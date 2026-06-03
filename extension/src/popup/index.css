@@ -603,3 +603,153 @@ html, body {
 /* ── Misc ─────────────────────────────────────── */
 
 .divider { height: 1px; background: var(--border); margin: 14px 0; }
+
+
+/* ── Account card (hosted mode, signed in) ────────────────────── */
+
+.account-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.account-email {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  word-break: break-all;
+}
+
+.tier-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  color: var(--accent-h);
+  background: var(--accent-dim);
+  border: 1px solid rgba(99, 102, 241, 0.22);
+  border-radius: 20px;
+  padding: 3px 9px;
+  align-self: flex-start;
+}
+
+/* ── Mode cards (settings) ────────────────────────────────────────────── */
+
+.mode-cards {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.mode-card {
+  flex: 1;
+  padding: 12px 10px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: border-color 0.14s, background 0.14s;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.mode-card:hover:not(.active) {
+  border-color: var(--accent);
+}
+
+.mode-card.active {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.mode-card-icon {
+  color: var(--text-3);
+  margin-bottom: 4px;
+}
+
+.mode-card.active .mode-card-icon {
+  color: var(--accent-h);
+}
+
+.mode-card-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.mode-card-desc {
+  font-size: 10px;
+  color: var(--text-2);
+  line-height: 1.4;
+}
+
+/* ── Account card (hosted, signed in) ─────────────────────────────────── */
+
+.account-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--accent-dim);
+  border: 1.5px solid rgba(99, 102, 241, 0.3);
+  color: var(--accent-h);
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.account-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* ── Auth switch link ─────────────────────────────────────────────────── */
+
+.auth-switch {
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: 10px;
+}
+
+.auth-link {
+  background: none;
+  border: none;
+  color: var(--accent-h);
+  font-family: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.auth-link:hover {
+  text-decoration: underline;
+}
+
+.account-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.warning-box {
+  background: rgba(251, 191, 36, 0.08);
+  border: 1px solid rgba(251, 191, 36, 0.25);
+  border-radius: var(--r-sm);
+  padding: 11px 13px;
+  color: #fbbf24;
+  font-size: 12px;
+  line-height: 1.55;
+  margin-bottom: 12px;
+}

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { downloadCoverLetterPdf } from '../../lib/pdf'
-import type { GenerateResponse, JobData, Settings } from '../../types'
+import type { AuthSession, GenerateResponse, JobData, Settings } from '../../types'
 import logoIcon from '../../public/icon/48.png'
 import type { Page } from '../App'
 
@@ -18,6 +18,7 @@ export default function GeneratePage({ onNavigate }: Props) {
   const [job, setJob] = useState<JobData | null>(null)
   const [createdAt, setCreatedAt] = useState('')
   const [error, setError] = useState('')
+  const [errorCode, setErrorCode] = useState<'RATE_LIMIT' | undefined>()
   const [copied, setCopied] = useState(false)
 
   const [manualTitle, setManualTitle] = useState('')
@@ -27,13 +28,18 @@ export default function GeneratePage({ onNavigate }: Props) {
   // null = still loading from storage
   const [hasResume, setHasResume] = useState<boolean | null>(null)
   const [hasApiKey, setHasApiKey] = useState<boolean | null>(null)
+  const [hasSession, setHasSession] = useState<boolean | null>(null)
+  const [appMode, setAppMode] = useState<'byok' | 'hosted'>('byok')
 
   const loaded = useRef(false)
 
   useEffect(() => {
-    chrome.storage.local.get(['generatePage', 'resume', 'settings']).then((r) => {
+    chrome.storage.local.get(['generatePage', 'resume', 'settings', 'session']).then((r) => {
+      const storedSettings = r.settings as Settings | undefined
       setHasResume(!!r.resume)
-      setHasApiKey(!!(r.settings as Settings | undefined)?.apiKey)
+      setHasApiKey(!!(storedSettings?.apiKey))
+      setHasSession(!!(r.session as AuthSession | undefined)?.access_token)
+      setAppMode(storedSettings?.mode ?? 'byok')
 
       const s = r.generatePage as Record<string, unknown> | undefined
       if (s) {
@@ -63,6 +69,7 @@ export default function GeneratePage({ onNavigate }: Props) {
   async function generate() {
     setState('loading')
     setError('')
+    setErrorCode(undefined)
     try {
       const res = (await chrome.runtime.sendMessage({ type: 'GENERATE_FROM_TAB' })) as GenerateResponse
       if (res.success) {
@@ -72,6 +79,7 @@ export default function GeneratePage({ onNavigate }: Props) {
         setState('done')
       } else {
         setError(res.error)
+        setErrorCode(res.errorCode)
         setState('error')
       }
     } catch (err) {
@@ -83,6 +91,7 @@ export default function GeneratePage({ onNavigate }: Props) {
   async function generateManual() {
     setState('loading')
     setError('')
+    setErrorCode(undefined)
     const jobData: JobData = {
       title: manualTitle.trim(),
       company: manualCompany.trim() || 'Unknown Company',
@@ -101,6 +110,7 @@ export default function GeneratePage({ onNavigate }: Props) {
         setState('done')
       } else {
         setError(res.error)
+        setErrorCode(res.errorCode)
         setState('error')
       }
     } catch (err) {
@@ -131,8 +141,9 @@ export default function GeneratePage({ onNavigate }: Props) {
   }
 
   const manualReady = manualTitle.trim().length > 0 && manualDescription.trim().length > 0
-  const setupComplete = hasResume === true && hasApiKey === true
-  const setupLoaded = hasResume !== null && hasApiKey !== null
+  const isReady = appMode === 'hosted' ? hasSession === true : hasApiKey === true
+  const setupComplete = hasResume === true && isReady
+  const setupLoaded = hasResume !== null && hasApiKey !== null && hasSession !== null
 
   return (
     <div className="page">
@@ -181,11 +192,11 @@ export default function GeneratePage({ onNavigate }: Props) {
           </button>
 
           <button
-            className={`setup-step${hasApiKey ? ' done' : ''}`}
-            onClick={() => !hasApiKey && onNavigate('settings')}
+            className={`setup-step${isReady ? ' done' : ''}`}
+            onClick={() => !isReady && onNavigate('settings')}
           >
             <div className="setup-step-icon">
-              {hasApiKey ? (
+              {isReady ? (
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
@@ -197,10 +208,19 @@ export default function GeneratePage({ onNavigate }: Props) {
               )}
             </div>
             <div className="setup-step-text">
-              <div className="setup-step-title">Add your API key</div>
-              <div className="setup-step-hint">Claude or OpenAI — stays on your device</div>
+              {appMode === 'hosted' ? (
+                <>
+                  <div className="setup-step-title">Sign in to Cover Me</div>
+                  <div className="setup-step-hint">Free account — 10 letters/day</div>
+                </>
+              ) : (
+                <>
+                  <div className="setup-step-title">Add your API key</div>
+                  <div className="setup-step-hint">Claude or OpenAI — stays on your device</div>
+                </>
+              )}
             </div>
-            {!hasApiKey && (
+            {!isReady && (
               <svg className="setup-step-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="9 18 15 12 9 6" />
               </svg>
@@ -280,10 +300,14 @@ export default function GeneratePage({ onNavigate }: Props) {
 
           {state === 'error' && (
             <div className="letter-container">
-              <div className="error-box">{error}</div>
-              <button className="btn btn-secondary" onClick={() => setState('idle')}>
-                Try Again
-              </button>
+              <div className={errorCode === 'RATE_LIMIT' ? 'warning-box' : 'error-box'}>
+                {error}
+              </div>
+              {errorCode !== 'RATE_LIMIT' && (
+                <button className="btn btn-secondary" onClick={() => setState('idle')}>
+                  Try Again
+                </button>
+              )}
             </div>
           )}
 

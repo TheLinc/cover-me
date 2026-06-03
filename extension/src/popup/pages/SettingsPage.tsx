@@ -1,120 +1,292 @@
 import { useEffect, useState } from 'react'
+import { signIn, signOut, signUp, uploadResumeToBackend } from '../../lib/auth'
 import { encryptApiKey } from '../../lib/crypto'
-import { getSettings, saveSettings } from '../../lib/storage'
-import type { AIProvider } from '../../types'
+import { clearSession, getResume, getSession, getSettings, saveSession, saveSettings } from '../../lib/storage'
+import type { AIProvider, AppMode, AuthSession } from '../../types'
 
-type Status = 'idle' | 'saving' | 'saved' | 'error'
+type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
+type AuthStatus = 'idle' | 'loading'
+type AuthView = 'signin' | 'signup'
 
 const MASKED = '••••••••••••••••'
 
 export default function SettingsPage() {
+  const [mode, setMode] = useState<AppMode>('byok')
+
+  // BYOK
   const [provider, setProvider] = useState<AIProvider>('claude')
   const [apiKey, setApiKey] = useState('')
   const [keyDirty, setKeyDirty] = useState(false)
   const [showKey, setShowKey] = useState(false)
-  const [status, setStatus] = useState<Status>('idle')
-  const [error, setError] = useState('')
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
+  const [saveError, setSaveError] = useState('')
+
+  // Hosted
+  const [session, setSession] = useState<AuthSession | null>(null)
+  const [authView, setAuthView] = useState<AuthView>('signin')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [authStatus, setAuthStatus] = useState<AuthStatus>('idle')
+  const [authError, setAuthError] = useState('')
 
   useEffect(() => {
-    getSettings().then((s) => {
+    Promise.all([getSettings(), getSession()]).then(([s, sess]) => {
       if (s) {
+        setMode(s.mode ?? 'byok')
         setProvider(s.provider)
-        setApiKey(MASKED)
+        if (s.apiKey) setApiKey(MASKED)
       }
+      setSession(sess)
     })
   }, [])
 
-  async function save() {
-    setStatus('saving')
-    setError('')
+  async function handleSwitchMode(newMode: AppMode) {
+    setMode(newMode)
+    const existing = await getSettings()
+    await saveSettings({
+      provider: existing?.provider ?? 'claude',
+      apiKey: existing?.apiKey ?? '',
+      mode: newMode,
+    })
+  }
+
+  async function saveBYOK() {
+    setSaveStatus('saving')
+    setSaveError('')
     try {
       const existing = await getSettings()
-
-      // If the key field wasn't touched, keep the existing encrypted key
       const encryptedKey = keyDirty
         ? await encryptApiKey(apiKey.trim())
         : (existing?.apiKey ?? '')
 
       if (!encryptedKey) {
-        setError('Please enter your API key.')
-        setStatus('error')
+        setSaveError('Please enter your API key.')
+        setSaveStatus('error')
         return
       }
 
-      await saveSettings({ provider, apiKey: encryptedKey })
-      if (keyDirty) {
-        setApiKey(MASKED)
-        setKeyDirty(false)
-      }
-      setStatus('saved')
-      setTimeout(() => setStatus('idle'), 2000)
+      await saveSettings({ provider, apiKey: encryptedKey, mode: 'byok' })
+      if (keyDirty) { setApiKey(MASKED); setKeyDirty(false) }
+      setSaveStatus('saved')
+      setTimeout(() => setSaveStatus('idle'), 2000)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save settings')
-      setStatus('error')
+      setSaveError(err instanceof Error ? err.message : 'Failed to save settings')
+      setSaveStatus('error')
     }
   }
 
-  const placeholder = provider === 'claude' ? 'sk-ant-api03-…' : 'sk-proj-…'
+  async function handleAuth() {
+    setAuthStatus('loading')
+    setAuthError('')
+    try {
+      const sess = authView === 'signin'
+        ? await signIn(email, password)
+        : await signUp(email, password)
+      await saveSession(sess)
+      setSession(sess)
+      setEmail('')
+      setPassword('')
+
+      // Sync any existing local resume to the backend so the user doesn't have to re-upload
+      const localResume = await getResume()
+      if (localResume?.text) {
+        uploadResumeToBackend(sess.access_token, localResume.text, localResume.filename).catch(() => {
+          // Non-fatal — user can re-upload manually if sync fails
+        })
+      }
+    } catch (err) {
+      setAuthError(err instanceof Error ? err.message : 'Authentication failed')
+    } finally {
+      setAuthStatus('idle')
+    }
+  }
+
+  async function handleSignOut() {
+    if (session) await signOut(session.access_token).catch(() => {})
+    await clearSession()
+    setSession(null)
+  }
+
+  function switchAuthView(v: AuthView) {
+    setAuthView(v)
+    setAuthError('')
+  }
+
+  const emailInitial = session?.user.email?.[0]?.toUpperCase() ?? '?'
 
   return (
     <div className="page">
       <div className="page-header">
         <h1 className="page-title">Settings</h1>
-        <p className="page-subtitle">Configure your AI provider</p>
+        <p className="page-subtitle">Choose how to generate cover letters</p>
       </div>
 
-      <div className="form-group">
-        <label className="form-label">AI Provider</label>
-        <div className="provider-toggle">
-          {(['claude', 'openai'] as AIProvider[]).map((p) => (
-            <button
-              key={p}
-              className={`provider-option${provider === p ? ' active' : ''}`}
-              onClick={() => setProvider(p)}
-            >
-              {p === 'claude' ? 'Claude' : 'OpenAI'}
-            </button>
-          ))}
-        </div>
+      {/* ── Mode cards ──────────────────────────────────────────────────── */}
+      <div className="mode-cards">
+        <button
+          className={`mode-card${mode === 'byok' ? ' active' : ''}`}
+          onClick={() => handleSwitchMode('byok')}
+        >
+          <div className="mode-card-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+            </svg>
+          </div>
+          <div className="mode-card-title">My API Key</div>
+          <div className="mode-card-desc">Claude or OpenAI — unlimited, private</div>
+        </button>
+
+        <button
+          className={`mode-card${mode === 'hosted' ? ' active' : ''}`}
+          onClick={() => handleSwitchMode('hosted')}
+        >
+          <div className="mode-card-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          </div>
+          <div className="mode-card-title">Cover Me Account</div>
+          <div className="mode-card-desc">Free · 10 letters/day · no key needed</div>
+        </button>
       </div>
 
-      <div className="form-group">
-        <label className="form-label">API Key</label>
-        <div className="input-wrap">
-          <input
-            className="form-input"
-            type={showKey ? 'text' : 'password'}
-            value={apiKey}
-            placeholder={placeholder}
-            style={{ paddingRight: 34 }}
-            onChange={(e) => { setApiKey(e.target.value); setKeyDirty(true) }}
-            onFocus={() => { if (!keyDirty && apiKey === MASKED) { setApiKey(''); setKeyDirty(true) } }}
-          />
-          <button className="input-eye-btn" onClick={() => setShowKey((v) => !v)} title={showKey ? 'Hide' : 'Show'}>
-            {showKey ? (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94" />
-                <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19" />
-                <line x1="1" y1="1" x2="23" y2="23" />
-              </svg>
-            ) : (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
-            )}
+      {/* ── BYOK ────────────────────────────────────────────────────────── */}
+
+      {mode === 'byok' && (
+        <>
+          <div className="form-group">
+            <label className="form-label">AI Provider</label>
+            <div className="provider-toggle">
+              {(['claude', 'openai'] as AIProvider[]).map((p) => (
+                <button
+                  key={p}
+                  className={`provider-option${provider === p ? ' active' : ''}`}
+                  onClick={() => setProvider(p)}
+                >
+                  {p === 'claude' ? 'Claude' : 'OpenAI'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">API Key</label>
+            <div className="input-wrap">
+              <input
+                className="form-input"
+                type={showKey ? 'text' : 'password'}
+                value={apiKey}
+                placeholder={provider === 'claude' ? 'sk-ant-api03-…' : 'sk-proj-…'}
+                style={{ paddingRight: 34 }}
+                onChange={(e) => { setApiKey(e.target.value); setKeyDirty(true) }}
+                onFocus={() => {
+                  if (!keyDirty && apiKey === MASKED) { setApiKey(''); setKeyDirty(true) }
+                }}
+              />
+              <button className="input-eye-btn" onClick={() => setShowKey(v => !v)} title={showKey ? 'Hide' : 'Show'}>
+                {showKey ? (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94" />
+                    <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19" />
+                    <line x1="1" y1="1" x2="23" y2="23" />
+                  </svg>
+                ) : (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                )}
+              </button>
+            </div>
+            <p className="hint" style={{ marginTop: 7 }}>Encrypted locally — never sent to our servers.</p>
+          </div>
+
+          {saveStatus === 'error' && <div className="error-box">{saveError}</div>}
+
+          <button className="btn btn-primary" onClick={saveBYOK} disabled={saveStatus === 'saving'}>
+            {saveStatus === 'saving' ? 'Saving…' : saveStatus === 'saved' ? '✓  Saved' : 'Save Settings'}
           </button>
-        </div>
-        <p className="hint" style={{ marginTop: 7 }}>
-          Encrypted locally — never sent to our servers.
-        </p>
-      </div>
+        </>
+      )}
 
-      {status === 'error' && <div className="error-box">{error}</div>}
+      {/* ── Hosted ──────────────────────────────────────────────────────── */}
 
-      <button className="btn btn-primary" onClick={save} disabled={status === 'saving'}>
-        {status === 'saving' ? 'Saving…' : status === 'saved' ? '✓  Saved' : 'Save Settings'}
-      </button>
+      {mode === 'hosted' && (
+        <>
+          {session ? (
+            /* Signed-in state */
+            <div className="account-card">
+              <div className="account-row">
+                <div className="account-avatar">{emailInitial}</div>
+                <div className="account-info">
+                  <div className="account-email">{session.user.email}</div>
+                  <span className="tier-badge">Free · 10 letters/day</span>
+                </div>
+              </div>
+              <button className="btn btn-secondary" style={{ marginTop: 16 }} onClick={handleSignOut}>
+                Sign Out
+              </button>
+            </div>
+          ) : (
+            /* Auth form */
+            <>
+              <div className="form-group">
+                <label className="form-label">Email</label>
+                <input
+                  className="form-input"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  autoComplete="email"
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Password</label>
+                <input
+                  className="form-input"
+                  type="password"
+                  placeholder={authView === 'signup' ? 'At least 6 characters' : '••••••••'}
+                  value={password}
+                  autoComplete={authView === 'signin' ? 'current-password' : 'new-password'}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && email && password) handleAuth() }}
+                />
+              </div>
+
+              {authError && <div className="error-box">{authError}</div>}
+
+              <button
+                className="btn btn-primary"
+                onClick={handleAuth}
+                disabled={authStatus === 'loading' || !email || !password}
+              >
+                {authStatus === 'loading'
+                  ? (authView === 'signin' ? 'Signing in…' : 'Creating account…')
+                  : (authView === 'signin' ? 'Sign In' : 'Create Free Account')}
+              </button>
+
+              <p className="auth-switch">
+                {authView === 'signin' ? (
+                  <>No account?{' '}
+                    <button className="auth-link" onClick={() => switchAuthView('signup')}>
+                      Create one free →
+                    </button>
+                  </>
+                ) : (
+                  <>Already have an account?{' '}
+                    <button className="auth-link" onClick={() => switchAuthView('signin')}>
+                      Sign in →
+                    </button>
+                  </>
+                )}
+              </p>
+            </>
+          )}
+        </>
+      )}
     </div>
   )
 }

@@ -1,8 +1,10 @@
 export type AIProvider = 'claude' | 'openai'
+export type AppMode = 'byok' | 'hosted'
 
 export interface Settings {
   provider: AIProvider
   apiKey: string // AES-GCM encrypted, stored in chrome.storage.local
+  mode: AppMode  // 'byok' (default) or 'hosted'
 }
 
 export interface ResumeData {
@@ -25,9 +27,19 @@ export interface CoverLetter {
   createdAt: string
 }
 
+export interface AuthSession {
+  access_token: string
+  refresh_token: string
+  expires_at: number // unix timestamp (seconds)
+  user: {
+    id: string
+    email: string
+  }
+}
+
 export type GenerateResponse =
   | { success: true; letter: string; job: JobData }
-  | { success: false; error: string }
+  | { success: false; error: string; errorCode?: 'RATE_LIMIT' }
 
 export type ScrapeResponse =
   | { success: true; job: JobData }

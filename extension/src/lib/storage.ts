@@ -1,4 +1,4 @@
-import type { CoverLetter, ResumeData, Settings } from '../types'
+import type { AuthSession, CoverLetter, ResumeData, Settings } from '../types'
 
 const HISTORY_LIMIT = 50
 
@@ -34,4 +34,17 @@ export async function addToHistory(letter: CoverLetter): Promise<void> {
 export async function deleteFromHistory(id: string): Promise<void> {
   const history = await getHistory()
   await chrome.storage.local.set({ history: history.filter((l) => l.id !== id) })
+}
+
+export async function getSession(): Promise<AuthSession | null> {
+  const { session } = await chrome.storage.local.get('session')
+  return (session as AuthSession) ?? null
+}
+
+export async function saveSession(session: AuthSession): Promise<void> {
+  await chrome.storage.local.set({ session })
+}
+
+export async function clearSession(): Promise<void> {
+  await chrome.storage.local.remove('session')
 }
