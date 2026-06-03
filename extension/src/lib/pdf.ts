@@ -20,7 +20,12 @@ export function downloadCoverLetterPdf(letter: string, job: JobData, createdAt: 
   const doc = new jsPDF({ unit: 'pt', format: 'letter' })
 
   const companyKnown = job.company && job.company !== 'Unknown Company'
-  const paragraphs = letter.split(/\n\n+/).map((p) => p.trim()).filter(Boolean)
+  const paragraphs = letter
+    .replace(/\r\n/g, '\n')        // normalise Windows line endings
+    .replace(/\r/g, '\n')          // normalise old Mac line endings
+    .split(/\n\n+/)                // split on paragraph breaks
+    .map(p => p.replace(/\n/g, ' ').trim())  // collapse soft returns to spaces
+    .filter(p => p.length > 0)
   const date = new Date(createdAt).toLocaleDateString('en-US', {
     year: 'numeric', month: 'long', day: 'numeric',
   })
@@ -72,10 +77,16 @@ export function downloadCoverLetterPdf(letter: string, job: JobData, createdAt: 
   doc.setFontSize(fontSize)
   doc.setTextColor(30, 30, 30)
 
+  // Render line-by-line so y always advances by our LINE_RATIO, not jsPDF's
+  // internal line-height factor (1.15). Passing an array to doc.text() lets
+  // jsPDF space lines at 1.15× while we advance y at 1.45×, accumulating
+  // extra whitespace proportional to paragraph length — the visible bug.
   for (let i = 0; i < paragraphs.length; i++) {
     const lines = doc.splitTextToSize(paragraphs[i], USABLE_W) as string[]
-    doc.text(lines, MARGIN_X, y)
-    y += lines.length * lh
+    for (const line of lines) {
+      doc.text(line, MARGIN_X, y)
+      y += lh
+    }
     if (i < paragraphs.length - 1) y += fontSize * PARA_RATIO
   }
 
