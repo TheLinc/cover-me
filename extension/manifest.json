@@ -1,0 +1,41 @@
+{
+  "manifest_version": 3,
+  "name": "Cover Me",
+  "version": "0.1.0",
+  "description": "Auto-generate tailored cover letters from job posting pages",
+  "icons": {
+    "16": "src/public/icon/16.png",
+    "32": "src/public/icon/32.png",
+    "48": "src/public/icon/48.png",
+    "128": "src/public/icon/128.png"
+  },
+  "action": {
+    "default_popup": "src/popup/index.html",
+    "default_title": "Cover Me",
+    "default_icon": {
+      "16": "src/public/icon/16.png",
+      "32": "src/public/icon/32.png",
+      "48": "src/public/icon/48.png",
+      "128": "src/public/icon/128.png"
+    }
+  },
+  "background": {
+    "service_worker": "src/background/index.ts",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/content/index.ts"],
+      "run_at": "document_idle"
+    }
+  ],
+  "permissions": ["storage", "activeTab", "scripting", "tabs"],
+  "host_permissions": [
+    "https://api.anthropic.com/*",
+    "https://api.openai.com/*"
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com"
+  }
+}
