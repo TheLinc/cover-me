@@ -628,12 +628,19 @@ html, body {
   display: inline-flex;
   align-items: center;
   font-size: 11px;
-  color: var(--accent-h);
-  background: var(--accent-dim);
-  border: 1px solid rgba(99, 102, 241, 0.22);
+  color: var(--text-2);
+  background: var(--elevated);
+  border: 1px solid var(--border);
   border-radius: 20px;
   padding: 3px 9px;
   align-self: flex-start;
+}
+
+.tier-badge-pro {
+  color: #fff;
+  background: var(--accent);
+  border-color: transparent;
+  font-weight: 600;
 }
 
 /* ── Mode cards (settings) ────────────────────────────────────────────── */

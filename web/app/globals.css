@@ -1,0 +1,169 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+/* ── Shadcn CSS variables ───────────────────────────────────────────────────
+ * --border and --accent are NOT defined here — they live in the project
+ * palette below as hex values and are hardcoded in tailwind.config.ts to
+ * avoid CSS variable format conflicts (CSS Modules used hex; Tailwind needs
+ * raw HSL channel values for hsl(var(--x)) interpolation).
+ * ─────────────────────────────────────────────────────────────────────────── */
+@layer base {
+  :root {
+    --background:             217 47% 7%;
+    --foreground:             213 27% 91%;
+    --card:                   225 32% 14%;
+    --card-foreground:        213 27% 91%;
+    --popover:                225 32% 14%;
+    --popover-foreground:     213 27% 91%;
+    --primary:                239 84% 67%;
+    --primary-foreground:     0 0% 100%;
+    --secondary:              222 36% 18%;
+    --secondary-foreground:   213 27% 91%;
+    --muted:                  222 36% 18%;
+    --muted-foreground:       215 16% 65%;
+    --destructive:            0 91% 71%;
+    --destructive-foreground: 0 0% 100%;
+    --input:                  225 32% 24%;
+    --ring:                   239 84% 67%;
+    --radius:                 0.375rem;
+  }
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg:         #0d1117;
+  --surface:    #161c2e;
+  --elevated:   #1e2740;
+  --border:     #2a3452;
+  --accent:     #6366f1;
+  --accent-h:   #818cf8;
+  --accent-dim: rgba(99, 102, 241, 0.14);
+  --accent-glow:rgba(99, 102, 241, 0.28);
+  --text:       #e2e8f0;
+  --text-2:     #94a3b8;
+  --text-3:     #475569;
+  --success:    #34d399;
+  --error:      #f87171;
+  --error-dim:  rgba(248, 113, 113, 0.10);
+
+  --font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --r:    5px;
+  --r-md: 6px;
+  --r-lg: 8px;
+  --r-xl: 12px;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+a       { color: inherit; text-decoration: none; }
+button  { cursor: pointer; font-family: inherit; }
+img, svg { display: block; }
+
+/* ── Shared layout ───────────────────────────────────────────────────────── */
+
+.container {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 0 48px;
+}
+
+@media (max-width: 768px) {
+  .container { padding: 0 20px; }
+}
+
+/* ── "hired." liquid fill — @property can't be expressed in Tailwind ─────── */
+
+@property --fill-pct {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 0%;
+}
+
+.hero-hired {
+  display: inline;
+  white-space: nowrap;
+  background:
+    linear-gradient(
+      to top,
+      transparent   0%,
+      transparent   var(--fill-pct),
+      var(--text)   var(--fill-pct),
+      var(--text)   100%
+    ),
+    linear-gradient(170deg, var(--accent-h) 0%, var(--accent) 55%, #4338ca 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  line-height: 1.4;
+  animation: liquidFill 1.6s cubic-bezier(0.25, 0.1, 0.25, 1) 0.65s forwards;
+}
+
+@keyframes liquidFill {
+  0%   { --fill-pct:   0%; }
+  72%  { --fill-pct: 105%; }
+  85%  { --fill-pct:  97%; }
+  100% { --fill-pct: 100%; }
+}
+
+/* ── Skeleton shimmer — complex gradient animation, not Tailwind-able ─────── */
+
+.skeleton-line {
+  border-radius: 3px;
+  background: linear-gradient(
+    90deg,
+    var(--elevated) 25%,
+    rgba(99, 102, 241, 0.1) 50%,
+    var(--elevated) 75%
+  );
+  background-size: 300% 100%;
+  animation: skeletonShimmer 1.8s ease-in-out infinite;
+}
+
+@keyframes skeletonShimmer {
+  0%   { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+
+/* ── Keyframes — referenced by arbitrary Tailwind animation values ─────────── */
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes floatY {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-10px); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.35; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

@@ -81,6 +81,20 @@ export async function ensureValidSession(): Promise<AuthSession | null> {
   }
 }
 
+export async function fetchTier(userId: string, accessToken: string): Promise<string> {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/users?select=tier&id=eq.${userId}&limit=1`,
+      { headers: authHeaders(accessToken) },
+    )
+    if (!res.ok) return 'hosted_free'
+    const rows = await res.json() as Array<{ tier: string }>
+    return rows[0]?.tier ?? 'hosted_free'
+  } catch {
+    return 'hosted_free'
+  }
+}
+
 export class RateLimitError extends Error {
   readonly code = 'RATE_LIMIT'
   constructor(message: string) { super(message) }

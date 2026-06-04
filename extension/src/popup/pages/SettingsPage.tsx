@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { signIn, signOut, signUp, uploadResumeToBackend } from '../../lib/auth'
+import { ensureValidSession, fetchTier, signIn, signOut, signUp, uploadResumeToBackend } from '../../lib/auth'
 import { encryptApiKey } from '../../lib/crypto'
-import { clearSession, getResume, getSession, getSettings, saveSession, saveSettings } from '../../lib/storage'
+import { clearSession, getResume, getSettings, saveSession, saveSettings } from '../../lib/storage'
 import type { AIProvider, AppMode, AuthSession } from '../../types'
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
@@ -23,6 +23,7 @@ export default function SettingsPage() {
 
   // Hosted
   const [session, setSession] = useState<AuthSession | null>(null)
+  const [tier, setTier] = useState<string>('hosted_free')
   const [authView, setAuthView] = useState<AuthView>('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -30,13 +31,17 @@ export default function SettingsPage() {
   const [authError, setAuthError] = useState('')
 
   useEffect(() => {
-    Promise.all([getSettings(), getSession()]).then(([s, sess]) => {
+    Promise.all([getSettings(), ensureValidSession()]).then(async ([s, sess]) => {
       if (s) {
         setMode(s.mode ?? 'byok')
         setProvider(s.provider)
         if (s.apiKey) setApiKey(MASKED)
       }
       setSession(sess)
+      if (sess) {
+        const t = await fetchTier(sess.user.id, sess.access_token)
+        setTier(t)
+      }
     })
   }, [])
 
@@ -86,6 +91,7 @@ export default function SettingsPage() {
       setSession(sess)
       setEmail('')
       setPassword('')
+      fetchTier(sess.user.id, sess.access_token).then(setTier)
 
       // Sync any existing local resume to the backend so the user doesn't have to re-upload
       const localResume = await getResume()
@@ -113,6 +119,7 @@ export default function SettingsPage() {
   }
 
   const emailInitial = session?.user.email?.[0]?.toUpperCase() ?? '?'
+  const isPro = tier === 'hosted_pro'
 
   return (
     <div className="page">
@@ -147,7 +154,9 @@ export default function SettingsPage() {
             </svg>
           </div>
           <div className="mode-card-title">Cover Me Account</div>
-          <div className="mode-card-desc">Free · 10 letters/day · no key needed</div>
+          <div className="mode-card-desc">
+            {session && isPro ? 'Pro · Unlimited letters' : 'Free · 10 letters/day · no key needed'}
+          </div>
         </button>
       </div>
 
@@ -221,7 +230,9 @@ export default function SettingsPage() {
                 <div className="account-avatar">{emailInitial}</div>
                 <div className="account-info">
                   <div className="account-email">{session.user.email}</div>
-                  <span className="tier-badge">Free · 10 letters/day</span>
+                  <span className={isPro ? 'tier-badge tier-badge-pro' : 'tier-badge'}>
+                    {isPro ? '★ Pro · Unlimited' : 'Free · 10 letters/day'}
+                  </span>
                 </div>
               </div>
               <button className="btn btn-secondary" style={{ marginTop: 16 }} onClick={handleSignOut}>

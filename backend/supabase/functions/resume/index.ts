@@ -2,8 +2,9 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 import { handleCors, json } from '../_shared/cors.ts'
 import { decrypt, encrypt } from '../_shared/encrypt.ts'
 
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
+const SUPABASE_URL        = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SECRET_KEY = Deno.env.get('SERVICE_KEY')!
+const MAX_RESUME_BYTES    = 100_000 // 100 KB — well above any real resume text
 
 Deno.serve(async (req) => {
   const cors = handleCors(req)
@@ -19,7 +20,7 @@ Deno.serve(async (req) => {
 
   const userId = user.id
 
-  // GET — fetch resume text (for debugging / future dashboard use)
+  // GET — fetch resume text
   if (req.method === 'GET') {
     const { data, error } = await supabase
       .from('resumes')
@@ -39,6 +40,12 @@ Deno.serve(async (req) => {
 
   // POST — save/replace resume
   if (req.method === 'POST') {
+    // Reject oversized payloads before parsing JSON
+    const contentLength = parseInt(req.headers.get('content-length') ?? '0', 10)
+    if (contentLength > MAX_RESUME_BYTES) {
+      return json({ error: 'Resume text too large (max 100 KB)' }, 413)
+    }
+
     let text: string, filename: string | undefined
     try {
       const body = await req.json()
@@ -49,6 +56,14 @@ Deno.serve(async (req) => {
     }
 
     if (!text || typeof text !== 'string') return json({ error: 'Missing text' }, 400)
+    if (text.length > MAX_RESUME_BYTES) {
+      return json({ error: 'Resume text too large (max 100 KB)' }, 413)
+    }
+    if (filename && typeof filename !== 'string') {
+      return json({ error: 'Invalid filename' }, 400)
+    }
+    // Strip any non-printable characters from filename
+    const safeFilename = filename?.replace(/[^\x20-\x7E]/g, '').slice(0, 255) ?? null
 
     let text_encrypted: string
     try {
@@ -58,7 +73,7 @@ Deno.serve(async (req) => {
     }
 
     const { error } = await supabase.from('resumes').upsert(
-      { user_id: userId, text_encrypted, filename: filename ?? null, updated_at: new Date().toISOString() },
+      { user_id: userId, text_encrypted, filename: safeFilename, updated_at: new Date().toISOString() },
       { onConflict: 'user_id' },
     )
 

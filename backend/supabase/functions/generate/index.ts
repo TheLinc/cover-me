@@ -32,25 +32,27 @@ Deno.serve(async (req) => {
   // Rate limit (free tier only)
   if (tier === 'hosted_free') {
     const today = new Date().toISOString().split('T')[0]
-    const { data: rateRow } = await supabase
-      .from('rate_limits')
-      .select('count')
-      .eq('user_id', userId)
-      .eq('date', today)
-      .single()
 
-    const count = rateRow?.count ?? 0
-    if (count >= FREE_DAILY_LIMIT) {
+    // Single atomic DB call — check and increment together so concurrent
+    // requests cannot both slip through the same count value.
+    const { data: allowed, error: rateError } = await supabase
+      .rpc('check_and_increment_rate_limit', {
+        p_user_id: userId,
+        p_date:    today,
+        p_limit:   FREE_DAILY_LIMIT,
+      })
+
+    if (rateError) {
+      console.error('Rate limit RPC error:', rateError.message)
+      return json({ error: 'Could not check rate limit. Please try again.' }, 500)
+    }
+
+    if (!allowed) {
       return json(
         { error: `You've used all ${FREE_DAILY_LIMIT} free letters for today. Your limit resets at midnight UTC.` },
         429,
       )
     }
-
-    await supabase.from('rate_limits').upsert(
-      { user_id: userId, date: today, count: count + 1 },
-      { onConflict: 'user_id,date' },
-    )
   }
 
   // Fetch resume
