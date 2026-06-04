@@ -25,7 +25,7 @@ function Nav() {
   return (
     <nav
       className={cn(
-        "fixed top-0 left-0 right-0 z-[100] py-[18px] transition-[background,border-color,backdrop-filter] duration-[250ms] border-b border-transparent",
+        "fixed top-0 left-0 right-0 z-[100] py-[18px] transition-[background,border-color,backdrop-filter] [transition-duration:250ms] border-b border-transparent",
         scrolled && "bg-[rgba(13,17,23,0.92)] backdrop-blur-2xl [-webkit-backdrop-filter:blur(24px)] border-border"
       )}
     >
@@ -128,7 +128,7 @@ function WorkflowDemo() {
         {/* Extension popup */}
         <div
           className={cn(
-            "absolute top-[14px] right-[14px] w-[264px] bg-background border border-border rounded-[8px] shadow-[0_24px_72px_rgba(0,0,0,0.65),0_0_0_1px_rgba(99,102,241,0.12)] overflow-hidden opacity-0 translate-y-[14px] scale-[0.96] transition-[opacity,transform] duration-[400ms] ease-out max-[900px]:w-[220px] max-[768px]:w-[200px] max-[768px]:top-2.5 max-[768px]:right-2.5 max-[540px]:hidden"
+            "absolute top-[14px] right-[14px] w-[264px] bg-background border border-border rounded-[8px] shadow-[0_24px_72px_rgba(0,0,0,0.65),0_0_0_1px_rgba(99,102,241,0.12)] overflow-hidden opacity-0 translate-y-[14px] scale-[0.96] transition-[opacity,transform] [transition-duration:400ms] ease-out max-[900px]:w-[220px] max-[768px]:w-[200px] max-[768px]:top-2.5 max-[768px]:right-2.5 max-[540px]:hidden"
           )}
           style={phase >= 1 ? { opacity: 1, transform: 'translateY(0) scale(1)' } : undefined}
         >
@@ -141,7 +141,7 @@ function WorkflowDemo() {
           <div className="h-[204px] relative overflow-hidden">
             <div
               className={cn(
-                "absolute inset-0 p-[14px] flex flex-col gap-[14px] transition-opacity duration-[350ms]",
+                "absolute inset-0 p-[14px] flex flex-col gap-[14px] transition-opacity [transition-duration:350ms]",
                 phase >= 2 && "opacity-0 pointer-events-none"
               )}
             >
@@ -156,7 +156,7 @@ function WorkflowDemo() {
 
             <div
               className={cn(
-                "absolute inset-0 p-[14px] flex flex-col gap-[9px] overflow-hidden opacity-0 transition-opacity duration-[450ms]",
+                "absolute inset-0 p-[14px] flex flex-col gap-[9px] overflow-hidden opacity-0 transition-opacity [transition-duration:450ms]",
                 phase >= 2 && "opacity-100"
               )}
             >
@@ -204,8 +204,8 @@ function Hero() {
             <br />
             that gets you <span className="hero-hired">hired.</span>
           </h1>
-          <p className="text-[16px] leading-[1.7] text-muted-foreground max-w-[440px] mt-1.5">
-            Cover Me reads any job posting and writes a tailored, human-sounding letter from your resume. One click. Five seconds.
+          <p className="text-[16px] leading-[1.7] text-muted-foreground max-w-[480px] mt-1.5">
+            Cover Me reads the job posting, surfaces the keywords, and writes a tailored letter built from your resume — in under five seconds. Apply to every opportunity without spending an hour on each one.
           </p>
           <div className="flex gap-2.5 flex-wrap justify-center mt-2">
             <Button asChild size="lg">
@@ -270,8 +270,8 @@ const STEPS = [
   },
   {
     n: "03",
-    title: "Generate, edit, and send",
-    body: "Click Generate. Claude reads the job description, cross-references your resume, and writes a specific, human-sounding letter in under five seconds. Edit it inline in the extension, then copy to clipboard or export as PDF.",
+    title: "Generate, edit, and apply",
+    body: "Click Generate. Cover Me reads the job requirements, identifies the keywords and skills the role demands, and maps them to your actual achievements — producing a letter specific to that posting in under five seconds. Edit inline, copy to clipboard, or export as PDF.",
   },
 ];
 
@@ -290,7 +290,7 @@ function HowItWorks() {
         <div className="flex flex-col gap-2.5 mb-[52px]">
           <span className="text-[10px] font-bold tracking-[0.12em] uppercase text-brand">How it works</span>
           <h2 className="text-[clamp(30px,3.8vw,48px)] font-extrabold tracking-[-1.5px] leading-none text-foreground max-w-[600px]">
-            As simple as opening a job posting.
+            From job posting to cover letter in under a minute.
           </h2>
         </div>
         <div className="border-t border-border">
@@ -348,8 +348,8 @@ const FEATURES: { title: string; body: string; accent?: boolean; span: string; p
     span: "col-span-2 max-[900px]:col-span-full",
   },
   {
-    title: "Zero clichés, zero AI tells",
-    body: 'Engineered to avoid "I am writing to apply", "team player", "passionate", "delve", and 40+ other phrases that flag AI-written letters to recruiters.',
+    title: "Keywords from the posting, built in",
+    body: "Cover Me reads the job description to find the exact skills, tools, and terms the role demands, then weaves them naturally into your letter — so you surface in ATS filters and make clear you actually read the posting.",
     span: "col-span-6 max-[1100px]:col-span-4 max-[900px]:col-span-full",
     pad: "py-7",
   },
@@ -370,7 +370,7 @@ function Features() {
         <div className="flex flex-col gap-2.5 mb-[52px]">
           <span className="text-[10px] font-bold tracking-[0.12em] uppercase text-brand">Features</span>
           <h2 className="text-[clamp(30px,3.8vw,48px)] font-extrabold tracking-[-1.5px] leading-none text-foreground max-w-[600px]">
-            Everything you need. Nothing you don&apos;t.
+            Built for people who apply seriously.
           </h2>
         </div>
         <div className="grid grid-cols-6 max-[1100px]:grid-cols-4 max-[900px]:grid-cols-2 max-[768px]:grid-cols-1 gap-px bg-border border border-border rounded-[10px] overflow-hidden">
@@ -378,7 +378,7 @@ function Features() {
             <div
               key={f.title}
               className={cn(
-                "bg-elevated px-8 py-9 flex flex-col gap-3 opacity-0 translate-y-3 transition-[opacity,transform,background] duration-[450ms] hover:bg-[rgba(30,39,64,0.96)]",
+                "bg-elevated px-8 py-9 flex flex-col gap-3 opacity-0 translate-y-3 transition-[opacity,transform,background] [transition-duration:450ms] hover:bg-[rgba(30,39,64,0.96)]",
                 f.accent && "bg-gradient-to-br from-elevated to-[rgba(99,102,241,0.06)]",
                 f.pad ?? "",
                 f.span,
@@ -499,7 +499,7 @@ function Pricing() {
               <span className="text-[14px] text-dim font-medium">/month</span>
             </div>
             <p className="text-[13px] text-muted-foreground leading-[1.65] pb-6 border-b border-border mb-6">
-              For serious candidates who apply frequently and want everything synced.
+              For active job seekers who apply to multiple roles a day and want their history everywhere.
             </p>
             <ul className="list-none flex flex-col gap-2.5 flex-1 mb-7">
               {PRO_FEATURES.map((f) => (
@@ -532,7 +532,7 @@ function Footer() {
               <Image src="/logo.png" width={24} height={24} alt="Cover Me" />
               <span>Cover Me</span>
             </a>
-            <p className="text-[13px] text-dim">AI cover letters that sound like you.</p>
+            <p className="text-[13px] text-dim">A tailored cover letter for every job you apply to.</p>
           </div>
           <div className="flex gap-[60px] max-[768px]:gap-10">
             <div className="flex flex-col gap-2.5">
