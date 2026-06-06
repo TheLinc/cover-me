@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 }
 
 const EFFECTIVE_DATE = 'June 4, 2026'
-const CONTACT_EMAIL  = 'lincolnlaylor@gmail.com'
+const CONTACT_EMAIL  = 'support@cover-me.dev'
 
 // ── Section heading ────────────────────────────────────────────────────────
 
