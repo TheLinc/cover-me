@@ -1,4 +1,4 @@
-import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from './config'
+import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL, WEB_URL } from './config'
 import { clearSession, getSession, saveSession } from './storage'
 import type { AuthSession, JobData } from '../types'
 
@@ -27,7 +27,8 @@ export async function signIn(email: string, password: string): Promise<AuthSessi
 }
 
 export async function signUp(email: string, password: string): Promise<AuthSession> {
-  const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+  const redirectTo = encodeURIComponent(`${WEB_URL}/auth`)
+  const res = await fetch(`${SUPABASE_URL}/auth/v1/signup?redirect_to=${redirectTo}`, {
     method: 'POST',
     headers: authHeaders(),
     body: JSON.stringify({ email, password }),

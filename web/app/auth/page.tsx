@@ -15,7 +15,7 @@ import {
 } from "@phosphor-icons/react";
 import { Spinner } from "@/components/ui/spinner";
 
-type View = "signin" | "signup" | "forgot" | "reset";
+type View = "signin" | "signup" | "forgot" | "reset" | "confirmed";
 
 export default function AuthPage() {
   return (
@@ -42,17 +42,34 @@ function AuthContent() {
 
   const supabase = createClient();
 
-  // Detect Supabase password-recovery session — fires when the user arrives
-  // via the reset link (hash contains type=recovery + access_token).
   useEffect(() => {
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") {
-        setView("reset");
-        // Remove the hash so the token isn't visible in the address bar.
-        window.history.replaceState(null, "", window.location.pathname);
+    const hash = window.location.hash;
+
+    if (hash) {
+      const h = new URLSearchParams(hash.slice(1));
+
+      if (h.get("error")) {
+        const code = h.get("error_code");
+        if (code === "otp_expired") {
+          setError("That confirmation link has expired. Sign in or sign up again to get a new one.");
+        } else if (code === "access_denied") {
+          setError("This link is invalid or has already been used. Sign in or request a new link.");
+        } else {
+          const desc = h.get("error_description");
+          setError(desc ? decodeURIComponent(desc.replace(/\+/g, " ")) : "Something went wrong. Please try again.");
+        }
+      } else if (h.get("access_token")) {
+        const type = h.get("type");
+        if (type === "signup") setView("confirmed");
+        if (type === "recovery") setView("reset");
       }
+
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+
+    // Fallback: catch events fired before React mounted (e.g. slow hydration).
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") setView("reset");
     });
     return () => subscription.unsubscribe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -81,7 +98,11 @@ function AuthContent() {
         if (error) throw error;
         window.location.href = "/dashboard";
       } else {
-        const { error } = await supabase.auth.signUp({ email, password });
+        const { error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: { emailRedirectTo: `${window.location.origin}/auth` },
+          });
         if (error) throw error;
         if (plan === "pro") {
           window.location.href = "/dashboard?upgrade=1";
@@ -268,8 +289,24 @@ function AuthContent() {
             </span>
           </a>
 
-          {/* ── Success state ── */}
-          {status === "success" ? (
+          {/* ── Email confirmed ── */}
+          {view === "confirmed" ? (
+            <>
+              <div className="w-12 h-12 rounded-full bg-[rgba(52,211,153,0.1)] border border-[rgba(52,211,153,0.25)] flex items-center justify-center mb-6">
+                <CheckIcon size={22} color="var(--success)" />
+              </div>
+              <h2 className="text-2xl font-extrabold tracking-[-0.55px] text-foreground leading-[1.2] mb-[5px]">
+                Email confirmed.
+              </h2>
+              <p className="text-[13.5px] text-muted-foreground leading-[1.6] mb-7">
+                Your account is active. Let&apos;s get to work.
+              </p>
+              <Button onClick={() => { window.location.href = "/dashboard"; }} size="lg" className="w-full">
+                Go to dashboard
+              </Button>
+            </>
+          ) : /* ── Success state ── */
+          status === "success" ? (
             <>
               <div className="flex items-center gap-5 mb-7">
                 <div>

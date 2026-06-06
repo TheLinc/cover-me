@@ -27,6 +27,7 @@ export default function SettingsPage() {
   const [authView, setAuthView] = useState<AuthView>('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [authStatus, setAuthStatus] = useState<AuthStatus>('idle')
   const [authError, setAuthError] = useState('')
 
@@ -116,6 +117,7 @@ export default function SettingsPage() {
   function switchAuthView(v: AuthView) {
     setAuthView(v)
     setAuthError('')
+    setShowPassword(false)
   }
 
   const emailInitial = session?.user.email?.[0]?.toUpperCase() ?? '?'
@@ -256,15 +258,32 @@ export default function SettingsPage() {
 
               <div className="form-group">
                 <label className="form-label">Password</label>
-                <input
-                  className="form-input"
-                  type="password"
-                  placeholder={authView === 'signup' ? 'At least 6 characters' : '••••••••'}
-                  value={password}
-                  autoComplete={authView === 'signin' ? 'current-password' : 'new-password'}
-                  onChange={(e) => setPassword(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' && email && password) handleAuth() }}
-                />
+                <div className="input-wrap">
+                  <input
+                    className="form-input"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder={authView === 'signup' ? 'At least 6 characters' : '••••••••'}
+                    value={password}
+                    style={{ paddingRight: 34 }}
+                    autoComplete={authView === 'signin' ? 'current-password' : 'new-password'}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' && email && password) handleAuth() }}
+                  />
+                  <button className="input-eye-btn" onClick={() => setShowPassword(v => !v)} title={showPassword ? 'Hide' : 'Show'}>
+                    {showPassword ? (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94" />
+                        <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19" />
+                        <line x1="1" y1="1" x2="23" y2="23" />
+                      </svg>
+                    ) : (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
               </div>
 
               {authError && <div className="error-box">{authError}</div>}
