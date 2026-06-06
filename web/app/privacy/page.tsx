@@ -306,62 +306,70 @@ export default function PrivacyPage() {
             </PermissionCard>
 
             <PermissionCard name="activeTab">
-              <strong className="text-foreground">Why it is needed:</strong> To generate a cover letter
-              from a job posting, the extension must read the content of the job posting page. The{' '}
-              <code className="text-brand-light font-mono text-[12px]">activeTab</code> permission grants
-              temporary access to the current tab only, and only when the user explicitly activates the
-              extension by clicking the toolbar icon or the Generate button. Without this permission,
-              the extension cannot read job posting content.
+              <strong className="text-foreground">Why it is needed:</strong> When you click
+              &ldquo;Generate&rdquo;, the service worker needs to identify and communicate with the
+              content script running on your current tab. The{' '}
+              <code className="text-brand-light font-mono text-[12px]">activeTab</code> permission
+              grants temporary access to the active tab at the moment of user action — specifically,
+              it allows{' '}
+              <code className="text-brand-light font-mono text-[12px]">chrome.tabs.query(&#123;active: true, currentWindow: true&#125;)</code>{' '}
+              to return the tab&apos;s <code className="text-brand-light font-mono text-[12px]">id</code>,
+              which is then used to route a message to the content script on that tab.
               <br /><br />
-              <strong className="text-foreground">Exactly how it is used:</strong> When you click
-              &ldquo;Generate&rdquo;, the service worker uses <code className="text-brand-light font-mono text-[12px]">chrome.tabs.query(&#123;active: true, currentWindow: true&#125;)</code> to
-              identify the active tab, then sends a message to the content script running on that tab
-              to extract the job title, company name, and job description. The tab URL is used solely
-              to identify the job board and route to the correct scraper. Page content is processed
-              in memory and not retained after the cover letter is generated.
+              <strong className="text-foreground">Exactly how it is used:</strong> The service worker
+              retrieves the active tab&apos;s ID and sends a <code className="text-brand-light font-mono text-[12px]">SCRAPE_JOB</code> message
+              to the content script on that specific tab. The content script reads the page DOM to
+              extract the job title, company name, and description, then returns that data to the
+              service worker. No tab URLs, titles, or other metadata are accessed, stored, or
+              transmitted — only the tab ID is used, and only for message routing.
+              <br /><br />
+              <strong className="text-foreground">Access is strictly user-initiated:</strong>{' '}
+              Access is granted only at the moment you click Generate and expires immediately after.
+              The extension does not have persistent access to any tab between actions.
             </PermissionCard>
 
-            <PermissionCard name="scripting">
-              <strong className="text-foreground">Why it is needed:</strong> The{' '}
-              <code className="text-brand-light font-mono text-[12px]">scripting</code> permission is
-              required to register and manage the content scripts that read job posting pages. Content
-              scripts for LinkedIn, Indeed, Greenhouse, Lever, Workday, Ashby, and a generic fallback
-              are injected into job posting pages to locate and extract the job description from each
-              site&apos;s unique HTML structure.
-              <br /><br />
-              <strong className="text-foreground">Exactly how it is used:</strong> Content scripts are
-              declared statically in <code className="text-brand-light font-mono text-[12px]">manifest.json</code> and
-              are only activated by explicit user action (clicking Generate). Scripts read the
-              page&apos;s DOM to locate job title, company, and description elements. No scripts are
-              loaded from remote URLs — all code is bundled in the extension package.
-            </PermissionCard>
+            <H3>Content script host access</H3>
+            <P>
+              In addition to declared permissions, Cover Me registers a content script that runs on
+              web pages. This is what Chrome displays as{' '}
+              <strong className="text-foreground">&ldquo;Read and change all your data on all websites&rdquo;</strong>{' '}
+              during installation.
+            </P>
 
             <PermissionCard
-              name="tabs"
-              warning="Read your browsing history"
+              name={"<all_urls> content script"}
+              warning="Read and change all your data on all websites"
             >
-              <strong className="text-foreground">Why Chrome shows this warning:</strong> Chrome
-              displays &ldquo;Read your browsing history&rdquo; for the{' '}
-              <code className="text-brand-light font-mono text-[12px]">tabs</code> permission because
-              the API can theoretically access tab URLs. Cover Me&apos;s actual use is far narrower.
+              <strong className="text-foreground">Why Chrome shows this warning:</strong> Cover Me
+              registers a content script with <code className="text-brand-light font-mono text-[12px]">matches: [&quot;&lt;all_urls&gt;&quot;]</code>,
+              which Chrome surfaces as &ldquo;Read and change all your data on all websites.&rdquo;
+              This warning reflects the technical scope of the permission, not Cover Me&apos;s
+              actual behaviour.
               <br /><br />
-              <strong className="text-foreground">Why it is needed:</strong> The service worker uses{' '}
-              <code className="text-brand-light font-mono text-[12px]">chrome.tabs.query(&#123;active: true, currentWindow: true&#125;)</code> to
-              retrieve the tab ID of the current tab so it can send a message to the content script
-              running on that specific tab. Without the tab ID, the service worker cannot target the
-              correct content script to scrape job data.
+              <strong className="text-foreground">Why all URLs are needed:</strong> Cover Me is
+              designed to work on any job posting — not just LinkedIn or Indeed, but Greenhouse,
+              Lever, Workday, Ashby, and any company&apos;s own careers page. Restricting the
+              content script to a fixed list of domains would prevent it from working on the
+              hundreds of job boards and ATS-hosted postings that exist. The broad match is
+              required to deliver the extension&apos;s core promise: one tool for every job posting.
               <br /><br />
-              <strong className="text-foreground">What we do NOT do:</strong> We do not enumerate,
-              store, or transmit the URLs or titles of any tabs. We do not monitor tab activity. We
-              do not access any tab other than the one that is active at the moment you click
-              Generate. No browsing history is collected or recorded at any point.
+              <strong className="text-foreground">What the content script actually does:</strong> The
+              script registers a single message listener ({' '}
+              <code className="text-brand-light font-mono text-[12px]">chrome.runtime.onMessage</code>)
+              and does nothing else passively. It only reads page content when it receives a{' '}
+              <code className="text-brand-light font-mono text-[12px]">SCRAPE_JOB</code> message from
+              the service worker — which only happens when you explicitly click Generate. It reads
+              only the job title, company name, and job description from the DOM of the active tab.
+              It does not modify any page content, inject any UI, monitor navigation, or transmit
+              any data independently.
               <br /><br />
-              <strong className="text-foreground">Why a narrower alternative is not feasible:</strong>{' '}
-              The <code className="text-brand-light font-mono text-[12px]">activeTab</code> permission
-              alone does not expose the <code className="text-brand-light font-mono text-[12px]">tab.id</code> property
-              to the service worker context; <code className="text-brand-light font-mono text-[12px]">tabs</code> is
-              required to query and retrieve the active tab object including its ID in the background
-              service worker.
+              <strong className="text-foreground">What we do NOT do:</strong>
+              <ul className="mt-2 space-y-1 pl-4 list-disc">
+                <li>We do not read content from any tab other than the one you activate Generate on.</li>
+                <li>We do not monitor, log, or transmit the URLs or titles of pages you visit.</li>
+                <li>We do not modify, inject into, or interact with web pages in any way beyond reading job posting data on explicit user request.</li>
+                <li>We do not track your browsing history or build any profile of the sites you visit.</li>
+              </ul>
             </PermissionCard>
 
             <H3>Host permissions</H3>
@@ -588,7 +596,7 @@ export default function PrivacyPage() {
 
             {/* Footer note */}
             <div className="mt-16 pt-8 border-t border-border">
-              <p className="text-[12.5px] text-dim">
+              <p className="text-[12.5px] text-muted-foreground">
                 Cover Me is open-source software released under the MIT License.
                 The source code is available at{' '}
                 <a

@@ -30,7 +30,7 @@
       "run_at": "document_idle"
     }
   ],
-  "permissions": ["storage", "activeTab", "scripting", "tabs"],
+  "permissions": ["storage", "activeTab"],
   "host_permissions": [
     "https://api.anthropic.com/*",
     "https://api.openai.com/*",
