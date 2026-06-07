@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ensureValidSession, fetchTier, signIn, signOut, signUp, uploadResumeToBackend } from '../../lib/auth'
-import { encryptApiKey } from '../../lib/crypto'
-import { clearSession, getResume, getSettings, saveSession, saveSettings } from '../../lib/storage'
+import { decryptApiKey, encryptApiKey } from '../../lib/crypto'
+import { clearSavedLogin, clearSession, getSavedLogin, getResume, getSettings, saveSession, saveSettings, setSavedLogin } from '../../lib/storage'
 import type { AIProvider, AppMode, AuthSession } from '../../types'
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
@@ -28,6 +28,7 @@ export default function SettingsPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [rememberMe, setRememberMe] = useState(false)
   const [authStatus, setAuthStatus] = useState<AuthStatus>('idle')
   const [authError, setAuthError] = useState('')
 
@@ -45,6 +46,23 @@ export default function SettingsPage() {
       }
     })
   }, [])
+
+  // Pre-fill remembered credentials whenever the sign-in form becomes visible
+  // (initial mount with no session, or after sign-out)
+  useEffect(() => {
+    if (session !== null) return
+    getSavedLogin().then(async (saved) => {
+      if (!saved) return
+      try {
+        const decrypted = await decryptApiKey(saved.encryptedPassword)
+        setEmail(saved.email)
+        setPassword(decrypted)
+        setRememberMe(true)
+      } catch {
+        clearSavedLogin()
+      }
+    })
+  }, [session])
 
   async function handleSwitchMode(newMode: AppMode) {
     setMode(newMode)
@@ -89,6 +107,16 @@ export default function SettingsPage() {
         ? await signIn(email, password)
         : await signUp(email, password)
       await saveSession(sess)
+
+      if (authView === 'signin') {
+        if (rememberMe) {
+          const encryptedPassword = await encryptApiKey(password)
+          await setSavedLogin({ email, encryptedPassword })
+        } else {
+          await clearSavedLogin()
+        }
+      }
+
       setSession(sess)
       setEmail('')
       setPassword('')
@@ -118,6 +146,11 @@ export default function SettingsPage() {
     setAuthView(v)
     setAuthError('')
     setShowPassword(false)
+    if (v === 'signup') {
+      setEmail('')
+      setPassword('')
+      setRememberMe(false)
+    }
   }
 
   const emailInitial = session?.user.email?.[0]?.toUpperCase() ?? '?'
@@ -285,6 +318,18 @@ export default function SettingsPage() {
                   </button>
                 </div>
               </div>
+
+              {authView === 'signin' && (
+                <div className="remember-row">
+                  <input
+                    id="remember-me"
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                  />
+                  <label htmlFor="remember-me">Remember me</label>
+                </div>
+              )}
 
               {authError && <div className="error-box">{authError}</div>}
 

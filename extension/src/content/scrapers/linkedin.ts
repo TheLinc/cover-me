@@ -16,6 +16,8 @@ function isValidJobTitle(text: string): boolean {
     'put your best', 'job alert', 'about the', 'company photo',
     'more jobs', 'skip to', 'job poster', 'verified job',
     'hiring team', 'meet the', 'show all', 'follow',
+    'reposted', 'week ago', 'day ago', 'hour ago', 'month ago', 'just now',
+    'people clicked', 'clicked apply', 'applicants', 'promoted',
   ]
   return !reject.some(p => lower.includes(p))
 }
@@ -95,20 +97,48 @@ function extractTitleFromP(p: HTMLElement): string | undefined {
     if (cleaned.length >= 8 && isValidJobTitle(cleaned)) return cleaned
   }
 
+  // Case 4: title wrapped in a direct child <a> (LinkedIn search results detail pane
+  // renders the job title as <p><a href="/jobs/view/...">Title</a></p>)
+  for (const a of Array.from(p.querySelectorAll<HTMLAnchorElement>(':scope > a'))) {
+    const text = (firstTextNode(a) || a.innerText?.trim() || '')
+      .replace(/\s*\(verified job\)\s*/gi, '')
+      .trim()
+    if (text.length >= 4 && isValidJobTitle(text)) return text
+  }
+
   return undefined
 }
 
 // Find the job title. Strategy:
-//   1. [data-display-contents="true"] > p  — confirmed unique to the title element
-//      in LinkedIn's current layout (direct <p> child of the display-contents wrapper)
-//   2. Scan <p> elements near the company link as fallback
+//   1. Walk up from descEl and search for [data-display-contents="true"] > p within
+//      progressively larger containers — this keeps the search scoped to the detail
+//      panel and avoids picking up job-list card titles on the search results page,
+//      where document.querySelector would return the first card (wrong job).
+//   2. Scan <p> elements near the company link as fallback.
 function findTitleBeforeDescription(descEl: HTMLElement | null): string | undefined {
-  // Primary: direct-child <p> of a data-display-contents wrapper.
-  // Confirmed via DOM inspection to be unique to the job title element.
-  const directP = document.querySelector<HTMLElement>('[data-display-contents="true"] > p')
-  if (directP && !isUIChrome(directP)) {
-    const text = extractTitleFromP(directP)
-    if (text) return text
+  // Primary: scope to the container holding descEl so we never reach the job list.
+  if (descEl) {
+    let container: HTMLElement | null = descEl.parentElement
+    let depth = 0
+    while (container && container !== document.body && depth < 12) {
+      const candidates = Array.from(
+        container.querySelectorAll<HTMLElement>('[data-display-contents="true"] > p')
+      ).filter(p =>
+        !isUIChrome(p) &&
+        // p must precede descEl in the DOM (title is above description)
+        !!(p.compareDocumentPosition(descEl) & Node.DOCUMENT_POSITION_FOLLOWING)
+      )
+      if (candidates.length > 0) {
+        // The title is always the first element in the header — metadata like
+        // "Reposted 1 week ago" appears later and would be candidates[last].
+        for (const p of candidates) {
+          const text = extractTitleFromP(p)
+          if (text) return text
+        }
+      }
+      container = container.parentElement
+      depth++
+    }
   }
 
   // Fallback: scan <p> elements anchored near the company link, working

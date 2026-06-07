@@ -1,11 +1,6 @@
-import * as pdfjsLib from 'pdfjs-dist'
-import mammoth from 'mammoth'
-
-// Vite bundles the worker as a static asset and returns its extension URL.
-// If this import fails in your setup, copy node_modules/pdfjs-dist/build/pdf.worker.min.mjs
-// to the extension's public/ directory and reference it via chrome.runtime.getURL().
+// Worker URL is a static asset reference (just a string) — keeping it static is fine.
+// The heavy pdfjs-dist and mammoth libraries are loaded dynamically only when needed.
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl
 
 export async function parseResume(file: File): Promise<string> {
   const name = file.name.toLowerCase()
@@ -23,6 +18,9 @@ export async function parseResume(file: File): Promise<string> {
 }
 
 async function parsePdf(file: File): Promise<string> {
+  const pdfjsLib = await import('pdfjs-dist')
+  pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl
+
   const arrayBuffer = await file.arrayBuffer()
   const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise
   const pages: string[] = []
@@ -42,6 +40,7 @@ async function parsePdf(file: File): Promise<string> {
 }
 
 async function parseDocx(file: File): Promise<string> {
+  const { default: mammoth } = await import('mammoth')
   const arrayBuffer = await file.arrayBuffer()
   const { value } = await mammoth.extractRawText({ arrayBuffer })
   const result = value.trim()
