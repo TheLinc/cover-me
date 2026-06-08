@@ -2,9 +2,72 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 
+const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
+
 export const metadata: Metadata = {
   title: 'Support',
-  description: 'Get help with Cover Me — the AI cover letter generator Chrome extension.',
+  description: 'Get help with Cover Me. Find answers to common questions about the AI cover letter Chrome extension, API keys, daily limits, and resume storage.',
+  alternates: { canonical: `${BASE}/support` },
+  openGraph: {
+    title: 'Support — Cover Me',
+    description: 'Get help with Cover Me. Find answers to common questions about the AI cover letter Chrome extension, API keys, daily limits, and resume storage.',
+    url: `${BASE}/support`,
+    siteName: 'Cover Me',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Support — Cover Me',
+    description: 'Get help with Cover Me. Answers to common questions about the AI cover letter Chrome extension.',
+  },
+}
+
+const breadcrumbJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: BASE },
+    { '@type': 'ListItem', position: 2, name: 'Support', item: `${BASE}/support` },
+  ],
+}
+
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [
+    {
+      '@type': 'Question',
+      name: 'The extension isn\'t scraping the job description — what do I do?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Click the Cover Me icon, scroll down, and use "Paste job description manually" to paste the text directly. This works on any page.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'I hit my daily cover letter limit. When does it reset?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Free accounts get 10 cover letters per day. The limit resets at midnight UTC. Upgrade to Cover Me Pro for unlimited generations.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'My API key isn\'t working. How do I fix it?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Make sure you\'ve selected the correct provider (Claude or OpenAI) in Settings and that your key has available credits.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Where is my resume stored?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'BYOK users: your resume is stored locally on your device only and never sent to Cover Me servers. Hosted accounts: your resume is encrypted at rest in our database using AES-256-GCM — it is never shared or used for AI training.',
+      },
+    },
+  ],
 }
 
 const SUPPORT_EMAIL = 'support@cover-me.dev'
@@ -13,6 +76,8 @@ const GITHUB_ISSUES = 'https://github.com/TheLinc/cover-me/issues'
 export default function SupportPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
 
       {/* Nav */}
       <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-md">

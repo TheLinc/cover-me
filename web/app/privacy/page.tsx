@@ -2,9 +2,24 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 
+const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
+
 export const metadata: Metadata = {
-  title: 'Privacy Policy — Cover Me',
-  description: 'How Cover Me collects, uses, and protects your data.',
+  title: 'Privacy Policy',
+  description: 'How Cover Me collects, uses, and protects your data. Your resume is encrypted at rest, never shared, and never used for AI training.',
+  alternates: { canonical: `${BASE}/privacy` },
+  openGraph: {
+    title: 'Privacy Policy — Cover Me',
+    description: 'How Cover Me collects, uses, and protects your data. Your resume is encrypted at rest, never shared, and never used for AI training.',
+    url: `${BASE}/privacy`,
+    siteName: 'Cover Me',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Privacy Policy — Cover Me',
+    description: 'How Cover Me collects, uses, and protects your data. Your resume is encrypted at rest, never shared, and never used for AI training.',
+  },
 }
 
 const EFFECTIVE_DATE = 'June 4, 2026'
@@ -101,9 +116,19 @@ const TOC = [
 
 // ── Page ───────────────────────────────────────────────────────────────────
 
+const breadcrumbJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: BASE },
+    { '@type': 'ListItem', position: 2, name: 'Privacy Policy', item: `${BASE}/privacy` },
+  ],
+}
+
 export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-background">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
 
       {/* Nav */}
       <nav className="sticky top-0 z-20 bg-[rgba(13,17,23,0.92)] backdrop-blur-2xl border-b border-border">

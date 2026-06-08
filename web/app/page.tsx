@@ -281,9 +281,10 @@ function Hero() {
             that gets you <span className="hero-hired">hired.</span>
           </h1>
           <p className="text-[16px] leading-[1.7] text-muted-foreground max-w-[480px] mt-1.5">
-            Stop writing cover letters from scratch. Cover Me reads the job
-            posting, surfaces the keywords, and builds a tailored letter from
-            your resume — in under five seconds.
+            Stop writing job application letters from scratch. Cover Me reads
+            the posting, extracts the ATS keywords hiring managers look for,
+            and builds a personalised cover letter from your resume — in under
+            five seconds.
           </p>
           {/* Before → After stat */}
           <div className="flex items-center gap-3 mt-2">
@@ -491,7 +492,7 @@ function HowItWorks() {
             How it works
           </span>
           <h2 className="text-[clamp(30px,3.8vw,48px)] font-extrabold tracking-[-1.5px] leading-none text-foreground max-w-[600px]">
-            From job posting to tailored cover letter in 5 seconds.
+            How does Cover Me generate cover letters?
           </h2>
         </div>
         <div className="border-t border-border">
@@ -593,7 +594,7 @@ function Features() {
             Features
           </span>
           <h2 className="text-[clamp(30px,3.8vw,48px)] font-extrabold tracking-[-1.5px] leading-none text-foreground max-w-[600px]">
-            More applications. Each one specific. Zero extra hours.
+            What makes Cover Me different?
           </h2>
         </div>
         <div className="grid grid-cols-6 max-[1100px]:grid-cols-4 max-[900px]:grid-cols-2 max-[768px]:grid-cols-1 gap-px bg-border border border-border rounded-[10px] overflow-hidden">
@@ -862,6 +863,12 @@ function Footer() {
                 GitHub
               </a>
               <a
+                href="/about"
+                className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
+              >
+                About
+              </a>
+              <a
                 href="/privacy"
                 className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
               >
@@ -872,6 +879,12 @@ function Footer() {
                 className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
               >
                 Terms
+              </a>
+              <a
+                href="/support"
+                className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Support
               </a>
             </div>
             <div className="flex flex-col gap-2.5">
@@ -908,6 +921,72 @@ function Footer() {
   );
 }
 
+// ── FAQ ───────────────────────────────────────────────────────────────────────
+
+const FAQ_ITEMS = [
+  {
+    q: "Is Cover Me free to use?",
+    a: "Yes. Cover Me is free forever. In BYOK mode you use your own Claude or OpenAI API key — unlimited cover letter generations at your own API cost, with no account required. The hosted free tier gives you 10 AI-generated cover letters per day. Pro ($4/month) removes the daily limit and adds cross-device history sync.",
+  },
+  {
+    q: "What job boards does Cover Me support?",
+    a: "Cover Me auto-scrapes job descriptions on LinkedIn, Indeed, Greenhouse, Lever, Workday, and Ashby. For any other job board or ATS, you can paste the job description manually — it works on any page in seconds.",
+  },
+  {
+    q: "How is Cover Me different from using ChatGPT or Claude directly?",
+    a: "Cover Me is purpose-built for job applications. It automatically reads the job posting so you never paste anything manually. It maps the job requirements to your specific resume, surfaces the ATS keywords the role demands, and avoids the generic AI-sounding language that hiring managers immediately recognise. One click — done in five seconds.",
+  },
+  {
+    q: "Is my resume data private?",
+    a: "Yes. In BYOK mode, your resume lives entirely on your device — nothing is ever sent to Cover Me servers. In hosted mode, your resume is encrypted with AES-256-GCM before being stored. Cover Me has no ads, no telemetry, and does not use your resume for AI training.",
+  },
+  {
+    q: "Do I need an account to use Cover Me?",
+    a: "No account is needed for BYOK mode — install the extension, add your resume and API key, and start generating immediately. You only need an account for the hosted free tier (10 letters/day) or Pro ($4/month).",
+  },
+];
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: FAQ_ITEMS.map(({ q, a }) => ({
+    "@type": "Question",
+    name: q,
+    acceptedAnswer: { "@type": "Answer", text: a },
+  })),
+};
+
+function FAQ() {
+  return (
+    <section className="py-[120px] max-[768px]:py-20">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
+      <div className="container">
+        <div className="flex flex-col gap-2.5 mb-[52px]">
+          <span className="text-[10px] font-bold tracking-[0.12em] uppercase text-brand">
+            FAQ
+          </span>
+          <h2 className="text-[clamp(30px,3.8vw,48px)] font-extrabold tracking-[-1.5px] leading-none text-foreground max-w-[600px]">
+            Common questions
+          </h2>
+        </div>
+        <div className="max-w-[720px] divide-y divide-border border-t border-border">
+          {FAQ_ITEMS.map(({ q, a }) => (
+            <div key={q} className="py-8">
+              <h3 className="text-[17px] font-bold text-foreground tracking-[-0.3px] mb-3 leading-[1.3]">
+                {q}
+              </h3>
+              <p className="text-[14px] text-muted-foreground leading-[1.8]">{a}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function Home() {
@@ -925,6 +1004,8 @@ export default function Home() {
         <OpenSource />
         <div className="h-px bg-border" />
         <Pricing />
+        <div className="h-px bg-border" />
+        <FAQ />
       </main>
       <Footer />
     </>

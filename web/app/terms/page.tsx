@@ -2,9 +2,24 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 
+const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
+
 export const metadata: Metadata = {
-  title: 'Terms of Service — Cover Me',
-  description: 'Terms governing your use of the Cover Me extension and web dashboard.',
+  title: 'Terms of Service',
+  description: 'Terms governing your use of the Cover Me Chrome extension and web dashboard. MIT-licensed, open source, governed by Ontario law.',
+  alternates: { canonical: `${BASE}/terms` },
+  openGraph: {
+    title: 'Terms of Service — Cover Me',
+    description: 'Terms governing your use of the Cover Me Chrome extension and web dashboard.',
+    url: `${BASE}/terms`,
+    siteName: 'Cover Me',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Terms of Service — Cover Me',
+    description: 'Terms governing your use of the Cover Me Chrome extension and web dashboard.',
+  },
 }
 
 const EFFECTIVE_DATE = 'June 4, 2026'
@@ -57,9 +72,19 @@ const TOC = [
   { id: 'contact',      label: 'Contact' },
 ]
 
+const breadcrumbJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: BASE },
+    { '@type': 'ListItem', position: 2, name: 'Terms of Service', item: `${BASE}/terms` },
+  ],
+}
+
 export default function TermsPage() {
   return (
     <div className="min-h-screen bg-background">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
 
       {/* Nav */}
       <nav className="sticky top-0 z-20 bg-[rgba(13,17,23,0.92)] backdrop-blur-2xl border-b border-border">

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 
-const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://cover-me.dev'
+const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE),
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
   },
 }
 
-const jsonLd = {
+const jsonLdApp = {
   '@context': 'https://schema.org',
   '@type': 'SoftwareApplication',
   name: 'Cover Me',
@@ -81,14 +81,66 @@ const jsonLd = {
   license: 'https://opensource.org/licenses/MIT',
 }
 
+const jsonLdOrg = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'Cover Me',
+  url: BASE,
+  logo: `${BASE}/logo.png`,
+  sameAs: [
+    'https://github.com/TheLinc/cover-me',
+  ],
+  contactPoint: {
+    '@type': 'ContactPoint',
+    email: 'support@cover-me.dev',
+    contactType: 'customer support',
+  },
+}
+
+const jsonLdWebSite = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'Cover Me',
+  url: BASE,
+  description: 'Free AI cover letter generator Chrome extension. One click on any job posting — tailored, ATS-friendly cover letter from your resume in under 5 seconds.',
+}
+
+const jsonLdHowTo = {
+  '@context': 'https://schema.org',
+  '@type': 'HowTo',
+  name: 'How to generate a cover letter with Cover Me',
+  description: 'Generate a tailored, ATS-friendly cover letter from any job posting in under 5 seconds using the Cover Me Chrome extension.',
+  totalTime: 'PT1M',
+  step: [
+    {
+      '@type': 'HowToStep',
+      name: 'Install and configure',
+      text: 'Install Cover Me from the Chrome Web Store. Upload your resume (PDF or DOCX) — text is extracted locally. Choose BYOK with your own Claude or OpenAI key for unlimited free use, or sign up for 10 free hosted letters per day.',
+      position: 1,
+    },
+    {
+      '@type': 'HowToStep',
+      name: 'Open a job posting',
+      text: 'Navigate to any job on LinkedIn, Indeed, Greenhouse, Lever, Workday, or Ashby. Cover Me reads the page automatically. If the scraper does not catch it, paste the description manually.',
+      position: 2,
+    },
+    {
+      '@type': 'HowToStep',
+      name: 'Generate, edit, and apply',
+      text: 'Click Generate. Cover Me maps the job requirements to your achievements and produces a tailored letter in under 5 seconds. Edit inline, copy to clipboard, or export as PDF.',
+      position: 3,
+    },
+  ],
+}
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <head>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdApp) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdOrg) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdWebSite) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdHowTo) }} />
       </head>
       <body>{children}</body>
     </html>

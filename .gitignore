@@ -44,3 +44,10 @@ backend/supabase/.temp/
 claude/
 *.mcp.json
 CLAUDE.md
+
+# Documentation
+*.docx
+*.pdf
+
+#packages
+*.zip
