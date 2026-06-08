@@ -48,6 +48,7 @@ CLAUDE.md
 # Documentation
 *.docx
 *.pdf
+*.txt
 
 #packages
 *.zip
