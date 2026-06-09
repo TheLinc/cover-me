@@ -1,6 +1,6 @@
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL, WEB_URL } from './config'
 import { clearSession, getSession, saveSession } from './storage'
-import type { AuthSession, JobData } from '../types'
+import type { AuthSession, CoverLetter, JobData } from '../types'
 
 function authHeaders(token?: string): HeadersInit {
   const h: HeadersInit = {
@@ -138,6 +138,38 @@ export async function uploadResumeToBackend(
   if (!res.ok) {
     const data = await res.json().catch(() => ({})) as Record<string, unknown>
     throw new Error((data.error as string) ?? 'Resume sync failed')
+  }
+}
+
+export async function saveLetterToBackend(accessToken: string, entry: CoverLetter): Promise<void> {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/letters`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(entry),
+  })
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({})) as Record<string, unknown>
+    throw new Error((data.error as string) ?? 'Failed to save letter')
+  }
+}
+
+export async function fetchLettersFromBackend(accessToken: string): Promise<CoverLetter[]> {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/letters`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+  if (!res.ok) throw new Error('Failed to fetch letters')
+  const data = await res.json() as { letters: CoverLetter[] }
+  return data.letters ?? []
+}
+
+export async function deleteLetterFromBackend(accessToken: string, id: string): Promise<void> {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/letters?id=${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({})) as Record<string, unknown>
+    throw new Error((data.error as string) ?? 'Failed to delete letter')
   }
 }
 

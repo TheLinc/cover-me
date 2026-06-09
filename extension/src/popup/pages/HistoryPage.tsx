@@ -1,15 +1,45 @@
 import { useEffect, useState } from 'react'
+import { deleteLetterFromBackend, ensureValidSession, fetchLettersFromBackend } from '../../lib/auth'
 import { downloadCoverLetterPdf } from '../../lib/pdf'
-import { deleteFromHistory, getHistory } from '../../lib/storage'
+import { deleteFromHistory, getCachedTier, getHistory, getSettings, saveHistory } from '../../lib/storage'
 import type { CoverLetter } from '../../types'
 
 export default function HistoryPage() {
   const [history, setHistory] = useState<CoverLetter[]>([])
   const [expanded, setExpanded] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
+  const [syncing, setSyncing] = useState(false)
 
   useEffect(() => {
-    getHistory().then(setHistory)
+    let cancelled = false
+
+    async function load() {
+      const local = await getHistory()
+      if (!cancelled) setHistory(local)
+
+      const [settings, tier, session] = await Promise.all([
+        getSettings(),
+        getCachedTier(),
+        ensureValidSession(),
+      ])
+
+      if (settings?.mode !== 'hosted' || tier !== 'hosted_pro' || !session) return
+
+      setSyncing(true)
+      try {
+        const remote = await fetchLettersFromBackend(session.access_token)
+        if (cancelled) return
+        await saveHistory(remote)
+        setHistory(remote)
+      } catch {
+        // Backend unreachable — keep showing local history
+      } finally {
+        if (!cancelled) setSyncing(false)
+      }
+    }
+
+    load()
+    return () => { cancelled = true }
   }, [])
 
   async function copy(item: CoverLetter) {
@@ -22,6 +52,15 @@ export default function HistoryPage() {
     await deleteFromHistory(id)
     setHistory((h) => h.filter((l) => l.id !== id))
     if (expanded === id) setExpanded(null)
+
+    const [settings, tier, session] = await Promise.all([
+      getSettings(),
+      getCachedTier(),
+      ensureValidSession(),
+    ])
+    if (settings?.mode === 'hosted' && tier === 'hosted_pro' && session) {
+      deleteLetterFromBackend(session.access_token, id).catch(() => {})
+    }
   }
 
   function formatDate(iso: string) {
@@ -38,9 +77,11 @@ export default function HistoryPage() {
       <div className="page-header">
         <h1 className="page-title">History</h1>
         <p className="page-subtitle">
-          {history.length === 0
-            ? 'No letters yet'
-            : `${history.length} letter${history.length !== 1 ? 's' : ''} generated`}
+          {syncing
+            ? 'Syncing…'
+            : history.length === 0
+              ? 'No letters yet'
+              : `${history.length} letter${history.length !== 1 ? 's' : ''} generated`}
         </p>
       </div>
 

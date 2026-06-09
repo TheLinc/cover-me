@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ensureValidSession, fetchTier, signIn, signOut, signUp, uploadResumeToBackend } from '../../lib/auth'
 import { decryptApiKey, encryptApiKey } from '../../lib/crypto'
-import { clearSavedLogin, clearSession, getSavedLogin, getResume, getSettings, saveSession, saveSettings, setSavedLogin } from '../../lib/storage'
+import { clearSavedLogin, clearSession, getSavedLogin, getResume, getSettings, saveCachedTier, saveSession, saveSettings, setSavedLogin } from '../../lib/storage'
 import type { AIProvider, AppMode, AuthSession } from '../../types'
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
@@ -43,6 +43,7 @@ export default function SettingsPage() {
       if (sess) {
         const t = await fetchTier(sess.user.id, sess.access_token)
         setTier(t)
+        await saveCachedTier(t)
       }
     })
   }, [])
@@ -120,7 +121,10 @@ export default function SettingsPage() {
       setSession(sess)
       setEmail('')
       setPassword('')
-      fetchTier(sess.user.id, sess.access_token).then(setTier)
+      fetchTier(sess.user.id, sess.access_token).then(async (t) => {
+        setTier(t)
+        await saveCachedTier(t)
+      })
 
       // Sync any existing local resume to the backend so the user doesn't have to re-upload
       const localResume = await getResume()

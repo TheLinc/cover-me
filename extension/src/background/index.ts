@@ -1,7 +1,7 @@
-import { ensureValidSession, generateViaBackend, RateLimitError } from '../lib/auth'
+import { ensureValidSession, generateViaBackend, RateLimitError, saveLetterToBackend } from '../lib/auth'
 import { generateCoverLetter } from '../lib/ai'
 import { decryptApiKey } from '../lib/crypto'
-import { addToHistory, getResume, getSettings } from '../lib/storage'
+import { addToHistory, getCachedTier, getResume, getSettings } from '../lib/storage'
 import type { CoverLetter, GenerateResponse, JobData, ScrapeResponse } from '../types'
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
@@ -61,6 +61,10 @@ async function generateFromJob(job: JobData): Promise<GenerateResponse> {
         createdAt: new Date().toISOString(),
       }
       await addToHistory(entry)
+      const tier = await getCachedTier()
+      if (tier === 'hosted_pro') {
+        saveLetterToBackend(session.access_token, entry).catch(() => {})
+      }
       return { success: true, letter, job }
     }
 

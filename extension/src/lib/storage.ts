@@ -31,6 +31,10 @@ export async function addToHistory(letter: CoverLetter): Promise<void> {
   await chrome.storage.local.set({ history: history.slice(0, HISTORY_LIMIT) })
 }
 
+export async function saveHistory(letters: CoverLetter[]): Promise<void> {
+  await chrome.storage.local.set({ history: letters.slice(0, HISTORY_LIMIT) })
+}
+
 export async function deleteFromHistory(id: string): Promise<void> {
   const history = await getHistory()
   await chrome.storage.local.set({ history: history.filter((l) => l.id !== id) })
@@ -65,4 +69,13 @@ export async function setSavedLogin(login: SavedLogin): Promise<void> {
 
 export async function clearSavedLogin(): Promise<void> {
   await chrome.storage.local.remove('savedLogin')
+}
+
+export async function getCachedTier(): Promise<string | null> {
+  const { cachedTier } = await chrome.storage.local.get('cachedTier')
+  return (cachedTier as string) ?? null
+}
+
+export async function saveCachedTier(tier: string): Promise<void> {
+  await chrome.storage.local.set({ cachedTier: tier })
 }
