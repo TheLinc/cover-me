@@ -2,24 +2,29 @@ import { useEffect, useRef, useState } from 'react'
 import { uploadResumeToBackend } from '../../lib/auth'
 import { parseResume } from '../../lib/resume-parser'
 import { getResume, getSession, getSettings, saveResume } from '../../lib/storage'
-import type { ResumeData } from '../../types'
+import type { ParsedResume, ResumeData } from '../../types'
 
 type Status = 'idle' | 'parsing' | 'saved' | 'error'
 
 export default function ResumePage() {
   const [resume, setResume] = useState<ResumeData | null>(null)
+  const [parsed, setParsed] = useState<ParsedResume | null>(null)
   const [status, setStatus] = useState<Status>('idle')
   const [error, setError] = useState('')
   const [dragOver, setDragOver] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    getResume().then(setResume)
+    getResume().then((r) => {
+      setResume(r)
+      if (r?.parsed) setParsed(r.parsed)
+    })
   }, [])
 
   async function handleFile(file: File) {
     setStatus('parsing')
     setError('')
+    setParsed(null) // clear stale parse on new upload
     try {
       const text = await parseResume(file)
       const data: ResumeData = { text, filename: file.name, updatedAt: new Date().toISOString() }
@@ -54,6 +59,16 @@ export default function ResumePage() {
     if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
     if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
     return new Date(iso).toLocaleDateString()
+  }
+
+  function parsedSummary(p: ParsedResume): string {
+    return [
+      `${p.experience.length} experience ${p.experience.length === 1 ? 'entry' : 'entries'}`,
+      p.projects?.length ? `${p.projects.length} ${p.projects.length === 1 ? 'project' : 'projects'}` : null,
+      `${p.education.length} ${p.education.length === 1 ? 'education entry' : 'education entries'}`,
+      p.skills ? 'skills' : null,
+      p.certifications?.length ? `${p.certifications.length} cert${p.certifications.length === 1 ? '' : 's'}` : null,
+    ].filter(Boolean).join(' · ')
   }
 
   return (
@@ -116,6 +131,9 @@ export default function ResumePage() {
               <div className="resume-meta">
                 Updated {formatAge(resume.updatedAt)} · ~{Math.round(resume.text.length / 5)} words
               </div>
+              {parsed && (
+                <div className="resume-sections">{parsedSummary(parsed)}</div>
+              )}
             </div>
             {status === 'saved' && (
               <span className="success-badge">

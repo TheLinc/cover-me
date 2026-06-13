@@ -1,6 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { handleCors, json } from '../_shared/cors.ts'
 import { decrypt, encrypt } from '../_shared/encrypt.ts'
+import { findOrCreateJobApplication } from '../_shared/job-application.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SECRET_KEY = Deno.env.get('SERVICE_KEY')!
@@ -29,14 +30,14 @@ Deno.serve(async (req) => {
     return json({ error: 'History sync requires a Pro subscription.' }, 403)
   }
 
-  const url = new URL(req.url)
-  const letterId = url.searchParams.get('id')
+  const searchParams = new URL(req.url).searchParams
+  const letterId = searchParams.get('id')
 
-  // GET — fetch history
+  // GET — fetch history joined with job_applications
   if (req.method === 'GET') {
     const { data: rows, error } = await supabase
       .from('cover_letters')
-      .select('id, company, role, letter_encrypted, created_at')
+      .select('id, letter_encrypted, created_at, job_applications(title, company, url)')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(50)
@@ -47,9 +48,10 @@ Deno.serve(async (req) => {
     for (const row of rows ?? []) {
       try {
         const letter = await decrypt(row.letter_encrypted)
+        const ja = row.job_applications as { title: string | null; company: string | null; url: string | null } | null
         letters.push({
           id: row.id,
-          job: { title: row.role ?? '', company: row.company ?? '', description: '', url: '' },
+          job: { title: ja?.title ?? '', company: ja?.company ?? '', description: '', url: ja?.url ?? '' },
           letter,
           createdAt: row.created_at,
         })
@@ -61,9 +63,14 @@ Deno.serve(async (req) => {
     return json({ letters })
   }
 
-  // POST — save letter
+  // POST — save letter, find or create the job_application it belongs to
   if (req.method === 'POST') {
-    let body: { id: string; job: { title: string; company: string }; letter: string; createdAt: string }
+    let body: {
+      id: string
+      job: { title?: string; company?: string; url?: string }
+      letter: string
+      createdAt: string
+    }
     try {
       body = await req.json()
     } catch {
@@ -72,13 +79,19 @@ Deno.serve(async (req) => {
 
     if (!body?.id || !body?.letter) return json({ error: 'Missing required fields' }, 400)
 
+    let jobApplicationId: string
+    try {
+      jobApplicationId = await findOrCreateJobApplication(supabase, userId, body.job ?? {})
+    } catch {
+      return json({ error: 'Failed to resolve job application' }, 500)
+    }
+
     const letter_encrypted = await encrypt(body.letter)
 
     const { error } = await supabase.from('cover_letters').upsert({
       id: body.id,
       user_id: userId,
-      company: body.job?.company ?? null,
-      role: body.job?.title ?? null,
+      job_application_id: jobApplicationId,
       letter_encrypted,
       created_at: body.createdAt,
     })
@@ -87,7 +100,7 @@ Deno.serve(async (req) => {
     return json({ success: true })
   }
 
-  // DELETE — remove letter by id query param
+  // DELETE — remove letter by id
   if (req.method === 'DELETE') {
     if (!letterId) return json({ error: 'Missing id' }, 400)
 

@@ -1,10 +1,16 @@
-import { ensureValidSession, generateViaBackend, RateLimitError, saveLetterToBackend } from '../lib/auth'
+import { ensureValidSession, generateViaBackend, RateLimitError, saveLetterToBackend, tailorViaBackend } from '../lib/auth'
 import { generateCoverLetter } from '../lib/ai'
+import { parseResumeStructure } from '../lib/ai/resume-parse'
+import { tailorResume } from '../lib/ai/resume-tailor'
 import { decryptApiKey } from '../lib/crypto'
-import { addToHistory, getCachedTier, getResume, getSettings } from '../lib/storage'
-import type { CoverLetter, GenerateResponse, JobData, ScrapeResponse } from '../types'
+import { addToHistory, getCachedTier, getResume, getSettings, saveParsedResume } from '../lib/storage'
+import type { CoverLetter, GenerateResponse, JobData, ScrapeResponse, TailorResponse } from '../types'
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (message.type === 'SCRAPE_TAB') {
+    handleScrapeTab().then(sendResponse)
+    return true
+  }
   if (message.type === 'GENERATE_FROM_TAB') {
     handleGenerate().then(sendResponse)
     return true
@@ -13,31 +19,213 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     handleGenerateManual(message.job as JobData).then(sendResponse)
     return true
   }
+  if (message.type === 'TAILOR_FROM_TAB') {
+    handleTailorFromTab(!!message.compact).then(sendResponse)
+    return true
+  }
+  if (message.type === 'TAILOR_FROM_MANUAL') {
+    handleTailorFromManual(message.job as JobData, !!message.compact, message.supplemental as string | undefined, !!message.trim, message.includeSummary !== false).then(sendResponse)
+    return true
+  }
 })
+
+// Scrape the active tab. Tries the content script first; falls back to a
+// self-contained inline scraper injected via chrome.scripting.executeScript
+// so the user doesn't need to refresh after installing or reloading the extension.
+async function scrapeTab(tabId: number): Promise<JobData> {
+  // --- Primary path: content script message ---
+  try {
+    const scrape = (await chrome.tabs.sendMessage(tabId, { type: 'SCRAPE_JOB' })) as ScrapeResponse
+    if (scrape.success) return scrape.job
+    throw new Error(scrape.error)
+  } catch (primaryErr) {
+    // Content script not responding — fall through to inline injection.
+    // Rethrow immediately if it IS responding but reported a scrape failure
+    // (i.e. the error came from the scraper, not from sendMessage itself).
+    if (primaryErr instanceof Error && !isConnectionError(primaryErr)) {
+      throw primaryErr
+    }
+  }
+
+  // --- Fallback: inject a self-contained scraper into the page ---
+  type InlineResult = { title: string; company: string; description: string; url: string }
+  let result: InlineResult | null = null
+  try {
+    const injections = await chrome.scripting.executeScript({
+      target: { tabId },
+      func: inlineScraper,
+    })
+    const r = injections[0]?.result
+    if (r && typeof r === 'object' && 'title' in r && 'description' in r) {
+      result = r as InlineResult
+    }
+  } catch {
+    // scripting API unavailable or page is restricted (e.g. chrome:// URLs)
+  }
+
+  if (result && result.description.length > 200) {
+    return { title: result.title, company: result.company, description: result.description, url: result.url }
+  }
+
+  throw new Error(
+    'Could not read this page. Try refreshing, or paste the job description manually.',
+  )
+}
+
+// Returns true when the error is a Chrome messaging/connection error rather than
+// a deliberate failure thrown by our own scraper code.
+function isConnectionError(err: Error): boolean {
+  const msg = err.message.toLowerCase()
+  return msg.includes('could not establish connection') ||
+    msg.includes('receiving end does not exist') ||
+    msg.includes('no tab with id')
+}
+
+// Self-contained scraper injected via chrome.scripting.executeScript.
+// MUST NOT reference any outer-scope variables — this function is serialised
+// via .toString() and evaluated in the page's isolated world.
+function inlineScraper(): { title: string; company: string; description: string; url: string } | null {
+  const url = location.href
+
+  // 1. JSON-LD structured data
+  const ldScripts = document.querySelectorAll<HTMLScriptElement>('script[type="application/ld+json"]')
+  for (const s of ldScripts) {
+    try {
+      const d = JSON.parse(s.textContent ?? '') as Record<string, unknown>
+      if (d['@type'] === 'JobPosting') {
+        const title = String(d.title ?? d.name ?? '')
+        const org = d.hiringOrganization as Record<string, unknown> | string | undefined
+        const company = typeof org === 'object' ? String(org?.name ?? 'Unknown') : String(org ?? 'Unknown')
+        const desc = String(d.description ?? '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+        if (title && desc.length > 100) return { title, company, description: desc, url }
+      }
+    } catch { /* malformed */ }
+  }
+
+  // 2. BambooHR specific — Fabric design system uses stable data attributes and BambooRichText class
+  if (location.hostname.includes('bamboohr.com')) {
+    const titleEl = document.querySelector<HTMLElement>('[data-fabric-component="Headline"]')
+    const descEl = document.querySelector<HTMLElement>('.BambooRichText')
+    const title = titleEl?.innerText?.trim() ?? ''
+    const description = descEl?.innerText?.trim() ?? ''
+    const sub = location.hostname.split('.')[0]
+    const company = sub
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .split(/[-_]/)
+      .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(' ')
+    if (title && description.length > 200) return { title, company, description, url }
+  }
+
+  // 3. Common ATS selectors (Greenhouse, Ashby, Lever, Workable, etc.)
+  const atsTitleEl = document.querySelector<HTMLElement>(
+    '[data-qa="job-title"], .job-title, [class*="posting-title"], h1[class*="title"], h1',
+  )
+  const atsDescEl = document.querySelector<HTMLElement>(
+    '[data-qa="job-description"], .posting-description, [class*="job-description"], #content',
+  )
+  const atsTitle = atsTitleEl?.innerText?.trim() ?? ''
+  const atsDesc = atsDescEl?.innerText?.trim() ?? ''
+  if (atsTitle && atsDesc.length > 200) {
+    return { title: atsTitle, company: 'Unknown Company', description: atsDesc, url }
+  }
+
+  // 4. Heuristic: largest text block + first h1
+  const h1 = Array.from(document.querySelectorAll<HTMLElement>('h1, h2'))
+    .find((el) => { const t = el.innerText?.trim(); return t && t.length > 2 && t.length < 120 })
+  const blocks = Array.from(document.querySelectorAll<HTMLElement>('div, section, article'))
+    .filter((el) => (el.innerText?.trim().length ?? 0) > 500)
+    .sort((a, b) => (b.innerText?.length ?? 0) - (a.innerText?.length ?? 0))
+  const hTitle = h1?.innerText?.trim() ?? ''
+  const hDesc = blocks[0]?.innerText?.trim() ?? ''
+  if (hTitle && hDesc.length > 200) return { title: hTitle, company: 'Unknown Company', description: hDesc, url }
+
+  return null
+}
+
+async function handleScrapeTab(): Promise<ScrapeResponse> {
+  const tabs = await chrome.tabs.query({ active: true, currentWindow: true })
+  const tab = tabs[0]
+  if (!tab?.id) return { success: false, error: 'Could not access the current tab.' }
+  try {
+    const job = await scrapeTab(tab.id)
+    return { success: true, job }
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : 'Could not read this page.' }
+  }
+}
 
 async function handleGenerate(): Promise<GenerateResponse> {
   const tabs = await chrome.tabs.query({ active: true, currentWindow: true })
   const tab = tabs[0]
   if (!tab?.id) return { success: false, error: 'Could not access the current tab.' }
-
-  let job: JobData
   try {
-    const scrape = (await chrome.tabs.sendMessage(tab.id, { type: 'SCRAPE_JOB' })) as ScrapeResponse
-    if (!scrape.success) return { success: false, error: scrape.error }
-    job = scrape.job
+    return generateFromJob(await scrapeTab(tab.id))
   } catch (err) {
-    console.error('[cover-me] sendMessage failed:', err)
-    return {
-      success: false,
-      error: 'Could not read this page. Try refreshing, or paste the job description manually.',
-    }
+    return { success: false, error: err instanceof Error ? err.message : 'Could not read this page.' }
   }
-
-  return generateFromJob(job)
 }
 
 async function handleGenerateManual(job: JobData): Promise<GenerateResponse> {
   return generateFromJob(job)
+}
+
+async function handleTailorFromTab(compact: boolean): Promise<TailorResponse> {
+  const tabs = await chrome.tabs.query({ active: true, currentWindow: true })
+  const tab = tabs[0]
+  if (!tab?.id) return { success: false, error: 'Could not access the current tab.' }
+  try {
+    return tailorFromJob(await scrapeTab(tab.id), compact)
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : 'Could not read this page.' }
+  }
+}
+
+async function handleTailorFromManual(job: JobData, compact: boolean, supplemental?: string, trim = false, includeSummary = true): Promise<TailorResponse> {
+  return tailorFromJob(job, compact, supplemental, trim, includeSummary)
+}
+
+async function tailorFromJob(job: JobData, compact: boolean, supplemental?: string, trim = false, includeSummary = true): Promise<TailorResponse> {
+  try {
+    const settings = await getSettings()
+
+    if (settings?.mode === 'hosted') {
+      const session = await ensureValidSession()
+      if (!session) {
+        return { success: false, error: 'Session expired. Please sign in again in Settings.' }
+      }
+      const resume = await tailorViaBackend(job, session.access_token, compact, supplemental, trim, includeSummary)
+      return { success: true, resume, job }
+    }
+
+    if (!settings?.apiKey) {
+      return { success: false, error: 'No API key set. Open Settings to add your key.' }
+    }
+    const resumeData = await getResume()
+    if (!resumeData?.text) {
+      return { success: false, error: 'No resume uploaded. Open Resume to upload yours.' }
+    }
+    const apiKey = await decryptApiKey(settings.apiKey)
+
+    // Lazy parse: run once on first tailor, cache result for all subsequent tailors.
+    // Re-run automatically when resume is replaced (saveResume clears the parsed field).
+    let parsed = resumeData.parsed
+    if (!parsed) {
+      parsed = await parseResumeStructure(resumeData.text, settings.provider, apiKey)
+      await saveParsedResume(parsed)
+    }
+
+    const tailored = await tailorResume(job, parsed, settings.provider, apiKey, compact, supplemental, trim, includeSummary)
+    return { success: true, resume: tailored, job }
+  } catch (err) {
+    if (err instanceof RateLimitError) {
+      return { success: false, error: err.message, errorCode: 'RATE_LIMIT' }
+    }
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : 'Resume tailoring failed. Please try again.',
+    }
+  }
 }
 
 async function generateFromJob(job: JobData): Promise<GenerateResponse> {

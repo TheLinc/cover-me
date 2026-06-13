@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Cover Me – AI Cover Letter",
+  "name": "Cover Me – AI Cover Letter & Resume",
   "version": "1.0.0",
-  "description": "AI cover letter generator — tailored letters from any job posting in 5 seconds. Free Chrome extension.",
+  "description": "AI cover letter writer & resume tailor — personalized job applications from any posting in seconds.",
   "icons": {
     "16": "src/public/icon/16.png",
     "32": "src/public/icon/32.png",
@@ -30,7 +30,7 @@
       "run_at": "document_idle"
     }
   ],
-  "permissions": ["storage", "activeTab"],
+  "permissions": ["storage", "activeTab", "scripting"],
   "host_permissions": [
     "https://api.anthropic.com/*",
     "https://api.openai.com/*",

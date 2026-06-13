@@ -193,6 +193,40 @@ html, body {
 
 .loading-text { font-size: 12px; color: var(--text-2); max-width: 200px; text-align: center; }
 
+.loading-job-preview {
+  margin-top: 2px;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  text-align: left;
+  width: 100%;
+  max-width: 300px;
+}
+.loading-job-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.loading-job-org {
+  font-size: 10px;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+.loading-job-snippet {
+  font-size: 10px;
+  color: var(--text-2);
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .error-box {
   background: var(--error-dim);
   border: 1px solid rgba(248, 113, 113, 0.18);
@@ -303,6 +337,63 @@ html, body {
   width: 100%;
 }
 .manual-toggle:hover { color: var(--text-2); }
+
+.compact-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-2);
+  cursor: pointer;
+  margin-top: 6px;
+  user-select: none;
+}
+.compact-toggle input[type="checkbox"] {
+  accent-color: var(--accent);
+  cursor: pointer;
+  width: 13px;
+  height: 13px;
+}
+.tooltip-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--border);
+  color: var(--text-2);
+  font-size: 9px;
+  font-weight: 700;
+  cursor: default;
+  flex-shrink: 0;
+  position: relative;
+}
+.tooltip-icon::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #e2e8f0;
+  color: #1e293b;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.45;
+  padding: 8px 10px;
+  border-radius: 6px;
+  width: 210px;
+  white-space: normal;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 100;
+  text-align: left;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+.tooltip-icon:hover::after {
+  opacity: 1;
+}
 
 /* ── Onboarding checklist ─────────────────────── */
 
@@ -433,6 +524,7 @@ html, body {
   text-overflow: ellipsis;
 }
 .resume-meta { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+.resume-sections { font-size: 10px; color: var(--accent); margin-top: 4px; letter-spacing: 0.1px; }
 
 .success-badge {
   display: inline-flex;
@@ -522,29 +614,150 @@ html, body {
 }
 .input-eye-btn:hover { color: var(--text-2); }
 
-/* ── History page ─────────────────────────────── */
+/* ── ATS Score result ─────────────────────────── */
 
-.history-list { display: flex; flex-direction: column; gap: 8px; }
+.tailor-result-job {
+  margin-bottom: 10px;
+}
+.tailor-result-role { font-size: 13px; font-weight: 600; color: var(--text); }
+.tailor-result-company { font-size: 11px; color: var(--text-2); margin-top: 1px; }
 
-.history-item {
+.ats-result {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--r);
-  padding: 12px 13px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
 }
 
-.history-item-header {
+.ats-score-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  margin-bottom: 10px;
 }
 
-.history-item-title { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.3; }
-.history-item-company { font-size: 11px; color: var(--text-2); margin-top: 2px; }
-.history-item-date { font-size: 11px; color: var(--text-3); white-space: nowrap; margin-top: 2px; }
+.ats-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
 
-.history-item-actions { display: flex; gap: 6px; margin-top: 10px; }
+.ats-badge {
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.5px;
+}
+.ats-denom { font-size: 13px; font-weight: 500; opacity: 0.55; }
+
+.ats-badge-green { color: var(--success); }
+.ats-badge-amber { color: #f59e0b; }
+.ats-badge-red   { color: var(--error); }
+
+.ats-gaps {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.ats-gap {
+  font-size: 11px;
+  color: var(--text-2);
+  padding: 4px 9px;
+  background: var(--error-dim);
+  border-left: 2px solid rgba(248, 113, 113, 0.45);
+  border-radius: 3px;
+}
+
+.ats-strong {
+  font-size: 11px;
+  color: var(--success);
+  opacity: 0.85;
+}
+
+.supplemental-section { margin-bottom: 10px; }
+.supplemental-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-2);
+  margin-bottom: 5px;
+}
+.supplemental-input {
+  height: 62px;
+  resize: none;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+/* ── History / Applications page ──────────────── */
+
+.history-list { display: flex; flex-direction: column; gap: 8px; }
+
+/* Job card — top-level entry grouping all artifacts for one posting */
+.job-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+
+.job-card-header { padding: 12px 13px; }
+
+.job-card-title { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.3; }
+.job-card-company { font-size: 11px; color: var(--text-2); margin-top: 2px; }
+
+.history-item-url {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 4px;
+  font-size: 10px;
+  color: var(--accent);
+  text-decoration: none;
+  opacity: 0.8;
+  transition: opacity 0.15s;
+}
+.history-item-url:hover { opacity: 1; text-decoration: underline; }
+
+.job-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+.job-card-counts { font-size: 11px; color: var(--text-3); }
+.job-card-date { font-size: 11px; color: var(--text-3); white-space: nowrap; }
+
+.job-card-actions { display: flex; gap: 6px; margin-top: 10px; }
+
+/* Expanded artifact section */
+.job-card-body {
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.artifact {
+  padding: 10px 13px;
+  border-bottom: 1px solid var(--border);
+}
+.artifact:last-child { border-bottom: none; }
+
+.artifact-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.artifact-label { font-size: 11px; font-weight: 600; color: var(--text-2); }
+.artifact-date { font-size: 10px; color: var(--text-3); }
+
+.artifact-actions { display: flex; gap: 6px; }
 
 .history-empty {
   text-align: center;

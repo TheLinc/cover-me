@@ -1,4 +1,5 @@
 import type { JobData } from '../../types'
+import { scrapeBambooHR } from './bamboohr'
 import { scrapeGeneric } from './generic'
 import { scrapeIndeed } from './indeed'
 import { scrapeLever } from './lever'
@@ -13,6 +14,7 @@ export function scrapeJobPage(): JobData {
   if (hostname.includes('indeed.com')) return scrapeIndeed()
   if (hostname.includes('lever.co')) return scrapeLever()
   if (hostname.includes('myworkdayjobs.com')) return scrapeWorkday()
+  if (hostname.includes('bamboohr.com')) return scrapeBambooHR()
   if (hostname.includes('terminal.io')) return scrapeTerminal()
   return scrapeGeneric()
 }

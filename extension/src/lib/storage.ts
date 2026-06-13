@@ -1,4 +1,4 @@
-import type { AuthSession, CoverLetter, ResumeData, Settings } from '../types'
+import type { AuthSession, CoverLetter, ParsedResume, ResumeData, Settings } from '../types'
 
 const HISTORY_LIMIT = 50
 
@@ -18,6 +18,12 @@ export async function getResume(): Promise<ResumeData | null> {
 
 export async function saveResume(resume: ResumeData): Promise<void> {
   await chrome.storage.local.set({ resume })
+}
+
+export async function saveParsedResume(parsed: ParsedResume): Promise<void> {
+  const { resume } = await chrome.storage.local.get('resume')
+  if (!resume) return
+  await chrome.storage.local.set({ resume: { ...(resume as object), parsed } })
 }
 
 export async function getHistory(): Promise<CoverLetter[]> {

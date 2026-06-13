@@ -1,6 +1,7 @@
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL, WEB_URL } from './config'
 import { clearSession, getSession, saveSession } from './storage'
-import type { AuthSession, CoverLetter, JobData } from '../types'
+import { isValidResume } from './ai/resume-tailor'
+import type { ApplicationRecord, AuthSession, CoverLetter, JobData, TailoredResume } from '../types'
 
 function authHeaders(token?: string): HeadersInit {
   const h: HeadersInit = {
@@ -141,6 +142,27 @@ export async function uploadResumeToBackend(
   }
 }
 
+export async function tailorViaBackend(job: JobData, accessToken: string, compact = false, supplemental?: string, trim = false, includeSummary = true): Promise<TailoredResume> {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/tailor`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ job, compact, supplemental: supplemental?.trim() || undefined, trim, includeSummary }),
+  })
+  const data = await res.json() as Record<string, unknown>
+  if (res.status === 429) {
+    throw new RateLimitError((data.error as string) ?? 'Daily limit reached.')
+  }
+  if (!res.ok) {
+    throw new Error((data.error as string) ?? `Server error ${res.status}`)
+  }
+  const resume = data.resume
+  if (!isValidResume(resume)) throw new Error('Invalid response from server. Please try again.')
+  return resume
+}
+
 export async function saveLetterToBackend(accessToken: string, entry: CoverLetter): Promise<void> {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/letters`, {
     method: 'POST',
@@ -160,6 +182,26 @@ export async function fetchLettersFromBackend(accessToken: string): Promise<Cove
   if (!res.ok) throw new Error('Failed to fetch letters')
   const data = await res.json() as { letters: CoverLetter[] }
   return data.letters ?? []
+}
+
+export async function fetchApplicationsFromBackend(accessToken: string): Promise<ApplicationRecord[]> {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/applications`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+  if (!res.ok) throw new Error('Failed to fetch applications')
+  const data = await res.json() as { applications: ApplicationRecord[] }
+  return data.applications ?? []
+}
+
+export async function deleteApplicationFromBackend(accessToken: string, id: string): Promise<void> {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/applications?id=${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({})) as Record<string, unknown>
+    throw new Error((data.error as string) ?? 'Failed to delete application')
+  }
 }
 
 export async function deleteLetterFromBackend(accessToken: string, id: string): Promise<void> {

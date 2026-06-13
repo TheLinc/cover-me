@@ -228,16 +228,29 @@ function WorkflowDemo() {
 
           {/* Actions */}
           <div className="px-3 py-[9px] border-t border-border flex gap-1.5">
-            <button className="flex-1 inline-flex items-center justify-center gap-[5px] bg-brand text-white border-none rounded-[4px] py-[7px] px-2.5 text-[11px] font-semibold cursor-default">
-              <CopyIcon size={10} />
-              Copy
-            </button>
-            <button className="bg-elevated text-muted-foreground border border-border rounded-[4px] py-[7px] px-2.5 text-[11px] font-semibold cursor-default">
-              PDF
-            </button>
-            <button className="bg-elevated text-muted-foreground border border-border rounded-[4px] py-[7px] px-2.5 text-[11px] font-semibold cursor-default">
-              Edit
-            </button>
+            {phase < 2 ? (
+              <>
+                <button className="flex-1 inline-flex items-center justify-center bg-brand text-white border-none rounded-[4px] py-[7px] px-2.5 text-[10.5px] font-semibold cursor-default">
+                  Cover Letter
+                </button>
+                <button className="inline-flex items-center justify-center bg-elevated text-muted-foreground border border-border rounded-[4px] py-[7px] px-2 text-[10.5px] font-semibold cursor-default whitespace-nowrap">
+                  Resume
+                </button>
+              </>
+            ) : (
+              <>
+                <button className="flex-1 inline-flex items-center justify-center gap-[5px] bg-brand text-white border-none rounded-[4px] py-[7px] px-2.5 text-[11px] font-semibold cursor-default">
+                  <CopyIcon size={10} />
+                  Copy
+                </button>
+                <button className="bg-elevated text-muted-foreground border border-border rounded-[4px] py-[7px] px-2.5 text-[11px] font-semibold cursor-default">
+                  PDF
+                </button>
+                <button className="bg-elevated text-muted-foreground border border-border rounded-[4px] py-[7px] px-2.5 text-[11px] font-semibold cursor-default">
+                  Edit
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -276,15 +289,15 @@ function Hero() {
           style={{ animation: "fadeUp 0.65s ease both" }}
         >
           <h1 className="text-[clamp(48px,7vw,84px)] font-extrabold leading-[0.91] tracking-[-3px] text-foreground max-[768px]:tracking-[-2px]">
-            The cover letter
+            The job application
             <br />
             that gets you <span className="hero-hired">hired.</span>
           </h1>
           <p className="text-[16px] leading-[1.7] text-muted-foreground max-w-[480px] mt-1.5">
-            Stop writing job application letters from scratch. Cover Me reads
-            the posting, extracts the ATS keywords hiring managers look for,
-            and builds a personalised cover letter from your resume — in under
-            five seconds.
+            Stop writing job applications from scratch. Cover Me reads the
+            posting, extracts the ATS keywords hiring managers look for, and
+            builds a personalized cover letter and tailored resume from your
+            experience — in seconds.
           </p>
           {/* Before → After stat */}
           <div className="flex items-center gap-3 mt-2">
@@ -382,7 +395,7 @@ const STEPS = [
   {
     n: "03",
     title: "Generate, edit, and apply",
-    body: "Click Generate. Cover Me reads the job requirements, identifies the keywords and skills the role demands, and maps them to your actual achievements — producing a letter specific to that posting in under five seconds. Edit inline, copy to clipboard, or export as PDF.",
+    body: "Click Generate Cover Letter for an ATS-optimized letter, or Tailor Resume to Job to have AI rewrite your resume bullets to match the role's keywords — downloaded as a formatted PDF instantly. Both read the posting automatically and map its requirements to your actual experience. Edit inline, copy to clipboard, or export either document as a PDF.",
   },
 ];
 
@@ -492,7 +505,7 @@ function HowItWorks() {
             How it works
           </span>
           <h2 className="text-[clamp(30px,3.8vw,48px)] font-extrabold tracking-[-1.5px] leading-none text-foreground max-w-[600px]">
-            How does Cover Me generate cover letters?
+            How does Cover Me work?
           </h2>
         </div>
         <div className="border-t border-border">
@@ -565,8 +578,18 @@ const FEATURES: {
     span: "col-span-2 max-[900px]:col-span-full",
   },
   {
+    title: "AI resume tailoring",
+    body: "Cover Me rewrites your resume bullets to match the ATS keywords and requirements of the specific role — without inventing skills or changing your job history. Your experience, optimized for each application.",
+    span: "col-span-3 max-[1100px]:col-span-2 max-[900px]:col-span-full",
+  },
+  {
+    title: "Compact to one page",
+    body: "Some roles require a single-page resume. Enable compact mode and Cover Me trims your tailored resume to one page automatically — keeping the most relevant content for that role.",
+    span: "col-span-3 max-[1100px]:col-span-2 max-[900px]:col-span-full",
+  },
+  {
     title: "Keywords from the posting, built in",
-    body: "Cover Me reads the job description to find the exact skills, tools, and terms the role demands, then weaves them naturally into your letter — so you surface in ATS filters and make clear you actually read the posting.",
+    body: "Cover Me reads the job description to find the exact skills, tools, and terms the role demands, then weaves them into both your cover letter and your rewritten resume bullets — so you surface in ATS filters for every application.",
     span: "col-span-6 max-[1100px]:col-span-4 max-[900px]:col-span-full",
     pad: "py-7",
   },
@@ -681,18 +704,18 @@ function OpenSource() {
 // ── Pricing ───────────────────────────────────────────────────────────────────
 
 const FREE_FEATURES = [
-  "10 letters per day (hosted)",
+  "10 AI generations/day — cover letters + resumes",
   "BYOK — your key, unlimited & free",
   "All major job boards",
   "Edit & export to PDF",
-  "Local letter history",
+  "Local cover letter history",
 ];
 
 const PRO_FEATURES = [
-  "Unlimited letters per day",
+  "Unlimited cover letters and resume tailoring",
   "All major job boards",
   "Edit & export to PDF",
-  "Letter history synced cross-device",
+  "Cover letter history synced cross-device",
   "Priority access to new features",
 ];
 
@@ -815,7 +838,7 @@ function Footer() {
               <span>Cover Me</span>
             </a>
             <p className="text-[13px] text-muted-foreground">
-              A tailored cover letter for every job you apply to.
+              Tailored cover letters and resumes for every job you apply to.
             </p>
           </div>
           <div className="flex gap-[60px] max-[768px]:gap-10">
@@ -926,7 +949,11 @@ function Footer() {
 const FAQ_ITEMS = [
   {
     q: "Is Cover Me free to use?",
-    a: "Yes. Cover Me is free forever. In BYOK mode you use your own Claude or OpenAI API key — unlimited cover letter generations at your own API cost, with no account required. The hosted free tier gives you 10 AI-generated cover letters per day. Pro ($4/month) removes the daily limit and adds cross-device history sync.",
+    a: "Yes. Cover Me is free forever. In BYOK mode you use your own Claude or OpenAI API key — unlimited cover letters and resume tailoring at your own API cost, with no account required. The hosted free tier gives you 10 AI generations per day — cover letters and resume tailoring combined. Pro ($4/month) removes the daily limit and adds cross-device history sync.",
+  },
+  {
+    q: "Can Cover Me tailor my resume too?",
+    a: "Yes. Click \"Tailor Resume to Job\" on any job posting and Cover Me rewrites your resume bullets to match the ATS keywords and requirements of that specific role. It never invents skills or changes your job history — it rewrites your existing experience in language that matches what the role demands. The tailored resume downloads as a formatted PDF instantly. Enable \"Compact to one page\" if the role requires a single-page resume.",
   },
   {
     q: "What job boards does Cover Me support?",

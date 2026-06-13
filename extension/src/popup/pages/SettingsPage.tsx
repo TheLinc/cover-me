@@ -194,7 +194,7 @@ export default function SettingsPage() {
           </div>
           <div className="mode-card-title">Cover Me Account</div>
           <div className="mode-card-desc">
-            {session && isPro ? 'Pro · Unlimited letters' : 'Free · 10 letters/day · no key needed'}
+            {session && isPro ? 'Pro · Unlimited' : 'Free · 10 generations/day · no key needed'}
           </div>
         </button>
       </div>
@@ -270,7 +270,7 @@ export default function SettingsPage() {
                 <div className="account-info">
                   <div className="account-email">{session.user.email}</div>
                   <span className={isPro ? 'tier-badge tier-badge-pro' : 'tier-badge'}>
-                    {isPro ? '★ Pro · Unlimited' : 'Free · 10 letters/day'}
+                    {isPro ? '★ Pro · Unlimited' : 'Free · 10 generations/day'}
                   </span>
                 </div>
               </div>
