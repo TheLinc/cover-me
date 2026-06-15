@@ -331,7 +331,7 @@ export default function SettingsPage() {
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
                   />
-                  <label htmlFor="remember-me">Remember me</label>
+                  <label htmlFor="remember-me">Remember me <span className="hint">(password saved encrypted on this device)</span></label>
                 </div>
               )}
 

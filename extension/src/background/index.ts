@@ -3,10 +3,12 @@ import { generateCoverLetter } from '../lib/ai'
 import { parseResumeStructure } from '../lib/ai/resume-parse'
 import { tailorResume } from '../lib/ai/resume-tailor'
 import { decryptApiKey } from '../lib/crypto'
+import { debugGroup } from '../lib/debug'
 import { addToHistory, getCachedTier, getResume, getSettings, saveParsedResume } from '../lib/storage'
-import type { CoverLetter, GenerateResponse, JobData, ScrapeResponse, TailorResponse } from '../types'
+import type { CoverJob, CoverLetter, GenerateResponse, JobData, ScrapeResponse, TailorJob, TailorResponse } from '../types'
 
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (sender.id !== chrome.runtime.id) return
   if (message.type === 'SCRAPE_TAB') {
     handleScrapeTab().then(sendResponse)
     return true
@@ -16,7 +18,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     return true
   }
   if (message.type === 'GENERATE_FROM_MANUAL') {
-    handleGenerateManual(message.job as JobData).then(sendResponse)
+    handleGenerateManual(message.jobId as string | undefined, message.job as JobData, message.supplemental as string | undefined).then(sendResponse)
     return true
   }
   if (message.type === 'TAILOR_FROM_TAB') {
@@ -24,10 +26,33 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     return true
   }
   if (message.type === 'TAILOR_FROM_MANUAL') {
-    handleTailorFromManual(message.job as JobData, !!message.compact, message.supplemental as string | undefined, !!message.trim, message.includeSummary !== false).then(sendResponse)
+    handleTailorFromManual(message.jobId as string | undefined, message.job as JobData, !!message.compact, message.supplemental as string | undefined, !!message.trim, message.includeSummary !== false).then(sendResponse)
     return true
   }
 })
+
+// --- Job lifecycle persistence ---------------------------------------------
+// The actual AI call runs here in the service worker, independent of the popup.
+// We persist the job's status to chrome.storage.local so the result survives the
+// popup closing mid-generation, and so a "cancel" in the popup can stop watching
+// without aborting the work (the generation still completes and still counts).
+async function setCoverJob(rec: CoverJob): Promise<void> {
+  await chrome.storage.local.set({ coverJob: rec })
+}
+
+async function setTailorJob(rec: TailorJob): Promise<void> {
+  await chrome.storage.local.set({ tailorJob: rec })
+}
+
+async function failCover(id: string, job: JobData, startedAt: number, error: string): Promise<GenerateResponse> {
+  await setCoverJob({ id, status: 'error', job, error, startedAt })
+  return { success: false, error }
+}
+
+async function failTailor(id: string, job: JobData, startedAt: number, error: string): Promise<TailorResponse> {
+  await setTailorJob({ id, status: 'error', job, error, startedAt })
+  return { success: false, error }
+}
 
 // Scrape the active tab. Tries the content script first; falls back to a
 // self-contained inline scraper injected via chrome.scripting.executeScript
@@ -166,8 +191,8 @@ async function handleGenerate(): Promise<GenerateResponse> {
   }
 }
 
-async function handleGenerateManual(job: JobData): Promise<GenerateResponse> {
-  return generateFromJob(job)
+async function handleGenerateManual(jobId: string | undefined, job: JobData, supplemental?: string): Promise<GenerateResponse> {
+  return generateFromJob(job, supplemental, jobId)
 }
 
 async function handleTailorFromTab(compact: boolean): Promise<TailorResponse> {
@@ -181,29 +206,45 @@ async function handleTailorFromTab(compact: boolean): Promise<TailorResponse> {
   }
 }
 
-async function handleTailorFromManual(job: JobData, compact: boolean, supplemental?: string, trim = false, includeSummary = true): Promise<TailorResponse> {
-  return tailorFromJob(job, compact, supplemental, trim, includeSummary)
+async function handleTailorFromManual(jobId: string | undefined, job: JobData, compact: boolean, supplemental?: string, trim = false, includeSummary = true): Promise<TailorResponse> {
+  return tailorFromJob(job, compact, supplemental, trim, includeSummary, jobId)
 }
 
-async function tailorFromJob(job: JobData, compact: boolean, supplemental?: string, trim = false, includeSummary = true): Promise<TailorResponse> {
+async function tailorFromJob(job: JobData, compact: boolean, supplemental?: string, trim = false, includeSummary = true, jobId?: string): Promise<TailorResponse> {
+  const id = jobId ?? crypto.randomUUID()
+  const startedAt = Date.now()
+  await setTailorJob({ id, status: 'loading', job, startedAt })
   try {
     const settings = await getSettings()
+
+    await debugGroup('Tailor — scraped job + flags', {
+      mode: settings?.mode ?? 'byok',
+      'job.title': job.title,
+      'job.company': job.company,
+      'job.url': job.url,
+      'job.description': job.description,
+      'job.description.length': job.description?.length,
+      flags: { compact, trim, includeSummary, hasSupplemental: !!supplemental },
+    })
 
     if (settings?.mode === 'hosted') {
       const session = await ensureValidSession()
       if (!session) {
-        return { success: false, error: 'Session expired. Please sign in again in Settings.' }
+        return failTailor(id, job, startedAt, 'Session expired. Please sign in again in Settings.')
       }
+      // Hosted: the resume + final prompt live server-side. Enable DEBUG_MODE on
+      // the edge function to see those in the Supabase function logs.
       const resume = await tailorViaBackend(job, session.access_token, compact, supplemental, trim, includeSummary)
+      await setTailorJob({ id, status: 'done', job, resume, startedAt })
       return { success: true, resume, job }
     }
 
     if (!settings?.apiKey) {
-      return { success: false, error: 'No API key set. Open Settings to add your key.' }
+      return failTailor(id, job, startedAt, 'No API key set. Open Settings to add your key.')
     }
     const resumeData = await getResume()
     if (!resumeData?.text) {
-      return { success: false, error: 'No resume uploaded. Open Resume to upload yours.' }
+      return failTailor(id, job, startedAt, 'No resume uploaded. Open Resume to upload yours.')
     }
     const apiKey = await decryptApiKey(settings.apiKey)
 
@@ -215,33 +256,51 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
       await saveParsedResume(parsed)
     }
 
+    // Shows how many bullets the parser extracted per role — if this is already
+    // short, the model never saw the missing bullets in the first place.
+    await debugGroup('Tailor — parsed resume (BYOK, input to model)', {
+      parsed,
+      bulletsPerRole: parsed.experience?.map((e) => ({ role: e.title, bullets: e.bullets?.length })),
+    })
+
     const tailored = await tailorResume(job, parsed, settings.provider, apiKey, compact, supplemental, trim, includeSummary)
+    await setTailorJob({ id, status: 'done', job, resume: tailored, startedAt })
     return { success: true, resume: tailored, job }
   } catch (err) {
     if (err instanceof RateLimitError) {
+      await setTailorJob({ id, status: 'error', job, error: err.message, errorCode: 'RATE_LIMIT', startedAt })
       return { success: false, error: err.message, errorCode: 'RATE_LIMIT' }
     }
-    return {
-      success: false,
-      error: err instanceof Error ? err.message : 'Resume tailoring failed. Please try again.',
-    }
+    const error = err instanceof Error ? err.message : 'Resume tailoring failed. Please try again.'
+    await setTailorJob({ id, status: 'error', job, error, startedAt })
+    return { success: false, error }
   }
 }
 
-async function generateFromJob(job: JobData): Promise<GenerateResponse> {
+async function generateFromJob(job: JobData, supplemental?: string, jobId?: string): Promise<GenerateResponse> {
+  const id = jobId ?? crypto.randomUUID()
+  const startedAt = Date.now()
+  await setCoverJob({ id, status: 'loading', job, startedAt })
   try {
     const settings = await getSettings()
+
+    await debugGroup('Cover letter — scraped job', {
+      mode: settings?.mode ?? 'byok',
+      'job.title': job.title,
+      'job.company': job.company,
+      'job.url': job.url,
+      'job.description': job.description,
+      'job.description.length': job.description?.length,
+      hasSupplemental: !!supplemental,
+    })
 
     // Hosted path: JWT sent to backend, no local API key or resume needed
     if (settings?.mode === 'hosted') {
       const session = await ensureValidSession()
       if (!session) {
-        return {
-          success: false,
-          error: 'Session expired. Please sign in again in Settings.',
-        }
+        return failCover(id, job, startedAt, 'Session expired. Please sign in again in Settings.')
       }
-      const letter = await generateViaBackend(job, session.access_token)
+      const letter = await generateViaBackend(job, session.access_token, supplemental)
       const entry: CoverLetter = {
         id: crypto.randomUUID(),
         job,
@@ -253,20 +312,21 @@ async function generateFromJob(job: JobData): Promise<GenerateResponse> {
       if (tier === 'hosted_pro') {
         saveLetterToBackend(session.access_token, entry).catch(() => {})
       }
+      await setCoverJob({ id, status: 'done', job, letter, createdAt: entry.createdAt, startedAt })
       return { success: true, letter, job }
     }
 
     // BYOK path: decrypt local key, generate locally
     if (!settings?.apiKey) {
-      return { success: false, error: 'No API key set. Open Settings to add your key.' }
+      return failCover(id, job, startedAt, 'No API key set. Open Settings to add your key.')
     }
     const resume = await getResume()
     if (!resume?.text) {
-      return { success: false, error: 'No resume uploaded. Open Resume to upload yours.' }
+      return failCover(id, job, startedAt, 'No resume uploaded. Open Resume to upload yours.')
     }
 
     const apiKey = await decryptApiKey(settings.apiKey)
-    const letter = await generateCoverLetter(job, resume.text, settings.provider, apiKey)
+    const letter = await generateCoverLetter(job, resume.text, settings.provider, apiKey, supplemental)
     const entry: CoverLetter = {
       id: crypto.randomUUID(),
       job,
@@ -274,14 +334,15 @@ async function generateFromJob(job: JobData): Promise<GenerateResponse> {
       createdAt: new Date().toISOString(),
     }
     await addToHistory(entry)
+    await setCoverJob({ id, status: 'done', job, letter, createdAt: entry.createdAt, startedAt })
     return { success: true, letter, job }
   } catch (err) {
     if (err instanceof RateLimitError) {
+      await setCoverJob({ id, status: 'error', job, error: err.message, errorCode: 'RATE_LIMIT', startedAt })
       return { success: false, error: err.message, errorCode: 'RATE_LIMIT' }
     }
-    return {
-      success: false,
-      error: err instanceof Error ? err.message : 'Generation failed. Please try again.',
-    }
+    const error = err instanceof Error ? err.message : 'Generation failed. Please try again.'
+    await setCoverJob({ id, status: 'error', job, error, startedAt })
+    return { success: false, error }
   }
 }

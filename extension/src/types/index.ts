@@ -98,6 +98,31 @@ export type ScrapeResponse =
   | { success: true; job: JobData }
   | { success: false; error: string }
 
+// Service-worker-owned job records persisted to chrome.storage.local so an
+// in-flight or completed generation survives the popup being closed. The popup
+// derives its loading/done/error view from these; "cancel" just stops watching
+// (the worker keeps running and the generation still counts).
+export interface CoverJob {
+  id: string
+  status: 'loading' | 'done' | 'error'
+  job: JobData
+  letter?: string
+  createdAt?: string
+  error?: string
+  errorCode?: 'RATE_LIMIT'
+  startedAt: number
+}
+
+export interface TailorJob {
+  id: string
+  status: 'loading' | 'done' | 'error'
+  job: JobData
+  resume?: TailoredResume
+  error?: string
+  errorCode?: 'RATE_LIMIT'
+  startedAt: number
+}
+
 export interface CoverLetterEntry {
   id: string
   letter: string

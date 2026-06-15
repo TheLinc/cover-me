@@ -75,9 +75,11 @@ Deno.serve(async (req) => {
 
   // Parse request
   let job: { title: string; company: string; description: string }
+  let supplemental: string | undefined
   try {
     const body = await req.json()
     job = body.job
+    supplemental = typeof body.supplemental === 'string' ? body.supplemental.trim() : undefined
   } catch {
     return json({ error: 'Invalid request body' }, 400)
   }
@@ -87,7 +89,7 @@ Deno.serve(async (req) => {
   }
 
   // Build prompt and call Claude
-  const prompt = buildPrompt(job, resumeText)
+  const prompt = buildPrompt(job, resumeText, supplemental)
 
   const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -123,6 +125,7 @@ Deno.serve(async (req) => {
 function buildPrompt(
   job: { title: string; company: string; description: string },
   resumeText: string,
+  supplemental?: string,
 ): string {
   const companyKnown = job.company && job.company !== 'Unknown Company'
   const companyLine = companyKnown
@@ -139,6 +142,15 @@ function buildPrompt(
 
   const today = new Date().toISOString().split('T')[0]
 
+  const supplementalSection = supplemental?.trim()
+    ? `
+SUPPLEMENTAL CANDIDATE CONTEXT (verified by the candidate — real experience, a referral, or a genuine reason for interest not captured in the resume above):
+${supplemental.trim()}
+
+Treat this as true and part of your STEP 0 allowlist. Use it to strengthen the letter — name a referral, ground a "why this company" reason, or add a real metric — but never let it license a claim it does not actually support.
+`
+    : ''
+
   return `You are an expert cover letter writer. Write a tailored, human-sounding cover letter for the job application below.
 
 TODAY'S DATE: ${today}
@@ -150,13 +162,13 @@ ${job.description.slice(0, 4000)}
 
 APPLICANT RESUME:
 ${resumeText.slice(0, 6000)}
-
+${supplementalSection}
 ---
 
 Follow these steps in order:
 
-STEP 0 — TECHNOLOGY ALLOWLIST (do this before writing anything)
-Read the APPLICANT RESUME above. Extract every specific technology, tool, framework, and library named in it. This is your allowlist. Only technologies on this allowlist may appear anywhere in the letter — in any paragraph, in any framing. If a technology appears in the JD but is NOT on this allowlist, it may not appear in the letter under any circumstances. Do not infer allowlist membership from related skills (e.g. "automated testing practices" does not add Jest, Cypress, or React Testing Library to the allowlist — those are specific tools that must appear verbatim in the resume).
+STEP 0 — QUALIFICATIONS ALLOWLIST (do this before writing anything)
+Read the APPLICANT RESUME above. Extract every concrete qualification named in it — technologies, tools, frameworks, certifications, licenses, methods, systems, and the industries/domains the applicant has actually worked in. This is your allowlist. Only items on this allowlist may appear anywhere in the letter, in any framing. If something appears in the JD but is NOT on this allowlist, it may not appear in the letter under any circumstances — this includes a credential the applicant lacks (JD wants ACLS, resume has only BLS → never write ACLS) and a domain the applicant has never worked in (JD wants e-commerce experience, resume shows none → never claim e-commerce, not even as "e-commerce-adjacent"). Do not infer allowlist membership from related skills (e.g. "automated testing practices" does not add Jest or Cypress; "patient care" does not add a specific EHR the resume never names).
 
 STEP 1 — DETECT INDUSTRY
 Identify the industry from the job description vocabulary:
@@ -165,6 +177,7 @@ Identify the industry from the job description vocabulary:
 - Finance: AUM, CFA, CPA, GAAP, SOX, Bloomberg, portfolio, deal, equity, securities, audit
 - Marketing/Creative: campaign, CTR, CPC, funnel, A/B test, brand, conversion, impressions, ROAS
 - Legal: jurisdiction, litigation, deposition, contract, discovery, counsel, plaintiff, defendant
+- Other: if the role fits none of the above (education, manufacturing, trades, hospitality, public sector, science, etc.), infer the field's own hard-skill vocabulary, credentials, and success metrics directly from the JD, and use the General tone below.
 
 STEP 2 — ADAPT TONE AND KEYWORDS
 Apply the tone and approach for the detected industry:
@@ -178,6 +191,8 @@ Finance: High formality. Error-free prose is a baseline competency signal — a 
 Marketing/Creative: Match the company's observable brand voice — read their site copy before writing. The letter is itself a writing sample; a dull marketing letter is self-disqualifying. Lead with a specific campaign metric. Include portfolio URL in plain text if in the resume. Use business outcomes (revenue, conversion, CAC) not vanity metrics (followers, impressions).
 
 Legal: Highest formality of any industry. Precision of language is the job — the letter is evaluated as a writing sample from sentence one. Lead with bar admission state + most relevant experience or clerkship, then immediately connect to a specific matter type from the posting. Name the judge and court for clerkships explicitly. For in-house roles: orient toward business problem-solving, not legal analysis. Never use "To Whom It May Concern."
+
+Other / General: Match the formality of the posting's own writing. Lead with the single most relevant concrete achievement, named in the field's own terms from the JD. State any license, certification, or credential the role requires that the applicant genuinely holds. Use the field's real success metrics (output, accuracy, safety, satisfaction, cost, throughput, turnaround) — never borrow tech or finance jargon that does not fit the work.
 
 ---
 
@@ -193,13 +208,13 @@ Lead with what the applicant offers, not what they want. Use one of these proven
 - Bold specific claim: a confident, evidence-backed statement that demands the reader's attention
 - Referral: name a mutual contact explicitly in the first sentence if one exists
 
-Never open with any variant of: "I am writing to apply," "I am excited to apply," "I am interested in," "Please accept this letter," "I have always been passionate about," or "My name is."
+Never open with a generic applying-to phrase ("I am writing to apply," "I am excited to apply," "My name is") — full list under ABSOLUTE PROHIBITIONS.
 
 Paragraph 2 — Core Proof (4–6 sentences):
 Present 2–3 accomplishments from the resume that directly map to the top requirements in the JD. For each achievement, use this formula:
   [Strong action verb] + [specific context] + [quantified outcome] + [business impact]
 
-This is NOT a resume restatement — give each metric its narrative context. "When the deployment pipeline was blocking four engineers, I rebuilt it from scratch — deployment time fell 40% and the team reclaimed 20 hours a week" is the cover letter version of a resume bullet. Use the JD's exact terminology when naming the requirement being addressed. Where the resume has no number, use concrete scope: team size, user count, transaction volume, timeline.
+This is NOT a resume restatement — give each metric its narrative context. "When the deployment pipeline was blocking four engineers, I rebuilt it from scratch — deployment time fell 40% and the team reclaimed 20 hours a week" is the cover letter version of a resume bullet. Use the JD's exact terminology when naming the requirement being addressed. NEVER invent a metric: every percentage, dollar figure, or count must come from the resume or the candidate's verified context. Where the resume has no number, use concrete scope (team size, user count, transaction volume, timeline) or qualitative impact — never a fabricated stat, which reads well but collapses the moment an interviewer asks how it was measured.
 
 ${whyCompany}
 
@@ -214,7 +229,7 @@ LANGUAGE RULES:
 
 Keywords: Identify 5–10 hard-skill keywords from the JD (tools, certifications, methodologies, domain terms) that the applicant genuinely has. Embed them naturally in sentences — never as a list, never more than twice each. Use the JD's exact phrasing, not synonyms. Only hard skills — soft-skill keywords ("communication," "team player") score nothing in ATS.
 
-A candidate "genuinely has" a keyword only if that exact technology, tool, or framework appears verbatim in their resume. Having a similar or competing tool does not qualify — Zustand is not Redux, Vue is not React, Mocha is not Jest. When the JD requires a tool the candidate lacks, describe the closest real capability they do have without naming the missing tool — do not reference the gap technology at all.
+A candidate "genuinely has" a keyword only if that exact skill, tool, certification, or credential appears verbatim in their resume. A similar or competing one does not qualify, in any field — Zustand≠Redux, Vue≠React (tech), BLS≠ACLS (healthcare), QuickBooks≠SAP (finance), Series 63≠Series 7 (finance). When the JD requires something the candidate lacks, describe the closest real capability they do have without naming the missing item — do not reference the gap at all.
 
 Action verbs: Strong past-tense for past roles: Led, Built, Designed, Optimized, Launched, Reduced, Generated, Negotiated, Delivered, Streamlined, Orchestrated, Partnered, Authored, Exceeded, Drove, Shipped, Architected, Scaled, Mentored. Present tense for current role only.
 
@@ -232,11 +247,11 @@ Clichés (never use): hard worker, hard-working, team player, detail-oriented, r
 
 AI-flagged vocabulary (never use): delve, realm, intricate, showcasing, pivotal, tapestry, synergistic, synergy, testament, underscore, facilitate, beacon, meticulous, transformative, leverage (when used abstractly rather than literally)
 
-AI-tell patterns (never produce these): repeating the same "by doing X, I achieved Y" sentence structure in every paragraph; uniform sentence rhythm with no variation; excessive politeness throughout; claiming passion or dedication without a single specific example; using the company name exactly once in a formulaic opener and never again
+AI-tell patterns (never produce these): repeating the same "by doing X, I achieved Y" sentence structure in every paragraph; uniform sentence rhythm with no variation; excessive politeness throughout; claiming passion or dedication without a single specific example; using the company name exactly once in a formulaic opener and never again; the triadic-list tic (packaging every description as three parallel items — "scalable, maintainable, and robust"); "not only… but also" constructions; formal connective openers ("Moreover," "Furthermore," "Additionally," "In today's fast-paced world"); more than one em-dash in a single paragraph
 
 Passive close phrases (never use): I hope to hear from you, feel free to contact me at your convenience, I would be happy to discuss, I look forward to hearing from you at your earliest convenience
 
-No fabricated technology claims: Never mention a technology, framework, language, or tool that does not appear in the applicant's resume. This prohibition covers every framing — including "adjacent to", "similar to", "equivalent to", "mirrors", and compound phrasings like "Redux-adjacent state management (Zustand)". If the JD lists a stack the applicant does not have, do not reference those technologies at all — describe what the candidate can genuinely do instead. Never enumerate or echo back the employer's tech stack as proof of fit (e.g. "Your stack of React, Redux, Jest, Cypress is exactly the toolkit I've used") — this fabricates ownership of every tool listed and reads as mirroring the JD, not as evidence of real experience.
+No fabricated qualifications: Never mention a technology, tool, certification, license, method, or industry/domain that does not appear in the applicant's resume. This prohibition covers every framing — including "adjacent to", "similar to", "equivalent to", "mirrors", and compound phrasings like "Redux-adjacent state management (Zustand)" or "e-commerce-adjacent". It holds in every field: a tech stack (tech), a credential the JD prefers (ACLS, CPA, PMP), or a sector the applicant never worked in. If the JD lists something the applicant does not have, do not reference it at all — describe what the candidate can genuinely do instead. Never enumerate or echo back the employer's requirements as proof of fit (e.g. "Your stack of React, Redux, Jest, Cypress is exactly my toolkit") — this fabricates ownership of every item and reads as mirroring the JD, not as evidence of real experience.
 
 No fabricated personal knowledge: Never claim the applicant has personally followed, used, or researched the company's products, history, or evolution unless it is explicitly stated in the resume. All company-specific details must be derivable solely from the job description provided.
 
@@ -246,7 +261,7 @@ FORMAT RULES:
 - Plain text only — no markdown, no # headers, no **bold**, no bullet points, no asterisks, no dashes as list markers
 - 250–400 words total (excluding salutation and sign-off)
 - No subject line, date, or postal address block
-- No contact information (no phone, email, or URL) — the recruiter has this from the application
+- No contact block — omit phone and email (the recruiter already has them). A single portfolio, GitHub, or work-sample URL is allowed inline ONLY if it appears in the resume and the field values it (tech, design, writing, marketing); otherwise include no URL
 - ${companyKnown ? '' : 'Company name is unknown — refer to "the team" or "the role" rather than any company name'}
 - This must read as a letter written by a specific human for this specific job — not a template`
 }

@@ -86,7 +86,7 @@ export async function ensureValidSession(): Promise<AuthSession | null> {
 export async function fetchTier(userId: string, accessToken: string): Promise<string> {
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/users?select=tier&id=eq.${userId}&limit=1`,
+      `${SUPABASE_URL}/rest/v1/users?select=tier&id=eq.${encodeURIComponent(userId)}&limit=1`,
       { headers: authHeaders(accessToken) },
     )
     if (!res.ok) return 'hosted_free'
@@ -102,14 +102,14 @@ export class RateLimitError extends Error {
   constructor(message: string) { super(message) }
 }
 
-export async function generateViaBackend(job: JobData, accessToken: string): Promise<string> {
+export async function generateViaBackend(job: JobData, accessToken: string, supplemental?: string): Promise<string> {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/generate`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ job }),
+    body: JSON.stringify({ job, supplemental: supplemental?.trim() || undefined }),
   })
   const data = await res.json() as Record<string, unknown>
   if (res.status === 429) {

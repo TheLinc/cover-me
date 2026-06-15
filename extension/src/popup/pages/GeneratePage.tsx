@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { downloadCoverLetterPdf } from '../../lib/pdf'
 import { downloadTailoredResumePdf } from '../../lib/resume-pdf'
-import type { AuthSession, GenerateResponse, JobData, Settings, ScrapeResponse, TailorResponse, TailoredResume } from '../../types'
+import type { AuthSession, CoverJob, GenerateResponse, JobData, Settings, ScrapeResponse, TailorJob, TailorResponse, TailoredResume } from '../../types'
 import logoIcon from '../../public/icon/48.png'
 import type { Page } from '../App'
 
@@ -28,6 +28,7 @@ export default function GeneratePage({ onNavigate }: Props) {
   const [tailoredResume, setTailoredResume] = useState<TailoredResume | null>(null)
   const [tailoredJob, setTailoredJob] = useState<JobData | null>(null)
   const [supplemental, setSupplemental] = useState('')
+  const [letterSupplemental, setLetterSupplemental] = useState('')
   const [compact, setCompact] = useState(false)
   const [trim, setTrim] = useState(false)
   const [includeSummary, setIncludeSummary] = useState(true)
@@ -44,9 +45,20 @@ export default function GeneratePage({ onNavigate }: Props) {
   const [appMode, setAppMode] = useState<'byok' | 'hosted'>('byok')
 
   const loaded = useRef(false)
+  // The generation runs in the service worker and persists its status to
+  // chrome.storage.local (coverJob / tailorJob). The popup is just a view: it
+  // hydrates from those records on mount and follows them live via onChanged,
+  // so closing the popup mid-generation never loses the result.
+  const coverJobId = useRef<string | null>(null)
+  const tailorJobId = useRef<string | null>(null)
+  // "Cancel" doesn't abort the worker (the generation still runs and still
+  // counts) — it just dismisses the job so the popup stops surfacing it. We
+  // remember the dismissed id (persisted) so a late completion isn't resurfaced.
+  const coverDismissedId = useRef<string | null>(null)
+  const tailorDismissedId = useRef<string | null>(null)
 
   useEffect(() => {
-    chrome.storage.local.get(['generatePage', 'resume', 'settings', 'session']).then((r) => {
+    chrome.storage.local.get(['generatePage', 'resume', 'settings', 'session', 'coverJob', 'tailorJob']).then((r) => {
       const storedSettings = r.settings as Settings | undefined
       setHasResume(!!r.resume)
       setHasApiKey(!!(storedSettings?.apiKey))
@@ -54,6 +66,8 @@ export default function GeneratePage({ onNavigate }: Props) {
       setAppMode(storedSettings?.mode ?? 'byok')
 
       const s = r.generatePage as Record<string, unknown> | undefined
+      let restoredCoverDone = false
+      let restoredTailorDone = false
       if (s) {
         if (s.inputMode) setInputMode(s.inputMode as InputMode)
         if (s.manualTitle) setManualTitle(s.manualTitle as string)
@@ -62,21 +76,114 @@ export default function GeneratePage({ onNavigate }: Props) {
         if (typeof s.compact === 'boolean') setCompact(s.compact)
         if (typeof s.trim === 'boolean') setTrim(s.trim)
         if (typeof s.includeSummary === 'boolean') setIncludeSummary(s.includeSummary)
+        coverDismissedId.current = (s.coverDismissedId as string) ?? null
+        tailorDismissedId.current = (s.tailorDismissedId as string) ?? null
+        // A done result the popup already captured (and the user may have edited)
+        // takes priority over the worker's original copy.
         if (s.state === 'done' && s.letter && s.job && s.createdAt) {
           setLetter(s.letter as string)
           setJob(s.job as JobData)
           setCreatedAt(s.createdAt as string)
+          setLetterSupplemental((s.letterSupplemental as string) ?? '')
           setState('done')
+          restoredCoverDone = true
         }
         if (s.tailorState === 'done' && s.tailoredResume && s.tailoredJob) {
           setTailoredResume(s.tailoredResume as TailoredResume)
           setTailoredJob(s.tailoredJob as JobData)
           setSupplemental((s.supplemental as string) ?? '')
           setTailorState('done')
+          restoredTailorDone = true
         }
       }
+
+      // Recover an in-flight / completed job the popup never captured (e.g. it
+      // was closed during loading). Skipped if the user cancelled this job.
+      const cj = r.coverJob as CoverJob | undefined
+      if (cj && cj.id !== coverDismissedId.current) {
+        coverJobId.current = cj.id
+        if (cj.status === 'loading') {
+          setLoadingJob(cj.job)
+          setState('loading')
+        } else if (cj.status === 'error') {
+          setError(cj.error ?? 'Generation failed.')
+          setErrorCode(cj.errorCode)
+          setState('error')
+        } else if (cj.status === 'done' && !restoredCoverDone) {
+          setLetter(cj.letter ?? '')
+          setJob(cj.job)
+          setCreatedAt(cj.createdAt ?? new Date().toISOString())
+          setLetterSupplemental((s?.letterSupplemental as string) ?? '')
+          setState('done')
+        }
+      }
+
+      const tj = r.tailorJob as TailorJob | undefined
+      if (tj && tj.id !== tailorDismissedId.current) {
+        tailorJobId.current = tj.id
+        if (tj.status === 'loading') {
+          setLoadingJob(tj.job)
+          setTailorState('loading')
+        } else if (tj.status === 'error') {
+          setTailorError(tj.error ?? 'Resume tailoring failed.')
+          setTailorState('error')
+        } else if (tj.status === 'done' && !restoredTailorDone && tj.resume) {
+          setTailoredResume(tj.resume)
+          setTailoredJob(tj.job)
+          setSupplemental((s?.supplemental as string) ?? '')
+          setTailorState('done')
+        }
+      }
+
       loaded.current = true
     })
+  }, [])
+
+  // Follow the worker's job records live so the popup transitions to done/error
+  // even when it was reopened mid-generation (the original popup that fired the
+  // request is gone). Dismissed (cancelled) jobs are ignored.
+  useEffect(() => {
+    function handler(changes: { [key: string]: chrome.storage.StorageChange }, area: string) {
+      if (area !== 'local') return
+      if (changes.coverJob) {
+        const cj = changes.coverJob.newValue as CoverJob | undefined
+        if (cj && cj.id !== coverDismissedId.current) {
+          coverJobId.current = cj.id
+          if (cj.status === 'loading') {
+            setLoadingJob(cj.job)
+            setState('loading')
+          } else if (cj.status === 'error') {
+            setError(cj.error ?? 'Generation failed.')
+            setErrorCode(cj.errorCode)
+            setState('error')
+          } else if (cj.status === 'done') {
+            setLetter(cj.letter ?? '')
+            setJob(cj.job)
+            setCreatedAt(cj.createdAt ?? new Date().toISOString())
+            setState('done')
+          }
+        }
+      }
+      if (changes.tailorJob) {
+        const tj = changes.tailorJob.newValue as TailorJob | undefined
+        if (tj && tj.id !== tailorDismissedId.current) {
+          tailorJobId.current = tj.id
+          if (tj.status === 'loading') {
+            setLoadingJob(tj.job)
+            setTailorState('loading')
+          } else if (tj.status === 'error') {
+            setTailorError(tj.error ?? 'Resume tailoring failed.')
+            setTailorState('error')
+          } else if (tj.status === 'done' && tj.resume) {
+            setTailoredResume(tj.resume)
+            setTailoredJob(tj.job)
+            setTailorState('done')
+          }
+        }
+      }
+    }
+    chrome.storage.onChanged.addListener(handler)
+    return () => chrome.storage.onChanged.removeListener(handler)
   }, [])
 
   useEffect(() => {
@@ -91,9 +198,12 @@ export default function GeneratePage({ onNavigate }: Props) {
         tailoredResume: tailorState === 'done' ? tailoredResume : null,
         tailoredJob: tailorState === 'done' ? tailoredJob : null,
         supplemental,
+        letterSupplemental,
+        coverDismissedId: coverDismissedId.current,
+        tailorDismissedId: tailorDismissedId.current,
       },
     })
-  }, [state, inputMode, manualTitle, manualCompany, manualDescription, letter, job, createdAt, compact, trim, includeSummary, tailorState, tailoredResume, tailoredJob, supplemental])
+  }, [state, inputMode, manualTitle, manualCompany, manualDescription, letter, job, createdAt, compact, trim, includeSummary, tailorState, tailoredResume, tailoredJob, supplemental, letterSupplemental])
 
   async function generate() {
     setState('loading')
@@ -112,22 +222,16 @@ export default function GeneratePage({ onNavigate }: Props) {
       setState('error')
       return
     }
-    // Step 2: generate
+    // Step 2: generate — the worker drives state transitions via storage.
+    const jobId = crypto.randomUUID()
+    coverJobId.current = jobId
     try {
-      const res = (await chrome.runtime.sendMessage({ type: 'GENERATE_FROM_MANUAL', job: scrapedJob })) as GenerateResponse
-      if (res.success) {
-        setLetter(res.letter)
-        setJob(res.job)
-        setCreatedAt(new Date().toISOString())
-        setState('done')
-      } else {
-        setError(res.error)
-        setErrorCode(res.errorCode)
+      await chrome.runtime.sendMessage({ type: 'GENERATE_FROM_MANUAL', jobId, job: scrapedJob }) as GenerateResponse
+    } catch (err) {
+      if (coverJobId.current === jobId && coverDismissedId.current !== jobId) {
+        setError(err instanceof Error ? err.message : 'Something went wrong')
         setState('error')
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong')
-      setState('error')
     }
   }
 
@@ -142,24 +246,15 @@ export default function GeneratePage({ onNavigate }: Props) {
     setLoadingJob(jobData)
     setError('')
     setErrorCode(undefined)
+    const jobId = crypto.randomUUID()
+    coverJobId.current = jobId
     try {
-      const res = (await chrome.runtime.sendMessage({
-        type: 'GENERATE_FROM_MANUAL',
-        job: jobData,
-      })) as GenerateResponse
-      if (res.success) {
-        setLetter(res.letter)
-        setJob(res.job)
-        setCreatedAt(new Date().toISOString())
-        setState('done')
-      } else {
-        setError(res.error)
-        setErrorCode(res.errorCode)
+      await chrome.runtime.sendMessage({ type: 'GENERATE_FROM_MANUAL', jobId, job: jobData }) as GenerateResponse
+    } catch (err) {
+      if (coverJobId.current === jobId && coverDismissedId.current !== jobId) {
+        setError(err instanceof Error ? err.message : 'Something went wrong')
         setState('error')
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong')
-      setState('error')
     }
   }
 
@@ -171,6 +266,37 @@ export default function GeneratePage({ onNavigate }: Props) {
 
   function downloadPdf() {
     if (job) downloadCoverLetterPdf(letter, job, createdAt)
+  }
+
+  async function regenerateLetter() {
+    if (!job) return
+    setState('loading')
+    setLoadingJob(job)
+    setError('')
+    setErrorCode(undefined)
+    const jobId = crypto.randomUUID()
+    coverJobId.current = jobId
+    try {
+      await chrome.runtime.sendMessage({
+        type: 'GENERATE_FROM_MANUAL',
+        jobId,
+        job,
+        supplemental: letterSupplemental.trim() || undefined,
+      }) as GenerateResponse
+    } catch (err) {
+      if (coverJobId.current === jobId && coverDismissedId.current !== jobId) {
+        setError(err instanceof Error ? err.message : 'Something went wrong')
+        setState('error')
+      }
+    }
+  }
+
+  // Stop watching the in-flight letter. The worker keeps running and the
+  // generation still counts — the finished letter lands in History.
+  function cancelLetter() {
+    if (coverJobId.current) coverDismissedId.current = coverJobId.current
+    setState('idle')
+    setLoadingJob(null)
   }
 
   async function tailor() {
@@ -189,20 +315,16 @@ export default function GeneratePage({ onNavigate }: Props) {
       setTailorState('error')
       return
     }
-    // Step 2: tailor
+    // Step 2: tailor — the worker drives state transitions via storage.
+    const jobId = crypto.randomUUID()
+    tailorJobId.current = jobId
     try {
-      const res = (await chrome.runtime.sendMessage({ type: 'TAILOR_FROM_MANUAL', job: scrapedJob, compact, trim, includeSummary })) as TailorResponse
-      if (res.success) {
-        setTailoredResume(res.resume)
-        setTailoredJob(res.job)
-        setTailorState('done')
-      } else {
-        setTailorError(res.error)
+      await chrome.runtime.sendMessage({ type: 'TAILOR_FROM_MANUAL', jobId, job: scrapedJob, compact, trim, includeSummary }) as TailorResponse
+    } catch (err) {
+      if (tailorJobId.current === jobId && tailorDismissedId.current !== jobId) {
+        setTailorError(err instanceof Error ? err.message : 'Something went wrong')
         setTailorState('error')
       }
-    } catch (err) {
-      setTailorError(err instanceof Error ? err.message : 'Something went wrong')
-      setTailorState('error')
     }
   }
 
@@ -216,25 +338,22 @@ export default function GeneratePage({ onNavigate }: Props) {
     setTailorState('loading')
     setLoadingJob(jobData)
     setTailorError('')
+    const jobId = crypto.randomUUID()
+    tailorJobId.current = jobId
     try {
-      const res = (await chrome.runtime.sendMessage({
+      await chrome.runtime.sendMessage({
         type: 'TAILOR_FROM_MANUAL',
+        jobId,
         job: jobData,
         compact,
         trim,
         includeSummary,
-      })) as TailorResponse
-      if (res.success) {
-        setTailoredResume(res.resume)
-        setTailoredJob(res.job)
-        setTailorState('done')
-      } else {
-        setTailorError(res.error)
+      }) as TailorResponse
+    } catch (err) {
+      if (tailorJobId.current === jobId && tailorDismissedId.current !== jobId) {
+        setTailorError(err instanceof Error ? err.message : 'Something went wrong')
         setTailorState('error')
       }
-    } catch (err) {
-      setTailorError(err instanceof Error ? err.message : 'Something went wrong')
-      setTailorState('error')
     }
   }
 
@@ -243,6 +362,16 @@ export default function GeneratePage({ onNavigate }: Props) {
     setTailoredResume(null)
     setTailoredJob(null)
     setSupplemental('')
+    tailorJobId.current = null
+    chrome.storage.local.remove('tailorJob')
+  }
+
+  // Stop watching the in-flight tailor. The worker keeps running and the
+  // generation still counts.
+  function cancelTailor() {
+    if (tailorJobId.current) tailorDismissedId.current = tailorJobId.current
+    setTailorState('idle')
+    setLoadingJob(null)
   }
 
   async function regenerate() {
@@ -251,26 +380,23 @@ export default function GeneratePage({ onNavigate }: Props) {
     setLoadingJob(tailoredJob)
     setTailoredResume(null)
     setTailorError('')
+    const jobId = crypto.randomUUID()
+    tailorJobId.current = jobId
     try {
-      const res = (await chrome.runtime.sendMessage({
+      await chrome.runtime.sendMessage({
         type: 'TAILOR_FROM_MANUAL',
+        jobId,
         job: tailoredJob,
         compact,
         trim,
         includeSummary,
         supplemental: supplemental.trim() || undefined,
-      })) as TailorResponse
-      if (res.success) {
-        setTailoredResume(res.resume)
-        setTailoredJob(res.job)
-        setTailorState('done')
-      } else {
-        setTailorError(res.error)
+      }) as TailorResponse
+    } catch (err) {
+      if (tailorJobId.current === jobId && tailorDismissedId.current !== jobId) {
+        setTailorError(err instanceof Error ? err.message : 'Something went wrong')
         setTailorState('error')
       }
-    } catch (err) {
-      setTailorError(err instanceof Error ? err.message : 'Something went wrong')
-      setTailorState('error')
     }
   }
 
@@ -283,6 +409,9 @@ export default function GeneratePage({ onNavigate }: Props) {
     setManualTitle('')
     setManualCompany('')
     setManualDescription('')
+    setLetterSupplemental('')
+    coverJobId.current = null
+    chrome.storage.local.remove('coverJob')
   }
 
   const manualReady = manualTitle.trim().length > 0 && manualDescription.trim().length > 0
@@ -389,6 +518,12 @@ export default function GeneratePage({ onNavigate }: Props) {
                   <p className="loading-job-snippet">{loadingJob.description.slice(0, 160).trim()}…</p>
                 </div>
               )}
+              <button className="btn btn-ghost" style={{ marginTop: 16 }} onClick={cancelTailor}>
+                Cancel
+              </button>
+              <p className="generate-hint" style={{ marginTop: 8 }}>
+                This still counts as a generation, even if you cancel.
+              </p>
             </div>
           )}
 
@@ -611,6 +746,12 @@ export default function GeneratePage({ onNavigate }: Props) {
                       <p className="loading-job-snippet">{loadingJob.description.slice(0, 160).trim()}…</p>
                     </div>
                   )}
+                  <button className="btn btn-ghost" style={{ marginTop: 16 }} onClick={cancelLetter}>
+                    Cancel
+                  </button>
+                  <p className="generate-hint" style={{ marginTop: 8 }}>
+                    This still counts as a generation — when it finishes, the letter is saved to your History.
+                  </p>
                 </div>
               )}
 
@@ -635,6 +776,15 @@ export default function GeneratePage({ onNavigate }: Props) {
                       value={letter}
                       onChange={e => setLetter(e.target.value)}
                       spellCheck={false}
+                    />
+                  </div>
+                  <div className="supplemental-section">
+                    <label className="supplemental-label">Improve this letter</label>
+                    <textarea
+                      className="form-input supplemental-input"
+                      placeholder={'Add a referral, a real reason you want this company, or experience not on your resume\ne.g. "Referred by Jane Chen" · "Open to relocating to Toronto"'}
+                      value={letterSupplemental}
+                      onChange={e => setLetterSupplemental(e.target.value)}
                     />
                   </div>
                   <div className="letter-actions">
@@ -663,6 +813,14 @@ export default function GeneratePage({ onNavigate }: Props) {
                         <line x1="12" y1="15" x2="12" y2="3" />
                       </svg>
                       PDF
+                    </button>
+                    <button
+                      className="btn btn-secondary"
+                      onClick={regenerateLetter}
+                      disabled={!letterSupplemental.trim()}
+                      style={{ width: 'auto', padding: '10px 14px' }}
+                    >
+                      Regenerate
                     </button>
                     <button className="btn btn-ghost" onClick={resetToNew}>
                       New
