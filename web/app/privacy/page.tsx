@@ -228,6 +228,9 @@ export default function PrivacyPage() {
                 <strong className="text-foreground">Account credentials (Hosted mode only).</strong>{' '}
                 Your email address and password are used to create and authenticate your account, managed
                 by Supabase Auth. Passwords are hashed using bcrypt and are never stored in plaintext.
+                If you enable &ldquo;Remember me&rdquo; on the sign-in screen, your password is encrypted
+                with AES-256-GCM and stored locally on your device so the sign-in form can be pre-filled.
+                It is never transmitted to our servers in plaintext.
               </Li>
               <Li>
                 <strong className="text-foreground">API keys (BYOK mode only).</strong>{' '}
@@ -249,9 +252,10 @@ export default function PrivacyPage() {
                 your cover letter.
               </Li>
               <Li>
-                <strong className="text-foreground">Cover letter history.</strong> Generated cover
-                letters are saved locally in your browser storage (BYOK and Hosted Free modes) or
-                synced to our encrypted backend (Hosted Pro mode) for cross-device access.
+                <strong className="text-foreground">Application history.</strong> Generated cover
+                letters and tailored resumes are grouped by job application and saved locally in your
+                browser storage (BYOK and Hosted Free modes) or synced to our encrypted backend
+                (Hosted Pro mode) for cross-device access.
               </Li>
               <Li>
                 <strong className="text-foreground">Authentication session tokens (Hosted mode only).</strong>{' '}
@@ -261,9 +265,9 @@ export default function PrivacyPage() {
               </Li>
               <Li>
                 <strong className="text-foreground">Usage count (Hosted Free mode only).</strong>{' '}
-                We record the number of cover letters generated per day per account for the purpose
-                of enforcing the 10 letters/day free tier limit. Only the count is stored — no content
-                or metadata about individual letters is recorded server-side for Free users.
+                We record the number of AI generations (cover letters and resume tailoring combined)
+                per day per account to enforce the free tier limit. Only the count is stored — no
+                content or metadata about individual generations is recorded server-side for Free users.
               </Li>
               <Li>
                 <strong className="text-foreground">Billing information (Pro subscribers only).</strong>{' '}
@@ -289,7 +293,7 @@ export default function PrivacyPage() {
               <Li>To generate tailored cover letters by combining your resume text with the job posting data you activate the extension on.</Li>
               <Li>To authenticate you and maintain your session (Hosted mode).</Li>
               <Li>To enforce the daily generation limit for Free tier accounts (Hosted mode).</Li>
-              <Li>To sync your cover letter history across devices (Pro mode only).</Li>
+              <Li>To sync your application history (cover letters and tailored resumes) across devices (Pro mode only).</Li>
               <Li>To process subscription billing through Stripe (Pro mode only).</Li>
               <Li>To respond to support requests you initiate by contacting us directly.</Li>
             </Ul>
@@ -318,11 +322,14 @@ export default function PrivacyPage() {
               <br /><br />
               <strong className="text-foreground">Exactly how it is used:</strong>
               <ul className="mt-2 space-y-1 pl-4 list-disc">
-                <li>Stores user settings (AI provider, mode selection) in <code className="text-brand-light font-mono text-[12px]">chrome.storage.local</code></li>
-                <li>Stores the AES-GCM encrypted API key (BYOK mode) in <code className="text-brand-light font-mono text-[12px]">chrome.storage.local</code></li>
-                <li>Stores extracted resume text (BYOK mode) in <code className="text-brand-light font-mono text-[12px]">chrome.storage.local</code></li>
-                <li>Stores cover letter history in <code className="text-brand-light font-mono text-[12px]">chrome.storage.local</code></li>
-                <li>Stores JWT session tokens (Hosted mode) in <code className="text-brand-light font-mono text-[12px]">chrome.storage.local</code></li>
+                <li>User settings (AI provider, mode selection)</li>
+                <li>AES-256-GCM encrypted API key (BYOK mode)</li>
+                <li>Extracted resume text and parsed resume structure (BYOK mode)</li>
+                <li>Application history — cover letters and tailored resumes grouped by job</li>
+                <li>JWT session tokens (Hosted mode)</li>
+                <li>AES-256-GCM encrypted login credential for the &ldquo;Remember me&rdquo; feature (optional, Hosted mode)</li>
+                <li>Cached account tier to avoid redundant network requests</li>
+                <li>Transient in-flight generation state so results survive the popup closing mid-generation</li>
               </ul>
               <br />
               <code className="text-brand-light font-mono text-[12px]">chrome.storage.sync</code> is
@@ -331,26 +338,53 @@ export default function PrivacyPage() {
             </PermissionCard>
 
             <PermissionCard name="activeTab">
-              <strong className="text-foreground">Why it is needed:</strong> When you click
-              &ldquo;Generate&rdquo;, the service worker needs to identify and communicate with the
-              content script running on your current tab. The{' '}
+              <strong className="text-foreground">Why it is needed:</strong> The{' '}
               <code className="text-brand-light font-mono text-[12px]">activeTab</code> permission
-              grants temporary access to the active tab at the moment of user action — specifically,
-              it allows{' '}
-              <code className="text-brand-light font-mono text-[12px]">chrome.tabs.query(&#123;active: true, currentWindow: true&#125;)</code>{' '}
-              to return the tab&apos;s <code className="text-brand-light font-mono text-[12px]">id</code>,
-              which is then used to route a message to the content script on that tab.
+              grants temporary host access to the tab the user is currently viewing. This is what
+              allows <code className="text-brand-light font-mono text-[12px]">chrome.scripting.executeScript</code>{' '}
+              to inject the fallback job scraper into that tab. Without it, the extension would need
+              to declare explicit host permissions for every possible job board domain — an
+              impractical and overly broad alternative given that job postings exist on thousands
+              of different domains.
               <br /><br />
-              <strong className="text-foreground">Exactly how it is used:</strong> The service worker
-              retrieves the active tab&apos;s ID and sends a <code className="text-brand-light font-mono text-[12px]">SCRAPE_JOB</code> message
-              to the content script on that specific tab. The content script reads the page DOM to
-              extract the job title, company name, and description, then returns that data to the
-              service worker. No tab URLs, titles, or other metadata are accessed, stored, or
-              transmitted — only the tab ID is used, and only for message routing.
+              <strong className="text-foreground">Exactly how it is used:</strong> When you click
+              Generate or Tailor Resume, the service worker first tries the content script already
+              running on the page. If the content script is unavailable (e.g. the tab was open
+              before the extension was installed), <code className="text-brand-light font-mono text-[12px]">activeTab</code>{' '}
+              enables the fallback: a scraper function defined in the extension&apos;s own bundle
+              is injected via <code className="text-brand-light font-mono text-[12px]">chrome.scripting.executeScript</code>{' '}
+              to read the job title, company name, and description from the page. No tab URLs,
+              browsing history, cookies, or other metadata are accessed or transmitted.
               <br /><br />
               <strong className="text-foreground">Access is strictly user-initiated:</strong>{' '}
-              Access is granted only at the moment you click Generate and expires immediately after.
-              The extension does not have persistent access to any tab between actions.
+              Access is granted only at the moment you click Generate or Tailor Resume and expires
+              immediately after. The extension does not have persistent access to any tab between actions.
+            </PermissionCard>
+
+            <PermissionCard name="scripting">
+              <strong className="text-foreground">Why it is needed:</strong> The content script
+              declared in Cover Me is only available in tabs that were loaded after the extension
+              was installed or last reloaded. For tabs already open at install time, sending a
+              message to the content script fails silently. The{' '}
+              <code className="text-brand-light font-mono text-[12px]">scripting</code> permission
+              enables a fallback path via{' '}
+              <code className="text-brand-light font-mono text-[12px]">chrome.scripting.executeScript</code>{' '}
+              so users do not need to manually refresh every open tab before the extension works.
+              <br /><br />
+              <strong className="text-foreground">Exactly how it is used:</strong> When the content
+              script is unreachable, the service worker injects a self-contained scraper function
+              into the active tab. This function is defined entirely within the extension&apos;s
+              own bundle and passed via the{' '}
+              <code className="text-brand-light font-mono text-[12px]">func:</code> parameter —
+              no code is fetched from any remote source. It reads only DOM text and JSON-LD
+              structured data to extract job title, company name, and description, then returns
+              a plain object. It does not write to the page, access cookies or
+              localStorage, or persist anything.
+              <br /><br />
+              <strong className="text-foreground">Access is strictly user-initiated:</strong>{' '}
+              Injection is gated by <code className="text-brand-light font-mono text-[12px]">activeTab</code>{' '}
+              and only triggered when you click Generate or Tailor Resume. No scripts are ever
+              injected in the background.
             </PermissionCard>
 
             <H3>Content script host access</H3>
@@ -427,15 +461,17 @@ export default function PrivacyPage() {
               <strong className="text-foreground">Not used in Hosted mode.</strong>
             </PermissionCard>
 
-            <PermissionCard name="https://*.supabase.co/*">
+            <PermissionCard name="https://ncnmkxzrygnwjiciyxqs.supabase.co/*">
               <strong className="text-foreground">Used by:</strong> Hosted mode only.
               <br /><br />
               <strong className="text-foreground">Why it is needed:</strong> In Hosted mode, the
-              extension communicates with our Supabase backend for three purposes:
+              extension communicates with our Supabase backend for the following user-initiated purposes:
               <ul className="mt-2 space-y-1 pl-4 list-disc">
-                <li>Authentication — signing in, signing up, and refreshing JWT session tokens via the Supabase Auth API.</li>
-                <li>Cover letter generation — sending the job data and session token to our backend Edge Function, which retrieves your encrypted resume, calls the Claude API with our key, and returns the generated letter.</li>
-                <li>Resume sync — uploading your resume text to encrypted backend storage when you sign in, so it is available to the backend proxy.</li>
+                <li>Authentication — signing in, signing up, signing out, and refreshing JWT session tokens.</li>
+                <li>Account tier — fetching your subscription tier when the Settings page opens.</li>
+                <li>Cover letter &amp; resume generation — sending job data and your session token to our backend Edge Functions, which retrieve your encrypted resume, call the Claude API with our key, and return the generated output.</li>
+                <li>Application history sync — fetching and deleting your cover letters and tailored resumes when the History page opens (Pro mode).</li>
+                <li>Resume sync — uploading your resume text to encrypted backend storage after sign-in, so it is available to the backend generation proxy.</li>
               </ul>
               <br />
               <strong className="text-foreground">Not used in BYOK mode.</strong>
@@ -485,7 +521,7 @@ export default function PrivacyPage() {
                   name: 'Supabase',
                   url: 'https://supabase.com/privacy',
                   when: 'Hosted mode only',
-                  receives: 'Email address, hashed password, encrypted resume text, encrypted cover letters (Pro), session tokens, and usage counts. Supabase hosts our authentication system and database.',
+                  receives: 'Email address, hashed password, encrypted resume text, encrypted cover letters and tailored resumes (Pro), session tokens, and usage counts. Supabase hosts our authentication system and database.',
                 },
                 {
                   name: 'Stripe',
@@ -526,7 +562,7 @@ export default function PrivacyPage() {
             <H2 id="retention">Data Retention</H2>
             <Ul>
               <Li><strong className="text-foreground">BYOK mode:</strong> All data resides on your device. You can delete it at any time by removing the extension or clearing extension storage in Chrome settings. We hold no copy of it.</Li>
-              <Li><strong className="text-foreground">Hosted account data:</strong> Your account, resume, and cover letter history are retained for as long as your account is active. You may request deletion at any time by contacting us at <a href={`mailto:${CONTACT_EMAIL}`} className="text-brand-light hover:text-foreground transition-colors">{CONTACT_EMAIL}</a>. We will permanently delete all your data within 30 days of a verified deletion request.</Li>
+              <Li><strong className="text-foreground">Hosted account data:</strong> Your account, resume, and application history (cover letters and tailored resumes) are retained for as long as your account is active. You may request deletion at any time by contacting us at <a href={`mailto:${CONTACT_EMAIL}`} className="text-brand-light hover:text-foreground transition-colors">{CONTACT_EMAIL}</a>. We will permanently delete all your data within 30 days of a verified deletion request.</Li>
               <Li><strong className="text-foreground">Usage count records:</strong> Daily generation counts are deleted after 90 days.</Li>
               <Li><strong className="text-foreground">Stripe billing records:</strong> Stripe retains transaction records as required by financial regulations. We cannot delete data held directly by Stripe.</Li>
             </Ul>
