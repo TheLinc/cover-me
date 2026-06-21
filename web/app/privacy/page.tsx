@@ -406,11 +406,12 @@ export default function PrivacyPage() {
               actual behaviour.
               <br /><br />
               <strong className="text-foreground">Why all URLs are needed:</strong> Cover Me is
-              designed to work on any job posting — not just LinkedIn or Indeed, but Greenhouse,
-              Lever, Workday, Ashby, and any company&apos;s own careers page. Restricting the
-              content script to a fixed list of domains would prevent it from working on the
-              hundreds of job boards and ATS-hosted postings that exist. The broad match is
-              required to deliver the extension&apos;s core promise: one tool for every job posting.
+              designed to work on any job posting — from large boards like LinkedIn and Indeed to an
+              applicant tracking system hosting a single posting, or a company&apos;s own careers
+              page. Restricting the content script to a fixed list of domains would prevent it from
+              working on the hundreds of job boards and ATS-hosted postings that exist. The broad
+              match is required to deliver the extension&apos;s core promise: one tool for every job
+              posting.
               <br /><br />
               <strong className="text-foreground">What the content script actually does:</strong> The
               script registers a single message listener ({' '}
@@ -533,7 +534,7 @@ export default function PrivacyPage() {
                   name: 'Vercel',
                   url: 'https://vercel.com/legal/privacy-policy',
                   when: 'All users who visit the web dashboard',
-                  receives: 'Standard web server access logs (IP address, browser, requested URL) for the dashboard at covermeweb.com. Vercel hosts our Next.js web application.',
+                  receives: 'Standard web server access logs (IP address, browser, requested URL) for the dashboard at cover-me.dev. Vercel hosts our Next.js web application.',
                 },
               ].map((svc) => (
                 <div key={svc.name} className="bg-surface border border-border rounded-[10px] px-5 py-4">
