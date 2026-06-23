@@ -5,7 +5,7 @@ import { tailorResume } from '../lib/ai/resume-tailor'
 import { decryptApiKey } from '../lib/crypto'
 import { debugGroup } from '../lib/debug'
 import { addToHistory, getCachedTier, getResume, getSettings, saveParsedResume } from '../lib/storage'
-import type { CoverJob, CoverLetter, GenerateResponse, JobData, ScrapeResponse, TailorJob, TailorResponse } from '../types'
+import type { CoverJob, CoverLetter, GenerateResponse, JobData, ScrapeResponse, TailoredResume, TailorJob, TailorResponse } from '../types'
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (sender.id !== chrome.runtime.id) return
@@ -26,7 +26,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true
   }
   if (message.type === 'TAILOR_FROM_MANUAL') {
-    handleTailorFromManual(message.jobId as string | undefined, message.job as JobData, !!message.compact, message.supplemental as string | undefined, !!message.trim, message.includeSummary !== false).then(sendResponse)
+    handleTailorFromManual(message.jobId as string | undefined, message.job as JobData, !!message.compact, message.supplemental as string | undefined, !!message.trim, message.includeSummary !== false, message.previous as TailoredResume | undefined).then(sendResponse)
     return true
   }
 })
@@ -206,11 +206,11 @@ async function handleTailorFromTab(compact: boolean): Promise<TailorResponse> {
   }
 }
 
-async function handleTailorFromManual(jobId: string | undefined, job: JobData, compact: boolean, supplemental?: string, trim = false, includeSummary = true): Promise<TailorResponse> {
-  return tailorFromJob(job, compact, supplemental, trim, includeSummary, jobId)
+async function handleTailorFromManual(jobId: string | undefined, job: JobData, compact: boolean, supplemental?: string, trim = false, includeSummary = true, previous?: TailoredResume): Promise<TailorResponse> {
+  return tailorFromJob(job, compact, supplemental, trim, includeSummary, jobId, previous)
 }
 
-async function tailorFromJob(job: JobData, compact: boolean, supplemental?: string, trim = false, includeSummary = true, jobId?: string): Promise<TailorResponse> {
+async function tailorFromJob(job: JobData, compact: boolean, supplemental?: string, trim = false, includeSummary = true, jobId?: string, previous?: TailoredResume): Promise<TailorResponse> {
   const id = jobId ?? crypto.randomUUID()
   const startedAt = Date.now()
   await setTailorJob({ id, status: 'loading', job, startedAt })
@@ -224,7 +224,7 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
       'job.url': job.url,
       'job.description': job.description,
       'job.description.length': job.description?.length,
-      flags: { compact, trim, includeSummary, hasSupplemental: !!supplemental },
+      flags: { compact, trim, includeSummary, hasSupplemental: !!supplemental, hasPrevious: !!previous },
     })
 
     if (settings?.mode === 'hosted') {
@@ -234,7 +234,7 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
       }
       // Hosted: the resume + final prompt live server-side. Enable DEBUG_MODE on
       // the edge function to see those in the Supabase function logs.
-      const resume = await tailorViaBackend(job, session.access_token, compact, supplemental, trim, includeSummary)
+      const resume = await tailorViaBackend(job, session.access_token, compact, supplemental, trim, includeSummary, previous)
       await setTailorJob({ id, status: 'done', job, resume, startedAt })
       return { success: true, resume, job }
     }
@@ -263,7 +263,7 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
       bulletsPerRole: parsed.experience?.map((e) => ({ role: e.title, bullets: e.bullets?.length })),
     })
 
-    const tailored = await tailorResume(job, parsed, settings.provider, apiKey, compact, supplemental, trim, includeSummary)
+    const tailored = await tailorResume(job, parsed, settings.provider, apiKey, compact, supplemental, trim, includeSummary, previous)
     await setTailorJob({ id, status: 'done', job, resume: tailored, startedAt })
     return { success: true, resume: tailored, job }
   } catch (err) {

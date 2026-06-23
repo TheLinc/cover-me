@@ -376,6 +376,9 @@ export default function GeneratePage({ onNavigate }: Props) {
 
   async function regenerate() {
     if (!tailoredJob) return
+    // Capture the current result before clearing state — it becomes the editing
+    // base so the model revises this resume instead of rebuilding from scratch.
+    const previous = tailoredResume
     setTailorState('loading')
     setLoadingJob(tailoredJob)
     setTailoredResume(null)
@@ -391,6 +394,7 @@ export default function GeneratePage({ onNavigate }: Props) {
         trim,
         includeSummary,
         supplemental: supplemental.trim() || undefined,
+        previous: previous ?? undefined,
       }) as TailorResponse
     } catch (err) {
       if (tailorJobId.current === jobId && tailorDismissedId.current !== jobId) {

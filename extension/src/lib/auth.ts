@@ -142,14 +142,14 @@ export async function uploadResumeToBackend(
   }
 }
 
-export async function tailorViaBackend(job: JobData, accessToken: string, compact = false, supplemental?: string, trim = false, includeSummary = true): Promise<TailoredResume> {
+export async function tailorViaBackend(job: JobData, accessToken: string, compact = false, supplemental?: string, trim = false, includeSummary = true, previous?: TailoredResume): Promise<TailoredResume> {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/tailor`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ job, compact, supplemental: supplemental?.trim() || undefined, trim, includeSummary }),
+    body: JSON.stringify({ job, compact, supplemental: supplemental?.trim() || undefined, trim, includeSummary, previous }),
   })
   const data = await res.json() as Record<string, unknown>
   if (res.status === 429) {

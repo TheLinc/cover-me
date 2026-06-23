@@ -23,12 +23,81 @@ function buildTailorSchema(parsed: ParsedResume): string {
   if (parsed.skills) {
     resume.skills = 'string'
   }
-  return JSON.stringify({ resume, atsScore: 'number (0–100)', atsGaps: ['string — one specific gap per item'] }, null, 2)
+  return JSON.stringify({
+    resume,
+    keywordMatch: {
+      tier1Covered: ['string — Tier 1 keyword the candidate genuinely has'],
+      tier1Missing: ['string — Tier 1 keyword not supported by the resume'],
+      tier2Covered: ['string — Tier 2 keyword the candidate genuinely has'],
+      tier2Missing: ['string — Tier 2 keyword not supported by the resume'],
+      gatingGaps: ['string — unmet hard qualification the JD requires, ≤55 chars'],
+    },
+  }, null, 2)
 }
 
-function buildPrompt(job: JobData, parsed: ParsedResume, compact: boolean, supplemental?: string, trim = false, includeSummary = true): string {
+// ── ATS scoring ──────────────────────────────────────────────────────────────
+// The model reports keyword coverage (facts); we compute the score here so it is
+// deterministic, granular, and monotonic on regeneration: adding a covered
+// keyword over a fixed JD denominator can only raise the score, never lower it.
+interface KeywordMatch {
+  tier1Covered?: unknown
+  tier1Missing?: unknown
+  tier2Covered?: unknown
+  tier2Missing?: unknown
+  gatingGaps?: unknown
+}
+
+const TIER1_WEIGHT = 70
+const TIER2_WEIGHT = 30
+const GATING_PENALTY = 10      // per unmet hard qualification
+const MAX_GATING_PENALTY = 25  // cap so strong-skill candidates aren't cratered
+
+function strArr(v: unknown): string[] {
+  return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string' && x.trim().length > 0) : []
+}
+
+// Coverage → score + complete gap list. JD with no Tier-N keywords scores that
+// tier as fully covered (nothing to miss) rather than dividing by zero.
+function scoreFromMatch(m: KeywordMatch): { score: number; gaps: string[] } {
+  const t1c = strArr(m.tier1Covered).length
+  const t1Missing = strArr(m.tier1Missing)
+  const t2c = strArr(m.tier2Covered).length
+  const t2Missing = strArr(m.tier2Missing)
+  const gating = strArr(m.gatingGaps)
+
+  const t1total = t1c + t1Missing.length
+  const t2total = t2c + t2Missing.length
+  const t1frac = t1total ? t1c / t1total : 1
+  const t2frac = t2total ? t2c / t2total : 1
+
+  const base = TIER1_WEIGHT * t1frac + TIER2_WEIGHT * t2frac
+  const penalty = Math.min(gating.length * GATING_PENALTY, MAX_GATING_PENALTY)
+  const score = Math.max(0, Math.min(100, Math.round(base - penalty)))
+  const gaps = [...new Set([...t1Missing, ...t2Missing, ...gating])]
+  return { score, gaps }
+}
+
+// The editing base for revision mode — strip the derived score fields so the
+// model edits resume content, not stale numbers (STEP 9 is recomputed fresh).
+function stripScores(r: TailoredResume): Omit<TailoredResume, 'atsScore' | 'atsGaps'> {
+  const { atsScore: _s, atsGaps: _g, ...rest } = r
+  return rest
+}
+
+function buildPrompt(job: JobData, parsed: ParsedResume, compact: boolean, supplemental?: string, trim = false, includeSummary = true, previous?: TailoredResume): string {
   const company = job.company && job.company !== 'Unknown Company' ? job.company : 'Unknown'
   const today = new Date().toISOString().split('T')[0]
+
+  const previousSection = previous ? `
+PREVIOUS TAILORED RESUME (your last output for THIS job — the base you are now editing):
+${JSON.stringify(stripScores(previous), null, 2)}
+
+REVISION MODE — revise, do not rebuild:
+- Start from the PREVIOUS TAILORED RESUME above and change as little as possible. Keep its summary, bullets, and skills exactly as written EXCEPT where the supplemental context adds new truth, or a previously missing JD keyword can now be incorporated honestly.
+- Do not re-rank or re-word bullets that need no change, and preserve each role's existing bullet count. The steps below define HOW to write; this block only changes WHAT you start from.
+- The candidate resume above remains the ground truth for what is true; the supplemental context is the only new truth. Integrity rules still apply — never fabricate to close a gap.
+- Recompute STEP 9 against the SAME JD keyword set as before, so added coverage raises the score rather than shifting the baseline.
+` : ''
 
   const step8 = parsed.skills ? `
 STEP 8 — OPTIMIZE SKILLS
@@ -72,7 +141,7 @@ SUPPLEMENTAL CANDIDATE CONTEXT (verified by the candidate — real experience no
 ${supplemental.trim()}
 
 Use this context to strengthen existing bullets where the experience is relevant and accurate. Do not add bullet entries beyond the budget set in STEP 5 — weave the context into the most applicable existing bullets.
-` : ''}
+` : ''}${previousSection}
 ---
 
 PROCEDURE — follow in order:
@@ -99,6 +168,8 @@ BEHAVIORAL REQUIREMENTS — when the JD names a verifiable activity under its re
   Legal: discovery review, client communication, brief preparation
   Any: cross-functional collaboration, knowledge sharing, process documentation
 ${parsed.skills ? '' : '\nNote: this resume has no skills section — embed keywords naturally within experience bullets only.\n'}
+ALTERNATIVE REQUIREMENTS — when the JD offers a choice ("X, Y, or Z"; "SQL/NoSQL"; "relational or non-relational"), treat the whole set as ONE requirement that is covered if the candidate has ANY one member. Tier it once, by the member the candidate has, and NEVER list the unused alternatives as missing or as a gap — they are not required.
+
 SYNONYM PAIRS — when the resume and JD name the same thing differently and both fit one phrase, keep both: "localization (i18n)"; "PostgreSQL (SQL)"; "REST API integrations".
 
 STEP 3 — DEFINE RESUME ANGLE
@@ -130,9 +201,13 @@ Compressed STAR: [strong action verb] + [what was done] + [measurable result or 
 STEP 7 — REORDER BULLETS
 Within each role, sort bullets most-relevant-first. This touches only the bullets inside a role; role order is fixed (Integrity 2).
 ${step8}
-STEP 9 — ATS CONFIDENCE SCORE
-Score 0–100 honestly (an accurate 58 beats a padded 82): 85–100 strong, 65–84 good (1–2 gaps), 45–64 moderate, 25–44 weak, 0–24 poor fit.
-atsGaps: 2–4 specific hard-requirement gaps (≤55 chars each), e.g. "GraphQL not on resume" / "Requires 7yr, candidate ~3yr". Empty [] if a strong match.
+STEP 9 — ATS MATCH REPORT (the score is computed in code from this report — do NOT output a number)
+Judge coverage ONLY against this JD: the Tier 1 and Tier 2 keywords from STEP 2, plus the qualifications the JD explicitly states. NEVER weigh skills the JD does not mention, or skills "typically"/"usually" expected for this kind of role — if it is not in this JD, it neither helps nor hurts the candidate.
+Report in keywordMatch:
+- tier1Covered / tier1Missing: every STEP 2 Tier 1 keyword, split by whether the candidate genuinely has it (Integrity 3).
+- tier2Covered / tier2Missing: same for every Tier 2 keyword.
+- gatingGaps: hard qualifications the JD explicitly requires but the candidate does not meet — years of experience, a required degree, a mandatory license/cert (≤55 chars each, e.g. "Requires 5yr, candidate ~3yr"). A "preferred"/"nice-to-have" item is a Tier 2 keyword, never a gatingGap.
+Be exhaustive — list ALL keywords across the covered/missing arrays, not a sample; the user's score and gap list are derived entirely from them.
 
 ${compactMode}---
 
@@ -183,8 +258,16 @@ function parseJson(raw: string): TailoredResume {
   const resumeData = (data.resume && typeof data.resume === 'object') ? data.resume : parsed
   if (!isValidResume(resumeData)) throw new Error('AI returned incomplete response. Please try again.')
   const resume = resumeData as TailoredResume
-  if (typeof data.atsScore === 'number') resume.atsScore = Math.max(0, Math.min(100, Math.round(data.atsScore)))
-  if (Array.isArray(data.atsGaps)) resume.atsGaps = (data.atsGaps as unknown[]).filter((g): g is string => typeof g === 'string')
+  // Preferred path: compute score + gaps in code from the model's coverage report.
+  if (data.keywordMatch && typeof data.keywordMatch === 'object') {
+    const { score, gaps } = scoreFromMatch(data.keywordMatch as KeywordMatch)
+    resume.atsScore = score
+    resume.atsGaps = gaps
+  } else {
+    // Fallback for any response still using the legacy score fields.
+    if (typeof data.atsScore === 'number') resume.atsScore = Math.max(0, Math.min(100, Math.round(data.atsScore)))
+    if (Array.isArray(data.atsGaps)) resume.atsGaps = (data.atsGaps as unknown[]).filter((g): g is string => typeof g === 'string')
+  }
   return resume
 }
 
@@ -197,8 +280,9 @@ export async function tailorResume(
   supplemental?: string,
   trim = false,
   includeSummary = true,
+  previous?: TailoredResume,
 ): Promise<TailoredResume> {
-  const prompt = buildPrompt(job, parsed, compact, supplemental, trim, includeSummary)
+  const prompt = buildPrompt(job, parsed, compact, supplemental, trim, includeSummary, previous)
 
   await debugGroup('Tailor — full prompt sent to model (BYOK)', {
     provider,
