@@ -5,20 +5,20 @@ import Link from 'next/link'
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 
 export const metadata: Metadata = {
-  title: 'Support',
-  description: 'Get help with Cover Me. Find answers to common questions about the AI cover letter Chrome extension, API keys, daily limits, and resume storage.',
+  title: 'Help & Support — Cover Me AI Cover Letter & Resume Tailor',
+  description: 'Get help with Cover Me. Find answers to common questions about the AI cover letter and resume tailor Chrome extension, API keys, daily limits, and resume storage.',
   alternates: { canonical: `${BASE}/support` },
   openGraph: {
-    title: 'Support — Cover Me',
-    description: 'Get help with Cover Me. Find answers to common questions about the AI cover letter Chrome extension, API keys, daily limits, and resume storage.',
+    title: 'Help & Support — Cover Me AI Cover Letter & Resume Tailor',
+    description: 'Get help with Cover Me. Find answers to common questions about the AI cover letter and resume tailor Chrome extension, API keys, daily limits, and resume storage.',
     url: `${BASE}/support`,
     siteName: 'Cover Me',
     type: 'website',
   },
   twitter: {
-    card: 'summary',
-    title: 'Support — Cover Me',
-    description: 'Get help with Cover Me. Answers to common questions about the AI cover letter Chrome extension.',
+    card: 'summary_large_image',
+    title: 'Help & Support — Cover Me AI Cover Letter & Resume Tailor',
+    description: 'Get help with Cover Me. Find answers to common questions about the AI cover letter and resume tailor Chrome extension.',
   },
 }
 
@@ -97,9 +97,12 @@ export default function SupportPage() {
 
         {/* Heading */}
         <div className="mb-14">
-          <h1 className="text-[36px] font-bold tracking-[-0.8px] text-foreground mb-3">
+          <h1 className="text-[36px] font-bold tracking-[-0.8px] text-foreground mb-2">
             Support
           </h1>
+          <p className="text-[12px] text-muted-foreground mb-3">
+            <time dateTime="2026-06-23">Last updated June 23, 2026</time>
+          </p>
           <p className="text-[16px] text-muted-foreground leading-[1.7]">
             Having trouble with Cover Me? We&apos;re here to help.
           </p>

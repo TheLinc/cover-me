@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     type: 'website',
   },
   twitter: {
-    card: 'summary',
+    card: 'summary_large_image',
     title: 'Privacy Policy — Cover Me',
     description: 'How Cover Me collects, uses, and protects your data. Your resume is encrypted at rest, never shared, and never used for AI training.',
   },

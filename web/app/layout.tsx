@@ -7,10 +7,10 @@ const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 export const metadata: Metadata = {
   metadataBase: new URL(BASE),
   title: {
-    default: 'AI Cover Letter Generator Chrome Extension — Cover Me',
+    default: 'AI Cover Letter & Resume Tailor — Cover Me Chrome Extension',
     template: '%s — Cover Me',
   },
-  description: 'Cover Me is a free Chrome extension that reads any job posting and generates a tailored, ATS-friendly cover letter from your resume in under 5 seconds. Works on LinkedIn, Indeed, Greenhouse, Lever, Workday, and more.',
+  description: 'Free Chrome extension. One click on any job posting — AI writes your cover letter and rewrites your resume with the exact ATS keywords the role demands. Works on LinkedIn, Indeed, Greenhouse, Lever, Workday, and more.',
   keywords: [
     'AI cover letter generator',
     'cover letter generator Chrome extension',
@@ -29,16 +29,16 @@ export const metadata: Metadata = {
     canonical: BASE,
   },
   openGraph: {
-    title: 'AI Cover Letter Generator Chrome Extension — Cover Me',
-    description: 'One click on any job posting. A tailored, ATS-friendly cover letter built from your resume in under 5 seconds. Free Chrome extension.',
+    title: 'AI Cover Letter & Resume Tailor — Cover Me Chrome Extension',
+    description: 'One click on any job posting — AI writes your cover letter and rewrites your resume with the exact ATS keywords the role demands. Free Chrome extension.',
     type: 'website',
     siteName: 'Cover Me',
     url: BASE,
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'AI Cover Letter Generator Chrome Extension — Cover Me',
-    description: 'One click on any job posting. A tailored, ATS-friendly cover letter built from your resume in under 5 seconds. Free Chrome extension.',
+    title: 'AI Cover Letter & Resume Tailor — Cover Me Chrome Extension',
+    description: 'One click on any job posting — AI writes your cover letter and rewrites your resume with the exact ATS keywords the role demands. Free Chrome extension.',
   },
 }
 
@@ -48,7 +48,7 @@ const jsonLdApp = {
   name: 'Cover Me',
   applicationCategory: 'BusinessApplication',
   operatingSystem: 'Chrome',
-  description: 'AI-powered Chrome extension that reads any job posting and generates a tailored, ATS-friendly cover letter from your resume in under 5 seconds.',
+  description: 'AI-powered Chrome extension that reads any job posting and generates a tailored cover letter and rewrites your resume with ATS keywords — in seconds.',
   url: BASE,
   installUrl: CHROME_STORE_URL,
   downloadUrl: CHROME_STORE_URL,
@@ -73,11 +73,12 @@ const jsonLdApp = {
     },
   ],
   featureList: [
+    'AI cover letter generation from job posting',
+    'AI resume tailoring with ATS keyword matching',
+    'ATS match score and gap analysis',
     'Reads job posting automatically',
-    'ATS keyword matching',
-    'Resume-based personalisation',
     'Works on LinkedIn, Indeed, Greenhouse, Lever, Workday, Ashby',
-    'PDF export',
+    'PDF export for cover letter and tailored resume',
     'Open source — MIT license',
   ],
   isAccessibleForFree: true,
@@ -92,6 +93,8 @@ const jsonLdOrg = {
   logo: `${BASE}/logo.png`,
   sameAs: [
     'https://github.com/TheLinc/cover-me',
+    'https://github.com/TheLinc',
+    'https://www.linkedin.com/in/lincolnlaylor/',
   ],
   contactPoint: {
     '@type': 'ContactPoint',
@@ -106,6 +109,16 @@ const jsonLdWebSite = {
   name: 'Cover Me',
   url: BASE,
   description: 'Free AI cover letter generator Chrome extension. One click on any job posting — tailored, ATS-friendly cover letter from your resume in under 5 seconds.',
+}
+
+const jsonLdSpeakable = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  speakable: {
+    '@type': 'SpeakableSpecification',
+    cssSelector: ['h1', 'h2', 'h3'],
+  },
+  url: BASE,
 }
 
 const jsonLdHowTo = {
@@ -144,6 +157,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdOrg) }} />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdWebSite) }} />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdHowTo) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdSpeakable) }} />
       </head>
       <body>{children}</body>
     </html>

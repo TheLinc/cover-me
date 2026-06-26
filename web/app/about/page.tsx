@@ -6,20 +6,20 @@ import { CHROME_STORE_URL } from '@/lib/utils'
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 
 export const metadata: Metadata = {
-  title: 'About',
-  description: 'Cover Me is an open-source AI cover letter generator built by Lincoln Laylor. One click on any job posting — a tailored, ATS-friendly cover letter from your resume in under 5 seconds.',
+  title: 'About Cover Me — AI Cover Letter & Resume Tailor by Lincoln Laylor',
+  description: 'Cover Me is an open-source AI Chrome extension by Lincoln Laylor that generates tailored cover letters and rewrites your resume to match any job posting. Privacy-first, MIT licensed.',
   alternates: { canonical: `${BASE}/about` },
   openGraph: {
-    title: 'About — Cover Me',
-    description: 'Cover Me is an open-source AI cover letter generator built by Lincoln Laylor. Privacy-first, MIT licensed, no telemetry.',
+    title: 'About Cover Me — AI Cover Letter & Resume Tailor by Lincoln Laylor',
+    description: 'Cover Me is an open-source AI Chrome extension by Lincoln Laylor that generates tailored cover letters and rewrites your resume to match any job posting. Privacy-first, MIT licensed.',
     url: `${BASE}/about`,
     siteName: 'Cover Me',
     type: 'website',
   },
   twitter: {
-    card: 'summary',
-    title: 'About — Cover Me',
-    description: 'Cover Me is an open-source AI cover letter generator built by Lincoln Laylor. Privacy-first, MIT licensed, no telemetry.',
+    card: 'summary_large_image',
+    title: 'About Cover Me — AI Cover Letter & Resume Tailor by Lincoln Laylor',
+    description: 'Cover Me is an open-source AI Chrome extension by Lincoln Laylor that generates tailored cover letters and rewrites your resume to match any job posting. Privacy-first, MIT licensed.',
   },
 }
 
@@ -36,8 +36,11 @@ const personJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Person',
   name: 'Lincoln Laylor',
-  url: 'https://github.com/TheLinc',
-  sameAs: ['https://github.com/TheLinc'],
+  url: 'https://www.linkedin.com/in/lincolnlaylor/',
+  sameAs: [
+    'https://github.com/TheLinc',
+    'https://www.linkedin.com/in/lincolnlaylor/',
+  ],
 }
 
 export default function AboutPage() {
@@ -66,11 +69,14 @@ export default function AboutPage() {
           <span className="text-[10px] font-bold tracking-[0.12em] uppercase text-brand mb-4 block">
             About
           </span>
-          <h1 className="text-[clamp(32px,5vw,56px)] font-extrabold tracking-[-2px] text-foreground leading-[0.95] mb-6">
+          <h1 className="text-[clamp(32px,5vw,56px)] font-extrabold tracking-[-2px] text-foreground leading-[0.95] mb-4">
             Built for job seekers who apply seriously.
           </h1>
+          <p className="text-[12px] text-muted-foreground mb-5">
+            <time dateTime="2026-06-23">Last updated June 23, 2026</time>
+          </p>
           <p className="text-[17px] text-muted-foreground leading-[1.75]">
-            Cover Me is a free, open-source Chrome extension that generates tailored, ATS-friendly cover letters from any job posting in under 5 seconds. No generic templates — every letter is built from your resume and the job&apos;s exact requirements.
+            Cover Me is a free, open-source Chrome extension that writes your cover letter and rewrites your resume to match any job posting — ATS keywords extracted, both documents tailored to the role in seconds. No generic templates — every output is built from your resume and the job&apos;s exact requirements.
           </p>
         </div>
 
@@ -84,7 +90,10 @@ export default function AboutPage() {
               Writing cover letters is the most time-consuming part of a job search — and the part that matters most. Hiring managers read them first. Applicant tracking systems scan them for keywords. A generic letter costs you the interview before your resume is even opened.
             </p>
             <p>
-              Most job seekers spend 30–60 minutes per application writing and tailoring a letter. At scale — applying to dozens of roles — that&apos;s days of work. The AI tools that exist are either too generic (ChatGPT with a prompt), too expensive, or too invasive (storing your resume in systems you can&apos;t audit).
+              The resume problem is just as real. Research consistently shows that over 75% of resumes are automatically filtered out by ATS software before a recruiter ever sees them. Optimising for the right keywords isn&apos;t a nice-to-have — it&apos;s the baseline requirement for getting your application read by a human.
+            </p>
+            <p>
+              Most job seekers spend 30–60 minutes per application writing and tailoring both documents. At scale — applying to dozens of roles — that&apos;s days of work. The AI tools that exist are either too generic (ChatGPT with a prompt), too expensive, or too invasive (storing your resume in systems you can&apos;t audit).
             </p>
             <p>
               Cover Me was built to solve this. One click on any job posting. Your resume, their requirements, matched in seconds. Fully editable output you actually want to send. And for users who care about privacy, a BYOK mode where your resume never leaves your device.
@@ -124,17 +133,30 @@ export default function AboutPage() {
               <p className="text-[13px] text-muted-foreground leading-[1.7] mb-5">
                 Software developer based in Canada. Built Cover Me to solve a problem he ran into during his own job search — spending too long personalising cover letters that should take seconds.
               </p>
-              <a
-                href="https://github.com/TheLinc"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-[13px] font-semibold text-brand-light hover:text-brand transition-colors"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" />
-                </svg>
-                github.com/TheLinc
-              </a>
+              <div className="flex flex-col gap-2.5">
+                <a
+                  href="https://github.com/TheLinc"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-[13px] font-semibold text-brand-light hover:text-brand transition-colors"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" />
+                  </svg>
+                  github.com/TheLinc
+                </a>
+                <a
+                  href="https://www.linkedin.com/in/lincolnlaylor/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-[13px] font-semibold text-brand-light hover:text-brand transition-colors"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+                  </svg>
+                  linkedin.com/in/lincolnlaylor
+                </a>
+              </div>
             </div>
 
             {/* Stats */}

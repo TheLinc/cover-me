@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     type: 'website',
   },
   twitter: {
-    card: 'summary',
+    card: 'summary_large_image',
     title: 'Terms of Service — Cover Me',
     description: 'Terms governing your use of the Cover Me Chrome extension and web dashboard.',
   },
