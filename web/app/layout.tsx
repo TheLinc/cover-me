@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { CHROME_STORE_URL } from '@/lib/utils'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 
@@ -49,6 +50,8 @@ const jsonLdApp = {
   operatingSystem: 'Chrome',
   description: 'AI-powered Chrome extension that reads any job posting and generates a tailored, ATS-friendly cover letter from your resume in under 5 seconds.',
   url: BASE,
+  installUrl: CHROME_STORE_URL,
+  downloadUrl: CHROME_STORE_URL,
   offers: [
     {
       '@type': 'Offer',

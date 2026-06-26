@@ -29,6 +29,9 @@ export default function GeneratePage({ onNavigate }: Props) {
   const [tailoredJob, setTailoredJob] = useState<JobData | null>(null)
   const [supplemental, setSupplemental] = useState('')
   const [letterSupplemental, setLetterSupplemental] = useState('')
+  // Optional context the user can add BEFORE the first generation — fed to both
+  // the cover-letter and resume-tailor prompts as supplemental input.
+  const [initialContext, setInitialContext] = useState('')
   const [compact, setCompact] = useState(false)
   const [trim, setTrim] = useState(false)
   const [includeSummary, setIncludeSummary] = useState(true)
@@ -76,6 +79,7 @@ export default function GeneratePage({ onNavigate }: Props) {
         if (typeof s.compact === 'boolean') setCompact(s.compact)
         if (typeof s.trim === 'boolean') setTrim(s.trim)
         if (typeof s.includeSummary === 'boolean') setIncludeSummary(s.includeSummary)
+        if (s.initialContext) setInitialContext(s.initialContext as string)
         coverDismissedId.current = (s.coverDismissedId as string) ?? null
         tailorDismissedId.current = (s.tailorDismissedId as string) ?? null
         // A done result the popup already captured (and the user may have edited)
@@ -199,11 +203,12 @@ export default function GeneratePage({ onNavigate }: Props) {
         tailoredJob: tailorState === 'done' ? tailoredJob : null,
         supplemental,
         letterSupplemental,
+        initialContext,
         coverDismissedId: coverDismissedId.current,
         tailorDismissedId: tailorDismissedId.current,
       },
     })
-  }, [state, inputMode, manualTitle, manualCompany, manualDescription, letter, job, createdAt, compact, trim, includeSummary, tailorState, tailoredResume, tailoredJob, supplemental, letterSupplemental])
+  }, [state, inputMode, manualTitle, manualCompany, manualDescription, letter, job, createdAt, compact, trim, includeSummary, tailorState, tailoredResume, tailoredJob, supplemental, letterSupplemental, initialContext])
 
   async function generate() {
     setState('loading')
@@ -226,7 +231,7 @@ export default function GeneratePage({ onNavigate }: Props) {
     const jobId = crypto.randomUUID()
     coverJobId.current = jobId
     try {
-      await chrome.runtime.sendMessage({ type: 'GENERATE_FROM_MANUAL', jobId, job: scrapedJob }) as GenerateResponse
+      await chrome.runtime.sendMessage({ type: 'GENERATE_FROM_MANUAL', jobId, job: scrapedJob, supplemental: initialContext.trim() || undefined }) as GenerateResponse
     } catch (err) {
       if (coverJobId.current === jobId && coverDismissedId.current !== jobId) {
         setError(err instanceof Error ? err.message : 'Something went wrong')
@@ -249,7 +254,7 @@ export default function GeneratePage({ onNavigate }: Props) {
     const jobId = crypto.randomUUID()
     coverJobId.current = jobId
     try {
-      await chrome.runtime.sendMessage({ type: 'GENERATE_FROM_MANUAL', jobId, job: jobData }) as GenerateResponse
+      await chrome.runtime.sendMessage({ type: 'GENERATE_FROM_MANUAL', jobId, job: jobData, supplemental: initialContext.trim() || undefined }) as GenerateResponse
     } catch (err) {
       if (coverJobId.current === jobId && coverDismissedId.current !== jobId) {
         setError(err instanceof Error ? err.message : 'Something went wrong')
@@ -319,7 +324,7 @@ export default function GeneratePage({ onNavigate }: Props) {
     const jobId = crypto.randomUUID()
     tailorJobId.current = jobId
     try {
-      await chrome.runtime.sendMessage({ type: 'TAILOR_FROM_MANUAL', jobId, job: scrapedJob, compact, trim, includeSummary }) as TailorResponse
+      await chrome.runtime.sendMessage({ type: 'TAILOR_FROM_MANUAL', jobId, job: scrapedJob, compact, trim, includeSummary, supplemental: initialContext.trim() || undefined }) as TailorResponse
     } catch (err) {
       if (tailorJobId.current === jobId && tailorDismissedId.current !== jobId) {
         setTailorError(err instanceof Error ? err.message : 'Something went wrong')
@@ -348,6 +353,7 @@ export default function GeneratePage({ onNavigate }: Props) {
         compact,
         trim,
         includeSummary,
+        supplemental: initialContext.trim() || undefined,
       }) as TailorResponse
     } catch (err) {
       if (tailorJobId.current === jobId && tailorDismissedId.current !== jobId) {
@@ -362,6 +368,7 @@ export default function GeneratePage({ onNavigate }: Props) {
     setTailoredResume(null)
     setTailoredJob(null)
     setSupplemental('')
+    setInitialContext('')
     tailorJobId.current = null
     chrome.storage.local.remove('tailorJob')
   }
@@ -414,6 +421,7 @@ export default function GeneratePage({ onNavigate }: Props) {
     setManualCompany('')
     setManualDescription('')
     setLetterSupplemental('')
+    setInitialContext('')
     coverJobId.current = null
     chrome.storage.local.remove('coverJob')
   }
@@ -610,6 +618,15 @@ export default function GeneratePage({ onNavigate }: Props) {
             <>
               {state === 'idle' && inputMode === 'auto' && (
                 <div className="generate-cta">
+                  <div className="supplemental-section">
+                    <label className="supplemental-label">Add context (optional)</label>
+                    <textarea
+                      className="form-input supplemental-input"
+                      placeholder={'Anything for the AI to factor in before generating\ne.g. "Referred by Jane Chen" · "2yr GraphQL from freelance" · "emphasize leadership"'}
+                      value={initialContext}
+                      onChange={e => setInitialContext(e.target.value)}
+                    />
+                  </div>
                   <button className="btn btn-primary" onClick={generate}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
@@ -688,6 +705,15 @@ export default function GeneratePage({ onNavigate }: Props) {
                       placeholder="Paste the full job description here…"
                       value={manualDescription}
                       onChange={e => setManualDescription(e.target.value)}
+                    />
+                  </div>
+                  <div className="supplemental-section">
+                    <label className="supplemental-label">Add context (optional)</label>
+                    <textarea
+                      className="form-input supplemental-input"
+                      placeholder={'Anything for the AI to factor in before generating\ne.g. "Referred by Jane Chen" · "2yr GraphQL from freelance" · "emphasize leadership"'}
+                      value={initialContext}
+                      onChange={e => setInitialContext(e.target.value)}
                     />
                   </div>
                   <button className="btn btn-primary" onClick={generateManual} disabled={!manualReady}>

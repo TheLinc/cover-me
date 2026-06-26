@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn, CHROME_STORE_URL } from "@/lib/utils";
 import {
   ArrowUpRightIcon,
   CheckIcon,
@@ -65,7 +65,7 @@ function Nav() {
             </Button>
             <Button asChild size="sm">
               <a
-                href="https://chrome.google.com/webstore"
+                href={CHROME_STORE_URL}
                 target="_blank"
                 rel="noreferrer"
               >
@@ -316,7 +316,7 @@ function Hero() {
           <div className="flex gap-2.5 flex-wrap justify-center mt-2">
             <Button asChild size="lg">
               <a
-                href="https://chrome.google.com/webstore"
+                href={CHROME_STORE_URL}
                 target="_blank"
                 rel="noreferrer"
               >
@@ -770,7 +770,7 @@ function Pricing() {
               className="w-full justify-center py-3 text-[13px]"
             >
               <a
-                href="https://chrome.google.com/webstore"
+                href={CHROME_STORE_URL}
                 target="_blank"
                 rel="noreferrer"
               >
@@ -865,7 +865,7 @@ function Footer() {
                 Pricing
               </a>
               <a
-                href="https://chrome.google.com/webstore"
+                href={CHROME_STORE_URL}
                 target="_blank"
                 rel="noreferrer"
                 className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"

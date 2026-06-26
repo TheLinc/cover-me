@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
+import { CHROME_STORE_URL } from '@/lib/utils'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 
@@ -166,7 +167,7 @@ export default function AboutPage() {
           </p>
           <div className="flex gap-3 justify-center flex-wrap">
             <a
-              href="https://chrome.google.com/webstore"
+              href={CHROME_STORE_URL}
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-2 bg-brand text-white font-semibold text-[14px] px-5 py-2.5 rounded-[8px] hover:bg-brand/90 transition-colors"

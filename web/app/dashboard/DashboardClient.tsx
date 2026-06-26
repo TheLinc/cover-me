@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase";
+import { CHROME_STORE_URL } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -328,7 +329,7 @@ export default function DashboardClient({
               </div>
             </div>
             <a
-              href="https://chrome.google.com/webstore"
+              href={CHROME_STORE_URL}
               target="_blank"
               rel="noreferrer"
             >

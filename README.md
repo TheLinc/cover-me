@@ -1,8 +1,8 @@
 # Cover Me
 
-**AI-powered cover letters, generated from any job posting in seconds.**
+**AI cover letters and ATS-tailored resumes, generated from any job posting in seconds.**
 
-Cover Me is an open-source Chrome extension that scrapes job descriptions and generates tailored cover letters using your stored resume. Bring your own API key for unlimited, fully private use — or use the hosted tier for a no-configuration experience.
+Cover Me is an open-source Chrome extension that reads job descriptions and, using your stored resume, generates tailored cover letters and ATS-optimized resumes — complete with a match score and gap analysis. Bring your own API key for unlimited, fully private use — or use the hosted tier for a no-configuration experience.
 
 ---
 
@@ -10,10 +10,10 @@ Cover Me is an open-source Chrome extension that scrapes job descriptions and ge
 
 1. Open any job posting (LinkedIn, Indeed, Lever, Workday, and more)
 2. Click the Cover Me extension icon
-3. Hit **Generate Cover Letter**
+3. Hit **Generate Cover Letter** — or **Tailor Resume to Job**
 4. Edit, copy, or download as PDF
 
-The extension reads the job description from the page, combines it with your resume, and sends it to an AI model that produces a tailored, human-sounding letter — no generic templates, no "I am excited to apply."
+The extension reads the job description from the page and combines it with your resume. **Generate Cover Letter** produces a tailored, human-sounding letter — no generic templates, no "I am excited to apply." **Tailor Resume to Job** rewrites your resume's wording and skills to match the posting's ATS keywords (without fabricating experience), shows a match score out of 100 with a gap analysis, and exports a clean PDF. Optional toggles let you compact to one page, trim irrelevant bullets, or add a tailored summary.
 
 ---
 
@@ -25,7 +25,7 @@ The extension reads the job description from the page, combines it with your res
 | API key required | Yes (yours) | No | No |
 | Generations | Unlimited | 10/day | Unlimited |
 | Resume storage | Local only | Encrypted cloud | Encrypted cloud |
-| Cover letter history | Local only | Local only | Synced across devices |
+| Application history (letters + tailored resumes) | Local only | Local only | Synced across devices |
 | Privacy | Resume never leaves your device | Resume encrypted at rest | Resume encrypted at rest |
 
 ---
@@ -34,7 +34,7 @@ The extension reads the job description from the page, combines it with your res
 
 ### Chrome Web Store
 
-[Install Cover Me](https://chromewebstore.google.com/detail/cover-me-ai-cover-letter/heoaelkdkdninlkgaoahpndmgecfhdbn)
+[**Install Cover Me**](https://chromewebstore.google.com/detail/cover-me-%E2%80%93-ai-cover-lette/bpbnopjgjbimdjjdolhkgimllbgamgpi) — add it to Chrome in one click.
 
 ### Load unpacked (development build)
 
@@ -72,7 +72,7 @@ Cover Me supports two AI providers:
 
 - Navigate to any job posting
 - Click the extension icon
-- Click **Generate Cover Letter**
+- Click **Generate Cover Letter**, or **Tailor Resume to Job** to produce an ATS-optimized resume with a match score
 - Edit the result inline, then copy or download as PDF
 
 If the extension can't detect the job description automatically, use **"Paste it manually"** to enter the details yourself.
@@ -87,10 +87,11 @@ If the extension can't detect the job description automatically, use **"Paste it
 | Indeed | Dedicated scraper |
 | Lever | Dedicated scraper |
 | Workday | Dedicated scraper |
+| BambooHR | Dedicated scraper |
+| Terminal | Dedicated scraper |
 | Greenhouse | Generic scraper (JSON-LD + ATS selectors) |
 | Ashby | Generic scraper |
 | Workable | Generic scraper |
-| BambooHR | Generic scraper |
 | Any careers page | Generic scraper (heuristic fallback) |
 
 The generic scraper tries three strategies in order: JSON-LD structured data, known ATS CSS selectors, then a heuristic that finds the largest heading and text block on the page. If all else fails, use the manual paste option.
@@ -169,10 +170,11 @@ cover-me/
 │   │   ├── content/         # Content scripts + per-site scrapers
 │   │   │   └── scrapers/    # LinkedIn, Indeed, Lever, Workday, generic
 │   │   ├── lib/             # Shared utilities
-│   │   │   ├── ai/          # Claude + OpenAI clients, prompt builder
+│   │   │   ├── ai/          # Cover-letter + resume-tailor prompts, Claude/OpenAI clients, resume parsing
 │   │   │   ├── auth.ts      # Supabase auth + backend API helpers
 │   │   │   ├── crypto.ts    # AES-GCM key encryption/decryption
-│   │   │   ├── pdf.ts       # PDF generation (jsPDF)
+│   │   │   ├── pdf.ts       # Cover letter PDF generation (jsPDF)
+│   │   │   ├── resume-pdf.ts # Tailored resume PDF generation (jsPDF)
 │   │   │   ├── resume-parser.ts
 │   │   │   └── storage.ts   # chrome.storage.local helpers
 │   │   ├── popup/           # React UI
@@ -195,10 +197,12 @@ cover-me/
 └── backend/                 # Supabase Edge Functions + DB migrations
     └── supabase/
         ├── functions/
-        │   ├── generate/    # JWT auth → rate limit → resume fetch → Claude call
-        │   ├── resume/      # GET / POST / DELETE encrypted resume
-        │   ├── letters/     # GET / POST / DELETE cover letter history (Pro)
-        │   └── _shared/     # CORS helpers, AES-GCM encrypt/decrypt
+        │   ├── generate/     # Cover letter: JWT auth → rate limit → resume fetch → Claude (Haiku)
+        │   ├── tailor/       # Resume tailoring: same flow → Claude (Sonnet) → tailored resume + ATS score
+        │   ├── resume/       # GET / POST / DELETE encrypted resume
+        │   ├── letters/      # GET / POST / DELETE cover letter history (Pro)
+        │   ├── applications/ # GET / DELETE job applications w/ nested letters + tailored resumes (Pro)
+        │   └── _shared/      # CORS helpers, AES-GCM encrypt/decrypt
         └── migrations/      # Postgres schema + RLS policies
 ```
 
@@ -214,7 +218,7 @@ cover-me/
 | Backend | Supabase (Auth + Postgres + Edge Functions) |
 | Web dashboard | Next.js on Vercel |
 | Payments | Stripe |
-| AI — hosted | Claude Haiku (Anthropic) |
+| AI — hosted | Claude (Anthropic) — Haiku for cover letters, Sonnet for resume tailoring |
 | AI — BYOK | Claude or OpenAI, user's choice |
 
 ---
@@ -236,11 +240,15 @@ Service worker
         → sends JWT + job data to Supabase Edge Function
         → Edge Function: verifies JWT, checks rate limit,
           fetches encrypted resume, decrypts, calls Claude,
-          returns letter
-        → Pro users: letter also saved to backend history
+          returns letter (generate) or tailored resume +
+          ATS match score (tailor)
+        → Pro users: result also saved to backend history
+
+The same two paths serve both features: "Generate Cover Letter"
+(generate) and "Tailor Resume to Job" (tailor).
 
 Popup (React)
-  → displays editable letter
+  → displays editable letter, or tailored resume + ATS score/gaps
   → copy to clipboard / download PDF
   → history page syncs from backend for Pro users
 ```
@@ -314,8 +322,10 @@ supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...
 
 ```bash
 supabase functions deploy generate
+supabase functions deploy tailor
 supabase functions deploy resume
 supabase functions deploy letters
+supabase functions deploy applications
 ```
 
 ### 7. Set up Stripe
@@ -434,9 +444,11 @@ Contributions are welcome. A few guidelines:
 - [x] Stripe paid tier — Checkout, webhooks, billing portal
 - [x] Web dashboard — landing page, user dashboard, auth flow
 - [x] Cover letter history sync for Pro users (cross-device)
+- [x] Resume tailoring — AI optimizes your resume for each job posting with an ATS match score, exports as PDF
+- [x] Application history — cover letters + tailored resumes grouped by job, synced for Pro
 - [x] Chrome Web Store release
+- [ ] Tailored resume history stored locally (BYOK/Free)
 - [ ] Prompt tuning based on real usage
-- [ ] Resume tailoring — AI optimizes your resume for each job posting, exports as PDF
 - [ ] Firefox support (polyfill already in place)
 
 ---
