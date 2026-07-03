@@ -23,6 +23,7 @@
   --error:       #f87171;
   --error-dim:   rgba(248, 113, 113, 0.10);
   --success:     #34d399;
+  --success-dim: rgba(52, 211, 153, 0.10);
   --r:           8px;
   --r-sm:        5px;
 }
@@ -238,6 +239,17 @@ html, body {
   margin-bottom: 12px;
 }
 
+.notice-box {
+  background: var(--success-dim);
+  border: 1px solid rgba(52, 211, 153, 0.2);
+  border-radius: var(--r-sm);
+  padding: 11px 13px;
+  color: var(--success);
+  font-size: 12px;
+  line-height: 1.55;
+  margin-bottom: 12px;
+}
+
 /* ── Generate page ────────────────────────────── */
 
 .generate-cta {
@@ -327,7 +339,7 @@ html, body {
 .manual-toggle {
   background: transparent;
   border: none;
-  color: var(--text-3);
+  color: var(--text-2);
   font-family: inherit;
   font-size: 11px;
   cursor: pointer;
@@ -336,7 +348,7 @@ html, body {
   transition: color 0.14s;
   width: 100%;
 }
-.manual-toggle:hover { color: var(--text-2); }
+.manual-toggle:hover { color: var(--text); }
 
 .compact-toggle {
   display: flex;
@@ -983,6 +995,165 @@ html, body {
   color: var(--text-2);
   cursor: pointer;
   user-select: none;
+}
+
+/* ── Context expander ─────────────────────────── */
+
+.context-expander { margin-bottom: 4px; }
+
+.context-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: none;
+  color: var(--text-2);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0 0 8px;
+  transition: color 0.14s;
+}
+.context-toggle:hover { color: var(--text); }
+
+.context-hint {
+  font-size: 11px;
+  color: var(--text-3);
+  line-height: 1.5;
+  margin: 4px 0 0;
+}
+
+.context-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+/* ── Tailor section (button + grouped options) ── */
+
+.tailor-section { display: flex; flex-direction: column; gap: 8px; }
+
+.tailor-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-left: 10px;
+  border-left: 2px solid var(--border);
+  margin-left: 3px;
+}
+
+.tailor-options .compact-toggle { margin-top: 0; }
+
+/* ── Manual back button ───────────────────────── */
+
+.manual-back {
+  background: transparent;
+  border: none;
+  color: var(--text-2);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0 0 14px;
+  text-align: left;
+  transition: color 0.14s;
+}
+.manual-back:hover { color: var(--text); }
+
+/* ── Letter result header ─────────────────────── */
+
+.letter-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  gap: 8px;
+}
+
+.letter-job-label {
+  font-size: 11px;
+  color: var(--text-2);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+.letter-edit-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  color: var(--text-2);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 3px 9px;
+  transition: border-color 0.14s, color 0.14s, background 0.14s;
+  flex-shrink: 0;
+}
+.letter-edit-btn:hover { border-color: var(--accent); color: var(--accent-h); }
+.letter-edit-btn.active {
+  border-color: var(--accent);
+  color: var(--accent-h);
+  background: var(--accent-dim);
+}
+
+/* ── Regenerate expander ──────────────────────── */
+
+.regen-expander { display: flex; flex-direction: column; gap: 8px; }
+
+.regen-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: none;
+  color: var(--text-3);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.14s;
+  text-align: left;
+}
+.regen-toggle:hover { color: var(--text-2); }
+
+.regen-section { display: flex; flex-direction: column; gap: 6px; }
+
+/* ── Result tabs ──────────────────────────────── */
+
+.result-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 10px;
+}
+
+.result-tab {
+  flex: 1;
+  padding: 7px 12px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-3);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.14s, border-color 0.14s;
+  margin-bottom: -1px;
+}
+.result-tab:hover { color: var(--text-2); }
+.result-tab.active {
+  color: var(--accent-h);
+  border-bottom-color: var(--accent);
 }
 
 .warning-box {

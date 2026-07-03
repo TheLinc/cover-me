@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Cover Me – AI Cover Letter & Resume",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "AI cover letter writer & resume tailor — personalized job applications from any posting in seconds.",
   "icons": {
     "16": "src/public/icon/16.png",

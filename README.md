@@ -371,13 +371,15 @@ Or deploy to Vercel — set the same variables in *Project Settings → Environm
 
 ### 9. Configure the extension
 
-Create `extension/.env.local`:
+Create `extension/.env`:
 
 ```env
 VITE_SUPABASE_URL=https://<project-ref>.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=<anon-key>
 VITE_WEB_URL=https://your-domain.com
 ```
+
+(If you want separate credentials for local development, put those in `extension/.env.development` instead — Vite only loads that file for `pnpm dev`, never for `pnpm run build`, so your production build always uses `extension/.env`.)
 
 Rebuild the extension:
 
@@ -412,7 +414,7 @@ Load `extension/dist/` as an unpacked extension in Chrome. The hosted tier will 
 | `STRIPE_PRO_PRICE_ID` | Stripe recurring price ID |
 | `NEXT_PUBLIC_SITE_URL` | Your web dashboard URL |
 
-**Extension** (`extension/.env.local`):
+**Extension** (`extension/.env`; use `extension/.env.development` for local-only overrides):
 
 | Variable | Description |
 |---|---|

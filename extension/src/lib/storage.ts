@@ -85,3 +85,16 @@ export async function getCachedTier(): Promise<string | null> {
 export async function saveCachedTier(tier: string): Promise<void> {
   await chrome.storage.local.set({ cachedTier: tier })
 }
+
+// Standing facts about the candidate (e.g. "4 years total experience — resume
+// only shows 3", "referred by Jane Chen") that apply to every future cover
+// letter and resume tailor, not just the generation in progress. Stored
+// separately from the per-job supplemental fields so it survives "New" resets.
+export async function getCandidateContext(): Promise<string> {
+  const { candidateContext } = await chrome.storage.local.get('candidateContext')
+  return (candidateContext as string) ?? ''
+}
+
+export async function saveCandidateContext(text: string): Promise<void> {
+  await chrome.storage.local.set({ candidateContext: text })
+}

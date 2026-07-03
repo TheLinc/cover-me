@@ -4,7 +4,7 @@ import { parseResumeStructure } from '../lib/ai/resume-parse'
 import { tailorResume } from '../lib/ai/resume-tailor'
 import { decryptApiKey } from '../lib/crypto'
 import { debugGroup } from '../lib/debug'
-import { addToHistory, getCachedTier, getResume, getSettings, saveParsedResume } from '../lib/storage'
+import { addToHistory, getCachedTier, getCandidateContext, getResume, getSettings, saveParsedResume } from '../lib/storage'
 import type { CoverJob, CoverLetter, GenerateResponse, JobData, ScrapeResponse, TailoredResume, TailorJob, TailorResponse } from '../types'
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -217,6 +217,11 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
   try {
     const settings = await getSettings()
 
+    // Standing candidate facts (set once, edited in the "Candidate context" box)
+    // apply to every generation, layered under any one-off note for this run.
+    const candidateContext = (await getCandidateContext()).trim()
+    const merged = [candidateContext, supplemental?.trim()].filter(Boolean).join('\n\n') || undefined
+
     await debugGroup('Tailor — scraped job + flags', {
       mode: settings?.mode ?? 'byok',
       'job.title': job.title,
@@ -224,7 +229,7 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
       'job.url': job.url,
       'job.description': job.description,
       'job.description.length': job.description?.length,
-      flags: { compact, trim, includeSummary, hasSupplemental: !!supplemental, hasPrevious: !!previous },
+      flags: { compact, trim, includeSummary, hasCandidateContext: !!candidateContext, hasSupplemental: !!supplemental, hasPrevious: !!previous },
     })
 
     if (settings?.mode === 'hosted') {
@@ -234,7 +239,7 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
       }
       // Hosted: the resume + final prompt live server-side. Enable DEBUG_MODE on
       // the edge function to see those in the Supabase function logs.
-      const resume = await tailorViaBackend(job, session.access_token, compact, supplemental, trim, includeSummary, previous)
+      const resume = await tailorViaBackend(job, session.access_token, compact, merged, trim, includeSummary, previous)
       await setTailorJob({ id, status: 'done', job, resume, startedAt })
       return { success: true, resume, job }
     }
@@ -263,7 +268,7 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
       bulletsPerRole: parsed.experience?.map((e) => ({ role: e.title, bullets: e.bullets?.length })),
     })
 
-    const tailored = await tailorResume(job, parsed, settings.provider, apiKey, compact, supplemental, trim, includeSummary, previous)
+    const tailored = await tailorResume(job, parsed, settings.provider, apiKey, compact, merged, trim, includeSummary, previous)
     await setTailorJob({ id, status: 'done', job, resume: tailored, startedAt })
     return { success: true, resume: tailored, job }
   } catch (err) {
@@ -284,6 +289,11 @@ async function generateFromJob(job: JobData, supplemental?: string, jobId?: stri
   try {
     const settings = await getSettings()
 
+    // Standing candidate facts (set once, edited in the "Candidate context" box)
+    // apply to every generation, layered under any one-off note for this run.
+    const candidateContext = (await getCandidateContext()).trim()
+    const merged = [candidateContext, supplemental?.trim()].filter(Boolean).join('\n\n') || undefined
+
     await debugGroup('Cover letter — scraped job', {
       mode: settings?.mode ?? 'byok',
       'job.title': job.title,
@@ -291,6 +301,7 @@ async function generateFromJob(job: JobData, supplemental?: string, jobId?: stri
       'job.url': job.url,
       'job.description': job.description,
       'job.description.length': job.description?.length,
+      hasCandidateContext: !!candidateContext,
       hasSupplemental: !!supplemental,
     })
 
@@ -300,7 +311,7 @@ async function generateFromJob(job: JobData, supplemental?: string, jobId?: stri
       if (!session) {
         return failCover(id, job, startedAt, 'Session expired. Please sign in again in Settings.')
       }
-      const letter = await generateViaBackend(job, session.access_token, supplemental)
+      const letter = await generateViaBackend(job, session.access_token, merged)
       const entry: CoverLetter = {
         id: crypto.randomUUID(),
         job,
@@ -326,7 +337,7 @@ async function generateFromJob(job: JobData, supplemental?: string, jobId?: stri
     }
 
     const apiKey = await decryptApiKey(settings.apiKey)
-    const letter = await generateCoverLetter(job, resume.text, settings.provider, apiKey, supplemental)
+    const letter = await generateCoverLetter(job, resume.text, settings.provider, apiKey, merged)
     const entry: CoverLetter = {
       id: crypto.randomUUID(),
       job,

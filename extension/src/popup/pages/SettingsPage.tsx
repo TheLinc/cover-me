@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ensureValidSession, fetchTier, signIn, signOut, signUp, uploadResumeToBackend } from '../../lib/auth'
+import { EmailConfirmationRequiredError, ensureValidSession, fetchTier, signIn, signOut, signUp, uploadResumeToBackend } from '../../lib/auth'
 import { decryptApiKey, encryptApiKey } from '../../lib/crypto'
 import { clearSavedLogin, clearSession, getSavedLogin, getResume, getSettings, saveCachedTier, saveSession, saveSettings, setSavedLogin } from '../../lib/storage'
 import type { AIProvider, AppMode, AuthSession } from '../../types'
@@ -31,6 +31,7 @@ export default function SettingsPage() {
   const [rememberMe, setRememberMe] = useState(false)
   const [authStatus, setAuthStatus] = useState<AuthStatus>('idle')
   const [authError, setAuthError] = useState('')
+  const [authNotice, setAuthNotice] = useState('')
 
   useEffect(() => {
     Promise.all([getSettings(), ensureValidSession()]).then(async ([s, sess]) => {
@@ -103,6 +104,7 @@ export default function SettingsPage() {
   async function handleAuth() {
     setAuthStatus('loading')
     setAuthError('')
+    setAuthNotice('')
     try {
       const sess = authView === 'signin'
         ? await signIn(email, password)
@@ -134,7 +136,13 @@ export default function SettingsPage() {
         })
       }
     } catch (err) {
-      setAuthError(err instanceof Error ? err.message : 'Authentication failed')
+      if (err instanceof EmailConfirmationRequiredError) {
+        setAuthNotice(err.message)
+        setEmail('')
+        setPassword('')
+      } else {
+        setAuthError(err instanceof Error ? err.message : 'Authentication failed')
+      }
     } finally {
       setAuthStatus('idle')
     }
@@ -149,6 +157,7 @@ export default function SettingsPage() {
   function switchAuthView(v: AuthView) {
     setAuthView(v)
     setAuthError('')
+    setAuthNotice('')
     setShowPassword(false)
     if (v === 'signup') {
       setEmail('')
@@ -336,6 +345,7 @@ export default function SettingsPage() {
               )}
 
               {authError && <div className="error-box">{authError}</div>}
+              {authNotice && <div className="notice-box">{authNotice}</div>}
 
               <button
                 className="btn btn-primary"

@@ -1,6 +1,17 @@
 const CLAUDE_API = 'https://api.anthropic.com/v1/messages'
 
-export async function callClaude(prompt: string, apiKey: string): Promise<string> {
+export interface ChatMessage {
+  role: 'user' | 'assistant'
+  content: string
+}
+
+// Sonnet for cover letters: the letter is the product's flagship "must sound
+// human" artifact and the prompt carries ~60 constraints — the small models
+// are the ones that leak AI-tells and drop rules. ~1¢/letter on the user's key.
+const LETTER_MODEL = 'claude-sonnet-4-6'
+
+export async function callClaude(prompt: string | ChatMessage[], apiKey: string): Promise<string> {
+  const messages = typeof prompt === 'string' ? [{ role: 'user', content: prompt }] : prompt
   const res = await fetch(CLAUDE_API, {
     method: 'POST',
     headers: {
@@ -10,9 +21,9 @@ export async function callClaude(prompt: string, apiKey: string): Promise<string
       'anthropic-dangerous-direct-browser-access': 'true',
     },
     body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
+      model: LETTER_MODEL,
       max_tokens: 1024,
-      messages: [{ role: 'user', content: prompt }],
+      messages,
     }),
   })
 

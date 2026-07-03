@@ -84,7 +84,7 @@ function stripScores(r: TailoredResume): Omit<TailoredResume, 'atsScore' | 'atsG
   return rest
 }
 
-function buildPrompt(job: JobData, parsed: ParsedResume, compact: boolean, supplemental?: string, trim = false, includeSummary = true, previous?: TailoredResume): string {
+export function buildPrompt(job: JobData, parsed: ParsedResume, compact: boolean, supplemental?: string, trim = false, includeSummary = true, previous?: TailoredResume): string {
   const company = job.company && job.company !== 'Unknown Company' ? job.company : 'Unknown'
   const today = new Date().toISOString().split('T')[0]
 
@@ -105,7 +105,7 @@ Reorder the skills so the most relevant to this job appear first, using the JD's
 
 ADD a skill only when it is in the JD AND justified by the resume in one of two ways:
   - Direct superset/subset of an existing skill — JavaScript on resume + JD says TypeScript → add TypeScript.
-  - A capability CATEGORY LABEL you can back with a SPECIFIC tool already on the resume — Zustand on resume + JD says "state management" → add "State Management"; Jest/RTL on resume + JD says "testing" → add "Testing". Before adding any label, name the resume tool that justifies it; if you cannot name one, do not add it. Add the label only, never the specific JD tool itself (Integrity 3).
+  - A capability CATEGORY LABEL you can back with a SPECIFIC tool already on the resume — Zustand on resume + JD says "state management" → add "State Management"; Jest/RTL on resume + JD says "testing" → add "Testing". Before adding any label, name the resume tool that justifies it; if you cannot name one, do not add it. Add the label only, NEVER the specific JD tool itself (JD says Meta Ads, resume has Google Ads → you may add the label "Paid Acquisition", never "Meta Ads") (Integrity 3).
 Never add a competing or unrelated tool the candidate lacks (Vue, Redux, a different language). Do NOT add process or architecture buzzwords the resume gives no concrete evidence for — in tech, "CI/CD", "DevOps", "Cloud Security", "Microservices Architecture", "Cloud-Native" each require a named tool or practice on the resume; in any field, a license, certification, or method named only in the JD is never added unless the resume states it. Absent evidence, these are fabrications (Integrity 4). If in doubt, leave it out.
 
 REMOVE skills not relevant to this role type (e.g. a mobile-only framework for a pure web role). When over the cap, keep the most JD-relevant skills and drop the least relevant first. Aim for ~15–18 focused skills, not an exhaustive inventory; a bloated list buries the terms that matter and reads as unfocused. NEVER remove a skill the JD names — or a specific instance of a category the JD names (e.g. MySQL under "relational databases") — that the candidate genuinely has; ATS matches literal tokens, so the JD's exact term must survive. When the resume has both a JD-named specific term and its generic synonym, keep BOTH ("MySQL (SQL)", not just "SQL"); dedupe only synonyms the JD does not name. Hard cap: 18 items.
@@ -176,7 +176,7 @@ STEP 3 — DEFINE RESUME ANGLE
 Write one internal positioning sentence (not output): "[Role archetype] with [X years] of [key area] specializing in [top 2 Tier 1 strengths], with proven [achievement type]." Every bullet and the summary must reinforce it.
 
 ${includeSummary ? `STEP 4 — WRITE SUMMARY
-2–3 sentences, 40–70 words, no first-person pronouns, no weak openers ("Experienced professional", "Results-driven", "Dynamic"), no clichés ("passionate", "innovative", "team player"):
+2–3 sentences, 40–70 words, no first-person pronouns, no weak openers ("Experienced professional", "Results-driven", "Dynamic"), no clichés ("passionate", "innovative", "team player", "fast-paced", "dynamic"):
 - Identity: open with the target role's title (TARGET ROLE above) as the archetype, unless the candidate's experience clearly does not support that level — then use the closest archetype it does support. Include 2–3 Tier 1 keywords and years of experience.
 - Strongest capability or achievement that answers the role's core challenge
 - Optional: a differentiator or collaboration strength relevant to the role
@@ -195,8 +195,11 @@ Compressed STAR: [strong action verb] + [what was done] + [measurable result or 
 - Use the JD's exact term for matching work — if the JD says "WCAG 2.1 AA" and the candidate did accessibility work, write "WCAG 2.1 AA", not just "accessible". Apply STEP 2 synonym pairs where they fit.
 - Borrow the JD's vocabulary, not its sentences: keep the JD's specific terms-of-art (per above), but never reproduce a whole sentence or clause from the JD — phrase every accomplishment in the candidate's own words. Lifted phrasing reads as templated to a human reviewer.
 - Quantify with industry-fit metrics — Tech: latency, scale, uptime, cost, build time; Healthcare: caseload, outcomes, error-free records, compliance; Finance: $ value, audit volume, reporting time; Marketing: conversion, CTR, ROI, revenue; Legal: transaction value, case outcomes, caseload. No real metric? Use concrete scope (team size, user count, integrations, timeline). Never a vague improvement with no number. Use each specific figure once — never repeat the same metric across bullets; the summary may cite at most one headline number.
+- Numbers are evidence, not decoration: use ONLY figures stated in the resume or supplemental context. If the input gives no number for an accomplishment, write it with concrete scope or without a figure — a made-up percentage is a fabrication, not a rewrite (Integrity 7).
 - Replace weak openers: Responsible for→Led/Owned; Worked on→Built/Developed; Helped/Assisted with→Partnered/Collaborated; "Demonstrating proficiency in"→delete (the work shows it).
-- Verb bank: Led, Owned, Drove, Spearheaded, Built, Designed, Launched, Shipped, Architected, Reduced, Optimized, Streamlined, Scaled, Generated, Delivered, Partnered, Mentored.
+- Verb bank: Led, Owned, Drove, Directed, Built, Designed, Launched, Shipped, Architected, Reduced, Optimized, Streamlined, Scaled, Generated, Delivered, Partnered, Mentored.
+- Vary bullet rhythm: recruiters flag resumes where every bullet follows the identical [verb + task + metric] cadence or consecutive bullets open with the same verb. Vary sentence shape and length across each role's bullets — place the metric mid-sentence in some, at the end in others; a bullet with no metric stays concrete and factual rather than force-fitted to the formula.
+- Banned filler (reads as AI-written): leveraged, utilized, seamlessly, cutting-edge, state-of-the-art, spearheaded, honed, fostered, garnered, various, numerous. Use the plain verb or name the specific thing instead.
 
 STEP 7 — REORDER BULLETS
 Within each role, sort bullets most-relevant-first. This touches only the bullets inside a role; role order is fixed (Integrity 2).
@@ -215,16 +218,18 @@ INTEGRITY RULES — any violation makes the output unusable:
 
 1. NEVER alter: name, contact details, job titles, company names, dates, locations, institutions, degree names, certifications, or any bullet beginning "Tech:" (copy those verbatim — they count toward the bullet budget).
 2. NEVER reorder experience or education entries. Output every entry in the EXACT top-to-bottom order it appears in the input — do NOT re-sort by date, recency, relevance, or seniority. If the input lists role A above role B, the output lists A above B, even when B's start date is more recent or B seems more relevant to this job. Only the bullets WITHIN an entry may be reordered.
-3. NO INVENTED OR SUBSTITUTED SKILLS. Any concrete skill, tool, technology, certification, license, method, or system may appear in the output (bullets or skills) only if it appears verbatim in the resume. A competing or adjacent one does NOT qualify the candidate for the one the JD names — this holds in every field: Zustand≠Redux, Vue≠React (tech), BLS≠ACLS (healthcare), QuickBooks≠SAP (finance), M&A≠litigation (legal). JD-only items — including "preferred"/"nice-to-have" ones — are never added. Never swap something the resume names for a different thing the JD names even when they serve the same purpose (resume "PHP (Symfony)" stays "PHP (Symfony)" even if the JD says "Python/FastAPI"). The only additions allowed are those defined in STEP 8.
+3. NO INVENTED OR SUBSTITUTED SKILLS. Any concrete skill, tool, technology, certification, license, method, or system may appear in the output (bullets or skills) only if it appears verbatim in the resume. A competing or adjacent one does NOT qualify the candidate for the one the JD names — this holds in every field: Zustand≠Redux, Vue≠React (tech), BLS≠ACLS (healthcare), QuickBooks≠SAP (finance), M&A≠litigation (legal). JD-only items — including "preferred"/"nice-to-have" ones — are never added. Never swap something the resume names for a different thing the JD names even when they serve the same purpose (resume "PHP (Symfony)" stays "PHP (Symfony)" even if the JD says "Python/FastAPI"). A JD-only item may not appear in ANY framing — not as "pursuing [X]", "ready to obtain [X]", "[X]-ready", "[X]-eligible", "willing to obtain [X]", nor ANY other construction that attaches the missing item's name to the candidate; the candidate's gaps are reported exclusively in keywordMatch, and resume content never names what the candidate lacks. The only additions allowed are those defined in STEP 8.
 4. NO SCOPE INFLATION. Keep each bullet's real depth — never upgrade narrow, specific work into a broad claim. This applies in every field: "used AWS S3 for storage" must not become "deployed on AWS" (tech); "recorded patient vitals" must not become "managed critical care" (healthcare); "reconciled invoices" must not become "owned the financial close" (finance). Don't apply a JD term-of-art unless the resume gives concrete evidence for it — in tech that means "microservices", "cloud-native", "CI/CD", "DevOps", "cloud security"; in other fields, the equivalent inflated label. This ban includes hedged or hyphenated variants ("microservice-aligned", "X-aligned", "X-inspired", "X-adjacent") — you may not evade it by softening the word. It also covers INDUSTRY/DOMAIN claims: if no bullet shows the candidate worked in a domain (e-commerce, fintech, healthcare, etc.), the summary and bullets may not claim it or call the experience "X-adjacent", even when the JD lists that domain as required or preferred. A skill listed only in the skills section (no supporting bullet) may never appear in a bullet or the summary. Do not manufacture an accomplishment from a supervisory mention — "reviewed others' work" does not license claiming you performed that work.
 5. ONE BULLET IN, ONE BULLET OUT (NO MERGING). Never merge two bullets into one sentence — to shorten a role, drop whole bullets, never fuse them. In DEFAULT mode each role's output bullet count equals its input count EXACTLY (11 in → 11 out, no drops). In TRIM or COMPACT mode, dropping whole bullets is REQUIRED per STEP 5 — a long role is expected to come out roughly half its input length — but the surviving bullets are still strictly one-in-one-out (never a JD-named activity, never merged).
 6. PROTECT BEHAVIORAL BULLETS. If the JD names a verifiable activity under its responsibilities (STEP 2) and a bullet demonstrates it, that bullet must appear in the output — never dropped or merged, regardless of budget. Drop a different bullet instead.
-7. Return ONLY valid JSON — no markdown anywhere in values, no fences, no text before or after.
+7. NO INVENTED NUMBERS. Every figure in the output — percentages, dollar amounts, counts, team sizes, durations, caseloads — must appear in the candidate's resume or supplemental context. Never introduce, estimate, extrapolate, or round a figure the input does not state ("improved performance" may not become "improved performance by 30%"). Deriving a new figure from the resume's own numbers also counts as inventing: "reduced load from 1.2s to 400ms" may not become "cut load time by 67%" — keep the resume's original figures, which are more concrete anyway. Removing a number is allowed; inventing, altering, or deriving one never is.
+8. Return ONLY valid JSON — no markdown anywhere in values, no fences, no text before or after.
 
 FINAL CHECK — before emitting, SILENTLY audit your draft against the rules above and fix every violation. Do NOT write the audit, reasoning, or any commentary; your entire response must be the JSON object only, starting with { and ending with }. Verify:
 - NO MERGING: no output bullet combines two distinct accomplishments from separate input bullets. To shorten a role, drop whole bullets per the active budget — never fuse them. If any bullet joins two unrelated accomplishments with ";" or "and also", split it back.
 - BEHAVIORAL MATCH: every activity the JD names under its responsibilities that the resume supports (e.g. code reviews, mentoring) appears as its own bullet.
-- EVIDENCE: every skill, credential, and claim in a bullet or the summary is backed verbatim by the resume. Remove anything that is not — especially a term-of-art lifted from the JD that the resume never supports (in tech: CI/CD, DevOps, Microservices; in any field, the equivalent unearned buzzword).
+- EVIDENCE: every skill, credential, and claim in the skills list, a bullet, or the summary is backed verbatim by the resume. Remove anything that is not — especially a term-of-art lifted from the JD that the resume never supports (in tech: CI/CD, DevOps, Microservices; in any field, the equivalent unearned buzzword). No JD-only requirement is named anywhere in resume content in any framing (pursuing/ready to obtain/transitioning to) — gaps live only in keywordMatch.
+- NUMBERS: every figure in bullets and the summary appears in the input resume or supplemental context; none invented, altered, extrapolated, or derived by arithmetic from other input figures (Integrity 7).
 
 Return this exact JSON structure:
 
@@ -239,7 +244,7 @@ export function isValidResume(r: unknown): r is TailoredResume {
     Array.isArray(resume.experience)
 }
 
-function parseJson(raw: string): TailoredResume {
+export function parseJson(raw: string): TailoredResume {
   let cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
   // If the model wrapped the JSON in prose, extract the outermost object.
   if (!cleaned.startsWith('{')) {
@@ -302,7 +307,8 @@ export async function tailorResume(
       },
       body: JSON.stringify({
         // Sonnet for tailoring: judgment-heavy (bullet preservation, relevance
-        // calls) — Haiku compresses/merges. Cover letters stay on Haiku.
+        // calls) — the small models compress/merge. Cover letters are on
+        // Sonnet too (see claude.ts).
         model: 'claude-sonnet-4-6',
         max_tokens: 6000,
         messages: [{ role: 'user', content: prompt }],

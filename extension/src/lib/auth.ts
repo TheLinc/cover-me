@@ -3,6 +3,11 @@ import { clearSession, getSession, saveSession } from './storage'
 import { isValidResume } from './ai/resume-tailor'
 import type { ApplicationRecord, AuthSession, CoverLetter, JobData, TailoredResume } from '../types'
 
+// Thrown by signUp() when the account was created but needs email confirmation
+// before it can sign in — not a failure, so callers should render it as a
+// neutral/success notice rather than an error.
+export class EmailConfirmationRequiredError extends Error {}
+
 function authHeaders(token?: string): HeadersInit {
   const h: HeadersInit = {
     'Content-Type': 'application/json',
@@ -41,7 +46,7 @@ export async function signUp(email: string, password: string): Promise<AuthSessi
     )
   }
   if (!data.access_token) {
-    throw new Error('Check your email to confirm your account, then sign in.')
+    throw new EmailConfirmationRequiredError('Check your email to confirm your account, then sign in.')
   }
   return parseSession(data)
 }

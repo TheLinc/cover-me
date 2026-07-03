@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { downloadCoverLetterPdf } from '../../lib/pdf'
 import { downloadTailoredResumePdf } from '../../lib/resume-pdf'
+import { getCandidateContext, saveCandidateContext } from '../../lib/storage'
 import type { AuthSession, CoverJob, GenerateResponse, JobData, Settings, ScrapeResponse, TailorJob, TailorResponse, TailoredResume } from '../../types'
 import logoIcon from '../../public/icon/48.png'
 import type { Page } from '../App'
@@ -10,6 +11,93 @@ type InputMode = 'auto' | 'manual'
 
 interface Props {
   onNavigate: (page: Page) => void
+}
+
+interface ContextExpanderProps {
+  contextExpanded: boolean
+  setContextExpanded: (fn: (v: boolean) => boolean) => void
+  initialContext: string
+  setInitialContext: (v: string) => void
+}
+
+function ContextExpander({ contextExpanded, setContextExpanded, initialContext, setInitialContext }: ContextExpanderProps) {
+  return (
+    <div className="context-expander">
+      <button className="context-toggle" onClick={() => setContextExpanded(v => !v)}>
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          {contextExpanded
+            ? <line x1="5" y1="12" x2="19" y2="12" />
+            : <><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></>
+          }
+        </svg>
+        Candidate context
+        {!contextExpanded && initialContext && <span className="context-dot" />}
+      </button>
+      {contextExpanded && (
+        <>
+          <textarea
+            className="form-input supplemental-input"
+            placeholder={'Standing facts the AI should always factor in…\ne.g. "4 years total experience — resume only shows 3" · "Referred by Jane Chen" · "2yr GraphQL from freelance"'}
+            value={initialContext}
+            onChange={e => setInitialContext(e.target.value)}
+            autoFocus
+          />
+          <p className="context-hint">Saved automatically — applied to every cover letter and resume you generate.</p>
+        </>
+      )}
+    </div>
+  )
+}
+
+interface TailorOptionsProps {
+  inputMode: InputMode
+  manualReady: boolean
+  onTailor: () => void
+  compact: boolean
+  setCompact: (v: boolean) => void
+  trim: boolean
+  setTrim: (v: boolean) => void
+  includeSummary: boolean
+  setIncludeSummary: (v: boolean) => void
+}
+
+function TailorOptions({ inputMode, manualReady, onTailor, compact, setCompact, trim, setTrim, includeSummary, setIncludeSummary }: TailorOptionsProps) {
+  return (
+    <div className="tailor-section">
+      <button className="btn btn-secondary" onClick={onTailor} disabled={inputMode === 'manual' ? !manualReady : false}>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+          <polyline points="14 2 14 8 20 8" />
+          <line x1="16" y1="13" x2="8" y2="13" />
+          <line x1="16" y1="17" x2="8" y2="17" />
+          <polyline points="10 9 9 9 8 9" />
+        </svg>
+        Tailor Resume to Job
+      </button>
+      <div className="tailor-options">
+        <label className="compact-toggle">
+          <input type="checkbox" checked={compact} onChange={e => setCompact(e.target.checked)} />
+          Compact to one page
+        </label>
+        <label className="compact-toggle">
+          <input type="checkbox" checked={trim} onChange={e => setTrim(e.target.checked)} />
+          Remove irrelevant bullets
+          <span
+            className="tooltip-icon"
+            data-tooltip="Best for long master resumes with all your experience — the AI selects only the bullets most relevant to the role being applied for."
+          >?</span>
+        </label>
+        <label className="compact-toggle">
+          <input type="checkbox" checked={includeSummary} onChange={e => setIncludeSummary(e.target.checked)} />
+          Include summary
+          <span
+            className="tooltip-icon"
+            data-tooltip="Adds a 2-3 sentence professional summary tailored to the role. Turn off if your resume already has one or the role prefers none."
+          >?</span>
+        </label>
+      </div>
+    </div>
+  )
 }
 
 export default function GeneratePage({ onNavigate }: Props) {
@@ -29,8 +117,6 @@ export default function GeneratePage({ onNavigate }: Props) {
   const [tailoredJob, setTailoredJob] = useState<JobData | null>(null)
   const [supplemental, setSupplemental] = useState('')
   const [letterSupplemental, setLetterSupplemental] = useState('')
-  // Optional context the user can add BEFORE the first generation — fed to both
-  // the cover-letter and resume-tailor prompts as supplemental input.
   const [initialContext, setInitialContext] = useState('')
   const [compact, setCompact] = useState(false)
   const [trim, setTrim] = useState(false)
@@ -41,26 +127,25 @@ export default function GeneratePage({ onNavigate }: Props) {
   const [manualCompany, setManualCompany] = useState('')
   const [manualDescription, setManualDescription] = useState('')
 
-  // null = still loading from storage
   const [hasResume, setHasResume] = useState<boolean | null>(null)
   const [hasApiKey, setHasApiKey] = useState<boolean | null>(null)
   const [hasSession, setHasSession] = useState<boolean | null>(null)
   const [appMode, setAppMode] = useState<'byok' | 'hosted'>('byok')
 
+  // UI state — not persisted across popup opens
+  const [contextExpanded, setContextExpanded] = useState(false)
+  const [letterEditing, setLetterEditing] = useState(false)
+  const [regenerateExpanded, setRegenerateExpanded] = useState(false)
+  const [activeResultTab, setActiveResultTab] = useState<'letter' | 'resume'>('letter')
+
   const loaded = useRef(false)
-  // The generation runs in the service worker and persists its status to
-  // chrome.storage.local (coverJob / tailorJob). The popup is just a view: it
-  // hydrates from those records on mount and follows them live via onChanged,
-  // so closing the popup mid-generation never loses the result.
   const coverJobId = useRef<string | null>(null)
   const tailorJobId = useRef<string | null>(null)
-  // "Cancel" doesn't abort the worker (the generation still runs and still
-  // counts) — it just dismisses the job so the popup stops surfacing it. We
-  // remember the dismissed id (persisted) so a late completion isn't resurfaced.
   const coverDismissedId = useRef<string | null>(null)
   const tailorDismissedId = useRef<string | null>(null)
 
   useEffect(() => {
+    getCandidateContext().then(setInitialContext)
     chrome.storage.local.get(['generatePage', 'resume', 'settings', 'session', 'coverJob', 'tailorJob']).then((r) => {
       const storedSettings = r.settings as Settings | undefined
       setHasResume(!!r.resume)
@@ -79,11 +164,9 @@ export default function GeneratePage({ onNavigate }: Props) {
         if (typeof s.compact === 'boolean') setCompact(s.compact)
         if (typeof s.trim === 'boolean') setTrim(s.trim)
         if (typeof s.includeSummary === 'boolean') setIncludeSummary(s.includeSummary)
-        if (s.initialContext) setInitialContext(s.initialContext as string)
+        if (s.activeResultTab) setActiveResultTab(s.activeResultTab as 'letter' | 'resume')
         coverDismissedId.current = (s.coverDismissedId as string) ?? null
         tailorDismissedId.current = (s.tailorDismissedId as string) ?? null
-        // A done result the popup already captured (and the user may have edited)
-        // takes priority over the worker's original copy.
         if (s.state === 'done' && s.letter && s.job && s.createdAt) {
           setLetter(s.letter as string)
           setJob(s.job as JobData)
@@ -101,8 +184,6 @@ export default function GeneratePage({ onNavigate }: Props) {
         }
       }
 
-      // Recover an in-flight / completed job the popup never captured (e.g. it
-      // was closed during loading). Skipped if the user cancelled this job.
       const cj = r.coverJob as CoverJob | undefined
       if (cj && cj.id !== coverDismissedId.current) {
         coverJobId.current = cj.id
@@ -119,6 +200,7 @@ export default function GeneratePage({ onNavigate }: Props) {
           setCreatedAt(cj.createdAt ?? new Date().toISOString())
           setLetterSupplemental((s?.letterSupplemental as string) ?? '')
           setState('done')
+          setActiveResultTab('letter')
         }
       }
 
@@ -136,6 +218,7 @@ export default function GeneratePage({ onNavigate }: Props) {
           setTailoredJob(tj.job)
           setSupplemental((s?.supplemental as string) ?? '')
           setTailorState('done')
+          setActiveResultTab('resume')
         }
       }
 
@@ -143,9 +226,6 @@ export default function GeneratePage({ onNavigate }: Props) {
     })
   }, [])
 
-  // Follow the worker's job records live so the popup transitions to done/error
-  // even when it was reopened mid-generation (the original popup that fired the
-  // request is gone). Dismissed (cancelled) jobs are ignored.
   useEffect(() => {
     function handler(changes: { [key: string]: chrome.storage.StorageChange }, area: string) {
       if (area !== 'local') return
@@ -165,6 +245,7 @@ export default function GeneratePage({ onNavigate }: Props) {
             setJob(cj.job)
             setCreatedAt(cj.createdAt ?? new Date().toISOString())
             setState('done')
+            setActiveResultTab('letter')
           }
         }
       }
@@ -182,6 +263,7 @@ export default function GeneratePage({ onNavigate }: Props) {
             setTailoredResume(tj.resume)
             setTailoredJob(tj.job)
             setTailorState('done')
+            setActiveResultTab('resume')
           }
         }
       }
@@ -203,19 +285,26 @@ export default function GeneratePage({ onNavigate }: Props) {
         tailoredJob: tailorState === 'done' ? tailoredJob : null,
         supplemental,
         letterSupplemental,
-        initialContext,
+        activeResultTab,
         coverDismissedId: coverDismissedId.current,
         tailorDismissedId: tailorDismissedId.current,
       },
     })
-  }, [state, inputMode, manualTitle, manualCompany, manualDescription, letter, job, createdAt, compact, trim, includeSummary, tailorState, tailoredResume, tailoredJob, supplemental, letterSupplemental, initialContext])
+  }, [state, inputMode, manualTitle, manualCompany, manualDescription, letter, job, createdAt, compact, trim, includeSummary, tailorState, tailoredResume, tailoredJob, supplemental, letterSupplemental, activeResultTab])
+
+  // Candidate context is a standing profile fact, not per-job state — persisted
+  // to its own storage key so it survives "New" resets and applies automatically
+  // to every future generation (merged in by the service worker).
+  useEffect(() => {
+    if (!loaded.current) return
+    saveCandidateContext(initialContext)
+  }, [initialContext])
 
   async function generate() {
     setState('loading')
     setLoadingJob(null)
     setError('')
     setErrorCode(undefined)
-    // Step 1: scrape so we can show job details immediately
     let scrapedJob: JobData
     try {
       const scrape = (await chrome.runtime.sendMessage({ type: 'SCRAPE_TAB' })) as ScrapeResponse
@@ -227,11 +316,10 @@ export default function GeneratePage({ onNavigate }: Props) {
       setState('error')
       return
     }
-    // Step 2: generate — the worker drives state transitions via storage.
     const jobId = crypto.randomUUID()
     coverJobId.current = jobId
     try {
-      await chrome.runtime.sendMessage({ type: 'GENERATE_FROM_MANUAL', jobId, job: scrapedJob, supplemental: initialContext.trim() || undefined }) as GenerateResponse
+      await chrome.runtime.sendMessage({ type: 'GENERATE_FROM_MANUAL', jobId, job: scrapedJob }) as GenerateResponse
     } catch (err) {
       if (coverJobId.current === jobId && coverDismissedId.current !== jobId) {
         setError(err instanceof Error ? err.message : 'Something went wrong')
@@ -254,7 +342,7 @@ export default function GeneratePage({ onNavigate }: Props) {
     const jobId = crypto.randomUUID()
     coverJobId.current = jobId
     try {
-      await chrome.runtime.sendMessage({ type: 'GENERATE_FROM_MANUAL', jobId, job: jobData, supplemental: initialContext.trim() || undefined }) as GenerateResponse
+      await chrome.runtime.sendMessage({ type: 'GENERATE_FROM_MANUAL', jobId, job: jobData }) as GenerateResponse
     } catch (err) {
       if (coverJobId.current === jobId && coverDismissedId.current !== jobId) {
         setError(err instanceof Error ? err.message : 'Something went wrong')
@@ -279,6 +367,7 @@ export default function GeneratePage({ onNavigate }: Props) {
     setLoadingJob(job)
     setError('')
     setErrorCode(undefined)
+    setRegenerateExpanded(false)
     const jobId = crypto.randomUUID()
     coverJobId.current = jobId
     try {
@@ -296,8 +385,6 @@ export default function GeneratePage({ onNavigate }: Props) {
     }
   }
 
-  // Stop watching the in-flight letter. The worker keeps running and the
-  // generation still counts — the finished letter lands in History.
   function cancelLetter() {
     if (coverJobId.current) coverDismissedId.current = coverJobId.current
     setState('idle')
@@ -308,7 +395,6 @@ export default function GeneratePage({ onNavigate }: Props) {
     setTailorState('loading')
     setLoadingJob(null)
     setTailorError('')
-    // Step 1: scrape so we can show job details immediately
     let scrapedJob: JobData
     try {
       const scrape = (await chrome.runtime.sendMessage({ type: 'SCRAPE_TAB' })) as ScrapeResponse
@@ -320,11 +406,10 @@ export default function GeneratePage({ onNavigate }: Props) {
       setTailorState('error')
       return
     }
-    // Step 2: tailor — the worker drives state transitions via storage.
     const jobId = crypto.randomUUID()
     tailorJobId.current = jobId
     try {
-      await chrome.runtime.sendMessage({ type: 'TAILOR_FROM_MANUAL', jobId, job: scrapedJob, compact, trim, includeSummary, supplemental: initialContext.trim() || undefined }) as TailorResponse
+      await chrome.runtime.sendMessage({ type: 'TAILOR_FROM_MANUAL', jobId, job: scrapedJob, compact, trim, includeSummary }) as TailorResponse
     } catch (err) {
       if (tailorJobId.current === jobId && tailorDismissedId.current !== jobId) {
         setTailorError(err instanceof Error ? err.message : 'Something went wrong')
@@ -353,7 +438,6 @@ export default function GeneratePage({ onNavigate }: Props) {
         compact,
         trim,
         includeSummary,
-        supplemental: initialContext.trim() || undefined,
       }) as TailorResponse
     } catch (err) {
       if (tailorJobId.current === jobId && tailorDismissedId.current !== jobId) {
@@ -368,13 +452,10 @@ export default function GeneratePage({ onNavigate }: Props) {
     setTailoredResume(null)
     setTailoredJob(null)
     setSupplemental('')
-    setInitialContext('')
     tailorJobId.current = null
     chrome.storage.local.remove('tailorJob')
   }
 
-  // Stop watching the in-flight tailor. The worker keeps running and the
-  // generation still counts.
   function cancelTailor() {
     if (tailorJobId.current) tailorDismissedId.current = tailorJobId.current
     setTailorState('idle')
@@ -383,8 +464,6 @@ export default function GeneratePage({ onNavigate }: Props) {
 
   async function regenerate() {
     if (!tailoredJob) return
-    // Capture the current result before clearing state — it becomes the editing
-    // base so the model revises this resume instead of rebuilding from scratch.
     const previous = tailoredResume
     setTailorState('loading')
     setLoadingJob(tailoredJob)
@@ -421,15 +500,40 @@ export default function GeneratePage({ onNavigate }: Props) {
     setManualCompany('')
     setManualDescription('')
     setLetterSupplemental('')
-    setInitialContext('')
+    setLetterEditing(false)
+    setRegenerateExpanded(false)
     coverJobId.current = null
     chrome.storage.local.remove('coverJob')
+  }
+
+  function resetAll() {
+    setState('idle')
+    setInputMode('auto')
+    setLetter('')
+    setJob(null)
+    setCreatedAt('')
+    setManualTitle('')
+    setManualCompany('')
+    setManualDescription('')
+    setLetterSupplemental('')
+    setLetterEditing(false)
+    setRegenerateExpanded(false)
+    coverJobId.current = null
+    chrome.storage.local.remove('coverJob')
+    setTailorState('idle')
+    setTailoredResume(null)
+    setTailoredJob(null)
+    setSupplemental('')
+    tailorJobId.current = null
+    chrome.storage.local.remove('tailorJob')
   }
 
   const manualReady = manualTitle.trim().length > 0 && manualDescription.trim().length > 0
   const isReady = appMode === 'hosted' ? hasSession === true : hasApiKey === true
   const setupComplete = hasResume === true && isReady
   const setupLoaded = hasResume !== null && hasApiKey !== null && hasSession !== null
+
+  const bothDone = state === 'done' && tailorState === 'done'
 
   return (
     <div className="page">
@@ -438,10 +542,8 @@ export default function GeneratePage({ onNavigate }: Props) {
           <img src={logoIcon} width="26" height="26" alt="" className="logo-icon" />
           <span className="logo-text">Cover Me</span>
         </div>
-        <p className="page-subtitle">AI-powered cover letters &amp; resume tailoring</p>
       </div>
 
-      {/* Don't render anything until we know setup state — avoids flash */}
       {!setupLoaded && null}
 
       {setupLoaded && !setupComplete && (
@@ -517,11 +619,15 @@ export default function GeneratePage({ onNavigate }: Props) {
 
       {setupLoaded && setupComplete && (
         <>
-          {tailorState === 'loading' && (
+          {/* ── LOADING (full-screen, either feature) ── */}
+          {(state === 'loading' || tailorState === 'loading') && (
             <div className="centered">
               <div className="spinner" />
               <p className="loading-text">
-                {loadingJob ? 'Tailoring your resume…' : 'Reading the job posting…'}
+                {state === 'loading'
+                  ? loadingJob ? 'Crafting your cover letter…' : 'Reading the job posting…'
+                  : loadingJob ? 'Tailoring your resume…' : 'Reading the job posting…'
+                }
               </p>
               {loadingJob && (
                 <div className="loading-job-preview">
@@ -530,143 +636,48 @@ export default function GeneratePage({ onNavigate }: Props) {
                   <p className="loading-job-snippet">{loadingJob.description.slice(0, 160).trim()}…</p>
                 </div>
               )}
-              <button className="btn btn-ghost" style={{ marginTop: 16 }} onClick={cancelTailor}>
+              <button className="btn btn-ghost" style={{ marginTop: 16 }}
+                onClick={state === 'loading' ? cancelLetter : cancelTailor}>
                 Cancel
               </button>
               <p className="generate-hint" style={{ marginTop: 8 }}>
-                This still counts as a generation, even if you cancel.
+                {state === 'loading'
+                  ? 'This still counts as a generation — when it finishes, the letter is saved to your History.'
+                  : 'This still counts as a generation, even if you cancel.'
+                }
               </p>
             </div>
           )}
 
-          {tailorState === 'error' && (
-            <div className="letter-container">
-              <div className="error-box">{tailorError}</div>
-              <button className="btn btn-secondary" onClick={resetTailor}>
-                Try Again
-              </button>
-            </div>
-          )}
-
-          {tailorState === 'done' && tailoredResume && (
-            <div className="letter-container">
-              {tailoredJob && (
-                <div className="tailor-result-job">
-                  <div className="tailor-result-role">{tailoredJob.title}</div>
-                  <div className="tailor-result-company">{tailoredJob.company}</div>
-                </div>
-              )}
-              <div className="ats-result">
-                <div className="ats-score-row">
-                  <span className="ats-label">ATS Score</span>
-                  <span className={`ats-badge ${
-                    tailoredResume.atsScore === undefined ? 'ats-badge-amber' :
-                    tailoredResume.atsScore >= 80 ? 'ats-badge-green' :
-                    tailoredResume.atsScore >= 60 ? 'ats-badge-amber' : 'ats-badge-red'
-                  }`}>
-                    {tailoredResume.atsScore ?? '—'}<span className="ats-denom">/100</span>
-                  </span>
-                </div>
-                {tailoredResume.atsGaps && tailoredResume.atsGaps.length > 0 && (
-                  <ul className="ats-gaps">
-                    {tailoredResume.atsGaps.map((gap, i) => (
-                      <li key={i} className="ats-gap">{gap}</li>
-                    ))}
-                  </ul>
-                )}
-                {(!tailoredResume.atsGaps || tailoredResume.atsGaps.length === 0) && tailoredResume.atsScore !== undefined && tailoredResume.atsScore >= 80 && (
-                  <p className="ats-strong">Strong match — no significant gaps detected.</p>
-                )}
-              </div>
-              <div className="supplemental-section">
-                <label className="supplemental-label">Missing something?</label>
-                <textarea
-                  className="form-input supplemental-input"
-                  placeholder={'Add real experience not on your resume\ne.g. "2yr GraphQL from freelance, AWS cert in progress"'}
-                  value={supplemental}
-                  onChange={e => setSupplemental(e.target.value)}
-                />
-              </div>
-              <div className="letter-actions">
-                <button
-                  className="btn btn-primary"
-                  onClick={() => tailoredJob && downloadTailoredResumePdf(tailoredResume, tailoredJob.title)}
-                >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                    <polyline points="7 10 12 15 17 10" />
-                    <line x1="12" y1="15" x2="12" y2="3" />
-                  </svg>
-                  Download PDF
-                </button>
-                <button
-                  className="btn btn-secondary"
-                  onClick={regenerate}
-                  disabled={!supplemental.trim()}
-                  style={{ width: 'auto', padding: '10px 14px' }}
-                >
-                  Regenerate
-                </button>
-                <button className="btn btn-ghost" onClick={resetTailor}>
-                  New
-                </button>
-              </div>
-            </div>
-          )}
-
-          {tailorState === 'idle' && (
+          {/* ── NON-LOADING CONTENT ── */}
+          {state !== 'loading' && tailorState !== 'loading' && (
             <>
-              {state === 'idle' && inputMode === 'auto' && (
+              {/* IDLE — AUTO */}
+              {state === 'idle' && tailorState === 'idle' && inputMode === 'auto' && (
                 <div className="generate-cta">
-                  <div className="supplemental-section">
-                    <label className="supplemental-label">Add context (optional)</label>
-                    <textarea
-                      className="form-input supplemental-input"
-                      placeholder={'Anything for the AI to factor in before generating\ne.g. "Referred by Jane Chen" · "2yr GraphQL from freelance" · "emphasize leadership"'}
-                      value={initialContext}
-                      onChange={e => setInitialContext(e.target.value)}
-                    />
-                  </div>
+                  <ContextExpander
+                    contextExpanded={contextExpanded}
+                    setContextExpanded={setContextExpanded}
+                    initialContext={initialContext}
+                    setInitialContext={setInitialContext}
+                  />
                   <button className="btn btn-primary" onClick={generate}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
                     </svg>
                     Generate Cover Letter
                   </button>
-                  <button
-                    className="btn btn-secondary"
-                    onClick={tailor}
-                    style={{ marginTop: 8 }}
-                  >
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-                      <polyline points="14 2 14 8 20 8" />
-                      <line x1="16" y1="13" x2="8" y2="13" />
-                      <line x1="16" y1="17" x2="8" y2="17" />
-                      <polyline points="10 9 9 9 8 9" />
-                    </svg>
-                    Tailor Resume to Job
-                  </button>
-                  <label className="compact-toggle">
-                    <input type="checkbox" checked={compact} onChange={e => setCompact(e.target.checked)} />
-                    Compact to one page
-                  </label>
-                  <label className="compact-toggle">
-                    <input type="checkbox" checked={trim} onChange={e => setTrim(e.target.checked)} />
-                    Remove irrelevant bullets
-                    <span
-                      className="tooltip-icon"
-                      data-tooltip="Best for long master resumes with all your experience — the AI selects only the bullets most relevant to the role being applied for."
-                    >?</span>
-                  </label>
-                  <label className="compact-toggle">
-                    <input type="checkbox" checked={includeSummary} onChange={e => setIncludeSummary(e.target.checked)} />
-                    Include summary
-                    <span
-                      className="tooltip-icon"
-                      data-tooltip="Adds a 2-3 sentence professional summary tailored to the role. Turn off if your resume already has one or the role prefers none."
-                    >?</span>
-                  </label>
+                  <TailorOptions
+                    inputMode={inputMode}
+                    manualReady={manualReady}
+                    onTailor={tailor}
+                    compact={compact}
+                    setCompact={setCompact}
+                    trim={trim}
+                    setTrim={setTrim}
+                    includeSummary={includeSummary}
+                    setIncludeSummary={setIncludeSummary}
+                  />
                   <p className="generate-hint">
                     Open a job posting on LinkedIn, Indeed, or any careers page, then click Generate.
                   </p>
@@ -676,8 +687,12 @@ export default function GeneratePage({ onNavigate }: Props) {
                 </div>
               )}
 
-              {state === 'idle' && inputMode === 'manual' && (
+              {/* IDLE — MANUAL */}
+              {state === 'idle' && tailorState === 'idle' && inputMode === 'manual' && (
                 <div className="manual-form">
+                  <button className="manual-back" onClick={() => setInputMode('auto')}>
+                    ← Auto-detect
+                  </button>
                   <div className="form-group">
                     <label className="form-label">Job Title *</label>
                     <input
@@ -707,85 +722,36 @@ export default function GeneratePage({ onNavigate }: Props) {
                       onChange={e => setManualDescription(e.target.value)}
                     />
                   </div>
-                  <div className="supplemental-section">
-                    <label className="supplemental-label">Add context (optional)</label>
-                    <textarea
-                      className="form-input supplemental-input"
-                      placeholder={'Anything for the AI to factor in before generating\ne.g. "Referred by Jane Chen" · "2yr GraphQL from freelance" · "emphasize leadership"'}
-                      value={initialContext}
-                      onChange={e => setInitialContext(e.target.value)}
-                    />
-                  </div>
-                  <button className="btn btn-primary" onClick={generateManual} disabled={!manualReady}>
+                  <ContextExpander
+                    contextExpanded={contextExpanded}
+                    setContextExpanded={setContextExpanded}
+                    initialContext={initialContext}
+                    setInitialContext={setInitialContext}
+                  />
+                  <button className="btn btn-primary" style={{ marginTop: 12 }} onClick={generateManual} disabled={!manualReady}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
                     </svg>
                     Generate Cover Letter
                   </button>
-                  <button
-                    className="btn btn-secondary"
-                    onClick={tailorManual}
-                    disabled={!manualReady}
-                    style={{ marginTop: 8 }}
-                  >
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-                      <polyline points="14 2 14 8 20 8" />
-                      <line x1="16" y1="13" x2="8" y2="13" />
-                      <line x1="16" y1="17" x2="8" y2="17" />
-                      <polyline points="10 9 9 9 8 9" />
-                    </svg>
-                    Tailor Resume to Job
-                  </button>
-                  <label className="compact-toggle">
-                    <input type="checkbox" checked={compact} onChange={e => setCompact(e.target.checked)} />
-                    Compact to one page
-                  </label>
-                  <label className="compact-toggle">
-                    <input type="checkbox" checked={trim} onChange={e => setTrim(e.target.checked)} />
-                    Remove irrelevant bullets
-                    <span
-                      className="tooltip-icon"
-                      data-tooltip="Best for long master resumes with all your experience — the AI selects only the bullets most relevant to the role being applied for."
-                    >?</span>
-                  </label>
-                  <label className="compact-toggle">
-                    <input type="checkbox" checked={includeSummary} onChange={e => setIncludeSummary(e.target.checked)} />
-                    Include summary
-                    <span
-                      className="tooltip-icon"
-                      data-tooltip="Adds a 2-3 sentence professional summary tailored to the role. Turn off if your resume already has one or the role prefers none."
-                    >?</span>
-                  </label>
-                  <button className="manual-toggle" onClick={() => setInputMode('auto')}>
-                    ← Back to auto-detect
-                  </button>
+                  <div style={{ marginTop: 8 }}>
+                    <TailorOptions
+                      inputMode={inputMode}
+                      manualReady={manualReady}
+                      onTailor={tailorManual}
+                      compact={compact}
+                      setCompact={setCompact}
+                      trim={trim}
+                      setTrim={setTrim}
+                      includeSummary={includeSummary}
+                      setIncludeSummary={setIncludeSummary}
+                    />
+                  </div>
                 </div>
               )}
 
-              {state === 'loading' && (
-                <div className="centered">
-                  <div className="spinner" />
-                  <p className="loading-text">
-                    {loadingJob ? 'Crafting your cover letter…' : 'Reading the job posting…'}
-                  </p>
-                  {loadingJob && (
-                    <div className="loading-job-preview">
-                      <div className="loading-job-title">{loadingJob.title}</div>
-                      <div className="loading-job-org">{loadingJob.company}</div>
-                      <p className="loading-job-snippet">{loadingJob.description.slice(0, 160).trim()}…</p>
-                    </div>
-                  )}
-                  <button className="btn btn-ghost" style={{ marginTop: 16 }} onClick={cancelLetter}>
-                    Cancel
-                  </button>
-                  <p className="generate-hint" style={{ marginTop: 8 }}>
-                    This still counts as a generation — when it finishes, the letter is saved to your History.
-                  </p>
-                </div>
-              )}
-
-              {state === 'error' && (
+              {/* LETTER ERROR */}
+              {state === 'error' && tailorState !== 'done' && (
                 <div className="letter-container">
                   <div className={errorCode === 'RATE_LIMIT' ? 'warning-box' : 'error-box'}>
                     {error}
@@ -798,24 +764,90 @@ export default function GeneratePage({ onNavigate }: Props) {
                 </div>
               )}
 
-              {state === 'done' && (
+              {/* TAILOR ERROR */}
+              {tailorState === 'error' && state !== 'done' && (
                 <div className="letter-container">
-                  <div className="letter-box">
-                    <textarea
-                      className="letter-textarea"
-                      value={letter}
-                      onChange={e => setLetter(e.target.value)}
-                      spellCheck={false}
-                    />
+                  <div className="error-box">{tailorError}</div>
+                  <button className="btn btn-secondary" onClick={resetTailor}>
+                    Try Again
+                  </button>
+                </div>
+              )}
+
+              {/* RESULT TABS — only shown when both are done */}
+              {bothDone && (
+                <div className="result-tabs">
+                  <button
+                    className={`result-tab${activeResultTab === 'letter' ? ' active' : ''}`}
+                    onClick={() => setActiveResultTab('letter')}
+                  >
+                    Cover Letter
+                  </button>
+                  <button
+                    className={`result-tab${activeResultTab === 'resume' ? ' active' : ''}`}
+                    onClick={() => setActiveResultTab('resume')}
+                  >
+                    Tailored Resume
+                  </button>
+                </div>
+              )}
+
+              {/* LETTER RESULT */}
+              {state === 'done' && (!bothDone || activeResultTab === 'letter') && (
+                <div className="letter-container">
+                  <div className="letter-header-row">
+                    {job && (
+                      <span className="letter-job-label">
+                        {job.title}{job.company && job.company !== 'Unknown Company' ? ` · ${job.company}` : ''}
+                      </span>
+                    )}
+                    <button
+                      className={`letter-edit-btn${letterEditing ? ' active' : ''}`}
+                      onClick={() => setLetterEditing(v => !v)}
+                    >
+                      {letterEditing ? 'Done' : 'Edit'}
+                    </button>
                   </div>
-                  <div className="supplemental-section">
-                    <label className="supplemental-label">Improve this letter</label>
-                    <textarea
-                      className="form-input supplemental-input"
-                      placeholder={'Add a referral, a real reason you want this company, or experience not on your resume\ne.g. "Referred by Jane Chen" · "Open to relocating to Toronto"'}
-                      value={letterSupplemental}
-                      onChange={e => setLetterSupplemental(e.target.value)}
-                    />
+                  <div className="letter-box">
+                    {letterEditing ? (
+                      <textarea
+                        className="letter-textarea"
+                        value={letter}
+                        onChange={e => setLetter(e.target.value)}
+                        spellCheck={false}
+                      />
+                    ) : (
+                      <p className="letter-text">{letter}</p>
+                    )}
+                  </div>
+                  <div className="regen-expander">
+                    <button
+                      className="regen-toggle"
+                      onClick={() => setRegenerateExpanded(v => !v)}
+                    >
+                      <svg
+                        width="11" height="11" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                        style={{ transform: regenerateExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}
+                      >
+                        <polyline points="6 9 12 15 18 9" />
+                      </svg>
+                      Want a different version?
+                    </button>
+                    {regenerateExpanded && (
+                      <div className="regen-section">
+                        <textarea
+                          className="form-input supplemental-input"
+                          placeholder={'What to change? (optional)\ne.g. "Referred by Jane Chen" · "emphasize leadership" · "Open to relocating"'}
+                          value={letterSupplemental}
+                          onChange={e => setLetterSupplemental(e.target.value)}
+                          autoFocus
+                        />
+                        <button className="btn btn-secondary" onClick={regenerateLetter}>
+                          Regenerate
+                        </button>
+                      </div>
+                    )}
                   </div>
                   <div className="letter-actions">
                     <button className="btn btn-primary" onClick={copy}>
@@ -844,15 +876,73 @@ export default function GeneratePage({ onNavigate }: Props) {
                       </svg>
                       PDF
                     </button>
+                    <button className="btn btn-ghost" onClick={bothDone ? resetAll : resetToNew}>
+                      New
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* TAILOR RESULT */}
+              {tailorState === 'done' && tailoredResume && (!bothDone || activeResultTab === 'resume') && (
+                <div className="letter-container">
+                  {tailoredJob && (
+                    <div className="tailor-result-job">
+                      <div className="tailor-result-role">{tailoredJob.title}</div>
+                      <div className="tailor-result-company">{tailoredJob.company}</div>
+                    </div>
+                  )}
+                  <div className="ats-result">
+                    <div className="ats-score-row">
+                      <span className="ats-label">ATS Score</span>
+                      <span className={`ats-badge ${
+                        tailoredResume.atsScore === undefined ? 'ats-badge-amber' :
+                        tailoredResume.atsScore >= 80 ? 'ats-badge-green' :
+                        tailoredResume.atsScore >= 60 ? 'ats-badge-amber' : 'ats-badge-red'
+                      }`}>
+                        {tailoredResume.atsScore ?? '—'}<span className="ats-denom">/100</span>
+                      </span>
+                    </div>
+                    {tailoredResume.atsGaps && tailoredResume.atsGaps.length > 0 && (
+                      <ul className="ats-gaps">
+                        {tailoredResume.atsGaps.map((gap, i) => (
+                          <li key={i} className="ats-gap">{gap}</li>
+                        ))}
+                      </ul>
+                    )}
+                    {(!tailoredResume.atsGaps || tailoredResume.atsGaps.length === 0) && tailoredResume.atsScore !== undefined && tailoredResume.atsScore >= 80 && (
+                      <p className="ats-strong">Strong match — no significant gaps detected.</p>
+                    )}
+                  </div>
+                  <div className="supplemental-section">
+                    <label className="supplemental-label">Missing something?</label>
+                    <textarea
+                      className="form-input supplemental-input"
+                      placeholder={'Add real experience not on your resume\ne.g. "2yr GraphQL from freelance, AWS cert in progress"'}
+                      value={supplemental}
+                      onChange={e => setSupplemental(e.target.value)}
+                    />
+                  </div>
+                  <div className="letter-actions">
+                    <button
+                      className="btn btn-primary"
+                      onClick={() => tailoredJob && downloadTailoredResumePdf(tailoredResume, tailoredJob.title)}
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                      </svg>
+                      Download PDF
+                    </button>
                     <button
                       className="btn btn-secondary"
-                      onClick={regenerateLetter}
-                      disabled={!letterSupplemental.trim()}
+                      onClick={regenerate}
                       style={{ width: 'auto', padding: '10px 14px' }}
                     >
                       Regenerate
                     </button>
-                    <button className="btn btn-ghost" onClick={resetToNew}>
+                    <button className="btn btn-ghost" onClick={bothDone ? resetAll : resetTailor}>
                       New
                     </button>
                   </div>
