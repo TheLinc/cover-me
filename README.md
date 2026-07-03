@@ -55,7 +55,7 @@ Cover Me supports two AI providers:
 **Claude (Anthropic)** — recommended
 - Go to [console.anthropic.com](https://console.anthropic.com)
 - Create an API key
-- Claude Haiku is used by default — fast and very cost-effective (fractions of a cent per letter)
+- Claude Sonnet is used for letter generation — a few cents per letter
 
 **OpenAI**
 - Go to [platform.openai.com](https://platform.openai.com)
@@ -197,7 +197,7 @@ cover-me/
 └── backend/                 # Supabase Edge Functions + DB migrations
     └── supabase/
         ├── functions/
-        │   ├── generate/     # Cover letter: JWT auth → rate limit → resume fetch → Claude (Haiku)
+        │   ├── generate/     # Cover letter: JWT auth → rate limit → resume fetch → Claude (Sonnet)
         │   ├── tailor/       # Resume tailoring: same flow → Claude (Sonnet) → tailored resume + ATS score
         │   ├── resume/       # GET / POST / DELETE encrypted resume
         │   ├── letters/      # GET / POST / DELETE cover letter history (Pro)
@@ -218,7 +218,7 @@ cover-me/
 | Backend | Supabase (Auth + Postgres + Edge Functions) |
 | Web dashboard | Next.js on Vercel |
 | Payments | Stripe |
-| AI — hosted | Claude (Anthropic) — Haiku for cover letters, Sonnet for resume tailoring |
+| AI — hosted | Claude (Anthropic) — Sonnet for cover letters and resume tailoring |
 | AI — BYOK | Claude or OpenAI, user's choice |
 
 ---

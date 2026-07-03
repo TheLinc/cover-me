@@ -17,6 +17,14 @@ import { Spinner } from "@/components/ui/spinner";
 
 type View = "signin" | "signup" | "forgot" | "reset" | "confirmed";
 
+// Canonical origin for Supabase email redirects. window.location.origin varies
+// between www/non-www depending on how the user reached the site, and any
+// variant missing from the Supabase Redirect URL allowlist silently falls back
+// to the Site URL (landing page) instead of /auth.
+function authRedirectUrl() {
+  return `${process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin}/auth`;
+}
+
 export default function AuthContent() {
   return (
     <Suspense>
@@ -72,6 +80,17 @@ function AuthForm() {
         const type = h.get("type");
         if (type === "signup") setView("confirmed");
         if (type === "recovery") setView("reset");
+        // The pkce browser client never consumes implicit-flow hash tokens,
+        // and the dashboard is server-guarded via cookies — without an
+        // explicit setSession the user lands on "confirmed" signed out, and
+        // password recovery's updateUser call has no session to act on.
+        const refreshToken = h.get("refresh_token");
+        if (refreshToken) {
+          supabase.auth.setSession({
+            access_token: h.get("access_token")!,
+            refresh_token: refreshToken,
+          });
+        }
       }
 
       window.history.replaceState(null, "", window.location.pathname);
@@ -121,7 +140,7 @@ function AuthForm() {
         const { error } = await supabase.auth.signUp({
             email,
             password,
-            options: { emailRedirectTo: `${window.location.origin}/auth` },
+            options: { emailRedirectTo: authRedirectUrl() },
           });
         if (error) throw error;
         if (plan === "pro") {
@@ -143,7 +162,7 @@ function AuthForm() {
     setError("");
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth`,
+        redirectTo: authRedirectUrl(),
       });
       if (error) throw error;
       setStatus("success");

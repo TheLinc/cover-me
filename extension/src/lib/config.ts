@@ -6,4 +6,4 @@ export const SUPABASE_PUBLISHABLE_KEY = (import.meta.env.VITE_SUPABASE_PUBLISHAB
 
 // Web app URL — used as the email confirmation redirect target.
 // Set VITE_WEB_URL in extension/.env (prod) or extension/.env.development (local dev)
-export const WEB_URL = (import.meta.env.VITE_WEB_URL as string) ?? 'https://cover-me.dev'
+export const WEB_URL = (import.meta.env.VITE_WEB_URL as string) ?? 'https://www.cover-me.dev'
