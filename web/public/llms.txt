@@ -1,0 +1,35 @@
+# Cover Me
+
+> Cover Me is a free, open-source (MIT) Chrome extension that reads any job posting and generates a tailored, ATS-friendly cover letter from the user's resume in about 10 seconds. It can also rewrite ("tailor") the resume itself to match a specific role's ATS keywords and show a match score with gap analysis. It works automatically on LinkedIn, Indeed, Greenhouse, Lever, Workday, and Ashby, with a manual-paste fallback for any other job board.
+
+Key facts:
+- Pricing: Free forever with your own Claude or OpenAI API key (BYOK, no account needed), free hosted tier with 10 AI generations/day, or Pro at $4/month for unlimited generations and cross-device history sync.
+- Privacy: In BYOK mode the resume and API key never leave the user's device (AES-GCM encrypted in local storage). In hosted mode the resume is encrypted at rest (AES-256-GCM). No ads, no telemetry, resume data is never used for AI training.
+- AI: Claude (Anthropic) on hosted tiers; user's choice of Claude or OpenAI in BYOK mode.
+- Output: Editable cover letters and tailored resumes, exportable as formatted PDFs; local generation history.
+- Not included by design: no auto-apply/form submission, no LinkedIn account integration, no resume builder.
+- Open source: extension and backend are self-hostable; code at https://github.com/TheLinc/cover-me
+
+## Main pages
+
+- [Home](https://www.cover-me.dev/): product overview, how it works, pricing, FAQ
+- [About](https://www.cover-me.dev/about): who builds Cover Me and why; privacy principles
+- [Support](https://www.cover-me.dev/support): FAQ and contact (support@cover-me.dev)
+- [Privacy Policy](https://www.cover-me.dev/privacy)
+- [Terms of Service](https://www.cover-me.dev/terms)
+- [Chrome Web Store listing](https://chromewebstore.google.com/detail/cover-me-%E2%80%93-ai-cover-lette/bpbnopjgjbimdjjdolhkgimllbgamgpi)
+
+## Job board guides
+
+- [Cover Me for LinkedIn](https://www.cover-me.dev/for/linkedin)
+- [Cover Me for Indeed](https://www.cover-me.dev/for/indeed)
+- [Cover Me for Greenhouse](https://www.cover-me.dev/for/greenhouse)
+- [Cover Me for Lever](https://www.cover-me.dev/for/lever)
+- [Cover Me for Workday](https://www.cover-me.dev/for/workday)
+- [Cover Me for Ashby](https://www.cover-me.dev/for/ashby)
+
+## Guides
+
+- [What is an ATS score?](https://www.cover-me.dev/guides/what-is-an-ats-score)
+- [Cover Me vs ChatGPT for cover letters](https://www.cover-me.dev/guides/cover-me-vs-chatgpt)
+- [How to tailor your resume to a job description](https://www.cover-me.dev/guides/tailor-resume-to-job-description)

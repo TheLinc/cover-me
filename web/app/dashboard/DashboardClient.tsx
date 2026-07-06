@@ -324,7 +324,7 @@ export default function DashboardClient({
                   Generate letters directly on any job board
                 </p>
                 <p className="text-[12.5px] text-muted-foreground truncate max-[700px]:whitespace-normal">
-                  LinkedIn, Indeed, Greenhouse, Lever, Workday — one click, five seconds.
+                  LinkedIn, Indeed, Greenhouse, Lever, Workday — one click, ten seconds.
                 </p>
               </div>
             </div>

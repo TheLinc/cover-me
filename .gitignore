@@ -53,6 +53,7 @@ CLAUDE.md
 *.docx
 *.pdf
 *.txt
+!web/public/llms.txt
 docs/
 
 #packages

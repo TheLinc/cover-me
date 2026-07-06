@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { cn, CHROME_STORE_URL } from "@/lib/utils";
+import { jsonLdApp, jsonLdHowTo, jsonLdSpeakable, STORE_RATING } from "@/lib/structured-data";
 import {
   ArrowUpRightIcon,
   CheckIcon,
@@ -503,16 +504,14 @@ function Hero() {
           <span className="text-[11px] font-bold tracking-[0.1em] uppercase text-brand">
             AI cover letter generator &amp; resume tailor
           </span>
-          <h1 className="text-[clamp(36px,7vw,84px)] font-extrabold leading-[0.91] tracking-[-3px] text-foreground max-[768px]:tracking-[-2px]">
+          <h1 className="text-[clamp(34px,4.8vw,64px)] font-extrabold leading-[0.98] tracking-[-2.5px] text-foreground max-[768px]:tracking-[-1.5px]">
             The job application
             <br />
             that gets you <span className="hero-hired">hired.</span>
           </h1>
-          <p className="text-[16px] leading-[1.7] text-muted-foreground max-w-[480px] mt-1.5">
-            Stop writing job applications from scratch. Cover Me reads the
-            posting, extracts the ATS keywords hiring managers look for, and
-            builds a personalized cover letter and tailored resume from your
-            experience — in seconds.
+          <p className="text-[16px] leading-[1.65] text-muted-foreground max-w-[560px] mt-1.5">
+            Cover Me reads the posting, extracts the ATS keywords, and builds a
+            tailored cover letter and resume from your experience — in seconds.
           </p>
           {/* Before → After stat */}
           <div className="flex items-center gap-3 mt-2">
@@ -524,7 +523,7 @@ function Hero() {
               <path d="M0 7H22M17 1.5L23.5 7L17 12.5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
             <div className="px-3.5 py-2 rounded-[8px] border border-[rgba(99,102,241,0.3)] bg-[rgba(99,102,241,0.1)] shadow-[0_0_18px_rgba(99,102,241,0.18)]">
-              <p className="text-[19px] font-bold text-[#a5b4fc] leading-none">5 sec</p>
+              <p className="text-[19px] font-bold text-[#a5b4fc] leading-none">10 sec</p>
               <p className="text-[11px] font-medium text-[#818cf8] tracking-[0.06em] uppercase mt-[5px]">per application</p>
             </div>
           </div>
@@ -543,7 +542,12 @@ function Hero() {
               <a href="#pricing">See pricing</a>
             </Button>
           </div>
-          <p className="flex items-center gap-2.5 text-[12px] text-muted-foreground tracking-[0.01em]">
+          <p className="flex items-center gap-2.5 text-[12px] text-muted-foreground tracking-[0.01em] flex-wrap justify-center">
+            <span className="flex items-center gap-1">
+              <span className="text-[#f59e0b]" aria-hidden="true">★</span>
+              {STORE_RATING.value.toFixed(1)} on Chrome Web Store
+            </span>
+            <span className="inline-block w-[3px] h-[3px] rounded-full bg-border" />
             Free forever
             <span className="inline-block w-[3px] h-[3px] rounded-full bg-border" />
             BYOK or hosted
@@ -560,14 +564,14 @@ function Hero() {
 // ── Works on ──────────────────────────────────────────────────────────────────
 
 function WorksOn() {
-  const boards = [
-    "LinkedIn",
-    "Indeed",
-    "Greenhouse",
-    "Lever",
-    "Workday",
-    "Ashby",
-    "Any job board",
+  const boards: { name: string; href?: string }[] = [
+    { name: "LinkedIn", href: "/for/linkedin" },
+    { name: "Indeed", href: "/for/indeed" },
+    { name: "Greenhouse", href: "/for/greenhouse" },
+    { name: "Lever", href: "/for/lever" },
+    { name: "Workday", href: "/for/workday" },
+    { name: "Ashby", href: "/for/ashby" },
+    { name: "Any job board" },
   ];
   return (
     <div className="py-[18px] border-t border-b border-border">
@@ -578,10 +582,19 @@ function WorksOn() {
           </span>
           <div className="flex items-center gap-2.5 flex-wrap">
             {boards.map((b, i) => (
-              <span key={b} className="flex items-center gap-2.5">
-                <span className="text-[12.5px] font-medium text-muted-foreground">
-                  {b}
-                </span>
+              <span key={b.name} className="flex items-center gap-2.5">
+                {b.href ? (
+                  <a
+                    href={b.href}
+                    className="text-[12.5px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {b.name}
+                  </a>
+                ) : (
+                  <span className="text-[12.5px] font-medium text-muted-foreground">
+                    {b.name}
+                  </span>
+                )}
                 {i < boards.length - 1 && (
                   <span className="inline-block w-[3px] h-[3px] rounded-full bg-border" />
                 )}
@@ -1363,6 +1376,35 @@ function Footer() {
             </div>
             <div className="flex flex-col gap-2.5">
               <span className="text-[10px] font-bold uppercase tracking-[0.09em] text-muted-foreground mb-0.5">
+                Guides
+              </span>
+              <a
+                href="/guides/what-is-an-ats-score"
+                className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
+              >
+                What is an ATS score?
+              </a>
+              <a
+                href="/guides/cover-me-vs-chatgpt"
+                className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Cover Me vs ChatGPT
+              </a>
+              <a
+                href="/guides/tailor-resume-to-job-description"
+                className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Tailor your resume
+              </a>
+              <a
+                href="/guides"
+                className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
+              >
+                All guides
+              </a>
+            </div>
+            <div className="flex flex-col gap-2.5">
+              <span className="text-[10px] font-bold uppercase tracking-[0.09em] text-muted-foreground mb-0.5">
                 Account
               </span>
               <a
@@ -1606,6 +1648,9 @@ function FAQ() {
 export default function Home() {
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdApp) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdHowTo) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdSpeakable) }} />
       <Nav />
       <main>
         <Hero />

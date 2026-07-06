@@ -272,7 +272,7 @@ function AuthForm() {
               style={{ animation: "fadeUp 0.55s ease 0.3s both" }}
             >
               One click on any job posting. A tailored, human-sounding letter
-              built from your resume — in under five seconds.
+              built from your resume — in under ten seconds.
             </p>
           </div>
 
