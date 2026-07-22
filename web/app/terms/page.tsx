@@ -166,7 +166,7 @@ export default function TermsPage() {
               <Li>
                 <strong className="text-foreground">Hosted (Free &amp; Pro).</strong> You create an
                 account. Cover letter generation is handled by our backend using our API key. The Free
-                tier allows 10 letters per day. The Pro tier ($4/month) provides unlimited generation
+                tier allows 5 letters per day. The Pro tier ($8/month) provides unlimited generation
                 and cross-device history sync.
               </Li>
             </Ul>
@@ -221,7 +221,7 @@ export default function TermsPage() {
             <Ul>
               <Li>
                 <strong className="text-foreground">Billing.</strong> Cover Me Pro is billed at
-                $4 USD per month as a recurring subscription. Payment is processed by Stripe.
+                $8 USD per month as a recurring subscription. Payment is processed by Stripe.
                 By subscribing you authorise Stripe to charge your payment method on a recurring
                 monthly basis until you cancel.
               </Li>

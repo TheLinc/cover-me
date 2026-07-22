@@ -1,38 +1,33 @@
 import type { AIProvider, JobData, ParsedResume, TailoredResume } from '../../types'
 import { debugGroup, debugLog } from '../debug'
+import { deriveTailorProgress } from './tailor-progress'
 
 const CLAUDE_API = 'https://api.anthropic.com/v1/messages'
 const OPENAI_API = 'https://api.openai.com/v1/chat/completions'
 
+// The model outputs a DELTA (rewritten content only), not the full resume —
+// immutable fields are merged back in code (see mergeTailorDelta below). Key
+// order matters: tailor-progress.ts derives the live progress label from which
+// key the model is currently emitting.
 function buildTailorSchema(parsed: ParsedResume): string {
-  const resume: Record<string, unknown> = {
-    name: 'string',
-    phone: 'string',
-    email: 'string',
-    website: 'string',
-    summary: 'string — 2-3 sentence professional summary, no first-person pronouns',
-    experience: [{ title: 'string', company: 'string', location: 'string', dates: 'string', bullets: ['string'] }],
+  const delta: Record<string, unknown> = {
+    summary: 'string — 2-3 sentence professional summary, no first-person pronouns; "" when STEP 4 says skip',
+    experience: [{ bullets: ['string — rewritten bullets for the SAME-INDEX input experience entry'] }],
   }
   if (parsed.projects?.length) {
-    resume.projects = [{ name: 'string', bullets: ['string'] }]
-  }
-  resume.education = [{ institution: 'string', degree: 'string', location: 'string', dates: 'string', bullets: ['string'] }]
-  if (parsed.certifications?.length) {
-    resume.certifications = ['string']
+    delta.projects = [{ bullets: ['string — rewritten bullets for the SAME-INDEX input project'] }]
   }
   if (parsed.skills) {
-    resume.skills = 'string'
+    delta.skills = 'string — the optimized skills list from STEP 8, comma-separated'
   }
-  return JSON.stringify({
-    resume,
-    keywordMatch: {
-      tier1Covered: ['string — Tier 1 keyword the candidate genuinely has'],
-      tier1Missing: ['string — Tier 1 keyword not supported by the resume'],
-      tier2Covered: ['string — Tier 2 keyword the candidate genuinely has'],
-      tier2Missing: ['string — Tier 2 keyword not supported by the resume'],
-      gatingGaps: ['string — unmet hard qualification the JD requires, ≤55 chars'],
-    },
-  }, null, 2)
+  delta.keywordMatch = {
+    tier1Covered: ['string — Tier 1 keyword the candidate genuinely has'],
+    tier1Missing: ['string — Tier 1 keyword not supported by the resume'],
+    tier2Covered: ['string — Tier 2 keyword the candidate genuinely has'],
+    tier2Missing: ['string — Tier 2 keyword not supported by the resume'],
+    gatingGaps: ['string — unmet hard qualification the JD requires, ≤55 chars'],
+  }
+  return JSON.stringify(delta, null, 2)
 }
 
 // ── ATS scoring ──────────────────────────────────────────────────────────────
@@ -84,6 +79,66 @@ function stripScores(r: TailoredResume): Omit<TailoredResume, 'atsScore' | 'atsG
   return rest
 }
 
+// ── Tailor delta (mirrored: extension/src/lib/ai/resume-tailor.ts ⇄ backend/supabase/functions/tailor/index.ts) ──
+// The model outputs only rewritten content; these helpers validate it and merge
+// it back into the parsed resume, so immutable fields (name, contact, titles,
+// companies, dates, education, certifications) can never be altered by the model.
+
+export interface TailorDeltaEntry { bullets: string[] }
+
+export interface TailorDelta {
+  summary?: string
+  experience: TailorDeltaEntry[]
+  projects?: TailorDeltaEntry[]
+  skills?: string
+  keywordMatch?: Record<string, unknown>
+}
+
+export function parseDelta(raw: string): TailorDelta {
+  let cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
+  // If the model wrapped the JSON in prose, extract the outermost object.
+  if (!cleaned.startsWith('{')) {
+    const first = cleaned.indexOf('{')
+    const last = cleaned.lastIndexOf('}')
+    if (first !== -1 && last > first) cleaned = cleaned.slice(first, last + 1)
+  }
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(cleaned)
+  } catch {
+    throw new Error('AI returned invalid JSON. Please try again.')
+  }
+  const d = parsed as Record<string, unknown>
+  if (!Array.isArray(d.experience)) throw new Error('AI returned incomplete response. Please try again.')
+  return d as unknown as TailorDelta
+}
+
+// Merge the model's delta into the parsed resume. A missing or empty bullets
+// array for an entry keeps that entry's original bullets — a partially valid
+// response degrades to "some bullets untailored", never to a broken resume.
+export function mergeTailorDelta<T extends {
+  experience: Array<{ bullets: string[] }>
+  projects?: Array<{ bullets: string[] }>
+  skills?: string
+}>(base: T, delta: TailorDelta): T & { summary: string } {
+  const pick = (orig: string[], d?: TailorDeltaEntry): string[] => {
+    const rewritten = Array.isArray(d?.bullets) ? d.bullets.filter((b): b is string => typeof b === 'string' && b.trim().length > 0) : []
+    return rewritten.length > 0 ? rewritten : orig
+  }
+  return {
+    ...base,
+    summary: typeof delta.summary === 'string' ? delta.summary : '',
+    experience: base.experience.map((role, i) => ({ ...role, bullets: pick(role.bullets, delta.experience?.[i]) })),
+    ...(base.projects?.length
+      ? { projects: base.projects.map((p, i) => ({ ...p, bullets: pick(p.bullets, delta.projects?.[i]) })) }
+      : {}),
+    ...(base.skills
+      ? { skills: typeof delta.skills === 'string' && delta.skills.trim() ? delta.skills : base.skills }
+      : {}),
+  }
+}
+// ── End mirrored tailor delta ──
+
 export function buildPrompt(job: JobData, parsed: ParsedResume, compact: boolean, supplemental?: string, trim = false, includeSummary = true, previous?: TailoredResume): string {
   const company = job.company && job.company !== 'Unknown Company' ? job.company : 'Unknown'
   const today = new Date().toISOString().split('T')[0]
@@ -124,6 +179,8 @@ The output must fit on a single letter page. Apply these additional constraints 
 ` : ''
 
   return `You are an expert resume writer and ATS optimization specialist. Tailor the candidate's resume for the specific job below by rewriting content — never fabricating it.
+
+YOUR OUTPUT IS A DELTA, NOT A FULL RESUME. Return ONLY the rewritten content: the summary, each entry's rewritten bullets, the optimized skills list, and the keyword report. The application merges your output back into the resume in code — everything you do not output (name, contact details, job titles, company names, dates, locations, education, certifications) is preserved verbatim from the input automatically.
 
 TODAY'S DATE: ${today}
 TARGET ROLE: ${job.title}
@@ -216,22 +273,24 @@ ${compactMode}---
 
 INTEGRITY RULES — any violation makes the output unusable:
 
-1. NEVER alter: name, contact details, job titles, company names, dates, locations, institutions, degree names, certifications, or any bullet beginning "Tech:" (copy those verbatim — they count toward the bullet budget).
-2. NEVER reorder experience or education entries. Output every entry in the EXACT top-to-bottom order it appears in the input — do NOT re-sort by date, recency, relevance, or seniority. If the input lists role A above role B, the output lists A above B, even when B's start date is more recent or B seems more relevant to this job. Only the bullets WITHIN an entry may be reordered.
+1. IMMUTABLE CONTENT IS NOT YOURS TO WRITE. Name, contact details, job titles, company names, dates, locations, institutions, degree names, and certifications are preserved in code from the input resume — never include them in your output. Any bullet beginning "Tech:" must appear in your output copied verbatim (it counts toward the bullet budget).
+2. INDEX ALIGNMENT — NEVER REORDER ENTRIES. Your "experience" array must contain EXACTLY one entry per input experience entry, in the SAME top-to-bottom order: output entry i holds the rewritten bullets for input entry i, even when a later entry seems more relevant to this job. The same applies to "projects". Never add, remove, merge, or re-sort entries; only the bullets WITHIN an entry may be reordered.
 3. NO INVENTED OR SUBSTITUTED SKILLS. Any concrete skill, tool, technology, certification, license, method, or system may appear in the output (bullets or skills) only if it appears verbatim in the resume. A competing or adjacent one does NOT qualify the candidate for the one the JD names — this holds in every field: Zustand≠Redux, Vue≠React (tech), BLS≠ACLS (healthcare), QuickBooks≠SAP (finance), M&A≠litigation (legal). JD-only items — including "preferred"/"nice-to-have" ones — are never added. Never swap something the resume names for a different thing the JD names even when they serve the same purpose (resume "PHP (Symfony)" stays "PHP (Symfony)" even if the JD says "Python/FastAPI"). A JD-only item may not appear in ANY framing — not as "pursuing [X]", "ready to obtain [X]", "[X]-ready", "[X]-eligible", "willing to obtain [X]", nor ANY other construction that attaches the missing item's name to the candidate; the candidate's gaps are reported exclusively in keywordMatch, and resume content never names what the candidate lacks. The only additions allowed are those defined in STEP 8.
 4. NO SCOPE INFLATION. Keep each bullet's real depth — never upgrade narrow, specific work into a broad claim. This applies in every field: "used AWS S3 for storage" must not become "deployed on AWS" (tech); "recorded patient vitals" must not become "managed critical care" (healthcare); "reconciled invoices" must not become "owned the financial close" (finance). Don't apply a JD term-of-art unless the resume gives concrete evidence for it — in tech that means "microservices", "cloud-native", "CI/CD", "DevOps", "cloud security"; in other fields, the equivalent inflated label. This ban includes hedged or hyphenated variants ("microservice-aligned", "X-aligned", "X-inspired", "X-adjacent") — you may not evade it by softening the word. It also covers INDUSTRY/DOMAIN claims: if no bullet shows the candidate worked in a domain (e-commerce, fintech, healthcare, etc.), the summary and bullets may not claim it or call the experience "X-adjacent", even when the JD lists that domain as required or preferred. A skill listed only in the skills section (no supporting bullet) may never appear in a bullet or the summary. Do not manufacture an accomplishment from a supervisory mention — "reviewed others' work" does not license claiming you performed that work.
 5. ONE BULLET IN, ONE BULLET OUT (NO MERGING). Never merge two bullets into one sentence — to shorten a role, drop whole bullets, never fuse them. In DEFAULT mode each role's output bullet count equals its input count EXACTLY (11 in → 11 out, no drops). In TRIM or COMPACT mode, dropping whole bullets is REQUIRED per STEP 5 — a long role is expected to come out roughly half its input length — but the surviving bullets are still strictly one-in-one-out (never a JD-named activity, never merged).
 6. PROTECT BEHAVIORAL BULLETS. If the JD names a verifiable activity under its responsibilities (STEP 2) and a bullet demonstrates it, that bullet must appear in the output — never dropped or merged, regardless of budget. Drop a different bullet instead.
 7. NO INVENTED NUMBERS. Every figure in the output — percentages, dollar amounts, counts, team sizes, durations, caseloads — must appear in the candidate's resume or supplemental context. Never introduce, estimate, extrapolate, or round a figure the input does not state ("improved performance" may not become "improved performance by 30%"). Deriving a new figure from the resume's own numbers also counts as inventing: "reduced load from 1.2s to 400ms" may not become "cut load time by 67%" — keep the resume's original figures, which are more concrete anyway. Removing a number is allowed; inventing, altering, or deriving one never is.
-8. Return ONLY valid JSON — no markdown anywhere in values, no fences, no text before or after.
+8. OPTIONAL SECTIONS — include the "projects" key only when the schema below lists it (the input has projects), and the "skills" key only when the schema lists it. Never invent content for a section the resume lacks.
+9. Return ONLY valid JSON — no markdown anywhere in values, no fences, no text before or after.
 
 FINAL CHECK — before emitting, SILENTLY audit your draft against the rules above and fix every violation. Do NOT write the audit, reasoning, or any commentary; your entire response must be the JSON object only, starting with { and ending with }. Verify:
 - NO MERGING: no output bullet combines two distinct accomplishments from separate input bullets. To shorten a role, drop whole bullets per the active budget — never fuse them. If any bullet joins two unrelated accomplishments with ";" or "and also", split it back.
+- ALIGNMENT: each output entry's bullets rewrite that SAME-INDEX input entry, and each role's bullet count obeys the active budget (STEP 5).
 - BEHAVIORAL MATCH: every activity the JD names under its responsibilities that the resume supports (e.g. code reviews, mentoring) appears as its own bullet.
 - EVIDENCE: every skill, credential, and claim in the skills list, a bullet, or the summary is backed verbatim by the resume. Remove anything that is not — especially a term-of-art lifted from the JD that the resume never supports (in tech: CI/CD, DevOps, Microservices; in any field, the equivalent unearned buzzword). No JD-only requirement is named anywhere in resume content in any framing (pursuing/ready to obtain/transitioning to) — gaps live only in keywordMatch.
 - NUMBERS: every figure in bullets and the summary appears in the input resume or supplemental context; none invented, altered, extrapolated, or derived by arithmetic from other input figures (Integrity 7).
 
-Return this exact JSON structure:
+Return ONLY this exact JSON structure — emit the keys in exactly this top-to-bottom order:
 
 ${buildTailorSchema(parsed)}`
 }
@@ -244,36 +303,72 @@ export function isValidResume(r: unknown): r is TailoredResume {
     Array.isArray(resume.experience)
 }
 
-export function parseJson(raw: string): TailoredResume {
-  let cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
-  // If the model wrapped the JSON in prose, extract the outermost object.
-  if (!cleaned.startsWith('{')) {
-    const first = cleaned.indexOf('{')
-    const last = cleaned.lastIndexOf('}')
-    if (first !== -1 && last > first) cleaned = cleaned.slice(first, last + 1)
-  }
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(cleaned)
-  } catch {
-    throw new Error('AI returned invalid JSON. Please try again.')
-  }
-  // Unwrap { resume, atsScore, atsGaps } wrapper; fall back to bare resume object
-  const data = parsed as Record<string, unknown>
-  const resumeData = (data.resume && typeof data.resume === 'object') ? data.resume : parsed
-  if (!isValidResume(resumeData)) throw new Error('AI returned incomplete response. Please try again.')
-  const resume = resumeData as TailoredResume
-  // Preferred path: compute score + gaps in code from the model's coverage report.
-  if (data.keywordMatch && typeof data.keywordMatch === 'object') {
-    const { score, gaps } = scoreFromMatch(data.keywordMatch as KeywordMatch)
+// Full production assembly: raw model output → validated delta → merged resume
+// with the code-computed ATS score attached. Shared by tailorResume and the
+// eval harness so evals exercise exactly the production path.
+export function assembleTailored(parsed: ParsedResume, raw: string): TailoredResume {
+  const delta = parseDelta(raw)
+  const resume = mergeTailorDelta(parsed, delta) as TailoredResume
+  if (delta.keywordMatch && typeof delta.keywordMatch === 'object') {
+    const { score, gaps } = scoreFromMatch(delta.keywordMatch as KeywordMatch)
     resume.atsScore = score
     resume.atsGaps = gaps
-  } else {
-    // Fallback for any response still using the legacy score fields.
-    if (typeof data.atsScore === 'number') resume.atsScore = Math.max(0, Math.min(100, Math.round(data.atsScore)))
-    if (Array.isArray(data.atsGaps)) resume.atsGaps = (data.atsGaps as unknown[]).filter((g): g is string => typeof g === 'string')
   }
   return resume
+}
+
+// Reads an SSE stream (Claude or OpenAI shape), forwarding each text fragment
+// to onText and returning the full accumulated text. Lines may split across
+// network chunks, so a partial-line buffer is kept between reads.
+async function readSseText(
+  res: Response,
+  extract: (ev: Record<string, unknown>) => string | undefined,
+  onText?: (text: string) => void,
+): Promise<string> {
+  if (!res.body) throw new Error('AI response had no body. Please try again.')
+  const reader = res.body.getReader()
+  const decoder = new TextDecoder()
+  let lineBuf = ''
+  let full = ''
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) break
+    lineBuf += decoder.decode(value, { stream: true })
+    const lines = lineBuf.split('\n')
+    lineBuf = lines.pop() ?? ''
+    for (const line of lines) {
+      if (!line.startsWith('data:')) continue
+      const payload = line.slice(5).trim()
+      if (!payload || payload === '[DONE]') continue
+      let ev: Record<string, unknown>
+      try {
+        ev = JSON.parse(payload) as Record<string, unknown>
+      } catch {
+        continue
+      }
+      if (ev.type === 'error') {
+        const e = ev.error as { message?: string } | undefined
+        throw new Error(e?.message ?? 'AI stream error. Please try again.')
+      }
+      const text = extract(ev)
+      if (text) {
+        full += text
+        onText?.(text)
+      }
+    }
+  }
+  return full
+}
+
+function claudeDelta(ev: Record<string, unknown>): string | undefined {
+  if (ev.type !== 'content_block_delta') return undefined
+  const delta = ev.delta as { type?: string; text?: string } | undefined
+  return delta?.type === 'text_delta' ? delta.text : undefined
+}
+
+function openaiDelta(ev: Record<string, unknown>): string | undefined {
+  const choices = ev.choices as Array<{ delta?: { content?: string } }> | undefined
+  return choices?.[0]?.delta?.content ?? undefined
 }
 
 export async function tailorResume(
@@ -286,6 +381,7 @@ export async function tailorResume(
   trim = false,
   includeSummary = true,
   previous?: TailoredResume,
+  onProgress?: (label: string) => void,
 ): Promise<TailoredResume> {
   const prompt = buildPrompt(job, parsed, compact, supplemental, trim, includeSummary, previous)
 
@@ -296,6 +392,14 @@ export async function tailorResume(
     prompt,
   })
 
+  const roleCount = parsed.experience.length
+  let acc = ''
+  const onText = (text: string): void => {
+    acc += text
+    onProgress?.(deriveTailorProgress(acc, roleCount))
+  }
+
+  let raw: string
   if (provider === 'claude') {
     const res = await fetch(CLAUDE_API, {
       method: 'POST',
@@ -311,6 +415,7 @@ export async function tailorResume(
         // Sonnet too (see claude.ts).
         model: 'claude-sonnet-4-6',
         max_tokens: 6000,
+        stream: true,
         messages: [{ role: 'user', content: prompt }],
       }),
     })
@@ -318,33 +423,31 @@ export async function tailorResume(
       const err = (await res.json().catch(() => ({}))) as { error?: { message?: string } }
       throw new Error(err.error?.message ?? `Claude API error ${res.status}`)
     }
-    const data = (await res.json()) as { content: Array<{ type: string; text: string }> }
-    const text = data.content.find((b) => b.type === 'text')?.text ?? ''
-    await debugLog('Tailor — raw model response (Claude)', text)
-    return parseJson(text)
+    raw = await readSseText(res, claudeDelta, onText)
+  } else {
+    // OpenAI
+    const res = await fetch(OPENAI_API, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        // gpt-4o (not -mini) for tailoring: same judgment-heavy task as the
+        // Claude path above; the mini model merges/drops bullets like Haiku.
+        model: 'gpt-4o',
+        max_tokens: 6000,
+        stream: true,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    })
+    if (!res.ok) {
+      const err = (await res.json().catch(() => ({}))) as { error?: { message?: string } }
+      throw new Error(err.error?.message ?? `OpenAI API error ${res.status}`)
+    }
+    raw = await readSseText(res, openaiDelta, onText)
   }
 
-  // OpenAI
-  const res = await fetch(OPENAI_API, {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      // gpt-4o (not -mini) for tailoring: same judgment-heavy task as the
-      // Claude path above; the mini model merges/drops bullets like Haiku.
-      model: 'gpt-4o',
-      max_tokens: 6000,
-      messages: [{ role: 'user', content: prompt }],
-    }),
-  })
-  if (!res.ok) {
-    const err = (await res.json().catch(() => ({}))) as { error?: { message?: string } }
-    throw new Error(err.error?.message ?? `OpenAI API error ${res.status}`)
-  }
-  const data = (await res.json()) as { choices: Array<{ message: { content: string } }> }
-  const text = data.choices[0]?.message?.content ?? ''
-  await debugLog('Tailor — raw model response (OpenAI)', text)
-  return parseJson(text)
+  await debugLog('Tailor — raw model response', raw)
+  return assembleTailored(parsed, raw)
 }

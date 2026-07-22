@@ -3,7 +3,7 @@
 > Cover Me is a free, open-source (MIT) Chrome extension that reads any job posting and generates a tailored, ATS-friendly cover letter from the user's resume in about 10 seconds. It can also rewrite ("tailor") the resume itself to match a specific role's ATS keywords and show a match score with gap analysis. It works automatically on LinkedIn, Indeed, Greenhouse, Lever, Workday, and Ashby, with a manual-paste fallback for any other job board.
 
 Key facts:
-- Pricing: Free forever with your own Claude or OpenAI API key (BYOK, no account needed), free hosted tier with 10 AI generations/day, or Pro at $4/month for unlimited generations and cross-device history sync.
+- Pricing: Free forever with your own Claude or OpenAI API key (BYOK, no account needed), free hosted tier with 5 AI generations/day, or Pro at $8/month for unlimited generations and cross-device history sync.
 - Privacy: In BYOK mode the resume and API key never leave the user's device (AES-GCM encrypted in local storage). In hosted mode the resume is encrypted at rest (AES-256-GCM). No ads, no telemetry, resume data is never used for AI training.
 - AI: Claude (Anthropic) on hosted tiers; user's choice of Claude or OpenAI in BYOK mode.
 - Output: Editable cover letters and tailored resumes, exportable as formatted PDFs; local generation history.

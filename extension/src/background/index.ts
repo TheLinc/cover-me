@@ -54,47 +54,127 @@ async function failTailor(id: string, job: JobData, startedAt: number, error: st
   return { success: false, error }
 }
 
-// Scrape the active tab. Tries the content script first; falls back to a
-// self-contained inline scraper injected via chrome.scripting.executeScript
-// so the user doesn't need to refresh after installing or reloading the extension.
-async function scrapeTab(tabId: number): Promise<JobData> {
-  // --- Primary path: content script message ---
+// ATS providers that render job postings inside cross-origin iframes on
+// company careers pages. Frames on these hosts are worth scraping even though
+// they don't match the top frame's hostname.
+const EMBEDDED_ATS_HOSTS = ['greenhouse.io', 'lever.co', 'myworkdayjobs.com', 'ashbyhq.com', 'bamboohr.com', 'workable.com']
+
+// Enumerate frames worth scraping: the top frame, same-hostname iframes
+// (LinkedIn's interop shell renders the job pane in a same-origin iframe at
+// /preload/), and known ATS iframes. Ad/tracking iframes never match. Falls
+// back to top-frame-only when scripting is unavailable (restricted pages).
+async function listScrapableFrames(tabId: number): Promise<number[]> {
   try {
-    const scrape = (await chrome.tabs.sendMessage(tabId, { type: 'SCRAPE_JOB' })) as ScrapeResponse
-    if (scrape.success) return scrape.job
-    throw new Error(scrape.error)
-  } catch (primaryErr) {
-    // Content script not responding — fall through to inline injection.
-    // Rethrow immediately if it IS responding but reported a scrape failure
-    // (i.e. the error came from the scraper, not from sendMessage itself).
-    if (primaryErr instanceof Error && !isConnectionError(primaryErr)) {
-      throw primaryErr
-    }
+    const frames = await chrome.scripting.executeScript({
+      target: { tabId, allFrames: true },
+      func: () => location.hostname,
+    })
+    const topHost = frames.find((f) => f.frameId === 0)?.result
+    const ids = frames
+      .filter((f) => {
+        const host = typeof f.result === 'string' ? f.result : ''
+        if (!host) return false
+        if (f.frameId === 0) return true
+        return host === topHost || EMBEDDED_ATS_HOSTS.some((h) => host === h || host.endsWith('.' + h))
+      })
+      .map((f) => f.frameId)
+    return ids.length > 0 ? [...new Set([0, ...ids])] : [0]
+  } catch {
+    return [0]
+  }
+}
+
+type FrameScrape =
+  | { frameId: number; ok: true; job: JobData }
+  | { frameId: number; ok: false; error: Error; connection: boolean }
+
+// Scrape the active tab. Tries the content-script scrapers in every relevant
+// frame (some sites render the posting inside an iframe the top frame can't
+// see); falls back to a self-contained inline scraper injected via
+// chrome.scripting.executeScript so the user doesn't need to refresh after
+// installing or reloading the extension.
+async function scrapeTab(tabId: number): Promise<JobData> {
+  const frameIds = await listScrapableFrames(tabId)
+
+  // --- Primary path: content script message, per frame ---
+  const results: FrameScrape[] = await Promise.all(
+    frameIds.map(async (frameId): Promise<FrameScrape> => {
+      try {
+        const scrape = (await chrome.tabs.sendMessage(tabId, { type: 'SCRAPE_JOB' }, { frameId })) as ScrapeResponse
+        if (scrape.success) return { frameId, ok: true, job: scrape.job }
+        return { frameId, ok: false, error: new Error(scrape.error), connection: false }
+      } catch (err) {
+        const e = err instanceof Error ? err : new Error(String(err))
+        return { frameId, ok: false, error: e, connection: isConnectionError(e) }
+      }
+    }),
+  )
+
+  // The top frame keeps its historical precedence so already-working sites
+  // behave exactly as before; among iframe hits, take the longest description.
+  const top = results.find((r) => r.frameId === 0)
+  if (top?.ok) return top.job
+  const successes = results.filter((r): r is Extract<FrameScrape, { ok: true }> => r.ok)
+  if (successes.length > 0) {
+    successes.sort((a, b) => b.job.description.length - a.job.description.length)
+    const job = successes[0].job
+    return { ...job, url: (await topFrameUrl(tabId)) ?? job.url }
   }
 
-  // --- Fallback: inject a self-contained scraper into the page ---
-  type InlineResult = { title: string; company: string; description: string; url: string }
+  // No frame produced a job. If any frame ran our scraper and deliberately
+  // failed, surface that error — it carries a site-specific message. Pure
+  // connection errors mean the content script isn't loaded (e.g. right after
+  // an extension reload), which the inline fallback below handles.
+  const deliberate =
+    results.find((r) => !r.ok && !r.connection && r.frameId === 0) ??
+    results.find((r) => !r.ok && !r.connection)
+  if (deliberate && !deliberate.ok) throw deliberate.error
+
+  // --- Fallback: inject a self-contained scraper into every frame ---
+  type InlineResult = { title: string; company: string; description: string; url: string; heuristic?: boolean }
   let result: InlineResult | null = null
+  let resultFrameId = 0
   try {
     const injections = await chrome.scripting.executeScript({
-      target: { tabId },
+      target: { tabId, allFrames: true },
       func: inlineScraper,
     })
-    const r = injections[0]?.result
-    if (r && typeof r === 'object' && 'title' in r && 'description' in r) {
-      result = r as InlineResult
-    }
+    const valid = injections
+      .map((i) => ({ frameId: i.frameId, r: i.result as InlineResult | null }))
+      .filter((x): x is { frameId: number; r: InlineResult } =>
+        !!x.r && typeof x.r === 'object' && 'title' in x.r && 'description' in x.r && x.r.description.length > 200)
+    // Selector-based results beat last-resort heuristic ones in ANY frame
+    // (the top frame may be an empty shell whose heuristic grabs nav text
+    // while an iframe holds the real posting); within the same quality tier,
+    // the top frame wins, then the longest description.
+    valid.sort((a, b) =>
+      Number(!!a.r.heuristic) - Number(!!b.r.heuristic) ||
+      Number(b.frameId === 0) - Number(a.frameId === 0) ||
+      b.r.description.length - a.r.description.length)
+    result = valid[0]?.r ?? null
+    resultFrameId = valid[0]?.frameId ?? 0
   } catch {
     // scripting API unavailable or page is restricted (e.g. chrome:// URLs)
   }
 
   if (result && result.description.length > 200) {
-    return { title: result.title, company: result.company, description: result.description, url: result.url }
+    const url = resultFrameId === 0 ? result.url : await topFrameUrl(tabId) ?? result.url
+    return { title: result.title, company: result.company, description: result.description, url }
   }
 
   throw new Error(
     'Could not read this page. Try refreshing, or paste the job description manually.',
   )
+}
+
+// An iframe's location.href (e.g. LinkedIn's /preload/ interop frame) is not
+// the address the user sees — use the tab's URL for jobs scraped from iframes.
+async function topFrameUrl(tabId: number): Promise<string | undefined> {
+  try {
+    return (await chrome.tabs.get(tabId)).url ?? undefined
+  } catch {
+    return undefined
+  }
 }
 
 // Returns true when the error is a Chrome messaging/connection error rather than
@@ -109,11 +189,35 @@ function isConnectionError(err: Error): boolean {
 // Self-contained scraper injected via chrome.scripting.executeScript.
 // MUST NOT reference any outer-scope variables — this function is serialised
 // via .toString() and evaluated in the page's isolated world.
-function inlineScraper(): { title: string; company: string; description: string; url: string } | null {
+function inlineScraper(): { title: string; company: string; description: string; url: string; heuristic?: boolean } | null {
   const url = location.href
 
+  // querySelector never pierces shadow roots, and some sites (LinkedIn's
+  // interop shell) render page content inside open/declarative shadow DOM.
+  // Collect the document plus every open shadow root and query across all.
+  const roots: (Document | ShadowRoot)[] = [document]
+  const scanRoots = (root: Document | ShadowRoot): void => {
+    for (const el of Array.from(root.querySelectorAll('*'))) {
+      const sr = (el as HTMLElement).shadowRoot
+      if (sr) {
+        roots.push(sr)
+        scanRoots(sr)
+      }
+    }
+  }
+  scanRoots(document)
+  const q = (sel: string): HTMLElement | null => {
+    for (const r of roots) {
+      const el = r.querySelector(sel)
+      if (el) return el as HTMLElement
+    }
+    return null
+  }
+  const qa = (sel: string): HTMLElement[] =>
+    roots.flatMap((r) => Array.from(r.querySelectorAll(sel)) as HTMLElement[])
+
   // 1. JSON-LD structured data
-  const ldScripts = document.querySelectorAll<HTMLScriptElement>('script[type="application/ld+json"]')
+  const ldScripts = qa('script[type="application/ld+json"]') as HTMLScriptElement[]
   for (const s of ldScripts) {
     try {
       const d = JSON.parse(s.textContent ?? '') as Record<string, unknown>
@@ -129,8 +233,8 @@ function inlineScraper(): { title: string; company: string; description: string;
 
   // 2. BambooHR specific — Fabric design system uses stable data attributes and BambooRichText class
   if (location.hostname.includes('bamboohr.com')) {
-    const titleEl = document.querySelector<HTMLElement>('[data-fabric-component="Headline"]')
-    const descEl = document.querySelector<HTMLElement>('.BambooRichText')
+    const titleEl = q('[data-fabric-component="Headline"]')
+    const descEl = q('.BambooRichText')
     const title = titleEl?.innerText?.trim() ?? ''
     const description = descEl?.innerText?.trim() ?? ''
     const sub = location.hostname.split('.')[0]
@@ -142,28 +246,48 @@ function inlineScraper(): { title: string; company: string; description: string;
     if (title && description.length > 200) return { title, company, description, url }
   }
 
-  // 3. Common ATS selectors (Greenhouse, Ashby, Lever, Workable, etc.)
-  const atsTitleEl = document.querySelector<HTMLElement>(
-    '[data-qa="job-title"], .job-title, [class*="posting-title"], h1[class*="title"], h1',
-  )
-  const atsDescEl = document.querySelector<HTMLElement>(
-    '[data-qa="job-description"], .posting-description, [class*="job-description"], #content',
-  )
-  const atsTitle = atsTitleEl?.innerText?.trim() ?? ''
-  const atsDesc = atsDescEl?.innerText?.trim() ?? ''
+  // 3. Common ATS + LinkedIn classic selectors, tried in priority order
+  // (a comma-group querySelector would return document order, not our order)
+  const firstMatch = (sels: string[]): string => {
+    for (const s of sels) {
+      const t = q(s)?.innerText?.trim()
+      if (t) return t
+    }
+    return ''
+  }
+  const atsTitle = firstMatch([
+    '[data-qa="job-title"]',
+    '[class*="job-title"] h1',
+    '.job-title',
+    '[class*="posting-title"]',
+    'h1[class*="title"]',
+    'h1',
+  ])
+  const atsDesc = firstMatch([
+    '[data-qa="job-description"]',
+    '#job-details',
+    '.posting-description',
+    '[class*="job-description"]',
+    '#content',
+  ])
   if (atsTitle && atsDesc.length > 200) {
     return { title: atsTitle, company: 'Unknown Company', description: atsDesc, url }
   }
 
-  // 4. Heuristic: largest text block + first h1
-  const h1 = Array.from(document.querySelectorAll<HTMLElement>('h1, h2'))
-    .find((el) => { const t = el.innerText?.trim(); return t && t.length > 2 && t.length < 120 })
-  const blocks = Array.from(document.querySelectorAll<HTMLElement>('div, section, article'))
+  // 4. Heuristic: largest text block + first plausible h1 (h2 only as backup).
+  // Skip headings that are clearly UI chrome (e.g. LinkedIn's toast counter
+  // "0 notifications total" is the first h2 in the document).
+  const plausible = (el: HTMLElement): boolean => {
+    const t = el.innerText?.trim()
+    return !!t && t.length > 2 && t.length < 120 && !/^\d/.test(t) && !/notification|skip to|menu/i.test(t)
+  }
+  const h1 = qa('h1').find(plausible) ?? qa('h2').find(plausible)
+  const blocks = qa('div, section, article')
     .filter((el) => (el.innerText?.trim().length ?? 0) > 500)
     .sort((a, b) => (b.innerText?.length ?? 0) - (a.innerText?.length ?? 0))
   const hTitle = h1?.innerText?.trim() ?? ''
   const hDesc = blocks[0]?.innerText?.trim() ?? ''
-  if (hTitle && hDesc.length > 200) return { title: hTitle, company: 'Unknown Company', description: hDesc, url }
+  if (hTitle && hDesc.length > 200) return { title: hTitle, company: 'Unknown Company', description: hDesc, url, heuristic: true }
 
   return null
 }
@@ -232,6 +356,16 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
       flags: { compact, trim, includeSummary, hasCandidateContext: !!candidateContext, hasSupplemental: !!supplemental, hasPrevious: !!previous },
     })
 
+    // Live progress: the tailor call streams the model's output and reports a
+    // stage label; persisting it on the job record lets the popup show real
+    // progress (and survive being closed/reopened mid-generation).
+    let lastProgress = ''
+    const onProgress = (progress: string): void => {
+      if (progress === lastProgress) return
+      lastProgress = progress
+      void setTailorJob({ id, status: 'loading', job, startedAt, progress })
+    }
+
     if (settings?.mode === 'hosted') {
       const session = await ensureValidSession()
       if (!session) {
@@ -239,7 +373,7 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
       }
       // Hosted: the resume + final prompt live server-side. Enable DEBUG_MODE on
       // the edge function to see those in the Supabase function logs.
-      const resume = await tailorViaBackend(job, session.access_token, compact, merged, trim, includeSummary, previous)
+      const resume = await tailorViaBackend(job, session.access_token, compact, merged, trim, includeSummary, previous, onProgress)
       await setTailorJob({ id, status: 'done', job, resume, startedAt })
       return { success: true, resume, job }
     }
@@ -257,6 +391,7 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
     // Re-run automatically when resume is replaced (saveResume clears the parsed field).
     let parsed = resumeData.parsed
     if (!parsed) {
+      onProgress('Reading your resume (first run only)…')
       parsed = await parseResumeStructure(resumeData.text, settings.provider, apiKey)
       await saveParsedResume(parsed)
     }
@@ -268,7 +403,7 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
       bulletsPerRole: parsed.experience?.map((e) => ({ role: e.title, bullets: e.bullets?.length })),
     })
 
-    const tailored = await tailorResume(job, parsed, settings.provider, apiKey, compact, merged, trim, includeSummary, previous)
+    const tailored = await tailorResume(job, parsed, settings.provider, apiKey, compact, merged, trim, includeSummary, previous, onProgress)
     await setTailorJob({ id, status: 'done', job, resume: tailored, startedAt })
     return { success: true, resume: tailored, job }
   } catch (err) {

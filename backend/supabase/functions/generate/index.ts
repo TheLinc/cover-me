@@ -6,7 +6,7 @@ import { buildLintRetryMessage, lintLetter } from '../_shared/letter-lint.ts'
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SECRET_KEY = Deno.env.get('SERVICE_KEY')!
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')!
-const FREE_DAILY_LIMIT = 10
+const FREE_DAILY_LIMIT = 5
 
 Deno.serve(async (req) => {
   const cors = handleCors(req)

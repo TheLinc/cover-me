@@ -55,7 +55,7 @@ const faqJsonLd = {
       name: 'Can I check my ATS score for free?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Yes. The Cover Me Chrome extension scores your resume against any job posting you have open and shows the specific keyword gaps — free with your own API key, or 10 generations per day on the hosted free tier.',
+        text: 'Yes. The Cover Me Chrome extension scores your resume against any job posting you have open and shows the specific keyword gaps — free with your own API key, or 5 generations per day on the hosted free tier.',
       },
     },
   ],

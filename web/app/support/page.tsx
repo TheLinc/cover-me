@@ -48,7 +48,7 @@ const faqJsonLd = {
       name: 'I hit my daily cover letter limit. When does it reset?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Free accounts get 10 cover letters per day. The limit resets at midnight UTC. Upgrade to Cover Me Pro for unlimited generations.',
+        text: 'Free accounts get 5 cover letters per day. The limit resets at midnight UTC. Upgrade to Cover Me Pro for unlimited generations.',
       },
     },
     {
@@ -183,7 +183,7 @@ export default function SupportPage() {
                 },
                 {
                   q: 'I hit my daily limit',
-                  a: 'Free accounts get 10 cover letters per day. The limit resets at midnight UTC. Upgrade to Pro for unlimited generations.',
+                  a: 'Free accounts get 5 cover letters per day. The limit resets at midnight UTC. Upgrade to Pro for unlimited generations.',
                 },
                 {
                   q: 'My API key isn\'t working',

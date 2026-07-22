@@ -72,8 +72,10 @@ Deno.serve(async (req) => {
       return json({ error: 'Encryption failed' }, 500)
     }
 
+    // structured_encrypted: null — invalidate the cached AI-parsed structure;
+    // the tailor function re-parses (and re-caches) from the new text.
     const { error } = await supabase.from('resumes').upsert(
-      { user_id: userId, text_encrypted, filename: safeFilename, updated_at: new Date().toISOString() },
+      { user_id: userId, text_encrypted, filename: safeFilename, structured_encrypted: null, updated_at: new Date().toISOString() },
       { onConflict: 'user_id' },
     )
 

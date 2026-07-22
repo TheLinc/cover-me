@@ -112,6 +112,7 @@ export default function GeneratePage({ onNavigate }: Props) {
 
   type TailorState = 'idle' | 'loading' | 'done' | 'error'
   const [tailorState, setTailorState] = useState<TailorState>('idle')
+  const [tailorProgress, setTailorProgress] = useState('')
   const [tailorError, setTailorError] = useState('')
   const [tailoredResume, setTailoredResume] = useState<TailoredResume | null>(null)
   const [tailoredJob, setTailoredJob] = useState<JobData | null>(null)
@@ -209,6 +210,7 @@ export default function GeneratePage({ onNavigate }: Props) {
         tailorJobId.current = tj.id
         if (tj.status === 'loading') {
           setLoadingJob(tj.job)
+          setTailorProgress(tj.progress ?? '')
           setTailorState('loading')
         } else if (tj.status === 'error') {
           setTailorError(tj.error ?? 'Resume tailoring failed.')
@@ -255,11 +257,14 @@ export default function GeneratePage({ onNavigate }: Props) {
           tailorJobId.current = tj.id
           if (tj.status === 'loading') {
             setLoadingJob(tj.job)
+            setTailorProgress(tj.progress ?? '')
             setTailorState('loading')
           } else if (tj.status === 'error') {
+            setTailorProgress('')
             setTailorError(tj.error ?? 'Resume tailoring failed.')
             setTailorState('error')
           } else if (tj.status === 'done' && tj.resume) {
+            setTailorProgress('')
             setTailoredResume(tj.resume)
             setTailoredJob(tj.job)
             setTailorState('done')
@@ -599,7 +604,7 @@ export default function GeneratePage({ onNavigate }: Props) {
               {appMode === 'hosted' ? (
                 <>
                   <div className="setup-step-title">Sign in to Cover Me</div>
-                  <div className="setup-step-hint">Free account — 10 generations/day</div>
+                  <div className="setup-step-hint">Free account — 5 generations/day</div>
                 </>
               ) : (
                 <>
@@ -626,7 +631,7 @@ export default function GeneratePage({ onNavigate }: Props) {
               <p className="loading-text">
                 {state === 'loading'
                   ? loadingJob ? 'Crafting your cover letter…' : 'Reading the job posting…'
-                  : loadingJob ? 'Tailoring your resume…' : 'Reading the job posting…'
+                  : loadingJob ? (tailorProgress || 'Tailoring your resume…') : 'Reading the job posting…'
                 }
               </p>
               {loadingJob && (

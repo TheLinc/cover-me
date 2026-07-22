@@ -15,7 +15,7 @@ import { mkdirSync, writeFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { buildPrompt as buildLetterPrompt, type LetterVariation } from '../src/lib/ai/index'
-import { buildPrompt as buildTailorPrompt, parseJson } from '../src/lib/ai/resume-tailor'
+import { buildPrompt as buildTailorPrompt, assembleTailored } from '../src/lib/ai/resume-tailor'
 import { lintLetter, buildLintRetryMessage } from '../src/lib/ai/letter-lint'
 import { CASES, type EvalCase } from './fixtures'
 import { checkLetter, checkTailored, type CheckResult } from './checks'
@@ -253,7 +253,9 @@ async function liveTailor() {
     let result: CheckResult
     let tailoredJson = ''
     try {
-      const tailored = parseJson(raw)
+      // Production path: parse the delta output, merge into the parsed resume,
+      // attach the code-computed score — same as tailorResume/the backend.
+      const tailored = assembleTailored(c.parsed, raw)
       tailoredJson = JSON.stringify(tailored, null, 2)
       result = checkTailored(tailored, c)
       result.warnings.unshift(`atsScore: ${tailored.atsScore ?? 'n/a'} | gaps: ${(tailored.atsGaps ?? []).join('; ') || 'none'}`)

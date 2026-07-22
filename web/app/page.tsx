@@ -613,7 +613,7 @@ const STEPS = [
   {
     n: "01",
     title: "Install and configure in 60 seconds",
-    body: "Add the extension from the Chrome Web Store. Upload your resume — PDF or DOCX, text is extracted locally on your device and never stored raw. Choose BYOK with your own Claude or OpenAI key for unlimited free use, or sign up for 10 free hosted letters per day. No credit card required.",
+    body: "Add the extension from the Chrome Web Store. Upload your resume — PDF or DOCX, text is extracted locally on your device and never stored raw. Choose BYOK with your own Claude or OpenAI key for unlimited free use, or sign up for 5 free hosted letters per day. No credit card required.",
   },
   {
     n: "02",
@@ -1168,7 +1168,7 @@ function OpenSource() {
 // ── Pricing ───────────────────────────────────────────────────────────────────
 
 const FREE_FEATURES = [
-  "10 AI generations/day — cover letters + resumes",
+  "5 AI generations/day — cover letters + resumes",
   "BYOK — your key, unlimited & free",
   "All major job boards",
   "Edit & export to PDF",
@@ -1253,7 +1253,7 @@ function Pricing() {
             </p>
             <div className="flex items-baseline gap-1 mb-3">
               <span className="text-[52px] font-extrabold tracking-[-2.5px] leading-none text-brand-light">
-                $4
+                $8
               </span>
               <span className="text-[14px] text-muted-foreground font-medium">/month</span>
             </div>
@@ -1444,7 +1444,7 @@ type CellVal = string | boolean;
 const COMPARE_COLS = ["Cover Me", "AI Chatbots", "AI Writing Tools"] as const;
 
 const COMPARE_ROWS: { feature: string; vals: CellVal[] }[] = [
-  { feature: "Price",                           vals: ["Free / $4/mo", "Free / $20/mo", "$39–$49/mo"] },
+  { feature: "Price",                           vals: ["Free / $8/mo", "Free / $20/mo", "$39–$49/mo"] },
   { feature: "Auto-reads job posting",          vals: [true, false, false] },
   { feature: "Cover letter generation",         vals: [true, true, true] },
   { feature: "AI resume tailoring to role",     vals: [true, false, false] },
@@ -1574,7 +1574,7 @@ function Compare() {
 const FAQ_ITEMS = [
   {
     q: "Is Cover Me free to use?",
-    a: "Yes. Cover Me is free forever. In BYOK mode you use your own Claude or OpenAI API key — unlimited cover letters and resume tailoring at your own API cost, with no account required. The hosted free tier gives you 10 AI generations per day — cover letters and resume tailoring combined. Pro ($4/month) removes the daily limit and adds cross-device history sync.",
+    a: "Yes. Cover Me is free forever. In BYOK mode you use your own Claude or OpenAI API key — unlimited cover letters and resume tailoring at your own API cost, with no account required. The hosted free tier gives you 5 AI generations per day — cover letters and resume tailoring combined. Pro ($8/month) removes the daily limit and adds cross-device history sync.",
   },
   {
     q: "Can Cover Me tailor my resume too?",
@@ -1598,7 +1598,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "Do I need an account to use Cover Me?",
-    a: "No account is needed for BYOK mode — install the extension, add your resume and API key, and start generating immediately. You only need an account for the hosted free tier (10 letters/day) or Pro ($4/month).",
+    a: "No account is needed for BYOK mode — install the extension, add your resume and API key, and start generating immediately. You only need an account for the hosted free tier (5 letters/day) or Pro ($8/month).",
   },
 ];
 

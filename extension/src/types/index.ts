@@ -121,6 +121,9 @@ export interface TailorJob {
   error?: string
   errorCode?: 'RATE_LIMIT'
   startedAt: number
+  // Live progress label derived from the model's streaming output
+  // ("Rewriting experience (2 of 3)…") — shown under the popup spinner.
+  progress?: string
 }
 
 export interface CoverLetterEntry {

@@ -142,7 +142,7 @@ export default async function BoardPage({ params }: { params: Promise<{ board: s
             Try it on your next {board.name} application
           </h2>
           <p className="text-[15px] text-muted-foreground mb-6 max-w-[460px] mx-auto leading-[1.7]">
-            Free forever with your own API key, or 10 hosted generations per day. No credit card required.
+            Free forever with your own API key, or 5 hosted generations per day. No credit card required.
           </p>
           <div className="flex gap-3 justify-center flex-wrap">
             <a

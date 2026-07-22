@@ -6,6 +6,39 @@ function isUIChrome(el: HTMLElement): boolean {
   return !!el.closest('nav, header, footer, [role="navigation"], [role="banner"], [role="complementary"]')
 }
 
+// ── Shadow DOM traversal ──────────────────────────────────────────────────────
+// LinkedIn's new "interop" shell renders page content inside open shadow roots
+// (declarative <template shadowrootmode="open"> on #interop-outlet), which
+// querySelector never pierces. These helpers extend queries through every open
+// shadow root in the current document.
+
+function collectShadowRoots(root: ParentNode, acc: ShadowRoot[] = []): ShadowRoot[] {
+  for (const el of Array.from(root.querySelectorAll<HTMLElement>('*'))) {
+    if (el.shadowRoot) {
+      acc.push(el.shadowRoot)
+      collectShadowRoots(el.shadowRoot, acc)
+    }
+  }
+  return acc
+}
+
+function queryDeep<T extends Element>(selector: string): T | null {
+  const direct = document.querySelector<T>(selector)
+  if (direct) return direct
+  for (const sr of collectShadowRoots(document)) {
+    const found = sr.querySelector<T>(selector)
+    if (found) return found
+  }
+  return null
+}
+
+// parentElement that can climb out of a shadow root into its host element
+function parentOrHost(el: HTMLElement): HTMLElement | null {
+  if (el.parentElement) return el.parentElement
+  const root = el.getRootNode()
+  return root instanceof ShadowRoot && root.host instanceof HTMLElement ? root.host : null
+}
+
 function isValidJobTitle(text: string): boolean {
   if (!text || text.length < 4 || text.length > 120) return false
   if (/^\d|^[•·]/.test(text)) return false
@@ -33,13 +66,11 @@ function isValidJobTitle(text: string): boolean {
 
 function tryCurrentLayout(): JobData | null {
   // Description — data-testid is stable across redesigns
-  const descEl = document.querySelector<HTMLElement>('[data-testid="expandable-text-box"]')
+  const descEl = queryDeep<HTMLElement>('[data-testid="expandable-text-box"]')
   const description = descEl?.innerText?.trim()
-  if (!description) return null
+  if (!descEl || !description) return null
 
-  // Company — LinkedIn company profile URLs always contain /company/
-  const companyEl = document.querySelector<HTMLAnchorElement>('a[href*="linkedin.com/company/"]')
-  const company = companyEl?.innerText?.trim() || 'Unknown Company'
+  const company = findCompanyNearDescription(descEl) ?? 'Unknown Company'
 
   // Title — the title <p> contains the job title as its first text node,
   // followed by child elements (badge icons, verified checkmarks).
@@ -52,6 +83,22 @@ function tryCurrentLayout(): JobData | null {
     description,
     url: window.location.href,
   }
+}
+
+// Company — LinkedIn company profile URLs always contain /company/. Search
+// outward from the description element so that on split-pane pages (search
+// results, collections) we find the detail pane's company link rather than the
+// first job-list card's.
+function findCompanyNearDescription(descEl: HTMLElement): string | undefined {
+  let container: HTMLElement | null = parentOrHost(descEl)
+  let depth = 0
+  while (container && depth < 16) {
+    const text = container.querySelector<HTMLAnchorElement>('a[href*="linkedin.com/company/"]')?.innerText?.trim()
+    if (text) return text
+    container = parentOrHost(container)
+    depth++
+  }
+  return queryDeep<HTMLAnchorElement>('a[href*="linkedin.com/company/"]')?.innerText?.trim() || undefined
 }
 
 // Extract text from direct text nodes only — ignores child element text
@@ -136,14 +183,14 @@ function findTitleBeforeDescription(descEl: HTMLElement | null): string | undefi
           if (text) return text
         }
       }
-      container = container.parentElement
+      container = parentOrHost(container)
       depth++
     }
   }
 
   // Fallback: scan <p> elements anchored near the company link, working
   // outward from it so we stay in the job card header area.
-  const companyEl = document.querySelector<HTMLAnchorElement>('a[href*="linkedin.com/company/"]')
+  const companyEl = queryDeep<HTMLAnchorElement>('a[href*="linkedin.com/company/"]')
   if (companyEl) {
     let container: HTMLElement | null = companyEl.parentElement
     while (container && container !== document.body) {
@@ -153,7 +200,7 @@ function findTitleBeforeDescription(descEl: HTMLElement | null): string | undefi
         const text = extractTitleFromP(p)
         if (text) return text
       }
-      container = container.parentElement
+      container = parentOrHost(container)
       // Stop before we've walked too far up and risk picking up unrelated sections
       if (container && container.querySelectorAll('p').length > 30) break
     }
@@ -212,7 +259,7 @@ function tryLegacySelectors(): JobData | null {
 
   function first(sels: string[]) {
     for (const s of sels) {
-      const t = document.querySelector<HTMLElement>(s)?.innerText?.trim()
+      const t = queryDeep<HTMLElement>(s)?.innerText?.trim()
       if (t) return t
     }
   }
@@ -232,10 +279,13 @@ function tryLegacySelectors(): JobData | null {
 // ── Main export ───────────────────────────────────────────────────────────────
 
 export function scrapeLinkedIn(): JobData {
+  // DOM strategies first: they read the in-focus detail pane. The embedded
+  // JSON blobs are last-resort only — on search pages they contain every job
+  // in the results list, so they can return the wrong posting.
   const result =
-    tryEmbeddedJson() ??
     tryCurrentLayout() ??
-    tryLegacySelectors()
+    tryLegacySelectors() ??
+    tryEmbeddedJson()
 
   if (result) return result
 

@@ -191,7 +191,7 @@ export const BOARDS: Board[] = [
       },
       {
         q: 'Is Cover Me free for Lever applications?',
-        a: 'Yes. Bring your own Claude or OpenAI API key for unlimited free generation, or use the hosted free tier for 10 generations per day. Pro at $4/month removes the daily limit.',
+        a: 'Yes. Bring your own Claude or OpenAI API key for unlimited free generation, or use the hosted free tier for 5 generations per day. Pro at $8/month removes the daily limit.',
       },
     ],
   },

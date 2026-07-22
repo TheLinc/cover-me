@@ -18,6 +18,12 @@ export const GUIDES = [
     description: 'A step-by-step method for matching your resume to a specific role — which keywords matter, what to rewrite, and what never to fabricate.',
     date: '2026-07-06',
   },
+  {
+    slug: 'cover-me-vs-aiapply',
+    title: 'Cover Me vs AIApply for job applications',
+    description: 'Auto-apply vs one-click, reviewed applications — an honest comparison of two very different philosophies for using AI in your job search.',
+    date: '2026-07-21',
+  },
 ] as const
 
 export type Guide = (typeof GUIDES)[number]

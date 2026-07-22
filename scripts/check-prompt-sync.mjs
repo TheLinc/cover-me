@@ -66,8 +66,24 @@ const checks = [
     start: 'SUPPLEMENTAL CANDIDATE CONTEXT (verified by the candidate — real experience, a referral',
     end: 'a claim it does not actually support.',
   },
-  // The tailor prompts legitimately differ in shape (raw text vs parsed JSON,
-  // fixed vs dynamic schema), so compare each shared section individually.
+  // The tailor prompt builders are near-identical mirrors; compare each shared
+  // section individually so file-level differences (types, imports) don't trip it.
+  {
+    name: 'tailor: delta output contract',
+    a: EXT_TAILOR,
+    b: BE_TAILOR,
+    start: 'YOUR OUTPUT IS A DELTA, NOT A FULL RESUME.',
+    end: 'preserved verbatim from the input automatically.',
+  },
+  {
+    // The delta parse/merge helpers decide what the model can and cannot alter —
+    // they must behave identically in the extension (BYOK) and the Edge Function.
+    name: 'tailor: delta parse + merge helpers',
+    a: EXT_TAILOR,
+    b: BE_TAILOR,
+    start: '// ── Tailor delta (mirrored:',
+    end: '// ── End mirrored tailor delta ──',
+  },
   {
     name: 'tailor: industry detection + keyword tiering',
     a: EXT_TAILOR,
@@ -137,6 +153,15 @@ const checks = [
     b: BE_TAILOR,
     start: 'REVISION MODE — revise, do not rebuild',
     end: 'shifting the baseline.',
+  },
+  // The resume parse prompt runs client-side for BYOK and server-side for the
+  // hosted tier's structured-resume cache — the template must not drift.
+  {
+    name: 'resume parse prompt template',
+    a: 'extension/src/lib/ai/resume-parse.ts',
+    b: 'backend/supabase/functions/_shared/resume-parse.ts',
+    start: 'You are a resume parser.',
+    end: '${resumeText.slice(0, 6000)}`',
   },
 ]
 

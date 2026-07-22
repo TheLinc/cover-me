@@ -23,7 +23,7 @@ interface Props {
   justUpgraded?: boolean;
 }
 
-const FREE_LIMIT = 10;
+const FREE_LIMIT = 5;
 
 export default function DashboardClient({
   email,
@@ -260,7 +260,7 @@ export default function DashboardClient({
 
               <div className="flex flex-col items-end gap-3 relative z-[1] shrink-0 max-[700px]:flex-row max-[700px]:items-center">
                 <div className="text-[32px] font-extrabold tracking-[-1.5px] text-brand-light leading-none gap-1 flex items-baseline">
-                  $4
+                  $8
                   <span className="text-[14px] font-medium text-muted-foreground tracking-normal">
                     /mo
                   </span>

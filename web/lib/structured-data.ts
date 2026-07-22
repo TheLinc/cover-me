@@ -7,7 +7,7 @@ export const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.de
 // the two must always match the store listing.
 export const STORE_RATING = { value: 5, count: 3 }
 
-export const EXTENSION_VERSION = '1.1.0'
+export const EXTENSION_VERSION = '1.2.0'
 
 export const jsonLdApp = {
   '@context': 'https://schema.org',
@@ -40,11 +40,11 @@ export const jsonLdApp = {
       price: '0',
       priceCurrency: 'USD',
       name: 'Free',
-      description: '10 AI-generated cover letters per day, or unlimited with your own API key.',
+      description: '5 AI-generated cover letters per day, or unlimited with your own API key.',
     },
     {
       '@type': 'Offer',
-      price: '4',
+      price: '8',
       priceCurrency: 'USD',
       name: 'Pro',
       description: 'Unlimited cover letters per day with cross-device history sync.',
@@ -77,7 +77,7 @@ export const jsonLdHowTo = {
     {
       '@type': 'HowToStep',
       name: 'Install and configure',
-      text: 'Install Cover Me from the Chrome Web Store. Upload your resume (PDF or DOCX) — text is extracted locally. Choose BYOK with your own Claude or OpenAI key for unlimited free use, or sign up for 10 free hosted letters per day.',
+      text: 'Install Cover Me from the Chrome Web Store. Upload your resume (PDF or DOCX) — text is extracted locally. Choose BYOK with your own Claude or OpenAI key for unlimited free use, or sign up for 5 free hosted letters per day.',
       position: 1,
     },
     {

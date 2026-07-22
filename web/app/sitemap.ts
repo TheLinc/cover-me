@@ -37,7 +37,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     })),
     {
       url: `${BASE}/guides`,
-      lastModified: GUIDES.reduce((max, g) => (g.date > max ? g.date : max), GUIDES[0].date),
+      lastModified: GUIDES.map((g) => g.date).reduce((max, date) => (date > max ? date : max)),
       changeFrequency: 'weekly',
       priority: 0.7,
     },

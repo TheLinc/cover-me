@@ -1,6 +1,7 @@
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL, WEB_URL } from './config'
 import { clearSession, getSession, saveSession } from './storage'
 import { isValidResume } from './ai/resume-tailor'
+import { deriveTailorProgress } from './ai/tailor-progress'
 import type { ApplicationRecord, AuthSession, CoverLetter, JobData, TailoredResume } from '../types'
 
 // Thrown by signUp() when the account was created but needs email confirmation
@@ -147,25 +148,78 @@ export async function uploadResumeToBackend(
   }
 }
 
-export async function tailorViaBackend(job: JobData, accessToken: string, compact = false, supplemental?: string, trim = false, includeSummary = true, previous?: TailoredResume): Promise<TailoredResume> {
+export async function tailorViaBackend(job: JobData, accessToken: string, compact = false, supplemental?: string, trim = false, includeSummary = true, previous?: TailoredResume, onProgress?: (label: string) => void): Promise<TailoredResume> {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/tailor`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
+      // Opts into the NDJSON progress stream; older function versions ignore
+      // this and respond with plain JSON, which the fallback below handles.
+      Accept: 'application/x-ndjson',
     },
     body: JSON.stringify({ job, compact, supplemental: supplemental?.trim() || undefined, trim, includeSummary, previous }),
   })
-  const data = await res.json() as Record<string, unknown>
-  if (res.status === 429) {
-    throw new RateLimitError((data.error as string) ?? 'Daily limit reached.')
+
+  // Pre-stream failures (auth, rate limit, missing resume) and any older
+  // non-streaming function version respond with plain JSON.
+  const contentType = res.headers.get('content-type') ?? ''
+  if (!res.ok || !contentType.includes('ndjson') || !res.body) {
+    const data = await res.json().catch(() => ({})) as Record<string, unknown>
+    if (res.status === 429) {
+      throw new RateLimitError((data.error as string) ?? 'Daily limit reached.')
+    }
+    if (!res.ok) {
+      throw new Error((data.error as string) ?? `Server error ${res.status}`)
+    }
+    const resume = data.resume
+    if (!isValidResume(resume)) throw new Error('Invalid response from server. Please try again.')
+    return resume
   }
-  if (!res.ok) {
-    throw new Error((data.error as string) ?? `Server error ${res.status}`)
+
+  // NDJSON stream: {type:'start',roles} → {type:'delta',text}* → {type:'done',resume}
+  // Deltas only drive the progress label; the authoritative resume (merged and
+  // scored server-side) arrives in the done event.
+  const reader = res.body.getReader()
+  const decoder = new TextDecoder()
+  let lineBuf = ''
+  let acc = ''
+  let roles = 1
+  let final: TailoredResume | null = null
+
+  const handleLine = (line: string): void => {
+    const trimmed = line.trim()
+    if (!trimmed) return
+    let ev: Record<string, unknown>
+    try {
+      ev = JSON.parse(trimmed) as Record<string, unknown>
+    } catch {
+      return
+    }
+    if (ev.type === 'start' && typeof ev.roles === 'number' && ev.roles > 0) {
+      roles = ev.roles
+    } else if (ev.type === 'delta' && typeof ev.text === 'string') {
+      acc += ev.text
+      onProgress?.(deriveTailorProgress(acc, roles))
+    } else if (ev.type === 'done') {
+      if (isValidResume(ev.resume)) final = ev.resume
+    } else if (ev.type === 'error') {
+      throw new Error((ev.error as string) ?? 'Resume tailoring failed. Please try again.')
+    }
   }
-  const resume = data.resume
-  if (!isValidResume(resume)) throw new Error('Invalid response from server. Please try again.')
-  return resume
+
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) break
+    lineBuf += decoder.decode(value, { stream: true })
+    const lines = lineBuf.split('\n')
+    lineBuf = lines.pop() ?? ''
+    for (const line of lines) handleLine(line)
+  }
+  handleLine(lineBuf)
+
+  if (!final) throw new Error('Invalid response from server. Please try again.')
+  return final
 }
 
 export async function saveLetterToBackend(accessToken: string, entry: CoverLetter): Promise<void> {

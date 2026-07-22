@@ -47,7 +47,7 @@ const faqJsonLd = {
       name: 'Is Cover Me cheaper than ChatGPT Plus?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'For cover letters, yes. ChatGPT Plus costs $20/month. Cover Me is free with your own API key (you pay cents per letter directly to Anthropic or OpenAI), free for 10 hosted generations per day, or $4/month for unlimited hosted use.',
+        text: 'For cover letters, yes. ChatGPT Plus costs $20/month. Cover Me is free with your own API key (you pay cents per letter directly to Anthropic or OpenAI), free for 5 hosted generations per day, or $8/month for unlimited hosted use.',
       },
     },
     {
@@ -67,7 +67,7 @@ const COMPARISON: { feature: string; coverMe: string; chatgpt: string }[] = [
   { feature: 'ATS keyword matching', coverMe: 'Extracted from the posting, woven in', chatgpt: 'Only if you prompt for it explicitly' },
   { feature: 'Resume tailoring + match score', coverMe: 'One click, scored with gap analysis', chatgpt: 'Not without elaborate prompting' },
   { feature: 'Where it runs', coverMe: 'In the browser, on the job page', chatgpt: 'Separate tab, constant switching' },
-  { feature: 'Price', coverMe: 'Free (BYOK or 10/day) · $4/mo unlimited', chatgpt: 'Free tier limited · $20/mo Plus' },
+  { feature: 'Price', coverMe: 'Free (BYOK or 5/day) · $8/mo unlimited', chatgpt: 'Free tier limited · $20/mo Plus' },
   { feature: 'Open source', coverMe: 'Yes — MIT licensed, auditable', chatgpt: 'No' },
 ]
 
@@ -169,7 +169,7 @@ export default function Page() {
       <div className="border border-border rounded-[12px] p-8 bg-surface text-center mt-14">
         <h2 className="text-[20px] font-bold text-foreground tracking-[-0.4px] mb-2">Try the one-click version</h2>
         <p className="text-[14px] text-muted-foreground mb-5 max-w-[420px] mx-auto leading-[1.7]">
-          Free with your own API key or 10 hosted generations a day. No credit card required.
+          Free with your own API key or 5 hosted generations a day. No credit card required.
         </p>
         <a
           href={CHROME_STORE_URL}
