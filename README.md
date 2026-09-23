@@ -146,6 +146,8 @@ pnpm rebuild esbuild   # required — pnpm v10 blocks esbuild's postinstall
 pnpm dev
 ```
 
+`pnpm dev` talks to the local Supabase stack, so start it first (see [Local backend](#local-backend-supabase-in-docker)). BYOK mode works without it.
+
 Then load the extension in Chrome:
 1. `chrome://extensions` → Enable **Developer Mode**
 2. **Load unpacked** → select the `extension/dist/` folder
@@ -159,6 +161,58 @@ pnpm run build
 ```
 
 Output is in `extension/dist/`.
+
+### Local backend (Supabase in Docker)
+
+The hosted tier runs entirely on your machine: Postgres, Auth, the REST API and the Edge Functions. This is the only dev environment. Production changes only when you run `pnpm run deploy:prod`.
+
+You need Docker Desktop running. Then, from `backend/`:
+
+```bash
+pnpm install
+pnpm start        # first run pulls the Supabase images, a few minutes
+pnpm env:local    # writes local env files for the functions, extension and web app
+```
+
+`pnpm start` applies every migration and `supabase/seed.sql`, which creates two confirmed accounts: `free@cover-me.test` and `pro@cover-me.test`, both with password `password123`. `pnpm status` prints the local URLs, including Studio (a local dashboard) and Mailpit, which catches signup and password reset emails.
+
+Then run the apps against it:
+
+```bash
+# backend/: add a real ANTHROPIC_API_KEY to supabase/functions/.env first
+pnpm functions:serve
+
+# extension/: adds http://127.0.0.1:54321 to host_permissions (production builds don't)
+pnpm dev
+
+# web/: Supabase values come from .env.localdb, Stripe keys from .env.local (use test mode)
+pnpm dev
+stripe listen --forward-to localhost:3000/api/stripe-webhook   # optional, paste the whsec_ into web/.env.localdb
+```
+
+#### Tests
+
+```bash
+pnpm test             # db reset, then database tests, then integration tests
+pnpm db:test          # pgTAP tests in supabase/tests/database (RLS, rate limit functions)
+pnpm test:functions   # Vitest tests in tests/integration against the served functions
+```
+
+The integration tests never call Anthropic. `test:functions` serves the functions with `ANTHROPIC_BASE_URL` pointed at a mock server (`tests/mock-anthropic.ts`), so the letter, parse and streaming tailor paths all run for free. It replaces any running `functions:serve`, so restart that afterwards.
+
+#### Changing the schema
+
+Add a numbered file to `supabase/migrations/` (next is `012_...`), run `pnpm db:reset` to replay everything from scratch, and add or update a test in `supabase/tests/database/`.
+
+#### Deploying
+
+```bash
+pnpm run deploy:prod
+```
+
+This runs `pnpm test` and stops on a failure. Then it asks you to type "prod", pushes migrations, and deploys the functions. Migrations go first because new function code can depend on new columns. `db push` lists the pending migrations and asks again before applying them. Flags: `--db-only`, `--functions-only`, `--skip-tests`.
+
+Use `pnpm run`, not `pnpm deploy`. The second is a built-in pnpm command.
 
 ### Project structure
 

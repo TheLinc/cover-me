@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --mode localdb",
+    "build:local": "node ../scripts/check-prompt-sync.mjs && vite build --mode localdb",
     "build": "node ../scripts/check-prompt-sync.mjs && vite build",
     "preview": "vite preview",
     "eval": "tsx eval/run.ts",

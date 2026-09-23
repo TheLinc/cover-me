@@ -1,0 +1,27 @@
+{
+  "name": "cover-me-backend",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "supabase start",
+    "stop": "supabase stop",
+    "status": "supabase status",
+    "env:local": "node scripts/local-env.mjs",
+    "db:reset": "supabase db reset",
+    "db:test": "supabase test db",
+    "functions:serve": "supabase functions serve --env-file supabase/functions/.env",
+    "test:functions": "node scripts/test-functions.mjs",
+    "test": "supabase db reset && supabase test db && node scripts/test-functions.mjs",
+    "deploy:prod": "node scripts/deploy.mjs"
+  },
+  "devDependencies": {
+    "@supabase/supabase-js": "2.117.1",
+    "supabase": "2.117.0",
+    "vitest": "5.0.1"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "supabase"
+    ]
+  }
+}

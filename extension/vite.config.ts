@@ -39,10 +39,19 @@ function stripJsPdfRemoteCode(): Plugin {
   }
 }
 
-export default defineConfig({
+// `--mode localdb` (pnpm dev / build:local) targets the local Supabase
+// stack from .env.localdb, so the service worker also needs host access to it.
+// Production builds use manifest.json unchanged.
+const LOCAL_SUPABASE = 'http://127.0.0.1:54321/*'
+
+export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
-    crx({ manifest }),
+    crx({
+      manifest: mode === 'localdb'
+        ? { ...manifest, host_permissions: [...manifest.host_permissions, LOCAL_SUPABASE] }
+        : manifest,
+    }),
     stripJsPdfRemoteCode(),
   ],
   // Drop attribution/legal comments from minified output. Some bundled deps
@@ -56,4 +65,4 @@ export default defineConfig({
     emptyOutDir: true,
     chunkSizeWarningLimit: 1000,
   },
-})
+}))

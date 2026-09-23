@@ -1,4 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { ANTHROPIC_MESSAGES_URL } from '../_shared/anthropic.ts'
 import { corsHeaders, handleCors, json } from '../_shared/cors.ts'
 import { decrypt } from '../_shared/encrypt.ts'
 import { buildLintRetryMessage, lintLetter } from '../_shared/letter-lint.ts'
@@ -152,7 +153,7 @@ Deno.serve(async (req) => {
 const LETTER_MODEL = 'claude-sonnet-4-6'
 
 async function callClaude(messages: Array<{ role: 'user' | 'assistant'; content: string }>): Promise<string> {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+  const res = await fetch(ANTHROPIC_MESSAGES_URL, {
     method: 'POST',
     headers: {
       'x-api-key': ANTHROPIC_API_KEY,

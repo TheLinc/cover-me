@@ -1,4 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { ANTHROPIC_MESSAGES_URL } from '../_shared/anthropic.ts'
 import { corsHeaders, handleCors, json } from '../_shared/cors.ts'
 import { decrypt, encrypt } from '../_shared/encrypt.ts'
 import { findOrCreateJobApplication } from '../_shared/job-application.ts'
@@ -421,7 +422,7 @@ Deno.serve(async (req) => {
     console.log('[CoverMe debug] full prompt sent to model:\n', prompt)
   }
 
-  const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
+  const claudeRes = await fetch(ANTHROPIC_MESSAGES_URL, {
     method: 'POST',
     headers: {
       'x-api-key': ANTHROPIC_API_KEY,

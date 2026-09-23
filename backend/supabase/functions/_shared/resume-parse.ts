@@ -6,7 +6,7 @@
 // The prompt template is mirrored from extension/src/lib/ai/resume-parse.ts —
 // scripts/check-prompt-sync.mjs fails the build if the copies drift.
 
-const CLAUDE_API = 'https://api.anthropic.com/v1/messages'
+import { ANTHROPIC_MESSAGES_URL } from './anthropic.ts'
 
 export interface ParsedResume {
   name: string
@@ -83,7 +83,7 @@ export function isValidParsedResume(r: unknown): r is ParsedResume {
 }
 
 export async function parseResumeStructure(resumeText: string, apiKey: string): Promise<ParsedResume> {
-  const res = await fetch(CLAUDE_API, {
+  const res = await fetch(ANTHROPIC_MESSAGES_URL, {
     method: 'POST',
     headers: {
       'x-api-key': apiKey,
