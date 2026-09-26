@@ -1,15 +1,13 @@
 // Brand regression check for the "Made to measure" redesign.
 //
 //   node scripts/check-brand.mjs [paths...]   source checks (default: app components lib) + token contrast
-//   node scripts/check-brand.mjs --media      media files exist and fit their budgets
 //   BASE_URL=http://localhost:3000 node scripts/check-brand.mjs   also checks rendered pages
-import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs'
+import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join, extname } from 'node:path'
 
 const errors = []
 const args = process.argv.slice(2)
-const mediaOnly = args.includes('--media')
-const targets = args.filter((a) => !a.startsWith('--'))
+const targets = args
 
 // ── Source checks ────────────────────────────────────────────────────────────
 const OLD_PALETTE =
@@ -20,7 +18,7 @@ const TIMELINE = /animation-?[tT]imeline/
 const walk = (p) => (statSync(p).isDirectory() ? readdirSync(p).flatMap((f) => walk(join(p, f))) : [p])
 const lineOf = (src, idx) => src.slice(0, idx).split('\n').length
 
-if (!mediaOnly) {
+{
   const files = (targets.length ? targets : ['app', 'components', 'lib'])
     .flatMap(walk)
     .filter((f) => ['.ts', '.tsx', '.css'].includes(extname(f)))
@@ -68,22 +66,6 @@ if (!mediaOnly) {
   }
 }
 
-// ── Media budgets ────────────────────────────────────────────────────────────
-if (mediaOnly || (!targets.length && existsSync('public/media'))) {
-  const BUDGET = {
-    'hero.mp4': 3_000_000,
-    'hero-poster.jpg': 400_000,
-    'footer.mp4': 1_500_000,
-    'footer-poster.jpg': 300_000,
-  }
-  for (const [name, max] of Object.entries(BUDGET)) {
-    const p = join('public/media', name)
-    if (!existsSync(p)) { errors.push(`missing ${p}`); continue }
-    const size = statSync(p).size
-    if (size > max) errors.push(`${p} is ${(size / 1e6).toFixed(2)} MB, budget ${(max / 1e6).toFixed(2)} MB`)
-  }
-}
-
 // ── Rendered pages ───────────────────────────────────────────────────────────
 const base = process.env.BASE_URL
 if (base) {
@@ -100,8 +82,8 @@ if (base) {
   for (const type of ['"Organization"', '"WebSite"', '"SoftwareApplication"', '"HowTo"', '"FAQPage"']) {
     if (!home.includes(type)) errors.push(`/ is missing ${type} JSON-LD`)
   }
-  if (!home.includes('poster="/media/hero-poster.jpg"')) errors.push('/ hero video has no poster')
-  if ((home.match(/preload="none"/g) ?? []).length < 2) errors.push('/ videos must use preload="none"')
+  if (!home.includes('data-hero-scene')) errors.push('/ is missing the hero scene')
+  if (!home.includes('data-footer-thread')) errors.push('/ footer is missing its thread')
   if (!home.includes('rises from 52% to 78%')) errors.push('/ ATS score is missing its sr-only sentence')
 }
 

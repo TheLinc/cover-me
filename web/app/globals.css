@@ -175,6 +175,23 @@ img, svg, video { display: block; }
   stroke-linecap: round;
 }
 
+/* Hero scene: the thread draws itself and the two forms sway out of phase.
+ * Time-based, not scroll-driven. Without motion the drawing is simply finished. */
+@media (prefers-reduced-motion: no-preference) {
+  .hero-thread {
+    stroke-dasharray: 1;
+    animation: threadIn 1s cubic-bezier(0.6, 0, 0.2, 1) both;
+  }
+  .hero-form {
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+    animation: sway 7s ease-in-out infinite alternate;
+  }
+  .hero-form--right { animation-delay: -3.5s; }
+}
+@keyframes threadIn { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes sway     { from { rotate: -0.6deg; } to { rotate: 0.6deg; } }
+
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(18px); }
   to   { opacity: 1; transform: translateY(0); }
