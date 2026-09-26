@@ -210,7 +210,7 @@ Add a numbered file to `supabase/migrations/` (next is `012_...`), run `pnpm db:
 pnpm run deploy:prod
 ```
 
-This runs `pnpm test` and stops on a failure. Then it asks you to type "prod", pushes migrations, and deploys the functions. Migrations go first because new function code can depend on new columns. `db push` lists the pending migrations and asks again before applying them. Flags: `--db-only`, `--functions-only`, `--skip-tests`.
+This runs `pnpm test` and stops on a failure. It then lists the pending migrations (a dry run), asks you to type "prod", pushes migrations, and deploys the functions. Migrations go first because new function code can depend on new columns. No database password is needed: the CLI uses your `supabase login`. Flags: `--db-only`, `--functions-only`, `--skip-tests`.
 
 Use `pnpm run`, not `pnpm deploy`. The second is a built-in pnpm command.
 

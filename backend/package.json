@@ -11,7 +11,7 @@
     "db:test": "supabase test db",
     "functions:serve": "supabase functions serve --env-file supabase/functions/.env",
     "test:functions": "node scripts/test-functions.mjs",
-    "test": "supabase db reset && supabase test db && node scripts/test-functions.mjs",
+    "test": "node scripts/ensure-stack.mjs && supabase db reset && supabase test db && node scripts/test-functions.mjs",
     "deploy:prod": "node scripts/deploy.mjs"
   },
   "devDependencies": {

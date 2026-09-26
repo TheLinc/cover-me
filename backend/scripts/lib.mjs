@@ -6,16 +6,17 @@ export const BACKEND = join(dirname(fileURLToPath(import.meta.url)), '..')
 export const REPO = join(BACKEND, '..')
 
 const isWindows = process.platform === 'win32'
-const SUPABASE_BIN = join(BACKEND, 'node_modules', '.bin', isWindows ? 'supabase.cmd' : 'supabase')
+// The npm package's JS entry point, run with node directly: no .cmd shim,
+// so no shell, so arguments (like a db URL with a password) pass through as-is.
+const SUPABASE_JS = join(BACKEND, 'node_modules', 'supabase', 'dist', 'supabase.js')
 
-// Runs the pinned CLI from backend/node_modules. shell is needed on Windows
-// to execute .cmd shims.
+// Runs the pinned CLI from backend/node_modules.
 export function supabase(args, opts = {}) {
-  return spawnSync(SUPABASE_BIN, args, { cwd: BACKEND, shell: isWindows, encoding: 'utf8', ...opts })
+  return spawnSync(process.execPath, [SUPABASE_JS, ...args], { cwd: BACKEND, encoding: 'utf8', ...opts })
 }
 
 export function supabaseAsync(args, opts = {}) {
-  return spawn(SUPABASE_BIN, args, { cwd: BACKEND, shell: isWindows, ...opts })
+  return spawn(process.execPath, [SUPABASE_JS, ...args], { cwd: BACKEND, ...opts })
 }
 
 // Local stack URLs and keys from `supabase status -o env`, e.g.
