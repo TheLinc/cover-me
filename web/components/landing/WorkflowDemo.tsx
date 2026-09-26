@@ -72,6 +72,7 @@ export function WorkflowDemo() {
       ref={ref}
       className="relative border border-border rounded-[10px] overflow-hidden shadow-[0_28px_60px_-24px_rgba(28,26,23,0.35)]"
       aria-hidden="true"
+      inert
       style={{ animation: "fadeUp 0.65s ease 0.25s both" }}
     >
       {/* Browser chrome */}

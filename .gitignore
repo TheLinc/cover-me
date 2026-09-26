@@ -64,3 +64,6 @@ docs/
 
 # Playwright MCP screenshots
 .playwright-mcp/
+
+# Raw Higgsfield downloads
+.media-raw/

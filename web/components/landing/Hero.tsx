@@ -19,6 +19,12 @@ export function Hero() {
             <p className="max-w-[500px] text-[17px] leading-[1.6] text-ink-2">
               Cover Me tailors yours to each posting&rsquo;s ATS keywords and writes the cover letter, in one click.
             </p>
+            <p className="flex items-baseline gap-3 text-ink-2">
+              <span className="font-display text-[28px] leading-none line-through decoration-thread decoration-2">45 min</span>
+              <span aria-hidden="true" className="font-mono">→</span>
+              <span className="font-display text-[28px] leading-none text-ink">10 sec</span>
+              <PatternNote>per application</PatternNote>
+            </p>
             <div className="flex flex-wrap gap-3 max-lg:justify-center">
               <Button asChild size="lg">
                 <a href={CHROME_STORE_URL} target="_blank" rel="noreferrer">

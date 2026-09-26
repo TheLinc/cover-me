@@ -85,7 +85,7 @@ function PermissionCard({
       <div className="bg-surface px-5 py-3 flex items-center justify-between gap-4 border-b border-border">
         <code className="text-[13px] font-bold text-brand-light font-mono">{name}</code>
         {warning && (
-          <span className="text-[11px] font-semibold text-amber-400 bg-amber-400/10 border border-amber-400/20 px-2.5 py-1 rounded-full shrink-0">
+          <span className="text-[11px] font-semibold text-thread-deep bg-surface border border-[rgba(196,50,31,0.25)] px-2.5 py-1 rounded-full shrink-0">
             ⚠ Chrome shows: &ldquo;{warning}&rdquo;
           </span>
         )}

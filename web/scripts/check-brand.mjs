@@ -11,7 +11,7 @@ const targets = args
 
 // ── Source checks ────────────────────────────────────────────────────────────
 const OLD_PALETTE =
-  /6366f1|818cf8|4338ca|a5b4fc|e2e8f0|94a3b8|475569|99,\s*102,\s*241|0d1117|13,\s*17,\s*23|161c2e|1e2740|2a3452|Plus Jakarta|255,\s*255,\s*255/i
+  /6366f1|818cf8|4338ca|a5b4fc|e2e8f0|94a3b8|475569|99,\s*102,\s*241|0d1117|13,\s*17,\s*23|161c2e|1e2740|2a3452|Plus Jakarta|255,\s*255,\s*255|\b(amber|indigo|violet|slate)-\d/i
 const BOLD_HEADING = /<h[12]\b[^>]*?font-(extra)?bold/g
 const TIMELINE = /animation-?[tT]imeline/
 
@@ -83,6 +83,11 @@ if (base) {
     if (!home.includes(type)) errors.push(`/ is missing ${type} JSON-LD`)
   }
   if (!home.includes('data-hero-scene')) errors.push('/ is missing the hero scene')
+  if (!/45 min[\s\S]{0,400}10 sec/.test(home)) errors.push('/ is missing the 45 min → 10 sec stat')
+  // The demo is decorative (aria-hidden) but contains real buttons; inert keeps them out of the tab order.
+  if (!/<div[^>]*inert=""[^>]*aria-hidden="true"|<div[^>]*aria-hidden="true"[^>]*inert=""/.test(home)) {
+    errors.push('/ demo must be inert so its fake buttons are not focusable')
+  }
   if (!home.includes('data-footer-thread')) errors.push('/ footer is missing its thread')
   if (!home.includes('rises from 52% to 78%')) errors.push('/ ATS score is missing its sr-only sentence')
 }
