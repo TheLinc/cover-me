@@ -81,6 +81,8 @@ img, svg, video { display: block; }
 }
 
 /* ── Motifs ──────────────────────────────────────────────────────────────── */
+/* In the components layer so Tailwind utilities (absolute, p-*, etc.) override them. */
+@layer components {
 
 /* Yellow tape measure: major tick every 48px, minor every 8px, on the top edge. */
 .tape {
@@ -138,12 +140,14 @@ img, svg, video { display: block; }
   background-size: 300% 100%;
   animation: skeletonShimmer 1.8s ease-in-out infinite;
 }
+}
 @keyframes skeletonShimmer {
   0%   { background-position: 200% center; }
   100% { background-position: -200% center; }
 }
 
 /* Running stitch down the landing page's left margin. */
+@layer components {
 .thread-line {
   position: absolute;
   top: 0;
@@ -155,6 +159,7 @@ img, svg, video { display: block; }
 }
 @media (max-width: 767px) {
   .thread-line { display: none; }
+}
 }
 
 /* ATS score tape. --score is animated in the scroll-driven block; 78 is the finished state. */
