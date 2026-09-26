@@ -10,59 +10,48 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Shadcn colors
-        border:      '#2a3452',
+        // shadcn
+        border:      'var(--pattern-line)',
         input:       'hsl(var(--input))',
         ring:        'hsl(var(--ring))',
         background:  'hsl(var(--background))',
         foreground:  'hsl(var(--foreground))',
-        primary: {
-          DEFAULT:    'hsl(var(--primary))',
-          foreground: 'hsl(var(--primary-foreground))',
-        },
-        secondary: {
-          DEFAULT:    'hsl(var(--secondary))',
-          foreground: 'hsl(var(--secondary-foreground))',
-        },
-        destructive: {
-          DEFAULT:    'hsl(var(--destructive))',
-          foreground: 'hsl(var(--destructive-foreground))',
-        },
-        muted: {
-          DEFAULT:    'hsl(var(--muted))',
-          foreground: 'hsl(var(--muted-foreground))',
-        },
-        accent: {
-          DEFAULT:    '#1e2740',
-          foreground: '#e2e8f0',
-        },
-        popover: {
-          DEFAULT:    'hsl(var(--popover))',
-          foreground: 'hsl(var(--popover-foreground))',
-        },
-        card: {
-          DEFAULT:    'hsl(var(--card))',
-          foreground: 'hsl(var(--card-foreground))',
-        },
-        // Project semantic aliases — map to CSS variables defined in globals.css
-        surface:  'var(--surface)',   // = #161c2e
-        elevated: 'var(--elevated)',  // = #1e2740
+        primary:     { DEFAULT: 'hsl(var(--primary))',     foreground: 'hsl(var(--primary-foreground))' },
+        secondary:   { DEFAULT: 'hsl(var(--secondary))',   foreground: 'hsl(var(--secondary-foreground))' },
+        destructive: { DEFAULT: 'hsl(var(--destructive))', foreground: 'hsl(var(--destructive-foreground))' },
+        muted:       { DEFAULT: 'hsl(var(--muted))',       foreground: 'hsl(var(--muted-foreground))' },
+        accent:      { DEFAULT: 'var(--tissue-2)',          foreground: 'var(--ink)' },
+        popover:     { DEFAULT: 'hsl(var(--popover))',     foreground: 'hsl(var(--popover-foreground))' },
+        card:        { DEFAULT: 'hsl(var(--card))',        foreground: 'hsl(var(--card-foreground))' },
+        // Made to measure (values in globals.css)
+        tissue: { DEFAULT: 'var(--tissue)', 2: 'var(--tissue-2)' },
+        ink:    { DEFAULT: 'var(--ink)',    2: 'var(--ink-2)' },
+        line:   'var(--pattern-line)',
+        thread: { DEFAULT: 'var(--thread)', deep: 'var(--thread-deep)' },
+        tape:   'var(--tape)',
+        chalk:  'var(--chalk)',
+        night:  'var(--night)',
+        // Legacy aliases still used by inner pages. New code uses the names above.
+        surface:  'var(--tissue-2)',
+        elevated: 'var(--tissue-2)',
         brand: {
-          DEFAULT: 'var(--accent)',       // = #6366f1
-          light:   'var(--accent-h)',     // = #818cf8
-          dim:     'rgba(99,102,241,0.14)',
-          glow:    'rgba(99,102,241,0.28)',
+          DEFAULT: 'var(--thread)',
+          light:   'var(--thread-deep)',
+          dim:     'rgba(196,50,31,0.10)',
+          glow:    'rgba(196,50,31,0.18)',
         },
-        dim:     'var(--text-3)',    // = #475569 (very muted text)
-        success: 'var(--success)',   // = #34d399
+        dim:     'var(--ink-2)',
+        success: 'var(--chalk)',
       },
       borderRadius: {
         lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
+        md: 'calc(var(--radius) - 1px)',
+        sm: 'calc(var(--radius) - 2px)',
       },
       fontFamily: {
-        sans: ['Plus Jakarta Sans', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        sans:    ['var(--font-sans)', 'system-ui', 'sans-serif'],
+        display: ['var(--font-display)', 'Georgia', 'serif'],
+        mono:    ['var(--font-mono)', 'ui-monospace', 'monospace'],
       },
       keyframes: {
         'accordion-down': {

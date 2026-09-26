@@ -2,33 +2,48 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
-
-/* ── Shadcn CSS variables ───────────────────────────────────────────────────
- * --border and --accent are NOT defined here — they live in the project
- * palette below as hex values and are hardcoded in tailwind.config.ts to
- * avoid CSS variable format conflicts (CSS Modules used hex; Tailwind needs
- * raw HSL channel values for hsl(var(--x)) interpolation).
+/* ── Made to measure palette ─────────────────────────────────────────────────
+ * Hex tokens for our own classes. The HSL channels in the base layer feed
+ * shadcn's hsl(var(--x)) utilities; keep the two in sync.
  * ─────────────────────────────────────────────────────────────────────────── */
+:root {
+  --tissue:       #F2EADB;
+  --tissue-2:     #E8DCC6;
+  --ink:          #1C1A17;
+  --ink-2:        #5E574C;
+  --pattern-line: #B3A489;
+  --thread:       #C4321F;
+  --thread-deep:  #A3281A; /* hover, and small thread-colored text on --tissue-2 */
+  --tape:         #E6B422; /* ATS score and tape measures only */
+  --chalk:        #3B5B8F; /* "your resume" / "matched" in diagrams only */
+  --night:        #141311;
+}
+
 @layer base {
   :root {
-    --background:             217 47% 7%;
-    --foreground:             213 27% 91%;
-    --card:                   225 32% 14%;
-    --card-foreground:        213 27% 91%;
-    --popover:                225 32% 14%;
-    --popover-foreground:     213 27% 91%;
-    --primary:                239 84% 67%;
-    --primary-foreground:     0 0% 100%;
-    --secondary:              222 36% 18%;
-    --secondary-foreground:   213 27% 91%;
-    --muted:                  222 36% 18%;
-    --muted-foreground:       215 16% 65%;
-    --destructive:            0 91% 71%;
-    --destructive-foreground: 0 0% 100%;
-    --input:                  225 32% 24%;
-    --ring:                   239 84% 67%;
-    --radius:                 0.375rem;
+    --background:             39 47% 90%;
+    --foreground:             36 10% 10%;
+    --card:                   39 42% 84%;
+    --card-foreground:        36 10% 10%;
+    --popover:                39 47% 90%;
+    --popover-foreground:     36 10% 10%;
+    --primary:                7 73% 45%;
+    --primary-foreground:     39 47% 90%;
+    --secondary:              39 42% 84%;
+    --secondary-foreground:   36 10% 10%;
+    --muted:                  39 42% 84%;
+    --muted-foreground:       37 11% 33%;
+    --destructive:            7 73% 45%;
+    --destructive-foreground: 39 47% 90%;
+    --input:                  39 22% 62%;
+    --ring:                   36 10% 10%;
+    --radius:                 0.25rem;
+  }
+
+  h1, h2 {
+    font-family: var(--font-display), Georgia, serif;
+    font-weight: 500;
+    letter-spacing: -0.015em;
   }
 }
 
@@ -38,132 +53,167 @@
   padding: 0;
 }
 
-:root {
-  --bg:         #0d1117;
-  --surface:    #161c2e;
-  --elevated:   #1e2740;
-  --border:     #2a3452;
-  --accent:     #6366f1;
-  --accent-h:   #818cf8;
-  --accent-dim: rgba(99, 102, 241, 0.14);
-  --accent-glow:rgba(99, 102, 241, 0.28);
-  --text:       #e2e8f0;
-  --text-2:     #94a3b8;
-  --text-3:     #475569;
-  --success:    #34d399;
-  --error:      #f87171;
-  --error-dim:  rgba(248, 113, 113, 0.10);
-
-  --font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-  --r:    5px;
-  --r-md: 6px;
-  --r-lg: 8px;
-  --r-xl: 12px;
-}
-
 html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 
 body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--font);
+  background: var(--tissue);
+  color: var(--ink);
+  font-family: var(--font-sans), system-ui, sans-serif;
   font-size: 15px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
 
-a       { color: inherit; text-decoration: none; }
-button  { cursor: pointer; font-family: inherit; }
-img, svg { display: block; }
-
-/* ── Shared layout ───────────────────────────────────────────────────────── */
+a      { color: inherit; text-decoration: none; }
+button { cursor: pointer; font-family: inherit; }
+img, svg, video { display: block; }
+::selection { background: var(--tape); color: var(--ink); }
 
 .container {
-  max-width: 1160px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 0 48px;
 }
-
 @media (max-width: 768px) {
   .container { padding: 0 20px; }
 }
 
-/* ── "hired." liquid fill — @property can't be expressed in Tailwind ─────── */
+/* ── Motifs ──────────────────────────────────────────────────────────────── */
 
-@property --fill-pct {
-  syntax: '<percentage>';
-  inherits: false;
-  initial-value: 0%;
+/* Yellow tape measure: major tick every 48px, minor every 8px, on the top edge. */
+.tape {
+  background-color: var(--tape);
+  background-image:
+    repeating-linear-gradient(to right, var(--ink) 0 1px, transparent 1px 48px),
+    repeating-linear-gradient(to right, var(--ink) 0 1px, transparent 1px 8px);
+  background-size: 100% 14px, 100% 7px;
+  background-repeat: no-repeat;
 }
 
-.hero-hired {
-  display: inline;
-  white-space: nowrap;
-  background:
-    linear-gradient(
-      to top,
-      transparent   0%,
-      transparent   var(--fill-pct),
-      var(--text)   var(--fill-pct),
-      var(--text)   100%
-    ),
-    linear-gradient(170deg, var(--accent-h) 0%, var(--accent) 55%, #4338ca 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  line-height: 1.4;
-  animation: liquidFill 1.6s cubic-bezier(0.25, 0.1, 0.25, 1) 0.65s forwards;
+/* Plain ruler ticks, no fill. Sits under the nav. */
+.ruler {
+  height: 8px;
+  background-image:
+    repeating-linear-gradient(to right, var(--pattern-line) 0 1px, transparent 1px 48px),
+    repeating-linear-gradient(to right, var(--pattern-line) 0 1px, transparent 1px 8px);
+  background-size: 100% 8px, 100% 4px;
+  background-repeat: no-repeat;
 }
 
-@keyframes liquidFill {
-  0%   { --fill-pct:   0%; }
-  72%  { --fill-pct: 105%; }
-  85%  { --fill-pct:  97%; }
-  100% { --fill-pct: 100%; }
+/* Pattern piece: dashed outline with a notch on the top edge and the left edge. */
+.piece {
+  position: relative;
+  background: var(--tissue-2);
+  border: 1.5px dashed var(--pattern-line);
+  border-radius: 4px;
+}
+.piece::before,
+.piece::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 0;
+  border: 7px solid transparent;
+}
+.piece::before { top: -1.5px; left: 32px; border-top-color: var(--pattern-line); }
+.piece::after  { left: -1.5px; top: 32px; border-left-color: var(--pattern-line); }
+
+/* Swatch card with pinked (zigzag) top and bottom edges. */
+.swatch {
+  --z: 14px;
+  mask:
+    conic-gradient(from 135deg at top, #0000, #000 1deg 90deg, #0000 91deg) top / var(--z) 51% repeat-x,
+    conic-gradient(from -45deg at bottom, #0000, #000 1deg 90deg, #0000 91deg) bottom / var(--z) 51% repeat-x;
 }
 
-/* ── Skeleton shimmer — complex gradient animation, not Tailwind-able ─────── */
+/* Hang tag silhouette. The punched hole is a child element. */
+.tag { clip-path: polygon(16% 0, 84% 0, 100% 7%, 100% 100%, 0 100%, 0 7%); }
 
+/* Loading shimmer in the WorkflowDemo popup. */
 .skeleton-line {
-  border-radius: 3px;
-  background: linear-gradient(
-    90deg,
-    var(--elevated) 25%,
-    rgba(99, 102, 241, 0.1) 50%,
-    var(--elevated) 75%
-  );
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--tissue-2) 25%, rgba(196, 50, 31, 0.12) 50%, var(--tissue-2) 75%);
   background-size: 300% 100%;
   animation: skeletonShimmer 1.8s ease-in-out infinite;
 }
-
 @keyframes skeletonShimmer {
   0%   { background-position: 200% center; }
   100% { background-position: -200% center; }
 }
 
-/* ── Keyframes — referenced by arbitrary Tailwind animation values ─────────── */
+/* Running stitch down the landing page's left margin. */
+.thread-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: max(12px, calc((100vw - 1200px) / 2 - 8px));
+  width: 2px;
+  background: repeating-linear-gradient(to bottom, var(--thread) 0 12px, transparent 12px 20px);
+  pointer-events: none;
+}
+@media (max-width: 767px) {
+  .thread-line { display: none; }
+}
+
+/* ATS score tape. --score is animated in the scroll-driven block; 78 is the finished state. */
+@property --score {
+  syntax: '<integer>';
+  inherits: true;
+  initial-value: 78;
+}
+.score-tape .score-fill { width: calc(var(--score) * 1%); }
+.score-tape .score-num::after { counter-reset: score var(--score); content: counter(score) '%'; }
+
+/* Stitched wordmark in the footer. */
+.stitch-text {
+  fill: none;
+  stroke: var(--thread);
+  stroke-width: 2.5;
+  stroke-dasharray: 11 7;
+  stroke-linecap: round;
+}
 
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(18px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-
 @keyframes fadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
 
-@keyframes floatY {
-  0%, 100% { transform: translateY(0); }
-  50%       { transform: translateY(-10px); }
+/* scroll-driven:start
+ * Every animation-timeline rule lives in this block. Outside it, everything
+ * renders in its finished state, so Firefox (no scroll timelines) and
+ * reduced-motion visitors get a complete page. scripts/check-brand.mjs fails
+ * if animation-timeline appears anywhere else. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal {
+      animation: reveal ease-out both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 70%;
+    }
+    .thread-line {
+      animation: threadDraw linear both;
+      animation-timeline: scroll(root);
+    }
+    .score-tape {
+      animation: score linear both;
+      animation-timeline: view();
+      animation-range: entry 30% cover 50%;
+    }
+    .stitch-draw {
+      animation: stitchDraw ease-out both;
+      animation-timeline: view();
+      animation-range: entry 10% cover 40%;
+    }
+  }
 }
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.35; }
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
+@keyframes reveal     { from { opacity: 0; translate: 0 24px; } to { opacity: 1; translate: 0 0; } }
+@keyframes threadDraw { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes score      { from { --score: 52; } to { --score: 78; } }
+@keyframes stitchDraw { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+/* scroll-driven:end */
