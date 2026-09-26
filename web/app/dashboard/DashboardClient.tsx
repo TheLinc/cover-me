@@ -91,8 +91,6 @@ export default function DashboardClient({
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Background glow */}
-      <div className="fixed inset-0 pointer-events-none bg-[radial-gradient(ellipse_900px_600px_at_70%_-5%,rgba(99,102,241,0.06)_0%,transparent_65%)]" />
 
       <SiteNav
         actions={
@@ -116,7 +114,7 @@ export default function DashboardClient({
           {/* Upgrade success banner */}
           {upgradeBanner && (
             <div
-              className="flex items-center gap-3 bg-[rgba(52,211,153,0.08)] border border-[rgba(52,211,153,0.25)] rounded-[10px] px-5 py-3.5"
+              className="flex items-center gap-3 bg-[rgba(59,91,143,0.08)] border border-[rgba(59,91,143,0.25)] rounded-[10px] px-5 py-3.5"
               style={{ animation: 'fadeUp 0.4s ease both' }}
             >
               <CheckCircleIcon size={18} className="text-success shrink-0" weight="fill" />
@@ -139,7 +137,7 @@ export default function DashboardClient({
             style={{ animation: "fadeUp 0.5s ease both" }}
           >
             <div className="flex flex-col gap-2.5">
-              <h1 className="text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-1.8px] leading-none text-foreground">
+              <h1 className="text-[clamp(28px,3.8vw,46px)] leading-none text-foreground">
                 Good to see you.
               </h1>
               <div className="flex items-center gap-2 flex-wrap">
@@ -152,7 +150,7 @@ export default function DashboardClient({
                 </span>
               </div>
             </div>
-            <div className="w-14 h-14 max-[700px]:w-11 max-[700px]:h-11 rounded-full bg-brand-dim border border-[rgba(99,102,241,0.28)] text-brand-light text-xl font-extrabold flex items-center justify-center shrink-0 tracking-[-1px]">
+            <div className="w-14 h-14 max-[700px]:w-11 max-[700px]:h-11 rounded-full bg-brand-dim border border-[rgba(196,50,31,0.28)] text-brand-light text-xl font-extrabold flex items-center justify-center shrink-0 tracking-[-1px]">
               {initial}
             </div>
           </header>
@@ -225,18 +223,15 @@ export default function DashboardClient({
           {/* Upgrade card (free) / Pro confirmation (pro) */}
           {!isPro ? (
             <div
-              className="relative bg-gradient-to-br from-surface to-[rgba(99,102,241,0.05)] border border-[rgba(99,102,241,0.22)] rounded-[10px] px-8 py-7 flex items-center justify-between gap-8 overflow-hidden shadow-[0_0_48px_rgba(99,102,241,0.05)] max-[700px]:flex-col max-[700px]:items-start"
+              className="piece px-8 py-7 flex items-center justify-between gap-8 max-[700px]:flex-col max-[700px]:items-start"
               style={{ animation: "fadeUp 0.5s ease 0.16s both" }}
             >
-              {/* Decorative glow */}
-              <div className="absolute -top-[60px] -right-[60px] w-[200px] h-[200px] rounded-full bg-[radial-gradient(ellipse,rgba(99,102,241,0.1)_0%,transparent_65%)] pointer-events-none" />
-
               <div className="flex flex-col gap-1.5 relative z-[1] flex-1 min-w-0">
                 <span className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.12em] text-brand-light mb-0.5">
                   <StarIcon size={10} weight="fill" />
                   Cover Me Pro
                 </span>
-                <h2 className="text-[17px] font-extrabold tracking-[-0.4px] text-foreground leading-[1.2]">
+                <h2 className="text-[17px] text-foreground leading-[1.2]">
                   Remove the daily limit.
                 </h2>
                 <p className="text-[13px] text-muted-foreground leading-[1.65] max-w-[420px]">
@@ -269,14 +264,14 @@ export default function DashboardClient({
             </div>
           ) : (
             <div
-              className="bg-surface border border-[rgba(99,102,241,0.2)] rounded-[10px] px-7 py-6 flex items-start gap-4"
+              className="bg-surface border border-[rgba(196,50,31,0.2)] rounded-[10px] px-7 py-6 flex items-start gap-4"
               style={{ animation: "fadeUp 0.5s ease 0.16s both" }}
             >
-              <div className="w-10 h-10 rounded-lg bg-brand-dim border border-[rgba(99,102,241,0.2)] flex items-center justify-center shrink-0 text-brand-light">
+              <div className="w-10 h-10 rounded-lg bg-brand-dim border border-[rgba(196,50,31,0.2)] flex items-center justify-center shrink-0 text-brand-light">
                 <StarIcon size={16} weight="fill" />
               </div>
               <div className="flex-1">
-                <h2 className="text-[15px] font-bold text-foreground tracking-[-0.2px] mb-1">
+                <h2 className="text-[15px] text-foreground mb-1">
                   You&apos;re on Pro
                 </h2>
                 <p className="text-[13px] text-muted-foreground leading-[1.65] mb-3">

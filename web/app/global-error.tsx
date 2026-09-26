@@ -23,26 +23,26 @@ export default function GlobalError({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#0d1117",
+          background: "#F2EADB",
           fontFamily: "system-ui, sans-serif",
-          color: "#e2e8f0",
+          color: "#1C1A17",
         }}
       >
         <div style={{ textAlign: "center", padding: "0 24px" }}>
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>
+          <h2 style={{ fontSize: 28, fontWeight: 500, fontFamily: "Georgia, serif", marginBottom: 8 }}>
             Something went wrong.
           </h2>
-          <p style={{ fontSize: 14, color: "#94a3b8", marginBottom: 24 }}>
+          <p style={{ fontSize: 14, color: "#5E574C", marginBottom: 24 }}>
             We've been notified. Try again or come back shortly.
           </p>
           <button
             onClick={reset}
             style={{
               padding: "10px 20px",
-              background: "#6366f1",
-              color: "#fff",
+              background: "#C4321F",
+              color: "#F2EADB",
               border: "none",
-              borderRadius: 8,
+              borderRadius: 3,
               fontSize: 14,
               fontWeight: 600,
               cursor: "pointer",

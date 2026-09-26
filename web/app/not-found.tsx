@@ -20,11 +20,11 @@ export default function NotFound() {
           className="text-center flex flex-col items-center gap-5 max-w-[480px]"
           style={{ animation: 'fadeUp 0.5s ease both' }}
         >
-          <p className="text-[clamp(72px,12vw,120px)] font-extrabold leading-none tracking-[-4px] text-[rgba(255,255,255,0.06)] select-none">
+          <p className="font-display italic text-[clamp(96px,16vw,180px)] leading-none text-[rgba(28,26,23,0.12)] select-none">
             404
           </p>
           <div className="-mt-4">
-            <h1 className="text-[28px] font-extrabold tracking-[-0.8px] text-foreground mb-2">
+            <h1 className="text-[28px] text-foreground mb-2">
               Page not found.
             </h1>
             <p className="text-[15px] text-muted-foreground leading-[1.7]">
