@@ -1,14 +1,5 @@
 import { PatternNote } from '@/components/brand/PatternNote'
-import { DressForm, SuitForm } from './scene-paths'
-
-// Hand-authored so it can draw itself (the source art's thread was filled shapes).
-// Drawn in order: a loop into the suit's collar, suit → dress, a tail off the dress.
-// Separate paths because Chrome restarts dashes per sub-path, which breaks pathLength.
-const THREAD = [
-  'M312 549 C373 472 503 457 523 518 C533 564 442 567 433 503 C427 411 579 290 747 286',
-  'M957 354 C1036 411 1112 465 1173 510',
-  'M1341 552 C1448 552 1539 488 1516 411 C1501 358 1440 350 1435 389 C1432 442 1539 465 1722 462',
-]
+import { DressForm, SCENE_VIEWBOX, SuitForm, THREAD } from './scene-paths'
 
 const NOTE = 'absolute max-md:hidden'
 
@@ -17,7 +8,7 @@ export function HeroScene() {
   return (
     <figure data-hero-scene className="relative mx-auto w-full max-w-[900px]">
       <svg
-        viewBox="280 62 1480 1049"
+        viewBox={SCENE_VIEWBOX}
         className="h-auto w-full"
         role="img"
         aria-label="Two dress forms, one wearing a suit and one a dress, both cut from the same resume and joined by a red thread."
