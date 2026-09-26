@@ -74,10 +74,10 @@ img, svg, video { display: block; }
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 48px;
+  padding-inline: 48px;
 }
 @media (max-width: 768px) {
-  .container { padding: 0 20px; }
+  .container { padding-inline: 20px; }
 }
 
 /* ── Motifs ──────────────────────────────────────────────────────────────── */
@@ -226,6 +226,12 @@ img, svg, video { display: block; }
       animation: stitchDraw ease-out both;
       animation-timeline: view();
       animation-range: entry 10% cover 40%;
+    }
+    .footer-thread {
+      stroke-dasharray: 1;
+      animation: threadIn linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 30%;
     }
   }
 }

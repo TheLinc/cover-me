@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
-import Image from 'next/image'
-import Link from 'next/link'
+import { SiteNav } from '@/components/site/SiteNav'
+import { SiteFooter } from '@/components/site/SiteFooter'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 
@@ -86,18 +86,7 @@ export default function TermsPage() {
     <div className="min-h-screen bg-background">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
 
-      {/* Nav */}
-      <nav className="sticky top-0 z-20 bg-[rgba(13,17,23,0.92)] backdrop-blur-2xl border-b border-border">
-        <div className="max-w-[1160px] mx-auto px-12 h-[58px] flex items-center justify-between max-md:px-5">
-          <Link href="/" className="flex items-center gap-[9px] text-[15px] font-bold text-foreground tracking-[-0.3px]">
-            <Image src="/logo.png" width={22} height={22} alt="Cover Me" />
-            Cover Me
-          </Link>
-          <Link href="/" className="text-[13px] text-muted-foreground hover:text-foreground transition-colors">
-            ← Back to home
-          </Link>
-        </div>
-      </nav>
+      <SiteNav />
 
       <div className="max-w-[1160px] mx-auto px-12 py-16 max-md:px-5">
         <div className="grid grid-cols-[220px_1fr] gap-16 max-lg:grid-cols-1">
@@ -384,6 +373,7 @@ export default function TermsPage() {
           </main>
         </div>
       </div>
+      <SiteFooter />
     </div>
   )
 }

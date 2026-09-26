@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import { createClient } from "@/lib/supabase";
 import { CHROME_STORE_URL } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -14,6 +13,7 @@ import {
   XIcon,
 } from "@phosphor-icons/react";
 import { Spinner } from "@/components/ui/spinner";
+import { SiteNav } from '@/components/site/SiteNav'
 
 interface Props {
   email: string;
@@ -94,33 +94,20 @@ export default function DashboardClient({
       {/* Background glow */}
       <div className="fixed inset-0 pointer-events-none bg-[radial-gradient(ellipse_900px_600px_at_70%_-5%,rgba(99,102,241,0.06)_0%,transparent_65%)]" />
 
-      {/* Nav */}
-      <nav className="sticky top-0 z-20 bg-[rgba(13,17,23,0.88)] backdrop-blur-xl [-webkit-backdrop-filter:blur(20px)] border-b border-border">
-        <div className="max-w-[860px] mx-auto px-10 h-[58px] flex items-center justify-between max-[700px]:px-5">
-          <a
-            href="/"
-            className="flex items-center gap-[9px] text-[15px] font-bold text-foreground tracking-[-0.3px]"
-          >
-            <Image src="/logo.png" width={22} height={22} alt="Cover Me" />
-            Cover Me
-          </a>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleSignOut}
-            disabled={signingOut}
-          >
+      <SiteNav
+        actions={
+          <Button variant="outline" size="sm" onClick={handleSignOut} disabled={signingOut}>
             {signingOut ? (
               <>
                 <Spinner className="size-3.5" />
                 Signing out
               </>
             ) : (
-              "Sign out"
+              'Sign out'
             )}
           </Button>
-        </div>
-      </nav>
+        }
+      />
 
       {/* Main */}
       <main className="px-5 pt-14 pb-24 relative z-[1]">

@@ -5,6 +5,8 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { cn, CHROME_STORE_URL } from "@/lib/utils";
 import { jsonLdApp, jsonLdHowTo, jsonLdSpeakable, STORE_RATING } from "@/lib/structured-data";
+import { SiteNav } from '@/components/site/SiteNav'
+import { SiteFooter } from '@/components/site/SiteFooter'
 import {
   ArrowUpRightIcon,
   CheckIcon,
@@ -12,79 +14,6 @@ import {
   CopyIcon,
   ShieldIcon,
 } from "@phosphor-icons/react";
-
-// ── Nav ───────────────────────────────────────────────────────────────────────
-
-function Nav() {
-  const [scrolled, setScrolled] = useState(false);
-  useEffect(() => {
-    const fn = () => setScrolled(window.scrollY > 48);
-    window.addEventListener("scroll", fn, { passive: true });
-    return () => window.removeEventListener("scroll", fn);
-  }, []);
-
-  return (
-    <nav
-      className={cn(
-        "fixed top-0 left-0 right-0 z-[100] py-[18px] transition-[background,border-color,backdrop-filter] [transition-duration:250ms] border-b border-transparent",
-        scrolled &&
-          "bg-[rgba(13,17,23,0.92)] backdrop-blur-2xl [-webkit-backdrop-filter:blur(24px)] border-border",
-      )}
-    >
-      <div className="container">
-        <div className="flex items-center gap-8">
-          <a
-            href="/"
-            className="flex items-center gap-[9px] text-[15px] font-bold text-foreground tracking-[-0.3px] shrink-0"
-          >
-            <Image src="/logo.png" width={26} height={26} alt="Cover Me" />
-            <span>Cover Me</span>
-          </a>
-          <div className="flex gap-7 flex-1 max-md:hidden">
-            <a
-              href="#how-it-works"
-              className="text-[13px] font-medium text-muted-foreground hover:text-foreground transition-colors tracking-[0.01em]"
-            >
-              How it works
-            </a>
-            <a
-              href="#features"
-              className="text-[13px] font-medium text-muted-foreground hover:text-foreground transition-colors tracking-[0.01em]"
-            >
-              Features
-            </a>
-            <a
-              href="#pricing"
-              className="text-[13px] font-medium text-muted-foreground hover:text-foreground transition-colors tracking-[0.01em]"
-            >
-              Pricing
-            </a>
-            <a
-              href="/about"
-              className="text-[13px] font-medium text-muted-foreground hover:text-foreground transition-colors tracking-[0.01em]"
-            >
-              About
-            </a>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button asChild variant="outline" size="sm">
-              <a href="/auth">Sign in</a>
-            </Button>
-            <Button asChild size="sm">
-              <a
-                href={CHROME_STORE_URL}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Install free
-              </a>
-            </Button>
-          </div>
-        </div>
-      </div>
-    </nav>
-  );
-}
 
 // ── Workflow demo ─────────────────────────────────────────────────────────────
 
@@ -1285,158 +1214,6 @@ function Pricing() {
   );
 }
 
-// ── Footer ────────────────────────────────────────────────────────────────────
-
-function Footer() {
-  return (
-    <footer className="pb-12">
-      <div className="h-px bg-border" />
-      <div className="container">
-        <div className="flex gap-20 pt-14 pb-10 items-start max-[768px]:flex-col max-[768px]:gap-9">
-          <div className="flex flex-col gap-3 flex-1">
-            <a
-              href="/"
-              className="flex items-center gap-[9px] text-[15px] font-bold text-foreground tracking-[-0.3px]"
-            >
-              <Image src="/logo.png" width={24} height={24} alt="Cover Me" />
-              <span>Cover Me</span>
-            </a>
-            <p className="text-[13px] text-muted-foreground">
-              Tailored cover letters and resumes for every job you apply to.
-            </p>
-          </div>
-          <div className="flex gap-[60px] max-[768px]:gap-10">
-            <div className="flex flex-col gap-2.5">
-              <span className="text-[10px] font-bold uppercase tracking-[0.09em] text-muted-foreground mb-0.5">
-                Product
-              </span>
-              <a
-                href="#how-it-works"
-                className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
-              >
-                How it works
-              </a>
-              <a
-                href="#features"
-                className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Features
-              </a>
-              <a
-                href="#pricing"
-                className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Pricing
-              </a>
-              <a
-                href={CHROME_STORE_URL}
-                target="_blank"
-                rel="noreferrer"
-                className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Install
-              </a>
-            </div>
-            <div className="flex flex-col gap-2.5">
-              <span className="text-[10px] font-bold uppercase tracking-[0.09em] text-muted-foreground mb-0.5">
-                Open source
-              </span>
-              <a
-                href="https://github.com/TheLinc/cover-me"
-                target="_blank"
-                rel="noreferrer"
-                className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
-              >
-                GitHub
-              </a>
-              <a
-                href="/about"
-                className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
-              >
-                About
-              </a>
-              <a
-                href="/privacy"
-                className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Privacy
-              </a>
-              <a
-                href="/terms"
-                className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Terms
-              </a>
-              <a
-                href="/support"
-                className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Support
-              </a>
-            </div>
-            <div className="flex flex-col gap-2.5">
-              <span className="text-[10px] font-bold uppercase tracking-[0.09em] text-muted-foreground mb-0.5">
-                Guides
-              </span>
-              <a
-                href="/guides/what-is-an-ats-score"
-                className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
-              >
-                What is an ATS score?
-              </a>
-              <a
-                href="/guides/cover-me-vs-chatgpt"
-                className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Cover Me vs ChatGPT
-              </a>
-              <a
-                href="/guides/tailor-resume-to-job-description"
-                className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Tailor your resume
-              </a>
-              <a
-                href="/guides"
-                className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
-              >
-                All guides
-              </a>
-            </div>
-            <div className="flex flex-col gap-2.5">
-              <span className="text-[10px] font-bold uppercase tracking-[0.09em] text-muted-foreground mb-0.5">
-                Account
-              </span>
-              <a
-                href="/auth"
-                className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Sign in
-              </a>
-              <a
-                href="/auth?plan=pro"
-                className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Upgrade to Pro
-              </a>
-              <a
-                href="/dashboard"
-                className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Dashboard
-              </a>
-            </div>
-          </div>
-        </div>
-        <div className="flex justify-between items-center pt-6 border-t border-border text-[12px] text-muted-foreground">
-          <span>© {new Date().getFullYear()} Cover Me · MIT License</span>
-          <span>Built in Canada</span>
-        </div>
-      </div>
-    </footer>
-  );
-}
-
 // ── Compare ───────────────────────────────────────────────────────────────────
 
 type CellVal = string | boolean;
@@ -1651,7 +1428,7 @@ export default function Home() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdApp) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdHowTo) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdSpeakable) }} />
-      <Nav />
+      <SiteNav />
       <main>
         <Hero />
         <WorksOn />
@@ -1670,7 +1447,7 @@ export default function Home() {
         <div className="h-px bg-border" />
         <FAQ />
       </main>
-      <Footer />
+      <SiteFooter />
     </>
   );
 }

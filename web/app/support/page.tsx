@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
-import Image from 'next/image'
-import Link from 'next/link'
+import { SiteNav } from '@/components/site/SiteNav'
+import { SiteFooter } from '@/components/site/SiteFooter'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 
@@ -79,19 +79,7 @@ export default function SupportPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
 
-      {/* Nav */}
-      <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-md">
-        <div className="max-w-3xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5">
-            <Image src="/logo.png" alt="Cover Me" width={26} height={26} className="rounded-md" />
-            <span className="font-bold text-[15px] tracking-[-0.3px]">Cover Me</span>
-          </Link>
-          <nav className="flex items-center gap-6 text-[13px] text-muted-foreground">
-            <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
-            <Link href="/terms" className="hover:text-foreground transition-colors">Terms</Link>
-          </nav>
-        </div>
-      </header>
+      <SiteNav />
 
       <main className="max-w-2xl mx-auto px-6 py-20">
 
@@ -214,6 +202,7 @@ export default function SupportPage() {
         </p>
 
       </main>
+      <SiteFooter />
     </div>
   )
 }
