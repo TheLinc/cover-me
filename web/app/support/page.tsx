@@ -85,7 +85,7 @@ export default function SupportPage() {
 
         {/* Heading */}
         <div className="mb-14">
-          <h1 className="text-[36px] font-bold tracking-[-0.8px] text-foreground mb-2">
+          <h1 className="text-[36px] text-foreground mb-2">
             Support
           </h1>
           <p className="text-[12px] text-muted-foreground mb-3">
@@ -109,7 +109,7 @@ export default function SupportPage() {
                 </svg>
               </div>
               <div className="flex-1 min-w-0">
-                <h2 className="text-[16px] font-bold text-foreground tracking-[-0.3px] mb-1">
+                <h2 className="text-[16px] text-foreground mb-1">
                   Email support
                 </h2>
                 <p className="text-[14px] text-muted-foreground leading-[1.7] mb-4">
@@ -137,7 +137,7 @@ export default function SupportPage() {
                 </svg>
               </div>
               <div className="flex-1 min-w-0">
-                <h2 className="text-[16px] font-bold text-foreground tracking-[-0.3px] mb-1">
+                <h2 className="text-[16px] text-foreground mb-1">
                   Bug reports &amp; feature requests
                 </h2>
                 <p className="text-[14px] text-muted-foreground leading-[1.7] mb-4">
@@ -160,7 +160,7 @@ export default function SupportPage() {
 
           {/* Common issues */}
           <div className="border border-border rounded-[12px] p-7 bg-surface">
-            <h2 className="text-[16px] font-bold text-foreground tracking-[-0.3px] mb-5">
+            <h2 className="text-[16px] text-foreground mb-5">
               Common questions
             </h2>
             <div className="space-y-5">

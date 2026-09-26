@@ -55,10 +55,10 @@ export default function AboutPage() {
 
         {/* Header */}
         <div className="mb-16 max-w-[640px]">
-          <span className="text-[10px] font-bold tracking-[0.12em] uppercase text-brand mb-4 block">
+          <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-2 mb-4 block">
             About
           </span>
-          <h1 className="text-[clamp(32px,5vw,56px)] font-extrabold tracking-[-2px] text-foreground leading-[0.95] mb-4">
+          <h1 className="text-[clamp(32px,5vw,56px)] text-foreground leading-[0.95] mb-4">
             Built for job seekers who apply seriously.
           </h1>
           <p className="text-[12px] text-muted-foreground mb-5">
@@ -72,7 +72,7 @@ export default function AboutPage() {
         {/* Story */}
         <div className="grid grid-cols-[1fr_280px] gap-16 mb-20 max-lg:grid-cols-1">
           <div className="space-y-5 text-[15px] text-muted-foreground leading-[1.85]">
-            <h2 className="text-[22px] font-bold text-foreground tracking-[-0.5px]">
+            <h2 className="text-[22px] text-foreground">
               Why Cover Me exists
             </h2>
             <p>
@@ -87,7 +87,7 @@ export default function AboutPage() {
             <p>
               Cover Me was built to solve this. One click on any job posting. Your resume, their requirements, matched in seconds. Fully editable output you actually want to send. And for users who care about privacy, a BYOK mode where your resume never leaves your device.
             </p>
-            <h2 className="text-[22px] font-bold text-foreground tracking-[-0.5px] !mt-10">
+            <h2 className="text-[22px] text-foreground !mt-10">
               Privacy as a first principle
             </h2>
             <p>
@@ -96,7 +96,7 @@ export default function AboutPage() {
             <p>
               In BYOK mode, your resume and API key are encrypted on-device using AES-256-GCM via the Web Crypto API and never transmitted to Cover Me servers. In hosted mode, your resume is encrypted at rest in our database. The extension has no analytics, no telemetry, and no ads — the code is MIT licensed and auditable by anyone.
             </p>
-            <h2 className="text-[22px] font-bold text-foreground tracking-[-0.5px] !mt-10">
+            <h2 className="text-[22px] text-foreground !mt-10">
               Open source
             </h2>
             <p>
@@ -110,7 +110,7 @@ export default function AboutPage() {
           {/* Founder card */}
           <div className="space-y-5 max-lg:order-first">
             <div className="border border-border rounded-[12px] p-7 bg-surface">
-              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#818cf8] to-[#4338ca] flex items-center justify-center text-white text-[22px] font-extrabold mb-5 select-none">
+              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-thread to-thread-deep flex items-center justify-center text-tissue font-display text-[22px] font-extrabold mb-5 select-none">
                 L
               </div>
               <h3 className="text-[16px] font-bold text-foreground tracking-[-0.3px] mb-1">
@@ -170,7 +170,7 @@ export default function AboutPage() {
 
         {/* CTA */}
         <div className="border border-border rounded-[12px] p-10 bg-surface text-center">
-          <h2 className="text-[22px] font-bold text-foreground tracking-[-0.5px] mb-3">
+          <h2 className="text-[22px] text-foreground mb-3">
             Try Cover Me free
           </h2>
           <p className="text-[15px] text-muted-foreground mb-6 max-w-[460px] mx-auto leading-[1.7]">
@@ -181,7 +181,7 @@ export default function AboutPage() {
               href={CHROME_STORE_URL}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-2 bg-brand text-white font-semibold text-[14px] px-5 py-2.5 rounded-[8px] hover:bg-brand/90 transition-colors"
+              className="inline-flex items-center gap-2 bg-thread text-tissue font-semibold text-[14px] px-5 py-2.5 rounded-[8px] hover:bg-thread-deep transition-colors"
             >
               Install free · Chrome
             </a>

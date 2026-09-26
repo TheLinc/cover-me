@@ -32,10 +32,10 @@ export default function GuidesPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
 
       <div className="mb-14 max-w-[640px]">
-        <span className="text-[10px] font-bold tracking-[0.12em] uppercase text-brand mb-4 block">
+        <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-2 mb-4 block">
           Guides
         </span>
-        <h1 className="text-[clamp(32px,5vw,52px)] font-extrabold tracking-[-2px] text-foreground leading-[0.98] mb-5">
+        <h1 className="text-[clamp(32px,5vw,52px)] text-foreground leading-[0.98] mb-5">
           Job application guides
         </h1>
         <p className="text-[16px] text-muted-foreground leading-[1.75]">
@@ -43,16 +43,16 @@ export default function GuidesPage() {
         </p>
       </div>
 
-      <div className="divide-y divide-border border-t border-border">
+      <div className="divide-y divide-dashed divide-line border-t-[1.5px] border-ink">
         {GUIDES.map((g) => (
           <Link key={g.slug} href={`/guides/${g.slug}`} className="block py-8 group">
-            <h2 className="text-[20px] font-bold text-foreground tracking-[-0.4px] mb-2 group-hover:text-brand-light transition-colors">
+            <h2 className="text-[20px] text-foreground mb-2 group-hover:text-brand-light transition-colors">
               {g.title}
             </h2>
             <p className="text-[14px] text-muted-foreground leading-[1.75] max-w-[640px] mb-2">
               {g.description}
             </p>
-            <time dateTime={g.date} className="text-[12px] text-dim">
+            <time dateTime={g.date} className="font-mono text-[11px] uppercase tracking-[0.1em] text-dim">
               Updated {new Date(`${g.date}T00:00:00`).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
             </time>
           </Link>

@@ -1,3 +1,4 @@
+import { CutLine } from '@/components/brand/CutLine'
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -82,7 +83,7 @@ export default function Page() {
         <Link href="/guides" className="text-[12px] font-semibold text-brand-light hover:text-brand transition-colors">
           ← All guides
         </Link>
-        <h1 className="text-[clamp(30px,4.5vw,46px)] font-extrabold tracking-[-1.8px] text-foreground leading-[1.02] mt-4 mb-4">
+        <h1 className="text-[clamp(30px,4.5vw,46px)] text-foreground leading-[1.02] mt-4 mb-4">
           Cover Me vs ChatGPT for cover letters
         </h1>
         <p className="text-[12px] text-muted-foreground">
@@ -91,6 +92,7 @@ export default function Page() {
       </div>
 
       {/* Hero graphic */}
+      <CutLine className="mb-10" />
       <figure className="mb-12">
         <Image
           src={HERO_IMAGE}
@@ -111,7 +113,7 @@ export default function Page() {
           This is an honest comparison — we build Cover Me, but the trade-offs below are real, and for some people ChatGPT is genuinely enough.
         </p>
 
-        <h2 className="text-[22px] font-bold text-foreground tracking-[-0.5px] !mt-10">The core difference: workflow, not intelligence</h2>
+        <h2 className="text-[22px] text-foreground !mt-10">The core difference: workflow, not intelligence</h2>
         <p>
           Both tools sit on the same generation of AI models — Cover Me runs on Claude (or your own OpenAI key in BYOK mode). The difference is everything around the model. With ChatGPT, each application means: open the posting, copy the description, switch tabs, re-establish context (&ldquo;here&rsquo;s my resume, here&rsquo;s the job, write a letter that…&rdquo;), generate, then fix the clichés. Five to ten minutes when you&rsquo;re careful; generic output when you&rsquo;re not.
         </p>
@@ -119,7 +121,7 @@ export default function Page() {
           Cover Me collapses that loop into a click because it&rsquo;s purpose-built: the scraper reads the posting, your resume is stored (encrypted, or fully on-device in BYOK mode), and the prompt — purpose-built for cover letters, with explicit bans on AI-tell phrases like &ldquo;I&rsquo;m excited to apply&rdquo; — is applied consistently every time. Application #30 of the week gets the same quality as application #1.
         </p>
 
-        <h2 className="text-[22px] font-bold text-foreground tracking-[-0.5px] !mt-10">Feature comparison</h2>
+        <h2 className="text-[22px] text-foreground !mt-10">Feature comparison</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-[13.5px] border border-border rounded-[8px] overflow-hidden" style={{ borderCollapse: 'collapse' }}>
             <thead>
@@ -141,12 +143,12 @@ export default function Page() {
           </table>
         </div>
 
-        <h2 className="text-[22px] font-bold text-foreground tracking-[-0.5px] !mt-10">When ChatGPT is the right choice</h2>
+        <h2 className="text-[22px] text-foreground !mt-10">When ChatGPT is the right choice</h2>
         <p>
           If you apply to one or two roles a month and enjoy iterating on the letter conversationally, a chatbot is flexible in ways an extension isn&rsquo;t — you can ask follow-ups, explore angles, and rewrite paragraphs interactively. You already pay for Plus? The marginal cost is zero.
         </p>
 
-        <h2 className="text-[22px] font-bold text-foreground tracking-[-0.5px] !mt-10">When a purpose-built tool wins</h2>
+        <h2 className="text-[22px] text-foreground !mt-10">When a purpose-built tool wins</h2>
         <p>
           Volume and consistency. If you&rsquo;re applying to multiple roles a day, the per-application overhead is the whole game — and the things a chatbot won&rsquo;t do without prompting are exactly the things that get applications past screening: mirroring the posting&rsquo;s <Link href="/guides/what-is-an-ats-score" className="text-brand-light hover:text-brand transition-colors">ATS keywords</Link>, <Link href="/guides/tailor-resume-to-job-description" className="text-brand-light hover:text-brand transition-colors">tailoring the resume itself</Link>, and scoring the match before you submit. Cover Me also works on <Link href="/for/linkedin" className="text-brand-light hover:text-brand transition-colors">LinkedIn</Link>, <Link href="/for/indeed" className="text-brand-light hover:text-brand transition-colors">Indeed</Link>, <Link href="/for/greenhouse" className="text-brand-light hover:text-brand transition-colors">Greenhouse</Link>, <Link href="/for/lever" className="text-brand-light hover:text-brand transition-colors">Lever</Link>, <Link href="/for/workday" className="text-brand-light hover:text-brand transition-colors">Workday</Link>, and <Link href="/for/ashby" className="text-brand-light hover:text-brand transition-colors">Ashby</Link> without leaving the page.
         </p>
@@ -154,7 +156,7 @@ export default function Page() {
 
       {/* FAQ */}
       <section className="mt-14">
-        <h2 className="text-[22px] font-bold text-foreground tracking-[-0.5px] mb-4">Frequently asked questions</h2>
+        <h2 className="text-[22px] text-foreground mb-4">Frequently asked questions</h2>
         <div className="divide-y divide-border border-t border-border">
           {(faqJsonLd.mainEntity as { name: string; acceptedAnswer: { text: string } }[]).map((item) => (
             <div key={item.name} className="py-6">
@@ -167,7 +169,7 @@ export default function Page() {
 
       {/* CTA */}
       <div className="border border-border rounded-[12px] p-8 bg-surface text-center mt-14">
-        <h2 className="text-[20px] font-bold text-foreground tracking-[-0.4px] mb-2">Try the one-click version</h2>
+        <h2 className="text-[20px] text-foreground mb-2">Try the one-click version</h2>
         <p className="text-[14px] text-muted-foreground mb-5 max-w-[420px] mx-auto leading-[1.7]">
           Free with your own API key or 5 hosted generations a day. No credit card required.
         </p>
@@ -175,7 +177,7 @@ export default function Page() {
           href={CHROME_STORE_URL}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex items-center gap-2 bg-brand text-white font-semibold text-[14px] px-5 py-2.5 rounded-[8px] hover:bg-brand/90 transition-colors"
+          className="inline-flex items-center gap-2 bg-thread text-tissue font-semibold text-[14px] px-5 py-2.5 rounded-[8px] hover:bg-thread-deep transition-colors"
         >
           Install free · Chrome
         </a>

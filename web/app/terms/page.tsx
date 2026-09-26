@@ -29,7 +29,7 @@ function H2({ id, children }: { id: string; children: React.ReactNode }) {
   return (
     <h2
       id={id}
-      className="text-[22px] font-bold text-foreground tracking-[-0.4px] mt-14 mb-4 scroll-mt-24"
+      className="text-[26px] text-foreground mt-14 mb-4 scroll-mt-24"
     >
       {children}
     </h2>
@@ -94,7 +94,7 @@ export default function TermsPage() {
           {/* Sidebar TOC */}
           <aside className="max-lg:hidden">
             <div className="sticky top-24">
-              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground mb-4">
+              <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-2 mb-4">
                 On this page
               </p>
               <nav className="flex flex-col gap-1">
@@ -116,10 +116,10 @@ export default function TermsPage() {
 
             {/* Header */}
             <div className="mb-10 pb-10 border-b border-border">
-              <span className="text-[10px] font-bold tracking-[0.12em] uppercase text-brand mb-4 block">
+              <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-2 mb-4 block">
                 Legal
               </span>
-              <h1 className="text-[clamp(32px,4vw,48px)] font-extrabold tracking-[-1.5px] text-foreground leading-none mb-4">
+              <h1 className="text-[clamp(32px,4vw,48px)] text-foreground leading-none mb-4">
                 Terms of Service
               </h1>
               <p className="text-[15px] text-muted-foreground">
