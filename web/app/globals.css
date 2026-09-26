@@ -138,7 +138,9 @@ img, svg, video { display: block; }
   border-radius: 2px;
   background: linear-gradient(90deg, var(--tissue-2) 25%, rgba(196, 50, 31, 0.12) 50%, var(--tissue-2) 75%);
   background-size: 300% 100%;
-  animation: skeletonShimmer 1.8s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .skeleton-line { animation: skeletonShimmer 1.8s ease-in-out infinite; }
 }
 }
 @keyframes skeletonShimmer {
