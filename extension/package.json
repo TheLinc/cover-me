@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite --mode localdb",
-    "build:local": "node ../scripts/check-prompt-sync.mjs && vite build --mode localdb",
-    "build": "node ../scripts/check-prompt-sync.mjs && vite build",
+    "build:local": "node ../scripts/check-prompt-sync.mjs && vite build --mode localdb && node scripts/check-dist.mjs",
+    "build": "node ../scripts/check-prompt-sync.mjs && vite build && node scripts/check-dist.mjs",
     "preview": "vite preview",
     "eval": "tsx eval/run.ts",
     "check:prompts": "node ../scripts/check-prompt-sync.mjs"
