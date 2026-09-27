@@ -1,4 +1,3 @@
-import { CutLine } from '@/components/brand/CutLine'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
@@ -87,7 +86,7 @@ export default async function BoardPage({ params }: { params: Promise<{ board: s
           ))}
         </div>
 
-        <CutLine className="mb-12" />
+        <div className="mb-12 h-px bg-line" />
         {/* Steps */}
         <section className="mb-16">
           <h2 className="text-[24px] text-foreground mb-8">
@@ -96,7 +95,7 @@ export default async function BoardPage({ params }: { params: Promise<{ board: s
           <ol className="space-y-7 list-none">
             {board.steps.map((s, i) => (
               <li key={s.title} className="flex gap-5">
-                <span className="font-mono text-[11px] text-thread tracking-[0.08em] pt-[5px] shrink-0 w-7">
+                <span className="font-mono text-[11px] text-brand-strong tracking-[0.08em] pt-[5px] shrink-0 w-7">
                   {String(i + 1).padStart(2, '0')}
                 </span>
                 <div>
@@ -108,7 +107,7 @@ export default async function BoardPage({ params }: { params: Promise<{ board: s
           </ol>
         </section>
 
-        <CutLine className="mb-12" />
+        <div className="mb-12 h-px bg-line" />
         {/* FAQ */}
         <section className="mb-16">
           <h2 className="text-[24px] text-foreground mb-6">
@@ -125,7 +124,7 @@ export default async function BoardPage({ params }: { params: Promise<{ board: s
         </section>
 
         {/* CTA */}
-        <div className="piece p-10 text-center mb-16">
+        <div className="soft-card p-10 text-center mb-16">
           <h2 className="text-[22px] text-foreground mb-3">
             Try it on your next {board.name} application
           </h2>
@@ -137,7 +136,7 @@ export default async function BoardPage({ params }: { params: Promise<{ board: s
               href={CHROME_STORE_URL}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-2 bg-thread text-tissue font-semibold text-[14px] px-5 py-2.5 rounded-[8px] hover:bg-thread-deep transition-colors"
+              className="inline-flex items-center gap-2 bg-brand-strong text-white font-semibold text-[14px] px-5 py-2.5 rounded-[8px] hover:bg-brand-deep transition-colors"
             >
               Install free · Chrome
             </a>

@@ -1,87 +1,154 @@
-import { PatternNote } from '@/components/brand/PatternNote'
-import { STEPS } from './content'
+'use client'
 
-const SVG = { viewBox: '0 0 240 150', 'aria-hidden': true, className: 'h-[150px] w-full' } as const
+import { useEffect, useRef, useState } from 'react'
+import { cn } from '@/lib/utils'
+import { Eyebrow } from '@/components/site/Eyebrow'
+import { ExtensionPopup, PopupButton } from './ExtensionPopup'
+import { BrowserFrame, Chip, EXAMPLE, LetterDoc, Line, ResumeDoc } from './visuals'
 
-function EnvelopeArt() {
+const STEPS = [
+  {
+    title: 'Open any job posting',
+    body: 'LinkedIn, Indeed, Greenhouse, Lever, Workday and more are read automatically. Anywhere else, paste the description.',
+  },
+  {
+    title: 'Click Tailor resume',
+    body: "Cover Me pulls the posting's keywords and rewrites your summary, bullets and skills to match. It never invents experience.",
+  },
+  {
+    title: 'Download and apply',
+    body: 'A one-page PDF and a cover letter written from your resume. Edit either before you send.',
+  },
+]
+
+function PostingPage({ children }: { children?: React.ReactNode }) {
   return (
-    <svg {...SVG}>
-      <rect x="40" y="18" width="160" height="116" rx="2" className="fill-tissue stroke-ink" strokeWidth="1.5" />
-      <path d="M40 18 L120 70 L200 18" className="fill-none stroke-ink" strokeWidth="1.5" />
-      <rect x="58" y="94" width="124" height="26" className="fill-tape" />
-      <text x="120" y="111" textAnchor="middle" className="fill-ink font-mono" fontSize="8" letterSpacing="1.2">
-        PATTERN · COVER ME
-      </text>
-      <circle cx="120" cy="70" r="6" className="fill-thread" />
-    </svg>
+    <BrowserFrame url={`job-boards.greenhouse.io/northwind/jobs/4821`} className="h-full">
+      <div className="flex flex-col gap-3 p-6">
+        <div className="flex items-center gap-3">
+          <div className="flex size-10 items-center justify-center rounded-[10px] bg-ink font-semibold text-white">N</div>
+          <div>
+            <div className="text-[17px] font-semibold text-ink">{EXAMPLE.role}</div>
+            <div className="text-[12px] text-subtle">{EXAMPLE.company} · Remote · Full time</div>
+          </div>
+        </div>
+        <div className="mt-3 text-[12px] font-semibold text-ink-2">About the role</div>
+        <Line w="96%" />
+        <Line w="88%" />
+        <Line w="92%" />
+        <Line w="60%" />
+        <div className="mt-3 text-[12px] font-semibold text-ink-2">Requirements</div>
+        <div className="flex flex-wrap gap-1.5">
+          {EXAMPLE.keywords.map((k) => (
+            <Chip key={k}>{k}</Chip>
+          ))}
+        </div>
+        <Line w="84%" className="mt-2" />
+        <Line w="72%" />
+        <Line w="90%" />
+      </div>
+      {children}
+    </BrowserFrame>
   )
 }
 
-function PinnedPostingArt() {
+function StepVisual({ step }: { step: number }) {
+  if (step === 0) {
+    return (
+      <PostingPage>
+        <div className="absolute bottom-5 right-5 flex items-center gap-2 rounded-full bg-brand-tint px-3 py-1.5 text-[12px] font-medium text-brand-ink">
+          <span className="pulse size-2 rounded-full bg-brand" />
+          Posting detected · Greenhouse
+        </div>
+      </PostingPage>
+    )
+  }
+  if (step === 1) {
+    return (
+      <PostingPage>
+        <ExtensionPopup className="absolute right-4 top-4 w-[250px]">
+          <div className="flex flex-col gap-3 px-4 py-4">
+            <div className="text-[12px] text-ext-muted">Tailoring your resume</div>
+            <div className="pulse text-[14px] font-medium">Rewriting experience (2 of 3)</div>
+            <div className="h-1.5 rounded-full bg-ext-elevated">
+              <div className="h-1.5 w-[62%] rounded-full bg-brand" />
+            </div>
+            <div className="flex flex-col gap-1.5 text-[11.5px] text-ext-muted">
+              <span className="text-ext-soft">✓ Read the posting · 14 keywords</span>
+              <span className="text-ext-soft">✓ Rewrote summary</span>
+              <span>○ Skills</span>
+            </div>
+          </div>
+        </ExtensionPopup>
+      </PostingPage>
+    )
+  }
   return (
-    <svg {...SVG}>
-      <g transform="rotate(-3 120 76)">
-        <rect x="60" y="14" width="120" height="124" className="fill-tissue stroke-ink" strokeWidth="1.5" />
-        <rect x="74" y="30" width="20" height="20" className="fill-ink" />
-        <rect x="100" y="32" width="64" height="6" className="fill-ink" />
-        <rect x="100" y="44" width="40" height="4" className="fill-line" />
-        {[64, 76, 88, 100, 112].map((y, i) => (
-          <rect key={y} x="74" y={y} width={i % 2 ? 72 : 90} height="4" className="fill-line" />
-        ))}
-      </g>
-      <line x1="84" y1="10" x2="96" y2="30" className="stroke-ink" strokeWidth="1.5" />
-      <circle cx="84" cy="10" r="5" className="fill-thread" />
-      <line x1="160" y1="8" x2="150" y2="28" className="stroke-ink" strokeWidth="1.5" />
-      <circle cx="160" cy="8" r="5" className="fill-thread" />
-    </svg>
+    <div className="relative flex h-full items-center justify-center">
+      <LetterDoc className="absolute left-[8%] top-[14%] w-[62%] rotate-[-4deg]" />
+      <ResumeDoc className="relative z-10 ml-[20%] w-[64%]" />
+      <div className="absolute bottom-[8%] right-[8%] z-20 w-[200px]">
+        <ExtensionPopup footer={<><PopupButton primary>Download PDF</PopupButton><PopupButton>Copy</PopupButton></>}>
+          <div className="px-4 py-3 text-[12px] text-ext-muted">Ready to apply</div>
+        </ExtensionPopup>
+      </div>
+    </div>
   )
 }
-
-function CutResumeArt() {
-  return (
-    <svg {...SVG}>
-      <rect x="50" y="12" width="140" height="128" className="fill-tissue stroke-ink" strokeWidth="1.5" />
-      <rect x="64" y="26" width="70" height="7" className="fill-ink" />
-      {[44, 56].map((y) => (
-        <rect key={y} x="64" y={y} width="110" height="4" className="fill-line" />
-      ))}
-      <rect x="60" y="68" width="120" height="16" className="fill-none stroke-thread" strokeWidth="1.5" strokeDasharray="5 4" />
-      <rect x="64" y="74" width="78" height="4" className="fill-chalk" />
-      {[94, 106].map((y) => (
-        <rect key={y} x="64" y={y} width="104" height="4" className="fill-line" />
-      ))}
-      <rect x="60" y="114" width="120" height="16" className="fill-none stroke-thread" strokeWidth="1.5" strokeDasharray="5 4" />
-      <rect x="64" y="120" width="92" height="4" className="fill-chalk" />
-    </svg>
-  )
-}
-
-const ART = [EnvelopeArt, PinnedPostingArt, CutResumeArt]
 
 export function HowItWorks() {
+  const [active, setActive] = useState(0)
+  const refs = useRef<(HTMLDivElement | null)[]>([])
+
+  // The step nearest the middle of the viewport drives the sticky visual.
+  useEffect(() => {
+    const obs = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) if (e.isIntersecting) setActive(Number((e.target as HTMLElement).dataset.step))
+      },
+      { rootMargin: '-45% 0px -45% 0px' },
+    )
+    refs.current.forEach((el) => el && obs.observe(el))
+    return () => obs.disconnect()
+  }, [])
+
   return (
-    <section id="how-it-works" className="py-28 max-md:py-20">
-      <div className="container">
-        <div className="reveal mb-14 flex max-w-[640px] flex-col gap-4">
-          <PatternNote>How it works</PatternNote>
-          <h2 className="text-[clamp(34px,4.4vw,58px)] leading-none text-ink">How does Cover Me work?</h2>
-          <p className="text-[16px] leading-[1.7] text-ink-2">
-            Cover Me is a free Chrome extension that writes your cover letter and rewrites your resume to match any job posting — ATS keywords extracted, both documents done in seconds.
-          </p>
+    <section id="how-it-works" className="container py-28 max-md:py-20">
+      <div className="grid gap-16 lg:grid-cols-2">
+        <div className="min-w-0">
+          <div className="flex flex-col gap-4">
+            <Eyebrow>How it works</Eyebrow>
+            <h2 className="text-[clamp(34px,4vw,52px)] leading-[1.05]">From job posting to application in three clicks</h2>
+          </div>
+          <div className="mt-10 flex flex-col">
+            {STEPS.map((s, i) => (
+              <div
+                key={s.title}
+                ref={(el) => { refs.current[i] = el }}
+                data-step={i}
+                className="flex flex-col gap-4 border-t border-line py-8 lg:min-h-[40vh] lg:justify-center"
+              >
+                <div className="flex items-baseline gap-4">
+                  <span className={cn('font-mono text-[13px]', active === i ? 'text-brand-strong' : 'text-subtle')}>0{i + 1}</span>
+                  <h3 className={cn('text-[22px] font-medium tracking-[-0.02em] transition-colors', active === i ? 'text-ink' : 'text-subtle')}>
+                    {s.title}
+                  </h3>
+                </div>
+                <p className="max-w-[440px] pl-9 text-[16px] leading-[1.6] text-ink-2">{s.body}</p>
+                <div inert aria-hidden="true" className="stage-grid mt-4 h-[380px] rounded-[24px] p-5 lg:hidden">
+                  <StepVisual step={i} />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-        <ol className="grid grid-cols-3 gap-6 max-lg:grid-cols-1">
-          {STEPS.map((s, i) => {
-            const Art = ART[i]
-            return (
-              <li key={s.n} className="piece reveal flex flex-col gap-5 p-7 pt-9">
-                <PatternNote>Piece {i + 1} of 3</PatternNote>
-                <Art />
-                <h3 className="font-display text-[24px] leading-[1.15] text-ink">{s.title}</h3>
-                <p className="text-[14px] leading-[1.75] text-ink-2">{s.body}</p>
-              </li>
-            )
-          })}
-        </ol>
+        <div className="hidden lg:block">
+          <div inert aria-hidden="true" className="stage-grid sticky top-28 h-[560px] rounded-[28px] p-8">
+            <div key={active} className="h-full animate-[fadeIn_.45s_ease]">
+              <StepVisual step={active} />
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   )

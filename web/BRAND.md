@@ -1,52 +1,59 @@
-# Cover Me brand: made to measure
+# Cover Me brand
 
-The resume is a garment and Cover Me is the tailor. The visual language comes from
-sewing patterns: cream tissue paper, dashed cut lines, notches, small mono
-annotations, a red thread, a yellow tape measure. Headline idea: one resume doesn't
-fit every job.
-
-Promo videos are flat motion graphics that show the product flow, not live action.
-Use the same palette, type, and assets as the site so a video frame and a page
-screenshot look like the same brand.
+Graphics first. A visitor should understand the product from the pictures and the
+headings alone: a job posting goes in, the Cover Me popup scores it, a tailored
+resume and cover letter come out. Body text only adds detail. Promo videos are flat
+motion graphics built from the same pieces.
 
 ## Palette
 
+Warm neutrals with Cover Me indigo as the only accent. The extension uses the same
+indigo, so the popup and the site match.
+
 | Token | Hex | Use |
 |---|---|---|
-| tissue | #F2EADB | background |
-| tissue-2 | #E8DCC6 | panels, pattern pieces |
-| ink | #1C1A17 | text, outlines |
-| ink-2 | #5E574C | secondary text |
-| pattern-line | #B3A489 | dashed rules, outlines, dress-form heads |
-| thread | #C4321F | the one accent: CTAs, the thread |
-| thread-deep | #A3281A | hover, small red text on tissue-2 |
-| tape | #E6B422 | ATS score and tape measures only |
-| chalk | #3B5B8F | "your resume" and "matched" only |
-| night | #141311 | footer, dark end cards |
+| paper | #F5F3F2 | page background |
+| panel | #ECEAE7 | soft panels behind product visuals |
+| card | #FFFFFF | cards |
+| line | #E2DFDB | dividers, borders |
+| ink | #1E1B4B | headings, strong text |
+| body | #2A2A2A | body text |
+| ink-2 | #5A534D | secondary text |
+| subtle | #6B635D | small labels, captions |
+| brand | #6366F1 | Cover Me indigo: graphics, rings, focus |
+| brand-strong | #4F46E5 | buttons and links (white text passes AA) |
+| brand-tint / brand-ink | #EEEEFF / #4338CA | matched-keyword chips |
+| gap / gap-tint / gap-ink | #F97316 / #FFEDD5 / #9A3412 | missing keywords |
+| night | #15132B | dark bands, footer |
 
-## Type
+The extension popup keeps its own dark palette (`--ext-*` in `app/globals.css`) inside
+product visuals, so the site shows exactly what people install.
 
-- Bodoni Moda 500 for headlines. Set one word in italic, often in thread red ("every", "hired.").
-- Hanken Grotesk for body and UI.
-- IBM Plex Mono, uppercase with wide tracking, for pattern notes ("PIECE 1 OF 3", "TAILORED FOR:").
+## Type and shape
 
-## Assets
+- Geist 600 for headings with tight tracking (-0.025 to -0.035em), Geist 400/500 for body.
+- Geist Mono for small labels ("HOW IT WORKS", sources).
+- Soft corners: 16 to 32px panels and cards, pill buttons.
 
-- `public/brand/hero-scene.svg`: two dress forms wearing a suit and a dress cut from the same
-  resume, joined by a red thread. Groups `#suit`, `#dress`, `#thread` animate separately.
-  Source: Higgsfield, Recraft V4.1 vector mode, job `f98289d0-0a20-4cc9-9059-e29f53672b39`,
-  prompt: "Minimal flat vector illustration, cream background: two dress forms on thin stands,
-  one wearing a tailored blazer and one wearing a dress, both garments made of white resume
-  paper with thin grey text lines and dashed cutting lines. A red thread loops from one garment
-  to the other. A yellow tape measure hangs over one form. Bold simple shapes, thin black
-  outlines, modern editorial motion-graphics style, generous negative space. No legible text."
-  Regenerate the site component and this file with `node scripts/svg-to-scene.mjs <recraft.svg>`.
-- `app/opengraph-image.tsx`: the 1200×630 share card (headline plus the scene).
+## Building blocks (web/components/landing)
+
+- `ExtensionPopup`, `ScoreRing`: the real popup and its ATS ring.
+- `JobCard`, `ResumeDoc`, `LetterDoc`, `BrowserFrame`, `Chip` (`visuals.tsx`): the
+  job posting and the two outputs. Example data lives in `EXAMPLE`.
 
 ## Motion
 
-- The thread draws itself (stroke-dashoffset), one segment after another, about 1 s each.
-- Dress forms sway ±0.6° from the base, out of phase, on a slow 7 s loop.
-- The footer wordmark is stitched: a dashed red outline revealed left to right.
-- Scores count up on a tape measure (52% → 78% in the site example).
-- Hard cuts between scenes; no glows, gradients, or blur.
+- Animated flow lines between the posting, the popup and the output.
+- The ATS ring and the stats count up the first time they scroll into view.
+- Hero scene tabs auto-advance like a demo until the visitor picks one.
+- Sticky walkthrough: the visual follows the step you're reading.
+- Everything snaps to its final state under reduced motion, and without scroll
+  timelines (Firefox) content simply shows.
+
+## Claims
+
+- Job boards: only the sites the extension reads (LinkedIn, Indeed, Greenhouse, Lever,
+  Workday, Ashby, BambooHR, Workable). Everywhere else is "paste it in".
+- Stats must carry a source: Huntr (2.1× interviews), Jobscan (97.8% of Fortune 500
+  use an ATS), Ladders (7.4 s first look). The 40 s figure is our arithmetic, stated on
+  the page.

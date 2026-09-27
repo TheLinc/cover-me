@@ -20,7 +20,7 @@ export default function NotFound() {
           className="text-center flex flex-col items-center gap-5 max-w-[480px]"
           style={{ animation: 'fadeUp 0.5s ease both' }}
         >
-          <p className="font-display italic text-[clamp(96px,16vw,180px)] leading-none text-[rgba(28,26,23,0.12)] select-none">
+          <p className="italic text-[clamp(96px,16vw,180px)] leading-none text-[rgba(30,27,75,0.12)] select-none">
             404
           </p>
           <div className="-mt-4">

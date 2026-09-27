@@ -2,48 +2,72 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Made to measure palette ─────────────────────────────────────────────────
- * Hex tokens for our own classes. The HSL channels in the base layer feed
- * shadcn's hsl(var(--x)) utilities; keep the two in sync.
+/* ── Palette ─────────────────────────────────────────────────────────────────
+ * Warm neutrals with Cover Me indigo as the only accent (the extension shares it).
+ * Hex tokens for our own classes; the HSL channels in the base layer feed
+ * shadcn's hsl(var(--x)) utilities. Keep the two in sync.
  * ─────────────────────────────────────────────────────────────────────────── */
 :root {
-  --tissue:       #F2EADB;
-  --tissue-2:     #E8DCC6;
-  --ink:          #1C1A17;
-  --ink-2:        #5E574C;
-  --pattern-line: #B3A489;
-  --thread:       #C4321F;
-  --thread-deep:  #A3281A; /* hover, and small thread-colored text on --tissue-2 */
-  --tape:         #E6B422; /* ATS score and tape measures only */
-  --chalk:        #3B5B8F; /* "your resume" / "matched" in diagrams only */
-  --night:        #141311;
+  --paper:        #F5F3F2; /* page */
+  --panel:        #ECEAE7; /* soft panels behind product visuals */
+  --card:         #FFFFFF;
+  --line:         #E2DFDB;
+  --ink:          #1E1B4B; /* headings, strong text */
+  --body:         #2A2A2A; /* body text */
+  --ink-2:        #5A534D; /* secondary text */
+  --subtle:       #6B635D; /* small labels, captions */
+  --brand:        #6366F1; /* Cover Me indigo: graphics, focus, accents */
+  --brand-strong: #4F46E5; /* buttons and links (white text passes AA) */
+  --brand-deep:   #4338CA; /* hover */
+  --brand-tint:   #EEEEFF;
+  --brand-ink:    #4338CA; /* text on brand-tint */
+  --on-brand:     #FFFFFF;
+  --gap:          #F97316; /* missing keywords */
+  --gap-tint:     #FFEDD5;
+  --gap-ink:      #9A3412;
+  --night:        #15132B; /* dark bands, footer */
+  --night-2:      #1F1C3D;
+  --on-night:     #F5F3F2;
+  --on-night-2:   #B7B2C9;
+
+  /* extension-palette:start
+   * The extension popup's own dark UI, used only inside product visuals so they
+   * match the real popup. scripts/check-brand.mjs allows these hexes only here. */
+  --ext-bg:       #0D1117;
+  --ext-surface:  #161C2E;
+  --ext-elevated: #1E2740;
+  --ext-border:   #2A3452;
+  --ext-text:     #E2E8F0;
+  --ext-muted:    #94A3B8;
+  --ext-accent-soft: #A5B4FC;
+  /* extension-palette:end */
 }
 
 @layer base {
   :root {
-    --background:             39 47% 90%;
-    --foreground:             36 10% 10%;
-    --card:                   39 42% 84%;
-    --card-foreground:        36 10% 10%;
-    --popover:                39 47% 90%;
-    --popover-foreground:     36 10% 10%;
-    --primary:                7 73% 45%;
-    --primary-foreground:     39 47% 90%;
-    --secondary:              39 42% 84%;
-    --secondary-foreground:   36 10% 10%;
-    --muted:                  39 42% 84%;
-    --muted-foreground:       37 11% 33%;
-    --destructive:            7 73% 45%;
-    --destructive-foreground: 39 47% 90%;
-    --input:                  39 22% 62%;
-    --ring:                   36 10% 10%;
-    --radius:                 0.25rem;
+    --background:             20 13% 95%;
+    --foreground:             0 0% 16%;
+    --card:                   0 0% 100%;
+    --card-foreground:        0 0% 16%;
+    --popover:                0 0% 100%;
+    --popover-foreground:     0 0% 16%;
+    --primary:                243 75% 59%;
+    --primary-foreground:     0 0% 100%;
+    --secondary:              30 8% 92%;
+    --secondary-foreground:   243 47% 20%;
+    --muted:                  30 8% 92%;
+    --muted-foreground:       28 8% 33%;
+    --destructive:            17 88% 40%;
+    --destructive-foreground: 0 0% 100%;
+    --input:                  30 9% 87%;
+    --ring:                   239 84% 67%;
+    --radius:                 0.75rem;
   }
 
-  h1, h2 {
-    font-family: var(--font-display), Georgia, serif;
-    font-weight: 500;
-    letter-spacing: -0.015em;
+  h1, h2, h3 {
+    color: var(--ink);
+    font-weight: 600;
+    letter-spacing: -0.025em;
   }
 }
 
@@ -65,10 +89,10 @@ html { scroll-behavior: smooth; }
 }
 
 body {
-  background: var(--tissue);
-  color: var(--ink);
+  background: var(--paper);
+  color: var(--body);
   font-family: var(--font-sans), system-ui, sans-serif;
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
@@ -77,147 +101,62 @@ body {
 a      { color: inherit; text-decoration: none; }
 button { cursor: pointer; font-family: inherit; }
 img, svg, video { display: block; }
-::selection { background: var(--tape); color: var(--ink); }
+::selection { background: var(--brand-tint); color: var(--ink); }
 
 .container {
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
-  padding-inline: 48px;
+  padding-inline: 40px;
 }
 @media (max-width: 768px) {
   .container { padding-inline: 20px; }
 }
 
-/* ── Motifs ──────────────────────────────────────────────────────────────── */
-/* In the components layer so Tailwind utilities (absolute, p-*, etc.) override them. */
+/* In the components layer so Tailwind utilities can override them. */
 @layer components {
-
-/* Yellow tape measure: major tick every 48px, minor every 8px, on the top edge. */
-.tape {
-  background-color: var(--tape);
-  background-image:
-    repeating-linear-gradient(to right, var(--ink) 0 1px, transparent 1px 48px),
-    repeating-linear-gradient(to right, var(--ink) 0 1px, transparent 1px 8px);
-  background-size: 100% 14px, 100% 7px;
-  background-repeat: no-repeat;
-}
-
-/* Plain ruler ticks, no fill. Sits under the nav. */
-.ruler {
-  height: 8px;
-  background-image:
-    repeating-linear-gradient(to right, var(--pattern-line) 0 1px, transparent 1px 48px),
-    repeating-linear-gradient(to right, var(--pattern-line) 0 1px, transparent 1px 8px);
-  background-size: 100% 8px, 100% 4px;
-  background-repeat: no-repeat;
-}
-
-/* Pattern piece: dashed outline with a notch on the top edge and the left edge. */
-.piece {
-  position: relative;
-  background: var(--tissue-2);
-  border: 1.5px dashed var(--pattern-line);
-  border-radius: 4px;
-}
-.piece::before,
-.piece::after {
-  content: '';
-  position: absolute;
-  width: 0;
-  height: 0;
-  border: 7px solid transparent;
-}
-.piece::before { top: -1.5px; left: 32px; border-top-color: var(--pattern-line); }
-.piece::after  { left: -1.5px; top: 32px; border-left-color: var(--pattern-line); }
-
-/* Swatch card with pinked (zigzag) top and bottom edges. */
-.swatch {
-  --z: 14px;
-  mask:
-    conic-gradient(from 135deg at top, #0000, #000 1deg 90deg, #0000 91deg) top / var(--z) 51% repeat-x,
-    conic-gradient(from -45deg at bottom, #0000, #000 1deg 90deg, #0000 91deg) bottom / var(--z) 51% repeat-x;
-}
-
-/* Hang tag silhouette. The punched hole is a child element. */
-.tag { clip-path: polygon(16% 0, 84% 0, 100% 7%, 100% 100%, 0 100%, 0 7%); }
-
-/* Loading shimmer in the WorkflowDemo popup. */
-.skeleton-line {
-  border-radius: 2px;
-  background: linear-gradient(90deg, var(--tissue-2) 25%, rgba(196, 50, 31, 0.12) 50%, var(--tissue-2) 75%);
-  background-size: 300% 100%;
-}
-@media (prefers-reduced-motion: no-preference) {
-  .skeleton-line { animation: skeletonShimmer 1.8s ease-in-out infinite; }
-}
-}
-@keyframes skeletonShimmer {
-  0%   { background-position: 200% center; }
-  100% { background-position: -200% center; }
-}
-
-/* Running stitch down the landing page's left margin. */
-@layer components {
-.thread-line {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: max(12px, calc((100vw - 1200px) / 2 - 8px));
-  width: 2px;
-  background: repeating-linear-gradient(to bottom, var(--thread) 0 12px, transparent 12px 20px);
-  pointer-events: none;
-}
-@media (max-width: 767px) {
-  .thread-line { display: none; }
-}
-}
-
-/* ATS score tape. --score is animated in the scroll-driven block; 78 is the finished state. */
-@property --score {
-  syntax: '<integer>';
-  inherits: true;
-  initial-value: 78;
-}
-.score-tape .score-fill { width: calc(var(--score) * 1%); }
-.score-tape .score-num::after { counter-reset: score var(--score); content: counter(score) '%'; }
-
-/* Stitched wordmark in the footer. */
-.stitch-text {
-  fill: none;
-  stroke: var(--thread);
-  stroke-width: 2.5;
-  stroke-dasharray: 11 7;
-  stroke-linecap: round;
-}
-
-/* Hero scene: the thread draws itself and the two forms sway out of phase.
- * Time-based, not scroll-driven. Without motion the drawing is simply finished. */
-@media (prefers-reduced-motion: no-preference) {
-  .hero-thread {
-    stroke-dasharray: 1;
-    animation: threadIn 1s cubic-bezier(0.6, 0, 0.2, 1) both;
+  /* White rounded card on the paper background. */
+  .soft-card {
+    background: var(--card);
+    border-radius: 24px;
   }
-  .hero-form {
-    transform-box: fill-box;
-    transform-origin: 50% 100%;
-    animation: sway 7s ease-in-out infinite alternate;
-  }
-  .hero-form--right { animation-delay: -3.5s; }
-}
-@keyframes threadIn { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
-@keyframes sway     { from { rotate: -0.6deg; } to { rotate: 0.6deg; } }
 
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(18px); }
-  to   { opacity: 1; transform: translateY(0); }
+  /* Faint grid behind product stages. */
+  .stage-grid {
+    background-color: var(--panel);
+    background-image:
+      linear-gradient(to right, #E0DDD9 1px, transparent 1px),
+      linear-gradient(to bottom, #E0DDD9 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
+  /* Loading shimmer in product visuals. */
+  .skeleton-line {
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--ext-elevated) 25%, rgba(99, 102, 241, 0.25) 50%, var(--ext-elevated) 75%);
+    background-size: 300% 100%;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .skeleton-line { animation: shimmer 1.8s ease-in-out infinite; }
+  }
 }
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+
+@keyframes shimmer { 0% { background-position: 200% center; } 100% { background-position: -200% center; } }
+@keyframes fadeUp  { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
+
+/* Time-based motion. Without it (reduced motion) everything is in its end state. */
+@media (prefers-reduced-motion: no-preference) {
+  .flow-line { stroke-dasharray: 6 8; animation: flow 1.6s linear infinite; }
+  .marquee   { animation: marquee 36s linear infinite; }
+  .marquee:hover { animation-play-state: paused; }
+  .pulse     { animation: pulse 1.4s ease-in-out infinite; }
 }
+@keyframes flow    { to { stroke-dashoffset: -40; } }
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes pulse   { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }
 
 /* scroll-driven:start
- * Every animation-timeline rule lives in this block. Outside it, everything
+ * Every animation-timeline rule lives in this block. Outside it, content
  * renders in its finished state, so Firefox (no scroll timelines) and
  * reduced-motion visitors get a complete page. scripts/check-brand.mjs fails
  * if animation-timeline appears anywhere else. */
@@ -226,32 +165,9 @@ img, svg, video { display: block; }
     .reveal {
       animation: reveal ease-out both;
       animation-timeline: view();
-      animation-range: entry 0% entry 70%;
-    }
-    .thread-line {
-      animation: threadDraw linear both;
-      animation-timeline: scroll(root);
-    }
-    .score-tape {
-      animation: score linear both;
-      animation-timeline: view();
-      animation-range: entry 30% cover 50%;
-    }
-    .stitch-draw {
-      animation: stitchDraw ease-out both;
-      animation-timeline: view();
-      animation-range: entry 10% cover 40%;
-    }
-    .footer-thread {
-      stroke-dasharray: 1;
-      animation: threadIn linear both;
-      animation-timeline: view();
-      animation-range: entry 0% cover 30%;
+      animation-range: entry 0% entry 60%;
     }
   }
 }
-@keyframes reveal     { from { opacity: 0; translate: 0 24px; } to { opacity: 1; translate: 0 0; } }
-@keyframes threadDraw { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 0 0); } }
-@keyframes score      { from { --score: 52; } to { --score: 78; } }
-@keyframes stitchDraw { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes reveal { from { opacity: 0; translate: 0 24px; } to { opacity: 1; translate: 0 0; } }
 /* scroll-driven:end */

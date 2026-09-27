@@ -1,16 +1,16 @@
 import { jsonLdApp, jsonLdHowTo, jsonLdSpeakable } from '@/lib/structured-data'
 import { SiteNav } from '@/components/site/SiteNav'
 import { SiteFooter } from '@/components/site/SiteFooter'
-import { CutLine } from '@/components/brand/CutLine'
 import { Hero } from '@/components/landing/Hero'
-import { BoardsTape } from '@/components/landing/BoardsTape'
+import { BoardsStrip } from '@/components/landing/BoardsStrip'
 import { HowItWorks } from '@/components/landing/HowItWorks'
-import { AtsFit } from '@/components/landing/AtsFit'
-import { Swatches } from '@/components/landing/Swatches'
-import { OpenSource } from '@/components/landing/OpenSource'
+import { AtsScore } from '@/components/landing/AtsScore'
+import { Stats } from '@/components/landing/Stats'
+import { Features } from '@/components/landing/Features'
+import { PrivacyBand } from '@/components/landing/PrivacyBand'
 import { Pricing } from '@/components/landing/Pricing'
-import { Compare } from '@/components/landing/Compare'
 import { Faq } from '@/components/landing/Faq'
+import { ClosingCta } from '@/components/landing/ClosingCta'
 
 export default function Home() {
   return (
@@ -19,21 +19,17 @@ export default function Home() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdHowTo) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdSpeakable) }} />
       <SiteNav />
-      <main className="relative">
-        <div className="thread-line" aria-hidden="true" />
+      <main>
         <Hero />
-        <BoardsTape />
+        <BoardsStrip />
         <HowItWorks />
-        <CutLine className="container" />
-        <AtsFit />
-        <CutLine className="container" />
-        <Swatches />
-        <OpenSource />
+        <AtsScore />
+        <Stats />
+        <Features />
+        <PrivacyBand />
         <Pricing />
-        <CutLine className="container" />
-        <Compare />
-        <CutLine className="container" />
         <Faq />
+        <ClosingCta />
       </main>
       <SiteFooter />
     </>

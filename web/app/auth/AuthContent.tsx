@@ -227,7 +227,7 @@ function AuthForm() {
         className="relative overflow-hidden bg-surface border-r border-border max-md:hidden"
         style={{
           backgroundImage:
-            "radial-gradient(circle, rgba(179,164,137,0.85) 1px, transparent 1px)",
+            "radial-gradient(circle, rgba(226,223,219,0.85) 1px, transparent 1px)",
           backgroundSize: "26px 26px",
         }}
       >
@@ -261,7 +261,7 @@ function AuthForm() {
               <br />
               that gets you
               <br />
-              <em className="italic text-thread">hired.</em>
+              hired.
             </h1>
             <p
               className="text-[15px] text-muted-foreground leading-[1.65] max-w-[340px]"
@@ -326,7 +326,7 @@ function AuthForm() {
           {/* ── Email confirmed ── */}
           {view === "confirmed" ? (
             <>
-              <div className="w-12 h-12 rounded-full bg-[rgba(59,91,143,0.1)] border border-[rgba(59,91,143,0.25)] flex items-center justify-center mb-6">
+              <div className="w-12 h-12 rounded-full bg-[rgba(79,70,229,0.1)] border border-[rgba(79,70,229,0.25)] flex items-center justify-center mb-6">
                 <CheckIcon size={22} color="var(--success)" />
               </div>
               <h2 className="text-2xl text-foreground leading-[1.2] mb-[5px]">
@@ -366,7 +366,7 @@ function AuthForm() {
                     )}
                   </p>
                 </div>
-                <div className="w-12 h-12 rounded-full bg-[rgba(59,91,143,0.1)] border border-[rgba(59,91,143,0.25)] flex items-center justify-center shrink-0">
+                <div className="w-12 h-12 rounded-full bg-[rgba(79,70,229,0.1)] border border-[rgba(79,70,229,0.25)] flex items-center justify-center shrink-0">
                   <CheckIcon size={20} color="var(--success)" />
                 </div>
               </div>

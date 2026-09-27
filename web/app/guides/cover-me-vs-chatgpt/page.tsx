@@ -1,4 +1,3 @@
-import { CutLine } from '@/components/brand/CutLine'
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -92,7 +91,7 @@ export default function Page() {
       </div>
 
       {/* Hero graphic */}
-      <CutLine className="mb-10" />
+      <div className="mb-10 h-px bg-line" />
       <figure className="mb-12">
         <Image
           src={HERO_IMAGE}
@@ -177,7 +176,7 @@ export default function Page() {
           href={CHROME_STORE_URL}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex items-center gap-2 bg-thread text-tissue font-semibold text-[14px] px-5 py-2.5 rounded-[8px] hover:bg-thread-deep transition-colors"
+          className="inline-flex items-center gap-2 bg-brand-strong text-white font-semibold text-[14px] px-5 py-2.5 rounded-[8px] hover:bg-brand-deep transition-colors"
         >
           Install free · Chrome
         </a>

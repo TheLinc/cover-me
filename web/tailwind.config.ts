@@ -11,7 +11,7 @@ const config: Config = {
     extend: {
       colors: {
         // shadcn
-        border:      'var(--pattern-line)',
+        border:      'var(--line)',
         input:       'hsl(var(--input))',
         ring:        'hsl(var(--ring))',
         background:  'hsl(var(--background))',
@@ -20,38 +20,53 @@ const config: Config = {
         secondary:   { DEFAULT: 'hsl(var(--secondary))',   foreground: 'hsl(var(--secondary-foreground))' },
         destructive: { DEFAULT: 'hsl(var(--destructive))', foreground: 'hsl(var(--destructive-foreground))' },
         muted:       { DEFAULT: 'hsl(var(--muted))',       foreground: 'hsl(var(--muted-foreground))' },
-        accent:      { DEFAULT: 'var(--tissue-2)',          foreground: 'var(--ink)' },
+        accent:      { DEFAULT: 'var(--panel)',             foreground: 'var(--ink)' },
         popover:     { DEFAULT: 'hsl(var(--popover))',     foreground: 'hsl(var(--popover-foreground))' },
         card:        { DEFAULT: 'hsl(var(--card))',        foreground: 'hsl(var(--card-foreground))' },
-        // Made to measure (values in globals.css)
-        tissue: { DEFAULT: 'var(--tissue)', 2: 'var(--tissue-2)' },
-        ink:    { DEFAULT: 'var(--ink)',    2: 'var(--ink-2)' },
-        line:   'var(--pattern-line)',
-        thread: { DEFAULT: 'var(--thread)', deep: 'var(--thread-deep)' },
-        tape:   'var(--tape)',
-        chalk:  'var(--chalk)',
-        night:  'var(--night)',
-        // Legacy aliases still used by inner pages. New code uses the names above.
-        surface:  'var(--tissue-2)',
-        elevated: 'var(--tissue-2)',
+        // Palette (values in globals.css)
+        paper:  'var(--paper)',
+        panel:  'var(--panel)',
+        line:   'var(--line)',
+        ink:    { DEFAULT: 'var(--ink)', 2: 'var(--ink-2)' },
+        body:   'var(--body)',
+        subtle: 'var(--subtle)',
         brand: {
-          DEFAULT: 'var(--thread)',
-          light:   'var(--thread-deep)',
-          dim:     'rgba(196,50,31,0.10)',
-          glow:    'rgba(196,50,31,0.18)',
+          DEFAULT: 'var(--brand)',
+          strong:  'var(--brand-strong)',
+          deep:    'var(--brand-deep)',
+          tint:    'var(--brand-tint)',
+          ink:     'var(--brand-ink)',
+          // Legacy names still used by inner pages.
+          light:   'var(--brand-strong)',
+          dim:     'var(--brand-tint)',
+          glow:    'rgba(99,102,241,0.18)',
         },
-        dim:     'var(--ink-2)',
-        success: 'var(--chalk)',
+        gap:    { DEFAULT: 'var(--gap)', tint: 'var(--gap-tint)', ink: 'var(--gap-ink)' },
+        night:  { DEFAULT: 'var(--night)', 2: 'var(--night-2)' },
+        // The extension popup's dark UI, for product visuals only.
+        ext: {
+          bg:       'var(--ext-bg)',
+          surface:  'var(--ext-surface)',
+          elevated: 'var(--ext-elevated)',
+          border:   'var(--ext-border)',
+          text:     'var(--ext-text)',
+          muted:    'var(--ext-muted)',
+          soft:     'var(--ext-accent-soft)',
+        },
+        // Legacy aliases still used by inner pages. New code uses the names above.
+        surface:  'var(--card)',
+        elevated: 'var(--panel)',
+        dim:      'var(--subtle)',
+        success:  'var(--brand-strong)',
       },
       borderRadius: {
         lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 1px)',
-        sm: 'calc(var(--radius) - 2px)',
+        md: 'calc(var(--radius) - 2px)',
+        sm: 'calc(var(--radius) - 4px)',
       },
       fontFamily: {
-        sans:    ['var(--font-sans)', 'system-ui', 'sans-serif'],
-        display: ['var(--font-display)', 'Georgia', 'serif'],
-        mono:    ['var(--font-mono)', 'ui-monospace', 'monospace'],
+        sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
+        mono: ['var(--font-mono)', 'ui-monospace', 'monospace'],
       },
       keyframes: {
         'accordion-down': {

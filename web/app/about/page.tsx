@@ -110,7 +110,7 @@ export default function AboutPage() {
           {/* Founder card */}
           <div className="space-y-5 max-lg:order-first">
             <div className="border border-border rounded-[12px] p-7 bg-surface">
-              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-thread to-thread-deep flex items-center justify-center text-tissue font-display text-[22px] font-extrabold mb-5 select-none">
+              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-brand to-brand-strong flex items-center justify-center text-white text-[22px] font-extrabold mb-5 select-none">
                 L
               </div>
               <h3 className="text-[16px] font-bold text-foreground tracking-[-0.3px] mb-1">
@@ -181,7 +181,7 @@ export default function AboutPage() {
               href={CHROME_STORE_URL}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-2 bg-thread text-tissue font-semibold text-[14px] px-5 py-2.5 rounded-[8px] hover:bg-thread-deep transition-colors"
+              className="inline-flex items-center gap-2 bg-brand-strong text-white font-semibold text-[14px] px-5 py-2.5 rounded-[8px] hover:bg-brand-deep transition-colors"
             >
               Install free · Chrome
             </a>

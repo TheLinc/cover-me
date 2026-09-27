@@ -8,7 +8,7 @@ import { cn, CHROME_STORE_URL } from '@/lib/utils'
 
 const LINKS = [
   { href: '/#how-it-works', label: 'How it works' },
-  { href: '/#features', label: 'Features' },
+  { href: '/#ats-score', label: 'ATS score' },
   { href: '/#pricing', label: 'Pricing' },
   { href: '/guides', label: 'Guides' },
   { href: '/about', label: 'About' },
@@ -28,13 +28,13 @@ export function SiteNav({ actions }: { actions?: ReactNode }) {
     <header
       className={cn(
         'sticky top-0 z-50 transition-colors duration-300',
-        scrolled ? 'bg-[rgba(242,234,219,0.92)] backdrop-blur-md' : 'bg-transparent',
+        scrolled ? 'bg-[rgba(245,243,242,0.92)] backdrop-blur-md' : 'bg-transparent',
       )}
     >
       <div className="container flex h-16 items-center gap-8">
         <Link href="/" className="flex shrink-0 items-center gap-2.5">
-          <Image src="/logo.png" width={24} height={24} alt="" />
-          <span className="font-display text-[21px] leading-none text-ink">Cover Me</span>
+          <Image src="/logo.png" width={28} height={28} alt="" className="rounded-[8px]" />
+          <span className="text-[18px] font-semibold tracking-[-0.02em] text-ink">Cover Me</span>
         </Link>
         <nav aria-label="Main" className="flex flex-1 gap-7 max-md:hidden">
           {LINKS.map((l) => (
@@ -58,7 +58,6 @@ export function SiteNav({ actions }: { actions?: ReactNode }) {
           )}
         </div>
       </div>
-      <div className="ruler" aria-hidden="true" />
     </header>
   )
 }

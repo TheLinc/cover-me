@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import { CHROME_STORE_URL } from '@/lib/utils'
 
@@ -8,19 +9,9 @@ const COLUMNS: { title: string; links: FooterLink[] }[] = [
     title: 'Product',
     links: [
       { label: 'How it works', href: '/#how-it-works' },
-      { label: 'Features', href: '/#features' },
+      { label: 'ATS score', href: '/#ats-score' },
       { label: 'Pricing', href: '/#pricing' },
       { label: 'Install', href: CHROME_STORE_URL, external: true },
-    ],
-  },
-  {
-    title: 'Open source',
-    links: [
-      { label: 'GitHub', href: 'https://github.com/TheLinc/cover-me', external: true },
-      { label: 'About', href: '/about' },
-      { label: 'Privacy', href: '/privacy' },
-      { label: 'Terms', href: '/terms' },
-      { label: 'Support', href: '/support' },
     ],
   },
   {
@@ -33,6 +24,16 @@ const COLUMNS: { title: string; links: FooterLink[] }[] = [
     ],
   },
   {
+    title: 'Company',
+    links: [
+      { label: 'About', href: '/about' },
+      { label: 'GitHub', href: 'https://github.com/TheLinc/cover-me', external: true },
+      { label: 'Support', href: '/support' },
+      { label: 'Privacy', href: '/privacy' },
+      { label: 'Terms', href: '/terms' },
+    ],
+  },
+  {
     title: 'Account',
     links: [
       { label: 'Sign in', href: '/auth' },
@@ -42,67 +43,41 @@ const COLUMNS: { title: string; links: FooterLink[] }[] = [
   },
 ]
 
-// A loose thread that loops once and runs down into the wordmark.
-const THREAD = 'M-20 70 C 180 20, 300 150, 420 80 C 480 45, 470 5, 440 20 C 410 35, 450 95, 520 110 C 600 128, 640 150, 660 190'
+const LINK = 'text-[14px] text-[#D8D5E6] transition-colors hover:text-white'
 
 export function SiteFooter() {
   return (
-    <footer className="relative overflow-hidden bg-night text-[rgba(242,234,219,0.72)]">
-      <svg
-        data-footer-thread
-        viewBox="0 0 1000 190"
-        preserveAspectRatio="none"
+    <footer className="mt-20 overflow-hidden bg-night text-[var(--on-night-2)]">
+      <div className="container grid gap-10 pb-10 pt-16 md:grid-cols-[1.2fr_repeat(4,minmax(0,1fr))]">
+        <div className="flex flex-col gap-3">
+          <Link href="/" className="flex items-center gap-2.5">
+            <Image src="/logo.png" width={28} height={28} alt="" className="rounded-[8px]" />
+            <span className="text-[18px] font-semibold tracking-[-0.02em] text-white">Cover Me</span>
+          </Link>
+          <p className="max-w-[240px] text-[14px] leading-[1.55]">Tailored resumes and cover letters for every job you apply to.</p>
+        </div>
+        {COLUMNS.map((c) => (
+          <div key={c.title} className="flex flex-col gap-3">
+            <span className="text-[12px] text-[var(--on-night-2)]">{c.title}</span>
+            {c.links.map((l) =>
+              l.external ? (
+                <a key={l.label} href={l.href} target="_blank" rel="noreferrer" className={LINK}>{l.label}</a>
+              ) : (
+                <Link key={l.label} href={l.href} className={LINK}>{l.label}</Link>
+              ),
+            )}
+          </div>
+        ))}
+      </div>
+      <div className="container flex justify-between gap-4 border-t border-white/10 py-6 text-[13px] max-sm:flex-col">
+        <span>© {new Date().getFullYear()} Cover Me · MIT License</span>
+        <span>Built in Canada</span>
+      </div>
+      <div
         aria-hidden="true"
-        className="absolute inset-x-0 top-0 h-[190px] w-full"
+        className="select-none whitespace-nowrap text-center text-[clamp(96px,21vw,300px)] font-semibold leading-[0.78] tracking-[-0.06em] text-night-2"
       >
-        <path
-          d={THREAD}
-          pathLength={1}
-          className="footer-thread fill-none stroke-thread"
-          strokeWidth={2}
-          strokeLinecap="round"
-          vectorEffect="non-scaling-stroke"
-        />
-      </svg>
-      <div className="container relative pb-10 pt-44 max-md:pt-36">
-        <svg viewBox="0 0 1000 190" className="stitch-draw w-full" role="img" aria-label="Cover Me">
-          <text
-            x="500"
-            y="150"
-            textAnchor="middle"
-            className="stitch-text"
-            style={{ fontFamily: 'var(--font-display)', fontSize: 190, fontWeight: 500 }}
-          >
-            Cover Me
-          </text>
-        </svg>
-        <p className="mt-4 text-center font-display text-[clamp(26px,3vw,40px)] italic text-tissue">
-          Made to measure.
-        </p>
-        <div className="mt-24 grid grid-cols-4 gap-8 border-t border-dashed border-[rgba(242,234,219,0.2)] pt-10 max-md:grid-cols-2">
-          {COLUMNS.map((c) => (
-            <div key={c.title} className="flex flex-col gap-2.5">
-              <span className="mb-1 font-mono text-[10.5px] uppercase tracking-[0.14em] text-[rgba(242,234,219,0.6)]">
-                {c.title}
-              </span>
-              {c.links.map((l) =>
-                l.external ? (
-                  <a key={l.label} href={l.href} target="_blank" rel="noreferrer" className="text-[13px] transition-colors hover:text-tissue">
-                    {l.label}
-                  </a>
-                ) : (
-                  <Link key={l.label} href={l.href} className="text-[13px] transition-colors hover:text-tissue">
-                    {l.label}
-                  </Link>
-                ),
-              )}
-            </div>
-          ))}
-        </div>
-        <div className="mt-12 flex justify-between font-mono text-[10.5px] uppercase tracking-[0.14em] text-[rgba(242,234,219,0.6)] max-sm:flex-col max-sm:gap-2">
-          <span>© {new Date().getFullYear()} Cover Me · MIT License</span>
-          <span>Built in Canada</span>
-        </div>
+        Cover Me
       </div>
     </footer>
   )

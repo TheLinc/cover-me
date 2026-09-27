@@ -85,7 +85,7 @@ function PermissionCard({
       <div className="bg-surface px-5 py-3 flex items-center justify-between gap-4 border-b border-border">
         <code className="text-[13px] font-bold text-brand-light font-mono">{name}</code>
         {warning && (
-          <span className="text-[11px] font-semibold text-thread-deep bg-surface border border-[rgba(196,50,31,0.25)] px-2.5 py-1 rounded-full shrink-0">
+          <span className="text-[11px] font-semibold text-brand-deep bg-surface border border-[rgba(99,102,241,0.25)] px-2.5 py-1 rounded-full shrink-0">
             ⚠ Chrome shows: &ldquo;{warning}&rdquo;
           </span>
         )}
@@ -592,7 +592,7 @@ export default function PrivacyPage() {
               <Li>We do not allow humans to read user-generated content (resumes, cover letters, job postings) except with explicit user consent, for security and fraud prevention, to meet legal obligations, or in aggregate anonymised form.</Li>
               <Li>We do not use data to determine creditworthiness or for lending decisions.</Li>
             </Ul>
-            <div className="bg-surface border border-[rgba(196,50,31,0.25)] rounded-[10px] px-5 py-4 mt-4">
+            <div className="bg-surface border border-[rgba(99,102,241,0.25)] rounded-[10px] px-5 py-4 mt-4">
               <p className="text-[14px] text-muted-foreground leading-[1.8]">
                 The use of information received from Chrome extension APIs will adhere to the{' '}
                 <a
