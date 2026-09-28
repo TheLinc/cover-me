@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import { Eyebrow } from '@/components/site/Eyebrow'
 import { ExtensionPopup, PopupButton } from './ExtensionPopup'
@@ -9,7 +10,7 @@ import { BrowserFrame, Chip, EXAMPLE, LetterDoc, Line, ResumeDoc } from './visua
 
 const STEPS = [
   {
-    title: 'Open any job posting',
+    title: 'Click Cover Me on a job posting',
     body: 'LinkedIn, Indeed, Greenhouse, Lever, Workday and more are read automatically. Anywhere else, paste the description.',
   },
   {
@@ -27,9 +28,29 @@ const STEPS = [
 const VISUAL_W = 504
 const VISUAL_H = 496
 
-function PostingPage({ children }: { children?: React.ReactNode }) {
+// Cover Me's icon in the browser toolbar. `clicking` plays the cursor, press and
+// burst loop from globals.css; `open` marks it as the popup's anchor.
+function ExtIcon({ clicking, open }: { clicking?: boolean; open?: boolean }) {
   return (
-    <BrowserFrame url={`job-boards.greenhouse.io/northwind/jobs/4821`} className="h-full">
+    <span className={cn('relative flex size-7 items-center justify-center rounded-[8px]', open && 'bg-white', clicking && 'ext-press')}>
+      <Image src="/logo.png" width={18} height={18} alt="" className="rounded-[5px]" />
+      {clicking && (
+        <>
+          {Array.from({ length: 8 }, (_, i) => (
+            <span key={i} className="ext-ray" style={{ '--a': `${i * 45 + 22.5}deg` } as React.CSSProperties} />
+          ))}
+          <svg className="ext-cursor" width="22" height="22" viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M3 2l13 7.2-5.6 1.4L8 16z" fill="#1E1B4B" stroke="#fff" strokeWidth="1.4" strokeLinejoin="round" />
+          </svg>
+        </>
+      )}
+    </span>
+  )
+}
+
+function PostingPage({ toolbar, children }: { toolbar?: React.ReactNode; children?: React.ReactNode }) {
+  return (
+    <BrowserFrame url={`job-boards.greenhouse.io/northwind/jobs/4821`} toolbar={toolbar} className="h-full">
       <div className="flex flex-col gap-3 p-6">
         <div className="flex items-center gap-3">
           <div className="flex size-10 items-center justify-center rounded-[10px] bg-ink font-semibold text-white">N</div>
@@ -59,20 +80,11 @@ function PostingPage({ children }: { children?: React.ReactNode }) {
 }
 
 function StepVisual({ step }: { step: number }) {
-  if (step === 0) {
-    return (
-      <PostingPage>
-        <div className="absolute bottom-5 right-5 flex items-center gap-2 rounded-full bg-brand-tint px-3 py-1.5 text-[12px] font-medium text-brand-ink">
-          <span className="pulse size-2 rounded-full bg-brand" />
-          Posting detected · Greenhouse
-        </div>
-      </PostingPage>
-    )
-  }
+  if (step === 0) return <PostingPage toolbar={<ExtIcon clicking />} />
   if (step === 1) {
     return (
-      <PostingPage>
-        <ExtensionPopup className="absolute right-4 top-4 w-[250px]">
+      <PostingPage toolbar={<ExtIcon open />}>
+        <ExtensionPopup className="absolute right-2 top-1.5 w-[250px]">
           <div className="flex flex-col gap-3 px-4 py-4">
             <div className="text-[12px] text-ext-muted">Tailoring your resume</div>
             <div className="pulse text-[14px] font-medium">Rewriting experience (2 of 3)</div>

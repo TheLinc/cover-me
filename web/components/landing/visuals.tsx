@@ -111,16 +111,29 @@ export function LetterDoc({ className }: { className?: string }) {
   )
 }
 
-export function BrowserFrame({ url, children, className }: { url: string; children: ReactNode; className?: string }) {
+// The page clips its content, not the frame, so toolbar effects (the click
+// burst on the extension icon) can spill past the window edge.
+export function BrowserFrame({
+  url,
+  toolbar,
+  children,
+  className,
+}: {
+  url: string
+  toolbar?: ReactNode
+  children: ReactNode
+  className?: string
+}) {
   return (
-    <div className={cn('overflow-hidden rounded-[16px] bg-white shadow-[0_20px_50px_-24px_rgba(30,27,75,0.25)]', className)}>
-      <div className="flex h-9 items-center gap-1.5 bg-[#F2F0ED] px-3.5">
+    <div className={cn('flex flex-col rounded-[16px] bg-white shadow-[0_20px_50px_-24px_rgba(30,27,75,0.25)]', className)}>
+      <div className="relative z-20 flex h-9 items-center gap-1.5 rounded-t-[16px] bg-[#F2F0ED] px-3.5">
         <span className="size-2.5 rounded-full bg-[#E0DCD7]" />
         <span className="size-2.5 rounded-full bg-[#E0DCD7]" />
         <span className="size-2.5 rounded-full bg-[#E0DCD7]" />
         <div className="ml-3 flex h-5 flex-1 items-center truncate rounded-full bg-white px-2.5 text-[11px] text-subtle">{url}</div>
+        {toolbar}
       </div>
-      <div className="relative">{children}</div>
+      <div className="relative min-h-0 flex-1 overflow-hidden rounded-b-[16px]">{children}</div>
     </div>
   )
 }

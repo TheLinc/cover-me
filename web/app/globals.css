@@ -147,6 +147,16 @@ img, svg, video { display: block; }
     transition: block-size 0.3s ease, content-visibility 0.3s allow-discrete;
   }
   .accordion[open]::details-content { block-size: auto; }
+
+  /* How it works, step 1: cursor clicks the toolbar icon, lines burst out.
+   * At rest (reduced motion) the cursor sits on the icon. */
+  .ext-cursor { position: absolute; left: calc(50% - 3px); top: calc(50% - 2px); z-index: 1; }
+  .ext-ray {
+    position: absolute; left: 50%; top: 50%;
+    width: 2.5px; height: 10px; margin: -5px 0 0 -1.25px;
+    border-radius: 2px; background: var(--brand); opacity: 0;
+    transform: rotate(var(--a)) translateY(-26px);
+  }
 }
 
 @keyframes shimmer { 0% { background-position: 200% center; } 100% { background-position: -200% center; } }
@@ -159,6 +169,30 @@ img, svg, video { display: block; }
   .marquee   { animation: marquee 36s linear infinite; }
   .marquee:hover { animation-play-state: paused; }
   .pulse     { animation: pulse 1.4s ease-in-out infinite; }
+  .ext-cursor { animation: ext-cursor 3.6s cubic-bezier(0.45, 0, 0.2, 1) infinite; }
+  .ext-ray    { animation: ext-ray 3.6s ease-out infinite; }
+  .ext-press  { animation: ext-press 3.6s ease infinite; }
+}
+@keyframes ext-cursor {
+  0%       { translate: -210px 230px; opacity: 0; }
+  10%      { opacity: 1; }
+  40%      { translate: 0 0; scale: 1; }
+  44%      { scale: 0.8; }
+  50%      { scale: 1; }
+  86%      { translate: 0 0; opacity: 1; }
+  96%, 100% { translate: 0 0; opacity: 0; }
+}
+@keyframes ext-ray {
+  0%, 43%   { opacity: 0; transform: rotate(var(--a)) translateY(-14px) scaleY(0.3); }
+  46%       { opacity: 1; }
+  66%, 100% { opacity: 0; transform: rotate(var(--a)) translateY(-36px) scaleY(1); }
+}
+@keyframes ext-press {
+  0%, 42%   { scale: 1; background-color: transparent; }
+  45%       { scale: 0.86; background-color: #fff; }
+  52%       { scale: 1; }
+  82%       { background-color: #fff; }
+  92%, 100% { scale: 1; background-color: transparent; }
 }
 @keyframes flow    { to { stroke-dashoffset: -40; } }
 @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
