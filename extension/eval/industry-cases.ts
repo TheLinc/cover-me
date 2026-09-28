@@ -31,6 +31,8 @@ interface Spec {
   warnTerms?: string[]
   mustKeepSkills?: string[]
   fieldNotes: string
+  /** Category labels a human editor would add from specific resume evidence; see EvalCase. */
+  expectedLabels?: string[][]
 }
 
 const role = (title: string, company: string, location: string, dates: string, bullets: string[]): ResumeExperience =>
@@ -90,6 +92,7 @@ const toCase = (s: Spec): EvalCase => ({
   warnTerms: s.warnTerms ?? [],
   mustKeepSkills: s.mustKeepSkills ?? [],
   fieldNotes: s.fieldNotes,
+  expectedLabels: s.expectedLabels,
 })
 
 // ── Cases ────────────────────────────────────────────────────────────────────
@@ -132,6 +135,7 @@ Requirements:
     failTerms: ['Six Sigma', 'Green Belt', 'MBA', 'BPMN', 'Tableau'],
     warnTerms: ['healthcare', 'payer'],
     mustKeepSkills: ['SQL', 'Power BI', 'Jira', 'requirements'],
+    expectedLabels: [['Requirements Elicitation']],
     fieldNotes: 'Business analysis: requirements work, stakeholder facilitation, process improvement with measured outcomes, and BI/data tools. Should read as business-outcome focused, not like a software engineer. The JD accepts "Tableau or Power BI", so Power BI fully covers it.',
   },
   {
@@ -309,6 +313,7 @@ Startup experience preferred.`),
     failTerms: ['Google Workspace', 'Expensify', 'Gmail'],
     warnTerms: ['startup', 'robotics'],
     mustKeepSkills: ['board', 'travel'],
+    expectedLabels: [['Expense Reporting', 'Expense Management']],
     fieldNotes: 'Executive assistant: scope of executive support, confidentiality, board and event logistics. Tools must not be swapped (Microsoft 365 is not Google Workspace, Concur is not Expensify).',
   },
   {
@@ -849,6 +854,7 @@ SaaS experience preferred.`),
     failTerms: ['After Effects', 'Cinema 4D', 'motion graphics'],
     warnTerms: ['SaaS', 'B2B'],
     mustKeepSkills: ['Figma'],
+    expectedLabels: [['Brand System', 'Brand Systems']],
     fieldNotes: 'Design: portfolio link, kinds of work (identity, packaging, print), clients and scale, tools. Concrete rather than flowery; no invented tools or motion work.',
   },
   {
@@ -1049,6 +1055,7 @@ M&A integration experience preferred.`),
     failTerms: ['SQF', 'FSMA', 'SAP', 'M&A'],
     warnTerms: ['food', 'supply chain'],
     mustKeepSkills: ['P&L', 'lean'],
+    expectedLabels: [['Quality Management', 'Quality Systems']],
     fieldNotes: 'Executive: scale (plants, people, P&L), strategic outcomes with exact numbers, transformation leadership; executive tone. Packaging must not be recast as food manufacturing; the $85M P&L must not grow. 18 bullets in, 18 out.',
   },
 ]

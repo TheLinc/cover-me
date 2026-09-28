@@ -4,7 +4,7 @@ import { corsHeaders, handleCors, json } from '../_shared/cors.ts'
 import { decrypt, encrypt } from '../_shared/encrypt.ts'
 import { findOrCreateJobApplication } from '../_shared/job-application.ts'
 import { isValidParsedResume, parseResumeStructure, type ParsedResume } from '../_shared/resume-parse.ts'
-import { candidateText, groundTailored } from '../_shared/resume-grounding.ts'
+import { candidateText, groundSkills, groundTailored } from '../_shared/resume-grounding.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SECRET_KEY = Deno.env.get('SERVICE_KEY')!
@@ -54,7 +54,8 @@ export interface TailorDelta {
   summary?: string
   experience: TailorDeltaEntry[]
   projects?: TailorDeltaEntry[]
-  skills?: string
+  /** [{ skill, evidence? }] from current prompts; a comma-separated string from older ones. Converted by groundSkills before merging. */
+  skills?: string | unknown[]
   keywordMatch?: Record<string, unknown>
 }
 
@@ -105,6 +106,23 @@ export function mergeTailorDelta<T extends {
 
 interface JobPayload { title: string; company: string; description: string }
 
+// Model for the skill-claim pair check (see _shared/resume-grounding.ts).
+// Sonnet, not Haiku: 38/38 vs 29/38 on hand-labeled pairs (extension/eval/claim-pairs.ts).
+async function askSkillCheck(prompt: string): Promise<string> {
+  const res = await fetch(ANTHROPIC_MESSAGES_URL, {
+    method: 'POST',
+    headers: {
+      'x-api-key': ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] }),
+  })
+  if (!res.ok) throw new Error(`skill check ${res.status}`)
+  const data = await res.json() as { content: Array<{ type: string; text: string }> }
+  return data.content.find((b) => b.type === 'text')?.text ?? ''
+}
+
 // The model outputs a DELTA (rewritten content only), not the full resume —
 // immutable fields are merged back in code (see mergeTailorDelta above).
 function buildTailorSchema(parsed: ParsedResume): string {
@@ -116,7 +134,10 @@ function buildTailorSchema(parsed: ParsedResume): string {
     delta.projects = [{ bullets: ['string — rewritten bullets for the SAME-INDEX input project'] }]
   }
   if (parsed.skills) {
-    delta.skills = 'string — the optimized skills list from STEP 8, comma-separated'
+    delta.skills = [
+      { skill: 'string — a skill worded exactly as in the resume' },
+      { skill: 'string — an added or reworded skill (STEP 8)', evidence: 'string — exact phrase copied from the resume that proves it' },
+    ]
   }
   delta.keywordMatch = {
     tier1Covered: ['string — Tier 1 keyword the candidate genuinely has'],
@@ -153,8 +174,9 @@ STEP 8 — OPTIMIZE SKILLS
 Reorder the skills so the most relevant to this job appear first, using the JD's exact phrasing where it differs from the resume.
 
 ADD a skill only when it is in the JD AND justified by the resume in one of two ways:
-  - Direct superset/subset of an existing skill — JavaScript on resume + JD says TypeScript → add TypeScript.
-  - A capability CATEGORY LABEL you can back with a SPECIFIC tool already on the resume — Zustand on resume + JD says "state management" → add "State Management"; Jest/RTL on resume + JD says "testing" → add "Testing". Before adding any label, name the resume tool that justifies it; if you cannot name one, do not add it. Add the label only, NEVER the specific JD tool itself (JD says Meta Ads, resume has Google Ads → you may add the label "Paid Acquisition", never "Meta Ads") (Integrity 3).
+  - Direct superset/subset of an existing skill — JavaScript on resume + JD says TypeScript → {"skill": "TypeScript", "evidence": "JavaScript"}.
+  - A capability CATEGORY LABEL backed by a SPECIFIC item already on the resume — {"skill": "State Management", "evidence": "Zustand"}; {"skill": "Testing", "evidence": "Jest"}; {"skill": "Paid Acquisition", "evidence": "Google Ads"}; {"skill": "Expense Reporting", "evidence": "expense reports in Concur"}. Make these connections actively: whenever the JD names a capability category and the resume shows a specific instance of it, add the category with its evidence, the way a careful human editor would. Add the label only, NEVER the specific JD tool itself (JD says Meta Ads, resume has Google Ads → "Paid Acquisition", never "Meta Ads") (Integrity 3).
+SKILLS OUTPUT FORMAT: "skills" is a JSON array of objects. A skill worded exactly as in the resume is {"skill": "..."}. Every other skill (an addition, or a rewording into the JD's phrasing) MUST include "evidence": a phrase copied character-for-character from the resume that directly demonstrates that skill itself, not something merely near it. The application checks every evidence phrase against the resume and deletes any skill whose evidence is missing or not found, so never paraphrase evidence and never add a skill you cannot back.
 Never add a competing or unrelated tool the candidate lacks (Vue, Redux, a different language). Do NOT add process or architecture buzzwords the resume gives no concrete evidence for — in tech, "CI/CD", "DevOps", "Cloud Security", "Microservices Architecture", "Cloud-Native" each require a named tool or practice on the resume; in any field, a license, certification, or method named only in the JD is never added unless the resume states it. Absent evidence, these are fabrications (Integrity 4). If in doubt, leave it out.
 
 REMOVE skills not relevant to this role type (e.g. a mobile-only framework for a pure web role). When over the cap, keep the most JD-relevant skills and drop the least relevant first. Aim for ~15–18 focused skills, not an exhaustive inventory; a bloated list buries the terms that matter and reads as unfocused. NEVER remove a skill the JD names — or a specific instance of a category the JD names (e.g. MySQL under "relational databases") — that the candidate genuinely has; ATS matches literal tokens, so the JD's exact term must survive. When the resume has both a JD-named specific term and its generic synonym, keep BOTH ("MySQL (SQL)", not just "SQL"); dedupe only synonyms the JD does not name. Hard cap: 18 items.
@@ -166,7 +188,7 @@ COMPACT MODE — SINGLE PAGE REQUIRED:
 The output must fit on a single letter page. Apply these additional constraints (they override the general rules where they conflict):
 - Reduce to a maximum of 3 bullets per role — keep the most relevant 3, drop the rest. A bullet matching an activity the JD explicitly names (e.g. code reviews) is among the most relevant — keep it.
 - Every bullet must fit on a single line (100 characters maximum)
-- Shorten the skills string to the 10 most relevant skills only
+- Shorten the skills list to the 10 most relevant skills only
 - The bullet budget rule (STEP 5) does NOT apply in compact mode — use these constraints instead
 - The summary may be omitted in compact mode if space is critical
 
@@ -496,9 +518,12 @@ Deno.serve(async (req) => {
     if (DEBUG) console.log('[CoverMe debug] raw model response:\n', raw)
 
     const delta = parseDelta(raw)
+    // Keep only skills the resume backs, then strip job-posting requirements
+    // the model copied in (see _shared/resume-grounding.ts).
+    const candidate = candidateText(structuredResume, supplemental)
+    delta.skills = (await groundSkills(delta.skills, candidate, askSkillCheck)).skills
     const merged = mergeTailorDelta(structuredResume, delta)
-    // Strip job-posting requirements the model copied in (see _shared/resume-grounding.ts).
-    const resume = groundTailored(merged, structuredResume, candidateText(structuredResume, supplemental), job.description).resume as Record<string, unknown>
+    const resume = groundTailored(merged, structuredResume, candidate, job.description).resume as Record<string, unknown>
 
     let atsScore: number | undefined
     let atsGaps: string[] | undefined

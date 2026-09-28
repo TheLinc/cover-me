@@ -1,7 +1,7 @@
 import type { AIProvider, JobData, ParsedResume, TailoredResume } from '../../types'
 import { debugGroup, debugLog } from '../debug'
 import { deriveTailorProgress } from './tailor-progress'
-import { candidateText, groundTailored } from './resume-grounding'
+import { candidateText, groundSkills, groundTailored, type AskModel } from './resume-grounding'
 
 const CLAUDE_API = 'https://api.anthropic.com/v1/messages'
 const OPENAI_API = 'https://api.openai.com/v1/chat/completions'
@@ -19,7 +19,10 @@ function buildTailorSchema(parsed: ParsedResume): string {
     delta.projects = [{ bullets: ['string — rewritten bullets for the SAME-INDEX input project'] }]
   }
   if (parsed.skills) {
-    delta.skills = 'string — the optimized skills list from STEP 8, comma-separated'
+    delta.skills = [
+      { skill: 'string — a skill worded exactly as in the resume' },
+      { skill: 'string — an added or reworded skill (STEP 8)', evidence: 'string — exact phrase copied from the resume that proves it' },
+    ]
   }
   delta.keywordMatch = {
     tier1Covered: ['string — Tier 1 keyword the candidate genuinely has'],
@@ -91,7 +94,8 @@ export interface TailorDelta {
   summary?: string
   experience: TailorDeltaEntry[]
   projects?: TailorDeltaEntry[]
-  skills?: string
+  /** [{ skill, evidence? }] from current prompts; a comma-separated string from older ones. Converted by groundSkills before merging. */
+  skills?: string | unknown[]
   keywordMatch?: Record<string, unknown>
 }
 
@@ -160,8 +164,9 @@ STEP 8 — OPTIMIZE SKILLS
 Reorder the skills so the most relevant to this job appear first, using the JD's exact phrasing where it differs from the resume.
 
 ADD a skill only when it is in the JD AND justified by the resume in one of two ways:
-  - Direct superset/subset of an existing skill — JavaScript on resume + JD says TypeScript → add TypeScript.
-  - A capability CATEGORY LABEL you can back with a SPECIFIC tool already on the resume — Zustand on resume + JD says "state management" → add "State Management"; Jest/RTL on resume + JD says "testing" → add "Testing". Before adding any label, name the resume tool that justifies it; if you cannot name one, do not add it. Add the label only, NEVER the specific JD tool itself (JD says Meta Ads, resume has Google Ads → you may add the label "Paid Acquisition", never "Meta Ads") (Integrity 3).
+  - Direct superset/subset of an existing skill — JavaScript on resume + JD says TypeScript → {"skill": "TypeScript", "evidence": "JavaScript"}.
+  - A capability CATEGORY LABEL backed by a SPECIFIC item already on the resume — {"skill": "State Management", "evidence": "Zustand"}; {"skill": "Testing", "evidence": "Jest"}; {"skill": "Paid Acquisition", "evidence": "Google Ads"}; {"skill": "Expense Reporting", "evidence": "expense reports in Concur"}. Make these connections actively: whenever the JD names a capability category and the resume shows a specific instance of it, add the category with its evidence, the way a careful human editor would. Add the label only, NEVER the specific JD tool itself (JD says Meta Ads, resume has Google Ads → "Paid Acquisition", never "Meta Ads") (Integrity 3).
+SKILLS OUTPUT FORMAT: "skills" is a JSON array of objects. A skill worded exactly as in the resume is {"skill": "..."}. Every other skill (an addition, or a rewording into the JD's phrasing) MUST include "evidence": a phrase copied character-for-character from the resume that directly demonstrates that skill itself, not something merely near it. The application checks every evidence phrase against the resume and deletes any skill whose evidence is missing or not found, so never paraphrase evidence and never add a skill you cannot back.
 Never add a competing or unrelated tool the candidate lacks (Vue, Redux, a different language). Do NOT add process or architecture buzzwords the resume gives no concrete evidence for — in tech, "CI/CD", "DevOps", "Cloud Security", "Microservices Architecture", "Cloud-Native" each require a named tool or practice on the resume; in any field, a license, certification, or method named only in the JD is never added unless the resume states it. Absent evidence, these are fabrications (Integrity 4). If in doubt, leave it out.
 
 REMOVE skills not relevant to this role type (e.g. a mobile-only framework for a pure web role). When over the cap, keep the most JD-relevant skills and drop the least relevant first. Aim for ~15–18 focused skills, not an exhaustive inventory; a bloated list buries the terms that matter and reads as unfocused. NEVER remove a skill the JD names — or a specific instance of a category the JD names (e.g. MySQL under "relational databases") — that the candidate genuinely has; ATS matches literal tokens, so the JD's exact term must survive. When the resume has both a JD-named specific term and its generic synonym, keep BOTH ("MySQL (SQL)", not just "SQL"); dedupe only synonyms the JD does not name. Hard cap: 18 items.
@@ -173,7 +178,7 @@ COMPACT MODE — SINGLE PAGE REQUIRED:
 The output must fit on a single letter page. Apply these additional constraints (they override the general rules where they conflict):
 - Reduce to a maximum of 3 bullets per role — keep the most relevant 3, drop the rest. A bullet matching an activity the JD explicitly names (e.g. code reviews) is among the most relevant — keep it.
 - Every bullet must fit on a single line (100 characters maximum)
-- Shorten the skills string to the 10 most relevant skills only
+- Shorten the skills list to the 10 most relevant skills only
 - The bullet budget rule (STEP 5) does NOT apply in compact mode — use these constraints instead
 - The summary may be omitted in compact mode if space is critical
 
@@ -309,16 +314,20 @@ export function isValidResume(r: unknown): r is TailoredResume {
 // → grounding guard (job-only terms removed), with the code-computed ATS score
 // attached. Shared by tailorResume and the eval harness so evals exercise
 // exactly the production path.
-export function assembleTailored(
+export async function assembleTailored(
   parsed: ParsedResume,
   raw: string,
-  grounding: { jobDescription: string; supplemental?: string },
+  grounding: { jobDescription: string; supplemental?: string; ask?: AskModel },
   onRemoved?: (terms: string[]) => void,
-): TailoredResume {
+): Promise<TailoredResume> {
   const delta = parseDelta(raw)
+  const candidate = candidateText(parsed, grounding.supplemental)
+  const claimed = await groundSkills(delta.skills, candidate, grounding.ask)
+  delta.skills = claimed.skills
   const merged = mergeTailorDelta(parsed, delta) as TailoredResume
-  const { resume, removed } = groundTailored(merged, parsed, candidateText(parsed, grounding.supplemental), grounding.jobDescription)
-  if (removed.length) onRemoved?.(removed)
+  const { resume, removed } = groundTailored(merged, parsed, candidate, grounding.jobDescription)
+  const all = [...claimed.dropped, ...removed]
+  if (all.length) onRemoved?.(all)
   if (delta.keywordMatch && typeof delta.keywordMatch === 'object') {
     const { score, gaps } = scoreFromMatch(delta.keywordMatch as KeywordMatch)
     resume.atsScore = score
@@ -459,6 +468,38 @@ export async function tailorResume(
   }
 
   await debugLog('Tailor — raw model response', raw)
-  return assembleTailored(parsed, raw, { jobDescription: job.description, supplemental }, (removed) =>
-    void debugLog('Tailor — grounding guard removed job-only terms', removed))
+  return assembleTailored(parsed, raw, { jobDescription: job.description, supplemental, ask: skillCheckModel(provider, apiKey) }, (removed) =>
+    void debugLog('Tailor — grounding guard removed', removed))
+}
+
+// Model for the skill-claim pair check (see resume-grounding.ts), on the same
+// provider and key as the tailor call. Sonnet, not Haiku: on a hand-labeled set
+// of 38 label/evidence pairs Haiku was right 29 times, Sonnet 4.6 38 times
+// (extension/eval/claim-pairs.ts). The prompt is a few short lines, so it's cheap.
+function skillCheckModel(provider: AIProvider, apiKey: string): AskModel {
+  return async (prompt) => {
+    if (provider === 'claude') {
+      const res = await fetch(CLAUDE_API, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] }),
+      })
+      if (!res.ok) throw new Error(`Claude API error ${res.status}`)
+      const data = (await res.json()) as { content: Array<{ type: string; text: string }> }
+      return data.content.find((b) => b.type === 'text')?.text ?? ''
+    }
+    const res = await fetch(OPENAI_API, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({ model: 'gpt-4o', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] }),
+    })
+    if (!res.ok) throw new Error(`OpenAI API error ${res.status}`)
+    const data = (await res.json()) as { choices: Array<{ message: { content: string } }> }
+    return data.choices[0]?.message?.content ?? ''
+  }
 }

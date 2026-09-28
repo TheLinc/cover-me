@@ -21,6 +21,12 @@ export interface EvalCase {
   mustKeepSkills: string[]
   /** What a hiring manager in this field expects; the resume judge scores field fit against it. */
   fieldNotes: string
+  /**
+   * Category labels a careful human editor would add to the skills list from
+   * specific resume evidence (Zustand → "State Management"). Each entry lists
+   * acceptable wordings; the eval reports how often the tailor makes the link.
+   */
+  expectedLabels?: string[][]
 }
 
 const TECH_NOTES = 'Software engineering: concrete stack names, scale (users, latency, coverage), ownership and code review. Frontend work must not be inflated into infrastructure or e-commerce domain claims.'
@@ -280,6 +286,7 @@ Nice to have: Node.js, accessibility (WCAG 2.1 AA) experience.`,
     resumeText: alexText,
     parsed: alexParsed,
     failTerms: ['Redux', 'Kubernetes', 'Cypress'],
+    expectedLabels: [['State Management']],
     warnTerms: ['e-commerce', 'ecommerce', 'storefront'],
     mustKeepSkills: ['React', 'TypeScript', 'GraphQL', 'Jest', 'Node.js'],
   },
@@ -359,6 +366,7 @@ Requirements:
     resumeText: samText,
     parsed: samParsed,
     failTerms: ['Meta Ads', 'ROAS'],
+    expectedLabels: [['Paid Acquisition', 'Paid Search', 'Paid Media']],
     warnTerms: ['fintech', 'B2B SaaS'],
     mustKeepSkills: ['Google Ads', 'HubSpot', 'SEO', 'Google Analytics 4', 'A/B testing'],
   },

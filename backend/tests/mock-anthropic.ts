@@ -56,7 +56,15 @@ export const MOCK_TAILOR_DELTA = {
     { bullets: ['Rebuilt the billing export pipeline in TypeScript, cutting run time from 4 hours to 40 minutes', 'Owned Postgres-backed customer dashboard services'] },
     { bullets: ['Fixed production bugs across the React web app'] },
   ],
-  skills: 'TypeScript, Postgres, React',
+  // Current prompt format: added skills cite resume evidence. "Data Pipelines"
+  // is backed by a real bullet; "Kafka" cites evidence the resume lacks.
+  skills: [
+    { skill: 'TypeScript' },
+    { skill: 'Postgres' },
+    { skill: 'React' },
+    { skill: 'Data Pipelines', evidence: 'Built billing export pipeline' },
+    { skill: 'Kafka', evidence: 'event streaming' },
+  ],
   keywordMatch: {
     tier1Covered: ['TypeScript', 'Postgres'],
     tier1Missing: ['Kafka'],
@@ -136,8 +144,16 @@ export function startMockAnthropic(port: number): Promise<Server> {
         return res.end(failure.body)
       }
 
-      // Tailor is the only streaming call; the resume parse runs on Haiku;
-      // everything else is a cover letter (first draft or lint retry).
+      // Tailor is the only streaming call; the skill-claim check and the resume
+      // parse run on Haiku; everything else is a cover letter.
+      const prompt = body.messages?.[0]?.content ?? ''
+      if (prompt.startsWith('SKILL CLAIM CHECK')) {
+        // Approve every pair: the tests assert which skills survive grounding.
+        const count = (prompt.match(/^\d+\. EVIDENCE:/gm) ?? []).length
+        const verdicts = Array.from({ length: count }, (_, i) => ({ i, ok: true }))
+        res.writeHead(200, { 'content-type': 'application/json' })
+        return res.end(messageJson(JSON.stringify({ verdicts }), body.model))
+      }
       if (body.stream) {
         res.writeHead(200, { 'content-type': 'text/event-stream' })
         return res.end(sseBody(JSON.stringify(MOCK_TAILOR_DELTA)))

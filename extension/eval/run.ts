@@ -33,6 +33,8 @@ import { lintLetter, buildLintRetryMessage } from '../src/lib/ai/letter-lint'
 import { CASES, type EvalCase } from './fixtures'
 import { checkFixture, checkLetter, checkParse, checkTailored, type CheckResult } from './checks'
 import { buildResumeJudgePrompt, DIMENSIONS, FAIL_AT, parseJudgment, type Dimension, type ResumeJudgment } from './judge'
+import { buildClaimCheckPrompt, parseClaimVerdicts } from '../src/lib/ai/resume-grounding'
+import { CLAIM_CHECK_MIN, CLAIM_PAIRS } from './claim-pairs'
 import { claudeIsolation, makeCaller, pool, usage, type Backend } from './model'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
@@ -146,6 +148,7 @@ function staticChecks() {
       ['resume embedded', c.parsed.name],
     ]
     if (c.parsed.certifications?.length) tailorMust.push(['certifications in schema', '"certifications"'])
+    if (c.parsed.skills) tailorMust.push(['evidence-backed skills format', 'SKILLS OUTPUT FORMAT'])
     for (const [label, needle] of tailorMust) {
       if (!tp.includes(needle)) result.failures.push(`tailor prompt missing ${label} ("${needle.slice(0, 40)}…")`)
     }
@@ -267,8 +270,12 @@ interface TailorRun {
   parse?: { result: CheckResult; parsed?: ParsedResume }
   tailor: CheckResult
   tailored?: TailoredResume
+  /** The tailor's raw output, including each skill's cited evidence, for review. */
+  raw?: string
   /** Job-only terms the production grounding guard stripped from the model's output. */
   guardRemoved?: string[]
+  /** Expected category labels (EvalCase.expectedLabels) the final skills list did or didn't include. */
+  connections?: { made: string[]; missed: string[] }
   judgment?: ResumeJudgment
   error?: string
 }
@@ -294,14 +301,28 @@ async function tailorOnce(c: EvalCase, run: number): Promise<TailorRun> {
 
     // 2. Tailor, exactly as production does (delta → merge → code-computed ATS).
     const raw = await call([{ role: 'user', content: buildTailorPrompt(c.job, input, false) }], { model: MODEL, maxTokens: 6000 })
+    out.raw = raw
     try {
       let guarded: string[] = []
-      const tailored = assembleTailored(input, raw, { jobDescription: c.job.description }, (removed) => (guarded = removed))
+      const ask = (prompt: string) => call([{ role: 'user', content: prompt }], { model: MODEL, maxTokens: 1000 })
+      const tailored = await assembleTailored(input, raw, { jobDescription: c.job.description, ask }, (removed) => (guarded = removed))
       out.tailored = tailored
       out.guardRemoved = guarded
       out.tailor = checkTailored(tailored, c, input)
       out.tailor.warnings.unshift(`atsScore: ${tailored.atsScore ?? 'n/a'} | gaps: ${(tailored.atsGaps ?? []).join('; ') || 'none'}`)
-      if (guarded.length) out.tailor.warnings.push(`grounding guard removed model-added job-only terms: ${guarded.join(', ')}`)
+      if (guarded.length) out.tailor.warnings.push(`grounding guard removed: ${guarded.join(', ')}`)
+      if (c.expectedLabels?.length) {
+        const skills = (tailored.skills ?? '').toLowerCase()
+        const made: string[] = []
+        const missed: string[] = []
+        for (const options of c.expectedLabels) {
+          const hit = options.find((o) => skills.includes(o.toLowerCase()))
+          if (hit) made.push(hit)
+          else missed.push(options[0])
+        }
+        out.connections = { made, missed }
+        out.tailor.warnings.push(`connections: ${made.length}/${c.expectedLabels.length}${missed.length ? ` (missed: ${missed.join(', ')})` : ''}`)
+      }
 
       // 3. Judge field fit and quality.
       if (JUDGE) {
@@ -330,6 +351,14 @@ function mean(xs: number[]): number {
 }
 
 type Averages = Record<string, Record<Dimension, number>>
+interface Baseline { scores: Averages; connectionRate?: number }
+
+/** Share of expected category labels the tailor added, across every run that has any. */
+function connectionRate(runs: TailorRun[]): number | undefined {
+  const made = runs.reduce((n, r) => n + (r.connections?.made.length ?? 0), 0)
+  const total = runs.reduce((n, r) => n + (r.connections ? r.connections.made.length + r.connections.missed.length : 0), 0)
+  return total ? Math.round((made / total) * 100) / 100 : undefined
+}
 
 function judgeAverages(runs: TailorRun[]): Averages {
   const out: Averages = {}
@@ -357,25 +386,34 @@ async function liveTailor(): Promise<TailorRun[]> {
 
   // Industry summary table.
   const avgs = judgeAverages(runs)
-  const table = ['| Industry | Case | Parse | Integrity | Faithful | Field fit | Relevance | Readability | ATS |', '|---|---|---|---|---|---|---|---|---|']
+  const table = ['| Industry | Case | Parse | Integrity | Faithful | Field fit | Relevance | Readability | ATS | Links |', '|---|---|---|---|---|---|---|---|---|---|']
   for (const c of cases) {
     const rs = runs.filter((r) => r.id === c.id)
     const parseOk = rs.every((r) => !r.parse || r.parse.result.failures.length === 0)
     const tailorOk = rs.every((r) => r.tailor.failures.filter((f) => !f.startsWith('judge scored')).length === 0)
     const a = avgs[c.id]
     const ats = mean(rs.map((r) => r.tailored?.atsScore).filter((n): n is number => typeof n === 'number'))
-    table.push(`| ${c.industry} | ${c.id} | ${USE_PARSE ? (parseOk ? 'pass' : '**FAIL**') : 'skipped'} | ${tailorOk ? 'pass' : '**FAIL**'} | ${DIMENSIONS.map((d) => (a ? a[d].toFixed(1) : '-')).join(' | ')} | ${Number.isNaN(ats) ? '-' : Math.round(ats)} |`)
+    const links = rs.filter((r) => r.connections)
+    const linkCell = links.length ? `${links.reduce((n, r) => n + r.connections!.made.length, 0)}/${links.reduce((n, r) => n + r.connections!.made.length + r.connections!.missed.length, 0)}` : '-'
+    table.push(`| ${c.industry} | ${c.id} | ${USE_PARSE ? (parseOk ? 'pass' : '**FAIL**') : 'skipped'} | ${tailorOk ? 'pass' : '**FAIL**'} | ${DIMENSIONS.map((d) => (a ? a[d].toFixed(1) : '-')).join(' | ')} | ${Number.isNaN(ats) ? '-' : Math.round(ats)} | ${linkCell} |`)
   }
-  reportLines.splice(4, 0, '## Summary', '', ...table, '')
-  console.log('\n' + table.join('\n'))
+  const rate = connectionRate(runs)
+  const rateLine = rate === undefined ? '' : `Skill connections made (expected category labels added from resume evidence): ${Math.round(rate * 100)}%`
+  reportLines.splice(4, 0, '## Summary', '', ...table, '', rateLine, '')
+  console.log('\n' + table.join('\n') + (rateLine ? `\n\n${rateLine}` : ''))
 
   // Baseline comparison: a real regression is a sustained drop, not one noisy score.
-  if (JUDGE && flag('baseline')) {
+  if (flag('baseline')) {
     if (!existsSync(BASELINE_FILE)) {
       console.log('\n(no eval/baseline.json yet; run with --update-baseline to create one)')
     } else {
-      const base = JSON.parse(readFileSync(BASELINE_FILE, 'utf8')) as { scores: Averages }
+      const base = JSON.parse(readFileSync(BASELINE_FILE, 'utf8')) as Baseline
       const result: CheckResult = { failures: [], warnings: [] }
+      if (rate !== undefined && base.connectionRate !== undefined) {
+        const drop = base.connectionRate - rate
+        if (drop >= 0.3) result.failures.push(`skill connections fell ${base.connectionRate} → ${rate}`)
+        else if (drop >= 0.15) result.warnings.push(`skill connections dipped ${base.connectionRate} → ${rate}`)
+      }
       for (const [id, now] of Object.entries(avgs)) {
         const was = base.scores[id]
         if (!was) continue
@@ -385,18 +423,44 @@ async function liveTailor(): Promise<TailorRun[]> {
           else if (drop >= 0.5) result.warnings.push(`${id}: ${d} dipped ${was[d]} → ${now[d]}`)
         }
       }
-      record('judge scores vs baseline', result)
+      record('judge scores and skill connections vs baseline', result)
     }
   }
-  if (JUDGE && flag('update-baseline')) {
-    const existing = existsSync(BASELINE_FILE) ? (JSON.parse(readFileSync(BASELINE_FILE, 'utf8')) as { scores: Averages }).scores : {}
+  if (flag('update-baseline')) {
+    const existing: Baseline = existsSync(BASELINE_FILE) ? JSON.parse(readFileSync(BASELINE_FILE, 'utf8')) : { scores: {} }
     writeFileSync(BASELINE_FILE, JSON.stringify({
       updated: new Date().toISOString(), model: MODEL, judge: JUDGE_MODEL, runs: RUNS,
-      scores: { ...existing, ...avgs },
+      connectionRate: rate ?? existing.connectionRate,
+      scores: { ...existing.scores, ...avgs },
     }, null, 2) + '\n')
     console.log(`\nBaseline updated: ${BASELINE_FILE}`)
   }
   return runs
+}
+
+// ── Skill-claim checker accuracy ─────────────────────────────────────────────
+// The production pair check decides which added skill labels survive. Run it
+// over hand-labeled pairs, in batches of 5 like production calls.
+
+async function claimChecker(): Promise<{ correct: number; total: number }> {
+  section(`Skill-claim checker (model: ${MODEL})`)
+  const batches: number[][] = []
+  for (let i = 0; i < CLAIM_PAIRS.length; i += 5) batches.push(CLAIM_PAIRS.slice(i, i + 5).map((_, k) => i + k))
+  const verdict = new Array<boolean>(CLAIM_PAIRS.length)
+  await pool(batches, CONCURRENCY, async (b) => {
+    const prompt = buildClaimCheckPrompt(b.map((i) => ({ skill: CLAIM_PAIRS[i].skill, evidence: CLAIM_PAIRS[i].evidence })))
+    const ok = parseClaimVerdicts(await call([{ role: 'user', content: prompt }], { model: MODEL, maxTokens: 1000 }), b.length)
+    b.forEach((i, k) => (verdict[i] = ok[k]))
+  })
+  const result: CheckResult = { failures: [], warnings: [] }
+  const wrongReject = CLAIM_PAIRS.filter((p, i) => p.ok && !verdict[i]).map((p) => `${p.skill} <- "${p.evidence}"`)
+  const wrongAccept = CLAIM_PAIRS.filter((p, i) => !p.ok && verdict[i]).map((p) => `${p.skill} <- "${p.evidence}"`)
+  const correct = CLAIM_PAIRS.length - wrongReject.length - wrongAccept.length
+  if (wrongReject.length) result.warnings.push(`honest connections rejected: ${wrongReject.join(' | ')}`)
+  if (wrongAccept.length) result.warnings.push(`inflated labels accepted: ${wrongAccept.join(' | ')}`)
+  if (correct / CLAIM_PAIRS.length < CLAIM_CHECK_MIN) result.failures.push(`checker accuracy ${correct}/${CLAIM_PAIRS.length} is below ${CLAIM_CHECK_MIN * 100}%`)
+  record(`skill-claim checker: ${correct}/${CLAIM_PAIRS.length} correct`, result)
+  return { correct, total: CLAIM_PAIRS.length }
 }
 
 // ── Main ─────────────────────────────────────────────────────────────────────
@@ -414,7 +478,11 @@ async function main() {
     console.log(`\nBackend: ${VIA}${VIA === 'claude' ? ` — ${claudeIsolation()}` : ''}`)
     reportLines.push(`Backend: ${VIA}${VIA === 'claude' ? ` — ${claudeIsolation()}` : ''}`, '')
     if (RUN_LETTERS) letters = await liveLetters()
-    if (RUN_TAILOR) tailorRuns = await liveTailor()
+    if (RUN_TAILOR) {
+      const checker = await claimChecker()
+      reportLines.splice(3, 0, `Skill-claim checker: ${checker.correct}/${checker.total} hand-labeled pairs correct`, '')
+      tailorRuns = await liveTailor()
+    }
     const costLine = `Model calls: ${usage.calls} | tokens in/out: ${usage.inputTokens}/${usage.outputTokens} | API-equivalent cost: $${usage.costUsd.toFixed(2)}${VIA === 'claude' ? ' (billed to your Claude plan, not API credits)' : ''}`
     console.log(`\n${costLine}`)
     reportLines.splice(3, 0, costLine, '')
