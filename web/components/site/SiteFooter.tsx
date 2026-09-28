@@ -75,7 +75,7 @@ export function SiteFooter() {
       </div>
       <div
         aria-hidden="true"
-        className="select-none whitespace-nowrap text-center text-[clamp(96px,21vw,300px)] font-semibold leading-[0.78] tracking-[-0.06em] text-night-2"
+        className="select-none whitespace-nowrap text-center text-[min(22vw,300px)] font-semibold leading-[0.78] tracking-[-0.06em] text-night-2"
       >
         Cover Me
       </div>
