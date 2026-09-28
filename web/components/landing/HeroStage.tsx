@@ -6,10 +6,11 @@ import { ExtensionPopup, PopupButton } from './ExtensionPopup'
 import { ScoreRing } from './ScoreRing'
 import { Chip, EXAMPLE, JobCard, LetterDoc, ResumeDoc } from './visuals'
 
+// `short` labels keep the tab bar inside a phone-width stage.
 const SCENES = [
-  { id: 'resume', label: 'Tailor resume' },
-  { id: 'letter', label: 'Write cover letter' },
-  { id: 'score', label: 'Check ATS score' },
+  { id: 'resume', label: 'Tailor resume', short: 'Resume' },
+  { id: 'letter', label: 'Write cover letter', short: 'Letter' },
+  { id: 'score', label: 'Check ATS score', short: 'ATS score' },
 ] as const
 type SceneId = (typeof SCENES)[number]['id']
 
@@ -42,7 +43,7 @@ function PopupScene({ scene }: { scene: SceneId }) {
       <div className="flex flex-col gap-3 px-4 py-5">
         <div className="text-[12px] text-ext-muted">Cover letter · {EXAMPLE.company}</div>
         <p className="text-[12.5px] leading-[1.6]">
-          Dear {EXAMPLE.company} team, your posting asks for someone who can make a large React codebase fast…
+          Dear {EXAMPLE.company} team, {EXAMPLE.letterOpening.charAt(0).toLowerCase() + EXAMPLE.letterOpening.slice(1)}
         </p>
         <div className="skeleton-line h-2 w-[92%]" />
         <div className="skeleton-line h-2 w-[80%]" />
@@ -55,9 +56,10 @@ function PopupScene({ scene }: { scene: SceneId }) {
       <ScoreRing from={EXAMPLE.before} to={EXAMPLE.after} />
       <div className="text-[12px] text-ext-soft">+{EXAMPLE.after - EXAMPLE.before} points after tailoring</div>
       <div className="mt-2 flex w-full flex-col gap-2 text-[12px]">
-        <span className="text-ext-soft">✓ React, TypeScript, Performance</span>
-        <span className="text-ext-soft">✓ Design systems, Accessibility</span>
-        <span className="text-[#FDBA74]">! CI/CD: not in your experience</span>
+        {EXAMPLE.matchedLines.map((l) => (
+          <span key={l} className="text-ext-soft">✓ {l}</span>
+        ))}
+        <span className="text-[#FDBA74]">! {EXAMPLE.gaps[0]}: not in your experience</span>
       </div>
     </div>
   )
@@ -126,7 +128,7 @@ export function HeroStage() {
           <PopupBody scene={scene} />
         </ExtensionPopup>
         <Flow />
-        <div key={`out-${scene}`} className={cn('hidden items-center justify-center animate-[fadeUp_.5s_ease] lg:flex', OUTPUT_H)}>
+        <div key={`out-${scene}`} className={cn('hidden items-center justify-start animate-[fadeUp_.5s_ease] lg:flex', OUTPUT_H)}>
           <Output scene={scene} />
         </div>
       </div>
@@ -150,7 +152,8 @@ export function HeroStage() {
               scene === s.id ? 'bg-ink text-white' : 'text-ink-2 hover:text-ink',
             )}
           >
-            {s.label}
+            <span className="sm:hidden">{s.short}</span>
+            <span className="max-sm:hidden">{s.label}</span>
           </button>
         ))}
       </div>

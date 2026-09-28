@@ -21,6 +21,30 @@ const STEPS = [
   },
 ]
 
+// The step visuals are laid out at the desktop panel's size and scaled down as a
+// whole on small screens, like a screenshot, instead of reflowing into a squeeze.
+const VISUAL_W = 504
+const VISUAL_H = 496
+
+function FitScale({ width, height, children }: { width: number; height: number; children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [scale, setScale] = useState(1)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const ro = new ResizeObserver(([entry]) => setScale(Math.min(1, entry.contentRect.width / width)))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [width])
+  return (
+    <div ref={ref} className="relative w-full" style={{ height: height * scale }}>
+      <div className="absolute left-0 top-0 origin-top-left" style={{ width, height, transform: `scale(${scale})` }}>
+        {children}
+      </div>
+    </div>
+  )
+}
+
 function PostingPage({ children }: { children?: React.ReactNode }) {
   return (
     <BrowserFrame url={`job-boards.greenhouse.io/northwind/jobs/4821`} className="h-full">
@@ -135,8 +159,10 @@ export function HowItWorks() {
                   </h3>
                 </div>
                 <p className="max-w-[440px] pl-9 text-[16px] leading-[1.6] text-ink-2">{s.body}</p>
-                <div inert aria-hidden="true" className="stage-grid mt-4 h-[380px] rounded-[24px] p-5 lg:hidden">
-                  <StepVisual step={i} />
+                <div inert aria-hidden="true" className="stage-grid mt-4 rounded-[24px] p-4 lg:hidden">
+                  <FitScale width={VISUAL_W} height={VISUAL_H}>
+                    <StepVisual step={i} />
+                  </FitScale>
                 </div>
               </div>
             ))}

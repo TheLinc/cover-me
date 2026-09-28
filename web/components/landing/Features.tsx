@@ -37,9 +37,9 @@ const CARDS = [
     body: 'Reopen any letter or resume. Pro syncs it across devices.',
     visual: (
       <div className="flex h-full flex-col justify-center gap-2.5 p-7">
-        <HistoryRow label="Northwind · Frontend" score={86} />
-        <HistoryRow label="Acme · Design Engineer" score={81} />
-        <HistoryRow label="Globex · UI Engineer" score={77} faded />
+        <HistoryRow label="Northwind · Marketing Manager" score={86} />
+        <HistoryRow label="Acme · Operations Lead" score={81} />
+        <HistoryRow label="Globex · Project Coordinator" score={77} faded />
       </div>
     ),
   },

@@ -46,8 +46,8 @@ export function AtsScore() {
         <div className="reveal flex flex-col gap-4 rounded-[20px] bg-white p-7">
           <div className="text-[13px] text-subtle">Keywords from the posting</div>
           <div className="flex flex-wrap gap-2">
-            {[...EXAMPLE.keywords, 'Kubernetes'].map((k) => {
-              const gap = EXAMPLE.gaps.includes(k) || k === 'Kubernetes'
+            {[...EXAMPLE.keywords, EXAMPLE.extraGap].map((k) => {
+              const gap = EXAMPLE.gaps.includes(k) || k === EXAMPLE.extraGap
               return <Chip key={k} gap={gap}>{gap ? k : `✓ ${k}`}</Chip>
             })}
           </div>
@@ -60,12 +60,12 @@ export function AtsScore() {
         <div className="reveal flex flex-col gap-4 rounded-[20px] bg-ink p-7 text-white">
           <div className="text-[13px] text-[#C7D2FE]">What Cover Me changed</div>
           <p className="text-[14px] leading-[1.55] text-[#C7D2FE] line-through decoration-[#C7D2FE]/50">
-            Worked on the company website frontend
+            {EXAMPLE.bulletBefore}
           </p>
-          <p className="text-[15px] leading-[1.55]">Led a React + TypeScript migration that cut page load 40%</p>
+          <p className="text-[15px] leading-[1.55]">{EXAMPLE.bulletAfter}</p>
           <div className="h-px bg-white/15" />
           <p className="text-[13px] leading-[1.55] text-[#C7D2FE]">
-            Gaps stay gaps. Cover Me won&apos;t claim Kubernetes you don&apos;t have. It tells you what&apos;s missing instead.
+            Gaps stay gaps. Cover Me won&apos;t claim {EXAMPLE.extraGap} experience you don&apos;t have. It tells you what&apos;s missing instead.
           </p>
         </div>
       </div>

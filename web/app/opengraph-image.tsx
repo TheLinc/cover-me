@@ -59,10 +59,10 @@ export default async function Image() {
             <div style={{ display: 'flex', width: '86%', borderRadius: 999, background: '#6366F1' }} />
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {chip('React')}
-            {chip('TypeScript')}
-            {chip('Design systems')}
-            {chip('CI/CD', true)}
+            {chip('SEO')}
+            {chip('Google Analytics')}
+            {chip('Budget management')}
+            {chip('HubSpot', true)}
           </div>
         </div>
       </div>

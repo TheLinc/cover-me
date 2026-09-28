@@ -1,13 +1,20 @@
 import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 
-// Example data for the product visuals. Names are placeholders, numbers are an
-// illustrative example (labelled as such where a score appears).
+// Example data for every product visual on the landing page. Names are
+// placeholders, numbers are an illustrative example (labelled as such where a
+// score appears). Keep it a role most job seekers recognise, not a tech job.
 export const EXAMPLE = {
   company: 'Northwind',
-  role: 'Senior Frontend Engineer',
-  keywords: ['React', 'TypeScript', 'Performance', 'Design systems', 'Accessibility', 'CI/CD'],
-  gaps: ['CI/CD'],
+  role: 'Marketing Manager',
+  keywords: ['SEO', 'Campaign strategy', 'Google Analytics', 'Budget management', 'Team leadership', 'HubSpot'],
+  gaps: ['HubSpot'],
+  matchedLines: ['SEO, Campaign strategy, Google Analytics', 'Budget management, Team leadership'],
+  extraGap: 'Salesforce',
+  letterOpening:
+    'Your posting asks for someone who can grow demand without growing the budget. At Brightline I grew qualified leads 38% on a flat spend…',
+  bulletBefore: 'Handled social media and email marketing',
+  bulletAfter: 'Ran email and social campaigns that grew qualified leads 38%',
   before: 54,
   after: 86,
 }
@@ -74,9 +81,9 @@ export function ResumeDoc({ className }: { className?: string }) {
       <div className="text-[16px] font-semibold text-ink">Alex Rivera</div>
       <Line w="55%" />
       <div className="mt-2 text-[11px] font-semibold text-ink-2">Experience</div>
-      <p className="text-[12px] leading-[1.55] text-body">Led a <Hl>React + TypeScript</Hl> migration that cut page load 40%</p>
-      <p className="text-[12px] leading-[1.55] text-body">Built the company&apos;s <Hl>design system</Hl>, adopted by 6 teams</p>
-      <p className="text-[12px] leading-[1.55] text-body">Raised Lighthouse <Hl>accessibility</Hl> score from 71 to 98</p>
+      <p className="text-[12px] leading-[1.55] text-body">Led a <Hl>campaign strategy</Hl> refresh that grew qualified leads 38%</p>
+      <p className="text-[12px] leading-[1.55] text-body">Owned a $1.2M paid media <Hl>budget</Hl> across four channels</p>
+      <p className="text-[12px] leading-[1.55] text-body">Grew organic traffic 64% with an <Hl>SEO</Hl> content program</p>
       <div className="mt-1 flex flex-col gap-2">
         <Line w="92%" />
         <Line w="76%" />
@@ -91,7 +98,7 @@ export function LetterDoc({ className }: { className?: string }) {
       <Label>Cover letter</Label>
       <div className="text-[13px] font-semibold text-ink">Dear {EXAMPLE.company} team,</div>
       <p className="text-[12px] leading-[1.6] text-body">
-        Your posting asks for someone who can make a large React codebase fast. At Relay I led exactly that migration, cutting page load by 40%…
+        {EXAMPLE.letterOpening}
       </p>
       <div className="flex flex-col gap-2">
         <Line w="96%" />
