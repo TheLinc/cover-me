@@ -1,0 +1,29 @@
+# Free checks on every push: prompt copies in sync between extension and
+# backend, prompt invariants, lint self-tests, and eval fixture integrity.
+# No model calls.
+name: Prompt checks
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: extension
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: extension/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check:prompts
+      - run: pnpm eval

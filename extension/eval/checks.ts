@@ -28,7 +28,8 @@ function containsTerm(text: string, term: string): boolean {
 /** Extract normalized numeric tokens: "60,000" → "60000", "$15K" → "15000". */
 function extractNumbers(text: string): Array<{ raw: string; norm: string; hard: boolean }> {
   const out: Array<{ raw: string; norm: string; hard: boolean }> = []
-  const re = /(\$?)(\d[\d,]*(?:\.\d+)?)\s?([KkMmBb](?![a-z]))?(%?)/g
+  // (?<![A-Za-z]) so "B2B" doesn't read as the number 2B.
+  const re = /(?<![A-Za-z])(\$?)(\d[\d,]*(?:\.\d+)?)\s?([KkMmBb](?![A-Za-z]))?(%?)/g
   const MULT: Record<string, number> = { k: 1_000, m: 1_000_000, b: 1_000_000_000 }
   let m: RegExpExecArray | null
   while ((m = re.exec(text)) !== null) {
@@ -107,9 +108,10 @@ export function checkLetter(letter: string, c: EvalCase): CheckResult {
 
 // ── Tailored resume checks ───────────────────────────────────────────────────
 
-export function checkTailored(out: TailoredResume, c: EvalCase): CheckResult {
+// `input` is the resume the tailor call actually received: the model's parse
+// in the full pipeline, the fixture's answer key with --no-parse.
+export function checkTailored(out: TailoredResume, c: EvalCase, input: ParsedResume = c.parsed): CheckResult {
   const result: CheckResult = { failures: [], warnings: [] }
-  const input: ParsedResume = c.parsed
 
   const same = (label: string, a: string | undefined, b: string | undefined) => {
     if ((a ?? '').trim() !== (b ?? '').trim()) {
@@ -214,7 +216,10 @@ export function checkTailored(out: TailoredResume, c: EvalCase): CheckResult {
   if (out.summary) {
     const words = out.summary.split(/\s+/).filter(Boolean).length
     if (words < 25 || words > 85) result.warnings.push(`summary is ${words} words (target 40–70)`)
-    if (/\b(I|my|me)\b/.test(out.summary)) result.failures.push('summary uses first-person pronouns')
+    // A bare "I" would flag job titles like "Scientist I"; require it to act as a subject.
+    if (/\b(my|me|myself)\b/i.test(out.summary) || /(^|[.!?]\s+)I\b|\bI (am|have|was|will|led|built|managed|bring)\b/.test(out.summary)) {
+      result.failures.push('summary uses first-person pronouns')
+    }
   }
 
   checkNumberProvenance(
@@ -229,5 +234,105 @@ export function checkTailored(out: TailoredResume, c: EvalCase): CheckResult {
     result.failures.push('no atsScore computed — keywordMatch report missing from model output')
   }
 
+  return result
+}
+
+// ── Resume parse checks ──────────────────────────────────────────────────────
+// The parse step (raw text → structured JSON) runs before every hosted tailor.
+// Compare it to the case's answer key. Formatting noise (dash style, spacing,
+// bullet markers, curly quotes) is normalized away; wording is not.
+
+function norm(s: string | undefined): string {
+  return (s ?? '')
+    .normalize('NFKC')
+    .replace(/[‐-―−]/g, '-')
+    .replace(/[‘’]/g, "'")
+    .replace(/[“”]/g, '"')
+    .replace(/^\s*[-•*·]\s+/, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+export function checkParse(actual: ParsedResume, c: EvalCase): CheckResult {
+  const result: CheckResult = { failures: [], warnings: [] }
+  const want = c.parsed
+  const eq = (label: string, a: string | undefined, b: string | undefined) => {
+    if (norm(a) !== norm(b)) result.failures.push(`${label}: expected "${a}", parsed "${b}"`)
+  }
+
+  // Names may legitimately keep a credential suffix ("Jordan Bell, RN").
+  if (!norm(actual.name).includes(norm(want.name))) result.failures.push(`name: expected "${want.name}", parsed "${actual.name}"`)
+  eq('email', want.email, actual.email)
+  eq('phone', want.phone, actual.phone)
+
+  if (actual.experience.length !== want.experience.length) {
+    result.failures.push(`experience entries: expected ${want.experience.length}, parsed ${actual.experience.length}`)
+  } else {
+    want.experience.forEach((w, i) => {
+      const a = actual.experience[i]
+      eq(`experience[${i}].title`, w.title, a.title)
+      eq(`experience[${i}].company`, w.company, a.company)
+      eq(`experience[${i}].dates`, w.dates, a.dates)
+      if (a.bullets.length !== w.bullets.length) {
+        result.failures.push(`experience[${i}] bullets: expected ${w.bullets.length}, parsed ${a.bullets.length}`)
+      } else {
+        w.bullets.forEach((b, j) => eq(`experience[${i}].bullets[${j}]`, b, a.bullets[j]))
+      }
+    })
+  }
+
+  const wantProjects = want.projects ?? []
+  const gotProjects = actual.projects ?? []
+  if (gotProjects.length !== wantProjects.length) {
+    result.failures.push(`projects: expected ${wantProjects.length}, parsed ${gotProjects.length}`)
+  } else {
+    wantProjects.forEach((p, i) => {
+      if (!norm(gotProjects[i].name).includes(norm(p.name))) result.failures.push(`projects[${i}].name: expected "${p.name}", parsed "${gotProjects[i].name}"`)
+      if (gotProjects[i].bullets.length !== p.bullets.length) result.failures.push(`projects[${i}] bullets: expected ${p.bullets.length}, parsed ${gotProjects[i].bullets.length}`)
+    })
+  }
+
+  if (actual.education.length !== want.education.length) {
+    result.failures.push(`education entries: expected ${want.education.length}, parsed ${actual.education.length}`)
+  } else {
+    want.education.forEach((w, i) => {
+      eq(`education[${i}].degree`, w.degree, actual.education[i].degree)
+      eq(`education[${i}].institution`, w.institution, actual.education[i].institution)
+    })
+  }
+
+  const wantCerts = (want.certifications ?? []).map(norm)
+  const gotCerts = (actual.certifications ?? []).map(norm)
+  for (const cert of wantCerts) {
+    if (!gotCerts.includes(cert)) result.failures.push(`certification missing or altered: "${cert}"`)
+  }
+  if (gotCerts.length > wantCerts.length) result.failures.push(`certifications: expected ${wantCerts.length}, parsed ${gotCerts.length}`)
+
+  if (!!want.skills !== !!actual.skills) {
+    result.failures.push(`skills section: expected ${want.skills ? 'present' : 'absent'}, parsed ${actual.skills ? 'present' : 'absent'}`)
+  } else if (want.skills) {
+    eq('skills', want.skills, actual.skills)
+  }
+
+  return result
+}
+
+// Static sanity check on the fixtures themselves: every answer-key bullet must
+// appear in the resume text the parser sees, or a parse "failure" is our bug.
+export function checkFixture(c: EvalCase): CheckResult {
+  const result: CheckResult = { failures: [], warnings: [] }
+  const text = norm(c.resumeText.split(/\r?\n/).map(norm).join(' '))
+  const all = [
+    c.parsed.name,
+    ...c.parsed.experience.flatMap((e) => [e.title, e.company, e.dates, ...e.bullets]),
+    ...(c.parsed.projects ?? []).flatMap((p) => p.bullets),
+    ...c.parsed.education.flatMap((e) => [e.degree, e.institution, ...e.bullets]),
+    ...(c.parsed.certifications ?? []),
+    c.parsed.skills ?? '',
+  ].filter(Boolean)
+  for (const item of all) {
+    if (!text.includes(norm(item))) result.failures.push(`answer key text not found in resumeText: "${item.slice(0, 60)}"`)
+  }
+  if (!c.fieldNotes) result.failures.push('fieldNotes missing')
   return result
 }

@@ -4,6 +4,7 @@ import { corsHeaders, handleCors, json } from '../_shared/cors.ts'
 import { decrypt, encrypt } from '../_shared/encrypt.ts'
 import { findOrCreateJobApplication } from '../_shared/job-application.ts'
 import { isValidParsedResume, parseResumeStructure, type ParsedResume } from '../_shared/resume-parse.ts'
+import { candidateText, groundTailored } from '../_shared/resume-grounding.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SECRET_KEY = Deno.env.get('SERVICE_KEY')!
@@ -227,10 +228,10 @@ Write one internal positioning sentence (not output): "[Role archetype] with [X 
 
 ${includeSummary ? `STEP 4 — WRITE SUMMARY
 2–3 sentences, 40–70 words, no first-person pronouns, no weak openers ("Experienced professional", "Results-driven", "Dynamic"), no clichés ("passionate", "innovative", "team player", "fast-paced", "dynamic"):
-- Identity: open with the target role's title (TARGET ROLE above) as the archetype, unless the candidate's experience clearly does not support that level — then use the closest archetype it does support. Include 2–3 Tier 1 keywords and years of experience.
+- Identity: open with the candidate's own most recent title, or the archetype their experience directly supports. Use the TARGET ROLE's title only if the candidate has held that role at that level; never adopt a target title that names a level, specialty, license, or credential the resume does not show (a line cook is not a "Sous Chef", a tanker driver is not a "Hazmat Tanker Driver", a VP is not a "Chief Operating Officer"), and never write "[target title] candidate". Include 2–3 Tier 1 keywords and years of experience.
 - Strongest capability or achievement that answers the role's core challenge
 - Optional: a differentiator or collaboration strength relevant to the role
-YEARS OF EXPERIENCE: state only what the resume's employment dates support (earliest start date to today). Never round up or inflate to match the job's stated minimum — if the dates support 3 years and the JD asks for 5, write 3, not 5. If unsure, omit the number entirely.
+YEARS OF EXPERIENCE: state only what the resume's employment dates support: add up the employed periods, and never count gaps between roles or time after a last role that has ended (a resume whose last role ended in 2018 gains no years through today). Never round up or inflate to match the job's stated minimum — if the dates support 3 years and the JD asks for 5, write 3, not 5. If unsure, omit the number entirely.
 Claim only what a bullet demonstrates — a skills-only technology may not be claimed as built/deployed/specialised in, and architecture buzzwords the resume does not support are forbidden (Integrity 4).
 INDUSTRY/DOMAIN: name a domain (e-commerce, fintech, biotech, etc.) ONLY if a bullet shows the candidate actually worked in it. Never borrow a domain from the JD's requirements or "nice-to-have" list, and never hedge an unearned one in with "-adjacent", "-aligned", or "cross-domain" (Integrity 4).` : `STEP 4 — SUMMARY: skip; set summary to "".`}
 
@@ -242,13 +243,14 @@ PROJECTS: preserve every project's bullet count exactly, and never drop a techno
 
 STEP 6 — REWRITE BULLETS
 Compressed STAR: [strong action verb] + [what was done] + [measurable result or concrete scope]. Reword for impact and ATS phrasing without changing what actually happened (Integrity 3–5).
-- Use the JD's exact term for matching work — if the JD says "WCAG 2.1 AA" and the candidate did accessibility work, write "WCAG 2.1 AA", not just "accessible". Apply STEP 2 synonym pairs where they fit.
+- Use the JD's exact term for matching work — if the JD says "cycle counting" and the resume says "inventory counts", write "cycle counting". This never extends to a named standard, tool, certification, or system the resume does not name (the resume says "accessibility work", the JD says "WCAG 2.1 AA": keep "accessibility"). Apply STEP 2 synonym pairs where they fit.
 - Borrow the JD's vocabulary, not its sentences: keep the JD's specific terms-of-art (per above), but never reproduce a whole sentence or clause from the JD — phrase every accomplishment in the candidate's own words. Lifted phrasing reads as templated to a human reviewer.
 - Quantify with industry-fit metrics — Tech: latency, scale, uptime, cost, build time; Healthcare: caseload, outcomes, error-free records, compliance; Finance: $ value, audit volume, reporting time; Marketing: conversion, CTR, ROI, revenue; Legal: transaction value, case outcomes, caseload. No real metric? Use concrete scope (team size, user count, integrations, timeline). Never a vague improvement with no number. Use each specific figure once — never repeat the same metric across bullets; the summary may cite at most one headline number.
 - Numbers are evidence, not decoration: use ONLY figures stated in the resume or supplemental context. If the input gives no number for an accomplishment, write it with concrete scope or without a figure — a made-up percentage is a fabrication, not a rewrite (Integrity 7).
 - Replace weak openers: Responsible for→Led/Owned; Worked on→Built/Developed; Helped/Assisted with→Partnered/Collaborated; "Demonstrating proficiency in"→delete (the work shows it).
 - Verb bank: Led, Owned, Drove, Directed, Built, Designed, Launched, Shipped, Architected, Reduced, Optimized, Streamlined, Scaled, Generated, Delivered, Partnered, Mentored.
 - Vary bullet rhythm: recruiters flag resumes where every bullet follows the identical [verb + task + metric] cadence or consecutive bullets open with the same verb. Vary sentence shape and length across each role's bullets — place the metric mid-sentence in some, at the end in others; a bullet with no metric stays concrete and factual rather than force-fitted to the formula.
+- No bridging clauses: never append a clause that argues the bullet's relevance to this job ("demonstrating…", "transferable to…", "directly applicable to…", "supporting [the JD's goals]", "[JD term]-aligned"). State what happened; the reader draws the connection.
 - Banned filler (reads as AI-written): leveraged, utilized, seamlessly, cutting-edge, state-of-the-art, spearheaded, honed, fostered, garnered, various, numerous. Use the plain verb or name the specific thing instead.
 
 STEP 7 — REORDER BULLETS
@@ -494,7 +496,9 @@ Deno.serve(async (req) => {
     if (DEBUG) console.log('[CoverMe debug] raw model response:\n', raw)
 
     const delta = parseDelta(raw)
-    const resume = mergeTailorDelta(structuredResume, delta) as Record<string, unknown>
+    const merged = mergeTailorDelta(structuredResume, delta)
+    // Strip job-posting requirements the model copied in (see _shared/resume-grounding.ts).
+    const resume = groundTailored(merged, structuredResume, candidateText(structuredResume, supplemental), job.description).resume as Record<string, unknown>
 
     let atsScore: number | undefined
     let atsGaps: string[] | undefined

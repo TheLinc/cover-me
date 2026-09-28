@@ -64,7 +64,7 @@ JSON structure (omit "projects", "skills", "certifications" entirely if those se
     }
   ],
   "skills": "skills string exactly as written in the resume",
-  "certifications": ["Certification Name — Issuer — Year"]
+  "certifications": ["each certification or license line copied verbatim"]
 }
 
 RESUME:

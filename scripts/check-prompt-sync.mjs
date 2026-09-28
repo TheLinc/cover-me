@@ -183,15 +183,18 @@ for (const c of checks) {
   }
 }
 
-// The lint module mirrors must be byte-identical end to end.
-{
-  const a = read(EXT_LINT)
-  const b = read(BE_LINT)
+// The lint and grounding module mirrors must be byte-identical end to end.
+for (const [name, extPath, bePath] of [
+  ['letter-lint', EXT_LINT, BE_LINT],
+  ['resume-grounding', 'extension/src/lib/ai/resume-grounding.ts', 'backend/supabase/functions/_shared/resume-grounding.ts'],
+]) {
+  const a = read(extPath)
+  const b = read(bePath)
   if (a === b) {
-    console.log('  ok    letter-lint mirror')
+    console.log(`  ok    ${name} mirror`)
   } else {
     failed++
-    console.error(`  DRIFT letter-lint mirror\n    ${EXT_LINT}\n    ${BE_LINT}\n${firstDiff(a, b)}`)
+    console.error(`  DRIFT ${name} mirror\n    ${extPath}\n    ${bePath}\n${firstDiff(a, b)}`)
   }
 }
 
