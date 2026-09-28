@@ -24,7 +24,19 @@ function Flow() {
   )
 }
 
+// Fixed heights so switching scenes swaps content without resizing the stage.
+const POPUP_BODY_H = 'h-[300px]'
+const OUTPUT_H = 'lg:h-[370px]'
+
 function PopupBody({ scene }: { scene: SceneId }) {
+  return (
+    <div className={cn(POPUP_BODY_H, 'overflow-hidden')}>
+      <PopupScene scene={scene} />
+    </div>
+  )
+}
+
+function PopupScene({ scene }: { scene: SceneId }) {
   if (scene === 'letter') {
     return (
       <div className="flex flex-col gap-3 px-4 py-5">
@@ -114,7 +126,7 @@ export function HeroStage() {
           <PopupBody scene={scene} />
         </ExtensionPopup>
         <Flow />
-        <div key={`out-${scene}`} className="hidden justify-center animate-[fadeUp_.5s_ease] lg:flex">
+        <div key={`out-${scene}`} className={cn('hidden items-center justify-center animate-[fadeUp_.5s_ease] lg:flex', OUTPUT_H)}>
           <Output scene={scene} />
         </div>
       </div>
