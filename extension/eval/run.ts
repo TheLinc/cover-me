@@ -33,8 +33,9 @@ import { lintLetter, buildLintRetryMessage } from '../src/lib/ai/letter-lint'
 import { CASES, type EvalCase } from './fixtures'
 import { checkFixture, checkLetter, checkParse, checkTailored, type CheckResult } from './checks'
 import { buildResumeJudgePrompt, DIMENSIONS, FAIL_AT, parseJudgment, type Dimension, type ResumeJudgment } from './judge'
-import { buildClaimCheckPrompt, parseClaimVerdicts } from '../src/lib/ai/resume-grounding'
+import { buildClaimCheckPrompt, buildLineCheckPrompt, parseClaimVerdicts, parseLineFlags, type LineRepair } from '../src/lib/ai/resume-grounding'
 import { CLAIM_CHECK_MIN, CLAIM_PAIRS } from './claim-pairs'
+import { LINE_CHECK_MIN, LINE_ROLES } from './line-pairs'
 import { claudeIsolation, makeCaller, pool, usage, type Backend } from './model'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
@@ -274,6 +275,8 @@ interface TailorRun {
   raw?: string
   /** Job-only terms the production grounding guard stripped from the model's output. */
   guardRemoved?: string[]
+  /** What the production line check flagged, rewrote, or reverted. */
+  lines?: LineRepair
   /** Expected category labels (EvalCase.expectedLabels) the final skills list did or didn't include. */
   connections?: { made: string[]; missed: string[] }
   judgment?: ResumeJudgment
@@ -286,7 +289,7 @@ async function tailorOnce(c: EvalCase, run: number): Promise<TailorRun> {
     // 1. Parse the raw resume text, as the hosted tier does on first tailor.
     let input: ParsedResume = c.parsed
     if (USE_PARSE) {
-      const raw = await call([{ role: 'user', content: buildParsePrompt(c.resumeText) }], { model: PARSE_MODEL, maxTokens: 3000 })
+      const raw = await call([{ role: 'user', content: buildParsePrompt(c.resumeText) }], { model: PARSE_MODEL, maxTokens: 3000, label: 'parse' })
       try {
         const parsed = parseParsedJson(raw)
         const result = checkParse(parsed, c)
@@ -300,17 +303,22 @@ async function tailorOnce(c: EvalCase, run: number): Promise<TailorRun> {
     }
 
     // 2. Tailor, exactly as production does (delta → merge → code-computed ATS).
-    const raw = await call([{ role: 'user', content: buildTailorPrompt(c.job, input, false) }], { model: MODEL, maxTokens: 6000 })
+    const raw = await call([{ role: 'user', content: buildTailorPrompt(c.job, input, false) }], { model: MODEL, maxTokens: 6000, label: 'tailor' })
     out.raw = raw
     try {
       let guarded: string[] = []
-      const ask = (prompt: string) => call([{ role: 'user', content: prompt }], { model: MODEL, maxTokens: 1000 })
-      const tailored = await assembleTailored(input, raw, { jobDescription: c.job.description, ask }, (removed) => (guarded = removed))
+      const stepOf = (prompt: string) =>
+        prompt.startsWith('SKILL CLAIM CHECK') ? 'skill check' : prompt.startsWith('RESUME ACCURACY CHECK') ? 'line check' : 'line rewrite'
+      const ask = (prompt: string) => call([{ role: 'user', content: prompt }], { model: MODEL, maxTokens: 2000, label: stepOf(prompt) })
+      const onLineRepair = (repair: LineRepair) => (out.lines = repair)
+      const tailored = await assembleTailored(input, raw, { jobDescription: c.job.description, ask, onLineRepair }, (removed) => (guarded = removed))
       out.tailored = tailored
       out.guardRemoved = guarded
       out.tailor = checkTailored(tailored, c, input)
       out.tailor.warnings.unshift(`atsScore: ${tailored.atsScore ?? 'n/a'} | gaps: ${(tailored.atsGaps ?? []).join('; ') || 'none'}`)
       if (guarded.length) out.tailor.warnings.push(`grounding guard removed: ${guarded.join(', ')}`)
+      if (out.lines?.checkFailed) out.tailor.warnings.push('line check failed to run; tailoring kept unchecked')
+      else if (out.lines?.flagged.length) out.tailor.warnings.push(`line check: ${out.lines.rewritten} rewritten, ${out.lines.reverted} reverted — ${out.lines.flagged.join(' | ')}`)
       if (c.expectedLabels?.length) {
         const skills = (tailored.skills ?? '').toLowerCase()
         const made: string[] = []
@@ -326,7 +334,7 @@ async function tailorOnce(c: EvalCase, run: number): Promise<TailorRun> {
 
       // 3. Judge field fit and quality.
       if (JUDGE) {
-        const jraw = await call([{ role: 'user', content: buildResumeJudgePrompt(c, input, tailored) }], { model: JUDGE_MODEL, maxTokens: 4000, think: true })
+        const jraw = await call([{ role: 'user', content: buildResumeJudgePrompt(c, input, tailored) }], { model: JUDGE_MODEL, maxTokens: 4000, think: true, label: 'judge' })
         const j = parseJudgment(jraw)
         out.judgment = j
         const scores = DIMENSIONS.map((d) => `${d} ${j[d]}`).join(', ')
@@ -383,6 +391,20 @@ async function liveTailor(): Promise<TailorRun[]> {
     record(`tailor: ${r.id}${suffix}`, r.tailor)
     if (r.tailored) reportLines.push('<details><summary>tailored resume JSON</summary>\n\n```json\n' + JSON.stringify(r.tailored, null, 2) + '\n```\n</details>\n')
   }
+
+  // Production cost per tailor, by step (list prices; claude -p adds ~230 input
+  // tokens of its own per call, so these read slightly high).
+  const perTailor = runs.length
+  const costRows = ['| Step | Calls | Avg input | Avg output | Cost per tailor |', '|---|---|---|---|---|']
+  for (const step of ['parse', 'tailor', 'skill check', 'line check', 'line rewrite']) {
+    const es = usage.log.filter((e) => e.label === step)
+    if (!es.length) continue
+    const [pin, pout] = step === 'parse' ? [1, 5] : [3, 15]
+    const cost = es.reduce((n, e) => n + (e.input * pin + e.output * pout) / 1e6, 0) / perTailor
+    costRows.push(`| ${step} | ${es.length} | ${Math.round(mean(es.map((e) => e.input)))} | ${Math.round(mean(es.map((e) => e.output)))} | $${cost.toFixed(4)} |`)
+  }
+  reportLines.push('\n## Production cost per tailor\n', ...costRows, '')
+  console.log('\n' + costRows.join('\n'))
 
   // Industry summary table.
   const avgs = judgeAverages(runs)
@@ -463,6 +485,41 @@ async function claimChecker(): Promise<{ correct: number; total: number }> {
   return { correct, total: CLAIM_PAIRS.length }
 }
 
+// The production line check decides which rewritten bullets get rewritten
+// again. Run it over hand-labeled roles, one role per call.
+async function lineChecker(): Promise<{ correct: number; total: number }> {
+  section(`Line checker (model: ${MODEL})`)
+  let correct = 0
+  let total = 0
+  const result: CheckResult = { failures: [], warnings: [] }
+  const missed: string[] = []
+  const wrong: string[] = []
+  await pool(LINE_ROLES, CONCURRENCY, async (r) => {
+    const original = { experience: [{ title: r.title, company: r.company, bullets: r.original }] }
+    const tailored = { summary: '', experience: [{ title: r.title, company: r.company, bullets: r.rewritten }] }
+    const flags = parseLineFlags(await call([{ role: 'user', content: buildLineCheckPrompt(original, tailored) }], { model: MODEL, maxTokens: 2000 }))
+    if (!flags) {
+      result.failures.push(`${r.id}: check reply could not be read`)
+      return
+    }
+    for (const k of r.flag) {
+      total++
+      if (flags.has(`e0b${k}`)) correct++
+      else missed.push(`${r.id}: "${r.rewritten[k]}"`)
+    }
+    for (const k of r.ok) {
+      total++
+      if (!flags.has(`e0b${k}`)) correct++
+      else wrong.push(`${r.id}: "${r.rewritten[k]}" (${flags.get(`e0b${k}`)})`)
+    }
+  })
+  if (missed.length) result.warnings.push(`inflation missed: ${missed.join(' | ')}`)
+  if (wrong.length) result.warnings.push(`faithful lines flagged: ${wrong.join(' | ')}`)
+  if (total && correct / total < LINE_CHECK_MIN) result.failures.push(`line check accuracy ${correct}/${total} is below ${LINE_CHECK_MIN * 100}%`)
+  record(`line checker: ${correct}/${total} correct`, result)
+  return { correct, total }
+}
+
 // ── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -480,7 +537,8 @@ async function main() {
     if (RUN_LETTERS) letters = await liveLetters()
     if (RUN_TAILOR) {
       const checker = await claimChecker()
-      reportLines.splice(3, 0, `Skill-claim checker: ${checker.correct}/${checker.total} hand-labeled pairs correct`, '')
+      const lines = await lineChecker()
+      reportLines.splice(3, 0, `Skill-claim checker: ${checker.correct}/${checker.total} hand-labeled pairs correct | Line checker: ${lines.correct}/${lines.total} hand-labeled lines correct`, '')
       tailorRuns = await liveTailor()
     }
     const costLine = `Model calls: ${usage.calls} | tokens in/out: ${usage.inputTokens}/${usage.outputTokens} | API-equivalent cost: $${usage.costUsd.toFixed(2)}${VIA === 'claude' ? ' (billed to your Claude plan, not API credits)' : ''}`

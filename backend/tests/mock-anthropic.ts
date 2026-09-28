@@ -23,6 +23,9 @@ Kind regards,
 
 Test Person`
 
+// What the mock line rewrite returns for the flagged bullet (see /v1/messages below).
+export const MOCK_REWRITTEN_BULLET = 'Rebuilt the billing export pipeline in TypeScript'
+
 export const MOCK_PARSED_RESUME = {
   name: 'Test Person',
   email: 'test@example.com',
@@ -153,6 +156,19 @@ export function startMockAnthropic(port: number): Promise<Server> {
         const verdicts = Array.from({ length: count }, (_, i) => ({ i, ok: true }))
         res.writeHead(200, { 'content-type': 'application/json' })
         return res.end(messageJson(JSON.stringify({ verdicts }), body.model))
+      }
+      // Line check: flag the tailor output's invented metric ("4 hours to 40
+      // minutes" is not in the resume). Line rewrite: fix each flagged id.
+      if (prompt.startsWith('RESUME ACCURACY CHECK')) {
+        const id = /\[(e\d+b\d+)\][^\n]*4 hours to 40 minutes/.exec(prompt)?.[1]
+        const flags = id ? [{ id, reason: 'invented run-time numbers' }] : []
+        res.writeHead(200, { 'content-type': 'application/json' })
+        return res.end(messageJson(JSON.stringify({ flags, summary: null }), body.model))
+      }
+      if (prompt.startsWith('RESUME LINE REWRITE')) {
+        const rewrites = [...prompt.matchAll(/^\[(e\d+b\d+)\]/gm)].map((m) => ({ id: m[1], text: MOCK_REWRITTEN_BULLET }))
+        res.writeHead(200, { 'content-type': 'application/json' })
+        return res.end(messageJson(JSON.stringify({ rewrites }), body.model))
       }
       if (body.stream) {
         res.writeHead(200, { 'content-type': 'text/event-stream' })

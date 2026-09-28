@@ -1,7 +1,7 @@
 import type { AIProvider, JobData, ParsedResume, TailoredResume } from '../../types'
 import { debugGroup, debugLog } from '../debug'
 import { deriveTailorProgress } from './tailor-progress'
-import { candidateText, groundSkills, groundTailored, type AskModel } from './resume-grounding'
+import { candidateText, checkAndRewriteLines, groundSkills, groundTailored, type AskModel, type LineRepair } from './resume-grounding'
 
 const CLAUDE_API = 'https://api.anthropic.com/v1/messages'
 const OPENAI_API = 'https://api.openai.com/v1/chat/completions'
@@ -317,14 +317,19 @@ export function isValidResume(r: unknown): r is TailoredResume {
 export async function assembleTailored(
   parsed: ParsedResume,
   raw: string,
-  grounding: { jobDescription: string; supplemental?: string; ask?: AskModel },
+  grounding: { jobDescription: string; supplemental?: string; ask?: AskModel; onLineRepair?: (repair: LineRepair) => void },
   onRemoved?: (terms: string[]) => void,
 ): Promise<TailoredResume> {
   const delta = parseDelta(raw)
   const candidate = candidateText(parsed, grounding.supplemental)
   const claimed = await groundSkills(delta.skills, candidate, grounding.ask)
   delta.skills = claimed.skills
-  const merged = mergeTailorDelta(parsed, delta) as TailoredResume
+  let merged = mergeTailorDelta(parsed, delta) as TailoredResume
+  if (grounding.ask) {
+    const lines = await checkAndRewriteLines(merged, parsed, grounding.jobDescription, grounding.ask)
+    merged = lines.resume
+    grounding.onLineRepair?.(lines.repair)
+  }
   const { resume, removed } = groundTailored(merged, parsed, candidate, grounding.jobDescription)
   const all = [...claimed.dropped, ...removed]
   if (all.length) onRemoved?.(all)
@@ -468,15 +473,15 @@ export async function tailorResume(
   }
 
   await debugLog('Tailor — raw model response', raw)
-  return assembleTailored(parsed, raw, { jobDescription: job.description, supplemental, ask: skillCheckModel(provider, apiKey) }, (removed) =>
+  return assembleTailored(parsed, raw, { jobDescription: job.description, supplemental, ask: checkModel(provider, apiKey) }, (removed) =>
     void debugLog('Tailor — grounding guard removed', removed))
 }
 
-// Model for the skill-claim pair check (see resume-grounding.ts), on the same
-// provider and key as the tailor call. Sonnet, not Haiku: on a hand-labeled set
-// of 38 label/evidence pairs Haiku was right 29 times, Sonnet 4.6 38 times
-// (extension/eval/claim-pairs.ts). The prompt is a few short lines, so it's cheap.
-function skillCheckModel(provider: AIProvider, apiKey: string): AskModel {
+// Model for the skill-claim pair check and the line check/rewrite (see
+// resume-grounding.ts), on the same provider and key as the tailor call.
+// Sonnet, not Haiku: on 38 hand-labeled skill/evidence pairs Haiku was right 29
+// times, Sonnet 4.6 38 times (extension/eval/claim-pairs.ts). Prompts are small.
+function checkModel(provider: AIProvider, apiKey: string): AskModel {
   return async (prompt) => {
     if (provider === 'claude') {
       const res = await fetch(CLAUDE_API, {
@@ -487,7 +492,7 @@ function skillCheckModel(provider: AIProvider, apiKey: string): AskModel {
           'anthropic-version': '2023-06-01',
           'anthropic-dangerous-direct-browser-access': 'true',
         },
-        body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] }),
+        body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 2000, messages: [{ role: 'user', content: prompt }] }),
       })
       if (!res.ok) throw new Error(`Claude API error ${res.status}`)
       const data = (await res.json()) as { content: Array<{ type: string; text: string }> }
@@ -496,7 +501,7 @@ function skillCheckModel(provider: AIProvider, apiKey: string): AskModel {
     const res = await fetch(OPENAI_API, {
       method: 'POST',
       headers: { 'content-type': 'application/json', Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({ model: 'gpt-4o', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] }),
+      body: JSON.stringify({ model: 'gpt-4o', max_tokens: 2000, messages: [{ role: 'user', content: prompt }] }),
     })
     if (!res.ok) throw new Error(`OpenAI API error ${res.status}`)
     const data = (await res.json()) as { choices: Array<{ message: { content: string } }> }

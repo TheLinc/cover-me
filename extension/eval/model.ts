@@ -26,6 +26,8 @@ export interface CallOptions {
   maxTokens: number
   /** Judge calls think; generation calls mirror production (no thinking). */
   think?: boolean
+  /** Step name for per-step usage (usage.log), e.g. "tailor". */
+  label?: string
 }
 
 // $/MTok for the API-equivalent cost estimate (claude backend reports its own).
@@ -37,9 +39,13 @@ const PRICES: Record<string, [number, number]> = {
   'claude-opus-5': [5, 25],
 }
 
-export const usage = { calls: 0, inputTokens: 0, outputTokens: 0, costUsd: 0 }
+export const usage = {
+  calls: 0, inputTokens: 0, outputTokens: 0, costUsd: 0,
+  log: [] as Array<{ label?: string; model: string; input: number; output: number }>,
+}
 
-function record(model: string, input: number, output: number, cost?: number) {
+function record(model: string, input: number, output: number, cost?: number, label?: string) {
+  usage.log.push({ label, model, input, output })
   usage.calls++
   usage.inputTokens += input
   usage.outputTokens += output
@@ -73,7 +79,7 @@ async function callApi(messages: Msg[], opts: CallOptions): Promise<string> {
       content: Array<{ type: string; text?: string }>
       usage: { input_tokens: number; output_tokens: number }
     }
-    record(opts.model, data.usage.input_tokens, data.usage.output_tokens)
+    record(opts.model, data.usage.input_tokens, data.usage.output_tokens, undefined, opts.label)
     return data.content.find((b) => b.type === 'text')?.text ?? ''
   }
 }
@@ -131,7 +137,7 @@ function runClaude(prompt: string, opts: CallOptions): Promise<string> {
       if (data.is_error) return reject(new Error(`claude -p error: ${String(data.result).slice(0, 500)}`))
       const u = data.usage ?? {}
       const input = (u.input_tokens ?? 0) + (u.cache_read_input_tokens ?? 0) + (u.cache_creation_input_tokens ?? 0)
-      record(opts.model, input, u.output_tokens ?? 0, data.total_cost_usd)
+      record(opts.model, input, u.output_tokens ?? 0, data.total_cost_usd, opts.label)
       resolve(data.result ?? '')
     })
     child.stdin.end(prompt)

@@ -4,7 +4,7 @@ import { corsHeaders, handleCors, json } from '../_shared/cors.ts'
 import { decrypt, encrypt } from '../_shared/encrypt.ts'
 import { findOrCreateJobApplication } from '../_shared/job-application.ts'
 import { isValidParsedResume, parseResumeStructure, type ParsedResume } from '../_shared/resume-parse.ts'
-import { candidateText, groundSkills, groundTailored } from '../_shared/resume-grounding.ts'
+import { candidateText, checkAndRewriteLines, groundSkills, groundTailored } from '../_shared/resume-grounding.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SECRET_KEY = Deno.env.get('SERVICE_KEY')!
@@ -106,9 +106,10 @@ export function mergeTailorDelta<T extends {
 
 interface JobPayload { title: string; company: string; description: string }
 
-// Model for the skill-claim pair check (see _shared/resume-grounding.ts).
-// Sonnet, not Haiku: 38/38 vs 29/38 on hand-labeled pairs (extension/eval/claim-pairs.ts).
-async function askSkillCheck(prompt: string): Promise<string> {
+// Model for the skill-claim pair check and the line check/rewrite (see
+// _shared/resume-grounding.ts). Sonnet, not Haiku: 38/38 vs 29/38 on
+// hand-labeled skill pairs (extension/eval/claim-pairs.ts).
+async function askChecker(prompt: string): Promise<string> {
   const res = await fetch(ANTHROPIC_MESSAGES_URL, {
     method: 'POST',
     headers: {
@@ -116,7 +117,7 @@ async function askSkillCheck(prompt: string): Promise<string> {
       'anthropic-version': '2023-06-01',
       'content-type': 'application/json',
     },
-    body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] }),
+    body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 2000, messages: [{ role: 'user', content: prompt }] }),
   })
   if (!res.ok) throw new Error(`skill check ${res.status}`)
   const data = await res.json() as { content: Array<{ type: string; text: string }> }
@@ -521,9 +522,11 @@ Deno.serve(async (req) => {
     // Keep only skills the resume backs, then strip job-posting requirements
     // the model copied in (see _shared/resume-grounding.ts).
     const candidate = candidateText(structuredResume, supplemental)
-    delta.skills = (await groundSkills(delta.skills, candidate, askSkillCheck)).skills
+    delta.skills = (await groundSkills(delta.skills, candidate, askChecker)).skills
     const merged = mergeTailorDelta(structuredResume, delta)
-    const resume = groundTailored(merged, structuredResume, candidate, job.description).resume as Record<string, unknown>
+    // Rewrite only the lines that claim more than the original resume supports.
+    const lined = (await checkAndRewriteLines(merged, structuredResume, job.description, askChecker)).resume
+    const resume = groundTailored(lined, structuredResume, candidate, job.description).resume as Record<string, unknown>
 
     let atsScore: number | undefined
     let atsGaps: string[] | undefined

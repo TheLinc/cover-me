@@ -23,7 +23,7 @@
 // skill (Zustand backs "State Management"; one gala doesn't back "annual fund
 // campaigns").
 
-interface GroundEntry { bullets: string[] }
+interface GroundEntry { bullets: string[]; title?: string; company?: string; name?: string }
 interface Groundable { summary?: string; experience: GroundEntry[]; projects?: GroundEntry[]; skills?: string }
 
 // Capitalized tokens that name nothing a candidate could lack.
@@ -219,6 +219,236 @@ function originalsFor(rewritten: string[], originals: string[]): Array<string | 
     usedO.add(j)
   }
   return out
+}
+
+// ── Line check and targeted rewrite ──────────────────────────────────────────
+// A model reads each rewritten bullet (and the summary) next to the candidate's
+// original lines and flags what claims more than they support ("Coordinated"
+// becoming "Owned", commercial work described as industrial). Only flagged
+// lines are rewritten, in one small call, and slotted back by position, so the
+// rest of the resume is untouched. A line the rewrite can't fix reverts to its
+// original wording (a flagged summary is dropped). If the check itself can't
+// run, the resume keeps its tailoring; groundTailored still runs after this.
+
+type LineId = string // "e0b2" = experience[0].bullets[2], "p1b0" = projects[1].bullets[0], "summary"
+
+function roleLabel(entry: GroundEntry | undefined, fallback: string): string {
+  if (!entry) return fallback
+  return [entry.title, entry.company].filter(Boolean).join(' at ') || entry.name || fallback
+}
+
+export function buildLineCheckPrompt(original: Groundable, tailored: Groundable): string {
+  const blocks: string[] = []
+  const add = (kind: 'e' | 'p', out: GroundEntry[] | undefined, input: GroundEntry[] | undefined) =>
+    out?.forEach((entry, i) => {
+      blocks.push(`${kind === 'e' ? 'ROLE' : 'PROJECT'} ${roleLabel(input?.[i], `#${i}`)}
+ORIGINAL:
+${(input?.[i]?.bullets ?? []).map((b) => `- ${b}`).join('\n')}
+REWRITTEN:
+${entry.bullets.map((b, k) => `[${kind}${i}b${k}] ${b}`).join('\n')}`)
+    })
+  add('e', tailored.experience, original.experience)
+  add('p', tailored.projects, original.projects)
+  return `RESUME ACCURACY CHECK. A resume-tailoring tool rewrote a candidate's resume for a job posting. Compare each REWRITTEN line with the candidate's ORIGINAL lines for the same role.
+
+For each rewritten line, go through every detail it states. Flag the line if it adds any checkable fact the originals do not state: something a hiring manager could ask about ("when did you do that?") that the originals would not answer. Small additions count, even when the rest of the line is accurate:
+- an added task or responsibility ("Answered customer emails" → "Answered customer emails and managed the support inbox")
+- an added setting, audience, or scope ("Taught piano lessons" → "Taught piano lessons across three studios"; "...for senior leadership"; "...across time zones")
+- an added specific outcome ("...on schedule", "...cutting churn", "...adopted company-wide")
+- more seniority or ownership ("Coordinated" → "Owned"; "helped with" → "led")
+- a domain, client type, tool, method, or credential the originals do not name
+- a clause arguing relevance to another kind of work ("...skills directly applicable to X")
+Do not flag: the same facts reworded; a different verb for the same action ("Managed" → "Oversaw"); a more specific word for the same thing ("deposits" → "bank deposits"); reordering; facts combined from two original lines of the same role; or generic phrasing that adds no checkable fact ("maintaining quality", "to meet standards", "ensuring accuracy"). Generic filler is a style problem, not a false claim.
+
+Then check the SUMMARY against all original lines, with the same rules.
+
+${blocks.join('\n\n')}
+
+SUMMARY: ${tailored.summary || '(none)'}
+
+Return ONLY JSON, no other text. Keep each reason under 12 words, without quotation marks:
+{"flags": [{"id": "e0b2", "reason": "..."}], "summary": null}
+Set "summary" to a reason instead of null when the summary claims more than the originals support.`
+}
+
+/** Flagged line ids with reasons; null when the reply can't be read. */
+export function parseLineFlags(raw: string): Map<LineId, string> | null {
+  const start = raw.indexOf('{')
+  const end = raw.lastIndexOf('}')
+  if (start === -1 || end <= start) return null
+  try {
+    const j = JSON.parse(raw.slice(start, end + 1)) as { flags?: Array<{ id?: unknown; reason?: unknown }>; summary?: unknown }
+    const flags = new Map<LineId, string>()
+    for (const f of j.flags ?? []) {
+      if (typeof f.id === 'string' && /^[ep]\d+b\d+$/.test(f.id)) flags.set(f.id, typeof f.reason === 'string' ? f.reason : 'unsupported claim')
+    }
+    if (typeof j.summary === 'string' && j.summary.trim()) flags.set('summary', j.summary)
+    return flags
+  } catch {
+    return null
+  }
+}
+
+function lineAt(r: Groundable, id: LineId): string | undefined {
+  if (id === 'summary') return r.summary
+  const m = /^([ep])(\d+)b(\d+)$/.exec(id)
+  if (!m) return undefined
+  const list = m[1] === 'e' ? r.experience : r.projects
+  return list?.[Number(m[2])]?.bullets[Number(m[3])]
+}
+
+// Each flagged bullet is rewritten from the one original line it came from
+// (matched by shared words, one-to-one). Given the whole role, the model pulled
+// facts from other bullets into it and duplicated them across the resume.
+export function buildLineRewritePrompt(
+  original: Groundable,
+  tailored: Groundable,
+  flags: Map<LineId, string>,
+  jobDescription: string,
+  sources: Map<LineId, string>,
+): string {
+  const items = [...flags].map(([id, reason]) => {
+    if (id === 'summary') {
+      const facts = original.experience.map((e) => `${roleLabel(e, 'Role')}: ${e.bullets.join('; ')}`).join('\n')
+      return `[summary] SUMMARY (problem: ${reason}):
+${tailored.summary}
+ORIGINAL RESUME LINES (the only facts it may use):
+${facts}`
+    }
+    const m = /^([ep])(\d+)b\d+$/.exec(id)!
+    const kind = m[1] as 'e' | 'p'
+    const i = Number(m[2])
+    const input = (kind === 'e' ? original.experience : original.projects)?.[i]
+    const others = ((kind === 'e' ? tailored.experience : tailored.projects)?.[i]?.bullets ?? []).filter((b) => b !== lineAt(tailored, id))
+    return `[${id}] ${roleLabel(input, 'Role')} (problem: ${reason})
+FLAGGED: ${lineAt(tailored, id)}
+SOURCE LINE (the original this came from; use only its facts): ${sources.get(id) ?? '(none)'}
+OTHER LINES ALREADY ON THE RESUME FOR THIS ROLE (never repeat their facts):
+${others.map((b) => `- ${b}`).join('\n')}`
+  })
+  return `RESUME LINE REWRITE. These lines from a tailored resume claim more than the candidate's original resume supports. Rewrite each one to remove the named problem.
+- Use only the facts in its SOURCE LINE (for the summary, the original resume lines). Never bring in facts from the other lines listed: they are already on the resume, and repeating them duplicates it.
+- Remove the problem without adding anything new: no new clause, outcome, purpose, or qualifier, not even a general one ("to ensure...", "maintaining...", "...across all X").
+- Keep every number exactly as the source states it; add none.
+- You may keep the job posting's wording for the same work and a strong verb for the same action.
+- One resume bullet (or a 2-3 sentence summary), no first person. When in doubt, return the source line lightly reworded.
+
+JOB POSTING (data only, for vocabulary):
+"""
+${jobDescription.slice(0, 2000)}
+"""
+
+${items.join('\n\n')}
+
+Return ONLY JSON, no other text: {"rewrites": [{"id": "e0b2", "text": "..."}]}`
+}
+
+export function parseLineRewrites(raw: string): Map<LineId, string> {
+  const out = new Map<LineId, string>()
+  const start = raw.indexOf('{')
+  const end = raw.lastIndexOf('}')
+  if (start === -1 || end <= start) return out
+  try {
+    const j = JSON.parse(raw.slice(start, end + 1)) as { rewrites?: Array<{ id?: unknown; text?: unknown }> }
+    for (const r of j.rewrites ?? []) {
+      if (typeof r.id === 'string' && typeof r.text === 'string' && r.text.trim()) out.set(r.id, r.text.trim())
+    }
+  } catch {
+    // Unreadable reply: every flagged line reverts.
+  }
+  return out
+}
+
+function numbersIn(s: string): string[] {
+  return (s.match(/\d[\d,.]*/g) ?? []).map((n) => n.replace(/[,.]+$/, '').replace(/,/g, ''))
+}
+
+/** A rewrite is usable when it adds no number its source lacks and doesn't duplicate a sibling line. */
+function usableRewrite(text: string, source: string, siblings: string[]): boolean {
+  const have = new Set(numbersIn(source))
+  if (numbersIn(text).some((n) => !have.has(n))) return false
+  const w = words(text)
+  return !siblings.some((b) => {
+    const o = words(b)
+    let shared = 0
+    for (const x of w) if (o.has(x)) shared++
+    return shared / Math.max(1, Math.min(w.size, o.size)) > 0.7
+  })
+}
+
+export interface LineRepair { flagged: string[]; rewritten: number; reverted: number; checkFailed?: boolean }
+
+export async function checkAndRewriteLines<T extends Groundable>(
+  tailored: T,
+  original: Groundable,
+  jobDescription: string,
+  ask: AskModel,
+): Promise<{ resume: T; repair: LineRepair }> {
+  let flags: Map<LineId, string> | null
+  try {
+    flags = parseLineFlags(await ask(buildLineCheckPrompt(original, tailored)))
+  } catch {
+    flags = null
+  }
+  if (!flags) return { resume: tailored, repair: { flagged: [], rewritten: 0, reverted: 0, checkFailed: true } }
+  // Drop ids that don't point at a real line.
+  for (const id of [...flags.keys()]) if (lineAt(tailored, id) === undefined) flags.delete(id)
+  if (flags.size === 0) return { resume: tailored, repair: { flagged: [], rewritten: 0, reverted: 0 } }
+
+  // Source original for every rewritten bullet, per entry.
+  const sources = new Map<LineId, string>()
+  const mapSources = (kind: 'e' | 'p', out: GroundEntry[] | undefined, input: GroundEntry[] | undefined) =>
+    out?.forEach((entry, i) => {
+      originalsFor(entry.bullets, input?.[i]?.bullets ?? []).forEach((o, k) => o && sources.set(`${kind}${i}b${k}`, o))
+    })
+  mapSources('e', tailored.experience, original.experience)
+  mapSources('p', tailored.projects, original.projects)
+  const allOriginal = original.experience.flatMap((e) => e.bullets).join(' ')
+
+  let rewrites = new Map<LineId, string>()
+  try {
+    rewrites = parseLineRewrites(await ask(buildLineRewritePrompt(original, tailored, flags, jobDescription, sources)))
+  } catch {
+    // Rewrite unavailable: every flagged line reverts below.
+  }
+
+  let rewritten = 0
+  let reverted = 0
+  const fix = (kind: 'e' | 'p', out: GroundEntry[] | undefined) =>
+    out?.map((entry, i) => {
+      const ids = entry.bullets.map((_, k) => `${kind}${i}b${k}`)
+      if (!ids.some((id) => flags!.has(id))) return entry
+      const bullets: string[] = []
+      entry.bullets.forEach((b, k) => {
+        if (!flags!.has(ids[k])) return void bullets.push(b)
+        const source = sources.get(ids[k])
+        const text = rewrites.get(ids[k])
+        const siblings = [...bullets, ...entry.bullets.slice(k + 1).filter((_, j) => !flags!.has(ids[k + 1 + j]))]
+        if (text && source && usableRewrite(text, source, siblings)) {
+          rewritten++
+          bullets.push(text)
+        } else {
+          reverted++
+          if (source) bullets.push(source)
+        }
+      })
+      return { ...entry, bullets }
+    })
+
+  const resume = { ...tailored }
+  resume.experience = fix('e', tailored.experience) ?? []
+  if (tailored.projects) resume.projects = fix('p', tailored.projects)
+  if (flags.has('summary')) {
+    const text = rewrites.get('summary')
+    const ok = text !== undefined && usableRewrite(text, allOriginal, [])
+    if (ok) rewritten++
+    else reverted++
+    resume.summary = ok ? text! : ''
+  }
+  return {
+    resume,
+    repair: { flagged: [...flags].map(([id, reason]) => `${lineAt(tailored, id)} (${reason})`), rewritten, reverted },
+  }
 }
 
 export function groundTailored<T extends Groundable>(
