@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { ExtensionPopup, PopupButton } from './ExtensionPopup'
 import { ScoreRing } from './ScoreRing'
@@ -88,6 +88,61 @@ function Output({ scene }: { scene: SceneId }) {
   return <ResumeDoc className="w-full max-w-[330px]" />
 }
 
+// Tab bar with one dark pill that slides and resizes to the selected tab.
+// Tabs differ in width (and switch to short labels on phones), so the pill is
+// measured from the selected button and re-measured when the bar resizes.
+function SceneTabs({ scene, onPick }: { scene: SceneId; onPick: (id: SceneId) => void }) {
+  const listRef = useRef<HTMLDivElement>(null)
+  const [pill, setPill] = useState<{ left: number; width: number } | null>(null)
+
+  useLayoutEffect(() => {
+    const list = listRef.current
+    if (!list) return
+    const measure = () => {
+      const el = list.querySelector<HTMLElement>('[aria-selected="true"]')
+      if (el) setPill({ left: el.offsetLeft, width: el.offsetWidth })
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(list)
+    return () => ro.disconnect()
+  }, [scene])
+
+  return (
+    <div
+      ref={listRef}
+      role="tablist"
+      aria-label="Product demo"
+      className="absolute bottom-6 left-1/2 flex -translate-x-1/2 gap-1 rounded-full bg-white/90 p-1.5 shadow-[0_8px_24px_-12px_rgba(30,27,75,0.3)] backdrop-blur"
+    >
+      {pill && (
+        <span
+          aria-hidden="true"
+          className="absolute inset-y-1.5 left-0 rounded-full bg-ink transition-[transform,width] duration-300 ease-[cubic-bezier(0.2,0.7,0.2,1)]"
+          style={{ width: pill.width, transform: `translateX(${pill.left}px)` }}
+        />
+      )}
+      {SCENES.map((s) => (
+        <button
+          key={s.id}
+          role="tab"
+          aria-selected={scene === s.id}
+          onClick={() => onPick(s.id)}
+          className={cn(
+            'relative z-10 whitespace-nowrap rounded-full px-4 py-2 text-[13px] transition-colors duration-300 max-sm:px-3 max-sm:text-[12px]',
+            scene === s.id ? 'text-white' : 'text-ink-2 hover:text-ink',
+            // Before the pill is measured (first paint), the selected tab carries its own fill.
+            !pill && scene === s.id && 'bg-ink',
+          )}
+        >
+          <span className="sm:hidden">{s.short}</span>
+          <span className="max-sm:hidden">{s.label}</span>
+        </button>
+      ))}
+    </div>
+  )
+}
+
 export function HeroStage() {
   const [scene, setScene] = useState<SceneId>('resume')
   const [auto, setAuto] = useState(true)
@@ -133,30 +188,13 @@ export function HeroStage() {
         </div>
       </div>
 
-      <div
-        role="tablist"
-        aria-label="Product demo"
-        className="absolute bottom-6 left-1/2 flex -translate-x-1/2 gap-1 rounded-full bg-white/90 p-1.5 shadow-[0_8px_24px_-12px_rgba(30,27,75,0.3)] backdrop-blur"
-      >
-        {SCENES.map((s) => (
-          <button
-            key={s.id}
-            role="tab"
-            aria-selected={scene === s.id}
-            onClick={() => {
-              setScene(s.id)
-              setAuto(false)
-            }}
-            className={cn(
-              'whitespace-nowrap rounded-full px-4 py-2 text-[13px] transition-colors max-sm:px-3 max-sm:text-[12px]',
-              scene === s.id ? 'bg-ink text-white' : 'text-ink-2 hover:text-ink',
-            )}
-          >
-            <span className="sm:hidden">{s.short}</span>
-            <span className="max-sm:hidden">{s.label}</span>
-          </button>
-        ))}
-      </div>
+      <SceneTabs
+        scene={scene}
+        onPick={(id) => {
+          setScene(id)
+          setAuto(false)
+        }}
+      />
     </div>
   )
 }
