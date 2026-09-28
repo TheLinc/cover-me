@@ -15,7 +15,7 @@ export function PrivacyBand() {
         <GithubLogoIcon
           weight="fill"
           aria-hidden="true"
-          className="pointer-events-none absolute -bottom-[22%] -left-[6%] size-[520px] rotate-[-12deg] text-night-2 max-md:-right-[22%] max-md:-top-[4%] max-md:bottom-auto max-md:left-auto max-md:size-[280px]"
+          className="pointer-events-none absolute -bottom-[22%] -left-[6%] size-[520px] rotate-[-12deg] text-night-2 max-lg:-right-[16%] max-lg:-top-[4%] max-lg:bottom-auto max-lg:left-auto max-lg:size-[300px] max-md:-right-[22%] max-md:size-[280px]"
         />
         <div className="relative flex flex-col gap-5">
           <h2 className="text-[clamp(32px,3.6vw,48px)] leading-[1.05] !text-[var(--on-night)]">Your resume stays yours</h2>

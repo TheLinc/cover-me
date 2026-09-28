@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { Eyebrow } from '@/components/site/Eyebrow'
 import { ExtensionPopup, PopupButton } from './ExtensionPopup'
+import { FitScale } from './FitScale'
 import { BrowserFrame, Chip, EXAMPLE, LetterDoc, Line, ResumeDoc } from './visuals'
 
 const STEPS = [
@@ -22,28 +23,9 @@ const STEPS = [
 ]
 
 // The step visuals are laid out at the desktop panel's size and scaled down as a
-// whole on small screens, like a screenshot, instead of reflowing into a squeeze.
+// whole on small screens (FitScale) instead of reflowing into a squeeze.
 const VISUAL_W = 504
 const VISUAL_H = 496
-
-function FitScale({ width, height, children }: { width: number; height: number; children: React.ReactNode }) {
-  const ref = useRef<HTMLDivElement>(null)
-  const [scale, setScale] = useState(1)
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const ro = new ResizeObserver(([entry]) => setScale(Math.min(1, entry.contentRect.width / width)))
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [width])
-  return (
-    <div ref={ref} className="relative w-full" style={{ height: height * scale }}>
-      <div className="absolute left-0 top-0 origin-top-left" style={{ width, height, transform: `scale(${scale})` }}>
-        {children}
-      </div>
-    </div>
-  )
-}
 
 function PostingPage({ children }: { children?: React.ReactNode }) {
   return (

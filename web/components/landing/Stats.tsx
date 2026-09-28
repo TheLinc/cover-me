@@ -3,9 +3,17 @@
 import { cn } from '@/lib/utils'
 import { useCountUp } from './useCountUp'
 
-// Sourced numbers only. The last one is our arithmetic: Huntr's median of 4
-// applications a week, at the site's claims of ~10 s with Cover Me vs ~45 min by hand.
-const STATS = [
+// Sourced numbers only. The last is ours: a typical tailoring run takes about
+// 30 s; the 45 min manual figure is our estimate, and the source line says so.
+const STATS: {
+  value: number
+  decimals: number
+  suffix: string
+  accent?: boolean
+  label: string
+  source: string
+  href?: string
+}[] = [
   {
     value: 2.1, decimals: 1, suffix: '×', accent: true,
     label: 'more interviews for tailored resumes',
@@ -25,10 +33,9 @@ const STATS = [
     href: 'https://www.theladders.com/career-advice/you-only-get-6-seconds-of-fame-make-it-count',
   },
   {
-    value: 40, decimals: 0, suffix: 's', accent: true,
-    label: 'to tailor a week of applications, vs about 3 hours by hand',
-    source: '4 applications, the median week',
-    href: 'https://huntr.co/research/job-search-trends-q2-2025',
+    value: 30, decimals: 0, suffix: 's', accent: true,
+    label: 'to tailor an application, vs about 45 minutes by hand',
+    source: 'Typical Cover Me run; manual time is our estimate',
   },
 ]
 
@@ -41,9 +48,13 @@ function Stat({ stat, last }: { stat: (typeof STATS)[number]; last: boolean }) {
         {stat.suffix}
       </div>
       <div className="text-[15px] leading-[1.45] text-body">{stat.label}</div>
-      <a href={stat.href} target="_blank" rel="noreferrer" className="mt-auto pt-2 text-[12px] text-subtle underline-offset-2 hover:underline">
-        {stat.source}
-      </a>
+      {stat.href ? (
+        <a href={stat.href} target="_blank" rel="noreferrer" className="mt-auto pt-2 text-[12px] text-subtle underline-offset-2 hover:underline">
+          {stat.source}
+        </a>
+      ) : (
+        <span className="mt-auto pt-2 text-[12px] text-subtle">{stat.source}</span>
+      )}
     </div>
   )
 }

@@ -85,13 +85,16 @@ if (base) {
   }
   if (!home.includes('data-hero-stage')) errors.push('/ is missing the hero product stage')
   // Stats render their final values in HTML; the count-up only animates them.
-  for (const v of ['2.1', '97.8', '7.4', '40']) {
+  for (const v of ['2.1', '97.8', '7.4', '30']) {
     if (!new RegExp(`data-stat[^>]*>${v.replace('.', '\\.')}<`).test(home)) errors.push(`/ stats row is missing ${v} in server HTML`)
   }
   for (const board of ['LinkedIn', 'Indeed', 'Greenhouse', 'Lever', 'Workday', 'Ashby', 'BambooHR', 'Workable']) {
     if (!home.includes(board)) errors.push(`/ boards strip is missing ${board}`)
   }
   if (/Any job (board|page)/i.test(home)) errors.push('/ claims automatic reading on any job page')
+  // A real tailoring run takes about 30 s. Visible landing copy must not promise 10.
+  const visible = home.replace(/<script[\s\S]*?<\/script>/g, '')
+  if (/(in|under|about) (10|ten) sec/i.test(visible)) errors.push('/ promises 10 seconds; a real run takes about 30')
   if (!/<div[^>]*inert=""[^>]*aria-hidden="true"|<div[^>]*aria-hidden="true"[^>]*inert=""/.test(home)) {
     errors.push('/ decorative product visuals must be inert so fake buttons are not focusable')
   }
