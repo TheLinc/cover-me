@@ -52,7 +52,7 @@ export default async function Image() {
             <div style={{ display: 'flex', fontSize: 96, fontWeight: 600, letterSpacing: -4, lineHeight: 1 }}>86</div>
             <div style={{ display: 'flex', flexDirection: 'column', fontFamily: 'Geist Mono', fontSize: 14, color: '#94A3C8', letterSpacing: 1.5 }}>
               <span>% ATS MATCH</span>
-              <span style={{ color: '#8B9CF8' }}>+32 AFTER TAILORING</span>
+              <span style={{ color: '#8B9CF8' }}>TAILORED RESUME</span>
             </div>
           </div>
           <div style={{ display: 'flex', height: 12, borderRadius: 999, background: '#262B55' }}>

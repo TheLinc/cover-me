@@ -71,7 +71,7 @@ function Run() {
           <div className="flex items-center justify-between rounded-[10px] bg-ext-elevated px-3 py-2 text-[12px]">
             <span className="text-ext-muted">ATS match</span>
             <span className={done ? 'font-semibold text-ext-text' : 'text-ext-muted'}>
-              {done ? `${EXAMPLE.after}% · +${EXAMPLE.after - EXAMPLE.before}` : `${EXAMPLE.before}%`}
+              {done ? `${EXAMPLE.score}%` : 'Scoring…'}
             </span>
           </div>
         </div>

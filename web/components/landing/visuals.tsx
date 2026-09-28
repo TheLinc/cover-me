@@ -15,8 +15,10 @@ export const EXAMPLE = {
     'Your posting asks for someone who can grow demand without growing the budget. At Brightline I grew qualified leads 38% on a flat spend…',
   bulletBefore: 'Handled social media and email marketing',
   bulletAfter: 'Ran email and social campaigns that grew qualified leads 38%',
+  // Cover Me scores only the tailored resume. `before` appears only in the
+  // ATS section's illustrative before/after card, never in the popup visuals.
   before: 54,
-  after: 86,
+  score: 86,
 }
 
 export function Line({ w, className }: { w: string; className?: string }) {

@@ -32,14 +32,14 @@ export function AtsScore() {
           <div className="flex flex-col gap-5">
             <Bar label="Before" value={EXAMPLE.before} />
             <div>
-              <Bar label="After tailoring" value={EXAMPLE.after} strong />
+              <Bar label="After tailoring" value={EXAMPLE.score} strong />
               <div className="mt-1.5 flex justify-between font-mono text-[10px] text-subtle" aria-hidden="true">
                 <span>0</span><span>25</span><span>50</span><span>75</span><span>100</span>
               </div>
             </div>
           </div>
           <div className="mt-auto text-[44px] font-semibold leading-none tracking-[-0.03em] text-ink">
-            +{EXAMPLE.after - EXAMPLE.before} <span className="text-[16px] font-medium tracking-normal text-subtle">points</span>
+            +{EXAMPLE.score - EXAMPLE.before} <span className="text-[16px] font-medium tracking-normal text-subtle">points</span>
           </div>
         </div>
 

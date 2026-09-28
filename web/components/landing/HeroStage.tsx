@@ -10,7 +10,7 @@ import { Chip, EXAMPLE, JobCard, LetterDoc, ResumeDoc } from './visuals'
 const SCENES = [
   { id: 'resume', label: 'Tailor resume', short: 'Resume' },
   { id: 'letter', label: 'Write cover letter', short: 'Letter' },
-  { id: 'score', label: 'Check ATS score', short: 'ATS score' },
+  { id: 'score', label: 'ATS match', short: 'ATS match' },
 ] as const
 type SceneId = (typeof SCENES)[number]['id']
 
@@ -53,8 +53,8 @@ function PopupScene({ scene }: { scene: SceneId }) {
   }
   return (
     <div className="flex flex-col items-center gap-2 px-4 pb-3 pt-5">
-      <ScoreRing from={EXAMPLE.before} to={EXAMPLE.after} />
-      <div className="text-[12px] text-ext-soft">+{EXAMPLE.after - EXAMPLE.before} points after tailoring</div>
+      <ScoreRing to={EXAMPLE.score} />
+      <div className="text-[12px] text-ext-soft">Tailored resume vs. {EXAMPLE.company} posting</div>
       <div className="mt-2 flex w-full flex-col gap-2 text-[12px]">
         {EXAMPLE.matchedLines.map((l) => (
           <span key={l} className="text-ext-soft">✓ {l}</span>
@@ -159,7 +159,7 @@ export function HeroStage() {
   return (
     <div data-hero-stage className="stage-grid relative overflow-hidden rounded-[32px] px-6 pb-24 pt-10 lg:px-12 lg:pt-14">
       <p className="sr-only">
-        Example: Cover Me reads a job posting, raises the resume&apos;s ATS match from {EXAMPLE.before}% to {EXAMPLE.after}%,
+        Example: Cover Me reads a job posting, tailors the resume to it, scores the tailored resume at a {EXAMPLE.score}% ATS match,
         and writes a matching cover letter.
       </p>
       <div

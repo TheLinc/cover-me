@@ -2,9 +2,9 @@
 
 import { useCountUp } from './useCountUp'
 
-// ATS match ring from the extension popup. Counts up from `from` to `to`.
-export function ScoreRing({ from, to, size = 132 }: { from: number; to: number; size?: number }) {
-  const [ref, value] = useCountUp<HTMLDivElement>(to, { from, duration: 1800 })
+// ATS match ring from the extension popup. Counts up to `to`.
+export function ScoreRing({ to, size = 132 }: { to: number; size?: number }) {
+  const [ref, value] = useCountUp<HTMLDivElement>(to, { duration: 1800 })
   const r = 54
   const c = 2 * Math.PI * r
   const filled = (c * Number(value)) / 100
