@@ -138,6 +138,15 @@ img, svg, video { display: block; }
   @media (prefers-reduced-motion: no-preference) {
     .skeleton-line { animation: shimmer 1.8s ease-in-out infinite; }
   }
+
+  /* <details> that slides open. Chrome 131+; other browsers open instantly. */
+  .accordion { interpolate-size: allow-keywords; }
+  .accordion::details-content {
+    block-size: 0;
+    overflow: hidden;
+    transition: block-size 0.3s ease, content-visibility 0.3s allow-discrete;
+  }
+  .accordion[open]::details-content { block-size: auto; }
 }
 
 @keyframes shimmer { 0% { background-position: 200% center; } 100% { background-position: -200% center; } }

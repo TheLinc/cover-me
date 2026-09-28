@@ -57,13 +57,21 @@ function Run() {
                 <li
                   key={s.label}
                   className={cn(
+                    'flex items-center gap-1.5',
                     state === 'done' && 'text-ext-soft',
-                    state === 'active' && 'pulse text-ext-text',
+                    state === 'active' && 'text-ext-text',
                     state === 'todo' && 'text-ext-muted',
                   )}
                 >
-                  {state === 'done' ? '✓' : '○'} {s.label}
-                  {s.label === 'Rewrite experience' && state === 'active' ? ` (${role} of 3)` : ''}
+                  <span className="inline-flex w-3 justify-center">
+                    {state === 'active' ? (
+                      <span className="size-2.5 animate-spin rounded-full border-[1.5px] border-brand/30 border-t-brand" />
+                    ) : state === 'done' ? '✓' : '○'}
+                  </span>
+                  <span>
+                    {s.label}
+                    {s.label === 'Rewrite experience' && state === 'active' ? ` (${role} of 3)` : ''}
+                  </span>
                 </li>
               )
             })}
