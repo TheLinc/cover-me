@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase";
+import { openBilling } from "@/lib/billing";
 import { CHROME_STORE_URL } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -63,9 +64,9 @@ export default function DashboardClient({
   async function handleBillingPortal() {
     setBillingLoading(true);
     try {
-      const res  = await fetch('/api/billing-portal', { method: 'POST' });
-      const data = await res.json() as { url?: string };
+      const data = await openBilling('portal');
       if (data.url) window.location.href = data.url;
+      else setBillingLoading(false);
     } catch {
       setBillingLoading(false);
     }
@@ -75,8 +76,7 @@ export default function DashboardClient({
     setUpgrading(true);
     setUpgradeError('');
     try {
-      const res  = await fetch('/api/checkout', { method: 'POST' });
-      const data = await res.json() as { url?: string; error?: string };
+      const data = await openBilling('checkout');
       if (data.url) {
         window.location.href = data.url;
       } else {
