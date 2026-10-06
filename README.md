@@ -214,6 +214,24 @@ This runs `pnpm test` and stops on a failure. It then lists the pending migratio
 
 Use `pnpm run`, not `pnpm deploy`. The second is a built-in pnpm command.
 
+### Resume quality eval
+
+`extension/eval/` checks the cover letter and resume tailoring prompts against 32 synthetic resumes across 16 industries (business, finance, legal, education, trades, hospitality, retail, logistics, healthcare, engineering, design, government, nonprofit, science, technology, manufacturing). Every job posting asks for something its resume lacks, so the checks can confirm the output never claims it.
+
+From `extension/`:
+
+```bash
+pnpm eval                                   # free: prompt invariants, lint self-tests, fixture integrity
+pnpm eval --live --tailor --judge           # parse, tailor, integrity checks, and an industry-fit judge
+pnpm eval --live --tailor --judge --industry Trades --runs 2
+```
+
+Live runs go through `claude -p` on your Claude plan unless `ANTHROPIC_API_KEY` is set (then `--via api` uses API credits). For clean outputs, put a token from `claude setup-token` in `extension/eval/.env` as `CLAUDE_CODE_OAUTH_TOKEN=...`. The harness then uses an empty Claude Code config, so your own `CLAUDE.md`, hooks and rules never reach the model. Every output is saved to `eval/reports/results-*.json`.
+
+A resume fails when the parse doesn't match its answer key, when an integrity check fails (invented skills or numbers, changed titles or dates, dropped certifications, wrong bullet counts), or when the judge scores faithfulness, field fit, relevance or readability at 2/5 or lower. `--baseline` also fails a case whose judge scores drop by a full point against `eval/baseline.json`. Refresh that file with `--update-baseline` after an intended change.
+
+GitHub Actions runs the free checks on every push (`.github/workflows/prompt-checks.yml`) and the live eval when the prompt code or eval changes, weekly, and on demand (`.github/workflows/resume-eval.yml`, needs a `CLAUDE_CODE_OAUTH_TOKEN` repository secret).
+
 ### Project structure
 
 ```

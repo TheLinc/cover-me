@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
   admin, callFunction, createUser, deleteUser, JOB, mockClaude, quotaUsedToday, setQuotaUsedToday, type TestUser, uploadResume,
 } from './helpers'
-import { MOCK_PARSED_RESUME, MOCK_TAILOR_DELTA } from '../mock-anthropic'
+import { MOCK_PARSED_RESUME, MOCK_REWRITTEN_BULLET, MOCK_TAILOR_DELTA } from '../mock-anthropic'
 
 type NdjsonEvent =
   | { type: 'start'; roles: number }
@@ -36,8 +36,13 @@ describe('tailor', () => {
     expect(resume.name).toBe(MOCK_PARSED_RESUME.name)
     expect(resume.experience[0].company).toBe('Initech')
     expect(resume.experience[0].dates).toBe(MOCK_PARSED_RESUME.experience[0].dates)
-    expect(resume.experience[0].bullets).toEqual(MOCK_TAILOR_DELTA.experience[0].bullets)
+    // The line check flags the invented "4 hours to 40 minutes"; only that
+    // bullet is rewritten, the rest of the role is untouched.
+    expect(resume.experience[0].bullets).toEqual([MOCK_REWRITTEN_BULLET, MOCK_TAILOR_DELTA.experience[0].bullets[1]])
     expect(resume.summary).toBe(MOCK_TAILOR_DELTA.summary)
+    // Evidence-backed skills: the category label with real evidence stays, the
+    // skill whose evidence isn't in the resume is dropped.
+    expect(resume.skills).toBe('TypeScript, Postgres, React, Data Pipelines')
     // 2 of 3 tier-1 keywords covered, 1 of 1 tier-2: 70 * 2/3 + 30 = 76.67 → 77
     expect(resume.atsScore).toBe(77)
     expect(resume.atsGaps).toEqual(['Kafka'])
@@ -55,9 +60,10 @@ describe('tailor', () => {
 
     await mockClaude.reset()
     await callFunction('tailor', { token: user.token, body: { job: JOB } })
-    const models = (await mockClaude.requests()).map((r) => r.model)
-    expect(models.some((m) => m.includes('haiku'))).toBe(false)
-    expect(models).toHaveLength(1)
+    const prompts = (await mockClaude.requests()).map((r) => r.messages[0].content)
+    expect(prompts.some((p) => p.startsWith('You are a resume parser'))).toBe(false)
+    const checks = ['SKILL CLAIM CHECK', 'RESUME ACCURACY CHECK', 'RESUME LINE REWRITE']
+    expect(prompts.filter((p) => !checks.some((c) => p.startsWith(c)))).toHaveLength(1)
   })
 
   it('streams NDJSON start, delta and done events when asked', async () => {

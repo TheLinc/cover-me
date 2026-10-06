@@ -3,7 +3,7 @@ import type { AIProvider, ParsedResume } from '../../types'
 const CLAUDE_API = 'https://api.anthropic.com/v1/messages'
 const OPENAI_API = 'https://api.openai.com/v1/chat/completions'
 
-function buildParsePrompt(resumeText: string): string {
+export function buildParsePrompt(resumeText: string): string {
   return `You are a resume parser. Convert the resume text below into structured JSON.
 
 RULES:
@@ -47,7 +47,7 @@ JSON structure (omit "projects", "skills", "certifications" entirely if those se
     }
   ],
   "skills": "skills string exactly as written in the resume",
-  "certifications": ["Certification Name — Issuer — Year"]
+  "certifications": ["each certification or license line copied verbatim"]
 }
 
 RESUME:
@@ -65,7 +65,7 @@ function isValidParsedResume(r: unknown): r is ParsedResume {
   )
 }
 
-function parseParsedJson(raw: string): ParsedResume {
+export function parseParsedJson(raw: string): ParsedResume {
   const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
   let parsed: unknown
   try {

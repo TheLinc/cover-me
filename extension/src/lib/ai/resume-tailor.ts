@@ -1,6 +1,7 @@
 import type { AIProvider, JobData, ParsedResume, TailoredResume } from '../../types'
 import { debugGroup, debugLog } from '../debug'
 import { deriveTailorProgress } from './tailor-progress'
+import { candidateText, checkAndRewriteLines, groundSkills, groundTailored, type AskModel, type LineRepair } from './resume-grounding'
 
 const CLAUDE_API = 'https://api.anthropic.com/v1/messages'
 const OPENAI_API = 'https://api.openai.com/v1/chat/completions'
@@ -18,7 +19,10 @@ function buildTailorSchema(parsed: ParsedResume): string {
     delta.projects = [{ bullets: ['string — rewritten bullets for the SAME-INDEX input project'] }]
   }
   if (parsed.skills) {
-    delta.skills = 'string — the optimized skills list from STEP 8, comma-separated'
+    delta.skills = [
+      { skill: 'string — a skill worded exactly as in the resume' },
+      { skill: 'string — an added or reworded skill (STEP 8)', evidence: 'string — exact phrase copied from the resume that proves it' },
+    ]
   }
   delta.keywordMatch = {
     tier1Covered: ['string — Tier 1 keyword the candidate genuinely has'],
@@ -90,7 +94,8 @@ export interface TailorDelta {
   summary?: string
   experience: TailorDeltaEntry[]
   projects?: TailorDeltaEntry[]
-  skills?: string
+  /** [{ skill, evidence? }] from current prompts; a comma-separated string from older ones. Converted by groundSkills before merging. */
+  skills?: string | unknown[]
   keywordMatch?: Record<string, unknown>
 }
 
@@ -159,8 +164,9 @@ STEP 8 — OPTIMIZE SKILLS
 Reorder the skills so the most relevant to this job appear first, using the JD's exact phrasing where it differs from the resume.
 
 ADD a skill only when it is in the JD AND justified by the resume in one of two ways:
-  - Direct superset/subset of an existing skill — JavaScript on resume + JD says TypeScript → add TypeScript.
-  - A capability CATEGORY LABEL you can back with a SPECIFIC tool already on the resume — Zustand on resume + JD says "state management" → add "State Management"; Jest/RTL on resume + JD says "testing" → add "Testing". Before adding any label, name the resume tool that justifies it; if you cannot name one, do not add it. Add the label only, NEVER the specific JD tool itself (JD says Meta Ads, resume has Google Ads → you may add the label "Paid Acquisition", never "Meta Ads") (Integrity 3).
+  - Direct superset/subset of an existing skill — JavaScript on resume + JD says TypeScript → {"skill": "TypeScript", "evidence": "JavaScript"}.
+  - A capability CATEGORY LABEL backed by a SPECIFIC item already on the resume — {"skill": "State Management", "evidence": "Zustand"}; {"skill": "Testing", "evidence": "Jest"}; {"skill": "Paid Acquisition", "evidence": "Google Ads"}; {"skill": "Expense Reporting", "evidence": "expense reports in Concur"}. Make these connections actively: whenever the JD names a capability category and the resume shows a specific instance of it, add the category with its evidence, the way a careful human editor would. Add the label only, NEVER the specific JD tool itself (JD says Meta Ads, resume has Google Ads → "Paid Acquisition", never "Meta Ads") (Integrity 3).
+SKILLS OUTPUT FORMAT: "skills" is a JSON array of objects. A skill worded exactly as in the resume is {"skill": "..."}. Every other skill (an addition, or a rewording into the JD's phrasing) MUST include "evidence": a phrase copied character-for-character from the resume that directly demonstrates that skill itself, not something merely near it. The application checks every evidence phrase against the resume and deletes any skill whose evidence is missing or not found, so never paraphrase evidence and never add a skill you cannot back.
 Never add a competing or unrelated tool the candidate lacks (Vue, Redux, a different language). Do NOT add process or architecture buzzwords the resume gives no concrete evidence for — in tech, "CI/CD", "DevOps", "Cloud Security", "Microservices Architecture", "Cloud-Native" each require a named tool or practice on the resume; in any field, a license, certification, or method named only in the JD is never added unless the resume states it. Absent evidence, these are fabrications (Integrity 4). If in doubt, leave it out.
 
 REMOVE skills not relevant to this role type (e.g. a mobile-only framework for a pure web role). When over the cap, keep the most JD-relevant skills and drop the least relevant first. Aim for ~15–18 focused skills, not an exhaustive inventory; a bloated list buries the terms that matter and reads as unfocused. NEVER remove a skill the JD names — or a specific instance of a category the JD names (e.g. MySQL under "relational databases") — that the candidate genuinely has; ATS matches literal tokens, so the JD's exact term must survive. When the resume has both a JD-named specific term and its generic synonym, keep BOTH ("MySQL (SQL)", not just "SQL"); dedupe only synonyms the JD does not name. Hard cap: 18 items.
@@ -172,7 +178,7 @@ COMPACT MODE — SINGLE PAGE REQUIRED:
 The output must fit on a single letter page. Apply these additional constraints (they override the general rules where they conflict):
 - Reduce to a maximum of 3 bullets per role — keep the most relevant 3, drop the rest. A bullet matching an activity the JD explicitly names (e.g. code reviews) is among the most relevant — keep it.
 - Every bullet must fit on a single line (100 characters maximum)
-- Shorten the skills string to the 10 most relevant skills only
+- Shorten the skills list to the 10 most relevant skills only
 - The bullet budget rule (STEP 5) does NOT apply in compact mode — use these constraints instead
 - The summary may be omitted in compact mode if space is critical
 
@@ -234,10 +240,10 @@ Write one internal positioning sentence (not output): "[Role archetype] with [X 
 
 ${includeSummary ? `STEP 4 — WRITE SUMMARY
 2–3 sentences, 40–70 words, no first-person pronouns, no weak openers ("Experienced professional", "Results-driven", "Dynamic"), no clichés ("passionate", "innovative", "team player", "fast-paced", "dynamic"):
-- Identity: open with the target role's title (TARGET ROLE above) as the archetype, unless the candidate's experience clearly does not support that level — then use the closest archetype it does support. Include 2–3 Tier 1 keywords and years of experience.
+- Identity: open with the candidate's own most recent title, or the archetype their experience directly supports. Use the TARGET ROLE's title only if the candidate has held that role at that level; never adopt a target title that names a level, specialty, license, or credential the resume does not show (a line cook is not a "Sous Chef", a tanker driver is not a "Hazmat Tanker Driver", a VP is not a "Chief Operating Officer"), and never write "[target title] candidate". Include 2–3 Tier 1 keywords and years of experience.
 - Strongest capability or achievement that answers the role's core challenge
 - Optional: a differentiator or collaboration strength relevant to the role
-YEARS OF EXPERIENCE: state only what the resume's employment dates support (earliest start date to today). Never round up or inflate to match the job's stated minimum — if the dates support 3 years and the JD asks for 5, write 3, not 5. If unsure, omit the number entirely.
+YEARS OF EXPERIENCE: state only what the resume's employment dates support: add up the employed periods, and never count gaps between roles or time after a last role that has ended (a resume whose last role ended in 2018 gains no years through today). Never round up or inflate to match the job's stated minimum — if the dates support 3 years and the JD asks for 5, write 3, not 5. If unsure, omit the number entirely.
 Claim only what a bullet demonstrates — a skills-only technology may not be claimed as built/deployed/specialised in, and architecture buzzwords the resume does not support are forbidden (Integrity 4).
 INDUSTRY/DOMAIN: name a domain (e-commerce, fintech, biotech, etc.) ONLY if a bullet shows the candidate actually worked in it. Never borrow a domain from the JD's requirements or "nice-to-have" list, and never hedge an unearned one in with "-adjacent", "-aligned", or "cross-domain" (Integrity 4).` : `STEP 4 — SUMMARY: skip; set summary to "".`}
 
@@ -249,13 +255,14 @@ PROJECTS: preserve every project's bullet count exactly, and never drop a techno
 
 STEP 6 — REWRITE BULLETS
 Compressed STAR: [strong action verb] + [what was done] + [measurable result or concrete scope]. Reword for impact and ATS phrasing without changing what actually happened (Integrity 3–5).
-- Use the JD's exact term for matching work — if the JD says "WCAG 2.1 AA" and the candidate did accessibility work, write "WCAG 2.1 AA", not just "accessible". Apply STEP 2 synonym pairs where they fit.
+- Use the JD's exact term for matching work — if the JD says "cycle counting" and the resume says "inventory counts", write "cycle counting". This never extends to a named standard, tool, certification, or system the resume does not name (the resume says "accessibility work", the JD says "WCAG 2.1 AA": keep "accessibility"). Apply STEP 2 synonym pairs where they fit.
 - Borrow the JD's vocabulary, not its sentences: keep the JD's specific terms-of-art (per above), but never reproduce a whole sentence or clause from the JD — phrase every accomplishment in the candidate's own words. Lifted phrasing reads as templated to a human reviewer.
 - Quantify with industry-fit metrics — Tech: latency, scale, uptime, cost, build time; Healthcare: caseload, outcomes, error-free records, compliance; Finance: $ value, audit volume, reporting time; Marketing: conversion, CTR, ROI, revenue; Legal: transaction value, case outcomes, caseload. No real metric? Use concrete scope (team size, user count, integrations, timeline). Never a vague improvement with no number. Use each specific figure once — never repeat the same metric across bullets; the summary may cite at most one headline number.
 - Numbers are evidence, not decoration: use ONLY figures stated in the resume or supplemental context. If the input gives no number for an accomplishment, write it with concrete scope or without a figure — a made-up percentage is a fabrication, not a rewrite (Integrity 7).
 - Replace weak openers: Responsible for→Led/Owned; Worked on→Built/Developed; Helped/Assisted with→Partnered/Collaborated; "Demonstrating proficiency in"→delete (the work shows it).
 - Verb bank: Led, Owned, Drove, Directed, Built, Designed, Launched, Shipped, Architected, Reduced, Optimized, Streamlined, Scaled, Generated, Delivered, Partnered, Mentored.
 - Vary bullet rhythm: recruiters flag resumes where every bullet follows the identical [verb + task + metric] cadence or consecutive bullets open with the same verb. Vary sentence shape and length across each role's bullets — place the metric mid-sentence in some, at the end in others; a bullet with no metric stays concrete and factual rather than force-fitted to the formula.
+- No bridging clauses: never append a clause that argues the bullet's relevance to this job ("demonstrating…", "transferable to…", "directly applicable to…", "supporting [the JD's goals]", "[JD term]-aligned"). State what happened; the reader draws the connection.
 - Banned filler (reads as AI-written): leveraged, utilized, seamlessly, cutting-edge, state-of-the-art, spearheaded, honed, fostered, garnered, various, numerous. Use the plain verb or name the specific thing instead.
 
 STEP 7 — REORDER BULLETS
@@ -304,11 +311,28 @@ export function isValidResume(r: unknown): r is TailoredResume {
 }
 
 // Full production assembly: raw model output → validated delta → merged resume
-// with the code-computed ATS score attached. Shared by tailorResume and the
-// eval harness so evals exercise exactly the production path.
-export function assembleTailored(parsed: ParsedResume, raw: string): TailoredResume {
+// → grounding guard (job-only terms removed), with the code-computed ATS score
+// attached. Shared by tailorResume and the eval harness so evals exercise
+// exactly the production path.
+export async function assembleTailored(
+  parsed: ParsedResume,
+  raw: string,
+  grounding: { jobDescription: string; supplemental?: string; ask?: AskModel; onLineRepair?: (repair: LineRepair) => void },
+  onRemoved?: (terms: string[]) => void,
+): Promise<TailoredResume> {
   const delta = parseDelta(raw)
-  const resume = mergeTailorDelta(parsed, delta) as TailoredResume
+  const candidate = candidateText(parsed, grounding.supplemental)
+  const claimed = await groundSkills(delta.skills, candidate, grounding.ask)
+  delta.skills = claimed.skills
+  let merged = mergeTailorDelta(parsed, delta) as TailoredResume
+  if (grounding.ask) {
+    const lines = await checkAndRewriteLines(merged, parsed, grounding.jobDescription, grounding.ask)
+    merged = lines.resume
+    grounding.onLineRepair?.(lines.repair)
+  }
+  const { resume, removed } = groundTailored(merged, parsed, candidate, grounding.jobDescription)
+  const all = [...claimed.dropped, ...removed]
+  if (all.length) onRemoved?.(all)
   if (delta.keywordMatch && typeof delta.keywordMatch === 'object') {
     const { score, gaps } = scoreFromMatch(delta.keywordMatch as KeywordMatch)
     resume.atsScore = score
@@ -449,5 +473,38 @@ export async function tailorResume(
   }
 
   await debugLog('Tailor — raw model response', raw)
-  return assembleTailored(parsed, raw)
+  return assembleTailored(parsed, raw, { jobDescription: job.description, supplemental, ask: checkModel(provider, apiKey) }, (removed) =>
+    void debugLog('Tailor — grounding guard removed', removed))
+}
+
+// Model for the skill-claim pair check and the line check/rewrite (see
+// resume-grounding.ts), on the same provider and key as the tailor call.
+// Sonnet, not Haiku: on 38 hand-labeled skill/evidence pairs Haiku was right 29
+// times, Sonnet 4.6 38 times (extension/eval/claim-pairs.ts). Prompts are small.
+function checkModel(provider: AIProvider, apiKey: string): AskModel {
+  return async (prompt) => {
+    if (provider === 'claude') {
+      const res = await fetch(CLAUDE_API, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 2000, messages: [{ role: 'user', content: prompt }] }),
+      })
+      if (!res.ok) throw new Error(`Claude API error ${res.status}`)
+      const data = (await res.json()) as { content: Array<{ type: string; text: string }> }
+      return data.content.find((b) => b.type === 'text')?.text ?? ''
+    }
+    const res = await fetch(OPENAI_API, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({ model: 'gpt-4o', max_tokens: 2000, messages: [{ role: 'user', content: prompt }] }),
+    })
+    if (!res.ok) throw new Error(`OpenAI API error ${res.status}`)
+    const data = (await res.json()) as { choices: Array<{ message: { content: string } }> }
+    return data.choices[0]?.message?.content ?? ''
+  }
 }
