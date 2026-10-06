@@ -93,8 +93,20 @@ type FrameScrape =
 // see); falls back to a self-contained inline scraper injected via
 // chrome.scripting.executeScript so the user doesn't need to refresh after
 // installing or reloading the extension.
+// The scrapers, built by vite.config.ts (contentScriptIife) as one classic script at
+// the extension root. Injected on click; nothing is declared in content_scripts.
+const CONTENT_SCRIPT_FILE = 'content.js'
+
 async function scrapeTab(tabId: number): Promise<JobData> {
   const frameIds = await listScrapableFrames(tabId)
+
+  // Inject the scrapers into those frames. activeTab covers the main frame's
+  // origin; embedded ATS frames are covered by their host_permissions. A frame
+  // we can't inject into just answers with a connection error below, and the
+  // inline fallback gets its turn.
+  await chrome.scripting
+    .executeScript({ target: { tabId, frameIds }, files: [CONTENT_SCRIPT_FILE] })
+    .catch(() => {})
 
   // --- Primary path: content script message, per frame ---
   const results: FrameScrape[] = await Promise.all(

@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
 }
 
-const EFFECTIVE_DATE = 'June 4, 2026'
+const EFFECTIVE_DATE = 'September 27, 2026'
 const CONTACT_EMAIL  = 'support@cover-me.dev'
 
 // ── Section heading ────────────────────────────────────────────────────────
@@ -342,19 +342,14 @@ export default function PrivacyPage() {
               <code className="text-brand-light font-mono text-[12px]">activeTab</code> permission
               grants temporary host access to the tab the user is currently viewing. This is what
               allows <code className="text-brand-light font-mono text-[12px]">chrome.scripting.executeScript</code>{' '}
-              to inject the fallback job scraper into that tab. Without it, the extension would need
-              to declare explicit host permissions for every possible job board domain — an
-              impractical and overly broad alternative given that job postings exist on thousands
-              of different domains.
+              to read the job posting in that tab. It is why Cover Me can work on job postings across
+              thousands of sites without asking for access to all websites.
               <br /><br />
               <strong className="text-foreground">Exactly how it is used:</strong> When you click
-              Generate or Tailor Resume, the service worker first tries the content script already
-              running on the page. If the content script is unavailable (e.g. the tab was open
-              before the extension was installed), <code className="text-brand-light font-mono text-[12px]">activeTab</code>{' '}
-              enables the fallback: a scraper function defined in the extension&apos;s own bundle
-              is injected via <code className="text-brand-light font-mono text-[12px]">chrome.scripting.executeScript</code>{' '}
-              to read the job title, company name, and description from the page. No tab URLs,
-              browsing history, cookies, or other metadata are accessed or transmitted.
+              Generate or Tailor Resume, the service worker injects the job-posting reader from the
+              extension&apos;s own package into the page you are viewing and reads the job title,
+              company name, and description. No tab URLs, browsing history, cookies, or other
+              metadata are accessed or transmitted.
               <br /><br />
               <strong className="text-foreground">Access is strictly user-initiated:</strong>{' '}
               Access is granted only at the moment you click Generate or Tailor Resume and expires
@@ -362,23 +357,18 @@ export default function PrivacyPage() {
             </PermissionCard>
 
             <PermissionCard name="scripting">
-              <strong className="text-foreground">Why it is needed:</strong> The content script
-              declared in Cover Me is only available in tabs that were loaded after the extension
-              was installed or last reloaded. For tabs already open at install time, sending a
-              message to the content script fails silently. The{' '}
-              <code className="text-brand-light font-mono text-[12px]">scripting</code> permission
-              enables a fallback path via{' '}
-              <code className="text-brand-light font-mono text-[12px]">chrome.scripting.executeScript</code>{' '}
-              so users do not need to manually refresh every open tab before the extension works.
+              <strong className="text-foreground">Why it is needed:</strong> Cover Me does not run
+              any code on web pages in the background. Its job-posting reader is injected only when
+              you click Generate or Tailor Resume, using{' '}
+              <code className="text-brand-light font-mono text-[12px]">chrome.scripting.executeScript</code>.
               <br /><br />
-              <strong className="text-foreground">Exactly how it is used:</strong> When the content
-              script is unreachable, the service worker injects a self-contained scraper function
-              into the active tab. This function is defined entirely within the extension&apos;s
-              own bundle and passed via the{' '}
-              <code className="text-brand-light font-mono text-[12px]">func:</code> parameter —
-              no code is fetched from any remote source. It reads only DOM text and JSON-LD
-              structured data to extract job title, company name, and description, then returns
-              a plain object. It does not write to the page, access cookies or
+              <strong className="text-foreground">Exactly how it is used:</strong> On your click, the
+              service worker injects the reader (a file inside the extension&apos;s own package,{' '}
+              <code className="text-brand-light font-mono text-[12px]">content.js</code>) into the
+              active tab. If that fails, it injects a smaller self-contained scraper function from
+              the same bundle. No code is fetched from any remote source. Both read only DOM text
+              and JSON-LD structured data to extract job title, company name, and description, then
+              return a plain object. They do not write to the page, access cookies or
               localStorage, or persist anything.
               <br /><br />
               <strong className="text-foreground">Access is strictly user-initiated:</strong>{' '}
@@ -387,41 +377,32 @@ export default function PrivacyPage() {
               injected in the background.
             </PermissionCard>
 
-            <H3>Content script host access</H3>
+            <H3>Job board host access</H3>
             <P>
-              In addition to declared permissions, Cover Me registers a content script that runs on
-              web pages. This is what Chrome displays as{' '}
-              <strong className="text-foreground">&ldquo;Read and change all your data on all websites&rdquo;</strong>{' '}
-              during installation.
+              Cover Me does not run on the websites you visit. It reads a page only when you click
+              Generate or Tailor Resume, through the <code className="text-brand-light font-mono text-[12px]">activeTab</code>{' '}
+              permission above. Six job-board domains are listed as host permissions so Cover Me can
+              also read postings that a company&apos;s careers page embeds from those services. Together
+              with the API domains below, Chrome shows this during installation as{' '}
+              <strong className="text-foreground">&ldquo;Read and change your data on a number of websites.&rdquo;</strong>
             </P>
 
             <PermissionCard
-              name={"<all_urls> content script"}
-              warning="Read and change all your data on all websites"
+              name="greenhouse.io, lever.co, myworkdayjobs.com, ashbyhq.com, bamboohr.com, workable.com"
+              warning="Read and change your data on a number of websites"
             >
-              <strong className="text-foreground">Why Chrome shows this warning:</strong> Cover Me
-              registers a content script with <code className="text-brand-light font-mono text-[12px]">matches: [&quot;&lt;all_urls&gt;&quot;]</code>,
-              which Chrome surfaces as &ldquo;Read and change all your data on all websites.&rdquo;
-              This warning reflects the technical scope of the permission, not Cover Me&apos;s
-              actual behaviour.
+              <strong className="text-foreground">Why it is needed:</strong> Many company careers
+              pages show the job posting inside an embedded frame served by an applicant tracking
+              system (Greenhouse, Lever, Workday, Ashby, BambooHR, or Workable). Chrome&apos;s{' '}
+              <code className="text-brand-light font-mono text-[12px]">activeTab</code> permission only
+              covers the page you are on, not frames from other sites inside it, so reading those
+              embedded postings requires access to these six domains.
               <br /><br />
-              <strong className="text-foreground">Why all URLs are needed:</strong> Cover Me is
-              designed to work on any job posting — from large boards like LinkedIn and Indeed to an
-              applicant tracking system hosting a single posting, or a company&apos;s own careers
-              page. Restricting the content script to a fixed list of domains would prevent it from
-              working on the hundreds of job boards and ATS-hosted postings that exist. The broad
-              match is required to deliver the extension&apos;s core promise: one tool for every job
-              posting.
-              <br /><br />
-              <strong className="text-foreground">What the content script actually does:</strong> The
-              script registers a single message listener ({' '}
-              <code className="text-brand-light font-mono text-[12px]">chrome.runtime.onMessage</code>)
-              and does nothing else passively. It only reads page content when it receives a{' '}
-              <code className="text-brand-light font-mono text-[12px]">SCRAPE_JOB</code> message from
-              the service worker — which only happens when you explicitly click Generate. It reads
-              only the job title, company name, and job description from the DOM of the active tab.
-              It does not modify any page content, inject any UI, monitor navigation, or transmit
-              any data independently.
+              <strong className="text-foreground">Exactly how it is used:</strong> Only when you click
+              Generate or Tailor Resume, the job-posting reader is injected into the embedded posting
+              frame and reads the job title, company name, and description. Nothing runs on these
+              domains at any other time. The reader does not modify the page, inject any UI, monitor
+              navigation, or transmit data independently.
               <br /><br />
               <strong className="text-foreground">What we do NOT do:</strong>
               <ul className="mt-2 space-y-1 pl-4 list-disc">

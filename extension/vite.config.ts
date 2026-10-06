@@ -1,4 +1,4 @@
-import { defineConfig, type Plugin } from 'vite'
+import { build, defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import { crx } from '@crxjs/vite-plugin'
 import manifest from './manifest.json'
@@ -39,6 +39,48 @@ function stripJsPdfRemoteCode(): Plugin {
   }
 }
 
+// The scrapers are injected on click with chrome.scripting.executeScript({ files }),
+// not declared in manifest.content_scripts, so nothing runs on a page until the
+// user opens the popup there. executeScript needs one classic (non-module) file,
+// and CRXJS 2.4's `?script&iife` isn't implemented while its `?script` loader
+// exposes the chunk to every site via web_accessible_resources. So build
+// src/content/index.ts separately as an IIFE at dist/content.js
+// (CONTENT_SCRIPT_FILE, used by the background). Extension files injected by
+// executeScript don't need to be web-accessible.
+export const CONTENT_SCRIPT_FILE = 'content.js'
+
+function contentScriptIife(): Plugin {
+  const iifeBuild = (write: boolean) =>
+    build({
+      configFile: false,
+      logLevel: 'warn',
+      esbuild: { legalComments: 'none' },
+      build: {
+        write,
+        outDir: 'dist',
+        emptyOutDir: false,
+        copyPublicDir: false,
+        lib: { entry: 'src/content/index.ts', formats: ['iife'], name: 'coverMeContent', fileName: () => CONTENT_SCRIPT_FILE },
+      },
+    })
+  return {
+    name: 'content-script-iife',
+    async generateBundle() {
+      const [out] = (await iifeBuild(false)) as { output: { code: string }[] }[]
+      this.emitFile({ type: 'asset', fileName: CONTENT_SCRIPT_FILE, source: out.output[0].code })
+    },
+    configureServer(server) {
+      // Dev (`pnpm dev`): CRXJS serves from dist/, so write the file there and
+      // rebuild it when a scraper changes.
+      const rebuild = () => iifeBuild(true).catch((e) => server.config.logger.error(String(e)))
+      rebuild()
+      server.watcher.on('change', (file) => {
+        if (file.replace(/\\/g, '/').includes('/src/content/')) rebuild()
+      })
+    },
+  }
+}
+
 // `--mode localdb` (pnpm dev / build:local) targets the local Supabase
 // stack from .env.localdb, so the service worker also needs host access to it.
 // Production builds use manifest.json unchanged.
@@ -52,6 +94,7 @@ export default defineConfig(({ mode }) => ({
         ? { ...manifest, host_permissions: [...manifest.host_permissions, LOCAL_SUPABASE] }
         : manifest,
     }),
+    contentScriptIife(),
     stripJsPdfRemoteCode(),
   ],
   // Drop attribution/legal comments from minified output. Some bundled deps
