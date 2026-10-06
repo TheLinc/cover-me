@@ -34,6 +34,10 @@ writeFileSync(envFile, [
   'ANTHROPIC_API_KEY=mock-key',
   `ANTHROPIC_BASE_URL=http://host.docker.internal:${MOCK_PORT}`,
   'DEBUG_MODE=false',
+  'STRIPE_SECRET_KEY=sk_test_mock',
+  'STRIPE_PRO_PRICE_ID=price_mock_pro',
+  `STRIPE_API_BASE=http://host.docker.internal:${MOCK_PORT}`,
+  'SITE_URL=http://localhost:3000',
 ].join('\n') + '\n')
 
 console.log('Serving functions with the test env…')
@@ -49,7 +53,7 @@ process.on('SIGINT', () => { cleanup(); process.exit(130) })
 // anon JWT, then the function rejects it as a user token with its own JSON
 // body. Warming all of them here keeps cold starts (slow after a volume wipe,
 // when the runtime re-downloads npm deps) out of the first test that calls each.
-const FUNCTIONS = ['resume', 'generate', 'tailor', 'letters', 'applications']
+const FUNCTIONS = ['resume', 'generate', 'tailor', 'letters', 'applications', 'billing']
 
 async function waitForFunctions(timeoutMs = 180_000) {
   const deadline = Date.now() + timeoutMs

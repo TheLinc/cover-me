@@ -99,6 +99,16 @@ export const mockClaude = {
   requests: async (): Promise<ClaudeRequest[]> => (await fetch(`${MOCK_URL}/__mock/requests`)).json(),
 }
 
+export interface StripeCall {
+  path: string
+  params: Record<string, string>
+  idempotencyKey: string | null
+}
+
+export const mockStripe = {
+  calls: async (): Promise<StripeCall[]> => (await fetch(`${MOCK_URL}/__mock/stripe`)).json(),
+}
+
 export const JOB = {
   title: 'Senior Backend Engineer',
   company: 'Acme',

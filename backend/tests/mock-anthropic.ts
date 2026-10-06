@@ -6,6 +6,9 @@
 //   POST /__mock/fail-next     { status, body? } → the next /v1/messages call fails
 //   GET  /__mock/requests      every /v1/messages body received since the last reset
 //   POST /__mock/reset         clears recorded requests and queued failures
+//   POST /v1/customers, /v1/checkout/sessions, /v1/billing_portal/sessions
+//                              Stripe stand-ins (billing function, via STRIPE_API_BASE)
+//   GET  /__mock/stripe        every Stripe call received since the last reset
 
 import { createServer, type IncomingMessage, type Server } from 'node:http'
 
@@ -82,6 +85,9 @@ type MessagesBody = { model?: string; stream?: boolean; messages?: Array<{ role:
 const received: MessagesBody[] = []
 const failures: Array<{ status: number; body: string }> = []
 
+type StripeCall = { path: string; params: Record<string, string>; idempotencyKey: string | null }
+const stripeCalls: StripeCall[] = []
+
 function readBody(req: IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
     let data = ''
@@ -123,6 +129,7 @@ export function startMockAnthropic(port: number): Promise<Server> {
 
     if (req.method === 'POST' && url === '/__mock/reset') {
       received.length = 0
+      stripeCalls.length = 0
       failures.length = 0
       return res.writeHead(204).end()
     }
@@ -177,6 +184,23 @@ export function startMockAnthropic(port: number): Promise<Server> {
       res.writeHead(200, { 'content-type': 'application/json' })
       if (body.model?.includes('haiku')) return res.end(messageJson(JSON.stringify(MOCK_PARSED_RESUME), body.model))
       return res.end(messageJson(MOCK_LETTER, body.model))
+    }
+
+    if (req.method === 'GET' && url === '/__mock/stripe') {
+      res.writeHead(200, { 'content-type': 'application/json' })
+      return res.end(JSON.stringify(stripeCalls))
+    }
+    if (req.method === 'POST' && ['/v1/customers', '/v1/checkout/sessions', '/v1/billing_portal/sessions'].includes(url)) {
+      const params = Object.fromEntries(new URLSearchParams(await readBody(req)))
+      const key = req.headers['idempotency-key']
+      stripeCalls.push({ path: url, params, idempotencyKey: typeof key === 'string' ? key : null })
+      const n = stripeCalls.length
+      const reply =
+        url === '/v1/customers' ? { id: `cus_mock_${n}` }
+        : url === '/v1/checkout/sessions' ? { id: `cs_mock_${n}`, url: `https://checkout.stripe.test/cs_mock_${n}` }
+        : { url: 'https://billing.stripe.test/portal' }
+      res.writeHead(200, { 'content-type': 'application/json' })
+      return res.end(JSON.stringify(reply))
     }
 
     res.writeHead(404).end()
