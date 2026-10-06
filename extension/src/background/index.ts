@@ -4,8 +4,12 @@ import { parseResumeStructure } from '../lib/ai/resume-parse'
 import { tailorResume } from '../lib/ai/resume-tailor'
 import { decryptApiKey } from '../lib/crypto'
 import { debugGroup } from '../lib/debug'
-import { addToHistory, getCachedTier, getCandidateContext, getResume, getSettings, saveParsedResume } from '../lib/storage'
+import { addToHistory, clearSavedLogin, getCachedTier, getCandidateContext, getResume, getSettings, saveParsedResume } from '../lib/storage'
 import type { CoverJob, CoverLetter, GenerateResponse, JobData, ScrapeResponse, TailoredResume, TailorJob, TailorResponse } from '../types'
+
+chrome.runtime.onInstalled.addListener(() => {
+  clearSavedLogin()
+})
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (sender.id !== chrome.runtime.id) return

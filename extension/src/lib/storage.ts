@@ -59,20 +59,8 @@ export async function clearSession(): Promise<void> {
   await chrome.storage.local.remove('session')
 }
 
-export interface SavedLogin {
-  email: string
-  encryptedPassword: string
-}
-
-export async function getSavedLogin(): Promise<SavedLogin | null> {
-  const { savedLogin } = await chrome.storage.local.get('savedLogin')
-  return (savedLogin as SavedLogin) ?? null
-}
-
-export async function setSavedLogin(login: SavedLogin): Promise<void> {
-  await chrome.storage.local.set({ savedLogin: login })
-}
-
+// "Remember me" used to keep the password here, encrypted with a key stored
+// next to it. The background worker deletes any leftover copy on install or update.
 export async function clearSavedLogin(): Promise<void> {
   await chrome.storage.local.remove('savedLogin')
 }

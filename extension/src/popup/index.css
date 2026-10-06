@@ -975,28 +975,6 @@ html, body {
   gap: 10px;
 }
 
-.remember-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 14px;
-}
-
-.remember-row input[type="checkbox"] {
-  width: 14px;
-  height: 14px;
-  accent-color: var(--accent);
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.remember-row label {
-  font-size: 12px;
-  color: var(--text-2);
-  cursor: pointer;
-  user-select: none;
-}
-
 /* ── Context expander ─────────────────────────── */
 
 .context-expander { margin-bottom: 4px; }
