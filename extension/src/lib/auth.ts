@@ -148,6 +148,17 @@ export async function uploadResumeToBackend(
   }
 }
 
+export async function startBilling(accessToken: string, action: 'checkout' | 'portal'): Promise<string> {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/billing`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action }),
+  })
+  const data = await res.json() as { url?: string; error?: string }
+  if (!res.ok || !data.url) throw new Error(data.error ?? 'Could not start checkout.')
+  return data.url
+}
+
 export async function tailorViaBackend(job: JobData, accessToken: string, compact = false, supplemental?: string, trim = false, includeSummary = true, previous?: TailoredResume, onProgress?: (label: string) => void): Promise<TailoredResume> {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/tailor`, {
     method: 'POST',

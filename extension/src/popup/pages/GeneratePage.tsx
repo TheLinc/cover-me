@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { ensureValidSession, startBilling } from '../../lib/auth'
 import { downloadCoverLetterPdf } from '../../lib/pdf'
 import { downloadTailoredResumePdf } from '../../lib/resume-pdf'
 import { getCandidateContext, saveCandidateContext } from '../../lib/storage'
@@ -114,6 +115,8 @@ export default function GeneratePage({ onNavigate }: Props) {
   const [tailorState, setTailorState] = useState<TailorState>('idle')
   const [tailorProgress, setTailorProgress] = useState('')
   const [tailorError, setTailorError] = useState('')
+  const [tailorErrorCode, setTailorErrorCode] = useState<'RATE_LIMIT' | undefined>()
+  const [upgradeError, setUpgradeError] = useState('')
   const [tailoredResume, setTailoredResume] = useState<TailoredResume | null>(null)
   const [tailoredJob, setTailoredJob] = useState<JobData | null>(null)
   const [supplemental, setSupplemental] = useState('')
@@ -214,6 +217,7 @@ export default function GeneratePage({ onNavigate }: Props) {
           setTailorState('loading')
         } else if (tj.status === 'error') {
           setTailorError(tj.error ?? 'Resume tailoring failed.')
+          setTailorErrorCode(tj.errorCode)
           setTailorState('error')
         } else if (tj.status === 'done' && !restoredTailorDone && tj.resume) {
           setTailoredResume(tj.resume)
@@ -262,6 +266,7 @@ export default function GeneratePage({ onNavigate }: Props) {
           } else if (tj.status === 'error') {
             setTailorProgress('')
             setTailorError(tj.error ?? 'Resume tailoring failed.')
+            setTailorErrorCode(tj.errorCode)
             setTailorState('error')
           } else if (tj.status === 'done' && tj.resume) {
             setTailorProgress('')
@@ -452,8 +457,30 @@ export default function GeneratePage({ onNavigate }: Props) {
     }
   }
 
+  async function handleUpgrade() {
+    setUpgradeError('')
+    try {
+      const session = await ensureValidSession()
+      if (!session) {
+        setUpgradeError('Sign in again in Settings to upgrade.')
+        return
+      }
+      chrome.tabs.create({ url: await startBilling(session.access_token, 'checkout') })
+    } catch (err) {
+      setUpgradeError(err instanceof Error ? err.message : 'Could not start checkout.')
+    }
+  }
+
+  const upgradePrompt = (
+    <>
+      <button className="btn btn-primary" onClick={handleUpgrade}>Upgrade to Pro for unlimited</button>
+      {upgradeError && <div className="error-box">{upgradeError}</div>}
+    </>
+  )
+
   function resetTailor() {
     setTailorState('idle')
+    setTailorErrorCode(undefined)
     setTailoredResume(null)
     setTailoredJob(null)
     setSupplemental('')
@@ -766,16 +793,19 @@ export default function GeneratePage({ onNavigate }: Props) {
                       Try Again
                     </button>
                   )}
+                  {errorCode === 'RATE_LIMIT' && upgradePrompt}
                 </div>
               )}
 
               {/* TAILOR ERROR */}
               {tailorState === 'error' && state !== 'done' && (
                 <div className="letter-container">
-                  <div className="error-box">{tailorError}</div>
-                  <button className="btn btn-secondary" onClick={resetTailor}>
-                    Try Again
-                  </button>
+                  <div className={tailorErrorCode === 'RATE_LIMIT' ? 'warning-box' : 'error-box'}>{tailorError}</div>
+                  {tailorErrorCode === 'RATE_LIMIT' ? upgradePrompt : (
+                    <button className="btn btn-secondary" onClick={resetTailor}>
+                      Try Again
+                    </button>
+                  )}
                 </div>
               )}
 
