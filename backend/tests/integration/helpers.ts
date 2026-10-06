@@ -107,6 +107,8 @@ export interface StripeCall {
 
 export const mockStripe = {
   calls: async (): Promise<StripeCall[]> => (await fetch(`${MOCK_URL}/__mock/stripe`)).json(),
+  setState: (state: { subscriptions?: string[]; missingCustomer?: boolean }) =>
+    fetch(`${MOCK_URL}/__mock/stripe-state`, { method: 'POST', body: JSON.stringify(state) }),
 }
 
 export const JOB = {

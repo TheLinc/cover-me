@@ -87,6 +87,8 @@ const failures: Array<{ status: number; body: string }> = []
 
 type StripeCall = { path: string; params: Record<string, string>; idempotencyKey: string | null }
 const stripeCalls: StripeCall[] = []
+// What GET /v1/subscriptions answers: these statuses, or "No such customer".
+const stripeState = { subscriptions: [] as string[], missingCustomer: false }
 
 function readBody(req: IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -130,6 +132,8 @@ export function startMockAnthropic(port: number): Promise<Server> {
     if (req.method === 'POST' && url === '/__mock/reset') {
       received.length = 0
       stripeCalls.length = 0
+      stripeState.subscriptions = []
+      stripeState.missingCustomer = false
       failures.length = 0
       return res.writeHead(204).end()
     }
@@ -189,6 +193,19 @@ export function startMockAnthropic(port: number): Promise<Server> {
     if (req.method === 'GET' && url === '/__mock/stripe') {
       res.writeHead(200, { 'content-type': 'application/json' })
       return res.end(JSON.stringify(stripeCalls))
+    }
+    if (req.method === 'POST' && url === '/__mock/stripe-state') {
+      Object.assign(stripeState, JSON.parse((await readBody(req)) || '{}'))
+      return res.writeHead(204).end()
+    }
+    if (req.method === 'GET' && url.startsWith('/v1/subscriptions?')) {
+      stripeCalls.push({ path: '/v1/subscriptions', params: Object.fromEntries(new URL(url, 'http://mock').searchParams), idempotencyKey: null })
+      if (stripeState.missingCustomer) {
+        res.writeHead(400, { 'content-type': 'application/json' })
+        return res.end(JSON.stringify({ error: { type: 'invalid_request_error', code: 'resource_missing', param: 'customer' } }))
+      }
+      res.writeHead(200, { 'content-type': 'application/json' })
+      return res.end(JSON.stringify({ data: stripeState.subscriptions.map((status) => ({ status })) }))
     }
     if (req.method === 'POST' && ['/v1/customers', '/v1/checkout/sessions', '/v1/billing_portal/sessions'].includes(url)) {
       const params = Object.fromEntries(new URLSearchParams(await readBody(req)))

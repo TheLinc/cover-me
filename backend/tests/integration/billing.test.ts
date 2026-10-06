@@ -56,6 +56,33 @@ describe('billing', () => {
     expect(res.status).toBe(409)
   })
 
+  it('refuses checkout while an earlier subscription is still past due', async () => {
+    user = await createUser()
+    await admin.from('users').update({ stripe_customer_id: 'cus_existing' }).eq('id', user.id)
+    await mockStripe.setState({ subscriptions: ['canceled', 'past_due'] })
+
+    const res = await callFunction('billing', { token: user.token, body: { action: 'checkout' } })
+    expect(res.status).toBe(409)
+    const checkouts = (await mockStripe.calls()).filter((c) => c.path === '/v1/checkout/sessions')
+    expect(checkouts).toHaveLength(0)
+  })
+
+  it('replaces a Stripe customer that no longer exists', async () => {
+    user = await createUser()
+    await admin.from('users').update({ stripe_customer_id: 'cus_gone' }).eq('id', user.id)
+    await mockStripe.setState({ missingCustomer: true })
+
+    const res = await callFunction('billing', { token: user.token, body: { action: 'checkout' } })
+    expect(res.status).toBe(200)
+
+    const { data } = await admin.from('users').select('stripe_customer_id').eq('id', user.id).single()
+    expect(data?.stripe_customer_id).toMatch(/^cus_mock_/)
+    const customer = (await mockStripe.calls()).find((c) => c.path === '/v1/customers')
+    // A fresh key: Stripe would replay the old customer for the original key.
+    expect(customer?.idempotencyKey).not.toBe(`customer-${user.id}`)
+    expect(customer?.idempotencyKey?.startsWith(`customer-${user.id}-`)).toBe(true)
+  })
+
   it('returns a portal URL only when the user has a Stripe customer', async () => {
     user = await createUser()
     const before = await callFunction('billing', { token: user.token, body: { action: 'portal' } })

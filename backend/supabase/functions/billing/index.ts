@@ -9,15 +9,36 @@ const SITE_URL = (Deno.env.get('SITE_URL') || 'https://www.cover-me.dev').replac
 // Unset in production. The local test run points it at the mock server.
 const STRIPE_BASE = (Deno.env.get('STRIPE_API_BASE') || 'https://api.stripe.com').replace(/\/+$/, '')
 
-async function stripe(path: string, params: Record<string, string>, idempotencyKey?: string) {
-  const headers: Record<string, string> = {
-    Authorization: `Bearer ${STRIPE_SECRET_KEY}`,
-    'Content-Type': 'application/x-www-form-urlencoded',
+// Subscriptions that still bill (or retry) the card. Checkout on top of one
+// of these would charge the customer twice.
+const OPEN_STATUSES = new Set(['active', 'trialing', 'past_due', 'unpaid'])
+
+class StripeError extends Error {
+  constructor(readonly status: number, readonly code: string | undefined, path: string) {
+    super(`Stripe ${path} returned ${status}${code ? ` (${code})` : ''}`)
   }
-  if (idempotencyKey) headers['Idempotency-Key'] = idempotencyKey
-  const res = await fetch(`${STRIPE_BASE}/v1/${path}`, { method: 'POST', headers, body: new URLSearchParams(params) })
-  if (!res.ok) throw new Error(`Stripe ${path} returned ${res.status}`)
-  return await res.json()
+}
+
+async function stripe(
+  path: string,
+  params: Record<string, string>,
+  opts: { method?: 'GET' | 'POST'; idempotencyKey?: string } = {},
+) {
+  const method = opts.method ?? 'POST'
+  const headers: Record<string, string> = { Authorization: `Bearer ${STRIPE_SECRET_KEY}` }
+  let url = `${STRIPE_BASE}/v1/${path}`
+  let body: URLSearchParams | undefined
+  if (method === 'GET') {
+    url += `?${new URLSearchParams(params)}`
+  } else {
+    headers['Content-Type'] = 'application/x-www-form-urlencoded'
+    body = new URLSearchParams(params)
+  }
+  if (opts.idempotencyKey) headers['Idempotency-Key'] = opts.idempotencyKey
+  const res = await fetch(url, { method, headers, body })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new StripeError(res.status, data?.error?.code, path)
+  return data
 }
 
 // Checkout and billing portal for the extension and the web dashboard. Both
@@ -54,12 +75,29 @@ Deno.serve(async (req) => {
 
     if (row?.tier === 'hosted_pro') return json({ error: 'You are already on Pro.' }, 409)
 
+    // The tier can read free while a past_due subscription still retries the
+    // card, so ask Stripe. A customer deleted in Stripe gets replaced.
+    let replaced = false
+    if (customerId) {
+      try {
+        const subs = await stripe('subscriptions', { customer: customerId, status: 'all', limit: '20' }, { method: 'GET' })
+        if ((subs.data as Array<{ status: string }>).some((s) => OPEN_STATUSES.has(s.status))) {
+          return json({ error: 'You already have a subscription. Update your payment method from the dashboard.' }, 409)
+        }
+      } catch (err) {
+        if (!(err instanceof StripeError && err.code === 'resource_missing')) throw err
+        customerId = null
+        replaced = true
+      }
+    }
+
     if (!customerId) {
-      // The idempotency key makes a double click return the same customer.
+      // The idempotency key makes a double click return the same customer. A
+      // replacement needs a fresh key: Stripe replays the old one for 24 hours.
       const customer = await stripe(
         'customers',
         { email: user.email ?? '', 'metadata[supabase_user_id]': user.id },
-        `customer-${user.id}`,
+        { idempotencyKey: replaced ? `customer-${user.id}-${Date.now()}` : `customer-${user.id}` },
       )
       customerId = customer.id as string
       const { error } = await supabase.from('users').update({ stripe_customer_id: customerId }).eq('id', user.id)
