@@ -471,6 +471,14 @@ export default function GeneratePage({ onNavigate }: Props) {
     }
   }
 
+  // The error is persisted in coverJob and restored on every popup open, so
+  // leaving it has to clear the record too (otherwise a user who just paid
+  // stays on the limit warning).
+  function dismissLetterError() {
+    setState('idle')
+    chrome.storage.local.remove('coverJob')
+  }
+
   const upgradePrompt = (
     <>
       <button className="btn btn-primary" onClick={handleUpgrade}>Upgrade to Pro for unlimited</button>
@@ -788,12 +796,10 @@ export default function GeneratePage({ onNavigate }: Props) {
                   <div className={errorCode === 'RATE_LIMIT' ? 'warning-box' : 'error-box'}>
                     {error}
                   </div>
-                  {errorCode !== 'RATE_LIMIT' && (
-                    <button className="btn btn-secondary" onClick={() => setState('idle')}>
-                      Try Again
-                    </button>
-                  )}
                   {errorCode === 'RATE_LIMIT' && upgradePrompt}
+                  <button className="btn btn-secondary" onClick={dismissLetterError}>
+                    {errorCode === 'RATE_LIMIT' ? 'Back' : 'Try Again'}
+                  </button>
                 </div>
               )}
 
@@ -801,11 +807,10 @@ export default function GeneratePage({ onNavigate }: Props) {
               {tailorState === 'error' && state !== 'done' && (
                 <div className="letter-container">
                   <div className={tailorErrorCode === 'RATE_LIMIT' ? 'warning-box' : 'error-box'}>{tailorError}</div>
-                  {tailorErrorCode === 'RATE_LIMIT' ? upgradePrompt : (
-                    <button className="btn btn-secondary" onClick={resetTailor}>
-                      Try Again
-                    </button>
-                  )}
+                  {tailorErrorCode === 'RATE_LIMIT' && upgradePrompt}
+                  <button className="btn btn-secondary" onClick={resetTailor}>
+                    {tailorErrorCode === 'RATE_LIMIT' ? 'Back' : 'Try Again'}
+                  </button>
                 </div>
               )}
 
