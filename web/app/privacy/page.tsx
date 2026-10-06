@@ -280,7 +280,8 @@ export default function PrivacyPage() {
             <H3>Information we do NOT collect</H3>
             <Ul>
               <Li>We do not track your browsing history or the URLs of pages you visit.</Li>
-              <Li>We do not collect analytics, telemetry, or usage metrics.</Li>
+              <Li>The extension contains no analytics or telemetry code. In BYOK mode it sends nothing to Cover Me.</Li>
+              <Li>In hosted mode our servers count how many letters and resumes you generate, to enforce the daily limit, and log errors. Logs never contain your resume, letters, or job descriptions.</Li>
               <Li>We do not use cookies for tracking or advertising.</Li>
               <Li>We do not collect any data from tabs other than the active job posting tab, and only when you explicitly activate the extension.</Li>
               <Li>We do not sell, rent, or trade your data to any third party.</Li>
@@ -516,6 +517,12 @@ export default function PrivacyPage() {
                   url: 'https://vercel.com/legal/privacy-policy',
                   when: 'All users who visit the web dashboard',
                   receives: 'Standard web server access logs (IP address, browser, requested URL) for the dashboard at cover-me.dev. Vercel hosts our Next.js web application.',
+                },
+                {
+                  name: 'Sentry',
+                  url: 'https://sentry.io/privacy/',
+                  when: 'Visitors to cover-me.dev (the website, not the extension)',
+                  receives: 'Error reports and page-load timing from the website: the error, page URL, browser version, and your user ID if you are signed in. Form contents, cookies, and email addresses are removed before sending.',
                 },
               ].map((svc) => (
                 <div key={svc.name} className="bg-surface border border-border rounded-[10px] px-5 py-4">

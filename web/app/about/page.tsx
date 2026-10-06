@@ -168,7 +168,7 @@ export default function AboutPage() {
                 ['Under 10 sec', 'to generate a tailored letter'],
                 ['MIT licensed', 'fully auditable source code'],
                 ['6+ job boards', 'LinkedIn, Indeed, Greenhouse, Lever, Workday, Ashby'],
-                ['0 telemetry', 'no analytics, no ads, no tracking'],
+                ['0 telemetry', 'in the extension: no analytics, no ads, no tracking'],
               ].map(([stat, label]) => (
                 <div key={stat}>
                   <p className="text-[16px] font-bold text-foreground tracking-[-0.3px]">{stat}</p>
