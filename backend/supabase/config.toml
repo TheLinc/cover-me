@@ -85,14 +85,17 @@ allowed_cidrs_v6 = ["::/0"]
 # enabled = true
 
 [realtime]
-enabled = true
+# Off to save RAM: nothing in Cover Me subscribes to realtime channels.
+enabled = false
 # Bind realtime via either IPv4 or IPv6. (default: IPv4)
 # ip_version = "IPv6"
 # The maximum length in bytes of HTTP request headers. (default: 4096)
 # max_header_length = 4096
 
 [studio]
-enabled = true
+# Off to save RAM (Studio plus postgres-meta). Set to true when you want the
+# local dashboard, or query with psql: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+enabled = false
 # Port to use for Supabase Studio.
 port = 54323
 # External URL of the API server that frontend connects to.
@@ -397,7 +400,9 @@ deno_version = 2
 # secret_key = "env(SECRET_VALUE)"
 
 [analytics]
-enabled = true
+# Off to save RAM: Logflare and Vector are the heaviest local containers.
+# Edge Function logs still print in `pnpm functions:serve`.
+enabled = false
 port = 54327
 # Configure one of the supported backends: `postgres`, `bigquery`.
 backend = "postgres"

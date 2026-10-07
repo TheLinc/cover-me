@@ -174,7 +174,7 @@ pnpm start        # first run pulls the Supabase images, a few minutes
 pnpm env:local    # writes local env files for the functions, extension and web app
 ```
 
-`pnpm start` applies every migration and `supabase/seed.sql`, which creates two confirmed accounts: `free@cover-me.test` and `pro@cover-me.test`, both with password `password123`. `pnpm status` prints the local URLs, including Studio (a local dashboard) and Mailpit, which catches signup and password reset emails.
+`pnpm start` applies every migration and `supabase/seed.sql`, which creates two confirmed accounts: `free@cover-me.test` and `pro@cover-me.test`, both with password `password123`. `pnpm status` prints the local URLs, including Mailpit, which catches signup and password reset emails. Studio (the local dashboard), Realtime and Analytics are turned off in `supabase/config.toml` to keep the stack's memory low; set `[studio] enabled = true` there when you want the dashboard.
 
 Then run the apps against it:
 
