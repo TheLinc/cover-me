@@ -1,11 +1,19 @@
-# Live resume quality eval: parses, tailors, checks and judges a tailored
-# resume for every industry case in extension/eval. Runs when the AI prompt
-# code or the eval changes, weekly (to catch model drift), or on demand.
+# Live output eval: generates cover letters and tailored resumes for real test
+# cases and has a model judge them.
 #
-# Billing: uses the CLAUDE_CODE_OAUTH_TOKEN secret (from `claude setup-token`)
-# so calls go through Claude Code on your Claude plan. If you instead add an
-# ANTHROPIC_API_KEY secret and remove the OAuth one, it uses API credits.
-name: Resume quality eval
+#   Prompt PRs and master pushes: the quick set (9 cases, one per field family),
+#   judged by Sonnet 5.5, gated on extension/eval/baseline.json. About 10 min.
+#   Weekly and on demand: every case, 2 runs per resume, judged by Opus 5.5,
+#   gated on extension/eval/baseline-full.json once that file exists.
+#
+# Billing: only the CLAUDE_CODE_OAUTH_TOKEN secret (from `claude setup-token`),
+# so every call goes through `claude -p` on the Claude plan. There is no API key
+# fallback: ANTHROPIC_API_KEY is blanked and the eval runs with --via claude.
+# Without the secret (fork PRs never get secrets) the job skips with a warning.
+#
+# Not a required check: GitHub never reports a path-filtered workflow on
+# unrelated PRs, so a required one would leave those PRs waiting forever.
+name: Output eval
 
 on:
   push:
@@ -13,41 +21,50 @@ on:
     paths:
       - extension/src/lib/ai/**
       - extension/eval/**
+      - backend/supabase/functions/generate/**
       - backend/supabase/functions/tailor/**
+      - backend/supabase/functions/_shared/anthropic.ts
+      - backend/supabase/functions/_shared/letter-lint.ts
       - backend/supabase/functions/_shared/resume-parse.ts
-      - .github/workflows/resume-eval.yml
+      - backend/supabase/functions/_shared/resume-grounding.ts
+      - scripts/check-prompt-sync.mjs
+      - .github/workflows/output-eval.yml
   pull_request:
     paths:
       - extension/src/lib/ai/**
       - extension/eval/**
+      - backend/supabase/functions/generate/**
       - backend/supabase/functions/tailor/**
+      - backend/supabase/functions/_shared/anthropic.ts
+      - backend/supabase/functions/_shared/letter-lint.ts
       - backend/supabase/functions/_shared/resume-parse.ts
-      - .github/workflows/resume-eval.yml
+      - backend/supabase/functions/_shared/resume-grounding.ts
+      - scripts/check-prompt-sync.mjs
+      - .github/workflows/output-eval.yml
   schedule:
-    - cron: '0 9 * * 1' # Mondays 09:00 UTC
+    - cron: '0 9 * * 1' # Mondays 09:00 UTC: the full set, to catch model drift
   workflow_dispatch:
     inputs:
-      runs:
-        description: Samples per case
-        default: '1'
-      industry:
-        description: Only this industry (blank = all)
-        default: ''
+      full:
+        description: Run every case (otherwise the quick set)
+        type: boolean
+        default: true
 
 concurrency:
-  group: resume-eval-${{ github.ref }}
+  group: output-eval-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   live:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 120
     defaults:
       run:
         working-directory: extension
     env:
       CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-      ANTHROPIC_API_KEY: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN == '' && secrets.ANTHROPIC_API_KEY || '' }}
+      ANTHROPIC_API_KEY: ''
+      FULL: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.full) }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -61,21 +78,20 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: npm install -g @anthropic-ai/claude-code
         if: env.CLAUDE_CODE_OAUTH_TOKEN != ''
-      - name: Resume eval (parse, tailor, integrity checks, industry judge)
+      - name: Output eval (letters and tailored resumes)
         run: |
-          if [ -z "$CLAUDE_CODE_OAUTH_TOKEN" ] && [ -z "$ANTHROPIC_API_KEY" ]; then
-            echo "::warning::No CLAUDE_CODE_OAUTH_TOKEN or ANTHROPIC_API_KEY secret; skipping the live eval (fork PRs never get secrets)."
+          if [ -z "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
+            echo "::warning::No CLAUDE_CODE_OAUTH_TOKEN secret; skipping the live eval (fork PRs never get secrets)."
             exit 0
           fi
-          ARGS="--live --tailor --judge --baseline --concurrency 4 --runs ${RUNS:-1}"
-          if [ -n "$INDUSTRY" ]; then ARGS="$ARGS --industry $INDUSTRY"; fi
-          pnpm eval $ARGS
-        env:
-          RUNS: ${{ github.event_name == 'schedule' && '2' || inputs.runs }}
-          INDUSTRY: ${{ inputs.industry }}
+          if [ "$FULL" = "true" ]; then
+            pnpm eval --live --judge --baseline --via claude --runs 2 --judge-model claude-opus-5-5
+          else
+            pnpm eval --live --quick --judge --baseline --via claude
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: resume-eval-reports
+          name: output-eval-reports
           path: extension/eval/reports/
           if-no-files-found: ignore
