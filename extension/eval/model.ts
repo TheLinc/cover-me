@@ -36,7 +36,9 @@ const PRICES: Record<string, [number, number]> = {
   'claude-haiku-4-5-20251001': [1, 5],
   'claude-sonnet-4-6': [3, 15],
   'claude-sonnet-5': [2, 10],
+  'claude-sonnet-5-5': [2, 10],
   'claude-opus-5': [5, 25],
+  'claude-opus-5-5': [4, 20],
 }
 
 export const usage = {
@@ -60,6 +62,9 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 async function callApi(messages: Msg[], opts: CallOptions): Promise<string> {
   const body: Record<string, unknown> = { model: opts.model, max_tokens: opts.maxTokens, messages }
   if (opts.think) body.thinking = { type: 'adaptive' }
+  // Sonnet 5.5 thinks by default and rejects {type: 'disabled'}; between_tools is
+  // its thinking-off setting, matching production generation calls.
+  else if (opts.model === 'claude-sonnet-5-5') body.thinking = { type: 'between_tools' }
   for (let attempt = 0; ; attempt++) {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
