@@ -262,9 +262,12 @@ Respond with ONLY this JSON: {"score": <1-5>, "flags": ["<each phrase or pattern
 
 async function liveLetters() {
   section(`Live letters (model: ${MODEL})`)
-  process.stdout.write(`  ${cases.length} letters `)
-  const results = await pool(cases, CONCURRENCY, async (c, i) => {
-    const variation: LetterVariation = { signOff: SIGN_OFFS[i % SIGN_OFFS.length], hookPattern: HOOKS[i % HOOKS.length] }
+  // Runs apply to letters too: one letter per case is too noisy to compare.
+  const jobs = cases.flatMap((c, i) => Array.from({ length: RUNS }, (_, run) => ({ c, i, run })))
+  process.stdout.write(`  ${jobs.length} letters `)
+  const results = await pool(jobs, CONCURRENCY, async ({ c, i, run }) => {
+    const v = i + run
+    const variation: LetterVariation = { signOff: SIGN_OFFS[v % SIGN_OFFS.length], hookPattern: HOOKS[v % HOOKS.length] }
     const prompt = buildLetterPrompt(c.job, c.resumeText, undefined, variation)
     let letter = stripMarkdown(await call([{ role: 'user', content: prompt }], { model: MODEL, maxTokens: 1024 }))
 
@@ -296,14 +299,15 @@ async function liveLetters() {
       }
     }
     process.stdout.write('.')
-    return { c, variation, letter, result, judgeScore }
+    return { c, run, variation, letter, result, judgeScore }
   })
   console.log('')
-  for (const { c, variation, letter, result } of results) {
-    record(`letter: ${c.id} (${variation.hookPattern}, "${variation.signOff}")`, result)
+  for (const { c, run, variation, letter, result } of results) {
+    const suffix = RUNS > 1 ? ` (run ${run + 1})` : ''
+    record(`letter: ${c.id}${suffix} (${variation.hookPattern}, "${variation.signOff}")`, result)
     reportLines.push('<details><summary>letter text</summary>\n\n```\n' + letter + '\n```\n</details>\n')
   }
-  return results.map(({ c, letter, result, judgeScore }) => ({ id: c.id, letter, judgeScore, failures: result.failures, warnings: result.warnings }))
+  return results.map(({ c, run, letter, result, judgeScore }) => ({ id: c.id, run, letter, judgeScore, failures: result.failures, warnings: result.warnings }))
 }
 
 // ── Live resume pipeline: parse → tailor → checks → judge ────────────────────
@@ -620,9 +624,11 @@ async function main() {
       tailorRuns = await liveTailor()
     }
     if (JUDGE) {
-      const letterScores = Object.fromEntries(
-        letters.filter((l) => l.judgeScore !== undefined).map((l) => [l.id, l.judgeScore as number]),
-      )
+      // Mean judge score per case across runs.
+      const scored = letters.filter((l) => l.judgeScore !== undefined)
+      const letterScores = Object.fromEntries([...new Set(scored.map((l) => l.id))].map((id) => [
+        id, mean(scored.filter((l) => l.id === id).map((l) => l.judgeScore as number)),
+      ]))
       baselineStep(letterScores, tailorRuns)
     }
     const costLine = `Model calls: ${usage.calls} | tokens in/out: ${usage.inputTokens}/${usage.outputTokens} | API-equivalent cost: $${usage.costUsd.toFixed(2)}${VIA === 'claude' ? ' (billed to your Claude plan, not API credits)' : ''}`
