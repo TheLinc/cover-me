@@ -264,7 +264,8 @@ cover-me/
 │   │   ├── terms/
 │   │   ├── support/
 │   │   ├── about/
-│   │   └── api/             # checkout, stripe-webhook, billing-portal
+│   │   ├── upgraded/        # Stripe Checkout success page
+│   │   └── api/             # stripe-webhook (checkout and portal live in the billing Edge Function)
 │   └── lib/
 └── backend/                 # Supabase Edge Functions + DB migrations
     └── supabase/
@@ -274,6 +275,7 @@ cover-me/
         │   ├── resume/       # GET / POST / DELETE encrypted resume
         │   ├── letters/      # GET / POST / DELETE cover letter history (Pro)
         │   ├── applications/ # GET / DELETE job applications w/ nested letters + tailored resumes (Pro)
+        │   ├── billing/      # Stripe Checkout and billing portal sessions for the extension and dashboard
         │   └── _shared/      # CORS helpers, AES-GCM encrypt/decrypt
         └── migrations/      # Postgres schema + RLS policies
 ```
@@ -385,10 +387,11 @@ supabase secrets set SERVICE_KEY=<service-role-key>
 supabase secrets set ANTHROPIC_API_KEY=<your-anthropic-key>
 supabase secrets set ENCRYPTION_KEY=<64-char-hex-from-step-4>
 supabase secrets set STRIPE_SECRET_KEY=sk_live_...
-supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...
+supabase secrets set STRIPE_PRO_PRICE_ID=price_...
+supabase secrets set SITE_URL=https://your-domain.com
 ```
 
-`SERVICE_KEY` and `STRIPE_*` are only used in the Edge Functions and web API routes — they never reach the client.
+`SERVICE_KEY` and `STRIPE_*` are only used in the Edge Functions and the web webhook route. They never reach the client. The `billing` function uses `STRIPE_PRO_PRICE_ID` for checkout and `SITE_URL` for Stripe's return pages.
 
 ### 6. Deploy Edge Functions
 
@@ -398,6 +401,7 @@ supabase functions deploy tailor
 supabase functions deploy resume
 supabase functions deploy letters
 supabase functions deploy applications
+supabase functions deploy billing
 ```
 
 ### 7. Set up Stripe
@@ -407,8 +411,9 @@ supabase functions deploy applications
 3. Copy the **Price ID** (starts with `price_...`)
 4. Create a **webhook** pointing to `https://<your-web-url>/api/stripe-webhook` with these events:
    - `checkout.session.completed`
-   - `customer.subscription.deleted`
+   - `customer.subscription.created`
    - `customer.subscription.updated`
+   - `customer.subscription.deleted`
 5. Copy the **webhook signing secret** (starts with `whsec_...`)
 
 For local testing, use the [Stripe CLI](https://stripe.com/docs/stripe-cli):
@@ -427,7 +432,6 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<anon-key>
 SUPABASE_SERVICE_KEY=<service-role-key>
 STRIPE_SECRET_KEY=sk_live_...
 STRIPE_WEBHOOK_SECRET=whsec_...
-STRIPE_PRO_PRICE_ID=price_...
 NEXT_PUBLIC_SITE_URL=https://your-domain.com
 ```
 
@@ -472,7 +476,8 @@ Load `extension/dist/` as an unpacked extension in Chrome. The hosted tier will 
 | `ANTHROPIC_API_KEY` | Your Anthropic API key |
 | `ENCRYPTION_KEY` | 64-char hex string (32 bytes) for AES-256-GCM |
 | `STRIPE_SECRET_KEY` | Stripe secret key |
-| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret |
+| `STRIPE_PRO_PRICE_ID` | Stripe recurring price ID (checkout) |
+| `SITE_URL` | Your web dashboard URL (Stripe return pages) |
 
 **Web dashboard** (`web/.env.local`):
 
@@ -483,7 +488,6 @@ Load `extension/dist/` as an unpacked extension in Chrome. The hosted tier will 
 | `SUPABASE_SERVICE_KEY` | Supabase service role key (server-side only) |
 | `STRIPE_SECRET_KEY` | Stripe secret key |
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret |
-| `STRIPE_PRO_PRICE_ID` | Stripe recurring price ID |
 | `NEXT_PUBLIC_SITE_URL` | Your web dashboard URL |
 
 **Extension** (`extension/.env`; use `extension/.env.development` for local-only overrides):
