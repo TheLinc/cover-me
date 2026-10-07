@@ -88,7 +88,12 @@ const failures: Array<{ status: number; body: string }> = []
 type StripeCall = { path: string; params: Record<string, string>; idempotencyKey: string | null }
 const stripeCalls: StripeCall[] = []
 // What GET /v1/subscriptions answers: these statuses, or "No such customer".
-const stripeState = { subscriptions: [] as string[], missingCustomer: false }
+// customerError makes the next POST /v1/customers fail once with that error.
+const stripeState = {
+  subscriptions: [] as string[],
+  missingCustomer: false,
+  customerError: null as { status: number; code: string } | null,
+}
 
 function readBody(req: IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -134,6 +139,7 @@ export function startMockAnthropic(port: number): Promise<Server> {
       stripeCalls.length = 0
       stripeState.subscriptions = []
       stripeState.missingCustomer = false
+      stripeState.customerError = null
       failures.length = 0
       return res.writeHead(204).end()
     }
@@ -211,6 +217,12 @@ export function startMockAnthropic(port: number): Promise<Server> {
       const params = Object.fromEntries(new URLSearchParams(await readBody(req)))
       const key = req.headers['idempotency-key']
       stripeCalls.push({ path: url, params, idempotencyKey: typeof key === 'string' ? key : null })
+      if (url === '/v1/customers' && stripeState.customerError) {
+        const { status, code } = stripeState.customerError
+        stripeState.customerError = null
+        res.writeHead(status, { 'content-type': 'application/json' })
+        return res.end(JSON.stringify({ error: { type: 'idempotency_error', code } }))
+      }
       const n = stripeCalls.length
       const reply =
         url === '/v1/customers' ? { id: `cus_mock_${n}` }

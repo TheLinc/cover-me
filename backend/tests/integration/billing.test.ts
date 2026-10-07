@@ -83,6 +83,26 @@ describe('billing', () => {
     expect(customer?.idempotencyKey?.startsWith(`customer-${user.id}-`)).toBe(true)
   })
 
+  it('asks the user to wait when the same checkout is already starting', async () => {
+    user = await createUser()
+    await mockStripe.setState({ customerError: { status: 409, code: 'idempotency_key_in_use' } })
+
+    const res = await callFunction('billing', { token: user.token, body: { action: 'checkout' } })
+    expect(res.status).toBe(409)
+    expect((await res.json()).error).toMatch(/already/i)
+  })
+
+  it('retries with a fresh key when Stripe rejects a reused one', async () => {
+    user = await createUser()
+    await mockStripe.setState({ customerError: { status: 400, code: 'idempotency_error' } })
+
+    const res = await callFunction('billing', { token: user.token, body: { action: 'checkout' } })
+    expect(res.status).toBe(200)
+    const customers = (await mockStripe.calls()).filter((c) => c.path === '/v1/customers')
+    expect(customers).toHaveLength(2)
+    expect(customers[1].idempotencyKey?.startsWith(`customer-${user.id}-`)).toBe(true)
+  })
+
   it('returns a portal URL only when the user has a Stripe customer', async () => {
     user = await createUser()
     const before = await callFunction('billing', { token: user.token, body: { action: 'portal' } })

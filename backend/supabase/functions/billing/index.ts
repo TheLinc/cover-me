@@ -94,11 +94,23 @@ Deno.serve(async (req) => {
     if (!customerId) {
       // The idempotency key makes a double click return the same customer. A
       // replacement needs a fresh key: Stripe replays the old one for 24 hours.
-      const customer = await stripe(
-        'customers',
-        { email: user.email ?? '', 'metadata[supabase_user_id]': user.id },
-        { idempotencyKey: replaced ? `customer-${user.id}-${Date.now()}` : `customer-${user.id}` },
-      )
+      const createCustomer = (key: string) =>
+        stripe('customers', { email: user.email ?? '', 'metadata[supabase_user_id]': user.id }, { idempotencyKey: key })
+      const freshKey = () => `customer-${user.id}-${Date.now()}`
+
+      let customer
+      try {
+        customer = await createCustomer(replaced ? freshKey() : `customer-${user.id}`)
+      } catch (err) {
+        if (!(err instanceof StripeError)) throw err
+        // A second tab is creating the customer with the same key right now.
+        if (err.code === 'idempotency_key_in_use') {
+          return json({ error: 'Checkout is already opening. Try again in a moment.' }, 409)
+        }
+        // Same key, different details (for example a changed email): new key.
+        if (err.code !== 'idempotency_error') throw err
+        customer = await createCustomer(freshKey())
+      }
       customerId = customer.id as string
       const { error } = await supabase.from('users').update({ stripe_customer_id: customerId }).eq('id', user.id)
       if (error) return json({ error: 'Could not start checkout. Please try again.' }, 500)
