@@ -2,6 +2,7 @@ import type { AIProvider, JobData, ParsedResume, TailoredResume } from '../../ty
 import { debugGroup, debugLog } from '../debug'
 import { deriveTailorProgress } from './tailor-progress'
 import { candidateText, checkAndRewriteLines, groundSkills, groundTailored, type AskModel, type LineRepair } from './resume-grounding'
+import { SONNET_BETA_HEADER, SONNET_FIELDS } from './claude'
 
 const CLAUDE_API = 'https://api.anthropic.com/v1/messages'
 const OPENAI_API = 'https://api.openai.com/v1/chat/completions'
@@ -411,7 +412,7 @@ export async function tailorResume(
 
   await debugGroup('Tailor — full prompt sent to model (BYOK)', {
     provider,
-    model: provider === 'claude' ? 'claude-sonnet-4-6' : 'gpt-4o',
+    model: provider === 'claude' ? SONNET_FIELDS.model : 'gpt-4o',
     promptLength: prompt.length,
     prompt,
   })
@@ -432,12 +433,13 @@ export async function tailorResume(
         'x-api-key': apiKey,
         'anthropic-version': '2023-06-01',
         'anthropic-dangerous-direct-browser-access': 'true',
+        ...SONNET_BETA_HEADER,
       },
       body: JSON.stringify({
         // Sonnet for tailoring: judgment-heavy (bullet preservation, relevance
         // calls) — the small models compress/merge. Cover letters are on
         // Sonnet too (see claude.ts).
-        model: 'claude-sonnet-4-6',
+        ...SONNET_FIELDS,
         max_tokens: 6000,
         stream: true,
         messages: [{ role: 'user', content: prompt }],
@@ -491,8 +493,9 @@ function checkModel(provider: AIProvider, apiKey: string): AskModel {
           'x-api-key': apiKey,
           'anthropic-version': '2023-06-01',
           'anthropic-dangerous-direct-browser-access': 'true',
+          ...SONNET_BETA_HEADER,
         },
-        body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 2000, messages: [{ role: 'user', content: prompt }] }),
+        body: JSON.stringify({ ...SONNET_FIELDS, max_tokens: 2000, messages: [{ role: 'user', content: prompt }] }),
       })
       if (!res.ok) throw new Error(`Claude API error ${res.status}`)
       const data = (await res.json()) as { content: Array<{ type: string; text: string }> }

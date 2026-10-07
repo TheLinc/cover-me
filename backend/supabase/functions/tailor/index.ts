@@ -1,5 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
-import { ANTHROPIC_MESSAGES_URL } from '../_shared/anthropic.ts'
+import { ANTHROPIC_MESSAGES_URL, SONNET_BETA_HEADER, SONNET_FIELDS } from '../_shared/anthropic.ts'
 import { corsHeaders, handleCors, json } from '../_shared/cors.ts'
 import { decrypt, encrypt } from '../_shared/encrypt.ts'
 import { findOrCreateJobApplication } from '../_shared/job-application.ts'
@@ -116,8 +116,9 @@ async function askChecker(prompt: string): Promise<string> {
       'x-api-key': ANTHROPIC_API_KEY,
       'anthropic-version': '2023-06-01',
       'content-type': 'application/json',
+      ...SONNET_BETA_HEADER,
     },
-    body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 2000, messages: [{ role: 'user', content: prompt }] }),
+    body: JSON.stringify({ ...SONNET_FIELDS, max_tokens: 2000, messages: [{ role: 'user', content: prompt }] }),
   })
   if (!res.ok) throw new Error(`skill check ${res.status}`)
   const data = await res.json() as { content: Array<{ type: string; text: string }> }
@@ -453,12 +454,14 @@ Deno.serve(async (req) => {
       'x-api-key': ANTHROPIC_API_KEY,
       'anthropic-version': '2023-06-01',
       'content-type': 'application/json',
+      ...SONNET_BETA_HEADER,
     },
     body: JSON.stringify({
       // Sonnet for tailoring: judgment-heavy (bullet preservation, relevance
       // calls) — the small models compress/merge. Cover letters are on Sonnet
-      // too (see generate/index.ts).
-      model: 'claude-sonnet-4-6',
+      // too (see generate/index.ts). A mid-stream decline ends the stream
+      // early; the incomplete delta fails to parse and the request refunds.
+      ...SONNET_FIELDS,
       max_tokens: 6000,
       stream: true,
       messages: [{ role: 'user', content: prompt }],

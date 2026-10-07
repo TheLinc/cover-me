@@ -1,5 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
-import { ANTHROPIC_MESSAGES_URL } from '../_shared/anthropic.ts'
+import { ANTHROPIC_MESSAGES_URL, SONNET_BETA_HEADER, SONNET_FIELDS } from '../_shared/anthropic.ts'
 import { corsHeaders, handleCors, json } from '../_shared/cors.ts'
 import { decrypt } from '../_shared/encrypt.ts'
 import { buildLintRetryMessage, lintLetter } from '../_shared/letter-lint.ts'
@@ -150,8 +150,8 @@ Deno.serve(async (req) => {
 // Sonnet for cover letters: the letter is the product's flagship "must sound
 // human" artifact and the prompt carries ~60 constraints — the small models
 // are the ones that leak AI-tells and drop rules. Tailoring is on Sonnet too.
-const LETTER_MODEL = 'claude-sonnet-4-6'
-
+// A decline (stop_reason "refusal") comes back with no text, which the caller
+// treats as an empty response and refunds.
 async function callClaude(messages: Array<{ role: 'user' | 'assistant'; content: string }>): Promise<string> {
   const res = await fetch(ANTHROPIC_MESSAGES_URL, {
     method: 'POST',
@@ -159,9 +159,10 @@ async function callClaude(messages: Array<{ role: 'user' | 'assistant'; content:
       'x-api-key': ANTHROPIC_API_KEY,
       'anthropic-version': '2023-06-01',
       'content-type': 'application/json',
+      ...SONNET_BETA_HEADER,
     },
     body: JSON.stringify({
-      model: LETTER_MODEL,
+      ...SONNET_FIELDS,
       max_tokens: 1024,
       messages,
     }),

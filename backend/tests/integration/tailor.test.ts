@@ -49,6 +49,24 @@ describe('tailor', () => {
     expect(await quotaUsedToday(user.id)).toBe(1)
   })
 
+  it('uses Sonnet 5.5 with thinking off and fallback, and Haiku 4.5 for the parse', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    await callFunction('tailor', { token: user.token, body: { job: JOB } })
+
+    const requests = await mockClaude.requests()
+    const parse = requests.filter((r) => r.messages[0].content.startsWith('You are a resume parser'))
+    const sonnet = requests.filter((r) => !r.messages[0].content.startsWith('You are a resume parser'))
+    expect(parse.map((r) => r.model)).toEqual(['claude-haiku-4-5'])
+    expect(sonnet.length).toBeGreaterThan(0)
+    for (const r of sonnet) {
+      expect(r.model).toBe('claude-sonnet-5-5')
+      expect(r.thinking).toEqual({ type: 'between_tools' })
+      expect(r.fallbacks).toBe('default')
+      expect(r.betaHeader).toBe('server-side-fallback-2026-07-01')
+    }
+  })
+
   it('parses the resume once, then reuses the encrypted cache', async () => {
     user = await createUser()
     await uploadResume(user)

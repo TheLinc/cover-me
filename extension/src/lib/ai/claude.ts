@@ -8,7 +8,21 @@ export interface ChatMessage {
 // Sonnet for cover letters: the letter is the product's flagship "must sound
 // human" artifact and the prompt carries ~60 constraints — the small models
 // are the ones that leak AI-tells and drop rules. ~1¢/letter on the user's key.
-const LETTER_MODEL = 'claude-sonnet-4-6'
+// Keep in step with backend/supabase/functions/_shared/anthropic.ts.
+export const HAIKU_MODEL = 'claude-haiku-4-5'
+
+// Request fields every Sonnet call sends. Sonnet 5.5 thinks by default, and
+// thinking counts toward max_tokens, so a 1,024-token letter could be cut off;
+// it rejects {type: 'disabled'}, and between_tools is its thinking-off setting.
+// fallbacks: 'default' re-runs a cyber-category decline (a security-job posting
+// can trip it) on Sonnet 5 server-side instead of failing the request.
+export const SONNET_FIELDS = {
+  model: 'claude-sonnet-5-5',
+  thinking: { type: 'between_tools' },
+  fallbacks: 'default',
+} as const
+
+export const SONNET_BETA_HEADER = { 'anthropic-beta': 'server-side-fallback-2026-07-01' }
 
 export async function callClaude(prompt: string | ChatMessage[], apiKey: string): Promise<string> {
   const messages = typeof prompt === 'string' ? [{ role: 'user', content: prompt }] : prompt
@@ -19,9 +33,10 @@ export async function callClaude(prompt: string | ChatMessage[], apiKey: string)
       'x-api-key': apiKey,
       'anthropic-version': '2023-06-01',
       'anthropic-dangerous-direct-browser-access': 'true',
+      ...SONNET_BETA_HEADER,
     },
     body: JSON.stringify({
-      model: LETTER_MODEL,
+      ...SONNET_FIELDS,
       max_tokens: 1024,
       messages,
     }),

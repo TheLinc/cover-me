@@ -28,6 +28,27 @@ describe('generate', () => {
     expect(first.messages[0].content).toContain(JOB.description)
   })
 
+  it('asks Sonnet 5.5 for the letter with thinking off and server-side fallback', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    await callFunction('generate', { token: user.token, body: { job: JOB } })
+
+    const [first] = await mockClaude.requests()
+    expect(first.model).toBe('claude-sonnet-5-5')
+    expect(first.thinking).toEqual({ type: 'between_tools' })
+    expect(first.fallbacks).toBe('default')
+    expect(first.betaHeader).toBe('server-side-fallback-2026-07-01')
+  })
+
+  it('refunds the generation when Claude declines the request', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    await mockClaude.refuseNext()
+    const res = await callFunction('generate', { token: user.token, body: { job: JOB } })
+    expect(res.status).toBe(502)
+    expect(await quotaUsedToday(user.id)).toBe(0)
+  })
+
   it('refunds the generation when the user has no resume', async () => {
     user = await createUser()
     const res = await callFunction('generate', { token: user.token, body: { job: JOB } })

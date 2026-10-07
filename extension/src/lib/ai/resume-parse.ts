@@ -1,4 +1,5 @@
 import type { AIProvider, ParsedResume } from '../../types'
+import { HAIKU_MODEL } from './claude'
 
 const CLAUDE_API = 'https://api.anthropic.com/v1/messages'
 const OPENAI_API = 'https://api.openai.com/v1/chat/completions'
@@ -96,7 +97,7 @@ export async function parseResumeStructure(
         'anthropic-dangerous-direct-browser-access': 'true',
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
+        model: HAIKU_MODEL,
         max_tokens: 3000,
         messages: [{ role: 'user', content: prompt }],
       }),

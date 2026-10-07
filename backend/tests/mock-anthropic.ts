@@ -80,7 +80,15 @@ export const MOCK_TAILOR_DELTA = {
   },
 }
 
-type MessagesBody = { model?: string; stream?: boolean; messages?: Array<{ role: string; content: string }> }
+type MessagesBody = {
+  model?: string
+  stream?: boolean
+  messages?: Array<{ role: string; content: string }>
+  thinking?: { type: string }
+  fallbacks?: unknown
+  /** The anthropic-beta request header, recorded so tests can check it. */
+  betaHeader?: string
+}
 
 const received: MessagesBody[] = []
 const failures: Array<{ status: number; body: string }> = []
@@ -156,7 +164,8 @@ export function startMockAnthropic(port: number): Promise<Server> {
 
     if (req.method === 'POST' && url === '/v1/messages') {
       const body = JSON.parse(await readBody(req)) as MessagesBody
-      received.push(body)
+      const beta = req.headers['anthropic-beta']
+      received.push({ ...body, betaHeader: typeof beta === 'string' ? beta : undefined })
 
       const failure = failures.shift()
       if (failure) {

@@ -90,12 +90,24 @@ export interface ClaudeRequest {
   model: string
   stream?: boolean
   messages: Array<{ role: string; content: string }>
+  thinking?: { type: string }
+  fallbacks?: unknown
+  betaHeader?: string
 }
+
+// A Sonnet 5.5 decline: HTTP 200, stop_reason "refusal", no text.
+export const REFUSAL_BODY = JSON.stringify({
+  id: 'msg_mock', type: 'message', role: 'assistant', model: 'claude-sonnet-5-5',
+  content: [], stop_reason: 'refusal', stop_details: { type: 'refusal', category: 'general_harms' },
+  usage: { input_tokens: 1, output_tokens: 0 },
+})
 
 export const mockClaude = {
   reset: () => fetch(`${MOCK_URL}/__mock/reset`, { method: 'POST' }),
   failNext: (status = 500) =>
     fetch(`${MOCK_URL}/__mock/fail-next`, { method: 'POST', body: JSON.stringify({ status }) }),
+  refuseNext: () =>
+    fetch(`${MOCK_URL}/__mock/fail-next`, { method: 'POST', body: JSON.stringify({ status: 200, body: REFUSAL_BODY }) }),
   requests: async (): Promise<ClaudeRequest[]> => (await fetch(`${MOCK_URL}/__mock/requests`)).json(),
 }
 

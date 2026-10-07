@@ -6,7 +6,7 @@
 // The prompt template is mirrored from extension/src/lib/ai/resume-parse.ts —
 // scripts/check-prompt-sync.mjs fails the build if the copies drift.
 
-import { ANTHROPIC_MESSAGES_URL } from './anthropic.ts'
+import { ANTHROPIC_MESSAGES_URL, HAIKU_MODEL } from './anthropic.ts'
 
 export interface ParsedResume {
   name: string
@@ -93,7 +93,7 @@ export async function parseResumeStructure(resumeText: string, apiKey: string): 
     body: JSON.stringify({
       // Haiku is enough here: parsing is verbatim extraction, not judgment —
       // matches the extension's BYOK parse model.
-      model: 'claude-haiku-4-5-20251001',
+      model: HAIKU_MODEL,
       max_tokens: 3000,
       messages: [{ role: 'user', content: buildParsePrompt(resumeText) }],
     }),
