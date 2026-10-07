@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase";
 import { openBilling } from "@/lib/billing";
@@ -9,10 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
   ArrowUpRightIcon,
-  CheckCircleIcon,
   GoogleChromeLogoIcon,
   StarIcon,
-  XIcon,
 } from "@phosphor-icons/react";
 import { Spinner } from "@/components/ui/spinner";
 
@@ -21,7 +19,6 @@ interface Props {
   tier: string;
   memberSince: string;
   usageToday: number;
-  justUpgraded?: boolean;
 }
 
 const FREE_LIMIT = 5;
@@ -31,22 +28,13 @@ export default function DashboardClient({
   tier,
   memberSince,
   usageToday,
-  justUpgraded = false,
 }: Props) {
   const [signingOut, setSigningOut]         = useState(false);
   const [upgrading, setUpgrading]           = useState(false);
   const [upgradeError, setUpgradeError]     = useState('');
   const [billingLoading, setBillingLoading] = useState(false);
-  const [upgradeBanner, setUpgradeBanner]   = useState(justUpgraded);
-
-  // Strip ?upgraded=1 from the URL so a refresh doesn't re-show the banner.
-  useEffect(() => {
-    if (justUpgraded) {
-      window.history.replaceState(null, '', '/dashboard');
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  const isPro = tier === "hosted_pro" || justUpgraded;
+  const [billingError, setBillingError]     = useState('');
+  const isPro = tier === "hosted_pro";
   const initial = email[0]?.toUpperCase() ?? "?";
   const memberDate = new Date(memberSince).toLocaleDateString("en-US", {
     month: "long",
@@ -63,11 +51,17 @@ export default function DashboardClient({
 
   async function handleBillingPortal() {
     setBillingLoading(true);
+    setBillingError('');
     try {
       const data = await openBilling('portal');
-      if (data.url) window.location.href = data.url;
-      else setBillingLoading(false);
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        setBillingError(data.error ?? 'Something went wrong. Please try again.');
+        setBillingLoading(false);
+      }
     } catch {
+      setBillingError('Could not reach the server. Please try again.');
       setBillingLoading(false);
     }
   }
@@ -126,26 +120,6 @@ export default function DashboardClient({
       <main className="px-5 pt-14 pb-24 relative z-[1]">
         <div className="max-w-[860px] mx-auto flex flex-col gap-4">
 
-          {/* Upgrade success banner */}
-          {upgradeBanner && (
-            <div
-              className="flex items-center gap-3 bg-[rgba(52,211,153,0.08)] border border-[rgba(52,211,153,0.25)] rounded-[10px] px-5 py-3.5"
-              style={{ animation: 'fadeUp 0.4s ease both' }}
-            >
-              <CheckCircleIcon size={18} className="text-success shrink-0" weight="fill" />
-              <p className="text-[13.5px] text-foreground flex-1 leading-snug">
-                <span className="font-bold">You&apos;re on Pro.</span>{' '}
-                <span className="text-muted-foreground">Unlimited letters, cross-device sync, and every future feature — all yours.</span>
-              </p>
-              <button
-                aria-label="Dismiss"
-                className="text-dim hover:text-muted-foreground transition-colors shrink-0"
-                onClick={() => setUpgradeBanner(false)}
-              >
-                <XIcon size={15} />
-              </button>
-            </div>
-          )}
           {/* Identity header */}
           <header
             className="flex items-start justify-between gap-6 pb-10 border-b border-border mb-1 max-[700px]:flex-col-reverse max-[700px]:gap-4"
@@ -306,6 +280,9 @@ export default function DashboardClient({
                     : <>Manage billing <ArrowUpRightIcon size={11} /></>
                   }
                 </Button>
+                {billingError && (
+                  <p className="mt-2 text-[12px] text-destructive leading-snug">{billingError}</p>
+                )}
               </div>
             </div>
           )}

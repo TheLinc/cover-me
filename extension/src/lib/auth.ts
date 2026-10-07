@@ -154,8 +154,9 @@ export async function startBilling(accessToken: string, action: 'checkout' | 'po
     headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ action }),
   })
-  const data = await res.json() as { url?: string; error?: string }
-  if (!res.ok || !data.url) throw new Error(data.error ?? 'Could not start checkout.')
+  // A gateway error (502/504) can come back as an HTML page, not JSON.
+  const data = await res.json().catch(() => ({})) as { url?: string; error?: string }
+  if (!res.ok || !data.url) throw new Error(data.error ?? 'Could not reach billing. Please try again.')
   return data.url
 }
 
