@@ -1,11 +1,18 @@
-# Every push: extension build (includes check-dist), web unit tests, and the
-# backend suite (pgTAP plus function tests against the mock server) on a
-# local Supabase stack in Docker.
+# Pull requests and pushes to master: extension build (includes check-dist),
+# web unit tests, and the backend suite (pgTAP plus function tests against the
+# mock server) on a local Supabase stack in Docker. The Supabase CLI maps
+# host.docker.internal to the runner, so the functions reach the mock on Linux.
 name: CI
 
 on:
   push:
+    branches: [master]
   pull_request:
+
+# A newer push to the same branch or PR cancels the run it replaces.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   extension:
