@@ -3,12 +3,13 @@ import Image from 'next/image'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: "You're on Pro | Cover Me",
+  title: 'Payment received | Cover Me',
   robots: { index: false },
 }
 
 // Stripe Checkout's success_url. Needs no sign-in: the extension picks up the
-// new tier from the server on its next request.
+// new tier from the server on its next request. Stripe's webhook can land a
+// few seconds after this page, so the copy doesn't promise Pro is already on.
 export default function UpgradedPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -22,9 +23,10 @@ export default function UpgradedPage() {
       </header>
 
       <main className="max-w-2xl mx-auto px-6 py-24 text-center">
-        <h1 className="text-[40px] font-bold leading-[1.05] tracking-[-1.2px]">You&apos;re on Pro</h1>
+        <h1 className="text-[40px] font-bold leading-[1.05] tracking-[-1.2px]">Payment received</h1>
         <p className="mt-4 text-muted-foreground">
-          Go back to the job posting and open Cover Me. Your next letter or resume runs with no daily limit.
+          Pro turns on as soon as Stripe confirms the payment, usually within a minute. Then go back to the job
+          posting and open Cover Me: your next letter or resume runs with no daily limit.
         </p>
         <p className="mt-2 text-muted-foreground">You can close this tab.</p>
       </main>
