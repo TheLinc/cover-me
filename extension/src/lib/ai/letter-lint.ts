@@ -123,13 +123,18 @@ export function lintLetter(
   const body = letterBody(letter)
   const wordCount = countWords(body)
 
+  // The employer's name is not word choice: "Beacon Retail Group" must not trip
+  // the "beacon" rule, or the model learns to avoid naming the company.
+  const scanned = opts.companyName
+    ? letter.replace(new RegExp(escapeRegex(opts.companyName), 'gi'), ' ')
+    : letter
   for (const w of AI_VOCAB) {
-    if (containsWord(letter, w)) {
+    if (containsWord(scanned, w)) {
       violations.push(`Contains AI-flagged word "${w}" — replace it with plain, specific language.`)
     }
   }
   for (const p of CLICHE_PHRASES) {
-    if (p.includes(' ') ? containsPhrase(letter, p) : containsWord(letter, p)) {
+    if (p.includes(' ') ? containsPhrase(scanned, p) : containsWord(scanned, p)) {
       violations.push(`Contains cliché "${p}" — cut it or replace it with a concrete example.`)
     }
   }
