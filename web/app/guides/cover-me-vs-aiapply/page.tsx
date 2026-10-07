@@ -83,7 +83,7 @@ export default function Page() {
         <Link href="/guides" className="text-[12px] font-semibold text-brand-light hover:text-brand transition-colors">
           ← All guides
         </Link>
-        <h1 className="text-[clamp(30px,4.5vw,46px)] font-extrabold tracking-[-1.8px] text-foreground leading-[1.02] mt-4 mb-4">
+        <h1 className="text-[clamp(30px,4.5vw,46px)] text-foreground leading-[1.02] mt-4 mb-4">
           Cover Me vs AIApply for job applications
         </h1>
         <p className="text-[12px] text-muted-foreground">
@@ -92,6 +92,7 @@ export default function Page() {
       </div>
 
       {/* Hero graphic */}
+      <div className="mb-10 h-px bg-line" />
       <figure className="mb-12">
         <Image
           src={HERO_IMAGE}
@@ -112,7 +113,7 @@ export default function Page() {
           This is an honest comparison — we build Cover Me, but the trade-off below is real, and for some job searches, AIApply&rsquo;s approach is the right one.
         </p>
 
-        <h2 className="text-[22px] font-bold text-foreground tracking-[-0.5px] !mt-10">The core difference: auto-apply vs reviewed applications</h2>
+        <h2 className="text-[22px] text-foreground !mt-10">The core difference: auto-apply vs reviewed applications</h2>
         <p>
           AIApply&rsquo;s pitch is volume: pay per batch of applications, and it finds roles, tailors materials, and submits — largely without you reading what went out under your name. That&rsquo;s a legitimate strategy if you&rsquo;re optimizing for applications-sent-per-hour and treating the job search as a numbers game.
         </p>
@@ -120,7 +121,7 @@ export default function Page() {
           Cover Me stops one step earlier, on purpose. It generates the letter and the tailored, <Link href="/guides/what-is-an-ats-score" className="text-brand-light hover:text-brand transition-colors">ATS-scored</Link> resume for the specific posting you&rsquo;re looking at, then hands it back to you to edit, copy, or download — the submission itself is always a deliberate action you take. Auto-submitting on your behalf is explicitly out of scope; the tool generates, it doesn&rsquo;t apply.
         </p>
 
-        <h2 className="text-[22px] font-bold text-foreground tracking-[-0.5px] !mt-10">Feature comparison</h2>
+        <h2 className="text-[22px] text-foreground !mt-10">Feature comparison</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-[13.5px] border border-border rounded-[8px] overflow-hidden" style={{ borderCollapse: 'collapse' }}>
             <thead>
@@ -142,12 +143,12 @@ export default function Page() {
           </table>
         </div>
 
-        <h2 className="text-[22px] font-bold text-foreground tracking-[-0.5px] !mt-10">When AIApply&rsquo;s approach makes sense</h2>
+        <h2 className="text-[22px] text-foreground !mt-10">When AIApply&rsquo;s approach makes sense</h2>
         <p>
           If you&rsquo;re early in your career, applying broadly to roles you&rsquo;re genuinely open to, and comfortable trading per-application polish for sheer coverage, auto-apply removes the tedium entirely. Bundling a job board, interview coaching, and a resume translator into one subscription is also a real convenience if you want a single tool for the whole search rather than assembling your own stack.
         </p>
 
-        <h2 className="text-[22px] font-bold text-foreground tracking-[-0.5px] !mt-10">When reviewed, tailored applications win</h2>
+        <h2 className="text-[22px] text-foreground !mt-10">When reviewed, tailored applications win</h2>
         <p>
           Two things make unreviewed auto-apply riskier than it looks. First, quality control: an AI-written resume or letter you never read can contain a claim you can&rsquo;t back up in an interview, or simply read as generic to a hiring manager — you find out after it&rsquo;s already submitted. Second, detectability: recruiters and modern ATS platforms increasingly flag unusually high application velocity and templated submissions from the same source, which can quietly hurt your standing with a company rather than help it.
         </p>
@@ -158,7 +159,7 @@ export default function Page() {
 
       {/* FAQ */}
       <section className="mt-14">
-        <h2 className="text-[22px] font-bold text-foreground tracking-[-0.5px] mb-4">Frequently asked questions</h2>
+        <h2 className="text-[22px] text-foreground mb-4">Frequently asked questions</h2>
         <div className="divide-y divide-border border-t border-border">
           {(faqJsonLd.mainEntity as { name: string; acceptedAnswer: { text: string } }[]).map((item) => (
             <div key={item.name} className="py-6">
@@ -171,7 +172,7 @@ export default function Page() {
 
       {/* CTA */}
       <div className="border border-border rounded-[12px] p-8 bg-surface text-center mt-14">
-        <h2 className="text-[20px] font-bold text-foreground tracking-[-0.4px] mb-2">Try the reviewed-application version</h2>
+        <h2 className="text-[20px] text-foreground mb-2">Try the reviewed-application version</h2>
         <p className="text-[14px] text-muted-foreground mb-5 max-w-[420px] mx-auto leading-[1.7]">
           Free with your own API key or 5 hosted generations a day. No credit packs, no credit card required.
         </p>
@@ -179,7 +180,7 @@ export default function Page() {
           href={CHROME_STORE_URL}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex items-center gap-2 bg-brand text-white font-semibold text-[14px] px-5 py-2.5 rounded-[8px] hover:bg-brand/90 transition-colors"
+          className="inline-flex items-center gap-2 bg-brand-strong text-white font-semibold text-[14px] px-5 py-2.5 rounded-[8px] hover:bg-brand-deep transition-colors"
         >
           Install free · Chrome
         </a>

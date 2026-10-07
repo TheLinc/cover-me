@@ -227,12 +227,10 @@ function AuthForm() {
         className="relative overflow-hidden bg-surface border-r border-border max-md:hidden"
         style={{
           backgroundImage:
-            "radial-gradient(circle, rgba(42,52,82,0.85) 1px, transparent 1px)",
+            "radial-gradient(circle, rgba(226,223,219,0.85) 1px, transparent 1px)",
           backgroundSize: "26px 26px",
         }}
       >
-        <div className="absolute -bottom-[120px] -left-[120px] w-[560px] h-[560px] rounded-full bg-[radial-gradient(ellipse,rgba(99,102,241,0.11)_0%,transparent_60%)] pointer-events-none" />
-        <div className="absolute inset-0 bg-[linear-gradient(160deg,rgba(13,17,23,0.18)_0%,transparent_45%)] pointer-events-none" />
 
         <div className="relative z-[1] h-full min-h-screen flex flex-col pt-[38px] px-[52px] pb-11">
           <a
@@ -250,22 +248,20 @@ function AuthForm() {
 
           <div className="flex flex-col mb-11">
             <span
-              className="text-[10px] font-bold tracking-[0.13em] uppercase text-brand mb-5"
+              className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-2 mb-5"
               style={{ animation: "fadeUp 0.5s ease 0.12s both" }}
             >
               AI Cover Letters
             </span>
             <h1
-              className="text-[clamp(36px,4.2vw,62px)] font-extrabold tracking-[-2.5px] leading-[1.1] text-foreground mb-[22px]"
+              className="text-[clamp(40px,4.6vw,68px)] leading-[1.02] text-foreground mb-[22px]"
               style={{ animation: "fadeUp 0.55s ease 0.2s both" }}
             >
               The cover letter
               <br />
               that gets you
               <br />
-              <span className="inline bg-gradient-to-br from-brand-light via-brand to-[#4338ca] bg-clip-text [-webkit-background-clip:text] text-transparent mt-4">
-                hired.
-              </span>
+              hired.
             </h1>
             <p
               className="text-[15px] text-muted-foreground leading-[1.65] max-w-[340px]"
@@ -300,7 +296,6 @@ function AuthForm() {
 
       {/* ── Right panel ─────────────────────────────────────────────────── */}
       <div className="relative bg-background flex flex-col items-center justify-center px-10 py-12 min-h-screen max-md:px-6 max-md:pt-14 max-md:pb-10">
-        <div className="absolute -top-[160px] left-1/2 -translate-x-1/2 w-[480px] h-[400px] bg-[radial-gradient(ellipse,rgba(99,102,241,0.055)_0%,transparent_65%)] pointer-events-none" />
 
         {/* Back link — hidden in reset view (user arrived via email link) */}
         {view !== "reset" && (
@@ -331,10 +326,10 @@ function AuthForm() {
           {/* ── Email confirmed ── */}
           {view === "confirmed" ? (
             <>
-              <div className="w-12 h-12 rounded-full bg-[rgba(52,211,153,0.1)] border border-[rgba(52,211,153,0.25)] flex items-center justify-center mb-6">
+              <div className="w-12 h-12 rounded-full bg-[rgba(79,70,229,0.1)] border border-[rgba(79,70,229,0.25)] flex items-center justify-center mb-6">
                 <CheckIcon size={22} color="var(--success)" />
               </div>
-              <h2 className="text-2xl font-extrabold tracking-[-0.55px] text-foreground leading-[1.2] mb-[5px]">
+              <h2 className="text-2xl text-foreground leading-[1.2] mb-[5px]">
                 Email confirmed.
               </h2>
               <p className="text-[13.5px] text-muted-foreground leading-[1.6] mb-7">
@@ -349,7 +344,7 @@ function AuthForm() {
             <>
               <div className="flex items-center gap-5 mb-7">
                 <div>
-                  <h2 className="text-2xl font-extrabold tracking-[-0.55px] text-foreground leading-[1.2] mb-[5px]">
+                  <h2 className="text-2xl text-foreground leading-[1.2] mb-[5px]">
                     {view === "reset"
                       ? "Password updated."
                       : "Check your inbox."}
@@ -371,7 +366,7 @@ function AuthForm() {
                     )}
                   </p>
                 </div>
-                <div className="w-12 h-12 rounded-full bg-[rgba(52,211,153,0.1)] border border-[rgba(52,211,153,0.25)] flex items-center justify-center shrink-0">
+                <div className="w-12 h-12 rounded-full bg-[rgba(79,70,229,0.1)] border border-[rgba(79,70,229,0.25)] flex items-center justify-center shrink-0">
                   <CheckIcon size={20} color="var(--success)" />
                 </div>
               </div>
@@ -407,7 +402,7 @@ function AuthForm() {
             /* ── Password reset form ── */
             <>
               <div className="mb-7">
-                <h2 className="text-2xl font-extrabold tracking-[-0.55px] text-foreground leading-[1.2] mb-[5px]">
+                <h2 className="text-2xl text-foreground leading-[1.2] mb-[5px]">
                   {heading}
                 </h2>
                 <p className="text-[13.5px] text-muted-foreground leading-[1.55]">
@@ -507,7 +502,7 @@ function AuthForm() {
             /* ── Forgot password form ── */
             <>
               <div className="mb-7">
-                <h2 className="text-2xl font-extrabold tracking-[-0.55px] text-foreground leading-[1.2] mb-[5px]">
+                <h2 className="text-2xl text-foreground leading-[1.2] mb-[5px]">
                   {heading}
                 </h2>
                 <p className="text-[13.5px] text-muted-foreground leading-[1.55]">
@@ -567,7 +562,7 @@ function AuthForm() {
             /* ── Sign in / sign up form ── */
             <>
               <div className="mb-7">
-                <h2 className="text-2xl font-extrabold tracking-[-0.55px] text-foreground leading-[1.2] mb-[5px]">
+                <h2 className="text-2xl text-foreground leading-[1.2] mb-[5px]">
                   {heading}
                 </h2>
                 <p className="text-[13.5px] text-muted-foreground leading-[1.55]">

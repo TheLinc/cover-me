@@ -72,7 +72,7 @@ export default function Page() {
         <Link href="/guides" className="text-[12px] font-semibold text-brand-light hover:text-brand transition-colors">
           ← All guides
         </Link>
-        <h1 className="text-[clamp(30px,4.5vw,46px)] font-extrabold tracking-[-1.8px] text-foreground leading-[1.02] mt-4 mb-4">
+        <h1 className="text-[clamp(30px,4.5vw,46px)] text-foreground leading-[1.02] mt-4 mb-4">
           What is an ATS score?
         </h1>
         <p className="text-[12px] text-muted-foreground">
@@ -81,6 +81,7 @@ export default function Page() {
       </div>
 
       {/* Hero graphic */}
+      <div className="mb-10 h-px bg-line" />
       <figure className="mb-12">
         <Image
           src={HERO_IMAGE}
@@ -99,7 +100,7 @@ export default function Page() {
           An ATS score is a percentage that measures how closely your resume matches a specific job description — the keywords, skills, and requirements an applicant tracking system (ATS) scans for when it filters candidates. A higher score means your resume is more likely to survive automated screening and reach a human recruiter.
         </p>
 
-        <h2 className="text-[22px] font-bold text-foreground tracking-[-0.5px] !mt-10">How does ATS screening actually work?</h2>
+        <h2 className="text-[22px] text-foreground !mt-10">How does ATS screening actually work?</h2>
         <p>
           An applicant tracking system is the software companies use to collect and manage applications — Greenhouse, Lever, Workday, and Ashby are common examples. When you apply online, your resume is parsed into structured data: job titles, dates, skills, education. Recruiters then search and filter that pool by the terms that matter for the role.
         </p>
@@ -110,7 +111,7 @@ export default function Page() {
           The scoring is not mysterious. It is substantially keyword and requirement overlap: does the language in your resume match the language in the posting? That is also why the score is per-job, not a property of your resume — the same resume scores differently against every posting.
         </p>
 
-        <h2 className="text-[22px] font-bold text-foreground tracking-[-0.5px] !mt-10">What counts as a good ATS score?</h2>
+        <h2 className="text-[22px] text-foreground !mt-10">What counts as a good ATS score?</h2>
         <p>
           As a rule of thumb:
         </p>
@@ -123,7 +124,7 @@ export default function Page() {
           Chasing 100% is the wrong goal. A resume stuffed with every keyword reads as spam to the human who eventually opens it — and the human is the one who schedules interviews.
         </p>
 
-        <h2 className="text-[22px] font-bold text-foreground tracking-[-0.5px] !mt-10">How do you improve your ATS score?</h2>
+        <h2 className="text-[22px] text-foreground !mt-10">How do you improve your ATS score?</h2>
         <ol className="list-decimal pl-6 space-y-2">
           <li>Read the posting and note the specific skills, tools, and qualifications it repeats — those are the filter terms.</li>
           <li>Mirror the posting&rsquo;s exact wording where it truthfully describes your experience (&ldquo;React&rdquo; not &ldquo;modern JavaScript frameworks&rdquo;; &ldquo;stakeholder management&rdquo; not &ldquo;worked with teams&rdquo;).</li>
@@ -132,7 +133,7 @@ export default function Page() {
           <li>Re-check the score after tailoring and close remaining gaps where you honestly can.</li>
         </ol>
 
-        <h2 className="text-[22px] font-bold text-foreground tracking-[-0.5px] !mt-10">How Cover Me calculates it</h2>
+        <h2 className="text-[22px] text-foreground !mt-10">How Cover Me calculates it</h2>
         <p>
           The <Link href="/" className="text-brand-light hover:text-brand transition-colors">Cover Me</Link> Chrome extension does this whole loop in one click. On any job posting, &ldquo;Tailor Resume to Job&rdquo; rewrites your resume bullets to match the role&rsquo;s keywords — without inventing skills or changing your job history — then scores the result against the posting&rsquo;s requirements and lists each one as matched or a gap. You see exactly where you stand before you apply, and you can re-tailor after addressing the gaps.
         </p>
@@ -140,7 +141,7 @@ export default function Page() {
 
       {/* FAQ */}
       <section className="mt-14">
-        <h2 className="text-[22px] font-bold text-foreground tracking-[-0.5px] mb-4">Frequently asked questions</h2>
+        <h2 className="text-[22px] text-foreground mb-4">Frequently asked questions</h2>
         <div className="divide-y divide-border border-t border-border">
           {(faqJsonLd.mainEntity as { name: string; acceptedAnswer: { text: string } }[]).map((item) => (
             <div key={item.name} className="py-6">
@@ -153,7 +154,7 @@ export default function Page() {
 
       {/* CTA */}
       <div className="border border-border rounded-[12px] p-8 bg-surface text-center mt-14">
-        <h2 className="text-[20px] font-bold text-foreground tracking-[-0.4px] mb-2">See your ATS score on any job posting</h2>
+        <h2 className="text-[20px] text-foreground mb-2">See your ATS score on any job posting</h2>
         <p className="text-[14px] text-muted-foreground mb-5 max-w-[420px] mx-auto leading-[1.7]">
           Cover Me tailors your resume to the role and shows your match score and gaps — in one click.
         </p>
@@ -161,7 +162,7 @@ export default function Page() {
           href={CHROME_STORE_URL}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex items-center gap-2 bg-brand text-white font-semibold text-[14px] px-5 py-2.5 rounded-[8px] hover:bg-brand/90 transition-colors"
+          className="inline-flex items-center gap-2 bg-brand-strong text-white font-semibold text-[14px] px-5 py-2.5 rounded-[8px] hover:bg-brand-deep transition-colors"
         >
           Install free · Chrome
         </a>

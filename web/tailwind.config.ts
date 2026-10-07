@@ -10,51 +10,54 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Shadcn colors
-        border:      '#2a3452',
+        // shadcn
+        border:      'var(--line)',
         input:       'hsl(var(--input))',
         ring:        'hsl(var(--ring))',
         background:  'hsl(var(--background))',
         foreground:  'hsl(var(--foreground))',
-        primary: {
-          DEFAULT:    'hsl(var(--primary))',
-          foreground: 'hsl(var(--primary-foreground))',
-        },
-        secondary: {
-          DEFAULT:    'hsl(var(--secondary))',
-          foreground: 'hsl(var(--secondary-foreground))',
-        },
-        destructive: {
-          DEFAULT:    'hsl(var(--destructive))',
-          foreground: 'hsl(var(--destructive-foreground))',
-        },
-        muted: {
-          DEFAULT:    'hsl(var(--muted))',
-          foreground: 'hsl(var(--muted-foreground))',
-        },
-        accent: {
-          DEFAULT:    '#1e2740',
-          foreground: '#e2e8f0',
-        },
-        popover: {
-          DEFAULT:    'hsl(var(--popover))',
-          foreground: 'hsl(var(--popover-foreground))',
-        },
-        card: {
-          DEFAULT:    'hsl(var(--card))',
-          foreground: 'hsl(var(--card-foreground))',
-        },
-        // Project semantic aliases — map to CSS variables defined in globals.css
-        surface:  'var(--surface)',   // = #161c2e
-        elevated: 'var(--elevated)',  // = #1e2740
+        primary:     { DEFAULT: 'hsl(var(--primary))',     foreground: 'hsl(var(--primary-foreground))' },
+        secondary:   { DEFAULT: 'hsl(var(--secondary))',   foreground: 'hsl(var(--secondary-foreground))' },
+        destructive: { DEFAULT: 'hsl(var(--destructive))', foreground: 'hsl(var(--destructive-foreground))' },
+        muted:       { DEFAULT: 'hsl(var(--muted))',       foreground: 'hsl(var(--muted-foreground))' },
+        accent:      { DEFAULT: 'var(--panel)',             foreground: 'var(--ink)' },
+        popover:     { DEFAULT: 'hsl(var(--popover))',     foreground: 'hsl(var(--popover-foreground))' },
+        card:        { DEFAULT: 'hsl(var(--card))',        foreground: 'hsl(var(--card-foreground))' },
+        // Palette (values in globals.css)
+        paper:  'var(--paper)',
+        panel:  'var(--panel)',
+        line:   'var(--line)',
+        ink:    { DEFAULT: 'var(--ink)', 2: 'var(--ink-2)' },
+        body:   'var(--body)',
+        subtle: 'var(--subtle)',
         brand: {
-          DEFAULT: 'var(--accent)',       // = #6366f1
-          light:   'var(--accent-h)',     // = #818cf8
-          dim:     'rgba(99,102,241,0.14)',
-          glow:    'rgba(99,102,241,0.28)',
+          DEFAULT: 'var(--brand)',
+          strong:  'var(--brand-strong)',
+          deep:    'var(--brand-deep)',
+          tint:    'var(--brand-tint)',
+          ink:     'var(--brand-ink)',
+          // Legacy names still used by inner pages.
+          light:   'var(--brand-strong)',
+          dim:     'var(--brand-tint)',
+          glow:    'rgba(99,102,241,0.18)',
         },
-        dim:     'var(--text-3)',    // = #475569 (very muted text)
-        success: 'var(--success)',   // = #34d399
+        gap:    { DEFAULT: 'var(--gap)', tint: 'var(--gap-tint)', ink: 'var(--gap-ink)' },
+        night:  { DEFAULT: 'var(--night)', 2: 'var(--night-2)' },
+        // The extension popup's dark UI, for product visuals only.
+        ext: {
+          bg:       'var(--ext-bg)',
+          surface:  'var(--ext-surface)',
+          elevated: 'var(--ext-elevated)',
+          border:   'var(--ext-border)',
+          text:     'var(--ext-text)',
+          muted:    'var(--ext-muted)',
+          soft:     'var(--ext-accent-soft)',
+        },
+        // Legacy aliases still used by inner pages. New code uses the names above.
+        surface:  'var(--card)',
+        elevated: 'var(--panel)',
+        dim:      'var(--subtle)',
+        success:  'var(--brand-strong)',
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -62,7 +65,8 @@ const config: Config = {
         sm: 'calc(var(--radius) - 4px)',
       },
       fontFamily: {
-        sans: ['Plus Jakarta Sans', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
+        mono: ['var(--font-mono)', 'ui-monospace', 'monospace'],
       },
       keyframes: {
         'accordion-down': {

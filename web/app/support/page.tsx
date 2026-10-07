@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
-import Image from 'next/image'
-import Link from 'next/link'
+import { SiteNav } from '@/components/site/SiteNav'
+import { SiteFooter } from '@/components/site/SiteFooter'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 
@@ -79,25 +79,13 @@ export default function SupportPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
 
-      {/* Nav */}
-      <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-md">
-        <div className="max-w-3xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5">
-            <Image src="/logo.png" alt="Cover Me" width={26} height={26} className="rounded-md" />
-            <span className="font-bold text-[15px] tracking-[-0.3px]">Cover Me</span>
-          </Link>
-          <nav className="flex items-center gap-6 text-[13px] text-muted-foreground">
-            <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
-            <Link href="/terms" className="hover:text-foreground transition-colors">Terms</Link>
-          </nav>
-        </div>
-      </header>
+      <SiteNav />
 
       <main className="max-w-2xl mx-auto px-6 py-20">
 
         {/* Heading */}
         <div className="mb-14">
-          <h1 className="text-[36px] font-bold tracking-[-0.8px] text-foreground mb-2">
+          <h1 className="text-[36px] text-foreground mb-2">
             Support
           </h1>
           <p className="text-[12px] text-muted-foreground mb-3">
@@ -114,14 +102,14 @@ export default function SupportPage() {
           {/* Email */}
           <div className="border border-border rounded-[12px] p-7 bg-surface">
             <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-[10px] bg-brand/10 border border-brand/20 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-[10px] bg-brand-tint border border-brand-tint flex items-center justify-center shrink-0">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-brand-light">
                   <rect width="20" height="16" x="2" y="4" rx="2" />
                   <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
                 </svg>
               </div>
               <div className="flex-1 min-w-0">
-                <h2 className="text-[16px] font-bold text-foreground tracking-[-0.3px] mb-1">
+                <h2 className="text-[16px] text-foreground mb-1">
                   Email support
                 </h2>
                 <p className="text-[14px] text-muted-foreground leading-[1.7] mb-4">
@@ -143,13 +131,13 @@ export default function SupportPage() {
           {/* GitHub Issues */}
           <div className="border border-border rounded-[12px] p-7 bg-surface">
             <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-[10px] bg-brand/10 border border-brand/20 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-[10px] bg-brand-tint border border-brand-tint flex items-center justify-center shrink-0">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="text-brand-light">
                   <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" />
                 </svg>
               </div>
               <div className="flex-1 min-w-0">
-                <h2 className="text-[16px] font-bold text-foreground tracking-[-0.3px] mb-1">
+                <h2 className="text-[16px] text-foreground mb-1">
                   Bug reports &amp; feature requests
                 </h2>
                 <p className="text-[14px] text-muted-foreground leading-[1.7] mb-4">
@@ -172,7 +160,7 @@ export default function SupportPage() {
 
           {/* Common issues */}
           <div className="border border-border rounded-[12px] p-7 bg-surface">
-            <h2 className="text-[16px] font-bold text-foreground tracking-[-0.3px] mb-5">
+            <h2 className="text-[16px] text-foreground mb-5">
               Common questions
             </h2>
             <div className="space-y-5">
@@ -214,6 +202,7 @@ export default function SupportPage() {
         </p>
 
       </main>
+      <SiteFooter />
     </div>
   )
 }

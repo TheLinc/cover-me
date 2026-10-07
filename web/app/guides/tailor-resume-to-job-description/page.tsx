@@ -110,7 +110,7 @@ export default function Page() {
         <Link href="/guides" className="text-[12px] font-semibold text-brand-light hover:text-brand transition-colors">
           ← All guides
         </Link>
-        <h1 className="text-[clamp(30px,4.5vw,46px)] font-extrabold tracking-[-1.8px] text-foreground leading-[1.02] mt-4 mb-4">
+        <h1 className="text-[clamp(30px,4.5vw,46px)] text-foreground leading-[1.02] mt-4 mb-4">
           How to tailor your resume to a job description
         </h1>
         <p className="text-[12px] text-muted-foreground">
@@ -119,6 +119,7 @@ export default function Page() {
       </div>
 
       {/* Hero graphic */}
+      <div className="mb-10 h-px bg-line" />
       <figure className="mb-12">
         <Image
           src={HERO_IMAGE}
@@ -139,7 +140,7 @@ export default function Page() {
           Here is the five-step method, followed by the honest caveats — including what you should never do.
         </p>
 
-        <h2 className="text-[22px] font-bold text-foreground tracking-[-0.5px] !mt-10">The five-step method</h2>
+        <h2 className="text-[22px] text-foreground !mt-10">The five-step method</h2>
         <ol className="list-none space-y-6 !mt-6">
           {STEPS.map((s, i) => (
             <li key={s.name} className="flex gap-5">
@@ -154,7 +155,7 @@ export default function Page() {
           ))}
         </ol>
 
-        <h2 className="text-[22px] font-bold text-foreground tracking-[-0.5px] !mt-10">The line you must not cross</h2>
+        <h2 className="text-[22px] text-foreground !mt-10">The line you must not cross</h2>
         <p>
           Tailoring is translation, not fiction. Re-expressing &ldquo;built dashboards used by leadership&rdquo; as &ldquo;stakeholder reporting and data visualization&rdquo; is honest tailoring — the experience is the same, the language now matches the filter. Adding &ldquo;Kubernetes&rdquo; because the posting wants it and you once watched a talk is fabrication. It passes the ATS, then costs you the interview, and sometimes the offer you already had.
         </p>
@@ -162,7 +163,7 @@ export default function Page() {
           The practical test: could you speak about this bullet, as written, for two minutes in an interview? If not, it doesn&rsquo;t belong on the tailored resume.
         </p>
 
-        <h2 className="text-[22px] font-bold text-foreground tracking-[-0.5px] !mt-10">Doing it in one click</h2>
+        <h2 className="text-[22px] text-foreground !mt-10">Doing it in one click</h2>
         <p>
           The method above takes 20–30 minutes per application done well — which is why most people stop tailoring after the third application of the day. The <Link href="/" className="text-brand-light hover:text-brand transition-colors">Cover Me</Link> Chrome extension automates exactly this method: on any job posting, &ldquo;Tailor Resume to Job&rdquo; extracts the role&rsquo;s keywords, rewrites your bullets in the posting&rsquo;s language under a hard constraint against inventing skills or changing your job history, then shows your <Link href="/guides/what-is-an-ats-score" className="text-brand-light hover:text-brand transition-colors">ATS match score</Link> with each requirement marked matched or gap. It works on <Link href="/for/linkedin" className="text-brand-light hover:text-brand transition-colors">LinkedIn</Link>, <Link href="/for/indeed" className="text-brand-light hover:text-brand transition-colors">Indeed</Link>, <Link href="/for/greenhouse" className="text-brand-light hover:text-brand transition-colors">Greenhouse</Link>, <Link href="/for/lever" className="text-brand-light hover:text-brand transition-colors">Lever</Link>, <Link href="/for/workday" className="text-brand-light hover:text-brand transition-colors">Workday</Link>, and <Link href="/for/ashby" className="text-brand-light hover:text-brand transition-colors">Ashby</Link>, and exports a formatted one-page PDF when the role demands it.
         </p>
@@ -170,7 +171,7 @@ export default function Page() {
 
       {/* FAQ */}
       <section className="mt-14">
-        <h2 className="text-[22px] font-bold text-foreground tracking-[-0.5px] mb-4">Frequently asked questions</h2>
+        <h2 className="text-[22px] text-foreground mb-4">Frequently asked questions</h2>
         <div className="divide-y divide-border border-t border-border">
           {(faqJsonLd.mainEntity as { name: string; acceptedAnswer: { text: string } }[]).map((item) => (
             <div key={item.name} className="py-6">
@@ -183,7 +184,7 @@ export default function Page() {
 
       {/* CTA */}
       <div className="border border-border rounded-[12px] p-8 bg-surface text-center mt-14">
-        <h2 className="text-[20px] font-bold text-foreground tracking-[-0.4px] mb-2">Tailor your resume in one click</h2>
+        <h2 className="text-[20px] text-foreground mb-2">Tailor your resume in one click</h2>
         <p className="text-[14px] text-muted-foreground mb-5 max-w-[420px] mx-auto leading-[1.7]">
           Keywords matched, score shown, gaps listed — without inventing a single skill.
         </p>
@@ -191,7 +192,7 @@ export default function Page() {
           href={CHROME_STORE_URL}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex items-center gap-2 bg-brand text-white font-semibold text-[14px] px-5 py-2.5 rounded-[8px] hover:bg-brand/90 transition-colors"
+          className="inline-flex items-center gap-2 bg-brand-strong text-white font-semibold text-[14px] px-5 py-2.5 rounded-[8px] hover:bg-brand-deep transition-colors"
         >
           Install free · Chrome
         </a>

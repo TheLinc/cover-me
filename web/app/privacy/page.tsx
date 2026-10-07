@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
-import Image from 'next/image'
-import Link from 'next/link'
+import { SiteNav } from '@/components/site/SiteNav'
+import { SiteFooter } from '@/components/site/SiteFooter'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 
@@ -31,7 +31,7 @@ function H2({ id, children }: { id: string; children: React.ReactNode }) {
   return (
     <h2
       id={id}
-      className="text-[22px] font-bold text-foreground tracking-[-0.4px] mt-14 mb-4 scroll-mt-24"
+      className="text-[26px] text-foreground mt-14 mb-4 scroll-mt-24"
     >
       {children}
     </h2>
@@ -85,7 +85,7 @@ function PermissionCard({
       <div className="bg-surface px-5 py-3 flex items-center justify-between gap-4 border-b border-border">
         <code className="text-[13px] font-bold text-brand-light font-mono">{name}</code>
         {warning && (
-          <span className="text-[11px] font-semibold text-amber-400 bg-amber-400/10 border border-amber-400/20 px-2.5 py-1 rounded-full shrink-0">
+          <span className="text-[11px] font-semibold text-brand-deep bg-surface border border-[rgba(99,102,241,0.25)] px-2.5 py-1 rounded-full shrink-0">
             ⚠ Chrome shows: &ldquo;{warning}&rdquo;
           </span>
         )}
@@ -130,18 +130,7 @@ export default function PrivacyPage() {
     <div className="min-h-screen bg-background">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
 
-      {/* Nav */}
-      <nav className="sticky top-0 z-20 bg-[rgba(13,17,23,0.92)] backdrop-blur-2xl border-b border-border">
-        <div className="max-w-[1160px] mx-auto px-12 h-[58px] flex items-center justify-between max-md:px-5">
-          <Link href="/" className="flex items-center gap-[9px] text-[15px] font-bold text-foreground tracking-[-0.3px]">
-            <Image src="/logo.png" width={22} height={22} alt="Cover Me" />
-            Cover Me
-          </Link>
-          <Link href="/" className="text-[13px] text-muted-foreground hover:text-foreground transition-colors">
-            ← Back to home
-          </Link>
-        </div>
-      </nav>
+      <SiteNav />
 
       <div className="max-w-[1160px] mx-auto px-12 py-16 max-md:px-5">
         <div className="grid grid-cols-[220px_1fr] gap-16 max-lg:grid-cols-1">
@@ -149,7 +138,7 @@ export default function PrivacyPage() {
           {/* Sidebar TOC — sticky on desktop */}
           <aside className="max-lg:hidden">
             <div className="sticky top-24">
-              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground mb-4">
+              <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-2 mb-4">
                 On this page
               </p>
               <nav className="flex flex-col gap-1">
@@ -171,10 +160,10 @@ export default function PrivacyPage() {
 
             {/* Header */}
             <div className="mb-10 pb-10 border-b border-border">
-              <span className="text-[10px] font-bold tracking-[0.12em] uppercase text-brand mb-4 block">
+              <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-2 mb-4 block">
                 Legal
               </span>
-              <h1 className="text-[clamp(32px,4vw,48px)] font-extrabold tracking-[-1.5px] text-foreground leading-none mb-4">
+              <h1 className="text-[clamp(32px,4vw,48px)] text-foreground leading-none mb-4">
                 Privacy Policy
               </h1>
               <p className="text-[15px] text-muted-foreground">
@@ -664,6 +653,7 @@ export default function PrivacyPage() {
           </main>
         </div>
       </div>
+      <SiteFooter />
     </div>
   )
 }

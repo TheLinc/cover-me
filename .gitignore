@@ -4,6 +4,7 @@ node_modules/
 # Build output
 dist/
 .next/
+.next-verify*/
 .vercel/
 
 # Eval harness output
@@ -61,3 +62,9 @@ docs/
 
 #packages
 *.zip
+
+# Playwright MCP screenshots
+.playwright-mcp/
+
+# Raw Higgsfield downloads
+.media-raw/

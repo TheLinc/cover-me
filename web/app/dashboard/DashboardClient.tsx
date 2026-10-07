@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { createClient } from "@/lib/supabase";
 import { openBilling } from "@/lib/billing";
 import { CHROME_STORE_URL } from "@/lib/utils";
@@ -13,6 +12,7 @@ import {
   StarIcon,
 } from "@phosphor-icons/react";
 import { Spinner } from "@/components/ui/spinner";
+import { SiteNav } from '@/components/site/SiteNav'
 
 interface Props {
   email: string;
@@ -85,36 +85,21 @@ export default function DashboardClient({
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Background glow */}
-      <div className="fixed inset-0 pointer-events-none bg-[radial-gradient(ellipse_900px_600px_at_70%_-5%,rgba(99,102,241,0.06)_0%,transparent_65%)]" />
 
-      {/* Nav */}
-      <nav className="sticky top-0 z-20 bg-[rgba(13,17,23,0.88)] backdrop-blur-xl [-webkit-backdrop-filter:blur(20px)] border-b border-border">
-        <div className="max-w-[860px] mx-auto px-10 h-[58px] flex items-center justify-between max-[700px]:px-5">
-          <a
-            href="/"
-            className="flex items-center gap-[9px] text-[15px] font-bold text-foreground tracking-[-0.3px]"
-          >
-            <Image src="/logo.png" width={22} height={22} alt="Cover Me" />
-            Cover Me
-          </a>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleSignOut}
-            disabled={signingOut}
-          >
+      <SiteNav
+        actions={
+          <Button variant="outline" size="sm" onClick={handleSignOut} disabled={signingOut}>
             {signingOut ? (
               <>
                 <Spinner className="size-3.5" />
                 Signing out
               </>
             ) : (
-              "Sign out"
+              'Sign out'
             )}
           </Button>
-        </div>
-      </nav>
+        }
+      />
 
       {/* Main */}
       <main className="px-5 pt-14 pb-24 relative z-[1]">
@@ -126,7 +111,7 @@ export default function DashboardClient({
             style={{ animation: "fadeUp 0.5s ease both" }}
           >
             <div className="flex flex-col gap-2.5">
-              <h1 className="text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-1.8px] leading-none text-foreground">
+              <h1 className="text-[clamp(28px,3.8vw,46px)] leading-none text-foreground">
                 Good to see you.
               </h1>
               <div className="flex items-center gap-2 flex-wrap">
@@ -212,18 +197,15 @@ export default function DashboardClient({
           {/* Upgrade card (free) / Pro confirmation (pro) */}
           {!isPro ? (
             <div
-              className="relative bg-gradient-to-br from-surface to-[rgba(99,102,241,0.05)] border border-[rgba(99,102,241,0.22)] rounded-[10px] px-8 py-7 flex items-center justify-between gap-8 overflow-hidden shadow-[0_0_48px_rgba(99,102,241,0.05)] max-[700px]:flex-col max-[700px]:items-start"
+              className="soft-card px-8 py-7 flex items-center justify-between gap-8 max-[700px]:flex-col max-[700px]:items-start"
               style={{ animation: "fadeUp 0.5s ease 0.16s both" }}
             >
-              {/* Decorative glow */}
-              <div className="absolute -top-[60px] -right-[60px] w-[200px] h-[200px] rounded-full bg-[radial-gradient(ellipse,rgba(99,102,241,0.1)_0%,transparent_65%)] pointer-events-none" />
-
               <div className="flex flex-col gap-1.5 relative z-[1] flex-1 min-w-0">
                 <span className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.12em] text-brand-light mb-0.5">
                   <StarIcon size={10} weight="fill" />
                   Cover Me Pro
                 </span>
-                <h2 className="text-[17px] font-extrabold tracking-[-0.4px] text-foreground leading-[1.2]">
+                <h2 className="text-[17px] text-foreground leading-[1.2]">
                   Remove the daily limit.
                 </h2>
                 <p className="text-[13px] text-muted-foreground leading-[1.65] max-w-[420px]">
@@ -263,7 +245,7 @@ export default function DashboardClient({
                 <StarIcon size={16} weight="fill" />
               </div>
               <div className="flex-1">
-                <h2 className="text-[15px] font-bold text-foreground tracking-[-0.2px] mb-1">
+                <h2 className="text-[15px] text-foreground mb-1">
                   You&apos;re on Pro
                 </h2>
                 <p className="text-[13px] text-muted-foreground leading-[1.65] mb-3">
