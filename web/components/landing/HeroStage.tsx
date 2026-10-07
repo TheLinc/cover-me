@@ -1,200 +1,298 @@
 'use client'
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
+import Image from 'next/image'
+import { CheckIcon } from '@phosphor-icons/react/dist/ssr'
 import { cn } from '@/lib/utils'
-import { ExtensionPopup, PopupButton } from './ExtensionPopup'
-import { ScoreRing } from './ScoreRing'
-import { Chip, EXAMPLE, JobCard, LetterDoc, ResumeDoc } from './visuals'
+import { ProgressStep } from './ExtensionPopup'
+import { FitScale } from './FitScale'
+import { BrowserFrame, EXAMPLE, Hl, Label, Line } from './visuals'
 
-// `short` labels keep the tab bar inside a phone-width stage.
-const SCENES = [
-  { id: 'resume', label: 'Tailor resume', short: 'Resume' },
-  { id: 'letter', label: 'Write cover letter', short: 'Letter' },
-  { id: 'score', label: 'ATS match', short: 'ATS match' },
-] as const
-type SceneId = (typeof SCENES)[number]['id']
+// The hero's product shot, laid out as a flow with nothing stacked: the posting
+// on top, Cover Me in the middle saying what it is doing, and the two outputs
+// side by side below. Cards never move; only their contents change, one at a
+// time. It opens on the finished result (as the server renders it), holds,
+// then replays the run slowly. Reduced motion stays on the result.
+const LOOP = 21000
+const READ = 6000 // requirements light up on the posting
+const TAILOR = 9500 // resume bullets are rewritten, then scored
+const LETTER = 14000 // the letter is written
+const DONE = 18500 // back to the finished frame
 
-// Animated connector between stage columns (desktop only).
-function Flow() {
-  return (
-    <svg viewBox="0 0 48 40" className="hidden h-10 w-12 self-center lg:block" aria-hidden="true">
-      <path className="flow-line" d="M0 20 H48" fill="none" stroke="var(--brand)" strokeWidth="2" />
-      <circle cx="3" cy="20" r="3.5" fill="var(--brand)" />
-      <circle cx="45" cy="20" r="3.5" fill="var(--brand)" />
-    </svg>
-  )
+type Phase = 'done' | 'read' | 'tailor' | 'letter'
+const phaseAt = (t: number): Phase => (t < READ || t >= DONE ? 'done' : t < TAILOR ? 'read' : t < LETTER ? 'tailor' : 'letter')
+const clamp01 = (v: number) => Math.min(1, Math.max(0, v))
+
+function useLoopClock() {
+  const [t, setT] = useState(0)
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const start = performance.now()
+    const id = window.setInterval(() => setT((performance.now() - start) % LOOP), 100)
+    return () => clearInterval(id)
+  }, [])
+  return t
 }
 
-// Fixed heights so switching scenes swaps content without resizing the stage.
-const POPUP_BODY_H = 'h-[300px]'
-const OUTPUT_H = 'lg:h-[370px]'
+const W = 560
+const H = 520
+const POST_H = 112
+const DOCS_Y = 196
+const RESUME = { left: 0, w: 320 }
+const LETTER_CARD = { left: 340, w: 220 }
+const rewriteAt = (i: number) => TAILOR + 600 + i * 1400
+const SCORE_AT = rewriteAt(EXAMPLE.bullets.length - 1) + 700
+const LETTER_TEXT = EXAMPLE.letter.join('\n\n')
 
-function PopupBody({ scene }: { scene: SceneId }) {
+// Every card keeps its place; the one being worked on gets an indigo outline.
+const card = (active: boolean) =>
+  cn(
+    'absolute rounded-[18px] transition-shadow duration-500',
+    active
+      ? 'shadow-[0_0_0_2px_rgba(99,102,241,0.55),0_24px_60px_-28px_rgba(30,27,75,0.45)]'
+      : 'shadow-[0_0_0_1px_rgba(30,27,75,0.08),0_24px_60px_-28px_rgba(30,27,75,0.35)]',
+  )
+
+function Posting({ lit, active }: { lit: number; active: boolean }) {
   return (
-    <div className={cn(POPUP_BODY_H, 'overflow-hidden')}>
-      <PopupScene scene={scene} />
+    <div className={cn(card(active), 'rounded-[16px]')} style={{ left: 0, top: 0, width: W, height: POST_H }}>
+      <BrowserFrame
+        url="boards.greenhouse.io/northwind"
+        className="h-full shadow-none"
+        toolbar={
+          <span className="ml-2 flex size-6 items-center justify-center rounded-[7px] bg-white">
+            <Image src="/logo.png" width={16} height={16} alt="" className="rounded-[4px]" />
+          </span>
+        }
+      >
+        <div className="flex h-full items-center gap-5 px-4">
+          <div className="flex shrink-0 items-center gap-2.5">
+            <div className="flex size-8 items-center justify-center rounded-[9px] bg-ink text-[13px] font-semibold text-white">N</div>
+            <div className="leading-tight">
+              <div className="text-[13px] font-semibold text-ink">{EXAMPLE.role}</div>
+              <div className="text-[11px] text-subtle">{EXAMPLE.company} · Job posting</div>
+            </div>
+          </div>
+          <div className="flex flex-wrap justify-end gap-1">
+            {EXAMPLE.keywords.map((k, i) => (
+              <span
+                key={k}
+                className={cn(
+                  'rounded-[6px] px-1.5 py-0.5 text-[10.5px] transition-colors duration-500',
+                  i < lit ? 'bg-brand-tint text-brand-ink' : 'bg-[#F2F0ED] text-subtle',
+                )}
+              >
+                {k}
+              </span>
+            ))}
+          </div>
+        </div>
+      </BrowserFrame>
     </div>
   )
 }
 
-function PopupScene({ scene }: { scene: SceneId }) {
-  if (scene === 'letter') {
-    return (
-      <div className="flex flex-col gap-3 px-4 py-5">
-        <div className="text-[12px] text-ext-muted">Cover letter · {EXAMPLE.company}</div>
-        <p className="text-[12.5px] leading-[1.6]">
-          Dear {EXAMPLE.company} team, {EXAMPLE.letterOpening.charAt(0).toLowerCase() + EXAMPLE.letterOpening.slice(1)}
-        </p>
-        <div className="skeleton-line h-2 w-[92%]" />
-        <div className="skeleton-line h-2 w-[80%]" />
-        <div className="skeleton-line h-2 w-[64%]" />
-      </div>
-    )
-  }
+// Cover Me between the posting and the outputs, saying what it is doing.
+const STATUS: Record<Phase, string> = {
+  read: 'Reading the posting',
+  tailor: 'Rewriting your resume',
+  letter: 'Writing your cover letter',
+  done: 'Ready to apply',
+}
+
+function Connectors({ phase }: { phase: Phase }) {
+  const mid = W / 2
+  const pillTop = POST_H + 18
+  const pillBottom = pillTop + 34
+  const left = RESUME.left + RESUME.w / 2
+  const right = LETTER_CARD.left + LETTER_CARD.w / 2
+  const line = (on: boolean) => (on ? 'flow-line stroke-[var(--brand)]' : 'stroke-[#BFB8B0]')
   return (
-    <div className="flex flex-col items-center gap-2 px-4 pb-3 pt-5">
-      <ScoreRing to={EXAMPLE.score} />
-      <div className="text-[12px] text-ext-soft">Tailored resume vs. {EXAMPLE.company} posting</div>
-      <div className="mt-2 flex w-full flex-col gap-2 text-[12px]">
-        {EXAMPLE.matchedLines.map((l) => (
-          <span key={l} className="text-ext-soft">✓ {l}</span>
-        ))}
-        <span className="text-[#FDBA74]">! {EXAMPLE.gaps[0]}: not in your experience</span>
+    <>
+      <svg className="absolute inset-0" width={W} height={DOCS_Y} fill="none" strokeWidth="2">
+        <path d={`M${mid} ${POST_H} V${pillTop}`} className={line(phase === 'read')} />
+        <path d={`M${mid} ${pillBottom} C${mid} ${DOCS_Y - 6}, ${left} ${pillBottom + 4}, ${left} ${DOCS_Y}`} className={line(phase === 'tailor')} />
+        <path d={`M${mid} ${pillBottom} C${mid} ${DOCS_Y - 6}, ${right} ${pillBottom + 4}, ${right} ${DOCS_Y}`} className={line(phase === 'letter')} />
+      </svg>
+      <div
+        className="absolute flex h-[34px] -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full border border-ext-border bg-ext-bg px-3 text-ext-text shadow-[0_14px_30px_-14px_rgba(15,14,40,0.6)]"
+        style={{ left: mid, top: pillTop }}
+      >
+        <Image src="/logo.png" width={16} height={16} alt="" className="rounded-[4px]" />
+        <ul key={phase} className="animate-[fadeIn_.4s_ease]">
+          <ProgressStep state={phase === 'done' ? 'done' : 'active'}>{STATUS[phase]}</ProgressStep>
+        </ul>
       </div>
+    </>
+  )
+}
+
+// A light version of the popup's ring, for the resume's header.
+function MiniScore({ value }: { value: number | null }) {
+  const r = 15
+  const c = 2 * Math.PI * r
+  return (
+    <div className={cn('flex items-center gap-2 transition-opacity duration-500', value === null && 'opacity-0')}>
+      <span className="text-right font-mono text-[9.5px] uppercase leading-[1.2] tracking-[0.06em] text-subtle">
+        ATS<br />match
+      </span>
+      <svg width="38" height="38" viewBox="0 0 38 38">
+        <circle cx="19" cy="19" r={r} fill="none" stroke="var(--brand-tint)" strokeWidth="4" />
+        <circle
+          cx="19"
+          cy="19"
+          r={r}
+          fill="none"
+          stroke="var(--brand)"
+          strokeWidth="4"
+          strokeLinecap="round"
+          strokeDasharray={`${(c * (value ?? 0)) / 100} ${c}`}
+          transform="rotate(-90 19 19)"
+        />
+        <text x="19" y="23" textAnchor="middle" fontSize="12" fontWeight="600" fill="var(--ink)">
+          {value ?? 0}
+        </text>
+      </svg>
     </div>
   )
 }
 
-function Output({ scene }: { scene: SceneId }) {
-  if (scene === 'letter') return <LetterDoc className="w-full max-w-[330px]" />
-  if (scene === 'score') {
-    return (
-      <div className="flex w-full max-w-[330px] flex-col gap-4 rounded-[16px] bg-white p-6 shadow-[0_24px_60px_-24px_rgba(30,27,75,0.35)]">
-        <div className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-subtle">Keywords from the posting</div>
-        <div className="flex flex-wrap gap-1.5">
-          {EXAMPLE.keywords.map((k) => (
-            <Chip key={k} gap={EXAMPLE.gaps.includes(k)}>
-              {EXAMPLE.gaps.includes(k) ? k : `✓ ${k}`}
-            </Chip>
-          ))}
-        </div>
-        <div className="flex gap-4 text-[12px] text-subtle">
-          <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-brand" />In your resume</span>
-          <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-gap" />Gap</span>
-        </div>
-      </div>
-    )
-  }
-  return <ResumeDoc className="w-full max-w-[330px]" />
-}
-
-// Tab bar with one dark pill that slides and resizes to the selected tab.
-// Tabs differ in width (and switch to short labels on phones), so the pill is
-// measured from the selected button and re-measured when the bar resizes.
-function SceneTabs({ scene, onPick }: { scene: SceneId; onPick: (id: SceneId) => void }) {
-  const listRef = useRef<HTMLDivElement>(null)
-  const [pill, setPill] = useState<{ left: number; width: number } | null>(null)
-
-  useLayoutEffect(() => {
-    const list = listRef.current
-    if (!list) return
-    const measure = () => {
-      const el = list.querySelector<HTMLElement>('[aria-selected="true"]')
-      if (el) setPill({ left: el.offsetLeft, width: el.offsetWidth })
-    }
-    measure()
-    const ro = new ResizeObserver(measure)
-    ro.observe(list)
-    return () => ro.disconnect()
-  }, [scene])
-
+// The first bullet keeps its original, struck through, above the rewrite.
+function Resume({ t, phase }: { t: number; phase: Phase }) {
+  const finished = phase === 'done' || phase === 'letter'
+  const rewritten = (i: number) => finished || (phase === 'tailor' && t >= rewriteAt(i))
+  const score = finished
+    ? EXAMPLE.score
+    : phase === 'tailor' && t >= SCORE_AT
+      ? Math.round(EXAMPLE.score * clamp01((t - SCORE_AT) / 900))
+      : null
   return (
     <div
-      ref={listRef}
-      role="tablist"
-      aria-label="Product demo"
-      className="absolute bottom-6 left-1/2 flex -translate-x-1/2 gap-1 rounded-full bg-white/90 p-1.5 shadow-[0_8px_24px_-12px_rgba(30,27,75,0.3)] backdrop-blur"
+      className={cn(card(phase === 'tailor'), 'flex flex-col gap-2 overflow-hidden bg-white p-5')}
+      style={{ left: RESUME.left, top: DOCS_Y, width: RESUME.w, height: H - DOCS_Y }}
     >
-      {pill && (
-        <span
-          aria-hidden="true"
-          className="absolute inset-y-1.5 left-0 rounded-full bg-ink transition-[transform,width] duration-300 ease-[cubic-bezier(0.2,0.7,0.2,1)]"
-          style={{ width: pill.width, transform: `translateX(${pill.left}px)` }}
-        />
-      )}
-      {SCENES.map((s) => (
-        <button
-          key={s.id}
-          role="tab"
-          aria-selected={scene === s.id}
-          onClick={() => onPick(s.id)}
-          className={cn(
-            'relative z-10 whitespace-nowrap rounded-full px-4 py-2 text-[13px] transition-colors duration-300 max-sm:px-3 max-sm:text-[12px]',
-            scene === s.id ? 'text-white' : 'text-ink-2 hover:text-ink',
-            // Before the pill is measured (first paint), the selected tab carries its own fill.
-            !pill && scene === s.id && 'bg-ink',
+      <div className="flex h-[38px] items-center justify-between">
+        <Label>Your resume</Label>
+        <MiniScore value={score} />
+      </div>
+      <div className="text-[16px] font-semibold leading-tight text-ink">{EXAMPLE.candidate}</div>
+      <div className="-mt-1 text-[11px] text-subtle">Marketing Lead · Brightline</div>
+      <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.06em] text-ink-2">Experience</div>
+      {EXAMPLE.bullets.map((b, i) => {
+        const done = rewritten(i)
+        return (
+          <div key={b.before} className="flex flex-col gap-0.5">
+            {i === 0 && done && (
+              <p className="animate-[fadeIn_.5s_ease] text-[10.5px] leading-[1.4] text-subtle line-through">{b.before}</p>
+            )}
+            <p key={String(done)} className="animate-[fadeIn_.5s_ease] text-[12px] leading-[1.45] text-body">
+              {done ? <>{b.after[0]}<Hl className="font-medium">{b.after[1]}</Hl>{b.after[2]}</> : b.before}
+            </p>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// Warm paper so it reads as a different document from the resume.
+function Letter({ t, phase }: { t: number; phase: Phase }) {
+  const chars =
+    phase === 'done'
+      ? LETTER_TEXT.length
+      : phase === 'letter'
+        ? Math.floor(LETTER_TEXT.length * clamp01((t - LETTER - 300) / (DONE - LETTER - 1000)))
+        : 0
+  return (
+    <div
+      className={cn(card(phase === 'letter'), 'flex flex-col gap-2 overflow-hidden bg-[#FBF7EF] p-5')}
+      style={{ left: LETTER_CARD.left, top: DOCS_Y, width: LETTER_CARD.w, height: H - DOCS_Y }}
+    >
+      <div className="flex h-[38px] items-center">
+        <Label>Cover letter</Label>
+      </div>
+      {chars > 0 ? (
+        <>
+          <div className="text-[12px] font-semibold text-ink">Dear {EXAMPLE.company} team,</div>
+          <p className="whitespace-pre-line text-[11px] leading-[1.6] text-body">{LETTER_TEXT.slice(0, chars)}</p>
+          {chars === LETTER_TEXT.length && (
+            <div className="mt-auto flex animate-[fadeIn_.5s_ease] flex-col gap-1.5">
+              <Line w="92%" className="h-[6px] bg-[#EEE7DA]" />
+              <Line w="70%" className="h-[6px] bg-[#EEE7DA]" />
+            </div>
           )}
-        >
-          <span className="sm:hidden">{s.short}</span>
-          <span className="max-sm:hidden">{s.label}</span>
-        </button>
-      ))}
+        </>
+      ) : (
+        <div className="flex flex-col gap-2.5 pt-1">
+          {['60%', '96%', '90%', '94%', '72%'].map((w, i) => (
+            <Line key={i} w={w} className="h-[6px] bg-[#EEE7DA]" />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function Scene({ t }: { t: number }) {
+  const phase = phaseAt(t)
+  const n = EXAMPLE.keywords.length
+  const lit = phase === 'read' ? Math.floor(n * clamp01((t - READ - 300) / (TAILOR - READ - 800))) : n
+  return (
+    <div className="relative" style={{ width: W, height: H }}>
+      <Posting lit={lit} active={phase === 'read'} />
+      <Connectors phase={phase} />
+      <Resume t={t} phase={phase} />
+      <Letter t={t} phase={phase} />
+    </div>
+  )
+}
+
+// Phones: the finished result as one card, right under the buttons.
+function CompactResult() {
+  const b = EXAMPLE.bullets[0]
+  return (
+    <div className="relative mx-auto w-full max-w-[400px] pt-4">
+      <div className="absolute inset-x-6 top-0 h-full rotate-[3deg] rounded-[18px] bg-[#FBF7EF] shadow-[0_16px_40px_-24px_rgba(30,27,75,0.3)] ring-1 ring-[rgba(120,90,40,0.12)]" />
+      <div className="relative flex flex-col gap-3 rounded-[18px] bg-white p-5 shadow-[inset_0_3px_0_var(--brand),0_24px_60px_-28px_rgba(30,27,75,0.45)] ring-1 ring-[rgba(30,27,75,0.08)]">
+        <div className="flex items-center justify-between gap-3">
+          <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-subtle">Your resume · {EXAMPLE.company}</span>
+          <span className="flex shrink-0 items-baseline gap-1 rounded-full bg-brand-tint px-2.5 py-1 text-[11px] text-brand-ink">
+            ATS match <span className="font-semibold">{EXAMPLE.score}</span>
+          </span>
+        </div>
+        <p className="text-[12px] leading-[1.45] text-subtle line-through">{b.before}</p>
+        <p className="-mt-1.5 text-[14px] leading-[1.5] text-body">{b.after[0]}<Hl className="font-medium">{b.after[1]}</Hl>{b.after[2]}</p>
+        <div className="flex gap-2 border-t border-line pt-3 text-[12px] text-ink-2">
+          {['Tailored resume', 'Cover letter'].map((s) => (
+            <span key={s} className="flex items-center gap-1.5 rounded-[8px] bg-panel px-2.5 py-1.5">
+              <CheckIcon size={12} weight="bold" className="text-brand-strong" />
+              {s}
+            </span>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }
 
 export function HeroStage() {
-  const [scene, setScene] = useState<SceneId>('resume')
-  const [auto, setAuto] = useState(true)
-
-  // Cycle scenes like a product demo until the visitor picks one.
-  useEffect(() => {
-    if (!auto || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    const id = setInterval(() => {
-      setScene((s) => SCENES[(SCENES.findIndex((x) => x.id === s) + 1) % SCENES.length].id)
-    }, 6000)
-    return () => clearInterval(id)
-  }, [auto])
-
+  const t = useLoopClock()
   return (
-    <div data-hero-stage className="stage-grid relative overflow-hidden rounded-[32px] px-6 pb-24 pt-10 lg:px-12 lg:pt-14">
+    <div data-hero-stage className="relative">
       <p className="sr-only">
-        Example: Cover Me reads a job posting, tailors the resume to it, scores the tailored resume at a {EXAMPLE.score}% ATS match,
-        and writes a matching cover letter.
+        Example: Cover Me reads a {EXAMPLE.company} {EXAMPLE.role} posting, rewrites the resume in the posting&apos;s words, scores it
+        {` ${EXAMPLE.score}`} out of 100, and writes a matching cover letter.
       </p>
-      <div
-        inert
-        aria-hidden="true"
-        className="grid items-center gap-6 lg:grid-cols-[minmax(0,1fr)_48px_290px_48px_minmax(0,1fr)] lg:gap-0"
-      >
-        <JobCard className="hidden lg:flex" />
-        <Flow />
-        <ExtensionPopup
-          key={scene}
-          status={scene === 'letter' ? 'Letter ready' : 'Resume tailored'}
-          className="mx-auto w-full max-w-[290px] animate-[fadeIn_.4s_ease]"
-          footer={
-            <>
-              <PopupButton primary>{scene === 'letter' ? 'Copy letter' : 'Download resume'}</PopupButton>
-              <PopupButton>{scene === 'letter' ? 'PDF' : 'Cover letter'}</PopupButton>
-            </>
-          }
-        >
-          <PopupBody scene={scene} />
-        </ExtensionPopup>
-        <Flow />
-        <div key={`out-${scene}`} className={cn('hidden items-center justify-start animate-[fadeUp_.5s_ease] lg:flex', OUTPUT_H)}>
-          <Output scene={scene} />
+      <div inert aria-hidden="true">
+        <div className="mx-auto w-full max-w-[560px] max-lg:hidden">
+          <FitScale width={W} height={H}>
+            <Scene t={t} />
+          </FitScale>
+        </div>
+        <div className="lg:hidden">
+          <CompactResult />
         </div>
       </div>
-
-      <SceneTabs
-        scene={scene}
-        onPick={(id) => {
-          setScene(id)
-          setAuto(false)
-        }}
-      />
     </div>
   )
 }

@@ -1,7 +1,6 @@
 'use client'
 
-import { cn } from '@/lib/utils'
-import { ExtensionPopup, PopupButton } from './ExtensionPopup'
+import { ExtensionPopup, PopupButton, ProgressStep } from './ExtensionPopup'
 import { FitScale } from './FitScale'
 import { useCountUp } from './useCountUp'
 import { EXAMPLE, LetterDoc, ResumeDoc } from './visuals'
@@ -50,29 +49,14 @@ function Run() {
           <div className="h-1.5 rounded-full bg-ext-elevated">
             <div className="h-1.5 rounded-full bg-brand" style={{ width: `${(t / RUN_SECONDS) * 100}%` }} />
           </div>
-          <ul className="flex flex-col gap-1.5 text-[12px]">
+          <ul className="flex flex-col gap-2">
             {STEPS.map((s, i) => {
               const state = stepState(i, t)
               return (
-                <li
-                  key={s.label}
-                  className={cn(
-                    'flex items-center gap-1.5',
-                    state === 'done' && 'text-ext-soft',
-                    state === 'active' && 'text-ext-text',
-                    state === 'todo' && 'text-ext-muted',
-                  )}
-                >
-                  <span className="inline-flex w-3 justify-center">
-                    {state === 'active' ? (
-                      <span className="size-2.5 animate-spin rounded-full border-[1.5px] border-brand/30 border-t-brand" />
-                    ) : state === 'done' ? '✓' : '○'}
-                  </span>
-                  <span>
-                    {s.label}
-                    {s.label === 'Rewrite experience' && state === 'active' ? ` (${role} of 3)` : ''}
-                  </span>
-                </li>
+                <ProgressStep key={s.label} state={state}>
+                  {s.label}
+                  {s.label === 'Rewrite experience' && state === 'active' ? ` (${role} of 3)` : ''}
+                </ProgressStep>
               )
             })}
           </ul>

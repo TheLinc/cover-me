@@ -1,10 +1,12 @@
 import { PlusIcon } from '@phosphor-icons/react/dist/ssr'
 import { FAQ_ITEMS, faqJsonLd } from './content'
+import { Ambient } from './Ambient'
 
 // Native <details>: keyboard accessible, and answers stay in the HTML for crawlers.
 export function Faq() {
   return (
-    <section className="container py-28 max-md:py-20">
+    <section className="container relative isolate py-28 max-md:py-20">
+      <Ambient dots={{ left: -40, top: 60, w: 360, h: 280 }} shape={{ right: 10, bottom: 100, size: 110, rotate: -14 }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       <div className="mx-auto max-w-[860px]">
         <h2 className="text-center text-[clamp(32px,3.6vw,44px)] leading-[1.05]">Questions</h2>

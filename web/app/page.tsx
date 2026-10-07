@@ -3,8 +3,10 @@ import { SiteNav } from '@/components/site/SiteNav'
 import { SiteFooter } from '@/components/site/SiteFooter'
 import { Hero } from '@/components/landing/Hero'
 import { BoardsStrip } from '@/components/landing/BoardsStrip'
-import { HowItWorks } from '@/components/landing/HowItWorks'
-import { AtsScore } from '@/components/landing/AtsScore'
+import { RunStory } from '@/components/landing/RunStory'
+import { FoundInSearch } from '@/components/landing/FoundInSearch'
+import { NoFakes } from '@/components/landing/NoFakes'
+import { JourneyDock } from '@/components/landing/JourneyDock'
 import { Stats } from '@/components/landing/Stats'
 import { Features } from '@/components/landing/Features'
 import { PrivacyBand } from '@/components/landing/PrivacyBand'
@@ -22,15 +24,17 @@ export default function Home() {
       <main>
         <Hero />
         <BoardsStrip />
-        <HowItWorks />
-        <AtsScore />
+        <RunStory />
+        <FoundInSearch />
         <Stats />
+        <NoFakes />
         <Features />
         <PrivacyBand />
         <Pricing />
         <Faq />
         <ClosingCta />
       </main>
+      <JourneyDock />
       <SiteFooter />
     </>
   )

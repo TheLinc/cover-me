@@ -37,18 +37,34 @@ product visuals, so the site shows exactly what people install.
 
 ## Building blocks (web/components/landing)
 
-- `ExtensionPopup`, `ScoreRing`: the real popup and its ATS ring.
-- `JobCard`, `ResumeDoc`, `LetterDoc`, `BrowserFrame`, `Chip` (`visuals.tsx`): the
-  job posting and the two outputs. Example data lives in `EXAMPLE`.
+- `ExtensionPopup`, `ProgressStep`, `ScoreRing`: the real popup, its progress rows and its ATS ring.
+- `ResumeDoc`, `LetterDoc`, `BrowserFrame`, `Hl` (`visuals.tsx`): the outputs and the page they come from.
+- `EXAMPLE`, `TIERS`, `CELLS`, `SCORE` (`visuals.tsx`): the one Northwind application every visual
+  shows. The posting text, the original and tailored bullets and the 86 score all live here, and
+  the score uses the backend's real 70/30 weights.
+- `Ambient`: background depth behind a section (indigo or warm glows, a fading dot field, an
+  outlined rounded square that drifts on scroll). Paper grain sits under the whole page.
+- The hero is a flow with no stacked cards: the posting in a browser on top, a dark Cover Me status
+  pill in the middle, the resume (white) and letter (warm paper) side by side below.
+
+## Story
+
+The page follows one application. The hero shows the result, then replays it over 21 seconds. `RunStory` is the
+pinned walkthrough: scroll drives a position from 0 to 5 (click, read, rewrite, score,
+letter) and every layer derives its state from it, so it plays backwards too. Then
+`FoundInSearch` shows why the wording matters, `NoFakes` lets visitors try to add a gap
+and watch it bounce off, and `PrivacyBand` toggles where the data goes. `JourneyDock`
+tracks the application's progress at the bottom of the screen and keeps the install
+button one click away.
 
 ## Motion
 
-- Animated flow lines between the posting, the popup and the output.
-- The ATS ring and the stats count up the first time they scroll into view.
-- Hero scene tabs auto-advance like a demo until the visitor picks one.
-- Sticky walkthrough: the visual follows the step you're reading.
-- Everything snaps to its final state under reduced motion, and without scroll
-  timelines (Firefox) content simply shows.
+- The hero holds the result for about 8 seconds, then changes one card at a time: requirements light
+  up, bullets are rewritten and scored, the letter types out. Cards never move.
+- The walkthrough is scroll-scrubbed; chapters fade in and out at their boundaries, never overlapping.
+- Phones get a portrait stage (`compact`) scaled to fit, and the dock waits until the walkthrough ends.
+- Reduced motion: the walkthrough becomes stacked still frames and loops show their finished state.
+  Without scroll timelines (Firefox) content simply shows.
 
 ## Claims
 

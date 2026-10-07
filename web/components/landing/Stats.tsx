@@ -2,6 +2,7 @@
 
 import { cn } from '@/lib/utils'
 import { useCountUp } from './useCountUp'
+import { Ambient } from './Ambient'
 
 // Sourced numbers only. The last is ours: a typical tailoring run takes about
 // 30 s; the 45 min manual figure is our estimate, and the source line says so.
@@ -61,7 +62,8 @@ function Stat({ stat, last }: { stat: (typeof STATS)[number]; last: boolean }) {
 
 export function Stats() {
   return (
-    <section className="container py-28 max-md:py-20">
+    <section className="container relative isolate py-28 max-md:py-20">
+      <Ambient glows={[{ left: -200, top: -60, size: 600, tone: 'warm' }]} dots={{ right: -40, top: 20, w: 380, h: 260 }} />
       <div className="flex items-end justify-between gap-10 max-lg:flex-col max-lg:items-start">
         <h2 className="max-w-[620px] text-[clamp(34px,4vw,52px)] leading-[1.05]">Why tailoring every application pays off</h2>
         <p className="max-w-[380px] text-[16px] leading-[1.55] text-ink-2">

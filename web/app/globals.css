@@ -98,6 +98,20 @@ body {
   overflow-x: hidden;
 }
 
+/* Paper grain under all content, so flat paper areas read as a surface. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.11;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Ambient glows reach past the page edge; clip (not hidden) keeps sticky working. */
+main { overflow-x: clip; }
+
 a      { color: inherit; text-decoration: none; }
 button { cursor: pointer; font-family: inherit; }
 img, svg, video { display: block; }
@@ -129,6 +143,13 @@ img, svg, video { display: block; }
     background-size: 32px 32px;
   }
 
+  /* Dot field behind sections (Ambient), fading out toward its edges. */
+  .dot-field {
+    background-image: radial-gradient(#C9C3BC 1.3px, transparent 1.5px);
+    background-size: 18px 18px;
+    mask-image: radial-gradient(closest-side, #000 20%, transparent);
+  }
+
   /* Loading shimmer in product visuals. */
   .skeleton-line {
     border-radius: 3px;
@@ -148,15 +169,6 @@ img, svg, video { display: block; }
   }
   .accordion[open]::details-content { block-size: auto; }
 
-  /* How it works, step 1: cursor clicks the toolbar icon, lines burst out.
-   * At rest (reduced motion) the cursor sits on the icon. */
-  .ext-cursor { position: absolute; left: calc(50% - 3px); top: calc(50% - 2px); z-index: 1; }
-  .ext-ray {
-    position: absolute; left: 50%; top: 50%;
-    width: 2.5px; height: 10px; margin: -5px 0 0 -1.25px;
-    border-radius: 2px; background: var(--brand); opacity: 0;
-    transform: rotate(var(--a)) translateY(-26px);
-  }
 }
 
 @keyframes shimmer { 0% { background-position: 200% center; } 100% { background-position: -200% center; } }
@@ -169,34 +181,16 @@ img, svg, video { display: block; }
   .marquee   { animation: marquee 36s linear infinite; }
   .marquee:hover { animation-play-state: paused; }
   .pulse     { animation: pulse 1.4s ease-in-out infinite; }
-  .ext-cursor { animation: ext-cursor 3.6s cubic-bezier(0.45, 0, 0.2, 1) infinite; }
-  .ext-ray    { animation: ext-ray 3.6s ease-out infinite; }
-  .ext-press  { animation: ext-press 3.6s ease infinite; }
-}
-@keyframes ext-cursor {
-  0%       { translate: -210px 230px; opacity: 0; }
-  10%      { opacity: 1; }
-  40%      { translate: 0 0; scale: 1; }
-  44%      { scale: 0.8; }
-  50%      { scale: 1; }
-  86%      { translate: 0 0; opacity: 1; }
-  96%, 100% { translate: 0 0; opacity: 0; }
-}
-@keyframes ext-ray {
-  0%, 43%   { opacity: 0; transform: rotate(var(--a)) translateY(-14px) scaleY(0.3); }
-  46%       { opacity: 1; }
-  66%, 100% { opacity: 0; transform: rotate(var(--a)) translateY(-36px) scaleY(1); }
-}
-@keyframes ext-press {
-  0%, 42%   { scale: 1; background-color: transparent; }
-  45%       { scale: 0.86; background-color: #fff; }
-  52%       { scale: 1; }
-  82%       { background-color: #fff; }
-  92%, 100% { scale: 1; background-color: transparent; }
+  .packet    { animation: packet 1.8s cubic-bezier(0.5, 0, 0.5, 1) infinite; }
+  .shake     { animation: shake 0.45s ease; }
 }
 @keyframes flow    { to { stroke-dashoffset: -40; } }
 @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 @keyframes pulse   { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }
+/* Packets ride the privacy diagram's wires; at rest they are not drawn. */
+.packet { opacity: 0; }
+@keyframes packet  { 0% { left: 0; opacity: 0; } 15%, 85% { opacity: 1; } 100% { left: calc(100% - 8px); opacity: 0; } }
+@keyframes shake   { 20% { translate: -7px 0; rotate: -0.6deg; } 45% { translate: 6px 0; rotate: 0.5deg; } 70% { translate: -3px 0; } 100% { translate: 0 0; } }
 
 /* scroll-driven:start
  * Every animation-timeline rule lives in this block. Outside it, content
@@ -210,7 +204,13 @@ img, svg, video { display: block; }
       animation-timeline: view();
       animation-range: entry 0% entry 60%;
     }
+    /* Ambient shapes move slower than the page, so the background reads as deeper. */
+    .drift {
+      animation: drift linear both;
+      animation-timeline: view();
+    }
   }
 }
+@keyframes drift  { from { translate: 0 80px; } to { translate: 0 -80px; } }
 @keyframes reveal { from { opacity: 0; translate: 0 24px; } to { opacity: 1; translate: 0 0; } }
 /* scroll-driven:end */

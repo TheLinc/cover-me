@@ -27,8 +27,8 @@ export function SiteNav({ actions }: { actions?: ReactNode }) {
   return (
     <header
       className={cn(
-        'sticky top-0 z-50 transition-colors duration-300',
-        scrolled ? 'bg-[rgba(245,243,242,0.92)] backdrop-blur-md' : 'bg-transparent',
+        'sticky top-0 z-50 border-b border-line bg-[rgba(245,243,242,0.88)] backdrop-blur-md transition-shadow duration-300',
+        scrolled && 'shadow-[0_10px_30px_-18px_rgba(30,27,75,0.35)]',
       )}
     >
       <div className="container flex h-16 items-center gap-8">
@@ -36,9 +36,9 @@ export function SiteNav({ actions }: { actions?: ReactNode }) {
           <Image src="/logo.png" width={28} height={28} alt="" className="rounded-[8px]" />
           <span className="text-[18px] font-semibold tracking-[-0.02em] text-ink">Cover Me</span>
         </Link>
-        <nav aria-label="Main" className="flex flex-1 gap-7 max-md:hidden">
+        <nav aria-label="Main" className="flex flex-1 gap-1 max-md:hidden">
           {LINKS.map((l) => (
-            <Link key={l.href} href={l.href} className="text-[13.5px] text-ink-2 transition-colors hover:text-ink">
+            <Link key={l.href} href={l.href} className="rounded-full px-3 py-1.5 text-[14px] font-medium text-ink-2 transition-colors hover:bg-panel hover:text-ink">
               {l.label}
             </Link>
           ))}

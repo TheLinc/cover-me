@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 
 // Example data for every product visual on the landing page. Names are
@@ -10,82 +10,74 @@ export const EXAMPLE = {
   keywords: ['SEO', 'Campaign strategy', 'Google Analytics', 'Budget management', 'Team leadership', 'HubSpot'],
   gaps: ['HubSpot'],
   matchedLines: ['SEO, Campaign strategy, Google Analytics', 'Budget management, Team leadership'],
-  extraGap: 'Salesforce',
+  candidate: 'Alex Rivera',
+  // The posting's requirements, split the way the tailor prompt tiers them.
+  // With the real 70/30 weights and HubSpot missing they score
+  // 4/5 × 70 + 3/3 × 30 = 86 (SCORE below computes it).
+  mustHave: ['SEO', 'Campaign strategy', 'Google Analytics', 'Budget management', 'HubSpot'],
+  niceToHave: ['Team leadership', 'A/B testing', 'Copywriting'],
+  // Posting body: strings, or { k } where a requirement appears (`text` when
+  // the words on the page differ from the requirement's name).
+  posting: [
+    ["You'll own our ", { k: 'Campaign strategy', text: 'campaign strategy' }, ' across email and social, manage a $1.2M ', { k: 'Budget management', text: 'budget' }, ' and report results in ', { k: 'Google Analytics' }, '.'],
+    ['You bring strong ', { k: 'SEO' }, ' skills, hands-on ', { k: 'HubSpot' }, ' experience and a record of ', { k: 'Team leadership', text: 'team leadership' }, '. ', { k: 'A/B testing' }, ' and ', { k: 'Copywriting', text: 'copywriting' }, ' are a plus.'],
+  ] as PostingLine[],
+  // Every rewrite keeps the facts and only borrows the posting's words.
+  bullets: [
+    { before: 'Handled social media and email marketing that grew leads 38%', after: ['Owned ', 'campaign strategy', ' for email and social, growing qualified leads 38%'] },
+    { before: 'Managed $1.2M in paid media spend across four channels', after: ['Owned a $1.2M paid media ', 'budget', ' across four channels'] },
+    { before: 'Wrote blog posts that grew organic traffic 64%', after: ['Grew organic traffic 64% with an ', 'SEO', ' content program'] },
+  ] as { before: string; after: [string, string, string] }[],
+  skillsBefore: 'Analytics, copy, testing, managed a team of 4',
+  skillsAfter: ['Google Analytics', 'A/B testing', 'Copywriting', 'Team leadership'],
   letterOpening:
     'Your posting asks for someone who can grow demand without growing the budget. At Brightline I grew qualified leads 38% on a flat spend…',
-  bulletBefore: 'Handled social media and email marketing',
-  bulletAfter: 'Ran email and social campaigns that grew qualified leads 38%',
-  // Cover Me scores only the tailored resume. `before` appears only in the
-  // ATS section's illustrative before/after card, never in the popup visuals.
-  before: 54,
+  letter: [
+    'Your posting asks for someone who can grow demand without growing the budget. At Brightline I grew qualified leads 38% on a flat spend by rebuilding our campaign strategy around email and social.',
+    'I also own a $1.2M paid media budget across four channels, and the SEO program I started lifted organic traffic 64%.',
+  ],
+  // Cover Me scores only the tailored resume, so no visual shows a before score.
   score: 86,
 }
+
+export type PostingLine = (string | { k: string; text?: string })[]
+
+// Same weights as scoreFromMatch in backend/supabase/functions/tailor: the
+// posting's must-haves share 70 points, its nice-to-haves share 30.
+export const TIERS = [
+  { label: 'Must-have', points: 70, keywords: EXAMPLE.mustHave },
+  { label: 'Nice to have', points: 30, keywords: EXAMPLE.niceToHave },
+]
+export const CELLS = TIERS.flatMap((t) =>
+  t.keywords.map((k) => ({ k, pts: t.points / t.keywords.length, gap: EXAMPLE.gaps.includes(k) })),
+)
+export const SCORE = Math.round(CELLS.reduce((sum, c) => sum + (c.gap ? 0 : c.pts), 0))
 
 export function Line({ w, className }: { w: string; className?: string }) {
   return <div className={cn('h-[7px] rounded-full bg-[#EFEDEA]', className)} style={{ width: w }} />
 }
 
-export function Chip({ children, gap }: { children: ReactNode; gap?: boolean }) {
-  return (
-    <span
-      className={cn(
-        'rounded-full px-2.5 py-1 text-[12px]',
-        gap ? 'bg-gap-tint text-gap-ink' : 'bg-brand-tint text-brand-ink',
-      )}
-    >
-      {children}
-    </span>
-  )
-}
-
-function Label({ children }: { children: ReactNode }) {
+export function Label({ children }: { children: ReactNode }) {
   return <div className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-subtle">{children}</div>
 }
 
-export function JobCard({ className }: { className?: string }) {
-  return (
-    <div className={cn('flex flex-col gap-3.5 rounded-[20px] bg-white p-5 shadow-[0_20px_50px_-24px_rgba(30,27,75,0.25)]', className)}>
-      <Label>Job posting</Label>
-      <div className="flex items-center gap-3">
-        <div className="flex size-10 items-center justify-center rounded-[10px] bg-ink font-semibold text-white">N</div>
-        <div>
-          <div className="text-[15px] font-semibold text-ink">{EXAMPLE.role}</div>
-          <div className="text-[12.5px] text-subtle">{EXAMPLE.company} · Remote</div>
-        </div>
-      </div>
-      <div className="h-px bg-[#EFEDEA]" />
-      <div className="text-[12px] font-semibold text-ink-2">What you&apos;ll need</div>
-      <div className="flex flex-wrap gap-1.5">
-        {EXAMPLE.keywords.map((k) => (
-          <Chip key={k}>{k}</Chip>
-        ))}
-      </div>
-      <div className="mt-1 flex flex-col gap-2">
-        <Line w="100%" />
-        <Line w="86%" />
-        <Line w="64%" />
-      </div>
-    </div>
-  )
+export function Hl({ children, className }: { children: ReactNode; className?: string }) {
+  return <span className={cn('rounded bg-brand-tint px-1 text-brand-ink', className)}>{children}</span>
 }
 
-function Hl({ children }: { children: ReactNode }) {
-  return <span className="rounded bg-brand-tint px-1 text-brand-ink">{children}</span>
-}
-
-export function ResumeDoc({ className }: { className?: string }) {
+export function ResumeDoc({ className, style }: { className?: string; style?: CSSProperties }) {
   return (
-    <div className={cn('flex flex-col gap-2.5 rounded-[16px] bg-white p-6 shadow-[0_24px_60px_-24px_rgba(30,27,75,0.35)]', className)}>
+    <div style={style} className={cn('flex flex-col gap-2.5 rounded-[16px] bg-white p-6 shadow-[0_24px_60px_-24px_rgba(30,27,75,0.35)]', className)}>
       <div className="flex items-center justify-between">
         <Label>Your resume</Label>
         <span className="rounded-full bg-brand-tint px-2.5 py-1 text-[11px] text-brand-ink">Tailored for {EXAMPLE.company}</span>
       </div>
-      <div className="text-[16px] font-semibold text-ink">Alex Rivera</div>
+      <div className="text-[16px] font-semibold text-ink">{EXAMPLE.candidate}</div>
       <Line w="55%" />
       <div className="mt-2 text-[11px] font-semibold text-ink-2">Experience</div>
-      <p className="text-[12px] leading-[1.55] text-body">Led a <Hl>campaign strategy</Hl> refresh that grew qualified leads 38%</p>
-      <p className="text-[12px] leading-[1.55] text-body">Owned a $1.2M paid media <Hl>budget</Hl> across four channels</p>
-      <p className="text-[12px] leading-[1.55] text-body">Grew organic traffic 64% with an <Hl>SEO</Hl> content program</p>
+      {EXAMPLE.bullets.map(({ after: [a, k, b] }) => (
+        <p key={k} className="text-[12px] leading-[1.55] text-body">{a}<Hl>{k}</Hl>{b}</p>
+      ))}
       <div className="mt-1 flex flex-col gap-2">
         <Line w="92%" />
         <Line w="76%" />

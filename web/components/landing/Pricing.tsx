@@ -1,12 +1,17 @@
 import { CheckIcon } from '@phosphor-icons/react/dist/ssr'
 import { CHROME_STORE_URL } from '@/lib/utils'
+import { Ambient } from './Ambient'
 
 const FREE = ['5 AI generations a day, letters and resumes', 'Unlimited with your own API key', 'PDF export and local history']
 const PRO = ['Unlimited letters and resume tailoring', 'History synced across devices', 'Early access to new features']
 
 export function Pricing() {
   return (
-    <section id="pricing" className="container py-28 max-md:py-20">
+    <section id="pricing" className="container relative isolate py-28 max-md:py-20">
+      <Ambient
+        glows={[{ left: 'calc(50% - 420px)', top: 60, size: 840, tone: 'brand' }]}
+        shape={{ left: 0, top: 140, size: 150, rotate: 18 }}
+      />
       <h2 className="mx-auto max-w-[760px] text-center text-[clamp(34px,4vw,52px)] leading-[1.05]">
         Free to start. $8 when you&apos;re applying a lot.
       </h2>
