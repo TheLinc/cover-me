@@ -61,6 +61,26 @@ describe('handleStripeEvent', () => {
     expect(await handleStripeEvent(event('customer.subscription.created', { customer: 'cus_1' }), deps)).toBe(false)
   })
 
+  it('stamps the tier write with the time it started reading Stripe', async () => {
+    let readStartedAt = 0
+    let writtenReadAt: Date | undefined
+    const deps: TierDeps = {
+      listStatuses: async () => {
+        readStartedAt = Date.now()
+        await new Promise((r) => setTimeout(r, 20))
+        return ['active']
+      },
+      setTier: async (_customerId, _tier, readAt) => {
+        writtenReadAt = readAt
+        return { error: null }
+      },
+      linkCustomer: async () => ({ error: null }),
+    }
+    await handleStripeEvent(event('customer.subscription.updated', { customer: 'cus_1' }), deps)
+    expect(writtenReadAt).toBeInstanceOf(Date)
+    expect(writtenReadAt!.getTime()).toBeLessThanOrEqual(readStartedAt)
+  })
+
   it('ignores unrelated events', async () => {
     const { calls, deps } = fakeDeps(['active'])
     expect(await handleStripeEvent(event('invoice.paid', { customer: 'cus_1' }), deps)).toBe(true)

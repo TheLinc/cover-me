@@ -11,7 +11,8 @@ export function tierFromStatuses(statuses: string[]): Tier {
 export interface TierDeps {
   /** Status of every subscription the customer has, read live from Stripe. */
   listStatuses(customerId: string): Promise<string[]>
-  setTier(customerId: string, tier: Tier): Promise<{ error: string | null }>
+  /** readAt is when the Stripe read started; the DB drops writes older than the last one. */
+  setTier(customerId: string, tier: Tier, readAt: Date): Promise<{ error: string | null }>
   linkCustomer(userId: string, customerId: string): Promise<{ error: string | null }>
 }
 
@@ -36,7 +37,8 @@ export async function handleStripeEvent(event: Stripe.Event, deps: TierDeps): Pr
   }
 
   if (!customerId) return true
+  const readAt = new Date()
   const tier = tierFromStatuses(await deps.listStatuses(customerId))
-  const { error } = await deps.setTier(customerId, tier)
+  const { error } = await deps.setTier(customerId, tier, readAt)
   return !error
 }

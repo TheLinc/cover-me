@@ -26,8 +26,12 @@ export async function POST(req: NextRequest) {
       const subs = await stripe.subscriptions.list({ customer, status: 'all', limit: 100 })
       return subs.data.map((s) => s.status)
     },
-    setTier: async (customerId, tier) => {
-      const { error } = await adminSupabase.from('users').update({ tier }).eq('stripe_customer_id', customerId)
+    setTier: async (customerId, tier, readAt) => {
+      const { error } = await adminSupabase.rpc('set_tier_if_newer', {
+        p_customer_id: customerId,
+        p_tier: tier,
+        p_read_at: readAt.toISOString(),
+      })
       return { error: error?.message ?? null }
     },
     linkCustomer: async (userId, customerId) => {
