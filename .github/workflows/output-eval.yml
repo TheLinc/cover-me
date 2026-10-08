@@ -1,7 +1,8 @@
 # Live output eval: generates cover letters and tailored resumes for real test
 # cases and has a model judge them.
 #
-#   Prompt PRs and master pushes: the quick set (9 cases, one per field family),
+#   Prompt PRs and master pushes: the quick set (11 cases: one per field family
+#   plus two long postings),
 #   judged by Sonnet 5.5, gated on extension/eval/baseline.json. About 10 min.
 #   Weekly and on demand: every case, 2 runs per resume, judged by Opus 5.5,
 #   gated on extension/eval/baseline-full.json once that file exists.
