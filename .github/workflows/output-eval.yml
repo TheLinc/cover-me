@@ -67,13 +67,15 @@ jobs:
     defaults:
       run:
         working-directory: extension
+    # The token is only in the eval step's env, so no other step (third-party
+    # actions, package install scripts) can read it. Other steps see HAS_TOKEN.
     env:
-      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+      HAS_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' }}
       ANTHROPIC_API_KEY: ''
       FULL: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.full) }}
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
         with:
           version: 10
       - uses: actions/setup-node@v4
@@ -83,7 +85,7 @@ jobs:
           cache-dependency-path: extension/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - run: npm install -g @anthropic-ai/claude-code
-        if: env.CLAUDE_CODE_OAUTH_TOKEN != ''
+        if: env.HAS_TOKEN == 'true'
       - name: Output eval (letters and tailored resumes)
         run: |
           if [ -z "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
@@ -98,6 +100,7 @@ jobs:
             pnpm eval --live --quick --judge --baseline --via claude $EXTRA
           fi
         env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           UPDATE_BASELINE: ${{ github.event_name == 'workflow_dispatch' && inputs.update_baseline }}
       # The workflow can't push to master, so a refreshed baseline comes out as
       # an artifact: download it and commit it to extension/eval/.
