@@ -26,9 +26,11 @@ const MAX_DEPTH = 256
 export function scrapeHtml(parseHTML: ParseHTML, url: string, html: string): JobData {
   const dom = parseHTML(html)
   dom.window.location = new URL(url)
+  // Before anything else walks the tree: attachShadowRoots recurses once per
+  // nested template.
+  checkSize(dom.document)
   patchLayoutApis(dom)
   attachShadowRoots(dom.document)
-  checkSize(dom.document)
 
   const g = globalThis as Record<string, unknown>
   const saved = GLOBALS.map((k) => g[k])
@@ -46,8 +48,9 @@ function checkSize(doc: Dom) {
   while (stack.length) {
     const [el, depth] = stack.pop()!
     if (++count > MAX_ELEMENTS || depth > MAX_DEPTH) throw new Error('This page is too large to read.')
-    for (const child of el.children) stack.push([child, depth + 1])
-    if (el.shadowRoot) for (const child of el.shadowRoot.children) stack.push([child, depth + 1])
+    // A <template>'s markup sits in .content, not its children, until attached
+    const children = el.tagName === 'TEMPLATE' ? el.content?.children ?? [] : el.children
+    for (const child of children) stack.push([child, depth + 1])
   }
 }
 

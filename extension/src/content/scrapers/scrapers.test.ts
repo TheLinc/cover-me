@@ -30,6 +30,9 @@ describe('scrapers on saved postings', () => {
 test('refuses pages nested far deeper than any real posting', () => {
   expect(() => scrape('https://careers.example.com/jobs/1', `<html><body>${'<div>'.repeat(300)}x${'</div>'.repeat(300)}</body></html>`))
     .toThrow('too large')
+  // Nested declarative shadow roots, counted before they're attached
+  const nested = '<div><template shadowrootmode="open">'.repeat(300) + 'x' + '</template></div>'.repeat(300)
+  expect(() => scrape('https://careers.example.com/jobs/1', `<html><body>${nested}</body></html>`)).toThrow('too large')
 })
 
 describe('JSON-LD', () => {
