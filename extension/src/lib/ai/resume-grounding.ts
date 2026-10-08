@@ -271,10 +271,10 @@ For each rewritten line, go through every detail it states. Flag the line if it 
 - an added task or responsibility ("Answered customer emails" → "Answered customer emails and managed the support inbox")
 - an added setting, audience, or scope ("Taught piano lessons" → "Taught piano lessons across three studios"; "...for senior leadership"; "...across time zones")
 - an added specific outcome ("...on schedule", "...cutting churn", "...adopted company-wide")
-- more seniority or ownership ("Coordinated" → "Owned"; "helped with" → "led")
+- more seniority or ownership over work the originals show the candidate only supporting ("Coordinated" → "Owned"; "helped with" → "led")
 - a domain, client type, tool, method, or credential the originals do not name
 - a clause arguing relevance to another kind of work ("...skills directly applicable to X")
-Do not flag: the same facts reworded; a different verb for the same action ("Managed" → "Oversaw"); a more specific word for the same thing ("deposits" → "bank deposits"); reordering; facts combined from two original lines of the same role; or generic phrasing that adds no checkable fact ("maintaining quality", "to meet standards", "ensuring accuracy"). Generic filler is a style problem, not a false claim.
+Do not flag: the same facts reworded; a different verb for the same action ("Managed" → "Oversaw"); a more specific word for the same thing ("deposits" → "bank deposits"); reordering; facts combined from two original lines of the same role; generic phrasing that adds no checkable fact ("maintaining quality", "to meet standards", "ensuring accuracy"); a clause that only restates what the line's own facts already show ("Processed 400 claims a week" → "...in a high-volume claims queue"; a stated record of beating targets → "...consistently exceeding goals"; written how-to guides → "...giving customers self-service answers"); the field's usual name for the same task ("answered and routed incoming calls" → "call triage"), as long as it names no tool, system, standard, or credential the originals lack; or a stronger verb for work the originals show the candidate doing or running themselves ("Ran the monthly payroll" → "Owned the monthly payroll run"). Generic filler and restatement are style problems, not false claims.
 
 Then check the SUMMARY against all original lines and the RESUME FACTS below, with the same rules. A title, degree, license, or certification listed in RESUME FACTS is supported. Flag any count of years of experience in the summary.
 
