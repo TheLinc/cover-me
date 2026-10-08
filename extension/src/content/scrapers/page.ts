@@ -18,12 +18,19 @@ export type ParseHTML = (html: string) => Dom
 const GLOBALS = ['window', 'document', 'Node', 'HTMLElement', 'ShadowRoot', 'DOMParser'] as const
 
 // The body cap limits bytes, not work: innerText walks a subtree, and the
-// generic heuristic measures every div, so deep nesting costs elements x depth.
-// Real postings measured at most ~5k elements and depth 42.
+// generic heuristic measures every div, so deep nesting costs nodes x depth.
+// Real postings measured at most ~9k "<", ~5k elements and depth 42.
+// "<" is counted in the raw HTML, before linkedom allocates anything; it
+// bounds elements, comments and the text nodes between them alike.
+const MAX_TAGS = 150_000
 const MAX_ELEMENTS = 60_000
 const MAX_DEPTH = 256
 
 export function scrapeHtml(parseHTML: ParseHTML, url: string, html: string): JobData {
+  let tags = 0
+  for (let i = html.indexOf('<'); i !== -1; i = html.indexOf('<', i + 1)) {
+    if (++tags > MAX_TAGS) throw new Error('This page is too large to read.')
+  }
   const dom = parseHTML(html)
   dom.window.location = new URL(url)
   // Before anything else walks the tree: attachShadowRoots recurses once per

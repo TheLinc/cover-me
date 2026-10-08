@@ -52,7 +52,7 @@ describe('scrape', () => {
   it('stops reading a body that expands past the limit', async () => {
     const res = await callFunction('scrape', {
       headers: { 'Content-Type': 'application/json', 'Content-Encoding': 'gzip' },
-      rawBody: gzipSync(JSON.stringify({ pages: [{ url: 'https://example.com/', html: 'a'.repeat(9_000_000) }] })),
+      rawBody: gzipSync(JSON.stringify({ pages: [{ url: 'https://example.com/', html: 'a'.repeat(5_000_000) }] })),
     })
     expect(res.status).toBe(413)
   })

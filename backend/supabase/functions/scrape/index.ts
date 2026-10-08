@@ -13,8 +13,10 @@ import { handleCors, json } from '../_shared/cors.ts'
 import { scrapeHtml } from '../_shared/scrapers/page.ts'
 
 const MAX_PAGES = 8
-// Decompressed body. The extension doesn't send pages above 3M characters.
-const MAX_BYTES = 8_000_000
+// Decompressed body, checked while reading, before anything is parsed. The
+// extension doesn't send pages above 3M characters; the largest real posting
+// seen is 420 KB.
+const MAX_BYTES = 4_000_000
 
 Deno.serve(async (req) => {
   const cors = handleCors(req)
