@@ -1,13 +1,30 @@
 import type { JobData } from '../../types'
+import { jobFromJsonLd } from './jsonld'
 
-// Indeed has two layouts:
+// Current layout (seen 2026-10): the search page's right-hand pane and the
+// full /viewjob page render the same detail component, with stable data-testids
+// and no #jobDescriptionText. The description is the element after the
+// "Full job description" heading.
+//
+// Older layouts, kept while Indeed rolls the new one out:
 // 1. Search results page — left list + right detail panel
 //    Selected job identified by aria-pressed="true" on the listing anchor.
 //    Title and company live in that listing card; description in #jobDescriptionText.
 // 2. Full job page (/viewjob?jk=...) — single job, title in h1/h2 header.
 
 export function scrapeIndeed(): JobData {
-  // Description is in the right panel on both layouts
+  const paneTitle = firstText(['[data-testid="vj-job-title"]'])
+  const paneDescription = firstText(['[data-testid="vj-job-description-heading"] + *'])
+  if (paneTitle && paneDescription) {
+    return {
+      title: paneTitle,
+      company: firstText(['[data-testid="vj-company-name"]']) ?? 'Unknown Company',
+      description: paneDescription,
+      url: window.location.href,
+    }
+  }
+
+  // Description is in the right panel on both older layouts
   const description = firstText([
     '#jobDescriptionText',
     '[id*="jobDescription"]',
@@ -36,6 +53,9 @@ export function scrapeIndeed(): JobData {
   ])
 
   if (!title || !description) {
+    // /viewjob pages carry a JobPosting JSON-LD block (the search page doesn't)
+    const fromLd = jobFromJsonLd()
+    if (fromLd) return fromLd
     throw new Error(
       'Could not find job details on this Indeed page. ' +
       'Try clicking the job title to open the full job page, then generate again.',

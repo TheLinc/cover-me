@@ -1,4 +1,5 @@
 import type { JobData } from '../../types'
+import { jobFromJsonLd } from './jsonld'
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
 
@@ -279,12 +280,14 @@ function tryLegacySelectors(): JobData | null {
 // ── Main export ───────────────────────────────────────────────────────────────
 
 export function scrapeLinkedIn(): JobData {
-  // DOM strategies first: they read the in-focus detail pane. The embedded
-  // JSON blobs are last-resort only — on search pages they contain every job
-  // in the results list, so they can return the wrong posting.
+  // DOM strategies first: they read the in-focus detail pane. JSON-LD covers
+  // the signed-out /jobs/view/ page. The embedded JSON blobs are last-resort
+  // only — on search pages they contain every job in the results list, so
+  // they can return the wrong posting.
   const result =
     tryCurrentLayout() ??
     tryLegacySelectors() ??
+    jobFromJsonLd() ??
     tryEmbeddedJson()
 
   if (result) return result

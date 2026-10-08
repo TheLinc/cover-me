@@ -1,8 +1,9 @@
 import type { JobData } from '../../types'
+import { jobFromJsonLd } from './jsonld'
 
 export function scrapeTerminal(): JobData {
   // Strategy 1: JSON-LD structured data (cleanest if available)
-  const ldJob = tryJsonLd()
+  const ldJob = jobFromJsonLd()
   if (ldJob) return ldJob
 
   // Strategy 2: anchor on "About The Role" heading, then extract sibling content
@@ -32,22 +33,6 @@ export function scrapeTerminal(): JobData {
     description,
     url: window.location.href,
   }
-}
-
-function tryJsonLd(): JobData | null {
-  for (const script of document.querySelectorAll<HTMLScriptElement>('script[type="application/ld+json"]')) {
-    try {
-      const data = JSON.parse(script.textContent ?? '') as Record<string, unknown>
-      if (data['@type'] === 'JobPosting') {
-        const title = (data.title ?? data.name) as string | undefined
-        const org = data.hiringOrganization as Record<string, string> | string | undefined
-        const company = typeof org === 'object' ? org.name : (org ?? 'Unknown Company')
-        const description = stripHtml((data.description as string | undefined) ?? '')
-        if (title && description) return { title, company, description, url: window.location.href }
-      }
-    } catch { /* malformed — skip */ }
-  }
-  return null
 }
 
 function tryAboutSection(): string {
@@ -99,6 +84,3 @@ function isNav(text: string): boolean {
     'the role', 'about the job'].some(p => lower === p || lower.startsWith(p + '\n'))
 }
 
-function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
-}
