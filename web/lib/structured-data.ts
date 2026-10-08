@@ -71,7 +71,7 @@ export const jsonLdHowTo = {
   '@context': 'https://schema.org',
   '@type': 'HowTo',
   name: 'How to generate a cover letter with Cover Me',
-  description: 'Generate a tailored, ATS-friendly cover letter from any job posting in under 10 seconds using the Cover Me Chrome extension.',
+  description: 'Generate a tailored, ATS-friendly cover letter from any job posting in about 20 seconds using the Cover Me Chrome extension.',
   totalTime: 'PT1M',
   step: [
     {
@@ -89,7 +89,7 @@ export const jsonLdHowTo = {
     {
       '@type': 'HowToStep',
       name: 'Generate, edit, and apply',
-      text: 'Click Generate. Cover Me maps the job requirements to your achievements and produces a tailored letter in under 10 seconds. Edit inline, copy to clipboard, or export as PDF.',
+      text: 'Click Generate. Cover Me maps the job requirements to your achievements and produces a tailored letter in about 20 seconds. Edit inline, copy to clipboard, or export as PDF.',
       position: 3,
     },
   ],

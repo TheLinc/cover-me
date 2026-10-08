@@ -15,6 +15,9 @@ const targets = process.argv.slice(2)
 const RETIRED =
   /f2eadb|e8dcc6|c4321f|a3281a|e6b422|b3a489|1c1a17|5e574c|3b5b8f|141311|0d1117|161c2e|1e2740|2a3452|e2e8f0|94a3b8|475569|a5b4fc|28,\s*26,\s*23|196,\s*50,\s*31|242,\s*234,\s*219|179,\s*164,\s*137|59,\s*91,\s*143|230,\s*180,\s*34|13,\s*17,\s*23|Bodoni|Hanken|Plex Mono|Plus Jakarta|\b(amber|slate|violet)-\d|\b(tissue|thread|tape|chalk)\b/i
 const TIMELINE = /animation-?[tT]imeline/
+// Measured with thinking on (2026-10-08): a letter takes about 20 s (median
+// 17.6 s), letter plus tailored resume about 30 s. Copy must not promise less.
+const SPEED = /\b(in|under|about|around|within|just)\s+(5|five|10|ten)\s*(s\b|secs?\b|seconds)|\b(5|five|10|ten)\s+seconds\b/i
 
 const walk = (p) => (statSync(p).isDirectory() ? readdirSync(p).flatMap((f) => walk(join(p, f))) : [p])
 const lineOf = (src, idx) => src.slice(0, idx).split('\n').length
@@ -31,6 +34,7 @@ for (const f of files) {
   src.split('\n').forEach((line, i) => {
     const inExt = extStart !== -1 && offset > extStart && offset < extEnd
     if (!inExt && RETIRED.test(line)) errors.push(`${f}:${i + 1} retired color/font/motif: ${line.trim().slice(0, 110)}`)
+    if (SPEED.test(line)) errors.push(`${f}:${i + 1} promises a speed we don't hit (a letter takes about 20 s): ${line.trim().slice(0, 110)}`)
     offset += line.length + 1
   })
   if (f.endsWith('.css')) {

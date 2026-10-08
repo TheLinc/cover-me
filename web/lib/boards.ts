@@ -32,7 +32,7 @@ export const BOARDS: Board[] = [
       'Generate a tailored, ATS-friendly cover letter from any LinkedIn job posting in one click. Free Chrome extension — works on full postings and search results.',
     h1: 'AI cover letters for LinkedIn job postings',
     answer:
-      'Cover Me is a free Chrome extension that reads the LinkedIn job posting you have open, extracts the role’s requirements and ATS keywords, and generates a tailored cover letter from your resume in about 10 seconds — no copying or pasting.',
+      'Cover Me is a free Chrome extension that reads the LinkedIn job posting you have open, extracts the role’s requirements and ATS keywords, and generates a tailored cover letter from your resume in about 20 seconds — no copying or pasting.',
     intro: [
       'LinkedIn is where most applications start — and where most generic cover letters get written. Easy Apply makes submitting fast, but the applications that get callbacks are the ones tailored to the posting. Cover Me closes that gap: it reads the job page you’re already on and builds the letter for you.',
       'It works on full LinkedIn job pages and in the search-results view with the job panel open. No LinkedIn integration, no login sharing — the extension simply reads the visible posting, so it never touches your LinkedIn account.',
@@ -75,7 +75,7 @@ export const BOARDS: Board[] = [
       'One click on any Indeed job posting — AI writes a tailored, ATS-friendly cover letter from your resume. Free Chrome extension, works on postings and search results.',
     h1: 'AI cover letters for Indeed job postings',
     answer:
-      'Cover Me is a free Chrome extension that reads the Indeed job posting you have open and generates a tailored, ATS-optimized cover letter from your resume in about 10 seconds — on full postings and in the search-results preview pane.',
+      'Cover Me is a free Chrome extension that reads the Indeed job posting you have open and generates a tailored, ATS-optimized cover letter from your resume in about 20 seconds — on full postings and in the search-results preview pane.',
     intro: [
       'Indeed aggregates millions of postings, which makes it perfect for applying at volume — and volume is exactly where cover letter quality collapses. Writing a fresh letter for the tenth application of the day is where most people give up and send something generic.',
       'Cover Me keeps every application tailored at that pace. It reads the posting on the page, extracts the requirements and keywords, and builds each letter from your actual resume — so application #10 is as specific as application #1.',
@@ -87,11 +87,11 @@ export const BOARDS: Board[] = [
       },
       {
         title: 'Click the Cover Me icon',
-        body: 'The extension scrapes the title, company, and description automatically. If a posting loads in an unusual format, paste the description into the manual fallback — it takes five seconds.',
+        body: 'The extension scrapes the title, company, and description automatically. If a posting loads in an unusual format, paste the description into the manual fallback — it only takes a moment.',
       },
       {
         title: 'Generate and apply',
-        body: 'A tailored letter, built from your resume and the role’s keywords, in about 10 seconds. Edit inline, copy it into Indeed’s application form, or download a PDF.',
+        body: 'A tailored letter, built from your resume and the role’s keywords, in about 20 seconds. Edit inline, copy it into Indeed’s application form, or download a PDF.',
       },
     ],
     faqs: [
@@ -118,7 +118,7 @@ export const BOARDS: Board[] = [
       'Applying through a Greenhouse job page? Cover Me reads the posting and writes a tailored, ATS-friendly cover letter from your resume in one click. Free Chrome extension.',
     h1: 'AI cover letters for Greenhouse job applications',
     answer:
-      'Cover Me is a free Chrome extension that reads any Greenhouse job posting — the boards.greenhouse.io pages used by thousands of tech companies — and generates a tailored cover letter from your resume in about 10 seconds.',
+      'Cover Me is a free Chrome extension that reads any Greenhouse job posting — the boards.greenhouse.io pages used by thousands of tech companies — and generates a tailored cover letter from your resume in about 20 seconds.',
     intro: [
       'Greenhouse is the ATS behind the careers pages of a huge share of tech companies — if you’re applying to startups and scale-ups, you’ll see its clean single-page postings constantly. Those applications almost always include an optional cover letter field, and “optional” is where tailored letters quietly win interviews.',
       'Cover Me reads the Greenhouse posting directly — including embedded Greenhouse boards on company career sites — and builds a letter matched to the role’s requirements, so filling that optional field costs you seconds instead of half an hour.',
@@ -140,7 +140,7 @@ export const BOARDS: Board[] = [
     faqs: [
       {
         q: 'Greenhouse says the cover letter is optional. Should I still include one?',
-        a: 'Yes — optional fields are a differentiator. Most applicants skip them, so a tailored letter is one of the few signals that separates you at the screening stage. With Cover Me it costs about 10 seconds, so there’s no reason to leave it empty.',
+        a: 'Yes — optional fields are a differentiator. Most applicants skip them, so a tailored letter is one of the few signals that separates you at the screening stage. With Cover Me it costs about 20 seconds, so there’s no reason to leave it empty.',
       },
       {
         q: 'Does Cover Me work on Greenhouse boards embedded in company websites?',
@@ -161,7 +161,7 @@ export const BOARDS: Board[] = [
       'Applying through jobs.lever.co? Cover Me reads the Lever posting and writes a tailored, ATS-friendly cover letter from your resume in one click. Free Chrome extension.',
     h1: 'AI cover letters for Lever job applications',
     answer:
-      'Cover Me is a free Chrome extension that reads any Lever job posting — the jobs.lever.co pages used by startups and scale-ups — and generates a tailored cover letter from your resume in about 10 seconds.',
+      'Cover Me is a free Chrome extension that reads any Lever job posting — the jobs.lever.co pages used by startups and scale-ups — and generates a tailored cover letter from your resume in about 20 seconds.',
     intro: [
       'Lever powers hiring at thousands of startups and growth-stage companies. Its postings are clean and structured, and its application form has a dedicated field for additional information — the natural home for a cover letter that actually addresses the role.',
       'Cover Me reads the Lever posting you have open, maps its requirements against your resume, and produces a letter specific to that company and role — not a template with the company name swapped in.',
@@ -204,7 +204,7 @@ export const BOARDS: Board[] = [
       'Workday applications are long — the cover letter doesn’t have to be. Cover Me reads any myworkdayjobs.com posting and writes a tailored letter in one click. Free.',
     h1: 'AI cover letters for Workday job applications',
     answer:
-      'Cover Me is a free Chrome extension that reads any Workday job posting — the myworkdayjobs.com pages used by large enterprises — and generates a tailored, ATS-friendly cover letter from your resume in about 10 seconds.',
+      'Cover Me is a free Chrome extension that reads any Workday job posting — the myworkdayjobs.com pages used by large enterprises — and generates a tailored, ATS-friendly cover letter from your resume in about 20 seconds.',
     intro: [
       'Workday is the ATS of the enterprise world — banks, airlines, retailers, and Fortune 500s. Its application flow is famously long: account creation, resume re-entry, screening questions. By the time you reach the cover letter step, most applicants have nothing left to give it.',
       'That’s exactly the wrong place to go generic — enterprise recruiting pipelines are the most keyword-filtered of all. Cover Me reads the Workday posting before you start the form and hands you a letter matched to the role’s requirements, so the highest-leverage part of the application is the one part that’s already done.',
@@ -247,7 +247,7 @@ export const BOARDS: Board[] = [
       'Applying through jobs.ashbyhq.com? Cover Me reads the Ashby posting and writes a tailored, ATS-friendly cover letter from your resume in one click. Free Chrome extension.',
     h1: 'AI cover letters for Ashby job applications',
     answer:
-      'Cover Me is a free Chrome extension that reads any Ashby job posting — the jobs.ashbyhq.com pages used by fast-growing startups — and generates a tailored cover letter from your resume in about 10 seconds.',
+      'Cover Me is a free Chrome extension that reads any Ashby job posting — the jobs.ashbyhq.com pages used by fast-growing startups — and generates a tailored cover letter from your resume in about 20 seconds.',
     intro: [
       'Ashby is the ATS of choice for a new generation of startups — the kind of companies where a hiring manager, not just a recruiter, reads applications. That’s the audience where a specific, well-matched cover letter moves the needle most.',
       'Cover Me reads the Ashby posting you have open and builds a letter from your resume and the role’s actual requirements — concrete, specific, and free of the AI clichés that hiring managers at these companies spot instantly.',
@@ -263,7 +263,7 @@ export const BOARDS: Board[] = [
       },
       {
         title: 'Generate and apply',
-        body: 'Get a tailored letter in about 10 seconds. Edit it inline, paste it into Ashby’s application form, or attach the PDF.',
+        body: 'Get a tailored letter in about 20 seconds. Edit it inline, paste it into Ashby’s application form, or attach the PDF.',
       },
     ],
     faqs: [
