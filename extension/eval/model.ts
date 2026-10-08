@@ -75,8 +75,12 @@ async function callApi(messages: Msg[], opts: CallOptions): Promise<string> {
       },
       body: JSON.stringify(body),
     })
-    if ((res.status === 429 || res.status >= 500) && attempt < 3) {
-      await sleep(2000 * 2 ** attempt)
+    // Rate limits and overload: wait as long as the API asks (retry-after), else
+    // back off with jitter, so a full run on a low usage tier slows down instead
+    // of failing cases.
+    if ((res.status === 429 || res.status >= 500) && attempt < 6) {
+      const after = Number(res.headers.get('retry-after'))
+      await sleep(after > 0 ? after * 1000 : 2000 * 2 ** attempt + Math.random() * 1000)
       continue
     }
     if (!res.ok) throw new Error(`API ${res.status}: ${await res.text()}`)

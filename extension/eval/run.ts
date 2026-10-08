@@ -12,7 +12,9 @@
 //     --runs <n>               samples per resume case (default 1)
 //     --concurrency <n>        parallel cases (default 6)
 //     --via claude|api         claude (default): `claude -p` on your Claude plan;
-//                              api: API credits, only when named explicitly
+//                              api: API credits, only when named explicitly. The key
+//                              is ANTHROPIC_API_KEY, read from extension/.env or
+//                              extension/eval/.env by `pnpm eval`.
 //     --no-parse               tailor from the fixture's answer key instead of the
 //                              model's parse (isolates tailoring from parsing)
 //     --baseline               fail if judge scores drop vs the baseline
