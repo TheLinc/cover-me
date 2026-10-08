@@ -2,10 +2,12 @@ import { ensureValidSession, generateViaBackend, RateLimitError, saveLetterToBac
 import { generateCoverLetter } from '../lib/ai'
 import { parseResumeStructure } from '../lib/ai/resume-parse'
 import { tailorResume } from '../lib/ai/resume-tailor'
+import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from '../lib/config'
 import { decryptApiKey } from '../lib/crypto'
 import { debugGroup } from '../lib/debug'
 import { addToHistory, clearSavedLogin, getCachedTier, getCandidateContext, getResume, getSettings, saveParsedResume } from '../lib/storage'
-import type { CoverJob, CoverLetter, GenerateResponse, JobData, ScrapeResponse, TailoredResume, TailorJob, TailorResponse } from '../types'
+import type { PageSnapshot } from '../content/snapshot.ts'
+import type { CoverJob, CoverLetter, FrameScrapeResponse, GenerateResponse, JobData, ScrapeResponse, TailoredResume, TailorJob, TailorResponse } from '../types'
 
 chrome.runtime.onInstalled.addListener(() => {
   clearSavedLogin()
@@ -96,9 +98,10 @@ async function listScrapableFrames(tabId: number): Promise<number[]> {
   }
 }
 
-type FrameScrape =
-  | { frameId: number; ok: true; job: JobData }
-  | { frameId: number; ok: false; error: Error; connection: boolean }
+type FrameScrape = { frameId: number; snapshot?: PageSnapshot | null } & (
+  | { ok: true; job: JobData }
+  | { ok: false; error: Error; connection: boolean }
+)
 
 // Scrape the active tab. Tries the content-script scrapers in every relevant
 // frame (some sites render the posting inside an iframe the top frame can't
@@ -121,18 +124,19 @@ async function scrapeTab(tabId: number): Promise<JobData> {
     .catch(() => {})
 
   // --- Primary path: content script message, per frame ---
-  const results: FrameScrape[] = await Promise.all(
+  const local: FrameScrape[] = await Promise.all(
     frameIds.map(async (frameId): Promise<FrameScrape> => {
       try {
-        const scrape = (await chrome.tabs.sendMessage(tabId, { type: 'SCRAPE_JOB' }, { frameId })) as ScrapeResponse
-        if (scrape.success) return { frameId, ok: true, job: scrape.job }
-        return { frameId, ok: false, error: new Error(scrape.error), connection: false }
+        const scrape = (await chrome.tabs.sendMessage(tabId, { type: 'SCRAPE_JOB' }, { frameId })) as FrameScrapeResponse
+        if (scrape.success) return { frameId, ok: true, job: scrape.job, snapshot: scrape.snapshot }
+        return { frameId, ok: false, error: new Error(scrape.error), connection: false, snapshot: scrape.snapshot }
       } catch (err) {
         const e = err instanceof Error ? err : new Error(String(err))
         return { frameId, ok: false, error: e, connection: isConnectionError(e) }
       }
     }),
   )
+  const results = await preferServerScrapes(local)
 
   // The top frame keeps its historical precedence so already-working sites
   // behave exactly as before; among iframe hits, take the longest description.
@@ -189,6 +193,38 @@ async function scrapeTab(tabId: number): Promise<JobData> {
   throw new Error(
     'Could not read this page. Try refreshing, or paste the job description manually.',
   )
+}
+
+// The scrape Edge Function runs the current scrapers on each frame's snapshot,
+// so a board's markup change ships by deploying the function, not through a
+// store release. It wins wherever it read a job, even where the bundled
+// scrapers also did: outdated scrapers tend to return a wrong or partial job
+// rather than fail. The bundled result stands when the server is unreachable,
+// unconfigured (self-hosted builds), slow, or couldn't read that frame.
+async function preferServerScrapes(results: FrameScrape[]): Promise<FrameScrape[]> {
+  const sent = results.filter((r) => r.snapshot)
+  if (!SUPABASE_URL || sent.length === 0) return results
+  try {
+    const body = JSON.stringify({ pages: sent.map((r) => r.snapshot) })
+    const gzipped = await new Response(new Blob([body]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer()
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/scrape`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Content-Encoding': 'gzip', apikey: SUPABASE_PUBLISHABLE_KEY },
+      body: gzipped,
+      signal: AbortSignal.timeout(8000),
+    })
+    if (!res.ok) throw new Error(`scrape function returned ${res.status}`)
+    const { results: server } = await res.json() as { results: ({ ok: true; job: JobData } | { ok: false; error: string })[] }
+    const byFrame = new Map(sent.map((r, i) => [r.frameId, server[i]]))
+    await debugGroup('Scrape — server', { frames: sent.length, read: server.filter((s) => s.ok).length })
+    return results.map((r) => {
+      const s = byFrame.get(r.frameId)
+      return s?.ok ? { frameId: r.frameId, ok: true, job: s.job } : r
+    })
+  } catch (err) {
+    await debugGroup('Scrape — server unavailable, using bundled scrapers', { error: err instanceof Error ? err.message : String(err) })
+    return results
+  }
 }
 
 // An iframe's location.href (e.g. LinkedIn's /preload/ interop frame) is not

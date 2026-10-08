@@ -52,6 +52,8 @@ interface CallOptions {
   body?: unknown
   query?: Record<string, string>
   headers?: Record<string, string>
+  // Sent as-is (e.g. a gzipped body); set Content-Type in headers.
+  rawBody?: Uint8Array
 }
 
 export async function callFunction(name: string, opts: CallOptions = {}): Promise<Response> {
@@ -61,9 +63,9 @@ export async function callFunction(name: string, opts: CallOptions = {}): Promis
   if (opts.token) headers.Authorization = `Bearer ${opts.token}`
   if (opts.body !== undefined) headers['Content-Type'] = 'application/json'
   return fetch(url, {
-    method: opts.method ?? (opts.body !== undefined ? 'POST' : 'GET'),
+    method: opts.method ?? (opts.body !== undefined || opts.rawBody ? 'POST' : 'GET'),
     headers,
-    body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
+    body: opts.rawBody ?? (opts.body !== undefined ? JSON.stringify(opts.body) : undefined),
   })
 }
 
