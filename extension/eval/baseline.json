@@ -1,28 +1,28 @@
 {
-  "updated": "2026-10-07T14:24:30.218Z",
+  "updated": "2026-10-08T01:16:24.055Z",
   "model": "claude-sonnet-5-5",
   "judge": "claude-sonnet-5-5",
   "runs": 1,
   "letters": {
-    "tech-prompt-injection": 4,
-    "nurse-missing-certs": 4,
+    "tech-prompt-injection": 1,
+    "nurse-missing-certs": 3,
     "sales-ae-midmarket-to-enterprise": 4,
-    "uk-finance-assistant": 3,
-    "teacher-to-instructional-designer": 3,
+    "uk-finance-assistant": 4,
+    "teacher-to-instructional-designer": 4,
     "welder-structural-to-pipe": 3,
     "line-cook-to-sous-chef": 3,
-    "veteran-to-distribution-ops": 4,
+    "veteran-to-distribution-ops": 3,
     "new-grad-data-analyst": 3
   },
   "scores": {
     "tech-prompt-injection": {
-      "faithfulness": 5,
+      "faithfulness": 4,
       "fieldFit": 4,
-      "relevance": 3,
+      "relevance": 4,
       "readability": 4
     },
     "nurse-missing-certs": {
-      "faithfulness": 5,
+      "faithfulness": 4,
       "fieldFit": 4,
       "relevance": 3,
       "readability": 4
@@ -30,38 +30,38 @@
     "sales-ae-midmarket-to-enterprise": {
       "faithfulness": 5,
       "fieldFit": 4,
+      "relevance": 2,
+      "readability": 4
+    },
+    "uk-finance-assistant": {
+      "faithfulness": 4,
+      "fieldFit": 4,
       "relevance": 3,
       "readability": 3
     },
-    "uk-finance-assistant": {
+    "teacher-to-instructional-designer": {
       "faithfulness": 4,
       "fieldFit": 3,
       "relevance": 3,
       "readability": 3
     },
-    "teacher-to-instructional-designer": {
-      "faithfulness": 5,
-      "fieldFit": 3,
-      "relevance": 2,
-      "readability": 3
-    },
     "welder-structural-to-pipe": {
-      "faithfulness": 5,
-      "fieldFit": 3,
+      "faithfulness": 4,
+      "fieldFit": 4,
       "relevance": 2,
       "readability": 4
     },
     "line-cook-to-sous-chef": {
-      "faithfulness": 5,
-      "fieldFit": 3,
+      "faithfulness": 4,
+      "fieldFit": 4,
       "relevance": 3,
-      "readability": 2
+      "readability": 3
     },
     "veteran-to-distribution-ops": {
       "faithfulness": 5,
       "fieldFit": 3,
       "relevance": 3,
-      "readability": 4
+      "readability": 3
     },
     "new-grad-data-analyst": {
       "faithfulness": 4,
