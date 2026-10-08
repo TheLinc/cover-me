@@ -277,7 +277,7 @@ cover-me/
         │   ├── letters/      # GET / POST / DELETE cover letter history (Pro)
         │   ├── applications/ # GET / DELETE job applications w/ nested letters + tailored resumes (Pro)
         │   ├── billing/      # Stripe Checkout and billing portal sessions for the extension and dashboard
-        │   ├── scrape/       # Reads the job from page HTML; no account needed (verify_jwt off)
+        │   ├── scrape/       # Reads the job from page HTML; no account, rate-limited per IP (HMAC, never the IP)
         │   └── _shared/      # CORS helpers, AES-GCM encrypt/decrypt, scrapers/ (copy of the extension's)
         └── migrations/      # Postgres schema + RLS policies
 ```
