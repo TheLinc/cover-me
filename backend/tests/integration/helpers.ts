@@ -110,6 +110,8 @@ export const mockClaude = {
     fetch(`${MOCK_URL}/__mock/fail-next`, { method: 'POST', body: JSON.stringify({ status }) }),
   refuseNext: () =>
     fetch(`${MOCK_URL}/__mock/fail-next`, { method: 'POST', body: JSON.stringify({ status: 200, body: REFUSAL_BODY }) }),
+  delayNext: (ms: number) =>
+    fetch(`${MOCK_URL}/__mock/delay-next`, { method: 'POST', body: JSON.stringify({ ms }) }),
   requests: async (): Promise<ClaudeRequest[]> => (await fetch(`${MOCK_URL}/__mock/requests`)).json(),
 }
 

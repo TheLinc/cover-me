@@ -2,10 +2,9 @@ import type { AIProvider, JobData, ParsedResume, TailoredResume } from '../../ty
 import { debugGroup, debugLog } from '../debug'
 import { deriveTailorProgress } from './tailor-progress'
 import { candidateText, checkAndRewriteLines, groundSkills, groundTailored, type AskModel, type LineRepair } from './resume-grounding'
-import { SONNET_BETA_HEADER, SONNET_FIELDS, SONNET_MAX_TOKENS } from './claude'
+import { readSseText, SONNET_FIELDS, streamSonnet } from './claude'
 import { scoreFromMatch, type KeywordMatch } from './ats-score'
 
-const CLAUDE_API = 'https://api.anthropic.com/v1/messages'
 const OPENAI_API = 'https://api.openai.com/v1/chat/completions'
 
 // The model outputs a DELTA (rewritten content only), not the full resume —
@@ -301,55 +300,6 @@ export async function assembleTailored(
   return resume
 }
 
-// Reads an SSE stream (Claude or OpenAI shape), forwarding each text fragment
-// to onText and returning the full accumulated text. Lines may split across
-// network chunks, so a partial-line buffer is kept between reads.
-async function readSseText(
-  res: Response,
-  extract: (ev: Record<string, unknown>) => string | undefined,
-  onText?: (text: string) => void,
-): Promise<string> {
-  if (!res.body) throw new Error('AI response had no body. Please try again.')
-  const reader = res.body.getReader()
-  const decoder = new TextDecoder()
-  let lineBuf = ''
-  let full = ''
-  for (;;) {
-    const { done, value } = await reader.read()
-    if (done) break
-    lineBuf += decoder.decode(value, { stream: true })
-    const lines = lineBuf.split('\n')
-    lineBuf = lines.pop() ?? ''
-    for (const line of lines) {
-      if (!line.startsWith('data:')) continue
-      const payload = line.slice(5).trim()
-      if (!payload || payload === '[DONE]') continue
-      let ev: Record<string, unknown>
-      try {
-        ev = JSON.parse(payload) as Record<string, unknown>
-      } catch {
-        continue
-      }
-      if (ev.type === 'error') {
-        const e = ev.error as { message?: string } | undefined
-        throw new Error(e?.message ?? 'AI stream error. Please try again.')
-      }
-      const text = extract(ev)
-      if (text) {
-        full += text
-        onText?.(text)
-      }
-    }
-  }
-  return full
-}
-
-function claudeDelta(ev: Record<string, unknown>): string | undefined {
-  if (ev.type !== 'content_block_delta') return undefined
-  const delta = ev.delta as { type?: string; text?: string } | undefined
-  return delta?.type === 'text_delta' ? delta.text : undefined
-}
-
 function openaiDelta(ev: Record<string, unknown>): string | undefined {
   const choices = ev.choices as Array<{ delta?: { content?: string } }> | undefined
   return choices?.[0]?.delta?.content ?? undefined
@@ -385,30 +335,9 @@ export async function tailorResume(
 
   let raw: string
   if (provider === 'claude') {
-    const res = await fetch(CLAUDE_API, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-        ...SONNET_BETA_HEADER,
-      },
-      body: JSON.stringify({
-        // Sonnet for tailoring: judgment-heavy (bullet preservation, relevance
-        // calls) — the small models compress/merge. Cover letters are on
-        // Sonnet too (see claude.ts).
-        ...SONNET_FIELDS,
-        max_tokens: SONNET_MAX_TOKENS,
-        stream: true,
-        messages: [{ role: 'user', content: prompt }],
-      }),
-    })
-    if (!res.ok) {
-      const err = (await res.json().catch(() => ({}))) as { error?: { message?: string } }
-      throw new Error(err.error?.message ?? `Claude API error ${res.status}`)
-    }
-    raw = await readSseText(res, claudeDelta, onText)
+    // Sonnet for tailoring: judgment-heavy (bullet preservation, relevance
+    // calls) — the small models compress/merge. Cover letters are on Sonnet too.
+    raw = await streamSonnet([{ role: 'user', content: prompt }], apiKey, onText)
   } else {
     // OpenAI
     const res = await fetch(OPENAI_API, {
@@ -444,22 +373,7 @@ export async function tailorResume(
 // times, Sonnet 4.6 38 times (extension/eval/claim-pairs.ts). Prompts are small.
 function checkModel(provider: AIProvider, apiKey: string): AskModel {
   return async (prompt) => {
-    if (provider === 'claude') {
-      const res = await fetch(CLAUDE_API, {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-          ...SONNET_BETA_HEADER,
-        },
-        body: JSON.stringify({ ...SONNET_FIELDS, max_tokens: SONNET_MAX_TOKENS, messages: [{ role: 'user', content: prompt }] }),
-      })
-      if (!res.ok) throw new Error(`Claude API error ${res.status}`)
-      const data = (await res.json()) as { content: Array<{ type: string; text: string }> }
-      return data.content.find((b) => b.type === 'text')?.text ?? ''
-    }
+    if (provider === 'claude') return streamSonnet([{ role: 'user', content: prompt }], apiKey)
     const res = await fetch(OPENAI_API, {
       method: 'POST',
       headers: { 'content-type': 'application/json', Authorization: `Bearer ${apiKey}` },

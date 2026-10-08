@@ -110,42 +110,78 @@ Deno.serve(async (req) => {
   const variation = pickLetterVariation()
   const prompt = buildPrompt(job, resumeText, supplemental, variation)
 
-  let draft: string
-  try {
-    draft = stripMarkdown(await callClaude([{ role: 'user', content: prompt }]))
-  } catch (err) {
-    console.error('Claude error:', err instanceof Error ? err.message : String(err))
-    await refund()
-    return json({ error: 'AI generation failed. Please try again.' }, 502)
-  }
-
-  if (!draft) {
-    await refund()
-    return json({ error: 'Empty response from AI. Please try again.' }, 502)
-  }
-
-  // Deterministic lint + one corrective retry, so the prompt's style rules are
-  // guarantees rather than hopes. Retry failure falls back to the draft.
-  let letter = draft
-  const draftLint = lintLetter(draft, { companyName: job.company })
-  if (draftLint.violations.length > 0) {
+  return heartbeatJson(async () => {
+    let draft: string
     try {
-      const retry = stripMarkdown(await callClaude([
-        { role: 'user', content: prompt },
-        { role: 'assistant', content: draft },
-        { role: 'user', content: buildLintRetryMessage(draftLint.violations) },
-      ]))
-      if (retry) {
-        const retryLint = lintLetter(retry, { companyName: job.company })
-        if (retryLint.violations.length <= draftLint.violations.length) letter = retry
-      }
+      draft = stripMarkdown(await callClaude([{ role: 'user', content: prompt }]))
     } catch (err) {
-      console.error('Claude retry error:', err instanceof Error ? err.message : String(err))
+      console.error('Claude error:', err instanceof Error ? err.message : String(err))
+      await refund()
+      return { error: 'AI generation failed. Please try again.' }
     }
-  }
 
-  return json({ letter })
+    if (!draft) {
+      await refund()
+      return { error: 'Empty response from AI. Please try again.' }
+    }
+
+    // Deterministic lint + one corrective retry, so the prompt's style rules are
+    // guarantees rather than hopes. Retry failure falls back to the draft.
+    let letter = draft
+    const draftLint = lintLetter(draft, { companyName: job.company })
+    if (draftLint.violations.length > 0) {
+      try {
+        const retry = stripMarkdown(await callClaude([
+          { role: 'user', content: prompt },
+          { role: 'assistant', content: draft },
+          { role: 'user', content: buildLintRetryMessage(draftLint.violations) },
+        ]))
+        if (retry) {
+          const retryLint = lintLetter(retry, { companyName: job.company })
+          if (retryLint.violations.length <= draftLint.violations.length) letter = retry
+        }
+      } catch (err) {
+        console.error('Claude retry error:', err instanceof Error ? err.message : String(err))
+      }
+    }
+
+    return { letter }
+  })
 })
+
+// Chrome stops an extension service worker whose fetch() gets no response for
+// 30 s, and a letter plus a lint retry can take longer (median 17.6 s, max
+// 23.5 s without one). So the headers go out now and a space every 5 s until
+// the JSON is ready; JSON parsers skip leading whitespace, so the published
+// extension reads it unchanged. The status is already 200 by then, so a late
+// failure is reported as { error } in the body.
+function heartbeatJson(work: () => Promise<Record<string, unknown>>): Response {
+  const enc = new TextEncoder()
+  let beat: number | undefined
+  const body = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      const send = (s: string) => {
+        try { controller.enqueue(enc.encode(s)) } catch { /* client went away */ }
+      }
+      send(' ')
+      beat = setInterval(() => send(' '), 5000)
+      let result: Record<string, unknown>
+      try {
+        result = await work()
+      } catch (err) {
+        console.error('generate error:', err instanceof Error ? err.message : String(err))
+        result = { error: 'AI generation failed. Please try again.' }
+      }
+      clearInterval(beat)
+      send(JSON.stringify(result))
+      try { controller.close() } catch { /* already closed */ }
+    },
+    cancel() {
+      clearInterval(beat)
+    },
+  })
+  return new Response(body, { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+}
 
 // Sonnet for cover letters: the letter is the product's flagship "must sound
 // human" artifact and the prompt carries ~60 constraints — the small models
