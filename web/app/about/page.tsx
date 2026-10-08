@@ -154,7 +154,7 @@ export default function AboutPage() {
                 By the numbers
               </h3>
               {[
-                ['Under 10 sec', 'to generate a tailored letter'],
+                ['About 20 sec', 'to generate a tailored letter'],
                 ['MIT licensed', 'fully auditable source code'],
                 ['6+ job boards', 'LinkedIn, Indeed, Greenhouse, Lever, Workday, Ashby'],
                 ['0 telemetry', 'in the extension: no analytics, no ads, no tracking'],

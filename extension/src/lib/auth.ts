@@ -121,7 +121,9 @@ export async function generateViaBackend(job: JobData, accessToken: string, supp
   if (res.status === 429) {
     throw new RateLimitError((data.error as string) ?? 'Daily limit reached.')
   }
-  if (!res.ok) {
+  // The function sends 200 before the letter is ready (see heartbeatJson in
+  // generate/index.ts), so a late failure arrives as { error } with status 200.
+  if (!res.ok || data.error) {
     throw new Error((data.error as string) ?? `Server error ${res.status}`)
   }
   const letter = data.letter as string

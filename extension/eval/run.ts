@@ -1,21 +1,27 @@
 // Eval harness for Cover Me's prompts.
 //
-//   pnpm eval                            static checks only (free, no model calls)
-//   pnpm eval --live                     generate + check letters and tailored resumes
-//   pnpm eval --live --tailor --judge    resumes only, plus the industry-fit judge
+//   pnpm eval                                  static checks only (free, no model calls)
+//   pnpm eval --live --quick --judge --baseline   the PR check: 9 cases, ~10 min
+//   pnpm eval --live --judge --runs 2 --judge-model claude-opus-5-5 --baseline
+//                                              the weekly full check: every case
 //
 //   Flags:
+//     --quick                  9 cases, one per field family (PR check)
 //     --letters / --tailor     run only one side (default both)
 //     --case <id>              one case          --industry <name>  one industry
-//     --runs <n>               samples per case (default 1; outputs vary run to run)
-//     --concurrency <n>        parallel cases (default 3)
-//     --via claude|api         claude: `claude -p` on your Claude plan (default when
-//                              ANTHROPIC_API_KEY is unset); api: API credits
+//     --runs <n>               samples per resume case (default 1)
+//     --concurrency <n>        parallel cases (default 6)
+//     --via claude|api         claude (default): `claude -p` on your Claude plan;
+//                              api: API credits, only when named explicitly. The key
+//                              is ANTHROPIC_API_KEY, read from extension/.env or
+//                              extension/eval/.env by `pnpm eval`.
 //     --no-parse               tailor from the fixture's answer key instead of the
 //                              model's parse (isolates tailoring from parsing)
-//     --baseline               fail if judge scores drop vs eval/baseline.json
-//     --update-baseline        write this run's judge averages to eval/baseline.json
+//     --baseline               fail if judge scores drop vs the baseline
+//                              (eval/baseline.json with --quick, else baseline-full.json)
+//     --update-baseline        write this run's judge scores to that baseline
 //     --model / --parse-model / --judge-model <id>
+//                              defaults: claude-sonnet-5-5 / claude-haiku-4-5 / claude-sonnet-5-5
 //
 // Static mode verifies prompt invariants and fixture integrity, so it doubles
 // as a regression test for prompt edits. Live mode mirrors production: the
@@ -36,10 +42,9 @@ import { buildResumeJudgePrompt, DIMENSIONS, FAIL_AT, parseJudgment, type Dimens
 import { buildClaimCheckPrompt, buildLineCheckPrompt, parseClaimVerdicts, parseLineFlags, type LineRepair } from '../src/lib/ai/resume-grounding'
 import { CLAIM_CHECK_MIN, CLAIM_PAIRS } from './claim-pairs'
 import { LINE_CHECK_MIN, LINE_ROLES } from './line-pairs'
-import { claudeIsolation, makeCaller, pool, usage, type Backend } from './model'
+import { claudeIsolation, makeCaller, planLimitHit, pool, usage, type Backend } from './model'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
-const BASELINE_FILE = join(HERE, 'baseline.json')
 
 const args = process.argv.slice(2)
 const flag = (name: string) => args.includes(`--${name}`)
@@ -50,23 +55,48 @@ const opt = (name: string) => {
 
 const LIVE = flag('live')
 const JUDGE = flag('judge')
+const QUICK = flag('quick')
 const RUN_LETTERS = flag('letters') || !flag('tailor')
 const RUN_TAILOR = flag('tailor') || !flag('letters')
-const MODEL = opt('model') ?? 'claude-sonnet-4-6'
+const MODEL = opt('model') ?? 'claude-sonnet-5-5'
 const PARSE_MODEL = opt('parse-model') ?? 'claude-haiku-4-5'
-const JUDGE_MODEL = opt('judge-model') ?? 'claude-opus-5'
+const JUDGE_MODEL = opt('judge-model') ?? 'claude-sonnet-5-5'
 const RUNS = Math.max(1, Number(opt('runs') ?? 1))
-const CONCURRENCY = Math.max(1, Number(opt('concurrency') ?? 3))
-const VIA = (opt('via') ?? (process.env.ANTHROPIC_API_KEY ? 'api' : 'claude')) as Backend
+const CONCURRENCY = Math.max(1, Number(opt('concurrency') ?? 6))
+// API credits only when asked for by name: an ANTHROPIC_API_KEY in the shell
+// must never switch the eval off the Claude plan.
+const VIA = (opt('via') ?? 'claude') as Backend
 const USE_PARSE = !flag('no-parse')
 const ONLY_CASE = opt('case')
 const ONLY_INDUSTRY = opt('industry')?.toLowerCase()
+// The PR gate and the weekly full run keep separate baselines: different case
+// sets and judges give scores that can't be compared.
+const BASELINE_FILE = join(HERE, QUICK ? 'baseline.json' : 'baseline-full.json')
 
 const SIGN_OFFS = ['Sincerely,', 'Best regards,', 'Kind regards,']
 const HOOKS = ['Achievement-first', 'Problem-solution', 'Bold specific claim']
 
+// A low judge score fails a plain run. Under --baseline (the CI gate) it is a
+// warning: the gate fails on drops against the baseline and on the factual
+// checks (invented terms, lint, integrity), so it isn't red on every PR while
+// overall quality is still being raised.
+const judgeFloor = (r: { failures: string[]; warnings: string[] }) => (flag('baseline') ? r.warnings : r.failures)
+
+// --quick: one case per field family plus the prompt-injection case, for the
+// PR check. The full set runs weekly.
+const QUICK_CASES = [
+  'tech-prompt-injection', 'new-grad-data-analyst', 'nurse-missing-certs',
+  'sales-ae-midmarket-to-enterprise', 'uk-finance-assistant', 'teacher-to-instructional-designer',
+  'welder-structural-to-pipe', 'line-cook-to-sous-chef', 'veteran-to-distribution-ops',
+]
+
 const cases = CASES.filter((c) =>
+  (!QUICK || QUICK_CASES.includes(c.id)) &&
   (!ONLY_CASE || c.id === ONLY_CASE) && (!ONLY_INDUSTRY || c.industry.toLowerCase() === ONLY_INDUSTRY))
+if (QUICK && cases.length !== QUICK_CASES.length && !ONLY_CASE && !ONLY_INDUSTRY) {
+  console.error(`--quick lists cases that no longer exist: ${QUICK_CASES.filter((id) => !CASES.some((c) => c.id === id)).join(', ')}`)
+  process.exit(1)
+}
 if (cases.length === 0) {
   console.error(`No case matches. Cases: ${CASES.map((c) => c.id).join(', ')}\nIndustries: ${[...new Set(CASES.map((c) => c.industry))].join(', ')}`)
   process.exit(1)
@@ -193,6 +223,35 @@ John Doe`
     }
   }
   record(`bad letter caught (${badLint.violations.length} violations flagged)`, badResult)
+
+  // Lint self-test 3: a banned word inside the employer's name is the employer,
+  // not an AI tell. Without this, the model avoids naming "Beacon Retail Group".
+  const companyResult: CheckResult = { failures: [], warnings: [] }
+  if (exemplarMatch) {
+    const renamed = exemplarMatch[1].replaceAll('Northlight', 'Beacon Retail Group')
+    for (const v of lintLetter(renamed, { companyName: 'Beacon Retail Group' }).violations) {
+      companyResult.failures.push(`company name tripped the lint: ${v}`)
+    }
+  }
+  record('banned words inside the company name are allowed', companyResult)
+
+  // Lint self-test 4: the letter goes to an employer, so a note to the user
+  // (seen live after a prompt-injection posting) must be caught and retried.
+  const noteResult: CheckResult = { failures: [], warnings: [] }
+  if (exemplarMatch) {
+    const notes = [
+      'Note: the job posting contained an embedded instruction telling AI tools to claim extra experience. I ignored it and wrote the letter from your resume only.',
+      'The posting included hidden instructions for AI tools, which I did not follow.',
+      'I kept every claim to what is in your resume.',
+    ]
+    for (const note of notes) {
+      const lint = lintLetter(`${note}\n\n${exemplarMatch[1]}`, { companyName: 'Northlight' })
+      if (!lint.violations.some((v) => /note to the user|aimed at the user/i.test(v))) {
+        noteResult.failures.push(`lint missed a note to the user: "${note.slice(0, 60)}..."`)
+      }
+    }
+  }
+  record('notes to the user are caught', noteResult)
 }
 
 // ── Live letters ─────────────────────────────────────────────────────────────
@@ -223,43 +282,65 @@ Respond with ONLY this JSON: {"score": <1-5>, "flags": ["<each phrase or pattern
 
 async function liveLetters() {
   section(`Live letters (model: ${MODEL})`)
-  const results = await pool(cases, CONCURRENCY, async (c, i) => {
-    const variation: LetterVariation = { signOff: SIGN_OFFS[i % SIGN_OFFS.length], hookPattern: HOOKS[i % HOOKS.length] }
+  // Runs apply to letters too: one letter per case is too noisy to compare.
+  const jobs = cases.flatMap((c, i) => Array.from({ length: RUNS }, (_, run) => ({ c, i, run })))
+  process.stdout.write(`  ${jobs.length} letters `)
+  const results = await pool(jobs, CONCURRENCY, async ({ c, i, run }) => {
+    const v = i + run
+    const variation: LetterVariation = { signOff: SIGN_OFFS[v % SIGN_OFFS.length], hookPattern: HOOKS[v % HOOKS.length] }
     const prompt = buildLetterPrompt(c.job, c.resumeText, undefined, variation)
-    let letter = stripMarkdown(await call([{ role: 'user', content: prompt }], { model: MODEL, maxTokens: 1024 }))
+    let letter: string
+    try {
+      letter = stripMarkdown(await call([{ role: 'user', content: prompt }], { model: MODEL, maxTokens: 1024 }))
+    } catch (e) {
+      // One failed call fails this letter, not the whole run.
+      process.stdout.write('x')
+      const result: CheckResult = { failures: [`model call failed: ${e instanceof Error ? e.message : e}`], warnings: [] }
+      return { c, run, variation, letter: '', result, judgeScore: undefined as number | undefined }
+    }
 
-    // Mirror production: one corrective retry on lint violations.
+    // Mirror production: one corrective retry on lint violations. A failed
+    // retry keeps the draft, as production does.
     let retried = false
     const firstLint = lintLetter(letter, { companyName: c.job.company })
     if (firstLint.violations.length > 0) {
       retried = true
-      const retry = stripMarkdown(await call([
-        { role: 'user', content: prompt },
-        { role: 'assistant', content: letter },
-        { role: 'user', content: buildLintRetryMessage(firstLint.violations) },
-      ], { model: MODEL, maxTokens: 1024 }))
-      const retryLint = lintLetter(retry, { companyName: c.job.company })
-      if (retryLint.violations.length <= firstLint.violations.length) letter = retry
+      try {
+        const retry = stripMarkdown(await call([
+          { role: 'user', content: prompt },
+          { role: 'assistant', content: letter },
+          { role: 'user', content: buildLintRetryMessage(firstLint.violations) },
+        ], { model: MODEL, maxTokens: 1024 }))
+        const retryLint = lintLetter(retry, { companyName: c.job.company })
+        if (retryLint.violations.length <= firstLint.violations.length) letter = retry
+      } catch {
+        // keep the draft
+      }
     }
 
     const result = checkLetter(letter, c)
     if (retried) result.warnings.unshift(`first draft had ${firstLint.violations.length} lint violation(s), corrective retry used: ${firstLint.violations.join(' | ')}`)
+    let judgeScore: number | undefined
     if (JUDGE) {
       try {
         const j = await judgeLetter(letter)
+        judgeScore = j.score
         result.warnings.unshift(`judge score: ${j.score}/5${j.flags.length ? ` — flags: ${j.flags.join(' | ')}` : ''}`)
-        if (j.score <= 2) result.failures.push(`judge rated the letter ${j.score}/5 — reads as AI-generated`)
+        if (j.score <= 2) judgeFloor(result).push(`judge rated the letter ${j.score}/5 — reads as AI-generated`)
       } catch (e) {
         result.warnings.push(`judge call failed: ${e instanceof Error ? e.message : e}`)
       }
     }
-    return { c, variation, letter, result }
+    process.stdout.write('.')
+    return { c, run, variation, letter, result, judgeScore }
   })
-  for (const { c, variation, letter, result } of results) {
-    record(`letter: ${c.id} (${variation.hookPattern}, "${variation.signOff}")`, result)
+  console.log('')
+  for (const { c, run, variation, letter, result } of results) {
+    const suffix = RUNS > 1 ? ` (run ${run + 1})` : ''
+    record(`letter: ${c.id}${suffix} (${variation.hookPattern}, "${variation.signOff}")`, result)
     reportLines.push('<details><summary>letter text</summary>\n\n```\n' + letter + '\n```\n</details>\n')
   }
-  return results.map(({ c, letter, result }) => ({ id: c.id, letter, failures: result.failures, warnings: result.warnings }))
+  return results.map(({ c, run, letter, result, judgeScore }) => ({ id: c.id, run, letter, judgeScore, failures: result.failures, warnings: result.warnings }))
 }
 
 // ── Live resume pipeline: parse → tailor → checks → judge ────────────────────
@@ -340,7 +421,7 @@ async function tailorOnce(c: EvalCase, run: number): Promise<TailorRun> {
         const scores = DIMENSIONS.map((d) => `${d} ${j[d]}`).join(', ')
         out.tailor.warnings.unshift(`judge: ${scores}${j.issues.length ? ` — ${j.issues.join(' | ')}` : ''}`)
         for (const d of DIMENSIONS) {
-          if (j[d] <= FAIL_AT) out.tailor.failures.push(`judge scored ${d} ${j[d]}/5`)
+          if (j[d] <= FAIL_AT) judgeFloor(out.tailor).push(`judge scored ${d} ${j[d]}/5`)
         }
       }
     } catch (e) {
@@ -359,7 +440,14 @@ function mean(xs: number[]): number {
 }
 
 type Averages = Record<string, Record<Dimension, number>>
-interface Baseline { scores: Averages; connectionRate?: number }
+interface Baseline {
+  scores: Averages
+  connectionRate?: number
+  /** Letter judge score (1 to 5) per case. */
+  letters?: Record<string, number>
+  model?: string
+  judge?: string
+}
 
 /** Share of expected category labels the tailor added, across every run that has any. */
 function connectionRate(runs: TailorRun[]): number | undefined {
@@ -423,26 +511,53 @@ async function liveTailor(): Promise<TailorRun[]> {
   const rateLine = rate === undefined ? '' : `Skill connections made (expected category labels added from resume evidence): ${Math.round(rate * 100)}%`
   reportLines.splice(4, 0, '## Summary', '', ...table, '', rateLine, '')
   console.log('\n' + table.join('\n') + (rateLine ? `\n\n${rateLine}` : ''))
+  return runs
+}
 
-  // Baseline comparison: a real regression is a sustained drop, not one noisy score.
+// ── Baseline ─────────────────────────────────────────────────────────────────
+// A real regression is a sustained drop, not one noisy score: the gate is an
+// average falling 0.5 or more. Scores from a different judge model aren't
+// comparable, so a judge mismatch fails loudly.
+
+function baselineStep(letterScores: Record<string, number>, runs: TailorRun[]) {
+  const avgs = runs.length ? judgeAverages(runs) : {}
+  const rate = runs.length ? connectionRate(runs) : undefined
+  const name = BASELINE_FILE.split(/[\\/]/).pop()
+
   if (flag('baseline')) {
     if (!existsSync(BASELINE_FILE)) {
-      console.log('\n(no eval/baseline.json yet; run with --update-baseline to create one)')
+      console.log(`\n(no eval/${name} yet; run with --update-baseline to create one)`)
     } else {
       const base = JSON.parse(readFileSync(BASELINE_FILE, 'utf8')) as Baseline
       const result: CheckResult = { failures: [], warnings: [] }
-      if (rate !== undefined && base.connectionRate !== undefined) {
-        const drop = base.connectionRate - rate
-        if (drop >= 0.3) result.failures.push(`skill connections fell ${base.connectionRate} → ${rate}`)
-        else if (drop >= 0.15) result.warnings.push(`skill connections dipped ${base.connectionRate} → ${rate}`)
-      }
-      for (const [id, now] of Object.entries(avgs)) {
-        const was = base.scores[id]
-        if (!was) continue
+      if (base.judge && base.judge !== JUDGE_MODEL) {
+        result.failures.push(`eval/${name} was judged by ${base.judge} but this run used ${JUDGE_MODEL}; scores aren't comparable. Re-run with --update-baseline.`)
+      } else {
+        if (rate !== undefined && base.connectionRate !== undefined) {
+          const drop = base.connectionRate - rate
+          if (drop >= 0.3) result.failures.push(`skill connections fell ${base.connectionRate} → ${rate}`)
+          else if (drop >= 0.15) result.warnings.push(`skill connections dipped ${base.connectionRate} → ${rate}`)
+        }
+        // One sample per case swings by a point between runs, so the gate is the
+        // average across cases per dimension; single-case drops are warnings.
+        const sharedIds = Object.keys(avgs).filter((id) => base.scores[id])
         for (const d of DIMENSIONS) {
-          const drop = was[d] - now[d]
-          if (drop >= 1) result.failures.push(`${id}: ${d} fell ${was[d]} → ${now[d]}`)
-          else if (drop >= 0.5) result.warnings.push(`${id}: ${d} dipped ${was[d]} → ${now[d]}`)
+          if (!sharedIds.length) break
+          const was = mean(sharedIds.map((id) => base.scores[id][d]))
+          const now = mean(sharedIds.map((id) => avgs[id][d]))
+          if (was - now >= 0.5) result.failures.push(`average ${d} fell ${was.toFixed(2)} → ${now.toFixed(2)}`)
+          for (const id of sharedIds) {
+            if (base.scores[id][d] - avgs[id][d] >= 1) result.warnings.push(`${id}: ${d} fell ${base.scores[id][d]} → ${avgs[id][d]}`)
+          }
+        }
+        const shared = Object.keys(letterScores).filter((id) => base.letters?.[id] !== undefined)
+        if (shared.length) {
+          const was = mean(shared.map((id) => base.letters![id]))
+          const now = mean(shared.map((id) => letterScores[id]))
+          if (was - now >= 0.5) result.failures.push(`average letter score fell ${was.toFixed(2)} → ${now.toFixed(2)}`)
+          for (const id of shared) {
+            if (base.letters![id] - letterScores[id] >= 2) result.warnings.push(`${id}: letter score fell ${base.letters![id]} → ${letterScores[id]}`)
+          }
         }
       }
       record('judge scores and skill connections vs baseline', result)
@@ -453,11 +568,11 @@ async function liveTailor(): Promise<TailorRun[]> {
     writeFileSync(BASELINE_FILE, JSON.stringify({
       updated: new Date().toISOString(), model: MODEL, judge: JUDGE_MODEL, runs: RUNS,
       connectionRate: rate ?? existing.connectionRate,
+      letters: { ...existing.letters, ...letterScores },
       scores: { ...existing.scores, ...avgs },
     }, null, 2) + '\n')
     console.log(`\nBaseline updated: ${BASELINE_FILE}`)
   }
-  return runs
 }
 
 // ── Skill-claim checker accuracy ─────────────────────────────────────────────
@@ -525,7 +640,7 @@ async function lineChecker(): Promise<{ correct: number; total: number }> {
 async function main() {
   staticChecks()
 
-  let letters: unknown[] = []
+  let letters: Awaited<ReturnType<typeof liveLetters>> = []
   let tailorRuns: TailorRun[] = []
   if (LIVE) {
     if (VIA === 'api' && !process.env.ANTHROPIC_API_KEY) {
@@ -541,11 +656,19 @@ async function main() {
       reportLines.splice(3, 0, `Skill-claim checker: ${checker.correct}/${checker.total} hand-labeled pairs correct | Line checker: ${lines.correct}/${lines.total} hand-labeled lines correct`, '')
       tailorRuns = await liveTailor()
     }
+    if (JUDGE) {
+      // Mean judge score per case across runs.
+      const scored = letters.filter((l) => l.judgeScore !== undefined)
+      const letterScores = Object.fromEntries([...new Set(scored.map((l) => l.id))].map((id) => [
+        id, mean(scored.filter((l) => l.id === id).map((l) => l.judgeScore as number)),
+      ]))
+      baselineStep(letterScores, tailorRuns)
+    }
     const costLine = `Model calls: ${usage.calls} | tokens in/out: ${usage.inputTokens}/${usage.outputTokens} | API-equivalent cost: $${usage.costUsd.toFixed(2)}${VIA === 'claude' ? ' (billed to your Claude plan, not API credits)' : ''}`
     console.log(`\n${costLine}`)
     reportLines.splice(3, 0, costLine, '')
   } else {
-    console.log('\n(static checks only — add --live to generate and evaluate real outputs; runs on your Claude plan via `claude -p` unless ANTHROPIC_API_KEY is set)')
+    console.log('\n(static checks only — add --live to generate and evaluate real outputs; runs on your Claude plan via `claude -p`; add --quick for the 9-case PR set)')
   }
 
   const reportsDir = join(HERE, 'reports')
@@ -559,6 +682,10 @@ async function main() {
   }
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, reportLines.slice(0, 60).join('\n') + '\n')
   console.log(`Report written to ${file}`)
+  if (planLimitHit()) {
+    console.error(`RESULT: INCOMPLETE. The Claude plan limit was hit (${planLimitHit()}); outputs after that point are failures, not scores. Re-run after the reset.`)
+    process.exit(1)
+  }
   console.log(hardFailures === 0 ? 'RESULT: all checks passed' : `RESULT: ${hardFailures} check group(s) failed`)
   process.exit(hardFailures === 0 ? 0 : 1)
 }

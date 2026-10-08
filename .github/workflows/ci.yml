@@ -1,5 +1,5 @@
-# Pull requests and pushes to master: extension build (includes check-dist),
-# web unit tests, and the backend suite (pgTAP plus function tests against the
+# Pull requests and pushes to master: extension build (includes prompt sync and
+# check-dist), web unit tests and brand check, and the backend suite (pgTAP plus function tests against the
 # mock server) on a local Supabase stack in Docker. The Supabase CLI maps
 # host.docker.internal to the runner, so the functions reach the mock on Linux.
 name: CI
@@ -33,6 +33,7 @@ jobs:
           cache-dependency-path: extension/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - run: pnpm rebuild esbuild
+      - run: pnpm test
       - run: pnpm build
 
   web:
@@ -53,6 +54,7 @@ jobs:
           cache-dependency-path: web/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - run: pnpm test
+      - run: pnpm check
 
   backend:
     runs-on: ubuntu-latest

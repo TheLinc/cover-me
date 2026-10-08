@@ -4,6 +4,7 @@
 // Routes:
 //   POST /v1/messages          canned reply picked by request shape (see reply())
 //   POST /__mock/fail-next     { status, body? } → the next /v1/messages call fails
+//   POST /__mock/delay-next    { ms } → the next /v1/messages call answers after ms
 //   GET  /__mock/requests      every /v1/messages body received since the last reset
 //   POST /__mock/reset         clears recorded requests and queued failures
 //   POST /v1/customers, /v1/checkout/sessions, /v1/billing_portal/sessions
@@ -80,10 +81,19 @@ export const MOCK_TAILOR_DELTA = {
   },
 }
 
-type MessagesBody = { model?: string; stream?: boolean; messages?: Array<{ role: string; content: string }> }
+type MessagesBody = {
+  model?: string
+  stream?: boolean
+  messages?: Array<{ role: string; content: string }>
+  thinking?: { type: string }
+  fallbacks?: unknown
+  /** The anthropic-beta request header, recorded so tests can check it. */
+  betaHeader?: string
+}
 
 const received: MessagesBody[] = []
 const failures: Array<{ status: number; body: string }> = []
+let delayNext = 0
 
 type StripeCall = { path: string; params: Record<string, string>; idempotencyKey: string | null }
 const stripeCalls: StripeCall[] = []
@@ -141,12 +151,17 @@ export function startMockAnthropic(port: number): Promise<Server> {
       stripeState.missingCustomer = false
       stripeState.customerError = null
       failures.length = 0
+      delayNext = 0
       return res.writeHead(204).end()
     }
     if (req.method === 'POST' && url === '/__mock/fail-next') {
       const { status = 500, body = '{"type":"error","error":{"type":"api_error","message":"mock failure"}}' } =
         JSON.parse((await readBody(req)) || '{}')
       failures.push({ status, body: typeof body === 'string' ? body : JSON.stringify(body) })
+      return res.writeHead(204).end()
+    }
+    if (req.method === 'POST' && url === '/__mock/delay-next') {
+      delayNext = JSON.parse(await readBody(req)).ms
       return res.writeHead(204).end()
     }
     if (req.method === 'GET' && url === '/__mock/requests') {
@@ -156,7 +171,13 @@ export function startMockAnthropic(port: number): Promise<Server> {
 
     if (req.method === 'POST' && url === '/v1/messages') {
       const body = JSON.parse(await readBody(req)) as MessagesBody
-      received.push(body)
+      const beta = req.headers['anthropic-beta']
+      received.push({ ...body, betaHeader: typeof beta === 'string' ? beta : undefined })
+      if (delayNext) {
+        const ms = delayNext
+        delayNext = 0
+        await new Promise((r) => setTimeout(r, ms))
+      }
 
       const failure = failures.shift()
       if (failure) {

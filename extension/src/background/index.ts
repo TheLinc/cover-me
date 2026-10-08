@@ -18,22 +18,30 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true
   }
   if (message.type === 'GENERATE_FROM_TAB') {
-    handleGenerate().then(sendResponse)
+    keepAlive(handleGenerate()).then(sendResponse)
     return true
   }
   if (message.type === 'GENERATE_FROM_MANUAL') {
-    handleGenerateManual(message.jobId as string | undefined, message.job as JobData, message.supplemental as string | undefined).then(sendResponse)
+    keepAlive(handleGenerateManual(message.jobId as string | undefined, message.job as JobData, message.supplemental as string | undefined)).then(sendResponse)
     return true
   }
   if (message.type === 'TAILOR_FROM_TAB') {
-    handleTailorFromTab(!!message.compact).then(sendResponse)
+    keepAlive(handleTailorFromTab(!!message.compact)).then(sendResponse)
     return true
   }
   if (message.type === 'TAILOR_FROM_MANUAL') {
-    handleTailorFromManual(message.jobId as string | undefined, message.job as JobData, !!message.compact, message.supplemental as string | undefined, !!message.trim, message.includeSummary !== false, message.previous as TailoredResume | undefined).then(sendResponse)
+    keepAlive(handleTailorFromManual(message.jobId as string | undefined, message.job as JobData, !!message.compact, message.supplemental as string | undefined, !!message.trim, message.includeSummary !== false, message.previous as TailoredResume | undefined)).then(sendResponse)
     return true
   }
 })
+
+// Chrome stops a service worker after 30 s with no event or extension API call.
+// A letter with a lint retry, or a tailor run, can take longer, so ping an API
+// every 20 s until the work ends.
+function keepAlive<T>(work: Promise<T>): Promise<T> {
+  const ping = setInterval(() => void chrome.runtime.getPlatformInfo(), 20_000)
+  return work.finally(() => clearInterval(ping))
+}
 
 // --- Job lifecycle persistence ---------------------------------------------
 // The actual AI call runs here in the service worker, independent of the popup.

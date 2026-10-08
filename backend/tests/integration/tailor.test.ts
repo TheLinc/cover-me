@@ -49,6 +49,37 @@ describe('tailor', () => {
     expect(await quotaUsedToday(user.id)).toBe(1)
   })
 
+  it('scores an either/or requirement as covered when the resume has the other option', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    // The mock reports Kafka missing; this posting accepts Kafka or Postgres, and the resume has Postgres.
+    const job = { ...JOB, description: `${JOB.description} Queue work runs on Kafka or Postgres.` }
+    const res = await callFunction('tailor', { token: user.token, body: { job } })
+    const { resume } = await res.json()
+    expect(resume.atsGaps).toEqual([])
+    expect(resume.atsScore).toBe(100)
+  })
+
+  it('uses Sonnet 5.5 with adaptive thinking at high effort and fallback, and Haiku 4.5 for the parse', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    await callFunction('tailor', { token: user.token, body: { job: JOB } })
+
+    const requests = await mockClaude.requests()
+    const parse = requests.filter((r) => r.messages[0].content.startsWith('You are a resume parser'))
+    const sonnet = requests.filter((r) => !r.messages[0].content.startsWith('You are a resume parser'))
+    expect(parse.map((r) => r.model)).toEqual(['claude-haiku-4-5'])
+    expect(sonnet.length).toBeGreaterThan(0)
+    for (const r of sonnet) {
+      expect(r.model).toBe('claude-sonnet-5-5')
+      expect(r.thinking).toEqual({ type: 'adaptive' })
+      expect(r.output_config).toEqual({ effort: 'high' })
+      expect(r.max_tokens).toBeGreaterThanOrEqual(8000)
+      expect(r.fallbacks).toBe('default')
+      expect(r.betaHeader).toBe('server-side-fallback-2026-07-01')
+    }
+  })
+
   it('parses the resume once, then reuses the encrypted cache', async () => {
     user = await createUser()
     await uploadResume(user)

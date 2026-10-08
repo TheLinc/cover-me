@@ -28,6 +28,49 @@ describe('generate', () => {
     expect(first.messages[0].content).toContain(JOB.description)
   })
 
+  it('asks Sonnet 5.5 for the letter with adaptive thinking at high effort and server-side fallback', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    await callFunction('generate', { token: user.token, body: { job: JOB } })
+
+    const [first] = await mockClaude.requests()
+    expect(first.model).toBe('claude-sonnet-5-5')
+    // With thinking off, letters cited posting requirements the resume lacks in
+    // 26 of 32 eval cases; at high effort, 0 of 32. Thinking counts toward
+    // max_tokens, so the limit must leave room for it.
+    expect(first.thinking).toEqual({ type: 'adaptive' })
+    expect(first.output_config).toEqual({ effort: 'high' })
+    expect(first.max_tokens).toBeGreaterThanOrEqual(8000)
+    expect(first.fallbacks).toBe('default')
+    expect(first.betaHeader).toBe('server-side-fallback-2026-07-01')
+  })
+
+  // Chrome stops an extension service worker whose fetch() gets no response for
+  // 30 s. Headers must arrive before Claude answers, not after.
+  it('sends headers before the letter is ready', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    await mockClaude.delayNext(6000)
+
+    const started = Date.now()
+    const res = await callFunction('generate', { token: user.token, body: { job: JOB } })
+    expect(Date.now() - started).toBeLessThan(4000)
+    expect(res.status).toBe(200)
+    const { letter } = await res.json()
+    expect(Date.now() - started).toBeGreaterThanOrEqual(6000)
+    expect(letter).toContain('Dear Acme Team')
+  }, 20_000)
+
+  // Headers have already gone out as 200, so a late failure is an { error } body.
+  it('refunds the generation when Claude declines the request', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    await mockClaude.refuseNext()
+    const res = await callFunction('generate', { token: user.token, body: { job: JOB } })
+    expect((await res.json()).error).toMatch(/Empty response/)
+    expect(await quotaUsedToday(user.id)).toBe(0)
+  })
+
   it('refunds the generation when the user has no resume', async () => {
     user = await createUser()
     const res = await callFunction('generate', { token: user.token, body: { job: JOB } })
@@ -48,7 +91,7 @@ describe('generate', () => {
     await uploadResume(user)
     await mockClaude.failNext(529)
     const res = await callFunction('generate', { token: user.token, body: { job: JOB } })
-    expect(res.status).toBe(502)
+    expect((await res.json()).error).toMatch(/generation failed/)
     expect(await quotaUsedToday(user.id)).toBe(0)
   })
 

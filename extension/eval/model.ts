@@ -36,7 +36,9 @@ const PRICES: Record<string, [number, number]> = {
   'claude-haiku-4-5-20251001': [1, 5],
   'claude-sonnet-4-6': [3, 15],
   'claude-sonnet-5': [2, 10],
+  'claude-sonnet-5-5': [2, 10],
   'claude-opus-5': [5, 25],
+  'claude-opus-5-5': [4, 20],
 }
 
 export const usage = {
@@ -59,7 +61,14 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
 async function callApi(messages: Msg[], opts: CallOptions): Promise<string> {
   const body: Record<string, unknown> = { model: opts.model, max_tokens: opts.maxTokens, messages }
-  if (opts.think) body.thinking = { type: 'adaptive' }
+  // Mirror production: Sonnet 5.5 generation uses adaptive thinking at high
+  // effort (SONNET_FIELDS in src/lib/ai/claude.ts). Judges think too. Thinking
+  // counts toward max_tokens, so leave room for it either way.
+  if (opts.think || opts.model === 'claude-sonnet-5-5') {
+    body.thinking = { type: 'adaptive' }
+    body.max_tokens = Math.max(opts.maxTokens, 16000)
+  }
+  if (opts.model === 'claude-sonnet-5-5' && !opts.think) body.output_config = { effort: 'high' }
   for (let attempt = 0; ; attempt++) {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -70,8 +79,12 @@ async function callApi(messages: Msg[], opts: CallOptions): Promise<string> {
       },
       body: JSON.stringify(body),
     })
-    if ((res.status === 429 || res.status >= 500) && attempt < 3) {
-      await sleep(2000 * 2 ** attempt)
+    // Rate limits and overload: wait as long as the API asks (retry-after), else
+    // back off with jitter, so a full run on a low usage tier slows down instead
+    // of failing cases.
+    if ((res.status === 429 || res.status >= 500) && attempt < 6) {
+      const after = Number(res.headers.get('retry-after'))
+      await sleep(after > 0 ? after * 1000 : 2000 * 2 ** attempt + Math.random() * 1000)
       continue
     }
     if (!res.ok) throw new Error(`API ${res.status}: ${await res.text()}`)
@@ -144,10 +157,23 @@ function runClaude(prompt: string, opts: CallOptions): Promise<string> {
   })
 }
 
+// Set once the Claude plan reports a session or usage limit. Every later call
+// fails at once instead of retrying, so the run finishes quickly and still
+// writes the outputs it completed.
+let planLimit: string | undefined
+export const planLimitHit = () => planLimit
+const LIMIT = /session limit|usage limit|hit your .*limit/i
+
 async function callClaude(messages: Msg[], opts: CallOptions): Promise<string> {
+  if (planLimit) throw new Error(planLimit)
   try {
     return await runClaude(flatten(messages), opts)
-  } catch {
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e)
+    if (LIMIT.test(msg)) {
+      planLimit = msg
+      throw e
+    }
     await sleep(5000)
     return runClaude(flatten(messages), opts) // one retry for transient failures
   }

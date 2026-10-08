@@ -8,7 +8,7 @@ const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 const guide = getGuide('cover-me-vs-chatgpt')
 const HERO_IMAGE = '/guides/cover-me-vs-chatgpt.png'
 const HERO_ALT =
-  'Infographic comparing Cover Me and ChatGPT for cover letters: Cover Me generates a letter in one click in about 5 seconds with ATS and resume tailoring built in, while ChatGPT requires copying, pasting, and prompting for 5–10 minutes per letter. The difference is workflow, not intelligence.'
+  'Infographic comparing Cover Me and ChatGPT for cover letters: Cover Me generates a letter in one click with ATS and resume tailoring built in, while ChatGPT requires copying, pasting, and prompting for 5–10 minutes per letter. The difference is workflow, not intelligence.'
 
 export const metadata: Metadata = {
   title: 'Cover Me vs ChatGPT for Cover Letters — Honest Comparison',
@@ -106,7 +106,7 @@ export default function Page() {
 
       <article className="space-y-5 text-[15.5px] text-muted-foreground leading-[1.85]">
         <p className="text-[17px] text-foreground font-medium leading-[1.7]">
-          ChatGPT can write a decent cover letter if you feed it the job description, your resume, and a careful prompt — and repeat that for every application. Cover Me is a Chrome extension that does the same job in one click on the posting itself: it reads the page, already knows your resume, extracts the role&rsquo;s ATS keywords, and generates a tailored letter in about 10 seconds.
+          ChatGPT can write a decent cover letter if you feed it the job description, your resume, and a careful prompt — and repeat that for every application. Cover Me is a Chrome extension that does the same job in one click on the posting itself: it reads the page, already knows your resume, extracts the role&rsquo;s ATS keywords, and generates a tailored letter in about 20 seconds.
         </p>
         <p>
           This is an honest comparison — we build Cover Me, but the trade-offs below are real, and for some people ChatGPT is genuinely enough.

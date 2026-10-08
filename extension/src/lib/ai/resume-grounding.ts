@@ -23,8 +23,15 @@
 // skill (Zustand backs "State Management"; one gala doesn't back "annual fund
 // campaigns").
 
-interface GroundEntry { bullets: string[]; title?: string; company?: string; name?: string }
-interface Groundable { summary?: string; experience: GroundEntry[]; projects?: GroundEntry[]; skills?: string }
+interface GroundEntry { bullets: string[]; title?: string; company?: string; name?: string; dates?: string }
+interface Groundable {
+  summary?: string
+  experience: GroundEntry[]
+  projects?: GroundEntry[]
+  skills?: string
+  education?: Array<{ degree?: string; institution?: string }>
+  certifications?: string[]
+}
 
 // Capitalized tokens that name nothing a candidate could lack.
 const GENERIC = new Set(['I', 'IT', 'HR', 'US', 'USA', 'UK', 'EU', 'OK', 'AM', 'PM', 'Inc', 'LLC', 'Ltd'])
@@ -237,6 +244,15 @@ function roleLabel(entry: GroundEntry | undefined, fallback: string): string {
   return [entry.title, entry.company].filter(Boolean).join(' at ') || entry.name || fallback
 }
 
+// What a summary may cite beyond the bullets: titles with their dates, degrees,
+// licenses, certifications. Without these the checker flags every year count
+// and credential in the summary as invented, and the summary gets dropped.
+function resumeFacts(r: Groundable): string {
+  const roles = r.experience.map((e) => `${roleLabel(e, 'Role')}${e.dates ? ` (${e.dates})` : ''}`)
+  const edu = (r.education ?? []).map((e) => [e.degree, e.institution].filter(Boolean).join(', '))
+  return [...roles, ...edu, ...(r.certifications ?? [])].filter(Boolean).map((l) => `- ${l}`).join('\n')
+}
+
 export function buildLineCheckPrompt(original: Groundable, tailored: Groundable): string {
   const blocks: string[] = []
   const add = (kind: 'e' | 'p', out: GroundEntry[] | undefined, input: GroundEntry[] | undefined) =>
@@ -255,14 +271,17 @@ For each rewritten line, go through every detail it states. Flag the line if it 
 - an added task or responsibility ("Answered customer emails" → "Answered customer emails and managed the support inbox")
 - an added setting, audience, or scope ("Taught piano lessons" → "Taught piano lessons across three studios"; "...for senior leadership"; "...across time zones")
 - an added specific outcome ("...on schedule", "...cutting churn", "...adopted company-wide")
-- more seniority or ownership ("Coordinated" → "Owned"; "helped with" → "led")
+- more seniority or ownership over work the originals show the candidate only supporting ("Coordinated" → "Owned"; "helped with" → "led")
 - a domain, client type, tool, method, or credential the originals do not name
 - a clause arguing relevance to another kind of work ("...skills directly applicable to X")
-Do not flag: the same facts reworded; a different verb for the same action ("Managed" → "Oversaw"); a more specific word for the same thing ("deposits" → "bank deposits"); reordering; facts combined from two original lines of the same role; or generic phrasing that adds no checkable fact ("maintaining quality", "to meet standards", "ensuring accuracy"). Generic filler is a style problem, not a false claim.
+Do not flag: the same facts reworded; a different verb for the same action ("Managed" → "Oversaw"); a more specific word for the same thing ("deposits" → "bank deposits"); reordering; facts combined from two original lines of the same role; generic phrasing that adds no checkable fact ("maintaining quality", "to meet standards", "ensuring accuracy"); a clause that only restates what the line's own facts already show ("Processed 400 claims a week" → "...in a high-volume claims queue"; a stated record of beating targets → "...consistently exceeding goals"; written how-to guides → "...giving customers self-service answers"); the field's usual name for the same task ("answered and routed incoming calls" → "call triage"), as long as it names no tool, system, standard, or credential the originals lack; or a stronger verb for work the originals show the candidate doing or running themselves ("Ran the monthly payroll" → "Owned the monthly payroll run"). Generic filler and restatement are style problems, not false claims.
 
-Then check the SUMMARY against all original lines, with the same rules.
+Then check the SUMMARY against all original lines and the RESUME FACTS below, with the same rules. A title, degree, license, or certification listed in RESUME FACTS is supported. Flag any count of years of experience in the summary.
 
 ${blocks.join('\n\n')}
+
+RESUME FACTS:
+${resumeFacts(original)}
 
 SUMMARY: ${tailored.summary || '(none)'}
 
@@ -309,7 +328,7 @@ export function buildLineRewritePrompt(
 ): string {
   const items = [...flags].map(([id, reason]) => {
     if (id === 'summary') {
-      const facts = original.experience.map((e) => `${roleLabel(e, 'Role')}: ${e.bullets.join('; ')}`).join('\n')
+      const facts = `${original.experience.map((e) => `${roleLabel(e, 'Role')}: ${e.bullets.join('; ')}`).join('\n')}\n${resumeFacts(original)}`
       return `[summary] SUMMARY (problem: ${reason}):
 ${tailored.summary}
 ORIGINAL RESUME LINES (the only facts it may use):
@@ -329,7 +348,7 @@ ${others.map((b) => `- ${b}`).join('\n')}`
   return `RESUME LINE REWRITE. These lines from a tailored resume claim more than the candidate's original resume supports. Rewrite each one to remove the named problem.
 - Use only the facts in its SOURCE LINE (for the summary, the original resume lines). Never bring in facts from the other lines listed: they are already on the resume, and repeating them duplicates it.
 - Remove the problem without adding anything new: no new clause, outcome, purpose, or qualifier, not even a general one ("to ensure...", "maintaining...", "...across all X").
-- Keep every number exactly as the source states it; add none.
+- Keep every number exactly as the source states it; add none. In the summary, leave out counts of years.
 - You may keep the job posting's wording for the same work and a strong verb for the same action.
 - One resume bullet (or a 2-3 sentence summary), no first person. When in doubt, return the source line lightly reworded.
 
@@ -403,7 +422,7 @@ export async function checkAndRewriteLines<T extends Groundable>(
     })
   mapSources('e', tailored.experience, original.experience)
   mapSources('p', tailored.projects, original.projects)
-  const allOriginal = original.experience.flatMap((e) => e.bullets).join(' ')
+  const allOriginal = `${original.experience.flatMap((e) => e.bullets).join(' ')} ${resumeFacts(original)}`
 
   let rewrites = new Map<LineId, string>()
   try {

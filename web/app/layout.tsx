@@ -75,7 +75,7 @@ const jsonLdWebSite = {
   '@type': 'WebSite',
   name: 'Cover Me',
   url: BASE,
-  description: 'Free AI cover letter generator Chrome extension. One click on any job posting — tailored, ATS-friendly cover letter from your resume in under 10 seconds.',
+  description: 'Free AI cover letter generator Chrome extension. One click on any job posting — tailored, ATS-friendly cover letter from your resume in about 20 seconds.',
 }
 
 // SoftwareApplication, HowTo, and Speakable JSON-LD live in lib/structured-data.ts
