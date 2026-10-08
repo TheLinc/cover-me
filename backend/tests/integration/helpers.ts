@@ -91,6 +91,8 @@ export interface ClaudeRequest {
   stream?: boolean
   messages: Array<{ role: string; content: string }>
   thinking?: { type: string }
+  output_config?: { effort?: string }
+  max_tokens?: number
   fallbacks?: unknown
   betaHeader?: string
 }

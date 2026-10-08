@@ -61,10 +61,14 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
 async function callApi(messages: Msg[], opts: CallOptions): Promise<string> {
   const body: Record<string, unknown> = { model: opts.model, max_tokens: opts.maxTokens, messages }
-  if (opts.think) body.thinking = { type: 'adaptive' }
-  // Sonnet 5.5 thinks by default and rejects {type: 'disabled'}; between_tools is
-  // its thinking-off setting, matching production generation calls.
-  else if (opts.model === 'claude-sonnet-5-5') body.thinking = { type: 'between_tools' }
+  // Mirror production: Sonnet 5.5 generation uses adaptive thinking at high
+  // effort (SONNET_FIELDS in src/lib/ai/claude.ts). Judges think too. Thinking
+  // counts toward max_tokens, so leave room for it either way.
+  if (opts.think || opts.model === 'claude-sonnet-5-5') {
+    body.thinking = { type: 'adaptive' }
+    body.max_tokens = Math.max(opts.maxTokens, 16000)
+  }
+  if (opts.model === 'claude-sonnet-5-5' && !opts.think) body.output_config = { effort: 'high' }
   for (let attempt = 0; ; attempt++) {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',

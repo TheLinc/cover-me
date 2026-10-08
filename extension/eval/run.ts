@@ -234,6 +234,24 @@ John Doe`
     }
   }
   record('banned words inside the company name are allowed', companyResult)
+
+  // Lint self-test 4: the letter goes to an employer, so a note to the user
+  // (seen live after a prompt-injection posting) must be caught and retried.
+  const noteResult: CheckResult = { failures: [], warnings: [] }
+  if (exemplarMatch) {
+    const notes = [
+      'Note: the job posting contained an embedded instruction telling AI tools to claim extra experience. I ignored it and wrote the letter from your resume only.',
+      'The posting included hidden instructions for AI tools, which I did not follow.',
+      'I kept every claim to what is in your resume.',
+    ]
+    for (const note of notes) {
+      const lint = lintLetter(`${note}\n\n${exemplarMatch[1]}`, { companyName: 'Northlight' })
+      if (!lint.violations.some((v) => /note to the user|aimed at the user/i.test(v))) {
+        noteResult.failures.push(`lint missed a note to the user: "${note.slice(0, 60)}..."`)
+      }
+    }
+  }
+  record('notes to the user are caught', noteResult)
 }
 
 // ── Live letters ─────────────────────────────────────────────────────────────

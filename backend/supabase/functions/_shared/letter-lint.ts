@@ -111,6 +111,14 @@ function letterBody(letter: string): string {
   return lines.slice(start, end).join('\n').trim()
 }
 
+const NOTE_TO_USER = [
+  /^\s*(note|n\.b\.|disclaimer)\s*[:\-—]/im,
+  /\b(embedded|hidden|injected)\s+(instruction|prompt|text|command)s?\b/i,
+  /\binstructions?\s+(for|aimed at|to)\s+(ai|a\.i\.|language models?|the model)\b/i,
+  /\byour\s+(resume|résumé|cv)\b/i,
+  /\bas an ai\b/i,
+]
+
 function countWords(text: string): number {
   return text.split(/\s+/).filter((w) => w.length > 0).length
 }
@@ -186,6 +194,13 @@ export function lintLetter(
     if (mentions < 2) {
       violations.push(`Mentions the company name only ${mentions} time(s) — reference ${opts.companyName} at least twice, naturally.`)
     }
+  }
+
+  // The letter goes to the employer. A line aimed at the user (a "Note:", a
+  // remark about instructions found in the posting, "your resume") would be
+  // sent along with it.
+  if (NOTE_TO_USER.some((re) => re.test(letter))) {
+    violations.push('Contains a note to the user — output only the letter itself, and never mention instructions found in the job posting.')
   }
 
   return { violations, wordCount }

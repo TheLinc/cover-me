@@ -60,7 +60,7 @@ describe('tailor', () => {
     expect(resume.atsScore).toBe(100)
   })
 
-  it('uses Sonnet 5.5 with thinking off and fallback, and Haiku 4.5 for the parse', async () => {
+  it('uses Sonnet 5.5 with adaptive thinking at high effort and fallback, and Haiku 4.5 for the parse', async () => {
     user = await createUser()
     await uploadResume(user)
     await callFunction('tailor', { token: user.token, body: { job: JOB } })
@@ -72,7 +72,9 @@ describe('tailor', () => {
     expect(sonnet.length).toBeGreaterThan(0)
     for (const r of sonnet) {
       expect(r.model).toBe('claude-sonnet-5-5')
-      expect(r.thinking).toEqual({ type: 'between_tools' })
+      expect(r.thinking).toEqual({ type: 'adaptive' })
+      expect(r.output_config).toEqual({ effort: 'high' })
+      expect(r.max_tokens).toBeGreaterThanOrEqual(8000)
       expect(r.fallbacks).toBe('default')
       expect(r.betaHeader).toBe('server-side-fallback-2026-07-01')
     }

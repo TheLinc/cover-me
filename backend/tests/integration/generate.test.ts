@@ -28,14 +28,19 @@ describe('generate', () => {
     expect(first.messages[0].content).toContain(JOB.description)
   })
 
-  it('asks Sonnet 5.5 for the letter with thinking off and server-side fallback', async () => {
+  it('asks Sonnet 5.5 for the letter with adaptive thinking at high effort and server-side fallback', async () => {
     user = await createUser()
     await uploadResume(user)
     await callFunction('generate', { token: user.token, body: { job: JOB } })
 
     const [first] = await mockClaude.requests()
     expect(first.model).toBe('claude-sonnet-5-5')
-    expect(first.thinking).toEqual({ type: 'between_tools' })
+    // With thinking off, letters cited posting requirements the resume lacks in
+    // 26 of 32 eval cases; at high effort, 0 of 32. Thinking counts toward
+    // max_tokens, so the limit must leave room for it.
+    expect(first.thinking).toEqual({ type: 'adaptive' })
+    expect(first.output_config).toEqual({ effort: 'high' })
+    expect(first.max_tokens).toBeGreaterThanOrEqual(8000)
     expect(first.fallbacks).toBe('default')
     expect(first.betaHeader).toBe('server-side-fallback-2026-07-01')
   })
