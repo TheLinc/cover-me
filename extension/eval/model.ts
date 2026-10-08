@@ -149,10 +149,23 @@ function runClaude(prompt: string, opts: CallOptions): Promise<string> {
   })
 }
 
+// Set once the Claude plan reports a session or usage limit. Every later call
+// fails at once instead of retrying, so the run finishes quickly and still
+// writes the outputs it completed.
+let planLimit: string | undefined
+export const planLimitHit = () => planLimit
+const LIMIT = /session limit|usage limit|hit your .*limit/i
+
 async function callClaude(messages: Msg[], opts: CallOptions): Promise<string> {
+  if (planLimit) throw new Error(planLimit)
   try {
     return await runClaude(flatten(messages), opts)
-  } catch {
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e)
+    if (LIMIT.test(msg)) {
+      planLimit = msg
+      throw e
+    }
     await sleep(5000)
     return runClaude(flatten(messages), opts) // one retry for transient failures
   }

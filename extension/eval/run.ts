@@ -40,7 +40,7 @@ import { buildResumeJudgePrompt, DIMENSIONS, FAIL_AT, parseJudgment, type Dimens
 import { buildClaimCheckPrompt, buildLineCheckPrompt, parseClaimVerdicts, parseLineFlags, type LineRepair } from '../src/lib/ai/resume-grounding'
 import { CLAIM_CHECK_MIN, CLAIM_PAIRS } from './claim-pairs'
 import { LINE_CHECK_MIN, LINE_ROLES } from './line-pairs'
-import { claudeIsolation, makeCaller, pool, usage, type Backend } from './model'
+import { claudeIsolation, makeCaller, planLimitHit, pool, usage, type Backend } from './model'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 
@@ -269,20 +269,33 @@ async function liveLetters() {
     const v = i + run
     const variation: LetterVariation = { signOff: SIGN_OFFS[v % SIGN_OFFS.length], hookPattern: HOOKS[v % HOOKS.length] }
     const prompt = buildLetterPrompt(c.job, c.resumeText, undefined, variation)
-    let letter = stripMarkdown(await call([{ role: 'user', content: prompt }], { model: MODEL, maxTokens: 1024 }))
+    let letter: string
+    try {
+      letter = stripMarkdown(await call([{ role: 'user', content: prompt }], { model: MODEL, maxTokens: 1024 }))
+    } catch (e) {
+      // One failed call fails this letter, not the whole run.
+      process.stdout.write('x')
+      const result: CheckResult = { failures: [`model call failed: ${e instanceof Error ? e.message : e}`], warnings: [] }
+      return { c, run, variation, letter: '', result, judgeScore: undefined as number | undefined }
+    }
 
-    // Mirror production: one corrective retry on lint violations.
+    // Mirror production: one corrective retry on lint violations. A failed
+    // retry keeps the draft, as production does.
     let retried = false
     const firstLint = lintLetter(letter, { companyName: c.job.company })
     if (firstLint.violations.length > 0) {
       retried = true
-      const retry = stripMarkdown(await call([
-        { role: 'user', content: prompt },
-        { role: 'assistant', content: letter },
-        { role: 'user', content: buildLintRetryMessage(firstLint.violations) },
-      ], { model: MODEL, maxTokens: 1024 }))
-      const retryLint = lintLetter(retry, { companyName: c.job.company })
-      if (retryLint.violations.length <= firstLint.violations.length) letter = retry
+      try {
+        const retry = stripMarkdown(await call([
+          { role: 'user', content: prompt },
+          { role: 'assistant', content: letter },
+          { role: 'user', content: buildLintRetryMessage(firstLint.violations) },
+        ], { model: MODEL, maxTokens: 1024 }))
+        const retryLint = lintLetter(retry, { companyName: c.job.company })
+        if (retryLint.violations.length <= firstLint.violations.length) letter = retry
+      } catch {
+        // keep the draft
+      }
     }
 
     const result = checkLetter(letter, c)
@@ -649,6 +662,10 @@ async function main() {
   }
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, reportLines.slice(0, 60).join('\n') + '\n')
   console.log(`Report written to ${file}`)
+  if (planLimitHit()) {
+    console.error(`RESULT: INCOMPLETE. The Claude plan limit was hit (${planLimitHit()}); outputs after that point are failures, not scores. Re-run after the reset.`)
+    process.exit(1)
+  }
   console.log(hardFailures === 0 ? 'RESULT: all checks passed' : `RESULT: ${hardFailures} check group(s) failed`)
   process.exit(hardFailures === 0 ? 0 : 1)
 }
