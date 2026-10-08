@@ -13,11 +13,13 @@
 // window with a fresh profile. So each Indeed page opens in its own new window
 // (Chrome must be installed). After a few visits it blocks the IP for a while
 // regardless, so the live smoke test skips Indeed.
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { chromium, type Browser, type Page } from 'playwright'
+import { transformWithEsbuild } from 'vite'
+import type { PageSnapshot } from '../src/content/snapshot.ts'
 
 export interface Board {
   name: string
@@ -50,10 +52,24 @@ export const BOARDS: Board[] = [
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36'
 
-// Returns the posting URL and its rendered HTML. Scripts other than JSON-LD,
-// styles and media are dropped: the scrapers never read them and they are
-// most of the bytes.
-export async function fetchPosting(browser: Browsers, board: Board): Promise<{ url: string; html: string }> {
+// The extension's own snapshotPage() (src/content/snapshot.ts), compiled to a
+// script so it runs in the page exactly as the content script does: shadow
+// roots included, scripts, styles and media stripped.
+const SNAPSHOT_JS = (await transformWithEsbuild(
+  readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../src/content/snapshot.ts'), 'utf8'),
+  'snapshot.ts',
+  { format: 'iife', globalName: '__coverMeSnapshot' },
+)).code
+
+export async function takeSnapshot(page: Page): Promise<PageSnapshot> {
+  // A string, not a function: evaluate runs it over CDP, so page CSP doesn't apply.
+  const snapshot = await page.evaluate(`${SNAPSHOT_JS}; __coverMeSnapshot.snapshotPage()`) as PageSnapshot | null
+  if (!snapshot) throw new Error(`snapshotPage() returned null on ${page.url()} (page too large?)`)
+  return snapshot
+}
+
+// Returns the posting URL and the HTML the extension would send for it.
+export async function fetchPosting(browser: Browsers, board: Board): Promise<PageSnapshot> {
   const open = () => board.headed ? browser.headed() : browser.headless.newPage({ userAgent: UA })
   let page = await open()
   try {
@@ -69,13 +85,7 @@ export async function fetchPosting(browser: Browsers, board: Board): Promise<{ u
       await load(page, board.rewrite ? board.rewrite(url) : url)
     }
     if (board.ready) await page.waitForSelector(board.ready, { timeout: 30_000 })
-    const html = await page.evaluate(() => {
-      const doc = document.documentElement.cloneNode(true) as HTMLElement
-      doc.querySelectorAll('script:not([type="application/ld+json"]), style, link, noscript, svg, img, picture, video, iframe')
-        .forEach((el) => el.remove())
-      return '<!doctype html>\n' + doc.outerHTML
-    })
-    return { url: page.url(), html }
+    return await takeSnapshot(page)
   } finally {
     await page.close()
   }

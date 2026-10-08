@@ -104,7 +104,8 @@ The generic scraper tries three strategies in order: JSON-LD structured data, kn
 
 - Text is extracted client-side on upload using pdf.js / mammoth.js. The raw file is never stored.
 - In BYOK mode, extracted resume text is stored in `chrome.storage.local` on your device only. It never leaves your machine.
-- API calls go directly from the extension to Anthropic or OpenAI using **your key**. Cover Me's servers are not in the loop.
+- API calls go directly from the extension to Anthropic or OpenAI using **your key**. Cover Me's servers never see your resume, letters, or key.
+- To read a posting, the extension sends a copy of the job page you clicked on (scripts, images and embedded data removed in the browser) to the `scrape` Edge Function, in every mode. It returns the title, company and description and keeps nothing. If it can't be reached, the extension reads the page itself.
 - Your API key is encrypted at rest using the Web Crypto API (AES-GCM) before being written to `chrome.storage.local`. It is decrypted only at call time and immediately discarded from memory.
 - No analytics, no telemetry, no third-party SDKs in the extension.
 
@@ -276,7 +277,8 @@ cover-me/
         │   ├── letters/      # GET / POST / DELETE cover letter history (Pro)
         │   ├── applications/ # GET / DELETE job applications w/ nested letters + tailored resumes (Pro)
         │   ├── billing/      # Stripe Checkout and billing portal sessions for the extension and dashboard
-        │   └── _shared/      # CORS helpers, AES-GCM encrypt/decrypt
+        │   ├── scrape/       # Reads the job from page HTML; no account, rate-limited per IP (HMAC, never the IP)
+        │   └── _shared/      # CORS helpers, AES-GCM encrypt/decrypt, scrapers/ (copy of the extension's)
         └── migrations/      # Postgres schema + RLS policies
 ```
 
@@ -300,11 +302,18 @@ cover-me/
 ## Architecture
 
 ```
-Job page (content script)
-  → scrapes title, company, description
-  → sends to service worker via chrome.runtime.sendMessage
+Job page (content script, injected on click)
+  → snapshots the page (open shadow roots kept, scripts and media stripped)
+  → also runs the bundled scrapers, as the offline fallback
+  → sends both to the service worker
 
 Service worker
+  → posts the snapshots to the scrape Edge Function, which runs the same
+    scrapers (copied from the extension) and returns the job; a fix to a
+    board's scraper ships by deploying the function
+  → falls back to the bundled result if the function can't read it or
+    can't be reached
+  → then generates from the job:
   ├── BYOK mode
   │     → decrypts API key from chrome.storage.local
   │     → fetches resume text from chrome.storage.local

@@ -1,49 +1,24 @@
-// @vitest-environment happy-dom
 /// <reference types="vite/client" />
 // Each fixture is a real posting saved by `pnpm fixtures:save` (line 1 holds
-// its URL). The tests load it at that URL and run the same router the content
-// script runs. Boards change their markup: when a test here fails after a
+// its URL). The tests run it through scrapeHtml() on linkedom, exactly as the
+// scrape Edge Function does; the bundled copy runs the same scrapers in Chrome. Boards change their markup: when a test here fails after a
 // re-save, the scraper needs fixing, not the expectation.
 //
 // `pnpm test:scrapers-live` also runs every board against a live posting (weekly in CI,
 // scraper-smoke.yml), so markup changes show up before users report them.
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { parseHTML } from 'linkedom'
 import { afterAll, beforeAll, describe, expect, test } from 'vitest'
-import { scrapeJobPage } from './index'
+import { FIXTURE_CASES, fixtureUrl } from './fixtures/cases.ts'
+import { scrapeHtml } from './page.ts'
 
-function loadPage(url: string, html: string) {
-  ;(window as unknown as { happyDOM: { setURL(url: string): void } }).happyDOM.setURL(url)
-  document.open()
-  document.write(html)
-  document.close()
-}
-
-function loadFixture(name: string) {
-  const html = readFileSync(join(__dirname, 'fixtures', `${name}.html`), 'utf8')
-  loadPage(html.match(/^<!-- (\S+)/)![1], html)
-}
-
-// `ends` is text from the end of the posting: it proves the scraper took the
-// whole description, not only the first section.
-const CASES = [
-  { board: 'greenhouse', title: 'Anthropic Fellows Program, AI Safety & Security', company: 'Anthropic', ends: 'for using AI in our application process.' },
-  { board: 'lever', title: 'Administrative Business Partner', company: 'Palantir Technologies', ends: 'Internet Crime Complaint Center (IC3).' },
-  { board: 'ashby', title: 'AI Systems Engineer, Codex Agents', company: 'OpenAI', ends: 'Join us in shaping the future of technology.' },
-  { board: 'workable', title: 'Senior Open-Source Python Engineer, ML Developer Tools - EMEA Remote', company: 'Hugging Face', ends: 'Join a community supporting the ML/AI community.' },
-  { board: 'workday', title: 'Senior Applied AI Engineer', company: 'Nvidia', ends: 'or any other characteristic protected by law.' },
-  { board: 'bamboohr', title: 'Senior Business Analyst', company: 'Picton Mahoney Asset Management', ends: 'All decisions are made by our hiring team.' },
-  // Signed-out /jobs/view/ page: read from its JSON-LD
-  { board: 'linkedin', title: 'RN - SAU', company: 'INTEGRIS Health', ends: 'including protected veteran or disability status.' },
-  // Indeed's 2026 layout: same detail pane on /viewjob and in the search page's right-hand pane
-  { board: 'indeed', title: 'Welder', company: 'Bleema Manufacturing Corporation', ends: '1 year experience in shop setting' },
-  { board: 'indeed-search', title: 'Welder', company: 'Bleema Manufacturing Corporation', ends: '1 year experience in shop setting' },
-]
+const scrape = (url: string, html: string) => scrapeHtml(parseHTML, url, html)
 
 describe('scrapers on saved postings', () => {
-  test.each(CASES)('$board', ({ board, title, company, ends }) => {
-    loadFixture(board)
-    const job = scrapeJobPage()
+  test.each(FIXTURE_CASES)('$board', ({ board, title, company, ends }) => {
+    const html = readFileSync(join(__dirname, 'fixtures', `${board}.html`), 'utf8')
+    const job = scrape(fixtureUrl(html), html)
     expect(job.title).toBe(title)
     expect(job.company).toBe(company)
     expect(job.description.trim().endsWith(ends)).toBe(true)
@@ -52,37 +27,64 @@ describe('scrapers on saved postings', () => {
   })
 })
 
+test('refuses pages nested far deeper than any real posting', () => {
+  expect(() => scrape('https://careers.example.com/jobs/1', `<html><body>${'<div>'.repeat(300)}x${'</div>'.repeat(300)}</body></html>`))
+    .toThrow('too large')
+  // Comments aren't elements but still cost a node each
+  expect(() => scrape('https://careers.example.com/jobs/1', `<html><body>${'<!---->'.repeat(200_000)}</body></html>`)).toThrow('too large')
+  // Nested declarative shadow roots, counted before they're attached
+  const nested = '<div><template shadowrootmode="open">'.repeat(300) + 'x' + '</template></div>'.repeat(300)
+  expect(() => scrape('https://careers.example.com/jobs/1', `<html><body>${nested}</body></html>`)).toThrow('too large')
+})
+
 describe('JSON-LD', () => {
   const page = (ld: unknown) =>
-    loadPage('https://careers.example.com/jobs/1', `<html><body><script type="application/ld+json">${JSON.stringify(ld)}</script></body></html>`)
+    scrape('https://careers.example.com/jobs/1', `<html><body><script type="application/ld+json">${JSON.stringify(ld)}</script></body></html>`)
   const description = '<p>Lead the night shift &amp; train new staff.</p><ul><li>Two years of experience</li><li>Forklift licence</li></ul>'.repeat(2)
 
   test('reads a posting inside @graph, with breaks kept and entities decoded', () => {
-    page({ '@graph': [{ '@type': 'WebPage' }, { '@type': ['JobPosting'], title: 'Shift Lead', hiringOrganization: { name: 'Acme &amp; Co' }, description }] })
-    const job = scrapeJobPage()
+    const job = page({ '@graph': [{ '@type': 'WebPage' }, { '@type': ['JobPosting'], title: 'Shift Lead', hiringOrganization: { name: 'Acme &amp; Co' }, description }] })
     expect(job.company).toBe('Acme & Co')
     expect(job.description).toMatch(/^Lead the night shift & train new staff\.\n\n- Two years of experience\n- Forklift licence\n/)
   })
 
   test('decodes descriptions whose HTML is itself entity-encoded (LinkedIn)', () => {
-    page({ '@type': 'JobPosting', title: 'Shift Lead', hiringOrganization: 'Acme', description: description.replace(/</g, '&lt;').replace(/>/g, '&gt;') })
-    expect(scrapeJobPage().description).toMatch(/^Lead the night shift & train new staff\.\n\n- Two years/)
+    const job = page({ '@type': 'JobPosting', title: 'Shift Lead', hiringOrganization: 'Acme', description: description.replace(/</g, '&lt;').replace(/>/g, '&gt;') })
+    expect(job.description).toMatch(/^Lead the night shift & train new staff\.\n\n- Two years/)
   })
 })
 
 describe.runIf(import.meta.env.MODE === 'smoke')('scrapers on live postings', async () => {
-  const { BOARDS, fetchPosting, launchBrowsers } = await import('../../../scripts/scraper-fixtures')
+  const { BOARDS, fetchPosting, launchBrowsers, takeSnapshot } = await import('../../../scripts/scraper-fixtures')
   // Launch in beforeAll: the describe body runs even when the suite is skipped.
   let browser: Awaited<ReturnType<typeof launchBrowsers>>
   beforeAll(async () => { browser = await launchBrowsers() })
   afterAll(() => browser?.close())
 
+  // The capture path the fixtures can't show: LinkedIn's signed-in pages put
+  // the job pane in an open shadow root, which the snapshot must carry.
+  test('snapshot keeps open shadow roots and drops scripts, tokens and data blobs', async () => {
+    const page = await browser.headless.newPage()
+    const description = 'Analyse sales data and build weekly dashboards for the regional team. '.repeat(8)
+    await page.setContent(`<html><body><div id="interop-outlet"><template shadowrootmode="open">
+      <div><div data-display-contents="true"><p>Senior Data Analyst</p></div>
+      <a href="https://www.linkedin.com/company/acme/life/">Acme Corp</a>
+      <span data-testid="expandable-text-box">${description}</span></div></template></div>
+      <script>window.secretSession = 'abc123'</script>
+      <meta name="csrf-token" content="csrf456"><input type="hidden" name="csrf" value="csrf789"><a href="https://www.linkedin.com/m/logout/?csrfToken=tok321">Sign out</a>
+      <div data-props='${JSON.stringify({ member: { email: 'me@example.com', blob: 'x'.repeat(400) } })}'></div></body></html>`)
+    const { html } = await takeSnapshot(page)
+    await page.close()
+    for (const secret of ['abc123', 'csrf456', 'csrf789', 'tok321', 'me@example.com']) expect(html).not.toContain(secret)
+    const job = scrape('https://www.linkedin.com/jobs/view/1', html)
+    expect(job).toMatchObject({ title: 'Senior Data Analyst', company: 'Acme Corp', description: description.trim() })
+  })
+
   // Indeed's bot check needs a visible Chrome window and starts blocking an IP
   // after a few visits, so it can't be smoke-tested on a schedule.
   test.each(BOARDS.filter((b) => !b.headed))('$name', { timeout: 120_000 }, async (board) => {
     const { url, html } = await fetchPosting(browser, board)
-    loadPage(url, html)
-    const job = scrapeJobPage()
+    const job = scrape(url, html)
     expect(job.title, url).not.toBe('')
     expect(job.company, url).not.toBe('Unknown Company')
     expect(job.description.length, url).toBeGreaterThan(500)

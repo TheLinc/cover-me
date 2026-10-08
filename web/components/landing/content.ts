@@ -23,7 +23,7 @@ export const FAQ_ITEMS = [
   },
   {
     q: "Is my resume data private?",
-    a: "Yes. In BYOK mode, your resume lives entirely on your device — nothing is ever sent to Cover Me servers. In hosted mode, your resume is encrypted with AES-256-GCM before being stored. The extension has no ads, analytics, or telemetry, and Cover Me never uses your resume for AI training.",
+    a: "Yes. In BYOK mode, your resume and API key stay on your device and never reach Cover Me servers; the only thing sent to us is the job page you click on, so we can read the posting. In hosted mode, your resume is encrypted with AES-256-GCM before being stored. The extension has no ads, analytics, or telemetry, and Cover Me never uses your resume for AI training.",
   },
   {
     q: "Do I need an account to use Cover Me?",

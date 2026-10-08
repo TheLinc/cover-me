@@ -7,12 +7,9 @@ export interface Settings {
   mode: AppMode  // 'byok' (default) or 'hosted'
 }
 
-export interface JobData {
-  title: string
-  company: string
-  description: string
-  url: string
-}
+export type { JobData } from '../content/scrapers/types.ts'
+import type { PageSnapshot } from '../content/snapshot.ts'
+import type { JobData } from '../content/scrapers/types.ts'
 
 export interface CoverLetter {
   id: string
@@ -97,6 +94,11 @@ export type TailorResponse =
 export type ScrapeResponse =
   | { success: true; job: JobData }
   | { success: false; error: string }
+
+// A frame's content script answer: its bundled scrapers' result (the offline
+// fallback) plus the page for the scrape Edge Function, null when it can't be
+// taken (src/content/snapshot.ts).
+export type FrameScrapeResponse = ScrapeResponse & { snapshot: PageSnapshot | null }
 
 // Service-worker-owned job records persisted to chrome.storage.local so an
 // in-flight or completed generation survives the popup being closed. The popup
