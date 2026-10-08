@@ -65,6 +65,25 @@ describe('scrape', () => {
     expect((await scrape({ body }, '203.0.113.8')).status).toBe(200)
   })
 
+  it('ignores client-chosen x-forwarded-for entries', async () => {
+    // No cf-connecting-ip: the key is the entry the gateway appends, so a
+    // different forged first entry on every call still shares one bucket.
+    const body = { pages: [page('lever')] }
+    const statuses: number[] = []
+    for (let i = 1; i <= 21; i++) {
+      statuses.push((await callFunction('scrape', { body, headers: { 'X-Forwarded-For': `10.9.0.${i}` } })).status)
+    }
+    expect(statuses.slice(0, 20).every((s) => s === 200)).toBe(true)
+    expect(statuses[20]).toBe(429)
+  })
+
+  it('limits IPv6 per /64, not per address', async () => {
+    const body = { pages: [page('lever')] }
+    for (let i = 1; i <= 20; i++) expect((await scrape({ body }, `2001:db8:1:2::${i.toString(16)}`)).status).toBe(200)
+    expect((await scrape({ body }, '2001:db8:1:2:ffff:ffff:ffff:ffff')).status).toBe(429)
+    expect((await scrape({ body }, '2001:db8:1:3::1')).status).toBe(200)
+  })
+
   it('stores an HMAC of the IP, never the IP', async () => {
     await scrape({ body: { pages: [page('lever')] } }, '203.0.113.9')
     const { data } = await admin.from('scrape_rate_limits').select('ip_hash')
