@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
 }
 
-const EFFECTIVE_DATE = 'September 27, 2026'
+const EFFECTIVE_DATE = 'October 8, 2026'
 const CONTACT_EMAIL  = 'support@cover-me.dev'
 
 // ── Section heading ────────────────────────────────────────────────────────
@@ -234,11 +234,15 @@ export default function PrivacyPage() {
             <Ul>
               <Li>
                 <strong className="text-foreground">Job posting data.</strong> When you activate the
-                extension on a job posting, the extension reads the page content of the active tab
-                (job title, company name, and job description) solely to generate your cover letter.
-                This data is processed transiently — it is passed to the AI model and then discarded.
-                It is not logged, stored on our servers, or used for any purpose beyond generating
-                your cover letter.
+                extension on a job posting, it copies the page you are looking at and sends it, with
+                the page&apos;s address, to our server over HTTPS, in every mode including BYOK. The
+                server reads the job title, company name, and job description from it and sends those
+                back; the page itself is discarded as soon as it is read and is never logged or
+                stored. Scripts, images, and the data sites embed in them are removed in your browser
+                before anything is sent, but the copy includes whatever text the page shows, which on
+                sites you are signed in to can include your name. If our server can&apos;t be reached,
+                the extension reads the posting on your device instead. The job details are then used
+                only to generate your cover letter or tailored resume.
               </Li>
               <Li>
                 <strong className="text-foreground">Application history.</strong> Generated cover
@@ -268,8 +272,8 @@ export default function PrivacyPage() {
 
             <H3>Information we do NOT collect</H3>
             <Ul>
-              <Li>We do not track your browsing history or the URLs of pages you visit.</Li>
-              <Li>The extension contains no analytics or telemetry code. In BYOK mode it sends nothing to Cover Me.</Li>
+              <Li>We do not track your browsing history. We receive a page&apos;s address only when you activate the extension on it.</Li>
+              <Li>The extension contains no analytics or telemetry code. In BYOK mode the only thing it sends to Cover Me is the job page you activate it on, so we can read the posting. Your resume and API key never reach us.</Li>
               <Li>In hosted mode our servers count how many letters and resumes you generate, to enforce the daily limit, and log errors. Logs never contain your resume, letters, or job descriptions.</Li>
               <Li>We do not use cookies for tracking or advertising.</Li>
               <Li>We do not collect any data from tabs other than the active job posting tab, and only when you explicitly activate the extension.</Li>
