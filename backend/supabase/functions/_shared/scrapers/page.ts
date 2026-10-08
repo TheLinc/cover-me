@@ -17,11 +17,18 @@ export type ParseHTML = (html: string) => Dom
 
 const GLOBALS = ['window', 'document', 'Node', 'HTMLElement', 'ShadowRoot', 'DOMParser'] as const
 
+// The body cap limits bytes, not work: innerText walks a subtree, and the
+// generic heuristic measures every div, so deep nesting costs elements x depth.
+// Real postings measured at most ~5k elements and depth 42.
+const MAX_ELEMENTS = 60_000
+const MAX_DEPTH = 256
+
 export function scrapeHtml(parseHTML: ParseHTML, url: string, html: string): JobData {
   const dom = parseHTML(html)
   dom.window.location = new URL(url)
   patchLayoutApis(dom)
   attachShadowRoots(dom.document)
+  checkSize(dom.document)
 
   const g = globalThis as Record<string, unknown>
   const saved = GLOBALS.map((k) => g[k])
@@ -30,6 +37,17 @@ export function scrapeHtml(parseHTML: ParseHTML, url: string, html: string): Job
     return scrapeJobPage()
   } finally {
     GLOBALS.forEach((k, i) => (g[k] = saved[i]))
+  }
+}
+
+function checkSize(doc: Dom) {
+  let count = 0
+  const stack: [Dom, number][] = [[doc.documentElement, 1]]
+  while (stack.length) {
+    const [el, depth] = stack.pop()!
+    if (++count > MAX_ELEMENTS || depth > MAX_DEPTH) throw new Error('This page is too large to read.')
+    for (const child of el.children) stack.push([child, depth + 1])
+    if (el.shadowRoot) for (const child of el.shadowRoot.children) stack.push([child, depth + 1])
   }
 }
 

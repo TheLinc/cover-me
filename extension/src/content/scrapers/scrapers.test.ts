@@ -27,6 +27,11 @@ describe('scrapers on saved postings', () => {
   })
 })
 
+test('refuses pages nested far deeper than any real posting', () => {
+  expect(() => scrape('https://careers.example.com/jobs/1', `<html><body>${'<div>'.repeat(300)}x${'</div>'.repeat(300)}</body></html>`))
+    .toThrow('too large')
+})
+
 describe('JSON-LD', () => {
   const page = (ld: unknown) =>
     scrape('https://careers.example.com/jobs/1', `<html><body><script type="application/ld+json">${JSON.stringify(ld)}</script></body></html>`)
@@ -53,17 +58,19 @@ describe.runIf(import.meta.env.MODE === 'smoke')('scrapers on live postings', as
 
   // The capture path the fixtures can't show: LinkedIn's signed-in pages put
   // the job pane in an open shadow root, which the snapshot must carry.
-  test('snapshot keeps open shadow roots and drops scripts', async () => {
+  test('snapshot keeps open shadow roots and drops scripts, tokens and data blobs', async () => {
     const page = await browser.headless.newPage()
     const description = 'Analyse sales data and build weekly dashboards for the regional team. '.repeat(8)
     await page.setContent(`<html><body><div id="interop-outlet"><template shadowrootmode="open">
       <div><div data-display-contents="true"><p>Senior Data Analyst</p></div>
       <a href="https://www.linkedin.com/company/acme/life/">Acme Corp</a>
       <span data-testid="expandable-text-box">${description}</span></div></template></div>
-      <script>window.secretSession = 'abc123'</script></body></html>`)
+      <script>window.secretSession = 'abc123'</script>
+      <meta name="csrf-token" content="csrf456"><input type="hidden" name="csrf" value="csrf789"><a href="https://www.linkedin.com/m/logout/?csrfToken=tok321">Sign out</a>
+      <div data-props='${JSON.stringify({ member: { email: 'me@example.com', blob: 'x'.repeat(400) } })}'></div></body></html>`)
     const { html } = await takeSnapshot(page)
     await page.close()
-    expect(html).not.toContain('abc123')
+    for (const secret of ['abc123', 'csrf456', 'csrf789', 'tok321', 'me@example.com']) expect(html).not.toContain(secret)
     const job = scrape('https://www.linkedin.com/jobs/view/1', html)
     expect(job).toMatchObject({ title: 'Senior Data Analyst', company: 'Acme Corp', description: description.trim() })
   })
