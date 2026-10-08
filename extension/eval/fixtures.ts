@@ -5,6 +5,7 @@
 
 import type { JobData, ParsedResume } from '../src/types'
 import { INDUSTRY_CASES } from './industry-cases'
+import { longPostingCases } from './long-postings'
 
 export interface EvalCase {
   id: string
@@ -392,3 +393,4 @@ Requirements: 3+ years React, TypeScript, strong testing habits, comfort with am
   },
   ...INDUSTRY_CASES,
 ]
+CASES.push(...longPostingCases(CASES))

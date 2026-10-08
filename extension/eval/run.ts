@@ -1,12 +1,12 @@
 // Eval harness for Cover Me's prompts.
 //
 //   pnpm eval                                  static checks only (free, no model calls)
-//   pnpm eval --live --quick --judge --baseline   the PR check: 9 cases, ~10 min
+//   pnpm eval --live --quick --judge --baseline   the PR check: 11 cases, ~12 min
 //   pnpm eval --live --judge --runs 2 --judge-model claude-opus-5-5 --baseline
 //                                              the weekly full check: every case
 //
 //   Flags:
-//     --quick                  9 cases, one per field family (PR check)
+//     --quick                  11 cases: one per field family, plus two long postings (PR check)
 //     --letters / --tailor     run only one side (default both)
 //     --case <id>              one case          --industry <name>  one industry
 //     --runs <n>               samples per resume case (default 1)
@@ -82,12 +82,14 @@ const HOOKS = ['Achievement-first', 'Problem-solution', 'Bold specific claim']
 // overall quality is still being raised.
 const judgeFloor = (r: { failures: string[]; warnings: string[] }) => (flag('baseline') ? r.warnings : r.failures)
 
-// --quick: one case per field family plus the prompt-injection case, for the
-// PR check. The full set runs weekly.
+// --quick: one case per field family, the prompt-injection case, and the two
+// long postings (the only cases past the old 4,000-character cut), for the PR
+// check. The full set runs weekly.
 const QUICK_CASES = [
   'tech-prompt-injection', 'new-grad-data-analyst', 'nurse-missing-certs',
   'sales-ae-midmarket-to-enterprise', 'uk-finance-assistant', 'teacher-to-instructional-designer',
   'welder-structural-to-pipe', 'line-cook-to-sous-chef', 'veteran-to-distribution-ops',
+  'long-new-grad-data-analyst', 'long-nurse-missing-certs',
 ]
 
 const cases = CASES.filter((c) =>
@@ -668,7 +670,7 @@ async function main() {
     console.log(`\n${costLine}`)
     reportLines.splice(3, 0, costLine, '')
   } else {
-    console.log('\n(static checks only — add --live to generate and evaluate real outputs; runs on your Claude plan via `claude -p`; add --quick for the 9-case PR set)')
+    console.log('\n(static checks only — add --live to generate and evaluate real outputs; runs on your Claude plan via `claude -p`; add --quick for the 11-case PR set)')
   }
 
   const reportsDir = join(HERE, 'reports')
