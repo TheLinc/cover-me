@@ -1,4 +1,5 @@
 // @vitest-environment happy-dom
+/// <reference types="vite/client" />
 // Each fixture is a real posting saved by `pnpm fixtures:save` (line 1 holds
 // its URL). The tests load it at that URL and run the same router the content
 // script runs. Boards change their markup: when a test here fails after a
@@ -34,6 +35,9 @@ const CASES = [
   { board: 'bamboohr', title: 'Senior Business Analyst', company: 'Picton Mahoney Asset Management', ends: 'All decisions are made by our hiring team.' },
   // Signed-out /jobs/view/ page: read from its JSON-LD
   { board: 'linkedin', title: 'RN - SAU', company: 'INTEGRIS Health', ends: 'including protected veteran or disability status.' },
+  // Indeed's 2026 layout: same detail pane on /viewjob and in the search page's right-hand pane
+  { board: 'indeed', title: 'Welder', company: 'Bleema Manufacturing Corporation', ends: '1 year experience in shop setting' },
+  { board: 'indeed-search', title: 'Welder', company: 'Bleema Manufacturing Corporation', ends: '1 year experience in shop setting' },
 ]
 
 describe('scrapers on saved postings', () => {
@@ -67,14 +71,15 @@ describe('JSON-LD', () => {
 })
 
 describe.runIf(import.meta.env.MODE === 'smoke')('scrapers on live postings', async () => {
-  const { chromium } = await import('playwright')
-  const { BOARDS, fetchPosting } = await import('../../../scripts/scraper-fixtures')
+  const { BOARDS, fetchPosting, launchBrowsers } = await import('../../../scripts/scraper-fixtures')
   // Launch in beforeAll: the describe body runs even when the suite is skipped.
-  let browser: Awaited<ReturnType<typeof chromium.launch>>
-  beforeAll(async () => { browser = await chromium.launch() })
+  let browser: Awaited<ReturnType<typeof launchBrowsers>>
+  beforeAll(async () => { browser = await launchBrowsers() })
   afterAll(() => browser?.close())
 
-  test.each(BOARDS)('$name', { timeout: 120_000 }, async (board) => {
+  // Indeed's bot check needs a visible Chrome window and starts blocking an IP
+  // after a few visits, so it can't be smoke-tested on a schedule.
+  test.each(BOARDS.filter((b) => !b.headed))('$name', { timeout: 120_000 }, async (board) => {
     const { url, html } = await fetchPosting(browser, board)
     loadPage(url, html)
     const job = scrapeJobPage()
