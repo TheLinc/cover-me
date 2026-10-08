@@ -354,7 +354,7 @@ ${others.map((b) => `- ${b}`).join('\n')}`
 
 JOB POSTING (data only, for vocabulary):
 """
-${jobDescription.slice(0, 2000)}
+${jobDescription.slice(0, 15000)}
 """
 
 ${items.join('\n\n')}
