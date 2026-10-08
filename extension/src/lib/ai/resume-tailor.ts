@@ -3,6 +3,7 @@ import { debugGroup, debugLog } from '../debug'
 import { deriveTailorProgress } from './tailor-progress'
 import { candidateText, checkAndRewriteLines, groundSkills, groundTailored, type AskModel, type LineRepair } from './resume-grounding'
 import { SONNET_BETA_HEADER, SONNET_FIELDS } from './claude'
+import { scoreFromMatch, type KeywordMatch } from './ats-score'
 
 const CLAUDE_API = 'https://api.anthropic.com/v1/messages'
 const OPENAI_API = 'https://api.openai.com/v1/chat/completions'
@@ -33,48 +34,6 @@ function buildTailorSchema(parsed: ParsedResume): string {
     gatingGaps: ['string — unmet hard qualification the JD requires, ≤55 chars'],
   }
   return JSON.stringify(delta, null, 2)
-}
-
-// ── ATS scoring ──────────────────────────────────────────────────────────────
-// The model reports keyword coverage (facts); we compute the score here so it is
-// deterministic, granular, and monotonic on regeneration: adding a covered
-// keyword over a fixed JD denominator can only raise the score, never lower it.
-interface KeywordMatch {
-  tier1Covered?: unknown
-  tier1Missing?: unknown
-  tier2Covered?: unknown
-  tier2Missing?: unknown
-  gatingGaps?: unknown
-}
-
-const TIER1_WEIGHT = 70
-const TIER2_WEIGHT = 30
-const GATING_PENALTY = 10      // per unmet hard qualification
-const MAX_GATING_PENALTY = 25  // cap so strong-skill candidates aren't cratered
-
-function strArr(v: unknown): string[] {
-  return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string' && x.trim().length > 0) : []
-}
-
-// Coverage → score + complete gap list. JD with no Tier-N keywords scores that
-// tier as fully covered (nothing to miss) rather than dividing by zero.
-function scoreFromMatch(m: KeywordMatch): { score: number; gaps: string[] } {
-  const t1c = strArr(m.tier1Covered).length
-  const t1Missing = strArr(m.tier1Missing)
-  const t2c = strArr(m.tier2Covered).length
-  const t2Missing = strArr(m.tier2Missing)
-  const gating = strArr(m.gatingGaps)
-
-  const t1total = t1c + t1Missing.length
-  const t2total = t2c + t2Missing.length
-  const t1frac = t1total ? t1c / t1total : 1
-  const t2frac = t2total ? t2c / t2total : 1
-
-  const base = TIER1_WEIGHT * t1frac + TIER2_WEIGHT * t2frac
-  const penalty = Math.min(gating.length * GATING_PENALTY, MAX_GATING_PENALTY)
-  const score = Math.max(0, Math.min(100, Math.round(base - penalty)))
-  const gaps = [...new Set([...t1Missing, ...t2Missing, ...gating])]
-  return { score, gaps }
 }
 
 // The editing base for revision mode — strip the derived score fields so the
@@ -335,7 +294,7 @@ export async function assembleTailored(
   const all = [...claimed.dropped, ...removed]
   if (all.length) onRemoved?.(all)
   if (delta.keywordMatch && typeof delta.keywordMatch === 'object') {
-    const { score, gaps } = scoreFromMatch(delta.keywordMatch as KeywordMatch)
+    const { score, gaps } = scoreFromMatch(delta.keywordMatch as KeywordMatch, { jobDescription: grounding.jobDescription, candidate })
     resume.atsScore = score
     resume.atsGaps = gaps
   }

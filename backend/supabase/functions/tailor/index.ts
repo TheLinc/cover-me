@@ -5,43 +5,12 @@ import { decrypt, encrypt } from '../_shared/encrypt.ts'
 import { findOrCreateJobApplication } from '../_shared/job-application.ts'
 import { isValidParsedResume, parseResumeStructure, type ParsedResume } from '../_shared/resume-parse.ts'
 import { candidateText, checkAndRewriteLines, groundSkills, groundTailored } from '../_shared/resume-grounding.ts'
+import { scoreFromMatch } from '../_shared/ats-score.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SECRET_KEY = Deno.env.get('SERVICE_KEY')!
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')!
 const FREE_DAILY_LIMIT = 5
-
-// ── ATS scoring (mirrors extension/src/lib/ai/resume-tailor.ts) ──────────────
-// The model reports keyword coverage (facts); we compute the score here so it is
-// deterministic, granular, and monotonic on regeneration: adding a covered
-// keyword over a fixed JD denominator can only raise the score, never lower it.
-const TIER1_WEIGHT = 70
-const TIER2_WEIGHT = 30
-const GATING_PENALTY = 10
-const MAX_GATING_PENALTY = 25
-
-function strArr(v: unknown): string[] {
-  return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string' && x.trim().length > 0) : []
-}
-
-function scoreFromMatch(m: Record<string, unknown>): { score: number; gaps: string[] } {
-  const t1c = strArr(m.tier1Covered).length
-  const t1Missing = strArr(m.tier1Missing)
-  const t2c = strArr(m.tier2Covered).length
-  const t2Missing = strArr(m.tier2Missing)
-  const gating = strArr(m.gatingGaps)
-
-  const t1total = t1c + t1Missing.length
-  const t2total = t2c + t2Missing.length
-  const t1frac = t1total ? t1c / t1total : 1
-  const t2frac = t2total ? t2c / t2total : 1
-
-  const base = TIER1_WEIGHT * t1frac + TIER2_WEIGHT * t2frac
-  const penalty = Math.min(gating.length * GATING_PENALTY, MAX_GATING_PENALTY)
-  const score = Math.max(0, Math.min(100, Math.round(base - penalty)))
-  const gaps = [...new Set([...t1Missing, ...t2Missing, ...gating])]
-  return { score, gaps }
-}
 
 // ── Tailor delta (mirrored: extension/src/lib/ai/resume-tailor.ts ⇄ backend/supabase/functions/tailor/index.ts) ──
 // The model outputs only rewritten content; these helpers validate it and merge
@@ -534,7 +503,7 @@ Deno.serve(async (req) => {
     let atsScore: number | undefined
     let atsGaps: string[] | undefined
     if (delta.keywordMatch && typeof delta.keywordMatch === 'object') {
-      const computed = scoreFromMatch(delta.keywordMatch)
+      const computed = scoreFromMatch(delta.keywordMatch, { jobDescription: job.description, candidate })
       atsScore = computed.score
       atsGaps = computed.gaps
       resume.atsScore = atsScore

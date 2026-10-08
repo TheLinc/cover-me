@@ -9,7 +9,8 @@
     "build": "node ../scripts/check-prompt-sync.mjs && vite build && node scripts/check-dist.mjs",
     "preview": "vite preview",
     "eval": "tsx --env-file-if-exists=eval/.env eval/run.ts",
-    "check:prompts": "node ../scripts/check-prompt-sync.mjs"
+    "check:prompts": "node ../scripts/check-prompt-sync.mjs",
+    "test": "vitest run"
   },
   "dependencies": {
     "jspdf": "^4.2.1",
@@ -28,7 +29,8 @@
     "@vitejs/plugin-react": "^4.3.4",
     "tsx": "^4.22.5",
     "typescript": "^5.7.2",
-    "vite": "^5.4.11"
+    "vite": "^5.4.11",
+    "vitest": "3.2.7"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

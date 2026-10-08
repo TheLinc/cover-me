@@ -33,6 +33,7 @@ jobs:
           cache-dependency-path: extension/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - run: pnpm rebuild esbuild
+      - run: pnpm test
       - run: pnpm build
 
   web:

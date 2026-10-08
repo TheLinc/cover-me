@@ -49,6 +49,17 @@ describe('tailor', () => {
     expect(await quotaUsedToday(user.id)).toBe(1)
   })
 
+  it('scores an either/or requirement as covered when the resume has the other option', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    // The mock reports Kafka missing; this posting accepts Kafka or Postgres, and the resume has Postgres.
+    const job = { ...JOB, description: `${JOB.description} Queue work runs on Kafka or Postgres.` }
+    const res = await callFunction('tailor', { token: user.token, body: { job } })
+    const { resume } = await res.json()
+    expect(resume.atsGaps).toEqual([])
+    expect(resume.atsScore).toBe(100)
+  })
+
   it('uses Sonnet 5.5 with thinking off and fallback, and Haiku 4.5 for the parse', async () => {
     user = await createUser()
     await uploadResume(user)
