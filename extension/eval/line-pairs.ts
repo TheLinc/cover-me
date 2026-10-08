@@ -4,7 +4,10 @@
 // out of `flag` and `ok` are borderline and not scored. The live eval runs the
 // check over these and fails below LINE_CHECK_MIN.
 
-export const LINE_CHECK_MIN = 0.85
+// Sonnet 5.5 scores 26 to 27 of 30 (5 runs); three faithful lines are flagged
+// almost every run, so two chance misses would fail an 85% gate. The prompt
+// before ac742cb scored 76%. 80% (24/30) still catches that.
+export const LINE_CHECK_MIN = 0.8
 
 export interface LineRole {
   id: string
