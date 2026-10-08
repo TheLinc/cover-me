@@ -1,33 +1,14 @@
 import type { JobData } from '../../types'
+import { jobFromJsonLd } from './jsonld'
 
 export function scrapeGeneric(): JobData {
-  return tryJsonLd() ?? tryAtsSelectors() ?? tryHeuristic()
-}
-
-function tryJsonLd(): JobData | null {
-  const scripts = document.querySelectorAll<HTMLScriptElement>('script[type="application/ld+json"]')
-  for (const script of scripts) {
-    try {
-      const data = JSON.parse(script.textContent ?? '') as Record<string, unknown>
-      if (data['@type'] === 'JobPosting') {
-        const title = (data.title ?? data.name) as string | undefined
-        const org = data.hiringOrganization as Record<string, string> | string | undefined
-        const company = typeof org === 'object' ? org.name : (org ?? 'Unknown Company')
-        const description = stripHtml((data.description as string | undefined) ?? '')
-        if (title && description) {
-          return { title, company, description, url: window.location.href }
-        }
-      }
-    } catch {
-      // malformed JSON-LD — continue
-    }
-  }
-  return null
+  return jobFromJsonLd() ?? tryAtsSelectors() ?? tryHeuristic()
 }
 
 function tryAtsSelectors(): JobData | null {
   // Covers Greenhouse, Lever, Ashby, Workable, BambooHR
   const title = firstText([
+    '.job__title h1', // Greenhouse job-boards.greenhouse.io
     '[data-qa="job-title"]',
     '.posting-headline h2',
     '.job-title',
@@ -35,6 +16,7 @@ function tryAtsSelectors(): JobData | null {
     'h1[class*="title"]',
   ])
   const description = firstText([
+    '.job__description',
     '[data-qa="job-description"]',
     '.posting-description',
     '[class*="job-description"]',
@@ -43,7 +25,10 @@ function tryAtsSelectors(): JobData | null {
   ])
 
   if (title && description) {
-    const company = firstText(['[data-qa="company"]', '[class*="company-name"]']) ?? 'Unknown Company'
+    const company = firstText(['[data-qa="company"]', '[class*="company-name"]'])
+      // Greenhouse names the company only in the tab title
+      ?? document.title.match(/^Job Application for .+ at (.+)$/)?.[1]?.trim()
+      ?? 'Unknown Company'
     return { title, company, description, url: window.location.href }
   }
   return null
@@ -94,6 +79,3 @@ function firstText(selectors: string[]): string | undefined {
   }
 }
 
-function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
-}

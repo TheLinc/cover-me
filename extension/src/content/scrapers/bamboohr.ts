@@ -1,8 +1,9 @@
 import type { JobData } from '../../types'
+import { jobFromJsonLd } from './jsonld'
 
 export function scrapeBambooHR(): JobData {
   // BambooHR inlines a full JobPosting JSON-LD block — most reliable path
-  const fromLd = tryJsonLd()
+  const fromLd = jobFromJsonLd()
   if (fromLd) return fromLd
 
   // Fallback: BambooHR Fabric component selectors (stable data-fabric-component attributes)
@@ -29,28 +30,3 @@ export function scrapeBambooHR(): JobData {
   return { title, company, description, url: window.location.href }
 }
 
-function tryJsonLd(): JobData | null {
-  const scripts = document.querySelectorAll<HTMLScriptElement>('script[type="application/ld+json"]')
-  for (const script of scripts) {
-    try {
-      const data = JSON.parse(script.textContent ?? '') as Record<string, unknown>
-      if (data['@type'] === 'JobPosting') {
-        const title = String(data.title ?? data.name ?? '').trim()
-        const org = data.hiringOrganization as Record<string, unknown> | string | undefined
-        const company = typeof org === 'object'
-          ? String(org?.name ?? 'Unknown Company')
-          : String(org ?? 'Unknown Company')
-        const description = String(data.description ?? '')
-          .replace(/<[^>]*>/g, ' ')
-          .replace(/\s+/g, ' ')
-          .trim()
-        if (title && description.length > 100) {
-          return { title, company, description, url: window.location.href }
-        }
-      }
-    } catch {
-      // malformed JSON-LD — try next
-    }
-  }
-  return null
-}
