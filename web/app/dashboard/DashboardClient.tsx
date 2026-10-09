@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { openBilling } from "@/lib/billing";
+import { describeAllowance, type Allowance } from "@/lib/limits";
 import { CHROME_STORE_URL } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -18,19 +19,17 @@ interface Props {
   email: string;
   tier: string;
   memberSince: string;
-  usageToday: number;
+  allowance: Allowance;
 }
-
-const FREE_LIMIT = 5;
 
 export default function DashboardClient({
   email,
   tier,
   memberSince,
-  usageToday,
+  allowance,
 }: Props) {
   const [signingOut, setSigningOut]         = useState(false);
-  const [upgrading, setUpgrading]           = useState(false);
+  const [upgrading, setUpgrading]           = useState<'monthly' | 'quarterly' | null>(null);
   const [upgradeError, setUpgradeError]     = useState('');
   const [billingLoading, setBillingLoading] = useState(false);
   const [billingError, setBillingError]     = useState('');
@@ -40,7 +39,8 @@ export default function DashboardClient({
     month: "long",
     year: "numeric",
   });
-  const usagePct = Math.min(100, (usageToday / FREE_LIMIT) * 100);
+  const usage = describeAllowance(allowance);
+  const usagePct = Math.min(100, (usage.used / usage.limit) * 100);
 
   async function handleSignOut() {
     setSigningOut(true);
@@ -66,20 +66,20 @@ export default function DashboardClient({
     }
   }
 
-  async function handleUpgrade() {
-    setUpgrading(true);
+  async function handleUpgrade(plan: 'monthly' | 'quarterly') {
+    setUpgrading(plan);
     setUpgradeError('');
     try {
-      const data = await openBilling('checkout');
+      const data = await openBilling('checkout', plan);
       if (data.url) {
         window.location.href = data.url;
       } else {
         setUpgradeError(data.error ?? 'Something went wrong. Please try again.');
-        setUpgrading(false);
+        setUpgrading(null);
       }
     } catch {
       setUpgradeError('Could not reach the server. Please try again.');
-      setUpgrading(false);
+      setUpgrading(null);
     }
   }
 
@@ -154,28 +154,18 @@ export default function DashboardClient({
             {/* Letters today */}
             <div className="bg-surface px-[26px] py-[22px] flex flex-col gap-2.5">
               <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
-                Letters today
+                {usage.label}
               </span>
-              {isPro ? (
+              <div className="flex flex-col gap-2.5">
                 <div className="text-[28px] font-extrabold tracking-[-1.2px] text-foreground leading-none flex items-baseline gap-0.5">
-                  {usageToday}
+                  {usage.used}
                   <span className="text-[13px] font-medium text-muted-foreground tracking-normal">
                     {" "}
-                    · unlimited
+                    / {usage.limit}
                   </span>
                 </div>
-              ) : (
-                <div className="flex flex-col gap-2.5">
-                  <div className="text-[28px] font-extrabold tracking-[-1.2px] text-foreground leading-none flex items-baseline gap-0.5">
-                    {usageToday}
-                    <span className="text-[13px] font-medium text-muted-foreground tracking-normal">
-                      {" "}
-                      / {FREE_LIMIT}
-                    </span>
-                  </div>
-                  <Progress value={usagePct} className="h-1" />
-                </div>
-              )}
+                <Progress value={usagePct} className="h-1" />
+              </div>
             </div>
 
             {/* Resets */}
@@ -183,14 +173,9 @@ export default function DashboardClient({
               <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
                 Resets
               </span>
-              <div className="flex flex-col gap-1">
-                <span className="text-[20px] font-extrabold tracking-[-0.8px] text-foreground leading-none">
-                  Midnight
-                </span>
-                <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-                  UTC
-                </span>
-              </div>
+              <span className="text-[20px] font-extrabold tracking-[-0.8px] text-foreground leading-none">
+                {usage.resets}
+              </span>
             </div>
           </div>
 
@@ -206,26 +191,33 @@ export default function DashboardClient({
                   Cover Me Pro
                 </span>
                 <h2 className="text-[17px] text-foreground leading-[1.2]">
-                  Remove the daily limit.
+                  Get up to 25 generations a day.
                 </h2>
                 <p className="text-[13px] text-muted-foreground leading-[1.65] max-w-[420px]">
-                  Unlimited letters per day, cross-device history sync, and
-                  priority access to every new feature. Cancel any time.
+                  Pro adds cross-device history sync, with every new feature
+                  included. Cancel any time.
                 </p>
               </div>
 
               <div className="flex flex-col items-end gap-3 relative z-[1] shrink-0 max-[700px]:flex-row max-[700px]:items-center">
                 <div className="text-[32px] font-extrabold tracking-[-1.5px] text-brand-light leading-none gap-1 flex items-baseline">
-                  $8
+                  $15
                   <span className="text-[14px] font-medium text-muted-foreground tracking-normal">
                     /mo
                   </span>
                 </div>
+                <span className="text-[12px] text-muted-foreground">or $35 every 3 months</span>
                 <div className="flex flex-col items-end gap-2">
-                  <Button onClick={handleUpgrade} disabled={upgrading} className="shrink-0">
-                    {upgrading
+                  <Button onClick={() => handleUpgrade('monthly')} disabled={upgrading !== null} className="shrink-0">
+                    {upgrading === 'monthly'
                       ? <><Spinner />Redirecting</>
-                      : <>Upgrade to Pro <ArrowUpRightIcon size={12} /></>
+                      : <>Upgrade monthly <ArrowUpRightIcon size={12} /></>
+                    }
+                  </Button>
+                  <Button variant="outline" onClick={() => handleUpgrade('quarterly')} disabled={upgrading !== null} className="shrink-0">
+                    {upgrading === 'quarterly'
+                      ? <><Spinner />Redirecting</>
+                      : <>Upgrade quarterly <ArrowUpRightIcon size={12} /></>
                     }
                   </Button>
                   {upgradeError && (
@@ -249,7 +241,7 @@ export default function DashboardClient({
                   You&apos;re on Pro
                 </h2>
                 <p className="text-[13px] text-muted-foreground leading-[1.65] mb-3">
-                  Unlimited letters, cross-device history sync, and all future features included.
+                  Up to 25 generations a day, cross-device history sync, and every new feature included.
                 </p>
                 <Button
                   variant="outline"
