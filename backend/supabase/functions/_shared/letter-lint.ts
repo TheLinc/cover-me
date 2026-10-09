@@ -15,6 +15,9 @@ export interface LetterLintResult {
 
 // Words that essentially never belong in a good cover letter. AI models emit
 // them at 10–150x human base rates, and recruiters read them as machine output.
+// Not here on purpose: facilitate (a job title in training, therapy and
+// mediation) and comprehensive (comprehensive care, comprehensive exams). They
+// are ordinary words in those fields, not AI tells.
 const AI_VOCAB = [
   'delve', 'delves', 'delving',
   'realm', 'tapestry', 'beacon',
@@ -23,7 +26,6 @@ const AI_VOCAB = [
   'pivotal', 'paramount', 'holistic', 'multifaceted',
   'synergy', 'synergistic',
   'testament', 'underscore', 'underscores', 'underscored',
-  'facilitate', 'facilitated', 'facilitating',
   'meticulous', 'meticulously',
   'transformative', 'groundbreaking', 'revolutionize', 'revolutionized',
   'leverage', 'leveraged', 'leveraging',
@@ -35,7 +37,7 @@ const AI_VOCAB = [
   'unlock', 'unleash',
   'spearheaded', 'orchestrated',
   'cutting-edge', 'state-of-the-art',
-  'crucial', 'comprehensive', 'innovative',
+  'crucial', 'innovative',
 ]
 
 // Phrases HR research consistently finds on rejected/AI-flagged letters.
