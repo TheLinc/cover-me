@@ -209,4 +209,15 @@ describe('tailor', () => {
     await new Promise((r) => setTimeout(r, 5000))
     expect(await quotaUsedToday(user.id)).toBe(1)
   })
+
+  // A bad request is rejected before anything is charged, so it gets its real
+  // error even when the allowance is used up.
+  it('rejects an invalid request with 400 before checking the allowance', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    await setUsage(user.id, [{ daysAgo: 40, count: 10 }, { daysAgo: 0, count: 5 }])
+    const res = await callFunction('tailor', { token: user.token, body: { job: { title: 'Engineer' } } })
+    expect(res.status).toBe(400)
+    expect(await quotaUsedToday(user.id)).toBe(5)
+  })
 })

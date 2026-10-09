@@ -338,22 +338,6 @@ Deno.serve(async (req) => {
     .single()
   const tier = userData?.tier ?? 'hosted_free'
 
-  // Every hosted generation counts: free against its starter or weekly
-  // allowance, Pro against its fair-use cap (migration 015).
-  const today = new Date().toISOString().split('T')[0]
-  const consumed = await consumeGeneration(supabase, userId)
-  if (!consumed.ok) return json(consumed.body, consumed.status)
-  let charged = true
-
-  // Refunds the consumed slot when a downstream step fails, so a failed
-  // generation doesn't count against the user's allowance.
-  const refund = async () => {
-    if (!charged) return
-    charged = false
-    const { error } = await supabase.rpc('decrement_rate_limit', { p_user_id: userId, p_date: today })
-    if (error) console.error('Rate limit refund RPC error:', error.message)
-  }
-
   const { data: resumeRow, error: resumeError } = await supabase
     .from('resumes')
     .select('text_encrypted, structured_encrypted')
@@ -361,7 +345,6 @@ Deno.serve(async (req) => {
     .single()
 
   if (resumeError || !resumeRow) {
-    await refund()
     return json({ error: 'No resume found. Upload your resume in the extension first.' }, 400)
   }
 
@@ -380,13 +363,28 @@ Deno.serve(async (req) => {
     includeSummary = body.includeSummary !== false
     previous = body.previous && typeof body.previous === 'object' ? body.previous : undefined
   } catch {
-    await refund()
     return json({ error: 'Invalid request body' }, 400)
   }
 
   if (!job?.title || !job?.description) {
-    await refund()
     return json({ error: 'Missing job title or description' }, 400)
+  }
+
+  // Every hosted generation counts: free against its starter or weekly
+  // allowance, Pro against its fair-use cap (migration 015). Charged only once
+  // the request is valid, so a bad request never costs a generation.
+  const today = new Date().toISOString().split('T')[0]
+  const consumed = await consumeGeneration(supabase, userId)
+  if (!consumed.ok) return json(consumed.body, consumed.status)
+  let charged = true
+
+  // Refunds the consumed slot when a downstream step fails, so a failed
+  // generation doesn't count against the user's allowance.
+  const refund = async () => {
+    if (!charged) return
+    charged = false
+    const { error } = await supabase.rpc('decrement_rate_limit', { p_user_id: userId, p_date: today })
+    if (error) console.error('Rate limit refund RPC error:', error.message)
   }
 
   // Structured resume: read the cached copy, or parse the raw text once

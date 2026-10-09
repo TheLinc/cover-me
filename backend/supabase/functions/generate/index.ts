@@ -23,8 +23,42 @@ Deno.serve(async (req) => {
 
   const userId = user.id
 
+  // Parse request
+  let job: { title: string; company: string; description: string }
+  let supplemental: string | undefined
+  try {
+    const body = await req.json()
+    job = body.job
+    supplemental = typeof body.supplemental === 'string' ? body.supplemental.trim() : undefined
+  } catch {
+    return json({ error: 'Invalid request body' }, 400)
+  }
+
+  if (!job?.title || !job?.description) {
+    return json({ error: 'Missing job title or description' }, 400)
+  }
+
+  // Fetch resume
+  const { data: resumeRow, error: resumeError } = await supabase
+    .from('resumes')
+    .select('text_encrypted')
+    .eq('user_id', userId)
+    .single()
+
+  if (resumeError || !resumeRow) {
+    return json({ error: 'No resume found. Upload your resume in the extension first.' }, 400)
+  }
+
+  let resumeText: string
+  try {
+    resumeText = await decrypt(resumeRow.text_encrypted)
+  } catch {
+    return json({ error: 'Failed to read resume. Please re-upload.' }, 500)
+  }
+
   // Every hosted generation counts: free against its starter or weekly
-  // allowance, Pro against its fair-use cap (migration 015).
+  // allowance, Pro against its fair-use cap (migration 015). Charged only once
+  // the request is valid, so a bad request never costs a generation.
   const today = new Date().toISOString().split('T')[0]
   const consumed = await consumeGeneration(supabase, userId)
   if (!consumed.ok) return json(consumed.body, consumed.status)
@@ -37,43 +71,6 @@ Deno.serve(async (req) => {
     charged = false
     const { error } = await supabase.rpc('decrement_rate_limit', { p_user_id: userId, p_date: today })
     if (error) console.error('Rate limit refund RPC error:', error.message)
-  }
-
-  // Fetch resume
-  const { data: resumeRow, error: resumeError } = await supabase
-    .from('resumes')
-    .select('text_encrypted')
-    .eq('user_id', userId)
-    .single()
-
-  if (resumeError || !resumeRow) {
-    await refund()
-    return json({ error: 'No resume found. Upload your resume in the extension first.' }, 400)
-  }
-
-  let resumeText: string
-  try {
-    resumeText = await decrypt(resumeRow.text_encrypted)
-  } catch {
-    await refund()
-    return json({ error: 'Failed to read resume. Please re-upload.' }, 500)
-  }
-
-  // Parse request
-  let job: { title: string; company: string; description: string }
-  let supplemental: string | undefined
-  try {
-    const body = await req.json()
-    job = body.job
-    supplemental = typeof body.supplemental === 'string' ? body.supplemental.trim() : undefined
-  } catch {
-    await refund()
-    return json({ error: 'Invalid request body' }, 400)
-  }
-
-  if (!job?.title || !job?.description) {
-    await refund()
-    return json({ error: 'Missing job title or description' }, 400)
   }
 
   // Build prompt and call Claude
