@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
-  admin, callFunction, createUser, deleteUser, JOB, mockClaude, quotaUsedToday, setQuotaUsedToday, type TestUser, uploadResume,
+  admin, callFunction, createUser, deleteUser, JOB, mockClaude, quotaUsedToday, setQuotaUsedToday, setUsage, type TestUser, uploadResume,
 } from './helpers'
 import { MOCK_PARSED_RESUME, MOCK_REWRITTEN_BULLET, MOCK_TAILOR_DELTA } from '../mock-anthropic'
 
@@ -166,12 +166,22 @@ describe('tailor', () => {
     expect(data).toHaveLength(0)
   })
 
-  it('returns 429 at the free daily limit', async () => {
+  it('refuses past the free weekly allowance', async () => {
     user = await createUser()
     await uploadResume(user)
-    await setQuotaUsedToday(user.id, 5)
+    await setUsage(user.id, [{ daysAgo: 40, count: 10 }, { daysAgo: 0, count: 5 }])
     const res = await callFunction('tailor', { token: user.token, body: { job: JOB } })
     expect(res.status).toBe(429)
+    expect((await res.json()).error).toContain("You've used this week's 5 free generations")
     expect(await mockClaude.requests()).toHaveLength(0)
+  })
+
+  it('applies the Pro fair-use cap of 25 a day', async () => {
+    user = await createUser('hosted_pro')
+    await uploadResume(user)
+    await setQuotaUsedToday(user.id, 25)
+    const res = await callFunction('tailor', { token: user.token, body: { job: JOB } })
+    expect(res.status).toBe(429)
+    expect((await res.json()).error).toContain("Pro's fair-use limit of 25 generations today")
   })
 })

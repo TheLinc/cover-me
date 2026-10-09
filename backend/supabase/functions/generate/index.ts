@@ -1,4 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { consumeGeneration } from '../_shared/limits.ts'
 import { ANTHROPIC_MESSAGES_URL, SONNET_BETA_HEADER, SONNET_FIELDS, SONNET_MAX_TOKENS } from '../_shared/anthropic.ts'
 import { corsHeaders, handleCors, json } from '../_shared/cors.ts'
 import { decrypt } from '../_shared/encrypt.ts'
@@ -7,7 +8,6 @@ import { buildLintRetryMessage, lintLetter } from '../_shared/letter-lint.ts'
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SECRET_KEY = Deno.env.get('SERVICE_KEY')!
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')!
-const FREE_DAILY_LIMIT = 5
 
 Deno.serve(async (req) => {
   const cors = handleCors(req)
@@ -23,45 +23,15 @@ Deno.serve(async (req) => {
 
   const userId = user.id
 
-  // Tier check
-  const { data: userData } = await supabase
-    .from('users')
-    .select('tier')
-    .eq('id', userId)
-    .single()
-  const tier = userData?.tier ?? 'hosted_free'
-
-  // Rate limit (free tier only)
+  // Every hosted generation counts: free against its starter or weekly
+  // allowance, Pro against its fair-use cap (migration 015).
   const today = new Date().toISOString().split('T')[0]
-  let charged = false
-
-  if (tier === 'hosted_free') {
-    // Single atomic DB call — check and increment together so concurrent
-    // requests cannot both slip through the same count value.
-    const { data: allowed, error: rateError } = await supabase
-      .rpc('check_and_increment_rate_limit', {
-        p_user_id: userId,
-        p_date:    today,
-        p_limit:   FREE_DAILY_LIMIT,
-      })
-
-    if (rateError) {
-      console.error('Rate limit RPC error:', rateError.message)
-      return json({ error: 'Could not check rate limit. Please try again.' }, 500)
-    }
-
-    if (!allowed) {
-      return json(
-        { error: `You've used all ${FREE_DAILY_LIMIT} free generations for today. Your limit resets at midnight UTC.` },
-        429,
-      )
-    }
-
-    charged = true
-  }
+  const consumed = await consumeGeneration(supabase, userId)
+  if (!consumed.ok) return json(consumed.body, consumed.status)
+  let charged = true
 
   // Refunds the consumed slot when a downstream step fails, so a failed
-  // generation doesn't count against the user's daily quota.
+  // generation doesn't count against the user's allowance.
   const refund = async () => {
     if (!charged) return
     charged = false

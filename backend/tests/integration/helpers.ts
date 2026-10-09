@@ -80,6 +80,16 @@ export async function quotaUsedToday(userId: string): Promise<number> {
   return data?.count ?? 0
 }
 
+// Usage rows for the allowance tests (migration 015): daysAgo 0 is today, UTC.
+export async function setUsage(userId: string, rows: Array<{ daysAgo: number; count: number }>) {
+  await admin.from('rate_limits').delete().eq('user_id', userId)
+  for (const { daysAgo, count } of rows) {
+    const date = new Date(Date.now() - daysAgo * 86_400_000).toISOString().split('T')[0]
+    const { error } = await admin.from('rate_limits').insert({ user_id: userId, date, count })
+    if (error) throw new Error(`set usage failed: ${error.message}`)
+  }
+}
+
 export async function setQuotaUsedToday(userId: string, count: number) {
   const today = new Date().toISOString().split('T')[0]
   const { error } = await admin.from('rate_limits').upsert({ user_id: userId, date: today, count })
