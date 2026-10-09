@@ -21,9 +21,9 @@ The extension reads the job description from the page and combines it with your 
 
 | | BYOK (Free) | Hosted Free | Hosted Pro |
 |---|---|---|---|
-| Price | Free | Free | $8/month |
+| Price | Free | Free | $15/month or $35/3 months |
 | API key required | Yes (yours) | No | No |
-| Generations | Unlimited | 5/day | Unlimited |
+| Generations | Unlimited | 10 to start, then 5/week | Up to 25/day |
 | Resume storage | Local only | Encrypted cloud | Encrypted cloud |
 | Application history (letters + tailored resumes) | Local only | Local only | Synced across devices |
 | Privacy | Resume never leaves your device | Resume encrypted at rest | Resume encrypted at rest |
@@ -416,7 +416,7 @@ supabase functions deploy billing
 ### 7. Set up Stripe
 
 1. Create a Stripe account at [stripe.com](https://stripe.com)
-2. In the Stripe dashboard, create a **Product** (e.g. "Cover Me Pro") with a recurring **$8/month** price
+2. In the Stripe dashboard, create a **Product** (e.g. "Cover Me Pro") with two recurring prices, **$15/month** and **$35 every 3 months**
 3. Copy the **Price ID** (starts with `price_...`)
 4. Create a **webhook** pointing to `https://<your-web-url>/api/stripe-webhook` with these events:
    - `checkout.session.completed`

@@ -6,11 +6,11 @@ const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 
 export const metadata: Metadata = {
   title: 'Help & Support — Cover Me AI Cover Letter & Resume Tailor',
-  description: 'Get help with Cover Me. Find answers to common questions about the AI cover letter and resume tailor Chrome extension, API keys, daily limits, and resume storage.',
+  description: 'Get help with Cover Me. Find answers to common questions about the AI cover letter and resume tailor Chrome extension, API keys, generation limits, and resume storage.',
   alternates: { canonical: `${BASE}/support` },
   openGraph: {
     title: 'Help & Support — Cover Me AI Cover Letter & Resume Tailor',
-    description: 'Get help with Cover Me. Find answers to common questions about the AI cover letter and resume tailor Chrome extension, API keys, daily limits, and resume storage.',
+    description: 'Get help with Cover Me. Find answers to common questions about the AI cover letter and resume tailor Chrome extension, API keys, generation limits, and resume storage.',
     url: `${BASE}/support`,
     siteName: 'Cover Me',
     type: 'website',
@@ -48,7 +48,7 @@ const faqJsonLd = {
       name: 'I hit my daily cover letter limit. When does it reset?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Free accounts get 5 cover letters per day. The limit resets at midnight UTC. Upgrade to Cover Me Pro for unlimited generations.',
+        text: 'Free accounts get 10 generations to start, then 5 a week; the weekly allowance resets Monday at 00:00 UTC. Pro allows up to 25 a day.',
       },
     },
     {
@@ -170,8 +170,8 @@ export default function SupportPage() {
                   a: 'Click the Cover Me icon, scroll down, and use "Paste job description manually" to paste the text directly.',
                 },
                 {
-                  q: 'I hit my daily limit',
-                  a: 'Free accounts get 5 cover letters per day. The limit resets at midnight UTC. Upgrade to Pro for unlimited generations.',
+                  q: 'I hit my free limit',
+                  a: 'Free accounts get 10 generations to start, then 5 a week; the weekly allowance resets Monday at 00:00 UTC. Pro allows up to 25 a day.',
                 },
                 {
                   q: 'My API key isn\'t working',

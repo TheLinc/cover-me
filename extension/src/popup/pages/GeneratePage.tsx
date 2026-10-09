@@ -481,7 +481,7 @@ export default function GeneratePage({ onNavigate }: Props) {
 
   const upgradePrompt = (
     <>
-      <button className="btn btn-primary" onClick={handleUpgrade}>Upgrade to Pro for unlimited</button>
+      <button className="btn btn-primary" onClick={handleUpgrade}>Upgrade to Pro: up to 25 a day</button>
       {upgradeError && <div className="error-box">{upgradeError}</div>}
     </>
   )
@@ -639,7 +639,7 @@ export default function GeneratePage({ onNavigate }: Props) {
               {appMode === 'hosted' ? (
                 <>
                   <div className="setup-step-title">Sign in to Cover Me</div>
-                  <div className="setup-step-hint">Free account — 5 generations/day</div>
+                  <div className="setup-step-hint">Free account — 10 to start, then 5 a week</div>
                 </>
               ) : (
                 <>

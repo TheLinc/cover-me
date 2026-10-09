@@ -119,7 +119,7 @@ export async function generateViaBackend(job: JobData, accessToken: string, supp
   })
   const data = await res.json() as Record<string, unknown>
   if (res.status === 429) {
-    throw new RateLimitError((data.error as string) ?? 'Daily limit reached.')
+    throw new RateLimitError((data.error as string) ?? 'Generation limit reached.')
   }
   // The function sends 200 before the letter is ready (see heartbeatJson in
   // generate/index.ts), so a late failure arrives as { error } with status 200.
@@ -181,7 +181,7 @@ export async function tailorViaBackend(job: JobData, accessToken: string, compac
   if (!res.ok || !contentType.includes('ndjson') || !res.body) {
     const data = await res.json().catch(() => ({})) as Record<string, unknown>
     if (res.status === 429) {
-      throw new RateLimitError((data.error as string) ?? 'Daily limit reached.')
+      throw new RateLimitError((data.error as string) ?? 'Generation limit reached.')
     }
     if (!res.ok) {
       throw new Error((data.error as string) ?? `Server error ${res.status}`)

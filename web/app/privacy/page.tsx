@@ -259,7 +259,7 @@ export default function PrivacyPage() {
               <Li>
                 <strong className="text-foreground">Usage count (Hosted Free mode only).</strong>{' '}
                 We record the number of AI generations (cover letters and resume tailoring combined)
-                per day per account to enforce the free tier limit. Only the count is stored — no
+                per day per account to enforce the free allowance and Pro's fair-use limit. Only the count is stored — no
                 content or metadata about individual generations is recorded server-side for Free users.
               </Li>
               <Li>
@@ -274,7 +274,7 @@ export default function PrivacyPage() {
             <Ul>
               <Li>We do not track your browsing history. We receive a page&apos;s address only when you activate the extension on it.</Li>
               <Li>The extension contains no analytics or telemetry code. In BYOK mode the only thing it sends to Cover Me is the job page you activate it on, so we can read the posting. Your resume and API key never reach us.</Li>
-              <Li>In hosted mode our servers count how many letters and resumes you generate, to enforce the daily limit, and log errors. Logs never contain your resume, letters, or job descriptions.</Li>
+              <Li>In hosted mode our servers count how many letters and resumes you generate, to enforce the generation limits, and log errors. Logs never contain your resume, letters, or job descriptions.</Li>
               <Li>We do not use cookies for tracking or advertising.</Li>
               <Li>We do not collect any data from tabs other than the active job posting tab, and only when you explicitly activate the extension.</Li>
               <Li>We do not sell, rent, or trade your data to any third party.</Li>

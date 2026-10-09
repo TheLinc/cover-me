@@ -2,8 +2,8 @@ import { CheckIcon } from '@phosphor-icons/react/dist/ssr'
 import { CHROME_STORE_URL } from '@/lib/utils'
 import { Ambient } from './Ambient'
 
-const FREE = ['5 AI generations a day, letters and resumes', 'Unlimited with your own API key', 'PDF export and local history']
-const PRO = ['Unlimited letters and resume tailoring', 'History synced across devices', 'Early access to new features']
+const FREE = ['10 AI generations to start, then 5 a week, letters and resumes', 'Unlimited with your own API key', 'PDF export and local history']
+const PRO = ['Up to 25 letters or tailored resumes a day', 'History synced across devices', 'Early access to new features']
 
 export function Pricing() {
   return (
@@ -13,7 +13,7 @@ export function Pricing() {
         shape={{ left: 0, top: 140, size: 150, rotate: 18 }}
       />
       <h2 className="mx-auto max-w-[760px] text-center text-[clamp(34px,4vw,52px)] leading-[1.05]">
-        Free to start. $8 when you&apos;re applying a lot.
+        Free to start. $15 when you&apos;re applying a lot.
       </h2>
       <div className="mx-auto mt-12 grid max-w-[860px] gap-5 md:grid-cols-2">
         <div className="reveal soft-card flex flex-col gap-5 p-9">
@@ -34,8 +34,9 @@ export function Pricing() {
             <span className="rounded-full bg-brand px-2.5 py-1 text-[12px]">Most popular</span>
           </div>
           <div className="text-[56px] font-semibold leading-none tracking-[-0.04em]">
-            $8<span className="text-[16px] font-medium tracking-normal text-[#C7D2FE]">/month</span>
+            $15<span className="text-[16px] font-medium tracking-normal text-[#C7D2FE]">/month</span>
           </div>
+          <div className="-mt-3 text-[14px] text-[#C7D2FE]">or $35 every 3 months</div>
           <ul className="flex flex-col gap-3 text-[15px] text-[#E0E7FF]">
             {PRO.map((f) => (
               <li key={f} className="flex items-start gap-2.5"><CheckIcon size={16} className="mt-[3px] shrink-0 text-[#C7D2FE]" />{f}</li>

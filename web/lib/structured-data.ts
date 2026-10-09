@@ -40,14 +40,14 @@ export const jsonLdApp = {
       price: '0',
       priceCurrency: 'USD',
       name: 'Free',
-      description: '5 AI-generated cover letters per day, or unlimited with your own API key.',
+      description: '10 AI generations to start, then 5 a week, or unlimited with your own API key.',
     },
     {
       '@type': 'Offer',
-      price: '8',
+      price: '15',
       priceCurrency: 'USD',
       name: 'Pro',
-      description: 'Unlimited cover letters per day with cross-device history sync.',
+      description: 'Up to 25 generations a day with cross-device history sync, $15/month or $35 every 3 months.',
       eligibleQuantity: {
         '@type': 'QuantitativeValue',
         unitText: 'month',
@@ -77,7 +77,7 @@ export const jsonLdHowTo = {
     {
       '@type': 'HowToStep',
       name: 'Install and configure',
-      text: 'Install Cover Me from the Chrome Web Store. Upload your resume (PDF or DOCX) — text is extracted locally. Choose BYOK with your own Claude or OpenAI key for unlimited free use, or sign up for 5 free hosted letters per day.',
+      text: 'Install Cover Me from the Chrome Web Store. Upload your resume (PDF or DOCX) — text is extracted locally. Choose BYOK with your own Claude or OpenAI key for unlimited free use, or sign up for 10 free hosted generations to start.',
       position: 1,
     },
     {
