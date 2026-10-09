@@ -217,7 +217,7 @@ function AuthForm() {
         : view === "signin"
           ? "Sign in to your Cover Me account."
           : plan === "pro"
-            ? "Unlock unlimited cover letters."
+            ? "Up to 25 generations a day, synced across devices."
             : "10 free generations to start. No credit card required.";
 
   return (

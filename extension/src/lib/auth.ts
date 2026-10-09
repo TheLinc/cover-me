@@ -103,9 +103,22 @@ export async function fetchTier(userId: string, accessToken: string): Promise<st
   }
 }
 
+// kind is the limit the server applied (migration 015): 'starter' or 'weekly'
+// for free accounts, 'daily' for Pro's fair-use cap.
 export class RateLimitError extends Error {
   readonly code = 'RATE_LIMIT'
-  constructor(message: string) { super(message) }
+  constructor(message: string, readonly kind?: 'starter' | 'weekly' | 'daily') { super(message) }
+}
+
+// Pro's daily cap gets its own code so the popup doesn't offer an upgrade to
+// someone who is already on Pro.
+export function limitErrorCode(err: RateLimitError): 'RATE_LIMIT' | 'FAIR_USE' {
+  return err.kind === 'daily' ? 'FAIR_USE' : 'RATE_LIMIT'
+}
+
+function rateLimitError(data: Record<string, unknown>): RateLimitError {
+  const kind = (data.allowance as { kind?: 'starter' | 'weekly' | 'daily' } | undefined)?.kind
+  return new RateLimitError((data.error as string) ?? 'Generation limit reached.', kind)
 }
 
 export async function generateViaBackend(job: JobData, accessToken: string, supplemental?: string): Promise<string> {
@@ -119,7 +132,7 @@ export async function generateViaBackend(job: JobData, accessToken: string, supp
   })
   const data = await res.json() as Record<string, unknown>
   if (res.status === 429) {
-    throw new RateLimitError((data.error as string) ?? 'Generation limit reached.')
+    throw rateLimitError(data)
   }
   // The function sends 200 before the letter is ready (see heartbeatJson in
   // generate/index.ts), so a late failure arrives as { error } with status 200.
@@ -181,7 +194,7 @@ export async function tailorViaBackend(job: JobData, accessToken: string, compac
   if (!res.ok || !contentType.includes('ndjson') || !res.body) {
     const data = await res.json().catch(() => ({})) as Record<string, unknown>
     if (res.status === 429) {
-      throw new RateLimitError((data.error as string) ?? 'Generation limit reached.')
+      throw rateLimitError(data)
     }
     if (!res.ok) {
       throw new Error((data.error as string) ?? `Server error ${res.status}`)

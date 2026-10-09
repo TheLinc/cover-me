@@ -24,7 +24,7 @@ export default async function DashboardPage() {
       email={user.email ?? ''}
       tier={userData?.tier ?? 'hosted_free'}
       memberSince={userData?.created_at ?? user.created_at}
-      allowance={allowance as Allowance}
+      allowance={(allowance as Allowance | null) ?? null}
     />
   )
 }

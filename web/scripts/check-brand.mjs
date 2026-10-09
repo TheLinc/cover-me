@@ -24,6 +24,11 @@ const SPEED = /\b(in|under|about|around|within|just)\s+(5|five|10|ten)\s*(s\b|se
 // limits, or "no daily limit".
 const RETIRED_PRICING = /\$8\b|\b5(?: [A-Za-z-]+){0,2} (?:generations|letters)(?: per day| a day|\/day)|\b5\/day\b|no daily limit/i
 
+// Hosted Pro has a 25-a-day fair-use cap: "unlimited" is only true for BYOK,
+// so it may appear only on a line that names the API key.
+const UNLIMITED = /\bunlimited (?:cover letters|letters|generations|hosted)\b/i
+const BYOK_LINE = /API key|BYOK|own key|API cost/i
+
 const walk = (p) => (statSync(p).isDirectory() ? readdirSync(p).flatMap((f) => walk(join(p, f))) : [p])
 const lineOf = (src, idx) => src.slice(0, idx).split('\n').length
 const block = (src, name) => [src.indexOf(`${name}:start`), src.indexOf(`${name}:end`)]
@@ -41,6 +46,7 @@ for (const f of files) {
     if (!inExt && RETIRED.test(line)) errors.push(`${f}:${i + 1} retired color/font/motif: ${line.trim().slice(0, 110)}`)
     if (SPEED.test(line)) errors.push(`${f}:${i + 1} promises a speed we don't hit (a letter takes about 20 s): ${line.trim().slice(0, 110)}`)
     if (RETIRED_PRICING.test(line)) errors.push(`${f}:${i + 1} retired pricing claim (relaunch pricing: 10 free then 5 a week, Pro $15): ${line.trim().slice(0, 110)}`)
+    if (UNLIMITED.test(line) && !BYOK_LINE.test(line)) errors.push(`${f}:${i + 1} says unlimited without naming BYOK (hosted Pro is 25 a day): ${line.trim().slice(0, 110)}`)
     offset += line.length + 1
   })
   if (f.endsWith('.css')) {

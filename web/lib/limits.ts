@@ -10,7 +10,10 @@ export interface Allowance {
   pro_daily: number
 }
 
-export function describeAllowance(a: Allowance): { label: string; used: number; limit: number; resets: string } {
+// Null when the allowance couldn't be read (the RPC failed or migration 015
+// isn't deployed yet): the dashboard still renders, without usage.
+export function describeAllowance(a: Allowance | null): { label: string; used: number; limit: number; resets: string } | null {
+  if (!a) return null
   if (a.kind === 'starter') return { label: 'Free generations to start', used: a.used, limit: a.limit, resets: 'Then 5 a week' }
   if (a.kind === 'weekly') return { label: 'Free generations this week', used: a.used, limit: a.limit, resets: 'Monday, 00:00 UTC' }
   return { label: 'Generations today', used: a.used, limit: a.limit, resets: 'Midnight UTC' }

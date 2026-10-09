@@ -80,6 +80,16 @@ Deno.serve(async (req) => {
 
     if (row?.tier === 'hosted_pro') return json({ error: 'You are already on Pro.' }, 409)
 
+    // A price secret that isn't set would reach Stripe as the string
+    // "undefined" and come back as an opaque 502. Say which one, before any
+    // customer is created.
+    if (!PRICES[plan]) {
+      console.error(`[billing] ${plan === 'monthly' ? 'STRIPE_PRO_PRICE_ID' : 'STRIPE_PRO_QUARTERLY_PRICE_ID'} is not set`)
+      return json({ error: plan === 'quarterly'
+        ? "Quarterly billing isn't available yet. Choose monthly, or try again later."
+        : "Billing isn't available right now. Please try again later." }, 503)
+    }
+
     // The tier can read free while a past_due subscription still retries the
     // card, so ask Stripe. A customer deleted in Stripe gets replaced.
     let replaced = false

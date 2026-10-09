@@ -19,7 +19,7 @@ interface Props {
   email: string;
   tier: string;
   memberSince: string;
-  allowance: Allowance;
+  allowance: Allowance | null;
 }
 
 export default function DashboardClient({
@@ -40,7 +40,7 @@ export default function DashboardClient({
     year: "numeric",
   });
   const usage = describeAllowance(allowance);
-  const usagePct = Math.min(100, (usage.used / usage.limit) * 100);
+  const usagePct = usage ? Math.min(100, (usage.used / usage.limit) * 100) : 0;
 
   async function handleSignOut() {
     setSigningOut(true);
@@ -154,18 +154,22 @@ export default function DashboardClient({
             {/* Letters today */}
             <div className="bg-surface px-[26px] py-[22px] flex flex-col gap-2.5">
               <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
-                {usage.label}
+                {usage?.label ?? 'Usage'}
               </span>
-              <div className="flex flex-col gap-2.5">
-                <div className="text-[28px] font-extrabold tracking-[-1.2px] text-foreground leading-none flex items-baseline gap-0.5">
-                  {usage.used}
-                  <span className="text-[13px] font-medium text-muted-foreground tracking-normal">
-                    {" "}
-                    / {usage.limit}
-                  </span>
+              {usage ? (
+                <div className="flex flex-col gap-2.5">
+                  <div className="text-[28px] font-extrabold tracking-[-1.2px] text-foreground leading-none flex items-baseline gap-0.5">
+                    {usage.used}
+                    <span className="text-[13px] font-medium text-muted-foreground tracking-normal">
+                      {" "}
+                      / {usage.limit}
+                    </span>
+                  </div>
+                  <Progress value={usagePct} className="h-1" />
                 </div>
-                <Progress value={usagePct} className="h-1" />
-              </div>
+              ) : (
+                <span className="text-[13px] text-muted-foreground">Unavailable right now</span>
+              )}
             </div>
 
             {/* Resets */}
@@ -174,7 +178,7 @@ export default function DashboardClient({
                 Resets
               </span>
               <span className="text-[20px] font-extrabold tracking-[-0.8px] text-foreground leading-none">
-                {usage.resets}
+                {usage?.resets ?? '—'}
               </span>
             </div>
           </div>

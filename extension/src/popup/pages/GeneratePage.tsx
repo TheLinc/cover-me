@@ -108,14 +108,14 @@ export default function GeneratePage({ onNavigate }: Props) {
   const [job, setJob] = useState<JobData | null>(null)
   const [createdAt, setCreatedAt] = useState('')
   const [error, setError] = useState('')
-  const [errorCode, setErrorCode] = useState<'RATE_LIMIT' | undefined>()
+  const [errorCode, setErrorCode] = useState<'RATE_LIMIT' | 'FAIR_USE' | undefined>()
   const [copied, setCopied] = useState(false)
 
   type TailorState = 'idle' | 'loading' | 'done' | 'error'
   const [tailorState, setTailorState] = useState<TailorState>('idle')
   const [tailorProgress, setTailorProgress] = useState('')
   const [tailorError, setTailorError] = useState('')
-  const [tailorErrorCode, setTailorErrorCode] = useState<'RATE_LIMIT' | undefined>()
+  const [tailorErrorCode, setTailorErrorCode] = useState<'RATE_LIMIT' | 'FAIR_USE' | undefined>()
   const [upgradeError, setUpgradeError] = useState('')
   const [tailoredResume, setTailoredResume] = useState<TailoredResume | null>(null)
   const [tailoredJob, setTailoredJob] = useState<JobData | null>(null)
@@ -793,12 +793,12 @@ export default function GeneratePage({ onNavigate }: Props) {
               {/* LETTER ERROR */}
               {state === 'error' && tailorState !== 'done' && (
                 <div className="letter-container">
-                  <div className={errorCode === 'RATE_LIMIT' ? 'warning-box' : 'error-box'}>
+                  <div className={errorCode ? 'warning-box' : 'error-box'}>
                     {error}
                   </div>
                   {errorCode === 'RATE_LIMIT' && upgradePrompt}
                   <button className="btn btn-secondary" onClick={dismissLetterError}>
-                    {errorCode === 'RATE_LIMIT' ? 'Back' : 'Try Again'}
+                    {errorCode ? 'Back' : 'Try Again'}
                   </button>
                 </div>
               )}
@@ -806,10 +806,10 @@ export default function GeneratePage({ onNavigate }: Props) {
               {/* TAILOR ERROR */}
               {tailorState === 'error' && state !== 'done' && (
                 <div className="letter-container">
-                  <div className={tailorErrorCode === 'RATE_LIMIT' ? 'warning-box' : 'error-box'}>{tailorError}</div>
+                  <div className={tailorErrorCode ? 'warning-box' : 'error-box'}>{tailorError}</div>
                   {tailorErrorCode === 'RATE_LIMIT' && upgradePrompt}
                   <button className="btn btn-secondary" onClick={resetTailor}>
-                    {tailorErrorCode === 'RATE_LIMIT' ? 'Back' : 'Try Again'}
+                    {tailorErrorCode ? 'Back' : 'Try Again'}
                   </button>
                 </div>
               )}

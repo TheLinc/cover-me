@@ -85,11 +85,11 @@ export interface TailoredResume {
 
 export type GenerateResponse =
   | { success: true; letter: string; job: JobData }
-  | { success: false; error: string; errorCode?: 'RATE_LIMIT' }
+  | { success: false; error: string; errorCode?: 'RATE_LIMIT' | 'FAIR_USE' }
 
 export type TailorResponse =
   | { success: true; resume: TailoredResume; job: JobData }
-  | { success: false; error: string; errorCode?: 'RATE_LIMIT' }
+  | { success: false; error: string; errorCode?: 'RATE_LIMIT' | 'FAIR_USE' }
 
 export type ScrapeResponse =
   | { success: true; job: JobData }
@@ -111,7 +111,7 @@ export interface CoverJob {
   letter?: string
   createdAt?: string
   error?: string
-  errorCode?: 'RATE_LIMIT'
+  errorCode?: 'RATE_LIMIT' | 'FAIR_USE'
   startedAt: number
 }
 
@@ -121,7 +121,7 @@ export interface TailorJob {
   job: JobData
   resume?: TailoredResume
   error?: string
-  errorCode?: 'RATE_LIMIT'
+  errorCode?: 'RATE_LIMIT' | 'FAIR_USE'
   startedAt: number
   // Live progress label derived from the model's streaming output
   // ("Rewriting experience (2 of 3)…") — shown under the popup spinner.

@@ -17,3 +17,11 @@ describe('describeAllowance', () => {
       .toEqual({ label: 'Generations today', used: 7, limit: 25, resets: 'Midnight UTC' })
   })
 })
+
+describe('describeAllowance without data', () => {
+  // The dashboard must render when my_generation_allowance returns nothing
+  // (web deployed before migration 015, or a database hiccup).
+  it('returns null instead of throwing', () => {
+    expect(describeAllowance(null)).toBeNull()
+  })
+})

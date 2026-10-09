@@ -211,8 +211,9 @@ export default function TermsPage() {
               <Li>
                 <strong className="text-foreground">Billing.</strong> Cover Me Pro is billed at
                 $15 USD per month, or $35 USD every three months, as a recurring subscription. Payment is processed by Stripe.
-                By subscribing you authorise Stripe to charge your payment method on a recurring
-                monthly basis until you cancel.
+                By subscribing you authorise Stripe to charge your payment method at the start of
+                each billing period (every month, or every three months on the quarterly plan) until
+                you cancel.
               </Li>
               <Li>
                 <strong className="text-foreground">Cancellation.</strong> You may cancel your
