@@ -5,6 +5,7 @@
 //   POST /v1/messages          canned reply picked by request shape (see reply())
 //   POST /__mock/fail-next     { status, body? } → the next /v1/messages call fails
 //   POST /__mock/delay-next    { ms } → the next /v1/messages call answers after ms
+//   POST /__mock/stream-pause  { ms } → the next streaming reply pauses ms after its first text delta
 //   GET  /__mock/requests      every /v1/messages body received since the last reset
 //   POST /__mock/reset         clears recorded requests and queued failures
 //   POST /v1/customers, /v1/checkout/sessions, /v1/billing_portal/sessions
@@ -94,6 +95,7 @@ type MessagesBody = {
 const received: MessagesBody[] = []
 const failures: Array<{ status: number; body: string }> = []
 let delayNext = 0
+let streamPause = 0
 
 type StripeCall = { path: string; params: Record<string, string>; idempotencyKey: string | null }
 const stripeCalls: StripeCall[] = []
@@ -152,6 +154,7 @@ export function startMockAnthropic(port: number): Promise<Server> {
       stripeState.customerError = null
       failures.length = 0
       delayNext = 0
+      streamPause = 0
       return res.writeHead(204).end()
     }
     if (req.method === 'POST' && url === '/__mock/fail-next') {
@@ -162,6 +165,10 @@ export function startMockAnthropic(port: number): Promise<Server> {
     }
     if (req.method === 'POST' && url === '/__mock/delay-next') {
       delayNext = JSON.parse(await readBody(req)).ms
+      return res.writeHead(204).end()
+    }
+    if (req.method === 'POST' && url === '/__mock/stream-pause') {
+      streamPause = JSON.parse(await readBody(req)).ms
       return res.writeHead(204).end()
     }
     if (req.method === 'GET' && url === '/__mock/requests') {
@@ -210,7 +217,17 @@ export function startMockAnthropic(port: number): Promise<Server> {
       }
       if (body.stream) {
         res.writeHead(200, { 'content-type': 'text/event-stream' })
-        return res.end(sseBody(JSON.stringify(MOCK_TAILOR_DELTA)))
+        const sse = sseBody(JSON.stringify(MOCK_TAILOR_DELTA))
+        if (streamPause) {
+          const ms = streamPause
+          streamPause = 0
+          // Split just before the second text delta.
+          const cut = sse.indexOf('event: content_block_delta', sse.indexOf('event: content_block_delta') + 1)
+          res.write(sse.slice(0, cut))
+          await new Promise((r) => setTimeout(r, ms))
+          return res.end(sse.slice(cut))
+        }
+        return res.end(sse)
       }
       res.writeHead(200, { 'content-type': 'application/json' })
       if (body.model?.includes('haiku')) return res.end(messageJson(JSON.stringify(MOCK_PARSED_RESUME), body.model))

@@ -184,4 +184,29 @@ describe('tailor', () => {
     expect(res.status).toBe(429)
     expect((await res.json()).error).toContain("Pro's fair-use limit of 25 generations today")
   })
+
+  // Disconnecting once the streamed rewrite has arrived must not refund it:
+  // otherwise a script could read the deltas, drop the connection before
+  // "done", and tailor for free indefinitely.
+  it('keeps the charge when the client disconnects after the streamed rewrite arrives', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    await mockClaude.streamPause(3000) // the rewrite is still streaming when we hang up
+    const abort = new AbortController()
+    const res = await callFunction('tailor', {
+      token: user.token, body: { job: JOB }, headers: { Accept: 'application/x-ndjson' }, signal: abort.signal,
+    })
+    const reader = res.body!.getReader()
+    const decoder = new TextDecoder()
+    let seen = ''
+    while (!seen.includes('"type":"delta"')) {
+      const { value, done } = await reader.read()
+      if (done) break
+      seen += decoder.decode(value, { stream: true })
+    }
+    expect(seen).toContain('"type":"delta"')
+    abort.abort()
+    await new Promise((r) => setTimeout(r, 5000))
+    expect(await quotaUsedToday(user.id)).toBe(1)
+  })
 })

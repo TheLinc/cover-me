@@ -572,7 +572,12 @@ Deno.serve(async (req) => {
   const encoder = new TextEncoder()
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
-      const send = (obj: unknown) => controller.enqueue(encoder.encode(JSON.stringify(obj) + '\n'))
+      // A client that hangs up mid-stream still got the generation, so a failed
+      // write must not reach the catch below and refund it. (The local edge
+      // runtime never cancels the stream; this guards runtimes that do.)
+      const send = (obj: unknown) => {
+        try { controller.enqueue(encoder.encode(JSON.stringify(obj) + '\n')) } catch { /* client gone */ }
+      }
       send({ type: 'start', roles: structuredResume.experience.length })
       try {
         const raw = await readUpstream((text) => send({ type: 'delta', text }))
@@ -582,7 +587,7 @@ Deno.serve(async (req) => {
         await refund()
         send({ type: 'error', error: 'AI generation failed. Please try again.' })
       } finally {
-        controller.close()
+        try { controller.close() } catch { /* client gone */ }
       }
     },
   })

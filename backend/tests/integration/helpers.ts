@@ -54,6 +54,7 @@ interface CallOptions {
   headers?: Record<string, string>
   // Sent as-is (e.g. a gzipped body); set Content-Type in headers.
   rawBody?: Uint8Array
+  signal?: AbortSignal
 }
 
 export async function callFunction(name: string, opts: CallOptions = {}): Promise<Response> {
@@ -66,6 +67,7 @@ export async function callFunction(name: string, opts: CallOptions = {}): Promis
     method: opts.method ?? (opts.body !== undefined || opts.rawBody ? 'POST' : 'GET'),
     headers,
     body: opts.rawBody ?? (opts.body !== undefined ? JSON.stringify(opts.body) : undefined),
+    signal: opts.signal,
   })
 }
 
@@ -122,6 +124,8 @@ export const mockClaude = {
     fetch(`${MOCK_URL}/__mock/fail-next`, { method: 'POST', body: JSON.stringify({ status }) }),
   refuseNext: () =>
     fetch(`${MOCK_URL}/__mock/fail-next`, { method: 'POST', body: JSON.stringify({ status: 200, body: REFUSAL_BODY }) }),
+  streamPause: (ms: number) =>
+    fetch(`${MOCK_URL}/__mock/stream-pause`, { method: 'POST', body: JSON.stringify({ ms }) }),
   delayNext: (ms: number) =>
     fetch(`${MOCK_URL}/__mock/delay-next`, { method: 'POST', body: JSON.stringify({ ms }) }),
   requests: async (): Promise<ClaudeRequest[]> => (await fetch(`${MOCK_URL}/__mock/requests`)).json(),
