@@ -1,11 +1,15 @@
 # Live output eval: generates cover letters and tailored resumes for real test
 # cases and has a model judge them.
 #
-#   Prompt PRs and master pushes: the quick set (11 cases: one per field family
-#   plus two long postings),
-#   judged by Sonnet 5.5, gated on extension/eval/baseline.json. About 10 min.
-#   Weekly and on demand: every case, 2 runs per resume, judged by Opus 5.5,
-#   gated on extension/eval/baseline-full.json once that file exists.
+#   Prompt PRs: the quick set (11 cases: one per field family plus two long
+#   postings), judged by Sonnet 5.5, gated on extension/eval/baseline.json.
+#   About 10 min. Not re-run on the merge to master: the PR already tested
+#   that content, and every run spends the Claude plan.
+#   On demand (Actions > Output eval > Run workflow): every case, 2 runs per
+#   resume, judged by Opus 5.5, gated on extension/eval/baseline-full.json once
+#   that file exists. Run it at milestones, not per change.
+#   Weekly: paused during active development (2026-10-09). Turn the schedule
+#   below back on at launch, when catching model drift matters.
 #   Manual runs with "update_baseline" save the scores as an eval-baseline
 #   artifact to commit (the first full run needs this to create baseline-full).
 #
@@ -19,19 +23,6 @@
 name: Output eval
 
 on:
-  push:
-    branches: [master]
-    paths:
-      - extension/src/lib/ai/**
-      - extension/eval/**
-      - backend/supabase/functions/generate/**
-      - backend/supabase/functions/tailor/**
-      - backend/supabase/functions/_shared/anthropic.ts
-      - backend/supabase/functions/_shared/letter-lint.ts
-      - backend/supabase/functions/_shared/resume-parse.ts
-      - backend/supabase/functions/_shared/resume-grounding.ts
-      - scripts/check-prompt-sync.mjs
-      - .github/workflows/output-eval.yml
   pull_request:
     paths:
       - extension/src/lib/ai/**
@@ -43,9 +34,10 @@ on:
       - backend/supabase/functions/_shared/resume-parse.ts
       - backend/supabase/functions/_shared/resume-grounding.ts
       - scripts/check-prompt-sync.mjs
-      - .github/workflows/output-eval.yml
-  schedule:
-    - cron: '0 9 * * 1' # Mondays 09:00 UTC: the full set, to catch model drift
+      # Not this file: a workflow-only edit can be checked with a manual run.
+  # Paused during active development; restore at launch.
+  # schedule:
+  #   - cron: '0 9 * * 1' # Mondays 09:00 UTC: the full set, to catch model drift
   workflow_dispatch:
     inputs:
       full:
