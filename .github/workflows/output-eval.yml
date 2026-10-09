@@ -4,7 +4,7 @@
 #   Prompt PRs: the quick set (11 cases: one per field family plus two long
 #   postings), judged by Sonnet 5.5, gated on extension/eval/baseline.json.
 #   About 10 min. Not re-run on the merge to master: the PR already tested
-#   that content, and every run spends the Claude plan.
+#   that content, and every run costs API credits.
 #   On demand (Actions > Output eval > Run workflow): every case, 2 runs per
 #   resume, judged by Opus 5.5, gated on extension/eval/baseline-full.json once
 #   that file exists. Run it at milestones, not per change.
@@ -13,10 +13,10 @@
 #   Manual runs with "update_baseline" save the scores as an eval-baseline
 #   artifact to commit (the first full run needs this to create baseline-full).
 #
-# Billing: only the CLAUDE_CODE_OAUTH_TOKEN secret (from `claude setup-token`),
-# so every call goes through `claude -p` on the Claude plan. There is no API key
-# fallback: ANTHROPIC_API_KEY is blanked and the eval runs with --via claude.
-# Without the secret (fork PRs never get secrets) the job skips with a warning.
+# Billing: the ANTHROPIC_API_KEY secret, with --via api, so evals bill API
+# credits and never compete with the owner's Claude plan (until 2026-10-09 they
+# ran on a CLAUDE_CODE_OAUTH_TOKEN and hit the plan's session limit). Without
+# the secret (fork PRs never get secrets) the job skips with a warning.
 #
 # Not a required check: GitHub never reports a path-filtered workflow on
 # unrelated PRs, so a required one would leave those PRs waiting forever.
@@ -60,11 +60,9 @@ jobs:
     defaults:
       run:
         working-directory: extension
-    # The token is only in the eval step's env, so no other step (third-party
-    # actions, package install scripts) can read it. Other steps see HAS_TOKEN.
+    # The key is only in the eval step's env, so no other step (third-party
+    # actions, package install scripts) can read it.
     env:
-      HAS_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' }}
-      ANTHROPIC_API_KEY: ''
       FULL: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.full) }}
     steps:
       - uses: actions/checkout@v4
@@ -77,23 +75,21 @@ jobs:
           cache: pnpm
           cache-dependency-path: extension/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
-      - run: npm install -g @anthropic-ai/claude-code
-        if: env.HAS_TOKEN == 'true'
       - name: Output eval (letters and tailored resumes)
         run: |
-          if [ -z "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
-            echo "::warning::No CLAUDE_CODE_OAUTH_TOKEN secret; skipping the live eval (fork PRs never get secrets)."
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "::warning::No ANTHROPIC_API_KEY secret; skipping the live eval (fork PRs never get secrets)."
             exit 0
           fi
           EXTRA=""
           if [ "$UPDATE_BASELINE" = "true" ]; then EXTRA="--update-baseline"; fi
           if [ "$FULL" = "true" ]; then
-            pnpm eval --live --judge --baseline --via claude --runs 2 --judge-model claude-opus-5-5 $EXTRA
+            pnpm eval --live --judge --baseline --via api --runs 2 --judge-model claude-opus-5-5 $EXTRA
           else
-            pnpm eval --live --quick --judge --baseline --via claude $EXTRA
+            pnpm eval --live --quick --judge --baseline --via api $EXTRA
           fi
         env:
-          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           UPDATE_BASELINE: ${{ github.event_name == 'workflow_dispatch' && inputs.update_baseline }}
       # The workflow can't push to master, so a refreshed baseline comes out as
       # an artifact: download it and commit it to extension/eval/.
