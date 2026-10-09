@@ -85,11 +85,15 @@ export function checkLetter(letter: string, c: EvalCase): CheckResult {
   const lint = lintLetter(letter, { companyName: c.job.company })
   for (const v of lint.violations) result.failures.push(`lint: ${v}`)
 
+  // The posting's own job title is fair to name ("the Hazmat Tanker Driver
+  // role") even when a word in it is something the candidate lacks.
+  const titleRe = new RegExp(c.job.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi')
+  const prose = letter.replace(titleRe, ' ')
   for (const t of c.failTerms) {
-    if (containsTerm(letter, t)) result.failures.push(`letter contains forbidden term "${t}" (not in resume)`)
+    if (containsTerm(prose, t)) result.failures.push(`letter contains forbidden term "${t}" (not in resume)`)
   }
   for (const t of c.warnTerms) {
-    if (containsTerm(letter, t)) result.warnings.push(`letter contains "${t}" — verify it describes the employer, not the candidate`)
+    if (containsTerm(prose, t)) result.warnings.push(`letter contains "${t}" — verify it describes the employer, not the candidate`)
   }
 
   const lastName = c.parsed.name.split(' ').pop() ?? c.parsed.name
