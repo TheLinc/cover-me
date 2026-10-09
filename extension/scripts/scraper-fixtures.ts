@@ -43,6 +43,10 @@ export const BOARDS: Board[] = [
   { name: 'workday', listing: 'https://nvidia.wd5.myworkdayjobs.com/NVIDIAExternalCareerSite', posting: /myworkdayjobs\.com\/(en-US\/)?NVIDIAExternalCareerSite\/job\// },
   { name: 'bamboohr', listing: 'https://pictonmahoney.bamboohr.com/careers', posting: /bamboohr\.com\/careers\/\d+/ },
   { name: 'linkedin', listing: 'https://www.linkedin.com/jobs/search?keywords=registered%20nurse&location=United%20States', posting: /linkedin\.com\/jobs\/view\/[^?]+/ },
+  // Terminal's public posting pages (its app's job list is behind sign-in)
+  { name: 'terminal', listing: 'https://www.terminal.io/engineers/job-openings/canada', posting: /terminal\.io\/engineers\/job-openings\/canada\/[a-z]+\/[^/]+\/\d+\// },
+  // No dedicated scraper: the generic one (JSON-LD) covers SmartRecruiters
+  { name: 'smartrecruiters', listing: 'https://jobs.smartrecruiters.com/Equinox', posting: /jobs\.smartrecruiters\.com\/Equinox\/\d+-/ },
   { name: 'indeed', listing: 'https://www.indeed.com/jobs?q=welder', posting: /indeed\.com\/rc\/clk\?jk=/,
     // The /rc/clk tracking redirect trips Cloudflare; the direct page doesn't.
     rewrite: (href) => `https://www.indeed.com/viewjob?jk=${new URL(href).searchParams.get('jk')}`, ready: '[data-testid="vj-job-description-heading"]', headed: true },

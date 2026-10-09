@@ -1,8 +1,8 @@
 import type { JobData } from './types.ts'
-import { jobFromJsonLd } from './jsonld.ts'
+import { jobFromJsonLd, jobFromMicrodata } from './jsonld.ts'
 
 export function scrapeGeneric(): JobData {
-  return jobFromJsonLd() ?? tryAtsSelectors() ?? tryHeuristic()
+  return jobFromJsonLd() ?? jobFromMicrodata() ?? tryAtsSelectors() ?? tryHeuristic()
 }
 
 function tryAtsSelectors(): JobData | null {
