@@ -4,7 +4,11 @@ import { handleCors, json } from '../_shared/cors.ts'
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SECRET_KEY = Deno.env.get('SERVICE_KEY')!
 const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY')!
-const PRICE_ID = Deno.env.get('STRIPE_PRO_PRICE_ID')!
+// Pro at $15/month or $35 every 3 months (relaunch pricing, 2026-10-08).
+const PRICES = {
+  monthly: Deno.env.get('STRIPE_PRO_PRICE_ID')!,
+  quarterly: Deno.env.get('STRIPE_PRO_QUARTERLY_PRICE_ID')!,
+} as const
 const SITE_URL = (Deno.env.get('SITE_URL') || 'https://www.cover-me.dev').replace(/\/+$/, '')
 // Unset in production. The local test run points it at the mock server.
 const STRIPE_BASE = (Deno.env.get('STRIPE_API_BASE') || 'https://api.stripe.com').replace(/\/+$/, '')
@@ -56,8 +60,9 @@ Deno.serve(async (req) => {
 
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405)
 
-  const { action } = await req.json().catch(() => ({})) as { action?: string }
+  const { action, plan = 'monthly' } = await req.json().catch(() => ({})) as { action?: string; plan?: string }
   if (action !== 'checkout' && action !== 'portal') return json({ error: 'Unknown action' }, 400)
+  if (plan !== 'monthly' && plan !== 'quarterly') return json({ error: 'Unknown plan' }, 400)
 
   const { data: row } = await supabase
     .from('users')
@@ -119,7 +124,7 @@ Deno.serve(async (req) => {
     const session = await stripe('checkout/sessions', {
       mode: 'subscription',
       customer: customerId,
-      'line_items[0][price]': PRICE_ID,
+      'line_items[0][price]': PRICES[plan],
       'line_items[0][quantity]': '1',
       'metadata[supabase_user_id]': user.id,
       success_url: `${SITE_URL}/upgraded`,

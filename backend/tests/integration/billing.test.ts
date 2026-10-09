@@ -115,4 +115,19 @@ describe('billing', () => {
     const portal = (await mockStripe.calls()).find((c) => c.path === '/v1/billing_portal/sessions')
     expect(portal?.params.customer).toBe('cus_existing')
   })
+
+  it('checks out the quarterly price when asked', async () => {
+    user = await createUser()
+    const res = await callFunction('billing', { token: user.token, body: { action: 'checkout', plan: 'quarterly' } })
+    expect(res.status).toBe(200)
+    const checkout = (await mockStripe.calls()).find((c) => c.path === '/v1/checkout/sessions')
+    expect(checkout?.params['line_items[0][price]']).toBe('price_mock_pro_quarterly')
+  })
+
+  it('rejects an unknown plan instead of charging monthly', async () => {
+    user = await createUser()
+    const res = await callFunction('billing', { token: user.token, body: { action: 'checkout', plan: 'weekly' } })
+    expect(res.status).toBe(400)
+    expect((await mockStripe.calls()).some((c) => c.path === '/v1/checkout/sessions')).toBe(false)
+  })
 })
