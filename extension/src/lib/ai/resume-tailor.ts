@@ -59,42 +59,71 @@ export interface TailorDelta {
 }
 
 export function parseDelta(raw: string): TailorDelta {
-  let cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
-  // If the model wrapped the JSON in prose, extract the outermost object.
-  if (!cleaned.startsWith('{')) {
-    const first = cleaned.indexOf('{')
-    const last = cleaned.lastIndexOf('}')
-    if (first !== -1 && last > first) cleaned = cleaned.slice(first, last + 1)
+  // The model sometimes emits the JSON, then "Wait, correction needed..." and a
+  // corrected object (2 of 68 tailors in one full eval). Use the last complete
+  // top-level object that parses: that is its final answer. Code fences,
+  // surrounding prose, and an object cut off mid-stream all fall away.
+  const objects = topLevelObjects(raw)
+  let incomplete = false
+  for (let i = objects.length - 1; i >= 0; i--) {
+    let d: Record<string, unknown>
+    try {
+      d = JSON.parse(objects[i]) as Record<string, unknown>
+    } catch {
+      continue
+    }
+    if (Array.isArray(d.experience)) return d as unknown as TailorDelta
+    incomplete = true
   }
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(cleaned)
-  } catch {
-    throw new Error('AI returned invalid JSON. Please try again.')
+  throw new Error(incomplete ? 'AI returned incomplete response. Please try again.' : 'AI returned invalid JSON. Please try again.')
+}
+
+// Each balanced {...} at the top level, ignoring braces inside JSON strings.
+function topLevelObjects(text: string): string[] {
+  const out: string[] = []
+  let depth = 0
+  let start = -1
+  let inString = false
+  let escaped = false
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i]
+    if (inString) {
+      if (escaped) escaped = false
+      else if (ch === '\\') escaped = true
+      else if (ch === '"') inString = false
+    } else if (ch === '"' && depth > 0) {
+      inString = true
+    } else if (ch === '{') {
+      if (depth++ === 0) start = i
+    } else if (ch === '}' && depth > 0 && --depth === 0) {
+      out.push(text.slice(start, i + 1))
+    }
   }
-  const d = parsed as Record<string, unknown>
-  if (!Array.isArray(d.experience)) throw new Error('AI returned incomplete response. Please try again.')
-  return d as unknown as TailorDelta
+  return out
 }
 
 // Merge the model's delta into the parsed resume. A missing or empty bullets
 // array for an entry keeps that entry's original bullets — a partially valid
 // response degrades to "some bullets untailored", never to a broken resume.
+// The same holds for a count the prompt forbids: in default mode a role must
+// come back with as many bullets as it had (a different count means bullets
+// were merged or dropped), and projects keep their count in every mode.
 export function mergeTailorDelta<T extends {
   experience: Array<{ bullets: string[] }>
   projects?: Array<{ bullets: string[] }>
   skills?: string
-}>(base: T, delta: TailorDelta): T & { summary: string } {
-  const pick = (orig: string[], d?: TailorDeltaEntry): string[] => {
+}>(base: T, delta: TailorDelta, opts: { exactBulletCounts?: boolean } = {}): T & { summary: string } {
+  const pick = (orig: string[], d: TailorDeltaEntry | undefined, exact: boolean): string[] => {
     const rewritten = Array.isArray(d?.bullets) ? d.bullets.filter((b): b is string => typeof b === 'string' && b.trim().length > 0) : []
-    return rewritten.length > 0 ? rewritten : orig
+    if (rewritten.length === 0 || (exact && rewritten.length !== orig.length)) return orig
+    return rewritten
   }
   return {
     ...base,
     summary: typeof delta.summary === 'string' ? delta.summary : '',
-    experience: base.experience.map((role, i) => ({ ...role, bullets: pick(role.bullets, delta.experience?.[i]) })),
+    experience: base.experience.map((role, i) => ({ ...role, bullets: pick(role.bullets, delta.experience?.[i], !!opts.exactBulletCounts) })),
     ...(base.projects?.length
-      ? { projects: base.projects.map((p, i) => ({ ...p, bullets: pick(p.bullets, delta.projects?.[i]) })) }
+      ? { projects: base.projects.map((p, i) => ({ ...p, bullets: pick(p.bullets, delta.projects?.[i], true) })) }
       : {}),
     ...(base.skills
       ? { skills: typeof delta.skills === 'string' && delta.skills.trim() ? delta.skills : base.skills }
@@ -202,6 +231,7 @@ ${includeSummary ? `STEP 4 — WRITE SUMMARY
 - Identity: open with the candidate's own most recent title, or the archetype their experience directly supports. Use the TARGET ROLE's title only if the candidate has held that role at that level; never adopt a target title that names a level, specialty, license, or credential the resume does not show (a line cook is not a "Sous Chef", a tanker driver is not a "Hazmat Tanker Driver", a VP is not a "Chief Operating Officer"), and never write "[target title] candidate". Include 2–3 Tier 1 keywords.
 - Strongest capability or achievement that answers the role's core challenge
 - Optional: a differentiator or collaboration strength relevant to the role
+- Aim it at THIS role: lead with the evidence that answers the posting's core need, in its terms where honest, and in fresh words: no phrase or figure lifted from the bullets beyond the one headline number. A summary that restates the bullets, or could sit on any application for the candidate's current job, is not tailored.
 YEARS OF EXPERIENCE: never state a count of years in the summary. The dates already sit on the resume, and any total you compute counts training, junior, or unrelated roles that a reader will not credit.
 Claim only what a bullet demonstrates — a skills-only technology may not be claimed as built/deployed/specialised in, and architecture buzzwords the resume does not support are forbidden (Integrity 4).
 INDUSTRY/DOMAIN: name a domain (e-commerce, fintech, biotech, etc.) ONLY if a bullet shows the candidate actually worked in it. Never borrow a domain from the JD's requirements or "nice-to-have" list, and never hedge an unearned one in with "-adjacent", "-aligned", or "cross-domain" (Integrity 4).` : `STEP 4 — SUMMARY: skip; set summary to "".`}
@@ -214,9 +244,13 @@ PROJECTS: preserve every project's bullet count exactly, and never drop a techno
 
 STEP 6 — REWRITE BULLETS
 Compressed STAR: [strong action verb] + [what was done] + [measurable result or concrete scope]. Reword for impact and ATS phrasing without changing what actually happened (Integrity 3–5).
+- Tailor, don't just reorder: every bullet whose work matches a JD responsibility or a Tier 1/Tier 2 keyword is rewritten so that match leads, in the JD's term where it names the same work. A bullet stays close to its original wording only when nothing in the JD relates to it. Reordering alone is not tailoring.
+- Changing fields: when the target role is in a different field from the candidate's recent work, describe the transferable work in the target field's plain vocabulary wherever the description stays true (a bank teller's "balanced a $25,000 cash drawer daily" can read "reconciled $25,000 in daily cash transactions"; a flight attendant's "briefed passengers on safety procedures" can read "delivered safety training to groups of up to 180"). Facts, scope and numbers stay exactly as the resume states them, and the target field's titles, credentials, tools and domains are never adopted (Integrity 3–4).
 - Use the JD's exact term for matching work — if the JD says "cycle counting" and the resume says "inventory counts", write "cycle counting". This never extends to a named standard, tool, certification, or system the resume does not name (the resume says "accessibility work", the JD says "WCAG 2.1 AA": keep "accessibility"). Apply STEP 2 synonym pairs where they fit.
 - Borrow the JD's vocabulary, not its sentences: keep the JD's specific terms-of-art (per above), but never reproduce a whole sentence or clause from the JD — phrase every accomplishment in the candidate's own words. Lifted phrasing reads as templated to a human reviewer.
 - Quantify with industry-fit metrics — Tech: latency, scale, uptime, cost, build time; Healthcare: caseload, outcomes, error-free records, compliance; Finance: $ value, audit volume, reporting time; Marketing: conversion, CTR, ROI, revenue; Legal: transaction value, case outcomes, caseload. No real metric? Use concrete scope (team size, user count, integrations, timeline). Never a vague improvement with no number. Use each specific figure once — never repeat the same metric across bullets; the summary may cite at most one headline number.
+- Say each thing once: never repeat a distinctive phrase or fact across two bullets (a phrase like "cross-functional teams" belongs in one bullet only). Fix a repeat by rewording one of the bullets, never by dropping or merging them; STEP 5's counts still hold.
+- Tense: the current role in present tense, every earlier role in past tense, held consistently within each role. With no current role (a career break), use past tense throughout, the summary included, so nothing implies work the candidate is not doing.
 - Numbers are evidence, not decoration: use ONLY figures stated in the resume or supplemental context. If the input gives no number for an accomplishment, write it with concrete scope or without a figure — a made-up percentage is a fabrication, not a rewrite (Integrity 7).
 - Replace weak openers: Responsible for→Led/Owned; Worked on→Built/Developed; Helped/Assisted with→Partnered/Collaborated; "Demonstrating proficiency in"→delete (the work shows it).
 - Verb bank: Led, Owned, Drove, Directed, Built, Designed, Launched, Shipped, Architected, Reduced, Optimized, Streamlined, Scaled, Generated, Delivered, Partnered, Mentored.
@@ -276,14 +310,14 @@ export function isValidResume(r: unknown): r is TailoredResume {
 export async function assembleTailored(
   parsed: ParsedResume,
   raw: string,
-  grounding: { jobDescription: string; supplemental?: string; ask?: AskModel; onLineRepair?: (repair: LineRepair) => void },
+  grounding: { jobDescription: string; supplemental?: string; ask?: AskModel; onLineRepair?: (repair: LineRepair) => void; exactBulletCounts?: boolean },
   onRemoved?: (terms: string[]) => void,
 ): Promise<TailoredResume> {
   const delta = parseDelta(raw)
   const candidate = candidateText(parsed, grounding.supplemental)
   const claimed = await groundSkills(delta.skills, candidate, grounding.ask)
   delta.skills = claimed.skills
-  let merged = mergeTailorDelta(parsed, delta) as TailoredResume
+  let merged = mergeTailorDelta(parsed, delta, { exactBulletCounts: grounding.exactBulletCounts }) as TailoredResume
   if (grounding.ask) {
     const lines = await checkAndRewriteLines(merged, parsed, grounding.jobDescription, grounding.ask)
     merged = lines.resume
@@ -338,7 +372,7 @@ export async function tailorResume(
   }
 
   await debugLog('Tailor — raw model response', raw)
-  return assembleTailored(parsed, raw, { jobDescription: job.description, supplemental, ask: checkModel(provider, apiKey) }, (removed) =>
+  return assembleTailored(parsed, raw, { jobDescription: job.description, supplemental, ask: checkModel(provider, apiKey), exactBulletCounts: !compact && !trim }, (removed) =>
     void debugLog('Tailor — grounding guard removed', removed))
 }
 

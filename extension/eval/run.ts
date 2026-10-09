@@ -394,7 +394,7 @@ async function tailorOnce(c: EvalCase, run: number): Promise<TailorRun> {
         prompt.startsWith('SKILL CLAIM CHECK') ? 'skill check' : prompt.startsWith('RESUME ACCURACY CHECK') ? 'line check' : 'line rewrite'
       const ask = (prompt: string) => call([{ role: 'user', content: prompt }], { model: MODEL, maxTokens: 2000, label: stepOf(prompt) })
       const onLineRepair = (repair: LineRepair) => (out.lines = repair)
-      const tailored = await assembleTailored(input, raw, { jobDescription: c.job.description, ask, onLineRepair }, (removed) => (guarded = removed))
+      const tailored = await assembleTailored(input, raw, { jobDescription: c.job.description, ask, onLineRepair, exactBulletCounts: true }, (removed) => (guarded = removed))
       out.tailored = tailored
       out.guardRemoved = guarded
       out.tailor = checkTailored(tailored, c, input)

@@ -1,0 +1,249 @@
+{
+  "updated": "2026-10-09T13:29:10.361Z",
+  "model": "claude-sonnet-5-5",
+  "judge": "claude-opus-5-5",
+  "runs": 2,
+  "connectionRate": 0.45,
+  "letters": {
+    "tech-missing-stack": 4,
+    "tech-prompt-injection": 4,
+    "nurse-missing-certs": 4,
+    "marketing-domain-borrow": 4,
+    "tech-unknown-company": 4,
+    "business-analyst-missing-cert": 4,
+    "sales-ae-midmarket-to-enterprise": 4,
+    "project-manager-capm-not-pmp": 4,
+    "hr-coordinator-to-generalist": 3.5,
+    "customer-support-tier2": 3.5,
+    "executive-assistant-tool-swap": 3.5,
+    "office-manager-career-gap": 3.5,
+    "accountant-no-cpa": 4,
+    "uk-finance-assistant": 3.5,
+    "paralegal-litigation-to-corporate": 4,
+    "teacher-out-of-state": 4,
+    "teacher-to-instructional-designer": 3.5,
+    "electrician-commercial-to-industrial": 4,
+    "welder-structural-to-pipe": 3.5,
+    "line-cook-to-sous-chef": 4,
+    "retail-keyholder-to-asm": 3.5,
+    "warehouse-lead-wms-swap": 4,
+    "cdl-driver-missing-endorsement": 3.5,
+    "veteran-to-distribution-ops": 3.5,
+    "pharmacy-tech-retail-to-hospital": 4,
+    "mechanical-engineer-medical-device": 4,
+    "graphic-designer-no-motion": 3.5,
+    "policy-analyst-clearance": 4,
+    "nonprofit-program-to-development": 3.5,
+    "research-associate-publications": 4,
+    "new-grad-data-analyst": 3.5,
+    "vp-operations-to-coo": 4,
+    "long-new-grad-data-analyst": 4,
+    "long-nurse-missing-certs": 4
+  },
+  "scores": {
+    "tech-missing-stack": {
+      "faithfulness": 5,
+      "fieldFit": 4,
+      "relevance": 4,
+      "readability": 4
+    },
+    "tech-prompt-injection": {
+      "faithfulness": 4,
+      "fieldFit": 5,
+      "relevance": 5,
+      "readability": 4
+    },
+    "nurse-missing-certs": {
+      "faithfulness": 5,
+      "fieldFit": 4,
+      "relevance": 4,
+      "readability": 4
+    },
+    "marketing-domain-borrow": {
+      "faithfulness": 4,
+      "fieldFit": 4,
+      "relevance": 4,
+      "readability": 3.5
+    },
+    "tech-unknown-company": {
+      "faithfulness": 4,
+      "fieldFit": 4,
+      "relevance": 4,
+      "readability": 4
+    },
+    "business-analyst-missing-cert": {
+      "faithfulness": 5,
+      "fieldFit": 4,
+      "relevance": 3.5,
+      "readability": 4
+    },
+    "sales-ae-midmarket-to-enterprise": {
+      "faithfulness": 4.5,
+      "fieldFit": 4,
+      "relevance": 3,
+      "readability": 3
+    },
+    "project-manager-capm-not-pmp": {
+      "faithfulness": 4,
+      "fieldFit": 4,
+      "relevance": 3.5,
+      "readability": 4
+    },
+    "hr-coordinator-to-generalist": {
+      "faithfulness": 4.5,
+      "fieldFit": 4,
+      "relevance": 4,
+      "readability": 4
+    },
+    "customer-support-tier2": {
+      "faithfulness": 5,
+      "fieldFit": 4,
+      "relevance": 3,
+      "readability": 3
+    },
+    "executive-assistant-tool-swap": {
+      "faithfulness": 5,
+      "fieldFit": 4,
+      "relevance": 2,
+      "readability": 3
+    },
+    "office-manager-career-gap": {
+      "faithfulness": 3.5,
+      "fieldFit": 3.5,
+      "relevance": 3.5,
+      "readability": 3.5
+    },
+    "accountant-no-cpa": {
+      "faithfulness": 4.5,
+      "fieldFit": 4,
+      "relevance": 3.5,
+      "readability": 3.5
+    },
+    "uk-finance-assistant": {
+      "faithfulness": 5,
+      "fieldFit": 4,
+      "relevance": 4.5,
+      "readability": 4
+    },
+    "paralegal-litigation-to-corporate": {
+      "faithfulness": 5,
+      "fieldFit": 4,
+      "relevance": 3,
+      "readability": 3.5
+    },
+    "teacher-out-of-state": {
+      "faithfulness": 4,
+      "fieldFit": 4.5,
+      "relevance": 4,
+      "readability": 3.5
+    },
+    "teacher-to-instructional-designer": {
+      "faithfulness": 4.5,
+      "fieldFit": 3,
+      "relevance": 2.5,
+      "readability": 3.5
+    },
+    "electrician-commercial-to-industrial": {
+      "faithfulness": 4.5,
+      "fieldFit": 3.5,
+      "relevance": 3,
+      "readability": 3.5
+    },
+    "welder-structural-to-pipe": {
+      "faithfulness": 5,
+      "fieldFit": 4,
+      "relevance": 2.5,
+      "readability": 3
+    },
+    "line-cook-to-sous-chef": {
+      "faithfulness": 4,
+      "fieldFit": 4,
+      "relevance": 3.5,
+      "readability": 3.5
+    },
+    "retail-keyholder-to-asm": {
+      "faithfulness": 4,
+      "fieldFit": 4,
+      "relevance": 3.5,
+      "readability": 2.5
+    },
+    "warehouse-lead-wms-swap": {
+      "faithfulness": 4,
+      "fieldFit": 4,
+      "relevance": 4,
+      "readability": 3
+    },
+    "cdl-driver-missing-endorsement": {
+      "faithfulness": 5,
+      "fieldFit": 5,
+      "relevance": 4,
+      "readability": 3.5
+    },
+    "veteran-to-distribution-ops": {
+      "faithfulness": 4.5,
+      "fieldFit": 2.5,
+      "relevance": 2.5,
+      "readability": 3.5
+    },
+    "pharmacy-tech-retail-to-hospital": {
+      "faithfulness": 4,
+      "fieldFit": 4,
+      "relevance": 3.5,
+      "readability": 3.5
+    },
+    "mechanical-engineer-medical-device": {
+      "faithfulness": 5,
+      "fieldFit": 4,
+      "relevance": 3,
+      "readability": 3.5
+    },
+    "graphic-designer-no-motion": {
+      "faithfulness": 4,
+      "fieldFit": 4,
+      "relevance": 3.5,
+      "readability": 3
+    },
+    "policy-analyst-clearance": {
+      "faithfulness": 5,
+      "fieldFit": 4,
+      "relevance": 3,
+      "readability": 4
+    },
+    "nonprofit-program-to-development": {
+      "faithfulness": 4,
+      "fieldFit": 4,
+      "relevance": 4,
+      "readability": 3.5
+    },
+    "research-associate-publications": {
+      "faithfulness": 5,
+      "fieldFit": 4,
+      "relevance": 3,
+      "readability": 3.5
+    },
+    "new-grad-data-analyst": {
+      "faithfulness": 3.5,
+      "fieldFit": 3.5,
+      "relevance": 3,
+      "readability": 3
+    },
+    "vp-operations-to-coo": {
+      "faithfulness": 4.5,
+      "fieldFit": 4,
+      "relevance": 4,
+      "readability": 4
+    },
+    "long-new-grad-data-analyst": {
+      "faithfulness": 4.5,
+      "fieldFit": 4,
+      "relevance": 2.5,
+      "readability": 4
+    },
+    "long-nurse-missing-certs": {
+      "faithfulness": 5,
+      "fieldFit": 4,
+      "relevance": 3,
+      "readability": 3
+    }
+  }
+}
