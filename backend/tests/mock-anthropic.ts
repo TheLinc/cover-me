@@ -6,6 +6,7 @@
 //   POST /__mock/fail-next     { status, body? } → the next /v1/messages call fails
 //   POST /__mock/delay-next    { ms } → the next /v1/messages call answers after ms
 //   POST /__mock/stream-pause  { ms } → the next streaming reply pauses ms after its first text delta
+//   POST /__mock/drop-next-stream     → the next streaming request has its connection cut, no response
 //   GET  /__mock/requests      every /v1/messages body received since the last reset
 //   POST /__mock/reset         clears recorded requests and queued failures
 //   POST /v1/customers, /v1/checkout/sessions, /v1/billing_portal/sessions
@@ -96,6 +97,7 @@ const received: MessagesBody[] = []
 const failures: Array<{ status: number; body: string }> = []
 let delayNext = 0
 let streamPause = 0
+let dropNextStream = false
 
 type StripeCall = { path: string; params: Record<string, string>; idempotencyKey: string | null }
 const stripeCalls: StripeCall[] = []
@@ -155,6 +157,7 @@ export function startMockAnthropic(port: number): Promise<Server> {
       failures.length = 0
       delayNext = 0
       streamPause = 0
+      dropNextStream = false
       return res.writeHead(204).end()
     }
     if (req.method === 'POST' && url === '/__mock/fail-next') {
@@ -165,6 +168,10 @@ export function startMockAnthropic(port: number): Promise<Server> {
     }
     if (req.method === 'POST' && url === '/__mock/delay-next') {
       delayNext = JSON.parse(await readBody(req)).ms
+      return res.writeHead(204).end()
+    }
+    if (req.method === 'POST' && url === '/__mock/drop-next-stream') {
+      dropNextStream = true
       return res.writeHead(204).end()
     }
     if (req.method === 'POST' && url === '/__mock/stream-pause') {
@@ -216,6 +223,10 @@ export function startMockAnthropic(port: number): Promise<Server> {
         return res.end(messageJson(JSON.stringify({ rewrites }), body.model))
       }
       if (body.stream) {
+        if (dropNextStream) {
+          dropNextStream = false
+          return req.socket.destroy()
+        }
         res.writeHead(200, { 'content-type': 'text/event-stream' })
         const sse = sseBody(JSON.stringify(MOCK_TAILOR_DELTA))
         if (streamPause) {

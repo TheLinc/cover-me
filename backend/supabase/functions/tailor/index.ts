@@ -435,25 +435,33 @@ Deno.serve(async (req) => {
     console.log('[CoverMe debug] full prompt sent to model:\n', prompt)
   }
 
-  const claudeRes = await fetch(ANTHROPIC_MESSAGES_URL, {
-    method: 'POST',
-    headers: {
-      'x-api-key': ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01',
-      'content-type': 'application/json',
-      ...SONNET_BETA_HEADER,
-    },
-    body: JSON.stringify({
-      // Sonnet for tailoring: judgment-heavy (bullet preservation, relevance
-      // calls) — the small models compress/merge. Cover letters are on Sonnet
-      // too (see generate/index.ts). A mid-stream decline ends the stream
-      // early; the incomplete delta fails to parse and the request refunds.
-      ...SONNET_FIELDS,
-      max_tokens: SONNET_MAX_TOKENS,
-      stream: true,
-      messages: [{ role: 'user', content: prompt }],
-    }),
-  })
+  let claudeRes: Response
+  try {
+    claudeRes = await fetch(ANTHROPIC_MESSAGES_URL, {
+      method: 'POST',
+      headers: {
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+        ...SONNET_BETA_HEADER,
+      },
+      body: JSON.stringify({
+        // Sonnet for tailoring: judgment-heavy (bullet preservation, relevance
+        // calls) — the small models compress/merge. Cover letters are on Sonnet
+        // too (see generate/index.ts). A mid-stream decline ends the stream
+        // early; the incomplete delta fails to parse and the request refunds.
+        ...SONNET_FIELDS,
+        max_tokens: SONNET_MAX_TOKENS,
+        stream: true,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    })
+  } catch (err) {
+    // A dropped connection throws instead of returning a 5xx; refund it the same way.
+    console.error('Claude connection error:', err instanceof Error ? err.message : err)
+    await refund()
+    return json({ error: 'AI generation failed. Please try again.' }, 502)
+  }
 
   if (!claudeRes.ok || !claudeRes.body) {
     console.error('Claude error:', await claudeRes.text())

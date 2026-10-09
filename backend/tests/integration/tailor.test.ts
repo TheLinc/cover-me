@@ -220,4 +220,14 @@ describe('tailor', () => {
     expect(res.status).toBe(400)
     expect(await quotaUsedToday(user.id)).toBe(5)
   })
+
+  // A dropped connection to Anthropic (not an HTTP error) must refund too.
+  it('refunds when the connection to Claude drops', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    await mockClaude.dropNextStream()
+    const res = await callFunction('tailor', { token: user.token, body: { job: JOB } })
+    expect(res.status).toBe(502)
+    expect(await quotaUsedToday(user.id)).toBe(0)
+  })
 })
