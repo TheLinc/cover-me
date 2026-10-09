@@ -39,9 +39,16 @@ export function jobFromMicrodata(): JobData | null {
   const org = posting.querySelector('[itemprop="hiringOrganization"]')
   const company = value(org?.querySelector('[itemprop="name"]')) || value(org) || 'Unknown Company'
   // Outermost sections only: some boards nest responsibilities inside description.
+  // Checked by walking each section's ancestors (elements x depth, which the
+  // scrape function caps), not by comparing every pair of sections.
   const sections = Array.from(posting.querySelectorAll<HTMLElement>(MICRODATA_SECTIONS.map((p) => `[itemprop="${p}"]`).join(',')))
+  const isSection = new Set<Element>(sections)
+  const outermost = (el: HTMLElement) => {
+    for (let p = el.parentElement; p && p !== posting; p = p.parentElement) if (isSection.has(p)) return false
+    return true
+  }
   const description = sections
-    .filter((el) => !sections.some((other) => other !== el && other.contains(el)))
+    .filter(outermost)
     .map((el) => el.innerText.trim())
     .filter(Boolean)
     .join('\n\n')
