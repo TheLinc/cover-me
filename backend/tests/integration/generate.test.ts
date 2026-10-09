@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
-  callFunction, createUser, deleteUser, JOB, mockClaude, quotaUsedToday, setQuotaUsedToday, type TestUser, uploadResume,
+  callFunction, createUser, deleteUser, JOB, mockClaude, quotaUsedToday, setQuotaUsedToday, setUsage, type TestUser, uploadResume,
 } from './helpers'
 
 describe('generate', () => {
@@ -95,25 +95,61 @@ describe('generate', () => {
     expect(await quotaUsedToday(user.id)).toBe(0)
   })
 
-  it('returns 429 at the free daily limit without calling Claude', async () => {
+  it('refuses past the free weekly allowance without calling Claude', async () => {
     user = await createUser()
     await uploadResume(user)
-    await setQuotaUsedToday(user.id, 5)
+    // The 10 starter generations last month, 5 more already this week
+    await setUsage(user.id, [{ daysAgo: 40, count: 10 }, { daysAgo: 0, count: 5 }])
 
     const res = await callFunction('generate', { token: user.token, body: { job: JOB } })
     expect(res.status).toBe(429)
-    expect((await res.json()).error).toMatch(/free generations/)
+    const body = await res.json()
+    expect(body.error).toContain("You've used this week's 5 free generations")
+    expect(body.allowance).toMatchObject({ kind: 'weekly', limit: 5, remaining: 0 })
     expect(await mockClaude.requests()).toHaveLength(0)
     expect(await quotaUsedToday(user.id)).toBe(5)
   })
 
-  it('lets Pro users past the free limit without counting usage', async () => {
+  it('counts Pro generations, past the free numbers', async () => {
     user = await createUser('hosted_pro')
     await uploadResume(user)
     await setQuotaUsedToday(user.id, 5)
 
     const res = await callFunction('generate', { token: user.token, body: { job: JOB } })
     expect(res.status).toBe(200)
+    expect(await quotaUsedToday(user.id)).toBe(6)
+  })
+
+  it('applies the Pro fair-use cap of 25 a day', async () => {
+    user = await createUser('hosted_pro')
+    await uploadResume(user)
+    await setQuotaUsedToday(user.id, 25)
+
+    const res = await callFunction('generate', { token: user.token, body: { job: JOB } })
+    expect(res.status).toBe(429)
+    expect((await res.json()).error).toContain("Pro's fair-use limit of 25 generations today")
+  })
+
+  it('lets only one of two tabs take the last free slot', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    await setUsage(user.id, [{ daysAgo: 40, count: 10 }, { daysAgo: 0, count: 4 }])
+
+    const [a, b] = await Promise.all([
+      callFunction('generate', { token: user.token, body: { job: JOB } }),
+      callFunction('generate', { token: user.token, body: { job: JOB } }),
+    ])
+    expect([a.status, b.status].sort()).toEqual([200, 429])
+  })
+
+  // A bad request is rejected before anything is charged, so it gets its real
+  // error even when the allowance is used up.
+  it('rejects an invalid request with 400 before checking the allowance', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    await setUsage(user.id, [{ daysAgo: 40, count: 10 }, { daysAgo: 0, count: 5 }])
+    const res = await callFunction('generate', { token: user.token, body: { job: { title: 'Engineer' } } })
+    expect(res.status).toBe(400)
     expect(await quotaUsedToday(user.id)).toBe(5)
   })
 })

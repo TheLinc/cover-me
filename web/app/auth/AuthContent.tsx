@@ -217,8 +217,8 @@ function AuthForm() {
         : view === "signin"
           ? "Sign in to your Cover Me account."
           : plan === "pro"
-            ? "Unlock unlimited cover letters."
-            : "5 free letters per day. No credit card required.";
+            ? "Up to 25 generations a day, synced across devices."
+            : "10 free generations to start. No credit card required.";
 
   return (
     <div className="grid min-h-screen grid-cols-[55fr_45fr] max-md:grid-cols-1">
@@ -279,7 +279,7 @@ function AuthForm() {
             {[
               "Open source · MIT",
               "Bring your own key",
-              "5 free letters/day",
+              "10 free to start",
             ].map((item, i, arr) => (
               <span key={item} className="flex items-center gap-2.5">
                 <span className="text-xs font-medium text-dim tracking-[0.01em]">

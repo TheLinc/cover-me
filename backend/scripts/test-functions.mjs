@@ -36,6 +36,7 @@ writeFileSync(envFile, [
   'DEBUG_MODE=false',
   'STRIPE_SECRET_KEY=sk_test_mock',
   'STRIPE_PRO_PRICE_ID=price_mock_pro',
+  'STRIPE_PRO_QUARTERLY_PRICE_ID=price_mock_pro_quarterly',
   `STRIPE_API_BASE=http://host.docker.internal:${MOCK_PORT}`,
   'SITE_URL=http://localhost:3000',
 ].join('\n') + '\n')

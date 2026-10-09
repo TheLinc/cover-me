@@ -1,4 +1,4 @@
-import { ensureValidSession, generateViaBackend, RateLimitError, saveLetterToBackend, tailorViaBackend } from '../lib/auth'
+import { ensureValidSession, generateViaBackend, limitErrorCode, RateLimitError, saveLetterToBackend, tailorViaBackend } from '../lib/auth'
 import { generateCoverLetter } from '../lib/ai'
 import { parseResumeStructure } from '../lib/ai/resume-parse'
 import { tailorResume } from '../lib/ai/resume-tailor'
@@ -468,8 +468,8 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
     return { success: true, resume: tailored, job }
   } catch (err) {
     if (err instanceof RateLimitError) {
-      await setTailorJob({ id, status: 'error', job, error: err.message, errorCode: 'RATE_LIMIT', startedAt })
-      return { success: false, error: err.message, errorCode: 'RATE_LIMIT' }
+      await setTailorJob({ id, status: 'error', job, error: err.message, errorCode: limitErrorCode(err), startedAt })
+      return { success: false, error: err.message, errorCode: limitErrorCode(err) }
     }
     const error = err instanceof Error ? err.message : 'Resume tailoring failed. Please try again.'
     await setTailorJob({ id, status: 'error', job, error, startedAt })
@@ -544,8 +544,8 @@ async function generateFromJob(job: JobData, supplemental?: string, jobId?: stri
     return { success: true, letter, job }
   } catch (err) {
     if (err instanceof RateLimitError) {
-      await setCoverJob({ id, status: 'error', job, error: err.message, errorCode: 'RATE_LIMIT', startedAt })
-      return { success: false, error: err.message, errorCode: 'RATE_LIMIT' }
+      await setCoverJob({ id, status: 'error', job, error: err.message, errorCode: limitErrorCode(err), startedAt })
+      return { success: false, error: err.message, errorCode: limitErrorCode(err) }
     }
     const error = err instanceof Error ? err.message : 'Generation failed. Please try again.'
     await setCoverJob({ id, status: 'error', job, error, startedAt })

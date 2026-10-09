@@ -54,6 +54,7 @@ interface CallOptions {
   headers?: Record<string, string>
   // Sent as-is (e.g. a gzipped body); set Content-Type in headers.
   rawBody?: Uint8Array
+  signal?: AbortSignal
 }
 
 export async function callFunction(name: string, opts: CallOptions = {}): Promise<Response> {
@@ -66,6 +67,7 @@ export async function callFunction(name: string, opts: CallOptions = {}): Promis
     method: opts.method ?? (opts.body !== undefined || opts.rawBody ? 'POST' : 'GET'),
     headers,
     body: opts.rawBody ?? (opts.body !== undefined ? JSON.stringify(opts.body) : undefined),
+    signal: opts.signal,
   })
 }
 
@@ -78,6 +80,16 @@ export async function quotaUsedToday(userId: string): Promise<number> {
   const today = new Date().toISOString().split('T')[0]
   const { data } = await admin.from('rate_limits').select('count').eq('user_id', userId).eq('date', today).maybeSingle()
   return data?.count ?? 0
+}
+
+// Usage rows for the allowance tests (migration 015): daysAgo 0 is today, UTC.
+export async function setUsage(userId: string, rows: Array<{ daysAgo: number; count: number }>) {
+  await admin.from('rate_limits').delete().eq('user_id', userId)
+  for (const { daysAgo, count } of rows) {
+    const date = new Date(Date.now() - daysAgo * 86_400_000).toISOString().split('T')[0]
+    const { error } = await admin.from('rate_limits').insert({ user_id: userId, date, count })
+    if (error) throw new Error(`set usage failed: ${error.message}`)
+  }
 }
 
 export async function setQuotaUsedToday(userId: string, count: number) {
@@ -112,6 +124,9 @@ export const mockClaude = {
     fetch(`${MOCK_URL}/__mock/fail-next`, { method: 'POST', body: JSON.stringify({ status }) }),
   refuseNext: () =>
     fetch(`${MOCK_URL}/__mock/fail-next`, { method: 'POST', body: JSON.stringify({ status: 200, body: REFUSAL_BODY }) }),
+  dropNextStream: () => fetch(`${MOCK_URL}/__mock/drop-next-stream`, { method: 'POST' }),
+  streamPause: (ms: number) =>
+    fetch(`${MOCK_URL}/__mock/stream-pause`, { method: 'POST', body: JSON.stringify({ ms }) }),
   delayNext: (ms: number) =>
     fetch(`${MOCK_URL}/__mock/delay-next`, { method: 'POST', body: JSON.stringify({ ms }) }),
   requests: async (): Promise<ClaudeRequest[]> => (await fetch(`${MOCK_URL}/__mock/requests`)).json(),

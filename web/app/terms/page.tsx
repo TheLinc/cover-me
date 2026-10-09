@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
 }
 
-const EFFECTIVE_DATE = 'June 4, 2026'
+const EFFECTIVE_DATE = 'October 9, 2026'
 const CONTACT_EMAIL  = 'support@cover-me.dev'
 
 function H2({ id, children }: { id: string; children: React.ReactNode }) {
@@ -155,7 +155,7 @@ export default function TermsPage() {
               <Li>
                 <strong className="text-foreground">Hosted (Free &amp; Pro).</strong> You create an
                 account. Cover letter generation is handled by our backend using our API key. The Free
-                tier allows 5 letters per day. The Pro tier ($8/month) provides unlimited generation
+                tier allows 10 generations to start, then 5 a week. The Pro tier ($15/month or $35 every 3 months) allows up to 25 generations a day under fair use
                 and cross-device history sync.
               </Li>
             </Ul>
@@ -210,9 +210,10 @@ export default function TermsPage() {
             <Ul>
               <Li>
                 <strong className="text-foreground">Billing.</strong> Cover Me Pro is billed at
-                $8 USD per month as a recurring subscription. Payment is processed by Stripe.
-                By subscribing you authorise Stripe to charge your payment method on a recurring
-                monthly basis until you cancel.
+                $15 USD per month, or $35 USD every three months, as a recurring subscription. Payment is processed by Stripe.
+                By subscribing you authorise Stripe to charge your payment method at the start of
+                each billing period (every month, or every three months on the quarterly plan) until
+                you cancel.
               </Li>
               <Li>
                 <strong className="text-foreground">Cancellation.</strong> You may cancel your

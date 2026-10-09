@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
 }
 
-const EFFECTIVE_DATE = 'October 8, 2026'
+const EFFECTIVE_DATE = 'October 9, 2026'
 const CONTACT_EMAIL  = 'support@cover-me.dev'
 
 // ── Section heading ────────────────────────────────────────────────────────
@@ -257,9 +257,9 @@ export default function PrivacyPage() {
                 generation request to authenticate you.
               </Li>
               <Li>
-                <strong className="text-foreground">Usage count (Hosted Free mode only).</strong>{' '}
+                <strong className="text-foreground">Usage count (Hosted mode).</strong>{' '}
                 We record the number of AI generations (cover letters and resume tailoring combined)
-                per day per account to enforce the free tier limit. Only the count is stored — no
+                per day per account to enforce the free allowance and Pro's fair-use limit. Only the count is stored — no
                 content or metadata about individual generations is recorded server-side for Free users.
               </Li>
               <Li>
@@ -274,7 +274,7 @@ export default function PrivacyPage() {
             <Ul>
               <Li>We do not track your browsing history. We receive a page&apos;s address only when you activate the extension on it.</Li>
               <Li>The extension contains no analytics or telemetry code. In BYOK mode the only thing it sends to Cover Me is the job page you activate it on, so we can read the posting. Your resume and API key never reach us.</Li>
-              <Li>In hosted mode our servers count how many letters and resumes you generate, to enforce the daily limit, and log errors. Logs never contain your resume, letters, or job descriptions.</Li>
+              <Li>In hosted mode our servers count how many letters and resumes you generate, to enforce the generation limits, and log errors. Logs never contain your resume, letters, or job descriptions.</Li>
               <Li>We do not use cookies for tracking or advertising.</Li>
               <Li>We do not collect any data from tabs other than the active job posting tab, and only when you explicitly activate the extension.</Li>
               <Li>We do not sell, rent, or trade your data to any third party.</Li>
@@ -286,7 +286,7 @@ export default function PrivacyPage() {
             <Ul>
               <Li>To generate tailored cover letters by combining your resume text with the job posting data you activate the extension on.</Li>
               <Li>To authenticate you and maintain your session (Hosted mode).</Li>
-              <Li>To enforce the daily generation limit for Free tier accounts (Hosted mode).</Li>
+              <Li>To enforce the generation limits: the free allowance and Pro&apos;s fair-use cap (Hosted mode).</Li>
               <Li>To sync your application history (cover letters and tailored resumes) across devices (Pro mode only).</Li>
               <Li>To process subscription billing through Stripe (Pro mode only).</Li>
               <Li>To respond to support requests you initiate by contacting us directly.</Li>
@@ -545,7 +545,7 @@ export default function PrivacyPage() {
             <Ul>
               <Li><strong className="text-foreground">BYOK mode:</strong> All data resides on your device. You can delete it at any time by removing the extension or clearing extension storage in Chrome settings. We hold no copy of it.</Li>
               <Li><strong className="text-foreground">Hosted account data:</strong> Your account, resume, and application history (cover letters and tailored resumes) are retained for as long as your account is active. You may request deletion at any time by contacting us at <a href={`mailto:${CONTACT_EMAIL}`} className="text-brand-light hover:text-foreground transition-colors">{CONTACT_EMAIL}</a>. We will permanently delete all your data within 30 days of a verified deletion request.</Li>
-              <Li><strong className="text-foreground">Usage count records:</strong> Daily generation counts are deleted after 90 days.</Li>
+              <Li><strong className="text-foreground">Usage count records:</strong> Kept for as long as your account exists, because the free allowance counts generations over the life of the account. They are deleted with your account.</Li>
               <Li><strong className="text-foreground">Stripe billing records:</strong> Stripe retains transaction records as required by financial regulations. We cannot delete data held directly by Stripe.</Li>
             </Ul>
 

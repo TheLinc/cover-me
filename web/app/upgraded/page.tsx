@@ -26,7 +26,7 @@ export default function UpgradedPage() {
         <h1 className="text-[40px] font-bold leading-[1.05] tracking-[-1.2px]">Payment received</h1>
         <p className="mt-4 text-muted-foreground">
           Pro turns on as soon as Stripe confirms the payment, usually within a minute. Then go back to the job
-          posting and open Cover Me: your next letter or resume runs with no daily limit.
+          posting and open Cover Me: your next letter or resume runs with up to 25 generations a day.
         </p>
         <p className="mt-2 text-muted-foreground">You can close this tab.</p>
       </main>

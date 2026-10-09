@@ -55,7 +55,7 @@ const faqJsonLd = {
       name: 'Is AIApply free like Cover Me?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'AIApply offers a limited free tier, but full access requires a paid Premium subscription, and auto-apply submissions are metered separately through paid credit packs (e.g. 100 or 250 applications) — exact pricing isn’t published. Cover Me is free with your own API key, free for 5 hosted generations a day, or $8/month for unlimited hosted use — all public, no credit packs.',
+        text: 'AIApply offers a limited free tier, but full access requires a paid Premium subscription, and auto-apply submissions are metered separately through paid credit packs (e.g. 100 or 250 applications) — exact pricing isn’t published. Cover Me is free with your own API key, free for 10 hosted generations to start then 5 a week, or $15/month for up to 25 a day — all public, no credit packs.',
       },
     },
   ],
@@ -68,7 +68,7 @@ const COMPARISON: { feature: string; coverMe: string; aiapply: string }[] = [
   { feature: 'Resume tailoring', coverMe: 'One click, ATS match score + gap analysis, shown before you use it', aiapply: 'AI-rewritten per application inside the auto-apply pipeline' },
   { feature: 'Cover letter per application', coverMe: 'Generated and editable before you send it', aiapply: 'Generated as part of the automated submission' },
   { feature: 'Interview prep / job board / translator', coverMe: 'Not in scope — letters and resumes only', aiapply: 'Yes — bundled interview coach, job board, 50+ language resume translator' },
-  { feature: 'Pricing', coverMe: 'Free (BYOK or 5/day) · $8/mo unlimited — all public', aiapply: 'Subscription + paid application credit packs — pricing not published' },
+  { feature: 'Pricing', coverMe: 'Free (BYOK, or 10 then 5/week) · $15/mo for 25/day — all public', aiapply: 'Subscription + paid application credit packs — pricing not published' },
   { feature: 'Open source', coverMe: 'Yes — MIT licensed, auditable', aiapply: 'No' },
 ]
 
@@ -174,7 +174,7 @@ export default function Page() {
       <div className="border border-border rounded-[12px] p-8 bg-surface text-center mt-14">
         <h2 className="text-[20px] text-foreground mb-2">Try the reviewed-application version</h2>
         <p className="text-[14px] text-muted-foreground mb-5 max-w-[420px] mx-auto leading-[1.7]">
-          Free with your own API key or 5 hosted generations a day. No credit packs, no credit card required.
+          Free with your own API key, or 10 hosted generations to start, then 5 a week. No credit packs, no credit card required.
         </p>
         <a
           href={CHROME_STORE_URL}

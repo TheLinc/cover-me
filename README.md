@@ -21,9 +21,9 @@ The extension reads the job description from the page and combines it with your 
 
 | | BYOK (Free) | Hosted Free | Hosted Pro |
 |---|---|---|---|
-| Price | Free | Free | $8/month |
+| Price | Free | Free | $15/month or $35/3 months |
 | API key required | Yes (yours) | No | No |
-| Generations | Unlimited | 5/day | Unlimited |
+| Generations | Unlimited | 10 to start, then 5/week | Up to 25/day |
 | Resume storage | Local only | Encrypted cloud | Encrypted cloud |
 | Application history (letters + tailored resumes) | Local only | Local only | Synced across devices |
 | Privacy | Resume never leaves your device | Resume encrypted at rest | Resume encrypted at rest |
@@ -396,11 +396,11 @@ supabase secrets set SERVICE_KEY=<service-role-key>
 supabase secrets set ANTHROPIC_API_KEY=<your-anthropic-key>
 supabase secrets set ENCRYPTION_KEY=<64-char-hex-from-step-4>
 supabase secrets set STRIPE_SECRET_KEY=sk_live_...
-supabase secrets set STRIPE_PRO_PRICE_ID=price_...
+supabase secrets set STRIPE_PRO_PRICE_ID=price_... STRIPE_PRO_QUARTERLY_PRICE_ID=price_...
 supabase secrets set SITE_URL=https://your-domain.com
 ```
 
-`SERVICE_KEY` and `STRIPE_*` are only used in the Edge Functions and the web webhook route. They never reach the client. The `billing` function uses `STRIPE_PRO_PRICE_ID` for checkout and `SITE_URL` for Stripe's return pages.
+`SERVICE_KEY` and `STRIPE_*` are only used in the Edge Functions and the web webhook route. They never reach the client. The `billing` function uses `STRIPE_PRO_PRICE_ID` ($15/month) and `STRIPE_PRO_QUARTERLY_PRICE_ID` ($35 every 3 months) for checkout and `SITE_URL` for Stripe's return pages.
 
 ### 6. Deploy Edge Functions
 
@@ -416,7 +416,7 @@ supabase functions deploy billing
 ### 7. Set up Stripe
 
 1. Create a Stripe account at [stripe.com](https://stripe.com)
-2. In the Stripe dashboard, create a **Product** (e.g. "Cover Me Pro") with a recurring **$8/month** price
+2. In the Stripe dashboard, create a **Product** (e.g. "Cover Me Pro") with two recurring prices, **$15/month** and **$35 every 3 months**
 3. Copy the **Price ID** (starts with `price_...`)
 4. Create a **webhook** pointing to `https://<your-web-url>/api/stripe-webhook` with these events:
    - `checkout.session.completed`
@@ -485,7 +485,8 @@ Load `extension/dist/` as an unpacked extension in Chrome. The hosted tier will 
 | `ANTHROPIC_API_KEY` | Your Anthropic API key |
 | `ENCRYPTION_KEY` | 64-char hex string (32 bytes) for AES-256-GCM |
 | `STRIPE_SECRET_KEY` | Stripe secret key |
-| `STRIPE_PRO_PRICE_ID` | Stripe recurring price ID (checkout) |
+| `STRIPE_PRO_PRICE_ID` | Stripe price ID for Pro, $15/month (checkout) |
+| `STRIPE_PRO_QUARTERLY_PRICE_ID` | Stripe price ID for Pro, $35 every 3 months (checkout) |
 | `SITE_URL` | Your web dashboard URL (Stripe return pages) |
 
 **Web dashboard** (`web/.env.local`):

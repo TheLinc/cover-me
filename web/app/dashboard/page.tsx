@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import DashboardClient from './DashboardClient'
+import type { Allowance } from '@/lib/limits'
 
 export default async function DashboardPage() {
   const supabase = await createServerSupabaseClient()
@@ -14,19 +15,16 @@ export default async function DashboardPage() {
     .eq('id', user.id)
     .single()
 
-  const { data: rateData } = await supabase
-    .from('rate_limits')
-    .select('count')
-    .eq('user_id', user.id)
-    .eq('date', new Date().toISOString().split('T')[0])
-    .single()
+  // Usage against the free starter, the free week, or Pro's daily cap
+  // (migration 015). The database owns the numbers.
+  const { data: allowance } = await supabase.rpc('my_generation_allowance')
 
   return (
     <DashboardClient
       email={user.email ?? ''}
       tier={userData?.tier ?? 'hosted_free'}
       memberSince={userData?.created_at ?? user.created_at}
-      usageToday={rateData?.count ?? 0}
+      allowance={(allowance as Allowance | null) ?? null}
     />
   )
 }

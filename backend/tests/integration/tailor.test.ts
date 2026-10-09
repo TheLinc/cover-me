@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
-  admin, callFunction, createUser, deleteUser, JOB, mockClaude, quotaUsedToday, setQuotaUsedToday, type TestUser, uploadResume,
+  admin, callFunction, createUser, deleteUser, JOB, mockClaude, quotaUsedToday, setQuotaUsedToday, setUsage, type TestUser, uploadResume,
 } from './helpers'
 import { MOCK_PARSED_RESUME, MOCK_REWRITTEN_BULLET, MOCK_TAILOR_DELTA } from '../mock-anthropic'
 
@@ -166,12 +166,68 @@ describe('tailor', () => {
     expect(data).toHaveLength(0)
   })
 
-  it('returns 429 at the free daily limit', async () => {
+  it('refuses past the free weekly allowance', async () => {
     user = await createUser()
     await uploadResume(user)
-    await setQuotaUsedToday(user.id, 5)
+    await setUsage(user.id, [{ daysAgo: 40, count: 10 }, { daysAgo: 0, count: 5 }])
     const res = await callFunction('tailor', { token: user.token, body: { job: JOB } })
     expect(res.status).toBe(429)
+    expect((await res.json()).error).toContain("You've used this week's 5 free generations")
     expect(await mockClaude.requests()).toHaveLength(0)
+  })
+
+  it('applies the Pro fair-use cap of 25 a day', async () => {
+    user = await createUser('hosted_pro')
+    await uploadResume(user)
+    await setQuotaUsedToday(user.id, 25)
+    const res = await callFunction('tailor', { token: user.token, body: { job: JOB } })
+    expect(res.status).toBe(429)
+    expect((await res.json()).error).toContain("Pro's fair-use limit of 25 generations today")
+  })
+
+  // Disconnecting once the streamed rewrite has arrived must not refund it:
+  // otherwise a script could read the deltas, drop the connection before
+  // "done", and tailor for free indefinitely.
+  it('keeps the charge when the client disconnects after the streamed rewrite arrives', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    await mockClaude.streamPause(3000) // the rewrite is still streaming when we hang up
+    const abort = new AbortController()
+    const res = await callFunction('tailor', {
+      token: user.token, body: { job: JOB }, headers: { Accept: 'application/x-ndjson' }, signal: abort.signal,
+    })
+    const reader = res.body!.getReader()
+    const decoder = new TextDecoder()
+    let seen = ''
+    while (!seen.includes('"type":"delta"')) {
+      const { value, done } = await reader.read()
+      if (done) break
+      seen += decoder.decode(value, { stream: true })
+    }
+    expect(seen).toContain('"type":"delta"')
+    abort.abort()
+    await new Promise((r) => setTimeout(r, 5000))
+    expect(await quotaUsedToday(user.id)).toBe(1)
+  })
+
+  // A bad request is rejected before anything is charged, so it gets its real
+  // error even when the allowance is used up.
+  it('rejects an invalid request with 400 before checking the allowance', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    await setUsage(user.id, [{ daysAgo: 40, count: 10 }, { daysAgo: 0, count: 5 }])
+    const res = await callFunction('tailor', { token: user.token, body: { job: { title: 'Engineer' } } })
+    expect(res.status).toBe(400)
+    expect(await quotaUsedToday(user.id)).toBe(5)
+  })
+
+  // A dropped connection to Anthropic (not an HTTP error) must refund too.
+  it('refunds when the connection to Claude drops', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    await mockClaude.dropNextStream()
+    const res = await callFunction('tailor', { token: user.token, body: { job: JOB } })
+    expect(res.status).toBe(502)
+    expect(await quotaUsedToday(user.id)).toBe(0)
   })
 })

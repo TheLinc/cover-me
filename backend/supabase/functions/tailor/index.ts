@@ -1,4 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { consumeGeneration } from '../_shared/limits.ts'
 import { ANTHROPIC_MESSAGES_URL, SONNET_BETA_HEADER, SONNET_FIELDS, SONNET_MAX_TOKENS } from '../_shared/anthropic.ts'
 import { corsHeaders, handleCors, json } from '../_shared/cors.ts'
 import { decrypt, encrypt } from '../_shared/encrypt.ts'
@@ -10,7 +11,6 @@ import { scoreFromMatch } from '../_shared/ats-score.ts'
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SECRET_KEY = Deno.env.get('SERVICE_KEY')!
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')!
-const FREE_DAILY_LIMIT = 5
 
 // ── Tailor delta (mirrored: extension/src/lib/ai/resume-tailor.ts ⇄ backend/supabase/functions/tailor/index.ts) ──
 // The model outputs only rewritten content; these helpers validate it and merge
@@ -338,36 +338,6 @@ Deno.serve(async (req) => {
     .single()
   const tier = userData?.tier ?? 'hosted_free'
 
-  const today = new Date().toISOString().split('T')[0]
-  let charged = false
-
-  if (tier === 'hosted_free') {
-    const { data: allowed, error: rateError } = await supabase
-      .rpc('check_and_increment_rate_limit', {
-        p_user_id: userId,
-        p_date: today,
-        p_limit: FREE_DAILY_LIMIT,
-      })
-    if (rateError) return json({ error: 'Could not check rate limit. Please try again.' }, 500)
-    if (!allowed) {
-      return json(
-        { error: `You've used all ${FREE_DAILY_LIMIT} free generations for today. Your limit resets at midnight UTC.` },
-        429,
-      )
-    }
-
-    charged = true
-  }
-
-  // Refunds the consumed slot when a downstream step fails, so a failed
-  // generation doesn't count against the user's daily quota.
-  const refund = async () => {
-    if (!charged) return
-    charged = false
-    const { error } = await supabase.rpc('decrement_rate_limit', { p_user_id: userId, p_date: today })
-    if (error) console.error('Rate limit refund RPC error:', error.message)
-  }
-
   const { data: resumeRow, error: resumeError } = await supabase
     .from('resumes')
     .select('text_encrypted, structured_encrypted')
@@ -375,7 +345,6 @@ Deno.serve(async (req) => {
     .single()
 
   if (resumeError || !resumeRow) {
-    await refund()
     return json({ error: 'No resume found. Upload your resume in the extension first.' }, 400)
   }
 
@@ -394,13 +363,28 @@ Deno.serve(async (req) => {
     includeSummary = body.includeSummary !== false
     previous = body.previous && typeof body.previous === 'object' ? body.previous : undefined
   } catch {
-    await refund()
     return json({ error: 'Invalid request body' }, 400)
   }
 
   if (!job?.title || !job?.description) {
-    await refund()
     return json({ error: 'Missing job title or description' }, 400)
+  }
+
+  // Every hosted generation counts: free against its starter or weekly
+  // allowance, Pro against its fair-use cap (migration 015). Charged only once
+  // the request is valid, so a bad request never costs a generation.
+  const today = new Date().toISOString().split('T')[0]
+  const consumed = await consumeGeneration(supabase, userId)
+  if (!consumed.ok) return json(consumed.body, consumed.status)
+  let charged = true
+
+  // Refunds the consumed slot when a downstream step fails, so a failed
+  // generation doesn't count against the user's allowance.
+  const refund = async () => {
+    if (!charged) return
+    charged = false
+    const { error } = await supabase.rpc('decrement_rate_limit', { p_user_id: userId, p_date: today })
+    if (error) console.error('Rate limit refund RPC error:', error.message)
   }
 
   // Structured resume: read the cached copy, or parse the raw text once
@@ -451,25 +435,33 @@ Deno.serve(async (req) => {
     console.log('[CoverMe debug] full prompt sent to model:\n', prompt)
   }
 
-  const claudeRes = await fetch(ANTHROPIC_MESSAGES_URL, {
-    method: 'POST',
-    headers: {
-      'x-api-key': ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01',
-      'content-type': 'application/json',
-      ...SONNET_BETA_HEADER,
-    },
-    body: JSON.stringify({
-      // Sonnet for tailoring: judgment-heavy (bullet preservation, relevance
-      // calls) — the small models compress/merge. Cover letters are on Sonnet
-      // too (see generate/index.ts). A mid-stream decline ends the stream
-      // early; the incomplete delta fails to parse and the request refunds.
-      ...SONNET_FIELDS,
-      max_tokens: SONNET_MAX_TOKENS,
-      stream: true,
-      messages: [{ role: 'user', content: prompt }],
-    }),
-  })
+  let claudeRes: Response
+  try {
+    claudeRes = await fetch(ANTHROPIC_MESSAGES_URL, {
+      method: 'POST',
+      headers: {
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+        ...SONNET_BETA_HEADER,
+      },
+      body: JSON.stringify({
+        // Sonnet for tailoring: judgment-heavy (bullet preservation, relevance
+        // calls) — the small models compress/merge. Cover letters are on Sonnet
+        // too (see generate/index.ts). A mid-stream decline ends the stream
+        // early; the incomplete delta fails to parse and the request refunds.
+        ...SONNET_FIELDS,
+        max_tokens: SONNET_MAX_TOKENS,
+        stream: true,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    })
+  } catch (err) {
+    // A dropped connection throws instead of returning a 5xx; refund it the same way.
+    console.error('Claude connection error:', err instanceof Error ? err.message : err)
+    await refund()
+    return json({ error: 'AI generation failed. Please try again.' }, 502)
+  }
 
   if (!claudeRes.ok || !claudeRes.body) {
     console.error('Claude error:', await claudeRes.text())
@@ -586,7 +578,12 @@ Deno.serve(async (req) => {
   const encoder = new TextEncoder()
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
-      const send = (obj: unknown) => controller.enqueue(encoder.encode(JSON.stringify(obj) + '\n'))
+      // A client that hangs up mid-stream still got the generation, so a failed
+      // write must not reach the catch below and refund it. (The local edge
+      // runtime never cancels the stream; this guards runtimes that do.)
+      const send = (obj: unknown) => {
+        try { controller.enqueue(encoder.encode(JSON.stringify(obj) + '\n')) } catch { /* client gone */ }
+      }
       send({ type: 'start', roles: structuredResume.experience.length })
       try {
         const raw = await readUpstream((text) => send({ type: 'delta', text }))
@@ -596,7 +593,7 @@ Deno.serve(async (req) => {
         await refund()
         send({ type: 'error', error: 'AI generation failed. Please try again.' })
       } finally {
-        controller.close()
+        try { controller.close() } catch { /* client gone */ }
       }
     },
   })
