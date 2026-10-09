@@ -3,12 +3,13 @@
 // job pane in one), minus everything the scrapers never read. Stripping
 // happens here so what carries the signed-in user's details or tokens never
 // leaves the browser: scripts and embedded data blobs, form fields (hidden
-// inputs hold CSRF tokens and prefilled emails), <meta> (CSRF tokens),
+// inputs hold CSRF tokens and prefilled emails), <meta> (CSRF tokens; the
+// schema.org microdata ones, meta[itemprop], are kept: they're the posting's),
 // leftover <template>s, long attribute values (sites stash JSON state in
 // data-* attributes), and link query strings (tokens ride in them). The
 // scrapers read only short attributes and link paths.
 export const STRIP_SELECTOR =
-  'script:not([type="application/ld+json"]), code[id^="bpr-guid"], style, link, meta, noscript, template, input, textarea, select, ' +
+  'script:not([type="application/ld+json"]), code[id^="bpr-guid"], style, link, meta:not([itemprop]), noscript, template, input, textarea, select, ' +
   'svg, img, picture, video, audio, canvas, iframe, object, embed'
 const MAX_ATTRIBUTE_CHARS = 300
 const LONG_ATTRIBUTES_KEPT = new Set(['class', 'style'])

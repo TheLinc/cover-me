@@ -11,6 +11,10 @@ export const FIXTURE_CASES = [
   { board: 'bamboohr', title: 'Senior Business Analyst', company: 'Picton Mahoney Asset Management', ends: 'All decisions are made by our hiring team.' },
   // Signed-out /jobs/view/ page: read from its JSON-LD
   { board: 'linkedin', title: 'RN - SAU', company: 'INTEGRIS Health', ends: 'including protected veteran or disability status.' },
+  // Terminal's public posting page
+  { board: 'terminal', title: 'Data Engineer', company: 'Overflow', ends: '- SQL' },
+  // No dedicated scraper: schema.org microdata through the generic one (no JSON-LD on the page)
+  { board: 'smartrecruiters', title: 'Housekeeping Associate, Downtown San Diego', company: 'Equinox', ends: 'Must have a legal right to work in the United States.' },
   // Indeed's 2026 layout: same detail pane on /viewjob and in the search page's right-hand pane
   { board: 'indeed', title: 'Welder', company: 'Bleema Manufacturing Corporation', ends: '1 year experience in shop setting' },
   { board: 'indeed-search', title: 'Welder', company: 'Bleema Manufacturing Corporation', ends: '1 year experience in shop setting' },

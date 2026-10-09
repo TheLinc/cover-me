@@ -32,6 +32,12 @@ test('refuses pages nested far deeper than any real posting', () => {
     .toThrow('too large')
   // Comments aren't elements but still cost a node each
   expect(() => scrape('https://careers.example.com/jobs/1', `<html><body>${'<!---->'.repeat(200_000)}</body></html>`)).toThrow('too large')
+  // 50,000 microdata sections fit the caps; finding the outermost must not
+  // compare every pair of them
+  const nestedSections = '<div itemprop="description">x</div>'.repeat(50_000)
+  const start = performance.now()
+  scrape('https://careers.example.com/jobs/1', `<html><body><main itemscope itemtype="https://schema.org/JobPosting"><h1 itemprop="title">Clerk</h1>${nestedSections}</main></body></html>`)
+  expect(performance.now() - start).toBeLessThan(2000)
   // Nested declarative shadow roots, counted before they're attached
   const nested = '<div><template shadowrootmode="open">'.repeat(300) + 'x' + '</template></div>'.repeat(300)
   expect(() => scrape('https://careers.example.com/jobs/1', `<html><body>${nested}</body></html>`)).toThrow('too large')

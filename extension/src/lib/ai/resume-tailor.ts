@@ -2,10 +2,10 @@ import type { AIProvider, JobData, ParsedResume, TailoredResume } from '../../ty
 import { debugGroup, debugLog } from '../debug'
 import { deriveTailorProgress } from './tailor-progress'
 import { candidateText, checkAndRewriteLines, groundSkills, groundTailored, type AskModel, type LineRepair } from './resume-grounding'
-import { readSseText, SONNET_FIELDS, streamSonnet } from './claude'
+import { SONNET_FIELDS, streamSonnet } from './claude'
 import { scoreFromMatch, type KeywordMatch } from './ats-score'
+import { callOpenAI, OPENAI_MODEL } from './openai'
 
-const OPENAI_API = 'https://api.openai.com/v1/chat/completions'
 
 // The model outputs a DELTA (rewritten content only), not the full resume —
 // immutable fields are merged back in code (see mergeTailorDelta below). Key
@@ -300,11 +300,6 @@ export async function assembleTailored(
   return resume
 }
 
-function openaiDelta(ev: Record<string, unknown>): string | undefined {
-  const choices = ev.choices as Array<{ delta?: { content?: string } }> | undefined
-  return choices?.[0]?.delta?.content ?? undefined
-}
-
 export async function tailorResume(
   job: JobData,
   parsed: ParsedResume,
@@ -321,7 +316,7 @@ export async function tailorResume(
 
   await debugGroup('Tailor — full prompt sent to model (BYOK)', {
     provider,
-    model: provider === 'claude' ? SONNET_FIELDS.model : 'gpt-4o',
+    model: provider === 'claude' ? SONNET_FIELDS.model : OPENAI_MODEL,
     promptLength: prompt.length,
     prompt,
   })
@@ -339,27 +334,7 @@ export async function tailorResume(
     // calls) — the small models compress/merge. Cover letters are on Sonnet too.
     raw = await streamSonnet([{ role: 'user', content: prompt }], apiKey, onText)
   } else {
-    // OpenAI
-    const res = await fetch(OPENAI_API, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        // gpt-4o (not -mini) for tailoring: same judgment-heavy task as the
-        // Claude path above; the mini model merges/drops bullets like Haiku.
-        model: 'gpt-4o',
-        max_tokens: 6000,
-        stream: true,
-        messages: [{ role: 'user', content: prompt }],
-      }),
-    })
-    if (!res.ok) {
-      const err = (await res.json().catch(() => ({}))) as { error?: { message?: string } }
-      throw new Error(err.error?.message ?? `OpenAI API error ${res.status}`)
-    }
-    raw = await readSseText(res, openaiDelta, onText)
+    raw = await callOpenAI([{ role: 'user', content: prompt }], apiKey, onText)
   }
 
   await debugLog('Tailor — raw model response', raw)
@@ -374,13 +349,6 @@ export async function tailorResume(
 function checkModel(provider: AIProvider, apiKey: string): AskModel {
   return async (prompt) => {
     if (provider === 'claude') return streamSonnet([{ role: 'user', content: prompt }], apiKey)
-    const res = await fetch(OPENAI_API, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({ model: 'gpt-4o', max_tokens: 2000, messages: [{ role: 'user', content: prompt }] }),
-    })
-    if (!res.ok) throw new Error(`OpenAI API error ${res.status}`)
-    const data = (await res.json()) as { choices: Array<{ message: { content: string } }> }
-    return data.choices[0]?.message?.content ?? ''
+    return callOpenAI(prompt, apiKey)
   }
 }
