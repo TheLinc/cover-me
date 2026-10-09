@@ -74,7 +74,7 @@ export function buildPrompt(
     : `"Dear Hiring Manager,"`
 
   const whyCompany = companyKnown
-    ? `Paragraph 3 — Company Fit (2–3 sentences): Name one specific, concrete reason the applicant wants THIS company — derive it only from what is visible in the job description provided (a stated product challenge, a team structure detail, a technical problem described in the posting) — and connect it to something genuine in the applicant's experience. Never draw on assumed external knowledge about the company. Never claim the applicant has personally used, followed, or researched the company's products unless the resume explicitly states it. Specific enough that it could only appear in a letter for this company. Never "I admire your innovative culture."`
+    ? `Paragraph 3 — Company Fit (2–3 sentences): Name one specific, concrete reason the applicant wants THIS company — derive it only from what is visible in the job description provided (a stated product challenge, a team structure detail, a technical problem described in the posting) — and connect it to something genuine in the applicant's experience. Never draw on assumed external knowledge about the company. Never claim the applicant has personally used, followed, or researched the company's products unless the resume explicitly states it. Specific enough that it could only appear in a letter for this company. Never "I admire your innovative culture." Write about what the employer does or is working on, not about the posting: never restate, quote, or summarize it ("What stands out in the posting", "Your posting pairs X with Y", "The posting asks for"), and never name a duty, tool, or requirement from it that the applicant lacks.`
     : `Paragraph 3 — Role Fit (2–3 sentences): Since the company is unknown, explain what specifically draws the applicant to this type of role and the challenges it presents, grounded in their experience.`
 
   const today = new Date().toISOString().split('T')[0]
@@ -188,11 +188,11 @@ Exemplar A (technology):
 """
 Dear Northlight Team,
 
-Last year I cut checkout latency at Ferris Retail from 900ms to 210ms, and the conversion lift paid for my salary twice over. Northlight's posting describes the same shape of problem: a React storefront that has outgrown its data layer. I know that work well.
+Last year I cut checkout latency at Ferris Retail from 900ms to 210ms, and the conversion lift paid for my salary twice over. Northlight has the same shape of problem: a React storefront that has outgrown its data layer. I know that work well.
 
 I owned Ferris's storefront platform for three years. I rebuilt the product-listing pipeline in TypeScript and GraphQL, moved image delivery behind edge caching, and wrote the load tests that let us ship during peak season without an incident. Most of that work shipped behind feature flags to 60,000 daily shoppers, so rollbacks were boring, which is how I like them. When our two-person SRE team got buried in alert noise, I took the pager for a quarter and cut false alarms roughly in half, mostly by deleting dashboards nobody read. The habit stuck: before I improve anything now, I first ask what can be removed.
 
-The posting mentions the migration off a legacy Rails monolith. I lived through one of those, including the month both systems ran side by side and every bug had two possible homes. Northlight's two-quarter timeline is tight but workable; ours took three, and I can name exactly where we lost the extra one. The team setup in the posting, five engineers and a designer, matches the pod size I have spent the last two years working in.
+Northlight is moving off a legacy Rails monolith. I lived through one of those, including the month both systems ran side by side and every bug had two possible homes. Northlight's two-quarter timeline is tight but workable; ours took three, and I can name exactly where we lost the extra one. A pod of five engineers and a designer is the setup I have spent the last two years working in.
 
 A storefront rebuild rewards someone who has already made its mistakes once. If it would help to talk through how the Ferris migration actually went — what worked and what I would never do again — I would welcome the conversation.
 
@@ -205,7 +205,7 @@ Exemplar B (healthcare, opening only — the register shifts by industry, the co
 """
 Dear Riverbend Medical Team,
 
-Six years on a 32-bed med-surg unit taught me to spot a deteriorating patient before the monitor does. Riverbend's posting asks for a nurse who can carry a full caseload on nights without dropping details; that is a fair description of my last two years at St. Anne's, where I managed six to seven patients a shift, precepted three new graduates, and kept a clean medication record across roughly 4,000 administrations.
+Six years on a 32-bed med-surg unit taught me to spot a deteriorating patient before the monitor does. Riverbend needs a nurse who can carry a full caseload on nights without dropping details; that is a fair description of my last two years at St. Anne's, where I managed six to seven patients a shift, precepted three new graduates, and kept a clean medication record across roughly 4,000 administrations.
 """
 
 ---
