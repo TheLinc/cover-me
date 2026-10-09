@@ -1,8 +1,8 @@
 import type { AIProvider, ParsedResume } from '../../types'
 import { HAIKU_MODEL } from './claude'
+import { OPENAI_CHAT, OPENAI_PARSE_FIELDS } from './openai'
 
 const CLAUDE_API = 'https://api.anthropic.com/v1/messages'
-const OPENAI_API = 'https://api.openai.com/v1/chat/completions'
 
 export function buildParsePrompt(resumeText: string): string {
   return `You are a resume parser. Convert the resume text below into structured JSON.
@@ -112,17 +112,13 @@ export async function parseResumeStructure(
   }
 
   // OpenAI
-  const res = await fetch(OPENAI_API, {
+  const res = await fetch(OPENAI_CHAT, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
       Authorization: `Bearer ${apiKey}`,
     },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      max_tokens: 3000,
-      messages: [{ role: 'user', content: prompt }],
-    }),
+    body: JSON.stringify({ ...OPENAI_PARSE_FIELDS, messages: [{ role: 'user', content: prompt }] }),
   })
   if (!res.ok) {
     const err = (await res.json().catch(() => ({}))) as { error?: { message?: string } }

@@ -60,7 +60,7 @@ Cover Me supports two AI providers:
 **OpenAI**
 - Go to [platform.openai.com](https://platform.openai.com)
 - Create an API key under API Keys
-- GPT-4o Mini is used by default
+- GPT-6.1 Sol writes letters and tailors resumes (about the same per-letter cost as Claude Sonnet); GPT-6 Luna parses your resume
 
 ### 2. Upload your resume
 
