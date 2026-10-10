@@ -67,7 +67,7 @@ write(webPath, [
   `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${publishableKey(status)}`,
   `SUPABASE_SERVICE_KEY=${serviceKey(status)}`,
   'NEXT_PUBLIC_SITE_URL=http://localhost:3000',
-  "# From `STRIPE_API_KEY=$(grep '^STRIPE_SECRET_KEY=' web/.env.local | cut -d= -f2-) stripe listen --print-secret` (whsec_...).",
+  '# From `stripe listen --print-secret` with your test key pinned (README → local development) (whsec_...).',
   // Left commented until set: an empty value would override .env.local's.
   webOld.STRIPE_WEBHOOK_SECRET ? `STRIPE_WEBHOOK_SECRET=${webOld.STRIPE_WEBHOOK_SECRET}` : '# STRIPE_WEBHOOK_SECRET=',
 ])
