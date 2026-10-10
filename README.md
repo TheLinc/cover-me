@@ -188,7 +188,10 @@ pnpm dev
 
 # web/: Supabase values come from .env.localdb, Stripe keys from .env.local (use test mode)
 pnpm dev
-stripe listen --forward-to localhost:3000/api/stripe-webhook   # optional, paste the whsec_ into web/.env.localdb
+# optional; the key pins the Stripe account (the CLI's active one can belong to another project),
+# and the :? stops instead of falling back to that account when no key is found. Paste the whsec_ into web/.env.localdb
+key=$(grep '^STRIPE_SECRET_KEY=' .env.local | cut -d= -f2- | awk '{print $1}' | tr -d '"\r')
+STRIPE_API_KEY="${key:?no STRIPE_SECRET_KEY in .env.local}" stripe listen --forward-to localhost:3000/api/stripe-webhook
 ```
 
 #### Tests
@@ -425,10 +428,10 @@ supabase functions deploy billing
    - `customer.subscription.deleted`
 5. Copy the **webhook signing secret** (starts with `whsec_...`)
 
-For local testing, use the [Stripe CLI](https://stripe.com/docs/stripe-cli):
+For local testing, use the [Stripe CLI](https://stripe.com/docs/stripe-cli). Pass your test-mode secret key so the listener uses your account, whichever one the CLI last signed in to:
 
 ```bash
-stripe listen --forward-to localhost:3000/api/stripe-webhook
+STRIPE_API_KEY=sk_test_... stripe listen --forward-to localhost:3000/api/stripe-webhook
 ```
 
 ### 8. Configure the web dashboard
