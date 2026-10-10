@@ -188,8 +188,10 @@ pnpm dev
 
 # web/: Supabase values come from .env.localdb, Stripe keys from .env.local (use test mode)
 pnpm dev
-# optional; the key pins the Stripe account (the CLI's active one can belong to another project). Paste the whsec_ into web/.env.localdb
-STRIPE_API_KEY=$(grep '^STRIPE_SECRET_KEY=' .env.local | cut -d= -f2- | awk '{print $1}' | tr -d '"\r') stripe listen --forward-to localhost:3000/api/stripe-webhook
+# optional; the key pins the Stripe account (the CLI's active one can belong to another project),
+# and the :? stops instead of falling back to that account when no key is found. Paste the whsec_ into web/.env.localdb
+key=$(grep '^STRIPE_SECRET_KEY=' .env.local | cut -d= -f2- | awk '{print $1}' | tr -d '"\r')
+STRIPE_API_KEY="${key:?no STRIPE_SECRET_KEY in .env.local}" stripe listen --forward-to localhost:3000/api/stripe-webhook
 ```
 
 #### Tests
