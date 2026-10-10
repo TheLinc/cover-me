@@ -1,0 +1,30 @@
+# Supabase pauses free-plan projects after a week without activity, which takes
+# the hosted mode down for every extension user. Two small database calls a
+# week keep the CoverMe project awake. A failed run (e.g. the project already
+# paused) emails the repo owner through GitHub's failed-workflow notice.
+name: Supabase keep-alive
+
+on:
+  schedule:
+    - cron: '0 12 * * 1,4' # Mondays and Thursdays 12:00 UTC
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # generation_limits() (migration 015) is a real database call that any
+      # client may make; it returns only the public allowance numbers. The
+      # publishable key is public too (it ships in the extension).
+      - run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 -X POST \
+            "$SUPABASE_URL/rest/v1/rpc/generation_limits" \
+            -H "apikey: $SUPABASE_PUBLISHABLE_KEY" -H 'content-type: application/json' -d '{}')
+          echo "Supabase answered $code"
+          test "$code" = 200
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
