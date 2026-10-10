@@ -23,11 +23,13 @@ select is((select email from public.users where id = 'cccccccc-cccc-4ccc-8ccc-cc
 
 -- ── RLS policies: auth.uid() once per query, signed-in users only ─────────────
 
+-- Every auth.uid() call must be a wrapped one: comparing counts also catches
+-- a policy that wraps it in USING but not in WITH CHECK (or vice versa).
 select is(
   (select count(*)::int from pg_policies
     where schemaname = 'public'
-      and coalesce(qual, '') || coalesce(with_check, '') ~ 'auth\.uid\(\)'
-      and coalesce(qual, '') || coalesce(with_check, '') !~ 'SELECT auth\.uid\(\)'),
+      and regexp_count(coalesce(qual, '') || coalesce(with_check, ''), 'auth\.uid\(\)')
+       <> regexp_count(coalesce(qual, '') || coalesce(with_check, ''), 'SELECT auth\.uid\(\)')),
   0, 'no policy calls auth.uid() once per row');
 select is(
   (select count(*)::int from pg_policies
