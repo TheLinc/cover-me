@@ -1,16 +1,19 @@
 import * as Sentry from "@sentry/nextjs";
+import { sentryEnvironment } from "@/lib/sentry-env";
+
+const environment = sentryEnvironment();
 
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
 
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-  environment: process.env.NODE_ENV,
+  environment,
 
   // Never send IPs, cookies, or auth headers automatically
   sendDefaultPii: false,
 
   // 10% of transactions in production — raise after launch if needed
-  tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0,
+  tracesSampleRate: environment === "development" ? 1.0 : 0.1,
 
   // No session replay: it records keystrokes in form fields (passwords, resume text)
   replaysSessionSampleRate: 0,
