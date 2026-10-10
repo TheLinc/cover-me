@@ -1,0 +1,33 @@
+# Supabase pauses free-plan projects after a week without enough database
+# activity, which takes the hosted mode down for every extension user. A daily
+# database call keeps the CoverMe project awake. Any failure (non-200, or no
+# connection at all) fails the run, and GitHub emails the repo owner.
+#
+# GitHub disables scheduled workflows after 60 days with no repo activity, and
+# then nothing fails or emails: see the reminder in docs/DEPLOY-TODO.md.
+name: Supabase keep-alive
+
+on:
+  schedule:
+    - cron: '23 12 * * *' # daily, off the hour (top-of-hour runs get dropped under load)
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # generation_limits() (migration 015) is a real database call that any
+      # client may make; it returns only the public allowance numbers. The
+      # publishable key is public too (it ships in the extension).
+      - run: |
+          code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 -X POST \
+            "$SUPABASE_URL/rest/v1/rpc/generation_limits" \
+            -H "apikey: $SUPABASE_PUBLISHABLE_KEY" -H 'content-type: application/json' -d '{}')
+          echo "Supabase answered $code"
+          test "$code" = 200
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
