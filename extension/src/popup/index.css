@@ -4,6 +4,20 @@
    tokens.test.ts holds every text colour to 4.5:1.
 ───────────────────────────────────────────────── */
 
+/* Geist ships in the package (SIL OFL, fonts/OFL.txt): no request to Google. */
+@font-face {
+  font-family: 'Geist';
+  src: url('../fonts/Geist-Variable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('../fonts/GeistMono-Variable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -36,7 +50,7 @@ html, body {
   width: 380px;
   height: 560px;
   overflow: hidden;
-  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 13px;
   line-height: 1.5;
   background: var(--bg);

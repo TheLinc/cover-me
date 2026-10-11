@@ -5,7 +5,7 @@
 // Fails if the built extension runs code on pages the user hasn't clicked on,
 // asks for broader host access than the embedded-ATS list, or if the content
 // script that the background injects on click can't be injected as a file.
-import { readFileSync, existsSync } from 'node:fs'
+import { readFileSync, existsSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 
 const DIST = 'dist'
@@ -16,6 +16,10 @@ if (manifest.content_scripts?.length) {
   errors.push(`manifest declares content_scripts (${manifest.content_scripts.map((c) => c.matches).flat().join(', ')}); scrapers must be injected on click`)
 }
 if (!existsSync(join(DIST, 'src/welcome/index.html'))) errors.push('missing src/welcome/index.html (the onInstalled welcome tab)')
+// Fonts ship in the package: opening the popup must not call Google.
+for (const file of readdirSync(DIST, { recursive: true }).map(String).filter((f) => /\.(html|css|js|json)$/.test(f))) {
+  if (/fonts\.(googleapis|gstatic)\.com/.test(readFileSync(join(DIST, file), 'utf8'))) errors.push(`remote font URL in ${file}`)
+}
 
 const broad = (p) => /<all_urls>|^\*:\/\/\*\/|^https?:\/\/\*\/\*$/.test(p)
 for (const p of [...(manifest.host_permissions ?? []), ...(manifest.optional_host_permissions ?? [])]) {
