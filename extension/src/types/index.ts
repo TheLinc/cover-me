@@ -149,6 +149,14 @@ export interface TailoredResumeEntry {
   createdAt: string
 }
 
+// A tailored resume kept on this device (History), for every mode.
+export interface TailoredHistoryEntry {
+  id: string
+  job: JobData
+  resume: TailoredResume
+  createdAt: string
+}
+
 export interface ApplicationRecord {
   id: string
   title: string

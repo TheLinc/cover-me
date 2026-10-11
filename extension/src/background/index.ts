@@ -5,7 +5,7 @@ import { tailorResume } from '../lib/ai/resume-tailor'
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from '../lib/config'
 import { decryptApiKey } from '../lib/crypto'
 import { debugGroup } from '../lib/debug'
-import { addToHistory, getCachedTier, getCandidateContext, getResume, getSettings, resolveMode, saveParsedResume } from '../lib/storage'
+import { addToHistory, addToTailoredHistory, getCachedTier, getCandidateContext, getResume, getSettings, resolveMode, saveParsedResume } from '../lib/storage'
 import { handleInstalled } from './install'
 import type { PageSnapshot } from '../content/snapshot.ts'
 import type { CoverJob, CoverLetter, FrameScrapeResponse, GenerateResponse, JobData, ScrapeResponse, TailoredResume, TailorJob, TailorResponse } from '../types'
@@ -64,6 +64,13 @@ async function setTailorJob(rec: TailorJob): Promise<void> {
 async function failCover(id: string, job: JobData, startedAt: number, error: string): Promise<GenerateResponse> {
   await setCoverJob({ id, status: 'error', job, error, startedAt })
   return { success: false, error }
+}
+
+// Every successful run is kept for History, on every path (Pro runs are also
+// saved server-side by the tailor function). Best-effort: a failed save must
+// not turn a finished (and, hosted, already counted) run into an error.
+async function recordTailored(job: JobData, resume: TailoredResume): Promise<void> {
+  await addToTailoredHistory({ id: crypto.randomUUID(), job, resume, createdAt: new Date().toISOString() }).catch(() => {})
 }
 
 async function failTailor(id: string, job: JobData, startedAt: number, error: string): Promise<TailorResponse> {
@@ -437,6 +444,7 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
       // Hosted: the resume + final prompt live server-side. Enable DEBUG_MODE on
       // the edge function to see those in the Supabase function logs.
       const resume = await tailorViaBackend(job, session.access_token, compact, merged, trim, includeSummary, previous, onProgress)
+      await recordTailored(job, resume)
       await setTailorJob({ id, status: 'done', job, resume, startedAt })
       return { success: true, resume, job }
     }
@@ -467,6 +475,7 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
     })
 
     const tailored = await tailorResume(job, parsed, settings.provider, apiKey, compact, merged, trim, includeSummary, previous, onProgress)
+    await recordTailored(job, tailored)
     await setTailorJob({ id, status: 'done', job, resume: tailored, startedAt })
     return { success: true, resume: tailored, job }
   } catch (err) {
