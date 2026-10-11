@@ -1,5 +1,5 @@
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL, WEB_URL } from './config'
-import { clearResume, clearSession, getResume, getSession, getSettings, saveGoogleSignInError, saveResume, saveSession, saveSettings, takeGoogleSignInError } from './storage'
+import { clearResume, clearSession, getResume, getSession, getSettings, saveGoogleSignInError, saveCachedTier, saveResume, saveSession, saveSettings, takeGoogleSignInError } from './storage'
 import { isValidResume } from './ai/resume-tailor'
 import { deriveTailorProgress } from './ai/tailor-progress'
 import type { ApplicationRecord, AuthSession, CoverLetter, JobData, ResumeData, TailoredResume } from '../types'
@@ -122,6 +122,10 @@ export async function completeSignIn(sess: AuthSession): Promise<void> {
   await saveSettings({ provider: existing?.provider ?? 'claude', apiKey: existing?.apiKey ?? '', mode: 'hosted' })
   await saveSession(sess)
   await syncResume(sess).catch(() => {})
+  // A Google sign-in finishes in the worker with no panel open to do this, and
+  // the worker's Pro history sync reads the cached tier.
+  const tier = await fetchTier(sess.user.id, sess.access_token)
+  if (tier) await saveCachedTier(tier)
 }
 
 // One resume on both sides, owned by this account:

@@ -108,7 +108,7 @@ function fakeStorage(initial: Record<string, unknown>) {
     local: {
       get: vi.fn(async (k: string | string[]) => Object.fromEntries((Array.isArray(k) ? k : [k]).filter((x) => x in data).map((x) => [x, data[x]]))),
       set: vi.fn(async (o: Record<string, unknown>) => { Object.assign(data, o) }),
-      remove: vi.fn(async (k: string) => { delete data[k] }),
+      remove: vi.fn(async (k: string | string[]) => { for (const key of [k].flat()) delete data[key] }),
     },
   }
 }
@@ -119,6 +119,7 @@ describe('completeSignIn', () => {
   function resumeServer(stored: { text: string; filename: string; updated_at: string } | null) {
     const uploads: unknown[] = []
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.includes('/rest/v1/users')) return new Response('[{"tier":"hosted_pro"}]', { status: 200 })
       if (!url.endsWith('/functions/v1/resume')) throw new Error(`unexpected ${url}`)
       if (init?.method === 'POST') { uploads.push(JSON.parse(init.body as string)); return new Response('{}', { status: 200 }) }
       return stored ? new Response(JSON.stringify(stored), { status: 200 }) : new Response('{"error":"No resume found"}', { status: 404 })
@@ -140,6 +141,18 @@ describe('completeSignIn', () => {
     expect(storage.data.session).toEqual(session)
     expect(storage.data.settings).toEqual({ provider: 'openai', apiKey: 'enc', mode: 'hosted' })
     expect(server.uploads).toEqual([{ text: 'resume text', filename: 'cv.pdf' }])
+  })
+
+  // A Google sign-in finishes in the worker with no panel open, so the sign-in
+  // itself caches the tier (Pro history sync reads it).
+  test("caches the account's tier", async () => {
+    const storage = fakeStorage({ cachedTier: 'hosted_free' })
+    vi.stubGlobal('chrome', { storage })
+    resumeServer(null)
+
+    await completeSignIn(session)
+
+    expect(storage.data.cachedTier).toBe('hosted_pro')
   })
 
   // A new device: no local resume, so the account's copy comes down and the

@@ -116,7 +116,8 @@ export async function clearSession(): Promise<void> {
   if (session?.user?.id && resume?.text && !resume.accountId) {
     await saveResume({ ...resume, accountId: session.user.id })
   }
-  await chrome.storage.local.remove('session')
+  // The tier belonged to that account too; the next account caches its own.
+  await chrome.storage.local.remove(['session', 'cachedTier'])
 }
 
 // "Remember me" used to keep the password here, encrypted with a key stored

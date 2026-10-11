@@ -8,10 +8,16 @@ describe('clearSession', () => {
     vi.stubGlobal('chrome', { storage: { local: {
       get: async (k: string) => (k in data ? { [k]: data[k] } : {}),
       set: async (o: Record<string, unknown>) => { Object.assign(data, o) },
-      remove: async (k: string) => { delete data[k] },
+      remove: async (k: string | string[]) => { for (const key of [k].flat()) delete data[key] },
     } } })
     return data
   }
+
+  test("forgets the signed-out account's tier", async () => {
+    const data = fakeLocal({ session: { user: { id: 'a' } }, cachedTier: 'hosted_pro' })
+    await clearSession()
+    expect(data.cachedTier).toBeUndefined()
+  })
 
   test('tags an untagged resume with the signed-out account', async () => {
     const data = fakeLocal({ session: { user: { id: 'a' } }, resume: { text: 't', filename: 'f', updatedAt: '' } })
@@ -34,7 +40,7 @@ describe('takeGoogleSignInError', () => {
     const data: Record<string, unknown> = { googleSignInError: 'Unsupported provider' }
     vi.stubGlobal('chrome', { storage: { local: {
       get: async (k: string) => (k in data ? { [k]: data[k] } : {}),
-      remove: async (k: string) => { delete data[k] },
+      remove: async (k: string | string[]) => { for (const key of [k].flat()) delete data[key] },
     } } })
     expect(await takeGoogleSignInError()).toBe('Unsupported provider')
     expect(await takeGoogleSignInError()).toBe('')
