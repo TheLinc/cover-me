@@ -65,6 +65,17 @@ export async function saveSession(session: AuthSession): Promise<void> {
   await chrome.storage.local.set({ session })
 }
 
+// Calls back when the saved session changes in another context: the worker
+// finishing Google sign-in, or a sign-in or sign-out in the popup while the
+// welcome tab is open. Returns the unsubscribe function.
+export function watchSession(onChange: (session: AuthSession | null) => void): () => void {
+  const listener = (changes: Record<string, chrome.storage.StorageChange>, area: string) => {
+    if (area === 'local' && 'session' in changes) onChange((changes.session.newValue as AuthSession) ?? null)
+  }
+  chrome.storage.onChanged.addListener(listener)
+  return () => chrome.storage.onChanged.removeListener(listener)
+}
+
 export async function clearSession(): Promise<void> {
   await chrome.storage.local.remove('session')
 }

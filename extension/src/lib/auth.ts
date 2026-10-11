@@ -94,7 +94,9 @@ export async function signInWithGoogle(): Promise<AuthSession> {
   const u = new URL(callback)
   const params = new URLSearchParams(`${u.search.slice(1)}&${u.hash.slice(1)}`)
   const code = params.get('code')
-  if (!code) throw new Error(params.get('error_description') ?? 'Google sign-in failed. Please try again.')
+  // access_denied: the user pressed Cancel on Google's consent screen.
+  if (params.get('error') === 'access_denied') throw new GoogleSignInCancelledError('Sign-in cancelled')
+  if (!code) throw new Error(params.get('error_description') || 'Google sign-in failed. Please try again.')
 
   const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=pkce`, {
     method: 'POST',
@@ -103,7 +105,7 @@ export async function signInWithGoogle(): Promise<AuthSession> {
   })
   const data = await res.json() as Record<string, unknown>
   if (!res.ok) {
-    throw new Error((data.error_description as string) ?? (data.msg as string) ?? 'Google sign-in failed. Please try again.')
+    throw new Error((data.error_description as string) || (data.msg as string) || 'Google sign-in failed. Please try again.')
   }
   return parseSession(data)
 }
@@ -113,9 +115,10 @@ export async function signInWithGoogle(): Promise<AuthSession> {
 // of a resume uploaded before signing in. A failed sync is non-fatal: the
 // resume page retries on the next upload.
 export async function completeSignIn(sess: AuthSession): Promise<void> {
-  await saveSession(sess)
+  // Mode first: panels watching the session read the mode when it lands.
   const existing = await getSettings()
   await saveSettings({ provider: existing?.provider ?? 'claude', apiKey: existing?.apiKey ?? '', mode: 'hosted' })
+  await saveSession(sess)
   const resume = await getResume()
   if (resume?.text) {
     await uploadResumeToBackend(sess.access_token, resume.text, resume.filename).catch(() => {})
@@ -136,7 +139,7 @@ export async function handleGoogleSignIn(): Promise<GoogleSignInResponse> {
     return { success: true, session }
   } catch (err) {
     if (err instanceof GoogleSignInCancelledError) return { success: false, cancelled: true }
-    return { success: false, cancelled: false, error: err instanceof Error ? err.message : 'Google sign-in failed' }
+    return { success: false, cancelled: false, error: (err instanceof Error && err.message) || 'Google sign-in failed' }
   }
 }
 

@@ -109,9 +109,12 @@ function AuthForm() {
       if (event === "SIGNED_IN" && isOAuth) window.location.href = afterOAuth(searchParams.get("plan"));
     });
 
+    // getSession waits for the client's code exchange, so no session here
+    // means the exchange failed (an expired or reused link, say).
     if (isOAuth) {
       supabase.auth.getSession().then(({ data: { session } }) => {
         if (session) window.location.href = afterOAuth(searchParams.get("plan"));
+        else setError((current) => current || "Google sign-in didn't finish. Please try again.");
       });
     }
 

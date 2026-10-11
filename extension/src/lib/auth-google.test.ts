@@ -57,6 +57,22 @@ describe('signInWithGoogle', () => {
     expect(err.message).toMatch(/could not be loaded/)
   })
 
+  test('Cancel on Google\'s consent screen is a cancel, not an error', async () => {
+    fakeIdentity(async () => `${REDIRECT}?error=access_denied&error_description=`)
+    await expect(signInWithGoogle()).rejects.toBeInstanceOf(GoogleSignInCancelledError)
+  })
+
+  test('an error with an empty description still gets a message', async () => {
+    fakeIdentity(async () => `${REDIRECT}#error=server_error&error_description=`)
+    await expect(signInWithGoogle()).rejects.toThrow('Google sign-in failed. Please try again.')
+  })
+
+  test('a failed exchange with an empty server message still gets a message', async () => {
+    fakeIdentity(async () => `${REDIRECT}?code=c`)
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ error_description: '', msg: '' }), { status: 400 })))
+    await expect(signInWithGoogle()).rejects.toThrow('Google sign-in failed. Please try again.')
+  })
+
   test('an error from Supabase in the redirect is shown to the user', async () => {
     fakeIdentity(async () => `${REDIRECT}#error=server_error&error_description=Unsupported+provider%3A+provider+is+not+enabled`)
     const err = await signInWithGoogle().catch((e) => e)
@@ -100,6 +116,19 @@ describe('completeSignIn', () => {
     const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit]
     expect(url).toMatch(/\/functions\/v1\/resume$/)
     expect(JSON.parse(init.body as string)).toEqual({ text: 'resume text', filename: 'cv.pdf' })
+  })
+
+  // Panels watching the session read the mode when it arrives, so the mode
+  // must already say hosted by then.
+  test('hosted mode is saved before the session', async () => {
+    const storage = fakeStorage({ settings: { provider: 'claude', apiKey: 'enc', mode: 'byok' } })
+    vi.stubGlobal('chrome', { storage })
+    vi.stubGlobal('fetch', vi.fn())
+
+    await completeSignIn(session)
+
+    const keys = storage.local.set.mock.calls.map(([o]) => Object.keys(o)[0])
+    expect(keys.indexOf('settings')).toBeLessThan(keys.indexOf('session'))
   })
 
   test('with no resume yet, nothing is uploaded and a fresh install gets default settings', async () => {

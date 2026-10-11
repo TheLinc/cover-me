@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { completeSignIn, EmailConfirmationRequiredError, ensureValidSession, fetchTier, signIn, signOut, signUp } from '../../lib/auth'
 import type { GoogleSignInResponse } from '../../lib/auth'
+import { GOOGLE_SIGNIN } from '../../lib/config'
 import { encryptApiKey } from '../../lib/crypto'
-import { clearSession, getSettings, resolveMode, saveCachedTier, saveSettings } from '../../lib/storage'
+import { clearSession, getMode, getSettings, resolveMode, saveCachedTier, saveSettings, watchSession } from '../../lib/storage'
 import type { AIProvider, AppMode, AuthSession } from '../../types'
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
@@ -34,6 +35,9 @@ export default function AccountPanel() {
   const [authStatus, setAuthStatus] = useState<AuthStatus>('idle')
   const [authError, setAuthError] = useState('')
   const [authNotice, setAuthNotice] = useState('')
+  // The load, the sign-in handlers and the session watcher can all report the
+  // same session; fetch the tier once per session.
+  const shownToken = useRef<string | null>(null)
 
   useEffect(() => {
     Promise.all([getSettings(), ensureValidSession()]).then(async ([s, sess]) => {
@@ -42,13 +46,22 @@ export default function AccountPanel() {
         setProvider(s.provider)
         if (s.apiKey) setApiKey(MASKED)
       }
-      setSession(sess)
+      if (sess) signedIn(sess)
+    })
+    // The worker may finish a Google sign-in after this panel opened, and the
+    // welcome tab should follow a sign-in or sign-out made in the popup. A
+    // token refresh lands here too, so take the mode from storage rather than
+    // assuming hosted (completeSignIn saves hosted mode before the session).
+    return watchSession((sess) => {
       if (sess) {
-        const t = await fetchTier(sess.user.id, sess.access_token)
-        setTier(t)
-        await saveCachedTier(t)
+        getMode().then(setMode)
+        signedIn(sess)
+      } else {
+        shownToken.current = null
+        setSession(null)
       }
     })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   async function switchMode(next: AppMode) {
@@ -84,6 +97,8 @@ export default function AccountPanel() {
 
   function signedIn(sess: AuthSession) {
     setSession(sess)
+    if (shownToken.current === sess.access_token) return
+    shownToken.current = sess.access_token
     fetchTier(sess.user.id, sess.access_token).then(async (t) => {
       setTier(t)
       await saveCachedTier(t)
@@ -124,7 +139,9 @@ export default function AccountPanel() {
     try {
       const res = await chrome.runtime.sendMessage({ type: 'GOOGLE_SIGN_IN' }) as GoogleSignInResponse
       if (res.success) signedIn(res.session)
-      else if (!res.cancelled) setAuthError(res.error ?? 'Google sign-in failed')
+      else if (!res.cancelled) setAuthError(res.error || 'Google sign-in failed')
+    } catch (err) {
+      setAuthError(err instanceof Error ? err.message : 'Google sign-in failed')
     } finally {
       setAuthStatus('idle')
     }
@@ -244,11 +261,14 @@ export default function AccountPanel() {
           ) : (
             /* Auth form */
             <>
-              <button className="btn btn-primary" onClick={handleGoogle} disabled={authStatus === 'loading'}>
-                Continue with Google
-              </button>
-
-              <div className="auth-divider"><span>or use email</span></div>
+              {GOOGLE_SIGNIN && (
+                <>
+                  <button className="btn btn-primary" onClick={handleGoogle} disabled={authStatus === 'loading'}>
+                    Continue with Google
+                  </button>
+                  <div className="auth-divider"><span>or use email</span></div>
+                </>
+              )}
 
               <div className="form-group">
                 <label className="form-label">Email</label>
@@ -296,7 +316,7 @@ export default function AccountPanel() {
               {authNotice && <div className="notice-box">{authNotice}</div>}
 
               <button
-                className="btn btn-secondary"
+                className={GOOGLE_SIGNIN ? 'btn btn-secondary' : 'btn btn-primary'}
                 onClick={handleAuth}
                 disabled={authStatus === 'loading' || !email || !password}
               >

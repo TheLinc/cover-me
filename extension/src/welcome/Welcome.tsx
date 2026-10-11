@@ -12,7 +12,7 @@ export default function Welcome() {
       <h1 className="page-title" style={{ marginTop: 16 }}>Your first letter is three steps away</h1>
 
       <section className="welcome-step">
-        <h2>1. Create your free account</h2>
+        <h2>1. Create a free account, or add your own API key</h2>
         <AccountPanel />
       </section>
 

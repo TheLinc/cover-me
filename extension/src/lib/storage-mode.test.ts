@@ -1,5 +1,39 @@
-import { describe, expect, test } from 'vitest'
-import { resolveMode } from './storage'
+import { afterEach, describe, expect, test, vi } from 'vitest'
+import { resolveMode, watchSession } from './storage'
+
+afterEach(() => vi.unstubAllGlobals())
+
+describe('watchSession', () => {
+  function fakeOnChanged() {
+    const listeners = new Set<(changes: Record<string, { newValue?: unknown }>, area: string) => void>()
+    vi.stubGlobal('chrome', { storage: { onChanged: {
+      addListener: (l: never) => listeners.add(l),
+      removeListener: (l: never) => listeners.delete(l),
+    } } })
+    return { fire: (changes: Record<string, { newValue?: unknown }>, area = 'local') => listeners.forEach((l) => l(changes, area)), listeners }
+  }
+
+  test('reports a session saved elsewhere (the worker finishing Google sign-in)', () => {
+    const on = fakeOnChanged()
+    const seen: unknown[] = []
+    watchSession((s) => seen.push(s))
+    on.fire({ session: { newValue: { access_token: 'at' } } })
+    on.fire({ session: {} }) // removed: signed out
+    expect(seen).toEqual([{ access_token: 'at' }, null])
+  })
+
+  test('ignores other keys and other storage areas, and stops when unsubscribed', () => {
+    const on = fakeOnChanged()
+    const seen: unknown[] = []
+    const stop = watchSession((s) => seen.push(s))
+    on.fire({ settings: { newValue: {} } })
+    on.fire({ session: { newValue: { access_token: 'x' } } }, 'sync')
+    stop()
+    on.fire({ session: { newValue: { access_token: 'y' } } })
+    expect(seen).toEqual([])
+    expect(on.listeners.size).toBe(0)
+  })
+})
 
 describe('resolveMode', () => {
   test('a fresh install defaults to the hosted account', () => {

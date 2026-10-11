@@ -868,60 +868,6 @@ html, body {
   font-weight: 600;
 }
 
-/* ── Mode cards (settings) ────────────────────────────────────────────── */
-
-.mode-cards {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 20px;
-}
-
-.mode-card {
-  flex: 1;
-  padding: 12px 10px;
-  background: var(--surface);
-  border: 1.5px solid var(--border);
-  border-radius: var(--r);
-  cursor: pointer;
-  text-align: left;
-  font-family: inherit;
-  transition: border-color 0.14s, background 0.14s;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.mode-card:hover:not(.active) {
-  border-color: var(--accent);
-}
-
-.mode-card.active {
-  border-color: var(--accent);
-  background: var(--accent-dim);
-}
-
-.mode-card-icon {
-  color: var(--text-3);
-  margin-bottom: 4px;
-}
-
-.mode-card.active .mode-card-icon {
-  color: var(--accent-h);
-}
-
-.mode-card-title {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text);
-  line-height: 1.2;
-}
-
-.mode-card-desc {
-  font-size: 10px;
-  color: var(--text-2);
-  line-height: 1.4;
-}
-
 /* ── Account card (hosted, signed in) ─────────────────────────────────── */
 
 .account-avatar {

@@ -217,6 +217,9 @@ export default function PrivacyPage() {
                 <strong className="text-foreground">Account credentials (Hosted mode only).</strong>{' '}
                 Your email address and password are used to create and authenticate your account, managed
                 by Supabase Auth. Passwords are hashed using bcrypt and are never stored in plaintext.
+                If you choose Continue with Google instead, there is no password: Google confirms who
+                you are, and we receive your email address, name, and profile picture link (see
+                Third-Party Services below).
                 If you enable &ldquo;Remember me&rdquo; on the sign-in screen, your password is encrypted
                 with AES-256-GCM and stored locally on your device so the sign-in form can be pre-filled.
                 It is never transmitted to our servers in plaintext.
@@ -371,6 +374,20 @@ export default function PrivacyPage() {
               injected in the background.
             </PermissionCard>
 
+            <PermissionCard name="identity">
+              <strong className="text-foreground">Why it is needed:</strong> It lets you sign in with
+              your Google account through Chrome&apos;s own sign-in window, using{' '}
+              <code className="text-brand-light font-mono text-[12px]">chrome.identity.launchWebAuthFlow</code>.
+              <br /><br />
+              <strong className="text-foreground">Exactly how it is used:</strong> Only when you click
+              Continue with Google, Chrome opens Google&apos;s sign-in page. After you approve, Supabase
+              Auth receives the email address, name, and profile picture link Google shares, and the
+              extension receives a Cover Me session. The extension reads nothing else from your Google
+              account or from Chrome&apos;s signed-in profile. The{' '}
+              <code className="text-brand-light font-mono text-[12px]">identity.email</code> permission
+              is not requested.
+            </PermissionCard>
+
             <H3>Job board host access</H3>
             <P>
               Cover Me does not run on the websites you visit. It reads a page only when you click
@@ -497,7 +514,7 @@ export default function PrivacyPage() {
                   name: 'Supabase',
                   url: 'https://supabase.com/privacy',
                   when: 'Hosted mode only',
-                  receives: 'Email address, hashed password, encrypted resume text, encrypted cover letters and tailored resumes (Pro), session tokens, and usage counts. Supabase hosts our authentication system and database.',
+                  receives: 'Email address, hashed password (email sign-in only), encrypted resume text, encrypted cover letters and tailored resumes (Pro), session tokens, and usage counts. Supabase hosts our authentication system and database.',
                 },
                 {
                   name: 'Google',
