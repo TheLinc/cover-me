@@ -64,6 +64,7 @@ export default function AccountPanel({ initialView = 'signin' }: { initialView?:
       } else {
         shownToken.current = null
         setSession(null)
+        setTier('hosted_free') // the next account's badge must not show this one's tier
       }
     })
     // A flow that fails while this panel is open: show it now, not next open.
