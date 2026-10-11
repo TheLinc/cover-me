@@ -487,8 +487,9 @@ export default function GeneratePage({ onNavigate }: Props) {
   // The error is persisted in coverJob and restored on every popup open, so
   // leaving it has to clear the record too (otherwise a user who just paid
   // stays on the limit warning).
+  // Back to the letter that was showing (a failed regenerate keeps it), or idle.
   function dismissLetterError() {
-    setState('idle')
+    setState(letter && job ? 'done' : 'idle')
     chrome.storage.local.remove('coverJob')
   }
 
@@ -590,8 +591,8 @@ export default function GeneratePage({ onNavigate }: Props) {
 
   // The header's status line: what's running, what failed, or that a result is
   // ready. A failure wins over the other result being done.
-  const status =
-    state === 'loading' ? (loadingJob ? 'Writing…' : 'Reading the posting…')
+  const status = !setupComplete ? ''
+    : state === 'loading' ? (loadingJob ? 'Writing…' : 'Reading the posting…')
     : tailorState === 'loading' ? (loadingJob ? 'Tailoring…' : 'Reading the posting…')
     : state === 'error' ? 'Letter failed'
     : tailorState === 'error' ? 'Tailoring failed'
@@ -818,7 +819,7 @@ export default function GeneratePage({ onNavigate }: Props) {
                   </div>
                   {errorCode === 'RATE_LIMIT' && upgradePrompt}
                   <button className="btn btn-secondary" onClick={dismissLetterError}>
-                    {errorCode ? 'Back' : 'Try Again'}
+                    {errorCode || letter || tailorState === 'done' ? 'Back' : 'Try Again'}
                   </button>
                 </div>
               )}
@@ -829,7 +830,7 @@ export default function GeneratePage({ onNavigate }: Props) {
                   <div className={tailorErrorCode ? 'warning-box' : 'error-box'}>{tailorError}</div>
                   {tailorErrorCode === 'RATE_LIMIT' && upgradePrompt}
                   <button className="btn btn-secondary" onClick={resetTailor}>
-                    {tailorErrorCode ? 'Back' : 'Try Again'}
+                    {tailorErrorCode || state === 'done' ? 'Back' : 'Try Again'}
                   </button>
                 </div>
               )}
