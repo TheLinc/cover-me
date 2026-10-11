@@ -177,6 +177,8 @@ pnpm env:local    # writes local env files for the functions, extension and web 
 
 `pnpm start` applies every migration and `supabase/seed.sql`, which creates two confirmed accounts: `free@cover-me.test` and `pro@cover-me.test`, both with password `password123`. `pnpm status` prints the local URLs, including Mailpit, which catches signup and password reset emails. Studio (the local dashboard), Realtime and Analytics are turned off in `supabase/config.toml` to keep the stack's memory low; set `[studio] enabled = true` there when you want the dashboard.
 
+Google sign-in is off on the local stack until you add a Google OAuth client for it. Copy `backend/.env.example` to `backend/.env` and follow the comments there: a *Web application* client with redirect URI `http://127.0.0.1:54321/auth/v1/callback`, its ID and secret, and `SUPABASE_AUTH_EXTERNAL_GOOGLE_ENABLED=true`. Then run `supabase stop`, `pnpm start` and `pnpm env:local`, which turns on the Google buttons in the local extension and web builds.
+
 Then run the apps against it:
 
 ```bash

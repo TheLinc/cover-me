@@ -5,7 +5,8 @@
 //   web/.env.localdb                  `pnpm dev` in web/
 //
 // Safe to re-run: ENCRYPTION_KEY, ANTHROPIC_API_KEY and STRIPE_WEBHOOK_SECRET
-// keep any value already in the file. Run after `pnpm start`.
+// keep any value already in the file. Run after `pnpm start`. The Google
+// buttons are on when backend/.env turns on the local Google provider.
 
 import { randomBytes } from 'node:crypto'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
@@ -47,6 +48,9 @@ write(fnPath, [
 ])
 if (!anthropicKey) console.warn('  ANTHROPIC_API_KEY is empty: add one to use generate/tailor from the extension.')
 
+// The Supabase CLI reads backend/.env too (see .env.example there).
+const google = readEnv(join(BACKEND, '.env')).SUPABASE_AUTH_EXTERNAL_GOOGLE_ENABLED === 'true' ? '1' : ''
+
 // ── Extension ────────────────────────────────────────────────────────────────
 
 write(join(REPO, 'extension', '.env.localdb'), [
@@ -54,6 +58,7 @@ write(join(REPO, 'extension', '.env.localdb'), [
   `VITE_SUPABASE_URL=${API_URL}`,
   `VITE_SUPABASE_PUBLISHABLE_KEY=${publishableKey(status)}`,
   'VITE_WEB_URL=http://localhost:3000',
+  `VITE_GOOGLE_SIGNIN=${google}`,
 ])
 
 // ── Web ──────────────────────────────────────────────────────────────────────
@@ -67,6 +72,7 @@ write(webPath, [
   `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${publishableKey(status)}`,
   `SUPABASE_SERVICE_KEY=${serviceKey(status)}`,
   'NEXT_PUBLIC_SITE_URL=http://localhost:3000',
+  `NEXT_PUBLIC_GOOGLE_SIGNIN=${google}`,
   '# whsec_... from `stripe listen --print-secret` with your test key pinned (README → Local backend).',
   // Left commented until set: an empty value would override .env.local's.
   webOld.STRIPE_WEBHOOK_SECRET ? `STRIPE_WEBHOOK_SECRET=${webOld.STRIPE_WEBHOOK_SECRET}` : '# STRIPE_WEBHOOK_SECRET=',
