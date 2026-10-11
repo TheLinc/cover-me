@@ -42,9 +42,11 @@ export default function DashboardClient({
   const [billingError, setBillingError]     = useState('');
   const isPro = tier === "hosted_pro";
   const initial = email[0]?.toUpperCase() ?? "?";
+  // UTC on server and browser alike, or a month-boundary date differs and hydration fails.
   const memberDate = new Date(memberSince).toLocaleDateString("en-US", {
     month: "long",
     year: "numeric",
+    timeZone: "UTC",
   });
   const usage = describeAllowance(allowance);
   const usagePct = usage ? Math.min(100, (usage.used / usage.limit) * 100) : 0;

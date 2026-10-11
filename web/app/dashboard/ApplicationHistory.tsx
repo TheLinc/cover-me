@@ -10,7 +10,9 @@ export function ApplicationHistory({ applications }: { applications: Application
       <p className="text-[13px] text-muted-foreground mb-4">
         {applications.length === 0
           ? 'Letters and tailored resumes you make in the extension appear here, on every device.'
-          : `The ${applications.length} most recent, synced from the extension.`}
+          : applications.length >= 30
+            ? 'Your 30 most recent, synced from the extension.'
+            : 'Synced from the extension.'}
       </p>
       <ul className="flex flex-col divide-y divide-border">
         {applications.map((app) => {
@@ -21,7 +23,8 @@ export function ApplicationHistory({ applications }: { applications: Application
                 <div className="min-w-0">
                   <p className="text-[14px] font-semibold text-foreground truncate">{app.title || 'Untitled role'}</p>
                   <p className="text-[12.5px] text-muted-foreground truncate">
-                    {app.company || 'Unknown company'} · {new Date(app.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    {/* UTC on both server and browser, or an evening date differs and hydration fails. */}
+                    {app.company || 'Unknown company'} · {new Date(app.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })}
                   </p>
                 </div>
                 {s.bestScore !== null && (

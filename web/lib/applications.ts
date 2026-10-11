@@ -10,17 +10,28 @@ export interface Application {
   tailoredResumes: { id: string; resume: { atsScore?: number; atsGaps?: string[] }; createdAt: string }[]
 }
 
-// null on any failure (not Pro, paused project, network): the dashboard
-// renders without the section.
+// null on any failure (not Pro, paused project, network, a hang past 5 s): the
+// dashboard renders without the section.
 export async function fetchApplications(supabaseUrl: string, accessToken: string): Promise<Application[] | null> {
   try {
     const res = await fetch(`${supabaseUrl}/functions/v1/applications`, {
       headers: { Authorization: `Bearer ${accessToken}` },
       cache: 'no-store',
+      signal: AbortSignal.timeout(5000),
     })
     if (!res.ok) return null
     const data = (await res.json()) as { applications?: Application[] }
-    return Array.isArray(data.applications) ? data.applications : null
+    if (!Array.isArray(data.applications)) return null
+    // The dashboard is a client component: everything returned here is sent
+    // to the browser. Keep only what it shows, not the full resumes.
+    return data.applications.map((a) => ({
+      ...a,
+      tailoredResumes: (a.tailoredResumes ?? []).map((t) => ({
+        id: t.id,
+        createdAt: t.createdAt,
+        resume: { atsScore: t.resume?.atsScore, atsGaps: t.resume?.atsGaps },
+      })),
+    }))
   } catch {
     return null
   }

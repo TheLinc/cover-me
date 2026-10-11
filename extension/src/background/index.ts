@@ -67,9 +67,10 @@ async function failCover(id: string, job: JobData, startedAt: number, error: str
 }
 
 // Every successful run is kept for History, on every path (Pro runs are also
-// saved server-side by the tailor function).
+// saved server-side by the tailor function). Best-effort: a failed save must
+// not turn a finished (and, hosted, already counted) run into an error.
 async function recordTailored(job: JobData, resume: TailoredResume): Promise<void> {
-  await addToTailoredHistory({ id: crypto.randomUUID(), job, resume, createdAt: new Date().toISOString() })
+  await addToTailoredHistory({ id: crypto.randomUUID(), job, resume, createdAt: new Date().toISOString() }).catch(() => {})
 }
 
 async function failTailor(id: string, job: JobData, startedAt: number, error: string): Promise<TailorResponse> {
