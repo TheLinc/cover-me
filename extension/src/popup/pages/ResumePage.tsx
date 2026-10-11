@@ -31,8 +31,11 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
       const text = await parseResume(file)
       const [mode, session] = await Promise.all([getMode(), getSession()])
       const hosted = mode === 'hosted' && !!session?.access_token
-      // Signed in: the copy belongs to this account (see syncResume in lib/auth.ts).
-      const data: ResumeData = { text, filename: file.name, updatedAt: new Date().toISOString(), ...(hosted ? { accountId: session.user.id } : {}) }
+      // Signed in: the copy belongs to this account. Signed out: it keeps the
+      // previous copy's owner, so the next account to sign in on this browser
+      // can't claim it (see syncResume in lib/auth.ts).
+      const accountId = hosted ? session.user.id : (await getResume())?.accountId
+      const data: ResumeData = { text, filename: file.name, updatedAt: new Date().toISOString(), ...(accountId ? { accountId } : {}) }
       await saveResume(data)
       setResume(data)
       setStatus('saved')

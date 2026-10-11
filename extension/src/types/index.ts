@@ -67,8 +67,10 @@ export interface ResumeData {
   filename: string
   updatedAt: string
   parsed?: ParsedResume
-  // The Cover Me account this copy was synced with. Unset: uploaded before any
-  // sign-in (BYOK or a new install), so the next sign-in may claim it.
+  // The Cover Me account this copy belongs to. Set by a sign-in's sync, an
+  // upload while signed in, a sign-out, and inherited by a signed-out upload.
+  // Unset only when this browser has never had a signed-in account with a
+  // resume (BYOK or a new install), so the next sign-in may claim it.
   accountId?: string
 }
 
