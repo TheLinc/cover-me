@@ -588,10 +588,13 @@ export default function GeneratePage({ onNavigate }: Props) {
 
   const bothDone = state === 'done' && tailorState === 'done'
 
-  // The header's status line: what's running, or that a result is ready.
+  // The header's status line: what's running, what failed, or that a result is
+  // ready. A failure wins over the other result being done.
   const status =
     state === 'loading' ? (loadingJob ? 'Writing…' : 'Reading the posting…')
     : tailorState === 'loading' ? (loadingJob ? 'Tailoring…' : 'Reading the posting…')
+    : state === 'error' ? 'Letter failed'
+    : tailorState === 'error' ? 'Tailoring failed'
     : state === 'done' || tailorState === 'done' ? 'Done'
     : ''
 
@@ -600,8 +603,9 @@ export default function GeneratePage({ onNavigate }: Props) {
       <header className="popup-bar">
         <img src={logoIcon} width="20" height="20" alt="" className="logo-icon" />
         <span className="logo-text">Cover Me</span>
-        {/* Always mounted, so screen readers hear "Done" when a run finishes. */}
-        <span className="popup-status" role="status">{status}</span>
+        {/* Mounted once saved state has loaded (so reopening the popup doesn't
+            announce "Done"), then kept, so screen readers hear each change. */}
+        {setupLoaded && <span className="popup-status" role="status">{status}</span>}
       </header>
 
       {!setupLoaded && null}
@@ -807,7 +811,7 @@ export default function GeneratePage({ onNavigate }: Props) {
               )}
 
               {/* LETTER ERROR */}
-              {state === 'error' && tailorState !== 'done' && (
+              {state === 'error' && (
                 <div className="letter-container">
                   <div className={errorCode ? 'warning-box' : 'error-box'}>
                     {error}
@@ -820,7 +824,7 @@ export default function GeneratePage({ onNavigate }: Props) {
               )}
 
               {/* TAILOR ERROR */}
-              {tailorState === 'error' && state !== 'done' && (
+              {tailorState === 'error' && (
                 <div className="letter-container">
                   <div className={tailorErrorCode ? 'warning-box' : 'error-box'}>{tailorError}</div>
                   {tailorErrorCode === 'RATE_LIMIT' && upgradePrompt}
