@@ -32,7 +32,8 @@ export default function AccountPanel({ initialView = 'signin' }: { initialView?:
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [authStatus, setAuthStatus] = useState<AuthStatus>('idle')
+  const [authStatus, setAuthStatus] = useState<AuthStatus>('idle') // email sign-in
+  const [googleBusy, setGoogleBusy] = useState(false)
   const [authError, setAuthError] = useState('')
   const [authNotice, setAuthNotice] = useState('')
   // The load, the sign-in handlers and the session watcher can all report the
@@ -49,7 +50,7 @@ export default function AccountPanel({ initialView = 'signin' }: { initialView?:
       if (sess) signedIn(sess)
     })
     // A Google sign-in started from the popup fails after the popup closed.
-    takeGoogleSignInError().then((msg) => { if (msg) setAuthError(msg) })
+    takeGoogleSignInError().then((msg) => { if (msg && !shownToken.current) setAuthError(msg) })
     // The worker may finish a Google sign-in after this panel opened, and the
     // welcome tab should follow a sign-in or sign-out made in the popup. A
     // token refresh lands here too, so take the mode from storage rather than
@@ -65,7 +66,7 @@ export default function AccountPanel({ initialView = 'signin' }: { initialView?:
     })
     // A flow that fails while this panel is open: show it now, not next open.
     const stopError = watchGoogleSignInError((msg) => {
-      setAuthError(msg)
+      if (!shownToken.current) setAuthError(msg) // signed in: nothing to show it on
       void takeGoogleSignInError()
     })
     return () => { stopSession(); stopError() }
@@ -105,6 +106,7 @@ export default function AccountPanel({ initialView = 'signin' }: { initialView?:
 
   function signedIn(sess: AuthSession) {
     setSession(sess)
+    setAuthError('') // an old failure would reappear on the form after sign-out
     if (shownToken.current === sess.access_token) return
     shownToken.current = sess.access_token
     fetchTier(sess.user.id, sess.access_token).then(async (t) => {
@@ -141,7 +143,7 @@ export default function AccountPanel({ initialView = 'signin' }: { initialView?:
   // The worker runs the flow (see handleGoogleSignIn). In the popup this
   // usually never resolves, because the popup closes when Google's window opens.
   async function handleGoogle() {
-    setAuthStatus('loading')
+    setGoogleBusy(true)
     setAuthError('')
     setAuthNotice('')
     try {
@@ -154,7 +156,7 @@ export default function AccountPanel({ initialView = 'signin' }: { initialView?:
     } catch (err) {
       setAuthError(err instanceof Error ? err.message : 'Google sign-in failed')
     } finally {
-      setAuthStatus('idle')
+      setGoogleBusy(false)
     }
   }
 
@@ -277,7 +279,7 @@ export default function AccountPanel({ initialView = 'signin' }: { initialView?:
             <>
               {GOOGLE_SIGNIN && (
                 <>
-                  <button className="btn btn-primary" onClick={handleGoogle} disabled={authStatus === 'loading'}>
+                  <button className="btn btn-primary" onClick={handleGoogle} disabled={googleBusy || authStatus === 'loading'}>
                     Continue with Google
                   </button>
                   <div className="auth-divider"><span>or use email</span></div>
