@@ -478,6 +478,19 @@ pnpm run build
 
 Load `extension/dist/` as an unpacked extension in Chrome. The hosted tier will now point to your own Supabase project and web dashboard.
 
+### 10. Google sign-in (optional)
+
+Email and password sign-in works without this. To turn on "Continue with Google":
+
+1. In the **Google Cloud Console**, go to *APIs & Services → Credentials → Create OAuth client ID → Web application*.
+   - Authorized redirect URI: `https://<your-project-ref>.supabase.co/auth/v1/callback`.
+   - On the OAuth consent screen, request only the `openid`, `email` and `profile` scopes.
+2. In the **Supabase dashboard**, go to *Authentication → Providers → Google*. Enable it and paste the client ID and secret.
+3. Under *Authentication → URL Configuration → Redirect URLs*, add:
+   - `https://<your-extension-id>.chromiumapp.org/`, your extension's ID (`chrome.identity.getRedirectURL()` in its service-worker console prints it). Add each ID exactly. A `*.chromiumapp.org` wildcard would let any extension receive your users' sessions.
+   - `https://your-domain.com/auth` and `https://your-domain.com/auth?**` for the website.
+4. Set `NEXT_PUBLIC_GOOGLE_SIGNIN=1` for the web dashboard to show its Google button.
+
 ### Environment variable reference
 
 **Edge Functions** (set via `supabase secrets set`):
@@ -502,6 +515,7 @@ Load `extension/dist/` as an unpacked extension in Chrome. The hosted tier will 
 | `STRIPE_SECRET_KEY` | Stripe secret key |
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret |
 | `NEXT_PUBLIC_SITE_URL` | Your web dashboard URL |
+| `NEXT_PUBLIC_GOOGLE_SIGNIN` | `1` shows "Continue with Google" (after step 10) |
 
 **Extension** (`extension/.env`; use `extension/.env.development` for local-only overrides):
 
