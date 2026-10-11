@@ -279,9 +279,6 @@ export default function DashboardClient({
             </div>
           )}
 
-          {/* Pro history (2e) */}
-          {history}
-
           {/* Extension CTA */}
           <div
             className="bg-surface border border-border rounded-[10px] px-7 py-[22px] flex items-center justify-between gap-6 max-[700px]:flex-col max-[700px]:items-start max-[700px]:gap-3.5"
@@ -311,6 +308,9 @@ export default function DashboardClient({
               </Button>
             </a>
           </div>
+
+          {/* Pro history (2e). Last, so nothing shifts when it streams in. */}
+          {history}
         </div>
       </main>
     </div>

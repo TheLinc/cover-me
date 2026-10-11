@@ -22,8 +22,9 @@ export async function fetchApplications(supabaseUrl: string, accessToken: string
     if (!res.ok) return null
     const data = (await res.json()) as { applications?: Application[] }
     if (!Array.isArray(data.applications)) return null
-    // The dashboard is a client component: everything returned here is sent
-    // to the browser. Keep only what it shows, not the full resumes.
+    // Keep only what the section shows: the full resumes are personal data it
+    // never needs, and the lighter the better if it's ever passed to a client
+    // component.
     return data.applications.map((a) => ({
       ...a,
       tailoredResumes: (a.tailoredResumes ?? []).map((t) => ({

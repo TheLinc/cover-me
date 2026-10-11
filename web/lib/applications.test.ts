@@ -19,8 +19,8 @@ describe('fetchApplications', () => {
     expect((init.headers as Record<string, string>).Authorization).toBe('Bearer at')
   })
 
-  // The dashboard is a client component, so whatever this returns is sent to
-  // the browser. Only the score and gaps are shown; the rest is personal data.
+  // Only the score and gaps are shown; the rest is personal data the
+  // dashboard never needs.
   it('keeps only the ATS score and gaps of each tailored resume', async () => {
     const full = { name: 'Pat', email: 'pat@example.com', phone: '555', experience: [{ title: 'x' }], atsScore: 80, atsGaps: ['Go'] }
     vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ applications: [app([{ id: 't1', resume: full, createdAt: '2026-10-01T00:00:00Z' }])] }), { status: 200 })))
