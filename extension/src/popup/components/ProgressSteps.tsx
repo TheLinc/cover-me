@@ -9,7 +9,7 @@ export default function ProgressSteps({ steps }: { steps: Step[] }) {
   return (
     <ul className="steps" aria-live="polite">
       {steps.map((s) => (
-        <li key={s.label.replace(/ \(.*\)$/, '')} className={`step step-${s.state}`} aria-current={s.state === 'active' ? 'step' : undefined}>
+        <li key={s.label.replace(/ \(.*\)$/, '')} className={`step step-${s.state}`} aria-atomic="true" aria-current={s.state === 'active' ? 'step' : undefined}>
           {s.state === 'done' && (
             <span className="step-icon step-icon-done" aria-hidden="true">
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">

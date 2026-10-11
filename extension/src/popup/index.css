@@ -1164,3 +1164,7 @@ textarea:focus-visible, input:focus-visible, [tabindex]:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   .spinner, .step-spinner { animation: none; }
 }
+
+/* An option with its "?" beside the label, not inside it: the checkbox is
+   named by its own text, and the explanation belongs to the button. */
+.toggle-row { display: flex; align-items: center; gap: 6px; }
