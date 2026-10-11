@@ -5,13 +5,12 @@ import { tailorResume } from '../lib/ai/resume-tailor'
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from '../lib/config'
 import { decryptApiKey } from '../lib/crypto'
 import { debugGroup } from '../lib/debug'
-import { addToHistory, clearSavedLogin, getCachedTier, getCandidateContext, getResume, getSettings, resolveMode, saveParsedResume } from '../lib/storage'
+import { addToHistory, getCachedTier, getCandidateContext, getResume, getSettings, resolveMode, saveParsedResume } from '../lib/storage'
+import { handleInstalled } from './install'
 import type { PageSnapshot } from '../content/snapshot.ts'
 import type { CoverJob, CoverLetter, FrameScrapeResponse, GenerateResponse, JobData, ScrapeResponse, TailoredResume, TailorJob, TailorResponse } from '../types'
 
-chrome.runtime.onInstalled.addListener(() => {
-  clearSavedLogin()
-})
+chrome.runtime.onInstalled.addListener((details) => { void handleInstalled(details) })
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (sender.id !== chrome.runtime.id) return

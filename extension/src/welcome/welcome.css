@@ -1,0 +1,6 @@
+/* The popup stylesheet fixes the body at 380×560; a tab needs normal flow. */
+html, body { width: auto; height: auto; overflow: auto; }
+.welcome { max-width: 420px; margin: 40px auto 64px; padding: 0 18px; }
+.welcome-step { margin-top: 28px; }
+.welcome-step h2 { font-size: 15px; font-weight: 700; margin-bottom: 10px; }
+.welcome-step .page { padding: 0; min-height: 0; }

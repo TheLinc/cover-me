@@ -6,7 +6,7 @@ import type { ParsedResume, ResumeData } from '../../types'
 
 type Status = 'idle' | 'parsing' | 'saved' | 'error'
 
-export default function ResumePage() {
+export default function ResumePage({ hideHeader = false }: { hideHeader?: boolean }) {
   const [resume, setResume] = useState<ResumeData | null>(null)
   const [parsed, setParsed] = useState<ParsedResume | null>(null)
   const [status, setStatus] = useState<Status>('idle')
@@ -73,10 +73,12 @@ export default function ResumePage() {
 
   return (
     <div className="page">
-      <div className="page-header">
-        <h1 className="page-title">Resume</h1>
-        <p className="page-subtitle">Upload once — used for every cover letter</p>
-      </div>
+      {!hideHeader && (
+        <div className="page-header">
+          <h1 className="page-title">Resume</h1>
+          <p className="page-subtitle">Upload once — used for every cover letter</p>
+        </div>
+      )}
 
       <div
         className={`upload-area${dragOver ? ' drag-over' : ''}`}
