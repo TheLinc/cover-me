@@ -146,7 +146,12 @@ async function syncResume(sess: AuthSession): Promise<void> {
   const signedOut = !!mine?.signedOutUpload
   const keepMine = mine && (!remote || remote.text === mine.text || (!signedOut && Date.parse(mine.updatedAt) >= Date.parse(remote.updatedAt)))
 
-  const next = keepMine ? { ...mine, accountId: userId } : remote ? { ...remote, accountId: userId } : null
+  let next: ResumeData | null = remote ? { ...remote, accountId: userId } : null
+  if (keepMine) {
+    // Matching the account's copy, a signed-out copy is in the account after all.
+    const { signedOutUpload, ...rest } = mine
+    next = { ...rest, accountId: userId, ...(signedOutUpload && remote?.text !== mine.text ? { signedOutUpload } : {}) }
+  }
 
   // Don't overwrite a resume the user added while this ran.
   const current = await getResume()
@@ -208,11 +213,16 @@ async function refreshSession(refreshToken: string): Promise<AuthSession> {
     headers: authHeaders(),
     body: JSON.stringify({ refresh_token: refreshToken }),
   })
-  if (!res.ok) throw new Error('Session refresh failed')
+  if (!res.ok) throw new SessionRejectedError('Session refresh failed')
   return parseSession(await res.json() as Record<string, unknown>)
 }
 
-// Returns a valid session (refreshing if near-expiry). Returns null if no session or refresh fails.
+// The auth server refused the refresh token: the session is over. A network
+// error is not this, so being offline doesn't sign anyone out.
+class SessionRejectedError extends Error {}
+
+// Returns a valid session (refreshing if near-expiry). Returns null if there's
+// no session or the server rejects the refresh; offline, returns the stored one.
 export async function ensureValidSession(): Promise<AuthSession | null> {
   const session = await getSession()
   if (!session) return null
@@ -226,7 +236,8 @@ export async function ensureValidSession(): Promise<AuthSession | null> {
     const fresh = await refreshSession(session.refresh_token)
     await saveSession(fresh)
     return fresh
-  } catch {
+  } catch (err) {
+    if (!(err instanceof SessionRejectedError)) return session
     await clearSession()
     return null
   }

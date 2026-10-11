@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { completeSignIn, GoogleSignInCancelledError, handleGoogleSignIn, pkcePair, signInWithGoogle } from './auth'
+import { completeSignIn, ensureValidSession, GoogleSignInCancelledError, handleGoogleSignIn, pkcePair, signInWithGoogle } from './auth'
 
 const REDIRECT = 'https://abc.chromiumapp.org/'
 const session = { access_token: 'at', refresh_token: 'rt', expires_at: 2_000_000_000, user: { id: 'u1', email: 'a@b.co' } }
@@ -237,6 +237,17 @@ describe('completeSignIn', () => {
     expect(storage.data.resume).toEqual({ text: 'account copy', filename: 'cv.pdf', updatedAt: '2026-10-01T00:00:00Z', accountId: 'u1' })
   })
 
+  test('a signed-out copy that matches the account copy loses its "not in your account" mark', async () => {
+    const storage = fakeStorage({ resume: { text: 'same', filename: 'cv.pdf', updatedAt: '2026-10-11T00:00:00Z', accountId: 'u1', signedOutUpload: true } })
+    vi.stubGlobal('chrome', { storage })
+    const server = resumeServer({ text: 'same', filename: 'cv.pdf', updated_at: '2026-10-01T00:00:00Z' })
+
+    await completeSignIn(session)
+
+    expect(server.uploads).toEqual([])
+    expect((storage.data.resume as { signedOutUpload?: boolean }).signedOutUpload).toBeUndefined()
+  })
+
   test('a signed-out upload stays local when the account has no resume', async () => {
     const local = { text: 'new file', filename: 'x.pdf', updatedAt: '2026-10-11T00:00:00Z', accountId: 'u1', signedOutUpload: true }
     const storage = fakeStorage({ resume: local })
@@ -353,5 +364,29 @@ describe('handleGoogleSignIn', () => {
     vi.stubGlobal('chrome', { storage, identity: { getRedirectURL: () => REDIRECT, launchWebAuthFlow: vi.fn(async () => { throw new Error('The user did not approve access.') }) } })
     await handleGoogleSignIn()
     expect(storage.data.googleSignInError).toBeUndefined()
+  })
+})
+
+// An expired access token is refreshed before use. Only a refresh the server
+// rejects ends the session; being offline must not sign the user out.
+describe('ensureValidSession', () => {
+  const expired = { ...session, expires_at: 1 }
+
+  test('offline: keeps the session instead of signing out', async () => {
+    const storage = fakeStorage({ session: expired })
+    vi.stubGlobal('chrome', { storage })
+    vi.stubGlobal('fetch', vi.fn(async () => { throw new TypeError('Failed to fetch') }))
+
+    expect(await ensureValidSession()).toEqual(expired)
+    expect(storage.data.session).toEqual(expired)
+  })
+
+  test('a refresh the server rejects ends the session', async () => {
+    const storage = fakeStorage({ session: expired })
+    vi.stubGlobal('chrome', { storage })
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('{"error":"invalid_grant"}', { status: 400 })))
+
+    expect(await ensureValidSession()).toBeNull()
+    expect(storage.data.session).toBeUndefined()
   })
 })
