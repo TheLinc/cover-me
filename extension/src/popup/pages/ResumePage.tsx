@@ -31,11 +31,15 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
       const text = await parseResume(file)
       const [mode, session] = await Promise.all([getMode(), getSession()])
       const hosted = mode === 'hosted' && !!session?.access_token
-      // Signed in: the copy belongs to this account. Signed out: it keeps the
-      // previous copy's owner, so the next account to sign in on this browser
-      // can't claim it (see syncResume in lib/auth.ts).
-      const accountId = hosted ? session.user.id : (await getResume())?.accountId
-      const data: ResumeData = { text, filename: file.name, updatedAt: new Date().toISOString(), ...(accountId ? { accountId } : {}) }
+      // Signed in: the copy belongs to this account. Signed out after an account
+      // was here: it keeps that owner, so another account can't claim it, and is
+      // marked so the owner's next sign-in doesn't upload it either (it may be
+      // someone else's). See syncResume in lib/auth.ts.
+      const inherited = hosted ? undefined : (await getResume())?.accountId
+      const data: ResumeData = {
+        text, filename: file.name, updatedAt: new Date().toISOString(),
+        ...(hosted ? { accountId: session.user.id } : inherited ? { accountId: inherited, signedOutUpload: true } : {}),
+      }
       await saveResume(data)
       setResume(data)
       setStatus('saved')
@@ -121,7 +125,7 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
         )}
       </div>
 
-      {status === 'error' && (
+      {error && (
         <div className="error-box" style={{ marginTop: 10 }}>{error}</div>
       )}
 

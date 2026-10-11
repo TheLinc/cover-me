@@ -141,7 +141,10 @@ async function syncResume(sess: AuthSession): Promise<void> {
   if (before?.accountId && before.accountId !== userId) await clearResume()
   const [local, remote] = await Promise.all([getResume(), fetchResumeFromBackend(sess.access_token)])
   const mine = local?.text && (!local.accountId || local.accountId === userId) ? local : null
-  const keepMine = mine && (!remote || remote.text === mine.text || Date.parse(mine.updatedAt) >= Date.parse(remote.updatedAt))
+  // Added while signed out: maybe someone else's on a shared browser, so never
+  // uploaded here. The account's copy wins when they differ.
+  const signedOut = !!mine?.signedOutUpload
+  const keepMine = mine && (!remote || remote.text === mine.text || (!signedOut && Date.parse(mine.updatedAt) >= Date.parse(remote.updatedAt)))
 
   const next = keepMine ? { ...mine, accountId: userId } : remote ? { ...remote, accountId: userId } : null
 
@@ -152,7 +155,7 @@ async function syncResume(sess: AuthSession): Promise<void> {
   // by the next account to sign in here, and this account retries next time.
   if (next) await saveResume(next)
   else if (local) await clearResume()
-  if (keepMine && remote?.text !== mine.text) await uploadResumeToBackend(sess.access_token, mine.text, mine.filename)
+  if (keepMine && !signedOut && remote?.text !== mine.text) await uploadResumeToBackend(sess.access_token, mine.text, mine.filename)
 }
 
 // The account's resume, or null when it has none (404).

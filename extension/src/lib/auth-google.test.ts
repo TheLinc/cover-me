@@ -224,6 +224,31 @@ describe('completeSignIn', () => {
     expect((storage.data.resume as { accountId?: string }).accountId).toBe('u1')
   })
 
+  // A copy added while signed out may be someone else's (a shared browser), so
+  // a sign-in never uploads it: the account's copy wins when they differ.
+  test('a signed-out upload is never uploaded; the account copy wins even when older', async () => {
+    const storage = fakeStorage({ resume: { text: "someone's new file", filename: 'x.pdf', updatedAt: '2026-10-11T00:00:00Z', accountId: 'u1', signedOutUpload: true } })
+    vi.stubGlobal('chrome', { storage })
+    const server = resumeServer({ text: 'account copy', filename: 'cv.pdf', updated_at: '2026-10-01T00:00:00Z' })
+
+    await completeSignIn(session)
+
+    expect(server.uploads).toEqual([])
+    expect(storage.data.resume).toEqual({ text: 'account copy', filename: 'cv.pdf', updatedAt: '2026-10-01T00:00:00Z', accountId: 'u1' })
+  })
+
+  test('a signed-out upload stays local when the account has no resume', async () => {
+    const local = { text: 'new file', filename: 'x.pdf', updatedAt: '2026-10-11T00:00:00Z', accountId: 'u1', signedOutUpload: true }
+    const storage = fakeStorage({ resume: local })
+    vi.stubGlobal('chrome', { storage })
+    const server = resumeServer(null)
+
+    await completeSignIn(session)
+
+    expect(server.uploads).toEqual([])
+    expect(storage.data.resume).toEqual(local)
+  })
+
   test("another account's copy is removed even when the account's copy can't be fetched", async () => {
     const storage = fakeStorage({ resume: { text: "A's resume", filename: 'a.pdf', updatedAt: '2026-10-09T00:00:00Z', accountId: 'someone-else' } })
     vi.stubGlobal('chrome', { storage })

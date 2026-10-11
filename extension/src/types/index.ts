@@ -72,6 +72,9 @@ export interface ResumeData {
   // Unset only when this browser has never had a signed-in account with a
   // resume (BYOK or a new install), so the next sign-in may claim it.
   accountId?: string
+  // Uploaded while signed out after an account was here. A sign-in never
+  // uploads it: on a shared browser it may be someone else's.
+  signedOutUpload?: boolean
 }
 
 export interface TailoredResume {
