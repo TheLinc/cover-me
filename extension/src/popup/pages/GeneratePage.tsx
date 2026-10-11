@@ -775,13 +775,13 @@ export default function GeneratePage({ onNavigate }: Props) {
                     initialContext={initialContext}
                     setInitialContext={setInitialContext}
                   />
-                  <button className="btn btn-primary" style={{ marginTop: 12 }} onClick={generateManual} disabled={!manualReady}>
+                  <button className="btn btn-primary manual-submit" onClick={generateManual} disabled={!manualReady}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
                     </svg>
                     Generate Cover Letter
                   </button>
-                  <div style={{ marginTop: 8 }}>
+                  <div className="manual-tailor">
                     <TailorOptions
                       inputMode={inputMode}
                       manualReady={manualReady}
@@ -875,7 +875,7 @@ export default function GeneratePage({ onNavigate }: Props) {
                       <svg
                         width="11" height="11" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-                        style={{ transform: regenerateExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}
+                        className={regenerateExpanded ? 'chevron open' : 'chevron'}
                       >
                         <polyline points="6 9 12 15 18 9" />
                       </svg>
@@ -915,7 +915,7 @@ export default function GeneratePage({ onNavigate }: Props) {
                         </>
                       )}
                     </button>
-                    <button className="btn btn-secondary" style={{ width: 'auto', padding: '10px 14px' }} onClick={downloadPdf}>
+                    <button className="btn btn-secondary btn-compact" onClick={downloadPdf}>
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
                         <polyline points="7 10 12 15 17 10" />
@@ -972,9 +972,8 @@ export default function GeneratePage({ onNavigate }: Props) {
                       Download PDF
                     </button>
                     <button
-                      className="btn btn-secondary"
+                      className="btn btn-secondary btn-compact"
                       onClick={regenerate}
-                      style={{ width: 'auto', padding: '10px 14px' }}
                     >
                       Regenerate
                     </button>

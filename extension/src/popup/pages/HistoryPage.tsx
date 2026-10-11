@@ -176,7 +176,7 @@ export default function HistoryPage() {
                           <span className="artifact-date">{formatDate(cl.createdAt)}</span>
                         </div>
                         {previewId === cl.id && (
-                          <div className="letter-box" style={{ maxHeight: 160, marginBottom: 8 }}>
+                          <div className="letter-box letter-preview">
                             <pre className="letter-text">{cl.letter}</pre>
                           </div>
                         )}

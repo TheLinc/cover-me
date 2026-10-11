@@ -194,7 +194,7 @@ export default function AccountPanel({ initialView = 'signin' }: { initialView?:
     <>
       {/* Once signed in, the account card's badge states the plan. */}
       {!(mode === 'hosted' && session) && (
-        <p className="hint" style={{ marginBottom: 14 }}>
+        <p className="hint hint-intro">
           {mode === 'hosted'
             ? 'Free: 10 generations to start, then 5 a week. No API key needed.'
             : 'Claude or OpenAI, unlimited. Your key stays on this device.'}
@@ -224,11 +224,10 @@ export default function AccountPanel({ initialView = 'signin' }: { initialView?:
             <label className="form-label">API Key</label>
             <div className="input-wrap">
               <input
-                className="form-input"
+                className="form-input with-eye"
                 type={showKey ? 'text' : 'password'}
                 value={apiKey}
                 placeholder={provider === 'claude' ? 'sk-ant-api03-…' : 'sk-proj-…'}
-                style={{ paddingRight: 34 }}
                 onChange={(e) => { setApiKey(e.target.value); setKeyDirty(true) }}
                 onFocus={() => {
                   if (!keyDirty && apiKey === MASKED) { setApiKey(''); setKeyDirty(true) }
@@ -249,7 +248,7 @@ export default function AccountPanel({ initialView = 'signin' }: { initialView?:
                 )}
               </button>
             </div>
-            <p className="hint" style={{ marginTop: 7 }}>Encrypted locally — never sent to our servers.</p>
+            <p className="hint hint-under">Encrypted locally — never sent to our servers.</p>
           </div>
 
           {saveStatus === 'error' && <div className="error-box">{saveError}</div>}
@@ -284,7 +283,7 @@ export default function AccountPanel({ initialView = 'signin' }: { initialView?:
                   </span>
                 </div>
               </div>
-              <button className="btn btn-secondary" style={{ marginTop: 16 }} onClick={handleSignOut}>
+              <button className="btn btn-secondary account-signout" onClick={handleSignOut}>
                 Sign Out
               </button>
             </div>
@@ -317,11 +316,10 @@ export default function AccountPanel({ initialView = 'signin' }: { initialView?:
                 <label className="form-label">Password</label>
                 <div className="input-wrap">
                   <input
-                    className="form-input"
+                    className="form-input with-eye"
                     type={showPassword ? 'text' : 'password'}
                     placeholder={authView === 'signup' ? 'At least 6 characters' : '••••••••'}
                     value={password}
-                    style={{ paddingRight: 34 }}
                     autoComplete={authView === 'signin' ? 'current-password' : 'new-password'}
                     onChange={(e) => setPassword(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter' && email && password) handleAuth() }}
