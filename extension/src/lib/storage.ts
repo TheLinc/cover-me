@@ -78,6 +78,12 @@ export function watchGoogleSignInError(onError: (message: string) => void): () =
   return watchLocalKey('googleSignInError', (value) => { if (value) onError(value as string) })
 }
 
+// Calls back when the resume changes elsewhere, e.g. a sign-in downloading the
+// account's copy while the welcome tab shows the upload step.
+export function watchResume(onChange: (resume: ResumeData | null) => void): () => void {
+  return watchLocalKey('resume', (value) => onChange((value as ResumeData) ?? null))
+}
+
 function watchLocalKey(key: string, onChange: (newValue: unknown) => void): () => void {
   const listener = (changes: Record<string, chrome.storage.StorageChange>, area: string) => {
     if (area === 'local' && key in changes) onChange(changes[key].newValue)

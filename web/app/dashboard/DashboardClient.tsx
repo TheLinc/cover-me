@@ -17,6 +17,7 @@ import { SiteNav } from '@/components/site/SiteNav'
 
 interface Props {
   email: string;
+  avatar: string | null;
   tier: string;
   memberSince: string;
   allowance: Allowance | null;
@@ -24,10 +25,12 @@ interface Props {
 
 export default function DashboardClient({
   email,
+  avatar,
   tier,
   memberSince,
   allowance,
 }: Props) {
+  const [avatarFailed, setAvatarFailed]     = useState(false);
   const [signingOut, setSigningOut]         = useState(false);
   const [upgrading, setUpgrading]           = useState<'monthly' | 'quarterly' | null>(null);
   const [upgradeError, setUpgradeError]     = useState('');
@@ -124,8 +127,19 @@ export default function DashboardClient({
                 </span>
               </div>
             </div>
-            <div className="w-14 h-14 max-[700px]:w-11 max-[700px]:h-11 rounded-full bg-brand-dim border border-[rgba(99,102,241,0.28)] text-brand-light text-xl font-extrabold flex items-center justify-center shrink-0 tracking-[-1px]">
-              {initial}
+            <div className="w-14 h-14 max-[700px]:w-11 max-[700px]:h-11 rounded-full bg-brand-dim border border-[rgba(99,102,241,0.28)] text-brand-light text-xl font-extrabold flex items-center justify-center shrink-0 tracking-[-1px] overflow-hidden">
+              {avatar && !avatarFailed ? (
+                // A plain img: next/image would need Google's image host allowed in next.config.
+                <img
+                  src={avatar}
+                  alt=""
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-cover"
+                  onError={() => setAvatarFailed(true)}
+                />
+              ) : (
+                initial
+              )}
             </div>
           </header>
 

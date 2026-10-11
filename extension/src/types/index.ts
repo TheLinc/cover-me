@@ -25,6 +25,7 @@ export interface AuthSession {
   user: {
     id: string
     email: string
+    avatar_url?: string // Google sign-in only: the profile picture
   }
 }
 

@@ -211,7 +211,8 @@ export default function PrivacyPage() {
                 file, text is extracted client-side on your device. The raw binary file is never stored or
                 transmitted. In BYOK mode, the extracted text is stored only in your browser&apos;s local
                 storage. In Hosted mode, the extracted text is transmitted to our server over HTTPS and
-                stored in an encrypted database.
+                stored in an encrypted database, and a copy is kept in local storage on each browser you
+                sign in from, so you don&apos;t upload it again on a new device.
               </Li>
               <Li>
                 <strong className="text-foreground">Account credentials (Hosted mode only).</strong>{' '}
@@ -321,7 +322,7 @@ export default function PrivacyPage() {
               <ul className="mt-2 space-y-1 pl-4 list-disc">
                 <li>User settings (AI provider, mode selection)</li>
                 <li>AES-256-GCM encrypted API key (BYOK mode)</li>
-                <li>Extracted resume text and parsed resume structure (BYOK mode)</li>
+                <li>Extracted resume text and parsed resume structure</li>
                 <li>Application history — cover letters and tailored resumes grouped by job</li>
                 <li>JWT session tokens (Hosted mode)</li>
                 <li>AES-256-GCM encrypted login credential for the &ldquo;Remember me&rdquo; feature (optional, Hosted mode)</li>
@@ -520,7 +521,7 @@ export default function PrivacyPage() {
                   name: 'Google',
                   url: 'https://policies.google.com/privacy',
                   when: 'Only if you choose "Continue with Google"',
-                  receives: 'Google confirms who you are and sends us your email address, name, and profile picture link. We use the email address to create and sign in to your account. The name and picture link are stored with your account but not used. We never see your Google password.',
+                  receives: 'Google confirms who you are and sends us your email address, name, and profile picture link. We use the email address to create and sign in to your account, and show the picture as your account avatar in the extension and on the dashboard. Your browser loads the picture from Google\'s servers. The name is stored with your account but not used. We never see your Google password.',
                 },
                 {
                   name: 'Stripe',

@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import DashboardClient from './DashboardClient'
 import type { Allowance } from '@/lib/limits'
+import { avatarUrl } from '@/lib/avatar'
 
 export default async function DashboardPage() {
   const supabase = await createServerSupabaseClient()
@@ -22,6 +23,7 @@ export default async function DashboardPage() {
   return (
     <DashboardClient
       email={user.email ?? ''}
+      avatar={avatarUrl(user.user_metadata)}
       tier={userData?.tier ?? 'hosted_free'}
       memberSince={userData?.created_at ?? user.created_at}
       allowance={(allowance as Allowance | null) ?? null}

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { uploadResumeToBackend } from '../../lib/auth'
 import { parseResume } from '../../lib/resume-parser'
-import { getMode, getResume, getSession, saveResume } from '../../lib/storage'
+import { getMode, getResume, getSession, saveResume, watchResume } from '../../lib/storage'
 import type { ParsedResume, ResumeData } from '../../types'
 
 type Status = 'idle' | 'parsing' | 'saved' | 'error'
@@ -15,10 +15,12 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    getResume().then((r) => {
+    const show = (r: ResumeData | null) => {
       setResume(r)
-      if (r?.parsed) setParsed(r.parsed)
-    })
+      setParsed(r?.parsed ?? null)
+    }
+    getResume().then(show)
+    return watchResume(show)
   }, [])
 
   async function handleFile(file: File) {

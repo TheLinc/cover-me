@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { resolveMode, takeGoogleSignInError, watchGoogleSignInError, watchSession } from './storage'
+import { resolveMode, takeGoogleSignInError, watchGoogleSignInError, watchResume, watchSession } from './storage'
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -44,6 +44,15 @@ describe('watchSession', () => {
     stop()
     expect(seen).toEqual(['Unsupported provider'])
     expect(on.listeners.size).toBe(0)
+  })
+
+  // The welcome tab's resume step shows the copy a sign-in just downloaded.
+  test('watchResume reports a resume saved elsewhere', () => {
+    const on = fakeOnChanged()
+    const seen: unknown[] = []
+    watchResume((r) => seen.push(r))
+    on.fire({ resume: { newValue: { text: 't', filename: 'cv.pdf', updatedAt: '' } } })
+    expect(seen).toEqual([{ text: 't', filename: 'cv.pdf', updatedAt: '' }])
   })
 
   test('ignores other keys and other storage areas, and stops when unsubscribed', () => {

@@ -45,6 +45,20 @@ describe('signInWithGoogle', () => {
     expect(u.searchParams.get('code_challenge')).toBe(challenge)
   })
 
+  test('the session keeps the Google profile picture for the account avatar', async () => {
+    fakeIdentity(async () => `${REDIRECT}?code=c`)
+    const withPicture = { ...session, user: { ...session.user, user_metadata: { avatar_url: 'https://lh3.googleusercontent.com/a/p=s96-c' } } }
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify(withPicture), { status: 200 })))
+    expect((await signInWithGoogle()).user.avatar_url).toBe('https://lh3.googleusercontent.com/a/p=s96-c')
+  })
+
+  test('a picture link that is not https is dropped', async () => {
+    fakeIdentity(async () => `${REDIRECT}?code=c`)
+    const bad = { ...session, user: { ...session.user, user_metadata: { avatar_url: 'javascript:alert(1)' } } }
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify(bad), { status: 200 })))
+    expect((await signInWithGoogle()).user.avatar_url).toBeUndefined()
+  })
+
   test('closing the Google window is a cancel, not an error', async () => {
     fakeIdentity(async () => { throw new Error('The user did not approve access.') })
     await expect(signInWithGoogle()).rejects.toBeInstanceOf(GoogleSignInCancelledError)
@@ -100,22 +114,80 @@ function fakeStorage(initial: Record<string, unknown>) {
 }
 
 describe('completeSignIn', () => {
-  test('saves the session, switches to the account, and syncs a resume uploaded earlier', async () => {
+  // The resume function: GET returns the account's copy (404 when there is
+  // none), POST replaces it. Records what was uploaded.
+  function resumeServer(stored: { text: string; filename: string; updated_at: string } | null) {
+    const uploads: unknown[] = []
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (!url.endsWith('/functions/v1/resume')) throw new Error(`unexpected ${url}`)
+      if (init?.method === 'POST') { uploads.push(JSON.parse(init.body as string)); return new Response('{}', { status: 200 }) }
+      return stored ? new Response(JSON.stringify(stored), { status: 200 }) : new Response('{"error":"No resume found"}', { status: 404 })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    return { uploads, fetchMock }
+  }
+
+  test('saves the session, switches to the account, and uploads a resume the account lacks', async () => {
     const storage = fakeStorage({
       settings: { provider: 'openai', apiKey: 'enc', mode: 'byok' },
       resume: { text: 'resume text', filename: 'cv.pdf', updatedAt: '2026-10-09T00:00:00Z' },
     })
     vi.stubGlobal('chrome', { storage })
-    const fetchMock = vi.fn(async () => new Response('{}', { status: 200 }))
-    vi.stubGlobal('fetch', fetchMock)
+    const server = resumeServer(null)
 
     await completeSignIn(session)
 
     expect(storage.data.session).toEqual(session)
     expect(storage.data.settings).toEqual({ provider: 'openai', apiKey: 'enc', mode: 'hosted' })
-    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit]
-    expect(url).toMatch(/\/functions\/v1\/resume$/)
-    expect(JSON.parse(init.body as string)).toEqual({ text: 'resume text', filename: 'cv.pdf' })
+    expect(server.uploads).toEqual([{ text: 'resume text', filename: 'cv.pdf' }])
+  })
+
+  // A new device: no local resume, so the account's copy comes down and the
+  // user doesn't upload it again.
+  test('on a new device, the account\'s resume is downloaded', async () => {
+    const storage = fakeStorage({})
+    vi.stubGlobal('chrome', { storage })
+    const server = resumeServer({ text: 'from the account', filename: 'cv.pdf', updated_at: '2026-10-01T00:00:00Z' })
+
+    await completeSignIn(session)
+
+    expect(storage.data.resume).toEqual({ text: 'from the account', filename: 'cv.pdf', updatedAt: '2026-10-01T00:00:00Z' })
+    expect(server.uploads).toEqual([])
+  })
+
+  test('the newer copy wins: a newer account copy replaces an older local one', async () => {
+    const storage = fakeStorage({ resume: { text: 'old local', filename: 'old.pdf', updatedAt: '2026-09-01T00:00:00Z' } })
+    vi.stubGlobal('chrome', { storage })
+    const server = resumeServer({ text: 'newer account copy', filename: 'new.pdf', updated_at: '2026-10-01T00:00:00Z' })
+
+    await completeSignIn(session)
+
+    expect((storage.data.resume as { text: string }).text).toBe('newer account copy')
+    expect(server.uploads).toEqual([])
+  })
+
+  test('the newer copy wins: a newer local resume replaces the account copy', async () => {
+    const storage = fakeStorage({ resume: { text: 'newer local', filename: 'new.pdf', updatedAt: '2026-10-05T00:00:00Z' } })
+    vi.stubGlobal('chrome', { storage })
+    const server = resumeServer({ text: 'old account copy', filename: 'old.pdf', updated_at: '2026-10-01T00:00:00Z' })
+
+    await completeSignIn(session)
+
+    expect(server.uploads).toEqual([{ text: 'newer local', filename: 'new.pdf' }])
+    expect((storage.data.resume as { text: string }).text).toBe('newer local')
+  })
+
+  // Re-uploading identical text would clear the server's parsed-resume cache.
+  test('the same resume on both sides moves nothing', async () => {
+    const local = { text: 'same', filename: 'cv.pdf', updatedAt: '2026-10-01T00:00:00Z', parsed: { name: 'Pat' } }
+    const storage = fakeStorage({ resume: local })
+    vi.stubGlobal('chrome', { storage })
+    const server = resumeServer({ text: 'same', filename: 'cv.pdf', updated_at: '2026-10-01T00:00:05Z' })
+
+    await completeSignIn(session)
+
+    expect(server.uploads).toEqual([])
+    expect(storage.data.resume).toEqual(local)
   })
 
   // Panels watching the session read the mode when it arrives, so the mode
@@ -141,16 +213,16 @@ describe('completeSignIn', () => {
     expect(storage.data.googleSignInError).toBeUndefined()
   })
 
-  test('with no resume yet, nothing is uploaded and a fresh install gets default settings', async () => {
+  test('with no resume anywhere, nothing moves and a fresh install gets default settings', async () => {
     const storage = fakeStorage({})
     vi.stubGlobal('chrome', { storage })
-    const fetchMock = vi.fn()
-    vi.stubGlobal('fetch', fetchMock)
+    const server = resumeServer(null)
 
     await completeSignIn(session)
 
     expect(storage.data.settings).toEqual({ provider: 'claude', apiKey: '', mode: 'hosted' })
-    expect(fetchMock).not.toHaveBeenCalled()
+    expect(storage.data.resume).toBeUndefined()
+    expect(server.uploads).toEqual([])
   })
 
   test('a failed resume sync does not fail the sign-in', async () => {

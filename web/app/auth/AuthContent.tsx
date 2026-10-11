@@ -6,6 +6,7 @@ import Image from "next/image";
 import { createClient } from "@/lib/supabase";
 import { afterOAuth, oauthCancelled, oauthErrorDescription, oauthRedirectUrl } from "@/lib/auth-redirect";
 import { Button } from "@/components/ui/button";
+import { GoogleIcon } from "@/components/ui/google-icon";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -601,6 +602,7 @@ function AuthForm() {
               {GOOGLE_SIGNIN && (
                 <div className="flex flex-col gap-3.5 mb-[18px]">
                   <Button type="button" variant="outline" size="lg" className="w-full" onClick={handleGoogle}>
+                    <GoogleIcon />
                     Continue with Google
                   </Button>
                   <div className="flex items-center gap-3 text-[12px] text-muted-foreground">

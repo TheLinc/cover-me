@@ -5,6 +5,7 @@ import { GOOGLE_SIGNIN } from '../../lib/config'
 import { encryptApiKey } from '../../lib/crypto'
 import { clearSession, getMode, getSettings, resolveMode, saveCachedTier, saveSettings, takeGoogleSignInError, watchGoogleSignInError, watchSession } from '../../lib/storage'
 import type { AIProvider, AppMode, AuthSession } from '../../types'
+import GoogleIcon from './GoogleIcon'
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 type AuthStatus = 'idle' | 'loading'
@@ -36,6 +37,7 @@ export default function AccountPanel({ initialView = 'signin' }: { initialView?:
   const [googleBusy, setGoogleBusy] = useState(false)
   const [authError, setAuthError] = useState('')
   const [authNotice, setAuthNotice] = useState('')
+  const [avatarFailed, setAvatarFailed] = useState(false) // offline, or Google's link expired
   // The load, the sign-in handlers and the session watcher can all report the
   // same session; fetch the tier once per session.
   const shownToken = useRef<string | null>(null)
@@ -262,7 +264,11 @@ export default function AccountPanel({ initialView = 'signin' }: { initialView?:
             /* Signed-in state */
             <div className="account-card">
               <div className="account-row">
-                <div className="account-avatar">{emailInitial}</div>
+                <div className="account-avatar">
+                  {session.user.avatar_url && !avatarFailed ? (
+                    <img src={session.user.avatar_url} alt="" referrerPolicy="no-referrer" onError={() => setAvatarFailed(true)} />
+                  ) : emailInitial}
+                </div>
                 <div className="account-info">
                   <div className="account-email">{session.user.email}</div>
                   <span className={isPro ? 'tier-badge tier-badge-pro' : 'tier-badge'}>
@@ -279,7 +285,8 @@ export default function AccountPanel({ initialView = 'signin' }: { initialView?:
             <>
               {GOOGLE_SIGNIN && (
                 <>
-                  <button className="btn btn-primary" onClick={handleGoogle} disabled={googleBusy || authStatus === 'loading'}>
+                  <button className="btn btn-google" onClick={handleGoogle} disabled={googleBusy || authStatus === 'loading'}>
+                    <GoogleIcon />
                     Continue with Google
                   </button>
                   <div className="auth-divider"><span>or use email</span></div>

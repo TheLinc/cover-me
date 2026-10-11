@@ -1,8 +1,8 @@
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL, WEB_URL } from './config'
-import { clearSession, getResume, getSession, getSettings, saveGoogleSignInError, saveSession, saveSettings, takeGoogleSignInError } from './storage'
+import { clearSession, getResume, getSession, getSettings, saveGoogleSignInError, saveResume, saveSession, saveSettings, takeGoogleSignInError } from './storage'
 import { isValidResume } from './ai/resume-tailor'
 import { deriveTailorProgress } from './ai/tailor-progress'
-import type { ApplicationRecord, AuthSession, CoverLetter, JobData, TailoredResume } from '../types'
+import type { ApplicationRecord, AuthSession, CoverLetter, JobData, ResumeData, TailoredResume } from '../types'
 
 // Thrown by signUp() when the account was created but needs email confirmation
 // before it can sign in — not a failure, so callers should render it as a
@@ -111,9 +111,9 @@ export async function signInWithGoogle(): Promise<AuthSession> {
 }
 
 // Everything a successful sign-in (email or Google) must leave behind for the
-// first hosted Generate to work: the session, hosted mode, and the backend copy
-// of a resume uploaded before signing in. A failed sync is non-fatal: the
-// resume page retries on the next upload.
+// first hosted Generate to work: the session, hosted mode, and one resume on
+// both sides (see syncResume). A failed sync is non-fatal: the resume page
+// retries on the next upload.
 export async function completeSignIn(sess: AuthSession): Promise<void> {
   // A saved Google failure is moot once any sign-in succeeds.
   await takeGoogleSignInError()
@@ -121,10 +121,32 @@ export async function completeSignIn(sess: AuthSession): Promise<void> {
   const existing = await getSettings()
   await saveSettings({ provider: existing?.provider ?? 'claude', apiKey: existing?.apiKey ?? '', mode: 'hosted' })
   await saveSession(sess)
-  const resume = await getResume()
-  if (resume?.text) {
-    await uploadResumeToBackend(sess.access_token, resume.text, resume.filename).catch(() => {})
+  await syncResume(sess.access_token).catch(() => {})
+}
+
+// The newer copy wins. On a new device the account's resume comes down, so
+// the user doesn't upload it again; a resume uploaded before signing in goes
+// up. Identical text moves nothing (an upload clears the server's parse cache).
+async function syncResume(accessToken: string): Promise<void> {
+  const [local, remote] = await Promise.all([getResume(), fetchResumeFromBackend(accessToken)])
+  if (remote && local?.text === remote.text) return
+  if (remote && (!local?.text || Date.parse(remote.updatedAt) > Date.parse(local.updatedAt))) {
+    await saveResume(remote)
+  } else if (local?.text) {
+    await uploadResumeToBackend(accessToken, local.text, local.filename)
   }
+}
+
+// The account's resume, or null when it has none (404).
+async function fetchResumeFromBackend(accessToken: string): Promise<ResumeData | null> {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/resume`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+  if (res.status === 404) return null
+  const data = await res.json().catch(() => ({})) as Record<string, unknown>
+  if (!res.ok) throw new Error((data.error as string) || 'Resume sync failed')
+  if (typeof data.text !== 'string' || !data.text) return null
+  return { text: data.text, filename: (data.filename as string) || 'resume', updatedAt: (data.updated_at as string) || new Date(0).toISOString() }
 }
 
 export type GoogleSignInResponse =
@@ -403,6 +425,9 @@ export async function deleteLetterFromBackend(accessToken: string, id: string): 
 
 function parseSession(data: Record<string, unknown>): AuthSession {
   const user = data.user as Record<string, unknown>
+  // Google sign-ins carry the profile picture; email sign-ins show the initial.
+  const meta = (user?.user_metadata ?? {}) as Record<string, unknown>
+  const picture = meta.avatar_url || meta.picture
   return {
     access_token: data.access_token as string,
     refresh_token: data.refresh_token as string,
@@ -412,6 +437,7 @@ function parseSession(data: Record<string, unknown>): AuthSession {
     user: {
       id: user?.id as string,
       email: user?.email as string,
+      ...(typeof picture === 'string' && picture.startsWith('https://') ? { avatar_url: picture } : {}),
     },
   }
 }
