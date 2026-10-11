@@ -489,7 +489,7 @@ Email and password sign-in works without this. To turn on "Continue with Google"
 3. Under *Authentication → URL Configuration → Redirect URLs*, add:
    - `https://<your-extension-id>.chromiumapp.org/`, your extension's ID (`chrome.identity.getRedirectURL()` in its service-worker console prints it). Add each ID exactly. A `*.chromiumapp.org` wildcard would let any extension receive your users' sessions.
    - `https://your-domain.com/auth` and `https://your-domain.com/auth?**` for the website.
-4. Set `VITE_GOOGLE_SIGNIN=1` in `extension/.env` and rebuild, and `NEXT_PUBLIC_GOOGLE_SIGNIN=1` for the web dashboard. Both buttons stay hidden until then.
+4. Set `VITE_GOOGLE_SIGNIN=1` in `extension/.env` and rebuild, and `NEXT_PUBLIC_GOOGLE_SIGNIN=1` for the web dashboard, then redeploy it (Next.js reads `NEXT_PUBLIC_` variables at build time). Both buttons stay hidden until then.
 
 Turn on the website's button only once users have an extension build with Google sign-in. Someone who signs up on the website with Google has no password, so an older build that offers only email sign-in can't sign them in.
 

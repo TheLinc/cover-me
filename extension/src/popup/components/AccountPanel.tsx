@@ -14,7 +14,7 @@ const MASKED = '••••••••••••••••'
 
 // The account first, with BYOK behind "I have an API key". Used by Settings and
 // by the welcome tab.
-export default function AccountPanel() {
+export default function AccountPanel({ initialView = 'signin' }: { initialView?: AuthView }) {
   const [mode, setMode] = useState<AppMode>('hosted')
 
   // BYOK
@@ -28,7 +28,7 @@ export default function AccountPanel() {
   // Hosted
   const [session, setSession] = useState<AuthSession | null>(null)
   const [tier, setTier] = useState<string>('hosted_free')
-  const [authView, setAuthView] = useState<AuthView>('signin')
+  const [authView, setAuthView] = useState<AuthView>(initialView)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
