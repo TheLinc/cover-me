@@ -435,3 +435,24 @@ enabled = true
 # so the gateway's JWT check is off. It reads no data and calls nothing outside.
 [functions.scrape]
 verify_jwt = false
+
+# Every other function requires a signed-in user's JWT at the gateway, as in
+# production. They're declared because the Supabase GitHub integration deploys
+# only functions listed here (tests/integration/functions-config.test.ts).
+[functions.applications]
+verify_jwt = true
+
+[functions.billing]
+verify_jwt = true
+
+[functions.generate]
+verify_jwt = true
+
+[functions.letters]
+verify_jwt = true
+
+[functions.resume]
+verify_jwt = true
+
+[functions.tailor]
+verify_jwt = true
