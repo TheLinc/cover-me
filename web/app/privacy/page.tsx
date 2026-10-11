@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
 }
 
-const EFFECTIVE_DATE = 'October 9, 2026'
+const EFFECTIVE_DATE = 'October 11, 2026'
 const CONTACT_EMAIL  = 'support@cover-me.dev'
 
 // ── Section heading ────────────────────────────────────────────────────────
@@ -498,6 +498,12 @@ export default function PrivacyPage() {
                   url: 'https://supabase.com/privacy',
                   when: 'Hosted mode only',
                   receives: 'Email address, hashed password, encrypted resume text, encrypted cover letters and tailored resumes (Pro), session tokens, and usage counts. Supabase hosts our authentication system and database.',
+                },
+                {
+                  name: 'Google',
+                  url: 'https://policies.google.com/privacy',
+                  when: 'Only if you choose "Continue with Google"',
+                  receives: 'Google confirms who you are and sends us your email address, name, and profile picture link. We use the email address to create and sign in to your account. The name and picture link are stored with your account but not used. We never see your Google password.',
                 },
                 {
                   name: 'Stripe',
