@@ -30,6 +30,10 @@ export async function saveResume(resume: ResumeData): Promise<void> {
   await chrome.storage.local.set({ resume })
 }
 
+export async function clearResume(): Promise<void> {
+  await chrome.storage.local.remove('resume')
+}
+
 export async function saveParsedResume(parsed: ParsedResume): Promise<void> {
   const { resume } = await chrome.storage.local.get('resume')
   if (!resume) return

@@ -67,6 +67,9 @@ export interface ResumeData {
   filename: string
   updatedAt: string
   parsed?: ParsedResume
+  // The Cover Me account this copy was synced with. Unset: uploaded before any
+  // sign-in (BYOK or a new install), so the next sign-in may claim it.
+  accountId?: string
 }
 
 export interface TailoredResume {

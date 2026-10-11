@@ -29,15 +29,17 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
     setParsed(null) // clear stale parse on new upload
     try {
       const text = await parseResume(file)
-      const data: ResumeData = { text, filename: file.name, updatedAt: new Date().toISOString() }
+      const [mode, session] = await Promise.all([getMode(), getSession()])
+      const hosted = mode === 'hosted' && !!session?.access_token
+      // Signed in: the copy belongs to this account (see syncResume in lib/auth.ts).
+      const data: ResumeData = { text, filename: file.name, updatedAt: new Date().toISOString(), ...(hosted ? { accountId: session.user.id } : {}) }
       await saveResume(data)
       setResume(data)
       setStatus('saved')
       setTimeout(() => setStatus('idle'), 2500)
 
       // Best-effort cloud sync for hosted users
-      const [mode, session] = await Promise.all([getMode(), getSession()])
-      if (mode === 'hosted' && session?.access_token) {
+      if (hosted) {
         uploadResumeToBackend(session.access_token, text, file.name).catch((err) => {
           setError(`Saved locally, but cloud sync failed: ${err instanceof Error ? err.message : 'unknown error'}`)
         })

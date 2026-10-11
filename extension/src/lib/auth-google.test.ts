@@ -151,7 +151,7 @@ describe('completeSignIn', () => {
 
     await completeSignIn(session)
 
-    expect(storage.data.resume).toEqual({ text: 'from the account', filename: 'cv.pdf', updatedAt: '2026-10-01T00:00:00Z' })
+    expect(storage.data.resume).toEqual({ text: 'from the account', filename: 'cv.pdf', updatedAt: '2026-10-01T00:00:00Z', accountId: 'u1' })
     expect(server.uploads).toEqual([])
   })
 
@@ -187,7 +187,56 @@ describe('completeSignIn', () => {
     await completeSignIn(session)
 
     expect(server.uploads).toEqual([])
-    expect(storage.data.resume).toEqual(local)
+    expect(storage.data.resume).toEqual({ ...local, accountId: 'u1' })
+  })
+
+  // Person A signs out and person B signs in on the same browser. A's resume
+  // must never end up in B's account.
+  test("another account's resume is never uploaded; this account's copy replaces it", async () => {
+    const storage = fakeStorage({ resume: { text: "A's resume", filename: 'a.pdf', updatedAt: '2026-10-09T00:00:00Z', accountId: 'someone-else' } })
+    vi.stubGlobal('chrome', { storage })
+    const server = resumeServer({ text: "B's resume", filename: 'b.pdf', updated_at: '2026-10-01T00:00:00Z' })
+
+    await completeSignIn(session)
+
+    expect(server.uploads).toEqual([])
+    expect(storage.data.resume).toEqual({ text: "B's resume", filename: 'b.pdf', updatedAt: '2026-10-01T00:00:00Z', accountId: 'u1' })
+  })
+
+  test("another account's resume is removed when this account has none", async () => {
+    const storage = fakeStorage({ resume: { text: "A's resume", filename: 'a.pdf', updatedAt: '2026-10-09T00:00:00Z', accountId: 'someone-else' } })
+    vi.stubGlobal('chrome', { storage })
+    const server = resumeServer(null)
+
+    await completeSignIn(session)
+
+    expect(server.uploads).toEqual([])
+    expect(storage.data.resume).toBeUndefined()
+  })
+
+  test('an uploaded resume is tagged with the account it went to', async () => {
+    const storage = fakeStorage({ resume: { text: 'mine', filename: 'cv.pdf', updatedAt: '2026-10-09T00:00:00Z' } })
+    vi.stubGlobal('chrome', { storage })
+    resumeServer(null)
+
+    await completeSignIn(session)
+
+    expect((storage.data.resume as { accountId?: string }).accountId).toBe('u1')
+  })
+
+  // The user drops a file on the welcome tab while the sign-in's sync runs.
+  test('a resume the user adds during the sync is not overwritten', async () => {
+    const storage = fakeStorage({})
+    vi.stubGlobal('chrome', { storage })
+    const added = { text: 'just added', filename: 'new.pdf', updatedAt: '2026-10-11T12:00:00Z' }
+    vi.stubGlobal('fetch', vi.fn(async () => {
+      storage.data.resume = added // lands while the GET is in flight
+      return new Response(JSON.stringify({ text: 'account copy', filename: 'cv.pdf', updated_at: '2026-10-01T00:00:00Z' }), { status: 200 })
+    }))
+
+    await completeSignIn(session)
+
+    expect(storage.data.resume).toEqual(added)
   })
 
   // Panels watching the session read the mode when it arrives, so the mode

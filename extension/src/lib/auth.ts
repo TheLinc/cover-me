@@ -1,5 +1,5 @@
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL, WEB_URL } from './config'
-import { clearSession, getResume, getSession, getSettings, saveGoogleSignInError, saveResume, saveSession, saveSettings, takeGoogleSignInError } from './storage'
+import { clearResume, clearSession, getResume, getSession, getSettings, saveGoogleSignInError, saveResume, saveSession, saveSettings, takeGoogleSignInError } from './storage'
 import { isValidResume } from './ai/resume-tailor'
 import { deriveTailorProgress } from './ai/tailor-progress'
 import type { ApplicationRecord, AuthSession, CoverLetter, JobData, ResumeData, TailoredResume } from '../types'
@@ -121,20 +121,34 @@ export async function completeSignIn(sess: AuthSession): Promise<void> {
   const existing = await getSettings()
   await saveSettings({ provider: existing?.provider ?? 'claude', apiKey: existing?.apiKey ?? '', mode: 'hosted' })
   await saveSession(sess)
-  await syncResume(sess.access_token).catch(() => {})
+  await syncResume(sess).catch(() => {})
 }
 
-// The newer copy wins. On a new device the account's resume comes down, so
-// the user doesn't upload it again; a resume uploaded before signing in goes
-// up. Identical text moves nothing (an upload clears the server's parse cache).
-async function syncResume(accessToken: string): Promise<void> {
-  const [local, remote] = await Promise.all([getResume(), fetchResumeFromBackend(accessToken)])
-  if (remote && local?.text === remote.text) return
-  if (remote && (!local?.text || Date.parse(remote.updatedAt) > Date.parse(local.updatedAt))) {
-    await saveResume(remote)
-  } else if (local?.text) {
-    await uploadResumeToBackend(accessToken, local.text, local.filename)
-  }
+// One resume on both sides, owned by this account:
+// - The newer copy wins. On a new device the account's resume comes down, so
+//   the user doesn't upload it again; a resume added before signing in goes up.
+// - Identical text moves nothing (an upload clears the server's parse cache).
+// - Another account's copy, left in this browser after a sign-out, is never
+//   uploaded here: this account's copy replaces it, or it's removed (it still
+//   lives in its own account).
+// The comparison uses this device's clock against the server's; a badly wrong
+// clock can pick the older copy.
+async function syncResume(sess: AuthSession): Promise<void> {
+  const userId = sess.user.id
+  const [local, remote] = await Promise.all([getResume(), fetchResumeFromBackend(sess.access_token)])
+  const mine = local?.text && (!local.accountId || local.accountId === userId) ? local : null
+  const keepMine = mine && (!remote || remote.text === mine.text || Date.parse(mine.updatedAt) >= Date.parse(remote.updatedAt))
+
+  const next = keepMine ? { ...mine, accountId: userId } : remote ? { ...remote, accountId: userId } : null
+
+  // Don't overwrite a resume the user added while this ran.
+  const current = await getResume()
+  if (current?.updatedAt !== local?.updatedAt || current?.text !== local?.text) return
+  // Tag before uploading: if the upload fails, the copy still isn't claimable
+  // by the next account to sign in here, and this account retries next time.
+  if (next) await saveResume(next)
+  else if (local) await clearResume()
+  if (keepMine && remote?.text !== mine.text) await uploadResumeToBackend(sess.access_token, mine.text, mine.filename)
 }
 
 // The account's resume, or null when it has none (404).

@@ -478,7 +478,7 @@ export default function PrivacyPage() {
             <Ul>
               <Li>All on-device data is stored in <code className="text-brand-light font-mono text-[13px]">chrome.storage.local</code> — never in <code className="text-brand-light font-mono text-[13px]">chrome.storage.sync</code>, cookies, or <code className="text-brand-light font-mono text-[13px]">localStorage</code>.</Li>
               <Li>API keys (BYOK mode) are encrypted with AES-256-GCM using a key derived via the Web Crypto API before being written to storage. The plaintext key exists in memory only for the duration of a single API call.</Li>
-              <Li>Resume text and cover letter history are stored unencrypted in local storage (BYOK mode) since they never leave your device.</Li>
+              <Li>Resume text and cover letter history are stored unencrypted in your browser&apos;s local storage, in every mode. In Hosted mode the copies on our server are encrypted; the local copies stay on your device.</Li>
             </Ul>
 
             <H3>Server-side storage (Hosted mode only)</H3>
