@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from '@/lib/supabase-server'
 import DashboardClient from './DashboardClient'
 import type { Allowance } from '@/lib/limits'
 import { avatarUrl } from '@/lib/avatar'
+import { fetchApplications, type Application } from '@/lib/applications'
 
 export default async function DashboardPage() {
   const supabase = await createServerSupabaseClient()
@@ -20,6 +21,14 @@ export default async function DashboardPage() {
   // (migration 015). The database owns the numbers.
   const { data: allowance } = await supabase.rpc('my_generation_allowance')
 
+  // Pro history (2e). The session's token is forwarded to the function, which
+  // verifies it; null hides the section.
+  let applications: Application[] | null = null
+  if (userData?.tier === 'hosted_pro') {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session) applications = await fetchApplications(process.env.NEXT_PUBLIC_SUPABASE_URL!, session.access_token)
+  }
+
   return (
     <DashboardClient
       email={user.email ?? ''}
@@ -27,6 +36,7 @@ export default async function DashboardPage() {
       tier={userData?.tier ?? 'hosted_free'}
       memberSince={userData?.created_at ?? user.created_at}
       allowance={(allowance as Allowance | null) ?? null}
+      applications={applications}
     />
   )
 }

@@ -4,6 +4,8 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { openBilling } from "@/lib/billing";
 import { describeAllowance, type Allowance } from "@/lib/limits";
+import type { Application } from "@/lib/applications";
+import { ApplicationHistory } from "./ApplicationHistory";
 import { CHROME_STORE_URL } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -21,6 +23,7 @@ interface Props {
   tier: string;
   memberSince: string;
   allowance: Allowance | null;
+  applications: Application[] | null;
 }
 
 export default function DashboardClient({
@@ -29,6 +32,7 @@ export default function DashboardClient({
   tier,
   memberSince,
   allowance,
+  applications,
 }: Props) {
   const [avatarFailed, setAvatarFailed]     = useState(false);
   const [signingOut, setSigningOut]         = useState(false);
@@ -278,6 +282,9 @@ export default function DashboardClient({
               </div>
             </div>
           )}
+
+          {/* Pro history (2e) */}
+          {applications && <ApplicationHistory applications={applications} />}
 
           {/* Extension CTA */}
           <div
