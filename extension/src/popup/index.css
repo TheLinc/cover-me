@@ -1150,3 +1150,5 @@ textarea:focus-visible, input:focus-visible, [tabindex]:focus-visible {
 .letter-preview { max-height: 160px; margin-bottom: 8px; }
 .upload-spinner { margin: 0 auto 10px; }
 .resume-error { margin-top: 10px; }
+/* The nav sits on the popup bottom edge, so its ring goes inside. */
+.nav-item:focus-visible { outline-offset: -3px; }
