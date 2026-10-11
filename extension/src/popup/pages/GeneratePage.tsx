@@ -410,7 +410,8 @@ export default function GeneratePage({ onNavigate }: Props) {
 
   function cancelLetter() {
     if (coverJobId.current) coverDismissedId.current = coverJobId.current
-    setState('idle')
+    // A cancelled regenerate returns to the letter it would have replaced.
+    setState(letter && job ? 'done' : 'idle')
     setLoadingJob(null)
   }
 
