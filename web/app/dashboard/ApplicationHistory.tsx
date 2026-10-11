@@ -1,8 +1,16 @@
-import type { Application } from '@/lib/applications'
-import { summarizeApplication } from '@/lib/applications'
+import { fetchApplications, summarizeApplication, type Application } from '@/lib/applications'
+import { CopyLetterButton } from './CopyLetterButton'
+import { LocalDate } from './LocalDate'
 
-// Pro history, read-only: letters to read, tailored resumes with their ATS
-// score. PDFs and a full applications page come in 2f.
+// Pro history (2e). Streams in behind <Suspense> so the rest of the dashboard
+// doesn't wait on the applications function. Renders nothing if the call fails.
+export async function ProHistory({ accessToken }: { accessToken: string }) {
+  const applications = await fetchApplications(process.env.NEXT_PUBLIC_SUPABASE_URL!, accessToken)
+  return applications ? <ApplicationHistory applications={applications} /> : null
+}
+
+// Read-only: letters to read and copy, tailored resumes with their ATS score.
+// PDFs and a full applications page come in 2f.
 export function ApplicationHistory({ applications }: { applications: Application[] }) {
   return (
     <section className="bg-surface border border-border rounded-[10px] px-7 py-6" style={{ animation: 'fadeUp 0.5s ease 0.2s both' }}>
@@ -23,8 +31,7 @@ export function ApplicationHistory({ applications }: { applications: Application
                 <div className="min-w-0">
                   <p className="text-[14px] font-semibold text-foreground truncate">{app.title || 'Untitled role'}</p>
                   <p className="text-[12.5px] text-muted-foreground truncate">
-                    {/* UTC on both server and browser, or an evening date differs and hydration fails. */}
-                    {app.company || 'Unknown company'} · {new Date(app.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })}
+                    {app.company || 'Unknown company'} · <LocalDate iso={app.createdAt} options={{ month: 'short', day: 'numeric' }} />
                   </p>
                 </div>
                 {s.bestScore !== null && (
@@ -41,6 +48,7 @@ export function ApplicationHistory({ applications }: { applications: Application
                     Read letter{app.coverLetters.length > 1 ? ` ${i + 1}` : ''}
                   </summary>
                   <pre className="mt-2 whitespace-pre-wrap text-[13px] leading-[1.6] text-foreground font-sans">{cl.letter}</pre>
+                  <CopyLetterButton letter={cl.letter} />
                 </details>
               ))}
             </li>

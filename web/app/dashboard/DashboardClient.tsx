@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { createClient } from "@/lib/supabase";
 import { openBilling } from "@/lib/billing";
 import { describeAllowance, type Allowance } from "@/lib/limits";
-import type { Application } from "@/lib/applications";
-import { ApplicationHistory } from "./ApplicationHistory";
+import { LocalDate } from "./LocalDate";
 import { CHROME_STORE_URL } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -23,7 +22,8 @@ interface Props {
   tier: string;
   memberSince: string;
   allowance: Allowance | null;
-  applications: Application[] | null;
+  // Pro history, rendered by the server page and streamed in (2e).
+  history: ReactNode;
 }
 
 export default function DashboardClient({
@@ -32,7 +32,7 @@ export default function DashboardClient({
   tier,
   memberSince,
   allowance,
-  applications,
+  history,
 }: Props) {
   const [avatarFailed, setAvatarFailed]     = useState(false);
   const [signingOut, setSigningOut]         = useState(false);
@@ -42,12 +42,6 @@ export default function DashboardClient({
   const [billingError, setBillingError]     = useState('');
   const isPro = tier === "hosted_pro";
   const initial = email[0]?.toUpperCase() ?? "?";
-  // UTC on server and browser alike, or a month-boundary date differs and hydration fails.
-  const memberDate = new Date(memberSince).toLocaleDateString("en-US", {
-    month: "long",
-    year: "numeric",
-    timeZone: "UTC",
-  });
   const usage = describeAllowance(allowance);
   const usagePct = usage ? Math.min(100, (usage.used / usage.limit) * 100) : 0;
 
@@ -129,7 +123,7 @@ export default function DashboardClient({
                 </span>
                 <span className="inline-block w-[3px] h-[3px] rounded-full bg-border shrink-0" />
                 <span className="text-[13px] text-muted-foreground">
-                  Member since {memberDate}
+                  Member since <LocalDate iso={memberSince} options={{ month: "long", year: "numeric" }} />
                 </span>
               </div>
             </div>
@@ -286,7 +280,7 @@ export default function DashboardClient({
           )}
 
           {/* Pro history (2e) */}
-          {applications && <ApplicationHistory applications={applications} />}
+          {history}
 
           {/* Extension CTA */}
           <div
