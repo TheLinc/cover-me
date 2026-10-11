@@ -1,4 +1,4 @@
-import type { AuthSession, CoverLetter, ParsedResume, ResumeData, Settings } from '../types'
+import type { AppMode, AuthSession, CoverLetter, ParsedResume, ResumeData, Settings } from '../types'
 
 const HISTORY_LIMIT = 50
 
@@ -9,6 +9,16 @@ export async function getSettings(): Promise<Settings | null> {
 
 export async function saveSettings(settings: Settings): Promise<void> {
   await chrome.storage.local.set({ settings })
+}
+
+// The one place the default mode is decided. New installs get the free hosted
+// account; anyone who saved a mode (or, before modes existed, a key) keeps it.
+export function resolveMode(settings: Settings | null | undefined): AppMode {
+  return settings?.mode ?? (settings?.apiKey ? 'byok' : 'hosted')
+}
+
+export async function getMode(): Promise<AppMode> {
+  return resolveMode(await getSettings())
 }
 
 export async function getResume(): Promise<ResumeData | null> {

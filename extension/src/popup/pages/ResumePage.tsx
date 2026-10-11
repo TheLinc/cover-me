@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { uploadResumeToBackend } from '../../lib/auth'
 import { parseResume } from '../../lib/resume-parser'
-import { getResume, getSession, getSettings, saveResume } from '../../lib/storage'
+import { getMode, getResume, getSession, saveResume } from '../../lib/storage'
 import type { ParsedResume, ResumeData } from '../../types'
 
 type Status = 'idle' | 'parsing' | 'saved' | 'error'
@@ -34,8 +34,8 @@ export default function ResumePage() {
       setTimeout(() => setStatus('idle'), 2500)
 
       // Best-effort cloud sync for hosted users
-      const [settings, session] = await Promise.all([getSettings(), getSession()])
-      if (settings?.mode === 'hosted' && session?.access_token) {
+      const [mode, session] = await Promise.all([getMode(), getSession()])
+      if (mode === 'hosted' && session?.access_token) {
         uploadResumeToBackend(session.access_token, text, file.name).catch((err) => {
           setError(`Saved locally, but cloud sync failed: ${err instanceof Error ? err.message : 'unknown error'}`)
         })

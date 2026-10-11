@@ -4,7 +4,7 @@ export type AppMode = 'byok' | 'hosted'
 export interface Settings {
   provider: AIProvider
   apiKey: string // AES-GCM encrypted, stored in chrome.storage.local
-  mode: AppMode  // 'byok' (default) or 'hosted'
+  mode: AppMode  // see resolveMode() in lib/storage.ts for the default
 }
 
 export type { JobData } from '../content/scrapers/types.ts'

@@ -5,7 +5,7 @@ import { tailorResume } from '../lib/ai/resume-tailor'
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from '../lib/config'
 import { decryptApiKey } from '../lib/crypto'
 import { debugGroup } from '../lib/debug'
-import { addToHistory, clearSavedLogin, getCachedTier, getCandidateContext, getResume, getSettings, saveParsedResume } from '../lib/storage'
+import { addToHistory, clearSavedLogin, getCachedTier, getCandidateContext, getResume, getSettings, resolveMode, saveParsedResume } from '../lib/storage'
 import type { PageSnapshot } from '../content/snapshot.ts'
 import type { CoverJob, CoverLetter, FrameScrapeResponse, GenerateResponse, JobData, ScrapeResponse, TailoredResume, TailorJob, TailorResponse } from '../types'
 
@@ -407,7 +407,7 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
     const merged = [candidateContext, supplemental?.trim()].filter(Boolean).join('\n\n') || undefined
 
     await debugGroup('Tailor — scraped job + flags', {
-      mode: settings?.mode ?? 'byok',
+      mode: resolveMode(settings),
       'job.title': job.title,
       'job.company': job.company,
       'job.url': job.url,
@@ -426,7 +426,7 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
       void setTailorJob({ id, status: 'loading', job, startedAt, progress })
     }
 
-    if (settings?.mode === 'hosted') {
+    if (resolveMode(settings) === 'hosted') {
       const session = await ensureValidSession()
       if (!session) {
         return failTailor(id, job, startedAt, 'Session expired. Please sign in again in Settings.')
@@ -490,7 +490,7 @@ async function generateFromJob(job: JobData, supplemental?: string, jobId?: stri
     const merged = [candidateContext, supplemental?.trim()].filter(Boolean).join('\n\n') || undefined
 
     await debugGroup('Cover letter — scraped job', {
-      mode: settings?.mode ?? 'byok',
+      mode: resolveMode(settings),
       'job.title': job.title,
       'job.company': job.company,
       'job.url': job.url,
@@ -501,7 +501,7 @@ async function generateFromJob(job: JobData, supplemental?: string, jobId?: stri
     })
 
     // Hosted path: JWT sent to backend, no local API key or resume needed
-    if (settings?.mode === 'hosted') {
+    if (resolveMode(settings) === 'hosted') {
       const session = await ensureValidSession()
       if (!session) {
         return failCover(id, job, startedAt, 'Session expired. Please sign in again in Settings.')
