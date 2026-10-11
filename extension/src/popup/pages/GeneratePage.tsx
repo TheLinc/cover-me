@@ -600,7 +600,8 @@ export default function GeneratePage({ onNavigate }: Props) {
       <header className="popup-bar">
         <img src={logoIcon} width="20" height="20" alt="" className="logo-icon" />
         <span className="logo-text">Cover Me</span>
-        {status && <span className="popup-status">{status}</span>}
+        {/* Always mounted, so screen readers hear "Done" when a run finishes. */}
+        <span className="popup-status" role="status">{status}</span>
       </header>
 
       {!setupLoaded && null}
