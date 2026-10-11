@@ -4,7 +4,9 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase";
+import { afterOAuth, oauthCancelled, oauthErrorDescription, oauthRedirectUrl } from "@/lib/auth-redirect";
 import { Button } from "@/components/ui/button";
+import { GoogleIcon } from "@/components/ui/google-icon";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -16,6 +18,9 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 
 type View = "signin" | "signup" | "forgot" | "reset" | "confirmed";
+
+// Off until the Google provider is set up in Supabase: merging deploys the site.
+const GOOGLE_SIGNIN = process.env.NEXT_PUBLIC_GOOGLE_SIGNIN === "1";
 
 // Canonical origin for Supabase email redirects. window.location.origin varies
 // between www/non-www depending on how the user reached the site, and any
@@ -56,8 +61,13 @@ function AuthForm() {
     // We detect the code param as a signal that this is an email confirmation,
     // then show the confirmed view when the exchange completes.
     const searchParams = new URLSearchParams(window.location.search);
-    const isConfirmation = searchParams.has("code");
-    if (isConfirmation) {
+    // Google sign-in comes back with ?oauth=1&code=…: a sign-in, not a confirmation.
+    const isOAuth = searchParams.has("oauth");
+    // Read before replaceState below strips the query and the hash.
+    const cancelledOAuth = isOAuth && oauthCancelled(window.location.search, window.location.hash);
+    const oauthReason = isOAuth ? oauthErrorDescription(window.location.search, window.location.hash) : "";
+    const isConfirmation = searchParams.has("code") && !isOAuth;
+    if (isConfirmation || isOAuth) {
       window.history.replaceState(null, "", window.location.pathname);
     }
 
@@ -100,7 +110,17 @@ function AuthForm() {
       if (event === "PASSWORD_RECOVERY") setView("reset");
       // Fires after auto-exchange of PKCE code completes
       if (event === "SIGNED_IN" && isConfirmation) setView("confirmed");
+      if (event === "SIGNED_IN" && isOAuth) window.location.href = afterOAuth(searchParams.get("plan"));
     });
+
+    // getSession waits for the client's code exchange, so no session here
+    // means the exchange failed (an expired or reused link, say).
+    if (isOAuth) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) window.location.href = afterOAuth(searchParams.get("plan"));
+        else if (!cancelledOAuth) setError(oauthReason || "Google sign-in didn't finish. Please try again.");
+      });
+    }
 
     // Fallback: auto-exchange may complete before the listener above is attached,
     // in which case onAuthStateChange fires INITIAL_SESSION (not SIGNED_IN).
@@ -153,6 +173,15 @@ function AuthForm() {
       setError(err instanceof Error ? err.message : "Something went wrong");
       setStatus("idle");
     }
+  }
+
+  async function handleGoogle() {
+    setError("");
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: oauthRedirectUrl(process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin, plan) },
+    });
+    if (error) setError(error.message);
   }
 
   // ── Forgot password ──────────────────────────────────────────────────────
@@ -569,6 +598,18 @@ function AuthForm() {
                   {subtext}
                 </p>
               </div>
+
+              {GOOGLE_SIGNIN && (
+                <div className="flex flex-col gap-3.5 mb-[18px]">
+                  <Button type="button" variant="outline" size="lg" className="w-full" onClick={handleGoogle}>
+                    <GoogleIcon />
+                    Continue with Google
+                  </Button>
+                  <div className="flex items-center gap-3 text-[12px] text-muted-foreground">
+                    <span className="h-px flex-1 bg-border" />or<span className="h-px flex-1 bg-border" />
+                  </div>
+                </div>
+              )}
 
               <form onSubmit={handleSubmit}>
                 <div className="flex flex-col gap-3.5 mb-[18px]">

@@ -1,24 +1,30 @@
 import { useEffect, useRef, useState } from 'react'
-import { uploadResumeToBackend } from '../../lib/auth'
+import { ensureValidSession, uploadResumeToBackend } from '../../lib/auth'
 import { parseResume } from '../../lib/resume-parser'
-import { getResume, getSession, getSettings, saveResume } from '../../lib/storage'
+import { getMode, getResume, getSession, saveResume, watchResume } from '../../lib/storage'
 import type { ParsedResume, ResumeData } from '../../types'
 
 type Status = 'idle' | 'parsing' | 'saved' | 'error'
 
-export default function ResumePage() {
+export default function ResumePage({ hideHeader = false }: { hideHeader?: boolean }) {
   const [resume, setResume] = useState<ResumeData | null>(null)
   const [parsed, setParsed] = useState<ParsedResume | null>(null)
   const [status, setStatus] = useState<Status>('idle')
   const [error, setError] = useState('')
   const [dragOver, setDragOver] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  // Signed in to the account: a copy added while signed out isn't in it yet.
+  const [accountMode, setAccountMode] = useState(false)
 
   useEffect(() => {
-    getResume().then((r) => {
+    const show = (r: ResumeData | null) => {
       setResume(r)
-      if (r?.parsed) setParsed(r.parsed)
-    })
+      setParsed(r?.parsed ?? null)
+      // A sign-in's sync rewrites the resume, so this also catches a sign-in.
+      Promise.all([getMode(), getSession()]).then(([m, s]) => setAccountMode(m === 'hosted' && !!s))
+    }
+    getResume().then(show)
+    return watchResume(show)
   }, [])
 
   async function handleFile(file: File) {
@@ -27,15 +33,26 @@ export default function ResumePage() {
     setParsed(null) // clear stale parse on new upload
     try {
       const text = await parseResume(file)
-      const data: ResumeData = { text, filename: file.name, updatedAt: new Date().toISOString() }
+      // ensureValidSession refreshes an expired token (or clears a dead session),
+      // so the upload below doesn't fail with a stale token.
+      const [mode, session] = await Promise.all([getMode(), ensureValidSession()])
+      const hosted = mode === 'hosted' && !!session
+      // Signed in (either mode): the copy belongs to this account. Signed out
+      // after an account was here: it keeps that owner, so another account can't
+      // claim it, and is marked so the owner's next sign-in doesn't upload it
+      // either (it may be someone else's). See syncResume in lib/auth.ts.
+      const inherited = session ? undefined : (await getResume())?.accountId
+      const data: ResumeData = {
+        text, filename: file.name, updatedAt: new Date().toISOString(),
+        ...(session ? { accountId: session.user.id } : inherited ? { accountId: inherited, signedOutUpload: true } : {}),
+      }
       await saveResume(data)
       setResume(data)
       setStatus('saved')
       setTimeout(() => setStatus('idle'), 2500)
 
       // Best-effort cloud sync for hosted users
-      const [settings, session] = await Promise.all([getSettings(), getSession()])
-      if (settings?.mode === 'hosted' && session?.access_token) {
+      if (hosted && session) {
         uploadResumeToBackend(session.access_token, text, file.name).catch((err) => {
           setError(`Saved locally, but cloud sync failed: ${err instanceof Error ? err.message : 'unknown error'}`)
         })
@@ -73,10 +90,12 @@ export default function ResumePage() {
 
   return (
     <div className="page">
-      <div className="page-header">
-        <h1 className="page-title">Resume</h1>
-        <p className="page-subtitle">Upload once — used for every cover letter</p>
-      </div>
+      {!hideHeader && (
+        <div className="page-header">
+          <h1 className="page-title">Resume</h1>
+          <p className="page-subtitle">Upload once — used for every cover letter</p>
+        </div>
+      )}
 
       <div
         className={`upload-area${dragOver ? ' drag-over' : ''}`}
@@ -112,7 +131,7 @@ export default function ResumePage() {
         )}
       </div>
 
-      {status === 'error' && (
+      {error && (
         <div className="error-box" style={{ marginTop: 10 }}>{error}</div>
       )}
 
@@ -133,6 +152,9 @@ export default function ResumePage() {
               </div>
               {parsed && (
                 <div className="resume-sections">{parsedSummary(parsed)}</div>
+              )}
+              {resume.signedOutUpload && accountMode && (
+                <div className="hint" style={{ marginTop: 4 }}>Added while signed out, so it isn&apos;t in your account yet. Upload it again to use it for letters.</div>
               )}
             </div>
             {status === 'saved' && (

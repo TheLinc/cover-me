@@ -177,6 +177,8 @@ pnpm env:local    # writes local env files for the functions, extension and web 
 
 `pnpm start` applies every migration and `supabase/seed.sql`, which creates two confirmed accounts: `free@cover-me.test` and `pro@cover-me.test`, both with password `password123`. `pnpm status` prints the local URLs, including Mailpit, which catches signup and password reset emails. Studio (the local dashboard), Realtime and Analytics are turned off in `supabase/config.toml` to keep the stack's memory low; set `[studio] enabled = true` there when you want the dashboard.
 
+Google sign-in is off on the local stack until you add a Google OAuth client for it. Copy `backend/.env.example` to `backend/.env` and follow the comments there: a *Web application* client with redirect URI `http://127.0.0.1:54321/auth/v1/callback`, its ID and secret, and `SUPABASE_AUTH_EXTERNAL_GOOGLE_ENABLED=true`. Then run `pnpm stop`, `pnpm start` and `pnpm env:local`, which turns on the Google buttons in the local extension and web builds.
+
 Then run the apps against it:
 
 ```bash
@@ -478,6 +480,21 @@ pnpm run build
 
 Load `extension/dist/` as an unpacked extension in Chrome. The hosted tier will now point to your own Supabase project and web dashboard.
 
+### 10. Google sign-in (optional)
+
+Email and password sign-in works without this. To turn on "Continue with Google":
+
+1. In the **Google Cloud Console**, go to *APIs & Services → Credentials → Create OAuth client ID → Web application*.
+   - Authorized redirect URI: `https://<your-project-ref>.supabase.co/auth/v1/callback`.
+   - On the OAuth consent screen, request only the `openid`, `email` and `profile` scopes.
+2. In the **Supabase dashboard**, go to *Authentication → Providers → Google*. Enable it and paste the client ID and secret.
+3. Under *Authentication → URL Configuration → Redirect URLs*, add:
+   - `https://<your-extension-id>.chromiumapp.org/`, your extension's ID (`chrome.identity.getRedirectURL()` in its service-worker console prints it). Add each ID exactly. A `*.chromiumapp.org` wildcard would let any extension receive your users' sessions.
+   - `https://your-domain.com/auth` and `https://your-domain.com/auth?**` for the website.
+4. Set `VITE_GOOGLE_SIGNIN=1` in `extension/.env` and rebuild, and `NEXT_PUBLIC_GOOGLE_SIGNIN=1` for the web dashboard, then redeploy it (Next.js reads `NEXT_PUBLIC_` variables at build time). Both buttons stay hidden until then.
+
+Turn on the website's button only once users have an extension build with Google sign-in. Someone who signs up on the website with Google has no password, so an older build that offers only email sign-in can't sign them in.
+
 ### Environment variable reference
 
 **Edge Functions** (set via `supabase secrets set`):
@@ -502,6 +519,7 @@ Load `extension/dist/` as an unpacked extension in Chrome. The hosted tier will 
 | `STRIPE_SECRET_KEY` | Stripe secret key |
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret |
 | `NEXT_PUBLIC_SITE_URL` | Your web dashboard URL |
+| `NEXT_PUBLIC_GOOGLE_SIGNIN` | `1` shows "Continue with Google" (after step 10) |
 
 **Extension** (`extension/.env`; use `extension/.env.development` for local-only overrides):
 
@@ -510,6 +528,7 @@ Load `extension/dist/` as an unpacked extension in Chrome. The hosted tier will 
 | `VITE_SUPABASE_URL` | Supabase project URL |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Supabase anon key |
 | `VITE_WEB_URL` | Your web dashboard URL (for auth redirects) |
+| `VITE_GOOGLE_SIGNIN` | `1` shows "Continue with Google" (after step 10) |
 
 ---
 

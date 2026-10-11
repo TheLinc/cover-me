@@ -1,8 +1,8 @@
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL, WEB_URL } from './config'
-import { clearSession, getSession, saveSession } from './storage'
+import { clearResume, clearSession, getResume, getSession, getSettings, saveGoogleSignInError, saveCachedTier, saveResume, saveSession, saveSettings, takeGoogleSignInError } from './storage'
 import { isValidResume } from './ai/resume-tailor'
 import { deriveTailorProgress } from './ai/tailor-progress'
-import type { ApplicationRecord, AuthSession, CoverLetter, JobData, TailoredResume } from '../types'
+import type { ApplicationRecord, AuthSession, CoverLetter, JobData, ResumeData, TailoredResume } from '../types'
 
 // Thrown by signUp() when the account was created but needs email confirmation
 // before it can sign in — not a failure, so callers should render it as a
@@ -52,6 +52,158 @@ export async function signUp(email: string, password: string): Promise<AuthSessi
   return parseSession(data)
 }
 
+// Closing the Google window rejects launchWebAuthFlow; callers treat this as
+// "nothing happened" and show no error.
+export class GoogleSignInCancelledError extends Error {}
+
+function base64url(bytes: Uint8Array): string {
+  return btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+
+export async function pkcePair(): Promise<{ verifier: string; challenge: string }> {
+  const verifier = base64url(crypto.getRandomValues(new Uint8Array(32)))
+  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier)))
+  return { verifier, challenge: base64url(digest) }
+}
+
+// Supabase OAuth with PKCE inside Chrome's auth window. Supabase redirects to
+// https://<extension-id>.chromiumapp.org/?code=…, which must be on the
+// project's Redirect URL allowlist (exact ID, never a wildcard).
+export async function signInWithGoogle(): Promise<AuthSession> {
+  const { verifier, challenge } = await pkcePair()
+  const url = `${SUPABASE_URL}/auth/v1/authorize?${new URLSearchParams({
+    provider: 'google',
+    redirect_to: chrome.identity.getRedirectURL(),
+    code_challenge: challenge,
+    code_challenge_method: 's256',
+  })}`
+
+  let callback: string | undefined
+  try {
+    callback = await chrome.identity.launchWebAuthFlow({ url, interactive: true })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : ''
+    // Chrome's message when the user closes the window. Anything else (the
+    // page failed to load, say) is a real failure the user should see.
+    if (/did not approve/i.test(message)) throw new GoogleSignInCancelledError(message)
+    throw new Error(message || 'Google sign-in failed. Please try again.')
+  }
+  if (!callback) throw new GoogleSignInCancelledError('Sign-in cancelled')
+
+  // Success comes back in the query; Supabase reports errors in the fragment.
+  const u = new URL(callback)
+  const params = new URLSearchParams(`${u.search.slice(1)}&${u.hash.slice(1)}`)
+  const code = params.get('code')
+  // access_denied: the user pressed Cancel on Google's consent screen.
+  if (params.get('error') === 'access_denied') throw new GoogleSignInCancelledError('Sign-in cancelled')
+  if (!code) throw new Error(params.get('error_description') || 'Google sign-in failed. Please try again.')
+
+  const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=pkce`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ auth_code: code, code_verifier: verifier }),
+  })
+  const data = await res.json() as Record<string, unknown>
+  if (!res.ok) {
+    throw new Error((data.error_description as string) || (data.msg as string) || 'Google sign-in failed. Please try again.')
+  }
+  return parseSession(data)
+}
+
+// Everything a successful sign-in (email or Google) must leave behind for the
+// first hosted Generate to work: the session, hosted mode, and one resume on
+// both sides (see syncResume). A failed sync is non-fatal: the resume page
+// retries on the next upload.
+export async function completeSignIn(sess: AuthSession): Promise<void> {
+  // A saved Google failure is moot once any sign-in succeeds.
+  await takeGoogleSignInError()
+  // Mode first: panels watching the session read the mode when it lands.
+  const existing = await getSettings()
+  await saveSettings({ provider: existing?.provider ?? 'claude', apiKey: existing?.apiKey ?? '', mode: 'hosted' })
+  await saveSession(sess)
+  await syncResume(sess).catch(() => {})
+  // A Google sign-in finishes in the worker with no panel open to do this, and
+  // the worker's Pro history sync reads the cached tier.
+  const tier = await fetchTier(sess.user.id, sess.access_token)
+  if (tier) await saveCachedTier(tier)
+}
+
+// One resume on both sides, owned by this account:
+// - The newer copy wins. On a new device the account's resume comes down, so
+//   the user doesn't upload it again; a resume added before signing in goes up.
+// - Identical text moves nothing (an upload clears the server's parse cache).
+// - Another account's copy, left in this browser after a sign-out, is never
+//   uploaded here: it's removed first, then this account's copy (if any)
+//   comes down. Its owner normally has it in their account, unless their last
+//   upload failed.
+// The comparison uses this device's clock against the server's; a badly wrong
+// clock can pick the older copy.
+async function syncResume(sess: AuthSession): Promise<void> {
+  const userId = sess.user.id
+  const before = await getResume()
+  // Removed before the fetch, so a failed fetch can't leave it showing as this account's.
+  if (before?.accountId && before.accountId !== userId) await clearResume()
+  const [local, remote] = await Promise.all([getResume(), fetchResumeFromBackend(sess.access_token)])
+  const mine = local?.text && (!local.accountId || local.accountId === userId) ? local : null
+  // Added while signed out: maybe someone else's on a shared browser, so never
+  // uploaded here. The account's copy wins when they differ.
+  const signedOut = !!mine?.signedOutUpload
+  const keepMine = mine && (!remote || remote.text === mine.text || (!signedOut && Date.parse(mine.updatedAt) >= Date.parse(remote.updatedAt)))
+
+  let next: ResumeData | null = remote ? { ...remote, accountId: userId } : null
+  if (keepMine) {
+    // Matching the account's copy, a signed-out copy is in the account after all.
+    const { signedOutUpload, ...rest } = mine
+    next = { ...rest, accountId: userId, ...(signedOutUpload && remote?.text !== mine.text ? { signedOutUpload } : {}) }
+  }
+
+  // Don't overwrite a resume the user added while this ran.
+  const current = await getResume()
+  if (current?.updatedAt !== local?.updatedAt || current?.text !== local?.text) return
+  // Tag before uploading: if the upload fails, the copy still isn't claimable
+  // by the next account to sign in here, and this account retries next time.
+  if (next) await saveResume(next)
+  else if (local) await clearResume()
+  if (keepMine && !signedOut && remote?.text !== mine.text) await uploadResumeToBackend(sess.access_token, mine.text, mine.filename)
+}
+
+// The account's resume, or null when it has none (404).
+async function fetchResumeFromBackend(accessToken: string): Promise<ResumeData | null> {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/resume`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+  if (res.status === 404) return null
+  const data = await res.json().catch(() => ({})) as Record<string, unknown>
+  if (!res.ok) throw new Error((data.error as string) || 'Resume sync failed')
+  if (typeof data.text !== 'string' || !data.text) return null
+  return { text: data.text, filename: (data.filename as string) || 'resume', updatedAt: (data.updated_at as string) || new Date(0).toISOString() }
+}
+
+export type GoogleSignInResponse =
+  | { success: true; session: AuthSession }
+  | { success: false; cancelled: boolean; error?: string }
+
+// The GOOGLE_SIGN_IN message handler. It runs in the service worker because the
+// popup closes as soon as Google's window takes focus; the worker finishes the
+// sign-in either way, and the popup shows it the next time it opens.
+export async function handleGoogleSignIn(): Promise<GoogleSignInResponse> {
+  try {
+    const session = await signInWithGoogle()
+    await completeSignIn(session)
+    return { success: true, session }
+  } catch (err) {
+    if (err instanceof GoogleSignInCancelledError) {
+      await takeGoogleSignInError()
+      return { success: false, cancelled: true }
+    }
+    const error = (err instanceof Error && err.message) || 'Google sign-in failed'
+    // Usually nobody is listening: the popup closed when Google's window
+    // opened. The next panel to open shows it.
+    await saveGoogleSignInError(error)
+    return { success: false, cancelled: false, error }
+  }
+}
+
 export async function signOut(accessToken: string): Promise<void> {
   await fetch(`${SUPABASE_URL}/auth/v1/logout`, {
     method: 'POST',
@@ -65,11 +217,18 @@ async function refreshSession(refreshToken: string): Promise<AuthSession> {
     headers: authHeaders(),
     body: JSON.stringify({ refresh_token: refreshToken }),
   })
-  if (!res.ok) throw new Error('Session refresh failed')
+  // A server error or rate limit is temporary, like being offline.
+  if (res.status >= 500 || res.status === 429) throw new Error('Session refresh unavailable')
+  if (!res.ok) throw new SessionRejectedError('Session refresh failed')
   return parseSession(await res.json() as Record<string, unknown>)
 }
 
-// Returns a valid session (refreshing if near-expiry). Returns null if no session or refresh fails.
+// The auth server refused the refresh token: the session is over. A network
+// error is not this, so being offline doesn't sign anyone out.
+class SessionRejectedError extends Error {}
+
+// Returns a valid session (refreshing if near-expiry). Returns null if there's
+// no session or the server rejects the refresh; offline, returns the stored one.
 export async function ensureValidSession(): Promise<AuthSession | null> {
   const session = await getSession()
   if (!session) return null
@@ -83,23 +242,26 @@ export async function ensureValidSession(): Promise<AuthSession | null> {
     const fresh = await refreshSession(session.refresh_token)
     await saveSession(fresh)
     return fresh
-  } catch {
+  } catch (err) {
+    if (!(err instanceof SessionRejectedError)) return session
     await clearSession()
     return null
   }
 }
 
-export async function fetchTier(userId: string, accessToken: string): Promise<string> {
+// null when the lookup fails (offline, an expired token): callers keep the
+// cached tier rather than downgrading a Pro user to free.
+export async function fetchTier(userId: string, accessToken: string): Promise<string | null> {
   try {
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/users?select=tier&id=eq.${encodeURIComponent(userId)}&limit=1`,
       { headers: authHeaders(accessToken) },
     )
-    if (!res.ok) return 'hosted_free'
+    if (!res.ok) return null
     const rows = await res.json() as Array<{ tier: string }>
     return rows[0]?.tier ?? 'hosted_free'
   } catch {
-    return 'hosted_free'
+    return null
   }
 }
 
@@ -303,6 +465,9 @@ export async function deleteLetterFromBackend(accessToken: string, id: string): 
 
 function parseSession(data: Record<string, unknown>): AuthSession {
   const user = data.user as Record<string, unknown>
+  // Google sign-ins carry the profile picture; email sign-ins show the initial.
+  const meta = (user?.user_metadata ?? {}) as Record<string, unknown>
+  const picture = meta.avatar_url || meta.picture
   return {
     access_token: data.access_token as string,
     refresh_token: data.refresh_token as string,
@@ -312,6 +477,7 @@ function parseSession(data: Record<string, unknown>): AuthSession {
     user: {
       id: user?.id as string,
       email: user?.email as string,
+      ...(typeof picture === 'string' && picture.startsWith('https://') ? { avatar_url: picture } : {}),
     },
   }
 }

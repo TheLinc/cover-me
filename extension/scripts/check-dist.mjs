@@ -15,6 +15,7 @@ const manifest = JSON.parse(readFileSync(join(DIST, 'manifest.json'), 'utf8'))
 if (manifest.content_scripts?.length) {
   errors.push(`manifest declares content_scripts (${manifest.content_scripts.map((c) => c.matches).flat().join(', ')}); scrapers must be injected on click`)
 }
+if (!existsSync(join(DIST, 'src/welcome/index.html'))) errors.push('missing src/welcome/index.html (the onInstalled welcome tab)')
 
 const broad = (p) => /<all_urls>|^\*:\/\/\*\/|^https?:\/\/\*\/\*$/.test(p)
 for (const p of [...(manifest.host_permissions ?? []), ...(manifest.optional_host_permissions ?? [])]) {

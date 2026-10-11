@@ -1,17 +1,16 @@
-import { ensureValidSession, generateViaBackend, limitErrorCode, RateLimitError, saveLetterToBackend, tailorViaBackend } from '../lib/auth'
+import { ensureValidSession, generateViaBackend, handleGoogleSignIn, limitErrorCode, RateLimitError, saveLetterToBackend, tailorViaBackend } from '../lib/auth'
 import { generateCoverLetter } from '../lib/ai'
 import { parseResumeStructure } from '../lib/ai/resume-parse'
 import { tailorResume } from '../lib/ai/resume-tailor'
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from '../lib/config'
 import { decryptApiKey } from '../lib/crypto'
 import { debugGroup } from '../lib/debug'
-import { addToHistory, clearSavedLogin, getCachedTier, getCandidateContext, getResume, getSettings, saveParsedResume } from '../lib/storage'
+import { addToHistory, getCachedTier, getCandidateContext, getResume, getSettings, resolveMode, saveParsedResume } from '../lib/storage'
+import { handleInstalled } from './install'
 import type { PageSnapshot } from '../content/snapshot.ts'
 import type { CoverJob, CoverLetter, FrameScrapeResponse, GenerateResponse, JobData, ScrapeResponse, TailoredResume, TailorJob, TailorResponse } from '../types'
 
-chrome.runtime.onInstalled.addListener(() => {
-  clearSavedLogin()
-})
+chrome.runtime.onInstalled.addListener((details) => { void handleInstalled(details) })
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (sender.id !== chrome.runtime.id) return
@@ -33,6 +32,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   if (message.type === 'TAILOR_FROM_MANUAL') {
     keepAlive(handleTailorFromManual(message.jobId as string | undefined, message.job as JobData, !!message.compact, message.supplemental as string | undefined, !!message.trim, message.includeSummary !== false, message.previous as TailoredResume | undefined)).then(sendResponse)
+    return true
+  }
+  if (message.type === 'GOOGLE_SIGN_IN') {
+    keepAlive(handleGoogleSignIn()).then(sendResponse)
     return true
   }
 })
@@ -407,7 +410,7 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
     const merged = [candidateContext, supplemental?.trim()].filter(Boolean).join('\n\n') || undefined
 
     await debugGroup('Tailor — scraped job + flags', {
-      mode: settings?.mode ?? 'byok',
+      mode: resolveMode(settings),
       'job.title': job.title,
       'job.company': job.company,
       'job.url': job.url,
@@ -426,10 +429,10 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
       void setTailorJob({ id, status: 'loading', job, startedAt, progress })
     }
 
-    if (settings?.mode === 'hosted') {
+    if (resolveMode(settings) === 'hosted') {
       const session = await ensureValidSession()
       if (!session) {
-        return failTailor(id, job, startedAt, 'Session expired. Please sign in again in Settings.')
+        return failTailor(id, job, startedAt, 'Sign in to your Cover Me account in Settings.')
       }
       // Hosted: the resume + final prompt live server-side. Enable DEBUG_MODE on
       // the edge function to see those in the Supabase function logs.
@@ -490,7 +493,7 @@ async function generateFromJob(job: JobData, supplemental?: string, jobId?: stri
     const merged = [candidateContext, supplemental?.trim()].filter(Boolean).join('\n\n') || undefined
 
     await debugGroup('Cover letter — scraped job', {
-      mode: settings?.mode ?? 'byok',
+      mode: resolveMode(settings),
       'job.title': job.title,
       'job.company': job.company,
       'job.url': job.url,
@@ -501,10 +504,10 @@ async function generateFromJob(job: JobData, supplemental?: string, jobId?: stri
     })
 
     // Hosted path: JWT sent to backend, no local API key or resume needed
-    if (settings?.mode === 'hosted') {
+    if (resolveMode(settings) === 'hosted') {
       const session = await ensureValidSession()
       if (!session) {
-        return failCover(id, job, startedAt, 'Session expired. Please sign in again in Settings.')
+        return failCover(id, job, startedAt, 'Sign in to your Cover Me account in Settings.')
       }
       const letter = await generateViaBackend(job, session.access_token, merged)
       const entry: CoverLetter = {

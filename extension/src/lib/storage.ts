@@ -1,4 +1,4 @@
-import type { AuthSession, CoverLetter, ParsedResume, ResumeData, Settings } from '../types'
+import type { AppMode, AuthSession, CoverLetter, ParsedResume, ResumeData, Settings } from '../types'
 
 const HISTORY_LIMIT = 50
 
@@ -11,6 +11,16 @@ export async function saveSettings(settings: Settings): Promise<void> {
   await chrome.storage.local.set({ settings })
 }
 
+// The one place the default mode is decided. New installs get the free hosted
+// account; anyone who saved a mode (or, before modes existed, a key) keeps it.
+export function resolveMode(settings: Settings | null | undefined): AppMode {
+  return settings?.mode ?? (settings?.apiKey ? 'byok' : 'hosted')
+}
+
+export async function getMode(): Promise<AppMode> {
+  return resolveMode(await getSettings())
+}
+
 export async function getResume(): Promise<ResumeData | null> {
   const { resume } = await chrome.storage.local.get('resume')
   return (resume as ResumeData) ?? null
@@ -18,6 +28,10 @@ export async function getResume(): Promise<ResumeData | null> {
 
 export async function saveResume(resume: ResumeData): Promise<void> {
   await chrome.storage.local.set({ resume })
+}
+
+export async function clearResume(): Promise<void> {
+  await chrome.storage.local.remove('resume')
 }
 
 export async function saveParsedResume(parsed: ParsedResume): Promise<void> {
@@ -55,8 +69,55 @@ export async function saveSession(session: AuthSession): Promise<void> {
   await chrome.storage.local.set({ session })
 }
 
+// Calls back when the saved session changes in another context: the worker
+// finishing Google sign-in, or a sign-in or sign-out in the popup while the
+// welcome tab is open. Returns the unsubscribe function.
+export function watchSession(onChange: (session: AuthSession | null) => void): () => void {
+  return watchLocalKey('session', (value) => onChange((value as AuthSession) ?? null))
+}
+
+// Calls back when the worker saves a Google sign-in error, for a panel that
+// opened while Google's window was still up.
+export function watchGoogleSignInError(onError: (message: string) => void): () => void {
+  return watchLocalKey('googleSignInError', (value) => { if (value) onError(value as string) })
+}
+
+// Calls back when the resume changes elsewhere, e.g. a sign-in downloading the
+// account's copy while the welcome tab shows the upload step.
+export function watchResume(onChange: (resume: ResumeData | null) => void): () => void {
+  return watchLocalKey('resume', (value) => onChange((value as ResumeData) ?? null))
+}
+
+function watchLocalKey(key: string, onChange: (newValue: unknown) => void): () => void {
+  const listener = (changes: Record<string, chrome.storage.StorageChange>, area: string) => {
+    if (area === 'local' && key in changes) onChange(changes[key].newValue)
+  }
+  chrome.storage.onChanged.addListener(listener)
+  return () => chrome.storage.onChanged.removeListener(listener)
+}
+
+// A Google sign-in error the worker saved because the popup that started the
+// flow had already closed. Returned once, then removed.
+export async function saveGoogleSignInError(message: string): Promise<void> {
+  await chrome.storage.local.set({ googleSignInError: message })
+}
+
+export async function takeGoogleSignInError(): Promise<string> {
+  const { googleSignInError } = await chrome.storage.local.get('googleSignInError')
+  if (googleSignInError) await chrome.storage.local.remove('googleSignInError')
+  return (googleSignInError as string) ?? ''
+}
+
+// Sign-out, or a session that can't be refreshed. An untagged resume belonged
+// to the account that was signed in: tag it, so the next account to sign in on
+// this browser can't claim it (see syncResume in lib/auth.ts).
 export async function clearSession(): Promise<void> {
-  await chrome.storage.local.remove('session')
+  const [session, resume] = await Promise.all([getSession(), getResume()])
+  if (session?.user?.id && resume?.text && !resume.accountId) {
+    await saveResume({ ...resume, accountId: session.user.id })
+  }
+  // The tier belonged to that account too; the next account caches its own.
+  await chrome.storage.local.remove(['session', 'cachedTier'])
 }
 
 // "Remember me" used to keep the password here, encrypted with a key stored

@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
 }
 
-const EFFECTIVE_DATE = 'October 9, 2026'
+const EFFECTIVE_DATE = 'October 11, 2026'
 const CONTACT_EMAIL  = 'support@cover-me.dev'
 
 // ── Section heading ────────────────────────────────────────────────────────
@@ -211,12 +211,16 @@ export default function PrivacyPage() {
                 file, text is extracted client-side on your device. The raw binary file is never stored or
                 transmitted. In BYOK mode, the extracted text is stored only in your browser&apos;s local
                 storage. In Hosted mode, the extracted text is transmitted to our server over HTTPS and
-                stored in an encrypted database.
+                stored in an encrypted database, and a copy is kept in local storage on each browser you
+                sign in from, so you don&apos;t upload it again on a new device.
               </Li>
               <Li>
                 <strong className="text-foreground">Account credentials (Hosted mode only).</strong>{' '}
                 Your email address and password are used to create and authenticate your account, managed
                 by Supabase Auth. Passwords are hashed using bcrypt and are never stored in plaintext.
+                If you choose Continue with Google instead, there is no password: Google confirms who
+                you are, and we receive your email address, name, and profile picture link (see
+                Third-Party Services below).
                 If you enable &ldquo;Remember me&rdquo; on the sign-in screen, your password is encrypted
                 with AES-256-GCM and stored locally on your device so the sign-in form can be pre-filled.
                 It is never transmitted to our servers in plaintext.
@@ -318,7 +322,7 @@ export default function PrivacyPage() {
               <ul className="mt-2 space-y-1 pl-4 list-disc">
                 <li>User settings (AI provider, mode selection)</li>
                 <li>AES-256-GCM encrypted API key (BYOK mode)</li>
-                <li>Extracted resume text and parsed resume structure (BYOK mode)</li>
+                <li>Extracted resume text and parsed resume structure</li>
                 <li>Application history — cover letters and tailored resumes grouped by job</li>
                 <li>JWT session tokens (Hosted mode)</li>
                 <li>AES-256-GCM encrypted login credential for the &ldquo;Remember me&rdquo; feature (optional, Hosted mode)</li>
@@ -369,6 +373,20 @@ export default function PrivacyPage() {
               Injection is gated by <code className="text-brand-light font-mono text-[12px]">activeTab</code>{' '}
               and only triggered when you click Generate or Tailor Resume. No scripts are ever
               injected in the background.
+            </PermissionCard>
+
+            <PermissionCard name="identity">
+              <strong className="text-foreground">Why it is needed:</strong> It lets you sign in with
+              your Google account through Chrome&apos;s own sign-in window, using{' '}
+              <code className="text-brand-light font-mono text-[12px]">chrome.identity.launchWebAuthFlow</code>.
+              <br /><br />
+              <strong className="text-foreground">Exactly how it is used:</strong> Only when you click
+              Continue with Google, Chrome opens Google&apos;s sign-in page. After you approve, Supabase
+              Auth receives the email address, name, and profile picture link Google shares, and the
+              extension receives a Cover Me session. The extension reads nothing else from your Google
+              account or from Chrome&apos;s signed-in profile. The{' '}
+              <code className="text-brand-light font-mono text-[12px]">identity.email</code> permission
+              is not requested.
             </PermissionCard>
 
             <H3>Job board host access</H3>
@@ -460,7 +478,7 @@ export default function PrivacyPage() {
             <Ul>
               <Li>All on-device data is stored in <code className="text-brand-light font-mono text-[13px]">chrome.storage.local</code> — never in <code className="text-brand-light font-mono text-[13px]">chrome.storage.sync</code>, cookies, or <code className="text-brand-light font-mono text-[13px]">localStorage</code>.</Li>
               <Li>API keys (BYOK mode) are encrypted with AES-256-GCM using a key derived via the Web Crypto API before being written to storage. The plaintext key exists in memory only for the duration of a single API call.</Li>
-              <Li>Resume text and cover letter history are stored unencrypted in local storage (BYOK mode) since they never leave your device.</Li>
+              <Li>Resume text and cover letter history are stored unencrypted in your browser&apos;s local storage, in every mode. In Hosted mode the copies on our server are encrypted; the local copies stay on your device.</Li>
             </Ul>
 
             <H3>Server-side storage (Hosted mode only)</H3>
@@ -497,7 +515,13 @@ export default function PrivacyPage() {
                   name: 'Supabase',
                   url: 'https://supabase.com/privacy',
                   when: 'Hosted mode only',
-                  receives: 'Email address, hashed password, encrypted resume text, encrypted cover letters and tailored resumes (Pro), session tokens, and usage counts. Supabase hosts our authentication system and database.',
+                  receives: 'Email address, hashed password (email sign-in only), encrypted resume text, encrypted cover letters and tailored resumes (Pro), session tokens, and usage counts. Supabase hosts our authentication system and database.',
+                },
+                {
+                  name: 'Google',
+                  url: 'https://policies.google.com/privacy',
+                  when: 'Only if you choose "Continue with Google"',
+                  receives: 'Google confirms who you are and sends us your email address, name, and profile picture link. We use the email address to create and sign in to your account, and show the picture as your account avatar in the extension and on the dashboard. Your browser loads the picture from Google\'s servers. The name is stored with your account but not used. We never see your Google password.',
                 },
                 {
                   name: 'Stripe',

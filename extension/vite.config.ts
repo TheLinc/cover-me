@@ -107,5 +107,7 @@ export default defineConfig(({ mode }) => ({
     outDir: 'dist',
     emptyOutDir: true,
     chunkSizeWarningLimit: 1000,
+    // The welcome tab isn't referenced by the manifest, so name it as an input.
+    rollupOptions: { input: { welcome: 'src/welcome/index.html' } },
   },
 }))

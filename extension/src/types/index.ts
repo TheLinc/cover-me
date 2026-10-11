@@ -4,7 +4,7 @@ export type AppMode = 'byok' | 'hosted'
 export interface Settings {
   provider: AIProvider
   apiKey: string // AES-GCM encrypted, stored in chrome.storage.local
-  mode: AppMode  // 'byok' (default) or 'hosted'
+  mode: AppMode  // see resolveMode() in lib/storage.ts for the default
 }
 
 export type { JobData } from '../content/scrapers/types.ts'
@@ -25,6 +25,7 @@ export interface AuthSession {
   user: {
     id: string
     email: string
+    avatar_url?: string // Google sign-in only: the profile picture
   }
 }
 
@@ -66,6 +67,14 @@ export interface ResumeData {
   filename: string
   updatedAt: string
   parsed?: ParsedResume
+  // The Cover Me account this copy belongs to. Set by a sign-in's sync, an
+  // upload while signed in, a sign-out, and inherited by a signed-out upload.
+  // Unset only when this browser has never had a signed-in account with a
+  // resume (BYOK or a new install), so the next sign-in may claim it.
+  accountId?: string
+  // Uploaded while signed out after an account was here. A sign-in never
+  // uploads it: on a shared browser it may be someone else's.
+  signedOutUpload?: boolean
 }
 
 export interface TailoredResume {

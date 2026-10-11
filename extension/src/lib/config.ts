@@ -7,3 +7,8 @@ export const SUPABASE_PUBLISHABLE_KEY = (import.meta.env.VITE_SUPABASE_PUBLISHAB
 // Web app URL — used as the email confirmation redirect target.
 // Set VITE_WEB_URL in extension/.env (prod) or extension/.env.development (local dev)
 export const WEB_URL = (import.meta.env.VITE_WEB_URL as string) ?? 'https://www.cover-me.dev'
+
+// "Continue with Google" shows only when VITE_GOOGLE_SIGNIN=1, i.e. once the
+// project has the Google provider and this extension's redirect URL set up
+// (README, self-hosting step 10). Without it, email sign-in is the only option.
+export const GOOGLE_SIGNIN = import.meta.env.VITE_GOOGLE_SIGNIN === '1'

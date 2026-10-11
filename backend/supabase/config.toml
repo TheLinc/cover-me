@@ -165,7 +165,9 @@ site_url = "http://localhost:3000"
 # The public URL that Auth serves on. Defaults to the API external URL with `/auth/v1` appended.
 # external_url = ""
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-additional_redirect_urls = ["http://localhost:3000/**", "http://127.0.0.1:3000/**"]
+# The chromiumapp.org wildcard lets any unpacked build's Google sign-in return here (each checkout
+# loads with its own extension ID). Local stack only: production lists the store ID exactly.
+additional_redirect_urls = ["http://localhost:3000/**", "http://127.0.0.1:3000/**", "https://*.chromiumapp.org/"]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to auth.external_url.
@@ -347,6 +349,15 @@ url = ""
 skip_nonce_check = false
 # If enabled, it will allow the user to successfully authenticate when the provider does not return an email address.
 email_optional = false
+
+# Google sign-in. Off here so CI and fresh checkouts start without credentials. backend/.env turns it
+# on with the dev OAuth client: the CLI reads that file and lets SUPABASE_AUTH_EXTERNAL_GOOGLE_*
+# variables override these keys (see backend/.env.example).
+[auth.external.google]
+enabled = false
+client_id = ""
+secret = ""
+skip_nonce_check = false
 
 # Allow Solana wallet holders to sign in to your project via the Sign in with Solana (SIWS, EIP-4361) standard.
 # You can configure "web3" rate limit in the [auth.rate_limit] section and set up [auth.captcha] if self-hosting.

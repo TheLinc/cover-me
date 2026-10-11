@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { ensureValidSession, startBilling } from '../../lib/auth'
+import { GOOGLE_SIGNIN } from '../../lib/config'
 import { downloadCoverLetterPdf } from '../../lib/pdf'
 import { downloadTailoredResumePdf } from '../../lib/resume-pdf'
-import { getCandidateContext, saveCandidateContext } from '../../lib/storage'
+import { getCandidateContext, resolveMode, saveCandidateContext } from '../../lib/storage'
 import type { AuthSession, CoverJob, GenerateResponse, JobData, Settings, ScrapeResponse, TailorJob, TailorResponse, TailoredResume } from '../../types'
 import logoIcon from '../../public/icon/48.png'
 import type { Page } from '../App'
@@ -134,7 +135,7 @@ export default function GeneratePage({ onNavigate }: Props) {
   const [hasResume, setHasResume] = useState<boolean | null>(null)
   const [hasApiKey, setHasApiKey] = useState<boolean | null>(null)
   const [hasSession, setHasSession] = useState<boolean | null>(null)
-  const [appMode, setAppMode] = useState<'byok' | 'hosted'>('byok')
+  const [appMode, setAppMode] = useState<'byok' | 'hosted'>('hosted')
 
   // UI state — not persisted across popup opens
   const [contextExpanded, setContextExpanded] = useState(false)
@@ -155,7 +156,7 @@ export default function GeneratePage({ onNavigate }: Props) {
       setHasResume(!!r.resume)
       setHasApiKey(!!(storedSettings?.apiKey))
       setHasSession(!!(r.session as AuthSession | undefined)?.access_token)
-      setAppMode(storedSettings?.mode ?? 'byok')
+      setAppMode(resolveMode(storedSettings))
 
       const s = r.generatePage as Record<string, unknown> | undefined
       let restoredCoverDone = false
@@ -639,7 +640,7 @@ export default function GeneratePage({ onNavigate }: Props) {
               {appMode === 'hosted' ? (
                 <>
                   <div className="setup-step-title">Sign in to Cover Me</div>
-                  <div className="setup-step-hint">Free account — 10 to start, then 5 a week</div>
+                  <div className="setup-step-hint">{GOOGLE_SIGNIN ? 'Continue with Google, free: 10 to start, then 5 a week' : 'Free account — 10 to start, then 5 a week'}</div>
                 </>
               ) : (
                 <>

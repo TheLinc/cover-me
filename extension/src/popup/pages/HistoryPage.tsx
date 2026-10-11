@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { deleteApplicationFromBackend, ensureValidSession, fetchApplicationsFromBackend } from '../../lib/auth'
 import { downloadCoverLetterPdf } from '../../lib/pdf'
 import { downloadTailoredResumePdf } from '../../lib/resume-pdf'
-import { deleteFromHistory, getCachedTier, getHistory, getSettings } from '../../lib/storage'
+import { deleteFromHistory, getCachedTier, getHistory, getMode } from '../../lib/storage'
 import type { ApplicationRecord, AuthSession, CoverLetter, CoverLetterEntry, TailoredResumeEntry } from '../../types'
 
 interface JobGroup {
@@ -76,13 +76,13 @@ export default function HistoryPage() {
     const local = await getHistory()
     setGroups(groupLocalHistory(local))
 
-    const [settings, tier, session] = await Promise.all([
-      getSettings(),
+    const [mode, tier, session] = await Promise.all([
+      getMode(),
       getCachedTier(),
       ensureValidSession(),
     ])
 
-    if (settings?.mode !== 'hosted' || tier !== 'hosted_pro' || !session) return
+    if (mode !== 'hosted' || tier !== 'hosted_pro' || !session) return
 
     sessionRef.current = session
     setIsProMode(true)
