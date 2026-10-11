@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { resolveMode, takeGoogleSignInError, watchSession } from './storage'
+import { resolveMode, takeGoogleSignInError, watchGoogleSignInError, watchSession } from './storage'
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -32,6 +32,18 @@ describe('watchSession', () => {
     on.fire({ session: { newValue: { access_token: 'at' } } })
     on.fire({ session: {} }) // removed: signed out
     expect(seen).toEqual([{ access_token: 'at' }, null])
+  })
+
+  // A panel that opened while Google's window was up learns of the failure.
+  test('watchGoogleSignInError reports a newly saved error, not its removal', () => {
+    const on = fakeOnChanged()
+    const seen: string[] = []
+    const stop = watchGoogleSignInError((msg) => seen.push(msg))
+    on.fire({ googleSignInError: { newValue: 'Unsupported provider' } })
+    on.fire({ googleSignInError: {} })
+    stop()
+    expect(seen).toEqual(['Unsupported provider'])
+    expect(on.listeners.size).toBe(0)
   })
 
   test('ignores other keys and other storage areas, and stops when unsubscribed', () => {

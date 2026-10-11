@@ -69,8 +69,18 @@ export async function saveSession(session: AuthSession): Promise<void> {
 // finishing Google sign-in, or a sign-in or sign-out in the popup while the
 // welcome tab is open. Returns the unsubscribe function.
 export function watchSession(onChange: (session: AuthSession | null) => void): () => void {
+  return watchLocalKey('session', (value) => onChange((value as AuthSession) ?? null))
+}
+
+// Calls back when the worker saves a Google sign-in error, for a panel that
+// opened while Google's window was still up.
+export function watchGoogleSignInError(onError: (message: string) => void): () => void {
+  return watchLocalKey('googleSignInError', (value) => { if (value) onError(value as string) })
+}
+
+function watchLocalKey(key: string, onChange: (newValue: unknown) => void): () => void {
   const listener = (changes: Record<string, chrome.storage.StorageChange>, area: string) => {
-    if (area === 'local' && 'session' in changes) onChange((changes.session.newValue as AuthSession) ?? null)
+    if (area === 'local' && key in changes) onChange(changes[key].newValue)
   }
   chrome.storage.onChanged.addListener(listener)
   return () => chrome.storage.onChanged.removeListener(listener)

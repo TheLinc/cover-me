@@ -432,7 +432,7 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
     if (resolveMode(settings) === 'hosted') {
       const session = await ensureValidSession()
       if (!session) {
-        return failTailor(id, job, startedAt, 'Session expired. Please sign in again in Settings.')
+        return failTailor(id, job, startedAt, 'Sign in to your Cover Me account in Settings.')
       }
       // Hosted: the resume + final prompt live server-side. Enable DEBUG_MODE on
       // the edge function to see those in the Supabase function logs.
@@ -507,7 +507,7 @@ async function generateFromJob(job: JobData, supplemental?: string, jobId?: stri
     if (resolveMode(settings) === 'hosted') {
       const session = await ensureValidSession()
       if (!session) {
-        return failCover(id, job, startedAt, 'Session expired. Please sign in again in Settings.')
+        return failCover(id, job, startedAt, 'Sign in to your Cover Me account in Settings.')
       }
       const letter = await generateViaBackend(job, session.access_token, merged)
       const entry: CoverLetter = {

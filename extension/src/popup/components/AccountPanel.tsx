@@ -3,7 +3,7 @@ import { completeSignIn, EmailConfirmationRequiredError, ensureValidSession, fet
 import type { GoogleSignInResponse } from '../../lib/auth'
 import { GOOGLE_SIGNIN } from '../../lib/config'
 import { encryptApiKey } from '../../lib/crypto'
-import { clearSession, getMode, getSettings, resolveMode, saveCachedTier, saveSettings, takeGoogleSignInError, watchSession } from '../../lib/storage'
+import { clearSession, getMode, getSettings, resolveMode, saveCachedTier, saveSettings, takeGoogleSignInError, watchGoogleSignInError, watchSession } from '../../lib/storage'
 import type { AIProvider, AppMode, AuthSession } from '../../types'
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
@@ -54,7 +54,7 @@ export default function AccountPanel({ initialView = 'signin' }: { initialView?:
     // welcome tab should follow a sign-in or sign-out made in the popup. A
     // token refresh lands here too, so take the mode from storage rather than
     // assuming hosted (completeSignIn saves hosted mode before the session).
-    return watchSession((sess) => {
+    const stopSession = watchSession((sess) => {
       if (sess) {
         getMode().then(setMode)
         signedIn(sess)
@@ -63,6 +63,12 @@ export default function AccountPanel({ initialView = 'signin' }: { initialView?:
         setSession(null)
       }
     })
+    // A flow that fails while this panel is open: show it now, not next open.
+    const stopError = watchGoogleSignInError((msg) => {
+      setAuthError(msg)
+      void takeGoogleSignInError()
+    })
+    return () => { stopSession(); stopError() }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
