@@ -1,7 +1,19 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { resolveMode, watchSession } from './storage'
+import { resolveMode, takeGoogleSignInError, watchSession } from './storage'
 
 afterEach(() => vi.unstubAllGlobals())
+
+describe('takeGoogleSignInError', () => {
+  test('returns a saved Google sign-in error once, then forgets it', async () => {
+    const data: Record<string, unknown> = { googleSignInError: 'Unsupported provider' }
+    vi.stubGlobal('chrome', { storage: { local: {
+      get: async (k: string) => (k in data ? { [k]: data[k] } : {}),
+      remove: async (k: string) => { delete data[k] },
+    } } })
+    expect(await takeGoogleSignInError()).toBe('Unsupported provider')
+    expect(await takeGoogleSignInError()).toBe('')
+  })
+})
 
 describe('watchSession', () => {
   function fakeOnChanged() {

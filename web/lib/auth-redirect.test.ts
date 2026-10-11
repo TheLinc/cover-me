@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest'
-import { afterOAuth, oauthRedirectUrl } from './auth-redirect'
+import { afterOAuth, oauthCancelled, oauthRedirectUrl } from './auth-redirect'
+
+describe('oauthCancelled', () => {
+  it('is true when Google reports access_denied, in the query or the fragment', () => {
+    expect(oauthCancelled('?oauth=1&error=access_denied&error_description=', '')).toBe(true)
+    expect(oauthCancelled('?oauth=1', '#error=access_denied&error_code=access_denied')).toBe(true)
+  })
+  it('is false for other errors and for a normal return', () => {
+    expect(oauthCancelled('?oauth=1&error=server_error', '')).toBe(false)
+    expect(oauthCancelled('?oauth=1&code=abc', '')).toBe(false)
+  })
+})
 
 describe('Google sign-in redirects', () => {
   it('returns to /auth marked as an OAuth sign-in', () => {

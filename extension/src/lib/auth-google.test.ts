@@ -172,4 +172,20 @@ describe('handleGoogleSignIn', () => {
     vi.stubGlobal('chrome', { storage: fakeStorage({}), identity: { getRedirectURL: () => REDIRECT, launchWebAuthFlow: vi.fn(async () => `${REDIRECT}#error_description=nope`) } })
     expect(await handleGoogleSignIn()).toEqual({ success: false, cancelled: false, error: 'nope' })
   })
+
+  // The popup that started the flow has closed by now, so the error is kept
+  // for the next panel that opens.
+  test('a failure is saved for the next panel to show', async () => {
+    const storage = fakeStorage({})
+    vi.stubGlobal('chrome', { storage, identity: { getRedirectURL: () => REDIRECT, launchWebAuthFlow: vi.fn(async () => `${REDIRECT}#error_description=nope`) } })
+    await handleGoogleSignIn()
+    expect(storage.data.googleSignInError).toBe('nope')
+  })
+
+  test('a success or a cancel clears an old saved failure', async () => {
+    const storage = fakeStorage({ googleSignInError: 'old' })
+    vi.stubGlobal('chrome', { storage, identity: { getRedirectURL: () => REDIRECT, launchWebAuthFlow: vi.fn(async () => { throw new Error('The user did not approve access.') }) } })
+    await handleGoogleSignIn()
+    expect(storage.data.googleSignInError).toBeUndefined()
+  })
 })

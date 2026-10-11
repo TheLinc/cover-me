@@ -3,7 +3,7 @@ import { completeSignIn, EmailConfirmationRequiredError, ensureValidSession, fet
 import type { GoogleSignInResponse } from '../../lib/auth'
 import { GOOGLE_SIGNIN } from '../../lib/config'
 import { encryptApiKey } from '../../lib/crypto'
-import { clearSession, getMode, getSettings, resolveMode, saveCachedTier, saveSettings, watchSession } from '../../lib/storage'
+import { clearSession, getMode, getSettings, resolveMode, saveCachedTier, saveSettings, takeGoogleSignInError, watchSession } from '../../lib/storage'
 import type { AIProvider, AppMode, AuthSession } from '../../types'
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
@@ -48,6 +48,8 @@ export default function AccountPanel({ initialView = 'signin' }: { initialView?:
       }
       if (sess) signedIn(sess)
     })
+    // A Google sign-in started from the popup fails after the popup closed.
+    takeGoogleSignInError().then((msg) => { if (msg) setAuthError(msg) })
     // The worker may finish a Google sign-in after this panel opened, and the
     // welcome tab should follow a sign-in or sign-out made in the popup. A
     // token refresh lands here too, so take the mode from storage rather than
@@ -139,7 +141,10 @@ export default function AccountPanel({ initialView = 'signin' }: { initialView?:
     try {
       const res = await chrome.runtime.sendMessage({ type: 'GOOGLE_SIGN_IN' }) as GoogleSignInResponse
       if (res.success) signedIn(res.session)
-      else if (!res.cancelled) setAuthError(res.error || 'Google sign-in failed')
+      else if (!res.cancelled) {
+        setAuthError(res.error || 'Google sign-in failed')
+        await takeGoogleSignInError() // shown here; don't show it again next open
+      }
     } catch (err) {
       setAuthError(err instanceof Error ? err.message : 'Google sign-in failed')
     } finally {
@@ -169,11 +174,14 @@ export default function AccountPanel({ initialView = 'signin' }: { initialView?:
 
   return (
     <>
-      <p className="hint" style={{ marginBottom: 14 }}>
-        {mode === 'hosted'
-          ? 'Free: 10 generations to start, then 5 a week. No API key needed.'
-          : 'Claude or OpenAI, unlimited. Your key stays on this device.'}
-      </p>
+      {/* Once signed in, the account card's badge states the plan. */}
+      {!(mode === 'hosted' && session) && (
+        <p className="hint" style={{ marginBottom: 14 }}>
+          {mode === 'hosted'
+            ? 'Free: 10 generations to start, then 5 a week. No API key needed.'
+            : 'Claude or OpenAI, unlimited. Your key stays on this device.'}
+        </p>
+      )}
 
       {/* ── BYOK ────────────────────────────────────────────────────────── */}
 

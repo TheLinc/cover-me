@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase";
-import { afterOAuth, oauthRedirectUrl } from "@/lib/auth-redirect";
+import { afterOAuth, oauthCancelled, oauthRedirectUrl } from "@/lib/auth-redirect";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -62,6 +62,7 @@ function AuthForm() {
     const searchParams = new URLSearchParams(window.location.search);
     // Google sign-in comes back with ?oauth=1&code=…: a sign-in, not a confirmation.
     const isOAuth = searchParams.has("oauth");
+    const cancelledOAuth = isOAuth && oauthCancelled(window.location.search, window.location.hash);
     const isConfirmation = searchParams.has("code") && !isOAuth;
     if (isConfirmation || isOAuth) {
       window.history.replaceState(null, "", window.location.pathname);
@@ -72,7 +73,7 @@ function AuthForm() {
     if (hash) {
       const h = new URLSearchParams(hash.slice(1));
 
-      if (h.get("error")) {
+      if (h.get("error") && !cancelledOAuth) {
         const errCode = h.get("error_code");
         if (errCode === "otp_expired") {
           setError("That confirmation link has expired. Sign in or sign up again to get a new one.");
@@ -114,7 +115,7 @@ function AuthForm() {
     if (isOAuth) {
       supabase.auth.getSession().then(({ data: { session } }) => {
         if (session) window.location.href = afterOAuth(searchParams.get("plan"));
-        else setError((current) => current || "Google sign-in didn't finish. Please try again.");
+        else if (!cancelledOAuth) setError((current) => current || "Google sign-in didn't finish. Please try again.");
       });
     }
 

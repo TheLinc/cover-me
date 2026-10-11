@@ -76,6 +76,18 @@ export function watchSession(onChange: (session: AuthSession | null) => void): (
   return () => chrome.storage.onChanged.removeListener(listener)
 }
 
+// A Google sign-in error the worker saved because the popup that started the
+// flow had already closed. Returned once, then removed.
+export async function saveGoogleSignInError(message: string): Promise<void> {
+  await chrome.storage.local.set({ googleSignInError: message })
+}
+
+export async function takeGoogleSignInError(): Promise<string> {
+  const { googleSignInError } = await chrome.storage.local.get('googleSignInError')
+  if (googleSignInError) await chrome.storage.local.remove('googleSignInError')
+  return (googleSignInError as string) ?? ''
+}
+
 export async function clearSession(): Promise<void> {
   await chrome.storage.local.remove('session')
 }

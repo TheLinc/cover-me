@@ -1,5 +1,5 @@
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL, WEB_URL } from './config'
-import { clearSession, getResume, getSession, getSettings, saveSession, saveSettings } from './storage'
+import { clearSession, getResume, getSession, getSettings, saveGoogleSignInError, saveSession, saveSettings, takeGoogleSignInError } from './storage'
 import { isValidResume } from './ai/resume-tailor'
 import { deriveTailorProgress } from './ai/tailor-progress'
 import type { ApplicationRecord, AuthSession, CoverLetter, JobData, TailoredResume } from '../types'
@@ -135,11 +135,19 @@ export type GoogleSignInResponse =
 export async function handleGoogleSignIn(): Promise<GoogleSignInResponse> {
   try {
     const session = await signInWithGoogle()
+    await takeGoogleSignInError()
     await completeSignIn(session)
     return { success: true, session }
   } catch (err) {
-    if (err instanceof GoogleSignInCancelledError) return { success: false, cancelled: true }
-    return { success: false, cancelled: false, error: (err instanceof Error && err.message) || 'Google sign-in failed' }
+    if (err instanceof GoogleSignInCancelledError) {
+      await takeGoogleSignInError()
+      return { success: false, cancelled: true }
+    }
+    const error = (err instanceof Error && err.message) || 'Google sign-in failed'
+    // Usually nobody is listening: the popup closed when Google's window
+    // opened. The next panel to open shows it.
+    await saveGoogleSignInError(error)
+    return { success: false, cancelled: false, error }
   }
 }
 
