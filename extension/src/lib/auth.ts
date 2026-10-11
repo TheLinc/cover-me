@@ -52,6 +52,62 @@ export async function signUp(email: string, password: string): Promise<AuthSessi
   return parseSession(data)
 }
 
+// Closing the Google window rejects launchWebAuthFlow; callers treat this as
+// "nothing happened" and show no error.
+export class GoogleSignInCancelledError extends Error {}
+
+function base64url(bytes: Uint8Array): string {
+  return btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+
+export async function pkcePair(): Promise<{ verifier: string; challenge: string }> {
+  const verifier = base64url(crypto.getRandomValues(new Uint8Array(32)))
+  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier)))
+  return { verifier, challenge: base64url(digest) }
+}
+
+// Supabase OAuth with PKCE inside Chrome's auth window. Supabase redirects to
+// https://<extension-id>.chromiumapp.org/?code=…, which must be on the
+// project's Redirect URL allowlist (exact ID, never a wildcard).
+export async function signInWithGoogle(): Promise<AuthSession> {
+  const { verifier, challenge } = await pkcePair()
+  const url = `${SUPABASE_URL}/auth/v1/authorize?${new URLSearchParams({
+    provider: 'google',
+    redirect_to: chrome.identity.getRedirectURL(),
+    code_challenge: challenge,
+    code_challenge_method: 's256',
+  })}`
+
+  let callback: string | undefined
+  try {
+    callback = await chrome.identity.launchWebAuthFlow({ url, interactive: true })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : ''
+    // Chrome's message when the user closes the window. Anything else (the
+    // page failed to load, say) is a real failure the user should see.
+    if (/did not approve/i.test(message)) throw new GoogleSignInCancelledError(message)
+    throw new Error(message || 'Google sign-in failed. Please try again.')
+  }
+  if (!callback) throw new GoogleSignInCancelledError('Sign-in cancelled')
+
+  // Success comes back in the query; Supabase reports errors in the fragment.
+  const u = new URL(callback)
+  const params = new URLSearchParams(`${u.search.slice(1)}&${u.hash.slice(1)}`)
+  const code = params.get('code')
+  if (!code) throw new Error(params.get('error_description') ?? 'Google sign-in failed. Please try again.')
+
+  const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=pkce`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ auth_code: code, code_verifier: verifier }),
+  })
+  const data = await res.json() as Record<string, unknown>
+  if (!res.ok) {
+    throw new Error((data.error_description as string) ?? (data.msg as string) ?? 'Google sign-in failed. Please try again.')
+  }
+  return parseSession(data)
+}
+
 export async function signOut(accessToken: string): Promise<void> {
   await fetch(`${SUPABASE_URL}/auth/v1/logout`, {
     method: 'POST',
