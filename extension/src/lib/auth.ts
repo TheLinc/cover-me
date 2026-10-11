@@ -129,12 +129,16 @@ export async function completeSignIn(sess: AuthSession): Promise<void> {
 //   the user doesn't upload it again; a resume added before signing in goes up.
 // - Identical text moves nothing (an upload clears the server's parse cache).
 // - Another account's copy, left in this browser after a sign-out, is never
-//   uploaded here: this account's copy replaces it, or it's removed (it still
-//   lives in its own account).
+//   uploaded here: it's removed first, then this account's copy (if any)
+//   comes down. Its owner normally has it in their account, unless their last
+//   upload failed.
 // The comparison uses this device's clock against the server's; a badly wrong
 // clock can pick the older copy.
 async function syncResume(sess: AuthSession): Promise<void> {
   const userId = sess.user.id
+  const before = await getResume()
+  // Removed before the fetch, so a failed fetch can't leave it showing as this account's.
+  if (before?.accountId && before.accountId !== userId) await clearResume()
   const [local, remote] = await Promise.all([getResume(), fetchResumeFromBackend(sess.access_token)])
   const mine = local?.text && (!local.accountId || local.accountId === userId) ? local : null
   const keepMine = mine && (!remote || remote.text === mine.text || Date.parse(mine.updatedAt) >= Date.parse(remote.updatedAt))

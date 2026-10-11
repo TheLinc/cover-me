@@ -108,7 +108,14 @@ export async function takeGoogleSignInError(): Promise<string> {
   return (googleSignInError as string) ?? ''
 }
 
+// Sign-out, or a session that can't be refreshed. An untagged resume belonged
+// to the account that was signed in: tag it, so the next account to sign in on
+// this browser can't claim it (see syncResume in lib/auth.ts).
 export async function clearSession(): Promise<void> {
+  const [session, resume] = await Promise.all([getSession(), getResume()])
+  if (session?.user?.id && resume?.text && !resume.accountId) {
+    await saveResume({ ...resume, accountId: session.user.id })
+  }
   await chrome.storage.local.remove('session')
 }
 

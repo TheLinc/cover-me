@@ -224,6 +224,16 @@ describe('completeSignIn', () => {
     expect((storage.data.resume as { accountId?: string }).accountId).toBe('u1')
   })
 
+  test("another account's copy is removed even when the account's copy can't be fetched", async () => {
+    const storage = fakeStorage({ resume: { text: "A's resume", filename: 'a.pdf', updatedAt: '2026-10-09T00:00:00Z', accountId: 'someone-else' } })
+    vi.stubGlobal('chrome', { storage })
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('{"error":"boom"}', { status: 500 })))
+
+    await completeSignIn(session)
+
+    expect(storage.data.resume).toBeUndefined()
+  })
+
   // The user drops a file on the welcome tab while the sign-in's sync runs.
   test('a resume the user adds during the sync is not overwritten', async () => {
     const storage = fakeStorage({})

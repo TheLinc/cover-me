@@ -1,5 +1,31 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { resolveMode, takeGoogleSignInError, watchGoogleSignInError, watchResume, watchSession } from './storage'
+import { clearSession, resolveMode, takeGoogleSignInError, watchGoogleSignInError, watchResume, watchSession } from './storage'
+
+// Signing out stamps an untagged resume with the account that was signed in,
+// so the next account to sign in on this browser can't claim it.
+describe('clearSession', () => {
+  function fakeLocal(data: Record<string, unknown>) {
+    vi.stubGlobal('chrome', { storage: { local: {
+      get: async (k: string) => (k in data ? { [k]: data[k] } : {}),
+      set: async (o: Record<string, unknown>) => { Object.assign(data, o) },
+      remove: async (k: string) => { delete data[k] },
+    } } })
+    return data
+  }
+
+  test('tags an untagged resume with the signed-out account', async () => {
+    const data = fakeLocal({ session: { user: { id: 'a' } }, resume: { text: 't', filename: 'f', updatedAt: '' } })
+    await clearSession()
+    expect(data.session).toBeUndefined()
+    expect((data.resume as { accountId?: string }).accountId).toBe('a')
+  })
+
+  test("leaves a resume that already has an owner alone", async () => {
+    const data = fakeLocal({ session: { user: { id: 'a' } }, resume: { text: 't', filename: 'f', updatedAt: '', accountId: 'b' } })
+    await clearSession()
+    expect((data.resume as { accountId?: string }).accountId).toBe('b')
+  })
+})
 
 afterEach(() => vi.unstubAllGlobals())
 
