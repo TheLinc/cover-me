@@ -4,7 +4,7 @@ export default function GapChips({ gaps }: { gaps: string[] }) {
   if (gaps.length === 0) return null
   return (
     <div>
-      <div className="chip-caption mono">MISSING</div>
+      <div className="chip-caption mono">Missing</div>
       <ul className="chips">
         {gaps.map((g, i) => <li key={`${i}-${g}`} className="chip chip-gap">{g}</li>)}
       </ul>

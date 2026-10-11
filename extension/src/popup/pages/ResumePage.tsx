@@ -99,7 +99,8 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
 
       <div
         className={`upload-area${dragOver ? ' drag-over' : ''}`}
-        onClick={() => inputRef.current?.click()}
+        // The input's own click bubbles here too; don't open the picker twice.
+        onClick={(e) => { if (e.target !== inputRef.current) inputRef.current?.click() }}
         onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
         onDragLeave={() => setDragOver(false)}
         onDrop={onDrop}
@@ -108,6 +109,7 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
           ref={inputRef}
           className="upload-input"
           type="file"
+          aria-label="Upload your resume (PDF, DOCX or TXT)"
           accept=".pdf,.docx,.txt"
           onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f) }}
         />

@@ -23,10 +23,11 @@ export function tailorSteps(progress: string, hasJob: boolean, includeSummary: b
   ]
   const at = (label: string) => labels.findIndex((l) => l.startsWith(label))
   let active = 0 // still reading the posting, or a stage label we don't know
-  if (!hasJob) active = 0
-  else if (/Scoring/.test(progress)) active = at('Score the match')
-  else if (/skills|projects/i.test(progress)) active = at('Skills and projects')
-  else if (/Rewriting experience/.test(progress)) active = at('Rewrite experience')
-  else if (/summary/i.test(progress) && includeSummary) active = at('Write the summary')
+  if (hasJob) {
+    if (/Scoring/.test(progress)) active = at('Score the match')
+    else if (/skills|projects/i.test(progress)) active = at('Skills and projects')
+    else if (/Rewriting experience/.test(progress)) active = at('Rewrite experience')
+    else if (/summary/i.test(progress) && includeSummary) active = at('Write the summary')
+  }
   return mark(labels, active)
 }

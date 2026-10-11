@@ -16,6 +16,8 @@ if (manifest.content_scripts?.length) {
   errors.push(`manifest declares content_scripts (${manifest.content_scripts.map((c) => c.matches).flat().join(', ')}); scrapers must be injected on click`)
 }
 if (!existsSync(join(DIST, 'src/welcome/index.html'))) errors.push('missing src/welcome/index.html (the onInstalled welcome tab)')
+// The bundled fonts are SIL OFL: their license travels with them.
+if (!existsSync(join(DIST, 'fonts/OFL.txt'))) errors.push('missing fonts/OFL.txt (the bundled Geist fonts\' license)')
 // Fonts ship in the package: opening the popup must not call Google.
 for (const file of readdirSync(DIST, { recursive: true }).map(String).filter((f) => /\.(html|css|js|json)$/.test(f))) {
   if (/fonts\.(googleapis|gstatic)\.com/.test(readFileSync(join(DIST, file), 'utf8'))) errors.push(`remote font URL in ${file}`)

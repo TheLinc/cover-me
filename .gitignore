@@ -58,6 +58,7 @@ CLAUDE.md
 *.pdf
 *.txt
 !web/public/llms.txt
+!extension/src/fonts/OFL.txt
 docs/
 
 #packages

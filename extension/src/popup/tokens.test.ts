@@ -22,7 +22,21 @@ describe('popup tokens (Night)', () => {
       })
     }
   }
-  test('white on --accent-strong (buttons) is at least 4.5:1', () => {
+  test('white on --accent-strong (buttons, Pro badge) is at least 4.5:1', () => {
     expect(ratio('#FFFFFF', token('accent-strong')!)).toBeGreaterThanOrEqual(4.5)
+  })
+
+  test('missing-keyword chips: --gap-fg on the gap fill over a card is at least 4.5:1', () => {
+    const [r, g, b, a] = css.match(/--gap-bg:\s*rgba\(([^)]+)\)/)![1].split(',').map(Number)
+    const card = token('surface')!
+    const mix = [r, g, b].map((c, i) => Math.round(c * a + parseInt(card.slice(1 + i * 2, 3 + i * 2), 16) * (1 - a)))
+    const fill = '#' + mix.map((v) => v.toString(16).padStart(2, '0')).join('')
+    expect(ratio(token('gap-fg')!, fill)).toBeGreaterThanOrEqual(4.5)
+  })
+
+  // Text never sits on --accent (#6366F1): white on it is 4.47:1.
+  test('no rule puts text on the plain accent fill', () => {
+    const offenders = css.split('}').filter((rule) => /background:\s*var\(--accent\)\s*;/.test(rule) && /(^|[\s;{])color:\s*#fff/i.test(rule))
+    expect(offenders.map((r) => r.trim().split('{')[0].trim())).toEqual([])
   })
 })

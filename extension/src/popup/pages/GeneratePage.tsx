@@ -88,18 +88,22 @@ function TailorOptions({ inputMode, manualReady, onTailor, compact, setCompact, 
         <label className="compact-toggle">
           <input type="checkbox" checked={trim} onChange={e => setTrim(e.target.checked)} />
           Remove irrelevant bullets
-          <span
+          <button
+            type="button"
             className="tooltip-icon"
+            aria-label="Best for long master resumes with all your experience — the AI selects only the bullets most relevant to the role being applied for."
             data-tooltip="Best for long master resumes with all your experience — the AI selects only the bullets most relevant to the role being applied for."
-          >?</span>
+          >?</button>
         </label>
         <label className="compact-toggle">
           <input type="checkbox" checked={includeSummary} onChange={e => setIncludeSummary(e.target.checked)} />
           Include summary
-          <span
+          <button
+            type="button"
             className="tooltip-icon"
+            aria-label="Adds a 2-3 sentence professional summary tailored to the role. Turn off if your resume already has one or the role prefers none."
             data-tooltip="Adds a 2-3 sentence professional summary tailored to the role. Turn off if your resume already has one or the role prefers none."
-          >?</span>
+          >?</button>
         </label>
       </div>
     </div>
