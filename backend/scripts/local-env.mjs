@@ -20,7 +20,7 @@ function readEnv(path) {
   if (!existsSync(path)) return {}
   const out = {}
   for (const line of readFileSync(path, 'utf8').split(/\r?\n/)) {
-    const m = line.match(/^([A-Z0-9_]+)=(.*)$/)
+    const m = line.match(/^\s*([A-Z0-9_]+)\s*=(.*)$/)
     if (m) out[m[1]] = m[2]
   }
   return out
@@ -48,8 +48,11 @@ write(fnPath, [
 ])
 if (!anthropicKey) console.warn('  ANTHROPIC_API_KEY is empty: add one to use generate/tailor from the extension.')
 
-// The Supabase CLI reads backend/.env too (see .env.example there).
-const google = readEnv(join(BACKEND, '.env')).SUPABASE_AUTH_EXTERNAL_GOOGLE_ENABLED === 'true' ? '1' : ''
+// The Supabase CLI reads backend/.env too (see .env.example there). Accept the
+// spellings its parser treats as on: quotes, a trailing comment, TRUE or 1.
+const googleOn = (readEnv(join(BACKEND, '.env')).SUPABASE_AUTH_EXTERNAL_GOOGLE_ENABLED ?? '')
+  .replace(/\s+#.*$/, '').trim().replace(/^(["'])(.*)\1$/, '$2').toLowerCase()
+const google = googleOn === 'true' || googleOn === '1' ? '1' : ''
 
 // ── Extension ────────────────────────────────────────────────────────────────
 
