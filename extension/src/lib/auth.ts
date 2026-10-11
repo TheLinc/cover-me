@@ -1,5 +1,5 @@
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL, WEB_URL } from './config'
-import { clearSession, getSession, saveSession } from './storage'
+import { clearSession, getResume, getSession, getSettings, saveSession, saveSettings } from './storage'
 import { isValidResume } from './ai/resume-tailor'
 import { deriveTailorProgress } from './ai/tailor-progress'
 import type { ApplicationRecord, AuthSession, CoverLetter, JobData, TailoredResume } from '../types'
@@ -106,6 +106,38 @@ export async function signInWithGoogle(): Promise<AuthSession> {
     throw new Error((data.error_description as string) ?? (data.msg as string) ?? 'Google sign-in failed. Please try again.')
   }
   return parseSession(data)
+}
+
+// Everything a successful sign-in (email or Google) must leave behind for the
+// first hosted Generate to work: the session, hosted mode, and the backend copy
+// of a resume uploaded before signing in. A failed sync is non-fatal: the
+// resume page retries on the next upload.
+export async function completeSignIn(sess: AuthSession): Promise<void> {
+  await saveSession(sess)
+  const existing = await getSettings()
+  await saveSettings({ provider: existing?.provider ?? 'claude', apiKey: existing?.apiKey ?? '', mode: 'hosted' })
+  const resume = await getResume()
+  if (resume?.text) {
+    await uploadResumeToBackend(sess.access_token, resume.text, resume.filename).catch(() => {})
+  }
+}
+
+export type GoogleSignInResponse =
+  | { success: true; session: AuthSession }
+  | { success: false; cancelled: boolean; error?: string }
+
+// The GOOGLE_SIGN_IN message handler. It runs in the service worker because the
+// popup closes as soon as Google's window takes focus; the worker finishes the
+// sign-in either way, and the popup shows it the next time it opens.
+export async function handleGoogleSignIn(): Promise<GoogleSignInResponse> {
+  try {
+    const session = await signInWithGoogle()
+    await completeSignIn(session)
+    return { success: true, session }
+  } catch (err) {
+    if (err instanceof GoogleSignInCancelledError) return { success: false, cancelled: true }
+    return { success: false, cancelled: false, error: err instanceof Error ? err.message : 'Google sign-in failed' }
+  }
 }
 
 export async function signOut(accessToken: string): Promise<void> {

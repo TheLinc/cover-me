@@ -639,7 +639,7 @@ export default function GeneratePage({ onNavigate }: Props) {
               {appMode === 'hosted' ? (
                 <>
                   <div className="setup-step-title">Sign in to Cover Me</div>
-                  <div className="setup-step-hint">Free account — 10 to start, then 5 a week</div>
+                  <div className="setup-step-hint">Continue with Google, free: 10 to start, then 5 a week</div>
                 </>
               ) : (
                 <>

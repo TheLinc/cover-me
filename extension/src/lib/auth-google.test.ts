@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { GoogleSignInCancelledError, pkcePair, signInWithGoogle } from './auth'
+import { completeSignIn, GoogleSignInCancelledError, handleGoogleSignIn, pkcePair, signInWithGoogle } from './auth'
 
 const REDIRECT = 'https://abc.chromiumapp.org/'
 const session = { access_token: 'at', refresh_token: 'rt', expires_at: 2_000_000_000, user: { id: 'u1', email: 'a@b.co' } }
@@ -68,5 +68,79 @@ describe('signInWithGoogle', () => {
     fakeIdentity(async () => `${REDIRECT}?code=stale`)
     vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ error_description: 'invalid flow state' }), { status: 400 })))
     await expect(signInWithGoogle()).rejects.toThrow('invalid flow state')
+  })
+})
+
+function fakeStorage(initial: Record<string, unknown>) {
+  const data: Record<string, unknown> = { ...initial }
+  return {
+    data,
+    local: {
+      get: vi.fn(async (k: string | string[]) => Object.fromEntries((Array.isArray(k) ? k : [k]).filter((x) => x in data).map((x) => [x, data[x]]))),
+      set: vi.fn(async (o: Record<string, unknown>) => { Object.assign(data, o) }),
+      remove: vi.fn(async (k: string) => { delete data[k] }),
+    },
+  }
+}
+
+describe('completeSignIn', () => {
+  test('saves the session, switches to the account, and syncs a resume uploaded earlier', async () => {
+    const storage = fakeStorage({
+      settings: { provider: 'openai', apiKey: 'enc', mode: 'byok' },
+      resume: { text: 'resume text', filename: 'cv.pdf', updatedAt: '2026-10-09T00:00:00Z' },
+    })
+    vi.stubGlobal('chrome', { storage })
+    const fetchMock = vi.fn(async () => new Response('{}', { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await completeSignIn(session)
+
+    expect(storage.data.session).toEqual(session)
+    expect(storage.data.settings).toEqual({ provider: 'openai', apiKey: 'enc', mode: 'hosted' })
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit]
+    expect(url).toMatch(/\/functions\/v1\/resume$/)
+    expect(JSON.parse(init.body as string)).toEqual({ text: 'resume text', filename: 'cv.pdf' })
+  })
+
+  test('with no resume yet, nothing is uploaded and a fresh install gets default settings', async () => {
+    const storage = fakeStorage({})
+    vi.stubGlobal('chrome', { storage })
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+
+    await completeSignIn(session)
+
+    expect(storage.data.settings).toEqual({ provider: 'claude', apiKey: '', mode: 'hosted' })
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  test('a failed resume sync does not fail the sign-in', async () => {
+    vi.stubGlobal('chrome', { storage: fakeStorage({ resume: { text: 't', filename: 'f', updatedAt: '' } }) })
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('{"error":"boom"}', { status: 500 })))
+    await expect(completeSignIn(session)).resolves.toBeUndefined()
+  })
+})
+
+// Runs in the service worker: the popup closes when Google's window takes
+// focus, so the worker must finish the sign-in on its own.
+describe('handleGoogleSignIn', () => {
+  test('signs in, completes the sign-in, and reports the session', async () => {
+    const storage = fakeStorage({})
+    vi.stubGlobal('chrome', { storage, identity: { getRedirectURL: () => REDIRECT, launchWebAuthFlow: vi.fn(async () => `${REDIRECT}?code=c`) } })
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify(session), { status: 200 })))
+
+    expect(await handleGoogleSignIn()).toEqual({ success: true, session })
+    expect(storage.data.session).toEqual(session)
+    expect(storage.data.settings).toEqual({ provider: 'claude', apiKey: '', mode: 'hosted' })
+  })
+
+  test('a closed window reports a cancel with no error message', async () => {
+    vi.stubGlobal('chrome', { storage: fakeStorage({}), identity: { getRedirectURL: () => REDIRECT, launchWebAuthFlow: vi.fn(async () => { throw new Error('The user did not approve access.') }) } })
+    expect(await handleGoogleSignIn()).toEqual({ success: false, cancelled: true })
+  })
+
+  test('a failure reports its message', async () => {
+    vi.stubGlobal('chrome', { storage: fakeStorage({}), identity: { getRedirectURL: () => REDIRECT, launchWebAuthFlow: vi.fn(async () => `${REDIRECT}#error_description=nope`) } })
+    expect(await handleGoogleSignIn()).toEqual({ success: false, cancelled: false, error: 'nope' })
   })
 })
