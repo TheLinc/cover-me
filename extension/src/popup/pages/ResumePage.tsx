@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { uploadResumeToBackend } from '../../lib/auth'
+import { ensureValidSession, uploadResumeToBackend } from '../../lib/auth'
 import { parseResume } from '../../lib/resume-parser'
 import { getMode, getResume, getSession, saveResume, watchResume } from '../../lib/storage'
 import type { ParsedResume, ResumeData } from '../../types'
@@ -13,11 +13,15 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
   const [error, setError] = useState('')
   const [dragOver, setDragOver] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  // Signed in to the account: a copy added while signed out isn't in it yet.
+  const [accountMode, setAccountMode] = useState(false)
 
   useEffect(() => {
     const show = (r: ResumeData | null) => {
       setResume(r)
       setParsed(r?.parsed ?? null)
+      // A sign-in's sync rewrites the resume, so this also catches a sign-in.
+      Promise.all([getMode(), getSession()]).then(([m, s]) => setAccountMode(m === 'hosted' && !!s))
     }
     getResume().then(show)
     return watchResume(show)
@@ -29,16 +33,18 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
     setParsed(null) // clear stale parse on new upload
     try {
       const text = await parseResume(file)
-      const [mode, session] = await Promise.all([getMode(), getSession()])
-      const hosted = mode === 'hosted' && !!session?.access_token
-      // Signed in: the copy belongs to this account. Signed out after an account
-      // was here: it keeps that owner, so another account can't claim it, and is
-      // marked so the owner's next sign-in doesn't upload it either (it may be
-      // someone else's). See syncResume in lib/auth.ts.
-      const inherited = hosted ? undefined : (await getResume())?.accountId
+      // ensureValidSession refreshes an expired token (or clears a dead session),
+      // so the upload below doesn't fail with a stale token.
+      const [mode, session] = await Promise.all([getMode(), ensureValidSession()])
+      const hosted = mode === 'hosted' && !!session
+      // Signed in (either mode): the copy belongs to this account. Signed out
+      // after an account was here: it keeps that owner, so another account can't
+      // claim it, and is marked so the owner's next sign-in doesn't upload it
+      // either (it may be someone else's). See syncResume in lib/auth.ts.
+      const inherited = session ? undefined : (await getResume())?.accountId
       const data: ResumeData = {
         text, filename: file.name, updatedAt: new Date().toISOString(),
-        ...(hosted ? { accountId: session.user.id } : inherited ? { accountId: inherited, signedOutUpload: true } : {}),
+        ...(session ? { accountId: session.user.id } : inherited ? { accountId: inherited, signedOutUpload: true } : {}),
       }
       await saveResume(data)
       setResume(data)
@@ -46,7 +52,7 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
       setTimeout(() => setStatus('idle'), 2500)
 
       // Best-effort cloud sync for hosted users
-      if (hosted) {
+      if (hosted && session) {
         uploadResumeToBackend(session.access_token, text, file.name).catch((err) => {
           setError(`Saved locally, but cloud sync failed: ${err instanceof Error ? err.message : 'unknown error'}`)
         })
@@ -146,6 +152,9 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
               </div>
               {parsed && (
                 <div className="resume-sections">{parsedSummary(parsed)}</div>
+              )}
+              {resume.signedOutUpload && accountMode && (
+                <div className="hint" style={{ marginTop: 4 }}>Added while signed out, so it isn&apos;t in your account yet. Upload it again to use it for letters.</div>
               )}
             </div>
             {status === 'saved' && (
