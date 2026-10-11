@@ -3,7 +3,7 @@ import { completeSignIn, EmailConfirmationRequiredError, ensureValidSession, fet
 import type { GoogleSignInResponse } from '../../lib/auth'
 import { GOOGLE_SIGNIN } from '../../lib/config'
 import { encryptApiKey } from '../../lib/crypto'
-import { clearSession, getMode, getSettings, resolveMode, saveCachedTier, saveSettings, takeGoogleSignInError, watchGoogleSignInError, watchSession } from '../../lib/storage'
+import { clearSession, getCachedTier, getMode, getSettings, resolveMode, saveCachedTier, saveSettings, takeGoogleSignInError, watchGoogleSignInError, watchSession } from '../../lib/storage'
 import type { AIProvider, AppMode, AuthSession } from '../../types'
 import GoogleIcon from './GoogleIcon'
 
@@ -112,8 +112,15 @@ export default function AccountPanel({ initialView = 'signin' }: { initialView?:
     if (shownToken.current === sess.access_token) return
     shownToken.current = sess.access_token
     fetchTier(sess.user.id, sess.access_token).then(async (t) => {
-      setTier(t)
-      await saveCachedTier(t)
+      if (t) {
+        setTier(t)
+        await saveCachedTier(t)
+      } else {
+        // Lookup failed (offline, say): show the last known tier, retry next time.
+        shownToken.current = null
+        const cached = await getCachedTier()
+        if (cached) setTier(cached)
+      }
     })
   }
 

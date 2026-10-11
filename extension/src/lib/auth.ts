@@ -213,6 +213,8 @@ async function refreshSession(refreshToken: string): Promise<AuthSession> {
     headers: authHeaders(),
     body: JSON.stringify({ refresh_token: refreshToken }),
   })
+  // A server error or rate limit is temporary, like being offline.
+  if (res.status >= 500 || res.status === 429) throw new Error('Session refresh unavailable')
   if (!res.ok) throw new SessionRejectedError('Session refresh failed')
   return parseSession(await res.json() as Record<string, unknown>)
 }
@@ -243,17 +245,19 @@ export async function ensureValidSession(): Promise<AuthSession | null> {
   }
 }
 
-export async function fetchTier(userId: string, accessToken: string): Promise<string> {
+// null when the lookup fails (offline, an expired token): callers keep the
+// cached tier rather than downgrading a Pro user to free.
+export async function fetchTier(userId: string, accessToken: string): Promise<string | null> {
   try {
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/users?select=tier&id=eq.${encodeURIComponent(userId)}&limit=1`,
       { headers: authHeaders(accessToken) },
     )
-    if (!res.ok) return 'hosted_free'
+    if (!res.ok) return null
     const rows = await res.json() as Array<{ tier: string }>
     return rows[0]?.tier ?? 'hosted_free'
   } catch {
-    return 'hosted_free'
+    return null
   }
 }
 

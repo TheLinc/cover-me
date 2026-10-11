@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { completeSignIn, ensureValidSession, GoogleSignInCancelledError, handleGoogleSignIn, pkcePair, signInWithGoogle } from './auth'
+import { completeSignIn, ensureValidSession, fetchTier, GoogleSignInCancelledError, handleGoogleSignIn, pkcePair, signInWithGoogle } from './auth'
 
 const REDIRECT = 'https://abc.chromiumapp.org/'
 const session = { access_token: 'at', refresh_token: 'rt', expires_at: 2_000_000_000, user: { id: 'u1', email: 'a@b.co' } }
@@ -367,6 +367,24 @@ describe('handleGoogleSignIn', () => {
   })
 })
 
+// A failed lookup must not read as "free": a Pro user's cached tier would be
+// overwritten, and Pro history sync would stop.
+describe('fetchTier', () => {
+  test('returns null when the lookup fails, offline or with an expired token', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => { throw new TypeError('Failed to fetch') }))
+    expect(await fetchTier('u1', 'at')).toBeNull()
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('{}', { status: 401 })))
+    expect(await fetchTier('u1', 'at')).toBeNull()
+  })
+
+  test('returns the tier, or free when the account has no row yet', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('[{"tier":"hosted_pro"}]', { status: 200 })))
+    expect(await fetchTier('u1', 'at')).toBe('hosted_pro')
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('[]', { status: 200 })))
+    expect(await fetchTier('u1', 'at')).toBe('hosted_free')
+  })
+})
+
 // An expired access token is refreshed before use. Only a refresh the server
 // rejects ends the session; being offline must not sign the user out.
 describe('ensureValidSession', () => {
@@ -379,6 +397,17 @@ describe('ensureValidSession', () => {
 
     expect(await ensureValidSession()).toEqual(expired)
     expect(storage.data.session).toEqual(expired)
+  })
+
+  test('a server error or rate limit on refresh keeps the session', async () => {
+    for (const status of [503, 429]) {
+      const storage = fakeStorage({ session: expired })
+      vi.stubGlobal('chrome', { storage })
+      vi.stubGlobal('fetch', vi.fn(async () => new Response('{}', { status })))
+
+      expect(await ensureValidSession()).toEqual(expired)
+      expect(storage.data.session).toEqual(expired)
+    }
   })
 
   test('a refresh the server rejects ends the session', async () => {
