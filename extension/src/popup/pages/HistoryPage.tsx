@@ -2,49 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { deleteApplicationFromBackend, ensureValidSession, fetchApplicationsFromBackend } from '../../lib/auth'
 import { downloadCoverLetterPdf } from '../../lib/pdf'
 import { downloadTailoredResumePdf } from '../../lib/resume-pdf'
-import { deleteFromHistory, getCachedTier, getHistory, getMode } from '../../lib/storage'
-import type { ApplicationRecord, AuthSession, CoverLetter, CoverLetterEntry, TailoredResumeEntry } from '../../types'
-
-interface JobGroup {
-  key: string            // stable id for expand/delete state
-  id: string | null      // job_application_id (null for BYOK local)
-  title: string
-  company: string
-  url: string
-  latestAt: string
-  coverLetters: CoverLetterEntry[]
-  tailoredResumes: TailoredResumeEntry[]
-  // cover letter ids for local delete (BYOK only)
-  localCoverLetterIds?: string[]
-}
-
-function groupLocalHistory(letters: CoverLetter[]): JobGroup[] {
-  const map = new Map<string, JobGroup>()
-  for (const cl of letters) {
-    const key = cl.job.url || `${cl.job.company}|||${cl.job.title}`
-    if (!map.has(key)) {
-      map.set(key, {
-        key,
-        id: null,
-        title: cl.job.title,
-        company: cl.job.company,
-        url: cl.job.url,
-        latestAt: cl.createdAt,
-        coverLetters: [],
-        tailoredResumes: [],
-        localCoverLetterIds: [],
-      })
-    }
-    const g = map.get(key)!
-    g.coverLetters.push({ id: cl.id, letter: cl.letter, createdAt: cl.createdAt })
-    g.localCoverLetterIds!.push(cl.id)
-    if (cl.createdAt > g.latestAt) g.latestAt = cl.createdAt
-  }
-  for (const g of map.values()) {
-    g.coverLetters.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-  }
-  return Array.from(map.values()).sort((a, b) => b.latestAt.localeCompare(a.latestAt))
-}
+import { groupLocalHistory, type JobGroup } from '../../lib/history'
+import { deleteFromHistory, deleteFromTailoredHistory, getCachedTier, getHistory, getMode, getTailoredHistory } from '../../lib/storage'
+import type { ApplicationRecord, AuthSession, CoverLetterEntry } from '../../types'
 
 function fromApplicationRecords(apps: ApplicationRecord[]): JobGroup[] {
   return apps.map((app) => ({
@@ -73,8 +33,8 @@ export default function HistoryPage() {
   }, [])
 
   async function load() {
-    const local = await getHistory()
-    setGroups(groupLocalHistory(local))
+    const [letters, tailored] = await Promise.all([getHistory(), getTailoredHistory()])
+    setGroups(groupLocalHistory(letters, tailored))
 
     const [mode, tier, session] = await Promise.all([
       getMode(),
@@ -103,6 +63,9 @@ export default function HistoryPage() {
     } else {
       for (const id of group.localCoverLetterIds ?? []) {
         await deleteFromHistory(id)
+      }
+      for (const id of group.localTailoredIds ?? []) {
+        await deleteFromTailoredHistory(id)
       }
     }
     setGroups((gs) => gs.filter((g) => g.key !== group.key))
