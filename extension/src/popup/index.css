@@ -1,6 +1,7 @@
 /* ─────────────────────────────────────────────────
    Cover Me — Popup Styles
-   Dark slate + indigo accent
+   Night (the website's night indigo) + Cover Me indigo.
+   tokens.test.ts holds every text colour to 4.5:1.
 ───────────────────────────────────────────────── */
 
 *, *::before, *::after {
@@ -10,22 +11,25 @@
 }
 
 :root {
-  --bg:          #0d1117;
-  --surface:     #161c2e;
-  --elevated:    #1e2740;
-  --border:      #2a3452;
-  --accent:      #6366f1;
-  --accent-h:    #818cf8;
-  --accent-dim:  rgba(99, 102, 241, 0.14);
-  --text:        #e2e8f0;
-  --text-2:      #94a3b8;
-  --text-3:      #475569;
+  --bg:          #15132B;
+  --surface:     #1C1A38;
+  --elevated:    #272449;
+  --border:      #35315E;
+  --accent:      #6366F1;   /* graphics, rings, focus */
+  --accent-strong: #4F46E5; /* button fills: white passes AA */
+  --accent-h:    #AAB4FF;   /* link and active text */
+  --accent-dim:  rgba(99, 102, 241, 0.16);
+  --text:        #EEEDF8;
+  --text-2:      #CFCCE6;
+  --text-3:      #A6A3C6;
+  --gap-bg:      rgba(249, 115, 22, 0.16);
+  --gap-fg:      #FDBA74;
   --error:       #f87171;
   --error-dim:   rgba(248, 113, 113, 0.10);
   --success:     #34d399;
   --success-dim: rgba(52, 211, 153, 0.10);
-  --r:           8px;
-  --r-sm:        5px;
+  --r:           12px;
+  --r-sm:        10px;
 }
 
 html, body {
@@ -130,14 +134,13 @@ html, body {
 .btn:disabled { opacity: 0.42; cursor: not-allowed; }
 
 .btn-primary {
-  background: var(--accent);
+  background: var(--accent-strong);
   color: #fff;
   width: 100%;
   padding: 11px;
 }
 .btn-primary:hover:not(:disabled) {
-  background: var(--accent-h);
-  box-shadow: 0 0 18px rgba(99, 102, 241, 0.32);
+  background: #5B52F0;
 }
 
 .btn-secondary {
