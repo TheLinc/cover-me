@@ -3,7 +3,11 @@ import { ensureValidSession, startBilling } from '../../lib/auth'
 import { GOOGLE_SIGNIN } from '../../lib/config'
 import { downloadCoverLetterPdf } from '../../lib/pdf'
 import { downloadTailoredResumePdf } from '../../lib/resume-pdf'
+import { letterSteps, tailorSteps } from '../../lib/progress-steps'
 import { getCandidateContext, resolveMode, saveCandidateContext } from '../../lib/storage'
+import GapChips from '../components/GapChips'
+import ProgressSteps from '../components/ProgressSteps'
+import ScoreRing from '../components/ScoreRing'
 import type { AuthSession, CoverJob, GenerateResponse, JobData, Settings, ScrapeResponse, TailorJob, TailorResponse, TailoredResume } from '../../types'
 import logoIcon from '../../public/icon/48.png'
 import type { Page } from '../App'
@@ -576,14 +580,20 @@ export default function GeneratePage({ onNavigate }: Props) {
 
   const bothDone = state === 'done' && tailorState === 'done'
 
+  // The header's status line: what's running, or that a result is ready.
+  const status =
+    state === 'loading' ? (loadingJob ? 'Writing…' : 'Reading the posting…')
+    : tailorState === 'loading' ? (loadingJob ? 'Tailoring…' : 'Reading the posting…')
+    : state === 'done' || tailorState === 'done' ? 'Done'
+    : ''
+
   return (
     <div className="page">
-      <div className="page-header">
-        <div className="logo">
-          <img src={logoIcon} width="26" height="26" alt="" className="logo-icon" />
-          <span className="logo-text">Cover Me</span>
-        </div>
-      </div>
+      <header className="popup-bar">
+        <img src={logoIcon} width="20" height="20" alt="" className="logo-icon" />
+        <span className="logo-text">Cover Me</span>
+        {status && <span className="popup-status">{status}</span>}
+      </header>
 
       {!setupLoaded && null}
 
@@ -662,14 +672,10 @@ export default function GeneratePage({ onNavigate }: Props) {
         <>
           {/* ── LOADING (full-screen, either feature) ── */}
           {(state === 'loading' || tailorState === 'loading') && (
-            <div className="centered">
-              <div className="spinner" />
-              <p className="loading-text">
-                {state === 'loading'
-                  ? loadingJob ? 'Crafting your cover letter…' : 'Reading the job posting…'
-                  : loadingJob ? (tailorProgress || 'Tailoring your resume…') : 'Reading the job posting…'
-                }
-              </p>
+            <div className="loading">
+              <ProgressSteps
+                steps={state === 'loading' ? letterSteps(!!loadingJob) : tailorSteps(tailorProgress, !!loadingJob, includeSummary)}
+              />
               {loadingJob && (
                 <div className="loading-job-preview">
                   <div className="loading-job-title">{loadingJob.title}</div>
@@ -677,11 +683,11 @@ export default function GeneratePage({ onNavigate }: Props) {
                   <p className="loading-job-snippet">{loadingJob.description.slice(0, 160).trim()}…</p>
                 </div>
               )}
-              <button className="btn btn-ghost" style={{ marginTop: 16 }}
+              <button className="btn btn-ghost loading-cancel"
                 onClick={state === 'loading' ? cancelLetter : cancelTailor}>
                 Cancel
               </button>
-              <p className="generate-hint" style={{ marginTop: 8 }}>
+              <p className="generate-hint">
                 {state === 'loading'
                   ? 'This still counts as a generation — when it finishes, the letter is saved to your History.'
                   : 'This still counts as a generation, even if you cancel.'
@@ -933,28 +939,17 @@ export default function GeneratePage({ onNavigate }: Props) {
                       <div className="tailor-result-company">{tailoredJob.company}</div>
                     </div>
                   )}
-                  <div className="ats-result">
-                    <div className="ats-score-row">
-                      <span className="ats-label">ATS Score</span>
-                      <span className={`ats-badge ${
-                        tailoredResume.atsScore === undefined ? 'ats-badge-amber' :
-                        tailoredResume.atsScore >= 80 ? 'ats-badge-green' :
-                        tailoredResume.atsScore >= 60 ? 'ats-badge-amber' : 'ats-badge-red'
-                      }`}>
-                        {tailoredResume.atsScore ?? '—'}<span className="ats-denom">/100</span>
-                      </span>
+                  {(typeof tailoredResume.atsScore === 'number' || (tailoredResume.atsGaps?.length ?? 0) > 0) && (
+                    <div className="ats-result">
+                      {typeof tailoredResume.atsScore === 'number' && <ScoreRing score={tailoredResume.atsScore} />}
+                      <div className="ats-detail">
+                        <GapChips gaps={tailoredResume.atsGaps ?? []} />
+                        {(tailoredResume.atsGaps?.length ?? 0) === 0 && typeof tailoredResume.atsScore === 'number' && tailoredResume.atsScore >= 80 && (
+                          <p className="ats-strong">Strong match: no significant gaps.</p>
+                        )}
+                      </div>
                     </div>
-                    {tailoredResume.atsGaps && tailoredResume.atsGaps.length > 0 && (
-                      <ul className="ats-gaps">
-                        {tailoredResume.atsGaps.map((gap, i) => (
-                          <li key={i} className="ats-gap">{gap}</li>
-                        ))}
-                      </ul>
-                    )}
-                    {(!tailoredResume.atsGaps || tailoredResume.atsGaps.length === 0) && tailoredResume.atsScore !== undefined && tailoredResume.atsScore >= 80 && (
-                      <p className="ats-strong">Strong match — no significant gaps detected.</p>
-                    )}
-                  </div>
+                  )}
                   <div className="supplemental-section">
                     <label className="supplemental-label">Missing something?</label>
                     <textarea
