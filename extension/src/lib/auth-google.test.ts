@@ -131,6 +131,16 @@ describe('completeSignIn', () => {
     expect(keys.indexOf('settings')).toBeLessThan(keys.indexOf('session'))
   })
 
+  test('any sign-in clears a saved Google error, so it never shows after sign-out', async () => {
+    const storage = fakeStorage({ googleSignInError: 'old failure' })
+    vi.stubGlobal('chrome', { storage })
+    vi.stubGlobal('fetch', vi.fn())
+
+    await completeSignIn(session)
+
+    expect(storage.data.googleSignInError).toBeUndefined()
+  })
+
   test('with no resume yet, nothing is uploaded and a fresh install gets default settings', async () => {
     const storage = fakeStorage({})
     vi.stubGlobal('chrome', { storage })

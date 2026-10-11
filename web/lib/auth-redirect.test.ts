@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import { afterOAuth, oauthCancelled, oauthRedirectUrl } from './auth-redirect'
+import { afterOAuth, oauthCancelled, oauthErrorDescription, oauthRedirectUrl } from './auth-redirect'
+
+describe('oauthErrorDescription', () => {
+  it('reads Supabase\'s reason from the query or the fragment', () => {
+    expect(oauthErrorDescription('?oauth=1&error=server_error&error_description=Database+error+saving+new+user', '')).toBe('Database error saving new user')
+    expect(oauthErrorDescription('?oauth=1', '#error=server_error&error_description=Unsupported%20provider')).toBe('Unsupported provider')
+  })
+  it('is empty when there is no reason', () => {
+    expect(oauthErrorDescription('?oauth=1&code=abc', '')).toBe('')
+  })
+})
 
 describe('oauthCancelled', () => {
   it('is true when Google reports access_denied, in the query or the fragment', () => {

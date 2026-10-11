@@ -115,6 +115,8 @@ export async function signInWithGoogle(): Promise<AuthSession> {
 // of a resume uploaded before signing in. A failed sync is non-fatal: the
 // resume page retries on the next upload.
 export async function completeSignIn(sess: AuthSession): Promise<void> {
+  // A saved Google failure is moot once any sign-in succeeds.
+  await takeGoogleSignInError()
   // Mode first: panels watching the session read the mode when it lands.
   const existing = await getSettings()
   await saveSettings({ provider: existing?.provider ?? 'claude', apiKey: existing?.apiKey ?? '', mode: 'hosted' })
@@ -135,7 +137,6 @@ export type GoogleSignInResponse =
 export async function handleGoogleSignIn(): Promise<GoogleSignInResponse> {
   try {
     const session = await signInWithGoogle()
-    await takeGoogleSignInError()
     await completeSignIn(session)
     return { success: true, session }
   } catch (err) {
