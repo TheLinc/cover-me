@@ -47,13 +47,15 @@ export default function GapChips({ gaps }: { gaps: string[] }) {
       <div className="chip-caption mono">Missing</div>
       <ul className="chips" ref={listRef} id="gap-chips">
         {shown.map((g, i) => <li key={`${i}-${g}`} className="chip chip-gap">{g}</li>)}
-        {hidden > 0 && (
+        {/* expanded too: a late fonts.ready re-measure can reset limit while open */}
+        {(expanded || hidden > 0) && (
           <li>
             <button
               type="button"
               className="chip chip-more"
               aria-expanded={expanded}
               aria-controls="gap-chips"
+              aria-label={expanded ? undefined : `+${hidden} more missing keywords`}
               onClick={() => setExpanded(e => !e)}
             >
               {expanded ? 'Show less' : `+${hidden} more`}
