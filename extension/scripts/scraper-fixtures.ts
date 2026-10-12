@@ -81,7 +81,7 @@ export async function fetchPosting(browser: Browsers, board: Board): Promise<Pag
     if (board.posting) {
       const hrefs = await page.$$eval('a[href]', (as) => as.map((a) => (a as HTMLAnchorElement).href))
       const url = hrefs.find((h) => board.posting!.test(h.split('#')[0]))
-      if (!url) throw new Error(`${board.name}: no posting link on ${board.listing} (landed on ${page.url()}, title "${await page.title()}", ${hrefs.length} links)`)
+      if (!url) throw new Error(`${board.name}: no posting link on ${board.listing} (landed on ${page.url()}, title "${await page.title().catch(() => '?')}", ${hrefs.length} links)`)
       if (board.headed) {
         await page.close()
         page = await open()
@@ -104,7 +104,8 @@ async function load(page: Page, url: string) {
     const res = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45_000 })
     await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {})
     const blocked = res?.status() === 429 || new URL(page.url()).pathname.startsWith('/authwall')
-    if (!blocked || attempt === 4) return
+    if (!blocked) return
+    if (attempt === 4) throw new Error(`blocked (HTTP ${res?.status()}) at ${page.url()} after 4 loads`)
     await page.waitForTimeout(2_000 * attempt)
   }
 }
