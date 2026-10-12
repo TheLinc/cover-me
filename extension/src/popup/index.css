@@ -704,7 +704,7 @@ html, body {
   padding: 14px;
   margin-bottom: 12px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 14px;
 }
 .ats-detail { flex: 1; min-width: 0; }
@@ -715,6 +715,8 @@ html, body {
 .chips { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { font-size: 11px; padding: 3px 9px; border-radius: 999px; }
 .chip-gap { background: var(--gap-bg); color: var(--gap-fg); }
+.chip-more { background: var(--elevated); color: var(--text-2); border: none; font-family: inherit; cursor: pointer; }
+.chip-more:hover { color: var(--text); }
 
 .ats-strong {
   font-size: 12px;
