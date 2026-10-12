@@ -81,7 +81,7 @@ export async function fetchPosting(browser: Browsers, board: Board): Promise<Pag
     if (board.posting) {
       const hrefs = await page.$$eval('a[href]', (as) => as.map((a) => (a as HTMLAnchorElement).href))
       const url = hrefs.find((h) => board.posting!.test(h.split('#')[0]))
-      if (!url) throw new Error(`${board.name}: no posting link on ${board.listing}`)
+      if (!url) throw new Error(`${board.name}: no posting link on ${board.listing} (landed on ${page.url()}, title "${await page.title()}", ${hrefs.length} links)`)
       if (board.headed) {
         await page.close()
         page = await open()
