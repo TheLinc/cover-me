@@ -99,7 +99,8 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
 
       <div
         className={`upload-area${dragOver ? ' drag-over' : ''}`}
-        onClick={() => inputRef.current?.click()}
+        // The input's own click bubbles here too; don't open the picker twice.
+        onClick={(e) => { if (e.target !== inputRef.current) inputRef.current?.click() }}
         onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
         onDragLeave={() => setDragOver(false)}
         onDrop={onDrop}
@@ -108,12 +109,13 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
           ref={inputRef}
           className="upload-input"
           type="file"
+          aria-label="Upload your resume (PDF, DOCX or TXT)"
           accept=".pdf,.docx,.txt"
           onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f) }}
         />
         {status === 'parsing' ? (
           <>
-            <div className="spinner" style={{ margin: '0 auto 10px' }} />
+            <div className="spinner upload-spinner" />
             <p className="upload-title">Parsing…</p>
           </>
         ) : (
@@ -132,7 +134,7 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
       </div>
 
       {error && (
-        <div className="error-box" style={{ marginTop: 10 }}>{error}</div>
+        <div className="error-box resume-error">{error}</div>
       )}
 
       {resume && status !== 'parsing' && (
@@ -154,7 +156,7 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
                 <div className="resume-sections">{parsedSummary(parsed)}</div>
               )}
               {resume.signedOutUpload && accountMode && (
-                <div className="hint" style={{ marginTop: 4 }}>Added while signed out, so it isn&apos;t in your account yet. Upload it again to use it for letters.</div>
+                <div className="hint hint-tight">Added while signed out, so it isn&apos;t in your account yet. Upload it again to use it for letters.</div>
               )}
             </div>
             {status === 'saved' && (

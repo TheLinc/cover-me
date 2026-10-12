@@ -9,7 +9,7 @@ export default function Welcome() {
         <img src={logoIcon} width="32" height="32" alt="" className="logo-icon" />
         <span className="logo-text">Cover Me</span>
       </div>
-      <h1 className="page-title" style={{ marginTop: 16 }}>Your first letter is three steps away</h1>
+      <h1 className="page-title welcome-title">Your first letter is three steps away</h1>
 
       <section className="welcome-step">
         <h2>1. Create a free account, or add your own API key</h2>

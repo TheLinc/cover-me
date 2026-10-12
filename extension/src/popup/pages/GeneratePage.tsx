@@ -3,7 +3,11 @@ import { ensureValidSession, startBilling } from '../../lib/auth'
 import { GOOGLE_SIGNIN } from '../../lib/config'
 import { downloadCoverLetterPdf } from '../../lib/pdf'
 import { downloadTailoredResumePdf } from '../../lib/resume-pdf'
+import { letterSteps, tailorSteps } from '../../lib/progress-steps'
 import { getCandidateContext, resolveMode, saveCandidateContext } from '../../lib/storage'
+import GapChips from '../components/GapChips'
+import ProgressSteps from '../components/ProgressSteps'
+import ScoreRing from '../components/ScoreRing'
 import type { AuthSession, CoverJob, GenerateResponse, JobData, Settings, ScrapeResponse, TailorJob, TailorResponse, TailoredResume } from '../../types'
 import logoIcon from '../../public/icon/48.png'
 import type { Page } from '../App'
@@ -81,22 +85,30 @@ function TailorOptions({ inputMode, manualReady, onTailor, compact, setCompact, 
           <input type="checkbox" checked={compact} onChange={e => setCompact(e.target.checked)} />
           Compact to one page
         </label>
-        <label className="compact-toggle">
-          <input type="checkbox" checked={trim} onChange={e => setTrim(e.target.checked)} />
-          Remove irrelevant bullets
-          <span
+        <div className="toggle-row">
+          <label className="compact-toggle">
+            <input type="checkbox" checked={trim} onChange={e => setTrim(e.target.checked)} />
+            Remove irrelevant bullets
+          </label>
+          <button
+            type="button"
             className="tooltip-icon"
+            aria-label="Best for long master resumes with all your experience — the AI selects only the bullets most relevant to the role being applied for."
             data-tooltip="Best for long master resumes with all your experience — the AI selects only the bullets most relevant to the role being applied for."
-          >?</span>
-        </label>
-        <label className="compact-toggle">
-          <input type="checkbox" checked={includeSummary} onChange={e => setIncludeSummary(e.target.checked)} />
-          Include summary
-          <span
+          >?</button>
+        </div>
+        <div className="toggle-row">
+          <label className="compact-toggle">
+            <input type="checkbox" checked={includeSummary} onChange={e => setIncludeSummary(e.target.checked)} />
+            Include summary
+          </label>
+          <button
+            type="button"
             className="tooltip-icon"
+            aria-label="Adds a 2-3 sentence professional summary tailored to the role. Turn off if your resume already has one or the role prefers none."
             data-tooltip="Adds a 2-3 sentence professional summary tailored to the role. Turn off if your resume already has one or the role prefers none."
-          >?</span>
-        </label>
+          >?</button>
+        </div>
       </div>
     </div>
   )
@@ -398,7 +410,8 @@ export default function GeneratePage({ onNavigate }: Props) {
 
   function cancelLetter() {
     if (coverJobId.current) coverDismissedId.current = coverJobId.current
-    setState('idle')
+    // A cancelled regenerate returns to the letter it would have replaced.
+    setState(letter && job ? 'done' : 'idle')
     setLoadingJob(null)
   }
 
@@ -475,8 +488,9 @@ export default function GeneratePage({ onNavigate }: Props) {
   // The error is persisted in coverJob and restored on every popup open, so
   // leaving it has to clear the record too (otherwise a user who just paid
   // stays on the limit warning).
+  // Back to the letter that was showing (a failed regenerate keeps it), or idle.
   function dismissLetterError() {
-    setState('idle')
+    setState(letter && job ? 'done' : 'idle')
     chrome.storage.local.remove('coverJob')
   }
 
@@ -576,14 +590,25 @@ export default function GeneratePage({ onNavigate }: Props) {
 
   const bothDone = state === 'done' && tailorState === 'done'
 
+  // The header's status line: what's running, what failed, or that a result is
+  // ready. A failure wins over the other result being done.
+  const status = !setupComplete ? ''
+    : state === 'loading' ? (loadingJob ? 'Writing…' : 'Reading the posting…')
+    : tailorState === 'loading' ? (loadingJob ? 'Tailoring…' : 'Reading the posting…')
+    : state === 'error' ? 'Letter failed'
+    : tailorState === 'error' ? 'Tailoring failed'
+    : state === 'done' || tailorState === 'done' ? 'Done'
+    : ''
+
   return (
     <div className="page">
-      <div className="page-header">
-        <div className="logo">
-          <img src={logoIcon} width="26" height="26" alt="" className="logo-icon" />
-          <span className="logo-text">Cover Me</span>
-        </div>
-      </div>
+      <header className="popup-bar">
+        <img src={logoIcon} width="20" height="20" alt="" className="logo-icon" />
+        <span className="logo-text">Cover Me</span>
+        {/* Mounted once saved state has loaded (so reopening the popup doesn't
+            announce "Done"), then kept, so screen readers hear each change. */}
+        {setupLoaded && <span className="popup-status" role="status">{status}</span>}
+      </header>
 
       {!setupLoaded && null}
 
@@ -662,14 +687,10 @@ export default function GeneratePage({ onNavigate }: Props) {
         <>
           {/* ── LOADING (full-screen, either feature) ── */}
           {(state === 'loading' || tailorState === 'loading') && (
-            <div className="centered">
-              <div className="spinner" />
-              <p className="loading-text">
-                {state === 'loading'
-                  ? loadingJob ? 'Crafting your cover letter…' : 'Reading the job posting…'
-                  : loadingJob ? (tailorProgress || 'Tailoring your resume…') : 'Reading the job posting…'
-                }
-              </p>
+            <div className="loading">
+              <ProgressSteps
+                steps={state === 'loading' ? letterSteps(!!loadingJob) : tailorSteps(tailorProgress, !!loadingJob, includeSummary)}
+              />
               {loadingJob && (
                 <div className="loading-job-preview">
                   <div className="loading-job-title">{loadingJob.title}</div>
@@ -677,11 +698,11 @@ export default function GeneratePage({ onNavigate }: Props) {
                   <p className="loading-job-snippet">{loadingJob.description.slice(0, 160).trim()}…</p>
                 </div>
               )}
-              <button className="btn btn-ghost" style={{ marginTop: 16 }}
+              <button className="btn btn-ghost loading-cancel"
                 onClick={state === 'loading' ? cancelLetter : cancelTailor}>
                 Cancel
               </button>
-              <p className="generate-hint" style={{ marginTop: 8 }}>
+              <p className="generate-hint">
                 {state === 'loading'
                   ? 'This still counts as a generation — when it finishes, the letter is saved to your History.'
                   : 'This still counts as a generation, even if you cancel.'
@@ -769,13 +790,13 @@ export default function GeneratePage({ onNavigate }: Props) {
                     initialContext={initialContext}
                     setInitialContext={setInitialContext}
                   />
-                  <button className="btn btn-primary" style={{ marginTop: 12 }} onClick={generateManual} disabled={!manualReady}>
+                  <button className="btn btn-primary manual-submit" onClick={generateManual} disabled={!manualReady}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
                     </svg>
                     Generate Cover Letter
                   </button>
-                  <div style={{ marginTop: 8 }}>
+                  <div className="manual-tailor">
                     <TailorOptions
                       inputMode={inputMode}
                       manualReady={manualReady}
@@ -792,25 +813,25 @@ export default function GeneratePage({ onNavigate }: Props) {
               )}
 
               {/* LETTER ERROR */}
-              {state === 'error' && tailorState !== 'done' && (
+              {state === 'error' && (
                 <div className="letter-container">
                   <div className={errorCode ? 'warning-box' : 'error-box'}>
                     {error}
                   </div>
                   {errorCode === 'RATE_LIMIT' && upgradePrompt}
                   <button className="btn btn-secondary" onClick={dismissLetterError}>
-                    {errorCode ? 'Back' : 'Try Again'}
+                    {errorCode || letter || tailorState === 'done' ? 'Back' : 'Try Again'}
                   </button>
                 </div>
               )}
 
               {/* TAILOR ERROR */}
-              {tailorState === 'error' && state !== 'done' && (
+              {tailorState === 'error' && (
                 <div className="letter-container">
                   <div className={tailorErrorCode ? 'warning-box' : 'error-box'}>{tailorError}</div>
                   {tailorErrorCode === 'RATE_LIMIT' && upgradePrompt}
                   <button className="btn btn-secondary" onClick={resetTailor}>
-                    {tailorErrorCode ? 'Back' : 'Try Again'}
+                    {tailorErrorCode || state === 'done' ? 'Back' : 'Try Again'}
                   </button>
                 </div>
               )}
@@ -869,7 +890,7 @@ export default function GeneratePage({ onNavigate }: Props) {
                       <svg
                         width="11" height="11" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-                        style={{ transform: regenerateExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}
+                        className={regenerateExpanded ? 'chevron open' : 'chevron'}
                       >
                         <polyline points="6 9 12 15 18 9" />
                       </svg>
@@ -909,7 +930,7 @@ export default function GeneratePage({ onNavigate }: Props) {
                         </>
                       )}
                     </button>
-                    <button className="btn btn-secondary" style={{ width: 'auto', padding: '10px 14px' }} onClick={downloadPdf}>
+                    <button className="btn btn-secondary btn-compact" onClick={downloadPdf}>
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
                         <polyline points="7 10 12 15 17 10" />
@@ -933,28 +954,17 @@ export default function GeneratePage({ onNavigate }: Props) {
                       <div className="tailor-result-company">{tailoredJob.company}</div>
                     </div>
                   )}
-                  <div className="ats-result">
-                    <div className="ats-score-row">
-                      <span className="ats-label">ATS Score</span>
-                      <span className={`ats-badge ${
-                        tailoredResume.atsScore === undefined ? 'ats-badge-amber' :
-                        tailoredResume.atsScore >= 80 ? 'ats-badge-green' :
-                        tailoredResume.atsScore >= 60 ? 'ats-badge-amber' : 'ats-badge-red'
-                      }`}>
-                        {tailoredResume.atsScore ?? '—'}<span className="ats-denom">/100</span>
-                      </span>
+                  {(typeof tailoredResume.atsScore === 'number' || (tailoredResume.atsGaps?.length ?? 0) > 0) && (
+                    <div className="ats-result">
+                      {typeof tailoredResume.atsScore === 'number' && <ScoreRing score={tailoredResume.atsScore} />}
+                      <div className="ats-detail">
+                        <GapChips gaps={tailoredResume.atsGaps ?? []} />
+                        {(tailoredResume.atsGaps?.length ?? 0) === 0 && typeof tailoredResume.atsScore === 'number' && tailoredResume.atsScore >= 80 && (
+                          <p className="ats-strong">Strong match: no significant gaps.</p>
+                        )}
+                      </div>
                     </div>
-                    {tailoredResume.atsGaps && tailoredResume.atsGaps.length > 0 && (
-                      <ul className="ats-gaps">
-                        {tailoredResume.atsGaps.map((gap, i) => (
-                          <li key={i} className="ats-gap">{gap}</li>
-                        ))}
-                      </ul>
-                    )}
-                    {(!tailoredResume.atsGaps || tailoredResume.atsGaps.length === 0) && tailoredResume.atsScore !== undefined && tailoredResume.atsScore >= 80 && (
-                      <p className="ats-strong">Strong match — no significant gaps detected.</p>
-                    )}
-                  </div>
+                  )}
                   <div className="supplemental-section">
                     <label className="supplemental-label">Missing something?</label>
                     <textarea
@@ -977,9 +987,8 @@ export default function GeneratePage({ onNavigate }: Props) {
                       Download PDF
                     </button>
                     <button
-                      className="btn btn-secondary"
+                      className="btn btn-secondary btn-compact"
                       onClick={regenerate}
-                      style={{ width: 'auto', padding: '10px 14px' }}
                     >
                       Regenerate
                     </button>

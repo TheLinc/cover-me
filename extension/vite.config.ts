@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { build, defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import { crx } from '@crxjs/vite-plugin'
@@ -81,6 +82,17 @@ function contentScriptIife(): Plugin {
   }
 }
 
+// The bundled Geist fonts are SIL OFL, which asks that the license travel with
+// every copy: ship it next to them in the package (check-dist requires it).
+function fontLicense(): Plugin {
+  return {
+    name: 'font-license',
+    generateBundle() {
+      this.emitFile({ type: 'asset', fileName: 'fonts/OFL.txt', source: readFileSync('src/fonts/OFL.txt', 'utf8') })
+    },
+  }
+}
+
 // `--mode localdb` (pnpm dev / build:local) targets the local Supabase
 // stack from .env.localdb, so the service worker also needs host access to it.
 // Production builds use manifest.json unchanged.
@@ -96,6 +108,7 @@ export default defineConfig(({ mode }) => ({
     }),
     contentScriptIife(),
     stripJsPdfRemoteCode(),
+    fontLicense(),
   ],
   // Drop attribution/legal comments from minified output. Some bundled deps
   // (jsPDF's md5 + pdfkit notes) carry comment URLs that, while not executable,

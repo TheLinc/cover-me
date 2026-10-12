@@ -1,7 +1,23 @@
 /* ─────────────────────────────────────────────────
    Cover Me — Popup Styles
-   Dark slate + indigo accent
+   Night (the website's night indigo) + Cover Me indigo.
+   tokens.test.ts holds the text tokens, button and badge fills and the
+   missing-keyword chips to 4.5:1.
 ───────────────────────────────────────────────── */
+
+/* Geist ships in the package (SIL OFL, fonts/OFL.txt): no request to Google. */
+@font-face {
+  font-family: 'Geist';
+  src: url('../fonts/Geist-Variable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('../fonts/GeistMono-Variable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+}
 
 *, *::before, *::after {
   box-sizing: border-box;
@@ -10,29 +26,32 @@
 }
 
 :root {
-  --bg:          #0d1117;
-  --surface:     #161c2e;
-  --elevated:    #1e2740;
-  --border:      #2a3452;
-  --accent:      #6366f1;
-  --accent-h:    #818cf8;
-  --accent-dim:  rgba(99, 102, 241, 0.14);
-  --text:        #e2e8f0;
-  --text-2:      #94a3b8;
-  --text-3:      #475569;
+  --bg:          #15132B;
+  --surface:     #1C1A38;
+  --elevated:    #272449;
+  --border:      #35315E;
+  --accent:      #6366F1;   /* graphics, rings, focus */
+  --accent-strong: #4F46E5; /* button fills: white passes AA */
+  --accent-h:    #AAB4FF;   /* link and active text */
+  --accent-dim:  rgba(99, 102, 241, 0.16);
+  --text:        #EEEDF8;
+  --text-2:      #CFCCE6;
+  --text-3:      #A6A3C6;
+  --gap-bg:      rgba(249, 115, 22, 0.16);
+  --gap-fg:      #FDBA74;
   --error:       #f87171;
   --error-dim:   rgba(248, 113, 113, 0.10);
   --success:     #34d399;
   --success-dim: rgba(52, 211, 153, 0.10);
-  --r:           8px;
-  --r-sm:        5px;
+  --r:           12px;
+  --r-sm:        10px;
 }
 
 html, body {
   width: 380px;
   height: 560px;
   overflow: hidden;
-  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 13px;
   line-height: 1.5;
   background: var(--bg);
@@ -130,14 +149,13 @@ html, body {
 .btn:disabled { opacity: 0.42; cursor: not-allowed; }
 
 .btn-primary {
-  background: var(--accent);
+  background: var(--accent-strong);
   color: #fff;
   width: 100%;
   padding: 11px;
 }
 .btn-primary:hover:not(:disabled) {
-  background: var(--accent-h);
-  box-shadow: 0 0 18px rgba(99, 102, 241, 0.32);
+  background: #5B52F0;
 }
 
 .btn-secondary {
@@ -181,15 +199,44 @@ html, body {
 
 /* ── States ───────────────────────────────────── */
 
-.centered {
+/* The Generate page's header bar: logo, name, and what's running. */
+.popup-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: -18px -18px 16px;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.popup-bar .logo-icon { width: 20px; height: 20px; border-radius: 6px; }
+.popup-bar .logo-text { font-size: 14px; font-weight: 600; letter-spacing: -0.2px; }
+.popup-status { margin-left: auto; font-size: 12px; font-weight: 500; color: var(--text-2); }
+
+/* Generating: the step list, the job, then Cancel. */
+.loading {
   flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  text-align: center;
-  padding: 36px 0;
+  align-items: stretch;
+  gap: 14px;
+  padding: 18px 2px;
+}
+.loading-cancel { align-self: center; }
+.loading .generate-hint { margin-top: -6px; }
+
+.steps { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.step { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.step-done { color: var(--text-2); }
+.step-active { color: var(--text); font-weight: 500; }
+.step-todo { color: var(--text-3); }
+.step-icon { width: 16px; height: 16px; flex-shrink: 0; border-radius: 5px; display: flex; align-items: center; justify-content: center; }
+.step-icon-done { background: rgba(99, 102, 241, 0.28); color: var(--accent-h); }
+.step-icon-todo { border: 1px dashed var(--border); }
+.step-spinner {
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.65s linear infinite;
 }
 
 .spinner {
@@ -203,17 +250,12 @@ html, body {
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.loading-text { font-size: 12px; color: var(--text-2); max-width: 200px; text-align: center; }
-
 .loading-job-preview {
   margin-top: 2px;
   padding: 10px 12px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--r);
-  text-align: left;
-  width: 100%;
-  max-width: 300px;
 }
 .loading-job-title {
   font-size: 11px;
@@ -226,7 +268,7 @@ html, body {
 }
 .loading-job-org {
   font-size: 10px;
-  color: var(--accent);
+  color: var(--accent-h);
   margin-bottom: 6px;
 }
 .loading-job-snippet {
@@ -388,8 +430,11 @@ html, body {
   color: var(--text-2);
   font-size: 9px;
   font-weight: 700;
-  cursor: default;
+  cursor: help;
   flex-shrink: 0;
+  border: none;
+  padding: 0;
+  font-family: inherit;
   position: relative;
 }
 .tooltip-icon::after {
@@ -398,8 +443,8 @@ html, body {
   bottom: calc(100% + 6px);
   left: 50%;
   transform: translateX(-50%);
-  background: #e2e8f0;
-  color: #1e293b;
+  background: var(--text);
+  color: var(--bg);
   font-size: 11px;
   font-weight: 400;
   line-height: 1.45;
@@ -414,7 +459,8 @@ html, body {
   text-align: left;
   box-shadow: 0 4px 16px rgba(0,0,0,0.4);
 }
-.tooltip-icon:hover::after {
+.tooltip-icon:hover::after,
+.tooltip-icon:focus-visible::after {
   opacity: 1;
 }
 
@@ -468,7 +514,7 @@ html, body {
 .setup-step-icon {
   width: 24px;
   height: 24px;
-  border-radius: 50%;
+  border-radius: 7px; /* rounded square: status markers are never circles */
   border: 1.5px solid var(--border);
   display: flex;
   align-items: center;
@@ -520,7 +566,13 @@ html, body {
   background: var(--accent-dim);
 }
 
-.upload-input { display: none; }
+/* Visually hidden but focusable: keyboard users Tab to it and press Enter. */
+.sr-only, .upload-input {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+.upload-area:has(.upload-input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.upload-area { position: relative; }
 
 .upload-icon { color: var(--text-3); margin-bottom: 10px; }
 .upload-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
@@ -547,7 +599,7 @@ html, body {
   text-overflow: ellipsis;
 }
 .resume-meta { font-size: 11px; color: var(--text-3); margin-top: 2px; }
-.resume-sections { font-size: 10px; color: var(--accent); margin-top: 4px; letter-spacing: 0.1px; }
+.resume-sections { font-size: 10px; color: var(--accent-h); margin-top: 4px; letter-spacing: 0.1px; }
 
 .success-badge {
   display: inline-flex;
@@ -649,56 +701,26 @@ html, body {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--r);
-  padding: 14px 16px;
+  padding: 14px;
   margin-bottom: 12px;
-}
-
-.ats-score-row {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
+  align-items: flex-start;
+  gap: 14px;
 }
+.ats-detail { flex: 1; min-width: 0; }
+.score-ring { flex-shrink: 0; font-family: inherit; }
 
-.ats-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-2);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.ats-badge {
-  font-size: 26px;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: -0.5px;
-}
-.ats-denom { font-size: 13px; font-weight: 500; opacity: 0.55; }
-
-.ats-badge-green { color: var(--success); }
-.ats-badge-amber { color: #f59e0b; }
-.ats-badge-red   { color: var(--error); }
-
-.ats-gaps {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-.ats-gap {
-  font-size: 11px;
-  color: var(--text-2);
-  padding: 4px 9px;
-  background: var(--error-dim);
-  border-left: 2px solid rgba(248, 113, 113, 0.45);
-  border-radius: 3px;
-}
+.mono { font-family: 'Geist Mono', ui-monospace, monospace; }
+.chip-caption { font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-3); margin-bottom: 6px; }
+.chips { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 11px; padding: 3px 9px; border-radius: 999px; }
+.chip-gap { background: var(--gap-bg); color: var(--gap-fg); }
+.chip-more { display: block; line-height: inherit; background: var(--elevated); color: var(--text-2); border: none; font-family: inherit; cursor: pointer; }
+.chip-more:hover { color: var(--text); }
 
 .ats-strong {
-  font-size: 11px;
-  color: var(--success);
-  opacity: 0.85;
+  font-size: 12px;
+  color: var(--text-2);
 }
 
 .supplemental-section { margin-bottom: 10px; }
@@ -739,7 +761,7 @@ html, body {
   gap: 3px;
   margin-top: 4px;
   font-size: 10px;
-  color: var(--accent);
+  color: var(--accent-h);
   text-decoration: none;
   opacity: 0.8;
   transition: opacity 0.15s;
@@ -822,7 +844,7 @@ html, body {
 
 .nav-item:hover { color: var(--text-2); }
 
-.nav-item.active { color: var(--accent); }
+.nav-item.active { color: var(--accent-h); }
 
 .nav-item.active::before {
   content: '';
@@ -874,7 +896,7 @@ html, body {
 
 .tier-badge-pro {
   color: #fff;
-  background: var(--accent);
+  background: var(--accent-strong);
   border-color: transparent;
   font-weight: 600;
 }
@@ -973,7 +995,7 @@ html, body {
 .context-dot {
   width: 5px;
   height: 5px;
-  border-radius: 50%;
+  border-radius: 1.5px; /* a square: status markers are never circles */
   background: var(--accent);
   display: inline-block;
   flex-shrink: 0;
@@ -1112,3 +1134,39 @@ html, body {
   line-height: 1.55;
   margin-bottom: 12px;
 }
+
+/* ── Focus: every control shows where the keyboard is ── */
+
+button:focus-visible, a:focus-visible, select:focus-visible,
+textarea:focus-visible, input:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.form-input:focus-visible, .letter-textarea:focus-visible { outline-offset: 0; }
+
+/* ── Small layout classes (were inline styles) ── */
+
+.hint-intro { margin-bottom: 14px; }
+.hint-under { margin-top: 7px; }
+.hint-tight { margin-top: 4px; }
+.form-input.with-eye { padding-right: 34px; }
+.account-signout { margin-top: 16px; }
+.manual-submit { margin-top: 12px; }
+.manual-tailor { margin-top: 8px; }
+.btn-compact { width: auto; padding: 10px 14px; }
+.chevron { transition: transform 0.15s; }
+.chevron.open { transform: rotate(180deg); }
+.letter-preview { max-height: 160px; margin-bottom: 8px; }
+.upload-spinner { margin: 0 auto 10px; }
+.resume-error { margin-top: 10px; }
+/* The nav sits on the popup bottom edge, so its ring goes inside. */
+.nav-item:focus-visible { outline-offset: -3px; }
+
+/* Reduced motion: spinners hold still (the arc still marks the active step). */
+@media (prefers-reduced-motion: reduce) {
+  .spinner, .step-spinner { animation: none; }
+}
+
+/* An option with its "?" beside the label, not inside it: the checkbox is
+   named by its own text, and the explanation belongs to the button. */
+.toggle-row { display: flex; align-items: center; gap: 6px; }

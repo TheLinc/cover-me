@@ -4,3 +4,4 @@ html, body { width: auto; height: auto; overflow: auto; }
 .welcome-step { margin-top: 28px; }
 .welcome-step h2 { font-size: 15px; font-weight: 700; margin-bottom: 10px; }
 .welcome-step .page { padding: 0; min-height: 0; }
+.welcome-title { margin-top: 16px; }
