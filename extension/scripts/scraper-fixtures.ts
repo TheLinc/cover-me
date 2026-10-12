@@ -81,7 +81,7 @@ export async function fetchPosting(browser: Browsers, board: Board): Promise<Pag
     if (board.posting) {
       const hrefs = await page.$$eval('a[href]', (as) => as.map((a) => (a as HTMLAnchorElement).href))
       const url = hrefs.find((h) => board.posting!.test(h.split('#')[0]))
-      if (!url) throw new Error(`${board.name}: no posting link on ${board.listing}`)
+      if (!url) throw new Error(`${board.name}: no posting link on ${board.listing} (landed on ${page.url()}, title "${await page.title().catch(() => '?')}", ${hrefs.length} links)`)
       if (board.headed) {
         await page.close()
         page = await open()
@@ -96,10 +96,18 @@ export async function fetchPosting(browser: Browsers, board: Board): Promise<Pag
 }
 
 // Some boards poll forever and never reach network idle; settle for whatever
-// has rendered after 15 s.
+// has rendered after 15 s. LinkedIn answers a share of signed-out loads at
+// random with a 429 (an empty page) or a redirect to /authwall; loading the
+// page again after a pause usually gets through.
 async function load(page: Page, url: string) {
-  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45_000 })
-  await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {})
+  for (let attempt = 1; ; attempt++) {
+    const res = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45_000 })
+    await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {})
+    const blocked = res?.status() === 429 || new URL(page.url()).pathname.startsWith('/authwall')
+    if (!blocked) return
+    if (attempt === 4) throw new Error(`blocked (HTTP ${res?.status()}) at ${page.url()} after 4 loads`)
+    await page.waitForTimeout(2_000 * attempt)
+  }
 }
 
 export interface Browsers {
