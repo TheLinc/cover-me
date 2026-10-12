@@ -193,7 +193,7 @@ pnpm dev
 # optional; the key pins the Stripe account (the CLI's active one can belong to another project),
 # and the :? stops instead of falling back to that account when no key is found. Paste the whsec_ into web/.env.localdb
 key=$(grep '^STRIPE_SECRET_KEY=' .env.local | cut -d= -f2- | awk '{print $1}' | tr -d '"\r')
-STRIPE_API_KEY="${key:?no STRIPE_SECRET_KEY in .env.local}" stripe listen --forward-to localhost:3000/api/stripe-webhook
+STRIPE_API_KEY="${key:?no STRIPE_SECRET_KEY in .env.local}" stripe listen --forward-to localhost:3100/api/stripe-webhook
 ```
 
 #### Tests
@@ -433,7 +433,7 @@ supabase functions deploy billing
 For local testing, use the [Stripe CLI](https://stripe.com/docs/stripe-cli). Pass your test-mode secret key so the listener uses your account, whichever one the CLI last signed in to:
 
 ```bash
-STRIPE_API_KEY=sk_test_... stripe listen --forward-to localhost:3000/api/stripe-webhook
+STRIPE_API_KEY=sk_test_... stripe listen --forward-to localhost:3100/api/stripe-webhook
 ```
 
 ### 8. Configure the web dashboard

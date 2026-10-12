@@ -1,7 +1,7 @@
 // Brand regression check for the website.
 //
 //   node scripts/check-brand.mjs [paths...]   source checks (default: app components lib) + token contrast
-//   BASE_URL=http://localhost:3000 node scripts/check-brand.mjs   also checks rendered pages
+//   BASE_URL=http://localhost:3100 node scripts/check-brand.mjs   also checks rendered pages
 import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join, extname } from 'node:path'
 

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "node --env-file=.env.localdb node_modules/next/dist/bin/next dev",
+    "dev": "node --env-file=.env.localdb node_modules/next/dist/bin/next dev -p 3100",
     "build": "next build",
     "start": "next start",
     "test": "vitest run",
