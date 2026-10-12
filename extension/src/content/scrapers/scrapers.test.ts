@@ -86,9 +86,11 @@ describe.runIf(import.meta.env.MODE === 'smoke')('scrapers on live postings', as
     expect(job).toMatchObject({ title: 'Senior Data Analyst', company: 'Acme Corp', description: description.trim() })
   })
 
+  // retry: LinkedIn now and then serves a runner's IP a page with no postings;
+  // a real markup change fails every attempt.
   // Indeed's bot check needs a visible Chrome window and starts blocking an IP
   // after a few visits, so it can't be smoke-tested on a schedule.
-  test.each(BOARDS.filter((b) => !b.headed))('$name', { timeout: 120_000 }, async (board) => {
+  test.each(BOARDS.filter((b) => !b.headed))('$name', { timeout: 120_000, retry: 2 }, async (board) => {
     const { url, html } = await fetchPosting(browser, board)
     const job = scrape(url, html)
     expect(job.title, url).not.toBe('')
