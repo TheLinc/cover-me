@@ -45,6 +45,8 @@ write(fnPath, [
   `ANTHROPIC_API_KEY=${anthropicKey}`,
   '# Logs resume text and prompts to the function logs. Local only.',
   `DEBUG_MODE=${fnOld.DEBUG_MODE || 'false'}`,
+  '# Stripe checkout and portal return here (billing falls back to production).',
+  'SITE_URL=http://localhost:3100',
 ])
 if (!anthropicKey) console.warn('  ANTHROPIC_API_KEY is empty: add one to use generate/tailor from the extension.')
 

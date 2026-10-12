@@ -1,11 +1,11 @@
 // Public Supabase credentials — safe to bundle in the extension.
-// Production values live in extension/.env; local dev overrides go in
-// extension/.env.development (only loaded by `vite dev`, never by `vite build`).
+// Production values live in extension/.env; local values go in
+// extension/.env.localdb, written by `pnpm env:local` in backend/.
 export const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL as string) ?? ''
 export const SUPABASE_PUBLISHABLE_KEY = (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string) ?? ''
 
 // Web app URL — used as the email confirmation redirect target.
-// Set VITE_WEB_URL in extension/.env (prod) or extension/.env.development (local dev)
+// Set VITE_WEB_URL in extension/.env (prod); .env.localdb has the local one
 export const WEB_URL = (import.meta.env.VITE_WEB_URL as string) ?? 'https://www.cover-me.dev'
 
 // "Continue with Google" shows only when VITE_GOOGLE_SIGNIN=1, i.e. once the
