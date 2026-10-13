@@ -36,7 +36,8 @@ export function queryFromParams(params: URLSearchParams): ApplicationsQuery {
 
 // Date inputs give local YYYY-MM-DD; the function wants instants. "To" covers
 // its whole day, so it becomes the start of the next one (exclusive). A date
-// JavaScript can't hold (year 275760 and up) is left out, not thrown.
+// outside years 1-9999 (a date field takes up to 275760) is left out:
+// JavaScript can't hold some of them and Postgres won't take the rest.
 export function dayRange(from: string, to: string): { from?: string; to?: string } | null {
   const local = (d: string, addDays = 0) => {
     const [y, m, day] = d.split('-').map(Number)
@@ -44,7 +45,8 @@ export function dayRange(from: string, to: string): { from?: string; to?: string
     const date = new Date(0)
     date.setFullYear(y, m - 1, day + addDays)
     date.setHours(0, 0, 0, 0)
-    return Number.isNaN(date.getTime()) ? null : date
+    const year = date.getFullYear()
+    return year >= 1 && year <= 9999 ? date : null
   }
   const start = from ? local(from) : null
   const end = to ? local(to, 1) : null
