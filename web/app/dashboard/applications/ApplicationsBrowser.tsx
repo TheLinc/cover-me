@@ -4,12 +4,12 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { CheckIcon, MagnifyingGlassIcon, XIcon } from '@phosphor-icons/react/dist/ssr'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Skeleton } from '@/components/ui/skeleton'
 import { Toggle } from '@/components/ui/toggle'
 import { Spinner } from '@/components/ui/spinner'
 import { dayRange, type ApplicationSummary, type ApplicationsPage, type ApplicationsQuery } from '@/lib/applications'
 import { createLatestSearch } from '@/lib/latest-search'
 import { ApplicationCard } from './ApplicationCard'
+import { TileSkeletons } from './TileSkeletons'
 import { DateField } from './DateField'
 
 type Status = 'loading' | 'ready' | 'error'
@@ -177,23 +177,7 @@ export function ApplicationsBrowser() {
             <Button variant="link" size="sm" className="h-auto p-0 text-[13.5px]" onClick={retry}>Try again</Button>
           </p>
         ) : status === 'loading' && applications.length === 0 ? (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2" aria-label="Loading applications">
-            {[0, 1, 2, 3].map((i) => (
-              <div key={i} className="flex flex-col gap-4 rounded-[20px] border border-line/80 bg-surface p-5">
-                <div className="flex gap-3">
-                  <Skeleton className="size-10 rounded-[12px] bg-panel" />
-                  <div className="flex flex-1 flex-col gap-2 pt-1">
-                    <Skeleton className="h-3.5 w-2/3 bg-panel" />
-                    <Skeleton className="h-3 w-1/2 bg-panel" />
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Skeleton className="h-8 w-28 rounded-full bg-panel" />
-                  <Skeleton className="h-8 w-24 rounded-full bg-panel" />
-                </div>
-              </div>
-            ))}
-          </div>
+          <TileSkeletons count={4} label="Loading applications" />
         ) : applications.length === 0 ? (
           filtered ? (
             <div className="flex flex-col items-start gap-2 rounded-[20px] border border-dashed border-line px-6 py-8">

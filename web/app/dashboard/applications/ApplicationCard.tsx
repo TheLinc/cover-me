@@ -145,7 +145,7 @@ export function ApplicationCard({ app: initial, onDeleted, onInterviewChange }: 
                 {app.interviewAt ? 'Remove interview mark' : 'Mark as got an interview'}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => setConfirming(true)}>Delete</DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive focus:text-destructive" disabled={busy !== null} onSelect={() => setConfirming(true)}>Delete</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

@@ -2,12 +2,23 @@ import Link from 'next/link'
 import { ArrowRightIcon } from '@phosphor-icons/react/dist/ssr'
 import { fetchApplications, type ApplicationSummary } from '@/lib/applications'
 import { ApplicationCard } from './applications/ApplicationCard'
+import { TileSkeletons } from './applications/TileSkeletons'
 
 // Pro history (2e). Streams in behind <Suspense> so the rest of the dashboard
 // doesn't wait on the applications function. Renders nothing if the call fails.
 export async function ProHistory({ accessToken }: { accessToken: string }) {
   const page = await fetchApplications(process.env.NEXT_PUBLIC_SUPABASE_URL!, accessToken, { limit: 6 })
   return page ? <ApplicationHistory applications={page.applications} /> : null
+}
+
+// Holds the section's place while it streams in, so the page below doesn't jump.
+export function ProHistorySkeleton() {
+  return (
+    <section className="flex flex-col gap-4" aria-label="Loading recent applications">
+      <h2 className="text-[20px] font-semibold tracking-[-0.02em] text-ink">Recent applications</h2>
+      <TileSkeletons count={2} label="Loading" />
+    </section>
+  )
 }
 
 // The newest six as tiles; the applications page has the rest, with search.
