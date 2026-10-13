@@ -1,5 +1,7 @@
+// Shared with the website. Edit here, then run `node scripts/sync-pdf.mjs`,
+// which copies this folder to web/lib/pdf/ (both builds fail on a stale copy).
 import { jsPDF } from 'jspdf'
-import type { TailoredResume } from '../types'
+import type { TailoredResume } from './types'
 
 // Letter page: 612 × 792 pt
 const PW = 612

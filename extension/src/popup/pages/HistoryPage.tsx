@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { deleteApplicationFromBackend, ensureValidSession, fetchApplicationsFromBackend, fetchTier, uploadLocalHistory, UploadError } from '../../lib/auth'
-import { downloadCoverLetterPdf } from '../../lib/pdf'
-import { downloadTailoredResumePdf } from '../../lib/resume-pdf'
+import { downloadCoverLetterPdf } from '../../lib/pdf/cover-letter'
+import { downloadTailoredResumePdf } from '../../lib/pdf/resume'
 import { accountUpdates, capWarning, groupLocalHistory, groupsFromApplications, ownPending, unclaimed, uploadMessage, uploadSummary, withLocalOnly, type JobGroup } from '../../lib/history'
 import { deleteFromHistory, deleteFromTailoredHistory, getCachedTier, getHistory, getMode, getTailoredHistory, getUploadAsked, markUploadAsked, saveCachedTier, setEntryAccounts } from '../../lib/storage'
 import type { AuthSession, CoverLetter, CoverLetterEntry, TailoredHistoryEntry } from '../../types'
@@ -329,7 +329,7 @@ export default function HistoryPage() {
                           </button>
                           <button
                             className="btn btn-secondary btn-sm"
-                            onClick={() => downloadCoverLetterPdf(cl.letter, { title: group.title, company: group.company, url: group.url, description: '' }, cl.createdAt)}
+                            onClick={() => downloadCoverLetterPdf(cl.letter, { title: group.title, company: group.company }, cl.createdAt)}
                           >
                             PDF
                           </button>

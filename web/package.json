@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "test": "vitest run",
-    "check": "node scripts/check-brand.mjs"
+    "check": "node ../scripts/sync-pdf.mjs --check && node scripts/check-brand.mjs"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
@@ -20,6 +20,7 @@
     "autoprefixer": "^10.5.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "jspdf": "^4.2.1",
     "next": "^15.1.0",
     "postcss": "^8.5.15",
     "react": "^19.0.0",
