@@ -44,7 +44,7 @@ export function ApplicationsBrowser() {
       failed.current = query
       // The rows on screen are for an older search; only a failed Load more
       // keeps them, since they still match.
-      if (!query.before) setApplications([])
+      if (!query.before) { setApplications([]); setHasMore(false) }
       setStatus('error')
       return
     }
