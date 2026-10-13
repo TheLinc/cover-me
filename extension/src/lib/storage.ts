@@ -78,6 +78,36 @@ export async function deleteFromTailoredHistory(id: string): Promise<void> {
   await chrome.storage.local.set({ tailoredHistory: list.filter((e) => e.id !== id) })
 }
 
+// Marks local entries with the account that holds them (see CoverLetter.account).
+export async function setEntryAccounts(updates: { letters?: Record<string, string>; tailored?: Record<string, string> }): Promise<void> {
+  // Only the lists that change are written: the background may be adding to
+  // the other one at the same moment.
+  const mark = <T extends { id: string; account?: string }>(list: T[], accounts: Record<string, string> = {}): T[] | null =>
+    list.some((e) => accounts[e.id]) ? list.map((e) => (accounts[e.id] ? { ...e, account: accounts[e.id] } : e)) : null
+  const write: Record<string, unknown> = {}
+  if (updates.letters && Object.keys(updates.letters).length > 0) {
+    const history = mark(await getHistory(), updates.letters)
+    if (history) write.history = history
+  }
+  if (updates.tailored && Object.keys(updates.tailored).length > 0) {
+    const tailoredHistory = mark(await getTailoredHistory(), updates.tailored)
+    if (tailoredHistory) write.tailoredHistory = tailoredHistory
+  }
+  if (Object.keys(write).length > 0) await chrome.storage.local.set(write)
+}
+
+// Accounts that answered the "save these to your account?" prompt (Save or
+// Not now). They get the quiet link instead of the prompt from then on.
+export async function getUploadAsked(): Promise<string[]> {
+  const { uploadAsked } = await chrome.storage.local.get('uploadAsked')
+  return (uploadAsked as string[]) ?? []
+}
+
+export async function markUploadAsked(userId: string): Promise<void> {
+  const asked = await getUploadAsked()
+  if (!asked.includes(userId)) await chrome.storage.local.set({ uploadAsked: [...asked, userId] })
+}
+
 export async function getSession(): Promise<AuthSession | null> {
   const { session } = await chrome.storage.local.get('session')
   return (session as AuthSession) ?? null

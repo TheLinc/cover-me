@@ -5,7 +5,7 @@ import { tailorResume } from '../lib/ai/resume-tailor'
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from '../lib/config'
 import { decryptApiKey } from '../lib/crypto'
 import { debugGroup } from '../lib/debug'
-import { addToHistory, addToTailoredHistory, getCachedTier, getCandidateContext, getResume, getSettings, resolveMode, saveParsedResume } from '../lib/storage'
+import { addToHistory, addToTailoredHistory, getCachedTier, getCandidateContext, getResume, getSettings, resolveMode, saveParsedResume, setEntryAccounts } from '../lib/storage'
 import { handleInstalled } from './install'
 import type { PageSnapshot } from '../content/snapshot.ts'
 import type { CoverJob, CoverLetter, FrameScrapeResponse, GenerateResponse, JobData, ScrapeResponse, TailoredResume, TailorJob, TailorResponse } from '../types'
@@ -66,11 +66,18 @@ async function failCover(id: string, job: JobData, startedAt: number, error: str
   return { success: false, error }
 }
 
-// Every successful run is kept for History, on every path (Pro runs are also
-// saved server-side by the tailor function). Best-effort: a failed save must
-// not turn a finished (and, hosted, already counted) run into an error.
-async function recordTailored(job: JobData, resume: TailoredResume): Promise<void> {
-  await addToTailoredHistory({ id: crypto.randomUUID(), job, resume, createdAt: new Date().toISOString() }).catch(() => {})
+// Every successful run is kept for History, on every path. A Pro run's local
+// copy shares its ID with the server copy (account set once the server
+// confirmed it), so uploading local history never duplicates it. Best-effort:
+// a failed save must not turn a finished (and, hosted, already counted) run
+// into an error. owner: where a Pro run belongs (see TailoredHistoryEntry).
+async function recordTailored(
+  job: JobData,
+  resume: TailoredResume,
+  id: string = crypto.randomUUID(),
+  owner?: { account?: string; saveTo?: string },
+): Promise<void> {
+  await addToTailoredHistory({ id, job, resume, createdAt: new Date().toISOString(), ...owner }).catch(() => {})
 }
 
 async function failTailor(id: string, job: JobData, startedAt: number, error: string): Promise<TailorResponse> {
@@ -443,8 +450,13 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
       }
       // Hosted: the resume + final prompt live server-side. Enable DEBUG_MODE on
       // the edge function to see those in the Supabase function logs.
-      const resume = await tailorViaBackend(job, session.access_token, compact, merged, trim, includeSummary, previous, onProgress)
-      await recordTailored(job, resume)
+      const localId = crypto.randomUUID()
+      const { resume, savedId } = await tailorViaBackend(job, session.access_token, compact, merged, trim, includeSummary, previous, onProgress, localId)
+      const pro = (await getCachedTier()) === 'hosted_pro'
+      await recordTailored(job, resume, localId, {
+        ...(savedId === localId ? { account: session.user.id } : {}),
+        ...(pro ? { saveTo: session.user.id } : {}),
+      })
       await setTailorJob({ id, status: 'done', job, resume, startedAt })
       return { success: true, resume, job }
     }
@@ -519,16 +531,20 @@ async function generateFromJob(job: JobData, supplemental?: string, jobId?: stri
         return failCover(id, job, startedAt, 'Sign in to your Cover Me account in Settings.')
       }
       const letter = await generateViaBackend(job, session.access_token, merged)
+      const pro = (await getCachedTier()) === 'hosted_pro'
       const entry: CoverLetter = {
         id: crypto.randomUUID(),
         job,
         letter,
         createdAt: new Date().toISOString(),
+        // A Pro letter belongs in the account; History retries it if this save fails.
+        ...(pro ? { saveTo: session.user.id } : {}),
       }
       await addToHistory(entry)
-      const tier = await getCachedTier()
-      if (tier === 'hosted_pro') {
-        saveLetterToBackend(session.access_token, entry).catch(() => {})
+      if (pro) {
+        saveLetterToBackend(session.access_token, entry)
+          .then(() => setEntryAccounts({ letters: { [entry.id]: session.user.id } }))
+          .catch(() => {})
       }
       await setCoverJob({ id, status: 'done', job, letter, createdAt: entry.createdAt, startedAt })
       return { success: true, letter, job }

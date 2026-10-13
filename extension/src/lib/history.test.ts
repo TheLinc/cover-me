@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { capWarning, groupLocalHistory } from './history'
+import { accountUpdates, capWarning, groupLocalHistory, groupsFromApplications, ownPending, uploadMessage, uploadSummary, withLocalOnly } from './history'
 
 const job = (url: string, company = 'Northwind', title = 'Engineer') => ({ title, company, url, description: '' })
 const resume = { name: 'Pat', phone: '', email: '', website: '', experience: [], education: [] }
@@ -68,5 +68,123 @@ describe('capWarning', () => {
 
   test('both at their caps', () => {
     expect(capWarning(50, 20)).toBe(`This browser keeps your last 50 letters and 20 tailored resumes, so the oldest are now being removed. ${PRO}`)
+  })
+})
+
+describe('accountUpdates', () => {
+  const submitted = { letters: ['l1', 'l2', 'l3'], tailored: ['t1'] }
+
+  test('a save: confirmed IDs are this account, failed ones are left alone, the rest belong to another account', () => {
+    expect(accountUpdates(submitted, { letters: ['l1'], tailored: ['t1'], failed: ['l2'] }, 'me', false))
+      .toEqual({ letters: { l1: 'me', l3: 'other' }, tailored: { t1: 'me' } })
+  })
+
+  test('a check only confirms', () => {
+    expect(accountUpdates(submitted, { letters: ['l1'], tailored: [], failed: [] }, 'me', true))
+      .toEqual({ letters: { l1: 'me' }, tailored: {} })
+  })
+})
+
+describe('withLocalOnly', () => {
+  const server = [{ key: 'app1', id: 'app1', title: 'A', company: 'Acme', url: 'https://jobs.example/a', latestAt: '2026-10-03T00:00:00Z', coverLetters: [], tailoredResumes: [] }]
+
+  test('adds local-only entries in date order, tagged, and leaves out other accounts', () => {
+    const groups = withLocalOnly(
+      server,
+      [
+        { id: 'l1', job: job('https://jobs.example/1'), letter: 'x', createdAt: '2026-10-04T00:00:00Z' },
+        { id: 'l2', job: job('https://jobs.example/2'), letter: 'x', createdAt: '2026-10-01T00:00:00Z' },
+        { id: 'l3', job: job('https://jobs.example/3'), letter: 'x', createdAt: '2026-10-05T00:00:00Z', account: 'other' },
+        { id: 'l4', job: job('https://jobs.example/4'), letter: 'x', createdAt: '2026-10-06T00:00:00Z', account: 'me' },
+        // Another Pro account's letter whose save failed: still that account's.
+        { id: 'l5', job: job('https://jobs.example/5'), letter: 'x', createdAt: '2026-10-07T00:00:00Z', saveTo: 'you' },
+      ],
+      [],
+      'me',
+    )
+    expect(groups.map((g) => [g.key, g.localOnly ?? false])).toEqual([
+      ['local:https://jobs.example/1', true],
+      ['app1', false],
+      ['local:https://jobs.example/2', true],
+    ])
+  })
+})
+
+describe('uploadSummary', () => {
+  test('counts applications, not entries: a letter and a resume for one job count once', () => {
+    const letters = [
+      { id: 'l1', job: job('https://jobs.example/1'), letter: 'x', createdAt: '2026-10-01T00:00:00Z' },
+      { id: 'l2', job: job('https://jobs.example/2'), letter: 'x', createdAt: '2026-10-01T00:00:00Z' },
+      { id: 'l3', job: job('https://jobs.example/3'), letter: 'x', createdAt: '2026-10-01T00:00:00Z' },
+    ]
+    const tailored = [{ id: 't1', job: job('https://jobs.example/1'), resume, createdAt: '2026-10-02T00:00:00Z' }]
+    expect(uploadSummary(letters, tailored, { letters: ['l1'], tailored: ['t1'], failed: ['l2'] }))
+      .toEqual({ saved: 1, other: 1, failed: 1 })
+  })
+
+  test('an application with any failed entry counts as failed', () => {
+    const letters = [{ id: 'l1', job: job('https://jobs.example/1'), letter: 'x', createdAt: '2026-10-01T00:00:00Z' }]
+    const tailored = [{ id: 't1', job: job('https://jobs.example/1'), resume, createdAt: '2026-10-02T00:00:00Z' }]
+    expect(uploadSummary(letters, tailored, { letters: ['l1'], tailored: [], failed: ['t1'] }))
+      .toEqual({ saved: 0, other: 0, failed: 1 })
+  })
+})
+
+describe('uploadMessage', () => {
+  test('all saved', () => {
+    expect(uploadMessage({ saved: 40, other: 0, failed: 0 })).toBe('Saved 40 applications to your account.')
+    expect(uploadMessage({ saved: 1, other: 0, failed: 0 })).toBe('Saved 1 application to your account.')
+  })
+  test('some already in another account', () => {
+    expect(uploadMessage({ saved: 38, other: 2, failed: 0 }))
+      .toBe('Saved 38 applications to your account. 2 were already saved to another account that used this browser, so they stay with it.')
+    expect(uploadMessage({ saved: 3, other: 1, failed: 0 }))
+      .toBe('Saved 3 applications to your account. 1 was already saved to another account that used this browser, so it stays with it.')
+  })
+  test('some failed', () => {
+    expect(uploadMessage({ saved: 38, other: 0, failed: 2 })).toBe("Saved 38 applications. 2 couldn't be saved, try again.")
+    expect(uploadMessage({ saved: 38, other: 1, failed: 2 }))
+      .toBe("Saved 38 applications. 1 was already saved to another account that used this browser, so it stays with it. 2 couldn't be saved, try again.")
+  })
+})
+
+describe('groupsFromApplications', () => {
+  // Same rule as local cards: the date is the newest thing made for the job,
+  // so a card doesn't jump to an older date once it's saved.
+  test('dates each application by its newest letter or resume', () => {
+    const [g] = groupsFromApplications([{
+      id: 'app1', title: 'A', company: 'Acme', url: 'https://jobs.example/a', createdAt: '2026-10-01T00:00:00Z',
+      coverLetters: [{ id: 'l1', letter: 'x', createdAt: '2026-10-02T00:00:00Z' }],
+      tailoredResumes: [{ id: 't1', resume, createdAt: '2026-10-05T00:00:00Z' }],
+    }])
+    expect(g).toMatchObject({ key: 'app1', id: 'app1', latestAt: '2026-10-05T00:00:00Z' })
+  })
+
+  test('lists the most recently active first', () => {
+    const app = (id: string, createdAt: string, letterAt?: string) => ({
+      id, title: id, company: 'Acme', url: '', createdAt, tailoredResumes: [],
+      coverLetters: letterAt ? [{ id: `l-${id}`, letter: 'x', createdAt: letterAt }] : [],
+    })
+    // The server orders by when each application was made.
+    const groups = groupsFromApplications([app('b', '2026-10-05T00:00:00+00:00'), app('a', '2026-10-01T00:00:00+00:00', '2026-10-10T00:00:00+00:00')])
+    expect(groups.map((g) => g.id)).toEqual(['a', 'b'])
+  })
+
+  test('an application with nothing in it keeps its own date', () => {
+    const [g] = groupsFromApplications([{ id: 'app1', title: 'A', company: 'Acme', url: '', createdAt: '2026-10-01T00:00:00Z', coverLetters: [], tailoredResumes: [] }])
+    expect(g.latestAt).toBe('2026-10-01T00:00:00Z')
+  })
+})
+
+describe('ownPending', () => {
+  test("picks unsaved entries made while this account was Pro, nobody else's", () => {
+    const l = (id: string, extra: object = {}) => ({ id, job: job(`https://jobs.example/${id}`), letter: 'x', createdAt: 'a', ...extra })
+    const out = ownPending(
+      [l('mine', { saveTo: 'me' }), l('saved', { saveTo: 'me', account: 'me' }), l('theirs', { saveTo: 'you' }), l('free-era')],
+      [{ id: 't1', job: job('https://jobs.example/t'), resume, createdAt: 'a', saveTo: 'me' }],
+      'me',
+    )
+    expect(out.letters.map((e) => e.id)).toEqual(['mine'])
+    expect(out.tailored.map((e) => e.id)).toEqual(['t1'])
   })
 })

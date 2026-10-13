@@ -16,6 +16,15 @@ export interface CoverLetter {
   job: JobData
   letter: string
   createdAt: string
+  // Which account holds this entry on the server: the user's ID once the
+  // server confirmed it, 'other' when the ID already belongs to another
+  // account (a previous user of this browser), missing while it exists only
+  // in this browser.
+  account?: string
+  // Made while signed in to this Pro account, so it was always meant to be
+  // saved there. If that save didn't go through, History retries it without
+  // asking (entries from before the upgrade still wait for the user's Save).
+  saveTo?: string
 }
 
 export interface AuthSession {
@@ -155,6 +164,15 @@ export interface TailoredHistoryEntry {
   job: JobData
   resume: TailoredResume
   createdAt: string
+  // Which account holds this entry on the server: the user's ID once the
+  // server confirmed it, 'other' when the ID already belongs to another
+  // account (a previous user of this browser), missing while it exists only
+  // in this browser.
+  account?: string
+  // Made while signed in to this Pro account, so it was always meant to be
+  // saved there. If that save didn't go through, History retries it without
+  // asking (entries from before the upgrade still wait for the user's Save).
+  saveTo?: string
 }
 
 export interface ApplicationRecord {

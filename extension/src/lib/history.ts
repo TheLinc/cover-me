@@ -1,5 +1,6 @@
-import type { CoverLetter, CoverLetterEntry, TailoredHistoryEntry, TailoredResumeEntry } from '../types'
+import type { ApplicationRecord, CoverLetter, CoverLetterEntry, TailoredHistoryEntry, TailoredResumeEntry } from '../types'
 import { HISTORY_LIMIT, TAILORED_HISTORY_LIMIT } from './storage'
+import type { UploadResult } from './auth'
 
 // One job in History with everything generated for it.
 export interface JobGroup {
@@ -13,6 +14,7 @@ export interface JobGroup {
   tailoredResumes: TailoredResumeEntry[]
   localCoverLetterIds?: string[]
   localTailoredIds?: string[]
+  localOnly?: boolean // Pro list: an entry that exists only in this browser
 }
 
 // Local letters and tailored resumes, grouped by posting (URL, or company and
@@ -70,4 +72,91 @@ export function capWarning(letters: number, tailored: number): string | null {
   }
   sentences.push('Pro saves all of them to your account, including the ones already here, and you can search them on your dashboard.')
   return sentences.join(' ')
+}
+
+// What a server answer (applications POST) means for each submitted entry.
+// Check: confirmed IDs only. Save: confirmed IDs are this account's, failed
+// ones are left for another try, and the rest already belong to another
+// account (never-overwrite means nothing else leaves an ID unsaved).
+export function accountUpdates(
+  submitted: { letters: string[]; tailored: string[] },
+  result: UploadResult,
+  userId: string,
+  check: boolean,
+): { letters: Record<string, string>; tailored: Record<string, string> } {
+  const failed = new Set(result.failed)
+  const map = (ids: string[], confirmed: string[]) => {
+    const mine = new Set(confirmed)
+    const out: Record<string, string> = {}
+    for (const id of ids) {
+      if (mine.has(id)) out[id] = userId
+      else if (!check && !failed.has(id)) out[id] = 'other'
+    }
+    return out
+  }
+  return { letters: map(submitted.letters, result.letters), tailored: map(submitted.tailored, result.tailored) }
+}
+
+// Not in any account yet, and not made while another account was Pro (that
+// one's save failed; it's still theirs). Only these are offered, uploaded on
+// Save, or shown as local-only.
+export const unclaimed = (userId: string) => (e: { account?: string; saveTo?: string }): boolean =>
+  !e.account && (!e.saveTo || e.saveTo === userId)
+
+// Pro History: the account's applications plus this account's unclaimed local
+// entries, tagged, in date order. Entries another account holds are left out.
+export function withLocalOnly(server: JobGroup[], letters: CoverLetter[], tailored: TailoredHistoryEntry[], userId: string): JobGroup[] {
+  const mine = unclaimed(userId)
+  const local = groupLocalHistory(letters.filter(mine), tailored.filter(mine))
+    .map((g) => ({ ...g, key: `local:${g.key}`, localOnly: true }))
+  return [...server, ...local].sort((a, b) => b.latestAt.localeCompare(a.latestAt))
+}
+
+// A save's result in applications (jobs), the unit the list and dashboard
+// use. A job with any failed entry counts as failed; otherwise saved if any
+// entry is now in the account; otherwise it belongs to another account.
+export function uploadSummary(letters: CoverLetter[], tailored: TailoredHistoryEntry[], result: UploadResult): { saved: number; other: number; failed: number } {
+  const mine = new Set([...result.letters, ...result.tailored])
+  const failed = new Set(result.failed)
+  const summary = { saved: 0, other: 0, failed: 0 }
+  for (const g of groupLocalHistory(letters, tailored)) {
+    const ids = [...(g.localCoverLetterIds ?? []), ...(g.localTailoredIds ?? [])]
+    if (ids.some((id) => failed.has(id))) summary.failed++
+    else if (ids.some((id) => mine.has(id))) summary.saved++
+    else summary.other++
+  }
+  return summary
+}
+
+export function uploadMessage(s: { saved: number; other: number; failed: number }): string {
+  const apps = (n: number) => `${n} application${n === 1 ? '' : 's'}`
+  const sentences = [s.failed > 0 ? `Saved ${apps(s.saved)}.` : `Saved ${apps(s.saved)} to your account.`]
+  if (s.other > 0) {
+    sentences.push(s.other === 1
+      ? '1 was already saved to another account that used this browser, so it stays with it.'
+      : `${s.other} were already saved to another account that used this browser, so they stay with it.`)
+  }
+  if (s.failed > 0) sentences.push(`${s.failed} couldn't be saved, try again.`)
+  return sentences.join(' ')
+}
+
+// The account's applications as History groups. Dated like local groups, by
+// the newest thing made for the job, so a card keeps its date once saved.
+export function groupsFromApplications(apps: ApplicationRecord[]): JobGroup[] {
+  return apps.map((app) => ({
+    key: app.id,
+    id: app.id,
+    title: app.title,
+    company: app.company,
+    url: app.url,
+    latestAt: [...app.coverLetters, ...app.tailoredResumes].reduce((latest, e) => (e.createdAt > latest ? e.createdAt : latest), app.createdAt),
+    coverLetters: app.coverLetters,
+    tailoredResumes: app.tailoredResumes,
+  })).sort((a, b) => b.latestAt.localeCompare(a.latestAt))
+}
+
+// Unsaved entries made while this account was Pro (see CoverLetter.saveTo).
+export function ownPending(letters: CoverLetter[], tailored: TailoredHistoryEntry[], userId: string): { letters: CoverLetter[]; tailored: TailoredHistoryEntry[] } {
+  const mine = <T extends { account?: string; saveTo?: string }>(e: T) => !e.account && e.saveTo === userId
+  return { letters: letters.filter(mine), tailored: tailored.filter(mine) }
 }

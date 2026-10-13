@@ -2,7 +2,7 @@ import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL, WEB_URL } from './config'
 import { clearResume, clearSession, getResume, getSession, getSettings, saveGoogleSignInError, saveCachedTier, saveResume, saveSession, saveSettings, takeGoogleSignInError } from './storage'
 import { isValidResume } from './ai/resume-tailor'
 import { deriveTailorProgress } from './ai/tailor-progress'
-import type { ApplicationRecord, AuthSession, CoverLetter, JobData, ResumeData, TailoredResume } from '../types'
+import type { ApplicationRecord, AuthSession, CoverLetter, JobData, ResumeData, TailoredHistoryEntry, TailoredResume } from '../types'
 
 // Thrown by signUp() when the account was created but needs email confirmation
 // before it can sign in — not a failure, so callers should render it as a
@@ -337,7 +337,7 @@ export async function startBilling(accessToken: string, action: 'checkout' | 'po
   return data.url
 }
 
-export async function tailorViaBackend(job: JobData, accessToken: string, compact = false, supplemental?: string, trim = false, includeSummary = true, previous?: TailoredResume, onProgress?: (label: string) => void): Promise<TailoredResume> {
+export async function tailorViaBackend(job: JobData, accessToken: string, compact = false, supplemental?: string, trim = false, includeSummary = true, previous?: TailoredResume, onProgress?: (label: string) => void, localId?: string): Promise<{ resume: TailoredResume; savedId?: string }> {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/tailor`, {
     method: 'POST',
     headers: {
@@ -347,7 +347,7 @@ export async function tailorViaBackend(job: JobData, accessToken: string, compac
       // this and respond with plain JSON, which the fallback below handles.
       Accept: 'application/x-ndjson',
     },
-    body: JSON.stringify({ job, compact, supplemental: supplemental?.trim() || undefined, trim, includeSummary, previous }),
+    body: JSON.stringify({ job, compact, supplemental: supplemental?.trim() || undefined, trim, includeSummary, previous, localId }),
   })
 
   // Pre-stream failures (auth, rate limit, missing resume) and any older
@@ -363,7 +363,7 @@ export async function tailorViaBackend(job: JobData, accessToken: string, compac
     }
     const resume = data.resume
     if (!isValidResume(resume)) throw new Error('Invalid response from server. Please try again.')
-    return resume
+    return { resume, savedId: typeof data.savedId === 'string' ? data.savedId : undefined }
   }
 
   // NDJSON stream: {type:'start',roles} → {type:'delta',text}* → {type:'done',resume}
@@ -375,6 +375,7 @@ export async function tailorViaBackend(job: JobData, accessToken: string, compac
   let acc = ''
   let roles = 1
   let final: TailoredResume | null = null
+  let savedId: string | undefined
 
   const handleLine = (line: string): void => {
     const trimmed = line.trim()
@@ -392,6 +393,7 @@ export async function tailorViaBackend(job: JobData, accessToken: string, compac
       onProgress?.(deriveTailorProgress(acc, roles))
     } else if (ev.type === 'done') {
       if (isValidResume(ev.resume)) final = ev.resume
+      if (typeof ev.savedId === 'string') savedId = ev.savedId
     } else if (ev.type === 'error') {
       throw new Error((ev.error as string) ?? 'Resume tailoring failed. Please try again.')
     }
@@ -408,7 +410,7 @@ export async function tailorViaBackend(job: JobData, accessToken: string, compac
   handleLine(lineBuf)
 
   if (!final) throw new Error('Invalid response from server. Please try again.')
-  return final
+  return { resume: final, savedId }
 }
 
 export async function saveLetterToBackend(accessToken: string, entry: CoverLetter): Promise<void> {
@@ -421,6 +423,38 @@ export async function saveLetterToBackend(accessToken: string, entry: CoverLette
     const data = await res.json().catch(() => ({})) as Record<string, unknown>
     throw new Error((data.error as string) ?? 'Failed to save letter')
   }
+}
+
+export interface UploadResult { letters: string[]; tailored: string[]; failed: string[] }
+
+export class UploadError extends Error {
+  constructor(message: string, readonly status: number) { super(message) }
+}
+
+// Saves local history to the account (applications POST), or with check only
+// asks which entries the account already holds. Job descriptions stay in the
+// browser: the server keeps title, company and URL, and 70 descriptions could
+// pass the 1 MB cap.
+export async function uploadLocalHistory(accessToken: string, letters: CoverLetter[], tailored: TailoredHistoryEntry[], check = false): Promise<UploadResult> {
+  // Trimmed to the server's per-field limit: scrapers keep the full page URL,
+  // and one long one must not make the whole batch fail.
+  const cap = (v: string | undefined) => v?.slice(0, 8192)
+  const job = (j: JobData) => ({ title: cap(j.title), company: cap(j.company), url: cap(j.url) })
+  const body = check
+    ? { check: true, letters: letters.map((e) => ({ id: e.id })), tailored: tailored.map((e) => ({ id: e.id })) }
+    : {
+        letters: letters.map((e) => ({ id: e.id, job: job(e.job), letter: e.letter, createdAt: e.createdAt })),
+        tailored: tailored.map((e) => ({ id: e.id, job: job(e.job), resume: e.resume, createdAt: e.createdAt })),
+      }
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/applications`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  const data = await res.json().catch(() => ({})) as Record<string, unknown>
+  if (!res.ok) throw new UploadError((data.error as string) || `Server error ${res.status}`, res.status)
+  const ids = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [])
+  return { letters: ids(data.letters), tailored: ids(data.tailored), failed: ids(data.failed) }
 }
 
 export async function fetchLettersFromBackend(accessToken: string): Promise<CoverLetter[]> {

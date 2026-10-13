@@ -9,12 +9,17 @@ interface Job {
 // Find an existing job_application for this user+job, or create one.
 // Match priority: URL (covered by partial unique index) → company+title (manual entries).
 // Non-concurrent — extension users don't generate two things simultaneously.
+// createdAt dates a new application (an upload of older local history);
+// an existing one keeps its date.
 export async function findOrCreateJobApplication(
   supabase: SupabaseClient,
   userId: string,
   job: Job,
+  createdAt?: string,
 ): Promise<string> {
-  const url = job.url || null
+  // Shortened: Postgres can't index a URL much past 2,700 bytes
+  // (job_applications_user_url), and page URLs can carry long tracking parameters.
+  const url = job.url ? job.url.slice(0, 2_048) : null
   const title = job.title || null
   const company = job.company || null
 
@@ -40,7 +45,7 @@ export async function findOrCreateJobApplication(
 
   const { data, error } = await supabase
     .from('job_applications')
-    .insert({ user_id: userId, title, company, url })
+    .insert({ user_id: userId, title, company, url, ...(createdAt ? { created_at: createdAt } : {}) })
     .select('id')
     .single()
 

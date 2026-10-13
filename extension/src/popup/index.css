@@ -745,6 +745,33 @@ html, body {
 /* Free account near the local history cap: warning, then the upgrade button */
 .cap-prompt { margin-bottom: 14px; }
 
+/* Pro: save the applications that exist only in this browser */
+.upload-prompt {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 12px 13px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.upload-prompt-text { margin: 0; font-size: 12px; line-height: 1.55; color: var(--text); }
+.upload-link {
+  align-self: flex-start; /* .page is a flex column, which would stretch it */
+  background: none;
+  border: none;
+  padding: 0;
+  margin-bottom: 14px;
+  color: var(--accent-h);
+  font-family: inherit;
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.upload-link:disabled { cursor: default; opacity: 0.7; }
+.local-tag { color: var(--text-2); }
+
 /* Job card — top-level entry grouping all artifacts for one posting */
 .job-card {
   background: var(--surface);
