@@ -1,14 +1,14 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { MagnifyingGlassIcon } from '@phosphor-icons/react/dist/ssr'
+import { CheckIcon, MagnifyingGlassIcon, XIcon } from '@phosphor-icons/react/dist/ssr'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Toggle } from '@/components/ui/toggle'
 import { Spinner } from '@/components/ui/spinner'
 import { dayRange, type ApplicationSummary, type ApplicationsPage, type ApplicationsQuery } from '@/lib/applications'
 import { createLatestSearch } from '@/lib/latest-search'
-import { Checkbox } from '@/components/ui/checkbox'
 import { ApplicationCard } from './ApplicationCard'
 import { DateField } from './DateField'
 
@@ -91,42 +91,109 @@ export function ApplicationsBrowser() {
     search.now({ ...shown.current, before: applications[applications.length - 1].createdAt })
   }
 
+  const statusText = !range
+    ? 'The From date is after the To date.'
+    : status === 'error'
+      ? "Couldn't load your applications."
+      : status === 'loading'
+        ? 'Loading applications'
+        : applications.length === 0
+          ? (filtered ? 'No applications match' : 'No applications yet')
+          : hasMore
+            ? `${applications.length} shown`
+            : filtered
+              ? `${applications.length} ${applications.length === 1 ? 'matches' : 'match'}`
+              : `${applications.length} application${applications.length === 1 ? '' : 's'}`
+  const counted = range && status === 'ready' && applications.length > 0
+
+  function clearFilters() {
+    setText('')
+    setFrom('')
+    setTo('')
+    setInterviewOnly(false)
+  }
+
   return (
-    <div className="flex flex-col gap-5">
-      {/* Sticks under the site header (h-16) while the cards scroll. Not on
-          phones: the bar wraps to most of the screen there. */}
-      <div className="md:sticky md:top-16 z-10 -mx-7 flex flex-wrap items-end gap-3 rounded-t-[10px] border-b border-border bg-surface px-7 pb-4 pt-6">
-        <div className="flex min-w-[220px] flex-1 flex-col gap-1.5">
-          <Label htmlFor="app-search">Company or job title</Label>
-          <div className="relative">
-            <MagnifyingGlassIcon size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden />
-            <Input id="app-search" type="search" value={text} onChange={(e) => setText(e.target.value)} maxLength={100} placeholder="Search" className="pl-9" />
-          </div>
+    <div className="flex flex-col gap-6">
+      {/* Find first: the search leads and the filters are chips under it. It
+          sticks under the site header (h-16) from md up; on phones it would
+          fill the screen. */}
+      <div className="z-10 -mx-5 flex flex-col gap-3 bg-background px-5 pb-3 pt-2 md:sticky md:top-16">
+        <div className="relative">
+          <MagnifyingGlassIcon size={20} className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-subtle" aria-hidden />
+          <Input
+            id="app-search"
+            type="search"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            maxLength={100}
+            placeholder="Search company or job title"
+            aria-label="Search applications by company or job title"
+            className="h-14 rounded-full border-line bg-surface pl-14 pr-5 text-[16px] text-ink shadow-[0_1px_2px_rgba(30,27,75,0.05),0_10px_28px_-18px_rgba(30,27,75,0.25)] placeholder:text-subtle focus-visible:ring-brand"
+          />
         </div>
-        <DateField id="app-from" label="From" value={from} onChange={setFrom} invalid={!range} describedBy={range ? undefined : 'app-range-error'} />
-        <DateField id="app-to" label="To" value={to} onChange={setTo} invalid={!range} describedBy={range ? undefined : 'app-range-error'} />
-        <div className="flex h-10 items-center gap-2">
-          <Checkbox id="app-interview" checked={interviewOnly} onCheckedChange={(v) => setInterviewOnly(v === true)} />
-          <Label htmlFor="app-interview" className="cursor-pointer">Got an interview</Label>
+        <div className="flex flex-wrap items-center gap-2">
+          <DateField id="app-from" label="From" value={from} onChange={setFrom} invalid={!range} describedBy={range ? undefined : 'app-range-error'} />
+          <DateField id="app-to" label="To" value={to} onChange={setTo} invalid={!range} describedBy={range ? undefined : 'app-range-error'} />
+          <Toggle
+            pressed={interviewOnly}
+            onPressedChange={setInterviewOnly}
+            variant="outline"
+            size="sm"
+            className="h-9 gap-1.5 rounded-full border-line bg-surface px-3.5 text-[13px] font-normal text-ink-2 hover:bg-surface hover:text-ink data-[state=on]:border-brand-strong/40 data-[state=on]:bg-brand-tint data-[state=on]:font-medium data-[state=on]:text-brand-ink"
+          >
+            {interviewOnly && <CheckIcon size={13} weight="bold" aria-hidden />}
+            Got an interview
+          </Toggle>
+          {filtered && (
+            <Button variant="ghost" size="sm" className="h-9 gap-1 rounded-full px-3 text-[13px] text-ink-2" onClick={clearFilters}>
+              <XIcon size={12} aria-hidden />Clear
+            </Button>
+          )}
         </div>
+        {/* What the list below shows: visible as a count, otherwise announced only. */}
+        <p aria-live="polite" className={counted ? 'px-1 text-[13px] tabular-nums text-subtle' : 'sr-only'}>{statusText}</p>
       </div>
 
-      <div aria-live="polite">
+      <div className="empty:hidden">
         {!range ? (
           <p id="app-range-error" className="text-[13px] text-destructive">The From date is after the To date.</p>
         ) : status === 'error' ? (
-          <p className="text-[13px] text-muted-foreground">
+          <p className="text-[13.5px] text-ink-2">
             Couldn&apos;t load your applications.{' '}
-            <button type="button" className="text-brand-light underline" onClick={retry}>Try again</button>
+            <Button variant="link" size="sm" className="h-auto p-0 text-[13.5px]" onClick={retry}>Try again</Button>
           </p>
         ) : status === 'loading' && applications.length === 0 ? (
-          <p className="flex items-center gap-2 text-[13px] text-muted-foreground"><Spinner className="size-3.5" />Loading</p>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2" aria-label="Loading applications">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="flex flex-col gap-4 rounded-[20px] border border-line/80 bg-surface p-5">
+                <div className="flex gap-3">
+                  <Skeleton className="size-10 rounded-[12px] bg-panel" />
+                  <div className="flex flex-1 flex-col gap-2 pt-1">
+                    <Skeleton className="h-3.5 w-2/3 bg-panel" />
+                    <Skeleton className="h-3 w-1/2 bg-panel" />
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Skeleton className="h-8 w-28 rounded-full bg-panel" />
+                  <Skeleton className="h-8 w-24 rounded-full bg-panel" />
+                </div>
+              </div>
+            ))}
+          </div>
         ) : applications.length === 0 ? (
-          <p className="text-[13px] text-muted-foreground">
-            {filtered ? 'No applications match.' : 'Letters and tailored resumes you make in the extension appear here, on every device.'}
-          </p>
-        ) : status === 'ready' ? (
-          <p className="sr-only">{applications.length} application{applications.length === 1 ? '' : 's'} shown</p>
+          filtered ? (
+            <div className="flex flex-col items-start gap-2 rounded-[20px] border border-dashed border-line px-6 py-8">
+              <p className="text-[15px] font-semibold text-ink">No applications match</p>
+              <p className="text-[13.5px] text-ink-2">Try another company or title, or widen the dates.</p>
+              <Button variant="outline" size="sm" className="mt-2 rounded-full" onClick={clearFilters}>Clear filters</Button>
+            </div>
+          ) : (
+            <div className="flex flex-col items-start gap-2 rounded-[20px] border border-dashed border-line px-6 py-8">
+              <p className="text-[15px] font-semibold text-ink">No applications yet</p>
+              <p className="max-w-[46ch] text-[13.5px] text-ink-2">Letters and tailored resumes you make in the extension appear here, on every device.</p>
+            </div>
+          )
         ) : null}
       </div>
 
@@ -137,7 +204,7 @@ export function ApplicationsBrowser() {
       )}
 
       {range && hasMore && status !== 'error' && (
-        <Button variant="outline" size="sm" className="self-center" onClick={loadMore} disabled={status === 'loading'}>
+        <Button variant="outline" size="sm" className="self-center rounded-full px-5" onClick={loadMore} disabled={status === 'loading'}>
           {loadingMore ? <><Spinner className="size-3.5" />Loading</> : 'Load more'}
         </Button>
       )}

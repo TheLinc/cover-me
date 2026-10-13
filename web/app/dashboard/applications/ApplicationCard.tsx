@@ -1,12 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { ArrowSquareOutIcon, DotsThreeVerticalIcon, DownloadSimpleIcon } from '@phosphor-icons/react/dist/ssr'
+import { ArrowSquareOutIcon, CaretRightIcon, CheckIcon, DotsThreeVerticalIcon, DownloadSimpleIcon } from '@phosphor-icons/react/dist/ssr'
 import { toast } from 'sonner'
 import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Spinner } from '@/components/ui/spinner'
 import { newest, postingHost, type ApplicationSummary } from '@/lib/applications'
@@ -83,30 +82,40 @@ export function ApplicationCard({ app: initial }: { app: ApplicationSummary }) {
     }
   }
 
+  const company = app.company || 'Unknown company'
+  const monogram = (app.company || app.title || '?').trim().charAt(0).toUpperCase()
+  const score = app.tailoredResumes[0]?.atsScore ?? null
+
   return (
-    <Card className="flex flex-col gap-4 p-5">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h3 className="truncate text-[15px] font-semibold text-foreground">{title}</h3>
-          <p className="text-[13px] text-muted-foreground">
-            {app.company || 'Unknown company'} · Applied <LocalDate iso={app.createdAt} options={{ month: 'short', day: 'numeric', year: 'numeric' }} />
-            {host && (
-              <> · <a href={app.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-brand-strong hover:underline">{host}<ArrowSquareOutIcon size={12} aria-hidden /></a></>
-            )}
+    <article className="group/tile flex flex-col gap-4 rounded-[20px] border border-line/80 bg-surface p-5 shadow-[0_1px_2px_rgba(30,27,75,0.05),0_10px_28px_-16px_rgba(30,27,75,0.22)] transition-[box-shadow,transform] duration-200 ease-out hover:-translate-y-px hover:shadow-[0_1px_2px_rgba(30,27,75,0.06),0_16px_36px_-16px_rgba(30,27,75,0.32)]">
+      <header className="flex items-start gap-3">
+        <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-[12px] bg-brand-tint text-[15px] font-semibold text-brand-ink">
+          {monogram}
+        </span>
+        <div className="min-w-0 flex-1 pt-px">
+          <h3 className="truncate text-[15px] font-semibold leading-snug tracking-[-0.01em] text-ink">
+            <button type="button" onClick={() => setDetailsOpen(true)} className="max-w-full truncate rounded-sm text-left underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand">
+              {title}
+            </button>
+          </h3>
+          <p className="truncate text-[13px] leading-snug text-ink-2">
+            {company} · Applied <LocalDate iso={app.createdAt} options={{ month: 'short', day: 'numeric', year: 'numeric' }} />
           </p>
         </div>
-        <div className="flex shrink-0 items-center gap-1.5">
-          {app.interviewAt && <Badge variant="interview">Interview</Badge>}
+        <div className="-mr-1.5 -mt-1 shrink-0">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Actions for ${title}`}>
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-ink-2" aria-label={`Actions for ${title}`}>
                 <DotsThreeVerticalIcon size={18} weight="bold" aria-hidden />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => setDetailsOpen(true)}>View details</DropdownMenuItem>
               {host && (
                 <DropdownMenuItem asChild>
-                  <a href={app.url} target="_blank" rel="noreferrer">Go to posting</a>
+                  <a href={app.url} target="_blank" rel="noreferrer">
+                    Go to posting <ArrowSquareOutIcon size={13} className="ml-auto opacity-60" aria-hidden />
+                  </a>
                 </DropdownMenuItem>
               )}
               <DropdownMenuItem disabled={busy === 'interview'} onSelect={toggleInterview}>
@@ -117,26 +126,31 @@ export function ApplicationCard({ app: initial }: { app: ApplicationSummary }) {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-      </div>
+      </header>
 
-      {(app.coverLetters.length > 0 || app.tailoredResumes.length > 0) && (
-        <div className="flex flex-wrap gap-2">
-          {app.coverLetters.length > 0 && (
-            <Button variant="outline" size="sm" onClick={() => download('letter')} disabled={busy === 'letter'}>
-              {busy === 'letter' ? <Spinner className="size-3.5" /> : <DownloadSimpleIcon size={14} aria-hidden />}
-              Download cover letter
-            </Button>
-          )}
-          {app.tailoredResumes.length > 0 && (
-            <Button variant="outline" size="sm" onClick={() => download('resume')} disabled={busy === 'resume'}>
-              {busy === 'resume' ? <Spinner className="size-3.5" /> : <DownloadSimpleIcon size={14} aria-hidden />}
-              Download resume
-            </Button>
-          )}
+      <div className="flex flex-wrap items-center gap-2">
+        {app.coverLetters.length > 0 && (
+          <Button variant="outline" size="sm" className="h-8 gap-1.5 px-3 text-[13px] hover:border-brand-strong hover:text-brand-strong" onClick={() => download('letter')} disabled={busy === 'letter'} aria-label="Download cover letter">
+            {busy === 'letter' ? <Spinner className="size-3.5" /> : <DownloadSimpleIcon size={14} aria-hidden />}
+            Cover letter
+          </Button>
+        )}
+        {app.tailoredResumes.length > 0 && (
+          <Button variant="outline" size="sm" className="h-8 gap-1.5 px-3 text-[13px] hover:border-brand-strong hover:text-brand-strong" onClick={() => download('resume')} disabled={busy === 'resume'} aria-label={score !== null ? `Download resume, ATS score ${score}` : 'Download resume'}>
+            {busy === 'resume' ? <Spinner className="size-3.5" /> : <DownloadSimpleIcon size={14} aria-hidden />}
+            Resume
+            {score !== null && (
+              <span aria-hidden className="-mr-1 rounded-full bg-brand-tint px-1.5 py-px text-[11.5px] font-semibold tabular-nums text-brand-ink">{score}</span>
+            )}
+          </Button>
+        )}
+        <div className="ml-auto flex items-center gap-1">
+          {app.interviewAt && <Badge variant="interview" className="font-medium"><CheckIcon size={11} weight="bold" aria-hidden />Interview</Badge>}
+          <Button variant="ghost" size="sm" className="h-8 gap-1 px-2.5 text-[13px] text-ink-2 hover:text-ink" onClick={() => setDetailsOpen(true)}>
+            <span className="max-sm:sr-only">Details</span> <CaretRightIcon size={12} aria-hidden />
+          </Button>
         </div>
-      )}
-
-      <Button variant="link" className="h-auto self-start p-0 text-[13px]" onClick={() => setDetailsOpen(true)}>View details</Button>
+      </div>
 
       <ApplicationDetailsSheet
         app={app}
@@ -163,6 +177,6 @@ export function ApplicationCard({ app: initial }: { app: ApplicationSummary }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Card>
+    </article>
   )
 }
