@@ -35,16 +35,23 @@ export function queryFromParams(params: URLSearchParams): ApplicationsQuery {
 }
 
 // Date inputs give local YYYY-MM-DD; the function wants instants. "To" covers
-// its whole day, so it becomes the start of the next one (exclusive).
+// its whole day, so it becomes the start of the next one (exclusive). A date
+// JavaScript can't hold (year 275760 and up) is left out, not thrown.
 export function dayRange(from: string, to: string): { from?: string; to?: string } | null {
   const local = (d: string, addDays = 0) => {
     const [y, m, day] = d.split('-').map(Number)
-    return new Date(y, m - 1, day + addDays)
+    // setFullYear, not new Date(y, …), which reads years 0-99 as 1900-1999.
+    const date = new Date(0)
+    date.setFullYear(y, m - 1, day + addDays)
+    date.setHours(0, 0, 0, 0)
+    return Number.isNaN(date.getTime()) ? null : date
   }
-  if (from && to && local(from) > local(to)) return null
+  const start = from ? local(from) : null
+  const end = to ? local(to, 1) : null
+  if (start && end && start >= end) return null
   const range: { from?: string; to?: string } = {}
-  if (from) range.from = local(from).toISOString()
-  if (to) range.to = local(to, 1).toISOString()
+  if (start) range.from = start.toISOString()
+  if (end) range.to = end.toISOString()
   return range
 }
 

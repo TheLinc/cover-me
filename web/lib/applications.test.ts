@@ -73,6 +73,15 @@ describe('dayRange', () => {
     expect(dayRange('2026-10-03', '')).toEqual({ from: new Date(2026, 9, 3).toISOString() })
     expect(dayRange('', '')).toEqual({})
   })
+  // A date field accepts years JavaScript can't turn into an instant, and
+  // new Date(y, …) reads 0-99 as 1900-1999.
+  it('ignores a date past what JavaScript can hold, and keeps two-digit years as typed', () => {
+    expect(dayRange('', '275760-09-12')).toEqual({})
+    const y99 = new Date(0)
+    y99.setFullYear(99, 0, 1)
+    y99.setHours(0, 0, 0, 0)
+    expect(dayRange('0099-01-01', '')).toEqual({ from: y99.toISOString() })
+  })
   it('is null when from is after to', () => {
     expect(dayRange('2026-10-06', '2026-10-05')).toBeNull()
   })

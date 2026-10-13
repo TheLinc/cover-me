@@ -16,9 +16,10 @@ async function load(query: ApplicationsQuery, signal: AbortSignal): Promise<Appl
   const params = new URLSearchParams()
   for (const [key, value] of Object.entries(query)) if (value) params.set(key, String(value))
   const res = await fetch(`/api/applications?${params}`, { signal })
-  // Signed out, or no longer Pro: a retry can't fix either.
-  if (res.status === 401) window.location.assign('/auth')
-  if (res.status === 403) window.location.assign('/dashboard')
+  // Signed out, or no longer Pro: a retry can't fix either. The promise never
+  // settles, so the page doesn't flash an error on its way out.
+  const leaveTo = res.status === 401 ? '/auth' : res.status === 403 ? '/dashboard' : null
+  if (leaveTo) { window.location.assign(leaveTo); return new Promise(() => {}) }
   if (!res.ok) throw new Error(String(res.status))
   return res.json()
 }
@@ -35,9 +36,11 @@ export function ApplicationsBrowser() {
   // The query the list on screen came from: Load more pages that one, not
   // whatever is in the inputs now.
   const shown = useRef<ApplicationsQuery>({})
+  // What Try again repeats: a failed Load more retries that page, not page 1.
+  const failed = useRef<ApplicationsQuery | null>(null)
   const search = useMemo(() => createLatestSearch<ApplicationsQuery, ApplicationsPage>(load, (query, result) => {
     setLoadingMore(false)
-    if (!result.ok) { setStatus('error'); return }
+    if (!result.ok) { failed.current = query; setStatus('error'); return }
     const { before, ...rest } = query
     shown.current = rest
     setApplications((prev) => (before ? [...prev, ...result.value.applications] : result.value.applications))
@@ -54,6 +57,8 @@ export function ApplicationsBrowser() {
   // pause (a date field emits each keystroke of its year as a value).
   const loaded = useRef(false)
   useEffect(() => {
+    // A new search cuts off any Load more in flight.
+    setLoadingMore(false)
     if (!query) { search.cancel(); return }
     setStatus('loading')
     if (loaded.current) search.schedule(query)
@@ -62,9 +67,11 @@ export function ApplicationsBrowser() {
   }, [text, from, to])
 
   function retry() {
-    if (!query) return
+    const q = failed.current ?? query
+    if (!q) return
     setStatus('loading')
-    search.now(query)
+    setLoadingMore(Boolean(q.before))
+    search.now(q)
   }
 
   function loadMore() {

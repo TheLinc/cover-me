@@ -18,6 +18,8 @@ export async function GET(req: NextRequest) {
     req.signal,
   )
   if (!page) {
+    // The page aborted it (a newer search): nobody reads this answer.
+    if (req.signal.aborted) return new NextResponse(null, { status: 499 })
     // A lapsed subscription looks like any other failure from here; tell the
     // page, so it leaves instead of offering a retry that can't work.
     const { data: userData } = await supabase.from('users').select('tier').eq('id', user.id).single()
