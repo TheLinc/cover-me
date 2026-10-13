@@ -23,7 +23,7 @@ export default function UpgradeButton({ label }: { label: string }) {
   return (
     <>
       <button className="btn btn-primary" onClick={handleUpgrade}>{label}</button>
-      {error && <div className="error-box">{error}</div>}
+      {error && <div className="error-box" role="alert">{error}</div>}
     </>
   )
 }

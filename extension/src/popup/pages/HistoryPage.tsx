@@ -83,6 +83,9 @@ export default function HistoryPage() {
       for (const id of group.localTailoredIds ?? []) {
         await deleteFromTailoredHistory(id)
       }
+      // Deleting makes room: recount, so a showing prompt updates or goes.
+      const [letters, tailored] = await Promise.all([getHistory(), getTailoredHistory()])
+      setCapText((current) => current && capWarning(letters.length, tailored.length))
     }
     setGroups((gs) => gs.filter((g) => g.key !== group.key))
     if (expandedKey === group.key) setExpandedKey(null)
