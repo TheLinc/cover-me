@@ -469,7 +469,7 @@ VITE_SUPABASE_PUBLISHABLE_KEY=<anon-key>
 VITE_WEB_URL=https://your-domain.com
 ```
 
-(If you want separate credentials for local development, put those in `extension/.env.development` instead — Vite only loads that file for `pnpm dev`, never for `pnpm run build`, so your production build always uses `extension/.env`.)
+(Local development uses `extension/.env.localdb` instead, which `pnpm env:local` in `backend/` writes. `pnpm dev` and `pnpm build:local` load it; `pnpm run build` always uses `extension/.env`.)
 
 Rebuild the extension:
 
@@ -521,7 +521,7 @@ Turn on the website's button only once users have an extension build with Google
 | `NEXT_PUBLIC_SITE_URL` | Your web dashboard URL |
 | `NEXT_PUBLIC_GOOGLE_SIGNIN` | `1` shows "Continue with Google" (after step 10) |
 
-**Extension** (`extension/.env`; use `extension/.env.development` for local-only overrides):
+**Extension** (`extension/.env`; local development uses `extension/.env.localdb`, written by `pnpm env:local`):
 
 | Variable | Description |
 |---|---|
