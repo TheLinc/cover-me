@@ -17,6 +17,12 @@ export async function GET(req: NextRequest) {
     queryFromParams(req.nextUrl.searchParams),
     req.signal,
   )
-  if (!page) return NextResponse.json({ error: 'Could not load applications' }, { status: 502 })
+  if (!page) {
+    // A lapsed subscription looks like any other failure from here; tell the
+    // page, so it leaves instead of offering a retry that can't work.
+    const { data: userData } = await supabase.from('users').select('tier').eq('id', user.id).single()
+    if (userData && userData.tier !== 'hosted_pro') return NextResponse.json({ error: 'Pro only' }, { status: 403 })
+    return NextResponse.json({ error: 'Could not load applications' }, { status: 502 })
+  }
   return NextResponse.json(page)
 }

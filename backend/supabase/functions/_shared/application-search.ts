@@ -14,11 +14,16 @@ const MAX_TERMS = 5
 const DEFAULT_LIMIT = 30
 const MAX_LIMIT = 50
 
-// undefined = present but not a date
+// undefined = present but not a date. toISOString() keeps only milliseconds,
+// so the microseconds of a created_at (Postgres keeps six digits) are put
+// back: a paging cursor rounded to the millisecond would skip rows from the
+// same millisecond.
 function instant(value: string | null): string | null | undefined {
   if (value === null || value === '') return null
   const t = Date.parse(value)
-  return Number.isNaN(t) ? undefined : new Date(t).toISOString()
+  if (Number.isNaN(t)) return undefined
+  const micros = /:\d{2}\.\d{3}(\d{1,3})/.exec(value)?.[1] ?? ''
+  return new Date(t).toISOString().replace('Z', `${micros}Z`)
 }
 
 export function parseSearch(params: URLSearchParams): ApplicationSearch | { error: string } {

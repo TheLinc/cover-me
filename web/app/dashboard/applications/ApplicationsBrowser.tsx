@@ -16,6 +16,9 @@ async function load(query: ApplicationsQuery, signal: AbortSignal): Promise<Appl
   const params = new URLSearchParams()
   for (const [key, value] of Object.entries(query)) if (value) params.set(key, String(value))
   const res = await fetch(`/api/applications?${params}`, { signal })
+  // Signed out, or no longer Pro: a retry can't fix either.
+  if (res.status === 401) window.location.assign('/auth')
+  if (res.status === 403) window.location.assign('/dashboard')
   if (!res.ok) throw new Error(String(res.status))
   return res.json()
 }
@@ -29,10 +32,15 @@ export function ApplicationsBrowser() {
   const [status, setStatus] = useState<Status>('loading')
   const [loadingMore, setLoadingMore] = useState(false)
 
+  // The query the list on screen came from: Load more pages that one, not
+  // whatever is in the inputs now.
+  const shown = useRef<ApplicationsQuery>({})
   const search = useMemo(() => createLatestSearch<ApplicationsQuery, ApplicationsPage>(load, (query, result) => {
     setLoadingMore(false)
     if (!result.ok) { setStatus('error'); return }
-    setApplications((prev) => (query.before ? [...prev, ...result.value.applications] : result.value.applications))
+    const { before, ...rest } = query
+    shown.current = rest
+    setApplications((prev) => (before ? [...prev, ...result.value.applications] : result.value.applications))
     setHasMore(result.value.hasMore)
     setStatus('ready')
   }), [])
@@ -42,22 +50,16 @@ export function ApplicationsBrowser() {
   const query: ApplicationsQuery | null = range ? { q: text.trim(), ...range } : null
   const filtered = Boolean(text.trim() || from || to)
 
-  // Typing waits for a pause; dates and the first load run at once. The text
-  // effect skips the mount, or the first load would run twice.
-  const textChanged = useRef(false)
+  // The first load runs at once; after that, typing and dates wait for a
+  // pause (a date field emits each keystroke of its year as a value).
+  const loaded = useRef(false)
   useEffect(() => {
-    if (!query) return
+    if (!query) { search.cancel(); return }
     setStatus('loading')
-    search.now(query)
+    if (loaded.current) search.schedule(query)
+    else { loaded.current = true; search.now(query) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [from, to])
-  useEffect(() => {
-    if (!textChanged.current) { textChanged.current = true; return }
-    if (!query) return
-    setStatus('loading')
-    search.schedule(query)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [text])
+  }, [text, from, to])
 
   function retry() {
     if (!query) return
@@ -66,9 +68,10 @@ export function ApplicationsBrowser() {
   }
 
   function loadMore() {
-    if (!query || applications.length === 0) return
+    if (applications.length === 0) return
+    setStatus('loading')
     setLoadingMore(true)
-    search.now({ ...query, before: applications[applications.length - 1].createdAt })
+    search.now({ ...shown.current, before: applications[applications.length - 1].createdAt })
   }
 
   return (
@@ -83,17 +86,17 @@ export function ApplicationsBrowser() {
         </div>
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="app-from">From</Label>
-          <Input id="app-from" type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="w-[160px]" />
+          <Input id="app-from" type="date" value={from} onChange={(e) => setFrom(e.target.value)} aria-invalid={!range} aria-describedby={range ? undefined : 'app-range-error'} className="w-[160px]" />
         </div>
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="app-to">To</Label>
-          <Input id="app-to" type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-[160px]" />
+          <Input id="app-to" type="date" value={to} onChange={(e) => setTo(e.target.value)} aria-invalid={!range} aria-describedby={range ? undefined : 'app-range-error'} className="w-[160px]" />
         </div>
       </div>
 
       <div aria-live="polite">
         {!range ? (
-          <p className="text-[13px] text-destructive">The From date is after the To date.</p>
+          <p id="app-range-error" className="text-[13px] text-destructive">The From date is after the To date.</p>
         ) : status === 'error' ? (
           <p className="text-[13px] text-muted-foreground">
             Couldn&apos;t load your applications.{' '}
@@ -105,6 +108,8 @@ export function ApplicationsBrowser() {
           <p className="text-[13px] text-muted-foreground">
             {filtered ? 'No applications match.' : 'Letters and tailored resumes you make in the extension appear here, on every device.'}
           </p>
+        ) : status === 'ready' ? (
+          <p className="sr-only">{applications.length} application{applications.length === 1 ? '' : 's'} shown</p>
         ) : null}
       </div>
 
@@ -115,7 +120,7 @@ export function ApplicationsBrowser() {
       )}
 
       {range && hasMore && status !== 'error' && (
-        <Button variant="outline" size="sm" className="self-center" onClick={loadMore} disabled={loadingMore}>
+        <Button variant="outline" size="sm" className="self-center" onClick={loadMore} disabled={status === 'loading'}>
           {loadingMore ? <><Spinner className="size-3.5" />Loading</> : 'Load more'}
         </Button>
       )}

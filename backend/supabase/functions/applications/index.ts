@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
     for (const term of search.terms) query = query.ilike('search_text', likeContains(term))
     if (search.from) query = query.gte('created_at', search.from)
     if (search.to) query = query.lt('created_at', search.to)
-    // ponytail: created_at alone as the cursor. Two of one user's applications
+    // ponytail: created_at alone as the cursor (to the microsecond). Two of one user's applications
     // in the same microsecond would page past one; use (created_at, id) if seen.
     if (search.before) query = query.lt('created_at', search.before)
 

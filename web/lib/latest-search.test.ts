@@ -53,6 +53,21 @@ describe('createLatestSearch', () => {
     expect(onResult.mock.calls).toEqual([[{}, { ok: true, value: 'new results' }]])
   })
 
+  // Typing while a load-more is in flight: that page must not land and mark
+  // the list ready while the new search is still waiting out its delay.
+  it('schedule aborts the current request straight away', async () => {
+    const calls: Array<{ signal: AbortSignal; d: ReturnType<typeof deferred<string>> }> = []
+    const fetcher = (_q: string, signal: AbortSignal) => { const d = deferred<string>(); calls.push({ signal, d }); return d.promise }
+    const onResult = vi.fn()
+    const s = createLatestSearch(fetcher, onResult, 300)
+    s.now('page 2')
+    s.schedule('acme')
+    expect(calls[0].signal.aborted).toBe(true)
+    calls[0].d.resolve('page 2 rows')
+    await vi.advanceTimersByTimeAsync(0)
+    expect(onResult).not.toHaveBeenCalled()
+  })
+
   it('reports a failure of the latest request, not of an aborted one', async () => {
     const calls: Array<ReturnType<typeof deferred<string>>> = []
     const fetcher = () => { const d = deferred<string>(); calls.push(d); return d.promise }

@@ -47,6 +47,20 @@ describe('applications search and paging', () => {
     expect(seen).toEqual(Array.from({ length: 70 }, (_, i) => `Role ${69 - i}`))
   })
 
+  // The cursor keeps Postgres's microseconds: rounding it to milliseconds would
+  // skip a row from the same millisecond.
+  it('pages past rows in the same millisecond', async () => {
+    user = await createUser('hosted_pro')
+    await seed(user, [
+      { title: 'Later', company: 'A', createdAt: '2026-09-01T12:00:00.123456Z' },
+      { title: 'Earlier', company: 'A', createdAt: '2026-09-01T12:00:00.123200Z' },
+    ])
+    const first = await list(user, { limit: '1' })
+    expect(first.body.applications.map((a) => a.title)).toEqual(['Later'])
+    const second = await list(user, { limit: '1', before: first.body.applications[0].createdAt })
+    expect(second.body.applications.map((a) => a.title)).toEqual(['Earlier'])
+  })
+
   it('ANDs terms across company and title, case-insensitive', async () => {
     user = await createUser('hosted_pro')
     await seed(user, [
