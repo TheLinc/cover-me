@@ -97,10 +97,17 @@ export function accountUpdates(
   return { letters: map(submitted.letters, result.letters), tailored: map(submitted.tailored, result.tailored) }
 }
 
-// Pro History: the account's applications plus local entries not in any
-// account yet, tagged, in date order. Entries another account holds are left out.
-export function withLocalOnly(server: JobGroup[], letters: CoverLetter[], tailored: TailoredHistoryEntry[]): JobGroup[] {
-  const local = groupLocalHistory(letters.filter((e) => !e.account), tailored.filter((e) => !e.account))
+// Not in any account yet, and not made while another account was Pro (that
+// one's save failed; it's still theirs). Only these are offered, uploaded on
+// Save, or shown as local-only.
+export const unclaimed = (userId: string) => (e: { account?: string; saveTo?: string }): boolean =>
+  !e.account && (!e.saveTo || e.saveTo === userId)
+
+// Pro History: the account's applications plus this account's unclaimed local
+// entries, tagged, in date order. Entries another account holds are left out.
+export function withLocalOnly(server: JobGroup[], letters: CoverLetter[], tailored: TailoredHistoryEntry[], userId: string): JobGroup[] {
+  const mine = unclaimed(userId)
+  const local = groupLocalHistory(letters.filter(mine), tailored.filter(mine))
     .map((g) => ({ ...g, key: `local:${g.key}`, localOnly: true }))
   return [...server, ...local].sort((a, b) => b.latestAt.localeCompare(a.latestAt))
 }
@@ -145,7 +152,7 @@ export function groupsFromApplications(apps: ApplicationRecord[]): JobGroup[] {
     latestAt: [...app.coverLetters, ...app.tailoredResumes].reduce((latest, e) => (e.createdAt > latest ? e.createdAt : latest), app.createdAt),
     coverLetters: app.coverLetters,
     tailoredResumes: app.tailoredResumes,
-  }))
+  })).sort((a, b) => b.latestAt.localeCompare(a.latestAt))
 }
 
 // Unsaved entries made while this account was Pro (see CoverLetter.saveTo).

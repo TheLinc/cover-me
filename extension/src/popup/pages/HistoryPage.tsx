@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { deleteApplicationFromBackend, ensureValidSession, fetchApplicationsFromBackend, fetchTier, uploadLocalHistory, UploadError } from '../../lib/auth'
 import { downloadCoverLetterPdf } from '../../lib/pdf'
 import { downloadTailoredResumePdf } from '../../lib/resume-pdf'
-import { accountUpdates, capWarning, groupLocalHistory, groupsFromApplications, ownPending, uploadMessage, uploadSummary, withLocalOnly, type JobGroup } from '../../lib/history'
+import { accountUpdates, capWarning, groupLocalHistory, groupsFromApplications, ownPending, unclaimed, uploadMessage, uploadSummary, withLocalOnly, type JobGroup } from '../../lib/history'
 import { deleteFromHistory, deleteFromTailoredHistory, getCachedTier, getHistory, getMode, getTailoredHistory, getUploadAsked, markUploadAsked, saveCachedTier, setEntryAccounts } from '../../lib/storage'
 import type { AuthSession, CoverLetter, CoverLetterEntry, TailoredHistoryEntry } from '../../types'
 import UpgradeButton from '../components/UpgradeButton'
@@ -32,8 +32,8 @@ export default function HistoryPage() {
   // which case nothing is tagged or offered.
   async function localOnlyAfterCheck(session: AuthSession): Promise<{ letters: CoverLetter[]; tailored: TailoredHistoryEntry[] } | null> {
     const [letters, tailored] = await Promise.all([getHistory(), getTailoredHistory()])
-    const l = letters.filter((e) => !e.account)
-    const t = tailored.filter((e) => !e.account)
+    const l = letters.filter(unclaimed(session.user.id))
+    const t = tailored.filter(unclaimed(session.user.id))
     if (l.length + t.length === 0) return { letters: [], tailored: [] }
     try {
       const result = await uploadLocalHistory(session.access_token, l, t, true)
@@ -81,8 +81,8 @@ export default function HistoryPage() {
     await markUploadAsked(session.user.id)
     try {
       const [letters, tailored] = await Promise.all([getHistory(), getTailoredHistory()])
-      const l = letters.filter((e) => !e.account)
-      const t = tailored.filter((e) => !e.account)
+      const l = letters.filter(unclaimed(session.user.id))
+      const t = tailored.filter(unclaimed(session.user.id))
       const result = await uploadLocalHistory(session.access_token, l, t)
       await setEntryAccounts(accountUpdates({ letters: l.map((e) => e.id), tailored: t.map((e) => e.id) }, result, session.user.id, false))
       setUploadNote({ text: uploadMessage(uploadSummary(l, t, result)), error: false })
@@ -145,7 +145,7 @@ export default function HistoryPage() {
       if (checked) {
         const local = await retryOwn(session, checked)
         if (local.saved) server = groupsFromApplications(await fetchApplicationsFromBackend(session.access_token))
-        setGroups(withLocalOnly(server, local.letters, local.tailored))
+        setGroups(withLocalOnly(server, local.letters, local.tailored, session.user.id))
         const count = groupLocalHistory(local.letters, local.tailored).length
         setUpload(count > 0 ? { count, asked: (await getUploadAsked()).includes(session.user.id) } : null)
       } else {

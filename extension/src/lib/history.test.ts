@@ -96,8 +96,11 @@ describe('withLocalOnly', () => {
         { id: 'l2', job: job('https://jobs.example/2'), letter: 'x', createdAt: '2026-10-01T00:00:00Z' },
         { id: 'l3', job: job('https://jobs.example/3'), letter: 'x', createdAt: '2026-10-05T00:00:00Z', account: 'other' },
         { id: 'l4', job: job('https://jobs.example/4'), letter: 'x', createdAt: '2026-10-06T00:00:00Z', account: 'me' },
+        // Another Pro account's letter whose save failed: still that account's.
+        { id: 'l5', job: job('https://jobs.example/5'), letter: 'x', createdAt: '2026-10-07T00:00:00Z', saveTo: 'you' },
       ],
       [],
+      'me',
     )
     expect(groups.map((g) => [g.key, g.localOnly ?? false])).toEqual([
       ['local:https://jobs.example/1', true],
@@ -155,6 +158,16 @@ describe('groupsFromApplications', () => {
       tailoredResumes: [{ id: 't1', resume, createdAt: '2026-10-05T00:00:00Z' }],
     }])
     expect(g).toMatchObject({ key: 'app1', id: 'app1', latestAt: '2026-10-05T00:00:00Z' })
+  })
+
+  test('lists the most recently active first', () => {
+    const app = (id: string, createdAt: string, letterAt?: string) => ({
+      id, title: id, company: 'Acme', url: '', createdAt, tailoredResumes: [],
+      coverLetters: letterAt ? [{ id: `l-${id}`, letter: 'x', createdAt: letterAt }] : [],
+    })
+    // The server orders by when each application was made.
+    const groups = groupsFromApplications([app('b', '2026-10-05T00:00:00+00:00'), app('a', '2026-10-01T00:00:00+00:00', '2026-10-10T00:00:00+00:00')])
+    expect(groups.map((g) => g.id)).toEqual(['a', 'b'])
   })
 
   test('an application with nothing in it keeps its own date', () => {
