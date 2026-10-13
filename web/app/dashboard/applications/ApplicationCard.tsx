@@ -29,6 +29,7 @@ export function ApplicationCard({ app: initial, onDeleted, onInterviewChange }: 
   const [app, setApp] = useState(initial)
   // Once the user sets the mark here, theirs wins over a search that started before it.
   const marked = useRef(false)
+  const left = useRef(false)
   // A mark changed from the open drawer reaches the list once the drawer has
   // closed, so a filter that drops the card doesn't pull the drawer away.
   const pendingMark = useRef<{ interviewAt: string | null } | null>(null)
@@ -54,6 +55,9 @@ export function ApplicationCard({ app: initial, onDeleted, onInterviewChange }: 
 
   // Deleted here, or found deleted elsewhere: the card leaves the list.
   function leave(message: string) {
+    // A download and the drawer can both find it gone; leave once.
+    if (left.current) return
+    left.current = true
     setConfirming(false)
     setDetailsOpen(false)
     setDeleted(true)

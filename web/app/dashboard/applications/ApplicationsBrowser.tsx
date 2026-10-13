@@ -122,6 +122,14 @@ export function ApplicationsBrowser() {
     }
   }, [status, applications.length, hasMore, search])
 
+  const moreFailed = status === 'error' && Boolean(failed.current?.before)
+  const loadError = (
+    <p className="text-[13.5px] text-ink-2">
+      Couldn&apos;t load your applications.{' '}
+      <Button variant="link" size="sm" className="h-auto p-0 text-[13.5px]" onClick={retry}>Try again</Button>
+    </p>
+  )
+
   function clearFilters() {
     setText('')
     setFrom('')
@@ -174,11 +182,8 @@ export function ApplicationsBrowser() {
       <div className="empty:hidden">
         {!range ? (
           <p id="app-range-error" className="text-[13px] text-destructive">The From date is after the To date.</p>
-        ) : status === 'error' ? (
-          <p className="text-[13.5px] text-ink-2">
-            Couldn&apos;t load your applications.{' '}
-            <Button variant="link" size="sm" className="h-auto p-0 text-[13.5px]" onClick={retry}>Try again</Button>
-          </p>
+        ) : status === 'error' && !moreFailed ? (
+          loadError
         ) : status === 'loading' && applications.length === 0 ? (
           <TileSkeletons count={4} label="Loading applications" />
         ) : applications.length === 0 ? (
@@ -209,6 +214,9 @@ export function ApplicationsBrowser() {
           ))}
         </div>
       )}
+
+      {/* A failed Load more says so where its button was. */}
+      {range && moreFailed && <div className="self-center">{loadError}</div>}
 
       {range && hasMore && status !== 'error' && (
         <Button variant="outline" size="sm" className="self-center rounded-full px-5" onClick={loadMore} disabled={status === 'loading'}>
