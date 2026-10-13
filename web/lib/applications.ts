@@ -1,13 +1,30 @@
-// Pro history from the applications Edge Function (the same data the
-// extension's History shows). Server-side only: called with the user's token.
-export interface Application {
+import type { TailoredResume } from './pdf/types'
+
+// A card: what the list shows. Letters and resumes as IDs and dates; a
+// resume's ATS score and gaps come from plain columns, so the server decrypts
+// nothing for the list.
+export interface ApplicationSummary {
   id: string
   title: string
   company: string
   url: string
   createdAt: string
+  interviewAt: string | null
+  coverLetters: { id: string; createdAt: string }[]
+  tailoredResumes: { id: string; createdAt: string; atsScore: number | null; atsGaps: string[] | null }[]
+}
+
+// One application in full, fetched when its details open or a Download is
+// first clicked (application-actions.ts).
+export interface ApplicationDetail {
+  id: string
+  title: string
+  company: string
+  url: string
+  createdAt: string
+  interviewAt: string | null
   coverLetters: { id: string; letter: string; createdAt: string }[]
-  tailoredResumes: { id: string; resume: { atsScore?: number; atsGaps?: string[] }; createdAt: string }[]
+  tailoredResumes: { id: string; resume: TailoredResume; createdAt: string }[]
 }
 
 export interface ApplicationsQuery {
@@ -15,22 +32,25 @@ export interface ApplicationsQuery {
   from?: string
   to?: string
   before?: string
+  interview?: '1'
   limit?: number
 }
 
 export interface ApplicationsPage {
-  applications: Application[]
+  applications: ApplicationSummary[]
   hasMore: boolean
 }
 
-// The parameters the website's /api/applications route forwards. limit stays
-// the function's default there; only the dashboard's own server call sets it.
+// The parameters the website's /api/applications route forwards for the list.
+// limit stays the function's default there; only the dashboard's own server
+// call sets it.
 export function queryFromParams(params: URLSearchParams): ApplicationsQuery {
   const query: ApplicationsQuery = {}
   for (const key of ['q', 'from', 'to', 'before'] as const) {
     const value = params.get(key)
     if (value) query[key] = value
   }
+  if (params.get('interview') === '1') query.interview = '1'
   return query
 }
 
@@ -59,8 +79,9 @@ export function dayRange(from: string, to: string): { from?: string; to?: string
   return range
 }
 
-// null on any failure (not Pro, paused project, network, a hang past 5 s): the
-// dashboard renders without the section, the applications page shows a retry.
+// Summaries for the cards. null on any failure (not Pro, paused project,
+// network, a hang past 5 s): the dashboard renders without the section, the
+// applications page shows a retry.
 export async function fetchApplications(
   supabaseUrl: string,
   accessToken: string,
@@ -69,6 +90,7 @@ export async function fetchApplications(
 ): Promise<ApplicationsPage | null> {
   try {
     const url = new URL(`${supabaseUrl}/functions/v1/applications`)
+    url.searchParams.set('summary', '1')
     for (const [key, value] of Object.entries(query)) {
       if (value !== undefined && value !== '') url.searchParams.set(key, String(value))
     }
@@ -79,35 +101,42 @@ export async function fetchApplications(
       signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
     })
     if (!res.ok) return null
-    const data = (await res.json()) as { applications?: Application[]; hasMore?: boolean }
+    const data = (await res.json()) as { applications?: ApplicationSummary[]; hasMore?: boolean }
     if (!Array.isArray(data.applications)) return null
-    // Keep only what the pages show: the full resumes are personal data they
-    // never need, and these are passed to client components.
-    return {
-      hasMore: data.hasMore === true,
-      applications: data.applications.map((a) => ({
-        ...a,
-        tailoredResumes: (a.tailoredResumes ?? []).map((t) => ({
-          id: t.id,
-          createdAt: t.createdAt,
-          resume: { atsScore: t.resume?.atsScore, atsGaps: t.resume?.atsGaps },
-        })),
-      })),
-    }
+    return { hasMore: data.hasMore === true, applications: data.applications }
   } catch {
     return null
   }
 }
 
-export function summarizeApplication(app: Application): { letters: number; resumes: number; bestScore: number | null; gaps: string[] } {
-  let best: Application['tailoredResumes'][number] | null = null
-  for (const tr of app.tailoredResumes) {
-    if (typeof tr.resume.atsScore === 'number' && (best === null || tr.resume.atsScore > (best.resume.atsScore ?? -1))) best = tr
+// A posting link only for web addresses: scraped URLs. Entries pasted by hand
+// have none, and anything else isn't something to open.
+export function postingHost(url: string): string | null {
+  try {
+    const u = new URL(url)
+    return u.protocol === 'https:' || u.protocol === 'http:' ? u.hostname.replace(/^www\./, '') : null
+  } catch {
+    return null
   }
-  return {
-    letters: app.coverLetters.length,
-    resumes: app.tailoredResumes.length,
-    bestScore: best?.resume.atsScore ?? null,
-    gaps: best?.resume.atsGaps ?? [],
-  }
+}
+
+export function newest<T extends { createdAt: string }>(items: T[]): T | undefined {
+  return items.reduce<T | undefined>((best, item) => (!best || item.createdAt > best.createdAt ? item : best), undefined)
+}
+
+// The date picker gives a Date; the filters keep the local YYYY-MM-DD that
+// dayRange takes.
+export function toDay(date?: Date): string {
+  if (!date) return ''
+  const pad = (n: number, w = 2) => String(n).padStart(w, '0')
+  return `${pad(date.getFullYear(), 4)}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+}
+
+export function fromDay(day: string): Date | undefined {
+  if (!day) return undefined
+  const [y, m, d] = day.split('-').map(Number)
+  const date = new Date(0)
+  date.setFullYear(y, m - 1, d)
+  date.setHours(0, 0, 0, 0)
+  return Number.isNaN(date.getTime()) ? undefined : date
 }
