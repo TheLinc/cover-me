@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { fetchApplications, summarizeApplication, type Application } from './applications'
+import { dayRange, fetchApplications, queryFromParams, summarizeApplication, type Application } from './applications'
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -13,7 +13,7 @@ describe('fetchApplications', () => {
   it('returns the applications for a Pro account', async () => {
     const fetchMock = vi.fn(async () => new Response(JSON.stringify({ applications: [app([])] }), { status: 200 }))
     vi.stubGlobal('fetch', fetchMock)
-    expect(await fetchApplications('https://x.supabase.co', 'at')).toHaveLength(1)
+    expect((await fetchApplications('https://x.supabase.co', 'at'))?.applications).toHaveLength(1)
     const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit]
     expect(url).toBe('https://x.supabase.co/functions/v1/applications')
     expect((init.headers as Record<string, string>).Authorization).toBe('Bearer at')
@@ -24,7 +24,7 @@ describe('fetchApplications', () => {
   it('keeps only the ATS score and gaps of each tailored resume', async () => {
     const full = { name: 'Pat', email: 'pat@example.com', phone: '555', experience: [{ title: 'x' }], atsScore: 80, atsGaps: ['Go'] }
     vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ applications: [app([{ id: 't1', resume: full, createdAt: '2026-10-01T00:00:00Z' }])] }), { status: 200 })))
-    const [a] = (await fetchApplications('https://x.supabase.co', 'at'))!
+    const [a] = (await fetchApplications('https://x.supabase.co', 'at'))!.applications
     expect(a.tailoredResumes[0].resume).toEqual({ atsScore: 80, atsGaps: ['Go'] })
   })
 
@@ -35,6 +35,46 @@ describe('fetchApplications', () => {
     expect(await fetchApplications('https://x.supabase.co', 'at')).toBeNull()
     vi.stubGlobal('fetch', vi.fn(async () => { throw new TypeError('fetch failed') }))
     expect(await fetchApplications('https://x.supabase.co', 'at')).toBeNull()
+  })
+})
+
+describe('fetchApplications query', () => {
+  it('sends only the parameters that are set, and reads hasMore', async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ applications: [], hasMore: true }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    const page = await fetchApplications('https://x.supabase.co', 'at', { q: 'acme eng', from: '2026-10-01T04:00:00.000Z', to: '', limit: 5 })
+    expect(page).toEqual({ applications: [], hasMore: true })
+    const [url] = fetchMock.mock.calls[0] as unknown as [string]
+    expect(url).toBe('https://x.supabase.co/functions/v1/applications?q=acme+eng&from=2026-10-01T04%3A00%3A00.000Z&limit=5')
+  })
+
+  it('treats a missing hasMore as false', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ applications: [] }), { status: 200 })))
+    expect(await fetchApplications('https://x.supabase.co', 'at')).toEqual({ applications: [], hasMore: false })
+  })
+})
+
+describe('queryFromParams', () => {
+  it('keeps q, from, to and before only', () => {
+    const p = new URLSearchParams('q=a&from=b&to=c&before=d&limit=50&id=x')
+    expect(queryFromParams(p)).toEqual({ q: 'a', from: 'b', to: 'c', before: 'd' })
+  })
+})
+
+describe('dayRange', () => {
+  it('turns local dates into instants, to inclusive of its whole day', () => {
+    expect(dayRange('2026-10-03', '2026-10-05')).toEqual({
+      from: new Date(2026, 9, 3).toISOString(),
+      to: new Date(2026, 9, 6).toISOString(),
+    })
+  })
+  it('allows either side alone', () => {
+    expect(dayRange('', '2026-10-05')).toEqual({ to: new Date(2026, 9, 6).toISOString() })
+    expect(dayRange('2026-10-03', '')).toEqual({ from: new Date(2026, 9, 3).toISOString() })
+    expect(dayRange('', '')).toEqual({})
+  })
+  it('is null when from is after to', () => {
+    expect(dayRange('2026-10-06', '2026-10-05')).toBeNull()
   })
 })
 

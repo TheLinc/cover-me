@@ -5,8 +5,8 @@ import { LocalDate } from './LocalDate'
 // Pro history (2e). Streams in behind <Suspense> so the rest of the dashboard
 // doesn't wait on the applications function. Renders nothing if the call fails.
 export async function ProHistory({ accessToken }: { accessToken: string }) {
-  const applications = await fetchApplications(process.env.NEXT_PUBLIC_SUPABASE_URL!, accessToken)
-  return applications ? <ApplicationHistory applications={applications} /> : null
+  const page = await fetchApplications(process.env.NEXT_PUBLIC_SUPABASE_URL!, accessToken)
+  return page ? <ApplicationHistory applications={page.applications} /> : null
 }
 
 // Read-only: letters to read and copy, tailored resumes with their ATS score.

@@ -10,29 +10,79 @@ export interface Application {
   tailoredResumes: { id: string; resume: { atsScore?: number; atsGaps?: string[] }; createdAt: string }[]
 }
 
+export interface ApplicationsQuery {
+  q?: string
+  from?: string
+  to?: string
+  before?: string
+  limit?: number
+}
+
+export interface ApplicationsPage {
+  applications: Application[]
+  hasMore: boolean
+}
+
+// The parameters the website's /api/applications route forwards. limit stays
+// the function's default there; only the dashboard's own server call sets it.
+export function queryFromParams(params: URLSearchParams): ApplicationsQuery {
+  const query: ApplicationsQuery = {}
+  for (const key of ['q', 'from', 'to', 'before'] as const) {
+    const value = params.get(key)
+    if (value) query[key] = value
+  }
+  return query
+}
+
+// Date inputs give local YYYY-MM-DD; the function wants instants. "To" covers
+// its whole day, so it becomes the start of the next one (exclusive).
+export function dayRange(from: string, to: string): { from?: string; to?: string } | null {
+  const local = (d: string, addDays = 0) => {
+    const [y, m, day] = d.split('-').map(Number)
+    return new Date(y, m - 1, day + addDays)
+  }
+  if (from && to && local(from) > local(to)) return null
+  const range: { from?: string; to?: string } = {}
+  if (from) range.from = local(from).toISOString()
+  if (to) range.to = local(to, 1).toISOString()
+  return range
+}
+
 // null on any failure (not Pro, paused project, network, a hang past 5 s): the
-// dashboard renders without the section.
-export async function fetchApplications(supabaseUrl: string, accessToken: string): Promise<Application[] | null> {
+// dashboard renders without the section, the applications page shows a retry.
+export async function fetchApplications(
+  supabaseUrl: string,
+  accessToken: string,
+  query: ApplicationsQuery = {},
+  signal?: AbortSignal,
+): Promise<ApplicationsPage | null> {
   try {
-    const res = await fetch(`${supabaseUrl}/functions/v1/applications`, {
+    const url = new URL(`${supabaseUrl}/functions/v1/applications`)
+    for (const [key, value] of Object.entries(query)) {
+      if (value !== undefined && value !== '') url.searchParams.set(key, String(value))
+    }
+    const timeout = AbortSignal.timeout(5000)
+    const res = await fetch(url.toString(), {
       headers: { Authorization: `Bearer ${accessToken}` },
       cache: 'no-store',
-      signal: AbortSignal.timeout(5000),
+      signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
     })
     if (!res.ok) return null
-    const data = (await res.json()) as { applications?: Application[] }
+    const data = (await res.json()) as { applications?: Application[]; hasMore?: boolean }
     if (!Array.isArray(data.applications)) return null
-    // Keep only what the section shows: the full resumes are personal data it
-    // never needs, and the lighter the better if it's ever passed to a client
-    // component.
-    return data.applications.map((a) => ({
-      ...a,
-      tailoredResumes: (a.tailoredResumes ?? []).map((t) => ({
-        id: t.id,
-        createdAt: t.createdAt,
-        resume: { atsScore: t.resume?.atsScore, atsGaps: t.resume?.atsGaps },
+    // Keep only what the pages show: the full resumes are personal data they
+    // never need, and these are passed to client components.
+    return {
+      hasMore: data.hasMore === true,
+      applications: data.applications.map((a) => ({
+        ...a,
+        tailoredResumes: (a.tailoredResumes ?? []).map((t) => ({
+          id: t.id,
+          createdAt: t.createdAt,
+          resume: { atsScore: t.resume?.atsScore, atsGaps: t.resume?.atsGaps },
+        })),
       })),
-    }))
+    }
   } catch {
     return null
   }
