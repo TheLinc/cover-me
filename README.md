@@ -182,7 +182,7 @@ Google sign-in is off on the local stack until you add a Google OAuth client for
 Then run the apps against it:
 
 ```bash
-# backend/: add a real ANTHROPIC_API_KEY to supabase/functions/.env first
+# backend/: add a real ANTHROPIC_API_KEY to supabase/functions/.env first (and the sandbox STRIPE_* values for local checkout)
 pnpm functions:serve
 
 # extension/: adds http://127.0.0.1:54321 to host_permissions (production builds don't)

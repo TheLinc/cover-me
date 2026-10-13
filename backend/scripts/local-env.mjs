@@ -4,9 +4,10 @@
 //   extension/.env.localdb            `pnpm dev` / `pnpm build:local` in extension/
 //   web/.env.localdb                  `pnpm dev` in web/
 //
-// Safe to re-run: ENCRYPTION_KEY, ANTHROPIC_API_KEY, DEBUG_MODE, the functions'
-// STRIPE_* keys and STRIPE_WEBHOOK_SECRET keep any value already in the file. Run after `pnpm start`. The Google
-// buttons are on when backend/.env turns on the local Google provider.
+// Safe to re-run: ENCRYPTION_KEY, ANTHROPIC_API_KEY, DEBUG_MODE, STRIPE_SECRET_KEY,
+// both STRIPE_PRO_*_PRICE_IDs and STRIPE_WEBHOOK_SECRET keep any value already
+// in the file. Run after `pnpm start`. The Google buttons are on when
+// backend/.env turns on the local Google provider.
 
 import { randomBytes } from 'node:crypto'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
