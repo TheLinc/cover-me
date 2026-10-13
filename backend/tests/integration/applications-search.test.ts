@@ -30,7 +30,7 @@ describe('applications search and paging', () => {
     expect(body.applications).toHaveLength(30)
     expect(body.applications[0].title).toBe('Role 34')
     expect(body.hasMore).toBe(true)
-    expect(Object.keys(body.applications[0]).sort()).toEqual(['company', 'coverLetters', 'createdAt', 'id', 'tailoredResumes', 'title', 'url'])
+    expect(Object.keys(body.applications[0]).sort()).toEqual(['company', 'coverLetters', 'createdAt', 'id', 'interviewAt', 'tailoredResumes', 'title', 'url'])
   })
 
   it('pages through everything with before, with no repeats or gaps', async () => {

@@ -2,12 +2,79 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 import { handleCors, json } from '../_shared/cors.ts'
 import { decrypt, encrypt } from '../_shared/encrypt.ts'
 import { findOrCreateJobApplication } from '../_shared/job-application.ts'
-import { atsColumns, MAX_UPLOAD_BYTES, parseUpload } from '../_shared/history-upload.ts'
+import { atsColumns, isUuid, MAX_UPLOAD_BYTES, parseUpload } from '../_shared/history-upload.ts'
 import { readBody } from '../_shared/read-body.ts'
 import { likeContains, parseSearch } from '../_shared/application-search.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SECRET_KEY = Deno.env.get('SERVICE_KEY')!
+
+const FULL_SELECT = `
+  id, title, company, url, created_at, interview_at,
+  cover_letters(id, letter_encrypted, created_at),
+  tailored_resumes(id, resume_json_encrypted, created_at)
+`
+// What a card shows. Nothing to decrypt: the ATS score and gaps are plain columns.
+const SUMMARY_SELECT = `
+  id, title, company, url, created_at, interview_at,
+  cover_letters(id, created_at),
+  tailored_resumes(id, created_at, ats_score, ats_gaps)
+`
+
+type Row = {
+  id: string
+  title: string | null
+  company: string | null
+  url: string | null
+  created_at: string
+  interview_at: string | null
+  cover_letters: Record<string, unknown>[] | null
+  tailored_resumes: Record<string, unknown>[] | null
+}
+
+const newestFirst = (a: { createdAt: string }, b: { createdAt: string }) => b.createdAt.localeCompare(a.createdAt)
+
+const base = (row: Row) => ({
+  id: row.id,
+  title: row.title ?? '',
+  company: row.company ?? '',
+  url: row.url ?? '',
+  createdAt: row.created_at,
+  interviewAt: row.interview_at,
+})
+
+async function fullApplication(row: Row) {
+  const coverLetters = []
+  for (const cl of row.cover_letters ?? []) {
+    try {
+      coverLetters.push({ id: cl.id as string, letter: await decrypt(cl.letter_encrypted as string), createdAt: cl.created_at as string })
+    } catch { /* skip corrupt entries */ }
+  }
+  const tailoredResumes = []
+  for (const tr of row.tailored_resumes ?? []) {
+    try {
+      tailoredResumes.push({ id: tr.id as string, resume: JSON.parse(await decrypt(tr.resume_json_encrypted as string)), createdAt: tr.created_at as string })
+    } catch { /* skip corrupt entries */ }
+  }
+  return { ...base(row), coverLetters: coverLetters.sort(newestFirst), tailoredResumes: tailoredResumes.sort(newestFirst) }
+}
+
+function summaryApplication(row: Row) {
+  return {
+    ...base(row),
+    coverLetters: (row.cover_letters ?? [])
+      .map((cl) => ({ id: cl.id as string, createdAt: cl.created_at as string }))
+      .sort(newestFirst),
+    tailoredResumes: (row.tailored_resumes ?? [])
+      .map((tr) => ({
+        id: tr.id as string,
+        createdAt: tr.created_at as string,
+        atsScore: (tr.ats_score as number | null) ?? null,
+        atsGaps: (tr.ats_gaps as string[] | null) ?? null,
+      }))
+      .sort(newestFirst),
+  }
+}
 
 Deno.serve(async (req) => {
   const cors = handleCors(req)
@@ -36,22 +103,35 @@ Deno.serve(async (req) => {
   const params = new URL(req.url).searchParams
   const appId = params.get('id')
 
-  // GET: job applications with nested artifacts, newest first; optional search, dates and paging (_shared/application-search.ts)
+  // GET: job applications, newest first; optional search, dates, paging and
+  // the interview filter (_shared/application-search.ts). summary=1 is what a
+  // dashboard card shows; detail=<id> is one application in full.
   if (req.method === 'GET') {
+    const detailId = params.get('detail')
+    if (detailId !== null) {
+      if (!isUuid(detailId)) return json({ error: 'Invalid id' }, 400)
+      const { data: row, error } = await supabase
+        .from('job_applications')
+        .select(FULL_SELECT)
+        .eq('id', detailId)
+        .eq('user_id', userId)
+        .maybeSingle()
+      if (error) return json({ error: 'Failed to fetch application' }, 500)
+      if (!row) return json({ error: 'Not found' }, 404)
+      return json({ application: await fullApplication(row as unknown as Row) })
+    }
+
     const search = parseSearch(params)
     if ('error' in search) return json({ error: search.error }, 400)
 
     let query = supabase
       .from('job_applications')
-      .select(`
-        id, title, company, url, created_at,
-        cover_letters(id, letter_encrypted, created_at),
-        tailored_resumes(id, resume_json_encrypted, created_at)
-      `)
+      .select(search.summary ? SUMMARY_SELECT : FULL_SELECT)
       .eq('user_id', userId)
     for (const term of search.terms) query = query.ilike('search_text', likeContains(term))
     if (search.from) query = query.gte('created_at', search.from)
     if (search.to) query = query.lt('created_at', search.to)
+    if (search.interview) query = query.not('interview_at', 'is', null)
     // ponytail: created_at alone as the cursor (to the microsecond). Two of one user's applications
     // in the same microsecond would page past one; use (created_at, id) if seen.
     if (search.before) query = query.lt('created_at', search.before)
@@ -63,45 +143,32 @@ Deno.serve(async (req) => {
 
     if (error) return json({ error: 'Failed to fetch applications' }, 500)
     const hasMore = (found?.length ?? 0) > search.limit
-    const rows = (found ?? []).slice(0, search.limit)
-
-    type RawCoverLetter = { id: string; letter_encrypted: string; created_at: string }
-    type RawResume = { id: string; resume_json_encrypted: string; created_at: string }
-
-    const applications = []
-    for (const row of rows) {
-      const coverLetters = []
-      for (const cl of (row.cover_letters as RawCoverLetter[]) ?? []) {
-        try {
-          const letter = await decrypt(cl.letter_encrypted)
-          coverLetters.push({ id: cl.id, letter, createdAt: cl.created_at })
-        } catch { /* skip corrupt entries */ }
-      }
-
-      const tailoredResumes = []
-      for (const tr of (row.tailored_resumes as RawResume[]) ?? []) {
-        try {
-          const json_str = await decrypt(tr.resume_json_encrypted)
-          tailoredResumes.push({ id: tr.id, resume: JSON.parse(json_str), createdAt: tr.created_at })
-        } catch { /* skip corrupt entries */ }
-      }
-
-      // Sort artifacts newest-first
-      coverLetters.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-      tailoredResumes.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-
-      applications.push({
-        id: row.id,
-        title: row.title ?? '',
-        company: row.company ?? '',
-        url: row.url ?? '',
-        createdAt: row.created_at,
-        coverLetters,
-        tailoredResumes,
-      })
-    }
-
+    const rows = ((found ?? []) as unknown as Row[]).slice(0, search.limit)
+    const applications = search.summary ? rows.map(summaryApplication) : await Promise.all(rows.map(fullApplication))
     return json({ applications, hasMore })
+  }
+
+  // PATCH ?id=: mark or unmark "got an interview" on the caller's own application.
+  if (req.method === 'PATCH') {
+    if (!isUuid(appId)) return json({ error: 'Invalid id' }, 400)
+    let body: unknown
+    try {
+      body = await req.json()
+    } catch {
+      return json({ error: 'Invalid request body' }, 400)
+    }
+    const interview = (body as { interview?: unknown } | null)?.interview
+    if (typeof interview !== 'boolean') return json({ error: 'Invalid request body' }, 400)
+    const { data, error } = await supabase
+      .from('job_applications')
+      .update({ interview_at: interview ? new Date().toISOString() : null })
+      .eq('id', appId)
+      .eq('user_id', userId)
+      .select('interview_at')
+      .maybeSingle()
+    if (error) return json({ error: 'Failed to update application' }, 500)
+    if (!data) return json({ error: 'Not found' }, 404)
+    return json({ interviewAt: data.interview_at })
   }
 
   // POST: save entries from the extension's local history under their local

@@ -7,6 +7,8 @@ export interface ApplicationSearch {
   to: string | null
   before: string | null
   limit: number
+  interview: boolean // only applications marked "got an interview"
+  summary: boolean   // what a card shows, nothing decrypted (the website's list)
 }
 
 const MAX_Q = 100
@@ -43,7 +45,7 @@ export function parseSearch(params: URLSearchParams): ApplicationSearch | { erro
     limit = n
   }
 
-  return { terms, from, to, before, limit }
+  return { terms, from, to, before, limit, interview: params.get('interview') === '1', summary: params.get('summary') === '1' }
 }
 
 // Escape LIKE's own wildcards so a term matches literally.
