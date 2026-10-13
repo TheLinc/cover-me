@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { deleteApplicationFromBackend, ensureValidSession, fetchApplicationsFromBackend } from '../../lib/auth'
+import { deleteApplicationFromBackend, ensureValidSession, fetchApplicationsFromBackend, fetchTier } from '../../lib/auth'
 import { downloadCoverLetterPdf } from '../../lib/pdf'
 import { downloadTailoredResumePdf } from '../../lib/resume-pdf'
-import { groupLocalHistory, type JobGroup } from '../../lib/history'
-import { deleteFromHistory, deleteFromTailoredHistory, getCachedTier, getHistory, getMode, getTailoredHistory } from '../../lib/storage'
+import { capWarning, groupLocalHistory, type JobGroup } from '../../lib/history'
+import { deleteFromHistory, deleteFromTailoredHistory, getCachedTier, getHistory, getMode, getTailoredHistory, saveCachedTier } from '../../lib/storage'
 import type { ApplicationRecord, AuthSession, CoverLetterEntry } from '../../types'
+import UpgradeButton from '../components/UpgradeButton'
 
 function fromApplicationRecords(apps: ApplicationRecord[]): JobGroup[] {
   return apps.map((app) => ({
@@ -26,6 +27,7 @@ export default function HistoryPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [syncing, setSyncing] = useState(false)
   const [isProMode, setIsProMode] = useState(false)
+  const [capText, setCapText] = useState<string | null>(null)
   const sessionRef = useRef<AuthSession | null>(null)
 
   useEffect(() => {
@@ -36,11 +38,25 @@ export default function HistoryPage() {
     const [letters, tailored] = await Promise.all([getHistory(), getTailoredHistory()])
     setGroups(groupLocalHistory(letters, tailored))
 
-    const [mode, tier, session] = await Promise.all([
+    const [mode, cachedTier, session] = await Promise.all([
       getMode(),
       getCachedTier(),
       ensureValidSession(),
     ])
+    let tier = cachedTier
+
+    // A free account close to what this browser keeps sees the upgrade
+    // prompt. The tier is checked with the server first, so someone who just
+    // paid isn't asked again; an unknown tier shows nothing.
+    const warning = capWarning(letters.length, tailored.length)
+    if (warning && mode === 'hosted' && session && tier !== 'hosted_pro') {
+      const fresh = await fetchTier(session.user.id, session.access_token)
+      if (fresh) {
+        tier = fresh
+        await saveCachedTier(fresh)
+      }
+      if (tier === 'hosted_free') setCapText(warning)
+    }
 
     if (mode !== 'hosted' || tier !== 'hosted_pro' || !session) return
 
@@ -113,6 +129,13 @@ export default function HistoryPage() {
               : `${totalJobs} job${totalJobs !== 1 ? 's' : ''}`}
         </p>
       </div>
+
+      {capText && (
+        <div className="cap-prompt">
+          <div className="warning-box">{capText}</div>
+          <UpgradeButton label="Upgrade to Pro" />
+        </div>
+      )}
 
       {totalJobs === 0 ? (
         <div className="history-empty">

@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react'
-import { ensureValidSession, startBilling } from '../../lib/auth'
 import { GOOGLE_SIGNIN } from '../../lib/config'
 import { downloadCoverLetterPdf } from '../../lib/pdf'
 import { downloadTailoredResumePdf } from '../../lib/resume-pdf'
@@ -8,6 +7,7 @@ import { getCandidateContext, resolveMode, saveCandidateContext } from '../../li
 import GapChips from '../components/GapChips'
 import ProgressSteps from '../components/ProgressSteps'
 import ScoreRing from '../components/ScoreRing'
+import UpgradeButton from '../components/UpgradeButton'
 import type { AuthSession, CoverJob, GenerateResponse, JobData, Settings, ScrapeResponse, TailorJob, TailorResponse, TailoredResume } from '../../types'
 import logoIcon from '../../public/icon/48.png'
 import type { Page } from '../App'
@@ -129,7 +129,6 @@ export default function GeneratePage({ onNavigate }: Props) {
   const [tailorProgress, setTailorProgress] = useState('')
   const [tailorError, setTailorError] = useState('')
   const [tailorErrorCode, setTailorErrorCode] = useState<'RATE_LIMIT' | 'FAIR_USE' | undefined>()
-  const [upgradeError, setUpgradeError] = useState('')
   const [tailoredResume, setTailoredResume] = useState<TailoredResume | null>(null)
   const [tailoredJob, setTailoredJob] = useState<JobData | null>(null)
   const [supplemental, setSupplemental] = useState('')
@@ -471,20 +470,6 @@ export default function GeneratePage({ onNavigate }: Props) {
     }
   }
 
-  async function handleUpgrade() {
-    setUpgradeError('')
-    try {
-      const session = await ensureValidSession()
-      if (!session) {
-        setUpgradeError('Sign in again in Settings to upgrade.')
-        return
-      }
-      chrome.tabs.create({ url: await startBilling(session.access_token, 'checkout') })
-    } catch (err) {
-      setUpgradeError(err instanceof Error ? err.message : 'Could not start checkout.')
-    }
-  }
-
   // The error is persisted in coverJob and restored on every popup open, so
   // leaving it has to clear the record too (otherwise a user who just paid
   // stays on the limit warning).
@@ -494,12 +479,7 @@ export default function GeneratePage({ onNavigate }: Props) {
     chrome.storage.local.remove('coverJob')
   }
 
-  const upgradePrompt = (
-    <>
-      <button className="btn btn-primary" onClick={handleUpgrade}>Upgrade to Pro: up to 25 a day</button>
-      {upgradeError && <div className="error-box">{upgradeError}</div>}
-    </>
-  )
+  const upgradePrompt = <UpgradeButton label="Upgrade to Pro: up to 25 a day" />
 
   function resetTailor() {
     setTailorState('idle')

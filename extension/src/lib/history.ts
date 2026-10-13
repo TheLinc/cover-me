@@ -1,4 +1,5 @@
 import type { CoverLetter, CoverLetterEntry, TailoredHistoryEntry, TailoredResumeEntry } from '../types'
+import { HISTORY_LIMIT, TAILORED_HISTORY_LIMIT } from './storage'
 
 // One job in History with everything generated for it.
 export interface JobGroup {
@@ -43,4 +44,30 @@ export function groupLocalHistory(letters: CoverLetter[], tailored: TailoredHist
     g.tailoredResumes.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   }
   return Array.from(map.values()).sort((a, b) => b.latestAt.localeCompare(a.latestAt))
+}
+
+// The free account's upgrade prompt in History: once letters or tailored
+// resumes come within reach of what this browser keeps, say what's about to
+// be lost. null while neither is close.
+export function capWarning(letters: number, tailored: number): string | null {
+  const lists = [
+    { count: letters, limit: HISTORY_LIMIT, noun: 'letters', near: HISTORY_LIMIT - 5 },
+    { count: tailored, limit: TAILORED_HISTORY_LIMIT, noun: 'tailored resumes', near: TAILORED_HISTORY_LIMIT - 3 },
+  ].filter((l) => l.count >= l.near)
+  if (lists.length === 0) return null
+
+  const full = lists.filter((l) => l.count >= l.limit)
+  const near = lists.filter((l) => l.count < l.limit)
+  const sentences: string[] = []
+  if (full.length > 0) {
+    sentences.push(`This browser keeps your last ${full.map((l) => `${l.limit} ${l.noun}`).join(' and ')}, so the oldest are now being removed.`)
+  }
+  if (near.length > 0) {
+    sentences.push(
+      `You've ${full.length > 0 ? 'also ' : ''}saved ${near.map((l) => `${l.count} of ${l.limit} ${l.noun}`).join(' and ')} in this browser.`,
+      near.length === 1 ? `After ${near[0].limit}, the oldest are removed to make room.` : 'Past those limits, the oldest are removed to make room.',
+    )
+  }
+  sentences.push('Pro saves all of them to your account, including the ones already here, and you can search them on your dashboard.')
+  return sentences.join(' ')
 }

@@ -1,6 +1,6 @@
 import type { AppMode, AuthSession, CoverLetter, ParsedResume, ResumeData, Settings, TailoredHistoryEntry } from '../types'
 
-const HISTORY_LIMIT = 50
+export const HISTORY_LIMIT = 50
 
 export async function getSettings(): Promise<Settings | null> {
   const { settings } = await chrome.storage.local.get('settings')
@@ -61,7 +61,7 @@ export async function deleteFromHistory(id: string): Promise<void> {
 }
 
 // Tailored resumes are 5–15 KB each, so fewer are kept than letters.
-const TAILORED_HISTORY_LIMIT = 20
+export const TAILORED_HISTORY_LIMIT = 20
 
 export async function getTailoredHistory(): Promise<TailoredHistoryEntry[]> {
   const { tailoredHistory } = await chrome.storage.local.get('tailoredHistory')
