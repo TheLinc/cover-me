@@ -13,7 +13,8 @@ import {
   StarIcon,
 } from "@phosphor-icons/react";
 import { Spinner } from "@/components/ui/spinner";
-import { SiteNav, appLinks } from '@/components/site/SiteNav'
+import { SiteNav } from '@/components/site/SiteNav'
+import { appLinks } from '@/components/site/app-links'
 import { SignOutButton } from '@/components/site/SignOutButton'
 
 interface Props {

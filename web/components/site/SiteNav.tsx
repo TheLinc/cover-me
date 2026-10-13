@@ -6,8 +6,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { cn, CHROME_STORE_URL } from '@/lib/utils'
-
-type NavLink = { href: string; label: string }
+import type { NavLink } from './app-links'
 
 const MARKETING_LINKS: NavLink[] = [
   { href: '/#how-it-works', label: 'How it works' },
@@ -16,14 +15,6 @@ const MARKETING_LINKS: NavLink[] = [
   { href: '/guides', label: 'Guides' },
   { href: '/about', label: 'About' },
 ]
-
-// Signed-in pages show where you can go in your account, not the landing
-// page's sections.
-export function appLinks(isPro: boolean): NavLink[] {
-  return isPro
-    ? [{ href: '/dashboard', label: 'Dashboard' }, { href: '/dashboard/applications', label: 'Applications' }]
-    : [{ href: '/dashboard', label: 'Dashboard' }]
-}
 
 // `actions` replaces the default Sign in / Install buttons (signed-in pages pass Sign out).
 // `links` replaces the marketing links (signed-in pages pass appLinks()).
@@ -44,10 +35,10 @@ export function SiteNav({ actions, links }: { actions?: ReactNode; links?: NavLi
         scrolled && 'shadow-[0_10px_30px_-18px_rgba(30,27,75,0.35)]',
       )}
     >
-      <div className="container flex h-16 items-center gap-8">
+      <div className={cn('container flex h-16 items-center gap-8', links && 'max-sm:gap-2')}>
         <Link href="/" className="flex shrink-0 items-center gap-2.5">
           <Image src="/logo.png" width={28} height={28} alt="" className="rounded-[8px]" />
-          <span className="text-[18px] font-semibold tracking-[-0.02em] text-ink">Cover Me</span>
+          <span className={cn('text-[18px] font-semibold tracking-[-0.02em] text-ink', links && 'max-sm:sr-only')}>Cover Me</span>
         </Link>
         <nav aria-label="Main" className={cn('flex flex-1 gap-1', !links && 'max-md:hidden')}>
           {(links ?? MARKETING_LINKS).map((l) => (
@@ -55,7 +46,7 @@ export function SiteNav({ actions, links }: { actions?: ReactNode; links?: NavLi
               key={l.href}
               href={l.href}
               aria-current={pathname === l.href ? 'page' : undefined}
-              className="rounded-full px-3 py-1.5 text-[14px] font-medium text-ink-2 transition-colors hover:bg-panel hover:text-ink aria-[current=page]:bg-panel aria-[current=page]:text-ink"
+              className="rounded-full px-3 py-1.5 text-[14px] font-medium text-ink-2 transition-colors hover:bg-panel hover:text-ink aria-[current=page]:bg-panel aria-[current=page]:text-ink max-sm:px-2.5 max-sm:text-[13px]"
             >
               {l.label}
             </Link>

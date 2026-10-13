@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
-import { SiteNav, appLinks } from '@/components/site/SiteNav'
+import { SiteNav } from '@/components/site/SiteNav'
+import { appLinks } from '@/components/site/app-links'
 import { SignOutButton } from '@/components/site/SignOutButton'
 import { ApplicationsBrowser } from './ApplicationsBrowser'
 
