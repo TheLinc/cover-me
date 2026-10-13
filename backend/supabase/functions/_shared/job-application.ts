@@ -17,7 +17,9 @@ export async function findOrCreateJobApplication(
   job: Job,
   createdAt?: string,
 ): Promise<string> {
-  const url = job.url || null
+  // Shortened: Postgres can't index a URL much past 2,700 bytes
+  // (job_applications_user_url), and page URLs can carry long tracking parameters.
+  const url = job.url ? job.url.slice(0, 2_048) : null
   const title = job.title || null
   const company = job.company || null
 

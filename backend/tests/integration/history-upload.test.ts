@@ -94,6 +94,18 @@ describe('saving local history to the account', () => {
     expect(appsB).toHaveLength(0)
   })
 
+  // Postgres can't index a URL much past 2,700 bytes (job_applications_user_url),
+  // and page URLs can carry long tracking parameters.
+  it('saves an entry whose URL is too long to index, under a shortened URL', async () => {
+    const u = await user()
+    const id = randomUUID()
+    const longUrl = `https://jobs.example/1?${'x'.repeat(3_000)}`
+    const { body } = await post(u, { letters: [{ id, job: { ...job, url: longUrl }, letter: 'x', createdAt: day(1) }] })
+    expect(body).toEqual({ letters: [id], tailored: [], failed: [] })
+    const { data: apps } = await admin.from('job_applications').select('url').eq('user_id', u.id)
+    expect(apps?.[0].url).toBe(longUrl.slice(0, 2_048))
+  })
+
   it('an existing application keeps its date', async () => {
     const u = await user()
     await post(u, { letters: [{ id: randomUUID(), job, letter: 'later', createdAt: day(5) }] })
