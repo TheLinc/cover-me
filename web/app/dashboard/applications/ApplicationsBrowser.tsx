@@ -93,8 +93,9 @@ export function ApplicationsBrowser() {
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Sticks under the site header (h-16) while the cards scroll. */}
-      <div className="sticky top-16 z-10 -mx-7 -mt-6 flex flex-wrap items-end gap-3 border-b border-border bg-surface px-7 pb-4 pt-6">
+      {/* Sticks under the site header (h-16) while the cards scroll. Not on
+          phones: the bar wraps to most of the screen there. */}
+      <div className="md:sticky md:top-16 z-10 -mx-7 -mt-6 flex flex-wrap items-end gap-3 border-b border-border bg-surface px-7 pb-4 pt-6">
         <div className="flex min-w-[220px] flex-1 flex-col gap-1.5">
           <Label htmlFor="app-search">Company or job title</Label>
           <div className="relative">
@@ -130,7 +131,7 @@ export function ApplicationsBrowser() {
       </div>
 
       {range && applications.length > 0 && (
-        <div className={status === 'loading' && !loadingMore ? 'grid gap-4 opacity-60 transition-opacity md:grid-cols-2' : 'grid gap-4 transition-opacity md:grid-cols-2'}>
+        <div className={status === 'loading' && !loadingMore ? 'grid grid-cols-1 gap-4 opacity-60 transition-opacity md:grid-cols-2' : 'grid grid-cols-1 gap-4 transition-opacity md:grid-cols-2'}>
           {applications.map((app) => <ApplicationCard key={app.id} app={app} />)}
         </div>
       )}

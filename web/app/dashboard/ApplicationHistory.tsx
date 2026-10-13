@@ -26,7 +26,7 @@ export function ApplicationHistory({ applications }: { applications: Application
           ? 'Letters and tailored resumes you make in the extension appear here, on every device.'
           : 'Your most recent, synced from the extension.'}
       </p>
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {applications.map((app) => <ApplicationCard key={app.id} app={app} />)}
       </div>
     </section>
