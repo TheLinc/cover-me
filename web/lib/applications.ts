@@ -45,8 +45,10 @@ export function dayRange(from: string, to: string): { from?: string; to?: string
     const date = new Date(0)
     date.setFullYear(y, m - 1, day + addDays)
     date.setHours(0, 0, 0, 0)
-    const year = date.getFullYear()
-    return year >= 1 && year <= 9999 ? date : null
+    // Both years: east of UTC, local 1 January of year 1 is still year 0 in
+    // UTC, and the instant sent is UTC.
+    const ok = (year: number) => year >= 1 && year <= 9999
+    return ok(date.getFullYear()) && ok(date.getUTCFullYear()) ? date : null
   }
   const start = from ? local(from) : null
   const end = to ? local(to, 1) : null

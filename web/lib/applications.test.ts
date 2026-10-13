@@ -79,6 +79,8 @@ describe('dayRange', () => {
     expect(dayRange('', '275760-09-12')).toEqual({})
     expect(dayRange('10000-01-01', '')).toEqual({})
     expect(dayRange('', '9999-12-31')).toEqual({})
+    // East of UTC, local midnight on 1 January of year 1 is still year 0 in UTC.
+    expect(dayRange('0001-01-01', '')?.from?.startsWith('0000')).not.toBe(true)
     const y99 = new Date(0)
     y99.setFullYear(99, 0, 1)
     y99.setHours(0, 0, 0, 0)
