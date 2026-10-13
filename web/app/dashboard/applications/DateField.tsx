@@ -39,7 +39,7 @@ export function DateField({ id, label, value, onChange, invalid, describedBy }: 
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
-        <Calendar mode="single" selected={date} defaultMonth={date} onSelect={(d: Date | undefined) => { onChange(toDay(d)); setOpen(false) }} autoFocus />
+        <Calendar mode="single" required selected={date} defaultMonth={date} onSelect={(d: Date | undefined) => { onChange(toDay(d)); setOpen(false) }} autoFocus />
         {value && (
           <div className="border-t border-border p-2">
             <Button variant="ghost" size="sm" onClick={() => { onChange(''); setOpen(false) }}>Clear</Button>

@@ -107,7 +107,8 @@ export function ApplicationsBrowser() {
             : filtered
               ? `${applications.length} ${applications.length === 1 ? 'matches' : 'match'}`
               : `${applications.length} application${applications.length === 1 ? '' : 's'}`
-  const counted = range && status === 'ready' && applications.length > 0
+  // Stays visible while a search loads (its text says so), so the bar keeps its height.
+  const counted = range && status !== 'error' && applications.length > 0
 
   // A deleted card, or one unmarked under the interview filter, leaves the list.
   function drop(id: string) {
@@ -116,7 +117,7 @@ export function ApplicationsBrowser() {
 
   // If that empties a page with more behind it, the first page loads again.
   useEffect(() => {
-    if (status === 'ready' && applications.length === 0 && hasMore) {
+    if (status !== 'loading' && applications.length === 0 && hasMore) {
       setStatus('loading')
       search.now(shown.current)
     }
@@ -203,7 +204,11 @@ export function ApplicationsBrowser() {
       </div>
 
       {range && applications.length > 0 && (
-        <div className={status === 'loading' && !loadingMore ? 'grid grid-cols-1 gap-4 opacity-60 transition-opacity md:grid-cols-2' : 'grid grid-cols-1 gap-4 transition-opacity md:grid-cols-2'}>
+        // The old results, dimmed and out of reach until the new ones replace them.
+        <div
+          inert={status === 'loading' && !loadingMore}
+          className={status === 'loading' && !loadingMore ? 'grid grid-cols-1 gap-4 opacity-60 transition-opacity md:grid-cols-2' : 'grid grid-cols-1 gap-4 transition-opacity md:grid-cols-2'}
+        >
           {applications.map((app) => (
             <ApplicationCard
               key={app.id}
