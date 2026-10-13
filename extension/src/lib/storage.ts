@@ -80,10 +80,20 @@ export async function deleteFromTailoredHistory(id: string): Promise<void> {
 
 // Marks local entries with the account that holds them (see CoverLetter.account).
 export async function setEntryAccounts(updates: { letters?: Record<string, string>; tailored?: Record<string, string> }): Promise<void> {
-  const [history, tailoredHistory] = await Promise.all([getHistory(), getTailoredHistory()])
-  const mark = <T extends { id: string; account?: string }>(list: T[], accounts: Record<string, string> = {}): T[] =>
-    list.map((e) => (accounts[e.id] ? { ...e, account: accounts[e.id] } : e))
-  await chrome.storage.local.set({ history: mark(history, updates.letters), tailoredHistory: mark(tailoredHistory, updates.tailored) })
+  // Only the lists that change are written: the background may be adding to
+  // the other one at the same moment.
+  const mark = <T extends { id: string; account?: string }>(list: T[], accounts: Record<string, string> = {}): T[] | null =>
+    list.some((e) => accounts[e.id]) ? list.map((e) => (accounts[e.id] ? { ...e, account: accounts[e.id] } : e)) : null
+  const write: Record<string, unknown> = {}
+  if (updates.letters && Object.keys(updates.letters).length > 0) {
+    const history = mark(await getHistory(), updates.letters)
+    if (history) write.history = history
+  }
+  if (updates.tailored && Object.keys(updates.tailored).length > 0) {
+    const tailoredHistory = mark(await getTailoredHistory(), updates.tailored)
+    if (tailoredHistory) write.tailoredHistory = tailoredHistory
+  }
+  if (Object.keys(write).length > 0) await chrome.storage.local.set(write)
 }
 
 // Accounts that answered the "save these to your account?" prompt (Save or

@@ -436,7 +436,10 @@ export class UploadError extends Error {
 // browser: the server keeps title, company and URL, and 70 descriptions could
 // pass the 1 MB cap.
 export async function uploadLocalHistory(accessToken: string, letters: CoverLetter[], tailored: TailoredHistoryEntry[], check = false): Promise<UploadResult> {
-  const job = (j: JobData) => ({ title: j.title, company: j.company, url: j.url })
+  // Trimmed to the server's per-field limit: scrapers keep the full page URL,
+  // and one long one must not make the whole batch fail.
+  const cap = (v: string | undefined) => v?.slice(0, 8192)
+  const job = (j: JobData) => ({ title: cap(j.title), company: cap(j.company), url: cap(j.url) })
   const body = check
     ? { check: true, letters: letters.map((e) => ({ id: e.id })), tailored: tailored.map((e) => ({ id: e.id })) }
     : {

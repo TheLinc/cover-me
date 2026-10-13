@@ -28,6 +28,16 @@ describe('uploadLocalHistory', () => {
     })
   })
 
+  // Scrapers keep the full page URL, tracking parameters and all; one long one
+  // must not make the server reject the whole batch.
+  test('trims job fields to what the server accepts', async () => {
+    const fetchMock = answer(200, { letters: [], tailored: [], failed: [] })
+    const longUrl = `https://jobs.example/1?${'x'.repeat(9000)}`
+    await uploadLocalHistory('at', [{ id: 'l1', job: { ...job, url: longUrl }, letter: 'x', createdAt: 'a' }], [])
+    const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit]
+    expect(JSON.parse(init.body as string).letters[0].job.url).toBe(longUrl.slice(0, 8192))
+  })
+
   test('a check sends IDs only', async () => {
     const fetchMock = answer(200, { letters: [], tailored: [], failed: [] })
     await uploadLocalHistory('at', [{ id: 'l1', job, letter: 'x', createdAt: 'a' }], [], true)

@@ -25,6 +25,18 @@ describe('which account holds each local entry', () => {
     expect((await getTailoredHistory()).map((e) => e.account)).toEqual(['other'])
   })
 
+  // A list it doesn't change isn't rewritten: the background may be adding to
+  // it at the same moment.
+  test('setEntryAccounts writes only the lists it changes', async () => {
+    const data = fakeLocal({ history: [{ id: 'l1', job, letter: 'x', createdAt: 'a' }], tailoredHistory: [] })
+    const set = vi.spyOn(chrome.storage.local, 'set')
+    await setEntryAccounts({ letters: { l1: 'me' } })
+    expect(set.mock.calls.map((c) => Object.keys(c[0]))).toEqual([['history']])
+    await setEntryAccounts({ letters: { nope: 'me' }, tailored: {} })
+    expect(set).toHaveBeenCalledTimes(1)
+    expect((data.history as { account?: string }[])[0].account).toBe('me')
+  })
+
   test('remembers which accounts answered the upload prompt', async () => {
     fakeLocal()
     expect(await getUploadAsked()).toEqual([])
