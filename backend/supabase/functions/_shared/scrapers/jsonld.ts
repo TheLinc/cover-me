@@ -71,10 +71,13 @@ export function htmlToText(html: string): string {
   if (!html.includes('<') && html.includes('&lt;')) html = decodeEntities(html)
   const text = html
     .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<li[^>]*>/gi, '\n- ')
+    .replace(/<li[^<>]*>/gi, '\n- ')
     .replace(/<\/(p|div|ul|ol|h[1-6]|tr|section)>/gi, '\n')
-    .replace(/<[^>]*>/g, '')
-  return decodeEntities(text)
+    .replace(/<[^<>]*>/g, '') // [^<>], not [^>]: a run of "<" with no ">" backtracked quadratically
+  // [^<>] can leave a "<" that pairs up after stripping ("<<b>div>" -> "<div>").
+  // Escape what's left so decodeEntities only decodes, never parses a tag; a
+  // stray "<" in the text ("a<b") stays as text instead of hiding the rest.
+  return decodeEntities(text.replace(/</g, '&lt;'))
     .split('\n')
     .map((line) => line.replace(/\s+/g, ' ').trim())
     .join('\n')
