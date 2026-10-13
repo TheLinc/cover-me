@@ -12,6 +12,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { parseHTML } from 'npm:linkedom@0.18.13'
 import { handleCors, json } from '../_shared/cors.ts'
+import { readBody } from '../_shared/read-body.ts'
 import { scrapeHtml } from '../_shared/scrapers/page.ts'
 
 const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SERVICE_KEY')!)
@@ -37,7 +38,7 @@ Deno.serve(async (req) => {
 
   let pages: unknown
   try {
-    const body = await readBody(req)
+    const body = await readBody(req, MAX_BYTES)
     if (body === null) return json({ error: 'Request too large' }, 413)
     pages = (JSON.parse(body) as { pages?: unknown }).pages
   } catch {
@@ -124,27 +125,4 @@ function isPage(p: unknown): p is { url: string; html: string } {
   if (!p || typeof p !== 'object') return false
   const { url, html } = p as Record<string, unknown>
   return typeof html === 'string' && typeof url === 'string' && /^https?:\/\//.test(url) && URL.canParse(url)
-}
-
-// Gzip from the extension, plain JSON from anything else. Stops reading past
-// MAX_BYTES so a small compressed body can't expand without limit.
-async function readBody(req: Request): Promise<string | null> {
-  if (!req.body) return ''
-  const stream = req.headers.get('content-encoding') === 'gzip'
-    ? req.body.pipeThrough(new DecompressionStream('gzip'))
-    : req.body
-  const chunks: Uint8Array[] = []
-  let size = 0
-  for await (const chunk of stream) {
-    size += chunk.byteLength
-    if (size > MAX_BYTES) return null
-    chunks.push(chunk)
-  }
-  const bytes = new Uint8Array(size)
-  let offset = 0
-  for (const c of chunks) {
-    bytes.set(c, offset)
-    offset += c.byteLength
-  }
-  return new TextDecoder().decode(bytes)
 }
