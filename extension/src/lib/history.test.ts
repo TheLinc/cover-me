@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { groupLocalHistory } from './history'
+import { capWarning, groupLocalHistory } from './history'
 
 const job = (url: string, company = 'Northwind', title = 'Engineer') => ({ title, company, url, description: '' })
 const resume = { name: 'Pat', phone: '', email: '', website: '', experience: [], education: [] }
@@ -34,5 +34,39 @@ describe('groupLocalHistory', () => {
     ])
     expect(groups.map((g) => g.url)).toEqual(['https://a', 'https://b'])
     expect(groups[0].tailoredResumes.map((t) => t.id)).toEqual(['new', 'old'])
+  })
+})
+
+describe('capWarning', () => {
+  const PRO = 'Pro saves all of them to your account, including the ones already here, and you can search them on your dashboard.'
+
+  test('nothing until a list is within reach of its cap', () => {
+    expect(capWarning(44, 16)).toBeNull()
+    expect(capWarning(0, 0)).toBeNull()
+  })
+
+  test('letters near the cap', () => {
+    expect(capWarning(46, 0)).toBe(`You've saved 46 of 50 letters in this browser. After 50, the oldest are removed to make room. ${PRO}`)
+    expect(capWarning(45, 0)).not.toBeNull()
+  })
+
+  test('letters at the cap', () => {
+    expect(capWarning(50, 3)).toBe(`This browser keeps your last 50 letters, so the oldest are now being removed. ${PRO}`)
+  })
+
+  test('tailored resumes near the cap', () => {
+    expect(capWarning(10, 17)).toBe(`You've saved 17 of 20 tailored resumes in this browser. After 20, the oldest are removed to make room. ${PRO}`)
+  })
+
+  test('both near their caps', () => {
+    expect(capWarning(46, 18)).toBe(`You've saved 46 of 50 letters and 18 of 20 tailored resumes in this browser. Past those limits, the oldest are removed to make room. ${PRO}`)
+  })
+
+  test('one at its cap, the other near', () => {
+    expect(capWarning(50, 18)).toBe(`This browser keeps your last 50 letters, so the oldest are now being removed. You've also saved 18 of 20 tailored resumes in this browser. After 20, the oldest are removed to make room. ${PRO}`)
+  })
+
+  test('both at their caps', () => {
+    expect(capWarning(50, 20)).toBe(`This browser keeps your last 50 letters and 20 tailored resumes, so the oldest are now being removed. ${PRO}`)
   })
 })

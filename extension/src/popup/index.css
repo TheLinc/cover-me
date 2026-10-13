@@ -742,6 +742,9 @@ html, body {
 
 .history-list { display: flex; flex-direction: column; gap: 8px; }
 
+/* Free account near the local history cap: warning, then the upgrade button */
+.cap-prompt { margin-bottom: 14px; }
+
 /* Job card — top-level entry grouping all artifacts for one posting */
 .job-card {
   background: var(--surface);
