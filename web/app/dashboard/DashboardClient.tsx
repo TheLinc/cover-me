@@ -191,8 +191,8 @@ export default function DashboardClient({
                   Get up to 25 generations a day.
                 </h2>
                 <p className="text-[13px] text-muted-foreground leading-[1.65] max-w-[420px]">
-                  Pro adds cross-device history sync, with every new feature
-                  included. Cancel any time.
+                  Pro saves every application, searchable here on your dashboard, with
+                  every new feature included. Cancel any time.
                 </p>
               </div>
 
@@ -238,7 +238,7 @@ export default function DashboardClient({
                   You&apos;re on Pro
                 </h2>
                 <p className="text-[13px] text-muted-foreground leading-[1.65] mb-3">
-                  Up to 25 generations a day, cross-device history sync, and every new feature included.
+                  Up to 25 generations a day, every application saved and searchable, and every new feature included.
                 </p>
                 <Button
                   variant="outline"
