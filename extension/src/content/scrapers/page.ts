@@ -55,9 +55,9 @@ function checkSize(doc: Dom) {
   while (stack.length) {
     const [el, depth] = stack.pop()!
     if (++count > MAX_ELEMENTS || depth > MAX_DEPTH) throw new Error('This page is too large to read.')
-    // A <template>'s markup sits in .content, not its children, until attached
-    const children = el.tagName === 'TEMPLATE' ? el.content?.children ?? [] : el.children
-    for (const child of children) stack.push([child, depth + 1])
+    // linkedom keeps a <template>'s markup in its children; .content is a deep
+    // copy, which nested templates would multiply (levels x subtree of memory)
+    for (const child of el.children) stack.push([child, depth + 1])
   }
 }
 
@@ -68,7 +68,8 @@ function attachShadowRoots(root: Dom) {
     const host = t.parentNode
     if (!host?.attachShadow || host.shadowRoot) continue
     const shadow = host.attachShadow({ mode: t.getAttribute('shadowrootmode') === 'closed' ? 'closed' : 'open' })
-    shadow.appendChild(t.content)
+    // Move the template's own children: t.content would deep-copy them (see checkSize)
+    while (t.firstChild) shadow.appendChild(t.firstChild)
     t.remove()
     attachShadowRoots(shadow)
   }
@@ -122,16 +123,38 @@ function patchLayoutApis(dom: Dom) {
     DOCUMENT_POSITION_DISCONNECTED: 1, DOCUMENT_POSITION_PRECEDING: 2, DOCUMENT_POSITION_FOLLOWING: 4,
     DOCUMENT_POSITION_CONTAINS: 8, DOCUMENT_POSITION_CONTAINED_BY: 16, DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC: 32,
   })
+  // Siblings are ordered by tree-order numbers, filled per tree (document or
+  // shadow root) on first use. The scrapers only read the page, so the numbers
+  // stay valid. Walking siblings instead costs their count per call, which made
+  // a page of 29,000 sibling links take 4 s (scrapers compare once per link).
+  const order = new WeakMap<Dom, number>()
+  const numbered = new WeakSet<Dom>()
+  const numberTree = (root: Dom) => {
+    let i = 0
+    const stack: Dom[] = [root]
+    while (stack.length) {
+      const n = stack.pop()
+      order.set(n, i++)
+      // childNodes, not firstChild/nextSibling: linkedom's doctype has no
+      // nextSibling, so that walk would stop before <html> on every snapshot
+      const kids = Array.from(n.childNodes) as Dom[]
+      for (let k = kids.length - 1; k >= 0; k--) stack.push(kids[k])
+    }
+    numbered.add(root)
+  }
   dom.Node.prototype.compareDocumentPosition = function (this: Dom, other: Dom): number {
     if (this === other) return 0
-    const chain = (n: Dom) => { const a: Dom[] = []; for (let x = n; x; x = x.parentNode) a.unshift(x); return a }
+    const chain = (n: Dom) => { const a: Dom[] = []; for (let x = n; x; x = x.parentNode) a.push(x); return a.reverse() }
     const a = chain(this), b = chain(other)
     if (a[0] !== b[0]) return 1 | 32 // DISCONNECTED | IMPLEMENTATION_SPECIFIC
     let i = 0
     while (i < a.length && i < b.length && a[i] === b[i]) i++
     if (i === a.length) return 16 | 4 // other is inside this: CONTAINED_BY | FOLLOWING
     if (i === b.length) return 8 | 2 // other contains this: CONTAINS | PRECEDING
-    const siblings = Array.from(a[i - 1].childNodes)
-    return siblings.indexOf(b[i]) > siblings.indexOf(a[i]) ? 4 : 2
+    if (!numbered.has(a[0])) numberTree(a[0])
+    const x = order.get(a[i]), y = order.get(b[i])
+    if (x !== undefined && y !== undefined) return y > x ? 4 : 2
+    for (let s = a[i].nextSibling; s; s = s.nextSibling) if (s === b[i]) return 4 // added after numbering
+    return 2
   }
 }

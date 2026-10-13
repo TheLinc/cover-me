@@ -11,6 +11,12 @@ export const FIXTURE_CASES = [
   { board: 'bamboohr', title: 'Senior Business Analyst', company: 'Picton Mahoney Asset Management', ends: 'All decisions are made by our hiring team.' },
   // Signed-out /jobs/view/ page: read from its JSON-LD
   { board: 'linkedin', title: 'RN - SAU', company: 'INTEGRIS Health', ends: 'including protected veteran or disability status.' },
+  // Signed-in /jobs/view/ page for a posting already applied to, cut down to the
+  // posting by hand (no nav, people or job lists), with the company and text made
+  // up. "Application status" sits between the title and the description; "About
+  // the company" links the company with its follower count; the description
+  // continues after its box.
+  { board: 'linkedin-applied', title: 'Frontend Developer', company: 'Northwind', ends: 'Northwind Applicant Privacy Notice' },
   // Terminal's public posting page
   { board: 'terminal', title: 'Data Engineer', company: 'Overflow', ends: '- SQL' },
   // No dedicated scraper: schema.org microdata through the generic one (no JSON-LD on the page)
