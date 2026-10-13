@@ -70,9 +70,14 @@ async function failCover(id: string, job: JobData, startedAt: number, error: str
 // copy shares its ID with the server copy (account set once the server
 // confirmed it), so uploading local history never duplicates it. Best-effort:
 // a failed save must not turn a finished (and, hosted, already counted) run
-// into an error.
-async function recordTailored(job: JobData, resume: TailoredResume, id: string = crypto.randomUUID(), account?: string): Promise<void> {
-  await addToTailoredHistory({ id, job, resume, createdAt: new Date().toISOString(), ...(account ? { account } : {}) }).catch(() => {})
+// into an error. owner: where a Pro run belongs (see TailoredHistoryEntry).
+async function recordTailored(
+  job: JobData,
+  resume: TailoredResume,
+  id: string = crypto.randomUUID(),
+  owner?: { account?: string; saveTo?: string },
+): Promise<void> {
+  await addToTailoredHistory({ id, job, resume, createdAt: new Date().toISOString(), ...owner }).catch(() => {})
 }
 
 async function failTailor(id: string, job: JobData, startedAt: number, error: string): Promise<TailorResponse> {
@@ -447,7 +452,11 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
       // the edge function to see those in the Supabase function logs.
       const localId = crypto.randomUUID()
       const { resume, savedId } = await tailorViaBackend(job, session.access_token, compact, merged, trim, includeSummary, previous, onProgress, localId)
-      await recordTailored(job, resume, localId, savedId === localId ? session.user.id : undefined)
+      const pro = (await getCachedTier()) === 'hosted_pro'
+      await recordTailored(job, resume, localId, {
+        ...(savedId === localId ? { account: session.user.id } : {}),
+        ...(pro ? { saveTo: session.user.id } : {}),
+      })
       await setTailorJob({ id, status: 'done', job, resume, startedAt })
       return { success: true, resume, job }
     }
@@ -522,15 +531,17 @@ async function generateFromJob(job: JobData, supplemental?: string, jobId?: stri
         return failCover(id, job, startedAt, 'Sign in to your Cover Me account in Settings.')
       }
       const letter = await generateViaBackend(job, session.access_token, merged)
+      const pro = (await getCachedTier()) === 'hosted_pro'
       const entry: CoverLetter = {
         id: crypto.randomUUID(),
         job,
         letter,
         createdAt: new Date().toISOString(),
+        // A Pro letter belongs in the account; History retries it if this save fails.
+        ...(pro ? { saveTo: session.user.id } : {}),
       }
       await addToHistory(entry)
-      const tier = await getCachedTier()
-      if (tier === 'hosted_pro') {
+      if (pro) {
         saveLetterToBackend(session.access_token, entry)
           .then(() => setEntryAccounts({ letters: { [entry.id]: session.user.id } }))
           .catch(() => {})

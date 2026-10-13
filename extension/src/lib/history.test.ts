@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { accountUpdates, capWarning, groupLocalHistory, uploadMessage, uploadSummary, withLocalOnly } from './history'
+import { accountUpdates, capWarning, groupLocalHistory, groupsFromApplications, ownPending, uploadMessage, uploadSummary, withLocalOnly } from './history'
 
 const job = (url: string, company = 'Northwind', title = 'Engineer') => ({ title, company, url, description: '' })
 const resume = { name: 'Pat', phone: '', email: '', website: '', experience: [], education: [] }
@@ -142,5 +142,36 @@ describe('uploadMessage', () => {
     expect(uploadMessage({ saved: 38, other: 0, failed: 2 })).toBe("Saved 38 applications. 2 couldn't be saved, try again.")
     expect(uploadMessage({ saved: 38, other: 1, failed: 2 }))
       .toBe("Saved 38 applications. 1 was already saved to another account that used this browser, so it stays with it. 2 couldn't be saved, try again.")
+  })
+})
+
+describe('groupsFromApplications', () => {
+  // Same rule as local cards: the date is the newest thing made for the job,
+  // so a card doesn't jump to an older date once it's saved.
+  test('dates each application by its newest letter or resume', () => {
+    const [g] = groupsFromApplications([{
+      id: 'app1', title: 'A', company: 'Acme', url: 'https://jobs.example/a', createdAt: '2026-10-01T00:00:00Z',
+      coverLetters: [{ id: 'l1', letter: 'x', createdAt: '2026-10-02T00:00:00Z' }],
+      tailoredResumes: [{ id: 't1', resume, createdAt: '2026-10-05T00:00:00Z' }],
+    }])
+    expect(g).toMatchObject({ key: 'app1', id: 'app1', latestAt: '2026-10-05T00:00:00Z' })
+  })
+
+  test('an application with nothing in it keeps its own date', () => {
+    const [g] = groupsFromApplications([{ id: 'app1', title: 'A', company: 'Acme', url: '', createdAt: '2026-10-01T00:00:00Z', coverLetters: [], tailoredResumes: [] }])
+    expect(g.latestAt).toBe('2026-10-01T00:00:00Z')
+  })
+})
+
+describe('ownPending', () => {
+  test("picks unsaved entries made while this account was Pro, nobody else's", () => {
+    const l = (id: string, extra: object = {}) => ({ id, job: job(`https://jobs.example/${id}`), letter: 'x', createdAt: 'a', ...extra })
+    const out = ownPending(
+      [l('mine', { saveTo: 'me' }), l('saved', { saveTo: 'me', account: 'me' }), l('theirs', { saveTo: 'you' }), l('free-era')],
+      [{ id: 't1', job: job('https://jobs.example/t'), resume, createdAt: 'a', saveTo: 'me' }],
+      'me',
+    )
+    expect(out.letters.map((e) => e.id)).toEqual(['mine'])
+    expect(out.tailored.map((e) => e.id)).toEqual(['t1'])
   })
 })

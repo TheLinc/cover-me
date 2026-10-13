@@ -2,23 +2,10 @@ import { useEffect, useRef, useState } from 'react'
 import { deleteApplicationFromBackend, ensureValidSession, fetchApplicationsFromBackend, fetchTier, uploadLocalHistory, UploadError } from '../../lib/auth'
 import { downloadCoverLetterPdf } from '../../lib/pdf'
 import { downloadTailoredResumePdf } from '../../lib/resume-pdf'
-import { accountUpdates, capWarning, groupLocalHistory, uploadMessage, uploadSummary, withLocalOnly, type JobGroup } from '../../lib/history'
+import { accountUpdates, capWarning, groupLocalHistory, groupsFromApplications, ownPending, uploadMessage, uploadSummary, withLocalOnly, type JobGroup } from '../../lib/history'
 import { deleteFromHistory, deleteFromTailoredHistory, getCachedTier, getHistory, getMode, getTailoredHistory, getUploadAsked, markUploadAsked, saveCachedTier, setEntryAccounts } from '../../lib/storage'
-import type { ApplicationRecord, AuthSession, CoverLetter, CoverLetterEntry, TailoredHistoryEntry } from '../../types'
+import type { AuthSession, CoverLetter, CoverLetterEntry, TailoredHistoryEntry } from '../../types'
 import UpgradeButton from '../components/UpgradeButton'
-
-function fromApplicationRecords(apps: ApplicationRecord[]): JobGroup[] {
-  return apps.map((app) => ({
-    key: app.id,
-    id: app.id,
-    title: app.title,
-    company: app.company,
-    url: app.url,
-    latestAt: app.createdAt,
-    coverLetters: app.coverLetters,
-    tailoredResumes: app.tailoredResumes,
-  }))
-}
 
 export default function HistoryPage() {
   const [groups, setGroups] = useState<JobGroup[]>([])
@@ -55,6 +42,30 @@ export default function HistoryPage() {
       return { letters: l.filter((e) => !mine.has(e.id)), tailored: t.filter((e) => !mine.has(e.id)) }
     } catch {
       return null
+    }
+  }
+
+  // Entries made while this account was Pro were always meant for it. If
+  // their save didn't go through (offline, a server error), it's retried here
+  // without asking. Returns what's still only in this browser, and whether
+  // anything new reached the account.
+  async function retryOwn(session: AuthSession, local: { letters: CoverLetter[]; tailored: TailoredHistoryEntry[] }) {
+    const own = ownPending(local.letters, local.tailored, session.user.id)
+    if (own.letters.length + own.tailored.length === 0) return { ...local, saved: false }
+    try {
+      const result = await uploadLocalHistory(session.access_token, own.letters, own.tailored)
+      const submitted = { letters: own.letters.map((e) => e.id), tailored: own.tailored.map((e) => e.id) }
+      await setEntryAccounts(accountUpdates(submitted, result, session.user.id, false))
+      // Settled: now in this account, or already another account's. Failed ones stay.
+      const failed = new Set(result.failed)
+      const settled = new Set([...submitted.letters, ...submitted.tailored].filter((id) => !failed.has(id)))
+      return {
+        letters: local.letters.filter((e) => !settled.has(e.id)),
+        tailored: local.tailored.filter((e) => !settled.has(e.id)),
+        saved: result.letters.length + result.tailored.length > 0,
+      }
+    } catch {
+      return { ...local, saved: false }
     }
   }
 
@@ -128,10 +139,12 @@ export default function HistoryPage() {
     setIsProMode(true)
     setSyncing(true)
     try {
-      const server = fromApplicationRecords(await fetchApplicationsFromBackend(session.access_token))
+      let server = groupsFromApplications(await fetchApplicationsFromBackend(session.access_token))
       setGroups(server)
-      const local = await localOnlyAfterCheck(session)
-      if (local) {
+      const checked = await localOnlyAfterCheck(session)
+      if (checked) {
+        const local = await retryOwn(session, checked)
+        if (local.saved) server = groupsFromApplications(await fetchApplicationsFromBackend(session.access_token))
         setGroups(withLocalOnly(server, local.letters, local.tailored))
         const count = groupLocalHistory(local.letters, local.tailored).length
         setUpload(count > 0 ? { count, asked: (await getUploadAsked()).includes(session.user.id) } : null)

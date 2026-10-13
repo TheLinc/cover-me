@@ -1,4 +1,4 @@
-import type { CoverLetter, CoverLetterEntry, TailoredHistoryEntry, TailoredResumeEntry } from '../types'
+import type { ApplicationRecord, CoverLetter, CoverLetterEntry, TailoredHistoryEntry, TailoredResumeEntry } from '../types'
 import { HISTORY_LIMIT, TAILORED_HISTORY_LIMIT } from './storage'
 import type { UploadResult } from './auth'
 
@@ -131,4 +131,25 @@ export function uploadMessage(s: { saved: number; other: number; failed: number 
   }
   if (s.failed > 0) sentences.push(`${s.failed} couldn't be saved, try again.`)
   return sentences.join(' ')
+}
+
+// The account's applications as History groups. Dated like local groups, by
+// the newest thing made for the job, so a card keeps its date once saved.
+export function groupsFromApplications(apps: ApplicationRecord[]): JobGroup[] {
+  return apps.map((app) => ({
+    key: app.id,
+    id: app.id,
+    title: app.title,
+    company: app.company,
+    url: app.url,
+    latestAt: [...app.coverLetters, ...app.tailoredResumes].reduce((latest, e) => (e.createdAt > latest ? e.createdAt : latest), app.createdAt),
+    coverLetters: app.coverLetters,
+    tailoredResumes: app.tailoredResumes,
+  }))
+}
+
+// Unsaved entries made while this account was Pro (see CoverLetter.saveTo).
+export function ownPending(letters: CoverLetter[], tailored: TailoredHistoryEntry[], userId: string): { letters: CoverLetter[]; tailored: TailoredHistoryEntry[] } {
+  const mine = <T extends { account?: string; saveTo?: string }>(e: T) => !e.account && e.saveTo === userId
+  return { letters: letters.filter(mine), tailored: tailored.filter(mine) }
 }

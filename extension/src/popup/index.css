@@ -758,6 +758,7 @@ html, body {
 }
 .upload-prompt-text { margin: 0; font-size: 12px; line-height: 1.55; color: var(--text); }
 .upload-link {
+  align-self: flex-start; /* .page is a flex column, which would stretch it */
   background: none;
   border: none;
   padding: 0;
