@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Spinner } from '@/components/ui/spinner'
 import { postingHost, type ApplicationDetail, type ApplicationSummary } from '@/lib/applications'
-import { downloadLetter, downloadResume, loadDetail } from '@/lib/application-actions'
+import { downloadLetter, downloadResume, GONE, loadDetail } from '@/lib/application-actions'
 import { CopyLetterButton } from '../CopyLetterButton'
 import { LocalDate } from '../LocalDate'
 
@@ -19,10 +19,12 @@ const UNREADABLE = "Some of these couldn't be opened."
 
 // Everything for one application: every letter and tailored resume first, then
 // the ATS result, the interview mark and delete. Its detail is fetched on first open.
-export function ApplicationDetailsSheet({ app, open, onOpenChange, busy, onToggleInterview, onDelete }: {
+export function ApplicationDetailsSheet({ app, open, onOpenChange, onClosed, onGone, busy, onToggleInterview, onDelete }: {
   app: ApplicationSummary
   open: boolean
   onOpenChange: (open: boolean) => void
+  onClosed: () => void // after the close animation
+  onGone: () => void // the application was deleted elsewhere
   busy: string | null
   onToggleInterview: () => void
   onDelete: () => void
@@ -41,9 +43,13 @@ export function ApplicationDetailsSheet({ app, open, onOpenChange, busy, onToggl
     setState('loading')
     loadDetail(app).then(
       (d) => { if (call === current.current) { setDetail(d); setState('idle') } },
-      () => { if (call === current.current) setState('error') },
+      (e) => {
+        if (call !== current.current) return
+        if (e instanceof Error && e.message === GONE) onGone()
+        else setState('error')
+      },
     )
-  }, [app])
+  }, [app, onGone])
 
   // A newer summary (more letters or resumes) drops what was shown, so the next open fetches again.
   useEffect(() => { current.current++; setDetail(null); setState('idle') }, [app.coverLetters, app.tailoredResumes])
@@ -58,7 +64,7 @@ export function ApplicationDetailsSheet({ app, open, onOpenChange, busy, onToggl
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="flex w-full flex-col gap-0 overflow-y-auto p-0 sm:max-w-[520px]">
+      <SheetContent side="right" className="flex w-full flex-col gap-0 overflow-y-auto p-0 sm:max-w-[520px]" onCloseAutoFocus={onClosed}>
         <SheetHeader className="space-y-1.5 px-6 pb-6 pr-12 pt-6 text-left">
           <SheetTitle className="text-[20px] leading-snug tracking-[-0.02em] text-ink">{app.title || 'Untitled role'}</SheetTitle>
           <SheetDescription className="text-[13.5px] text-ink-2">

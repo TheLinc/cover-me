@@ -10,12 +10,13 @@ import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Spinner } from '@/components/ui/spinner'
 import { newest, postingHost, type ApplicationSummary } from '@/lib/applications'
-import { deleteApplication, downloadLetter, downloadResume, loadDetail, setInterview } from '@/lib/application-actions'
+import { deleteApplication, downloadLetter, downloadResume, GONE, loadDetail, setInterview } from '@/lib/application-actions'
 import { LocalDate } from '../LocalDate'
 import { ApplicationDetailsSheet } from './ApplicationDetailsSheet'
 
 type Busy = 'letter' | 'resume' | 'interview' | 'delete' | null
 const UNREADABLE = 'unreadable'
+const GONE_MESSAGE = 'This application was already deleted.'
 
 // One application. After a delete it tells the list (onDeleted), or refreshes
 // the server-rendered page when there's no list to tell, and renders nothing.
@@ -28,6 +29,9 @@ export function ApplicationCard({ app: initial, onDeleted, onInterviewChange }: 
   const [app, setApp] = useState(initial)
   // Once the user sets the mark here, theirs wins over a search that started before it.
   const marked = useRef(false)
+  // A mark changed from the open drawer reaches the list once the drawer has
+  // closed, so a filter that drops the card doesn't pull the drawer away.
+  const pendingMark = useRef<{ interviewAt: string | null } | null>(null)
   const [deleted, setDeleted] = useState(false)
   const [detailsOpen, setDetailsOpen] = useState(false)
   const [confirming, setConfirming] = useState(false)
@@ -42,6 +46,18 @@ export function ApplicationCard({ app: initial, onDeleted, onInterviewChange }: 
 
   const host = postingHost(app.url)
   const title = app.title || 'Untitled role'
+
+  const isGone = (e: unknown) => e instanceof Error && e.message === GONE
+
+  // Deleted here, or found deleted elsewhere: the card leaves the list.
+  function leave(message: string) {
+    setConfirming(false)
+    setDetailsOpen(false)
+    setDeleted(true)
+    if (onDeleted) onDeleted(app.id)
+    else router.refresh()
+    toast.success(message)
+  }
 
   async function download(kind: 'letter' | 'resume') {
     if (busy) return
@@ -62,6 +78,7 @@ export function ApplicationCard({ app: initial, onDeleted, onInterviewChange }: 
         await downloadResume(detail.title, resume.resume)
       }
     } catch (e) {
+      if (isGone(e)) return leave(GONE_MESSAGE)
       toast.error(e instanceof Error && e.message === UNREADABLE
         ? "This one couldn't be opened. Open Details for the others."
         : "Couldn't download it. Try again.")
@@ -77,9 +94,11 @@ export function ApplicationCard({ app: initial, onDeleted, onInterviewChange }: 
       const interviewAt = await setInterview(app.id, !app.interviewAt)
       marked.current = true
       setApp((a) => ({ ...a, interviewAt }))
-      onInterviewChange?.(app.id, interviewAt)
+      if (detailsOpen) pendingMark.current = { interviewAt }
+      else onInterviewChange?.(app.id, interviewAt)
       toast.success(interviewAt ? 'Marked as got an interview' : 'Interview mark removed')
-    } catch {
+    } catch (e) {
+      if (isGone(e)) return leave(GONE_MESSAGE)
       toast.error("Couldn't update it. Try again.")
     } finally {
       setBusy(null)
@@ -92,12 +111,7 @@ export function ApplicationCard({ app: initial, onDeleted, onInterviewChange }: 
     setDeleteError('')
     try {
       await deleteApplication(app.id)
-      setConfirming(false)
-      setDetailsOpen(false)
-      setDeleted(true)
-      if (onDeleted) onDeleted(app.id)
-      else router.refresh()
-      toast.success('Application deleted')
+      leave('Application deleted')
     } catch {
       setDeleteError("Couldn't delete it. Try again.")
     } finally {
@@ -179,6 +193,12 @@ export function ApplicationCard({ app: initial, onDeleted, onInterviewChange }: 
         app={app}
         open={detailsOpen}
         onOpenChange={setDetailsOpen}
+        onClosed={() => {
+          const pending = pendingMark.current
+          pendingMark.current = null
+          if (pending) onInterviewChange?.(app.id, pending.interviewAt)
+        }}
+        onGone={() => leave(GONE_MESSAGE)}
         busy={busy}
         onToggleInterview={toggleInterview}
         onDelete={() => setConfirming(true)}

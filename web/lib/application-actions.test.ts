@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { deleteApplication, loadDetail } from './application-actions'
+import { deleteApplication, GONE, loadDetail } from './application-actions'
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -29,6 +29,11 @@ describe('loadDetail', () => {
 
   // The extension can add a letter while the page is open; a new search then
   // brings a summary with more letters than the kept detail.
+  it('reports a deleted application as gone', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('{"error":"Not found"}', { status: 404 })))
+    await expect(loadDetail(summary('a5'))).rejects.toThrow(GONE)
+  })
+
   it('rejects an answer without an application, and keeps nothing', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ applications: [] }), { status: 200 })))
     await expect(loadDetail(summary('a4'))).rejects.toThrow()

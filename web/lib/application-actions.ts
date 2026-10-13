@@ -16,6 +16,10 @@ async function call(path: string, init?: RequestInit): Promise<Response> {
   return res
 }
 
+// The message of the error thrown when the application is gone (404): deleted
+// from another device or tab since the list loaded.
+export const GONE = 'gone'
+
 // Each application's detail is fetched once and kept for the visit: the
 // drawer and both Download buttons share it. It's kept against the letter and
 // resume IDs the card's summary lists, so a newer summary (the extension added
@@ -30,7 +34,7 @@ export function loadDetail(app: ApplicationSummary): Promise<ApplicationDetail> 
   const cached = details.get(app.id)
   if (cached && cached.key === key) return cached.promise
   const promise = call(`/api/applications?detail=${encodeURIComponent(app.id)}`).then(async (res) => {
-    if (!res.ok) throw new Error(String(res.status))
+    if (!res.ok) throw new Error(res.status === 404 ? GONE : String(res.status))
     // An older function ignores detail= and answers with the whole list.
     const { application } = (await res.json()) as { application?: ApplicationDetail }
     if (!application) throw new Error('No application in the response')
@@ -47,7 +51,7 @@ export async function setInterview(id: string, interview: boolean): Promise<stri
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ interview }),
   })
-  if (!res.ok) throw new Error(String(res.status))
+  if (!res.ok) throw new Error(res.status === 404 ? GONE : String(res.status))
   return ((await res.json()) as { interviewAt: string | null }).interviewAt
 }
 
