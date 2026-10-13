@@ -29,6 +29,14 @@ describe('loadDetail', () => {
 
   // The extension can add a letter while the page is open; a new search then
   // brings a summary with more letters than the kept detail.
+  it('rejects an answer without an application, and keeps nothing', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ applications: [] }), { status: 200 })))
+    await expect(loadDetail(summary('a4'))).rejects.toThrow()
+    await Promise.resolve()
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ application: { ...detail, id: 'a4' } }), { status: 200 })))
+    expect((await loadDetail(summary('a4'))).id).toBe('a4')
+  })
+
   it('fetches again when the summary lists different letters or resumes', async () => {
     const fetchMock = vi.fn(async () => new Response(JSON.stringify({ application: { ...detail, id: 'a3' } }), { status: 200 }))
     vi.stubGlobal('fetch', fetchMock)

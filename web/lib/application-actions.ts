@@ -31,7 +31,10 @@ export function loadDetail(app: ApplicationSummary): Promise<ApplicationDetail> 
   if (cached && cached.key === key) return cached.promise
   const promise = call(`/api/applications?detail=${encodeURIComponent(app.id)}`).then(async (res) => {
     if (!res.ok) throw new Error(String(res.status))
-    return ((await res.json()) as { application: ApplicationDetail }).application
+    // An older function ignores detail= and answers with the whole list.
+    const { application } = (await res.json()) as { application?: ApplicationDetail }
+    if (!application) throw new Error('No application in the response')
+    return application
   })
   details.set(app.id, { key, promise })
   promise.catch(() => { if (details.get(app.id)?.promise === promise) details.delete(app.id) })

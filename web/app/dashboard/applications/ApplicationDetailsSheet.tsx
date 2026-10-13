@@ -104,7 +104,7 @@ export function ApplicationDetailsSheet({ app, open, onOpenChange, busy, onToggl
               <div className="flex flex-col gap-2.5">
                 <h3 id={`resumes-${app.id}`} className="flex items-center gap-2 text-[13px] font-semibold text-ink-2">
                   {resumes === 1 ? 'Tailored resume' : `Tailored resumes (${resumes})`}
-                  {result.atsScore !== null && (
+                  {result.atsScore != null && (
                     <span className="rounded-full bg-brand-tint px-2 py-px text-[12px] font-semibold tabular-nums text-brand-ink">ATS {result.atsScore}</span>
                   )}
                 </h3>

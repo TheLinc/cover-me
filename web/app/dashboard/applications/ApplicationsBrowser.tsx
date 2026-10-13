@@ -39,6 +39,8 @@ export function ApplicationsBrowser() {
   // The query the list on screen came from: Load more pages that one, not
   // whatever is in the inputs now.
   const shown = useRef<ApplicationsQuery>({})
+  // Deleted here: a search that was already in flight mustn't bring them back.
+  const deleted = useRef(new Set<string>())
   // What Try again repeats: a failed Load more retries that page, not page 1.
   const failed = useRef<ApplicationsQuery | null>(null)
   const search = useMemo(() => createLatestSearch<ApplicationsQuery, ApplicationsPage>(load, (query, result) => {
@@ -53,7 +55,8 @@ export function ApplicationsBrowser() {
     }
     const { before, ...rest } = query
     shown.current = rest
-    setApplications((prev) => (before ? [...prev, ...result.value.applications] : result.value.applications))
+    const page = result.value.applications.filter((a) => !deleted.current.has(a.id))
+    setApplications((prev) => (before ? [...prev, ...page] : page))
     setHasMore(result.value.hasMore)
     setStatus('ready')
   }), [])
@@ -200,7 +203,7 @@ export function ApplicationsBrowser() {
             <ApplicationCard
               key={app.id}
               app={app}
-              onDeleted={drop}
+              onDeleted={(id) => { deleted.current.add(id); drop(id) }}
               onInterviewChange={(id, interviewAt) => { if (shown.current.interview && !interviewAt) drop(id) }}
             />
           ))}
