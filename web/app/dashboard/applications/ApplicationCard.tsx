@@ -15,10 +15,15 @@ import { LocalDate } from '../LocalDate'
 import { ApplicationDetailsSheet } from './ApplicationDetailsSheet'
 
 type Busy = 'letter' | 'resume' | 'interview' | 'delete' | null
+const UNREADABLE = 'unreadable'
 
 // One application. After a delete it tells the list (onDeleted), or refreshes
 // the server-rendered page when there's no list to tell, and renders nothing.
-export function ApplicationCard({ app: initial, onDeleted }: { app: ApplicationSummary; onDeleted?: (id: string) => void }) {
+export function ApplicationCard({ app: initial, onDeleted, onInterviewChange }: {
+  app: ApplicationSummary
+  onDeleted?: (id: string) => void
+  onInterviewChange?: (id: string, interviewAt: string | null) => void
+}) {
   const router = useRouter()
   const [app, setApp] = useState(initial)
   // Once the user sets the mark here, theirs wins over a search that started before it.
@@ -44,17 +49,22 @@ export function ApplicationCard({ app: initial, onDeleted }: { app: ApplicationS
     try {
       const detail = await loadDetail(app)
       if (kind === 'letter') {
-        const letter = newest(detail.coverLetters)
-        // The summary lists it, but the detail leaves out what can't be decrypted.
-        if (!letter) throw new Error('unreadable')
+        // The newest the card shows, by ID: the detail leaves out what can't be
+        // decrypted, and an older letter isn't what the button promised.
+        const id = newest(app.coverLetters)?.id
+        const letter = detail.coverLetters.find((l) => l.id === id)
+        if (!letter) throw new Error(UNREADABLE)
         await downloadLetter(detail, letter)
       } else {
-        const resume = newest(detail.tailoredResumes)
-        if (!resume) throw new Error('unreadable')
+        const id = newest(app.tailoredResumes)?.id
+        const resume = detail.tailoredResumes.find((r) => r.id === id)
+        if (!resume) throw new Error(UNREADABLE)
         await downloadResume(detail.title, resume.resume)
       }
-    } catch {
-      toast.error("Couldn't download it. Try again.")
+    } catch (e) {
+      toast.error(e instanceof Error && e.message === UNREADABLE
+        ? "This one couldn't be opened. Open Details for the others."
+        : "Couldn't download it. Try again.")
     } finally {
       setBusy(null)
     }
@@ -67,6 +77,7 @@ export function ApplicationCard({ app: initial, onDeleted }: { app: ApplicationS
       const interviewAt = await setInterview(app.id, !app.interviewAt)
       marked.current = true
       setApp((a) => ({ ...a, interviewAt }))
+      onInterviewChange?.(app.id, interviewAt)
       toast.success(interviewAt ? 'Marked as got an interview' : 'Interview mark removed')
     } catch {
       toast.error("Couldn't update it. Try again.")

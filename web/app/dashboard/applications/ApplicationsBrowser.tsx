@@ -106,6 +106,17 @@ export function ApplicationsBrowser() {
               : `${applications.length} application${applications.length === 1 ? '' : 's'}`
   const counted = range && status === 'ready' && applications.length > 0
 
+  // A deleted card, or one unmarked under the interview filter, leaves the list.
+  // If that empties a page with more behind it, the first page loads again.
+  function drop(id: string) {
+    const rest = applications.filter((a) => a.id !== id)
+    setApplications(rest)
+    if (rest.length === 0 && hasMore) {
+      setStatus('loading')
+      search.now(shown.current)
+    }
+  }
+
   function clearFilters() {
     setText('')
     setFrom('')
@@ -200,7 +211,12 @@ export function ApplicationsBrowser() {
       {range && applications.length > 0 && (
         <div className={status === 'loading' && !loadingMore ? 'grid grid-cols-1 gap-4 opacity-60 transition-opacity md:grid-cols-2' : 'grid grid-cols-1 gap-4 transition-opacity md:grid-cols-2'}>
           {applications.map((app) => (
-            <ApplicationCard key={app.id} app={app} onDeleted={(id) => setApplications((list) => list.filter((a) => a.id !== id))} />
+            <ApplicationCard
+              key={app.id}
+              app={app}
+              onDeleted={drop}
+              onInterviewChange={(id, interviewAt) => { if (shown.current.interview && !interviewAt) drop(id) }}
+            />
           ))}
         </div>
       )}

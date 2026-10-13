@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { ArrowSquareOutIcon, DownloadSimpleIcon } from '@phosphor-icons/react/dist/ssr'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -34,13 +34,19 @@ export function ApplicationDetailsSheet({ app, open, onOpenChange, busy, onToggl
   const letters = app.coverLetters.length
   const resumes = app.tailoredResumes.length
 
+  // Only the latest fetch may fill the drawer; one for an older summary is ignored.
+  const current = useRef(0)
   const load = useCallback(() => {
+    const call = ++current.current
     setState('loading')
-    loadDetail(app).then((d) => { setDetail(d); setState('idle') }, () => setState('error'))
+    loadDetail(app).then(
+      (d) => { if (call === current.current) { setDetail(d); setState('idle') } },
+      () => { if (call === current.current) setState('error') },
+    )
   }, [app])
 
   // A newer summary (more letters or resumes) drops what was shown, so the next open fetches again.
-  useEffect(() => { setDetail(null); setState('idle') }, [app.coverLetters, app.tailoredResumes])
+  useEffect(() => { current.current++; setDetail(null); setState('idle') }, [app.coverLetters, app.tailoredResumes])
 
   useEffect(() => {
     if (open && !detail && state === 'idle') load()
