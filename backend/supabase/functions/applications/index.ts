@@ -1,6 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { handleCors, json } from '../_shared/cors.ts'
 import { decrypt } from '../_shared/encrypt.ts'
+import { likeContains, parseSearch } from '../_shared/application-search.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SECRET_KEY = Deno.env.get('SERVICE_KEY')!
@@ -29,11 +30,15 @@ Deno.serve(async (req) => {
     return json({ error: 'Application history requires a Pro subscription.' }, 403)
   }
 
-  const appId = new URL(req.url).searchParams.get('id')
+  const params = new URL(req.url).searchParams
+  const appId = params.get('id')
 
-  // GET — fetch all job applications with nested artifacts
+  // GET: job applications with nested artifacts, newest first; optional search, dates and paging (_shared/application-search.ts)
   if (req.method === 'GET') {
-    const { data: rows, error } = await supabase
+    const search = parseSearch(params)
+    if ('error' in search) return json({ error: search.error }, 400)
+
+    let query = supabase
       .from('job_applications')
       .select(`
         id, title, company, url, created_at,
@@ -41,16 +46,27 @@ Deno.serve(async (req) => {
         tailored_resumes(id, resume_json_encrypted, created_at)
       `)
       .eq('user_id', userId)
+    for (const term of search.terms) query = query.ilike('search_text', likeContains(term))
+    if (search.from) query = query.gte('created_at', search.from)
+    if (search.to) query = query.lt('created_at', search.to)
+    // ponytail: created_at alone as the cursor. Two of one user's applications
+    // in the same microsecond would page past one; use (created_at, id) if seen.
+    if (search.before) query = query.lt('created_at', search.before)
+
+    // One extra row tells us whether there's another page.
+    const { data: found, error } = await query
       .order('created_at', { ascending: false })
-      .limit(30)
+      .limit(search.limit + 1)
 
     if (error) return json({ error: 'Failed to fetch applications' }, 500)
+    const hasMore = (found?.length ?? 0) > search.limit
+    const rows = (found ?? []).slice(0, search.limit)
 
     type RawCoverLetter = { id: string; letter_encrypted: string; created_at: string }
     type RawResume = { id: string; resume_json_encrypted: string; created_at: string }
 
     const applications = []
-    for (const row of rows ?? []) {
+    for (const row of rows) {
       const coverLetters = []
       for (const cl of (row.cover_letters as RawCoverLetter[]) ?? []) {
         try {
@@ -82,7 +98,7 @@ Deno.serve(async (req) => {
       })
     }
 
-    return json({ applications })
+    return json({ applications, hasMore })
   }
 
   // DELETE — remove a job application (cascades to cover_letters + tailored_resumes)
