@@ -246,7 +246,7 @@ function AuthForm() {
         : view === "signin"
           ? "Sign in to your Cover Me account."
           : plan === "pro"
-            ? "Up to 25 generations a day, synced across devices."
+            ? "Up to 25 generations a day, every application saved."
             : "10 free generations to start. No credit card required.";
 
   return (

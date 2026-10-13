@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { fetchApplications, summarizeApplication, type Application } from './applications'
+import { dayRange, fetchApplications, queryFromParams, summarizeApplication, type Application } from './applications'
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -13,7 +13,7 @@ describe('fetchApplications', () => {
   it('returns the applications for a Pro account', async () => {
     const fetchMock = vi.fn(async () => new Response(JSON.stringify({ applications: [app([])] }), { status: 200 }))
     vi.stubGlobal('fetch', fetchMock)
-    expect(await fetchApplications('https://x.supabase.co', 'at')).toHaveLength(1)
+    expect((await fetchApplications('https://x.supabase.co', 'at'))?.applications).toHaveLength(1)
     const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit]
     expect(url).toBe('https://x.supabase.co/functions/v1/applications')
     expect((init.headers as Record<string, string>).Authorization).toBe('Bearer at')
@@ -24,7 +24,7 @@ describe('fetchApplications', () => {
   it('keeps only the ATS score and gaps of each tailored resume', async () => {
     const full = { name: 'Pat', email: 'pat@example.com', phone: '555', experience: [{ title: 'x' }], atsScore: 80, atsGaps: ['Go'] }
     vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ applications: [app([{ id: 't1', resume: full, createdAt: '2026-10-01T00:00:00Z' }])] }), { status: 200 })))
-    const [a] = (await fetchApplications('https://x.supabase.co', 'at'))!
+    const [a] = (await fetchApplications('https://x.supabase.co', 'at'))!.applications
     expect(a.tailoredResumes[0].resume).toEqual({ atsScore: 80, atsGaps: ['Go'] })
   })
 
@@ -35,6 +35,59 @@ describe('fetchApplications', () => {
     expect(await fetchApplications('https://x.supabase.co', 'at')).toBeNull()
     vi.stubGlobal('fetch', vi.fn(async () => { throw new TypeError('fetch failed') }))
     expect(await fetchApplications('https://x.supabase.co', 'at')).toBeNull()
+  })
+})
+
+describe('fetchApplications query', () => {
+  it('sends only the parameters that are set, and reads hasMore', async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ applications: [], hasMore: true }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    const page = await fetchApplications('https://x.supabase.co', 'at', { q: 'acme eng', from: '2026-10-01T04:00:00.000Z', to: '', limit: 5 })
+    expect(page).toEqual({ applications: [], hasMore: true })
+    const [url] = fetchMock.mock.calls[0] as unknown as [string]
+    expect(url).toBe('https://x.supabase.co/functions/v1/applications?q=acme+eng&from=2026-10-01T04%3A00%3A00.000Z&limit=5')
+  })
+
+  it('treats a missing hasMore as false', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ applications: [] }), { status: 200 })))
+    expect(await fetchApplications('https://x.supabase.co', 'at')).toEqual({ applications: [], hasMore: false })
+  })
+})
+
+describe('queryFromParams', () => {
+  it('keeps q, from, to and before only', () => {
+    const p = new URLSearchParams('q=a&from=b&to=c&before=d&limit=50&id=x')
+    expect(queryFromParams(p)).toEqual({ q: 'a', from: 'b', to: 'c', before: 'd' })
+  })
+})
+
+describe('dayRange', () => {
+  it('turns local dates into instants, to inclusive of its whole day', () => {
+    expect(dayRange('2026-10-03', '2026-10-05')).toEqual({
+      from: new Date(2026, 9, 3).toISOString(),
+      to: new Date(2026, 9, 6).toISOString(),
+    })
+  })
+  it('allows either side alone', () => {
+    expect(dayRange('', '2026-10-05')).toEqual({ to: new Date(2026, 9, 6).toISOString() })
+    expect(dayRange('2026-10-03', '')).toEqual({ from: new Date(2026, 9, 3).toISOString() })
+    expect(dayRange('', '')).toEqual({})
+  })
+  // A date field accepts years up to 275760, and new Date(y, …) reads 0-99
+  // as 1900-1999.
+  it('ignores five-digit years, and keeps two-digit years as typed', () => {
+    expect(dayRange('', '275760-09-12')).toEqual({})
+    expect(dayRange('10000-01-01', '')).toEqual({})
+    expect(dayRange('', '9999-12-31')).toEqual({})
+    // East of UTC, local midnight on 1 January of year 1 is still year 0 in UTC.
+    expect(dayRange('0001-01-01', '')?.from?.startsWith('0000')).not.toBe(true)
+    const y99 = new Date(0)
+    y99.setFullYear(99, 0, 1)
+    y99.setHours(0, 0, 0, 0)
+    expect(dayRange('0099-01-01', '')).toEqual({ from: y99.toISOString() })
+  })
+  it('is null when from is after to', () => {
+    expect(dayRange('2026-10-06', '2026-10-05')).toBeNull()
   })
 })
 

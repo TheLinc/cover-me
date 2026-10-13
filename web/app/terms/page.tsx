@@ -156,7 +156,7 @@ export default function TermsPage() {
                 <strong className="text-foreground">Hosted (Free &amp; Pro).</strong> You create an
                 account. Cover letter generation is handled by our backend using our API key. The Free
                 tier allows 10 generations to start, then 5 a week. The Pro tier ($15/month or $35 every 3 months) allows up to 25 generations a day under fair use
-                and cross-device history sync.
+                and keeps every application on your account, searchable on the dashboard.
               </Li>
             </Ul>
             <P>

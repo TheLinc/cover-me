@@ -47,7 +47,7 @@ export const jsonLdApp = {
       price: '15',
       priceCurrency: 'USD',
       name: 'Pro',
-      description: 'Up to 25 generations a day with cross-device history sync, $15/month or $35 every 3 months.',
+      description: 'Up to 25 generations a day, every application saved and searchable, $15/month or $35 every 3 months.',
       eligibleQuantity: {
         '@type': 'QuantitativeValue',
         unitText: 'month',
