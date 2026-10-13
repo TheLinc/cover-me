@@ -33,7 +33,10 @@ export function ApplicationCard({ app: initial, onDeleted, onInterviewChange }: 
   // closed, so a filter that drops the card doesn't pull the drawer away.
   const pendingMark = useRef<{ interviewAt: string | null } | null>(null)
   const [deleted, setDeleted] = useState(false)
-  const [detailsOpen, setDetailsOpen] = useState(false)
+  const [detailsOpen, setDetailsOpenState] = useState(false)
+  // Read after an await, where the render's detailsOpen may be out of date.
+  const openNow = useRef(false)
+  const setDetailsOpen = (open: boolean) => { openNow.current = open; setDetailsOpenState(open) }
   const [confirming, setConfirming] = useState(false)
   const [deleteError, setDeleteError] = useState('')
   const [busy, setBusy] = useState<Busy>(null)
@@ -94,8 +97,11 @@ export function ApplicationCard({ app: initial, onDeleted, onInterviewChange }: 
       const interviewAt = await setInterview(app.id, !app.interviewAt)
       marked.current = true
       setApp((a) => ({ ...a, interviewAt }))
-      if (detailsOpen) pendingMark.current = { interviewAt }
-      else onInterviewChange?.(app.id, interviewAt)
+      if (openNow.current) pendingMark.current = { interviewAt }
+      else {
+        pendingMark.current = null
+        onInterviewChange?.(app.id, interviewAt)
+      }
       toast.success(interviewAt ? 'Marked as got an interview' : 'Interview mark removed')
     } catch (e) {
       if (isGone(e)) return leave(GONE_MESSAGE)
