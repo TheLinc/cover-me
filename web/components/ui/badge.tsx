@@ -17,6 +17,8 @@ const badgeVariants = cva(
           'border-border text-foreground bg-transparent',
         pro:
           'border-transparent bg-primary text-primary-foreground',
+        interview:
+          'border-transparent bg-primary/10 text-brand-strong',
         free:
           'border-border bg-secondary text-muted-foreground',
       },

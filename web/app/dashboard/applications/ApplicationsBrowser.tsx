@@ -6,9 +6,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Spinner } from '@/components/ui/spinner'
-import { dayRange, type Application, type ApplicationsPage, type ApplicationsQuery } from '@/lib/applications'
+import { dayRange, type ApplicationSummary, type ApplicationsPage, type ApplicationsQuery } from '@/lib/applications'
 import { createLatestSearch } from '@/lib/latest-search'
-import { ApplicationList } from '../ApplicationList'
+import { Checkbox } from '@/components/ui/checkbox'
+import { ApplicationCard } from './ApplicationCard'
+import { DateField } from './DateField'
 
 type Status = 'loading' | 'ready' | 'error'
 
@@ -28,7 +30,8 @@ export function ApplicationsBrowser() {
   const [text, setText] = useState('')
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
-  const [applications, setApplications] = useState<Application[]>([])
+  const [applications, setApplications] = useState<ApplicationSummary[]>([])
+  const [interviewOnly, setInterviewOnly] = useState(false)
   const [hasMore, setHasMore] = useState(false)
   const [status, setStatus] = useState<Status>('loading')
   const [loadingMore, setLoadingMore] = useState(false)
@@ -57,8 +60,8 @@ export function ApplicationsBrowser() {
   useEffect(() => () => search.cancel(), [search])
 
   const range = dayRange(from, to)
-  const query: ApplicationsQuery | null = range ? { q: text.trim(), ...range } : null
-  const filtered = Boolean(text.trim() || from || to)
+  const query: ApplicationsQuery | null = range ? { q: text.trim(), ...range, ...(interviewOnly ? { interview: '1' as const } : {}) } : null
+  const filtered = Boolean(text.trim() || from || to || interviewOnly)
 
   // The first load runs at once; after that, typing and dates wait for a
   // pause (a date field emits each keystroke of its year as a value).
@@ -71,7 +74,7 @@ export function ApplicationsBrowser() {
     if (loaded.current) search.schedule(query)
     else { loaded.current = true; search.now(query) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [text, from, to])
+  }, [text, from, to, interviewOnly])
 
   function retry() {
     const q = failed.current ?? query
@@ -90,21 +93,20 @@ export function ApplicationsBrowser() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-end gap-3">
-        <div className="flex flex-col gap-1.5 flex-1 min-w-[220px]">
+      {/* Sticks under the site header (h-16) while the cards scroll. */}
+      <div className="sticky top-16 z-10 -mx-7 -mt-6 flex flex-wrap items-end gap-3 border-b border-border bg-surface px-7 pb-4 pt-6">
+        <div className="flex min-w-[220px] flex-1 flex-col gap-1.5">
           <Label htmlFor="app-search">Company or job title</Label>
           <div className="relative">
             <MagnifyingGlassIcon size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden />
             <Input id="app-search" type="search" value={text} onChange={(e) => setText(e.target.value)} maxLength={100} placeholder="Search" className="pl-9" />
           </div>
         </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="app-from">From</Label>
-          <Input id="app-from" type="date" value={from} onChange={(e) => setFrom(e.target.value)} aria-invalid={!range} aria-describedby={range ? undefined : 'app-range-error'} className="w-[160px]" />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="app-to">To</Label>
-          <Input id="app-to" type="date" value={to} onChange={(e) => setTo(e.target.value)} aria-invalid={!range} aria-describedby={range ? undefined : 'app-range-error'} className="w-[160px]" />
+        <DateField id="app-from" label="From" value={from} onChange={setFrom} invalid={!range} describedBy={range ? undefined : 'app-range-error'} />
+        <DateField id="app-to" label="To" value={to} onChange={setTo} invalid={!range} describedBy={range ? undefined : 'app-range-error'} />
+        <div className="flex h-10 items-center gap-2">
+          <Checkbox id="app-interview" checked={interviewOnly} onCheckedChange={(v) => setInterviewOnly(v === true)} />
+          <Label htmlFor="app-interview" className="cursor-pointer">Got an interview</Label>
         </div>
       </div>
 
@@ -128,8 +130,8 @@ export function ApplicationsBrowser() {
       </div>
 
       {range && applications.length > 0 && (
-        <div className={status === 'loading' && !loadingMore ? 'opacity-60 transition-opacity' : 'transition-opacity'}>
-          <ApplicationList applications={applications} />
+        <div className={status === 'loading' && !loadingMore ? 'grid gap-4 opacity-60 transition-opacity md:grid-cols-2' : 'grid gap-4 transition-opacity md:grid-cols-2'}>
+          {applications.map((app) => <ApplicationCard key={app.id} app={app} />)}
         </div>
       )}
 

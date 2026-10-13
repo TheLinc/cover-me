@@ -5,6 +5,7 @@ import { SiteNav } from '@/components/site/SiteNav'
 import { appLinks } from '@/components/site/app-links'
 import { SignOutButton } from '@/components/site/SignOutButton'
 import { ApplicationsBrowser } from './ApplicationsBrowser'
+import { Toaster } from '@/components/ui/sonner'
 
 export const metadata: Metadata = { title: 'Your applications', robots: { index: false } }
 
@@ -25,11 +26,12 @@ export default async function ApplicationsPage() {
             <h1 className="text-[clamp(28px,3.8vw,40px)] leading-none text-foreground">Your applications</h1>
             <p className="text-[13.5px] text-muted-foreground">Every letter and tailored resume you&apos;ve made, synced from the extension.</p>
           </header>
-          <section className="bg-surface border border-border rounded-[10px] px-7 py-6">
+          <section className="bg-surface border border-border rounded-[10px] px-7 pb-6">
             <ApplicationsBrowser />
           </section>
         </div>
       </main>
+      <Toaster />
     </div>
   )
 }

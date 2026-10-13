@@ -5,6 +5,7 @@ import DashboardClient from './DashboardClient'
 import type { Allowance } from '@/lib/limits'
 import { avatarUrl } from '@/lib/avatar'
 import { ProHistory } from './ApplicationHistory'
+import { Toaster } from '@/components/ui/sonner'
 
 export default async function DashboardPage() {
   const supabase = await createServerSupabaseClient()
@@ -31,6 +32,7 @@ export default async function DashboardPage() {
   }
 
   return (
+    <>
     <DashboardClient
       email={user.email ?? ''}
       avatar={avatarUrl(user.user_metadata)}
@@ -39,5 +41,7 @@ export default async function DashboardPage() {
       allowance={(allowance as Allowance | null) ?? null}
       history={history}
     />
+    <Toaster />
+    </>
   )
 }

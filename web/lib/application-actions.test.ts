@@ -12,7 +12,7 @@ describe('loadDetail', () => {
     expect(await loadDetail('a1')).toEqual(detail)
     expect(await loadDetail('a1')).toEqual(detail)
     expect(fetchMock).toHaveBeenCalledTimes(1)
-    expect(fetchMock.mock.calls[0][0]).toBe('/api/applications?detail=a1')
+    expect((fetchMock.mock.calls[0] as unknown[])[0]).toBe('/api/applications?detail=a1')
   })
 
   it("doesn't keep a failure: the next call tries again", async () => {
