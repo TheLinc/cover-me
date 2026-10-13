@@ -182,7 +182,7 @@ Google sign-in is off on the local stack until you add a Google OAuth client for
 Then run the apps against it:
 
 ```bash
-# backend/: add a real ANTHROPIC_API_KEY to supabase/functions/.env first
+# backend/: add a real ANTHROPIC_API_KEY to supabase/functions/.env first (and the sandbox STRIPE_* values for local checkout)
 pnpm functions:serve
 
 # extension/: adds http://127.0.0.1:54321 to host_permissions (production builds don't)
@@ -193,7 +193,7 @@ pnpm dev
 # optional; the key pins the Stripe account (the CLI's active one can belong to another project),
 # and the :? stops instead of falling back to that account when no key is found. Paste the whsec_ into web/.env.localdb
 key=$(grep '^STRIPE_SECRET_KEY=' .env.local | cut -d= -f2- | awk '{print $1}' | tr -d '"\r')
-STRIPE_API_KEY="${key:?no STRIPE_SECRET_KEY in .env.local}" stripe listen --forward-to localhost:3000/api/stripe-webhook
+STRIPE_API_KEY="${key:?no STRIPE_SECRET_KEY in .env.local}" stripe listen --forward-to localhost:3100/api/stripe-webhook
 ```
 
 #### Tests
@@ -433,7 +433,7 @@ supabase functions deploy billing
 For local testing, use the [Stripe CLI](https://stripe.com/docs/stripe-cli). Pass your test-mode secret key so the listener uses your account, whichever one the CLI last signed in to:
 
 ```bash
-STRIPE_API_KEY=sk_test_... stripe listen --forward-to localhost:3000/api/stripe-webhook
+STRIPE_API_KEY=sk_test_... stripe listen --forward-to localhost:3100/api/stripe-webhook
 ```
 
 ### 8. Configure the web dashboard
@@ -469,7 +469,7 @@ VITE_SUPABASE_PUBLISHABLE_KEY=<anon-key>
 VITE_WEB_URL=https://your-domain.com
 ```
 
-(If you want separate credentials for local development, put those in `extension/.env.development` instead — Vite only loads that file for `pnpm dev`, never for `pnpm run build`, so your production build always uses `extension/.env`.)
+(Local development uses `extension/.env.localdb` instead, which `pnpm env:local` in `backend/` writes. `pnpm dev` and `pnpm build:local` load it; `pnpm run build` always uses `extension/.env`.)
 
 Rebuild the extension:
 
@@ -521,7 +521,7 @@ Turn on the website's button only once users have an extension build with Google
 | `NEXT_PUBLIC_SITE_URL` | Your web dashboard URL |
 | `NEXT_PUBLIC_GOOGLE_SIGNIN` | `1` shows "Continue with Google" (after step 10) |
 
-**Extension** (`extension/.env`; use `extension/.env.development` for local-only overrides):
+**Extension** (`extension/.env`; local development uses `extension/.env.localdb`, written by `pnpm env:local`):
 
 | Variable | Description |
 |---|---|
