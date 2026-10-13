@@ -79,6 +79,13 @@ Deno.serve(async (req) => {
 
     if (!body?.id || !body?.letter) return json({ error: 'Missing required fields' }, 400)
 
+    // An ID that already exists, in this account or another, is left alone:
+    // never overwritten, and no job application is made for it. The extension
+    // sends each letter once, so this changes nothing for it.
+    const { data: existing, error: lookupError } = await supabase.from('cover_letters').select('id').eq('id', body.id).maybeSingle()
+    if (lookupError) return json({ error: 'Failed to save letter' }, 500)
+    if (existing) return json({ success: true })
+
     let jobApplicationId: string
     try {
       jobApplicationId = await findOrCreateJobApplication(supabase, userId, body.job ?? {})
@@ -94,7 +101,7 @@ Deno.serve(async (req) => {
       job_application_id: jobApplicationId,
       letter_encrypted,
       created_at: body.createdAt,
-    })
+    }, { onConflict: 'id', ignoreDuplicates: true })
 
     if (error) return json({ error: 'Failed to save letter' }, 500)
     return json({ success: true })

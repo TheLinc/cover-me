@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
   admin, callFunction, createUser, deleteUser, JOB, mockClaude, quotaUsedToday, setQuotaUsedToday, setUsage, type TestUser, uploadResume,
@@ -7,7 +8,7 @@ import { MOCK_PARSED_RESUME, MOCK_REWRITTEN_BULLET, MOCK_TAILOR_DELTA } from '..
 type NdjsonEvent =
   | { type: 'start'; roles: number }
   | { type: 'delta'; text: string }
-  | { type: 'done'; resume: Record<string, unknown> }
+  | { type: 'done'; resume: Record<string, unknown>; savedId?: string }
   | { type: 'error'; error: string }
 
 async function readNdjson(res: Response): Promise<NdjsonEvent[]> {
@@ -229,5 +230,56 @@ describe('tailor', () => {
     const res = await callFunction('tailor', { token: user.token, body: { job: JOB } })
     expect(res.status).toBe(502)
     expect(await quotaUsedToday(user.id)).toBe(0)
+  })
+
+  it('stores the Pro copy under the local ID and returns it as savedId', async () => {
+    user = await createUser('hosted_pro')
+    await uploadResume(user)
+    const localId = randomUUID()
+    const res = await callFunction('tailor', { token: user.token, body: { job: JOB, localId } })
+    expect((await res.json()).savedId).toBe(localId)
+    const { data } = await admin.from('tailored_resumes').select('id').eq('user_id', user.id)
+    expect(data?.map((r) => r.id)).toEqual([localId])
+  })
+
+  it('streams savedId in the done event', async () => {
+    user = await createUser('hosted_pro')
+    await uploadResume(user)
+    const localId = randomUUID()
+    const res = await callFunction('tailor', { token: user.token, body: { job: JOB, localId }, headers: { Accept: 'application/x-ndjson' } })
+    const done = (await readNdjson(res)).at(-1)
+    expect(done?.type === 'done' && done.savedId).toBe(localId)
+  })
+
+  it("without a local ID, savedId is the stored row's ID (1.2.0 sends none)", async () => {
+    user = await createUser('hosted_pro')
+    await uploadResume(user)
+    const body = await (await callFunction('tailor', { token: user.token, body: { job: JOB } })).json()
+    const { data } = await admin.from('tailored_resumes').select('id').eq('user_id', user.id)
+    expect(data?.map((r) => r.id)).toEqual([body.savedId])
+  })
+
+  it('a local ID that belongs to another account saves nothing and returns no savedId', async () => {
+    const other = await createUser('hosted_pro')
+    try {
+      await uploadResume(other)
+      const localId = randomUUID()
+      await callFunction('tailor', { token: other.token, body: { job: JOB, localId } })
+      user = await createUser('hosted_pro')
+      await uploadResume(user)
+      const body = await (await callFunction('tailor', { token: user.token, body: { job: JOB, localId } })).json()
+      expect(body.savedId).toBeUndefined()
+      const { data } = await admin.from('tailored_resumes').select('user_id').eq('id', localId).single()
+      expect(data?.user_id).toBe(other.id)
+    } finally {
+      await deleteUser(other)
+    }
+  })
+
+  it('free accounts get no savedId', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    const body = await (await callFunction('tailor', { token: user.token, body: { job: JOB, localId: randomUUID() } })).json()
+    expect(body.savedId).toBeUndefined()
   })
 })

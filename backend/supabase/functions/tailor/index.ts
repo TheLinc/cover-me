@@ -4,6 +4,7 @@ import { ANTHROPIC_MESSAGES_URL, SONNET_BETA_HEADER, SONNET_FIELDS, SONNET_MAX_T
 import { corsHeaders, handleCors, json } from '../_shared/cors.ts'
 import { decrypt, encrypt } from '../_shared/encrypt.ts'
 import { findOrCreateJobApplication } from '../_shared/job-application.ts'
+import { isUuid } from '../_shared/history-upload.ts'
 import { isValidParsedResume, parseResumeStructure, type ParsedResume } from '../_shared/resume-parse.ts'
 import { candidateText, checkAndRewriteLines, groundSkills, groundTailored } from '../_shared/resume-grounding.ts'
 import { scoreFromMatch } from '../_shared/ats-score.ts'
@@ -354,6 +355,7 @@ Deno.serve(async (req) => {
   let trim = false
   let includeSummary = true
   let previous: Record<string, unknown> | undefined
+  let localId: string | undefined
   try {
     const body = await req.json()
     job = body.job
@@ -362,6 +364,7 @@ Deno.serve(async (req) => {
     trim = !!body.trim
     includeSummary = body.includeSummary !== false
     previous = body.previous && typeof body.previous === 'object' ? body.previous : undefined
+    localId = isUuid(body.localId) ? body.localId : undefined
   } catch {
     return json({ error: 'Invalid request body' }, 400)
   }
@@ -513,7 +516,7 @@ Deno.serve(async (req) => {
 
   // Parse the delta, merge into the structured resume, attach the code-computed
   // score, and persist for Pro users. Throws on unusable model output.
-  const assemble = async (raw: string): Promise<Record<string, unknown>> => {
+  const assemble = async (raw: string): Promise<{ resume: Record<string, unknown>; savedId?: string }> => {
     if (DEBUG) console.log('[CoverMe debug] raw model response:\n', raw)
 
     const delta = parseDelta(raw)
@@ -536,24 +539,36 @@ Deno.serve(async (req) => {
       resume.atsGaps = atsGaps
     }
 
-    // Persist for Pro users — non-fatal if it fails
+    // Persist for Pro users, non-fatal if it fails. Under the extension's
+    // local ID when it sends one (1.2.0 doesn't), never overwriting an
+    // existing row, so a later upload of local history can't duplicate it.
+    // ponytail: a local ID that's already someone else's still leaves an empty
+    // job application here; only a client making up IDs can cause that.
+    let savedId: string | undefined
     if (tier === 'hosted_pro') {
       try {
         const jobAppId = await findOrCreateJobApplication(supabase, userId, job)
-        const resume_json_encrypted = await encrypt(JSON.stringify(resume))
-        await supabase.from('tailored_resumes').insert({
+        const row = {
           user_id: userId,
           job_application_id: jobAppId,
-          resume_json_encrypted,
+          resume_json_encrypted: await encrypt(JSON.stringify(resume)),
           ats_score: atsScore ?? null,
           ats_gaps: atsGaps ?? null,
-        })
+        }
+        const table = supabase.from('tailored_resumes')
+        // An upsert that hits an existing ID returns no row, so savedId stays empty.
+        const { data, error } = await (localId
+          ? table.upsert({ ...row, id: localId }, { onConflict: 'id', ignoreDuplicates: true })
+          : table.insert(row)
+        ).select('id')
+        if (error) throw error
+        savedId = data?.[0]?.id
       } catch {
         console.error('Failed to persist tailored resume')
       }
     }
 
-    return resume
+    return { resume, savedId }
   }
 
   // Legacy clients (extension versions before the streaming update) expect a
@@ -562,8 +577,8 @@ Deno.serve(async (req) => {
   const wantsStream = (req.headers.get('accept') ?? '').includes('application/x-ndjson')
   if (!wantsStream) {
     try {
-      const resume = await assemble(await readUpstream())
-      return json({ resume })
+      const { resume, savedId } = await assemble(await readUpstream())
+      return json({ resume, savedId })
     } catch (err) {
       console.error('Tailor error:', err instanceof Error ? err.message : err)
       await refund()
@@ -587,7 +602,8 @@ Deno.serve(async (req) => {
       send({ type: 'start', roles: structuredResume.experience.length })
       try {
         const raw = await readUpstream((text) => send({ type: 'delta', text }))
-        send({ type: 'done', resume: await assemble(raw) })
+        const { resume, savedId } = await assemble(raw)
+        send({ type: 'done', resume, savedId })
       } catch (err) {
         console.error('Tailor stream error:', err instanceof Error ? err.message : err)
         await refund()

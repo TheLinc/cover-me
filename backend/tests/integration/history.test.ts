@@ -83,4 +83,24 @@ describe('history sync', () => {
       await deleteUser(other)
     }
   })
+
+  it("letters POST never overwrites another user's letter, or leaves an empty application", async () => {
+    const other = await createUser('hosted_pro')
+    try {
+      user = await createUser('hosted_pro')
+      const id = randomUUID()
+      await callFunction('letters', { token: other.token, body: { id, job: JOB, letter: 'original', createdAt: new Date().toISOString() } })
+      const res = await callFunction('letters', { token: user.token, body: { id, job: JOB, letter: 'replaced', createdAt: new Date().toISOString() } })
+      expect(res.status).toBe(200)
+
+      const { data } = await admin.from('cover_letters').select('user_id').eq('id', id).single()
+      expect(data?.user_id).toBe(other.id)
+      const theirs = await (await callFunction('letters', { token: other.token })).json()
+      expect(theirs.letters[0].letter).toBe('original')
+      const { data: apps } = await admin.from('job_applications').select('id').eq('user_id', user.id)
+      expect(apps).toHaveLength(0)
+    } finally {
+      await deleteUser(other)
+    }
+  })
 })
