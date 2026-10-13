@@ -63,8 +63,8 @@ export function ApplicationsBrowser() {
   const query: ApplicationsQuery | null = range ? { q: text.trim(), ...range, ...(interviewOnly ? { interview: '1' as const } : {}) } : null
   const filtered = Boolean(text.trim() || from || to || interviewOnly)
 
-  // The first load runs at once; after that, typing and dates wait for a
-  // pause (a date field emits each keystroke of its year as a value).
+  // The first load runs at once; after that, changes wait for a short pause
+  // (typing sends one search per pause, not per keystroke).
   const loaded = useRef(false)
   useEffect(() => {
     // A new search cuts off any Load more in flight.
@@ -95,7 +95,7 @@ export function ApplicationsBrowser() {
     <div className="flex flex-col gap-5">
       {/* Sticks under the site header (h-16) while the cards scroll. Not on
           phones: the bar wraps to most of the screen there. */}
-      <div className="md:sticky md:top-16 z-10 -mx-7 -mt-6 flex flex-wrap items-end gap-3 border-b border-border bg-surface px-7 pb-4 pt-6">
+      <div className="md:sticky md:top-16 z-10 -mx-7 flex flex-wrap items-end gap-3 rounded-t-[10px] border-b border-border bg-surface px-7 pb-4 pt-6">
         <div className="flex min-w-[220px] flex-1 flex-col gap-1.5">
           <Label htmlFor="app-search">Company or job title</Label>
           <div className="relative">

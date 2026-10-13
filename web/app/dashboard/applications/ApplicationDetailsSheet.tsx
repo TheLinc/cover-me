@@ -31,8 +31,11 @@ export function ApplicationDetailsSheet({ app, open, onOpenChange, busy, onToggl
 
   const load = useCallback(() => {
     setState('loading')
-    loadDetail(app.id).then((d) => { setDetail(d); setState('idle') }, () => setState('error'))
-  }, [app.id])
+    loadDetail(app).then((d) => { setDetail(d); setState('idle') }, () => setState('error'))
+  }, [app])
+
+  // A newer summary (more letters or resumes) drops what was shown, so the next open fetches again.
+  useEffect(() => { setDetail(null); setState('idle') }, [app.coverLetters, app.tailoredResumes])
 
   useEffect(() => {
     if (open && !detail && state === 'idle') load()
@@ -81,7 +84,7 @@ export function ApplicationDetailsSheet({ app, open, onOpenChange, busy, onToggl
           {state === 'error' && (
             <p className="text-[13px] text-muted-foreground">
               Couldn&apos;t load this application.{' '}
-              <button type="button" className="text-brand-strong underline" onClick={load}>Try again</button>
+              <Button variant="link" size="sm" className="h-auto p-0" onClick={load}>Try again</Button>
             </p>
           )}
         </div>
@@ -95,7 +98,7 @@ export function ApplicationDetailsSheet({ app, open, onOpenChange, busy, onToggl
                   <article key={l.id} className="mt-3 rounded-[10px] border border-border p-4">
                     <p className="text-[12px] text-muted-foreground"><LocalDate iso={l.createdAt} options={DATE} /></p>
                     <pre className="mt-2 whitespace-pre-wrap break-words font-sans text-[13px] leading-[1.6] text-foreground">{l.letter}</pre>
-                    <div className="mt-2 flex items-center gap-4">
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
                       <CopyLetterButton letter={l.letter} />
                       <Button variant="outline" size="sm" onClick={() => download(() => downloadLetter(detail, l))}>
                         <DownloadSimpleIcon size={14} aria-hidden />Download

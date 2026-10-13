@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ArrowSquareOutIcon, DotsThreeVerticalIcon, DownloadSimpleIcon } from '@phosphor-icons/react/dist/ssr'
 import { toast } from 'sonner'
 import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
@@ -16,8 +16,8 @@ import { ApplicationDetailsSheet } from './ApplicationDetailsSheet'
 
 type Busy = 'letter' | 'resume' | 'interview' | 'delete' | null
 
-// One application. Owns its own state: the interview mark it changes, and
-// after a delete it renders nothing.
+// One application. Keeps the interview mark it changes until the next summary
+// arrives, and after a delete it renders nothing.
 export function ApplicationCard({ app: initial }: { app: ApplicationSummary }) {
   const [app, setApp] = useState(initial)
   const [deleted, setDeleted] = useState(false)
@@ -25,6 +25,9 @@ export function ApplicationCard({ app: initial }: { app: ApplicationSummary }) {
   const [confirming, setConfirming] = useState(false)
   const [deleteError, setDeleteError] = useState('')
   const [busy, setBusy] = useState<Busy>(null)
+  // A new search brings a fresh summary for the same application (a letter the
+  // extension added since, the server's interview mark): show that one.
+  useEffect(() => { setApp(initial) }, [initial])
   if (deleted) return null
 
   const host = postingHost(app.url)
@@ -34,7 +37,7 @@ export function ApplicationCard({ app: initial }: { app: ApplicationSummary }) {
     if (busy) return
     setBusy(kind)
     try {
-      const detail = await loadDetail(app.id)
+      const detail = await loadDetail(app)
       if (kind === 'letter') {
         const letter = newest(detail.coverLetters)
         if (letter) await downloadLetter(detail, letter)

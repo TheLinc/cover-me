@@ -20,14 +20,15 @@ export function DateField({ id, label, value, onChange, invalid, describedBy }: 
 }) {
   const [open, setOpen] = useState(false)
   const date = fromDay(value)
+  const shown = date ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Any date'
   return (
     <div className="flex flex-col gap-1.5">
       <Label htmlFor={id}>{label}</Label>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button id={id} variant="outline" className="w-[170px] justify-start font-normal" aria-invalid={invalid || undefined} aria-describedby={describedBy}>
+          <Button id={id} variant="outline" className="w-[170px] justify-start font-normal" aria-invalid={invalid || undefined} aria-describedby={describedBy} aria-label={`${label}: ${shown}`}>
             <CalendarBlankIcon size={15} aria-hidden />
-            {date ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Any date'}
+            {shown}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">

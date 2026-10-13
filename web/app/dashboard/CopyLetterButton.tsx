@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { CopyIcon } from '@phosphor-icons/react/dist/ssr'
+import { Button } from '@/components/ui/button'
 
 export function CopyLetterButton({ letter }: { letter: string }) {
   const [copied, setCopied] = useState(false)
@@ -10,8 +12,9 @@ export function CopyLetterButton({ letter }: { letter: string }) {
     setTimeout(() => setCopied(false), 2000)
   }
   return (
-    <button type="button" onClick={copy} className="mt-2 text-[12.5px] text-brand-light cursor-pointer bg-transparent border-none p-0 hover:underline">
+    <Button variant="outline" size="sm" onClick={copy}>
+      <CopyIcon size={14} aria-hidden />
       {copied ? 'Copied' : 'Copy letter'}
-    </button>
+    </Button>
   )
 }

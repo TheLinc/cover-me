@@ -1,6 +1,6 @@
 'use client'
 
-import type { ApplicationDetail } from './applications'
+import type { ApplicationDetail, ApplicationSummary } from './applications'
 import type { PdfJob, TailoredResume } from './pdf/types'
 
 // The cards' calls to /api/applications. Signed out (401) or no longer Pro
@@ -17,18 +17,24 @@ async function call(path: string, init?: RequestInit): Promise<Response> {
 }
 
 // Each application's detail is fetched once and kept for the visit: the
-// drawer and both Download buttons share it. A failure isn't kept.
-const details = new Map<string, Promise<ApplicationDetail>>()
+// drawer and both Download buttons share it. It's kept against the letter and
+// resume IDs the card's summary lists, so a newer summary (the extension added
+// a letter since) fetches again. A failure isn't kept.
+const details = new Map<string, { key: string; promise: Promise<ApplicationDetail> }>()
 
-export function loadDetail(id: string): Promise<ApplicationDetail> {
-  const cached = details.get(id)
-  if (cached) return cached
-  const promise = call(`/api/applications?detail=${encodeURIComponent(id)}`).then(async (res) => {
+const contentKey = (app: ApplicationSummary) =>
+  [...app.coverLetters.map((l) => l.id), '|', ...app.tailoredResumes.map((r) => r.id)].join(',')
+
+export function loadDetail(app: ApplicationSummary): Promise<ApplicationDetail> {
+  const key = contentKey(app)
+  const cached = details.get(app.id)
+  if (cached && cached.key === key) return cached.promise
+  const promise = call(`/api/applications?detail=${encodeURIComponent(app.id)}`).then(async (res) => {
     if (!res.ok) throw new Error(String(res.status))
     return ((await res.json()) as { application: ApplicationDetail }).application
   })
-  details.set(id, promise)
-  promise.catch(() => details.delete(id))
+  details.set(app.id, { key, promise })
+  promise.catch(() => { if (details.get(app.id)?.promise === promise) details.delete(app.id) })
   return promise
 }
 
