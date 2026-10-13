@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { createClient } from "@/lib/supabase";
 import { openBilling } from "@/lib/billing";
 import { describeAllowance, type Allowance } from "@/lib/limits";
 import { LocalDate } from "./LocalDate";
@@ -14,7 +13,8 @@ import {
   StarIcon,
 } from "@phosphor-icons/react";
 import { Spinner } from "@/components/ui/spinner";
-import { SiteNav } from '@/components/site/SiteNav'
+import { SiteNav, appLinks } from '@/components/site/SiteNav'
+import { SignOutButton } from '@/components/site/SignOutButton'
 
 interface Props {
   email: string;
@@ -35,7 +35,6 @@ export default function DashboardClient({
   history,
 }: Props) {
   const [avatarFailed, setAvatarFailed]     = useState(false);
-  const [signingOut, setSigningOut]         = useState(false);
   const [upgrading, setUpgrading]           = useState<'monthly' | 'quarterly' | null>(null);
   const [upgradeError, setUpgradeError]     = useState('');
   const [billingLoading, setBillingLoading] = useState(false);
@@ -44,13 +43,6 @@ export default function DashboardClient({
   const initial = email[0]?.toUpperCase() ?? "?";
   const usage = describeAllowance(allowance);
   const usagePct = usage ? Math.min(100, (usage.used / usage.limit) * 100) : 0;
-
-  async function handleSignOut() {
-    setSigningOut(true);
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    window.location.href = "/";
-  }
 
   async function handleBillingPortal() {
     setBillingLoading(true);
@@ -89,20 +81,7 @@ export default function DashboardClient({
   return (
     <div className="min-h-screen bg-background">
 
-      <SiteNav
-        actions={
-          <Button variant="outline" size="sm" onClick={handleSignOut} disabled={signingOut}>
-            {signingOut ? (
-              <>
-                <Spinner className="size-3.5" />
-                Signing out
-              </>
-            ) : (
-              'Sign out'
-            )}
-          </Button>
-        }
-      />
+      <SiteNav links={appLinks(isPro)} actions={<SignOutButton />} />
 
       {/* Main */}
       <main className="px-5 pt-14 pb-24 relative z-[1]">
