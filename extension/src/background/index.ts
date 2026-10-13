@@ -5,7 +5,7 @@ import { tailorResume } from '../lib/ai/resume-tailor'
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from '../lib/config'
 import { decryptApiKey } from '../lib/crypto'
 import { debugGroup } from '../lib/debug'
-import { addToHistory, addToTailoredHistory, getCachedTier, getCandidateContext, getResume, getSettings, resolveMode, saveParsedResume } from '../lib/storage'
+import { addToHistory, addToTailoredHistory, getCachedTier, getCandidateContext, getResume, getSettings, resolveMode, saveParsedResume, setEntryAccounts } from '../lib/storage'
 import { handleInstalled } from './install'
 import type { PageSnapshot } from '../content/snapshot.ts'
 import type { CoverJob, CoverLetter, FrameScrapeResponse, GenerateResponse, JobData, ScrapeResponse, TailoredResume, TailorJob, TailorResponse } from '../types'
@@ -66,11 +66,13 @@ async function failCover(id: string, job: JobData, startedAt: number, error: str
   return { success: false, error }
 }
 
-// Every successful run is kept for History, on every path (Pro runs are also
-// saved server-side by the tailor function). Best-effort: a failed save must
-// not turn a finished (and, hosted, already counted) run into an error.
-async function recordTailored(job: JobData, resume: TailoredResume): Promise<void> {
-  await addToTailoredHistory({ id: crypto.randomUUID(), job, resume, createdAt: new Date().toISOString() }).catch(() => {})
+// Every successful run is kept for History, on every path. A Pro run's local
+// copy shares its ID with the server copy (account set once the server
+// confirmed it), so uploading local history never duplicates it. Best-effort:
+// a failed save must not turn a finished (and, hosted, already counted) run
+// into an error.
+async function recordTailored(job: JobData, resume: TailoredResume, id: string = crypto.randomUUID(), account?: string): Promise<void> {
+  await addToTailoredHistory({ id, job, resume, createdAt: new Date().toISOString(), ...(account ? { account } : {}) }).catch(() => {})
 }
 
 async function failTailor(id: string, job: JobData, startedAt: number, error: string): Promise<TailorResponse> {
@@ -443,8 +445,9 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
       }
       // Hosted: the resume + final prompt live server-side. Enable DEBUG_MODE on
       // the edge function to see those in the Supabase function logs.
-      const resume = await tailorViaBackend(job, session.access_token, compact, merged, trim, includeSummary, previous, onProgress)
-      await recordTailored(job, resume)
+      const localId = crypto.randomUUID()
+      const { resume, savedId } = await tailorViaBackend(job, session.access_token, compact, merged, trim, includeSummary, previous, onProgress, localId)
+      await recordTailored(job, resume, localId, savedId === localId ? session.user.id : undefined)
       await setTailorJob({ id, status: 'done', job, resume, startedAt })
       return { success: true, resume, job }
     }
@@ -528,7 +531,9 @@ async function generateFromJob(job: JobData, supplemental?: string, jobId?: stri
       await addToHistory(entry)
       const tier = await getCachedTier()
       if (tier === 'hosted_pro') {
-        saveLetterToBackend(session.access_token, entry).catch(() => {})
+        saveLetterToBackend(session.access_token, entry)
+          .then(() => setEntryAccounts({ letters: { [entry.id]: session.user.id } }))
+          .catch(() => {})
       }
       await setCoverJob({ id, status: 'done', job, letter, createdAt: entry.createdAt, startedAt })
       return { success: true, letter, job }
