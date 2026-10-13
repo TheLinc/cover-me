@@ -131,11 +131,11 @@ export function ApplicationDetailsSheet({ app, open, onOpenChange, busy, onToggl
         </div>
 
         <footer className="sticky bottom-0 flex items-center gap-2 border-t border-line bg-background px-6 py-4">
-          <Button variant="outline" size="sm" className={PILL} onClick={onToggleInterview} disabled={busy === 'interview'}>
+          <Button variant="outline" size="sm" className={PILL} onClick={onToggleInterview} disabled={busy !== null}>
             {busy === 'interview' && <Spinner className="size-3.5" />}
             {app.interviewAt ? 'Remove interview mark' : 'Mark as got an interview'}
           </Button>
-          <Button variant="ghost" size="sm" className={`${PILL} ml-auto text-destructive hover:text-destructive`} onClick={onDelete} disabled={busy === 'delete'}>Delete</Button>
+          <Button variant="ghost" size="sm" className={`${PILL} ml-auto text-destructive hover:text-destructive`} onClick={onDelete} disabled={busy !== null}>Delete</Button>
         </footer>
       </SheetContent>
     </Sheet>

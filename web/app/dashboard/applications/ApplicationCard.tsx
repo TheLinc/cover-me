@@ -141,7 +141,7 @@ export function ApplicationCard({ app: initial, onDeleted, onInterviewChange }: 
                   </a>
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem disabled={busy === 'interview'} onSelect={toggleInterview}>
+              <DropdownMenuItem disabled={busy !== null} onSelect={toggleInterview}>
                 {app.interviewAt ? 'Remove interview mark' : 'Mark as got an interview'}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -153,13 +153,13 @@ export function ApplicationCard({ app: initial, onDeleted, onInterviewChange }: 
 
       <div className="flex flex-wrap items-center gap-2">
         {app.coverLetters.length > 0 && (
-          <Button variant="outline" size="sm" className="h-8 gap-1.5 px-3 text-[13px] hover:border-brand-strong hover:text-brand-strong" onClick={() => download('letter')} disabled={busy === 'letter'} aria-label="Download cover letter">
+          <Button variant="outline" size="sm" className="h-8 gap-1.5 px-3 text-[13px] hover:border-brand-strong hover:text-brand-strong" onClick={() => download('letter')} disabled={busy !== null} aria-label="Download cover letter">
             {busy === 'letter' ? <Spinner className="size-3.5" /> : <DownloadSimpleIcon size={14} aria-hidden />}
             Cover letter
           </Button>
         )}
         {app.tailoredResumes.length > 0 && (
-          <Button variant="outline" size="sm" className="h-8 gap-1.5 px-3 text-[13px] hover:border-brand-strong hover:text-brand-strong" onClick={() => download('resume')} disabled={busy === 'resume'} aria-label={score !== null ? `Download resume, ATS score ${score}` : 'Download resume'}>
+          <Button variant="outline" size="sm" className="h-8 gap-1.5 px-3 text-[13px] hover:border-brand-strong hover:text-brand-strong" onClick={() => download('resume')} disabled={busy !== null} aria-label={score !== null ? `Download resume, ATS score ${score}` : 'Download resume'}>
             {busy === 'resume' ? <Spinner className="size-3.5" /> : <DownloadSimpleIcon size={14} aria-hidden />}
             Resume
             {score !== null && (
@@ -194,7 +194,7 @@ export function ApplicationCard({ app: initial, onDeleted, onInterviewChange }: 
           <AlertDialogFooter>
             <AlertDialogCancel disabled={busy === 'delete'}>Cancel</AlertDialogCancel>
             {/* A plain Button, not AlertDialogAction, which closes the dialog before the delete finishes. */}
-            <Button variant="destructive" onClick={remove} disabled={busy === 'delete'}>
+            <Button variant="destructive" onClick={remove} disabled={busy !== null}>
               {busy === 'delete' ? <><Spinner className="size-3.5" />Deleting</> : 'Delete'}
             </Button>
           </AlertDialogFooter>

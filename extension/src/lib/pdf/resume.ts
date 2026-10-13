@@ -60,9 +60,9 @@ export function downloadTailoredResumePdf(resume: TailoredResume, jobTitle?: str
     need(14)
     doc.setFont('times', leftStyle)
     doc.setFontSize(size)
-    doc.text(left, ML, y)
+    doc.text(left || '', ML, y)
     doc.setFont('times', 'normal')
-    doc.text(right, MR, y, { align: 'right' })
+    doc.text(right || '', MR, y, { align: 'right' })
     y += 13
   }
 
@@ -74,7 +74,7 @@ export function downloadTailoredResumePdf(resume: TailoredResume, jobTitle?: str
   function bullet(text: string) {
     doc.setFont('times', 'normal')
     doc.setFontSize(10)
-    const lines = doc.splitTextToSize(text, WRAP_W) as string[]
+    const lines = doc.splitTextToSize(String(text ?? ''), WRAP_W) as string[]
     need(lines.length * 12 + 2)
     doc.text('•', BULLET_X, y)
     for (const line of lines) {
@@ -104,7 +104,7 @@ export function downloadTailoredResumePdf(resume: TailoredResume, jobTitle?: str
       twoCol(exp.title, exp.dates, 'bold')
       twoCol(exp.company, exp.location, 'italic')
       y += 2
-      for (const b of exp.bullets) bullet(b)
+      for (const b of exp.bullets ?? []) bullet(b)
       y += 5
     }
   }
@@ -116,9 +116,9 @@ export function downloadTailoredResumePdf(resume: TailoredResume, jobTitle?: str
       need(14)
       doc.setFont('times', 'bold')
       doc.setFontSize(10.5)
-      doc.text(proj.name, ML, y)
+      doc.text(proj.name || '', ML, y)
       y += 13
-      for (const b of proj.bullets) bullet(b)
+      for (const b of proj.bullets ?? []) bullet(b)
       y += 5
     }
   }
@@ -130,7 +130,7 @@ export function downloadTailoredResumePdf(resume: TailoredResume, jobTitle?: str
       twoCol(edu.institution, edu.dates, 'bold')
       twoCol(edu.degree, edu.location, 'italic')
       y += 2
-      for (const b of edu.bullets) bullet(b)
+      for (const b of edu.bullets ?? []) bullet(b)
       y += 5
     }
   }
@@ -164,5 +164,5 @@ export function downloadTailoredResumePdf(resume: TailoredResume, jobTitle?: str
   const slug = jobTitle
     ? jobTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
     : 'resume'
-  doc.save(`${resume.name.replace(/\s+/g, '-')}-${slug}.pdf`)
+  doc.save(`${(resume.name || 'Resume').replace(/\s+/g, '-')}-${slug}.pdf`)
 }

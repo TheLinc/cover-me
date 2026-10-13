@@ -107,15 +107,17 @@ export function ApplicationsBrowser() {
   const counted = range && status === 'ready' && applications.length > 0
 
   // A deleted card, or one unmarked under the interview filter, leaves the list.
-  // If that empties a page with more behind it, the first page loads again.
   function drop(id: string) {
-    const rest = applications.filter((a) => a.id !== id)
-    setApplications(rest)
-    if (rest.length === 0 && hasMore) {
+    setApplications((list) => list.filter((a) => a.id !== id))
+  }
+
+  // If that empties a page with more behind it, the first page loads again.
+  useEffect(() => {
+    if (status === 'ready' && applications.length === 0 && hasMore) {
       setStatus('loading')
       search.now(shown.current)
     }
-  }
+  }, [status, applications.length, hasMore, search])
 
   function clearFilters() {
     setText('')
