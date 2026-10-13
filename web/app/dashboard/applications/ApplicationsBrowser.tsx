@@ -40,7 +40,14 @@ export function ApplicationsBrowser() {
   const failed = useRef<ApplicationsQuery | null>(null)
   const search = useMemo(() => createLatestSearch<ApplicationsQuery, ApplicationsPage>(load, (query, result) => {
     setLoadingMore(false)
-    if (!result.ok) { failed.current = query; setStatus('error'); return }
+    if (!result.ok) {
+      failed.current = query
+      // The rows on screen are for an older search; only a failed Load more
+      // keeps them, since they still match.
+      if (!query.before) setApplications([])
+      setStatus('error')
+      return
+    }
     const { before, ...rest } = query
     shown.current = rest
     setApplications((prev) => (before ? [...prev, ...result.value.applications] : result.value.applications))
