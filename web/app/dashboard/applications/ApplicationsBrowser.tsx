@@ -199,7 +199,9 @@ export function ApplicationsBrowser() {
 
       {range && applications.length > 0 && (
         <div className={status === 'loading' && !loadingMore ? 'grid grid-cols-1 gap-4 opacity-60 transition-opacity md:grid-cols-2' : 'grid grid-cols-1 gap-4 transition-opacity md:grid-cols-2'}>
-          {applications.map((app) => <ApplicationCard key={app.id} app={app} />)}
+          {applications.map((app) => (
+            <ApplicationCard key={app.id} app={app} onDeleted={(id) => setApplications((list) => list.filter((a) => a.id !== id))} />
+          ))}
         </div>
       )}
 

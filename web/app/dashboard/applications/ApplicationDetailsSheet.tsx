@@ -14,6 +14,8 @@ import { LocalDate } from '../LocalDate'
 const DATE = { month: 'short', day: 'numeric', year: 'numeric' } as const
 const TILE = 'rounded-[20px] bg-surface p-5 shadow-[0_1px_2px_rgba(30,27,75,0.05),0_10px_28px_-16px_rgba(30,27,75,0.22)]'
 const PILL = 'h-8 gap-1.5 rounded-full px-3.5 text-[13px]'
+// The detail leaves out anything that can't be decrypted.
+const UNREADABLE = "Some of these couldn't be opened."
 
 // Everything for one application: every letter and tailored resume first, then
 // the ATS result, the interview mark and delete. Its detail is fetched on first open.
@@ -75,6 +77,7 @@ export function ApplicationDetailsSheet({ app, open, onOpenChange, busy, onToggl
           {letters > 0 && (
             <section className="flex flex-col gap-3" aria-labelledby={`letters-${app.id}`}>
               <h3 id={`letters-${app.id}`} className="text-[13px] font-semibold text-ink-2">{letters === 1 ? 'Cover letter' : `Cover letters (${letters})`}</h3>
+              {detail && detail.coverLetters.length < letters && <p className="text-[13px] text-ink-2">{UNREADABLE}</p>}
               {detail?.coverLetters.map((l) => (
                 <article key={l.id} className={TILE}>
                   <p className="text-[12.5px] text-subtle"><LocalDate iso={l.createdAt} options={DATE} /></p>
@@ -108,6 +111,7 @@ export function ApplicationDetailsSheet({ app, open, onOpenChange, busy, onToggl
                   </div>
                 )}
               </div>
+              {detail && detail.tailoredResumes.length < resumes && <p className="text-[13px] text-ink-2">{UNREADABLE}</p>}
               {detail?.tailoredResumes.map((r) => (
                 <article key={r.id} className={`${TILE} flex items-center justify-between gap-3 py-4`}>
                   <p className="text-[13.5px] text-ink">Tailored <LocalDate iso={r.createdAt} options={DATE} /></p>

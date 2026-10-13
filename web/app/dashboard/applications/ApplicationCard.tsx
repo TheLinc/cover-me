@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { ArrowSquareOutIcon, CaretRightIcon, CheckIcon, DotsThreeVerticalIcon, DownloadSimpleIcon } from '@phosphor-icons/react/dist/ssr'
 import { toast } from 'sonner'
 import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
@@ -15,10 +16,13 @@ import { ApplicationDetailsSheet } from './ApplicationDetailsSheet'
 
 type Busy = 'letter' | 'resume' | 'interview' | 'delete' | null
 
-// One application. Keeps the interview mark it changes until the next summary
-// arrives, and after a delete it renders nothing.
-export function ApplicationCard({ app: initial }: { app: ApplicationSummary }) {
+// One application. After a delete it tells the list (onDeleted), or refreshes
+// the server-rendered page when there's no list to tell, and renders nothing.
+export function ApplicationCard({ app: initial, onDeleted }: { app: ApplicationSummary; onDeleted?: (id: string) => void }) {
+  const router = useRouter()
   const [app, setApp] = useState(initial)
+  // Once the user sets the mark here, theirs wins over a search that started before it.
+  const marked = useRef(false)
   const [deleted, setDeleted] = useState(false)
   const [detailsOpen, setDetailsOpen] = useState(false)
   const [confirming, setConfirming] = useState(false)
@@ -26,7 +30,9 @@ export function ApplicationCard({ app: initial }: { app: ApplicationSummary }) {
   const [busy, setBusy] = useState<Busy>(null)
   // A new search brings a fresh summary for the same application (a letter the
   // extension added since, the server's interview mark): show that one.
-  useEffect(() => { setApp(initial) }, [initial])
+  useEffect(() => {
+    setApp((a) => (marked.current ? { ...initial, interviewAt: a.interviewAt } : initial))
+  }, [initial])
   if (deleted) return null
 
   const host = postingHost(app.url)
@@ -39,10 +45,13 @@ export function ApplicationCard({ app: initial }: { app: ApplicationSummary }) {
       const detail = await loadDetail(app)
       if (kind === 'letter') {
         const letter = newest(detail.coverLetters)
-        if (letter) await downloadLetter(detail, letter)
+        // The summary lists it, but the detail leaves out what can't be decrypted.
+        if (!letter) throw new Error('unreadable')
+        await downloadLetter(detail, letter)
       } else {
         const resume = newest(detail.tailoredResumes)
-        if (resume) await downloadResume(detail.title, resume.resume)
+        if (!resume) throw new Error('unreadable')
+        await downloadResume(detail.title, resume.resume)
       }
     } catch {
       toast.error("Couldn't download it. Try again.")
@@ -56,6 +65,7 @@ export function ApplicationCard({ app: initial }: { app: ApplicationSummary }) {
     setBusy('interview')
     try {
       const interviewAt = await setInterview(app.id, !app.interviewAt)
+      marked.current = true
       setApp((a) => ({ ...a, interviewAt }))
       toast.success(interviewAt ? 'Marked as got an interview' : 'Interview mark removed')
     } catch {
@@ -74,6 +84,8 @@ export function ApplicationCard({ app: initial }: { app: ApplicationSummary }) {
       setConfirming(false)
       setDetailsOpen(false)
       setDeleted(true)
+      if (onDeleted) onDeleted(app.id)
+      else router.refresh()
       toast.success('Application deleted')
     } catch {
       setDeleteError("Couldn't delete it. Try again.")
