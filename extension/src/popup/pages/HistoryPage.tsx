@@ -55,7 +55,11 @@ export default function HistoryPage() {
         tier = fresh
         await saveCachedTier(fresh)
       }
-      if (tier === 'hosted_free') setCapText(warning)
+      if (tier === 'hosted_free') {
+        // Counted again: the user may have deleted something during the checks.
+        const [l, t] = await Promise.all([getHistory(), getTailoredHistory()])
+        setCapText(capWarning(l.length, t.length))
+      }
     }
 
     if (mode !== 'hosted' || tier !== 'hosted_pro' || !session) return
