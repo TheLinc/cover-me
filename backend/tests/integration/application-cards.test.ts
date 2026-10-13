@@ -106,4 +106,25 @@ describe('application cards', () => {
     expect((await get(u, { detail: randomUUID() })).status).toBe(403)
     expect((await patch(u, randomUUID(), { interview: true })).status).toBe(403)
   })
+
+  it('delete checks the id and only deletes your own application', async () => {
+    const a = await user()
+    const b = await user()
+    const { appId } = await seeded(a)
+    const del = (u: TestUser, id: string) => callFunction('applications', { token: u.token, method: 'DELETE', query: { id } })
+
+    expect((await del(a, 'nope')).status).toBe(400)
+    expect((await del(b, appId)).status).toBe(404)
+    const { data: still } = await admin.from('job_applications').select('id').eq('id', appId)
+    expect(still).toHaveLength(1)
+    expect((await del(a, appId)).status).toBe(200)
+    expect((await del(a, appId)).status).toBe(404)
+  })
+
+  it('PATCH refuses an oversized body', async () => {
+    const u = await user()
+    const { appId } = await seeded(u)
+    const res = await callFunction('applications', { token: u.token, method: 'PATCH', query: { id: appId }, body: { interview: true, pad: 'x'.repeat(5_000) } })
+    expect(res.status).toBe(400)
+  })
 })

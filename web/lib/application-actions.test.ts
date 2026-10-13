@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { loadDetail } from './application-actions'
+import { deleteApplication, loadDetail } from './application-actions'
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -37,5 +37,15 @@ describe('loadDetail', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1)
     await loadDetail(summary('a3', ['l2', 'l1']))
     expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe('deleteApplication', () => {
+  // Already deleted (another device, another tab): the card can go.
+  it('treats 404 as deleted, and other failures as errors', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('{"error":"Not found"}', { status: 404 })))
+    await expect(deleteApplication('a1')).resolves.toBeUndefined()
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('{"error":"x"}', { status: 502 })))
+    await expect(deleteApplication('a1')).rejects.toThrow()
   })
 })

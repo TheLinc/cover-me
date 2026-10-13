@@ -151,9 +151,12 @@ Deno.serve(async (req) => {
   // PATCH ?id=: mark or unmark "got an interview" on the caller's own application.
   if (req.method === 'PATCH') {
     if (!isUuid(appId)) return json({ error: 'Invalid id' }, 400)
+    // { interview: true } is a few bytes; anything past 1 KB isn't this request.
+    const raw = await readBody(req, 1024)
+    if (raw === null) return json({ error: 'Request too large' }, 400)
     let body: unknown
     try {
-      body = await req.json()
+      body = JSON.parse(raw)
     } catch {
       return json({ error: 'Invalid request body' }, 400)
     }
@@ -237,15 +240,18 @@ Deno.serve(async (req) => {
 
   // DELETE — remove a job application (cascades to cover_letters + tailored_resumes)
   if (req.method === 'DELETE') {
-    if (!appId) return json({ error: 'Missing id' }, 400)
+    if (!isUuid(appId)) return json({ error: 'Invalid id' }, 400)
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('job_applications')
       .delete()
       .eq('id', appId)
       .eq('user_id', userId)
+      .select('id')
 
     if (error) return json({ error: 'Failed to delete application' }, 500)
+    // Nothing of yours had that id (already deleted, or someone else's).
+    if (!data || data.length === 0) return json({ error: 'Not found' }, 404)
     return json({ success: true })
   }
 

@@ -50,7 +50,8 @@ export async function setInterview(id: string, interview: boolean): Promise<stri
 
 export async function deleteApplication(id: string): Promise<void> {
   const res = await call(`/api/applications?id=${encodeURIComponent(id)}`, { method: 'DELETE' })
-  if (!res.ok) throw new Error(String(res.status))
+  // 404: already deleted (another device or tab), so the card can go too.
+  if (!res.ok && res.status !== 404) throw new Error(String(res.status))
   details.delete(id)
 }
 
