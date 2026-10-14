@@ -12,7 +12,7 @@
 export const STRIP_SELECTOR =
   'script:not([type="application/ld+json"]), code[id^="bpr-guid"], style, link, meta:not([itemprop]), noscript, template, input, textarea, select, ' +
   'svg, img, picture, video, audio, canvas, iframe, object, embed, ' +
-  '[id^="msg-overlay"], [class*="msg-overlay"]'
+  '[id^="msg-overlay"], [class*="msg-overlay"], [data-test-msg-overlay], aside[aria-label*="messaging" i]'
 const MAX_ATTRIBUTE_CHARS = 300
 const LONG_ATTRIBUTES_KEPT = new Set(['class', 'style'])
 

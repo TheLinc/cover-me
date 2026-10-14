@@ -77,6 +77,7 @@ html, body {
   scrollbar-color: var(--border) transparent;
 }
 
+.page-content:focus { outline: none; }
 .page-content::-webkit-scrollbar { width: 4px; }
 .page-content::-webkit-scrollbar-track { background: transparent; }
 .page-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
@@ -298,7 +299,7 @@ html, body {
   border: 1px solid var(--border);
   border-radius: var(--r-sm);
   padding: 12px 14px;
-  margin-bottom: 14px;
+  margin: 18px 18px 0;
   color: var(--text-2);
   font-size: 12px;
   line-height: 1.55;

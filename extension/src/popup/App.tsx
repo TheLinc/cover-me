@@ -24,7 +24,7 @@ export default function App() {
 
   return (
     <div className="app">
-      <div className="page-content">
+      <div className="page-content" tabIndex={-1}>
         <PageReadNotice />
         {page === 'generate' && <GeneratePage onNavigate={navigate} />}
         {page === 'resume' && <ResumePage />}

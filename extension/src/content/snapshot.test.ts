@@ -17,4 +17,14 @@ describe('STRIP_SELECTOR', () => {
     expect(html).not.toContain('following up')
     expect(html).toContain('Build pipelines.')
   })
+
+  test('also removes a dock marked only by its aria-label', () => {
+    const { document } = parseHTML(`<!doctype html><html><body>
+      <main><div class="jobs-description">Build pipelines.</div></main>
+      <aside aria-label="Messaging"><p>Sam: are you still interested?</p></aside>
+    </body></html>`)
+    document.querySelectorAll(STRIP_SELECTOR).forEach((el) => el.remove())
+    expect(document.body.innerHTML).not.toContain('Sam:')
+    expect(document.body.innerHTML).toContain('Build pipelines.')
+  })
 })
