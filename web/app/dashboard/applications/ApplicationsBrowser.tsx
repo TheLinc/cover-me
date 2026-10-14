@@ -20,7 +20,7 @@ async function load(query: ApplicationsQuery, signal: AbortSignal): Promise<Appl
   const res = await fetch(`/api/applications?${params}`, { signal })
   // Signed out, or no longer Pro: a retry can't fix either. The promise never
   // settles, so the page doesn't flash an error on its way out.
-  const leaveTo = res.status === 401 ? '/auth' : res.status === 403 ? '/dashboard' : null
+  const leaveTo = res.status === 401 ? '/auth?next=/dashboard/applications' : res.status === 403 ? '/dashboard' : null
   if (leaveTo) { window.location.assign(leaveTo); return new Promise(() => {}) }
   if (!res.ok) throw new Error(String(res.status))
   return res.json()

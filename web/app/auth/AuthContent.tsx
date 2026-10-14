@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase";
-import { afterOAuth, oauthCancelled, oauthErrorDescription, oauthRedirectUrl } from "@/lib/auth-redirect";
+import { afterOAuth, oauthCancelled, oauthErrorDescription, oauthRedirectUrl, safeNext } from "@/lib/auth-redirect";
 import { Button } from "@/components/ui/button";
 import { GoogleIcon } from "@/components/ui/google-icon";
 import { Input } from "@/components/ui/input";
@@ -68,7 +68,15 @@ function AuthForm() {
     const oauthReason = isOAuth ? oauthErrorDescription(window.location.search, window.location.hash) : "";
     const isConfirmation = searchParams.has("code") && !isOAuth;
     if (isConfirmation || isOAuth) {
-      window.history.replaceState(null, "", window.location.pathname);
+      // Drop the code and any error, but keep where to go after signing in
+      // (plan, next): a cancelled Google sign-in leaves the user here to retry.
+      const keep = new URLSearchParams();
+      for (const key of ["plan", "next"]) {
+        const value = searchParams.get(key);
+        if (value) keep.set(key, value);
+      }
+      const rest = keep.toString();
+      window.history.replaceState(null, "", window.location.pathname + (rest ? `?${rest}` : ""));
     }
 
     // Implicit flow (extension signup via raw GoTrue API): redirects with #access_token=...
@@ -110,14 +118,14 @@ function AuthForm() {
       if (event === "PASSWORD_RECOVERY") setView("reset");
       // Fires after auto-exchange of PKCE code completes
       if (event === "SIGNED_IN" && isConfirmation) setView("confirmed");
-      if (event === "SIGNED_IN" && isOAuth) window.location.href = afterOAuth(searchParams.get("plan"));
+      if (event === "SIGNED_IN" && isOAuth) window.location.href = afterOAuth(searchParams.get("plan"), searchParams.get("next"));
     });
 
     // getSession waits for the client's code exchange, so no session here
     // means the exchange failed (an expired or reused link, say).
     if (isOAuth) {
       supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session) window.location.href = afterOAuth(searchParams.get("plan"));
+        if (session) window.location.href = afterOAuth(searchParams.get("plan"), searchParams.get("next"));
         else if (!cancelledOAuth) setError(oauthReason || "Google sign-in didn't finish. Please try again.");
       });
     }
@@ -155,7 +163,7 @@ function AuthForm() {
           password,
         });
         if (error) throw error;
-        window.location.href = "/dashboard";
+        window.location.href = safeNext(params.get("next")) ?? "/dashboard";
       } else {
         const { error } = await supabase.auth.signUp({
             email,
@@ -179,7 +187,7 @@ function AuthForm() {
     setError("");
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: oauthRedirectUrl(process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin, plan) },
+      options: { redirectTo: oauthRedirectUrl(process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin, plan, params.get("next")) },
     });
     if (error) setError(error.message);
   }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { afterOAuth, oauthCancelled, oauthErrorDescription, oauthRedirectUrl } from './auth-redirect'
+import { afterOAuth, oauthCancelled, oauthErrorDescription, oauthRedirectUrl, safeNext } from './auth-redirect'
 
 describe('oauthErrorDescription', () => {
   it('reads Supabase\'s reason from the query or the fragment', () => {
@@ -33,5 +33,21 @@ describe('Google sign-in redirects', () => {
   it('lands everyone else on the dashboard', () => {
     expect(afterOAuth(null)).toBe('/dashboard')
     expect(afterOAuth('anything-else')).toBe('/dashboard')
+  })
+  it('returns to the dashboard page that sent the user to sign in', () => {
+    expect(oauthRedirectUrl('https://www.cover-me.dev', null, '/dashboard/applications'))
+      .toBe('https://www.cover-me.dev/auth?oauth=1&next=%2Fdashboard%2Fapplications')
+    expect(afterOAuth(null, '/dashboard/applications')).toBe('/dashboard/applications')
+    expect(afterOAuth('pro', '/dashboard/applications')).toBe('/dashboard?upgrade=1')
+  })
+})
+
+describe('safeNext', () => {
+  it('allows dashboard paths only', () => {
+    expect(safeNext('/dashboard')).toBe('/dashboard')
+    expect(safeNext('/dashboard/applications')).toBe('/dashboard/applications')
+    for (const bad of ['https://evil.example/dashboard', '//evil.example', '/dashboard/../x', '/dashboardx', '/dashboard?x=1', '/\\evil.example', null, '']) {
+      expect(safeNext(bad)).toBeNull()
+    }
   })
 })

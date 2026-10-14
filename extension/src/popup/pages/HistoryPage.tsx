@@ -6,6 +6,7 @@ import { accountUpdates, capWarning, groupLocalHistory, groupsFromApplications, 
 import { deleteFromHistory, deleteFromTailoredHistory, getCachedTier, getHistory, getMode, getTailoredHistory, getUploadAsked, markUploadAsked, saveCachedTier, setEntryAccounts } from '../../lib/storage'
 import type { AuthSession, CoverLetter, CoverLetterEntry, TailoredHistoryEntry } from '../../types'
 import UpgradeButton from '../components/UpgradeButton'
+import { WEB_URL } from '../../lib/config'
 
 export default function HistoryPage() {
   const [groups, setGroups] = useState<JobGroup[]>([])
@@ -153,9 +154,10 @@ export default function HistoryPage() {
       }
     } catch {
       // Keep showing local groups. A cached Pro tier that's out of date is
-      // refreshed, so the next open takes the free path.
+      // refreshed, and the Pro-only parts go now rather than next open.
       const fresh = await fetchTier(session.user.id, session.access_token)
       if (fresh) await saveCachedTier(fresh)
+      if (fresh && fresh !== 'hosted_pro') setIsProMode(false)
     } finally {
       setSyncing(false)
     }
@@ -220,6 +222,11 @@ export default function HistoryPage() {
               ? 'No applications yet'
               : `${totalJobs} job${totalJobs !== 1 ? 's' : ''}`}
         </p>
+        {isProMode && (
+          <a className="text-link" href={`${WEB_URL}/dashboard/applications`} target="_blank" rel="noreferrer">
+            See all on the dashboard, with search
+          </a>
+        )}
       </div>
 
       {capText && (

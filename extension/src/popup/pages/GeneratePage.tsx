@@ -416,6 +416,7 @@ export default function GeneratePage({ onNavigate }: Props) {
 
   async function tailor() {
     setTailorState('loading')
+    setTailorProgress('') // a new run starts at the top, whatever the last one reached
     setLoadingJob(null)
     setTailorError('')
     let scrapedJob: JobData
@@ -449,6 +450,7 @@ export default function GeneratePage({ onNavigate }: Props) {
       url: '',
     }
     setTailorState('loading')
+    setTailorProgress('') // a new run starts at the top, whatever the last one reached
     setLoadingJob(jobData)
     setTailorError('')
     const jobId = crypto.randomUUID()
@@ -501,6 +503,7 @@ export default function GeneratePage({ onNavigate }: Props) {
     if (!tailoredJob) return
     const previous = tailoredResume
     setTailorState('loading')
+    setTailorProgress('') // a new run starts at the top, whatever the last one reached
     setLoadingJob(tailoredJob)
     setTailoredResume(null)
     setTailorError('')

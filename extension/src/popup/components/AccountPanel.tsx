@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { completeSignIn, EmailConfirmationRequiredError, ensureValidSession, fetchTier, signIn, signOut, signUp } from '../../lib/auth'
 import type { GoogleSignInResponse } from '../../lib/auth'
-import { GOOGLE_SIGNIN } from '../../lib/config'
+import { GOOGLE_SIGNIN, WEB_URL } from '../../lib/config'
 import { encryptApiKey } from '../../lib/crypto'
 import { clearSession, getCachedTier, getMode, getSettings, resolveMode, saveCachedTier, saveSettings, takeGoogleSignInError, watchGoogleSignInError, watchSession } from '../../lib/storage'
 import type { AIProvider, AppMode, AuthSession } from '../../types'
 import GoogleIcon from './GoogleIcon'
+import UpgradeButton from './UpgradeButton'
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 type AuthStatus = 'idle' | 'loading'
@@ -14,8 +15,9 @@ type AuthView = 'signin' | 'signup'
 const MASKED = '••••••••••••••••'
 
 // The account first, with BYOK behind "I have an API key". Used by Settings and
-// by the welcome tab.
-export default function AccountPanel({ initialView = 'signin' }: { initialView?: AuthView }) {
+// by the welcome tab, which leaves out the upgrade and dashboard links so
+// onboarding stays on the first letter.
+export default function AccountPanel({ initialView = 'signin', links = true }: { initialView?: AuthView; links?: boolean }) {
   const [mode, setMode] = useState<AppMode>('hosted')
 
   // BYOK
@@ -28,7 +30,8 @@ export default function AccountPanel({ initialView = 'signin' }: { initialView?:
 
   // Hosted
   const [session, setSession] = useState<AuthSession | null>(null)
-  const [tier, setTier] = useState<string>('hosted_free')
+  // null until known: no badge and no upgrade button rather than a wrong one.
+  const [tier, setTier] = useState<string | null>(null)
   const [authView, setAuthView] = useState<AuthView>(initialView)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -64,7 +67,7 @@ export default function AccountPanel({ initialView = 'signin' }: { initialView?:
       } else {
         shownToken.current = null
         setSession(null)
-        setTier('hosted_free') // the next account's badge must not show this one's tier
+        setTier(null) // the next account's badge must not show this one's tier
       }
     })
     // A flow that fails while this panel is open: show it now, not next open.
@@ -112,14 +115,24 @@ export default function AccountPanel({ initialView = 'signin' }: { initialView?:
     setAuthError('') // an old failure would reappear on the form after sign-out
     if (shownToken.current === sess.access_token) return
     shownToken.current = sess.access_token
+    // The last known tier at once, so a Pro account doesn't flash "Upgrade"
+    // while the lookup runs; the lookup's answer wins when it lands.
+    let looked = false
+    // A lookup that lands after a sign-out or a switch of account belongs to
+    // the old session: it must not set or cache this one's tier.
+    const current = () => shownToken.current === sess.access_token
+    getCachedTier().then((cached) => { if (cached && !looked && current()) setTier(cached) })
     fetchTier(sess.user.id, sess.access_token).then(async (t) => {
+      looked = true
+      if (!current()) return
       if (t) {
         setTier(t)
         await saveCachedTier(t)
       } else {
         // Lookup failed (offline, say): show the last known tier, retry next time.
-        shownToken.current = null
         const cached = await getCachedTier()
+        if (!current()) return
+        shownToken.current = null
         if (cached) setTier(cached)
       }
     })
@@ -278,11 +291,20 @@ export default function AccountPanel({ initialView = 'signin' }: { initialView?:
                 </div>
                 <div className="account-info">
                   <div className="account-email">{session.user.email}</div>
-                  <span className={isPro ? 'tier-badge tier-badge-pro' : 'tier-badge'}>
-                    {isPro ? '★ Pro · up to 25 a day' : 'Free · 10 to start, then 5 a week'}
-                  </span>
+                  {tier && (
+                    <span className={isPro ? 'tier-badge tier-badge-pro' : 'tier-badge'}>
+                      {isPro ? '★ Pro · up to 25 a day' : 'Free · 10 to start, then 5 a week'}
+                    </span>
+                  )}
                 </div>
               </div>
+              {links && (
+                <>
+                  {tier === 'hosted_free' && <UpgradeButton label="Upgrade to Pro: up to 25 a day" />}
+                  {/* Plan, usage and (for Pro) billing and every saved application. */}
+                  <a className="text-link" href={`${WEB_URL}/dashboard`} target="_blank" rel="noreferrer">Open your dashboard</a>
+                </>
+              )}
               <button className="btn btn-secondary account-signout" onClick={handleSignOut}>
                 Sign Out
               </button>
