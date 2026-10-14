@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { completeSignIn, EmailConfirmationRequiredError, ensureValidSession, fetchTier, signIn, signOut, signUp } from '../../lib/auth'
 import type { GoogleSignInResponse } from '../../lib/auth'
-import { GOOGLE_SIGNIN } from '../../lib/config'
+import { GOOGLE_SIGNIN, WEB_URL } from '../../lib/config'
 import { encryptApiKey } from '../../lib/crypto'
 import { clearSession, getCachedTier, getMode, getSettings, resolveMode, saveCachedTier, saveSettings, takeGoogleSignInError, watchGoogleSignInError, watchSession } from '../../lib/storage'
 import type { AIProvider, AppMode, AuthSession } from '../../types'
 import GoogleIcon from './GoogleIcon'
+import UpgradeButton from './UpgradeButton'
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 type AuthStatus = 'idle' | 'loading'
@@ -14,8 +15,9 @@ type AuthView = 'signin' | 'signup'
 const MASKED = '••••••••••••••••'
 
 // The account first, with BYOK behind "I have an API key". Used by Settings and
-// by the welcome tab.
-export default function AccountPanel({ initialView = 'signin' }: { initialView?: AuthView }) {
+// by the welcome tab, which leaves out the upgrade and dashboard links so
+// onboarding stays on the first letter.
+export default function AccountPanel({ initialView = 'signin', links = true }: { initialView?: AuthView; links?: boolean }) {
   const [mode, setMode] = useState<AppMode>('hosted')
 
   // BYOK
@@ -283,6 +285,13 @@ export default function AccountPanel({ initialView = 'signin' }: { initialView?:
                   </span>
                 </div>
               </div>
+              {links && (
+                <>
+                  {!isPro && <UpgradeButton label="Upgrade to Pro: up to 25 a day" />}
+                  {/* Plan, usage and (for Pro) billing and every saved application. */}
+                  <a className="text-link" href={`${WEB_URL}/dashboard`} target="_blank" rel="noreferrer">Open your dashboard</a>
+                </>
+              )}
               <button className="btn btn-secondary account-signout" onClick={handleSignOut}>
                 Sign Out
               </button>

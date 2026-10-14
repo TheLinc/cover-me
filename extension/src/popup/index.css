@@ -771,6 +771,15 @@ html, body {
   cursor: pointer;
 }
 .upload-link:disabled { cursor: default; opacity: 0.7; }
+.text-link {
+  align-self: flex-start;
+  color: var(--accent-h);
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.text-link:hover { color: var(--text); }
+.page-header .text-link { display: inline-block; margin-top: 6px; }
 .local-tag { color: var(--text-2); }
 
 /* Job card — top-level entry grouping all artifacts for one posting */

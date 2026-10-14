@@ -6,6 +6,7 @@ import { accountUpdates, capWarning, groupLocalHistory, groupsFromApplications, 
 import { deleteFromHistory, deleteFromTailoredHistory, getCachedTier, getHistory, getMode, getTailoredHistory, getUploadAsked, markUploadAsked, saveCachedTier, setEntryAccounts } from '../../lib/storage'
 import type { AuthSession, CoverLetter, CoverLetterEntry, TailoredHistoryEntry } from '../../types'
 import UpgradeButton from '../components/UpgradeButton'
+import { WEB_URL } from '../../lib/config'
 
 export default function HistoryPage() {
   const [groups, setGroups] = useState<JobGroup[]>([])
@@ -220,6 +221,11 @@ export default function HistoryPage() {
               ? 'No applications yet'
               : `${totalJobs} job${totalJobs !== 1 ? 's' : ''}`}
         </p>
+        {isProMode && (
+          <a className="text-link" href={`${WEB_URL}/dashboard/applications`} target="_blank" rel="noreferrer">
+            See all on the dashboard, with search
+          </a>
+        )}
       </div>
 
       {capText && (
