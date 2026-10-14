@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
   admin, callFunction, createUser, deleteUser, LONG_RESUME_TEXT, mockClaude, parsedResume, RESUME_TEXT, type TestUser, uploadResume, waitForParsedResume,
@@ -74,11 +75,15 @@ describe('resume', () => {
     expect(after).not.toBe(before)
   })
 
-  it('stops parsing ahead after two uploads a minute, and a delete does not reset that', async () => {
+  it('stops parsing ahead once the account reaches its daily limit, and a delete does not reset that', async () => {
     await uploadResume(user)
-    await uploadResume(user, NEW_TEXT)
+    // The limiter's per-account row (see resume/index.ts parseAhead), at its
+    // daily cap. Pinned rather than raced, so a minute rolling over can't
+    // start a fresh window mid-test.
+    const key = createHash('sha256').update(`resume-parse:${user.id}`).digest('hex')
+    await admin.from('scrape_rate_limits').update({ count: 10 }).eq('ip_hash', key).eq('window_kind', 'day')
     await callFunction('resume', { method: 'DELETE', token: user.token })
-    await uploadResume(user, RESUME_TEXT + '\nThird version', { wait: false })
+    await uploadResume(user, NEW_TEXT, { wait: false })
     await sleep(800)
     expect(await parsedResume(user.id)).toBeNull()
     expect((await mockClaude.requests()).filter(isParse)).toHaveLength(0)
