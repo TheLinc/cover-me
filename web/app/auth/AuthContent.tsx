@@ -68,7 +68,15 @@ function AuthForm() {
     const oauthReason = isOAuth ? oauthErrorDescription(window.location.search, window.location.hash) : "";
     const isConfirmation = searchParams.has("code") && !isOAuth;
     if (isConfirmation || isOAuth) {
-      window.history.replaceState(null, "", window.location.pathname);
+      // Drop the code and any error, but keep where to go after signing in
+      // (plan, next): a cancelled Google sign-in leaves the user here to retry.
+      const keep = new URLSearchParams();
+      for (const key of ["plan", "next"]) {
+        const value = searchParams.get(key);
+        if (value) keep.set(key, value);
+      }
+      const rest = keep.toString();
+      window.history.replaceState(null, "", window.location.pathname + (rest ? `?${rest}` : ""));
     }
 
     // Implicit flow (extension signup via raw GoTrue API): redirects with #access_token=...

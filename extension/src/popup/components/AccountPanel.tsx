@@ -130,8 +130,9 @@ export default function AccountPanel({ initialView = 'signin', links = true }: {
         await saveCachedTier(t)
       } else {
         // Lookup failed (offline, say): show the last known tier, retry next time.
-        shownToken.current = null
         const cached = await getCachedTier()
+        if (!current()) return
+        shownToken.current = null
         if (cached) setTier(cached)
       }
     })
