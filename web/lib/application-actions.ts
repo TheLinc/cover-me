@@ -8,7 +8,8 @@ import type { PdfJob, TailoredResume } from './pdf/types'
 // error on the way out.
 async function call(path: string, init?: RequestInit): Promise<Response> {
   const res = await fetch(path, init)
-  const leaveTo = res.status === 401 ? '/auth' : res.status === 403 ? '/dashboard' : null
+  // Signed out: back to this dashboard page after signing in (safeNext keeps it to dashboard paths).
+  const leaveTo = res.status === 401 ? `/auth?next=${encodeURIComponent(window.location.pathname)}` : res.status === 403 ? '/dashboard' : null
   if (leaveTo) {
     window.location.assign(leaveTo)
     return new Promise(() => {})
