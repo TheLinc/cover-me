@@ -307,6 +307,7 @@ html, body {
 .page-read-notice-title { color: var(--text); font-size: 13px; font-weight: 600; margin-bottom: 6px; }
 .page-read-notice-actions { display: flex; align-items: center; gap: 14px; margin-top: 10px; }
 .page-read-notice-actions .btn { width: auto; padding: 7px 14px; }
+.page-read-notice-actions .btn-ghost { padding: 7px 4px; }
 
 .notice-box {
   background: var(--success-dim);

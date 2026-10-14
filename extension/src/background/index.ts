@@ -5,7 +5,7 @@ import { tailorResume } from '../lib/ai/resume-tailor'
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from '../lib/config'
 import { decryptApiKey } from '../lib/crypto'
 import { debugGroup } from '../lib/debug'
-import { addToHistory, addToTailoredHistory, getCachedTier, getCandidateContext, getResume, getSettings, needsPageReadNotice, resolveMode, saveParsedResume, setEntryAccounts } from '../lib/storage'
+import { addToHistory, addToTailoredHistory, getCachedTier, getCandidateContext, getResume, getSettings, hasAgreedToPageRead, resolveMode, saveParsedResume, setEntryAccounts } from '../lib/storage'
 import { handleInstalled } from './install'
 import type { PageSnapshot } from '../content/snapshot.ts'
 import type { CoverJob, CoverLetter, FrameScrapeResponse, GenerateResponse, JobData, ScrapeResponse, TailoredResume, TailorJob, TailorResponse } from '../types'
@@ -221,10 +221,10 @@ async function scrapeTab(tabId: number): Promise<JobData> {
 async function preferServerScrapes(results: FrameScrape[]): Promise<FrameScrape[]> {
   const sent = results.filter((r) => r.snapshot)
   if (!SUPABASE_URL || sent.length === 0) return results
-  // Until the user has clicked "I understand" on the notice about how pages
-  // are read (popup/components/PageReadNotice.tsx), nothing leaves the
-  // browser: the bundled scrapers' results stand.
-  if (await needsPageReadNotice()) return results
+  // Until the user has agreed on the notice about how pages are read
+  // (popup/components/PageReadNotice.tsx), nothing leaves the browser: the
+  // bundled scrapers' results stand.
+  if (!(await hasAgreedToPageRead())) return results
   try {
     const body = JSON.stringify({ pages: sent.map((r) => r.snapshot) })
     const gzipped = await new Response(new Blob([body]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer()

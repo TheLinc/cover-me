@@ -174,18 +174,26 @@ export async function clearSavedLogin(): Promise<void> {
   await chrome.storage.local.remove('savedLogin')
 }
 
-// The one-time notice about how job pages are read (popup/components/PageReadNotice.tsx).
-export async function needsPageReadNotice(): Promise<boolean> {
-  const { pageReadNotice } = await chrome.storage.local.get('pageReadNotice')
-  return pageReadNotice === true
+// Agreement to sending the page copy to our server (popup/components/
+// PageReadNotice.tsx). Without it, postings are read on the device only
+// (preferServerScrapes in background/index.ts), so a missing flag never sends.
+export async function hasAgreedToPageRead(): Promise<boolean> {
+  const { pageReadAgreed } = await chrome.storage.local.get('pageReadAgreed')
+  return pageReadAgreed === true
 }
 
-export async function showPageReadNotice(): Promise<void> {
-  await chrome.storage.local.set({ pageReadNotice: true })
+export async function agreeToPageRead(): Promise<void> {
+  await chrome.storage.local.set({ pageReadAgreed: true })
 }
 
-export async function dismissPageReadNotice(): Promise<void> {
-  await chrome.storage.local.remove('pageReadNotice')
+// "Not now" hides the notice until the browser restarts (session storage).
+export async function isPageReadNoticeSnoozed(): Promise<boolean> {
+  const { pageReadNotNow } = await chrome.storage.session.get('pageReadNotNow')
+  return pageReadNotNow === true
+}
+
+export async function snoozePageReadNotice(): Promise<void> {
+  await chrome.storage.session.set({ pageReadNotNow: true })
 }
 
 export async function getCachedTier(): Promise<string | null> {
