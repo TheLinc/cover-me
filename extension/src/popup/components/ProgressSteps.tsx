@@ -20,7 +20,7 @@ export default function ProgressSteps({ steps }: { steps: Step[] }) {
           {s.state === 'active' && <span className="step-icon step-spinner" aria-hidden="true" />}
           {s.state === 'todo' && <span className="step-icon step-icon-todo" aria-hidden="true" />}
           <span>{s.label}</span>
-          {s.detail && <span className="step-detail">{s.detail}</span>}
+          {s.detail && <><span className="sr-only">, </span><span className="step-detail">{s.detail}</span></>}
           <span className="sr-only">, {SPOKEN[s.state]}</span>
         </li>
       ))}

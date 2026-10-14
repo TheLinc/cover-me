@@ -4,9 +4,6 @@
 // key seen tells us which stage the model is in. Used by both the BYOK path
 // (raw model stream) and the hosted path (NDJSON deltas from the Edge Function).
 export function deriveTailorProgress(buffer: string, roleCount: number): string {
-  // The whole object is in: what's left is the checks against the original
-  // resume (resume-grounding.ts), which take several seconds on their own.
-  if (isComplete(buffer)) return 'Checking every line against your resume…'
   if (buffer.includes('"keywordMatch"')) return 'Scoring ATS match…'
   if (buffer.includes('"skills"')) return 'Optimizing skills…'
   if (buffer.includes('"projects"')) return 'Tailoring projects…'
@@ -23,15 +20,4 @@ export function deriveTailorProgress(buffer: string, roleCount: number): string 
   }
   if (buffer.includes('"summary"')) return 'Writing your summary…'
   return 'Analyzing the job posting…'
-}
-
-function isComplete(buffer: string): boolean {
-  const body = buffer.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '')
-  if (!body.endsWith('}')) return false
-  try {
-    JSON.parse(body)
-    return true
-  } catch {
-    return false
-  }
 }

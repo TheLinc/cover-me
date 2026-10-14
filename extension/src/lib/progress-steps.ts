@@ -20,17 +20,18 @@ const TAILOR_STEPS = ['Read the posting', 'Plan the changes', 'Rewrite your resu
 
 // Four steps, so none flashes by: the model's thinking is "Plan", every part
 // it writes is "Rewrite" (the part shows as the detail), and the keyword lists
-// plus the checks against the original resume are "Check".
-export function tailorSteps(progress: string, hasJob: boolean): Step[] {
+// plus the checks against the original resume that follow them are "Check".
+export function tailorSteps(progress: string, hasJob: boolean, includeSummary: boolean): Step[] {
   if (!hasJob) return mark(TAILOR_STEPS, 0)
-  if (/Checking|Scoring/.test(progress)) return mark(TAILOR_STEPS, 3)
+  if (/Scoring/.test(progress)) return mark(TAILOR_STEPS, 3)
   if (/skills/i.test(progress)) return mark(TAILOR_STEPS, 2, 'Skills')
   if (/projects/i.test(progress)) return mark(TAILOR_STEPS, 2, 'Projects')
   if (/Rewriting experience/.test(progress)) {
     const role = progress.match(/\((\d+) of (\d+)\)/)
     return mark(TAILOR_STEPS, 2, role ? `Experience, ${role[1]} of ${role[2]}` : 'Experience')
   }
-  if (/summary/i.test(progress)) return mark(TAILOR_STEPS, 2, 'Summary')
+  // With the summary off the model still writes an empty one first.
+  if (/summary/i.test(progress)) return mark(TAILOR_STEPS, 2, includeSummary ? 'Summary' : undefined)
   if (/Reading your resume/.test(progress)) return mark(TAILOR_STEPS, 1, 'Reading your resume first')
   return mark(TAILOR_STEPS, 1) // thinking, or a stage label we don't know
 }
