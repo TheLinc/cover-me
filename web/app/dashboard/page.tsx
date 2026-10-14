@@ -4,7 +4,8 @@ import { createServerSupabaseClient } from '@/lib/supabase-server'
 import DashboardClient from './DashboardClient'
 import type { Allowance } from '@/lib/limits'
 import { avatarUrl } from '@/lib/avatar'
-import { ProHistory } from './ApplicationHistory'
+import { ProHistory, ProHistorySkeleton } from './ApplicationHistory'
+import { Toaster } from '@/components/ui/sonner'
 
 export default async function DashboardPage() {
   const supabase = await createServerSupabaseClient()
@@ -27,10 +28,11 @@ export default async function DashboardPage() {
   let history = null
   if (userData?.tier === 'hosted_pro') {
     const { data: { session } } = await supabase.auth.getSession()
-    if (session) history = <Suspense fallback={null}><ProHistory accessToken={session.access_token} /></Suspense>
+    if (session) history = <Suspense fallback={<ProHistorySkeleton />}><ProHistory accessToken={session.access_token} /></Suspense>
   }
 
   return (
+    <>
     <DashboardClient
       email={user.email ?? ''}
       avatar={avatarUrl(user.user_metadata)}
@@ -39,5 +41,7 @@ export default async function DashboardPage() {
       allowance={(allowance as Allowance | null) ?? null}
       history={history}
     />
+    <Toaster />
+    </>
   )
 }

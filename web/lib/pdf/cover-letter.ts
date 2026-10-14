@@ -1,5 +1,7 @@
+// Shared with the website. Edit here, then run `node scripts/sync-pdf.mjs`,
+// which copies this folder to web/lib/pdf/ (both builds fail on a stale copy).
 import { jsPDF } from 'jspdf'
-import type { JobData } from '../types'
+import type { PdfJob } from './types'
 
 const PAGE_W = 612
 const PAGE_H = 792
@@ -16,10 +18,10 @@ const PARA_RATIO  = 0.80  // gap between paragraphs (~8pt at 11pt — standard b
 const HEAD_RATIO  = 1.60  // gap between header block and divider
 const DIV_RATIO   = 1.10  // gap between divider and letter body
 
-export function downloadCoverLetterPdf(letter: string, job: JobData, createdAt: string) {
+export function downloadCoverLetterPdf(letter: string, job: PdfJob, createdAt: string) {
   const doc = new jsPDF({ unit: 'pt', format: 'letter' })
 
-  const companyKnown = job.company && job.company !== 'Unknown Company'
+  const companyKnown = Boolean(job.company) && job.company !== 'Unknown Company'
   const paragraphs = letter
     .replace(/\r\n/g, '\n')        // normalise Windows line endings
     .replace(/\r/g, '\n')          // normalise old Mac line endings

@@ -10,11 +10,11 @@ describe('describeAllowance', () => {
   })
   it('weekly: resets Monday', () => {
     expect(describeAllowance({ ...base, kind: 'weekly', limit: 5, used: 2, resets_at: '2026-10-12T00:00:00Z' }))
-      .toEqual({ label: 'Free generations this week', used: 2, limit: 5, resets: 'Monday, 00:00 UTC' })
+      .toEqual({ label: 'Free generations this week', used: 2, limit: 5, resets: 'Resets Monday, 00:00 UTC' })
   })
   it('daily: Pro fair use resets at midnight', () => {
     expect(describeAllowance({ ...base, kind: 'daily', limit: 25, used: 7, resets_at: '2026-10-10T00:00:00Z' }))
-      .toEqual({ label: 'Generations today', used: 7, limit: 25, resets: 'Midnight UTC' })
+      .toEqual({ label: 'Generations today', used: 7, limit: 25, resets: 'Resets at midnight UTC' })
   })
   // Free users who used more than 5 under the old 5-a-day rules in the
   // deploy week would otherwise see "15 / 5" until Monday.

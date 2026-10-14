@@ -69,3 +69,6 @@ docs/
 
 # Raw Higgsfield downloads
 .media-raw/
+
+# Impeccable decision-page answers (per session)
+.impeccable/questions/

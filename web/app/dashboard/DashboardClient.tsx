@@ -5,6 +5,7 @@ import { openBilling } from "@/lib/billing";
 import { describeAllowance, type Allowance } from "@/lib/limits";
 import { LocalDate } from "./LocalDate";
 import { CHROME_STORE_URL } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -84,37 +85,25 @@ export default function DashboardClient({
 
       <SiteNav links={appLinks(isPro)} actions={<SignOutButton />} />
 
-      {/* Main */}
-      <main className="px-5 pt-14 pb-24 relative z-[1]">
-        <div className="max-w-[860px] mx-auto flex flex-col gap-4">
+      <main className="relative z-[1] px-5 pb-24 pt-12">
+        <div className="mx-auto flex max-w-[1040px] flex-col gap-8">
 
-          {/* Identity header */}
-          <header
-            className="flex items-start justify-between gap-6 pb-10 border-b border-border mb-1 max-[700px]:flex-col-reverse max-[700px]:gap-4"
-            style={{ animation: "fadeUp 0.5s ease both" }}
-          >
-            <div className="flex flex-col gap-2.5">
-              <h1 className="text-[clamp(28px,3.8vw,46px)] leading-none text-foreground">
-                Good to see you.
-              </h1>
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[13.5px] text-muted-foreground">
-                  {email}
-                </span>
-                <span className="inline-block w-[3px] h-[3px] rounded-full bg-border shrink-0" />
-                <span className="text-[13px] text-muted-foreground">
-                  Member since <LocalDate iso={memberSince} options={{ month: "long", year: "numeric" }} />
-                </span>
-              </div>
+          {/* Who's here */}
+          <header className="flex items-center justify-between gap-6">
+            <div className="flex min-w-0 flex-col gap-1.5">
+              <h1 className="text-[34px] font-semibold leading-tight tracking-[-0.03em] text-ink">Good to see you.</h1>
+              <p className="truncate text-[14px] text-ink-2">
+                {email} · Member since <LocalDate iso={memberSince} options={{ month: "long", year: "numeric" }} />
+              </p>
             </div>
-            <div className="w-14 h-14 max-[700px]:w-11 max-[700px]:h-11 rounded-full bg-brand-dim border border-[rgba(99,102,241,0.28)] text-brand-light text-xl font-extrabold flex items-center justify-center shrink-0 tracking-[-1px] overflow-hidden">
+            <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand-tint text-[18px] font-semibold text-brand-ink">
               {avatar && !avatarFailed ? (
                 // A plain img: next/image would need Google's image host allowed in next.config.
                 <img
                   src={avatar}
                   alt=""
                   referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover"
+                  className="h-full w-full object-cover"
                   onError={() => setAvatarFailed(true)}
                 />
               ) : (
@@ -123,174 +112,75 @@ export default function DashboardClient({
             </div>
           </header>
 
-          {/* Stats — hairline border grid */}
-          <div
-            className="grid grid-cols-[180px_1fr_160px] max-[700px]:grid-cols-2 gap-px bg-border border border-border rounded-[10px] overflow-hidden"
-            style={{ animation: "fadeUp 0.5s ease 0.08s both" }}
-          >
-            {/* Plan */}
-            <div className="bg-surface px-[26px] py-[22px] flex flex-col gap-2.5">
-              <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
-                Plan
-              </span>
-              {isPro ? (
-                <div className="inline-flex items-center gap-[5px] text-[11.5px] font-bold text-white bg-brand px-3 py-[5px] rounded-full w-fit tracking-[-0.1px]">
-                  <StarIcon size={9} weight="fill" />
-                  Pro
-                </div>
-              ) : (
-                <div className="inline-flex items-center text-[11.5px] font-semibold text-muted-foreground bg-elevated border border-border px-3 py-[5px] rounded-full w-fit">
-                  Free
-                </div>
-              )}
-            </div>
-
-            {/* Letters today */}
-            <div className="bg-surface px-[26px] py-[22px] flex flex-col gap-2.5">
-              <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
-                {usage?.label ?? 'Usage'}
-              </span>
-              {usage ? (
-                <div className="flex flex-col gap-2.5">
-                  <div className="text-[28px] font-extrabold tracking-[-1.2px] text-foreground leading-none flex items-baseline gap-0.5">
-                    {usage.used}
-                    <span className="text-[13px] font-medium text-muted-foreground tracking-normal">
-                      {" "}
-                      / {usage.limit}
-                    </span>
-                  </div>
-                  <Progress value={usagePct} className="h-1" />
-                </div>
-              ) : (
-                <span className="text-[13px] text-muted-foreground">Unavailable right now</span>
-              )}
-            </div>
-
-            {/* Resets */}
-            <div className="bg-surface px-[26px] py-[22px] flex flex-col gap-2.5 max-[700px]:col-span-2">
-              <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
-                Resets
-              </span>
-              <span className="text-[20px] font-extrabold tracking-[-0.8px] text-foreground leading-none">
-                {usage?.resets ?? '—'}
-              </span>
-            </div>
-          </div>
-
-          {/* Upgrade card (free) / Pro confirmation (pro) */}
-          {!isPro ? (
-            <div
-              className="soft-card px-8 py-7 flex items-center justify-between gap-8 max-[700px]:flex-col max-[700px]:items-start"
-              style={{ animation: "fadeUp 0.5s ease 0.16s both" }}
-            >
-              <div className="flex flex-col gap-1.5 relative z-[1] flex-1 min-w-0">
-                <span className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.12em] text-brand-light mb-0.5">
-                  <StarIcon size={10} weight="fill" />
-                  Cover Me Pro
-                </span>
-                <h2 className="text-[17px] text-foreground leading-[1.2]">
-                  Get up to 25 generations a day.
-                </h2>
-                <p className="text-[13px] text-muted-foreground leading-[1.65] max-w-[420px]">
-                  Pro saves every application, searchable here on your dashboard, with
-                  every new feature included. Cancel any time.
-                </p>
-              </div>
-
-              <div className="flex flex-col items-end gap-3 relative z-[1] shrink-0 max-[700px]:flex-row max-[700px]:items-center">
-                <div className="text-[32px] font-extrabold tracking-[-1.5px] text-brand-light leading-none gap-1 flex items-baseline">
-                  $15
-                  <span className="text-[14px] font-medium text-muted-foreground tracking-normal">
-                    /mo
-                  </span>
-                </div>
-                <span className="text-[12px] text-muted-foreground">or $35 every 3 months</span>
-                <div className="flex flex-col items-end gap-2">
-                  <Button onClick={() => handleUpgrade('monthly')} disabled={upgrading !== null} className="shrink-0">
-                    {upgrading === 'monthly'
-                      ? <><Spinner />Redirecting</>
-                      : <>Upgrade monthly <ArrowUpRightIcon size={12} /></>
-                    }
-                  </Button>
-                  <Button variant="outline" onClick={() => handleUpgrade('quarterly')} disabled={upgrading !== null} className="shrink-0">
-                    {upgrading === 'quarterly'
-                      ? <><Spinner />Redirecting</>
-                      : <>Upgrade quarterly <ArrowUpRightIcon size={12} /></>
-                    }
-                  </Button>
-                  {upgradeError && (
-                    <p className="text-[12px] text-destructive max-w-[200px] text-right leading-snug">
-                      {upgradeError}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div
-              className="bg-surface border border-[rgba(99,102,241,0.2)] rounded-[10px] px-7 py-6 flex items-start gap-4"
-              style={{ animation: "fadeUp 0.5s ease 0.16s both" }}
-            >
-              <div className="w-10 h-10 rounded-lg bg-brand-dim border border-[rgba(99,102,241,0.2)] flex items-center justify-center shrink-0 text-brand-light">
-                <StarIcon size={16} weight="fill" />
-              </div>
-              <div className="flex-1">
-                <h2 className="text-[15px] text-foreground mb-1">
-                  You&apos;re on Pro
-                </h2>
-                <p className="text-[13px] text-muted-foreground leading-[1.65] mb-3">
-                  Up to 25 generations a day, every application saved and searchable, and every new feature included.
-                </p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleBillingPortal}
-                  disabled={billingLoading}
-                >
-                  {billingLoading
-                    ? <><Spinner className="size-3.5" />Loading</>
-                    : <>Manage billing <ArrowUpRightIcon size={11} /></>
-                  }
-                </Button>
-                {billingError && (
-                  <p className="mt-2 text-[12px] text-destructive leading-snug">{billingError}</p>
+          {/* Plan and usage: one strip, read left to right. Free accounts get the upgrade in its last slot. */}
+          <div className="flex flex-col gap-3">
+            <section aria-label="Plan and usage" className="flex flex-wrap items-center gap-x-8 gap-y-4 rounded-[20px] border border-line/80 bg-surface px-6 py-5 shadow-[0_1px_2px_rgba(30,27,75,0.05),0_10px_28px_-16px_rgba(30,27,75,0.22)]">
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[12.5px] text-subtle">Plan</span>
+                {isPro ? (
+                  <Badge variant="pro" className="w-fit gap-1"><StarIcon size={10} weight="fill" aria-hidden />Pro</Badge>
+                ) : (
+                  <Badge variant="free" className="w-fit">Free</Badge>
                 )}
               </div>
-            </div>
-          )}
-
-          {/* Extension CTA */}
-          <div
-            className="bg-surface border border-border rounded-[10px] px-7 py-[22px] flex items-center justify-between gap-6 max-[700px]:flex-col max-[700px]:items-start max-[700px]:gap-3.5"
-            style={{ animation: "fadeUp 0.5s ease 0.24s both" }}
-          >
-            <div className="flex items-center gap-4 min-w-0">
-              <div className="w-[38px] h-[38px] rounded-[7px] bg-elevated border border-border flex items-center justify-center shrink-0 text-muted-foreground">
-                <GoogleChromeLogoIcon size={17} />
+              <div className="flex min-w-[220px] flex-1 flex-col gap-2">
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="text-[12.5px] text-subtle">{usage?.label ?? 'Usage'}</span>
+                  {usage ? (
+                    <span className="text-[13px] tabular-nums text-ink-2">
+                      <span className="text-[20px] font-semibold tracking-[-0.02em] text-ink">{usage.used}</span> of {usage.limit}
+                    </span>
+                  ) : (
+                    <span className="text-[13px] text-ink-2">Unavailable right now</span>
+                  )}
+                </div>
+                <Progress value={usagePct} className="h-1.5" aria-label={usage ? `${usage.used} of ${usage.limit} used` : 'Usage unavailable'} />
+                {usage && <span className="text-[12.5px] text-subtle">{usage.resets}</span>}
               </div>
-              <div className="min-w-0">
-                <p className="text-[14px] font-bold text-foreground tracking-[-0.2px] mb-0.5 truncate max-[700px]:whitespace-normal">
-                  Generate letters directly on any job board
-                </p>
-                <p className="text-[12.5px] text-muted-foreground truncate max-[700px]:whitespace-normal">
-                  LinkedIn, Indeed, Greenhouse, Lever, Workday — one click, about 20 seconds.
-                </p>
-              </div>
-            </div>
-            <a
-              href={CHROME_STORE_URL}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <Button variant="outline" size="sm">
-                Install extension
-                <ArrowUpRightIcon size={11} />
-              </Button>
-            </a>
+              {isPro ? (
+                <div className="flex flex-col items-start gap-1.5">
+                  <Button variant="outline" size="sm" className="rounded-full" onClick={handleBillingPortal} disabled={billingLoading}>
+                    {billingLoading
+                      ? <><Spinner className="size-3.5" />Loading</>
+                      : <>Manage billing <ArrowUpRightIcon size={12} aria-hidden /></>
+                    }
+                  </Button>
+                  {billingError && <p className="max-w-[220px] text-[12px] leading-snug text-destructive">{billingError}</p>}
+                </div>
+              ) : (
+                <div className="flex flex-col items-start gap-1.5">
+                  <div className="flex flex-wrap gap-2">
+                    <Button size="sm" className="rounded-full px-4" onClick={() => handleUpgrade('monthly')} disabled={upgrading !== null}>
+                      {upgrading === 'monthly' ? <><Spinner className="size-3.5" />Redirecting</> : <>Upgrade, $15/mo <ArrowUpRightIcon size={12} aria-hidden /></>}
+                    </Button>
+                    <Button variant="outline" size="sm" className="rounded-full px-4" onClick={() => handleUpgrade('quarterly')} disabled={upgrading !== null}>
+                      {upgrading === 'quarterly' ? <><Spinner className="size-3.5" />Redirecting</> : '$35 every 3 months'}
+                    </Button>
+                  </div>
+                  {upgradeError && <p className="max-w-[260px] text-[12px] leading-snug text-destructive">{upgradeError}</p>}
+                </div>
+              )}
+            </section>
+            {!isPro && (
+              <p className="px-1 text-[13.5px] text-ink-2">
+                Pro gives you up to 25 generations a day and saves every application here, searchable. Cancel any time.
+              </p>
+            )}
           </div>
 
-          {/* Pro history (2e). Last, so nothing shifts when it streams in. */}
+          {/* Pro history (2e), streamed in by the server page. */}
           {history}
+
+          {/* Where the work happens */}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-6">
+            <p className="flex items-center gap-2.5 text-[13.5px] text-ink-2">
+              <GoogleChromeLogoIcon size={18} className="text-subtle" aria-hidden />
+              Make letters on LinkedIn, Indeed, Greenhouse, Lever and Workday: one click, about 20 seconds.
+            </p>
+            <a href={CHROME_STORE_URL} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[13.5px] font-medium text-brand-strong underline-offset-4 hover:underline">
+              Install the extension <ArrowUpRightIcon size={12} aria-hidden />
+            </a>
+          </div>
         </div>
       </main>
     </div>

@@ -8,6 +8,8 @@ export interface Settings {
 }
 
 export type { JobData } from '../content/scrapers/types.ts'
+import type { ResumeEducation, ResumeExperience, ResumeProject, TailoredResume } from '../lib/pdf/types'
+export type { ResumeEducation, ResumeExperience, ResumeProject, TailoredResume } from '../lib/pdf/types'
 import type { PageSnapshot } from '../content/snapshot.ts'
 import type { JobData } from '../content/scrapers/types.ts'
 
@@ -38,27 +40,6 @@ export interface AuthSession {
   }
 }
 
-export interface ResumeExperience {
-  title: string
-  company: string
-  location: string
-  dates: string
-  bullets: string[]
-}
-
-export interface ResumeProject {
-  name: string
-  bullets: string[]
-}
-
-export interface ResumeEducation {
-  institution: string
-  degree: string
-  location: string
-  dates: string
-  bullets: string[]
-}
-
 export interface ParsedResume {
   name: string
   email: string
@@ -84,21 +65,6 @@ export interface ResumeData {
   // Uploaded while signed out after an account was here. A sign-in never
   // uploads it: on a shared browser it may be someone else's.
   signedOutUpload?: boolean
-}
-
-export interface TailoredResume {
-  name: string
-  phone: string
-  email: string
-  website: string
-  summary?: string
-  experience: ResumeExperience[]
-  projects?: ResumeProject[]
-  education: ResumeEducation[]
-  skills?: string
-  certifications?: string[]
-  atsScore?: number
-  atsGaps?: string[]
 }
 
 export type GenerateResponse =

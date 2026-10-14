@@ -1,0 +1,442 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-13T22:43:13+00:00",
+  "title": "Design System: Cover Me dashboard",
+  "extensions": {
+    "colorMeta": {
+      "paper": {
+        "role": "neutral",
+        "displayName": "Warm Paper",
+        "canonical": "#F5F3F2",
+        "tonalRamp": [
+          "#2A2522",
+          "#3F3935",
+          "#5A534D",
+          "#6B635D",
+          "#9A928B",
+          "#C9C3BC",
+          "#E2DFDB",
+          "#F5F3F2"
+        ]
+      },
+      "panel": {
+        "role": "neutral",
+        "displayName": "Soft Panel",
+        "canonical": "#ECEAE7",
+        "tonalRamp": [
+          "#2A2522",
+          "#3F3935",
+          "#5A534D",
+          "#6B635D",
+          "#9A928B",
+          "#C9C3BC",
+          "#E2DFDB",
+          "#F5F3F2"
+        ]
+      },
+      "card": {
+        "role": "neutral",
+        "displayName": "White Card",
+        "canonical": "#FFFFFF",
+        "tonalRamp": [
+          "#2A2522",
+          "#3F3935",
+          "#5A534D",
+          "#6B635D",
+          "#9A928B",
+          "#C9C3BC",
+          "#E2DFDB",
+          "#F5F3F2"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#E2DFDB",
+        "tonalRamp": [
+          "#2A2522",
+          "#3F3935",
+          "#5A534D",
+          "#6B635D",
+          "#9A928B",
+          "#C9C3BC",
+          "#E2DFDB",
+          "#F5F3F2"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Deep Ink",
+        "canonical": "#1E1B4B",
+        "tonalRamp": [
+          "#0B0A1F",
+          "#15132B",
+          "#1E1B4B",
+          "#312E81",
+          "#4A4790",
+          "#7C79B5",
+          "#B9B7DA",
+          "#ECEBF7"
+        ]
+      },
+      "body": {
+        "role": "neutral",
+        "displayName": "Body Text",
+        "canonical": "#2A2A2A",
+        "tonalRamp": [
+          "#111111",
+          "#2A2A2A",
+          "#444444",
+          "#5E5E5E",
+          "#7A7A7A",
+          "#A3A3A3",
+          "#D4D4D4",
+          "#F5F5F5"
+        ]
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Warm Grey",
+        "canonical": "#5A534D",
+        "tonalRamp": [
+          "#2A2522",
+          "#3F3935",
+          "#5A534D",
+          "#6B635D",
+          "#9A928B",
+          "#C9C3BC",
+          "#E2DFDB",
+          "#F5F3F2"
+        ]
+      },
+      "subtle": {
+        "role": "neutral",
+        "displayName": "Caption Grey",
+        "canonical": "#6B635D",
+        "tonalRamp": [
+          "#2A2522",
+          "#3F3935",
+          "#5A534D",
+          "#6B635D",
+          "#9A928B",
+          "#C9C3BC",
+          "#E2DFDB",
+          "#F5F3F2"
+        ]
+      },
+      "brand": {
+        "role": "primary",
+        "displayName": "Signal Indigo",
+        "canonical": "#6366F1",
+        "tonalRamp": [
+          "#1E1B4B",
+          "#312E81",
+          "#3730A3",
+          "#4338CA",
+          "#4F46E5",
+          "#6366F1",
+          "#C7D2FE",
+          "#EEEEFF"
+        ]
+      },
+      "brand-strong": {
+        "role": "primary",
+        "displayName": "Cover Me Indigo",
+        "canonical": "#4F46E5",
+        "tonalRamp": [
+          "#1E1B4B",
+          "#312E81",
+          "#3730A3",
+          "#4338CA",
+          "#4F46E5",
+          "#6366F1",
+          "#C7D2FE",
+          "#EEEEFF"
+        ]
+      },
+      "brand-deep": {
+        "role": "primary",
+        "displayName": "Pressed Indigo",
+        "canonical": "#4338CA",
+        "tonalRamp": [
+          "#1E1B4B",
+          "#312E81",
+          "#3730A3",
+          "#4338CA",
+          "#4F46E5",
+          "#6366F1",
+          "#C7D2FE",
+          "#EEEEFF"
+        ]
+      },
+      "brand-tint": {
+        "role": "primary",
+        "displayName": "Indigo Tint",
+        "canonical": "#EEEEFF",
+        "tonalRamp": [
+          "#1E1B4B",
+          "#312E81",
+          "#3730A3",
+          "#4338CA",
+          "#4F46E5",
+          "#6366F1",
+          "#C7D2FE",
+          "#EEEEFF"
+        ]
+      },
+      "brand-ink": {
+        "role": "primary",
+        "displayName": "Indigo Ink",
+        "canonical": "#4338CA",
+        "tonalRamp": [
+          "#1E1B4B",
+          "#312E81",
+          "#3730A3",
+          "#4338CA",
+          "#4F46E5",
+          "#6366F1",
+          "#C7D2FE",
+          "#EEEEFF"
+        ]
+      },
+      "gap-tint": {
+        "role": "secondary",
+        "displayName": "Gap Tint",
+        "canonical": "#FFEDD5",
+        "tonalRamp": [
+          "#431407",
+          "#7C2D12",
+          "#9A3412",
+          "#C2410C",
+          "#EA580C",
+          "#F97316",
+          "#FED7AA",
+          "#FFEDD5"
+        ]
+      },
+      "gap-ink": {
+        "role": "secondary",
+        "displayName": "Gap Ink",
+        "canonical": "#9A3412",
+        "tonalRamp": [
+          "#431407",
+          "#7C2D12",
+          "#9A3412",
+          "#C2410C",
+          "#EA580C",
+          "#F97316",
+          "#FED7AA",
+          "#FFEDD5"
+        ]
+      },
+      "destructive": {
+        "role": "neutral",
+        "displayName": "Rust",
+        "canonical": "hsl(17 88% 40%)",
+        "tonalRamp": [
+          "#3A1204",
+          "#5E1D07",
+          "#8A2B0A",
+          "#C03F0C",
+          "#E2602E",
+          "#EE8E68",
+          "#F7C3AE",
+          "#FCEAE2"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Page headings."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Section headings, drawer job title, usage number."
+      },
+      "tile-title": {
+        "displayName": "Tile title",
+        "purpose": "Job title on a tile; empty-state headings."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Context lines, empty-state text."
+      },
+      "letter": {
+        "displayName": "Letter",
+        "purpose": "Full letter text in the drawer."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Captions in Caption Grey, sentence case."
+      },
+      "control": {
+        "displayName": "Control",
+        "purpose": "Chip and small-button text."
+      },
+      "search": {
+        "displayName": "Search",
+        "purpose": "The pill search field."
+      }
+    },
+    "shadows": [
+      {
+        "name": "tile-rest",
+        "value": "0 1px 2px rgba(30,27,75,0.05), 0 10px 28px -16px rgba(30,27,75,0.22)",
+        "purpose": "Application tiles, the plan strip, drawer document tiles."
+      },
+      {
+        "name": "tile-hover",
+        "value": "0 1px 2px rgba(30,27,75,0.06), 0 16px 36px -16px rgba(30,27,75,0.32)",
+        "purpose": "Application tile hover, with a 1px lift."
+      },
+      {
+        "name": "search-lift",
+        "value": "0 1px 2px rgba(30,27,75,0.05), 0 10px 28px -18px rgba(30,27,75,0.25)",
+        "purpose": "The pill search."
+      },
+      {
+        "name": "primary-glow",
+        "value": "0 10px 30px -12px rgba(79,70,229,0.6)",
+        "purpose": "The primary button."
+      }
+    ],
+    "motion": [
+      {
+        "name": "tile-lift",
+        "value": "200ms ease-out",
+        "purpose": "Tile hover lift and shadow."
+      },
+      {
+        "name": "control-colors",
+        "value": "150ms",
+        "purpose": "Button and chip color changes."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one primary action in a view, such as the monthly upgrade.",
+      "html": "<button class=\"ds-btn-primary\">Upgrade, $15/mo</button>",
+      "css": ".ds-btn-primary { font-family: var(--font-sans, Geist, system-ui, sans-serif); display: inline-flex; align-items: center; gap: 6px; border-radius: 9999px; font-size: 13px; font-weight: 500; cursor: pointer; transition: background-color .15s, border-color .15s, color .15s; height: 36px; padding: 0 16px; border: none; background: var(--brand-strong, #4F46E5); color: #fff; box-shadow: 0 10px 30px -12px rgba(79,70,229,0.6); } .ds-btn-primary:hover { background: var(--brand-deep, #4338CA); } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--paper, #F5F3F2), 0 0 0 4px var(--brand, #6366F1); }"
+    },
+    {
+      "name": "Outline button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Secondary actions: Manage billing, the quarterly plan, Load more.",
+      "html": "<button class=\"ds-btn-outline\">Manage billing</button>",
+      "css": ".ds-btn-outline { font-family: var(--font-sans, Geist, system-ui, sans-serif); display: inline-flex; align-items: center; gap: 6px; border-radius: 9999px; font-size: 13px; font-weight: 500; cursor: pointer; transition: background-color .15s, border-color .15s, color .15s; height: 36px; padding: 0 16px; border: 1px solid var(--line, #E2DFDB); background: #fff; color: var(--ink, #1E1B4B); } .ds-btn-outline:hover { border-color: var(--ink-2, #5A534D); } .ds-btn-outline:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--paper, #F5F3F2), 0 0 0 4px var(--brand, #6366F1); }"
+    },
+    {
+      "name": "Document chip",
+      "kind": "chip",
+      "refersTo": "document-chip",
+      "description": "One-click download of an application's newest letter or resume; the resume chip carries the ATS score.",
+      "html": "<div style=\"display:flex;gap:8px\"><button class=\"ds-doc-chip\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z\"/></svg>Cover letter</button><button class=\"ds-doc-chip\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z\"/></svg>Resume<span class=\"ds-doc-score\">86</span></button></div>",
+      "css": ".ds-doc-chip { font-family: var(--font-sans, Geist, system-ui, sans-serif); display: inline-flex; align-items: center; gap: 6px; border-radius: 9999px; font-size: 13px; font-weight: 500; cursor: pointer; transition: background-color .15s, border-color .15s, color .15s; height: 32px; padding: 0 12px; border: 1px solid var(--line, #E2DFDB); background: #fff; color: var(--ink, #1E1B4B); } .ds-doc-chip:hover { border-color: var(--brand-strong, #4F46E5); color: var(--brand-strong, #4F46E5); } .ds-doc-chip:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--paper, #F5F3F2), 0 0 0 4px var(--brand, #6366F1); } .ds-doc-score { margin-right: -4px; border-radius: 9999px; background: var(--brand-tint, #EEEEFF); color: var(--brand-ink, #4338CA); padding: 1px 6px; font-size: 11.5px; font-weight: 600; font-variant-numeric: tabular-nums; }"
+    },
+    {
+      "name": "Filter chip",
+      "kind": "chip",
+      "refersTo": "filter-chip",
+      "description": "Date and interview filters under the search; tinted indigo when set.",
+      "html": "<div style=\"display:flex;gap:8px\"><button class=\"ds-filter-chip\"><span class=\"ds-filter-label\">From</span> <span class=\"ds-filter-value\">Any date</span></button><button class=\"ds-filter-chip is-active\" aria-pressed=\"true\"><svg width=\"11\" height=\"11\" viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z\"/></svg>Got an interview</button></div>",
+      "css": ".ds-filter-chip { font-family: var(--font-sans, Geist, system-ui, sans-serif); display: inline-flex; align-items: center; gap: 6px; border-radius: 9999px; font-size: 13px; font-weight: 500; cursor: pointer; transition: background-color .15s, border-color .15s, color .15s; height: 36px; padding: 0 14px; border: 1px solid var(--line, #E2DFDB); background: #fff; color: var(--ink-2, #5A534D); font-weight: 400; } .ds-filter-chip:hover { color: var(--ink, #1E1B4B); } .ds-filter-chip:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--paper, #F5F3F2), 0 0 0 4px var(--brand, #6366F1); } .ds-filter-label { color: var(--subtle, #6B635D); } .ds-filter-value { color: var(--ink, #1E1B4B); font-weight: 500; } .ds-filter-chip.is-active { background: var(--brand-tint, #EEEEFF); border-color: rgba(79,70,229,0.4); color: var(--brand-ink, #4338CA); font-weight: 500; }"
+    },
+    {
+      "name": "Search",
+      "kind": "input",
+      "refersTo": "search-input",
+      "description": "The 56px pill search that leads the Applications page.",
+      "html": "<label class=\"ds-search\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z\"/></svg><input type=\"search\" placeholder=\"Search company or job title\" aria-label=\"Search applications\"></label>",
+      "css": ".ds-search { position: relative; display: block; width: 100%; max-width: 640px; color: var(--subtle, #6B635D); } .ds-search svg { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); pointer-events: none; } .ds-search input { font-family: var(--font-sans, Geist, system-ui, sans-serif); width: 100%; height: 56px; padding: 0 20px 0 56px; border-radius: 9999px; border: 1px solid var(--line, #E2DFDB); background: #fff; color: var(--ink, #1E1B4B); font-size: 16px; box-shadow: 0 1px 2px rgba(30,27,75,0.05), 0 10px 28px -18px rgba(30,27,75,0.25); } .ds-search input::placeholder { color: var(--subtle, #6B635D); } .ds-search input:focus-visible { outline: none; box-shadow: 0 1px 2px rgba(30,27,75,0.05), 0 10px 28px -18px rgba(30,27,75,0.25), 0 0 0 2px var(--brand, #6366F1); }"
+    },
+    {
+      "name": "Application tile",
+      "kind": "card",
+      "refersTo": "application-tile",
+      "description": "One application on paper: monogram, title, company and date, document chips and Details.",
+      "html": "<article class=\"ds-tile\"><header class=\"ds-tile-head\"><span class=\"ds-monogram\">N</span><div class=\"ds-tile-text\"><h3>Senior Backend Engineer</h3><p>Northwind · Applied Oct 13, 2026</p></div></header><div class=\"ds-tile-row\"><button class=\"ds-doc-chip\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z\"/></svg>Cover letter</button><button class=\"ds-doc-chip\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z\"/></svg>Resume<span class=\"ds-doc-score\">86</span></button><button class=\"ds-tile-details\">Details <svg width=\"12\" height=\"12\" viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z\"/></svg></button></div></article>",
+      "css": ".ds-tile { font-family: var(--font-sans, Geist, system-ui, sans-serif); display: flex; flex-direction: column; gap: 16px; max-width: 480px; padding: 20px; border-radius: 20px; border: 1px solid rgba(226,223,219,0.8); background: #fff; box-shadow: 0 1px 2px rgba(30,27,75,0.05), 0 10px 28px -16px rgba(30,27,75,0.22); transition: box-shadow .2s ease-out, transform .2s ease-out; } .ds-tile:hover { transform: translateY(-1px); box-shadow: 0 1px 2px rgba(30,27,75,0.06), 0 16px 36px -16px rgba(30,27,75,0.32); } .ds-tile-head { display: flex; gap: 12px; align-items: flex-start; } .ds-monogram { display: grid; place-items: center; width: 40px; height: 40px; flex-shrink: 0; border-radius: 12px; background: var(--brand-tint, #EEEEFF); color: var(--brand-ink, #4338CA); font-size: 15px; font-weight: 600; } .ds-tile-text h3 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.375; color: var(--ink, #1E1B4B); } .ds-tile-text p { margin: 0; font-size: 13px; line-height: 1.375; color: var(--ink-2, #5A534D); } .ds-tile-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; } .ds-tile-details { font-family: var(--font-sans, Geist, system-ui, sans-serif); display: inline-flex; align-items: center; gap: 6px; border-radius: 9999px; font-size: 13px; font-weight: 500; cursor: pointer; transition: background-color .15s, border-color .15s, color .15s; margin-left: auto; height: 32px; padding: 0 10px; border: none; background: transparent; color: var(--ink-2, #5A534D); font-weight: 400; } .ds-tile-details:hover { background: var(--panel, #ECEAE7); color: var(--ink, #1E1B4B); } .ds-tile-details:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--paper, #F5F3F2), 0 0 0 4px var(--brand, #6366F1); } .ds-doc-chip { font-family: var(--font-sans, Geist, system-ui, sans-serif); display: inline-flex; align-items: center; gap: 6px; border-radius: 9999px; font-size: 13px; font-weight: 500; cursor: pointer; transition: background-color .15s, border-color .15s, color .15s; height: 32px; padding: 0 12px; border: 1px solid var(--line, #E2DFDB); background: #fff; color: var(--ink, #1E1B4B); } .ds-doc-chip:hover { border-color: var(--brand-strong, #4F46E5); color: var(--brand-strong, #4F46E5); } .ds-doc-chip:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--paper, #F5F3F2), 0 0 0 4px var(--brand, #6366F1); } .ds-doc-score { margin-right: -4px; border-radius: 9999px; background: var(--brand-tint, #EEEEFF); color: var(--brand-ink, #4338CA); padding: 1px 6px; font-size: 11.5px; font-weight: 600; font-variant-numeric: tabular-nums; }"
+    },
+    {
+      "name": "ATS capsule and gap chips",
+      "kind": "chip",
+      "refersTo": "ats-capsule",
+      "description": "The drawer's resume heading with its score, then the missing keywords.",
+      "html": "<div class=\"ds-ats\"><h3>Tailored resume <span class=\"ds-ats-score\">ATS 72</span></h3><div class=\"ds-gaps\"><span class=\"ds-gaps-label\">Missing</span><span class=\"ds-gap\">Kafka</span><span class=\"ds-gap\">Terraform</span></div></div>",
+      "css": ".ds-ats { font-family: var(--font-sans, Geist, system-ui, sans-serif); display: flex; flex-direction: column; gap: 10px; } .ds-ats h3 { margin: 0; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--ink-2, #5A534D); } .ds-ats-score { border-radius: 9999px; background: var(--brand-tint, #EEEEFF); color: var(--brand-ink, #4338CA); padding: 1px 8px; font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; } .ds-gaps { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; } .ds-gaps-label { margin-right: 2px; font-size: 12.5px; color: var(--subtle, #6B635D); } .ds-gap { border-radius: 9999px; background: var(--gap-tint, #FFEDD5); color: var(--gap-ink, #9A3412); padding: 2px 10px; font-size: 12px; font-weight: 500; }"
+    },
+    {
+      "name": "Badges",
+      "kind": "chip",
+      "refersTo": "badge-pro",
+      "description": "Plan and interview status as labeled pills.",
+      "html": "<div style=\"display:flex;gap:8px\"><span class=\"ds-badge ds-badge-pro\"><svg width=\"10\" height=\"10\" viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M234.29,114.85l-45,38.83L203,211.75a16.4,16.4,0,0,1-24.5,17.82L128,198.49,77.47,229.57A16.4,16.4,0,0,1,53,211.75l13.76-58.07-45-38.83A16.46,16.46,0,0,1,31.08,86l59-4.76,22.76-55.08a16.36,16.36,0,0,1,30.27,0l22.75,55.08,59,4.76a16.46,16.46,0,0,1,9.37,28.86Z\"/></svg>Pro</span><span class=\"ds-badge ds-badge-free\">Free</span><span class=\"ds-badge ds-badge-interview\"><svg width=\"11\" height=\"11\" viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z\"/></svg>Interview</span></div>",
+      "css": ".ds-badge { font-family: var(--font-sans, Geist, system-ui, sans-serif); display: inline-flex; align-items: center; gap: 4px; border-radius: 9999px; border: 1px solid transparent; padding: 2px 10px; font-size: 12px; font-weight: 600; } .ds-badge-pro { background: var(--brand-strong, #4F46E5); color: #fff; } .ds-badge-free { background: var(--panel, #ECEAE7); border-color: var(--line, #E2DFDB); color: var(--ink-2, #5A534D); } .ds-badge-interview { background: #fff; border-color: var(--line, #E2DFDB); color: var(--ink, #1E1B4B); font-weight: 500; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Documents on the desk",
+    "overview": "The app is the brand's warm paper ground with white tiles laid straight on it. Each tile is one application, and its documents (cover letter, tailored resume) sit on the tile as pill chips you click to download. Nothing is boxed twice: there is no panel around the tiles, no bordered section around a bordered card. Depth comes from a soft two-part shadow, not from frames.\n\nDensity is compact but calm. A page opens with a 34px heading and one line of context, then the thing you came for: a full-width pill search on Applications, the plan strip and recent tiles on home. Detail lives one step away in a right-hand drawer, which repeats the same white tile on paper for each letter and resume.\n\nIndigo is used sparingly and mostly as a tint. Solid indigo marks the one primary action, the Pro badge, the usage bar and links; the pale tint with deep indigo text marks things that belong to Cover Me's output (monograms, the ATS score, an active filter).",
+    "keyCharacteristics": [
+      "Warm paper page, white tiles floating on a two-part shadow with an 80% hairline.",
+      "Pills for every control: buttons, search, filter chips, badges, document chips.",
+      "20px tile corners, 12px monogram squares.",
+      "Indigo tint with indigo ink for Cover Me output; orange tint only for missing keywords.",
+      "Geist throughout, numbers in tabular figures."
+    ],
+    "rules": [
+      {
+        "name": "The Tint Not Fill Rule",
+        "body": "Cover Me's output is marked with indigo tint and indigo ink, never a solid indigo block. Solid indigo is kept for the single primary action, the Pro badge and the usage bar.",
+        "section": "colors"
+      },
+      {
+        "name": "The Orange Means Missing Rule",
+        "body": "Gap tint and gap ink appear only on missing-keyword chips. No warning, badge or decoration borrows them.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tabular Numbers Rule",
+        "body": "Usage counts, ATS scores and the result count use tabular figures so they don't shift as they change.",
+        "section": "typography"
+      },
+      {
+        "name": "The Floating Tile Rule",
+        "body": "White tiles sit directly on paper. Never wrap a group of tiles in a panel, card or bordered section.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** lay white 20px tiles straight on Warm Paper with the tile rest shadow and an 80% hairline.",
+      "**Do** make every control a pill and every container 20px.",
+      "**Do** put a document one click from the tile: a download chip per document, the ATS score on the Resume chip.",
+      "**Do** mark Cover Me output and set filters with Indigo Tint and Indigo Ink.",
+      "**Do** keep missing keywords in Gap Tint and Gap Ink, labeled \"Missing\".",
+      "**Do** use tabular figures for counts and scores, and write all text in sentence case.",
+      "**Do** follow `web/BRAND.md` for anything on the marketing pages."
+    ],
+    "donts": [
+      "**Don't** wrap tiles in a panel or bordered section, or nest a bordered card in a bordered card.",
+      "**Don't** use Signal Indigo (`brand`) for text; text uses Cover Me Indigo or Indigo Ink.",
+      "**Don't** use circular dots or bullets as status markers; status is a labeled pill (Interview, Pro, Free).",
+      "**Don't** add uppercase, mono or tracked-out labels above headings in the app; a section is named by its own heading.",
+      "**Don't** use black or hard offset shadows; shadows are ink-tinted and soft."
+    ]
+  }
+}

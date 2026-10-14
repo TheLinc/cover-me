@@ -251,8 +251,7 @@ cover-me/
 │   │   │   ├── ai/          # Cover-letter + resume-tailor prompts, Claude/OpenAI clients, resume parsing
 │   │   │   ├── auth.ts      # Supabase auth + backend API helpers
 │   │   │   ├── crypto.ts    # AES-GCM key encryption/decryption
-│   │   │   ├── pdf.ts       # Cover letter PDF generation (jsPDF)
-│   │   │   ├── resume-pdf.ts # Tailored resume PDF generation (jsPDF)
+│   │   │   ├── pdf/         # Cover letter and tailored resume PDFs (jsPDF); copied to web/lib/pdf by scripts/sync-pdf.mjs, so edit them here
 │   │   │   ├── resume-parser.ts
 │   │   │   └── storage.ts   # chrome.storage.local helpers
 │   │   ├── popup/           # React UI
