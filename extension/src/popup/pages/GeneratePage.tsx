@@ -669,7 +669,7 @@ export default function GeneratePage({ onNavigate }: Props) {
           {(state === 'loading' || tailorState === 'loading') && (
             <div className="loading">
               <ProgressSteps
-                steps={state === 'loading' ? letterSteps(!!loadingJob) : tailorSteps(tailorProgress, !!loadingJob, includeSummary)}
+                steps={state === 'loading' ? letterSteps(!!loadingJob) : tailorSteps(tailorProgress, !!loadingJob)}
               />
               {loadingJob && (
                 <div className="loading-job-preview">
