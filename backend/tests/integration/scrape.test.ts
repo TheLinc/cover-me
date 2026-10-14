@@ -57,7 +57,16 @@ describe('scrape', () => {
     }
   })
 
+  // The limiter counts per calendar minute (migration 014). A test that makes
+  // 21 calls must not straddle a minute boundary, or the count restarts and the
+  // 21st call passes, so each starts with at least 15 s left in its minute.
+  const awayFromMinuteEdge = async () => {
+    const left = 60_000 - (Date.now() % 60_000)
+    if (left < 15_000) await new Promise((r) => setTimeout(r, left + 500))
+  }
+
   it('limits each IP to 20 calls a minute; other IPs are unaffected', async () => {
+    await awayFromMinuteEdge()
     const ip = '203.0.113.7'
     const body = { pages: [page('lever')] }
     for (let i = 0; i < 20; i++) expect((await scrape({ body }, ip)).status).toBe(200)
@@ -68,6 +77,7 @@ describe('scrape', () => {
   it('ignores client-chosen x-forwarded-for entries', async () => {
     // No cf-connecting-ip: the key is the entry the gateway appends, so a
     // different forged first entry on every call still shares one bucket.
+    await awayFromMinuteEdge()
     const body = { pages: [page('lever')] }
     const statuses: number[] = []
     for (let i = 1; i <= 21; i++) {
@@ -78,6 +88,7 @@ describe('scrape', () => {
   })
 
   it('limits IPv6 per /64, not per address', async () => {
+    await awayFromMinuteEdge()
     const body = { pages: [page('lever')] }
     for (let i = 1; i <= 20; i++) expect((await scrape({ body }, `2001:db8:1:2::${i.toString(16)}`)).status).toBe(200)
     expect((await scrape({ body }, '2001:db8:1:2:ffff:ffff:ffff:ffff')).status).toBe(429)
