@@ -1,7 +1,8 @@
 // One-time resume structuring for the tailor delta prompt. The hosted tier
 // stores raw resume text; the tailor function needs the structured shape the
 // extension's BYOK path already produces. Parsed once per resume, cached
-// encrypted in resumes.structured_encrypted (cleared on re-upload).
+// encrypted in resumes.structured_encrypted. The resume function parses a new
+// upload in the background; new text clears the old copy, the same text keeps it.
 //
 // The prompt template is mirrored from extension/src/lib/ai/resume-parse.ts —
 // scripts/check-prompt-sync.mjs fails the build if the copies drift.

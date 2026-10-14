@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
-  admin, callFunction, createUser, deleteUser, JOB, mockClaude, quotaUsedToday, setQuotaUsedToday, setUsage, type TestUser, uploadResume,
+  admin, callFunction, clearParsedResume, createUser, deleteUser, JOB, LONG_RESUME_TEXT, mockClaude, quotaUsedToday, setQuotaUsedToday, setUsage, type TestUser, uploadResume,
 } from './helpers'
 import { MOCK_PARSED_RESUME, MOCK_REWRITTEN_BULLET, MOCK_TAILOR_DELTA } from '../mock-anthropic'
 
@@ -64,6 +64,7 @@ describe('tailor', () => {
   it('uses Sonnet 5.5 with adaptive thinking at high effort and fallback, and Haiku 4.5 for the parse', async () => {
     user = await createUser()
     await uploadResume(user)
+    await clearParsedResume(user.id) // so tailor parses it itself
     await callFunction('tailor', { token: user.token, body: { job: JOB } })
 
     const requests = await mockClaude.requests()
@@ -81,9 +82,10 @@ describe('tailor', () => {
     }
   })
 
-  it('parses the resume once, then reuses the encrypted cache', async () => {
+  it('parses the resume once when it has no parsed copy, then reuses the encrypted cache', async () => {
     user = await createUser()
     await uploadResume(user)
+    await clearParsedResume(user.id)
 
     await callFunction('tailor', { token: user.token, body: { job: JOB } })
     const { data } = await admin.from('resumes').select('structured_encrypted').eq('user_id', user.id).single()
@@ -119,9 +121,19 @@ describe('tailor', () => {
     if (done?.type === 'done') expect(done.resume.atsScore).toBe(77)
   })
 
+  it('caches its own parse of a full-length resume', async () => {
+    user = await createUser()
+    await uploadResume(user, LONG_RESUME_TEXT)
+    await clearParsedResume(user.id)
+    await callFunction('tailor', { token: user.token, body: { job: JOB } })
+    const { data } = await admin.from('resumes').select('structured_encrypted').eq('user_id', user.id).single()
+    expect(data?.structured_encrypted).toBeTruthy()
+  })
+
   it('refunds when the resume parse call fails', async () => {
     user = await createUser()
     await uploadResume(user)
+    await clearParsedResume(user.id)
     await mockClaude.failNext(500)
 
     const res = await callFunction('tailor', { token: user.token, body: { job: JOB } })
@@ -132,8 +144,7 @@ describe('tailor', () => {
   it('refunds when the tailor call fails', async () => {
     user = await createUser()
     await uploadResume(user)
-    // First run caches the parsed resume, so the next Claude call is the tailor itself.
-    await callFunction('tailor', { token: user.token, body: { job: JOB } })
+    // The upload already parsed the resume, so the next Claude call is the tailor itself.
     await mockClaude.failNext(529)
 
     const res = await callFunction('tailor', {
@@ -142,7 +153,7 @@ describe('tailor', () => {
       headers: { Accept: 'application/x-ndjson' },
     })
     expect(res.status).toBe(502)
-    expect(await quotaUsedToday(user.id)).toBe(1)
+    expect(await quotaUsedToday(user.id)).toBe(0)
   })
 
   it('saves the tailored resume and ATS score for Pro users', async () => {

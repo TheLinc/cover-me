@@ -2,7 +2,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 import { consumeGeneration } from '../_shared/limits.ts'
 import { ANTHROPIC_MESSAGES_URL, SONNET_BETA_HEADER, SONNET_FIELDS, SONNET_MAX_TOKENS } from '../_shared/anthropic.ts'
 import { corsHeaders, handleCors, json } from '../_shared/cors.ts'
-import { decrypt, encrypt } from '../_shared/encrypt.ts'
+import { decrypt, encrypt, sameCiphertext } from '../_shared/encrypt.ts'
 import { findOrCreateJobApplication } from '../_shared/job-application.ts'
 import { isUuid } from '../_shared/history-upload.ts'
 import { isValidParsedResume, parseResumeStructure, type ParsedResume } from '../_shared/resume-parse.ts'
@@ -392,7 +392,8 @@ Deno.serve(async (req) => {
 
   // Structured resume: read the cached copy, or parse the raw text once
   // (Haiku, verbatim extraction) and cache it encrypted for future tailors.
-  // resume/index.ts clears the cache whenever the resume text is replaced.
+  // resume/index.ts clears the cache when the text changes and usually parses
+  // it ahead in the background, so this parse is the fallback.
   let structured: ParsedResume | null = null
   if (resumeRow.structured_encrypted) {
     try {
@@ -419,7 +420,10 @@ Deno.serve(async (req) => {
     // Cache best-effort — a failed write just means we re-parse next time.
     try {
       const structured_encrypted = await encrypt(JSON.stringify(structured))
-      await supabase.from('resumes').update({ structured_encrypted }).eq('user_id', userId)
+      // Only if the resume text wasn't replaced meanwhile.
+      const { error } = await supabase.from('resumes').update({ structured_encrypted })
+        .eq('user_id', userId).like('text_encrypted', sameCiphertext(resumeRow.text_encrypted))
+      if (error) console.error('Failed to cache structured resume')
     } catch {
       console.error('Failed to cache structured resume')
     }
