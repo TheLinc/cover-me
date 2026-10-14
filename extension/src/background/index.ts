@@ -477,6 +477,7 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
       onProgress('Reading your resume (first run only)…')
       parsed = await parseResumeStructure(resumeData.text, settings.provider, apiKey)
       await saveParsedResume(parsed)
+      onProgress('') // read; the model thinks next, which is plain "Plan the changes"
     }
 
     // Shows how many bullets the parser extracted per role — if this is already

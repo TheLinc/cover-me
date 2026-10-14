@@ -13,7 +13,7 @@ export default function Welcome() {
 
       <section className="welcome-step">
         <h2>1. Create a free account, or add your own API key</h2>
-        <AccountPanel initialView="signup" />
+        <AccountPanel initialView="signup" links={false} />
       </section>
 
       <section className="welcome-step">

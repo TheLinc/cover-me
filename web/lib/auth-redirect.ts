@@ -1,8 +1,16 @@
 // Google sign-in leaves the site and comes back to /auth with ?code=…. The
 // oauth flag tells /auth this is a sign-in (go to the dashboard), not an
 // email confirmation (show "confirmed").
-export function oauthRedirectUrl(site: string, plan: string | null): string {
-  return `${site}/auth?oauth=1${plan === 'pro' ? '&plan=pro' : ''}`
+export function oauthRedirectUrl(site: string, plan: string | null, next: string | null = null): string {
+  const back = safeNext(next)
+  return `${site}/auth?oauth=1${plan === 'pro' ? '&plan=pro' : ''}${back ? `&next=${encodeURIComponent(back)}` : ''}`
+}
+
+// Where to land after signing in when a dashboard page sent the user here
+// (?next=/dashboard/applications, from the extension's History link). Only a
+// dashboard path, so the parameter can't send anyone to another site.
+export function safeNext(next: string | null): string | null {
+  return next && /^\/dashboard(\/[a-z-]+)*$/.test(next) ? next : null
 }
 
 // Cancel on Google's consent screen comes back as error=access_denied. It's
@@ -21,6 +29,6 @@ function returnParams(search: string, hash: string): URLSearchParams[] {
   return [new URLSearchParams(search.replace(/^\?/, '')), new URLSearchParams(hash.replace(/^#/, ''))]
 }
 
-export function afterOAuth(plan: string | null): string {
-  return plan === 'pro' ? '/dashboard?upgrade=1' : '/dashboard'
+export function afterOAuth(plan: string | null, next: string | null = null): string {
+  return plan === 'pro' ? '/dashboard?upgrade=1' : safeNext(next) ?? '/dashboard'
 }

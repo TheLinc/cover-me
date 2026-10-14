@@ -229,6 +229,7 @@ html, body {
 .step-done { color: var(--text-2); }
 .step-active { color: var(--text); font-weight: 500; }
 .step-todo { color: var(--text-3); }
+.step-detail { color: var(--text-3); font-weight: 400; font-size: 12px; }
 .step-icon { width: 16px; height: 16px; flex-shrink: 0; border-radius: 5px; display: flex; align-items: center; justify-content: center; }
 .step-icon-done { background: rgba(99, 102, 241, 0.28); color: var(--accent-h); }
 .step-icon-todo { border: 1px dashed var(--border); }
@@ -770,6 +771,15 @@ html, body {
   cursor: pointer;
 }
 .upload-link:disabled { cursor: default; opacity: 0.7; }
+.text-link {
+  align-self: flex-start;
+  color: var(--accent-h);
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.text-link:hover { color: var(--text); }
+.page-header .text-link { display: inline-block; margin-top: 6px; }
 .local-tag { color: var(--text-2); }
 
 /* Job card — top-level entry grouping all artifacts for one posting */
