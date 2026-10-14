@@ -6,11 +6,11 @@ const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 
 export const metadata: Metadata = {
   title: 'Privacy Policy',
-  description: 'How Cover Me collects, uses, and protects your data. Your resume is encrypted at rest, never sold, and never used for AI training.',
+  description: 'How Cover Me collects, uses, and protects your data. Your resume is encrypted at rest on our servers, never sold, and never used for AI training.',
   alternates: { canonical: `${BASE}/privacy` },
   openGraph: {
     title: 'Privacy Policy — Cover Me',
-    description: 'How Cover Me collects, uses, and protects your data. Your resume is encrypted at rest, never sold, and never used for AI training.',
+    description: 'How Cover Me collects, uses, and protects your data. Your resume is encrypted at rest on our servers, never sold, and never used for AI training.',
     url: `${BASE}/privacy`,
     siteName: 'Cover Me',
     type: 'website',
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Privacy Policy — Cover Me',
-    description: 'How Cover Me collects, uses, and protects your data. Your resume is encrypted at rest, never sold, and never used for AI training.',
+    description: 'How Cover Me collects, uses, and protects your data. Your resume is encrypted at rest on our servers, never sold, and never used for AI training.',
   },
 }
 
@@ -211,7 +211,7 @@ export default function PrivacyPage() {
               <Li>
                 <strong className="text-foreground">Resume text.</strong> When you upload a PDF or DOCX
                 file, text is extracted client-side on your device. The raw binary file is never stored or
-                transmitted. In BYOK mode, the extracted text is stored only in your browser&apos;s local
+                transmitted; in Hosted mode its file name is stored, unencrypted, with your resume. In BYOK mode, the extracted text is stored only in your browser&apos;s local
                 storage. In Hosted mode, the extracted text is transmitted to our server over HTTPS and
                 stored in an encrypted database, and a copy is kept in local storage on each browser you
                 sign in from, so you don&apos;t upload it again on a new device. When you upload a new
@@ -251,11 +251,13 @@ export default function PrivacyPage() {
                 <strong className="text-foreground">Job posting data.</strong> From version 1.3.0,
                 when you click Generate or Tailor Resume on a job posting, the extension copies the page
                 you are looking at and sends it, with the page&apos;s address, to our server over HTTPS,
-                in every mode including BYOK. The
+                in every mode including BYOK. The extension explains this the first time you open it and
+                reads postings on your device only until you agree. The
                 server reads the job title, company name, and job description from it and sends those
                 back; the page itself is discarded as soon as it is read and is never logged or
-                stored. Scripts, form fields, images, LinkedIn&apos;s messaging panel and the data
-                sites embed in them are removed in your browser before anything is sent, but the copy includes whatever text the page shows, which on
+                stored. The copy covers the page and any job-board frames embedded in it. Scripts,
+                form fields, images, LinkedIn&apos;s messaging panel and the data sites embed in them are
+                removed in your browser before anything is sent, but the copy includes whatever text the page shows, which on
                 sites you are signed in to can include your name. If our server can&apos;t be reached,
                 the extension reads the posting on your device instead. The job details are then used
                 only to generate your cover letter or tailored resume.
@@ -265,8 +267,8 @@ export default function PrivacyPage() {
                 letters and tailored resumes are grouped by job application and saved locally in your
                 browser storage (BYOK and Hosted Free modes) or also synced to our backend (Hosted Pro
                 mode) for cross-device access. On our backend the letters and resumes are encrypted; the
-                job title, company, posting address and dates that group them are not, so you can search
-                them.
+                job title, company, posting address, dates, interview mark, ATS match score and missing
+                keywords that go with them are not, so you can search and filter them.
               </Li>
               <Li>
                 <strong className="text-foreground">Authentication session tokens (Hosted mode only).</strong>{' '}
@@ -283,8 +285,9 @@ export default function PrivacyPage() {
               <Li>
                 <strong className="text-foreground">Rate-limit counter (all modes).</strong>{' '}
                 To stop abuse of the posting reader, our server counts requests per IP address. It
-                stores a keyed hash (HMAC) of the address, never the address itself, and deletes counts
-                more than two days old during routine cleanup.
+                stores a keyed hash (HMAC) of the address, never the address itself. When it reads a
+                newly uploaded resume, it also counts per account, keyed by a hash of your account ID.
+                Periodic cleanup deletes counts once they are two days old.
               </Li>
               <Li>
                 <strong className="text-foreground">Billing information (Pro subscribers only).</strong>{' '}
@@ -350,6 +353,7 @@ export default function PrivacyPage() {
                 <li>Facts you add for your letters, such as a referrer&apos;s name</li>
                 <li>Cached account tier to avoid redundant network requests</li>
                 <li>Transient in-flight generation state so results survive the popup closing mid-generation</li>
+                <li>The popup&apos;s last inputs and results, so they&apos;re still there when you reopen it</li>
               </ul>
               <br />
               <code className="text-brand-light font-mono text-[12px]">chrome.storage.sync</code> is
@@ -379,8 +383,8 @@ export default function PrivacyPage() {
             </PermissionCard>
 
             <PermissionCard name="scripting">
-              <strong className="text-foreground">Why it is needed:</strong> Cover Me does not run
-              any code on web pages in the background. Its job-posting reader is injected only when
+              <strong className="text-foreground">Why it is needed:</strong> From version 1.3.0, Cover
+              Me runs no code on web pages until you ask. Its job-posting reader is injected only when
               you click Generate or Tailor Resume, using{' '}
               <code className="text-brand-light font-mono text-[12px]">chrome.scripting.executeScript</code>.
               <br /><br />
@@ -397,8 +401,10 @@ export default function PrivacyPage() {
               <br /><br />
               <strong className="text-foreground">Access is strictly user-initiated:</strong>{' '}
               Injection is gated by <code className="text-brand-light font-mono text-[12px]">activeTab</code>{' '}
-              and only triggered when you click Generate or Tailor Resume. No scripts are ever
-              injected in the background.
+              and only triggered when you click Generate or Tailor Resume. No scripts are injected in
+              the background. Earlier versions loaded a small listener into every page that did nothing
+              until you clicked Generate or Tailor Resume; Chrome shows those versions as able to read
+              and change your data on all websites.
             </PermissionCard>
 
             <PermissionCard name="identity">
@@ -418,7 +424,7 @@ export default function PrivacyPage() {
 
             <H3>Job board host access</H3>
             <P>
-              Cover Me does not run on the websites you visit. It reads a page only when you click
+              From version 1.3.0, Cover Me does not run on the websites you visit. It reads a page only when you click
               Generate or Tailor Resume, through the <code className="text-brand-light font-mono text-[12px]">activeTab</code>{' '}
               permission above. Six job-board domains are listed as host permissions so Cover Me can
               also read postings that a company&apos;s careers page embeds from those services. Together
@@ -439,8 +445,8 @@ export default function PrivacyPage() {
               <br /><br />
               <strong className="text-foreground">Exactly how it is used:</strong> Only when you click
               Generate or Tailor Resume, the job-posting reader is injected into the embedded posting
-              frame and reads the job title, company name, and description. Nothing runs on these
-              domains at any other time. The reader does not modify the page, inject any UI, monitor
+              frame and reads the job title, company name, and description. From version 1.3.0, nothing
+              runs on these domains at any other time. The reader does not modify the page, inject any UI, monitor
               navigation, or transmit data independently.
               <br /><br />
               <strong className="text-foreground">What we do NOT do:</strong>
@@ -495,7 +501,7 @@ export default function PrivacyPage() {
                 <li>Account tier — fetching your plan after sign-in and when the Settings or History page opens.</li>
                 <li>Upgrade — getting a Stripe checkout page when you click an Upgrade button.</li>
                 <li>Cover letter &amp; resume generation — sending job data and your session token to our backend Edge Functions, which retrieve your encrypted resume, call the Claude API with our key, and return the generated output.</li>
-                <li>Application history sync — fetching and deleting your cover letters and tailored resumes when the History page opens (Pro mode).</li>
+                <li>Application history sync (Pro mode) — saving each new cover letter and tailored resume, uploading ones already in the extension when you agree, and fetching and deleting them on the History page.</li>
                 <li>Resume sync — downloading your saved resume after sign-in, and uploading a new one to encrypted backend storage. The server then reads its structure with Anthropic.</li>
               </ul>
             </PermissionCard>
@@ -513,8 +519,8 @@ export default function PrivacyPage() {
             <H3>Server-side storage (Hosted mode only)</H3>
             <Ul>
               <Li>Resume text is encrypted with AES-256-GCM before being stored in our Supabase Postgres database. The encryption key is derived from a server-side secret. Plaintext resume text is never persisted to disk.</Li>
-              <Li>Cover letters and tailored resumes (Pro mode) are encrypted with AES-256-GCM before storage. The job title, company, posting address and dates that group them are stored unencrypted so you can search them.</Li>
-              <Li>Rate-limit counters (all modes) hold only a keyed hash of an IP address and are deleted once they are more than two days old.</Li>
+              <Li>Cover letters and tailored resumes (Pro mode) are encrypted with AES-256-GCM before storage. The job title, company, posting address, dates, interview mark, ATS match score and missing keywords that go with them are stored unencrypted so you can search and filter them. Your resume's file name is stored unencrypted too.</Li>
+              <Li>Rate-limit counters (all modes) hold only a keyed hash of an IP address, or a hash of your account ID when a new resume is read, and are deleted by periodic cleanup once they are two days old.</Li>
               <Li>All data in transit is protected by TLS 1.2 or higher (enforced by Supabase and Vercel).</Li>
               <Li>Database access is protected by Supabase Row-Level Security policies. Users can only access their own data rows.</Li>
               <Li>The Supabase service-role key (which bypasses RLS) is used only server-side in webhook handlers and is never exposed to clients.</Li>
@@ -545,7 +551,7 @@ export default function PrivacyPage() {
                   name: 'Supabase',
                   url: 'https://supabase.com/privacy',
                   when: 'Every mode (reading job postings, from version 1.3.0); everything else Hosted mode only',
-                  receives: 'Copies of the job pages you ask us to read, which are processed and not stored, and rate-limit counters keyed by a hash of your IP address. In Hosted mode also: email address, hashed password (email sign-in only), encrypted resume text, encrypted cover letters and tailored resumes with their job title, company and posting address (Pro), session tokens, and usage counts. Supabase hosts our backend functions, authentication system and database.',
+                  receives: 'Copies of the job pages you ask us to read, which are processed and not stored, and rate-limit counters keyed by a hash of your IP address. In Hosted mode also: email address, hashed password (email sign-in only), encrypted resume text, encrypted cover letters and tailored resumes with their job title, company and posting address (Pro), session tokens, and usage counts. Supabase hosts our backend functions, authentication system and database, and keeps standard request logs (IP address, time, function called) for a short period.',
                 },
                 {
                   name: 'Google',
@@ -600,7 +606,7 @@ export default function PrivacyPage() {
               <Li><strong className="text-foreground">BYOK mode:</strong> All data resides on your device. You can delete it at any time by removing the extension or clearing extension storage in Chrome settings. We hold no copy of it.</Li>
               <Li><strong className="text-foreground">Hosted account data:</strong> Your account, resume, and application history (cover letters and tailored resumes) are retained for as long as your account is active. You may request deletion at any time by contacting us at <a href={`mailto:${CONTACT_EMAIL}`} className="text-brand-light hover:text-foreground transition-colors">{CONTACT_EMAIL}</a>. We will permanently delete all your data within 30 days of a verified deletion request.</Li>
               <Li><strong className="text-foreground">Usage count records:</strong> Kept for as long as your account exists, because the free allowance counts generations over the life of the account. They are deleted with your account.</Li>
-              <Li><strong className="text-foreground">Rate-limit counters:</strong> Deleted during routine cleanup once they are more than two days old.</Li>
+              <Li><strong className="text-foreground">Rate-limit counters:</strong> Deleted by periodic cleanup once they are two days old.</Li>
               <Li><strong className="text-foreground">Stripe billing records:</strong> Stripe retains transaction records as required by financial regulations. We cannot delete data held directly by Stripe.</Li>
             </Ul>
 

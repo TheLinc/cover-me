@@ -85,7 +85,7 @@ export default function AboutPage() {
               Most job seekers spend 30–60 minutes per application writing and tailoring both documents. At scale — applying to dozens of roles — that&apos;s days of work. The AI tools that exist are either too generic (ChatGPT with a prompt), too expensive, or too invasive (storing your resume in systems you can&apos;t audit).
             </p>
             <p>
-              Cover Me was built to solve this. One click on any job posting. Your resume, their requirements, matched in seconds. Fully editable output you actually want to send. And for users who care about privacy, a BYOK mode where your resume never leaves your device.
+              Cover Me was built to solve this. One click on any job posting. Your resume, their requirements, matched in seconds. Fully editable output you actually want to send. And for users who care about privacy, a BYOK mode where your resume goes only to the AI provider whose key you use, never to us.
             </p>
             <h2 className="text-[22px] text-foreground !mt-10">
               Privacy as a first principle
@@ -94,7 +94,7 @@ export default function AboutPage() {
               Your resume is PII — it contains your employment history, education, and contact details. It should not be stored on servers you haven&apos;t consented to, trained on without your knowledge, or shared with third parties.
             </p>
             <p>
-              In BYOK mode, your resume and API key are encrypted on-device using AES-256-GCM via the Web Crypto API and never transmitted to Cover Me servers. In hosted mode, your resume is encrypted at rest in our database. The extension has no analytics, no telemetry, and no ads — the code is MIT licensed and auditable by anyone.
+              In BYOK mode your API key is encrypted on your device with AES-256-GCM via the Web Crypto API, and neither it nor your resume is sent to Cover Me servers. In hosted mode, your resume is encrypted at rest in our database. The extension has no analytics, no telemetry, and no ads — the code is MIT licensed and auditable by anyone.
             </p>
             <h2 className="text-[22px] text-foreground !mt-10">
               Open source

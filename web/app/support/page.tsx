@@ -64,7 +64,7 @@ const faqJsonLd = {
       name: 'Where is my resume stored?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'BYOK users: your resume is stored locally on your device only and never sent to Cover Me servers. Hosted accounts: your resume is encrypted at rest in our database using AES-256-GCM — it is never shared or used for AI training.',
+        text: 'BYOK users: your resume is stored locally on your device and goes only to the AI provider whose key you use, never to Cover Me servers. Hosted accounts: your resume is encrypted at rest in our database using AES-256-GCM. It is never sold or used for AI training, and it is sent to Anthropic only to read it and write your documents.',
       },
     },
   ],
@@ -179,7 +179,7 @@ export default function SupportPage() {
                 },
                 {
                   q: 'Where is my resume stored?',
-                  a: 'BYOK users: locally on your device only. Hosted accounts: encrypted at rest in our database — it is never shared or used for training.',
+                  a: 'BYOK users: locally on your device, and sent only to the AI provider whose key you use. Hosted accounts: encrypted at rest in our database. It is never sold or used for training, and it is sent to Anthropic only to read it and write your documents.',
                 },
               ].map(({ q, a }) => (
                 <div key={q} className="border-t border-border pt-5 first:border-t-0 first:pt-0">
