@@ -118,9 +118,13 @@ export default function AccountPanel({ initialView = 'signin', links = true }: {
     // The last known tier at once, so a Pro account doesn't flash "Upgrade"
     // while the lookup runs; the lookup's answer wins when it lands.
     let looked = false
-    getCachedTier().then((cached) => { if (cached && !looked) setTier(cached) })
+    // A lookup that lands after a sign-out or a switch of account belongs to
+    // the old session: it must not set or cache this one's tier.
+    const current = () => shownToken.current === sess.access_token
+    getCachedTier().then((cached) => { if (cached && !looked && current()) setTier(cached) })
     fetchTier(sess.user.id, sess.access_token).then(async (t) => {
       looked = true
+      if (!current()) return
       if (t) {
         setTier(t)
         await saveCachedTier(t)

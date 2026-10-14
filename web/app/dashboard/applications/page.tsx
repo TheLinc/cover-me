@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: 'Your applications', robots: { index:
 export default async function ApplicationsPage() {
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/auth')
+  if (!user) redirect('/auth?next=/dashboard/applications')
   const { data: userData } = await supabase.from('users').select('tier').eq('id', user.id).single()
   if (userData?.tier !== 'hosted_pro') redirect('/dashboard')
 
