@@ -154,9 +154,10 @@ export default function HistoryPage() {
       }
     } catch {
       // Keep showing local groups. A cached Pro tier that's out of date is
-      // refreshed, so the next open takes the free path.
+      // refreshed, and the Pro-only parts go now rather than next open.
       const fresh = await fetchTier(session.user.id, session.access_token)
       if (fresh) await saveCachedTier(fresh)
+      if (fresh && fresh !== 'hosted_pro') setIsProMode(false)
     } finally {
       setSyncing(false)
     }

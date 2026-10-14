@@ -30,7 +30,8 @@ export default function AccountPanel({ initialView = 'signin', links = true }: {
 
   // Hosted
   const [session, setSession] = useState<AuthSession | null>(null)
-  const [tier, setTier] = useState<string>('hosted_free')
+  // null until known: no badge and no upgrade button rather than a wrong one.
+  const [tier, setTier] = useState<string | null>(null)
   const [authView, setAuthView] = useState<AuthView>(initialView)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -66,7 +67,7 @@ export default function AccountPanel({ initialView = 'signin', links = true }: {
       } else {
         shownToken.current = null
         setSession(null)
-        setTier('hosted_free') // the next account's badge must not show this one's tier
+        setTier(null) // the next account's badge must not show this one's tier
       }
     })
     // A flow that fails while this panel is open: show it now, not next open.
@@ -114,7 +115,12 @@ export default function AccountPanel({ initialView = 'signin', links = true }: {
     setAuthError('') // an old failure would reappear on the form after sign-out
     if (shownToken.current === sess.access_token) return
     shownToken.current = sess.access_token
+    // The last known tier at once, so a Pro account doesn't flash "Upgrade"
+    // while the lookup runs; the lookup's answer wins when it lands.
+    let looked = false
+    getCachedTier().then((cached) => { if (cached && !looked) setTier(cached) })
     fetchTier(sess.user.id, sess.access_token).then(async (t) => {
+      looked = true
       if (t) {
         setTier(t)
         await saveCachedTier(t)
@@ -280,14 +286,16 @@ export default function AccountPanel({ initialView = 'signin', links = true }: {
                 </div>
                 <div className="account-info">
                   <div className="account-email">{session.user.email}</div>
-                  <span className={isPro ? 'tier-badge tier-badge-pro' : 'tier-badge'}>
-                    {isPro ? '★ Pro · up to 25 a day' : 'Free · 10 to start, then 5 a week'}
-                  </span>
+                  {tier && (
+                    <span className={isPro ? 'tier-badge tier-badge-pro' : 'tier-badge'}>
+                      {isPro ? '★ Pro · up to 25 a day' : 'Free · 10 to start, then 5 a week'}
+                    </span>
+                  )}
                 </div>
               </div>
               {links && (
                 <>
-                  {!isPro && <UpgradeButton label="Upgrade to Pro: up to 25 a day" />}
+                  {tier === 'hosted_free' && <UpgradeButton label="Upgrade to Pro: up to 25 a day" />}
                   {/* Plan, usage and (for Pro) billing and every saved application. */}
                   <a className="text-link" href={`${WEB_URL}/dashboard`} target="_blank" rel="noreferrer">Open your dashboard</a>
                 </>
