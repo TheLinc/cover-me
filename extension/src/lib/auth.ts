@@ -131,7 +131,8 @@ export async function completeSignIn(sess: AuthSession): Promise<void> {
 // One resume on both sides, owned by this account:
 // - The newer copy wins. On a new device the account's resume comes down, so
 //   the user doesn't upload it again; a resume added before signing in goes up.
-// - Identical text moves nothing (an upload clears the server's parse cache).
+// - Identical text moves nothing (the server would keep its parsed copy anyway;
+//   new text is parsed there in the background as soon as it's uploaded).
 // - Another account's copy, left in this browser after a sign-out, is never
 //   uploaded here: it's removed first, then this account's copy (if any)
 //   comes down. Its owner normally has it in their account, unless their last
