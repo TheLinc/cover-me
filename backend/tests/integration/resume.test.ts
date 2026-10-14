@@ -53,20 +53,20 @@ describe('resume', () => {
     expect((await mockClaude.requests()).filter(isParse)).toHaveLength(0)
   })
 
-  it('parses new text again once the last upload is a minute old', async () => {
+  it('parses a quick re-upload of new text too', async () => {
     await uploadResume(user)
     const before = await parsedResume(user.id)
-    const aMinuteAgo = new Date(Date.now() - 61_000).toISOString()
-    await admin.from('resumes').update({ updated_at: aMinuteAgo }).eq('user_id', user.id)
     await uploadResume(user, NEW_TEXT, { wait: false })
     const after = await waitForParsedResume(user.id)
     expect(after).not.toBe(before)
   })
 
-  it('leaves new text uploaded within a minute of the last one for tailor to parse', async () => {
+  it('stops parsing ahead after two uploads a minute, and a delete does not reset that', async () => {
     await uploadResume(user)
-    await uploadResume(user, NEW_TEXT, { wait: false })
-    await sleep(500)
+    await uploadResume(user, NEW_TEXT)
+    await callFunction('resume', { method: 'DELETE', token: user.token })
+    await uploadResume(user, RESUME_TEXT + '\nThird version', { wait: false })
+    await sleep(800)
     expect(await parsedResume(user.id)).toBeNull()
     expect((await mockClaude.requests()).filter(isParse)).toHaveLength(0)
   })
@@ -75,9 +75,10 @@ describe('resume', () => {
     await mockClaude.delayNext(1500)
     await uploadResume(user, RESUME_TEXT, { wait: false })
     await uploadResume(user, NEW_TEXT, { wait: false })
-    await sleep(2500)
-    expect((await mockClaude.requests()).filter(isParse)).toHaveLength(1)
-    expect(await parsedResume(user.id)).toBeNull()
+    const newest = await waitForParsedResume(user.id) // the second parse, not delayed
+    await sleep(2000) // the first one lands now, and must not write
+    expect((await mockClaude.requests()).filter(isParse)).toHaveLength(2)
+    expect(await parsedResume(user.id)).toBe(newest)
   })
 
   it('leaves the parse to tailor when the background parse fails', async () => {

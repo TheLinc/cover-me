@@ -7,10 +7,11 @@ const SUPABASE_URL        = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SECRET_KEY = Deno.env.get('SERVICE_KEY')!
 const MAX_RESUME_BYTES    = 100_000 // 100 KB — well above any real resume text
 const ANTHROPIC_API_KEY   = Deno.env.get('ANTHROPIC_API_KEY')!
-// ponytail: an upload within this long of the previous one isn't parsed ahead
-// (tailor parses it on first use, as before). Bounds the Haiku calls one
-// account can cause by re-uploading; a per-day cap would allow more retries.
-const PARSE_AGAIN_AFTER_MS = 60_000
+// Background parses per account. Uploads aren't charged like generations,
+// so this bounds the Haiku calls one account can cause by re-uploading (or
+// deleting and re-uploading). Past it, tailor parses on first use, as before.
+const PARSES_PER_MINUTE = 2
+const PARSES_PER_DAY    = 10
 
 declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void }
 
@@ -82,7 +83,7 @@ Deno.serve(async (req) => {
 
     const { data: previous } = await supabase
       .from('resumes')
-      .select('text_encrypted, updated_at')
+      .select('text_encrypted')
       .eq('user_id', userId)
       .maybeSingle()
     let sameText = false
@@ -103,8 +104,7 @@ Deno.serve(async (req) => {
 
     if (error) return json({ error: 'Failed to save resume' }, 500)
 
-    const recent = previous && Date.now() - new Date(previous.updated_at).getTime() < PARSE_AGAIN_AFTER_MS
-    if (!sameText && !recent) EdgeRuntime.waitUntil(parseAhead(supabase, userId, text, updated_at))
+    if (!sameText) EdgeRuntime.waitUntil(parseAhead(supabase, userId, text, updated_at))
 
     return json({ success: true })
   }
@@ -120,10 +120,20 @@ Deno.serve(async (req) => {
 })
 
 // Parses the resume in the background and caches it, the same way tailor does
-// on first use. Only writes if this upload is still the latest; a failure just
-// leaves the parse to tailor.
+// on first use. Only writes if this upload is still the latest; a failure, or
+// an account over its parse limit, just leaves the parse to tailor.
 async function parseAhead(supabase: ReturnType<typeof createClient>, userId: string, text: string, updatedAt: string) {
   try {
+    // The scrape limiter's counter, keyed by a hash of the account instead of
+    // the IP (the table holds only 64-character hex keys).
+    const key = new TextEncoder().encode(`resume-parse:${userId}`)
+    const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', key))
+    const { data: allowed, error } = await supabase.rpc('check_scrape_rate_limit', {
+      p_ip_hash: Array.from(digest, (b) => b.toString(16).padStart(2, '0')).join(''),
+      p_per_minute: PARSES_PER_MINUTE,
+      p_per_day: PARSES_PER_DAY,
+    })
+    if (error || !allowed) return
     const structured = await parseResumeStructure(text, ANTHROPIC_API_KEY)
     const structured_encrypted = await encrypt(JSON.stringify(structured))
     await supabase.from('resumes').update({ structured_encrypted }).eq('user_id', userId).eq('updated_at', updatedAt)
