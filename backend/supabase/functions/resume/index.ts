@@ -74,13 +74,6 @@ Deno.serve(async (req) => {
     // Strip any non-printable characters from filename
     const safeFilename = filename?.replace(/[^\x20-\x7E]/g, '').slice(0, 255) ?? null
 
-    let text_encrypted: string
-    try {
-      text_encrypted = await encrypt(text)
-    } catch {
-      return json({ error: 'Encryption failed' }, 500)
-    }
-
     const { data: previous } = await supabase
       .from('resumes')
       .select('text_encrypted')
@@ -90,21 +83,33 @@ Deno.serve(async (req) => {
     if (previous) {
       try { sameText = (await decrypt(previous.text_encrypted)) === text } catch { /* unreadable: treat as new */ }
     }
-
-    // The same text again (a sign-in sync) keeps the parsed copy. New text
-    // clears it, and the parse starts now so the first tailor doesn't wait for it.
     const updated_at = new Date().toISOString()
+
+    // The same text again (a sign-in sync) leaves the stored text and its
+    // parsed copy alone, so a parse still running for it can save its result.
+    if (sameText) {
+      const { error } = await supabase.from('resumes').update({ filename: safeFilename, updated_at }).eq('user_id', userId)
+      if (error) return json({ error: 'Failed to save resume' }, 500)
+      return json({ success: true })
+    }
+
+    let text_encrypted: string
+    try {
+      text_encrypted = await encrypt(text)
+    } catch {
+      return json({ error: 'Encryption failed' }, 500)
+    }
+
+    // New text clears the parsed copy, and the parse starts now so the first
+    // tailor doesn't wait for it.
     const { error } = await supabase.from('resumes').upsert(
-      {
-        user_id: userId, text_encrypted, filename: safeFilename, updated_at,
-        ...(sameText ? {} : { structured_encrypted: null }),
-      },
+      { user_id: userId, text_encrypted, filename: safeFilename, updated_at, structured_encrypted: null },
       { onConflict: 'user_id' },
     )
 
     if (error) return json({ error: 'Failed to save resume' }, 500)
 
-    if (!sameText) EdgeRuntime.waitUntil(parseAhead(supabase, userId, text, updated_at))
+    EdgeRuntime.waitUntil(parseAhead(supabase, userId, text, text_encrypted))
 
     return json({ success: true })
   }
@@ -120,9 +125,9 @@ Deno.serve(async (req) => {
 })
 
 // Parses the resume in the background and caches it, the same way tailor does
-// on first use. Only writes if this upload is still the latest; a failure, or
+// on first use. Only writes if the stored text is still the text it parsed; a failure, or
 // an account over its parse limit, just leaves the parse to tailor.
-async function parseAhead(supabase: ReturnType<typeof createClient>, userId: string, text: string, updatedAt: string) {
+async function parseAhead(supabase: ReturnType<typeof createClient>, userId: string, text: string, textEncrypted: string) {
   try {
     // The scrape limiter's counter, keyed by a hash of the account instead of
     // the IP (the table holds only 64-character hex keys).
@@ -136,7 +141,7 @@ async function parseAhead(supabase: ReturnType<typeof createClient>, userId: str
     if (error || !allowed) return
     const structured = await parseResumeStructure(text, ANTHROPIC_API_KEY)
     const structured_encrypted = await encrypt(JSON.stringify(structured))
-    await supabase.from('resumes').update({ structured_encrypted }).eq('user_id', userId).eq('updated_at', updatedAt)
+    await supabase.from('resumes').update({ structured_encrypted }).eq('user_id', userId).eq('text_encrypted', textEncrypted)
   } catch {
     console.error('Background resume parse failed')
   }

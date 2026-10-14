@@ -341,7 +341,7 @@ Deno.serve(async (req) => {
 
   const { data: resumeRow, error: resumeError } = await supabase
     .from('resumes')
-    .select('text_encrypted, structured_encrypted, updated_at')
+    .select('text_encrypted, structured_encrypted')
     .eq('user_id', userId)
     .single()
 
@@ -420,8 +420,8 @@ Deno.serve(async (req) => {
     // Cache best-effort — a failed write just means we re-parse next time.
     try {
       const structured_encrypted = await encrypt(JSON.stringify(structured))
-      // Only if the resume wasn't replaced meanwhile.
-      await supabase.from('resumes').update({ structured_encrypted }).eq('user_id', userId).eq('updated_at', resumeRow.updated_at)
+      // Only if the resume text wasn't replaced meanwhile.
+      await supabase.from('resumes').update({ structured_encrypted }).eq('user_id', userId).eq('text_encrypted', resumeRow.text_encrypted)
     } catch {
       console.error('Failed to cache structured resume')
     }

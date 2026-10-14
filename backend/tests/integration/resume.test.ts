@@ -53,6 +53,14 @@ describe('resume', () => {
     expect((await mockClaude.requests()).filter(isParse)).toHaveLength(0)
   })
 
+  it('saves a running parse when the same text is uploaded again meanwhile (sign-in sync)', async () => {
+    await mockClaude.delayNext(1500)
+    await uploadResume(user, RESUME_TEXT, { wait: false })
+    await uploadResume(user, RESUME_TEXT, { wait: false })
+    await waitForParsedResume(user.id)
+    expect((await mockClaude.requests()).filter(isParse)).toHaveLength(1)
+  })
+
   it('parses a quick re-upload of new text too', async () => {
     await uploadResume(user)
     const before = await parsedResume(user.id)
