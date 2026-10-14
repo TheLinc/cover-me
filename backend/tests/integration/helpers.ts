@@ -71,9 +71,36 @@ export async function callFunction(name: string, opts: CallOptions = {}): Promis
   })
 }
 
-export async function uploadResume(user: TestUser, text = RESUME_TEXT) {
+// The resume function parses new text in the background after it answers.
+// By default this waits for that parse, then clears the mock's log, so a test
+// sees only the Claude calls it makes itself. { wait: false } returns at once.
+export async function uploadResume(user: TestUser, text = RESUME_TEXT, { wait = true } = {}) {
   const res = await callFunction('resume', { token: user.token, body: { text, filename: 'resume.pdf' } })
   if (res.status !== 200) throw new Error(`resume upload failed: ${res.status} ${await res.text()}`)
+  if (wait) {
+    await waitForParsedResume(user.id)
+    await mockClaude.reset()
+  }
+}
+
+export async function parsedResume(userId: string): Promise<string | null> {
+  const { data } = await admin.from('resumes').select('structured_encrypted').eq('user_id', userId).single()
+  return data?.structured_encrypted ?? null
+}
+
+export async function waitForParsedResume(userId: string, timeoutMs = 10_000): Promise<string> {
+  const until = Date.now() + timeoutMs
+  for (;;) {
+    const parsed = await parsedResume(userId)
+    if (parsed) return parsed
+    if (Date.now() > until) throw new Error('the background resume parse never landed')
+    await new Promise((r) => setTimeout(r, 100))
+  }
+}
+
+// Drops the parsed copy, so the next tailor parses the resume itself.
+export async function clearParsedResume(userId: string) {
+  await admin.from('resumes').update({ structured_encrypted: null }).eq('user_id', userId)
 }
 
 export async function quotaUsedToday(userId: string): Promise<number> {

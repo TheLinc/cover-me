@@ -341,7 +341,7 @@ Deno.serve(async (req) => {
 
   const { data: resumeRow, error: resumeError } = await supabase
     .from('resumes')
-    .select('text_encrypted, structured_encrypted')
+    .select('text_encrypted, structured_encrypted, updated_at')
     .eq('user_id', userId)
     .single()
 
@@ -392,7 +392,8 @@ Deno.serve(async (req) => {
 
   // Structured resume: read the cached copy, or parse the raw text once
   // (Haiku, verbatim extraction) and cache it encrypted for future tailors.
-  // resume/index.ts clears the cache whenever the resume text is replaced.
+  // resume/index.ts clears the cache when the text changes and usually parses
+  // it ahead in the background, so this parse is the fallback.
   let structured: ParsedResume | null = null
   if (resumeRow.structured_encrypted) {
     try {
@@ -419,7 +420,8 @@ Deno.serve(async (req) => {
     // Cache best-effort — a failed write just means we re-parse next time.
     try {
       const structured_encrypted = await encrypt(JSON.stringify(structured))
-      await supabase.from('resumes').update({ structured_encrypted }).eq('user_id', userId)
+      // Only if the resume wasn't replaced meanwhile.
+      await supabase.from('resumes').update({ structured_encrypted }).eq('user_id', userId).eq('updated_at', resumeRow.updated_at)
     } catch {
       console.error('Failed to cache structured resume')
     }
