@@ -495,6 +495,7 @@ export default function GeneratePage({ onNavigate }: Props) {
     if (tailorJobId.current) tailorDismissedId.current = tailorJobId.current
     setTailorState('idle')
     setLoadingJob(null)
+    setTailorProgress('') // so the next run doesn't start on this one's last step
   }
 
   async function regenerate() {
