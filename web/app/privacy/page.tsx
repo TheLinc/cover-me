@@ -6,11 +6,11 @@ const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 
 export const metadata: Metadata = {
   title: 'Privacy Policy',
-  description: 'How Cover Me collects, uses, and protects your data. Your resume is encrypted at rest, never shared, and never used for AI training.',
+  description: 'How Cover Me collects, uses, and protects your data. Your resume is encrypted at rest, never sold, and never used for AI training.',
   alternates: { canonical: `${BASE}/privacy` },
   openGraph: {
     title: 'Privacy Policy — Cover Me',
-    description: 'How Cover Me collects, uses, and protects your data. Your resume is encrypted at rest, never shared, and never used for AI training.',
+    description: 'How Cover Me collects, uses, and protects your data. Your resume is encrypted at rest, never sold, and never used for AI training.',
     url: `${BASE}/privacy`,
     siteName: 'Cover Me',
     type: 'website',
@@ -18,11 +18,11 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Privacy Policy — Cover Me',
-    description: 'How Cover Me collects, uses, and protects your data. Your resume is encrypted at rest, never shared, and never used for AI training.',
+    description: 'How Cover Me collects, uses, and protects your data. Your resume is encrypted at rest, never sold, and never used for AI training.',
   },
 }
 
-const EFFECTIVE_DATE = 'October 11, 2026'
+const EFFECTIVE_DATE = 'October 14, 2026'
 const CONTACT_EMAIL  = 'support@cover-me.dev'
 
 // ── Section heading ────────────────────────────────────────────────────────
@@ -175,8 +175,8 @@ export default function PrivacyPage() {
             <H2 id="overview">Overview</H2>
             <P>
               Cover Me (&ldquo;we&rdquo;, &ldquo;our&rdquo;, or &ldquo;us&rdquo;) is an open-source Chrome
-              extension that generates tailored cover letters from job postings using your resume and an
-              AI model. This Privacy Policy explains what information we collect, how we use it, and your
+              extension that reads a job posting, tailors your resume to it, and writes a matching
+              cover letter, using an AI model. This Privacy Policy explains what information we collect, how we use it, and your
               rights regarding that data.
             </P>
             <P>
@@ -186,15 +186,17 @@ export default function PrivacyPage() {
             <Ul>
               <Li>
                 <strong className="text-foreground">BYOK (Bring Your Own Key) — free, unlimited.</strong>{' '}
-                You supply your own Claude or OpenAI API key. Your resume, API key, and cover letter
-                history are stored exclusively on your device in encrypted local storage. No account is
-                required and no data is sent to our servers.
+                You supply your own Claude or OpenAI API key. No account is required. Your resume,
+                API key and history are stored on your device, and only the API key is encrypted. Your
+                resume goes only to the AI provider whose key you use. From version 1.3.0, the job page
+                you use the extension on is also sent to our server so it can read the posting (see
+                Job posting data below).
               </Li>
               <Li>
                 <strong className="text-foreground">Hosted (Free &amp; Pro).</strong>{' '}
-                You create an account. Your resume is encrypted and stored on our backend. Cover letter
-                generation is handled by our server-side proxy using our API key. Pro subscribers are
-                billed through Stripe.
+                You create an account. Your resume is encrypted and stored on our backend. Our server
+                sends it to Anthropic, with our API key, to read it and to write your cover letters and
+                tailored resumes. Pro subscribers are billed through Stripe.
               </Li>
             </Ul>
             <P>
@@ -212,18 +214,20 @@ export default function PrivacyPage() {
                 transmitted. In BYOK mode, the extracted text is stored only in your browser&apos;s local
                 storage. In Hosted mode, the extracted text is transmitted to our server over HTTPS and
                 stored in an encrypted database, and a copy is kept in local storage on each browser you
-                sign in from, so you don&apos;t upload it again on a new device.
+                sign in from, so you don&apos;t upload it again on a new device. When you upload a new
+                resume, our server sends it to Anthropic right away to read its structure, so tailoring
+                can start at once.
               </Li>
               <Li>
                 <strong className="text-foreground">Account credentials (Hosted mode only).</strong>{' '}
                 Your email address and password are used to create and authenticate your account, managed
                 by Supabase Auth. Passwords are hashed using bcrypt and are never stored in plaintext.
                 If you choose Continue with Google instead, there is no password: Google confirms who
-                you are, and we receive your email address, name, and profile picture link (see
-                Third-Party Services below).
-                If you enable &ldquo;Remember me&rdquo; on the sign-in screen, your password is encrypted
-                with AES-256-GCM and stored locally on your device so the sign-in form can be pre-filled.
-                It is never transmitted to our servers in plaintext.
+                you are, and we receive your email address, name, profile picture link and Google
+                account ID (see Third-Party Services below).
+                Versions before 1.3.0 offered &ldquo;Remember me&rdquo;, which saved your password on
+                your device, encrypted with AES-256-GCM, to pre-fill the sign-in form. Version 1.3.0
+                removes that feature and deletes any saved password when it updates.
               </Li>
               <Li>
                 <strong className="text-foreground">API keys (BYOK mode only).</strong>{' '}
@@ -232,18 +236,26 @@ export default function PrivacyPage() {
                 of an API call and immediately discarded from memory. It is never transmitted to our
                 servers, logged, or included in error messages.
               </Li>
+              <Li>
+                <strong className="text-foreground">Facts you add.</strong>{' '}
+                Anything you type to give the AI more context, such as a referrer&apos;s name or
+                experience missing from your resume, is saved in your browser and sent with each
+                generation request: to our server in Hosted mode, or to your AI provider with your own
+                key.
+              </Li>
             </Ul>
 
             <H3>Information collected automatically</H3>
             <Ul>
               <Li>
-                <strong className="text-foreground">Job posting data.</strong> When you activate the
-                extension on a job posting, it copies the page you are looking at and sends it, with
-                the page&apos;s address, to our server over HTTPS, in every mode including BYOK. The
+                <strong className="text-foreground">Job posting data.</strong> From version 1.3.0,
+                when you click Generate or Tailor Resume on a job posting, the extension copies the page
+                you are looking at and sends it, with the page&apos;s address, to our server over HTTPS,
+                in every mode including BYOK. The
                 server reads the job title, company name, and job description from it and sends those
                 back; the page itself is discarded as soon as it is read and is never logged or
-                stored. Scripts, images, and the data sites embed in them are removed in your browser
-                before anything is sent, but the copy includes whatever text the page shows, which on
+                stored. Scripts, form fields, images, LinkedIn&apos;s messaging panel and the data
+                sites embed in them are removed in your browser before anything is sent, but the copy includes whatever text the page shows, which on
                 sites you are signed in to can include your name. If our server can&apos;t be reached,
                 the extension reads the posting on your device instead. The job details are then used
                 only to generate your cover letter or tailored resume.
@@ -251,8 +263,10 @@ export default function PrivacyPage() {
               <Li>
                 <strong className="text-foreground">Application history.</strong> Generated cover
                 letters and tailored resumes are grouped by job application and saved locally in your
-                browser storage (BYOK and Hosted Free modes) or synced to our encrypted backend
-                (Hosted Pro mode) for cross-device access.
+                browser storage (BYOK and Hosted Free modes) or also synced to our backend (Hosted Pro
+                mode) for cross-device access. On our backend the letters and resumes are encrypted; the
+                job title, company, posting address and dates that group them are not, so you can search
+                them.
               </Li>
               <Li>
                 <strong className="text-foreground">Authentication session tokens (Hosted mode only).</strong>{' '}
@@ -267,9 +281,16 @@ export default function PrivacyPage() {
                 content or metadata about individual generations is recorded server-side for Free users.
               </Li>
               <Li>
+                <strong className="text-foreground">Rate-limit counter (all modes).</strong>{' '}
+                To stop abuse of the posting reader, our server counts requests per IP address. It
+                stores a keyed hash (HMAC) of the address, never the address itself, and deletes counts
+                more than two days old during routine cleanup.
+              </Li>
+              <Li>
                 <strong className="text-foreground">Billing information (Pro subscribers only).</strong>{' '}
-                If you subscribe to Cover Me Pro, your payment is processed by Stripe. We store only your
-                Stripe Customer ID and subscription status in our database. Full payment details
+                When you click Upgrade, we send Stripe your email address and Cover Me account ID to
+                start checkout, and Stripe processes your payment. We store only your Stripe Customer ID
+                and subscription status in our database. Full payment details
                 (card numbers, CVV, etc.) are never transmitted to or stored by our servers.
               </Li>
             </Ul>
@@ -288,7 +309,8 @@ export default function PrivacyPage() {
             <H2 id="how-we-use">How We Use Your Information</H2>
             <P>We use the information we collect exclusively to provide the Cover Me service:</P>
             <Ul>
-              <Li>To generate tailored cover letters by combining your resume text with the job posting data you activate the extension on.</Li>
+              <Li>To read the job posting on the page you ask the extension to read.</Li>
+              <Li>To tailor your resume to that posting and write a matching cover letter, using your resume and any facts you add.</Li>
               <Li>To authenticate you and maintain your session (Hosted mode).</Li>
               <Li>To enforce the generation limits: the free allowance and Pro&apos;s fair-use cap (Hosted mode).</Li>
               <Li>To sync your application history (cover letters and tailored resumes) across devices (Pro mode only).</Li>
@@ -306,8 +328,8 @@ export default function PrivacyPage() {
               The following section details every permission declared in Cover Me&apos;s{' '}
               <code className="text-[13px] text-brand-light bg-elevated px-1.5 py-0.5 rounded font-mono">manifest.json</code>,
               why it is necessary, and exactly how it is used. No permission is requested beyond what is
-              strictly required to deliver the extension&apos;s single stated purpose: generating cover
-              letters from job postings.
+              strictly required to deliver the extension&apos;s single stated purpose: helping you apply
+              for a job by tailoring your resume to the posting and writing a matching cover letter.
             </P>
 
             <H3>Declared permissions</H3>
@@ -325,7 +347,7 @@ export default function PrivacyPage() {
                 <li>Extracted resume text and parsed resume structure</li>
                 <li>Application history — cover letters and tailored resumes grouped by job</li>
                 <li>JWT session tokens (Hosted mode)</li>
-                <li>AES-256-GCM encrypted login credential for the &ldquo;Remember me&rdquo; feature (optional, Hosted mode)</li>
+                <li>Facts you add for your letters, such as a referrer&apos;s name</li>
                 <li>Cached account tier to avoid redundant network requests</li>
                 <li>Transient in-flight generation state so results survive the popup closing mid-generation</li>
               </ul>
@@ -346,12 +368,14 @@ export default function PrivacyPage() {
               <strong className="text-foreground">Exactly how it is used:</strong> When you click
               Generate or Tailor Resume, the service worker injects the job-posting reader from the
               extension&apos;s own package into the page you are viewing and reads the job title,
-              company name, and description. No tab URLs, browsing history, cookies, or other
-              metadata are accessed or transmitted.
+              company name, and description. From version 1.3.0 it also sends the page&apos;s address
+              and a stripped copy of the page to our server to read the posting (see Job posting data
+              above). It reads no cookies, browsing history or other tabs.
               <br /><br />
               <strong className="text-foreground">Access is strictly user-initiated:</strong>{' '}
-              Access is granted only at the moment you click Generate or Tailor Resume and expires
-              immediately after. The extension does not have persistent access to any tab between actions.
+              Chrome grants this access when you click the Cover Me icon, and it ends when you leave
+              the page or close the tab. The extension uses it only when you click Generate or Tailor
+              Resume. It has no access to any other tab.
             </PermissionCard>
 
             <PermissionCard name="scripting">
@@ -365,8 +389,10 @@ export default function PrivacyPage() {
               <code className="text-brand-light font-mono text-[12px]">content.js</code>) into the
               active tab. If that fails, it injects a smaller self-contained scraper function from
               the same bundle. No code is fetched from any remote source. Both read only DOM text
-              and JSON-LD structured data to extract job title, company name, and description, then
-              return a plain object. They do not write to the page, access cookies or
+              and JSON-LD structured data to extract job title, company name, and description. From
+              version 1.3.0 the reader also returns the page&apos;s address and a copy of the page with
+              scripts, form fields, images and link query strings removed, which our server reads with
+              the latest version of the reader. They do not write to the page, access cookies or
               localStorage, or persist anything.
               <br /><br />
               <strong className="text-foreground">Access is strictly user-initiated:</strong>{' '}
@@ -382,7 +408,8 @@ export default function PrivacyPage() {
               <br /><br />
               <strong className="text-foreground">Exactly how it is used:</strong> Only when you click
               Continue with Google, Chrome opens Google&apos;s sign-in page. After you approve, Supabase
-              Auth receives the email address, name, and profile picture link Google shares, and the
+              Auth receives the email address, name, profile picture link and Google account ID Google
+              shares, and the
               extension receives a Cover Me session. The extension reads nothing else from your Google
               account or from Chrome&apos;s signed-in profile. The{' '}
               <code className="text-brand-light font-mono text-[12px]">identity.email</code> permission
@@ -419,7 +446,7 @@ export default function PrivacyPage() {
               <strong className="text-foreground">What we do NOT do:</strong>
               <ul className="mt-2 space-y-1 pl-4 list-disc">
                 <li>We do not read content from any tab other than the one you activate Generate on.</li>
-                <li>We do not monitor, log, or transmit the URLs or titles of pages you visit.</li>
+                <li>We do not monitor the pages you visit. We receive a page&apos;s address and content only when you click Generate or Tailor Resume on it.</li>
                 <li>We do not modify, inject into, or interact with web pages in any way beyond reading job posting data on explicit user request.</li>
                 <li>We do not track your browsing history or build any profile of the sites you visit.</li>
               </ul>
@@ -437,7 +464,8 @@ export default function PrivacyPage() {
               <br /><br />
               <strong className="text-foreground">Why it is needed:</strong> In BYOK mode, the
               service worker calls the Anthropic Claude API directly from your browser using your own
-              API key to generate cover letters. The request contains your API key (in the
+              API key to write cover letters and tailor resumes, and the first time you tailor, to read
+              your resume&apos;s structure. The request contains your API key (in the
               Authorization header), the job description, and your resume text. No Cover Me server
               is involved — the request goes directly from your browser to Anthropic.
               <br /><br />
@@ -456,19 +484,20 @@ export default function PrivacyPage() {
             </PermissionCard>
 
             <PermissionCard name="https://ncnmkxzrygnwjiciyxqs.supabase.co/*">
-              <strong className="text-foreground">Used by:</strong> Hosted mode only.
+              <strong className="text-foreground">Used by:</strong> Every mode, to read job postings
+              (from version 1.3.0). Everything else is Hosted mode only.
               <br /><br />
-              <strong className="text-foreground">Why it is needed:</strong> In Hosted mode, the
-              extension communicates with our Supabase backend for the following user-initiated purposes:
+              <strong className="text-foreground">Why it is needed:</strong> The extension
+              communicates with our Supabase backend for the following user-initiated purposes:
               <ul className="mt-2 space-y-1 pl-4 list-disc">
+                <li>Reading the job posting (every mode) — sending the stripped copy of the page you click Generate or Tailor Resume on, and getting back the job title, company and description. The page is not stored.</li>
                 <li>Authentication — signing in, signing up, signing out, and refreshing JWT session tokens.</li>
-                <li>Account tier — fetching your subscription tier when the Settings page opens.</li>
+                <li>Account tier — fetching your plan after sign-in and when the Settings or History page opens.</li>
+                <li>Upgrade — getting a Stripe checkout page when you click an Upgrade button.</li>
                 <li>Cover letter &amp; resume generation — sending job data and your session token to our backend Edge Functions, which retrieve your encrypted resume, call the Claude API with our key, and return the generated output.</li>
                 <li>Application history sync — fetching and deleting your cover letters and tailored resumes when the History page opens (Pro mode).</li>
-                <li>Resume sync — uploading your resume text to encrypted backend storage after sign-in, so it is available to the backend generation proxy.</li>
+                <li>Resume sync — downloading your saved resume after sign-in, and uploading a new one to encrypted backend storage. The server then reads its structure with Anthropic.</li>
               </ul>
-              <br />
-              <strong className="text-foreground">Not used in BYOK mode.</strong>
             </PermissionCard>
 
             {/* ── 5. Data Storage & Security ──────────────────────────── */}
@@ -477,14 +506,15 @@ export default function PrivacyPage() {
             <H3>On-device storage (all modes)</H3>
             <Ul>
               <Li>All on-device data is stored in <code className="text-brand-light font-mono text-[13px]">chrome.storage.local</code> — never in <code className="text-brand-light font-mono text-[13px]">chrome.storage.sync</code>, cookies, or <code className="text-brand-light font-mono text-[13px]">localStorage</code>.</Li>
-              <Li>API keys (BYOK mode) are encrypted with AES-256-GCM using a key derived via the Web Crypto API before being written to storage. The plaintext key exists in memory only for the duration of a single API call.</Li>
+              <Li>API keys (BYOK mode) are encrypted with AES-256-GCM through the Web Crypto API before being written to storage. The random key that encrypts them is stored alongside them, so this keeps the key from being read at a glance, not from someone with access to your browser profile. The plaintext key exists in memory only for the duration of a single API call.</Li>
               <Li>Resume text and cover letter history are stored unencrypted in your browser&apos;s local storage, in every mode. In Hosted mode the copies on our server are encrypted; the local copies stay on your device.</Li>
             </Ul>
 
             <H3>Server-side storage (Hosted mode only)</H3>
             <Ul>
               <Li>Resume text is encrypted with AES-256-GCM before being stored in our Supabase Postgres database. The encryption key is derived from a server-side secret. Plaintext resume text is never persisted to disk.</Li>
-              <Li>Generated cover letters (Pro mode) are encrypted with AES-256-GCM before storage.</Li>
+              <Li>Cover letters and tailored resumes (Pro mode) are encrypted with AES-256-GCM before storage. The job title, company, posting address and dates that group them are stored unencrypted so you can search them.</Li>
+              <Li>Rate-limit counters (all modes) hold only a keyed hash of an IP address and are deleted once they are more than two days old.</Li>
               <Li>All data in transit is protected by TLS 1.2 or higher (enforced by Supabase and Vercel).</Li>
               <Li>Database access is protected by Supabase Row-Level Security policies. Users can only access their own data rows.</Li>
               <Li>The Supabase service-role key (which bypasses RLS) is used only server-side in webhook handlers and is never exposed to clients.</Li>
@@ -503,7 +533,7 @@ export default function PrivacyPage() {
                   name: 'Anthropic',
                   url: 'https://www.anthropic.com/privacy',
                   when: 'BYOK mode (Claude provider) and Hosted mode (our key)',
-                  receives: 'Your resume text and the job posting data. In BYOK mode, requests are made with your own API key and are subject to your agreement with Anthropic. In Hosted mode, requests are made with our key.',
+                  receives: 'Your resume text, the job posting data and any facts you add. In Hosted mode, also your resume on its own when you upload a new one, so we can read its structure. In BYOK mode, requests are made with your own API key and are subject to your agreement with Anthropic. In Hosted mode, requests are made with our key.',
                 },
                 {
                   name: 'OpenAI',
@@ -514,20 +544,20 @@ export default function PrivacyPage() {
                 {
                   name: 'Supabase',
                   url: 'https://supabase.com/privacy',
-                  when: 'Hosted mode only',
-                  receives: 'Email address, hashed password (email sign-in only), encrypted resume text, encrypted cover letters and tailored resumes (Pro), session tokens, and usage counts. Supabase hosts our authentication system and database.',
+                  when: 'Every mode (reading job postings, from version 1.3.0); everything else Hosted mode only',
+                  receives: 'Copies of the job pages you ask us to read, which are processed and not stored, and rate-limit counters keyed by a hash of your IP address. In Hosted mode also: email address, hashed password (email sign-in only), encrypted resume text, encrypted cover letters and tailored resumes with their job title, company and posting address (Pro), session tokens, and usage counts. Supabase hosts our backend functions, authentication system and database.',
                 },
                 {
                   name: 'Google',
                   url: 'https://policies.google.com/privacy',
                   when: 'Only if you choose "Continue with Google"',
-                  receives: 'Google confirms who you are and sends us your email address, name, and profile picture link. We use the email address to create and sign in to your account, and show the picture as your account avatar in the extension and on the dashboard. Your browser loads the picture from Google\'s servers. The name is stored with your account but not used. We never see your Google password.',
+                  receives: 'Google confirms who you are and sends us your email address, name, profile picture link and Google account ID. We use the email address to create and sign in to your account, and show the picture as your account avatar in the extension and on the dashboard. Your browser loads the picture from Google\'s servers. The name is stored with your account but not used. We never see your Google password.',
                 },
                 {
                   name: 'Stripe',
                   url: 'https://stripe.com/privacy',
-                  when: 'Pro subscribers only',
-                  receives: 'Payment information (card details, billing address). Stripe processes all payments; we receive only a customer ID and subscription status. We never see or store your raw card details.',
+                  when: 'When you click Upgrade, and for Pro subscribers',
+                  receives: 'Your email address and Cover Me account ID when you start checkout, then the payment information you enter on Stripe\'s page (card details, billing address). Stripe processes all payments; we receive only a customer ID and subscription status. We never see or store your raw card details.',
                 },
                 {
                   name: 'Vercel',
@@ -570,6 +600,7 @@ export default function PrivacyPage() {
               <Li><strong className="text-foreground">BYOK mode:</strong> All data resides on your device. You can delete it at any time by removing the extension or clearing extension storage in Chrome settings. We hold no copy of it.</Li>
               <Li><strong className="text-foreground">Hosted account data:</strong> Your account, resume, and application history (cover letters and tailored resumes) are retained for as long as your account is active. You may request deletion at any time by contacting us at <a href={`mailto:${CONTACT_EMAIL}`} className="text-brand-light hover:text-foreground transition-colors">{CONTACT_EMAIL}</a>. We will permanently delete all your data within 30 days of a verified deletion request.</Li>
               <Li><strong className="text-foreground">Usage count records:</strong> Kept for as long as your account exists, because the free allowance counts generations over the life of the account. They are deleted with your account.</Li>
+              <Li><strong className="text-foreground">Rate-limit counters:</strong> Deleted during routine cleanup once they are more than two days old.</Li>
               <Li><strong className="text-foreground">Stripe billing records:</strong> Stripe retains transaction records as required by financial regulations. We cannot delete data held directly by Stripe.</Li>
             </Ul>
 
@@ -601,7 +632,7 @@ export default function PrivacyPage() {
               Specifically:
             </P>
             <Ul>
-              <Li>Data collected is used solely to provide and improve the cover letter generation feature you have explicitly requested.</Li>
+              <Li>Data collected is used solely to provide and improve the features you explicitly request: reading a job posting, tailoring your resume to it, and writing a cover letter.</Li>
               <Li>We do not use data to develop, improve, or train AI or machine learning models other than passing it transiently to third-party AI APIs (Anthropic/OpenAI) in real time as part of the generation request.</Li>
               <Li>We do not use data for personalised advertising or retargeting of any kind.</Li>
               <Li>We do not sell or transfer user data to third parties for purposes unrelated to providing the Cover Me service.</Li>
