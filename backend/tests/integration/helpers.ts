@@ -198,3 +198,8 @@ State University, BS Computer Science, 2016 – 2020
 
 SKILLS
 TypeScript, Postgres, React`
+
+// About 10,000 characters, like a real two-page resume. Its ciphertext is far
+// longer than a URL can carry, which once broke saving the parsed copy.
+export const LONG_RESUME_TEXT = RESUME_TEXT + '\n' +
+  Array.from({ length: 120 }, (_, i) => `- Shipped project ${i} on time and under budget for a long-running client.`).join('\n')

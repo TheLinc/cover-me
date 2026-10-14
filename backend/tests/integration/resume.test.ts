@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
-  admin, callFunction, createUser, deleteUser, mockClaude, parsedResume, RESUME_TEXT, type TestUser, uploadResume, waitForParsedResume,
+  admin, callFunction, createUser, deleteUser, LONG_RESUME_TEXT, mockClaude, parsedResume, RESUME_TEXT, type TestUser, uploadResume, waitForParsedResume,
 } from './helpers'
 
 const isParse = (r: { messages: Array<{ content: string }> }) => r.messages[0].content.startsWith('You are a resume parser')
@@ -42,6 +42,11 @@ describe('resume', () => {
     const parsed = await waitForParsedResume(user.id)
     expect(parsed).not.toContain('Initech')
     expect((await mockClaude.requests()).filter(isParse).map((r) => r.model)).toEqual(['claude-haiku-4-5'])
+  })
+
+  it('saves the parse of a full-length resume', async () => {
+    await uploadResume(user, LONG_RESUME_TEXT, { wait: false })
+    expect(await waitForParsedResume(user.id)).toBeTruthy()
   })
 
   it('keeps the parsed copy when the same text is uploaded again', async () => {

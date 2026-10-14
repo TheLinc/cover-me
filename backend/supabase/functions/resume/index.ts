@@ -1,6 +1,6 @@
-import { createClient } from 'npm:@supabase/supabase-js@2'
+import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2'
 import { handleCors, json } from '../_shared/cors.ts'
-import { decrypt, encrypt } from '../_shared/encrypt.ts'
+import { decrypt, encrypt, sameCiphertext } from '../_shared/encrypt.ts'
 import { parseResumeStructure } from '../_shared/resume-parse.ts'
 
 const SUPABASE_URL        = Deno.env.get('SUPABASE_URL')!
@@ -127,7 +127,7 @@ Deno.serve(async (req) => {
 // Parses the resume in the background and caches it, the same way tailor does
 // on first use. Only writes if the stored text is still the text it parsed; a failure, or
 // an account over its parse limit, just leaves the parse to tailor.
-async function parseAhead(supabase: ReturnType<typeof createClient>, userId: string, text: string, textEncrypted: string) {
+async function parseAhead(supabase: SupabaseClient, userId: string, text: string, textEncrypted: string) {
   try {
     // The scrape limiter's counter, keyed by a hash of the account instead of
     // the IP (the table holds only 64-character hex keys).
@@ -141,7 +141,9 @@ async function parseAhead(supabase: ReturnType<typeof createClient>, userId: str
     if (error || !allowed) return
     const structured = await parseResumeStructure(text, ANTHROPIC_API_KEY)
     const structured_encrypted = await encrypt(JSON.stringify(structured))
-    await supabase.from('resumes').update({ structured_encrypted }).eq('user_id', userId).eq('text_encrypted', textEncrypted)
+    const { error: saveError } = await supabase.from('resumes').update({ structured_encrypted })
+      .eq('user_id', userId).like('text_encrypted', sameCiphertext(textEncrypted))
+    if (saveError) console.error('Background resume parse: saving it failed')
   } catch {
     console.error('Background resume parse failed')
   }

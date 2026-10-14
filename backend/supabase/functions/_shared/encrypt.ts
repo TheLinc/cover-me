@@ -19,6 +19,14 @@ export async function encrypt(plaintext: string): Promise<string> {
   return btoa(String.fromCharCode(...combined))
 }
 
+// A LIKE pattern for "this exact ciphertext": its first 16 characters are the
+// random 12-byte IV, which no other encryption repeats. Matching the whole
+// ciphertext instead puts it in the request URL, and a long resume's is too
+// long for the gateway (414). Base64 has no % or _, so the prefix is literal.
+export function sameCiphertext(encoded: string): string {
+  return `${encoded.slice(0, 16)}%`
+}
+
 export async function decrypt(encoded: string): Promise<string> {
   const key = await importKey()
   const combined = Uint8Array.from(atob(encoded), (c) => c.charCodeAt(0))

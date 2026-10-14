@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
-  admin, callFunction, clearParsedResume, createUser, deleteUser, JOB, mockClaude, quotaUsedToday, setQuotaUsedToday, setUsage, type TestUser, uploadResume,
+  admin, callFunction, clearParsedResume, createUser, deleteUser, JOB, LONG_RESUME_TEXT, mockClaude, quotaUsedToday, setQuotaUsedToday, setUsage, type TestUser, uploadResume,
 } from './helpers'
 import { MOCK_PARSED_RESUME, MOCK_REWRITTEN_BULLET, MOCK_TAILOR_DELTA } from '../mock-anthropic'
 
@@ -119,6 +119,15 @@ describe('tailor', () => {
     const done = events.at(-1)
     expect(done?.type).toBe('done')
     if (done?.type === 'done') expect(done.resume.atsScore).toBe(77)
+  })
+
+  it('caches its own parse of a full-length resume', async () => {
+    user = await createUser()
+    await uploadResume(user, LONG_RESUME_TEXT)
+    await clearParsedResume(user.id)
+    await callFunction('tailor', { token: user.token, body: { job: JOB } })
+    const { data } = await admin.from('resumes').select('structured_encrypted').eq('user_id', user.id).single()
+    expect(data?.structured_encrypted).toBeTruthy()
   })
 
   it('refunds when the resume parse call fails', async () => {
