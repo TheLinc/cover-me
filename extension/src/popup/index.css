@@ -293,6 +293,20 @@ html, body {
   margin-bottom: 12px;
 }
 
+.page-read-notice {
+  background: var(--elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  color: var(--text-2);
+  font-size: 12px;
+  line-height: 1.55;
+}
+.page-read-notice-title { color: var(--text); font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+.page-read-notice-actions { display: flex; align-items: center; gap: 14px; margin-top: 10px; }
+.page-read-notice-actions .btn { width: auto; padding: 7px 14px; }
+
 .notice-box {
   background: var(--success-dim);
   border: 1px solid rgba(52, 211, 153, 0.2);

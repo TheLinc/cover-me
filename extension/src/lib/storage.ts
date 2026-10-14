@@ -174,6 +174,20 @@ export async function clearSavedLogin(): Promise<void> {
   await chrome.storage.local.remove('savedLogin')
 }
 
+// The one-time notice about how job pages are read (popup/components/PageReadNotice.tsx).
+export async function needsPageReadNotice(): Promise<boolean> {
+  const { pageReadNotice } = await chrome.storage.local.get('pageReadNotice')
+  return pageReadNotice === true
+}
+
+export async function showPageReadNotice(): Promise<void> {
+  await chrome.storage.local.set({ pageReadNotice: true })
+}
+
+export async function dismissPageReadNotice(): Promise<void> {
+  await chrome.storage.local.remove('pageReadNotice')
+}
+
 export async function getCachedTier(): Promise<string | null> {
   const { cachedTier } = await chrome.storage.local.get('cachedTier')
   return (cachedTier as string) ?? null
