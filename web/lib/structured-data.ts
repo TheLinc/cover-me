@@ -58,7 +58,7 @@ export const jsonLdApp = {
     'AI cover letter generation from job posting',
     'AI resume tailoring with ATS keyword matching',
     'ATS match score and gap analysis',
-    'Reads job posting automatically',
+    'Reads the job posting when you click',
     'Works on LinkedIn, Indeed, Greenhouse, Lever, Workday, Ashby',
     'PDF export for cover letter and tailored resume',
     'Open source — MIT license',

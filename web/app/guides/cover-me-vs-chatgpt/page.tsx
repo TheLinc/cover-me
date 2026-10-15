@@ -62,7 +62,7 @@ const faqJsonLd = {
 }
 
 const COMPARISON: { feature: string; coverMe: string; chatgpt: string }[] = [
-  { feature: 'Reads the job posting', coverMe: 'Automatic — scrapes the open page', chatgpt: 'Manual copy-paste every time' },
+  { feature: 'Reads the job posting', coverMe: 'Reads the open page when you click (no copy-paste)', chatgpt: 'Manual copy-paste every time' },
   { feature: 'Knows your resume', coverMe: 'Stored once, used every generation', chatgpt: 'Re-paste or re-upload per chat' },
   { feature: 'ATS keyword matching', coverMe: 'Extracted from the posting, woven in', chatgpt: 'Only if you prompt for it explicitly' },
   { feature: 'Resume tailoring + match score', coverMe: 'One click, scored with gap analysis', chatgpt: 'Not without elaborate prompting' },

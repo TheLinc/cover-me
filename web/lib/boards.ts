@@ -35,7 +35,7 @@ export const BOARDS: Board[] = [
       'Cover Me is a free Chrome extension that reads the LinkedIn job posting you have open, extracts the role’s requirements and ATS keywords, and generates a tailored cover letter from your resume in about 20 seconds — no copying or pasting.',
     intro: [
       'LinkedIn is where most applications start — and where most generic cover letters get written. Easy Apply makes submitting fast, but the applications that get callbacks are the ones tailored to the posting. Cover Me closes that gap: it reads the job page you’re already on and builds the letter for you.',
-      'It works on full LinkedIn job pages and in the search-results view with the job panel open. No LinkedIn integration, no login sharing — the extension simply reads the visible posting, so it never touches your LinkedIn account.',
+      'It works on full LinkedIn job pages and in the search-results view with the job panel open. No LinkedIn integration, no login sharing — the extension reads the posting page when you click, so it never touches your LinkedIn account.',
     ],
     steps: [
       {
@@ -44,7 +44,7 @@ export const BOARDS: Board[] = [
       },
       {
         title: 'Click the Cover Me icon',
-        body: 'The extension scrapes the job title, company, and full description from the page automatically. Nothing is sent to LinkedIn and your account is never accessed.',
+        body: 'When you click Generate, the extension reads the job title, company, and full description from the page. Nothing is sent to LinkedIn and your account is never accessed.',
       },
       {
         title: 'Generate and apply',
@@ -58,7 +58,7 @@ export const BOARDS: Board[] = [
       },
       {
         q: 'Does Cover Me need access to my LinkedIn account?',
-        a: 'No. Cover Me only reads the job description visible on the page when you click the extension. It never logs into LinkedIn, never accesses your profile or connections, and has no LinkedIn integration.',
+        a: 'No. Cover Me reads the page only when you click Generate or Tailor. It never logs into LinkedIn, never opens your profile or connections, and has no LinkedIn integration. From version 1.3.0, once you agree, a copy of the page is sent to our server to read the posting; on a signed-in page that copy can include your name. See the privacy policy.',
       },
       {
         q: 'Does it work on LinkedIn search results, or only full job pages?',
@@ -87,7 +87,7 @@ export const BOARDS: Board[] = [
       },
       {
         title: 'Click the Cover Me icon',
-        body: 'The extension scrapes the title, company, and description automatically. If a posting loads in an unusual format, paste the description into the manual fallback — it only takes a moment.',
+        body: 'When you click Generate, the extension reads the title, company, and description. If a posting loads in an unusual format, paste the description into the manual fallback — it only takes a moment.',
       },
       {
         title: 'Generate and apply',
@@ -101,7 +101,7 @@ export const BOARDS: Board[] = [
       },
       {
         q: 'Does it work when Indeed links out to a company’s own career site?',
-        a: 'Usually yes — many of those career sites run on Greenhouse, Lever, Workday, or Ashby, all of which Cover Me scrapes automatically. For anything else, the manual paste fallback works on any page.',
+        a: 'Usually yes — many of those career sites run on Greenhouse, Lever, Workday, or Ashby, all of which Cover Me reads when you click. For anything else, the manual paste fallback works on any page.',
       },
       {
         q: 'Can I generate letters from Indeed search results?',
@@ -144,7 +144,7 @@ export const BOARDS: Board[] = [
       },
       {
         q: 'Does Cover Me work on Greenhouse boards embedded in company websites?',
-        a: 'Yes. Whether the posting lives on boards.greenhouse.io or is embedded in a company’s own careers page, Cover Me detects the Greenhouse structure and scrapes it automatically. If a heavily customized page slips through, the manual paste fallback covers it.',
+        a: 'Yes. Whether the posting lives on boards.greenhouse.io or is embedded in a company’s own careers page, Cover Me detects the Greenhouse structure and reads it when you click. If a heavily customized page slips through, the manual paste fallback covers it.',
       },
       {
         q: 'Will the letter make it past the ATS screening?',
@@ -169,7 +169,7 @@ export const BOARDS: Board[] = [
     steps: [
       {
         title: 'Open a Lever posting',
-        body: 'Any jobs.lever.co job page works. Cover Me detects Lever’s posting structure and reads the full description automatically.',
+        body: 'Any jobs.lever.co job page works. Cover Me detects Lever’s posting structure and reads the full description when you click.',
       },
       {
         title: 'Click the Cover Me icon',
@@ -183,7 +183,7 @@ export const BOARDS: Board[] = [
     faqs: [
       {
         q: 'Does Cover Me work on every Lever job page?',
-        a: 'Cover Me scrapes standard jobs.lever.co postings automatically. For companies that heavily customize their Lever pages, the manual paste fallback generates the same tailored letter from a copied description.',
+        a: 'Cover Me reads standard jobs.lever.co postings when you click. For companies that heavily customize their Lever pages, the manual paste fallback generates the same tailored letter from a copied description.',
       },
       {
         q: 'Can I personalize the letter beyond my resume?',
@@ -230,7 +230,7 @@ export const BOARDS: Board[] = [
       },
       {
         q: 'Does Cover Me work on every company’s Workday site?',
-        a: 'Cover Me handles standard myworkdayjobs.com postings automatically. Workday allows heavy per-employer customization, so for the occasional page that scrapes incompletely, the manual paste fallback produces the same tailored result.',
+        a: 'Cover Me reads standard myworkdayjobs.com postings when you click. Workday allows heavy per-employer customization, so for the occasional page that scrapes incompletely, the manual paste fallback produces the same tailored result.',
       },
       {
         q: 'Can Cover Me fill out the Workday application for me?',
@@ -259,7 +259,7 @@ export const BOARDS: Board[] = [
       },
       {
         title: 'Click the Cover Me icon',
-        body: 'The extension reads the role, company, and full description from Ashby’s structured posting format automatically.',
+        body: 'When you click, the extension reads the role, company, and full description from Ashby’s structured posting format.',
       },
       {
         title: 'Generate and apply',
