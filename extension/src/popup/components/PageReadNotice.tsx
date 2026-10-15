@@ -46,7 +46,7 @@ export default function PageReadNotice() {
       {expanded && (
         <div id="page-read-notice-details" className="page-read-notice-details">
           <p>
-            They're sent to Cover Me's server when you click Generate or Tailor, with your own API key too. Most scripts, form fields and
+            Pages and their URLs are sent to Cover Me's server when you click Generate or Tailor, with your own API key too. Most scripts, form fields and
             images are removed first; everything else in the page is sent, even parts not on screen. The server pulls
             out the job title, company and description.
           </p>
