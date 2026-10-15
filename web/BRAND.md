@@ -70,6 +70,6 @@ button one click away.
 
 - Job boards: only the sites the extension reads (LinkedIn, Indeed, Greenhouse, Lever,
   Workday, Ashby, BambooHR, Workable). Everywhere else is "paste it in".
-- Stats must carry a source: Huntr (2.1× interviews), Jobscan (97.8% of Fortune 500
+- Stats must carry a source: Huntr (2.1× interviews), Jobscan (97.4% of Fortune 500
   use an ATS), Ladders (7.4 s first look). The 40 s figure is our arithmetic, stated on
   the page.

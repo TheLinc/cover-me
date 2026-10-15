@@ -113,26 +113,31 @@ function AtsWindow({ tailored, narrow }: { tailored: boolean; narrow?: boolean }
 
 export function FoundInSearch() {
   const [tailored, setTailored] = useState(false)
-  const [auto, setAuto] = useState(true)
+  const picked = useRef(false)
   const ref = useRef<HTMLDivElement>(null)
 
-  // Flip between the two resumes while in view, until the visitor picks one.
+  // Once per page load: soon after the results come into view, the tailored
+  // resume moves up. From then on the toggle is the visitor's.
   useEffect(() => {
-    if (!auto || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    let id = 0
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setTailored(true)
+      return
+    }
+    let timer = 0
     const obs = new IntersectionObserver(([e]) => {
-      clearInterval(id)
-      if (e.isIntersecting) id = window.setInterval(() => setTailored((t) => !t), 3200)
-    }, { threshold: 0.5 })
+      if (!e.isIntersecting) return
+      obs.disconnect()
+      timer = window.setTimeout(() => { if (!picked.current) setTailored(true) }, 700)
+    }, { threshold: 0.25 })
     if (ref.current) obs.observe(ref.current)
     return () => {
       obs.disconnect()
-      clearInterval(id)
+      clearTimeout(timer)
     }
-  }, [auto])
+  }, [])
 
   const pick = (t: boolean) => {
-    setAuto(false)
+    picked.current = true
     setTailored(t)
   }
 

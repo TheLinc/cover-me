@@ -104,7 +104,7 @@ if (base) {
   }
   if (!home.includes('data-hero-stage')) errors.push('/ is missing the hero product stage')
   // Stats render their final values in HTML; the count-up only animates them.
-  for (const v of ['2.1', '97.8', '7.4', '30']) {
+  for (const v of ['2.1', '97.4', '7.4', '30']) {
     if (!new RegExp(`data-stat[^>]*>${v.replace('.', '\\.')}<`).test(home)) errors.push(`/ stats row is missing ${v} in server HTML`)
   }
   for (const board of ['LinkedIn', 'Indeed', 'Greenhouse', 'Lever', 'Workday', 'Ashby', 'BambooHR', 'Workable']) {
