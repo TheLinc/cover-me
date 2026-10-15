@@ -35,9 +35,10 @@ export default function PageReadNotice() {
 
   return (
     <section className="page-read-notice" aria-labelledby="page-read-notice-title">
-      <p id="page-read-notice-title" className="page-read-notice-title">Send job pages to Cover Me's server?</p>
+      <p id="page-read-notice-title" className="page-read-notice-title">Read job pages on Cover Me's server?</p>
       <p>
-        The page and its address are read there, then deleted. They can include your name if you're signed in to the site.
+        When a job site changes its layout, we fix it on our side, with no extension update. Pages and their
+        addresses are deleted after reading but can include your name.
       </p>
       <button className="page-read-notice-more" aria-expanded={expanded} aria-controls="page-read-notice-details" onClick={() => setExpanded(!expanded)}>
         {expanded ? 'Less' : 'Details'}
@@ -50,8 +51,8 @@ export default function PageReadNotice() {
             out the job title, company and description.
           </p>
           <p>
-            It reads postings on more sites, and we can fix a job site's layout change without an update. Until you
-            agree, postings are read on your device only. You can change this in Settings.{' '}
+            Until you agree, postings are read on your device only, and a job site's change waits for the next
+            extension update. You can change this in Settings.{' '}
             <a className="text-link" href={`${WEB_URL}/privacy`} target="_blank" rel="noreferrer">Privacy policy</a>
           </p>
         </div>
