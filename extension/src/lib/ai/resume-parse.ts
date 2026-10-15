@@ -1,5 +1,5 @@
 import type { AIProvider, ParsedResume } from '../../types'
-import { HAIKU_MODEL } from './claude'
+import { claudeDelta, HAIKU_MODEL, readSseText } from './claude'
 import { OPENAI_CHAT, OPENAI_PARSE_FIELDS } from './openai'
 
 const CLAUDE_API = 'https://api.anthropic.com/v1/messages'
@@ -87,6 +87,8 @@ export async function parseResumeStructure(
 ): Promise<ParsedResume> {
   const prompt = buildParsePrompt(resumeText)
 
+  // Streams: a resume near the 12,000-character cap took 31 s to parse, and
+  // Chrome stops a service worker whose fetch() gets no response for 30 s.
   if (provider === 'claude') {
     const res = await fetch(CLAUDE_API, {
       method: 'POST',
@@ -99,6 +101,7 @@ export async function parseResumeStructure(
       body: JSON.stringify({
         model: HAIKU_MODEL,
         max_tokens: 6000,
+        stream: true,
         messages: [{ role: 'user', content: prompt }],
       }),
     })
@@ -106,9 +109,7 @@ export async function parseResumeStructure(
       const err = (await res.json().catch(() => ({}))) as { error?: { message?: string } }
       throw new Error(err.error?.message ?? `Claude API error ${res.status}`)
     }
-    const data = (await res.json()) as { content: Array<{ type: string; text: string }> }
-    const text = data.content.find((b) => b.type === 'text')?.text ?? ''
-    return parseParsedJson(text)
+    return parseParsedJson(await readSseText(res, claudeDelta))
   }
 
   // OpenAI

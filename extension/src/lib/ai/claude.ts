@@ -107,7 +107,7 @@ export async function readSseText(
   return full
 }
 
-function claudeDelta(ev: Record<string, unknown>): string | undefined {
+export function claudeDelta(ev: Record<string, unknown>): string | undefined {
   if (ev.type !== 'content_block_delta') return undefined
   const delta = ev.delta as { type?: string; text?: string } | undefined
   return delta?.type === 'text_delta' ? delta.text : undefined

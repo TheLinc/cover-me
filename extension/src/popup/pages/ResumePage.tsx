@@ -158,6 +158,10 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
               {resume.signedOutUpload && accountMode && (
                 <div className="hint hint-tight">Added while signed out, so it isn&apos;t in your account yet. Upload it again to use it for letters.</div>
               )}
+              {/* The letter and parse prompts read only this much (lib/ai/index.ts, lib/ai/resume-parse.ts). */}
+              {resume.text.length > 12000 && (
+                <div className="hint hint-tight">Only the first 12,000 characters (about 2,400 words) are used. Shorten your resume so letters and tailored resumes include everything.</div>
+              )}
             </div>
             {status === 'saved' && (
               <span className="success-badge">

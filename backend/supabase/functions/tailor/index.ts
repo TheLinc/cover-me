@@ -390,94 +390,105 @@ Deno.serve(async (req) => {
     if (error) console.error('Rate limit refund RPC error:', error.message)
   }
 
-  // Structured resume: read the cached copy, or parse the raw text once
-  // (Haiku, verbatim extraction) and cache it encrypted for future tailors.
-  // resume/index.ts clears the cache when the text changes and usually parses
-  // it ahead in the background, so this parse is the fallback.
-  let structured: ParsedResume | null = null
-  if (resumeRow.structured_encrypted) {
-    try {
-      const decoded = JSON.parse(await decrypt(resumeRow.structured_encrypted))
-      if (isValidParsedResume(decoded)) structured = decoded
-    } catch {
-      structured = null
-    }
-  }
-  if (!structured) {
-    let resumeText: string
-    try {
-      resumeText = await decrypt(resumeRow.text_encrypted)
-    } catch {
-      await refund()
-      return json({ error: 'Failed to read resume. Please re-upload.' }, 500)
-    }
-    try {
-      structured = await parseResumeStructure(resumeText, ANTHROPIC_API_KEY)
-    } catch {
-      await refund()
-      return json({ error: 'Could not process your resume. Please try again.' }, 502)
-    }
-    // Cache best-effort — a failed write just means we re-parse next time.
-    try {
-      const structured_encrypted = await encrypt(JSON.stringify(structured))
-      // Only if the resume text wasn't replaced meanwhile.
-      const { error } = await supabase.from('resumes').update({ structured_encrypted })
-        .eq('user_id', userId).like('text_encrypted', sameCiphertext(resumeRow.text_encrypted))
-      if (error) console.error('Failed to cache structured resume')
-    } catch {
-      console.error('Failed to cache structured resume')
-    }
-  }
-
-  const prompt = buildPrompt(job, structured, compact, supplemental, trim, includeSummary, previous)
-
   // Debug — OFF by default. Logs PII (resume + prompt) to the function logs.
   // Enable only for local/staging:  supabase secrets set DEBUG_MODE=true
   // View with:  supabase functions logs tailor
   const DEBUG = Deno.env.get('DEBUG_MODE') === 'true'
-  if (DEBUG) {
-    console.log('[CoverMe debug] job:', JSON.stringify(job))
-    console.log('[CoverMe debug] flags:', JSON.stringify({ compact, trim, includeSummary, hasSupplemental: !!supplemental, hasPrevious: !!previous }))
-    console.log('[CoverMe debug] structured resume (input to model):\n', JSON.stringify(structured))
-    console.log('[CoverMe debug] full prompt sent to model:\n', prompt)
-  }
 
-  let claudeRes: Response
-  try {
-    claudeRes = await fetch(ANTHROPIC_MESSAGES_URL, {
-      method: 'POST',
-      headers: {
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-        ...SONNET_BETA_HEADER,
-      },
-      body: JSON.stringify({
-        // Sonnet for tailoring: judgment-heavy (bullet preservation, relevance
-        // calls) — the small models compress/merge. Cover letters are on Sonnet
-        // too (see generate/index.ts). A mid-stream decline ends the stream
-        // early; the incomplete delta fails to parse and the request refunds.
-        ...SONNET_FIELDS,
-        max_tokens: SONNET_MAX_TOKENS,
-        stream: true,
-        messages: [{ role: 'user', content: prompt }],
-      }),
-    })
-  } catch (err) {
-    // A dropped connection throws instead of returning a 5xx; refund it the same way.
-    console.error('Claude connection error:', err instanceof Error ? err.message : err)
-    await refund()
-    return json({ error: 'AI generation failed. Please try again.' }, 502)
-  }
+  let structuredResume!: ParsedResume
+  let upstream!: ReadableStream<Uint8Array>
 
-  if (!claudeRes.ok || !claudeRes.body) {
-    console.error('Claude error:', await claudeRes.text())
-    await refund()
-    return json({ error: 'AI generation failed. Please try again.' }, 502)
-  }
+  // Loads the structured resume and opens the Sonnet stream; on failure,
+  // refunds and returns the error. Streaming clients run it inside the stream:
+  // an uncached parse of a resume near the 12,000-character cap took 31 s, and
+  // Chrome stops a service worker whose fetch() gets no response for 30 s.
+  const prepare = async (): Promise<{ error: string; status: number } | null> => {
+    // Structured resume: read the cached copy, or parse the raw text once
+    // (Haiku, verbatim extraction) and cache it encrypted for future tailors.
+    // resume/index.ts clears the cache when the text changes and usually parses
+    // it ahead in the background, so this parse is the fallback.
+    let structured: ParsedResume | null = null
+    if (resumeRow.structured_encrypted) {
+      try {
+        const decoded = JSON.parse(await decrypt(resumeRow.structured_encrypted))
+        if (isValidParsedResume(decoded)) structured = decoded
+      } catch {
+        structured = null
+      }
+    }
+    if (!structured) {
+      let resumeText: string
+      try {
+        resumeText = await decrypt(resumeRow.text_encrypted)
+      } catch {
+        await refund()
+        return { error: 'Failed to read resume. Please re-upload.', status: 500 }
+      }
+      try {
+        structured = await parseResumeStructure(resumeText, ANTHROPIC_API_KEY)
+      } catch {
+        await refund()
+        return { error: 'Could not process your resume. Please try again.', status: 502 }
+      }
+      // Cache best-effort — a failed write just means we re-parse next time.
+      try {
+        const structured_encrypted = await encrypt(JSON.stringify(structured))
+        // Only if the resume text wasn't replaced meanwhile.
+        const { error } = await supabase.from('resumes').update({ structured_encrypted })
+          .eq('user_id', userId).like('text_encrypted', sameCiphertext(resumeRow.text_encrypted))
+        if (error) console.error('Failed to cache structured resume')
+      } catch {
+        console.error('Failed to cache structured resume')
+      }
+    }
 
-  const upstream = claudeRes.body
-  const structuredResume = structured
+    const prompt = buildPrompt(job, structured, compact, supplemental, trim, includeSummary, previous)
+
+    if (DEBUG) {
+      console.log('[CoverMe debug] job:', JSON.stringify(job))
+      console.log('[CoverMe debug] flags:', JSON.stringify({ compact, trim, includeSummary, hasSupplemental: !!supplemental, hasPrevious: !!previous }))
+      console.log('[CoverMe debug] structured resume (input to model):\n', JSON.stringify(structured))
+      console.log('[CoverMe debug] full prompt sent to model:\n', prompt)
+    }
+
+    let claudeRes: Response
+    try {
+      claudeRes = await fetch(ANTHROPIC_MESSAGES_URL, {
+        method: 'POST',
+        headers: {
+          'x-api-key': ANTHROPIC_API_KEY,
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json',
+          ...SONNET_BETA_HEADER,
+        },
+        body: JSON.stringify({
+          // Sonnet for tailoring: judgment-heavy (bullet preservation, relevance
+          // calls) — the small models compress/merge. Cover letters are on Sonnet
+          // too (see generate/index.ts). A mid-stream decline ends the stream
+          // early; the incomplete delta fails to parse and the request refunds.
+          ...SONNET_FIELDS,
+          max_tokens: SONNET_MAX_TOKENS,
+          stream: true,
+          messages: [{ role: 'user', content: prompt }],
+        }),
+      })
+    } catch (err) {
+      // A dropped connection throws instead of returning a 5xx; refund it the same way.
+      console.error('Claude connection error:', err instanceof Error ? err.message : err)
+      await refund()
+      return { error: 'AI generation failed. Please try again.', status: 502 }
+    }
+
+    if (!claudeRes.ok || !claudeRes.body) {
+      console.error('Claude error:', await claudeRes.text())
+      await refund()
+      return { error: 'AI generation failed. Please try again.', status: 502 }
+    }
+
+    upstream = claudeRes.body
+    structuredResume = structured
+    return null
+  }
 
   // Reads Anthropic's SSE stream, forwarding each text fragment to onDelta and
   // returning the full accumulated text.
@@ -580,6 +591,8 @@ Deno.serve(async (req) => {
   // Web Store updates roll out over days, so both must keep working.
   const wantsStream = (req.headers.get('accept') ?? '').includes('application/x-ndjson')
   if (!wantsStream) {
+    const failed = await prepare()
+    if (failed) return json({ error: failed.error }, failed.status)
     try {
       const { resume, savedId } = await assemble(await readUpstream())
       return json({ resume, savedId })
@@ -603,8 +616,18 @@ Deno.serve(async (req) => {
       const send = (obj: unknown) => {
         try { controller.enqueue(encoder.encode(JSON.stringify(obj) + '\n')) } catch { /* client gone */ }
       }
-      send({ type: 'start', roles: structuredResume.experience.length })
+      // Blank lines (clients skip them) send the headers at once and keep the
+      // connection from sitting silent while the resume is parsed.
+      const heartbeat = () => { try { controller.enqueue(encoder.encode('\n')) } catch { /* client gone */ } }
+      heartbeat()
+      const beat = setInterval(heartbeat, 10_000)
       try {
+        const failed = await prepare()
+        if (failed) {
+          send({ type: 'error', error: failed.error })
+          return
+        }
+        send({ type: 'start', roles: structuredResume.experience.length })
         const raw = await readUpstream((text) => send({ type: 'delta', text }))
         const { resume, savedId } = await assemble(raw)
         send({ type: 'done', resume, savedId })
@@ -613,6 +636,7 @@ Deno.serve(async (req) => {
         await refund()
         send({ type: 'error', error: 'AI generation failed. Please try again.' })
       } finally {
+        clearInterval(beat)
         try { controller.close() } catch { /* client gone */ }
       }
     },

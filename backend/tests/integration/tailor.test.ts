@@ -152,7 +152,34 @@ describe('tailor', () => {
       body: { job: JOB },
       headers: { Accept: 'application/x-ndjson' },
     })
-    expect(res.status).toBe(502)
+    expect(res.status).toBe(200)
+    expect(await readNdjson(res)).toEqual([{ type: 'error', error: 'AI generation failed. Please try again.' }])
+    expect(await quotaUsedToday(user.id)).toBe(0)
+  })
+
+  it('streams before an uncached parse finishes, so a slow parse never holds back the response', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    await clearParsedResume(user.id)
+    await mockClaude.delayNext(3000) // the parse
+
+    const started = Date.now()
+    const res = await callFunction('tailor', { token: user.token, body: { job: JOB }, headers: { Accept: 'application/x-ndjson' } })
+    expect(Date.now() - started).toBeLessThan(2000)
+    expect(res.headers.get('content-type')).toContain('application/x-ndjson')
+    const events = await readNdjson(res)
+    expect(events[0]).toEqual({ type: 'start', roles: 2 })
+    expect(events.at(-1)?.type).toBe('done')
+  })
+
+  it('streams an error and refunds when the parse fails inside the stream', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    await clearParsedResume(user.id)
+    await mockClaude.failNext(500)
+
+    const res = await callFunction('tailor', { token: user.token, body: { job: JOB }, headers: { Accept: 'application/x-ndjson' } })
+    expect(await readNdjson(res)).toEqual([{ type: 'error', error: 'Could not process your resume. Please try again.' }])
     expect(await quotaUsedToday(user.id)).toBe(0)
   })
 
