@@ -5,6 +5,7 @@ import { downloadTailoredResumePdf } from '../../lib/pdf/resume'
 import { letterSteps, tailorSteps } from '../../lib/progress-steps'
 import { getCandidateContext, resolveMode, saveCandidateContext } from '../../lib/storage'
 import GapChips from '../components/GapChips'
+import PageReadNotice from '../components/PageReadNotice'
 import ProgressSteps from '../components/ProgressSteps'
 import ScoreRing from '../components/ScoreRing'
 import UpgradeButton from '../components/UpgradeButton'
@@ -592,6 +593,8 @@ export default function GeneratePage({ onNavigate }: Props) {
             announce "Done"), then kept, so screen readers hear each change. */}
         {setupLoaded && <span className="popup-status" role="status">{status}</span>}
       </header>
+
+      <PageReadNotice />
 
       {!setupLoaded && null}
 

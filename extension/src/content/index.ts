@@ -11,11 +11,15 @@ if (!w[flag]) {
   w[flag] = true
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message.type === 'SCRAPE_JOB') {
+      // Only when the background will send it: the user has agreed to the page
+      // copy, and the build has a backend. Serializing a big page isn't free.
       let snapshot: PageSnapshot | null = null
-      try {
-        snapshot = snapshotPage()
-      } catch {
-        // the bundled scrapers below still run
+      if (message.snapshot === true) {
+        try {
+          snapshot = snapshotPage()
+        } catch {
+          // the bundled scrapers below still run
+        }
       }
       try {
         const job = scrapeJobPage()

@@ -1,3 +1,4 @@
+import PageReadSetting from '../components/PageReadSetting'
 import AccountPanel from '../components/AccountPanel'
 
 export default function SettingsPage() {
@@ -8,6 +9,7 @@ export default function SettingsPage() {
         <p className="page-subtitle">Your account, or your own API key</p>
       </div>
       <AccountPanel />
+      <PageReadSetting />
     </div>
   )
 }
