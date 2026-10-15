@@ -3,6 +3,8 @@ import { Button } from '@/components/ui/button'
 import { CHROME_STORE_URL } from '@/lib/utils'
 import { STORE_RATING } from '@/lib/structured-data'
 import { Ambient } from './Ambient'
+import heroDesktop from '@/public/hero/hero-desktop.webp'
+import heroPhone from '@/public/hero/hero-phone.webp'
 
 // Split hero: the promise on the left, the product on a job posting on the
 // right. The picture is a real capture of the extension's popup on the
@@ -41,11 +43,11 @@ export function Hero() {
           </p>
         </div>
         <picture data-hero-stage className="mx-auto block w-full max-w-[560px] max-sm:max-w-[360px]">
-          <source media="(min-width: 640px)" srcSet="/hero/hero-desktop.webp" width={1320} height={1120} />
+          <source media="(min-width: 640px)" srcSet={heroDesktop.src} width={heroDesktop.width} height={heroDesktop.height} />
           <img
-            src="/hero/hero-phone.webp"
-            width={720}
-            height={1080}
+            src={heroPhone.src}
+            width={heroPhone.width}
+            height={heroPhone.height}
             alt="The Cover Me popup open on a Northwind job posting, showing an 86 ATS match with HubSpot missing, next to the tailored resume."
             fetchPriority="high"
             className="h-auto w-full"
