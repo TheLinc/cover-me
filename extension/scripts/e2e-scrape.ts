@@ -29,6 +29,9 @@ try {
   const { ms, r } = await ext.evaluate(async (jobUrl) => {
     const [tab] = await chrome.tabs.query({ url: jobUrl.split('#')[0] + '*' })
     await chrome.windows.create({ tabId: tab.id, focused: true })
+    // The server path runs only once the user has agreed to the page copy
+    // (PageReadNotice.tsx), as they would in the popup.
+    await chrome.storage.local.set({ pageReadAgreed: true })
     const t0 = performance.now()
     const r = await chrome.runtime.sendMessage({ type: 'SCRAPE_TAB' })
     return { ms: Math.round(performance.now() - t0), r }

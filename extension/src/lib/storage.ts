@@ -186,6 +186,10 @@ export async function agreeToPageRead(): Promise<void> {
   await chrome.storage.local.set({ pageReadAgreed: true })
 }
 
+export async function withdrawPageRead(): Promise<void> {
+  await chrome.storage.local.remove('pageReadAgreed')
+}
+
 // "Not now" hides the notice until the browser restarts (session storage).
 export async function isPageReadNoticeSnoozed(): Promise<boolean> {
   const { pageReadNotNow } = await chrome.storage.session.get('pageReadNotNow')

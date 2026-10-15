@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
-import { WEB_URL } from '../../lib/config'
+import { SUPABASE_URL, WEB_URL } from '../../lib/config'
 import { agreeToPageRead, hasAgreedToPageRead, isPageReadNoticeSnoozed, snoozePageReadNotice } from '../../lib/storage'
 
 // How job pages are read, at the top of the popup until the user agrees.
 // Until then the page copy isn't sent (preferServerScrapes in
 // background/index.ts) and the extension reads postings with its bundled
-// scrapers alone. "Not now" hides it until the browser restarts.
+// scrapers alone. "Not now" hides it until the browser restarts; Settings has
+// the same choice (PageReadSetting.tsx).
 // Chrome Web Store policy asks for disclosure and an action that agrees before
 // user data is handled; 1.3.0 started sending the page copy to our server in
 // every mode, BYOK included (content/snapshot.ts).
@@ -13,6 +14,8 @@ export default function PageReadNotice() {
   const [show, setShow] = useState(false)
 
   useEffect(() => {
+    // A build without a backend never sends the page copy (preferServerScrapes), so there's nothing to agree to.
+    if (!SUPABASE_URL) return
     Promise.all([hasAgreedToPageRead(), isPageReadNoticeSnoozed()]).then(([agreed, snoozed]) => setShow(!agreed && !snoozed))
   }, [])
 

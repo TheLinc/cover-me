@@ -141,10 +141,12 @@ async function scrapeTab(tabId: number): Promise<JobData> {
     .catch(() => {})
 
   // --- Primary path: content script message, per frame ---
+  // The page copy is only built when it can be sent (preferServerScrapes).
+  const wantSnapshot = !!SUPABASE_URL && (await hasAgreedToPageRead())
   const local: FrameScrape[] = await Promise.all(
     frameIds.map(async (frameId): Promise<FrameScrape> => {
       try {
-        const scrape = (await chrome.tabs.sendMessage(tabId, { type: 'SCRAPE_JOB' }, { frameId })) as FrameScrapeResponse
+        const scrape = (await chrome.tabs.sendMessage(tabId, { type: 'SCRAPE_JOB', snapshot: wantSnapshot }, { frameId })) as FrameScrapeResponse
         if (scrape.success) return { frameId, ok: true, job: scrape.job, snapshot: scrape.snapshot }
         return { frameId, ok: false, error: new Error(scrape.error), connection: false, snapshot: scrape.snapshot }
       } catch (err) {
