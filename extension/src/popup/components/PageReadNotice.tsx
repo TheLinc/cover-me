@@ -39,6 +39,9 @@ export default function PageReadNotice() {
       <p>
         The page and its address are read there, then deleted. They can include your name if you're signed in to the site.
       </p>
+      <button className="page-read-notice-more" aria-expanded={expanded} aria-controls="page-read-notice-details" onClick={() => setExpanded(!expanded)}>
+        {expanded ? 'Less' : 'Details'}
+      </button>
       {expanded && (
         <div id="page-read-notice-details" className="page-read-notice-details">
           <p>
@@ -53,9 +56,6 @@ export default function PageReadNotice() {
           </p>
         </div>
       )}
-      <button className="page-read-notice-more" aria-expanded={expanded} aria-controls="page-read-notice-details" onClick={() => setExpanded(!expanded)}>
-        {expanded ? 'Less' : 'Details'}
-      </button>
       <div className="page-read-notice-actions">
         <button className="btn btn-primary btn-sm" onClick={() => close(() => setPageReadChoice(true))}>Agree</button>
         <button className="btn btn-secondary btn-sm" onClick={() => close(snoozePageReadNotice)}>Not now</button>

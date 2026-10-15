@@ -304,7 +304,7 @@ html, body {
   line-height: 1.55;
 }
 .page-read-notice-title { color: var(--text); font-size: 13px; font-weight: 600; margin-bottom: 4px; }
-.page-read-notice-details p { margin-top: 8px; }
+.page-read-notice-details p { margin-top: 6px; }
 .page-read-notice-more {
   margin-top: 6px;
   padding: 0;
