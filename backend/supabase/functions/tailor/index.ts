@@ -591,9 +591,9 @@ Deno.serve(async (req) => {
   // Web Store updates roll out over days, so both must keep working.
   const wantsStream = (req.headers.get('accept') ?? '').includes('application/x-ndjson')
   if (!wantsStream) {
-    const failed = await prepare()
-    if (failed) return json({ error: failed.error }, failed.status)
     try {
+      const failed = await prepare()
+      if (failed) return json({ error: failed.error }, failed.status)
       const { resume, savedId } = await assemble(await readUpstream())
       return json({ resume, savedId })
     } catch (err) {

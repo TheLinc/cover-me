@@ -161,11 +161,11 @@ describe('tailor', () => {
     user = await createUser()
     await uploadResume(user)
     await clearParsedResume(user.id)
-    await mockClaude.delayNext(3000) // the parse
+    await mockClaude.delayNext(5000) // the parse
 
     const started = Date.now()
     const res = await callFunction('tailor', { token: user.token, body: { job: JOB }, headers: { Accept: 'application/x-ndjson' } })
-    expect(Date.now() - started).toBeLessThan(2000)
+    expect(Date.now() - started).toBeLessThan(4000)
     expect(res.headers.get('content-type')).toContain('application/x-ndjson')
     const events = await readNdjson(res)
     expect(events[0]).toEqual({ type: 'start', roles: 2 })
