@@ -93,7 +93,8 @@ export async function readSseText(
       } catch {
         continue
       }
-      if (ev.type === 'error') {
+      // Chat Completions sends a mid-stream error as { error } with no type.
+      if (ev.type === 'error' || ev.error) {
         const e = ev.error as { message?: string } | undefined
         throw new Error(e?.message ?? 'AI stream error. Please try again.')
       }
