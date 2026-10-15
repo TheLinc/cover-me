@@ -48,7 +48,7 @@ function Wire({ off }: { off?: boolean }) {
         <span className="absolute inset-0 bg-white/15" />
       ) : (
         <span className="absolute inset-0 overflow-hidden">
-          <span className="flow-line absolute inset-y-0 -left-[14px] right-0 bg-[var(--brand)] motion-safe:bg-[repeating-linear-gradient(90deg,var(--brand)_0_6px,transparent_6px_14px)]" />
+          <span className="flow-line absolute inset-y-0 -left-[14px] right-0 motion-reduce:bg-[var(--brand)] motion-safe:bg-[repeating-linear-gradient(90deg,var(--brand)_0_6px,transparent_6px_14px)]" />
         </span>
       )}
       {!off && [0, 1].map((i) => (
