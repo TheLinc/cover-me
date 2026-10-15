@@ -9,7 +9,10 @@ export const OPENAI_CHAT = 'https://api.openai.com/v1/chat/completions'
 // max_tokens and any temperature but the default. Medium effort: a full letter
 // took 20 s there (the site promises about 20) and 53 s at high.
 export const OPENAI_MODEL = 'gpt-6.1-sol'
-const OPENAI_FIELDS = { model: OPENAI_MODEL, reasoning: { effort: 'medium' }, max_output_tokens: 16000 }
+// store: false: the Responses API keeps each request and response in the user's
+// OpenAI account by default (store defaults to true); nothing here reuses a
+// stored response, and the privacy policy says these calls aren't kept.
+const OPENAI_FIELDS = { model: OPENAI_MODEL, reasoning: { effort: 'medium' }, max_output_tokens: 16000, store: false }
 
 // GPT-6 Luna for resume parsing, the job Haiku does on the Claude path:
 // extraction, not judgment. Parsing returns in about 4 s, so plain Chat
