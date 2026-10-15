@@ -174,20 +174,35 @@ export async function clearSavedLogin(): Promise<void> {
   await chrome.storage.local.remove('savedLogin')
 }
 
-// Agreement to sending the page copy to our server (popup/components/
-// PageReadNotice.tsx). Without it, postings are read on the device only
-// (preferServerScrapes in background/index.ts), so a missing flag never sends.
+// The user's choice about sending the page copy to our server
+// (popup/components/PageReadNotice.tsx and PageReadSetting.tsx): true once they
+// agree, false once they turn it off in Settings, missing until they decide.
+// Only true sends (preferServerScrapes in background/index.ts), so a missing
+// or unreadable value never does.
+export const PAGE_READ_KEY = 'pageReadAgreed'
+
+export async function getPageReadChoice(): Promise<boolean | undefined> {
+  const { pageReadAgreed } = await chrome.storage.local.get(PAGE_READ_KEY)
+  return typeof pageReadAgreed === 'boolean' ? pageReadAgreed : undefined
+}
+
 export async function hasAgreedToPageRead(): Promise<boolean> {
-  const { pageReadAgreed } = await chrome.storage.local.get('pageReadAgreed')
-  return pageReadAgreed === true
+  return (await getPageReadChoice()) === true
 }
 
-export async function agreeToPageRead(): Promise<void> {
-  await chrome.storage.local.set({ pageReadAgreed: true })
+export async function setPageReadChoice(agreed: boolean): Promise<void> {
+  await chrome.storage.local.set({ [PAGE_READ_KEY]: agreed })
 }
 
-export async function withdrawPageRead(): Promise<void> {
-  await chrome.storage.local.remove('pageReadAgreed')
+// Calls back with the new choice whenever it changes, from either component.
+export function watchPageReadChoice(cb: (agreed: boolean | undefined) => void): () => void {
+  const listener = (changes: Record<string, chrome.storage.StorageChange>, area: string) => {
+    if (area !== 'local' || !(PAGE_READ_KEY in changes)) return
+    const next = changes[PAGE_READ_KEY].newValue
+    cb(typeof next === 'boolean' ? next : undefined)
+  }
+  chrome.storage.onChanged.addListener(listener)
+  return () => chrome.storage.onChanged.removeListener(listener)
 }
 
 // "Not now" hides the notice until the browser restarts (session storage).
