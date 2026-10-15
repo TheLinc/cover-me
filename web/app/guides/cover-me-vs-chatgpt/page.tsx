@@ -12,7 +12,7 @@ const HERO_ALT =
 
 export const metadata: Metadata = {
   title: 'Cover Me vs ChatGPT for Cover Letters — Honest Comparison',
-  description: 'Can ChatGPT write a good cover letter? Yes — with manual work. Here’s what a purpose-built extension does differently: auto-reading postings, resume grounding, and ATS keyword matching.',
+  description: 'Can ChatGPT write a good cover letter? Yes — with manual work. Here’s what a purpose-built extension does differently: reading the posting when you click, resume grounding, and ATS keyword matching.',
   alternates: { canonical: `${BASE}/guides/${guide.slug}` },
   openGraph: {
     title: 'Cover Me vs ChatGPT for Cover Letters — Cover Me',

@@ -15,7 +15,7 @@ export const FAQ_ITEMS = [
   },
   {
     q: "What job boards does Cover Me support?",
-    a: "Cover Me auto-scrapes job descriptions on LinkedIn, Indeed, Greenhouse, Lever, Workday, and Ashby. For any other job board or ATS, you can paste the job description manually — it works on any page in seconds.",
+    a: "Cover Me reads the job description when you click, on LinkedIn, Indeed, Greenhouse, Lever, Workday, and Ashby. For any other job board or ATS, you can paste the job description manually — it works on any page in seconds.",
   },
   {
     q: "How is Cover Me different from using ChatGPT or Claude directly?",

@@ -251,7 +251,7 @@ export default function PrivacyPage() {
               <Li>
                 <strong className="text-foreground">Job posting data.</strong> From version 1.3.0,
                 when you click Generate or Tailor Resume on a job posting, the extension copies the page
-                you are looking at and sends it, with the page&apos;s address, to our server over HTTPS,
+                you are looking at and sends it, with the full address of the page (and of each frame copied), including any query string, to our server over HTTPS,
                 in every mode including BYOK, once you agree. The extension asks when you open it until
                 you choose, and reads postings on your device only until you agree. You can turn this on or off at
                 any time in the extension&apos;s Settings. The
@@ -481,7 +481,7 @@ export default function PrivacyPage() {
               <br /><br />
               <strong className="text-foreground">Why it is needed:</strong> In BYOK mode, the
               service worker calls the Anthropic Claude API directly from your browser using your own
-              API key to write cover letters and tailor resumes, and the first time you tailor, to read
+              API key to write cover letters and tailor resumes, and the first time you tailor after uploading a resume, to read
               your resume&apos;s structure. The request contains your API key (in the
               Authorization header), the job description, and your resume text. No Cover Me server
               is involved — the request goes directly from your browser to Anthropic.
@@ -550,13 +550,13 @@ export default function PrivacyPage() {
                   name: 'Anthropic',
                   url: 'https://www.anthropic.com/privacy',
                   when: 'BYOK mode (Claude provider) and Hosted mode (our key)',
-                  receives: 'Your resume text, the job posting data and any facts you add. In Hosted mode, also your resume on its own when you upload a new one, and in BYOK mode the first time you tailor, so its structure can be read. In BYOK mode, requests are made with your own API key and are subject to your agreement with Anthropic. In Hosted mode, requests are made with our key.',
+                  receives: 'Your resume text, the job posting data and any facts you add. In Hosted mode, also your resume on its own when you upload a new one, and in BYOK mode the first time you tailor after uploading one, so its structure can be read. In BYOK mode, requests are made with your own API key and are subject to your agreement with Anthropic. In Hosted mode, requests are made with our key.',
                 },
                 {
                   name: 'OpenAI',
                   url: 'https://openai.com/policies/privacy-policy',
                   when: 'BYOK mode only (OpenAI provider)',
-                  receives: 'Your resume text, the job posting data and any facts you add, plus your resume on its own the first time you tailor, to read its structure. Requests use your own API key and are subject to your agreement with OpenAI.',
+                  receives: 'Your resume text, the job posting data and any facts you add, plus your resume on its own the first time you tailor after uploading it, to read its structure. Requests use your own API key and are subject to your agreement with OpenAI.',
                 },
                 {
                   name: 'Supabase',
@@ -580,7 +580,7 @@ export default function PrivacyPage() {
                   name: 'Vercel',
                   url: 'https://vercel.com/legal/privacy-policy',
                   when: 'Anyone who visits cover-me.dev',
-                  receives: 'Standard web server access logs (IP address, browser, requested URL) for every page of cover-me.dev. Vercel also runs the website\'s server code: for anyone signed in to the dashboard it reads your email, plan and usage from our backend to build the page; for Pro users it passes your saved applications (job details, cover letters and tailored resumes) from our backend to your browser; and it receives Stripe\'s billing notifications (your customer ID, subscription status and the checkout details Stripe holds). It stores none of these.',
+                  receives: 'Standard web server access logs (IP address, browser, requested URL) for every page of cover-me.dev. Vercel also runs the website\'s server code: for anyone signed in to the dashboard it reads your email, profile picture link, sign-up date, plan and usage from our backend to build the page; for Pro users it passes your saved applications (job details, cover letters and tailored resumes) from our backend to your browser; and it receives Stripe\'s billing notifications (your customer ID, subscription status and the checkout details Stripe holds). It stores none of these.',
                 },
                 {
                   name: 'Sentry',
