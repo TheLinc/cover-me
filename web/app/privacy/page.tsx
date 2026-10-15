@@ -260,10 +260,11 @@ export default function PrivacyPage() {
                 back; the page itself is discarded as soon as it is read and is never logged or
                 stored. The copy covers the page and any frames in it from the same site or from the six
                 job-board services listed below. Scripts (except the posting&apos;s structured data), form
-                fields, images, LinkedIn&apos;s messaging panel and the data sites embed in them are
-                removed in your browser before anything is sent, but the rest of the page is sent as
-                is: its text, including parts not on screen, its link addresses and short attribute
-                values, which on sites you are signed in to can include your name or a link to your
+                fields, images and the data sites embed in them are removed in your browser before
+                anything is sent, and so is LinkedIn&apos;s messaging panel where the extension
+                recognises it. The rest of the page is sent as is: its text, including parts not on
+                screen, its link addresses, short attribute values, and class and style attributes at
+                any length, which on sites you are signed in to can include your name or a link to your
                 profile. If our server can&apos;t be reached,
                 the extension reads the posting on your device instead. The job details are then used
                 only to generate your cover letter or tailored resume and, on Pro, to label your saved
