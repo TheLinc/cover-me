@@ -26,7 +26,7 @@ The extension reads the job description from the page and combines it with your 
 | Generations | Unlimited | 10 to start, then 5/week | Up to 25/day |
 | Resume storage | Local only | Encrypted cloud | Encrypted cloud |
 | Application history (letters + tailored resumes) | Local only | Local only | Synced across devices |
-| Privacy | Resume never leaves your device | Resume encrypted at rest | Resume encrypted at rest |
+| Privacy | Resume goes only to your AI provider | Resume encrypted at rest | Resume encrypted at rest |
 
 ---
 
@@ -103,9 +103,9 @@ The generic scraper tries three strategies in order: JSON-LD structured data, kn
 **Your resume is sensitive — here is exactly how it is handled:**
 
 - Text is extracted client-side on upload using pdf.js / mammoth.js. The raw file is never stored.
-- In BYOK mode, extracted resume text is stored in `chrome.storage.local` on your device only. It never leaves your machine.
+- In BYOK mode, extracted resume text is stored in `chrome.storage.local` on your device. It's sent only to the AI provider whose key you use.
 - API calls go directly from the extension to Anthropic or OpenAI using **your key**. Cover Me's servers never see your resume, letters, or key.
-- To read a posting, the extension sends a copy of the job page you clicked on (scripts, images and embedded data removed in the browser) to the `scrape` Edge Function, in every mode. It returns the title, company and description and keeps nothing. If it can't be reached, the extension reads the page itself.
+- From 1.3.0, once you agree (a notice in the popup, or Settings), the extension sends a copy of the job page you clicked on (scripts, images, form fields and embedded data removed in the browser) to the `scrape` Edge Function, in every mode. It returns the title, company and description and keeps no copy. Until you agree, or if it can't be reached, the extension reads the page itself.
 - Your API key is encrypted at rest using the Web Crypto API (AES-GCM) before being written to `chrome.storage.local`. It is decrypted only at call time and immediately discarded from memory.
 - No analytics, no telemetry, no third-party SDKs in the extension.
 

@@ -215,9 +215,9 @@ export default function PrivacyPage() {
                 transmitted; in Hosted mode its file name is stored, unencrypted, with your resume. In BYOK mode, the extracted text is stored only in your browser&apos;s local
                 storage. In Hosted mode, the extracted text is transmitted to our server over HTTPS and
                 stored in an encrypted database, and a copy is kept in local storage on each browser you
-                sign in from, so you don&apos;t upload it again on a new device. When you upload a new
-                resume, our server sends it to Anthropic right away to read its structure, so tailoring
-                can start at once.
+                sign in from, so you don&apos;t upload it again on a new device. In Hosted mode, when you
+                upload a new resume, our server sends it to Anthropic right away to read its structure,
+                so tailoring can start at once (or on your first tailor, if it hasn&apos;t been read yet).
               </Li>
               <Li>
                 <strong className="text-foreground">Account credentials (Hosted mode only).</strong>{' '}
@@ -513,7 +513,7 @@ export default function PrivacyPage() {
                 <li>Upgrade — getting a Stripe checkout page when you click an Upgrade button.</li>
                 <li>Cover letter &amp; resume generation — sending job data and your session token to our backend Edge Functions, which retrieve your encrypted resume, call the Claude API with our key, and return the generated output.</li>
                 <li>Application history sync (Pro mode) — saving each new cover letter and tailored resume, uploading ones already in the extension when you agree, and fetching and deleting them on the History page.</li>
-                <li>Resume sync — downloading your saved resume after sign-in, and uploading a new one to encrypted backend storage. The server then reads its structure with Anthropic.</li>
+                <li>Resume sync — after sign-in, downloading your saved resume, or uploading the one already in the extension if it&apos;s newer; and uploading a new one when you add it. Uploads go to encrypted backend storage, and the server then reads the resume&apos;s structure with Anthropic.</li>
               </ul>
             </PermissionCard>
 
@@ -550,7 +550,7 @@ export default function PrivacyPage() {
                   name: 'Anthropic',
                   url: 'https://www.anthropic.com/privacy',
                   when: 'BYOK mode (Claude provider) and Hosted mode (our key)',
-                  receives: 'Your resume text, the job posting data and any facts you add. In Hosted mode, also your resume on its own when you upload a new one, and in BYOK mode the first time you tailor after uploading one, so its structure can be read. In BYOK mode, requests are made with your own API key and are subject to your agreement with Anthropic. In Hosted mode, requests are made with our key.',
+                  receives: 'Your resume text, the job posting data and any facts you add. In Hosted mode, also your resume on its own when you upload a new one (or on your first tailor, if it hasn\'t been read yet), and in BYOK mode the first time you tailor after uploading one, so its structure can be read. In BYOK mode, requests are made with your own API key and are subject to your agreement with Anthropic. In Hosted mode, requests are made with our key.',
                 },
                 {
                   name: 'OpenAI',
@@ -650,7 +650,7 @@ export default function PrivacyPage() {
             </P>
             <Ul>
               <Li>Data collected is used solely to provide and improve the features you explicitly request: reading a job posting, tailoring your resume to it, and writing a cover letter.</Li>
-              <Li>We do not use data to develop, improve, or train AI or machine learning models other than passing it transiently to third-party AI APIs (Anthropic/OpenAI) in real time as part of the generation request.</Li>
+              <Li>We do not use data to develop, improve, or train AI or machine learning models. We pass it to third-party AI APIs (Anthropic, or OpenAI with your own key) only as part of a request you make; each provider handles API data under its own terms, linked above. From version 1.3.0, requests made with your own OpenAI key ask OpenAI not to store them.</Li>
               <Li>We do not use data for personalised advertising or retargeting of any kind.</Li>
               <Li>We do not sell or transfer user data to third parties for purposes unrelated to providing the Cover Me service.</Li>
               <Li>We do not allow humans to read user-generated content (resumes, cover letters, job postings) except with explicit user consent, for security and fraud prevention, to meet legal obligations, or in aggregate anonymised form.</Li>
