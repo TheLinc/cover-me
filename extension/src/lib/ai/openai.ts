@@ -18,7 +18,8 @@ const OPENAI_FIELDS = { model: OPENAI_MODEL, reasoning: { effort: 'medium' }, ma
 // GPT-6 Luna for resume parsing, the job Haiku does on the Claude path:
 // extraction, not judgment. Parsing returns in about 4 s, so plain Chat
 // Completions is fine.
-export const OPENAI_PARSE_FIELDS = { model: 'gpt-6-luna', reasoning_effort: 'low', max_completion_tokens: 8000 } as const
+// store: false is Chat Completions' default; it's sent anyway so every OpenAI call says so.
+export const OPENAI_PARSE_FIELDS = { model: 'gpt-6-luna', reasoning_effort: 'low', max_completion_tokens: 8000, store: false } as const
 
 // Streams through the Responses API, which sends progress events from the
 // first second while the model reasons. Chat Completions sends nothing until
