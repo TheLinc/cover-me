@@ -25,8 +25,8 @@ export default function PageReadSetting() {
         Send a copy of the job page to Cover Me's server to read it
       </label>
       <p className="page-read-setting-hint">
-        Works on more sites. The copy has scripts, form fields and images removed, but includes anything else shown on
-        the page, like your name if you're signed in to the site. The server keeps none of it. Off: postings are read on
+        Works on more sites. The copy has scripts, form fields and images removed, but includes everything else in the
+        page, even parts not on screen, like your name if you're signed in to the site. The server keeps none of it. Off: postings are read on
         your device only. <a className="text-link" href={`${WEB_URL}/privacy`} target="_blank" rel="noreferrer">Privacy policy</a>
       </p>
     </section>
