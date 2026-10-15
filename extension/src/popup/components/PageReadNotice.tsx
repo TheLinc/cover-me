@@ -35,9 +35,9 @@ export default function PageReadNotice() {
 
   return (
     <section className="page-read-notice" aria-labelledby="page-read-notice-title">
-      <p id="page-read-notice-title" className="page-read-notice-title">Read job pages on Cover Me's server?</p>
+      <p id="page-read-notice-title" className="page-read-notice-title">Send job pages to Cover Me's server?</p>
       <p>
-        When a job site changes its layout, we fix it on our side, with no extension update. Pages and their
+        When a job site changes its layout, we can usually fix it on our side, with no extension update. Pages and their
         addresses are deleted after reading but can include your name.
       </p>
       <button className="page-read-notice-more" aria-expanded={expanded} aria-controls="page-read-notice-details" onClick={() => setExpanded(!expanded)}>
@@ -46,7 +46,7 @@ export default function PageReadNotice() {
       {expanded && (
         <div id="page-read-notice-details" className="page-read-notice-details">
           <p>
-            It happens when you click Generate or Tailor, with your own API key too. Most scripts, form fields and
+            Pages are sent when you click Generate or Tailor, with your own API key too. Most scripts, form fields and
             images are removed first; everything else in the page is sent, even parts not on screen. The server pulls
             out the job title, company and description.
           </p>
