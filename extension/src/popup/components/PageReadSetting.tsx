@@ -22,7 +22,7 @@ export default function PageReadSetting() {
       <h2 id="page-read-setting-title" className="page-read-setting-title">Reading job pages</h2>
       <label className="compact-toggle">
         <input type="checkbox" checked={agreed} onChange={(e) => { setAgreed(e.target.checked); void setPageReadChoice(e.target.checked) }} />
-        Send a copy of the job page to Cover Me's server to read it
+        Send the job page's address and a copy of it to Cover Me's server to read it
       </label>
       <p className="page-read-setting-hint">
         Works on more sites. The copy has most scripts, form fields and images removed, but includes everything else in the
