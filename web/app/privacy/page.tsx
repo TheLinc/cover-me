@@ -196,7 +196,8 @@ export default function PrivacyPage() {
                 <strong className="text-foreground">Hosted (Free &amp; Pro).</strong>{' '}
                 You create an account. Your resume is encrypted and stored on our backend. Our server
                 sends it to Anthropic, with our API key, to read it and to write your cover letters and
-                tailored resumes. Pro subscribers are billed through Stripe.
+                tailored resumes. Pro subscribers are billed through Stripe. From version 1.3.0, once
+                you agree, the job page is also sent to our server to read the posting, as in BYOK.
               </Li>
             </Ul>
             <P>
@@ -262,7 +263,8 @@ export default function PrivacyPage() {
                 removed in your browser before anything is sent, but the copy includes whatever text the page shows, which on
                 sites you are signed in to can include your name. If our server can&apos;t be reached,
                 the extension reads the posting on your device instead. The job details are then used
-                only to generate your cover letter or tailored resume.
+                only to generate your cover letter or tailored resume and, on Pro, to label your saved
+                applications.
               </Li>
               <Li>
                 <strong className="text-foreground">Application history.</strong> Generated cover
@@ -281,8 +283,9 @@ export default function PrivacyPage() {
               <Li>
                 <strong className="text-foreground">Usage count (Hosted mode).</strong>{' '}
                 We record the number of AI generations (cover letters and resume tailoring combined)
-                per day per account to enforce the free allowance and Pro's fair-use limit. Only the count is stored — no
-                content or metadata about individual generations is recorded server-side for Free users.
+                per day per account to enforce the free allowance and Pro's fair-use limit. Apart from Supabase&apos;s
+                short-lived request logs (see Third-Party Services), only the count is stored: no content
+                of individual generations is recorded server-side for Free users.
               </Li>
               <Li>
                 <strong className="text-foreground">Rate-limit counter (all modes).</strong>{' '}
@@ -322,6 +325,7 @@ export default function PrivacyPage() {
               <Li>To sync your application history (cover letters and tailored resumes) across devices (Pro mode only).</Li>
               <Li>To process subscription billing through Stripe (Pro mode only).</Li>
               <Li>To respond to support requests you initiate by contacting us directly.</Li>
+              <Li>To count, in aggregate, how many accounts sign up and use the service.</Li>
             </Ul>
             <P>
               We do not use your data for advertising, profiling, training AI models, or any purpose
@@ -544,7 +548,7 @@ export default function PrivacyPage() {
                   name: 'Anthropic',
                   url: 'https://www.anthropic.com/privacy',
                   when: 'BYOK mode (Claude provider) and Hosted mode (our key)',
-                  receives: 'Your resume text, the job posting data and any facts you add. In Hosted mode, also your resume on its own when you upload a new one, so we can read its structure. In BYOK mode, requests are made with your own API key and are subject to your agreement with Anthropic. In Hosted mode, requests are made with our key.',
+                  receives: 'Your resume text, the job posting data and any facts you add. In Hosted mode, also your resume on its own when you upload a new one, and in BYOK mode the first time you tailor, so its structure can be read. In BYOK mode, requests are made with your own API key and are subject to your agreement with Anthropic. In Hosted mode, requests are made with our key.',
                 },
                 {
                   name: 'OpenAI',
@@ -556,7 +560,7 @@ export default function PrivacyPage() {
                   name: 'Supabase',
                   url: 'https://supabase.com/privacy',
                   when: 'Every mode (reading job postings, from version 1.3.0); everything else Hosted mode only',
-                  receives: 'Copies of the job pages you ask us to read, which are processed and not stored, and rate-limit counters keyed by a hash of your IP address. In Hosted mode also: email address, hashed password (email sign-in only), encrypted resume text, encrypted cover letters and tailored resumes with the unencrypted fields that go with them (Pro), your resume&apos;s file name, your Stripe customer ID, your Google name, picture link and account ID, session tokens, usage counts, and the account-keyed counter used when a new resume is read (see Information We Collect for each). Supabase Auth also records the IP address and browser of each signed-in session, kept with your account. Supabase hosts our backend functions, authentication system and database, and keeps standard request logs (IP address, time, function called) for a short period.',
+                  receives: 'Copies of the job pages you ask us to read, which are processed and not stored, and rate-limit counters keyed by a hash of your IP address. In Hosted mode also: the job details, any facts you add and, when you regenerate, the previous tailored resume, sent with each generation request (not stored, except Pro history); email address, hashed password (email sign-in only), encrypted resume text, encrypted cover letters and tailored resumes with the unencrypted fields that go with them (Pro), your resume&apos;s file name, your Stripe customer ID, your Google name, picture link and account ID, session tokens, usage counts, and the account-keyed counter used when a new resume is read (see Information We Collect for each). Supabase Auth also records the IP address and browser of each signed-in session, kept with your account. Supabase hosts our backend functions, authentication system and database, and keeps standard request logs (IP address, time, function called) for a short period.',
                 },
                 {
                   name: 'Google',
@@ -573,8 +577,8 @@ export default function PrivacyPage() {
                 {
                   name: 'Vercel',
                   url: 'https://vercel.com/legal/privacy-policy',
-                  when: 'All users who visit the web dashboard',
-                  receives: 'Standard web server access logs (IP address, browser, requested URL) for the dashboard at cover-me.dev. Vercel hosts our Next.js web application.',
+                  when: 'Anyone who visits cover-me.dev',
+                  receives: 'Standard web server access logs (IP address, browser, requested URL) for every page of cover-me.dev. Vercel hosts our Next.js web application.',
                 },
                 {
                   name: 'Sentry',

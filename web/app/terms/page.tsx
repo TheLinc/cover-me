@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
 }
 
-const EFFECTIVE_DATE = 'October 9, 2026'
+const EFFECTIVE_DATE = 'October 15, 2026'
 const CONTACT_EMAIL  = 'support@cover-me.dev'
 
 function H2({ id, children }: { id: string; children: React.ReactNode }) {

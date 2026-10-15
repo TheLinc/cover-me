@@ -91,7 +91,7 @@ export default function AboutPage() {
               Privacy as a first principle
             </h2>
             <p>
-              Your resume is PII — it contains your employment history, education, and contact details. It should not be stored on servers you haven&apos;t consented to, trained on without your knowledge, or shared with third parties.
+              Your resume is PII — it contains your employment history, education, and contact details. It should not be stored on servers you haven&apos;t consented to, trained on without your knowledge, or shared beyond the AI provider that writes your documents.
             </p>
             <p>
               In BYOK mode your API key is encrypted on your device with AES-256-GCM via the Web Crypto API, and neither it nor your resume is sent to Cover Me servers. In hosted mode, your resume is encrypted at rest in our database. The extension has no analytics, no telemetry, and no ads — the code is MIT licensed and auditable by anyone.
