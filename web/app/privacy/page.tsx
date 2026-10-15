@@ -251,8 +251,9 @@ export default function PrivacyPage() {
                 <strong className="text-foreground">Job posting data.</strong> From version 1.3.0,
                 when you click Generate or Tailor Resume on a job posting, the extension copies the page
                 you are looking at and sends it, with the page&apos;s address, to our server over HTTPS,
-                in every mode including BYOK. The extension explains this the first time you open it and
-                reads postings on your device only until you agree. The
+                in every mode including BYOK, once you agree. The extension asks the first time you open
+                it and reads postings on your device only until you agree. You can turn this on or off at
+                any time in the extension&apos;s Settings. The
                 server reads the job title, company name, and job description from it and sends those
                 back; the page itself is discarded as soon as it is read and is never logged or
                 stored. The copy covers the page and any job-board frames embedded in it. Scripts,
@@ -301,7 +302,7 @@ export default function PrivacyPage() {
             <H3>Information we do NOT collect</H3>
             <Ul>
               <Li>We do not track your browsing history. We receive a page&apos;s address only when you activate the extension on it.</Li>
-              <Li>The extension contains no analytics or telemetry code. In BYOK mode the only thing it sends to Cover Me is the job page you activate it on, so we can read the posting. Your resume and API key never reach us.</Li>
+              <Li>The extension contains no analytics or telemetry code. In BYOK mode the only thing it sends to Cover Me is the job page you activate it on, once you have agreed, so we can read the posting. Your resume and API key never reach us.</Li>
               <Li>In hosted mode our servers count how many letters and resumes you generate, to enforce the generation limits, and log errors. Logs never contain your resume, letters, or job descriptions.</Li>
               <Li>We do not use cookies for tracking or advertising.</Li>
               <Li>We do not collect any data from tabs other than the active job posting tab, and only when you explicitly activate the extension.</Li>
@@ -354,6 +355,7 @@ export default function PrivacyPage() {
                 <li>Cached account tier to avoid redundant network requests</li>
                 <li>Transient in-flight generation state so results survive the popup closing mid-generation</li>
                 <li>The popup&apos;s last inputs and results, so they&apos;re still there when you reopen it</li>
+                <li>Your choice about sending job pages to our server to be read</li>
               </ul>
               <br />
               <code className="text-brand-light font-mono text-[12px]">chrome.storage.sync</code> is
