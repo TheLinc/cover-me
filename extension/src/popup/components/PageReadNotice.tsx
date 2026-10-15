@@ -37,7 +37,7 @@ export default function PageReadNotice() {
     <section className="page-read-notice" aria-labelledby="page-read-notice-title">
       <p id="page-read-notice-title" className="page-read-notice-title">Send job pages and URLs to Cover Me to read?</p>
       <p>
-        When a job site changes, we can usually fix it on our side, with no extension update. Each page is deleted
+        When a job site changes, we can usually fix it on our server, with no extension update. Each page is deleted
         once it's read, but can include your name.
       </p>
       <button className="page-read-notice-more" aria-expanded={expanded} aria-controls="page-read-notice-details" onClick={() => setExpanded(!expanded)}>
