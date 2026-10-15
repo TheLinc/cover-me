@@ -52,7 +52,7 @@ JSON structure (omit "projects", "skills", "certifications" entirely if those se
 }
 
 RESUME:
-${resumeText.slice(0, 6000)}`
+${resumeText.slice(0, 12000)}`
 }
 
 function isValidParsedResume(r: unknown): r is ParsedResume {
@@ -98,7 +98,7 @@ export async function parseResumeStructure(
       },
       body: JSON.stringify({
         model: HAIKU_MODEL,
-        max_tokens: 3000,
+        max_tokens: 6000,
         messages: [{ role: 'user', content: prompt }],
       }),
     })
