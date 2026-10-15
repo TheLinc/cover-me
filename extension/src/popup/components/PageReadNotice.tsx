@@ -35,7 +35,7 @@ export default function PageReadNotice() {
     <section className="page-read-notice" aria-labelledby="page-read-notice-title">
       <p id="page-read-notice-title" className="page-read-notice-title">How Cover Me reads a job posting</p>
       <p>
-        When you click Generate or Tailor, Cover Me can send a copy of the job page to its server, with scripts,
+        When you click Generate or Tailor, Cover Me can send a copy of the job page to its server, with most scripts,
         form fields and images removed. The copy includes everything else in the page, even parts not on screen,
         like your name if you're signed in to the site. The server pulls out the job title, company and description and keeps no
         copy. This applies with your own API key too, and lets us fix a job site's layout change without an
