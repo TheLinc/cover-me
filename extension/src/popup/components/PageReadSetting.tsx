@@ -25,8 +25,8 @@ export default function PageReadSetting() {
         Send the job page's address and a copy of it to Cover Me's server to read it
       </label>
       <p className="page-read-setting-hint">
-        When a job site changes its layout, we can usually fix it on our side, with no extension update. The copy has most scripts, form fields and images removed, but includes everything else in the
-        page, even parts not on screen, like your name if you're signed in to the site. The server keeps none of it. Off: postings are read on
+        When a job site changes, we can usually fix it on our side, with no extension update. The copy has most scripts, form fields and images removed, but includes everything else in the
+        page, even parts not on screen, like your name if you're signed in to the site. The server deletes the copy once it's read. Off: postings are read on
         your device only, and a site's change waits for the next extension update. <a className="text-link" href={`${WEB_URL}/privacy`} target="_blank" rel="noreferrer">Privacy policy</a>
       </p>
     </section>
