@@ -2,7 +2,7 @@
 
 **AI cover letters and ATS-tailored resumes, generated from any job posting in seconds.**
 
-Cover Me is an open-source Chrome extension that reads job descriptions and, using your stored resume, generates tailored cover letters and ATS-optimized resumes — complete with a match score and gap analysis. Bring your own API key for unlimited, fully private use — or use the hosted tier for a no-configuration experience.
+Cover Me is an open-source Chrome extension that reads job descriptions and, using your stored resume, generates tailored cover letters and ATS-optimized resumes — complete with a match score and gap analysis. Bring your own API key for unlimited use, with your resume going only to your AI provider — or use the hosted tier for a no-configuration experience.
 
 ---
 
@@ -115,12 +115,14 @@ The generic scraper tries three strategies in order: JSON-LD structured data, kn
 |---|---|
 | `storage` | Save resume, API key (encrypted), and letter history locally |
 | `activeTab` | Read the job posting on the current tab when you click Generate |
-| `scripting` | Inject the content script to scrape job details |
+| `scripting` | Inject the job-posting reader when you click Generate or Tailor |
+| `identity` | Continue with Google sign-in (`launchWebAuthFlow` only) |
 | `https://api.anthropic.com/*` | Direct API calls for Claude (BYOK only) |
 | `https://api.openai.com/*` | Direct API calls for OpenAI (BYOK only) |
-| `https://<project>.supabase.co/*` | Account auth, resume sync, generation (hosted mode only) |
+| `https://<project>.supabase.co/*` | From 1.3.0, once you agree, reading the job page (every mode); account auth, resume sync, generation and Pro history (hosted mode) |
+| `https://*.greenhouse.io/*`, `*.lever.co`, `*.myworkdayjobs.com`, `*.ashbyhq.com`, `*.bamboohr.com`, `*.workable.com` | Read postings that career pages embed from these services, only when you click Generate or Tailor |
 
-No `<all_urls>` permission — the extension only activates on the tab you're on when you click the icon.
+From 1.3.0, no `<all_urls>` and no content scripts: the reader is injected only when you click. Earlier versions declared a content script on all sites.
 
 ---
 
@@ -307,12 +309,12 @@ cover-me/
 
 ```
 Job page (content script, injected on click)
-  → snapshots the page (open shadow roots kept, scripts and media stripped)
+  → once the user agrees, snapshots the page (open shadow roots kept, scripts and media stripped)
   → also runs the bundled scrapers, as the offline fallback
   → sends both to the service worker
 
 Service worker
-  → posts the snapshots to the scrape Edge Function, which runs the same
+  → if the user agreed, posts the snapshots to the scrape Edge Function, which runs the same
     scrapers (copied from the extension) and returns the job; a fix to a
     board's scraper ships by deploying the function
   → falls back to the bundled result if the function can't read it or

@@ -513,7 +513,7 @@ export default function PrivacyPage() {
                 <li>Upgrade — getting a Stripe checkout page when you click an Upgrade button.</li>
                 <li>Cover letter &amp; resume generation — sending job data and your session token to our backend Edge Functions, which retrieve your encrypted resume, call the Claude API with our key, and return the generated output.</li>
                 <li>Application history sync (Pro mode) — saving each new cover letter and tailored resume, uploading ones already in the extension when you agree, and fetching and deleting them on the History page.</li>
-                <li>Resume sync — after sign-in, downloading your saved resume, or uploading the one already in the extension if it&apos;s newer; and uploading a new one when you add it. Uploads go to encrypted backend storage, and the server then reads the resume&apos;s structure with Anthropic.</li>
+                <li>Resume sync — after sign-in, uploading the resume already in the extension (versions before 1.3.0 always upload it; from 1.3.0 only if it&apos;s newer than the account&apos;s) or, from 1.3.0, downloading the account&apos;s copy; and uploading a new one when you add it. Uploads go to encrypted backend storage, and the server then reads the resume&apos;s structure with Anthropic.</li>
               </ul>
             </PermissionCard>
 
