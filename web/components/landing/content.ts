@@ -19,7 +19,7 @@ export const FAQ_ITEMS = [
   },
   {
     q: "How is Cover Me different from using ChatGPT or Claude directly?",
-    a: "Cover Me is purpose-built for job applications — it does things a general AI chatbot can't. It reads the job posting automatically, generates a tailored cover letter, and rewrites your resume bullets to match the role's ATS keywords, all without you copying or pasting anything. It also scores your resume against the role and surfaces the exact gaps. One click, done in seconds.",
+    a: "Cover Me is purpose-built for job applications — it does things a general AI chatbot can't. It reads the job posting when you click Generate, writes a tailored cover letter, and rewrites your resume bullets to match the role's ATS keywords, all without you copying or pasting anything. It also scores your resume against the role and surfaces the exact gaps. One click, done in seconds.",
   },
   {
     q: "Is my resume data private?",

@@ -83,7 +83,7 @@ export const jsonLdHowTo = {
     {
       '@type': 'HowToStep',
       name: 'Open a job posting',
-      text: 'Navigate to any job on LinkedIn, Indeed, Greenhouse, Lever, Workday, or Ashby. Cover Me reads the page automatically. If the scraper does not catch it, paste the description manually.',
+      text: 'Open any job on LinkedIn, Indeed, Greenhouse, Lever, Workday, or Ashby, click the Cover Me icon and choose Generate. Cover Me reads the posting when you click. If it can\'t read it, paste the description.',
       position: 2,
     },
     {

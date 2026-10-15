@@ -260,8 +260,10 @@ export default function PrivacyPage() {
                 stored. The copy covers the page and any frames in it from the same site or from the six
                 job-board services listed below. Scripts (except the posting&apos;s structured data), form
                 fields, images, LinkedIn&apos;s messaging panel and the data sites embed in them are
-                removed in your browser before anything is sent, but the copy includes whatever text the page shows, which on
-                sites you are signed in to can include your name. If our server can&apos;t be reached,
+                removed in your browser before anything is sent, but the rest of the page is sent as
+                is: its text, including parts not on screen, its link addresses and short attribute
+                values, which on sites you are signed in to can include your name or a link to your
+                profile. If our server can&apos;t be reached,
                 the extension reads the posting on your device instead. The job details are then used
                 only to generate your cover letter or tailored resume and, on Pro, to label your saved
                 applications.
@@ -527,12 +529,12 @@ export default function PrivacyPage() {
 
             <H3>Server-side storage</H3>
             <Ul>
-              <Li>Resume text is encrypted with AES-256-GCM before being stored in our Supabase Postgres database. The encryption key is derived from a server-side secret. Plaintext resume text is never persisted to disk.</Li>
+              <Li>Resume text, and a parsed copy of its structure, are encrypted with AES-256-GCM before being stored in our Supabase Postgres database. The encryption key is derived from a server-side secret. Plaintext resume text is never persisted to disk.</Li>
               <Li>Cover letters and tailored resumes (Pro mode) are encrypted with AES-256-GCM before storage. The job title, company, posting address, dates, interview mark, ATS match score and missing keywords that go with them are stored unencrypted so you can search and filter them. Your resume's file name is stored unencrypted too.</Li>
               <Li>Rate-limit counters (all modes) hold only a keyed hash of an IP address, or a hash of your account ID when a new resume is read, and a counter not updated for two days is deleted at the next cleanup.</Li>
               <Li>All data in transit is protected by TLS 1.2 or higher (enforced by Supabase and Vercel).</Li>
               <Li>Database access is protected by Supabase Row-Level Security policies. Users can only access their own data rows.</Li>
-              <Li>The Supabase service-role key (which bypasses RLS) is used only server-side in webhook handlers and is never exposed to clients.</Li>
+              <Li>The Supabase service-role key (which bypasses RLS) is used only on our servers (the backend functions and the Stripe webhook) and is never exposed to clients.</Li>
             </Ul>
 
             {/* ── 6. Third-Party Services ─────────────────────────────── */}
@@ -578,7 +580,7 @@ export default function PrivacyPage() {
                   name: 'Vercel',
                   url: 'https://vercel.com/legal/privacy-policy',
                   when: 'Anyone who visits cover-me.dev',
-                  receives: 'Standard web server access logs (IP address, browser, requested URL) for every page of cover-me.dev. Vercel hosts our Next.js web application.',
+                  receives: 'Standard web server access logs (IP address, browser, requested URL) for every page of cover-me.dev. Vercel also runs the website\'s server code: for Pro users on the dashboard it passes your saved applications (job details, cover letters and tailored resumes) from our backend to your browser without storing them, and it receives Stripe\'s billing notifications (customer ID, subscription status).',
                 },
                 {
                   name: 'Sentry',
