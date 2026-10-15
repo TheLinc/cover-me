@@ -298,15 +298,27 @@ html, body {
   border: 1px solid var(--border);
   border-radius: var(--r-sm);
   padding: 12px 14px;
-  margin: 18px 18px 0;
+  margin-bottom: 16px;
   color: var(--text-2);
   font-size: 12px;
   line-height: 1.55;
 }
-.page-read-notice-title { color: var(--text); font-size: 13px; font-weight: 600; margin-bottom: 6px; }
-.page-read-notice-actions { display: flex; align-items: center; gap: 14px; margin-top: 10px; }
-.page-read-notice-actions .btn { width: auto; padding: 7px 14px; }
-.page-read-notice-actions .btn-ghost { padding: 7px 4px; }
+.page-read-notice-title { color: var(--text); font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.page-read-notice-details p { margin-top: 8px; }
+.page-read-notice-more {
+  margin-top: 6px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent-h);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.page-read-notice-more:hover { color: var(--text); }
+.page-read-notice-actions { display: flex; gap: 8px; margin-top: 10px; }
+.page-read-notice-actions .btn { flex: 1; width: auto; }
 .page-read-setting { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); }
 .page-read-setting-title { color: var(--text); font-size: 13px; font-weight: 600; margin-bottom: 4px; }
 .page-read-setting-hint { color: var(--text-2); font-size: 12px; line-height: 1.55; margin-top: 6px; }

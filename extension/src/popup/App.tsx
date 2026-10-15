@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import Nav from './components/Nav'
-import PageReadNotice from './components/PageReadNotice'
 import GeneratePage from './pages/GeneratePage'
 import HistoryPage from './pages/HistoryPage'
 import ResumePage from './pages/ResumePage'
@@ -25,7 +24,6 @@ export default function App() {
   return (
     <div className="app">
       <div className="page-content">
-        <PageReadNotice />
         {page === 'generate' && <GeneratePage onNavigate={navigate} />}
         {page === 'resume' && <ResumePage />}
         {page === 'settings' && <SettingsPage />}

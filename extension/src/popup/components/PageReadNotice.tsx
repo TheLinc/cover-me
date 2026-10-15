@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { SUPABASE_URL, WEB_URL } from '../../lib/config'
 import { getPageReadChoice, isPageReadNoticeSnoozed, setPageReadChoice, snoozePageReadNotice, watchPageReadChoice } from '../../lib/storage'
 
-// How job pages are read, at the top of the popup until the user decides.
+// How job pages are read, under the Generate page's header until the user decides.
 // Until they agree the page copy isn't sent (preferServerScrapes in
 // background/index.ts) and the extension reads postings with its bundled
 // scrapers alone. "Not now" hides it until the browser restarts; turning it
@@ -12,6 +12,7 @@ import { getPageReadChoice, isPageReadNoticeSnoozed, setPageReadChoice, snoozePa
 // every mode, BYOK included (content/snapshot.ts).
 export default function PageReadNotice() {
   const [show, setShow] = useState(false)
+  const [expanded, setExpanded] = useState(false)
 
   useEffect(() => {
     // A build without a backend never sends the page copy, so there's nothing to agree to.
@@ -27,25 +28,37 @@ export default function PageReadNotice() {
     setShow(false)
     void save()
     // The buttons are gone: move keyboard focus to the page's first control, not <body>.
-    // (The notice is still in the DOM here, so look only inside the page under it.)
-    document.querySelector<HTMLElement>('.page-content .page button, .page-content .page a[href], .page-content .page input')?.focus()
+    // (The notice is still in the DOM here, so skip its own controls.)
+    const controls = document.querySelectorAll<HTMLElement>('.page button, .page a[href], .page input')
+    Array.from(controls).find((el) => !el.closest('.page-read-notice'))?.focus()
   }
 
   return (
     <section className="page-read-notice" aria-labelledby="page-read-notice-title">
-      <p id="page-read-notice-title" className="page-read-notice-title">How Cover Me reads a job posting</p>
+      <p id="page-read-notice-title" className="page-read-notice-title">Send job pages to Cover Me's server?</p>
       <p>
-        When you click Generate or Tailor, Cover Me can send the page's address and a copy of the job page to its server, with most scripts,
-        form fields and images removed. The copy includes everything else in the page, even parts not on screen,
-        like your name if you're signed in to the site. The server pulls out the job title, company and description and keeps no
-        copy. This applies with your own API key too, and lets us fix a job site's layout change without an
-        update. Until you agree, Cover Me reads postings on your device only, which works on fewer sites. You can
-        change this later in Settings.
+        The page and its address are read there, then deleted. They can include your name if you're signed in to the site.
       </p>
+      {expanded && (
+        <div id="page-read-notice-details" className="page-read-notice-details">
+          <p>
+            It happens when you click Generate or Tailor, with your own API key too. Most scripts, form fields and
+            images are removed first; everything else in the page is sent, even parts not on screen. The server pulls
+            out the job title, company and description.
+          </p>
+          <p>
+            It reads postings on more sites, and we can fix a job site's layout change without an update. Until you
+            agree, postings are read on your device only. You can change this in Settings.{' '}
+            <a className="text-link" href={`${WEB_URL}/privacy`} target="_blank" rel="noreferrer">Privacy policy</a>
+          </p>
+        </div>
+      )}
+      <button className="page-read-notice-more" aria-expanded={expanded} aria-controls="page-read-notice-details" onClick={() => setExpanded(!expanded)}>
+        {expanded ? 'Less' : 'Details'}
+      </button>
       <div className="page-read-notice-actions">
-        <button className="btn btn-primary" onClick={() => close(() => setPageReadChoice(true))}>Agree</button>
-        <button className="btn btn-ghost" onClick={() => close(snoozePageReadNotice)}>Not now</button>
-        <a className="text-link" href={`${WEB_URL}/privacy`} target="_blank" rel="noreferrer">Privacy policy</a>
+        <button className="btn btn-primary btn-sm" onClick={() => close(() => setPageReadChoice(true))}>Agree</button>
+        <button className="btn btn-secondary btn-sm" onClick={() => close(snoozePageReadNotice)}>Not now</button>
       </div>
     </section>
   )
