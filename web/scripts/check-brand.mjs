@@ -98,7 +98,7 @@ if (base) {
     if (/Bodoni|Hanken|Plus Jakarta/i.test(html)) errors.push(`${p} still references a retired font`)
   }
   const home = await (await fetch(base + '/')).text()
-  if (!home.includes('Your resume and cover letter, tailored to every job')) errors.push('/ is missing the H1')
+  if (!home.includes('Tailor your resume to any job posting')) errors.push('/ is missing the H1')
   for (const type of ['"Organization"', '"WebSite"', '"SoftwareApplication"', '"HowTo"', '"FAQPage"', '"SpeakableSpecification"']) {
     if (!home.includes(type)) errors.push(`/ is missing ${type} JSON-LD`)
   }

@@ -177,19 +177,19 @@ img, svg, video { display: block; }
 
 /* Time-based motion. Without it (reduced motion) everything is in its end state. */
 @media (prefers-reduced-motion: no-preference) {
-  .flow-line { stroke-dasharray: 6 8; animation: flow 1.6s linear infinite; }
+  .flow-line { animation: flow 0.56s linear infinite; }
   .marquee   { animation: marquee 36s linear infinite; }
   .marquee:hover { animation-play-state: paused; }
   .pulse     { animation: pulse 1.4s ease-in-out infinite; }
   .packet    { animation: packet 1.8s cubic-bezier(0.5, 0, 0.5, 1) infinite; }
   .shake     { animation: shake 0.45s ease; }
 }
-@keyframes flow    { to { stroke-dashoffset: -40; } }
+@keyframes flow    { to { transform: translateX(14px); } }
 @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 @keyframes pulse   { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }
 /* Packets ride the privacy diagram's wires; at rest they are not drawn. */
 .packet { opacity: 0; }
-@keyframes packet  { 0% { left: 0; opacity: 0; } 15%, 85% { opacity: 1; } 100% { left: calc(100% - 8px); opacity: 0; } }
+@keyframes packet  { 0% { transform: translateX(0); opacity: 0; } 15%, 85% { opacity: 1; } 100% { transform: translateX(100%); opacity: 0; } }
 @keyframes shake   { 20% { translate: -7px 0; rotate: -0.6deg; } 45% { translate: 6px 0; rotate: 0.5deg; } 70% { translate: -3px 0; } 100% { translate: 0 0; } }
 
 /* scroll-driven:start

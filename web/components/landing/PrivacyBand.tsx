@@ -38,15 +38,23 @@ function Node({ icon, title, sub, dim }: { icon: ReactNode; title: string; sub?:
   )
 }
 
-// A dashed wire with small packets travelling along it.
+// A dashed wire with small packets travelling along it. Both move with
+// transform only, so they run on the compositor instead of re-laying out and
+// repainting the page every frame.
 function Wire({ off }: { off?: boolean }) {
   return (
-    <div className="relative mt-[27px] h-[2px] min-w-6 flex-1">
-      <svg className="absolute inset-0 h-[2px] w-full overflow-visible" aria-hidden="true">
-        <line x1="0" y1="1" x2="100%" y2="1" stroke={off ? 'rgba(255,255,255,0.15)' : 'var(--brand)'} strokeWidth="2" className={off ? undefined : 'flow-line'} />
-      </svg>
+    <div className="relative mt-[27px] h-[2px] min-w-6 flex-1" aria-hidden="true">
+      {off ? (
+        <span className="absolute inset-0 bg-white/15" />
+      ) : (
+        <span className="absolute inset-0 overflow-hidden">
+          <span className="flow-line absolute inset-y-0 -left-[14px] right-0 bg-[repeating-linear-gradient(90deg,var(--brand)_0_6px,transparent_6px_14px)]" />
+        </span>
+      )}
       {!off && [0, 1].map((i) => (
-        <span key={i} className="packet absolute -top-[3px] size-2 rounded-[2px] bg-[#C7D2FE]" style={{ animationDelay: `${i * 0.9}s` }} />
+        <span key={i} className="packet absolute -top-[3px] left-0 h-2 w-[calc(100%-8px)]" style={{ animationDelay: `${i * 0.9}s` }}>
+          <span className="block size-2 rounded-[2px] bg-[#C7D2FE]" />
+        </span>
       ))}
     </div>
   )
