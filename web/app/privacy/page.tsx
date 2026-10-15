@@ -214,8 +214,9 @@ export default function PrivacyPage() {
                 file, text is extracted client-side on your device. The raw binary file is never stored or
                 transmitted; in Hosted mode its file name is stored, unencrypted, with your resume. In BYOK mode, the extracted text is stored only in your browser&apos;s local
                 storage. In Hosted mode, the extracted text is transmitted to our server over HTTPS and
-                stored in an encrypted database, and a copy is kept in local storage on each browser you
-                sign in from, so you don&apos;t upload it again on a new device. In Hosted mode, when you
+                stored in an encrypted database, and a copy is kept in local storage in the browser you
+                use; from version 1.3.0, signing in on another browser downloads it, so you don&apos;t
+                upload it again. In Hosted mode, when you
                 upload a new resume, our server sends it to Anthropic right away to read its structure,
                 so tailoring can start at once (or on your first tailor, if it hasn&apos;t been read yet).
               </Li>
@@ -382,7 +383,7 @@ export default function PrivacyPage() {
               <strong className="text-foreground">Exactly how it is used:</strong> When you click
               Generate or Tailor Resume, the service worker injects the job-posting reader from the
               extension&apos;s own package into the page you are viewing and reads the job title,
-              company name, and description. From version 1.3.0 it also sends the page&apos;s address
+              company name, and description. From version 1.3.0, once you agree, it also sends the page&apos;s address
               and a stripped copy of the page to our server to read the posting (see Job posting data
               above). It reads no cookies, browsing history or other tabs.
               <br /><br />
@@ -404,7 +405,7 @@ export default function PrivacyPage() {
               active tab. If that fails, it injects a smaller self-contained scraper function from
               the same bundle. No code is fetched from any remote source. Both read only DOM text
               and JSON-LD structured data to extract job title, company name, and description. From
-              version 1.3.0 the reader also returns the page&apos;s address and a copy of the page with
+              version 1.3.0, once you agree, the reader also returns the page&apos;s address and a copy of the page with
               scripts (except the posting&apos;s structured data), form fields, images and link query
               strings removed, which our server reads with
               the latest version of the reader. They do not write to the page, access cookies or
@@ -562,7 +563,7 @@ export default function PrivacyPage() {
                   name: 'Supabase',
                   url: 'https://supabase.com/privacy',
                   when: 'Every mode (reading job postings, from version 1.3.0); everything else Hosted mode only',
-                  receives: 'Copies of the job pages you ask us to read, which are processed and not stored, and rate-limit counters keyed by a hash of your IP address. In Hosted mode also: the job details, any facts you add and, when you regenerate, the previous tailored resume, sent with each generation request (not stored, except Pro history); email address, hashed password (email sign-in only), encrypted resume text, encrypted cover letters and tailored resumes with the unencrypted fields that go with them (Pro), your resume&apos;s file name, your Stripe customer ID, your Google name, picture link and account ID, session tokens, usage counts, and the account-keyed counter used when a new resume is read (see Information We Collect for each). Supabase Auth also records the IP address and browser of each signed-in session, kept with your account. Supabase hosts our backend functions, authentication system and database, and keeps standard request logs (IP address, browser, time, and the address requested, which can include a dashboard search) for a short period.',
+                  receives: 'Copies of the job pages you ask us to read, which are processed and not stored, and rate-limit counters keyed by a hash of your IP address. In Hosted mode also: the job details, any facts you add and, when you regenerate, the previous tailored resume, sent with each generation request (not stored, except Pro history); email address, hashed password (email sign-in only), encrypted resume text, encrypted cover letters and tailored resumes with the unencrypted fields that go with them (Pro), your resume\'s file name, your Stripe customer ID, your Google name, picture link and account ID, session tokens, usage counts, and the account-keyed counter used when a new resume is read (see Information We Collect for each). Supabase Auth also records the IP address and browser of each signed-in session, kept with your account. Supabase hosts our backend functions, authentication system and database, and keeps standard request logs (IP address, browser, time, and the address requested, which can include a dashboard search) for a short period.',
                 },
                 {
                   name: 'Google',
