@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
 }
 
-const EFFECTIVE_DATE = 'October 14, 2026'
+const EFFECTIVE_DATE = 'October 15, 2026'
 const CONTACT_EMAIL  = 'support@cover-me.dev'
 
 // ── Section heading ────────────────────────────────────────────────────────
@@ -188,9 +188,9 @@ export default function PrivacyPage() {
                 <strong className="text-foreground">BYOK (Bring Your Own Key) — free, unlimited.</strong>{' '}
                 You supply your own Claude or OpenAI API key. No account is required. Your resume,
                 API key and history are stored on your device, and only the API key is encrypted. Your
-                resume goes only to the AI provider whose key you use. From version 1.3.0, the job page
-                you use the extension on is also sent to our server so it can read the posting (see
-                Job posting data below).
+                resume goes only to the AI provider whose key you use. From version 1.3.0, once you
+                agree, the job page you use the extension on is also sent to our server so it can read
+                the posting (see Job posting data below).
               </Li>
               <Li>
                 <strong className="text-foreground">Hosted (Free &amp; Pro).</strong>{' '}
@@ -251,13 +251,14 @@ export default function PrivacyPage() {
                 <strong className="text-foreground">Job posting data.</strong> From version 1.3.0,
                 when you click Generate or Tailor Resume on a job posting, the extension copies the page
                 you are looking at and sends it, with the page&apos;s address, to our server over HTTPS,
-                in every mode including BYOK, once you agree. The extension asks the first time you open
-                it and reads postings on your device only until you agree. You can turn this on or off at
+                in every mode including BYOK, once you agree. The extension asks when you open it until
+                you choose, and reads postings on your device only until you agree. You can turn this on or off at
                 any time in the extension&apos;s Settings. The
                 server reads the job title, company name, and job description from it and sends those
                 back; the page itself is discarded as soon as it is read and is never logged or
-                stored. The copy covers the page and any job-board frames embedded in it. Scripts,
-                form fields, images, LinkedIn&apos;s messaging panel and the data sites embed in them are
+                stored. The copy covers the page and any frames in it from the same site or from the six
+                job-board services listed below. Scripts (except the posting&apos;s structured data), form
+                fields, images, LinkedIn&apos;s messaging panel and the data sites embed in them are
                 removed in your browser before anything is sent, but the copy includes whatever text the page shows, which on
                 sites you are signed in to can include your name. If our server can&apos;t be reached,
                 the extension reads the posting on your device instead. The job details are then used
@@ -288,10 +289,10 @@ export default function PrivacyPage() {
                 To stop abuse of the posting reader, our server counts requests per IP address. It
                 stores a keyed hash (HMAC) of the address, never the address itself. When it reads a
                 newly uploaded resume, it also counts per account, keyed by a hash of your account ID.
-                Periodic cleanup deletes counts once they are two days old.
+                A counter not updated for two days is deleted at the next cleanup, which runs during later requests.
               </Li>
               <Li>
-                <strong className="text-foreground">Billing information (Pro subscribers only).</strong>{' '}
+                <strong className="text-foreground">Billing information (when you click Upgrade, and Pro subscribers).</strong>{' '}
                 When you click Upgrade, we send Stripe your email address and Cover Me account ID to
                 start checkout, and Stripe processes your payment. We store only your Stripe Customer ID
                 and subscription status in our database. Full payment details
@@ -314,6 +315,7 @@ export default function PrivacyPage() {
             <P>We use the information we collect exclusively to provide the Cover Me service:</P>
             <Ul>
               <Li>To read the job posting on the page you ask the extension to read.</Li>
+              <Li>To protect the service from abuse, with rate limits.</Li>
               <Li>To tailor your resume to that posting and write a matching cover letter, using your resume and any facts you add.</Li>
               <Li>To authenticate you and maintain your session (Hosted mode).</Li>
               <Li>To enforce the generation limits: the free allowance and Pro&apos;s fair-use cap (Hosted mode).</Li>
@@ -397,7 +399,8 @@ export default function PrivacyPage() {
               the same bundle. No code is fetched from any remote source. Both read only DOM text
               and JSON-LD structured data to extract job title, company name, and description. From
               version 1.3.0 the reader also returns the page&apos;s address and a copy of the page with
-              scripts, form fields, images and link query strings removed, which our server reads with
+              scripts (except the posting&apos;s structured data), form fields, images and link query
+              strings removed, which our server reads with
               the latest version of the reader. They do not write to the page, access cookies or
               localStorage, or persist anything.
               <br /><br />
@@ -513,16 +516,16 @@ export default function PrivacyPage() {
 
             <H3>On-device storage (all modes)</H3>
             <Ul>
-              <Li>All on-device data is stored in <code className="text-brand-light font-mono text-[13px]">chrome.storage.local</code> — never in <code className="text-brand-light font-mono text-[13px]">chrome.storage.sync</code>, cookies, or <code className="text-brand-light font-mono text-[13px]">localStorage</code>.</Li>
+              <Li>All on-device data is stored in <code className="text-brand-light font-mono text-[13px]">chrome.storage.local</code> — never in <code className="text-brand-light font-mono text-[13px]">chrome.storage.sync</code>, cookies, or <code className="text-brand-light font-mono text-[13px]">localStorage</code> — plus one &ldquo;Not now&rdquo; flag in <code className="text-brand-light font-mono text-[13px]">chrome.storage.session</code>, cleared when Chrome restarts.</Li>
               <Li>API keys (BYOK mode) are encrypted with AES-256-GCM through the Web Crypto API before being written to storage. The random key that encrypts them is stored alongside them, so this keeps the key from being read at a glance, not from someone with access to your browser profile. The plaintext key exists in memory only for the duration of a single API call.</Li>
               <Li>Resume text and cover letter history are stored unencrypted in your browser&apos;s local storage, in every mode. In Hosted mode the copies on our server are encrypted; the local copies stay on your device.</Li>
             </Ul>
 
-            <H3>Server-side storage (Hosted mode only)</H3>
+            <H3>Server-side storage</H3>
             <Ul>
               <Li>Resume text is encrypted with AES-256-GCM before being stored in our Supabase Postgres database. The encryption key is derived from a server-side secret. Plaintext resume text is never persisted to disk.</Li>
               <Li>Cover letters and tailored resumes (Pro mode) are encrypted with AES-256-GCM before storage. The job title, company, posting address, dates, interview mark, ATS match score and missing keywords that go with them are stored unencrypted so you can search and filter them. Your resume's file name is stored unencrypted too.</Li>
-              <Li>Rate-limit counters (all modes) hold only a keyed hash of an IP address, or a hash of your account ID when a new resume is read, and are deleted by periodic cleanup once they are two days old.</Li>
+              <Li>Rate-limit counters (all modes) hold only a keyed hash of an IP address, or a hash of your account ID when a new resume is read, and a counter not updated for two days is deleted at the next cleanup.</Li>
               <Li>All data in transit is protected by TLS 1.2 or higher (enforced by Supabase and Vercel).</Li>
               <Li>Database access is protected by Supabase Row-Level Security policies. Users can only access their own data rows.</Li>
               <Li>The Supabase service-role key (which bypasses RLS) is used only server-side in webhook handlers and is never exposed to clients.</Li>
@@ -547,19 +550,19 @@ export default function PrivacyPage() {
                   name: 'OpenAI',
                   url: 'https://openai.com/policies/privacy-policy',
                   when: 'BYOK mode only (OpenAI provider)',
-                  receives: 'Your resume text and the job posting data, using your own API key. Requests are subject to your agreement with OpenAI.',
+                  receives: 'Your resume text, the job posting data and any facts you add, plus your resume on its own the first time you tailor, to read its structure. Requests use your own API key and are subject to your agreement with OpenAI.',
                 },
                 {
                   name: 'Supabase',
                   url: 'https://supabase.com/privacy',
                   when: 'Every mode (reading job postings, from version 1.3.0); everything else Hosted mode only',
-                  receives: 'Copies of the job pages you ask us to read, which are processed and not stored, and rate-limit counters keyed by a hash of your IP address. In Hosted mode also: email address, hashed password (email sign-in only), encrypted resume text, encrypted cover letters and tailored resumes with their job title, company and posting address (Pro), session tokens, and usage counts. Supabase hosts our backend functions, authentication system and database, and keeps standard request logs (IP address, time, function called) for a short period.',
+                  receives: 'Copies of the job pages you ask us to read, which are processed and not stored, and rate-limit counters keyed by a hash of your IP address. In Hosted mode also: email address, hashed password (email sign-in only), encrypted resume text, encrypted cover letters and tailored resumes with the unencrypted fields that go with them (Pro), your resume&apos;s file name, your Stripe customer ID, your Google name, picture link and account ID, session tokens, usage counts, and the account-keyed counter used when a new resume is read (see Information We Collect for each). Supabase Auth also records the IP address and browser of each signed-in session, kept with your account. Supabase hosts our backend functions, authentication system and database, and keeps standard request logs (IP address, time, function called) for a short period.',
                 },
                 {
                   name: 'Google',
                   url: 'https://policies.google.com/privacy',
-                  when: 'Only if you choose "Continue with Google"',
-                  receives: 'Google confirms who you are and sends us your email address, name, profile picture link and Google account ID. We use the email address to create and sign in to your account, and show the picture as your account avatar in the extension and on the dashboard. Your browser loads the picture from Google\'s servers. The name is stored with your account but not used. We never see your Google password.',
+                  when: 'If you choose "Continue with Google", and, before version 1.3.0, whenever the popup opens',
+                  receives: 'Google confirms who you are and sends us your email address, name, profile picture link and Google account ID. We use the email address to create and sign in to your account, and show the picture as your account avatar in the extension and on the dashboard. Your browser loads the picture from Google\'s servers. The name is stored with your account but not used. We never see your Google password. Versions before 1.3.0 load the popup\'s fonts from Google Fonts, so Google receives your IP address and browser details each time the popup opens; from 1.3.0 the fonts ship inside the extension.',
                 },
                 {
                   name: 'Stripe',
@@ -605,10 +608,10 @@ export default function PrivacyPage() {
             {/* ── 7. Data Retention ───────────────────────────────────── */}
             <H2 id="retention">Data Retention</H2>
             <Ul>
-              <Li><strong className="text-foreground">BYOK mode:</strong> All data resides on your device. You can delete it at any time by removing the extension or clearing extension storage in Chrome settings. We hold no copy of it.</Li>
+              <Li><strong className="text-foreground">BYOK mode:</strong> Your resume, API key and history stay on your device, and we hold no copy of them. You can delete them at any time by removing the extension or clearing extension storage in Chrome settings. The only BYOK data on our side are the rate-limit counters and Supabase&apos;s request logs described above.</Li>
               <Li><strong className="text-foreground">Hosted account data:</strong> Your account, resume, and application history (cover letters and tailored resumes) are retained for as long as your account is active. You may request deletion at any time by contacting us at <a href={`mailto:${CONTACT_EMAIL}`} className="text-brand-light hover:text-foreground transition-colors">{CONTACT_EMAIL}</a>. We will permanently delete all your data within 30 days of a verified deletion request.</Li>
               <Li><strong className="text-foreground">Usage count records:</strong> Kept for as long as your account exists, because the free allowance counts generations over the life of the account. They are deleted with your account.</Li>
-              <Li><strong className="text-foreground">Rate-limit counters:</strong> Deleted by periodic cleanup once they are two days old.</Li>
+              <Li><strong className="text-foreground">Rate-limit counters:</strong> A counter not updated for two days is deleted at the next cleanup, which runs during later requests.</Li>
               <Li><strong className="text-foreground">Stripe billing records:</strong> Stripe retains transaction records as required by financial regulations. We cannot delete data held directly by Stripe.</Li>
             </Ul>
 
