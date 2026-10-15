@@ -9,7 +9,7 @@ export const GUIDES = [
   {
     slug: 'cover-me-vs-chatgpt',
     title: 'Cover Me vs ChatGPT for cover letters',
-    description: 'What a purpose-built extension does that a general chatbot can’t: auto-reading postings, grounding letters in your resume, and matching ATS keywords.',
+    description: 'What a purpose-built extension does that a general chatbot can’t: reading the posting when you click, grounding letters in your resume, and matching ATS keywords.',
     date: '2026-07-06',
   },
   {

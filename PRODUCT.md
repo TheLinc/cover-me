@@ -22,7 +22,7 @@ It works on the posting the user already has open: one click in the browser read
 
 - The work happens in the extension popup, on the posting's page. The website is where Pro accounts see every application saved to the account, on any device.
 - An application is one job posting (title, company, posting URL, date applied) with its cover letters and tailored resumes, newest first. Tailored resumes carry an ATS score (0 to 100) and missing keywords.
-- Tiers: BYOK (own API key, everything local), hosted Free (10 generations to start, then 5 a week, history in the browser only), Pro ($15/month or $35 every 3 months, up to 25 a day, every application saved to the account and searchable on the dashboard).
+- Tiers: BYOK (own API key; resume and history stay in the browser), hosted Free (10 generations to start, then 5 a week, history in the browser only), Pro ($15/month or $35 every 3 months, up to 25 a day, every application saved to the account and searchable on the dashboard).
 - Payments happen on the website through Stripe Checkout; the dashboard shows plan, usage and billing.
 
 ## Capabilities and Constraints

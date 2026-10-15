@@ -103,8 +103,8 @@ export function PrivacyBand() {
             <Wire />
             <Node
               icon={<span className="relative"><CloudIcon size={26} /><LockSimpleIcon size={12} weight="fill" className="absolute -bottom-1 -right-1.5 text-[#C7D2FE]" /></span>}
-              title={m.via ?? 'No server'}
-              sub={m.via ? 'Encrypted at rest' : 'Skipped entirely'}
+              title={m.via ?? 'Cover Me server'}
+              sub={m.via ? 'Encrypted at rest' : 'Your resume skips it'}
               dim={!m.via}
             />
             <Wire />

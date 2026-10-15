@@ -12,7 +12,7 @@ const HERO_ALT =
 
 export const metadata: Metadata = {
   title: 'Cover Me vs ChatGPT for Cover Letters — Honest Comparison',
-  description: 'Can ChatGPT write a good cover letter? Yes — with manual work. Here’s what a purpose-built extension does differently: auto-reading postings, resume grounding, and ATS keyword matching.',
+  description: 'Can ChatGPT write a good cover letter? Yes — with manual work. Here’s what a purpose-built extension does differently: reading the posting when you click, resume grounding, and ATS keyword matching.',
   alternates: { canonical: `${BASE}/guides/${guide.slug}` },
   openGraph: {
     title: 'Cover Me vs ChatGPT for Cover Letters — Cover Me',
@@ -62,7 +62,7 @@ const faqJsonLd = {
 }
 
 const COMPARISON: { feature: string; coverMe: string; chatgpt: string }[] = [
-  { feature: 'Reads the job posting', coverMe: 'Automatic — scrapes the open page', chatgpt: 'Manual copy-paste every time' },
+  { feature: 'Reads the job posting', coverMe: 'Reads the open page when you click (no copy-paste)', chatgpt: 'Manual copy-paste every time' },
   { feature: 'Knows your resume', coverMe: 'Stored once, used every generation', chatgpt: 'Re-paste or re-upload per chat' },
   { feature: 'ATS keyword matching', coverMe: 'Extracted from the posting, woven in', chatgpt: 'Only if you prompt for it explicitly' },
   { feature: 'Resume tailoring + match score', coverMe: 'One click, scored with gap analysis', chatgpt: 'Not without elaborate prompting' },

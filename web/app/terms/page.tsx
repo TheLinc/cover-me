@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
 }
 
-const EFFECTIVE_DATE = 'October 9, 2026'
+const EFFECTIVE_DATE = 'October 15, 2026'
 const CONTACT_EMAIL  = 'support@cover-me.dev'
 
 function H2({ id, children }: { id: string; children: React.ReactNode }) {
@@ -148,7 +148,8 @@ export default function TermsPage() {
             <Ul>
               <Li>
                 <strong className="text-foreground">BYOK (Bring Your Own Key).</strong> You supply your
-                own Claude or OpenAI API key. All processing occurs on your device. No account is
+                own Claude or OpenAI API key. Your resume and API key stay on your device and go only
+                to your AI provider; from version 1.3.0, once you agree, the job page is read by our server. No account is
                 required. This mode is free and unlimited, subject to your API provider&apos;s own
                 usage limits and terms.
               </Li>

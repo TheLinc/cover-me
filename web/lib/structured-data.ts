@@ -58,7 +58,7 @@ export const jsonLdApp = {
     'AI cover letter generation from job posting',
     'AI resume tailoring with ATS keyword matching',
     'ATS match score and gap analysis',
-    'Reads job posting automatically',
+    'Reads the job posting when you click',
     'Works on LinkedIn, Indeed, Greenhouse, Lever, Workday, Ashby',
     'PDF export for cover letter and tailored resume',
     'Open source — MIT license',
@@ -83,7 +83,7 @@ export const jsonLdHowTo = {
     {
       '@type': 'HowToStep',
       name: 'Open a job posting',
-      text: 'Navigate to any job on LinkedIn, Indeed, Greenhouse, Lever, Workday, or Ashby. Cover Me reads the page automatically. If the scraper does not catch it, paste the description manually.',
+      text: 'Open any job on LinkedIn, Indeed, Greenhouse, Lever, Workday, or Ashby, click the Cover Me icon and choose Generate. Cover Me reads the posting when you click. If it can\'t read it, paste the description.',
       position: 2,
     },
     {

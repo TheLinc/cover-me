@@ -63,7 +63,7 @@ const faqJsonLd = {
 
 const COMPARISON: { feature: string; coverMe: string; aiapply: string }[] = [
   { feature: 'Submits applications for you', coverMe: 'No — you review and submit every one', aiapply: 'Yes, via paid auto-apply credits' },
-  { feature: 'Reads the job posting', coverMe: 'Automatic — scrapes the open tab', aiapply: 'Via its own job board or import' },
+  { feature: 'Reads the job posting', coverMe: 'Reads the open tab when you click (no copy-paste)', aiapply: 'Via its own job board or import' },
   { feature: 'Where it runs', coverMe: 'Browser extension, on the page you’re viewing', aiapply: 'Separate web dashboard' },
   { feature: 'Resume tailoring', coverMe: 'One click, ATS match score + gap analysis, shown before you use it', aiapply: 'AI-rewritten per application inside the auto-apply pipeline' },
   { feature: 'Cover letter per application', coverMe: 'Generated and editable before you send it', aiapply: 'Generated as part of the automated submission' },

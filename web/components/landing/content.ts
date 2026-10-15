@@ -15,15 +15,15 @@ export const FAQ_ITEMS = [
   },
   {
     q: "What job boards does Cover Me support?",
-    a: "Cover Me auto-scrapes job descriptions on LinkedIn, Indeed, Greenhouse, Lever, Workday, and Ashby. For any other job board or ATS, you can paste the job description manually — it works on any page in seconds.",
+    a: "Cover Me reads the job description when you click, on LinkedIn, Indeed, Greenhouse, Lever, Workday, and Ashby. For any other job board or ATS, you can paste the job description manually — it works on any page in seconds.",
   },
   {
     q: "How is Cover Me different from using ChatGPT or Claude directly?",
-    a: "Cover Me is purpose-built for job applications — it does things a general AI chatbot can't. It reads the job posting automatically, generates a tailored cover letter, and rewrites your resume bullets to match the role's ATS keywords, all without you copying or pasting anything. It also scores your resume against the role and surfaces the exact gaps. One click, done in seconds.",
+    a: "Cover Me is purpose-built for job applications — it does things a general AI chatbot can't. It reads the job posting when you click Generate, writes a tailored cover letter, and rewrites your resume bullets to match the role's ATS keywords, all without you copying or pasting anything. It also scores your resume against the role and surfaces the exact gaps. One click, done in seconds.",
   },
   {
     q: "Is my resume data private?",
-    a: "Yes. In BYOK mode, your resume and API key stay on your device and never reach Cover Me servers; the only thing sent to us is the job page you click on, so we can read the posting. In hosted mode, your resume is encrypted with AES-256-GCM before being stored. The extension has no ads, analytics, or telemetry, and Cover Me never uses your resume for AI training.",
+    a: "Yes. In BYOK mode, your resume and API key never reach Cover Me servers: your resume goes only to the AI provider whose key you use, and from version 1.3.0, once you agree, the only thing sent to us is the job page you click on, so we can read the posting. In hosted mode, your resume is encrypted with AES-256-GCM before being stored, and sent to Anthropic only to read it and write your documents. The extension has no ads, analytics, or telemetry, and Cover Me never uses your resume for AI training.",
   },
   {
     q: "Do I need an account to use Cover Me?",

@@ -2,7 +2,7 @@
 
 **AI cover letters and ATS-tailored resumes, generated from any job posting in seconds.**
 
-Cover Me is an open-source Chrome extension that reads job descriptions and, using your stored resume, generates tailored cover letters and ATS-optimized resumes — complete with a match score and gap analysis. Bring your own API key for unlimited, fully private use — or use the hosted tier for a no-configuration experience.
+Cover Me is an open-source Chrome extension that reads job descriptions and, using your stored resume, generates tailored cover letters and ATS-optimized resumes — complete with a match score and gap analysis. Bring your own API key for unlimited use, with your resume going only to your AI provider — or use the hosted tier for a no-configuration experience.
 
 ---
 
@@ -26,7 +26,7 @@ The extension reads the job description from the page and combines it with your 
 | Generations | Unlimited | 10 to start, then 5/week | Up to 25/day |
 | Resume storage | Local only | Encrypted cloud | Encrypted cloud |
 | Application history (letters + tailored resumes) | Local only | Local only | Synced across devices |
-| Privacy | Resume never leaves your device | Resume encrypted at rest | Resume encrypted at rest |
+| Privacy | Resume goes only to your AI provider | Resume encrypted at rest | Resume encrypted at rest |
 
 ---
 
@@ -103,9 +103,9 @@ The generic scraper tries three strategies in order: JSON-LD structured data, kn
 **Your resume is sensitive — here is exactly how it is handled:**
 
 - Text is extracted client-side on upload using pdf.js / mammoth.js. The raw file is never stored.
-- In BYOK mode, extracted resume text is stored in `chrome.storage.local` on your device only. It never leaves your machine.
+- In BYOK mode, extracted resume text is stored in `chrome.storage.local` on your device. It's sent only to the AI provider whose key you use.
 - API calls go directly from the extension to Anthropic or OpenAI using **your key**. Cover Me's servers never see your resume, letters, or key.
-- To read a posting, the extension sends a copy of the job page you clicked on (scripts, images and embedded data removed in the browser) to the `scrape` Edge Function, in every mode. It returns the title, company and description and keeps nothing. If it can't be reached, the extension reads the page itself.
+- From 1.3.0, once you agree (a notice in the popup, or Settings), the extension sends the address and a copy of the job page you clicked on (most scripts, images, form fields and embedded data removed in the browser; the posting's JSON-LD is kept) to the `scrape` Edge Function, in every mode. It returns the title, company and description and keeps no copy. Until you agree, or if it can't be reached, the extension reads the page itself.
 - Your API key is encrypted at rest using the Web Crypto API (AES-GCM) before being written to `chrome.storage.local`. It is decrypted only at call time and immediately discarded from memory.
 - No analytics, no telemetry, no third-party SDKs in the extension.
 
@@ -115,12 +115,14 @@ The generic scraper tries three strategies in order: JSON-LD structured data, kn
 |---|---|
 | `storage` | Save resume, API key (encrypted), and letter history locally |
 | `activeTab` | Read the job posting on the current tab when you click Generate |
-| `scripting` | Inject the content script to scrape job details |
+| `scripting` | Inject the job-posting reader when you click Generate or Tailor |
+| `identity` | Continue with Google sign-in (`launchWebAuthFlow` only) |
 | `https://api.anthropic.com/*` | Direct API calls for Claude (BYOK only) |
 | `https://api.openai.com/*` | Direct API calls for OpenAI (BYOK only) |
-| `https://<project>.supabase.co/*` | Account auth, resume sync, generation (hosted mode only) |
+| `https://<project>.supabase.co/*` | From 1.3.0, once you agree, reading the job page (every mode); account auth, resume sync, generation and Pro history (hosted mode) |
+| `https://*.greenhouse.io/*`, `*.lever.co`, `*.myworkdayjobs.com`, `*.ashbyhq.com`, `*.bamboohr.com`, `*.workable.com` | Read postings that career pages embed from these services, only when you click Generate or Tailor |
 
-No `<all_urls>` permission — the extension only activates on the tab you're on when you click the icon.
+From 1.3.0, no `<all_urls>` and no content scripts: the reader is injected only when you click. Earlier versions declared a content script on all sites.
 
 ---
 
@@ -307,12 +309,12 @@ cover-me/
 
 ```
 Job page (content script, injected on click)
-  → snapshots the page (open shadow roots kept, scripts and media stripped)
+  → once the user agrees, snapshots the page (open shadow roots kept, scripts other than JSON-LD and media stripped)
   → also runs the bundled scrapers, as the offline fallback
   → sends both to the service worker
 
 Service worker
-  → posts the snapshots to the scrape Edge Function, which runs the same
+  → if the user agreed, posts the snapshots to the scrape Edge Function, which runs the same
     scrapers (copied from the extension) and returns the job; a fix to a
     board's scraper ships by deploying the function
   → falls back to the bundled result if the function can't read it or
