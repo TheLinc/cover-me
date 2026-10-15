@@ -16,8 +16,8 @@ export const OPENAI_MODEL = 'gpt-6.1-sol'
 const OPENAI_FIELDS = { model: OPENAI_MODEL, reasoning: { effort: 'medium' }, max_output_tokens: 16000, store: false }
 
 // GPT-6 Luna for resume parsing, the job Haiku does on the Claude path:
-// extraction, not judgment. Parsing returns in about 4 s, so plain Chat
-// Completions is fine.
+// extraction, not judgment. Through Chat Completions, streamed: low effort
+// barely reasons, but copying a 12,000-character resume out took 30 s.
 // store: false is Chat Completions' default; it's sent anyway so every OpenAI call says so.
 export const OPENAI_PARSE_FIELDS = { model: 'gpt-6-luna', reasoning_effort: 'low', max_completion_tokens: 8000, store: false } as const
 

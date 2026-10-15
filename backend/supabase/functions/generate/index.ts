@@ -237,7 +237,7 @@ ${job.description.slice(0, 15000)}
 """
 
 APPLICANT RESUME:
-${resumeText.slice(0, 6000)}
+${resumeText.slice(0, 12000)}
 ${supplementalSection}
 ---
 

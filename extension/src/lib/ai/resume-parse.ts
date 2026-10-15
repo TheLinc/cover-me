@@ -1,5 +1,5 @@
 import type { AIProvider, ParsedResume } from '../../types'
-import { HAIKU_MODEL } from './claude'
+import { claudeDelta, HAIKU_MODEL, readSseText } from './claude'
 import { OPENAI_CHAT, OPENAI_PARSE_FIELDS } from './openai'
 
 const CLAUDE_API = 'https://api.anthropic.com/v1/messages'
@@ -52,7 +52,7 @@ JSON structure (omit "projects", "skills", "certifications" entirely if those se
 }
 
 RESUME:
-${resumeText.slice(0, 6000)}`
+${resumeText.slice(0, 12000)}`
 }
 
 function isValidParsedResume(r: unknown): r is ParsedResume {
@@ -87,6 +87,9 @@ export async function parseResumeStructure(
 ): Promise<ParsedResume> {
   const prompt = buildParsePrompt(resumeText)
 
+  // Both providers stream: a resume near the 12,000-character cap took 30-31 s
+  // to parse on either, and Chrome stops a service worker whose fetch() gets no
+  // response for 30 s.
   if (provider === 'claude') {
     const res = await fetch(CLAUDE_API, {
       method: 'POST',
@@ -98,7 +101,8 @@ export async function parseResumeStructure(
       },
       body: JSON.stringify({
         model: HAIKU_MODEL,
-        max_tokens: 3000,
+        max_tokens: 6000,
+        stream: true,
         messages: [{ role: 'user', content: prompt }],
       }),
     })
@@ -106,9 +110,7 @@ export async function parseResumeStructure(
       const err = (await res.json().catch(() => ({}))) as { error?: { message?: string } }
       throw new Error(err.error?.message ?? `Claude API error ${res.status}`)
     }
-    const data = (await res.json()) as { content: Array<{ type: string; text: string }> }
-    const text = data.content.find((b) => b.type === 'text')?.text ?? ''
-    return parseParsedJson(text)
+    return parseParsedJson(await readSseText(res, claudeDelta))
   }
 
   // OpenAI
@@ -118,13 +120,15 @@ export async function parseResumeStructure(
       'content-type': 'application/json',
       Authorization: `Bearer ${apiKey}`,
     },
-    body: JSON.stringify({ ...OPENAI_PARSE_FIELDS, messages: [{ role: 'user', content: prompt }] }),
+    body: JSON.stringify({ ...OPENAI_PARSE_FIELDS, stream: true, messages: [{ role: 'user', content: prompt }] }),
   })
   if (!res.ok) {
     const err = (await res.json().catch(() => ({}))) as { error?: { message?: string } }
     throw new Error(err.error?.message ?? `OpenAI API error ${res.status}`)
   }
-  const data = (await res.json()) as { choices: Array<{ message: { content: string } }> }
-  const text = data.choices[0]?.message?.content ?? ''
-  return parseParsedJson(text)
+  return parseParsedJson(await readSseText(res, chatDelta))
+}
+
+function chatDelta(ev: Record<string, unknown>): string | undefined {
+  return (ev.choices as Array<{ delta?: { content?: string } }> | undefined)?.[0]?.delta?.content
 }

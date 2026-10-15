@@ -372,7 +372,7 @@ async function tailorOnce(c: EvalCase, run: number): Promise<TailorRun> {
     // 1. Parse the raw resume text, as the hosted tier does on first tailor.
     let input: ParsedResume = c.parsed
     if (USE_PARSE) {
-      const raw = await call([{ role: 'user', content: buildParsePrompt(c.resumeText) }], { model: PARSE_MODEL, maxTokens: 3000, label: 'parse' })
+      const raw = await call([{ role: 'user', content: buildParsePrompt(c.resumeText) }], { model: PARSE_MODEL, maxTokens: 6000, label: 'parse' })
       try {
         const parsed = parseParsedJson(raw)
         const result = checkParse(parsed, c)

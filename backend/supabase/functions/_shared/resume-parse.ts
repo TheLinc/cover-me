@@ -69,7 +69,7 @@ JSON structure (omit "projects", "skills", "certifications" entirely if those se
 }
 
 RESUME:
-${resumeText.slice(0, 6000)}`
+${resumeText.slice(0, 12000)}`
 }
 
 export function isValidParsedResume(r: unknown): r is ParsedResume {
@@ -95,7 +95,7 @@ export async function parseResumeStructure(resumeText: string, apiKey: string): 
       // Haiku is enough here: parsing is verbatim extraction, not judgment —
       // matches the extension's BYOK parse model.
       model: HAIKU_MODEL,
-      max_tokens: 3000,
+      max_tokens: 6000,
       messages: [{ role: 'user', content: buildParsePrompt(resumeText) }],
     }),
   })
