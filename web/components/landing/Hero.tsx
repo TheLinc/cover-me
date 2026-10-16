@@ -1,11 +1,11 @@
 import type { CSSProperties } from 'react'
 import Image from 'next/image'
-import { CheckIcon, GoogleChromeLogoIcon } from '@phosphor-icons/react/dist/ssr'
+import { CheckIcon, FilePdfIcon, GoogleChromeLogoIcon } from '@phosphor-icons/react/dist/ssr'
 import { Button } from '@/components/ui/button'
 import { CHROME_STORE_URL } from '@/lib/utils'
 import { STORE_RATING } from '@/lib/structured-data'
 import { Ambient } from './Ambient'
-import { BrowserFrame, EXAMPLE, Label } from './visuals'
+import { BrowserFrame, EXAMPLE } from './visuals'
 
 // Split hero: the promise on the left, the rewrite on the right. One click on
 // the posting, its requirements light up one at a time, and each lands in the
@@ -34,11 +34,14 @@ const EXCERPT = [...PARTS.slice(0, LAST + 1), ' experience.']
 
 function Posting() {
   return (
-    <div className="flex flex-col gap-3 p-5 pb-12 max-sm:p-4 max-sm:pb-10">
+    <div className="flex flex-col gap-3 p-5 pb-14 max-sm:p-4 max-sm:pb-14">
       <div className="flex items-center gap-2.5">
         <span className="flex size-7 items-center justify-center rounded-[7px] bg-ink text-[13px] font-semibold text-white">N</span>
-        <span className="text-[15px] font-semibold text-ink">{EXAMPLE.role}</span>
-        <span className="text-[13px] text-subtle">{EXAMPLE.company}</span>
+        <span className="flex flex-col">
+          <span className="text-[15px] font-semibold leading-tight text-ink">{EXAMPLE.role}</span>
+          <span className="text-[12px] text-subtle">{EXAMPLE.company} · Denver, CO<span className="max-sm:hidden"> · Full-time</span></span>
+        </span>
+        <span className="ml-auto rounded-full bg-ink px-3.5 py-1.5 text-[12px] font-medium text-white">Apply</span>
       </div>
       <p className="text-[13.5px] leading-[1.65] text-body max-sm:text-[12.5px]">
         {EXCERPT.map((part, i) => {
@@ -76,8 +79,8 @@ function ToolbarIcon() {
 
 function Ring() {
   return (
-    <div className={`hero-pop absolute -right-3 -top-9 rounded-full bg-white p-1.5 max-sm:-top-8 max-sm:right-2 ${SHADOW}`} style={at(SCORE_AT - 0.1)}>
-      <div className="relative size-[76px] max-sm:size-[64px]">
+    <div className={`hero-pop absolute -right-5 -top-10 rounded-full font-sans bg-white p-1.5 max-sm:-right-1 max-sm:-top-6 ${SHADOW}`} style={at(SCORE_AT - 0.1)}>
+      <div className="relative size-[76px] max-sm:size-[56px]">
         <svg viewBox="0 0 76 76" className="size-full -rotate-90">
           <circle cx="38" cy="38" r="31" fill="none" stroke="var(--brand-tint)" strokeWidth="7" />
           <circle
@@ -95,7 +98,7 @@ function Ring() {
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="hero-count text-[22px] font-semibold leading-none tracking-[-0.02em] text-ink max-sm:text-[19px]" style={{ ...at(SCORE_AT), '--hero-n': EXAMPLE.score } as CSSProperties} />
+          <span className="hero-count text-[22px] font-semibold leading-none tracking-[-0.02em] text-ink max-sm:text-[17px]" style={{ ...at(SCORE_AT), '--hero-n': EXAMPLE.score } as CSSProperties} />
           <span className="mt-0.5 font-mono text-[7.5px] tracking-[0.12em] text-subtle">ATS</span>
         </div>
       </div>
@@ -103,38 +106,60 @@ function Ring() {
   )
 }
 
+// The resume is drawn like the PDF Cover Me downloads (extension/src/lib/pdf/resume.ts):
+// Times, centred name and contact line, ruled section titles, title and dates
+// on one row. Paper next to the posting's web page, so the two never read as
+// the same kind of thing.
+const SERIF = "font-['Times_New_Roman',Times,serif]"
+const PAPER = 'shadow-[0_1px_2px_rgba(42,42,42,0.1),0_28px_50px_-20px_rgba(42,42,42,0.35)]'
+
+function Section({ title }: { title: string }) {
+  return <div className="mt-3 border-b border-body pb-px text-[11px] font-bold uppercase tracking-[0.04em]">{title}</div>
+}
+
 function Resume() {
   return (
-    <div className={`relative -mt-9 ml-auto w-[92%] rounded-[16px] bg-white p-5 max-sm:-mt-7 max-sm:w-full max-sm:p-4 ${SHADOW}`}>
-      <Ring />
-      <div className="flex items-baseline gap-2.5">
-        <span className="text-[16px] font-semibold text-ink">{EXAMPLE.candidate}</span>
-        <span className="text-[12px] text-subtle max-sm:hidden">Brightline, 2021 to now</span>
-      </div>
-      <div className="mt-3"><Label>Experience</Label></div>
-      <ul className="mt-2 flex flex-col gap-2">
-        {EXAMPLE.bullets.map(({ before, after: [a, k, b] }, i) => (
-          <li key={k} className="flex gap-2.5 text-[13px] leading-[1.55] text-body max-sm:text-[12.5px] max-sm:[&:nth-child(3)]:hidden">
-            <span className="mt-[0.6em] size-1 shrink-0 rounded-full bg-ink-2" />
-            <span className="grid">
-              <span className="hero-before [grid-area:1/1]" style={at(TERM(i) + REWRITE)}>{before}</span>
-              <span className="hero-after [grid-area:1/1]" style={at(TERM(i) + REWRITE)}>
-                {a}<mark className="-mx-0.5 rounded bg-brand-tint px-0.5 text-brand-ink">{k}</mark>{b}
-              </span>
-            </span>
-          </li>
-        ))}
-      </ul>
-      <div className="mt-4 flex flex-wrap items-center gap-2">
-        {EXAMPLE.gaps.map((g) => (
-          <span key={g} className="hero-pop rounded-full bg-gap-tint px-2.5 py-1 text-[11.5px] text-gap-ink" style={at(SCORE_AT + 0.45)}>
-            {g} missing
-          </span>
-        ))}
-        <span className="hero-pop inline-flex items-center gap-1.5 rounded-full bg-brand-strong px-2.5 py-1 text-[11.5px] font-medium text-white" style={at(SCORE_AT + 0.75)}>
-          <CheckIcon size={12} weight="bold" />
-          Cover letter ready
+    <div className="relative -mt-10 ml-auto w-[90%] max-sm:-mt-8 max-sm:w-[96%]">
+      <span aria-hidden="true" className="absolute inset-0 translate-x-[7px] translate-y-[7px] rounded-[3px] bg-white shadow-[0_1px_3px_rgba(42,42,42,0.12)]" />
+      <div className={`relative rounded-[3px] bg-white px-6 pb-9 pt-5 text-body max-sm:px-4 ${SERIF} ${PAPER}`}>
+        <span className="absolute -top-3 left-4 inline-flex items-center gap-1.5 rounded-full bg-night px-2.5 py-1 font-sans text-[11px] text-white">
+          <FilePdfIcon size={13} weight="fill" />
+          <span><span className="max-[359px]:hidden">{EXAMPLE.candidate.replace(' ', '_')}_</span>Resume.pdf</span>
         </span>
+        <Ring />
+        <div className="text-center text-[21px] font-bold leading-tight max-sm:text-[19px]">{EXAMPLE.candidate}</div>
+        <div className="mt-0.5 text-center text-[10.5px] text-ink-2">(555) 014-2290 &nbsp;|&nbsp; alex.rivera@example.com<span className="max-sm:hidden"> &nbsp;|&nbsp; Denver, CO</span></div>
+        <Section title="Experience" />
+        <div className="mt-1.5 flex justify-between text-[12px]"><b>Marketing Lead</b><span>Mar 2021 – Present</span></div>
+        <div className="flex justify-between text-[12px]"><i>Brightline</i><span>Denver, CO</span></div>
+        <ul className="mt-1 flex flex-col gap-1">
+          {EXAMPLE.bullets.map(({ before, after: [a, k, b] }, i) => (
+            <li key={k} className="flex gap-2 text-[12.5px] leading-[1.5] max-sm:[&:nth-child(3)]:hidden">
+              <span>•</span>
+              <span className="grid">
+                <span className="hero-before [grid-area:1/1]" style={at(TERM(i) + REWRITE)}>{before}</span>
+                <span className="hero-after [grid-area:1/1]" style={at(TERM(i) + REWRITE)}>
+                  {a}<mark className="-mx-0.5 rounded-[3px] bg-brand-tint px-0.5 text-brand-ink">{k}</mark>{b}
+                </span>
+              </span>
+            </li>
+          ))}
+        </ul>
+        <div className="max-sm:hidden">
+          <Section title="Education" />
+          <div className="mt-1.5 flex justify-between text-[12px]"><b>University of Colorado Boulder</b><span>2014 – 2018</span></div>
+        </div>
+        <div className="absolute -bottom-3.5 left-4 flex items-center gap-2 whitespace-nowrap font-sans max-sm:left-3 max-sm:gap-1.5">
+          {EXAMPLE.gaps.map((g) => (
+            <span key={g} className={`hero-pop rounded-full bg-gap-tint px-2.5 py-1 text-[11.5px] text-gap-ink max-[359px]:px-2 max-[359px]:text-[10.5px] ${SHADOW}`} style={at(SCORE_AT + 0.45)}>
+              {g} missing
+            </span>
+          ))}
+          <span className={`hero-pop inline-flex items-center gap-1.5 rounded-full bg-brand-strong px-2.5 py-1 text-[11.5px] font-medium text-white max-[359px]:px-2 max-[359px]:text-[10.5px] ${SHADOW}`} style={at(SCORE_AT + 0.75)}>
+            <CheckIcon size={12} weight="bold" />
+            Cover letter ready
+          </span>
+        </div>
       </div>
     </div>
   )
@@ -177,7 +202,7 @@ export function Hero() {
             ATS match is {EXAMPLE.score} with {EXAMPLE.gaps.join(', ')} missing, and the cover letter is ready.
           </p>
           <div inert aria-hidden="true">
-            <BrowserFrame url={`boards.greenhouse.io/${EXAMPLE.company.toLowerCase()}`} toolbar={<ToolbarIcon />} className={SHADOW}>
+            <BrowserFrame url={`boards.greenhouse.io/${EXAMPLE.company.toLowerCase()}`} toolbar={<ToolbarIcon />} className={`bg-paper ${SHADOW}`}>
               <Posting />
             </BrowserFrame>
             <Resume />

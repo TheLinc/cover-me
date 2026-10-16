@@ -44,8 +44,10 @@ product visuals, so the site shows exactly what people install.
   the score uses the backend's real 70/30 weights.
 - `Ambient`: background depth behind a section (indigo or warm glows, a fading dot field, an
   outlined rounded square that drifts on scroll). Paper grain sits under the whole page.
-- The hero (`Hero.tsx`) is two cards: the posting in a browser, and the resume overlapping its
-  lower edge with the ATS ring on its corner. Built in HTML from `EXAMPLE`, not a screenshot, so it
+- The hero (`Hero.tsx`) is two cards: the posting as a web page (paper-toned, sans, an Apply
+  button) and the resume as a document overlapping its lower edge, drawn like the PDF the extension
+  downloads (Times, centred name, ruled sections, a sheet behind it, a `.pdf` file chip), with the
+  ATS ring on its corner. Only the resume uses a serif; it is the product's output, not the brand. Built in HTML from `EXAMPLE`, not a screenshot, so it
   stays sharp at any size and never shows a popup version people don't have.
 
 ## Story
