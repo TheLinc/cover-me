@@ -22,9 +22,9 @@ const STATS: {
     href: 'https://huntr.co/research/job-search-trends-q2-2025',
   },
   {
-    value: 97.8, decimals: 1, suffix: '%',
+    value: 97.4, decimals: 1, suffix: '%',
     label: 'of Fortune 500 companies screen with an ATS',
-    source: 'Jobscan, 2025',
+    source: 'Jobscan, 2026',
     href: 'https://www.jobscan.co/blog/fortune-500-use-applicant-tracking-systems/',
   },
   {

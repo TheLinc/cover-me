@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og'
 
-export const alt = 'Cover Me: your resume and cover letter, tailored to every job'
+export const alt = 'Cover Me: tailor your resume to any job posting'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
@@ -42,7 +42,7 @@ export default async function Image() {
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: 28 }}>
           <div style={{ display: 'flex', fontFamily: 'Geist Mono', fontSize: 17, letterSpacing: 2, color: '#4F46E5' }}>COVER ME · CHROME EXTENSION</div>
           <div style={{ display: 'flex', fontFamily: 'Geist', fontWeight: 600, fontSize: 68, lineHeight: 1.04, letterSpacing: -2.5, color: '#1E1B4B' }}>
-            Your resume and cover letter, tailored to every job.
+            Tailor your resume to any job posting.
           </div>
           <div style={{ display: 'flex', fontFamily: 'Geist', fontSize: 24, color: '#5A534D' }}>One click on any job posting. Free to start.</div>
         </div>

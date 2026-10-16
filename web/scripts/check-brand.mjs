@@ -98,13 +98,13 @@ if (base) {
     if (/Bodoni|Hanken|Plus Jakarta/i.test(html)) errors.push(`${p} still references a retired font`)
   }
   const home = await (await fetch(base + '/')).text()
-  if (!home.includes('Your resume and cover letter, tailored to every job')) errors.push('/ is missing the H1')
+  if (!home.includes('Tailor your resume to any job posting')) errors.push('/ is missing the H1')
   for (const type of ['"Organization"', '"WebSite"', '"SoftwareApplication"', '"HowTo"', '"FAQPage"', '"SpeakableSpecification"']) {
     if (!home.includes(type)) errors.push(`/ is missing ${type} JSON-LD`)
   }
   if (!home.includes('data-hero-stage')) errors.push('/ is missing the hero product stage')
   // Stats render their final values in HTML; the count-up only animates them.
-  for (const v of ['2.1', '97.8', '7.4', '30']) {
+  for (const v of ['2.1', '97.4', '7.4', '30']) {
     if (!new RegExp(`data-stat[^>]*>${v.replace('.', '\\.')}<`).test(home)) errors.push(`/ stats row is missing ${v} in server HTML`)
   }
   for (const board of ['LinkedIn', 'Indeed', 'Greenhouse', 'Lever', 'Workday', 'Ashby', 'BambooHR', 'Workable']) {
