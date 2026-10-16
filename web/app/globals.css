@@ -192,6 +192,53 @@ img, svg, video { display: block; }
 @keyframes packet  { 0% { transform: translateX(0); opacity: 0; } 15%, 85% { opacity: 1; } 100% { transform: translateX(100%); opacity: 0; } }
 @keyframes shake   { 20% { translate: -7px 0; rotate: -0.6deg; } 45% { translate: 6px 0; rotate: 0.5deg; } 70% { translate: -3px 0; } 100% { translate: 0 0; } }
 
+/* Hero (Hero.tsx). These rules are the finished frame; the keyframes below
+ * play once from each element's --d (seconds after load) and end on it. */
+@property --hero-n { syntax: '<integer>'; inherits: false; initial-value: 0; }
+.hero-mark {
+  background: linear-gradient(var(--brand-tint), var(--brand-tint)) no-repeat 0 0 / 100% 100%;
+  color: var(--brand-ink);
+  border-radius: 4px;
+  padding: 0 2px;
+  margin: 0 -2px; /* the tint reaches past the word without moving the text */
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.hero-mark-gap { background-image: linear-gradient(var(--gap-tint), var(--gap-tint)); color: var(--gap-ink); }
+.hero-before, .hero-ray, .hero-cursor { opacity: 0; }
+.hero-count { counter-reset: hero var(--hero-n); }
+.hero-count::after { content: counter(hero); }
+@media (prefers-reduced-motion: no-preference) {
+  .hero-cursor { animation: hero-cursor 1s var(--d) both; }
+  .hero-press  { animation: hero-press 0.3s ease-in-out var(--d) both; }
+  .hero-ray    { animation: hero-ray 0.55s ease-out var(--d) forwards; }
+  .hero-mark   { animation: hero-mark 0.45s cubic-bezier(0.3, 0.7, 0.4, 1) var(--d) both; }
+  .hero-before { animation: hero-out 0.3s ease-in var(--d) both; }
+  .hero-after  { animation: hero-wipe 0.6s cubic-bezier(0.5, 0, 0.2, 1) var(--d) both; }
+  .hero-after mark { animation: hero-land 0.5s ease-out calc(var(--d) + 0.5s) both; }
+  .hero-ring   { animation: hero-ring 1.1s cubic-bezier(0.3, 0.7, 0.3, 1) var(--d) both; }
+  .hero-count  { animation: hero-count 1.1s cubic-bezier(0.3, 0.7, 0.3, 1) var(--d) both; }
+  .hero-pop    { animation: hero-pop 0.4s cubic-bezier(0.3, 1.4, 0.5, 1) var(--d) both; }
+}
+@keyframes hero-cursor {
+  0%   { opacity: 0; transform: translate(-190px, 150px); animation-timing-function: cubic-bezier(0.3, 0.6, 0.3, 1); }
+  15%  { opacity: 1; }
+  60%  { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: none; }
+}
+@keyframes hero-press { 50% { transform: scale(0.82); } }
+@keyframes hero-ray {
+  from { opacity: 1; transform: rotate(var(--r)) translateY(-14px) scaleY(0.3); }
+  to   { opacity: 0; transform: rotate(var(--r)) translateY(-34px) scaleY(1); }
+}
+@keyframes hero-mark  { from { background-size: 0% 100%; color: var(--body); } }
+@keyframes hero-out   { from { opacity: 1; } to { opacity: 0; transform: translateY(-3px); } }
+@keyframes hero-wipe  { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0); } }
+@keyframes hero-land  { from { background-color: var(--brand); color: #fff; } }
+@keyframes hero-ring  { from { stroke-dashoffset: var(--score); } }
+@keyframes hero-count { from { --hero-n: 0; } }
+@keyframes hero-pop   { from { opacity: 0; transform: translateY(6px) scale(0.92); } }
+
 /* scroll-driven:start
  * Every animation-timeline rule lives in this block. Outside it, content
  * renders in its finished state, so Firefox (no scroll timelines) and

@@ -1,27 +1,156 @@
-import { GoogleChromeLogoIcon } from '@phosphor-icons/react/dist/ssr'
+import type { CSSProperties } from 'react'
+import Image from 'next/image'
+import { CheckIcon, GoogleChromeLogoIcon } from '@phosphor-icons/react/dist/ssr'
 import { Button } from '@/components/ui/button'
 import { CHROME_STORE_URL } from '@/lib/utils'
 import { STORE_RATING } from '@/lib/structured-data'
 import { Ambient } from './Ambient'
-import heroDesktop from '@/public/hero/hero-desktop.webp'
-import heroPhone from '@/public/hero/hero-phone.webp'
+import { BrowserFrame, EXAMPLE, Label } from './visuals'
 
-// Split hero: the promise on the left, the product on a job posting on the
-// right. The picture is a real capture of the extension's popup on the
-// Northwind posting (the same application the rest of the page follows), so
-// what it shows is what installs. Phones get their own stacked composition.
+// Split hero: the promise on the left, the rewrite on the right. One click on
+// the posting, its requirements light up one at a time, and each lands in the
+// resume bullet it rewrites; then the score fills and the letter is ready.
+// Plays once in about 3.5 s and rests on the result. The markup is the result
+// and the `hero-*` keyframes in globals.css only run under no-preference, so
+// reduced motion (and a page with no CSS animation) shows the finished frame.
 // No client JavaScript: it renders on the server and paints on the first frame.
+
+// Seconds after load. Requirement i lights up at TERM(i) and its bullet is
+// rewritten REWRITE later; the missing one lights after the matched ones.
+const PRESS = 0.75
+const TERM = (i: number) => 1.05 + i * 0.45
+const REWRITE = 0.25
+const GAP = TERM(EXAMPLE.bullets.length)
+const SCORE_AT = GAP + 0.25
+const at = (s: number) => ({ '--d': `${s}s` }) as CSSProperties
+
+const SHADOW = 'shadow-[0_1px_2px_rgba(42,42,42,0.06),0_18px_40px_-18px_rgba(42,42,42,0.22)]'
+
+// The posting up to its missing requirement ("...hands-on HubSpot experience."),
+// so the snippet stays short enough for the resume to clear the fold on phones.
+const PARTS = EXAMPLE.posting.flatMap((line, i) => (i ? [' ', ...line] : line))
+const LAST = PARTS.findIndex((p) => typeof p !== 'string' && EXAMPLE.gaps.includes(p.k))
+const EXCERPT = [...PARTS.slice(0, LAST + 1), ' experience.']
+
+function Posting() {
+  return (
+    <div className="flex flex-col gap-3 p-5 pb-12 max-sm:p-4 max-sm:pb-10">
+      <div className="flex items-center gap-2.5">
+        <span className="flex size-7 items-center justify-center rounded-[7px] bg-ink text-[13px] font-semibold text-white">N</span>
+        <span className="text-[15px] font-semibold text-ink">{EXAMPLE.role}</span>
+        <span className="text-[13px] text-subtle">{EXAMPLE.company}</span>
+      </div>
+      <p className="text-[13.5px] leading-[1.65] text-body max-sm:text-[12.5px]">
+        {EXCERPT.map((part, i) => {
+          if (typeof part === 'string') return part
+          const word = part.text ?? part.k
+          const bullet = EXAMPLE.bullets.findIndex((b) => b.after[1] === word)
+          if (bullet >= 0) return <mark key={i} className="hero-mark" style={at(TERM(bullet))}>{word}</mark>
+          if (EXAMPLE.gaps.includes(part.k)) return <mark key={i} className="hero-mark hero-mark-gap" style={at(GAP)}>{word}</mark>
+          return word
+        })}
+      </p>
+    </div>
+  )
+}
+
+function ToolbarIcon() {
+  return (
+    <span className="relative ml-2 flex size-7 items-center justify-center rounded-[8px] bg-white">
+      <span className="hero-press flex" style={at(PRESS)}>
+        <Image src="/logo.png" width={18} height={18} alt="" className="rounded-[5px]" />
+      </span>
+      {Array.from({ length: 8 }, (_, i) => (
+        <span
+          key={i}
+          className="hero-ray absolute left-1/2 top-1/2 -ml-[1.25px] -mt-[5px] h-[10px] w-[2.5px] rounded-[2px] bg-brand"
+          style={{ ...at(PRESS + 0.05), '--r': `${i * 45 + 22.5}deg` } as CSSProperties}
+        />
+      ))}
+      <svg className="hero-cursor absolute left-[calc(50%-3px)] top-[calc(50%-2px)] z-10" width="22" height="22" viewBox="0 0 20 20" style={at(0.1)}>
+        <path d="M3 2l13 7.2-5.6 1.4L8 16z" fill="var(--ink)" stroke="#fff" strokeWidth="1.4" strokeLinejoin="round" />
+      </svg>
+    </span>
+  )
+}
+
+function Ring() {
+  return (
+    <div className={`hero-pop absolute -right-3 -top-9 rounded-full bg-white p-1.5 max-sm:-top-8 max-sm:right-2 ${SHADOW}`} style={at(SCORE_AT - 0.1)}>
+      <div className="relative size-[76px] max-sm:size-[64px]">
+        <svg viewBox="0 0 76 76" className="size-full -rotate-90">
+          <circle cx="38" cy="38" r="31" fill="none" stroke="var(--brand-tint)" strokeWidth="7" />
+          <circle
+            className="hero-ring"
+            style={{ ...at(SCORE_AT), '--score': EXAMPLE.score } as CSSProperties}
+            cx="38"
+            cy="38"
+            r="31"
+            fill="none"
+            stroke="var(--brand)"
+            strokeWidth="7"
+            strokeLinecap="round"
+            pathLength={100}
+            strokeDasharray={`${EXAMPLE.score} 100`}
+          />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="hero-count text-[22px] font-semibold leading-none tracking-[-0.02em] text-ink max-sm:text-[19px]" style={{ ...at(SCORE_AT), '--hero-n': EXAMPLE.score } as CSSProperties} />
+          <span className="mt-0.5 font-mono text-[7.5px] tracking-[0.12em] text-subtle">ATS</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function Resume() {
+  return (
+    <div className={`relative -mt-9 ml-auto w-[92%] rounded-[16px] bg-white p-5 max-sm:-mt-7 max-sm:w-full max-sm:p-4 ${SHADOW}`}>
+      <Ring />
+      <div className="flex items-baseline gap-2.5">
+        <span className="text-[16px] font-semibold text-ink">{EXAMPLE.candidate}</span>
+        <span className="text-[12px] text-subtle max-sm:hidden">Brightline, 2021 to now</span>
+      </div>
+      <div className="mt-3"><Label>Experience</Label></div>
+      <ul className="mt-2 flex flex-col gap-2">
+        {EXAMPLE.bullets.map(({ before, after: [a, k, b] }, i) => (
+          <li key={k} className="flex gap-2.5 text-[13px] leading-[1.55] text-body max-sm:text-[12.5px] max-sm:[&:nth-child(3)]:hidden">
+            <span className="mt-[0.6em] size-1 shrink-0 rounded-full bg-ink-2" />
+            <span className="grid">
+              <span className="hero-before [grid-area:1/1]" style={at(TERM(i) + REWRITE)}>{before}</span>
+              <span className="hero-after [grid-area:1/1]" style={at(TERM(i) + REWRITE)}>
+                {a}<mark className="-mx-0.5 rounded bg-brand-tint px-0.5 text-brand-ink">{k}</mark>{b}
+              </span>
+            </span>
+          </li>
+        ))}
+      </ul>
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        {EXAMPLE.gaps.map((g) => (
+          <span key={g} className="hero-pop rounded-full bg-gap-tint px-2.5 py-1 text-[11.5px] text-gap-ink" style={at(SCORE_AT + 0.45)}>
+            {g} missing
+          </span>
+        ))}
+        <span className="hero-pop inline-flex items-center gap-1.5 rounded-full bg-brand-strong px-2.5 py-1 text-[11.5px] font-medium text-white" style={at(SCORE_AT + 0.75)}>
+          <CheckIcon size={12} weight="bold" />
+          Cover letter ready
+        </span>
+      </div>
+    </div>
+  )
+}
+
 export function Hero() {
   return (
     <section className="container pb-10 pt-8">
-      <div className="stage-grid relative isolate grid items-center gap-10 overflow-hidden rounded-[32px] px-12 py-10 max-lg:px-6 max-md:gap-8 max-md:px-4 max-md:py-8 xl:grid-cols-[minmax(0,1fr)_minmax(0,560px)] xl:px-14">
-        <Ambient glows={[{ right: -160, top: -120, size: 820, tone: 'brand' }, { left: '30%', bottom: -320, size: 620, tone: 'warm' }]} />
+      <div className="stage-grid relative isolate grid grid-cols-1 items-center gap-12 overflow-hidden rounded-[32px] px-12 py-12 max-lg:px-6 max-md:gap-10 max-md:px-4 max-md:py-8 xl:grid-cols-[minmax(0,1fr)_minmax(0,500px)] xl:px-14">
+        <Ambient glows={[{ right: -120, bottom: -260, size: 620, tone: 'warm' }]} />
         <div className="flex flex-col gap-6 max-xl:items-center max-xl:text-center max-md:gap-5">
-          <h1 className="text-balance max-w-[640px] text-[clamp(34px,4.3vw,60px)] leading-[1.02] tracking-[-0.035em]">
+          <h1 className="text-balance max-w-[640px] text-[clamp(34px,4.1vw,58px)] leading-[1.02] tracking-[-0.035em]">
             Tailor your resume to any job posting.
           </h1>
-          <p className="max-w-[500px] text-[18px] leading-[1.5] text-ink-2 max-md:text-[16px]">
-            One click on the posting. Cover Me rewrites your real experience in its words, scores the ATS match and writes the cover letter to go with it.
+          <p className="max-w-[460px] text-[18px] leading-[1.5] text-ink-2 max-md:text-[16px]">
+            One click on the posting. Cover Me rewrites your resume in its words, scores the match and writes the cover letter.
           </p>
           <div className="flex flex-wrap gap-3 max-xl:justify-center">
             <Button asChild size="lg">
@@ -42,17 +171,18 @@ export function Hero() {
             <span>Open source</span>
           </p>
         </div>
-        <picture data-hero-stage className="mx-auto block w-full max-w-[560px] max-sm:max-w-[360px]">
-          <source media="(min-width: 640px)" srcSet={heroDesktop.src} width={heroDesktop.width} height={heroDesktop.height} />
-          <img
-            src={heroPhone.src}
-            width={heroPhone.width}
-            height={heroPhone.height}
-            alt="The Cover Me popup open on a Northwind job posting, showing an 86 ATS match with HubSpot missing, next to the tailored resume."
-            fetchPriority="high"
-            className="h-auto w-full"
-          />
-        </picture>
+        <div data-hero-stage className="mx-auto w-full max-w-[500px] pt-4">
+          <p className="sr-only">
+            Cover Me on a {EXAMPLE.company} {EXAMPLE.role} posting: the posting&apos;s requirements are written into the resume bullets, the
+            ATS match is {EXAMPLE.score} with {EXAMPLE.gaps.join(', ')} missing, and the cover letter is ready.
+          </p>
+          <div inert aria-hidden="true">
+            <BrowserFrame url={`boards.greenhouse.io/${EXAMPLE.company.toLowerCase()}`} toolbar={<ToolbarIcon />} className={SHADOW}>
+              <Posting />
+            </BrowserFrame>
+            <Resume />
+          </div>
+        </div>
       </div>
     </section>
   )

@@ -44,12 +44,13 @@ product visuals, so the site shows exactly what people install.
   the score uses the backend's real 70/30 weights.
 - `Ambient`: background depth behind a section (indigo or warm glows, a fading dot field, an
   outlined rounded square that drifts on scroll). Paper grain sits under the whole page.
-- The hero is a flow with no stacked cards: the posting in a browser on top, a dark Cover Me status
-  pill in the middle, the resume (white) and letter (warm paper) side by side below.
+- The hero (`Hero.tsx`) is two cards: the posting in a browser, and the resume overlapping its
+  lower edge with the ATS ring on its corner. Built in HTML from `EXAMPLE`, not a screenshot, so it
+  stays sharp at any size and never shows a popup version people don't have.
 
 ## Story
 
-The page follows one application. The hero shows the result, then replays it over 21 seconds. `RunStory` is the
+The page follows one application. The hero plays the rewrite once. `RunStory` is the
 pinned walkthrough: scroll drives a position from 0 to 5 (click, read, rewrite, score,
 letter) and every layer derives its state from it, so it plays backwards too. Then
 `FoundInSearch` shows why the wording matters, `NoFakes` lets visitors try to add a gap
@@ -59,8 +60,10 @@ button one click away.
 
 ## Motion
 
-- The hero holds the result for about 8 seconds, then changes one card at a time: requirements light
-  up, bullets are rewritten and scored, the letter types out. Cards never move.
+- The hero plays once, in about 3.5 seconds, and rests on the result: a click on the toolbar icon,
+  then each requirement is highlighted in the posting and its resume bullet is rewritten, then the
+  ring fills to 86 and the chips appear. CSS keyframes only (`hero-*` in `globals.css`); the markup
+  is the finished frame, so reduced motion simply shows it. Cards never move.
 - The walkthrough is scroll-scrubbed; chapters fade in and out at their boundaries, never overlapping.
 - Phones get a portrait stage (`compact`) scaled to fit, and the dock waits until the walkthrough ends.
 - Reduced motion: the walkthrough becomes stacked still frames and loops show their finished state.
