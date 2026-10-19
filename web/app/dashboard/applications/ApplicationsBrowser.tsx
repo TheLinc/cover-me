@@ -165,7 +165,7 @@ export function ApplicationsBrowser() {
             onPressedChange={setInterviewOnly}
             variant="outline"
             size="sm"
-            className="h-9 gap-1.5 rounded-full border-line bg-surface px-3.5 text-[13px] font-normal text-ink-2 hover:bg-surface hover:text-ink data-[state=on]:border-brand-strong/40 data-[state=on]:bg-brand-tint data-[state=on]:font-medium data-[state=on]:text-brand-ink"
+            className="h-9 gap-1.5 rounded-full border-line bg-surface px-3.5 text-[13px] font-normal text-ink-2 hover:bg-surface hover:text-ink data-[state=on]:border-[color-mix(in_srgb,var(--brand-strong)_40%,transparent)] data-[state=on]:bg-brand-tint data-[state=on]:font-medium data-[state=on]:text-brand-ink"
           >
             {interviewOnly && <CheckIcon size={13} weight="bold" aria-hidden />}
             Got an interview
