@@ -47,6 +47,7 @@ export function Pricing() {
           </a>
         </div>
       </div>
+      <p className="mt-6 text-center text-[14px] text-subtle">Prices in US dollars. In Canada, checkout shows your price in Canadian dollars.</p>
     </section>
   )
 }
