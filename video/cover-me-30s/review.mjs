@@ -2,6 +2,10 @@
 //   node review.mjs [video] [strip times...]   → out/16x9/review/
 import { execFileSync } from 'node:child_process'
 import { mkdirSync } from 'node:fs'
+import { dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+process.chdir(dirname(fileURLToPath(import.meta.url)))
 
 const [video = 'out/16x9/silent.mp4', ...strips] = process.argv.slice(2)
 const dir = 'out/16x9/review'

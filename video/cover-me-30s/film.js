@@ -1,11 +1,10 @@
-// Cover Me, 30 s. Contract:
+// Cover Me, 30 s. Contract with render.mjs:
 //   window.DURATION  seconds
-//   window.CAPTIONS  [] (the brief asked for none; kinetic type carries the story)
 //   window.seek(t)   paints frame t from nothing but t
-// Times come from docs/shotlist.md, on a 96 BPM grid (beats.json): beat 0.625 s, bar 2.5 s.
+// No captions: the kinetic type carries the story. Times sit on a 96 BPM grid: beat 0.625 s, bar 2.5 s.
+// All markup set through innerHTML here is written in this file; nothing comes from outside.
 
 window.DURATION = 30
-window.CAPTIONS = []
 
 const BEAT = 60 / 96, E8 = BEAT / 2, E16 = BEAT / 4
 const C = {
@@ -271,9 +270,8 @@ const ring1 = makeRing(w1, 150, { left: px(RES1.x + RES1.w - 105), top: px(RES1.
 const fly1 = el('div', { left: 0, top: 0, padding: '3px 12px', borderRadius: '9px', background: C.tint, color: C.tintInk, fontSize: '34px', whiteSpace: 'nowrap', boxShadow: SH.chip, transformOrigin: '50% 50%' }, w1, 'campaign strategy')
 const s1TypeA = kinetic(S1, 'Every job has', { left: '1150px', top: '170px', fontSize: px(6.8 * u), whiteSpace: 'nowrap' })
 const s1TypeB = kinetic(S1, 'its own words.', { left: '1150px', top: px(170 + 7.4 * u), fontSize: px(6.8 * u), whiteSpace: 'nowrap' })
-// Only the four words the story uses ever light: three fly into the resume, HubSpot bounces off.
+// Only four of the posting's words ever light: three fly into the resume, HubSpot bounces off.
 // Campaign strategy flies in the hook; the other three light after it lands and stay lit until they fly.
-const STORY = ['Campaign strategy', 'Budget', 'SEO', 'HubSpot']
 const LATER = ['Budget', 'SEO', 'HubSpot']
 const HOOK_LAND = 2 * BEAT
 const LATER_AT = { Budget: HOOK_LAND + 0.3125, SEO: HOOK_LAND + 0.625, HubSpot: HOOK_LAND + 0.9375 }
@@ -305,11 +303,11 @@ pop2.show('idle')
 const S3 = scene(C.paper)
 const K3 = 994 / 560
 const P3 = { x: 30 * u, y: (H - 994) / 2 }
-const pop3 = makePopup(S3, ['idle', 'idle-hover-tailor', ...[0, 1, 2, 3, 4, 5].flatMap((k) => [0, 1, 2, 3].map((f) => `tail${k}-${f}`))])
+const TAIL_STEPS = ['plan', 'exp1', 'exp2', 'skills', 'score']
+const pop3 = makePopup(S3, ['idle', 'idle-hover-tailor', ...TAIL_STEPS.flatMap((k) => [0, 1, 2, 3].map((f) => `tail-${k}-${f}`))])
 // The Tailor button (css 18, 217 to 362, 251) darkens on the click, like Download PDF does.
 const press3 = el('div', { left: '18px', top: '217px', width: '344px', height: '34px', borderRadius: '10px', background: 'rgba(10,8,30,.32)', zIndex: 5 }, pop3.root)
 const s3Type = kinetic(S3, 'One click.', { left: px(1220), top: px(43 * u), fontSize: px(11 * u), whiteSpace: 'nowrap' })
-const TAILOR3 = [P3.x + 190 * K3, P3.y + 234 * K3]
 // Where shot 2's push hands the popup over: its center on screen, and its css scale (shot 3 starts at 0.873 of K3).
 const POP_S3 = { cx: P3.x + 190 * K3, cy: H / 2, k: K3 * 0.873 }
 
@@ -427,11 +425,10 @@ function measure() {
   M.fly = BULLETS.map((b, i) => ({ from: center(s4K[b.k].k, w4), to: inRes(center(res4.bullets[i].slot.k, w4)) }))
   M.flyW = fly4.map((f) => [f.offsetWidth, f.offsetHeight])
   M.hubFrom = center(s4K.HubSpot.k, w4)
-  // HubSpot hits the page just past the end of bullet 3 (the SEO line).
-  const b3 = res4.bullets[2].aText, [b3x, b3y] = localXY(b3, res4.root)
+  // HubSpot hits the page's right margin, level with bullet 3 (the SEO line).
+  const [, b3y] = localXY(res4.bullets[2].aText, res4.root)
   M.hubHit = inRes([RES4.x + 880 - 34, RES4.y + b3y + 14])
   M.hubA = hub.children[0].offsetWidth + 21
-  M.hubB = hub.scrollWidth + 24
   // Shot 1's posting and resume are scaled about their corners; offsets ignore transforms, so map them.
   const [px1, py1] = center(s1K['Campaign strategy'].k, page1)
   M.s1cs = [HOOK.x + px1 * HOOK.f, HOOK.y + py1 * HOOK.f]
@@ -449,7 +446,6 @@ const RING4 = [1820, 130, 176]
 // The ring's stroke spans 83.5% of the white disc (viewBox r 38 + half of 7.5, of 100).
 const RING4_STROKE = RING4[2] * 0.835
 const CAM5 = { s: 1.3, cx: 1856 - (1300 - 960) / 1.3, cy: 130 - (190 - 540) / 1.3 }
-const toW5 = ([x, y]) => [(x - W / 2) / CAM5.s + CAM5.cx, (y - H / 2) / CAM5.s + CAM5.cy]
 // Where the push ends: the ring left of center, its chip right of center.
 const PUSH_END = [RING4[0] + 0.55 * RING4_STROKE, RING4[1] + 8, 2.6]
 function cam4(t) {
@@ -508,7 +504,7 @@ const SCENES = [
     s1TypeA.draw(t, HOOK_LAND - 0.04, 2.38, 0.03)
     s1TypeB.draw(t, HOOK_LAND + E8 - 0.04, 2.38, 0.03)
   } },
-  { from: 2.5, to: 5, root: S2, draw(t, lt) {
+  { from: 2.5, to: 5, root: S2, draw(t) {
     // Pull out from the paragraph to the whole window, then follow the popup in until it sits
     // exactly where shot 3 has it, so the cut only takes the browser away.
     const pull = spring(t - 2.5, [30, 11]), push = spring(t - 3.9, [42, 13])
@@ -543,11 +539,11 @@ const SCENES = [
     const spin = Math.floor(((t % 0.65) / 0.65) * 4)
     let st = 'idle'
     if (t >= 5.36) st = 'idle-hover-tailor'
-    if (t >= 5.7) st = `tail0-${spin}`
-    if (t >= 6.25) st = `tail2-${spin}`
-    if (t >= 6.5625) st = `tail3-${spin}`
-    if (t >= 6.875) st = `tail4-${spin}`
-    if (t >= 7.1875) st = `tail5-${spin}`
+    if (t >= 5.7) st = `tail-plan-${spin}`
+    if (t >= 6.25) st = `tail-exp1-${spin}`
+    if (t >= 6.5625) st = `tail-exp2-${spin}`
+    if (t >= 6.875) st = `tail-skills-${spin}`
+    if (t >= 7.1875) st = `tail-score-${spin}`
     pop3.show(st)
     const pr3 = t < 5.7 ? Math.max(0, Math.sin(Math.PI * clamp((t - 5.605) / 0.16))) : 0
     show(press3, pr3 > 0.01)

@@ -5,6 +5,10 @@
 import { chromium } from 'playwright'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+process.chdir(dirname(fileURLToPath(import.meta.url)))
 
 const urls = process.argv.slice(2)
 if (!urls.length) throw new Error('usage: node capture-site.mjs <url> [url...]')

@@ -4,6 +4,9 @@
 // whoosh (camera move or wipe), chime (success). Keep them quiet under music: mix sits around -6 dB below the score.
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+process.chdir(dirname(fileURLToPath(import.meta.url)))
 
 const SR = 48000
 const cues = JSON.parse(readFileSync(process.argv[2], 'utf8'))

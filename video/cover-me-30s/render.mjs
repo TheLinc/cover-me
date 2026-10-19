@@ -1,24 +1,24 @@
-// Renders stage.html frame by frame into ffmpeg. Needs playwright (npm i -D playwright) and ffmpeg on PATH.
-//   node render.mjs                              full film, 16x9, 30 fps → out/16x9/silent.mp4 (+ captions.srt)
-//   node render.mjs --format 9x16 --fps 60 --sub 4   final: 60 fps with 4 blended subframes (motion blur)
-//   node render.mjs --stills 0.5,2,3.7            PNGs at those seconds → out/<format>/stills/
-//   node render.mjs --from 8 --to 12              only that span → out/<format>/span.mp4 (for review)
-//   node render.mjs --workers 6                   parallel pages, joined losslessly
+// Renders stage.html frame by frame into ffmpeg. Needs playwright and ffmpeg on PATH, and the popup captures
+// (`pnpm capture`). The film is laid out for 16:9 only.
+//   node render.mjs                              full film, 30 fps → out/16x9/silent.mp4
+//   node render.mjs --fps 60 --sub 4             final: 60 fps with 4 blended subframes (motion blur)
+//   node render.mjs --stills 0.5,2,3.7           PNGs at those seconds → out/16x9/stills/
+//   node render.mjs --from 8 --to 12             only that span → out/16x9/span.mp4 (for review)
+//   node render.mjs --workers 6                  parallel pages, joined losslessly
 import { chromium } from 'playwright'
 import { execFileSync, spawn } from 'node:child_process'
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs'
-import { join, resolve } from 'node:path'
-import { pathToFileURL } from 'node:url'
+import { dirname, join, resolve } from 'node:path'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
+process.chdir(dirname(fileURLToPath(import.meta.url)))
 const argv = process.argv.slice(2)
 const opt = (k, d) => { const i = argv.indexOf('--' + k); return i >= 0 ? argv[i + 1] : d }
-const FORMAT = opt('format', '16x9'), FPS = Number(opt('fps', 30)), SUB = Number(opt('sub', 1))
+const FPS = Number(opt('fps', 30)), SUB = Number(opt('sub', 1))
 const WORKERS = Number(opt('workers', 4)), SCALE = Number(opt('scale', 1))
 const stage = resolve(opt('stage', 'stage.html'))
-const out = resolve('out', FORMAT)
-const SIZES = { '16x9': [1920, 1080], '9x16': [1080, 1920], '1x1': [1080, 1080] }
-if (!SIZES[FORMAT]) throw new Error(`--format must be one of ${Object.keys(SIZES)}`)
-const [w, h] = SIZES[FORMAT]
+const out = resolve('out', '16x9')
+const [w, h] = [1920, 1080]
 mkdirSync(out, { recursive: true })
 
 const browser = await chromium.launch({ args: ['--allow-file-access-from-files', '--force-color-profile=srgb'] })
@@ -26,14 +26,18 @@ async function open() {
   const page = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: SCALE })
   const errors = []
   page.on('pageerror', (e) => errors.push(e.message))
-  await page.goto(`${pathToFileURL(stage).href}?format=${FORMAT}`)
+  await page.goto(pathToFileURL(stage).href)
   await page.evaluate(() => document.fonts.ready)
   if (errors.length) throw new Error(`stage.html threw: ${errors[0]}`)
+  // A missing image isn't a script error, so check them: without the captures every popup would render blank.
+  const missing = await page.evaluate(() => [...document.images].filter((i) => i.getAttribute('src') && !i.naturalWidth).map((i) => i.getAttribute('src')))
+  if (missing.length) throw new Error(`${missing.length} images didn't load (first: ${missing[0]}). Run \`pnpm capture\` first.`)
   return page
 }
+// The stage fills the viewport at 0,0, so a plain page screenshot is the stage, without a locator's checks per frame.
 const shoot = async (page, t) => {
   await page.evaluate((t) => window.seek(t), t)
-  return page.locator('#stage').screenshot({ type: 'png' })
+  return page.screenshot({ type: 'png' })
 }
 
 try {
@@ -46,7 +50,7 @@ try {
     }
     console.log(`stills → ${join(out, 'stills')}`)
   } else {
-    const { duration, captions } = await first.evaluate(() => ({ duration: window.DURATION, captions: window.CAPTIONS ?? [] }))
+    const duration = await first.evaluate(() => window.DURATION)
     const from = Number(opt('from', 0)), to = Math.min(Number(opt('to', duration)), duration)
     const frames = Math.round((to - from) * FPS)
     const per = Math.ceil(frames / WORKERS)
@@ -74,10 +78,6 @@ try {
     execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', join(out, 'segs.txt'),
       '-c', 'copy', '-movflags', '+faststart', join(out, `${name}.mp4`)])
     for (const f of [...segs, join(out, 'segs.txt')]) rmSync(f)
-    if (captions.length && name === 'silent') {
-      const ts = (s) => new Date(Math.round(s * 1000)).toISOString().slice(11, 23).replace('.', ',')
-      writeFileSync(join(out, 'captions.srt'), captions.map((c, i) => `${i + 1}\n${ts(c.from)} --> ${ts(c.to)}\n${c.text}\n`).join('\n'))
-    }
     console.log(`${frames} frames → ${join(out, `${name}.mp4`)}`)
   }
 } finally {

@@ -1,6 +1,10 @@
 // Writes cues.json from the film's timeline: one sound per real action. Keep in step with film.js.
 //   node cues.mjs && node sfx.mjs cues.json out/sfx.wav
 import { writeFileSync } from 'node:fs'
+import { dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+process.chdir(dirname(fileURLToPath(import.meta.url)))
 
 const BEAT = 60 / 96, E8 = BEAT / 2
 const HOOK_LAND = 2 * BEAT

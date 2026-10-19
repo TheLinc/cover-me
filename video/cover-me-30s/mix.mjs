@@ -1,6 +1,10 @@
 // Mixes the score and the UI sounds under a rendered video, normalized to -14 LUFS (YouTube's target).
 //   node mix.mjs out/16x9/silent.mp4 out/16x9/draft.mp4
 import { execFileSync } from 'node:child_process'
+import { dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+process.chdir(dirname(fileURLToPath(import.meta.url)))
 
 const [video = 'out/16x9/silent.mp4', out = 'out/16x9/final.mp4'] = process.argv.slice(2)
 execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', video, '-i', 'out/music.wav', '-i', 'out/sfx.wav', '-filter_complex',

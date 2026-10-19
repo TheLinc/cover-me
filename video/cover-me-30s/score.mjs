@@ -1,8 +1,11 @@
 // A sparse score synthesized in code, on the film's grid: 96 BPM, 12 bars of 2.5 s, D major.
 //   node score.mjs out/music.wav
-// Bars: D Bm G A | D Bm G A | Bm G A D. The end card sits on A so the CTA click (27.5 s) resolves to D.
+// Bars: D Bm G A | D Bm G A | Bm G A D. The end card lands on A (25 s) and resolves to D at 27.5 s.
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+process.chdir(dirname(fileURLToPath(import.meta.url)))
 
 const SR = 48000, DUR = 30, N = SR * DUR
 const BEAT = 60 / 96, BAR = BEAT * 4, S16 = BEAT / 4
@@ -20,8 +23,6 @@ const CHORDS = [
   { bass: 33, pad: [52, 57, 61, 66] }, // A6
 ]
 const PROG = [0, 1, 2, 3, 0, 1, 2, 3, 1, 2, 3, 0]
-const chordAt = (t) => CHORDS[PROG[Math.min(11, Math.floor(t / BAR))]]
-const bar = (t) => Math.floor(t / BAR) + 1
 
 // ── drums ──
 function kick(t0, gain = 1) {
@@ -41,8 +42,8 @@ function clap(t0, gain = 1) {
   for (let i = 0; i < 0.35 * SR; i++) {
     const t = i / SR, n = Math.floor(t0 * SR) + i
     if (n >= N) break
-    // three quick bursts, then a short tail; band-limited by a one-pole high-pass and low-pass
-    const env = (t < 0.03 ? (Math.floor(t / 0.01) % 1 === 0 ? Math.exp(-((t % 0.01) * 300)) : 0) : 0) + Math.exp(-(t - 0.02) * 22) * (t > 0.02)
+    // three quick bursts 10 ms apart, then a short tail; band-limited by a one-pole high-pass and low-pass
+    const env = (t < 0.03 ? Math.exp(-((t % 0.01) * 300)) : 0) + Math.exp(-(t - 0.02) * 22) * (t > 0.02)
     const x = noise(); const hp = x - prev; prev = x
     lp += 0.35 * (hp - lp)
     const v = lp * env * gain * 0.32

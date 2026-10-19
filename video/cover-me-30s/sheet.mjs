@@ -3,6 +3,10 @@
 import { execFileSync } from 'node:child_process'
 import { readdirSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
+import { dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+process.chdir(dirname(fileURLToPath(import.meta.url)))
 
 const [format = '16x9', cols = '4', width = '640'] = process.argv.slice(2)
 const dir = resolve('out', format, 'stills')
