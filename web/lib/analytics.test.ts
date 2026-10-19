@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { CaptureResult } from 'posthog-js'
-import { cleanUrl, isPrivatePath, scrubEvent } from './analytics'
+import { cleanUrl, isPrivatePath, scrubEvent, storeClick } from './analytics'
 
 const event = (properties: Record<string, unknown>) =>
   ({ uuid: 'u', event: '$pageview', properties }) as CaptureResult
@@ -41,5 +41,41 @@ describe('scrubEvent', () => {
   it('passes non-URL values through', () => {
     expect(cleanUrl('$direct')).toBe('$direct')
     expect(cleanUrl(undefined)).toBeUndefined()
+  })
+})
+
+describe('storeClick', () => {
+  // Enough of an element for closest('a[href]') and the label
+  const link = (href: string, text: string | null, ariaLabel?: string) => {
+    const a = {
+      textContent: text,
+      getAttribute: (name: string) => (name === 'href' ? href : name === 'aria-label' ? ariaLabel ?? null : null),
+    }
+    return { closest: () => a } as unknown as Element
+  }
+  const STORE = 'https://chromewebstore.google.com/detail/cover-me/bpbnopjgjbimdjjdolhkgimllbgamgpi'
+
+  it('records a click on a store link with its label', () => {
+    expect(storeClick({ type: 'click', button: 0, target: link(STORE, '  Add to\n Chrome  ') })).toEqual({ link_text: 'Add to Chrome' })
+  })
+
+  it('uses the label on screen when the link holds a hidden one too', () => {
+    const a = { innerText: 'Install', textContent: 'Add to Chrome, freeInstall', getAttribute: () => STORE }
+    expect(storeClick({ type: 'click', button: 0, target: { closest: () => a } as unknown as Element })).toEqual({ link_text: 'Install' })
+  })
+
+  it('falls back to aria-label for an icon-only link', () => {
+    expect(storeClick({ type: 'click', button: 0, target: link(STORE, '', 'Install Cover Me') })).toEqual({ link_text: 'Install Cover Me' })
+  })
+
+  it('counts middle clicks but not right clicks', () => {
+    expect(storeClick({ type: 'auxclick', button: 1, target: link(STORE, 'Install') })).not.toBeNull()
+    expect(storeClick({ type: 'auxclick', button: 2, target: link(STORE, 'Install') })).toBeNull()
+  })
+
+  it('ignores other links and clicks outside links', () => {
+    expect(storeClick({ type: 'click', button: 0, target: link('https://github.com/TheLinc/cover-me', 'GitHub') })).toBeNull()
+    expect(storeClick({ type: 'click', button: 0, target: { closest: () => null } as unknown as Element })).toBeNull()
+    expect(storeClick({ type: 'click', button: 0, target: null })).toBeNull()
   })
 })

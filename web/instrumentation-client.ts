@@ -51,7 +51,7 @@ Sentry.init({
 const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 if (posthogKey) {
   Promise.all([import("posthog-js"), import("@/lib/analytics")]).then(
-    ([{ default: posthog }, { scrubEvent }]) => {
+    ([{ default: posthog }, { scrubEvent, storeClick }]) => {
       posthog.init(posthogKey, {
         api_host: "/relay",
         ui_host: "https://us.posthog.com",
@@ -70,6 +70,13 @@ if (posthogKey) {
         advanced_disable_flags: true,
         before_send: scrubEvent,
       });
+      // Capture phase, so a component that stops propagation still counts
+      const onClick = (e: MouseEvent) => {
+        const props = storeClick(e);
+        if (props) posthog.capture("store_link_clicked", props);
+      };
+      document.addEventListener("click", onClick, true);
+      document.addEventListener("auxclick", onClick, true);
     },
   );
 }

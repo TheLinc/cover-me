@@ -29,6 +29,22 @@ export function cleanUrl(value: unknown): unknown {
   return url.toString()
 }
 
+const STORE_ORIGIN = 'https://chromewebstore.google.com/'
+
+// A click on any link to the Chrome Web Store listing: the traffic funnel's
+// last step. link_text is our own button label ("Add to Chrome"), so we can
+// tell which button works. A middle click opens the listing too, so it counts.
+export function storeClick(e: Pick<MouseEvent, 'type' | 'button' | 'target'>): { link_text: string } | null {
+  if (e.type === 'auxclick' && e.button !== 1) return null
+  const target = e.target as Element | null
+  const link = typeof target?.closest === 'function' ? target.closest('a[href]') : null
+  if (!link?.getAttribute('href')?.startsWith(STORE_ORIGIN)) return null
+  // innerText: only the label on screen (the dock link holds a wide and a narrow one)
+  const text = (link as HTMLElement).innerText ?? link.textContent
+  const label = text?.replace(/\s+/g, ' ').trim() || link.getAttribute('aria-label') || ''
+  return { link_text: label.slice(0, 60) }
+}
+
 const URL_PROPS = ['$current_url', '$referrer', '$prev_pageview_url']
 
 export function scrubEvent(event: CaptureResult | null): CaptureResult | null {
