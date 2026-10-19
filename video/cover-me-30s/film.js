@@ -1,6 +1,7 @@
 // Cover Me, 30 s. Contract with render.mjs:
 //   window.DURATION  seconds
 //   window.seek(t)   paints frame t from nothing but t
+//   window.CUTS      every hard change of picture; render.mjs keeps motion-blur subframes from blending across them
 // No captions: the kinetic type carries the story. Times sit on a 96 BPM grid: beat 0.625 s, bar 2.5 s.
 // All markup set through innerHTML here is written in this file; nothing comes from outside.
 
@@ -572,7 +573,6 @@ const SCENES = [
         const y = (1 - qq) ** 2 * y0 + 2 * (1 - qq) * qq * cyp + qq * qq * y1
         f.style.transform = `translate(${x - m.flyW[i][0] / 2}px, ${y - m.flyW[i][1] / 2}px) scale(${1 + 1.15 * Math.sin(Math.PI * qq)})`
       }
-      // The posting keeps its word: the tint stays, the flying copy leaves from it.
     })
     // HubSpot: lifts out of the posting like the others, hits the page beside bullet 3, turns orange,
     // and is thrown up to rest beside the ring as the "missing" chip.
@@ -637,7 +637,7 @@ const SCENES = [
     s5Type.draw(t, HUB.hit + 0.05, PUSH_AT - 0.12, E16)
   } },
   { from: CUT6, to: 17.5, root: S6, draw(t) {
-    // Starts with the popup's ring stroke exactly where and as big as the drawn ring's, holds three frames,
+    // Starts with the popup's ring stroke exactly where and as big as the drawn ring's, holds 0.1 s,
     // then glides out to frame the popup left with its Download PDF button under the cursor.
     const c = cam4(CUT6 - 1e-4)
     const r0 = [(RING4[0] - c.cx) * c.s + W / 2, (RING4[1] - c.cy) * c.s + H / 2]

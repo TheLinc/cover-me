@@ -15,7 +15,7 @@ process.chdir(dirname(fileURLToPath(import.meta.url)))
 const argv = process.argv.slice(2)
 const opt = (k, d) => { const i = argv.indexOf('--' + k); return i >= 0 ? argv[i + 1] : d }
 const FPS = Number(opt('fps', 30)), SUB = Number(opt('sub', 1))
-const WORKERS = Number(opt('workers', 4)), SCALE = Number(opt('scale', 1))
+const WORKERS = Number(opt('workers', 4))
 const stage = resolve('stage.html')
 const out = resolve('out', '16x9')
 const [w, h] = [1920, 1080]
@@ -23,7 +23,7 @@ mkdirSync(out, { recursive: true })
 
 const browser = await chromium.launch({ args: ['--force-color-profile=srgb'] })
 async function open() {
-  const page = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: SCALE })
+  const page = await browser.newPage({ viewport: { width: w, height: h } })
   const errors = []
   page.on('pageerror', (e) => errors.push(e.message))
   await page.goto(pathToFileURL(stage).href)
@@ -57,37 +57,42 @@ try {
       // Snapped to the microsecond, so a fractional --from can't put a frame that starts on a cut a hair before it.
       const t0 = Math.round((from + f / FPS) * 1e6) / 1e6, t = t0 + k / (FPS * SUB)
       const cut = cuts.find((c) => c > t0 && c <= t)
-      return cut === undefined ? t : cut - 1e-4
+      // ...and never past the end, where no scene is shown.
+      return Math.min(cut === undefined ? t : cut - 1e-4, duration - 1e-4)
     }
     const frames = Math.round((to - from) * FPS)
     const per = Math.ceil(frames / WORKERS)
     const name = opt('from') || opt('to') ? 'span' : 'silent'
     // Each run's segments go in their own folder, so two renders at once can't overwrite each other's.
     const tmp = mkdtempSync(join(out, 'segs-'))
-    // tmix averages SUB consecutive subframes; select keeps the last of each group, so groups line up per segment.
-    const vf = SUB > 1 ? ['-vf', `tmix=frames=${SUB},select='eq(mod(n\\,${SUB})\\,${SUB - 1})',setpts=N/${FPS}/TB`] : []
-    const segs = await Promise.all(Array.from({ length: Math.ceil(frames / per) }, async (_, s) => {
-      const page = s === 0 ? first : await open()
-      const file = join(tmp, `seg${s}.mp4`)
-      const ff = spawn('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(FPS * SUB), '-c:v', 'png', '-i', '-',
-        ...vf, '-r', String(FPS), '-c:v', 'libx264', '-preset', 'slow', '-crf', '16', '-pix_fmt', 'yuv420p', file], { stdio: ['pipe', 'inherit', 'inherit'] })
-      const done = new Promise((ok, fail) => ff.on('close', (c) => (c ? fail(new Error(`ffmpeg exited ${c}`)) : ok())))
-      for (let f = s * per; f < Math.min(frames, (s + 1) * per); f++) {
-        for (let k = 0; k < SUB; k++) {
-          const png = await shoot(page, at(f, k))
-          if (!ff.stdin.write(png)) await new Promise((r) => ff.stdin.once('drain', r))
+    try {
+      // tmix averages SUB consecutive subframes; select keeps the last of each group, so groups line up per segment.
+      const vf = SUB > 1 ? ['-vf', `tmix=frames=${SUB},select='eq(mod(n\\,${SUB})\\,${SUB - 1})',setpts=N/${FPS}/TB`] : []
+      const segs = await Promise.all(Array.from({ length: Math.ceil(frames / per) }, async (_, s) => {
+        const page = s === 0 ? first : await open()
+        const file = join(tmp, `seg${s}.mp4`)
+        const ff = spawn('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(FPS * SUB), '-c:v', 'png', '-i', '-',
+          ...vf, '-r', String(FPS), '-c:v', 'libx264', '-preset', 'slow', '-crf', '16', '-pix_fmt', 'yuv420p', file], { stdio: ['pipe', 'inherit', 'inherit'] })
+        const done = new Promise((ok, fail) => ff.on('close', (c) => (c ? fail(new Error(`ffmpeg exited ${c}`)) : ok())))
+        for (let f = s * per; f < Math.min(frames, (s + 1) * per); f++) {
+          for (let k = 0; k < SUB; k++) {
+            const png = await shoot(page, at(f, k))
+            if (!ff.stdin.write(png)) await new Promise((r) => ff.stdin.once('drain', r))
+          }
+          if (f % (FPS * 2) === 0) console.log(`worker ${s}: ${(from + f / FPS).toFixed(1)}s`)
         }
-        if (f % (FPS * 2) === 0) console.log(`worker ${s}: ${(from + f / FPS).toFixed(1)}s`)
-      }
-      ff.stdin.end()
-      await done
-      return file
-    }))
-    writeFileSync(join(tmp, 'segs.txt'), segs.map((f) => `file '${f.replace(/\\/g, '/')}'`).join('\n'))
-    execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', join(tmp, 'segs.txt'),
-      '-c', 'copy', '-movflags', '+faststart', join(out, `${name}.mp4`)])
-    rmSync(tmp, { recursive: true })
-    console.log(`${frames} frames → ${join(out, `${name}.mp4`)}`)
+        ff.stdin.end()
+        await done
+        return file
+      }))
+      writeFileSync(join(tmp, 'segs.txt'), segs.map((f) => `file '${f.replace(/\\/g, '/')}'`).join('\n'))
+      execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', join(tmp, 'segs.txt'),
+        '-c', 'copy', '-movflags', '+faststart', join(out, `${name}.mp4`)])
+      console.log(`${frames} frames → ${join(out, `${name}.mp4`)}`)
+    } finally {
+      // Also after a failure; Windows can refuse while an ffmpeg still holds a file, so don't let that mask the error.
+      try { rmSync(tmp, { recursive: true, force: true }) } catch {}
+    }
   }
 } finally {
   await browser.close()
