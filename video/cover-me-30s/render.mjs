@@ -7,6 +7,7 @@
 //   node render.mjs --workers 6                  parallel pages, joined losslessly
 import { chromium } from 'playwright'
 import { execFileSync, spawn } from 'node:child_process'
+import { once } from 'node:events'
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -65,6 +66,7 @@ try {
     const name = opt('from') || opt('to') ? 'span' : 'silent'
     // Each run's segments go in their own folder, so two renders at once can't overwrite each other's.
     const tmp = mkdtempSync(join(out, 'segs-'))
+    const procs = []
     try {
       // tmix averages SUB consecutive subframes; select keeps the last of each group, so groups line up per segment.
       const vf = SUB > 1 ? ['-vf', `tmix=frames=${SUB},select='eq(mod(n\\,${SUB})\\,${SUB - 1})',setpts=N/${FPS}/TB`] : []
@@ -73,11 +75,15 @@ try {
         const file = join(tmp, `seg${s}.mp4`)
         const ff = spawn('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(FPS * SUB), '-c:v', 'png', '-i', '-',
           ...vf, '-r', String(FPS), '-c:v', 'libx264', '-preset', 'slow', '-crf', '16', '-pix_fmt', 'yuv420p', file], { stdio: ['pipe', 'inherit', 'inherit'] })
-        const done = new Promise((ok, fail) => ff.on('close', (c) => (c ? fail(new Error(`ffmpeg exited ${c}`)) : ok())))
+        procs.push(ff)
+        // A dead ffmpeg ends this worker with an error instead of crashing Node on the next write.
+        ff.stdin.on('error', () => {})
+        const done = new Promise((ok, fail) => { ff.on('error', fail); ff.on('close', (c) => (c ? fail(new Error(`ffmpeg exited ${c}`)) : ok())) })
+        done.catch(() => {})
         for (let f = s * per; f < Math.min(frames, (s + 1) * per); f++) {
           for (let k = 0; k < SUB; k++) {
             const png = await shoot(page, at(f, k))
-            if (!ff.stdin.write(png)) await new Promise((r) => ff.stdin.once('drain', r))
+            if (!ff.stdin.write(png)) await Promise.race([once(ff.stdin, 'drain'), done])
           }
           if (f % (FPS * 2) === 0) console.log(`worker ${s}: ${(from + f / FPS).toFixed(1)}s`)
         }
@@ -90,8 +96,9 @@ try {
         '-c', 'copy', '-movflags', '+faststart', join(out, `${name}.mp4`)])
       console.log(`${frames} frames → ${join(out, `${name}.mp4`)}`)
     } finally {
-      // Also after a failure; Windows can refuse while an ffmpeg still holds a file, so don't let that mask the error.
-      try { rmSync(tmp, { recursive: true, force: true }) } catch {}
+      // Also after a failure: stop any ffmpeg still writing, then retry while Windows releases its files.
+      for (const ff of procs) ff.kill()
+      try { rmSync(tmp, { recursive: true, force: true, maxRetries: 10 }) } catch {}
     }
   }
 } finally {
