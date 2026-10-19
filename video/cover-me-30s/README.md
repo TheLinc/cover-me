@@ -32,7 +32,7 @@ pnpm draft      # 30 fps, about 1.5 min → out/16x9/draft.mp4
 pnpm final      # 60 fps with 4 blended subframes, about 10 min → out/16x9/final.mp4
 ```
 
-Videos render at 2x and scale down to 1080p (`--ss 1` turns that off). Chromium draws text on whole device pixels under a transform, so text that moves slowly steps a pixel at a time. Rendering at 2x halves those steps, and two rules in `film.js` keep text from stepping when it's meant to be still:
+Videos render at 2x and scale down to 1080p (`--ss 1` turns that off). Chromium draws text on whole device pixels under a transform, so text that moves slowly steps a pixel at a time. Rendering at 2x halves those steps, and two rules keep text from stepping when it's meant to be still:
 
 - Text moves decisively or holds still. Don't give a text-bearing camera or card a slow "keep it alive" drift. Drift the images instead (the popup captures are images).
 - Springs end. `spring()` in `motion.js` returns its target exactly once the remaining motion is under 0.02%, so a settled camera never creeps.
