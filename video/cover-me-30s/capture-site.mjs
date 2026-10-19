@@ -4,8 +4,7 @@
 // Read site.json and LOOK at the screenshots, then write docs/brand_notes.md from both.
 import { chromium } from 'playwright'
 import { mkdirSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
-import { dirname } from 'node:path'
+import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 process.chdir(dirname(fileURLToPath(import.meta.url)))

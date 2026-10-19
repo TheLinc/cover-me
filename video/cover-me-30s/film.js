@@ -18,7 +18,6 @@ const SH = {
   browser: '0 26px 60px -26px rgba(30,27,75,.30), 0 1px 3px rgba(30,27,75,.06)',
   popup: '0 40px 90px -30px rgba(21,19,43,.55), 0 2px 8px rgba(21,19,43,.18)',
   ring: '0 14px 34px -14px rgba(30,27,75,.40), 0 1px 3px rgba(30,27,75,.08)',
-  cta: '0 14px 36px -12px rgba(79,70,229,.6)',
   chip: '0 8px 20px -10px rgba(30,27,75,.35)',
 }
 const POP = 'assets/popup/'
@@ -60,7 +59,7 @@ function lit(h, s, gap = false) {
 // Kinetic type: each word rises out of a mask on a heavy spring, leaves upward on a snap.
 function kinetic(parent, text, style) {
   const box = el('div', { fontWeight: 600, letterSpacing: '-0.035em', lineHeight: 1.0, color: C.ink, ...style }, parent)
-  const words = text.split(' ').filter((w) => { if (w === '|') { box.appendChild(document.createElement('br')); return false } return true }).map((w) => {
+  const words = text.split(' ').filter((w) => w !== '|').map((w) => {
     const mask = document.createElement('span')
     Object.assign(mask.style, { display: 'inline-block', overflow: 'hidden', verticalAlign: 'top', padding: '0.04em 0 0.16em', margin: '-0.04em 0.22em -0.16em 0' })
     const inner = document.createElement('span')
@@ -69,8 +68,7 @@ function kinetic(parent, text, style) {
     mask.appendChild(inner)
     return [mask, inner]
   })
-  // Rebuild in order, so line breaks sit between the right words.
-  box.textContent = ''
+  // Place them in order, with a line break where the text has a '|'.
   text.split(' ').reduce((i, w) => { if (w === '|') { box.appendChild(document.createElement('br')); return i } box.appendChild(words[i][0]); return i + 1 }, 0)
   words.forEach((w, i) => { words[i] = w[1] })
   return {
@@ -114,9 +112,8 @@ function makeBrowser(parent, x, y, w, h, url) {
   const page = el('div', { left: 0, top: '56px', width: '100%', bottom: 0 }, root)
   return { root, bar, urlBox, icon, page }
 }
-function postingHeader(page, { letter = 'N', title = 'Marketing Manager', meta = 'Northwind · Denver, CO · Full-time', logo } = {}) {
-  const mark = el('div', { left: '56px', top: '46px', width: '66px', height: '66px', borderRadius: '16px', background: C.ink, color: '#fff', fontSize: '30px', fontWeight: 600, lineHeight: '66px', textAlign: 'center' }, page, logo ? '' : letter)
-  if (logo) { mark.style.background = '#fff'; mark.style.boxShadow = '0 0 0 1px #ECEAE7'; img(logo, { left: '13px', top: '13px', width: '40px', height: '40px', objectFit: 'contain' }, mark) }
+function postingHeader(page, { letter = 'N', title = 'Marketing Manager', meta = 'Northwind · Denver, CO · Full-time' } = {}) {
+  const mark = el('div', { left: '56px', top: '46px', width: '66px', height: '66px', borderRadius: '16px', background: C.ink, color: '#fff', fontSize: '30px', fontWeight: 600, lineHeight: '66px', textAlign: 'center' }, page, letter)
   const tEl = el('div', { left: '144px', top: '44px', fontSize: '34px', fontWeight: 600, color: C.ink, letterSpacing: '-0.02em', whiteSpace: 'nowrap' }, page, esc(title))
   const mEl = el('div', { left: '144px', top: '88px', fontSize: '20px', color: C.ink2, whiteSpace: 'nowrap' }, page, esc(meta))
   return { mark, tEl, mEl }
@@ -140,7 +137,7 @@ const BULLETS = [
   { before: 'Managed $1.2M in paid media spend across four channels', after: ['Managed a $1.2M paid media ', 'budget', ' across four channels'], k: 'Budget' },
   { before: 'Wrote blog posts that grew organic traffic 64%', after: ['Grew organic traffic 64% with an ', 'SEO', ' content program'], k: 'SEO' },
 ]
-function makeResume(parent, x, y, { w = 880, h = 1160, tailored = false } = {}) {
+function makeResume(parent, x, y, { w = 880, h = 1160 } = {}) {
   const pad = 64, fs = 21
   const root = el('div', { left: px(x), top: px(y), width: px(w), height: px(h), background: '#fff', borderRadius: '8px', boxShadow: SH.doc, overflow: 'hidden' }, parent)
   root.className = 'serif'
@@ -199,7 +196,7 @@ function makeResume(parent, x, y, { w = 880, h = 1160, tailored = false } = {}) 
       b.caret.style.left = px(t < L - 0.38 ? keep : typed)
     },
   }
-  BULLETS.forEach((_, i) => api.drawBullet(i, tailored ? 99 : -99, 0))
+  BULLETS.forEach((_, i) => api.drawBullet(i, -99, 0))
   return api
 }
 
@@ -222,8 +219,8 @@ function makeLetter(parent, x, y, { w = 1250, h = 950, fs = 34, pad = 80 } = {})
   const caret = el('div', { left: 0, top: 0, width: '3px', height: px(fs * 1.1), background: C.ink }, flow)
   caret.style.position = 'absolute'
   return {
-    root, words,
-    // n words visible (fractional part drives the newest keyword's pop)
+    root,
+    // Word i appears at t0 + i * step; a keyword pops as it appears.
     type(t, t0, step) {
       let last = null
       words.forEach((w, i) => {
@@ -235,7 +232,6 @@ function makeLetter(parent, x, y, { w = 1250, h = 950, fs = 34, pad = 80 } = {})
       show(caret, !!last && t < t0 + words.length * step + 0.4)
       if (last) { const [lx, ly] = localXY(last.s, flow); caret.style.left = px(lx + last.s.offsetWidth + 4); caret.style.top = px(ly + fs * 0.2) }
     },
-    full() { words.forEach((w) => { w.s.style.visibility = 'visible'; if (w.h) lit(w.h, 1) }); show(caret, false) },
   }
 }
 
@@ -395,7 +391,7 @@ el('div', { left: '56px', top: '300px', width: '1100px' }, b9.page, '<div class=
 el('div', { left: '56px', top: '560px', height: '56px', padding: '0 32px', borderRadius: '99px', background: C.brandStrong, color: '#fff', fontSize: '21px', fontWeight: 500, lineHeight: '56px' }, b9.page, 'Apply')
 // The board's name sits in a tab above the window, the way a browser tab would.
 const tab9 = el('div', { left: '290px', top: '126px', height: '84px', borderRadius: '18px 18px 0 0', background: '#F2F0ED' }, w9)
-const boardLogo9 = img('', { left: '28px', top: '20px', width: '44px', height: '44px', objectFit: 'contain' }, tab9)
+const boardLogos9 = BOARDS.map(([logo]) => img('../../web/public/boards/' + logo, { left: '28px', top: '20px', width: '44px', height: '44px', objectFit: 'contain' }, tab9))
 const boardName9 = el('div', { left: '88px', top: '17px', fontSize: px(4.6 * u), fontWeight: 600, color: C.ink, letterSpacing: '-0.03em', lineHeight: '50px', whiteSpace: 'nowrap' }, tab9)
 let cur9 = -1, k9 = []
 
@@ -549,7 +545,7 @@ const SCENES = [
     show(press3, pr3 > 0.01)
     press3.style.opacity = pr3
     s3Type.draw(t, 5.08, 7.28, E8)
-    drawCursor(t, [[5, W * 0.62, H + 40], [5.0, W * 0.62, H + 40], [5.0, 600 + 60, 540 + 10]], [5.625], 0.04)
+    drawCursor(t, [[5, W * 0.62, H + 40], [5.0, 600 + 60, 540 + 10]], [5.625], 0.04)
     if (t >= 5.75) show(cursor, false)
   } },
   { from: 7.5, to: CUT6, root: S4, draw(t) {
@@ -690,8 +686,8 @@ const SCENES = [
     const i = clamp(Math.floor((t - 22.5) / E8), 0, 7)
     if (cur9 !== i) {
       cur9 = i
-      const [logo, name, url, letter, role, meta, desc] = BOARDS[i]
-      boardLogo9.src = '../../web/public/boards/' + logo
+      const [, name, url, letter, role, meta, desc] = BOARDS[i]
+      boardLogos9.forEach((e, j) => show(e, j === i))
       boardName9.textContent = name
       tab9.style.width = px(88 + boardName9.offsetWidth + 36)
       b9.urlBox.textContent = url
@@ -707,7 +703,7 @@ const SCENES = [
     b9.icon.style.transform = `scale(${1 + 0.3 * Math.sin(Math.PI * clamp(lt / 0.2))})`
     const pop = spring(lt, [420, 26])
     boardName9.style.transform = `translateY(${(1 - pop) * 1.2 * u}px)`
-    boardLogo9.style.transform = `scale(${0.8 + 0.2 * pop})`
+    boardLogos9[i].style.transform = `scale(${0.8 + 0.2 * pop})`
   } },
   { from: 25, to: 30, root: S10, draw(t) {
     // One slow push under the whole card, still moving on the last frame.
@@ -725,6 +721,14 @@ const SCENES = [
   } },
 ]
 SCENES.forEach((s) => show(s.root, false))
+// Every hard change of picture: the scene cuts, the popup's state swaps in shot 3 and shot 6, and the board swaps.
+// render.mjs keeps a frame's motion-blur subframes on one side of these, so no frame shows two pictures at once.
+window.CUTS = [
+  ...SCENES.map((s) => s.from).filter((t) => t > 0),
+  5.36, 5.7, 6.25, 6.5625, 6.875, 7.1875,
+  CLICK6 - 0.25, CLICK6 + 0.3,
+  ...[1, 2, 3, 4, 5, 6, 7].map((i) => 22.5 + i * E8),
+].sort((a, b) => a - b)
 
 window.seek = (t) => {
   measure()
@@ -732,7 +736,7 @@ window.seek = (t) => {
   for (const s of SCENES) {
     const on = t >= s.from && t < s.to
     show(s.root, on)
-    if (on) s.draw(t, t - s.from)
+    if (on) s.draw(t)
   }
   return true
 }

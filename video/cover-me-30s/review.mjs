@@ -1,4 +1,4 @@
-// Review images for the critique loop (craft.md): contact sheet, phone test, and strips around fast actions.
+// Review images for a render: a contact sheet (two halves), a phone-size sheet, and strips around fast actions.
 //   node review.mjs [video] [strip times...]   → out/16x9/review/
 import { execFileSync } from 'node:child_process'
 import { mkdirSync } from 'node:fs'

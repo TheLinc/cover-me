@@ -50,8 +50,14 @@ try {
     }
     console.log(`stills → ${join(out, 'stills')}`)
   } else {
-    const duration = await first.evaluate(() => window.DURATION)
+    const [duration, cuts] = await first.evaluate(() => [window.DURATION, window.CUTS ?? []])
     const from = Number(opt('from', 0)), to = Math.min(Number(opt('to', duration)), duration)
+    // A frame's motion-blur subframes stop just before the next hard cut, so no frame blends two pictures.
+    const at = (f, k) => {
+      const t0 = from + f / FPS, t = t0 + k / (FPS * SUB)
+      const cut = cuts.find((c) => c > t0 && c <= t)
+      return cut === undefined ? t : cut - 1e-4
+    }
     const frames = Math.round((to - from) * FPS)
     const per = Math.ceil(frames / WORKERS)
     const name = opt('from') || opt('to') ? 'span' : 'silent'
@@ -65,7 +71,7 @@ try {
       const done = new Promise((ok, fail) => ff.on('close', (c) => (c ? fail(new Error(`ffmpeg exited ${c}`)) : ok())))
       for (let f = s * per; f < Math.min(frames, (s + 1) * per); f++) {
         for (let k = 0; k < SUB; k++) {
-          const png = await shoot(page, from + (f + k / SUB) / FPS)
+          const png = await shoot(page, at(f, k))
           if (!ff.stdin.write(png)) await new Promise((r) => ff.stdin.once('drain', r))
         }
         if (f % (FPS * 2) === 0) console.log(`worker ${s}: ${(from + f / FPS).toFixed(1)}s`)
