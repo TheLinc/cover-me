@@ -70,5 +70,8 @@ docs/
 # Raw Higgsfield downloads
 .media-raw/
 
+# Chrome Web Store listing assets (store zips, screenshots, the promo video): kept local, uploaded by hand
+chrome-store/
+
 # Impeccable decision-page answers (per session)
 .impeccable/questions/

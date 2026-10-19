@@ -1,0 +1,15 @@
+{
+  "name": "cover-me-video",
+  "private": true,
+  "description": "The 30 s Chrome Web Store and YouTube video, rendered from code. See README.md.",
+  "scripts": {
+    "capture": "node capture-popup.mjs",
+    "audio": "node score.mjs out/music.wav && node cues.mjs && node sfx.mjs cues.json out/sfx.wav",
+    "draft": "node render.mjs --workers 6 && node mix.mjs out/16x9/silent.mp4 out/16x9/draft.mp4",
+    "final": "node render.mjs --fps 60 --sub 4 --workers 6 && node mix.mjs out/16x9/silent.mp4 out/16x9/final.mp4",
+    "review": "node review.mjs out/16x9/silent.mp4"
+  },
+  "devDependencies": {
+    "playwright": "^1.64.1"
+  }
+}

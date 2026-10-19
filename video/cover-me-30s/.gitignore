@@ -1,0 +1,6 @@
+# Generated: renders, the score and UI sounds, cue times, and the popup and site captures
+# (capture-popup.mjs and capture-site.mjs rebuild them).
+out/
+assets/
+cues.json
+beats.json
