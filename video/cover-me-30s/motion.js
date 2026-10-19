@@ -10,6 +10,9 @@ const SNAP = [320, 30], BASE = [170, 26]
 function spring(t, [k, d] = BASE) {
   if (t <= 0) return 0
   const w0 = Math.sqrt(k), z = d / (2 * w0)
+  // Springs end: once what's left is under 0.02% of the move, return the target exactly. Otherwise the endless tail
+  // can tip text (which Chromium puts on whole pixels) over a rounding edge long after it looks settled.
+  if (Math.exp(-Math.min(z, 1) * w0 * t) * (1 + w0 * t) < 2e-4) return 1
   if (z < 1) {
     const wd = w0 * Math.sqrt(1 - z * z)
     return 1 - Math.exp(-z * w0 * t) * (Math.cos(wd * t) + (z * w0 / wd) * Math.sin(wd * t))

@@ -76,7 +76,7 @@ function kinetic(parent, text, style) {
     box,
     draw(t, tIn, tOut, step = E16) {
       words.forEach((w, i) => {
-        const s = spring(t - tIn - i * step, [140, 24])
+        const s = spring(t - tIn - i * step, [260, 32.2]) // stiff, so a word doesn't drop its last pixel after landing
         const o = spring(t - tOut, SNAP)
         w.style.transform = `translateY(${(1 - s) * 115 - o * 115}%)`
       })
@@ -446,18 +446,18 @@ const CAM5 = { s: 1.3, cx: 1856 - (1300 - 960) / 1.3, cy: 130 - (190 - 540) / 1.
 // Where the push ends: the ring left of center, its chip right of center.
 const PUSH_END = [RING4[0] + 0.55 * RING4_STROKE, RING4[1] + 8, 2.6]
 function cam4(t) {
-  const A = [60, 15.5], push = spring(t - PUSH_AT, [110, 21])
+  const A = [80, 17.9], push = spring(t - PUSH_AT, [110, 21])
   // Wide for budget and SEO; in to the proof (10.75); back out to see HubSpot leave the posting (12.5);
   // then follow it to the ring (13.85).
   const keys = [[7.5, 960, 540, 0.94], [9.375, 1010, 520, 1.0], [10.75, PROOF.cx, PROOF.cy, PROOF.s], [12.5, 1120, 480, 1.1], [13.85, CAM5.cx, CAM5.cy, CAM5.s]]
   const cx = track(t, keys.map((k) => [k[0], k[1]]), A)
   const cy = track(t, keys.map((k) => [k[0], k[2]]), A)
   const ls = track(t, keys.map((k) => [k[0], Math.log(k[3])]), A)
-  // A slow push while the line is read, then onto the ring with the chip beside it for the match cut.
-  const hold = 0.03 * spring(t - 14.5, [6, 5])
+  // Still while the line is read (a slow drift would make the text hop a pixel at a time), then onto the ring
+  // with the chips beside it for the match cut.
   return {
     cx: lerp(cx, PUSH_END[0], push), cy: lerp(cy, PUSH_END[1], push),
-    s: Math.exp(lerp(ls + hold, Math.log(PUSH_END[2]), push)),
+    s: Math.exp(lerp(ls, Math.log(PUSH_END[2]), push)),
   }
 }
 
@@ -478,7 +478,7 @@ const SCENES = [
   { from: 0, to: 2.5, root: S1, draw(t) {
     const m = measure()
     // Macro on the word with the whole job title above it, pulling out from frame 0 to the whole desk.
-    const z = spring(t + 0.04, [20, 9])
+    const z = spring(t + 0.04, [60, 15.5])
     const [wx, wy] = m ? [m.s1cs[0], m.s1cs[1] - 45] : [W / 2, H / 2]
     cam(w1, lerp(wx, W / 2, z), lerp(wy, H / 2, z), Math.exp(lerp(Math.log(2.4), 0, z)))
     // The word: lit on frame 0, lifts on beat 2 (its posting copy goes plain), lands on beat 3.
@@ -504,7 +504,7 @@ const SCENES = [
   { from: 2.5, to: 5, root: S2, draw(t) {
     // Pull out from the posting to the posting and toolbar, then follow the popup in to POP_S3;
     // shot 3 cuts in from there onto the Tailor button.
-    const pull = spring(t - 2.5, [30, 11]), push = spring(t - 3.9, [42, 13])
+    const pull = spring(t - 2.5, [110, 21]), push = spring(t - 3.9, [42, 13])
     // Start where shot 1 left its posting: the page at the same size, in the same place on screen.
     const s0 = HOOK.f, p0 = [HOOK.x, HOOK.y]
     const cx0 = 290 - (p0[0] - W / 2) / s0, cy0 = 140 + 56 - (p0[1] - H / 2) / s0
@@ -673,16 +673,16 @@ const SCENES = [
   } },
   { from: LETTER_AT, to: 22.5, root: S7, draw(t) {
     const m = measure()
-    let7.root.style.transform = `translateY(${260 * (1 - spring(t - LETTER_AT, [90, 19]))}px)`
+    let7.root.style.transform = `translateY(${260 * (1 - spring(t - LETTER_AT, [160, 25.3]))}px)`
     let7.type(t, LETTER_AT + 0.35, 0.045)
     s7Type.draw(t, LETTER_AT + 0.05, 20.15, E16)
     // Once it's typed, push in on the second paragraph so budget and SEO read on a phone.
-    const z = spring(t - 20.15, [7, 5.3])
+    const z = spring(t - 20.15, [60, 15.5])
     const [px2, py2] = m ? m.let7p2 : [W / 2, H / 2]
     cam(w7, lerp(W / 2, px2, z), lerp(H / 2, py2, z), Math.exp(lerp(0, Math.log(1.6), z)))
   } },
   { from: 22.5, to: 25, root: S9, draw(t) {
-    cam(w9, 760, 380, 1.45 + 0.04 * spring(t - 22.5, [5, 4.5]))
+    cam(w9, 760, 380, 1.45) // no drift: the board swaps are the motion
     const i = clamp(Math.floor((t - 22.5) / E8), 0, 7)
     if (cur9 !== i) {
       cur9 = i
@@ -706,11 +706,11 @@ const SCENES = [
     boardLogos9[i].style.transform = `scale(${0.8 + 0.2 * pop})`
   } },
   { from: 25, to: 30, root: S10, draw(t) {
-    // One slow push under the whole card, still moving on the last frame.
-    S10.style.transformOrigin = '50% 40%'
-    S10.style.transform = `scale(${1 + 0.035 * spring(t - 25.0, [1.2, 2.2])})`
+    // The lockup and CTA hold still once they land (moving text steps a pixel at a time); the popup card rises,
+    // then keeps growing slowly from its top edge, so the frame never freezes.
     const up = spring(t - 25.1, [70, 16.7])
-    pop10.root.style.transform = `translate(${(W - 380 * K10) / 2}px, ${lerp(H + 40, H - 262 * K10, up)}px) scale(${K10})`
+    const k10 = K10 * (1 + 0.035 * spring(t - 25.6, [1.2, 2.2]))
+    pop10.root.style.transform = `translate(${(W - 380 * k10) / 2}px, ${lerp(H + 40, H - 262 * K10, up)}px) scale(${k10})`
     const lock = spring(t - 25.0, [110, 21])
     row10.style.transform = `translateY(${(1 - lock) * 3 * u}px)`
     row10.style.clipPath = `inset(${(1 - clamp(lock)) * 100}% 0 -20% 0)`

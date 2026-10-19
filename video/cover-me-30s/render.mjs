@@ -5,6 +5,7 @@
 //   node render.mjs --stills 0.5,2,3.7           PNGs at those seconds → out/16x9/stills/
 //   node render.mjs --from 8 --to 12             only that span → out/16x9/span.mp4 (for review)
 //   node render.mjs --workers 6                  parallel pages, joined losslessly
+//   node render.mjs --ss 1                       no supersampling (videos render at 2x and scale down by default)
 import { chromium } from 'playwright'
 import { execFileSync, spawn } from 'node:child_process'
 import { once } from 'node:events'
@@ -17,6 +18,9 @@ const argv = process.argv.slice(2)
 const opt = (k, d) => { const i = argv.indexOf('--' + k); return i >= 0 ? argv[i + 1] : d }
 const FPS = Number(opt('fps', 30)), SUB = Number(opt('sub', 1))
 const WORKERS = Number(opt('workers', 4))
+// Videos render at 2x and scale down: Chromium puts text on whole pixels vertically, so text the camera moves
+// slowly would step a pixel at a time; at 2x the steps are half a pixel and the downscale averages them away.
+const SS = opt('stills') ? 1 : Number(opt('ss', 2))
 const stage = resolve('stage.html')
 const out = resolve('out', '16x9')
 const [w, h] = [1920, 1080]
@@ -24,7 +28,7 @@ mkdirSync(out, { recursive: true })
 
 const browser = await chromium.launch({ args: ['--force-color-profile=srgb'] })
 async function open() {
-  const page = await browser.newPage({ viewport: { width: w, height: h } })
+  const page = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: SS })
   const errors = []
   page.on('pageerror', (e) => errors.push(e.message))
   await page.goto(pathToFileURL(stage).href)
@@ -69,7 +73,11 @@ try {
     const procs = []
     try {
       // tmix averages SUB consecutive subframes; select keeps the last of each group, so groups line up per segment.
-      const vf = SUB > 1 ? ['-vf', `tmix=frames=${SUB},select='eq(mod(n\\,${SUB})\\,${SUB - 1})',setpts=N/${FPS}/TB`] : []
+      const filters = [
+        ...(SS > 1 ? [`scale=${w}:${h}:flags=area`] : []),
+        ...(SUB > 1 ? [`tmix=frames=${SUB}`, `select='eq(mod(n\\,${SUB})\\,${SUB - 1})'`, `setpts=N/${FPS}/TB`] : []),
+      ]
+      const vf = filters.length ? ['-vf', filters.join(',')] : []
       const segs = await Promise.all(Array.from({ length: Math.ceil(frames / per) }, async (_, s) => {
         const page = s === 0 ? first : await open()
         const file = join(tmp, `seg${s}.mp4`)

@@ -28,9 +28,14 @@ pnpm install
 pnpm exec playwright install chromium   # once
 pnpm capture    # the real popup states and PDF → assets/popup/ (again whenever the popup or the example data changes)
 pnpm audio      # score, cue times and UI sounds → out/
-pnpm draft      # 30 fps, about 40 s → out/16x9/draft.mp4
-pnpm final      # 60 fps with 4 blended subframes, about 5 min → out/16x9/final.mp4
+pnpm draft      # 30 fps, about 1.5 min → out/16x9/draft.mp4
+pnpm final      # 60 fps with 4 blended subframes, about 10 min → out/16x9/final.mp4
 ```
+
+Videos render at 2x and scale down to 1080p (`--ss 1` turns that off). Chromium draws text on whole device pixels under a transform, so text that moves slowly steps a pixel at a time. Rendering at 2x halves those steps, and two rules in `film.js` keep text from stepping when it's meant to be still:
+
+- Text moves decisively or holds still. Don't give a text-bearing camera or card a slow "keep it alive" drift. Drift the images instead (the popup captures are images).
+- Springs end. `spring()` in `motion.js` returns its target exactly once the remaining motion is under 0.02%, so a settled camera never creeps.
 
 One frame: `node render.mjs --stills 12.8` (→ `out/16x9/stills/`). Preview in a browser: open `stage.html`, or `stage.html?t=12.8` for one frame. A review pass: `pnpm review`, plus strip times as extra arguments (`node review.mjs out/16x9/silent.mp4 13.6 15.5`).
 
