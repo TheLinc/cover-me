@@ -16,9 +16,9 @@ function HistoryRow({ label, date, faded }: { label: string; date: string; faded
 
 // The downloaded resume: the extension's Times-serif PDF template, in miniature.
 function PdfPage() {
-  const rule = <div className="mt-1.5 h-px bg-ink/80" />
+  const rule = <div className="mt-1.5 h-px bg-ink" />
   return (
-    <div className="flex h-[236px] w-[176px] rotate-[-3deg] flex-col rounded-[6px] bg-white px-4 py-4 font-serif shadow-[0_18px_40px_-20px_rgba(30,27,75,0.35)]">
+    <div className="flex h-[236px] w-[176px] flex-col rounded-[6px] bg-white px-4 py-4 font-serif shadow-[0_18px_40px_-20px_rgba(30,27,75,0.35)]">
       <div className="text-center text-[11px] font-bold tracking-[0.04em] text-ink">ALEX RIVERA</div>
       <div className="text-center text-[5.5px] text-subtle">alex@example.com · Chicago, IL</div>
       <div className="mt-2.5 text-[6.5px] font-bold uppercase tracking-[0.08em] text-ink">Experience</div>

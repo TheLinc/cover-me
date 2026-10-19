@@ -134,7 +134,7 @@ export function ApplicationCard({ app: initial, onDeleted, onInterviewChange }: 
   const score = app.tailoredResumes[0]?.atsScore ?? null
 
   return (
-    <article className="group/tile flex flex-col gap-4 rounded-[20px] border border-line/80 bg-surface p-5 shadow-[0_1px_2px_rgba(30,27,75,0.05),0_10px_28px_-16px_rgba(30,27,75,0.22)] transition-[box-shadow,transform] duration-200 ease-out hover:-translate-y-px hover:shadow-[0_1px_2px_rgba(30,27,75,0.06),0_16px_36px_-16px_rgba(30,27,75,0.32)]">
+    <article className="group/tile flex flex-col gap-4 rounded-[20px] border border-line bg-surface p-5 shadow-[0_1px_2px_rgba(30,27,75,0.05),0_10px_28px_-16px_rgba(30,27,75,0.22)] transition-[box-shadow,transform] duration-200 ease-out hover:-translate-y-px hover:shadow-[0_1px_2px_rgba(30,27,75,0.06),0_16px_36px_-16px_rgba(30,27,75,0.32)]">
       <header className="flex items-start gap-3">
         <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-[12px] bg-brand-tint text-[15px] font-semibold text-brand-ink">
           {monogram}
