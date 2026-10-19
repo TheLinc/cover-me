@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
 }
 
-const EFFECTIVE_DATE = 'October 15, 2026'
+const EFFECTIVE_DATE = 'October 16, 2026'
 const CONTACT_EMAIL  = 'support@cover-me.dev'
 
 // ── Section heading ────────────────────────────────────────────────────────
@@ -297,6 +297,20 @@ export default function PrivacyPage() {
                 stores a keyed hash (HMAC) of the address, never the address itself. When it reads a
                 newly uploaded resume, it also counts per account, keyed by a hash of your account ID.
                 A counter not updated for two days is deleted at the next cleanup, which runs during later requests.
+              </Li>
+              <Li>
+                <strong className="text-foreground">Website visits (cover-me.dev only, not the extension).</strong>{' '}
+                We count visits to the public pages of the website with PostHog, to see which links
+                bring people here. Each count records the page address, keeping only campaign tags such
+                as <code className="text-brand-light font-mono text-[13px]">utm_</code> parameters (ad
+                click IDs like fbclid or gclid are blanked in your browser before sending), the site you
+                came from, your browser details (browser, operating system, device type, screen size and
+                language) and your time zone. Nothing is stored in your browser: no cookies and no local
+                storage. PostHog uses your IP address only to make a one-day visitor count, a one-way
+                hash with your browser details and a salt it deletes daily, and does not store the
+                address or any location derived from it.
+                Visits are not linked to your account, and signed-in pages (sign-in, dashboard, checkout)
+                are not counted at all.
               </Li>
               <Li>
                 <strong className="text-foreground">Billing information (when you click Upgrade, and Pro subscribers).</strong>{' '}
@@ -589,6 +603,12 @@ export default function PrivacyPage() {
                   url: 'https://sentry.io/privacy/',
                   when: 'Visitors to cover-me.dev (the website, not the extension)',
                   receives: 'Error reports and page-load timing from the website: the error, page URL, browser version, and your user ID if you are signed in. Form contents, cookies, and email addresses are removed before sending.',
+                },
+                {
+                  name: 'PostHog',
+                  url: 'https://posthog.com/privacy',
+                  when: 'Visitors to the public pages of cover-me.dev (not the extension, and not signed-in pages)',
+                  receives: 'A count of each page visit: the page address with only its campaign tags (such as utm_ parameters; ad click IDs are blanked first), the referring site, browser details (browser, operating system, device type, screen size, language) and time zone. Requests go through cover-me.dev. Your IP address is used only to make a daily visitor hash and is not stored, nor is any location derived from it. No cookies or browser storage are used, and visits are not linked to your account.',
                 },
               ].map((svc) => (
                 <div key={svc.name} className="bg-surface border border-border rounded-[10px] px-5 py-4">
