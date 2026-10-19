@@ -1,0 +1,34 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>stage</title>
+<style>
+  /* Fonts load from local files only: a network font can be missing on frame 1. */
+  @font-face { font-family: Geist; src: url(../../extension/src/fonts/Geist-Variable.woff2) format('woff2'); font-weight: 100 900; }
+  @font-face { font-family: 'Geist Mono'; src: url(../../extension/src/fonts/GeistMono-Variable.woff2) format('woff2'); font-weight: 100 900; }
+  html, body { margin: 0; background: #000; }
+  #stage { position: relative; overflow: hidden; font-family: Geist, sans-serif; -webkit-font-smoothing: antialiased; font-feature-settings: 'tnum' 0; }
+  /* Nothing moves on its own. Every style comes from seek(t). */
+  #stage, #stage * { transition: none !important; animation: none !important; box-sizing: border-box; }
+  .flow, .flow * { position: relative; }
+  .kw { position: relative; display: inline; white-space: nowrap; }
+  .kwbg { position: absolute; left: -0.16em; right: -0.16em; top: -0.02em; bottom: -0.06em; border-radius: 0.22em; background: #EEEEFF; transform-origin: 0 50%; transform: scaleX(0); z-index: 0; }
+  .kwt { position: relative; z-index: 1; }
+  .serif { font-family: 'Times New Roman', Times, serif; color: #111; }
+  .skel { height: 9px; border-radius: 99px; background: #EFEDEA; margin-top: 14px; }
+</style>
+<div id="stage"></div>
+<script src="motion.js"></script>
+<script src="film.js"></script>
+<script>
+  // Preview in a normal browser: plays on a loop, or ?t=4.2 freezes one frame.
+  if (!navigator.webdriver) {
+    document.fonts.ready.then(() => {
+      const at = params.get('t')
+      if (at !== null) window.seek(Number(at))
+      else {
+        const t0 = performance.now()
+        ;(function loop() { window.seek(((performance.now() - t0) / 1000) % DURATION); requestAnimationFrame(loop) })()
+      }
+    })
+  }
+</script>
