@@ -20,7 +20,7 @@ const OTHERS = [
 ]
 const YOU = { name: EXAMPLE.candidate, title: 'Marketing Lead · Brightline' }
 
-const W = 720
+const W = 580 // widest row (yours, with the "You" tag) still has ~30px to spare
 const NARROW_W = 400 // phones: rows drop their term chips and keep the count
 const ROW_H = 64
 const LIST_TOP = 150
@@ -148,7 +148,7 @@ export function FoundInSearch() {
         dots={{ left: -60, top: 40, w: 420, h: 320 }}
         shape={{ left: -40, bottom: 30, size: 130, rotate: 12 }}
       />
-      <div className="grid items-center gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,720px)]">
+      <div className="grid items-center gap-14 lg:grid-cols-[minmax(360px,1fr)_minmax(0,580px)]">
         <div className="flex flex-col gap-5">
           <Eyebrow>Why the wording matters</Eyebrow>
           <h2 className="text-[clamp(32px,3.6vw,48px)] leading-[1.05]">Recruiters search for the posting&apos;s words. Tailored, you show up.</h2>

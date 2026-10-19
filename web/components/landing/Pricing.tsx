@@ -47,6 +47,7 @@ export function Pricing() {
           </a>
         </div>
       </div>
+      <p className="mt-6 text-center text-[14px] text-subtle">Prices in US dollars. In Canada, Pro is CA$20 a month or CA$48 every 3 months.</p>
     </section>
   )
 }
