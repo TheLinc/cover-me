@@ -7,7 +7,7 @@
 //   node render.mjs --workers 6                  parallel pages, joined losslessly
 import { chromium } from 'playwright'
 import { execFileSync, spawn } from 'node:child_process'
-import { mkdirSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
@@ -16,12 +16,12 @@ const argv = process.argv.slice(2)
 const opt = (k, d) => { const i = argv.indexOf('--' + k); return i >= 0 ? argv[i + 1] : d }
 const FPS = Number(opt('fps', 30)), SUB = Number(opt('sub', 1))
 const WORKERS = Number(opt('workers', 4)), SCALE = Number(opt('scale', 1))
-const stage = resolve(opt('stage', 'stage.html'))
+const stage = resolve('stage.html')
 const out = resolve('out', '16x9')
 const [w, h] = [1920, 1080]
 mkdirSync(out, { recursive: true })
 
-const browser = await chromium.launch({ args: ['--allow-file-access-from-files', '--force-color-profile=srgb'] })
+const browser = await chromium.launch({ args: ['--force-color-profile=srgb'] })
 async function open() {
   const page = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: SCALE })
   const errors = []
@@ -54,18 +54,21 @@ try {
     const from = Number(opt('from', 0)), to = Math.min(Number(opt('to', duration)), duration)
     // A frame's motion-blur subframes stop just before the next hard cut, so no frame blends two pictures.
     const at = (f, k) => {
-      const t0 = from + f / FPS, t = t0 + k / (FPS * SUB)
+      // Snapped to the microsecond, so a fractional --from can't put a frame that starts on a cut a hair before it.
+      const t0 = Math.round((from + f / FPS) * 1e6) / 1e6, t = t0 + k / (FPS * SUB)
       const cut = cuts.find((c) => c > t0 && c <= t)
       return cut === undefined ? t : cut - 1e-4
     }
     const frames = Math.round((to - from) * FPS)
     const per = Math.ceil(frames / WORKERS)
     const name = opt('from') || opt('to') ? 'span' : 'silent'
+    // Each run's segments go in their own folder, so two renders at once can't overwrite each other's.
+    const tmp = mkdtempSync(join(out, 'segs-'))
     // tmix averages SUB consecutive subframes; select keeps the last of each group, so groups line up per segment.
     const vf = SUB > 1 ? ['-vf', `tmix=frames=${SUB},select='eq(mod(n\\,${SUB})\\,${SUB - 1})',setpts=N/${FPS}/TB`] : []
     const segs = await Promise.all(Array.from({ length: Math.ceil(frames / per) }, async (_, s) => {
       const page = s === 0 ? first : await open()
-      const file = join(out, `seg${s}.mp4`)
+      const file = join(tmp, `seg${s}.mp4`)
       const ff = spawn('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(FPS * SUB), '-c:v', 'png', '-i', '-',
         ...vf, '-r', String(FPS), '-c:v', 'libx264', '-preset', 'slow', '-crf', '16', '-pix_fmt', 'yuv420p', file], { stdio: ['pipe', 'inherit', 'inherit'] })
       const done = new Promise((ok, fail) => ff.on('close', (c) => (c ? fail(new Error(`ffmpeg exited ${c}`)) : ok())))
@@ -80,10 +83,10 @@ try {
       await done
       return file
     }))
-    writeFileSync(join(out, 'segs.txt'), segs.map((f) => `file '${f.replace(/\\/g, '/')}'`).join('\n'))
-    execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', join(out, 'segs.txt'),
+    writeFileSync(join(tmp, 'segs.txt'), segs.map((f) => `file '${f.replace(/\\/g, '/')}'`).join('\n'))
+    execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', join(tmp, 'segs.txt'),
       '-c', 'copy', '-movflags', '+faststart', join(out, `${name}.mp4`)])
-    for (const f of [...segs, join(out, 'segs.txt')]) rmSync(f)
+    rmSync(tmp, { recursive: true })
     console.log(`${frames} frames → ${join(out, `${name}.mp4`)}`)
   }
 } finally {

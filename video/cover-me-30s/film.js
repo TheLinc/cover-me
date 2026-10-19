@@ -297,15 +297,14 @@ pop2.show('idle')
 
 // ── 3 · The real popup: Tailor, then the progress steps ───────────────
 const S3 = scene(C.paper)
-const K3 = 994 / 560
-const P3 = { x: 30 * u, y: (H - 994) / 2 }
 const TAIL_STEPS = ['plan', 'exp1', 'exp2', 'skills', 'score']
 const pop3 = makePopup(S3, ['idle', 'idle-hover-tailor', ...TAIL_STEPS.flatMap((k) => [0, 1, 2, 3].map((f) => `tail-${k}-${f}`))])
 // The Tailor button (css 18, 217 to 362, 251) darkens on the click, like Download PDF does.
 const press3 = el('div', { left: '18px', top: '217px', width: '344px', height: '34px', borderRadius: '10px', background: 'rgba(10,8,30,.32)', zIndex: 5 }, pop3.root)
 const s3Type = kinetic(S3, 'One click.', { left: px(1220), top: px(43 * u), fontSize: px(11 * u), whiteSpace: 'nowrap' })
-// Where shot 2's push hands the popup over: its center on screen, and its css scale (shot 3 starts at 0.873 of K3).
-const POP_S3 = { cx: P3.x + 190 * K3, cy: H / 2, k: K3 * 0.873 }
+// Where shot 2's push ends: the popup's center on screen and its css scale (about 1.55, so 868 px tall, left of
+// center). Shot 3 then cuts in on its Tailor button (cam3).
+const POP_S3 = { cx: 30 * u + (190 * 994) / 560, cy: H / 2, k: (994 / 560) * 0.873 }
 
 // ── 4 + 5 · Keywords fly into the resume; HubSpot bounces off ─────────
 const S4 = scene(C.paper)
@@ -324,7 +323,8 @@ res4Move()
 const ring4 = makeRing(w4, 176, { left: px(1820 - 88), top: px(130 - 88) }) // keep in step with RING4
 // Bullet 1 landed in the hook; budget and SEO land here.
 const LANDS = [HOOK_LAND, 9.375, 10.625]
-// HubSpot: lifts on the beat after SEO lands, hits the page on the next, rests beside the ring on the downbeat.
+// HubSpot: lifts a bar after SEO lands (after the proof beat), hits the page a beat later, rests beside the ring
+// a beat after that; Salesforce and SQL pop in beside it on the next two sixteenths.
 const HUB = { lift: 13.125, hit: 13.75, rest: 14.375 }
 // The push onto the ring for the match cut, and the cut itself.
 const PUSH_AT = 15.0, CUT6 = 15.625
@@ -414,7 +414,7 @@ function measure() {
   if (M || document.fonts.status !== 'loaded') return M
   M = {}
   // Hidden scenes have no layout: show them while measuring.
-  const hidden = [S1, S4, S7, S10, hub, fly1, ...fly4, ...res4.bullets.map((b) => b.after), ...res1.bullets.map((b) => b.after)]
+  const hidden = [S1, S4, S7, hub, fly1, ...fly4, ...res4.bullets.map((b) => b.after), ...res1.bullets.map((b) => b.after)]
   hidden.forEach((e) => show(e, true))
   // The resume is scaled about its top-left corner; offsets ignore transforms, so scale them here.
   const inRes = ([x, y]) => [RES4.x + (x - RES4.x) * RES4.k, RES4.y + (y - RES4.y) * RES4.k]
@@ -432,7 +432,7 @@ function measure() {
   const [rx1, ry1] = center(res1.bullets[0].slot.k, res1.root)
   M.s1to = [RES1.x + (rx1 - RES1.cropX) * RES1.k, RES1.y + (ry1 - RES1.cropY) * RES1.k]
   M.fly1W = [fly1.offsetWidth, fly1.offsetHeight]
-  ;[S1, S4, S7, S10].forEach((e) => show(e, false))
+  ;[S1, S4, S7].forEach((e) => show(e, false))
   return M
 }
 
@@ -501,8 +501,8 @@ const SCENES = [
     s1TypeB.draw(t, HOOK_LAND + E8 - 0.04, 2.38, 0.03)
   } },
   { from: 2.5, to: 5, root: S2, draw(t) {
-    // Pull out from the paragraph to the whole window, then follow the popup in until it sits
-    // exactly where shot 3 has it, so the cut only takes the browser away.
+    // Pull out from the posting to the posting and toolbar, then follow the popup in to POP_S3;
+    // shot 3 cuts in from there onto the Tailor button.
     const pull = spring(t - 2.5, [30, 11]), push = spring(t - 3.9, [42, 13])
     // Start where shot 1 left its posting: the page at the same size, in the same place on screen.
     const s0 = HOOK.f, p0 = [HOOK.x, HOOK.y]
