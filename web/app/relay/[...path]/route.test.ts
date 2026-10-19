@@ -43,6 +43,14 @@ describe('/relay', () => {
     expect(res.headers.get('content-type')).toBe('application/json')
   })
 
+  it('never lets a response render as a cover-me.dev page', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('<script>x</script>', { headers: { 'content-type': 'text/html' } })))
+    const res = await GET(new Request('https://www.cover-me.dev/relay/anything'))
+    expect(res.headers.get('content-type')).toBe('text/plain')
+    expect(res.headers.get('x-content-type-options')).toBe('nosniff')
+    expect(res.headers.get('content-security-policy')).toContain('sandbox')
+  })
+
   it('answers 502 instead of throwing when PostHog is unreachable', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => { throw new TypeError('fetch failed') }))
     const res = await POST(new Request('https://www.cover-me.dev/relay/e/', { method: 'POST', body: 'x' }))

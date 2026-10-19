@@ -38,6 +38,11 @@ async function relay(req: Request): Promise<Response> {
     const value = res.headers.get(name)
     if (value) out.set(name, value)
   }
+  // Whatever PostHog returns is served as cover-me.dev, where the session
+  // lives: nothing here may render or run as a page of ours
+  if (/html|xml/i.test(out.get('content-type') ?? '')) out.set('content-type', 'text/plain')
+  out.set('x-content-type-options', 'nosniff')
+  out.set('content-security-policy', "sandbox; default-src 'none'")
   return new Response(res.body, { status: res.status, headers: out })
 }
 

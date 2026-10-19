@@ -16,8 +16,9 @@ const config: NextConfig = {
   // ...and puts back the trailing-slash redirect for every other page, so
   // /about/ doesn't serve a duplicate of /about.
   async redirects() {
-    // [^/] first: "//evil.com/" must not become a redirect to //evil.com
-    return [{ source: '/:path((?!relay/)[^/].*)/', destination: '/:path', permanent: true }]
+    // A word character first: "//evil.com/" and "/\evil.com/" must not become
+    // a redirect to another site (browsers read "/\" as "//")
+    return [{ source: '/:path((?!relay/)[\\w-].*)/', destination: '/:path', permanent: true }]
   },
 }
 
