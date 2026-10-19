@@ -44,3 +44,32 @@ Sentry.init({
     /^Load failed$/,
   ],
 });
+
+// Cookieless page views for UTM and referrer attribution (lib/analytics.ts).
+// Off unless the key is set, which is only on Vercel's Production environment.
+// /relay (app/relay) forwards to PostHog so ad blockers don't drop it.
+const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
+if (posthogKey) {
+  Promise.all([import("posthog-js"), import("@/lib/analytics")]).then(
+    ([{ default: posthog }, { scrubEvent }]) => {
+      posthog.init(posthogKey, {
+        api_host: "/relay",
+        ui_host: "https://us.posthog.com",
+        defaults: "2026-08-30",
+        cookieless_mode: "always",
+        person_profiles: "never",
+        // Ad click IDs (fbclid, gclid, ...) become "<masked>" in the browser
+        mask_personal_data_properties: true,
+        autocapture: false,
+        capture_heatmaps: false,
+        capture_dead_clicks: false,
+        capture_exceptions: false,
+        capture_performance: false,
+        disable_session_recording: true,
+        disable_surveys: true,
+        advanced_disable_flags: true,
+        before_send: scrubEvent,
+      });
+    },
+  );
+}
