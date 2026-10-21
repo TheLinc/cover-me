@@ -132,7 +132,9 @@ function AuthForm() {
         if (session) window.location.href = afterOAuth(searchParams.get("plan"), searchParams.get("next"));
         else {
           setSigningIn(false);
-          if (!cancelledOAuth) setError(oauthReason || "Google sign-in didn't finish. Please try again.");
+          // A cancel can also carry #error=access_denied, which the hash
+          // branch above reads as a used email link: clear that too.
+          setError(cancelledOAuth ? "" : oauthReason || "Google sign-in didn't finish. Please try again.");
         }
       });
     }
