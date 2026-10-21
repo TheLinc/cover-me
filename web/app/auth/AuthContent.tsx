@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase";
-import { afterOAuth, oauthCancelled, oauthErrorDescription, oauthRedirectUrl, safeNext } from "@/lib/auth-redirect";
+import { afterOAuth, hashReturn, oauthCancelled, oauthErrorDescription, oauthRedirectUrl, safeNext } from "@/lib/auth-redirect";
 import { Button } from "@/components/ui/button";
 import { GoogleIcon } from "@/components/ui/google-icon";
 import { Input } from "@/components/ui/input";
@@ -44,7 +44,11 @@ function AuthForm() {
   const params = useSearchParams();
   const plan = params.get("plan");
 
-  const [view, setView] = useState<View>("signin");
+  // Back from an email link with the token in the hash: start on its view or
+  // error, not the sign-in form. The built /auth renders on the client only;
+  // `next dev` also renders it on the server, where there's no window.
+  const [fromHash] = useState(() => hashReturn(typeof window === "undefined" ? "" : window.location.hash));
+  const [view, setView] = useState<View>(fromHash.view ?? "signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -53,14 +57,16 @@ function AuthForm() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "success">("idle");
-  const [error, setError] = useState("");
+  // A Google return's hash error is a cancel or a failed sign-in, not a used
+  // email link: the getSession() branch below words it.
+  const [error, setError] = useState(params.has("oauth") ? "" : fromHash.error);
   // Back from Google or an email link: show a waiting view while the code is
   // swapped for a session, not the form. Fixed on the first render, since the
   // URL loses oauth and code below. /auth is static, so this renders on the
   // client only and reading params here can't mismatch the server HTML.
   // "opening" is Google with a session, navigating to the dashboard.
   const [waiting, setWaiting] = useState<"google" | "opening" | "email" | null>(() =>
-    params.has("error") ? null : params.has("oauth") ? "google" : params.has("code") ? "email" : null,
+    params.has("error") || fromHash.error ? null : params.has("oauth") ? "google" : params.has("code") ? "email" : null,
   );
   // A live region that mounts already filled isn't announced, so it stays
   // empty until after the first render.
@@ -94,24 +100,12 @@ function AuthForm() {
     }
 
     // Implicit flow (extension signup via raw GoTrue API): redirects with #access_token=...
+    // The view and any error were already read from the hash (fromHash above).
     const hash = window.location.hash;
     if (hash) {
       const h = new URLSearchParams(hash.slice(1));
 
-      if (h.get("error")) {
-        const errCode = h.get("error_code");
-        if (errCode === "otp_expired") {
-          setError("That confirmation link has expired. Sign in or sign up again to get a new one.");
-        } else if (errCode === "access_denied") {
-          setError("This link is invalid or has already been used. Sign in or request a new link.");
-        } else {
-          const desc = h.get("error_description");
-          setError(desc ? decodeURIComponent(desc.replace(/\+/g, " ")) : "Something went wrong. Please try again.");
-        }
-      } else if (h.get("access_token")) {
-        const type = h.get("type");
-        if (type === "signup") setView("confirmed");
-        if (type === "recovery") setView("reset");
+      if (!h.get("error") && h.get("access_token")) {
         // The pkce browser client never consumes implicit-flow hash tokens,
         // and the dashboard is server-guarded via cookies — without an
         // explicit setSession the user lands on "confirmed" signed out, and
@@ -147,9 +141,8 @@ function AuthForm() {
         if (session) openDashboard();
         else {
           setWaiting(null);
-          // A cancel can also carry #error=access_denied, which the hash
-          // branch above reads as a used email link: clear that too.
-          setError(cancelledOAuth ? "" : oauthReason || "Google sign-in didn't finish. Please try again.");
+          // A cancel (?error= or #error=access_denied) shows no error.
+          if (!cancelledOAuth) setError(oauthReason || "Google sign-in didn't finish. Please try again.");
         }
       });
     }

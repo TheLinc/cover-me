@@ -1,13 +1,11 @@
 import * as React from 'react'
 import { cn } from '@/lib/utils'
 
-// bg-surface, not bg-card: globals.css also sets --card to a hex after the
-// base layer, which wins, so hsl(var(--card)) is invalid and renders transparent.
 const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn('rounded-lg border border-border bg-surface text-card-foreground', className)}
+      className={cn('rounded-lg border border-border bg-card text-card-foreground', className)}
       {...props}
     />
   )

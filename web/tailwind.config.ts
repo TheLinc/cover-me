@@ -54,7 +54,7 @@ const config: Config = {
           soft:     'var(--ext-accent-soft)',
         },
         // Legacy aliases still used by inner pages. New code uses the names above.
-        surface:  'var(--card)',
+        surface:  'var(--surface)',
         elevated: 'var(--panel)',
         dim:      'var(--subtle)',
         success:  'var(--brand-strong)',
