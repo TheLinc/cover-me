@@ -82,7 +82,10 @@ export function ProgressStep({
           )}
         />
       )}
-      <span>{children}</span>
+      <span>
+        <span className="sr-only">{state === 'done' ? 'Done: ' : state === 'active' ? 'In progress: ' : 'Next: '}</span>
+        {children}
+      </span>
     </li>
   )
 }

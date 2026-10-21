@@ -62,10 +62,14 @@ function AuthForm() {
   const [waiting, setWaiting] = useState<"google" | "opening" | "email" | null>(() =>
     params.has("error") ? null : params.has("oauth") ? "google" : params.has("code") ? "email" : null,
   );
+  // A live region that mounts already filled isn't announced, so it stays
+  // empty until after the first render.
+  const [announce, setAnnounce] = useState(false);
 
   const supabase = createClient();
 
   useEffect(() => {
+    setAnnounce(true);
     // PKCE flow (web signup): Supabase redirects to /auth?code=xxx.
     // createBrowserClient auto-exchanges the code internally and fires SIGNED_IN.
     // We detect the code param as a signal that this is an email confirmation,
@@ -371,6 +375,10 @@ function AuthForm() {
           className="relative z-[1] w-full max-w-[340px] max-md:max-w-full"
           style={{ animation: "fadeUp 0.5s ease 0.15s both" }}
         >
+          <p role="status" className="sr-only">
+            {announce && (waiting === "email" ? "Checking your link" : waiting === "opening" ? "Opening your dashboard" : waiting ? "Signing you in" : "")}
+          </p>
+
           {/* Mobile logo */}
           <a
             href="/"
@@ -384,7 +392,7 @@ function AuthForm() {
 
           {/* ── Back from Google or an email link ── */}
           {waiting ? (
-            <div role="status" aria-live="polite">
+            <div>
               <div className="mb-7">
                 <h2 className="text-2xl text-foreground leading-[1.2] mb-[5px]">
                   {waiting === "email" ? "Checking your link." : "Signing you in."}
