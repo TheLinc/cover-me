@@ -145,7 +145,8 @@ function AuthForm() {
     // in which case onAuthStateChange fires INITIAL_SESSION (not SIGNED_IN).
     if (isConfirmation) {
       supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session) setView("confirmed");
+        // A recovery link also comes back with ?code= and has already set "reset".
+        if (session) setView((v) => (v === "signin" ? "confirmed" : v));
         setSigningIn(false);
       });
     }
