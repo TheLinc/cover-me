@@ -52,6 +52,10 @@ function AuthForm() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "success">("idle");
   const [error, setError] = useState("");
+  // Back from Google: show "Signing you in…" while the code is swapped for a
+  // session, not the form. /auth is static, so this renders on the client
+  // only and reading params here can't mismatch the server HTML.
+  const [signingIn, setSigningIn] = useState(() => params.has("oauth") && !params.has("error"));
 
   const supabase = createClient();
 
@@ -126,7 +130,12 @@ function AuthForm() {
     if (isOAuth) {
       supabase.auth.getSession().then(({ data: { session } }) => {
         if (session) window.location.href = afterOAuth(searchParams.get("plan"), searchParams.get("next"));
-        else if (!cancelledOAuth) setError(oauthReason || "Google sign-in didn't finish. Please try again.");
+        else {
+          setSigningIn(false);
+          // A cancel can also carry #error=access_denied, which the hash
+          // branch above reads as a used email link: clear that too.
+          setError(cancelledOAuth ? "" : oauthReason || "Google sign-in didn't finish. Please try again.");
+        }
       });
     }
 
@@ -360,8 +369,13 @@ function AuthForm() {
             </span>
           </a>
 
-          {/* ── Email confirmed ── */}
-          {view === "confirmed" ? (
+          {signingIn ? (
+            <div className="flex items-center gap-2.5 text-[14px] text-muted-foreground">
+              <Spinner />
+              Signing you in…
+            </div>
+          ) : /* ── Email confirmed ── */
+          view === "confirmed" ? (
             <>
               <div className="w-12 h-12 rounded-full bg-[rgba(79,70,229,0.1)] border border-[rgba(79,70,229,0.25)] flex items-center justify-center mb-6">
                 <CheckIcon size={22} color="var(--success)" />
