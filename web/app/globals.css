@@ -10,7 +10,7 @@
 :root {
   --paper:        #F5F3F2; /* page */
   --panel:        #ECEAE7; /* soft panels behind product visuals */
-  --card:         #FFFFFF;
+  --surface:      #FFFFFF; /* cards; shadcn bg-card reads the HSL --card below */
   --line:         #E2DFDB;
   --ink:          #1E1B4B; /* headings, strong text */
   --body:         #2A2A2A; /* body text */
@@ -130,7 +130,7 @@ img, svg, video { display: block; }
 @layer components {
   /* White rounded card on the paper background. */
   .soft-card {
-    background: var(--card);
+    background: var(--surface);
     border-radius: 24px;
   }
 

@@ -186,7 +186,7 @@ Warm neutrals with Cover Me indigo as the only accent, and orange reserved for A
 
 ### Neutral
 - **Warm Paper** (`paper`) is every page background and the drawer's background.
-- **White Card** (`card`) is every tile, the search field, chips and outline buttons. In code it is written `bg-surface`, a legacy alias for `--card`.
+- **White Card** (`card`) is every tile, the search field, chips and outline buttons. In code it is written `bg-surface`, a legacy alias for `--surface`.
 - **Soft Panel** (`panel`) fills skeleton blocks, ghost-button hover and the Free badge.
 - **Hairline** (`line`) is tile borders at 80% opacity, chip and button outlines, dashed empty states and the rules above the extension row and the drawer footer.
 - **Deep Ink** (`ink`) is headings, tile titles, letter text and strong numbers.

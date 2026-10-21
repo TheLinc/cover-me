@@ -14,7 +14,7 @@ indigo, so the popup and the site match.
 |---|---|---|
 | paper | #F5F3F2 | page background |
 | panel | #ECEAE7 | soft panels behind product visuals |
-| card | #FFFFFF | cards |
+| surface | #FFFFFF | cards (`bg-surface`; shadcn `bg-card` reads its own HSL `--card`) |
 | line | #E2DFDB | dividers, borders |
 | ink | #1E1B4B | headings, strong text |
 | body | #2A2A2A | body text |
