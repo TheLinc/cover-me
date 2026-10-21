@@ -16,6 +16,8 @@ import {
   EyeSlashIcon,
 } from "@phosphor-icons/react";
 import { Spinner } from "@/components/ui/spinner";
+import { Card } from "@/components/ui/card";
+import { ProgressStep } from "@/components/landing/ExtensionPopup";
 
 type View = "signin" | "signup" | "forgot" | "reset" | "confirmed";
 
@@ -55,17 +57,25 @@ function AuthForm() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "success">("idle");
-  const [error, setError] = useState(fromHash.error);
-  // Back from Google or an email link: show "Signing you in…" while the code
-  // is swapped for a session, not the form. /auth is static, so this renders
-  // on the client only and reading params here can't mismatch the server HTML.
-  const [signingIn, setSigningIn] = useState(
-    () => (params.has("oauth") || params.has("code")) && !params.has("error"),
+  // A Google return's hash error is a cancel or a failed sign-in, not a used
+  // email link: the getSession() branch below words it.
+  const [error, setError] = useState(params.has("oauth") ? "" : fromHash.error);
+  // Back from Google or an email link: show a waiting view while the code is
+  // swapped for a session, not the form. Fixed on the first render, since the
+  // URL loses oauth and code below. /auth is static, so this renders on the
+  // client only and reading params here can't mismatch the server HTML.
+  // "opening" is Google with a session, navigating to the dashboard.
+  const [waiting, setWaiting] = useState<"google" | "opening" | "email" | null>(() =>
+    params.has("error") || fromHash.error ? null : params.has("oauth") ? "google" : params.has("code") ? "email" : null,
   );
+  // A live region that mounts already filled isn't announced, so it stays
+  // empty until after the first render.
+  const [announce, setAnnounce] = useState(false);
 
   const supabase = createClient();
 
   useEffect(() => {
+    setAnnounce(true);
     // PKCE flow (web signup): Supabase redirects to /auth?code=xxx.
     // createBrowserClient auto-exchanges the code internally and fires SIGNED_IN.
     // We detect the code param as a signal that this is an email confirmation,
@@ -112,23 +122,27 @@ function AuthForm() {
       window.history.replaceState(null, "", window.location.pathname);
     }
 
+    function openDashboard() {
+      setWaiting("opening");
+      window.location.href = afterOAuth(searchParams.get("plan"), searchParams.get("next"));
+    }
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") setView("reset");
       // Fires after auto-exchange of PKCE code completes
       if (event === "SIGNED_IN" && isConfirmation) setView("confirmed");
-      if (event === "SIGNED_IN" && isOAuth) window.location.href = afterOAuth(searchParams.get("plan"), searchParams.get("next"));
+      if (event === "SIGNED_IN" && isOAuth) openDashboard();
     });
 
     // getSession waits for the client's code exchange, so no session here
     // means the exchange failed (an expired or reused link, say).
     if (isOAuth) {
       supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session) window.location.href = afterOAuth(searchParams.get("plan"), searchParams.get("next"));
+        if (session) openDashboard();
         else {
-          setSigningIn(false);
-          // A cancel can also carry #error=access_denied, which the hash
-          // branch above reads as a used email link: clear that too.
-          setError(cancelledOAuth ? "" : oauthReason || "Google sign-in didn't finish. Please try again.");
+          setWaiting(null);
+          // A cancel (?error= or #error=access_denied) shows no error.
+          if (!cancelledOAuth) setError(oauthReason || "Google sign-in didn't finish. Please try again.");
         }
       });
     }
@@ -139,7 +153,7 @@ function AuthForm() {
       supabase.auth.getSession().then(({ data: { session } }) => {
         // A recovery link also comes back with ?code= and has already set "reset".
         if (session) setView((v) => (v === "signin" ? "confirmed" : v));
-        setSigningIn(false);
+        setWaiting(null);
       });
     }
 
@@ -337,7 +351,7 @@ function AuthForm() {
       </div>
 
       {/* ── Right panel ─────────────────────────────────────────────────── */}
-      <div className="relative bg-background flex flex-col items-center justify-center px-10 py-12 min-h-screen max-md:px-6 max-md:pt-14 max-md:pb-10">
+      <div className="relative bg-background flex flex-col items-center px-10 py-12 min-h-screen max-md:px-6 max-md:pt-14 max-md:pb-10">
 
         {/* Back link — hidden in reset view (user arrived via email link) */}
         {view !== "reset" && (
@@ -350,10 +364,18 @@ function AuthForm() {
           </a>
         )}
 
+        {/* Top-aligned, not centred, so a heading stays put when the view
+            changes height (waiting view to form, sign-in to forgot). The offsets
+            put every heading where the centred sign-in form had it (a 429px
+            column on desktop, measured; phones add the logo above it). */}
         <div
-          className="relative z-[1] w-full max-w-[340px] max-md:max-w-full"
+          className="relative z-[1] w-full max-w-[340px] mt-[max(0px,calc(50vh-262px))] max-md:max-w-full max-md:mt-[max(0px,calc(50vh-291px))]"
           style={{ animation: "fadeUp 0.5s ease 0.15s both" }}
         >
+          <p role="status" className="sr-only">
+            {announce && (waiting === "email" ? "Checking your link" : waiting === "opening" ? "Opening your dashboard" : waiting ? "Signing you in" : "")}
+          </p>
+
           {/* Mobile logo */}
           <a
             href="/"
@@ -365,10 +387,37 @@ function AuthForm() {
             </span>
           </a>
 
-          {signingIn ? (
-            <div className="flex items-center gap-2.5 text-[14px] text-muted-foreground">
-              <Spinner />
-              Signing you in…
+          {/* ── Back from Google or an email link ── */}
+          {waiting ? (
+            <div>
+              <div className="mb-7">
+                <h2 className="text-2xl text-foreground leading-[1.2] mb-[5px]">
+                  {waiting === "email" ? "Checking your link." : "Signing you in."}
+                </h2>
+                <p className="text-[13.5px] text-muted-foreground leading-[1.55]">
+                  {waiting === "email" ? "One moment." : "Opening your dashboard in a moment."}
+                </p>
+              </div>
+              <Card className="rounded-[16px] p-4 shadow-[0_1px_2px_rgba(30,27,75,0.05),0_12px_28px_-16px_rgba(30,27,75,0.18)]">
+                <ul className="flex flex-col gap-3">
+                  {waiting === "email" ? (
+                    <>
+                      <ProgressStep tone="light" state="done">Back from your email</ProgressStep>
+                      <ProgressStep tone="light" state="active">Checking your link</ProgressStep>
+                    </>
+                  ) : (
+                    <>
+                      <ProgressStep tone="light" state="done">Back from Google</ProgressStep>
+                      <ProgressStep tone="light" state={waiting === "opening" ? "done" : "active"}>
+                        Starting your session
+                      </ProgressStep>
+                      <ProgressStep tone="light" state={waiting === "opening" ? "active" : "todo"}>
+                        Opening your dashboard
+                      </ProgressStep>
+                    </>
+                  )}
+                </ul>
+              </Card>
             </div>
           ) : /* ── Email confirmed ── */
           view === "confirmed" ? (

@@ -36,30 +36,56 @@ export function ExtensionPopup({
 
 export type StepState = 'done' | 'active' | 'todo'
 
-// One line of the popup's tailoring progress list.
-export function ProgressStep({ state, children }: { state: StepState; children: ReactNode }) {
+// One line of the popup's tailoring progress list. tone="light" draws the same
+// row on the site's paper palette (the /auth waiting view).
+export function ProgressStep({
+  state,
+  children,
+  tone = 'dark',
+}: {
+  state: StepState
+  children: ReactNode
+  tone?: 'dark' | 'light'
+}) {
+  const light = tone === 'light'
   return (
     <li
       className={cn(
-        'flex items-center gap-2.5 text-[12px]',
-        state === 'done' && 'text-ext-soft',
-        state === 'active' && 'font-medium text-ext-text',
-        state === 'todo' && 'text-ext-muted',
+        'flex items-center gap-2.5',
+        light ? 'text-[13px]' : 'text-[12px]',
+        state === 'done' && (light ? 'text-ink-2' : 'text-ext-soft'),
+        state === 'active' && (light ? 'font-medium text-ink' : 'font-medium text-ext-text'),
+        state === 'todo' && (light ? 'text-subtle' : 'text-ext-muted'),
       )}
     >
       {state === 'done' && (
-        <span className="flex size-4 shrink-0 items-center justify-center rounded-[5px] bg-[rgba(99,102,241,0.28)] text-ext-soft">
+        <span
+          className={cn(
+            'flex size-4 shrink-0 items-center justify-center rounded-[5px]',
+            light ? 'bg-brand-tint text-brand-ink' : 'bg-[rgba(99,102,241,0.28)] text-ext-soft',
+          )}
+        >
           <CheckIcon size={10} weight="bold" />
         </span>
       )}
       {state === 'active' && (
-        <svg className="size-4 shrink-0 animate-spin" viewBox="0 0 16 16" fill="none">
-          <circle cx="8" cy="8" r="6" stroke="var(--ext-border)" strokeWidth="2" />
+        <svg className="size-4 shrink-0 animate-spin" viewBox="0 0 16 16" fill="none" aria-hidden>
+          <circle cx="8" cy="8" r="6" stroke={light ? 'var(--line)' : 'var(--ext-border)'} strokeWidth="2" />
           <path d="M8 2a6 6 0 0 1 6 6" stroke="var(--brand)" strokeWidth="2" strokeLinecap="round" />
         </svg>
       )}
-      {state === 'todo' && <span className="size-4 shrink-0 rounded-[5px] border border-dashed border-ext-border" />}
-      <span>{children}</span>
+      {state === 'todo' && (
+        <span
+          className={cn(
+            'size-4 shrink-0 rounded-[5px] border border-dashed',
+            light ? 'border-current opacity-50' : 'border-ext-border',
+          )}
+        />
+      )}
+      <span>
+        <span className="sr-only">{state === 'done' ? 'Done: ' : state === 'active' ? 'In progress: ' : 'Next: '}</span>
+        {children}
+      </span>
     </li>
   )
 }
