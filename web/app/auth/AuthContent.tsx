@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase";
-import { afterOAuth, oauthCancelled, oauthErrorDescription, oauthRedirectUrl, safeNext } from "@/lib/auth-redirect";
+import { afterOAuth, hashReturn, oauthCancelled, oauthErrorDescription, oauthRedirectUrl, safeNext } from "@/lib/auth-redirect";
 import { Button } from "@/components/ui/button";
 import { GoogleIcon } from "@/components/ui/google-icon";
 import { Input } from "@/components/ui/input";
@@ -42,7 +42,10 @@ function AuthForm() {
   const params = useSearchParams();
   const plan = params.get("plan");
 
-  const [view, setView] = useState<View>("signin");
+  // Back from an email link with the token in the hash: start on its view or
+  // error, not the sign-in form. Client-only, like signingIn below.
+  const [fromHash] = useState(() => hashReturn(window.location.hash));
+  const [view, setView] = useState<View>(fromHash.view ?? "signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -51,7 +54,7 @@ function AuthForm() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "success">("idle");
-  const [error, setError] = useState("");
+  const [error, setError] = useState(fromHash.error);
   // Back from Google or an email link: show "Signing you in…" while the code
   // is swapped for a session, not the form. /auth is static, so this renders
   // on the client only and reading params here can't mismatch the server HTML.
@@ -86,24 +89,12 @@ function AuthForm() {
     }
 
     // Implicit flow (extension signup via raw GoTrue API): redirects with #access_token=...
+    // The view and any error were already read from the hash (fromHash above).
     const hash = window.location.hash;
     if (hash) {
       const h = new URLSearchParams(hash.slice(1));
 
-      if (h.get("error")) {
-        const errCode = h.get("error_code");
-        if (errCode === "otp_expired") {
-          setError("That confirmation link has expired. Sign in or sign up again to get a new one.");
-        } else if (errCode === "access_denied") {
-          setError("This link is invalid or has already been used. Sign in or request a new link.");
-        } else {
-          const desc = h.get("error_description");
-          setError(desc ? decodeURIComponent(desc.replace(/\+/g, " ")) : "Something went wrong. Please try again.");
-        }
-      } else if (h.get("access_token")) {
-        const type = h.get("type");
-        if (type === "signup") setView("confirmed");
-        if (type === "recovery") setView("reset");
+      if (!h.get("error") && h.get("access_token")) {
         // The pkce browser client never consumes implicit-flow hash tokens,
         // and the dashboard is server-guarded via cookies — without an
         // explicit setSession the user lands on "confirmed" signed out, and
