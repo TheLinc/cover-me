@@ -43,8 +43,9 @@ function AuthForm() {
   const plan = params.get("plan");
 
   // Back from an email link with the token in the hash: start on its view or
-  // error, not the sign-in form. Client-only, like signingIn below.
-  const [fromHash] = useState(() => hashReturn(window.location.hash));
+  // error, not the sign-in form. The built /auth renders on the client only;
+  // `next dev` also renders it on the server, where there's no window.
+  const [fromHash] = useState(() => hashReturn(typeof window === "undefined" ? "" : window.location.hash));
   const [view, setView] = useState<View>(fromHash.view ?? "signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
