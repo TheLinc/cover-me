@@ -8,12 +8,20 @@ import { EXAMPLE, LetterDoc, ResumeDoc } from './visuals'
 // A real tailoring run takes about 30 s; this replays one in a few seconds
 // (the caption says so). The server renders the finished state.
 const RUN_SECONDS = 28
+// The popup's four tailor steps (extension/src/lib/progress-steps.ts).
 const STEPS = [
   { at: 0, label: 'Read the posting' },
-  { at: 4, label: 'Rewrite summary' },
-  { at: 10, label: 'Rewrite experience' },
-  { at: 22, label: 'Match skills' },
+  { at: 3, label: 'Plan the changes' },
+  { at: 7, label: 'Rewrite your resume' },
+  { at: 23, label: 'Check and score' },
 ]
+
+// The part being rewritten, shown next to the active step as the popup does.
+function rewriteDetail(t: number) {
+  if (t < 10) return 'Summary'
+  if (t < 20) return `Experience, ${Math.min(3, 1 + Math.floor((t - 10) / 3.4))} of 3`
+  return 'Skills'
+}
 
 function stepState(i: number, t: number) {
   const next = STEPS[i + 1]?.at ?? RUN_SECONDS
@@ -26,7 +34,6 @@ function Run() {
   const [ref, value] = useCountUp<HTMLDivElement>(RUN_SECONDS, { duration: 5200 })
   const t = Number(value)
   const done = t >= RUN_SECONDS
-  const role = Math.min(3, 1 + Math.floor((t - 10) / 4))
   return (
     <div ref={ref} className="relative h-full w-full">
       <LetterDoc className="absolute left-0 top-6 w-[250px] -rotate-[7deg] opacity-95" />
@@ -55,7 +62,9 @@ function Run() {
               return (
                 <ProgressStep key={s.label} state={state}>
                   {s.label}
-                  {s.label === 'Rewrite experience' && state === 'active' ? ` (${role} of 3)` : ''}
+                  {s.label === 'Rewrite your resume' && state === 'active' && (
+                    <span className="ml-1.5 font-normal text-ext-muted">{rewriteDetail(t)}</span>
+                  )}
                 </ProgressStep>
               )
             })}

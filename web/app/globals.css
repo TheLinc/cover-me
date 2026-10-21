@@ -33,13 +33,13 @@
   /* extension-palette:start
    * The extension popup's own dark UI, used only inside product visuals so they
    * match the real popup. scripts/check-brand.mjs allows these hexes only here. */
-  --ext-bg:       #0D1117;
-  --ext-surface:  #161C2E;
-  --ext-elevated: #1E2740;
-  --ext-border:   #2A3452;
-  --ext-text:     #E2E8F0;
-  --ext-muted:    #94A3B8;
-  --ext-accent-soft: #A5B4FC;
+  --ext-bg:       #15132B;
+  --ext-surface:  #1C1A38;
+  --ext-elevated: #272449;
+  --ext-border:   #35315E;
+  --ext-text:     #EEEDF8;
+  --ext-muted:    #A6A3C6;
+  --ext-accent-soft: #AAB4FF;
   /* extension-palette:end */
 }
 
