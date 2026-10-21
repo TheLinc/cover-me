@@ -66,6 +66,12 @@ if (RETIRED_PRICING.test(readFileSync('public/llms.txt', 'utf8'))) errors.push('
 
 // Token contrast (WCAG AA, 4.5:1 for body-size text)
 const css = readFileSync('app/globals.css', 'utf8')
+// Tailwind hoists @layer base above the plain :root, so a name declared in both
+// takes the plain value and breaks shadcn's hsl(var(--x)) (#45).
+const declared = [...css.matchAll(/^\s*(--[\w-]+):/gm)].map((m) => m[1])
+for (const name of new Set(declared.filter((n, i) => declared.indexOf(n) !== i))) {
+  errors.push(`globals.css declares ${name} more than once; give the hex and HSL tokens different names`)
+}
 const hex = (name) => css.match(new RegExp(`--${name}:\\s*(#[0-9a-fA-F]{6})`))?.[1]
 const lum = (h) => {
   const [r, g, b] = [1, 3, 5]
@@ -74,7 +80,7 @@ const lum = (h) => {
   return 0.2126 * r + 0.7152 * g + 0.0722 * b
 }
 const PAIRS = [
-  ['ink', 'paper'], ['body', 'paper'], ['ink-2', 'paper'], ['ink-2', 'panel'], ['subtle', 'paper'], ['subtle', 'card'],
+  ['ink', 'paper'], ['body', 'paper'], ['ink-2', 'paper'], ['ink-2', 'panel'], ['subtle', 'paper'], ['subtle', 'surface'],
   ['on-brand', 'brand-strong'], ['brand-ink', 'brand-tint'], ['brand-strong', 'paper'], ['gap-ink', 'gap-tint'],
   ['on-night', 'night'], ['on-night-2', 'night'], ['ext-text', 'ext-bg'], ['ext-muted', 'ext-bg'],
 ]
