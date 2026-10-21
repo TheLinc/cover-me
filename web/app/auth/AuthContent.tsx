@@ -351,7 +351,7 @@ function AuthForm() {
       </div>
 
       {/* ── Right panel ─────────────────────────────────────────────────── */}
-      <div className="relative bg-background flex flex-col items-center justify-center px-10 py-12 min-h-screen max-md:px-6 max-md:pt-14 max-md:pb-10">
+      <div className="relative bg-background flex flex-col items-center px-10 py-12 min-h-screen max-md:px-6 max-md:pt-14 max-md:pb-10">
 
         {/* Back link — hidden in reset view (user arrived via email link) */}
         {view !== "reset" && (
@@ -364,8 +364,12 @@ function AuthForm() {
           </a>
         )}
 
+        {/* Top-aligned, not centred, so a heading stays put when the view
+            changes height (waiting view to form, sign-in to forgot). The offsets
+            put every heading where the centred sign-in form had it (a 429px
+            column on desktop, measured; phones add the logo above it). */}
         <div
-          className="relative z-[1] w-full max-w-[340px] max-md:max-w-full"
+          className="relative z-[1] w-full max-w-[340px] mt-[max(0px,calc(50vh-262px))] max-md:max-w-full max-md:mt-[max(0px,calc(50vh-291px))]"
           style={{ animation: "fadeUp 0.5s ease 0.15s both" }}
         >
           <p role="status" className="sr-only">
