@@ -76,7 +76,10 @@ export function ProgressStep({
       )}
       {state === 'todo' && (
         <span
-          className={cn('size-4 shrink-0 rounded-[5px] border border-dashed', light ? 'border-line' : 'border-ext-border')}
+          className={cn(
+            'size-4 shrink-0 rounded-[5px] border border-dashed',
+            light ? 'border-current opacity-50' : 'border-ext-border',
+          )}
         />
       )}
       <span>{children}</span>
