@@ -52,10 +52,12 @@ function AuthForm() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "success">("idle");
   const [error, setError] = useState("");
-  // Back from Google: show "Signing you in…" while the code is swapped for a
-  // session, not the form. /auth is static, so this renders on the client
-  // only and reading params here can't mismatch the server HTML.
-  const [signingIn, setSigningIn] = useState(() => params.has("oauth") && !params.has("error"));
+  // Back from Google or an email link: show "Signing you in…" while the code
+  // is swapped for a session, not the form. /auth is static, so this renders
+  // on the client only and reading params here can't mismatch the server HTML.
+  const [signingIn, setSigningIn] = useState(
+    () => (params.has("oauth") || params.has("code")) && !params.has("error"),
+  );
 
   const supabase = createClient();
 
@@ -144,6 +146,7 @@ function AuthForm() {
     if (isConfirmation) {
       supabase.auth.getSession().then(({ data: { session } }) => {
         if (session) setView("confirmed");
+        setSigningIn(false);
       });
     }
 
