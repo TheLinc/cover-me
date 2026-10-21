@@ -3,7 +3,7 @@
 export const FAQ_ITEMS = [
   {
     q: "Is Cover Me free to use?",
-    a: "Yes. Cover Me is free forever. In BYOK mode you use your own Claude or OpenAI API key: unlimited cover letters and resume tailoring at your own API cost, with no account required. The hosted free tier gives you 10 AI generations to start, then 5 a week, cover letters and resume tailoring combined. Pro ($15/month, or $35 every 3 months) raises that to 25 a day and saves every application, searchable on your dashboard. Free and BYOK keep your last 50 letters in the extension.",
+    a: "Yes. Cover Me is free forever. In BYOK mode you use your own Claude or OpenAI API key: unlimited cover letters and resume tailoring at your own API cost, with no account required. The hosted free tier gives you 10 AI generations to start, then 5 a week, cover letters and resume tailoring combined. Pro ($15/month, or $35 every 3 months) raises that to 25 a day and saves every application, searchable on your dashboard. Free and BYOK keep your last 50 letters and 20 tailored resumes in the extension.",
   },
   {
     q: "Can Cover Me tailor my resume too?",
