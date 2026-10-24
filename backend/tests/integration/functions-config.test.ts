@@ -17,4 +17,11 @@ describe('Edge Function declarations', () => {
     const declared = [...config.matchAll(/^\[functions\.([\w-]+)\]/gm)].map((m) => m[1]).sort()
     expect(declared).toEqual(folders)
   })
+
+  // The gateway's check only accepts tokens signed with the legacy JWT secret,
+  // which production no longer uses. Each function checks the token itself.
+  it('leaves the gateway JWT check off', () => {
+    const config = readFileSync(join(SUPABASE_DIR, 'config.toml'), 'utf8')
+    expect(config).not.toMatch(/^verify_jwt\s*=\s*true/m)
+  })
 })

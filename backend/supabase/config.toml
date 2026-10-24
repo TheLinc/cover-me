@@ -447,23 +447,26 @@ enabled = true
 [functions.scrape]
 verify_jwt = false
 
-# Every other function requires a signed-in user's JWT at the gateway, as in
-# production. They're declared because the Supabase GitHub integration deploys
-# only functions listed here (tests/integration/functions-config.test.ts).
+# Every other function requires a signed-in user, checked in its own code with
+# auth.getUser() (401 without a valid token, tests/integration/auth.test.ts).
+# The gateway check stays off: it only accepts tokens signed with the legacy JWT
+# secret, so it would reject every user once Auth signs with the new keys.
+# They're declared because the Supabase GitHub integration deploys only
+# functions listed here (tests/integration/functions-config.test.ts).
 [functions.applications]
-verify_jwt = true
+verify_jwt = false
 
 [functions.billing]
-verify_jwt = true
+verify_jwt = false
 
 [functions.generate]
-verify_jwt = true
+verify_jwt = false
 
 [functions.letters]
-verify_jwt = true
+verify_jwt = false
 
 [functions.resume]
-verify_jwt = true
+verify_jwt = false
 
 [functions.tailor]
-verify_jwt = true
+verify_jwt = false
