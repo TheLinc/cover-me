@@ -53,9 +53,13 @@ const INNER_CAPS = /^[A-Za-z]*[a-z][A-Z]/
 // an everyday word. Acronyms, tokens with digits and inner capitals (HIPAA,
 // 401k, NetSuite) match in any case.
 function namesTerm(text: string, term: string): boolean {
-  if (!/^[A-Z][a-z]/.test(term) || /\d/.test(term) || INNER_CAPS.test(term)) return mentions(text, term)
+  if (!plainWord(term)) return mentions(text, term)
   const re = new RegExp(`(?:^|[^A-Za-z0-9])(${escapeRe(term)})(?=$|[^A-Za-z0-9])`, 'gi')
   return [...text.matchAll(re)].some((m) => m[1] !== m[1].toLowerCase())
+}
+
+function plainWord(term: string): boolean {
+  return /^[A-Z][a-z]/.test(term) && !/\d/.test(term) && !INNER_CAPS.test(term)
 }
 
 /** Every string value in the candidate's resume (keys excluded), plus any supplemental context they verified. */
@@ -97,7 +101,10 @@ export function jobOnlyTerms(jobDescription: string, candidate: string): string[
       }
     }
   }
-  return [...terms]
+  // A plain word the posting also writes in lowercase ("Frontend Web Developer
+  // ... build web apps") is an everyday word there, not a named requirement.
+  // ponytail: "React" next to "react quickly" goes unchecked too; the line check covers it.
+  return [...terms].filter((t) => !(plainWord(t) && new RegExp(`(^|[^A-Za-z0-9])${escapeRe(t.toLowerCase())}($|[^A-Za-z0-9])`).test(jobDescription)))
 }
 
 const SKILL_STOP = new Set(['and', 'for', 'the', 'with'])

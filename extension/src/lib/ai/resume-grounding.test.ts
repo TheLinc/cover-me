@@ -48,6 +48,15 @@ describe('groundTailored', () => {
     expect(netsuite.resume.summary).toBe('Builds React interfaces.')
   })
 
+  test('a word the posting also writes in lowercase is not a requirement, in any case', () => {
+    const job = 'Frontend Web Developer\nYou will build web apps in React. Ruby on Rails is a plus.'
+    const tailored = { ...original, summary: 'Web developer building React apps. Knows Ruby on Rails.', skills: 'React, Responsive Web Design' }
+    const { resume, removed } = groundTailored(tailored, original, candidateText(original), job)
+    expect(resume.summary).toBe('Web developer building React apps.')
+    expect(resume.skills).toBe('React, Responsive Web Design')
+    expect(removed).not.toContain('Web')
+  })
+
   test('an all-caps posting heading does not turn everyday words into acronyms', () => {
     const job = 'SENIOR WEB DEVELOPER\nYou will build React apps.'
     const summary = 'Builds accessible web interfaces in React.'
