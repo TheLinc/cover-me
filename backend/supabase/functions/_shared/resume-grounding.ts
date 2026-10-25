@@ -14,6 +14,7 @@
 //   skills   drop the parenthetical, or the whole item, that names it
 //   summary  drop the sentence that names it
 //   bullets  revert that bullet to the candidate's original wording
+// A capitalized word ("Web") only counts when the output capitalizes it too.
 // Lowercase phrases ("food cost", "due diligence") are not detected; the
 // prompt's integrity rules stay the first line of defence for those.
 //
@@ -40,8 +41,17 @@ function escapeRe(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
-function mentions(text: string, term: string): boolean {
-  return new RegExp(`(^|[^A-Za-z0-9])${escapeRe(term)}($|[^A-Za-z0-9])`, 'i').test(text)
+function mentions(text: string, term: string, caseSensitive = false): boolean {
+  return new RegExp(`(^|[^A-Za-z0-9])${escapeRe(term)}($|[^A-Za-z0-9])`, caseSensitive ? '' : 'i').test(text)
+}
+
+// A job-only term found only because it was capitalized mid-sentence ("Web" in
+// "Frontend Web Developer") names the requirement only when the output
+// capitalizes it too: lowercase "web" is an everyday word. Acronyms, tokens
+// with digits and inner capitals (HIPAA, 401k, NetSuite) match in any case.
+function namesTerm(text: string, term: string): boolean {
+  const plainWord = /^[A-Z][a-z]/.test(term) && !/\d/.test(term) && !/^[A-Za-z]*[a-z][A-Z]/.test(term)
+  return mentions(text, term, plainWord)
 }
 
 /** Every string value in the candidate's resume (keys excluded), plus any supplemental context they verified. */
@@ -479,7 +489,7 @@ export function groundTailored<T extends Groundable>(
   const terms = jobOnlyTerms(jobDescription, candidate)
   const removed = new Set<string>()
   const hits = (text: string): string[] => {
-    const found = terms.filter((t) => mentions(text, t))
+    const found = terms.filter((t) => namesTerm(text, t))
     found.forEach((t) => removed.add(t))
     return found
   }
@@ -487,7 +497,7 @@ export function groundTailored<T extends Groundable>(
 
   const fixEntries = (out: GroundEntry[] | undefined, input: GroundEntry[] | undefined) =>
     out?.map((entry, i) => {
-      if (!entry.bullets.some((b) => terms.some((t) => mentions(b, t)))) return entry
+      if (!entry.bullets.some((b) => terms.some((t) => namesTerm(b, t)))) return entry
       const origins = originalsFor(entry.bullets, input?.[i]?.bullets ?? [])
       const bullets = entry.bullets.flatMap((b, k) => (hits(b).length === 0 ? [b] : origins[k] ? [origins[k]!] : []))
       return { ...entry, bullets }
