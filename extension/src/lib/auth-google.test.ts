@@ -35,6 +35,8 @@ describe('signInWithGoogle', () => {
     expect(u.searchParams.get('provider')).toBe('google')
     expect(u.searchParams.get('redirect_to')).toBe(REDIRECT)
     expect(u.searchParams.get('code_challenge_method')).toBe('s256')
+    // Without it Google reuses the last account and skips the chooser.
+    expect(u.searchParams.get('prompt')).toBe('select_account')
     const [tokenUrl, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit]
     expect(tokenUrl).toMatch(/\/auth\/v1\/token\?grant_type=pkce$/)
     const body = JSON.parse(init.body as string)

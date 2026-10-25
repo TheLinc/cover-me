@@ -76,6 +76,9 @@ export async function signInWithGoogle(): Promise<AuthSession> {
     redirect_to: chrome.identity.getRedirectURL(),
     code_challenge: challenge,
     code_challenge_method: 's256',
+    // Supabase passes this to Google. Without it Google signs straight back
+    // in to the last account and the user can't pick another.
+    prompt: 'select_account',
   })}`
 
   let callback: string | undefined
