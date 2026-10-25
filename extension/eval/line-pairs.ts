@@ -180,4 +180,20 @@ export const LINE_ROLES: LineRole[] = [
     ],
     flag: [2], ok: [0, 1],
   },
+  {
+    // Made up, not from an eval output. The grounding guard lets a lowercase
+    // copy of a capitalized tool through (#53), so the line check must catch it.
+    id: 'lowercase-tools', title: 'Frontend Developer', company: 'Northlight Clinic Portal',
+    original: [
+      'Built React screens for a client portal used by 25k clients',
+      'Wrote Jest tests for the checkout flow',
+      'Reviewed pull requests for 4 developers',
+    ],
+    rewritten: [
+      'Built React web screens for a client portal used by 25k clients',
+      'Wrote Jest tests for the checkout flow and its ruby on rails payment API',
+      'Reviewed pull requests for 4 developers and synced deal data to salesforce',
+    ],
+    flag: [1, 2], ok: [0],
+  },
 ]
