@@ -206,7 +206,12 @@ function AuthForm() {
     setError("");
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: oauthRedirectUrl(process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin, plan, params.get("next")) },
+      options: {
+        redirectTo: oauthRedirectUrl(process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin, plan, params.get("next")),
+        // Show Google's account chooser. Without it Google signs straight back
+        // in to the last account and the user can't pick another.
+        queryParams: { prompt: "select_account" },
+      },
     });
     if (error) setError(error.message);
   }
