@@ -15,8 +15,9 @@
 //   summary  drop the sentence that names it
 //   bullets  revert that bullet to the candidate's original wording
 // A capitalized word ("Web") only counts when the output capitalizes it too.
-// Lowercase phrases ("food cost", "due diligence") are not detected; the
-// prompt's integrity rules stay the first line of defence for those.
+// Lowercase phrases ("food cost", "due diligence") are not detected, nor is a
+// product name copied in lowercase ("salesforce"); the prompt's integrity
+// rules stay the first line of defence for those.
 //
 // groundSkills runs first, on the model's skills list: every added or
 // reworded skill must cite evidence copied from the resume, code checks the
@@ -41,17 +42,20 @@ function escapeRe(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
-function mentions(text: string, term: string, caseSensitive = false): boolean {
-  return new RegExp(`(^|[^A-Za-z0-9])${escapeRe(term)}($|[^A-Za-z0-9])`, caseSensitive ? '' : 'i').test(text)
+function mentions(text: string, term: string): boolean {
+  return new RegExp(`(^|[^A-Za-z0-9])${escapeRe(term)}($|[^A-Za-z0-9])`, 'i').test(text)
 }
 
-// A job-only term found only because it was capitalized mid-sentence ("Web" in
-// "Frontend Web Developer") names the requirement only when the output
-// capitalizes it too: lowercase "web" is an everyday word. Acronyms, tokens
-// with digits and inner capitals (HIPAA, 401k, NetSuite) match in any case.
+const INNER_CAPS = /^[A-Za-z]*[a-z][A-Z]/
+
+// A plain capitalized term ("Web" in "Frontend Web Developer", "Rails") names
+// the requirement only when the output capitalizes it too: lowercase "web" is
+// an everyday word. Acronyms, tokens with digits and inner capitals (HIPAA,
+// 401k, NetSuite) match in any case.
 function namesTerm(text: string, term: string): boolean {
-  const plainWord = /^[A-Z][a-z]/.test(term) && !/\d/.test(term) && !/^[A-Za-z]*[a-z][A-Z]/.test(term)
-  return mentions(text, term, plainWord)
+  if (!/^[A-Z][a-z]/.test(term) || /\d/.test(term) || INNER_CAPS.test(term)) return mentions(text, term)
+  const re = new RegExp(`(?:^|[^A-Za-z0-9])(${escapeRe(term)})(?=$|[^A-Za-z0-9])`, 'gi')
+  return [...text.matchAll(re)].some((m) => m[1] !== m[1].toLowerCase())
 }
 
 /** Every string value in the candidate's resume (keys excluded), plus any supplemental context they verified. */
@@ -75,6 +79,9 @@ function grounded(token: string, candidate: string): boolean {
 export function jobOnlyTerms(jobDescription: string, candidate: string): string[] {
   const terms = new Set<string>()
   for (const line of jobDescription.split('\n')) {
+    // An all-caps line ("SENIOR WEB DEVELOPER") makes every word look like an
+    // acronym; its letter-only words are kept as plain words ("Web") instead.
+    const shouted = !/[a-z]/.test(line) && (line.match(/[A-Za-z]{2,}/g)?.length ?? 0) >= 2
     const re = /[A-Za-z0-9][A-Za-z0-9+#&.-]*[A-Za-z0-9+#]|[A-Za-z0-9]/g
     let m: RegExpExecArray | null
     while ((m = re.exec(line)) !== null) {
@@ -83,10 +90,10 @@ export function jobOnlyTerms(jobDescription: string, candidate: string): string[
       for (const tok of m[0].replace(/\.+$/, '').split('/')) {
         const acronym = tok.length >= 2 && /^[A-Z0-9&+#.-]+$/.test(tok) && /[A-Z]/.test(tok)
         const mixed = /\d/.test(tok) && /[A-Za-z]/.test(tok)
-        const innerCaps = /^[A-Za-z]*[a-z][A-Z]/.test(tok)
+        const innerCaps = INNER_CAPS.test(tok)
         const properMid = /^[A-Z][a-z]/.test(tok) && !sentenceStart
         if (!(acronym || mixed || innerCaps || properMid) || GENERIC.has(tok)) continue
-        if (!grounded(tok, candidate)) terms.add(tok)
+        if (!grounded(tok, candidate)) terms.add(shouted && /^[A-Z]+$/.test(tok) ? tok[0] + tok.slice(1).toLowerCase() : tok)
       }
     }
   }

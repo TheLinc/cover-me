@@ -38,7 +38,20 @@ describe('groundTailored', () => {
     expect(ground('Senior Web Developer. Ships React interfaces.').resume.summary).toBe('Ships React interfaces.')
   })
 
-  test('acronyms still match in any case', () => {
+  test('still removes an all-caps copy of a plain-word requirement', () => {
+    expect(ground('Builds React interfaces. Knows RUBY ON RAILS.').resume.summary).toBe('Builds React interfaces.')
+  })
+
+  test('acronyms and inner-caps tokens still match in any case', () => {
     expect(ground('Builds React interfaces. Follows hipaa rules.').resume.summary).toBe('Builds React interfaces.')
+    const netsuite = groundTailored({ ...original, summary: 'Builds React interfaces. Syncs orders to netsuite.' }, original, candidateText(original), 'You will use NetSuite daily.')
+    expect(netsuite.resume.summary).toBe('Builds React interfaces.')
+  })
+
+  test('an all-caps posting heading does not turn everyday words into acronyms', () => {
+    const job = 'SENIOR WEB DEVELOPER\nYou will build React apps.'
+    const summary = 'Builds accessible web interfaces in React.'
+    expect(groundTailored({ ...original, summary }, original, candidateText(original), job).resume.summary).toBe(summary)
+    expect(groundTailored({ ...original, summary: 'Senior Web Developer. Builds React apps.' }, original, candidateText(original), job).resume.summary).toBe('Builds React apps.')
   })
 })
