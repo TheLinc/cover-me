@@ -57,6 +57,7 @@ export const MOCK_PARSED_RESUME = {
     { institution: 'State University', degree: 'BS Computer Science', location: 'Austin, TX', dates: '2016 – 2020', bullets: [] },
   ],
   skills: 'TypeScript, Postgres, React',
+  otherSections: [{ heading: 'Volunteer Work', lines: ['Mentor, Code Club (2019 – 2021)'] }],
 }
 
 export const MOCK_TAILOR_DELTA = {

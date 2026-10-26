@@ -24,8 +24,6 @@ interface Spec {
   headers?: Partial<Record<'experience' | 'education' | 'skills' | 'certifications' | 'projects' | 'profile', string>>
   /** Summary paragraph in the source resume. Not part of the parsed schema: the parser must not turn it into experience. */
   profile?: string
-  /** An unsupported section (publications, references). Must not leak into parsed experience or education. */
-  extra?: string
   job: JobData
   failTerms: string[]
   warnTerms?: string[]
@@ -71,7 +69,8 @@ function render(s: Spec): string {
   const certs = block(h.certifications, (r.certifications ?? []).map((c) => `- ${c}`))
   const skills = r.skills ? block(h.skills, [r.skills]) : []
   const profile = s.profile ? block(h.profile, [s.profile]) : []
-  const extra = s.extra ? ['', s.extra] : []
+  // Sections outside the six, in their own order after the rest.
+  const other = (r.otherSections ?? []).flatMap((o) => block(o.heading, o.lines))
 
   const body = layout === 'skills-first'
     ? [...profile, ...skills, ...experience, ...projects, ...education, ...certs]
@@ -79,7 +78,7 @@ function render(s: Spec): string {
       ? [...profile, ...certs, ...experience, ...projects, ...education, ...skills]
       : [...profile, ...experience, ...projects, ...education, ...certs, ...skills]
 
-  return [r.name, [r.email, r.phone, r.website].filter(Boolean).join(' | '), ...body, ...extra].join('\n')
+  return [r.name, [r.email, r.phone, r.website].filter(Boolean).join(' | '), ...body, ...other].join('\n')
 }
 
 const toCase = (s: Spec): EvalCase => ({
@@ -792,6 +791,53 @@ Requirements: CPhT; hospital experience preferred.`),
     fieldNotes: 'Pharmacy: volume, accuracy, controlled-substance handling, certification and license. Retail work must not be recast as hospital, sterile or IV work.',
   },
 
+  {
+    // A paid job under "CLINICAL EXPERIENCE" is experience; the student
+    // rotations and the job-shaped volunteer role are not.
+    id: 'new-grad-nurse-rotations',
+    industry: 'Healthcare',
+    headers: { experience: 'CLINICAL EXPERIENCE' },
+    resume: {
+      name: 'Grace Okafor', email: 'grace.okafor.rn@email.com', phone: '(555) 274-9013', website: '',
+      experience: [
+        role('Patient Care Technician', 'Riverside General Hospital', 'Dayton, OH', 'Aug 2023 – Present', [
+          'Record vital signs and intake/output for up to 12 patients a shift on a med-surg unit',
+          'Assist patients with mobility, bathing and feeding under RN direction',
+          'Perform point-of-care glucose checks and report abnormal values to the charge nurse',
+        ]),
+      ],
+      education: [edu('Bachelor of Science in Nursing', 'Wright State University', 'Dayton, OH', '2021 – 2025')],
+      certifications: ['Registered Nurse (RN), Ohio — 2025', 'BLS — American Heart Association'],
+      otherSections: [
+        {
+          heading: 'CLINICAL ROTATIONS',
+          lines: [
+            'Medical-Surgical, Miami Valley Hospital — 120 hours',
+            'Pediatrics, Dayton Children\'s Hospital — 90 hours',
+            'Community Health, Montgomery County Public Health — 60 hours',
+          ],
+        },
+        {
+          heading: 'VOLUNTEER EXPERIENCE',
+          lines: [
+            'Health Screening Volunteer — St. Vincent Free Clinic, Dayton, OH (2022 – 2024)',
+            'Took blood pressure readings for about 40 visitors at monthly screening events',
+          ],
+        },
+      ],
+    },
+    job: job('Registered Nurse, Medical-Surgical', 'Kettering Health', `Kettering Health is hiring new graduate RNs for its medical-surgical units.
+
+- Assess, plan and deliver care for an assigned group of adult patients
+- Administer medications and document care in Epic
+- Educate patients and families before discharge
+
+Requirements: Ohio RN license, BLS. ACLS within 6 months of hire. Epic experience preferred.`),
+    failTerms: ['ACLS', 'Epic'],
+    warnTerms: ['medication administration'],
+    fieldNotes: 'New-grad nursing: license, clinical hours, patient load, and direct patient care. A patient care technician must not be presented as an RN with independent assessment or medication duties. The rotations and the volunteer role print word for word, not as jobs.',
+  },
+
   // ── Engineering, creative, government, nonprofit, science ──────────────────
   {
     id: 'mechanical-engineer-medical-device',
@@ -925,8 +971,6 @@ Requirements: Secret security clearance required; federal experience preferred.`
   {
     id: 'research-associate-publications',
     industry: 'Science',
-    extra: `PUBLICATIONS
-Adeyemi S, Park J, Lowell R. "CRISPR screening identifies regulators of drug resistance in lung adenocarcinoma." Journal of Cell Biology. 2023;41(2):112-120.`,
     resume: {
       name: 'Samuel Adeyemi', email: 'samuel.adeyemi.lab@email.com', phone: '(555) 617-2294', website: '',
       experience: [
@@ -942,6 +986,10 @@ Adeyemi S, Park J, Lowell R. "CRISPR screening identifies regulators of drug res
       ],
       education: [edu('B.S. Biochemistry', 'Boston University', 'Boston, MA', '2015 – 2019')],
       skills: 'qPCR, ELISA, cell culture, CRISPR-Cas9, Western blot, Benchling, GraphPad Prism',
+      otherSections: [{
+        heading: 'PUBLICATIONS',
+        lines: ['Adeyemi S, Park J, Lowell R. "CRISPR screening identifies regulators of drug resistance in lung adenocarcinoma." Journal of Cell Biology. 2023;41(2):112-120.'],
+      }],
     },
     job: job('Scientist I', 'Crestline Bio', `Crestline Bio develops cell therapies.
 
@@ -953,7 +1001,7 @@ PhD or MS preferred.`),
     failTerms: ['flow cytometry', 'GLP', 'PhD'],
     warnTerms: ['cell therapy', 'IND'],
     mustKeepSkills: ['CRISPR'],
-    fieldNotes: 'Science: techniques, model systems, programs supported, publications. Exact methods matter; a B.S. must not be presented as graduate training. The parser has no publications field, so publications are expected to drop out of the structured resume.',
+    fieldNotes: 'Science: techniques, model systems, programs supported, publications. Exact methods matter; a B.S. must not be presented as graduate training. The publication must come through word for word under its own heading.',
   },
 
   // ── Early career and senior leadership ─────────────────────────────────────

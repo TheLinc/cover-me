@@ -197,7 +197,7 @@ The output must fit on a single letter page. Apply these additional constraints 
 
   return `You are an expert resume writer and ATS optimization specialist. Tailor the candidate's resume for the specific job below by rewriting content — never fabricating it.
 
-YOUR OUTPUT IS A DELTA, NOT A FULL RESUME. Return ONLY the rewritten content: the summary, each entry's rewritten bullets, the optimized skills list, and the keyword report. The application merges your output back into the resume in code — everything you do not output (name, contact details, job titles, company names, dates, locations, education, certifications) is preserved verbatim from the input automatically.
+YOUR OUTPUT IS A DELTA, NOT A FULL RESUME. Return ONLY the rewritten content: the summary, each entry's rewritten bullets, the optimized skills list, and the keyword report. The application merges your output back into the resume in code — everything you do not output (name, contact details, job titles, company names, dates, locations, education, certifications, otherSections) is preserved verbatim from the input automatically.
 
 TODAY'S DATE: ${today}
 TARGET ROLE: ${job.title}
@@ -296,7 +296,7 @@ ${compactMode}---
 
 INTEGRITY RULES — any violation makes the output unusable:
 
-1. IMMUTABLE CONTENT IS NOT YOURS TO WRITE. Name, contact details, job titles, company names, dates, locations, institutions, degree names, and certifications are preserved in code from the input resume — never include them in your output. Any bullet beginning "Tech:" must appear in your output copied verbatim (it counts toward the bullet budget).
+1. IMMUTABLE CONTENT IS NOT YOURS TO WRITE. Name, contact details, job titles, company names, dates, locations, institutions, degree names, certifications, and otherSections (publications, volunteer work, awards and the like, kept word for word) are preserved in code from the input resume — never include them in your output. Any bullet beginning "Tech:" must appear in your output copied verbatim (it counts toward the bullet budget).
 2. INDEX ALIGNMENT — NEVER REORDER ENTRIES. Your "experience" array must contain EXACTLY one entry per input experience entry, in the SAME top-to-bottom order: output entry i holds the rewritten bullets for input entry i, even when a later entry seems more relevant to this job. The same applies to "projects". Never add, remove, merge, or re-sort entries; only the bullets WITHIN an entry may be reordered.
 3. NO INVENTED OR SUBSTITUTED SKILLS. Any concrete skill, tool, technology, certification, license, method, or system may appear in the output (bullets or skills) only if it appears verbatim in the resume. A competing or adjacent one does NOT qualify the candidate for the one the JD names — this holds in every field: Zustand≠Redux, Vue≠React (tech), BLS≠ACLS (healthcare), QuickBooks≠SAP (finance), M&A≠litigation (legal). JD-only items — including "preferred"/"nice-to-have" ones — are never added. Never swap something the resume names for a different thing the JD names even when they serve the same purpose (resume "PHP (Symfony)" stays "PHP (Symfony)" even if the JD says "Python/FastAPI"). A JD-only item may not appear in ANY framing — not as "pursuing [X]", "ready to obtain [X]", "[X]-ready", "[X]-eligible", "willing to obtain [X]", nor ANY other construction that attaches the missing item's name to the candidate; the candidate's gaps are reported exclusively in keywordMatch, and resume content never names what the candidate lacks. The only additions allowed are those defined in STEP 8.
 4. NO SCOPE INFLATION. Keep each bullet's real depth — never upgrade narrow, specific work into a broad claim. This applies in every field: "used AWS S3 for storage" must not become "deployed on AWS" (tech); "recorded patient vitals" must not become "managed critical care" (healthcare); "reconciled invoices" must not become "owned the financial close" (finance). Don't apply a JD term-of-art unless the resume gives concrete evidence for it — in tech that means "microservices", "cloud-native", "CI/CD", "DevOps", "cloud security"; in other fields, the equivalent inflated label. This ban includes hedged or hyphenated variants ("microservice-aligned", "X-aligned", "X-inspired", "X-adjacent") — you may not evade it by softening the word. It also covers INDUSTRY/DOMAIN claims: if no bullet shows the candidate worked in a domain (e-commerce, fintech, healthcare, etc.), the summary and bullets may not claim it or call the experience "X-adjacent", even when the JD lists that domain as required or preferred. A skill listed only in the skills section (no supporting bullet) may never appear in a bullet or the summary. Do not manufacture an accomplishment from a supervisory mention — "reviewed others' work" does not license claiming you performed that work.
@@ -406,12 +406,13 @@ Deno.serve(async (req) => {
     // Structured resume: read the cached copy, or parse the raw text once
     // (Haiku, verbatim extraction) and cache it encrypted for future tailors.
     // resume/index.ts clears the cache when the text changes and usually parses
-    // it ahead in the background, so this parse is the fallback.
+    // it ahead in the background, so this parse is the fallback. A cached copy
+    // without otherSections predates them (#54) and is parsed again once.
     let structured: ParsedResume | null = null
     if (resumeRow.structured_encrypted) {
       try {
         const decoded = JSON.parse(await decrypt(resumeRow.structured_encrypted))
-        if (isValidParsedResume(decoded)) structured = decoded
+        if (isValidParsedResume(decoded) && Array.isArray(decoded.otherSections)) structured = decoded
       } catch {
         structured = null
       }
