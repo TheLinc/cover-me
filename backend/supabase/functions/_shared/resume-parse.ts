@@ -19,6 +19,8 @@ export interface ParsedResume {
   education: Array<{ institution: string; degree: string; location: string; dates: string; bullets: string[] }>
   skills?: string
   certifications?: string[]
+  /** Always an array on a parse made since #54; a cached parse without it predates them and is parsed again. */
+  otherSections?: Array<{ heading: string; lines: string[] }>
 }
 
 function buildParsePrompt(resumeText: string): string {
@@ -30,9 +32,10 @@ RULES:
    - "projects": only if the resume has a personal projects, side projects, portfolio, or open source section
    - "skills": only if the resume has a skills, technical skills, or core competencies section
    - "certifications": only if the resume has a certifications, licenses, or credentials section
-3. Recognize experience headers: Work Experience, Professional Experience, Employment, Career History
+3. Recognize experience headers: Work Experience, Professional Experience, Employment, Career History. A section of paid jobs is experience under any heading (Clinical Experience, Work History, Relevant Experience)
 4. Recognize education headers: Education, Academic Background, Degrees
-5. Return ONLY valid JSON — no explanation, no markdown fences, no text before or after
+5. "otherSections": every other section goes here, in the order it appears: publications, volunteer work, clinical rotations or placements, awards, languages, memberships, interests, references, and anything else. Copy the heading exactly as written and each line or bullet verbatim, without its bullet marker. Volunteer work and clinical rotations go here even when they are laid out like jobs, with titles, organizations and dates. Never put contact details or a summary, profile or objective here; the summary is not part of the output. A list of tools, software or programming languages belongs in "skills". Use [] when the resume has no other sections
+6. Return ONLY valid JSON — no explanation, no markdown fences, no text before or after
 
 JSON structure (omit "projects", "skills", "certifications" entirely if those sections do not exist in the resume):
 {
@@ -65,7 +68,13 @@ JSON structure (omit "projects", "skills", "certifications" entirely if those se
     }
   ],
   "skills": "skills string exactly as written in the resume",
-  "certifications": ["each certification or license line copied verbatim"]
+  "certifications": ["each certification or license line copied verbatim"],
+  "otherSections": [
+    {
+      "heading": "Section heading exactly as written",
+      "lines": ["each line copied verbatim"]
+    }
+  ]
 }
 
 RESUME:
@@ -81,6 +90,19 @@ export function isValidParsedResume(r: unknown): r is ParsedResume {
     Array.isArray(resume.experience) &&
     Array.isArray(resume.education)
   )
+}
+
+// The model's otherSections, kept only where each entry is a heading with
+// verbatim lines, and always an array: the tailor treats a cached parse
+// without one as made before extra sections were kept, and parses again.
+export function withOtherSections<T extends object>(parsed: T): T & { otherSections: Array<{ heading: string; lines: string[] }> } {
+  const raw = (parsed as { otherSections?: unknown }).otherSections
+  const otherSections = (Array.isArray(raw) ? raw : []).flatMap((s) => {
+    const heading = typeof s?.heading === 'string' ? s.heading.trim() : ''
+    const lines = Array.isArray(s?.lines) ? s.lines.filter((l: unknown): l is string => typeof l === 'string' && l.trim().length > 0) : []
+    return heading && lines.length ? [{ heading, lines }] : []
+  })
+  return { ...parsed, otherSections }
 }
 
 export async function parseResumeStructure(resumeText: string, apiKey: string): Promise<ParsedResume> {
@@ -113,5 +135,5 @@ export async function parseResumeStructure(resumeText: string, apiKey: string): 
     throw new Error('Resume parse returned invalid JSON')
   }
   if (!isValidParsedResume(parsed)) throw new Error('Resume parse returned incomplete data')
-  return parsed
+  return withOtherSections(parsed)
 }
