@@ -4,6 +4,10 @@
 // whole description, not only the first section.
 export const FIXTURE_CASES = [
   { board: 'greenhouse', title: 'Anthropic Fellows Program, AI Safety & Security', company: 'Anthropic', ends: 'for using AI in our application process.' },
+  // Signed-in job search on my.greenhouse.io with a posting open in its pop-up,
+  // cut down to three results, with every company, title and line of posting
+  // text made up. The pop-up has no <h1> and ends with the application form.
+  { board: 'greenhouse-modal', title: 'Platform Engineer', company: 'Fabrikam', ends: 'Applicants must be able to work in Canada.' },
   { board: 'lever', title: 'Administrative Business Partner', company: 'Palantir Technologies', ends: 'Internet Crime Complaint Center (IC3).' },
   { board: 'ashby', title: 'AI Systems Engineer, Codex Agents', company: 'OpenAI', ends: 'Join us in shaping the future of technology.' },
   { board: 'workable', title: 'Senior Open-Source Python Engineer, ML Developer Tools - EMEA Remote', company: 'Hugging Face', ends: 'Join a community supporting the ML/AI community.' },
