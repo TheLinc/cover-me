@@ -79,6 +79,16 @@ describe('checkAndRewriteLines summary', () => {
     expect(repair.summary).toBe('rewritten')
   })
 
+  test('a rewrite citing a number from a project bullet is used (#62)', async () => {
+    const projects = [{ name: 'Class Scheduler', bullets: ['Built a scheduling app used by 300 students.'] }]
+    const replies = [JSON.stringify({ flags: [], summary: 'claims leadership' }), JSON.stringify({ rewrites: [{ id: 'summary', text: 'Builds React apps, including a scheduler used by 300 students.' }] })]
+    const prompts: string[] = []
+    const { resume, repair } = await checkAndRewriteLines({ ...original, projects, summary: flagged }, { ...original, projects }, posting, async (p) => (prompts.push(p), replies.shift()!))
+    expect(prompts[1]).toContain('Class Scheduler: Built a scheduling app used by 300 students.')
+    expect(resume.summary).toBe('Builds React apps, including a scheduler used by 300 students.')
+    expect(repair.summary).toBe('rewritten')
+  })
+
   test('an unusable rewrite falls back to the candidate\'s own summary', async () => {
     const { resume, repair } = await run(flagged, 'Led 12 developers building React portals.')
     expect(resume.summary).toBe(original.summary)

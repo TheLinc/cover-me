@@ -278,6 +278,14 @@ function resumeFacts(r: Groundable): string {
   return [...roles, ...edu, ...(r.certifications ?? [])].filter(Boolean).map((l) => `- ${l}`).join('\n')
 }
 
+// Every line a summary may draw on: role and project bullets plus resumeFacts.
+// The line check shows the model projects too, so the rewrite and its number
+// check must accept them or a summary citing a project loses that fact.
+function summarySources(r: Groundable): string {
+  const lines = (list: GroundEntry[] | undefined, fallback: string) => (list ?? []).map((e) => `${roleLabel(e, fallback)}: ${e.bullets.join('; ')}`)
+  return [...lines(r.experience, 'Role'), ...lines(r.projects, 'Project'), resumeFacts(r)].join('\n')
+}
+
 export function buildLineCheckPrompt(original: Groundable, tailored: Groundable): string {
   const blocks: string[] = []
   const add = (kind: 'e' | 'p', out: GroundEntry[] | undefined, input: GroundEntry[] | undefined) =>
@@ -353,11 +361,10 @@ export function buildLineRewritePrompt(
 ): string {
   const items = [...flags].map(([id, reason]) => {
     if (id === 'summary') {
-      const facts = `${original.experience.map((e) => `${roleLabel(e, 'Role')}: ${e.bullets.join('; ')}`).join('\n')}\n${resumeFacts(original)}`
       return `[summary] SUMMARY (problem: ${reason}):
 ${tailored.summary}
 ORIGINAL RESUME LINES (the only facts it may use):
-${facts}`
+${summarySources(original)}`
     }
     const m = /^([ep])(\d+)b\d+$/.exec(id)!
     const kind = m[1] as 'e' | 'p'
@@ -454,7 +461,7 @@ export async function checkAndRewriteLines<T extends Groundable>(
     })
   mapSources('e', tailored.experience, original.experience)
   mapSources('p', tailored.projects, original.projects)
-  const allOriginal = `${original.experience.flatMap((e) => e.bullets).join(' ')} ${resumeFacts(original)}`
+  const allOriginal = summarySources(original)
 
   let rewrites = new Map<LineId, string>()
   try {
