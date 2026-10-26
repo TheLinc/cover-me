@@ -145,7 +145,7 @@ export function extractNumbers(text: string): ExtractedNumber[] {
   const out: ExtractedNumber[] = []
   // (?<![A-Za-z]) so "B2B" doesn't read as the number 2B. The K/M/B suffix
   // must touch the number, so "20 K-12 schools" and "4 M&A deals" stay 20 and 4.
-  const re = /(?<![A-Za-z])(\$?)(\d+(?:,\d+)*(?:\.\d+)?)(?:([KkMmBb])(?![A-Za-z&]|-\d)|\s(thousand|million|billion)\b)?(%|\s?percent\b)?/gi
+  const re = /(?<![A-Za-z])(\$?)(\d+(?:,\d+)*(?:\.\d+)?)(?:([KkMmBb])(?![A-Za-z&])|\s(thousand|million|billion)\b)?(%|\s?percent\b)?/gi
   const MULT: Record<string, number> = { k: 1_000, t: 1_000, m: 1_000_000, b: 1_000_000_000 }
   let m: RegExpExecArray | null
   while ((m = re.exec(text)) !== null) {

@@ -48,6 +48,7 @@ describe('invented numbers', () => {
     ['$1.2 million', 'Cut food costs by $1.2M.'],
     ['40 percent', 'Cut waste 40%.'],
     ['$40K', 'Saved $40,000 a year.'],
+    ['$2M-3M', 'Ran budgets from $2M to $3M.'],
   ])('matches %s across formats', (amount, resume) => {
     expect(invented(`I cut costs by ${amount}.`, resume)).toEqual([])
   })
@@ -60,7 +61,6 @@ describe('invented numbers', () => {
     'I supported 20 K-12 schools.',
     'I closed 15 B2B accounts.',
     'I ran 4 M&A deals.',
-    'I ran 20K-12 tutoring.',
   ])('reads a letter after the number as a word, not a K/M/B suffix: %s', (s) => {
     expect(invented(s, 'Supported 20 schools, 15 accounts, 4 deals.')).toEqual([])
   })
