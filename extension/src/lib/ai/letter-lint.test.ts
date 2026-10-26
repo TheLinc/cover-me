@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { lintLetter } from './letter-lint'
+import { extractNumbers, lintLetter } from './letter-lint'
 
 const echoes = (sentence: string) =>
   lintLetter(sentence).violations.some((v) => v.startsWith('Restates the job posting'))
@@ -19,4 +19,48 @@ describe('posting echo', () => {
     'I ran our social posting calendar, which needs a steady weekly rhythm.',
     'I wrote job descriptions that list the skills each opening requires.',
   ])('leaves alone: %s', (s) => expect(echoes(s)).toBe(false))
+})
+
+describe('invented numbers', () => {
+  const letter = (sentence: string) => `Dear Hiring Manager,\n\n${sentence}\n\nKind regards,\nAlex Doe`
+  const invented = (sentence: string, ...numberSources: string[]) =>
+    lintLetter(letter(sentence), { numberSources }).violations.filter((v) => v.startsWith('Uses the number'))
+
+  const plates = 'The 240th plate has to look and taste like the 10th.'
+
+  test('flags a hard number found in no source', () => {
+    expect(invented(plates, 'Line cook, 6 years.', 'Sous chef wanted.', '')).toHaveLength(1)
+  })
+
+  test.each([
+    ['the resume', 'Plated 240 covers a night.', '', ''],
+    ['the posting', 'Line cook.', 'A 240-seat dining room.', ''],
+    ['the supplemental text', 'Line cook.', '', 'I ran a 240-cover banquet.'],
+  ])('accepts a hard number from %s', (_, resume, posting, supplemental) => {
+    expect(invented(plates, resume, posting, supplemental)).toEqual([])
+  })
+
+  test('leaves small numbers alone', () => {
+    expect(invented('I have 10 years on the line.', 'Line cook since the start.')).toEqual([])
+  })
+
+  test.each([
+    ['$1.2 million', 'Cut food costs by $1.2M.'],
+    ['40 percent', 'Cut waste 40%.'],
+    ['$40K', 'Saved $40,000 a year.'],
+  ])('matches %s across formats', (amount, resume) => {
+    expect(invented(`I cut costs by ${amount}.`, resume)).toEqual([])
+  })
+
+  test('flags money and percentages missing from the sources', () => {
+    expect(invented('I cut waste 40 percent and saved $5 million.', 'Line cook.')).toHaveLength(2)
+  })
+
+  test('is off without numberSources', () => {
+    expect(lintLetter(letter(plates)).violations.some((v) => v.startsWith('Uses the number'))).toBe(false)
+  })
+})
+
+test('extractNumbers leaves a trailing comma out of the number', () => {
+  expect(extractNumbers('a staff of 400, all hourly')).toEqual([{ raw: '400', norm: '400', hard: true }])
 })

@@ -134,9 +134,39 @@ function countWords(text: string): number {
   return text.split(/\s+/).filter((w) => w.length > 0).length
 }
 
+export interface ExtractedNumber {
+  raw: string
+  norm: string
+  hard: boolean
+}
+
+/** Numbers in `text`, normalized so "$1.2M", "$1.2 million" and "1,200,000" compare equal. */
+export function extractNumbers(text: string): ExtractedNumber[] {
+  const out: ExtractedNumber[] = []
+  // (?<![A-Za-z]) so "B2B" doesn't read as the number 2B.
+  const re = /(?<![A-Za-z])(\$?)(\d+(?:,\d+)*(?:\.\d+)?)(?:\s?([KkMmBb])(?![A-Za-z])|\s(thousand|million|billion)\b)?(%|\s?percent\b)?/gi
+  const MULT: Record<string, number> = { k: 1_000, t: 1_000, m: 1_000_000, b: 1_000_000_000 }
+  let m: RegExpExecArray | null
+  while ((m = re.exec(text)) !== null) {
+    const base = m[2].replace(/,/g, '')
+    const suffix = (m[3] ?? m[4])?.[0].toLowerCase()
+    const norm = suffix ? String(Math.round(parseFloat(base) * MULT[suffix])) : base
+    // "hard" numbers are the fabrication-risk class: money, percentages, and
+    // anything 3+ digits. Bare 1–2 digit integers (years of experience, team
+    // sizes) are often legitimately derived, so they pass.
+    const hard = m[1] === '$' || !!m[5] || norm.replace(/\./g, '').length >= 3
+    out.push({ raw: m[0].trim(), norm, hard })
+  }
+  return out
+}
+
 export function lintLetter(
   letter: string,
-  opts: { companyName?: string } = {},
+  opts: {
+    companyName?: string
+    /** Texts a number may come from (resume, posting, supplemental context). Omit to skip the number check. */
+    numberSources?: string[]
+  } = {},
 ): LetterLintResult {
   const violations: string[] = []
   const body = letterBody(letter)
@@ -216,6 +246,17 @@ export function lintLetter(
 
   if (POSTING_ECHO.some((re) => re.test(body))) {
     violations.push('Restates the job posting ("What stands out in the posting", "Your posting asks for") — write about what the employer does instead, and never name a requirement the applicant lacks.')
+  }
+
+  // The prompt forbids invented metrics; this catches the ones that slip
+  // through ("The 240th plate" with 240 in no input, 2026-10-26 eval).
+  if (opts.numberSources) {
+    const known = new Set(opts.numberSources.flatMap((s) => extractNumbers(s).map((n) => n.norm)))
+    for (const n of extractNumbers(body)) {
+      if (!n.hard || known.has(n.norm)) continue
+      known.add(n.norm)
+      violations.push(`Uses the number "${n.raw}", which appears in neither the resume, the job posting nor the supplemental context — use only figures those contain, and if this claim has none, make it without a number instead of picking another one.`)
+    }
   }
 
   return { violations, wordCount }
