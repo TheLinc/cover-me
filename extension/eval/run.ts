@@ -401,7 +401,7 @@ async function tailorOnce(c: EvalCase, run: number): Promise<TailorRun> {
       out.tailor.warnings.unshift(`atsScore: ${tailored.atsScore ?? 'n/a'} | gaps: ${(tailored.atsGaps ?? []).join('; ') || 'none'}`)
       if (guarded.length) out.tailor.warnings.push(`grounding guard removed: ${guarded.join(', ')}`)
       if (out.lines?.checkFailed) out.tailor.warnings.push('line check failed to run; tailoring kept unchecked')
-      else if (out.lines?.flagged.length) out.tailor.warnings.push(`line check: ${out.lines.rewritten} rewritten, ${out.lines.reverted} reverted — ${out.lines.flagged.join(' | ')}`)
+      else if (out.lines?.flagged.length) out.tailor.warnings.push(`line check: ${out.lines.rewritten} rewritten, ${out.lines.reverted} reverted${out.lines.summary ? `, summary ${out.lines.summary}` : ''} —${out.lines.flagged.join(' | ')}`)
       if (c.expectedLabels?.length) {
         const skills = (tailored.skills ?? '').toLowerCase()
         const made: string[] = []
