@@ -18,7 +18,12 @@ const config: NextConfig = {
   async redirects() {
     // A word character first: "//evil.com/" and "/\evil.com/" must not become
     // a redirect to another site (browsers read "/\" as "//")
-    return [{ source: '/:path((?!relay/)[\\w-].*)/', destination: '/:path', permanent: true }]
+    return [
+      { source: '/:path((?!relay/)[\\w-].*)/', destination: '/:path', permanent: true },
+      // Short link for the X bio, so the profile doesn't show the utm_ tags.
+      // Temporary (307) so browsers don't cache it and the target can change.
+      { source: '/x', destination: '/?utm_source=x&utm_medium=social&utm_campaign=bio', permanent: false },
+    ]
   },
 }
 
