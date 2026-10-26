@@ -164,7 +164,7 @@ export function downloadTailoredResumePdf(resume: TailoredResume, jobTitle?: str
   // ── Other sections (publications, volunteer work…), as the resume had them ─
   for (const section of resume.otherSections ?? []) {
     if (!section.lines?.length) continue
-    sectionHeading(section.heading.toUpperCase())
+    sectionHeading(String(section.heading ?? '').toUpperCase())
     for (const line of section.lines) bullet(line)
   }
 
