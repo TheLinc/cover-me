@@ -8,6 +8,10 @@ export const FIXTURE_CASES = [
   // cut down to three results, with every company, title and line of posting
   // text made up. The pop-up has no <h1> and ends with the application form.
   { board: 'greenhouse-modal', title: 'Platform Engineer', company: 'Fabrikam', ends: 'Applicants must be able to work in Canada.' },
+  // Signed-in Applications page on my.greenhouse.io, with the company, title and
+  // posting text made up. The applied posting sits under a "Job post" heading,
+  // with no <h1>, next to a list of applications and a "Stages" sidebar.
+  { board: 'greenhouse-applications', title: 'Backend Developer', company: 'Contoso', ends: 'Contoso does not accept unsolicited resumes from recruiting agencies.' },
   { board: 'lever', title: 'Administrative Business Partner', company: 'Palantir Technologies', ends: 'Internet Crime Complaint Center (IC3).' },
   { board: 'ashby', title: 'AI Systems Engineer, Codex Agents', company: 'OpenAI', ends: 'Join us in shaping the future of technology.' },
   { board: 'workable', title: 'Senior Open-Source Python Engineer, ML Developer Tools - EMEA Remote', company: 'Hugging Face', ends: 'Join a community supporting the ML/AI community.' },

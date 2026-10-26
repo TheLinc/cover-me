@@ -10,6 +10,7 @@ function tryAtsSelectors(): JobData | null {
   const title = firstText([
     '.job__title h1', // Greenhouse job-boards.greenhouse.io
     '.application-form-header--title', // Greenhouse job search pop-up, my.greenhouse.io
+    '.selected-application-pane .section-header', // Greenhouse Applications page, my.greenhouse.io
     '[data-qa="job-title"]',
     '.posting-headline h2',
     '.job-title',
@@ -19,6 +20,7 @@ function tryAtsSelectors(): JobData | null {
   const description = firstText([
     '.job__description',
     '.application-description',
+    '.selected-application-pane .job-post-contents',
     '[data-qa="job-description"]',
     '.posting-description',
     '[class*="job-description"]',
@@ -27,8 +29,8 @@ function tryAtsSelectors(): JobData | null {
   ])
 
   if (title && description) {
-    const company = firstText(['[data-qa="company"]', '[class*="company-name"]'])
-      // Greenhouse names the company only in the tab title
+    const company = firstText(['[data-qa="company"]', '[class*="company-name"]', '.selected-application-pane .section-header + * > .section-title'])
+      // job-boards.greenhouse.io names the company only in the tab title
       ?? document.title.match(/^Job Application for .+ at (.+)$/)?.[1]?.trim()
       ?? 'Unknown Company'
     return { title, company, description, url: window.location.href }
