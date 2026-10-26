@@ -27,6 +27,37 @@ describe('scrapers on saved postings', () => {
   })
 })
 
+describe('generic heuristic', () => {
+  // Greenhouse's public board listing: an <h1> of "Open Roles" over a list of
+  // job links, once read as a job called "Open Roles" (#64).
+  test('reads a listing page as no job, not a job', () => {
+    const html = readFileSync(join(__dirname, 'fixtures', 'greenhouse-board.html'), 'utf8')
+    expect(() => scrape(fixtureUrl(html), html)).toThrow('Could not find job details')
+    // A board with an intro above the list: the intro isn't links, so the
+    // heading is what gives it away
+    const intro = html.replace('<div class="index--header index--header__no-description"></div>',
+      `<div class="index--header"><p>${'We build reliable, interpretable AI systems. '.repeat(15)}</p></div>`)
+    expect(() => scrape(fixtureUrl(intro), intro)).toThrow('Could not find job details')
+  })
+
+  // Each link read once per block, not once per link it's nested in (34 s
+  // before, 1 s now)
+  test('70 nested links in 100 nested blocks stay cheap', () => {
+    const main = '<div>'.repeat(100) + 'x'.repeat(600) + '<a href="/a">L<div>'.repeat(70) + '<i></i>'.repeat(20_000) + '</div></a>'.repeat(70) + '</div>'.repeat(100)
+    const start = performance.now()
+    scrape('https://careers.example.com/jobs/1', `<!doctype html><html><body><h1>Clerk</h1><main>${main}</main></body></html>`)
+    expect(performance.now() - start).toBeLessThan(5000)
+  })
+
+  test('reads a plain posting, not the larger list of similar jobs beside it', () => {
+    const description = 'Lead a team of twelve on the night shift and keep the loading dock on schedule. '.repeat(8).trim()
+    const similar = Array.from({ length: 40 }, (_, i) => `<li><a href="/jobs/${i}">Forklift Operator, Night Shift - Toronto</a></li>`).join('')
+    const job = scrape('https://careers.example.com/jobs/1', `<html><body><main><h1>Warehouse Supervisor</h1>
+      <div><div><p>${description}</p></div><div><h2>Similar jobs</h2><ul>${similar}</ul></div></div></main></body></html>`)
+    expect(job).toMatchObject({ title: 'Warehouse Supervisor', company: 'Unknown Company', description })
+  })
+})
+
 test('refuses pages nested far deeper than any real posting', () => {
   expect(() => scrape('https://careers.example.com/jobs/1', `<html><body>${'<div>'.repeat(300)}x${'</div>'.repeat(300)}</body></html>`))
     .toThrow('too large')
