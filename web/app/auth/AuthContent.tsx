@@ -267,7 +267,7 @@ function AuthForm() {
         : view === "signin"
           ? "Welcome back."
           : plan === "pro"
-            ? "Start your Pro trial."
+            ? "Go Pro."
             : "Create your account.";
 
   const subtext =
