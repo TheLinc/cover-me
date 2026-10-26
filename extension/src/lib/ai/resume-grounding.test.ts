@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { candidateText, groundSkills, groundTailored } from './resume-grounding'
+import { candidateText, checkAndRewriteLines, groundSkills, groundTailored } from './resume-grounding'
 
 // Made-up posting and resume. The resume never says "web", "Ruby", "Rails" or "HIPAA".
 const posting = `Frontend Web Developer
@@ -62,6 +62,49 @@ describe('groundTailored', () => {
     const summary = 'Builds accessible web interfaces in React.'
     expect(groundTailored({ ...original, summary }, original, candidateText(original), job).resume.summary).toBe(summary)
     expect(groundTailored({ ...original, summary: 'Senior Web Developer. Builds React apps.' }, original, candidateText(original), job).resume.summary).toBe('Builds React apps.')
+  })
+})
+
+describe('checkAndRewriteLines summary', () => {
+  // The check flags only the summary; the rewrite reply is the given text.
+  const run = (summary: string, rewrite: string | null, input: { summary?: string } = original) => {
+    const replies = [JSON.stringify({ flags: [], summary: 'claims leadership' }), JSON.stringify({ rewrites: rewrite === null ? [] : [{ id: 'summary', text: rewrite }] })]
+    return checkAndRewriteLines({ ...original, summary }, { ...original, ...input }, posting, async () => replies.shift()!)
+  }
+  const flagged = 'Led a team of 12 building React portals.'
+
+  test('a usable rewrite replaces the summary', async () => {
+    const { resume, repair } = await run(flagged, 'Builds React screens for a portal used by 25k clients.')
+    expect(resume.summary).toBe('Builds React screens for a portal used by 25k clients.')
+    expect(repair.summary).toBe('rewritten')
+  })
+
+  test('an unusable rewrite falls back to the candidate\'s own summary', async () => {
+    const { resume, repair } = await run(flagged, 'Led 12 developers building React portals.')
+    expect(resume.summary).toBe(original.summary)
+    expect(repair).toMatchObject({ summary: 'original', reverted: 1 })
+  })
+
+  test('with no original summary, keeps the rewrite\'s sentences that pass the number check', async () => {
+    const { resume, repair } = await run(flagged, 'Led 12 developers. Builds React screens for 25k clients.', { summary: '' })
+    expect(resume.summary).toBe('Builds React screens for 25k clients.')
+    expect(repair.summary).toBe('trimmed')
+  })
+
+  test('empties the summary only when no sentence survives', async () => {
+    expect((await run(flagged, 'Led 12 developers.', { summary: '' })).repair.summary).toBe('emptied')
+    const missing = await run(flagged, null, { summary: '' })
+    expect(missing.resume.summary).toBe('')
+    expect(missing.repair.summary).toBe('emptied')
+  })
+
+  test('a flag on an empty summary changes nothing ("Include summary" off)', async () => {
+    for (const summary of ['', ' ']) {
+      const { resume, repair } = await run(summary, 'Anything.')
+      expect(resume.summary).toBe(summary)
+      expect(repair.flagged).toEqual([])
+      expect(repair.summary).toBeUndefined()
+    }
   })
 })
 

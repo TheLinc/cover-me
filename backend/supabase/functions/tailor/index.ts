@@ -542,7 +542,12 @@ Deno.serve(async (req) => {
     delta.skills = (await groundSkills(delta.skills, candidate, askChecker)).skills
     const merged = mergeTailorDelta(structuredResume, delta, { exactBulletCounts: !compact && !trim })
     // Rewrite only the lines that claim more than the original resume supports.
-    const lined = (await checkAndRewriteLines(merged, structuredResume, job.description, askChecker)).resume
+    const { resume: lined, repair } = await checkAndRewriteLines(merged, structuredResume, job.description, askChecker)
+    // Counts only: repair.flagged holds resume text.
+    if (repair.flagged.length || repair.checkFailed) {
+      const { rewritten, reverted, summary, checkFailed } = repair
+      console.log('[CoverMe] line check:', JSON.stringify({ flagged: repair.flagged.length, rewritten, reverted, summary, checkFailed }))
+    }
     const resume = groundTailored(lined, structuredResume, candidate, job.description).resume as Record<string, unknown>
 
     let atsScore: number | undefined

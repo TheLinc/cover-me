@@ -258,8 +258,9 @@ function originalsFor(rewritten: string[], originals: string[]): Array<string | 
 // becoming "Owned", commercial work described as industrial). Only flagged
 // lines are rewritten, in one small call, and slotted back by position, so the
 // rest of the resume is untouched. A line the rewrite can't fix reverts to its
-// original wording (a flagged summary is dropped). If the check itself can't
-// run, the resume keeps its tailoring; groundTailored still runs after this.
+// original wording (a flagged summary to the candidate's own, see below). If
+// the check itself can't run, the resume keeps its tailoring; groundTailored
+// still runs after this.
 
 type LineId = string // "e0b2" = experience[0].bullets[2], "p1b0" = projects[1].bullets[0], "summary"
 
@@ -419,7 +420,14 @@ function usableRewrite(text: string, source: string, siblings: string[]): boolea
   })
 }
 
-export interface LineRepair { flagged: string[]; rewritten: number; reverted: number; checkFailed?: boolean }
+export interface LineRepair {
+  flagged: string[]
+  rewritten: number
+  reverted: number
+  checkFailed?: boolean
+  /** What a flagged summary became. */
+  summary?: 'rewritten' | 'original' | 'trimmed' | 'emptied'
+}
 
 export async function checkAndRewriteLines<T extends Groundable>(
   tailored: T,
@@ -434,8 +442,8 @@ export async function checkAndRewriteLines<T extends Groundable>(
     flags = null
   }
   if (!flags) return { resume: tailored, repair: { flagged: [], rewritten: 0, reverted: 0, checkFailed: true } }
-  // Drop ids that don't point at a real line.
-  for (const id of [...flags.keys()]) if (lineAt(tailored, id) === undefined) flags.delete(id)
+  // Drop ids that don't point at a real line (an empty summary is none).
+  for (const id of [...flags.keys()]) if (!lineAt(tailored, id)?.trim()) flags.delete(id)
   if (flags.size === 0) return { resume: tailored, repair: { flagged: [], rewritten: 0, reverted: 0 } }
 
   // Source original for every rewritten bullet, per entry.
@@ -481,16 +489,26 @@ export async function checkAndRewriteLines<T extends Groundable>(
   const resume = { ...tailored }
   resume.experience = fix('e', tailored.experience) ?? []
   if (tailored.projects) resume.projects = fix('p', tailored.projects)
+  let summary: LineRepair['summary']
   if (flags.has('summary')) {
-    const text = rewrites.get('summary')
-    const ok = text !== undefined && usableRewrite(text, allOriginal, [])
-    if (ok) rewritten++
-    else reverted++
-    resume.summary = ok ? text! : ''
+    const text = rewrites.get('summary') ?? ''
+    if (text && usableRewrite(text, allOriginal, [])) {
+      rewritten++
+      summary = 'rewritten'
+      resume.summary = text
+    } else {
+      // Like a bullet, revert to the candidate's own summary. With none, keep
+      // the rewrite's sentences that pass; empty only when none do.
+      reverted++
+      const own = original.summary?.trim()
+      const kept = text.split(/(?<=[.!?])\s+/).filter((s) => usableRewrite(s, allOriginal, [])).join(' ')
+      resume.summary = own || kept
+      summary = own ? 'original' : kept ? 'trimmed' : 'emptied'
+    }
   }
   return {
     resume,
-    repair: { flagged: [...flags].map(([id, reason]) => `${lineAt(tailored, id)} (${reason})`), rewritten, reverted },
+    repair: { flagged: [...flags].map(([id, reason]) => `${lineAt(tailored, id)} (${reason})`), rewritten, reverted, summary },
   }
 }
 
