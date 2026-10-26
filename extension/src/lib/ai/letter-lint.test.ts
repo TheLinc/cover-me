@@ -56,6 +56,20 @@ describe('invented numbers', () => {
     expect(invented('I cut waste 40 percent and saved $5 million.', 'Line cook.')).toHaveLength(2)
   })
 
+  test.each([
+    'I supported 20 K-12 schools.',
+    'I closed 15 B2B accounts.',
+    'I ran 4 M&A deals.',
+    'I ran 20K-12 tutoring.',
+  ])('reads a letter after the number as a word, not a K/M/B suffix: %s', (s) => {
+    expect(invented(s, 'Supported 20 schools, 15 accounts, 4 deals.')).toEqual([])
+  })
+
+  test('counts the company name as a source', () => {
+    expect(lintLetter(letter('3M runs 3M plants.'), { companyName: '3M', numberSources: [''] })
+      .violations.filter((v) => v.startsWith('Uses the number'))).toEqual([])
+  })
+
   test('is off without numberSources', () => {
     expect(lintLetter(letter(plates)).violations.some((v) => v.startsWith('Uses the number'))).toBe(false)
   })

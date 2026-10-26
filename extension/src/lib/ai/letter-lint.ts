@@ -143,8 +143,9 @@ export interface ExtractedNumber {
 /** Numbers in `text`, normalized so "$1.2M", "$1.2 million" and "1,200,000" compare equal. */
 export function extractNumbers(text: string): ExtractedNumber[] {
   const out: ExtractedNumber[] = []
-  // (?<![A-Za-z]) so "B2B" doesn't read as the number 2B.
-  const re = /(?<![A-Za-z])(\$?)(\d+(?:,\d+)*(?:\.\d+)?)(?:\s?([KkMmBb])(?![A-Za-z])|\s(thousand|million|billion)\b)?(%|\s?percent\b)?/gi
+  // (?<![A-Za-z]) so "B2B" doesn't read as the number 2B. The K/M/B suffix
+  // must touch the number, so "20 K-12 schools" and "4 M&A deals" stay 20 and 4.
+  const re = /(?<![A-Za-z])(\$?)(\d+(?:,\d+)*(?:\.\d+)?)(?:([KkMmBb])(?![A-Za-z&]|-\d)|\s(thousand|million|billion)\b)?(%|\s?percent\b)?/gi
   const MULT: Record<string, number> = { k: 1_000, t: 1_000, m: 1_000_000, b: 1_000_000_000 }
   let m: RegExpExecArray | null
   while ((m = re.exec(text)) !== null) {
@@ -251,7 +252,9 @@ export function lintLetter(
   // The prompt forbids invented metrics; this catches the ones that slip
   // through ("The 240th plate" with 240 in no input, 2026-10-26 eval).
   if (opts.numberSources) {
-    const known = new Set(opts.numberSources.flatMap((s) => extractNumbers(s).map((n) => n.norm)))
+    // The company name counts as a source, so "3M" isn't an invented 3,000,000.
+    const sources = [...opts.numberSources, opts.companyName ?? '']
+    const known = new Set(sources.flatMap((s) => extractNumbers(s).map((n) => n.norm)))
     for (const n of extractNumbers(body)) {
       if (!n.hard || known.has(n.norm)) continue
       known.add(n.norm)
