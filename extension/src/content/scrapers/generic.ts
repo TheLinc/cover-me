@@ -45,15 +45,17 @@ function tryHeuristic(): JobData {
   })
 
   // Find the largest text block that looks like a job description: not a list
-  // of links, which is a job board's listing or a "similar jobs" panel
+  // of links, which is a job board's listing or a "similar jobs" panel.
+  // Postings measured 0 to 21% link text, Greenhouse's board listing 95%.
+  // Each block's text is measured once, and links nested in a link (linkedom
+  // allows them) aren't read, so each block costs one walk of its subtree.
+  const nested = new Set(document.querySelectorAll('a a'))
   const description = Array.from(document.querySelectorAll<HTMLElement>('div, section, article'))
-    .filter((el) => {
-      const len = el.innerText?.trim().length ?? 0
-      return len > 500 && len < 20000
-    })
-    .sort((a, b) => b.innerText.length - a.innerText.length)
-    .find((el) => linkTextShare(el) < 0.5)
-    ?.innerText?.trim()
+    .map((el) => ({ el, len: el.innerText?.trim().length ?? 0 }))
+    .filter(({ len }) => len > 500 && len < 20000)
+    .sort((a, b) => b.len - a.len)
+    .find(({ el, len }) => linkTextLength(el, nested) < len / 2)
+    ?.el.innerText.trim()
 
   if (!titleEl || !description || description.length < 200) {
     throw new Error(
@@ -70,16 +72,14 @@ function isNavHeading(text: string): boolean {
   const navPhrases = [
     'job matches', 'job listings', 'search results', 'find jobs',
     'browse jobs', 'open positions', 'career opportunities', 'all jobs',
-    'jobs at', 'we\'re hiring',
+    'jobs at', 'we\'re hiring', 'open roles', 'current openings', 'job openings',
   ]
   return navPhrases.some((p) => lower.includes(p))
 }
 
-// Postings measured 0 to 0.21, Greenhouse's board listing 0.95
-function linkTextShare(el: HTMLElement): number {
-  const linkText = Array.from(el.querySelectorAll<HTMLElement>('a'))
-    .reduce((n, a) => n + (a.innerText?.trim().length ?? 0), 0)
-  return linkText / el.innerText.trim().length
+function linkTextLength(el: HTMLElement, nested: Set<Element>): number {
+  return Array.from(el.querySelectorAll<HTMLElement>('a'))
+    .reduce((n, a) => n + (nested.has(a) ? 0 : a.innerText?.trim().length ?? 0), 0)
 }
 
 function firstText(selectors: string[]): string | undefined {

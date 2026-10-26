@@ -33,6 +33,20 @@ describe('generic heuristic', () => {
   test('reads a listing page as no job, not a job', () => {
     const html = readFileSync(join(__dirname, 'fixtures', 'greenhouse-board.html'), 'utf8')
     expect(() => scrape(fixtureUrl(html), html)).toThrow('Could not find job details')
+    // A board with an intro above the list: the intro isn't links, so the
+    // heading is what gives it away
+    const intro = html.replace('<div class="index--header index--header__no-description"></div>',
+      `<div class="index--header"><p>${'We build reliable, interpretable AI systems. '.repeat(15)}</p></div>`)
+    expect(() => scrape(fixtureUrl(intro), intro)).toThrow('Could not find job details')
+  })
+
+  // Each link read once per block, not once per link it's nested in (34 s
+  // before, 1 s now)
+  test('70 nested links in 100 nested blocks stay cheap', () => {
+    const main = '<div>'.repeat(100) + 'x'.repeat(600) + '<a href="/a">L<div>'.repeat(70) + '<i></i>'.repeat(20_000) + '</div></a>'.repeat(70) + '</div>'.repeat(100)
+    const start = performance.now()
+    scrape('https://careers.example.com/jobs/1', `<!doctype html><html><body><h1>Clerk</h1><main>${main}</main></body></html>`)
+    expect(performance.now() - start).toBeLessThan(5000)
   })
 
   test('reads a plain posting, not the larger list of similar jobs beside it', () => {
