@@ -30,7 +30,7 @@ function tryAtsSelectors(): JobData | null {
 
   if (title && description) {
     const company = firstText(['[data-qa="company"]', '[class*="company-name"]', '.selected-application-pane .section-header + * > .section-title'])
-      // Greenhouse names the company only in the tab title
+      // job-boards.greenhouse.io names the company only in the tab title
       ?? document.title.match(/^Job Application for .+ at (.+)$/)?.[1]?.trim()
       ?? 'Unknown Company'
     return { title, company, description, url: window.location.href }
