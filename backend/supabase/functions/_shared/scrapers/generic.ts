@@ -20,7 +20,7 @@ function tryAtsSelectors(): JobData | null {
   const description = firstText([
     '.job__description',
     '.application-description',
-    '.job-post-contents',
+    '.selected-application-pane .job-post-contents',
     '[data-qa="job-description"]',
     '.posting-description',
     '[class*="job-description"]',
