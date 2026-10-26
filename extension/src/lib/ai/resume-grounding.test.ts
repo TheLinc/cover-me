@@ -99,9 +99,11 @@ describe('checkAndRewriteLines summary', () => {
   })
 
   test('a flag on an empty summary changes nothing ("Include summary" off)', async () => {
-    const { resume, repair } = await run('', 'Anything.')
-    expect(resume.summary).toBe('')
-    expect(repair.flagged).toEqual([])
-    expect(repair.summary).toBeUndefined()
+    for (const summary of ['', ' ']) {
+      const { resume, repair } = await run(summary, 'Anything.')
+      expect(resume.summary).toBe(summary)
+      expect(repair.flagged).toEqual([])
+      expect(repair.summary).toBeUndefined()
+    }
   })
 })

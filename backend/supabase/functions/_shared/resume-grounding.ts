@@ -443,7 +443,7 @@ export async function checkAndRewriteLines<T extends Groundable>(
   }
   if (!flags) return { resume: tailored, repair: { flagged: [], rewritten: 0, reverted: 0, checkFailed: true } }
   // Drop ids that don't point at a real line (an empty summary is none).
-  for (const id of [...flags.keys()]) if (!lineAt(tailored, id)) flags.delete(id)
+  for (const id of [...flags.keys()]) if (!lineAt(tailored, id)?.trim()) flags.delete(id)
   if (flags.size === 0) return { resume: tailored, repair: { flagged: [], rewritten: 0, reverted: 0 } }
 
   // Source original for every rewritten bullet, per entry.
