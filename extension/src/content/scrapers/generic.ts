@@ -9,6 +9,7 @@ function tryAtsSelectors(): JobData | null {
   // Covers Greenhouse, Lever, Ashby, Workable, BambooHR
   const title = firstText([
     '.job__title h1', // Greenhouse job-boards.greenhouse.io
+    '.application-form-header--title', // Greenhouse job search pop-up, my.greenhouse.io
     '[data-qa="job-title"]',
     '.posting-headline h2',
     '.job-title',
@@ -17,6 +18,7 @@ function tryAtsSelectors(): JobData | null {
   ])
   const description = firstText([
     '.job__description',
+    '.application-description',
     '[data-qa="job-description"]',
     '.posting-description',
     '[class*="job-description"]',
