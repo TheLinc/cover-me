@@ -27,6 +27,23 @@ describe('scrapers on saved postings', () => {
   })
 })
 
+describe('generic heuristic', () => {
+  // Greenhouse's public board listing: an <h1> of "Open Roles" over a list of
+  // job links, once read as a job called "Open Roles" (#64).
+  test('reads a listing page as no job, not a job', () => {
+    const html = readFileSync(join(__dirname, 'fixtures', 'greenhouse-board.html'), 'utf8')
+    expect(() => scrape(fixtureUrl(html), html)).toThrow('Could not find job details')
+  })
+
+  test('reads a plain posting, not the larger list of similar jobs beside it', () => {
+    const description = 'Lead a team of twelve on the night shift and keep the loading dock on schedule. '.repeat(8).trim()
+    const similar = Array.from({ length: 40 }, (_, i) => `<li><a href="/jobs/${i}">Forklift Operator, Night Shift - Toronto</a></li>`).join('')
+    const job = scrape('https://careers.example.com/jobs/1', `<html><body><main><h1>Warehouse Supervisor</h1>
+      <div><div><p>${description}</p></div><div><h2>Similar jobs</h2><ul>${similar}</ul></div></div></main></body></html>`)
+    expect(job).toMatchObject({ title: 'Warehouse Supervisor', company: 'Unknown Company', description })
+  })
+})
+
 test('refuses pages nested far deeper than any real posting', () => {
   expect(() => scrape('https://careers.example.com/jobs/1', `<html><body>${'<div>'.repeat(300)}x${'</div>'.repeat(300)}</body></html>`))
     .toThrow('too large')

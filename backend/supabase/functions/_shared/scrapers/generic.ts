@@ -44,15 +44,16 @@ function tryHeuristic(): JobData {
     return text.length > 2 && text.length < 120 && !isNavHeading(text)
   })
 
-  // Find the largest text block that looks like a job description
-  const candidates = Array.from(document.querySelectorAll<HTMLElement>('div, section, article'))
+  // Find the largest text block that looks like a job description: not a list
+  // of links, which is a job board's listing or a "similar jobs" panel
+  const description = Array.from(document.querySelectorAll<HTMLElement>('div, section, article'))
     .filter((el) => {
       const len = el.innerText?.trim().length ?? 0
       return len > 500 && len < 20000
     })
     .sort((a, b) => b.innerText.length - a.innerText.length)
-
-  const description = candidates[0]?.innerText?.trim()
+    .find((el) => linkTextShare(el) < 0.5)
+    ?.innerText?.trim()
 
   if (!titleEl || !description || description.length < 200) {
     throw new Error(
@@ -72,6 +73,13 @@ function isNavHeading(text: string): boolean {
     'jobs at', 'we\'re hiring',
   ]
   return navPhrases.some((p) => lower.includes(p))
+}
+
+// Postings measured 0 to 0.21, Greenhouse's board listing 0.95
+function linkTextShare(el: HTMLElement): number {
+  const linkText = Array.from(el.querySelectorAll<HTMLElement>('a'))
+    .reduce((n, a) => n + (a.innerText?.trim().length ?? 0), 0)
+  return linkText / el.innerText.trim().length
 }
 
 function firstText(selectors: string[]): string | undefined {
