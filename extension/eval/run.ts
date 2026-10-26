@@ -304,7 +304,8 @@ async function liveLetters() {
     // Mirror production: one corrective retry on lint violations. A failed
     // retry keeps the draft, as production does.
     let retried = false
-    const firstLint = lintLetter(letter, { companyName: c.job.company })
+    const numberSources = [c.resumeText, c.job.title, c.job.description]
+    const firstLint = lintLetter(letter, { companyName: c.job.company, numberSources })
     if (firstLint.violations.length > 0) {
       retried = true
       try {
@@ -313,7 +314,7 @@ async function liveLetters() {
           { role: 'assistant', content: letter },
           { role: 'user', content: buildLintRetryMessage(firstLint.violations) },
         ], { model: MODEL, maxTokens: 1024 }))
-        const retryLint = lintLetter(retry, { companyName: c.job.company })
+        const retryLint = lintLetter(retry, { companyName: c.job.company, numberSources })
         if (retryLint.violations.length <= firstLint.violations.length) letter = retry
       } catch {
         // keep the draft

@@ -3,7 +3,7 @@
 
 import type { ParsedResume, TailoredResume } from '../src/types'
 import type { EvalCase } from './fixtures'
-import { lintLetter } from '../src/lib/ai/letter-lint'
+import { extractNumbers, lintLetter } from '../src/lib/ai/letter-lint'
 
 export interface CheckResult {
   failures: string[]
@@ -23,26 +23,6 @@ function escapeRegex(s: string): string {
 function containsTerm(text: string, term: string): boolean {
   if (term.includes(' ')) return text.toLowerCase().includes(term.toLowerCase())
   return new RegExp(`(^|[^A-Za-z])${escapeRegex(term)}($|[^A-Za-z])`, 'i').test(text)
-}
-
-/** Extract normalized numeric tokens: "60,000" → "60000", "$15K" → "15000". */
-function extractNumbers(text: string): Array<{ raw: string; norm: string; hard: boolean }> {
-  const out: Array<{ raw: string; norm: string; hard: boolean }> = []
-  // (?<![A-Za-z]) so "B2B" doesn't read as the number 2B.
-  const re = /(?<![A-Za-z])(\$?)(\d[\d,]*(?:\.\d+)?)\s?([KkMmBb](?![A-Za-z]))?(%?)/g
-  const MULT: Record<string, number> = { k: 1_000, m: 1_000_000, b: 1_000_000_000 }
-  let m: RegExpExecArray | null
-  while ((m = re.exec(text)) !== null) {
-    const base = m[2].replace(/,/g, '')
-    const suffix = m[3]?.toLowerCase()
-    const norm = suffix ? String(parseFloat(base) * MULT[suffix]) : base
-    // "hard" numbers are the fabrication-risk class: money, percentages, and
-    // anything 3+ digits. Bare 1–2 digit integers (years of experience, team
-    // sizes) are often legitimately derived, so they only warn.
-    const hard = m[1] === '$' || m[4] === '%' || norm.replace(/\./g, '').length >= 3
-    out.push({ raw: `${m[1]}${m[2]}${m[3] ?? ''}${m[4]}`, norm, hard })
-  }
-  return out
 }
 
 function numberSourceSet(...sources: string[]): Set<string> {
@@ -82,6 +62,8 @@ function checkNumberProvenance(
 export function checkLetter(letter: string, c: EvalCase): CheckResult {
   const result: CheckResult = { failures: [], warnings: [] }
 
+  // No numberSources: checkNumberProvenance below covers numbers, with the
+  // JD-only and small-number warnings the lint doesn't give.
   const lint = lintLetter(letter, { companyName: c.job.company })
   for (const v of lint.violations) result.failures.push(`lint: ${v}`)
 
