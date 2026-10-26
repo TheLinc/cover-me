@@ -42,7 +42,11 @@ export async function generateCoverLetter(
     provider === 'claude' ? callClaude(msgs, apiKey) : callOpenAI(msgs, apiKey)
 
   const draft = stripMarkdown(await call(prompt))
-  const draftLint = lintLetter(draft, { companyName: job.company })
+  const lintOpts = {
+    companyName: job.company,
+    numberSources: [resumeText, job.title, job.description, supplemental ?? ''],
+  }
+  const draftLint = lintLetter(draft, lintOpts)
   if (draftLint.violations.length === 0) return draft
 
   // One corrective retry: same conversation, violations spelled out.
@@ -54,7 +58,7 @@ export async function generateCoverLetter(
     { role: 'assistant', content: draft },
     { role: 'user', content: buildLintRetryMessage(draftLint.violations) },
   ]))
-  const retryLint = lintLetter(retry, { companyName: job.company })
+  const retryLint = lintLetter(retry, lintOpts)
   return retryLint.violations.length <= draftLint.violations.length ? retry : draft
 }
 

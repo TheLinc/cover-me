@@ -95,7 +95,11 @@ Deno.serve(async (req) => {
     // Deterministic lint + one corrective retry, so the prompt's style rules are
     // guarantees rather than hopes. Retry failure falls back to the draft.
     let letter = draft
-    const draftLint = lintLetter(draft, { companyName: job.company })
+    const lintOpts = {
+      companyName: job.company,
+      numberSources: [resumeText, job.title, job.description, supplemental ?? ''],
+    }
+    const draftLint = lintLetter(draft, lintOpts)
     if (draftLint.violations.length > 0) {
       try {
         const retry = stripMarkdown(await callClaude([
@@ -104,7 +108,7 @@ Deno.serve(async (req) => {
           { role: 'user', content: buildLintRetryMessage(draftLint.violations) },
         ]))
         if (retry) {
-          const retryLint = lintLetter(retry, { companyName: job.company })
+          const retryLint = lintLetter(retry, lintOpts)
           if (retryLint.violations.length <= draftLint.violations.length) letter = retry
         }
       } catch (err) {
