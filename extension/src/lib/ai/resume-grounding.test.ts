@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { candidateText, checkAndRewriteLines, groundTailored } from './resume-grounding'
+import { candidateText, checkAndRewriteLines, groundSkills, groundTailored } from './resume-grounding'
 
 // Made-up posting and resume. The resume never says "web", "Ruby", "Rails" or "HIPAA".
 const posting = `Frontend Web Developer
@@ -105,5 +105,18 @@ describe('checkAndRewriteLines summary', () => {
       expect(repair.flagged).toEqual([])
       expect(repair.summary).toBeUndefined()
     }
+  })
+})
+
+describe('groundSkills with sections outside the six', () => {
+  test('a skill backed only by a line in otherSections survives', async () => {
+    const parsed = {
+      experience: [{ title: 'Research Associate', bullets: ['Ran qPCR assays'] }],
+      skills: 'qPCR',
+      otherSections: [{ heading: 'PUBLICATIONS', lines: ['Adeyemi S. "Single-cell RNA-seq of lung tumours." J Cell Biol. 2023.'] }],
+    }
+    const { skills, dropped } = await groundSkills([{ skill: 'qPCR' }, { skill: 'Single-cell RNA-seq' }], candidateText(parsed))
+    expect(skills).toBe('qPCR, Single-cell RNA-seq')
+    expect(dropped).toEqual([])
   })
 })

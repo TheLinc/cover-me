@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
-  admin, callFunction, clearParsedResume, createUser, deleteUser, JOB, LONG_RESUME_TEXT, mockClaude, quotaUsedToday, setQuotaUsedToday, setUsage, type TestUser, uploadResume,
+  admin, cacheParsedResume, callFunction, clearParsedResume, createUser, deleteUser, JOB, LONG_RESUME_TEXT, mockClaude, quotaUsedToday, setQuotaUsedToday, setUsage, type TestUser, uploadResume,
 } from './helpers'
 import { MOCK_PARSED_RESUME, MOCK_REWRITTEN_BULLET, MOCK_TAILOR_DELTA } from '../mock-anthropic'
 
@@ -41,6 +41,8 @@ describe('tailor', () => {
     // bullet is rewritten, the rest of the role is untouched.
     expect(resume.experience[0].bullets).toEqual([MOCK_REWRITTEN_BULLET, MOCK_TAILOR_DELTA.experience[0].bullets[1]])
     expect(resume.summary).toBe(MOCK_TAILOR_DELTA.summary)
+    // Sections outside the six come through from the parse untouched.
+    expect(resume.otherSections).toEqual(MOCK_PARSED_RESUME.otherSections)
     // Evidence-backed skills: the category label with real evidence stays, the
     // skill whose evidence isn't in the resume is dropped.
     expect(resume.skills).toBe('TypeScript, Postgres, React, Data Pipelines')
@@ -98,6 +100,28 @@ describe('tailor', () => {
     expect(prompts.some((p) => p.startsWith('You are a resume parser'))).toBe(false)
     const checks = ['SKILL CLAIM CHECK', 'RESUME ACCURACY CHECK', 'RESUME LINE REWRITE']
     expect(prompts.filter((p) => !checks.some((c) => p.startsWith(c)))).toHaveLength(1)
+  })
+
+  it('parses again, once, a cached parse from before otherSections', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    const { otherSections: _, ...old } = MOCK_PARSED_RESUME
+    const isParse = (p: string) => p.startsWith('You are a resume parser')
+    const prompts = async () => (await mockClaude.requests()).map((r) => r.messages[0].content)
+
+    await cacheParsedResume(user.id, { ...old, otherSections: [] })
+    await callFunction('tailor', { token: user.token, body: { job: JOB } })
+    expect((await prompts()).filter(isParse)).toHaveLength(0)
+
+    await cacheParsedResume(user.id, old)
+    await mockClaude.reset()
+    const res = await callFunction('tailor', { token: user.token, body: { job: JOB } })
+    expect((await prompts()).filter(isParse)).toHaveLength(1)
+    expect((await res.json()).resume.otherSections).toEqual(MOCK_PARSED_RESUME.otherSections)
+
+    await mockClaude.reset()
+    await callFunction('tailor', { token: user.token, body: { job: JOB } })
+    expect((await prompts()).filter(isParse)).toHaveLength(0)
   })
 
   it('streams NDJSON start, delta and done events when asked', async () => {

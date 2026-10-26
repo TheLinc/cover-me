@@ -22,6 +22,14 @@ export interface ResumeEducation {
   bullets: string[]
 }
 
+// Any section besides summary, experience, projects, education, skills and
+// certifications (publications, volunteer work, awards). Copied verbatim by
+// the parser and never rewritten by the tailor.
+export interface ResumeSection {
+  heading: string
+  lines: string[]
+}
+
 export interface TailoredResume {
   name: string
   phone: string
@@ -33,6 +41,7 @@ export interface TailoredResume {
   education: ResumeEducation[]
   skills?: string
   certifications?: string[]
+  otherSections?: ResumeSection[]
   atsScore?: number
   atsGaps?: string[]
 }

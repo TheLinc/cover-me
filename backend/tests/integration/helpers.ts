@@ -98,6 +98,16 @@ export async function waitForParsedResume(userId: string, timeoutMs = 10_000): P
   }
 }
 
+// Stores a parsed copy the way the functions do (AES-256-GCM, IV first,
+// base64), with the key scripts/test-functions.mjs gave them.
+export async function cacheParsedResume(userId: string, parsed: unknown) {
+  const key = await crypto.subtle.importKey('raw', Buffer.from(env('ENCRYPTION_KEY'), 'hex'), 'AES-GCM', false, ['encrypt'])
+  const iv = crypto.getRandomValues(new Uint8Array(12))
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(JSON.stringify(parsed))))
+  const structured_encrypted = Buffer.concat([iv, ct]).toString('base64')
+  await admin.from('resumes').update({ structured_encrypted }).eq('user_id', userId)
+}
+
 // Drops the parsed copy, so the next tailor parses the resume itself.
 export async function clearParsedResume(userId: string) {
   await admin.from('resumes').update({ structured_encrypted: null }).eq('user_id', userId)

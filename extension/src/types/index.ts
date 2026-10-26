@@ -8,8 +8,8 @@ export interface Settings {
 }
 
 export type { JobData } from '../content/scrapers/types.ts'
-import type { ResumeEducation, ResumeExperience, ResumeProject, TailoredResume } from '../lib/pdf/types'
-export type { ResumeEducation, ResumeExperience, ResumeProject, TailoredResume } from '../lib/pdf/types'
+import type { ResumeEducation, ResumeExperience, ResumeProject, ResumeSection, TailoredResume } from '../lib/pdf/types'
+export type { ResumeEducation, ResumeExperience, ResumeProject, ResumeSection, TailoredResume } from '../lib/pdf/types'
 import type { PageSnapshot } from '../content/snapshot.ts'
 import type { JobData } from '../content/scrapers/types.ts'
 
@@ -50,6 +50,8 @@ export interface ParsedResume {
   education: ResumeEducation[]
   skills?: string
   certifications?: string[]
+  /** Always an array on a parse made since #54; a cached parse without it predates them and is parsed again. */
+  otherSections?: ResumeSection[]
 }
 
 export interface ResumeData {

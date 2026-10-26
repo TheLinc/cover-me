@@ -175,6 +175,11 @@ export function checkTailored(out: TailoredResume, c: EvalCase, input: ParsedRes
     }
   }
 
+  // Sections outside the six are never the model's to write.
+  if (JSON.stringify(out.otherSections ?? []) !== JSON.stringify(input.otherSections ?? [])) {
+    result.failures.push('otherSections dropped or altered')
+  }
+
   // Content bans over the rewritten prose.
   const prose = [
     out.summary ?? '',
@@ -318,6 +323,23 @@ export function checkParse(actual: ParsedResume, c: EvalCase): CheckResult {
     eq('skills', want.skills, actual.skills)
   }
 
+  // Sections outside the six come through whole, and nothing else lands there
+  // (a profile or a job section leaking in fails here).
+  const wantOther = want.otherSections ?? []
+  const gotOther = actual.otherSections ?? []
+  if (gotOther.length !== wantOther.length) {
+    result.failures.push(`otherSections: expected [${wantOther.map((o) => o.heading).join(', ')}], parsed [${gotOther.map((o) => o.heading).join(', ')}]`)
+  } else {
+    wantOther.forEach((w, i) => {
+      eq(`otherSections[${i}].heading`, w.heading, gotOther[i].heading)
+      if (gotOther[i].lines.length !== w.lines.length) {
+        result.failures.push(`otherSections[${i}] lines: expected ${w.lines.length}, parsed ${gotOther[i].lines.length}`)
+      } else {
+        w.lines.forEach((l, j) => eq(`otherSections[${i}].lines[${j}]`, l, gotOther[i].lines[j]))
+      }
+    })
+  }
+
   return result
 }
 
@@ -333,6 +355,7 @@ export function checkFixture(c: EvalCase): CheckResult {
     ...c.parsed.education.flatMap((e) => [e.degree, e.institution, ...e.bullets]),
     ...(c.parsed.certifications ?? []),
     c.parsed.skills ?? '',
+    ...(c.parsed.otherSections ?? []).flatMap((o) => [o.heading, ...o.lines]),
   ].filter(Boolean)
   for (const item of all) {
     if (!text.includes(norm(item))) result.failures.push(`answer key text not found in resumeText: "${item.slice(0, 60)}"`)

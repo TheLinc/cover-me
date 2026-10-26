@@ -55,3 +55,12 @@ describe('mergeTailorDelta bullet counts', () => {
     expect(mergeTailorDelta(base, delta).projects![0].bullets).toEqual(base.projects[0].bullets)
   })
 })
+
+describe('mergeTailorDelta other sections', () => {
+  test("keeps the resume's otherSections even when the delta carries its own", () => {
+    const otherSections = [{ heading: 'PUBLICATIONS', lines: ['Adeyemi S. "CRISPR screening." J Cell Biol. 2023.'] }]
+    const base = { experience: [{ bullets: ['Ran qPCR assays'] }], otherSections }
+    const delta = { experience: [{ bullets: ['Ran qPCR assays for 3 programs'] }], otherSections: [{ heading: 'AWARDS', lines: ['Nobel Prize'] }] }
+    expect(mergeTailorDelta(base, delta as Parameters<typeof mergeTailorDelta>[1]).otherSections).toBe(otherSections)
+  })
+})
