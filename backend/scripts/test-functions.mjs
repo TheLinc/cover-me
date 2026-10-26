@@ -27,10 +27,12 @@ async function freePort() {
 const MOCK_PORT = process.env.MOCK_ANTHROPIC_PORT ?? await freePort()
 const status = localStatus()
 
+// Also given to vitest, so a test can seed an encrypted cached parse.
+const ENCRYPTION_KEY = randomBytes(32).toString('hex')
 const envFile = join(BACKEND, 'supabase', 'functions', '.env.test')
 writeFileSync(envFile, [
   `SERVICE_KEY=${serviceKey(status)}`,
-  `ENCRYPTION_KEY=${randomBytes(32).toString('hex')}`,
+  `ENCRYPTION_KEY=${ENCRYPTION_KEY}`,
   'ANTHROPIC_API_KEY=mock-key',
   `ANTHROPIC_BASE_URL=http://host.docker.internal:${MOCK_PORT}`,
   'DEBUG_MODE=false',
@@ -91,6 +93,7 @@ const vitest = spawnSync(
       SUPABASE_PUBLISHABLE_KEY: publishableKey(status),
       SUPABASE_SERVICE_KEY: serviceKey(status),
       MOCK_ANTHROPIC_PORT: MOCK_PORT,
+      ENCRYPTION_KEY,
     },
   },
 )
