@@ -67,8 +67,12 @@ export function ApplicationDetailsSheet({ app, open, onOpenChange, onClosed, onG
     try { await run() } catch { toast.error("Couldn't download it. Try again.") }
   }
 
-  // The newest readable resume gets the preview; older ones stay a dated download.
-  const [latest, ...older] = detail ? [...detail.tailoredResumes].sort((a, b) => b.createdAt.localeCompare(a.createdAt)) : []
+  // The newest readable resume (the detail comes newest first) gets the
+  // preview; older ones stay a dated download.
+  const [latest, ...older] = detail?.tailoredResumes ?? []
+  // The score is the newest resume's. Once the detail shows that the newest
+  // couldn't be opened, it would sit above a different resume's text: hide it.
+  const ats = !detail || latest?.id === result?.id ? result : undefined
 
   const resumePanel = (
     <div className="flex flex-col gap-3">
@@ -135,15 +139,15 @@ export function ApplicationDetailsSheet({ app, open, onOpenChange, onClosed, onG
         </SheetHeader>
 
         <div className="flex flex-1 flex-col gap-6 px-6 pb-8 max-sm:px-4">
-          {result?.atsScore != null && (
+          {ats?.atsScore != null && (
             <section aria-label="ATS result" className={`${TILE} flex items-center gap-4 py-4`}>
-              <AtsRing score={result.atsScore} size={60} />
+              <AtsRing score={ats.atsScore} size={60} />
               <div className="flex min-w-0 flex-col gap-1.5">
                 <p className="text-[13px] text-ink-2">ATS match for the {resumes > 1 ? 'newest ' : ''}tailored resume</p>
-                {result.atsGaps && result.atsGaps.length > 0 && (
+                {ats.atsGaps && ats.atsGaps.length > 0 && (
                   <div className="flex flex-wrap items-center gap-1.5">
                     <span className="mr-0.5 text-[12.5px] text-subtle">Missing</span>
-                    {result.atsGaps.map((gap) => (
+                    {ats.atsGaps.map((gap) => (
                       <span key={gap} className="rounded-full bg-gap-tint px-2.5 py-0.5 text-[12px] font-medium text-gap-ink">{gap}</span>
                     ))}
                   </div>
@@ -168,8 +172,9 @@ export function ApplicationDetailsSheet({ app, open, onOpenChange, onClosed, onG
                 <TabsTrigger value="resume" className={TAB}>{resumeLabel}</TabsTrigger>
                 <TabsTrigger value="letter" className={TAB}>{letterLabel}</TabsTrigger>
               </TabsList>
-              <TabsContent value="resume" className="mt-0">{resumePanel}</TabsContent>
-              <TabsContent value="letter" className="mt-0">{letterPanel}</TabsContent>
+              {/* Hidden headings keep the outline whole: the preview's section titles are h4s. */}
+              <TabsContent value="resume" className="mt-0"><h3 className="sr-only">{resumeLabel}</h3>{resumePanel}</TabsContent>
+              <TabsContent value="letter" className="mt-0"><h3 className="sr-only">{letterLabel}</h3>{letterPanel}</TabsContent>
             </Tabs>
           ) : resumes > 0 ? (
             <Part id={`resumes-${app.id}`} title={resumeLabel}>{resumePanel}</Part>

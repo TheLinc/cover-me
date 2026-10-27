@@ -45,7 +45,7 @@ export default function DashboardClient({
   const isPro = tier === "hosted_pro";
   const initial = email[0]?.toUpperCase() ?? "?";
   const usage = describeAllowance(allowance);
-  const leftPct = usage ? Math.max(0, ((usage.limit - usage.used) / usage.limit) * 100) : 0;
+  const leftPct = usage && usage.limit > 0 ? ((usage.limit - usage.used) / usage.limit) * 100 : 0;
   const proDaily = allowance?.pro_daily ?? 25;
 
   async function handleBillingPortal() {
@@ -121,7 +121,7 @@ export default function DashboardClient({
               {usage ? (
                 <>
                   <p className="text-[14px] tabular-nums text-ink-2">
-                    <span className="mr-1 text-[34px] font-semibold leading-none tracking-[-0.03em] text-ink">{usage.limit - usage.used}</span>of {usage.limit} left
+                    <span className="text-[34px] font-semibold leading-none tracking-[-0.03em] text-ink">{usage.limit - usage.used}</span> of {usage.limit} left
                   </p>
                   {/* Free allowances are a handful of generations, one cell each; Pro's daily 25 is a bar. */}
                   {allowance?.kind === 'daily' ? (
