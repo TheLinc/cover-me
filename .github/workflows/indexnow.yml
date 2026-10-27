@@ -1,0 +1,29 @@
+# After Vercel finishes a production deploy, tell IndexNow (Bing, Yandex and
+# others) which pages changed, so the new content is live before engines fetch it.
+# Run it by hand with "all" to submit every page, e.g. after adding the site to Bing.
+name: IndexNow
+
+on:
+  deployment_status:
+  workflow_dispatch:
+    inputs:
+      all:
+        description: Submit every page in the sitemap, not only pages changed in the last 7 days
+        type: boolean
+        default: false
+
+jobs:
+  submit:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.deployment_status.state == 'success' && github.event.deployment.environment == 'Production')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: web/scripts
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node web/scripts/indexnow.mjs ${{ inputs.all && '--all' || '' }}
