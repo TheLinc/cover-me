@@ -4,8 +4,7 @@ import { useState, type ReactNode } from "react";
 import { openBilling } from "@/lib/billing";
 import { describeAllowance, type Allowance } from "@/lib/limits";
 import { LocalDate } from "./LocalDate";
-import { CHROME_STORE_URL } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
+import { CHROME_STORE_URL, cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -17,6 +16,8 @@ import { Spinner } from "@/components/ui/spinner";
 import { SiteNav } from '@/components/site/SiteNav'
 import { appLinks } from '@/components/site/app-links'
 import { SignOutButton } from '@/components/site/SignOutButton'
+
+const TILE = "flex flex-col rounded-[20px] border border-line bg-surface px-6 py-5 shadow-[0_1px_2px_rgba(30,27,75,0.05),0_10px_28px_-16px_rgba(30,27,75,0.22)]";
 
 interface Props {
   email: string;
@@ -44,7 +45,8 @@ export default function DashboardClient({
   const isPro = tier === "hosted_pro";
   const initial = email[0]?.toUpperCase() ?? "?";
   const usage = describeAllowance(allowance);
-  const usagePct = usage ? Math.min(100, (usage.used / usage.limit) * 100) : 0;
+  const leftPct = usage && usage.limit > 0 ? ((usage.limit - usage.used) / usage.limit) * 100 : 0;
+  const proDaily = allowance?.pro_daily ?? 25;
 
   async function handleBillingPortal() {
     setBillingLoading(true);
@@ -112,61 +114,69 @@ export default function DashboardClient({
             </div>
           </header>
 
-          {/* Plan and usage: one strip, read left to right. Free accounts get the upgrade in its last slot. */}
-          <div className="flex flex-col gap-3">
-            <section aria-label="Plan and usage" className="flex flex-wrap items-center gap-x-8 gap-y-4 rounded-[20px] border border-line/80 bg-surface px-6 py-5 shadow-[0_1px_2px_rgba(30,27,75,0.05),0_10px_28px_-16px_rgba(30,27,75,0.22)]">
-              <div className="flex flex-col gap-1.5">
-                <span className="text-[12.5px] text-subtle">Plan</span>
-                {isPro ? (
-                  <Badge variant="pro" className="w-fit gap-1"><StarIcon size={10} weight="fill" aria-hidden />Pro</Badge>
-                ) : (
-                  <Badge variant="free" className="w-fit">Free</Badge>
-                )}
-              </div>
-              <div className="flex min-w-[220px] flex-1 flex-col gap-2">
-                <div className="flex items-baseline justify-between gap-3">
-                  <span className="text-[12.5px] text-subtle">{usage?.label ?? 'Usage'}</span>
-                  {usage ? (
-                    <span className="text-[13px] tabular-nums text-ink-2">
-                      <span className="text-[20px] font-semibold tracking-[-0.02em] text-ink">{usage.used}</span> of {usage.limit}
-                    </span>
+          {/* Plan and usage: two tiles, stacked on phones. Usage leads with what's left. */}
+          <section aria-label="Plan and usage" className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className={cn(TILE, "gap-2.5")}>
+              <span className="text-[12.5px] text-subtle">{usage?.label ?? 'Generations'}</span>
+              {usage ? (
+                <>
+                  <p className="text-[14px] tabular-nums text-ink-2">
+                    <span className="text-[34px] font-semibold leading-none tracking-[-0.03em] text-ink">{usage.limit - usage.used}</span> of {usage.limit} left
+                  </p>
+                  {/* Free allowances are a handful of generations, one cell each; Pro's daily 25 is a bar. */}
+                  {allowance?.kind === 'daily' ? (
+                    <Progress value={leftPct} className="h-1.5" aria-label={`${usage.limit - usage.used} of ${usage.limit} left`} />
                   ) : (
-                    <span className="text-[13px] text-ink-2">Unavailable right now</span>
+                    <div role="img" aria-label={`${usage.limit - usage.used} of ${usage.limit} left`} className="flex gap-1">
+                      {Array.from({ length: usage.limit }, (_, i) => (
+                        <span key={i} className={`h-2 flex-1 rounded-full ${i < usage.limit - usage.used ? 'bg-brand' : 'bg-panel'}`} />
+                      ))}
+                    </div>
                   )}
-                </div>
-                <Progress value={usagePct} className="h-1.5" aria-label={usage ? `${usage.used} of ${usage.limit} used` : 'Usage unavailable'} />
-                {usage && <span className="text-[12.5px] text-subtle">{usage.resets}</span>}
-              </div>
-              {isPro ? (
-                <div className="flex flex-col items-start gap-1.5">
-                  <Button variant="outline" size="sm" className="rounded-full" onClick={handleBillingPortal} disabled={billingLoading}>
-                    {billingLoading
-                      ? <><Spinner className="size-3.5" />Loading</>
-                      : <>Manage billing <ArrowUpRightIcon size={12} aria-hidden /></>
-                    }
-                  </Button>
-                  {billingError && <p className="max-w-[220px] text-[12px] leading-snug text-destructive">{billingError}</p>}
-                </div>
+                  <span className="text-[12.5px] text-subtle">{usage.resets}</span>
+                </>
               ) : (
-                <div className="flex flex-col items-start gap-1.5">
-                  <div className="flex flex-wrap gap-2">
-                    <Button size="sm" className="rounded-full px-4" onClick={() => handleUpgrade('monthly')} disabled={upgrading !== null}>
-                      {upgrading === 'monthly' ? <><Spinner className="size-3.5" />Redirecting</> : <>Upgrade, $15/mo <ArrowUpRightIcon size={12} aria-hidden /></>}
-                    </Button>
-                    <Button variant="outline" size="sm" className="rounded-full px-4" onClick={() => handleUpgrade('quarterly')} disabled={upgrading !== null}>
-                      {upgrading === 'quarterly' ? <><Spinner className="size-3.5" />Redirecting</> : '$35 every 3 months'}
-                    </Button>
-                  </div>
-                  {upgradeError && <p className="max-w-[260px] text-[12px] leading-snug text-destructive">{upgradeError}</p>}
-                </div>
+                <>
+                  <p className="text-[14px] text-ink-2">Couldn&apos;t load your usage right now.</p>
+                  <div aria-hidden className="h-1.5 rounded-full bg-panel" />
+                </>
               )}
-            </section>
-            {!isPro && (
-              <p className="px-1 text-[13.5px] text-ink-2">
-                Pro gives you up to 25 generations a day and saves every application here, searchable. Cancel any time.
-              </p>
+            </div>
+            {isPro ? (
+              <div className={cn(TILE, "items-start gap-2.5")}>
+                <span className="text-[12.5px] text-subtle">Plan</span>
+                <p className="flex items-center gap-2 text-[24px] font-semibold leading-tight tracking-[-0.02em] text-ink">
+                  Pro <StarIcon size={16} weight="fill" className="text-brand-strong" aria-hidden />
+                </p>
+                <p className="text-[13.5px] text-ink-2">{proDaily} generations a day. Every application saved here and searchable.</p>
+                <Button variant="outline" size="sm" className="mt-1 rounded-full" onClick={handleBillingPortal} disabled={billingLoading}>
+                  {billingLoading
+                    ? <><Spinner className="size-3.5" />Loading</>
+                    : <>Manage billing <ArrowUpRightIcon size={12} aria-hidden /></>
+                  }
+                </Button>
+                {billingError && <p className="text-[12px] leading-snug text-destructive">{billingError}</p>}
+              </div>
+            ) : (
+              <div className={cn(TILE, "items-start gap-2.5 border-brand-tint bg-brand-tint")}>
+                <span className="text-[12.5px] font-medium text-brand-ink">Go Pro</span>
+                <ul className="flex flex-col gap-1 text-[13.5px] text-ink">
+                  {[`${proDaily} generations a day`, 'Every application saved here, searchable', 'Cancel any time'].map((line) => (
+                    <li key={line} className="flex items-center gap-2"><span aria-hidden className="size-1.5 rounded-full bg-brand" />{line}</li>
+                  ))}
+                </ul>
+                <div className="mt-1 flex flex-wrap gap-2">
+                  <Button size="sm" className="rounded-full px-4" onClick={() => handleUpgrade('monthly')} disabled={upgrading !== null}>
+                    {upgrading === 'monthly' ? <><Spinner className="size-3.5" />Redirecting</> : <>Upgrade, $15/mo <ArrowUpRightIcon size={12} aria-hidden /></>}
+                  </Button>
+                  <Button variant="outline" size="sm" className="rounded-full px-4" onClick={() => handleUpgrade('quarterly')} disabled={upgrading !== null}>
+                    {upgrading === 'quarterly' ? <><Spinner className="size-3.5" />Redirecting</> : '$35 every 3 months'}
+                  </Button>
+                </div>
+                {upgradeError && <p className="text-[12px] leading-snug text-destructive">{upgradeError}</p>}
+              </div>
             )}
-          </div>
+          </section>
 
           {/* Pro history (2e), streamed in by the server page. */}
           {history}

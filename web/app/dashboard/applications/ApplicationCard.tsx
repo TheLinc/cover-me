@@ -13,6 +13,7 @@ import { newest, postingHost, type ApplicationSummary } from '@/lib/applications
 import { deleteApplication, downloadLetter, downloadResume, GONE, loadDetail, setInterview } from '@/lib/application-actions'
 import { LocalDate } from '../LocalDate'
 import { ApplicationDetailsSheet } from './ApplicationDetailsSheet'
+import { AtsRing } from './AtsRing'
 
 type Busy = 'letter' | 'resume' | 'interview' | 'delete' | null
 const UNREADABLE = 'unreadable'
@@ -134,7 +135,7 @@ export function ApplicationCard({ app: initial, onDeleted, onInterviewChange }: 
   const score = app.tailoredResumes[0]?.atsScore ?? null
 
   return (
-    <article className="group/tile flex flex-col gap-4 rounded-[20px] border border-line bg-surface p-5 shadow-[0_1px_2px_rgba(30,27,75,0.05),0_10px_28px_-16px_rgba(30,27,75,0.22)] transition-[box-shadow,transform] duration-200 ease-out hover:-translate-y-px hover:shadow-[0_1px_2px_rgba(30,27,75,0.06),0_16px_36px_-16px_rgba(30,27,75,0.32)]">
+    <article className="group/tile flex flex-col justify-between gap-4 rounded-[20px] border border-line bg-surface p-5 shadow-[0_1px_2px_rgba(30,27,75,0.05),0_10px_28px_-16px_rgba(30,27,75,0.22)] transition-[box-shadow,transform] duration-200 ease-out hover:-translate-y-px hover:shadow-[0_1px_2px_rgba(30,27,75,0.06),0_16px_36px_-16px_rgba(30,27,75,0.32)]">
       <header className="flex items-start gap-3">
         <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-[12px] bg-brand-tint text-[15px] font-semibold text-brand-ink">
           {monogram}
@@ -145,14 +146,36 @@ export function ApplicationCard({ app: initial, onDeleted, onInterviewChange }: 
               {title}
             </button>
           </h3>
-          <p className="truncate text-[13px] leading-snug text-ink-2">
-            {company} · Applied <LocalDate iso={app.createdAt} options={{ month: 'short', day: 'numeric', year: 'numeric' }} />
+          {/* The date wraps under a long company name rather than being cut off. */}
+          <p className="flex flex-wrap gap-x-1 text-[13px] leading-snug text-ink-2">
+            <span className="min-w-0 max-w-full truncate">{company} ·</span>
+            <span className="whitespace-nowrap">Applied <LocalDate iso={app.createdAt} options={{ month: 'short', day: 'numeric', year: 'numeric' }} /></span>
           </p>
         </div>
-        <div className="-mr-1.5 -mt-1 shrink-0">
+        {score !== null && <div className="-mr-1 -mt-1.5"><AtsRing score={score} size={52} label /></div>}
+      </header>
+
+      <div className="flex flex-wrap items-center gap-2">
+        {app.coverLetters.length > 0 && (
+          <Button variant="outline" size="sm" className="h-8 gap-1.5 px-3 text-[13px] hover:border-brand-strong hover:text-brand-strong" onClick={() => download('letter')} disabled={busy !== null} aria-label="Download cover letter">
+            {busy === 'letter' ? <Spinner className="size-3.5" /> : <DownloadSimpleIcon size={14} aria-hidden />}
+            Cover letter
+          </Button>
+        )}
+        {app.tailoredResumes.length > 0 && (
+          <Button variant="outline" size="sm" className="h-8 gap-1.5 px-3 text-[13px] hover:border-brand-strong hover:text-brand-strong" onClick={() => download('resume')} disabled={busy !== null} aria-label="Download resume">
+            {busy === 'resume' ? <Spinner className="size-3.5" /> : <DownloadSimpleIcon size={14} aria-hidden />}
+            Resume
+          </Button>
+        )}
+        <div className="ml-auto flex items-center gap-1">
+          {app.interviewAt && <Badge variant="interview" className="font-medium"><CheckIcon size={11} weight="bold" aria-hidden />Interview</Badge>}
+          <Button variant="ghost" size="sm" className="h-8 gap-1 px-2.5 text-[13px] text-ink-2 hover:text-ink" onClick={() => setDetailsOpen(true)}>
+            <span className="max-sm:sr-only">Details</span> <CaretRightIcon size={12} aria-hidden />
+          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-ink-2" aria-label={`Actions for ${title}`}>
+              <Button variant="ghost" size="icon" className="-mr-1.5 h-8 w-8 text-ink-2" aria-label={`Actions for ${title}`}>
                 <DotsThreeVerticalIcon size={18} weight="bold" aria-hidden />
               </Button>
             </DropdownMenuTrigger>
@@ -172,30 +195,6 @@ export function ApplicationCard({ app: initial, onDeleted, onInterviewChange }: 
               <DropdownMenuItem className="text-destructive focus:text-destructive" disabled={busy !== null} onSelect={() => setConfirming(true)}>Delete</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </div>
-      </header>
-
-      <div className="flex flex-wrap items-center gap-2">
-        {app.coverLetters.length > 0 && (
-          <Button variant="outline" size="sm" className="h-8 gap-1.5 px-3 text-[13px] hover:border-brand-strong hover:text-brand-strong" onClick={() => download('letter')} disabled={busy !== null} aria-label="Download cover letter">
-            {busy === 'letter' ? <Spinner className="size-3.5" /> : <DownloadSimpleIcon size={14} aria-hidden />}
-            Cover letter
-          </Button>
-        )}
-        {app.tailoredResumes.length > 0 && (
-          <Button variant="outline" size="sm" className="h-8 gap-1.5 px-3 text-[13px] hover:border-brand-strong hover:text-brand-strong" onClick={() => download('resume')} disabled={busy !== null} aria-label={score !== null ? `Download resume, ATS score ${score}` : 'Download resume'}>
-            {busy === 'resume' ? <Spinner className="size-3.5" /> : <DownloadSimpleIcon size={14} aria-hidden />}
-            Resume
-            {score !== null && (
-              <span aria-hidden className="-mr-1 rounded-full bg-brand-tint px-1.5 py-px text-[11.5px] font-semibold tabular-nums text-brand-ink">{score}</span>
-            )}
-          </Button>
-        )}
-        <div className="ml-auto flex items-center gap-1">
-          {app.interviewAt && <Badge variant="interview" className="font-medium"><CheckIcon size={11} weight="bold" aria-hidden />Interview</Badge>}
-          <Button variant="ghost" size="sm" className="h-8 gap-1 px-2.5 text-[13px] text-ink-2 hover:text-ink" onClick={() => setDetailsOpen(true)}>
-            <span className="max-sm:sr-only">Details</span> <CaretRightIcon size={12} aria-hidden />
-          </Button>
         </div>
       </div>
 
