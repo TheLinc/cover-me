@@ -168,7 +168,7 @@ export function ApplicationDetailsSheet({ app, open, onOpenChange, onClosed, onG
 
           {resumes > 0 && letters > 0 ? (
             <Tabs defaultValue="resume" className="flex flex-col gap-4">
-              <TabsList className="h-auto w-fit rounded-full bg-panel p-1">
+              <TabsList aria-label="Documents" className="h-auto w-fit rounded-full bg-panel p-1">
                 <TabsTrigger value="resume" className={TAB}>{resumeLabel}</TabsTrigger>
                 <TabsTrigger value="letter" className={TAB}>{letterLabel}</TabsTrigger>
               </TabsList>
