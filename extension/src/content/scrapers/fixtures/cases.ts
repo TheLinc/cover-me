@@ -32,6 +32,9 @@ export const FIXTURE_CASES = [
   // Indeed's 2026 layout: same detail pane on /viewjob and in the search page's right-hand pane
   { board: 'indeed', title: 'Welder', company: 'Bleema Manufacturing Corporation', ends: '1 year experience in shop setting' },
   { board: 'indeed-search', title: 'Welder', company: 'Bleema Manufacturing Corporation', ends: '1 year experience in shop setting' },
+  // An employer with an Indeed company page: the pane links the name (no
+  // vj-company-name), and an empty sentinel div follows the description heading
+  { board: 'indeed-search-company-link', title: 'Retail Associates', company: 'Walmart', ends: 'Work Location: In person' },
 ]
 
 // Line 1 of every fixture is `<!-- {url} saved {date} -->`.
