@@ -18,6 +18,7 @@ Key facts:
 - [Privacy Policy](https://www.cover-me.dev/privacy)
 - [Terms of Service](https://www.cover-me.dev/terms)
 - [Chrome Web Store listing](https://chromewebstore.google.com/detail/cover-me-%E2%80%93-ai-cover-lette/bpbnopjgjbimdjjdolhkgimllbgamgpi)
+- [AlternativeTo listing](https://alternativeto.net/software/cover-me/about/): user reviews and comparisons with Jobscan, Teal, Kickresume and other resume tools
 
 ## Job board guides
 

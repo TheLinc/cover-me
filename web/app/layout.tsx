@@ -57,6 +57,7 @@ const jsonLdOrg = {
     'https://github.com/TheLinc',
     'https://www.linkedin.com/in/lincolnlaylor/',
     CHROME_STORE_URL,
+    'https://alternativeto.net/software/cover-me/about/',
   ],
   founder: {
     '@type': 'Person',
