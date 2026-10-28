@@ -4,7 +4,8 @@ import { jobFromJsonLd } from './jsonld.ts'
 // Current layout (seen 2026-10): the search page's right-hand pane and the
 // full /viewjob page render the same detail component, with stable data-testids
 // and no #jobDescriptionText. The description is the element after the
-// "Full job description" heading.
+// "Full job description" heading, sometimes after an empty aria-hidden sentinel
+// div. A company with an Indeed company page is a link with no vj-company-name.
 //
 // Older layouts, kept while Indeed rolls the new one out:
 // 1. Search results page — left list + right detail panel
@@ -14,11 +15,14 @@ import { jobFromJsonLd } from './jsonld.ts'
 
 export function scrapeIndeed(): JobData {
   const paneTitle = firstText(['[data-testid="vj-job-title"]'])
-  const paneDescription = firstText(['[data-testid="vj-job-description-heading"] + *'])
+  const paneDescription = firstText(['[data-testid="vj-job-description-heading"] ~ :not([aria-hidden="true"])'])
   if (paneTitle && paneDescription) {
     return {
       title: paneTitle,
-      company: firstText(['[data-testid="vj-company-name"]']) ?? 'Unknown Company',
+      company: firstText([
+        '[data-testid="vj-company-name"]',
+        '[data-testid="company-info-metadata"] a[href*="/cmp/"]',
+      ]) ?? 'Unknown Company',
       description: paneDescription,
       url: window.location.href,
     }
