@@ -105,6 +105,10 @@ export default function AboutPage() {
             <p>
               Open source is a trust signal, not just a philosophy. When you can read the code that handles your resume, you don&apos;t have to take anyone&apos;s word for how it works.
             </p>
+            {/* Open Source Alternatives checks for this badge to keep the free listing. A plain img: the SVG lives on their host. */}
+            <a href="https://www.opensourcealternatives.to" className="inline-block">
+              <img src="https://www.opensourcealternatives.to/badge-osa.svg" alt="As seen on Open Source Alternatives" width={270} height={20} />
+            </a>
           </div>
 
           {/* Founder card */}

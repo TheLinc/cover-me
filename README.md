@@ -2,6 +2,8 @@
 
 **AI cover letters and ATS-tailored resumes, generated from any job posting in seconds.**
 
+<a href="https://www.opensourcealternatives.to"><img src="https://www.opensourcealternatives.to/badge-osa.svg" alt="As seen on Open Source Alternatives" width="270" height="20"></a>
+
 Cover Me is an open-source Chrome extension that reads job descriptions and, using your stored resume, generates tailored cover letters and ATS-optimized resumes — complete with a match score and gap analysis. Bring your own API key for unlimited use, with your resume going only to your AI provider — or use the hosted tier for a no-configuration experience.
 
 ---
