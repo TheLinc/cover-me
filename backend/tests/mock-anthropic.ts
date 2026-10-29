@@ -88,7 +88,7 @@ type MessagesBody = {
   model?: string
   stream?: boolean
   messages?: Array<{ role: string; content: string }>
-  thinking?: { type: string }
+  thinking?: { type: string; display?: string }
   fallbacks?: unknown
   /** The anthropic-beta request header, recorded so tests can check it. */
   betaHeader?: string
@@ -131,15 +131,28 @@ function messageJson(text: string, model = 'mock') {
   })
 }
 
+export const MOCK_THINKING = ['**Matching the posting**\n\nThe posting asks for Kafka.', ' The resume has data pipelines.']
+
 // Anthropic SSE framing, split into several text deltas so the tailor
-// function's NDJSON relay has more than one fragment to forward.
-function sseBody(text: string): string {
+// function's NDJSON relay has more than one fragment to forward. A request for
+// summarized thinking gets a thinking block first, as the real API sends it.
+function sseBody(text: string, summarized = false): string {
   const chunks = text.match(/[\s\S]{1,80}/g) ?? []
+  const thinking: unknown[] = summarized
+    ? [
+        { type: 'content_block_start', index: 0, content_block: { type: 'thinking', thinking: '' } },
+        ...MOCK_THINKING.map((t) => ({ type: 'content_block_delta', index: 0, delta: { type: 'thinking_delta', thinking: t } })),
+        { type: 'content_block_delta', index: 0, delta: { type: 'signature_delta', signature: 'sig' } },
+        { type: 'content_block_stop', index: 0 },
+      ]
+    : []
+  const at = summarized ? 1 : 0
   const events: unknown[] = [
     { type: 'message_start', message: { id: 'msg_mock', type: 'message', role: 'assistant', content: [] } },
-    { type: 'content_block_start', index: 0, content_block: { type: 'text', text: '' } },
-    ...chunks.map((c) => ({ type: 'content_block_delta', index: 0, delta: { type: 'text_delta', text: c } })),
-    { type: 'content_block_stop', index: 0 },
+    ...thinking,
+    { type: 'content_block_start', index: at, content_block: { type: 'text', text: '' } },
+    ...chunks.map((c) => ({ type: 'content_block_delta', index: at, delta: { type: 'text_delta', text: c } })),
+    { type: 'content_block_stop', index: at },
     { type: 'message_stop' },
   ]
   return events.map((e) => `event: ${(e as { type: string }).type}\ndata: ${JSON.stringify(e)}\n\n`).join('')
@@ -229,12 +242,12 @@ export function startMockAnthropic(port: number): Promise<Server> {
           return req.socket.destroy()
         }
         res.writeHead(200, { 'content-type': 'text/event-stream' })
-        const sse = sseBody(JSON.stringify(MOCK_TAILOR_DELTA))
+        const sse = sseBody(JSON.stringify(MOCK_TAILOR_DELTA), body.thinking?.display === 'summarized')
         if (streamPause) {
           const ms = streamPause
           streamPause = 0
           // Split just before the second text delta.
-          const cut = sse.indexOf('event: content_block_delta', sse.indexOf('event: content_block_delta') + 1)
+          const cut = sse.lastIndexOf('event: ', sse.indexOf('"text_delta"', sse.indexOf('"text_delta"') + 1))
           res.write(sse.slice(0, cut))
           await new Promise((r) => setTimeout(r, ms))
           return res.end(sse.slice(cut))

@@ -2,7 +2,9 @@
 // active or still to come, built from the stage the stream already reports
 // (deriveTailorProgress in lib/ai/tailor-progress.ts). No invented progress.
 export type StepState = 'done' | 'active' | 'todo'
-export interface Step { label: string; state: StepState; detail?: string }
+// thought: the detail is the model's planning line, shown on its own row and
+// kept out of the live region (it changes every sentence).
+export interface Step { label: string; state: StepState; detail?: string; thought?: true }
 
 function mark(labels: string[], active: number, detail?: string): Step[] {
   return labels.map((label, i) => ({
@@ -18,11 +20,15 @@ export function letterSteps(hasJob: boolean): Step[] {
 
 const TAILOR_STEPS = ['Read the posting', 'Plan the changes', 'Rewrite your resume', 'Check and score']
 
-// Four steps, so none flashes by: the model's thinking is "Plan", every part
+// Four steps, so none flashes by: the model's thinking is "Plan" (its summary
+// line, "Planning: …", is the detail; checked first, since it's free text), every part
 // it writes is "Rewrite" (the part shows as the detail), and the keyword lists
 // plus the checks against the original resume that follow them are "Check".
 export function tailorSteps(progress: string, hasJob: boolean, includeSummary: boolean): Step[] {
   if (!hasJob) return mark(TAILOR_STEPS, 0)
+  if (progress.startsWith('Planning: ')) {
+    return mark(TAILOR_STEPS, 1).map((s, i) => (i === 1 ? { ...s, detail: progress.slice('Planning: '.length), thought: true } : s))
+  }
   if (/Scoring/.test(progress)) return mark(TAILOR_STEPS, 3)
   if (/skills/i.test(progress)) return mark(TAILOR_STEPS, 2, 'Skills')
   if (/projects/i.test(progress)) return mark(TAILOR_STEPS, 2, 'Projects')

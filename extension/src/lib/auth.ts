@@ -1,7 +1,7 @@
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL, WEB_URL } from './config'
 import { clearResume, clearSession, getResume, getSession, getSettings, saveGoogleSignInError, saveCachedTier, saveResume, saveSession, saveSettings, takeGoogleSignInError } from './storage'
 import { isValidResume } from './ai/resume-tailor'
-import { deriveTailorProgress } from './ai/tailor-progress'
+import { derivePlanningProgress, deriveTailorProgress } from './ai/tailor-progress'
 import type { ApplicationRecord, AuthSession, CoverLetter, JobData, ResumeData, TailoredHistoryEntry, TailoredResume } from '../types'
 
 // Thrown by signUp() when the account was created but needs email confirmation
@@ -370,13 +370,14 @@ export async function tailorViaBackend(job: JobData, accessToken: string, compac
     return { resume, savedId: typeof data.savedId === 'string' ? data.savedId : undefined }
   }
 
-  // NDJSON stream: {type:'start',roles} → {type:'delta',text}* → {type:'done',resume}
-  // Deltas only drive the progress label; the authoritative resume (merged and
-  // scored server-side) arrives in the done event.
+  // NDJSON stream: {type:'start',roles} → {type:'thinking',text}* → {type:'delta',text}* → {type:'done',resume}
+  // Thinking and deltas only drive the progress label; the authoritative resume
+  // (merged and scored server-side) arrives in the done event.
   const reader = res.body.getReader()
   const decoder = new TextDecoder()
   let lineBuf = ''
   let acc = ''
+  let thought = ''
   let roles = 1
   let final: TailoredResume | null = null
   let savedId: string | undefined
@@ -392,6 +393,10 @@ export async function tailorViaBackend(job: JobData, accessToken: string, compac
     }
     if (ev.type === 'start' && typeof ev.roles === 'number' && ev.roles > 0) {
       roles = ev.roles
+    } else if (ev.type === 'thinking' && typeof ev.text === 'string') {
+      thought += ev.text
+      const planning = derivePlanningProgress(thought)
+      if (planning) onProgress?.(planning)
     } else if (ev.type === 'delta' && typeof ev.text === 'string') {
       acc += ev.text
       onProgress?.(deriveTailorProgress(acc, roles))

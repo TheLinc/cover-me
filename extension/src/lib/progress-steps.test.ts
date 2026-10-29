@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { deriveTailorProgress } from './ai/tailor-progress'
+import { derivePlanningProgress, deriveTailorProgress } from './ai/tailor-progress'
 import { letterSteps, tailorSteps } from './progress-steps'
 
 const states = (steps: { state: string }[]) => steps.map((s) => s.state)
@@ -44,6 +44,11 @@ describe('tailorSteps', () => {
     expect(active('Reading your resume (first run only)…')).toEqual({ label: 'Plan the changes', state: 'active', detail: 'Reading your resume first' })
   })
 
+  test('the thinking summary is the planning detail, even when it names a later stage', () => {
+    expect(active('Planning: Matching the posting')).toEqual({ label: 'Plan the changes', state: 'active', detail: 'Matching the posting', thought: true })
+    expect(active('Planning: The summary should lead with skills.')?.label).toBe('Plan the changes')
+  })
+
   test('only the active step has a detail', () => {
     expect(tailorSteps('Rewriting experience (1 of 2)…', true, true).filter((s) => s.detail)).toHaveLength(1)
   })
@@ -57,5 +62,21 @@ describe('deriveTailorProgress', () => {
     expect(deriveTailorProgress('{"summary":"x","experience":[{"bullets":["a"]},{"bullets":[', 2)).toBe('Rewriting experience (2 of 2)…')
     expect(deriveTailorProgress(full.slice(0, -2), 2)).toBe('Scoring ATS match…')
     expect(deriveTailorProgress(full, 2)).toBe('Scoring ATS match…')
+  })
+})
+
+describe('derivePlanningProgress', () => {
+  test('shows the latest finished line, never one still streaming', () => {
+    expect(derivePlanningProgress('')).toBe('')
+    expect(derivePlanningProgress('**Matching the post')).toBe('')
+    expect(derivePlanningProgress('**Matching the posting**\n\nThe posting asks')).toBe('Planning: Matching the posting')
+    expect(derivePlanningProgress('**Matching the posting**\n\nThe posting asks for Kafka. The resume')).toBe('Planning: The posting asks for Kafka.')
+    expect(derivePlanningProgress('Done? Next one')).toBe('Planning: Done?')
+  })
+
+  test('clips a long line', () => {
+    const p = derivePlanningProgress(`${'word '.repeat(40)}end.\n`)
+    expect(p.length).toBeLessThanOrEqual('Planning: '.length + 120)
+    expect(p.endsWith('…')).toBe(true)
   })
 })

@@ -3,11 +3,12 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
   admin, cacheParsedResume, callFunction, clearParsedResume, createUser, deleteUser, JOB, LONG_RESUME_TEXT, mockClaude, quotaUsedToday, setQuotaUsedToday, setUsage, type TestUser, uploadResume,
 } from './helpers'
-import { MOCK_PARSED_RESUME, MOCK_REWRITTEN_BULLET, MOCK_TAILOR_DELTA } from '../mock-anthropic'
+import { MOCK_PARSED_RESUME, MOCK_REWRITTEN_BULLET, MOCK_TAILOR_DELTA, MOCK_THINKING } from '../mock-anthropic'
 
 type NdjsonEvent =
   | { type: 'start'; roles: number }
   | { type: 'delta'; text: string }
+  | { type: 'thinking'; text: string }
   | { type: 'done'; resume: Record<string, unknown>; savedId?: string }
   | { type: 'error'; error: string }
 
@@ -76,7 +77,8 @@ describe('tailor', () => {
     expect(sonnet.length).toBeGreaterThan(0)
     for (const r of sonnet) {
       expect(r.model).toBe('claude-sonnet-5-5')
-      expect(r.thinking).toEqual({ type: 'adaptive' })
+      // The tailor call streams a thinking summary for the popup; the checks don't.
+      expect(r.thinking).toEqual(r.stream ? { type: 'adaptive', display: 'summarized' } : { type: 'adaptive' })
       expect(r.output_config).toEqual({ effort: 'high' })
       expect(r.max_tokens).toBeGreaterThanOrEqual(8000)
       expect(r.fallbacks).toBe('default')
@@ -140,6 +142,10 @@ describe('tailor', () => {
     expect(events[0]).toEqual({ type: 'start', roles: 2 })
     const deltas = events.filter((e) => e.type === 'delta')
     expect(deltas.length).toBeGreaterThan(1)
+    // The thinking summary comes through ahead of the text.
+    const thinking = events.filter((e) => e.type === 'thinking')
+    expect(thinking.map((e) => e.type === 'thinking' && e.text)).toEqual(MOCK_THINKING)
+    expect(events.findIndex((e) => e.type === 'thinking')).toBeLessThan(events.findIndex((e) => e.type === 'delta'))
     const done = events.at(-1)
     expect(done?.type).toBe('done')
     if (done?.type === 'done') expect(done.resume.atsScore).toBe(77)
