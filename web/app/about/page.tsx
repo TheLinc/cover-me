@@ -130,6 +130,15 @@ export default function AboutPage() {
               </p>
               <p className="text-[13px] text-muted-foreground leading-[1.7] mb-5">
                 Software developer based in Canada. Built Cover Me to solve a problem he ran into during his own job search — spending too long personalising cover letters that should take seconds.
+                {' '}
+                <a
+                  href="https://dev.to/plain-stack/how-i-went-from-0-interviews-to-4-in-a-month-by-tailoring-every-application-1an4"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-brand-light hover:text-brand transition-colors underline underline-offset-2"
+                >
+                  He wrote up how it went on DEV.
+                </a>
               </p>
               <div className="flex flex-col gap-2.5">
                 <a
