@@ -35,3 +35,4 @@ Key facts:
 - [What is an ATS score?](https://www.cover-me.dev/guides/what-is-an-ats-score)
 - [Cover Me vs ChatGPT for cover letters](https://www.cover-me.dev/guides/cover-me-vs-chatgpt)
 - [How to tailor your resume to a job description](https://www.cover-me.dev/guides/tailor-resume-to-job-description)
+- [How I went from 0 interviews to 4 in a month by tailoring every application](https://dev.to/plain-stack/how-i-went-from-0-interviews-to-4-in-a-month-by-tailoring-every-application-1an4): the founder's job search story on DEV, and why he built Cover Me
