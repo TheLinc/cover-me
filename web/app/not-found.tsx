@@ -5,7 +5,7 @@ import { SiteNav } from '@/components/site/SiteNav'
 import { SiteFooter } from '@/components/site/SiteFooter'
 
 export const metadata: Metadata = {
-  title: '404 — Cover Me',
+  title: 'Page not found',
 }
 
 export default function NotFound() {

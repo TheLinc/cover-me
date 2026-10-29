@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   description: 'How Cover Me collects, uses, and protects your data. Your resume is encrypted at rest on our servers, never sold, and never used for AI training.',
   alternates: { canonical: `${BASE}/privacy` },
   openGraph: {
-    title: 'Privacy Policy — Cover Me',
+    title: 'Privacy Policy | Cover Me',
     description: 'How Cover Me collects, uses, and protects your data. Your resume is encrypted at rest on our servers, never sold, and never used for AI training.',
     url: `${BASE}/privacy`,
     siteName: 'Cover Me',
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Privacy Policy — Cover Me',
+    title: 'Privacy Policy | Cover Me',
     description: 'How Cover Me collects, uses, and protects your data. Your resume is encrypted at rest on our servers, never sold, and never used for AI training.',
   },
 }
@@ -185,7 +185,7 @@ export default function PrivacyPage() {
             </P>
             <Ul>
               <Li>
-                <strong className="text-foreground">BYOK (Bring Your Own Key) — free, unlimited.</strong>{' '}
+                <strong className="text-foreground">BYOK (Bring Your Own Key): free, unlimited.</strong>{' '}
                 You supply your own Claude or OpenAI API key. No account is required. Your resume,
                 API key and history are stored on your device, and only the API key is encrypted. Your
                 resume goes only to the AI provider whose key you use. From version 1.3.0, once you
@@ -375,7 +375,7 @@ export default function PrivacyPage() {
                 <li>User settings (AI provider, mode selection)</li>
                 <li>AES-256-GCM encrypted API key (BYOK mode)</li>
                 <li>Extracted resume text and parsed resume structure</li>
-                <li>Application history — cover letters and tailored resumes grouped by job</li>
+                <li>Application history: cover letters and tailored resumes grouped by job</li>
                 <li>JWT session tokens (Hosted mode)</li>
                 <li>Facts you add for your letters, such as a referrer&apos;s name</li>
                 <li>Cached account tier to avoid redundant network requests</li>
@@ -502,7 +502,7 @@ export default function PrivacyPage() {
               API key to write cover letters and tailor resumes, and the first time you tailor after uploading a resume, to read
               your resume&apos;s structure. The request contains your API key (in the
               Authorization header), the job description, and your resume text. No Cover Me server
-              is involved — the request goes directly from your browser to Anthropic.
+              is involved. The request goes directly from your browser to Anthropic.
               <br /><br />
               <strong className="text-foreground">Not used in Hosted mode.</strong>
             </PermissionCard>
@@ -512,7 +512,7 @@ export default function PrivacyPage() {
               OpenAI as your AI provider and supply your own API key).
               <br /><br />
               <strong className="text-foreground">Why it is needed:</strong> Same rationale as the
-              Anthropic permission above — direct browser-to-OpenAI API calls using your own key in
+              Anthropic permission above: direct browser-to-OpenAI API calls using your own key in
               BYOK mode.
               <br /><br />
               <strong className="text-foreground">Not used in Hosted mode.</strong>
@@ -525,13 +525,13 @@ export default function PrivacyPage() {
               <strong className="text-foreground">Why it is needed:</strong> The extension
               communicates with our Supabase backend for the following user-initiated purposes:
               <ul className="mt-2 space-y-1 pl-4 list-disc">
-                <li>Reading the job posting (every mode) — sending the stripped copy of the page you click Generate or Tailor Resume on, and getting back the job title, company and description. The page is not stored.</li>
-                <li>Authentication — signing in, signing up, signing out, and refreshing JWT session tokens.</li>
-                <li>Account tier — fetching your plan after sign-in and when the Settings or History page opens.</li>
-                <li>Upgrade — getting a Stripe checkout page when you click an Upgrade button.</li>
-                <li>Cover letter &amp; resume generation — sending job data and your session token to our backend Edge Functions, which retrieve your encrypted resume, call the Claude API with our key, and return the generated output.</li>
-                <li>Application history sync (Pro mode) — saving each new cover letter and tailored resume, uploading ones already in the extension when you agree, and fetching and deleting them on the History page.</li>
-                <li>Resume sync — after sign-in, uploading the resume already in the extension (versions before 1.3.0 always upload it; from 1.3.0 only if it&apos;s newer than the account&apos;s) or, from 1.3.0, downloading the account&apos;s copy; and uploading a new one when you add it. Uploads go to encrypted backend storage, and the server then reads the resume&apos;s structure with Anthropic.</li>
+                <li>Reading the job posting (every mode): sending the stripped copy of the page you click Generate or Tailor Resume on, and getting back the job title, company and description. The page is not stored.</li>
+                <li>Authentication: signing in, signing up, signing out, and refreshing JWT session tokens.</li>
+                <li>Account tier: fetching your plan after sign-in and when the Settings or History page opens.</li>
+                <li>Upgrade: getting a Stripe checkout page when you click an Upgrade button.</li>
+                <li>Cover letter &amp; resume generation: sending job data and your session token to our backend Edge Functions, which retrieve your encrypted resume, call the Claude API with our key, and return the generated output.</li>
+                <li>Application history sync (Pro mode): saving each new cover letter and tailored resume, uploading ones already in the extension when you agree, and fetching and deleting them on the History page.</li>
+                <li>Resume sync: after sign-in, uploading the resume already in the extension (versions before 1.3.0 always upload it; from 1.3.0 only if it&apos;s newer than the account&apos;s) or, from 1.3.0, downloading the account&apos;s copy; and uploading a new one when you add it. Uploads go to encrypted backend storage, and the server then reads the resume&apos;s structure with Anthropic.</li>
               </ul>
             </PermissionCard>
 
@@ -540,7 +540,7 @@ export default function PrivacyPage() {
 
             <H3>On-device storage (all modes)</H3>
             <Ul>
-              <Li>All on-device data is stored in <code className="text-brand-light font-mono text-[13px]">chrome.storage.local</code> — never in <code className="text-brand-light font-mono text-[13px]">chrome.storage.sync</code>, cookies, or <code className="text-brand-light font-mono text-[13px]">localStorage</code> — plus one &ldquo;Not now&rdquo; flag in <code className="text-brand-light font-mono text-[13px]">chrome.storage.session</code>, cleared when Chrome restarts.</Li>
+              <Li>All on-device data is stored in <code className="text-brand-light font-mono text-[13px]">chrome.storage.local</code>, never in <code className="text-brand-light font-mono text-[13px]">chrome.storage.sync</code>, cookies, or <code className="text-brand-light font-mono text-[13px]">localStorage</code>. The one exception is a &ldquo;Not now&rdquo; flag in <code className="text-brand-light font-mono text-[13px]">chrome.storage.session</code>, cleared when Chrome restarts.</Li>
               <Li>API keys (BYOK mode) are encrypted with AES-256-GCM through the Web Crypto API before being written to storage. The random key that encrypts them is stored alongside them, so this keeps the key from being read at a glance, not from someone with access to your browser profile. The plaintext key exists in memory only for the duration of a single API call.</Li>
               <Li>Resume text and cover letter history are stored unencrypted in your browser&apos;s local storage, in every mode. In Hosted mode the copies on our server are encrypted; the local copies stay on your device.</Li>
             </Ul>

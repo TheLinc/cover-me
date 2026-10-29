@@ -8,48 +8,48 @@ const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 const guide = getGuide('tailor-resume-to-job-description')
 const HERO_IMAGE = '/guides/tailor-resume-to-job-description.png'
 const HERO_ALT =
-  'Infographic: how to tailor your resume to a job description in five steps — extract keywords, mirror language, rewrite key bullets, reorder skills, verify the match. A job description flows into a tailored resume with a 95% ATS match score and key requirements checked off. Tailoring is translation, not fiction: use the posting’s language to reflect your real experience, never invent skills you don’t have.'
+  "Example of tailoring a resume to a job posting. The posting asks for campaign strategy, a budget and SEO. Two resume bullets are rewritten in the posting's words and keep their real results, 38% more leads and 64% more organic traffic. HubSpot, which the resume doesn't mention, is left off."
 
 export const metadata: Metadata = {
-  title: 'How to Tailor Your Resume to a Job Description (Step by Step)',
-  description: 'A practical method for matching your resume to a specific role: find the filter keywords, mirror the posting’s language truthfully, rewrite the right bullets, and verify the match.',
+  title: 'How to Tailor Your Resume to a Job Description',
+  description: "How to tailor your resume to a job description in five steps: find the must-have keywords, use the posting's words, and never add skills you don't have.",
   alternates: { canonical: `${BASE}/guides/${guide.slug}` },
   openGraph: {
-    title: 'How to Tailor Your Resume to a Job Description — Cover Me',
-    description: 'A step-by-step method for matching your resume to a specific role — which keywords matter, what to rewrite, and what never to fabricate.',
+    title: 'How to Tailor Your Resume to a Job Description | Cover Me',
+    description: 'A step-by-step method for matching your resume to one role: which keywords matter, what to rewrite, and what never to add.',
     url: `${BASE}/guides/${guide.slug}`,
     siteName: 'Cover Me',
     type: 'article',
-    images: [{ url: `${BASE}/guides/tailor-resume-to-job-description.png`, width: 1672, height: 941, alt: 'How to tailor your resume to a job description — five steps to a verified ATS match' }],
+    images: [{ url: `${BASE}/guides/tailor-resume-to-job-description.png`, width: 1600, height: 900, alt: "Two resume bullets rewritten in a job posting's words, with their real results kept" }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'How to Tailor Your Resume to a Job Description — Cover Me',
-    description: 'A step-by-step method for matching your resume to a specific role — which keywords matter, what to rewrite, and what never to fabricate.',
+    title: 'How to Tailor Your Resume to a Job Description | Cover Me',
+    description: 'A step-by-step method for matching your resume to one role: which keywords matter, what to rewrite, and what never to add.',
     images: [`${BASE}/guides/tailor-resume-to-job-description.png`],
   },
 }
 
 const STEPS = [
   {
-    name: 'Extract the keywords that matter',
-    text: 'Read the posting twice. Highlight the hard skills, tools, and qualifications that appear in the requirements — especially anything mentioned more than once or listed as “required”. Those repeated terms are what recruiters filter by in the ATS.',
+    name: 'Find the 4 to 6 must-have keywords',
+    text: 'Read the posting twice. Mark the hard skills, tools, and qualifications listed as required, repeated, or placed first. Recruiters filter the ATS by these terms, so they matter more than the long list of nice-to-haves.',
   },
   {
-    name: 'Mirror the posting’s exact language',
-    text: 'ATS keyword matching is often literal. If the posting says “React”, write “React”, not “modern JavaScript frameworks”. If it says “stakeholder management”, use those words — provided they truthfully describe your experience.',
+    name: "Use the posting's exact wording",
+    text: 'ATS searches are often literal. If the posting says "React", write "React", not "modern JavaScript frameworks". If it says "stakeholder management", use those words, as long as they truthfully describe your experience.',
   },
   {
     name: 'Rewrite your most relevant bullets first',
-    text: 'Don’t rewrite everything. Take the 4–6 experience bullets most relevant to this role and lead them with the matched skills, keeping your real metrics and outcomes. Recruiters skim top-down; your strongest matches should appear early.',
+    text: "You don't need to rewrite everything. Take the 4 to 6 bullets most relevant to this role and lead each one with a matched skill, keeping your real numbers and results. Recruiters skim from the top, so put your strongest matches early.",
   },
   {
     name: 'Reorder your skills section for the role',
-    text: 'Move the skills this posting asks for to the front of your skills list, and cut skills that add noise for this particular application. A skills section is per-application real estate, not a permanent inventory.',
+    text: 'Move the skills this posting asks for to the front of your skills list, and cut skills that add noise for this application. Each must-have you really have should appear in your summary, your skills, and at least one bullet.',
   },
   {
-    name: 'Verify the match before submitting',
-    text: 'Score your tailored resume against the posting — manually by checklist, or automatically with a tool that shows an ATS match score and lists gaps. Fix what you truthfully can, and accept the gaps you can’t.',
+    name: 'Check the match before you submit',
+    text: "Score your tailored resume against the posting, either by checklist or with a tool that shows an ATS match score and lists the gaps. Fix what you truthfully can, and accept the gaps you can't.",
   },
 ]
 
@@ -57,7 +57,7 @@ const howToJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'HowTo',
   name: 'How to tailor your resume to a job description',
-  description: 'A five-step method for matching your resume to a specific role: extract keywords, mirror the posting’s language, rewrite the right bullets, reorder skills, and verify the match.',
+  description: "A five-step method for matching your resume to one role: find the must-have keywords, use the posting's wording, rewrite the right bullets, reorder your skills, and check the match.",
   totalTime: 'PT20M',
   step: STEPS.map((s, i) => ({
     '@type': 'HowToStep',
@@ -76,15 +76,15 @@ const faqJsonLd = {
       name: 'Should I tailor my resume for every job application?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'For roles you actually want — yes. Tailoring is the single highest-leverage edit you can make, because ATS filtering happens per-posting. Done manually it takes 20–30 minutes per role; automated tools like Cover Me reduce it to one click, which makes tailoring every application practical.',
+        text: "For every role you want, yes. Recruiters search each posting's applicants separately, and Huntr's analysis of over 1.39 million applications found tailored resumes reached the interview stage 2.1 times as often as untailored ones. A tool like Cover Me makes it one click, which makes tailoring every application practical.",
       },
     },
     {
       '@type': 'Question',
-      name: 'Is it okay to add keywords I don’t have experience with?',
+      name: "Is it okay to add keywords I don't have experience with?",
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'No. Fabricated keywords survive the ATS but fail in the interview, and a discovered fabrication ends your candidacy entirely. Tailoring means re-expressing your real experience in the posting’s language — never inventing experience you don’t have.',
+        text: "No. An invented keyword can get you past the ATS and then fail in the interview, and a discovered fabrication ends your candidacy. Tailoring means describing your real experience in the posting's language.",
       },
     },
     {
@@ -92,7 +92,15 @@ const faqJsonLd = {
       name: 'Can AI tailor my resume automatically?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Yes. The Cover Me Chrome extension reads the job posting you have open, rewrites your resume bullets to match the role’s ATS keywords without inventing skills or changing your job history, shows a match score with the remaining gaps, and exports a formatted PDF.',
+        text: "Yes. The Cover Me Chrome extension reads the job posting you have open and rewrites your resume around the role's keywords without changing your job titles, employers, or dates. A check removes any skill or claim your original resume doesn't support. It shows a match score with the remaining gaps and exports a PDF.",
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'How long does it take to tailor a resume?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Doing it well by hand takes long enough that most people stop after a few applications a day. Using ChatGPT, it took the developer of Cover Me about 12 minutes per application. Cover Me does the tailoring in one click, and a typical run takes about 30 seconds.',
       },
     },
   ],
@@ -114,7 +122,7 @@ export default function Page() {
           How to tailor your resume to a job description
         </h1>
         <p className="text-[12px] text-muted-foreground">
-          <time dateTime={guide.date}>Updated July 6, 2026</time> · Lincoln Laylor
+          <time dateTime={guide.updated ?? guide.date}>Updated October 29, 2026</time> · Lincoln Laylor
         </p>
       </div>
 
@@ -124,8 +132,8 @@ export default function Page() {
         <Image
           src={HERO_IMAGE}
           alt={HERO_ALT}
-          width={1672}
-          height={941}
+          width={1600}
+          height={900}
           priority
           sizes="(max-width: 800px) 100vw, 760px"
           className="w-full h-auto rounded-[12px] border border-border"
@@ -134,13 +142,15 @@ export default function Page() {
 
       <article className="space-y-5 text-[15.5px] text-muted-foreground leading-[1.85]">
         <p className="text-[17px] text-foreground font-medium leading-[1.7]">
-          Tailoring a resume means rewriting it for one specific job posting: mirroring the posting&rsquo;s keywords where they truthfully describe your experience, leading with the most relevant accomplishments, and cutting what doesn&rsquo;t serve this role. It matters because applicant tracking systems filter resumes by keyword match — a strong candidate with an untailored resume is routinely invisible.
+          To tailor your resume to a job description, find the posting&rsquo;s 4 to 6 must-have keywords, use its exact wording wherever it truthfully describes your experience, rewrite your most relevant bullets to lead with those skills, and cut what doesn&rsquo;t serve the role. Never add a skill you don&rsquo;t have.
         </p>
         <p>
-          Here is the five-step method, followed by the honest caveats — including what you should never do.
+          It matters because recruiters search their applicant tracking system for the posting&rsquo;s terms, so a strong candidate with an untailored resume often doesn&rsquo;t come up. Huntr analyzed over 1.39 million applications and found tailored resumes reached the interview stage{' '}
+          <a href="https://huntr.co/research/job-search-trends-q2-2025" target="_blank" rel="noopener noreferrer" className="text-brand-light hover:text-brand transition-colors">2.1 times as often</a>
+          , 5.75% against 2.68%.
         </p>
 
-        <h2 className="text-[22px] text-foreground !mt-10">The five-step method</h2>
+        <h2 className="text-[22px] text-foreground !mt-10">What are the steps to tailor a resume?</h2>
         <ol className="list-none space-y-6 !mt-6">
           {STEPS.map((s, i) => (
             <li key={s.name} className="flex gap-5">
@@ -155,17 +165,26 @@ export default function Page() {
           ))}
         </ol>
 
-        <h2 className="text-[22px] text-foreground !mt-10">The line you must not cross</h2>
+        <h2 className="text-[22px] text-foreground !mt-10">What should you never add when tailoring?</h2>
         <p>
-          Tailoring is translation, not fiction. Re-expressing &ldquo;built dashboards used by leadership&rdquo; as &ldquo;stakeholder reporting and data visualization&rdquo; is honest tailoring — the experience is the same, the language now matches the filter. Adding &ldquo;Kubernetes&rdquo; because the posting wants it and you once watched a talk is fabrication. It passes the ATS, then costs you the interview, and sometimes the offer you already had.
+          Anything you can&rsquo;t back up. Rewriting &ldquo;built dashboards used by leadership&rdquo; as &ldquo;stakeholder reporting and data visualization&rdquo; is honest tailoring, because the experience is the same and only the wording changed. Adding &ldquo;Kubernetes&rdquo; because the posting wants it and you once watched a talk is fabrication. It passes the ATS, then costs you the interview, and sometimes an offer you already had.
         </p>
         <p>
-          The practical test: could you speak about this bullet, as written, for two minutes in an interview? If not, it doesn&rsquo;t belong on the tailored resume.
+          A practical test: could you talk about this bullet, as written, for two minutes in an interview? If not, leave it off the tailored resume.
+        </p>
+        <p>
+          AI tools get this wrong often. When a posting asks for a certification or tool, chatbots tend to add it to your resume, so read every line they write before you send it.
         </p>
 
-        <h2 className="text-[22px] text-foreground !mt-10">Doing it in one click</h2>
+        <h2 className="text-[22px] text-foreground !mt-10">Can you tailor a resume in one click?</h2>
         <p>
-          The method above takes 20–30 minutes per application done well — which is why most people stop tailoring after the third application of the day. The <Link href="/" className="text-brand-light hover:text-brand transition-colors">Cover Me</Link> Chrome extension automates exactly this method: on any job posting, &ldquo;Tailor Resume to Job&rdquo; extracts the role&rsquo;s keywords, rewrites your bullets in the posting&rsquo;s language under a hard constraint against inventing skills or changing your job history, then shows your <Link href="/guides/what-is-an-ats-score" className="text-brand-light hover:text-brand transition-colors">ATS match score</Link> with each requirement marked matched or gap. It works on <Link href="/for/linkedin" className="text-brand-light hover:text-brand transition-colors">LinkedIn</Link>, <Link href="/for/indeed" className="text-brand-light hover:text-brand transition-colors">Indeed</Link>, <Link href="/for/greenhouse" className="text-brand-light hover:text-brand transition-colors">Greenhouse</Link>, <Link href="/for/lever" className="text-brand-light hover:text-brand transition-colors">Lever</Link>, <Link href="/for/workday" className="text-brand-light hover:text-brand transition-colors">Workday</Link>, and <Link href="/for/ashby" className="text-brand-light hover:text-brand transition-colors">Ashby</Link>, and exports a formatted one-page PDF when the role demands it.
+          Yes. Done well by hand, this method takes long enough that most people stop tailoring after a few applications a day. Using ChatGPT, it took me about 12 minutes per application, which is why I built <Link href="/" className="text-brand-light hover:text-brand transition-colors">Cover Me (cover-me.dev)</Link>, an open-source Chrome extension that follows the same method.
+        </p>
+        <p>
+          On a job posting, &ldquo;Tailor Resume to Job&rdquo; finds the role&rsquo;s keywords and rewrites your bullets, summary, and skills in the posting&rsquo;s language. Your job titles, employers, and dates stay as they are. Every skill the AI adds has to cite evidence from your resume, and a check removes any skill or claim your original doesn&rsquo;t support. You then see your <Link href="/guides/what-is-an-ats-score" className="text-brand-light hover:text-brand transition-colors">ATS match score</Link> with each missing keyword listed, and you can export the result as a PDF.
+        </p>
+        <p>
+          It works on <Link href="/for/linkedin" className="text-brand-light hover:text-brand transition-colors">LinkedIn</Link>, <Link href="/for/indeed" className="text-brand-light hover:text-brand transition-colors">Indeed</Link>, <Link href="/for/greenhouse" className="text-brand-light hover:text-brand transition-colors">Greenhouse</Link>, <Link href="/for/lever" className="text-brand-light hover:text-brand transition-colors">Lever</Link>, <Link href="/for/workday" className="text-brand-light hover:text-brand transition-colors">Workday</Link>, and <Link href="/for/ashby" className="text-brand-light hover:text-brand transition-colors">Ashby</Link>, and you can paste a posting from any other site. It&rsquo;s free and unlimited with your own Claude or OpenAI API key.
         </p>
       </article>
 
@@ -186,7 +205,7 @@ export default function Page() {
       <div className="border border-border rounded-[12px] p-8 bg-surface text-center mt-14">
         <h2 className="text-[20px] text-foreground mb-2">Tailor your resume in one click</h2>
         <p className="text-[14px] text-muted-foreground mb-5 max-w-[420px] mx-auto leading-[1.7]">
-          Keywords matched, score shown, gaps listed — without inventing a single skill.
+          Keywords matched, score shown, gaps listed, and no invented skills.
         </p>
         <a
           href={CHROME_STORE_URL}

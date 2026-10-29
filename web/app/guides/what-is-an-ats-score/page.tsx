@@ -8,24 +8,24 @@ const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 const guide = getGuide('what-is-an-ats-score')
 const HERO_IMAGE = '/guides/what-is-an-ats-score.png'
 const HERO_ALT =
-  'Infographic: what is an ATS score? Your resume’s match percentage against a specific job description. A resume plus a job description produce an ATS match score — shown as 85%, a strong match, with React and TypeScript matched and Kubernetes flagged as a gap. The score is per-job, not permanent: the same resume scores differently for every role.'
+  "Diagram of an 86 ATS match score for a Marketing Manager posting at Northwind, a sample company. Four of five must-have keywords are covered (SEO, Campaign strategy, Google Analytics and Budget management) and HubSpot is missing, for 56 of 70 points. All three nice-to-have keywords are covered, for 30 of 30."
 
 export const metadata: Metadata = {
   title: 'What Is an ATS Score? How Resume Screening Works',
-  description: 'An ATS score measures how well your resume matches a job description’s keywords and requirements. Learn what a good score is and how to improve yours before applying.',
+  description: "An ATS score estimates how well your resume matches one job posting's keywords. See what a good score is, how to raise it, and how Cover Me calculates it.",
   alternates: { canonical: `${BASE}/guides/${guide.slug}` },
   openGraph: {
-    title: 'What Is an ATS Score? — Cover Me',
-    description: 'How applicant tracking systems score resumes, what a good match looks like, and how to improve yours before you apply.',
+    title: 'What Is an ATS Score? | Cover Me',
+    description: 'How applicant tracking systems filter resumes, what a good match score looks like, and how to raise yours before you apply.',
     url: `${BASE}/guides/${guide.slug}`,
     siteName: 'Cover Me',
     type: 'article',
-    images: [{ url: `${BASE}/guides/what-is-an-ats-score.png`, width: 1672, height: 941, alt: 'What is an ATS score? Your resume’s match percentage against a specific job description.' }],
+    images: [{ url: `${BASE}/guides/what-is-an-ats-score.png`, width: 1600, height: 900, alt: "An 86 ATS match score worked out from must-have and nice-to-have keywords" }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'What Is an ATS Score? — Cover Me',
-    description: 'How applicant tracking systems score resumes, what a good match looks like, and how to improve yours before you apply.',
+    title: 'What Is an ATS Score? | Cover Me',
+    description: 'How applicant tracking systems filter resumes, what a good match score looks like, and how to raise yours before you apply.',
     images: [`${BASE}/guides/what-is-an-ats-score.png`],
   },
 }
@@ -39,7 +39,7 @@ const faqJsonLd = {
       name: 'What is a good ATS score?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'A match of roughly 75–80% or higher against the job description is generally considered strong. Below about 50%, your resume is unlikely to surface in keyword-filtered searches. The score is relative to each specific posting — the same resume can score 85% for one role and 40% for another.',
+        text: 'As a rule of thumb, 80 or higher out of 100 is a strong match for that posting, 60 to 79 has gaps worth fixing, and below 50 means the resume needs real tailoring or the role is not a fit. Scores are per posting: the same resume can score 85 for one job and 40 for another.',
       },
     },
     {
@@ -47,7 +47,7 @@ const faqJsonLd = {
       name: 'Do all companies use ATS software?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Nearly all large companies do — commonly cited research puts ATS usage above 97% of Fortune 500 companies — and most startups use systems like Greenhouse, Lever, or Ashby. Assume any online application passes through an ATS.',
+        text: "Most large employers do. Jobscan found that 97.4% of Fortune 500 companies use an applicant tracking system, and many startups use Greenhouse, Lever, or Ashby. Assume any online application goes into an ATS.",
       },
     },
     {
@@ -55,7 +55,15 @@ const faqJsonLd = {
       name: 'Can I check my ATS score for free?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Yes. The Cover Me Chrome extension scores your resume against any job posting you have open and shows the specific keyword gaps — free with your own API key, or 10 generations to start, then 5 a week, on the hosted free tier.',
+        text: 'Yes. The Cover Me Chrome extension scores your resume against the job posting you have open and lists the missing keywords. It is free and unlimited with your own Claude or OpenAI API key, and the hosted free plan gives 10 generations to start, then 5 a week.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Does a higher ATS score guarantee an interview?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'No. A match score estimates keyword coverage, and a person still decides who gets interviewed. A high score helps your resume show up when a recruiter searches, and the content still has to convince the person who reads it.',
       },
     },
   ],
@@ -76,7 +84,7 @@ export default function Page() {
           What is an ATS score?
         </h1>
         <p className="text-[12px] text-muted-foreground">
-          <time dateTime={guide.date}>Updated July 6, 2026</time> · Lincoln Laylor
+          <time dateTime={guide.updated ?? guide.date}>Updated October 29, 2026</time> · Lincoln Laylor
         </p>
       </div>
 
@@ -86,8 +94,8 @@ export default function Page() {
         <Image
           src={HERO_IMAGE}
           alt={HERO_ALT}
-          width={1672}
-          height={941}
+          width={1600}
+          height={900}
           priority
           sizes="(max-width: 800px) 100vw, 760px"
           className="w-full h-auto rounded-[12px] border border-border"
@@ -95,47 +103,72 @@ export default function Page() {
       </figure>
 
       <article className="space-y-5 text-[15.5px] text-muted-foreground leading-[1.85]">
-        {/* Definition — direct answer for snippets */}
+        {/* Definition: direct answer for snippets */}
         <p className="text-[17px] text-foreground font-medium leading-[1.7]">
-          An ATS score is a percentage that measures how closely your resume matches a specific job description — the keywords, skills, and requirements an applicant tracking system (ATS) scans for when it filters candidates. A higher score means your resume is more likely to survive automated screening and reach a human recruiter.
+          An ATS score is a number, usually out of 100, that estimates how closely your resume matches one job description&rsquo;s keywords, skills, and requirements. A higher score means your resume is more likely to show up when a recruiter searches the applicant tracking system (ATS) for the terms that matter for that role.
+        </p>
+        <p>
+          The score belongs to a resume and a posting together. The same resume scores differently against every job.
         </p>
 
-        <h2 className="text-[22px] text-foreground !mt-10">How does ATS screening actually work?</h2>
+        <h2 className="text-[22px] text-foreground !mt-10">How does ATS screening work?</h2>
         <p>
-          An applicant tracking system is the software companies use to collect and manage applications — Greenhouse, Lever, Workday, and Ashby are common examples. When you apply online, your resume is parsed into structured data: job titles, dates, skills, education. Recruiters then search and filter that pool by the terms that matter for the role.
+          An applicant tracking system is the software a company uses to collect and manage applications. Greenhouse, Lever, Workday, and Ashby are common ones. When you apply, the ATS parses your resume into fields like job titles, dates, skills, and education. Recruiters then search, filter, and sort that pool by the terms that matter for the role. Some systems add their own ranking on top.
         </p>
         <p>
-          The often-quoted statistic is that over 75% of resumes never reach a human because of this filtering. The precise number varies by study, but the mechanism is real: if a recruiter filters 400 applicants by &ldquo;React&rdquo; and &ldquo;TypeScript&rdquo; and your resume says &ldquo;built modern web front-ends&rdquo;, you are invisible — regardless of how qualified you are.
+          Many ATS never show recruiters a single score for your resume. The &ldquo;ATS score&rdquo; you see in resume tools is an estimate of the same thing a recruiter&rsquo;s search rewards: overlap between your wording and the posting&rsquo;s.
         </p>
         <p>
-          The scoring is not mysterious. It is substantially keyword and requirement overlap: does the language in your resume match the language in the posting? That is also why the score is per-job, not a property of your resume — the same resume scores differently against every posting.
+          You will often read that over 75% of resumes never reach a human. That figure gets repeated widely and is poorly sourced. The mechanism behind it is real, though. If a recruiter filters 400 applicants by &ldquo;React&rdquo; and &ldquo;TypeScript&rdquo; and your resume says &ldquo;built modern web front-ends&rdquo;, your resume won&rsquo;t come up in that search, however qualified you are.
+        </p>
+        <p>
+          Matching the posting also pays off in results. Huntr analyzed over 1.39 million applications and found that people who tailored their resume reached the interview stage{' '}
+          <a href="https://huntr.co/research/job-search-trends-q2-2025" target="_blank" rel="noopener noreferrer" className="text-brand-light hover:text-brand transition-colors">2.1 times as often</a>
+          , 5.75% against 2.68%.
         </p>
 
         <h2 className="text-[22px] text-foreground !mt-10">What counts as a good ATS score?</h2>
         <p>
-          As a rule of thumb:
+          These bands are rules of thumb. No ATS publishes a cutoff.
         </p>
         <ul className="list-disc pl-6 space-y-2">
-          <li><strong className="text-foreground">80%+</strong> — strong match. Your resume speaks the posting&rsquo;s language and should surface in recruiter filters.</li>
-          <li><strong className="text-foreground">60–79%</strong> — decent, with visible gaps. Worth tailoring before you submit: a few rewritten bullets often close the distance.</li>
-          <li><strong className="text-foreground">Below 50%</strong> — either the resume needs real tailoring for this role, or the role genuinely isn&rsquo;t a fit. Both are useful to know before you spend time applying.</li>
+          <li><strong className="text-foreground">80 or higher.</strong> A strong match. Your resume uses the posting&rsquo;s language and should come up in recruiter searches.</li>
+          <li><strong className="text-foreground">60 to 79.</strong> A decent match with visible gaps. Tailor before you submit, since a few rewritten bullets often close the distance.</li>
+          <li><strong className="text-foreground">Below 50.</strong> The resume needs real tailoring for this role, or the role isn&rsquo;t a fit. Both are worth knowing before you spend time applying.</li>
         </ul>
         <p>
-          Chasing 100% is the wrong goal. A resume stuffed with every keyword reads as spam to the human who eventually opens it — and the human is the one who schedules interviews.
+          Don&rsquo;t chase 100. A resume stuffed with every keyword reads as spam to the person who eventually opens it, and that person decides who gets an interview.
         </p>
 
         <h2 className="text-[22px] text-foreground !mt-10">How do you improve your ATS score?</h2>
         <ol className="list-decimal pl-6 space-y-2">
-          <li>Read the posting and note the specific skills, tools, and qualifications it repeats — those are the filter terms.</li>
-          <li>Mirror the posting&rsquo;s exact wording where it truthfully describes your experience (&ldquo;React&rdquo; not &ldquo;modern JavaScript frameworks&rdquo;; &ldquo;stakeholder management&rdquo; not &ldquo;worked with teams&rdquo;).</li>
-          <li>Rewrite your experience bullets to lead with the matched skills, keeping your real accomplishments and metrics.</li>
-          <li>Never add skills you don&rsquo;t have — a keyword that gets you the interview and fails in the room costs more than the filter ever did.</li>
-          <li>Re-check the score after tailoring and close remaining gaps where you honestly can.</li>
+          <li>Read the posting and note the skills, tools, and qualifications it repeats or lists as required. Those are the terms recruiters filter by.</li>
+          <li>Use the posting&rsquo;s exact wording where it truthfully describes your experience: &ldquo;React&rdquo; instead of &ldquo;modern JavaScript frameworks&rdquo;, &ldquo;stakeholder management&rdquo; instead of &ldquo;worked with teams&rdquo;.</li>
+          <li>Rewrite your most relevant bullets to lead with the matched skills, and keep your real results and numbers.</li>
+          <li>Never add a skill you don&rsquo;t have. A keyword that gets you the interview and falls apart in the room costs more than the filter did.</li>
+          <li>Check the score again after tailoring, and close the remaining gaps where you honestly can.</li>
         </ol>
-
-        <h2 className="text-[22px] text-foreground !mt-10">How Cover Me calculates it</h2>
         <p>
-          The <Link href="/" className="text-brand-light hover:text-brand transition-colors">Cover Me</Link> Chrome extension does this whole loop in one click. On any job posting, &ldquo;Tailor Resume to Job&rdquo; rewrites your resume bullets to match the role&rsquo;s keywords — without inventing skills or changing your job history — then scores the result against the posting&rsquo;s requirements and lists each one as matched or a gap. You see exactly where you stand before you apply, and you can re-tailor after addressing the gaps.
+          Our <Link href="/guides/tailor-resume-to-job-description" className="text-brand-light hover:text-brand transition-colors">guide to tailoring your resume to a job description</Link> covers each step in detail.
+        </p>
+
+        <h2 className="text-[22px] text-foreground !mt-10">How does Cover Me calculate its ATS score?</h2>
+        <p>
+          <Link href="/" className="text-brand-light hover:text-brand transition-colors">Cover Me (cover-me.dev)</Link> is an open-source Chrome extension that tailors your resume to the posting you have open and scores the result. The AI never makes up the number. It reports which of the posting&rsquo;s keywords your tailored resume covers, sorted into must-haves and nice-to-haves, plus any hard requirements you don&rsquo;t meet. Code then calculates the score:
+        </p>
+        <ul className="list-disc pl-6 space-y-2">
+          <li>Must-have keywords are worth 70 points, split by how many you cover.</li>
+          <li>Nice-to-have keywords are worth 30 points, split the same way.</li>
+          <li>Each unmet hard requirement, such as a license or a years-of-experience minimum, subtracts 10 points, up to 25 in total.</li>
+          <li>A years requirement you meet doesn&rsquo;t count as a gap, and &ldquo;Tableau or Power BI&rdquo; counts as covered when your resume has either one.</li>
+        </ul>
+        <p>
+          Because code does the math, the same keyword coverage always gives the same score, and the score only goes up as you cover more keywords. Every keyword you&rsquo;re missing is listed as a gap. The scoring code is public in{' '}
+          <a href="https://github.com/TheLinc/cover-me/blob/master/extension/src/lib/ai/ats-score.ts" target="_blank" rel="noopener noreferrer" className="text-brand-light hover:text-brand transition-colors">ats-score.ts</a>
+          {' '}on GitHub.
+        </p>
+        <p>
+          Tailoring and scoring take one click on LinkedIn, Indeed, Greenhouse, Lever, Workday, and Ashby, and you can paste a posting from any other site. Before you see the result, a check removes any skill or claim your original resume doesn&rsquo;t support, so a higher score never comes from invented experience.
         </p>
       </article>
 
@@ -156,7 +189,7 @@ export default function Page() {
       <div className="border border-border rounded-[12px] p-8 bg-surface text-center mt-14">
         <h2 className="text-[20px] text-foreground mb-2">See your ATS score on any job posting</h2>
         <p className="text-[14px] text-muted-foreground mb-5 max-w-[420px] mx-auto leading-[1.7]">
-          Cover Me tailors your resume to the role and shows your match score and gaps — in one click.
+          Cover Me tailors your resume to the role, then shows your match score and every missing keyword.
         </p>
         <a
           href={CHROME_STORE_URL}

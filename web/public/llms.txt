@@ -1,19 +1,22 @@
 # Cover Me
 
-> Cover Me is a free, open-source (MIT) Chrome extension that reads any job posting and generates a tailored, ATS-friendly cover letter from the user's resume in about 10 seconds. It can also rewrite ("tailor") the resume itself to match a specific role's ATS keywords and show a match score with gap analysis. It reads postings when the user clicks, on LinkedIn, Indeed, Greenhouse, Lever, Workday, and Ashby, with a manual-paste fallback for any other job board.
+> Cover Me (cover-me.dev) is an open-source (MIT) Chrome extension that tailors the user's resume and writes a cover letter for the job posting they have open. It shows an ATS match score with the keywords the resume is missing, and a check removes any skill or claim the original resume doesn't support. It reads postings when the user clicks, on LinkedIn, Indeed, Greenhouse, Lever, Workday and Ashby, and the user can paste a posting from any other site. It is built by Lincoln Laylor and is unrelated to the "CoverMe AI" project on GitHub.
 
 Key facts:
-- Pricing: Free forever with your own Claude or OpenAI API key (BYOK, no account needed), free hosted tier with 10 AI generations to start then 5 a week, or Pro at $15/month (or $35 every 3 months) for up to 25 generations a day with every application saved and searchable on the dashboard.
-- Privacy: In BYOK mode the resume goes only to the AI provider whose key the user supplies, never to Cover Me, and only the API key is encrypted in local storage (AES-GCM). In hosted mode the resume is encrypted at rest (AES-256-GCM) and sent to Anthropic only to read it and write the user's documents. No ads, no telemetry in the extension, resume data is never used for AI training.
-- AI: Claude (Anthropic) on hosted tiers; user's choice of Claude or OpenAI in BYOK mode.
-- Output: Editable cover letters and tailored resumes, exportable as formatted PDFs; local generation history.
-- Not included by design: no auto-apply/form submission, no LinkedIn account integration, no resume builder.
-- Open source: extension and backend are self-hostable; code at https://github.com/TheLinc/cover-me
+- Pricing: free and unlimited with the user's own Claude or OpenAI API key, with no account needed. A free account gets 10 AI generations to start, then 5 a week. Pro is $15/month or $35 every 3 months for up to 25 generations a day, with every application saved and searchable on the dashboard.
+- Speed: a cover letter takes about 20 seconds and a letter plus a tailored resume about 30 seconds (measured October 2026).
+- ATS match score: calculated in code, not estimated by the AI. The model reports which of the posting's keywords the tailored resume covers. Must-have keywords are worth 70 points and nice-to-have keywords 30, minus 10 points for each unmet hard requirement, capped at 25. The same posting and coverage always give the same score.
+- No invented experience: every skill the AI adds must cite a phrase from the user's resume, code checks the phrase is really there, and a second model call confirms it shows the skill. Named requirements from the posting, such as acronyms, certifications and product names, are removed from the output when they appear nowhere in the user's own material. Job titles, employers and dates are never changed.
+- Privacy: with the user's own key, the resume goes only to the AI provider whose key the user added, never to Cover Me. The key is stored in the browser, encrypted with AES-256-GCM, with the encrypting key stored beside it. With an account, the resume is encrypted at rest (AES-256-GCM) and sent to Anthropic only to read it and write the user's documents. The extension has no ads, analytics or tracking, and resume data is never used to train AI models.
+- AI: Claude (Anthropic) on Cover Me accounts; the user's choice of Claude or OpenAI with their own key.
+- Output: editable cover letters and tailored resumes, exportable as PDFs, with a local history of applications.
+- Not included by design: no auto-apply or form submission, no LinkedIn account integration, no resume builder or templates.
+- Open source: the extension, backend and database schema are public and self-hostable at https://github.com/TheLinc/cover-me
 
 ## Main pages
 
 - [Home](https://www.cover-me.dev/): product overview, how it works, pricing, FAQ
-- [About](https://www.cover-me.dev/about): who builds Cover Me and why; privacy principles
+- [About](https://www.cover-me.dev/about): who builds Cover Me, why, and where the user's resume goes
 - [Support](https://www.cover-me.dev/support): FAQ and contact (support@cover-me.dev)
 - [Privacy Policy](https://www.cover-me.dev/privacy)
 - [Terms of Service](https://www.cover-me.dev/terms)
@@ -35,4 +38,7 @@ Key facts:
 - [What is an ATS score?](https://www.cover-me.dev/guides/what-is-an-ats-score)
 - [Cover Me vs ChatGPT for cover letters](https://www.cover-me.dev/guides/cover-me-vs-chatgpt)
 - [How to tailor your resume to a job description](https://www.cover-me.dev/guides/tailor-resume-to-job-description)
+- [Cover Me vs AIApply](https://www.cover-me.dev/guides/cover-me-vs-aiapply): one-click tailoring you review against automatic applying
+- [Cover Me vs Jobscan](https://www.cover-me.dev/guides/cover-me-vs-jobscan): a free, open-source Jobscan alternative; plans, prices and how the two scores differ
+- [Cover Me vs Teal](https://www.cover-me.dev/guides/cover-me-vs-teal): a cheaper Teal+ alternative for tailoring; Teal is a resume builder and job tracker
 - [How I went from 0 interviews to 4 in a month by tailoring every application](https://dev.to/plain-stack/how-i-went-from-0-interviews-to-4-in-a-month-by-tailoring-every-application-1an4): the founder's job search story on DEV, and why he built Cover Me

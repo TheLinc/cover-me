@@ -272,7 +272,7 @@ function AuthForm() {
 
   const subtext =
     view === "reset"
-      ? "Choose something strong — at least 6 characters."
+      ? "Choose something strong, at least 6 characters."
       : view === "forgot"
         ? "Enter your email and we'll send you a reset link."
         : view === "signin"
@@ -329,7 +329,7 @@ function AuthForm() {
               style={{ animation: "fadeUp 0.55s ease 0.3s both" }}
             >
               One click on any job posting. A tailored, human-sounding letter
-              built from your resume — in about 20 seconds.
+              built from your resume.
             </p>
           </div>
 

@@ -8,11 +8,11 @@ const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 // Never use new Date() here: stamping every page as modified on every deploy
 // teaches crawlers to ignore the lastmod signal entirely.
 const LAST_MODIFIED = {
-  home: '2026-07-06',
-  about: '2026-06-23',
+  home: '2026-10-29',
+  about: '2026-10-29',
   legal: '2026-10-19',
-  support: '2026-06-23',
-  boards: '2026-07-06',
+  support: '2026-10-29',
+  boards: '2026-10-29',
 } as const
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -37,13 +37,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     })),
     {
       url: `${BASE}/guides`,
-      lastModified: GUIDES.map((g) => g.date).reduce((max, date) => (date > max ? date : max)),
+      lastModified: GUIDES.map((g) => g.updated ?? g.date).reduce((max, date) => (date > max ? date : max)),
       changeFrequency: 'weekly',
       priority: 0.7,
     },
     ...GUIDES.map((g) => ({
       url: `${BASE}/guides/${g.slug}`,
-      lastModified: g.date,
+      lastModified: g.updated ?? g.date,
       changeFrequency: 'monthly' as const,
       priority: 0.7,
     })),
