@@ -49,6 +49,12 @@ export const GUIDES: Guide[] = [
     description: 'Teal is a resume builder and job tracker, with Teal+ at $29 every 30 days. Cover Me tailors the resume you already have to each posting, free with your own API key or $15 a month.',
     date: '2026-10-29',
   },
+  {
+    slug: 'use-your-own-api-key-for-cover-letters',
+    title: 'How to use your own OpenAI or Claude API key for cover letters',
+    description: 'Cover Me writes cover letters and tailors resumes with your own API key: unlimited, no account, and your resume goes only to Anthropic or OpenAI. Setup, models and trade-offs.',
+    date: '2026-10-29',
+  },
 ]
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
