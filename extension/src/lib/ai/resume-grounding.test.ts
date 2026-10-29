@@ -89,6 +89,15 @@ describe('checkAndRewriteLines summary', () => {
     expect(repair.summary).toBe('rewritten')
   })
 
+  // The model copies the reply example's id; a fixed "e0b2" there emptied every flagged summary.
+  test('the rewrite prompt\'s reply example uses a flagged id', async () => {
+    const prompts: string[] = []
+    const replies = [JSON.stringify({ flags: [], summary: 'claims leadership' }), '{}']
+    await checkAndRewriteLines({ ...original, summary: flagged }, original, posting, async (p) => (prompts.push(p), replies.shift()!))
+    expect(prompts[1]).toContain('{"rewrites": [{"id": "summary"')
+    expect(prompts[1]).not.toContain('e0b2')
+  })
+
   test('an unusable rewrite falls back to the candidate\'s own summary', async () => {
     const { resume, repair } = await run(flagged, 'Led 12 developers building React portals.')
     expect(resume.summary).toBe(original.summary)

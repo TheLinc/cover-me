@@ -391,7 +391,7 @@ ${jobDescription.slice(0, 15000)}
 
 ${items.join('\n\n')}
 
-Return ONLY JSON, no other text: {"rewrites": [{"id": "e0b2", "text": "..."}]}`
+Return ONLY JSON, no other text, one rewrite per id in brackets above: {"rewrites": [{"id": "${[...flags.keys()][0]}", "text": "..."}]}`
 }
 
 export function parseLineRewrites(raw: string): Map<LineId, string> {
