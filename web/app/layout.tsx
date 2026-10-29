@@ -58,6 +58,7 @@ const jsonLdOrg = {
     'https://www.linkedin.com/in/lincolnlaylor/',
     CHROME_STORE_URL,
     'https://alternativeto.net/software/cover-me/about/',
+    'https://toolradar.com/tools/cover-me',
   ],
   founder: {
     '@type': 'Person',

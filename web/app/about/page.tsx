@@ -105,10 +105,15 @@ export default function AboutPage() {
             <p>
               Open source is a trust signal, not just a philosophy. When you can read the code that handles your resume, you don&apos;t have to take anyone&apos;s word for how it works.
             </p>
-            {/* Open Source Alternatives checks for this badge to keep the free listing. A plain img: the SVG lives on their host. */}
-            <a href="https://www.opensourcealternatives.to" className="inline-block">
-              <img src="https://www.opensourcealternatives.to/badge-osa.svg" alt="As seen on Open Source Alternatives" width={270} height={20} />
-            </a>
+            {/* Open Source Alternatives and Toolradar check for these badges during review. Plain imgs: the images live on their hosts. */}
+            <div className="flex flex-wrap items-center gap-4">
+              <a href="https://www.opensourcealternatives.to" className="inline-block">
+                <img src="https://www.opensourcealternatives.to/badge-osa.svg" alt="As seen on Open Source Alternatives" width={270} height={20} />
+              </a>
+              <a href="https://toolradar.com/tools/cover-me" target="_blank" rel="noopener" className="inline-block">
+                <img src="https://toolradar.com/api/badge/cover-me?type=review&style=light&v=5" alt="Cover Me on Toolradar" width={280} height={80} />
+              </a>
+            </div>
           </div>
 
           {/* Founder card */}
