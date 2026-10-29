@@ -1,6 +1,7 @@
 // Per-job-board landing page content for /for/[board].
-// Each board gets differentiated copy — search engines and AI engines penalize
-// near-duplicate doorway pages, so keep the intros, steps, and FAQs specific.
+// Each board gets differentiated copy. Search engines and AI engines penalize
+// near-duplicate doorway pages, so keep the intros, steps, and FAQs specific,
+// and keep board behavior claims in line with extension/src/content/scrapers.
 
 export interface BoardFaq {
   q: string
@@ -10,12 +11,12 @@ export interface BoardFaq {
 export interface Board {
   slug: string
   name: string
-  /** e.g. "job board", "applicant tracking system" — used in copy */
+  /** e.g. "job board", "applicant tracking system", used in copy */
   kind: string
   metaTitle: string
   metaDescription: string
   h1: string
-  /** Direct-answer paragraph rendered right under the H1 — written for featured snippets. */
+  /** Direct-answer paragraph rendered right under the H1, written for featured snippets. */
   answer: string
   intro: string[]
   steps: { title: string; body: string }[]
@@ -27,42 +28,42 @@ export const BOARDS: Board[] = [
     slug: 'linkedin',
     name: 'LinkedIn',
     kind: 'job board',
-    metaTitle: 'AI Cover Letter Generator for LinkedIn Jobs',
+    metaTitle: 'AI Cover Letter and Resume Tailor for LinkedIn Jobs',
     metaDescription:
-      'Generate a tailored, ATS-friendly cover letter from any LinkedIn job posting in one click. Free Chrome extension — works on full postings and search results.',
-    h1: 'AI cover letters for LinkedIn job postings',
+      'Click once on a LinkedIn job and Cover Me writes a cover letter and tailors your resume to it. Works in the search results panel too. Free Chrome extension.',
+    h1: 'AI cover letters and tailored resumes for LinkedIn jobs',
     answer:
-      'Cover Me is a free Chrome extension that reads the LinkedIn job posting you have open, extracts the role’s requirements and ATS keywords, and generates a tailored cover letter from your resume in about 20 seconds — no copying or pasting.',
+      'To tailor a cover letter and resume to a LinkedIn job, open the posting and click the Cover Me icon. Cover Me (cover-me.dev) is a free Chrome extension that reads the job title, company and description from the page, then writes a cover letter and rewrites your resume for that role, using only what your resume already shows.',
     intro: [
-      'LinkedIn is where most applications start — and where most generic cover letters get written. Easy Apply makes submitting fast, but the applications that get callbacks are the ones tailored to the posting. Cover Me closes that gap: it reads the job page you’re already on and builds the letter for you.',
-      'It works on full LinkedIn job pages and in the search-results view with the job panel open. No LinkedIn integration, no login sharing — the extension reads the posting page when you click, so it never touches your LinkedIn account.',
+      "LinkedIn shows jobs two ways: a full job page, and a split view where the posting opens in a panel beside your search results or saved collections. Cover Me reads both, so you don't have to open each job in its own tab first.",
+      "It has no LinkedIn integration and never signs in to your account. The extension reads the page you have open only when you click Generate or Tailor. LinkedIn changes its layout often, so Cover Me's scrapers are tested against live LinkedIn postings every week, and once you agree, Cover Me's server also reads the page, which lets most layout changes get fixed without a new extension release.",
     ],
     steps: [
       {
         title: 'Open a job on LinkedIn',
-        body: 'Browse LinkedIn Jobs as you normally do. Cover Me works on the full job page and in the split-view job panel on search results — anywhere the description is visible.',
+        body: 'Use the full job page or the job panel beside your search results or saved collections.',
       },
       {
-        title: 'Click the Cover Me icon',
-        body: 'When you click Generate, the extension reads the job title, company, and full description from the page. Nothing is sent to LinkedIn and your account is never accessed.',
+        title: 'Click Generate or Tailor',
+        body: 'Cover Me reads the title, company and full description from that tab. Nothing is posted to LinkedIn and your account is never accessed.',
       },
       {
-        title: 'Generate and apply',
-        body: 'Get a tailored cover letter built from your resume and the posting’s exact keywords. Edit it inline, copy it into the Easy Apply flow, or download a PDF.',
+        title: 'Add it to Easy Apply',
+        body: 'Edit the letter, then copy it or download a PDF. If the Easy Apply form takes a resume upload, upload the tailored resume PDF.',
       },
     ],
     faqs: [
       {
         q: 'Does Cover Me work with LinkedIn Easy Apply?',
-        a: 'Yes. Generate your letter with Cover Me, then copy it to your clipboard or download the PDF and attach it in the Easy Apply flow. Cover Me does not auto-submit applications — you stay in control of what gets sent.',
+        a: "Yes. Copy the letter or download it as a PDF, then add it in the Easy Apply form. If the form takes a resume upload, use the tailored resume PDF. Cover Me never fills in or submits the form, so you check everything before it's sent.",
       },
       {
         q: 'Does Cover Me need access to my LinkedIn account?',
-        a: 'No. Cover Me reads the page only when you click Generate or Tailor. It never logs into LinkedIn, never opens your profile or connections, and has no LinkedIn integration. From version 1.3.0, once you agree, a copy of the page is sent to our server to read the posting; on a signed-in page that copy can include your name. See the privacy policy.',
+        a: "No. Cover Me reads the page only when you click Generate or Tailor. It never signs in to LinkedIn, never opens your profile or connections, and has no LinkedIn integration. Since version 1.3.0, once you agree, a copy of the job page goes to Cover Me's server to read the posting. On a signed-in LinkedIn page that copy can include your name. Cover Me doesn't keep the copy. See the privacy policy for details.",
       },
       {
         q: 'Does it work on LinkedIn search results, or only full job pages?',
-        a: 'Both. Cover Me reads the job panel that opens next to LinkedIn search results as well as full job pages, so you can generate letters without leaving your search.',
+        a: 'Both. Cover Me reads the job panel that opens beside LinkedIn search results and saved-job collections, as well as full job pages, so you can generate without leaving your search.',
       },
     ],
   },
@@ -70,42 +71,42 @@ export const BOARDS: Board[] = [
     slug: 'indeed',
     name: 'Indeed',
     kind: 'job board',
-    metaTitle: 'AI Cover Letter Generator for Indeed Jobs',
+    metaTitle: 'AI Cover Letter and Resume Tailor for Indeed Jobs',
     metaDescription:
-      'One click on any Indeed job posting — AI writes a tailored, ATS-friendly cover letter from your resume. Free Chrome extension, works on postings and search results.',
-    h1: 'AI cover letters for Indeed job postings',
+      'Click once on an Indeed job and Cover Me writes a cover letter and tailors your resume to it, from the job page or the search preview pane. Free Chrome extension.',
+    h1: 'AI cover letters and tailored resumes for Indeed jobs',
     answer:
-      'Cover Me is a free Chrome extension that reads the Indeed job posting you have open and generates a tailored, ATS-optimized cover letter from your resume in about 20 seconds — on full postings and in the search-results preview pane.',
+      "To write a cover letter for an Indeed job, open the posting or select it in your search results, then click the Cover Me icon. Cover Me (cover-me.dev) is a free Chrome extension that reads the posting from Indeed's page and writes a letter and a tailored resume from your own resume, so each application matches its job.",
     intro: [
-      'Indeed aggregates millions of postings, which makes it perfect for applying at volume — and volume is exactly where cover letter quality collapses. Writing a fresh letter for the tenth application of the day is where most people give up and send something generic.',
-      'Cover Me keeps every application tailored at that pace. It reads the posting on the page, extracts the requirements and keywords, and builds each letter from your actual resume — so application #10 is as specific as application #1.',
+      'Indeed is built for applying to a lot of jobs, and that is where cover letters usually get copied from the last application. Tailoring each one by hand takes long enough that most people stop after a few.',
+      "Cover Me reads the job in Indeed's right-hand preview pane on search results, or on the full job page. It pulls the title, company and full description, then builds the letter and resume from your resume and that posting. The tenth application of the day gets the same treatment as the first.",
     ],
     steps: [
       {
         title: 'Open a job on Indeed',
-        body: 'Works on full Indeed job pages and in the preview pane on search results — wherever the job description is visible on screen.',
+        body: 'Select a job in your search results so it opens in the preview pane, or open the full job page.',
       },
       {
-        title: 'Click the Cover Me icon',
-        body: 'When you click Generate, the extension reads the title, company, and description. If a posting loads in an unusual format, paste the description into the manual fallback — it only takes a moment.',
+        title: 'Click Generate or Tailor',
+        body: "Cover Me reads the title, company and description. If Indeed shows a layout the scraper doesn't recognize, paste the description into Cover Me instead.",
       },
       {
-        title: 'Generate and apply',
-        body: 'A tailored letter, built from your resume and the role’s keywords, in about 20 seconds. Edit inline, copy it into Indeed’s application form, or download a PDF.',
+        title: 'Add it to your application',
+        body: "Edit the letter, then paste it into Indeed's application form or upload the PDF. When a job sends you to the company's own site, open the posting there and run Cover Me again.",
       },
     ],
     faqs: [
       {
-        q: 'Does Cover Me work with Indeed’s own apply flow?',
-        a: 'Yes. When Indeed’s application form asks for a cover letter, generate it with Cover Me, then paste the text or upload the PDF. Cover Me never submits applications for you.',
+        q: "Does Cover Me work with Indeed's application form?",
+        a: 'Yes. When the form asks for a cover letter, paste the text or upload the PDF from Cover Me. Cover Me never fills in or submits applications.',
       },
       {
-        q: 'Does it work when Indeed links out to a company’s own career site?',
-        a: 'Usually yes — many of those career sites run on Greenhouse, Lever, Workday, or Ashby, all of which Cover Me reads when you click. For anything else, the manual paste fallback works on any page.',
+        q: "Does it work when Indeed links out to a company's own career site?",
+        a: 'Usually. Many company career sites run on Greenhouse, Lever, Workday or Ashby, and Cover Me reads those when you click, including postings a careers page embeds from those systems. On any other site, paste the job description into Cover Me.',
       },
       {
-        q: 'Can I generate letters from Indeed search results?',
-        a: 'Yes. Cover Me reads the job preview pane on Indeed search results as well as full job pages.',
+        q: 'Can I see how my resume matches an Indeed job before I apply?',
+        a: "Yes. Tailor Resume to Job scores your resume against the posting from 0 to 100 and lists the keywords you're missing. Cover Me calculates the score in code from which of the posting's must-have and nice-to-have keywords your resume covers, so the same keyword coverage always gives the same score.",
       },
     ],
   },
@@ -113,42 +114,42 @@ export const BOARDS: Board[] = [
     slug: 'greenhouse',
     name: 'Greenhouse',
     kind: 'applicant tracking system',
-    metaTitle: 'AI Cover Letter Generator for Greenhouse Applications',
+    metaTitle: 'AI Cover Letter and Resume Tailor for Greenhouse Applications',
     metaDescription:
-      'Applying through a Greenhouse job page? Cover Me reads the posting and writes a tailored, ATS-friendly cover letter from your resume in one click. Free Chrome extension.',
-    h1: 'AI cover letters for Greenhouse job applications',
+      'Applying through a Greenhouse job page? Cover Me reads the posting and writes a cover letter and tailored resume from your own resume in one click. Free Chrome extension.',
+    h1: 'AI cover letters and tailored resumes for Greenhouse applications',
     answer:
-      'Cover Me is a free Chrome extension that reads any Greenhouse job posting — the boards.greenhouse.io pages used by thousands of tech companies — and generates a tailored cover letter from your resume in about 20 seconds.',
+      'To tailor a cover letter for a Greenhouse application, open the posting and click the Cover Me icon. Cover Me (cover-me.dev) is a free Chrome extension that reads Greenhouse postings on job-boards.greenhouse.io, on company career pages that embed them, and in your my.greenhouse.io account, then writes a letter and tailored resume from your resume.',
     intro: [
-      'Greenhouse is the ATS behind the careers pages of a huge share of tech companies — if you’re applying to startups and scale-ups, you’ll see its clean single-page postings constantly. Those applications almost always include an optional cover letter field, and “optional” is where tailored letters quietly win interviews.',
-      'Cover Me reads the Greenhouse posting directly — including embedded Greenhouse boards on company career sites — and builds a letter matched to the role’s requirements, so filling that optional field costs you seconds instead of half an hour.',
+      "Greenhouse is the applicant tracking system behind many tech company career pages. You'll recognize its postings by the job-boards.greenhouse.io address, or by an application form at the bottom of a company's own careers page. Many Greenhouse forms include a cover letter field, often marked optional.",
+      "Cover Me reads the posting wherever it appears. On a company site, the Greenhouse posting often loads inside a frame from greenhouse.io, and Cover Me has permission to read that frame when you click. If you search and track jobs in my.greenhouse.io, it also reads the posting in the job pop-up and on your Applications page.",
     ],
     steps: [
       {
         title: 'Open a Greenhouse posting',
-        body: 'Works on boards.greenhouse.io and job-boards.greenhouse.io pages, and on Greenhouse boards embedded in company career sites.',
+        body: 'On job-boards.greenhouse.io, on a company careers page with a Greenhouse form, or in my.greenhouse.io.',
       },
       {
-        title: 'Click the Cover Me icon',
-        body: 'The extension reads the job title, company, and full description from the structured Greenhouse page — Greenhouse publishes job data in a machine-readable format, which makes scraping dependable.',
+        title: 'Click Generate or Tailor',
+        body: 'Cover Me reads the title, company and full description, including from an embedded Greenhouse frame.',
       },
       {
-        title: 'Generate and attach',
-        body: 'Get a letter tailored to the role’s exact requirements. Paste it into the cover letter field or upload the PDF with your application.',
+        title: 'Attach it',
+        body: 'Paste the letter into the cover letter field or upload the PDF, and upload the tailored resume PDF in the resume field.',
       },
     ],
     faqs: [
       {
-        q: 'Greenhouse says the cover letter is optional. Should I still include one?',
-        a: 'Yes — optional fields are a differentiator. Most applicants skip them, so a tailored letter is one of the few signals that separates you at the screening stage. With Cover Me it costs about 20 seconds, so there’s no reason to leave it empty.',
+        q: 'Greenhouse says the cover letter is optional. Should I still send one?',
+        a: 'If you can make it specific, yes. A letter about their posting gives the reader one more reason to move you forward, and a generic letter adds little. Cover Me writes the specific version from your resume and the posting, so filling the field takes one click and a read-through.',
       },
       {
         q: 'Does Cover Me work on Greenhouse boards embedded in company websites?',
-        a: 'Yes. Whether the posting lives on boards.greenhouse.io or is embedded in a company’s own careers page, Cover Me detects the Greenhouse structure and reads it when you click. If a heavily customized page slips through, the manual paste fallback covers it.',
+        a: "Yes. Whether the posting is on job-boards.greenhouse.io or embedded in a company's careers page, Cover Me reads it when you click. If a heavily customized page doesn't read cleanly, paste the description into Cover Me instead.",
       },
       {
-        q: 'Will the letter make it past the ATS screening?',
-        a: 'Cover Me extracts the keywords and requirements from the posting itself and weaves them into your letter, so the letter speaks the same language the recruiter — and any keyword filter — is looking for. You can also tailor your resume to the same posting and see an ATS match score.',
+        q: 'Will the letter use the keywords recruiters search for?',
+        a: "Yes. Cover Me pulls the must-have and nice-to-have keywords from the posting and uses the ones your resume supports in the letter and the tailored resume. Tailor Resume to Job also shows a match score from 0 to 100 and the keywords you're still missing.",
       },
     ],
   },
@@ -156,42 +157,42 @@ export const BOARDS: Board[] = [
     slug: 'lever',
     name: 'Lever',
     kind: 'applicant tracking system',
-    metaTitle: 'AI Cover Letter Generator for Lever Applications',
+    metaTitle: 'AI Cover Letter and Resume Tailor for Lever Applications',
     metaDescription:
-      'Applying through jobs.lever.co? Cover Me reads the Lever posting and writes a tailored, ATS-friendly cover letter from your resume in one click. Free Chrome extension.',
-    h1: 'AI cover letters for Lever job applications',
+      'Applying through jobs.lever.co? Cover Me reads the Lever posting and writes a cover letter and tailored resume from your own resume in one click. Free Chrome extension.',
+    h1: 'AI cover letters and tailored resumes for Lever applications',
     answer:
-      'Cover Me is a free Chrome extension that reads any Lever job posting — the jobs.lever.co pages used by startups and scale-ups — and generates a tailored cover letter from your resume in about 20 seconds.',
+      "To write a cover letter for a Lever application, open the jobs.lever.co posting and click the Cover Me icon. Cover Me (cover-me.dev) is a free Chrome extension that reads the role, company and description from the posting's structured job data, then writes a letter and a tailored resume from your resume.",
     intro: [
-      'Lever powers hiring at thousands of startups and growth-stage companies. Its postings are clean and structured, and its application form has a dedicated field for additional information — the natural home for a cover letter that actually addresses the role.',
-      'Cover Me reads the Lever posting you have open, maps its requirements against your resume, and produces a letter specific to that company and role — not a template with the company name swapped in.',
+      'Lever is an applicant tracking system used by many startups and growing companies. Its application form usually ends with an Additional information box, which is where a short cover letter goes when the form has no separate field for one.',
+      'Lever postings include structured job data that names the company and role exactly, and Cover Me reads it when you click. Add a note before you generate, like a referral or a project you want mentioned, and the letter uses it alongside your resume.',
     ],
     steps: [
       {
         title: 'Open a Lever posting',
-        body: 'Any jobs.lever.co job page works. Cover Me detects Lever’s posting structure and reads the full description when you click.',
+        body: "Any jobs.lever.co job page works, and so do Lever postings embedded in a company's careers page.",
       },
       {
-        title: 'Click the Cover Me icon',
-        body: 'The extension extracts the role, company, and requirements from the page. Add an optional note — “referred by Jane”, “emphasize leadership” — and it gets woven in.',
+        title: 'Add context if you want',
+        body: 'Type a referral, a project, or the reason you want this company. Cover Me works it into the letter with your resume.',
       },
       {
-        title: 'Generate and submit',
-        body: 'Paste the tailored letter into Lever’s application form or attach the PDF. Edit anything inline first — the letter is fully editable before you send it.',
+        title: 'Paste it in',
+        body: 'Paste the letter into the cover letter field or the Additional information box, or attach the PDF. Edit anything first.',
       },
     ],
     faqs: [
       {
         q: 'Does Cover Me work on every Lever job page?',
-        a: 'Cover Me reads standard jobs.lever.co postings when you click. For companies that heavily customize their Lever pages, the manual paste fallback generates the same tailored letter from a copied description.',
+        a: "Cover Me reads standard jobs.lever.co postings, and Lever postings embedded on company sites, when you click. If a company has customized its page so it doesn't read cleanly, paste the description into Cover Me and you get the same result.",
       },
       {
         q: 'Can I personalize the letter beyond my resume?',
-        a: 'Yes. Add supplemental context before generating — a referral, a project you want highlighted, a reason you want this specific company — and Cover Me weaves it into the letter alongside your resume and the job requirements.',
+        a: 'Yes. Before generating, add context: a referral, a project you want highlighted, or why you want this company. Cover Me uses it in the letter along with your resume and the posting.',
       },
       {
         q: 'Is Cover Me free for Lever applications?',
-        a: 'Yes. Bring your own Claude or OpenAI API key for unlimited free generation, or use the hosted free tier: 10 generations to start, then 5 a week. Pro at $15/month allows up to 25 a day.',
+        a: 'Yes. With your own Claude or OpenAI API key it is free and unlimited, with no account needed. The hosted free plan gives 10 generations to start, then 5 a week. Pro is $15 a month or $35 every 3 months for up to 25 generations a day.',
       },
     ],
   },
@@ -199,42 +200,42 @@ export const BOARDS: Board[] = [
     slug: 'workday',
     name: 'Workday',
     kind: 'applicant tracking system',
-    metaTitle: 'AI Cover Letter Generator for Workday Applications',
+    metaTitle: 'AI Cover Letter and Resume Tailor for Workday Applications',
     metaDescription:
-      'Workday applications are long — the cover letter doesn’t have to be. Cover Me reads any myworkdayjobs.com posting and writes a tailored letter in one click. Free.',
-    h1: 'AI cover letters for Workday job applications',
+      'Workday applications are long. Cover Me reads the myworkdayjobs.com posting and writes your cover letter and tailored resume in one click, before you start the form.',
+    h1: 'AI cover letters and tailored resumes for Workday applications',
     answer:
-      'Cover Me is a free Chrome extension that reads any Workday job posting — the myworkdayjobs.com pages used by large enterprises — and generates a tailored, ATS-friendly cover letter from your resume in about 20 seconds.',
+      "To tailor a cover letter for a Workday application, open the myworkdayjobs.com posting and click the Cover Me icon before you start the form. Cover Me (cover-me.dev) is a free Chrome extension that reads the job from Workday's page and writes a cover letter and tailored resume as PDFs you can upload in the application.",
     intro: [
-      'Workday is the ATS of the enterprise world — banks, airlines, retailers, and Fortune 500s. Its application flow is famously long: account creation, resume re-entry, screening questions. By the time you reach the cover letter step, most applicants have nothing left to give it.',
-      'That’s exactly the wrong place to go generic — enterprise recruiting pipelines are the most keyword-filtered of all. Cover Me reads the Workday posting before you start the form and hands you a letter matched to the role’s requirements, so the highest-leverage part of the application is the one part that’s already done.',
+      'Workday is the applicant tracking system many large employers use. Its applications are long: you create an account with each employer, check the details Workday parsed from your resume, and answer screening questions, and the cover letter upload comes late in the process.',
+      "Tailoring first means both documents are ready before you start. Cover Me reads Workday's page by labels that stay the same across employers, and takes the company name from the posting's address, like acme.wd1.myworkdayjobs.com.",
     ],
     steps: [
       {
         title: 'Open a Workday posting',
-        body: 'Works on myworkdayjobs.com job pages across employers. Open the posting’s description view so the full text is visible.',
+        body: "Open the job description on the employer's myworkdayjobs.com site, before you click Apply.",
       },
       {
-        title: 'Click the Cover Me icon',
-        body: 'The extension reads the title, company, and description from the page. Workday’s layouts vary by employer — if a page resists scraping, paste the description into the manual fallback.',
+        title: 'Click Generate or Tailor',
+        body: "Cover Me reads the title, company and description. If an employer's Workday site doesn't read cleanly, paste the description into Cover Me instead.",
       },
       {
-        title: 'Generate and upload',
-        body: 'Download the tailored letter as a PDF and attach it in Workday’s documents step, or paste the text wherever the form asks for it.',
+        title: 'Upload in Workday',
+        body: 'Download the tailored resume and the cover letter as PDFs. Upload the resume when the application starts and the letter where the form asks for documents, or paste the letter text.',
       },
     ],
     faqs: [
       {
-        q: 'Do enterprise companies actually read cover letters?',
-        a: 'The screening layer does, even when humans skim: enterprise ATS pipelines filter on keywords from the job description. A letter that mirrors the posting’s requirements — which is what Cover Me generates — helps you clear that layer, and gives the recruiter who does read it a reason to advance you.',
+        q: 'Is a cover letter worth it on a Workday application?',
+        a: 'When the form has a place for one, a specific letter costs you little and gives the recruiter more to go on than the form fields. The tailored resume matters too, because Workday reads your resume into the fields recruiters review.',
       },
       {
-        q: 'Does Cover Me work on every company’s Workday site?',
-        a: 'Cover Me reads standard myworkdayjobs.com postings when you click. Workday allows heavy per-employer customization, so for the occasional page that scrapes incompletely, the manual paste fallback produces the same tailored result.',
+        q: "Does Cover Me work on every company's Workday site?",
+        a: "Cover Me reads standard myworkdayjobs.com postings when you click. Employers can customize their Workday sites, so if a page doesn't read completely, paste the description into Cover Me and you get the same result.",
       },
       {
         q: 'Can Cover Me fill out the Workday application for me?',
-        a: 'No — Cover Me generates documents, it never auto-fills or submits applications. It writes the cover letter and tailors your resume; the application itself stays entirely in your hands.',
+        a: 'No. Cover Me writes the cover letter and tailors your resume. It never fills in or submits a Workday application, so the form stays in your hands.',
       },
     ],
   },
@@ -242,42 +243,42 @@ export const BOARDS: Board[] = [
     slug: 'ashby',
     name: 'Ashby',
     kind: 'applicant tracking system',
-    metaTitle: 'AI Cover Letter Generator for Ashby Applications',
+    metaTitle: 'AI Cover Letter and Resume Tailor for Ashby Applications',
     metaDescription:
-      'Applying through jobs.ashbyhq.com? Cover Me reads the Ashby posting and writes a tailored, ATS-friendly cover letter from your resume in one click. Free Chrome extension.',
-    h1: 'AI cover letters for Ashby job applications',
+      'Applying through jobs.ashbyhq.com? Cover Me reads the Ashby posting and writes a cover letter and tailored resume from your own resume in one click. Free Chrome extension.',
+    h1: 'AI cover letters and tailored resumes for Ashby applications',
     answer:
-      'Cover Me is a free Chrome extension that reads any Ashby job posting — the jobs.ashbyhq.com pages used by fast-growing startups — and generates a tailored cover letter from your resume in about 20 seconds.',
+      "To write a cover letter for an Ashby application, open the jobs.ashbyhq.com posting and click the Cover Me icon. Cover Me (cover-me.dev) is a free Chrome extension that reads the role, company and description from the posting's structured job data and writes a letter and tailored resume from your resume, with stock AI phrases filtered out.",
     intro: [
-      'Ashby is the ATS of choice for a new generation of startups — the kind of companies where a hiring manager, not just a recruiter, reads applications. That’s the audience where a specific, well-matched cover letter moves the needle most.',
-      'Cover Me reads the Ashby posting you have open and builds a letter from your resume and the role’s actual requirements — concrete, specific, and free of the AI clichés that hiring managers at these companies spot instantly.',
+      "Ashby is a newer applicant tracking system used by many startups. At a small company the person reading your application can be the hiring manager, so a letter about their actual role does more than one that could go to any company.",
+      'Cover Me checks each letter for stock phrases like "I am excited to apply" and "passionate", and builds it from results in your resume in the posting\'s own words. It also reads Ashby postings embedded in company careers pages, through permission to read the Ashby frame when you click.',
     ],
     steps: [
       {
         title: 'Open an Ashby posting',
-        body: 'Any jobs.ashbyhq.com job page works, including Ashby boards embedded on company career sites.',
+        body: 'Any jobs.ashbyhq.com page works, as do Ashby job boards embedded on company sites.',
       },
       {
-        title: 'Click the Cover Me icon',
-        body: 'When you click, the extension reads the role, company, and full description from Ashby’s structured posting format.',
+        title: 'Click Generate or Tailor',
+        body: "Cover Me reads the role, company and description from Ashby's structured job data.",
       },
       {
-        title: 'Generate and apply',
-        body: 'Get a tailored letter in about 20 seconds. Edit it inline, paste it into Ashby’s application form, or attach the PDF.',
+        title: 'Apply',
+        body: "Edit the letter, then paste it into Ashby's form or attach the PDF, with the tailored resume PDF in the resume field.",
       },
     ],
     faqs: [
       {
         q: 'Do startups expect cover letters?',
-        a: 'Small teams read applications closely — at many Ashby-using startups the hiring manager screens candidates personally. A letter that addresses their specific role and stack is a strong signal; a generic one is worse than none. Cover Me builds each letter from the posting’s actual requirements, so it always addresses the specific role.',
+        a: "It varies by company. When the form has a field for one, a short letter about the specific role and stack tells the reader something a resume can't, and a generic one can count against you. Cover Me builds each letter from the posting's requirements and your resume, so it is about that role.",
       },
       {
         q: 'Will the letter sound like AI wrote it?',
-        a: 'Cover Me’s prompts explicitly forbid the clichés and AI tells — “I’m excited to apply…”, “As a passionate…” — and build the letter from concrete achievements in your resume using the posting’s own language. You can edit every word before sending.',
+        a: 'Cover Me\'s prompts ban stock phrases like "I am excited to apply" and "As a passionate...", and a check flags them in the output. Letters are built from results in your resume, in the posting\'s own words, and you can edit every word before sending.',
       },
       {
         q: 'Does Cover Me also tailor my resume for Ashby applications?',
-        a: 'Yes. Click “Tailor Resume to Job” on any Ashby posting and Cover Me rewrites your resume bullets to match the role’s keywords, shows an ATS match score, and exports a formatted PDF.',
+        a: "Yes. Click Tailor Resume to Job on any Ashby posting. Cover Me rewrites your bullets around the posting's keywords, removes any skill your original resume doesn't support, shows a 0 to 100 match score with the missing keywords, and exports a PDF.",
       },
     ],
   },

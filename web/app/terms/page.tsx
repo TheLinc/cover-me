@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   description: 'Terms governing your use of the Cover Me Chrome extension and web dashboard. MIT-licensed, open source, governed by Ontario law.',
   alternates: { canonical: `${BASE}/terms` },
   openGraph: {
-    title: 'Terms of Service — Cover Me',
+    title: 'Terms of Service | Cover Me',
     description: 'Terms governing your use of the Cover Me Chrome extension and web dashboard.',
     url: `${BASE}/terms`,
     siteName: 'Cover Me',
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Terms of Service — Cover Me',
+    title: 'Terms of Service | Cover Me',
     description: 'Terms governing your use of the Cover Me Chrome extension and web dashboard.',
   },
 }
@@ -196,7 +196,7 @@ export default function TermsPage() {
             <Ul>
               <Li>Generate content that is fraudulent, misleading, or misrepresents your qualifications to employers.</Li>
               <Li>Violate any applicable law or regulation.</Li>
-              <Li>Attempt to reverse-engineer, decompile, or extract our proprietary backend systems. (The extension source code is MIT-licensed and freely available on GitHub — no circumvention is needed or permitted beyond what the license grants.)</Li>
+              <Li>Attempt to reverse-engineer, decompile, or extract our proprietary backend systems. (The extension source code is MIT-licensed and freely available on GitHub; no circumvention is needed or permitted beyond what the license grants.)</Li>
               <Li>Abuse the hosted service by automating requests, sharing accounts, or circumventing rate limits.</Li>
               <Li>Transmit malicious code, viruses, or any content intended to harm our systems or other users.</Li>
               <Li>Resell, sublicense, or provide access to the hosted service to third parties.</Li>

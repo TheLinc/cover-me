@@ -8,24 +8,24 @@ const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 const guide = getGuide('cover-me-vs-aiapply')
 const HERO_IMAGE = '/guides/cover-me-vs-aiapply.png'
 const HERO_ALT =
-  'Infographic comparing Cover Me and AIApply for job applications: Cover Me — "You review. You decide." — reviewed and tailored applications, versus AIApply — "It applies. Automatically." — auto-apply at scale.'
+  'Infographic comparing Cover Me and AIApply for job applications. Cover Me, labeled "You review. You decide.", makes reviewed, tailored applications. AIApply, labeled "It applies. Automatically.", auto-applies at scale.'
 
 export const metadata: Metadata = {
-  title: 'Cover Me vs AIApply — Auto-Apply vs Tailored Applications',
-  description: 'AIApply auto-submits applications for you from a credit-based dashboard. Cover Me generates one tailored letter and resume per posting for you to review. Here’s the honest trade-off.',
+  title: 'Cover Me vs AIApply: Auto-Apply vs Tailored Applications',
+  description: 'AIApply submits applications for you using paid credits. Cover Me writes a tailored resume and cover letter for the posting you have open, and you review and send it yourself. Here is the trade-off.',
   alternates: { canonical: `${BASE}/guides/${guide.slug}` },
   openGraph: {
-    title: 'Cover Me vs AIApply — Cover Me',
-    description: 'Auto-apply vs one-click, reviewed applications — an honest comparison.',
+    title: 'Cover Me vs AIApply | Cover Me',
+    description: 'Auto-apply compared with one-click applications you review first.',
     url: `${BASE}/guides/${guide.slug}`,
     siteName: 'Cover Me',
     type: 'article',
-    images: [{ url: `${BASE}${HERO_IMAGE}`, width: 1536, height: 1024, alt: 'Cover Me vs AIApply — reviewed and tailored applications vs auto-apply at scale' }],
+    images: [{ url: `${BASE}${HERO_IMAGE}`, width: 1536, height: 1024, alt: 'Cover Me vs AIApply: reviewed, tailored applications compared with auto-apply at scale' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Cover Me vs AIApply — Cover Me',
-    description: 'Auto-apply vs one-click, reviewed applications — an honest comparison.',
+    title: 'Cover Me vs AIApply | Cover Me',
+    description: 'Auto-apply compared with one-click applications you review first.',
     images: [`${BASE}${HERO_IMAGE}`],
   },
 }
@@ -39,15 +39,15 @@ const faqJsonLd = {
       name: 'Does Cover Me auto-apply to jobs for me?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'No, and this is deliberate. Cover Me generates a tailored cover letter and resume for the job posting you have open — you review, edit, and submit it yourself. Auto-submitting applications is explicitly out of scope for the tool.',
+        text: 'No, on purpose. Cover Me writes a tailored cover letter and resume for the job posting you have open. You review, edit, and submit it yourself.',
       },
     },
     {
       '@type': 'Question',
-      name: 'Is AIApply’s auto-apply feature worth it?',
+      name: "Is AIApply's auto-apply worth it?",
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'It depends what you’re optimizing for. If your goal is maximum applications sent with minimum time per application, auto-apply delivers that. If your goal is maximum callbacks per application sent, a reviewed, tailored submission generally outperforms an unreviewed one — recruiters and modern ATS software are increasingly good at spotting mass-applied, unedited submissions.',
+        text: 'It depends on what you want more of. If you want the most applications sent for the least time, auto-apply does that. If you want more interviews from each application, a tailored application you have read and checked gives you a better chance, because nothing goes out with a claim you cannot back up.',
       },
     },
     {
@@ -55,21 +55,22 @@ const faqJsonLd = {
       name: 'Is AIApply free like Cover Me?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'AIApply offers a limited free tier, but full access requires a paid Premium subscription, and auto-apply submissions are metered separately through paid credit packs (e.g. 100 or 250 applications) — exact pricing isn’t published. Cover Me is free with your own API key, free for 10 hosted generations to start then 5 a week, or $15/month for up to 25 a day — all public, no credit packs.',
+        text: "AIApply has a limited free tier. Full access needs a paid Premium subscription, and auto-apply runs on credits sold in packs, such as 100 or 250. Its pricing page didn't list prices when we checked in October 2026. Cover Me is free with your own API key, free for 10 hosted generations to start and then 5 a week, or $15 a month for up to 25 a day, with every price public.",
       },
     },
   ],
 }
 
 const COMPARISON: { feature: string; coverMe: string; aiapply: string }[] = [
-  { feature: 'Submits applications for you', coverMe: 'No — you review and submit every one', aiapply: 'Yes, via paid auto-apply credits' },
-  { feature: 'Reads the job posting', coverMe: 'Reads the open tab when you click (no copy-paste)', aiapply: 'Via its own job board or import' },
-  { feature: 'Where it runs', coverMe: 'Browser extension, on the page you’re viewing', aiapply: 'Separate web dashboard' },
-  { feature: 'Resume tailoring', coverMe: 'One click, ATS match score + gap analysis, shown before you use it', aiapply: 'AI-rewritten per application inside the auto-apply pipeline' },
-  { feature: 'Cover letter per application', coverMe: 'Generated and editable before you send it', aiapply: 'Generated as part of the automated submission' },
-  { feature: 'Interview prep / job board / translator', coverMe: 'Not in scope — letters and resumes only', aiapply: 'Yes — bundled interview coach, job board, 50+ language resume translator' },
-  { feature: 'Pricing', coverMe: 'Free (BYOK, or 10 then 5/week) · $15/mo for 25/day — all public', aiapply: 'Subscription + paid application credit packs — pricing not published' },
-  { feature: 'Open source', coverMe: 'Yes — MIT licensed, auditable', aiapply: 'No' },
+  { feature: 'Submits applications for you', coverMe: 'No, you review and submit every one', aiapply: 'Yes, with paid auto-apply credits' },
+  { feature: 'Where you find jobs', coverMe: 'Any posting you open on LinkedIn, Indeed, Greenhouse, Lever, Workday or Ashby, or paste', aiapply: 'Its own job search board' },
+  { feature: 'Where it runs', coverMe: 'Browser extension, on the page you are viewing', aiapply: 'Separate web dashboard' },
+  { feature: 'Resume tailoring', coverMe: 'One click, with an ATS match score and missing keywords shown before you use it', aiapply: 'Resumes tailored to each job description' },
+  { feature: 'Invented skills', coverMe: 'A check removes skills your original resume does not support', aiapply: 'Not described on its pricing page' },
+  { feature: 'Cover letter', coverMe: 'Written for the posting and editable before you send it', aiapply: 'Cover letter generator' },
+  { feature: 'Interview help, job board, translator', coverMe: 'Not included, letters and resumes only', aiapply: 'Live interview coaching, job search board, resume translator' },
+  { feature: 'Pricing', coverMe: 'Free with your own key, or 10 then 5 a week · Pro $15/mo for 25 a day, all public', aiapply: 'Premium subscription plus credit packs, prices not listed on its pricing page' },
+  { feature: 'Open source', coverMe: 'Yes, MIT licensed', aiapply: 'No' },
 ]
 
 export default function Page() {
@@ -87,7 +88,7 @@ export default function Page() {
           Cover Me vs AIApply for job applications
         </h1>
         <p className="text-[12px] text-muted-foreground">
-          <time dateTime={guide.date}>Updated July 21, 2026</time> · Lincoln Laylor
+          <time dateTime={guide.updated ?? guide.date}>Updated October 29, 2026</time> · Lincoln Laylor
         </p>
       </div>
 
@@ -107,21 +108,22 @@ export default function Page() {
 
       <article className="space-y-5 text-[15.5px] text-muted-foreground leading-[1.85]">
         <p className="text-[17px] text-foreground font-medium leading-[1.7]">
-          AIApply is a job-search platform built around auto-apply: buy a credit pack, point it at a job board, and it submits applications on your behalf with an AI-generated resume and cover letter attached. Cover Me does one narrower thing — it reads the posting you have open, generates a tailored letter and resume, and shows them to you before anything gets sent. Same underlying technology, opposite bet on where the human belongs in the loop.
+          AIApply is a job search platform built around auto-apply: you buy credits and it submits applications for you with an AI-written resume and cover letter. Cover Me (cover-me.dev) is an open-source Chrome extension that writes a tailored resume and cover letter for the posting you have open, and shows them to you before anything is sent.
         </p>
         <p>
-          This is an honest comparison — we build Cover Me, but the trade-off below is real, and for some job searches, AIApply&rsquo;s approach is the right one.
+          I build Cover Me, so weigh this comparison with that in mind. The trade-off is real, and for some job searches AIApply&rsquo;s approach fits better.
         </p>
 
-        <h2 className="text-[22px] text-foreground !mt-10">The core difference: auto-apply vs reviewed applications</h2>
+        <h2 className="text-[22px] text-foreground !mt-10">What is the difference between Cover Me and AIApply?</h2>
         <p>
-          AIApply&rsquo;s pitch is volume: pay per batch of applications, and it finds roles, tailors materials, and submits — largely without you reading what went out under your name. That&rsquo;s a legitimate strategy if you&rsquo;re optimizing for applications-sent-per-hour and treating the job search as a numbers game.
+          AIApply is built for volume. It finds roles on its job board, tailors your materials, and submits applications for you, paid for with credit packs. You don&rsquo;t have to read each application that goes out under your name. If you treat the job search as a numbers game, that&rsquo;s a reasonable strategy.
         </p>
         <p>
-          Cover Me stops one step earlier, on purpose. It generates the letter and the tailored, <Link href="/guides/what-is-an-ats-score" className="text-brand-light hover:text-brand transition-colors">ATS-scored</Link> resume for the specific posting you&rsquo;re looking at, then hands it back to you to edit, copy, or download — the submission itself is always a deliberate action you take. Auto-submitting on your behalf is explicitly out of scope; the tool generates, it doesn&rsquo;t apply.
+          Cover Me stops one step earlier, on purpose. It writes the letter and the tailored, <Link href="/guides/what-is-an-ats-score" className="text-brand-light hover:text-brand transition-colors">ATS-scored</Link> resume for the posting you&rsquo;re looking at, then hands them back to you to edit, copy, or download. You always submit the application yourself. Auto-apply is left out by design.
         </p>
 
         <h2 className="text-[22px] text-foreground !mt-10">Feature comparison</h2>
+        <p className="text-[13px]">AIApply details are from its pricing page, checked October 2026.</p>
         <div className="overflow-x-auto">
           <table className="w-full text-[13.5px] border border-border rounded-[8px] overflow-hidden" style={{ borderCollapse: 'collapse' }}>
             <thead>
@@ -143,17 +145,17 @@ export default function Page() {
           </table>
         </div>
 
-        <h2 className="text-[22px] text-foreground !mt-10">When AIApply&rsquo;s approach makes sense</h2>
+        <h2 className="text-[22px] text-foreground !mt-10">When does AIApply make sense?</h2>
         <p>
-          If you&rsquo;re early in your career, applying broadly to roles you&rsquo;re genuinely open to, and comfortable trading per-application polish for sheer coverage, auto-apply removes the tedium entirely. Bundling a job board, interview coaching, and a resume translator into one subscription is also a real convenience if you want a single tool for the whole search rather than assembling your own stack.
+          If you&rsquo;re applying broadly to roles you&rsquo;d be happy with and you&rsquo;d trade polish on each application for reach, auto-apply removes most of the repetitive work. AIApply also bundles a job board, live interview coaching, and a resume translator into one subscription, which helps if you want a single tool for the whole search.
         </p>
 
-        <h2 className="text-[22px] text-foreground !mt-10">When reviewed, tailored applications win</h2>
+        <h2 className="text-[22px] text-foreground !mt-10">When do reviewed, tailored applications win?</h2>
         <p>
-          Two things make unreviewed auto-apply riskier than it looks. First, quality control: an AI-written resume or letter you never read can contain a claim you can&rsquo;t back up in an interview, or simply read as generic to a hiring manager — you find out after it&rsquo;s already submitted. Second, detectability: recruiters and modern ATS platforms increasingly flag unusually high application velocity and templated submissions from the same source, which can quietly hurt your standing with a company rather than help it.
+          When each application counts. An AI-written resume or letter you never read can include a claim you can&rsquo;t back up in an interview, or read as generic to a hiring manager, and you only find out after it&rsquo;s sent. Reviewing each one also lets you fix what the AI got wrong before a recruiter sees it.
         </p>
         <p>
-          Cover Me is built for people who want AI to remove the busywork — the copy-pasting, the manual keyword matching, the blank-page problem — while keeping every submission a decision they made. It works the same way across <Link href="/for/linkedin" className="text-brand-light hover:text-brand transition-colors">LinkedIn</Link>, <Link href="/for/indeed" className="text-brand-light hover:text-brand transition-colors">Indeed</Link>, <Link href="/for/greenhouse" className="text-brand-light hover:text-brand transition-colors">Greenhouse</Link>, <Link href="/for/lever" className="text-brand-light hover:text-brand transition-colors">Lever</Link>, <Link href="/for/workday" className="text-brand-light hover:text-brand transition-colors">Workday</Link>, and <Link href="/for/ashby" className="text-brand-light hover:text-brand transition-colors">Ashby</Link>, and it&rsquo;s free to try — no credit packs to buy before you know if it helps.
+          Cover Me is for people who want AI to do the repetitive part, the copying and pasting, keyword matching, and blank-page start, while every submission stays their decision. Before you see a tailored resume, a check removes any skill or claim your original doesn&rsquo;t support. It works on <Link href="/for/linkedin" className="text-brand-light hover:text-brand transition-colors">LinkedIn</Link>, <Link href="/for/indeed" className="text-brand-light hover:text-brand transition-colors">Indeed</Link>, <Link href="/for/greenhouse" className="text-brand-light hover:text-brand transition-colors">Greenhouse</Link>, <Link href="/for/lever" className="text-brand-light hover:text-brand transition-colors">Lever</Link>, <Link href="/for/workday" className="text-brand-light hover:text-brand transition-colors">Workday</Link>, and <Link href="/for/ashby" className="text-brand-light hover:text-brand transition-colors">Ashby</Link>, and it&rsquo;s free to try with no credit packs to buy first.
         </p>
       </article>
 
@@ -172,9 +174,9 @@ export default function Page() {
 
       {/* CTA */}
       <div className="border border-border rounded-[12px] p-8 bg-surface text-center mt-14">
-        <h2 className="text-[20px] text-foreground mb-2">Try the reviewed-application version</h2>
+        <h2 className="text-[20px] text-foreground mb-2">Try applications you review first</h2>
         <p className="text-[14px] text-muted-foreground mb-5 max-w-[420px] mx-auto leading-[1.7]">
-          Free with your own API key, or 10 hosted generations to start, then 5 a week. No credit packs, no credit card required.
+          Free with your own API key, or 10 hosted generations to start, then 5 a week. No credit packs and no credit card required.
         </p>
         <a
           href={CHROME_STORE_URL}

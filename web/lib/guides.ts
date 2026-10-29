@@ -1,32 +1,43 @@
 // Guide metadata shared by the /guides index, sitemap, and article pages.
-export const GUIDES = [
+// `updated` marks the last real content change; it drives dateModified and lastmod.
+export type Guide = {
+  slug: string
+  title: string
+  description: string
+  date: string
+  updated?: string
+}
+
+export const GUIDES: Guide[] = [
   {
     slug: 'what-is-an-ats-score',
     title: 'What is an ATS score?',
-    description: 'How applicant tracking systems score and filter resumes, what a good match score looks like, and how to improve yours before you apply.',
+    description: 'What an ATS score measures, how applicant tracking systems filter resumes, what counts as a good match, and how Cover Me calculates its score.',
     date: '2026-07-06',
+    updated: '2026-10-29',
   },
   {
     slug: 'cover-me-vs-chatgpt',
     title: 'Cover Me vs ChatGPT for cover letters',
-    description: 'What a purpose-built extension does that a general chatbot can’t: reading the posting when you click, grounding letters in your resume, and matching ATS keywords.',
+    description: 'ChatGPT can write a good cover letter if you paste in the posting and your resume every time. Cover Me reads the posting when you click, keeps your resume, and checks the output against it.',
     date: '2026-07-06',
+    updated: '2026-10-29',
   },
   {
     slug: 'tailor-resume-to-job-description',
     title: 'How to tailor your resume to a job description',
-    description: 'A step-by-step method for matching your resume to a specific role — which keywords matter, what to rewrite, and what never to fabricate.',
+    description: 'A five-step method for matching your resume to one posting: find the must-have keywords, use the posting\'s wording where it is true, rewrite the right bullets, and never add skills you lack.',
     date: '2026-07-06',
+    updated: '2026-10-29',
   },
   {
     slug: 'cover-me-vs-aiapply',
     title: 'Cover Me vs AIApply for job applications',
-    description: 'Auto-apply vs one-click, reviewed applications — an honest comparison of two very different philosophies for using AI in your job search.',
+    description: 'AIApply submits applications for you with paid credits. Cover Me writes a tailored resume and cover letter for the posting you have open, and you review and send it yourself.',
     date: '2026-07-21',
+    updated: '2026-10-29',
   },
-] as const
-
-export type Guide = (typeof GUIDES)[number]
+]
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 
@@ -44,7 +55,7 @@ export function guideArticleJsonLd(guide: Guide, image?: string) {
     description: guide.description,
     ...(image ? { image: [`${BASE}${image}`] } : {}),
     datePublished: guide.date,
-    dateModified: guide.date,
+    dateModified: guide.updated ?? guide.date,
     url: `${BASE}/guides/${guide.slug}`,
     mainEntityOfPage: `${BASE}/guides/${guide.slug}`,
     author: {

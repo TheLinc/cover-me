@@ -5,12 +5,12 @@ import { GUIDES } from '@/lib/guides'
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 
 export const metadata: Metadata = {
-  title: 'Job Application Guides — ATS Scores, Cover Letters & Resume Tailoring',
-  description: 'Practical guides for job seekers: what an ATS score is, how to tailor your resume to a job description, and how purpose-built AI tools compare to ChatGPT for cover letters.',
+  title: 'Job Application Guides: ATS Scores, Cover Letters and Resume Tailoring',
+  description: 'Guides for job seekers: what an ATS score is, how to tailor your resume to a job description, and how Cover Me compares with ChatGPT and AIApply.',
   alternates: { canonical: `${BASE}/guides` },
   openGraph: {
-    title: 'Job Application Guides — Cover Me',
-    description: 'Practical guides for job seekers: ATS scores, resume tailoring, and AI cover letter tools compared.',
+    title: 'Job Application Guides | Cover Me',
+    description: 'Guides for job seekers on ATS scores, resume tailoring, and AI cover letter tools.',
     url: `${BASE}/guides`,
     siteName: 'Cover Me',
     type: 'website',
@@ -39,7 +39,7 @@ export default function GuidesPage() {
           Job application guides
         </h1>
         <p className="text-[16px] text-muted-foreground leading-[1.75]">
-          Practical, no-fluff answers to the questions that decide whether your application gets read — from the team behind the Cover Me Chrome extension.
+          Answers to the questions that decide whether your application gets read, from the developer of Cover Me, an open-source Chrome extension that tailors your resume and writes your cover letter.
         </p>
       </div>
 
@@ -52,8 +52,8 @@ export default function GuidesPage() {
             <p className="text-[14px] text-muted-foreground leading-[1.75] max-w-[640px] mb-2">
               {g.description}
             </p>
-            <time dateTime={g.date} className="font-mono text-[11px] uppercase tracking-[0.1em] text-dim">
-              Updated {new Date(`${g.date}T00:00:00`).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+            <time dateTime={g.updated ?? g.date} className="font-mono text-[11px] uppercase tracking-[0.1em] text-dim">
+              Updated {new Date(`${g.updated ?? g.date}T00:00:00`).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
             </time>
           </Link>
         ))}

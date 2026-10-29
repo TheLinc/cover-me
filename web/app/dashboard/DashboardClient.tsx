@@ -185,7 +185,7 @@ export default function DashboardClient({
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-6">
             <p className="flex items-center gap-2.5 text-[13.5px] text-ink-2">
               <GoogleChromeLogoIcon size={18} className="text-subtle" aria-hidden />
-              Make letters on LinkedIn, Indeed, Greenhouse, Lever and Workday: one click, about 20 seconds.
+              Make letters on LinkedIn, Indeed, Greenhouse, Lever, Workday and Ashby in one click.
             </p>
             <a href={CHROME_STORE_URL} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[13.5px] font-medium text-brand-strong underline-offset-4 hover:underline">
               Install the extension <ArrowUpRightIcon size={12} aria-hidden />

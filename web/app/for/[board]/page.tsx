@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: { params: Promise<{ board: st
     description: board.metaDescription,
     alternates: { canonical: `${BASE}/for/${board.slug}` },
     openGraph: {
-      title: `${board.metaTitle} — Cover Me`,
+      title: `${board.metaTitle} | Cover Me`,
       description: board.metaDescription,
       url: `${BASE}/for/${board.slug}`,
       siteName: 'Cover Me',
@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: { params: Promise<{ board: st
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${board.metaTitle} — Cover Me`,
+      title: `${board.metaTitle} | Cover Me`,
       description: board.metaDescription,
     },
   }
@@ -75,7 +75,7 @@ export default async function BoardPage({ params }: { params: Promise<{ board: s
           <h1 className="text-[clamp(32px,5vw,52px)] text-foreground leading-[0.98] mb-5">
             {board.h1}
           </h1>
-          {/* Direct-answer paragraph — kept concise for featured snippets */}
+          {/* Direct-answer paragraph, kept concise for featured snippets */}
           <p className="text-[17px] text-foreground leading-[1.7] mb-5 font-medium">
             {board.answer}
           </p>
@@ -111,7 +111,7 @@ export default async function BoardPage({ params }: { params: Promise<{ board: s
         {/* FAQ */}
         <section className="mb-16">
           <h2 className="text-[24px] text-foreground mb-6">
-            {board.name} + Cover Me — common questions
+            Common questions about Cover Me on {board.name}
           </h2>
           <div className="divide-y divide-border border-t border-border max-w-[720px]">
             {board.faqs.map(({ q, a }) => (
@@ -160,7 +160,7 @@ export default async function BoardPage({ params }: { params: Promise<{ board: s
               {i < otherBoards.length - 1 && ' · '}
             </span>
           ))}
-          {' '}— and any other job board via manual paste.
+          . On any other site, paste the job description into Cover Me.
         </div>
       </main>
 

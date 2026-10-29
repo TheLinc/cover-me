@@ -3,7 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Payment received | Cover Me',
+  title: 'Payment received',
   robots: { index: false },
 }
 

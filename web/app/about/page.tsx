@@ -5,21 +5,24 @@ import { SiteFooter } from '@/components/site/SiteFooter'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 
+const TITLE = 'About Cover Me (cover-me.dev): an open-source resume tailor by Lincoln Laylor'
+const DESCRIPTION = 'Cover Me is an open-source Chrome extension by Lincoln Laylor that tailors your resume and writes a cover letter for the job posting you have open. Why he built it, how it handles your data, and where the code lives.'
+
 export const metadata: Metadata = {
-  title: 'About Cover Me — AI Cover Letter & Resume Tailor by Lincoln Laylor',
-  description: 'Cover Me is an open-source AI Chrome extension by Lincoln Laylor that generates tailored cover letters and rewrites your resume to match any job posting. Privacy-first, MIT licensed.',
+  title: { absolute: TITLE },
+  description: DESCRIPTION,
   alternates: { canonical: `${BASE}/about` },
   openGraph: {
-    title: 'About Cover Me — AI Cover Letter & Resume Tailor by Lincoln Laylor',
-    description: 'Cover Me is an open-source AI Chrome extension by Lincoln Laylor that generates tailored cover letters and rewrites your resume to match any job posting. Privacy-first, MIT licensed.',
+    title: TITLE,
+    description: DESCRIPTION,
     url: `${BASE}/about`,
     siteName: 'Cover Me',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'About Cover Me — AI Cover Letter & Resume Tailor by Lincoln Laylor',
-    description: 'Cover Me is an open-source AI Chrome extension by Lincoln Laylor that generates tailored cover letters and rewrites your resume to match any job posting. Privacy-first, MIT licensed.',
+    title: TITLE,
+    description: DESCRIPTION,
   },
 }
 
@@ -59,13 +62,13 @@ export default function AboutPage() {
             About
           </span>
           <h1 className="text-[clamp(32px,5vw,56px)] text-foreground leading-[0.95] mb-4">
-            Built for job seekers who apply seriously.
+            Built after 300 applications and no interviews.
           </h1>
           <p className="text-[12px] text-muted-foreground mb-5">
-            <time dateTime="2026-06-23">Last updated June 23, 2026</time>
+            <time dateTime="2026-10-29">Last updated October 29, 2026</time>
           </p>
           <p className="text-[17px] text-muted-foreground leading-[1.75]">
-            Cover Me is a free, open-source Chrome extension that writes your cover letter and rewrites your resume to match any job posting — ATS keywords extracted, both documents tailored to the role in seconds. No generic templates — every output is built from your resume and the job&apos;s exact requirements.
+            Cover Me (cover-me.dev) is an open-source Chrome extension that tailors your resume and writes a cover letter for the job posting you have open. Lincoln Laylor, a software developer in Canada, builds it. It reads postings on LinkedIn, Indeed, Greenhouse, Lever, Workday and Ashby, shows an ATS match score with the keywords you&apos;re missing, and removes any skill your original resume doesn&apos;t support. It&apos;s free with your own OpenAI or Claude API key. Cover Me isn&apos;t related to the CoverMe AI project on GitHub.
           </p>
         </div>
 
@@ -76,34 +79,39 @@ export default function AboutPage() {
               Why Cover Me exists
             </h2>
             <p>
-              Writing cover letters is the most time-consuming part of a job search — and the part that matters most. Hiring managers read them first. Applicant tracking systems scan them for keywords. A generic letter costs you the interview before your resume is even opened.
+              For three months I applied to about 300 software developer roles and didn&apos;t get a single interview. I was sending the same resume to every posting.
             </p>
             <p>
-              The resume problem is just as real. Research consistently shows that over 75% of resumes are automatically filtered out by ATS software before a recruiter ever sees them. Optimising for the right keywords isn&apos;t a nice-to-have — it&apos;s the baseline requirement for getting your application read by a human.
+              So I started tailoring each application with ChatGPT. It helped, but every application took about 12 minutes. I pasted the posting, uploaded my resume, explained my background again in every new chat, and kept hitting the free plan&apos;s upload limit. It also added skills I don&apos;t have because the posting asked for them, so I had to check every line before sending.
             </p>
             <p>
-              Most job seekers spend 30–60 minutes per application writing and tailoring both documents. At scale — applying to dozens of roles — that&apos;s days of work. The AI tools that exist are either too generic (ChatGPT with a prompt), too expensive, or too invasive (storing your resume in systems you can&apos;t audit).
+              The tools built for this cost more than I wanted to pay while unemployed, and most were resume builders with templates. I only needed my own resume rewritten for each posting, plus a cover letter to match. So I built that.
             </p>
             <p>
-              Cover Me was built to solve this. One click on any job posting. Your resume, their requirements, matched in seconds. Fully editable output you actually want to send. And for users who care about privacy, a BYOK mode where your resume goes only to the AI provider whose key you use, never to us.
+              In the month after I started using Cover Me, I got 4 interviews, while applying to fewer jobs than before. Tailoring every application was the one thing I changed. I can&apos;t prove it did all the work, but larger data points the same way. Huntr looked at over 1.39 million applications and found{' '}
+              <a href="https://huntr.co/research/job-search-trends-q2-2025" target="_blank" rel="noopener noreferrer" className="text-brand-light hover:text-brand transition-colors underline underline-offset-2">tailored resumes reached the interview stage 2.1 times as often</a>
+              {' '}(5.75% against 2.68%).
             </p>
             <h2 className="text-[22px] text-foreground !mt-10">
-              Privacy as a first principle
+              What Cover Me does with your resume
             </h2>
             <p>
-              Your resume is PII — it contains your employment history, education, and contact details. It should not be stored on servers you haven&apos;t consented to, trained on without your knowledge, or shared beyond the AI provider that writes your documents.
+              Your resume holds your work history, education and contact details, so here is exactly where it goes.
             </p>
             <p>
-              In BYOK mode your API key is encrypted on your device with AES-256-GCM via the Web Crypto API, and neither it nor your resume is sent to Cover Me servers. In hosted mode, your resume is encrypted at rest in our database. The extension has no analytics, no telemetry, and no ads — the code is MIT licensed and auditable by anyone.
+              With your own API key, you need no account. Your resume goes only to the AI provider whose key you added, OpenAI or Anthropic, and never to Cover Me. The key is stored in the browser, encrypted with AES-256-GCM through the Web Crypto API. The key that encrypts it is stored beside it, so this stops casual reads of the storage file but not someone with full access to your Chrome profile.
+            </p>
+            <p>
+              With a Cover Me account, your resume is encrypted at rest in our database and sent to Anthropic only to read it and write your documents. It&apos;s never sold or used to train AI models. The extension has no ads, analytics or tracking.
             </p>
             <h2 className="text-[22px] text-foreground !mt-10">
               Open source
             </h2>
             <p>
-              Cover Me is fully open source under the MIT license. The extension code, backend Edge Functions, and database schema are all public on GitHub. You can read every line, self-host with your own Supabase and Stripe, or contribute a scraper for a job board we don&apos;t yet support.
+              Cover Me is open source under the MIT license. The extension, the backend Edge Functions and the database schema are public on GitHub. You can read how your resume is handled, self-host with your own Supabase and Stripe accounts, or add a scraper for a job board it doesn&apos;t support yet.
             </p>
             <p>
-              Open source is a trust signal, not just a philosophy. When you can read the code that handles your resume, you don&apos;t have to take anyone&apos;s word for how it works.
+              Every privacy claim on this page can be checked in the code, so you don&apos;t have to take my word for it.
             </p>
             {/* Open Source Alternatives and Toolradar check for these badges during review. Plain imgs: the images live on their hosts. */}
             <div className="flex flex-wrap items-center gap-4">
@@ -129,7 +137,7 @@ export default function AboutPage() {
                 Founder &amp; developer
               </p>
               <p className="text-[13px] text-muted-foreground leading-[1.7] mb-5">
-                Software developer based in Canada. Built Cover Me to solve a problem he ran into during his own job search — spending too long personalising cover letters that should take seconds.
+                Software developer based in Canada. Built Cover Me during his own job search, after three months of applications with no interviews.
                 {' '}
                 <a
                   href="https://dev.to/plain-stack/how-i-went-from-0-interviews-to-4-in-a-month-by-tailoring-every-application-1an4"
@@ -172,9 +180,9 @@ export default function AboutPage() {
                 By the numbers
               </h3>
               {[
-                ['About 20 sec', 'to generate a tailored letter'],
-                ['MIT licensed', 'fully auditable source code'],
-                ['6+ job boards', 'LinkedIn, Indeed, Greenhouse, Lever, Workday, Ashby'],
+                ['About 30 sec', 'for a typical resume tailoring run'],
+                ['MIT licensed', 'extension, backend and schema on GitHub'],
+                ['6 job boards', 'LinkedIn, Indeed, Greenhouse, Lever, Workday, Ashby, plus paste from any site'],
                 ['0 telemetry', 'in the extension: no analytics, no ads, no tracking'],
               ].map(([stat, label]) => (
                 <div key={stat}>
@@ -192,7 +200,7 @@ export default function AboutPage() {
             Try Cover Me free
           </h2>
           <p className="text-[15px] text-muted-foreground mb-6 max-w-[460px] mx-auto leading-[1.7]">
-            Install the Chrome extension and generate your first tailored cover letter in under a minute. No credit card, no account required for BYOK mode.
+            Install the Chrome extension, add your resume, and tailor it to the job posting you have open. No credit card, and no account if you use your own API key.
           </p>
           <div className="flex gap-3 justify-center flex-wrap">
             <a

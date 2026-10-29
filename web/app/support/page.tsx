@@ -4,21 +4,24 @@ import { SiteFooter } from '@/components/site/SiteFooter'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 
+const TITLE = 'Cover Me help and support'
+const DESCRIPTION = "Help with the Cover Me Chrome extension: what to do when a job posting isn't detected, when the free allowance resets, fixing an API key, and where your resume is stored."
+
 export const metadata: Metadata = {
-  title: 'Help & Support — Cover Me AI Cover Letter & Resume Tailor',
-  description: 'Get help with Cover Me. Find answers to common questions about the AI cover letter and resume tailor Chrome extension, API keys, generation limits, and resume storage.',
+  title: 'Help and support',
+  description: DESCRIPTION,
   alternates: { canonical: `${BASE}/support` },
   openGraph: {
-    title: 'Help & Support — Cover Me AI Cover Letter & Resume Tailor',
-    description: 'Get help with Cover Me. Find answers to common questions about the AI cover letter and resume tailor Chrome extension, API keys, generation limits, and resume storage.',
+    title: TITLE,
+    description: DESCRIPTION,
     url: `${BASE}/support`,
     siteName: 'Cover Me',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Help & Support — Cover Me AI Cover Letter & Resume Tailor',
-    description: 'Get help with Cover Me. Find answers to common questions about the AI cover letter and resume tailor Chrome extension.',
+    title: TITLE,
+    description: DESCRIPTION,
   },
 }
 
@@ -31,43 +34,34 @@ const breadcrumbJsonLd = {
   ],
 }
 
+// One list feeds both the visible questions and the FAQ schema, so they can't drift.
+const FAQ = [
+  {
+    q: "Cover Me didn't read the job posting. What do I do?",
+    a: "Open the Cover Me popup and click \"Can't detect the posting? Paste it manually\", then paste the job description. This works on any site.",
+  },
+  {
+    q: 'I used my free generations. When do they reset?',
+    a: 'A free account gets 10 generations to start, then 5 a week. The weekly allowance resets every Monday at 00:00 UTC. Pro allows up to 25 a day, and your own API key has no limit from Cover Me.',
+  },
+  {
+    q: "My API key isn't working. How do I fix it?",
+    a: 'In Settings, check that you picked the provider the key belongs to, Claude or OpenAI, and that the account behind the key has credit.',
+  },
+  {
+    q: 'Where is my resume stored?',
+    a: "With your own API key, your resume stays in your browser and goes only to the AI provider whose key you added, never to Cover Me. With a Cover Me account, it's kept in your browser and encrypted at rest in our database with AES-256-GCM. It's sent to Anthropic only to read it and write your documents, and it's never sold or used to train AI models.",
+  },
+]
+
 const faqJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'FAQPage',
-  mainEntity: [
-    {
-      '@type': 'Question',
-      name: 'The extension isn\'t scraping the job description — what do I do?',
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: 'Click the Cover Me icon, scroll down, and use "Paste job description manually" to paste the text directly. This works on any page.',
-      },
-    },
-    {
-      '@type': 'Question',
-      name: 'I hit my daily cover letter limit. When does it reset?',
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: 'Free accounts get 10 generations to start, then 5 a week; the weekly allowance resets Monday at 00:00 UTC. Pro allows up to 25 a day.',
-      },
-    },
-    {
-      '@type': 'Question',
-      name: 'My API key isn\'t working. How do I fix it?',
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: 'Make sure you\'ve selected the correct provider (Claude or OpenAI) in Settings and that your key has available credits.',
-      },
-    },
-    {
-      '@type': 'Question',
-      name: 'Where is my resume stored?',
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: 'BYOK users: your resume is stored locally on your device and goes only to the AI provider whose key you use, never to Cover Me servers. Hosted accounts: your resume is kept in your browser and encrypted at rest in our database using AES-256-GCM. It is never sold or used for AI training, and it is sent to Anthropic only to read it and write your documents.',
-      },
-    },
-  ],
+  mainEntity: FAQ.map(({ q, a }) => ({
+    '@type': 'Question',
+    name: q,
+    acceptedAnswer: { '@type': 'Answer', text: a },
+  })),
 }
 
 const SUPPORT_EMAIL = 'support@cover-me.dev'
@@ -89,10 +83,10 @@ export default function SupportPage() {
             Support
           </h1>
           <p className="text-[12px] text-muted-foreground mb-3">
-            <time dateTime="2026-06-23">Last updated June 23, 2026</time>
+            <time dateTime="2026-10-29">Last updated October 29, 2026</time>
           </p>
           <p className="text-[16px] text-muted-foreground leading-[1.7]">
-            Having trouble with Cover Me? We&apos;re here to help.
+            Answers to the most common Cover Me questions, and how to reach a person when they don&apos;t cover it.
           </p>
         </div>
 
@@ -113,7 +107,7 @@ export default function SupportPage() {
                   Email support
                 </h2>
                 <p className="text-[14px] text-muted-foreground leading-[1.7] mb-4">
-                  For account issues, billing questions, or anything else — send us an email and we&apos;ll get back to you within one business day.
+                  Email us about your account, billing or anything else, and we&apos;ll reply within one business day.
                 </p>
                 <a
                   href={`mailto:${SUPPORT_EMAIL}`}
@@ -141,7 +135,7 @@ export default function SupportPage() {
                   Bug reports &amp; feature requests
                 </h2>
                 <p className="text-[14px] text-muted-foreground leading-[1.7] mb-4">
-                  Cover Me is open source. If you&apos;ve found a bug or have a feature idea, open an issue on GitHub — it&apos;s the fastest way to get it tracked and fixed.
+                  Cover Me is open source. If you&apos;ve found a bug or have a feature idea, open an issue on GitHub. That&apos;s the fastest way to get it tracked and fixed.
                 </p>
                 <a
                   href={GITHUB_ISSUES}
@@ -164,24 +158,7 @@ export default function SupportPage() {
               Common questions
             </h2>
             <div className="space-y-5">
-              {[
-                {
-                  q: 'The extension isn\'t scraping the job description',
-                  a: 'Click the Cover Me icon, scroll down, and use "Paste job description manually" to paste the text directly.',
-                },
-                {
-                  q: 'I hit my free limit',
-                  a: 'Free accounts get 10 generations to start, then 5 a week; the weekly allowance resets Monday at 00:00 UTC. Pro allows up to 25 a day.',
-                },
-                {
-                  q: 'My API key isn\'t working',
-                  a: 'Make sure you\'ve selected the correct provider (Claude or OpenAI) in Settings and that your key has available credits.',
-                },
-                {
-                  q: 'Where is my resume stored?',
-                  a: 'BYOK users: locally on your device, and sent only to the AI provider whose key you use. Hosted accounts: in your browser, and encrypted at rest in our database. It is never sold or used for training, and it is sent to Anthropic only to read it and write your documents.',
-                },
-              ].map(({ q, a }) => (
+              {FAQ.map(({ q, a }) => (
                 <div key={q} className="border-t border-border pt-5 first:border-t-0 first:pt-0">
                   <p className="text-[14px] font-semibold text-foreground mb-1.5">{q}</p>
                   <p className="text-[14px] text-muted-foreground leading-[1.7]">{a}</p>

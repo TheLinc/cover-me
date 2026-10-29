@@ -8,24 +8,24 @@ const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 const guide = getGuide('cover-me-vs-chatgpt')
 const HERO_IMAGE = '/guides/cover-me-vs-chatgpt.png'
 const HERO_ALT =
-  'Infographic comparing Cover Me and ChatGPT for cover letters: Cover Me generates a letter in one click with ATS and resume tailoring built in, while ChatGPT requires copying, pasting, and prompting for 5–10 minutes per letter. The difference is workflow, not intelligence.'
+  'Infographic comparing Cover Me and ChatGPT for cover letters. Cover Me writes a letter in one click with ATS matching and resume tailoring built in. ChatGPT needs the posting and resume copied in and a prompt written for every letter. The difference is the workflow around the model.'
 
 export const metadata: Metadata = {
-  title: 'Cover Me vs ChatGPT for Cover Letters — Honest Comparison',
-  description: 'Can ChatGPT write a good cover letter? Yes — with manual work. Here’s what a purpose-built extension does differently: reading the posting when you click, resume grounding, and ATS keyword matching.',
+  title: 'Cover Me vs ChatGPT for Cover Letters: An Honest Comparison',
+  description: 'Can ChatGPT write a good cover letter? Yes, if you paste in the posting and your resume each time. Cover Me reads the posting when you click, keeps your resume, matches ATS keywords, and checks the output against your resume.',
   alternates: { canonical: `${BASE}/guides/${guide.slug}` },
   openGraph: {
-    title: 'Cover Me vs ChatGPT for Cover Letters — Cover Me',
-    description: 'What a purpose-built extension does that a general chatbot can’t — an honest comparison.',
+    title: 'Cover Me vs ChatGPT for Cover Letters | Cover Me',
+    description: 'What a cover letter extension does that a general chatbot leaves to you, compared honestly.',
     url: `${BASE}/guides/${guide.slug}`,
     siteName: 'Cover Me',
     type: 'article',
-    images: [{ url: `${BASE}/guides/cover-me-vs-chatgpt.png`, width: 1672, height: 941, alt: 'Cover Me vs ChatGPT for cover letters — one-click workflow vs manual prompting' }],
+    images: [{ url: `${BASE}/guides/cover-me-vs-chatgpt.png`, width: 1672, height: 941, alt: 'Cover Me vs ChatGPT for cover letters: one click on the posting compared with manual prompting' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Cover Me vs ChatGPT for Cover Letters — Cover Me',
-    description: 'What a purpose-built extension does that a general chatbot can’t — an honest comparison.',
+    title: 'Cover Me vs ChatGPT for Cover Letters | Cover Me',
+    description: 'What a cover letter extension does that a general chatbot leaves to you, compared honestly.',
     images: [`${BASE}/guides/cover-me-vs-chatgpt.png`],
   },
 }
@@ -39,7 +39,7 @@ const faqJsonLd = {
       name: 'Can ChatGPT write a good cover letter?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Yes — if you paste in the job description and your resume, prompt it carefully, and edit out the clichés. The quality ceiling is similar to a purpose-built tool; the difference is the 5–10 minutes of manual work per application versus one click, and the risk of generic output if you rush the prompt.',
+        text: 'Yes, if you paste in the job description and your resume, prompt it carefully, and edit out the clichés. The writing can be as good as a dedicated tool. The cost is the manual work for every application, and generic output when you rush the prompt.',
       },
     },
     {
@@ -47,7 +47,7 @@ const faqJsonLd = {
       name: 'Is Cover Me cheaper than ChatGPT Plus?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'For cover letters, yes. ChatGPT Plus costs $20/month. Cover Me is free with your own API key (you pay cents per letter directly to Anthropic or OpenAI), free for 10 hosted generations to start then 5 a week, or $15/month for up to 25 a day.',
+        text: 'For cover letters and resume tailoring, yes. ChatGPT Plus is $20 a month. Cover Me is free with your own Claude or OpenAI API key, where you pay the provider for what you use. The hosted free plan gives 10 generations to start, then 5 a week, and Pro is $15 a month for up to 25 a day.',
       },
     },
     {
@@ -55,20 +55,29 @@ const faqJsonLd = {
       name: 'Does Cover Me use the same AI models as ChatGPT?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Cover Me uses Claude (Anthropic) on the hosted tiers, and in BYOK mode you choose your own Claude or OpenAI API key. The differentiator isn’t the model — it’s the automation around it: scraping the posting, grounding the letter in your stored resume, ATS keyword extraction, and prompts tuned specifically for cover letters.',
+        text: "Cover Me uses Claude from Anthropic on the hosted plans. With your own key, you choose Claude or OpenAI, the company behind ChatGPT. The difference is the work around the model: reading the posting, using your saved resume, extracting ATS keywords, and checking that the output doesn't claim skills your resume lacks.",
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Will ChatGPT add skills I do not have to my resume?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: "It can. When a posting asks for a skill, chatbots often add it to the tailored resume or letter, so you have to check every line. Cover Me removes any skill or claim your original resume doesn't support before you see the result.",
       },
     },
   ],
 }
 
 const COMPARISON: { feature: string; coverMe: string; chatgpt: string }[] = [
-  { feature: 'Reads the job posting', coverMe: 'Reads the open page when you click (no copy-paste)', chatgpt: 'Manual copy-paste every time' },
-  { feature: 'Knows your resume', coverMe: 'Stored once, used every generation', chatgpt: 'Re-paste or re-upload per chat' },
-  { feature: 'ATS keyword matching', coverMe: 'Extracted from the posting, woven in', chatgpt: 'Only if you prompt for it explicitly' },
-  { feature: 'Resume tailoring + match score', coverMe: 'One click, scored with gap analysis', chatgpt: 'Not without elaborate prompting' },
-  { feature: 'Where it runs', coverMe: 'In the browser, on the job page', chatgpt: 'Separate tab, constant switching' },
-  { feature: 'Price', coverMe: 'Free (BYOK, or 10 then 5/week) · $15/mo for 25/day', chatgpt: 'Free tier limited · $20/mo Plus' },
-  { feature: 'Open source', coverMe: 'Yes — MIT licensed, auditable', chatgpt: 'No' },
+  { feature: 'Reads the job posting', coverMe: 'Reads the open page when you click', chatgpt: 'You copy and paste it every time' },
+  { feature: 'Knows your resume', coverMe: 'Uploaded once, used for every application', chatgpt: 'Paste or upload it again in each new chat' },
+  { feature: 'ATS keyword matching', coverMe: 'Keywords pulled from the posting and worked in', chatgpt: 'Only if you ask for it' },
+  { feature: 'Resume tailoring and match score', coverMe: 'One click, with a score out of 100 and every missing keyword', chatgpt: 'Needs detailed prompting, no consistent score' },
+  { feature: 'Invented skills', coverMe: 'Removed by a check against your original resume', chatgpt: 'You have to catch them yourself' },
+  { feature: 'Where it runs', coverMe: 'In the browser, on the job page', chatgpt: 'A separate tab' },
+  { feature: 'Price', coverMe: 'Free with your own key, or 10 then 5 a week · Pro $15/mo for 25 a day', chatgpt: 'Free plan with limits · Plus $20/mo' },
+  { feature: 'Open source', coverMe: 'Yes, MIT licensed', chatgpt: 'No' },
 ]
 
 export default function Page() {
@@ -86,7 +95,7 @@ export default function Page() {
           Cover Me vs ChatGPT for cover letters
         </h1>
         <p className="text-[12px] text-muted-foreground">
-          <time dateTime={guide.date}>Updated July 6, 2026</time> · Lincoln Laylor
+          <time dateTime={guide.updated ?? guide.date}>Updated October 29, 2026</time> · Lincoln Laylor
         </p>
       </div>
 
@@ -106,18 +115,23 @@ export default function Page() {
 
       <article className="space-y-5 text-[15.5px] text-muted-foreground leading-[1.85]">
         <p className="text-[17px] text-foreground font-medium leading-[1.7]">
-          ChatGPT can write a decent cover letter if you feed it the job description, your resume, and a careful prompt — and repeat that for every application. Cover Me is a Chrome extension that does the same job in one click on the posting itself: it reads the page, already knows your resume, extracts the role&rsquo;s ATS keywords, and generates a tailored letter in about 20 seconds.
+          ChatGPT can write a good cover letter if you give it the job description, your resume, and a careful prompt, and repeat that for every application. Cover Me (cover-me.dev) is an open-source Chrome extension that does it in one click on the posting: it reads the page, uses the resume you uploaded once, works in the role&rsquo;s ATS keywords, and removes any skill your resume doesn&rsquo;t support.
         </p>
         <p>
-          This is an honest comparison — we build Cover Me, but the trade-offs below are real, and for some people ChatGPT is genuinely enough.
+          I build Cover Me, so weigh this comparison with that in mind. The trade-offs below are real, and for some people ChatGPT is enough.
         </p>
 
-        <h2 className="text-[22px] text-foreground !mt-10">The core difference: workflow, not intelligence</h2>
+        <h2 className="text-[22px] text-foreground !mt-10">What is the difference between Cover Me and ChatGPT?</h2>
         <p>
-          Both tools sit on the same generation of AI models — Cover Me runs on Claude (or your own OpenAI key in BYOK mode). The difference is everything around the model. With ChatGPT, each application means: open the posting, copy the description, switch tabs, re-establish context (&ldquo;here&rsquo;s my resume, here&rsquo;s the job, write a letter that…&rdquo;), generate, then fix the clichés. Five to ten minutes when you&rsquo;re careful; generic output when you&rsquo;re not.
+          The difference is the work around the model. Cover Me runs on Claude, or on your own OpenAI key if you prefer. With ChatGPT, each application means opening the posting, copying the description, switching tabs, pasting your resume again, writing the prompt, then fixing the clichés. When I tailored my own applications in ChatGPT it took{' '}
+          <a href="https://dev.to/plain-stack/how-i-went-from-0-interviews-to-4-in-a-month-by-tailoring-every-application-1an4" target="_blank" rel="noopener noreferrer" className="text-brand-light hover:text-brand transition-colors">about 12 minutes per application</a>
+          , and the free plan&rsquo;s file upload limit cut off my resume uploads partway through a day of applying.
         </p>
         <p>
-          Cover Me collapses that loop into a click because it&rsquo;s purpose-built: the scraper reads the posting, your resume is stored (encrypted, or fully on-device in BYOK mode), and the prompt — purpose-built for cover letters, with explicit bans on AI-tell phrases like &ldquo;I&rsquo;m excited to apply&rdquo; — is applied consistently every time. Application #30 of the week gets the same quality as application #1.
+          Cover Me does those steps for you. It reads the posting, keeps your resume (encrypted on our server, or only in your browser with your own key), and runs the same cover letter prompt every time, with common AI clichés filtered out. Your thirtieth application of the week gets the same care as your first.
+        </p>
+        <p>
+          The bigger difference shows up in resume tailoring. When a posting asks for a skill you lack, a chatbot will often add it anyway, so you have to read every line. Cover Me makes the AI cite resume evidence for every skill it adds, checks that evidence in code, and rewrites or reverts any bullet that claims more than your original.
         </p>
 
         <h2 className="text-[22px] text-foreground !mt-10">Feature comparison</h2>
@@ -142,14 +156,14 @@ export default function Page() {
           </table>
         </div>
 
-        <h2 className="text-[22px] text-foreground !mt-10">When ChatGPT is the right choice</h2>
+        <h2 className="text-[22px] text-foreground !mt-10">When is ChatGPT the better choice?</h2>
         <p>
-          If you apply to one or two roles a month and enjoy iterating on the letter conversationally, a chatbot is flexible in ways an extension isn&rsquo;t — you can ask follow-ups, explore angles, and rewrite paragraphs interactively. You already pay for Plus? The marginal cost is zero.
+          If you apply to one or two roles a month and like working on the letter in conversation, a chatbot is more flexible than an extension. You can ask follow-up questions, try different angles, and rewrite one paragraph at a time. If you already pay for Plus, it costs you nothing extra.
         </p>
 
-        <h2 className="text-[22px] text-foreground !mt-10">When a purpose-built tool wins</h2>
+        <h2 className="text-[22px] text-foreground !mt-10">When is Cover Me the better choice?</h2>
         <p>
-          Volume and consistency. If you&rsquo;re applying to multiple roles a day, the per-application overhead is the whole game — and the things a chatbot won&rsquo;t do without prompting are exactly the things that get applications past screening: mirroring the posting&rsquo;s <Link href="/guides/what-is-an-ats-score" className="text-brand-light hover:text-brand transition-colors">ATS keywords</Link>, <Link href="/guides/tailor-resume-to-job-description" className="text-brand-light hover:text-brand transition-colors">tailoring the resume itself</Link>, and scoring the match before you submit. Cover Me also works on <Link href="/for/linkedin" className="text-brand-light hover:text-brand transition-colors">LinkedIn</Link>, <Link href="/for/indeed" className="text-brand-light hover:text-brand transition-colors">Indeed</Link>, <Link href="/for/greenhouse" className="text-brand-light hover:text-brand transition-colors">Greenhouse</Link>, <Link href="/for/lever" className="text-brand-light hover:text-brand transition-colors">Lever</Link>, <Link href="/for/workday" className="text-brand-light hover:text-brand transition-colors">Workday</Link>, and <Link href="/for/ashby" className="text-brand-light hover:text-brand transition-colors">Ashby</Link> without leaving the page.
+          When you apply to several roles a day. The time per application then decides whether you tailor at all, and the steps a chatbot skips unless asked are the ones that get applications past screening: using the posting&rsquo;s <Link href="/guides/what-is-an-ats-score" className="text-brand-light hover:text-brand transition-colors">ATS keywords</Link>, <Link href="/guides/tailor-resume-to-job-description" className="text-brand-light hover:text-brand transition-colors">tailoring the resume itself</Link>, and scoring the match before you submit. Cover Me reads postings on <Link href="/for/linkedin" className="text-brand-light hover:text-brand transition-colors">LinkedIn</Link>, <Link href="/for/indeed" className="text-brand-light hover:text-brand transition-colors">Indeed</Link>, <Link href="/for/greenhouse" className="text-brand-light hover:text-brand transition-colors">Greenhouse</Link>, <Link href="/for/lever" className="text-brand-light hover:text-brand transition-colors">Lever</Link>, <Link href="/for/workday" className="text-brand-light hover:text-brand transition-colors">Workday</Link>, and <Link href="/for/ashby" className="text-brand-light hover:text-brand transition-colors">Ashby</Link>, and you can paste a posting from any other site.
         </p>
       </article>
 
