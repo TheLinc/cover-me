@@ -8,7 +8,7 @@ const mono = Geist_Mono({ subsets: ['latin'], variable: '--font-mono', display: 
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 
-const TITLE = 'Cover Me: AI resume tailor and cover letter generator for Chrome'
+const TITLE = 'Cover Me: AI Resume Tailor and Cover Letter Generator'
 const DESCRIPTION = 'Open-source Chrome extension that tailors your resume and writes a cover letter for any job posting, with an ATS match score. Free with your own API key.'
 
 export const metadata: Metadata = {

@@ -8,11 +8,11 @@ const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 const guide = getGuide('cover-me-vs-chatgpt')
 const HERO_IMAGE = '/guides/cover-me-vs-chatgpt.png'
 const HERO_ALT =
-  'Infographic comparing Cover Me and ChatGPT for cover letters. Cover Me writes a letter in one click with ATS matching and resume tailoring built in. ChatGPT needs the posting and resume copied in and a prompt written for every letter. The difference is the workflow around the model.'
+  "Comparison of the steps for each application. In a chatbot: copy the posting into a chat, paste or upload your resume, ask for a tailored resume, ask again for a cover letter, then fix, format and export a PDF. In Cover Me: click Tailor Resume to Job on the posting, then Generate Cover Letter, and get a tailored resume, a cover letter and an ATS score."
 
 export const metadata: Metadata = {
-  title: 'Cover Me vs ChatGPT for Cover Letters: An Honest Comparison',
-  description: 'Can ChatGPT write a good cover letter? Yes, if you paste in the posting and your resume each time. Cover Me reads the posting when you click, keeps your resume, matches ATS keywords, and checks the output against your resume.',
+  title: { absolute: 'Cover Me vs ChatGPT for Cover Letters and Resumes' },
+  description: "ChatGPT writes good cover letters if you paste in the posting and resume each time. Cover Me works from the posting and checks the result against your resume.",
   alternates: { canonical: `${BASE}/guides/${guide.slug}` },
   openGraph: {
     title: 'Cover Me vs ChatGPT for Cover Letters | Cover Me',
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     url: `${BASE}/guides/${guide.slug}`,
     siteName: 'Cover Me',
     type: 'article',
-    images: [{ url: `${BASE}/guides/cover-me-vs-chatgpt.png`, width: 1672, height: 941, alt: 'Cover Me vs ChatGPT for cover letters: one click on the posting compared with manual prompting' }],
+    images: [{ url: `${BASE}/guides/cover-me-vs-chatgpt.png`, width: 1600, height: 900, alt: "Five chatbot steps per application compared with two clicks in Cover Me" }],
   },
   twitter: {
     card: 'summary_large_image',
@@ -105,8 +105,8 @@ export default function Page() {
         <Image
           src={HERO_IMAGE}
           alt={HERO_ALT}
-          width={1672}
-          height={941}
+          width={1600}
+          height={900}
           priority
           sizes="(max-width: 800px) 100vw, 760px"
           className="w-full h-auto rounded-[12px] border border-border"

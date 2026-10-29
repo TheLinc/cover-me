@@ -8,11 +8,11 @@ const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 const guide = getGuide('cover-me-vs-aiapply')
 const HERO_IMAGE = '/guides/cover-me-vs-aiapply.png'
 const HERO_ALT =
-  'Infographic comparing Cover Me and AIApply for job applications. Cover Me, labeled "You review. You decide.", makes reviewed, tailored applications. AIApply, labeled "It applies. Automatically.", auto-applies at scale.'
+  "Comparison of how applications go out. AIApply: buy auto-apply credits, the AI writes the application, and it submits for you. Cover Me: click Tailor Resume to Job on a posting, read and edit the resume and letter, and submit it yourself."
 
 export const metadata: Metadata = {
-  title: 'Cover Me vs AIApply: Auto-Apply vs Tailored Applications',
-  description: 'AIApply submits applications for you using paid credits. Cover Me writes a tailored resume and cover letter for the posting you have open, and you review and send it yourself. Here is the trade-off.',
+  title: { absolute: 'Cover Me vs AIApply: Auto-Apply or Tailored Applications' },
+  description: "AIApply submits applications for you with paid credits. Cover Me tailors your resume and letter for the posting you have open, and you send it yourself.",
   alternates: { canonical: `${BASE}/guides/${guide.slug}` },
   openGraph: {
     title: 'Cover Me vs AIApply | Cover Me',
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     url: `${BASE}/guides/${guide.slug}`,
     siteName: 'Cover Me',
     type: 'article',
-    images: [{ url: `${BASE}${HERO_IMAGE}`, width: 1536, height: 1024, alt: 'Cover Me vs AIApply: reviewed, tailored applications compared with auto-apply at scale' }],
+    images: [{ url: `${BASE}${HERO_IMAGE}`, width: 1600, height: 900, alt: "AIApply submits applications for you; with Cover Me you review and submit each one" }],
   },
   twitter: {
     card: 'summary_large_image',
@@ -98,8 +98,8 @@ export default function Page() {
         <Image
           src={HERO_IMAGE}
           alt={HERO_ALT}
-          width={1536}
-          height={1024}
+          width={1600}
+          height={900}
           priority
           sizes="(max-width: 800px) 100vw, 760px"
           className="w-full h-auto rounded-[12px] border border-border"

@@ -8,11 +8,11 @@ const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 const guide = getGuide('what-is-an-ats-score')
 const HERO_IMAGE = '/guides/what-is-an-ats-score.png'
 const HERO_ALT =
-  "Infographic: what is an ATS score? It is your resume's match percentage against one job description. A resume and a job description produce a score of 85%, a strong match, with React and TypeScript matched and Kubernetes flagged as a gap. The same resume scores differently for every role."
+  "Diagram of an 86 ATS match score for a Marketing Manager posting at Northwind, a sample company. Four of five must-have keywords are covered (SEO, Campaign strategy, Google Analytics and Budget management) and HubSpot is missing, for 56 of 70 points. All three nice-to-have keywords are covered, for 30 of 30."
 
 export const metadata: Metadata = {
   title: 'What Is an ATS Score? How Resume Screening Works',
-  description: "An ATS score estimates how well your resume matches one job description's keywords and requirements. See what a good score is, how to raise it honestly, and how Cover Me calculates it.",
+  description: "An ATS score estimates how well your resume matches one job posting's keywords. See what a good score is, how to raise it, and how Cover Me calculates it.",
   alternates: { canonical: `${BASE}/guides/${guide.slug}` },
   openGraph: {
     title: 'What Is an ATS Score? | Cover Me',
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     url: `${BASE}/guides/${guide.slug}`,
     siteName: 'Cover Me',
     type: 'article',
-    images: [{ url: `${BASE}/guides/what-is-an-ats-score.png`, width: 1672, height: 941, alt: "What is an ATS score? Your resume's match percentage against one job description." }],
+    images: [{ url: `${BASE}/guides/what-is-an-ats-score.png`, width: 1600, height: 900, alt: "An 86 ATS match score worked out from must-have and nice-to-have keywords" }],
   },
   twitter: {
     card: 'summary_large_image',
@@ -94,8 +94,8 @@ export default function Page() {
         <Image
           src={HERO_IMAGE}
           alt={HERO_ALT}
-          width={1672}
-          height={941}
+          width={1600}
+          height={900}
           priority
           sizes="(max-width: 800px) 100vw, 760px"
           className="w-full h-auto rounded-[12px] border border-border"

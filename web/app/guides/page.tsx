@@ -5,8 +5,8 @@ import { GUIDES } from '@/lib/guides'
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 
 export const metadata: Metadata = {
-  title: 'Job Application Guides: ATS Scores, Cover Letters and Resume Tailoring',
-  description: 'Guides for job seekers: what an ATS score is, how to tailor your resume to a job description, and how Cover Me compares with ChatGPT and AIApply.',
+  title: 'Job Search Guides: ATS Scores and Tailoring',
+  description: "Guides for job seekers on ATS scores, tailoring your resume to a job description, and how Cover Me compares with ChatGPT, AIApply, Jobscan and Teal.",
   alternates: { canonical: `${BASE}/guides` },
   openGraph: {
     title: 'Job Application Guides | Cover Me',

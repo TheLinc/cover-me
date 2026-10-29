@@ -4,6 +4,7 @@
 
 Key facts:
 - Pricing: free and unlimited with the user's own Claude or OpenAI API key, with no account needed. A free account gets 10 AI generations to start, then 5 a week. Pro is $15/month or $35 every 3 months for up to 25 generations a day, with every application saved and searchable on the dashboard.
+- Speed: a cover letter takes about 20 seconds and a letter plus a tailored resume about 30 seconds (measured October 2026).
 - ATS match score: calculated in code, not estimated by the AI. The model reports which of the posting's keywords the tailored resume covers. Must-have keywords are worth 70 points and nice-to-have keywords 30, minus 10 points for each unmet hard requirement, capped at 25. The same posting and coverage always give the same score.
 - No invented experience: every skill the AI adds must cite a phrase from the user's resume, code checks the phrase is really there, and a second model call confirms it shows the skill. Named requirements from the posting, such as acronyms, certifications and product names, are removed from the output when they appear nowhere in the user's own material. Job titles, employers and dates are never changed.
 - Privacy: with the user's own key, the resume goes only to the AI provider whose key the user added, never to Cover Me. The key is stored in the browser, encrypted with AES-256-GCM, with the encrypting key stored beside it. With an account, the resume is encrypted at rest (AES-256-GCM) and sent to Anthropic only to read it and write the user's documents. The extension has no ads, analytics or tracking, and resume data is never used to train AI models.
@@ -38,4 +39,6 @@ Key facts:
 - [Cover Me vs ChatGPT for cover letters](https://www.cover-me.dev/guides/cover-me-vs-chatgpt)
 - [How to tailor your resume to a job description](https://www.cover-me.dev/guides/tailor-resume-to-job-description)
 - [Cover Me vs AIApply](https://www.cover-me.dev/guides/cover-me-vs-aiapply): one-click tailoring you review against automatic applying
+- [Cover Me vs Jobscan](https://www.cover-me.dev/guides/cover-me-vs-jobscan): a free, open-source Jobscan alternative; plans, prices and how the two scores differ
+- [Cover Me vs Teal](https://www.cover-me.dev/guides/cover-me-vs-teal): a cheaper Teal+ alternative for tailoring; Teal is a resume builder and job tracker
 - [How I went from 0 interviews to 4 in a month by tailoring every application](https://dev.to/plain-stack/how-i-went-from-0-interviews-to-4-in-a-month-by-tailoring-every-application-1an4): the founder's job search story on DEV, and why he built Cover Me

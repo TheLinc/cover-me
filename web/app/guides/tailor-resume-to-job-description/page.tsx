@@ -8,11 +8,11 @@ const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 const guide = getGuide('tailor-resume-to-job-description')
 const HERO_IMAGE = '/guides/tailor-resume-to-job-description.png'
 const HERO_ALT =
-  "Infographic: how to tailor your resume to a job description in five steps. Extract keywords, mirror the posting's language, rewrite key bullets, reorder skills, and verify the match. A job description flows into a tailored resume with a 95% ATS match score and its key requirements checked off. Use the posting's language to describe your real experience, and never add skills you don't have."
+  "Example of tailoring a resume to a job posting. The posting asks for campaign strategy, a budget and SEO. Two resume bullets are rewritten in the posting's words and keep their real results, 38% more leads and 64% more organic traffic. HubSpot, which the resume doesn't mention, is left off."
 
 export const metadata: Metadata = {
-  title: 'How to Tailor Your Resume to a Job Description (Step by Step)',
-  description: "A five-step method for matching your resume to one job posting: find the must-have keywords, use the posting's wording where it's true, rewrite the right bullets, reorder your skills, and check the match.",
+  title: 'How to Tailor Your Resume to a Job Description',
+  description: "How to tailor your resume to a job description in five steps: find the must-have keywords, use the posting's words, and never add skills you don't have.",
   alternates: { canonical: `${BASE}/guides/${guide.slug}` },
   openGraph: {
     title: 'How to Tailor Your Resume to a Job Description | Cover Me',
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     url: `${BASE}/guides/${guide.slug}`,
     siteName: 'Cover Me',
     type: 'article',
-    images: [{ url: `${BASE}/guides/tailor-resume-to-job-description.png`, width: 1672, height: 941, alt: 'How to tailor your resume to a job description in five steps, ending with a checked ATS match' }],
+    images: [{ url: `${BASE}/guides/tailor-resume-to-job-description.png`, width: 1600, height: 900, alt: "Two resume bullets rewritten in a job posting's words, with their real results kept" }],
   },
   twitter: {
     card: 'summary_large_image',
@@ -132,8 +132,8 @@ export default function Page() {
         <Image
           src={HERO_IMAGE}
           alt={HERO_ALT}
-          width={1672}
-          height={941}
+          width={1600}
+          height={900}
           priority
           sizes="(max-width: 800px) 100vw, 760px"
           className="w-full h-auto rounded-[12px] border border-border"
