@@ -37,6 +37,18 @@ export const GUIDES: Guide[] = [
     date: '2026-07-21',
     updated: '2026-10-29',
   },
+  {
+    slug: 'cover-me-vs-jobscan',
+    title: 'Cover Me vs Jobscan: a free, open-source alternative',
+    description: 'Jobscan gives 5 free resume scans a month, then costs $49.95 a month. Cover Me tailors your resume, scores it and writes a cover letter on the posting, free with your own API key or $15 a month.',
+    date: '2026-10-29',
+  },
+  {
+    slug: 'cover-me-vs-teal',
+    title: 'Cover Me vs Teal: a cheaper Teal+ alternative',
+    description: 'Teal is a resume builder and job tracker, with Teal+ at $29 every 30 days. Cover Me tailors the resume you already have to each posting, free with your own API key or $15 a month.',
+    date: '2026-10-29',
+  },
 ]
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'

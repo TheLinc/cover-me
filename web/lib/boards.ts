@@ -28,9 +28,9 @@ export const BOARDS: Board[] = [
     slug: 'linkedin',
     name: 'LinkedIn',
     kind: 'job board',
-    metaTitle: 'AI Cover Letter and Resume Tailor for LinkedIn Jobs',
+    metaTitle: 'AI Cover Letter and Resume Tailor for LinkedIn',
     metaDescription:
-      'Click once on a LinkedIn job and Cover Me writes a cover letter and tailors your resume to it. Works in the search results panel too. Free Chrome extension.',
+      'Cover Me tailors your resume and writes a cover letter for the LinkedIn job you have open, including in the search results panel. Free Chrome extension.',
     h1: 'AI cover letters and tailored resumes for LinkedIn jobs',
     answer:
       'To tailor a cover letter and resume to a LinkedIn job, open the posting and click the Cover Me icon. Cover Me (cover-me.dev) is a free Chrome extension that reads the job title, company and description from the page, then writes a cover letter and rewrites your resume for that role, using only what your resume already shows.',
@@ -71,9 +71,9 @@ export const BOARDS: Board[] = [
     slug: 'indeed',
     name: 'Indeed',
     kind: 'job board',
-    metaTitle: 'AI Cover Letter and Resume Tailor for Indeed Jobs',
+    metaTitle: 'AI Cover Letter and Resume Tailor for Indeed',
     metaDescription:
-      'Click once on an Indeed job and Cover Me writes a cover letter and tailors your resume to it, from the job page or the search preview pane. Free Chrome extension.',
+      'Cover Me tailors your resume and writes a cover letter for the Indeed job you have open, on the job page or in the search preview pane. Free Chrome extension.',
     h1: 'AI cover letters and tailored resumes for Indeed jobs',
     answer:
       "To write a cover letter for an Indeed job, open the posting or select it in your search results, then click the Cover Me icon. Cover Me (cover-me.dev) is a free Chrome extension that reads the posting from Indeed's page and writes a letter and a tailored resume from your own resume, so each application matches its job.",
@@ -114,9 +114,9 @@ export const BOARDS: Board[] = [
     slug: 'greenhouse',
     name: 'Greenhouse',
     kind: 'applicant tracking system',
-    metaTitle: 'AI Cover Letter and Resume Tailor for Greenhouse Applications',
+    metaTitle: 'AI Cover Letter and Resume Tailor for Greenhouse',
     metaDescription:
-      'Applying through a Greenhouse job page? Cover Me reads the posting and writes a cover letter and tailored resume from your own resume in one click. Free Chrome extension.',
+      'Cover Me reads the Greenhouse posting you have open, tailors your resume to it and writes a matching cover letter. Free Chrome extension.',
     h1: 'AI cover letters and tailored resumes for Greenhouse applications',
     answer:
       'To tailor a cover letter for a Greenhouse application, open the posting and click the Cover Me icon. Cover Me (cover-me.dev) is a free Chrome extension that reads Greenhouse postings on job-boards.greenhouse.io, on company career pages that embed them, and in your my.greenhouse.io account, then writes a letter and tailored resume from your resume.',
@@ -157,9 +157,9 @@ export const BOARDS: Board[] = [
     slug: 'lever',
     name: 'Lever',
     kind: 'applicant tracking system',
-    metaTitle: 'AI Cover Letter and Resume Tailor for Lever Applications',
+    metaTitle: 'AI Cover Letter and Resume Tailor for Lever',
     metaDescription:
-      'Applying through jobs.lever.co? Cover Me reads the Lever posting and writes a cover letter and tailored resume from your own resume in one click. Free Chrome extension.',
+      'Cover Me reads the jobs.lever.co posting you have open, tailors your resume to it and writes a matching cover letter. Free Chrome extension.',
     h1: 'AI cover letters and tailored resumes for Lever applications',
     answer:
       "To write a cover letter for a Lever application, open the jobs.lever.co posting and click the Cover Me icon. Cover Me (cover-me.dev) is a free Chrome extension that reads the role, company and description from the posting's structured job data, then writes a letter and a tailored resume from your resume.",
@@ -200,9 +200,9 @@ export const BOARDS: Board[] = [
     slug: 'workday',
     name: 'Workday',
     kind: 'applicant tracking system',
-    metaTitle: 'AI Cover Letter and Resume Tailor for Workday Applications',
+    metaTitle: 'AI Cover Letter and Resume Tailor for Workday',
     metaDescription:
-      'Workday applications are long. Cover Me reads the myworkdayjobs.com posting and writes your cover letter and tailored resume in one click, before you start the form.',
+      "Cover Me reads the myworkdayjobs.com posting, tailors your resume and writes your cover letter before you start Workday's long application form.",
     h1: 'AI cover letters and tailored resumes for Workday applications',
     answer:
       "To tailor a cover letter for a Workday application, open the myworkdayjobs.com posting and click the Cover Me icon before you start the form. Cover Me (cover-me.dev) is a free Chrome extension that reads the job from Workday's page and writes a cover letter and tailored resume as PDFs you can upload in the application.",
@@ -243,9 +243,9 @@ export const BOARDS: Board[] = [
     slug: 'ashby',
     name: 'Ashby',
     kind: 'applicant tracking system',
-    metaTitle: 'AI Cover Letter and Resume Tailor for Ashby Applications',
+    metaTitle: 'AI Cover Letter and Resume Tailor for Ashby',
     metaDescription:
-      'Applying through jobs.ashbyhq.com? Cover Me reads the Ashby posting and writes a cover letter and tailored resume from your own resume in one click. Free Chrome extension.',
+      'Cover Me reads the jobs.ashbyhq.com posting you have open, tailors your resume to it and writes a matching cover letter. Free Chrome extension.',
     h1: 'AI cover letters and tailored resumes for Ashby applications',
     answer:
       "To write a cover letter for an Ashby application, open the jobs.ashbyhq.com posting and click the Cover Me icon. Cover Me (cover-me.dev) is a free Chrome extension that reads the role, company and description from the posting's structured job data and writes a letter and tailored resume from your resume, with stock AI phrases filtered out.",

@@ -5,7 +5,7 @@ import { SiteFooter } from '@/components/site/SiteFooter'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 
-const TITLE = 'About Cover Me (cover-me.dev): an open-source resume tailor by Lincoln Laylor'
+const TITLE = 'About Cover Me: Open-Source Resume Tailor by Lincoln Laylor'
 const DESCRIPTION = 'Cover Me is an open-source Chrome extension by Lincoln Laylor that tailors your resume and writes a cover letter for the job posting you have open. Why he built it, how it handles your data, and where the code lives.'
 
 export const metadata: Metadata = {
@@ -180,7 +180,7 @@ export default function AboutPage() {
                 By the numbers
               </h3>
               {[
-                ['About 30 sec', 'for a typical resume tailoring run'],
+                ['About 20 sec', 'for a cover letter, about 30 with a tailored resume'],
                 ['MIT licensed', 'extension, backend and schema on GitHub'],
                 ['6 job boards', 'LinkedIn, Indeed, Greenhouse, Lever, Workday, Ashby, plus paste from any site'],
                 ['0 telemetry', 'in the extension: no analytics, no ads, no tracking'],
