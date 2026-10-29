@@ -41,4 +41,5 @@ Key facts:
 - [Cover Me vs AIApply](https://www.cover-me.dev/guides/cover-me-vs-aiapply): one-click tailoring you review against automatic applying
 - [Cover Me vs Jobscan](https://www.cover-me.dev/guides/cover-me-vs-jobscan): a free, open-source Jobscan alternative; plans, prices and how the two scores differ
 - [Cover Me vs Teal](https://www.cover-me.dev/guides/cover-me-vs-teal): a cheaper Teal+ alternative for tailoring; Teal is a resume builder and job tracker
+- [Use your own OpenAI or Claude API key for cover letters](https://www.cover-me.dev/guides/use-your-own-api-key-for-cover-letters): setup, which models run (Claude Sonnet 5.5 or GPT-6.1 Sol), where the resume and key go, and trade-offs against hosted plans
 - [How I went from 0 interviews to 4 in a month by tailoring every application](https://dev.to/plain-stack/how-i-went-from-0-interviews-to-4-in-a-month-by-tailoring-every-application-1an4): the founder's job search story on DEV, and why he built Cover Me
