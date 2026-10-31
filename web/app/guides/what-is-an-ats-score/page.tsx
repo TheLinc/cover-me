@@ -149,7 +149,8 @@ export default function Page() {
           <li>Check the score again after tailoring, and close the remaining gaps where you honestly can.</li>
         </ol>
         <p>
-          Our <Link href="/guides/tailor-resume-to-job-description" className="text-brand-light hover:text-brand transition-colors">guide to tailoring your resume to a job description</Link> covers each step in detail.
+          Our <Link href="/guides/tailor-resume-to-job-description" className="text-brand-light hover:text-brand transition-colors">guide to tailoring your resume to a job description</Link> covers each step in detail. Keywords only count if the ATS can read your file, so check your format with our{' '}
+          <Link href="/guides/ats-friendly-resume-format" className="text-brand-light hover:text-brand transition-colors">test of six resume formats</Link>.
         </p>
 
         <h2 className="text-[22px] text-foreground !mt-10">How does Cover Me calculate its ATS score?</h2>

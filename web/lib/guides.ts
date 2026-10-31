@@ -55,6 +55,12 @@ export const GUIDES: Guide[] = [
     description: 'Cover Me writes cover letters and tailors resumes with your own API key: unlimited, no account, and your resume goes only to Anthropic or OpenAI. Setup, models and trade-offs.',
     date: '2026-10-29',
   },
+  {
+    slug: 'ats-friendly-resume-format',
+    title: 'How to make your resume ATS friendly: we tested 6 formats',
+    description: 'One resume in six formats, uploaded to a real ATS and run through text extractors. Tables, Word headers and image PDFs lost text in simple parsers. Plain one-column files kept all of it.',
+    date: '2026-10-31',
+  },
 ]
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
