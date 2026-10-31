@@ -57,8 +57,8 @@ export const GUIDES: Guide[] = [
   },
   {
     slug: 'ats-friendly-resume-format',
-    title: 'How to make your resume ATS friendly: I tested 6 formats',
-    description: 'One resume in six formats, uploaded to Lever and Workday and run through text extractors. Workday read nothing from an image PDF, and simple parsers lost Word headers and tables. Plain one-column files kept everything.',
+    title: 'How to make your resume ATS friendly: I tested 6 formats in 4 ATSs',
+    description: 'One resume in six formats, uploaded to Lever, Workday, Ashby and SmartRecruiters. Workday read nothing from an image PDF, Ashby cut a link out of a two-column design, and SmartRecruiters mixed skills into a degree from a table.',
     date: '2026-10-31',
   },
 ]

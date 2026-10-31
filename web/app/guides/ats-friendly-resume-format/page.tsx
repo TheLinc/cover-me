@@ -8,25 +8,26 @@ const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 const guide = getGuide('ats-friendly-resume-format')
 const HERO_IMAGE = '/guides/ats-friendly-resume-format.png'
 const HERO_ALT =
-  "Results table for one made-up resume saved in six formats: one column PDF, one column Word, a two-column design, contact details in the Word header, a Word table layout, and an image-only PDF. Lever's resume autofill filled every field for all six, reading the image-only PDF by OCR. Workday's autofill filled every section for the first five and nothing for the image-only PDF. The basic text reader got all the text from the one-column files, split the LinkedIn link in the two-column design, lost the contact details in the Word header, and got 0 characters from the table layout and the image-only PDF."
+  "Results table for one made-up resume saved in six formats and uploaded to the resume autofill of Lever, Workday, Ashby and SmartRecruiters. All four read the one-column PDF, the one-column Word file and the Word file with contact details in the header. The two-column design made Ashby cut off the LinkedIn link. The table layout made SmartRecruiters mix skills into the degree. The image-only PDF gave Workday nothing, while the other three read it by OCR."
 const FILES = '/guides/ats-friendly-resume-format/files'
+const SUMMARY = 'One resume, six formats, four real ATSs. Workday read nothing from an image PDF, Ashby cut a link out of a two-column design, and SmartRecruiters mixed skills into a degree from a table.'
 
 export const metadata: Metadata = {
-  title: 'ATS-Friendly Resume Format: 6 Layouts Tested',
-  description: 'I uploaded one resume in six formats to Lever and Workday and ran it through text extractors. What broke, what held up, and a checklist for an ATS-friendly resume.',
+  title: 'ATS-Friendly Resume Format: 6 Layouts Tested in 4 ATSs',
+  description: 'I uploaded one resume in six formats to Lever, Workday, Ashby and SmartRecruiters. What broke, what held up, and a checklist for an ATS-friendly resume.',
   alternates: { canonical: `${BASE}/guides/${guide.slug}` },
   openGraph: {
-    title: 'How to make your resume ATS friendly: 6 formats tested | Cover Me',
-    description: 'One resume, six formats, two real ATSs and three text extractors. Workday read nothing from an image PDF, and simple readers lost Word headers and tables. Plain one-column files kept everything.',
+    title: 'How to make your resume ATS friendly: 6 formats tested in 4 ATSs | Cover Me',
+    description: SUMMARY,
     url: `${BASE}/guides/${guide.slug}`,
     siteName: 'Cover Me',
     type: 'article',
-    images: [{ url: `${BASE}${HERO_IMAGE}`, width: 1600, height: 900, alt: 'Results of uploading one resume in six formats to Lever, Workday and a basic text reader' }],
+    images: [{ url: `${BASE}${HERO_IMAGE}`, width: 1600, height: 900, alt: 'Results of uploading one resume in six formats to Lever, Workday, Ashby and SmartRecruiters' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'How to make your resume ATS friendly: 6 formats tested | Cover Me',
-    description: 'One resume, six formats, two real ATSs and three text extractors. Workday read nothing from an image PDF, and simple readers lost Word headers and tables. Plain one-column files kept everything.',
+    title: 'How to make your resume ATS friendly: 6 formats tested in 4 ATSs | Cover Me',
+    description: SUMMARY,
     images: [`${BASE}${HERO_IMAGE}`],
   },
 }
@@ -40,7 +41,7 @@ const faqJsonLd = {
       name: 'Is a PDF or a Word document better for an ATS?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: "Both worked in my test. Lever and Workday filled in the same fields from the one-column PDF and the one-column Word file, and Apache Tika read all their text. What matters more is what's inside the file: real text in a single column, with your contact details in the body. Send whichever format the posting asks for.",
+        text: "Both worked in my test. Lever, Workday, Ashby and SmartRecruiters filled in the same fields from the one-column PDF and the one-column Word file. What matters more is what's inside the file: real text in a single column, with no tables. Send whichever format the posting asks for.",
       },
     },
     {
@@ -48,7 +49,7 @@ const faqJsonLd = {
       name: 'Will a two-column resume get rejected by an ATS?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: "Not in my test. Lever filled every contact field from my two-column design, Workday pulled the same jobs, education and skills as it did from the plain file, and the text extractors kept all of the text. The narrow sidebar did cause damage in the extractors, though. The LinkedIn link wrapped onto two lines and came out split, and pdftotext read the spaced-out headings as \"C O N TA C T\". A one-column layout avoids both problems.",
+        text: "It's unlikely to be rejected, but it can be misread. Lever, Workday and SmartRecruiters read my two-column design correctly. Ashby cut the LinkedIn link off at \"alexrivera-exa\", where the narrow sidebar had wrapped it onto a second line. Text extractors split the same link, and pdftotext read the spaced-out headings as \"C O N TA C T\". A one-column layout avoids all of it.",
       },
     },
     {
@@ -64,7 +65,7 @@ const faqJsonLd = {
       name: 'How can I check if my resume is ATS friendly?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: "Open your PDF, select all the text, and paste it into a plain text editor such as Notepad. If your name, contact details, job titles and skills come out complete and in order, a parser can read them. If nothing highlights, the PDF is an image. You can also upload your resume to a job form with resume autofill, such as Lever or Workday, and check what fills in, then leave without submitting.",
+        text: "Open your PDF, select all the text, and paste it into a plain text editor such as Notepad. If your name, contact details, job titles and skills come out complete and in order, a parser can read them. If nothing highlights, the PDF is an image. You can also upload your resume to a job form with resume autofill, such as Lever, Ashby, SmartRecruiters or Workday, and check what fills in, then leave without submitting.",
       },
     },
   ],
@@ -72,27 +73,38 @@ const faqJsonLd = {
 
 // Results from October 31, 2026. "Simplest reader" is pdftotext for PDFs and
 // a body-only Word reader (python-docx paragraphs) for DOCX.
-const RESULTS: { format: string; file: string; lever: string; workday: string; tika: string; simple: string }[] = [
-  { format: 'One column, PDF', file: 'single-column.pdf', lever: 'All 6 fields', workday: 'All sections', tika: 'All text', simple: 'All text' },
-  { format: 'One column, Word', file: 'single-column.docx', lever: 'All 6 fields', workday: 'All sections', tika: 'All text', simple: 'All text' },
-  { format: 'Two-column design, PDF', file: 'two-column.pdf', lever: 'All 6 fields', workday: 'All sections', tika: 'LinkedIn link split', simple: 'LinkedIn link split, spaced headings garbled' },
-  { format: 'Contact in Word header', file: 'header-contact.docx', lever: 'All 6 fields', workday: 'All sections', tika: 'All text', simple: 'Name, email, phone and LinkedIn missing' },
-  { format: 'Table layout, Word', file: 'table-layout.docx', lever: 'All 6 fields', workday: 'All sections', tika: 'All text', simple: '0 characters' },
-  { format: 'Image-only PDF', file: 'image-only.pdf', lever: 'All 6 fields, read by OCR', workday: 'Nothing', tika: '0 characters', simple: '0 characters' },
+const RESULTS: { format: string; file: string; lever: string; workday: string; ashby: string; sr: string; simple: string }[] = [
+  { format: 'One column, PDF', file: 'single-column.pdf', lever: 'All fields', workday: 'All sections', ashby: 'All fields', sr: 'All sections', simple: 'All text' },
+  { format: 'One column, Word', file: 'single-column.docx', lever: 'All fields', workday: 'All sections', ashby: 'All fields', sr: 'All sections', simple: 'All text' },
+  { format: 'Two-column design, PDF', file: 'two-column.pdf', lever: 'All fields', workday: 'All sections', ashby: 'LinkedIn link cut off', sr: 'All sections', simple: 'LinkedIn link split, spaced headings garbled' },
+  { format: 'Contact in Word header', file: 'header-contact.docx', lever: 'All fields', workday: 'All sections', ashby: 'All fields', sr: 'All sections', simple: 'Name, email, phone and LinkedIn missing' },
+  { format: 'Table layout, Word', file: 'table-layout.docx', lever: 'All fields', workday: 'All sections', ashby: 'All fields', sr: 'Skills mixed into the degree', simple: '0 characters' },
+  { format: 'Image-only PDF', file: 'image-only.pdf', lever: 'All fields, by OCR', workday: 'Nothing', ashby: 'All fields, by OCR', sr: 'All sections, by OCR', simple: '0 characters' },
 ]
 
 const CHECKLIST: { title: string; body: string }[] = [
-  { title: 'Use one column', body: 'Put everything in a single column that reads top to bottom. Sidebars squeeze long lines like links and email addresses until they wrap and split.' },
+  { title: 'Use one column', body: 'Put everything in a single column that reads top to bottom. My two-column sidebar wrapped the LinkedIn link onto two lines, and Ashby kept only the first one.' },
   { title: 'Keep the text real', body: "Export from Word or Google Docs, not as a picture from a design app or a scan. Workday filled in nothing from my image-only PDF. If you can't highlight a word in your PDF, a parser without OCR can't read it either." },
-  { title: 'Put your name and contact details in the body', body: "Type them as the first lines of the page, not in Word's header or footer area." },
-  { title: "Don't build the layout with tables or text boxes", body: 'Use plain paragraphs, bullets and tab stops. The table layout gave the basic Word reader nothing at all.' },
+  { title: "Don't build the layout with tables or text boxes", body: 'Use plain paragraphs, bullets and tab stops. SmartRecruiters mixed two skills into my degree from the table layout, and the basic Word reader got nothing at all.' },
+  { title: 'Put your name and contact details in the body', body: "Type them as the first lines of the page, not in Word's header or footer area. All four ATSs found them in the header, but the basic Word reader didn't." },
   { title: 'Use standard section headings', body: 'Summary, Experience, Education and Skills. Skip letter-spaced or decorative headings, which can come out as "E D U C AT I O N".' },
   { title: 'Send a PDF or a Word file', body: 'Both worked in this test. Follow the posting if it asks for one.' },
-  { title: 'Check what the form filled in', body: 'Workday left a company name blank and put a job title in the address line, even from the plain file. Fix those fields by hand before you submit.' },
+  { title: 'Check what the form filled in', body: 'Every ATS got something wrong, even from the plain file. Fix those fields by hand before you submit.' },
   { title: 'Then match the posting', body: "A clean format only gets your words read. Recruiters search those words for the posting's skills, so use its wording where it's true for you." },
 ]
 
 const LINK = 'text-brand-light hover:text-brand transition-colors'
+const TH = 'text-left px-3 py-3 font-bold text-muted-foreground border-b border-border'
+const TD = 'px-3 py-3 text-muted-foreground border-b border-border'
+
+function Figure({ src, alt, width, height, caption }: { src: string; alt: string; width: number; height: number; caption: string }) {
+  return (
+    <figure className="!my-8">
+      <Image src={src} alt={alt} width={width} height={height} sizes="(max-width: 800px) 100vw, 760px" className="w-full h-auto rounded-[12px] border border-border" />
+      <figcaption className="text-[13px] mt-3">{caption}</figcaption>
+    </figure>
+  )
+}
 
 export default function Page() {
   return (
@@ -106,7 +118,7 @@ export default function Page() {
           ← All guides
         </Link>
         <h1 className="text-[clamp(30px,4.5vw,46px)] text-foreground leading-[1.02] mt-4 mb-4">
-          How to make your resume ATS friendly: I tested 6 formats
+          How to make your resume ATS friendly: I tested 6 formats in 4 ATSs
         </h1>
         <p className="text-[12px] text-muted-foreground">
           <time dateTime={guide.updated ?? guide.date}>Published October 31, 2026</time> · Lincoln Laylor
@@ -129,7 +141,7 @@ export default function Page() {
 
       <article className="space-y-5 text-[15.5px] text-muted-foreground leading-[1.85]">
         <p className="text-[17px] text-foreground font-medium leading-[1.7]">
-          An ATS-friendly resume is one a parser can read completely and in order. That means one column of real text, your name and contact details in the body of the page, standard section headings, and a PDF or Word file. I saved one resume in six formats and uploaded each one to two real applicant tracking systems, Lever and Workday. Both read the two-column design, the Word header and the table layout. The image-only PDF is where they differed. Lever read it with OCR, and Workday filled in nothing. Simpler text readers lost the contact details in a Word header and got nothing at all from a table layout. You can&rsquo;t tell which parser an employer runs, so the plain format is the safe one.
+          An ATS-friendly resume is one a parser can read completely and in order. That means one column of real text, no tables, your name and contact details in the body of the page, standard section headings, and a PDF or Word file. I saved one resume in six formats and uploaded each one to four real applicant tracking systems: Lever, Workday, Ashby and SmartRecruiters. All four read the plain one-column files. The fancier formats each broke one of them. Workday got nothing from an image-only PDF, Ashby cut a link out of a two-column design, and SmartRecruiters mixed skills into the degree from a table layout. You can&rsquo;t tell which ATS an employer runs, so the plain format is the safe one.
         </p>
         <p>
           I build Cover Me, a Chrome extension that tailors resumes to job postings. I ran this test because most ATS formatting advice is repeated from article to article without anyone checking it.
@@ -142,111 +154,125 @@ export default function Page() {
         <p>
           A badly parsed resume usually isn&rsquo;t thrown away automatically. In a{' '}
           <a href="https://enhancv.com/blog/does-ats-reject-resumes/" target="_blank" rel="noopener noreferrer" className={LINK}>2025 Enhancv study</a>,
-          23 of 25 US recruiters said their ATS doesn&rsquo;t auto-reject resumes for formatting, content or design. The popular claim that 75% of resumes are rejected by ATS has no published study behind it. The real cost of a bad format is quieter. Your profile shows up with empty fields, and a recruiter&rsquo;s keyword search can miss words the parser never read.
+          23 of 25 US recruiters said their ATS doesn&rsquo;t auto-reject resumes for formatting, content or design. The popular claim that 75% of resumes are rejected by ATS has no published study behind it. The real cost of a bad format is quieter. Your profile shows up with empty or wrong fields, and a recruiter&rsquo;s keyword search can miss words the parser never read.
         </p>
 
         <h2 className="text-[22px] text-foreground !mt-10">How did I test resume formats?</h2>
         <p>
           I wrote one resume for a made-up marketing manager, Alex Rivera, and saved the same words in six formats: a plain one-column PDF and Word file, a two-column design with a colored sidebar and contact icons, a Word file with the name and contact details in the page header, a Word file laid out with a table, and an image-only PDF with no text layer.
         </p>
-        <figure className="!my-8">
-          <Image
-            src="/guides/ats-friendly-resume-format/layouts.png"
-            alt="Two of the six test resumes side by side. Left, a plain one-column resume for Alex Rivera, Marketing Manager, with Summary, Experience, Education and Skills headings. Right, the same resume as a two-column design with a dark blue sidebar holding contact details with icons, skills and education."
-            width={1720}
-            height={1115}
-            sizes="(max-width: 800px) 100vw, 760px"
-            className="w-full h-auto rounded-[12px] border border-border"
-          />
-          <figcaption className="text-[13px] mt-3">The plain one-column layout (left) and the two-column design (right). Both hold the same words.</figcaption>
-        </figure>
+        <Figure
+          src="/guides/ats-friendly-resume-format/layouts.png"
+          alt="Two of the six test resumes side by side. Left, a plain one-column resume for Alex Rivera, Marketing Manager, with Summary, Experience, Education and Skills headings. Right, the same resume as a two-column design with a dark blue sidebar holding contact details with icons, skills and education."
+          width={1720}
+          height={1115}
+          caption="The plain one-column layout (left) and the two-column design (right). Both hold the same words."
+        />
         <p>Then I checked each file two ways:</p>
         <ul className="list-disc pl-6 space-y-2">
           <li>
-            <strong className="text-foreground">Two real ATSs.</strong> I uploaded each file to the resume autofill on a live Lever application form, on the careers page of Employ, the company that owns Lever. Then I signed in to NVIDIA&rsquo;s Workday careers site and started a new application for each file with &ldquo;Autofill with Resume&rdquo;. I noted what each one filled in and never submitted an application.
+            <strong className="text-foreground">Four real ATSs.</strong> I uploaded each file to the resume autofill on live job applications: Lever on the careers page of Employ, the company that owns Lever, Ashby on Ashby&rsquo;s own careers page, SmartRecruiters on a Bosch posting, and Workday on NVIDIA&rsquo;s careers site, where I signed in and started a new application for each file. I started every upload from an empty form, noted what filled in, and never submitted an application.
           </li>
           <li>
             <strong className="text-foreground">Text extractors.</strong> I ran each file through Apache Tika, an open-source library that pulls text out of documents, and through the simplest readers I could find: pdftotext for PDFs and a Word reader that only reads body paragraphs. They show what a less capable parser gets from the same file.
           </li>
         </ul>
         <p>
-          I picked these two because both show you what the parser pulled out before you apply. Lever fills in your contact details and current company. Workday goes further and fills in your work history, education and skills. Greenhouse only parses the resume after you submit, or after you sign in to MyGreenhouse.
+          I picked these four because each one shows you what its parser pulled out before you apply. Lever and Ashby fill in your contact details. Workday and SmartRecruiters go further and fill in your work history and education too. Greenhouse only parses the resume after you submit, or after you sign in to MyGreenhouse.
         </p>
 
         <h2 className="text-[22px] text-foreground !mt-10">Which resume formats can an ATS read?</h2>
         <div className="overflow-x-auto !mt-6">
-          <table className="w-full text-[13.5px] border border-border rounded-[8px] overflow-hidden" style={{ borderCollapse: 'collapse' }}>
+          <table className="w-full text-[13px] border border-border rounded-[8px] overflow-hidden" style={{ borderCollapse: 'collapse' }}>
             <thead>
               <tr className="bg-elevated">
-                <th className="text-left px-4 py-3 font-bold text-muted-foreground border-b border-border">Format</th>
-                <th className="text-left px-4 py-3 font-bold text-muted-foreground border-b border-border">Lever autofill</th>
-                <th className="text-left px-4 py-3 font-bold text-muted-foreground border-b border-border">Workday autofill</th>
-                <th className="text-left px-4 py-3 font-bold text-muted-foreground border-b border-border">Apache Tika</th>
-                <th className="text-left px-4 py-3 font-bold text-muted-foreground border-b border-border">Simplest reader</th>
+                <th className={TH}>Format</th>
+                <th className={TH}>Lever</th>
+                <th className={TH}>Workday</th>
+                <th className={TH}>Ashby</th>
+                <th className={TH}>Smart&shy;Recruiters</th>
+                <th className={TH}>Simplest reader</th>
               </tr>
             </thead>
             <tbody>
               {RESULTS.map((row, i) => (
                 <tr key={row.file} className={i % 2 === 0 ? 'bg-surface' : 'bg-elevated'}>
-                  <td className="px-4 py-3 font-medium text-foreground border-b border-border">
+                  <td className="px-3 py-3 font-medium text-foreground border-b border-border">
                     <a href={`${FILES}/${row.file}`} className={LINK}>{row.format}</a>
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground border-b border-border">{row.lever}</td>
-                  <td className="px-4 py-3 text-muted-foreground border-b border-border">{row.workday}</td>
-                  <td className="px-4 py-3 text-muted-foreground border-b border-border">{row.tika}</td>
-                  <td className="px-4 py-3 text-muted-foreground border-b border-border">{row.simple}</td>
+                  <td className={TD}>{row.lever}</td>
+                  <td className={TD}>{row.workday}</td>
+                  <td className={TD}>{row.ashby}</td>
+                  <td className={TD}>{row.sr}</td>
+                  <td className={TD}>{row.simple}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
         <p className="text-[13px]">
-          Tested October 31, 2026. Lever&rsquo;s 6 fields are full name, email, phone, location, current company and LinkedIn URL. Workday&rsquo;s sections are name, address, phone, three jobs with titles, dates and descriptions, school, field of study and skills. Workday fills in the email from your account, so it can&rsquo;t show whether the email was read. Click a format to download the test file.
+          Tested October 31, 2026. Lever fills in name, email, phone, location, current company and LinkedIn. Ashby fills in name, email and LinkedIn. SmartRecruiters fills in name, email, city, phone, every job with its dates and description, and education. Workday fills in the same sections plus suggested skills, but takes the email from your account instead of the resume. Click a format to download the test file.
         </p>
         <p>
-          Both ATSs read the two-column design, the Word header and the table layout as well as the plain files. Workday pulled the same three jobs, the same school and the same 15 suggested skills from all five text files. The only difference in the table version was that the &ldquo;&bull;&rdquo; bullet characters stayed in the job descriptions.
-        </p>
-        <p>
-          The image-only PDF is where they split. Lever got every field right, and a file with no text in it can only be read with optical character recognition (OCR), so Lever runs OCR on uploads. Workday left every field blank. Of the six formats, the image was the only one that failed in a real ATS.
-        </p>
-        <figure className="!my-8">
-          <Image
-            src="/guides/ats-friendly-resume-format/lever-image-only.png"
-            alt="Lever application form after uploading image-only.pdf. The upload shows Success, and the form is filled in with Full name Alex Rivera, Email alex.rivera@example.com, Phone 3125550142, Current location Chicago, IL, USA, and Current company Fernwood Labs."
-            width={1200}
-            height={1320}
-            sizes="(max-width: 800px) 100vw, 760px"
-            className="w-full h-auto rounded-[12px] border border-border"
-          />
-          <figcaption className="text-[13px] mt-3">Lever&rsquo;s form after I uploaded the image-only PDF. Every field is filled in, so Lever read the picture with OCR.</figcaption>
-        </figure>
-        <figure className="!my-8">
-          <Image
-            src="/guides/ats-friendly-resume-format/workday-image-only.png"
-            alt="Workday's My Information step after two uploads, side by side. Left, after single-column.pdf, First Name is Alex, Last Name is Rivera, and Address Line 1 says Marketing Manager. Right, after image-only.pdf, all three fields are empty."
-            width={924}
-            height={543}
-            sizes="(max-width: 800px) 100vw, 760px"
-            className="w-full h-auto rounded-[12px] border border-border"
-          />
-          <figcaption className="text-[13px] mt-3">Workday after the plain PDF (left) and the image-only PDF (right). It read nothing from the image.</figcaption>
-        </figure>
-        <p>
-          Workday wasn&rsquo;t perfect on any file. Every time, it left the company blank on the first job, Fernwood Labs. It put the job title &ldquo;Marketing Manager&rdquo; into Address Line 1 for the plain PDF, the plain Word file and the table layout, and it never picked a degree. Those mistakes happened on the plain files too, so changing the format wouldn&rsquo;t have fixed them. Check what the form filled in before you submit.
+          The plain one-column PDF and Word file came through all four. So did the Word file with contact details in the header, which some advice says an ATS can&rsquo;t see. Each of the other three formats broke exactly one ATS, and a different one each time.
         </p>
 
-        <h2 className="text-[22px] text-foreground !mt-10">Which resume formats lose text?</h2>
+        <h3 className="text-[18px] text-foreground !mt-8">The image-only PDF: Workday read nothing</h3>
         <p>
-          <strong className="text-foreground">Images of text.</strong> The image-only PDF gave Tika and pdftotext 0 characters, and Workday filled in nothing. This happens when a resume is exported as a picture from a design app, or scanned. Lever coped because it runs OCR. Workday saw a blank page.
+          A file with no text layer can only be read with optical character recognition (OCR). Lever, Ashby and SmartRecruiters all filled in the right name from the image, so all three run OCR on uploads. Workday left every field blank. That happens when a resume is exported as a picture from a design app, or scanned.
+        </p>
+        <Figure
+          src="/guides/ats-friendly-resume-format/workday-image-only.png"
+          alt="Workday's My Information step after two uploads, side by side. Left, after single-column.pdf, First Name is Alex, Last Name is Rivera, and Address Line 1 says Marketing Manager. Right, after image-only.pdf, all three fields are empty."
+          width={924}
+          height={543}
+          caption="Workday after the plain PDF (left) and the image-only PDF (right). It read nothing from the image."
+        />
+
+        <h3 className="text-[18px] text-foreground !mt-8">The two-column design: Ashby cut off the link</h3>
+        <p>
+          The sidebar is narrow, so the LinkedIn link wrapped onto a second line. Ashby kept only the first line and filled in &ldquo;linkedin.com/in/alexrivera-exa&rdquo;. A recruiter who clicks it gets a page that doesn&rsquo;t exist. Lever, Workday and SmartRecruiters read the design correctly.
+        </p>
+        <Figure
+          src="/guides/ats-friendly-resume-format/ashby-two-column.png"
+          alt="Ashby's LinkedIn Profile field after two uploads. After single-column.pdf it reads linkedin.com/in/alexrivera-example. After two-column.pdf it reads linkedin.com/in/alexrivera-exa."
+          width={746}
+          height={342}
+          caption="Ashby's LinkedIn field after the plain PDF (top) and the two-column design (bottom)."
+        />
+
+        <h3 className="text-[18px] text-foreground !mt-8">The table layout: SmartRecruiters mixed up cells</h3>
+        <p>
+          In the table version, the education and skills sat in neighbouring cells. SmartRecruiters filled in the degree as &ldquo;B.A. Communications A/B testing, Copywriting&rdquo;, with two skills stuck on the end. Workday read the table but kept the &ldquo;&bull;&rdquo; bullet characters in the job descriptions. Lever and Ashby were fine.
+        </p>
+        <Figure
+          src="/guides/ats-friendly-resume-format/smartrecruiters-table.png"
+          alt="SmartRecruiters' Education entry after two uploads. After single-column.pdf it shows University of Illinois, 2013 to 2017, B.A. Communications. After table-layout.docx the degree line reads B.A. Communications A/B testing, Copywriting."
+          width={1176}
+          height={422}
+          caption="SmartRecruiters' education entry after the plain PDF (top) and the table layout (bottom)."
+        />
+
+        <h3 className="text-[18px] text-foreground !mt-8">Every ATS made mistakes on the plain file too</h3>
+        <p>
+          Workday left the company blank on the newest job, Fernwood Labs, for every file. It put the job title &ldquo;Marketing Manager&rdquo; into the address line for three of them and never picked a degree. SmartRecruiters shortened &ldquo;University of Illinois Chicago&rdquo; to &ldquo;University of Illinois&rdquo; and never filled in the LinkedIn field. Changing the format wouldn&rsquo;t fix any of that, so read the form before you submit.
+        </p>
+
+        <h2 className="text-[22px] text-foreground !mt-10">What do simpler parsers lose?</h2>
+        <p>
+          The text extractors show what a less capable parser gets from the same files. Apache Tika read all the text from everything except the image-only PDF. The simplest readers lost more:
         </p>
         <p>
-          <strong className="text-foreground">Contact details in the Word header.</strong> Lever, Workday and Tika all read the header. The body-only Word reader started at &ldquo;Summary&rdquo;, so Alex&rsquo;s name, email, phone and LinkedIn were gone. Some resume templates put the name in the header to repeat it on every page.
+          <strong className="text-foreground">Contact details in the Word header.</strong> The body-only Word reader started at &ldquo;Summary&rdquo;, so Alex&rsquo;s name, email, phone and LinkedIn were gone. Some resume templates put the name in the header to repeat it on every page.
         </p>
         <p>
-          <strong className="text-foreground">Tables.</strong> The body-only reader got 0 characters from the table layout, because every word sat inside table cells. Workday and Tika read the cells in order.
+          <strong className="text-foreground">Tables.</strong> The body-only reader got 0 characters from the table layout, because every word sat inside table cells.
         </p>
         <p>
-          <strong className="text-foreground">Two columns.</strong> Lever and Workday handled it. In the text extractors, all the text came out, sidebar first and then the main column, which is a reasonable order. The narrow sidebar did damage two things. The LinkedIn link wrapped onto two lines and was read as two pieces, and pdftotext read the spaced-out headings as separate letters:
+          <strong className="text-foreground">Images of text.</strong> Tika and pdftotext both got 0 characters from the image-only PDF.
+        </p>
+        <p>
+          <strong className="text-foreground">Two columns.</strong> All the text came out, sidebar first and then the main column. Tika and pdftotext both split the LinkedIn link in two, the same place Ashby cut it, and pdftotext read the spaced-out headings as separate letters:
         </p>
         <pre className="text-[12.5px] leading-[1.6] bg-elevated border border-border rounded-[8px] p-4 overflow-x-auto text-foreground whitespace-pre-wrap">
 {`Alex Rivera
