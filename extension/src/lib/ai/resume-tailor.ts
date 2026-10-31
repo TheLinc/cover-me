@@ -1,6 +1,6 @@
 import type { AIProvider, JobData, ParsedResume, TailoredResume } from '../../types'
 import { debugGroup, debugLog } from '../debug'
-import { deriveTailorProgress } from './tailor-progress'
+import { derivePlanningProgress, deriveTailorProgress } from './tailor-progress'
 import { candidateText, checkAndRewriteLines, groundSkills, groundTailored, type AskModel, type LineRepair } from './resume-grounding'
 import { SONNET_FIELDS, streamSonnet } from './claude'
 import { scoreFromMatch, type KeywordMatch } from './ats-score'
@@ -361,12 +361,18 @@ export async function tailorResume(
     acc += text
     onProgress?.(deriveTailorProgress(acc, roleCount))
   }
+  let thought = ''
+  const onThinking = (text: string): void => {
+    thought += text
+    const planning = derivePlanningProgress(thought)
+    if (planning) onProgress?.(planning)
+  }
 
   let raw: string
   if (provider === 'claude') {
     // Sonnet for tailoring: judgment-heavy (bullet preservation, relevance
     // calls) — the small models compress/merge. Cover letters are on Sonnet too.
-    raw = await streamSonnet([{ role: 'user', content: prompt }], apiKey, onText)
+    raw = await streamSonnet([{ role: 'user', content: prompt }], apiKey, onText, onProgress && onThinking)
   } else {
     raw = await callOpenAI([{ role: 'user', content: prompt }], apiKey, onText)
   }

@@ -468,6 +468,10 @@ Deno.serve(async (req) => {
           // too (see generate/index.ts). A mid-stream decline ends the stream
           // early; the incomplete delta fails to parse and the request refunds.
           ...SONNET_FIELDS,
+          // Summarized thinking streams as thinking_delta, so the popup can show
+          // what the model is planning instead of a silent spinner (#91). Display
+          // only: the thinking and its cost are the same.
+          thinking: { type: 'adaptive', display: 'summarized' },
           max_tokens: SONNET_MAX_TOKENS,
           stream: true,
           messages: [{ role: 'user', content: prompt }],
@@ -492,8 +496,9 @@ Deno.serve(async (req) => {
   }
 
   // Reads Anthropic's SSE stream, forwarding each text fragment to onDelta and
-  // returning the full accumulated text.
-  const readUpstream = async (onDelta?: (text: string) => void): Promise<string> => {
+  // each thinking-summary fragment to onThinking, and returning the full
+  // accumulated text. Thinking text can quote the resume: never log it.
+  const readUpstream = async (onDelta?: (text: string) => void, onThinking?: (text: string) => void): Promise<string> => {
     const reader = upstream.getReader()
     const decoder = new TextDecoder()
     let lineBuf = ''
@@ -519,10 +524,12 @@ Deno.serve(async (req) => {
           throw new Error(e?.message ?? 'stream error')
         }
         if (ev.type === 'content_block_delta') {
-          const delta = ev.delta as { type?: string; text?: string } | undefined
+          const delta = ev.delta as { type?: string; text?: string; thinking?: string } | undefined
           if (delta?.type === 'text_delta' && delta.text) {
             raw += delta.text
             onDelta?.(delta.text)
+          } else if (delta?.type === 'thinking_delta' && delta.thinking) {
+            onThinking?.(delta.thinking)
           }
         }
       }
@@ -610,7 +617,8 @@ Deno.serve(async (req) => {
   }
 
   // Stream NDJSON to the extension: a start event (role count for the progress
-  // label), one delta event per text fragment, then a final done event carrying
+  // label), a thinking event per thinking-summary fragment and a delta event per
+  // text fragment, then a final done event carrying
   // the fully merged + scored resume. Streaming from the first token keeps the
   // connection alive on slow generations and lets the popup show real progress.
   const encoder = new TextEncoder()
@@ -634,7 +642,9 @@ Deno.serve(async (req) => {
           return
         }
         send({ type: 'start', roles: structuredResume.experience.length })
-        const raw = await readUpstream((text) => send({ type: 'delta', text }))
+        // 'thinking' is newer than the 1.3.1 store build, whose reader skips
+        // event types it doesn't know.
+        const raw = await readUpstream((text) => send({ type: 'delta', text }), (text) => send({ type: 'thinking', text }))
         const { resume, savedId } = await assemble(raw)
         send({ type: 'done', resume, savedId })
       } catch (err) {

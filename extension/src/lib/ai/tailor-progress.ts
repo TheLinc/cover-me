@@ -21,3 +21,14 @@ export function deriveTailorProgress(buffer: string, roleCount: number): string 
   if (buffer.includes('"summary"')) return 'Writing your summary…'
   return 'Analyzing the job posting…'
 }
+
+// While the model plans: its thinking summary's latest finished line (a heading
+// or a sentence with more text after it), as "Planning: <line>". '' until one
+// is finished. Finished lines only, so the label changes once a sentence, not
+// on every fragment (each change is a storage write).
+export function derivePlanningProgress(thinking: string): string {
+  const end = Math.max(thinking.lastIndexOf('\n'), ...['. ', '! ', '? '].map((p) => thinking.lastIndexOf(p) + 1))
+  const line = thinking.slice(0, end).replace(/\*\*/g, '').split(/\n+|(?<=[.!?])\s+/).map((s) => s.trim()).filter(Boolean).pop()
+  if (!line) return ''
+  return `Planning: ${line.length > 120 ? `${line.slice(0, 119).trimEnd()}…` : line}`
+}
