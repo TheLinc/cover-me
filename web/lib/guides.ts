@@ -57,7 +57,7 @@ export const GUIDES: Guide[] = [
   },
   {
     slug: 'ats-friendly-resume-format',
-    title: 'How to make your resume ATS friendly: we tested 6 formats',
+    title: 'How to make your resume ATS friendly: I tested 6 formats',
     description: 'One resume in six formats, uploaded to a real ATS and run through text extractors. Tables, Word headers and image PDFs lost text in simple parsers. Plain one-column files kept all of it.',
     date: '2026-10-31',
   },

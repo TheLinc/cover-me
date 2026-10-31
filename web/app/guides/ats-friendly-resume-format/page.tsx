@@ -13,7 +13,7 @@ const FILES = '/guides/ats-friendly-resume-format/files'
 
 export const metadata: Metadata = {
   title: 'ATS-Friendly Resume Format: 6 Layouts Tested',
-  description: 'We uploaded one resume in six formats to a real ATS and ran it through text extractors. What broke, what held up, and a checklist for an ATS-friendly resume.',
+  description: 'I uploaded one resume in six formats to a real ATS and ran it through text extractors. What broke, what held up, and a checklist for an ATS-friendly resume.',
   alternates: { canonical: `${BASE}/guides/${guide.slug}` },
   openGraph: {
     title: 'How to make your resume ATS friendly: 6 formats tested | Cover Me',
@@ -40,7 +40,7 @@ const faqJsonLd = {
       name: 'Is a PDF or a Word document better for an ATS?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: "Both worked in our test. Lever filled every field from the one-column PDF and the one-column Word file, and Apache Tika read all their text. What matters more is what's inside the file: real text in a single column, with your contact details in the body. Send whichever format the posting asks for.",
+        text: "Both worked in my test. Lever filled every field from the one-column PDF and the one-column Word file, and Apache Tika read all their text. What matters more is what's inside the file: real text in a single column, with your contact details in the body. Send whichever format the posting asks for.",
       },
     },
     {
@@ -48,7 +48,7 @@ const faqJsonLd = {
       name: 'Will a two-column resume get rejected by an ATS?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: "Not in our test. Lever filled every contact field from our two-column design, and the text extractors kept all of the text. The narrow sidebar did cause damage, though. The LinkedIn link wrapped onto two lines and came out split, and pdftotext read the spaced-out headings as \"C O N TA C T\". A one-column layout avoids both problems.",
+        text: "Not in my test. Lever filled every contact field from my two-column design, and the text extractors kept all of the text. The narrow sidebar did cause damage, though. The LinkedIn link wrapped onto two lines and came out split, and pdftotext read the spaced-out headings as \"C O N TA C T\". A one-column layout avoids both problems.",
       },
     },
     {
@@ -105,7 +105,7 @@ export default function Page() {
           ← All guides
         </Link>
         <h1 className="text-[clamp(30px,4.5vw,46px)] text-foreground leading-[1.02] mt-4 mb-4">
-          How to make your resume ATS friendly: we tested 6 formats
+          How to make your resume ATS friendly: I tested 6 formats
         </h1>
         <p className="text-[12px] text-muted-foreground">
           <time dateTime={guide.updated ?? guide.date}>Published October 31, 2026</time> · Lincoln Laylor
@@ -128,7 +128,7 @@ export default function Page() {
 
       <article className="space-y-5 text-[15.5px] text-muted-foreground leading-[1.85]">
         <p className="text-[17px] text-foreground font-medium leading-[1.7]">
-          An ATS-friendly resume is one a parser can read completely and in order. That means one column of real text, your name and contact details in the body of the page, standard section headings, and a PDF or Word file. We saved one resume in six formats and tested each one. Lever&rsquo;s parser read all six, even an image-only PDF. Simpler text readers lost the contact details in a Word header and got nothing at all from a table layout or an image. You can&rsquo;t tell which parser an employer runs, so the plain format is the safe one.
+          An ATS-friendly resume is one a parser can read completely and in order. That means one column of real text, your name and contact details in the body of the page, standard section headings, and a PDF or Word file. I saved one resume in six formats and tested each one. Lever&rsquo;s parser read all six, even an image-only PDF. Simpler text readers lost the contact details in a Word header and got nothing at all from a table layout or an image. You can&rsquo;t tell which parser an employer runs, so the plain format is the safe one.
         </p>
         <p>
           I build Cover Me, a Chrome extension that tailors resumes to job postings. I ran this test because most ATS formatting advice is repeated from article to article without anyone checking it.
@@ -144,9 +144,9 @@ export default function Page() {
           23 of 25 US recruiters said their ATS doesn&rsquo;t auto-reject resumes for formatting, content or design. The popular claim that 75% of resumes are rejected by ATS has no published study behind it. The real cost of a bad format is quieter. Your profile shows up with empty fields, and a recruiter&rsquo;s keyword search can miss words the parser never read.
         </p>
 
-        <h2 className="text-[22px] text-foreground !mt-10">How did we test resume formats?</h2>
+        <h2 className="text-[22px] text-foreground !mt-10">How did I test resume formats?</h2>
         <p>
-          We wrote one resume for a made-up marketing manager, Alex Rivera, and saved the same words in six formats: a plain one-column PDF and Word file, a two-column design with a colored sidebar and contact icons, a Word file with the name and contact details in the page header, a Word file laid out with a table, and an image-only PDF with no text layer.
+          I wrote one resume for a made-up marketing manager, Alex Rivera, and saved the same words in six formats: a plain one-column PDF and Word file, a two-column design with a colored sidebar and contact icons, a Word file with the name and contact details in the page header, a Word file laid out with a table, and an image-only PDF with no text layer.
         </p>
         <figure className="!my-8">
           <Image
@@ -159,17 +159,17 @@ export default function Page() {
           />
           <figcaption className="text-[13px] mt-3">The plain one-column layout (left) and the two-column design (right). Both hold the same words.</figcaption>
         </figure>
-        <p>Then we checked each file two ways:</p>
+        <p>Then I checked each file two ways:</p>
         <ul className="list-disc pl-6 space-y-2">
           <li>
-            <strong className="text-foreground">A real ATS.</strong> We uploaded each file to the resume autofill on a live Lever application form, on the careers page of Employ, the company that owns Lever, and recorded what it filled in. We never submitted an application.
+            <strong className="text-foreground">A real ATS.</strong> I uploaded each file to the resume autofill on a live Lever application form, on the careers page of Employ, the company that owns Lever, and noted what it filled in. I never submitted an application.
           </li>
           <li>
-            <strong className="text-foreground">Text extractors.</strong> We ran each file through Apache Tika, an open-source library that pulls text out of documents, and through the simplest readers we could find: pdftotext for PDFs and a Word reader that only reads body paragraphs. They show what a less capable parser gets from the same file.
+            <strong className="text-foreground">Text extractors.</strong> I ran each file through Apache Tika, an open-source library that pulls text out of documents, and through the simplest readers I could find: pdftotext for PDFs and a Word reader that only reads body paragraphs. They show what a less capable parser gets from the same file.
           </li>
         </ul>
         <p>
-          We tried other systems too. Greenhouse only parses the resume after you submit, or after you sign in to MyGreenhouse. Ashby&rsquo;s autofill said it had finished but filled nothing for any file on two employers&rsquo; forms in our automated browser, so we left it out. SmartRecruiters blocked the automated browser, and Workday needs an account for each employer.
+          I used Lever because its form shows you what the parser pulled out before you apply. Greenhouse only parses the resume after you submit, or after you sign in to MyGreenhouse, and Workday needs an account for each employer.
         </p>
 
         <h2 className="text-[22px] text-foreground !mt-10">Which resume formats did an ATS read?</h2>
@@ -212,7 +212,7 @@ export default function Page() {
             sizes="(max-width: 800px) 100vw, 760px"
             className="w-full h-auto rounded-[12px] border border-border"
           />
-          <figcaption className="text-[13px] mt-3">Lever&rsquo;s form after we uploaded the image-only PDF. Every field is filled in, so Lever read the picture with OCR.</figcaption>
+          <figcaption className="text-[13px] mt-3">Lever&rsquo;s form after I uploaded the image-only PDF. Every field is filled in, so Lever read the picture with OCR.</figcaption>
         </figure>
 
         <h2 className="text-[22px] text-foreground !mt-10">Which resume formats lose text?</h2>
@@ -247,7 +247,7 @@ SEO Campaign strategy Google Analytics Budget management ...`}
           ))}
         </ol>
         <p>
-          For the last step, see our guides on{' '}
+          For the last step, see my guides on{' '}
           <Link href="/guides/tailor-resume-to-job-description" className={LINK}>tailoring your resume to a job description</Link>{' '}
           and{' '}
           <Link href="/guides/what-is-an-ats-score" className={LINK}>what an ATS score measures</Link>.
