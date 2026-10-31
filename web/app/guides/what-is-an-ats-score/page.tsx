@@ -111,7 +111,7 @@ export default function Page() {
           The score belongs to a resume and a posting together. The same resume scores differently against every job.
         </p>
 
-        <h2 className="text-[22px] text-foreground !mt-10">How does ATS screening work?</h2>
+        <h2 id="how-ats-screening-works" className="text-[22px] text-foreground !mt-10 scroll-mt-24">How does ATS screening work?</h2>
         <p>
           An applicant tracking system is the software a company uses to collect and manage applications. Greenhouse, Lever, Workday, and Ashby are common ones. When you apply, the ATS parses your resume into fields like job titles, dates, skills, and education. Recruiters then search, filter, and sort that pool by the terms that matter for the role. Some systems add their own ranking on top.
         </p>
