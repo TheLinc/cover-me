@@ -243,7 +243,7 @@ export default function Page() {
 
         <h2 className="text-[22px] text-foreground !mt-10">The results</h2>
         <div className="overflow-x-auto !mt-6">
-          <table className="w-full text-[13.5px] border border-border rounded-[8px] overflow-hidden" style={{ borderCollapse: 'collapse' }}>
+          <table className="w-full min-w-[620px] text-[13.5px] border border-border rounded-[8px] overflow-hidden" style={{ borderCollapse: 'collapse' }}>
             <thead>
               <tr className="bg-elevated">
                 <th className={TH}>Resume layout</th>
@@ -256,7 +256,7 @@ export default function Page() {
             <tbody>
               {RESULTS.map((row, i) => (
                 <tr key={row.file} className={i % 2 === 0 ? 'bg-surface' : 'bg-elevated'}>
-                  <td className="px-3 py-3 font-medium text-foreground border-b border-border">
+                  <td className="px-3 py-3 font-medium text-foreground border-b border-border min-w-[150px]">
                     <a href={`${FILES}/${row.file}`} className={LINK}>{row.format}</a>
                   </td>
                   {row.cells.map((c, j) => (
