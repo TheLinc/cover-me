@@ -211,6 +211,17 @@ export default function Page() {
         </p>
         <figure className="!my-8">
           <Image
+            src="/guides/ats-friendly-resume-format/lever-image-only.png"
+            alt="Lever application form after uploading image-only.pdf. The upload shows Success, and the form is filled in with Full name Alex Rivera, Email alex.rivera@example.com, Phone 3125550142, Current location Chicago, IL, USA, and Current company Fernwood Labs."
+            width={1200}
+            height={1320}
+            sizes="(max-width: 800px) 100vw, 760px"
+            className="w-full h-auto rounded-[12px] border border-border"
+          />
+          <figcaption className="text-[13px] mt-3">Lever&rsquo;s form after I uploaded the image-only PDF. Every field is filled in, so Lever read the picture with OCR.</figcaption>
+        </figure>
+        <figure className="!my-8">
+          <Image
             src="/guides/ats-friendly-resume-format/workday-image-only.png"
             alt="Workday's My Information step after two uploads, side by side. Left, after single-column.pdf, First Name is Alex, Last Name is Rivera, and Address Line 1 says Marketing Manager. Right, after image-only.pdf, all three fields are empty."
             width={924}
@@ -223,17 +234,6 @@ export default function Page() {
         <p>
           Workday wasn&rsquo;t perfect on any file. Every time, it left the company blank on the first job, Fernwood Labs. It put the job title &ldquo;Marketing Manager&rdquo; into Address Line 1 for the plain PDF, the plain Word file and the table layout, and it never picked a degree. Those mistakes happened on the plain files too, so changing the format wouldn&rsquo;t have fixed them. Check what the form filled in before you submit.
         </p>
-        <figure className="!my-8">
-          <Image
-            src="/guides/ats-friendly-resume-format/lever-image-only.png"
-            alt="Lever application form after uploading image-only.pdf. The upload shows Success, and the form is filled in with Full name Alex Rivera, Email alex.rivera@example.com, Phone 3125550142, Current location Chicago, IL, USA, and Current company Fernwood Labs."
-            width={1200}
-            height={1320}
-            sizes="(max-width: 800px) 100vw, 760px"
-            className="w-full h-auto rounded-[12px] border border-border"
-          />
-          <figcaption className="text-[13px] mt-3">Lever&rsquo;s form after I uploaded the image-only PDF. Every field is filled in, so Lever read the picture with OCR.</figcaption>
-        </figure>
 
         <h2 className="text-[22px] text-foreground !mt-10">Which resume formats lose text?</h2>
         <p>
