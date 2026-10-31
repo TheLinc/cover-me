@@ -7,7 +7,7 @@ export const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.de
 // the two must always match the store listing.
 export const STORE_RATING = { value: 5, count: 3 }
 
-export const EXTENSION_VERSION = '1.3.1'
+export const EXTENSION_VERSION = '1.3.2'
 
 export const jsonLdApp = {
   '@context': 'https://schema.org',
