@@ -40,7 +40,7 @@ const faqJsonLd = {
       name: 'Is a PDF or a Word document better for an ATS?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: "Both worked in our test. Lever's autofill and Apache Tika read every word of the one-column PDF and the one-column Word file. What matters more is what's inside the file: real text in a single column, with your contact details in the body. Send whichever format the posting asks for.",
+        text: "Both worked in our test. Lever filled every field from the one-column PDF and the one-column Word file, and Apache Tika read all their text. What matters more is what's inside the file: real text in a single column, with your contact details in the body. Send whichever format the posting asks for.",
       },
     },
     {
@@ -48,7 +48,7 @@ const faqJsonLd = {
       name: 'Will a two-column resume get rejected by an ATS?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: "Not in our test. Lever filled every contact field from our two-column design, and the text extractors kept every word. The narrow sidebar did cause damage, though. The LinkedIn link wrapped onto two lines and came out split, and pdftotext read the spaced-out headings as \"C O N TA C T\". A one-column layout avoids both problems.",
+        text: "Not in our test. Lever filled every contact field from our two-column design, and the text extractors kept all of the text. The narrow sidebar did cause damage, though. The LinkedIn link wrapped onto two lines and came out split, and pdftotext read the spaced-out headings as \"C O N TA C T\". A one-column layout avoids both problems.",
       },
     },
     {
@@ -56,7 +56,7 @@ const faqJsonLd = {
       name: 'Does an ATS automatically reject resumes?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: "Rarely for formatting. In a 2025 Enhancv study, 23 of 25 US recruiters said their system doesn't auto-reject resumes for formatting, content or design. The other 2 set it to reject candidates below a match or experience threshold. Most automatic rejections come from knockout questions the recruiter writes into the form, such as work authorization. The often-quoted claim that 75% of resumes are rejected by ATS has no published study behind it.",
+        text: "Rarely for formatting. In a 2025 Enhancv study, 23 of 25 US recruiters said their system doesn't auto-reject resumes for formatting, content or design. The other 2 set it to reject candidates below a match or experience threshold. Recruiters can also add knockout questions to the form, such as work authorization, that reject an application automatically. The often-quoted claim that 75% of resumes are rejected by ATS has no published study behind it.",
       },
     },
     {
@@ -85,7 +85,7 @@ const CHECKLIST: { title: string; body: string }[] = [
   { title: 'Use one column', body: 'Put everything in a single column that reads top to bottom. Sidebars squeeze long lines like links and email addresses until they wrap and split.' },
   { title: 'Keep the text real', body: "Export from Word or Google Docs, not as a picture from a design app or a scan. If you can't highlight a word in your PDF, a parser without OCR can't read it either." },
   { title: 'Put your name and contact details in the body', body: "Type them as the first lines of the page, not in Word's header or footer area." },
-  { title: "Don't build the layout with tables or text boxes", body: 'Use plain paragraphs, bullets and tab stops. Tables were the only layout that gave a basic reader nothing at all.' },
+  { title: "Don't build the layout with tables or text boxes", body: 'Use plain paragraphs, bullets and tab stops. The table layout gave the basic Word reader nothing at all.' },
   { title: 'Use standard section headings', body: 'Summary, Experience, Education and Skills. Skip letter-spaced or decorative headings, which can come out as "E D U C AT I O N".' },
   { title: 'Send a PDF or a Word file', body: 'Both worked in this test. Follow the posting if it asks for one.' },
   { title: 'Then match the posting', body: "A clean format only gets your words read. Recruiters search those words for the posting's skills, so use its wording where it's true for you." },
@@ -226,7 +226,7 @@ export default function Page() {
           <strong className="text-foreground">Tables.</strong> The body-only reader got 0 characters from the table layout, because every word sat inside table cells. Tika read the cells in order.
         </p>
         <p>
-          <strong className="text-foreground">Two columns.</strong> Every word came out, sidebar first and then the main column, which is a reasonable order. The narrow sidebar did damage two things. The LinkedIn link wrapped onto two lines and was read as two pieces, and pdftotext read the spaced-out headings as separate letters:
+          <strong className="text-foreground">Two columns.</strong> All the text came out, sidebar first and then the main column, which is a reasonable order. The narrow sidebar did damage two things. The LinkedIn link wrapped onto two lines and was read as two pieces, and pdftotext read the spaced-out headings as separate letters:
         </p>
         <pre className="text-[12.5px] leading-[1.6] bg-elevated border border-border rounded-[8px] p-4 overflow-x-auto text-foreground whitespace-pre-wrap">
 {`Alex Rivera
