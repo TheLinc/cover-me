@@ -243,12 +243,12 @@ export default function Page() {
 
         <h3 className="text-[18px] text-foreground !mt-8">The table layout: SmartRecruiters mixed up cells</h3>
         <p>
-          In the table version, the education and skills sat in neighbouring cells. SmartRecruiters filled in the degree as &ldquo;B.A. Communications A/B testing, Copywriting&rdquo;, with two skills stuck on the end. Workday read the table but kept the &ldquo;&bull;&rdquo; bullet characters in the job descriptions. Lever and Ashby were fine.
+          In the table version, the education and skills sat in neighboring cells. SmartRecruiters filled in the degree as &ldquo;B.A. Communications A/B testing, Copywriting&rdquo;, with two skills stuck on the end. Workday read the table but kept the &ldquo;&bull;&rdquo; bullet characters in the job descriptions. Lever and Ashby were fine.
         </p>
         <Figure
           src="/guides/ats-friendly-resume-format/smartrecruiters-table.png"
           alt="SmartRecruiters' Education entry after two uploads. After single-column.pdf it shows University of Illinois, 2013 to 2017, B.A. Communications. After table-layout.docx the degree line reads B.A. Communications A/B testing, Copywriting."
-          width={1176}
+          width={596}
           height={422}
           caption="SmartRecruiters' education entry after the plain PDF (top) and the table layout (bottom)."
         />
