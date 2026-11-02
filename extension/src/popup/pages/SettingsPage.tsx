@@ -1,5 +1,6 @@
 import PageReadSetting from '../components/PageReadSetting'
 import AccountPanel from '../components/AccountPanel'
+import { ReviewLinksSetting } from '../components/ReviewAsk'
 
 export default function SettingsPage() {
   return (
@@ -10,6 +11,7 @@ export default function SettingsPage() {
       </div>
       <AccountPanel />
       <PageReadSetting />
+      <ReviewLinksSetting />
     </div>
   )
 }

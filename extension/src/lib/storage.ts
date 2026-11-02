@@ -1,4 +1,5 @@
 import type { AppMode, AuthSession, CoverLetter, ParsedResume, ResumeData, Settings, TailoredHistoryEntry } from '../types'
+import type { GenerationCount, ReviewAsk } from './review-ask'
 
 export const HISTORY_LIMIT = 50
 
@@ -49,6 +50,7 @@ export async function addToHistory(letter: CoverLetter): Promise<void> {
   const history = await getHistory()
   history.unshift(letter)
   await chrome.storage.local.set({ history: history.slice(0, HISTORY_LIMIT) })
+  await countGeneration().catch(() => {}) // a missed count must not fail a finished run
 }
 
 export async function saveHistory(letters: CoverLetter[]): Promise<void> {
@@ -71,11 +73,33 @@ export async function getTailoredHistory(): Promise<TailoredHistoryEntry[]> {
 export async function addToTailoredHistory(entry: TailoredHistoryEntry): Promise<void> {
   const list = await getTailoredHistory()
   await chrome.storage.local.set({ tailoredHistory: [entry, ...list].slice(0, TAILORED_HISTORY_LIMIT) })
+  await countGeneration().catch(() => {}) // a missed count must not fail a finished run
 }
 
 export async function deleteFromTailoredHistory(id: string): Promise<void> {
   const list = await getTailoredHistory()
   await chrome.storage.local.set({ tailoredHistory: list.filter((e) => e.id !== id) })
+}
+
+// Every successful generation lands in one of the two history lists above, so
+// they count it for the rating prompt (lib/review-ask.ts). Local only.
+async function countGeneration(): Promise<void> {
+  const gen = await getGenerationCount()
+  await chrome.storage.local.set({ generationCount: { count: (gen?.count ?? 0) + 1, firstAt: gen?.firstAt ?? new Date().toISOString() } })
+}
+
+export async function getGenerationCount(): Promise<GenerationCount | null> {
+  const { generationCount } = await chrome.storage.local.get('generationCount')
+  return (generationCount as GenerationCount) ?? null
+}
+
+export async function getReviewAsk(): Promise<ReviewAsk | null> {
+  const { reviewAsk } = await chrome.storage.local.get('reviewAsk')
+  return (reviewAsk as ReviewAsk) ?? null
+}
+
+export async function saveReviewAsk(ask: ReviewAsk): Promise<void> {
+  await chrome.storage.local.set({ reviewAsk: ask })
 }
 
 // Marks local entries with the account that holds them (see CoverLetter.account).

@@ -324,6 +324,30 @@ html, body {
 .page-read-notice-more:hover { color: var(--text); }
 .page-read-notice-actions { display: flex; gap: 8px; margin-top: 10px; }
 .page-read-notice-actions .btn { flex: 1; width: auto; }
+.review-ask {
+  background: var(--elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 12px 14px;
+  margin-top: 12px;
+  color: var(--text-2);
+  font-size: 12px;
+  line-height: 1.55;
+}
+.review-ask-title { color: var(--text); font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.review-ask-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-top: 10px; }
+.review-ask-actions .btn { width: auto; }
+.review-ask-actions .text-link { align-self: center; }
+.review-ask-dismiss {
+  margin-left: auto;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-2);
+  font: inherit;
+  cursor: pointer;
+}
+.review-ask-dismiss:hover { color: var(--text); }
 .page-read-setting { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); }
 .page-read-setting-title { color: var(--text); font-size: 13px; font-weight: 600; margin-bottom: 4px; }
 .page-read-setting-hint { color: var(--text-2); font-size: 12px; line-height: 1.55; margin-top: 6px; }
