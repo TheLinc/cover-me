@@ -336,7 +336,7 @@ html, body {
 }
 .review-ask-title { color: var(--text); font-size: 13px; font-weight: 600; margin-bottom: 4px; }
 .review-ask-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-top: 10px; }
-.review-ask-actions .btn { width: auto; }
+.review-ask-actions .btn { width: auto; text-decoration: none; }
 .review-ask-actions .text-link { align-self: center; }
 .review-ask-dismiss {
   margin-left: auto;

@@ -18,12 +18,13 @@ function endReviewAsk() {
 }
 
 // All three side by side every time: no "do you like it?" gate first.
-function ReviewLinks({ rateClass }: { rateClass: string }) {
+function ReviewLinks({ rateClass, onDone }: { rateClass: string; onDone?: () => void }) {
+  const done = () => { endReviewAsk(); onDone?.() }
   return (
     <>
-      <a className={rateClass} href="https://chromewebstore.google.com/detail/bpbnopjgjbimdjjdolhkgimllbgamgpi/reviews" target="_blank" rel="noreferrer" onClick={endReviewAsk}>Rate Cover Me</a>
-      <a className="text-link" href="https://github.com/TheLinc/cover-me" target="_blank" rel="noreferrer" onClick={endReviewAsk}>Star on GitHub</a>
-      <a className="text-link" href={`${WEB_URL}/support`} target="_blank" rel="noreferrer" onClick={endReviewAsk}>Send feedback</a>
+      <a className={rateClass} href="https://chromewebstore.google.com/detail/bpbnopjgjbimdjjdolhkgimllbgamgpi/reviews" target="_blank" rel="noreferrer" onClick={done}>Rate Cover Me</a>
+      <a className="text-link" href="https://github.com/TheLinc/cover-me" target="_blank" rel="noreferrer" onClick={done}>Star on GitHub</a>
+      <a className="text-link" href={`${WEB_URL}/support`} target="_blank" rel="noreferrer" onClick={done}>Send feedback</a>
     </>
   )
 }
@@ -35,7 +36,7 @@ export default function ReviewAsk({ onClose }: { onClose: () => void }) {
       <p id="review-ask-title" className="review-ask-title">Is Cover Me saving you time?</p>
       <p>A rating on the Chrome Web Store helps other job seekers find it.</p>
       <div className="review-ask-actions">
-        <ReviewLinks rateClass="btn btn-primary btn-sm" />
+        <ReviewLinks rateClass="btn btn-primary btn-sm" onDone={onClose} />
         <button
           className="review-ask-dismiss"
           onClick={() => {
