@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { WEB_URL } from '../../lib/config'
 import { shouldAskForReview } from '../../lib/review-ask'
 import { getGenerationCount, getReviewAsk, saveReviewAsk } from '../../lib/storage'
@@ -31,8 +32,15 @@ function ReviewLinks({ rateClass, onDone }: { rateClass: string; onDone?: () => 
 
 // The card under a result on the Generate page.
 export default function ReviewAsk({ onClose }: { onClose: () => void }) {
+  const ref = useRef<HTMLElement>(null)
+  // A long letter fills the popup, so the card opens below the fold. Bring it
+  // into view, without the slide when the user asked for less motion.
+  useEffect(() => {
+    const smooth = !matchMedia('(prefers-reduced-motion: reduce)').matches
+    ref.current?.scrollIntoView({ block: 'nearest', behavior: smooth ? 'smooth' : 'auto' })
+  }, [])
   return (
-    <section className="review-ask" aria-labelledby="review-ask-title">
+    <section ref={ref} className="review-ask" aria-labelledby="review-ask-title">
       <p id="review-ask-title" className="review-ask-title">Is Cover Me saving you time?</p>
       <p>A rating on the Chrome Web Store helps other job seekers find it.</p>
       <div className="review-ask-actions">
