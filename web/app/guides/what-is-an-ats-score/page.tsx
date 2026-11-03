@@ -111,7 +111,7 @@ export default function Page() {
           The score belongs to a resume and a posting together. The same resume scores differently against every job.
         </p>
 
-        <h2 className="text-[22px] text-foreground !mt-10">How does ATS screening work?</h2>
+        <h2 id="how-ats-screening-works" className="text-[22px] text-foreground !mt-10 scroll-mt-24">How does ATS screening work?</h2>
         <p>
           An applicant tracking system is the software a company uses to collect and manage applications. Greenhouse, Lever, Workday, and Ashby are common ones. When you apply, the ATS parses your resume into fields like job titles, dates, skills, and education. Recruiters then search, filter, and sort that pool by the terms that matter for the role. Some systems add their own ranking on top.
         </p>
@@ -149,7 +149,8 @@ export default function Page() {
           <li>Check the score again after tailoring, and close the remaining gaps where you honestly can.</li>
         </ol>
         <p>
-          Our <Link href="/guides/tailor-resume-to-job-description" className="text-brand-light hover:text-brand transition-colors">guide to tailoring your resume to a job description</Link> covers each step in detail.
+          Our <Link href="/guides/tailor-resume-to-job-description" className="text-brand-light hover:text-brand transition-colors">guide to tailoring your resume to a job description</Link> covers each step in detail. Keywords only count if the ATS can read your file, so check your format with our{' '}
+          <Link href="/guides/ats-friendly-resume-format" className="text-brand-light hover:text-brand transition-colors">test of six resume formats</Link>.
         </p>
 
         <h2 className="text-[22px] text-foreground !mt-10">How does Cover Me calculate its ATS score?</h2>
