@@ -98,7 +98,7 @@ export function dayRange(from: string, to: string): { from?: string; to?: string
   return range
 }
 
-// Summaries for the cards. null on any failure (not Pro, paused project,
+// Summaries for the cards. null on any failure (paused project,
 // network, a hang past 5 s): the dashboard renders without the section, the
 // applications page shows a retry.
 export async function fetchApplications(

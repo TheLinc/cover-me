@@ -25,7 +25,7 @@ export default async function ApplicationsPage() {
         <div className="mx-auto flex max-w-[1040px] flex-col gap-5">
           <header className="flex flex-col gap-1.5">
             <h1 className="text-[34px] font-semibold leading-tight tracking-[-0.03em] text-ink">Applications</h1>
-            <p className="text-[14px] text-ink-2">{pro ? 'Every letter and tailored resume you’ve made, synced from the extension.' : 'Every job you’ve made a letter or resume for in the extension.'}</p>
+            <p className="text-[14px] text-ink-2">{pro ? 'Every letter and tailored resume you’ve made, synced from the extension.' : 'Jobs you make a letter or resume for in the extension, tracked by stage.'}</p>
           </header>
           <ApplicationsBrowser pro={pro} />
         </div>
