@@ -177,16 +177,19 @@ export function ApplicationCard({ app: initial, onDeleted, onStageChange, compac
   if (compact) {
     return (
       <article className="relative flex flex-col gap-1 rounded-[20px] border border-line/80 bg-surface p-4 shadow-[0_1px_2px_rgba(30,27,75,0.05),0_10px_28px_-16px_rgba(30,27,75,0.22)] transition-shadow duration-200 ease-out hover:shadow-[0_1px_2px_rgba(30,27,75,0.06),0_16px_36px_-16px_rgba(30,27,75,0.32)]">
+        {/* The ring sits beside title and company, so a short title leaves no gap under it. */}
         <div className="flex items-start gap-2">
-          <h3 className="min-w-0 flex-1 text-[14px] font-semibold leading-snug tracking-[-0.01em] text-ink">
-            {/* Covers the whole card, so a click anywhere opens the drawer. */}
-            <button type="button" data-card={app.id} onClick={() => setDetailsOpen(true)} className="line-clamp-2 cursor-grab text-left after:absolute after:inset-0 after:rounded-[20px] focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-brand">
-              {title}
-            </button>
-          </h3>
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <h3 className="text-[14px] font-semibold leading-snug tracking-[-0.01em] text-ink">
+              {/* Covers the whole card, so a click anywhere opens the drawer. */}
+              <button type="button" data-card={app.id} onClick={() => setDetailsOpen(true)} className="line-clamp-2 cursor-grab text-left after:absolute after:inset-0 after:rounded-[20px] focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-brand">
+                {title}
+              </button>
+            </h3>
+            <p className="truncate text-[12.5px] leading-snug text-ink-2">{company}</p>
+          </div>
           {score !== null && <AtsRing score={score} size={34} />}
         </div>
-        <p className="truncate text-[12.5px] leading-snug text-ink-2">{company}</p>
         <p className="text-[12px] leading-snug text-subtle">Applied <LocalDate iso={app.createdAt} options={{ month: 'short', day: 'numeric', year: 'numeric' }} /></p>
         {dialogs}
       </article>
