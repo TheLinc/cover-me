@@ -11,8 +11,8 @@ export interface ApplicationSearch {
   summary: boolean   // what a card shows, nothing decrypted (the website's list)
 }
 
-// Where an application stands (migration 020). Closed covers rejected,
-// withdrawn and never heard back.
+// Where an application stands (migration 020's CHECK). Closed covers
+// rejected, withdrawn and never heard back. Mirrored in web/lib/applications.ts.
 export const STAGES = ['applied', 'interviewing', 'offer', 'closed'] as const
 export type Stage = typeof STAGES[number]
 export const isStage = (value: unknown): value is Stage => STAGES.includes(value as Stage)

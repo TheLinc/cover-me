@@ -143,7 +143,7 @@ components:
     textColor: "{colors.ink-2}"
     rounded: "{rounded.pill}"
     padding: "2px 10px"
-  badge-interview:
+  stage-pill:
     backgroundColor: "{colors.card}"
     textColor: "{colors.ink}"
     rounded: "{rounded.pill}"
@@ -179,7 +179,7 @@ Warm neutrals with Cover Me indigo as the only accent, and orange reserved for A
 - **Cover Me Indigo** (`brand-strong`) is the solid fill of the primary button, the Pro badge and the usage bar, and the color of text links ("See all", "Install the extension", the posting host in the drawer). It also tints the hover border and text of document chips.
 - **Pressed Indigo** (`brand-deep`) is the primary button's hover fill.
 - **Signal Indigo** (`brand`) is for focus rings only (the search's focus ring and the global button ring). It never colors text.
-- **Indigo Tint** (`brand-tint`) with **Indigo Ink** (`brand-ink`) mark Cover Me's output and active state: company monograms, the avatar fallback, the ATS score in the Resume chip and in the drawer, and a date or interview filter that is set.
+- **Indigo Tint** (`brand-tint`) with **Indigo Ink** (`brand-ink`) mark Cover Me's output and active state: company monograms, the avatar fallback, the ATS score in the Resume chip and in the drawer, and a date or stage filter that is set.
 
 ### Secondary
 - **Gap Tint** (`gap-tint`) with **Gap Ink** (`gap-ink`) mark missing keywords in the drawer and nothing else.
@@ -226,7 +226,7 @@ Applications tiles form a grid of two equal columns from 768px up with a 16px ga
 
 The Applications filter block (search, chips, count line) is sticky directly under the 64px site header from 768px up and sits on the paper background so tiles scroll under it. On phones it scrolls with the page. Tiles keep 16px between their header and their chip row; tile padding is 20px.
 
-The details drawer opens from the right, full width on phones and 520px from 640px up, with 24px side padding, 32px between sections, and a sticky footer for the interview mark and Delete.
+The details drawer opens from the right, full width on phones and 520px from 640px up, with 24px side padding, 32px between sections, and a sticky footer for the stage menu and Delete.
 
 ## Elevation & Depth
 
@@ -256,10 +256,10 @@ Pill buttons from the shared shadcn `Button`. Primary is Cover Me Indigo with wh
 The tile's signature: an outline pill per document with a download icon ("Cover letter", "Resume"). The Resume chip carries the newest ATS score as a small Indigo Tint capsule at its end. Hover turns the border and text Cover Me Indigo. One click downloads the newest PDF.
 
 ### Filter chips
-36px white pills under the search: two date pickers ("From Any date", "To Any date") and the "Got an interview" toggle. Idle text is Warm Grey with a Caption Grey label. When set, the chip fills with Indigo Tint, a 40% indigo border and Indigo Ink text, and the toggle gains a check. A ghost "Clear" pill appears only while a filter is set. Date chips open the shadcn Calendar in a Popover.
+36px white pills under the search: two date pickers ("From Any date", "To Any date") and one toggle per stage (Applied, Interviewing, Offer, Closed), any number on at once. Idle text is Warm Grey with a Caption Grey label. When set, the chip fills with Indigo Tint, a 40% indigo border and Indigo Ink text, and a toggle gains a check. A ghost "Clear" pill appears only while a filter is set. Date chips open the shadcn Calendar in a Popover.
 
 ### Application tile
-White, 20px corners, 20px padding, tile shadow. Top row: the monogram (company initial on Indigo Tint), the job title as a button that opens the drawer, then company and applied date in Warm Grey, and a ghost ⋮ menu (view details, go to posting, interview mark, delete). Bottom row: document chips on the left; the Interview badge and "Details" on the right. On phones "Details" collapses to its caret.
+White, 20px corners, 20px padding, tile shadow. Top row: the monogram (company initial on Indigo Tint), the job title as a button that opens the drawer, then company and applied date in Warm Grey, and a ghost ⋮ menu (view details, go to posting, delete). Bottom row: document chips on the left; the stage pill and "Details" on the right. On phones "Details" collapses to its caret.
 
 ### Search
 A 56px white pill across the full column, 16px text, a 20px magnifier inset 20px from the left, the search lift shadow, and a Signal Indigo focus ring. Placeholder "Search company or job title" in Caption Grey. Under the chips, one Caption Grey count line ("8 applications", "3 match", "30 shown").
@@ -268,10 +268,10 @@ A 56px white pill across the full column, 16px text, a 20px magnifier inset 20px
 One tile-styled row on home read left to right: Plan (Pro or Free badge), usage (label, big number "of" limit, 6px indigo bar, reset line), then the account action (outline "Manage billing" for Pro; the primary monthly upgrade and an outline quarterly button for Free). Free accounts get one plain sentence under the strip about what Pro adds.
 
 ### Badges
-Pills, 12px semibold. Pro is solid Cover Me Indigo with a small filled star. Free is Soft Panel with Warm Grey text. Interview is white with a hairline, Deep Ink text and a check.
+Pills, 12px semibold. Pro is solid Cover Me Indigo with a small filled star. Free is Soft Panel with Warm Grey text. The stage pill is a menu button: white with a hairline, 13px medium Deep Ink text and a small caret, opening a radio list of the four stages.
 
 ### Details drawer
-A right sheet on Warm Paper. Header: job title (Title), then company, applied date and the posting host as an indigo link. Sections are headed in 13px semibold Warm Grey, sentence case, with a count when there is more than one ("Cover letters (2)"). Each letter is a borderless white tile with its date, the full text and Copy and Download pills. The resume section heading carries the "ATS 72" capsule, then a "Missing" row of gap chips, then one slim white tile per tailored resume. The sticky footer holds the interview toggle (outline) and Delete (ghost, Rust) at the far right.
+A right sheet on Warm Paper. Header: job title (Title), then company, applied date and the posting host as an indigo link. Sections are headed in 13px semibold Warm Grey, sentence case, with a count when there is more than one ("Cover letters (2)"). Each letter is a borderless white tile with its date, the full text and Copy and Download pills. The resume section heading carries the "ATS 72" capsule, then a "Missing" row of gap chips, then one slim white tile per tailored resume. The sticky footer holds the stage pill and Delete (ghost, Rust) at the far right.
 
 ## Do's and Don'ts
 
@@ -287,6 +287,6 @@ A right sheet on Warm Paper. Header: job title (Title), then company, applied da
 ### Don't:
 - **Don't** wrap tiles in a panel or bordered section, or nest a bordered card in a bordered card.
 - **Don't** use Signal Indigo (`brand`) for text; text uses Cover Me Indigo or Indigo Ink.
-- **Don't** use circular dots or bullets as status markers; status is a labeled pill (Interview, Pro, Free).
+- **Don't** use circular dots or bullets as status markers; status is a labeled pill (a stage, Pro, Free).
 - **Don't** add uppercase, mono or tracked-out labels above headings in the app; a section is named by its own heading.
 - **Don't** use black or hard offset shadows; shadows are ink-tinted and soft.

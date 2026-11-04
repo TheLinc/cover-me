@@ -1,7 +1,8 @@
 import type { TailoredResume } from './pdf/types'
 
-// Where an application stands, in order (migration 020). Closed covers
-// rejected, withdrawn and never heard back.
+// Where an application stands, in order (migration 020's CHECK). Closed
+// covers rejected, withdrawn and never heard back. Mirrored from
+// backend/supabase/functions/_shared/application-search.ts.
 export const STAGES = ['applied', 'interviewing', 'offer', 'closed'] as const
 export type Stage = typeof STAGES[number]
 export const STAGE_LABEL: Record<Stage, string> = { applied: 'Applied', interviewing: 'Interviewing', offer: 'Offer', closed: 'Closed' }
@@ -9,28 +10,29 @@ export const STAGE_LABEL: Record<Stage, string> = { applied: 'Applied', intervie
 // A card: what the list shows. Letters and resumes as IDs and dates; a
 // resume's ATS score and gaps come from plain columns, so the server decrypts
 // nothing for the list.
-export interface ApplicationSummary {
+export interface StageState {
+  stage: Stage
+  stageChangedAt: string | null // null until the user first changes it
+}
+
+export interface ApplicationSummary extends StageState {
   id: string
   title: string
   company: string
   url: string
   createdAt: string
-  stage: Stage
-  stageChangedAt: string | null
   coverLetters: { id: string; createdAt: string }[]
   tailoredResumes: { id: string; createdAt: string; atsScore: number | null; atsGaps: string[] | null }[]
 }
 
 // One application in full, fetched when its details open or a Download is
 // first clicked (application-actions.ts).
-export interface ApplicationDetail {
+export interface ApplicationDetail extends StageState {
   id: string
   title: string
   company: string
   url: string
   createdAt: string
-  stage: Stage
-  stageChangedAt: string | null
   coverLetters: { id: string; letter: string; createdAt: string }[]
   tailoredResumes: { id: string; resume: TailoredResume; createdAt: string }[]
 }

@@ -4,7 +4,7 @@ import { decrypt, encrypt } from '../_shared/encrypt.ts'
 import { findOrCreateJobApplication } from '../_shared/job-application.ts'
 import { atsColumns, isUuid, MAX_UPLOAD_BYTES, parseUpload } from '../_shared/history-upload.ts'
 import { readBody } from '../_shared/read-body.ts'
-import { isStage, likeContains, parseSearch } from '../_shared/application-search.ts'
+import { isStage, likeContains, parseSearch, type Stage } from '../_shared/application-search.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SECRET_KEY = Deno.env.get('SERVICE_KEY')!
@@ -27,7 +27,7 @@ type Row = {
   company: string | null
   url: string | null
   created_at: string
-  stage: string
+  stage: Stage
   stage_changed_at: string | null
   cover_letters: Record<string, unknown>[] | null
   tailored_resumes: Record<string, unknown>[] | null

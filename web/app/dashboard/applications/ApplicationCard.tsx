@@ -8,7 +8,7 @@ import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescript
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Spinner } from '@/components/ui/spinner'
-import { newest, postingHost, STAGE_LABEL, type ApplicationSummary, type Stage } from '@/lib/applications'
+import { newest, postingHost, STAGE_LABEL, type ApplicationSummary, type Stage, type StageState } from '@/lib/applications'
 import { deleteApplication, downloadLetter, downloadResume, GONE, loadDetail, setStage } from '@/lib/application-actions'
 import { LocalDate } from '../LocalDate'
 import { ApplicationDetailsSheet } from './ApplicationDetailsSheet'
@@ -29,7 +29,7 @@ export function ApplicationCard({ app: initial, onDeleted, onStageChange }: {
   const router = useRouter()
   const [app, setApp] = useState(initial)
   // Once the user sets the stage here, theirs wins over a search that started before it.
-  const staged = useRef<Pick<ApplicationSummary, 'stage' | 'stageChangedAt'> | null>(null)
+  const staged = useRef<StageState | null>(null)
   const left = useRef(false)
   // A stage changed from the open drawer reaches the list once the drawer has
   // closed, so a filter that drops the card doesn't pull the drawer away.
@@ -107,7 +107,8 @@ export function ApplicationCard({ app: initial, onDeleted, onStageChange }: {
         pendingStage.current = null
         onStageChange?.(app.id, saved.stage)
       }
-      // The toast's live region is what tells a screen reader.
+      // The toast's live region tells a screen reader, with the drawer open
+      // too: Radix's aria-hidden leaves [aria-live] regions exposed.
       toast.success(`Moved to ${STAGE_LABEL[saved.stage]}`)
     } catch (e) {
       if (isGone(e)) return leave(GONE_MESSAGE)
