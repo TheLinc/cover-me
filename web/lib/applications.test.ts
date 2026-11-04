@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { dayRange, fetchApplications, fromDay, newest, postingHost, queryFromParams, toDay } from './applications'
+import { dayRange, fetchApplications, fromDay, newest, postingHost, queryFromParams, sortApplications, toDay, type ApplicationSummary } from './applications'
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -7,10 +7,10 @@ describe('fetchApplications', () => {
   it('asks for summaries, sends only the parameters that are set, and reads hasMore', async () => {
     const fetchMock = vi.fn(async () => new Response(JSON.stringify({ applications: [], hasMore: true }), { status: 200 }))
     vi.stubGlobal('fetch', fetchMock)
-    const page = await fetchApplications('https://x.supabase.co', 'at', { q: 'acme eng', from: '2026-10-01T04:00:00.000Z', to: '', stage: 'interviewing,offer', limit: 5 })
+    const page = await fetchApplications('https://x.supabase.co', 'at', { q: 'acme eng', from: '2026-10-01T04:00:00.000Z', to: '', limit: 5 })
     expect(page).toEqual({ applications: [], hasMore: true })
     const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit]
-    expect(url).toBe('https://x.supabase.co/functions/v1/applications?summary=1&q=acme+eng&from=2026-10-01T04%3A00%3A00.000Z&stage=interviewing%2Coffer&limit=5')
+    expect(url).toBe('https://x.supabase.co/functions/v1/applications?summary=1&q=acme+eng&from=2026-10-01T04%3A00%3A00.000Z&limit=5')
     expect((init.headers as Record<string, string>).Authorization).toBe('Bearer at')
   })
 
@@ -28,9 +28,9 @@ describe('fetchApplications', () => {
 })
 
 describe('queryFromParams', () => {
-  it('keeps q, from, to, before and stage only', () => {
+  it('keeps q, from and to, and always asks for the newest 200', () => {
     const p = new URLSearchParams('q=a&from=b&to=c&before=d&stage=offer,closed&interview=1&limit=50&id=x&detail=y')
-    expect(queryFromParams(p)).toEqual({ q: 'a', from: 'b', to: 'c', before: 'd', stage: 'offer,closed' })
+    expect(queryFromParams(p)).toEqual({ q: 'a', from: 'b', to: 'c', limit: 200 })
   })
 })
 
@@ -90,5 +90,36 @@ describe('dayRange', () => {
   })
   it('is null when from is after to', () => {
     expect(dayRange('2026-10-06', '2026-10-05')).toBeNull()
+  })
+})
+
+describe('sortApplications', () => {
+  const app = (id: string, company: string, createdAt: string, stageChangedAt: string | null = null): ApplicationSummary => ({
+    id, title: 'Role', company, url: '', createdAt, stage: 'applied', stageChangedAt, coverLetters: [], tailoredResumes: [],
+  })
+  const list = [
+    app('a', 'beta', '2026-10-01T00:00:00Z', '2026-10-20T00:00:00Z'), // applied first, moved last week
+    app('b', 'Acme', '2026-10-10T00:00:00Z'), // never moved
+    app('c', '', '2026-10-05T00:00:00Z', '2026-10-06T00:00:00Z'), // no company
+    app('d', 'acme', '2026-10-15T00:00:00Z'), // never moved, newest
+  ]
+  const ids = (sort: Parameters<typeof sortApplications>[1]) => sortApplications(list, sort).map((a) => a.id)
+
+  it('Recently moved: latest stage change first, never-moved cards by when they were applied', () => {
+    expect(ids('moved')).toEqual(['a', 'd', 'b', 'c'])
+  })
+
+  it('Newest applied and Oldest applied go by the applied date', () => {
+    expect(ids('newest')).toEqual(['d', 'b', 'c', 'a'])
+    expect(ids('oldest')).toEqual(['a', 'c', 'b', 'd'])
+  })
+
+  it('Company A to Z ignores case, puts no company last, and breaks ties newest first', () => {
+    expect(ids('company')).toEqual(['d', 'b', 'a', 'c'])
+  })
+
+  it('leaves the list it was given alone', () => {
+    sortApplications(list, 'newest')
+    expect(list.map((a) => a.id)).toEqual(['a', 'b', 'c', 'd'])
   })
 })

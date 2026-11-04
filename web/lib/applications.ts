@@ -41,8 +41,6 @@ export interface ApplicationsQuery {
   q?: string
   from?: string
   to?: string
-  before?: string
-  stage?: string // comma-separated stages, e.g. interviewing,offer
   limit?: number
 }
 
@@ -51,12 +49,17 @@ export interface ApplicationsPage {
   hasMore: boolean
 }
 
-// The parameters the website's /api/applications route forwards for the list.
-// limit stays the function's default there; only the dashboard's own server
-// call sets it.
+// The applications page loads every match at once, up to this many (the
+// function's cap for summaries), and sorts and filters by stage itself.
+// ponytail: one load of the newest 200. If anyone reaches it, page per stage
+// on the server instead.
+export const PAGE_LIMIT = 200
+
+// What the website's /api/applications route asks the function for: the
+// page's search and dates, and the newest PAGE_LIMIT.
 export function queryFromParams(params: URLSearchParams): ApplicationsQuery {
-  const query: ApplicationsQuery = {}
-  for (const key of ['q', 'from', 'to', 'before', 'stage'] as const) {
+  const query: ApplicationsQuery = { limit: PAGE_LIMIT }
+  for (const key of ['q', 'from', 'to'] as const) {
     const value = params.get(key)
     if (value) query[key] = value
   }
@@ -127,6 +130,27 @@ export function postingHost(url: string): string | null {
   } catch {
     return null
   }
+}
+
+// The applications page's one sort menu, for the board and the list.
+export const SORTS = ['moved', 'newest', 'oldest', 'company'] as const
+export type Sort = typeof SORTS[number]
+export const SORT_LABEL: Record<Sort, string> = { moved: 'Recently moved', newest: 'Newest applied', oldest: 'Oldest applied', company: 'Company A to Z' }
+
+const byCompany = new Intl.Collator(undefined, { sensitivity: 'base' })
+
+// A sorted copy. Recently moved counts a card never moved from when it was
+// applied; Company A to Z puts cards with no company last, ties newest first.
+export function sortApplications(list: ApplicationSummary[], sort: Sort): ApplicationSummary[] {
+  // As instants: the server's +00:00 and the browser's Z don't compare as text.
+  const desc = (a: string, b: string) => Date.parse(b) - Date.parse(a)
+  const compare: Record<Sort, (a: ApplicationSummary, b: ApplicationSummary) => number> = {
+    moved: (a, b) => desc(a.stageChangedAt ?? a.createdAt, b.stageChangedAt ?? b.createdAt),
+    newest: (a, b) => desc(a.createdAt, b.createdAt),
+    oldest: (a, b) => desc(b.createdAt, a.createdAt),
+    company: (a, b) => (!a.company !== !b.company ? (a.company ? -1 : 1) : byCompany.compare(a.company, b.company) || desc(a.createdAt, b.createdAt)),
+  }
+  return [...list].sort(compare[sort])
 }
 
 export function newest<T extends { createdAt: string }>(items: T[]): T | undefined {

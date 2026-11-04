@@ -257,13 +257,16 @@ Pill buttons from the shared shadcn `Button`. Primary is Cover Me Indigo with wh
 The tile's signature: an outline pill per document with a download icon ("Cover letter", "Resume"). The Resume chip carries the newest ATS score as a small Indigo Tint capsule at its end. Hover turns the border and text Cover Me Indigo. One click downloads the newest PDF.
 
 ### Filter chips
-36px white pills under the search: two date pickers ("From Any date", "To Any date") and one toggle per stage (Applied, Interviewing, Offer, Closed), any number on at once. Idle text is Warm Grey with a Caption Grey label. When set, the chip fills with Indigo Tint, a 40% indigo border and Indigo Ink text, and a toggle gains a check. A ghost "Clear" pill appears only while a filter is set. Date chips open the shadcn Calendar in a Popover.
+36px white pills under the search: two date pickers ("From Any date", "To Any date") and, in the list, one toggle per stage (Applied, Interviewing, Offer, Closed), any number on at once. Idle text is Warm Grey with a Caption Grey label. When set, the chip fills with Indigo Tint, a 40% indigo border and Indigo Ink text, and a toggle gains a check. A ghost "Clear" pill appears only while a filter is set. Date chips open the shadcn Calendar in a Popover. At the row's right end: the sort pill (an outline pill with a sort icon, opening a radio list) and the Board / List switch, two toggles in one white pill with the active one on Indigo Tint.
+
+### Board
+Four columns, one per stage, each a Soft Panel well with 20px corners, its name in 13px semibold Deep Ink and a Caption Grey count. Board cards are slim white tiles (16px corners, 14px padding): title, company, applied date, and a small ATS ring when there is a score. The whole card opens the drawer; dragging it with a mouse moves it to another column, which takes a Signal Indigo ring while a card is over it. An empty column holds a dashed note saying what puts a card there. Below about 1000px wide the columns scroll sideways. Board is the default from 768px, List below.
 
 ### Application tile
 White, 20px corners, 20px padding, tile shadow. Top row: the monogram (company initial on Indigo Tint), the job title as a button that opens the drawer, then company and applied date in Warm Grey, and a ghost ⋮ menu (view details, go to posting, delete). Bottom row: document chips on the left; the stage pill and "Details" on the right. On phones "Details" collapses to its caret.
 
 ### Search
-A 56px white pill across the full column, 16px text, a 20px magnifier inset 20px from the left, the search lift shadow, and a Signal Indigo focus ring. Placeholder "Search company or job title" in Caption Grey. Under the chips, one Caption Grey count line ("8 applications", "3 match", "30 shown").
+A 56px white pill across the full column, 16px text, a 20px magnifier inset 20px from the left, the search lift shadow, and a Signal Indigo focus ring. Placeholder "Search company or job title" in Caption Grey. Under the chips, one Caption Grey count line ("8 applications", "3 match", "Showing your newest 200").
 
 ### Plan strip
 One tile-styled row on home read left to right: Plan (Pro or Free badge), usage (label, big number "of" limit, 6px indigo bar, reset line), then the account action (outline "Manage billing" for Pro; the primary monthly upgrade and an outline quarterly button for Free). Free accounts get one plain sentence under the strip about what Pro adds.

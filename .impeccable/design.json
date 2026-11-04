@@ -337,7 +337,7 @@
       "name": "Outline button",
       "kind": "button",
       "refersTo": "button-outline",
-      "description": "Secondary actions: Manage billing, the quarterly plan, Load more.",
+      "description": "Secondary actions: Manage billing, the quarterly plan, Clear filters.",
       "html": "<button class=\"ds-btn-outline\">Manage billing</button>",
       "css": ".ds-btn-outline { font-family: var(--font-sans, Geist, system-ui, sans-serif); display: inline-flex; align-items: center; gap: 6px; border-radius: 9999px; font-size: 13px; font-weight: 500; cursor: pointer; transition: background-color .15s, border-color .15s, color .15s; height: 36px; padding: 0 16px; border: 1px solid var(--line, #E2DFDB); background: #fff; color: var(--ink, #1E1B4B); } .ds-btn-outline:hover { border-color: var(--ink-2, #5A534D); } .ds-btn-outline:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--paper, #F5F3F2), 0 0 0 4px var(--brand, #6366F1); }"
     },
