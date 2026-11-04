@@ -7,14 +7,14 @@ export const STAGES = ['applied', 'interviewing', 'offer', 'closed'] as const
 export type Stage = typeof STAGES[number]
 export const STAGE_LABEL: Record<Stage, string> = { applied: 'Applied', interviewing: 'Interviewing', offer: 'Offer', closed: 'Closed' }
 
-// A card: what the list shows. Letters and resumes as IDs and dates; a
-// resume's ATS score and gaps come from plain columns, so the server decrypts
-// nothing for the list.
 export interface StageState {
   stage: Stage
   stageChangedAt: string | null // null until the user first changes it
 }
 
+// A card: what the list shows. Letters and resumes as IDs and dates; a
+// resume's ATS score and gaps come from plain columns, so the server decrypts
+// nothing for the list.
 export interface ApplicationSummary extends StageState {
   id: string
   title: string

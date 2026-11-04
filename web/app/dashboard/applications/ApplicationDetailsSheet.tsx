@@ -192,7 +192,7 @@ export function ApplicationDetailsSheet({ app, open, onOpenChange, onClosed, onG
         </div>
 
         <footer className="sticky bottom-0 flex items-center gap-2 border-t border-line bg-background px-6 py-4 max-sm:px-4">
-          <StageMenu stage={app.stage} onChange={onStageChange} busy={busy !== null} saving={busy === 'stage'} align="start" />
+          <StageMenu title={app.title || 'Untitled role'} stage={app.stage} onChange={onStageChange} busy={busy !== null} saving={busy === 'stage'} align="start" />
           <Button variant="ghost" size="sm" className={`${PILL} ml-auto text-destructive hover:text-destructive`} onClick={onDelete} disabled={busy !== null}>Delete</Button>
         </footer>
       </SheetContent>

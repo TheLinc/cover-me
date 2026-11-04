@@ -171,7 +171,7 @@ export function ApplicationCard({ app: initial, onDeleted, onStageChange }: {
           </Button>
         )}
         <div className="ml-auto flex items-center gap-1">
-          <StageMenu stage={app.stage} onChange={changeStage} busy={busy !== null} saving={busy === 'stage'} />
+          <StageMenu title={title} stage={app.stage} onChange={changeStage} busy={busy !== null} saving={busy === 'stage'} />
           <Button variant="ghost" size="sm" className="h-8 gap-1 px-2.5 text-[13px] text-ink-2 hover:text-ink" onClick={() => setDetailsOpen(true)}>
             <span className="max-sm:sr-only">Details</span> <CaretRightIcon size={12} aria-hidden />
           </Button>

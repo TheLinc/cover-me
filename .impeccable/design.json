@@ -353,8 +353,8 @@
       "name": "Filter chip",
       "kind": "chip",
       "refersTo": "filter-chip",
-      "description": "Date and interview filters under the search; tinted indigo when set.",
-      "html": "<div style=\"display:flex;gap:8px\"><button class=\"ds-filter-chip\"><span class=\"ds-filter-label\">From</span> <span class=\"ds-filter-value\">Any date</span></button><button class=\"ds-filter-chip is-active\" aria-pressed=\"true\"><svg width=\"11\" height=\"11\" viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z\"/></svg>Got an interview</button></div>",
+      "description": "Date and stage filters under the search; tinted indigo when set.",
+      "html": "<div style=\"display:flex;gap:8px\"><button class=\"ds-filter-chip\"><span class=\"ds-filter-label\">From</span> <span class=\"ds-filter-value\">Any date</span></button><button class=\"ds-filter-chip is-active\" aria-pressed=\"true\"><svg width=\"11\" height=\"11\" viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z\"/></svg>Interviewing</button></div>",
       "css": ".ds-filter-chip { font-family: var(--font-sans, Geist, system-ui, sans-serif); display: inline-flex; align-items: center; gap: 6px; border-radius: 9999px; font-size: 13px; font-weight: 500; cursor: pointer; transition: background-color .15s, border-color .15s, color .15s; height: 36px; padding: 0 14px; border: 1px solid var(--line, #E2DFDB); background: #fff; color: var(--ink-2, #5A534D); font-weight: 400; } .ds-filter-chip:hover { color: var(--ink, #1E1B4B); } .ds-filter-chip:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--paper, #F5F3F2), 0 0 0 4px var(--brand, #6366F1); } .ds-filter-label { color: var(--subtle, #6B635D); } .ds-filter-value { color: var(--ink, #1E1B4B); font-weight: 500; } .ds-filter-chip.is-active { background: var(--brand-tint, #EEEEFF); border-color: rgba(79,70,229,0.4); color: var(--brand-ink, #4338CA); font-weight: 500; }"
     },
     {
@@ -385,9 +385,9 @@
       "name": "Badges",
       "kind": "chip",
       "refersTo": "badge-pro",
-      "description": "Plan and interview status as labeled pills.",
-      "html": "<div style=\"display:flex;gap:8px\"><span class=\"ds-badge ds-badge-pro\"><svg width=\"10\" height=\"10\" viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M234.29,114.85l-45,38.83L203,211.75a16.4,16.4,0,0,1-24.5,17.82L128,198.49,77.47,229.57A16.4,16.4,0,0,1,53,211.75l13.76-58.07-45-38.83A16.46,16.46,0,0,1,31.08,86l59-4.76,22.76-55.08a16.36,16.36,0,0,1,30.27,0l22.75,55.08,59,4.76a16.46,16.46,0,0,1,9.37,28.86Z\"/></svg>Pro</span><span class=\"ds-badge ds-badge-free\">Free</span><span class=\"ds-badge ds-badge-interview\"><svg width=\"11\" height=\"11\" viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z\"/></svg>Interview</span></div>",
-      "css": ".ds-badge { font-family: var(--font-sans, Geist, system-ui, sans-serif); display: inline-flex; align-items: center; gap: 4px; border-radius: 9999px; border: 1px solid transparent; padding: 2px 10px; font-size: 12px; font-weight: 600; } .ds-badge-pro { background: var(--brand-strong, #4F46E5); color: #fff; } .ds-badge-free { background: var(--panel, #ECEAE7); border-color: var(--line, #E2DFDB); color: var(--ink-2, #5A534D); } .ds-badge-interview { background: #fff; border-color: var(--line, #E2DFDB); color: var(--ink, #1E1B4B); font-weight: 500; }"
+      "description": "Plan status as labeled pills. An application's stage is a pill menu button (DESIGN.md, Badges).",
+      "html": "<div style=\"display:flex;gap:8px\"><span class=\"ds-badge ds-badge-pro\"><svg width=\"10\" height=\"10\" viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M234.29,114.85l-45,38.83L203,211.75a16.4,16.4,0,0,1-24.5,17.82L128,198.49,77.47,229.57A16.4,16.4,0,0,1,53,211.75l13.76-58.07-45-38.83A16.46,16.46,0,0,1,31.08,86l59-4.76,22.76-55.08a16.36,16.36,0,0,1,30.27,0l22.75,55.08,59,4.76a16.46,16.46,0,0,1,9.37,28.86Z\"/></svg>Pro</span><span class=\"ds-badge ds-badge-free\">Free</span></div>",
+      "css": ".ds-badge { font-family: var(--font-sans, Geist, system-ui, sans-serif); display: inline-flex; align-items: center; gap: 4px; border-radius: 9999px; border: 1px solid transparent; padding: 2px 10px; font-size: 12px; font-weight: 600; } .ds-badge-pro { background: var(--brand-strong, #4F46E5); color: #fff; } .ds-badge-free { background: var(--panel, #ECEAE7); border-color: var(--line, #E2DFDB); color: var(--ink-2, #5A534D); }"
     }
   ],
   "narrative": {
@@ -434,7 +434,7 @@
     "donts": [
       "**Don't** wrap tiles in a panel or bordered section, or nest a bordered card in a bordered card.",
       "**Don't** use Signal Indigo (`brand`) for text; text uses Cover Me Indigo or Indigo Ink.",
-      "**Don't** use circular dots or bullets as status markers; status is a labeled pill (Interview, Pro, Free).",
+      "**Don't** use circular dots or bullets as status markers; status is a labeled pill (a stage, Pro, Free).",
       "**Don't** add uppercase, mono or tracked-out labels above headings in the app; a section is named by its own heading.",
       "**Don't** use black or hard offset shadows; shadows are ink-tinted and soft."
     ]

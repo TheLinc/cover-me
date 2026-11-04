@@ -15,9 +15,9 @@ THESIS: The page opens on the question you came with, which application, and eve
 
 OWN-WORLD: The site's warm paper ground with white tiles that float on a soft two-part shadow (no panel around them), Cover Me indigo only on the primary search focus, chips' hover and the ATS score capsule (brand tint, brand ink). Geist throughout, pill chips and pill search, 20px tile corners, company monogram squares in brand tint.
 
-STORY: Land, type a company, see the tile, click "Cover letter" or "Resume 77" and the PDF downloads. Details (every version, gaps, copy) one click further in the drawer; interview mark and delete in the ⋮ menu.
+STORY: Land, type a company, see the tile, click "Cover letter" or "Resume 77" and the PDF downloads. Details (every version, gaps, copy) one click further in the drawer; the stage pill on each tile, delete in the ⋮ menu.
 
-FIRST VIEWPORT: Applications: page title and a one-line count, then a full-width pill search (56px tall) with the date pickers and the interview toggle as chips under it, sticky under the header from md up; then two columns of compact tiles (monogram, title, company and applied date, then document chips and Details). Home: greeting, one slim plan-and-usage strip (plan, generations used with a thin bar, reset, billing or upgrade action), then "Recent applications" with the six newest tiles in the same two columns and "See all".
+FIRST VIEWPORT: Applications: page title and a one-line count, then a full-width pill search (56px tall) with the date pickers and one toggle per stage as chips under it, sticky under the header from md up; then two columns of compact tiles (monogram, title, company and applied date, then document chips and Details). Home: greeting, one slim plan-and-usage strip (plan, generations used with a thin bar, reset, billing or upgrade action), then "Recent applications" with the six newest tiles in the same two columns and "See all".
 
 FORM: Surface structure 5 of my 7 (find-first compact tiles), dealt and chosen by the owner. Seed key 9af87b67.
 
