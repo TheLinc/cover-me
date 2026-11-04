@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Toggle } from '@/components/ui/toggle'
 import { Spinner } from '@/components/ui/spinner'
-import { dayRange, type ApplicationSummary, type ApplicationsPage, type ApplicationsQuery } from '@/lib/applications'
+import { dayRange, STAGE_LABEL, STAGES, type ApplicationSummary, type ApplicationsPage, type ApplicationsQuery, type Stage } from '@/lib/applications'
 import { createLatestSearch } from '@/lib/latest-search'
 import { ApplicationCard } from './ApplicationCard'
 import { TileSkeletons } from './TileSkeletons'
@@ -31,7 +31,8 @@ export function ApplicationsBrowser() {
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
   const [applications, setApplications] = useState<ApplicationSummary[]>([])
-  const [interviewOnly, setInterviewOnly] = useState(false)
+  // Stage filters; any number can be on. None on is every stage.
+  const [stages, setStages] = useState<Stage[]>([])
   const [hasMore, setHasMore] = useState(false)
   const [status, setStatus] = useState<Status>('loading')
   const [loadingMore, setLoadingMore] = useState(false)
@@ -63,8 +64,8 @@ export function ApplicationsBrowser() {
   useEffect(() => () => search.cancel(), [search])
 
   const range = dayRange(from, to)
-  const query: ApplicationsQuery | null = range ? { q: text.trim(), ...range, ...(interviewOnly ? { interview: '1' as const } : {}) } : null
-  const filtered = Boolean(text.trim() || from || to || interviewOnly)
+  const query: ApplicationsQuery | null = range ? { q: text.trim(), ...range, ...(stages.length ? { stage: stages.join(',') } : {}) } : null
+  const filtered = Boolean(text.trim() || from || to || stages.length)
 
   // The first load runs at once; after that, changes wait for a short pause
   // (typing sends one search per pause, not per keystroke).
@@ -77,7 +78,7 @@ export function ApplicationsBrowser() {
     if (loaded.current) search.schedule(query)
     else { loaded.current = true; search.now(query) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [text, from, to, interviewOnly])
+  }, [text, from, to, stages])
 
   function retry() {
     const q = failed.current ?? query
@@ -110,7 +111,7 @@ export function ApplicationsBrowser() {
   // Stays visible while a search loads (its text says so), so the bar keeps its height.
   const counted = range && status !== 'error' && applications.length > 0
 
-  // A deleted card, or one unmarked under the interview filter, leaves the list.
+  // A deleted card, or one moved out of the stages filtered on, leaves the list.
   function drop(id: string) {
     setApplications((list) => list.filter((a) => a.id !== id))
   }
@@ -135,7 +136,7 @@ export function ApplicationsBrowser() {
     setText('')
     setFrom('')
     setTo('')
-    setInterviewOnly(false)
+    setStages([])
   }
 
   return (
@@ -157,22 +158,33 @@ export function ApplicationsBrowser() {
             className="h-14 rounded-full border-line bg-surface pl-14 pr-5 text-[16px] text-ink shadow-[0_1px_2px_rgba(30,27,75,0.05),0_10px_28px_-18px_rgba(30,27,75,0.25)] placeholder:text-subtle focus-visible:ring-brand"
           />
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        {/* One line that scrolls sideways on narrow screens, out to the screen's
+            edges; py-1 leaves room for the focus ring. */}
+        <div className="-mx-5 -my-1 flex items-center gap-2 overflow-x-auto px-5 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <DateField id="app-from" label="From" value={from} onChange={setFrom} invalid={!range} describedBy={range ? undefined : 'app-range-error'} />
           <DateField id="app-to" label="To" value={to} onChange={setTo} invalid={!range} describedBy={range ? undefined : 'app-range-error'} />
-          <Toggle
-            pressed={interviewOnly}
-            onPressedChange={setInterviewOnly}
-            variant="outline"
-            size="sm"
-            className="h-9 gap-1.5 rounded-full border-line bg-surface px-3.5 text-[13px] font-normal text-ink-2 hover:bg-surface hover:text-ink data-[state=on]:border-[color-mix(in_srgb,var(--brand-strong)_40%,transparent)] data-[state=on]:bg-brand-tint data-[state=on]:font-medium data-[state=on]:text-brand-ink"
-          >
-            {interviewOnly && <CheckIcon size={13} weight="bold" aria-hidden />}
-            Got an interview
-          </Toggle>
+          <div role="group" aria-label="Filter by stage" className="flex items-center gap-2">
+            {STAGES.map((stage) => {
+              const on = stages.includes(stage)
+              return (
+                <Toggle
+                  key={stage}
+                  pressed={on}
+                  // Kept in STAGES order, so the same filters make the same query.
+                  onPressedChange={(pressed) => setStages((list) => STAGES.filter((s) => (s === stage ? pressed : list.includes(s))))}
+                  variant="outline"
+                  size="sm"
+                  className="h-9 gap-1.5 rounded-full border-line bg-surface px-3.5 text-[13px] font-normal text-ink-2 hover:bg-surface hover:text-ink data-[state=on]:border-[color-mix(in_srgb,var(--brand-strong)_40%,transparent)] data-[state=on]:bg-brand-tint data-[state=on]:font-medium data-[state=on]:text-brand-ink"
+                >
+                  {on && <CheckIcon size={13} weight="bold" aria-hidden />}
+                  <span className="cap-center">{STAGE_LABEL[stage]}</span>
+                </Toggle>
+              )
+            })}
+          </div>
           {filtered && (
             <Button variant="ghost" size="sm" className="h-9 gap-1 rounded-full px-3 text-[13px] text-ink-2" onClick={clearFilters}>
-              <XIcon size={12} aria-hidden />Clear
+              <XIcon size={12} aria-hidden /><span className="cap-center">Clear</span>
             </Button>
           )}
         </div>
@@ -191,7 +203,7 @@ export function ApplicationsBrowser() {
           filtered ? (
             <div className="flex flex-col items-start gap-2 rounded-[20px] border border-dashed border-line px-6 py-8">
               <p className="text-[15px] font-semibold text-ink">No applications match</p>
-              <p className="text-[13.5px] text-ink-2">Try another company or title, or widen the dates.</p>
+              <p className="text-[13.5px] text-ink-2">Try another company or title, or widen the dates or stages.</p>
               <Button variant="outline" size="sm" className="mt-2 rounded-full" onClick={clearFilters}>Clear filters</Button>
             </div>
           ) : (
@@ -214,7 +226,7 @@ export function ApplicationsBrowser() {
               key={app.id}
               app={app}
               onDeleted={(id) => { deleted.current.add(id); drop(id) }}
-              onInterviewChange={(id, interviewAt) => { if (shown.current.interview && !interviewAt) drop(id) }}
+              onStageChange={(id, stage) => { if (shown.current.stage && !shown.current.stage.split(',').includes(stage)) drop(id) }}
             />
           ))}
         </div>

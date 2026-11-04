@@ -1,6 +1,6 @@
 'use client'
 
-import type { ApplicationDetail, ApplicationSummary } from './applications'
+import type { ApplicationDetail, ApplicationSummary, Stage, StageState } from './applications'
 import type { PdfJob, TailoredResume } from './pdf/types'
 
 // The cards' calls to /api/applications. Signed out (401) or no longer Pro
@@ -46,14 +46,14 @@ export function loadDetail(app: ApplicationSummary): Promise<ApplicationDetail> 
   return promise
 }
 
-export async function setInterview(id: string, interview: boolean): Promise<string | null> {
+export async function setStage(id: string, stage: Stage): Promise<StageState> {
   const res = await call(`/api/applications?id=${encodeURIComponent(id)}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ interview }),
+    body: JSON.stringify({ stage }),
   })
   if (!res.ok) throw new Error(res.status === 404 ? GONE : String(res.status))
-  return ((await res.json()) as { interviewAt: string | null }).interviewAt
+  return (await res.json()) as StageState
 }
 
 export async function deleteApplication(id: string): Promise<void> {

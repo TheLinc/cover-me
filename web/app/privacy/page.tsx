@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
 }
 
-const EFFECTIVE_DATE = 'October 19, 2026'
+const EFFECTIVE_DATE = 'November 4, 2026'
 const CONTACT_EMAIL  = 'support@cover-me.dev'
 
 // ── Section heading ────────────────────────────────────────────────────────
@@ -275,7 +275,7 @@ export default function PrivacyPage() {
                 letters and tailored resumes are grouped by job application and saved locally in your
                 browser storage (BYOK and Hosted Free modes) or also synced to our backend (Hosted Pro
                 mode) for cross-device access. On our backend the letters and resumes are encrypted; the
-                job title, company, posting address, dates, interview mark, ATS match score and missing
+                job title, company, posting address, dates, application stage, ATS match score and missing
                 keywords that go with them are not, so you can search and filter them.
               </Li>
               <Li>
@@ -548,7 +548,7 @@ export default function PrivacyPage() {
             <H3>Server-side storage</H3>
             <Ul>
               <Li>Resume text, and a parsed copy of its structure, are encrypted with AES-256-GCM before being stored in our Supabase Postgres database. The encryption key is derived from a server-side secret. Plaintext resume text is never persisted to disk.</Li>
-              <Li>Cover letters and tailored resumes (Pro mode) are encrypted with AES-256-GCM before storage. The job title, company, posting address, dates, interview mark, ATS match score and missing keywords that go with them are stored unencrypted so you can search and filter them. Your resume's file name is stored unencrypted too.</Li>
+              <Li>Cover letters and tailored resumes (Pro mode) are encrypted with AES-256-GCM before storage. The job title, company, posting address, dates, application stage, ATS match score and missing keywords that go with them are stored unencrypted so you can search and filter them. Your resume's file name is stored unencrypted too.</Li>
               <Li>Rate-limit counters (all modes) hold only a keyed hash of an IP address, or a hash of your account ID when a new resume is read, and a counter not updated for two days is deleted at the next cleanup.</Li>
               <Li>All data in transit is protected by TLS 1.2 or higher (enforced by Supabase and Vercel).</Li>
               <Li>Database access is protected by Supabase Row-Level Security policies. Users can only access their own data rows.</Li>

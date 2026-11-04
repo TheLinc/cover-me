@@ -14,7 +14,7 @@ async function signedIn() {
 
 const notSignedIn = () => NextResponse.json({ error: 'Not signed in' }, { status: 401 })
 
-// One application's detail, the interview mark and delete pass straight
+// One application's detail, a stage change and delete pass straight
 // through: the function's answer and status are the page's.
 async function forward(token: string, method: string, params: Record<string, string>, body?: unknown, signal?: AbortSignal) {
   const url = new URL(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/applications`)

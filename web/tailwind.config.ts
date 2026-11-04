@@ -42,6 +42,7 @@ const config: Config = {
           glow:    'rgba(99,102,241,0.18)',
         },
         gap:    { DEFAULT: 'var(--gap)', tint: 'var(--gap-tint)', ink: 'var(--gap-ink)' },
+        offer:  { DEFAULT: 'var(--offer)', tint: 'var(--offer-tint)', ink: 'var(--offer-ink)' },
         night:  { DEFAULT: 'var(--night)', 2: 'var(--night-2)' },
         // The extension popup's dark UI, for product visuals only.
         ext: {

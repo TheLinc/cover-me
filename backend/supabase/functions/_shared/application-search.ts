@@ -7,9 +7,15 @@ export interface ApplicationSearch {
   to: string | null
   before: string | null
   limit: number
-  interview: boolean // only applications marked "got an interview"
+  stages: Stage[]    // only applications in these stages; empty is all
   summary: boolean   // what a card shows, nothing decrypted (the website's list)
 }
+
+// Where an application stands (migration 020's CHECK). Closed covers
+// rejected, withdrawn and never heard back. Mirrored in web/lib/applications.ts.
+export const STAGES = ['applied', 'interviewing', 'offer', 'closed'] as const
+export type Stage = typeof STAGES[number]
+export const isStage = (value: unknown): value is Stage => STAGES.includes(value as Stage)
 
 const MAX_Q = 100
 const MAX_TERMS = 5
@@ -45,7 +51,11 @@ export function parseSearch(params: URLSearchParams): ApplicationSearch | { erro
     limit = n
   }
 
-  return { terms, from, to, before, limit, interview: params.get('interview') === '1', summary: params.get('summary') === '1' }
+  // stage=interviewing,offer
+  const stages = (params.get('stage') ?? '').split(',').filter(Boolean)
+  if (!stages.every(isStage)) return { error: 'Invalid stage' }
+
+  return { terms, from, to, before, limit, stages, summary: params.get('summary') === '1' }
 }
 
 // Escape LIKE's own wildcards so a term matches literally.
