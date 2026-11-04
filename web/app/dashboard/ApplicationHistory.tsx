@@ -3,16 +3,18 @@ import { ArrowRightIcon } from '@phosphor-icons/react/dist/ssr'
 import { fetchApplications, type ApplicationSummary } from '@/lib/applications'
 import { ApplicationCard } from './applications/ApplicationCard'
 import { TileSkeletons } from './applications/TileSkeletons'
+import { BoardNotice } from './BoardNotice'
 
-// Pro history (2e). Streams in behind <Suspense> so the rest of the dashboard
-// doesn't wait on the applications function. Renders nothing if the call fails.
-export async function ProHistory({ accessToken }: { accessToken: string }) {
+// Recent applications (2e; every account since #101). Streams in behind
+// <Suspense> so the rest of the dashboard doesn't wait on the applications
+// function. Renders nothing if the call fails.
+export async function RecentApplications({ accessToken, pro }: { accessToken: string; pro: boolean }) {
   const page = await fetchApplications(process.env.NEXT_PUBLIC_SUPABASE_URL!, accessToken, { limit: 6 })
-  return page ? <ApplicationHistory applications={page.applications} /> : null
+  return page ? <ApplicationHistory applications={page.applications} pro={pro} /> : null
 }
 
 // Holds the section's place while it streams in, so the page below doesn't jump.
-export function ProHistorySkeleton() {
+export function RecentApplicationsSkeleton() {
   return (
     <section className="flex flex-col gap-4" aria-label="Loading recent applications">
       <h2 className="text-[20px] font-semibold tracking-[-0.02em] text-ink">Recent applications</h2>
@@ -22,7 +24,7 @@ export function ProHistorySkeleton() {
 }
 
 // The newest six as tiles; the applications page has the rest, with search.
-export function ApplicationHistory({ applications }: { applications: ApplicationSummary[] }) {
+export function ApplicationHistory({ applications, pro }: { applications: ApplicationSummary[]; pro: boolean }) {
   return (
     <section className="flex flex-col gap-4" aria-labelledby="recent-applications">
       <div className="flex items-baseline justify-between gap-4">
@@ -33,14 +35,15 @@ export function ApplicationHistory({ applications }: { applications: Application
           </Link>
         )}
       </div>
+      <BoardNotice />
       {applications.length === 0 ? (
         <div className="flex flex-col items-start gap-1.5 rounded-[20px] border border-dashed border-line px-6 py-7">
           <p className="text-[15px] font-semibold text-ink">No applications yet</p>
-          <p className="max-w-[46ch] text-[13.5px] text-ink-2">Letters and tailored resumes you make in the extension appear here, on every device.</p>
+          <p className="max-w-[46ch] text-[13.5px] text-ink-2">{pro ? 'Letters and tailored resumes you make in the extension appear here, on every device.' : 'Jobs you make a letter or resume for in the extension appear here.'}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {applications.map((app) => <ApplicationCard key={app.id} app={app} />)}
+          {applications.map((app) => <ApplicationCard key={app.id} app={app} pro={pro} />)}
         </div>
       )}
     </section>

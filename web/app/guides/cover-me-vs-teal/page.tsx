@@ -47,7 +47,7 @@ const faqJsonLd = {
       name: 'Does Cover Me have a resume builder or job tracker like Teal?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: "No. Cover Me starts from the resume you already have and tailors it to each posting. It keeps a history of your letters and tailored resumes, and Pro saves every application to a searchable dashboard, but it has no templates, resume builder or job tracking board. Teal's free plan includes a resume builder and unlimited job tracking.",
+        text: "Not like Teal's. Cover Me starts from the resume you already have and tailors it to each posting. Every Cover Me account tracks the jobs it generates for on a simple board, by stage, and Pro saves every letter and tailored resume to the account, but it has no templates, resume builder, contacts or follow-ups. Teal's free plan includes a resume builder and unlimited job tracking.",
       },
     },
     {
@@ -147,7 +147,7 @@ export default function Page() {
 
         <h2 className="text-[22px] text-foreground !mt-10">How much do Teal+ and Cover Me Pro cost?</h2>
         <p>
-          Teal+ costs $13 every 7 days, $29 every 30 days or $79 every 90 days. Cover Me Pro costs $15 a month or $35 every 3 months, for up to 25 generations a day with every application saved and searchable on your dashboard. With your own OpenAI or Claude API key, Cover Me is free and unlimited, and you pay the AI provider for what you use. Without a key, the hosted free plan gives 10 generations to start, then 5 a week.
+          Teal+ costs $13 every 7 days, $29 every 30 days or $79 every 90 days. Cover Me Pro costs $15 a month or $35 every 3 months, for up to 25 generations a day, with every letter and tailored resume saved to your account. With your own OpenAI or Claude API key, Cover Me is free and unlimited, and you pay the AI provider for what you use. Without a key, the hosted free plan gives 10 generations to start, then 5 a week.
         </p>
 
         <h2 className="text-[22px] text-foreground !mt-10">When is Teal the better choice?</h2>

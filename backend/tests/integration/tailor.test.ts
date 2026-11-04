@@ -227,12 +227,15 @@ describe('tailor', () => {
     expect(data?.[0].job_application_id).toBeTruthy()
   })
 
-  it('does not save history for free users', async () => {
+  it("puts a free account's job on the board, but keeps its resume out of the account", async () => {
     user = await createUser()
     await uploadResume(user)
     await callFunction('tailor', { token: user.token, body: { job: JOB } })
-    const { data } = await admin.from('tailored_resumes').select('id').eq('user_id', user.id)
-    expect(data).toHaveLength(0)
+
+    const res = await callFunction('applications', { token: user.token, query: { summary: '1' } })
+    const { applications } = await res.json()
+    expect(applications).toHaveLength(1)
+    expect(applications[0]).toMatchObject({ title: JOB.title, url: JOB.url, stage: 'applied', tailoredResumes: [] })
   })
 
   it('refuses past the free weekly allowance', async () => {

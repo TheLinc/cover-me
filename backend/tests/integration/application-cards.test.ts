@@ -106,10 +106,25 @@ describe('application cards', () => {
     expect((await get(u, { summary: '1', stage: 'saved' })).status).toBe(400)
   })
 
-  it('free accounts get 403', async () => {
+  // Free accounts track their jobs; letters and resumes on the server are Pro.
+  it('free accounts list, move and delete their applications, but get no documents or upload', async () => {
     const u = await user('hosted_free')
-    expect((await get(u, { detail: randomUUID() })).status).toBe(403)
-    expect((await patch(u, randomUUID(), { stage: 'offer' })).status).toBe(403)
+    const { data } = await admin.from('job_applications').insert({ user_id: u.id, ...job }).select('id').single()
+    const appId = data!.id as string
+
+    const list = await get(u, { summary: '1' })
+    expect(list.status).toBe(200)
+    expect(list.body.applications).toMatchObject([{ id: appId, stage: 'applied', coverLetters: [], tailoredResumes: [] }])
+    expect((await patch(u, appId, { stage: 'interviewing' })).status).toBe(200)
+    expect((await get(u, { summary: '1' })).body.applications[0].stage).toBe('interviewing')
+
+    expect((await get(u, { detail: appId })).status).toBe(403)
+    // The extension's history reads the full list: still refused, as before.
+    expect((await get(u, {})).status).toBe(403)
+    expect((await callFunction('applications', { token: u.token, body: { letters: [], tailored: [] } })).status).toBe(403)
+
+    expect((await callFunction('applications', { token: u.token, method: 'DELETE', query: { id: appId } })).status).toBe(200)
+    expect((await get(u, { summary: '1' })).body.applications).toEqual([])
   })
 
   it('delete checks the id and only deletes your own application', async () => {

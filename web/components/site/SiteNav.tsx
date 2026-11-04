@@ -17,7 +17,7 @@ const MARKETING_LINKS: NavLink[] = [
 ]
 
 // `actions` replaces the default Sign in / Install buttons (signed-in pages pass Sign out).
-// `links` replaces the marketing links (signed-in pages pass appLinks()).
+// `links` replaces the marketing links (signed-in pages pass APP_LINKS).
 export function SiteNav({ actions, links }: { actions?: ReactNode; links?: NavLink[] }) {
   const pathname = usePathname()
   const [scrolled, setScrolled] = useState(false)

@@ -8,7 +8,7 @@ import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescript
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Spinner } from '@/components/ui/spinner'
-import { newest, postingHost, STAGE_LABEL, type ApplicationSummary, type Stage, type StageState } from '@/lib/applications'
+import { newest, postingHost, PRO_LINE, STAGE_LABEL, type ApplicationSummary, type Stage, type StageState } from '@/lib/applications'
 import { deleteApplication, downloadLetter, downloadResume, GONE, GONE_MESSAGE, loadDetail, setStage } from '@/lib/application-actions'
 import { LocalDate } from '../LocalDate'
 import { ApplicationDetailsSheet } from './ApplicationDetailsSheet'
@@ -21,8 +21,10 @@ const UNREADABLE = 'unreadable'
 // One application. After a delete it tells the list (onDeleted), or refreshes
 // the server-rendered page when there's no list to tell, and renders nothing.
 // compact is the board's card: title, company and date, opening the drawer.
-export function ApplicationCard({ app: initial, onDeleted, onStageChange, compact = false }: {
+// A free account's card has no documents to offer (they stay in its browser).
+export function ApplicationCard({ app: initial, pro, onDeleted, onStageChange, compact = false }: {
   app: ApplicationSummary
+  pro: boolean
   onDeleted?: (id: string) => void
   // A list that's told keeps the stage itself; without one the card does.
   onStageChange?: (id: string, state: StageState) => void
@@ -142,6 +144,7 @@ export function ApplicationCard({ app: initial, onDeleted, onStageChange, compac
     <>
       <ApplicationDetailsSheet
         app={app}
+        pro={pro}
         open={detailsOpen}
         onOpenChange={setDetailsOpen}
         onClosed={() => {
@@ -218,13 +221,14 @@ export function ApplicationCard({ app: initial, onDeleted, onStageChange, compac
       </header>
 
       <div className="flex flex-wrap items-center gap-2">
-        {app.coverLetters.length > 0 && (
+        {!pro && <p className="text-[12.5px] leading-snug text-subtle">{PRO_LINE}</p>}
+        {pro && app.coverLetters.length > 0 && (
           <Button variant="outline" size="sm" className="h-8 gap-1.5 px-3 text-[13px] hover:border-brand-strong hover:text-brand-strong" onClick={() => download('letter')} disabled={busy !== null} aria-label="Download cover letter">
             {busy === 'letter' ? <Spinner className="size-3.5" /> : <DownloadSimpleIcon size={14} aria-hidden />}
             <span className="cap-center">Cover letter</span>
           </Button>
         )}
-        {app.tailoredResumes.length > 0 && (
+        {pro && app.tailoredResumes.length > 0 && (
           <Button variant="outline" size="sm" className="h-8 gap-1.5 px-3 text-[13px] hover:border-brand-strong hover:text-brand-strong" onClick={() => download('resume')} disabled={busy !== null} aria-label="Download resume">
             {busy === 'resume' ? <Spinner className="size-3.5" /> : <DownloadSimpleIcon size={14} aria-hidden />}
             <span className="cap-center">Resume</span>

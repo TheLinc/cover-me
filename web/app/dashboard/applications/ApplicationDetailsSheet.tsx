@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Spinner } from '@/components/ui/spinner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { postingHost, type ApplicationDetail, type ApplicationSummary, type Stage } from '@/lib/applications'
+import { postingHost, PRO_LINE, type ApplicationDetail, type ApplicationSummary, type Stage } from '@/lib/applications'
 import { downloadLetter, downloadResume, GONE, loadDetail } from '@/lib/application-actions'
 import { CopyLetterButton } from '../CopyLetterButton'
 import { LocalDate } from '../LocalDate'
@@ -24,9 +24,11 @@ const UNREADABLE = "Some of these couldn't be opened."
 
 // Everything for one application: the ATS result, then the newest tailored
 // resume drawn like its PDF and every letter, in tabs when there are both.
-// Its detail is fetched on first open.
-export function ApplicationDetailsSheet({ app, open, onOpenChange, onClosed, onGone, busy, onStageChange, onDelete }: {
+// Its detail is fetched on first open. A free account's drawer has the job
+// and its stage, and no documents to fetch.
+export function ApplicationDetailsSheet({ app, pro, open, onOpenChange, onClosed, onGone, busy, onStageChange, onDelete }: {
   app: ApplicationSummary
+  pro: boolean
   open: boolean
   onOpenChange: (open: boolean) => void
   onClosed: () => void // after the close animation
@@ -61,8 +63,8 @@ export function ApplicationDetailsSheet({ app, open, onOpenChange, onClosed, onG
   useEffect(() => { current.current++; setDetail(null); setState('idle') }, [app.coverLetters, app.tailoredResumes])
 
   useEffect(() => {
-    if (open && !detail && state === 'idle') load()
-  }, [open, detail, state, load])
+    if (pro && open && !detail && state === 'idle') load()
+  }, [pro, open, detail, state, load])
 
   async function download(run: () => Promise<void>) {
     try { await run() } catch { toast.error("Couldn't download it. Try again.") }
@@ -174,7 +176,9 @@ export function ApplicationDetailsSheet({ app, open, onOpenChange, onClosed, onG
             )}
           </div>
 
-          {resumes > 0 && letters > 0 ? (
+          {!pro ? (
+            <p className="text-[13.5px] text-ink-2">{PRO_LINE}</p>
+          ) : resumes > 0 && letters > 0 ? (
             <Tabs defaultValue="resume" className="flex flex-col gap-4">
               <TabsList aria-label="Documents" className="h-auto w-fit rounded-full bg-panel p-1">
                 <TabsTrigger value="resume" className={TAB}>{resumeLabel}</TabsTrigger>

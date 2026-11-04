@@ -28,6 +28,24 @@ describe('generate', () => {
     expect(first.messages[0].content).toContain(JOB.description)
   })
 
+  // Every account's generation is tracked on the board; the letter itself
+  // stays in the browser unless the account is Pro.
+  it("a free account's letter puts its job on the board once per posting link", async () => {
+    user = await createUser()
+    await uploadResume(user)
+
+    for (let i = 0; i < 2; i++) {
+      const res = await callFunction('generate', { token: user.token, body: { job: JOB } })
+      expect((await res.json()).letter).toBeTruthy()
+    }
+
+    const res = await callFunction('applications', { token: user.token, query: { summary: '1' } })
+    expect(res.status).toBe(200)
+    const { applications } = await res.json()
+    expect(applications).toHaveLength(1)
+    expect(applications[0]).toMatchObject({ title: JOB.title, company: JOB.company, url: JOB.url, stage: 'applied', coverLetters: [] })
+  })
+
   it('asks Sonnet 5.5 for the letter with adaptive thinking at high effort and server-side fallback', async () => {
     user = await createUser()
     await uploadResume(user)

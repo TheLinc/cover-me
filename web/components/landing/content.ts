@@ -3,7 +3,7 @@
 export const FAQ_ITEMS = [
   {
     q: "Is Cover Me free to use?",
-    a: "Yes. With your own Claude or OpenAI API key, Cover Me is free and unlimited, and you pay the provider for what you use. No account is needed. The hosted free plan gives you 10 AI generations to start, then 5 a week, with cover letters and resume tailoring counted together. Pro is $15 a month or $35 every 3 months for up to 25 generations a day, with every application saved and searchable on your dashboard. On the free plan and with your own key, the extension keeps your last 50 letters and 20 tailored resumes.",
+    a: "Yes. With your own Claude or OpenAI API key, Cover Me is free and unlimited, and you pay the provider for what you use. No account is needed. The hosted free plan gives you 10 AI generations to start, then 5 a week, with cover letters and resume tailoring counted together. Pro is $15 a month or $35 every 3 months for up to 25 generations a day, with every letter and tailored resume saved to your account, on any device. Free and Pro accounts both track every job they generate for on a board on the dashboard; the free plan saves the job's title, company and link there, not the documents. On the free plan and with your own key, the extension keeps your last 50 letters and 20 tailored resumes in your browser.",
   },
   {
     q: "Can Cover Me tailor my resume too?",

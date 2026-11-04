@@ -567,15 +567,19 @@ Deno.serve(async (req) => {
       resume.atsGaps = atsGaps
     }
 
-    // Persist for Pro users, non-fatal if it fails. Under the extension's
-    // local ID when it sends one (1.2.0 doesn't), never overwriting an
-    // existing row, so a later upload of local history can't duplicate it.
-    // ponytail: a local ID that's already someone else's still leaves an empty
-    // job application here; only a client making up IDs can cause that.
+    // Every account's job goes on its board; the resume itself is kept for
+    // Pro only. Non-fatal if either fails. Under the extension's local ID
+    // when it sends one (1.2.0 doesn't), never overwriting an existing row,
+    // so a later upload of local history can't duplicate it.
+    let jobAppId: string | undefined
+    try {
+      jobAppId = await findOrCreateJobApplication(supabase, userId, job)
+    } catch {
+      console.error('Failed to save job application')
+    }
     let savedId: string | undefined
-    if (tier === 'hosted_pro') {
+    if (tier === 'hosted_pro' && jobAppId) {
       try {
-        const jobAppId = await findOrCreateJobApplication(supabase, userId, job)
         const row = {
           user_id: userId,
           job_application_id: jobAppId,
