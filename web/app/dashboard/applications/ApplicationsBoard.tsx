@@ -69,8 +69,10 @@ export function ApplicationsBoard({ applications, onMove, onDeleted, onStageChan
         if (to) onMove(dragged(active.data.current), to)
       }}
     >
-      {/* All four columns fit from about 1000px wide; narrower screens scroll them sideways. */}
-      <div className="-mx-5 -my-2 grid auto-cols-[minmax(224px,1fr)] grid-flow-col gap-5 overflow-x-auto px-5 py-2">
+      {/* All four columns fit from about 1000px wide; narrower screens scroll
+          them sideways. The scroller clips, so its padding leaves room for the
+          outlines and the tile shadows. */}
+      <div className="-mx-5 -mb-8 -mt-2 grid auto-cols-[minmax(224px,1fr)] grid-flow-col gap-5 overflow-x-auto px-5 pb-8 pt-2">
         {STAGES.map((stage) => {
           const cards = applications.filter((a) => a.stage === stage)
           return (
@@ -133,7 +135,7 @@ function Draggable({ app, children }: { app: ApplicationSummary; children: React
       // The drawer and delete dialog are portals inside this card, and React
       // bubbles their events here: only a press on the card itself drags.
       onMouseDown={(e) => { if (e.currentTarget.contains(e.target as Node)) listeners?.onMouseDown?.(e) }}
-      className={cn('cursor-grab', isDragging && 'opacity-40')}
+      className={cn(isDragging && 'opacity-40')}
     >
       {children}
     </div>

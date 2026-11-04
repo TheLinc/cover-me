@@ -276,7 +276,7 @@ export function ApplicationsBrowser() {
             Couldn&apos;t load your applications.{' '}
             <Button variant="link" size="sm" className="h-auto p-0 text-[13.5px]" onClick={retry}>Try again</Button>
           </p>
-        ) : !view || (status === 'loading' && applications.length === 0) ? (
+        ) : !view || (status === 'loading' && shownCount === 0) ? (
           <TileSkeletons count={4} label="Loading applications" />
         ) : shownCount === 0 ? (
           filtered ? (

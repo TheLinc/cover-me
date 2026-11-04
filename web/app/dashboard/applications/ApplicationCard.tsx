@@ -180,7 +180,7 @@ export function ApplicationCard({ app: initial, onDeleted, onStageChange, compac
         <div className="flex items-start gap-2">
           <h3 className="min-w-0 flex-1 text-[14px] font-semibold leading-snug tracking-[-0.01em] text-ink">
             {/* Covers the whole card, so a click anywhere opens the drawer. */}
-            <button type="button" data-card={app.id} onClick={() => setDetailsOpen(true)} className="line-clamp-2 text-left after:absolute after:inset-0 after:rounded-[20px] focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-brand">
+            <button type="button" data-card={app.id} onClick={() => setDetailsOpen(true)} className="line-clamp-2 cursor-grab text-left after:absolute after:inset-0 after:rounded-[20px] focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-brand">
               {title}
             </button>
           </h3>
