@@ -147,7 +147,8 @@ components:
     backgroundColor: "{colors.card}"
     textColor: "{colors.ink}"
     rounded: "{rounded.pill}"
-    padding: "2px 10px"
+    height: "32px"
+    padding: "0 12px"
 ---
 
 # Design System: Cover Me dashboard

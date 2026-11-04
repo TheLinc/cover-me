@@ -201,7 +201,7 @@ export function ApplicationsBrowser() {
           filtered ? (
             <div className="flex flex-col items-start gap-2 rounded-[20px] border border-dashed border-line px-6 py-8">
               <p className="text-[15px] font-semibold text-ink">No applications match</p>
-              <p className="text-[13.5px] text-ink-2">Try another company or title, or widen the dates.</p>
+              <p className="text-[13.5px] text-ink-2">Try another company or title, or widen the dates or stages.</p>
               <Button variant="outline" size="sm" className="mt-2 rounded-full" onClick={clearFilters}>Clear filters</Button>
             </div>
           ) : (
