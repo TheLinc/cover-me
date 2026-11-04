@@ -7,8 +7,9 @@ import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Toggle } from '@/components/ui/toggle'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { dayRange, PAGE_LIMIT, SORT_LABEL, SORTS, sortApplications, STAGE_LABEL, STAGES, type ApplicationSummary, type ApplicationsPage, type ApplicationsQuery, type Sort, type Stage, type StageState } from '@/lib/applications'
-import { GONE, setStage } from '@/lib/application-actions'
+import { GONE, GONE_MESSAGE, setStage } from '@/lib/application-actions'
 import { createLatestSearch } from '@/lib/latest-search'
 import { ApplicationCard } from './ApplicationCard'
 import { ApplicationsBoard } from './ApplicationsBoard'
@@ -26,6 +27,8 @@ const stored = (key: string) => { try { return localStorage.getItem(key) } catch
 const store = (key: string, value: string) => { try { localStorage.setItem(key, value) } catch { /* not remembered */ } }
 
 const CHIP = 'h-9 gap-1.5 rounded-full border-line bg-surface px-3.5 text-[13px] font-normal text-ink-2 hover:bg-surface hover:text-ink data-[state=on]:border-[color-mix(in_srgb,var(--brand-strong)_40%,transparent)] data-[state=on]:bg-brand-tint data-[state=on]:font-medium data-[state=on]:text-brand-ink'
+
+const VIEW_ITEM = 'h-8 gap-1.5 rounded-full px-3 text-[13px] font-normal text-ink-2 hover:bg-transparent hover:text-ink data-[state=on]:bg-brand-tint data-[state=on]:font-medium data-[state=on]:text-brand-ink'
 
 async function load(query: ApplicationsQuery, signal: AbortSignal): Promise<ApplicationsPage> {
   const params = new URLSearchParams()
@@ -89,7 +92,8 @@ export function ApplicationsBrowser() {
   const range = dayRange(from, to)
   const query: ApplicationsQuery | null = range ? { q: text.trim(), ...range } : null
   const searched = Boolean(text.trim() || from || to)
-  const filtered = searched || (view === 'list' && stages.length > 0)
+  const stageFiltered = view === 'list' && stages.length > 0
+  const filtered = searched || stageFiltered
 
   // The first load runs at once; after that, changes wait for a short pause
   // (typing sends one search per pause, not per keystroke).
@@ -109,7 +113,7 @@ export function ApplicationsBrowser() {
   }
 
   const sorted = useMemo(() => sortApplications(applications, sort), [applications, sort])
-  const listed = view === 'list' && stages.length ? sorted.filter((a) => stages.includes(a.stage)) : sorted
+  const listed = stageFiltered ? sorted.filter((a) => stages.includes(a.stage)) : sorted
 
   function patch(id: string, state: StageState) {
     setApplications((list) => list.map((a) => (a.id === id ? { ...a, ...state } : a)))
@@ -135,23 +139,26 @@ export function ApplicationsBrowser() {
     const n = (moves.current.get(app.id) ?? 0) + 1
     moves.current.set(app.id, n)
     const was: StageState = { stage: app.stage, stageChangedAt: app.stageChangedAt }
-    patch(app.id, { stage, stageChangedAt: new Date().toISOString() })
+    // Kept as staged at once, so a search landing mid-save doesn't pull it back.
+    stageSaved(app.id, { stage, stageChangedAt: new Date().toISOString() })
     try {
       const saved = await setStage(app.id, stage)
       if (moves.current.get(app.id) === n) stageSaved(app.id, saved)
     } catch (e) {
       if (e instanceof Error && e.message === GONE) {
         removed(app.id)
-        toast.success('This application was already deleted.')
+        toast.success(GONE_MESSAGE)
         return
       }
       if (moves.current.get(app.id) !== n) return
-      patch(app.id, was)
+      stageSaved(app.id, was)
       toast.error(`Couldn't move it to ${STAGE_LABEL[stage]}, so it's back in ${STAGE_LABEL[was.stage]}. Try again.`)
     }
   }
 
   const shownCount = view === 'list' ? listed.length : applications.length
+  // The server caps after searching: with a search on, it's the newest matches.
+  const pool = searched ? `the newest ${PAGE_LIMIT} matches` : `your newest ${PAGE_LIMIT}`
   const statusText = !range
     ? 'The From date is after the To date.'
     : status === 'error'
@@ -160,10 +167,10 @@ export function ApplicationsBrowser() {
         ? 'Loading applications'
         : shownCount === 0
           ? (filtered ? 'No applications match' : 'No applications yet')
-          : filtered
-            ? `${shownCount} ${shownCount === 1 ? 'matches' : 'match'}${capped ? ` among the newest ${PAGE_LIMIT}` : ''}`
-            : capped
-              ? `Showing your newest ${PAGE_LIMIT}`
+          : capped
+            ? (stageFiltered ? `${shownCount} ${shownCount === 1 ? 'matches' : 'match'}, from ${pool}` : `Showing ${pool}`)
+            : filtered
+              ? `${shownCount} ${shownCount === 1 ? 'matches' : 'match'}`
               : `${shownCount} application${shownCount === 1 ? '' : 's'}`
   // Stays visible while a search loads (its text says so), so the bar keeps its height.
   const counted = range && status !== 'error' && shownCount > 0
@@ -172,7 +179,8 @@ export function ApplicationsBrowser() {
     setText('')
     setFrom('')
     setTo('')
-    setStages([])
+    // The board hides the stage filters, so its Clear leaves them for the list.
+    if (view === 'list') setStages([])
   }
 
   const dimmed = status === 'loading'
@@ -241,20 +249,18 @@ export function ApplicationsBrowser() {
                   </DropdownMenuRadioGroup>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <div role="group" aria-label="View" className="flex items-center gap-1 rounded-full border border-line bg-surface p-0.5">
-                {(['board', 'list'] as const).map((v) => (
-                  <Toggle
-                    key={v}
-                    pressed={view === v}
-                    onPressedChange={(pressed) => { if (pressed) chooseView(v) }}
-                    size="sm"
-                    className="h-8 gap-1.5 rounded-full px-3 text-[13px] font-normal text-ink-2 hover:bg-transparent hover:text-ink data-[state=on]:bg-brand-tint data-[state=on]:font-medium data-[state=on]:text-brand-ink"
-                  >
-                    {v === 'board' ? <KanbanIcon size={15} aria-hidden /> : <ListBulletsIcon size={15} aria-hidden />}
-                    {v === 'board' ? 'Board' : 'List'}
-                  </Toggle>
-                ))}
-              </div>
+              <ToggleGroup
+                type="single"
+                aria-label="View"
+                value={view}
+                // Clicking the pressed one would leave neither on: ignored.
+                onValueChange={(value) => { if (value) chooseView(value as View) }}
+                size="sm"
+                className="gap-1 rounded-full border border-line bg-surface p-0.5"
+              >
+                <ToggleGroupItem value="board" className={VIEW_ITEM}><KanbanIcon size={15} aria-hidden />Board</ToggleGroupItem>
+                <ToggleGroupItem value="list" className={VIEW_ITEM}><ListBulletsIcon size={15} aria-hidden />List</ToggleGroupItem>
+              </ToggleGroup>
             </div>
           )}
         </div>
@@ -292,7 +298,7 @@ export function ApplicationsBrowser() {
         // The old results, dimmed and out of reach until the new ones replace them.
         <div inert={dimmed} className={dimmed ? 'opacity-60 transition-opacity' : 'transition-opacity'}>
           {view === 'board' ? (
-            <ApplicationsBoard applications={sorted} onMove={move} onDeleted={removed} onStageChange={stageSaved} filtered={searched} />
+            <ApplicationsBoard applications={sorted} onMove={move} onDeleted={removed} onStageChange={stageSaved} />
           ) : (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {listed.map((app) => (

@@ -20,6 +20,7 @@ async function call(path: string, init?: RequestInit): Promise<Response> {
 // The message of the error thrown when the application is gone (404): deleted
 // from another device or tab since the list loaded.
 export const GONE = 'gone'
+export const GONE_MESSAGE = 'This application was already deleted.'
 
 // Each application's detail is fetched once and kept for the visit: the
 // drawer and both Download buttons share it. It's kept against the letter and

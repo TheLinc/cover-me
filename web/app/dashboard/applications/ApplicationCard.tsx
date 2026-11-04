@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Spinner } from '@/components/ui/spinner'
 import { newest, postingHost, STAGE_LABEL, type ApplicationSummary, type Stage, type StageState } from '@/lib/applications'
-import { deleteApplication, downloadLetter, downloadResume, GONE, loadDetail, setStage } from '@/lib/application-actions'
+import { deleteApplication, downloadLetter, downloadResume, GONE, GONE_MESSAGE, loadDetail, setStage } from '@/lib/application-actions'
 import { LocalDate } from '../LocalDate'
 import { ApplicationDetailsSheet } from './ApplicationDetailsSheet'
 import { AtsRing } from './AtsRing'
@@ -17,7 +17,6 @@ import { StageMenu } from './StageMenu'
 
 type Busy = 'letter' | 'resume' | 'stage' | 'delete' | null
 const UNREADABLE = 'unreadable'
-const GONE_MESSAGE = 'This application was already deleted.'
 
 // One application. After a delete it tells the list (onDeleted), or refreshes
 // the server-rendered page when there's no list to tell, and renders nothing.
@@ -177,11 +176,11 @@ export function ApplicationCard({ app: initial, onDeleted, onStageChange, compac
 
   if (compact) {
     return (
-      <article className="relative flex flex-col gap-1 rounded-[16px] border border-line bg-surface p-3.5 shadow-[0_1px_2px_rgba(30,27,75,0.05),0_8px_20px_-14px_rgba(30,27,75,0.22)] transition-shadow duration-200 ease-out hover:shadow-[0_1px_2px_rgba(30,27,75,0.06),0_14px_28px_-14px_rgba(30,27,75,0.32)]">
+      <article className="relative flex flex-col gap-1 rounded-[20px] border border-line/80 bg-surface p-4 shadow-[0_1px_2px_rgba(30,27,75,0.05),0_10px_28px_-16px_rgba(30,27,75,0.22)] transition-shadow duration-200 ease-out hover:shadow-[0_1px_2px_rgba(30,27,75,0.06),0_16px_36px_-16px_rgba(30,27,75,0.32)]">
         <div className="flex items-start gap-2">
           <h3 className="min-w-0 flex-1 text-[14px] font-semibold leading-snug tracking-[-0.01em] text-ink">
             {/* Covers the whole card, so a click anywhere opens the drawer. */}
-            <button type="button" onClick={() => setDetailsOpen(true)} className="line-clamp-2 text-left after:absolute after:inset-0 after:rounded-[16px] focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-brand">
+            <button type="button" data-card={app.id} onClick={() => setDetailsOpen(true)} className="line-clamp-2 text-left after:absolute after:inset-0 after:rounded-[20px] focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-brand">
               {title}
             </button>
           </h3>
