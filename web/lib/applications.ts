@@ -9,10 +9,6 @@ export const STAGE_LABEL: Record<Stage, string> = { applied: 'Applied', intervie
 
 // Shown on a free account's cards, where a Pro one offers its documents.
 export const PRO_LINE = 'Your letters and resumes on any device with Pro'
-// The applications list before the first one.
-export const emptyApplications = (pro: boolean) => pro
-  ? 'Letters and tailored resumes you make in the extension appear here, on every device.'
-  : 'Jobs you make a letter or resume for in the extension appear here.'
 
 export interface StageState {
   stage: Stage

@@ -8,12 +8,13 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuRadio
 import { Input } from '@/components/ui/input'
 import { Toggle } from '@/components/ui/toggle'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import { dayRange, emptyApplications, PAGE_LIMIT, SORT_LABEL, SORTS, sortApplications, STAGE_LABEL, STAGES, type ApplicationSummary, type ApplicationsPage, type ApplicationsQuery, type Sort, type Stage, type StageState } from '@/lib/applications'
+import { dayRange, PAGE_LIMIT, SORT_LABEL, SORTS, sortApplications, STAGE_LABEL, STAGES, type ApplicationSummary, type ApplicationsPage, type ApplicationsQuery, type Sort, type Stage, type StageState } from '@/lib/applications'
 import { GONE, GONE_MESSAGE, setStage } from '@/lib/application-actions'
 import { createLatestSearch } from '@/lib/latest-search'
 import { ApplicationCard } from './ApplicationCard'
 import { ApplicationsBoard } from './ApplicationsBoard'
 import { TileSkeletons } from './TileSkeletons'
+import { EmptyApplications } from './EmptyApplications'
 import { DateField } from './DateField'
 import { BOARD_SEEN_KEY } from '../BoardNotice'
 
@@ -296,10 +297,7 @@ export function ApplicationsBrowser({ pro }: { pro: boolean }) {
               <Button variant="outline" size="sm" className="mt-2 rounded-full" onClick={clearFilters}>Clear filters</Button>
             </div>
           ) : (
-            <div className="flex flex-col items-start gap-2 rounded-[20px] border border-dashed border-line px-6 py-8">
-              <p className="text-[15px] font-semibold text-ink">No applications yet</p>
-              <p className="max-w-[46ch] text-[13.5px] text-ink-2">{emptyApplications(pro)}</p>
-            </div>
+            <EmptyApplications pro={pro} />
           )
         ) : null}
       </div>

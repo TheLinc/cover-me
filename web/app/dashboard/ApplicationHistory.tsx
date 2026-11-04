@@ -1,8 +1,9 @@
 import Link from 'next/link'
 import { ArrowRightIcon } from '@phosphor-icons/react/dist/ssr'
-import { emptyApplications, fetchApplications, type ApplicationSummary } from '@/lib/applications'
+import { fetchApplications, type ApplicationSummary } from '@/lib/applications'
 import { ApplicationCard } from './applications/ApplicationCard'
 import { TileSkeletons } from './applications/TileSkeletons'
+import { EmptyApplications } from './applications/EmptyApplications'
 import { BoardNotice } from './BoardNotice'
 
 // Recent applications (2e; every account since #101). Streams in behind
@@ -37,10 +38,7 @@ export function ApplicationHistory({ applications, pro }: { applications: Applic
       </div>
       <BoardNotice />
       {applications.length === 0 ? (
-        <div className="flex flex-col items-start gap-1.5 rounded-[20px] border border-dashed border-line px-6 py-7">
-          <p className="text-[15px] font-semibold text-ink">No applications yet</p>
-          <p className="max-w-[46ch] text-[13.5px] text-ink-2">{emptyApplications(pro)}</p>
-        </div>
+        <EmptyApplications pro={pro} />
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {applications.map((app) => <ApplicationCard key={app.id} app={app} pro={pro} />)}
