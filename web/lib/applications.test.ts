@@ -7,10 +7,10 @@ describe('fetchApplications', () => {
   it('asks for summaries, sends only the parameters that are set, and reads hasMore', async () => {
     const fetchMock = vi.fn(async () => new Response(JSON.stringify({ applications: [], hasMore: true }), { status: 200 }))
     vi.stubGlobal('fetch', fetchMock)
-    const page = await fetchApplications('https://x.supabase.co', 'at', { q: 'acme eng', from: '2026-10-01T04:00:00.000Z', to: '', interview: '1', limit: 5 })
+    const page = await fetchApplications('https://x.supabase.co', 'at', { q: 'acme eng', from: '2026-10-01T04:00:00.000Z', to: '', stage: 'interviewing,offer', limit: 5 })
     expect(page).toEqual({ applications: [], hasMore: true })
     const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit]
-    expect(url).toBe('https://x.supabase.co/functions/v1/applications?summary=1&q=acme+eng&from=2026-10-01T04%3A00%3A00.000Z&interview=1&limit=5')
+    expect(url).toBe('https://x.supabase.co/functions/v1/applications?summary=1&q=acme+eng&from=2026-10-01T04%3A00%3A00.000Z&stage=interviewing%2Coffer&limit=5')
     expect((init.headers as Record<string, string>).Authorization).toBe('Bearer at')
   })
 
@@ -28,9 +28,9 @@ describe('fetchApplications', () => {
 })
 
 describe('queryFromParams', () => {
-  it('keeps q, from, to, before and interview only', () => {
-    const p = new URLSearchParams('q=a&from=b&to=c&before=d&interview=1&limit=50&id=x&detail=y')
-    expect(queryFromParams(p)).toEqual({ q: 'a', from: 'b', to: 'c', before: 'd', interview: '1' })
+  it('keeps q, from, to, before and stage only', () => {
+    const p = new URLSearchParams('q=a&from=b&to=c&before=d&stage=offer,closed&interview=1&limit=50&id=x&detail=y')
+    expect(queryFromParams(p)).toEqual({ q: 'a', from: 'b', to: 'c', before: 'd', stage: 'offer,closed' })
   })
 })
 

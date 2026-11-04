@@ -4,19 +4,19 @@ import { decrypt, encrypt } from '../_shared/encrypt.ts'
 import { findOrCreateJobApplication } from '../_shared/job-application.ts'
 import { atsColumns, isUuid, MAX_UPLOAD_BYTES, parseUpload } from '../_shared/history-upload.ts'
 import { readBody } from '../_shared/read-body.ts'
-import { likeContains, parseSearch } from '../_shared/application-search.ts'
+import { isStage, likeContains, parseSearch } from '../_shared/application-search.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SECRET_KEY = Deno.env.get('SERVICE_KEY')!
 
 const FULL_SELECT = `
-  id, title, company, url, created_at, interview_at,
+  id, title, company, url, created_at, stage, stage_changed_at,
   cover_letters(id, letter_encrypted, created_at),
   tailored_resumes(id, resume_json_encrypted, created_at)
 `
 // What a card shows. Nothing to decrypt: the ATS score and gaps are plain columns.
 const SUMMARY_SELECT = `
-  id, title, company, url, created_at, interview_at,
+  id, title, company, url, created_at, stage, stage_changed_at,
   cover_letters(id, created_at),
   tailored_resumes(id, created_at, ats_score, ats_gaps)
 `
@@ -27,7 +27,8 @@ type Row = {
   company: string | null
   url: string | null
   created_at: string
-  interview_at: string | null
+  stage: string
+  stage_changed_at: string | null
   cover_letters: Record<string, unknown>[] | null
   tailored_resumes: Record<string, unknown>[] | null
 }
@@ -40,7 +41,8 @@ const base = (row: Row) => ({
   company: row.company ?? '',
   url: row.url ?? '',
   createdAt: row.created_at,
-  interviewAt: row.interview_at,
+  stage: row.stage,
+  stageChangedAt: row.stage_changed_at,
 })
 
 async function fullApplication(row: Row) {
@@ -104,7 +106,7 @@ Deno.serve(async (req) => {
   const appId = params.get('id')
 
   // GET: job applications, newest first; optional search, dates, paging and
-  // the interview filter (_shared/application-search.ts). summary=1 is what a
+  // the stage filter (_shared/application-search.ts). summary=1 is what a
   // dashboard card shows; detail=<id> is one application in full.
   if (req.method === 'GET') {
     const detailId = params.get('detail')
@@ -131,7 +133,7 @@ Deno.serve(async (req) => {
     for (const term of search.terms) query = query.ilike('search_text', likeContains(term))
     if (search.from) query = query.gte('created_at', search.from)
     if (search.to) query = query.lt('created_at', search.to)
-    if (search.interview) query = query.not('interview_at', 'is', null)
+    if (search.stages.length > 0) query = query.in('stage', search.stages)
     // ponytail: created_at alone as the cursor (to the microsecond). Two of one user's applications
     // in the same microsecond would page past one; use (created_at, id) if seen.
     if (search.before) query = query.lt('created_at', search.before)
@@ -148,10 +150,10 @@ Deno.serve(async (req) => {
     return json({ applications, hasMore })
   }
 
-  // PATCH ?id=: mark or unmark "got an interview" on the caller's own application.
+  // PATCH ?id=: move the caller's own application to another stage.
   if (req.method === 'PATCH') {
     if (!isUuid(appId)) return json({ error: 'Invalid id' }, 400)
-    // { interview: true } is a few bytes; anything past 1 KB isn't this request.
+    // { stage: 'offer' } is a few bytes; anything past 1 KB isn't this request.
     const raw = await readBody(req, 1024)
     if (raw === null) return json({ error: 'Request too large' }, 400)
     let body: unknown
@@ -160,18 +162,18 @@ Deno.serve(async (req) => {
     } catch {
       return json({ error: 'Invalid request body' }, 400)
     }
-    const interview = (body as { interview?: unknown } | null)?.interview
-    if (typeof interview !== 'boolean') return json({ error: 'Invalid request body' }, 400)
+    const stage = (body as { stage?: unknown } | null)?.stage
+    if (!isStage(stage)) return json({ error: 'Invalid request body' }, 400)
     const { data, error } = await supabase
       .from('job_applications')
-      .update({ interview_at: interview ? new Date().toISOString() : null })
+      .update({ stage, stage_changed_at: new Date().toISOString() })
       .eq('id', appId)
       .eq('user_id', userId)
-      .select('interview_at')
+      .select('stage, stage_changed_at')
       .maybeSingle()
     if (error) return json({ error: 'Failed to update application' }, 500)
     if (!data) return json({ error: 'Not found' }, 404)
-    return json({ interviewAt: data.interview_at })
+    return json({ stage: data.stage, stageChangedAt: data.stage_changed_at })
   }
 
   // POST: save entries from the extension's local history under their local

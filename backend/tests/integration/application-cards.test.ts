@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { admin, callFunction, createUser, deleteUser, JOB, type TestUser } from './helpers'
 
 // Dashboard cards (spec 2026-10-13-application-cards-design.md): summaries,
-// one application in full, and the interview mark.
+// one application in full, and its stage.
 const job = { title: JOB.title, company: JOB.company, url: JOB.url }
 const resume = { name: 'Pat', email: '', experience: [], education: [], atsScore: 81, atsGaps: ['Kafka'] }
 const day = (n: number) => new Date(Date.UTC(2026, 6, 1 + n, 12)).toISOString()
@@ -46,7 +46,7 @@ describe('application cards', () => {
 
     const { body } = await get(u, { summary: '1' })
     expect(body.applications).toEqual([{
-      id: appId, title: job.title, company: job.company, url: job.url, createdAt: expect.any(String), interviewAt: null,
+      id: appId, title: job.title, company: job.company, url: job.url, createdAt: expect.any(String), stage: 'applied', stageChangedAt: null,
       coverLetters: [{ id: l, createdAt: expect.any(String) }],
       tailoredResumes: [{ id: t, createdAt: expect.any(String), atsScore: 81, atsGaps: ['Kafka'] }],
     }])
@@ -61,7 +61,7 @@ describe('application cards', () => {
 
     const mine = await get(a, { detail: appId })
     expect(mine.status).toBe(200)
-    expect(mine.body.application.interviewAt).toBeNull()
+    expect(mine.body.application).toMatchObject({ stage: 'applied', stageChangedAt: null })
     expect(mine.body.application.coverLetters).toEqual([{ id: l, letter: 'Dear Acme team', createdAt: expect.any(String) }])
     expect(mine.body.application.tailoredResumes[0]).toMatchObject({ id: t, resume: { name: 'Pat', atsScore: 81 } })
 
@@ -69,42 +69,47 @@ describe('application cards', () => {
     expect((await get(a, { detail: 'nope' })).status).toBe(400)
   })
 
-  it('marks and unmarks an interview on your own application only', async () => {
+  it('moves your own application to another stage, and only to one of the four', async () => {
     const a = await user()
     const b = await user()
     const { appId } = await seeded(a)
 
-    const on = await patch(a, appId, { interview: true })
-    expect(on.status).toBe(200)
-    const { interviewAt } = await on.json() as { interviewAt: string }
-    expect(Math.abs(Date.parse(interviewAt) - Date.now())).toBeLessThan(60_000)
+    const offer = await patch(a, appId, { stage: 'offer' })
+    expect(offer.status).toBe(200)
+    const body = await offer.json() as { stage: string; stageChangedAt: string }
+    expect(body.stage).toBe('offer')
+    expect(Math.abs(Date.parse(body.stageChangedAt) - Date.now())).toBeLessThan(60_000)
+    expect((await get(a, { detail: appId })).body.application).toMatchObject({ stage: 'offer', stageChangedAt: body.stageChangedAt })
 
-    expect((await patch(b, appId, { interview: false })).status).toBe(404)
-    const { data } = await admin.from('job_applications').select('interview_at').eq('id', appId).single()
-    expect(data?.interview_at).not.toBeNull()
-
-    const off = await patch(a, appId, { interview: false })
-    expect(await off.json()).toEqual({ interviewAt: null })
-    expect((await patch(a, appId, { interview: 'yes' })).status).toBe(400)
-    expect((await patch(a, 'nope', { interview: true })).status).toBe(400)
+    expect((await patch(b, appId, { stage: 'closed' })).status).toBe(404)
+    expect((await patch(a, appId, { stage: 'nope' })).status).toBe(400)
+    expect((await patch(a, appId, { interview: true })).status).toBe(400)
+    expect((await patch(a, 'nope', { stage: 'offer' })).status).toBe(400)
+    const { data } = await admin.from('job_applications').select('stage').eq('id', appId).single()
+    expect(data?.stage).toBe('offer')
   })
 
-  it('interview=1 lists only marked applications, alongside search', async () => {
+  it('stage= lists only applications in those stages, alongside search', async () => {
     const u = await user()
-    const { appId } = await seeded(u)
-    await seeded(u, { title: 'Data Engineer', company: 'Northwind', url: 'https://jobs.example/northwind' })
-    await patch(u, appId, { interview: true })
+    const { appId: acme } = await seeded(u)
+    const { appId: northwind } = await seeded(u, { title: 'Data Engineer', company: 'Northwind', url: 'https://jobs.example/northwind' })
+    await seeded(u, { title: 'Analyst', company: 'Initech', url: 'https://jobs.example/initech' })
+    await patch(u, acme, { stage: 'interviewing' })
+    await patch(u, northwind, { stage: 'offer' })
 
-    const marked = await get(u, { summary: '1', interview: '1' })
-    expect(marked.body.applications.map((a: { id: string }) => a.id)).toEqual([appId])
-    expect((await get(u, { summary: '1', interview: '1', q: 'northwind' })).body.applications).toEqual([])
-    expect((await get(u, { summary: '1' })).body.applications).toHaveLength(2)
+    const ids = async (query: Record<string, string>) =>
+      ((await get(u, { summary: '1', ...query })).body.applications as { id: string }[]).map((a) => a.id).sort()
+    expect(await ids({ stage: 'interviewing,offer' })).toEqual([acme, northwind].sort())
+    expect(await ids({ stage: 'offer' })).toEqual([northwind])
+    expect(await ids({ stage: 'interviewing', q: 'northwind' })).toEqual([])
+    expect(await ids({})).toHaveLength(3)
+    expect((await get(u, { summary: '1', stage: 'saved' })).status).toBe(400)
   })
 
   it('free accounts get 403', async () => {
     const u = await user('hosted_free')
     expect((await get(u, { detail: randomUUID() })).status).toBe(403)
-    expect((await patch(u, randomUUID(), { interview: true })).status).toBe(403)
+    expect((await patch(u, randomUUID(), { stage: 'offer' })).status).toBe(403)
   })
 
   it('delete checks the id and only deletes your own application', async () => {
@@ -124,7 +129,7 @@ describe('application cards', () => {
   it('PATCH refuses an oversized body', async () => {
     const u = await user()
     const { appId } = await seeded(u)
-    const res = await callFunction('applications', { token: u.token, method: 'PATCH', query: { id: appId }, body: { interview: true, pad: 'x'.repeat(5_000) } })
+    const res = await callFunction('applications', { token: u.token, method: 'PATCH', query: { id: appId }, body: { stage: 'offer', pad: 'x'.repeat(5_000) } })
     expect(res.status).toBe(400)
   })
 })

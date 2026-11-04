@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Toggle } from '@/components/ui/toggle'
 import { Spinner } from '@/components/ui/spinner'
-import { dayRange, type ApplicationSummary, type ApplicationsPage, type ApplicationsQuery } from '@/lib/applications'
+import { dayRange, STAGE_LABEL, STAGES, type ApplicationSummary, type ApplicationsPage, type ApplicationsQuery, type Stage } from '@/lib/applications'
 import { createLatestSearch } from '@/lib/latest-search'
 import { ApplicationCard } from './ApplicationCard'
 import { TileSkeletons } from './TileSkeletons'
@@ -31,7 +31,8 @@ export function ApplicationsBrowser() {
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
   const [applications, setApplications] = useState<ApplicationSummary[]>([])
-  const [interviewOnly, setInterviewOnly] = useState(false)
+  // Stage filters; any number can be on. None on is every stage.
+  const [stages, setStages] = useState<Stage[]>([])
   const [hasMore, setHasMore] = useState(false)
   const [status, setStatus] = useState<Status>('loading')
   const [loadingMore, setLoadingMore] = useState(false)
@@ -63,8 +64,8 @@ export function ApplicationsBrowser() {
   useEffect(() => () => search.cancel(), [search])
 
   const range = dayRange(from, to)
-  const query: ApplicationsQuery | null = range ? { q: text.trim(), ...range, ...(interviewOnly ? { interview: '1' as const } : {}) } : null
-  const filtered = Boolean(text.trim() || from || to || interviewOnly)
+  const query: ApplicationsQuery | null = range ? { q: text.trim(), ...range, ...(stages.length ? { stage: stages.join(',') } : {}) } : null
+  const filtered = Boolean(text.trim() || from || to || stages.length)
 
   // The first load runs at once; after that, changes wait for a short pause
   // (typing sends one search per pause, not per keystroke).
@@ -77,7 +78,7 @@ export function ApplicationsBrowser() {
     if (loaded.current) search.schedule(query)
     else { loaded.current = true; search.now(query) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [text, from, to, interviewOnly])
+  }, [text, from, to, stages])
 
   function retry() {
     const q = failed.current ?? query
@@ -110,7 +111,7 @@ export function ApplicationsBrowser() {
   // Stays visible while a search loads (its text says so), so the bar keeps its height.
   const counted = range && status !== 'error' && applications.length > 0
 
-  // A deleted card, or one unmarked under the interview filter, leaves the list.
+  // A deleted card, or one moved out of the stages filtered on, leaves the list.
   function drop(id: string) {
     setApplications((list) => list.filter((a) => a.id !== id))
   }
@@ -135,7 +136,7 @@ export function ApplicationsBrowser() {
     setText('')
     setFrom('')
     setTo('')
-    setInterviewOnly(false)
+    setStages([])
   }
 
   return (
@@ -160,16 +161,25 @@ export function ApplicationsBrowser() {
         <div className="flex flex-wrap items-center gap-2">
           <DateField id="app-from" label="From" value={from} onChange={setFrom} invalid={!range} describedBy={range ? undefined : 'app-range-error'} />
           <DateField id="app-to" label="To" value={to} onChange={setTo} invalid={!range} describedBy={range ? undefined : 'app-range-error'} />
-          <Toggle
-            pressed={interviewOnly}
-            onPressedChange={setInterviewOnly}
-            variant="outline"
-            size="sm"
-            className="h-9 gap-1.5 rounded-full border-line bg-surface px-3.5 text-[13px] font-normal text-ink-2 hover:bg-surface hover:text-ink data-[state=on]:border-[color-mix(in_srgb,var(--brand-strong)_40%,transparent)] data-[state=on]:bg-brand-tint data-[state=on]:font-medium data-[state=on]:text-brand-ink"
-          >
-            {interviewOnly && <CheckIcon size={13} weight="bold" aria-hidden />}
-            Got an interview
-          </Toggle>
+          <div role="group" aria-label="Filter by stage" className="flex flex-wrap items-center gap-2">
+            {STAGES.map((stage) => {
+              const on = stages.includes(stage)
+              return (
+                <Toggle
+                  key={stage}
+                  pressed={on}
+                  // Kept in STAGES order, so the same filters make the same query.
+                  onPressedChange={(pressed) => setStages((list) => STAGES.filter((s) => (s === stage ? pressed : list.includes(s))))}
+                  variant="outline"
+                  size="sm"
+                  className="h-9 gap-1.5 rounded-full border-line bg-surface px-3.5 text-[13px] font-normal text-ink-2 hover:bg-surface hover:text-ink data-[state=on]:border-[color-mix(in_srgb,var(--brand-strong)_40%,transparent)] data-[state=on]:bg-brand-tint data-[state=on]:font-medium data-[state=on]:text-brand-ink"
+                >
+                  {on && <CheckIcon size={13} weight="bold" aria-hidden />}
+                  {STAGE_LABEL[stage]}
+                </Toggle>
+              )
+            })}
+          </div>
           {filtered && (
             <Button variant="ghost" size="sm" className="h-9 gap-1 rounded-full px-3 text-[13px] text-ink-2" onClick={clearFilters}>
               <XIcon size={12} aria-hidden />Clear
@@ -214,7 +224,7 @@ export function ApplicationsBrowser() {
               key={app.id}
               app={app}
               onDeleted={(id) => { deleted.current.add(id); drop(id) }}
-              onInterviewChange={(id, interviewAt) => { if (shown.current.interview && !interviewAt) drop(id) }}
+              onStageChange={(id, stage) => { if (shown.current.stage && !shown.current.stage.split(',').includes(stage)) drop(id) }}
             />
           ))}
         </div>

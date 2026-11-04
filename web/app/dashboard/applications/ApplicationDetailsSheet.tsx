@@ -7,12 +7,13 @@ import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Spinner } from '@/components/ui/spinner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { postingHost, type ApplicationDetail, type ApplicationSummary } from '@/lib/applications'
+import { postingHost, type ApplicationDetail, type ApplicationSummary, type Stage } from '@/lib/applications'
 import { downloadLetter, downloadResume, GONE, loadDetail } from '@/lib/application-actions'
 import { CopyLetterButton } from '../CopyLetterButton'
 import { LocalDate } from '../LocalDate'
 import { AtsRing } from './AtsRing'
 import { ResumePreview } from './ResumePreview'
+import { StageMenu } from './StageMenu'
 
 const DATE = { month: 'short', day: 'numeric', year: 'numeric' } as const
 const TILE = 'rounded-[20px] bg-surface p-5 shadow-[0_1px_2px_rgba(30,27,75,0.05),0_10px_28px_-16px_rgba(30,27,75,0.22)]'
@@ -24,14 +25,14 @@ const UNREADABLE = "Some of these couldn't be opened."
 // Everything for one application: the ATS result, then the newest tailored
 // resume drawn like its PDF and every letter, in tabs when there are both.
 // Its detail is fetched on first open.
-export function ApplicationDetailsSheet({ app, open, onOpenChange, onClosed, onGone, busy, onToggleInterview, onDelete }: {
+export function ApplicationDetailsSheet({ app, open, onOpenChange, onClosed, onGone, busy, onStageChange, onDelete }: {
   app: ApplicationSummary
   open: boolean
   onOpenChange: (open: boolean) => void
   onClosed: () => void // after the close animation
   onGone: () => void // the application was deleted elsewhere
   busy: string | null
-  onToggleInterview: () => void
+  onStageChange: (stage: Stage) => void
   onDelete: () => void
 }) {
   const [detail, setDetail] = useState<ApplicationDetail | null>(null)
@@ -127,7 +128,14 @@ export function ApplicationDetailsSheet({ app, open, onOpenChange, onClosed, onG
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="flex w-full flex-col gap-0 overflow-y-auto p-0 sm:max-w-[760px]" onCloseAutoFocus={onClosed}>
+      <SheetContent
+        side="right"
+        className="flex w-full flex-col gap-0 overflow-y-auto p-0 focus:outline-none sm:max-w-[760px]"
+        onCloseAutoFocus={onClosed}
+        // Focus starts on the drawer itself, not its first button, so a stray
+        // Enter on opening changes nothing (#82).
+        onOpenAutoFocus={(e) => { e.preventDefault(); (e.currentTarget as HTMLElement).focus() }}
+      >
         <SheetHeader className="space-y-1.5 px-6 pb-6 pr-12 pt-6 text-left max-sm:px-4 max-sm:pr-12">
           <SheetTitle className="text-[20px] leading-snug tracking-[-0.02em] text-ink">{app.title || 'Untitled role'}</SheetTitle>
           <SheetDescription className="text-[13.5px] text-ink-2">
@@ -184,10 +192,7 @@ export function ApplicationDetailsSheet({ app, open, onOpenChange, onClosed, onG
         </div>
 
         <footer className="sticky bottom-0 flex items-center gap-2 border-t border-line bg-background px-6 py-4 max-sm:px-4">
-          <Button variant="outline" size="sm" className={PILL} onClick={onToggleInterview} disabled={busy !== null}>
-            {busy === 'interview' && <Spinner className="size-3.5" />}
-            {app.interviewAt ? 'Remove interview mark' : 'Mark as got an interview'}
-          </Button>
+          <StageMenu stage={app.stage} onChange={onStageChange} busy={busy !== null} saving={busy === 'stage'} align="start" />
           <Button variant="ghost" size="sm" className={`${PILL} ml-auto text-destructive hover:text-destructive`} onClick={onDelete} disabled={busy !== null}>Delete</Button>
         </footer>
       </SheetContent>

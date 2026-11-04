@@ -2,38 +2,38 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowSquareOutIcon, CaretRightIcon, CheckIcon, DotsThreeVerticalIcon, DownloadSimpleIcon } from '@phosphor-icons/react/dist/ssr'
+import { ArrowSquareOutIcon, CaretRightIcon, DotsThreeVerticalIcon, DownloadSimpleIcon } from '@phosphor-icons/react/dist/ssr'
 import { toast } from 'sonner'
 import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Spinner } from '@/components/ui/spinner'
-import { newest, postingHost, type ApplicationSummary } from '@/lib/applications'
-import { deleteApplication, downloadLetter, downloadResume, GONE, loadDetail, setInterview } from '@/lib/application-actions'
+import { newest, postingHost, STAGE_LABEL, type ApplicationSummary, type Stage } from '@/lib/applications'
+import { deleteApplication, downloadLetter, downloadResume, GONE, loadDetail, setStage } from '@/lib/application-actions'
 import { LocalDate } from '../LocalDate'
 import { ApplicationDetailsSheet } from './ApplicationDetailsSheet'
 import { AtsRing } from './AtsRing'
+import { StageMenu } from './StageMenu'
 
-type Busy = 'letter' | 'resume' | 'interview' | 'delete' | null
+type Busy = 'letter' | 'resume' | 'stage' | 'delete' | null
 const UNREADABLE = 'unreadable'
 const GONE_MESSAGE = 'This application was already deleted.'
 
 // One application. After a delete it tells the list (onDeleted), or refreshes
 // the server-rendered page when there's no list to tell, and renders nothing.
-export function ApplicationCard({ app: initial, onDeleted, onInterviewChange }: {
+export function ApplicationCard({ app: initial, onDeleted, onStageChange }: {
   app: ApplicationSummary
   onDeleted?: (id: string) => void
-  onInterviewChange?: (id: string, interviewAt: string | null) => void
+  onStageChange?: (id: string, stage: Stage) => void
 }) {
   const router = useRouter()
   const [app, setApp] = useState(initial)
-  // Once the user sets the mark here, theirs wins over a search that started before it.
-  const marked = useRef(false)
+  // Once the user sets the stage here, theirs wins over a search that started before it.
+  const staged = useRef<Pick<ApplicationSummary, 'stage' | 'stageChangedAt'> | null>(null)
   const left = useRef(false)
-  // A mark changed from the open drawer reaches the list once the drawer has
+  // A stage changed from the open drawer reaches the list once the drawer has
   // closed, so a filter that drops the card doesn't pull the drawer away.
-  const pendingMark = useRef<{ interviewAt: string | null } | null>(null)
+  const pendingStage = useRef<Stage | null>(null)
   const [deleted, setDeleted] = useState(false)
   const [detailsOpen, setDetailsOpenState] = useState(false)
   // Read after an await, where the render's detailsOpen may be out of date.
@@ -43,9 +43,9 @@ export function ApplicationCard({ app: initial, onDeleted, onInterviewChange }: 
   const [deleteError, setDeleteError] = useState('')
   const [busy, setBusy] = useState<Busy>(null)
   // A new search brings a fresh summary for the same application (a letter the
-  // extension added since, the server's interview mark): show that one.
+  // extension added since, the server's stage): show that one.
   useEffect(() => {
-    setApp((a) => (marked.current ? { ...initial, interviewAt: a.interviewAt } : initial))
+    setApp(staged.current ? { ...initial, ...staged.current } : initial)
   }, [initial])
   if (deleted) return null
 
@@ -95,19 +95,20 @@ export function ApplicationCard({ app: initial, onDeleted, onInterviewChange }: 
     }
   }
 
-  async function toggleInterview() {
+  async function changeStage(stage: Stage) {
     if (busy) return
-    setBusy('interview')
+    setBusy('stage')
     try {
-      const interviewAt = await setInterview(app.id, !app.interviewAt)
-      marked.current = true
-      setApp((a) => ({ ...a, interviewAt }))
-      if (openNow.current) pendingMark.current = { interviewAt }
+      const saved = await setStage(app.id, stage)
+      staged.current = saved
+      setApp((a) => ({ ...a, ...saved }))
+      if (openNow.current) pendingStage.current = saved.stage
       else {
-        pendingMark.current = null
-        onInterviewChange?.(app.id, interviewAt)
+        pendingStage.current = null
+        onStageChange?.(app.id, saved.stage)
       }
-      toast.success(interviewAt ? 'Marked as got an interview' : 'Interview mark removed')
+      // The toast's live region is what tells a screen reader.
+      toast.success(`Moved to ${STAGE_LABEL[saved.stage]}`)
     } catch (e) {
       if (isGone(e)) return leave(GONE_MESSAGE)
       toast.error("Couldn't update it. Try again.")
@@ -169,7 +170,7 @@ export function ApplicationCard({ app: initial, onDeleted, onInterviewChange }: 
           </Button>
         )}
         <div className="ml-auto flex items-center gap-1">
-          {app.interviewAt && <Badge variant="interview" className="font-medium"><CheckIcon size={11} weight="bold" aria-hidden />Interview</Badge>}
+          <StageMenu stage={app.stage} onChange={changeStage} busy={busy !== null} saving={busy === 'stage'} />
           <Button variant="ghost" size="sm" className="h-8 gap-1 px-2.5 text-[13px] text-ink-2 hover:text-ink" onClick={() => setDetailsOpen(true)}>
             <span className="max-sm:sr-only">Details</span> <CaretRightIcon size={12} aria-hidden />
           </Button>
@@ -188,9 +189,6 @@ export function ApplicationCard({ app: initial, onDeleted, onInterviewChange }: 
                   </a>
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem disabled={busy !== null} onSelect={toggleInterview}>
-                {app.interviewAt ? 'Remove interview mark' : 'Mark as got an interview'}
-              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="text-destructive focus:text-destructive" disabled={busy !== null} onSelect={() => setConfirming(true)}>Delete</DropdownMenuItem>
             </DropdownMenuContent>
@@ -203,13 +201,13 @@ export function ApplicationCard({ app: initial, onDeleted, onInterviewChange }: 
         open={detailsOpen}
         onOpenChange={setDetailsOpen}
         onClosed={() => {
-          const pending = pendingMark.current
-          pendingMark.current = null
-          if (pending) onInterviewChange?.(app.id, pending.interviewAt)
+          const pending = pendingStage.current
+          pendingStage.current = null
+          if (pending) onStageChange?.(app.id, pending)
         }}
         onGone={() => leave(GONE_MESSAGE)}
         busy={busy}
-        onToggleInterview={toggleInterview}
+        onStageChange={changeStage}
         onDelete={() => setConfirming(true)}
       />
 

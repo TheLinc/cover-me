@@ -34,14 +34,14 @@ describe('/api/applications', () => {
     expect((init.headers as Record<string, string>).Authorization).toBe('Bearer at')
   })
 
-  it('PATCH forwards the interview mark and the function status', async () => {
+  it('PATCH forwards the stage and the function status', async () => {
     fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({ error: 'Not found' }), { status: 404 }))
-    const res = await PATCH(new NextRequest('http://localhost/api/applications?id=abc', { method: 'PATCH', body: JSON.stringify({ interview: true }) }))
+    const res = await PATCH(new NextRequest('http://localhost/api/applications?id=abc', { method: 'PATCH', body: JSON.stringify({ stage: 'offer' }) }))
     expect(res.status).toBe(404)
     const [url, init] = call()
     expect(String(url)).toBe('https://x.supabase.co/functions/v1/applications?id=abc')
     expect(init.method).toBe('PATCH')
-    expect(JSON.parse(init.body as string)).toEqual({ interview: true })
+    expect(JSON.parse(init.body as string)).toEqual({ stage: 'offer' })
   })
 
   it('DELETE forwards the id', async () => {

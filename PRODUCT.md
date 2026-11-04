@@ -27,8 +27,8 @@ It works on the posting the user already has open: one click in the browser read
 
 ## Capabilities and Constraints
 
-- Dashboard home (`/dashboard`): plan, usage, upgrade or billing, the newest applications (Pro). Applications page (`/dashboard/applications`, Pro only): every application, searchable by company and title, filterable by date applied and by "got an interview", 30 at a time with Load more. The owner wants these to stay separate pages.
-- Per application: download the newest cover letter and tailored resume as PDFs, read and copy every letter, see each resume's ATS score and gaps, open the posting, mark "got an interview" (one yes/no), delete.
+- Dashboard home (`/dashboard`): plan, usage, upgrade or billing, the newest applications (Pro). Applications page (`/dashboard/applications`, Pro only): every application, searchable by company and title, filterable by date applied and by stage (any mix of Applied, Interviewing, Offer, Closed), 30 at a time with Load more. The owner wants these to stay separate pages.
+- Per application: download the newest cover letter and tailored resume as PDFs, read and copy every letter, see each resume's ATS score and gaps, open the posting, set its stage (Applied, Interviewing, Offer or Closed, from the card or the drawer), delete.
 - Letter and resume text are personal data, encrypted at rest; the list loads summaries and fetches one application's full text on demand.
 - Job tracking (stages, kanban, interview dates) is out of scope.
 - UI is built from shadcn components (Radix, Tailwind 3); missing ones are added with the shadcn CLI, never hand-rolled.

@@ -3,7 +3,7 @@ import { deleteApplication, GONE, loadDetail } from './application-actions'
 
 afterEach(() => vi.unstubAllGlobals())
 
-const detail = { id: 'a1', title: 'T', company: 'C', url: '', createdAt: '2026-10-01T00:00:00Z', interviewAt: null, coverLetters: [], tailoredResumes: [] }
+const detail = { id: 'a1', title: 'T', company: 'C', url: '', createdAt: '2026-10-01T00:00:00Z', stage: 'applied' as const, stageChangedAt: null, coverLetters: [], tailoredResumes: [] }
 // The card's summary of an application: loadDetail keys its cache on it.
 const summary = (id: string, letters: string[] = []) => ({ ...detail, id, coverLetters: letters.map((l) => ({ id: l, createdAt: '2026-10-01T00:00:00Z' })), tailoredResumes: [] })
 
