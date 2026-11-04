@@ -434,7 +434,7 @@
     "donts": [
       "**Don't** wrap tiles in a panel or bordered section, or nest a bordered card in a bordered card.",
       "**Don't** use Signal Indigo (`brand`) for text; text uses Cover Me Indigo or Indigo Ink.",
-      "**Don't** use circular dots or bullets as status markers; status is a labeled pill (a stage, Pro, Free).",
+      "**Don't** use a dot alone as a status marker; status is a labeled pill (a stage, Pro, Free). A stage pill's dot sits beside its label, never in place of it.",
       "**Don't** add uppercase, mono or tracked-out labels above headings in the app; a section is named by its own heading.",
       "**Don't** use black or hard offset shadows; shadows are ink-tinted and soft."
     ]

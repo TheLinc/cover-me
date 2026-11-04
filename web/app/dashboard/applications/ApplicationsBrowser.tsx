@@ -158,10 +158,12 @@ export function ApplicationsBrowser() {
             className="h-14 rounded-full border-line bg-surface pl-14 pr-5 text-[16px] text-ink shadow-[0_1px_2px_rgba(30,27,75,0.05),0_10px_28px_-18px_rgba(30,27,75,0.25)] placeholder:text-subtle focus-visible:ring-brand"
           />
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        {/* One line that scrolls sideways on narrow screens, out to the screen's
+            edges; py-1 leaves room for the focus ring. */}
+        <div className="-mx-5 -my-1 flex items-center gap-2 overflow-x-auto px-5 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <DateField id="app-from" label="From" value={from} onChange={setFrom} invalid={!range} describedBy={range ? undefined : 'app-range-error'} />
           <DateField id="app-to" label="To" value={to} onChange={setTo} invalid={!range} describedBy={range ? undefined : 'app-range-error'} />
-          <div role="group" aria-label="Filter by stage" className="flex flex-wrap items-center gap-2">
+          <div role="group" aria-label="Filter by stage" className="flex items-center gap-2">
             {STAGES.map((stage) => {
               const on = stages.includes(stage)
               return (
@@ -175,14 +177,14 @@ export function ApplicationsBrowser() {
                   className="h-9 gap-1.5 rounded-full border-line bg-surface px-3.5 text-[13px] font-normal text-ink-2 hover:bg-surface hover:text-ink data-[state=on]:border-[color-mix(in_srgb,var(--brand-strong)_40%,transparent)] data-[state=on]:bg-brand-tint data-[state=on]:font-medium data-[state=on]:text-brand-ink"
                 >
                   {on && <CheckIcon size={13} weight="bold" aria-hidden />}
-                  {STAGE_LABEL[stage]}
+                  <span className="cap-center">{STAGE_LABEL[stage]}</span>
                 </Toggle>
               )
             })}
           </div>
           {filtered && (
             <Button variant="ghost" size="sm" className="h-9 gap-1 rounded-full px-3 text-[13px] text-ink-2" onClick={clearFilters}>
-              <XIcon size={12} aria-hidden />Clear
+              <XIcon size={12} aria-hidden /><span className="cap-center">Clear</span>
             </Button>
           )}
         </div>

@@ -81,7 +81,7 @@ const lum = (h) => {
 }
 const PAIRS = [
   ['ink', 'paper'], ['body', 'paper'], ['ink-2', 'paper'], ['ink-2', 'panel'], ['subtle', 'paper'], ['subtle', 'surface'],
-  ['on-brand', 'brand-strong'], ['brand-ink', 'brand-tint'], ['brand-strong', 'paper'], ['gap-ink', 'gap-tint'],
+  ['on-brand', 'brand-strong'], ['brand-ink', 'brand-tint'], ['brand-strong', 'paper'], ['gap-ink', 'gap-tint'], ['offer-ink', 'offer-tint'], ['ink-2', 'panel'],
   ['on-night', 'night'], ['on-night-2', 'night'], ['ext-text', 'ext-bg'], ['ext-muted', 'ext-bg'],
 ]
 for (const [fg, bg] of PAIRS) {

@@ -17,6 +17,9 @@ colors:
   brand-ink: "#4338CA"
   gap-tint: "#FFEDD5"
   gap-ink: "#9A3412"
+  offer: "#16A34A"
+  offer-tint: "#DCFCE7"
+  offer-ink: "#166534"
   destructive: "hsl(17 88% 40%)"
 typography:
   headline:
@@ -244,7 +247,7 @@ Depth is one soft two-part shadow under white tiles on paper: a tight 1px contac
 
 ## Shapes
 
-Three radii. Every control is a pill (search, buttons, filter chips, document chips, badges, ATS and gap capsules). Every container is 20px (application tiles, the plan strip, drawer tiles, empty states, skeleton tiles). Company monograms are 40px squares at 12px. The avatar is the only circle, and it holds a picture or an initial, never a status.
+Three radii. Every control is a pill (search, buttons, filter chips, document chips, badges, ATS and gap capsules). Every container is 20px (application tiles, the plan strip, drawer tiles, empty states, skeleton tiles). Company monograms are 40px squares at 12px. The avatar is the only large circle, and it holds a picture or an initial, never a status. The stage pill's 8px dot is the one small one.
 
 Empty states are a 20px dashed hairline outline on paper with no fill, so they read as a place a tile will go.
 
@@ -257,7 +260,7 @@ Pill buttons from the shared shadcn `Button`. Primary is Cover Me Indigo with wh
 The tile's signature: an outline pill per document with a download icon ("Cover letter", "Resume"). The Resume chip carries the newest ATS score as a small Indigo Tint capsule at its end. Hover turns the border and text Cover Me Indigo. One click downloads the newest PDF.
 
 ### Filter chips
-36px white pills under the search: two date pickers ("From Any date", "To Any date") and one toggle per stage (Applied, Interviewing, Offer, Closed), any number on at once. Idle text is Warm Grey with a Caption Grey label. When set, the chip fills with Indigo Tint, a 40% indigo border and Indigo Ink text, and a toggle gains a check. A ghost "Clear" pill appears only while a filter is set. Date chips open the shadcn Calendar in a Popover.
+36px white pills under the search: two date pickers ("From Any date", "To Any date") and one toggle per stage (Applied, Interviewing, Offer, Closed), any number on at once. Idle text is Warm Grey with a Caption Grey label. When set, the chip fills with Indigo Tint, a 40% indigo border and Indigo Ink text, and a toggle gains a check. A ghost "Clear" pill appears only while a filter is set. Date chips open the shadcn Calendar in a Popover. The chips stay on one line; when they don't fit (phones) the line scrolls sideways out to the screen's edges, with no visible scrollbar. Labels in every pill carry `cap-center` (globals.css), a 0.075em nudge down, because Geist sits its capitals about 1px high in a centered control.
 
 ### Application tile
 White, 20px corners, 20px padding, tile shadow. Top row: the monogram (company initial on Indigo Tint), the job title as a button that opens the drawer, then company and applied date in Warm Grey, and a ghost ⋮ menu (view details, go to posting, delete). Bottom row: document chips on the left; the stage pill and "Details" on the right. On phones "Details" collapses to its caret.
@@ -269,7 +272,7 @@ A 56px white pill across the full column, 16px text, a 20px magnifier inset 20px
 One tile-styled row on home read left to right: Plan (Pro or Free badge), usage (label, big number "of" limit, 6px indigo bar, reset line), then the account action (outline "Manage billing" for Pro; the primary monthly upgrade and an outline quarterly button for Free). Free accounts get one plain sentence under the strip about what Pro adds.
 
 ### Badges
-Pills, 12px semibold. Pro is solid Cover Me Indigo with a small filled star. Free is Soft Panel with Warm Grey text. The stage pill is a menu button: white with a hairline, 13px medium Deep Ink text and a small caret, opening a radio list of the four stages.
+Pills, 12px semibold. Pro is solid Cover Me Indigo with a small filled star. Free is Soft Panel with Warm Grey text. The stage pill is a menu button: an 8px dot, 13px medium text and a small caret, opening a radio list of the four stages. Each stage has its own fill, so it doesn't read as one of the document chips beside it: Applied is white with a hairline and a Caption Grey dot; Interviewing is Indigo Tint with Indigo Ink text and a Signal Indigo dot; Offer is Offer Tint (`#DCFCE7`) with Offer Ink (`#166534`) text and a green dot (`#16A34A`); Closed is Soft Panel with Warm Grey text and a hollow dot.
 
 ### Details drawer
 A right sheet on Warm Paper. Header: job title (Title), then company, applied date and the posting host as an indigo link. Sections are headed in 13px semibold Warm Grey, sentence case, with a count when there is more than one ("Cover letters (2)"). Each letter is a borderless white tile with its date, the full text and Copy and Download pills. The resume section heading carries the "ATS 72" capsule, then a "Missing" row of gap chips, then one slim white tile per tailored resume. The sticky footer holds the stage pill and Delete (ghost, Rust) at the far right.
@@ -288,6 +291,6 @@ A right sheet on Warm Paper. Header: job title (Title), then company, applied da
 ### Don't:
 - **Don't** wrap tiles in a panel or bordered section, or nest a bordered card in a bordered card.
 - **Don't** use Signal Indigo (`brand`) for text; text uses Cover Me Indigo or Indigo Ink.
-- **Don't** use circular dots or bullets as status markers; status is a labeled pill (a stage, Pro, Free).
+- **Don't** use a dot alone as a status marker; status is a labeled pill (a stage, Pro, Free). A stage pill's dot sits beside its label, never in place of it.
 - **Don't** add uppercase, mono or tracked-out labels above headings in the app; a section is named by its own heading.
 - **Don't** use black or hard offset shadows; shadows are ink-tinted and soft.

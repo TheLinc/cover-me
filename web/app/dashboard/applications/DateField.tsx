@@ -34,8 +34,8 @@ export function DateField({ id, label, value, onChange, invalid, describedBy }: 
           aria-label={`${label}: ${shown}`}
         >
           <CalendarBlankIcon size={14} className={date ? 'text-brand-ink' : 'text-subtle'} aria-hidden />
-          <span className={date ? 'text-brand-ink' : 'text-subtle'}>{label}</span>
-          <span className={cn('font-medium', date ? 'text-brand-ink' : 'text-ink')}>{shown}</span>
+          <span className={cn('cap-center', date ? 'text-brand-ink' : 'text-subtle')}>{label}</span>
+          <span className={cn('cap-center font-medium', date ? 'text-brand-ink' : 'text-ink')}>{shown}</span>
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
