@@ -162,7 +162,12 @@ export function ApplicationCard({ app: initial, pro, onDeleted, onStageChange, c
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete this application?</AlertDialogTitle>
-            <AlertDialogDescription>Its letters and tailored resumes are deleted too.</AlertDialogDescription>
+            {/* Documents on the server go with it: a Pro account's, or ones kept from when this account was Pro. */}
+            <AlertDialogDescription>
+              {pro || app.coverLetters.length + app.tailoredResumes.length > 0
+                ? 'Its letters and tailored resumes are deleted too.'
+                : 'It comes off your board. Letters and resumes in the extension stay there.'}
+            </AlertDialogDescription>
           </AlertDialogHeader>
           {deleteError && <p role="alert" className="text-[13px] text-destructive">{deleteError}</p>}
           <AlertDialogFooter>

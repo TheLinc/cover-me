@@ -3,12 +3,18 @@ import { admin, callFunction, createUser, deleteUser, type TestUser } from './he
 
 type App = { id: string; title: string; company: string; createdAt: string }
 
-// Seeds job_applications directly: search only reads these columns.
+// Seeds job_applications directly: search only reads these columns. Each gets
+// a letter row, since the full list leaves out applications with no documents
+// (its text isn't read here, and an unreadable letter is skipped in the list).
 async function seed(user: TestUser, rows: Array<{ title: string; company: string; createdAt: string }>) {
-  const { error } = await admin.from('job_applications').insert(
+  const { data, error } = await admin.from('job_applications').insert(
     rows.map((r) => ({ user_id: user.id, title: r.title, company: r.company, url: null, created_at: r.createdAt })),
-  )
+  ).select('id')
   if (error) throw error
+  const { error: letterError } = await admin.from('cover_letters').insert(
+    data.map((a) => ({ user_id: user.id, job_application_id: a.id, letter_encrypted: 'not-a-ciphertext' })),
+  )
+  if (letterError) throw letterError
 }
 
 async function list(user: TestUser, query: Record<string, string> = {}) {

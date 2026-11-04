@@ -1,6 +1,7 @@
+import { randomUUID } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
-  callFunction, createUser, deleteUser, JOB, mockClaude, quotaUsedToday, setQuotaUsedToday, setUsage, type TestUser, uploadResume,
+  admin, callFunction, createUser, deleteUser, JOB, mockClaude, quotaUsedToday, setQuotaUsedToday, setUsage, type TestUser, uploadResume,
 } from './helpers'
 
 describe('generate', () => {
@@ -44,6 +45,35 @@ describe('generate', () => {
     const { applications } = await res.json()
     expect(applications).toHaveLength(1)
     expect(applications[0]).toMatchObject({ title: JOB.title, company: JOB.company, url: JOB.url, stage: 'applied', coverLetters: [] })
+  })
+
+  // A Pro letter: generate tracks the job, then the extension saves the letter
+  // (letters function), which finds that same application by its link.
+  it("a Pro account's letter and its save make one application", async () => {
+    user = await createUser('hosted_pro')
+    await uploadResume(user)
+    const { letter } = await (await callFunction('generate', { token: user.token, body: { job: JOB } })).json()
+    const save = await callFunction('letters', { token: user.token, body: { id: randomUUID(), job: JOB, letter, createdAt: new Date().toISOString() } })
+    expect(save.status).toBe(200)
+
+    const { applications } = await (await callFunction('applications', { token: user.token, query: { summary: '1' } })).json()
+    expect(applications).toHaveLength(1)
+    expect(applications[0].coverLetters).toHaveLength(1)
+  })
+
+  // The extension's history reads the full list, which lists documents: a job
+  // tracked while free, with none on the server, would show there as an empty
+  // entry beside the browser's copy of the same letter.
+  it('the full list leaves out applications with no documents; the board keeps them', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    await callFunction('generate', { token: user.token, body: { job: JOB } })
+    await admin.from('users').update({ tier: 'hosted_pro' }).eq('id', user.id)
+
+    const full = await (await callFunction('applications', { token: user.token })).json()
+    expect(full.applications).toEqual([])
+    const board = await (await callFunction('applications', { token: user.token, query: { summary: '1' } })).json()
+    expect(board.applications).toHaveLength(1)
   })
 
   it('asks Sonnet 5.5 for the letter with adaptive thinking at high effort and server-side fallback', async () => {

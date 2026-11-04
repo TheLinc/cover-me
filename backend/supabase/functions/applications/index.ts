@@ -139,6 +139,10 @@ Deno.serve(async (req) => {
     if (search.from) query = query.gte('created_at', search.from)
     if (search.to) query = query.lt('created_at', search.to)
     if (search.stages.length > 0) query = query.in('stage', search.stages)
+    // The full list is the extension's history, which lists documents. A job
+    // with none here (tracked while free, #101) would sit there empty beside
+    // the browser's copy of the same letter.
+    if (!search.summary) query = query.or('cover_letters.not.is.null,tailored_resumes.not.is.null')
     // ponytail: created_at alone as the cursor (to the microsecond). Two of one user's applications
     // in the same microsecond would page past one; use (created_at, id) if seen.
     if (search.before) query = query.lt('created_at', search.before)
