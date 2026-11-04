@@ -7,6 +7,7 @@ import { getCandidateContext, resolveMode, saveCandidateContext } from '../../li
 import GapChips from '../components/GapChips'
 import PageReadNotice from '../components/PageReadNotice'
 import ProgressSteps from '../components/ProgressSteps'
+import ReviewAsk, { claimReviewAsk } from '../components/ReviewAsk'
 import ScoreRing from '../components/ScoreRing'
 import UpgradeButton from '../components/UpgradeButton'
 import type { AuthSession, CoverJob, GenerateResponse, JobData, Settings, ScrapeResponse, TailorJob, TailorResponse, TailoredResume } from '../../types'
@@ -154,6 +155,7 @@ export default function GeneratePage({ onNavigate }: Props) {
   const [letterEditing, setLetterEditing] = useState(false)
   const [regenerateExpanded, setRegenerateExpanded] = useState(false)
   const [activeResultTab, setActiveResultTab] = useState<'letter' | 'resume'>('letter')
+  const [reviewOpen, setReviewOpen] = useState(false)
 
   const loaded = useRef(false)
   const coverJobId = useRef<string | null>(null)
@@ -374,14 +376,33 @@ export default function GeneratePage({ onNavigate }: Props) {
     }
   }
 
+  // The rating card closes when either result changes: a new run, New, an error.
+  useEffect(() => setReviewOpen(false), [state, tailorState])
+
+  // Right after the user got what they came for. Not while either side shows
+  // an error, which includes having just hit the allowance.
+  function askForReview() {
+    if (state === 'error' || tailorState === 'error') return
+    void claimReviewAsk().then((ask) => { if (ask) setReviewOpen(true) })
+  }
+
   async function copy() {
     await navigator.clipboard.writeText(letter)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+    askForReview()
   }
 
   function downloadPdf() {
-    if (job) downloadCoverLetterPdf(letter, job, createdAt)
+    if (!job) return
+    downloadCoverLetterPdf(letter, job, createdAt)
+    askForReview()
+  }
+
+  function downloadResumePdf() {
+    if (!tailoredResume || !tailoredJob) return
+    downloadTailoredResumePdf(tailoredResume, tailoredJob.title)
+    askForReview()
   }
 
   async function regenerateLetter() {
@@ -963,7 +984,7 @@ export default function GeneratePage({ onNavigate }: Props) {
                   <div className="letter-actions">
                     <button
                       className="btn btn-primary"
-                      onClick={() => tailoredJob && downloadTailoredResumePdf(tailoredResume, tailoredJob.title)}
+                      onClick={downloadResumePdf}
                     >
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
@@ -984,6 +1005,8 @@ export default function GeneratePage({ onNavigate }: Props) {
                   </div>
                 </div>
               )}
+
+              {reviewOpen && <ReviewAsk onClose={() => setReviewOpen(false)} />}
             </>
           )}
         </>
