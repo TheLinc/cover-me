@@ -1,6 +1,6 @@
 // Runs searches so only the latest one's result is shown: schedule() waits
 // for typing to pause, now() runs at once. Both abort the previous request
-// at once (a stale response, or a load-more for an old query, is dropped).
+// at once (a stale response is dropped).
 export function createLatestSearch<Q, R>(
   fetcher: (q: Q, signal: AbortSignal) => Promise<R>,
   onResult: (q: Q, result: { ok: true; value: R } | { ok: false }) => void,

@@ -21,6 +21,9 @@ const MAX_Q = 100
 const MAX_TERMS = 5
 const DEFAULT_LIMIT = 30
 const MAX_LIMIT = 50
+// Summaries decrypt nothing and are a few hundred bytes each: the website's
+// applications page loads up to 200 at once so it can sort them itself.
+const MAX_SUMMARY_LIMIT = 200
 
 // undefined = present but not a date. toISOString() keeps only milliseconds,
 // so the microseconds of a created_at (Postgres keeps six digits) are put
@@ -43,11 +46,12 @@ export function parseSearch(params: URLSearchParams): ApplicationSearch | { erro
   const before = instant(params.get('before'))
   if (from === undefined || to === undefined || before === undefined) return { error: 'Invalid date' }
 
+  const summary = params.get('summary') === '1'
   let limit = DEFAULT_LIMIT
   const rawLimit = params.get('limit')
   if (rawLimit !== null) {
     const n = Number(rawLimit)
-    if (!Number.isInteger(n) || n < 1 || n > MAX_LIMIT) return { error: 'Invalid limit' }
+    if (!Number.isInteger(n) || n < 1 || n > (summary ? MAX_SUMMARY_LIMIT : MAX_LIMIT)) return { error: 'Invalid limit' }
     limit = n
   }
 
@@ -55,7 +59,7 @@ export function parseSearch(params: URLSearchParams): ApplicationSearch | { erro
   const stages = (params.get('stage') ?? '').split(',').filter(Boolean)
   if (!stages.every(isStage)) return { error: 'Invalid stage' }
 
-  return { terms, from, to, before, limit, stages, summary: params.get('summary') === '1' }
+  return { terms, from, to, before, limit, stages, summary }
 }
 
 // Escape LIKE's own wildcards so a term matches literally.

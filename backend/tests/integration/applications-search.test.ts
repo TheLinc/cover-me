@@ -119,6 +119,17 @@ describe('applications search and paging', () => {
     expect(body.hasMore).toBe(true)
   })
 
+  it('takes up to 200 summaries at once, but still 50 full rows', async () => {
+    user = await createUser('hosted_pro')
+    await seed(user, Array.from({ length: 201 }, (_, i) => ({ title: `R${i}`, company: 'A', createdAt: day(i) })))
+    const { status, body } = await list(user, { summary: '1', limit: '200' })
+    expect(status).toBe(200)
+    expect(body.applications).toHaveLength(200)
+    expect(body.hasMore).toBe(true)
+    expect((await list(user, { summary: '1', limit: '201' })).status).toBe(400)
+    expect((await list(user, { limit: '51' })).status).toBe(400)
+  })
+
   it('still returns 403 for free users with parameters', async () => {
     user = await createUser()
     expect((await list(user, { q: 'x' })).status).toBe(403)

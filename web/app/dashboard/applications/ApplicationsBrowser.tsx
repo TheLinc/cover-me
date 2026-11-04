@@ -1,18 +1,34 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { CheckIcon, MagnifyingGlassIcon, XIcon } from '@phosphor-icons/react/dist/ssr'
+import { ArrowsDownUpIcon, CaretDownIcon, CheckIcon, KanbanIcon, ListBulletsIcon, MagnifyingGlassIcon, XIcon } from '@phosphor-icons/react/dist/ssr'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Toggle } from '@/components/ui/toggle'
-import { Spinner } from '@/components/ui/spinner'
-import { dayRange, STAGE_LABEL, STAGES, type ApplicationSummary, type ApplicationsPage, type ApplicationsQuery, type Stage } from '@/lib/applications'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { dayRange, PAGE_LIMIT, SORT_LABEL, SORTS, sortApplications, STAGE_LABEL, STAGES, type ApplicationSummary, type ApplicationsPage, type ApplicationsQuery, type Sort, type Stage, type StageState } from '@/lib/applications'
+import { GONE, GONE_MESSAGE, setStage } from '@/lib/application-actions'
 import { createLatestSearch } from '@/lib/latest-search'
 import { ApplicationCard } from './ApplicationCard'
+import { ApplicationsBoard } from './ApplicationsBoard'
 import { TileSkeletons } from './TileSkeletons'
 import { DateField } from './DateField'
 
 type Status = 'loading' | 'ready' | 'error'
+type View = 'board' | 'list'
+
+// The view and sort are remembered on this device; search and filters aren't.
+const VIEW_KEY = 'cover-me:applications-view'
+const SORT_KEY = 'cover-me:applications-sort'
+// Private windows can refuse storage: the page then just doesn't remember.
+const stored = (key: string) => { try { return localStorage.getItem(key) } catch { return null } }
+const store = (key: string, value: string) => { try { localStorage.setItem(key, value) } catch { /* not remembered */ } }
+
+const CHIP = 'h-9 gap-1.5 rounded-full border-line bg-surface px-3.5 text-[13px] font-normal text-ink-2 hover:bg-surface hover:text-ink data-[state=on]:border-[color-mix(in_srgb,var(--brand-strong)_40%,transparent)] data-[state=on]:bg-brand-tint data-[state=on]:font-medium data-[state=on]:text-brand-ink'
+
+const VIEW_ITEM = 'h-8 gap-1.5 rounded-full px-3 text-[13px] font-normal text-ink-2 hover:bg-transparent hover:text-ink data-[state=on]:bg-brand-tint data-[state=on]:font-medium data-[state=on]:text-brand-ink'
 
 async function load(query: ApplicationsQuery, signal: AbortSignal): Promise<ApplicationsPage> {
   const params = new URLSearchParams()
@@ -26,118 +42,148 @@ async function load(query: ApplicationsQuery, signal: AbortSignal): Promise<Appl
   return res.json()
 }
 
+// Every application matching the search and dates loads at once (up to
+// PAGE_LIMIT), so the page sorts them and filters by stage itself.
 export function ApplicationsBrowser() {
   const [text, setText] = useState('')
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
   const [applications, setApplications] = useState<ApplicationSummary[]>([])
-  // Stage filters; any number can be on. None on is every stage.
+  // Stage filters for the list; any number can be on. None on is every stage.
+  // The board's columns are the stages, so it shows them all.
   const [stages, setStages] = useState<Stage[]>([])
-  const [hasMore, setHasMore] = useState(false)
+  // More match than loaded: the page shows the newest PAGE_LIMIT.
+  const [capped, setCapped] = useState(false)
   const [status, setStatus] = useState<Status>('loading')
-  const [loadingMore, setLoadingMore] = useState(false)
+  // null until read from this device after mount, so the server render and
+  // the first client render agree.
+  const [view, setView] = useState<View | null>(null)
+  const [chosenSort, setChosenSort] = useState<Sort | null>(null)
 
-  // The query the list on screen came from: Load more pages that one, not
-  // whatever is in the inputs now.
-  const shown = useRef<ApplicationsQuery>({})
+  useEffect(() => {
+    const v = stored(VIEW_KEY)
+    setView(v === 'board' || v === 'list' ? v : window.matchMedia('(min-width: 768px)').matches ? 'board' : 'list')
+    const s = stored(SORT_KEY)
+    if (SORTS.includes(s as Sort)) setChosenSort(s as Sort)
+  }, [])
+  const sort: Sort = chosenSort ?? (view === 'board' ? 'moved' : 'newest')
+  function chooseView(v: View) { setView(v); store(VIEW_KEY, v) }
+  function chooseSort(s: Sort) { setChosenSort(s); store(SORT_KEY, s) }
+
   // Deleted here: a search that was already in flight mustn't bring them back.
   const deleted = useRef(new Set<string>())
-  // What Try again repeats: a failed Load more retries that page, not page 1.
-  const failed = useRef<ApplicationsQuery | null>(null)
-  const search = useMemo(() => createLatestSearch<ApplicationsQuery, ApplicationsPage>(load, (query, result) => {
-    setLoadingMore(false)
+  // Stages saved here win over a search that started before the save.
+  const staged = useRef(new Map<string, StageState>())
+  const search = useMemo(() => createLatestSearch<ApplicationsQuery, ApplicationsPage>(load, (_query, result) => {
     if (!result.ok) {
-      failed.current = query
-      // The rows on screen are for an older search; only a failed Load more
-      // keeps them, since they still match.
-      if (!query.before) { setApplications([]); setHasMore(false) }
+      setApplications([])
+      setCapped(false)
       setStatus('error')
       return
     }
-    const { before, ...rest } = query
-    shown.current = rest
-    const page = result.value.applications.filter((a) => !deleted.current.has(a.id))
-    setApplications((prev) => (before ? [...prev, ...page] : page))
-    setHasMore(result.value.hasMore)
+    setApplications(result.value.applications
+      .filter((a) => !deleted.current.has(a.id))
+      .map((a) => ({ ...a, ...staged.current.get(a.id) })))
+    setCapped(result.value.hasMore)
     setStatus('ready')
   }), [])
   useEffect(() => () => search.cancel(), [search])
 
   const range = dayRange(from, to)
-  const query: ApplicationsQuery | null = range ? { q: text.trim(), ...range, ...(stages.length ? { stage: stages.join(',') } : {}) } : null
-  const filtered = Boolean(text.trim() || from || to || stages.length)
+  const query: ApplicationsQuery | null = range ? { q: text.trim(), ...range } : null
+  const searched = Boolean(text.trim() || from || to)
+  const stageFiltered = view === 'list' && stages.length > 0
+  const filtered = searched || stageFiltered
 
   // The first load runs at once; after that, changes wait for a short pause
   // (typing sends one search per pause, not per keystroke).
   const loaded = useRef(false)
   useEffect(() => {
-    // A new search cuts off any Load more in flight.
-    setLoadingMore(false)
     if (!query) { search.cancel(); return }
     setStatus('loading')
     if (loaded.current) search.schedule(query)
     else { loaded.current = true; search.now(query) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [text, from, to, stages])
+  }, [text, from, to])
 
   function retry() {
-    const q = failed.current ?? query
-    if (!q) return
+    if (!query) return
     setStatus('loading')
-    setLoadingMore(Boolean(q.before))
-    search.now(q)
+    search.now(query)
   }
 
-  function loadMore() {
-    if (applications.length === 0) return
-    setStatus('loading')
-    setLoadingMore(true)
-    search.now({ ...shown.current, before: applications[applications.length - 1].createdAt })
+  const sorted = useMemo(() => sortApplications(applications, sort), [applications, sort])
+  const listed = stageFiltered ? sorted.filter((a) => stages.includes(a.stage)) : sorted
+
+  function patch(id: string, state: StageState) {
+    setApplications((list) => list.map((a) => (a.id === id ? { ...a, ...state } : a)))
   }
 
+  // A stage changed from a card's menu or drawer, already saved.
+  function stageSaved(id: string, state: StageState) {
+    staged.current.set(id, state)
+    patch(id, state)
+  }
+
+  // A card leaves the page: deleted here or found deleted elsewhere.
+  function removed(id: string) {
+    deleted.current.add(id)
+    setApplications((list) => list.filter((a) => a.id !== id))
+  }
+
+  // A card dropped in another column moves at once, then saves. If the save
+  // fails it goes back. Only the latest move of a card applies its answer.
+  const moves = useRef(new Map<string, number>())
+  async function move(app: ApplicationSummary, stage: Stage) {
+    if (app.stage === stage) return
+    const n = (moves.current.get(app.id) ?? 0) + 1
+    moves.current.set(app.id, n)
+    const was: StageState = { stage: app.stage, stageChangedAt: app.stageChangedAt }
+    // Kept as staged at once, so a search landing mid-save doesn't pull it back.
+    stageSaved(app.id, { stage, stageChangedAt: new Date().toISOString() })
+    try {
+      const saved = await setStage(app.id, stage)
+      if (moves.current.get(app.id) === n) stageSaved(app.id, saved)
+    } catch (e) {
+      if (e instanceof Error && e.message === GONE) {
+        removed(app.id)
+        toast.success(GONE_MESSAGE)
+        return
+      }
+      if (moves.current.get(app.id) !== n) return
+      stageSaved(app.id, was)
+      toast.error(`Couldn't move it to ${STAGE_LABEL[stage]}, so it's back in ${STAGE_LABEL[was.stage]}. Try again.`)
+    }
+  }
+
+  const shownCount = view === 'list' ? listed.length : applications.length
+  // The server caps after searching: with a search on, it's the newest matches.
+  const pool = searched ? `the newest ${PAGE_LIMIT} matches` : `your newest ${PAGE_LIMIT}`
   const statusText = !range
     ? 'The From date is after the To date.'
     : status === 'error'
       ? "Couldn't load your applications."
       : status === 'loading'
         ? 'Loading applications'
-        : applications.length === 0
+        : shownCount === 0
           ? (filtered ? 'No applications match' : 'No applications yet')
-          : hasMore
-            ? `${applications.length} shown`
+          : capped
+            ? (stageFiltered ? `${shownCount} ${shownCount === 1 ? 'matches' : 'match'}, from ${pool}` : `Showing ${pool}`)
             : filtered
-              ? `${applications.length} ${applications.length === 1 ? 'matches' : 'match'}`
-              : `${applications.length} application${applications.length === 1 ? '' : 's'}`
+              ? `${shownCount} ${shownCount === 1 ? 'matches' : 'match'}`
+              : `${shownCount} application${shownCount === 1 ? '' : 's'}`
   // Stays visible while a search loads (its text says so), so the bar keeps its height.
-  const counted = range && status !== 'error' && applications.length > 0
-
-  // A deleted card, or one moved out of the stages filtered on, leaves the list.
-  function drop(id: string) {
-    setApplications((list) => list.filter((a) => a.id !== id))
-  }
-
-  // If that empties a page with more behind it, the first page loads again.
-  useEffect(() => {
-    if (status !== 'loading' && applications.length === 0 && hasMore) {
-      setStatus('loading')
-      search.now(shown.current)
-    }
-  }, [status, applications.length, hasMore, search])
-
-  const moreFailed = status === 'error' && Boolean(failed.current?.before)
-  const loadError = (
-    <p className="text-[13.5px] text-ink-2">
-      Couldn&apos;t load your applications.{' '}
-      <Button variant="link" size="sm" className="h-auto p-0 text-[13.5px]" onClick={retry}>Try again</Button>
-    </p>
-  )
+  const counted = range && status !== 'error' && shownCount > 0
 
   function clearFilters() {
     setText('')
     setFrom('')
     setTo('')
-    setStages([])
+    // The board hides the stage filters, so its Clear leaves them for the list.
+    if (view === 'list') setStages([])
   }
+
+  const dimmed = status === 'loading'
 
   return (
     <div className="flex flex-col gap-6">
@@ -158,52 +204,92 @@ export function ApplicationsBrowser() {
             className="h-14 rounded-full border-line bg-surface pl-14 pr-5 text-[16px] text-ink shadow-[0_1px_2px_rgba(30,27,75,0.05),0_10px_28px_-18px_rgba(30,27,75,0.25)] placeholder:text-subtle focus-visible:ring-brand"
           />
         </div>
-        {/* One line that scrolls sideways on narrow screens, out to the screen's
-            edges; py-1 leaves room for the focus ring. */}
-        <div className="-mx-5 -my-1 flex items-center gap-2 overflow-x-auto px-5 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <DateField id="app-from" label="From" value={from} onChange={setFrom} invalid={!range} describedBy={range ? undefined : 'app-range-error'} />
-          <DateField id="app-to" label="To" value={to} onChange={setTo} invalid={!range} describedBy={range ? undefined : 'app-range-error'} />
-          <div role="group" aria-label="Filter by stage" className="flex items-center gap-2">
-            {STAGES.map((stage) => {
-              const on = stages.includes(stage)
-              return (
-                <Toggle
-                  key={stage}
-                  pressed={on}
-                  // Kept in STAGES order, so the same filters make the same query.
-                  onPressedChange={(pressed) => setStages((list) => STAGES.filter((s) => (s === stage ? pressed : list.includes(s))))}
-                  variant="outline"
-                  size="sm"
-                  className="h-9 gap-1.5 rounded-full border-line bg-surface px-3.5 text-[13px] font-normal text-ink-2 hover:bg-surface hover:text-ink data-[state=on]:border-[color-mix(in_srgb,var(--brand-strong)_40%,transparent)] data-[state=on]:bg-brand-tint data-[state=on]:font-medium data-[state=on]:text-brand-ink"
-                >
-                  {on && <CheckIcon size={13} weight="bold" aria-hidden />}
-                  <span className="cap-center">{STAGE_LABEL[stage]}</span>
-                </Toggle>
-              )
-            })}
+        {/* Filters on the left, sort and view on the right; on phones the sort
+            and view get their own line below. */}
+        <div className="flex flex-col gap-2 md:flex-row md:items-center">
+          {/* One line that scrolls sideways when it doesn't fit, out to the
+              screen's edges on phones; py-1 leaves room for the focus ring. */}
+          <div className="-mx-5 -my-1 flex min-w-0 items-center gap-2 overflow-x-auto px-5 py-1 [scrollbar-width:none] md:mr-0 md:flex-1 md:pr-1 [&::-webkit-scrollbar]:hidden">
+            <DateField id="app-from" label="From" value={from} onChange={setFrom} invalid={!range} describedBy={range ? undefined : 'app-range-error'} />
+            <DateField id="app-to" label="To" value={to} onChange={setTo} invalid={!range} describedBy={range ? undefined : 'app-range-error'} />
+            {view === 'list' && (
+              <div role="group" aria-label="Filter by stage" className="flex items-center gap-2">
+                {STAGES.map((stage) => {
+                  const on = stages.includes(stage)
+                  return (
+                    <Toggle
+                      key={stage}
+                      pressed={on}
+                      // Kept in STAGES order, so the same filters show the same way.
+                      onPressedChange={(pressed) => setStages((list) => STAGES.filter((s) => (s === stage ? pressed : list.includes(s))))}
+                      variant="outline"
+                      size="sm"
+                      className={CHIP}
+                    >
+                      {on && <CheckIcon size={13} weight="bold" aria-hidden />}
+                      <span className="cap-center">{STAGE_LABEL[stage]}</span>
+                    </Toggle>
+                  )
+                })}
+              </div>
+            )}
+            {filtered && (
+              <Button variant="ghost" size="sm" className="h-9 shrink-0 gap-1 rounded-full px-3 text-[13px] text-ink-2" onClick={clearFilters}>
+                <XIcon size={12} aria-hidden /><span className="cap-center">Clear</span>
+              </Button>
+            )}
           </div>
-          {filtered && (
-            <Button variant="ghost" size="sm" className="h-9 gap-1 rounded-full px-3 text-[13px] text-ink-2" onClick={clearFilters}>
-              <XIcon size={12} aria-hidden /><span className="cap-center">Clear</span>
-            </Button>
+          {view && (
+            <div className="flex shrink-0 items-center gap-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-9 gap-1.5 rounded-full border-line bg-surface px-3.5 text-[13px] font-normal text-ink-2 hover:text-ink">
+                    <ArrowsDownUpIcon size={14} aria-hidden />
+                    <span className="cap-center"><span className="sr-only">Sort: </span>{SORT_LABEL[sort]}</span>
+                    <CaretDownIcon size={12} aria-hidden />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel className="text-[12.5px] font-medium text-ink-2">Sort</DropdownMenuLabel>
+                  <DropdownMenuRadioGroup value={sort} onValueChange={(value) => chooseSort(value as Sort)}>
+                    {SORTS.map((s) => <DropdownMenuRadioItem key={s} value={s}>{SORT_LABEL[s]}</DropdownMenuRadioItem>)}
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <ToggleGroup
+                type="single"
+                aria-label="View"
+                value={view}
+                // Clicking the pressed one would leave neither on: ignored.
+                onValueChange={(value) => { if (value) chooseView(value as View) }}
+                size="sm"
+                className="gap-1 rounded-full border border-line bg-surface p-0.5"
+              >
+                <ToggleGroupItem value="board" className={VIEW_ITEM}><KanbanIcon size={15} aria-hidden /><span className="cap-center">Board</span></ToggleGroupItem>
+                <ToggleGroupItem value="list" className={VIEW_ITEM}><ListBulletsIcon size={15} aria-hidden /><span className="cap-center">List</span></ToggleGroupItem>
+              </ToggleGroup>
+            </div>
           )}
         </div>
-        {/* What the list below shows: visible as a count, otherwise announced only. */}
+        {/* What the page below shows: visible as a count, otherwise announced only. */}
         <p aria-live="polite" className={counted ? 'px-1 text-[13px] tabular-nums text-subtle' : 'sr-only'}>{statusText}</p>
       </div>
 
       <div className="empty:hidden">
         {!range ? (
           <p id="app-range-error" className="text-[13px] text-destructive">The From date is after the To date.</p>
-        ) : status === 'error' && !moreFailed ? (
-          loadError
-        ) : status === 'loading' && applications.length === 0 ? (
+        ) : status === 'error' ? (
+          <p className="text-[13.5px] text-ink-2">
+            Couldn&apos;t load your applications.{' '}
+            <Button variant="link" size="sm" className="h-auto p-0 text-[13.5px]" onClick={retry}>Try again</Button>
+          </p>
+        ) : !view || (status === 'loading' && shownCount === 0) ? (
           <TileSkeletons count={4} label="Loading applications" />
-        ) : applications.length === 0 ? (
+        ) : shownCount === 0 ? (
           filtered ? (
             <div className="flex flex-col items-start gap-2 rounded-[20px] border border-dashed border-line px-6 py-8">
               <p className="text-[15px] font-semibold text-ink">No applications match</p>
-              <p className="text-[13.5px] text-ink-2">Try another company or title, or widen the dates or stages.</p>
+              <p className="text-[13.5px] text-ink-2">Try another company or title, or widen the dates{view === 'list' ? ' or stages' : ''}.</p>
               <Button variant="outline" size="sm" className="mt-2 rounded-full" onClick={clearFilters}>Clear filters</Button>
             </div>
           ) : (
@@ -215,30 +301,19 @@ export function ApplicationsBrowser() {
         ) : null}
       </div>
 
-      {range && applications.length > 0 && (
+      {range && view && status !== 'error' && shownCount > 0 && (
         // The old results, dimmed and out of reach until the new ones replace them.
-        <div
-          inert={status === 'loading' && !loadingMore}
-          className={status === 'loading' && !loadingMore ? 'grid grid-cols-1 gap-4 opacity-60 transition-opacity md:grid-cols-2' : 'grid grid-cols-1 gap-4 transition-opacity md:grid-cols-2'}
-        >
-          {applications.map((app) => (
-            <ApplicationCard
-              key={app.id}
-              app={app}
-              onDeleted={(id) => { deleted.current.add(id); drop(id) }}
-              onStageChange={(id, stage) => { if (shown.current.stage && !shown.current.stage.split(',').includes(stage)) drop(id) }}
-            />
-          ))}
+        <div inert={dimmed} className={dimmed ? 'opacity-60 transition-opacity' : 'transition-opacity'}>
+          {view === 'board' ? (
+            <ApplicationsBoard applications={sorted} onMove={move} onDeleted={removed} onStageChange={stageSaved} />
+          ) : (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {listed.map((app) => (
+                <ApplicationCard key={app.id} app={app} onDeleted={removed} onStageChange={stageSaved} />
+              ))}
+            </div>
+          )}
         </div>
-      )}
-
-      {/* A failed Load more says so where its button was. */}
-      {range && moreFailed && <div className="self-center">{loadError}</div>}
-
-      {range && hasMore && status !== 'error' && (
-        <Button variant="outline" size="sm" className="self-center rounded-full px-5" onClick={loadMore} disabled={status === 'loading'}>
-          {loadingMore ? <><Spinner className="size-3.5" />Loading</> : 'Load more'}
-        </Button>
       )}
     </div>
   )

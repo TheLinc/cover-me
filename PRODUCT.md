@@ -27,10 +27,10 @@ It works on the posting the user already has open: one click in the browser read
 
 ## Capabilities and Constraints
 
-- Dashboard home (`/dashboard`): plan, usage, upgrade or billing, the newest applications (Pro). Applications page (`/dashboard/applications`, Pro only): every application, searchable by company and title, filterable by date applied and by stage (any mix of Applied, Interviewing, Offer, Closed), 30 at a time with Load more. The owner wants these to stay separate pages.
+- Dashboard home (`/dashboard`): plan, usage, upgrade or billing, the newest applications (Pro). Applications page (`/dashboard/applications`, Pro only): every application, searchable by company and title, filterable by date applied, as a board with a column per stage (drag a card to move it) or a list filterable by stage (any mix of Applied, Interviewing, Offer, Closed). One sort menu for both: Recently moved, Newest applied, Oldest applied, Company A to Z. Up to the newest 200 load at once; the view and sort are remembered on the device. The owner wants these to stay separate pages.
 - Per application: download the newest cover letter and tailored resume as PDFs, read and copy every letter, see each resume's ATS score and gaps, open the posting, set its stage (Applied, Interviewing, Offer or Closed, from the card or the drawer), delete.
 - Letter and resume text are personal data, encrypted at rest; the list loads summaries and fetches one application's full text on demand.
-- Job tracking beyond the four stages (interview dates, a reason for Closed, a "Saved" stage) is out of scope. A board view of the stages is planned (#100).
+- Job tracking beyond the four stages (interview dates, a reason for Closed, a "Saved" stage) is out of scope.
 - UI is built from shadcn components (Radix, Tailwind 3); missing ones are added with the shadcn CLI, never hand-rolled.
 
 ## Brand Commitments

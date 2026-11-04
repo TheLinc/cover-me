@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Spinner } from '@/components/ui/spinner'
 import { newest, postingHost, STAGE_LABEL, type ApplicationSummary, type Stage, type StageState } from '@/lib/applications'
-import { deleteApplication, downloadLetter, downloadResume, GONE, loadDetail, setStage } from '@/lib/application-actions'
+import { deleteApplication, downloadLetter, downloadResume, GONE, GONE_MESSAGE, loadDetail, setStage } from '@/lib/application-actions'
 import { LocalDate } from '../LocalDate'
 import { ApplicationDetailsSheet } from './ApplicationDetailsSheet'
 import { AtsRing } from './AtsRing'
@@ -17,14 +17,16 @@ import { StageMenu } from './StageMenu'
 
 type Busy = 'letter' | 'resume' | 'stage' | 'delete' | null
 const UNREADABLE = 'unreadable'
-const GONE_MESSAGE = 'This application was already deleted.'
 
 // One application. After a delete it tells the list (onDeleted), or refreshes
 // the server-rendered page when there's no list to tell, and renders nothing.
-export function ApplicationCard({ app: initial, onDeleted, onStageChange }: {
+// compact is the board's card: title, company and date, opening the drawer.
+export function ApplicationCard({ app: initial, onDeleted, onStageChange, compact = false }: {
   app: ApplicationSummary
   onDeleted?: (id: string) => void
-  onStageChange?: (id: string, stage: Stage) => void
+  // A list that's told keeps the stage itself; without one the card does.
+  onStageChange?: (id: string, state: StageState) => void
+  compact?: boolean
 }) {
   const router = useRouter()
   const [app, setApp] = useState(initial)
@@ -33,7 +35,7 @@ export function ApplicationCard({ app: initial, onDeleted, onStageChange }: {
   const left = useRef(false)
   // A stage changed from the open drawer reaches the list once the drawer has
   // closed, so a filter that drops the card doesn't pull the drawer away.
-  const pendingStage = useRef<Stage | null>(null)
+  const pendingStage = useRef<StageState | null>(null)
   const [deleted, setDeleted] = useState(false)
   const [detailsOpen, setDetailsOpenState] = useState(false)
   // Read after an await, where the render's detailsOpen may be out of date.
@@ -100,12 +102,12 @@ export function ApplicationCard({ app: initial, onDeleted, onStageChange }: {
     setBusy('stage')
     try {
       const saved = await setStage(app.id, stage)
-      staged.current = saved
+      if (!onStageChange) staged.current = saved
       setApp((a) => ({ ...a, ...saved }))
-      if (openNow.current) pendingStage.current = saved.stage
+      if (openNow.current) pendingStage.current = saved
       else {
         pendingStage.current = null
-        onStageChange?.(app.id, saved.stage)
+        onStageChange?.(app.id, saved)
       }
       // The toast's live region tells a screen reader, with the drawer open
       // too: Radix's aria-hidden leaves [aria-live] regions exposed.
@@ -135,6 +137,64 @@ export function ApplicationCard({ app: initial, onDeleted, onStageChange }: {
   const company = app.company || 'Unknown company'
   const monogram = (app.company || app.title || '?').trim().charAt(0).toUpperCase()
   const score = app.tailoredResumes[0]?.atsScore ?? null
+
+  const dialogs = (
+    <>
+      <ApplicationDetailsSheet
+        app={app}
+        open={detailsOpen}
+        onOpenChange={setDetailsOpen}
+        onClosed={() => {
+          const pending = pendingStage.current
+          pendingStage.current = null
+          if (pending) onStageChange?.(app.id, pending)
+        }}
+        onGone={() => leave(GONE_MESSAGE)}
+        busy={busy}
+        onStageChange={changeStage}
+        onDelete={() => setConfirming(true)}
+      />
+
+      <AlertDialog open={confirming} onOpenChange={(open) => { if (busy !== 'delete') { setConfirming(open); setDeleteError('') } }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this application?</AlertDialogTitle>
+            <AlertDialogDescription>Its letters and tailored resumes are deleted too.</AlertDialogDescription>
+          </AlertDialogHeader>
+          {deleteError && <p role="alert" className="text-[13px] text-destructive">{deleteError}</p>}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={busy === 'delete'}>Cancel</AlertDialogCancel>
+            {/* A plain Button, not AlertDialogAction, which closes the dialog before the delete finishes. */}
+            <Button variant="destructive" onClick={remove} disabled={busy !== null}>
+              {busy === 'delete' ? <><Spinner className="size-3.5" />Deleting</> : 'Delete'}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  )
+
+  if (compact) {
+    return (
+      <article className="relative flex flex-col gap-1 rounded-[20px] border border-line/80 bg-surface p-4 shadow-[0_1px_2px_rgba(30,27,75,0.05),0_10px_28px_-16px_rgba(30,27,75,0.22)] transition-shadow duration-200 ease-out hover:shadow-[0_1px_2px_rgba(30,27,75,0.06),0_16px_36px_-16px_rgba(30,27,75,0.32)]">
+        {/* The ring sits beside title and company, so a short title leaves no gap under it. */}
+        <div className="flex items-start gap-2">
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <h3 className="text-[14px] font-semibold leading-snug tracking-[-0.01em] text-ink">
+              {/* Covers the whole card, so a click anywhere opens the drawer. */}
+              <button type="button" data-card={app.id} onClick={() => setDetailsOpen(true)} className="line-clamp-2 cursor-grab text-left after:absolute after:inset-0 after:rounded-[20px] focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-brand">
+                {title}
+              </button>
+            </h3>
+            <p className="truncate text-[12.5px] leading-snug text-ink-2">{company}</p>
+          </div>
+          {score !== null && <AtsRing score={score} size={34} />}
+        </div>
+        <p className="text-[12px] leading-snug text-subtle">Applied <LocalDate iso={app.createdAt} options={{ month: 'short', day: 'numeric', year: 'numeric' }} /></p>
+        {dialogs}
+      </article>
+    )
+  }
 
   return (
     <article className="group/tile flex flex-col justify-between gap-4 rounded-[20px] border border-line bg-surface p-5 shadow-[0_1px_2px_rgba(30,27,75,0.05),0_10px_28px_-16px_rgba(30,27,75,0.22)] transition-[box-shadow,transform] duration-200 ease-out hover:-translate-y-px hover:shadow-[0_1px_2px_rgba(30,27,75,0.06),0_16px_36px_-16px_rgba(30,27,75,0.32)]">
@@ -197,37 +257,7 @@ export function ApplicationCard({ app: initial, onDeleted, onStageChange }: {
         </div>
       </div>
 
-      <ApplicationDetailsSheet
-        app={app}
-        open={detailsOpen}
-        onOpenChange={setDetailsOpen}
-        onClosed={() => {
-          const pending = pendingStage.current
-          pendingStage.current = null
-          if (pending) onStageChange?.(app.id, pending)
-        }}
-        onGone={() => leave(GONE_MESSAGE)}
-        busy={busy}
-        onStageChange={changeStage}
-        onDelete={() => setConfirming(true)}
-      />
-
-      <AlertDialog open={confirming} onOpenChange={(open) => { if (busy !== 'delete') { setConfirming(open); setDeleteError('') } }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete this application?</AlertDialogTitle>
-            <AlertDialogDescription>Its letters and tailored resumes are deleted too.</AlertDialogDescription>
-          </AlertDialogHeader>
-          {deleteError && <p role="alert" className="text-[13px] text-destructive">{deleteError}</p>}
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={busy === 'delete'}>Cancel</AlertDialogCancel>
-            {/* A plain Button, not AlertDialogAction, which closes the dialog before the delete finishes. */}
-            <Button variant="destructive" onClick={remove} disabled={busy !== null}>
-              {busy === 'delete' ? <><Spinner className="size-3.5" />Deleting</> : 'Delete'}
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {dialogs}
     </article>
   )
 }
