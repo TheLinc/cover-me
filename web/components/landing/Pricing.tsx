@@ -2,8 +2,8 @@ import { CheckIcon } from '@phosphor-icons/react/dist/ssr'
 import { CHROME_STORE_URL } from '@/lib/utils'
 import { Ambient } from './Ambient'
 
-const FREE = ['10 AI generations to start, then 5 a week, letters and resumes', 'Unlimited with your own API key', 'PDF export', 'Local history of your last 50 letters and 20 tailored resumes']
-const PRO = ['Up to 25 letters or tailored resumes a day', 'Every application saved and searchable on your dashboard', 'Early access to new features']
+const FREE = ['10 AI generations to start, then 5 a week, letters and resumes', 'Unlimited with your own API key', 'PDF export', 'With an account, every application on a board, from any device', 'Your last 50 letters and 20 tailored resumes, kept in your browser']
+const PRO = ['Up to 25 letters or tailored resumes a day', 'Every letter and tailored resume saved to your account, on any device', 'Early access to new features']
 
 export function Pricing() {
   return (

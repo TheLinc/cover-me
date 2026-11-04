@@ -196,7 +196,9 @@ export default function PrivacyPage() {
                 <strong className="text-foreground">Hosted (Free &amp; Pro).</strong>{' '}
                 You create an account. Your resume is encrypted and stored on our backend. Our server
                 sends it to Anthropic, with our API key, to read it and to write your cover letters and
-                tailored resumes. Pro subscribers are billed through Stripe. From version 1.3.0, once
+                tailored resumes. Each job you generate for is saved to your account (its title,
+                company, posting address, dates and stage) so you can track it on the dashboard; your
+                letters and resumes are stored on our backend only on Pro. Pro subscribers are billed through Stripe. From version 1.3.0, once
                 you agree, the job page is also sent to our server to read the posting, as in BYOK.
               </Li>
             </Ul>
@@ -267,16 +269,21 @@ export default function PrivacyPage() {
                 any length, which on sites you are signed in to can include your name or a link to your
                 profile. If our server can&apos;t be reached,
                 the extension reads the posting on your device instead. The job details are then used
-                only to generate your cover letter or tailored resume and, on Pro, to label your saved
-                applications.
+                only to generate your cover letter or tailored resume and, in Hosted mode, to label the
+                applications saved to your account.
               </Li>
               <Li>
                 <strong className="text-foreground">Application history.</strong> Generated cover
                 letters and tailored resumes are grouped by job application and saved locally in your
-                browser storage (BYOK and Hosted Free modes) or also synced to our backend (Hosted Pro
-                mode) for cross-device access. On our backend the letters and resumes are encrypted; the
-                job title, company, posting address, dates, application stage, ATS match score and missing
-                keywords that go with them are not, so you can search and filter them.
+                browser storage. In Hosted mode (Free and Pro), every job you generate a letter or
+                resume for is also saved to your account on our backend: its job title, company, posting
+                address, dates and application stage, so you can track it on the dashboard from any
+                device. On Hosted Free the letters and resumes themselves are not stored on our backend;
+                they stay in your browser. On Hosted Pro they are also synced to our backend, encrypted,
+                for cross-device access, with each tailored resume&apos;s ATS match score and missing
+                keywords. The job details, stage, ATS match score and missing keywords are not
+                encrypted, so you can search and filter them. In BYOK mode nothing is saved to our
+                backend.
               </Li>
               <Li>
                 <strong className="text-foreground">Authentication session tokens (Hosted mode only).</strong>{' '}
@@ -288,8 +295,9 @@ export default function PrivacyPage() {
                 <strong className="text-foreground">Usage count (Hosted mode).</strong>{' '}
                 We record the number of AI generations (cover letters and resume tailoring combined)
                 per day per account to enforce the free allowance and Pro's fair-use limit. Apart from Supabase&apos;s
-                short-lived request logs (see Third-Party Services), only the count is stored: no content
-                of individual generations is recorded server-side for Free users.
+                short-lived request logs (see Third-Party Services), all a Free user&apos;s generation
+                leaves on our backend is this count and the job details under Application history: no
+                letter or resume content is recorded server-side.
               </Li>
               <Li>
                 <strong className="text-foreground">Rate-limit counter (all modes).</strong>{' '}
@@ -342,7 +350,8 @@ export default function PrivacyPage() {
               <Li>To tailor your resume to that posting and write a matching cover letter, using your resume and any facts you add.</Li>
               <Li>To authenticate you and maintain your session (Hosted mode).</Li>
               <Li>To enforce the generation limits: the free allowance and Pro&apos;s fair-use cap (Hosted mode).</Li>
-              <Li>To sync your application history (cover letters and tailored resumes) across devices (Pro mode only).</Li>
+              <Li>To show the jobs you&apos;ve applied to on your dashboard, on any device (Hosted mode).</Li>
+              <Li>To sync your cover letters and tailored resumes across devices (Pro mode only).</Li>
               <Li>To process subscription billing through Stripe (Pro mode only).</Li>
               <Li>To respond to support requests you initiate by contacting us directly.</Li>
               <Li>To count, in aggregate, how many accounts sign up and use the service.</Li>
@@ -529,7 +538,7 @@ export default function PrivacyPage() {
                 <li>Authentication: signing in, signing up, signing out, and refreshing JWT session tokens.</li>
                 <li>Account tier: fetching your plan after sign-in and when the Settings or History page opens.</li>
                 <li>Upgrade: getting a Stripe checkout page when you click an Upgrade button.</li>
-                <li>Cover letter &amp; resume generation: sending job data and your session token to our backend Edge Functions, which retrieve your encrypted resume, call the Claude API with our key, and return the generated output.</li>
+                <li>Cover letter &amp; resume generation: sending job data and your session token to our backend Edge Functions, which retrieve your encrypted resume, call the Claude API with our key, return the generated output, and save the job&apos;s title, company, posting address and date to your account.</li>
                 <li>Application history sync (Pro mode): saving each new cover letter and tailored resume, uploading ones already in the extension when you agree, and fetching and deleting them on the History page.</li>
                 <li>Resume sync: after sign-in, uploading the resume already in the extension (versions before 1.3.0 always upload it; from 1.3.0 only if it&apos;s newer than the account&apos;s) or, from 1.3.0, downloading the account&apos;s copy; and uploading a new one when you add it. Uploads go to encrypted backend storage, and the server then reads the resume&apos;s structure with Anthropic.</li>
               </ul>
@@ -548,7 +557,7 @@ export default function PrivacyPage() {
             <H3>Server-side storage</H3>
             <Ul>
               <Li>Resume text, and a parsed copy of its structure, are encrypted with AES-256-GCM before being stored in our Supabase Postgres database. The encryption key is derived from a server-side secret. Plaintext resume text is never persisted to disk.</Li>
-              <Li>Cover letters and tailored resumes (Pro mode) are encrypted with AES-256-GCM before storage. The job title, company, posting address, dates, application stage, ATS match score and missing keywords that go with them are stored unencrypted so you can search and filter them. Your resume's file name is stored unencrypted too.</Li>
+              <Li>Cover letters and tailored resumes (Pro mode) are encrypted with AES-256-GCM before storage. The job title, company, posting address, dates and application stage (every Hosted account), and each tailored resume&apos;s ATS match score and missing keywords (Pro mode), are stored unencrypted so you can search and filter them. Your resume's file name is stored unencrypted too.</Li>
               <Li>Rate-limit counters (all modes) hold only a keyed hash of an IP address, or a hash of your account ID when a new resume is read, and a counter not updated for two days is deleted at the next cleanup.</Li>
               <Li>All data in transit is protected by TLS 1.2 or higher (enforced by Supabase and Vercel).</Li>
               <Li>Database access is protected by Supabase Row-Level Security policies. Users can only access their own data rows.</Li>
@@ -639,7 +648,7 @@ export default function PrivacyPage() {
             <H2 id="retention">Data Retention</H2>
             <Ul>
               <Li><strong className="text-foreground">BYOK mode:</strong> Your resume, API key and history stay on your device, and we hold no copy of them. You can delete them at any time by removing the extension or clearing extension storage in Chrome settings. The only BYOK data on our side are the rate-limit counters and Supabase&apos;s request logs described above.</Li>
-              <Li><strong className="text-foreground">Hosted account data:</strong> Your account, resume, and application history (cover letters and tailored resumes) are retained for as long as your account is active. You may request deletion at any time by contacting us at <a href={`mailto:${CONTACT_EMAIL}`} className="text-brand-light hover:text-foreground transition-colors">{CONTACT_EMAIL}</a>. We will permanently delete all your data within 30 days of a verified deletion request.</Li>
+              <Li><strong className="text-foreground">Hosted account data:</strong> Your account, resume, and application history (the job details, and on Pro your cover letters and tailored resumes) are retained for as long as your account is active. You may request deletion at any time by contacting us at <a href={`mailto:${CONTACT_EMAIL}`} className="text-brand-light hover:text-foreground transition-colors">{CONTACT_EMAIL}</a>. We will permanently delete all your data within 30 days of a verified deletion request.</Li>
               <Li><strong className="text-foreground">Usage count records:</strong> Kept for as long as your account exists, because the free allowance counts generations over the life of the account. They are deleted with your account.</Li>
               <Li><strong className="text-foreground">Rate-limit counters:</strong> A counter not updated for two days is deleted at the next cleanup, which runs during later requests.</Li>
               <Li><strong className="text-foreground">Stripe billing records:</strong> Stripe retains transaction records as required by financial regulations. We cannot delete data held directly by Stripe.</Li>

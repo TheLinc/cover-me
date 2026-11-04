@@ -20,15 +20,15 @@ It works on the posting the user already has open: one click in the browser read
 
 ## Operating Context
 
-- The work happens in the extension popup, on the posting's page. The website is where Pro accounts see every application saved to the account, on any device.
+- The work happens in the extension popup, on the posting's page. The website is where hosted accounts (Free and Pro) track every application on any device; Pro accounts also get its letters and resumes there.
 - An application is one job posting (title, company, posting URL, date applied) with its cover letters and tailored resumes, newest first. Tailored resumes carry an ATS score (0 to 100) and missing keywords.
-- Tiers: BYOK (own API key; resume and history stay in the browser), hosted Free (10 generations to start, then 5 a week, history in the browser only), Pro ($15/month or $35 every 3 months, up to 25 a day, every application saved to the account and searchable on the dashboard).
+- Tiers: BYOK (own API key; resume and history stay in the browser, no board), hosted Free (10 generations to start, then 5 a week; each job generated for is saved to the account, title, company, link and dates, and tracked on the board; letters and resumes stay in the browser), Pro ($15/month or $35 every 3 months, up to 25 a day, every letter and tailored resume saved to the account too).
 - Payments happen on the website through Stripe Checkout; the dashboard shows plan, usage and billing.
 
 ## Capabilities and Constraints
 
-- Dashboard home (`/dashboard`): plan, usage, upgrade or billing, the newest applications (Pro). Applications page (`/dashboard/applications`, Pro only): every application, searchable by company and title, filterable by date applied, as a board with a column per stage (drag a card to move it) or a list filterable by stage (any mix of Applied, Interviewing, Offer, Closed). One sort menu for both: Recently moved, Newest applied, Oldest applied, Company A to Z. Up to the newest 200 load at once; the view and sort are remembered on the device. The owner wants these to stay separate pages.
-- Per application: download the newest cover letter and tailored resume as PDFs, read and copy every letter, see each resume's ATS score and gaps, open the posting, set its stage (Applied, Interviewing, Offer or Closed, from the card or the drawer), delete.
+- Dashboard home (`/dashboard`): plan, usage, upgrade or billing, the newest applications. Applications page (`/dashboard/applications`, every signed-in account): every application, searchable by company and title, filterable by date applied, as a board with a column per stage (drag a card to move it) or a list filterable by stage (any mix of Applied, Interviewing, Offer, Closed). One sort menu for both: Recently moved, Newest applied, Oldest applied, Company A to Z. Up to the newest 200 load at once; the view and sort are remembered on the device. The owner wants these to stay separate pages.
+- Per application (documents Pro only; a free card says "Your letters and resumes on any device with Pro" instead): download the newest cover letter and tailored resume as PDFs, read and copy every letter, see each resume's ATS score and gaps, open the posting, set its stage (Applied, Interviewing, Offer or Closed, from the card or the drawer), delete.
 - Letter and resume text are personal data, encrypted at rest; the list loads summaries and fetches one application's full text on demand.
 - Job tracking beyond the four stages (interview dates, a reason for Closed, a "Saved" stage) is out of scope.
 - UI is built from shadcn components (Radix, Tailwind 3); missing ones are added with the shadcn CLI, never hand-rolled.

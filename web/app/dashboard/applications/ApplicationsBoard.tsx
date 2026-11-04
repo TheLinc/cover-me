@@ -49,8 +49,9 @@ const announcements: Announcements = {
 // A column for each stage. Dragging a card to another column moves it there
 // (onMove); within a column the cards keep the page's sort. Mouse only: on a
 // keyboard or touch screen the card opens the drawer, which has the stage menu.
-export function ApplicationsBoard({ applications, onMove, onDeleted, onStageChange }: {
+export function ApplicationsBoard({ applications, pro, onMove, onDeleted, onStageChange }: {
   applications: ApplicationSummary[] // sorted
+  pro: boolean
   onMove: (app: ApplicationSummary, stage: Stage) => void
   onDeleted: (id: string) => void
   onStageChange: (id: string, state: StageState) => void
@@ -112,7 +113,7 @@ export function ApplicationsBoard({ applications, onMove, onDeleted, onStageChan
                 <p className="rounded-[20px] border border-dashed border-line px-4 py-5 text-[13px] leading-snug text-ink-2">{EMPTY[stage]}</p>
               ) : cards.map((app) => (
                 <Draggable key={app.id} app={app}>
-                  <ApplicationCard app={app} compact onDeleted={onDeleted} onStageChange={stageChanged} />
+                  <ApplicationCard app={app} pro={pro} compact onDeleted={onDeleted} onStageChange={stageChanged} />
                 </Draggable>
               ))}
             </Column>

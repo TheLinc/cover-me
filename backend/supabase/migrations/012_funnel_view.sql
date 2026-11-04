@@ -1,7 +1,8 @@
 -- Relaunch funnel by signup week, for the owner (SQL editor or service key).
 -- Counts only: no emails, no resume or letter content.
--- Activated = generated at least one letter or resume. Free users show up in
--- rate_limits, Pro users in job_applications.
+-- Activated = generated at least one letter or resume. Generations show up in
+-- rate_limits, and in job_applications: Pro accounts' always, free accounts'
+-- from #101 on (free generations before that only in rate_limits).
 create view public.funnel_weekly
 with (security_invoker = true) as
 select

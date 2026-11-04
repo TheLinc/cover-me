@@ -166,7 +166,7 @@ export default function Page() {
 
         <h2 className="text-[22px] text-foreground !mt-10">What do you give up compared with a hosted plan?</h2>
         <p>
-          You manage a provider account, billing and a key. Your history of letters and tailored resumes stays in the browser, up to your last 50 letters and 20 tailored resumes, because the Pro dashboard that saves every application is a hosted feature. If you&rsquo;d rather skip the key, the hosted free plan gives 10 generations to start, then 5 a week, and Pro is $15 a month.
+          You manage a provider account, billing and a key. Your history of letters and tailored resumes stays in the browser, up to your last 50 letters and 20 tailored resumes, because saving to an account is a hosted feature: a free account tracks every application on a board, and Pro also keeps the letters and resumes on any device. If you&rsquo;d rather skip the key, the hosted free plan gives 10 generations to start, then 5 a week, and Pro is $15 a month.
         </p>
         <p>
           Everything else is the same in both modes: the{' '}

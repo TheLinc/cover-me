@@ -3,13 +3,13 @@ import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { fetchApplications, queryFromParams } from '@/lib/applications'
 
 // The applications page's requests. The session's token stays on the server;
-// the function checks it and the Pro tier.
+// the function checks it, and the Pro tier for an application's documents.
 async function signedIn() {
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
   const { data: { session } } = await supabase.auth.getSession()
-  return session ? { supabase, user, token: session.access_token } : null
+  return session ? { token: session.access_token } : null
 }
 
 const notSignedIn = () => NextResponse.json({ error: 'Not signed in' }, { status: 401 })
@@ -46,10 +46,6 @@ export async function GET(req: NextRequest) {
   if (!page) {
     // The page aborted it (a newer search): nobody reads this answer.
     if (req.signal.aborted) return new NextResponse(null, { status: 499 })
-    // A lapsed subscription looks like any other failure from here; tell the
-    // page, so it leaves instead of offering a retry that can't work.
-    const { data: userData } = await s.supabase.from('users').select('tier').eq('id', s.user.id).single()
-    if (userData && userData.tier !== 'hosted_pro') return NextResponse.json({ error: 'Pro only' }, { status: 403 })
     return NextResponse.json({ error: 'Could not load applications' }, { status: 502 })
   }
   return NextResponse.json(page)

@@ -27,7 +27,8 @@ The extension reads the job description from the page and combines it with your 
 | API key required | Yes (yours) | No | No |
 | Generations | Unlimited | 10 to start, then 5/week | Up to 25/day |
 | Resume storage | Local only | Encrypted cloud | Encrypted cloud |
-| Application history (letters + tailored resumes) | Local only | Local only | Synced across devices |
+| Application board (job title, company, link, stage) | None | On your account | On your account |
+| Letters + tailored resumes | Kept in your browser | Kept in your browser | Synced across devices |
 | Privacy | Resume goes only to your AI provider | Resume encrypted at rest | Resume encrypted at rest |
 
 ---
@@ -559,6 +560,7 @@ Contributions are welcome. A few guidelines:
 - [x] Cover letter history sync for Pro users (cross-device)
 - [x] Resume tailoring — AI optimizes your resume for each job posting with an ATS match score, exports as PDF
 - [x] Application history — cover letters + tailored resumes grouped by job, synced for Pro
+- [x] Application board: every hosted account's jobs by stage on the dashboard (documents stay Pro)
 - [x] Chrome Web Store release
 - [ ] Tailored resume history stored locally (BYOK/Free)
 - [ ] Prompt tuning based on real usage

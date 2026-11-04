@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
 }
 
-const EFFECTIVE_DATE = 'October 15, 2026'
+const EFFECTIVE_DATE = 'November 4, 2026'
 const CONTACT_EMAIL  = 'support@cover-me.dev'
 
 function H2({ id, children }: { id: string; children: React.ReactNode }) {
@@ -156,8 +156,10 @@ export default function TermsPage() {
               <Li>
                 <strong className="text-foreground">Hosted (Free &amp; Pro).</strong> You create an
                 account. Cover letter generation is handled by our backend using our API key. The Free
-                tier allows 10 generations to start, then 5 a week. The Pro tier ($15/month or $35 every 3 months) allows up to 25 generations a day under fair use
-                and keeps every application on your account, searchable on the dashboard.
+                tier allows 10 generations to start, then 5 a week. Both tiers save each job you
+                generate for to your account (its title, company, posting address, dates and stage), so
+                you can track your applications on the dashboard. The Pro tier ($15/month or $35 every 3 months) allows up to 25 generations a day under fair use
+                and also keeps your cover letters and tailored resumes on your account, on any device.
               </Li>
             </Ul>
             <P>

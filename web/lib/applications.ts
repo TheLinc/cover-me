@@ -7,6 +7,9 @@ export const STAGES = ['applied', 'interviewing', 'offer', 'closed'] as const
 export type Stage = typeof STAGES[number]
 export const STAGE_LABEL: Record<Stage, string> = { applied: 'Applied', interviewing: 'Interviewing', offer: 'Offer', closed: 'Closed' }
 
+// Shown on a free account's cards, where a Pro one offers its documents.
+export const PRO_LINE = 'Your letters and resumes on any device with Pro'
+
 export interface StageState {
   stage: Stage
   stageChangedAt: string | null // null until the user first changes it
@@ -91,7 +94,7 @@ export function dayRange(from: string, to: string): { from?: string; to?: string
   return range
 }
 
-// Summaries for the cards. null on any failure (not Pro, paused project,
+// Summaries for the cards. null on any failure (paused project,
 // network, a hang past 5 s): the dashboard renders without the section, the
 // applications page shows a retry.
 export async function fetchApplications(

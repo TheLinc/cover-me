@@ -8,7 +8,10 @@ interface Job {
 
 // Find an existing job_application for this user+job, or create one.
 // Match priority: URL (covered by partial unique index) → company+title (manual entries).
-// Non-concurrent — extension users don't generate two things simultaneously.
+// ponytail: not concurrency-safe. A letter and a tailored resume for the same
+// posting finishing in the same instant can collide on the unique URL index;
+// generate and tailor treat that as non-fatal (and the extension retries a Pro
+// save). Re-select on a unique violation if it shows up in logs.
 // createdAt dates a new application (an upload of older local history);
 // an existing one keeps its date.
 export async function findOrCreateJobApplication(

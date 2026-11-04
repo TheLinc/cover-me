@@ -14,7 +14,9 @@ import { createLatestSearch } from '@/lib/latest-search'
 import { ApplicationCard } from './ApplicationCard'
 import { ApplicationsBoard } from './ApplicationsBoard'
 import { TileSkeletons } from './TileSkeletons'
+import { EmptyApplications } from './EmptyApplications'
 import { DateField } from './DateField'
+import { BOARD_SEEN_KEY } from '../BoardNotice'
 
 type Status = 'loading' | 'ready' | 'error'
 type View = 'board' | 'list'
@@ -34,17 +36,17 @@ async function load(query: ApplicationsQuery, signal: AbortSignal): Promise<Appl
   const params = new URLSearchParams()
   for (const [key, value] of Object.entries(query)) if (value) params.set(key, String(value))
   const res = await fetch(`/api/applications?${params}`, { signal })
-  // Signed out, or no longer Pro: a retry can't fix either. The promise never
-  // settles, so the page doesn't flash an error on its way out.
-  const leaveTo = res.status === 401 ? '/auth?next=/dashboard/applications' : res.status === 403 ? '/dashboard' : null
-  if (leaveTo) { window.location.assign(leaveTo); return new Promise(() => {}) }
+  // Signed out: a retry can't fix it. The promise never settles, so the page
+  // doesn't flash an error on its way out.
+  if (res.status === 401) { window.location.assign('/auth?next=/dashboard/applications'); return new Promise(() => {}) }
   if (!res.ok) throw new Error(String(res.status))
   return res.json()
 }
 
 // Every application matching the search and dates loads at once (up to
 // PAGE_LIMIT), so the page sorts them and filters by stage itself.
-export function ApplicationsBrowser() {
+// pro: cards offer the letters and resumes; free ones show the job only.
+export function ApplicationsBrowser({ pro }: { pro: boolean }) {
   const [text, setText] = useState('')
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
@@ -65,6 +67,8 @@ export function ApplicationsBrowser() {
     setView(v === 'board' || v === 'list' ? v : window.matchMedia('(min-width: 768px)').matches ? 'board' : 'list')
     const s = stored(SORT_KEY)
     if (SORTS.includes(s as Sort)) setChosenSort(s as Sort)
+    // The dashboard's "New: track your applications on a board" has done its job.
+    store(BOARD_SEEN_KEY, '1')
   }, [])
   const sort: Sort = chosenSort ?? (view === 'board' ? 'moved' : 'newest')
   function chooseView(v: View) { setView(v); store(VIEW_KEY, v) }
@@ -293,10 +297,7 @@ export function ApplicationsBrowser() {
               <Button variant="outline" size="sm" className="mt-2 rounded-full" onClick={clearFilters}>Clear filters</Button>
             </div>
           ) : (
-            <div className="flex flex-col items-start gap-2 rounded-[20px] border border-dashed border-line px-6 py-8">
-              <p className="text-[15px] font-semibold text-ink">No applications yet</p>
-              <p className="max-w-[46ch] text-[13.5px] text-ink-2">Letters and tailored resumes you make in the extension appear here, on every device.</p>
-            </div>
+            <EmptyApplications pro={pro} />
           )
         ) : null}
       </div>
@@ -305,11 +306,11 @@ export function ApplicationsBrowser() {
         // The old results, dimmed and out of reach until the new ones replace them.
         <div inert={dimmed} className={dimmed ? 'opacity-60 transition-opacity' : 'transition-opacity'}>
           {view === 'board' ? (
-            <ApplicationsBoard applications={sorted} onMove={move} onDeleted={removed} onStageChange={stageSaved} />
+            <ApplicationsBoard applications={sorted} pro={pro} onMove={move} onDeleted={removed} onStageChange={stageSaved} />
           ) : (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {listed.map((app) => (
-                <ApplicationCard key={app.id} app={app} onDeleted={removed} onStageChange={stageSaved} />
+                <ApplicationCard key={app.id} app={app} pro={pro} onDeleted={removed} onStageChange={stageSaved} />
               ))}
             </div>
           )}

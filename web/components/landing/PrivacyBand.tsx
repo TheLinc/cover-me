@@ -23,7 +23,7 @@ const MODES = {
     holds: 'Resume + sign-in',
     via: 'Cover Me server',
     ai: 'Claude',
-    facts: ['Resume encrypted at rest (AES-256-GCM)', 'Resume text is never logged', 'Pro syncs your history across devices'],
+    facts: ['Resume encrypted at rest (AES-256-GCM)', 'Resume text is never logged', 'Applications tracked on your board; Pro syncs letters and resumes'],
   },
 } as const
 type Mode = keyof typeof MODES

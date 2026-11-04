@@ -98,9 +98,12 @@ Deno.serve(async (req) => {
     .eq('id', userId)
     .single()
 
-  if (userData?.tier !== 'hosted_pro') {
-    return json({ error: 'Application history requires a Pro subscription.' }, 403)
-  }
+  // Every account tracks its jobs: summaries, stages, deletes. What carries
+  // the letters and resumes themselves (the full list, one application in
+  // full, the upload) is Pro. The extension's history reads the full list,
+  // so a free account there still gets 403, as before.
+  const isPro = userData?.tier === 'hosted_pro'
+  const proOnly = () => json({ error: 'Application history requires a Pro subscription.' }, 403)
 
   const params = new URL(req.url).searchParams
   const appId = params.get('id')
@@ -111,6 +114,7 @@ Deno.serve(async (req) => {
   if (req.method === 'GET') {
     const detailId = params.get('detail')
     if (detailId !== null) {
+      if (!isPro) return proOnly()
       if (!isUuid(detailId)) return json({ error: 'Invalid id' }, 400)
       const { data: row, error } = await supabase
         .from('job_applications')
@@ -125,6 +129,7 @@ Deno.serve(async (req) => {
 
     const search = parseSearch(params)
     if ('error' in search) return json({ error: search.error }, 400)
+    if (!search.summary && !isPro) return proOnly()
 
     let query = supabase
       .from('job_applications')
@@ -134,6 +139,10 @@ Deno.serve(async (req) => {
     if (search.from) query = query.gte('created_at', search.from)
     if (search.to) query = query.lt('created_at', search.to)
     if (search.stages.length > 0) query = query.in('stage', search.stages)
+    // The full list is the extension's history, which lists documents. A job
+    // with none here (tracked while free, #101) would sit there empty beside
+    // the browser's copy of the same letter.
+    if (!search.summary) query = query.or('cover_letters.not.is.null,tailored_resumes.not.is.null')
     // ponytail: created_at alone as the cursor (to the microsecond). Two of one user's applications
     // in the same microsecond would page past one; use (created_at, id) if seen.
     if (search.before) query = query.lt('created_at', search.before)
@@ -180,6 +189,7 @@ Deno.serve(async (req) => {
   // IDs, or with check: true only report which the account already holds.
   // Never overwrites an existing row. Spec: 2026-10-13-local-history-upload-design.md
   if (req.method === 'POST') {
+    if (!isPro) return proOnly()
     const raw = await readBody(req, MAX_UPLOAD_BYTES)
     if (raw === null) return json({ error: 'Request too large' }, 400)
     let upload: ReturnType<typeof parseUpload>

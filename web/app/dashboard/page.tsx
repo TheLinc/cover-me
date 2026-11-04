@@ -4,7 +4,7 @@ import { createServerSupabaseClient } from '@/lib/supabase-server'
 import DashboardClient from './DashboardClient'
 import type { Allowance } from '@/lib/limits'
 import { avatarUrl } from '@/lib/avatar'
-import { ProHistory, ProHistorySkeleton } from './ApplicationHistory'
+import { RecentApplications, RecentApplicationsSkeleton } from './ApplicationHistory'
 import { Toaster } from '@/components/ui/sonner'
 
 export default async function DashboardPage() {
@@ -23,12 +23,17 @@ export default async function DashboardPage() {
   // (migration 015). The database owns the numbers.
   const { data: allowance } = await supabase.rpc('my_generation_allowance')
 
-  // Pro history (2e), streamed in so the rest of the page doesn't wait on it.
-  // The session's token is forwarded to the function, which verifies it.
+  // Recent applications, every account's (#101), streamed in so the rest of
+  // the page doesn't wait on them. The session's token is forwarded to the
+  // function, which verifies it.
   let history = null
-  if (userData?.tier === 'hosted_pro') {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (session) history = <Suspense fallback={<ProHistorySkeleton />}><ProHistory accessToken={session.access_token} /></Suspense>
+  const { data: { session } } = await supabase.auth.getSession()
+  if (session) {
+    history = (
+      <Suspense fallback={<RecentApplicationsSkeleton />}>
+        <RecentApplications accessToken={session.access_token} pro={userData?.tier === 'hosted_pro'} />
+      </Suspense>
+    )
   }
 
   return (

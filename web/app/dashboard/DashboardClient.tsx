@@ -14,7 +14,7 @@ import {
 } from "@phosphor-icons/react";
 import { Spinner } from "@/components/ui/spinner";
 import { SiteNav } from '@/components/site/SiteNav'
-import { appLinks } from '@/components/site/app-links'
+import { APP_LINKS } from '@/components/site/app-links'
 import { SignOutButton } from '@/components/site/SignOutButton'
 
 const TILE = "flex flex-col rounded-[20px] border border-line bg-surface px-6 py-5 shadow-[0_1px_2px_rgba(30,27,75,0.05),0_10px_28px_-16px_rgba(30,27,75,0.22)]";
@@ -25,7 +25,7 @@ interface Props {
   tier: string;
   memberSince: string;
   allowance: Allowance | null;
-  // Pro history, rendered by the server page and streamed in (2e).
+  // Recent applications, rendered by the server page and streamed in.
   history: ReactNode;
 }
 
@@ -85,7 +85,7 @@ export default function DashboardClient({
   return (
     <div className="min-h-screen bg-background">
 
-      <SiteNav links={appLinks(isPro)} actions={<SignOutButton />} />
+      <SiteNav links={APP_LINKS} actions={<SignOutButton />} />
 
       <main className="relative z-[1] px-5 pb-24 pt-12">
         <div className="mx-auto flex max-w-[1040px] flex-col gap-8">
@@ -148,7 +148,7 @@ export default function DashboardClient({
                 <p className="flex items-center gap-2 text-[24px] font-semibold leading-tight tracking-[-0.02em] text-ink">
                   Pro <StarIcon size={16} weight="fill" className="text-brand-strong" aria-hidden />
                 </p>
-                <p className="text-[13.5px] text-ink-2">{proDaily} generations a day. Every application saved here and searchable.</p>
+                <p className="text-[13.5px] text-ink-2">{proDaily} generations a day. Your letters and resumes saved here, on every device.</p>
                 <Button variant="outline" size="sm" className="mt-1 rounded-full" onClick={handleBillingPortal} disabled={billingLoading}>
                   {billingLoading
                     ? <><Spinner className="size-3.5" />Loading</>
@@ -161,7 +161,7 @@ export default function DashboardClient({
               <div className={cn(TILE, "items-start gap-2.5 border-brand-tint bg-brand-tint")}>
                 <span className="text-[12.5px] font-medium text-brand-ink">Go Pro</span>
                 <ul className="flex flex-col gap-1 text-[13.5px] text-ink">
-                  {[`${proDaily} generations a day`, 'Every application saved here, searchable', 'Cancel any time'].map((line) => (
+                  {[`${proDaily} generations a day`, 'Your letters and resumes on every device', 'Cancel any time'].map((line) => (
                     <li key={line} className="flex items-center gap-2"><span aria-hidden className="size-1.5 rounded-full bg-brand" />{line}</li>
                   ))}
                 </ul>
@@ -178,7 +178,7 @@ export default function DashboardClient({
             )}
           </section>
 
-          {/* Pro history (2e), streamed in by the server page. */}
+          {/* Recent applications, streamed in by the server page. */}
           {history}
 
           {/* Where the work happens */}

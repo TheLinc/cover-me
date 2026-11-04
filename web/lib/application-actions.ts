@@ -3,8 +3,8 @@
 import type { ApplicationDetail, ApplicationSummary, Stage, StageState } from './applications'
 import type { PdfJob, TailoredResume } from './pdf/types'
 
-// The cards' calls to /api/applications. Signed out (401) or no longer Pro
-// (403) leaves the page; the promise never settles, so nothing flashes an
+// The cards' calls to /api/applications. Signed out (401), or a Pro account
+// that lapsed mid-visit asking for a document (403), leaves the page; the promise never settles, so nothing flashes an
 // error on the way out.
 async function call(path: string, init?: RequestInit): Promise<Response> {
   const res = await fetch(path, init)

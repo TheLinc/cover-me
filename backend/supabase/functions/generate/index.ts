@@ -4,6 +4,7 @@ import { ANTHROPIC_MESSAGES_URL, SONNET_BETA_HEADER, SONNET_FIELDS, SONNET_MAX_T
 import { corsHeaders, handleCors, json } from '../_shared/cors.ts'
 import { decrypt } from '../_shared/encrypt.ts'
 import { buildLintRetryMessage, lintLetter } from '../_shared/letter-lint.ts'
+import { findOrCreateJobApplication } from '../_shared/job-application.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SECRET_KEY = Deno.env.get('SERVICE_KEY')!
@@ -24,7 +25,7 @@ Deno.serve(async (req) => {
   const userId = user.id
 
   // Parse request
-  let job: { title: string; company: string; description: string }
+  let job: { title: string; company: string; description: string; url?: string }
   let supplemental: string | undefined
   try {
     const body = await req.json()
@@ -114,6 +115,15 @@ Deno.serve(async (req) => {
       } catch (err) {
         console.error('Claude retry error:', err instanceof Error ? err.message : String(err))
       }
+    }
+
+    // Every account's job goes on its board (title, company, link, dates).
+    // The letter isn't stored here: a Pro account's extension saves it next
+    // (letters function), under this same application. Non-fatal.
+    try {
+      await findOrCreateJobApplication(supabase, userId, job)
+    } catch {
+      console.error('Failed to save job application')
     }
 
     return { letter }

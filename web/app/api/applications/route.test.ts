@@ -8,7 +8,6 @@ vi.mock('@/lib/supabase-server', () => ({
       getUser: async () => ({ data: { user: auth.user } }),
       getSession: async () => ({ data: { session: auth.user ? { access_token: auth.token } : null } }),
     },
-    from: () => ({ select: () => ({ eq: () => ({ single: async () => ({ data: { tier: 'hosted_pro' } }) }) }) }),
   }),
 }))
 

@@ -55,7 +55,7 @@ const faqJsonLd = {
       name: 'Does Cover Me optimize my LinkedIn profile like Jobscan?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: "No. Cover Me tailors your resume and writes a cover letter for one job posting at a time. Jobscan's paid plans include a LinkedIn optimizer, a job tracker and a resume builder, which Cover Me doesn't have.",
+        text: "No. Cover Me tailors your resume and writes a cover letter for one job posting at a time. Jobscan's paid plans include a LinkedIn optimizer, a job tracker and a resume builder. Cover Me has no LinkedIn optimizer or resume builder, and its tracking is a simple board of each application's stage.",
       },
     },
   ],
@@ -69,7 +69,7 @@ const COMPARISON: { feature: string; coverMe: string; jobscan: string }[] = [
   { feature: 'Resume rewriting', coverMe: 'One click rewrites your bullets, summary and skills for the posting', jobscan: 'AI optimizations on paid plans' },
   { feature: 'Invented skills', coverMe: 'A check removes skills your original resume does not support', jobscan: 'Not described on its plan page' },
   { feature: 'Cover letters', coverMe: 'On every plan, written for the posting', jobscan: 'AI cover letter generator on paid plans' },
-  { feature: 'LinkedIn, job tracker, resume builder', coverMe: 'Not included', jobscan: 'LinkedIn optimizer on paid plans; job tracker and resume builder on every plan' },
+  { feature: 'LinkedIn, job tracker, resume builder', coverMe: 'A simple board of your applications by stage; no LinkedIn optimizer or resume builder', jobscan: 'LinkedIn optimizer on paid plans; job tracker and resume builder on every plan' },
   { feature: 'Open source', coverMe: 'Yes, MIT licensed', jobscan: 'No' },
 ]
 
