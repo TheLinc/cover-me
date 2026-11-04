@@ -218,19 +218,19 @@ export function ApplicationCard({ app: initial, onDeleted, onStageChange, compac
         {app.coverLetters.length > 0 && (
           <Button variant="outline" size="sm" className="h-8 gap-1.5 px-3 text-[13px] hover:border-brand-strong hover:text-brand-strong" onClick={() => download('letter')} disabled={busy !== null} aria-label="Download cover letter">
             {busy === 'letter' ? <Spinner className="size-3.5" /> : <DownloadSimpleIcon size={14} aria-hidden />}
-            Cover letter
+            <span className="cap-center">Cover letter</span>
           </Button>
         )}
         {app.tailoredResumes.length > 0 && (
           <Button variant="outline" size="sm" className="h-8 gap-1.5 px-3 text-[13px] hover:border-brand-strong hover:text-brand-strong" onClick={() => download('resume')} disabled={busy !== null} aria-label="Download resume">
             {busy === 'resume' ? <Spinner className="size-3.5" /> : <DownloadSimpleIcon size={14} aria-hidden />}
-            Resume
+            <span className="cap-center">Resume</span>
           </Button>
         )}
         <div className="ml-auto flex items-center gap-1">
           <StageMenu title={title} stage={app.stage} onChange={changeStage} busy={busy !== null} saving={busy === 'stage'} />
-          <Button variant="ghost" size="sm" className="h-8 gap-1 px-2.5 text-[13px] text-ink-2 hover:text-ink" onClick={() => setDetailsOpen(true)}>
-            <span className="max-sm:sr-only">Details</span> <CaretRightIcon size={12} aria-hidden />
+          <Button variant="ghost" size="sm" className="h-8 gap-1 px-2 text-[13px] text-ink-2 hover:text-ink" onClick={() => setDetailsOpen(true)}>
+            <span className="cap-center max-sm:sr-only">Details</span> <CaretRightIcon size={12} aria-hidden />
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

@@ -25,6 +25,9 @@
   --gap:          #F97316; /* missing keywords */
   --gap-tint:     #FFEDD5;
   --gap-ink:      #9A3412;
+  --offer:        #16A34A; /* the Offer stage's dot */
+  --offer-tint:   #DCFCE7;
+  --offer-ink:    #166534; /* text on offer-tint */
   --night:        #15132B; /* dark bands, footer */
   --night-2:      #1F1C3D;
   --on-night:     #F5F3F2;
@@ -127,6 +130,13 @@ img, svg, video { display: block; }
 }
 
 /* In the components layer so Tailwind utilities can override them. */
+@layer utilities {
+  /* Geist sits its capitals about 1px high in a centered control (measured at
+     13px: 13 rows above, 15 below in a 36px chip). Labels inside pills take
+     this to sit on the middle; icons are already centered. */
+  .cap-center { position: relative; top: 0.075em; }
+}
+
 @layer components {
   /* White rounded card on the paper background. */
   .soft-card {

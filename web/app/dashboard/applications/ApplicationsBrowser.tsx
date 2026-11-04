@@ -204,41 +204,48 @@ export function ApplicationsBrowser() {
             className="h-14 rounded-full border-line bg-surface pl-14 pr-5 text-[16px] text-ink shadow-[0_1px_2px_rgba(30,27,75,0.05),0_10px_28px_-18px_rgba(30,27,75,0.25)] placeholder:text-subtle focus-visible:ring-brand"
           />
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <DateField id="app-from" label="From" value={from} onChange={setFrom} invalid={!range} describedBy={range ? undefined : 'app-range-error'} />
-          <DateField id="app-to" label="To" value={to} onChange={setTo} invalid={!range} describedBy={range ? undefined : 'app-range-error'} />
-          {view === 'list' && (
-            <div role="group" aria-label="Filter by stage" className="flex flex-wrap items-center gap-2">
-              {STAGES.map((stage) => {
-                const on = stages.includes(stage)
-                return (
-                  <Toggle
-                    key={stage}
-                    pressed={on}
-                    onPressedChange={(pressed) => setStages((list) => STAGES.filter((s) => (s === stage ? pressed : list.includes(s))))}
-                    variant="outline"
-                    size="sm"
-                    className={CHIP}
-                  >
-                    {on && <CheckIcon size={13} weight="bold" aria-hidden />}
-                    {STAGE_LABEL[stage]}
-                  </Toggle>
-                )
-              })}
-            </div>
-          )}
-          {filtered && (
-            <Button variant="ghost" size="sm" className="h-9 gap-1 rounded-full px-3 text-[13px] text-ink-2" onClick={clearFilters}>
-              <XIcon size={12} aria-hidden />Clear
-            </Button>
-          )}
+        {/* Filters on the left, sort and view on the right; on phones the sort
+            and view get their own line below. */}
+        <div className="flex flex-col gap-2 md:flex-row md:items-center">
+          {/* One line that scrolls sideways when it doesn't fit, out to the
+              screen's edges on phones; py-1 leaves room for the focus ring. */}
+          <div className="-mx-5 -my-1 flex min-w-0 items-center gap-2 overflow-x-auto px-5 py-1 [scrollbar-width:none] md:mr-0 md:flex-1 md:pr-1 [&::-webkit-scrollbar]:hidden">
+            <DateField id="app-from" label="From" value={from} onChange={setFrom} invalid={!range} describedBy={range ? undefined : 'app-range-error'} />
+            <DateField id="app-to" label="To" value={to} onChange={setTo} invalid={!range} describedBy={range ? undefined : 'app-range-error'} />
+            {view === 'list' && (
+              <div role="group" aria-label="Filter by stage" className="flex items-center gap-2">
+                {STAGES.map((stage) => {
+                  const on = stages.includes(stage)
+                  return (
+                    <Toggle
+                      key={stage}
+                      pressed={on}
+                      // Kept in STAGES order, so the same filters show the same way.
+                      onPressedChange={(pressed) => setStages((list) => STAGES.filter((s) => (s === stage ? pressed : list.includes(s))))}
+                      variant="outline"
+                      size="sm"
+                      className={CHIP}
+                    >
+                      {on && <CheckIcon size={13} weight="bold" aria-hidden />}
+                      <span className="cap-center">{STAGE_LABEL[stage]}</span>
+                    </Toggle>
+                  )
+                })}
+              </div>
+            )}
+            {filtered && (
+              <Button variant="ghost" size="sm" className="h-9 shrink-0 gap-1 rounded-full px-3 text-[13px] text-ink-2" onClick={clearFilters}>
+                <XIcon size={12} aria-hidden /><span className="cap-center">Clear</span>
+              </Button>
+            )}
+          </div>
           {view && (
-            <div className="ml-auto flex items-center gap-2">
+            <div className="flex shrink-0 items-center gap-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm" className="h-9 gap-1.5 rounded-full border-line bg-surface px-3.5 text-[13px] font-normal text-ink-2 hover:text-ink">
                     <ArrowsDownUpIcon size={14} aria-hidden />
-                    <span className="sr-only">Sort: </span>{SORT_LABEL[sort]}
+                    <span className="cap-center"><span className="sr-only">Sort: </span>{SORT_LABEL[sort]}</span>
                     <CaretDownIcon size={12} aria-hidden />
                   </Button>
                 </DropdownMenuTrigger>
@@ -258,8 +265,8 @@ export function ApplicationsBrowser() {
                 size="sm"
                 className="gap-1 rounded-full border border-line bg-surface p-0.5"
               >
-                <ToggleGroupItem value="board" className={VIEW_ITEM}><KanbanIcon size={15} aria-hidden />Board</ToggleGroupItem>
-                <ToggleGroupItem value="list" className={VIEW_ITEM}><ListBulletsIcon size={15} aria-hidden />List</ToggleGroupItem>
+                <ToggleGroupItem value="board" className={VIEW_ITEM}><KanbanIcon size={15} aria-hidden /><span className="cap-center">Board</span></ToggleGroupItem>
+                <ToggleGroupItem value="list" className={VIEW_ITEM}><ListBulletsIcon size={15} aria-hidden /><span className="cap-center">List</span></ToggleGroupItem>
               </ToggleGroup>
             </div>
           )}

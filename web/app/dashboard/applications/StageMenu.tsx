@@ -6,6 +6,15 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuRadio
 import { Spinner } from '@/components/ui/spinner'
 import { STAGE_LABEL, STAGES, type Stage } from '@/lib/applications'
 
+// Each stage's pill and dot, so a card's stage reads at a glance and doesn't
+// look like the document chips beside it. Closed is sunken, with a hollow dot.
+const STYLE: Record<Stage, { pill: string; dot: string }> = {
+  applied: { pill: 'border-line bg-surface text-ink', dot: 'bg-subtle' },
+  interviewing: { pill: 'border-transparent bg-brand-tint text-brand-ink hover:border-[color-mix(in_srgb,var(--brand-ink)_35%,transparent)]', dot: 'bg-brand' },
+  offer: { pill: 'border-transparent bg-offer-tint text-offer-ink hover:border-[color-mix(in_srgb,var(--offer-ink)_35%,transparent)]', dot: 'bg-offer' },
+  closed: { pill: 'border-transparent bg-panel text-ink-2 hover:border-line', dot: 'border border-subtle' },
+}
+
 // Where an application stands, and the menu that moves it. The card and the
 // details drawer both show one. The card's toast announces a change.
 export function StageMenu({ title, stage, onChange, busy, saving, align = 'end' }: {
@@ -19,14 +28,17 @@ export function StageMenu({ title, stage, onChange, busy, saving, align = 'end' 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 gap-1.5 rounded-full border-line bg-surface px-3 text-[13px] font-medium text-ink"
+        <Button
+          variant="outline"
+          size="sm"
+          className={`h-8 gap-1 rounded-full px-2.5 text-[13px] font-medium ${STYLE[stage].pill}`}
           // Not disabled during its own save: the closing menu puts focus back on
           // the trigger, and a disabled one can't take it. A pick then is ignored.
           disabled={busy && !saving}
         >
-          {saving && <Spinner className="size-3.5" />}
-          <span className="sr-only">Stage for {title}: </span>{STAGE_LABEL[stage]}
-          <CaretDownIcon size={12} className="text-ink-2" aria-hidden />
+          {saving ? <Spinner className="size-3.5" /> : <span aria-hidden className={`size-2 rounded-full ${STYLE[stage].dot}`} />}
+          <span className="cap-center"><span className="sr-only">Stage for {title}: </span>{STAGE_LABEL[stage]}</span>
+          <CaretDownIcon size={12} className="opacity-70" aria-hidden />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align={align}>
