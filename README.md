@@ -560,7 +560,7 @@ Contributions are welcome. A few guidelines:
 - [x] Cover letter history sync for Pro users (cross-device)
 - [x] Resume tailoring — AI optimizes your resume for each job posting with an ATS match score, exports as PDF
 - [x] Application history — cover letters + tailored resumes grouped by job, synced for Pro
-- [x] Application board — every hosted account's jobs by stage on the dashboard (documents stay Pro)
+- [x] Application board: every hosted account's jobs by stage on the dashboard (documents stay Pro)
 - [x] Chrome Web Store release
 - [ ] Tailored resume history stored locally (BYOK/Free)
 - [ ] Prompt tuning based on real usage

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { XIcon } from '@phosphor-icons/react'
+import { Button } from '@/components/ui/button'
 
 // Set when the line is closed or the applications page opens (ApplicationsBrowser).
 export const BOARD_SEEN_KEY = 'cover-me:board-notice-seen'
@@ -23,14 +24,14 @@ export function BoardNotice() {
   }
 
   return (
-    <div className="flex items-center gap-3 rounded-[16px] bg-brand-tint py-2.5 pl-4 pr-2 text-[13.5px] text-brand-ink">
+    <div className="flex items-center gap-3 rounded-[20px] bg-brand-tint py-2.5 pl-4 pr-2 text-[13.5px] text-brand-ink">
       <p className="min-w-0 flex-1">
         <span className="font-semibold">New:</span>{' '}
-        <Link href="/dashboard/applications" className="underline underline-offset-4 hover:text-brand-strong">track your applications on a board</Link>
+        <Link href="/dashboard/applications" className="font-medium text-brand-strong underline-offset-4 hover:underline">track your applications on a board</Link>
       </p>
-      <button type="button" onClick={close} aria-label="Close" className="grid size-8 shrink-0 place-items-center rounded-full hover:bg-surface/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand">
+      <Button variant="ghost" size="icon" onClick={close} aria-label="Close" className="h-8 w-8 shrink-0 rounded-full text-brand-ink">
         <XIcon size={14} aria-hidden />
-      </button>
+      </Button>
     </div>
   )
 }

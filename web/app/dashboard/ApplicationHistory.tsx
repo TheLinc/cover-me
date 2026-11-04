@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { ArrowRightIcon } from '@phosphor-icons/react/dist/ssr'
-import { fetchApplications, type ApplicationSummary } from '@/lib/applications'
+import { emptyApplications, fetchApplications, type ApplicationSummary } from '@/lib/applications'
 import { ApplicationCard } from './applications/ApplicationCard'
 import { TileSkeletons } from './applications/TileSkeletons'
 import { BoardNotice } from './BoardNotice'
@@ -39,7 +39,7 @@ export function ApplicationHistory({ applications, pro }: { applications: Applic
       {applications.length === 0 ? (
         <div className="flex flex-col items-start gap-1.5 rounded-[20px] border border-dashed border-line px-6 py-7">
           <p className="text-[15px] font-semibold text-ink">No applications yet</p>
-          <p className="max-w-[46ch] text-[13.5px] text-ink-2">{pro ? 'Letters and tailored resumes you make in the extension appear here, on every device.' : 'Jobs you make a letter or resume for in the extension appear here.'}</p>
+          <p className="max-w-[46ch] text-[13.5px] text-ink-2">{emptyApplications(pro)}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

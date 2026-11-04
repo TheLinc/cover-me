@@ -8,7 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuRadio
 import { Input } from '@/components/ui/input'
 import { Toggle } from '@/components/ui/toggle'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import { dayRange, PAGE_LIMIT, SORT_LABEL, SORTS, sortApplications, STAGE_LABEL, STAGES, type ApplicationSummary, type ApplicationsPage, type ApplicationsQuery, type Sort, type Stage, type StageState } from '@/lib/applications'
+import { dayRange, emptyApplications, PAGE_LIMIT, SORT_LABEL, SORTS, sortApplications, STAGE_LABEL, STAGES, type ApplicationSummary, type ApplicationsPage, type ApplicationsQuery, type Sort, type Stage, type StageState } from '@/lib/applications'
 import { GONE, GONE_MESSAGE, setStage } from '@/lib/application-actions'
 import { createLatestSearch } from '@/lib/latest-search'
 import { ApplicationCard } from './ApplicationCard'
@@ -298,7 +298,7 @@ export function ApplicationsBrowser({ pro }: { pro: boolean }) {
           ) : (
             <div className="flex flex-col items-start gap-2 rounded-[20px] border border-dashed border-line px-6 py-8">
               <p className="text-[15px] font-semibold text-ink">No applications yet</p>
-              <p className="max-w-[46ch] text-[13.5px] text-ink-2">{pro ? 'Letters and tailored resumes you make in the extension appear here, on every device.' : 'Jobs you make a letter or resume for in the extension appear here.'}</p>
+              <p className="max-w-[46ch] text-[13.5px] text-ink-2">{emptyApplications(pro)}</p>
             </div>
           )
         ) : null}

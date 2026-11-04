@@ -236,6 +236,8 @@ describe('tailor', () => {
     const { applications } = await res.json()
     expect(applications).toHaveLength(1)
     expect(applications[0]).toMatchObject({ title: JOB.title, url: JOB.url, stage: 'applied', tailoredResumes: [] })
+    const { data } = await admin.from('tailored_resumes').select('id').eq('user_id', user.id)
+    expect(data).toHaveLength(0)
   })
 
   it('refuses past the free weekly allowance', async () => {
