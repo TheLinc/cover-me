@@ -55,6 +55,8 @@ interface CallOptions {
   // Sent as-is (e.g. a gzipped body); set Content-Type in headers.
   rawBody?: Uint8Array
   signal?: AbortSignal
+  // 'manual' to see a redirect itself rather than where it leads.
+  redirect?: RequestRedirect
 }
 
 export async function callFunction(name: string, opts: CallOptions = {}): Promise<Response> {
@@ -68,6 +70,7 @@ export async function callFunction(name: string, opts: CallOptions = {}): Promis
     headers,
     body: opts.rawBody ?? (opts.body !== undefined ? JSON.stringify(opts.body) : undefined),
     signal: opts.signal,
+    redirect: opts.redirect,
   })
 }
 

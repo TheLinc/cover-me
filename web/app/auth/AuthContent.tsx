@@ -5,10 +5,12 @@ import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase";
 import { afterOAuth, hashReturn, oauthCancelled, oauthErrorDescription, oauthRedirectUrl, safeNext } from "@/lib/auth-redirect";
+import { saveProductUpdates } from "@/lib/email-preferences";
 import { Button } from "@/components/ui/button";
 import { GoogleIcon } from "@/components/ui/google-icon";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   ArrowLeftIcon,
   CheckIcon,
@@ -23,6 +25,9 @@ type View = "signin" | "signup" | "forgot" | "reset" | "confirmed";
 
 // Off until the Google provider is set up in Supabase: merging deploys the site.
 const GOOGLE_SIGNIN = process.env.NEXT_PUBLIC_GOOGLE_SIGNIN === "1";
+
+// The signup box across the Google round trip (#114).
+const SIGNUP_UPDATES_KEY = "cover-me:signup-updates";
 
 // Canonical origin for Supabase email redirects. window.location.origin varies
 // between www/non-www depending on how the user reached the site, and any
@@ -56,6 +61,8 @@ function AuthForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  // The signup box (#114): unticked until the user ticks it.
+  const [productUpdates, setProductUpdates] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -90,6 +97,10 @@ function AuthForm() {
     // Read before replaceState below strips the query and the hash.
     const cancelledOAuth = isOAuth && oauthCancelled(window.location.search, window.location.hash);
     const oauthReason = isOAuth ? oauthErrorDescription(window.location.search, window.location.hash) : "";
+    // The signup box, ticked before Google (handleGoogle). Kept in this tab's
+    // sessionStorage, never the URL, so a crafted link can't opt anyone in.
+    const oauthUpdates = isOAuth && sessionStorage.getItem(SIGNUP_UPDATES_KEY) === "1";
+    sessionStorage.removeItem(SIGNUP_UPDATES_KEY);
     const isConfirmation = searchParams.has("code") && !isOAuth;
     if (isConfirmation || isOAuth) {
       // Drop the code and any error, but keep where to go after signing in
@@ -126,8 +137,10 @@ function AuthForm() {
       window.history.replaceState(null, "", window.location.pathname);
     }
 
-    function openDashboard() {
+    async function openDashboard() {
       setWaiting("opening");
+      // A failed save leaves the user opted out; the dashboard toggle can fix it.
+      if (oauthUpdates) await saveProductUpdates(true, "signup").catch(() => {});
       window.location.href = afterOAuth(searchParams.get("plan"), searchParams.get("next"));
     }
 
@@ -199,7 +212,9 @@ function AuthForm() {
         const { error } = await supabase.auth.signUp({
             email,
             password,
-            options: { emailRedirectTo: authRedirectUrl(next) },
+            // The signup trigger records the box (migration 022), wherever
+            // the confirmation link is opened.
+            options: { emailRedirectTo: authRedirectUrl(next), ...(productUpdates ? { data: { product_updates: true } } : {}) },
           });
         if (error) throw error;
         if (plan === "pro") {
@@ -216,6 +231,8 @@ function AuthForm() {
 
   async function handleGoogle() {
     setError("");
+    if (view === "signup" && productUpdates) sessionStorage.setItem(SIGNUP_UPDATES_KEY, "1");
+    else sessionStorage.removeItem(SIGNUP_UPDATES_KEY);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -682,6 +699,21 @@ function AuthForm() {
                   {subtext}
                 </p>
               </div>
+
+              {/* Above both ways in, so it reads as applying to Google too. */}
+              {view === "signup" && (
+                <div className="flex items-center gap-2 mb-[18px]">
+                  <Checkbox
+                    id="product-updates"
+                    checked={productUpdates}
+                    onCheckedChange={(v) => setProductUpdates(v === true)}
+                    className="rounded-[4px]"
+                  />
+                  <label htmlFor="product-updates" className="text-[13px] text-muted-foreground cursor-pointer select-none">
+                    Email me about new features (a few times a year)
+                  </label>
+                </div>
+              )}
 
               {GOOGLE_SIGNIN && (
                 <div className="flex flex-col gap-3.5 mb-[18px]">

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { completeSignIn, ensureValidSession, fetchTier, GoogleSignInCancelledError, handleGoogleSignIn, pkcePair, signInWithGoogle } from './auth'
+import { completeSignIn, ensureValidSession, fetchTier, GoogleSignInCancelledError, handleGoogleSignIn, pkcePair, signInWithGoogle, signUp } from './auth'
 
 const REDIRECT = 'https://abc.chromiumapp.org/'
 const session = { access_token: 'at', refresh_token: 'rt', expires_at: 2_000_000_000, user: { id: 'u1', email: 'a@b.co' } }
@@ -374,6 +374,32 @@ describe('handleGoogleSignIn', () => {
     expect(storage.data.googleSignInError).toBe('nope')
   })
 
+  // The signup box (#114). Google signups can't carry it as user metadata, so
+  // it's sent once the session exists.
+  test('a ticked signup box is recorded as consent from signup', async () => {
+    vi.stubGlobal('chrome', { storage: fakeStorage({}), identity: { getRedirectURL: () => REDIRECT, launchWebAuthFlow: vi.fn(async () => `${REDIRECT}?code=c`) } })
+    const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => new Response(JSON.stringify(session), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await handleGoogleSignIn({ productUpdates: true })
+    const call = fetchMock.mock.calls.find(([url]) => String(url).endsWith('/functions/v1/email-preferences'))
+    expect(call?.[1]?.method).toBe('PATCH')
+    expect((call?.[1]?.headers as Record<string, string>).Authorization).toBe('Bearer at')
+    expect(JSON.parse(call?.[1]?.body as string)).toEqual({ product_updates: true, source: 'signup' })
+  })
+
+  test('an unticked box sends nothing, and a failed save does not fail the sign-in', async () => {
+    vi.stubGlobal('chrome', { storage: fakeStorage({}), identity: { getRedirectURL: () => REDIRECT, launchWebAuthFlow: vi.fn(async () => `${REDIRECT}?code=c`) } })
+    const fetchMock = vi.fn(async (url: string) => String(url).endsWith('/email-preferences')
+      ? new Response('{}', { status: 500 })
+      : new Response(JSON.stringify(session), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await handleGoogleSignIn()
+    expect(fetchMock.mock.calls.some(([url]) => String(url).endsWith('/email-preferences'))).toBe(false)
+    expect(await handleGoogleSignIn({ productUpdates: true })).toEqual({ success: true, session })
+  })
+
   test('a success or a cancel clears an old saved failure', async () => {
     const storage = fakeStorage({ googleSignInError: 'old' })
     vi.stubGlobal('chrome', { storage, identity: { getRedirectURL: () => REDIRECT, launchWebAuthFlow: vi.fn(async () => { throw new Error('The user did not approve access.') }) } })
@@ -432,5 +458,27 @@ describe('ensureValidSession', () => {
 
     expect(await ensureValidSession()).toBeNull()
     expect(storage.data.session).toBeUndefined()
+  })
+})
+
+// Email signups send the box as user metadata; the signup trigger records it
+// (migration 022), even when the confirmation link opens on another device.
+describe('signUp', () => {
+  function captureSignup() {
+    const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => new Response(JSON.stringify({ id: 'u1', email: 'a@b.co' }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    return () => JSON.parse(fetchMock.mock.calls[0][1]?.body as string)
+  }
+
+  test('a ticked box is sent as product_updates metadata', async () => {
+    const body = captureSignup()
+    await signUp('a@b.co', 'secret1', true).catch(() => {})
+    expect(body()).toEqual({ email: 'a@b.co', password: 'secret1', data: { product_updates: true } })
+  })
+
+  test('an unticked box sends no metadata', async () => {
+    const body = captureSignup()
+    await signUp('a@b.co', 'secret1').catch(() => {})
+    expect(body()).toEqual({ email: 'a@b.co', password: 'secret1' })
   })
 })
