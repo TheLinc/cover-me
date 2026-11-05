@@ -82,6 +82,9 @@ export function UninstallSurvey() {
       <h1 id="reason-label" className="text-[34px] font-semibold leading-tight tracking-[-0.03em]">
         Why did you remove Cover Me?
       </h1>
+      <p className="mt-3 text-[15px] text-muted-foreground">
+        Let us know what we can do better. All feedback is appreciated.
+      </p>
       <RadioGroup aria-labelledby="reason-label" value={reason} onValueChange={setReason} required className="mt-6 gap-3">
         {REASONS.map((r, i) => (
           <div key={r} className="flex items-center gap-3">
