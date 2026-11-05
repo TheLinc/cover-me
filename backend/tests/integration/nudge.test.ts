@@ -72,6 +72,8 @@ describe('nudge', () => {
     })
     expect(email.body.text).toContain('You added your resume to Cover Me yesterday')
     expect(email.body.text).toContain('press Tailor')
+    // "-- " with its space is the signature separator mail clients fold.
+    expect(email.body.text).toContain("\nLincoln\n\n-- \nDon't want emails like this?")
     // The HTML copy, in the auth emails' card: heading, opening, numbered steps.
     expect(email.body.html).toContain('>Try it on one job</h1>')
     expect(email.body.html).toContain('You added your resume to Cover Me yesterday but haven&#39;t tailored it to a job yet.')

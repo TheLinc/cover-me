@@ -5,12 +5,11 @@
 
 export type Version = 'resume' | 'no_resume'
 
-const COPY: Record<Version, { subject: string; heading: string; opening: string; lead: string; steps: string[] }> = {
+const COPY: Record<Version, { subject: string; heading: string; opening: string; lead?: string; steps: string[] }> = {
   resume: {
     subject: 'Your resume is in. Try it on one job',
     heading: 'Try it on one job',
     opening: "You added your resume to Cover Me yesterday but haven't tailored it to a job yet.",
-    lead: "You added your resume to Cover Me yesterday but haven't tailored it to a job yet.",
     steps: [
       'Open any job posting on LinkedIn, Indeed, Greenhouse, Lever or Workday.',
       'Click the Cover Me icon.',
@@ -21,7 +20,8 @@ const COPY: Record<Version, { subject: string; heading: string; opening: string;
     subject: 'One step left: add your resume',
     heading: 'One step left: add your resume',
     opening: "You made a Cover Me account yesterday. Add your resume in the extension's Settings and you're one click from a tailored resume.",
-    // The steps below say where the resume goes, so the HTML doesn't repeat it.
+    // The HTML's opening, when it differs: the steps there say where the
+    // resume goes, so it doesn't repeat it.
     lead: "You made a Cover Me account yesterday. You're three steps from a tailored resume.",
     steps: [
       "Click the Cover Me icon and add your resume in Settings.",
@@ -34,7 +34,7 @@ const COPY: Record<Version, { subject: string; heading: string; opening: string;
 const TIMING = 'It takes about 30 seconds, and you get 10 free to start.'
 
 export function nudgeEmail(version: Version, unsubscribeUrl: string, site: string) {
-  const { subject, heading, opening, lead, steps } = COPY[version]
+  const { subject, heading, opening, lead = opening, steps } = COPY[version]
 
   const text = `${opening}
 
@@ -44,7 +44,7 @@ If something didn't work, reply to this email. I read every one.
 
 Lincoln
 
---
+--\u0020
 Don't want emails like this? Unsubscribe: ${unsubscribeUrl}
 `
 
@@ -56,6 +56,8 @@ Don't want emails like this? Unsubscribe: ${unsubscribeUrl}
   <title>${esc(subject)}</title>
 </head>
 <body style="margin:0;padding:0;background-color:#0d1117;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;">
+  <!-- Inbox preview text -->
+  <div style="display:none;max-height:0;overflow:hidden;">${esc(lead)}</div>
   <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="background-color:#0d1117;">
     <tr>
       <td align="center" style="padding:48px 20px;">
