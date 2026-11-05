@@ -42,7 +42,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true
   }
   if (message.type === 'GOOGLE_SIGN_IN') {
-    keepAlive(handleGoogleSignIn()).then(sendResponse)
+    keepAlive(handleGoogleSignIn({ productUpdates: message.productUpdates === true })).then(sendResponse)
     return true
   }
 })

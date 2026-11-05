@@ -33,12 +33,14 @@ export async function signIn(email: string, password: string): Promise<AuthSessi
   return parseSession(data)
 }
 
-export async function signUp(email: string, password: string): Promise<AuthSession> {
+// productUpdates: the signup box (#114), sent as user metadata so the signup
+// trigger records it (migration 021). Unticked sends nothing.
+export async function signUp(email: string, password: string, productUpdates = false): Promise<AuthSession> {
   const redirectTo = encodeURIComponent(`${WEB_URL}/auth`)
   const res = await fetch(`${SUPABASE_URL}/auth/v1/signup?redirect_to=${redirectTo}`, {
     method: 'POST',
     headers: authHeaders(),
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify(productUpdates ? { email, password, data: { product_updates: true } } : { email, password }),
   })
   const data = await res.json() as Record<string, unknown>
   if (!res.ok) {
@@ -190,10 +192,20 @@ export type GoogleSignInResponse =
 // The GOOGLE_SIGN_IN message handler. It runs in the service worker because the
 // popup closes as soon as Google's window takes focus; the worker finishes the
 // sign-in either way, and the popup shows it the next time it opens.
-export async function handleGoogleSignIn(): Promise<GoogleSignInResponse> {
+// productUpdates: the signup box (#114). A Google signup can't carry it as
+// user metadata, so it's saved once the session exists. A failed save leaves
+// the user opted out, never signed out.
+export async function handleGoogleSignIn({ productUpdates = false } = {}): Promise<GoogleSignInResponse> {
   try {
     const session = await signInWithGoogle()
     await completeSignIn(session)
+    if (productUpdates) {
+      await fetch(`${SUPABASE_URL}/functions/v1/email-preferences`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ product_updates: true, source: 'signup' }),
+      }).catch(() => {})
+    }
     return { success: true, session }
   } catch (err) {
     if (err instanceof GoogleSignInCancelledError) {
