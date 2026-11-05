@@ -297,7 +297,8 @@ export default function Editor() {
       </main>
 
       <aside className="ed-preview" aria-label="PDF preview">
-        {previewUrl && <iframe title="Resume PDF preview" src={`${previewUrl}#toolbar=0&navpanes=0&view=FitH`} />}
+        {/* A new frame per preview: changing one frame's src adds a Back entry per edit. */}
+        {previewUrl && <iframe key={previewUrl} title="Resume PDF preview" src={`${previewUrl}#toolbar=0&navpanes=0&view=FitH`} />}
       </aside>
     </div>
   )
