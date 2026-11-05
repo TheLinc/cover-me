@@ -9,8 +9,8 @@
 //   POST /__mock/drop-next-stream     → the next streaming request has its connection cut, no response
 //   GET  /__mock/requests      every /v1/messages body received since the last reset
 //   POST /__mock/reset         clears recorded requests and queued failures
-//   POST /v1/customers, /v1/checkout/sessions, /v1/billing_portal/sessions
-//                              Stripe stand-ins (billing function, via STRIPE_API_BASE)
+//   POST /v1/customers, /v1/subscriptions, /v1/checkout/sessions, /v1/billing_portal/sessions
+//   GET  /v1/subscriptions     Stripe stand-ins (billing function, via STRIPE_API_BASE)
 //   GET  /__mock/stripe        every Stripe call received since the last reset
 
 import { createServer, type IncomingMessage, type Server } from 'node:http'
@@ -102,12 +102,16 @@ let dropNextStream = false
 
 type StripeCall = { path: string; params: Record<string, string>; idempotencyKey: string | null }
 const stripeCalls: StripeCall[] = []
-// What GET /v1/subscriptions answers: these statuses, or "No such customer".
-// customerError makes the next POST /v1/customers fail once with that error.
+// What GET /v1/subscriptions answers: these subscriptions (a bare status or a
+// whole object), or "No such customer". customerError and subscriptionError
+// make the next POST /v1/customers or /v1/subscriptions fail once.
+type MockSubscription = string | { id?: string; status: string; trial_end?: number; metadata?: Record<string, string> }
+type StripeFailure = { status: number; code: string } | null
 const stripeState = {
-  subscriptions: [] as string[],
+  subscriptions: [] as MockSubscription[],
   missingCustomer: false,
-  customerError: null as { status: number; code: string } | null,
+  customerError: null as StripeFailure,
+  subscriptionError: null as StripeFailure,
 }
 
 function readBody(req: IncomingMessage): Promise<string> {
@@ -168,6 +172,7 @@ export function startMockAnthropic(port: number): Promise<Server> {
       stripeState.subscriptions = []
       stripeState.missingCustomer = false
       stripeState.customerError = null
+      stripeState.subscriptionError = null
       failures.length = 0
       delayNext = 0
       streamPause = 0
@@ -274,21 +279,24 @@ export function startMockAnthropic(port: number): Promise<Server> {
         return res.end(JSON.stringify({ error: { type: 'invalid_request_error', code: 'resource_missing', param: 'customer' } }))
       }
       res.writeHead(200, { 'content-type': 'application/json' })
-      return res.end(JSON.stringify({ data: stripeState.subscriptions.map((status) => ({ status })) }))
+      return res.end(JSON.stringify({ data: stripeState.subscriptions.map((s) => (typeof s === 'string' ? { status: s } : s)) }))
     }
-    if (req.method === 'POST' && ['/v1/customers', '/v1/checkout/sessions', '/v1/billing_portal/sessions'].includes(url)) {
+    if (req.method === 'POST' && ['/v1/customers', '/v1/subscriptions', '/v1/checkout/sessions', '/v1/billing_portal/sessions'].includes(url)) {
       const params = Object.fromEntries(new URLSearchParams(await readBody(req)))
       const key = req.headers['idempotency-key']
       stripeCalls.push({ path: url, params, idempotencyKey: typeof key === 'string' ? key : null })
-      if (url === '/v1/customers' && stripeState.customerError) {
-        const { status, code } = stripeState.customerError
-        stripeState.customerError = null
-        res.writeHead(status, { 'content-type': 'application/json' })
-        return res.end(JSON.stringify({ error: { type: 'idempotency_error', code } }))
+      const failKey = url === '/v1/customers' ? 'customerError' : url === '/v1/subscriptions' ? 'subscriptionError' : null
+      const failure = failKey && stripeState[failKey]
+      if (failKey && failure) {
+        stripeState[failKey] = null
+        res.writeHead(failure.status, { 'content-type': 'application/json' })
+        return res.end(JSON.stringify({ error: { type: 'idempotency_error', code: failure.code } }))
       }
       const n = stripeCalls.length
       const reply =
         url === '/v1/customers' ? { id: `cus_mock_${n}` }
+        : url === '/v1/subscriptions'
+          ? { id: `sub_mock_${n}`, status: 'trialing', trial_end: Math.floor(Date.now() / 1000) + Number(params.trial_period_days) * 86_400 }
         : url === '/v1/checkout/sessions' ? { id: `cs_mock_${n}`, url: `https://checkout.stripe.test/cs_mock_${n}` }
         : { url: 'https://billing.stripe.test/portal' }
       res.writeHead(200, { 'content-type': 'application/json' })

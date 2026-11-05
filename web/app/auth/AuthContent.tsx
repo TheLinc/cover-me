@@ -27,9 +27,11 @@ const GOOGLE_SIGNIN = process.env.NEXT_PUBLIC_GOOGLE_SIGNIN === "1";
 // Canonical origin for Supabase email redirects. window.location.origin varies
 // between www/non-www depending on how the user reached the site, and any
 // variant missing from the Supabase Redirect URL allowlist silently falls back
-// to the Site URL (landing page) instead of /auth.
-function authRedirectUrl() {
-  return `${process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin}/auth`;
+// to the Site URL (landing page) instead of /auth. next (a gift trial link,
+// say) rides along so the confirmed view can continue there.
+function authRedirectUrl(next: string | null = null) {
+  const url = `${process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin}/auth`;
+  return next ? `${url}?next=${encodeURIComponent(next)}` : url;
 }
 
 export default function AuthContent() {
@@ -187,7 +189,7 @@ function AuthForm() {
         const { error } = await supabase.auth.signUp({
             email,
             password,
-            options: { emailRedirectTo: authRedirectUrl() },
+            options: { emailRedirectTo: authRedirectUrl(safeNext(params.get("next"))) },
           });
         if (error) throw error;
         if (plan === "pro") {
@@ -436,8 +438,8 @@ function AuthForm() {
               <p className="text-[13.5px] text-muted-foreground leading-[1.6] mb-7">
                 Your account is active. Let&apos;s get to work.
               </p>
-              <Button onClick={() => { window.location.href = "/dashboard"; }} size="lg" className="w-full">
-                Go to dashboard
+              <Button onClick={() => { window.location.href = safeNext(params.get("next")) ?? "/dashboard"; }} size="lg" className="w-full">
+                {safeNext(params.get("next")) ? "Continue" : "Go to dashboard"}
               </Button>
             </>
           ) : /* ── Success state ── */

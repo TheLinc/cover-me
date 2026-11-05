@@ -6,6 +6,19 @@ import type { Allowance } from '@/lib/limits'
 import { avatarUrl } from '@/lib/avatar'
 import { RecentApplications, RecentApplicationsSkeleton } from './ApplicationHistory'
 import { Toaster } from '@/components/ui/sonner'
+import Stripe from 'stripe'
+
+// When a gift trial (#112) ends, or null. Pro from a gift trial still gets the
+// upgrade buttons. A Stripe hiccup shows the plain Pro tile instead.
+async function giftTrialEnd(customer: string): Promise<string | null> {
+  try {
+    const subs = await new Stripe(process.env.STRIPE_SECRET_KEY!).subscriptions.list({ customer, status: 'trialing', limit: 10 })
+    const gift = subs.data.find((s) => s.metadata.gift_trial === 'true')
+    return gift?.trial_end ? new Date(gift.trial_end * 1000).toISOString() : null
+  } catch {
+    return null
+  }
+}
 
 export default async function DashboardPage() {
   const supabase = await createServerSupabaseClient()
@@ -15,13 +28,16 @@ export default async function DashboardPage() {
 
   const { data: userData } = await supabase
     .from('users')
-    .select('tier, created_at')
+    .select('tier, created_at, stripe_customer_id')
     .eq('id', user.id)
     .single()
 
   // Usage against the free starter, the free week, or Pro's daily cap
   // (migration 015). The database owns the numbers.
-  const { data: allowance } = await supabase.rpc('my_generation_allowance')
+  const [{ data: allowance }, trialEnd] = await Promise.all([
+    supabase.rpc('my_generation_allowance'),
+    userData?.tier === 'hosted_pro' && userData.stripe_customer_id ? giftTrialEnd(userData.stripe_customer_id) : null,
+  ])
 
   // Recent applications, every account's (#101), streamed in so the rest of
   // the page doesn't wait on them. The session's token is forwarded to the
@@ -42,6 +58,7 @@ export default async function DashboardPage() {
       email={user.email ?? ''}
       avatar={avatarUrl(user.user_metadata)}
       tier={userData?.tier ?? 'hosted_free'}
+      trialEnd={trialEnd}
       memberSince={userData?.created_at ?? user.created_at}
       allowance={(allowance as Allowance | null) ?? null}
       history={history}

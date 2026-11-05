@@ -14,6 +14,8 @@ export interface TierDeps {
   /** readAt is when the Stripe read started; the DB drops writes older than the last one. */
   setTier(customerId: string, tier: Tier, readAt: Date): Promise<{ error: string | null }>
   linkCustomer(userId: string, customerId: string): Promise<{ error: string | null }>
+  /** Ends a gift trial (a no-op once it's already over). */
+  cancelGiftTrial(subscriptionId: string): Promise<{ error: string | null }>
 }
 
 // Reads the customer's subscriptions from Stripe instead of trusting the event
@@ -28,6 +30,13 @@ export async function handleStripeEvent(event: Stripe.Event, deps: TierDeps): Pr
     const userId = session.metadata?.supabase_user_id
     if (userId && customerId) {
       const { error } = await deps.linkCustomer(userId, customerId)
+      if (error) return false
+    }
+    // A paid upgrade from a gift trial (the billing function tags the session).
+    // The paid subscription keeps the user on Pro while the trial ends.
+    const giftTrial = session.metadata?.gift_trial_subscription
+    if (giftTrial) {
+      const { error } = await deps.cancelGiftTrial(giftTrial)
       if (error) return false
     }
   } else if (event.type.startsWith('customer.subscription.')) {

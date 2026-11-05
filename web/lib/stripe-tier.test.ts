@@ -14,6 +14,7 @@ function fakeDeps(statuses: string[], opts: { failSetTier?: boolean } = {}) {
       calls.linkCustomer.push([userId, customerId])
       return { error: null }
     },
+    cancelGiftTrial: async () => ({ error: null }),
   }
   return { calls, deps }
 }
@@ -56,6 +57,39 @@ describe('handleStripeEvent', () => {
     expect(calls.setTier).toEqual([['cus_2', 'hosted_pro']])
   })
 
+  it('cancels the gift trial once its paid checkout completes, before reading the tier', async () => {
+    const order: string[] = []
+    const deps: TierDeps = {
+      listStatuses: async () => { order.push('list'); return ['trialing', 'canceled'] },
+      setTier: async () => ({ error: null }),
+      linkCustomer: async () => ({ error: null }),
+      cancelGiftTrial: async (id) => { order.push(`cancel ${id}`); return { error: null } },
+    }
+    await handleStripeEvent(
+      event('checkout.session.completed', { customer: 'cus_2', metadata: { supabase_user_id: 'user-1', gift_trial_subscription: 'sub_gift' } }),
+      deps,
+    )
+    expect(order).toEqual(['cancel sub_gift', 'list'])
+  })
+
+  it('leaves subscriptions alone on a checkout with no gift trial', async () => {
+    const cancelled: string[] = []
+    const { deps } = fakeDeps(['active'])
+    deps.cancelGiftTrial = async (id) => { cancelled.push(id); return { error: null } }
+    await handleStripeEvent(event('checkout.session.completed', { customer: 'cus_2', metadata: {} }), deps)
+    expect(cancelled).toEqual([])
+  })
+
+  it('reports failure when the gift trial cannot be cancelled, so Stripe retries', async () => {
+    const { deps } = fakeDeps(['active'])
+    deps.cancelGiftTrial = async () => ({ error: 'stripe down' })
+    const ok = await handleStripeEvent(
+      event('checkout.session.completed', { customer: 'cus_2', metadata: { gift_trial_subscription: 'sub_gift' } }),
+      deps,
+    )
+    expect(ok).toBe(false)
+  })
+
   it('reports failure when the DB write fails, so Stripe retries', async () => {
     const { deps } = fakeDeps(['active'], { failSetTier: true })
     expect(await handleStripeEvent(event('customer.subscription.created', { customer: 'cus_1' }), deps)).toBe(false)
@@ -75,6 +109,7 @@ describe('handleStripeEvent', () => {
         return { error: null }
       },
       linkCustomer: async () => ({ error: null }),
+      cancelGiftTrial: async () => ({ error: null }),
     }
     await handleStripeEvent(event('customer.subscription.updated', { customer: 'cus_1' }), deps)
     expect(writtenReadAt).toBeInstanceOf(Date)
