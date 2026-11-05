@@ -20,7 +20,7 @@ export function FeatureRequest() {
   return (
     <p className="text-[14px] text-ink-2">
       Want a feature added? Email us at{' '}
-      <a href={`mailto:${SUPPORT_EMAIL}`} className="font-medium text-brand-strong hover:underline">{SUPPORT_EMAIL}</a>
+      <a href={`mailto:${SUPPORT_EMAIL}`} className="whitespace-nowrap font-medium text-brand-strong hover:underline">{SUPPORT_EMAIL}</a>
     </p>
   )
 }
