@@ -4,10 +4,14 @@ import { getResume, getSession, getSettings, resolveMode, setupState, watchSetup
 import AccountPanel from '../popup/components/AccountPanel'
 import ResumePage from '../popup/pages/ResumePage'
 import logoIcon from '../public/icon/48.png'
+import { IndeedIcon, LinkedInIcon } from './JobSiteIcons'
 
 type StepState = 'done' | 'current' | 'waiting'
 
-const JOB_SITES = [['LinkedIn', 'https://www.linkedin.com/jobs/'], ['Indeed', 'https://www.indeed.com/']] as const
+const JOB_SITES = [
+  { name: 'LinkedIn', url: 'https://www.linkedin.com/jobs/', Icon: LinkedInIcon },
+  { name: 'Indeed', url: 'https://www.indeed.com/', Icon: IndeedIcon },
+]
 
 export default function Welcome() {
   // null until the first read, so a set-up user doesn't see the lock flash.
@@ -88,8 +92,9 @@ export default function Welcome() {
               job search to link to. */}
           {postingState === 'current' && (
             <div className="welcome-links">
-              {JOB_SITES.map(([name, url]) => (
+              {JOB_SITES.map(({ name, url, Icon }) => (
                 <a key={name} className="btn btn-secondary" href={url} target="_blank" rel="noreferrer">
+                  <Icon />
                   Find jobs on {name}<span className="welcome-sr"> (opens in a new tab)</span>
                 </a>
               ))}
