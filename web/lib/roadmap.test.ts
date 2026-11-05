@@ -7,6 +7,7 @@ const issue = (over: Partial<GithubIssue>): GithubIssue => ({
   number: 1,
   state: 'open',
   created_at: '2026-11-01T00:00:00Z',
+  author_association: 'OWNER',
   labels: [{ name: 'roadmap' }],
   body: PUBLIC('Thing'),
   ...over,
@@ -25,7 +26,7 @@ describe('publicBlock', () => {
 })
 
 describe('toRoadmap', () => {
-  it('buckets by state and the release label, newest first, skipping PRs, not-planned and unpublished', () => {
+  it('buckets by state and the release label, newest first, skipping PRs, not-planned, unpublished and outsider issues', () => {
     const r = toRoadmap([
       issue({ number: 1, created_at: '2026-10-01T00:00:00Z' }),
       issue({ number: 2, created_at: '2026-11-01T00:00:00Z' }),
@@ -34,6 +35,7 @@ describe('toRoadmap', () => {
       issue({ number: 5, state: 'closed', state_reason: 'not_planned', closed_at: '2026-10-20T00:00:00Z' }),
       issue({ number: 6, body: 'no public block' }),
       issue({ number: 7, pull_request: {} }),
+      issue({ number: 8, author_association: 'NONE' }),
     ])
     expect(r.upcoming.map((i) => i.number)).toEqual([2, 1])
     expect(r.rollingOut.map((i) => i.number)).toEqual([4])

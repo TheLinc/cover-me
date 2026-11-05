@@ -1,11 +1,14 @@
 // The public roadmap, read from GitHub issues labeled `roadmap` (#117).
 // An issue shows only if its body has a `## Public` section: first line is the
 // public title, second the blurb. Issue titles are written for agents, so they
-// never show.
+// never show. Only issues opened by a maintainer show: an issue's author can
+// edit its body after it is labeled, so an outsider's issue could otherwise
+// put their text on the site.
 
 const ISSUES_URL = 'https://api.github.com/repos/TheLinc/cover-me/issues?labels=roadmap&state=all&per_page=100'
 const RELEASE_LABEL = 'needs-extension-release'
 const NEW_LIMIT = 6
+const MAINTAINERS = new Set(['OWNER', 'MEMBER', 'COLLABORATOR'])
 
 export interface RoadmapItem {
   number: number
@@ -29,6 +32,7 @@ export interface GithubIssue {
   created_at: string
   closed_at?: string | null
   body?: string | null
+  author_association?: string
   labels: ({ name?: string } | string)[]
   pull_request?: unknown
 }
@@ -53,7 +57,7 @@ const newestFirst = (key: 'created_at' | 'closed_at') => (a: GithubIssue, b: Git
 
 export function toRoadmap(issues: GithubIssue[]): Roadmap {
   const roadmap: Roadmap = { rollingOut: [], upcoming: [], shipped: [] }
-  const shown = issues.filter((i) => !i.pull_request && publicBlock(i.body))
+  const shown = issues.filter((i) => !i.pull_request && MAINTAINERS.has(i.author_association ?? '') && publicBlock(i.body))
   const item = (i: GithubIssue, shipped?: boolean): RoadmapItem => ({
     number: i.number,
     ...publicBlock(i.body)!,
