@@ -9,7 +9,7 @@ import type { SupabaseClient } from 'npm:@supabase/supabase-js@2'
 
 export type EmailKind = 'product_updates' | 'onboarding'
 
-// Asks the database (can_email, migration 021). Senders never read the consent
+// Asks the database (can_email, migration 022). Senders never read the consent
 // columns themselves. A failed lookup means no.
 export async function canEmail(supabase: SupabaseClient, userId: string, kind: EmailKind): Promise<boolean> {
   const { data, error } = await supabase.rpc('can_email', { p_user_id: userId, p_kind: kind })

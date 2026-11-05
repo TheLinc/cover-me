@@ -462,7 +462,7 @@ describe('ensureValidSession', () => {
 })
 
 // Email signups send the box as user metadata; the signup trigger records it
-// (migration 021), even when the confirmation link opens on another device.
+// (migration 022), even when the confirmation link opens on another device.
 describe('signUp', () => {
   function captureSignup() {
     const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => new Response(JSON.stringify({ id: 'u1', email: 'a@b.co' }), { status: 200 }))

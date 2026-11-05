@@ -34,7 +34,7 @@ export async function signIn(email: string, password: string): Promise<AuthSessi
 }
 
 // productUpdates: the signup box (#114), sent as user metadata so the signup
-// trigger records it (migration 021). Unticked sends nothing.
+// trigger records it (migration 022). Unticked sends nothing.
 export async function signUp(email: string, password: string, productUpdates = false): Promise<AuthSession> {
   const redirectTo = encodeURIComponent(`${WEB_URL}/auth`)
   const res = await fetch(`${SUPABASE_URL}/auth/v1/signup?redirect_to=${redirectTo}`, {

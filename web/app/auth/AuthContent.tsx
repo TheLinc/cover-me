@@ -194,7 +194,7 @@ function AuthForm() {
         const { error } = await supabase.auth.signUp({
             email,
             password,
-            // The signup trigger records the box (migration 021), wherever
+            // The signup trigger records the box (migration 022), wherever
             // the confirmation link is opened.
             options: { emailRedirectTo: authRedirectUrl(), ...(productUpdates ? { data: { product_updates: true } } : {}) },
           });

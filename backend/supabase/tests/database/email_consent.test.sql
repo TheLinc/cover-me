@@ -1,4 +1,4 @@
--- Email consent (migration 021): the signup choice, the server-owned columns,
+-- Email consent (migration 022): the signup choice, the server-owned columns,
 -- and can_email(), the one place a sender asks whether it may write to someone.
 -- Run: pnpm db:test   (from backend/)
 begin;
