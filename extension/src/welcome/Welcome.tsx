@@ -65,7 +65,7 @@ export default function Welcome() {
         <img src={logoIcon} width="32" height="32" alt="" className="logo-icon" />
         <span className="logo-text">Cover Me</span>
       </div>
-      <h1 className="page-title welcome-title">Your first letter is three steps away</h1>
+      <h1 className="page-title welcome-title">Your first application is 3 steps away</h1>
       <p className="welcome-sub">Do these in order.</p>
 
       {ready !== null && <ol className="welcome-steps">
