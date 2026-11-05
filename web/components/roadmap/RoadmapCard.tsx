@@ -4,7 +4,7 @@ const SUPPORT_EMAIL = 'support@cover-me.dev'
 
 export function RoadmapCard({ item }: { item: RoadmapItem }) {
   return (
-    <div className="soft-card flex flex-col gap-2 px-6 py-5">
+    <div className="soft-card flex h-full flex-col gap-2 px-6 py-5">
       {item.shipped && <span className="text-[12px] text-subtle">{item.shipped}</span>}
       <h3 className="text-[17px] font-medium tracking-[-0.01em] text-ink">{item.title}</h3>
       {item.blurb && <p className="text-[15px] leading-[1.6] text-ink-2">{item.blurb}</p>}
