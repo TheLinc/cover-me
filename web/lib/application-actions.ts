@@ -64,13 +64,17 @@ export async function deleteApplication(id: string): Promise<void> {
   details.delete(id)
 }
 
-// jsPDF loads only when someone downloads.
+// jsPDF and docx load only when someone downloads.
 export async function downloadLetter(job: PdfJob, letter: { letter: string; createdAt: string }): Promise<void> {
   const { downloadCoverLetterPdf } = await import('./pdf/cover-letter')
   downloadCoverLetterPdf(letter.letter, { title: job.title, company: job.company }, letter.createdAt)
 }
 
-export async function downloadResume(jobTitle: string, resume: TailoredResume): Promise<void> {
+export async function downloadResume(jobTitle: string, resume: TailoredResume, format: 'pdf' | 'docx' = 'pdf'): Promise<void> {
+  if (format === 'docx') {
+    const { downloadTailoredResumeDocx } = await import('./pdf/resume-docx')
+    return downloadTailoredResumeDocx(resume, jobTitle)
+  }
   const { downloadTailoredResumePdf } = await import('./pdf/resume')
   downloadTailoredResumePdf(resume, jobTitle)
 }

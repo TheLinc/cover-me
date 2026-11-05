@@ -16,6 +16,7 @@
     "e2e:scrape": "tsx scripts/e2e-scrape.ts"
   },
   "dependencies": {
+    "docx": "^9.15.2",
     "jspdf": "^4.2.1",
     "mammoth": "^1.8.0",
     "pdfjs-dist": "^4.9.155",

@@ -4,9 +4,15 @@ import { downloadCoverLetterPdf } from '../../lib/pdf/cover-letter'
 import { downloadTailoredResumePdf } from '../../lib/pdf/resume'
 import { accountUpdates, capWarning, groupLocalHistory, groupsFromApplications, ownPending, unclaimed, uploadMessage, uploadSummary, withLocalOnly, type JobGroup } from '../../lib/history'
 import { deleteFromHistory, deleteFromTailoredHistory, getCachedTier, getHistory, getMode, getTailoredHistory, getUploadAsked, markUploadAsked, saveCachedTier, setEntryAccounts } from '../../lib/storage'
-import type { AuthSession, CoverLetter, CoverLetterEntry, TailoredHistoryEntry } from '../../types'
+import type { AuthSession, CoverLetter, CoverLetterEntry, TailoredHistoryEntry, TailoredResume } from '../../types'
 import UpgradeButton from '../components/UpgradeButton'
 import { WEB_URL } from '../../lib/config'
+
+// docx is big, so it loads only when someone asks for the Word file.
+async function downloadResumeDocx(resume: TailoredResume, jobTitle: string) {
+  const { downloadTailoredResumeDocx } = await import('../../lib/pdf/resume-docx')
+  await downloadTailoredResumeDocx(resume, jobTitle)
+}
 
 export default function HistoryPage() {
   const [groups, setGroups] = useState<JobGroup[]>([])
@@ -363,6 +369,9 @@ export default function HistoryPage() {
                               <line x1="12" y1="15" x2="12" y2="3" />
                             </svg>
                             Download PDF
+                          </button>
+                          <button className="btn btn-secondary btn-sm" onClick={() => void downloadResumeDocx(tr.resume, group.title)}>
+                            Word
                           </button>
                         </div>
                       </div>
