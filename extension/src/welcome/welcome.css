@@ -1,7 +1,50 @@
 /* The popup stylesheet fixes the body at 380×560; a tab needs normal flow. */
 html, body { width: auto; height: auto; overflow: auto; }
-.welcome { max-width: 420px; margin: 40px auto 64px; padding: 0 18px; }
-.welcome-step { margin-top: 28px; }
-.welcome-step h2 { font-size: 15px; font-weight: 700; margin-bottom: 10px; }
+.welcome { max-width: 600px; margin: 48px auto 72px; padding: 0 20px; }
+.welcome-title { margin-top: 18px; font-size: 24px; text-wrap: balance; }
+.welcome-sub { margin-top: 4px; font-size: 13px; color: var(--text-3); }
+
+/* A vertical stepper: a numbered dot per step, joined by a line. */
+.welcome-steps { list-style: none; padding: 0; margin-top: 28px; }
+.welcome-step { position: relative; display: grid; grid-template-columns: 32px 1fr; column-gap: 16px; padding-bottom: 28px; }
+.welcome-step:not(:last-child)::before {
+  content: ""; position: absolute; left: 15px; top: 38px; bottom: 6px;
+  width: 2px; border-radius: 2px; background: var(--border);
+}
+.welcome-step-done:not(:last-child)::before { background: var(--accent); }
+.welcome-dot {
+  width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center;
+  font-size: 13px; font-weight: 700; color: var(--text-3);
+  border: 2px solid var(--border); background: var(--bg);
+}
+.welcome-step-current .welcome-dot { color: #fff; background: var(--accent-strong); border-color: var(--accent); box-shadow: 0 0 0 5px var(--accent-dim); }
+.welcome-step-done .welcome-dot { color: #fff; background: var(--accent); border-color: var(--accent); }
+
+.welcome-step-body { min-width: 0; }
+.welcome-step-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 32px; margin-bottom: 8px; }
+.welcome-step-head h2 { font-size: 15px; font-weight: 700; scroll-margin-top: 24px; }
+/* Focused by script when step 1 finishes, so screen readers land on step 2; not a control, so no ring. */
+.welcome-step-head h2:focus, .welcome-step-head h2:focus-visible { outline: none; }
+.welcome-step-waiting h2 { color: var(--text-3); }
+.welcome-step-head .auth-link { font-size: 12px; flex: none; }
+
+.welcome-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 18px; }
+.welcome-summary { font-size: 13px; color: var(--text-2); background: var(--success-dim); border-radius: var(--r-sm); padding: 10px 12px; overflow-wrap: anywhere; }
 .welcome-step .page { padding: 0; min-height: 0; }
-.welcome-title { margin-top: 16px; }
+
+.welcome-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.welcome-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.welcome-links .btn { flex: 1 1 200px; width: auto; gap: 8px; text-decoration: none; }
+
+/* Reveal: a grid row that animates between 0fr and 1fr, so content grows to its
+   natural height without measuring it. */
+.welcome-reveal {
+  display: grid; grid-template-rows: 0fr; opacity: 0;
+  transition: grid-template-rows 0.3s ease, opacity 0.2s ease;
+}
+.welcome-reveal[data-open="true"] { grid-template-rows: 1fr; opacity: 1; }
+/* clip, not hidden: the margin keeps focus rings at the edge visible. */
+/* min-width 0: a grid item won't shrink below its content, so a long resume
+   filename would widen the step instead of ending in an ellipsis. */
+.welcome-reveal > div { min-height: 0; min-width: 0; overflow: clip; overflow-clip-margin: 4px; }
+@media (prefers-reduced-motion: reduce) { .welcome-reveal { transition: none; } }
