@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { callFunction } from './helpers'
 
-const FUNCTIONS = ['generate', 'tailor', 'resume', 'letters', 'applications', 'billing']
+const FUNCTIONS = ['generate', 'tailor', 'resume', 'letters', 'applications', 'billing', 'email-preferences']
 
 describe('every function rejects unauthenticated requests', () => {
   for (const name of FUNCTIONS) {
