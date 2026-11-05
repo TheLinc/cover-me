@@ -22,7 +22,8 @@ const OTHER = 'Other'
 const REASONS = [
   "It didn't work on the job sites I use",
   "The resumes or cover letters weren't good enough",
-  'Too expensive / hit the free limit',
+  'Too expensive',
+  'I hit the free limit',
   'Setting it up was too much work (account, resume, API key)',
   'I found a job or stopped looking',
   'Privacy concerns',
