@@ -22,8 +22,8 @@ export default function Welcome() {
   const [summary, setSummary] = useState('')
   // Step 1 reopened with "Change" after it was done.
   const [editing, setEditing] = useState(false)
-  // Done swaps in a fresh panel, which loads while step 1 is shut, so the next
-  // Change shows what's saved rather than edits left unsaved.
+  // Finishing step 1 and Done swap in a fresh panel, which loads while step 1
+  // is shut, so the next Change shows what's saved, not stale or unsaved state.
   const [panelKey, setPanelKey] = useState(0)
   const resumeHeading = useRef<HTMLHeadingElement>(null)
   const wasReady = useRef<boolean | null>(null)
@@ -47,6 +47,9 @@ export default function Welcome() {
     if (ready === false) setEditing(false) // signed out: the full panel shows anyway
     // Step 1 just finished on this page: take the user to the step it unlocked.
     if (ready && wasReady.current === false) {
+      // AccountPanel reads settings only on mount; a key saved in the popup
+      // would leave it showing the sign-up form behind the next Change.
+      setPanelKey((k) => k + 1)
       resumeHeading.current?.focus({ preventScroll: true })
       // Scroll once the steps have finished growing and shrinking, or the
       // target is measured where the heading was, not where it ends up.
