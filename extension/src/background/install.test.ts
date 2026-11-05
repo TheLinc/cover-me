@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { handleInstalled, WELCOME_PATH } from './install'
+import { WEB_URL } from '../lib/config'
+import { handleInstalled, uninstallUrl, WELCOME_PATH } from './install'
 
 function fakeChrome(resume?: unknown) {
   const chrome = {
@@ -45,5 +46,16 @@ describe('handleInstalled', () => {
     await handleInstalled({ reason: 'update', previousVersion: '1.10.0' })
     await handleInstalled({ reason: 'chrome_update', previousVersion: '1.2.0' })
     expect(long.storage.local.set).not.toHaveBeenCalled()
+  })
+})
+
+describe('uninstallUrl', () => {
+  test('signed out, it carries only the version', () => {
+    expect(uninstallUrl('1.4.0')).toBe(`${WEB_URL}/uninstalled?v=1.4.0`)
+  })
+  test("signed in, it adds the account id and stays under Chrome's 1,023 characters", () => {
+    const url = uninstallUrl('1.4.0', '3f2b8c1e-9d4a-4e6b-8f1a-2c7d5e9b0a13')
+    expect(url).toBe(`${WEB_URL}/uninstalled?v=1.4.0&u=3f2b8c1e-9d4a-4e6b-8f1a-2c7d5e9b0a13`)
+    expect(url.length).toBeLessThan(1023)
   })
 })

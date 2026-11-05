@@ -69,6 +69,8 @@ if (posthogKey) {
         disable_surveys: true,
         advanced_disable_flags: true,
         before_send: scrubEvent,
+        // For a page that captures on load (app/uninstalled) before this ran
+        loaded: () => window.dispatchEvent(new Event("posthog-loaded")),
       });
       // Capture phase, so a component that stops propagation still counts
       const onClick = (e: MouseEvent) => {

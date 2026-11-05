@@ -5,12 +5,19 @@ import { tailorResume } from '../lib/ai/resume-tailor'
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from '../lib/config'
 import { decryptApiKey } from '../lib/crypto'
 import { debugGroup } from '../lib/debug'
-import { addToHistory, addToTailoredHistory, getCachedTier, getCandidateContext, getResume, getSettings, hasAgreedToPageRead, resolveMode, saveParsedResume, setEntryAccounts } from '../lib/storage'
-import { handleInstalled } from './install'
+import { addToHistory, addToTailoredHistory, getCachedTier, getCandidateContext, getResume, getSession, getSettings, hasAgreedToPageRead, resolveMode, saveParsedResume, setEntryAccounts, watchSession } from '../lib/storage'
+import { handleInstalled, uninstallUrl } from './install'
 import type { PageSnapshot } from '../content/snapshot.ts'
 import type { CoverJob, CoverLetter, FrameScrapeResponse, GenerateResponse, JobData, ScrapeResponse, TailoredResume, TailorJob, TailorResponse } from '../types'
 
 chrome.runtime.onInstalled.addListener((details) => { void handleInstalled(details) })
+
+// Removing the extension opens the survey, with the account id while signed in
+function setUninstallUrl(userId?: string) {
+  void chrome.runtime.setUninstallURL(uninstallUrl(chrome.runtime.getManifest().version, userId))
+}
+void getSession().then((session) => setUninstallUrl(session?.user?.id))
+watchSession((session) => setUninstallUrl(session?.user?.id))
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (sender.id !== chrome.runtime.id) return

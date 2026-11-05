@@ -323,6 +323,14 @@ export default function PrivacyPage() {
                 are not counted at all.
               </Li>
               <Li>
+                <strong className="text-foreground">Uninstall survey (only if you answer it).</strong>{' '}
+                When you remove the extension, Chrome opens a one-question survey on cover-me.dev asking
+                why. Its address carries the extension&apos;s version and, if you were signed in, your
+                Cover Me account ID. If you answer, we store your answer, any comment you write, the
+                version and that account ID in PostHog, so a signed-in answer is linked to your account.
+                Answering is optional, and the survey asks for nothing else about you.
+              </Li>
+              <Li>
                 <strong className="text-foreground">Billing information (when you click Upgrade, and Pro subscribers).</strong>{' '}
                 When you click Upgrade, we send Stripe your email address and Cover Me account ID to
                 start checkout, and Stripe processes your payment. We store only your Stripe Customer ID
@@ -334,7 +342,7 @@ export default function PrivacyPage() {
             <H3>Information we do NOT collect</H3>
             <Ul>
               <Li>We do not track your browsing history. We receive a page&apos;s address only when you activate the extension on it.</Li>
-              <Li>The extension contains no analytics or telemetry code. In BYOK mode the only thing it sends to Cover Me is the job page you activate it on, once you have agreed, so we can read the posting. Your resume and API key never reach us.</Li>
+              <Li>The extension contains no analytics or telemetry code. It only gives Chrome the uninstall survey&apos;s address (see above). In BYOK mode the only thing it sends to Cover Me is the job page you activate it on, once you have agreed, so we can read the posting. Your resume and API key never reach us.</Li>
               <Li>In hosted mode our servers count how many letters and resumes you generate, to enforce the generation limits, and log errors. Logs never contain your resume, letters, or job descriptions.</Li>
               <Li>We do not use cookies for tracking or advertising.</Li>
               <Li>We do not collect any data from tabs other than the active job posting tab, and only when you explicitly activate the extension.</Li>
@@ -618,8 +626,8 @@ export default function PrivacyPage() {
                 {
                   name: 'PostHog',
                   url: 'https://posthog.com/privacy',
-                  when: 'Visitors to the public pages of cover-me.dev (not the extension, and not signed-in pages)',
-                  receives: 'A count of each page visit: the page address with only its campaign tags (such as utm_ parameters; ad click IDs are blanked first), the referring site, browser details (browser, operating system, device type, screen size, language) and time zone, plus a count of clicks on links to our Chrome Web Store page with the link\'s label. Requests go through cover-me.dev. Your IP address is used only to make a daily visitor hash and is not stored, nor is any location derived from it. No cookies or browser storage are used, and visits are not linked to your account.',
+                  when: 'Visitors to the public pages of cover-me.dev (not the extension, and not signed-in pages), and anyone who answers the uninstall survey',
+                  receives: 'A count of each page visit: the page address with only its campaign tags (such as utm_ parameters; ad click IDs are blanked first), the referring site, browser details (browser, operating system, device type, screen size, language) and time zone, plus a count of clicks on links to our Chrome Web Store page with the link\'s label. Requests go through cover-me.dev. Your IP address is used only to make a daily visitor hash and is not stored, nor is any location derived from it. No cookies or browser storage are used, and visits are not linked to your account. If you answer the uninstall survey: your answer, your comment, the extension version and, if you were signed in, your Cover Me account ID.',
                 },
               ].map((svc) => (
                 <div key={svc.name} className="bg-surface border border-border rounded-[10px] px-5 py-4">
