@@ -161,6 +161,14 @@ function AuthForm() {
       });
     }
 
+    // Opened while already signed in (a stale "Sign in" link, a bookmark): go
+    // where signing in would have gone. replace, so Back doesn't land here again.
+    if (!isOAuth && !isConfirmation && !hash) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) window.location.replace(afterOAuth(searchParams.get("plan"), searchParams.get("next")));
+      });
+    }
+
     return () => subscription.unsubscribe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
