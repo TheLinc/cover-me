@@ -11,6 +11,7 @@ import { Stats } from '@/components/landing/Stats'
 import { Features } from '@/components/landing/Features'
 import { PrivacyBand } from '@/components/landing/PrivacyBand'
 import { Pricing } from '@/components/landing/Pricing'
+import { RoadmapStrip } from '@/components/landing/RoadmapStrip'
 import { Faq } from '@/components/landing/Faq'
 import { ClosingCta } from '@/components/landing/ClosingCta'
 
@@ -31,6 +32,7 @@ export default function Home() {
         <Features />
         <PrivacyBand />
         <Pricing />
+        <RoadmapStrip />
         <Faq />
         <ClosingCta />
       </main>
