@@ -10,3 +10,20 @@ export function sentryEnvironment(
 ): SentryEnvironment {
   return vercelEnv === 'production' || vercelEnv === 'preview' ? vercelEnv : 'development'
 }
+
+// The uninstall survey's address carries the account id as u= (app/uninstalled),
+// and Sentry copies the page address into several fields of an event (request,
+// span attributes). Blank it everywhere: only an answer, sent to PostHog,
+// carries the account id.
+const ACCOUNT_ID_PARAM = /([?&]u=)[^&#"\\\s]+/g
+
+// An event JSON can't hold (a cycle, a BigInt) goes unchanged, rather than Sentry dropping it on the throw
+export function dropSurveyAccountId<T>(event: T): T {
+  try {
+    const json = JSON.stringify(event)
+    if (json.search(ACCOUNT_ID_PARAM) < 0) return event
+    return JSON.parse(json.replace(ACCOUNT_ID_PARAM, '$1'))
+  } catch {
+    return event
+  }
+}

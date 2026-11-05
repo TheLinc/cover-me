@@ -1,5 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
-import { sentryEnvironment } from "@/lib/sentry-env";
+import { dropSurveyAccountId, sentryEnvironment } from "@/lib/sentry-env";
 
 const environment = sentryEnvironment();
 
@@ -31,8 +31,9 @@ Sentry.init({
       event.user = { id: event.user.id };
     }
 
-    return event;
+    return dropSurveyAccountId(event);
   },
+  beforeSendTransaction: dropSurveyAccountId,
 
   // Silence noisy browser errors that aren't actionable
   ignoreErrors: [
@@ -51,7 +52,7 @@ Sentry.init({
 const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 if (posthogKey) {
   Promise.all([import("posthog-js"), import("@/lib/analytics")]).then(
-    ([{ default: posthog }, { scrubEvent, storeClick }]) => {
+    ([{ default: posthog }, { POSTHOG_LOADED, scrubEvent, storeClick }]) => {
       posthog.init(posthogKey, {
         api_host: "/relay",
         ui_host: "https://us.posthog.com",
@@ -69,6 +70,7 @@ if (posthogKey) {
         disable_surveys: true,
         advanced_disable_flags: true,
         before_send: scrubEvent,
+        loaded: () => window.dispatchEvent(new Event(POSTHOG_LOADED)),
       });
       // Capture phase, so a component that stops propagation still counts
       const onClick = (e: MouseEvent) => {

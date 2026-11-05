@@ -1,3 +1,4 @@
+import { WEB_URL } from '../lib/config'
 import { clearSavedLogin, getResume, saveResume } from '../lib/storage'
 
 export const WELCOME_PATH = 'src/welcome/index.html'
@@ -19,4 +20,13 @@ export async function handleInstalled(details: { reason: string; previousVersion
       await saveResume(rest)
     }
   }
+}
+
+// Chrome opens this page when the extension is removed: a one-question survey
+// on cover-me.dev. The account id goes only when signed in, so the answer can
+// be linked to it; nothing else that identifies the user goes in the URL.
+export function uninstallUrl(version: string, userId?: string): string {
+  const params = new URLSearchParams({ v: version })
+  if (userId) params.set('u', userId)
+  return `${WEB_URL}/uninstalled?${params}`
 }
