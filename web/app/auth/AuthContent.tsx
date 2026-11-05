@@ -176,9 +176,12 @@ function AuthForm() {
 
     // Opened while already signed in (a stale "Sign in" link, a bookmark): go
     // where signing in would have gone. replace, so Back doesn't land here again.
+    // getUser asks the server, as the dashboard does: getSession only reads the
+    // cookie, and a cookie for a session the server no longer has (signed out
+    // elsewhere, a password change) would bounce between here and the dashboard.
     if (!isOAuth && !isConfirmation && !hash) {
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session) window.location.replace(afterOAuth(searchParams.get("plan"), searchParams.get("next")));
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (user) window.location.replace(afterOAuth(searchParams.get("plan"), searchParams.get("next")));
       });
     }
 

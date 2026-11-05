@@ -1,6 +1,7 @@
 // Shared with the website. Edit here, then run `node scripts/sync-pdf.mjs`,
 // which copies this folder to web/lib/pdf/ (both builds fail on a stale copy).
 import { jsPDF } from 'jspdf'
+import { resumeFileName } from './file-name'
 import type { TailoredResume } from './types'
 
 // Letter page: 612 × 792 pt
@@ -168,8 +169,5 @@ export function downloadTailoredResumePdf(resume: TailoredResume, jobTitle?: str
     for (const line of section.lines) bullet(line)
   }
 
-  const slug = jobTitle
-    ? jobTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
-    : 'resume'
-  doc.save(`${(resume.name || 'Resume').replace(/\s+/g, '-')}-${slug}.pdf`)
+  doc.save(resumeFileName(resume, jobTitle, 'pdf'))
 }

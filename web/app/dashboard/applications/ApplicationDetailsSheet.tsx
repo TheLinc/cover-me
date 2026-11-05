@@ -82,11 +82,17 @@ export function ApplicationDetailsSheet({ app, pro, open, onOpenChange, onClosed
       {detail && detail.tailoredResumes.length < resumes && <p className="text-[13px] text-ink-2">{UNREADABLE}</p>}
       {latest && (
         <>
-          <div className="flex items-center justify-between gap-3">
+          {/* On a phone the date gets its own line, with the buttons under it. */}
+          <div className="flex items-center justify-between gap-3 max-sm:flex-col max-sm:items-start">
             <p className="text-[13px] text-ink-2">Tailored <LocalDate iso={latest.createdAt} options={DATE} /></p>
-            <Button variant="outline" size="sm" className={PILL} onClick={() => download(() => downloadResume(detail!.title, latest.resume))}>
-              <DownloadSimpleIcon size={14} aria-hidden />Download PDF
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button variant="outline" size="sm" className={PILL} onClick={() => download(() => downloadResume(detail!.title, latest.resume))}>
+                <DownloadSimpleIcon size={14} aria-hidden />Download PDF
+              </Button>
+              <Button variant="outline" size="sm" className={PILL} onClick={() => download(() => downloadResume(detail!.title, latest.resume, 'docx'))}>
+                <DownloadSimpleIcon size={14} aria-hidden />Download Word
+              </Button>
+            </div>
           </div>
           <ResumePreview resume={latest.resume} />
         </>
