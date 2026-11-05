@@ -155,7 +155,7 @@ export default function DashboardClient({
                 <p className="text-[13.5px] text-ink-2">{proDaily} generations a day. Your letters and resumes saved here, on every device.</p>
                 {firstPayment && (
                   <p className="text-[13.5px] text-ink-2">
-                    First payment <LocalDate iso={firstPayment.date} options={{ month: "long", day: "numeric" }} />: {firstPayment.price}.
+                    <strong className="font-semibold text-ink">First payment <LocalDate iso={firstPayment.date} options={{ month: "long", day: "numeric" }} />:</strong> {firstPayment.price}.
                   </p>
                 )}
                 <Button variant="outline" size="sm" className="mt-1 rounded-full" onClick={handleBillingPortal} disabled={billingLoading}>
