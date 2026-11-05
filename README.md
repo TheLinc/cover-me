@@ -430,6 +430,8 @@ supabase functions deploy resume
 supabase functions deploy letters
 supabase functions deploy applications
 supabase functions deploy billing
+supabase functions deploy email-preferences
+supabase functions deploy nudge
 ```
 
 ### 7. Set up Stripe
@@ -521,7 +523,11 @@ Turn on the website's button only once users have an extension build with Google
 | `STRIPE_SECRET_KEY` | Stripe secret key |
 | `STRIPE_PRO_PRICE_ID` | Stripe price ID for Pro, $15/month (checkout) |
 | `STRIPE_PRO_QUARTERLY_PRICE_ID` | Stripe price ID for Pro, $35 every 3 months (checkout) |
-| `SITE_URL` | Your web dashboard URL (Stripe return pages) |
+| `SITE_URL` | Your web dashboard URL (Stripe return pages, unsubscribe links) |
+| `EMAIL_TOKEN_SECRET` | Signs unsubscribe links. Never change it: links already sent would stop working |
+| `NUDGE_SECRET` | Shared with the `NUDGE_SECRET` GitHub secret; the daily follow-up workflow calls `nudge` with it |
+| `NUDGE_ENABLED` | `true` to let `nudge` send the follow-up email; anything else sends nothing |
+| `RESEND_API_KEY` | Resend API key, for the follow-up email |
 
 **Web dashboard** (`web/.env.local`):
 

@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { randomUUID } from 'node:crypto'
+import { createHmac, randomUUID } from 'node:crypto'
 import { MOCK_PORT } from '../global-setup'
 
 // Set by scripts/test-functions.mjs from `supabase status`.
@@ -40,6 +40,13 @@ export async function createUser(tier: 'hosted_free' | 'hosted_pro' = 'hosted_fr
   if (signInError || !session.session) throw new Error(`signIn failed: ${signInError?.message}`)
 
   return { id: data.user.id, email, token: session.session.access_token }
+}
+
+// The token every unsubscribe link carries: the user id and an HMAC of it under
+// EMAIL_TOKEN_SECRET (the secret scripts/test-functions.mjs gave the functions).
+export function unsubscribeToken(userId: string) {
+  const mac = createHmac('sha256', env('EMAIL_TOKEN_SECRET')).update(`unsubscribe:${userId}`).digest('base64url')
+  return `${userId}.${mac}`
 }
 
 export async function deleteUser(user: TestUser | undefined) {
@@ -187,6 +194,17 @@ export const mockStripe = {
     subscriptionError?: { status: number; code: string }
   }) =>
     fetch(`${MOCK_URL}/__mock/stripe-state`, { method: 'POST', body: JSON.stringify(state) }),
+}
+
+export interface SentEmail {
+  authorization?: string
+  body: { from: string; to: string[]; reply_to: string; subject: string; text: string; headers: Record<string, string> }
+}
+
+export const mockResend = {
+  sent: async (): Promise<SentEmail[]> => (await fetch(`${MOCK_URL}/__mock/emails`)).json(),
+  failNext: (status = 500) => fetch(`${MOCK_URL}/__mock/email-fail-next`, { method: 'POST', body: JSON.stringify({ status }) }),
+  dropNext: () => fetch(`${MOCK_URL}/__mock/email-drop-next`, { method: 'POST' }),
 }
 
 export const JOB = {

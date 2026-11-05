@@ -1,13 +1,5 @@
-import { createHmac } from 'node:crypto'
 import { afterEach, describe, expect, it } from 'vitest'
-import { admin, callFunction, createUser, deleteUser, type TestUser } from './helpers'
-
-// The token every unsubscribe link carries: the user id and an HMAC of it under
-// EMAIL_TOKEN_SECRET (the secret scripts/test-functions.mjs gave the functions).
-function unsubscribeToken(userId: string) {
-  const mac = createHmac('sha256', process.env.EMAIL_TOKEN_SECRET!).update(`unsubscribe:${userId}`).digest('base64url')
-  return `${userId}.${mac}`
-}
+import { admin, callFunction, createUser, deleteUser, type TestUser, unsubscribeToken } from './helpers'
 
 async function prefs(userId: string) {
   const { data } = await admin

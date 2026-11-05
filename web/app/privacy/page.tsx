@@ -236,6 +236,9 @@ export default function PrivacyPage() {
                 your dashboard. Unsubscribing stops all of our non-account email at once; turning product
                 updates back on later restarts only those. Account emails
                 (confirming your address, resetting your password, changing your email) still arrive.
+                If you sign up but haven&apos;t generated anything a day later, we send you one short
+                email on how to get started. It is sent once, never again, and the same unsubscribe
+                link stops it.
                 Versions before 1.3.0 offered &ldquo;Remember me&rdquo;, which saved your password on
                 your device, encrypted with AES-256-GCM, to pre-fill the sign-in form. Version 1.3.0
                 removes that feature and deletes any saved password when it updates.
@@ -370,6 +373,7 @@ export default function PrivacyPage() {
               <Li>To process subscription billing through Stripe (Pro mode only).</Li>
               <Li>To respond to support requests you initiate by contacting us directly.</Li>
               <Li>To email you about new features, only if you&apos;ve agreed to it (Hosted mode). You can stop them at any time.</Li>
+              <Li>To send one getting-started email a day after you sign up, if you haven&apos;t generated anything yet (Hosted mode). You can unsubscribe from it.</Li>
               <Li>To count, in aggregate, how many accounts sign up and use the service.</Li>
             </Ul>
             <P>
@@ -618,6 +622,12 @@ export default function PrivacyPage() {
                   url: 'https://stripe.com/privacy',
                   when: 'When you click Upgrade, and for Pro subscribers',
                   receives: 'Your email address and Cover Me account ID when you start checkout, then the payment information you enter on Stripe\'s page (card details, billing address). Stripe processes all payments. Its notifications to our website include the checkout details it holds (such as your email, name and billing country or postal code); we keep only a customer ID and subscription status. We never see or store your raw card details.',
+                },
+                {
+                  name: 'Resend',
+                  url: 'https://resend.com/legal/privacy-policy',
+                  when: 'Hosted mode, when we email you',
+                  receives: 'Your email address and the email itself: account emails (confirming your address, resetting your password, changing your email), the one getting-started email after signup, and product updates if you agreed to them. Resend delivers them for us and keeps a delivery log.',
                 },
                 {
                   name: 'Vercel',
