@@ -4,13 +4,15 @@ import { getResume, getSession, getSettings, resolveMode, setupState, watchSetup
 import AccountPanel from '../popup/components/AccountPanel'
 import ResumePage from '../popup/pages/ResumePage'
 import logoIcon from '../public/icon/48.png'
-import { IndeedIcon, LinkedInIcon } from './JobSiteIcons'
+// The sites' own favicons (largest size in each .ico), unchanged.
+import indeedIcon from './indeed.png'
+import linkedInIcon from './linkedin.png'
 
 type StepState = 'done' | 'current' | 'waiting'
 
 const JOB_SITES = [
-  { name: 'LinkedIn', url: 'https://www.linkedin.com/jobs/', Icon: LinkedInIcon },
-  { name: 'Indeed', url: 'https://www.indeed.com/', Icon: IndeedIcon },
+  { name: 'LinkedIn', url: 'https://www.linkedin.com/jobs/', icon: linkedInIcon },
+  { name: 'Indeed', url: 'https://www.indeed.com/', icon: indeedIcon },
 ]
 
 export default function Welcome() {
@@ -92,9 +94,9 @@ export default function Welcome() {
               job search to link to. */}
           {postingState === 'current' && (
             <div className="welcome-links">
-              {JOB_SITES.map(({ name, url, Icon }) => (
+              {JOB_SITES.map(({ name, url, icon }) => (
                 <a key={name} className="btn btn-secondary" href={url} target="_blank" rel="noreferrer">
-                  <Icon />
+                  <img src={icon} width="18" height="18" alt="" />
                   Find jobs on {name}<span className="welcome-sr"> (opens in a new tab)</span>
                 </a>
               ))}
