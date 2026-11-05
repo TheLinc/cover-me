@@ -62,7 +62,7 @@ export default function Welcome() {
 
       {ready !== null && <ol className="welcome-steps">
         <Step n={1} state={accountState} title="Create a free account, or add your own API key"
-          action={ready ? { label: editing ? 'Done' : 'Change', ariaLabel: 'Change your account or API key', expanded: editing, onClick: () => setEditing(!editing) } : undefined}>
+          action={ready ? { label: editing ? 'Done' : 'Change', ariaLabel: editing ? undefined : 'Change your account or API key', expanded: editing, onClick: () => setEditing(!editing) } : undefined}>
           {ready && !editing
             ? <p className="welcome-summary">{summary}</p>
             : (
@@ -91,7 +91,7 @@ function Step({ n, state, title, action, headingRef, children }: {
   n: number
   state: StepState
   title: string
-  action?: { label: string; ariaLabel: string; expanded: boolean; onClick: () => void }
+  action?: { label: string; ariaLabel?: string; expanded: boolean; onClick: () => void }
   headingRef?: React.Ref<HTMLHeadingElement>
   children: ReactNode
 }) {
