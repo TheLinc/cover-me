@@ -3,7 +3,7 @@
 // people who ask for reduced motion.
 
 // Brand indigos plus the orange accent (web/BRAND.md).
-const COLORS = ['#6366F1', '#4F46E5', '#4338CA', '#A5B4FC', '#F97316', '#FDBA74']
+const COLORS = ['#6366F1', '#4F46E5', '#4338CA', '#F97316', '#FDBA74']
 const COUNT = 140
 const GRAVITY = 0.32
 const DRAG = 0.985
