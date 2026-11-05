@@ -29,6 +29,9 @@ const GOOGLE_SIGNIN = process.env.NEXT_PUBLIC_GOOGLE_SIGNIN === "1";
 // between www/non-www depending on how the user reached the site, and any
 // variant missing from the Supabase Redirect URL allowlist silently falls back
 // to the Site URL (landing page) instead of /auth.
+// The signup box across the Google round trip (#114).
+const SIGNUP_UPDATES_KEY = "cover-me:signup-updates";
+
 function authRedirectUrl() {
   return `${process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin}/auth`;
 }
@@ -89,8 +92,10 @@ function AuthForm() {
     // Read before replaceState below strips the query and the hash.
     const cancelledOAuth = isOAuth && oauthCancelled(window.location.search, window.location.hash);
     const oauthReason = isOAuth ? oauthErrorDescription(window.location.search, window.location.hash) : "";
-    // The signup box, ticked before Google (oauthRedirectUrl).
-    const oauthUpdates = isOAuth && searchParams.get("updates") === "1";
+    // The signup box, ticked before Google (handleGoogle). Kept in this tab's
+    // sessionStorage, never the URL, so a crafted link can't opt anyone in.
+    const oauthUpdates = isOAuth && sessionStorage.getItem(SIGNUP_UPDATES_KEY) === "1";
+    sessionStorage.removeItem(SIGNUP_UPDATES_KEY);
     const isConfirmation = searchParams.has("code") && !isOAuth;
     if (isConfirmation || isOAuth) {
       // Drop the code and any error, but keep where to go after signing in
@@ -213,10 +218,12 @@ function AuthForm() {
 
   async function handleGoogle() {
     setError("");
+    if (view === "signup" && productUpdates) sessionStorage.setItem(SIGNUP_UPDATES_KEY, "1");
+    else sessionStorage.removeItem(SIGNUP_UPDATES_KEY);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: oauthRedirectUrl(process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin, plan, params.get("next"), view === "signup" && productUpdates),
+        redirectTo: oauthRedirectUrl(process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin, plan, params.get("next")),
         // Show Google's account chooser. Without it Google signs straight back
         // in to the last account and the user can't pick another.
         queryParams: { prompt: "select_account" },

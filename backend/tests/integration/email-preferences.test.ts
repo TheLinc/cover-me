@@ -59,6 +59,16 @@ describe('email-preferences', () => {
       expect(await prefs(user.id)).toMatchObject({ product_updates: true, product_updates_source: 'signup' })
     })
 
+    // A signup choice can only come from a signup: an older account opts in
+    // from the dashboard, so a replayed signup request can't forge consent.
+    it('refuses a signup choice for an account that is not new', async () => {
+      user = await createUser()
+      await admin.from('users').update({ created_at: new Date(Date.now() - 60 * 60_000).toISOString() }).eq('id', user.id)
+      const res = await callFunction('email-preferences', { method: 'PATCH', token: user.token, body: { product_updates: true, source: 'signup' } })
+      expect(res.status).toBe(400)
+      expect(await prefs(user.id)).toMatchObject({ product_updates: false, product_updates_source: null })
+    })
+
     it('rejects a source the client may not claim, or a value that is not a boolean', async () => {
       user = await createUser()
       for (const body of [

@@ -5,6 +5,8 @@ import { verifyUnsubscribeToken } from '../_shared/email-consent.ts'
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SECRET_KEY = Deno.env.get('SERVICE_KEY')!
 const SITE_URL = (Deno.env.get('SITE_URL') || 'https://www.cover-me.dev').replace(/\/+$/, '')
+// How long after the account is created a Google signup's box is accepted.
+const SIGNUP_WINDOW_MS = 10 * 60_000
 
 // Email consent (#114). Two ways in:
 //   ?token=… (the unsubscribe link, no sign-in):
@@ -57,6 +59,15 @@ Deno.serve(async (req) => {
   const { product_updates, source } = await req.json().catch(() => ({})) as { product_updates?: unknown; source?: unknown }
   if (typeof product_updates !== 'boolean') return json({ error: 'product_updates must be true or false' }, 400)
   if (source !== 'signup' && source !== 'dashboard') return json({ error: 'Unknown source' }, 400)
+
+  // A signup choice comes right after a Google signup. Later, the dashboard
+  // is the way in, so a replayed signup request can't forge consent.
+  if (source === 'signup') {
+    const { data: row } = await supabase.from('users').select('created_at').eq('id', user.id).single()
+    if (!row || Date.now() - Date.parse(row.created_at as string) > SIGNUP_WINDOW_MS) {
+      return json({ error: 'Choose this from your dashboard.' }, 400)
+    }
+  }
 
   const { error } = await supabase.from('users').update({
     product_updates,
