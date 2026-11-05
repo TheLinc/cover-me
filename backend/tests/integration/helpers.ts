@@ -189,6 +189,16 @@ export const mockStripe = {
     fetch(`${MOCK_URL}/__mock/stripe-state`, { method: 'POST', body: JSON.stringify(state) }),
 }
 
+export interface SentEmail {
+  headers: { authorization?: string; 'idempotency-key'?: string }
+  body: { from: string; to: string[]; reply_to: string; subject: string; text: string; headers: Record<string, string> }
+}
+
+export const mockResend = {
+  sent: async (): Promise<SentEmail[]> => (await fetch(`${MOCK_URL}/__mock/emails`)).json(),
+  failNext: (status = 500) => fetch(`${MOCK_URL}/__mock/email-fail-next`, { method: 'POST', body: JSON.stringify({ status }) }),
+}
+
 export const JOB = {
   title: 'Senior Backend Engineer',
   company: 'Acme',

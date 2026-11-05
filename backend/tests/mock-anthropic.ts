@@ -12,6 +12,9 @@
 //   POST /v1/customers, /v1/subscriptions, /v1/checkout/sessions, /v1/billing_portal/sessions
 //   GET  /v1/subscriptions     Stripe stand-ins (billing function, via STRIPE_API_BASE)
 //   GET  /__mock/stripe        every Stripe call received since the last reset
+//   POST /emails               Resend stand-in (nudge function, via RESEND_API_BASE)
+//   GET  /__mock/emails        every email sent since the last reset
+//   POST /__mock/email-fail-next { status } → the next POST /emails fails
 
 import { createServer, type IncomingMessage, type Server } from 'node:http'
 
@@ -107,6 +110,10 @@ const stripeCalls: StripeCall[] = []
 // make the next POST /v1/customers or /v1/subscriptions fail once.
 type MockSubscription = string | { id?: string; status: string; trial_end?: number; metadata?: Record<string, string> }
 type StripeFailure = { status: number; code: string } | null
+type SentEmail = { headers: Record<string, string | undefined>; body: Record<string, unknown> }
+const sentEmails: SentEmail[] = []
+let emailFailNext: number | null = null
+
 const stripeState = {
   subscriptions: [] as MockSubscription[],
   missingCustomer: false,
@@ -169,6 +176,8 @@ export function startMockAnthropic(port: number): Promise<Server> {
     if (req.method === 'POST' && url === '/__mock/reset') {
       received.length = 0
       stripeCalls.length = 0
+      sentEmails.length = 0
+      emailFailNext = null
       stripeState.subscriptions = []
       stripeState.missingCustomer = false
       stripeState.customerError = null
@@ -301,6 +310,28 @@ export function startMockAnthropic(port: number): Promise<Server> {
         : { url: 'https://billing.stripe.test/portal' }
       res.writeHead(200, { 'content-type': 'application/json' })
       return res.end(JSON.stringify(reply))
+    }
+
+    if (req.method === 'GET' && url === '/__mock/emails') {
+      res.writeHead(200, { 'content-type': 'application/json' })
+      return res.end(JSON.stringify(sentEmails))
+    }
+    if (req.method === 'POST' && url === '/__mock/email-fail-next') {
+      emailFailNext = JSON.parse((await readBody(req)) || '{}').status ?? 500
+      return res.writeHead(204).end()
+    }
+    if (req.method === 'POST' && url === '/emails') {
+      const body = JSON.parse(await readBody(req))
+      if (emailFailNext) {
+        const status = emailFailNext
+        emailFailNext = null
+        res.writeHead(status, { 'content-type': 'application/json' })
+        return res.end(JSON.stringify({ name: 'application_error', message: 'mock failure' }))
+      }
+      const h = req.headers
+      sentEmails.push({ headers: { authorization: h.authorization, 'idempotency-key': h['idempotency-key'] as string | undefined }, body })
+      res.writeHead(200, { 'content-type': 'application/json' })
+      return res.end(JSON.stringify({ id: `email_mock_${sentEmails.length}` }))
     }
 
     res.writeHead(404).end()

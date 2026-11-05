@@ -469,6 +469,10 @@ verify_jwt = false
 [functions.letters]
 verify_jwt = false
 
+# Called by the daily scheduler with its own secret (NUDGE_SECRET), no user.
+[functions.nudge]
+verify_jwt = false
+
 [functions.resume]
 verify_jwt = false
 

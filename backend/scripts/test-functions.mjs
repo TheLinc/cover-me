@@ -29,6 +29,8 @@ const status = localStatus()
 
 // Also given to vitest, so a test can seed an encrypted cached parse.
 const ENCRYPTION_KEY = randomBytes(32).toString('hex')
+// Also given to vitest, so a test can call the nudge function as the scheduler.
+const NUDGE_SECRET = randomBytes(32).toString('hex')
 // Also given to vitest, so a test can sign an unsubscribe token.
 const EMAIL_TOKEN_SECRET = randomBytes(32).toString('hex')
 const envFile = join(BACKEND, 'supabase', 'functions', '.env.test')
@@ -44,6 +46,10 @@ writeFileSync(envFile, [
   'STRIPE_PRO_QUARTERLY_PRICE_ID=price_mock_pro_quarterly',
   `STRIPE_API_BASE=http://host.docker.internal:${MOCK_PORT}`,
   'SITE_URL=http://localhost:3000',
+  `NUDGE_SECRET=${NUDGE_SECRET}`,
+  'NUDGE_ENABLED=true',
+  'RESEND_API_KEY=re_mock',
+  `RESEND_API_BASE=http://host.docker.internal:${MOCK_PORT}`,
 ].join('\n') + '\n')
 
 console.log('Serving functions with the test env…')
@@ -59,7 +65,7 @@ process.on('SIGINT', () => { cleanup(); process.exit(130) })
 // anon JWT, then the function rejects it as a user token with its own JSON
 // body. Warming all of them here keeps cold starts (slow after a volume wipe,
 // when the runtime re-downloads npm deps) out of the first test that calls each.
-const FUNCTIONS = ['resume', 'generate', 'tailor', 'letters', 'applications', 'billing', 'email-preferences']
+const FUNCTIONS = ['resume', 'generate', 'tailor', 'letters', 'applications', 'billing', 'email-preferences', 'nudge']
 
 async function waitForFunctions(timeoutMs = 180_000) {
   const deadline = Date.now() + timeoutMs
@@ -98,6 +104,7 @@ const vitest = spawnSync(
       MOCK_ANTHROPIC_PORT: MOCK_PORT,
       ENCRYPTION_KEY,
       EMAIL_TOKEN_SECRET,
+      NUDGE_SECRET,
     },
   },
 )

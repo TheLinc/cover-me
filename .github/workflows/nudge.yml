@@ -1,0 +1,31 @@
+# The one-day follow-up email (#113): once a day, the nudge function emails
+# accounts that signed up 1 to 7 days ago and never generated. Who gets it,
+# and the NUDGE_ENABLED off switch, live in the function. The run fails (and
+# GitHub emails the repo owner) if the call fails or any send failed; failed
+# sends are retried by the next run.
+#
+# NUDGE_SECRET must match the function's NUDGE_SECRET secret on Supabase.
+# GitHub disables scheduled workflows after 60 days with no repo activity: see
+# the keep-alive reminder in docs/DEPLOY-TODO.md.
+name: Signup follow-up email
+
+on:
+  schedule:
+    - cron: '41 14 * * *' # daily, off the hour; mid-morning in North America
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - run: |
+          body=$(curl -sS --fail-with-body --max-time 170 -X POST \
+            "$SUPABASE_URL/functions/v1/nudge" -H "Authorization: Bearer $NUDGE_SECRET")
+          echo "$body"
+          echo "$body" | jq -e '.failed == 0' > /dev/null
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          NUDGE_SECRET: ${{ secrets.NUDGE_SECRET }}
