@@ -33,9 +33,8 @@ Deno.serve(async (req) => {
   for (const [i, c] of (candidates as Candidate[]).entries()) {
     if (i > 0) await new Promise((r) => setTimeout(r, SEND_GAP_MS))
     // Claim before sending, so the email goes out at most once even if a write
-    // fails or two runs overlap. A failed send releases the claim, and the
-    // next run tries again.
-
+    // fails or two runs overlap. Only a send Resend refused releases the
+    // claim for the next run; after a timeout it may have gone out, so it stays.
     const { data: claimed, error: claimError } = await supabase.from('users').update({ nudge_sent_at: new Date().toISOString() })
       .eq('id', c.user_id).is('nudge_sent_at', null).select('id')
     if (claimError) {
@@ -45,10 +44,13 @@ Deno.serve(async (req) => {
     }
     if (!claimed?.length) continue
     const version = c.has_resume ? 'resume' : 'no_resume'
-    if (await send(c, VERSIONS[version])) {
+    const outcome = await send(c, VERSIONS[version])
+    if (outcome === 'sent') {
       sent[version]++
-    } else {
-      failed++
+      continue
+    }
+    failed++
+    if (outcome === 'refused') {
       const { error: releaseError } = await supabase.from('users').update({ nudge_sent_at: null }).eq('id', c.user_id)
       if (releaseError) console.error('[nudge] release:', releaseError.message)
     }
@@ -82,7 +84,7 @@ const VERSIONS = {
   },
 }
 
-async function send({ user_id: userId, email }: Candidate, { subject, opening }: { subject: string; opening: string }): Promise<boolean> {
+async function send({ user_id: userId, email }: Candidate, { subject, opening }: { subject: string; opening: string }): Promise<'sent' | 'refused' | 'unknown'> {
   try {
     const text = `${opening}
 
@@ -112,10 +114,11 @@ Don't want emails like this? Unsubscribe: ${await unsubscribeUrl(userId)}
       // One stuck send mustn't run the whole batch into the function time limit.
       signal: AbortSignal.timeout(15_000),
     })
-    if (!res.ok) console.error(`[nudge] Resend answered ${res.status}`)
-    return res.ok
+    if (res.ok) return 'sent'
+    console.error(`[nudge] Resend answered ${res.status}`)
+    return 'refused'
   } catch (err) {
     console.error('[nudge] send failed:', err instanceof Error ? err.message : 'unknown error')
-    return false
+    return 'unknown'
   }
 }

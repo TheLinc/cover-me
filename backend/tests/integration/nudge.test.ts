@@ -58,7 +58,9 @@ describe('nudge', () => {
 
     const res = await runNudge()
     expect(res.status).toBe(200)
-    expect(await res.json()).toMatchObject({ sent: { resume: expect.any(Number), no_resume: expect.any(Number) }, failed: 0 })
+    const body = await res.json()
+    expect(body).toMatchObject({ enabled: true, failed: 0 })
+    expect(body.sent.resume).toBeGreaterThanOrEqual(1)
 
     const [email, ...rest] = await sentTo(user.email)
     expect(rest).toEqual([])
@@ -78,7 +80,7 @@ describe('nudge', () => {
 
   it('sends the no-resume version to an account without one', async () => {
     const user = await signedUpTwoDaysAgo()
-    await runNudge()
+    expect((await (await runNudge()).json()).sent.no_resume).toBeGreaterThanOrEqual(1)
     const [email] = await sentTo(user.email)
     expect(email.body.subject).toBe('One step left: add your resume')
     expect(email.body.text).toMatch(/^You made a Cover Me account yesterday\. Add your resume in the extension's Settings/)
