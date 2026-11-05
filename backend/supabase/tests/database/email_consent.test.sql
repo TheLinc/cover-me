@@ -2,7 +2,7 @@
 -- and can_email(), the one place a sender asks whether it may write to someone.
 -- Run: pnpm db:test   (from backend/)
 begin;
-select plan(14);
+select plan(16);
 
 -- Ticked at signup (email signups send it as user metadata), unticked, and a
 -- Google signup, which never carries the key. Confirmed unless noted.
@@ -36,9 +36,18 @@ select ok(public.can_email('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'onboarding')
 select ok(not public.can_email('dddddddd-dddd-4ddd-8ddd-dddddddddddd', 'onboarding'), 'nothing goes to an unconfirmed address, even with the box ticked');
 select ok(not public.can_email('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'newsletter'), 'an unknown kind of email is refused');
 
-update public.users set email_unsubscribed_at = now() where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+-- The unsubscribe link writes both at the same moment (email-preferences).
+update public.users set email_unsubscribed_at = now() - interval '1 day', product_updates = false,
+  product_updates_changed_at = now() - interval '1 day', product_updates_source = 'unsubscribe'
+  where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 select ok(not public.can_email('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'product_updates'), 'an unsubscribe blocks product updates');
 select ok(not public.can_email('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'onboarding'), 'an unsubscribe blocks onboarding mail too');
+
+-- Turning product updates back on later is consent to those, not to the rest.
+update public.users set product_updates = true, product_updates_changed_at = now(), product_updates_source = 'dashboard'
+  where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+select ok(public.can_email('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'product_updates'), 'opting back in after an unsubscribe allows product updates again');
+select ok(not public.can_email('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'onboarding'), 'opting back in leaves other email blocked');
 
 -- ── Server-owned: clients can neither call it nor write the columns ─────────
 

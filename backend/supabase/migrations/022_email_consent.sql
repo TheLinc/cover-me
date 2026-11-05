@@ -3,7 +3,8 @@
 -- Supabase Auth's own emails (confirm, reset, change email) don't look here.
 --
 -- product_updates*: the opt-in and its proof (when, and from where).
--- email_unsubscribed_at: set by the unsubscribe link; blocks every kind.
+-- email_unsubscribed_at: set by the unsubscribe link; blocks every kind. A
+-- later opt-in to product updates lets those through again, nothing else.
 -- The 011 grants keep these server-owned: the email-preferences function
 -- writes them with the service key.
 -- Covered by supabase/tests/database/email_consent.test.sql.
@@ -36,9 +37,12 @@ $$;
 CREATE FUNCTION public.can_email(p_user_id uuid, p_kind text)
 RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = '' AS $$
   SELECT coalesce((
-    SELECT u.email_unsubscribed_at IS NULL
-      AND a.email_confirmed_at IS NOT NULL
-      AND (p_kind = 'onboarding' OR (p_kind = 'product_updates' AND u.product_updates))
+    SELECT a.email_confirmed_at IS NOT NULL AND CASE p_kind
+      WHEN 'onboarding' THEN u.email_unsubscribed_at IS NULL
+      WHEN 'product_updates' THEN u.product_updates
+        AND (u.email_unsubscribed_at IS NULL OR u.product_updates_changed_at > u.email_unsubscribed_at)
+      ELSE false
+    END
     FROM public.users u JOIN auth.users a ON a.id = u.id
     WHERE u.id = p_user_id
   ), false)

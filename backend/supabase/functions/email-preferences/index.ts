@@ -10,11 +10,13 @@ const SIGNUP_WINDOW_MS = 10 * 60_000
 
 // Email consent (#114). Two ways in:
 //   ?token=… (the unsubscribe link, no sign-in):
-//     GET  redirects to the site's /unsubscribe page, which POSTs back. Link
-//          scanners open every GET, so a GET changes nothing.
+//     GET  redirects to the site's /unsubscribe page, which POSTs back when
+//          it loads. The GET itself changes nothing, so a scanner that only
+//          fetches the link doesn't unsubscribe anyone.
 //     POST unsubscribes: product updates off, and every non-account email
 //          blocked (email_unsubscribed_at). Also the one-click target in the
-//          List-Unsubscribe header.
+//          List-Unsubscribe header. Opting back in later re-enables product
+//          updates only (can_email, migration 022).
 //   The user's token (dashboard toggle, the signup box on a Google signup):
 //     PATCH { product_updates: boolean, source: 'signup' | 'dashboard' }
 // The dashboard reads the current value from its own users row.
@@ -23,16 +25,16 @@ Deno.serve(async (req) => {
   if (cors) return cors
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SECRET_KEY)
-  const unsubscribe = new URL(req.url).searchParams.get('token')
+  const unsubscribeToken = new URL(req.url).searchParams.get('token')
 
-  if (unsubscribe !== null) {
+  if (unsubscribeToken !== null) {
     if (req.method === 'GET') {
-      return new Response(null, { status: 303, headers: { ...corsHeaders, Location: `${SITE_URL}/unsubscribe?token=${encodeURIComponent(unsubscribe)}` } })
+      return new Response(null, { status: 303, headers: { ...corsHeaders, Location: `${SITE_URL}/unsubscribe?token=${encodeURIComponent(unsubscribeToken)}` } })
     }
     if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405)
     let userId: string | null
     try {
-      userId = await verifyUnsubscribeToken(unsubscribe)
+      userId = await verifyUnsubscribeToken(unsubscribeToken)
     } catch (err) {
       console.error('[email-preferences]', err instanceof Error ? err.message : 'unknown error')
       return json({ error: "Unsubscribing isn't working right now. Please try again later." }, 503)
@@ -73,8 +75,6 @@ Deno.serve(async (req) => {
     product_updates,
     product_updates_changed_at: new Date().toISOString(),
     product_updates_source: source,
-    // Opting back in is consent again, so it lifts an earlier unsubscribe.
-    ...(product_updates ? { email_unsubscribed_at: null } : {}),
   }).eq('id', user.id)
   if (error) return json({ error: 'Could not save your choice. Please try again.' }, 500)
   return json({ product_updates })

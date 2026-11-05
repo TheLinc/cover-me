@@ -233,7 +233,8 @@ export default function PrivacyPage() {
                 &ldquo;Email me about new features&rdquo; when you sign up, or by turning it on in your
                 dashboard. We record when you agreed or stopped, and where. To stop them, use the
                 unsubscribe link in any of those emails (no sign-in needed) or turn the setting off in
-                your dashboard. Unsubscribing stops all of our non-account email at once. Account emails
+                your dashboard. Unsubscribing stops all of our non-account email at once; turning product
+                updates back on later restarts only those. Account emails
                 (confirming your address, resetting your password, changing your email) still arrive.
                 Versions before 1.3.0 offered &ldquo;Remember me&rdquo;, which saved your password on
                 your device, encrypted with AES-256-GCM, to pre-fill the sign-in form. Version 1.3.0

@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { unsubscribe } from '@/lib/email-preferences'
 
+const FAILED = "Couldn't unsubscribe right now. Please try again."
+
 export function Unsubscribe() {
   const token = useSearchParams().get('token')
   const [state, setState] = useState<{ done?: boolean; error?: string }>(
@@ -13,8 +15,8 @@ export function Unsubscribe() {
   useEffect(() => {
     if (!token) return
     unsubscribe(token)
-      .then((r) => setState(r.unsubscribed ? { done: true } : { error: r.error ?? "Couldn't unsubscribe right now. Please try again." }))
-      .catch(() => setState({ error: "Couldn't unsubscribe right now. Please try again." }))
+      .then((r) => setState(r.unsubscribed ? { done: true } : { error: r.error ?? FAILED }))
+      .catch(() => setState({ error: FAILED }))
   }, [token])
 
   if (state.error) {

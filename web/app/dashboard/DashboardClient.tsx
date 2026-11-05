@@ -8,6 +8,7 @@ import { LocalDate } from "./LocalDate";
 import { CHROME_STORE_URL, cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Switch } from "@/components/ui/switch";
 import {
   ArrowUpRightIcon,
   GoogleChromeLogoIcon,
@@ -46,7 +47,7 @@ export default function DashboardClient({
   const [upgradeError, setUpgradeError]     = useState('');
   const [billingLoading, setBillingLoading] = useState(false);
   const [billingError, setBillingError]     = useState('');
-  const [updates, setUpdates]               = useState(productUpdates);
+  const [updatesOn, setUpdatesOn]           = useState(productUpdates);
   const [updatesSaving, setUpdatesSaving]   = useState(false);
   const [updatesError, setUpdatesError]     = useState('');
   const isPro = tier === "hosted_pro";
@@ -74,12 +75,12 @@ export default function DashboardClient({
 
   // Saves at once; shows the old state again if the save fails.
   async function handleUpdatesToggle(next: boolean) {
-    setUpdates(next);
+    setUpdatesOn(next);
     setUpdatesSaving(true);
     setUpdatesError('');
     const data = await saveProductUpdates(next, 'dashboard').catch(() => ({ error: 'Could not reach the server. Please try again.' }));
     if ('error' in data && data.error) {
-      setUpdates(!next);
+      setUpdatesOn(!next);
       setUpdatesError(data.error);
     }
     setUpdatesSaving(false);
@@ -214,18 +215,18 @@ export default function DashboardClient({
 
           {/* Product-update emails. Account emails (confirm, reset password) don't depend on it. */}
           <section aria-label="Email" className="flex flex-col gap-1.5">
-            <label className="flex cursor-pointer items-center gap-2.5 text-[13.5px] text-ink-2">
-              <input
-                type="checkbox"
-                role="switch"
-                checked={updates}
+            <div className="flex items-center gap-2.5">
+              <Switch
+                id="product-updates"
+                checked={updatesOn}
                 disabled={updatesSaving}
-                onChange={(e) => handleUpdatesToggle(e.target.checked)}
-                className="size-4 cursor-pointer accent-brand-strong"
+                onCheckedChange={handleUpdatesToggle}
               />
-              Email me about new features (a few times a year)
-            </label>
-            {updatesError && <p className="text-[12px] leading-snug text-destructive">{updatesError}</p>}
+              <label htmlFor="product-updates" className="cursor-pointer text-[13.5px] text-ink-2">
+                Email me about new features (a few times a year)
+              </label>
+            </div>
+            {updatesError && <p role="alert" className="text-[12px] leading-snug text-destructive">{updatesError}</p>}
           </section>
         </div>
       </main>

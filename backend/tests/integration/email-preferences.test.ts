@@ -82,11 +82,15 @@ describe('email-preferences', () => {
       expect(await prefs(user.id)).toMatchObject({ product_updates: false, product_updates_source: null })
     })
 
-    it('opting back in after an unsubscribe lifts the block', async () => {
+    // can_email lets product updates through again (the opt-in is newer than
+    // the unsubscribe); every other kind stays blocked.
+    it('opting back in after an unsubscribe keeps the unsubscribe on record', async () => {
       user = await createUser()
       await oneClick(unsubscribeToken(user.id))
       await callFunction('email-preferences', { method: 'PATCH', token: user.token, body: { product_updates: true, source: 'dashboard' } })
-      expect(await prefs(user.id)).toMatchObject({ product_updates: true, email_unsubscribed_at: null })
+      const after = await prefs(user.id)
+      expect(after).toMatchObject({ product_updates: true, product_updates_source: 'dashboard' })
+      expect(after.email_unsubscribed_at).not.toBeNull()
     })
   })
 
@@ -125,7 +129,8 @@ describe('email-preferences', () => {
     })
 
     it('sends a link opened in a browser to the unsubscribe page, without unsubscribing yet', async () => {
-      // Link scanners open every GET, so a GET must never unsubscribe anyone.
+      // The page unsubscribes once it loads; the GET itself changes nothing, so
+      // a scanner that only fetches the link doesn't unsubscribe anyone.
       user = await createUser()
       const token = unsubscribeToken(user.id)
       const res = await callFunction('email-preferences', { query: { token }, redirect: 'manual' })

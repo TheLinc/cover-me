@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { GoogleIcon } from "@/components/ui/google-icon";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   ArrowLeftIcon,
   CheckIcon,
@@ -25,13 +26,13 @@ type View = "signin" | "signup" | "forgot" | "reset" | "confirmed";
 // Off until the Google provider is set up in Supabase: merging deploys the site.
 const GOOGLE_SIGNIN = process.env.NEXT_PUBLIC_GOOGLE_SIGNIN === "1";
 
+// The signup box across the Google round trip (#114).
+const SIGNUP_UPDATES_KEY = "cover-me:signup-updates";
+
 // Canonical origin for Supabase email redirects. window.location.origin varies
 // between www/non-www depending on how the user reached the site, and any
 // variant missing from the Supabase Redirect URL allowlist silently falls back
 // to the Site URL (landing page) instead of /auth.
-// The signup box across the Google round trip (#114).
-const SIGNUP_UPDATES_KEY = "cover-me:signup-updates";
-
 function authRedirectUrl() {
   return `${process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin}/auth`;
 }
@@ -766,15 +767,16 @@ function AuthForm() {
                 </div>
 
                 {view === "signup" && (
-                  <label className="flex items-center gap-2 text-[13px] text-muted-foreground mb-[18px] cursor-pointer select-none">
-                    <input
-                      type="checkbox"
+                  <div className="flex items-center gap-2 mb-[18px]">
+                    <Checkbox
+                      id="product-updates"
                       checked={productUpdates}
-                      onChange={(e) => setProductUpdates(e.target.checked)}
-                      className="size-3.5 accent-brand-strong cursor-pointer"
+                      onCheckedChange={(v) => setProductUpdates(v === true)}
                     />
-                    Email me about new features (a few times a year)
-                  </label>
+                    <label htmlFor="product-updates" className="text-[13px] text-muted-foreground cursor-pointer select-none">
+                      Email me about new features (a few times a year)
+                    </label>
+                  </div>
                 )}
 
                 {error && (
