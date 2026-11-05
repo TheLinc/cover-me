@@ -4,8 +4,10 @@ import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import posthog from 'posthog-js'
 import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Textarea } from '@/components/ui/textarea'
+import { whenPosthogLoaded } from '@/lib/analytics'
 import { CHROME_STORE_URL } from '@/lib/utils'
 
 // PostHog survey "Why did you remove Cover Me?" (API mode). Its results page
@@ -38,13 +40,7 @@ export function UninstallSurvey() {
   const [comment, setComment] = useState('')
   const [sent, setSent] = useState(false)
 
-  // instrumentation-client.ts loads PostHog after the page starts, so wait for it
-  useEffect(() => {
-    const shown = () => { posthog.capture('survey shown', { $survey_id: SURVEY_ID }) }
-    if (posthog.__loaded) return shown()
-    window.addEventListener('posthog-loaded', shown, { once: true })
-    return () => window.removeEventListener('posthog-loaded', shown)
-  }, [])
+  useEffect(() => whenPosthogLoaded(posthog, () => { posthog.capture('survey shown', { $survey_id: SURVEY_ID }) }), [])
 
   const needsComment = reason === OTHER
   const canSend = reason !== '' && (!needsComment || comment.trim() !== '')
@@ -54,13 +50,14 @@ export function UninstallSurvey() {
     if (!canSend) return
     const accountId = params.get('u') ?? ''
     const version = params.get('v') ?? ''
-    posthog.capture('survey sent', {
+    const answer = {
       $survey_id: SURVEY_ID,
       [`$survey_response_${REASON_QUESTION_ID}`]: reason,
       ...(comment.trim() && { [`$survey_response_${COMMENT_QUESTION_ID}`]: comment.trim() }),
       ...(UUID.test(accountId) && { account_id: accountId }),
       ...(VERSION.test(version) && { extension_version: version }),
-    })
+    }
+    whenPosthogLoaded(posthog, () => { posthog.capture('survey sent', answer) })
     setSent(true)
   }
 
@@ -86,15 +83,15 @@ export function UninstallSurvey() {
         {REASONS.map((r, i) => (
           <div key={r} className="flex items-center gap-3">
             <RadioGroupItem value={r} id={`reason-${i}`} />
-            <label htmlFor={`reason-${i}`} className="text-[15px] cursor-pointer">{r}</label>
+            <Label htmlFor={`reason-${i}`} className="normal-case tracking-normal text-[15px] text-foreground font-normal cursor-pointer">{r}</Label>
           </div>
         ))}
       </RadioGroup>
 
-      <label htmlFor="comment" className="block mt-8 text-[15px] font-medium">
+      <Label htmlFor="comment" className="block mt-8 normal-case tracking-normal text-[15px] text-foreground font-medium">
         Anything else you want to tell us?{' '}
         <span className="font-normal text-muted-foreground">{needsComment ? '(required for Other)' : '(optional)'}</span>
-      </label>
+      </Label>
       <Textarea
         id="comment"
         value={comment}

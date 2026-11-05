@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest'
-import type { CaptureResult } from 'posthog-js'
-import { cleanUrl, isPrivatePath, scrubEvent, storeClick } from './analytics'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import type { CaptureResult, PostHog } from 'posthog-js'
+import { cleanUrl, isPrivatePath, POSTHOG_LOADED, scrubEvent, storeClick, whenPosthogLoaded } from './analytics'
 
 const event = (properties: Record<string, unknown>) =>
   ({ uuid: 'u', event: '$pageview', properties }) as CaptureResult
@@ -77,5 +77,31 @@ describe('storeClick', () => {
     expect(storeClick({ type: 'click', button: 0, target: link('https://github.com/TheLinc/cover-me', 'GitHub') })).toBeNull()
     expect(storeClick({ type: 'click', button: 0, target: { closest: () => null } as unknown as Element })).toBeNull()
     expect(storeClick({ type: 'click', button: 0, target: null })).toBeNull()
+  })
+})
+
+describe('whenPosthogLoaded', () => {
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('runs at once when PostHog is loaded', () => {
+    const fn = vi.fn()
+    whenPosthogLoaded({ __loaded: true } as PostHog, fn)
+    expect(fn).toHaveBeenCalledOnce()
+  })
+  it('otherwise waits for the loaded event, and runs only once', () => {
+    vi.stubGlobal('window', new EventTarget())
+    const fn = vi.fn()
+    whenPosthogLoaded({ __loaded: false } as PostHog, fn)
+    expect(fn).not.toHaveBeenCalled()
+    window.dispatchEvent(new Event(POSTHOG_LOADED))
+    window.dispatchEvent(new Event(POSTHOG_LOADED))
+    expect(fn).toHaveBeenCalledOnce()
+  })
+  it('the returned function cancels the wait', () => {
+    vi.stubGlobal('window', new EventTarget())
+    const fn = vi.fn()
+    whenPosthogLoaded({ __loaded: false } as PostHog, fn)()
+    window.dispatchEvent(new Event(POSTHOG_LOADED))
+    expect(fn).not.toHaveBeenCalled()
   })
 })

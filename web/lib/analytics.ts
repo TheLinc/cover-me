@@ -1,4 +1,4 @@
-import type { CaptureResult } from 'posthog-js'
+import type { CaptureResult, PostHog } from 'posthog-js'
 
 // PostHog counts page views on the public site, cookieless, to see which links
 // bring visitors (utm_* tags and referrers). Signed-in pages never reach it:
@@ -56,4 +56,20 @@ export function scrubEvent(event: CaptureResult | null): CaptureResult | null {
   }
   for (const key of URL_PROPS) if (key in props) props[key] = cleanUrl(props[key])
   return event
+}
+
+// instrumentation-client.ts dispatches this once PostHog has started. It loads
+// PostHog after the page, and capture() drops events sent before then, so a
+// page that captures on load or on a quick click waits for it.
+export const POSTHOG_LOADED = 'posthog-loaded'
+
+// Returns a function that cancels the wait. Without a PostHog key (local and
+// preview builds) PostHog never loads, so fn never runs.
+export function whenPosthogLoaded(posthog: PostHog, fn: () => void): () => void {
+  if (posthog.__loaded) {
+    fn()
+    return () => {}
+  }
+  window.addEventListener(POSTHOG_LOADED, fn, { once: true })
+  return () => window.removeEventListener(POSTHOG_LOADED, fn)
 }
