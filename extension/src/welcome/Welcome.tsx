@@ -1,8 +1,17 @@
+import { useEffect, useState } from 'react'
+import { isAccountReady, watchAccountReady } from '../lib/storage'
 import AccountPanel from '../popup/components/AccountPanel'
 import ResumePage from '../popup/pages/ResumePage'
 import logoIcon from '../public/icon/48.png'
 
 export default function Welcome() {
+  // The resume waits for step 1, so it goes into the account it belongs to.
+  const [ready, setReady] = useState(false)
+  useEffect(() => {
+    isAccountReady().then(setReady)
+    return watchAccountReady(setReady)
+  }, [])
+
   return (
     <main className="welcome">
       <div className="logo">
@@ -18,7 +27,11 @@ export default function Welcome() {
 
       <section className="welcome-step">
         <h2>2. Add your resume</h2>
-        <ResumePage hideHeader />
+        {!ready && <p className="hint welcome-locked-hint">Finish step 1 first.</p>}
+        {/* React 18 doesn't type inert; the empty string turns it on. */}
+        <div {...(!ready && { inert: '' })}>
+          <ResumePage hideHeader />
+        </div>
       </section>
 
       <section className="welcome-step">

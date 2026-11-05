@@ -22,6 +22,22 @@ export async function getMode(): Promise<AppMode> {
   return resolveMode(await getSettings())
 }
 
+// Ready to generate: signed in to the account, or an API key saved. The welcome
+// tab keeps the resume step locked until then.
+export async function isAccountReady(): Promise<boolean> {
+  const [settings, session] = await Promise.all([getSettings(), getSession()])
+  return resolveMode(settings) === 'hosted' ? !!session : !!settings?.apiKey
+}
+
+// Calls back with isAccountReady when a sign-in, sign-out or key save lands.
+export function watchAccountReady(onChange: (ready: boolean) => void): () => void {
+  const listener = (changes: Record<string, chrome.storage.StorageChange>, area: string) => {
+    if (area === 'local' && ('settings' in changes || 'session' in changes)) void isAccountReady().then(onChange)
+  }
+  chrome.storage.onChanged.addListener(listener)
+  return () => chrome.storage.onChanged.removeListener(listener)
+}
+
 export async function getResume(): Promise<ResumeData | null> {
   const { resume } = await chrome.storage.local.get('resume')
   return (resume as ResumeData) ?? null

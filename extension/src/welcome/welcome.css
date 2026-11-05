@@ -5,3 +5,5 @@ html, body { width: auto; height: auto; overflow: auto; }
 .welcome-step h2 { font-size: 15px; font-weight: 700; margin-bottom: 10px; }
 .welcome-step .page { padding: 0; min-height: 0; }
 .welcome-title { margin-top: 16px; }
+.welcome-step [inert] { opacity: 0.42; }
+.welcome-locked-hint { margin-bottom: 10px; }

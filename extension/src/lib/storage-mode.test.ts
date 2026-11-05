@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { clearSession, resolveMode, takeGoogleSignInError, watchGoogleSignInError, watchResume, watchSession } from './storage'
+import { clearSession, isAccountReady, resolveMode, takeGoogleSignInError, watchGoogleSignInError, watchResume, watchSession } from './storage'
 
 // Signing out stamps an untagged resume with the account that was signed in,
 // so the next account to sign in on this browser can't claim it.
@@ -112,5 +112,28 @@ describe('resolveMode', () => {
   // Settings saved before `mode` existed: a stored key means they chose BYOK.
   test('old settings with a key but no mode stay BYOK', () => {
     expect(resolveMode({ provider: 'openai', apiKey: 'enc' } as never)).toBe('byok')
+  })
+})
+
+// The welcome tab unlocks the resume step on this.
+describe('isAccountReady', () => {
+  function fakeLocal(data: Record<string, unknown>) {
+    vi.stubGlobal('chrome', { storage: { local: { get: async (k: string) => (k in data ? { [k]: data[k] } : {}) } } })
+  }
+  afterEach(() => { vi.unstubAllGlobals() })
+
+  test('fresh install: not ready', async () => {
+    fakeLocal({})
+    expect(await isAccountReady()).toBe(false)
+  })
+  test('hosted needs a session', async () => {
+    fakeLocal({ settings: { provider: 'claude', apiKey: '', mode: 'hosted' }, session: { user: { id: 'a' } } })
+    expect(await isAccountReady()).toBe(true)
+  })
+  test('BYOK needs a saved key, not just the mode', async () => {
+    fakeLocal({ settings: { provider: 'claude', apiKey: '', mode: 'byok' }, session: { user: { id: 'a' } } })
+    expect(await isAccountReady()).toBe(false)
+    fakeLocal({ settings: { provider: 'claude', apiKey: 'enc', mode: 'byok' } })
+    expect(await isAccountReady()).toBe(true)
   })
 })
