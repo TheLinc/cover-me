@@ -1,11 +1,10 @@
-import { createHmac } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { admin, API_URL, callFunction, createUser, deleteUser, mockClaude, mockResend, setUsage, type SentEmail, type TestUser } from './helpers'
+import { admin, API_URL, callFunction, createUser, deleteUser, mockClaude, mockResend, setUsage, type SentEmail, type TestUser, unsubscribeToken } from './helpers'
 
 // The daily follow-up to accounts that signed up but never generated (#113).
 // The scheduler calls it with NUDGE_SECRET; it sends through Resend (the mock).
 
-const run = (secret = process.env.NUDGE_SECRET!) =>
+const runNudge = (secret = process.env.NUDGE_SECRET!) =>
   callFunction('nudge', { method: 'POST', headers: { Authorization: `Bearer ${secret}` } })
 
 const HOUR = 60 * 60_000
@@ -31,7 +30,7 @@ async function nudgeSentAt(userId: string) {
 describe('nudge', () => {
   const users: TestUser[] = []
   // An account two days old with no generations: the one this email is for.
-  async function eligible(): Promise<TestUser> {
+  async function signedUpTwoDaysAgo(): Promise<TestUser> {
     const user = await createUser()
     users.push(user)
     await setAge(user.id, 48 * HOUR)
@@ -46,18 +45,18 @@ describe('nudge', () => {
   })
 
   it('only answers the scheduler', async () => {
-    const user = await eligible()
-    for (const res of [await run('wrong'), await callFunction('nudge', { method: 'POST' })]) {
+    const user = await signedUpTwoDaysAgo()
+    for (const res of [await runNudge('wrong'), await callFunction('nudge', { method: 'POST' })]) {
       expect(res.status).toBe(401)
     }
     expect(await sentTo(user.email)).toEqual([])
   })
 
   it('sends the resume version to an account with a resume, once', async () => {
-    const user = await eligible()
+    const user = await signedUpTwoDaysAgo()
     await addResume(user.id)
 
-    const res = await run()
+    const res = await runNudge()
     expect(res.status).toBe(200)
     expect(await res.json()).toMatchObject({ sent: { resume: expect.any(Number), no_resume: expect.any(Number) }, failed: 0 })
 
@@ -73,13 +72,13 @@ describe('nudge', () => {
     expect(email.body.text).toContain('press Tailor')
     expect(await nudgeSentAt(user.id)).not.toBeNull()
 
-    await run()
+    await runNudge()
     expect(await sentTo(user.email)).toHaveLength(1)
   })
 
   it('sends the no-resume version to an account without one', async () => {
-    const user = await eligible()
-    await run()
+    const user = await signedUpTwoDaysAgo()
+    await runNudge()
     const [email] = await sentTo(user.email)
     expect(email.body.subject).toBe('One step left: add your resume')
     expect(email.body.text).toMatch(/^You made a Cover Me account yesterday\. Add your resume in the extension's Settings/)
@@ -87,12 +86,11 @@ describe('nudge', () => {
   })
 
   it('carries an unsubscribe link and one-click headers that work', async () => {
-    const user = await eligible()
-    await run()
+    const user = await signedUpTwoDaysAgo()
+    await runNudge()
     const [email] = await sentTo(user.email)
 
-    const mac = createHmac('sha256', process.env.EMAIL_TOKEN_SECRET!).update(`unsubscribe:${user.id}`).digest('base64url')
-    const token = encodeURIComponent(`${user.id}.${mac}`)
+    const token = encodeURIComponent(unsubscribeToken(user.id))
     expect(email.body.text).toContain(`Unsubscribe: http://localhost:3000/unsubscribe?token=${token}`)
     expect(email.body.headers).toEqual({
       'List-Unsubscribe': expect.stringMatching(new RegExp(`/functions/v1/email-preferences\\?token=${token}>$`)),
@@ -108,13 +106,13 @@ describe('nudge', () => {
   })
 
   it('skips accounts too new, too old, unconfirmed, that generated, or unsubscribed', async () => {
-    const tooNew = await eligible()
+    const tooNew = await signedUpTwoDaysAgo()
     await setAge(tooNew.id, 23 * HOUR)
-    const tooOld = await eligible()
+    const tooOld = await signedUpTwoDaysAgo()
     await setAge(tooOld.id, 8 * 24 * HOUR)
-    const generated = await eligible()
+    const generated = await signedUpTwoDaysAgo()
     await setUsage(generated.id, [{ daysAgo: 1, count: 1 }])
-    const unsubscribed = await eligible()
+    const unsubscribed = await signedUpTwoDaysAgo()
     await admin.from('users').update({ email_unsubscribed_at: new Date().toISOString() }).eq('id', unsubscribed.id)
 
     const unconfirmedEmail = `test-unconfirmed-${Date.now()}@cover-me.test`
@@ -122,8 +120,8 @@ describe('nudge', () => {
     users.push({ id: data.user!.id, email: unconfirmedEmail, token: '' })
     await setAge(data.user!.id, 48 * HOUR)
 
-    const control = await eligible()
-    await run()
+    const control = await signedUpTwoDaysAgo()
+    await runNudge()
     expect(await sentTo(control.email)).toHaveLength(1)
     for (const email of [tooNew.email, tooOld.email, generated.email, unsubscribed.email, unconfirmedEmail]) {
       expect(await sentTo(email), email).toEqual([])
@@ -131,13 +129,13 @@ describe('nudge', () => {
   })
 
   it('leaves a failed send unmarked, so the next run tries again', async () => {
-    const user = await eligible()
+    const user = await signedUpTwoDaysAgo()
     await mockResend.failNext(500)
-    const res = await run()
+    const res = await runNudge()
     expect((await res.json()).failed).toBeGreaterThanOrEqual(1)
     expect(await nudgeSentAt(user.id)).toBeNull()
 
-    await run()
+    await runNudge()
     expect(await sentTo(user.email)).toHaveLength(1)
     expect(await nudgeSentAt(user.id)).not.toBeNull()
   })

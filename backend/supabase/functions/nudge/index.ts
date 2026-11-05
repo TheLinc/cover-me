@@ -30,16 +30,27 @@ Deno.serve(async (req) => {
   }
 
   let failed = 0
-  for (const [i, c] of (candidates as Array<{ user_id: string; email: string; has_resume: boolean }>).entries()) {
+  for (const [i, c] of (candidates as Candidate[]).entries()) {
     if (i > 0) await new Promise((r) => setTimeout(r, SEND_GAP_MS))
-    // A failed send leaves nudge_sent_at empty, so the next run tries again.
-    // The idempotency key stops a resend if only the update below failed.
-    if (await send(c.user_id, c.email, c.has_resume)) {
-      const { error: markError } = await supabase.from('users').update({ nudge_sent_at: new Date().toISOString() }).eq('id', c.user_id)
-      if (markError) console.error('[nudge] mark sent:', markError.message)
-      sent[c.has_resume ? 'resume' : 'no_resume']++
+    // Claim before sending, so the email goes out at most once even if a write
+    // fails or two runs overlap. A failed send releases the claim, and the
+    // next run tries again.
+
+    const { data: claimed, error: claimError } = await supabase.from('users').update({ nudge_sent_at: new Date().toISOString() })
+      .eq('id', c.user_id).is('nudge_sent_at', null).select('id')
+    if (claimError) {
+      console.error('[nudge] claim:', claimError.message)
+      failed++
+      continue
+    }
+    if (!claimed?.length) continue
+    const version = c.has_resume ? 'resume' : 'no_resume'
+    if (await send(c, VERSIONS[version])) {
+      sent[version]++
     } else {
       failed++
+      const { error: releaseError } = await supabase.from('users').update({ nudge_sent_at: null }).eq('id', c.user_id)
+      if (releaseError) console.error('[nudge] release:', releaseError.message)
     }
   }
 
@@ -58,10 +69,20 @@ async function isScheduler(req: Request): Promise<boolean> {
   return a.reduce((diff, byte, i) => diff | (byte ^ b[i]), 0) === 0
 }
 
-async function send(userId: string, to: string, hasResume: boolean): Promise<boolean> {
-  const opening = hasResume
-    ? "You added your resume to Cover Me yesterday but haven't tailored it to a job yet."
-    : "You made a Cover Me account yesterday. Add your resume in the extension's Settings and you're one click from a tailored resume."
+type Candidate = { user_id: string; email: string; has_resume: boolean }
+
+const VERSIONS = {
+  resume: {
+    subject: 'Your resume is in. Try it on one job',
+    opening: "You added your resume to Cover Me yesterday but haven't tailored it to a job yet.",
+  },
+  no_resume: {
+    subject: 'One step left: add your resume',
+    opening: "You made a Cover Me account yesterday. Add your resume in the extension's Settings and you're one click from a tailored resume.",
+  },
+}
+
+async function send({ user_id: userId, email }: Candidate, { subject, opening }: { subject: string; opening: string }): Promise<boolean> {
   const text = `${opening}
 
 Open any job posting on LinkedIn, Indeed, Greenhouse, Lever or Workday, click the Cover Me icon, and press Tailor. It takes about 30 seconds, and you get 10 free to start.
@@ -79,13 +100,12 @@ Don't want emails like this? Unsubscribe: ${await unsubscribeUrl(userId)}
       headers: {
         Authorization: `Bearer ${Deno.env.get('RESEND_API_KEY')}`,
         'Content-Type': 'application/json',
-        'Idempotency-Key': `nudge/${userId}`,
       },
       body: JSON.stringify({
         from: FROM,
-        to: [to],
+        to: [email],
         reply_to: REPLY_TO,
-        subject: hasResume ? 'Your resume is in. Try it on one job' : 'One step left: add your resume',
+        subject,
         text,
         headers: await unsubscribeHeaders(userId),
       }),

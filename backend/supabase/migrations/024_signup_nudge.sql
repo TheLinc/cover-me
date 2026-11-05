@@ -16,7 +16,7 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = '' AS $$
   SELECT u.id, a.email, EXISTS (SELECT 1 FROM public.resumes r WHERE r.user_id = u.id)
   FROM public.users u JOIN auth.users a ON a.id = u.id
   WHERE u.created_at <= now() - interval '24 hours'
-    AND u.created_at > now() - interval '7 days'
+    AND u.created_at >= now() - interval '7 days'
     AND u.nudge_sent_at IS NULL
     AND a.email IS NOT NULL
     AND NOT EXISTS (SELECT 1 FROM public.rate_limits l WHERE l.user_id = u.id)
