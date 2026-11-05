@@ -11,10 +11,12 @@ import { whenPosthogLoaded } from '@/lib/analytics'
 import { CHROME_STORE_URL } from '@/lib/utils'
 
 // PostHog survey "Why did you remove Cover Me?" (API mode). Its results page
-// reads these events; the ids come from the survey in PostHog.
-const SURVEY_ID = 'TODO-create-survey-in-posthog'
-const REASON_QUESTION_ID = 'TODO-reason-question-id'
-const COMMENT_QUESTION_ID = 'TODO-comment-question-id'
+// reads these events; the ids come from the survey in PostHog:
+// https://us.posthog.com/project/668786/surveys/01a1a968-9657-0000-8c01-c3d4a0dca3ff
+// Its choices must match REASONS. Changing a question's text there keeps its id.
+const SURVEY_ID = '01a1a968-9657-0000-8c01-c3d4a0dca3ff'
+const REASON_QUESTION_ID = '57561f2e-d353-4321-91f9-ca247419d4a9'
+const COMMENT_QUESTION_ID = '5318a93b-ea8f-47ed-a8bb-5d70cc624d2a'
 
 const OTHER = 'Other'
 const REASONS = [
