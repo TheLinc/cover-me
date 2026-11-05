@@ -22,6 +22,9 @@ export default function Welcome() {
   const [summary, setSummary] = useState('')
   // Step 1 reopened with "Change" after it was done.
   const [editing, setEditing] = useState(false)
+  // A fresh panel each time Change opens it, showing what's saved rather than
+  // edits left unsaved the last time.
+  const [panelKey, setPanelKey] = useState(0)
   const resumeHeading = useRef<HTMLHeadingElement>(null)
   const wasReady = useRef<boolean | null>(null)
 
@@ -44,9 +47,21 @@ export default function Welcome() {
     if (ready === false) setEditing(false) // signed out: the full panel shows anyway
     // Step 1 just finished on this page: take the user to the step it unlocked.
     if (ready && wasReady.current === false) {
-      const still = matchMedia('(prefers-reduced-motion: reduce)').matches
-      resumeHeading.current?.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' })
       resumeHeading.current?.focus({ preventScroll: true })
+      // Scroll once the steps have finished growing and shrinking, or the
+      // target is measured where the heading was, not where it ends up.
+      const scroll = () => resumeHeading.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        resumeHeading.current?.scrollIntoView({ block: 'start' })
+      } else {
+        let done = false
+        const once = () => { if (!done) { done = true; scroll() } }
+        const onEnd = (e: TransitionEvent) => { if (e.propertyName === 'grid-template-rows') once() }
+        document.addEventListener('transitionend', onEnd)
+        const timer = setTimeout(once, 600) // in case no transition ends
+        wasReady.current = ready
+        return () => { document.removeEventListener('transitionend', onEnd); clearTimeout(timer) }
+      }
     }
     wasReady.current = ready
   }, [ready])
@@ -66,11 +81,11 @@ export default function Welcome() {
 
       {ready !== null && <ol className="welcome-steps">
         <Step n={1} state={accountState} title="Create a free account, or add your own API key"
-          action={ready ? { label: editing ? 'Done' : 'Change', ariaLabel: editing ? undefined : 'Change your account or API key', expanded: editing, onClick: () => setEditing(!editing) } : undefined}>
+          action={ready ? { label: editing ? 'Done' : 'Change', ariaLabel: editing ? undefined : 'Change your account or API key', expanded: editing, onClick: () => { if (!editing) setPanelKey((k) => k + 1); setEditing(!editing) } } : undefined}>
           <Reveal open={!!ready && !editing}><p className="welcome-summary">{summary}</p></Reveal>
           <Reveal open={!ready || editing}>
             <div className="welcome-card">
-              <AccountPanel initialView="signup" links={false} />
+              <AccountPanel key={panelKey} initialView="signup" links={false} />
             </div>
           </Reveal>
         </Step>

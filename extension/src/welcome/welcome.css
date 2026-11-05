@@ -22,7 +22,7 @@ html, body { width: auto; height: auto; overflow: auto; }
 
 .welcome-step-body { min-width: 0; }
 .welcome-step-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 32px; margin-bottom: 8px; }
-.welcome-step-head h2 { font-size: 15px; font-weight: 700; }
+.welcome-step-head h2 { font-size: 15px; font-weight: 700; scroll-margin-top: 24px; }
 /* Focused by script when step 1 finishes, so screen readers land on step 2; not a control, so no ring. */
 .welcome-step-head h2:focus, .welcome-step-head h2:focus-visible { outline: none; }
 .welcome-step-waiting h2 { color: var(--text-3); }
@@ -44,5 +44,7 @@ html, body { width: auto; height: auto; overflow: auto; }
 }
 .welcome-reveal[data-open="true"] { grid-template-rows: 1fr; opacity: 1; }
 /* clip, not hidden: the margin keeps focus rings at the edge visible. */
-.welcome-reveal > div { min-height: 0; overflow: clip; overflow-clip-margin: 4px; }
+/* min-width 0: a grid item won't shrink below its content, so a long resume
+   filename would widen the step instead of ending in an ellipsis. */
+.welcome-reveal > div { min-height: 0; min-width: 0; overflow: clip; overflow-clip-margin: 4px; }
 @media (prefers-reduced-motion: reduce) { .welcome-reveal { transition: none; } }
