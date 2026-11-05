@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { ensureValidSession } from '../lib/auth'
 import { getResume, getSession, getSettings, resolveMode, setupState, watchSetup } from '../lib/storage'
 import AccountPanel from '../popup/components/AccountPanel'
 import ResumePage from '../popup/pages/ResumePage'
@@ -38,9 +37,6 @@ export default function Welcome() {
         : `Using your ${settings?.provider === 'openai' ? 'OpenAI' : 'Claude'} API key`)
     }
     void refresh()
-    // AccountPanel used to do this on load; collapsed, it isn't mounted. A
-    // refreshed or cleared session lands through the watcher.
-    void ensureValidSession()
     return watchSetup(() => void refresh())
   }, [])
 
@@ -71,17 +67,17 @@ export default function Welcome() {
       {ready !== null && <ol className="welcome-steps">
         <Step n={1} state={accountState} title="Create a free account, or add your own API key"
           action={ready ? { label: editing ? 'Done' : 'Change', ariaLabel: editing ? undefined : 'Change your account or API key', expanded: editing, onClick: () => setEditing(!editing) } : undefined}>
-          {ready && !editing
-            ? <p className="welcome-summary">{summary}</p>
-            : (
-              <div className="welcome-card">
-                <AccountPanel initialView="signup" links={false} />
-              </div>
-            )}
+          <Reveal open={!!ready && !editing}><p className="welcome-summary">{summary}</p></Reveal>
+          <Reveal open={!ready || editing}>
+            <div className="welcome-card">
+              <AccountPanel initialView="signup" links={false} />
+            </div>
+          </Reveal>
         </Step>
 
         <Step n={2} state={resumeState} title="Add your resume" headingRef={resumeHeading}>
-          {ready ? <ResumePage hideHeader /> : <p className="hint">Finish step 1 first.</p>}
+          <Reveal open={!ready}><p className="hint">Finish step 1 first.</p></Reveal>
+          <Reveal open={!!ready}><ResumePage hideHeader /></Reveal>
         </Step>
 
         <Step n={3} state={postingState} title="Open a job posting">
@@ -92,7 +88,7 @@ export default function Welcome() {
           {/* Only once set up: earlier, they'd invite skipping steps 1 and 2. The
               other sites are hiring systems on each company's site, with no
               job search to link to. */}
-          {postingState === 'current' && (
+          <Reveal open={postingState === 'current'}>
             <div className="welcome-links">
               {JOB_SITES.map(({ name, url, icon }) => (
                 <a key={name} className="btn btn-secondary" href={url} target="_blank" rel="noreferrer">
@@ -101,7 +97,7 @@ export default function Welcome() {
                 </a>
               ))}
             </div>
-          )}
+          </Reveal>
         </Step>
       </ol>}
     </main>
@@ -135,5 +131,17 @@ function Step({ n, state, title, action, headingRef, children }: {
         {children}
       </div>
     </li>
+  )
+}
+
+// Grows open and shrinks shut instead of snapping. It stays mounted, so a
+// half-filled form keeps its state; shut, it's inert, so nothing in it can be
+// clicked, focused or read.
+function Reveal({ open, children }: { open: boolean; children: ReactNode }) {
+  // React 18 doesn't type inert; the empty string turns it on.
+  return (
+    <div className="welcome-reveal" data-open={open} {...(!open && { inert: '' })}>
+      <div>{children}</div>
+    </div>
   )
 }
