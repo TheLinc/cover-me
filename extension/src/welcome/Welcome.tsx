@@ -5,7 +5,7 @@ import ResumePage from '../popup/pages/ResumePage'
 import logoIcon from '../public/icon/48.png'
 
 export default function Welcome() {
-  // The resume waits for step 1, so it goes into the account it belongs to.
+  // The resume waits for step 1: an account to sync it to, or a key to use it with.
   const [ready, setReady] = useState(false)
   useEffect(() => {
     isAccountReady().then(setReady)
@@ -25,7 +25,12 @@ export default function Welcome() {
         <AccountPanel initialView="signup" links={false} />
       </section>
 
-      <section className="welcome-step">
+      {/* Locked, a file dropped here would otherwise make Chrome open it in place of this tab. */}
+      <section
+        className="welcome-step"
+        onDragOver={ready ? undefined : (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'none' }}
+        onDrop={ready ? undefined : (e) => e.preventDefault()}
+      >
         <h2>2. Add your resume</h2>
         {!ready && <p className="hint welcome-locked-hint">Finish step 1 first.</p>}
         {/* React 18 doesn't type inert; the empty string turns it on. */}
