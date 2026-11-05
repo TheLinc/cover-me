@@ -23,7 +23,8 @@ jobs:
     steps:
       - run: |
           body=$(curl -sS --fail-with-body --max-time 170 -X POST \
-            "$SUPABASE_URL/functions/v1/nudge" -H "Authorization: Bearer $NUDGE_SECRET")
+            "$SUPABASE_URL/functions/v1/nudge" -H "Authorization: Bearer $NUDGE_SECRET") \
+            || { echo "$body"; exit 1; }
           echo "$body"
           echo "$body" | jq -e '.failed == 0' > /dev/null
         env:

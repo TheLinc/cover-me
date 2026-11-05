@@ -197,7 +197,7 @@ export const mockStripe = {
 }
 
 export interface SentEmail {
-  headers: { authorization?: string; 'idempotency-key'?: string }
+  authorization?: string
   body: { from: string; to: string[]; reply_to: string; subject: string; text: string; headers: Record<string, string> }
 }
 

@@ -8,6 +8,8 @@ ALTER TABLE public.users ADD COLUMN nudge_sent_at timestamptz;
 -- Who gets it today: created 24 hours to 7 days ago, never generated (only the
 -- generation RPCs write rate_limits), not sent before, and can_email(...,
 -- 'onboarding'), which means a confirmed address that hasn't unsubscribed.
+-- Free accounts only: the email promises "10 free to start", and Pro
+-- (including a gift trial) is a different conversation.
 -- Oldest first; the cap keeps one run inside the Edge Function time limit, and
 -- the rest go the next day.
 CREATE FUNCTION public.nudge_candidates()
@@ -15,7 +17,8 @@ RETURNS TABLE (user_id uuid, email text, has_resume boolean)
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = '' AS $$
   SELECT u.id, a.email, EXISTS (SELECT 1 FROM public.resumes r WHERE r.user_id = u.id)
   FROM public.users u JOIN auth.users a ON a.id = u.id
-  WHERE u.created_at <= now() - interval '24 hours'
+  WHERE u.tier = 'hosted_free'
+    AND u.created_at <= now() - interval '24 hours'
     AND u.created_at >= now() - interval '7 days'
     AND u.nudge_sent_at IS NULL
     AND a.email IS NOT NULL

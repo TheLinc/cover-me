@@ -110,7 +110,7 @@ const stripeCalls: StripeCall[] = []
 // make the next POST /v1/customers or /v1/subscriptions fail once.
 type MockSubscription = string | { id?: string; status: string; trial_end?: number; metadata?: Record<string, string> }
 type StripeFailure = { status: number; code: string } | null
-type SentEmail = { headers: Record<string, string | undefined>; body: Record<string, unknown> }
+type SentEmail = { authorization: string | undefined; body: Record<string, unknown> }
 const sentEmails: SentEmail[] = []
 let emailFailNext: number | null = null
 
@@ -328,8 +328,7 @@ export function startMockAnthropic(port: number): Promise<Server> {
         res.writeHead(status, { 'content-type': 'application/json' })
         return res.end(JSON.stringify({ name: 'application_error', message: 'mock failure' }))
       }
-      const h = req.headers
-      sentEmails.push({ headers: { authorization: h.authorization, 'idempotency-key': h['idempotency-key'] as string | undefined }, body })
+      sentEmails.push({ authorization: req.headers.authorization, body })
       res.writeHead(200, { 'content-type': 'application/json' })
       return res.end(JSON.stringify({ id: `email_mock_${sentEmails.length}` }))
     }

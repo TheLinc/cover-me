@@ -83,7 +83,8 @@ const VERSIONS = {
 }
 
 async function send({ user_id: userId, email }: Candidate, { subject, opening }: { subject: string; opening: string }): Promise<boolean> {
-  const text = `${opening}
+  try {
+    const text = `${opening}
 
 Open any job posting on LinkedIn, Indeed, Greenhouse, Lever or Workday, click the Cover Me icon, and press Tailor. It takes about 30 seconds, and you get 10 free to start.
 
@@ -94,7 +95,6 @@ Lincoln
 --
 Don't want emails like this? Unsubscribe: ${await unsubscribeUrl(userId)}
 `
-  try {
     const res = await fetch(`${RESEND_API_BASE}/emails`, {
       method: 'POST',
       headers: {
@@ -109,11 +109,13 @@ Don't want emails like this? Unsubscribe: ${await unsubscribeUrl(userId)}
         text,
         headers: await unsubscribeHeaders(userId),
       }),
+      // One stuck send mustn't run the whole batch into the function time limit.
+      signal: AbortSignal.timeout(15_000),
     })
     if (!res.ok) console.error(`[nudge] Resend answered ${res.status}`)
     return res.ok
   } catch (err) {
-    console.error('[nudge] Resend unreachable:', err instanceof Error ? err.message : 'unknown error')
+    console.error('[nudge] send failed:', err instanceof Error ? err.message : 'unknown error')
     return false
   }
 }

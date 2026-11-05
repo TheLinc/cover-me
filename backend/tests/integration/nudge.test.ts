@@ -62,7 +62,7 @@ describe('nudge', () => {
 
     const [email, ...rest] = await sentTo(user.email)
     expect(rest).toEqual([])
-    expect(email.headers.authorization).toBe('Bearer re_mock')
+    expect(email.authorization).toBe('Bearer re_mock')
     expect(email.body).toMatchObject({
       from: 'Lincoln from Cover Me <lincoln@cover-me.dev>',
       reply_to: 'lincoln@cover-me.dev',
@@ -105,13 +105,15 @@ describe('nudge', () => {
     expect(data!.email_unsubscribed_at).not.toBeNull()
   })
 
-  it('skips accounts too new, too old, unconfirmed, that generated, or unsubscribed', async () => {
+  it('skips accounts too new, too old, unconfirmed, on Pro, that generated, or unsubscribed', async () => {
     const tooNew = await signedUpTwoDaysAgo()
     await setAge(tooNew.id, 23 * HOUR)
     const tooOld = await signedUpTwoDaysAgo()
     await setAge(tooOld.id, 8 * 24 * HOUR)
     const generated = await signedUpTwoDaysAgo()
     await setUsage(generated.id, [{ daysAgo: 1, count: 1 }])
+    const pro = await signedUpTwoDaysAgo()
+    await admin.from('users').update({ tier: 'hosted_pro' }).eq('id', pro.id)
     const unsubscribed = await signedUpTwoDaysAgo()
     await admin.from('users').update({ email_unsubscribed_at: new Date().toISOString() }).eq('id', unsubscribed.id)
 
@@ -123,7 +125,7 @@ describe('nudge', () => {
     const control = await signedUpTwoDaysAgo()
     await runNudge()
     expect(await sentTo(control.email)).toHaveLength(1)
-    for (const email of [tooNew.email, tooOld.email, generated.email, unsubscribed.email, unconfirmedEmail]) {
+    for (const email of [tooNew.email, tooOld.email, pro.email, generated.email, unsubscribed.email, unconfirmedEmail]) {
       expect(await sentTo(email), email).toEqual([])
     }
   })
