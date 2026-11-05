@@ -15,7 +15,7 @@ export default async function DashboardPage() {
 
   const { data: userData } = await supabase
     .from('users')
-    .select('tier, created_at')
+    .select('tier, created_at, product_updates')
     .eq('id', user.id)
     .single()
 
@@ -44,6 +44,7 @@ export default async function DashboardPage() {
       tier={userData?.tier ?? 'hosted_free'}
       memberSince={userData?.created_at ?? user.created_at}
       allowance={(allowance as Allowance | null) ?? null}
+      productUpdates={userData?.product_updates ?? false}
       history={history}
     />
     <Toaster />

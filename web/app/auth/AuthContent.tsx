@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase";
 import { afterOAuth, hashReturn, oauthCancelled, oauthErrorDescription, oauthRedirectUrl, safeNext } from "@/lib/auth-redirect";
+import { saveProductUpdates } from "@/lib/email-preferences";
 import { Button } from "@/components/ui/button";
 import { GoogleIcon } from "@/components/ui/google-icon";
 import { Input } from "@/components/ui/input";
@@ -52,6 +53,8 @@ function AuthForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  // The signup box (#114): unticked until the user ticks it.
+  const [productUpdates, setProductUpdates] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -86,6 +89,8 @@ function AuthForm() {
     // Read before replaceState below strips the query and the hash.
     const cancelledOAuth = isOAuth && oauthCancelled(window.location.search, window.location.hash);
     const oauthReason = isOAuth ? oauthErrorDescription(window.location.search, window.location.hash) : "";
+    // The signup box, ticked before Google (oauthRedirectUrl).
+    const oauthUpdates = isOAuth && searchParams.get("updates") === "1";
     const isConfirmation = searchParams.has("code") && !isOAuth;
     if (isConfirmation || isOAuth) {
       // Drop the code and any error, but keep where to go after signing in
@@ -122,8 +127,10 @@ function AuthForm() {
       window.history.replaceState(null, "", window.location.pathname);
     }
 
-    function openDashboard() {
+    async function openDashboard() {
       setWaiting("opening");
+      // A failed save leaves the user opted out; the dashboard toggle can fix it.
+      if (oauthUpdates) await saveProductUpdates(true, "signup").catch(() => {});
       window.location.href = afterOAuth(searchParams.get("plan"), searchParams.get("next"));
     }
 
@@ -187,7 +194,9 @@ function AuthForm() {
         const { error } = await supabase.auth.signUp({
             email,
             password,
-            options: { emailRedirectTo: authRedirectUrl() },
+            // The signup trigger records the box (migration 021), wherever
+            // the confirmation link is opened.
+            options: { emailRedirectTo: authRedirectUrl(), ...(productUpdates ? { data: { product_updates: true } } : {}) },
           });
         if (error) throw error;
         if (plan === "pro") {
@@ -207,7 +216,7 @@ function AuthForm() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: oauthRedirectUrl(process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin, plan, params.get("next")),
+        redirectTo: oauthRedirectUrl(process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin, plan, params.get("next"), view === "signup" && productUpdates),
         // Show Google's account chooser. Without it Google signs straight back
         // in to the last account and the user can't pick another.
         queryParams: { prompt: "select_account" },
@@ -748,6 +757,18 @@ function AuthForm() {
                     </div>
                   </div>
                 </div>
+
+                {view === "signup" && (
+                  <label className="flex items-center gap-2 text-[13px] text-muted-foreground mb-[18px] cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={productUpdates}
+                      onChange={(e) => setProductUpdates(e.target.checked)}
+                      className="size-3.5 accent-brand-strong cursor-pointer"
+                    />
+                    Email me about new features (a few times a year)
+                  </label>
+                )}
 
                 {error && (
                   <p className="text-[13px] text-destructive bg-destructive/10 border border-destructive/20 rounded-[var(--r)] px-[13px] py-2.5 mb-3.5 leading-[1.5]">

@@ -1,9 +1,10 @@
 // Google sign-in leaves the site and comes back to /auth with ?code=…. The
 // oauth flag tells /auth this is a sign-in (go to the dashboard), not an
-// email confirmation (show "confirmed").
-export function oauthRedirectUrl(site: string, plan: string | null, next: string | null = null): string {
+// email confirmation (show "confirmed"). updates: the product-updates box was
+// ticked on the signup view, saved once the session exists (#114).
+export function oauthRedirectUrl(site: string, plan: string | null, next: string | null = null, updates = false): string {
   const back = safeNext(next)
-  return `${site}/auth?oauth=1${plan === 'pro' ? '&plan=pro' : ''}${back ? `&next=${encodeURIComponent(back)}` : ''}`
+  return `${site}/auth?oauth=1${plan === 'pro' ? '&plan=pro' : ''}${back ? `&next=${encodeURIComponent(back)}` : ''}${updates ? '&updates=1' : ''}`
 }
 
 // Where to land after signing in when a dashboard page sent the user here
