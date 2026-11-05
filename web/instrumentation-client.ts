@@ -1,5 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
-import { sentryEnvironment } from "@/lib/sentry-env";
+import { dropSurveyAccountId, sentryEnvironment } from "@/lib/sentry-env";
 
 const environment = sentryEnvironment();
 
@@ -31,8 +31,9 @@ Sentry.init({
       event.user = { id: event.user.id };
     }
 
-    return event;
+    return dropSurveyAccountId(event);
   },
+  beforeSendTransaction: dropSurveyAccountId,
 
   // Silence noisy browser errors that aren't actionable
   ignoreErrors: [
