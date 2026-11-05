@@ -192,7 +192,7 @@ export default function Editor() {
         <p className="ed-status" aria-live="polite">
           {status === 'saving' ? 'Saving…'
             : status === 'saved' ? 'Saved'
-            : status === 'local' ? "Saved in this browser, but couldn't reach your account. Press Done to try again, or close the tab to keep the edit here only."
+            : status === 'local' ? "Couldn't reach your account, so it still has the version from before this edit. Press Done to try again."
             : ''}
         </p>
         <button className="btn btn-secondary btn-compact" onClick={() => downloadTailoredResumePdf(current, opened.jobTitle)}>
