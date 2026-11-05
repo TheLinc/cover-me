@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { clearSession, isAccountReady, resolveMode, takeGoogleSignInError, watchGoogleSignInError, watchResume, watchSession } from './storage'
+import { clearSession, resolveMode, setupState, takeGoogleSignInError, watchGoogleSignInError, watchResume, watchSession } from './storage'
+import type { AuthSession, Settings } from '../types'
 
 // Signing out stamps an untagged resume with the account that was signed in,
 // so the next account to sign in on this browser can't claim it.
@@ -115,25 +116,30 @@ describe('resolveMode', () => {
   })
 })
 
-// The welcome tab unlocks the resume step on this.
-describe('isAccountReady', () => {
-  function fakeLocal(data: Record<string, unknown>) {
-    vi.stubGlobal('chrome', { storage: { local: { get: async (k: string) => (k in data ? { [k]: data[k] } : {}) } } })
-  }
-  afterEach(() => { vi.unstubAllGlobals() })
+// The welcome tab's stepper reads this.
+describe('setupState', () => {
+  const session = { user: { id: 'a' } } as AuthSession
+  const hosted = { provider: 'claude', apiKey: '', mode: 'hosted' } as const
+  const byok = (apiKey: string) => ({ provider: 'claude', apiKey, mode: 'byok' } as const)
+  const resume = (signedOutUpload?: boolean) => ({ text: 't', filename: 'f', updatedAt: '', ...(signedOutUpload ? { signedOutUpload } : {}) })
 
-  test('fresh install: not ready', async () => {
-    fakeLocal({})
-    expect(await isAccountReady()).toBe(false)
+  test('fresh install: nothing done', () => {
+    expect(setupState(null, null, null)).toEqual({ ready: false, hasResume: false })
   })
-  test('hosted needs a session', async () => {
-    fakeLocal({ settings: { provider: 'claude', apiKey: '', mode: 'hosted' }, session: { user: { id: 'a' } } })
-    expect(await isAccountReady()).toBe(true)
+  test('the account needs a session', () => {
+    expect(setupState(hosted, null, null).ready).toBe(false)
+    expect(setupState(hosted, session, null).ready).toBe(true)
   })
-  test('BYOK needs a saved key, not just the mode', async () => {
-    fakeLocal({ settings: { provider: 'claude', apiKey: '', mode: 'byok' }, session: { user: { id: 'a' } } })
-    expect(await isAccountReady()).toBe(false)
-    fakeLocal({ settings: { provider: 'claude', apiKey: 'enc', mode: 'byok' } })
-    expect(await isAccountReady()).toBe(true)
+  test('an API key counts once saved, not on switching mode', () => {
+    expect(setupState(byok(''), session, null).ready).toBe(false)
+    expect(setupState(byok('enc'), null, null).ready).toBe(true)
+    expect(setupState({ provider: 'claude', apiKey: 'enc' } as Settings, null, null).ready).toBe(true) // saved before modes existed
+  })
+  test("a resume added while signed out doesn't count for the signed-in account", () => {
+    expect(setupState(hosted, session, resume()).hasResume).toBe(true)
+    expect(setupState(hosted, session, resume(true)).hasResume).toBe(false)
+  })
+  test('with an API key, any saved resume counts', () => {
+    expect(setupState(byok('enc'), null, resume(true)).hasResume).toBe(true)
   })
 })

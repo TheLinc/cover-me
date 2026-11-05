@@ -22,17 +22,22 @@ export async function getMode(): Promise<AppMode> {
   return resolveMode(await getSettings())
 }
 
-// Ready to generate: signed in to the account, or an API key saved. The welcome
-// tab keeps the resume step locked until then.
-export async function isAccountReady(): Promise<boolean> {
-  const [settings, session] = await Promise.all([getSettings(), getSession()])
-  return resolveMode(settings) === 'hosted' ? !!session : !!settings?.apiKey
+// The welcome tab's progress. Step 1 is done once signed in to the account or
+// an API key is saved. Step 2 is done once there's a resume to use; a copy
+// added while signed out isn't in the signed-in account, so it doesn't count there.
+export function setupState(settings: Settings | null, session: AuthSession | null, resume: ResumeData | null): { ready: boolean; hasResume: boolean } {
+  const account = resolveMode(settings) === 'hosted'
+  return {
+    ready: account ? !!session : !!settings?.apiKey,
+    hasResume: !!resume?.text && !(account && session && resume.signedOutUpload),
+  }
 }
 
-// Calls back with isAccountReady when a sign-in, sign-out or key save lands.
-export function watchAccountReady(onChange: (ready: boolean) => void): () => void {
+// Calls back when anything setupState reads changes: a sign-in, sign-out,
+// key save, mode switch or resume upload.
+export function watchSetup(onChange: () => void): () => void {
   const listener = (changes: Record<string, chrome.storage.StorageChange>, area: string) => {
-    if (area === 'local' && ('settings' in changes || 'session' in changes)) void isAccountReady().then(onChange)
+    if (area === 'local' && ['settings', 'session', 'resume'].some((k) => k in changes)) onChange()
   }
   chrome.storage.onChanged.addListener(listener)
   return () => chrome.storage.onChanged.removeListener(listener)
