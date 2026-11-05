@@ -4,19 +4,24 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { LocalDate } from '@/app/dashboard/LocalDate'
 
-export const metadata: Metadata = {
-  title: 'Payment received',
-  robots: { index: false },
+type Props = { searchParams: Promise<{ first?: string }> }
+
+// ?first=<unix seconds> is an upgrade from a gift trial (#112): nothing is
+// charged today, and the first payment is then.
+async function firstPaymentDate({ searchParams }: Props): Promise<string | null> {
+  const { first } = await searchParams
+  return first && /^\d{9,11}$/.test(first) ? new Date(Number(first) * 1000).toISOString() : null
+}
+
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  return { title: (await firstPaymentDate(props)) ? "You're on Pro" : 'Payment received', robots: { index: false } }
 }
 
 // Stripe Checkout's success_url. Needs no sign-in: the extension picks up the
 // new tier from the server on its next request. Stripe's webhook can land a
 // few seconds after this page, so the copy doesn't promise Pro is already on.
-// ?first=<unix seconds> is an upgrade from a gift trial (#112): nothing is
-// charged today, and the first payment is then.
-export default async function UpgradedPage({ searchParams }: { searchParams: Promise<{ first?: string }> }) {
-  const { first } = await searchParams
-  const firstPayment = first && /^\d{9,11}$/.test(first) ? new Date(Number(first) * 1000).toISOString() : null
+export default async function UpgradedPage(props: Props) {
+  const firstPayment = await firstPaymentDate(props)
 
   return (
     <div className="min-h-screen bg-background text-foreground">
