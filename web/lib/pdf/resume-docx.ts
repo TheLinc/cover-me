@@ -7,7 +7,7 @@
 // Times New Roman, which every machine has. Load it lazily: docx is big.
 import {
   AlignmentType, BorderStyle, Document, HeadingLevel, LevelFormat, LineRuleType,
-  Packer, Paragraph, TabStopType, TextRun,
+  Packer, Paragraph, Tab, TabStopType, TextRun,
 } from 'docx'
 import { resumeFileName } from './file-name'
 import type { TailoredResume } from './types'
@@ -28,7 +28,7 @@ function twoCol(left: string, right: string, style: 'bold' | 'italic', opts: { b
     keepNext: opts.keepNext,
     children: [
       new TextRun({ text: left || '', size: 21, bold: style === 'bold', italics: style === 'italic' }),
-      new TextRun({ text: `\t${right || ''}`, size: 21 }),
+      new TextRun({ children: [new Tab(), right || ''], size: 21 }),
     ],
   })
 }
