@@ -63,8 +63,9 @@ export function UninstallSurvey() {
 
   if (sent) {
     return (
-      <div role="status" className="text-center">
-        <h1 className="text-[34px] font-semibold leading-tight tracking-[-0.03em]">Thanks for telling us</h1>
+      <div className="text-center">
+        {/* Focused on mount: the form, and the Send button that had focus, are gone */}
+        <h1 ref={(el) => el?.focus()} tabIndex={-1} className="text-[34px] font-semibold leading-tight tracking-[-0.03em] outline-none">Thanks for telling us</h1>
         <p className="mt-6">
           <a href={CHROME_STORE_URL} className="text-brand-strong underline-offset-4 hover:underline">
             Changed your mind? Reinstall
