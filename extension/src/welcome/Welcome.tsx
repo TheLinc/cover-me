@@ -22,8 +22,8 @@ export default function Welcome() {
   const [summary, setSummary] = useState('')
   // Step 1 reopened with "Change" after it was done.
   const [editing, setEditing] = useState(false)
-  // A fresh panel each time Change opens it, showing what's saved rather than
-  // edits left unsaved the last time.
+  // Done swaps in a fresh panel, which loads while step 1 is shut, so the next
+  // Change shows what's saved rather than edits left unsaved.
   const [panelKey, setPanelKey] = useState(0)
   const resumeHeading = useRef<HTMLHeadingElement>(null)
   const wasReady = useRef<boolean | null>(null)
@@ -81,7 +81,7 @@ export default function Welcome() {
 
       {ready !== null && <ol className="welcome-steps">
         <Step n={1} state={accountState} title="Create a free account, or add your own API key"
-          action={ready ? { label: editing ? 'Done' : 'Change', ariaLabel: editing ? undefined : 'Change your account or API key', expanded: editing, onClick: () => { if (!editing) setPanelKey((k) => k + 1); setEditing(!editing) } } : undefined}>
+          action={ready ? { label: editing ? 'Done' : 'Change', ariaLabel: editing ? undefined : 'Change your account or API key', expanded: editing, onClick: () => { if (editing) setPanelKey((k) => k + 1); setEditing(!editing) } } : undefined}>
           <Reveal open={!!ready && !editing}><p className="welcome-summary">{summary}</p></Reveal>
           <Reveal open={!ready || editing}>
             <div className="welcome-card">
