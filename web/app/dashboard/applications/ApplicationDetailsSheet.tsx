@@ -153,7 +153,9 @@ export function ApplicationDetailsSheet({ app, pro, open, onOpenChange, onClosed
             <section aria-label="ATS result" className={`${TILE} flex items-center gap-4 py-4`}>
               <AtsRing score={ats.atsScore} size={60} />
               <div className="flex min-w-0 flex-col gap-1.5">
-                <p className="text-[13px] text-ink-2">ATS match for the {resumes > 1 ? 'newest ' : ''}tailored resume</p>
+                <p className="text-[13px] text-ink-2">
+                  ATS match for the {resumes > 1 ? 'newest ' : ''}tailored resume{ats.editedAt ? ', scored before your edits' : ''}
+                </p>
                 {ats.atsGaps && ats.atsGaps.length > 0 && (
                   <div className="flex flex-wrap items-center gap-1.5">
                     <span className="mr-0.5 text-[12.5px] text-subtle">Missing</span>

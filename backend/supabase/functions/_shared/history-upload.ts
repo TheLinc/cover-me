@@ -20,12 +20,12 @@ export const MAX_UPLOAD_BYTES = 1_000_000
 const MAX_LETTERS = 50
 const MAX_TAILORED = 20
 const MAX_LETTER_CHARS = 20_000
-const MAX_RESUME_JSON = 50_000
+export const MAX_RESUME_JSON = 50_000
 const MAX_JOB_FIELD = 8_192 // the extension trims to this; page URLs can carry long tracking parameters
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export const isUuid = (v: unknown): v is string => typeof v === 'string' && UUID.test(v)
-const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
+export const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
 
 function parseJob(v: unknown): UploadJob | null {
   if (v === undefined || v === null) return {}
@@ -77,12 +77,16 @@ export function parseUpload(body: unknown, now = Date.now()): Upload | { error: 
 }
 
 // The ATS columns tailor stores, read from an uploaded resume. Anything that
-// isn't a 0-100 score or a list of strings is left empty.
-export function atsColumns(resume: Record<string, unknown>): { ats_score: number | null; ats_gaps: string[] | null } {
+// isn't a 0-100 score, a list of strings or a readable date is left empty.
+// editedAt is set by the extension's editor (#118) on a resume edited before
+// it reached the account.
+export function atsColumns(resume: Record<string, unknown>): { ats_score: number | null; ats_gaps: string[] | null; edited_at: string | null } {
   const score = resume.atsScore
   const gaps = resume.atsGaps
+  const edited = typeof resume.editedAt === 'string' ? Date.parse(resume.editedAt) : NaN
   return {
     ats_score: typeof score === 'number' && score >= 0 && score <= 100 ? Math.round(score) : null,
     ats_gaps: Array.isArray(gaps) && gaps.every((g) => typeof g === 'string') ? gaps as string[] : null,
+    edited_at: Number.isNaN(edited) ? null : new Date(Math.min(edited, Date.now())).toISOString(),
   }
 }
