@@ -1,16 +1,28 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { LocalDate } from '@/app/dashboard/LocalDate'
 
-export const metadata: Metadata = {
-  title: 'Payment received',
-  robots: { index: false },
+type Props = { searchParams: Promise<{ first?: string }> }
+
+// ?first=<unix seconds> is an upgrade from a gift trial (#112): nothing is
+// charged today, and the first payment is then.
+async function firstPaymentDate({ searchParams }: Props): Promise<string | null> {
+  const { first } = await searchParams
+  return first && /^\d{9,11}$/.test(first) ? new Date(Number(first) * 1000).toISOString() : null
+}
+
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  return { title: (await firstPaymentDate(props)) ? "You're on Pro" : 'Payment received', robots: { index: false } }
 }
 
 // Stripe Checkout's success_url. Needs no sign-in: the extension picks up the
 // new tier from the server on its next request. Stripe's webhook can land a
 // few seconds after this page, so the copy doesn't promise Pro is already on.
-export default function UpgradedPage() {
+export default async function UpgradedPage(props: Props) {
+  const firstPayment = await firstPaymentDate(props)
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-md">
@@ -23,12 +35,27 @@ export default function UpgradedPage() {
       </header>
 
       <main className="max-w-2xl mx-auto px-6 py-24 text-center">
-        <h1 className="text-[40px] font-bold leading-[1.05] tracking-[-1.2px]">Payment received</h1>
-        <p className="mt-4 text-muted-foreground">
-          Pro turns on as soon as Stripe confirms the payment, usually within a minute. Then go back to the job
-          posting and open Cover Me: your next letter or resume runs with up to 25 generations a day.
-        </p>
-        <p className="mt-2 text-muted-foreground">You can close this tab.</p>
+        {firstPayment ? (
+          <>
+            <h1 className="text-[40px] font-bold leading-[1.05] tracking-[-1.2px]">You&apos;re on Pro</h1>
+            <p className="mt-4 text-muted-foreground">
+              Your trial carries on until it ends, and nothing is charged before then. Your first payment
+              is on <LocalDate iso={firstPayment} options={{ month: 'long', day: 'numeric', year: 'numeric' }} />.
+            </p>
+          </>
+        ) : (
+          <>
+            <h1 className="text-[40px] font-bold leading-[1.05] tracking-[-1.2px]">Payment received</h1>
+            <p className="mt-4 text-muted-foreground">
+              Pro turns on as soon as Stripe confirms the payment, usually within a minute. Then go back to the job
+              posting and open Cover Me: your next letter or resume runs with up to 25 generations a day.
+            </p>
+          </>
+        )}
+        <p className="mt-2 text-muted-foreground">Upgraded from the extension? You can close this tab.</p>
+        <Button asChild size="lg" variant="outline" className="mt-8">
+          <Link href="/dashboard">Go to dashboard</Link>
+        </Button>
       </main>
     </div>
   )

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
-import { handleStripeEvent } from '@/lib/stripe-tier'
+import { handleStripeEvent, isGiftTrial } from '@/lib/stripe-tier'
 
 export async function POST(req: NextRequest) {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
@@ -38,10 +38,20 @@ export async function POST(req: NextRequest) {
       const { error } = await adminSupabase.from('users').update({ stripe_customer_id: customerId }).eq('id', userId)
       return { error: error?.message ?? null }
     },
+    cancelGiftTrial: async (id) => {
+      try {
+        const sub = await stripe.subscriptions.retrieve(id)
+        // Only ever a gift trial. One that already ended (a retried event) is left alone.
+        if (isGiftTrial(sub)) await stripe.subscriptions.cancel(id)
+        return { error: null }
+      } catch (err) {
+        return { error: err instanceof Error ? err.message : 'cancel failed' }
+      }
+    },
   })
 
   if (!ok) {
-    console.error('[stripe-webhook] DB update failed for event', event.id, event.type)
+    console.error('[stripe-webhook] Update failed for event', event.id, event.type)
     return NextResponse.json({ error: 'Update failed' }, { status: 500 })
   }
   return NextResponse.json({ received: true })

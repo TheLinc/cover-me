@@ -13,6 +13,7 @@ const MARKETING_LINKS: NavLink[] = [
   { href: '/#ats-score', label: 'ATS score' },
   { href: '/#pricing', label: 'Pricing' },
   { href: '/guides', label: 'Guides' },
+  { href: '/roadmap', label: 'Roadmap' },
   { href: '/about', label: 'About' },
 ]
 
