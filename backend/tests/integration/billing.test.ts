@@ -141,6 +141,8 @@ describe('billing', () => {
       const checkout = (await mockStripe.calls()).find((c) => c.path === '/v1/checkout/sessions')
       expect(checkout?.params['subscription_data[trial_end]']).toBe(String(trialEnd))
       expect(checkout?.params['metadata[gift_trial_subscription]']).toBe('sub_gift')
+      // Nothing is charged today, so the success page names the first payment instead.
+      expect(checkout?.params.success_url).toBe(`http://localhost:3000/upgraded?first=${trialEnd}`)
     })
 
     it('starts billing now when less than two trial days remain', async () => {
@@ -153,6 +155,7 @@ describe('billing', () => {
       const checkout = (await mockStripe.calls()).find((c) => c.path === '/v1/checkout/sessions')
       expect(checkout?.params['subscription_data[trial_end]']).toBeUndefined()
       expect(checkout?.params['metadata[gift_trial_subscription]']).toBe('sub_gift')
+      expect(checkout?.params.success_url).toBe('http://localhost:3000/upgraded')
     })
 
     it('still refuses a Pro user whose subscription is a paid one', async () => {

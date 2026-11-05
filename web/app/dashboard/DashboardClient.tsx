@@ -3,7 +3,8 @@
 import { useState, type ReactNode } from "react";
 import { openBilling } from "@/lib/billing";
 import { describeAllowance, type Allowance } from "@/lib/limits";
-import { LocalDate } from "./LocalDate";
+import { DaysLeft, LocalDate } from "./LocalDate";
+import type { TrialState } from "@/lib/stripe-tier";
 import { CHROME_STORE_URL, cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -23,8 +24,8 @@ interface Props {
   email: string;
   avatar: string | null;
   tier: string;
-  // Set only during a gift trial: the user is Pro but still sees the upgrade buttons.
-  giftTrialEnd: string | null;
+  // A gift trial keeps the upgrade buttons; a plan bought during one shows its first payment.
+  trial: TrialState;
   memberSince: string;
   allowance: Allowance | null;
   // Recent applications, rendered by the server page and streamed in.
@@ -35,7 +36,7 @@ export default function DashboardClient({
   email,
   avatar,
   tier,
-  giftTrialEnd,
+  trial: { giftTrialEnd, firstPayment },
   memberSince,
   allowance,
   history,
@@ -152,6 +153,11 @@ export default function DashboardClient({
                   Pro <StarIcon size={16} weight="fill" className="text-brand-strong" aria-hidden />
                 </p>
                 <p className="text-[13.5px] text-ink-2">{proDaily} generations a day. Your letters and resumes saved here, on every device.</p>
+                {firstPayment && (
+                  <p className="text-[13.5px] text-ink-2">
+                    First payment <LocalDate iso={firstPayment.date} options={{ month: "long", day: "numeric" }} />: {firstPayment.price}.
+                  </p>
+                )}
                 <Button variant="outline" size="sm" className="mt-1 rounded-full" onClick={handleBillingPortal} disabled={billingLoading}>
                   {billingLoading
                     ? <><Spinner className="size-3.5" />Loading</>
@@ -162,14 +168,23 @@ export default function DashboardClient({
               </div>
             ) : (
               <div className={cn(TILE, "items-start gap-2.5 border-brand-tint bg-brand-tint")}>
-                <span className="text-[12.5px] font-medium text-brand-ink">
-                  {giftTrialEnd ? <>Pro trial ends <LocalDate iso={giftTrialEnd} options={{ month: "long", day: "numeric" }} /></> : "Go Pro"}
-                </span>
-                <ul className="flex flex-col gap-1 text-[13.5px] text-ink">
-                  {[`${proDaily} generations a day`, 'Your letters and resumes on every device', 'Cancel any time'].map((line) => (
-                    <li key={line} className="flex items-center gap-2"><span aria-hidden className="size-1.5 rounded-full bg-brand" />{line}</li>
-                  ))}
-                </ul>
+                {giftTrialEnd ? (
+                  <>
+                    <span className="text-[12.5px] font-medium text-brand-ink">Pro trial<DaysLeft iso={giftTrialEnd} /></span>
+                    <p className="text-[13.5px] text-ink">
+                      Ends <LocalDate iso={giftTrialEnd} options={{ month: "long", day: "numeric" }} />, then you&apos;re back on the free plan.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-[12.5px] font-medium text-brand-ink">Go Pro</span>
+                    <ul className="flex flex-col gap-1 text-[13.5px] text-ink">
+                      {[`${proDaily} generations a day`, 'Your letters and resumes on every device', 'Cancel any time'].map((line) => (
+                        <li key={line} className="flex items-center gap-2"><span aria-hidden className="size-1.5 rounded-full bg-brand" />{line}</li>
+                      ))}
+                    </ul>
+                  </>
+                )}
                 <div className="mt-1 flex flex-wrap gap-2">
                   <Button size="sm" className="rounded-full px-4" onClick={() => handleUpgrade('monthly')} disabled={upgrading !== null}>
                     {upgrading === 'monthly' ? <><Spinner className="size-3.5" />Redirecting</> : <>Upgrade, $15/mo <ArrowUpRightIcon size={12} aria-hidden /></>}

@@ -226,7 +226,8 @@ Deno.serve(async (req) => {
       'metadata[supabase_user_id]': user.id,
       ...(giftTrial && { 'metadata[gift_trial_subscription]': giftTrial.id }),
       ...(carryTrial && { 'subscription_data[trial_end]': String(giftTrial!.trial_end) }),
-      success_url: `${SITE_URL}/upgraded`,
+      // Nothing is charged today on a carried-over trial: the page names the first payment.
+      success_url: carryTrial ? `${SITE_URL}/upgraded?first=${giftTrial!.trial_end}` : `${SITE_URL}/upgraded`,
       cancel_url: `${SITE_URL}/dashboard`,
     })
     return json({ url: session.url })
