@@ -4,6 +4,11 @@ export type Tier = 'hosted_free' | 'hosted_pro'
 
 const PAID_STATUSES = new Set(['active', 'trialing'])
 
+// A free week from a /redeem link (#112): the billing function tags it.
+export function isGiftTrial(sub: Pick<Stripe.Subscription, 'status' | 'metadata'>): boolean {
+  return sub.status === 'trialing' && sub.metadata?.gift_trial === 'true'
+}
+
 export function tierFromStatuses(statuses: string[]): Tier {
   return statuses.some((s) => PAID_STATUSES.has(s)) ? 'hosted_pro' : 'hosted_free'
 }

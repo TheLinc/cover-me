@@ -225,6 +225,15 @@ This runs `pnpm test` and stops on a failure. It then lists the pending migratio
 
 Use `pnpm run`, not `pnpm deploy`. The second is a built-in pnpm command.
 
+#### Gift trial links
+
+```bash
+pnpm trial-links 5 --note "reddit launch"          # local stack, prints localhost links
+pnpm trial-links 5 --note "reddit launch" --prod   # production, asks you to type "prod"
+```
+
+Each link (`/redeem/<code>`) gives one account a free week of Pro with no card, then drops it back to free unless it upgrades. One gift trial per account. `--days` (default 30) is how long an unused link works. The note is stored in `trial_codes` and sent with PostHog's `trial_redeemed` event. To revoke an unused link, delete its row.
+
 ### Resume quality eval
 
 `extension/eval/` checks the cover letter and resume tailoring prompts against 32 synthetic resumes across 16 industries (business, finance, legal, education, trades, hospitality, retail, logistics, healthcare, engineering, design, government, nonprofit, science, technology, manufacturing). Every job posting asks for something its resume lacks, so the checks can confirm the output never claims it.
@@ -275,6 +284,7 @@ cover-me/
 │   │   ├── support/
 │   │   ├── about/
 │   │   ├── upgraded/        # Stripe Checkout success page
+│   │   ├── redeem/          # Gift trial links: a free week of Pro (pnpm trial-links)
 │   │   └── api/             # stripe-webhook (checkout and portal live in the billing Edge Function)
 │   └── lib/
 └── backend/                 # Supabase Edge Functions + DB migrations
@@ -285,7 +295,7 @@ cover-me/
         │   ├── resume/       # GET / POST / DELETE encrypted resume
         │   ├── letters/      # GET / POST / DELETE cover letter history (Pro)
         │   ├── applications/ # GET / DELETE job applications w/ nested letters + tailored resumes (Pro)
-        │   ├── billing/      # Stripe Checkout and billing portal sessions for the extension and dashboard
+        │   ├── billing/      # Stripe Checkout, billing portal, and gift trial redemption for the extension and dashboard
         │   ├── scrape/       # Reads the job from page HTML; no account, rate-limited per IP (HMAC, never the IP)
         │   └── _shared/      # CORS helpers, AES-GCM encrypt/decrypt, scrapers/ (copy of the extension's)
         └── migrations/      # Postgres schema + RLS policies

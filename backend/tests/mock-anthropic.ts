@@ -290,7 +290,7 @@ export function startMockAnthropic(port: number): Promise<Server> {
       if (failKey && failure) {
         stripeState[failKey] = null
         res.writeHead(failure.status, { 'content-type': 'application/json' })
-        return res.end(JSON.stringify({ error: { type: 'idempotency_error', code: failure.code } }))
+        return res.end(JSON.stringify({ error: { type: failKey === 'customerError' ? 'idempotency_error' : 'api_error', code: failure.code } }))
       }
       const n = stripeCalls.length
       const reply =

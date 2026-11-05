@@ -23,8 +23,8 @@ interface Props {
   email: string;
   avatar: string | null;
   tier: string;
-  // When a gift trial ends: the user is Pro but still sees the upgrade buttons.
-  trialEnd: string | null;
+  // Set only during a gift trial: the user is Pro but still sees the upgrade buttons.
+  giftTrialEnd: string | null;
   memberSince: string;
   allowance: Allowance | null;
   // Recent applications, rendered by the server page and streamed in.
@@ -35,7 +35,7 @@ export default function DashboardClient({
   email,
   avatar,
   tier,
-  trialEnd,
+  giftTrialEnd,
   memberSince,
   allowance,
   history,
@@ -145,7 +145,7 @@ export default function DashboardClient({
                 </>
               )}
             </div>
-            {isPro && !trialEnd ? (
+            {isPro && !giftTrialEnd ? (
               <div className={cn(TILE, "items-start gap-2.5")}>
                 <span className="text-[12.5px] text-subtle">Plan</span>
                 <p className="flex items-center gap-2 text-[24px] font-semibold leading-tight tracking-[-0.02em] text-ink">
@@ -163,7 +163,7 @@ export default function DashboardClient({
             ) : (
               <div className={cn(TILE, "items-start gap-2.5 border-brand-tint bg-brand-tint")}>
                 <span className="text-[12.5px] font-medium text-brand-ink">
-                  {trialEnd ? <>Pro trial ends <LocalDate iso={trialEnd} options={{ month: "long", day: "numeric" }} /></> : "Go Pro"}
+                  {giftTrialEnd ? <>Pro trial ends <LocalDate iso={giftTrialEnd} options={{ month: "long", day: "numeric" }} /></> : "Go Pro"}
                 </span>
                 <ul className="flex flex-col gap-1 text-[13.5px] text-ink">
                   {[`${proDaily} generations a day`, 'Your letters and resumes on every device', 'Cancel any time'].map((line) => (

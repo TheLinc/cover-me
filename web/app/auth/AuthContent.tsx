@@ -45,6 +45,8 @@ export default function AuthContent() {
 function AuthForm() {
   const params = useSearchParams();
   const plan = params.get("plan");
+  // Where to go once signed in: a dashboard page or a gift trial link.
+  const next = safeNext(params.get("next"));
 
   // Back from an email link with the token in the hash: start on its view or
   // error, not the sign-in form. The built /auth renders on the client only;
@@ -163,8 +165,8 @@ function AuthForm() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function switchView(next: View) {
-    setView(next);
+  function switchView(to: View) {
+    setView(to);
     setError("");
     setStatus("idle");
     setShowPassword(false);
@@ -184,12 +186,12 @@ function AuthForm() {
           password,
         });
         if (error) throw error;
-        window.location.href = safeNext(params.get("next")) ?? "/dashboard";
+        window.location.href = next ?? "/dashboard";
       } else {
         const { error } = await supabase.auth.signUp({
             email,
             password,
-            options: { emailRedirectTo: authRedirectUrl(safeNext(params.get("next"))) },
+            options: { emailRedirectTo: authRedirectUrl(next) },
           });
         if (error) throw error;
         if (plan === "pro") {
@@ -438,8 +440,8 @@ function AuthForm() {
               <p className="text-[13.5px] text-muted-foreground leading-[1.6] mb-7">
                 Your account is active. Let&apos;s get to work.
               </p>
-              <Button onClick={() => { window.location.href = safeNext(params.get("next")) ?? "/dashboard"; }} size="lg" className="w-full">
-                {safeNext(params.get("next")) ? "Continue" : "Go to dashboard"}
+              <Button onClick={() => { window.location.href = next ?? "/dashboard"; }} size="lg" className="w-full">
+                {next ? "Continue" : "Go to dashboard"}
               </Button>
             </>
           ) : /* ── Success state ── */

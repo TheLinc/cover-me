@@ -227,6 +227,8 @@ describe('billing: redeeming a gift trial', () => {
       'items[0][price]': 'price_mock_pro',
       trial_period_days: '7',
       'trial_settings[end_behavior][missing_payment_method]': 'cancel',
+      // Ends with no charge even if the customer kept a card from before.
+      cancel_at_period_end: 'true',
       'metadata[gift_trial]': 'true',
     })
     expect(sub.idempotencyKey).toContain(code)

@@ -7,13 +7,15 @@ import { avatarUrl } from '@/lib/avatar'
 import { RecentApplications, RecentApplicationsSkeleton } from './ApplicationHistory'
 import { Toaster } from '@/components/ui/sonner'
 import Stripe from 'stripe'
+import { isGiftTrial } from '@/lib/stripe-tier'
 
 // When a gift trial (#112) ends, or null. Pro from a gift trial still gets the
-// upgrade buttons. A Stripe hiccup shows the plain Pro tile instead.
+// upgrade buttons. A slow or failed Stripe read shows the plain Pro tile instead.
 async function giftTrialEnd(customer: string): Promise<string | null> {
   try {
-    const subs = await new Stripe(process.env.STRIPE_SECRET_KEY!).subscriptions.list({ customer, status: 'trialing', limit: 10 })
-    const gift = subs.data.find((s) => s.metadata.gift_trial === 'true')
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { timeout: 3000, maxNetworkRetries: 0 })
+    const subs = await stripe.subscriptions.list({ customer, status: 'trialing', limit: 10 })
+    const gift = subs.data.find(isGiftTrial)
     return gift?.trial_end ? new Date(gift.trial_end * 1000).toISOString() : null
   } catch {
     return null
@@ -58,7 +60,7 @@ export default async function DashboardPage() {
       email={user.email ?? ''}
       avatar={avatarUrl(user.user_metadata)}
       tier={userData?.tier ?? 'hosted_free'}
-      trialEnd={trialEnd}
+      giftTrialEnd={trialEnd}
       memberSince={userData?.created_at ?? user.created_at}
       allowance={(allowance as Allowance | null) ?? null}
       history={history}

@@ -195,12 +195,18 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'redeem') {
-      // The key holds the user too: a released code can go to someone else.
+      // Plain trial_period_days, not Stripe's newer trial offers: those need a
+      // separate offer object for the same cancel-at-the-end behaviour.
+      // missing_payment_method=cancel ends a cardless trial; cancel_at_period_end
+      // ends one whose customer kept a card from an old subscription, which
+      // Stripe would otherwise charge. The key holds the user too: a released
+      // code can go to someone else.
       const sub = await stripe('subscriptions', {
         customer: customerId,
         'items[0][price]': PRICES.monthly,
         trial_period_days: GIFT_TRIAL_DAYS,
         'trial_settings[end_behavior][missing_payment_method]': 'cancel',
+        cancel_at_period_end: 'true',
         'metadata[gift_trial]': 'true',
         'metadata[supabase_user_id]': user.id,
       }, { idempotencyKey: `gift-trial-${code}-${user.id}` })
@@ -228,6 +234,9 @@ Deno.serve(async (req) => {
     console.error('[billing]', err instanceof Error ? err.message : 'unknown error')
     return json({ error: 'Could not reach billing. Please try again.' }, 502)
   } finally {
+    // ponytail: a timeout after Stripe did create the trial also releases the
+    // code (one stray free week at worst); keep the claim on unclear errors if
+    // that ever matters.
     if (claimed && !trialStarted) {
       await supabase.from('trial_codes').update({ redeemed_by: null, redeemed_at: null }).eq('code', code).eq('redeemed_by', user.id)
     }
