@@ -57,7 +57,7 @@ Don't want emails like this? Unsubscribe: ${unsubscribeUrl}
 </head>
 <body style="margin:0;padding:0;background-color:#0d1117;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;">
   <!-- Inbox preview text -->
-  <div style="display:none;max-height:0;overflow:hidden;">${esc(lead)}</div>
+  <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;opacity:0;">${esc(lead)}${'&zwnj;&nbsp;'.repeat(40)}</div>
   <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="background-color:#0d1117;">
     <tr>
       <td align="center" style="padding:48px 20px;">
@@ -100,7 +100,7 @@ ${steps.map((step, i) => `                    <p style="margin:${i ? '10px' : '0
                 &nbsp;&middot;&nbsp;
                 <a href="${esc(site)}/privacy" style="color:#475569;text-decoration:none;">Privacy Policy</a>
                 &nbsp;&middot;&nbsp;
-                <a href="${esc(unsubscribeUrl)}" style="color:#475569;text-decoration:underline;">Unsubscribe</a>
+                <a href="${esc(unsubscribeUrl)}" style="color:#94a3b8;text-decoration:underline;">Unsubscribe</a>
               </p>
             </td>
           </tr>
