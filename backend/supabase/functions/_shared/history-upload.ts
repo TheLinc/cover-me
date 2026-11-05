@@ -80,13 +80,13 @@ export function parseUpload(body: unknown, now = Date.now()): Upload | { error: 
 // isn't a 0-100 score, a list of strings or a readable date is left empty.
 // editedAt is set by the extension's editor (#118) on a resume edited before
 // it reached the account.
-export function atsColumns(resume: Record<string, unknown>, now = Date.now()): { ats_score: number | null; ats_gaps: string[] | null; edited_at: string | null } {
+export function atsColumns(resume: Record<string, unknown>): { ats_score: number | null; ats_gaps: string[] | null; edited_at: string | null } {
   const score = resume.atsScore
   const gaps = resume.atsGaps
   const edited = typeof resume.editedAt === 'string' ? Date.parse(resume.editedAt) : NaN
   return {
     ats_score: typeof score === 'number' && score >= 0 && score <= 100 ? Math.round(score) : null,
     ats_gaps: Array.isArray(gaps) && gaps.every((g) => typeof g === 'string') ? gaps as string[] : null,
-    edited_at: Number.isNaN(edited) ? null : new Date(Math.min(edited, now)).toISOString(),
+    edited_at: Number.isNaN(edited) ? null : new Date(Math.min(edited, Date.now())).toISOString(),
   }
 }

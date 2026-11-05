@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { ensureValidSession, fetchApplicationsFromBackend, saveResumeEditToBackend } from '../lib/auth'
 import { splitSkills } from '../lib/ai/resume-grounding'
 import { downloadTailoredResumePdf, tailoredResumePdf } from '../lib/pdf/resume'
-import { remainingGaps, saveResumeEdit } from '../lib/resume-edit'
+import { editedResume, saveResumeEdit } from '../lib/resume-edit'
 import { getCachedTier, getMode, getTailoredHistory } from '../lib/storage'
 import GapChips from '../popup/components/GapChips'
 import ScoreRing from '../popup/components/ScoreRing'
@@ -36,20 +36,19 @@ async function openResume(id: string): Promise<Opened | null> {
   return null
 }
 
-// The draft as the PDF and History get it: skills joined back into one line,
-// and lines left empty dropped.
-function finished(draft: TailoredResume, skills: string[]): TailoredResume {
+// The form's state as a resume: skills joined back into one line, and lines
+// left empty dropped. A section emptied out stays, empty, so it can be filled again.
+function resumeFromForm(draft: TailoredResume, skills: string[]): TailoredResume {
   const lines = (l: string[] | undefined) => l?.filter((s) => s.trim())
-  const out: TailoredResume = {
+  return {
     ...draft,
     experience: draft.experience.map((e) => ({ ...e, bullets: lines(e.bullets) ?? [] })),
     projects: draft.projects?.map((p) => ({ ...p, bullets: lines(p.bullets) ?? [] })),
     education: draft.education.map((e) => ({ ...e, bullets: lines(e.bullets) ?? [] })),
     certifications: lines(draft.certifications),
     otherSections: draft.otherSections?.map((s) => ({ ...s, lines: lines(s.lines) ?? [] })),
-    skills: lines(skills)?.map((s) => s.trim()).join(', ') || undefined,
+    skills: draft.skills === undefined ? undefined : lines(skills)!.map((s) => s.trim()).join(', '),
   }
-  return out
 }
 
 type Status = '' | 'saving' | 'saved' | 'local'
@@ -63,8 +62,9 @@ export default function Editor() {
   const [status, setStatus] = useState<Status>('')
   const [previewUrl, setPreviewUrl] = useState('')
 
-  const unsaved = useRef<TailoredResume | null>(null)
-  const saving = useRef<Promise<void>>(Promise.resolve())
+  const localSaves = useRef<Promise<void>>(Promise.resolve())
+  const accountSaves = useRef<Promise<void>>(Promise.resolve())
+  const forAccount = useRef<TailoredResume | null>(null) // saved locally, not yet sent
   const session = useRef<AuthSession | null>(null)
 
   useEffect(() => {
@@ -80,7 +80,8 @@ export default function Editor() {
   }, [id])
 
   const scored = typeof opened === 'object' && opened ? opened.scored : null
-  const current = useMemo(() => (draft ? finished(draft, skills) : null), [draft, skills])
+  const current = useMemo(() => (draft ? resumeFromForm(draft, skills) : null), [draft, skills])
+  const saved = useMemo(() => (current && scored ? editedResume(scored, current) : null), [current, scored])
 
   // The preview, re-made a moment after typing stops.
   useEffect(() => {
@@ -92,46 +93,46 @@ export default function Editor() {
     return () => clearTimeout(t)
   }, [current])
 
-  // One save at a time, in order: local History, then the account's copy.
-  function save(): Promise<void> {
-    saving.current = saving.current.then(async () => {
-      const edit = unsaved.current
-      if (!edit || !scored) return
-      unsaved.current = null
-      setStatus('saving')
-      const saved = await saveResumeEdit(id, scored, edit)
+  // The account's copy, one save at a time, in order.
+  function saveToAccount(): Promise<void> {
+    accountSaves.current = accountSaves.current.then(async () => {
+      const edit = forAccount.current
+      if (!edit) return
+      forAccount.current = null
       try {
+        await localSaves.current
         session.current = await proSession()
-        if (session.current) await saveResumeEditToBackend(session.current.access_token, id, saved)
+        if (session.current) await saveResumeEditToBackend(session.current.access_token, id, edit)
         setStatus('saved')
       } catch {
         setStatus('local')
       }
     })
-    return saving.current
+    return accountSaves.current
   }
 
+  // Every change goes to History at once; the account's copy follows a
+  // moment after typing stops.
   useEffect(() => {
-    if (!dirty || !current) return
-    unsaved.current = current
-    const t = setTimeout(save, 800)
+    if (!dirty || !saved) return
+    setStatus('saving')
+    localSaves.current = localSaves.current.then(() => saveResumeEdit(id, saved)).catch(() => {})
+    forAccount.current = saved
+    const t = setTimeout(saveToAccount, 800)
     return () => clearTimeout(t)
-  }, [current, dirty])
+  }, [saved, dirty])
 
-  // Closing the tab mid-edit: save what's left. keepalive lets the account's
-  // save finish after the page is gone.
+  // Closing the tab before that: send it now, with keepalive (in
+  // saveResumeEditToBackend), so it lands after the page is gone.
   useEffect(() => {
     function flush() {
-      const edit = unsaved.current
-      if (!edit || !scored) return
-      unsaved.current = null
-      void saveResumeEdit(id, scored, edit).then((saved) => {
-        if (session.current) void saveResumeEditToBackend(session.current.access_token, id, saved, true).catch(() => {})
-      })
+      const edit = forAccount.current
+      forAccount.current = null
+      if (edit && session.current) void saveResumeEditToBackend(session.current.access_token, id, edit).catch(() => {})
     }
     window.addEventListener('pagehide', flush)
     return () => window.removeEventListener('pagehide', flush)
-  }, [id, scored])
+  }, [id])
 
   function edit(change: (r: TailoredResume) => void) {
     setDraft((d) => {
@@ -143,18 +144,16 @@ export default function Editor() {
   }
 
   async function done() {
-    if (current && dirty) unsaved.current = current
-    await save()
+    await saveToAccount()
     window.close()
   }
 
   if (opened === 'loading') return <main className="ed-message">Opening your resume…</main>
   if (opened === 'error') return <main className="ed-message">Couldn't open this resume. Check your connection and reload the tab.</main>
-  if (!opened || !draft || !current || !scored) {
+  if (!opened || !draft || !current || !scored || !saved) {
     return <main className="ed-message">This resume isn't in your History anymore.</main>
   }
 
-  const gaps = remainingGaps(scored.atsGaps, current)
   const edited = dirty || !!scored.editedAt
 
   return (
@@ -177,12 +176,12 @@ export default function Editor() {
       </header>
 
       <main className="ed-form">
-        {(typeof scored.atsScore === 'number' || (scored.atsGaps?.length ?? 0) > 0) && (
+        {(typeof scored.atsScore === 'number' || (saved.atsGaps?.length ?? 0) > 0) && (
           <section className="ats-result" aria-label="ATS result">
             {typeof scored.atsScore === 'number' && <ScoreRing score={scored.atsScore} size={88} />}
             <div className="ats-detail">
               {edited && <p className="ats-edited">Scored before your edits</p>}
-              <GapChips gaps={gaps} />
+              <GapChips gaps={saved.atsGaps ?? []} />
             </div>
           </section>
         )}

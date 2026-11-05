@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { remainingGaps, saveResumeEdit } from './resume-edit'
+import { editedResume, remainingGaps, saveResumeEdit } from './resume-edit'
 import { getTailoredHistory } from './storage'
 import type { TailoredResume } from '../types'
 
@@ -52,25 +52,41 @@ const job = { title: 'Engineer', company: 'Northwind', url: 'https://jobs.exampl
 afterEach(() => vi.unstubAllGlobals())
 
 describe('saving an edit', () => {
-  test('overwrites that entry in local History, keeps the score, clears typed gaps and marks it edited', async () => {
+  const now = new Date('2026-11-05T10:00:00Z')
+
+  test('keeps the score, clears typed gaps and marks it edited', () => {
+    const draft = { ...resume, skills: 'TypeScript, Go', atsScore: 99, atsGaps: [] }
+    expect(editedResume(resume, draft, now)).toEqual({
+      ...resume,
+      skills: 'TypeScript, Go',
+      atsGaps: ['Kafka', 'Terraform'],
+      atsGapsBeforeEdits: ['Kafka', 'Go', 'Terraform'],
+      editedAt: '2026-11-05T10:00:00.000Z',
+    })
+  })
+
+  test('editing again measures gaps against the score, so a deleted keyword brings its gap back', () => {
+    const first = editedResume(resume, { ...resume, skills: 'Go, Kafka' }, now)
+    expect(first.atsGaps).toEqual(['Terraform'])
+    const second = editedResume(first, { ...first, skills: 'Kafka' }, now)
+    expect(second.atsGaps).toEqual(['Go', 'Terraform'])
+  })
+
+  test('overwrites that entry in local History and nothing else', async () => {
     fakeLocal({ tailoredHistory: [
       { id: 'a', job, resume, createdAt: '2026-10-01T00:00:00Z', account: 'u1' },
       { id: 'b', job, resume, createdAt: '2026-10-02T00:00:00Z' },
     ] })
-    const draft = { ...resume, skills: 'TypeScript, Go', atsScore: 99, atsGaps: [] }
-
-    const saved = await saveResumeEdit('a', resume, draft, new Date('2026-11-05T10:00:00Z'))
-
-    expect(saved).toEqual({ ...resume, skills: 'TypeScript, Go', atsGaps: ['Kafka', 'Terraform'], editedAt: '2026-11-05T10:00:00.000Z' })
+    const saved = editedResume(resume, { ...resume, name: 'P. Lee' }, now)
+    await saveResumeEdit('a', saved)
     const [a, b] = await getTailoredHistory()
     expect(a).toEqual({ id: 'a', job, resume: saved, createdAt: '2026-10-01T00:00:00Z', account: 'u1' })
     expect(b.resume).toBe(resume)
   })
 
-  test('an entry not in this browser is left alone, and the edit is still returned', async () => {
+  test('an entry not in this browser is left alone', async () => {
     const data = fakeLocal({ tailoredHistory: [] })
-    const saved = await saveResumeEdit('gone', resume, { ...resume, name: 'P. Lee' }, new Date('2026-11-05T10:00:00Z'))
-    expect(saved.name).toBe('P. Lee')
+    await saveResumeEdit('gone', editedResume(resume, resume, now))
     expect(data.tailoredHistory).toEqual([])
   })
 })

@@ -22,26 +22,31 @@ export function remainingGaps(gaps: string[] | undefined, resume: TailoredResume
   return (gaps ?? []).filter((g) => !new RegExp(`(^|[^a-z0-9])${escape(g.toLowerCase())}($|[^a-z0-9])`).test(text))
 }
 
-// The edit as saved: the draft's text, the score from before the edit, the
-// gaps it hasn't filled, and when it was edited. Overwrites the entry in local
-// History when it's there; a Pro resume only on the server isn't added here.
-export async function saveResumeEdit(id: string, scored: TailoredResume, draft: TailoredResume, now = new Date()): Promise<TailoredResume> {
-  const saved: TailoredResume = {
-    ...draft,
-    atsScore: scored.atsScore,
-    atsGaps: remainingGaps(scored.atsGaps, draft),
+// The edit as saved: the draft's text, the score from before any edit, and
+// the gaps the text hasn't filled, measured against the gaps that score found
+// (atsGapsBeforeEdits), so deleting a keyword in a later edit brings its gap back.
+export function editedResume(scored: TailoredResume, draft: TailoredResume, now = new Date()): TailoredResume {
+  const before = scored.atsGapsBeforeEdits ?? scored.atsGaps
+  const { atsScore: _score, atsGaps: _gaps, atsGapsBeforeEdits: _before, ...text } = draft
+  return {
+    ...text,
+    ...(scored.atsScore !== undefined && { atsScore: scored.atsScore }),
+    ...(before && { atsGaps: remainingGaps(before, draft), atsGapsBeforeEdits: before }),
     editedAt: now.toISOString(),
   }
-  if (scored.atsScore === undefined) delete saved.atsScore
+}
+
+// Overwrites the entry in local History when it's there. A Pro resume only on
+// the server isn't added here.
+export async function saveResumeEdit(id: string, saved: TailoredResume): Promise<void> {
   const list = await getTailoredHistory()
   if (list.some((e) => e.id === id)) {
     await chrome.storage.local.set({ tailoredHistory: list.map((e) => (e.id === id ? { ...e, resume: saved } : e)) })
   }
-  return saved
 }
 
 // The editor tab, a page of its own (vite.config.ts builds it).
-export const EDITOR_PATH = 'src/editor/index.html'
+const EDITOR_PATH = 'src/editor/index.html'
 
 export function openResumeEditor(id: string): void {
   void chrome.tabs.create({ url: chrome.runtime.getURL(`${EDITOR_PATH}?id=${encodeURIComponent(id)}`) })
