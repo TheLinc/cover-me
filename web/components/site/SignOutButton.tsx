@@ -5,13 +5,15 @@ import { createClient } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 
-export function SignOutButton() {
+// `to` is where to land after signing out: the redeem page passes its own
+// link, so the gift can go to another account.
+export function SignOutButton({ to = '/' }: { to?: string }) {
   const [signingOut, setSigningOut] = useState(false)
 
   async function handleSignOut() {
     setSigningOut(true)
     await createClient().auth.signOut()
-    window.location.href = '/'
+    window.location.href = to
   }
 
   return (

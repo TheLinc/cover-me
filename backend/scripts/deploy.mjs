@@ -24,9 +24,7 @@
 
 import { spawnSync } from 'node:child_process'
 import { createInterface } from 'node:readline/promises'
-import { BACKEND, supabase } from './lib.mjs'
-
-const PROD_REF = 'ncnmkxzrygnwjiciyxqs'
+import { BACKEND, PROD_REF, supabase } from './lib.mjs'
 
 const FLAGS = ['--db-only', '--functions-only', '--skip-tests']
 const flags = process.argv.slice(2)

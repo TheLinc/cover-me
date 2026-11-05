@@ -43,10 +43,11 @@ describe('Google sign-in redirects', () => {
 })
 
 describe('safeNext', () => {
-  it('allows dashboard paths only', () => {
+  it('allows dashboard paths and gift trial links only', () => {
     expect(safeNext('/dashboard')).toBe('/dashboard')
     expect(safeNext('/dashboard/applications')).toBe('/dashboard/applications')
-    for (const bad of ['https://evil.example/dashboard', '//evil.example', '/dashboard/../x', '/dashboardx', '/dashboard?x=1', '/\\evil.example', null, '']) {
+    expect(safeNext('/redeem/Ab3_x-9Zq2')).toBe('/redeem/Ab3_x-9Zq2')
+    for (const bad of ['https://evil.example/dashboard', '//evil.example', '/dashboard/../x', '/dashboardx', '/dashboard?x=1', '/\\evil.example', '/redeem', '/redeem/', '/redeem/a/b', '/redeem/a?x=1', '/redeem/..', null, '']) {
       expect(safeNext(bad)).toBeNull()
     }
   })

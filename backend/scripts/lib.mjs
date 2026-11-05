@@ -3,6 +3,9 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 export const BACKEND = join(dirname(fileURLToPath(import.meta.url)), '..')
+// The production "CoverMe" project. Always passed explicitly: the CLI stays
+// linked to the paused CoverMe - Dev project (see deploy.mjs).
+export const PROD_REF = 'ncnmkxzrygnwjiciyxqs'
 export const REPO = join(BACKEND, '..')
 
 const isWindows = process.platform === 'win32'

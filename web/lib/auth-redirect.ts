@@ -7,10 +7,11 @@ export function oauthRedirectUrl(site: string, plan: string | null, next: string
 }
 
 // Where to land after signing in when a dashboard page sent the user here
-// (?next=/dashboard/applications, from the extension's History link). Only a
-// dashboard path, so the parameter can't send anyone to another site.
+// (?next=/dashboard/applications, from the extension's History link), or a
+// gift trial link (/redeem/<code>). Only those paths, so the parameter can't
+// send anyone to another site.
 export function safeNext(next: string | null): string | null {
-  return next && /^\/dashboard(\/[a-z-]+)*$/.test(next) ? next : null
+  return next && /^(\/dashboard(\/[a-z-]+)*|\/redeem\/[A-Za-z0-9_-]+)$/.test(next) ? next : null
 }
 
 // Cancel on Google's consent screen comes back as error=access_denied. It's
