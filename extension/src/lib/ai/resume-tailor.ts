@@ -37,8 +37,9 @@ function buildTailorSchema(parsed: ParsedResume): string {
 
 // The editing base for revision mode — strip the derived score fields so the
 // model edits resume content, not stale numbers (STEP 9 is recomputed fresh).
-function stripScores(r: TailoredResume): Omit<TailoredResume, 'atsScore' | 'atsGaps'> {
-  const { atsScore: _s, atsGaps: _g, ...rest } = r
+// An edited resume's fields from the editor tab go too: they hold the old gaps.
+function stripScores(r: TailoredResume): Omit<TailoredResume, 'atsScore' | 'atsGaps' | 'atsGapsBeforeEdits' | 'editedAt'> {
+  const { atsScore: _s, atsGaps: _g, atsGapsBeforeEdits: _b, editedAt: _e, ...rest } = r
   return rest
 }
 

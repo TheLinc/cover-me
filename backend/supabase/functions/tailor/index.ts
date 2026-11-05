@@ -150,8 +150,9 @@ function buildTailorSchema(parsed: ParsedResume): string {
   return JSON.stringify(delta, null, 2)
 }
 
+// An edited resume's fields from the extension's editor tab go too: they hold the old gaps.
 function stripScores(r: Record<string, unknown>): Record<string, unknown> {
-  const { atsScore: _s, atsGaps: _g, ...rest } = r
+  const { atsScore: _s, atsGaps: _g, atsGapsBeforeEdits: _b, editedAt: _e, ...rest } = r
   return rest
 }
 

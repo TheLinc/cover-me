@@ -2,11 +2,11 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { ensureValidSession, fetchApplicationsFromBackend, saveResumeEditToBackend } from '../lib/auth'
 import { splitSkills } from '../lib/ai/resume-grounding'
 import { downloadTailoredResumePdf, tailoredResumePdf } from '../lib/pdf/resume'
-import { editedResume, saveResumeEdit } from '../lib/resume-edit'
+import { editedResume, saveResumeEdit, withResumeEdit } from '../lib/resume-edit'
 import { getCachedTier, getMode, getTailoredHistory } from '../lib/storage'
 import GapChips from '../popup/components/GapChips'
 import ScoreRing from '../popup/components/ScoreRing'
-import type { AuthSession, TailoredResume } from '../types'
+import type { AuthSession, TailoredHistoryEntry, TailoredResume } from '../types'
 
 // The editor tab (#118): a form over one tailored resume on the left, the PDF
 // it makes on the right. Edits are the user's own, so the grounding checks
@@ -65,6 +65,7 @@ export default function Editor() {
   const localSaves = useRef<Promise<void>>(Promise.resolve())
   const accountSaves = useRef<Promise<void>>(Promise.resolve())
   const forAccount = useRef<TailoredResume | null>(null) // saved locally, not yet sent
+  const accountOk = useRef(true)
   const session = useRef<AuthSession | null>(null)
 
   useEffect(() => {
@@ -103,35 +104,54 @@ export default function Editor() {
         await localSaves.current
         session.current = await proSession()
         if (session.current) await saveResumeEditToBackend(session.current.access_token, id, edit)
+        accountOk.current = true
         setStatus('saved')
       } catch {
+        accountOk.current = false
         setStatus('local')
       }
     })
     return accountSaves.current
   }
 
-  // Every change goes to History at once; the account's copy follows a
-  // moment after typing stops.
+  // History gets each pause in typing; the account's copy a moment later.
+  // ponytail: History is read then written whole, as the background does when
+  // a tailor finishes, so the two can still collide; the pause keeps it rare.
+  // A per-entry key would end it.
   useEffect(() => {
     if (!dirty || !saved) return
     setStatus('saving')
-    localSaves.current = localSaves.current.then(() => saveResumeEdit(id, saved)).catch(() => {})
     forAccount.current = saved
-    const t = setTimeout(saveToAccount, 800)
-    return () => clearTimeout(t)
+    const local = setTimeout(() => {
+      localSaves.current = localSaves.current.then(() => saveResumeEdit(id, saved)).catch(() => {})
+    }, 300)
+    const account = setTimeout(saveToAccount, 800)
+    return () => { clearTimeout(local); clearTimeout(account) }
   }, [saved, dirty])
 
-  // Closing the tab before that: send it now, with keepalive (in
-  // saveResumeEditToBackend), so it lands after the page is gone.
+  // Closing the tab before those: save now. There's no time to read History
+  // first, so a copy is kept current here. The account's copy goes with
+  // keepalive (in saveResumeEditToBackend), so it lands after the page is gone.
+  const history = useRef<TailoredHistoryEntry[] | null>(null)
   useEffect(() => {
+    const listener = (changes: Record<string, chrome.storage.StorageChange>, area: string) => {
+      if (area === 'local' && 'tailoredHistory' in changes) history.current = (changes.tailoredHistory.newValue as TailoredHistoryEntry[]) ?? []
+    }
+    chrome.storage.onChanged.addListener(listener)
+    void getTailoredHistory().then((list) => { history.current ??= list })
     function flush() {
       const edit = forAccount.current
       forAccount.current = null
-      if (edit && session.current) void saveResumeEditToBackend(session.current.access_token, id, edit).catch(() => {})
+      if (!edit) return
+      const next = history.current && withResumeEdit(history.current, id, edit)
+      if (next) void chrome.storage.local.set({ tailoredHistory: next })
+      if (session.current) void saveResumeEditToBackend(session.current.access_token, id, edit).catch(() => {})
     }
     window.addEventListener('pagehide', flush)
-    return () => window.removeEventListener('pagehide', flush)
+    return () => {
+      chrome.storage.onChanged.removeListener(listener)
+      window.removeEventListener('pagehide', flush)
+    }
   }, [id])
 
   function edit(change: (r: TailoredResume) => void) {
@@ -143,9 +163,15 @@ export default function Editor() {
     setDirty(true)
   }
 
+  // Closes once everything is saved. When the account couldn't be reached the
+  // tab stays, showing why.
   async function done() {
+    if (dirty && saved) {
+      forAccount.current = saved
+      localSaves.current = localSaves.current.then(() => saveResumeEdit(id, saved)).catch(() => {})
+    }
     await saveToAccount()
-    window.close()
+    if (accountOk.current) window.close()
   }
 
   if (opened === 'loading') return <main className="ed-message">Opening your resume…</main>
@@ -166,7 +192,7 @@ export default function Editor() {
         <p className="ed-status" aria-live="polite">
           {status === 'saving' ? 'Saving…'
             : status === 'saved' ? 'Saved'
-            : status === 'local' ? "Saved in this browser. Couldn't reach your account, so it'll keep the old version for now."
+            : status === 'local' ? "Saved in this browser, but couldn't reach your account. Press Done to try again, or close the tab to keep the edit here only."
             : ''}
         </p>
         <button className="btn btn-secondary btn-compact" onClick={() => downloadTailoredResumePdf(current, opened.jobTitle)}>

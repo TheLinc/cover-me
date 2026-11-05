@@ -168,8 +168,9 @@ Deno.serve(async (req) => {
   if (req.method === 'PATCH' && resumeId !== null) {
     if (!isPro) return proOnly()
     if (!isUuid(resumeId)) return json({ error: 'Invalid id' }, 400)
-    // The resume plus room for the {"resume": ...} around it.
-    const raw = await readBody(req, MAX_RESUME_JSON + 1024)
+    // Bytes, while MAX_RESUME_JSON counts characters: up to 4 bytes each in
+    // UTF-8, plus room for the {"resume": ...} around it.
+    const raw = await readBody(req, MAX_RESUME_JSON * 4 + 1024)
     if (raw === null) return json({ error: 'Request too large' }, 400)
     let resume: unknown
     try {

@@ -1,4 +1,4 @@
-import type { TailoredResume } from '../types'
+import type { TailoredHistoryEntry, TailoredResume } from '../types'
 import { getTailoredHistory } from './storage'
 
 // Every piece of text the PDF prints, as one string.
@@ -36,13 +36,15 @@ export function editedResume(scored: TailoredResume, draft: TailoredResume, now 
   }
 }
 
-// Overwrites the entry in local History when it's there. A Pro resume only on
-// the server isn't added here.
+// History with one entry's resume replaced, or null when the entry isn't
+// there (a Pro resume only on the server isn't added).
+export function withResumeEdit(list: TailoredHistoryEntry[], id: string, saved: TailoredResume): TailoredHistoryEntry[] | null {
+  return list.some((e) => e.id === id) ? list.map((e) => (e.id === id ? { ...e, resume: saved } : e)) : null
+}
+
 export async function saveResumeEdit(id: string, saved: TailoredResume): Promise<void> {
-  const list = await getTailoredHistory()
-  if (list.some((e) => e.id === id)) {
-    await chrome.storage.local.set({ tailoredHistory: list.map((e) => (e.id === id ? { ...e, resume: saved } : e)) })
-  }
+  const next = withResumeEdit(await getTailoredHistory(), id, saved)
+  if (next) await chrome.storage.local.set({ tailoredHistory: next })
 }
 
 // The editor tab, a page of its own (vite.config.ts builds it).
