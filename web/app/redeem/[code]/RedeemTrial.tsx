@@ -9,19 +9,23 @@ import { LocalDate } from '@/app/dashboard/LocalDate'
 import { TRIAL_REDEEMED, whenPosthogLoaded } from '@/lib/analytics'
 import { redeemTrial } from '@/lib/billing'
 import { CHROME_STORE_URL } from '@/lib/utils'
+import { confettiFrom } from './confetti'
 
 // One click starts the trial. The billing function checks the code and the
 // account; the Stripe webhook then turns Pro on, usually within seconds.
 export function RedeemTrial({ code, email }: { code: string; email: string }) {
   const [state, setState] = useState<{ status: 'idle' | 'loading' } | { status: 'done'; trialEnd: string } | { status: 'error'; error: string }>({ status: 'idle' })
 
-  async function redeem() {
+  async function redeem(e: React.MouseEvent<HTMLButtonElement>) {
+    // Where the button is now: the success view replaces it, and the confetti starts there.
+    const { left, top, width, height } = e.currentTarget.getBoundingClientRect()
     setState({ status: 'loading' })
     try {
       const data = await redeemTrial(code)
       if (data.trialEnd) {
         const note = data.note ?? null
         whenPosthogLoaded(posthog, () => { posthog.capture(TRIAL_REDEEMED, { note }) })
+        confettiFrom(left + width / 2, top + height / 2)
         setState({ status: 'done', trialEnd: data.trialEnd })
       } else {
         setState({ status: 'error', error: data.error ?? 'Something went wrong. Please try again.' })
