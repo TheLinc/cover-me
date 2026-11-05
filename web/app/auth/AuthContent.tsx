@@ -688,6 +688,21 @@ function AuthForm() {
                 </p>
               </div>
 
+              {/* Above both ways in, so it reads as applying to Google too. */}
+              {view === "signup" && (
+                <div className="flex items-center gap-2 mb-[18px]">
+                  <Checkbox
+                    id="product-updates"
+                    checked={productUpdates}
+                    onCheckedChange={(v) => setProductUpdates(v === true)}
+                    className="rounded-[4px]"
+                  />
+                  <label htmlFor="product-updates" className="text-[13px] text-muted-foreground cursor-pointer select-none">
+                    Email me about new features (a few times a year)
+                  </label>
+                </div>
+              )}
+
               {GOOGLE_SIGNIN && (
                 <div className="flex flex-col gap-3.5 mb-[18px]">
                   <Button type="button" variant="outline" size="lg" className="w-full" onClick={handleGoogle}>
@@ -765,19 +780,6 @@ function AuthForm() {
                     </div>
                   </div>
                 </div>
-
-                {view === "signup" && (
-                  <div className="flex items-center gap-2 mb-[18px]">
-                    <Checkbox
-                      id="product-updates"
-                      checked={productUpdates}
-                      onCheckedChange={(v) => setProductUpdates(v === true)}
-                    />
-                    <label htmlFor="product-updates" className="text-[13px] text-muted-foreground cursor-pointer select-none">
-                      Email me about new features (a few times a year)
-                    </label>
-                  </div>
-                )}
 
                 {error && (
                   <p className="text-[13px] text-destructive bg-destructive/10 border border-destructive/20 rounded-[var(--r)] px-[13px] py-2.5 mb-3.5 leading-[1.5]">

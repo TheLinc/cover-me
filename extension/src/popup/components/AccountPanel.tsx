@@ -315,6 +315,14 @@ export default function AccountPanel({ initialView = 'signin', links = true }: {
           ) : (
             /* Auth form */
             <>
+              {/* Above both ways in, so it reads as applying to Google too. */}
+              {authView === 'signup' && (
+                <label className="compact-toggle signup-updates">
+                  <input type="checkbox" checked={productUpdates} onChange={(e) => setProductUpdates(e.target.checked)} />
+                  Email me about new features (a few times a year)
+                </label>
+              )}
+
               {GOOGLE_SIGNIN && (
                 <>
                   <button className="btn btn-google" onClick={handleGoogle} disabled={googleBusy || authStatus === 'loading'}>
@@ -365,13 +373,6 @@ export default function AccountPanel({ initialView = 'signin', links = true }: {
                   </button>
                 </div>
               </div>
-
-              {authView === 'signup' && (
-                <label className="compact-toggle signup-updates">
-                  <input type="checkbox" checked={productUpdates} onChange={(e) => setProductUpdates(e.target.checked)} />
-                  Email me about new features (a few times a year)
-                </label>
-              )}
 
               {authError && <div className="error-box">{authError}</div>}
               {authNotice && <div className="notice-box">{authNotice}</div>}
