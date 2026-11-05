@@ -69,7 +69,13 @@ html, body { width: auto; height: 100%; overflow: hidden; }
 
 @media (max-width: 960px) {
   html, body { overflow: auto; height: auto; }
-  .ed { grid-template-columns: 1fr; grid-template-rows: auto auto 90vh; height: auto; }
-  .ed-form { overflow: visible; }
+  .ed { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto 90vh; height: auto; }
+  .ed-bar { flex-wrap: wrap; }
+  .ed-bar-title { flex-basis: 100%; }
+  .ed-status { flex: 1; text-align: left; }
+  .ed-form { overflow: visible; padding: 20px 16px 48px; }
   .ed-preview { border-left: none; border-top: 1px solid var(--border); }
+}
+@media (max-width: 600px) {
+  .ed-grid, .ed-lines-short ol { grid-template-columns: minmax(0, 1fr); }
 }
