@@ -473,6 +473,7 @@ html, body {
   margin-top: 6px;
   user-select: none;
 }
+.signup-updates { margin: 0 0 12px; }
 .compact-toggle input[type="checkbox"] {
   accent-color: var(--accent);
   cursor: pointer;

@@ -29,10 +29,13 @@ const status = localStatus()
 
 // Also given to vitest, so a test can seed an encrypted cached parse.
 const ENCRYPTION_KEY = randomBytes(32).toString('hex')
+// Also given to vitest, so a test can sign an unsubscribe token.
+const EMAIL_TOKEN_SECRET = randomBytes(32).toString('hex')
 const envFile = join(BACKEND, 'supabase', 'functions', '.env.test')
 writeFileSync(envFile, [
   `SERVICE_KEY=${serviceKey(status)}`,
   `ENCRYPTION_KEY=${ENCRYPTION_KEY}`,
+  `EMAIL_TOKEN_SECRET=${EMAIL_TOKEN_SECRET}`,
   'ANTHROPIC_API_KEY=mock-key',
   `ANTHROPIC_BASE_URL=http://host.docker.internal:${MOCK_PORT}`,
   'DEBUG_MODE=false',
@@ -56,7 +59,7 @@ process.on('SIGINT', () => { cleanup(); process.exit(130) })
 // anon JWT, then the function rejects it as a user token with its own JSON
 // body. Warming all of them here keeps cold starts (slow after a volume wipe,
 // when the runtime re-downloads npm deps) out of the first test that calls each.
-const FUNCTIONS = ['resume', 'generate', 'tailor', 'letters', 'applications', 'billing']
+const FUNCTIONS = ['resume', 'generate', 'tailor', 'letters', 'applications', 'billing', 'email-preferences']
 
 async function waitForFunctions(timeoutMs = 180_000) {
   const deadline = Date.now() + timeoutMs
@@ -94,6 +97,7 @@ const vitest = spawnSync(
       SUPABASE_SERVICE_KEY: serviceKey(status),
       MOCK_ANTHROPIC_PORT: MOCK_PORT,
       ENCRYPTION_KEY,
+      EMAIL_TOKEN_SECRET,
     },
   },
 )

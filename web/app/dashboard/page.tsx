@@ -30,7 +30,7 @@ export default async function DashboardPage() {
 
   const { data: userData } = await supabase
     .from('users')
-    .select('tier, created_at, stripe_customer_id')
+    .select('tier, created_at, stripe_customer_id, product_updates')
     .eq('id', user.id)
     .single()
 
@@ -63,6 +63,7 @@ export default async function DashboardPage() {
       trial={trial}
       memberSince={userData?.created_at ?? user.created_at}
       allowance={(allowance as Allowance | null) ?? null}
+      productUpdates={userData?.product_updates ?? false}
       history={history}
     />
     <Toaster />

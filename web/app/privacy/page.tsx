@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
 }
 
-const EFFECTIVE_DATE = 'November 4, 2026'
+const EFFECTIVE_DATE = 'November 5, 2026'
 const CONTACT_EMAIL  = 'support@cover-me.dev'
 
 // ── Section heading ────────────────────────────────────────────────────────
@@ -229,6 +229,13 @@ export default function PrivacyPage() {
                 If you choose Continue with Google instead, there is no password: Google confirms who
                 you are, and we receive your email address, name, profile picture link and Google
                 account ID (see Third-Party Services below).
+                We use your email address for product updates only if you agree: by ticking
+                &ldquo;Email me about new features&rdquo; when you sign up, or by turning it on in your
+                dashboard. We record when you agreed or stopped, and where. To stop them, use the
+                unsubscribe link in any of those emails (no sign-in needed) or turn the setting off in
+                your dashboard. Unsubscribing stops all of our non-account email at once; turning product
+                updates back on later restarts only those. Account emails
+                (confirming your address, resetting your password, changing your email) still arrive.
                 Versions before 1.3.0 offered &ldquo;Remember me&rdquo;, which saved your password on
                 your device, encrypted with AES-256-GCM, to pre-fill the sign-in form. Version 1.3.0
                 removes that feature and deletes any saved password when it updates.
@@ -362,6 +369,7 @@ export default function PrivacyPage() {
               <Li>To sync your cover letters and tailored resumes across devices (Pro mode only).</Li>
               <Li>To process subscription billing through Stripe (Pro mode only).</Li>
               <Li>To respond to support requests you initiate by contacting us directly.</Li>
+              <Li>To email you about new features, only if you&apos;ve agreed to it (Hosted mode). You can stop them at any time.</Li>
               <Li>To count, in aggregate, how many accounts sign up and use the service.</Li>
             </Ul>
             <P>

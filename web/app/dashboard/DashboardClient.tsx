@@ -2,12 +2,14 @@
 
 import { useState, type ReactNode } from "react";
 import { openBilling } from "@/lib/billing";
+import { saveProductUpdates } from "@/lib/email-preferences";
 import { describeAllowance, type Allowance } from "@/lib/limits";
 import { DaysLeft, LocalDate } from "./LocalDate";
 import type { TrialState } from "@/lib/stripe-tier";
 import { CHROME_STORE_URL, cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Switch } from "@/components/ui/switch";
 import {
   ArrowUpRightIcon,
   GoogleChromeLogoIcon,
@@ -28,6 +30,8 @@ interface Props {
   trial: TrialState;
   memberSince: string;
   allowance: Allowance | null;
+  // Consent to product-update emails (#114), from the users row.
+  productUpdates: boolean;
   // Recent applications, rendered by the server page and streamed in.
   history: ReactNode;
 }
@@ -39,6 +43,7 @@ export default function DashboardClient({
   trial: { giftTrialEnd, firstPayment },
   memberSince,
   allowance,
+  productUpdates,
   history,
 }: Props) {
   const [avatarFailed, setAvatarFailed]     = useState(false);
@@ -46,6 +51,9 @@ export default function DashboardClient({
   const [upgradeError, setUpgradeError]     = useState('');
   const [billingLoading, setBillingLoading] = useState(false);
   const [billingError, setBillingError]     = useState('');
+  const [updatesOn, setUpdatesOn]           = useState(productUpdates);
+  const [updatesSaving, setUpdatesSaving]   = useState(false);
+  const [updatesError, setUpdatesError]     = useState('');
   const isPro = tier === "hosted_pro";
   const initial = email[0]?.toUpperCase() ?? "?";
   const usage = describeAllowance(allowance);
@@ -67,6 +75,19 @@ export default function DashboardClient({
       setBillingError('Could not reach the server. Please try again.');
       setBillingLoading(false);
     }
+  }
+
+  // Saves at once; shows the old state again if the save fails.
+  async function handleUpdatesToggle(next: boolean) {
+    setUpdatesOn(next);
+    setUpdatesSaving(true);
+    setUpdatesError('');
+    const data = await saveProductUpdates(next, 'dashboard').catch(() => ({ error: 'Could not reach the server. Please try again.' }));
+    if ('error' in data && data.error) {
+      setUpdatesOn(!next);
+      setUpdatesError(data.error);
+    }
+    setUpdatesSaving(false);
   }
 
   async function handleUpgrade(plan: 'monthly' | 'quarterly') {
@@ -211,6 +232,22 @@ export default function DashboardClient({
               Install the extension <ArrowUpRightIcon size={12} aria-hidden />
             </a>
           </div>
+
+          {/* Product-update emails. Account emails (confirm, reset password) don't depend on it. */}
+          <section aria-label="Email" className="flex flex-col gap-1.5">
+            <div className="flex items-center gap-2.5">
+              <Switch
+                id="product-updates"
+                checked={updatesOn}
+                disabled={updatesSaving}
+                onCheckedChange={handleUpdatesToggle}
+              />
+              <label htmlFor="product-updates" className="cursor-pointer text-[13.5px] text-ink-2">
+                Email me about new features (a few times a year)
+              </label>
+            </div>
+            {updatesError && <p role="alert" className="text-[12px] leading-snug text-destructive">{updatesError}</p>}
+          </section>
         </div>
       </main>
     </div>

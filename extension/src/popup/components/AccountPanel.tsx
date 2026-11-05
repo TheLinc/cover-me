@@ -36,6 +36,8 @@ export default function AccountPanel({ initialView = 'signin', links = true }: {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  // The signup box (#114): unticked until the user ticks it.
+  const [productUpdates, setProductUpdates] = useState(false)
   const [authStatus, setAuthStatus] = useState<AuthStatus>('idle') // email sign-in
   const [googleBusy, setGoogleBusy] = useState(false)
   const [authError, setAuthError] = useState('')
@@ -145,7 +147,7 @@ export default function AccountPanel({ initialView = 'signin', links = true }: {
     try {
       const sess = authView === 'signin'
         ? await signIn(email, password)
-        : await signUp(email, password)
+        : await signUp(email, password, productUpdates)
       await completeSignIn(sess)
       setEmail('')
       setPassword('')
@@ -170,7 +172,7 @@ export default function AccountPanel({ initialView = 'signin', links = true }: {
     setAuthError('')
     setAuthNotice('')
     try {
-      const res = await chrome.runtime.sendMessage({ type: 'GOOGLE_SIGN_IN' }) as GoogleSignInResponse
+      const res = await chrome.runtime.sendMessage({ type: 'GOOGLE_SIGN_IN', productUpdates: authView === 'signup' && productUpdates }) as GoogleSignInResponse
       if (res.success) signedIn(res.session)
       else if (!res.cancelled) {
         setAuthError(res.error || 'Google sign-in failed')
@@ -197,6 +199,7 @@ export default function AccountPanel({ initialView = 'signin', links = true }: {
     if (v === 'signup') {
       setEmail('')
       setPassword('')
+      setProductUpdates(false)
     }
   }
 
@@ -312,6 +315,14 @@ export default function AccountPanel({ initialView = 'signin', links = true }: {
           ) : (
             /* Auth form */
             <>
+              {/* Above both ways in, so it reads as applying to Google too. */}
+              {authView === 'signup' && (
+                <label className="compact-toggle signup-updates">
+                  <input type="checkbox" checked={productUpdates} onChange={(e) => setProductUpdates(e.target.checked)} />
+                  Email me about new features (a few times a year)
+                </label>
+              )}
+
               {GOOGLE_SIGNIN && (
                 <>
                   <button className="btn btn-google" onClick={handleGoogle} disabled={googleBusy || authStatus === 'loading'}>

@@ -459,6 +459,10 @@ verify_jwt = false
 [functions.billing]
 verify_jwt = false
 
+# Also takes the unsubscribe link's signed token, with no sign-in.
+[functions.email-preferences]
+verify_jwt = false
+
 [functions.generate]
 verify_jwt = false
 
