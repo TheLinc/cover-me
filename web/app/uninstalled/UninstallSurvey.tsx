@@ -63,7 +63,7 @@ export function UninstallSurvey() {
 
   if (sent) {
     return (
-      <div className="text-center">
+      <div role="status" className="text-center">
         <h1 className="text-[34px] font-semibold leading-tight tracking-[-0.03em]">Thanks for telling us</h1>
         <p className="mt-6">
           <a href={CHROME_STORE_URL} className="text-brand-strong underline-offset-4 hover:underline">

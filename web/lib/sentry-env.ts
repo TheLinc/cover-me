@@ -15,10 +15,15 @@ export function sentryEnvironment(
 // and Sentry copies the page address into several fields of an event (request,
 // span attributes). Blank it everywhere: only an answer, sent to PostHog,
 // carries the account id.
-const ACCOUNT_ID_PARAM = /([?&]u=)[^&#"\\s]+/g
+const ACCOUNT_ID_PARAM = /([?&]u=)[^&#"\\\s]+/g
 
+// An event JSON can't hold (a cycle, a BigInt) goes unchanged, rather than Sentry dropping it on the throw
 export function dropSurveyAccountId<T>(event: T): T {
-  const json = JSON.stringify(event)
-  if (json.search(ACCOUNT_ID_PARAM) < 0) return event
-  return JSON.parse(json.replace(ACCOUNT_ID_PARAM, '$1'))
+  try {
+    const json = JSON.stringify(event)
+    if (json.search(ACCOUNT_ID_PARAM) < 0) return event
+    return JSON.parse(json.replace(ACCOUNT_ID_PARAM, '$1'))
+  } catch {
+    return event
+  }
 }
