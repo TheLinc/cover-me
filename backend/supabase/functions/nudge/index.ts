@@ -1,10 +1,12 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { json } from '../_shared/cors.ts'
 import { unsubscribeHeaders, unsubscribeUrl } from '../_shared/email-consent.ts'
+import { nudgeEmail, type Version } from './email.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SECRET_KEY = Deno.env.get('SERVICE_KEY')!
 const RESEND_API_BASE = (Deno.env.get('RESEND_API_BASE') || 'https://api.resend.com').replace(/\/+$/, '')
+const SITE_URL = (Deno.env.get('SITE_URL') || 'https://www.cover-me.dev').replace(/\/+$/, '')
 const FROM = 'Lincoln from Cover Me <lincoln@cover-me.dev>'
 const REPLY_TO = 'lincoln@cover-me.dev'
 // Resend's default limit is 2 requests a second.
@@ -43,8 +45,8 @@ Deno.serve(async (req) => {
       continue
     }
     if (!claimed?.length) continue
-    const version = c.has_resume ? 'resume' : 'no_resume'
-    const outcome = await send(c, VERSIONS[version])
+    const version: Version = c.has_resume ? 'resume' : 'no_resume'
+    const outcome = await send(c, version)
     if (outcome === 'sent') {
       sent[version]++
       continue
@@ -73,30 +75,9 @@ async function isScheduler(req: Request): Promise<boolean> {
 
 type Candidate = { user_id: string; email: string; has_resume: boolean }
 
-const VERSIONS = {
-  resume: {
-    subject: 'Your resume is in. Try it on one job',
-    opening: "You added your resume to Cover Me yesterday but haven't tailored it to a job yet.",
-  },
-  no_resume: {
-    subject: 'One step left: add your resume',
-    opening: "You made a Cover Me account yesterday. Add your resume in the extension's Settings and you're one click from a tailored resume.",
-  },
-}
-
-async function send({ user_id: userId, email }: Candidate, { subject, opening }: { subject: string; opening: string }): Promise<'sent' | 'refused' | 'unknown'> {
+async function send({ user_id: userId, email }: Candidate, version: Version): Promise<'sent' | 'refused' | 'unknown'> {
   try {
-    const text = `${opening}
-
-Open any job posting on LinkedIn, Indeed, Greenhouse, Lever or Workday, click the Cover Me icon, and press Tailor. It takes about 30 seconds, and you get 10 free to start.
-
-If something didn't work, reply to this email. I read every one.
-
-Lincoln
-
--- 
-Don't want emails like this? Unsubscribe: ${await unsubscribeUrl(userId)}
-`
+    const { subject, text, html } = nudgeEmail(version, await unsubscribeUrl(userId), SITE_URL)
     const res = await fetch(`${RESEND_API_BASE}/emails`, {
       method: 'POST',
       headers: {
@@ -108,6 +89,7 @@ Don't want emails like this? Unsubscribe: ${await unsubscribeUrl(userId)}
         to: [email],
         reply_to: REPLY_TO,
         subject,
+        html,
         text,
         headers: await unsubscribeHeaders(userId),
       }),

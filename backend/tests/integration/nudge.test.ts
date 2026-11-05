@@ -72,6 +72,12 @@ describe('nudge', () => {
     })
     expect(email.body.text).toContain('You added your resume to Cover Me yesterday')
     expect(email.body.text).toContain('press Tailor')
+    // "-- " with its space is the signature separator mail clients fold.
+    expect(email.body.text).toContain("\nLincoln\n\n-- \nDon't want emails like this?")
+    // The HTML copy, in the auth emails' card: heading, opening, numbered steps.
+    expect(email.body.html).toContain('>Try it on one job</h1>')
+    expect(email.body.html).toContain('You added your resume to Cover Me yesterday but haven&#39;t tailored it to a job yet.')
+    expect(email.body.html).toMatch(/3\.<\/strong>&nbsp; Press Tailor\./)
     expect(await nudgeSentAt(user.id)).not.toBeNull()
 
     await runNudge()
@@ -84,6 +90,8 @@ describe('nudge', () => {
     const [email] = await sentTo(user.email)
     expect(email.body.subject).toBe('One step left: add your resume')
     expect(email.body.text).toMatch(/^You made a Cover Me account yesterday\. Add your resume in the extension's Settings/)
+    expect(email.body.html).toContain('>One step left: add your resume</h1>')
+    expect(email.body.html).toContain('add your resume in Settings.')
     expect(email.body.text).toContain('press Tailor')
   })
 
@@ -94,6 +102,7 @@ describe('nudge', () => {
 
     const token = encodeURIComponent(unsubscribeToken(user.id))
     expect(email.body.text).toContain(`Unsubscribe: http://localhost:3000/unsubscribe?token=${token}`)
+    expect(email.body.html).toContain(`href="http://localhost:3000/unsubscribe?token=${token}"`)
     expect(email.body.headers).toEqual({
       'List-Unsubscribe': expect.stringMatching(new RegExp(`/functions/v1/email-preferences\\?token=${token}>$`)),
       'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',

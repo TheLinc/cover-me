@@ -198,7 +198,7 @@ export const mockStripe = {
 
 export interface SentEmail {
   authorization?: string
-  body: { from: string; to: string[]; reply_to: string; subject: string; text: string; headers: Record<string, string> }
+  body: { from: string; to: string[]; reply_to: string; subject: string; text: string; html: string; headers: Record<string, string> }
 }
 
 export const mockResend = {
