@@ -484,6 +484,20 @@ export async function fetchApplicationsFromBackend(accessToken: string): Promise
   return data.applications ?? []
 }
 
+// Overwrites the account's copy of a tailored resume edited in the editor tab
+// (#118). 404 means the account doesn't hold it (made before Pro, or kept by
+// another account): the browser's copy is the only one, which is fine.
+// keepalive lets the save finish as the tab closes.
+export async function saveResumeEditToBackend(accessToken: string, id: string, resume: TailoredResume, keepalive = false): Promise<void> {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/applications?resume=${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    keepalive,
+    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ resume }),
+  })
+  if (!res.ok && res.status !== 404) throw new Error(`Server error ${res.status}`)
+}
+
 export async function deleteApplicationFromBackend(accessToken: string, id: string): Promise<void> {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/applications?id=${encodeURIComponent(id)}`, {
     method: 'DELETE',

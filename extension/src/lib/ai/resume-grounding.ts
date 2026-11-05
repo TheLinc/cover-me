@@ -205,7 +205,8 @@ export async function groundSkills(skills: unknown, candidate: string, ask?: Ask
   return { skills: kept.length ? kept.join(', ') : undefined, dropped }
 }
 
-function splitSkills(skills: string): string[] {
+// One skill per item, splitting on commas outside parentheses ("Cloud (AWS, GCP)" stays whole).
+export function splitSkills(skills: string): string[] {
   const items: string[] = []
   let depth = 0
   let cur = ''

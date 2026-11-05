@@ -112,6 +112,8 @@ export interface TailorJob {
   // Live progress label derived from the model's streaming output
   // ("Rewriting experience (2 of 3)…") — shown under the popup spinner.
   progress?: string
+  // The finished resume's ID in tailored History, which the editor tab opens.
+  entryId?: string
 }
 
 export interface CoverLetterEntry {

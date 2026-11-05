@@ -7,7 +7,7 @@ import manifest from './manifest.json'
 // jsPDF's `pdfobjectnewwindow` output mode hardcodes a cdnjs URL and injects it
 // as a <script> at runtime — remotely hosted code, which Manifest V3 forbids and
 // the Chrome Web Store rejects on static scan (ref "Blue Argon"). We never use
-// that output mode (only doc.save()), so the branch is dead code — but its mere
+// that output mode (only doc.save() and the editor's output('blob')), so the branch is dead code — but its mere
 // presence in the bundle trips the scanner. Neutralize the URL in every final
 // chunk so dist/ carries no remotely-hosted-code signature.
 function stripJsPdfRemoteCode(): Plugin {
@@ -120,7 +120,7 @@ export default defineConfig(({ mode }) => ({
     outDir: 'dist',
     emptyOutDir: true,
     chunkSizeWarningLimit: 1000,
-    // The welcome tab isn't referenced by the manifest, so name it as an input.
-    rollupOptions: { input: { welcome: 'src/welcome/index.html' } },
+    // The welcome and editor tabs aren't referenced by the manifest, so name them as inputs.
+    rollupOptions: { input: { welcome: 'src/welcome/index.html', editor: 'src/editor/index.html' } },
   },
 }))

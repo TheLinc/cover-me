@@ -3,7 +3,8 @@ import { GOOGLE_SIGNIN } from '../../lib/config'
 import { downloadCoverLetterPdf } from '../../lib/pdf/cover-letter'
 import { downloadTailoredResumePdf } from '../../lib/pdf/resume'
 import { letterSteps, tailorSteps } from '../../lib/progress-steps'
-import { getCandidateContext, resolveMode, saveCandidateContext } from '../../lib/storage'
+import { openResumeEditor } from '../../lib/resume-edit'
+import { getCandidateContext, getTailoredHistory, resolveMode, saveCandidateContext } from '../../lib/storage'
 import GapChips from '../components/GapChips'
 import PageReadNotice from '../components/PageReadNotice'
 import ProgressSteps from '../components/ProgressSteps'
@@ -133,6 +134,9 @@ export default function GeneratePage({ onNavigate }: Props) {
   const [tailorErrorCode, setTailorErrorCode] = useState<'RATE_LIMIT' | 'FAIR_USE' | undefined>()
   const [tailoredResume, setTailoredResume] = useState<TailoredResume | null>(null)
   const [tailoredJob, setTailoredJob] = useState<JobData | null>(null)
+  // The result's ID in tailored History: the editor tab opens it, and an
+  // edit made there replaces what this page saved of it.
+  const [tailoredEntryId, setTailoredEntryId] = useState<string | null>(null)
   const [supplemental, setSupplemental] = useState('')
   const [letterSupplemental, setLetterSupplemental] = useState('')
   const [initialContext, setInitialContext] = useState('')
@@ -197,6 +201,7 @@ export default function GeneratePage({ onNavigate }: Props) {
         if (s.tailorState === 'done' && s.tailoredResume && s.tailoredJob) {
           setTailoredResume(s.tailoredResume as TailoredResume)
           setTailoredJob(s.tailoredJob as JobData)
+          setTailoredEntryId((s.tailoredEntryId as string) ?? null)
           setSupplemental((s.supplemental as string) ?? '')
           setTailorState('done')
           restoredTailorDone = true
@@ -237,6 +242,7 @@ export default function GeneratePage({ onNavigate }: Props) {
         } else if (tj.status === 'done' && !restoredTailorDone && tj.resume) {
           setTailoredResume(tj.resume)
           setTailoredJob(tj.job)
+          setTailoredEntryId(tj.entryId ?? null)
           setSupplemental((s?.supplemental as string) ?? '')
           setTailorState('done')
           setActiveResultTab('resume')
@@ -287,6 +293,7 @@ export default function GeneratePage({ onNavigate }: Props) {
             setTailorProgress('')
             setTailoredResume(tj.resume)
             setTailoredJob(tj.job)
+            setTailoredEntryId(tj.entryId ?? null)
             setTailorState('done')
             setActiveResultTab('resume')
           }
@@ -308,6 +315,7 @@ export default function GeneratePage({ onNavigate }: Props) {
         tailorState: tailorState === 'done' ? 'done' : 'idle',
         tailoredResume: tailorState === 'done' ? tailoredResume : null,
         tailoredJob: tailorState === 'done' ? tailoredJob : null,
+        tailoredEntryId: tailorState === 'done' ? tailoredEntryId : null,
         supplemental,
         letterSupplemental,
         activeResultTab,
@@ -315,7 +323,16 @@ export default function GeneratePage({ onNavigate }: Props) {
         tailorDismissedId: tailorDismissedId.current,
       },
     })
-  }, [state, inputMode, manualTitle, manualCompany, manualDescription, letter, job, createdAt, compact, trim, includeSummary, tailorState, tailoredResume, tailoredJob, supplemental, letterSupplemental, activeResultTab])
+  }, [state, inputMode, manualTitle, manualCompany, manualDescription, letter, job, createdAt, compact, trim, includeSummary, tailorState, tailoredResume, tailoredJob, tailoredEntryId, supplemental, letterSupplemental, activeResultTab])
+
+  // Edited in the editor tab since this page saved it: show the edit.
+  useEffect(() => {
+    if (!tailoredEntryId) return
+    getTailoredHistory().then((list) => {
+      const entry = list.find((e) => e.id === tailoredEntryId)
+      if (entry?.resume.editedAt) setTailoredResume(entry.resume)
+    })
+  }, [tailoredEntryId])
 
   // Candidate context is a standing profile fact, not per-job state — persisted
   // to its own storage key so it survives "New" resets and applies automatically
@@ -965,6 +982,7 @@ export default function GeneratePage({ onNavigate }: Props) {
                     <div className="ats-result">
                       {typeof tailoredResume.atsScore === 'number' && <ScoreRing score={tailoredResume.atsScore} />}
                       <div className="ats-detail">
+                        {tailoredResume.editedAt && <p className="ats-edited">Scored before your edits</p>}
                         <GapChips gaps={tailoredResume.atsGaps ?? []} />
                         {(tailoredResume.atsGaps?.length ?? 0) === 0 && typeof tailoredResume.atsScore === 'number' && tailoredResume.atsScore >= 80 && (
                           <p className="ats-strong">Strong match: no significant gaps.</p>
@@ -993,6 +1011,11 @@ export default function GeneratePage({ onNavigate }: Props) {
                       </svg>
                       Download PDF
                     </button>
+                    {tailoredEntryId && (
+                      <button className="btn btn-secondary btn-compact" onClick={() => openResumeEditor(tailoredEntryId)}>
+                        Edit
+                      </button>
+                    )}
                     <button
                       className="btn btn-secondary btn-compact"
                       onClick={regenerate}

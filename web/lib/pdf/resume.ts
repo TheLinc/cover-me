@@ -11,6 +11,19 @@ const MR = 558  // right margin
 const CW = MR - ML  // content width: 504pt
 
 export function downloadTailoredResumePdf(resume: TailoredResume, jobTitle?: string): void {
+  tailoredResumePdf(resume).save(tailoredResumeFileName(resume, jobTitle))
+}
+
+export function tailoredResumeFileName(resume: TailoredResume, jobTitle?: string): string {
+  const slug = jobTitle
+    ? jobTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+    : 'resume'
+  return `${(resume.name || 'Resume').replace(/\s+/g, '-')}-${slug}.pdf`
+}
+
+// The resume as a jsPDF document: saved by the download, shown as a blob URL
+// by the extension's editor preview, so the two are the same file.
+export function tailoredResumePdf(resume: TailoredResume): jsPDF {
   const doc = new jsPDF({ unit: 'pt', format: 'letter' })
   let y = 52
 
@@ -168,8 +181,5 @@ export function downloadTailoredResumePdf(resume: TailoredResume, jobTitle?: str
     for (const line of section.lines) bullet(line)
   }
 
-  const slug = jobTitle
-    ? jobTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
-    : 'resume'
-  doc.save(`${(resume.name || 'Resume').replace(/\s+/g, '-')}-${slug}.pdf`)
+  return doc
 }

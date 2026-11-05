@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { deleteApplicationFromBackend, ensureValidSession, fetchApplicationsFromBackend, fetchTier, uploadLocalHistory, UploadError } from '../../lib/auth'
 import { downloadCoverLetterPdf } from '../../lib/pdf/cover-letter'
 import { downloadTailoredResumePdf } from '../../lib/pdf/resume'
+import { openResumeEditor } from '../../lib/resume-edit'
 import { accountUpdates, capWarning, groupLocalHistory, groupsFromApplications, ownPending, unclaimed, uploadMessage, uploadSummary, withLocalOnly, type JobGroup } from '../../lib/history'
 import { deleteFromHistory, deleteFromTailoredHistory, getCachedTier, getHistory, getMode, getTailoredHistory, getUploadAsked, markUploadAsked, saveCachedTier, setEntryAccounts } from '../../lib/storage'
 import type { AuthSession, CoverLetter, CoverLetterEntry, TailoredHistoryEntry } from '../../types'
@@ -352,6 +353,11 @@ export default function HistoryPage() {
                           </span>
                           <span className="artifact-date">{formatDate(tr.createdAt)}</span>
                         </div>
+                        {typeof tr.resume.atsScore === 'number' && (
+                          <p className="artifact-meta">
+                            ATS match {tr.resume.atsScore}{tr.resume.editedAt ? ' · Scored before your edits' : ''}
+                          </p>
+                        )}
                         <div className="artifact-actions">
                           <button
                             className="btn btn-secondary btn-sm"
@@ -363,6 +369,9 @@ export default function HistoryPage() {
                               <line x1="12" y1="15" x2="12" y2="3" />
                             </svg>
                             Download PDF
+                          </button>
+                          <button className="btn btn-secondary btn-sm" onClick={() => openResumeEditor(tr.id)}>
+                            Edit
                           </button>
                         </div>
                       </div>

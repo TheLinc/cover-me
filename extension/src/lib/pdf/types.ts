@@ -44,6 +44,9 @@ export interface TailoredResume {
   otherSections?: ResumeSection[]
   atsScore?: number
   atsGaps?: string[]
+  // Set when the user edits it in the extension's editor tab (#118). The ATS
+  // score is from before the edit, and says so.
+  editedAt?: string
 }
 
 // The job fields the letter's PDF prints. The extension's JobData has more.
