@@ -15,6 +15,7 @@
 //   POST /emails               Resend stand-in (nudge function, via RESEND_API_BASE)
 //   GET  /__mock/emails        every email sent since the last reset
 //   POST /__mock/email-fail-next { status } → the next POST /emails fails
+//   POST /__mock/email-drop-next       → the next POST /emails has its connection cut
 
 import { createServer, type IncomingMessage, type Server } from 'node:http'
 
@@ -113,6 +114,7 @@ type StripeFailure = { status: number; code: string } | null
 type SentEmail = { authorization: string | undefined; body: Record<string, unknown> }
 const sentEmails: SentEmail[] = []
 let emailFailNext: number | null = null
+let emailDropNext = false
 
 const stripeState = {
   subscriptions: [] as MockSubscription[],
@@ -178,6 +180,7 @@ export function startMockAnthropic(port: number): Promise<Server> {
       stripeCalls.length = 0
       sentEmails.length = 0
       emailFailNext = null
+      emailDropNext = false
       stripeState.subscriptions = []
       stripeState.missingCustomer = false
       stripeState.customerError = null
@@ -320,8 +323,16 @@ export function startMockAnthropic(port: number): Promise<Server> {
       emailFailNext = JSON.parse((await readBody(req)) || '{}').status ?? 500
       return res.writeHead(204).end()
     }
+    if (req.method === 'POST' && url === '/__mock/email-drop-next') {
+      emailDropNext = true
+      return res.writeHead(204).end()
+    }
     if (req.method === 'POST' && url === '/emails') {
       const body = JSON.parse(await readBody(req))
+      if (emailDropNext) {
+        emailDropNext = false
+        return req.socket.destroy()
+      }
       if (emailFailNext) {
         const status = emailFailNext
         emailFailNext = null

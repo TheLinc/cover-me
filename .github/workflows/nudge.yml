@@ -1,8 +1,9 @@
 # The one-day follow-up email (#113): once a day, the nudge function emails
 # accounts that signed up 1 to 7 days ago and never generated. Who gets it,
 # and the NUDGE_ENABLED off switch, live in the function. The run fails (and
-# GitHub emails the repo owner) if the call fails or any send failed; failed
-# sends are retried by the next run.
+# GitHub emails the repo owner) if the call fails or any send failed. A send
+# Resend refused is retried by the next run; one that got no answer is not,
+# since it may have gone out.
 #
 # NUDGE_SECRET must match the function's NUDGE_SECRET secret on Supabase.
 # GitHub disables scheduled workflows after 60 days with no repo activity: see

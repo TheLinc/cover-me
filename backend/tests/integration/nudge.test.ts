@@ -143,4 +143,15 @@ describe('nudge', () => {
     expect(await sentTo(user.email)).toHaveLength(1)
     expect(await nudgeSentAt(user.id)).not.toBeNull()
   })
+
+  // Resend may have delivered it, so it is never sent again.
+  it('keeps the claim when a send ends with no answer', async () => {
+    const user = await signedUpTwoDaysAgo()
+    await mockResend.dropNext()
+    expect((await (await runNudge()).json()).failed).toBeGreaterThanOrEqual(1)
+    expect(await nudgeSentAt(user.id)).not.toBeNull()
+
+    await runNudge()
+    expect(await sentTo(user.email)).toEqual([])
+  })
 })

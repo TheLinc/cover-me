@@ -204,6 +204,7 @@ export interface SentEmail {
 export const mockResend = {
   sent: async (): Promise<SentEmail[]> => (await fetch(`${MOCK_URL}/__mock/emails`)).json(),
   failNext: (status = 500) => fetch(`${MOCK_URL}/__mock/email-fail-next`, { method: 'POST', body: JSON.stringify({ status }) }),
+  dropNext: () => fetch(`${MOCK_URL}/__mock/email-drop-next`, { method: 'POST' }),
 }
 
 export const JOB = {

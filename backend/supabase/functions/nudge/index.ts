@@ -94,7 +94,7 @@ If something didn't work, reply to this email. I read every one.
 
 Lincoln
 
---
+-- 
 Don't want emails like this? Unsubscribe: ${await unsubscribeUrl(userId)}
 `
     const res = await fetch(`${RESEND_API_BASE}/emails`, {
