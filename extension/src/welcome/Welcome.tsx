@@ -7,6 +7,8 @@ import logoIcon from '../public/icon/48.png'
 
 type StepState = 'done' | 'current' | 'waiting'
 
+const JOB_SITES = [['LinkedIn', 'https://www.linkedin.com/jobs/'], ['Indeed', 'https://www.indeed.com/']] as const
+
 export default function Welcome() {
   // null until the first read, so a set-up user doesn't see the lock flash.
   const [ready, setReady] = useState<boolean | null>(null)
@@ -81,6 +83,18 @@ export default function Welcome() {
             Pin Cover Me: click the puzzle icon in Chrome's toolbar, then the pin next to Cover Me.
             On any posting (LinkedIn, Indeed, Greenhouse, Lever, Workday and more), click Cover Me, then Generate.
           </p>
+          {/* Only once set up: earlier, they'd invite skipping steps 1 and 2. The
+              other sites are hiring systems on each company's site, with no
+              job search to link to. */}
+          {postingState === 'current' && (
+            <div className="welcome-links">
+              {JOB_SITES.map(([name, url]) => (
+                <a key={name} className="btn btn-secondary" href={url} target="_blank" rel="noreferrer">
+                  Find jobs on {name}<span className="welcome-sr"> (opens in a new tab)</span>
+                </a>
+              ))}
+            </div>
+          )}
         </Step>
       </ol>}
     </main>
