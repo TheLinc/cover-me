@@ -265,6 +265,11 @@ export default function GeneratePage({ onNavigate }: Props) {
   useEffect(() => {
     function handler(changes: { [key: string]: chrome.storage.StorageChange }, area: string) {
       if (area !== 'local') return
+      // The design check finishes in the worker while the popup stays open.
+      if (changes.resume) {
+        setResumeData((changes.resume.newValue as ResumeData | undefined) ?? null)
+        setHasResume(!!changes.resume.newValue)
+      }
       if (changes.coverJob) {
         const cj = changes.coverJob.newValue as CoverJob | undefined
         if (cj && cj.id !== coverDismissedId.current) {

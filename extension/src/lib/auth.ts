@@ -340,7 +340,8 @@ export async function uploadResumeToBackend(
     body: JSON.stringify({ text, filename, ...(parse ? { parse: true } : {}) }),
   })
   const data = await res.json().catch(() => ({})) as Record<string, unknown>
-  if (!res.ok) throw new Error((data.error as string) ?? 'Resume sync failed')
+  // A parse answer is sent as it's ready (heartbeatJson), so a late failure comes with status 200.
+  if (!res.ok || data.error) throw new Error((data.error as string) ?? 'Resume sync failed')
   const structured = data.structured as ParsedResume | undefined
   return structured && Array.isArray(structured.experience) ? structured : undefined
 }

@@ -44,7 +44,7 @@ interface Para {
   inTextBox: boolean
   cell: number // the table cell it sits in, -1 outside tables
   keep: boolean // holds the section's settings: emptied, never removed
-  breaks: Edit[] // its soft line breaks, removed when its text is replaced
+  breaks: Edit[] // its soft line breaks and non-breaking hyphens, removed when its text is replaced
 }
 
 // Tailors file's text from tailored (when given) and reports what could be
@@ -317,6 +317,7 @@ function scan(xml: string): { paras: Para[]; layoutWarning?: DesignCheck['layout
       textStart = end
     } else if (name === 'w:noBreakHyphen' && stack[stack.length - 1] === 'w:r' && para) {
       pieces.get(para)!.push('‑') // as mammoth reads it
+      para.breaks.push({ start: at, end, text: '' }) // part of the old text
     } else if ((name === 'w:tab' || name === 'w:br' || name === 'w:cr') && stack[stack.length - 1] === 'w:r' && para) {
       pieces.get(para)!.push(' ')
       // A line break, not a page or column break.

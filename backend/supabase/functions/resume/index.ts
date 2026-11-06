@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2'
 import { handleCors, json } from '../_shared/cors.ts'
+import { heartbeatJson } from '../_shared/heartbeat-json.ts'
 import { decrypt, encrypt, sameCiphertext } from '../_shared/encrypt.ts'
 import { isValidParsedResume, parseResumeStructure, type ParsedResume } from '../_shared/resume-parse.ts'
 import { readBody } from '../_shared/read-body.ts'
@@ -135,7 +136,8 @@ Deno.serve(async (req) => {
       if (error) return json({ error: 'Failed to save resume' }, 500)
       if (!wantParse) return json({ success: true })
       const cached = await readParse(previous!.structured_encrypted)
-      return json({ success: true, structured: cached ?? await parseNow(supabase, userId, text, previous!.text_encrypted) })
+      if (cached) return json({ success: true, structured: cached })
+      return heartbeatJson('resume', 'Resume parse failed', async () => ({ success: true, structured: await parseNow(supabase, userId, text, previous!.text_encrypted) }))
     }
 
     let text_encrypted: string
@@ -154,7 +156,7 @@ Deno.serve(async (req) => {
 
     if (error) return json({ error: 'Failed to save resume' }, 500)
 
-    if (wantParse) return json({ success: true, structured: await parseNow(supabase, userId, text, text_encrypted) })
+    if (wantParse) return heartbeatJson('resume', 'Resume parse failed', async () => ({ success: true, structured: await parseNow(supabase, userId, text, text_encrypted) }))
     EdgeRuntime.waitUntil(parseNow(supabase, userId, text, text_encrypted))
 
     return json({ success: true })

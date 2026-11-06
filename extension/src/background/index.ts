@@ -504,7 +504,9 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
     // Lazy parse: run once on first tailor, cache result for all subsequent tailors.
     // Re-run automatically when resume is replaced (saveResume clears the parsed field),
     // and once for a parse from before extra sections (publications…) were kept.
-    let parsed = resumeData.parsed
+    // "Your design" places the text with the parse its file was checked
+    // against, so the tailor starts from that same parse.
+    let parsed = design.parsed ?? resumeData.parsed
     if (!Array.isArray(parsed?.otherSections)) {
       onProgress('Reading your resume (first run only)…')
       parsed = await parseResumeStructure(resumeData.text, settings.provider, apiKey)

@@ -1,7 +1,8 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { consumeGeneration } from '../_shared/limits.ts'
 import { ANTHROPIC_MESSAGES_URL, SONNET_BETA_HEADER, SONNET_FIELDS, SONNET_MAX_TOKENS } from '../_shared/anthropic.ts'
-import { corsHeaders, handleCors, json } from '../_shared/cors.ts'
+import { handleCors, json } from '../_shared/cors.ts'
+import { heartbeatJson } from '../_shared/heartbeat-json.ts'
 import { decrypt } from '../_shared/encrypt.ts'
 import { buildLintRetryMessage, lintLetter } from '../_shared/letter-lint.ts'
 import { findOrCreateJobApplication } from '../_shared/job-application.ts'
@@ -78,7 +79,7 @@ Deno.serve(async (req) => {
   const variation = pickLetterVariation()
   const prompt = buildPrompt(job, resumeText, supplemental, variation)
 
-  return heartbeatJson(async () => {
+  return heartbeatJson('generate', 'AI generation failed. Please try again.', async () => {
     let draft: string
     try {
       draft = stripMarkdown(await callClaude([{ role: 'user', content: prompt }]))
@@ -129,40 +130,6 @@ Deno.serve(async (req) => {
     return { letter }
   })
 })
-
-// Chrome stops an extension service worker whose fetch() gets no response for
-// 30 s, and a letter plus a lint retry can take longer (median 17.6 s, max
-// 23.5 s without one). So the headers go out now and a space every 5 s until
-// the JSON is ready; JSON parsers skip leading whitespace, so the published
-// extension reads it unchanged. The status is already 200 by then, so a late
-// failure is reported as { error } in the body.
-function heartbeatJson(work: () => Promise<Record<string, unknown>>): Response {
-  const enc = new TextEncoder()
-  let beat: number | undefined
-  const body = new ReadableStream<Uint8Array>({
-    async start(controller) {
-      const send = (s: string) => {
-        try { controller.enqueue(enc.encode(s)) } catch { /* client went away */ }
-      }
-      send(' ')
-      beat = setInterval(() => send(' '), 5000)
-      let result: Record<string, unknown>
-      try {
-        result = await work()
-      } catch (err) {
-        console.error('generate error:', err instanceof Error ? err.message : String(err))
-        result = { error: 'AI generation failed. Please try again.' }
-      }
-      clearInterval(beat)
-      send(JSON.stringify(result))
-      try { controller.close() } catch { /* already closed */ }
-    },
-    cancel() {
-      clearInterval(beat)
-    },
-  })
-  return new Response(body, { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
-}
 
 // Sonnet for cover letters: the letter is the product's flagship "must sound
 // human" artifact and the prompt carries ~60 constraints — the small models

@@ -87,9 +87,11 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
       setStatus('saved')
       setTimeout(() => setStatus('idle'), 2500)
 
-      // Best-effort cloud sync for hosted users. A Word file's check sends the
-      // text again to wait for the server's parse; the same text costs nothing.
-      if (hosted && session) {
+      // Best-effort cloud sync for hosted users. A Word file's check uploads
+      // the text itself and waits for the server's parse of it: a second
+      // upload here would start a second parse that can come out different.
+      // Its failures show on the card.
+      if (hosted && session && !bytes) {
         uploadResumeToBackend(session.access_token, text, file.name).catch((err) => {
           setError(`Saved locally, but cloud sync failed: ${err instanceof Error ? err.message : 'unknown error'}`)
         })

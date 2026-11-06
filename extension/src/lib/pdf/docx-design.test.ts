@@ -156,8 +156,9 @@ describe('tailorDesign', () => {
 
   test('a non-breaking hyphen matches the parse, as mammoth reads it', async () => {
     const hyphen = '<w:p><w:r><w:t>Ran e</w:t><w:noBreakHyphen/><w:t>commerce checkout</w:t></w:r></w:p>'
-    const { check } = await tailorDesign(await docx(hyphen), parsed([['Ran e‑commerce checkout']]))
+    const { check, bytes } = await tailorDesign(await docx(hyphen), parsed([['Ran e‑commerce checkout']]), parsed([['Owned checkout for an online store']]))
     expect(check.matched).toBe(1)
+    expect(await bodyOf(bytes!)).not.toContain('noBreakHyphen')
   })
 
   test('no summary in the file is never added, and skills split over lines are kept', async () => {
