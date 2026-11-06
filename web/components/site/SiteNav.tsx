@@ -4,7 +4,9 @@ import { useEffect, useState, type ReactNode } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { ListIcon } from '@phosphor-icons/react/dist/ssr'
 import { Button } from '@/components/ui/button'
+import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { cn, CHROME_STORE_URL } from '@/lib/utils'
 import type { NavLink } from './app-links'
 
@@ -22,6 +24,9 @@ const MARKETING_LINKS: NavLink[] = [
 export function SiteNav({ actions, links }: { actions?: ReactNode; links?: NavLink[] }) {
   const pathname = usePathname()
   const [scrolled, setScrolled] = useState(false)
+  // Guides keep one SiteNav across pages, so Back with the menu open must close it.
+  const [menuOpen, setMenuOpen] = useState(false)
+  useEffect(() => setMenuOpen(false), [pathname])
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24)
     onScroll()
@@ -56,7 +61,7 @@ export function SiteNav({ actions, links }: { actions?: ReactNode; links?: NavLi
         <div className="ml-auto flex items-center gap-2">
           {actions ?? (
             <>
-              <Button asChild variant="ghost" size="sm" className="max-sm:hidden">
+              <Button asChild variant="ghost" size="sm" className="max-md:hidden">
                 <Link href="/auth">Sign in</Link>
               </Button>
               <Button asChild size="sm">
@@ -65,6 +70,30 @@ export function SiteNav({ actions, links }: { actions?: ReactNode; links?: NavLi
                 </a>
               </Button>
             </>
+          )}
+          {!links && (
+            // Below md the marketing links and Sign in live in this sheet.
+            <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label="Open menu" className="md:hidden">
+                  <ListIcon size={22} aria-hidden />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" aria-describedby={undefined} className="flex flex-col gap-1 bg-paper px-4 pt-16">
+                <SheetTitle className="sr-only">Menu</SheetTitle>
+                {[...MARKETING_LINKS, ...(actions ? [] : [{ href: '/auth', label: 'Sign in' }])].map((l) => (
+                  <SheetClose asChild key={l.href}>
+                    <Link
+                      href={l.href}
+                      aria-current={pathname === l.href ? 'page' : undefined}
+                      className="flex h-11 items-center rounded-full px-4 text-[15px] font-medium text-ink-2 transition-colors hover:bg-panel hover:text-ink aria-[current=page]:bg-panel aria-[current=page]:text-ink"
+                    >
+                      {l.label}
+                    </Link>
+                  </SheetClose>
+                ))}
+              </SheetContent>
+            </Sheet>
           )}
         </div>
       </div>
