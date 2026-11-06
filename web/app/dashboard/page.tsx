@@ -4,6 +4,7 @@ import { createServerSupabaseClient } from '@/lib/supabase-server'
 import DashboardClient from './DashboardClient'
 import type { Allowance } from '@/lib/limits'
 import { avatarUrl } from '@/lib/avatar'
+import { greetingFor } from '@/lib/greeting'
 import { RecentApplications, RecentApplicationsSkeleton } from './ApplicationHistory'
 import { Toaster } from '@/components/ui/sonner'
 import Stripe from 'stripe'
@@ -30,7 +31,7 @@ export default async function DashboardPage() {
 
   const { data: userData } = await supabase
     .from('users')
-    .select('tier, created_at, stripe_customer_id, product_updates')
+    .select('tier, stripe_customer_id')
     .eq('id', user.id)
     .single()
 
@@ -59,11 +60,10 @@ export default async function DashboardPage() {
     <DashboardClient
       email={user.email ?? ''}
       avatar={avatarUrl(user.user_metadata)}
+      greeting={greetingFor(new Date())}
       tier={userData?.tier ?? 'hosted_free'}
       trial={trial}
-      memberSince={userData?.created_at ?? user.created_at}
       allowance={(allowance as Allowance | null) ?? null}
-      productUpdates={userData?.product_updates ?? false}
       history={history}
     />
     <Toaster />

@@ -2,14 +2,12 @@
 
 import { useState, type ReactNode } from "react";
 import { openBilling } from "@/lib/billing";
-import { saveProductUpdates } from "@/lib/email-preferences";
 import { describeAllowance, type Allowance } from "@/lib/limits";
 import { DaysLeft, LocalDate } from "./LocalDate";
 import type { TrialState } from "@/lib/stripe-tier";
 import { CHROME_STORE_URL, cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Switch } from "@/components/ui/switch";
 import {
   ArrowUpRightIcon,
   GoogleChromeLogoIcon,
@@ -18,20 +16,19 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { SiteNav } from '@/components/site/SiteNav'
 import { APP_LINKS } from '@/components/site/app-links'
-import { SignOutButton } from '@/components/site/SignOutButton'
+import { AccountMenu } from '@/components/site/AccountMenu'
 
 const TILE = "flex flex-col rounded-[20px] border border-line bg-surface px-6 py-5 shadow-[0_1px_2px_rgba(30,27,75,0.05),0_10px_28px_-16px_rgba(30,27,75,0.22)]";
 
 interface Props {
   email: string;
   avatar: string | null;
+  // greetingFor(), picked on the server so it can't differ after hydration.
+  greeting: string;
   tier: string;
   // A gift trial keeps the upgrade buttons; a plan bought during one shows its first payment.
   trial: TrialState;
-  memberSince: string;
   allowance: Allowance | null;
-  // Consent to product-update emails (#114), from the users row.
-  productUpdates: boolean;
   // Recent applications, rendered by the server page and streamed in.
   history: ReactNode;
 }
@@ -39,56 +36,18 @@ interface Props {
 export default function DashboardClient({
   email,
   avatar,
+  greeting,
   tier,
   trial: { giftTrialEnd, firstPayment },
-  memberSince,
   allowance,
-  productUpdates,
   history,
 }: Props) {
-  const [avatarFailed, setAvatarFailed]     = useState(false);
   const [upgrading, setUpgrading]           = useState<'monthly' | 'quarterly' | null>(null);
   const [upgradeError, setUpgradeError]     = useState('');
-  const [billingLoading, setBillingLoading] = useState(false);
-  const [billingError, setBillingError]     = useState('');
-  const [updatesOn, setUpdatesOn]           = useState(productUpdates);
-  const [updatesSaving, setUpdatesSaving]   = useState(false);
-  const [updatesError, setUpdatesError]     = useState('');
   const isPro = tier === "hosted_pro";
-  const initial = email[0]?.toUpperCase() ?? "?";
   const usage = describeAllowance(allowance);
   const leftPct = usage && usage.limit > 0 ? ((usage.limit - usage.used) / usage.limit) * 100 : 0;
   const proDaily = allowance?.pro_daily ?? 25;
-
-  async function handleBillingPortal() {
-    setBillingLoading(true);
-    setBillingError('');
-    try {
-      const data = await openBilling('portal');
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        setBillingError(data.error ?? 'Something went wrong. Please try again.');
-        setBillingLoading(false);
-      }
-    } catch {
-      setBillingError('Could not reach the server. Please try again.');
-      setBillingLoading(false);
-    }
-  }
-
-  // Saves at once; shows the old state again if the save fails.
-  async function handleUpdatesToggle(next: boolean) {
-    setUpdatesOn(next);
-    setUpdatesSaving(true);
-    setUpdatesError('');
-    const data = await saveProductUpdates(next, 'dashboard').catch(() => ({ error: 'Could not reach the server. Please try again.' }));
-    if ('error' in data && data.error) {
-      setUpdatesOn(!next);
-      setUpdatesError(data.error);
-    }
-    setUpdatesSaving(false);
-  }
 
   async function handleUpgrade(plan: 'monthly' | 'quarterly') {
     setUpgrading(plan);
@@ -110,34 +69,12 @@ export default function DashboardClient({
   return (
     <div className="min-h-screen bg-background">
 
-      <SiteNav links={APP_LINKS} actions={<SignOutButton />} />
+      <SiteNav links={APP_LINKS} actions={<AccountMenu email={email} avatar={avatar} />} />
 
       <main className="relative z-[1] px-5 pb-24 pt-12">
         <div className="mx-auto flex max-w-[1040px] flex-col gap-8">
 
-          {/* Who's here */}
-          <header className="flex items-center justify-between gap-6">
-            <div className="flex min-w-0 flex-col gap-1.5">
-              <h1 className="text-[34px] font-semibold leading-tight tracking-[-0.03em] text-ink">Good to see you.</h1>
-              <p className="truncate text-[14px] text-ink-2">
-                {email} · Member since <LocalDate iso={memberSince} options={{ month: "long", year: "numeric" }} />
-              </p>
-            </div>
-            <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand-tint text-[18px] font-semibold text-brand-ink">
-              {avatar && !avatarFailed ? (
-                // A plain img: next/image would need Google's image host allowed in next.config.
-                <img
-                  src={avatar}
-                  alt=""
-                  referrerPolicy="no-referrer"
-                  className="h-full w-full object-cover"
-                  onError={() => setAvatarFailed(true)}
-                />
-              ) : (
-                initial
-              )}
-            </div>
-          </header>
+          <h1 className="text-[34px] font-semibold leading-tight tracking-[-0.03em] text-ink">{greeting}</h1>
 
           {/* Plan and usage: two tiles, stacked on phones. Usage leads with what's left. */}
           <section aria-label="Plan and usage" className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -179,16 +116,9 @@ export default function DashboardClient({
                     <strong className="font-semibold text-ink">First payment <LocalDate iso={firstPayment.date} options={{ month: "long", day: "numeric" }} />:</strong> {firstPayment.price}.
                   </p>
                 )}
-                <Button variant="outline" size="sm" className="mt-1 rounded-full" onClick={handleBillingPortal} disabled={billingLoading}>
-                  {billingLoading
-                    ? <><Spinner className="size-3.5" />Loading</>
-                    : <>Manage billing <ArrowUpRightIcon size={12} aria-hidden /></>
-                  }
-                </Button>
-                {billingError && <p className="text-[12px] leading-snug text-destructive">{billingError}</p>}
               </div>
             ) : (
-              <div className={cn(TILE, "items-start gap-2.5 border-brand-tint bg-brand-tint")}>
+              <div id="upgrade" className={cn(TILE, "scroll-mt-24 items-start gap-2.5 border-brand-tint bg-brand-tint")}>
                 {giftTrialEnd ? (
                   <>
                     <span className="text-[12.5px] font-medium text-brand-ink">Pro trial<DaysLeft iso={giftTrialEnd} /></span>
@@ -232,22 +162,6 @@ export default function DashboardClient({
               Install the extension <ArrowUpRightIcon size={12} aria-hidden />
             </a>
           </div>
-
-          {/* Product-update emails. Account emails (confirm, reset password) don't depend on it. */}
-          <section aria-label="Email" className="flex flex-col gap-1.5">
-            <div className="flex items-center gap-2.5">
-              <Switch
-                id="product-updates"
-                checked={updatesOn}
-                disabled={updatesSaving}
-                onCheckedChange={handleUpdatesToggle}
-              />
-              <label htmlFor="product-updates" className="cursor-pointer text-[13.5px] text-ink-2">
-                Email me about new features (a few times a year)
-              </label>
-            </div>
-            {updatesError && <p role="alert" className="text-[12px] leading-snug text-destructive">{updatesError}</p>}
-          </section>
         </div>
       </main>
     </div>

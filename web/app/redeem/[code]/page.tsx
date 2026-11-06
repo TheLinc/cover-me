@@ -5,7 +5,8 @@ import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { Button } from '@/components/ui/button'
 import { SiteNav } from '@/components/site/SiteNav'
 import { APP_LINKS } from '@/components/site/app-links'
-import { SignOutButton } from '@/components/site/SignOutButton'
+import { AccountMenu } from '@/components/site/AccountMenu'
+import { avatarUrl } from '@/lib/avatar'
 import { RedeemTrial } from './RedeemTrial'
 
 // A gift trial link from `pnpm trial-links` (#112). Not in sitemap.ts.
@@ -26,7 +27,7 @@ export default async function RedeemPage({ params }: { params: Promise<{ code: s
       {user ? (
         // Signed in: the account nav, so it's clear whose account this is.
         // Signing out comes back here, so the link can go to another account.
-        <SiteNav links={APP_LINKS} actions={<SignOutButton to={here} />} />
+        <SiteNav links={APP_LINKS} actions={<AccountMenu email={user.email ?? ''} avatar={avatarUrl(user.user_metadata)} signOutTo={here} />} />
       ) : (
         <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-md">
           <div className="max-w-3xl mx-auto px-6 h-16 flex items-center justify-between">
