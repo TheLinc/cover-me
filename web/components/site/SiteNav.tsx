@@ -46,7 +46,7 @@ export function SiteNav({ actions, links }: { actions?: ReactNode; links?: NavLi
           <Image src="/logo.png" width={28} height={28} alt="" className="rounded-[8px]" />
           <span className={cn('text-[18px] font-semibold tracking-[-0.02em] text-ink', links && 'max-sm:sr-only')}>Cover Me</span>
         </Link>
-        <nav aria-label="Main" className={cn('flex flex-1 gap-1', !links && 'max-md:hidden')}>
+        <nav aria-label="Main" className={cn('flex flex-1 gap-1', !links && 'max-lg:hidden')}>
           {(links ?? MARKETING_LINKS).map((l) => (
             <Link
               key={l.href}
@@ -61,7 +61,7 @@ export function SiteNav({ actions, links }: { actions?: ReactNode; links?: NavLi
         <div className="ml-auto flex items-center gap-2">
           {actions ?? (
             <>
-              <Button asChild variant="ghost" size="sm" className="max-md:hidden">
+              <Button asChild variant="ghost" size="sm" className="max-lg:hidden">
                 <Link href="/auth">Sign in</Link>
               </Button>
               <Button asChild size="sm">
@@ -72,10 +72,10 @@ export function SiteNav({ actions, links }: { actions?: ReactNode; links?: NavLi
             </>
           )}
           {!links && (
-            // Below md the marketing links and Sign in live in this sheet.
+            // Below lg the marketing links and Sign in live in this sheet.
             <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label="Open menu" className="md:hidden">
+                <Button variant="ghost" size="icon" aria-label="Open menu" className="lg:hidden">
                   <ListIcon size={22} aria-hidden />
                 </Button>
               </SheetTrigger>
