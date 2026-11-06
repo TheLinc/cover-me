@@ -2,7 +2,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import type { ReactNode } from 'react'
-import { StarIcon } from '@phosphor-icons/react/dist/ssr'
+import type { Icon } from '@phosphor-icons/react'
+import { CreditCardIcon, EnvelopeSimpleIcon, StarIcon, TrashIcon, UserCircleIcon } from '@phosphor-icons/react/dist/ssr'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { avatarUrl } from '@/lib/avatar'
 import { SiteNav } from '@/components/site/SiteNav'
@@ -10,6 +11,7 @@ import { APP_LINKS } from '@/components/site/app-links'
 import { AccountMenu } from '@/components/site/AccountMenu'
 import { Badge } from '@/components/ui/badge'
 import { LocalDate } from '../LocalDate'
+import { DeleteAccount } from './DeleteAccount'
 import { ManageBilling } from './ManageBilling'
 import { ProductUpdatesSwitch } from './ProductUpdatesSwitch'
 
@@ -17,10 +19,14 @@ export const metadata: Metadata = { title: 'Settings', robots: { index: false } 
 
 const TILE = 'flex flex-col items-start gap-2.5 rounded-[20px] border border-line bg-surface px-6 py-5 shadow-[0_1px_2px_rgba(30,27,75,0.05),0_10px_28px_-16px_rgba(30,27,75,0.22)]'
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
+function Section({ title, icon: SectionIcon, children }: { title: string; icon: Icon; children: ReactNode }) {
+  const id = `settings-${title.toLowerCase().replace(/\s+/g, '-')}`
   return (
-    <section aria-labelledby={`settings-${title}`} className={TILE}>
-      <h2 id={`settings-${title}`} className="text-[12.5px] font-normal text-subtle">{title}</h2>
+    <section aria-labelledby={id} className={TILE}>
+      <h2 id={id} className="flex items-center gap-1.5 text-[12.5px] font-normal text-subtle">
+        <SectionIcon size={15} aria-hidden />
+        <span className="cap-center">{title}</span>
+      </h2>
       {children}
     </section>
   )
@@ -41,13 +47,13 @@ export default async function SettingsPage() {
         <div className="mx-auto flex max-w-[1040px] flex-col gap-5">
           <h1 className="text-[34px] font-semibold leading-tight tracking-[-0.03em] text-ink">Settings</h1>
           <div className="flex max-w-[640px] flex-col gap-5">
-          <Section title="Account">
+          <Section title="Account" icon={UserCircleIcon}>
             <p className="break-all text-[15px] font-medium text-ink">{email}</p>
             <p className="text-[13.5px] text-ink-2">
               Member since <LocalDate iso={userData?.created_at ?? user.created_at} options={{ month: 'long', year: 'numeric' }} />
             </p>
           </Section>
-          <Section title="Plan">
+          <Section title="Plan" icon={CreditCardIcon}>
             {userData?.tier === 'hosted_pro' ? (
               <>
                 <Badge variant="pro">Pro <StarIcon size={11} weight="fill" aria-hidden /></Badge>
@@ -62,8 +68,11 @@ export default async function SettingsPage() {
               </>
             )}
           </Section>
-          <Section title="Emails">
+          <Section title="Emails" icon={EnvelopeSimpleIcon}>
             <ProductUpdatesSwitch initial={userData?.product_updates ?? false} />
+          </Section>
+          <Section title="Delete account" icon={TrashIcon}>
+            <DeleteAccount pro={userData?.tier === 'hosted_pro'} />
           </Section>
           </div>
         </div>

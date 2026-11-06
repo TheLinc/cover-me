@@ -456,6 +456,9 @@ verify_jwt = false
 [functions.applications]
 verify_jwt = false
 
+[functions.account]
+verify_jwt = false
+
 [functions.billing]
 verify_jwt = false
 
