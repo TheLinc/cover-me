@@ -34,7 +34,7 @@ describe('deleteAccount', () => {
 
   it('asks for a fresh sign-in when the session is rejected', async () => {
     vi.stubGlobal('fetch', async () => Response.json({ error: 'Invalid token' }, { status: 401 }))
-    expect(await deleteAccount()).toEqual({ error: 'Your session has ended. Sign in again to delete your account.' })
+    expect(await deleteAccount()).toEqual({ error: "Your session has ended. If you just deleted your account, it's gone. Otherwise, sign in again." })
     expect(signOut).not.toHaveBeenCalled()
   })
 

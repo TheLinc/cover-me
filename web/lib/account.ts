@@ -14,8 +14,9 @@ export async function deleteAccount(): Promise<{ deleted?: true; error?: string 
     method: 'DELETE',
     headers: { Authorization: `Bearer ${session.access_token}` },
   })
-  // An expired session, or an account another tab already deleted.
-  if (res.status === 401) return { error: 'Your session has ended. Sign in again to delete your account.' }
+  // An expired session, or an account already deleted (another tab, or a
+  // retry after the first reply was lost).
+  if (res.status === 401) return { error: "Your session has ended. If you just deleted your account, it's gone. Otherwise, sign in again." }
   // A gateway error (502/504) can come back as an HTML page, not JSON.
   const data = (await res.json().catch(() => null)) as { deleted?: true; error?: string } | null
   if (!data?.deleted) return { error: data?.error ?? FAILED }
