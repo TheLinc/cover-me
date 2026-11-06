@@ -325,8 +325,8 @@ export default function PrivacyPage() {
                 came from, your browser details (browser, operating system, device type, screen size and
                 language) and your time zone. When you click a link to Cover Me&apos;s Chrome Web Store
                 page, we also count the click and that link&apos;s label (such as &ldquo;Add to
-                Chrome&rdquo;); no other clicks are recorded. Nothing is stored in your browser: no cookies and no local
-                storage. PostHog uses your IP address only to make a one-day visitor count, a one-way
+                Chrome&rdquo;); no other clicks are recorded. Counting visits stores nothing in your browser: no cookies
+                and no local storage. PostHog uses your IP address only to make a one-day visitor count, a one-way
                 hash with your browser details and a salt it deletes daily, and does not store the
                 address or any location derived from it.
                 Visits are not linked to your account, and signed-in pages (sign-in, dashboard, checkout)
@@ -339,7 +339,10 @@ export default function PrivacyPage() {
                 Cover Me account ID. If you answer, we store your answer, any comment you write, your
                 answer to the optional follow-up question some answers get, the version and that
                 account ID in PostHog, so a signed-in answer is linked to your account.
-                Answering is optional, and the survey asks for nothing else about you.
+                Answering is optional, and the survey asks for nothing else about you. After you
+                answer, your browser keeps the time you answered in its local storage, and for the
+                next 24 hours the survey page shows a thank-you instead of asking again. It holds
+                nothing else, is never sent to us, and stays until you clear this site&apos;s data.
               </Li>
               <Li>
                 <strong className="text-foreground">Billing information (when you click Upgrade, and Pro subscribers).</strong>{' '}
