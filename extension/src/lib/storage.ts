@@ -123,6 +123,21 @@ export async function saveReviewAsk(ask: ReviewAsk): Promise<void> {
   await chrome.storage.local.set({ reviewAsk: ask })
 }
 
+// The version whose changes the popup's "What's new" link points to, set by a
+// minor or major update (background/install.ts). Only clicking it clears it.
+export async function getWhatsNew(): Promise<string | null> {
+  const { whatsNew } = await chrome.storage.local.get('whatsNew')
+  return (whatsNew as string) ?? null
+}
+
+export async function saveWhatsNew(version: string): Promise<void> {
+  await chrome.storage.local.set({ whatsNew: version })
+}
+
+export async function clearWhatsNew(): Promise<void> {
+  await chrome.storage.local.remove('whatsNew')
+}
+
 // Marks local entries with the account that holds them (see CoverLetter.account).
 export async function setEntryAccounts(updates: { letters?: Record<string, string>; tailored?: Record<string, string> }): Promise<void> {
   // Only the lists that change are written: the background may be adding to
