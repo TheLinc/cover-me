@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react'
 import { WEB_URL } from '../../lib/config'
 import { clearWhatsNew, getWhatsNew } from '../../lib/storage'
 
-// No click tracking here: ?from=extension shows these visits in site analytics.
-const CHANGELOG_URL = `${WEB_URL}/changelog?from=extension`
+// No click tracking here. Site analytics keeps only utm_* tags (web/lib/analytics.ts),
+// so utm_source=extension is what shows these visits there.
+const CHANGELOG_URL = `${WEB_URL}/changelog?utm_source=extension`
 
 // The Generate page header, after a minor or major update
 // (background/install.ts). Clicking it (or middle-clicking) is the only thing that clears it.
