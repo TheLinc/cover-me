@@ -25,7 +25,7 @@ function Section({ title, icon: SectionIcon, children }: { title: string; icon: 
     <section aria-labelledby={id} className={TILE}>
       <h2 id={id} className="flex items-center gap-1.5 text-[12.5px] font-normal text-subtle">
         <SectionIcon size={15} aria-hidden />
-        {title}
+        <span className="cap-center">{title}</span>
       </h2>
       {children}
     </section>
