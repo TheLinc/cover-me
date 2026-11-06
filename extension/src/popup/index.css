@@ -944,6 +944,16 @@ html, body {
 
 .nav-item:hover { color: var(--text-2); }
 
+.nav-dot {
+  position: absolute;
+  top: 9px;
+  left: calc(50% + 7px);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
 .nav-item.active { color: var(--accent-h); }
 
 .nav-item.active::before {

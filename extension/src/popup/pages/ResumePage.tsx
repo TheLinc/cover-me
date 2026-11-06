@@ -204,7 +204,7 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
                 <div className="hint hint-tight">Only the first 12,000 characters (about 2,400 words) are used. Shorten your resume so letters and tailored resumes include everything.</div>
               )}
               {!wordUpload && (
-                <div className="hint hint-tight">Using the Cover Me layout. Upload the .docx to keep your design.</div>
+                <div className="hint hint-tight">Upload your resume as a Word file (.docx) and tailored resumes keep its design.</div>
               )}
             </div>
             {status === 'saved' && (
@@ -227,7 +227,7 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
           )}
           {wordUpload && !resume.design && !noteDismissed && (
             <div className="design-note">
-              <span>Re-upload your .docx to keep your own design.</span>
+              <span>New: upload your .docx again and tailored resumes keep its design.</span>
               <button type="button" className="design-note-close" aria-label="Dismiss" onClick={dismissNote}>×</button>
             </div>
           )}

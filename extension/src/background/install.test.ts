@@ -40,12 +40,35 @@ describe('handleInstalled', () => {
   test('a shorter resume, a later update or a Chrome update keeps the parse', async () => {
     const short = fakeChrome(resume(6000))
     await handleInstalled({ reason: 'update', previousVersion: '1.2.0' })
-    expect(short.storage.local.set).not.toHaveBeenCalled()
+    expect(short.storage.local.set).not.toHaveBeenCalledWith(expect.objectContaining({ resume: expect.anything() }))
     const long = fakeChrome(resume(9000))
     await handleInstalled({ reason: 'update', previousVersion: '1.3.0' })
     await handleInstalled({ reason: 'update', previousVersion: '1.10.0' })
     await handleInstalled({ reason: 'chrome_update', previousVersion: '1.2.0' })
-    expect(long.storage.local.set).not.toHaveBeenCalled()
+    expect(long.storage.local.set).not.toHaveBeenCalledWith(expect.objectContaining({ resume: expect.anything() }))
+  })
+})
+
+// The dot on the Resume tab that tells existing users about Word files (#131).
+describe('the Word design news', () => {
+  const pdf = { text: 'Ada', filename: 'ada.pdf', updatedAt: 'd' }
+  test('an update with a resume saved before Word designs shows it', async () => {
+    const chrome = fakeChrome(pdf)
+    await handleInstalled({ reason: 'update', previousVersion: '1.4.0' })
+    expect(chrome.storage.local.set).toHaveBeenCalledWith({ designNews: 'pending' })
+  })
+  test('a new install, an update with no resume, or one already using a design never does', async () => {
+    for (const [reason, saved] of [['install', pdf], ['update', undefined], ['update', { ...pdf, design: { hash: 'h' } }]] as const) {
+      const chrome = fakeChrome(saved)
+      await handleInstalled({ reason, previousVersion: '1.4.0' })
+      expect(chrome.storage.local.set, `${reason} ${JSON.stringify(saved)}`).toHaveBeenCalledWith({ designNews: 'seen' })
+    }
+  })
+  test('it is decided once, so a later update never brings it back', async () => {
+    const chrome = fakeChrome(pdf)
+    chrome.storage.local.get.mockImplementation(async () => ({ resume: pdf, designNews: 'seen' }))
+    await handleInstalled({ reason: 'update', previousVersion: '1.5.0' })
+    expect(chrome.storage.local.set).not.toHaveBeenCalledWith({ designNews: 'pending' })
   })
 })
 
