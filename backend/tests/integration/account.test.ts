@@ -36,13 +36,15 @@ describe('account', () => {
       const { error } = await admin.from(table).insert({ user_id: user.id, job_application_id: app!.id, ...row })
       expect(error, table).toBeNull()
     }
+    const { error: fileError } = await admin.from('resume_files').insert({ user_id: user.id, hash: 'a'.repeat(64), docx_encrypted: 'x' })
+    expect(fileError, 'resume_files').toBeNull()
 
     const res = await deleteAccount(user.token)
     expect(res.status).toBe(200)
     expect(await res.json()).toEqual({ deleted: true })
 
     expect(await authUserExists(user.id)).toBe(false)
-    for (const table of ['users', 'resumes', 'rate_limits', 'job_applications', 'cover_letters', 'tailored_resumes']) {
+    for (const table of ['users', 'resumes', 'rate_limits', 'job_applications', 'cover_letters', 'tailored_resumes', 'resume_files']) {
       expect(await rows(table, user.id), table).toBe(0)
     }
     expect(await mockStripe.calls()).toEqual([])
