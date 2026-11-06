@@ -19,7 +19,7 @@ const MARKETING_LINKS: NavLink[] = [
   { href: '/about', label: 'About' },
 ]
 
-// `actions` replaces the default Sign in / Install buttons (signed-in pages pass Sign out).
+// `actions` replaces the default Sign in / Install buttons (signed-in pages pass the AccountMenu).
 // `links` replaces the marketing links (signed-in pages pass APP_LINKS).
 export function SiteNav({ actions, links }: { actions?: ReactNode; links?: NavLink[] }) {
   const pathname = usePathname()

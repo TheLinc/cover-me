@@ -313,7 +313,8 @@ export default function PrivacyPage() {
                 <strong className="text-foreground">Rate-limit counter (all modes).</strong>{' '}
                 To stop abuse of the posting reader, our server counts requests per IP address. It
                 stores a keyed hash (HMAC) of the address, never the address itself. When it reads a
-                newly uploaded resume, it also counts per account, keyed by a hash of your account ID.
+                newly uploaded resume, or a message from the dashboard&apos;s support form, it also counts
+                per account, keyed by a hash of your account ID.
                 A counter not updated for two days is deleted at the next cleanup, which runs during later requests.
               </Li>
               <Li>
@@ -343,6 +344,12 @@ export default function PrivacyPage() {
                 answer, your browser keeps the time you answered in its local storage, and for the
                 next 24 hours the survey page shows a thank-you instead of asking again. It holds
                 nothing else, is never sent to us, and stays until you clear this site&apos;s data.
+              </Li>
+              <Li>
+                <strong className="text-foreground">Support messages (only if you send one).</strong>{' '}
+                A message you send from the dashboard&apos;s support form goes to our support inbox
+                through Resend, with your account email, Cover Me account ID and plan, so we can reply.
+                We don&apos;t store it in our database.
               </Li>
               <Li>
                 <strong className="text-foreground">Billing information (when you click Upgrade, and Pro subscribers).</strong>{' '}
@@ -582,7 +589,7 @@ export default function PrivacyPage() {
             <Ul>
               <Li>Resume text, and a parsed copy of its structure, are encrypted with AES-256-GCM before being stored in our Supabase Postgres database. The encryption key is derived from a server-side secret. Plaintext resume text is never persisted to disk.</Li>
               <Li>Cover letters and tailored resumes (Pro mode) are encrypted with AES-256-GCM before storage. The job title, company, posting address, dates and application stage (every Hosted account), and each tailored resume&apos;s ATS match score and missing keywords (Pro mode), are stored unencrypted so you can search and filter them. Your resume's file name is stored unencrypted too.</Li>
-              <Li>Rate-limit counters (all modes) hold only a keyed hash of an IP address, or a hash of your account ID when a new resume is read, and a counter not updated for two days is deleted at the next cleanup.</Li>
+              <Li>Rate-limit counters (all modes) hold only a keyed hash of an IP address, or a hash of your account ID when a new resume is read or a support message is sent, and a counter not updated for two days is deleted at the next cleanup.</Li>
               <Li>All data in transit is protected by TLS 1.2 or higher (enforced by Supabase and Vercel).</Li>
               <Li>Database access is protected by Supabase Row-Level Security policies. Users can only access their own data rows.</Li>
               <Li>The Supabase service-role key (which bypasses RLS) is used only on our servers (the backend functions and the Stripe webhook) and is never exposed to clients.</Li>
@@ -613,7 +620,7 @@ export default function PrivacyPage() {
                   name: 'Supabase',
                   url: 'https://supabase.com/privacy',
                   when: 'Every mode (reading job postings, from version 1.3.0); everything else Hosted mode only',
-                  receives: 'Copies of the job pages you ask us to read, which are processed and not stored, and rate-limit counters keyed by a hash of your IP address. In Hosted mode also: the job details, any facts you add and, when you regenerate, the previous tailored resume, sent with each generation request (not stored, except Pro history); email address, hashed password (email sign-in only), encrypted resume text, encrypted cover letters and tailored resumes with the unencrypted fields that go with them (Pro), your resume\'s file name, your Stripe customer ID, your Google name, picture link and account ID, session tokens, usage counts, and the account-keyed counter used when a new resume is read (see Information We Collect for each). Supabase Auth also records the IP address and browser of each signed-in session, kept with your account. Supabase hosts our backend functions, authentication system and database, and keeps standard request logs (IP address, browser, time, and the address requested, which can include a dashboard search) for a short period.',
+                  receives: 'Copies of the job pages you ask us to read, which are processed and not stored, and rate-limit counters keyed by a hash of your IP address. In Hosted mode also: the job details, any facts you add and, when you regenerate, the previous tailored resume, sent with each generation request (not stored, except Pro history); messages from the dashboard\'s support form, passed on to Resend and not stored; email address, hashed password (email sign-in only), encrypted resume text, encrypted cover letters and tailored resumes with the unencrypted fields that go with them (Pro), your resume\'s file name, your Stripe customer ID, your Google name, picture link and account ID, session tokens, usage counts, and the account-keyed counter used when a new resume is read or a support message is sent (see Information We Collect for each). Supabase Auth also records the IP address and browser of each signed-in session, kept with your account. Supabase hosts our backend functions, authentication system and database, and keeps standard request logs (IP address, browser, time, and the address requested, which can include a dashboard search) for a short period.',
                 },
                 {
                   name: 'Google',
@@ -630,8 +637,8 @@ export default function PrivacyPage() {
                 {
                   name: 'Resend',
                   url: 'https://resend.com/legal/privacy-policy',
-                  when: 'Hosted mode, when we email you',
-                  receives: 'Your email address and the email itself: account emails (confirming your address, resetting your password, changing your email), the one getting-started email after signup, and product updates if you agreed to them. Resend delivers them for us and keeps a delivery log.',
+                  when: 'Hosted mode, when we email you or you message support',
+                  receives: 'Your email address and the email itself: account emails (confirming your address, resetting your password, changing your email), the one getting-started email after signup, and product updates if you agreed to them; and messages you send from the dashboard\'s support form. Resend delivers them for us and keeps a delivery log.',
                 },
                 {
                   name: 'Vercel',

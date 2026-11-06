@@ -476,5 +476,8 @@ verify_jwt = false
 [functions.resume]
 verify_jwt = false
 
+[functions.support]
+verify_jwt = false
+
 [functions.tailor]
 verify_jwt = false

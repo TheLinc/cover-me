@@ -3,7 +3,8 @@ import { redirect } from 'next/navigation'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { SiteNav } from '@/components/site/SiteNav'
 import { APP_LINKS } from '@/components/site/app-links'
-import { SignOutButton } from '@/components/site/SignOutButton'
+import { AccountMenu } from '@/components/site/AccountMenu'
+import { avatarUrl } from '@/lib/avatar'
 import { ApplicationsBrowser } from './ApplicationsBrowser'
 import { Toaster } from '@/components/ui/sonner'
 
@@ -20,7 +21,7 @@ export default async function ApplicationsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <SiteNav links={APP_LINKS} actions={<SignOutButton />} />
+      <SiteNav links={APP_LINKS} actions={<AccountMenu email={user.email ?? ''} avatar={avatarUrl(user.user_metadata)} />} />
       <main className="relative z-[1] px-5 pb-24 pt-12">
         <div className="mx-auto flex max-w-[1040px] flex-col gap-5">
           <header className="flex flex-col gap-1.5">
