@@ -5,7 +5,7 @@ import { ensureValidSession, uploadDesignFileToBackend, uploadResumeToBackend, t
 import { parseResumeStructure } from './ai/resume-parse'
 import { decryptApiKey } from './crypto'
 import { designUsable, downloadDesignDocx, tailorDesign } from './pdf/docx-design'
-import { getCachedTier, getDesignFile, getResume, getSettings, resolveMode, saveDesignFile, saveParsedResume, saveResume } from './storage'
+import { getCachedTier, getDesignFile, getResume, getSettings, resolveMode, saveDesignFile, saveResume } from './storage'
 import type { AuthSession, ParsedResume, ResumeData, TailoredResume } from '../types'
 
 // The account's dashboard keeps Word files up to this size.
@@ -43,11 +43,12 @@ export function usesDesign(resume: ResumeData | null | undefined): boolean {
   return d?.status === 'done' && !!d.check && designUsable(d.check) && resume?.layout !== 'cover-me'
 }
 
-// Saves the check's progress on the resume, unless another upload replaced it meanwhile.
-async function setDesign(hash: string, update: Partial<NonNullable<ResumeData['design']>>): Promise<void> {
+// Saves the check's progress on the resume (and, BYOK, the parse it made),
+// unless another upload replaced the resume meanwhile.
+async function setDesign(hash: string, update: Partial<NonNullable<ResumeData['design']>>, parsed?: ParsedResume): Promise<void> {
   const resume = await getResume()
   if (resume?.design?.hash !== hash) return
-  await saveResume({ ...resume, design: { ...resume.design, ...update } })
+  await saveResume({ ...resume, ...(parsed ? { parsed } : {}), design: { ...resume.design, ...update } })
 }
 
 // The CHECK_DESIGN message: parses the resume (on the server for an account,
@@ -75,12 +76,12 @@ export async function checkUploadedDesign(hash: string): Promise<void> {
       parsed = file.parsed ?? (Array.isArray(resume.parsed?.otherSections)
         ? resume.parsed
         : await parseResumeStructure(resume.text, settings.provider, await decryptApiKey(settings.apiKey)))
-      await saveParsedResume(parsed!)
     }
 
     const { check } = await tailorDesign(fromBase64(file.data), parsed!)
     await saveDesignFile(hash, { ...file, parsed })
-    await setDesign(hash, { status: 'done', check })
+    // BYOK: the tailor reuses this parse instead of making its own.
+    await setDesign(hash, { status: 'done', check }, hosted ? undefined : parsed)
     if (hosted) {
       const session = await ensureValidSession()
       if (session) await uploadDesignIfPro(session)

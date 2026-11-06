@@ -161,6 +161,14 @@ describe('tailorDesign', () => {
     expect(await bodyOf(bytes!)).not.toContain('noBreakHyphen')
   })
 
+  test('a dropped bullet that anchors a shape is emptied, so the shape stays', async () => {
+    const anchored = '<w:p><w:r><w:t>Mentored two junior engineers</w:t></w:r><w:r><w:drawing><wps:txbx><w:txbxContent><w:p><w:r><w:t>SIDEBAR</w:t></w:r></w:p></w:txbxContent></wps:txbx></w:drawing></w:r></w:p>'
+    const { bytes } = await tailorDesign(await docx(p('Built the billing service in Go') + anchored),
+      parsed([['Built the billing service in Go', 'Mentored two junior engineers']]), parsed([['Shipped a Go billing service']]))
+    expect(await bodyOf(bytes!)).toContain('SIDEBAR')
+    expect(await bodyOf(bytes!)).not.toContain('Mentored two junior engineers')
+  })
+
   test('no summary in the file is never added, and skills split over lines are kept', async () => {
     const file = await docx(PLAIN + heading('Skills') + p('Go, Postgres', 'Normal') + p('Kubernetes', 'Normal'))
     const bullets = [['Built the billing service in Go', 'Cut page load time from 3s to 1s', 'Mentored two junior engineers']]

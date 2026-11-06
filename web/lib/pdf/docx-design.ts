@@ -43,7 +43,7 @@ interface Para {
   inTable: boolean
   inTextBox: boolean
   cell: number // the table cell it sits in, -1 outside tables
-  keep: boolean // holds the section's settings: emptied, never removed
+  keep: boolean // holds the section's settings or an anchored shape: emptied, never removed
   breaks: Edit[] // its soft line breaks and non-breaking hyphens, removed when its text is replaced
 }
 
@@ -250,6 +250,10 @@ export function norm(s: string): string {
     .toLowerCase()
 }
 
+// Elements a paragraph can anchor (text boxes, shapes, pictures, comments)
+// that would go with it if it were removed.
+const ANCHORS = new Set(['w:drawing', 'w:pict', 'w:object', 'mc:AlternateContent', 'w:commentRangeStart'])
+
 const TAG = /<(\/?)([A-Za-z][\w.-]*(?::[\w.-]+)?)((?:[^>"']|"[^"]*"|'[^']*')*?)(\/?)>/g
 
 // Every paragraph with its text runs, and whether the layout uses columns,
@@ -322,7 +326,7 @@ function scan(xml: string): { paras: Para[]; layoutWarning?: DesignCheck['layout
       pieces.get(para)!.push(' ')
       // A line break, not a page or column break.
       if (name !== 'w:tab' && selfClosing && !/w:type="(page|column)"/.test(attrs)) para.breaks.push({ start: at, end, text: '' })
-    } else if (name === 'w:sectPr' && para) {
+    } else if ((name === 'w:sectPr' || ANCHORS.has(name)) && para) {
       para.keep = true
     } else if (name === 'w:cols' && /w:num="([2-9]|\d\d)"/.test(attrs)) {
       columns = true

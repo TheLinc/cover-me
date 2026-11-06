@@ -260,7 +260,15 @@ function LayoutChoice({ design, yours, onPick, onRetry, dashboardFallback }: {
   onRetry: () => void
   dashboardFallback: boolean
 }) {
-  const stale = design.status === 'checking' && Date.now() - Date.parse(design.checkedAt ?? '') > DESIGN_CHECK_STALE_MS
+  // Re-renders once the check would count as stale, for a popup left open.
+  const [, setNow] = useState(0)
+  const left = DESIGN_CHECK_STALE_MS - (Date.now() - Date.parse(design.checkedAt ?? ''))
+  useEffect(() => {
+    if (design.status !== 'checking' || !(left > 0)) return
+    const t = setTimeout(() => setNow(Date.now()), left + 100)
+    return () => clearTimeout(t)
+  }, [design.status, left])
+  const stale = design.status === 'checking' && left <= 0
   if (stale) {
     return (
       <p className="hint design-choice">

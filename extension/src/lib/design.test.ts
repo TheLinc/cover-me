@@ -2,6 +2,10 @@ import JSZip from 'jszip'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { checkUploadedDesign, designForTailor, finishDesign, toBase64 } from './design'
 
+const parseMock = vi.hoisted(() => vi.fn())
+vi.mock('./ai/resume-parse', () => ({ parseResumeStructure: parseMock }))
+vi.mock('./crypto', () => ({ decryptApiKey: async () => 'sk-test' }))
+
 let local: Record<string, unknown> = {}
 function fakeLocal(data: Record<string, unknown> = {}) {
   local = data
@@ -78,6 +82,18 @@ describe('the upload check', () => {
     await checkUploadedDesign(hash)
     expect((local.resume as { design: unknown }).design).toMatchObject({ status: 'done', check: { matched: 2, total: 2 } })
     expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  test('BYOK: a resume replaced while its parse runs never gets that parse', async () => {
+    await store({ status: 'checking', extra: { settings: { provider: 'claude', apiKey: 'x', mode: 'byok' } } })
+    delete (local[`designFile:${hash}`] as { parsed?: unknown }).parsed // a first upload: no parse yet
+    const replaced = { text: 'Someone else', filename: 'other.pdf', updatedAt: '2026-11-02T00:00:00Z' }
+    parseMock.mockImplementationOnce(async () => {
+      local.resume = replaced // another file uploaded while the parse runs
+      return { ...resume(), otherSections: [] }
+    })
+    await checkUploadedDesign(hash)
+    expect(local.resume).toEqual(replaced)
   })
 
   test('hosted: a copy added while signed out is never sent to the account', async () => {
