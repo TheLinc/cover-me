@@ -41,7 +41,7 @@ export function SiteNav({ actions, links }: { actions?: ReactNode; links?: NavLi
         scrolled && 'shadow-[0_10px_30px_-18px_rgba(30,27,75,0.35)]',
       )}
     >
-      <div className={cn('container flex h-16 items-center gap-8', links && 'max-sm:gap-2')}>
+      <div className="container flex h-16 items-center gap-8 max-sm:gap-2">
         <Link href="/" className="flex shrink-0 items-center gap-2.5">
           <Image src="/logo.png" width={28} height={28} alt="" className="rounded-[8px]" />
           <span className={cn('text-[18px] font-semibold tracking-[-0.02em] text-ink', links && 'max-sm:sr-only')}>Cover Me</span>
@@ -79,19 +79,21 @@ export function SiteNav({ actions, links }: { actions?: ReactNode; links?: NavLi
                   <ListIcon size={22} aria-hidden />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" aria-describedby={undefined} className="flex flex-col gap-1 bg-paper px-4 pt-16">
+              <SheetContent side="right" aria-describedby={undefined} className="bg-paper px-4 pt-16">
                 <SheetTitle className="sr-only">Menu</SheetTitle>
-                {[...MARKETING_LINKS, ...(actions ? [] : [{ href: '/auth', label: 'Sign in' }])].map((l) => (
-                  <SheetClose asChild key={l.href}>
-                    <Link
-                      href={l.href}
-                      aria-current={pathname === l.href ? 'page' : undefined}
-                      className="flex h-11 items-center rounded-full px-4 text-[15px] font-medium text-ink-2 transition-colors hover:bg-panel hover:text-ink aria-[current=page]:bg-panel aria-[current=page]:text-ink"
-                    >
-                      {l.label}
-                    </Link>
-                  </SheetClose>
-                ))}
+                <nav aria-label="Main" className="flex flex-col gap-1">
+                  {[...MARKETING_LINKS, ...(actions ? [] : [{ href: '/auth', label: 'Sign in' }])].map((l) => (
+                    <SheetClose asChild key={l.href}>
+                      <Link
+                        href={l.href}
+                        aria-current={pathname === l.href ? 'page' : undefined}
+                        className="flex h-11 items-center rounded-full px-4 text-[15px] font-medium text-ink-2 transition-colors hover:bg-panel hover:text-ink aria-[current=page]:bg-panel aria-[current=page]:text-ink"
+                      >
+                        {l.label}
+                      </Link>
+                    </SheetClose>
+                  ))}
+                </nav>
               </SheetContent>
             </Sheet>
           )}
