@@ -156,7 +156,7 @@ components:
 
 # Design System: Cover Me dashboard
 
-This file covers the signed-in app: `/dashboard`, `/dashboard/applications` and the details drawer. Marketing pages follow `web/BRAND.md`, which owns the palette, Geist and the product visuals. Everything here uses BRAND.md's tokens from `web/app/globals.css` and adds the app's own component rules on top.
+This file covers the signed-in app: `/dashboard`, `/dashboard/applications`, the details drawer, `/dashboard/settings` and `/dashboard/support`. Marketing pages follow `web/BRAND.md`, which owns the palette, Geist and the product visuals. Everything here uses BRAND.md's tokens from `web/app/globals.css` and adds the app's own component rules on top.
 
 ## Overview
 
@@ -164,7 +164,7 @@ This file covers the signed-in app: `/dashboard`, `/dashboard/applications` and 
 
 The app is the brand's warm paper ground with white tiles laid straight on it. Each tile is one application, and its documents (cover letter, tailored resume) sit on the tile as pill chips you click to download. Nothing is boxed twice: there is no panel around the tiles, no bordered section around a bordered card. Depth comes from a soft two-part shadow, not from frames.
 
-Density is compact but calm. A page opens with a 34px heading and one line of context, then the thing you came for: a full-width pill search on Applications, the plan strip and recent tiles on home. Detail lives one step away in a right-hand drawer, which repeats the same white tile on paper for each letter and resume.
+Density is compact but calm. A page opens with a 34px heading (and on Applications one line of context), then the thing you came for: a full-width pill search on Applications, the plan strip and recent tiles on home. Detail lives one step away in a right-hand drawer, which repeats the same white tile on paper for each letter and resume.
 
 Indigo is used sparingly and mostly as a tint. Solid indigo marks the one primary action, the Pro badge, the usage bar and links; the pale tint with deep indigo text marks things that belong to Cover Me's output (monograms, the ATS score, an active filter).
 
@@ -194,7 +194,7 @@ Warm neutrals with Cover Me indigo as the only accent, and orange reserved for A
 - **Soft Panel** (`panel`) fills skeleton blocks, ghost-button hover and the Free badge.
 - **Hairline** (`line`) is tile borders at 80% opacity, chip and button outlines, dashed empty states and the rules above the extension row and the drawer footer.
 - **Deep Ink** (`ink`) is headings, tile titles, letter text and strong numbers.
-- **Warm Grey** (`ink-2`) is secondary lines: the email line, company and applied date, drawer section headings.
+- **Warm Grey** (`ink-2`) is secondary lines: company and applied date, drawer section headings.
 - **Caption Grey** (`subtle`) is small labels ("Plan", "Missing", letter dates), the count line, placeholders and idle icons.
 - **Rust** (`destructive`) is delete actions and error text.
 
@@ -210,7 +210,7 @@ Warm neutrals with Cover Me indigo as the only accent, and orange reserved for A
 **Character:** One family at a few close sizes, with weight and tracking doing the work. Headings are 600 with negative tracking, everything else 400 or 500.
 
 ### Hierarchy
-- **Headline** (600, 34px, 1.25, -0.03em): the page heading, "Good to see you." and "Applications".
+- **Headline** (600, 34px, 1.25, -0.03em): the page heading: home's daily greeting ("Good to see you.", "Welcome back." and three more, one per UTC day, `web/lib/greeting.ts`), "Applications", "Settings", "Support".
 - **Title** (600, 20px, -0.02em): section headings ("Recent applications"), the drawer's job title, and the usage number in the plan strip.
 - **Tile title** (600, 15px, -0.01em): the job title on a tile, truncated to one line. Empty-state headings use the same size.
 - **Body** (400, 13.5px to 14px): the context line under a heading, empty-state text, the extension row. Empty-state text caps at 46ch.
@@ -247,7 +247,7 @@ Depth is one soft two-part shadow under white tiles on paper: a tight 1px contac
 
 ## Shapes
 
-Three radii. Every control is a pill (search, buttons, filter chips, document chips, badges, ATS and gap capsules). Every container is 20px (application tiles, the plan strip, drawer tiles, empty states, skeleton tiles). Company monograms are 40px squares at 12px. The avatar is the only large circle, and it holds a picture or an initial, never a status. The stage pill's 8px dot is the one small one.
+Three radii. Every control is a pill (search, buttons, filter chips, document chips, badges, ATS and gap capsules). Every container is 20px (application tiles, the plan strip, drawer tiles, empty states, skeleton tiles). Company monograms are 40px squares at 12px. The avatar is the only circle besides pills: 36px on the account menu button, 32px inside the menu, holding a picture or an initial, never a status. The stage pill's 8px dot is the one small one.
 
 Empty states are a 20px dashed hairline outline on paper with no fill, so they read as a place a tile will go.
 
@@ -272,7 +272,16 @@ White, 20px corners, 20px padding, tile shadow. Top row: the monogram (company i
 A 56px white pill across the full column, 16px text, a 20px magnifier inset 20px from the left, the search lift shadow, and a Signal Indigo focus ring. Placeholder "Search company or job title" in Caption Grey. Under the chips, one Caption Grey count line ("8 applications", "3 match", "Showing your newest 200").
 
 ### Plan strip
-One tile-styled row on home read left to right: Plan (Pro or Free badge), usage (label, big number "of" limit, 6px indigo bar, reset line), then the account action (outline "Manage billing" for Pro; the primary monthly upgrade and an outline quarterly button for Free). Free accounts get one plain sentence under the strip about what Pro adds.
+Two tiles on home, side by side from 768px: usage (label, big number "of" limit, 6px indigo bar or one cell per free generation, reset line), then the plan. Pro shows "Pro" with a filled star, the daily limit and any first payment; billing lives in Settings. Free and gift-trial accounts get an Indigo Tint tile with what Pro adds (or when the trial ends) and the upgrade buttons: the primary monthly and an outline quarterly. They stay on home because they are a pitch, not a setting.
+
+### Account menu
+The top right of every signed-in page: the 36px avatar alone (picture or initial on Indigo Tint), with a hairline ring and Soft Panel fill on hover and while open. It opens a white dropdown at 16px corners with the menu lift: the avatar and email as its label, then Settings, Support and Sign out, each with an 18px Caption Grey icon (gear, lifebuoy, sign-out), with separators around the middle pair.
+
+### Settings
+In the 1040px column with its tiles held to 640px. Three white tiles 20px apart (Account, Plan, Emails), each headed by a Caption Grey label like the plan strip; Plan carries the Pro or Free badge and, for Pro, the outline "Manage billing".
+
+### Support
+In the 1040px column with its content held to 640px, under the heading and one line of context. The topic is a 48px pill Select ("What's this about?" as a Caption Grey label), its options carrying a duotone icon in Indigo Ink. Below it, one white writing tile: the job-site pill input (only for a site request, with a live "We'll look at example.com" line), a borderless 15px textarea whose placeholder follows the topic, and a footer row with the character count and the primary Send with a paper-plane icon. The tile's border turns indigo while focused. One Caption Grey line under it says what's attached. Sending swaps the form for a confirmation tile, focused for screen readers: a duotone seal in an Indigo Tint square that zooms in (motion-safe only), "Message sent", the reply line, an outline "Back to dashboard" and a ghost "Send another".
 
 ### Badges
 Pills, 12px semibold. Pro is solid Cover Me Indigo with a small filled star. Free is Soft Panel with Warm Grey text. The stage pill is a menu button: an 8px dot, 13px medium text and a small caret, opening a radio list of the four stages. Each stage has its own fill, so it doesn't read as one of the document chips beside it: Applied is white with a hairline and a Caption Grey dot; Interviewing is Indigo Tint with Indigo Ink text and a Signal Indigo dot; Offer is Offer Tint (`#DCFCE7`) with Offer Ink (`#166534`) text and a green dot (`#16A34A`); Closed is Soft Panel with Warm Grey text and a hollow dot.

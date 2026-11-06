@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
 }
 
-const EFFECTIVE_DATE = 'November 4, 2026'
+const EFFECTIVE_DATE = 'November 6, 2026'
 const CONTACT_EMAIL  = 'support@cover-me.dev'
 
 function H2({ id, children }: { id: string; children: React.ReactNode }) {
@@ -222,7 +222,8 @@ export default function TermsPage() {
                 <strong className="text-foreground">Cancellation.</strong> You may cancel your
                 subscription at any time through the billing portal accessible from your dashboard.
                 Cancellation takes effect at the end of the current billing period. You retain
-                Pro access until that date.
+                Pro access until that date. Deleting your account instead ends the subscription at
+                once (see Termination).
               </Li>
               <Li>
                 <strong className="text-foreground">Refunds.</strong> We do not offer refunds for
@@ -305,12 +306,14 @@ export default function TermsPage() {
             <Ul>
               <Li>
                 <strong className="text-foreground">By you.</strong> You may delete your account at
-                any time by contacting us at{' '}
+                any time from Settings in your dashboard, which deletes it and your data at once, or
+                by contacting us at{' '}
                 <a href={`mailto:${CONTACT_EMAIL}`} className="text-brand-light hover:text-foreground transition-colors">
                   {CONTACT_EMAIL}
                 </a>
-                . Account deletion cancels any active Pro subscription at the end of the current
-                billing period and permanently removes your data within 30 days.
+                , in which case we permanently remove your data within 30 days. Deleting your account
+                ends any active Pro subscription immediately, and the rest of the billing period is
+                not refunded.
               </Li>
               <Li>
                 <strong className="text-foreground">By us.</strong> We may suspend or terminate your

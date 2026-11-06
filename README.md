@@ -432,6 +432,7 @@ supabase functions deploy applications
 supabase functions deploy billing
 supabase functions deploy email-preferences
 supabase functions deploy nudge
+supabase functions deploy support
 ```
 
 ### 7. Set up Stripe
@@ -527,7 +528,7 @@ Turn on the website's button only once users have an extension build with Google
 | `EMAIL_TOKEN_SECRET` | Signs unsubscribe links. Never change it: links already sent would stop working |
 | `NUDGE_SECRET` | Shared with the `NUDGE_SECRET` GitHub secret; the daily follow-up workflow calls `nudge` with it |
 | `NUDGE_ENABLED` | `true` to let `nudge` send the follow-up email; anything else sends nothing |
-| `RESEND_API_KEY` | Resend API key, for the follow-up email |
+| `RESEND_API_KEY` | Resend API key, for the follow-up email and the dashboard's support form (`support` answers 503 without it) |
 
 **Web dashboard** (`web/.env.local`):
 
