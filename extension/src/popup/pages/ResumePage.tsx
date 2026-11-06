@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { ensureValidSession, uploadResumeToBackend } from '../../lib/auth'
-import { DESIGN_UPLOAD_MAX, sha256Hex, toBase64, usesDesign } from '../../lib/design'
+import { DESIGN_CHECK_STALE_MS, DESIGN_UPLOAD_MAX, sha256Hex, toBase64, usesDesign } from '../../lib/design'
 import { designUsable } from '../../lib/pdf/docx-design'
 import { parseResume } from '../../lib/resume-parser'
-import { getCachedTier, getMode, getResume, getSession, saveDesignFile, saveResume, watchResume } from '../../lib/storage'
+import { getCachedTier, getDesignFile, getMode, getResume, getSession, saveDesignFile, saveResume, watchResume } from '../../lib/storage'
 import type { DesignCheck, ParsedResume, ResumeData } from '../../types'
 
 type Status = 'idle' | 'parsing' | 'saved' | 'error'
@@ -72,13 +72,14 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
       const data: ResumeData = {
         text, filename: file.name, updatedAt: new Date().toISOString(),
         ...(session ? { accountId: session.user.id } : inherited ? { accountId: inherited, signedOutUpload: true } : {}),
-        ...(bytes && hash ? { design: { hash, size: bytes.length, status: 'checking' as const } } : {}),
+        ...(bytes && hash ? { design: { hash, size: bytes.length, status: 'checking' as const, checkedAt: new Date().toISOString() } } : {}),
       }
       // The resume first: a file stored before anything points to it could be
       // pruned by a History save in between.
       await saveResume(data)
       if (bytes && hash) {
-        await saveDesignFile(hash, { data: toBase64(bytes) })
+        // The same file again keeps the parse it was checked against.
+        await saveDesignFile(hash, { ...(await getDesignFile(hash)), data: toBase64(bytes) })
         checkDesign(hash)
       }
       dismissNote()
@@ -257,6 +258,15 @@ function LayoutChoice({ design, yours, onPick, onRetry, dashboardFallback }: {
   onRetry: () => void
   dashboardFallback: boolean
 }) {
+  const stale = design.status === 'checking' && Date.now() - Date.parse(design.checkedAt ?? '') > DESIGN_CHECK_STALE_MS
+  if (stale) {
+    return (
+      <p className="hint design-choice">
+        Checking your design didn&apos;t finish.{' '}
+        <button type="button" className="upload-link design-retry" onClick={onRetry}>Try again</button>
+      </p>
+    )
+  }
   if (design.status === 'checking') {
     return <p className="design-checking" role="status"><span className="spinner design-spinner" aria-hidden />Checking your design…</p>
   }

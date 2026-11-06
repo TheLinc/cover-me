@@ -76,6 +76,13 @@ describe('tailorDesign', () => {
 
     expect(check.matched).toBe(1)
     expect(await paragraphs(bytes!)).toEqual(['Reduced page load from 3s to 1s'])
+    expect(await bodyOf(bytes!)).not.toContain('<w:br/>')
+  })
+
+  test('a typed glyph in its own run stays in front of the tab', async () => {
+    const glyphRun = '<w:p><w:r><w:t>•</w:t><w:tab/></w:r><w:r><w:t>Built the billing service in Go</w:t></w:r></w:p>'
+    const { bytes } = await tailorDesign(await docx(glyphRun), parsed([['Built the billing service in Go']]), parsed([['Shipped a Go billing service']]))
+    expect(await bodyOf(bytes!)).toContain('<w:t>•</w:t><w:tab/></w:r><w:r><w:t xml:space="preserve">Shipped a Go billing service</w:t>')
   })
 
   test('bullets in a two-column table are tailored, with the layout warning', async () => {
@@ -151,6 +158,30 @@ describe('tailorDesign', () => {
     const bullets = [['Built the billing service in Go', 'Cut page load time from 3s to 1s', 'Mentored two junior engineers']]
     const { check } = await tailorDesign(file, parsed(bullets))
     expect(check.summary).toBe(false)
+  })
+
+  test('a long skills line above the bullets is skills, not a summary, and the file stays whole', async () => {
+    const many = Array.from({ length: 26 }, (_, i) => `Skill${i}`).join(', ')
+    const file = await docx(p(`Skills: ${many}`, 'Normal') + PLAIN)
+    const bullets = [['Built the billing service in Go', 'Cut page load time from 3s to 1s', 'Mentored two junior engineers']]
+    const { check, bytes } = await tailorDesign(file, parsed(bullets, { skills: many }), parsed(bullets, { skills: 'Skill3, Skill1', summary: 'A summary.' }))
+    expect(check).toMatchObject({ summary: false, skills: 'reordered' })
+    expect((await paragraphs(bytes!))[0]).toBe('Skills: Skill3, Skill1')
+  })
+
+  test('long prose further down the page is not taken for a summary', async () => {
+    const coursework = 'Relevant coursework: ' + Array.from({ length: 30 }, (_, i) => `Course ${i}`).join(', ')
+    const file = await docx(p('Ada Example', 'Title') + p('ada@example.com', 'Normal') + heading('Education') + p('State University', 'Normal') + p('BSc Computer Science', 'Normal') + p(coursework, 'Normal') + PLAIN)
+    const bullets = [['Built the billing service in Go', 'Cut page load time from 3s to 1s', 'Mentored two junior engineers']]
+    expect((await tailorDesign(file, parsed(bullets))).check.summary).toBe(false)
+  })
+
+  test('dropping every bullet in a table cell leaves the cell a paragraph', async () => {
+    const table = `<w:tbl><w:tr><w:tc>${p('Built the billing service in Go') + p('Mentored two junior engineers')}</w:tc></w:tr></w:tbl>`
+    const { bytes } = await tailorDesign(await docx(p('Cut page load time from 3s to 1s') + table),
+      parsed([['Cut page load time from 3s to 1s', 'Built the billing service in Go', 'Mentored two junior engineers']]),
+      parsed([['Reduced page load from 3s to 1s']]))
+    expect(await bodyOf(bytes!)).toMatch(/<w:tc>\s*<w:p[ >]/)
   })
 
   test('a tailored resume from a different parse is not placed', async () => {

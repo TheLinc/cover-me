@@ -6,7 +6,7 @@ import { parseResumeStructure } from './ai/resume-parse'
 import { decryptApiKey } from './crypto'
 import { designUsable, downloadDesignDocx, tailorDesign } from './pdf/docx-design'
 import { getCachedTier, getDesignFile, getResume, getSettings, resolveMode, saveDesignFile, saveParsedResume, saveResume } from './storage'
-import type { ParsedResume, ResumeData, TailoredResume } from '../types'
+import type { AuthSession, ParsedResume, ResumeData, TailoredResume } from '../types'
 
 // The account's dashboard keeps Word files up to this size.
 export const DESIGN_UPLOAD_MAX = 2 * 1024 * 1024
@@ -24,6 +24,17 @@ export function fromBase64(b64: string): Uint8Array {
 export async function sha256Hex(bytes: Uint8Array<ArrayBuffer>): Promise<string> {
   const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))
   return Array.from(digest, (b) => b.toString(16).padStart(2, '0')).join('')
+}
+
+// A check that started this long ago without finishing died with the
+// service worker; the resume page offers "Try again".
+export const DESIGN_CHECK_STALE_MS = 2 * 60 * 1000
+
+// The account may receive this upload's text and file: it was added while
+// signed in to this account. A copy added signed out, or another account's,
+// is never sent (the rule syncResume in lib/auth.ts follows).
+function ownedBy(resume: ResumeData, session: AuthSession): boolean {
+  return !resume.signedOutUpload && resume.accountId === session.user.id
 }
 
 // "Your design" is used: its check passed and the user hasn't picked the Cover Me layout.
@@ -47,27 +58,33 @@ export async function checkUploadedDesign(hash: string): Promise<void> {
     const [resume, file, settings] = await Promise.all([getResume(), getDesignFile(hash), getSettings()])
     if (resume?.design?.hash !== hash) return
     if (!file) throw new Error('Upload your .docx again.')
-    await setDesign(hash, { status: 'checking', error: undefined })
+    await setDesign(hash, { status: 'checking', error: undefined, checkedAt: new Date().toISOString() })
 
     let parsed: ParsedResume | undefined
     const hosted = resolveMode(settings) === 'hosted'
     if (hosted) {
       const session = await ensureValidSession()
       if (!session) throw new Error('Sign in to check your design.')
+      if (!ownedBy(resume, session)) throw new Error('Upload your .docx again while signed in to use your design.')
       parsed = await uploadResumeToBackend(session.access_token, resume.text, resume.filename, true)
       if (!parsed) throw new Error("Couldn't check your design right now. Try again in a few minutes.")
-      await uploadDesignIfPro(session.access_token)
     } else {
       if (!settings?.apiKey) throw new Error('Add your API key in Settings to check your design.')
-      parsed = Array.isArray(resume.parsed?.otherSections)
+      // The same file uploaded again keeps its parse, so History entries made
+      // from it still place their text the same way.
+      parsed = file.parsed ?? (Array.isArray(resume.parsed?.otherSections)
         ? resume.parsed
-        : await parseResumeStructure(resume.text, settings.provider, await decryptApiKey(settings.apiKey))
+        : await parseResumeStructure(resume.text, settings.provider, await decryptApiKey(settings.apiKey)))
       await saveParsedResume(parsed!)
     }
 
     const { check } = await tailorDesign(fromBase64(file.data), parsed!)
     await saveDesignFile(hash, { ...file, parsed })
     await setDesign(hash, { status: 'done', check })
+    if (hosted) {
+      const session = await ensureValidSession()
+      if (session) await uploadDesignIfPro(session)
+    }
   } catch (err) {
     await setDesign(hash, { status: 'error', error: err instanceof Error ? err.message : "Couldn't check your design." })
   }
@@ -76,14 +93,15 @@ export async function checkUploadedDesign(hash: string): Promise<void> {
 // Pro accounts keep the Word file for the dashboard. Tried after each check
 // and each hosted tailor until it lands, so an upgrade after the upload, or a
 // failed send, still gets the file there.
-export async function uploadDesignIfPro(accessToken: string): Promise<void> {
+export async function uploadDesignIfPro(session: AuthSession): Promise<void> {
   const resume = await getResume()
   const d = resume?.design
-  if (!d || d.uploaded || d.size > DESIGN_UPLOAD_MAX || (await getCachedTier()) !== 'hosted_pro') return
+  if (!d || d.status !== 'done' || d.uploaded || d.size > DESIGN_UPLOAD_MAX || !ownedBy(resume, session)) return
+  if ((await getCachedTier()) !== 'hosted_pro') return
   const file = await getDesignFile(d.hash)
   if (!file) return
   try {
-    await uploadDesignFileToBackend(accessToken, d.hash, file.data)
+    await uploadDesignFileToBackend(session.access_token, d.hash, file.data)
     await setDesign(d.hash, { uploaded: true })
   } catch { /* tried again on the next tailor */ }
 }

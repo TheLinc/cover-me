@@ -75,6 +75,7 @@ export interface ResumeData {
     hash: string
     size: number // bytes; over 2 MB the account's dashboard uses the Cover Me layout
     status: 'checking' | 'done' | 'error'
+    checkedAt?: string // when the check started; a stale one shows "Try again"
     check?: DesignCheck
     error?: string
     uploaded?: boolean // in the Pro account, for the dashboard

@@ -441,7 +441,8 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
     // "Your design" (#131): the user's file sets the page, so there's no
     // compacting, and no summary when the file has none to rewrite.
     const design = await designForTailor()
-    if (design.design.layout === 'yours' && !design.design.fellBack) {
+    // The popup hides "Compact" whenever "Your design" is picked, fallen back or not.
+    if (design.design.layout === 'yours') {
       compact = false
       if (!design.summary) includeSummary = false
     }
@@ -481,7 +482,7 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
       const localId = crypto.randomUUID()
       const { resume: tailored, savedId } = await tailorViaBackend(job, session.access_token, compact, merged, trim, includeSummary, lastResult && previous, onProgress, localId, design.design)
       const resume = await finishDesign(tailored, design)
-      if (resume.sourceHash) void uploadDesignIfPro(session.access_token)
+      if (resume.sourceHash) void uploadDesignIfPro(session)
       const pro = (await getCachedTier()) === 'hosted_pro'
       await recordTailored(job, resume, localId, {
         ...(savedId === localId ? { account: session.user.id } : {}),

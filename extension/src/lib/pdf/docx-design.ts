@@ -44,6 +44,7 @@ interface Para {
   inTextBox: boolean
   cell: number // the table cell it sits in, -1 outside tables
   keep: boolean // holds the section's settings: emptied, never removed
+  breaks: Edit[] // its soft line breaks, removed when its text is replaced
 }
 
 // Tailors file's text from tailored (when given) and reports what could be
@@ -92,8 +93,8 @@ export async function tailorDesign(
   const projects = (parsed.projects ?? []).map((r) => slotsOf(r.bullets))
   const firstBullet = Math.min(...used, paras.length)
 
-  const summaryAt = findSummary(paras, used, firstBullet)
   const skills = findSkills(paras, used, parsed.skills)
+  const summaryAt = findSummary(paras, skills.at === undefined ? used : new Set([...used, skills.at]), firstBullet)
 
   const check: DesignCheck = {
     matched: total - unmatched.length,
@@ -114,10 +115,13 @@ export async function tailorDesign(
 
   const edits: Edit[] = []
   const setText = (i: number, text: string) => edits.push(...replaceText(paras[i], text))
+  // A table cell must keep a paragraph, so its last one is emptied instead.
   const drop = (i: number) => {
     const p = paras[i]
-    if (p.keep || (p.cell >= 0 && cellCount.get(p.cell) === 1)) setText(i, '')
-    else edits.push({ start: p.start, end: p.end, text: '' })
+    const left = cellCount.get(p.cell) ?? 0
+    if (p.keep || (p.cell >= 0 && left <= 1)) return setText(i, '')
+    if (p.cell >= 0) cellCount.set(p.cell, left - 1)
+    edits.push({ start: p.start, end: p.end, text: '' })
   }
   // Slot k of an entry takes its tailored bullet k (the tailor reorders bullets
   // within a role). A bullet the tailor dropped removes its paragraph.
@@ -160,15 +164,21 @@ const allBullets = (r: Source) => [...r.experience, ...(r.projects ?? [])].flatM
 interface Edit { start: number; end: number; text: string }
 
 // The new text goes into the run that held the most text, after any bullet
-// glyph typed at the start; the paragraph's other runs are emptied.
+// glyph typed at the start of that run. The paragraph's other runs are
+// emptied, apart from a glyph in a run of its own in front, and its soft line
+// breaks go: they wrapped the old text.
 function replaceText(p: Para, text: string): Edit[] {
-  const glyph = p.text.match(LEADING_GLYPH)?.[0] ?? ''
   const main = p.runs.reduce((a, b) => (b.text.length > a.text.length ? b : a))
-  return p.runs.map((r) => ({
-    start: r.tagStart,
-    end: r.contentEnd,
-    text: `<w:t xml:space="preserve">${r === main ? escapeXml(glyph + text) : ''}`,
-  }))
+  const lead = main.text.match(LEADING_GLYPH)?.[0] ?? ''
+  const glyph = /\S/.test(lead) ? lead : ''
+  const before = p.runs.indexOf(main)
+  const isGlyph = (r: TextRun) => /\S/.test(r.text) && r.text.match(LEADING_GLYPH)?.[0] === r.text
+  return [
+    ...p.runs
+      .filter((r, i) => !(i < before && isGlyph(r)))
+      .map((r) => ({ start: r.tagStart, end: r.contentEnd, text: `<w:t xml:space="preserve">${r === main ? escapeXml(glyph + text) : ''}` })),
+    ...p.breaks,
+  ]
 }
 
 const SUMMARY_HEADING = /^(professional |career |executive )?(summary|profile|objective|about me|overview)( of qualifications)?:?$/i
@@ -187,7 +197,14 @@ function findSummary(paras: Para[], used: Set<number>, firstBullet: number): num
       return free(i) && words(paras[i].text) >= 8 ? i : undefined
     }
   }
-  for (let i = 0; i < firstBullet; i++) if (free(i) && words(paras[i].text) >= 25) return i
+  // Without a heading, only near the top of the page (under the name and
+  // contact lines), and not a labelled line like "Relevant coursework: …".
+  let seen = 0
+  for (let i = 0; i < firstBullet && seen < 5; i++) {
+    if (paras[i].inTextBox || !paras[i].text.trim()) continue
+    seen++
+    if (free(i) && words(paras[i].text) >= 25 && !/^[^:]{1,40}:/.test(paras[i].text)) return i
+  }
   return undefined
 }
 
@@ -283,6 +300,7 @@ function scan(xml: string): { paras: Para[]; layoutWarning?: DesignCheck['layout
         inTextBox: stack.includes('w:txbxContent') || stack.includes('v:textbox'),
         cell: cells[cells.length - 1] ?? -1,
         keep: false,
+        breaks: [],
       }
       open.push(p)
       pieces.set(p, [])
@@ -291,6 +309,8 @@ function scan(xml: string): { paras: Para[]; layoutWarning?: DesignCheck['layout
       textStart = end
     } else if ((name === 'w:tab' || name === 'w:br' || name === 'w:cr') && stack[stack.length - 1] === 'w:r' && para) {
       pieces.get(para)!.push(' ')
+      // A line break, not a page or column break.
+      if (name !== 'w:tab' && selfClosing && !/w:type="(page|column)"/.test(attrs)) para.breaks.push({ start: at, end, text: '' })
     } else if (name === 'w:sectPr' && para) {
       para.keep = true
     } else if (name === 'w:cols' && /w:num="([2-9]|\d\d)"/.test(attrs)) {
