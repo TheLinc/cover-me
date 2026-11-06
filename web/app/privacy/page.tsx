@@ -346,10 +346,11 @@ export default function PrivacyPage() {
               </Li>
               <Li>
                 <strong className="text-foreground">Uninstall survey (only if you answer it).</strong>{' '}
-                When you remove the extension, Chrome opens a one-question survey on cover-me.dev asking
+                When you remove the extension, Chrome opens a short survey on cover-me.dev asking
                 why. Its address carries the extension&apos;s version and, if you were signed in, your
-                Cover Me account ID. If you answer, we store your answer, any comment you write, the
-                version and that account ID in PostHog, so a signed-in answer is linked to your account.
+                Cover Me account ID. If you answer, we store your answer, any comment you write, your
+                answer to the optional follow-up question some answers get, the version and that
+                account ID in PostHog, so a signed-in answer is linked to your account.
                 Answering is optional, and the survey asks for nothing else about you.
               </Li>
               <Li>
@@ -657,7 +658,7 @@ export default function PrivacyPage() {
                   name: 'PostHog',
                   url: 'https://posthog.com/privacy',
                   when: 'Visitors to the public pages of cover-me.dev (not the extension, and not signed-in pages), anyone who answers the uninstall survey, and each resume tailored in Hosted mode',
-                  receives: 'A count of each page visit: the page address with only its campaign tags (such as utm_ parameters; ad click IDs are blanked first), the referring site, browser details (browser, operating system, device type, screen size, language) and time zone, plus a count of clicks on links to our Chrome Web Store page with the link\'s label. Requests go through cover-me.dev. Your IP address is used only to make a daily visitor hash and is not stored, nor is any location derived from it. No cookies or browser storage are used, and visits are not linked to your account. If you answer the uninstall survey: your answer, your comment, the extension version and, if you were signed in, your Cover Me account ID. For each resume tailored in Hosted mode: your Cover Me account ID, your plan and the tailor options used, with no resume or job text.',
+                  receives: 'A count of each page visit: the page address with only its campaign tags (such as utm_ parameters; ad click IDs are blanked first), the referring site, browser details (browser, operating system, device type, screen size, language) and time zone, plus a count of clicks on links to our Chrome Web Store page with the link\'s label. Requests go through cover-me.dev. Your IP address is used only to make a daily visitor hash and is not stored, nor is any location derived from it. No cookies or browser storage are used, and visits are not linked to your account. If you answer the uninstall survey: your answers, your comment, the extension version and, if you were signed in, your Cover Me account ID. For each resume tailored in Hosted mode: your Cover Me account ID, your plan and the tailor options used, with no resume or job text.',
                 },
               ].map((svc) => (
                 <div key={svc.name} className="bg-surface border border-border rounded-[10px] px-5 py-4">
