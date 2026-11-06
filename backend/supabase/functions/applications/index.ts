@@ -2,7 +2,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 import { handleCors, json } from '../_shared/cors.ts'
 import { decrypt, encrypt } from '../_shared/encrypt.ts'
 import { findOrCreateJobApplication } from '../_shared/job-application.ts'
-import { atsColumns, isUuid, MAX_UPLOAD_BYTES, parseUpload } from '../_shared/history-upload.ts'
+import { isUuid, MAX_UPLOAD_BYTES, parseUpload, resumeColumns } from '../_shared/history-upload.ts'
 import { readBody } from '../_shared/read-body.ts'
 import { isStage, likeContains, parseSearch, type Stage } from '../_shared/application-search.ts'
 
@@ -256,7 +256,7 @@ Deno.serve(async (req) => {
               { onConflict: 'id', ignoreDuplicates: true },
             )
             : await supabase.from('tailored_resumes').upsert(
-              { ...row, resume_json_encrypted: await encrypt(JSON.stringify(e.resume)), ...atsColumns(e.resume) },
+              { ...row, resume_json_encrypted: await encrypt(JSON.stringify(e.resume)), ...resumeColumns(e.resume) },
               { onConflict: 'id', ignoreDuplicates: true },
             )
           if (error) failed.push(e.id)

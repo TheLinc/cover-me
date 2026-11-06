@@ -87,9 +87,9 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
       setStatus('saved')
       setTimeout(() => setStatus('idle'), 2500)
 
-      // Best-effort cloud sync for hosted users. A Word file's check uploads
-      // the text itself, since it waits for the server's parse of it.
-      if (hosted && session && !bytes) {
+      // Best-effort cloud sync for hosted users. A Word file's check sends the
+      // text again to wait for the server's parse; the same text costs nothing.
+      if (hosted && session) {
         uploadResumeToBackend(session.access_token, text, file.name).catch((err) => {
           setError(`Saved locally, but cloud sync failed: ${err instanceof Error ? err.message : 'unknown error'}`)
         })
@@ -247,7 +247,7 @@ function designReasons(c: DesignCheck): string[] {
   const loose = c.unmatched.length - c.textBoxBullets
   const reasons: string[] = []
   if (c.textBoxBullets > 0) reasons.push(`${count(c.textBoxBullets, 'bullet is', 'bullets are')} inside text boxes. Move them into normal paragraphs in Word and upload again.`)
-  if (loose > 0) reasons.push(`${count(loose, "bullet isn't in a paragraph", "bullets aren't in paragraphs")} of its own. In Word, press Enter between bullets (not Shift+Enter) and upload again.`)
+  if (loose > 0) reasons.push(`${count(loose, "bullet isn't in a paragraph of its own", "bullets aren't in paragraphs of their own")}. In Word, press Enter between bullets (not Shift+Enter) and upload again.`)
   return reasons
 }
 

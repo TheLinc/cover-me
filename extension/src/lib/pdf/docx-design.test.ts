@@ -140,6 +140,26 @@ describe('tailorDesign', () => {
     expect((await paragraphs(bytes!)).slice(-1)[0]).toBe('Skills: Postgres, Go')
   })
 
+  test('a label run without its space keeps the label, and the space', async () => {
+    const line = `<w:p><w:r><w:rPr><w:b/></w:rPr><w:t>Skills:</w:t></w:r><w:r><w:t xml:space="preserve"> ${SKILLS}</w:t></w:r></w:p>`
+    const bullets = [['Built the billing service in Go']]
+    const { bytes } = await tailorDesign(await docx(p('Built the billing service in Go') + line), parsed(bullets, { skills: SKILLS }), parsed(bullets, { skills: 'Postgres, Go' }))
+    expect(await bodyOf(bytes!)).toContain('<w:b/></w:rPr><w:t>Skills:</w:t>')
+    expect((await paragraphs(bytes!)).slice(-1)[0]).toBe('Skills: Postgres, Go')
+  })
+
+  test('a summary heading over several lines is left alone', async () => {
+    const file = await docx(heading('Summary') + p(SUMMARY, 'Normal') + p('Shipped payment systems for marketplaces, logistics firms and two banks.', 'Normal') + PLAIN)
+    const bullets = [['Built the billing service in Go', 'Cut page load time from 3s to 1s', 'Mentored two junior engineers']]
+    expect((await tailorDesign(file, parsed(bullets))).check.summary).toBe(false)
+  })
+
+  test('a non-breaking hyphen matches the parse, as mammoth reads it', async () => {
+    const hyphen = '<w:p><w:r><w:t>Ran e</w:t><w:noBreakHyphen/><w:t>commerce checkout</w:t></w:r></w:p>'
+    const { check } = await tailorDesign(await docx(hyphen), parsed([['Ran e‑commerce checkout']]))
+    expect(check.matched).toBe(1)
+  })
+
   test('no summary in the file is never added, and skills split over lines are kept', async () => {
     const file = await docx(PLAIN + heading('Skills') + p('Go, Postgres', 'Normal') + p('Kubernetes', 'Normal'))
     const bullets = [['Built the billing service in Go', 'Cut page load time from 3s to 1s', 'Mentored two junior engineers']]

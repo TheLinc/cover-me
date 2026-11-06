@@ -1,8 +1,10 @@
 import JSZip from 'jszip'
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { designForTailor, finishDesign, toBase64 } from './design'
+import { checkUploadedDesign, designForTailor, finishDesign, toBase64 } from './design'
 
+let local: Record<string, unknown> = {}
 function fakeLocal(data: Record<string, unknown> = {}) {
+  local = data
   const pick = (k: string | string[]) => Object.fromEntries((Array.isArray(k) ? k : [k]).filter((x) => x in data).map((x) => [x, data[x]]))
   vi.stubGlobal('chrome', { storage: { local: {
     get: async (k: string | string[]) => pick(k),
@@ -20,13 +22,15 @@ const resume = (b = bullets) => ({
 const hash = 'c'.repeat(64)
 const check = { matched: 2, total: 2, unmatched: [], textBoxBullets: 0, summary: false, skills: 'none' as const }
 
-async function store({ layout, withFile = true }: { layout?: 'yours' | 'cover-me'; withFile?: boolean } = {}) {
+async function store({ layout, withFile = true, extra = {}, status = 'done' }: { layout?: 'yours' | 'cover-me'; withFile?: boolean; extra?: Record<string, unknown>; status?: string } = {}) {
   const zip = new JSZip()
   const body = bullets.map((b) => `<w:p><w:r><w:t>${b}</w:t></w:r></w:p>`).join('')
   zip.file('word/document.xml', `<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${body}</w:body></w:document>`)
   const data = toBase64(await zip.generateAsync({ type: 'uint8array' }))
+  const { resume: resumeExtra, ...rest } = extra
   fakeLocal({
-    resume: { text: 'Ada', filename: 'ada.docx', updatedAt: '2026-11-01T00:00:00Z', design: { hash, size: 100, status: 'done', check }, ...(layout ? { layout } : {}) },
+    resume: { text: 'Ada', filename: 'ada.docx', updatedAt: '2026-11-01T00:00:00Z', design: { hash, size: 100, status, check }, ...(layout ? { layout } : {}), ...(resumeExtra as object) },
+    ...rest,
     ...(withFile ? { [`designFile:${hash}`]: { data, parsed: resume() }, designFiles: [hash] } : {}),
   })
 }
@@ -63,5 +67,26 @@ describe('the layout of a tailor', () => {
     const d = await designForTailor()
     expect(d.design).toEqual({ layout: 'cover-me', fellBack: false })
     expect(await finishDesign({ ...resume(), sourceHash: hash }, d)).not.toHaveProperty('sourceHash')
+  })
+})
+
+describe('the upload check', () => {
+  test('BYOK: a file uploaded again is checked against the parse it already had, with no model call', async () => {
+    const fetchMock = vi.fn()
+    await store({ status: 'checking', extra: { settings: { provider: 'claude', apiKey: 'x', mode: 'byok' } } })
+    vi.stubGlobal('fetch', fetchMock)
+    await checkUploadedDesign(hash)
+    expect((local.resume as { design: unknown }).design).toMatchObject({ status: 'done', check: { matched: 2, total: 2 } })
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  test('hosted: a copy added while signed out is never sent to the account', async () => {
+    const fetchMock = vi.fn()
+    const session = { access_token: 't', refresh_token: 'r', expires_at: Math.floor(Date.now() / 1000) + 3600, user: { id: 'me', email: 'ada@example.com' } }
+    await store({ status: 'checking', extra: { settings: { provider: 'claude', apiKey: '', mode: 'hosted' }, session, resume: { accountId: 'me', signedOutUpload: true } } })
+    vi.stubGlobal('fetch', fetchMock)
+    await checkUploadedDesign(hash)
+    expect((local.resume as { design: unknown }).design).toMatchObject({ status: 'error', error: 'Upload your .docx again while signed in to use your design.' })
+    expect(fetchMock).not.toHaveBeenCalled()
   })
 })

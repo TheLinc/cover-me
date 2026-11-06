@@ -137,8 +137,10 @@ export async function tailorDesign(
     const p = paras[skills.at]
     let k = 0
     let label = ''
-    while (k < p.runs.length && label.length < skills.label.length) label += p.runs[k++].text
-    if (skills.label && label === skills.label && k < p.runs.length) edits.push(...replaceText({ ...p, runs: p.runs.slice(k), text: '' }, tailored.skills.trim()))
+    while (k < p.runs.length && label.trim().length < skills.label.trim().length) label += p.runs[k++].text
+    if (skills.label && label.trim() === skills.label.trim() && k < p.runs.length) {
+      edits.push(...replaceText({ ...p, runs: p.runs.slice(k), text: '' }, (/\s$/.test(label) ? '' : ' ') + tailored.skills.trim()))
+    }
     else setText(skills.at, skills.label + tailored.skills.trim())
   }
 
@@ -181,7 +183,7 @@ function replaceText(p: Para, text: string): Edit[] {
   ]
 }
 
-const SUMMARY_HEADING = /^(professional |career |executive )?(summary|profile|objective|about me|overview)( of qualifications)?:?$/i
+const SUMMARY_HEADING = /^(professional |career |executive )?(summary|profile|objective|about me|overview):?$/i
 const words = (s: string) => s.trim().split(/\s+/).filter(Boolean).length
 
 // The paragraph under a Summary/Profile heading, or else a long paragraph of
@@ -191,11 +193,17 @@ function findSummary(paras: Para[], used: Set<number>, firstBullet: number): num
   const free = (i: number) => !used.has(i) && !paras[i].inTextBox && paras[i].text.trim() !== ''
   const h = paras.findIndex((p) => !p.inTextBox && SUMMARY_HEADING.test(p.text.trim()))
   if (h >= 0) {
-    // The first paragraph with text under the heading, if it's prose.
-    for (let i = h + 1; i < paras.length; i++) {
-      if (paras[i].inTextBox || !paras[i].text.trim()) continue
-      return free(i) && words(paras[i].text) >= 8 ? i : undefined
+    // The first paragraph with text under the heading, if it's prose and
+    // the only prose there: a summary of several paragraphs or lines would
+    // come out half old, half new.
+    const next = (from: number) => {
+      for (let i = from; i < paras.length; i++) if (!paras[i].inTextBox && paras[i].text.trim()) return i
+      return -1
     }
+    const at = next(h + 1)
+    if (at < 0 || !free(at) || words(paras[at].text) < 8) return undefined
+    const after = next(at + 1)
+    return after >= 0 && free(after) && words(paras[after].text) >= 8 ? undefined : at
   }
   // Without a heading, only near the top of the page (under the name and
   // contact lines), and not a labelled line like "Relevant coursework: …".
@@ -307,6 +315,8 @@ function scan(xml: string): { paras: Para[]; layoutWarning?: DesignCheck['layout
     } else if (name === 'w:t' && !selfClosing && para) {
       textTag = at
       textStart = end
+    } else if (name === 'w:noBreakHyphen' && stack[stack.length - 1] === 'w:r' && para) {
+      pieces.get(para)!.push('‑') // as mammoth reads it
     } else if ((name === 'w:tab' || name === 'w:br' || name === 'w:cr') && stack[stack.length - 1] === 'w:r' && para) {
       pieces.get(para)!.push(' ')
       // A line break, not a page or column break.
