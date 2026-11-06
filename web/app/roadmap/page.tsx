@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { SiteNav } from '@/components/site/SiteNav'
 import { SiteFooter } from '@/components/site/SiteFooter'
 import { FeatureRequest } from '@/components/roadmap/RoadmapCard'
@@ -35,6 +36,9 @@ export default async function RoadmapPage() {
         {groups.length === 0
           ? <p className="text-[15px] text-ink-2 md:text-center">Nothing to show right now. Check back soon.</p>
           : <RoadmapTimeline groups={groups} />}
+        <p className="mt-10 text-center text-[14px]">
+          <Link href="/changelog" className="font-medium text-brand-strong hover:underline">See every release</Link>
+        </p>
         <div className="mt-16 text-center">
           <FeatureRequest />
         </div>

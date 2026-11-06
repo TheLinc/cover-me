@@ -37,16 +37,22 @@ export interface GithubIssue {
   pull_request?: unknown
 }
 
-const plain = (s: string) =>
+export const plain = (s: string) =>
   s.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/[*_`>#]/g, '').trim()
 
-export function publicBlock(body: string | null | undefined): { title: string; blurb: string } | null {
+// The lines of a body's `## Public` section, up to the next `##` heading.
+// Also read by release notes (lib/changelog.ts).
+export function publicSection(body: string | null | undefined): string[] | null {
   const lines = (body ?? '').split(/\r?\n/)
   const start = lines.findIndex((l) => /^##\s+public\s*$/i.test(l.trim()))
   if (start === -1) return null
   const rest = lines.slice(start + 1)
   const end = rest.findIndex((l) => /^##\s/.test(l))
-  const [title, blurb = ''] = (end === -1 ? rest : rest.slice(0, end)).map(plain).filter(Boolean)
+  return end === -1 ? rest : rest.slice(0, end)
+}
+
+export function publicBlock(body: string | null | undefined): { title: string; blurb: string } | null {
+  const [title, blurb = ''] = (publicSection(body) ?? []).map(plain).filter(Boolean)
   return title ? { title, blurb } : null
 }
 
