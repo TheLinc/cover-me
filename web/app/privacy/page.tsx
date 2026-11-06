@@ -339,7 +339,10 @@ export default function PrivacyPage() {
                 Cover Me account ID. If you answer, we store your answer, any comment you write, your
                 answer to the optional follow-up question some answers get, the version and that
                 account ID in PostHog, so a signed-in answer is linked to your account.
-                Answering is optional, and the survey asks for nothing else about you.
+                Answering is optional, and the survey asks for nothing else about you. After you
+                answer, your browser keeps the time you answered in its local storage, and for the
+                next 24 hours the survey page shows a thank-you instead of asking again. It holds
+                nothing else and is never sent to us.
               </Li>
               <Li>
                 <strong className="text-foreground">Billing information (when you click Upgrade, and Pro subscribers).</strong>{' '}

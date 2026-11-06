@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { useSearchParams } from 'next/navigation'
 import posthog from 'posthog-js'
 import { Button } from '@/components/ui/button'
@@ -94,6 +94,29 @@ const FOLLOW_UPS: Partial<Record<Reason, FollowUpQuestion>> = {
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const VERSION = /^\d+(\.\d+){0,3}$/
 
+// When this browser last sent an answer. For a day after, the page shows the
+// thank-you screen instead of the form, so a refresh, a new tab or a second
+// uninstall doesn't send the same person's answer twice. Disclosed on /privacy.
+const SENT_AT_KEY = 'uninstall-survey-sent-at'
+const ANSWER_ONCE_MS = 24 * 60 * 60 * 1000
+
+// localStorage throws when the browser blocks storage; the form then just shows
+function answeredRecently(): boolean {
+  try {
+    return Date.now() - Number(localStorage.getItem(SENT_AT_KEY)) < ANSWER_ONCE_MS
+  } catch {
+    return false
+  }
+}
+
+const noSubscribe = () => () => {}
+
+function rememberAnswered() {
+  try {
+    localStorage.setItem(SENT_AT_KEY, String(Date.now()))
+  } catch {}
+}
+
 // Opened by Chrome when someone removes the extension (extension/src/background/install.ts).
 // u is the account id, there only when they were signed in. Both come from the
 // URL, so anything that isn't a UUID or a version number is dropped.
@@ -103,8 +126,13 @@ export function UninstallSurvey() {
   const [comment, setComment] = useState('')
   // The answer as sent, kept so a follow-up can re-send it under the same submission id
   const [sent, setSent] = useState<Record<string, unknown> | null>(null)
+  // False on the server, then the browser's value, without a hydration mismatch
+  const answeredBefore = useSyncExternalStore(noSubscribe, answeredRecently, () => false)
 
-  useEffect(() => whenPosthogLoaded(posthog, () => { posthog.capture('survey shown', { $survey_id: SURVEY_ID }) }), [])
+  useEffect(() => {
+    if (answeredRecently()) return
+    return whenPosthogLoaded(posthog, () => { posthog.capture('survey shown', { $survey_id: SURVEY_ID }) })
+  }, [])
 
   const needsComment = reason === OTHER
   const canSend = reason !== '' && (!needsComment || comment.trim() !== '')
@@ -125,6 +153,7 @@ export function UninstallSurvey() {
       ...(VERSION.test(version) && { extension_version: version }),
     }
     whenPosthogLoaded(posthog, () => { posthog.capture('survey sent', answer) })
+    rememberAnswered()
     setSent(answer)
   }
 
@@ -138,6 +167,21 @@ export function UninstallSurvey() {
         <h1 ref={(el) => el?.focus()} tabIndex={-1} className="text-[34px] font-semibold leading-tight tracking-[-0.03em] outline-none">Thanks for telling us</h1>
         {reply && <div className="mt-4 text-[15px] text-muted-foreground">{reply}</div>}
         {followUp && <FollowUp {...followUp} answer={sent} />}
+        <p className="mt-6">
+          <a href={CHROME_STORE_URL} className={LINK_CLASS}>
+            Changed your mind? Reinstall
+          </a>
+        </p>
+      </div>
+    )
+  }
+
+  // After the sent screen: sending sets the flag this reads
+  if (answeredBefore) {
+    return (
+      <div className="text-center">
+        <h1 className="text-[34px] font-semibold leading-tight tracking-[-0.03em]">Thanks for telling us</h1>
+        <p className="mt-4 text-[15px] text-muted-foreground">We already have your answer.</p>
         <p className="mt-6">
           <a href={CHROME_STORE_URL} className={LINK_CLASS}>
             Changed your mind? Reinstall
