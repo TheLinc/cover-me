@@ -9,7 +9,9 @@
 // The upload check is this same function without a tailored resume.
 //
 // String scanning, not DOMParser: the tailor runs in the service worker,
-// which has no DOM.
+// which has no DOM. jszip is a static import for the same reason: a service
+// worker can't use import().
+import JSZip from 'jszip'
 import { resumeFileName, saveFile } from './file-name'
 import type { TailoredResume } from './types'
 
@@ -32,7 +34,7 @@ export function designUsable(check: DesignCheck): boolean {
 
 type Source = Pick<TailoredResume, 'experience' | 'projects' | 'skills'>
 
-interface TextRun { tagStart: number; contentStart: number; contentEnd: number; text: string }
+interface TextRun { tagStart: number; contentEnd: number; text: string }
 interface Para {
   start: number
   end: number
@@ -52,7 +54,6 @@ export async function tailorDesign(
   parsed: Source,
   tailored?: Source & { summary?: string },
 ): Promise<{ check: DesignCheck; bytes?: Uint8Array }> {
-  const { default: JSZip } = await import('jszip') // loaded on first use
   const zip = await JSZip.loadAsync(file)
   const entry = zip.file('word/document.xml')
   if (!entry) throw new Error('This file isn’t a Word document.')
@@ -251,7 +252,7 @@ function scan(xml: string): { paras: Para[]; layoutWarning?: DesignCheck['layout
     if (closing) {
       if (name === 'w:t' && para && textStart >= 0) {
         const text = decodeXml(xml.slice(textStart, at))
-        para.runs.push({ tagStart: textTag, contentStart: textStart, contentEnd: at, text })
+        para.runs.push({ tagStart: textTag, contentEnd: at, text })
         pieces.get(para)!.push(text)
         textStart = -1
       } else if (name === 'w:p' && para) {

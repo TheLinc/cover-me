@@ -4,7 +4,7 @@ import { parseResumeStructure } from '../lib/ai/resume-parse'
 import { tailorResume } from '../lib/ai/resume-tailor'
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from '../lib/config'
 import { decryptApiKey } from '../lib/crypto'
-import { checkUploadedDesign, designForTailor, finishDesign } from '../lib/design'
+import { checkUploadedDesign, designForTailor, finishDesign, uploadDesignIfPro } from '../lib/design'
 import { debugGroup } from '../lib/debug'
 import { addToHistory, addToTailoredHistory, getCachedTier, getCandidateContext, getResume, getSession, getSettings, hasAgreedToPageRead, resolveMode, saveParsedResume, setEntryAccounts, watchSession } from '../lib/storage'
 import { handleInstalled, uninstallUrl } from './install'
@@ -481,6 +481,7 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
       const localId = crypto.randomUUID()
       const { resume: tailored, savedId } = await tailorViaBackend(job, session.access_token, compact, merged, trim, includeSummary, lastResult && previous, onProgress, localId, design.design)
       const resume = await finishDesign(tailored, design)
+      if (resume.sourceHash) void uploadDesignIfPro(session.access_token)
       const pro = (await getCachedTier()) === 'hosted_pro'
       await recordTailored(job, resume, localId, {
         ...(savedId === localId ? { account: session.user.id } : {}),

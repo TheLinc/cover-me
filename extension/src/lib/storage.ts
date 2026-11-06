@@ -55,6 +55,7 @@ export async function saveResume(resume: ResumeData): Promise<void> {
 
 export async function clearResume(): Promise<void> {
   await chrome.storage.local.remove('resume')
+  await pruneDesignFiles()
 }
 
 export async function saveParsedResume(parsed: ParsedResume): Promise<void> {

@@ -56,9 +56,7 @@ export async function checkUploadedDesign(hash: string): Promise<void> {
       if (!session) throw new Error('Sign in to check your design.')
       parsed = await uploadResumeToBackend(session.access_token, resume.text, resume.filename, true)
       if (!parsed) throw new Error("Couldn't check your design right now. Try again in a few minutes.")
-      if ((await getCachedTier()) === 'hosted_pro' && resume.design.size <= DESIGN_UPLOAD_MAX) {
-        await uploadDesignFileToBackend(session.access_token, hash, file.data).catch(() => {})
-      }
+      await uploadDesignIfPro(session.access_token)
     } else {
       if (!settings?.apiKey) throw new Error('Add your API key in Settings to check your design.')
       parsed = Array.isArray(resume.parsed?.otherSections)
@@ -73,6 +71,21 @@ export async function checkUploadedDesign(hash: string): Promise<void> {
   } catch (err) {
     await setDesign(hash, { status: 'error', error: err instanceof Error ? err.message : "Couldn't check your design." })
   }
+}
+
+// Pro accounts keep the Word file for the dashboard. Tried after each check
+// and each hosted tailor until it lands, so an upgrade after the upload, or a
+// failed send, still gets the file there.
+export async function uploadDesignIfPro(accessToken: string): Promise<void> {
+  const resume = await getResume()
+  const d = resume?.design
+  if (!d || d.uploaded || d.size > DESIGN_UPLOAD_MAX || (await getCachedTier()) !== 'hosted_pro') return
+  const file = await getDesignFile(d.hash)
+  if (!file) return
+  try {
+    await uploadDesignFileToBackend(accessToken, d.hash, file.data)
+    await setDesign(d.hash, { uploaded: true })
+  } catch { /* tried again on the next tailor */ }
 }
 
 // What a tailor needs about the layout: the file to edit when "Your design"

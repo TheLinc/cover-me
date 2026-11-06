@@ -52,7 +52,7 @@ Deno.serve(async (req) => {
     }
   }
 
-  // POST ?file=1 — a Pro account's Word file, for the dashboard's download in
+  // POST ?file=1: a Pro account's Word file, for the dashboard's download in
   // the user's own design. Kept with the parse it was checked against.
   if (req.method === 'POST' && new URL(req.url).searchParams.has('file')) {
     const { data: account } = await supabase.from('users').select('tier').eq('id', userId).single()
@@ -200,10 +200,10 @@ async function parseNow(supabase: SupabaseClient, userId: string, text: string, 
     const structured_encrypted = await encrypt(JSON.stringify(structured))
     const { error: saveError } = await supabase.from('resumes').update({ structured_encrypted })
       .eq('user_id', userId).like('text_encrypted', sameCiphertext(textEncrypted))
-    if (saveError) console.error('Background resume parse: saving it failed')
+    if (saveError) console.error('Resume parse: saving it failed')
     return structured
   } catch {
-    console.error('Background resume parse failed')
+    console.error('Resume parse failed')
     return null
   }
 }

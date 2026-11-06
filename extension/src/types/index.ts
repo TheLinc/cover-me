@@ -77,6 +77,7 @@ export interface ResumeData {
     status: 'checking' | 'done' | 'error'
     check?: DesignCheck
     error?: string
+    uploaded?: boolean // in the Pro account, for the dashboard
   }
   // The layout picked on the resume page. Missing: "Your design" whenever its check passes.
   layout?: 'yours' | 'cover-me'
