@@ -31,9 +31,7 @@ export function StageMenu({ title, stage, onChange, busy, saving, align = 'end' 
         <Button
           variant="outline"
           size="sm"
-          // leading-5: text-[13px] drops the button's own line height, and an
-          // inherited one put the label up to 1px off center.
-          className={`h-8 gap-1 rounded-full px-2.5 text-[13px] leading-5 font-medium ${STYLE[stage].pill}`}
+          className={`h-8 gap-1 rounded-full px-2.5 font-medium ${STYLE[stage].pill}`}
           // Not disabled during its own save: the closing menu puts focus back on
           // the trigger, and a disabled one can't take it. A pick then is ignored.
           disabled={busy && !saving}
