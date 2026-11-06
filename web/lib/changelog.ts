@@ -2,7 +2,7 @@
 // the `## Public` section of its notes, bullets grouped under `### New` and
 // `### Fixed`. The rest of the notes is for checking the build. Releases are
 // published by maintainers only, so unlike the roadmap there's no author check.
-import { plain, publicSection } from './roadmap'
+import { fetchGithub, plain, publicSection } from './roadmap'
 
 const RELEASES_URL = 'https://api.github.com/repos/TheLinc/cover-me/releases?per_page=100'
 
@@ -55,20 +55,7 @@ export function toChangelog(releases: GithubRelease[]): ChangelogVersion[] {
     .map((r) => ({ version: r.tag_name.replace(/^v/, ''), date: day(r.created_at), ...groups(r.body) }))
 }
 
-// Same caching and build-time fallback as getRoadmap() in lib/roadmap.ts.
 export async function getChangelog(): Promise<ChangelogVersion[] | null> {
-  try {
-    const res = await fetch(RELEASES_URL, {
-      headers: {
-        Accept: 'application/vnd.github+json',
-        ...(process.env.GITHUB_TOKEN ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` } : {}),
-      },
-      next: { revalidate: 3600 },
-    })
-    if (!res.ok) throw new Error(`GitHub releases ${res.status}`)
-    return toChangelog(await res.json())
-  } catch (e) {
-    if (process.env.NEXT_PHASE === 'phase-production-build') return null
-    throw e
-  }
+  const releases = await fetchGithub<GithubRelease[]>(RELEASES_URL)
+  return releases && toChangelog(releases)
 }

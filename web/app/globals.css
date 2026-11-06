@@ -180,12 +180,9 @@ img, svg, video { display: block; }
   .accordion[open]::details-content { block-size: auto; }
 
   /* /changelog#v1.4.0 (the popup's "What's new" link): the version arrived
-     at fades a highlight in and out. Reduced motion gets a still outline. */
+     at fades a highlight in and out. Reduced motion skips it. */
   @media (prefers-reduced-motion: no-preference) {
     .changelog-version:target { animation: target-flash 2.4s ease-in-out; }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .changelog-version:target { box-shadow: 0 0 0 2px var(--brand); }
   }
 
 }

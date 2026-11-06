@@ -212,16 +212,7 @@ html, body {
 .popup-bar .logo-text { font-size: 14px; font-weight: 600; letter-spacing: -0.2px; }
 .popup-status { margin-left: auto; font-size: 12px; font-weight: 500; color: var(--text-2); }
 /* After a minor or major update (components/WhatsNew.tsx). */
-.whats-new {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  color: var(--accent-h);
-  font-size: 12px;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-.whats-new:hover { color: var(--text); }
+.whats-new { display: inline-flex; align-self: center; align-items: center; gap: 5px; }
 .whats-new-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
 
 /* Generating: the step list, the job, then Cancel. */

@@ -30,7 +30,7 @@ function Group({ title, items }: { title: string; items: string[] }) {
 
 // The popup's "What's new" link lands on #v<version>; see .changelog-version
 // in globals.css for the highlight.
-function Version({ v }: { v: ChangelogVersion }) {
+function Version({ version: v }: { version: ChangelogVersion }) {
   return (
     <section id={`v${v.version}`} aria-labelledby={`v${v.version}-title`} className="changelog-version soft-card flex scroll-mt-24 flex-col gap-4 px-6 py-5">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4">
@@ -58,7 +58,7 @@ export default async function ChangelogPage() {
           <p className="text-[16px] leading-[1.7] text-muted-foreground">{DESCRIPTION}</p>
         </div>
         {versions?.length
-          ? <div className="flex flex-col gap-6">{versions.map((v) => <Version key={v.version} v={v} />)}</div>
+          ? <div className="flex flex-col gap-6">{versions.map((v) => <Version key={v.version} version={v} />)}</div>
           : <p className="text-[15px] text-ink-2 md:text-center">Nothing to show right now. Check back soon.</p>}
         <p className="mt-16 text-center text-[14px] text-ink-2">
           Coming next? See the <Link href="/roadmap" className="font-medium text-brand-strong hover:underline">roadmap</Link>.

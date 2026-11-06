@@ -85,20 +85,26 @@ export function toRoadmap(issues: GithubIssue[]): Roadmap {
 
 // Cached for an hour. A failed fetch throws, so ISR keeps serving the last
 // good page. During `next build` there is no last good page, so it returns
-// null instead and a GitHub outage can't fail a deploy.
-export async function getRoadmap(): Promise<Roadmap | null> {
+// null instead and a GitHub outage can't fail a deploy. Also used by
+// lib/changelog.ts.
+export async function fetchGithub<T>(url: string): Promise<T | null> {
   try {
-    const res = await fetch(ISSUES_URL, {
+    const res = await fetch(url, {
       headers: {
         Accept: 'application/vnd.github+json',
         ...(process.env.GITHUB_TOKEN ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` } : {}),
       },
       next: { revalidate: 3600 },
     })
-    if (!res.ok) throw new Error(`GitHub issues ${res.status}`)
-    return toRoadmap(await res.json())
+    if (!res.ok) throw new Error(`GitHub ${res.status} for ${url}`)
+    return await res.json()
   } catch (e) {
     if (process.env.NEXT_PHASE === 'phase-production-build') return null
     throw e
   }
+}
+
+export async function getRoadmap(): Promise<Roadmap | null> {
+  const issues = await fetchGithub<GithubIssue[]>(ISSUES_URL)
+  return issues && toRoadmap(issues)
 }

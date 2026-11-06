@@ -14,8 +14,8 @@ export async function handleInstalled(details: { reason: string; previousVersion
   // don't: most releases are patches, and a dot on each would be ignored. A
   // fresh install sets nothing, so its version counts as seen.
   const version = chrome.runtime.getManifest().version
-  const minor = (v: string) => v.split('.').slice(0, 2).join('.')
-  if (details.reason === 'update' && details.previousVersion && minor(details.previousVersion) !== minor(version)) {
+  const majorMinor = (v: string) => v.split('.').slice(0, 2).join('.')
+  if (details.reason === 'update' && details.previousVersion && majorMinor(details.previousVersion) !== majorMinor(version)) {
     await saveWhatsNew(version)
   }
   // Builds before 1.3.0 parsed only the first 6,000 characters of the resume,
