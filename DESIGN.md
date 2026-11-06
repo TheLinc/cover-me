@@ -247,7 +247,7 @@ Depth is one soft two-part shadow under white tiles on paper: a tight 1px contac
 
 ## Shapes
 
-Three radii. Every control is a pill (search, buttons, filter chips, document chips, badges, ATS and gap capsules). Every container is 20px (application tiles, the plan strip, drawer tiles, empty states, skeleton tiles). Company monograms are 40px squares at 12px. The avatar is the only circle besides pills: a 32px one in the account menu, holding a picture or an initial, never a status. The stage pill's 8px dot is the one small one.
+Three radii. Every control is a pill (search, buttons, filter chips, document chips, badges, ATS and gap capsules). Every container is 20px (application tiles, the plan strip, drawer tiles, empty states, skeleton tiles). Company monograms are 40px squares at 12px. The avatar is the only circle besides pills: 36px on the account menu button, 32px inside the menu, holding a picture or an initial, never a status. The stage pill's 8px dot is the one small one.
 
 Empty states are a 20px dashed hairline outline on paper with no fill, so they read as a place a tile will go.
 
@@ -275,10 +275,17 @@ A 56px white pill across the full column, 16px text, a 20px magnifier inset 20px
 Two tiles on home, side by side from 768px: usage (label, big number "of" limit, 6px indigo bar or one cell per free generation, reset line), then the plan. Pro shows "Pro" with a filled star, the daily limit and any first payment; billing lives in Settings. Free and gift-trial accounts get an Indigo Tint tile with what Pro adds (or when the trial ends) and the upgrade buttons: the primary monthly and an outline quarterly. They stay on home because they are a pitch, not a setting.
 
 ### Account menu
-The top right of every signed-in page: a ghost pill with the avatar, the email and a small caret (the avatar alone on phones), opening a shadcn dropdown with the email as its label, Settings, Support, a separator and Sign out.
+The top right of every signed-in page: the 36px avatar alone (picture or initial on Indigo Tint), with a hairline ring and Soft Panel fill on hover and while open. It opens a white dropdown at 16px corners with the menu lift: the avatar and email as its label, then Settings, Support and Sign out, each with an 18px Caption Grey icon (gear, lifebuoy, sign-out), with separators around the middle pair.
 
-### Settings and Support
-Both sit in the 1040px column with their content held to 640px, since they are short reading and form widths. Settings stacks three white tiles 20px apart (Account, Plan, Emails), each headed by a Caption Grey label like the plan strip; Plan carries the Pro or Free badge and, for Pro, the outline "Manage billing". Support is a plain form on paper: a pill Select for the type, a pill input for a job site, a 20px-cornered textarea and a primary Send. Sending replaces the form with one focused line of thanks.
+### Settings
+In the 1040px column with its tiles held to 640px. Three white tiles 20px apart (Account, Plan, Emails), each headed by a Caption Grey label like the plan strip; Plan carries the Pro or Free badge and, for Pro, the outline "Manage billing".
+
+### Support
+A letter you can watch being written. Under the heading and one line of context, two columns from 1024px: the form, and a 380px live preview that sticks under the header.
+- **Topic tiles:** "What's this about?" (Title) over five 20px tiles in two columns, the last spanning both: a 40px Indigo Tint icon square (Phosphor duotone), the label in 14px semibold and a Caption Grey hint (hidden on phones). Chosen, a tile takes the set-chip look (Indigo Tint, 40% indigo border, Indigo Ink label) and its icon square turns white with a small check badge on its corner. They are a Radix radio group, so arrow keys move between them.
+- **Writing tile:** one white tile holding the job-site pill input (only for a site request, with a live "We'll look at example.com" line) and a borderless 15px textarea whose placeholder follows the topic, with a footer row: the character count and the primary Send with a paper-plane icon. The tile's border turns indigo while focused.
+- **The letter:** a white sheet with a Soft Panel sheet tilted behind it and a dashed postage stamp holding the logo. To and Reply-to rows, the subject exactly as the server writes it, a rule, the job-site chip, the message as typed, and "Attached" chips (Account ID, the plan). Phones hide it while writing and show one attachment line instead.
+- **Sent:** the form gives way to a focused confirmation (duotone seal in an Indigo Tint square, "Message sent", the reply line, an outline "Back to dashboard" and a ghost "Send another"). The letter settles in with a slight zoom and a tilted "Sent" stamp lands on its bottom edge, motion-safe only. On phones the letter follows the confirmation.
 
 ### Badges
 Pills, 12px semibold. Pro is solid Cover Me Indigo with a small filled star. Free is Soft Panel with Warm Grey text. The stage pill is a menu button: an 8px dot, 13px medium text and a small caret, opening a radio list of the four stages. Each stage has its own fill, so it doesn't read as one of the document chips beside it: Applied is white with a hairline and a Caption Grey dot; Interviewing is Indigo Tint with Indigo Ink text and a Signal Indigo dot; Offer is Offer Tint (`#DCFCE7`) with Offer Ink (`#166534`) text and a green dot (`#16A34A`); Closed is Soft Panel with Warm Grey text and a hollow dot.

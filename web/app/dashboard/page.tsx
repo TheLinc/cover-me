@@ -7,21 +7,7 @@ import { avatarUrl } from '@/lib/avatar'
 import { greetingFor } from '@/lib/greeting'
 import { RecentApplications, RecentApplicationsSkeleton } from './ApplicationHistory'
 import { Toaster } from '@/components/ui/sonner'
-import Stripe from 'stripe'
-import { trialState, type TrialState } from '@/lib/stripe-tier'
-
-const NO_TRIAL: TrialState = { giftTrialEnd: null, firstPayment: null }
-
-// A gift trial's end (#112), or the first payment of a plan bought during one.
-// A slow or failed Stripe read shows the plain Pro tile instead.
-async function readTrial(customer: string): Promise<TrialState> {
-  try {
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { timeout: 3000, maxNetworkRetries: 0 })
-    return trialState((await stripe.subscriptions.list({ customer, status: 'trialing', limit: 10 })).data)
-  } catch {
-    return NO_TRIAL
-  }
-}
+import { NO_TRIAL, readTrial } from '@/lib/read-trial'
 
 export default async function DashboardPage() {
   const supabase = await createServerSupabaseClient()
