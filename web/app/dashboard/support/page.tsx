@@ -21,9 +21,9 @@ export default async function SupportPage() {
     <div className="min-h-screen bg-background">
       <SiteNav links={APP_LINKS} actions={<AccountMenu email={email} avatar={avatarUrl(user.user_metadata)} />} />
       <main className="relative z-[1] px-5 pb-24 pt-12">
-        <div className="mx-auto flex max-w-[640px] flex-col gap-6">
+        <div className="mx-auto flex max-w-[1040px] flex-col gap-6">
           <h1 className="text-[34px] font-semibold leading-tight tracking-[-0.03em] text-ink">Support</h1>
-          <SupportForm email={email} />
+          <div className="max-w-[640px]"><SupportForm email={email} /></div>
         </div>
       </main>
     </div>

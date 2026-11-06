@@ -8,6 +8,7 @@ const INBOX = 'support@cover-me.dev'
 const MAX_MESSAGE = 1000
 const PER_MINUTE = 2
 const PER_DAY = 5
+// A gift trial's length (billing's GIFT_TRIAL_DAYS).
 const TRIAL_MS = 7 * 86_400_000
 // The subject's label comes from here, never from the request.
 const TYPES: Record<string, string> = {

@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase'
 const URL_BASE = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/support`
 
 export type SupportType = 'problem' | 'feature' | 'account' | 'job_site' | 'other'
+export type SupportResult = 'sent' | 'limited' | 'failed'
 
 // A pasted URL or a bare hostname, reduced to the hostname: lowercase, no
 // leading www. Null when it isn't a dotted hostname the function would take.
@@ -18,7 +19,7 @@ export function siteHost(input: string): string | null {
   }
 }
 
-export async function sendSupport(body: { type: SupportType; message: string; site?: string }): Promise<'sent' | 'limited' | 'failed'> {
+export async function sendSupport(body: { type: SupportType; message: string; site?: string }): Promise<SupportResult> {
   try {
     const { data: { session } } = await createClient().auth.getSession()
     if (!session) return 'failed'
