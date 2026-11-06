@@ -65,7 +65,7 @@ process.on('SIGINT', () => { cleanup(); process.exit(130) })
 // anon JWT, then the function rejects it as a user token with its own JSON
 // body. Warming all of them here keeps cold starts (slow after a volume wipe,
 // when the runtime re-downloads npm deps) out of the first test that calls each.
-const FUNCTIONS = ['resume', 'generate', 'tailor', 'letters', 'applications', 'billing', 'email-preferences', 'nudge']
+const FUNCTIONS = ['resume', 'generate', 'tailor', 'letters', 'applications', 'billing', 'email-preferences', 'nudge', 'support']
 
 async function waitForFunctions(timeoutMs = 180_000) {
   const deadline = Date.now() + timeoutMs

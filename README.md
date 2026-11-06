@@ -432,6 +432,7 @@ supabase functions deploy applications
 supabase functions deploy billing
 supabase functions deploy email-preferences
 supabase functions deploy nudge
+supabase functions deploy support
 ```
 
 ### 7. Set up Stripe
