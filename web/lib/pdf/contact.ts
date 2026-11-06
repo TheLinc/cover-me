@@ -7,7 +7,7 @@ import type { TailoredResume } from './types'
 // location, only website. Stored resumes are untrusted JSON, so each field is
 // checked to be a string.
 export function contactParts(resume: TailoredResume): string[] {
-  const links = Array.isArray(resume.links) && resume.links.length ? resume.links : [resume.website]
-  return [resume.location, resume.phone, resume.email, ...links]
-    .filter((p): p is string => typeof p === 'string' && p.trim().length > 0)
+  const clean = (parts: unknown[]) => parts.flatMap((p) => (typeof p === 'string' && p.trim() ? [p.trim()] : []))
+  const links = clean(Array.isArray(resume.links) ? resume.links : [])
+  return [...clean([resume.location, resume.phone, resume.email]), ...(links.length ? links : clean([resume.website]))]
 }

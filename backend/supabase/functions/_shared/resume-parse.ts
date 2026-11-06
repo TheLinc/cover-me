@@ -97,6 +97,7 @@ export function isValidParsedResume(r: unknown): r is ParsedResume {
   )
 }
 
+// ── Parse normalizers (mirrored: extension/src/lib/ai/resume-parse.ts ⇄ backend/supabase/functions/_shared/resume-parse.ts) ──
 // The model's otherSections, kept only where each entry is a heading with
 // verbatim lines, and always an array: the tailor treats a cached parse
 // without one as made before extra sections were kept, and parses again.
@@ -120,6 +121,7 @@ export function withLinks<T extends { website: string }>(parsed: T): T {
   if (website && !links.includes(website)) links.unshift(website)
   return links.length ? { ...parsed, website: website || links[0]!, links } : parsed
 }
+// ── End mirrored parse normalizers ──
 
 export async function parseResumeStructure(resumeText: string, apiKey: string): Promise<ParsedResume> {
   const res = await fetch(ANTHROPIC_MESSAGES_URL, {

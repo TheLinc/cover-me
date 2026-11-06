@@ -31,13 +31,14 @@ export function downloadTailoredResumePdf(resume: TailoredResume, jobTitle?: str
   y += 16
 
   // Wrapped between items, never inside a URL, once links and a location
-  // make the line wider than the page.
+  // make the line wider than the page. One URL wider than the page still
+  // overflows; no real one is.
   const contact: string[] = []
   doc.setFont('times', 'normal')
   doc.setFontSize(10)
   for (const part of contactParts(resume)) {
-    const joined = contact.length ? `${contact[contact.length - 1]}   |   ${part}` : ''
-    if (joined && doc.getTextWidth(joined) <= CW) contact[contact.length - 1] = joined
+    const joined = `${contact[contact.length - 1]}   |   ${part}`
+    if (contact.length && doc.getTextWidth(joined) <= CW) contact[contact.length - 1] = joined
     else contact.push(part)
   }
   contact.forEach((line, i) => {
