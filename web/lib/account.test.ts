@@ -32,6 +32,12 @@ describe('deleteAccount', () => {
     expect(signOut).not.toHaveBeenCalled()
   })
 
+  it('asks for a fresh sign-in when the session is rejected', async () => {
+    vi.stubGlobal('fetch', async () => Response.json({ error: 'Invalid token' }, { status: 401 }))
+    expect(await deleteAccount()).toEqual({ error: 'Your session has ended. Sign in again to delete your account.' })
+    expect(signOut).not.toHaveBeenCalled()
+  })
+
   it('turns a non-JSON gateway error into a readable message', async () => {
     vi.stubGlobal('fetch', async () => new Response('<html>502 Bad Gateway</html>', { status: 502 }))
     expect(await deleteAccount()).toEqual({ error: "Couldn't delete your account. Please try again." })

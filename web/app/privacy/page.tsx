@@ -699,7 +699,7 @@ export default function PrivacyPage() {
             <Ul>
               <Li><strong className="text-foreground">Access:</strong> Request a copy of all data we hold about you.</Li>
               <Li><strong className="text-foreground">Correction:</strong> Request correction of inaccurate data.</Li>
-              <Li><strong className="text-foreground">Deletion:</strong> Request permanent deletion of your account and all associated data.</Li>
+              <Li><strong className="text-foreground">Deletion:</strong> Delete your account and all associated data yourself from Settings in your dashboard, or ask us to.</Li>
               <Li><strong className="text-foreground">Portability:</strong> Request your data in a machine-readable format.</Li>
               <Li><strong className="text-foreground">Objection:</strong> Object to processing of your data.</Li>
               <Li><strong className="text-foreground">Restriction:</strong> Request restriction of processing while a dispute is resolved.</Li>

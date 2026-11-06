@@ -70,7 +70,7 @@ export function DeleteAccount({ pro }: { pro: boolean }) {
                 <AlertDialogDescription asChild>
                   <div className="flex flex-col gap-2">
                     <p>This deletes your account, your resume and your application history from our servers. You can&apos;t undo it.</p>
-                    {pro && <p>Your Pro plan ends now. The rest of this billing period isn&apos;t refunded.</p>}
+                    {pro && <p>Your Pro plan ends now, and time left on it isn&apos;t refunded.</p>}
                     <p>Letters and resumes saved in the extension stay on your computer until you remove the extension.</p>
                   </div>
                 </AlertDialogDescription>

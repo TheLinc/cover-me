@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
     } catch (err) {
       if (!(err instanceof StripeError && err.code === 'resource_missing')) {
         console.error('[account]', err instanceof Error ? err.message : 'unknown error')
-        return json({ error: 'Could not cancel your subscription. Your account was not deleted. Please try again.' }, 502)
+        return json({ error: 'Could not reach billing. Your account was not deleted. Please try again.' }, 502)
       }
     }
   }

@@ -30,14 +30,19 @@ describe('account', () => {
     user = await createUser()
     await uploadResume(user)
     await setUsage(user.id, [{ daysAgo: 0, count: 2 }])
-    await admin.from('job_applications').insert({ user_id: user.id, title: 'Engineer', company: 'Acme' })
+    const { data: app } = await admin.from('job_applications').insert({ user_id: user.id, title: 'Engineer', company: 'Acme' }).select('id').single()
+    // Kept from a time on Pro: free accounts can still hold them.
+    for (const [table, row] of [['cover_letters', { letter_encrypted: 'x' }], ['tailored_resumes', { resume_json_encrypted: 'x' }]] as const) {
+      const { error } = await admin.from(table).insert({ user_id: user.id, job_application_id: app!.id, ...row })
+      expect(error, table).toBeNull()
+    }
 
     const res = await deleteAccount(user.token)
     expect(res.status).toBe(200)
     expect(await res.json()).toEqual({ deleted: true })
 
     expect(await authUserExists(user.id)).toBe(false)
-    for (const table of ['users', 'resumes', 'rate_limits', 'job_applications']) {
+    for (const table of ['users', 'resumes', 'rate_limits', 'job_applications', 'cover_letters', 'tailored_resumes']) {
       expect(await rows(table, user.id), table).toBe(0)
     }
     expect(await mockStripe.calls()).toEqual([])
