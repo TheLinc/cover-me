@@ -11,6 +11,7 @@
 //   POST /__mock/reset         clears recorded requests and queued failures
 //   POST /v1/customers, /v1/subscriptions, /v1/checkout/sessions, /v1/billing_portal/sessions
 //   GET  /v1/subscriptions     Stripe stand-ins (billing function, via STRIPE_API_BASE)
+//   DELETE /v1/customers/:id   Stripe stand-in (account function)
 //   GET  /__mock/stripe        every Stripe call received since the last reset
 //   POST /emails               Resend stand-in (nudge function, via RESEND_API_BASE)
 //   GET  /__mock/emails        every email sent since the last reset
@@ -108,7 +109,8 @@ type StripeCall = { path: string; params: Record<string, string>; idempotencyKey
 const stripeCalls: StripeCall[] = []
 // What GET /v1/subscriptions answers: these subscriptions (a bare status or a
 // whole object), or "No such customer". customerError and subscriptionError
-// make the next POST /v1/customers or /v1/subscriptions fail once.
+// make the next POST /v1/customers or /v1/subscriptions fail once, and
+// deleteCustomerError the next DELETE /v1/customers/:id.
 type MockSubscription = string | { id?: string; status: string; trial_end?: number; metadata?: Record<string, string> }
 type StripeFailure = { status: number; code: string } | null
 type SentEmail = { authorization: string | undefined; body: Record<string, unknown> }
@@ -121,6 +123,7 @@ const stripeState = {
   missingCustomer: false,
   customerError: null as StripeFailure,
   subscriptionError: null as StripeFailure,
+  deleteCustomerError: null as StripeFailure,
 }
 
 function readBody(req: IncomingMessage): Promise<string> {
@@ -185,6 +188,7 @@ export function startMockAnthropic(port: number): Promise<Server> {
       stripeState.missingCustomer = false
       stripeState.customerError = null
       stripeState.subscriptionError = null
+      stripeState.deleteCustomerError = null
       failures.length = 0
       delayNext = 0
       streamPause = 0
@@ -292,6 +296,15 @@ export function startMockAnthropic(port: number): Promise<Server> {
       }
       res.writeHead(200, { 'content-type': 'application/json' })
       return res.end(JSON.stringify({ data: stripeState.subscriptions.map((s) => (typeof s === 'string' ? { status: s } : s)) }))
+    }
+    if (req.method === 'DELETE' && url.startsWith('/v1/customers/')) {
+      stripeCalls.push({ path: url, params: { method: 'DELETE' }, idempotencyKey: null })
+      const failure = stripeState.deleteCustomerError
+      stripeState.deleteCustomerError = null
+      res.writeHead(failure?.status ?? 200, { 'content-type': 'application/json' })
+      return res.end(JSON.stringify(failure
+        ? { error: { type: 'invalid_request_error', code: failure.code } }
+        : { id: decodeURIComponent(url.slice('/v1/customers/'.length)), object: 'customer', deleted: true }))
     }
     if (req.method === 'POST' && ['/v1/customers', '/v1/subscriptions', '/v1/checkout/sessions', '/v1/billing_portal/sessions'].includes(url)) {
       const params = Object.fromEntries(new URLSearchParams(await readBody(req)))
