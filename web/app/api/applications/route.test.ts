@@ -33,6 +33,11 @@ describe('/api/applications', () => {
     expect((init.headers as Record<string, string>).Authorization).toBe('Bearer at')
   })
 
+  it('GET with file asks the function for that Word file', async () => {
+    await GET(new NextRequest(`http://localhost/api/applications?file=${'a'.repeat(64)}`))
+    expect(String(call()[0])).toBe(`https://x.supabase.co/functions/v1/applications?file=${'a'.repeat(64)}`)
+  })
+
   it('PATCH forwards the stage and the function status', async () => {
     fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({ error: 'Not found' }), { status: 404 }))
     const res = await PATCH(new NextRequest('http://localhost/api/applications?id=abc', { method: 'PATCH', body: JSON.stringify({ stage: 'offer' }) }))

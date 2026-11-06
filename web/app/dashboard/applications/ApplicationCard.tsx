@@ -87,7 +87,8 @@ export function ApplicationCard({ app: initial, pro, onDeleted, onStageChange, c
         const id = newest(app.tailoredResumes)?.id
         const resume = detail.tailoredResumes.find((r) => r.id === id)
         if (!resume) throw new Error(UNREADABLE)
-        await downloadResume(detail.title, resume.resume)
+        // In the user's own design when it was tailored in a Word file the account keeps (#131).
+        await downloadResume(detail.title, resume.resume, resume.design ? 'design' : 'pdf')
       }
     } catch (e) {
       if (isGone(e)) return leave(GONE_MESSAGE)

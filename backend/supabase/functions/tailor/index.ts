@@ -8,10 +8,13 @@ import { isUuid } from '../_shared/history-upload.ts'
 import { isValidParsedResume, parseResumeStructure, type ParsedResume } from '../_shared/resume-parse.ts'
 import { candidateText, checkAndRewriteLines, groundSkills, groundTailored } from '../_shared/resume-grounding.ts'
 import { scoreFromMatch } from '../_shared/ats-score.ts'
+import { capture } from '../_shared/posthog.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SECRET_KEY = Deno.env.get('SERVICE_KEY')!
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')!
+
+declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void }
 
 // ── Tailor delta (mirrored: extension/src/lib/ai/resume-tailor.ts ⇄ backend/supabase/functions/tailor/index.ts) ──
 // The model outputs only rewritten content; these helpers validate it and merge
@@ -356,6 +359,11 @@ Deno.serve(async (req) => {
   let includeSummary = true
   let previous: Record<string, unknown> | undefined
   let localId: string | undefined
+  // "Your design" (#131): which layout the extension will put this in, for
+  // the usage count, and the hash of the user's Word file it's tailored in.
+  let layout: 'yours' | 'cover-me' = 'cover-me'
+  let fellBack = false
+  let sourceHash: string | undefined
   try {
     const body = await req.json()
     job = body.job
@@ -364,7 +372,15 @@ Deno.serve(async (req) => {
     trim = !!body.trim
     includeSummary = body.includeSummary !== false
     previous = body.previous && typeof body.previous === 'object' ? body.previous : undefined
+    // Which file a result came from isn't resume content for the model to revise.
+    if (previous) {
+      const { sourceHash: _h, designFellBack: _f, ...rest } = previous
+      previous = rest
+    }
     localId = isUuid(body.localId) ? body.localId : undefined
+    layout = body.layout === 'yours' ? 'yours' : 'cover-me'
+    fellBack = body.fellBack === true
+    if (layout === 'yours' && !fellBack && typeof body.sourceHash === 'string' && /^[0-9a-f]{64}$/.test(body.sourceHash)) sourceHash = body.sourceHash
   } catch {
     return json({ error: 'Invalid request body' }, 400)
   }
@@ -566,6 +582,11 @@ Deno.serve(async (req) => {
       resume.atsScore = atsScore
       resume.atsGaps = atsGaps
     }
+    if (sourceHash) resume.sourceHash = sourceHash
+
+    // One count per hosted run, with the tailor's options and no resume or
+    // job text. A failed send never fails the run.
+    EdgeRuntime.waitUntil(capture('tailor_run', userId, { tier, compact, trim, includeSummary, layout, fellBack }))
 
     // Every account's job goes on its board; the resume itself is kept for
     // Pro only. Non-fatal if either fails. Under the extension's local ID
@@ -586,6 +607,7 @@ Deno.serve(async (req) => {
           resume_json_encrypted: await encrypt(JSON.stringify(resume)),
           ats_score: atsScore ?? null,
           ats_gaps: atsGaps ?? null,
+          source_hash: sourceHash ?? null,
         }
         const table = supabase.from('tailored_resumes')
         // An upsert that hits an existing ID returns no row, so savedId stays empty.

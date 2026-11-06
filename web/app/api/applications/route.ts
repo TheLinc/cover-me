@@ -41,6 +41,9 @@ export async function GET(req: NextRequest) {
   if (!s) return notSignedIn()
   const detail = req.nextUrl.searchParams.get('detail')
   if (detail) return forward(s.token, 'GET', { detail }, undefined, req.signal)
+  // One of a Pro account's Word files, for a download in the user's own design (#131).
+  const file = req.nextUrl.searchParams.get('file')
+  if (file) return forward(s.token, 'GET', { file }, undefined, req.signal)
 
   const page = await fetchApplications(process.env.NEXT_PUBLIC_SUPABASE_URL!, s.token, queryFromParams(req.nextUrl.searchParams), req.signal)
   if (!page) {

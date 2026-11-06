@@ -16,6 +16,8 @@
 //   GET  /__mock/emails        every email sent since the last reset
 //   POST /__mock/email-fail-next { status } → the next POST /emails fails
 //   POST /__mock/email-drop-next       → the next POST /emails has its connection cut
+//   POST /i/v0/e/              PostHog stand-in (tailor's tailor_run event, via POSTHOG_HOST)
+//   GET  /__mock/posthog       every PostHog event received since the last reset
 
 import { createServer, type IncomingMessage, type Server } from 'node:http'
 
@@ -113,6 +115,7 @@ type MockSubscription = string | { id?: string; status: string; trial_end?: numb
 type StripeFailure = { status: number; code: string } | null
 type SentEmail = { authorization: string | undefined; body: Record<string, unknown> }
 const sentEmails: SentEmail[] = []
+const posthogEvents: Record<string, unknown>[] = []
 let emailFailNext: number | null = null
 let emailDropNext = false
 
@@ -179,6 +182,7 @@ export function startMockAnthropic(port: number): Promise<Server> {
       received.length = 0
       stripeCalls.length = 0
       sentEmails.length = 0
+      posthogEvents.length = 0
       emailFailNext = null
       emailDropNext = false
       stripeState.subscriptions = []
@@ -315,6 +319,15 @@ export function startMockAnthropic(port: number): Promise<Server> {
       return res.end(JSON.stringify(reply))
     }
 
+    if (req.method === 'GET' && url === '/__mock/posthog') {
+      res.writeHead(200, { 'content-type': 'application/json' })
+      return res.end(JSON.stringify(posthogEvents))
+    }
+    if (req.method === 'POST' && url === '/i/v0/e/') {
+      posthogEvents.push(JSON.parse(await readBody(req)))
+      res.writeHead(200, { 'content-type': 'application/json' })
+      return res.end('{"status":"Ok"}')
+    }
     if (req.method === 'GET' && url === '/__mock/emails') {
       res.writeHead(200, { 'content-type': 'application/json' })
       return res.end(JSON.stringify(sentEmails))

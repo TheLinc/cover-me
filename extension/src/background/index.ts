@@ -4,6 +4,7 @@ import { parseResumeStructure } from '../lib/ai/resume-parse'
 import { tailorResume } from '../lib/ai/resume-tailor'
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from '../lib/config'
 import { decryptApiKey } from '../lib/crypto'
+import { checkUploadedDesign, designForTailor, finishDesign } from '../lib/design'
 import { debugGroup } from '../lib/debug'
 import { addToHistory, addToTailoredHistory, getCachedTier, getCandidateContext, getResume, getSession, getSettings, hasAgreedToPageRead, resolveMode, saveParsedResume, setEntryAccounts, watchSession } from '../lib/storage'
 import { handleInstalled, uninstallUrl } from './install'
@@ -39,6 +40,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   if (message.type === 'TAILOR_FROM_MANUAL') {
     keepAlive(handleTailorFromManual(message.jobId as string | undefined, message.job as JobData, !!message.compact, message.supplemental as string | undefined, !!message.trim, message.includeSummary !== false, message.previous as TailoredResume | undefined)).then(sendResponse)
+    return true
+  }
+  if (message.type === 'CHECK_DESIGN') {
+    keepAlive(checkUploadedDesign(message.hash as string)).then(() => sendResponse({}))
     return true
   }
   if (message.type === 'GOOGLE_SIGN_IN') {
@@ -424,12 +429,22 @@ async function handleTailorFromManual(jobId: string | undefined, job: JobData, c
   return tailorFromJob(job, compact, supplemental, trim, includeSummary, jobId, previous)
 }
 
-async function tailorFromJob(job: JobData, compact: boolean, supplemental?: string, trim = false, includeSummary = true, jobId?: string, previous?: TailoredResume): Promise<TailorResponse> {
+async function tailorFromJob(job: JobData, compact: boolean, supplemental?: string, trim = false, includeSummary = true, jobId?: string, lastResult?: TailoredResume): Promise<TailorResponse> {
   const id = jobId ?? crypto.randomUUID()
   const startedAt = Date.now()
   await setTailorJob({ id, status: 'loading', job, startedAt })
+  // Which file a result came from isn't resume content for the model to revise.
+  const { sourceHash: _h, designFellBack: _f, ...previous } = lastResult ?? {} as TailoredResume
   try {
     const settings = await getSettings()
+
+    // "Your design" (#131): the user's file sets the page, so there's no
+    // compacting, and no summary when the file has none to rewrite.
+    const design = await designForTailor()
+    if (design.design.layout === 'yours' && !design.design.fellBack) {
+      compact = false
+      if (!design.summary) includeSummary = false
+    }
 
     // Standing candidate facts (set once, edited in the "Candidate context" box)
     // apply to every generation, layered under any one-off note for this run.
@@ -443,7 +458,7 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
       'job.url': job.url,
       'job.description': job.description,
       'job.description.length': job.description?.length,
-      flags: { compact, trim, includeSummary, hasCandidateContext: !!candidateContext, hasSupplemental: !!supplemental, hasPrevious: !!previous },
+      flags: { compact, trim, includeSummary, layout: design.design.layout, fellBack: design.design.fellBack, hasCandidateContext: !!candidateContext, hasSupplemental: !!supplemental, hasPrevious: !!lastResult },
     })
 
     // Live progress: the tailor call streams the model's output and reports a
@@ -464,7 +479,8 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
       // Hosted: the resume + final prompt live server-side. Enable DEBUG_MODE on
       // the edge function to see those in the Supabase function logs.
       const localId = crypto.randomUUID()
-      const { resume, savedId } = await tailorViaBackend(job, session.access_token, compact, merged, trim, includeSummary, previous, onProgress, localId)
+      const { resume: tailored, savedId } = await tailorViaBackend(job, session.access_token, compact, merged, trim, includeSummary, lastResult && previous, onProgress, localId, design.design)
+      const resume = await finishDesign(tailored, design)
       const pro = (await getCachedTier()) === 'hosted_pro'
       await recordTailored(job, resume, localId, {
         ...(savedId === localId ? { account: session.user.id } : {}),
@@ -501,7 +517,7 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
       bulletsPerRole: parsed.experience?.map((e) => ({ role: e.title, bullets: e.bullets?.length })),
     })
 
-    const tailored = await tailorResume(job, parsed, settings.provider, apiKey, compact, merged, trim, includeSummary, previous, onProgress)
+    const tailored = await finishDesign(await tailorResume(job, parsed, settings.provider, apiKey, compact, merged, trim, includeSummary, lastResult && previous, onProgress), design)
     await recordTailored(job, tailored)
     await setTailorJob({ id, status: 'done', job, resume: tailored, startedAt })
     return { success: true, resume: tailored, job }

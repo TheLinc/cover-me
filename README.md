@@ -68,8 +68,8 @@ Cover Me supports two AI providers:
 ### 2. Upload your resume
 
 - Click the extension icon → **Resume** tab
-- Upload a PDF, DOCX, or TXT file
-- The extension extracts the text client-side — the raw file is never stored or transmitted
+- Upload a Word file (.docx) to keep your own design, or a PDF or TXT file for the Cover Me layout
+- The extension extracts the text client-side. A Word file is kept in your browser so tailored resumes can be written into it (Pro also keeps it in the account, encrypted, for the dashboard); a PDF or TXT file is never stored or transmitted
 
 ### 3. Generate
 

@@ -12,7 +12,7 @@ const SUPABASE_SECRET_KEY = Deno.env.get('SERVICE_KEY')!
 const FULL_SELECT = `
   id, title, company, url, created_at, stage, stage_changed_at,
   cover_letters(id, letter_encrypted, created_at),
-  tailored_resumes(id, resume_json_encrypted, created_at)
+  tailored_resumes(id, resume_json_encrypted, created_at, source_hash)
 `
 // What a card shows. Nothing to decrypt: the ATS score and gaps are plain columns.
 const SUMMARY_SELECT = `
@@ -45,7 +45,10 @@ const base = (row: Row) => ({
   stageChangedAt: row.stage_changed_at,
 })
 
-async function fullApplication(row: Row) {
+// files: the hashes of the Word files the account keeps (#131). A resume
+// tailored in one of them is marked design: true, so the dashboard offers the
+// download in the user's own design.
+async function fullApplication(row: Row, files = new Set<string>()) {
   const coverLetters = []
   for (const cl of row.cover_letters ?? []) {
     try {
@@ -55,7 +58,12 @@ async function fullApplication(row: Row) {
   const tailoredResumes = []
   for (const tr of row.tailored_resumes ?? []) {
     try {
-      tailoredResumes.push({ id: tr.id as string, resume: JSON.parse(await decrypt(tr.resume_json_encrypted as string)), createdAt: tr.created_at as string })
+      tailoredResumes.push({
+        id: tr.id as string,
+        resume: JSON.parse(await decrypt(tr.resume_json_encrypted as string)),
+        createdAt: tr.created_at as string,
+        ...(files.has(tr.source_hash as string) ? { design: true } : {}),
+      })
     } catch { /* skip corrupt entries */ }
   }
   return { ...base(row), coverLetters: coverLetters.sort(newestFirst), tailoredResumes: tailoredResumes.sort(newestFirst) }
@@ -112,6 +120,23 @@ Deno.serve(async (req) => {
   // the stage filter (_shared/application-search.ts). summary=1 is what a
   // dashboard card shows; detail=<id> is one application in full.
   if (req.method === 'GET') {
+    // file=<hash>: one of the account's Word files, with the parse that places
+    // tailored text in it (lib/pdf/docx-design.ts on the website).
+    const fileHash = params.get('file')
+    if (fileHash !== null) {
+      if (!isPro) return proOnly()
+      if (!/^[0-9a-f]{64}$/.test(fileHash)) return json({ error: 'Invalid file' }, 400)
+      const { data: file } = await supabase.from('resume_files')
+        .select('docx_encrypted, structured_encrypted')
+        .eq('user_id', userId).eq('hash', fileHash).maybeSingle()
+      if (!file?.structured_encrypted) return json({ error: 'Not found' }, 404)
+      try {
+        return json({ docx: await decrypt(file.docx_encrypted), structured: JSON.parse(await decrypt(file.structured_encrypted)) })
+      } catch {
+        return json({ error: 'Failed to read file' }, 500)
+      }
+    }
+
     const detailId = params.get('detail')
     if (detailId !== null) {
       if (!isPro) return proOnly()
@@ -124,7 +149,10 @@ Deno.serve(async (req) => {
         .maybeSingle()
       if (error) return json({ error: 'Failed to fetch application' }, 500)
       if (!row) return json({ error: 'Not found' }, 404)
-      return json({ application: await fullApplication(row as unknown as Row) })
+      // Only files that can place tailored text: a parse to match against.
+      const { data: files } = await supabase.from('resume_files').select('hash')
+        .eq('user_id', userId).not('structured_encrypted', 'is', null)
+      return json({ application: await fullApplication(row as unknown as Row, new Set((files ?? []).map((f) => f.hash as string))) })
     }
 
     const search = parseSearch(params)
