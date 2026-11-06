@@ -45,6 +45,9 @@ export interface ParsedResume {
   email: string
   phone: string
   website: string
+  /** Every URL on the contact line, website first. Absent on a parse made before #129. */
+  links?: string[]
+  location?: string
   experience: ResumeExperience[]
   projects?: ResumeProject[]
   education: ResumeEducation[]

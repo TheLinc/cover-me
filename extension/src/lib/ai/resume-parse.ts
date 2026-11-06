@@ -23,7 +23,9 @@ JSON structure (omit "projects", "skills", "certifications" entirely if those se
   "name": "Full Name",
   "email": "email@example.com",
   "phone": "phone number or empty string if absent",
-  "website": "URL or empty string if absent",
+  "location": "the candidate's own city or region from the contact details, or empty string if absent",
+  "website": "the first URL in the contact details, or empty string if absent",
+  "links": ["every URL in the contact details (website, LinkedIn, GitHub, portfolio), copied verbatim in the order written"],
   "experience": [
     {
       "title": "Job Title",
@@ -86,6 +88,17 @@ export function withOtherSections<T extends object>(parsed: T): T & { otherSecti
   return { ...parsed, otherSections }
 }
 
+// Every contact-line URL, with website first and set, so a build that prints
+// only website (the store's before #129) still shows one. Left off when there
+// are none: renderers then fall back to website.
+export function withLinks<T extends { website: string }>(parsed: T): T {
+  const raw = (parsed as { links?: unknown }).links
+  const links = (Array.isArray(raw) ? raw : []).filter((l): l is string => typeof l === 'string' && l.trim().length > 0).map((l) => l.trim())
+  const website = typeof parsed.website === 'string' ? parsed.website.trim() : ''
+  if (website && !links.includes(website)) links.unshift(website)
+  return links.length ? { ...parsed, website: website || links[0]!, links } : parsed
+}
+
 export function parseParsedJson(raw: string): ParsedResume {
   const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
   let parsed: unknown
@@ -97,7 +110,7 @@ export function parseParsedJson(raw: string): ParsedResume {
   if (!isValidParsedResume(parsed)) {
     throw new Error('Resume parse returned incomplete data. Please try again.')
   }
-  return withOtherSections(parsed)
+  return withLinks(withOtherSections(parsed))
 }
 
 export async function parseResumeStructure(

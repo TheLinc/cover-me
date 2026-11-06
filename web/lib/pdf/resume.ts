@@ -1,6 +1,7 @@
 // Shared with the website. Edit here, then run `node scripts/sync-pdf.mjs`,
 // which copies this folder to web/lib/pdf/ (both builds fail on a stale copy).
 import { jsPDF } from 'jspdf'
+import { contactParts } from './contact'
 import { resumeFileName } from './file-name'
 import type { TailoredResume } from './types'
 
@@ -29,13 +30,21 @@ export function downloadTailoredResumePdf(resume: TailoredResume, jobTitle?: str
   doc.text(resume.name || 'Resume', PW / 2, y, { align: 'center' })
   y += 16
 
-  const contactParts = [resume.phone, resume.email, resume.website].filter(Boolean)
-  if (contactParts.length) {
-    doc.setFont('times', 'normal')
-    doc.setFontSize(10)
-    doc.text(contactParts.join('   |   '), PW / 2, y, { align: 'center' })
-    y += 6
+  // Wrapped between items, never inside a URL, once links and a location
+  // make the line wider than the page.
+  const contact: string[] = []
+  doc.setFont('times', 'normal')
+  doc.setFontSize(10)
+  for (const part of contactParts(resume)) {
+    const joined = contact.length ? `${contact[contact.length - 1]}   |   ${part}` : ''
+    if (joined && doc.getTextWidth(joined) <= CW) contact[contact.length - 1] = joined
+    else contact.push(part)
   }
+  contact.forEach((line, i) => {
+    if (i) y += 12
+    doc.text(line, PW / 2, y, { align: 'center' })
+  })
+  if (contact.length) y += 6
 
   // ── Section heading + rule ───────────────────────────────────────────────
   function sectionHeading(title: string) {

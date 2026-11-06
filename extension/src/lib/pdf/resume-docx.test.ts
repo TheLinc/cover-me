@@ -43,6 +43,18 @@ describe('buildResumeDocx', () => {
     expect(value).toContain('Analytical Co\tLondon')
   })
 
+  it('prints the location and every link on the contact line', async () => {
+    const { value } = await mammoth.extractRawText({ buffer: Buffer.from(await (await buildResumeDocx({
+      ...resume, location: 'Toronto, ON', links: ['ada.dev', 'linkedin.com/in/ada', 'github.com/ada'],
+    })).arrayBuffer()) })
+    expect(value).toContain('Toronto, ON   |   555-0100   |   ada@example.com   |   ada.dev   |   linkedin.com/in/ada   |   github.com/ada')
+  })
+
+  it('prints website on a resume parsed before links were kept', async () => {
+    const { value } = await mammoth.extractRawText({ buffer: Buffer.from(await (await buildResumeDocx(resume)).arrayBuffer()) })
+    expect(value).toContain('555-0100   |   ada@example.com   |   ada.dev')
+  })
+
   it('skips empty sections and falls back to "Resume" without a name', async () => {
     const html = await read({ name: '', phone: '', email: '', website: '', experience: [], education: [] })
     expect(html).toContain('Resume')

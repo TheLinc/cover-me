@@ -14,6 +14,9 @@ export interface ParsedResume {
   email: string
   phone: string
   website: string
+  /** Every URL on the contact line, website first. Absent on a parse made before #129. */
+  links?: string[]
+  location?: string
   experience: Array<{ title: string; company: string; location: string; dates: string; bullets: string[] }>
   projects?: Array<{ name: string; bullets: string[] }>
   education: Array<{ institution: string; degree: string; location: string; dates: string; bullets: string[] }>
@@ -42,7 +45,9 @@ JSON structure (omit "projects", "skills", "certifications" entirely if those se
   "name": "Full Name",
   "email": "email@example.com",
   "phone": "phone number or empty string if absent",
-  "website": "URL or empty string if absent",
+  "location": "the candidate's own city or region from the contact details, or empty string if absent",
+  "website": "the first URL in the contact details, or empty string if absent",
+  "links": ["every URL in the contact details (website, LinkedIn, GitHub, portfolio), copied verbatim in the order written"],
   "experience": [
     {
       "title": "Job Title",
@@ -105,6 +110,17 @@ export function withOtherSections<T extends object>(parsed: T): T & { otherSecti
   return { ...parsed, otherSections }
 }
 
+// Every contact-line URL, with website first and set, so a build that prints
+// only website (the store's before #129) still shows one. Left off when there
+// are none: renderers then fall back to website.
+export function withLinks<T extends { website: string }>(parsed: T): T {
+  const raw = (parsed as { links?: unknown }).links
+  const links = (Array.isArray(raw) ? raw : []).filter((l): l is string => typeof l === 'string' && l.trim().length > 0).map((l) => l.trim())
+  const website = typeof parsed.website === 'string' ? parsed.website.trim() : ''
+  if (website && !links.includes(website)) links.unshift(website)
+  return links.length ? { ...parsed, website: website || links[0]!, links } : parsed
+}
+
 export async function parseResumeStructure(resumeText: string, apiKey: string): Promise<ParsedResume> {
   const res = await fetch(ANTHROPIC_MESSAGES_URL, {
     method: 'POST',
@@ -135,5 +151,5 @@ export async function parseResumeStructure(resumeText: string, apiKey: string): 
     throw new Error('Resume parse returned invalid JSON')
   }
   if (!isValidParsedResume(parsed)) throw new Error('Resume parse returned incomplete data')
-  return withOtherSections(parsed)
+  return withLinks(withOtherSections(parsed))
 }

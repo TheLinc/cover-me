@@ -47,3 +47,17 @@ describe('parseParsedJson otherSections', () => {
     expect(parse('PUBLICATIONS')).toEqual([])
   })
 })
+
+describe('parseParsedJson links', () => {
+  const parse = (contact: object) => parseParsedJson(JSON.stringify({ ...RESUME, ...contact }))
+
+  test('keeps every contact-line URL, and website as the first for builds that print only website', () => {
+    const r = parse({ website: '', links: ['ada.dev', ' linkedin.com/in/ada ', 'github.com/ada', 3, ''] })
+    expect(r.links).toEqual(['ada.dev', 'linkedin.com/in/ada', 'github.com/ada'])
+    expect(r.website).toBe('ada.dev')
+  })
+
+  test('puts website first when the model left it out of links', () => {
+    expect(parse({ website: 'ada.dev', links: ['linkedin.com/in/ada'] }).links).toEqual(['ada.dev', 'linkedin.com/in/ada'])
+  })
+})

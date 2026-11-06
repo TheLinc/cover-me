@@ -1,11 +1,12 @@
 import type { ReactNode } from 'react'
+import { contactParts } from '@/lib/pdf/contact'
 import type { TailoredResume } from '@/lib/pdf/types'
 
 // The tailored resume as the PDF prints it (lib/pdf/resume.ts): Times, centred
 // name and contact line, ruled section titles in the same order. Fields can be
 // missing from older resumes, as the PDF allows.
 export function ResumePreview({ resume }: { resume: TailoredResume }) {
-  const contact = [resume.phone, resume.email, resume.website].filter(Boolean).join(' | ')
+  const contact = contactParts(resume).join(' | ')
   return (
     <div className="rounded-[4px] bg-white px-7 pb-8 pt-6 font-['Times_New_Roman',Times,serif] text-[13px] leading-[1.4] text-body shadow-[0_1px_2px_rgba(42,42,42,0.1),0_18px_40px_-22px_rgba(42,42,42,0.35)] max-sm:px-4">
       <p className="break-words text-center text-[20px] font-bold leading-tight">{resume.name || 'Resume'}</p>
