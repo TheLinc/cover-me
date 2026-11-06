@@ -20,7 +20,7 @@ const COMMENT_QUESTION_ID = '5318a93b-ea8f-47ed-a8bb-5d70cc624d2a'
 const PRICE_QUESTION_ID = '02b8d49f-d0ff-4ba3-b639-4d2d3ab9101f'
 const PRIVACY_QUESTION_ID = 'ed363ac7-1306-4e03-be2b-7337ae04f2f4'
 
-const OTHER = 'Other'
+const OTHER = 'Other' as const
 const REASONS = [
   "It didn't work on the job sites I use",
   "The resumes or cover letters weren't good enough",
@@ -30,43 +30,56 @@ const REASONS = [
   'I found a job or stopped looking',
   'Privacy concerns',
   OTHER,
-]
+] as const
+type Reason = (typeof REASONS)[number]
 
 const SUPPORT_EMAIL = 'support@cover-me.dev'
-const LINK = 'text-brand-strong underline-offset-4 hover:underline'
+const LINK_CLASS = 'text-brand-strong underline-offset-4 hover:underline'
 
 const FREE_LIMIT = "A free account gets 5 generations a week, and with your own Claude or OpenAI key there's no limit from us."
 
+// Arrow markers, as on /privacy: the brand avoids round bullets
+function Fact({ children }: { children: ReactNode }) {
+  return (
+    <li className="flex gap-3">
+      <span aria-hidden="true" className="shrink-0 text-brand">→</span>
+      <span>{children}</span>
+    </li>
+  )
+}
+
 // The line under "Thanks for telling us", by reason. Reasons not here get none.
 // Every privacy line must match a sentence on /privacy.
-const REPLIES: Record<string, ReactNode> = {
+const REPLIES: Partial<Record<Reason, ReactNode>> = {
   "It didn't work on the job sites I use": (
     <p>
       Which site was it? If your comment didn&apos;t say, email{' '}
-      <a href={`mailto:${SUPPORT_EMAIL}`} className={LINK}>{SUPPORT_EMAIL}</a>. We can usually fix a site
-      without an extension update. <a href="/roadmap" className={LINK}>See what we&apos;re working on</a>.
+      <a href={`mailto:${SUPPORT_EMAIL}`} className={LINK_CLASS}>{SUPPORT_EMAIL}</a>. We can usually fix a site
+      without an extension update. <a href="/roadmap" className={LINK_CLASS}>See what we&apos;re working on</a>.
     </p>
   ),
   'I hit the free limit': <p>{FREE_LIMIT}</p>,
   'Too expensive': <p>{FREE_LIMIT}</p>,
   'Privacy concerns': (
-    <ul className="mx-auto max-w-md list-disc space-y-2 pl-5 text-left">
-      <li>With your own API key, no account is needed. Your resume and letters stay in your browser, and your resume goes only to the AI provider whose key you use.</li>
-      <li>With an account, your resume is encrypted on our server, and we never use it to train AI.</li>
-      <li>The extension reads a page only when you click, and sends us a copy only if you agree.</li>
-      <li>
+    <ul className="mx-auto max-w-md space-y-2 text-left">
+      <Fact>With your own API key, no account is needed. Your resume and letters stay in your browser, and your resume goes only to the AI provider whose key you use.</Fact>
+      <Fact>With an account, your resume is encrypted on our server, and we never use it to train AI.</Fact>
+      <Fact>The extension reads a page only when you click, and sends us a copy only if you agree.</Fact>
+      <Fact>
         Cover Me is open source, so anyone can check this: read the{' '}
-        <a href="/privacy" className={LINK}>privacy policy</a> or the{' '}
-        <a href="https://github.com/TheLinc/cover-me" className={LINK}>code on GitHub</a>.
-      </li>
+        <a href="/privacy" className={LINK_CLASS}>privacy policy</a> or the{' '}
+        <a href="https://github.com/TheLinc/cover-me" className={LINK_CLASS}>code on GitHub</a>.
+      </Fact>
     </ul>
   ),
   'I found a job or stopped looking': <p>Congratulations.</p>,
 }
 
+type FollowUpQuestion = { id: string; question: string; choices: string[] }
+
 // One optional question on the thank-you screen, for the reasons that leave us guessing.
 // Its choices must match the question's in the PostHog survey.
-const FOLLOW_UPS: Record<string, { id: string; question: string; choices: string[] }> = {
+const FOLLOW_UPS: Partial<Record<Reason, FollowUpQuestion>> = {
   'Too expensive': {
     id: PRICE_QUESTION_ID,
     question: 'What would have worked for you?',
@@ -116,15 +129,17 @@ export function UninstallSurvey() {
   }
 
   if (sent) {
-    const followUp = FOLLOW_UPS[reason]
+    // Sent only with a reason picked from REASONS
+    const reply = REPLIES[reason as Reason]
+    const followUp = FOLLOW_UPS[reason as Reason]
     return (
       <div className="text-center">
         {/* Focused on mount: the form, and the Send button that had focus, are gone */}
         <h1 ref={(el) => el?.focus()} tabIndex={-1} className="text-[34px] font-semibold leading-tight tracking-[-0.03em] outline-none">Thanks for telling us</h1>
-        {REPLIES[reason] && <div className="mt-4 text-[15px] text-muted-foreground">{REPLIES[reason]}</div>}
+        {reply && <div className="mt-4 text-[15px] text-muted-foreground">{reply}</div>}
         {followUp && <FollowUp {...followUp} answer={sent} />}
         <p className="mt-6">
-          <a href={CHROME_STORE_URL} className={LINK}>
+          <a href={CHROME_STORE_URL} className={LINK_CLASS}>
             Changed your mind? Reinstall
           </a>
         </p>
@@ -173,7 +188,7 @@ export function UninstallSurvey() {
   )
 }
 
-function FollowUp({ id, question, choices, answer }: { id: string; question: string; choices: string[]; answer: Record<string, unknown> }) {
+function FollowUp({ id, question, choices, answer }: FollowUpQuestion & { answer: Record<string, unknown> }) {
   const [choice, setChoice] = useState('')
   const [done, setDone] = useState(false)
 
