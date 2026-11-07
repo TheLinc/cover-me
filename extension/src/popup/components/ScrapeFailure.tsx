@@ -47,10 +47,21 @@ export default function ScrapeFailurePanel({ failure, onReported, onPaste, onRet
     )
   }
 
+  // A card like the popup's other notices, so it reads apart from the paste form below.
   return (
-    <section className="scrape-failure">
+    <section className="page-read-notice scrape-failure-card" aria-labelledby="scrape-failure-title">
+      <div className="news-heading">
+        <span className="news-icon" aria-hidden="true">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M2 12h20" />
+            <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
+          </svg>
+        </span>
+        <p id="scrape-failure-title" className="page-read-notice-title">We can&apos;t read {failure.host} yet.</p>
+      </div>
       <p>
-        We can&apos;t read {failure.host} yet. Paste the job description below and you&apos;ll still get your{' '}
+        Paste the job description below and you&apos;ll still get your{' '}
         {failure.flow === 'letter' ? 'letter' : 'tailored resume'}.
       </p>
       {SUPABASE_URL && <SiteRequestRow host={failure.host} />}
