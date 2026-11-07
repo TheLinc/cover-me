@@ -13,6 +13,7 @@ export type { ResumeEducation, ResumeExperience, ResumeProject, ResumeSection, T
 import type { DesignCheck } from '../lib/pdf/docx-design'
 export type { DesignCheck } from '../lib/pdf/docx-design'
 import type { PageSnapshot } from '../content/snapshot.ts'
+import type { ScraperName } from '../content/scrapers/index.ts'
 import type { JobData } from '../content/scrapers/types.ts'
 
 export interface CoverLetter {
@@ -103,7 +104,7 @@ export interface ScrapeFailure {
   reason: 'unsupported' | 'failed' | 'not_web'
   host: string
   url?: string
-  scraper?: string
+  scraper?: ScraperName
   error: string
 }
 

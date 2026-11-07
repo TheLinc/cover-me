@@ -1,3 +1,4 @@
+import type { ScraperName } from '../content/scrapers/index.ts'
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from './config'
 
 // The popup's "Request this site" and "Report bug" buttons (#130), through the
@@ -5,7 +6,7 @@ import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from './config'
 // the user chose on the page-read notice.
 export type SiteRequest =
   | { kind: 'site'; host: string }
-  | { kind: 'bug'; url: string; scraper: string; error: string; version: string }
+  | { kind: 'bug'; url: string; scraper: ScraperName; error: string; version: string }
 
 // Throws with the response status, 0 when the server couldn't be reached.
 export async function sendSiteRequest(body: SiteRequest): Promise<void> {
@@ -24,6 +25,6 @@ export async function requestedSites(): Promise<string[]> {
   return (requestedSites as string[] | undefined) ?? []
 }
 
-export async function rememberRequestedSites(...hosts: string[]): Promise<void> {
-  await chrome.storage.local.set({ requestedSites: [...new Set([...(await requestedSites()), ...hosts])] })
+export async function rememberRequestedSite(host: string): Promise<void> {
+  await chrome.storage.local.set({ requestedSites: [...new Set([...(await requestedSites()), host])] })
 }

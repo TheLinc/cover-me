@@ -15,6 +15,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 import { handleCors, json } from '../_shared/cors.ts'
 import { checkIpRateLimit } from '../_shared/ip-rate-limit.ts'
 import { capture } from '../_shared/posthog.ts'
+import { readBody } from '../_shared/read-body.ts'
 import { SCRAPER_NAMES } from '../_shared/scrapers/index.ts'
 
 const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SERVICE_KEY')!)
@@ -28,6 +29,8 @@ const HOST = /^(?=.{4,253}$)(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9-]{2,}$
 const MAX_URL = 2048
 const MAX_ERROR = 300
 const VERSION = /^\d{1,5}(?:\.\d{1,5}){0,3}$/
+// A valid body is under 3 KB; reading stops past this.
+const MAX_BYTES = 8_000
 
 type Body = Record<string, unknown>
 
@@ -37,7 +40,12 @@ Deno.serve(async (req) => {
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405)
 
   // Validated before the rate limit, so a malformed body doesn't use it up.
-  const body = await req.json().catch(() => null) as Body | null
+  let body: Body | null = null
+  try {
+    const text = await readBody(req, MAX_BYTES)
+    if (text === null) return json({ error: 'Request too large' }, 413)
+    body = JSON.parse(text)
+  } catch { /* not JSON: rejected below */ }
   const properties = body?.kind === 'site' ? siteRequest(body) : body?.kind === 'bug' ? bugReport(body) : null
   if (!properties) return json({ error: 'Invalid request' }, 400)
 

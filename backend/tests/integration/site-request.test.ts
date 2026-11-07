@@ -75,6 +75,10 @@ describe('site-request', () => {
     expect(await mockPosthog.events()).toEqual([])
   })
 
+  it('stops reading a body over 8 KB', async () => {
+    expect((await send({ kind: 'site', host: 'acme.com', pad: 'x'.repeat(9000) })).status).toBe(413)
+  })
+
   it('limits each IP to 5 sends a minute', async () => {
     // Clear of a minute boundary, so the six calls share one window.
     const left = 60_000 - (Date.now() % 60_000)

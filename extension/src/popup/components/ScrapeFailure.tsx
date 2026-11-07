@@ -1,12 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { SUPABASE_URL, WEB_URL } from '../../lib/config'
-import { rememberRequestedSites, requestedSites, sendSiteRequest } from '../../lib/site-request'
+import { rememberRequestedSite, requestedSites, sendSiteRequest } from '../../lib/site-request'
 import type { ScrapeFailure } from '../../types'
 
 // A click that read no job (#130), saved with the tab's Generate page state.
-// flow: which button was pressed. tabId: the tab it's about. reported: the
-// bug report went through.
-export type ShownFailure = ScrapeFailure & { flow: 'letter' | 'tailor'; tabId?: number; reported?: boolean }
+// flow: which button was pressed. tabId, tabHost: the tab it's about and the
+// site that tab was on. reported: the bug report went through.
+export type ShownFailure = ScrapeFailure & { flow: 'letter' | 'tailor'; tabId?: number; tabHost?: string; reported?: boolean }
 
 interface Props {
   failure: ShownFailure
@@ -62,6 +62,12 @@ function SiteRequestRow({ host }: { host: string }) {
   const [noted, setNoted] = useState<string | null>(null)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
+  const thanks = useRef<HTMLParagraphElement>(null)
+  const submitted = useRef(false)
+
+  // After a send, the form is gone: keep focus on the line that replaced it,
+  // which also reads it out.
+  useEffect(() => { if (noted && submitted.current) thanks.current?.focus() }, [noted])
 
   useEffect(() => {
     void requestedSites().then((sites) => { if (sites.includes(host)) setNoted(host) })
@@ -75,7 +81,8 @@ function SiteRequestRow({ host }: { host: string }) {
     setError('')
     try {
       await sendSiteRequest({ kind: 'site', host: site })
-      await rememberRequestedSites(host, site)
+      await rememberRequestedSite(site)
+      submitted.current = true
       setNoted(site)
     } catch (err) {
       setError((err as { status?: number }).status === 400
@@ -88,7 +95,7 @@ function SiteRequestRow({ host }: { host: string }) {
 
   if (noted) {
     return (
-      <p className="scrape-failure-thanks">
+      <p className="scrape-failure-thanks" ref={thanks} tabIndex={-1}>
         Thanks, we&apos;ve noted {noted}.{' '}
         <a className="text-link" href={`${WEB_URL}/roadmap?utm_source=extension`} target="_blank" rel="noreferrer">See what&apos;s coming →</a>
       </p>
@@ -129,12 +136,13 @@ function BugReport({ failure, onReported }: { failure: ShownFailure; onReported:
   }
 
   return (
-    <div className="bug-report">
+    // Live, so the button's change to "Reported" is read out.
+    <div className="bug-report" aria-live="polite">
       <button className="btn btn-secondary btn-sm" onClick={report} disabled={sending || failure.reported}>
         {failure.reported ? "Reported. Thanks, we're on it." : 'Report bug'}
       </button>
       {!failure.reported && <p className="hint bug-report-url">Sends this address: {failure.url}</p>}
-      {error && <p className="scrape-failure-error" role="alert">{error}</p>}
+      {error && <p className="scrape-failure-error">{error}</p>}
     </div>
   )
 }

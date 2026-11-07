@@ -197,11 +197,13 @@ export default function GeneratePage({ onNavigate }: Props) {
       let restoredTailorDone = false
       if (s) {
         if (s.inputMode) setInputMode(s.inputMode as InputMode)
-        // Only on the tab it's about; elsewhere the page starts fresh.
+        // Only on the tab and site it's about. Elsewhere it's dropped, and the
+        // paste form it opened closes unless the user started filling it in.
         const failure = s.scrapeFailure as ShownFailure | undefined
         if (failure) {
           void chrome.tabs.query({ active: true, currentWindow: true }).then(([tab]) => {
-            if (tab?.id === failure.tabId) setScrapeFailure(failure)
+            if (tab?.id === failure.tabId && (tab?.url && URL.canParse(tab.url) ? new URL(tab.url).hostname : undefined) === failure.tabHost) setScrapeFailure(failure)
+            else if (!s.manualTitle && !s.manualDescription) setInputMode('auto')
           })
         }
         if (s.manualTitle) setManualTitle(s.manualTitle as string)
@@ -359,9 +361,11 @@ export default function GeneratePage({ onNavigate }: Props) {
 
   // An unsupported site opens the paste form straight away; the other cases
   // offer it beside a report or a retry.
+  const markReported = () => setScrapeFailure((f) => f && { ...f, reported: true })
+
   async function showScrapeFailure(failure: ScrapeFailure, flow: ShownFailure['flow']) {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
-    setScrapeFailure({ ...failure, flow, tabId: tab?.id })
+    setScrapeFailure({ ...failure, flow, tabId: tab?.id, tabHost: tab?.url && URL.canParse(tab.url) ? new URL(tab.url).hostname : undefined })
     setInputMode(failure.reason === 'unsupported' ? 'manual' : 'auto')
   }
 
@@ -781,7 +785,7 @@ export default function GeneratePage({ onNavigate }: Props) {
               {state === 'idle' && tailorState === 'idle' && inputMode === 'auto' && scrapeFailure && (
                 <ScrapeFailurePanel
                   failure={scrapeFailure}
-                  onReported={() => setScrapeFailure({ ...scrapeFailure, reported: true })}
+                  onReported={markReported}
                   onPaste={() => setInputMode('manual')}
                   onRetry={scrapeFailure.flow === 'letter' ? generate : tailor}
                 />
@@ -831,7 +835,7 @@ export default function GeneratePage({ onNavigate }: Props) {
                     ← Auto-detect
                   </button>
                   {scrapeFailure && scrapeFailure.reason !== 'not_web' && (
-                    <ScrapeFailurePanel failure={scrapeFailure} onReported={() => setScrapeFailure({ ...scrapeFailure, reported: true })} />
+                    <ScrapeFailurePanel failure={scrapeFailure} onReported={markReported} />
                   )}
                   <div className="form-group">
                     <label className="form-label">Job Title *</label>
