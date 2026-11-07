@@ -11,6 +11,7 @@ Key facts:
 - AI: Claude (Anthropic) on Cover Me accounts; the user's choice of Claude or OpenAI with their own key.
 - Output: editable cover letters and tailored resumes. Both download as PDFs, and the tailored resume also as a Word file. When the user uploads their resume as a Word file (.docx), the tailored Word download keeps its fonts and layout (beta); the PDF download and other uploads use a standard one-column layout.
 - Applications board: with an account, every job the user generates for appears on a board on the dashboard, with the stages Applied, Interviewing, Offer and Closed. Free accounts keep the job's title, company and link. Pro also keeps the letters and resumes.
+- History without an account: the extension keeps the user's last 50 letters and 20 tailored resumes in the browser.
 - Not included by design: no auto-apply or form submission, no LinkedIn account integration, no resume builder: it tailors the resume the user uploads.
 - Open source: the extension, backend and database schema are public and self-hostable at https://github.com/TheLinc/cover-me
 
