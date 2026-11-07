@@ -24,7 +24,7 @@ function HistoryRow({ label, date, faded }: { label: string; date: string; faded
 function Page({ src, label }: { src: string; label: string }) {
   return (
     <div className="relative h-full w-[46%] max-w-[400px]">
-      <Badge variant="tint" className="absolute -top-8 left-0 text-[12px] max-md:-top-7 max-md:text-[11px]">{label}</Badge>
+      <Badge variant="tint" className="absolute -top-8 left-0 whitespace-nowrap text-[12px] max-md:-top-7 max-md:text-[11px]">{label}</Badge>
       <div className="h-full overflow-hidden rounded-t-[4px] bg-white shadow-[0_18px_40px_-20px_rgba(30,27,75,0.35)]">
         <Image src={src} alt="" width={1080} height={1049} unoptimized className="w-full" />
       </div>
