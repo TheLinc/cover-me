@@ -163,6 +163,13 @@ const checks = [
     start: 'You are a resume parser.',
     end: '${resumeText.slice(0, 12000)}`',
   },
+  {
+    name: 'resume parse normalizers',
+    a: 'extension/src/lib/ai/resume-parse.ts',
+    b: 'backend/supabase/functions/_shared/resume-parse.ts',
+    start: '// ── Parse normalizers (mirrored:',
+    end: '// ── End mirrored parse normalizers ──',
+  },
 ]
 
 let failed = 0
