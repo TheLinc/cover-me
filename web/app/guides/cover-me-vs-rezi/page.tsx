@@ -109,7 +109,7 @@ export default function Page() {
 
       <article className="space-y-5 text-[15.5px] text-muted-foreground leading-[1.85]">
         <p className="text-[17px] text-foreground font-medium leading-[1.7]">
-          Rezi is an AI resume builder: you write or import your resume, format it in Rezi&rsquo;s templates and target it at a job, with Pro at $29 a month or $149 once. Cover Me (cover-me.dev) is an open-source Chrome extension that tailors the resume you already have to the posting you have open, scores it and writes a cover letter. It&rsquo;s free with your own API key, or $15 a month.
+          Rezi is an AI resume builder: you write or import your resume, format it in Rezi&rsquo;s templates and target it at a job, with Pro at $29 a month or Lifetime at $149 once. Cover Me (cover-me.dev) is an open-source Chrome extension that tailors the resume you already have to the posting you have open, scores it and writes a cover letter. It&rsquo;s free with your own API key, or $15 a month.
         </p>
         <p>
           I build Cover Me, so weigh this comparison with that in mind. Rezi prices and features are from its{' '}
@@ -120,7 +120,7 @@ export default function Page() {
 
         <h2 className="text-[22px] text-foreground !mt-10">What is the difference between Cover Me and Rezi?</h2>
         <p>
-          Rezi is where you make the resume. Its AI writes and edits bullet points, its templates set the layout, keyword targeting checks the result against a job description, and the Rezi Score rates the resume on 23 metrics. You can import an existing PDF or Word resume, and Rezi&rsquo;s builder page says the import fills a new Rezi document with your experience. Paid plans add an AI cover letter writer. It also has AI interview practice, a job tracker and a Chrome extension that fills in application forms.
+          Rezi is where you make the resume. Its AI writes and edits bullet points, its templates set the layout, keyword targeting checks the result against a job description, and the Rezi Score rates the resume on 23 metrics. You can upload your existing resume, and Rezi&rsquo;s builder page says the import fills a new Rezi document with your experience. Paid plans add an AI cover letter writer. It also has AI interview practice, a job tracker and a Chrome extension that fills in application forms.
         </p>
         <p>
           Cover Me starts from the resume you have. Upload it once, open a posting on <Link href="/for/linkedin" className="text-brand-light hover:text-brand transition-colors">LinkedIn</Link>, <Link href="/for/indeed" className="text-brand-light hover:text-brand transition-colors">Indeed</Link>, <Link href="/for/greenhouse" className="text-brand-light hover:text-brand transition-colors">Greenhouse</Link>, <Link href="/for/lever" className="text-brand-light hover:text-brand transition-colors">Lever</Link>, <Link href="/for/workday" className="text-brand-light hover:text-brand transition-colors">Workday</Link>, <Link href="/for/ashby" className="text-brand-light hover:text-brand transition-colors">Ashby</Link>, BambooHR or Workable, or paste one from anywhere else, and click Tailor Resume to Job. It rewrites your bullets, summary and skills in the posting&rsquo;s words, shows an <Link href="/guides/what-is-an-ats-score" className="text-brand-light hover:text-brand transition-colors">ATS score</Link> with every missing keyword, and writes a matching cover letter when you click Generate Cover Letter.
