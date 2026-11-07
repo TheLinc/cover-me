@@ -15,26 +15,65 @@ function HistoryRow({ label, date, faded }: { label: string; date: string; faded
   )
 }
 
-// The downloaded resume in the extension's standard layout, in miniature.
-function ResumeMiniature() {
-  const rule = <div className="mt-1.5 h-px bg-ink" />
+const PAGE = 'flex h-[200px] w-[150px] flex-col rounded-[6px] bg-white shadow-[0_18px_40px_-20px_rgba(30,27,75,0.35)]'
+const tailored = (k: string) => <span className="rounded-[1px] bg-brand-tint text-brand-ink">{k}</span>
+
+// The extension's standard layout: one serif column.
+function TemplatePage() {
+  const rule = <div className="mt-1 h-px bg-ink" />
   return (
-    <div className="flex h-[236px] w-[176px] flex-col rounded-[6px] bg-white px-4 py-4 font-serif shadow-[0_18px_40px_-20px_rgba(30,27,75,0.35)]">
-      <div className="text-center text-[11px] font-bold tracking-[0.04em] text-ink">ALEX RIVERA</div>
-      <div className="text-center text-[5.5px] text-subtle">alex@example.com · Chicago, IL</div>
-      <div className="mt-2.5 text-[6.5px] font-bold uppercase tracking-[0.08em] text-ink">Experience</div>
+    <div className={`${PAGE} px-3.5 py-3.5 font-serif`}>
+      <div className="text-center text-[10px] font-bold tracking-[0.04em] text-ink">ALEX RIVERA</div>
+      <div className="text-center text-[5px] text-subtle">alex@example.com · Chicago, IL</div>
+      <div className="mt-2 text-[6px] font-bold uppercase tracking-[0.08em] text-ink">Experience</div>
       {rule}
-      <div className="mt-1 flex justify-between text-[6px] font-bold text-ink"><span>Brightline</span><span>2021 – now</span></div>
+      <div className="mt-1 flex justify-between text-[5.5px] font-bold text-ink"><span>Brightline</span><span>2021 – now</span></div>
       {['campaign strategy', 'budget', 'SEO'].map((k) => (
-        <div key={k} className="mt-1 flex gap-1 text-[5.5px] leading-[1.4] text-body">
+        <div key={k} className="mt-1 flex gap-1 text-[5px] leading-[1.4] text-body">
           <span>•</span>
-          <span>… <span className="rounded-[1px] bg-brand-tint text-brand-ink">{k}</span> …</span>
+          <span>… {tailored(k)} …</span>
         </div>
       ))}
-      <div className="mt-2.5 text-[6.5px] font-bold uppercase tracking-[0.08em] text-ink">Skills</div>
+      <div className="mt-2 text-[6px] font-bold uppercase tracking-[0.08em] text-ink">Skills</div>
       {rule}
-      <div className="mt-1 text-[5.5px] text-body">Google Analytics · A/B testing · Copywriting · Team leadership</div>
-      <span className="mt-auto self-end rounded-full bg-brand-tint px-2 py-0.5 font-sans text-[9px] text-brand-ink">Word or PDF</span>
+      <div className="mt-1 text-[5px] text-body">Google Analytics · A/B testing · Copywriting · Team leadership</div>
+    </div>
+  )
+}
+
+// A made-up user design, to read as "not ours" at a glance: sans, a dark
+// header band and a sidebar. Not a real template the extension ships.
+function OwnDesignPage() {
+  return (
+    <div className={`${PAGE} overflow-hidden font-sans`}>
+      <div className="bg-ink px-3 py-2.5 text-white">
+        <div className="text-[10px] font-semibold tracking-[-0.01em]">Alex Rivera</div>
+        <div className="text-[5px] opacity-70">Marketing Lead</div>
+      </div>
+      <div className="flex flex-1">
+        <div className="w-[46px] bg-panel px-2 py-2 text-[4.5px] leading-[1.6] text-body">
+          <div className="mb-0.5 text-[5px] font-semibold text-ink">Skills</div>
+          <div>Analytics</div>
+          <div>A/B testing</div>
+          <div>Copywriting</div>
+        </div>
+        <div className="flex-1 px-2.5 py-2">
+          <div className="text-[5.5px] font-semibold text-ink">Brightline</div>
+          <div className="text-[4.5px] text-subtle">2021 – now</div>
+          {['campaign strategy', 'budget', 'SEO'].map((k) => (
+            <div key={k} className="mt-1 text-[5px] leading-[1.4] text-body">… {tailored(k)} …</div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function Layout({ page, label }: { page: React.ReactNode; label: string }) {
+  return (
+    <div className="flex flex-col items-center gap-3">
+      {page}
+      <Badge variant="tint" className="text-[10.5px]">{label}</Badge>
     </div>
   )
 }
@@ -46,12 +85,12 @@ const CARDS = [
     visual: <LetterDoc className="absolute inset-x-9 top-9 -bottom-5" />,
   },
   {
-    title: 'Tailored in your own design',
-    beta: true,
-    body: 'Upload your resume as a Word file and the tailored copy keeps its fonts and layout. Download it as Word or PDF.',
+    title: 'Your design or ours',
+    body: 'Upload a Word file to keep your own fonts and layout (beta), or use the ATS-ready Cover Me template. Both download as Word, and the template as PDF too.',
     visual: (
-      <div className="flex h-full items-center justify-center">
-        <ResumeMiniature />
+      <div className="flex h-full items-center justify-center gap-3">
+        <Layout page={<OwnDesignPage />} label="Your .docx · Beta" />
+        <Layout page={<TemplatePage />} label="Cover Me template" />
       </div>
     ),
   },
@@ -82,10 +121,7 @@ export function Features() {
             <div inert aria-hidden="true" className="relative h-[300px] overflow-hidden rounded-[24px] bg-panel">
               {c.visual}
             </div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-[18px] font-semibold tracking-[-0.01em]">{c.title}</h3>
-              {'beta' in c && <Badge variant="tint">Beta</Badge>}
-            </div>
+            <h3 className="text-[18px] font-semibold tracking-[-0.01em]">{c.title}</h3>
             <p className="-mt-2 text-[15px] leading-[1.55] text-ink-2">{c.body}</p>
           </div>
         ))}
