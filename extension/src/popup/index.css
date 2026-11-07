@@ -1295,8 +1295,6 @@ textarea:focus-visible, input:focus-visible, [tabindex]:focus-visible {
 .design-readout { display: flex; flex-direction: column; gap: 3px; margin-left: 21px; font-size: 11px; line-height: 1.5; color: var(--text-2); }
 .design-readout .text-link { font-size: 11px; }
 .upload-link.design-retry { margin: 0; font-size: 11px; }
-.design-note { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-top: 10px; font-size: 11px; color: var(--text-2); }
-.design-note-close { background: none; border: none; color: var(--text-3); font-size: 14px; line-height: 1; cursor: pointer; }
 .layout-line { font-size: 11px; color: var(--text-3); }
 .layout-line .upload-link { margin: 0; font-size: 11px; }
 .letter-actions.design-actions { flex-wrap: wrap; }

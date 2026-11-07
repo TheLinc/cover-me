@@ -9,7 +9,8 @@ export type Page = 'generate' | 'resume' | 'settings' | 'history'
 
 export default function App() {
   const [page, setPage] = useState<Page>('generate')
-  // Existing users: a dot on the Resume tab until they open it (#131).
+  // Existing users: a dot on the Resume tab until they open it (#131). The
+  // page's notice stays ('opened') until dismissed or a resume is uploaded.
   const [designNews, setDesignNews] = useState(false)
 
   useEffect(() => {
@@ -22,7 +23,7 @@ export default function App() {
   useEffect(() => {
     if (page !== 'resume' || !designNews) return
     setDesignNews(false)
-    void chrome.storage.local.set({ designNews: 'seen' })
+    void chrome.storage.local.set({ designNews: 'opened' })
   }, [page, designNews])
 
   function navigate(p: Page) {

@@ -18,8 +18,8 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
   // Signed in to the account: a copy added while signed out isn't in it yet.
   const [accountMode, setAccountMode] = useState(false)
   const [pro, setPro] = useState(false)
-  // The one-time note for a .docx uploaded before its file was kept (#131).
-  const [noteDismissed, setNoteDismissed] = useState(true)
+  // Existing users: the "New" notice the Resume tab's dot leads to (#131).
+  const [news, setNews] = useState(false)
 
   useEffect(() => {
     const show = (r: ResumeData | null) => {
@@ -32,13 +32,13 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
       })
     }
     getResume().then(show)
-    chrome.storage.local.get('designNoteDismissed').then((r) => setNoteDismissed(r.designNoteDismissed === true))
+    chrome.storage.local.get('designNews').then((r) => setNews(r.designNews === 'pending' || r.designNews === 'opened'))
     return watchResume(show)
   }, [])
 
-  function dismissNote() {
-    setNoteDismissed(true)
-    void chrome.storage.local.set({ designNoteDismissed: true })
+  function dismissNews() {
+    setNews(false)
+    void chrome.storage.local.set({ designNews: 'seen' })
   }
 
   async function pickLayout(layout: 'yours' | 'cover-me') {
@@ -82,7 +82,7 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
         await saveDesignFile(hash, { ...(await getDesignFile(hash)), data: toBase64(bytes) })
         checkDesign(hash)
       }
-      dismissNote()
+      dismissNews()
       setResume(data)
       setStatus('saved')
       setTimeout(() => setStatus('idle'), 2500)
@@ -136,6 +136,21 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
           <h1 className="page-title">Resume</h1>
           <p className="page-subtitle">Upload once — used for every cover letter</p>
         </div>
+      )}
+
+      {news && resume && !resume.design && (
+        <section className="page-read-notice" aria-labelledby="design-news-title">
+          <p id="design-news-title" className="page-read-notice-title">New: tailor inside your own Word design</p>
+          <p>
+            {wordUpload
+              ? 'Upload your .docx again, and tailored resumes keep its fonts and layout instead of switching to the Cover Me layout.'
+              : 'Upload your resume as a Word file (.docx), and tailored resumes keep its fonts and layout instead of switching to the Cover Me layout.'}
+          </p>
+          <div className="page-read-notice-actions">
+            <button className="btn btn-primary btn-sm" onClick={() => inputRef.current?.click()}>Upload .docx</button>
+            <button className="btn btn-secondary btn-sm" onClick={dismissNews}>Not now</button>
+          </div>
+        </section>
       )}
 
       <div
@@ -203,7 +218,7 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
               {resume.text.length > 12000 && (
                 <div className="hint hint-tight">Only the first 12,000 characters (about 2,400 words) are used. Shorten your resume so letters and tailored resumes include everything.</div>
               )}
-              {!wordUpload && (
+              {!wordUpload && !news && (
                 <div className="hint hint-tight">Upload your resume as a Word file (.docx) and tailored resumes keep its design.</div>
               )}
             </div>
@@ -224,12 +239,6 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
               onRetry={() => checkDesign(resume.design!.hash)}
               dashboardFallback={accountMode && pro && resume.design.size > DESIGN_UPLOAD_MAX}
             />
-          )}
-          {wordUpload && !resume.design && !noteDismissed && (
-            <div className="design-note">
-              <span>New: upload your .docx again and tailored resumes keep its design.</span>
-              <button type="button" className="design-note-close" aria-label="Dismiss" onClick={dismissNote}>×</button>
-            </div>
           )}
         </>
       )}
