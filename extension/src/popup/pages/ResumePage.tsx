@@ -139,24 +139,24 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
       )}
 
       {news && resume && !resume.design && (
-        <section className="page-read-notice news-notice" aria-labelledby="design-news-title">
-          <span className="news-icon" aria-hidden="true">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M6 8a6 6 0 0112 0c0 7 3 9 3 9H3s3-2 3-9" />
-              <path d="M10.3 21a1.94 1.94 0 003.4 0" />
-            </svg>
-          </span>
-          <div>
+        <section className="page-read-notice" aria-labelledby="design-news-title">
+          <div className="news-heading">
+            <span className="news-icon" aria-hidden="true">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 8a6 6 0 0112 0c0 7 3 9 3 9H3s3-2 3-9" />
+                <path d="M10.3 21a1.94 1.94 0 003.4 0" />
+              </svg>
+            </span>
             <p id="design-news-title" className="page-read-notice-title">New: tailor inside your own Word design</p>
-            <p>
-              {wordUpload
-                ? 'Upload your .docx again, and tailored resumes keep its fonts and layout instead of switching to the Cover Me layout.'
-                : 'Upload your resume as a Word file (.docx), and tailored resumes keep its fonts and layout instead of switching to the Cover Me layout.'}
-            </p>
-            <div className="page-read-notice-actions">
-              <button className="btn btn-primary btn-sm" onClick={() => inputRef.current?.click()}>Upload .docx</button>
-              <button className="btn btn-secondary btn-sm" onClick={dismissNews}>Not now</button>
-            </div>
+          </div>
+          <p>
+            {wordUpload
+              ? 'Upload your .docx again, and tailored resumes keep its fonts and layout instead of switching to the Cover Me layout.'
+              : 'Upload your resume as a Word file (.docx), and tailored resumes keep its fonts and layout instead of switching to the Cover Me layout.'}
+          </p>
+          <div className="page-read-notice-actions">
+            <button className="btn btn-primary btn-sm" onClick={() => inputRef.current?.click()}>Upload .docx</button>
+            <button className="btn btn-secondary btn-sm" onClick={dismissNews}>Not now</button>
           </div>
         </section>
       )}
