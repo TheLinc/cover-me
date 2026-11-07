@@ -327,6 +327,18 @@ html, body {
 .page-read-notice-more:hover { color: var(--text); }
 .page-read-notice-actions { display: flex; gap: 8px; margin-top: 10px; }
 .page-read-notice-actions .btn { flex: 1; width: auto; }
+.news-heading { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
+.news-heading .page-read-notice-title { margin-bottom: 0; }
+.news-icon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent-strong);
+  color: #fff;
+}
 .review-ask {
   background: var(--elevated);
   border: 1px solid var(--border);
@@ -947,6 +959,16 @@ html, body {
 
 .nav-item:hover { color: var(--text-2); }
 
+.nav-dot {
+  position: absolute;
+  top: 9px;
+  left: calc(50% + 7px);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
 .nav-item.active { color: var(--accent-h); }
 
 .nav-item.active::before {
@@ -1273,3 +1295,21 @@ textarea:focus-visible, input:focus-visible, [tabindex]:focus-visible {
 /* An option with its "?" beside the label, not inside it: the checkbox is
    named by its own text, and the explanation belongs to the button. */
 .toggle-row { display: flex; align-items: center; gap: 6px; }
+
+/* ── Layout choice on the resume page (#131) ── */
+.design-checking { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 12px; color: var(--text-2); }
+.design-spinner { display: inline-block; flex-shrink: 0; width: 12px; height: 12px; }
+.design-choice { border: none; margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.design-option { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; }
+.design-option input { accent-color: var(--accent); margin-top: 2px; cursor: pointer; }
+.design-option.disabled { cursor: default; }
+.design-option.disabled .design-option-title { color: var(--text-3); }
+.design-option-title { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; color: var(--text); }
+.design-option-desc { display: block; font-size: 11px; color: var(--text-3); margin-top: 2px; }
+.design-warn { color: #fbbf24; flex-shrink: 0; }
+.design-readout { display: flex; flex-direction: column; gap: 3px; margin-left: 21px; font-size: 11px; line-height: 1.5; color: var(--text-2); }
+.design-readout .text-link { font-size: 11px; }
+.upload-link.design-retry { margin: 0; font-size: 11px; }
+.layout-line { font-size: 11px; color: var(--text-3); }
+.layout-line .upload-link { margin: 0; font-size: 11px; }
+.letter-actions.design-actions { flex-wrap: wrap; }

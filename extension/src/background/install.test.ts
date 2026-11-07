@@ -57,6 +57,30 @@ describe('handleInstalled', () => {
   })
 })
 
+// The dot on the Resume tab that tells existing users about Word files (#131).
+describe('the Word design news', () => {
+  const pdf = { text: 'Ada', filename: 'ada.pdf', updatedAt: 'd' }
+  const news = async () => (await chrome.storage.local.get('designNews')).designNews
+  test('an update with a resume saved before Word designs shows it', async () => {
+    fakeChrome(pdf)
+    await handleInstalled({ reason: 'update', previousVersion: '1.4.0' })
+    expect(await news()).toBe('pending')
+  })
+  test('a new install, an update with no resume, or one already using a design never does', async () => {
+    for (const [reason, saved] of [['install', pdf], ['update', undefined], ['update', { ...pdf, design: { hash: 'h' } }]] as const) {
+      fakeChrome(saved)
+      await handleInstalled({ reason, previousVersion: '1.4.0' })
+      expect(await news(), `${reason} ${JSON.stringify(saved)}`).toBe('seen')
+    }
+  })
+  test('it is decided once, so a later update never brings it back', async () => {
+    fakeChrome(pdf)
+    await chrome.storage.local.set({ designNews: 'seen' })
+    await handleInstalled({ reason: 'update', previousVersion: '1.5.0' })
+    expect(await news()).toBe('seen')
+  })
+})
+
 describe("the popup's What's new link", () => {
   test('a fresh install counts its version as seen', async () => {
     fakeChrome(undefined, '1.5.0')

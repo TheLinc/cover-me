@@ -208,6 +208,11 @@ export const mockResend = {
   dropNext: () => fetch(`${MOCK_URL}/__mock/email-drop-next`, { method: 'POST' }),
 }
 
+export const mockPosthog = {
+  events: async (): Promise<Array<{ api_key: string; event: string; distinct_id: string; properties: Record<string, unknown> }>> =>
+    (await fetch(`${MOCK_URL}/__mock/posthog`)).json(),
+}
+
 export const JOB = {
   title: 'Senior Backend Engineer',
   company: 'Acme',

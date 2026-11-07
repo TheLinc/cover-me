@@ -9,3 +9,14 @@ export function resumeFileName(resume: TailoredResume, jobTitle: string | undefi
     : 'resume'
   return `${(resume.name || 'Resume').replace(/\s+/g, '-')}-${slug}.${ext}`
 }
+
+// Starts the browser's download of a file built in the page.
+export function saveFile(blob: Blob, name: string): void {
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = name
+  a.click()
+  // The click starts the download before this runs; revoking later frees the blob.
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
+}

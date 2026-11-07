@@ -213,8 +213,13 @@ export default function PrivacyPage() {
             <Ul>
               <Li>
                 <strong className="text-foreground">Resume text.</strong> When you upload a PDF or DOCX
-                file, text is extracted client-side on your device. The raw binary file is never stored or
-                transmitted; in Hosted mode its file name is stored, unencrypted, with your resume. In BYOK mode, the extracted text is stored only in your browser&apos;s local
+                file, text is extracted client-side on your device. A PDF or TXT file itself is never stored or
+                transmitted. A Word (DOCX) file is kept in your browser&apos;s local storage, so tailored resumes
+                can be written into your own design, for as long as your resume or a tailored resume in History
+                uses it. On Hosted Pro, a Word file up to 2 MB is also sent to our server and stored encrypted
+                with the parsed copy of its structure, so the dashboard can download tailored resumes in your
+                design; when you upload another, files no saved tailored resume uses are deleted. In Hosted mode
+                the file name is stored, unencrypted, with your resume. In BYOK mode, the extracted text is stored only in your browser&apos;s local
                 storage. In Hosted mode, the extracted text is transmitted to our server over HTTPS and
                 stored in an encrypted database, and a copy is kept in local storage in the browser you
                 use; from version 1.3.0, signing in on another browser downloads it, so you don&apos;t
@@ -316,6 +321,13 @@ export default function PrivacyPage() {
                 newly uploaded resume, or a message from the dashboard&apos;s support form, it also counts
                 per account, keyed by a hash of your account ID.
                 A counter not updated for two days is deleted at the next cleanup, which runs during later requests.
+              </Li>
+              <Li>
+                <strong className="text-foreground">Tailor option counts (Hosted mode).</strong>{' '}
+                Each resume tailored in Hosted mode sends one count to PostHog with your Cover Me account ID and
+                the options used: your plan, whether compact, remove irrelevant bullets and include summary were
+                on, which layout was used, and whether your own design fell back to ours. No resume or job text
+                is sent, and PostHog keeps no profile of you from it. Tailors in BYOK mode aren&apos;t counted.
               </Li>
               <Li>
                 <strong className="text-foreground">Website visits (cover-me.dev only, not the extension).</strong>{' '}
@@ -582,12 +594,12 @@ export default function PrivacyPage() {
             <Ul>
               <Li>All on-device data is stored in <code className="text-brand-light font-mono text-[13px]">chrome.storage.local</code>, never in <code className="text-brand-light font-mono text-[13px]">chrome.storage.sync</code>, cookies, or <code className="text-brand-light font-mono text-[13px]">localStorage</code>. The one exception is a &ldquo;Not now&rdquo; flag in <code className="text-brand-light font-mono text-[13px]">chrome.storage.session</code>, cleared when Chrome restarts.</Li>
               <Li>API keys (BYOK mode) are encrypted with AES-256-GCM through the Web Crypto API before being written to storage. The random key that encrypts them is stored alongside them, so this keeps the key from being read at a glance, not from someone with access to your browser profile. The plaintext key exists in memory only for the duration of a single API call.</Li>
-              <Li>Resume text and cover letter history are stored unencrypted in your browser&apos;s local storage, in every mode. In Hosted mode the copies on our server are encrypted; the local copies stay on your device.</Li>
+              <Li>Resume text, the Word file you uploaded (if any) and cover letter history are stored unencrypted in your browser&apos;s local storage, in every mode. In Hosted mode the copies on our server are encrypted; the local copies stay on your device.</Li>
             </Ul>
 
             <H3>Server-side storage</H3>
             <Ul>
-              <Li>Resume text, and a parsed copy of its structure, are encrypted with AES-256-GCM before being stored in our Supabase Postgres database. The encryption key is derived from a server-side secret. Plaintext resume text is never persisted to disk.</Li>
+              <Li>Resume text, a parsed copy of its structure and, on Hosted Pro, your Word file are encrypted with AES-256-GCM before being stored in our Supabase Postgres database. The encryption key is derived from a server-side secret. Plaintext resume text is never persisted to disk.</Li>
               <Li>Cover letters and tailored resumes (Pro mode) are encrypted with AES-256-GCM before storage. The job title, company, posting address, dates and application stage (every Hosted account), and each tailored resume&apos;s ATS match score and missing keywords (Pro mode), are stored unencrypted so you can search and filter them. Your resume's file name is stored unencrypted too.</Li>
               <Li>Rate-limit counters (all modes) hold only a keyed hash of an IP address, or a hash of your account ID when a new resume is read or a support message is sent, and a counter not updated for two days is deleted at the next cleanup.</Li>
               <Li>All data in transit is protected by TLS 1.2 or higher (enforced by Supabase and Vercel).</Li>
@@ -620,7 +632,7 @@ export default function PrivacyPage() {
                   name: 'Supabase',
                   url: 'https://supabase.com/privacy',
                   when: 'Every mode (reading job postings, from version 1.3.0); everything else Hosted mode only',
-                  receives: 'Copies of the job pages you ask us to read, which are processed and not stored, and rate-limit counters keyed by a hash of your IP address. In Hosted mode also: the job details, any facts you add and, when you regenerate, the previous tailored resume, sent with each generation request (not stored, except Pro history); messages from the dashboard\'s support form, passed on to Resend and not stored; email address, hashed password (email sign-in only), encrypted resume text, encrypted cover letters and tailored resumes with the unencrypted fields that go with them (Pro), your resume\'s file name, your Stripe customer ID, your Google name, picture link and account ID, session tokens, usage counts, and the account-keyed counter used when a new resume is read or a support message is sent (see Information We Collect for each). Supabase Auth also records the IP address and browser of each signed-in session, kept with your account. Supabase hosts our backend functions, authentication system and database, and keeps standard request logs (IP address, browser, time, and the address requested, which can include a dashboard search) for a short period.',
+                  receives: 'Copies of the job pages you ask us to read, which are processed and not stored, and rate-limit counters keyed by a hash of your IP address. In Hosted mode also: the job details, any facts you add and, when you regenerate, the previous tailored resume, sent with each generation request (not stored, except Pro history); messages from the dashboard\'s support form, passed on to Resend and not stored; email address, hashed password (email sign-in only), encrypted resume text, encrypted cover letters and tailored resumes with the unencrypted fields that go with them (Pro), your encrypted Word file and which tailored resumes were made from it (Pro), your resume\'s file name, your Stripe customer ID, your Google name, picture link and account ID, session tokens, usage counts, and the account-keyed counter used when a new resume is read or a support message is sent (see Information We Collect for each). Supabase Auth also records the IP address and browser of each signed-in session, kept with your account. Supabase hosts our backend functions, authentication system and database, and keeps standard request logs (IP address, browser, time, and the address requested, which can include a dashboard search) for a short period.',
                 },
                 {
                   name: 'Google',
@@ -655,8 +667,8 @@ export default function PrivacyPage() {
                 {
                   name: 'PostHog',
                   url: 'https://posthog.com/privacy',
-                  when: 'Visitors to the public pages of cover-me.dev (not the extension, and not signed-in pages), and anyone who answers the uninstall survey',
-                  receives: 'A count of each page visit: the page address with only its campaign tags (such as utm_ parameters; ad click IDs are blanked first), the referring site, browser details (browser, operating system, device type, screen size, language) and time zone, plus a count of clicks on links to our Chrome Web Store page with the link\'s label. Requests go through cover-me.dev. Your IP address is used only to make a daily visitor hash and is not stored, nor is any location derived from it. No cookies or browser storage are used, and visits are not linked to your account. If you answer the uninstall survey: your answers, your comment, the extension version and, if you were signed in, your Cover Me account ID.',
+                  when: 'Visitors to the public pages of cover-me.dev (not the extension, and not signed-in pages), anyone who answers the uninstall survey, and each resume tailored in Hosted mode',
+                  receives: 'A count of each page visit: the page address with only its campaign tags (such as utm_ parameters; ad click IDs are blanked first), the referring site, browser details (browser, operating system, device type, screen size, language) and time zone, plus a count of clicks on links to our Chrome Web Store page with the link\'s label. Requests go through cover-me.dev. Your IP address is used only to make a daily visitor hash and is not stored, nor is any location derived from it. No cookies or browser storage are used, and visits are not linked to your account. If you answer the uninstall survey: your answers, your comment, the extension version and, if you were signed in, your Cover Me account ID. For each resume tailored in Hosted mode: your Cover Me account ID, your plan and the tailor options used, with no resume or job text.',
                 },
               ].map((svc) => (
                 <div key={svc.name} className="bg-surface border border-border rounded-[10px] px-5 py-4">

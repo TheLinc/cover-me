@@ -28,6 +28,18 @@ export async function handleInstalled(details: { reason: string; previousVersion
       await saveResume(rest)
     }
   }
+  await decideDesignNews(details.reason)
+}
+
+// The dot on the Resume tab telling existing users their Word file can now
+// keep its design (#131). Decided once, on the first install or update that
+// has this code: shown only to someone with a resume saved before then.
+async function decideDesignNews(reason: string): Promise<void> {
+  if (reason !== 'install' && reason !== 'update') return
+  const { designNews } = await chrome.storage.local.get('designNews')
+  if (designNews) return
+  const resume = reason === 'update' ? await getResume() : null
+  await chrome.storage.local.set({ designNews: resume && !resume.design ? 'pending' : 'seen' })
 }
 
 // Chrome opens this page when the extension is removed: a one-question survey
