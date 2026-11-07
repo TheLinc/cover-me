@@ -6,7 +6,7 @@ import { SiteFooter } from '@/components/site/SiteFooter'
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 
 const TITLE = 'Cover Me help and support'
-const DESCRIPTION = "Help with Cover Me: a job posting isn't detected, when the free allowance resets, fixing an API key, and where your resume is stored."
+const DESCRIPTION = "Help with Cover Me: what to do when a job posting isn't detected, when the free allowance resets, fixing an API key, and where your resume is stored."
 
 export const metadata: Metadata = {
   title: 'Help and support',

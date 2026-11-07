@@ -57,7 +57,7 @@ const CARDS = [
   },
   {
     title: 'Every application in one history',
-    body: 'With an account, every job you tailor for lands on a board on your dashboard. Pro keeps the letters and resumes there too.',
+    body: 'With an account, every job you generate for lands on a board on your dashboard. Pro keeps the letters and resumes there too.',
     visual: (
       <div className="flex h-full flex-col justify-center gap-2.5 p-7">
         <HistoryRow label="Northwind · Marketing Manager" date="Today" />
