@@ -13,6 +13,7 @@ export type { ResumeEducation, ResumeExperience, ResumeProject, ResumeSection, T
 import type { DesignCheck } from '../lib/pdf/docx-design'
 export type { DesignCheck } from '../lib/pdf/docx-design'
 import type { PageSnapshot } from '../content/snapshot.ts'
+import type { ScraperName } from '../content/scrapers/index.ts'
 import type { JobData } from '../content/scrapers/types.ts'
 
 export interface CoverLetter {
@@ -94,7 +95,18 @@ export type TailorResponse =
 
 export type ScrapeResponse =
   | { success: true; job: JobData }
-  | { success: false; error: string }
+  | { success: false; error: string; failure?: ScrapeFailure }
+
+// Why a click read no job (background/scrape-failure.ts), for the popup's
+// request and report screens (#130). host: without a leading www., empty for
+// not_web. url and scraper: the failing page, only for a supported board.
+export interface ScrapeFailure {
+  reason: 'unsupported' | 'failed' | 'not_web'
+  host: string
+  url?: string
+  scraper?: ScraperName
+  error: string
+}
 
 // A frame's content script answer: its bundled scrapers' result (the offline
 // fallback) plus the page for the scrape Edge Function, null when it can't be
