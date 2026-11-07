@@ -126,7 +126,7 @@ export default function Page() {
             Bullets that aren&rsquo;t their own paragraph. If you pressed Shift+Enter to start a new line inside a bullet, a longer or shorter rewrite leaves stray line breaks, and the next bullet moves with it.
           </li>
           <li>
-            Moving the resume into a resume builder. Builders lay your content out in their own templates. Rezi&rsquo;s builder page, for example, says an imported resume&rsquo;s experience goes into a new Rezi document (checked November 7, 2026; see{' '}
+            Moving the resume into a resume builder. Builders lay your content out in their own templates. <a href="https://www.rezi.ai/ai-resume-builder" target="_blank" rel="noopener noreferrer" className="text-brand-light hover:text-brand transition-colors">Rezi&rsquo;s builder page</a>, for example, says an imported resume&rsquo;s experience goes into a new Rezi document (checked November 7, 2026; see{' '}
             <Link href="/guides/cover-me-vs-rezi" className="text-brand-light hover:text-brand transition-colors">Cover Me vs Rezi</Link>). That works if you want a new design, but your own Word layout doesn&rsquo;t come with it.
           </li>
         </ul>
@@ -168,7 +168,7 @@ export default function Page() {
           <li>HubSpot stayed off the resume. The posting asks for it, Alex&rsquo;s resume doesn&rsquo;t mention it, and Cover Me listed it as missing instead of adding it.</li>
         </ul>
         <p>
-          There are limits. Cover Me finds each bullet by its exact text, so a bullet it can&rsquo;t find as its own paragraph stays as written. If it can&rsquo;t find at least 80% of your bullets, it doesn&rsquo;t edit the file and uses its standard layout instead. A rewritten bullet takes the formatting of the longest stretch of text in it, so a bold lead-in comes back plain.
+          There are limits. Cover Me finds each bullet by its text, so a bullet it can&rsquo;t find as its own paragraph stays as written. If it can&rsquo;t find at least 80% of your bullets, it doesn&rsquo;t edit the file and uses its standard layout instead. A rewritten bullet takes the formatting of the longest stretch of text in it, so a bold lead-in comes back plain.
         </p>
 
         <h2 className="text-[22px] text-foreground !mt-10">How do you keep your Word design in Cover Me?</h2>
