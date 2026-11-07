@@ -1,12 +1,20 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { WEB_URL } from '../lib/config'
+import { getWhatsNew } from '../lib/storage'
 import { handleInstalled, uninstallUrl, WELCOME_PATH } from './install'
 
-function fakeChrome(resume?: unknown) {
+function fakeChrome(resume?: unknown, version = '1.4.0') {
+  const data: Record<string, unknown> = { resume }
   const chrome = {
-    runtime: { getURL: (p: string) => `chrome-extension://id/${p}` },
+    runtime: { getURL: (p: string) => `chrome-extension://id/${p}`, getManifest: () => ({ version }) },
     tabs: { create: vi.fn(async () => ({})) },
-    storage: { local: { remove: vi.fn(async () => {}), get: vi.fn(async () => ({ resume })), set: vi.fn(async () => {}) } },
+    storage: {
+      local: {
+        remove: vi.fn(async () => {}),
+        get: vi.fn(async (key: string) => ({ [key]: data[key] })),
+        set: vi.fn(async (items: Record<string, unknown>) => { Object.assign(data, items) }),
+      },
+    },
   }
   vi.stubGlobal('chrome', chrome)
   return chrome
@@ -52,23 +60,53 @@ describe('handleInstalled', () => {
 // The dot on the Resume tab that tells existing users about Word files (#131).
 describe('the Word design news', () => {
   const pdf = { text: 'Ada', filename: 'ada.pdf', updatedAt: 'd' }
+  const news = async () => (await chrome.storage.local.get('designNews')).designNews
   test('an update with a resume saved before Word designs shows it', async () => {
-    const chrome = fakeChrome(pdf)
+    fakeChrome(pdf)
     await handleInstalled({ reason: 'update', previousVersion: '1.4.0' })
-    expect(chrome.storage.local.set).toHaveBeenCalledWith({ designNews: 'pending' })
+    expect(await news()).toBe('pending')
   })
   test('a new install, an update with no resume, or one already using a design never does', async () => {
     for (const [reason, saved] of [['install', pdf], ['update', undefined], ['update', { ...pdf, design: { hash: 'h' } }]] as const) {
-      const chrome = fakeChrome(saved)
+      fakeChrome(saved)
       await handleInstalled({ reason, previousVersion: '1.4.0' })
-      expect(chrome.storage.local.set, `${reason} ${JSON.stringify(saved)}`).toHaveBeenCalledWith({ designNews: 'seen' })
+      expect(await news(), `${reason} ${JSON.stringify(saved)}`).toBe('seen')
     }
   })
   test('it is decided once, so a later update never brings it back', async () => {
-    const chrome = fakeChrome(pdf)
-    chrome.storage.local.get.mockImplementation(async () => ({ resume: pdf, designNews: 'seen' }))
+    fakeChrome(pdf)
+    await chrome.storage.local.set({ designNews: 'seen' })
     await handleInstalled({ reason: 'update', previousVersion: '1.5.0' })
-    expect(chrome.storage.local.set).not.toHaveBeenCalledWith({ designNews: 'pending' })
+    expect(await news()).toBe('seen')
+  })
+})
+
+describe("the popup's What's new link", () => {
+  test('a fresh install counts its version as seen', async () => {
+    fakeChrome(undefined, '1.5.0')
+    await handleInstalled({ reason: 'install' })
+    expect(await getWhatsNew()).toBeNull()
+  })
+  test('an update to a new minor or major version shows it, pointing at that version', async () => {
+    fakeChrome(undefined, '1.5.0')
+    await handleInstalled({ reason: 'update', previousVersion: '1.4.2' })
+    expect(await getWhatsNew()).toBe('1.5.0')
+    fakeChrome(undefined, '2.0.0')
+    await handleInstalled({ reason: 'update', previousVersion: '1.5.3' })
+    expect(await getWhatsNew()).toBe('2.0.0')
+  })
+  test("a patch update or a Chrome update doesn't", async () => {
+    fakeChrome(undefined, '1.5.1')
+    await handleInstalled({ reason: 'update', previousVersion: '1.5.0' })
+    await handleInstalled({ reason: 'chrome_update', previousVersion: '1.4.0' })
+    expect(await getWhatsNew()).toBeNull()
+  })
+  test('a patch update keeps a link not yet clicked', async () => {
+    const chrome = fakeChrome(undefined, '1.5.0')
+    await handleInstalled({ reason: 'update', previousVersion: '1.4.0' })
+    chrome.runtime.getManifest = () => ({ version: '1.5.1' })
+    await handleInstalled({ reason: 'update', previousVersion: '1.5.0' })
+    expect(await getWhatsNew()).toBe('1.5.0')
   })
 })
 

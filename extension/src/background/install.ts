@@ -1,5 +1,5 @@
 import { WEB_URL } from '../lib/config'
-import { clearSavedLogin, getResume, saveResume } from '../lib/storage'
+import { clearSavedLogin, getResume, saveResume, saveWhatsNew } from '../lib/storage'
 
 export const WELCOME_PATH = 'src/welcome/index.html'
 
@@ -9,6 +9,14 @@ export async function handleInstalled(details: { reason: string; previousVersion
   await clearSavedLogin()
   if (details.reason === 'install') {
     await chrome.tabs.create({ url: chrome.runtime.getURL(WELCOME_PATH) })
+  }
+  // A new minor or major version lights the popup's "What's new" link. Patches
+  // don't: most releases are patches, and a dot on each would be ignored. A
+  // fresh install sets nothing, so its version counts as seen.
+  const version = chrome.runtime.getManifest().version
+  const majorMinor = (v: string) => v.split('.').slice(0, 2).join('.')
+  if (details.reason === 'update' && details.previousVersion && majorMinor(details.previousVersion) !== majorMinor(version)) {
+    await saveWhatsNew(version)
   }
   // Builds before 1.3.0 parsed only the first 6,000 characters of the resume,
   // so a longer one lost its later sections (often education) in every

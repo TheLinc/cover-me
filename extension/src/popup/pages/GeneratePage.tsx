@@ -11,6 +11,7 @@ import ProgressSteps from '../components/ProgressSteps'
 import ReviewAsk, { claimReviewAsk } from '../components/ReviewAsk'
 import ScoreRing from '../components/ScoreRing'
 import UpgradeButton from '../components/UpgradeButton'
+import { WhatsNewLink } from '../components/WhatsNew'
 import type { AuthSession, CoverJob, GenerateResponse, JobData, ResumeData, Settings, ScrapeResponse, TailorJob, TailorResponse, TailoredResume } from '../../types'
 import logoIcon from '../../public/icon/48.png'
 import type { Page } from '../App'
@@ -637,6 +638,7 @@ export default function GeneratePage({ onNavigate }: Props) {
       <header className="popup-bar">
         <img src={logoIcon} width="20" height="20" alt="" className="logo-icon" />
         <span className="logo-text">Cover Me</span>
+        <WhatsNewLink />
         {/* Mounted once saved state has loaded (so reopening the popup doesn't
             announce "Done"), then kept, so screen readers hear each change. */}
         {setupLoaded && <span className="popup-status" role="status">{status}</span>}
