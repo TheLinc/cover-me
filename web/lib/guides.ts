@@ -65,7 +65,7 @@ export const GUIDES: Guide[] = [
   {
     slug: 'cover-me-vs-rezi',
     title: 'Cover Me vs Rezi: tailor the resume you already have',
-    description: 'Rezi is an AI resume builder with templates, with Pro at $29 a month or $149 once. Cover Me tailors the resume you already have to each posting, free with your own API key or $15 a month.',
+    description: 'Rezi is an AI resume builder with templates, and Pro costs $29 a month or $149 once. Cover Me tailors the resume you already have to each posting, free with your own API key or $15 a month.',
     date: '2026-11-07',
   },
 ]

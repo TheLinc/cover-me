@@ -66,10 +66,11 @@ const COMPARISON: { feature: string; coverMe: string; rezi: string }[] = [
   { feature: 'Free plan', coverMe: 'Unlimited with your own API key, or 10 generations to start, then 5 a week', rezi: '1 resume, 3 PDF downloads, 1 AI interview, standard templates, limited keyword targeting and Rezi Score' },
   { feature: 'Paid plan', coverMe: '$15 a month, or $35 every 3 months, for up to 25 generations a day', rezi: 'Pro at $29 a month, or Lifetime at $149 once' },
   { feature: 'Where it runs', coverMe: 'Chrome extension, on the job posting you have open', rezi: 'Web app, plus a Chrome extension that fills in application forms' },
-  { feature: 'Tailoring', coverMe: 'One click rewrites your bullets, summary and skills in the posting’s words', rezi: 'Keyword targeting against a job description, full on Pro' },
-  { feature: 'Score', coverMe: 'ATS score from 0 to 100 with every missing keyword listed', rezi: 'Rezi Score on 23 metrics, full on Pro' },
+  { feature: 'Tailoring', coverMe: 'One click rewrites your bullets, summary and skills in the posting’s words', rezi: 'Keyword targeting against a job description, full on paid plans' },
+  { feature: 'Score', coverMe: 'ATS score from 0 to 100 with every missing keyword listed', rezi: 'Rezi Score of resume strength on 23 metrics, full on paid plans' },
   { feature: 'Your own design', coverMe: 'A Word upload keeps its fonts and layout in the Word download (beta)', rezi: 'Imports your resume into a Rezi document and its templates' },
-  { feature: 'Cover letters', coverMe: 'On every plan, written for the posting', rezi: 'On every plan, from your resume and the job' },
+  { feature: 'AI cover letters', coverMe: 'On every plan, written for the posting', rezi: 'AI cover letter writer on paid plans' },
+  { feature: 'Downloads', coverMe: 'PDF, plus Word for the tailored resume, on every plan', rezi: '3 PDFs on the free plan; unlimited PDFs and Word files on paid plans' },
   { feature: 'Open source', coverMe: 'Yes, MIT licensed', rezi: 'No' },
 ]
 
@@ -119,10 +120,10 @@ export default function Page() {
 
         <h2 className="text-[22px] text-foreground !mt-10">What is the difference between Cover Me and Rezi?</h2>
         <p>
-          Rezi is where you make the resume. Its AI writes and edits bullet points, its templates set the layout, and its keyword targeting and Rezi Score check the result against a job description. You can import an existing PDF or Word resume, and Rezi&rsquo;s builder page says the import fills a new Rezi document with your experience. It also has a cover letter writer, AI interview practice, a job tracker and a Chrome extension that fills in application forms.
+          Rezi is where you make the resume. Its AI writes and edits bullet points, its templates set the layout, keyword targeting checks the result against a job description, and the Rezi Score rates the resume on 23 metrics. You can import an existing PDF or Word resume, and Rezi&rsquo;s builder page says the import fills a new Rezi document with your experience. Paid plans add an AI cover letter writer. It also has AI interview practice, a job tracker and a Chrome extension that fills in application forms.
         </p>
         <p>
-          Cover Me starts from the resume you have. Upload it once, open a posting on <Link href="/for/linkedin" className="text-brand-light hover:text-brand transition-colors">LinkedIn</Link>, <Link href="/for/indeed" className="text-brand-light hover:text-brand transition-colors">Indeed</Link>, <Link href="/for/greenhouse" className="text-brand-light hover:text-brand transition-colors">Greenhouse</Link>, <Link href="/for/lever" className="text-brand-light hover:text-brand transition-colors">Lever</Link>, <Link href="/for/workday" className="text-brand-light hover:text-brand transition-colors">Workday</Link> or <Link href="/for/ashby" className="text-brand-light hover:text-brand transition-colors">Ashby</Link>, or paste one from anywhere else, and click Tailor Resume to Job. It rewrites your bullets, summary and skills in the posting&rsquo;s words, shows an <Link href="/guides/what-is-an-ats-score" className="text-brand-light hover:text-brand transition-colors">ATS score</Link> with every missing keyword, and writes a matching cover letter when you click Generate Cover Letter.
+          Cover Me starts from the resume you have. Upload it once, open a posting on <Link href="/for/linkedin" className="text-brand-light hover:text-brand transition-colors">LinkedIn</Link>, <Link href="/for/indeed" className="text-brand-light hover:text-brand transition-colors">Indeed</Link>, <Link href="/for/greenhouse" className="text-brand-light hover:text-brand transition-colors">Greenhouse</Link>, <Link href="/for/lever" className="text-brand-light hover:text-brand transition-colors">Lever</Link>, <Link href="/for/workday" className="text-brand-light hover:text-brand transition-colors">Workday</Link>, <Link href="/for/ashby" className="text-brand-light hover:text-brand transition-colors">Ashby</Link>, BambooHR or Workable, or paste one from anywhere else, and click Tailor Resume to Job. It rewrites your bullets, summary and skills in the posting&rsquo;s words, shows an <Link href="/guides/what-is-an-ats-score" className="text-brand-light hover:text-brand transition-colors">ATS score</Link> with every missing keyword, and writes a matching cover letter when you click Generate Cover Letter.
         </p>
 
         <h2 className="text-[22px] text-foreground !mt-10">Feature comparison</h2>
@@ -150,7 +151,7 @@ export default function Page() {
 
         <h2 className="text-[22px] text-foreground !mt-10">How much do Rezi Pro and Cover Me Pro cost?</h2>
         <p>
-          Rezi Pro costs $29 a month, and Rezi Lifetime is a one-time $149 for the Pro features without the monthly expert review. Rezi&rsquo;s free plan includes 1 resume, 3 PDF downloads and 1 AI interview, with limited keyword targeting and Rezi Score. Cover Me Pro costs $15 a month or $35 every 3 months, for up to 25 generations a day, with every letter and tailored resume saved to your account. With your own OpenAI or Claude API key, Cover Me is free and unlimited, and you pay the AI provider for what you use. Without a key, the hosted free plan gives 10 generations to start, then 5 a week.
+          Rezi Pro costs $29 a month, and Rezi Lifetime is a one-time $149 for the Pro features without the monthly expert review. Rezi&rsquo;s free plan includes 1 resume, 3 PDF downloads and 1 AI interview, with limited keyword targeting and Rezi Score, and its plan table puts the AI cover letter writer and Word downloads on paid plans. Cover Me Pro costs $15 a month or $35 every 3 months, for up to 25 generations a day, with every letter and tailored resume saved to your account. With your own OpenAI or Claude API key, Cover Me is free and unlimited, and you pay the AI provider for what you use. Without a key, the hosted free plan gives 10 generations to start, then 5 a week.
         </p>
 
         <h2 className="text-[22px] text-foreground !mt-10">Does Cover Me keep my resume&rsquo;s design?</h2>
