@@ -52,6 +52,7 @@ writeFileSync(envFile, [
   `RESEND_API_BASE=http://host.docker.internal:${MOCK_PORT}`,
   'POSTHOG_KEY=phc_mock',
   `POSTHOG_HOST=http://host.docker.internal:${MOCK_PORT}`,
+  'POSTHOG_SITE_SURVEY_ID=survey_mock',
 ].join('\n') + '\n')
 
 console.log('Serving functions with the test env…')

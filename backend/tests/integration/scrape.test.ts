@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { gzipSync } from 'node:zlib'
 import { describe, expect, it } from 'vitest'
 import { FIXTURE_CASES, fixtureUrl } from '../../../extension/src/content/scrapers/fixtures/cases.ts'
-import { admin, callFunction } from './helpers'
+import { admin, callFunction, mockClaude, mockPosthog } from './helpers'
 
 // The extension's saved postings, read by the served function: the same cases
 // the extension's fixture tests check, so the deployed scrapers match.
@@ -49,6 +49,38 @@ describe('scrape', () => {
     const res = await scrape({ body: { pages: [{ url: 'https://example.com/about', html: '<html><body><h1>About us</h1></body></html>' }] } })
     expect(res.status).toBe(200)
     expect((await res.json()).results[0]).toMatchObject({ ok: false })
+  })
+
+  // Sent behind the response, so wait a little for it.
+  const posthogEvents = async () => {
+    let events = await mockPosthog.events()
+    for (let i = 0; i < 20 && events.length === 0; i++) events = await new Promise((r) => setTimeout(r, 100)).then(mockPosthog.events)
+    return events
+  }
+
+  it('counts a click where no page was read: hostname and scraper per page, no URL or HTML', async () => {
+    await mockClaude.reset()
+    const pages = [
+      { url: 'https://www.acme-careers.com/jobs/42?ref=mail', html: '<html><body><h1>About us</h1></body></html>' },
+      { url: 'https://job-boards.greenhouse.io/embed/job_app?token=9', html: '<html><body></body></html>' },
+    ]
+    expect((await scrape({ body: { pages } })).status).toBe(200)
+    const events = await posthogEvents()
+    expect(events).toHaveLength(1)
+    expect(events[0].event).toBe('scrape_failed')
+    expect(events[0].distinct_id).toMatch(/^[0-9a-f-]{36}$/)
+    expect(events[0].properties).toEqual({
+      pages: [{ hostname: 'www.acme-careers.com', scraper: 'generic' }, { hostname: 'job-boards.greenhouse.io', scraper: 'generic' }],
+      $process_person_profile: false,
+    })
+  })
+
+  it("doesn't count a click where a page was read", async () => {
+    await mockClaude.reset()
+    const pages = [page('lever'), { url: 'https://example.com/about', html: '<html><body><h1>About us</h1></body></html>' }]
+    expect((await scrape({ body: { pages } })).status).toBe(200)
+    await new Promise((r) => setTimeout(r, 1000))
+    expect(await mockPosthog.events()).toEqual([])
   })
 
   it('rejects malformed requests', async () => {

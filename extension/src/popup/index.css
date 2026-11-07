@@ -1313,3 +1313,23 @@ textarea:focus-visible, input:focus-visible, [tabindex]:focus-visible {
 .layout-line { font-size: 11px; color: var(--text-3); }
 .layout-line .upload-link { margin: 0; font-size: 11px; }
 .letter-actions.design-actions { flex-wrap: wrap; }
+
+/* After a click that read no job (#130): no error styling for a site we don't read yet. */
+.scrape-failure {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+  color: var(--text-2);
+  font-size: 12px;
+  line-height: 1.55;
+}
+.scrape-failure .error-box { margin-bottom: 0; }
+.scrape-failure-actions { display: flex; gap: 8px; }
+.scrape-failure-actions .btn { flex: 1; width: auto; }
+.site-request-row { display: flex; gap: 8px; }
+.site-request-row .form-input { flex: 1; min-width: 0; padding: 6px 10px; font-size: 12px; }
+.site-request-row .btn { width: auto; white-space: nowrap; }
+.scrape-failure-error { margin-top: 6px; color: var(--error); font-size: 11px; }
+.bug-report { display: flex; flex-direction: column; gap: 6px; }
+.bug-report-url { overflow-wrap: anywhere; }

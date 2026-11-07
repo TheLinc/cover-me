@@ -7,8 +7,10 @@
 const POSTHOG_KEY = Deno.env.get('POSTHOG_KEY') ?? ''
 const POSTHOG_HOST = Deno.env.get('POSTHOG_HOST') ?? 'https://us.i.posthog.com'
 
-export async function capture(event: string, distinctId: string, properties: Record<string, unknown>): Promise<void> {
-  if (!POSTHOG_KEY) return
+// false when PostHog didn't take the event; true when it did, or when there's
+// no key to send with.
+export async function capture(event: string, distinctId: string, properties: Record<string, unknown>): Promise<boolean> {
+  if (!POSTHOG_KEY) return true
   try {
     const res = await fetch(`${POSTHOG_HOST}/i/v0/e/`, {
       method: 'POST',
@@ -22,7 +24,9 @@ export async function capture(event: string, distinctId: string, properties: Rec
       signal: AbortSignal.timeout(5000),
     })
     if (!res.ok) console.error(`PostHog ${event}: ${res.status}`)
+    return res.ok
   } catch {
     console.error(`PostHog ${event}: send failed`)
+    return false
   }
 }

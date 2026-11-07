@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
 }
 
-const EFFECTIVE_DATE = 'November 6, 2026'
+const EFFECTIVE_DATE = 'November 7, 2026'
 const CONTACT_EMAIL  = 'support@cover-me.dev'
 
 // ── Section heading ────────────────────────────────────────────────────────
@@ -328,6 +328,23 @@ export default function PrivacyPage() {
                 the options used: your plan, whether compact, remove irrelevant bullets and include summary were
                 on, which layout was used, and whether your own design fell back to ours. No resume or job text
                 is sent, and PostHog keeps no profile of you from it. Tailors in BYOK mode aren&apos;t counted.
+              </Li>
+              <Li>
+                <strong className="text-foreground">Site requests and bug reports (only when you press the button).</strong>{' '}
+                When the extension can&apos;t read a job page, you can press Request this site or Report bug,
+                in any mode and whatever you chose about sending job pages. Each press sends one response to
+                PostHog, under a random ID that isn&apos;t linked to you or your account. A site request sends
+                only the site&apos;s name, which you can edit first. A bug report sends the page&apos;s address,
+                shown under the button before you press it (on some sites, such as LinkedIn search pages, it
+                includes your search), which part of the extension tried to read it, the error and the
+                extension&apos;s version. Nothing from the page itself is sent. The extension remembers the sites
+                you asked for in its local storage, so it thanks you instead of asking again.
+              </Li>
+              <Li>
+                <strong className="text-foreground">Failed-read counts (when you&apos;ve agreed to send job pages).</strong>{' '}
+                When our server reads none of the pages from a click, it sends one count to PostHog with each
+                page&apos;s site name and which part of the extension tried to read it, under a random ID. No
+                address, page content or account is sent.
               </Li>
               <Li>
                 <strong className="text-foreground">Website visits (cover-me.dev only, not the extension).</strong>{' '}
