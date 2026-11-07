@@ -62,6 +62,7 @@ const jsonLdOrg = {
     CHROME_STORE_URL,
     'https://alternativeto.net/software/cover-me/about/',
     'https://toolradar.com/tools/cover-me',
+    'https://www.opensourcealternatives.to/item/cover-me',
   ],
   founder: {
     '@type': 'Person',

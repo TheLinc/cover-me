@@ -72,7 +72,12 @@ docs/
 .media-raw/
 
 # Chrome Web Store listing assets (store zips, screenshots, the promo video): kept local, uploaded by hand
-chrome-store/
+chrome-store/*
+# Directory listing notes are public on purpose: the copy each listing uses and the free sites still to try
+!chrome-store/directory-listings/
+chrome-store/directory-listings/*
+!chrome-store/directory-listings/rankmyai.md
+!chrome-store/directory-listings/candidates-2026-11-06.md
 
 # Impeccable decision-page answers (per session)
 .impeccable/questions/
