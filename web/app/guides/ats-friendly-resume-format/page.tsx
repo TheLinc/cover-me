@@ -396,6 +396,9 @@ SEO Campaign strategy Google Analytics Budget management ...`}
         <p className="text-[14px] text-muted-foreground mb-5 max-w-[440px] mx-auto leading-[1.7]">
           Cover Me tailors your resume to the job posting you have open, shows its ATS keyword score, and writes the cover letter. Free to start.
         </p>
+        <p className="text-[13px] text-muted-foreground -mt-3 mb-5 max-w-[440px] mx-auto leading-[1.7]">
+          Using a Word file? See <Link href="/guides/tailor-resume-in-word" className="text-brand-light hover:text-brand transition-colors">how to tailor it without losing its formatting</Link>.
+        </p>
         <a
           href={CHROME_STORE_URL}
           target="_blank"

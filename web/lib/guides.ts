@@ -68,6 +68,12 @@ export const GUIDES: Guide[] = [
     description: 'Rezi is an AI resume builder, with Pro at $29 a month or Lifetime at $149 once. Cover Me tailors the resume you already have to each posting, free with your own API key or $15 a month.',
     date: '2026-11-07',
   },
+  {
+    slug: 'tailor-resume-in-word',
+    title: 'How to tailor your resume in Word without losing its formatting',
+    description: 'Change the words inside the paragraphs your resume already has, and leave the paragraphs alone. What breaks a Word design, how to tailor by hand, and a tested run with Cover Me.',
+    date: '2026-11-07',
+  },
 ]
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
