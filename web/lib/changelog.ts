@@ -55,6 +55,23 @@ export function toChangelog(releases: GithubRelease[]): ChangelogVersion[] {
     .map((r) => ({ version: r.tag_name.replace(/^v/, ''), date: day(r.created_at), ...groups(r.body) }))
 }
 
+// The newest version users can install. Highest by semver, not by date: 1.4.0
+// was published minutes after 1.5.0.
+export function latestVersion(releases: GithubRelease[]): string | null {
+  const parts = (v: string) => v.split('.').map(Number)
+  const newer = (a: string, b: string) => {
+    const [x, y] = [parts(a), parts(b)]
+    for (let i = 0; i < 3; i++) if (x[i] !== y[i]) return (x[i] ?? 0) > (y[i] ?? 0)
+    return false
+  }
+  return releases.filter((r) => !r.draft && !r.prerelease).map((r) => r.tag_name.replace(/^v/, '')).reduce<string | null>((best, v) => (!best || newer(v, best) ? v : best), null)
+}
+
+export async function getLatestVersion(): Promise<string | null> {
+  const releases = await fetchGithub<GithubRelease[]>(RELEASES_URL)
+  return releases && latestVersion(releases)
+}
+
 export async function getChangelog(): Promise<ChangelogVersion[] | null> {
   const releases = await fetchGithub<GithubRelease[]>(RELEASES_URL)
   return releases && toChangelog(releases)

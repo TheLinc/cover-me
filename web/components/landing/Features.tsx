@@ -1,3 +1,4 @@
+import { Badge } from '@/components/ui/badge'
 import { LetterDoc } from './visuals'
 import { Ambient } from './Ambient'
 
@@ -14,7 +15,7 @@ function HistoryRow({ label, date, faded }: { label: string; date: string; faded
   )
 }
 
-// The downloaded resume: the extension's Times-serif PDF template, in miniature.
+// The downloaded resume in the extension's standard layout, in miniature.
 function PdfPage() {
   const rule = <div className="mt-1.5 h-px bg-ink" />
   return (
@@ -33,7 +34,7 @@ function PdfPage() {
       <div className="mt-2.5 text-[6.5px] font-bold uppercase tracking-[0.08em] text-ink">Skills</div>
       {rule}
       <div className="mt-1 text-[5.5px] text-body">Google Analytics · A/B testing · Copywriting · Team leadership</div>
-      <span className="mt-auto self-end rounded-full bg-brand-tint px-2 py-0.5 font-sans text-[9px] text-brand-ink">1 page · PDF</span>
+      <span className="mt-auto self-end rounded-full bg-brand-tint px-2 py-0.5 font-sans text-[9px] text-brand-ink">Word or PDF</span>
     </div>
   )
 }
@@ -45,8 +46,9 @@ const CARDS = [
     visual: <LetterDoc className="absolute inset-x-9 top-9 -bottom-5" />,
   },
   {
-    title: 'A clean one-page PDF, ready to upload',
-    body: 'ATS-friendly layout. Compact mode trims it to one page.',
+    title: 'Tailored in your own design',
+    beta: true,
+    body: 'Upload your resume as a Word file and the tailored copy keeps its fonts and layout. Download it as Word or PDF.',
     visual: (
       <div className="flex h-full items-center justify-center">
         <PdfPage />
@@ -55,7 +57,7 @@ const CARDS = [
   },
   {
     title: 'Every application in one history',
-    body: 'Reopen any letter or resume. Pro syncs it across devices.',
+    body: 'Every job you tailor for lands on a board on your dashboard. Pro keeps the letters and resumes there too.',
     visual: (
       <div className="flex h-full flex-col justify-center gap-2.5 p-7">
         <HistoryRow label="Northwind · Marketing Manager" date="Today" />
@@ -80,7 +82,10 @@ export function Features() {
             <div inert aria-hidden="true" className="relative h-[300px] overflow-hidden rounded-[24px] bg-panel">
               {c.visual}
             </div>
-            <h3 className="text-[18px] font-semibold tracking-[-0.01em]">{c.title}</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="text-[18px] font-semibold tracking-[-0.01em]">{c.title}</h3>
+              {'beta' in c && <Badge className="border-transparent bg-brand-tint font-medium text-brand-ink">Beta</Badge>}
+            </div>
             <p className="-mt-2 text-[15px] leading-[1.55] text-ink-2">{c.body}</p>
           </div>
         ))}

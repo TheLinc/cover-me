@@ -92,7 +92,7 @@ const faqJsonLd = {
       name: 'Can AI tailor my resume automatically?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: "Yes. The Cover Me Chrome extension reads the job posting you have open and rewrites your resume around the role's keywords without changing your job titles, employers, or dates. A check removes any skill or claim your original resume doesn't support. It shows a match score with the remaining gaps and exports a PDF.",
+        text: "Yes. The Cover Me Chrome extension reads the job posting you have open and rewrites your resume around the role's keywords without changing your job titles, employers, or dates. A check removes any skill or claim your original resume doesn't support. It shows a match score with the remaining gaps, and the result downloads as a PDF or Word file.",
       },
     },
     {
@@ -122,7 +122,7 @@ export default function Page() {
           How to tailor your resume to a job description
         </h1>
         <p className="text-[12px] text-muted-foreground">
-          <time dateTime={guide.updated ?? guide.date}>Updated October 29, 2026</time> · Lincoln Laylor
+          <time dateTime={guide.updated ?? guide.date}>Updated November 7, 2026</time> · Lincoln Laylor
         </p>
       </div>
 
@@ -181,7 +181,7 @@ export default function Page() {
           Yes. Done well by hand, this method takes long enough that most people stop tailoring after a few applications a day. Using ChatGPT, it took me about 12 minutes per application, which is why I built <Link href="/" className="text-brand-light hover:text-brand transition-colors">Cover Me (cover-me.dev)</Link>, an open-source Chrome extension that follows the same method.
         </p>
         <p>
-          On a job posting, &ldquo;Tailor Resume to Job&rdquo; finds the role&rsquo;s keywords and rewrites your bullets, summary, and skills in the posting&rsquo;s language. Your job titles, employers, and dates stay as they are. Every skill the AI adds has to cite evidence from your resume, and a check removes any skill or claim your original doesn&rsquo;t support. You then see your <Link href="/guides/what-is-an-ats-score" className="text-brand-light hover:text-brand transition-colors">ATS match score</Link> with each missing keyword listed, and you can export the result as a PDF.
+          On a job posting, &ldquo;Tailor Resume to Job&rdquo; finds the role&rsquo;s keywords and rewrites your bullets, summary, and skills in the posting&rsquo;s language. Your job titles, employers, and dates stay as they are. Every skill the AI adds has to cite evidence from your resume, and a check removes any skill or claim your original doesn&rsquo;t support. You then see your <Link href="/guides/what-is-an-ats-score" className="text-brand-light hover:text-brand transition-colors">ATS match score</Link> with each missing keyword listed, and you can download the result as a PDF or Word file. Upload your resume as a Word file and the tailored copy keeps its own fonts and layout (beta).
         </p>
         <p>
           It works on <Link href="/for/linkedin" className="text-brand-light hover:text-brand transition-colors">LinkedIn</Link>, <Link href="/for/indeed" className="text-brand-light hover:text-brand transition-colors">Indeed</Link>, <Link href="/for/greenhouse" className="text-brand-light hover:text-brand transition-colors">Greenhouse</Link>, <Link href="/for/lever" className="text-brand-light hover:text-brand transition-colors">Lever</Link>, <Link href="/for/workday" className="text-brand-light hover:text-brand transition-colors">Workday</Link>, and <Link href="/for/ashby" className="text-brand-light hover:text-brand transition-colors">Ashby</Link>, and you can paste a posting from any other site. It&rsquo;s free and unlimited with your own Claude or OpenAI API key.

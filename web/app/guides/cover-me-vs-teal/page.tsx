@@ -47,7 +47,7 @@ const faqJsonLd = {
       name: 'Does Cover Me have a resume builder or job tracker like Teal?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: "Not like Teal's. Cover Me starts from the resume you already have and tailors it to each posting. Every Cover Me account tracks the jobs it generates for on a simple board, by stage, and Pro saves every letter and tailored resume to the account, but it has no templates, resume builder, contacts or follow-ups. Teal's free plan includes a resume builder and unlimited job tracking.",
+        text: "Not like Teal's. Cover Me starts from the resume you already have and tailors it to each posting. Every Cover Me account tracks the jobs it generates for on a simple board, by stage, and Pro saves every letter and tailored resume to the account, but it has no resume builder, template gallery, contacts or follow-ups. Upload a Word resume and the tailored copy keeps your own design. Teal's free plan includes a resume builder and unlimited job tracking.",
       },
     },
     {
@@ -69,7 +69,7 @@ const COMPARISON: { feature: string; coverMe: string; teal: string }[] = [
   { feature: 'Tailoring', coverMe: 'One click rewrites your bullets, summary and skills in the posting’s words', teal: 'Keyword matching highlights the posting’s keywords while you edit; AI writes bullets and summaries' },
   { feature: 'Match score', coverMe: 'ATS score from 0 to 100 with every missing keyword listed', teal: 'Keyword insights for the job you attach' },
   { feature: 'Invented skills', coverMe: 'A check removes skills your original resume does not support', teal: 'Not described on its pricing page' },
-  { feature: 'Templates and design', coverMe: 'Not included, PDF export only', teal: 'Resume templates and Design Mode' },
+  { feature: 'Templates and design', coverMe: 'Keeps your own Word design (beta), or a standard one-column layout; download as PDF or Word', teal: 'Resume templates and Design Mode' },
   { feature: 'Open source', coverMe: 'Yes, MIT licensed', teal: 'No' },
 ]
 
@@ -88,7 +88,7 @@ export default function Page() {
           Cover Me vs Teal: a cheaper Teal+ alternative
         </h1>
         <p className="text-[12px] text-muted-foreground">
-          <time dateTime={guide.updated ?? guide.date}>Updated October 29, 2026</time> · Lincoln Laylor
+          <time dateTime={guide.updated ?? guide.date}>Updated November 7, 2026</time> · Lincoln Laylor
         </p>
       </div>
 
@@ -119,7 +119,7 @@ export default function Page() {
           Teal is where you build and manage your resumes and your job search. You write resumes in its builder with templates and Design Mode, keep a version for each role, and track applications, contacts and companies. When you attach a job description, Teal highlights the posting&rsquo;s keywords so you can work them in, and its AI writes bullets, summaries and cover letters. Its Chrome extension saves job listings to the tracker.
         </p>
         <p>
-          Cover Me skips the builder. You upload your resume once, open a posting on <Link href="/for/linkedin" className="text-brand-light hover:text-brand transition-colors">LinkedIn</Link>, <Link href="/for/indeed" className="text-brand-light hover:text-brand transition-colors">Indeed</Link>, <Link href="/for/greenhouse" className="text-brand-light hover:text-brand transition-colors">Greenhouse</Link>, <Link href="/for/lever" className="text-brand-light hover:text-brand transition-colors">Lever</Link>, <Link href="/for/workday" className="text-brand-light hover:text-brand transition-colors">Workday</Link> or <Link href="/for/ashby" className="text-brand-light hover:text-brand transition-colors">Ashby</Link>, and click Tailor Resume to Job. It rewrites your bullets, summary and skills in the posting&rsquo;s words, shows an <Link href="/guides/what-is-an-ats-score" className="text-brand-light hover:text-brand transition-colors">ATS score</Link> with every missing keyword, and writes a matching cover letter when you click Generate Cover Letter. You edit the result and download it as a PDF.
+          Cover Me skips the builder. You upload your resume once, open a posting on <Link href="/for/linkedin" className="text-brand-light hover:text-brand transition-colors">LinkedIn</Link>, <Link href="/for/indeed" className="text-brand-light hover:text-brand transition-colors">Indeed</Link>, <Link href="/for/greenhouse" className="text-brand-light hover:text-brand transition-colors">Greenhouse</Link>, <Link href="/for/lever" className="text-brand-light hover:text-brand transition-colors">Lever</Link>, <Link href="/for/workday" className="text-brand-light hover:text-brand transition-colors">Workday</Link> or <Link href="/for/ashby" className="text-brand-light hover:text-brand transition-colors">Ashby</Link>, and click Tailor Resume to Job. It rewrites your bullets, summary and skills in the posting&rsquo;s words, shows an <Link href="/guides/what-is-an-ats-score" className="text-brand-light hover:text-brand transition-colors">ATS score</Link> with every missing keyword, and writes a matching cover letter when you click Generate Cover Letter. You edit the result and download it as a PDF or Word file.
         </p>
 
         <h2 className="text-[22px] text-foreground !mt-10">Feature comparison</h2>

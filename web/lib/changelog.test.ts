@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { toChangelog, type GithubRelease } from './changelog'
+import { latestVersion, toChangelog, type GithubRelease } from './changelog'
 
 const release = (over: Partial<GithubRelease>): GithubRelease => ({
   tag_name: 'v1.4.0',
@@ -79,5 +79,29 @@ describe('toChangelog', () => {
       release({ tag_name: 'v1.4.0', created_at: '2026-11-05T00:00:00Z' }),
     ])
     expect(list.map((v) => v.version)).toEqual(['1.4.0', '1.3.0'])
+  })
+})
+
+describe('latestVersion', () => {
+  it('takes the highest version by semver, not the newest by date', () => {
+    // 1.4.0 was published after 1.5.0 on 2026-11-07.
+    expect(latestVersion([
+      release({ tag_name: 'v1.4.0', created_at: '2026-11-07T16:12:00Z' }),
+      release({ tag_name: 'v1.5.0', created_at: '2026-11-07T16:05:00Z' }),
+      release({ tag_name: 'v1.10.0', created_at: '2026-01-01T00:00:00Z' }),
+      release({ tag_name: 'v1.9.3', created_at: '2026-11-08T00:00:00Z' }),
+    ])).toBe('1.10.0')
+  })
+
+  it('skips drafts and prereleases', () => {
+    expect(latestVersion([
+      release({ tag_name: 'v1.5.0' }),
+      release({ tag_name: 'v1.6.0', draft: true }),
+      release({ tag_name: 'v1.6.0-rc.1', prerelease: true }),
+    ])).toBe('1.5.0')
+  })
+
+  it('gives null for an empty list', () => {
+    expect(latestVersion([])).toBeNull()
   })
 })
