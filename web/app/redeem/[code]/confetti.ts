@@ -2,7 +2,7 @@
 // on a throwaway full-screen canvas that never takes clicks. Skipped for
 // people who ask for reduced motion.
 
-// Brand indigos plus the orange accent (web/BRAND.md).
+// Brand indigos plus the orange accent (the palette in globals.css).
 const COLORS = ['#6366F1', '#4F46E5', '#4338CA', '#F97316', '#FDBA74']
 const COUNT = 140
 const GRAVITY = 0.32

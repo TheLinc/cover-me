@@ -74,5 +74,13 @@ docs/
 # Chrome Web Store listing assets (store zips, screenshots, the promo video): kept local, uploaded by hand
 chrome-store/
 
-# Impeccable decision-page answers (per session)
-.impeccable/questions/
+# Scratch screenshots
+.shots-tmp/
+
+# Design context for the Impeccable skill: local only, read from these paths
+PRODUCT.md
+DESIGN.md
+.impeccable/
+
+# PR screenshots go on the orphan `screenshots` branch, not master
+.github/screenshots/

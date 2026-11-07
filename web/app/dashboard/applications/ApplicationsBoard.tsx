@@ -133,7 +133,7 @@ export function ApplicationsBoard({ applications, pro, onMove, onDeleted, onStag
   )
 }
 
-// Tiles sit on paper (DESIGN.md's Floating Tile Rule). While a card is
+// Columns have no fill or border, so the tiles sit on paper. While a card is
 // dragged, each column shows a dashed outline as a place it can go, and the
 // one under the pointer turns Cover Me Indigo. On a phone the header is a
 // button that collapses the column; a collapsed one still takes a drop.
