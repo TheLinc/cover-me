@@ -4,9 +4,10 @@ import { rememberRequestedSite, requestedSites, sendSiteRequest } from '../../li
 import type { ScrapeFailure } from '../../types'
 
 // A click that read no job (#130), saved with the tab's Generate page state.
-// flow: which button was pressed. tabId, tabHost: the tab it's about and the
-// site that tab was on. reported: the bug report went through.
-export type ShownFailure = ScrapeFailure & { flow: 'letter' | 'tailor'; tabId?: number; tabHost?: string; reported?: boolean }
+// flow: which button was pressed. tabId, tabUrl: the tab it's about and the
+// page that tab was on (kept in this browser only). reported: the bug report
+// went through.
+export type ShownFailure = ScrapeFailure & { flow: 'letter' | 'tailor'; tabId?: number; tabUrl?: string; reported?: boolean }
 
 interface Props {
   failure: ShownFailure

@@ -197,12 +197,16 @@ export default function GeneratePage({ onNavigate }: Props) {
       let restoredTailorDone = false
       if (s) {
         if (s.inputMode) setInputMode(s.inputMode as InputMode)
-        // Only on the tab and site it's about. Elsewhere it's dropped, and the
-        // paste form it opened closes unless the user started filling it in.
+        // Only on the tab it's about, still on that site (an unsupported one)
+        // or that page (a bug report is about one URL). Elsewhere it's dropped,
+        // and the paste form it opened closes unless the user started filling it in.
         const failure = s.scrapeFailure as ShownFailure | undefined
         if (failure) {
           void chrome.tabs.query({ active: true, currentWindow: true }).then(([tab]) => {
-            if (tab?.id === failure.tabId && (tab?.url && URL.canParse(tab.url) ? new URL(tab.url).hostname : undefined) === failure.tabHost) setScrapeFailure(failure)
+            const same = failure.reason === 'unsupported'
+              ? (tab?.url && URL.canParse(tab.url) ? new URL(tab.url).hostname : undefined) === (failure.tabUrl && new URL(failure.tabUrl).hostname)
+              : tab?.url === failure.tabUrl
+            if (tab?.id === failure.tabId && same) setScrapeFailure(failure)
             else if (!s.manualTitle && !s.manualDescription) setInputMode('auto')
           })
         }
@@ -365,7 +369,7 @@ export default function GeneratePage({ onNavigate }: Props) {
 
   async function showScrapeFailure(failure: ScrapeFailure, flow: ShownFailure['flow']) {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
-    setScrapeFailure({ ...failure, flow, tabId: tab?.id, tabHost: tab?.url && URL.canParse(tab.url) ? new URL(tab.url).hostname : undefined })
+    setScrapeFailure({ ...failure, flow, tabId: tab?.id, tabUrl: tab?.url })
     setInputMode(failure.reason === 'unsupported' ? 'manual' : 'auto')
   }
 

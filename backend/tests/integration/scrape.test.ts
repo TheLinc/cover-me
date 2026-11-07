@@ -51,10 +51,13 @@ describe('scrape', () => {
     expect((await res.json()).results[0]).toMatchObject({ ok: false })
   })
 
-  // Sent behind the response, so wait a little for it.
-  const posthogEvents = async () => {
-    let events = await mockPosthog.events()
-    for (let i = 0; i < 20 && events.length === 0; i++) events = await new Promise((r) => setTimeout(r, 100)).then(mockPosthog.events)
+  // Sent behind the response, so wait a little for it. Only this host's: an
+  // earlier test's event can land after the reset.
+  const posthogEvents = async (hostname: string) => {
+    const mine = async () => (await mockPosthog.events())
+      .filter((e) => (e.properties.pages as { hostname: string }[] | undefined)?.some((p) => p.hostname === hostname))
+    let events = await mine()
+    for (let i = 0; i < 20 && events.length === 0; i++) events = await new Promise((r) => setTimeout(r, 100)).then(mine)
     return events
   }
 
@@ -65,7 +68,7 @@ describe('scrape', () => {
       { url: 'https://job-boards.greenhouse.io/embed/job_app?token=9', html: '<html><body></body></html>' },
     ]
     expect((await scrape({ body: { pages } })).status).toBe(200)
-    const events = await posthogEvents()
+    const events = await posthogEvents('www.acme-careers.com')
     expect(events).toHaveLength(1)
     expect(events[0].event).toBe('scrape_failed')
     expect(events[0].distinct_id).toMatch(/^[0-9a-f-]{36}$/)
@@ -80,7 +83,7 @@ describe('scrape', () => {
     const pages = [page('lever'), { url: 'https://example.com/about', html: '<html><body><h1>About us</h1></body></html>' }]
     expect((await scrape({ body: { pages } })).status).toBe(200)
     await new Promise((r) => setTimeout(r, 1000))
-    expect(await mockPosthog.events()).toEqual([])
+    expect(await posthogEvents('jobs.lever.co')).toEqual([])
   })
 
   it('rejects malformed requests', async () => {
