@@ -1,12 +1,13 @@
 import type { Metadata } from 'next'
 import { CHROME_STORE_URL } from '@/lib/utils'
+import { OG_IMAGE } from '@/lib/structured-data'
 import { SiteNav } from '@/components/site/SiteNav'
 import { SiteFooter } from '@/components/site/SiteFooter'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 
 const TITLE = 'About Cover Me: Open-Source Resume Tailor by Lincoln Laylor'
-const DESCRIPTION = 'Cover Me is an open-source Chrome extension by Lincoln Laylor that tailors your resume and writes a cover letter for the job posting you have open. Why he built it, how it handles your data, and where the code lives.'
+const DESCRIPTION = 'Cover Me is an open-source Chrome extension by Lincoln Laylor that tailors your resume and writes a cover letter. Why he built it, your data, and the code.'
 
 export const metadata: Metadata = {
   title: { absolute: TITLE },
@@ -18,11 +19,13 @@ export const metadata: Metadata = {
     url: `${BASE}/about`,
     siteName: 'Cover Me',
     type: 'website',
+    images: [OG_IMAGE],
   },
   twitter: {
     card: 'summary_large_image',
     title: TITLE,
     description: DESCRIPTION,
+    images: [OG_IMAGE.url],
   },
 }
 

@@ -7,7 +7,7 @@ export const FAQ_ITEMS = [
   },
   {
     q: "Can Cover Me tailor my resume too?",
-    a: "Yes. Click \"Tailor Resume to Job\" on any posting and Cover Me rewrites your resume bullets, summary and skills around that role's keywords, scores the match, and lists the keywords you're missing. A check removes any skill or claim your original resume doesn't support, and your job titles, employers and dates stay as they are. Download the result as a PDF, or turn on \"Compact to one page\" for a single-page resume.",
+    a: "Yes. Click \"Tailor Resume to Job\" on any posting and Cover Me rewrites your resume bullets, summary and skills around that role's keywords, scores the match, and lists the keywords you're missing. A check removes any skill or claim your original resume doesn't support, and your job titles, employers and dates stay as they are. Download it as a PDF or Word file. Upload your resume as a Word file and the Word download keeps its fonts and layout (beta). Otherwise it uses a clean one-column layout, and \"Compact to one page\" can fit it on a single page.",
   },
   {
     q: "What is the ATS match score?",
@@ -15,7 +15,7 @@ export const FAQ_ITEMS = [
   },
   {
     q: "What job boards does Cover Me support?",
-    a: "Cover Me reads the job description when you click, on LinkedIn, Indeed, Greenhouse, Lever, Workday and Ashby, including postings that company career pages embed from those systems. On any other site, paste the job description into Cover Me.",
+    a: "Cover Me reads the job description when you click, on LinkedIn, Indeed, Greenhouse, Lever, Workday, Ashby, BambooHR and Workable, including postings that company career pages embed from those systems. On any other site, paste the job description into Cover Me.",
   },
   {
     q: "How is Cover Me different from using ChatGPT or Claude directly?",
