@@ -1334,6 +1334,6 @@ textarea:focus-visible, input:focus-visible, [tabindex]:focus-visible {
 .bug-report { display: flex; flex-direction: column; gap: 6px; }
 .bug-report-url { overflow-wrap: anywhere; }
 .scrape-failure-card { margin-bottom: 18px; }
-.scrape-failure-card .page-read-notice-title { overflow-wrap: anywhere; }
 .scrape-failure-card .site-request,
 .scrape-failure-card .scrape-failure-thanks { margin-top: 10px; }
+.scrape-failure-card p { text-wrap: pretty; }

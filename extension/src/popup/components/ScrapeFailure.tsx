@@ -58,7 +58,8 @@ export default function ScrapeFailurePanel({ failure, onReported, onPaste, onRet
             <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
           </svg>
         </span>
-        <p id="scrape-failure-title" className="page-read-notice-title">We can&apos;t read {failure.host} yet.</p>
+        {/* Fixed, so it stays on one line; the site is in the field below and the thanks line. */}
+        <p id="scrape-failure-title" className="page-read-notice-title">We can&apos;t read this site yet</p>
       </div>
       <p>
         Paste the job description below and you&apos;ll still get your{' '}
