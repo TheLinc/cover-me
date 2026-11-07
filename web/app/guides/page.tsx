@@ -4,14 +4,15 @@ import { GUIDES } from '@/lib/guides'
 import { OG_IMAGE } from '@/lib/structured-data'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
+const DESCRIPTION = "Job search guides on ATS scores, ATS-friendly resume formats and tailoring your resume, plus how Cover Me compares with ChatGPT, AIApply, Jobscan and Teal."
 
 export const metadata: Metadata = {
   title: 'Job Search Guides: ATS Scores and Tailoring',
-  description: "Job search guides on ATS scores, ATS-friendly resume formats and tailoring your resume, plus how Cover Me compares with ChatGPT, AIApply, Jobscan and Teal.",
+  description: DESCRIPTION,
   alternates: { canonical: `${BASE}/guides` },
   openGraph: {
-    title: 'Job Application Guides | Cover Me',
-    description: 'Guides for job seekers on ATS scores, resume tailoring, and AI cover letter tools.',
+    title: 'Job application guides | Cover Me',
+    description: DESCRIPTION,
     url: `${BASE}/guides`,
     siteName: 'Cover Me',
     type: 'website',
@@ -19,8 +20,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Job Application Guides | Cover Me',
-    description: 'Guides for job seekers on ATS scores, resume tailoring, and AI cover letter tools.',
+    title: 'Job application guides | Cover Me',
+    description: DESCRIPTION,
     images: [OG_IMAGE.url],
   },
 }

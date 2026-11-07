@@ -98,6 +98,7 @@ describe('latestVersion', () => {
       release({ tag_name: 'v1.5.0' }),
       release({ tag_name: 'v1.6.0', draft: true }),
       release({ tag_name: 'v1.6.0-rc.1', prerelease: true }),
+      release({ tag_name: 'v1.7.0-beta' }),
     ])).toBe('1.5.0')
   })
 

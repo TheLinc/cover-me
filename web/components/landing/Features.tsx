@@ -16,7 +16,7 @@ function HistoryRow({ label, date, faded }: { label: string; date: string; faded
 }
 
 // The downloaded resume in the extension's standard layout, in miniature.
-function PdfPage() {
+function ResumeMiniature() {
   const rule = <div className="mt-1.5 h-px bg-ink" />
   return (
     <div className="flex h-[236px] w-[176px] flex-col rounded-[6px] bg-white px-4 py-4 font-serif shadow-[0_18px_40px_-20px_rgba(30,27,75,0.35)]">
@@ -51,13 +51,13 @@ const CARDS = [
     body: 'Upload your resume as a Word file and the tailored copy keeps its fonts and layout. Download it as Word or PDF.',
     visual: (
       <div className="flex h-full items-center justify-center">
-        <PdfPage />
+        <ResumeMiniature />
       </div>
     ),
   },
   {
     title: 'Every application in one history',
-    body: 'Every job you tailor for lands on a board on your dashboard. Pro keeps the letters and resumes there too.',
+    body: 'With an account, every job you tailor for lands on a board on your dashboard. Pro keeps the letters and resumes there too.',
     visual: (
       <div className="flex h-full flex-col justify-center gap-2.5 p-7">
         <HistoryRow label="Northwind · Marketing Manager" date="Today" />
@@ -84,7 +84,7 @@ export function Features() {
             </div>
             <div className="flex items-center gap-2">
               <h3 className="text-[18px] font-semibold tracking-[-0.01em]">{c.title}</h3>
-              {'beta' in c && <Badge className="border-transparent bg-brand-tint font-medium text-brand-ink">Beta</Badge>}
+              {'beta' in c && <Badge variant="tint">Beta</Badge>}
             </div>
             <p className="-mt-2 text-[15px] leading-[1.55] text-ink-2">{c.body}</p>
           </div>
