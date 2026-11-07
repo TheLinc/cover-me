@@ -37,7 +37,8 @@ export interface ApplicationDetail extends StageState {
   url: string
   createdAt: string
   coverLetters: { id: string; letter: string; createdAt: string }[]
-  tailoredResumes: { id: string; resume: TailoredResume; createdAt: string }[]
+  // design: tailored in a Word file the account keeps, so it downloads in the user's own design (#131).
+  tailoredResumes: { id: string; resume: TailoredResume; createdAt: string; design?: boolean }[]
 }
 
 export interface ApplicationsQuery {

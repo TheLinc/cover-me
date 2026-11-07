@@ -76,13 +76,16 @@ export function parseUpload(body: unknown, now = Date.now()): Upload | { error: 
   return upload
 }
 
-// The ATS columns tailor stores, read from an uploaded resume. Anything that
-// isn't a 0-100 score or a list of strings is left empty.
-export function atsColumns(resume: Record<string, unknown>): { ats_score: number | null; ats_gaps: string[] | null } {
+// The plain columns tailor stores, read from an uploaded resume: the ATS
+// score and gaps, and the hash of the Word file it was tailored in (#131).
+// Anything that isn't a 0-100 score, a list of strings or a SHA-256 is left empty.
+export function resumeColumns(resume: Record<string, unknown>): { ats_score: number | null; ats_gaps: string[] | null; source_hash: string | null } {
   const score = resume.atsScore
   const gaps = resume.atsGaps
+  const hash = resume.sourceHash
   return {
     ats_score: typeof score === 'number' && score >= 0 && score <= 100 ? Math.round(score) : null,
     ats_gaps: Array.isArray(gaps) && gaps.every((g) => typeof g === 'string') ? gaps as string[] : null,
+    source_hash: typeof hash === 'string' && /^[0-9a-f]{64}$/.test(hash) ? hash : null,
   }
 }

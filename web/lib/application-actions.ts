@@ -70,8 +70,18 @@ export async function downloadLetter(job: PdfJob, letter: { letter: string; crea
   downloadCoverLetterPdf(letter.letter, { title: job.title, company: job.company }, letter.createdAt)
 }
 
-export async function downloadResume(jobTitle: string, resume: TailoredResume, format: 'pdf' | 'docx' = 'pdf'): Promise<void> {
-  if (format === 'docx') {
+// format 'design': the Word file the resume was tailored in, with the tailored
+// text in place (#131); the Cover Me layout's Word file if that can't be done.
+export async function downloadResume(jobTitle: string, resume: TailoredResume, format: 'pdf' | 'docx' | 'design' = 'pdf'): Promise<void> {
+  if (format === 'design' && resume.sourceHash) {
+    const res = await call(`/api/applications?file=${encodeURIComponent(resume.sourceHash)}`)
+    if (res.ok) {
+      const { docx, structured } = (await res.json()) as { docx: string; structured: TailoredResume }
+      const { downloadDesignDocx } = await import('./pdf/docx-design')
+      if (await downloadDesignDocx(Uint8Array.from(atob(docx), (c) => c.charCodeAt(0)), structured, resume, jobTitle)) return
+    }
+  }
+  if (format !== 'pdf') {
     const { downloadTailoredResumeDocx } = await import('./pdf/resume-docx')
     return downloadTailoredResumeDocx(resume, jobTitle)
   }

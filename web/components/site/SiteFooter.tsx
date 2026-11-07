@@ -28,6 +28,7 @@ const COLUMNS: { title: string; links: FooterLink[] }[] = [
     links: [
       { label: 'About', href: '/about' },
       { label: 'Roadmap', href: '/roadmap' },
+      { label: 'Changelog', href: '/changelog' },
       { label: 'GitHub', href: 'https://github.com/TheLinc/cover-me', external: true },
       { label: 'Support', href: '/support' },
       { label: 'Privacy', href: '/privacy' },

@@ -192,6 +192,7 @@ export const mockStripe = {
     missingCustomer?: boolean
     customerError?: { status: number; code: string }
     subscriptionError?: { status: number; code: string }
+    deleteCustomerError?: { status: number; code: string }
   }) =>
     fetch(`${MOCK_URL}/__mock/stripe-state`, { method: 'POST', body: JSON.stringify(state) }),
 }
@@ -205,6 +206,11 @@ export const mockResend = {
   sent: async (): Promise<SentEmail[]> => (await fetch(`${MOCK_URL}/__mock/emails`)).json(),
   failNext: (status = 500) => fetch(`${MOCK_URL}/__mock/email-fail-next`, { method: 'POST', body: JSON.stringify({ status }) }),
   dropNext: () => fetch(`${MOCK_URL}/__mock/email-drop-next`, { method: 'POST' }),
+}
+
+export const mockPosthog = {
+  events: async (): Promise<Array<{ api_key: string; event: string; distinct_id: string; properties: Record<string, unknown> }>> =>
+    (await fetch(`${MOCK_URL}/__mock/posthog`)).json(),
 }
 
 export const JOB = {

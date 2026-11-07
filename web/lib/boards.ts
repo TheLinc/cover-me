@@ -49,13 +49,13 @@ export const BOARDS: Board[] = [
       },
       {
         title: 'Add it to Easy Apply',
-        body: 'Edit the letter, then copy it or download a PDF. If the Easy Apply form takes a resume upload, upload the tailored resume PDF.',
+        body: 'Edit the letter, then copy it or download a PDF. If the Easy Apply form takes a resume upload, upload the tailored resume as a PDF or Word file.',
       },
     ],
     faqs: [
       {
         q: 'Does Cover Me work with LinkedIn Easy Apply?',
-        a: "Yes. Copy the letter or download it as a PDF, then add it in the Easy Apply form. If the form takes a resume upload, use the tailored resume PDF. Cover Me never fills in or submits the form, so you check everything before it's sent.",
+        a: "Yes. Copy the letter or download it as a PDF, then add it in the Easy Apply form. If the form takes a resume upload, use the tailored resume, as a PDF or Word file. Cover Me never fills in or submits the form, so you check everything before it's sent.",
       },
       {
         q: 'Does Cover Me need access to my LinkedIn account?',
@@ -135,7 +135,7 @@ export const BOARDS: Board[] = [
       },
       {
         title: 'Attach it',
-        body: 'Paste the letter into the cover letter field or upload the PDF, and upload the tailored resume PDF in the resume field.',
+        body: 'Paste the letter into the cover letter field or upload the PDF, and upload the tailored resume, as a PDF or Word file, in the resume field.',
       },
     ],
     faqs: [
@@ -205,7 +205,7 @@ export const BOARDS: Board[] = [
       "Cover Me reads the myworkdayjobs.com posting, tailors your resume and writes your cover letter before you start Workday's long application form.",
     h1: 'AI cover letters and tailored resumes for Workday applications',
     answer:
-      "To tailor a cover letter for a Workday application, open the myworkdayjobs.com posting and click the Cover Me icon before you start the form. Cover Me (cover-me.dev) is a free Chrome extension that reads the job from Workday's page and writes a cover letter and tailored resume as PDFs you can upload in the application.",
+      "To tailor a cover letter for a Workday application, open the myworkdayjobs.com posting and click the Cover Me icon before you start the form. Cover Me (cover-me.dev) is a free Chrome extension that reads the job from Workday's page and writes a cover letter and tailored resume you can upload in the application, as PDFs or, for the resume, a Word file.",
     intro: [
       'Workday is the applicant tracking system many large employers use. Its applications are long: you create an account with each employer, check the details Workday parsed from your resume, and answer screening questions, and the cover letter upload comes late in the process.',
       "Tailoring first means both documents are ready before you start. Cover Me reads Workday's page by labels that stay the same across employers, and takes the company name from the posting's address, like acme.wd1.myworkdayjobs.com.",
@@ -221,7 +221,7 @@ export const BOARDS: Board[] = [
       },
       {
         title: 'Upload in Workday',
-        body: 'Download the tailored resume and the cover letter as PDFs. Upload the resume when the application starts and the letter where the form asks for documents, or paste the letter text.',
+        body: 'Download the cover letter as a PDF and the tailored resume as a PDF or Word file. Upload the resume when the application starts and the letter where the form asks for documents, or paste the letter text.',
       },
     ],
     faqs: [
@@ -264,7 +264,7 @@ export const BOARDS: Board[] = [
       },
       {
         title: 'Apply',
-        body: "Edit the letter, then paste it into Ashby's form or attach the PDF, with the tailored resume PDF in the resume field.",
+        body: "Edit the letter, then paste it into Ashby's form or attach the PDF, with the tailored resume, as a PDF or Word file, in the resume field.",
       },
     ],
     faqs: [
@@ -278,7 +278,7 @@ export const BOARDS: Board[] = [
       },
       {
         q: 'Does Cover Me also tailor my resume for Ashby applications?',
-        a: "Yes. Click Tailor Resume to Job on any Ashby posting. Cover Me rewrites your bullets around the posting's keywords, removes any skill your original resume doesn't support, shows a 0 to 100 match score with the missing keywords, and exports a PDF.",
+        a: "Yes. Click Tailor Resume to Job on any Ashby posting. Cover Me rewrites your bullets around the posting's keywords, removes any skill your original resume doesn't support, shows a 0 to 100 match score with the missing keywords, and the result downloads as a PDF or Word file.",
       },
     ],
   },

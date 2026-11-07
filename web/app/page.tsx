@@ -1,4 +1,5 @@
 import { jsonLdApp, jsonLdHowTo, jsonLdSpeakable } from '@/lib/structured-data'
+import { getLatestVersion } from '@/lib/changelog'
 import { SiteNav } from '@/components/site/SiteNav'
 import { SiteFooter } from '@/components/site/SiteFooter'
 import { Hero } from '@/components/landing/Hero'
@@ -15,10 +16,14 @@ import { RoadmapStrip } from '@/components/landing/RoadmapStrip'
 import { Faq } from '@/components/landing/Faq'
 import { ClosingCta } from '@/components/landing/ClosingCta'
 
-export default function Home() {
+// Revalidated hourly so softwareVersion follows a new release.
+export const revalidate = 3600
+
+export default async function Home() {
+  const version = await getLatestVersion()
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdApp) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdApp(version)) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdHowTo) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdSpeakable) }} />
       <SiteNav />

@@ -9,7 +9,7 @@ import {
   AlignmentType, BorderStyle, Document, HeadingLevel, LevelFormat, LineRuleType,
   Packer, Paragraph, Tab, TabStopType, TextRun,
 } from 'docx'
-import { resumeFileName } from './file-name'
+import { resumeFileName, saveFile } from './file-name'
 import type { TailoredResume } from './types'
 
 // Twips (1/20 pt). Letter page, the PDF's 54pt side margins.
@@ -147,11 +147,5 @@ export function buildResumeDocx(resume: TailoredResume): Promise<Blob> {
 }
 
 export async function downloadTailoredResumeDocx(resume: TailoredResume, jobTitle?: string): Promise<void> {
-  const url = URL.createObjectURL(await buildResumeDocx(resume))
-  const a = document.createElement('a')
-  a.href = url
-  a.download = resumeFileName(resume, jobTitle, 'docx')
-  a.click()
-  // The click starts the download before this runs; revoking later frees the blob.
-  setTimeout(() => URL.revokeObjectURL(url), 1000)
+  saveFile(await buildResumeDocx(resume), resumeFileName(resume, jobTitle, 'docx'))
 }

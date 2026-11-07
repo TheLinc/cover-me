@@ -87,7 +87,8 @@ export function ApplicationCard({ app: initial, pro, onDeleted, onStageChange, c
         const id = newest(app.tailoredResumes)?.id
         const resume = detail.tailoredResumes.find((r) => r.id === id)
         if (!resume) throw new Error(UNREADABLE)
-        await downloadResume(detail.title, resume.resume)
+        // In the user's own design when it was tailored in a Word file the account keeps (#131).
+        await downloadResume(detail.title, resume.resume, resume.design ? 'design' : 'pdf')
       }
     } catch (e) {
       if (isGone(e)) return leave(GONE_MESSAGE)
@@ -228,20 +229,20 @@ export function ApplicationCard({ app: initial, pro, onDeleted, onStageChange, c
       <div className="flex flex-wrap items-center gap-2">
         {!pro && <p className="text-[12.5px] leading-snug text-subtle">{PRO_LINE}</p>}
         {pro && app.coverLetters.length > 0 && (
-          <Button variant="outline" size="sm" className="h-8 gap-1.5 px-3 text-[13px] hover:border-brand-strong hover:text-brand-strong" onClick={() => download('letter')} disabled={busy !== null} aria-label="Download cover letter">
+          <Button variant="outline" size="sm" className="h-8 gap-1.5 px-3 hover:border-brand-strong hover:text-brand-strong" onClick={() => download('letter')} disabled={busy !== null} aria-label="Download cover letter">
             {busy === 'letter' ? <Spinner className="size-3.5" /> : <DownloadSimpleIcon size={14} aria-hidden />}
             <span className="cap-center">Cover letter</span>
           </Button>
         )}
         {pro && app.tailoredResumes.length > 0 && (
-          <Button variant="outline" size="sm" className="h-8 gap-1.5 px-3 text-[13px] hover:border-brand-strong hover:text-brand-strong" onClick={() => download('resume')} disabled={busy !== null} aria-label="Download resume">
+          <Button variant="outline" size="sm" className="h-8 gap-1.5 px-3 hover:border-brand-strong hover:text-brand-strong" onClick={() => download('resume')} disabled={busy !== null} aria-label="Download resume">
             {busy === 'resume' ? <Spinner className="size-3.5" /> : <DownloadSimpleIcon size={14} aria-hidden />}
             <span className="cap-center">Resume</span>
           </Button>
         )}
         <div className="ml-auto flex items-center gap-1">
           <StageMenu title={title} stage={app.stage} onChange={changeStage} busy={busy !== null} saving={busy === 'stage'} />
-          <Button variant="ghost" size="sm" className="h-8 gap-1 px-2 text-[13px] text-ink-2 hover:text-ink" onClick={() => setDetailsOpen(true)}>
+          <Button variant="ghost" size="sm" className="h-8 gap-1 px-2 text-ink-2 hover:text-ink" onClick={() => setDetailsOpen(true)}>
             <span className="cap-center max-sm:sr-only">Details</span> <CaretRightIcon size={12} aria-hidden />
           </Button>
           <DropdownMenu>
