@@ -63,7 +63,7 @@ export const jsonLdApp = (version: string | null) => ({
     'ATS match score and gap analysis',
     'Reads the job posting when you click',
     'Works on LinkedIn, Indeed, Greenhouse, Lever, Workday, Ashby, BambooHR, Workable',
-    'Cover letter and tailored resume download as PDF, the resume also as Word; a Word upload keeps its own design (beta)',
+    'Cover letter and tailored resume download as PDF, the resume also as Word; a Word upload keeps its own design in the Word download (beta)',
     "Removes skills and claims the original resume doesn't support",
     'Free and unlimited with your own OpenAI or Claude API key, no account needed',
     'Open source under the MIT license',

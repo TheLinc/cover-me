@@ -7,7 +7,7 @@ export const FAQ_ITEMS = [
   },
   {
     q: "Can Cover Me tailor my resume too?",
-    a: "Yes. Click \"Tailor Resume to Job\" on any posting and Cover Me rewrites your resume bullets, summary and skills around that role's keywords, scores the match, and lists the keywords you're missing. A check removes any skill or claim your original resume doesn't support, and your job titles, employers and dates stay as they are. Download it as a PDF or Word file. Upload your resume as a Word file and the tailored copy keeps its fonts and layout (beta); other uploads get a clean one-column layout that \"Compact to one page\" can fit on a single page.",
+    a: "Yes. Click \"Tailor Resume to Job\" on any posting and Cover Me rewrites your resume bullets, summary and skills around that role's keywords, scores the match, and lists the keywords you're missing. A check removes any skill or claim your original resume doesn't support, and your job titles, employers and dates stay as they are. Download it as a PDF or Word file. Upload your resume as a Word file and the Word download keeps its fonts and layout (beta). Otherwise it uses a clean one-column layout, and \"Compact to one page\" can fit it on a single page.",
   },
   {
     q: "What is the ATS match score?",

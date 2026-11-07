@@ -175,7 +175,7 @@ export function Hero() {
         <div className="flex flex-col gap-6 max-xl:items-center max-xl:text-center max-md:gap-5">
           {/* Temporary: remove four weeks after it goes live (#152). */}
           <Link href="/changelog" className={cn(badgeVariants({ variant: 'tint' }), 'self-start px-3 py-1 text-[13px] hover:underline max-xl:self-center')}>
-            New: tailor inside your own Word file (beta) →
+            New: tailor inside your own Word file (beta) <span aria-hidden="true">→</span>
           </Link>
           <h1 className="text-balance max-w-[640px] text-[clamp(34px,4.1vw,58px)] leading-[1.02] tracking-[-0.035em]">
             Tailor your resume to any job posting.

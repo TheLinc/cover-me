@@ -47,7 +47,7 @@ const faqJsonLd = {
       name: 'Does Cover Me have a resume builder or job tracker like Teal?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: "Not like Teal's. Cover Me starts from the resume you already have and tailors it to each posting. Every Cover Me account tracks the jobs it generates for on a simple board, by stage, and Pro saves every letter and tailored resume to the account, but it has no resume builder, template gallery, contacts or follow-ups. Upload a Word resume and the tailored copy keeps your own design. Teal's free plan includes a resume builder and unlimited job tracking.",
+        text: "Not like Teal's. Cover Me starts from the resume you already have and tailors it to each posting. Every Cover Me account tracks the jobs it generates for on a simple board, by stage, and Pro saves every letter and tailored resume to the account, but it has no resume builder, template gallery, contacts or follow-ups. Upload a Word resume and the tailored Word file keeps your own design (beta). Teal's free plan includes a resume builder and unlimited job tracking.",
       },
     },
     {
