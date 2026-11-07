@@ -2,7 +2,7 @@ import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL, WEB_URL } from './config'
 import { clearResume, clearSession, getResume, getSession, getSettings, saveGoogleSignInError, saveCachedTier, saveResume, saveSession, saveSettings, takeGoogleSignInError } from './storage'
 import { isValidResume } from './ai/resume-tailor'
 import { derivePlanningProgress, deriveTailorProgress } from './ai/tailor-progress'
-import type { ApplicationRecord, AuthSession, CoverLetter, JobData, ResumeData, TailoredHistoryEntry, TailoredResume } from '../types'
+import type { ApplicationRecord, AuthSession, CoverLetter, JobData, ParsedResume, ResumeData, TailoredHistoryEntry, TailoredResume } from '../types'
 
 // Thrown by signUp() when the account was created but needs email confirmation
 // before it can sign in — not a failure, so callers should render it as a
@@ -322,22 +322,41 @@ export async function generateViaBackend(job: JobData, accessToken: string, supp
   return letter
 }
 
+// parse: wait for the server's parse of this text and return it, for the
+// check of an uploaded Word file (#131). Missing when the server didn't parse
+// (an older function, or the account's parse limit).
 export async function uploadResumeToBackend(
   accessToken: string,
   text: string,
   filename: string,
-): Promise<void> {
+  parse = false,
+): Promise<ParsedResume | undefined> {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/resume`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ text, filename }),
+    body: JSON.stringify({ text, filename, ...(parse ? { parse: true } : {}) }),
+  })
+  const data = await res.json().catch(() => ({})) as Record<string, unknown>
+  // A parse answer is sent as it's ready (heartbeatJson), so a late failure comes with status 200.
+  if (!res.ok || data.error) throw new Error((data.error as string) ?? 'Resume sync failed')
+  const structured = data.structured as ParsedResume | undefined
+  return structured && Array.isArray(structured.experience) ? structured : undefined
+}
+
+// Pro: the Word file goes to the account too, so the dashboard can download
+// tailored resumes in its design. base64: the file's bytes.
+export async function uploadDesignFileToBackend(accessToken: string, hash: string, base64: string): Promise<void> {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/resume?file=1`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ hash, docx: base64 }),
   })
   if (!res.ok) {
     const data = await res.json().catch(() => ({})) as Record<string, unknown>
-    throw new Error((data.error as string) ?? 'Resume sync failed')
+    throw new Error((data.error as string) ?? 'Word file upload failed')
   }
 }
 
@@ -353,7 +372,11 @@ export async function startBilling(accessToken: string, action: 'checkout' | 'po
   return data.url
 }
 
-export async function tailorViaBackend(job: JobData, accessToken: string, compact = false, supplemental?: string, trim = false, includeSummary = true, previous?: TailoredResume, onProgress?: (label: string) => void, localId?: string): Promise<{ resume: TailoredResume; savedId?: string }> {
+// The layout of a hosted tailor (#131): counted in the tailor_run event, and
+// sourceHash is saved on a Pro account's copy for the dashboard's download.
+export interface TailorDesign { layout: 'yours' | 'cover-me'; fellBack: boolean; sourceHash?: string }
+
+export async function tailorViaBackend(job: JobData, accessToken: string, compact = false, supplemental?: string, trim = false, includeSummary = true, previous?: TailoredResume, onProgress?: (label: string) => void, localId?: string, design?: TailorDesign): Promise<{ resume: TailoredResume; savedId?: string }> {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/tailor`, {
     method: 'POST',
     headers: {
@@ -363,7 +386,7 @@ export async function tailorViaBackend(job: JobData, accessToken: string, compac
       // this and respond with plain JSON, which the fallback below handles.
       Accept: 'application/x-ndjson',
     },
-    body: JSON.stringify({ job, compact, supplemental: supplemental?.trim() || undefined, trim, includeSummary, previous, localId }),
+    body: JSON.stringify({ job, compact, supplemental: supplemental?.trim() || undefined, trim, includeSummary, previous, localId, ...design }),
   })
 
   // Pre-stream failures (auth, rate limit, missing resume) and any older

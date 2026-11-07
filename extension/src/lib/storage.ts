@@ -50,10 +50,12 @@ export async function getResume(): Promise<ResumeData | null> {
 
 export async function saveResume(resume: ResumeData): Promise<void> {
   await chrome.storage.local.set({ resume })
+  await pruneDesignFiles()
 }
 
 export async function clearResume(): Promise<void> {
   await chrome.storage.local.remove('resume')
+  await pruneDesignFiles()
 }
 
 export async function saveParsedResume(parsed: ParsedResume): Promise<void> {
@@ -94,12 +96,48 @@ export async function getTailoredHistory(): Promise<TailoredHistoryEntry[]> {
 export async function addToTailoredHistory(entry: TailoredHistoryEntry): Promise<void> {
   const list = await getTailoredHistory()
   await chrome.storage.local.set({ tailoredHistory: [entry, ...list].slice(0, TAILORED_HISTORY_LIMIT) })
+  await pruneDesignFiles().catch(() => {})
   await countGeneration().catch(() => {}) // a missed count must not fail a finished run
 }
 
 export async function deleteFromTailoredHistory(id: string): Promise<void> {
   const list = await getTailoredHistory()
   await chrome.storage.local.set({ tailoredHistory: list.filter((e) => e.id !== id) })
+  await pruneDesignFiles()
+}
+
+// The user's own Word files (#131), each under the SHA-256 of its bytes, kept
+// for as long as the resume or a History entry uses it, so an older entry
+// still downloads in the design it was tailored in. Base64: storage holds JSON.
+// parsed: the parse the upload check matched against, which places the
+// tailored text later.
+export interface DesignFile { data: string; parsed?: ParsedResume }
+
+const designKey = (hash: string) => `designFile:${hash}`
+
+export async function getDesignFile(hash: string): Promise<DesignFile | null> {
+  const key = designKey(hash)
+  const got = await chrome.storage.local.get(key)
+  return (got[key] as DesignFile) ?? null
+}
+
+export async function saveDesignFile(hash: string, file: DesignFile): Promise<void> {
+  await chrome.storage.local.set({ [designKey(hash)]: file, designFiles: [...new Set([...(await getDesignHashes()), hash])] })
+}
+
+// Which files are stored, so History can label an entry before loading its file.
+export async function getDesignHashes(): Promise<string[]> {
+  const { designFiles } = await chrome.storage.local.get('designFiles')
+  return (designFiles as string[]) ?? []
+}
+
+async function pruneDesignFiles(): Promise<void> {
+  const [stored, resume, history] = await Promise.all([getDesignHashes(), getResume(), getTailoredHistory()])
+  const inUse = new Set([resume?.design?.hash, ...history.map((e) => e.resume.sourceHash)])
+  const unused = stored.filter((h) => !inUse.has(h))
+  if (unused.length === 0) return
+  await chrome.storage.local.remove(unused.map(designKey))
+  await chrome.storage.local.set({ designFiles: stored.filter((h) => inUse.has(h)) })
 }
 
 // Every successful generation lands in one of the two history lists above, so
@@ -121,6 +159,21 @@ export async function getReviewAsk(): Promise<ReviewAsk | null> {
 
 export async function saveReviewAsk(ask: ReviewAsk): Promise<void> {
   await chrome.storage.local.set({ reviewAsk: ask })
+}
+
+// The version whose changes the popup's "What's new" link points to, set by a
+// minor or major update (background/install.ts). Only clicking it clears it.
+export async function getWhatsNew(): Promise<string | null> {
+  const { whatsNew } = await chrome.storage.local.get('whatsNew')
+  return (whatsNew as string) ?? null
+}
+
+export async function saveWhatsNew(version: string): Promise<void> {
+  await chrome.storage.local.set({ whatsNew: version })
+}
+
+export async function clearWhatsNew(): Promise<void> {
+  await chrome.storage.local.remove('whatsNew')
 }
 
 // Marks local entries with the account that holds them (see CoverLetter.account).

@@ -16,7 +16,10 @@ export async function encrypt(plaintext: string): Promise<string> {
   const combined = new Uint8Array(iv.length + ciphertext.byteLength)
   combined.set(iv)
   combined.set(new Uint8Array(ciphertext), iv.length)
-  return btoa(String.fromCharCode(...combined))
+  // In chunks: spreading a Word file's megabytes as arguments overflows the stack.
+  let binary = ''
+  for (let i = 0; i < combined.length; i += 0x8000) binary += String.fromCharCode(...combined.subarray(i, i + 0x8000))
+  return btoa(binary)
 }
 
 // A LIKE pattern for "this exact ciphertext": its first 16 characters are the

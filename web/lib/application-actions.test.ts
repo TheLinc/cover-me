@@ -1,5 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { deleteApplication, GONE, loadDetail } from './application-actions'
+import { deleteApplication, downloadResume, GONE, loadDetail } from './application-actions'
+
+const docxMocks = vi.hoisted(() => ({ design: vi.fn(async () => true), coverMe: vi.fn(async () => {}) }))
+vi.mock('./pdf/docx-design', () => ({ downloadDesignDocx: docxMocks.design }))
+vi.mock('./pdf/resume-docx', () => ({ downloadTailoredResumeDocx: docxMocks.coverMe }))
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -60,5 +64,26 @@ describe('deleteApplication', () => {
     await expect(deleteApplication('a1')).resolves.toBeUndefined()
     vi.stubGlobal('fetch', vi.fn(async () => new Response('{"error":"x"}', { status: 502 })))
     await expect(deleteApplication('a1')).rejects.toThrow()
+  })
+})
+
+describe("downloadResume in the user's design (#131)", () => {
+  const hash = 'd'.repeat(64)
+  const resume = { name: 'Ada', email: '', phone: '', website: '', experience: [], education: [], sourceHash: hash }
+  afterEach(() => { docxMocks.design.mockClear(); docxMocks.coverMe.mockClear() })
+
+  it('fetches the Word file and places the tailored text in it', async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ docx: btoa('file'), structured: resume }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    await downloadResume('Engineer', resume, 'design')
+    expect((fetchMock.mock.calls[0] as unknown[])[0]).toBe(`/api/applications?file=${hash}`)
+    expect(docxMocks.design).toHaveBeenCalledWith(new TextEncoder().encode('file'), resume, resume, 'Engineer')
+    expect(docxMocks.coverMe).not.toHaveBeenCalled()
+  })
+
+  it('gives the Cover Me Word file when the account has no file for it', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('{"error":"Not found"}', { status: 404 })))
+    await downloadResume('Engineer', resume, 'design')
+    expect(docxMocks.coverMe).toHaveBeenCalledWith(resume, 'Engineer')
   })
 })
