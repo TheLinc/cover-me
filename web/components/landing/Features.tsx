@@ -16,14 +16,18 @@ function HistoryRow({ label, date, faded }: { label: string; date: string; faded
   )
 }
 
-// Real renders of a made-up resume (Alex Rivera): the Cover Me template from
-// lib/pdf/resume.ts, and an own design exported from Word. Rendered with
-// PyMuPDF at 640 px wide, so they're stale if the template changes.
+// Real renders of a made-up resume (Alex Rivera), the top 75% of each page
+// at 1080 px: the Cover Me template from lib/pdf/resume.ts, and a one-column
+// own design (no tables or text boxes, which the Word feature flags) exported
+// from Word. Stale if the template changes. Served as-is: resizing blurs
+// the small text.
 function Page({ src, label }: { src: string; label: string }) {
   return (
-    <div className="relative w-[46%] max-w-[360px]">
+    <div className="relative h-full w-[46%] max-w-[400px]">
       <Badge variant="tint" className="absolute -top-8 left-0 text-[12px] max-md:-top-7 max-md:text-[11px]">{label}</Badge>
-      <Image src={src} alt="" width={640} height={829} sizes="(min-width: 768px) 360px, 46vw" className="rounded-[4px] shadow-[0_18px_40px_-20px_rgba(30,27,75,0.35)]" />
+      <div className="h-full overflow-hidden rounded-t-[4px] bg-white shadow-[0_18px_40px_-20px_rgba(30,27,75,0.35)]">
+        <Image src={src} alt="" width={1080} height={1049} unoptimized className="w-full" />
+      </div>
     </div>
   )
 }
@@ -34,7 +38,7 @@ const CARDS = [
     body: 'Upload a Word file to keep your own fonts and layout (beta), or use the ATS-ready Cover Me template. Both download as Word, and the template as PDF too.',
     wide: true,
     visual: (
-      <div className="absolute inset-x-4 top-16 flex justify-center gap-[6%] max-md:top-12">
+      <div className="absolute inset-x-4 bottom-0 top-12 flex justify-center gap-[6%] max-md:top-10">
         <Page src="/landing/resume-own-design.png" label="Your design · Beta" />
         <Page src="/landing/resume-cover-me-template.png" label="Cover Me template" />
       </div>
@@ -69,7 +73,7 @@ export function Features() {
       <div className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-2">
         {CARDS.map((c) => (
           <div key={c.title} className={`reveal flex flex-col gap-4 ${'wide' in c ? 'md:col-span-2' : ''}`}>
-            <div inert aria-hidden="true" className={`relative overflow-hidden rounded-[24px] bg-panel ${'wide' in c ? 'h-[440px] max-md:h-[280px]' : 'h-[300px]'}`}>
+            <div inert aria-hidden="true" className={`relative overflow-hidden rounded-[24px] bg-panel ${'wide' in c ? 'h-[300px] max-md:h-[200px]' : 'h-[300px]'}`}>
               {c.visual}
             </div>
             <h3 className="text-[18px] font-semibold tracking-[-0.01em]">{c.title}</h3>
