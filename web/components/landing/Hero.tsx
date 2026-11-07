@@ -194,10 +194,11 @@ export function Hero() {
               <a href="#how-it-works">See how it works</a>
             </Button>
           </div>
+          <p className="-mt-2 text-[13px] text-subtle sm:hidden">A Chrome extension for your computer. Open this page there to install.</p>
           <p className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[11.5px] text-subtle max-xl:justify-center">
             <span>{STORE_RATING.value.toFixed(1)} on Chrome Web Store</span>
             <span aria-hidden="true">/</span>
-            <span>Free with your own key</span>
+            <span>Free to start, no API key needed</span>
             <span aria-hidden="true">/</span>
             <span>Open source</span>
           </p>

@@ -15,37 +15,29 @@ const BOARDS = [
   { name: 'Workable', logo: '/boards/workable.png' },
 ]
 
-function Board({ name, logo, href, hidden }: (typeof BOARDS)[number] & { hidden?: boolean }) {
+function Board({ name, logo, href }: (typeof BOARDS)[number]) {
   const body = (
     <>
-      <Image src={logo} width={24} height={24} alt="" className="rounded-[6px] object-contain opacity-70 grayscale transition group-hover:opacity-100 group-hover:grayscale-0" />
+      <Image src={logo} width={20} height={20} alt="" className="rounded-[5px] object-contain opacity-70 grayscale transition group-hover:opacity-100 group-hover:grayscale-0" />
       {name}
     </>
   )
-  // mr-12, not a gap on the track: a gap leaves one fewer space than items, so
-  // the -50% loop lands half a gap short of the second copy and jumps.
-  const cls = 'group mr-12 flex shrink-0 items-center gap-2.5 whitespace-nowrap text-[18px] font-semibold tracking-[-0.02em] text-ink-2'
-  return href && !hidden ? (
-    <Link href={href} className={cls}>{body}</Link>
-  ) : (
-    <span className={cls} aria-hidden={hidden || undefined}>{body}</span>
-  )
+  const cls = 'group flex items-center gap-2 whitespace-nowrap text-[15px] font-semibold tracking-[-0.01em] text-ink-2'
+  return href ? <Link href={href} className={cls}>{body}</Link> : <span className={cls}>{body}</span>
 }
 
+// Static, not a marquee: a skimmer has to see every site, LinkedIn and Indeed
+// first, without waiting for a loop.
 export function BoardsStrip() {
   return (
     <section aria-label="Supported job sites" className="container py-6">
-      <div className="soft-card flex items-center gap-8 overflow-hidden px-8 py-6 max-md:flex-col max-md:items-start max-md:gap-4 max-md:px-5">
-        <span className="shrink-0 text-[14px] text-subtle">Reads postings on</span>
-        <div className="min-w-0 flex-1 overflow-hidden [mask-image:linear-gradient(90deg,transparent,#000_6%,#000_94%,transparent)] max-md:w-full">
-          <div className="marquee flex w-max">
-            {BOARDS.map((b) => <Board key={b.name} {...b} />)}
-            {BOARDS.map((b) => <Board key={`dup-${b.name}`} {...b} hidden />)}
-          </div>
+      <div className="soft-card flex flex-col gap-4 px-8 py-6 max-md:px-5">
+        <p className="text-[14px] text-subtle">
+          Reads postings on these sites. Anywhere else, <span className="font-medium text-ink">paste it in</span>.
+        </p>
+        <div className="grid grid-cols-4 gap-x-6 gap-y-3 max-sm:grid-cols-2 lg:flex lg:justify-between">
+          {BOARDS.map((b) => <Board key={b.name} {...b} />)}
         </div>
-        <span className="shrink-0 border-l border-line pl-6 text-[14px] text-subtle max-md:border-0 max-md:pl-0">
-          Anywhere else, <span className="font-medium text-ink">paste it in</span>
-        </span>
       </div>
     </section>
   )
