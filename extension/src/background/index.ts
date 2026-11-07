@@ -8,8 +8,9 @@ import { checkUploadedDesign, designForTailor, finishDesign, uploadDesignIfPro }
 import { debugGroup } from '../lib/debug'
 import { addToHistory, addToTailoredHistory, getCachedTier, getCandidateContext, getResume, getSession, getSettings, hasAgreedToPageRead, resolveMode, saveParsedResume, setEntryAccounts, watchSession } from '../lib/storage'
 import { handleInstalled, uninstallUrl } from './install'
+import { scrapeFailure } from './scrape-failure'
 import type { PageSnapshot } from '../content/snapshot.ts'
-import type { CoverJob, CoverLetter, FrameScrapeResponse, GenerateResponse, JobData, ScrapeResponse, TailoredResume, TailorJob, TailorResponse } from '../types'
+import type { CoverJob, CoverLetter, FrameScrapeResponse, GenerateResponse, JobData, ScrapeFailure, ScrapeResponse, TailoredResume, TailorJob, TailorResponse } from '../types'
 
 chrome.runtime.onInstalled.addListener((details) => { void handleInstalled(details) })
 
@@ -106,24 +107,36 @@ const EMBEDDED_ATS_HOSTS = ['greenhouse.io', 'lever.co', 'myworkdayjobs.com', 'a
 // (LinkedIn's interop shell renders the job pane in a same-origin iframe at
 // /preload/), and known ATS iframes. Ad/tracking iframes never match. Falls
 // back to top-frame-only when scripting is unavailable (restricted pages).
-async function listScrapableFrames(tabId: number): Promise<number[]> {
+// urls: each listed frame's address, empty when Chrome won't let us script the
+// tab at all (scrapeFailure calls that not a web page).
+async function listScrapableFrames(tabId: number): Promise<{ frameIds: number[]; urls: Map<number, string> }> {
   try {
     const frames = await chrome.scripting.executeScript({
       target: { tabId, allFrames: true },
-      func: () => location.hostname,
+      func: () => location.href,
     })
-    const topHost = frames.find((f) => f.frameId === 0)?.result
-    const ids = frames
-      .filter((f) => {
-        const host = typeof f.result === 'string' ? f.result : ''
-        if (!host) return false
-        if (f.frameId === 0) return true
-        return host === topHost || EMBEDDED_ATS_HOSTS.some((h) => host === h || host.endsWith('.' + h))
-      })
-      .map((f) => f.frameId)
-    return ids.length > 0 ? [...new Set([0, ...ids])] : [0]
+    const hostOf = (href: unknown) => (typeof href === 'string' && URL.canParse(href) ? new URL(href).hostname : '')
+    const topHost = hostOf(frames.find((f) => f.frameId === 0)?.result)
+    const listed = frames.filter((f) => {
+      const host = hostOf(f.result)
+      if (!host) return false
+      if (f.frameId === 0) return true
+      return host === topHost || EMBEDDED_ATS_HOSTS.some((h) => host === h || host.endsWith('.' + h))
+    })
+    const ids = listed.map((f) => f.frameId)
+    return {
+      frameIds: ids.length > 0 ? [...new Set([0, ...ids])] : [0],
+      urls: new Map(listed.map((f) => [f.frameId, f.result as string])),
+    }
   } catch {
-    return [0]
+    return { frameIds: [0], urls: new Map() }
+  }
+}
+
+// A click that read no job, sorted for the popup (scrape-failure.ts).
+class ScrapeError extends Error {
+  constructor(readonly failure: ScrapeFailure) {
+    super(failure.error)
   }
 }
 
@@ -142,7 +155,9 @@ type FrameScrape = { frameId: number; snapshot?: PageSnapshot | null } & (
 const CONTENT_SCRIPT_FILE = 'content.js'
 
 async function scrapeTab(tabId: number): Promise<JobData> {
-  const frameIds = await listScrapableFrames(tabId)
+  const { frameIds, urls } = await listScrapableFrames(tabId)
+  const fail = async (error: string, frameId?: number) =>
+    new ScrapeError(scrapeFailure(await topFrameUrl(tabId), [...urls.values()], error, frameId === undefined ? undefined : urls.get(frameId)))
 
   // Inject the scrapers into those frames. activeTab covers the main frame's
   // origin; embedded ATS frames are covered by their host_permissions. A frame
@@ -187,7 +202,7 @@ async function scrapeTab(tabId: number): Promise<JobData> {
   const deliberate =
     results.find((r) => !r.ok && !r.connection && r.frameId === 0) ??
     results.find((r) => !r.ok && !r.connection)
-  if (deliberate && !deliberate.ok) throw deliberate.error
+  if (deliberate && !deliberate.ok) throw await fail(deliberate.error.message, deliberate.frameId)
 
   // --- Fallback: inject a self-contained scraper into every frame ---
   type InlineResult = { title: string; company: string; description: string; url: string; heuristic?: boolean }
@@ -221,9 +236,7 @@ async function scrapeTab(tabId: number): Promise<JobData> {
     return { title: result.title, company: result.company, description: result.description, url }
   }
 
-  throw new Error(
-    'Could not read this page. Try refreshing, or paste the job description manually.',
-  )
+  throw await fail('Could not read this page. Try refreshing, or paste the job description manually.')
 }
 
 // The scrape Edge Function runs the current scrapers on each frame's snapshot,
@@ -395,6 +408,7 @@ async function handleScrapeTab(): Promise<ScrapeResponse> {
     const job = await scrapeTab(tab.id)
     return { success: true, job }
   } catch (err) {
+    if (err instanceof ScrapeError) return { success: false, error: err.message, failure: err.failure }
     return { success: false, error: err instanceof Error ? err.message : 'Could not read this page.' }
   }
 }

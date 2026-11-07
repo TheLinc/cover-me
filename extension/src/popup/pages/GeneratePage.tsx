@@ -9,10 +9,11 @@ import GapChips from '../components/GapChips'
 import PageReadNotice from '../components/PageReadNotice'
 import ProgressSteps from '../components/ProgressSteps'
 import ReviewAsk, { claimReviewAsk } from '../components/ReviewAsk'
+import ScrapeFailurePanel, { type ShownFailure } from '../components/ScrapeFailure'
 import ScoreRing from '../components/ScoreRing'
 import UpgradeButton from '../components/UpgradeButton'
 import { WhatsNewLink } from '../components/WhatsNew'
-import type { AuthSession, CoverJob, GenerateResponse, JobData, ResumeData, Settings, ScrapeResponse, TailorJob, TailorResponse, TailoredResume } from '../../types'
+import type { AuthSession, CoverJob, GenerateResponse, JobData, ResumeData, Settings, ScrapeFailure, ScrapeResponse, TailorJob, TailorResponse, TailoredResume } from '../../types'
 import logoIcon from '../../public/icon/48.png'
 import type { Page } from '../App'
 
@@ -154,6 +155,9 @@ export default function GeneratePage({ onNavigate }: Props) {
   const [trim, setTrim] = useState(false)
   const [includeSummary, setIncludeSummary] = useState(true)
   const [loadingJob, setLoadingJob] = useState<JobData | null>(null)
+  // The last click read no job (#130). Saved, so it survives the popup closing
+  // while the user copies the posting.
+  const [scrapeFailure, setScrapeFailure] = useState<ShownFailure | null>(null)
 
   const [manualTitle, setManualTitle] = useState('')
   const [manualCompany, setManualCompany] = useState('')
@@ -193,6 +197,19 @@ export default function GeneratePage({ onNavigate }: Props) {
       let restoredTailorDone = false
       if (s) {
         if (s.inputMode) setInputMode(s.inputMode as InputMode)
+        // Only on the tab it's about, still on that site (an unsupported one)
+        // or that page (a bug report is about one URL). Elsewhere it's dropped,
+        // and the paste form it opened closes unless the user started filling it in.
+        const failure = s.scrapeFailure as ShownFailure | undefined
+        if (failure) {
+          void chrome.tabs.query({ active: true, currentWindow: true }).then(([tab]) => {
+            const same = failure.reason === 'unsupported'
+              ? (tab?.url && URL.canParse(tab.url) ? new URL(tab.url).hostname : undefined) === (failure.tabUrl && new URL(failure.tabUrl).hostname)
+              : tab?.url === failure.tabUrl
+            if (tab?.id === failure.tabId && same) setScrapeFailure(failure)
+            else if (!s.manualTitle && !s.manualDescription) setInputMode('auto')
+          })
+        }
         if (s.manualTitle) setManualTitle(s.manualTitle as string)
         if (s.manualCompany) setManualCompany(s.manualCompany as string)
         if (s.manualDescription) setManualDescription(s.manualDescription as string)
@@ -324,7 +341,7 @@ export default function GeneratePage({ onNavigate }: Props) {
     if (tailorState === 'loading') return
     chrome.storage.local.set({
       generatePage: {
-        state, inputMode, manualTitle, manualCompany, manualDescription, letter, job, createdAt,
+        state, inputMode, scrapeFailure, manualTitle, manualCompany, manualDescription, letter, job, createdAt,
         compact, trim, includeSummary,
         tailorState: tailorState === 'done' ? 'done' : 'idle',
         tailoredResume: tailorState === 'done' ? tailoredResume : null,
@@ -336,7 +353,7 @@ export default function GeneratePage({ onNavigate }: Props) {
         tailorDismissedId: tailorDismissedId.current,
       },
     })
-  }, [state, inputMode, manualTitle, manualCompany, manualDescription, letter, job, createdAt, compact, trim, includeSummary, tailorState, tailoredResume, tailoredJob, supplemental, letterSupplemental, activeResultTab])
+  }, [state, inputMode, scrapeFailure, manualTitle, manualCompany, manualDescription, letter, job, createdAt, compact, trim, includeSummary, tailorState, tailoredResume, tailoredJob, supplemental, letterSupplemental, activeResultTab])
 
   // Candidate context is a standing profile fact, not per-job state — persisted
   // to its own storage key so it survives "New" resets and applies automatically
@@ -346,7 +363,18 @@ export default function GeneratePage({ onNavigate }: Props) {
     saveCandidateContext(initialContext)
   }, [initialContext])
 
+  // An unsupported site opens the paste form straight away; the other cases
+  // offer it beside a report or a retry.
+  const markReported = () => setScrapeFailure((f) => f && { ...f, reported: true })
+
+  async function showScrapeFailure(failure: ScrapeFailure, flow: ShownFailure['flow']) {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+    setScrapeFailure({ ...failure, flow, tabId: tab?.id, tabUrl: tab?.url })
+    setInputMode(failure.reason === 'unsupported' ? 'manual' : 'auto')
+  }
+
   async function generate() {
+    setScrapeFailure(null)
     setState('loading')
     setLoadingJob(null)
     setError('')
@@ -354,6 +382,7 @@ export default function GeneratePage({ onNavigate }: Props) {
     let scrapedJob: JobData
     try {
       const scrape = (await chrome.runtime.sendMessage({ type: 'SCRAPE_TAB' })) as ScrapeResponse
+      if (!scrape.success && scrape.failure) { await showScrapeFailure(scrape.failure, 'letter'); setState('idle'); return }
       if (!scrape.success) { setError(scrape.error); setState('error'); return }
       scrapedJob = scrape.job
       setLoadingJob(scrapedJob)
@@ -381,6 +410,7 @@ export default function GeneratePage({ onNavigate }: Props) {
       description: manualDescription.trim(),
       url: '',
     }
+    setScrapeFailure(null)
     setState('loading')
     setLoadingJob(jobData)
     setError('')
@@ -464,6 +494,7 @@ export default function GeneratePage({ onNavigate }: Props) {
   }
 
   async function tailor() {
+    setScrapeFailure(null)
     setTailorState('loading')
     setTailorProgress('') // a new run starts at the top, whatever the last one reached
     setLoadingJob(null)
@@ -471,6 +502,7 @@ export default function GeneratePage({ onNavigate }: Props) {
     let scrapedJob: JobData
     try {
       const scrape = (await chrome.runtime.sendMessage({ type: 'SCRAPE_TAB' })) as ScrapeResponse
+      if (!scrape.success && scrape.failure) { await showScrapeFailure(scrape.failure, 'tailor'); setTailorState('idle'); return }
       if (!scrape.success) { setTailorError(scrape.error); setTailorState('error'); return }
       scrapedJob = scrape.job
       setLoadingJob(scrapedJob)
@@ -498,6 +530,7 @@ export default function GeneratePage({ onNavigate }: Props) {
       description: manualDescription.trim(),
       url: '',
     }
+    setScrapeFailure(null)
     setTailorState('loading')
     setTailorProgress('') // a new run starts at the top, whatever the last one reached
     setLoadingJob(jobData)
@@ -580,6 +613,7 @@ export default function GeneratePage({ onNavigate }: Props) {
   function resetToNew() {
     setState('idle')
     setInputMode('auto')
+    setScrapeFailure(null)
     setLetter('')
     setJob(null)
     setCreatedAt('')
@@ -596,6 +630,7 @@ export default function GeneratePage({ onNavigate }: Props) {
   function resetAll() {
     setState('idle')
     setInputMode('auto')
+    setScrapeFailure(null)
     setLetter('')
     setJob(null)
     setCreatedAt('')
@@ -750,8 +785,18 @@ export default function GeneratePage({ onNavigate }: Props) {
           {/* ── NON-LOADING CONTENT ── */}
           {state !== 'loading' && tailorState !== 'loading' && (
             <>
+              {/* IDLE — AUTO, after a click that read no job */}
+              {state === 'idle' && tailorState === 'idle' && inputMode === 'auto' && scrapeFailure && (
+                <ScrapeFailurePanel
+                  failure={scrapeFailure}
+                  onReported={markReported}
+                  onPaste={() => setInputMode('manual')}
+                  onRetry={scrapeFailure.flow === 'letter' ? generate : tailor}
+                />
+              )}
+
               {/* IDLE — AUTO */}
-              {state === 'idle' && tailorState === 'idle' && inputMode === 'auto' && (
+              {state === 'idle' && tailorState === 'idle' && inputMode === 'auto' && !scrapeFailure && (
                 <div className="generate-cta">
                   <ContextExpander
                     contextExpanded={contextExpanded}
@@ -790,9 +835,12 @@ export default function GeneratePage({ onNavigate }: Props) {
               {/* IDLE — MANUAL */}
               {state === 'idle' && tailorState === 'idle' && inputMode === 'manual' && (
                 <div className="manual-form">
-                  <button className="manual-back" onClick={() => setInputMode('auto')}>
+                  <button className="manual-back" onClick={() => { setInputMode('auto'); setScrapeFailure(null) }}>
                     ← Auto-detect
                   </button>
+                  {scrapeFailure && scrapeFailure.reason !== 'not_web' && (
+                    <ScrapeFailurePanel failure={scrapeFailure} onReported={markReported} />
+                  )}
                   <div className="form-group">
                     <label className="form-label">Job Title *</label>
                     <input

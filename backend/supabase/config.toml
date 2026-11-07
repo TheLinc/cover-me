@@ -447,6 +447,11 @@ enabled = true
 [functions.scrape]
 verify_jwt = false
 
+# The extension's "Request this site" and "Report bug" buttons (#130), also
+# without an account. Rate-limited per IP like scrape; sends only to PostHog.
+[functions.site-request]
+verify_jwt = false
+
 # Every other function requires a signed-in user, checked in its own code with
 # auth.getUser() (401 without a valid token, tests/integration/auth.test.ts).
 # The gateway check stays off: it only accepts tokens signed with the legacy JWT
