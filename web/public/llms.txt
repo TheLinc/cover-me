@@ -9,6 +9,7 @@ Key facts:
 - No invented experience: every skill the AI adds must cite a phrase from the user's resume, code checks the phrase is really there, and a second model call confirms it shows the skill. Named requirements from the posting, such as acronyms, certifications and product names, are removed from the output when they appear nowhere in the user's own material. Job titles, employers and dates are never changed.
 - Privacy: with the user's own key, the resume goes only to the AI provider whose key the user added, never to Cover Me. The key is stored in the browser, encrypted with AES-256-GCM, with the encrypting key stored beside it. With an account, the resume is encrypted at rest (AES-256-GCM) and sent to Anthropic only to read it and write the user's documents. The extension has no ads, analytics or tracking, and resume data is never used to train AI models.
 - AI: Claude (Anthropic) on Cover Me accounts; the user's choice of Claude or OpenAI with their own key.
+- Application board: Free and Pro accounts track every job they generate for on a board with four stages (Applied, Interviewing, Offer, Closed), on the website from any device. Own-key mode has no board; its history stays in the browser.
 - Output: editable cover letters and tailored resumes, exportable as PDFs, with a local history of applications.
 - Not included by design: no auto-apply or form submission, no LinkedIn account integration, no resume builder or templates.
 - Open source: the extension, backend and database schema are public and self-hostable at https://github.com/TheLinc/cover-me
@@ -23,6 +24,7 @@ Key facts:
 - [Chrome Web Store listing](https://chromewebstore.google.com/detail/cover-me-%E2%80%93-ai-cover-lette/bpbnopjgjbimdjjdolhkgimllbgamgpi)
 - [AlternativeTo listing](https://alternativeto.net/software/cover-me/about/): user reviews and comparisons with Jobscan, Teal, Kickresume and other resume tools
 - [Toolradar listing](https://toolradar.com/tools/cover-me): features, pricing, FAQ and alternatives such as Kickresume and Rezi
+- [Open Source Alternatives listing](https://www.opensourcealternatives.to/item/cover-me): Cover Me as an open-source alternative to Teal, Jobscan and Kickresume
 
 ## Job board guides
 
