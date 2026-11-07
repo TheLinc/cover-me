@@ -9,7 +9,7 @@ const mono = Geist_Mono({ subsets: ['latin'], variable: '--font-mono', display: 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 
 const TITLE = 'Cover Me: AI Resume Tailor and Cover Letter Generator'
-const DESCRIPTION = 'Open-source Chrome extension that tailors your resume and writes a cover letter for any job posting, with an ATS match score. Free with your own API key.'
+const DESCRIPTION = "Tailor your resume and write a matching cover letter for the job posting you have open, with an ATS match score and the keywords you're missing. Free plan to start."
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE),
@@ -62,6 +62,7 @@ const jsonLdOrg = {
     CHROME_STORE_URL,
     'https://alternativeto.net/software/cover-me/about/',
     'https://toolradar.com/tools/cover-me',
+    'https://www.opensourcealternatives.to/item/cover-me',
   ],
   founder: {
     '@type': 'Person',

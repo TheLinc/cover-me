@@ -48,11 +48,33 @@ function groups(body: string | null | undefined): Pick<ChangelogVersion, 'new' |
 const day = (iso: string) =>
   new Date(iso).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' })
 
+const published = (releases: GithubRelease[]) => releases.filter((r) => !r.draft && !r.prerelease)
+const version = (r: GithubRelease) => r.tag_name.replace(/^v/, '')
+
 export function toChangelog(releases: GithubRelease[]): ChangelogVersion[] {
-  return releases
-    .filter((r) => !r.draft && !r.prerelease)
+  return published(releases)
     .sort((a, b) => b.created_at.localeCompare(a.created_at))
-    .map((r) => ({ version: r.tag_name.replace(/^v/, ''), date: day(r.created_at), ...groups(r.body) }))
+    .map((r) => ({ version: version(r), date: day(r.created_at), ...groups(r.body) }))
+}
+
+// The newest version users can install. Highest by semver, not by date: 1.4.0
+// was published minutes after 1.5.0. Tags that aren't plain X.Y.Z are skipped.
+export function latestVersion(releases: GithubRelease[]): string | null {
+  const parts = (v: string) => v.split('.').map(Number)
+  const newer = (a: string, b: string) => {
+    const [x, y] = [parts(a), parts(b)]
+    const i = x.findIndex((n, j) => n !== y[j])
+    return i !== -1 && x[i] > y[i]
+  }
+  return published(releases)
+    .map(version)
+    .filter((v) => /^\d+\.\d+\.\d+$/.test(v))
+    .reduce<string | null>((best, v) => (!best || newer(v, best) ? v : best), null)
+}
+
+export async function getLatestVersion(): Promise<string | null> {
+  const releases = await fetchGithub<GithubRelease[]>(RELEASES_URL)
+  return releases && latestVersion(releases)
 }
 
 export async function getChangelog(): Promise<ChangelogVersion[] | null> {

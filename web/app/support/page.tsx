@@ -1,11 +1,12 @@
 import type { Metadata } from 'next'
+import { OG_IMAGE } from '@/lib/structured-data'
 import { SiteNav } from '@/components/site/SiteNav'
 import { SiteFooter } from '@/components/site/SiteFooter'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 
 const TITLE = 'Cover Me help and support'
-const DESCRIPTION = "Help with the Cover Me Chrome extension: what to do when a job posting isn't detected, when the free allowance resets, fixing an API key, and where your resume is stored."
+const DESCRIPTION = "Help with Cover Me: what to do when a job posting isn't detected, when the free allowance resets, fixing an API key, and where your resume is stored."
 
 export const metadata: Metadata = {
   title: 'Help and support',
@@ -17,11 +18,13 @@ export const metadata: Metadata = {
     url: `${BASE}/support`,
     siteName: 'Cover Me',
     type: 'website',
+    images: [OG_IMAGE],
   },
   twitter: {
     card: 'summary_large_image',
     title: TITLE,
     description: DESCRIPTION,
+    images: [OG_IMAGE.url],
   },
 }
 

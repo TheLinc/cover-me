@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { CHROME_STORE_URL } from '@/lib/utils'
+import { OG_IMAGE } from '@/lib/structured-data'
 import { BOARDS, getBoard } from '@/lib/boards'
 import { SiteNav } from '@/components/site/SiteNav'
 import { SiteFooter } from '@/components/site/SiteFooter'
@@ -25,11 +26,13 @@ export async function generateMetadata({ params }: { params: Promise<{ board: st
       url: `${BASE}/for/${board.slug}`,
       siteName: 'Cover Me',
       type: 'website',
+      images: [OG_IMAGE],
     },
     twitter: {
       card: 'summary_large_image',
       title: `${board.metaTitle} | Cover Me`,
       description: board.metaDescription,
+      images: [OG_IMAGE.url],
     },
   }
 }
