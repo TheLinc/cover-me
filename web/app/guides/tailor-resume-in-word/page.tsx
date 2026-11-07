@@ -123,7 +123,7 @@ export default function Page() {
             Pasting rewritten text from a chat window or web page. Word&rsquo;s paste keeps the source&rsquo;s font and size unless you tell it otherwise, so a pasted bullet can end up in a different font from the ones around it, with its own spacing.
           </li>
           <li>
-            Bullets that aren&rsquo;t their own paragraph. If you pressed Shift+Enter to start a new line inside a bullet, a longer or shorter rewrite leaves stray line breaks, and the next bullet moves with it.
+            Bullets that aren&rsquo;t their own paragraph. If you pressed Shift+Enter to start a new line inside a bullet, a rewrite of a different length leaves that line break in the middle of the new text.
           </li>
           <li>
             Moving the resume into a resume builder. Builders lay your content out in their own templates. <a href="https://www.rezi.ai/ai-resume-builder" target="_blank" rel="noopener noreferrer" className="text-brand-light hover:text-brand transition-colors">Rezi&rsquo;s builder page</a>, for example, says an imported resume&rsquo;s experience goes into a new Rezi document (checked November 7, 2026; see{' '}
@@ -206,7 +206,7 @@ export default function Page() {
         <h2 className="text-[22px] text-foreground !mt-10">Should you send the Word file or a PDF?</h2>
         <p>
           Either works if the layout is simple, so send what the application asks for. When I uploaded{' '}
-          <Link href="/guides/ats-friendly-resume-format" className="text-brand-light hover:text-brand transition-colors">one resume in six formats</Link> to Lever, Workday, Ashby and SmartRecruiters, all four read the one-column Word file and the one-column PDF correctly. To send your own design as a PDF, open the tailored Word file and use File, Save As, PDF. Cover Me&rsquo;s PDF button uses its own layout.
+          <Link href="/guides/ats-friendly-resume-format" className="text-brand-light hover:text-brand transition-colors">one resume in six formats</Link> to Lever, Workday, Ashby and SmartRecruiters, all four filled in the same details from the one-column Word file and the one-column PDF. To send your own design as a PDF, open the tailored Word file and use File, Save As, PDF. Cover Me&rsquo;s PDF button uses its own layout.
         </p>
 
         <h2 className="text-[22px] text-foreground !mt-10">Which Word layouts can&rsquo;t be tailored in place?</h2>
@@ -216,8 +216,8 @@ export default function Page() {
         <ul className="list-disc pl-6 space-y-2">
           <li>Bullets in text boxes stay as written. Move them into normal paragraphs.</li>
           <li>Bullets joined with Shift+Enter can&rsquo;t be found one by one. Put each on its own line with Enter.</li>
-          <li>Skills in a table or spread over several lines are kept as written. A single line of skills gets reordered.</li>
-          <li>Two columns, tables and text boxes get a warning: some application systems read them out of order, as the <Link href="/guides/ats-friendly-resume-format" className="text-brand-light hover:text-brand transition-colors">ATS format test</Link> showed.</li>
+          <li>A skills list in one paragraph is reordered, and terms from your bullets can be added. Skills split across several paragraphs or table cells are kept as written.</li>
+          <li>Two columns, tables and text boxes get a warning, because some application systems read them out of order. In the <Link href="/guides/ats-friendly-resume-format" className="text-brand-light hover:text-brand transition-colors">ATS format test</Link>, a two-column design lost part of a link in Ashby, and a table mixed skills into a degree in SmartRecruiters.</li>
         </ul>
       </article>
 
