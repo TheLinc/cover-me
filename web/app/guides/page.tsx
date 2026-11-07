@@ -4,7 +4,7 @@ import { GUIDES } from '@/lib/guides'
 import { OG_IMAGE } from '@/lib/structured-data'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
-const DESCRIPTION = "Job search guides on ATS scores, ATS-friendly resume formats and tailoring your resume, plus how Cover Me compares with ChatGPT, AIApply, Jobscan and Teal."
+const DESCRIPTION = "Job search guides on ATS scores, ATS-friendly resume formats and tailoring your resume, plus Cover Me compared with ChatGPT, AIApply, Jobscan, Teal and Rezi."
 
 export const metadata: Metadata = {
   title: 'Job Search Guides: ATS Scores and Tailoring',

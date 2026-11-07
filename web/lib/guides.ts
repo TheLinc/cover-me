@@ -62,6 +62,12 @@ export const GUIDES: Guide[] = [
     description: 'One resume in six formats, uploaded to Lever, Workday, Ashby and SmartRecruiters. Workday read nothing from an image PDF, Ashby cut a link out of a two-column design, and SmartRecruiters mixed skills into a degree from a table.',
     date: '2026-10-31',
   },
+  {
+    slug: 'cover-me-vs-rezi',
+    title: 'Cover Me vs Rezi: tailor the resume you already have',
+    description: 'Rezi is an AI resume builder with templates, with Pro at $29 a month or $149 once. Cover Me tailors the resume you already have to each posting, free with your own API key or $15 a month.',
+    date: '2026-11-07',
+  },
 ]
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
