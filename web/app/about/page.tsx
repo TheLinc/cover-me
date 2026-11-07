@@ -118,7 +118,7 @@ export default function AboutPage() {
             </p>
             {/* Open Source Alternatives and Toolradar check for these badges during review. Plain imgs: the images live on their hosts. */}
             <div className="flex flex-wrap items-center gap-4">
-              <a href="https://www.opensourcealternatives.to" className="inline-block">
+              <a href="https://www.opensourcealternatives.to/item/cover-me" target="_blank" rel="noopener" className="inline-block">
                 <img src="https://www.opensourcealternatives.to/badge-osa.svg" alt="As seen on Open Source Alternatives" width={270} height={20} />
               </a>
               <a href="https://toolradar.com/tools/cover-me" target="_blank" rel="noopener" className="inline-block">
