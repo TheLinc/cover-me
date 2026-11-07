@@ -19,6 +19,7 @@ const REASON_QUESTION_ID = '57561f2e-d353-4321-91f9-ca247419d4a9'
 const COMMENT_QUESTION_ID = '5318a93b-ea8f-47ed-a8bb-5d70cc624d2a'
 const PRICE_QUESTION_ID = '02b8d49f-d0ff-4ba3-b639-4d2d3ab9101f'
 const PRIVACY_QUESTION_ID = 'ed363ac7-1306-4e03-be2b-7337ae04f2f4'
+const QUALITY_QUESTION_ID = 'd003aad9-c2ef-475c-aa9c-b21a882041c3'
 
 const OTHER = 'Other' as const
 const REASONS = [
@@ -89,6 +90,12 @@ const FOLLOW_UPS: Partial<Record<Reason, FollowUpQuestion>> = {
     id: PRIVACY_QUESTION_ID,
     question: 'What worried you most?',
     choices: ['Uploading my resume', 'Creating an account', 'Sending data to an AI company', 'The extension reading web pages'],
+  },
+  // Splits a template or styling problem from a content one
+  "The resumes or cover letters weren't good enough": {
+    id: QUALITY_QUESTION_ID,
+    question: 'What was wrong with it?',
+    choices: ['The design or layout looked wrong', 'The wording sounded generic or not like me', "It added things that aren't true", 'It left out things that matter'],
   },
 }
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
