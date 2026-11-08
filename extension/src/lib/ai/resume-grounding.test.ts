@@ -98,6 +98,14 @@ describe('checkAndRewriteLines summary', () => {
     expect(prompts[1]).not.toContain('e0b2')
   })
 
+  // Without the notes the checker flagged context-backed lines ("uses GitHub Actions") as invented.
+  test('the check prompt carries the candidate\'s supplemental context', async () => {
+    const prompts: string[] = []
+    await checkAndRewriteLines({ ...original, summary: flagged }, original, posting, async (p) => (prompts.push(p), '{"flags": [], "summary": null}'), 'Cover Me uses GitHub Actions for CI/CD.')
+    expect(prompts[0]).toContain('CANDIDATE NOTES')
+    expect(prompts[0]).toContain('Cover Me uses GitHub Actions for CI/CD.')
+  })
+
   test('an unusable rewrite falls back to the candidate\'s own summary', async () => {
     const { resume, repair } = await run(flagged, 'Led 12 developers building React portals.')
     expect(resume.summary).toBe(original.summary)

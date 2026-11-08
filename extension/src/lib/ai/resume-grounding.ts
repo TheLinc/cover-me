@@ -286,7 +286,7 @@ function summarySources(r: Groundable): string {
   return [...lines(r.experience, 'Role'), ...lines(r.projects, 'Project'), resumeFacts(r)].join('\n')
 }
 
-export function buildLineCheckPrompt(original: Groundable, tailored: Groundable): string {
+export function buildLineCheckPrompt(original: Groundable, tailored: Groundable, supplemental?: string): string {
   const blocks: string[] = []
   const add = (kind: 'e' | 'p', out: GroundEntry[] | undefined, input: GroundEntry[] | undefined) =>
     out?.forEach((entry, i) => {
@@ -314,7 +314,10 @@ Then check the SUMMARY against all original lines and the RESUME FACTS below, wi
 ${blocks.join('\n\n')}
 
 RESUME FACTS:
-${resumeFacts(original)}
+${resumeFacts(original)}${supplemental?.trim() ? `
+
+CANDIDATE NOTES (the candidate's own additions about their experience; a line or summary that adds a fact stated here is supported, so do not flag it for that):
+${supplemental.trim()}` : ''}
 
 SUMMARY: ${tailored.summary || '(none)'}
 
@@ -441,10 +444,11 @@ export async function checkAndRewriteLines<T extends Groundable>(
   original: Groundable,
   jobDescription: string,
   ask: AskModel,
+  supplemental?: string,
 ): Promise<{ resume: T; repair: LineRepair }> {
   let flags: Map<LineId, string> | null
   try {
-    flags = parseLineFlags(await ask(buildLineCheckPrompt(original, tailored)))
+    flags = parseLineFlags(await ask(buildLineCheckPrompt(original, tailored, supplemental)))
   } catch {
     flags = null
   }
