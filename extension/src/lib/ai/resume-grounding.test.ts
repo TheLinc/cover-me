@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { candidateText, checkAndRewriteLines, groundSkills, groundTailored } from './resume-grounding'
+import { buildLineCheckPrompt, candidateText, checkAndRewriteLines, groundSkills, groundTailored } from './resume-grounding'
 
 // Made-up posting and resume. The resume never says "web", "Ruby", "Rails" or "HIPAA".
 const posting = `Frontend Web Developer
@@ -104,6 +104,8 @@ describe('checkAndRewriteLines summary', () => {
     await checkAndRewriteLines({ ...original, summary: flagged }, original, posting, async (p) => (prompts.push(p), '{"flags": [], "summary": null}'), 'Cover Me uses GitHub Actions for CI/CD.')
     expect(prompts[0]).toContain('CANDIDATE NOTES')
     expect(prompts[0]).toContain('Cover Me uses GitHub Actions for CI/CD.')
+    // Blank notes leave the prompt exactly as it was before notes existed.
+    expect(buildLineCheckPrompt(original, original, '  ')).toBe(buildLineCheckPrompt(original, original))
   })
 
   test('an unusable rewrite falls back to the candidate\'s own summary', async () => {

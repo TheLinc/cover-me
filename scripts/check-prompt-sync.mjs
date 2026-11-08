@@ -159,7 +159,7 @@ const checks = [
     a: EXT_TAILOR,
     b: BE_TAILOR,
     start: 'SUPPLEMENTAL CANDIDATE CONTEXT (verified by the candidate',
-    end: 'into the most applicable existing bullets.',
+    end: 'existing bullets of the entry it describes.',
   },
   // The resume parse prompt runs client-side for BYOK and server-side for the
   // hosted tier's structured-resume cache — the template must not drift.
