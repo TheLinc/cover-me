@@ -2,7 +2,7 @@
 
 **AI cover letters and ATS-tailored resumes, generated from any job posting in seconds.**
 
-<a href="https://www.opensourcealternatives.to"><img src="https://www.opensourcealternatives.to/badge-osa.svg" alt="As seen on Open Source Alternatives" width="270" height="20"></a>
+<a href="https://www.opensourcealternatives.to/item/cover-me"><img src="https://www.opensourcealternatives.to/badge-osa.svg" alt="As seen on Open Source Alternatives" width="270" height="20"></a>
 
 Cover Me is an open-source Chrome extension that reads job descriptions and, using your stored resume, generates tailored cover letters and ATS-optimized resumes — complete with a match score and gap analysis. Bring your own API key for unlimited use, with your resume going only to your AI provider — or use the hosted tier for a no-configuration experience.
 
@@ -68,8 +68,8 @@ Cover Me supports two AI providers:
 ### 2. Upload your resume
 
 - Click the extension icon → **Resume** tab
-- Upload a PDF, DOCX, or TXT file
-- The extension extracts the text client-side — the raw file is never stored or transmitted
+- Upload a Word file (.docx) to keep your own design, or a PDF or TXT file for the Cover Me layout
+- The extension extracts the text client-side. A Word file is kept in your browser so tailored resumes can be written into it (Pro also keeps it in the account, encrypted, for the dashboard); a PDF or TXT file is never stored or transmitted
 
 ### 3. Generate
 
@@ -430,6 +430,11 @@ supabase functions deploy resume
 supabase functions deploy letters
 supabase functions deploy applications
 supabase functions deploy billing
+supabase functions deploy email-preferences
+supabase functions deploy nudge
+supabase functions deploy support
+supabase functions deploy scrape
+supabase functions deploy site-request
 ```
 
 ### 7. Set up Stripe
@@ -521,7 +526,13 @@ Turn on the website's button only once users have an extension build with Google
 | `STRIPE_SECRET_KEY` | Stripe secret key |
 | `STRIPE_PRO_PRICE_ID` | Stripe price ID for Pro, $15/month (checkout) |
 | `STRIPE_PRO_QUARTERLY_PRICE_ID` | Stripe price ID for Pro, $35 every 3 months (checkout) |
-| `SITE_URL` | Your web dashboard URL (Stripe return pages) |
+| `SITE_URL` | Your web dashboard URL (Stripe return pages, unsubscribe links) |
+| `EMAIL_TOKEN_SECRET` | Signs unsubscribe links. Never change it: links already sent would stop working |
+| `NUDGE_SECRET` | Shared with the `NUDGE_SECRET` GitHub secret; the daily follow-up workflow calls `nudge` with it |
+| `NUDGE_ENABLED` | `true` to let `nudge` send the follow-up email; anything else sends nothing |
+| `RESEND_API_KEY` | Resend API key, for the follow-up email and the dashboard's support form (`support` answers 503 without it) |
+| `POSTHOG_KEY` | PostHog project token for server-side counts (`tailor_run`, `scrape_failed`) and the extension's site requests and bug reports. Optional: without it nothing is sent |
+| `POSTHOG_SITE_SURVEY_ID` | ID of a PostHog survey in API mode with three open-text questions: type, site, page URL. `site-request` records the extension's "Request this site" and "Report bug" presses there; without it they're accepted and dropped |
 
 **Web dashboard** (`web/.env.local`):
 

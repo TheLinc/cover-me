@@ -4,14 +4,17 @@ import { downloadCoverLetterPdf } from '../../lib/pdf/cover-letter'
 import { downloadTailoredResumePdf } from '../../lib/pdf/resume'
 import { letterSteps, tailorSteps } from '../../lib/progress-steps'
 import { openResumeEditor } from '../../lib/resume-edit'
+import { downloadResumeWord, usesDesign } from '../../lib/design'
 import { getCandidateContext, getTailoredHistory, resolveMode, saveCandidateContext } from '../../lib/storage'
 import GapChips from '../components/GapChips'
 import PageReadNotice from '../components/PageReadNotice'
 import ProgressSteps from '../components/ProgressSteps'
 import ReviewAsk, { claimReviewAsk } from '../components/ReviewAsk'
+import ScrapeFailurePanel, { type ShownFailure } from '../components/ScrapeFailure'
 import ScoreRing from '../components/ScoreRing'
 import UpgradeButton from '../components/UpgradeButton'
-import type { AuthSession, CoverJob, GenerateResponse, JobData, Settings, ScrapeResponse, TailorJob, TailorResponse, TailoredResume } from '../../types'
+import { WhatsNewLink } from '../components/WhatsNew'
+import type { AuthSession, CoverJob, GenerateResponse, JobData, ResumeData, Settings, ScrapeFailure, ScrapeResponse, TailorJob, TailorResponse, TailoredResume } from '../../types'
 import logoIcon from '../../public/icon/48.png'
 import type { Page } from '../App'
 
@@ -68,9 +71,14 @@ interface TailorOptionsProps {
   setTrim: (v: boolean) => void
   includeSummary: boolean
   setIncludeSummary: (v: boolean) => void
+  // A Word upload's layout (#131); null without one.
+  design: { yours: boolean; summary: boolean } | null
+  onChangeLayout: () => void
 }
 
-function TailorOptions({ inputMode, manualReady, onTailor, compact, setCompact, trim, setTrim, includeSummary, setIncludeSummary }: TailorOptionsProps) {
+function TailorOptions({ inputMode, manualReady, onTailor, compact, setCompact, trim, setTrim, includeSummary, setIncludeSummary, design, onChangeLayout }: TailorOptionsProps) {
+  // The user's file sets the page: no compacting, and a summary only where the file has one.
+  const yours = !!design?.yours
   return (
     <div className="tailor-section">
       <button className="btn btn-secondary" onClick={onTailor} disabled={inputMode === 'manual' ? !manualReady : false}>
@@ -84,10 +92,17 @@ function TailorOptions({ inputMode, manualReady, onTailor, compact, setCompact, 
         Tailor Resume to Job
       </button>
       <div className="tailor-options">
-        <label className="compact-toggle">
-          <input type="checkbox" checked={compact} onChange={e => setCompact(e.target.checked)} />
-          Compact to one page
-        </label>
+        {design && (
+          <p className="layout-line">
+            Layout: {yours ? 'Your design' : 'Cover Me layout'} · <button type="button" className="upload-link" onClick={onChangeLayout}>Change</button>
+          </p>
+        )}
+        {!yours && (
+          <label className="compact-toggle">
+            <input type="checkbox" checked={compact} onChange={e => setCompact(e.target.checked)} />
+            Compact to one page
+          </label>
+        )}
         <div className="toggle-row">
           <label className="compact-toggle">
             <input type="checkbox" checked={trim} onChange={e => setTrim(e.target.checked)} />
@@ -100,7 +115,7 @@ function TailorOptions({ inputMode, manualReady, onTailor, compact, setCompact, 
             data-tooltip="Best for long master resumes with all your experience — the AI selects only the bullets most relevant to the role being applied for."
           >?</button>
         </div>
-        <div className="toggle-row">
+        {(!yours || design?.summary) && <div className="toggle-row">
           <label className="compact-toggle">
             <input type="checkbox" checked={includeSummary} onChange={e => setIncludeSummary(e.target.checked)} />
             Include summary
@@ -111,7 +126,7 @@ function TailorOptions({ inputMode, manualReady, onTailor, compact, setCompact, 
             aria-label="Adds a 2-3 sentence professional summary tailored to the role. Turn off if your resume already has one or the role prefers none."
             data-tooltip="Adds a 2-3 sentence professional summary tailored to the role. Turn off if your resume already has one or the role prefers none."
           >?</button>
-        </div>
+        </div>}
       </div>
     </div>
   )
@@ -144,12 +159,16 @@ export default function GeneratePage({ onNavigate }: Props) {
   const [trim, setTrim] = useState(false)
   const [includeSummary, setIncludeSummary] = useState(true)
   const [loadingJob, setLoadingJob] = useState<JobData | null>(null)
+  // The last click read no job (#130). Saved, so it survives the popup closing
+  // while the user copies the posting.
+  const [scrapeFailure, setScrapeFailure] = useState<ShownFailure | null>(null)
 
   const [manualTitle, setManualTitle] = useState('')
   const [manualCompany, setManualCompany] = useState('')
   const [manualDescription, setManualDescription] = useState('')
 
   const [hasResume, setHasResume] = useState<boolean | null>(null)
+  const [resumeData, setResumeData] = useState<ResumeData | null>(null)
   const [hasApiKey, setHasApiKey] = useState<boolean | null>(null)
   const [hasSession, setHasSession] = useState<boolean | null>(null)
   const [appMode, setAppMode] = useState<'byok' | 'hosted'>('hosted')
@@ -172,6 +191,7 @@ export default function GeneratePage({ onNavigate }: Props) {
     chrome.storage.local.get(['generatePage', 'resume', 'settings', 'session', 'coverJob', 'tailorJob']).then((r) => {
       const storedSettings = r.settings as Settings | undefined
       setHasResume(!!r.resume)
+      setResumeData((r.resume as ResumeData | undefined) ?? null)
       setHasApiKey(!!(storedSettings?.apiKey))
       setHasSession(!!(r.session as AuthSession | undefined)?.access_token)
       setAppMode(resolveMode(storedSettings))
@@ -181,6 +201,19 @@ export default function GeneratePage({ onNavigate }: Props) {
       let restoredTailorDone = false
       if (s) {
         if (s.inputMode) setInputMode(s.inputMode as InputMode)
+        // Only on the tab it's about, still on that site (an unsupported one)
+        // or that page (a bug report is about one URL). Elsewhere it's dropped,
+        // and the paste form it opened closes unless the user started filling it in.
+        const failure = s.scrapeFailure as ShownFailure | undefined
+        if (failure) {
+          void chrome.tabs.query({ active: true, currentWindow: true }).then(([tab]) => {
+            const same = failure.reason === 'unsupported'
+              ? (tab?.url && URL.canParse(tab.url) ? new URL(tab.url).hostname : undefined) === (failure.tabUrl && new URL(failure.tabUrl).hostname)
+              : tab?.url === failure.tabUrl
+            if (tab?.id === failure.tabId && same) setScrapeFailure(failure)
+            else if (!s.manualTitle && !s.manualDescription) setInputMode('auto')
+          })
+        }
         if (s.manualTitle) setManualTitle(s.manualTitle as string)
         if (s.manualCompany) setManualCompany(s.manualCompany as string)
         if (s.manualDescription) setManualDescription(s.manualDescription as string)
@@ -256,6 +289,11 @@ export default function GeneratePage({ onNavigate }: Props) {
   useEffect(() => {
     function handler(changes: { [key: string]: chrome.storage.StorageChange }, area: string) {
       if (area !== 'local') return
+      // The design check finishes in the worker while the popup stays open.
+      if (changes.resume) {
+        setResumeData((changes.resume.newValue as ResumeData | undefined) ?? null)
+        setHasResume(!!changes.resume.newValue)
+      }
       if (changes.coverJob) {
         const cj = changes.coverJob.newValue as CoverJob | undefined
         if (cj && cj.id !== coverDismissedId.current) {
@@ -310,7 +348,7 @@ export default function GeneratePage({ onNavigate }: Props) {
     if (tailorState === 'loading') return
     chrome.storage.local.set({
       generatePage: {
-        state, inputMode, manualTitle, manualCompany, manualDescription, letter, job, createdAt,
+        state, inputMode, scrapeFailure, manualTitle, manualCompany, manualDescription, letter, job, createdAt,
         compact, trim, includeSummary,
         tailorState: tailorState === 'done' ? 'done' : 'idle',
         tailoredResume: tailorState === 'done' ? tailoredResume : null,
@@ -323,7 +361,7 @@ export default function GeneratePage({ onNavigate }: Props) {
         tailorDismissedId: tailorDismissedId.current,
       },
     })
-  }, [state, inputMode, manualTitle, manualCompany, manualDescription, letter, job, createdAt, compact, trim, includeSummary, tailorState, tailoredResume, tailoredJob, tailoredEntryId, supplemental, letterSupplemental, activeResultTab])
+  }, [state, inputMode, scrapeFailure, manualTitle, manualCompany, manualDescription, letter, job, createdAt, compact, trim, includeSummary, tailorState, tailoredResume, tailoredJob, tailoredEntryId, supplemental, letterSupplemental, activeResultTab])
 
   // Edited in the editor tab since this page saved it: show the edit.
   useEffect(() => {
@@ -342,7 +380,18 @@ export default function GeneratePage({ onNavigate }: Props) {
     saveCandidateContext(initialContext)
   }, [initialContext])
 
+  // An unsupported site opens the paste form straight away; the other cases
+  // offer it beside a report or a retry.
+  const markReported = () => setScrapeFailure((f) => f && { ...f, reported: true })
+
+  async function showScrapeFailure(failure: ScrapeFailure, flow: ShownFailure['flow']) {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+    setScrapeFailure({ ...failure, flow, tabId: tab?.id, tabUrl: tab?.url })
+    setInputMode(failure.reason === 'unsupported' ? 'manual' : 'auto')
+  }
+
   async function generate() {
+    setScrapeFailure(null)
     setState('loading')
     setLoadingJob(null)
     setError('')
@@ -350,6 +399,7 @@ export default function GeneratePage({ onNavigate }: Props) {
     let scrapedJob: JobData
     try {
       const scrape = (await chrome.runtime.sendMessage({ type: 'SCRAPE_TAB' })) as ScrapeResponse
+      if (!scrape.success && scrape.failure) { await showScrapeFailure(scrape.failure, 'letter'); setState('idle'); return }
       if (!scrape.success) { setError(scrape.error); setState('error'); return }
       scrapedJob = scrape.job
       setLoadingJob(scrapedJob)
@@ -377,6 +427,7 @@ export default function GeneratePage({ onNavigate }: Props) {
       description: manualDescription.trim(),
       url: '',
     }
+    setScrapeFailure(null)
     setState('loading')
     setLoadingJob(jobData)
     setError('')
@@ -422,6 +473,12 @@ export default function GeneratePage({ onNavigate }: Props) {
     askForReview()
   }
 
+  async function downloadResumeDocx() {
+    if (!tailoredResume || !tailoredJob) return
+    await downloadResumeWord(tailoredResume, tailoredJob.title)
+    askForReview()
+  }
+
   async function regenerateLetter() {
     if (!job) return
     setState('loading')
@@ -454,6 +511,7 @@ export default function GeneratePage({ onNavigate }: Props) {
   }
 
   async function tailor() {
+    setScrapeFailure(null)
     setTailorState('loading')
     setTailorProgress('') // a new run starts at the top, whatever the last one reached
     setLoadingJob(null)
@@ -461,6 +519,7 @@ export default function GeneratePage({ onNavigate }: Props) {
     let scrapedJob: JobData
     try {
       const scrape = (await chrome.runtime.sendMessage({ type: 'SCRAPE_TAB' })) as ScrapeResponse
+      if (!scrape.success && scrape.failure) { await showScrapeFailure(scrape.failure, 'tailor'); setTailorState('idle'); return }
       if (!scrape.success) { setTailorError(scrape.error); setTailorState('error'); return }
       scrapedJob = scrape.job
       setLoadingJob(scrapedJob)
@@ -488,6 +547,7 @@ export default function GeneratePage({ onNavigate }: Props) {
       description: manualDescription.trim(),
       url: '',
     }
+    setScrapeFailure(null)
     setTailorState('loading')
     setTailorProgress('') // a new run starts at the top, whatever the last one reached
     setLoadingJob(jobData)
@@ -570,6 +630,7 @@ export default function GeneratePage({ onNavigate }: Props) {
   function resetToNew() {
     setState('idle')
     setInputMode('auto')
+    setScrapeFailure(null)
     setLetter('')
     setJob(null)
     setCreatedAt('')
@@ -586,6 +647,7 @@ export default function GeneratePage({ onNavigate }: Props) {
   function resetAll() {
     setState('idle')
     setInputMode('auto')
+    setScrapeFailure(null)
     setLetter('')
     setJob(null)
     setCreatedAt('')
@@ -605,6 +667,7 @@ export default function GeneratePage({ onNavigate }: Props) {
     chrome.storage.local.remove('tailorJob')
   }
 
+  const designOption = resumeData?.design ? { yours: usesDesign(resumeData), summary: !!resumeData.design.check?.summary } : null
   const manualReady = manualTitle.trim().length > 0 && manualDescription.trim().length > 0
   const isReady = appMode === 'hosted' ? hasSession === true : hasApiKey === true
   const setupComplete = hasResume === true && isReady
@@ -627,6 +690,7 @@ export default function GeneratePage({ onNavigate }: Props) {
       <header className="popup-bar">
         <img src={logoIcon} width="20" height="20" alt="" className="logo-icon" />
         <span className="logo-text">Cover Me</span>
+        <WhatsNewLink />
         {/* Mounted once saved state has loaded (so reopening the popup doesn't
             announce "Done"), then kept, so screen readers hear each change. */}
         {setupLoaded && <span className="popup-status" role="status">{status}</span>}
@@ -713,7 +777,7 @@ export default function GeneratePage({ onNavigate }: Props) {
           {(state === 'loading' || tailorState === 'loading') && (
             <div className="loading">
               <ProgressSteps
-                steps={state === 'loading' ? letterSteps(!!loadingJob) : tailorSteps(tailorProgress, !!loadingJob, includeSummary)}
+                steps={state === 'loading' ? letterSteps(!!loadingJob) : tailorSteps(tailorProgress, !!loadingJob, includeSummary && !(designOption?.yours && !designOption.summary))}
               />
               {loadingJob && (
                 <div className="loading-job-preview">
@@ -738,8 +802,18 @@ export default function GeneratePage({ onNavigate }: Props) {
           {/* ── NON-LOADING CONTENT ── */}
           {state !== 'loading' && tailorState !== 'loading' && (
             <>
+              {/* IDLE — AUTO, after a click that read no job */}
+              {state === 'idle' && tailorState === 'idle' && inputMode === 'auto' && scrapeFailure && (
+                <ScrapeFailurePanel
+                  failure={scrapeFailure}
+                  onReported={markReported}
+                  onPaste={() => setInputMode('manual')}
+                  onRetry={scrapeFailure.flow === 'letter' ? generate : tailor}
+                />
+              )}
+
               {/* IDLE — AUTO */}
-              {state === 'idle' && tailorState === 'idle' && inputMode === 'auto' && (
+              {state === 'idle' && tailorState === 'idle' && inputMode === 'auto' && !scrapeFailure && (
                 <div className="generate-cta">
                   <ContextExpander
                     contextExpanded={contextExpanded}
@@ -763,6 +837,8 @@ export default function GeneratePage({ onNavigate }: Props) {
                     setTrim={setTrim}
                     includeSummary={includeSummary}
                     setIncludeSummary={setIncludeSummary}
+                    design={designOption}
+                    onChangeLayout={() => onNavigate('resume')}
                   />
                   <p className="generate-hint">
                     Open a job posting on LinkedIn, Indeed, or any careers page, then click Generate.
@@ -776,9 +852,12 @@ export default function GeneratePage({ onNavigate }: Props) {
               {/* IDLE — MANUAL */}
               {state === 'idle' && tailorState === 'idle' && inputMode === 'manual' && (
                 <div className="manual-form">
-                  <button className="manual-back" onClick={() => setInputMode('auto')}>
+                  <button className="manual-back" onClick={() => { setInputMode('auto'); setScrapeFailure(null) }}>
                     ← Auto-detect
                   </button>
+                  {scrapeFailure && scrapeFailure.reason !== 'not_web' && (
+                    <ScrapeFailurePanel failure={scrapeFailure} onReported={markReported} />
+                  )}
                   <div className="form-group">
                     <label className="form-label">Job Title *</label>
                     <input
@@ -831,6 +910,8 @@ export default function GeneratePage({ onNavigate }: Props) {
                       setTrim={setTrim}
                       includeSummary={includeSummary}
                       setIncludeSummary={setIncludeSummary}
+                      design={designOption}
+                      onChangeLayout={() => onNavigate('resume')}
                     />
                   </div>
                 </div>
@@ -999,18 +1080,45 @@ export default function GeneratePage({ onNavigate }: Props) {
                       onChange={e => setSupplemental(e.target.value)}
                     />
                   </div>
-                  <div className="letter-actions">
-                    <button
-                      className="btn btn-primary"
-                      onClick={downloadResumePdf}
-                    >
+                  {tailoredResume.designFellBack && (
+                    <p className="hint">Your file&apos;s layout couldn&apos;t be edited safely, so this one uses the Cover Me layout.</p>
+                  )}
+                  <div className={`letter-actions${tailoredResume.sourceHash ? ' design-actions' : ''}`}>
+                    {/* Tailored in the user's own file (#131): their Word file leads. */}
+                    {tailoredResume.sourceHash ? (
+                      <>
+                        <button className="btn btn-primary" onClick={() => void downloadResumeDocx()}>
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
                         <polyline points="7 10 12 15 17 10" />
                         <line x1="12" y1="15" x2="12" y2="3" />
                       </svg>
-                      Download PDF
-                    </button>
+                          Word (your design)
+                        </button>
+                        <button className="btn btn-secondary btn-compact" onClick={downloadResumePdf}>
+                          PDF (Cover Me layout)
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button className="btn btn-primary" onClick={downloadResumePdf}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                      </svg>
+                          PDF
+                        </button>
+                        <button className="btn btn-secondary btn-compact" onClick={() => void downloadResumeDocx()}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                      </svg>
+                          Word
+                        </button>
+                      </>
+                    )}
                     {tailoredEntryId && (
                       <button className="btn btn-secondary btn-compact" onClick={() => openResumeEditor(tailoredEntryId)}>
                         Edit

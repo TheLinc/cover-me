@@ -8,9 +8,15 @@ importers:
 
   .:
     dependencies:
+      docx:
+        specifier: ^9.15.2
+        version: 9.15.2
       jspdf:
         specifier: ^4.2.1
         version: 4.2.1
+      jszip:
+        specifier: ^3.10.1
+        version: 3.10.1
       mammoth:
         specifier: ^1.8.0
         version: 1.12.0
@@ -929,6 +935,10 @@ packages:
   dingbat-to-unicode@1.0.1:
     resolution: {integrity: sha512-98l0sW87ZT58pU4i61wa2OHwxbiYSbuxsCBozaVnYX2iCnr3bLM3fIes1/ej7h1YdOKuKt/MLs706TVnALA65w==}
 
+  docx@9.15.2:
+    resolution: {integrity: sha512-G/R41dlYE5RS3TG2ybX1DIodQv+TchMspmdvrrovFyzTpvLZe0pLKVqiGosBhZszLkRonrK9+zxJDPWHDYx4NA==}
+    engines: {node: '>=16'}
+
   dom-serializer@2.0.0:
     resolution: {integrity: sha512-wIkAryiqt/nV5EQKqQpo3SToSOV9J0DnbJqwK7Wv/Trc92zIAYZ4FlMu+JPFW1DfGFt81ZTCGgDEabffXeLyJg==}
 
@@ -1169,6 +1179,11 @@ packages:
   nanoid@3.3.12:
     resolution: {integrity: sha512-ZB9RH/39qpq5Vu6Y+NmUaFhQR6pp+M2Xt76XBnEwDaGcVAqhlvxrl3B2bKS5D3NH3QR76v3aSrKaF/Kiy7lEtQ==}
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
+    hasBin: true
+
+  nanoid@6.0.2:
+    resolution: {integrity: sha512-hIvVOb9Qr1p/9CNNLOe0OlWvgx/ziTsVwKN/GDSsuArN2K0wDiafP3s0SWmsm7o2BdnyS8Z9Z64NFBUbn6ziBg==}
+    engines: {node: ^22 || ^24 || >=26}
     hasBin: true
 
   node-html-parser@7.1.0:
@@ -1990,7 +2005,6 @@ snapshots:
   '@types/node@26.6.4':
     dependencies:
       undici-types: 8.9.0
-    optional: true
 
   '@types/pako@2.0.4': {}
 
@@ -2192,6 +2206,12 @@ snapshots:
   deep-eql@5.0.2: {}
 
   dingbat-to-unicode@1.0.1: {}
+
+  docx@9.15.2:
+    dependencies:
+      '@types/node': 26.6.4
+      fflate: 0.8.3
+      nanoid: 6.0.2
 
   dom-serializer@2.0.0:
     dependencies:
@@ -2495,6 +2515,8 @@ snapshots:
 
   nanoid@3.3.12: {}
 
+  nanoid@6.0.2: {}
+
   node-html-parser@7.1.0:
     dependencies:
       css-select: 5.2.2
@@ -2703,8 +2725,7 @@ snapshots:
 
   underscore@1.13.8: {}
 
-  undici-types@8.9.0:
-    optional: true
+  undici-types@8.9.0: {}
 
   universalify@2.0.1: {}
 

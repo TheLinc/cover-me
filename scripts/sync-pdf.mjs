@@ -1,5 +1,5 @@
-// The letter and resume PDFs are built in two places: the extension and the
-// website's dashboard. The website gets a byte-identical copy of the
+// The letter and resume PDFs, and the resume's Word file, are built in two
+// places: the extension and the website's dashboard. The website gets a byte-identical copy of the
 // extension's folder.
 //
 //   node scripts/sync-pdf.mjs           copy extension -> web

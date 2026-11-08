@@ -1,6 +1,6 @@
 {
   "name": "cover-me-extension",
-  "version": "1.3.2",
+  "version": "1.6.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -16,7 +16,9 @@
     "e2e:scrape": "tsx scripts/e2e-scrape.ts"
   },
   "dependencies": {
+    "docx": "^9.15.2",
     "jspdf": "^4.2.1",
+    "jszip": "^3.10.1",
     "mammoth": "^1.8.0",
     "pdfjs-dist": "^4.9.155",
     "react": "^18.3.1",

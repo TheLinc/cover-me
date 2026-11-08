@@ -10,7 +10,10 @@ export interface Settings {
 export type { JobData } from '../content/scrapers/types.ts'
 import type { ResumeEducation, ResumeExperience, ResumeProject, ResumeSection, TailoredResume } from '../lib/pdf/types'
 export type { ResumeEducation, ResumeExperience, ResumeProject, ResumeSection, TailoredResume } from '../lib/pdf/types'
+import type { DesignCheck } from '../lib/pdf/docx-design'
+export type { DesignCheck } from '../lib/pdf/docx-design'
 import type { PageSnapshot } from '../content/snapshot.ts'
+import type { ScraperName } from '../content/scrapers/index.ts'
 import type { JobData } from '../content/scrapers/types.ts'
 
 export interface CoverLetter {
@@ -67,6 +70,19 @@ export interface ResumeData {
   // Uploaded while signed out after an account was here. A sign-in never
   // uploads it: on a shared browser it may be someone else's.
   signedOutUpload?: boolean
+  // A Word upload, kept so tailoring can edit the user's own design (#131).
+  // The file itself is in the design file store, under this hash.
+  design?: {
+    hash: string
+    size: number // bytes; over 2 MB the account's dashboard uses the Cover Me layout
+    status: 'checking' | 'done' | 'error'
+    checkedAt?: string // when the check started; a stale one shows "Try again"
+    check?: DesignCheck
+    error?: string
+    uploaded?: boolean // in the Pro account, for the dashboard
+  }
+  // The layout picked on the resume page. Missing: "Your design" whenever its check passes.
+  layout?: 'yours' | 'cover-me'
 }
 
 export type GenerateResponse =
@@ -79,7 +95,18 @@ export type TailorResponse =
 
 export type ScrapeResponse =
   | { success: true; job: JobData }
-  | { success: false; error: string }
+  | { success: false; error: string; failure?: ScrapeFailure }
+
+// Why a click read no job (background/scrape-failure.ts), for the popup's
+// request and report screens (#130). host: without a leading www., empty for
+// not_web. url and scraper: the failing page, only for a supported board.
+export interface ScrapeFailure {
+  reason: 'unsupported' | 'failed' | 'not_web'
+  host: string
+  url?: string
+  scraper?: ScraperName
+  error: string
+}
 
 // A frame's content script answer: its bundled scrapers' result (the offline
 // fallback) plus the page for the scrape Edge Function, null when it can't be

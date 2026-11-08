@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
-  admin, cacheParsedResume, callFunction, clearParsedResume, createUser, deleteUser, JOB, LONG_RESUME_TEXT, mockClaude, quotaUsedToday, setQuotaUsedToday, setUsage, type TestUser, uploadResume,
+  admin, cacheParsedResume, callFunction, clearParsedResume, createUser, deleteUser, JOB, LONG_RESUME_TEXT, mockClaude, mockPosthog, quotaUsedToday, setQuotaUsedToday, setUsage, type TestUser, uploadResume,
 } from './helpers'
 import { MOCK_PARSED_RESUME, MOCK_REWRITTEN_BULLET, MOCK_TAILOR_DELTA, MOCK_THINKING } from '../mock-anthropic'
 
@@ -225,6 +225,36 @@ describe('tailor', () => {
     expect(data?.[0].ats_score).toBe(77)
     expect(data?.[0].ats_gaps).toEqual(['Kafka'])
     expect(data?.[0].job_application_id).toBeTruthy()
+  })
+
+  it("tailored in the user's Word file: the hash goes on the result and the Pro copy, and the run is counted", async () => {
+    user = await createUser('hosted_pro')
+    await uploadResume(user)
+    const sourceHash = 'f'.repeat(64)
+
+    const res = await callFunction('tailor', { token: user.token, body: { job: JOB, trim: true, layout: 'yours', fellBack: false, sourceHash } })
+    expect((await res.json()).resume.sourceHash).toBe(sourceHash)
+    const { data } = await admin.from('tailored_resumes').select('source_hash').eq('user_id', user.id)
+    expect(data?.[0].source_hash).toBe(sourceHash)
+
+    // Sent behind the response.
+    let events = await mockPosthog.events()
+    for (let i = 0; i < 20 && events.length === 0; i++) events = await new Promise((r) => setTimeout(r, 100)).then(mockPosthog.events)
+    expect(events).toEqual([{
+      api_key: 'phc_mock',
+      event: 'tailor_run',
+      distinct_id: user.id,
+      properties: { tier: 'hosted_pro', compact: false, trim: true, includeSummary: true, layout: 'yours', fellBack: false, $process_person_profile: false },
+    }])
+  })
+
+  it('a run that fell back to the Cover Me layout keeps no hash', async () => {
+    user = await createUser('hosted_pro')
+    await uploadResume(user)
+    const res = await callFunction('tailor', { token: user.token, body: { job: JOB, layout: 'yours', fellBack: true, sourceHash: 'f'.repeat(64) } })
+    expect((await res.json()).resume.sourceHash).toBeUndefined()
+    const { data } = await admin.from('tailored_resumes').select('source_hash').eq('user_id', user.id)
+    expect(data?.[0].source_hash).toBeNull()
   })
 
   it("puts a free account's job on the board, but keeps its resume out of the account", async () => {

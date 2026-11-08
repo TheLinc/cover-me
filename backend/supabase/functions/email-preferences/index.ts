@@ -63,11 +63,11 @@ Deno.serve(async (req) => {
   if (source !== 'signup' && source !== 'dashboard') return json({ error: 'Unknown source' }, 400)
 
   // A signup choice comes right after a Google signup. Later, the dashboard
-  // is the way in, so a replayed signup request can't forge consent.
+  // (now Settings) is the way in, so a replayed signup request can't forge consent.
   if (source === 'signup') {
     const { data: row } = await supabase.from('users').select('created_at').eq('id', user.id).single()
     if (!row || Date.now() - Date.parse(row.created_at as string) > SIGNUP_WINDOW_MS) {
-      return json({ error: 'Choose this from your dashboard.' }, 400)
+      return json({ error: 'Choose this in your Settings on cover-me.dev.' }, 400)
     }
   }
 

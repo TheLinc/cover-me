@@ -28,7 +28,7 @@ export const GUIDES: Guide[] = [
     title: 'How to tailor your resume to a job description',
     description: 'A five-step method for matching your resume to one posting: find the must-have keywords, use the posting\'s wording where it is true, rewrite the right bullets, and never add skills you lack.',
     date: '2026-07-06',
-    updated: '2026-10-29',
+    updated: '2026-11-07',
   },
   {
     slug: 'cover-me-vs-aiapply',
@@ -48,6 +48,7 @@ export const GUIDES: Guide[] = [
     title: 'Cover Me vs Teal: a cheaper Teal+ alternative',
     description: 'Teal is a resume builder and job tracker, with Teal+ at $29 every 30 days. Cover Me tailors the resume you already have to each posting, free with your own API key or $15 a month.',
     date: '2026-10-29',
+    updated: '2026-11-07',
   },
   {
     slug: 'use-your-own-api-key-for-cover-letters',
@@ -60,6 +61,18 @@ export const GUIDES: Guide[] = [
     title: 'How to make your resume ATS friendly: I tested 6 formats in 4 ATSs',
     description: 'One resume in six formats, uploaded to Lever, Workday, Ashby and SmartRecruiters. Workday read nothing from an image PDF, Ashby cut a link out of a two-column design, and SmartRecruiters mixed skills into a degree from a table.',
     date: '2026-10-31',
+  },
+  {
+    slug: 'cover-me-vs-rezi',
+    title: 'Cover Me vs Rezi: tailor the resume you already have',
+    description: 'Rezi is an AI resume builder, with Pro at $29 a month or Lifetime at $149 once. Cover Me tailors the resume you already have to each posting, free with your own API key or $15 a month.',
+    date: '2026-11-07',
+  },
+  {
+    slug: 'tailor-resume-in-word',
+    title: 'How to tailor your resume in Word without losing its formatting',
+    description: 'Change the words inside the paragraphs your resume already has, and leave the paragraphs alone. What breaks a Word design, how to tailor by hand, and a tested run with Cover Me.',
+    date: '2026-11-07',
   },
 ]
 

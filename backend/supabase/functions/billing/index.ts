@@ -1,17 +1,15 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { handleCors, json } from '../_shared/cors.ts'
+import { stripe, StripeError } from '../_shared/stripe.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SECRET_KEY = Deno.env.get('SERVICE_KEY')!
-const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY')!
 // Pro at $15/month or $35 every 3 months (relaunch pricing, 2026-10-08).
 const PRICES = {
   monthly: Deno.env.get('STRIPE_PRO_PRICE_ID')!,
   quarterly: Deno.env.get('STRIPE_PRO_QUARTERLY_PRICE_ID')!,
 } as const
 const SITE_URL = (Deno.env.get('SITE_URL') || 'https://www.cover-me.dev').replace(/\/+$/, '')
-// Unset in production. The local test run points it at the mock server.
-const STRIPE_BASE = (Deno.env.get('STRIPE_API_BASE') || 'https://api.stripe.com').replace(/\/+$/, '')
 
 // Subscriptions that still bill (or retry) the card. Checkout on top of one
 // of these would charge the customer twice.
@@ -32,34 +30,6 @@ const CODE_ERRORS = {
   used: { status: 409, error: 'This link has already been used.' },
   expired: { status: 410, error: 'This link has expired.' },
   accountUsed: { status: 409, error: 'This account has already used a free trial.' },
-}
-
-class StripeError extends Error {
-  constructor(readonly status: number, readonly code: string | undefined, path: string) {
-    super(`Stripe ${path} returned ${status}${code ? ` (${code})` : ''}`)
-  }
-}
-
-async function stripe(
-  path: string,
-  params: Record<string, string>,
-  opts: { method?: 'GET' | 'POST'; idempotencyKey?: string } = {},
-) {
-  const method = opts.method ?? 'POST'
-  const headers: Record<string, string> = { Authorization: `Bearer ${STRIPE_SECRET_KEY}` }
-  let url = `${STRIPE_BASE}/v1/${path}`
-  let body: URLSearchParams | undefined
-  if (method === 'GET') {
-    url += `?${new URLSearchParams(params)}`
-  } else {
-    headers['Content-Type'] = 'application/x-www-form-urlencoded'
-    body = new URLSearchParams(params)
-  }
-  if (opts.idempotencyKey) headers['Idempotency-Key'] = opts.idempotencyKey
-  const res = await fetch(url, { method, headers, body })
-  const data = await res.json().catch(() => ({}))
-  if (!res.ok) throw new StripeError(res.status, data?.error?.code, path)
-  return data
 }
 
 type Db = ReturnType<typeof createClient>

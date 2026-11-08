@@ -76,17 +76,20 @@ export function parseUpload(body: unknown, now = Date.now()): Upload | { error: 
   return upload
 }
 
-// The ATS columns tailor stores, read from an uploaded resume. Anything that
-// isn't a 0-100 score, a list of strings or a readable date is left empty.
-// editedAt is set by the extension's editor (#118) on a resume edited before
-// it reached the account.
-export function atsColumns(resume: Record<string, unknown>): { ats_score: number | null; ats_gaps: string[] | null; edited_at: string | null } {
+// The plain columns tailor stores, read from an uploaded resume: the ATS
+// score and gaps, the hash of the Word file it was tailored in (#131), and
+// when the extension's editor last changed it (#118), for a resume edited
+// before it reached the account. Anything that isn't a 0-100 score, a list of
+// strings, a SHA-256 or a readable date is left empty.
+export function resumeColumns(resume: Record<string, unknown>): { ats_score: number | null; ats_gaps: string[] | null; source_hash: string | null; edited_at: string | null } {
   const score = resume.atsScore
   const gaps = resume.atsGaps
+  const hash = resume.sourceHash
   const edited = typeof resume.editedAt === 'string' ? Date.parse(resume.editedAt) : NaN
   return {
     ats_score: typeof score === 'number' && score >= 0 && score <= 100 ? Math.round(score) : null,
     ats_gaps: Array.isArray(gaps) && gaps.every((g) => typeof g === 'string') ? gaps as string[] : null,
+    source_hash: typeof hash === 'string' && /^[0-9a-f]{64}$/.test(hash) ? hash : null,
     edited_at: Number.isNaN(edited) ? null : new Date(Math.min(edited, Date.now())).toISOString(),
   }
 }

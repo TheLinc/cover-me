@@ -17,7 +17,9 @@ const buttonVariants = cva(
       },
       size: {
         default: 'h-10 px-5 py-2',
-        sm:      'h-9 px-4 text-[13px]',
+        // leading-5: text-[13px] replaces text-sm, and its 20px line height with it.
+        // Without one the label inherits the page's and sits up to 1px off center.
+        sm:      'h-9 px-4 text-[13px] leading-5',
         lg:      'h-12 px-6 text-[15px]',
         icon:    'h-10 w-10',
       },

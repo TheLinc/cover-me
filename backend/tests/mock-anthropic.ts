@@ -11,7 +11,14 @@
 //   POST /__mock/reset         clears recorded requests and queued failures
 //   POST /v1/customers, /v1/subscriptions, /v1/checkout/sessions, /v1/billing_portal/sessions
 //   GET  /v1/subscriptions     Stripe stand-ins (billing function, via STRIPE_API_BASE)
+//   DELETE /v1/customers/:id   Stripe stand-in (account function)
 //   GET  /__mock/stripe        every Stripe call received since the last reset
+//   POST /emails               Resend stand-in (nudge function, via RESEND_API_BASE)
+//   GET  /__mock/emails        every email sent since the last reset
+//   POST /__mock/email-fail-next { status } → the next POST /emails fails
+//   POST /__mock/email-drop-next       → the next POST /emails has its connection cut
+//   POST /i/v0/e/              PostHog stand-in (tailor's tailor_run event, via POSTHOG_HOST)
+//   GET  /__mock/posthog       every PostHog event received since the last reset
 
 import { createServer, type IncomingMessage, type Server } from 'node:http'
 
@@ -104,14 +111,22 @@ type StripeCall = { path: string; params: Record<string, string>; idempotencyKey
 const stripeCalls: StripeCall[] = []
 // What GET /v1/subscriptions answers: these subscriptions (a bare status or a
 // whole object), or "No such customer". customerError and subscriptionError
-// make the next POST /v1/customers or /v1/subscriptions fail once.
+// make the next POST /v1/customers or /v1/subscriptions fail once, and
+// deleteCustomerError the next DELETE /v1/customers/:id.
 type MockSubscription = string | { id?: string; status: string; trial_end?: number; metadata?: Record<string, string> }
 type StripeFailure = { status: number; code: string } | null
+type SentEmail = { authorization: string | undefined; body: Record<string, unknown> }
+const sentEmails: SentEmail[] = []
+const posthogEvents: Record<string, unknown>[] = []
+let emailFailNext: number | null = null
+let emailDropNext = false
+
 const stripeState = {
   subscriptions: [] as MockSubscription[],
   missingCustomer: false,
   customerError: null as StripeFailure,
   subscriptionError: null as StripeFailure,
+  deleteCustomerError: null as StripeFailure,
 }
 
 function readBody(req: IncomingMessage): Promise<string> {
@@ -169,10 +184,15 @@ export function startMockAnthropic(port: number): Promise<Server> {
     if (req.method === 'POST' && url === '/__mock/reset') {
       received.length = 0
       stripeCalls.length = 0
+      sentEmails.length = 0
+      posthogEvents.length = 0
+      emailFailNext = null
+      emailDropNext = false
       stripeState.subscriptions = []
       stripeState.missingCustomer = false
       stripeState.customerError = null
       stripeState.subscriptionError = null
+      stripeState.deleteCustomerError = null
       failures.length = 0
       delayNext = 0
       streamPause = 0
@@ -281,6 +301,15 @@ export function startMockAnthropic(port: number): Promise<Server> {
       res.writeHead(200, { 'content-type': 'application/json' })
       return res.end(JSON.stringify({ data: stripeState.subscriptions.map((s) => (typeof s === 'string' ? { status: s } : s)) }))
     }
+    if (req.method === 'DELETE' && url.startsWith('/v1/customers/')) {
+      stripeCalls.push({ path: url, params: { method: 'DELETE' }, idempotencyKey: null })
+      const failure = stripeState.deleteCustomerError
+      stripeState.deleteCustomerError = null
+      res.writeHead(failure?.status ?? 200, { 'content-type': 'application/json' })
+      return res.end(JSON.stringify(failure
+        ? { error: { type: 'invalid_request_error', code: failure.code } }
+        : { id: decodeURIComponent(url.slice('/v1/customers/'.length)), object: 'customer', deleted: true }))
+    }
     if (req.method === 'POST' && ['/v1/customers', '/v1/subscriptions', '/v1/checkout/sessions', '/v1/billing_portal/sessions'].includes(url)) {
       const params = Object.fromEntries(new URLSearchParams(await readBody(req)))
       const key = req.headers['idempotency-key']
@@ -301,6 +330,44 @@ export function startMockAnthropic(port: number): Promise<Server> {
         : { url: 'https://billing.stripe.test/portal' }
       res.writeHead(200, { 'content-type': 'application/json' })
       return res.end(JSON.stringify(reply))
+    }
+
+    if (req.method === 'GET' && url === '/__mock/posthog') {
+      res.writeHead(200, { 'content-type': 'application/json' })
+      return res.end(JSON.stringify(posthogEvents))
+    }
+    if (req.method === 'POST' && url === '/i/v0/e/') {
+      posthogEvents.push(JSON.parse(await readBody(req)))
+      res.writeHead(200, { 'content-type': 'application/json' })
+      return res.end('{"status":"Ok"}')
+    }
+    if (req.method === 'GET' && url === '/__mock/emails') {
+      res.writeHead(200, { 'content-type': 'application/json' })
+      return res.end(JSON.stringify(sentEmails))
+    }
+    if (req.method === 'POST' && url === '/__mock/email-fail-next') {
+      emailFailNext = JSON.parse((await readBody(req)) || '{}').status ?? 500
+      return res.writeHead(204).end()
+    }
+    if (req.method === 'POST' && url === '/__mock/email-drop-next') {
+      emailDropNext = true
+      return res.writeHead(204).end()
+    }
+    if (req.method === 'POST' && url === '/emails') {
+      const body = JSON.parse(await readBody(req))
+      if (emailDropNext) {
+        emailDropNext = false
+        return req.socket.destroy()
+      }
+      if (emailFailNext) {
+        const status = emailFailNext
+        emailFailNext = null
+        res.writeHead(status, { 'content-type': 'application/json' })
+        return res.end(JSON.stringify({ name: 'application_error', message: 'mock failure' }))
+      }
+      sentEmails.push({ authorization: req.headers.authorization, body })
+      res.writeHead(200, { 'content-type': 'application/json' })
+      return res.end(JSON.stringify({ id: `email_mock_${sentEmails.length}` }))
     }
 
     res.writeHead(404).end()

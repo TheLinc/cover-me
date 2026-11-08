@@ -70,5 +70,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'weekly',
       priority: 0.5,
     },
+    {
+      url: `${BASE}/changelog`,
+      changeFrequency: 'weekly',
+      priority: 0.5,
+    },
   ]
 }

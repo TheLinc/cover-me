@@ -82,12 +82,31 @@ export function ApplicationDetailsSheet({ app, pro, open, onOpenChange, onClosed
       {detail && detail.tailoredResumes.length < resumes && <p className="text-[13px] text-ink-2">{UNREADABLE}</p>}
       {latest && (
         <>
-          <div className="flex items-center justify-between gap-3">
+          {/* On a phone the date gets its own line, with the buttons under it. */}
+          <div className="flex items-center justify-between gap-3 max-sm:flex-col max-sm:items-start">
             <p className="text-[13px] text-ink-2">Tailored <LocalDate iso={latest.createdAt} options={DATE} /></p>
-            <Button variant="outline" size="sm" className={PILL} onClick={() => download(() => downloadResume(detail!.title, latest.resume))}>
-              <DownloadSimpleIcon size={14} aria-hidden />Download PDF
-            </Button>
+            {/* Tailored in the user's own Word file (#131): that file leads. */}
+            {latest.design ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <Button variant="outline" size="sm" className={PILL} onClick={() => download(() => downloadResume(detail!.title, latest.resume, 'design'))}>
+                  <DownloadSimpleIcon size={14} aria-hidden />Download Word (your design)
+                </Button>
+                <Button variant="outline" size="sm" className={PILL} onClick={() => download(() => downloadResume(detail!.title, latest.resume))}>
+                  <DownloadSimpleIcon size={14} aria-hidden />Download PDF (Cover Me layout)
+                </Button>
+              </div>
+            ) : (
+              <div className="flex flex-wrap items-center gap-2">
+                <Button variant="outline" size="sm" className={PILL} onClick={() => download(() => downloadResume(detail!.title, latest.resume))}>
+                  <DownloadSimpleIcon size={14} aria-hidden />Download PDF
+                </Button>
+                <Button variant="outline" size="sm" className={PILL} onClick={() => download(() => downloadResume(detail!.title, latest.resume, 'docx'))}>
+                  <DownloadSimpleIcon size={14} aria-hidden />Download Word
+                </Button>
+              </div>
+            )}
           </div>
+          {latest.design && <p className="text-[13px] text-ink-2">Text preview. Download Word to see your design.</p>}
           <ResumePreview resume={latest.resume} />
         </>
       )}
@@ -97,7 +116,7 @@ export function ApplicationDetailsSheet({ app, pro, open, onOpenChange, onClosed
           {older.map((r) => (
             <article key={r.id} className={`${TILE} flex items-center justify-between gap-3 py-4`}>
               <p className="text-[13.5px] text-ink">Tailored <LocalDate iso={r.createdAt} options={DATE} /></p>
-              <Button variant="outline" size="sm" className={PILL} onClick={() => download(() => downloadResume(detail!.title, r.resume))}>
+              <Button variant="outline" size="sm" className={PILL} onClick={() => download(() => downloadResume(detail!.title, r.resume, r.design ? 'design' : 'pdf'))}>
                 <DownloadSimpleIcon size={14} aria-hidden />Download
               </Button>
             </article>

@@ -4,15 +4,21 @@ import { downloadCoverLetterPdf } from '../../lib/pdf/cover-letter'
 import { downloadTailoredResumePdf } from '../../lib/pdf/resume'
 import { openResumeEditor } from '../../lib/resume-edit'
 import { accountUpdates, capWarning, groupLocalHistory, groupsFromApplications, ownPending, unclaimed, uploadMessage, uploadSummary, withLocalOnly, type JobGroup } from '../../lib/history'
-import { deleteFromHistory, deleteFromTailoredHistory, getCachedTier, getHistory, getMode, getTailoredHistory, getUploadAsked, markUploadAsked, saveCachedTier, setEntryAccounts } from '../../lib/storage'
+import { deleteFromHistory, deleteFromTailoredHistory, getCachedTier, getDesignHashes, getHistory, getMode, getTailoredHistory, getUploadAsked, markUploadAsked, saveCachedTier, setEntryAccounts } from '../../lib/storage'
 import type { AuthSession, CoverLetter, CoverLetterEntry, TailoredHistoryEntry } from '../../types'
 import UpgradeButton from '../components/UpgradeButton'
 import { WEB_URL } from '../../lib/config'
+import { downloadResumeWord } from '../../lib/design'
+
 
 export default function HistoryPage() {
   const [groups, setGroups] = useState<JobGroup[]>([])
   const [expandedKey, setExpandedKey] = useState<string | null>(null)
   const [previewId, setPreviewId] = useState<string | null>(null)
+  // The user's own Word files still in this browser (#131): a resume tailored
+  // in one downloads in its design.
+  const [designHashes, setDesignHashes] = useState<string[]>([])
+  useEffect(() => { void getDesignHashes().then(setDesignHashes) }, [])
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [syncing, setSyncing] = useState(false)
   const [isProMode, setIsProMode] = useState(false)
@@ -358,22 +364,46 @@ export default function HistoryPage() {
                             ATS match {tr.resume.atsScore}{tr.resume.editedAt ? ' · Scored before your edits' : ''}
                           </p>
                         )}
-                        <div className="artifact-actions">
-                          <button
-                            className="btn btn-secondary btn-sm"
-                            onClick={() => downloadTailoredResumePdf(tr.resume, group.title)}
-                          >
-                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                              <polyline points="7 10 12 15 17 10" />
-                              <line x1="12" y1="15" x2="12" y2="3" />
-                            </svg>
-                            Download PDF
-                          </button>
-                          <button className="btn btn-secondary btn-sm" onClick={() => openResumeEditor(tr.id)}>
-                            Edit
-                          </button>
-                        </div>
+                        {tr.resume.sourceHash && designHashes.includes(tr.resume.sourceHash) ? (
+                          <div className="artifact-actions">
+                            <button className="btn btn-secondary btn-sm" onClick={() => void downloadResumeWord(tr.resume, group.title)}>
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                                <polyline points="7 10 12 15 17 10" />
+                                <line x1="12" y1="15" x2="12" y2="3" />
+                              </svg>
+                              Word (your design)
+                            </button>
+                            <button className="btn btn-secondary btn-sm" onClick={() => downloadTailoredResumePdf(tr.resume, group.title)}>
+                              PDF (Cover Me layout)
+                            </button>
+                            <button className="btn btn-secondary btn-sm" onClick={() => openResumeEditor(tr.id)}>
+                              Edit
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="artifact-actions">
+                            <button className="btn btn-secondary btn-sm" onClick={() => downloadTailoredResumePdf(tr.resume, group.title)}>
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                                <polyline points="7 10 12 15 17 10" />
+                                <line x1="12" y1="15" x2="12" y2="3" />
+                              </svg>
+                              Download PDF
+                            </button>
+                            <button className="btn btn-secondary btn-sm" onClick={() => void downloadResumeWord(tr.resume, group.title)}>
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                                <polyline points="7 10 12 15 17 10" />
+                                <line x1="12" y1="15" x2="12" y2="3" />
+                              </svg>
+                              Word
+                            </button>
+                            <button className="btn btn-secondary btn-sm" onClick={() => openResumeEditor(tr.id)}>
+                              Edit
+                            </button>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

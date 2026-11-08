@@ -31,14 +31,21 @@ export function StageMenu({ title, stage, onChange, busy, saving, align = 'end' 
         <Button
           variant="outline"
           size="sm"
-          className={`h-8 gap-1 rounded-full px-2.5 text-[13px] font-medium ${STYLE[stage].pill}`}
+          className={`h-8 gap-1 rounded-full px-2.5 font-medium ${STYLE[stage].pill}`}
           // Not disabled during its own save: the closing menu puts focus back on
           // the trigger, and a disabled one can't take it. A pick then is ignored.
           disabled={busy && !saving}
         >
-          {saving ? <Spinner className="size-3.5" /> : <span aria-hidden className={`size-2 rounded-full ${STYLE[stage].dot}`} />}
+          {/* The spinner turns over the dot's spot, so the pill doesn't change width while saving. */}
+          <span className="relative size-2">
+            {saving
+              // Offsets, not translate: animate-spin sets transform and would undo a translate.
+              ? <Spinner className="absolute -left-0.5 -top-0.5 size-3" />
+              : <span aria-hidden className={`block size-2 rounded-full ${STYLE[stage].dot}`} />}
+          </span>
           <span className="cap-center"><span className="sr-only">Stage for {title}: </span>{STAGE_LABEL[stage]}</span>
-          <CaretDownIcon size={12} className="opacity-70" aria-hidden />
+          {/* Phosphor draws the caret 8/256 below its box's middle. */}
+          <CaretDownIcon size={12} className="-translate-y-[3.125%] opacity-70" aria-hidden />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align={align}>

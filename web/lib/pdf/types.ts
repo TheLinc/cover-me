@@ -49,6 +49,12 @@ export interface TailoredResume {
   // gaps that score found; atsGaps drops the ones the edits filled.
   editedAt?: string
   atsGapsBeforeEdits?: string[]
+  // Tailored in the user's own Word file (#131): the SHA-256 of that file.
+  // Missing means the Cover Me layout.
+  sourceHash?: string
+  // The user picked their design, but the file couldn't be edited safely, so
+  // this one uses the Cover Me layout.
+  designFellBack?: boolean
 }
 
 // The job fields the letter's PDF prints. The extension's JobData has more.

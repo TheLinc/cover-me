@@ -3,6 +3,8 @@ import type { Page } from '../App'
 interface Props {
   current: Page
   onChange: (page: Page) => void
+  // A page with something new to see
+  dot?: Page
 }
 
 const items: { id: Page; label: string; icon: JSX.Element }[] = [
@@ -50,7 +52,7 @@ const items: { id: Page; label: string; icon: JSX.Element }[] = [
   },
 ]
 
-export default function Nav({ current, onChange }: Props) {
+export default function Nav({ current, onChange, dot }: Props) {
   return (
     <nav className="nav">
       {items.map((item) => (
@@ -62,6 +64,7 @@ export default function Nav({ current, onChange }: Props) {
         >
           {item.icon}
           {item.label}
+          {dot === item.id && <span className="nav-dot"><span className="sr-only">(new)</span></span>}
         </button>
       ))}
     </nav>

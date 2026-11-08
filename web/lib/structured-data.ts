@@ -7,16 +7,19 @@ export const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.de
 // the two must always match the store listing.
 export const STORE_RATING = { value: 5, count: 3 }
 
-export const EXTENSION_VERSION = '1.3.2'
+// The homepage's preview image, for pages that have none of their own.
+export const OG_IMAGE = { url: `${BASE}/opengraph-image`, width: 1200, height: 630, alt: 'Cover Me: tailor your resume to any job posting' }
 
-export const jsonLdApp = {
+// `version` is the newest published release (getLatestVersion). Left out when
+// GitHub can't be read, rather than naming a stale version.
+export const jsonLdApp = (version: string | null) => ({
   '@context': 'https://schema.org',
   '@type': 'SoftwareApplication',
   name: 'Cover Me',
   applicationCategory: 'BusinessApplication',
   applicationSubCategory: 'Browser Extension',
   operatingSystem: 'Windows, macOS, Linux, ChromeOS',
-  softwareVersion: EXTENSION_VERSION,
+  ...(version ? { softwareVersion: version } : {}),
   description: "Open-source Chrome extension that reads the job posting you have open, tailors your resume to it, writes a matching cover letter and scores the ATS keyword match. A check removes skills your original resume doesn't support.",
   url: BASE,
   installUrl: CHROME_STORE_URL,
@@ -59,15 +62,15 @@ export const jsonLdApp = {
     'AI resume tailoring with ATS keyword matching',
     'ATS match score and gap analysis',
     'Reads the job posting when you click',
-    'Works on LinkedIn, Indeed, Greenhouse, Lever, Workday, Ashby',
-    'PDF export for cover letter and tailored resume',
+    'Works on LinkedIn, Indeed, Greenhouse, Lever, Workday, Ashby, BambooHR, Workable',
+    'Cover letter and tailored resume download as PDF, the resume also as Word; a Word upload keeps its own design in the Word download (beta)',
     "Removes skills and claims the original resume doesn't support",
     'Free and unlimited with your own OpenAI or Claude API key, no account needed',
     'Open source under the MIT license',
   ],
   isAccessibleForFree: true,
   license: 'https://opensource.org/licenses/MIT',
-}
+})
 
 export const jsonLdHowTo = {
   '@context': 'https://schema.org',
@@ -85,7 +88,7 @@ export const jsonLdHowTo = {
     {
       '@type': 'HowToStep',
       name: 'Open a job posting',
-      text: 'Open any job on LinkedIn, Indeed, Greenhouse, Lever, Workday, or Ashby, click the Cover Me icon and choose Generate. Cover Me reads the posting when you click. If it can\'t read it, paste the description.',
+      text: 'Open any job on LinkedIn, Indeed, Greenhouse, Lever, Workday, Ashby, BambooHR or Workable, click the Cover Me icon and choose Generate. Cover Me reads the posting when you click. If it can\'t read it, paste the description.',
       position: 2,
     },
     {
