@@ -238,7 +238,7 @@ export default function HistoryPage() {
       {capText && (
         <div className="cap-prompt">
           <div className="warning-box">{capText}</div>
-          <UpgradeButton label="Upgrade to Pro" />
+          <UpgradeButton />
         </div>
       )}
       {upload && !upload.asked && (

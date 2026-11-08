@@ -303,7 +303,7 @@ export default function AccountPanel({ initialView = 'signin', links = true }: {
               </div>
               {links && (
                 <>
-                  {tier === 'hosted_free' && <UpgradeButton label="Upgrade to Pro: up to 25 a day" />}
+                  {tier === 'hosted_free' && <UpgradeButton />}
                   {/* Plan, usage and (for Pro) billing and every saved application. */}
                   <a className="text-link" href={`${WEB_URL}/dashboard`} target="_blank" rel="noreferrer">Open your dashboard</a>
                 </>

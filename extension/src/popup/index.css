@@ -821,6 +821,11 @@ html, body {
 /* Free account near the local history cap: warning, then the upgrade button */
 .cap-prompt { margin-bottom: 14px; }
 
+/* UpgradeButton: the two Pro plans side by side, sized to their labels */
+.upgrade { display: flex; flex-direction: column; gap: 6px; }
+.upgrade-actions { display: flex; gap: 8px; }
+.upgrade-actions .btn { flex: 1 1 auto; width: auto; padding: 11px 12px; }
+
 /* Pro: save the applications that exist only in this browser */
 .upload-prompt {
   background: var(--surface);

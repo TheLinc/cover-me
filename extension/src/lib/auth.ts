@@ -360,11 +360,12 @@ export async function uploadDesignFileToBackend(accessToken: string, hash: strin
   }
 }
 
-export async function startBilling(accessToken: string, action: 'checkout' | 'portal'): Promise<string> {
+// plan: which Pro plan checkout sells (the portal ignores it).
+export async function startBilling(accessToken: string, action: 'checkout' | 'portal', plan: 'monthly' | 'quarterly' = 'monthly'): Promise<string> {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/billing`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action }),
+    body: JSON.stringify({ action, plan }),
   })
   // A gateway error (502/504) can come back as an HTML page, not JSON.
   const data = await res.json().catch(() => ({})) as { url?: string; error?: string }

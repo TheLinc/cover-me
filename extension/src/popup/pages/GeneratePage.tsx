@@ -563,7 +563,7 @@ export default function GeneratePage({ onNavigate }: Props) {
     chrome.storage.local.remove('coverJob')
   }
 
-  const upgradePrompt = <UpgradeButton label="Upgrade to Pro: up to 25 a day" />
+  const upgradePrompt = <UpgradeButton />
 
   function resetTailor() {
     setTailorState('idle')
