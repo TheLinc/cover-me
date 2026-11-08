@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { ensureValidSession, fetchApplicationsFromBackend, saveResumeEditToBackend } from '../lib/auth'
 import { splitSkills } from '../lib/ai/resume-grounding'
 import { downloadTailoredResumePdf, tailoredResumePdf } from '../lib/pdf/resume'
-import { editedResume, saveResumeEdit, withResumeEdit } from '../lib/resume-edit'
+import type { PlacedSection } from '../lib/pdf/sections'
+import { editedResume, saveResumeEdit, shownSections, withResumeEdit, withSections } from '../lib/resume-edit'
 import { getCachedTier, getMode, getTailoredHistory } from '../lib/storage'
 import GapChips from '../popup/components/GapChips'
 import PdfPreview from './PdfPreview'
@@ -54,11 +55,26 @@ function resumeFromForm(draft: TailoredResume, skills: string[]): TailoredResume
 
 type Status = '' | 'saving' | 'saved' | 'local'
 
+// Everything an undo step restores.
+interface Form { draft: TailoredResume; skills: string[] }
+
+// Typing in one field counts as one undo step until it pauses this long.
+const STEP_PAUSE_MS = 1000
+const UNDO_LIMIT = 200
+const MOD = /Mac/.test(navigator.platform) ? '⌘' : 'Ctrl+'
+
+const SECTION_TITLES: Record<Exclude<PlacedSection['key'], 'other'>, string> = {
+  summary: 'Summary', experience: 'Experience', projects: 'Projects', education: 'Education', certifications: 'Certifications', skills: 'Skills',
+}
+
 export default function Editor() {
   const id = useMemo(() => new URLSearchParams(location.search).get('id') ?? '', [])
   const [opened, setOpened] = useState<Opened | null | 'loading' | 'error'>('loading')
-  const [draft, setDraft] = useState<TailoredResume | null>(null)
-  const [skills, setSkills] = useState<string[]>([])
+  const [form, setForm] = useState<Form | null>(null)
+  const [steps, setSteps] = useState<{ past: Form[]; future: Form[] }>({ past: [], future: [] })
+  const lastStep = useRef<{ field: Element | null; at: number }>({ field: null, at: 0 })
+  const [note, setNote] = useState('') // what the last section delete removed
+  const focusNext = useRef<string | null>(null) // a control to focus once the form re-renders
   const [dirty, setDirty] = useState(false)
   const [status, setStatus] = useState<Status>('')
   const [preview, setPreview] = useState<ArrayBuffer | null>(null)
@@ -73,8 +89,7 @@ export default function Editor() {
     openResume(id).then((o) => {
       setOpened(o)
       if (!o) return
-      setDraft(structuredClone(o.scored))
-      setSkills(o.scored.skills ? splitSkills(o.scored.skills) : [])
+      setForm({ draft: structuredClone(o.scored), skills: o.scored.skills ? splitSkills(o.scored.skills) : [] })
       document.title = `Edit resume · ${o.jobTitle || 'Cover Me'}`
       // Ready for a save as the tab closes, which can't wait for a refresh.
       void proSession().then((s) => { session.current = s }).catch(() => {})
@@ -82,7 +97,7 @@ export default function Editor() {
   }, [id])
 
   const scored = typeof opened === 'object' && opened ? opened.scored : null
-  const current = useMemo(() => (draft ? resumeFromForm(draft, skills) : null), [draft, skills])
+  const current = useMemo(() => (form ? resumeFromForm(form.draft, form.skills) : null), [form])
   const saved = useMemo(() => (current && scored ? editedResume(scored, current) : null), [current, scored])
 
   // The preview, re-made a moment after typing stops.
@@ -154,13 +169,81 @@ export default function Editor() {
     }
   }, [id])
 
-  function edit(change: (r: TailoredResume) => void) {
-    setDraft((d) => {
-      const next = structuredClone(d!)
-      change(next)
-      return next
-    })
+  // Every change goes through here, so it can be undone. Typing in one field
+  // joins the step before it until a pause; anything else is a step of its own.
+  function change(update: (f: Form) => Form) {
+    if (!form) return
+    const active = document.activeElement
+    const field = active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement ? active : null
+    const now = Date.now()
+    const joins = field !== null && field === lastStep.current.field && now - lastStep.current.at < STEP_PAUSE_MS
+    lastStep.current = { field, at: now }
+    setSteps((s) => ({ past: joins ? s.past : [...s.past, form].slice(-UNDO_LIMIT), future: [] }))
+    setForm(update(form))
+    setNote('')
     setDirty(true)
+  }
+
+  function edit(fn: (r: TailoredResume) => void) {
+    change((f) => {
+      const draft = structuredClone(f.draft)
+      fn(draft)
+      return { ...f, draft }
+    })
+  }
+
+  function undo() {
+    if (!form || !steps.past.length) return
+    setSteps({ past: steps.past.slice(0, -1), future: [form, ...steps.future] })
+    setForm(steps.past[steps.past.length - 1])
+    lastStep.current = { field: null, at: 0 }
+    setNote('')
+    setDirty(true)
+  }
+
+  function redo() {
+    if (!form || !steps.future.length) return
+    setSteps({ past: [...steps.past, form], future: steps.future.slice(1) })
+    setForm(steps.future[0])
+    lastStep.current = { field: null, at: 0 }
+    setNote('')
+    setDirty(true)
+  }
+
+  // Ctrl+Z, Ctrl+Shift+Z and Ctrl+Y (⌘ on a Mac) work in a field too: one
+  // history for the whole resume instead of each field's own.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey) || e.altKey) return
+      const key = e.key.toLowerCase()
+      if (key === 'z' && !e.shiftKey) { e.preventDefault(); undo() }
+      else if ((key === 'z' && e.shiftKey) || key === 'y') { e.preventDefault(); redo() }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  })
+
+  // Focus follows a moved section's button, or goes to Undo after a delete.
+  useEffect(() => {
+    if (!focusNext.current) return
+    document.querySelector<HTMLElement>(focusNext.current)?.focus()
+    focusNext.current = null
+  }, [form])
+
+  function moveSection(list: PlacedSection[], i: number, by: number, title: string) {
+    const next = [...list]
+    ;[next[i], next[i + by]] = [next[i + by], next[i]]
+    change((f) => ({ ...f, draft: withSections(f.draft, next) }))
+    // Moved to the top or bottom, its button is disabled: focus the other one.
+    const end = by < 0 ? i + by === 0 : i + by === list.length - 1
+    const dir = (by < 0) !== end ? 'up' : 'down'
+    focusNext.current = `[aria-label="Move ${CSS.escape(title)} section ${dir}"]`
+  }
+
+  function deleteSection(list: PlacedSection[], i: number, title: string) {
+    change((f) => ({ ...f, draft: withSections(f.draft, list.filter((_, j) => j !== i)) }))
+    setNote(`${title} deleted.`)
+    focusNext.current = '.ed-note button'
   }
 
   // Closes once everything is saved. When the account couldn't be reached the
@@ -176,11 +259,70 @@ export default function Editor() {
 
   if (opened === 'loading') return <main className="ed-message">Opening your resume…</main>
   if (opened === 'error') return <main className="ed-message">Couldn't open this resume. Check your connection and reload the tab.</main>
-  if (!opened || !draft || !current || !scored || !saved) {
+  if (!opened || !form || !current || !scored || !saved) {
     return <main className="ed-message">This resume isn't in your History anymore.</main>
   }
 
   const edited = dirty || !!scored.editedAt
+  const { draft, skills } = form
+  const sections = shownSections(draft)
+
+  function sectionFields(placed: PlacedSection): ReactNode {
+    switch (placed.key) {
+      case 'summary':
+        return <Field label="Summary" hideLabel long value={draft.summary ?? ''} onChange={(v) => edit((r) => { r.summary = v })} />
+      case 'experience':
+        return draft.experience.map((e, i) => (
+          <div key={i} className="ed-item">
+            <div className="ed-grid">
+              <Field label="Title" value={e.title} onChange={(v) => edit((r) => { r.experience[i].title = v })} />
+              <Field label="Dates" value={e.dates} onChange={(v) => edit((r) => { r.experience[i].dates = v })} />
+              <Field label="Company" value={e.company} onChange={(v) => edit((r) => { r.experience[i].company = v })} />
+              <Field label="Location" value={e.location} onChange={(v) => edit((r) => { r.experience[i].location = v })} />
+            </div>
+            <Lines label={`Bullets for ${e.title || `job ${i + 1}`}`} noun="bullet" items={e.bullets ?? []}
+              onChange={(l) => edit((r) => { r.experience[i].bullets = l })} />
+          </div>
+        ))
+      case 'projects':
+        return (draft.projects ?? []).map((p, i) => (
+          <div key={i} className="ed-item">
+            <Field label="Project" value={p.name} onChange={(v) => edit((r) => { r.projects![i].name = v })} />
+            <Lines label={`Bullets for ${p.name || `project ${i + 1}`}`} noun="bullet" items={p.bullets ?? []}
+              onChange={(l) => edit((r) => { r.projects![i].bullets = l })} />
+          </div>
+        ))
+      case 'education':
+        return draft.education.map((e, i) => (
+          <div key={i} className="ed-item">
+            <div className="ed-grid">
+              <Field label="School" value={e.institution} onChange={(v) => edit((r) => { r.education[i].institution = v })} />
+              <Field label="Dates" value={e.dates} onChange={(v) => edit((r) => { r.education[i].dates = v })} />
+              <Field label="Degree" value={e.degree} onChange={(v) => edit((r) => { r.education[i].degree = v })} />
+              <Field label="Location" value={e.location} onChange={(v) => edit((r) => { r.education[i].location = v })} />
+            </div>
+            <Lines label={`Bullets for ${e.institution || `school ${i + 1}`}`} noun="bullet" items={e.bullets ?? []}
+              onChange={(l) => edit((r) => { r.education[i].bullets = l })} />
+          </div>
+        ))
+      case 'certifications':
+        return <Lines label="Certifications" hideLabel noun="certification" items={draft.certifications ?? []}
+          onChange={(l) => edit((r) => { r.certifications = l })} />
+      case 'skills':
+        return <Lines label="Skills" hideLabel noun="skill" items={skills} short
+          onChange={(l) => change((f) => ({ ...f, skills: l }))} />
+      case 'other': {
+        const s = draft.otherSections![placed.index]
+        return (
+          <>
+            <Field label="Heading" value={s.heading} onChange={(v) => edit((r) => { r.otherSections![placed.index].heading = v })} />
+            <Lines label={`Lines under ${s.heading || 'this section'}`} noun="line" items={s.lines ?? []}
+              onChange={(l) => edit((r) => { r.otherSections![placed.index].lines = l })} />
+          </>
+        )
+      }
+    }
+  }
 
   return (
     <div className="ed">
@@ -188,6 +330,17 @@ export default function Editor() {
         <div className="ed-bar-title">
           <h1>Edit resume</h1>
           <p>{[opened.jobTitle, opened.company].filter(Boolean).join(' · ')}</p>
+        </div>
+        <p className="ed-note" aria-live="polite">
+          {note && <>{note} <button type="button" className="text-link" onClick={undo}>Undo</button></>}
+        </p>
+        <div className="ed-history">
+          <button type="button" className="ed-icon" aria-label="Undo" title={`Undo (${MOD}Z)`} aria-keyshortcuts="Control+Z Meta+Z" disabled={!steps.past.length} onClick={undo}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5" /><path d="M4 9h10.5a5.5 5.5 0 010 11H11" /></svg>
+          </button>
+          <button type="button" className="ed-icon" aria-label="Redo" title={`Redo (${MOD}Shift+Z)`} aria-keyshortcuts="Control+Shift+Z Meta+Shift+Z Control+Y" disabled={!steps.future.length} onClick={redo}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m15 14 5-5-5-5" /><path d="M20 9H9.5a5.5 5.5 0 000 11H13" /></svg>
+          </button>
         </div>
         <p className="ed-status" aria-live="polite">
           {status === 'saving' ? 'Saving…'
@@ -211,6 +364,14 @@ export default function Editor() {
             </div>
           </section>
         )}
+        {/* Your design (#131) puts only bullets, the summary and skills into the user's file (docx-design.ts). */}
+        {draft.sourceHash && (
+          <p className="hint ed-design-hint">
+            Word (your design) takes your edits to bullets, the summary and skills. Moved sections, other edits and bullets
+            beyond the ones in your file show only in the PDF. Changing a job title or company, or deleting Experience or
+            Projects, makes the Word download use the Cover Me layout.
+          </p>
+        )}
 
         <Section title="Contact">
           <div className="ed-grid">
@@ -221,79 +382,20 @@ export default function Editor() {
           </div>
         </Section>
 
-        {draft.summary !== undefined && (
-          <Section title="Summary">
-            <Field label="Summary" hideLabel long value={draft.summary} onChange={(v) => edit((r) => { r.summary = v })} />
-          </Section>
-        )}
-
-        {draft.experience.length > 0 && (
-          <Section title="Experience">
-            {draft.experience.map((e, i) => (
-              <div key={i} className="ed-item">
-                <div className="ed-grid">
-                  <Field label="Title" value={e.title} onChange={(v) => edit((r) => { r.experience[i].title = v })} />
-                  <Field label="Dates" value={e.dates} onChange={(v) => edit((r) => { r.experience[i].dates = v })} />
-                  <Field label="Company" value={e.company} onChange={(v) => edit((r) => { r.experience[i].company = v })} />
-                  <Field label="Location" value={e.location} onChange={(v) => edit((r) => { r.experience[i].location = v })} />
-                </div>
-                <Lines label={`Bullets for ${e.title || `job ${i + 1}`}`} noun="bullet" items={e.bullets ?? []}
-                  onChange={(l) => edit((r) => { r.experience[i].bullets = l })} />
-              </div>
-            ))}
-          </Section>
-        )}
-
-        {(draft.projects?.length ?? 0) > 0 && (
-          <Section title="Projects">
-            {draft.projects!.map((p, i) => (
-              <div key={i} className="ed-item">
-                <Field label="Project" value={p.name} onChange={(v) => edit((r) => { r.projects![i].name = v })} />
-                <Lines label={`Bullets for ${p.name || `project ${i + 1}`}`} noun="bullet" items={p.bullets ?? []}
-                  onChange={(l) => edit((r) => { r.projects![i].bullets = l })} />
-              </div>
-            ))}
-          </Section>
-        )}
-
-        {draft.education.length > 0 && (
-          <Section title="Education">
-            {draft.education.map((e, i) => (
-              <div key={i} className="ed-item">
-                <div className="ed-grid">
-                  <Field label="School" value={e.institution} onChange={(v) => edit((r) => { r.education[i].institution = v })} />
-                  <Field label="Dates" value={e.dates} onChange={(v) => edit((r) => { r.education[i].dates = v })} />
-                  <Field label="Degree" value={e.degree} onChange={(v) => edit((r) => { r.education[i].degree = v })} />
-                  <Field label="Location" value={e.location} onChange={(v) => edit((r) => { r.education[i].location = v })} />
-                </div>
-                <Lines label={`Bullets for ${e.institution || `school ${i + 1}`}`} noun="bullet" items={e.bullets ?? []}
-                  onChange={(l) => edit((r) => { r.education[i].bullets = l })} />
-              </div>
-            ))}
-          </Section>
-        )}
-
-        {draft.certifications !== undefined && (
-          <Section title="Certifications">
-            <Lines label="Certifications" hideLabel noun="certification" items={draft.certifications}
-              onChange={(l) => edit((r) => { r.certifications = l })} />
-          </Section>
-        )}
-
-        {draft.skills !== undefined && (
-          <Section title="Skills">
-            <Lines label="Skills" hideLabel noun="skill" items={skills} short
-              onChange={(l) => { setSkills(l); setDirty(true) }} />
-          </Section>
-        )}
-
-        {(draft.otherSections ?? []).map((s, i) => (
-          <Section key={i} title={s.heading || 'Other'}>
-            <Field label="Heading" value={s.heading} onChange={(v) => edit((r) => { r.otherSections![i].heading = v })} />
-            <Lines label={`Lines under ${s.heading || 'this section'}`} noun="line" items={s.lines ?? []}
-              onChange={(l) => edit((r) => { r.otherSections![i].lines = l })} />
-          </Section>
-        ))}
+        {sections.map((placed, i) => {
+          const title = placed.key === 'other' ? draft.otherSections![placed.index].heading || 'Other' : SECTION_TITLES[placed.key]
+          const controls: SectionControls = {
+            first: i === 0,
+            last: i === sections.length - 1,
+            move: (by) => moveSection(sections, i, by, title),
+            remove: () => deleteSection(sections, i, title),
+          }
+          return (
+            <Section key={placed.key === 'other' ? `other-${placed.index}` : placed.key} title={title} controls={controls}>
+              {sectionFields(placed)}
+            </Section>
+          )
+        })}
       </main>
 
       <aside className="ed-preview" aria-label="PDF preview">
@@ -303,10 +405,21 @@ export default function Editor() {
   )
 }
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
+interface SectionControls { first: boolean; last: boolean; move: (by: number) => void; remove: () => void }
+
+function Section({ title, children, controls }: { title: string; children: ReactNode; controls?: SectionControls }) {
   return (
     <section className="ed-section">
-      <h2>{title}</h2>
+      <div className="ed-section-head">
+        <h2>{title}</h2>
+        {controls && (
+          <div className="ed-line-tools">
+            <button type="button" className="ed-icon" aria-label={`Move ${title} section up`} title="Move section up" disabled={controls.first} onClick={() => controls.move(-1)}>↑</button>
+            <button type="button" className="ed-icon" aria-label={`Move ${title} section down`} title="Move section down" disabled={controls.last} onClick={() => controls.move(1)}>↓</button>
+            <button type="button" className="ed-icon ed-icon-delete" aria-label={`Delete ${title} section`} title="Delete section" onClick={controls.remove}>×</button>
+          </div>
+        )}
+      </div>
       {children}
     </section>
   )

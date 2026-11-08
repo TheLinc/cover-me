@@ -2,7 +2,8 @@
 // which copies this folder to web/lib/pdf/ (both builds fail on a stale copy).
 import { jsPDF } from 'jspdf'
 import { resumeFileName } from './file-name'
-import type { TailoredResume } from './types'
+import { orderedSections, type StandardSection } from './sections'
+import type { ResumeSection, TailoredResume } from './types'
 
 // Letter page: 612 × 792 pt
 const PW = 612
@@ -91,88 +92,97 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
     y += 1
   }
 
-  // ── SUMMARY ──────────────────────────────────────────────────────────────
-  if (resume.summary) {
-    sectionHeading('SUMMARY')
-    doc.setFont('times', 'normal')
-    doc.setFontSize(10)
-    const lines = doc.splitTextToSize(resume.summary, CW) as string[]
-    for (const line of lines) {
-      need(12)
-      doc.text(line, ML, y)
-      y += 12
-    }
-  }
-
-  // ── EXPERIENCE ───────────────────────────────────────────────────────────
-  if (resume.experience?.length) {
-    sectionHeading('EXPERIENCE')
-    for (const exp of resume.experience) {
-      twoCol(exp.title, exp.dates, 'bold')
-      twoCol(exp.company, exp.location, 'italic')
-      y += 2
-      for (const b of exp.bullets ?? []) bullet(b)
-      y += 5
-    }
-  }
-
-  // ── PROJECTS ─────────────────────────────────────────────────────────────
-  if (resume.projects?.length) {
-    sectionHeading('PROJECTS')
-    for (const proj of resume.projects) {
-      need(14)
-      doc.setFont('times', 'bold')
-      doc.setFontSize(10.5)
-      doc.text(proj.name || '', ML, y)
-      y += 13
-      for (const b of proj.bullets ?? []) bullet(b)
-      y += 5
-    }
-  }
-
-  // ── EDUCATION ────────────────────────────────────────────────────────────
-  if (resume.education?.length) {
-    sectionHeading('EDUCATION')
-    for (const edu of resume.education) {
-      twoCol(edu.institution, edu.dates, 'bold')
-      twoCol(edu.degree, edu.location, 'italic')
-      y += 2
-      for (const b of edu.bullets ?? []) bullet(b)
-      y += 5
-    }
-  }
-
-  // ── CERTIFICATIONS ───────────────────────────────────────────────────────
-  if (resume.certifications?.length) {
-    sectionHeading('CERTIFICATIONS')
-    for (const cert of resume.certifications) {
-      need(13)
-      doc.setFont('times', 'normal')
-      doc.setFontSize(10)
-      doc.text('•', BULLET_X, y)
-      doc.text(cert, TEXT_X, y)
-      y += 13
-    }
-  }
-
-  // ── SKILLS ───────────────────────────────────────────────────────────────
-  if (resume.skills) {
-    sectionHeading('SKILLS')
-    doc.setFont('times', 'normal')
-    doc.setFontSize(10)
-    const lines = doc.splitTextToSize(resume.skills, CW) as string[]
-    for (const line of lines) {
-      need(12)
-      doc.text(line, ML, y)
-      y += 12
-    }
+  // Each section, drawn in the order the user set (sections.ts).
+  const draw: Record<StandardSection, () => void> = {
+    summary: () => {
+      if (resume.summary) {
+        sectionHeading('SUMMARY')
+        doc.setFont('times', 'normal')
+        doc.setFontSize(10)
+        const lines = doc.splitTextToSize(resume.summary, CW) as string[]
+        for (const line of lines) {
+          need(12)
+          doc.text(line, ML, y)
+          y += 12
+        }
+      }
+    },
+    experience: () => {
+      if (resume.experience?.length) {
+        sectionHeading('EXPERIENCE')
+        for (const exp of resume.experience) {
+          twoCol(exp.title, exp.dates, 'bold')
+          twoCol(exp.company, exp.location, 'italic')
+          y += 2
+          for (const b of exp.bullets ?? []) bullet(b)
+          y += 5
+        }
+      }
+    },
+    projects: () => {
+      if (resume.projects?.length) {
+        sectionHeading('PROJECTS')
+        for (const proj of resume.projects) {
+          need(14)
+          doc.setFont('times', 'bold')
+          doc.setFontSize(10.5)
+          doc.text(proj.name || '', ML, y)
+          y += 13
+          for (const b of proj.bullets ?? []) bullet(b)
+          y += 5
+        }
+      }
+    },
+    education: () => {
+      if (resume.education?.length) {
+        sectionHeading('EDUCATION')
+        for (const edu of resume.education) {
+          twoCol(edu.institution, edu.dates, 'bold')
+          twoCol(edu.degree, edu.location, 'italic')
+          y += 2
+          for (const b of edu.bullets ?? []) bullet(b)
+          y += 5
+        }
+      }
+    },
+    certifications: () => {
+      if (resume.certifications?.length) {
+        sectionHeading('CERTIFICATIONS')
+        for (const cert of resume.certifications) {
+          need(13)
+          doc.setFont('times', 'normal')
+          doc.setFontSize(10)
+          doc.text('•', BULLET_X, y)
+          doc.text(cert, TEXT_X, y)
+          y += 13
+        }
+      }
+    },
+    skills: () => {
+      if (resume.skills) {
+        sectionHeading('SKILLS')
+        doc.setFont('times', 'normal')
+        doc.setFontSize(10)
+        const lines = doc.splitTextToSize(resume.skills, CW) as string[]
+        for (const line of lines) {
+          need(12)
+          doc.text(line, ML, y)
+          y += 12
+        }
+      }
+    },
   }
 
   // ── Other sections (publications, volunteer work…), as the resume had them ─
-  for (const section of resume.otherSections ?? []) {
-    if (!section.lines?.length) continue
+  const drawOther = (section: ResumeSection) => {
+    if (!section.lines?.length) return
     sectionHeading(String(section.heading ?? '').toUpperCase())
     for (const line of section.lines) bullet(line)
+  }
+
+  for (const s of orderedSections(resume)) {
+    if (s.key === 'other') drawOther(resume.otherSections![s.index])
+    else draw[s.key]()
   }
 
   return doc

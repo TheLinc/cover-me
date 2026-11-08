@@ -1,3 +1,4 @@
+import { orderedSections, type PlacedSection, type StandardSection } from './pdf/sections'
 import type { TailoredHistoryEntry, TailoredResume } from '../types'
 import { getTailoredHistory } from './storage'
 
@@ -34,6 +35,42 @@ export function editedResume(scored: TailoredResume, draft: TailoredResume, now 
     ...(before && { atsGaps: remainingGaps(before, draft), atsGapsBeforeEdits: before }),
     editedAt: now.toISOString(),
   }
+}
+
+// Whether the editor shows a standard section: the resume has it. An emptied
+// summary, skills or certifications list still counts, so it can be filled again.
+function hasSection(r: TailoredResume, key: StandardSection): boolean {
+  switch (key) {
+    case 'summary': return r.summary !== undefined
+    case 'experience': return r.experience.length > 0
+    case 'projects': return (r.projects?.length ?? 0) > 0
+    case 'education': return r.education.length > 0
+    case 'certifications': return r.certifications !== undefined
+    case 'skills': return r.skills !== undefined
+  }
+}
+
+// The sections the editor shows, in print order.
+export function shownSections(r: TailoredResume): PlacedSection[] {
+  return orderedSections(r).filter((s) => s.key === 'other' || hasSection(r, s.key))
+}
+
+// The resume with its sections in list's order. A shown section missing from
+// list is deleted. Moving and deleting both go through here.
+export function withSections(r: TailoredResume, list: PlacedSection[]): TailoredResume {
+  const keep = new Set(list.map((s) => s.key))
+  const next: TailoredResume = {
+    ...r,
+    sectionOrder: list.map((s) => s.key),
+    otherSections: list.flatMap((s) => (s.key === 'other' ? [r.otherSections![s.index]] : [])),
+  }
+  if (!keep.has('summary')) delete next.summary
+  if (!keep.has('experience')) next.experience = []
+  if (!keep.has('projects')) delete next.projects
+  if (!keep.has('education')) next.education = []
+  if (!keep.has('certifications')) delete next.certifications
+  if (!keep.has('skills')) delete next.skills
+  return next
 }
 
 // History with one entry's resume replaced, or null when the entry isn't

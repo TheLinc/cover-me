@@ -10,6 +10,7 @@ import {
   Packer, Paragraph, Tab, TabStopType, TextRun,
 } from 'docx'
 import { resumeFileName, saveFile } from './file-name'
+import { orderedSections, type StandardSection } from './sections'
 import type { TailoredResume } from './types'
 
 // Twips (1/20 pt). Letter page, the PDF's 54pt side margins.
@@ -51,52 +52,61 @@ export function buildResumeDocx(resume: TailoredResume): Promise<Blob> {
     body.push(new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun(contact.join('   |   '))] }))
   }
 
-  if (resume.summary) body.push(heading('SUMMARY'), new Paragraph(resume.summary))
-
-  if (resume.experience?.length) {
-    body.push(heading('EXPERIENCE'))
-    resume.experience.forEach((exp, i) => {
-      body.push(
-        twoCol(exp.title, exp.dates, 'bold', { before: i ? 5 * PT : 0, keepNext: true }),
-        twoCol(exp.company, exp.location, 'italic', { after: 2 * PT, keepNext: !!exp.bullets?.length }),
-        ...(exp.bullets ?? []).map(bullet),
-      )
-    })
+  // Each section, in the order the user set (sections.ts).
+  const add: Record<StandardSection, () => void> = {
+    summary: () => {
+      if (resume.summary) body.push(heading('SUMMARY'), new Paragraph(resume.summary))
+    },
+    experience: () => {
+      if (!resume.experience?.length) return
+      body.push(heading('EXPERIENCE'))
+      resume.experience.forEach((exp, i) => {
+        body.push(
+          twoCol(exp.title, exp.dates, 'bold', { before: i ? 5 * PT : 0, keepNext: true }),
+          twoCol(exp.company, exp.location, 'italic', { after: 2 * PT, keepNext: !!exp.bullets?.length }),
+          ...(exp.bullets ?? []).map(bullet),
+        )
+      })
+    },
+    projects: () => {
+      if (!resume.projects?.length) return
+      body.push(heading('PROJECTS'))
+      resume.projects.forEach((proj, i) => {
+        body.push(
+          new Paragraph({
+            spacing: { line: 13 * PT, lineRule: LineRuleType.AT_LEAST, before: i ? 5 * PT : 0 },
+            keepNext: !!proj.bullets?.length,
+            children: [new TextRun({ text: proj.name || '', bold: true, size: 21 })],
+          }),
+          ...(proj.bullets ?? []).map(bullet),
+        )
+      })
+    },
+    education: () => {
+      if (!resume.education?.length) return
+      body.push(heading('EDUCATION'))
+      resume.education.forEach((edu, i) => {
+        body.push(
+          twoCol(edu.institution, edu.dates, 'bold', { before: i ? 5 * PT : 0, keepNext: true }),
+          twoCol(edu.degree, edu.location, 'italic', { after: 2 * PT, keepNext: !!edu.bullets?.length }),
+          ...(edu.bullets ?? []).map(bullet),
+        )
+      })
+    },
+    certifications: () => {
+      if (resume.certifications?.length) body.push(heading('CERTIFICATIONS'), ...resume.certifications.map(bullet))
+    },
+    skills: () => {
+      if (resume.skills) body.push(heading('SKILLS'), new Paragraph(resume.skills))
+    },
   }
-
-  if (resume.projects?.length) {
-    body.push(heading('PROJECTS'))
-    resume.projects.forEach((proj, i) => {
-      body.push(
-        new Paragraph({
-          spacing: { line: 13 * PT, lineRule: LineRuleType.AT_LEAST, before: i ? 5 * PT : 0 },
-          keepNext: !!proj.bullets?.length,
-          children: [new TextRun({ text: proj.name || '', bold: true, size: 21 })],
-        }),
-        ...(proj.bullets ?? []).map(bullet),
-      )
-    })
-  }
-
-  if (resume.education?.length) {
-    body.push(heading('EDUCATION'))
-    resume.education.forEach((edu, i) => {
-      body.push(
-        twoCol(edu.institution, edu.dates, 'bold', { before: i ? 5 * PT : 0, keepNext: true }),
-        twoCol(edu.degree, edu.location, 'italic', { after: 2 * PT, keepNext: !!edu.bullets?.length }),
-        ...(edu.bullets ?? []).map(bullet),
-      )
-    })
-  }
-
-  if (resume.certifications?.length) body.push(heading('CERTIFICATIONS'), ...resume.certifications.map(bullet))
-
-  if (resume.skills) body.push(heading('SKILLS'), new Paragraph(resume.skills))
-
-  // Other sections (publications, volunteer work…), as the resume had them
-  for (const section of resume.otherSections ?? []) {
-    if (!section.lines?.length) continue
-    body.push(heading(String(section.heading ?? '').toUpperCase()), ...section.lines.map(bullet))
+  for (const s of orderedSections(resume)) {
+    if (s.key !== 'other') add[s.key]()
+    else {
+      // Other sections (publications, volunteer work…), as the resume had them
+      const section = resume.otherSections![s.index]
+      if (section.lines?.length) body.push(heading(String(section.heading ?? '').toUpperCase()), ...section.lines.map(bullet))
+    }
   }
 
   const doc = new Document({

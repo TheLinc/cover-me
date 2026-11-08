@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { editedResume, remainingGaps, saveResumeEdit } from './resume-edit'
+import { editedResume, remainingGaps, saveResumeEdit, shownSections, withSections } from './resume-edit'
 import { getTailoredHistory } from './storage'
 import type { TailoredResume } from '../types'
 
@@ -88,5 +88,41 @@ describe('saving an edit', () => {
     const data = fakeLocal({ tailoredHistory: [] })
     await saveResumeEdit('gone', editedResume(resume, resume, now))
     expect(data.tailoredHistory).toEqual([])
+  })
+})
+
+describe('moving and deleting sections', () => {
+  test('the editor lists the sections the resume has, in print order', () => {
+    expect(shownSections(resume)).toEqual([
+      { key: 'summary' }, { key: 'experience' }, { key: 'projects' }, { key: 'education' },
+      { key: 'certifications' }, { key: 'skills' }, { key: 'other', index: 0 },
+    ])
+  })
+
+  test('a new order is saved, and extra sections move with their "other" place', () => {
+    const two = { ...resume, otherSections: [{ heading: 'Talks', lines: ['x'] }, { heading: 'Awards', lines: ['y'] }] }
+    const [summary, experience, , , , skills, talks, awards] = shownSections(two)
+    const moved = withSections(two, [awards, skills, summary, experience, talks])
+    expect(moved.sectionOrder).toEqual(['other', 'skills', 'summary', 'experience', 'other'])
+    expect(moved.otherSections!.map((s) => s.heading)).toEqual(['Awards', 'Talks'])
+    expect(shownSections(moved)).toEqual([{ key: 'other', index: 0 }, { key: 'skills' }, { key: 'summary' }, { key: 'experience' }, { key: 'other', index: 1 }])
+  })
+
+  test('a section left out of the list is deleted', () => {
+    const kept = shownSections(resume).filter((s) => s.key === 'experience' || s.key === 'education')
+    const r = withSections(resume, kept)
+    expect(r.summary).toBeUndefined()
+    expect(r.projects).toBeUndefined()
+    expect(r.certifications).toBeUndefined()
+    expect(r.skills).toBeUndefined()
+    expect(r.otherSections).toEqual([])
+    expect(r.experience).toEqual(resume.experience)
+    expect(shownSections(r)).toEqual([{ key: 'experience' }, { key: 'education' }])
+  })
+
+  test('deleting experience or education empties it', () => {
+    const r = withSections(resume, shownSections(resume).filter((s) => s.key !== 'experience' && s.key !== 'education'))
+    expect(r.experience).toEqual([])
+    expect(r.education).toEqual([])
   })
 })
