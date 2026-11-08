@@ -151,7 +151,7 @@ REVISION MODE — revise, do not rebuild:
 STEP 8 — OPTIMIZE SKILLS
 Reorder the skills so the most relevant to this job appear first, using the JD's exact phrasing where it differs from the resume.
 
-ADD a skill only when it is in the JD AND either named in the supplemental context (add it as worded there) or justified by the resume in one of two ways:
+ADD a skill only when it is in the JD AND either named in the supplemental context as something the candidate has used or holds (add it as worded there) or justified by the resume in one of two ways:
   - Direct superset/subset of an existing skill — JavaScript on resume + JD says TypeScript → {"skill": "TypeScript", "evidence": "JavaScript"}.
   - A capability CATEGORY LABEL backed by a SPECIFIC item already on the resume — {"skill": "State Management", "evidence": "Zustand"}; {"skill": "Testing", "evidence": "Jest"}; {"skill": "Paid Acquisition", "evidence": "Google Ads"}; {"skill": "Expense Reporting", "evidence": "expense reports in Concur"}. Make these connections actively: whenever the JD names a capability category and the resume shows a specific instance of it, add the category with its evidence, the way a careful human editor would. Add the label only, NEVER the specific JD tool itself (JD says Meta Ads, resume has Google Ads → "Paid Acquisition", never "Meta Ads") (Integrity 3).
 SKILLS OUTPUT FORMAT: "skills" is a JSON array of objects. A skill worded exactly as in the resume is {"skill": "..."}. Every other skill (an addition, or a rewording into the JD's phrasing) MUST include "evidence": a phrase copied character-for-character from the resume or the supplemental context that directly demonstrates that skill itself, not something merely near it. The application checks every evidence phrase against the resume and supplemental context and deletes any skill whose evidence is missing or not found, so never paraphrase evidence and never add a skill you cannot back.
@@ -191,7 +191,7 @@ ${supplemental?.trim() ? `
 SUPPLEMENTAL CANDIDATE CONTEXT (verified by the candidate — real experience not captured in the resume above):
 ${supplemental.trim()}
 
-This context counts as part of the resume: wherever the rules below require something to appear in, or be backed by, the resume, a fact stated here qualifies too. A skill, tool, or practice it names may go in the skills list and into the bullets of the entry it describes. Use this context to strengthen existing bullets where the experience is relevant and accurate. Do not add bullet entries beyond the budget set in STEP 5 — weave the context into the most applicable existing bullets.
+This context counts as part of the resume: wherever the rules below require something to appear in, or be backed by, the resume, a fact stated here qualifies too. A skill, tool, practice, license, or certification it says the candidate has used or holds may go in the skills list and into the bullets of the entry it describes, never another entry. Anything it marks as in progress, planned, being learned, or not yet held stays out. Use this context to strengthen existing bullets where the experience is relevant and accurate. Do not add bullet entries beyond the budget set in STEP 5 — weave the context into the most applicable existing bullets.
 ` : ''}${previousSection}
 ---
 

@@ -154,6 +154,13 @@ const checks = [
     start: 'REVISION MODE — revise, do not rebuild',
     end: 'shifting the baseline.',
   },
+  {
+    name: 'tailor: supplemental-context block',
+    a: EXT_TAILOR,
+    b: BE_TAILOR,
+    start: 'SUPPLEMENTAL CANDIDATE CONTEXT (verified by the candidate',
+    end: 'into the most applicable existing bullets.',
+  },
   // The resume parse prompt runs client-side for BYOK and server-side for the
   // hosted tier's structured-resume cache — the template must not drift.
   {

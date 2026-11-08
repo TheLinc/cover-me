@@ -316,7 +316,7 @@ ${blocks.join('\n\n')}
 RESUME FACTS:
 ${resumeFacts(original)}${supplemental?.trim() ? `
 
-CANDIDATE NOTES (the candidate's own additions about their experience; a line or summary that adds a fact stated here is supported, so do not flag it for that):
+CANDIDATE NOTES (the candidate's own additions about their experience; a fact stated here is supported in the summary and on lines of the role or project it describes, so do not flag it there; on any other role's lines it is still an added fact):
 ${supplemental.trim()}` : ''}
 
 SUMMARY: ${tailored.summary || '(none)'}
