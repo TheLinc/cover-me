@@ -360,8 +360,10 @@ export async function uploadDesignFileToBackend(accessToken: string, hash: strin
   }
 }
 
-// plan: which Pro plan checkout sells (the portal ignores it).
-export async function startBilling(accessToken: string, action: 'checkout' | 'portal', plan: 'monthly' | 'quarterly' = 'monthly'): Promise<string> {
+// Which Pro plan checkout sells (the portal ignores it).
+export type Plan = 'monthly' | 'quarterly'
+
+export async function startBilling(accessToken: string, action: 'checkout' | 'portal', plan: Plan = 'monthly'): Promise<string> {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/billing`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },

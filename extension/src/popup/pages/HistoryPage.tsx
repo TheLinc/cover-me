@@ -5,7 +5,7 @@ import { downloadTailoredResumePdf } from '../../lib/pdf/resume'
 import { accountUpdates, capWarning, groupLocalHistory, groupsFromApplications, ownPending, unclaimed, uploadMessage, uploadSummary, withLocalOnly, type JobGroup } from '../../lib/history'
 import { deleteFromHistory, deleteFromTailoredHistory, getCachedTier, getDesignHashes, getHistory, getMode, getTailoredHistory, getUploadAsked, markUploadAsked, saveCachedTier, setEntryAccounts } from '../../lib/storage'
 import type { AuthSession, CoverLetter, CoverLetterEntry, TailoredHistoryEntry } from '../../types'
-import UpgradeButton from '../components/UpgradeButton'
+import UpgradePrompt from '../components/UpgradePrompt'
 import { WEB_URL } from '../../lib/config'
 import { downloadResumeWord } from '../../lib/design'
 
@@ -238,7 +238,7 @@ export default function HistoryPage() {
       {capText && (
         <div className="cap-prompt">
           <div className="warning-box">{capText}</div>
-          <UpgradeButton />
+          <UpgradePrompt />
         </div>
       )}
       {upload && !upload.asked && (

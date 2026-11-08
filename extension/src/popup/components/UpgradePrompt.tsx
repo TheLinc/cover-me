@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { ensureValidSession, startBilling } from '../../lib/auth'
+import { ensureValidSession, startBilling, type Plan } from '../../lib/auth'
 
 // Opens Stripe checkout for the chosen plan in a new tab (payments live on the
 // website, not in the extension). Prices match the dashboard's upgrade buttons.
-export default function UpgradeButton() {
+export default function UpgradePrompt() {
   const [error, setError] = useState('')
 
-  async function handleUpgrade(plan: 'monthly' | 'quarterly') {
+  async function handleUpgrade(plan: Plan) {
     setError('')
     try {
       const session = await ensureValidSession()
@@ -21,7 +21,7 @@ export default function UpgradeButton() {
   }
 
   return (
-    <div className="upgrade">
+    <div className="upgrade-prompt">
       <div className="upgrade-actions">
         <button className="btn btn-primary" onClick={() => handleUpgrade('monthly')}>Upgrade, $15/mo</button>
         <button className="btn btn-secondary" onClick={() => handleUpgrade('quarterly')}>$35 every 3 months</button>

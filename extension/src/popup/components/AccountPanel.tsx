@@ -6,7 +6,7 @@ import { encryptApiKey } from '../../lib/crypto'
 import { clearSession, getCachedTier, getMode, getSettings, resolveMode, saveCachedTier, saveSettings, takeGoogleSignInError, watchGoogleSignInError, watchSession } from '../../lib/storage'
 import type { AIProvider, AppMode, AuthSession } from '../../types'
 import GoogleIcon from './GoogleIcon'
-import UpgradeButton from './UpgradeButton'
+import UpgradePrompt from './UpgradePrompt'
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 type AuthStatus = 'idle' | 'loading'
@@ -303,7 +303,7 @@ export default function AccountPanel({ initialView = 'signin', links = true }: {
               </div>
               {links && (
                 <>
-                  {tier === 'hosted_free' && <UpgradeButton />}
+                  {tier === 'hosted_free' && <UpgradePrompt />}
                   {/* Plan, usage and (for Pro) billing and every saved application. */}
                   <a className="text-link" href={`${WEB_URL}/dashboard`} target="_blank" rel="noreferrer">Open your dashboard</a>
                 </>
