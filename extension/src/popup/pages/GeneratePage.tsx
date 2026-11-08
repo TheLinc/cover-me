@@ -6,7 +6,9 @@ import { letterSteps, tailorSteps } from '../../lib/progress-steps'
 import { openResumeEditor } from '../../lib/resume-edit'
 import { downloadResumeWord, usesDesign } from '../../lib/design'
 import { getCandidateContext, getTailoredHistory, resolveMode, saveCandidateContext } from '../../lib/storage'
+import DownloadMenu from '../components/DownloadMenu'
 import GapChips from '../components/GapChips'
+import { EditIcon, RegenerateIcon } from '../components/icons'
 import PageReadNotice from '../components/PageReadNotice'
 import ProgressSteps from '../components/ProgressSteps'
 import ReviewAsk, { claimReviewAsk } from '../components/ReviewAsk'
@@ -1002,17 +1004,21 @@ export default function GeneratePage({ onNavigate }: Props) {
                       Want a different version?
                     </button>
                     {regenerateExpanded && (
-                      <div className="regen-section">
+                      <div className="composer">
                         <textarea
-                          className="form-input supplemental-input"
+                          className="composer-input"
+                          aria-label="What to change"
                           placeholder={'What to change? (optional)\ne.g. "Referred by Jane Chen" · "emphasize leadership" · "Open to relocating"'}
                           value={letterSupplemental}
                           onChange={e => setLetterSupplemental(e.target.value)}
                           autoFocus
                         />
-                        <button className="btn btn-secondary" onClick={regenerateLetter}>
-                          Regenerate
-                        </button>
+                        <div className="composer-foot">
+                          <button className="btn btn-secondary btn-sm" onClick={regenerateLetter}>
+                            <RegenerateIcon />
+                            Regenerate
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -1072,64 +1078,41 @@ export default function GeneratePage({ onNavigate }: Props) {
                     </div>
                   )}
                   <div className="supplemental-section">
-                    <label className="supplemental-label">Missing something?</label>
-                    <textarea
-                      className="form-input supplemental-input"
-                      placeholder={'Add real experience not on your resume\ne.g. "2yr GraphQL from freelance, AWS cert in progress"'}
-                      value={supplemental}
-                      onChange={e => setSupplemental(e.target.value)}
-                    />
+                    <label className="supplemental-label" htmlFor="tailor-supplemental">Missing something?</label>
+                    <div className="composer">
+                      <textarea
+                        id="tailor-supplemental"
+                        className="composer-input"
+                        placeholder={'Add real experience not on your resume\ne.g. "2yr GraphQL from freelance, AWS cert in progress"'}
+                        value={supplemental}
+                        onChange={e => setSupplemental(e.target.value)}
+                      />
+                      <div className="composer-foot">
+                        <span className="composer-hint">Real experience only</span>
+                        <button className="btn btn-secondary btn-sm" onClick={regenerate}>
+                          <RegenerateIcon />
+                          Regenerate
+                        </button>
+                      </div>
+                    </div>
                   </div>
                   {tailoredResume.designFellBack && (
                     <p className="hint">Your file&apos;s layout couldn&apos;t be edited safely, so this one uses the Cover Me layout.</p>
                   )}
-                  <div className={`letter-actions${tailoredResume.sourceHash ? ' design-actions' : ''}`}>
+                  <div className="letter-actions">
                     {/* Tailored in the user's own file (#131): their Word file leads. */}
-                    {tailoredResume.sourceHash ? (
-                      <>
-                        <button className="btn btn-primary" onClick={() => void downloadResumeDocx()}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                        <polyline points="7 10 12 15 17 10" />
-                        <line x1="12" y1="15" x2="12" y2="3" />
-                      </svg>
-                          Word (your design)
-                        </button>
-                        <button className="btn btn-secondary btn-compact" onClick={downloadResumePdf}>
-                          PDF (Cover Me layout)
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button className="btn btn-primary" onClick={downloadResumePdf}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                        <polyline points="7 10 12 15 17 10" />
-                        <line x1="12" y1="15" x2="12" y2="3" />
-                      </svg>
-                          PDF
-                        </button>
-                        <button className="btn btn-secondary btn-compact" onClick={() => void downloadResumeDocx()}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                        <polyline points="7 10 12 15 17 10" />
-                        <line x1="12" y1="15" x2="12" y2="3" />
-                      </svg>
-                          Word
-                        </button>
-                      </>
-                    )}
+                    <DownloadMenu
+                      up
+                      options={tailoredResume.sourceHash
+                        ? [{ label: 'Word', note: 'Your design', onSelect: () => void downloadResumeDocx() }, { label: 'PDF', note: 'Cover Me layout', onSelect: downloadResumePdf }]
+                        : [{ label: 'PDF', onSelect: downloadResumePdf }, { label: 'Word', onSelect: () => void downloadResumeDocx() }]}
+                    />
                     {tailoredEntryId && (
                       <button className="btn btn-secondary btn-compact" onClick={() => openResumeEditor(tailoredEntryId)}>
+                        <EditIcon />
                         Edit
                       </button>
                     )}
-                    <button
-                      className="btn btn-secondary btn-compact"
-                      onClick={regenerate}
-                    >
-                      Regenerate
-                    </button>
                     <button className="btn btn-ghost" onClick={bothDone ? resetAll : resetTailor}>
                       New
                     </button>
