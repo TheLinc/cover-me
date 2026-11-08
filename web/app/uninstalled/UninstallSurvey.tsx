@@ -126,7 +126,8 @@ function rememberAnswered() {
 
 // Opened by Chrome when someone removes the extension (extension/src/background/install.ts).
 // u is the account id, there only when they were signed in. Both come from the
-// URL, so anything that isn't a UUID or a version number is dropped.
+// URL, so anything that isn't a UUID or a version number is dropped (and the
+// extension-removed function checks the id again).
 export function UninstallSurvey() {
   const params = useSearchParams()
   const [reason, setReason] = useState('')
@@ -135,6 +136,19 @@ export function UninstallSurvey() {
   const [sent, setSent] = useState<Record<string, unknown> | null>(null)
   // False on the server, then the browser's value, without a hydration mismatch
   const answeredBefore = useSyncExternalStore(noSubscribe, answeredRecently, () => false)
+
+  // Marks the account so the follow-up email skips it (#126), answer or not.
+  // Disclosed on /privacy. A failure only means the email may still go.
+  useEffect(() => {
+    const accountId = params.get('u') ?? ''
+    if (!UUID.test(accountId)) return
+    fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/extension-removed`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ account_id: accountId }),
+      keepalive: true,
+    }).catch(() => {})
+  }, [params])
 
   useEffect(() => {
     if (answeredRecently()) return
