@@ -20,6 +20,7 @@ const PER_MINUTE = 5
 const PER_DAY = 30
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+// A valid body is about 55 bytes; reading stops past this.
 const MAX_BYTES = 1_000
 
 Deno.serve(async (req) => {

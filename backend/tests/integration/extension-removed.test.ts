@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { admin, callFunction, createUser, deleteUser, mockClaude, type TestUser } from './helpers'
+import { admin, callFunction, createUser, deleteUser, type TestUser } from './helpers'
 
 // The uninstall page marks the account so the follow-up email skips it (#126),
 // and signing in to the extension again clears the mark. No sign-in to mark:
@@ -19,7 +19,6 @@ describe('extension-removed', () => {
   let user: TestUser
 
   beforeEach(async () => {
-    await mockClaude.reset()
     user = await createUser()
   })
   afterEach(() => deleteUser(user))

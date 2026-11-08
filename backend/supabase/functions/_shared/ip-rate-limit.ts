@@ -1,5 +1,5 @@
 // Per-IP (per /64 for IPv6) rate limit for functions that take calls without
-// an account: scrape and site-request. Counted by the check_scrape_rate_limit
+// an account: scrape, site-request and extension-removed. Counted by the check_scrape_rate_limit
 // RPC (migration 014). Never log or store the IP; only its HMAC is stored.
 import type { SupabaseClient } from 'npm:@supabase/supabase-js@2'
 

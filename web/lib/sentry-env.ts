@@ -13,8 +13,8 @@ export function sentryEnvironment(
 
 // The uninstall survey's address carries the account id as u= (app/uninstalled),
 // and Sentry copies the page address into several fields of an event (request,
-// span attributes). Blank it everywhere: only an answer, sent to PostHog, and
-// the extension-removed call to our server (#126) carry the account id.
+// span attributes). Blank it everywhere. Only two things carry the account id:
+// an answer, sent to PostHog, and the extension-removed call (#126).
 const ACCOUNT_ID_PARAM = /([?&]u=)[^&#"\\\s]+/g
 
 // An event JSON can't hold (a cycle, a BigInt) goes unchanged, rather than Sentry dropping it on the throw

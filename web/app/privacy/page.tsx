@@ -376,8 +376,8 @@ export default function PrivacyPage() {
               </Li>
               <Li>
                 <strong className="text-foreground">Extension removal (only if you were signed in).</strong>{' '}
-                When the uninstall survey&apos;s address carries your account ID, opening the page records
-                on our server, with your account, the time the extension was removed, whether or not
+                When the uninstall survey&apos;s address carries your account ID, opening the page saves
+                the time you removed the extension with your account on our server, whether or not
                 you answer. We use it only to stop the getting-started email, which tells you to use the
                 extension. Signing in to the extension again clears it, and it is deleted with your account.
               </Li>
