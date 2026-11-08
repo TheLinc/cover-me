@@ -5,6 +5,7 @@ import { downloadTailoredResumePdf, tailoredResumePdf } from '../lib/pdf/resume'
 import { editedResume, saveResumeEdit, withResumeEdit } from '../lib/resume-edit'
 import { getCachedTier, getMode, getTailoredHistory } from '../lib/storage'
 import GapChips from '../popup/components/GapChips'
+import PdfPreview from './PdfPreview'
 import ScoreRing from '../popup/components/ScoreRing'
 import type { AuthSession, TailoredHistoryEntry, TailoredResume } from '../types'
 
@@ -60,7 +61,7 @@ export default function Editor() {
   const [skills, setSkills] = useState<string[]>([])
   const [dirty, setDirty] = useState(false)
   const [status, setStatus] = useState<Status>('')
-  const [previewUrl, setPreviewUrl] = useState('')
+  const [preview, setPreview] = useState<ArrayBuffer | null>(null)
 
   const localSaves = useRef<Promise<void>>(Promise.resolve())
   const accountSaves = useRef<Promise<void>>(Promise.resolve())
@@ -88,8 +89,7 @@ export default function Editor() {
   useEffect(() => {
     if (!current) return
     const t = setTimeout(() => {
-      const url = URL.createObjectURL(tailoredResumePdf(current).output('blob'))
-      setPreviewUrl((old) => { if (old) URL.revokeObjectURL(old); return url })
+      setPreview(tailoredResumePdf(current).output('arraybuffer'))
     }, 300)
     return () => clearTimeout(t)
   }, [current])
@@ -297,8 +297,7 @@ export default function Editor() {
       </main>
 
       <aside className="ed-preview" aria-label="PDF preview">
-        {/* A new frame per preview: changing one frame's src adds a Back entry per edit. */}
-        {previewUrl && <iframe key={previewUrl} title="Resume PDF preview" src={`${previewUrl}#toolbar=0&navpanes=0&view=FitH`} />}
+        <PdfPreview pdf={preview} />
       </aside>
     </div>
   )
