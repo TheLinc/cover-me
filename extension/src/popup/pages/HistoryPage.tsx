@@ -8,7 +8,7 @@ import { deleteFromHistory, deleteFromTailoredHistory, getCachedTier, getDesignH
 import type { AuthSession, CoverLetter, CoverLetterEntry, TailoredHistoryEntry } from '../../types'
 import DownloadMenu from '../components/DownloadMenu'
 import { EditIcon } from '../components/icons'
-import UpgradeButton from '../components/UpgradeButton'
+import UpgradePrompt from '../components/UpgradePrompt'
 import { WEB_URL } from '../../lib/config'
 import { downloadResumeWord } from '../../lib/design'
 
@@ -241,7 +241,7 @@ export default function HistoryPage() {
       {capText && (
         <div className="cap-prompt">
           <div className="warning-box">{capText}</div>
-          <UpgradeButton label="Upgrade to Pro" />
+          <UpgradePrompt />
         </div>
       )}
       {upload && !upload.asked && (

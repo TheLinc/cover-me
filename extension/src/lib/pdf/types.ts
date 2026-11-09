@@ -38,6 +38,9 @@ export interface TailoredResume {
   phone: string
   email: string
   website: string
+  /** Every URL on the contact line, website first. Absent on a parse made before #129. */
+  links?: string[]
+  location?: string
   summary?: string
   experience: ResumeExperience[]
   projects?: ResumeProject[]

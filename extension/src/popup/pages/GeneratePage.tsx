@@ -14,7 +14,7 @@ import ProgressSteps from '../components/ProgressSteps'
 import ReviewAsk, { claimReviewAsk } from '../components/ReviewAsk'
 import ScrapeFailurePanel, { type ShownFailure } from '../components/ScrapeFailure'
 import ScoreRing from '../components/ScoreRing'
-import UpgradeButton from '../components/UpgradeButton'
+import UpgradePrompt from '../components/UpgradePrompt'
 import { WhatsNewLink } from '../components/WhatsNew'
 import type { AuthSession, CoverJob, GenerateResponse, JobData, ResumeData, Settings, ScrapeFailure, ScrapeResponse, TailorJob, TailorResponse, TailoredResume } from '../../types'
 import logoIcon from '../../public/icon/48.png'
@@ -582,7 +582,7 @@ export default function GeneratePage({ onNavigate }: Props) {
     chrome.storage.local.remove('coverJob')
   }
 
-  const upgradePrompt = <UpgradeButton label="Upgrade to Pro: up to 25 a day" />
+  const upgradePrompt = <UpgradePrompt />
 
   function resetTailor() {
     setTailorState('idle')
