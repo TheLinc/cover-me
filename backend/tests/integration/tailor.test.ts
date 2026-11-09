@@ -60,6 +60,7 @@ describe('tailor', () => {
     const typed = MOCK_TAILOR_DELTA.experience[0].bullets[0]
     const experience = [{ ...MOCK_PARSED_RESUME.experience[0], bullets: [typed, 'Maintained customer dashboard'] }, MOCK_PARSED_RESUME.experience[1]]
     const previous = { ...MOCK_PARSED_RESUME, experience, skills: 'TypeScript, Postgres, React, Kafka', atsGaps: [] }
+    const revisionPrompt = async () => (await mockClaude.requests()).map((r) => r.messages[0].content).find((p) => p.includes('REVISION MODE'))
     const regenerate = async (prev: Record<string, unknown>) => {
       user = await createUser()
       await uploadResume(user)
@@ -70,12 +71,14 @@ describe('tailor', () => {
       const resume = await regenerate({ ...previous, editedAt: '2026-11-09T00:00:00Z' })
       expect(resume.skills).toBe('TypeScript, Postgres, React, Data Pipelines, Kafka')
       expect(resume.experience[0].bullets[0]).toBe(typed)
+      expect(await revisionPrompt()).toContain('The candidate edited the PREVIOUS TAILORED RESUME themselves')
     })
 
     it('an unedited previous is checked as before', async () => {
       const resume = await regenerate(previous)
       expect(resume.skills).toBe('TypeScript, Postgres, React, Data Pipelines')
       expect(resume.experience[0].bullets[0]).toBe(MOCK_REWRITTEN_BULLET)
+      expect(await revisionPrompt()).not.toContain('edited the PREVIOUS')
     })
 
     it("a term only in an edited previous's gap list is still dropped", async () => {

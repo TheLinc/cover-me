@@ -171,7 +171,7 @@ ${JSON.stringify(stripScores(previous), null, 2)}
 REVISION MODE — revise, do not rebuild:
 - Start from the PREVIOUS TAILORED RESUME above and change as little as possible. Keep its summary, bullets, and skills exactly as written EXCEPT where the supplemental context adds new truth, or a previously missing JD keyword can now be incorporated honestly.
 - Do not re-rank or re-word bullets that need no change, and preserve each role's existing bullet count. The steps below define HOW to write; this block only changes WHAT you start from.
-- The candidate resume above remains the ground truth for what is true; the supplemental context is the only new truth. Integrity rules still apply — never fabricate to close a gap.
+- ${previous.editedAt ? 'The candidate edited the PREVIOUS TAILORED RESUME themselves, so its contents are true like the candidate resume above: keep what they wrote, and a phrase copied from it counts as evidence. Beyond those two, the supplemental context is the only new truth.' : 'The candidate resume above remains the ground truth for what is true; the supplemental context is the only new truth.'} Integrity rules still apply — never fabricate to close a gap.
 - Recompute STEP 9 against the SAME JD keyword set as before, so added coverage raises the score rather than shifting the baseline.
 ` : ''
 
