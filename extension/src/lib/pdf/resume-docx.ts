@@ -9,6 +9,7 @@ import {
   AlignmentType, BorderStyle, Document, HeadingLevel, LevelFormat, LineRuleType,
   Packer, Paragraph, Tab, TabStopType, TextRun,
 } from 'docx'
+import { contactParts } from './contact'
 import { resumeFileName, saveFile } from './file-name'
 import type { TailoredResume } from './types'
 
@@ -46,7 +47,7 @@ export function buildResumeDocx(resume: TailoredResume): Promise<Blob> {
     new Paragraph({ heading: HeadingLevel.TITLE, children: [new TextRun(resume.name || 'Resume')] }),
   ]
 
-  const contact = [resume.phone, resume.email, resume.website].filter(Boolean)
+  const contact = contactParts(resume)
   if (contact.length) {
     body.push(new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun(contact.join('   |   '))] }))
   }
