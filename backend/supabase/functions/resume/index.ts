@@ -35,6 +35,12 @@ Deno.serve(async (req) => {
 
   const userId = user.id
 
+  // Only the extension calls this, and every sign-in there fetches the resume,
+  // so the account has the extension again: the follow-up email may go (#126).
+  const { error: clearError } = await supabase.from('users').update({ extension_removed_at: null })
+    .eq('id', userId).not('extension_removed_at', 'is', null)
+  if (clearError) console.error('resume: clearing extension_removed_at failed')
+
   // GET — fetch resume text
   if (req.method === 'GET') {
     const { data, error } = await supabase

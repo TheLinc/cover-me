@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
 }
 
-const EFFECTIVE_DATE = 'November 7, 2026'
+const EFFECTIVE_DATE = 'November 8, 2026'
 const CONTACT_EMAIL  = 'support@cover-me.dev'
 
 // ── Section heading ────────────────────────────────────────────────────────
@@ -375,6 +375,13 @@ export default function PrivacyPage() {
                 nothing else, is never sent to us, and stays until you clear this site&apos;s data.
               </Li>
               <Li>
+                <strong className="text-foreground">Extension removal (only if you were signed in).</strong>{' '}
+                When the uninstall survey&apos;s address carries your account ID, opening the page saves
+                the time you removed the extension with your account on our server, whether or not
+                you answer. We use it only to stop the getting-started email, which tells you to use the
+                extension. Signing in to the extension again clears it, and it is deleted with your account.
+              </Li>
+              <Li>
                 <strong className="text-foreground">Support messages (only if you send one).</strong>{' '}
                 A message you send from the dashboard&apos;s support form goes to our support inbox
                 through Resend, with your account email, Cover Me account ID and plan, so we can reply.
@@ -392,7 +399,7 @@ export default function PrivacyPage() {
             <H3>Information we do NOT collect</H3>
             <Ul>
               <Li>We do not track your browsing history. We receive a page&apos;s address only when you activate the extension on it.</Li>
-              <Li>The extension contains no analytics or telemetry code. It only gives Chrome the uninstall survey&apos;s address (see above). In BYOK mode the only thing it sends to Cover Me is the job page you activate it on, once you have agreed, so we can read the posting. Your resume and API key never reach us.</Li>
+              <Li>The extension contains no analytics or telemetry code. It only gives Chrome the uninstall survey&apos;s address, which records the removal if you were signed in (see above). In BYOK mode the only thing it sends to Cover Me is the job page you activate it on, once you have agreed, so we can read the posting. Your resume and API key never reach us.</Li>
               <Li>In hosted mode our servers count how many letters and resumes you generate, to enforce the generation limits, and log errors. Logs never contain your resume, letters, or job descriptions.</Li>
               <Li>We do not use cookies for tracking or advertising.</Li>
               <Li>We do not collect any data from tabs other than the active job posting tab, and only when you explicitly activate the extension.</Li>
@@ -413,7 +420,7 @@ export default function PrivacyPage() {
               <Li>To process subscription billing through Stripe (Pro mode only).</Li>
               <Li>To respond to support requests you initiate by contacting us directly.</Li>
               <Li>To email you about new features, only if you&apos;ve agreed to it (Hosted mode). You can stop them at any time.</Li>
-              <Li>To send one getting-started email a day after you sign up, if you haven&apos;t generated anything yet (Hosted mode). You can unsubscribe from it.</Li>
+              <Li>To send one getting-started email a day after you sign up, if you haven&apos;t generated anything yet and haven&apos;t removed the extension while signed in (Hosted mode). You can unsubscribe from it.</Li>
               <Li>To count, in aggregate, how many accounts sign up and use the service.</Li>
             </Ul>
             <P>
@@ -649,7 +656,7 @@ export default function PrivacyPage() {
                   name: 'Supabase',
                   url: 'https://supabase.com/privacy',
                   when: 'Every mode (reading job postings, from version 1.3.0); everything else Hosted mode only',
-                  receives: 'Copies of the job pages you ask us to read, which are processed and not stored, and rate-limit counters keyed by a hash of your IP address. In Hosted mode also: the job details, any facts you add and, when you regenerate, the previous tailored resume, sent with each generation request (not stored, except Pro history); messages from the dashboard\'s support form, passed on to Resend and not stored; email address, hashed password (email sign-in only), encrypted resume text, encrypted cover letters and tailored resumes with the unencrypted fields that go with them (Pro), your encrypted Word file and which tailored resumes were made from it (Pro), your resume\'s file name, your Stripe customer ID, your Google name, picture link and account ID, session tokens, usage counts, and the account-keyed counter used when a new resume is read or a support message is sent (see Information We Collect for each). Supabase Auth also records the IP address and browser of each signed-in session, kept with your account. Supabase hosts our backend functions, authentication system and database, and keeps standard request logs (IP address, browser, time, and the address requested, which can include a dashboard search) for a short period.',
+                  receives: 'Copies of the job pages you ask us to read, which are processed and not stored, and rate-limit counters keyed by a hash of your IP address. In Hosted mode also: the job details, any facts you add and, when you regenerate, the previous tailored resume, sent with each generation request (not stored, except Pro history); messages from the dashboard\'s support form, passed on to Resend and not stored; email address, hashed password (email sign-in only), encrypted resume text, encrypted cover letters and tailored resumes with the unencrypted fields that go with them (Pro), your encrypted Word file and which tailored resumes were made from it (Pro), your resume\'s file name, your Stripe customer ID, your Google name, picture link and account ID, session tokens, usage counts, when you removed the extension (if you were signed in), and the account-keyed counter used when a new resume is read or a support message is sent (see Information We Collect for each). Supabase Auth also records the IP address and browser of each signed-in session, kept with your account. Supabase hosts our backend functions, authentication system and database, and keeps standard request logs (IP address, browser, time, and the address requested, which can include a dashboard search) for a short period.',
                 },
                 {
                   name: 'Google',
