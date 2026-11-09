@@ -307,7 +307,7 @@ export default function PrivacyPage() {
                 generation request to authenticate you.
               </Li>
               <Li>
-                <strong className="text-foreground">Usage count (Hosted mode).</strong>{' '}
+                <strong className="text-foreground">Generation count (Hosted mode).</strong>{' '}
                 We record the number of AI generations (cover letters and resume tailoring combined)
                 per day per account to enforce the free allowance and Pro's fair-use limit. Apart from Supabase&apos;s
                 short-lived request logs (see Third-Party Services), all a Free user&apos;s generation
@@ -327,7 +327,7 @@ export default function PrivacyPage() {
                 To decide what to improve, our server counts which features you use, such as the file type
                 you upload, the tailoring options you pick and whether you regenerate. Each count goes to
                 PostHog with your Cover Me account ID, your plan and those choices, and PostHog keeps no
-                profile of you from it. A count holds only yes-or-no answers and choices from a fixed list. It
+                profile of you from it. Apart from your account ID, a count holds only yes-or-no answers and choices from a fixed list. It
                 never includes your resume, letters, the context you add, job or company details, file names
                 or posting addresses. There are no usage counts in BYOK mode. To stop them for your account,
                 email{' '}
@@ -656,7 +656,7 @@ export default function PrivacyPage() {
                   name: 'Supabase',
                   url: 'https://supabase.com/privacy',
                   when: 'Every mode (reading job postings, from version 1.3.0); everything else Hosted mode only',
-                  receives: 'Copies of the job pages you ask us to read, which are processed and not stored, and rate-limit counters keyed by a hash of your IP address. In Hosted mode also: the job details, any facts you add and, when you regenerate, the previous tailored resume, sent with each generation request (not stored, except Pro history); messages from the dashboard\'s support form, passed on to Resend and not stored; email address, hashed password (email sign-in only), encrypted resume text, encrypted cover letters and tailored resumes with the unencrypted fields that go with them (Pro), your encrypted Word file and which tailored resumes were made from it (Pro), your resume\'s file name, your Stripe customer ID, your Google name, picture link and account ID, session tokens, usage counts, and the account-keyed counter used when a new resume is read or a support message is sent (see Information We Collect for each). Supabase Auth also records the IP address and browser of each signed-in session, kept with your account. Supabase hosts our backend functions, authentication system and database, and keeps standard request logs (IP address, browser, time, and the address requested, which can include a dashboard search) for a short period.',
+                  receives: 'Copies of the job pages you ask us to read, which are processed and not stored, and rate-limit counters keyed by a hash of your IP address. In Hosted mode also: the job details, any facts you add and, when you regenerate, the previous tailored resume, sent with each generation request (not stored, except Pro history); messages from the dashboard\'s support form, passed on to Resend and not stored; email address, hashed password (email sign-in only), encrypted resume text, encrypted cover letters and tailored resumes with the unencrypted fields that go with them (Pro), your encrypted Word file and which tailored resumes were made from it (Pro), your resume\'s file name, your Stripe customer ID, your Google name, picture link and account ID, session tokens, generation counts, whether and when you opted out of usage counts, and the account-keyed counter used when a new resume is read or a support message is sent (see Information We Collect for each). Supabase Auth also records the IP address and browser of each signed-in session, kept with your account. Supabase hosts our backend functions, authentication system and database, and keeps standard request logs (IP address, browser, time, and the address requested, which can include a dashboard search) for a short period.',
                 },
                 {
                   name: 'Google',
@@ -722,7 +722,8 @@ export default function PrivacyPage() {
             <Ul>
               <Li><strong className="text-foreground">BYOK mode:</strong> Your resume, API key and history stay on your device, and we hold no copy of them. You can delete them at any time by removing the extension or clearing extension storage in Chrome settings. The only BYOK data on our side are the rate-limit counters and Supabase&apos;s request logs described above.</Li>
               <Li><strong className="text-foreground">Hosted account data:</strong> Your account, resume, and application history (the job details, and on Pro your cover letters and tailored resumes) are retained for as long as your account is active. You can delete your account at any time from Settings in your dashboard, which deletes all of this at once. You can also ask us by email at <a href={`mailto:${CONTACT_EMAIL}`} className="text-brand-light hover:text-foreground transition-colors">{CONTACT_EMAIL}</a>, and we will permanently delete all your data within 30 days of a verified deletion request.</Li>
-              <Li><strong className="text-foreground">Usage count records:</strong> Kept for as long as your account exists, because the free allowance counts generations over the life of the account. They are deleted with your account.</Li>
+              <Li><strong className="text-foreground">Generation count records:</strong> Kept for as long as your account exists, because the free allowance counts generations over the life of the account. They are deleted with your account.</Li>
+              <Li><strong className="text-foreground">Usage counts in PostHog:</strong> PostHog deletes them after at most two years. Deleting your account doesn&apos;t remove them sooner, but once the account is gone, the account ID they carry no longer links to you.</Li>
               <Li><strong className="text-foreground">Rate-limit counters:</strong> A counter not updated for two days is deleted at the next cleanup, which runs during later requests.</Li>
               <Li><strong className="text-foreground">Stripe billing records:</strong> Deleting your account also deletes your Stripe customer record, which holds your email and saved card. Stripe retains transaction records as required by financial regulations, and we cannot delete those.</Li>
             </Ul>

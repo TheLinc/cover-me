@@ -43,6 +43,10 @@ export async function capture(event: string, distinctId: string, properties: Rec
 export async function captureUsage(supabase: SupabaseClient, event: string, userId: string, properties: Record<string, unknown>): Promise<void> {
   if (!POSTHOG_KEY) return
   const { data, error } = await supabase.from('users').select('usage_counts_opted_out_at').eq('id', userId).single()
-  if (error || !data || data.usage_counts_opted_out_at) return
+  if (error || !data) {
+    console.error(`PostHog ${event}: opt-out lookup failed`)
+    return
+  }
+  if (data.usage_counts_opted_out_at) return
   await capture(event, userId, properties)
 }
