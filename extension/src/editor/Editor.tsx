@@ -5,6 +5,7 @@ import { downloadTailoredResumePdf, tailoredResumePdf } from '../lib/pdf/resume'
 import type { PlacedSection } from '../lib/pdf/sections'
 import { editedResume, saveResumeEdit, shownSections, withResumeEdit, withSections } from '../lib/resume-edit'
 import { getCachedTier, getMode, getTailoredHistory } from '../lib/storage'
+import DownloadMenu from '../popup/components/DownloadMenu'
 import GapChips from '../popup/components/GapChips'
 import PdfPreview from './PdfPreview'
 import ScoreRing from '../popup/components/ScoreRing'
@@ -348,9 +349,12 @@ export default function Editor() {
             : status === 'local' ? "Couldn't reach your account, so it still has the version from before this edit. Press Done to try again."
             : ''}
         </p>
-        <button className="btn btn-secondary btn-compact" onClick={() => downloadTailoredResumePdf(current, opened.jobTitle)}>
-          Download PDF
-        </button>
+        {/* Only Cover Me layout resumes open here (no Edit on "Your design"), so Word is the Cover Me layout too. */}
+        <DownloadMenu className="btn btn-secondary btn-compact" options={[
+          { label: 'PDF', onSelect: () => downloadTailoredResumePdf(current, opened.jobTitle) },
+          // docx is big, so it loads only when someone asks for the Word file.
+          { label: 'Word', onSelect: () => void import('../lib/pdf/resume-docx').then((m) => m.downloadTailoredResumeDocx(current, opened.jobTitle)) },
+        ]} />
         <button className="btn btn-primary btn-compact" onClick={done}>Done</button>
       </header>
 
