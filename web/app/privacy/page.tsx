@@ -604,12 +604,14 @@ export default function PrivacyPage() {
 
             <PermissionCard name="https://ncnmkxzrygnwjiciyxqs.supabase.co/*">
               <strong className="text-foreground">Used by:</strong> Every mode, to read job postings
-              (from version 1.3.0). Everything else is Hosted mode only.
+              (from version 1.3.0) and to send site requests and bug reports when you press the button.
+              Everything else is Hosted mode only.
               <br /><br />
               <strong className="text-foreground">Why it is needed:</strong> The extension
               communicates with our Supabase backend for the following user-initiated purposes:
               <ul className="mt-2 space-y-1 pl-4 list-disc">
                 <li>Reading the job posting (every mode): sending the stripped copy of the page you click Generate or Tailor Resume on, and getting back the job title, company and description. The page is not stored.</li>
+                <li>Site requests and bug reports (every mode, only when you press the button): sending what Request this site or Report bug shows, as described under Information We Collect.</li>
                 <li>Authentication: signing in, signing up, signing out, and refreshing JWT session tokens.</li>
                 <li>Account tier: fetching your plan after sign-in and when the Settings or History page opens.</li>
                 <li>Upgrade: getting a Stripe checkout page when you click an Upgrade button.</li>
