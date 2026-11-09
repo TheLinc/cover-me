@@ -280,7 +280,10 @@ export default function GeneratePage({ onNavigate }: Props) {
           setTailorError(tj.error ?? 'Resume tailoring failed.')
           setTailorErrorCode(tj.errorCode)
           setTailorState('error')
-        } else if (tj.status === 'done' && !restoredTailorDone && tj.resume) {
+        // A finished run the saved page doesn't show yet: the page isn't saved
+        // while a run is loading, so after closing the popup during Regenerate
+        // the saved result is the one before it, under another History entry.
+        } else if (tj.status === 'done' && tj.resume && (!restoredTailorDone || (!!tj.entryId && tj.entryId !== s?.tailoredEntryId))) {
           setTailoredResume(tj.resume)
           setTailoredJob(tj.job)
           setTailoredEntryId(tj.entryId ?? null)
