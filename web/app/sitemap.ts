@@ -8,7 +8,7 @@ const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 // Never use new Date() here: stamping every page as modified on every deploy
 // teaches crawlers to ignore the lastmod signal entirely.
 const LAST_MODIFIED = {
-  home: '2026-10-29',
+  home: '2026-11-09',
   about: '2026-10-29',
   legal: '2026-11-09',
   support: '2026-10-29',
