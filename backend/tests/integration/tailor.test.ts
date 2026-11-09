@@ -244,7 +244,7 @@ describe('tailor', () => {
       api_key: 'phc_mock',
       event: 'tailor_run',
       distinct_id: user.id,
-      properties: { tier: 'hosted_pro', compact: false, trim: true, includeSummary: true, layout: 'yours', fellBack: false, $process_person_profile: false },
+      properties: { tier: 'hosted_pro', compact: false, trim: true, includeSummary: true, layout: 'yours', fellBack: false, $process_person_profile: false, $geoip_disable: true },
     }])
   })
 

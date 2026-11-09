@@ -2,7 +2,8 @@
 // POSTHOG_KEY secret is set (`supabase secrets set POSTHOG_KEY=phc_...`).
 // POSTHOG_HOST overrides the US cloud host (the function tests point it at
 // their mock). $process_person_profile: false counts events by distinct_id
-// without creating PostHog person profiles.
+// without creating PostHog person profiles, and $geoip_disable: true keeps
+// PostHog from adding a location (it would be our server's, from its IP).
 //
 // A count tied to an account goes through captureUsage, never capture: it
 // skips accounts that opted out (migration 028). The privacy policy allows
@@ -26,7 +27,7 @@ export async function capture(event: string, distinctId: string, properties: Rec
         api_key: POSTHOG_KEY,
         event,
         distinct_id: distinctId,
-        properties: { ...properties, $process_person_profile: false },
+        properties: { ...properties, $process_person_profile: false, $geoip_disable: true },
       }),
       signal: AbortSignal.timeout(5000),
     })
