@@ -97,6 +97,10 @@ describe('an edited previous version', () => {
     const { resume, repair } = await checkAndRewriteLines(tailored, original, posting, async () => replies.shift()!, notes)
     expect(resume.experience[0].bullets).toEqual([bullet])
     expect(repair.flagged).toEqual([])
+    // Only a whole line counts: inside a longer note it is still checked.
+    const again = [JSON.stringify({ flags: [{ id: 'e0b0', reason: 'adds Rails' }], summary: null }), '{}']
+    const partial = await checkAndRewriteLines(tailored, original, posting, async () => again.shift()!, `At my last job: ${bullet}`)
+    expect(partial.resume.experience[0].bullets).toEqual(original.experience[0].bullets)
   })
 })
 

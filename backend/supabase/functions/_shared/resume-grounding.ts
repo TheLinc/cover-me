@@ -468,10 +468,12 @@ export async function checkAndRewriteLines<T extends Groundable>(
   }
   if (!flags) return { resume: tailored, repair: { flagged: [], rewritten: 0, reverted: 0, checkFailed: true } }
   // Drop ids that don't point at a real line (an empty summary is none), and
-  // lines the candidate wrote themselves: copied word for word from the notes.
+  // lines the candidate wrote themselves: a whole line of the notes, as an
+  // edited version's bullets are (trustedNotes).
+  const own = new Set(supplemental?.split('\n').map((l) => l.trim()))
   for (const id of [...flags.keys()]) {
     const line = lineAt(tailored, id)?.trim()
-    if (!line || supplemental?.includes(line)) flags.delete(id)
+    if (!line || own.has(line)) flags.delete(id)
   }
   if (flags.size === 0) return { resume: tailored, repair: { flagged: [], rewritten: 0, reverted: 0 } }
 
