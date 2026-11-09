@@ -92,7 +92,7 @@ export default function Page() {
           How to use your own OpenAI or Claude API key for cover letters
         </h1>
         <p className="text-[12px] text-muted-foreground">
-          <time dateTime={guide.updated ?? guide.date}>Updated October 29, 2026</time> · Lincoln Laylor
+          <time dateTime={guide.updated ?? guide.date}>Updated November 9, 2026</time> · Lincoln Laylor
         </p>
       </div>
 
@@ -170,7 +170,7 @@ export default function Page() {
           Your key is stored in the browser&rsquo;s extension storage, encrypted with AES-256-GCM through the Web Crypto API. The key that encrypts it is stored beside it, so this stops casual reads of the storage file but not someone with full access to your Chrome profile.
         </p>
         <p>
-          One thing does reach Cover Me&rsquo;s server if you allow it. Under Settings, &ldquo;Reading job pages&rdquo; sends the job page&rsquo;s address and a copy of the page to the server so it can read the posting, which lets job board changes be fixed without an extension update. The server deletes the copy once it&rsquo;s read. Turn it off and postings are read on your device only.
+          Two things can reach Cover Me&rsquo;s server. Under Settings, &ldquo;Reading job pages&rdquo; sends the job page&rsquo;s address and a copy of the page to the server so it can read the posting, which lets job board changes be fixed without an extension update. The server deletes the copy once it&rsquo;s read. If it can&rsquo;t read any page from a click, it counts each site&rsquo;s name under a random ID. Turn it off and postings are read on your device only. And if a page can&rsquo;t be read, the Request this site and Report bug buttons send what they show you, only when you press one.
         </p>
 
         <h2 className="text-[22px] text-foreground !mt-10">What do you give up compared with a hosted plan?</h2>
