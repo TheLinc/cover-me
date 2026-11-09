@@ -74,6 +74,12 @@ export const GUIDES: Guide[] = [
     description: 'Change the words inside the paragraphs your resume already has, and leave the paragraphs alone. What breaks a Word design, how to tailor by hand, and a tested run with Cover Me.',
     date: '2026-11-07',
   },
+  {
+    slug: 'free-jobscan-alternatives',
+    title: 'Free Jobscan alternatives: 6 resume checkers compared',
+    description: "Jobscan's free plan gives 5 scans a month, and rewriting and cover letters cost $49.95 a month. Six tools that check your resume against a job posting for free, and which ones also rewrite it.",
+    date: '2026-11-09',
+  },
 ]
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'

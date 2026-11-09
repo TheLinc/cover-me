@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { CHROME_STORE_URL } from '@/lib/utils'
+import { GuideTldr } from '@/components/site/GuideTldr'
 import { getGuide, guideArticleJsonLd, guideBreadcrumbJsonLd } from '@/lib/guides'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
@@ -110,6 +111,14 @@ export default function Page() {
         <p className="text-[17px] text-foreground font-medium leading-[1.7]">
           Teal is a resume builder and job tracker, with Teal+ at $29 every 30 days for unlimited AI and keyword matching. Cover Me (cover-me.dev) is an open-source Chrome extension that tailors the resume you already have to the posting you have open, scores it and writes a cover letter. It&rsquo;s free with your own API key, or $15 a month.
         </p>
+
+        <GuideTldr
+          items={[
+            "Teal is a resume builder and job tracker. Teal+ costs $29 every 30 days for unlimited AI and keyword matching.",
+            "Cover Me tailors the resume you already have to the posting you have open, scores it and writes the cover letter.",
+            "Cover Me has a free plan, and Pro is $15 a month. Teal's free plan has unlimited job tracking.",
+          ]}
+        />
         <p>
           I build Cover Me, so weigh this comparison with that in mind. Teal prices and features are from its pricing page, checked in October 2026.
         </p>
