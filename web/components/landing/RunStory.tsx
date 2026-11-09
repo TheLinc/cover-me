@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import Image from 'next/image'
-import { CheckIcon, ExclamationMarkIcon } from '@phosphor-icons/react/dist/ssr'
+import { ArrowRightIcon, CheckIcon, ExclamationMarkIcon, FileDocIcon, FilePdfIcon, UploadSimpleIcon } from '@phosphor-icons/react/dist/ssr'
 import { cn } from '@/lib/utils'
 import { Eyebrow } from '@/components/site/Eyebrow'
 import { ExtensionPopup, PopupButton, ProgressStep, type StepState } from './ExtensionPopup'
@@ -12,14 +12,16 @@ import { BrowserFrame, CELLS, EXAMPLE, Hl, Label, Line, ResumeDoc, TIERS } from 
 import { Ambient } from './Ambient'
 
 // One application, start to finish. Scroll drives a single position x from 0
-// to 5 (one unit per chapter) and every layer of the stage derives its state
+// to 7 (one unit per chapter) and every layer of the stage derives its state
 // from x, so the story plays forwards and backwards with the scrollbar.
 const CHAPTERS = [
+  { title: "Give it everything you've done", body: 'Upload it once, as a PDF or Word file. Cover Me only uses what is in it, so give it every role and project.' },
   { title: 'Click Cover Me on the posting', body: 'LinkedIn, Indeed, Greenhouse, Lever, Workday and more. Anywhere else, paste it in.' },
   { title: 'It reads what the job asks for', body: 'Every requirement in the posting, sorted into must-haves and nice-to-haves.' },
-  { title: "Your resume, in the posting's words", body: 'Same jobs, same facts. Bullets are reworded so the requirements you meet are easy to spot.' },
+  { title: "Your resume, in the posting's words", body: 'Same jobs, same facts, in the posting’s words. "Remove irrelevant bullets" drops what this job doesn’t need.' },
   { title: 'A score you can read', body: 'Each requirement you cover adds points. Must-haves count the most.' },
   { title: 'And a cover letter to match', body: 'Written from your resume, about this job. Edit it, then send.' },
+  { title: 'Your design, or ours', body: 'A Word file can keep your own design (beta). Or use the clean, ATS-ready Cover Me layout, as PDF or Word.' },
 ]
 const N = CHAPTERS.length
 const CHAPTER_VH = 90 // scroll distance per chapter
@@ -48,7 +50,86 @@ function typed(segments: string[], n: number) {
 // Requirements in the order they appear in the posting.
 const FOUND = EXAMPLE.posting.flat().flatMap((s) => (typeof s === 'string' ? [] : [s.k]))
 
-// ── Chapter 0 and 1: the posting in the browser ─────────────────────────────
+// ── Chapter 0: the master resume goes in ────────────────────────────────────
+
+const ROLES = ['Marketing Lead · Brightline', 'Growth Marketing Manager · Juniper Labs', 'Marketing Coordinator · Fieldstone Co.', 'Marketing Intern · Denver Botanic Gardens']
+
+// A long resume: three sheets, the top one showing every role.
+function MasterStack({ className, style }: { className?: string; style?: CSSProperties }) {
+  const sheet = 'absolute inset-0 rounded-[6px] bg-white shadow-[0_18px_40px_-20px_rgba(30,27,75,0.35)]'
+  return (
+    <div className={cn('relative', className)} style={style}>
+      <div className={sheet} style={{ transform: 'translate(14px, 14px) rotate(3deg)' }} />
+      <div className={sheet} style={{ transform: 'translate(7px, 7px) rotate(1.5deg)' }} />
+      <div className={cn(sheet, 'flex flex-col gap-2 overflow-hidden p-5')}>
+        <Label>Master resume</Label>
+        <div className="text-[16px] font-semibold text-ink">{EXAMPLE.candidate}</div>
+        <Line w="70%" />
+        {ROLES.map((r) => (
+          <div key={r} className="mt-1 flex flex-col gap-1.5">
+            <div className="truncate text-[11px] font-semibold text-ink-2">{r}</div>
+            <Line w="94%" />
+            <Line w="82%" />
+          </div>
+        ))}
+        <div className="mt-1 text-[11px] font-semibold text-ink-2">Projects · Volunteering · Skills</div>
+        <Line w="76%" />
+      </div>
+    </div>
+  )
+}
+
+function UploadLayer({ x, c }: { x: number; c?: boolean }) {
+  const v = 1 - ramp(x, 1 - FADE, 1)
+  const drop = ease(ramp(x, 0.14, 0.5))
+  const over = ramp(x, 0.34, 0.46) - ramp(x, 0.5, 0.58)
+  const saved = ramp(x, 0.54, 0.64)
+  return (
+    <div className="absolute inset-0" style={{ opacity: v }}>
+      <ExtensionPopup
+        className={cn('absolute', c ? 'inset-x-0 bottom-[2%]' : 'right-[3%] top-[8%] w-[290px]')}
+        style={c ? undefined : { transform: `translateX(${-ease(ramp(x, 0.62, 0.86)) * 175}px)` }}
+        status="Resume"
+      >
+        <div className="flex flex-col gap-3 px-4 py-4">
+          <div
+            className={cn('flex flex-col items-center gap-1.5 rounded-[12px] border border-dashed px-4 py-5 text-center transition-colors', over > 0.3 ? 'border-brand bg-ext-elevated' : 'border-ext-border')}
+          >
+            <UploadSimpleIcon size={20} className="text-ext-soft" />
+            <span className="text-[13px] font-semibold">{saved > 0.5 ? 'Replace resume' : 'Upload your resume'}</span>
+            <span className="text-[11px] text-ext-muted">Upload once, used for every application</span>
+            <span className="mt-1 flex gap-1.5">
+              <span className="rounded-[6px] bg-ext-elevated px-2 py-0.5 text-[10.5px] text-ext-text">PDF</span>
+              <span className="rounded-[6px] bg-ext-elevated px-2 py-0.5 text-[10.5px] text-ext-text">Word (.docx)</span>
+            </span>
+          </div>
+          <div className="flex items-center gap-2.5 rounded-[12px] bg-ext-elevated px-3 py-2.5" style={{ opacity: saved, transform: `translateY(${(1 - saved) * 8}px)` }}>
+            <FileDocIcon size={20} className="shrink-0 text-ext-soft" />
+            <span className="flex min-w-0 flex-col">
+              <span className="truncate text-[12px] font-semibold">{EXAMPLE.candidate.replace(' ', '_')}_Resume.docx</span>
+              <span className="text-[10.5px] text-ext-muted">4 roles · 1 project · skills</span>
+            </span>
+            <span className="ml-auto flex items-center gap-1 rounded-full bg-[rgba(99,102,241,0.28)] px-2 py-0.5 text-[10.5px] text-ext-soft">
+              <CheckIcon size={10} weight="bold" />
+              Saved
+            </span>
+          </div>
+        </div>
+      </ExtensionPopup>
+      {/* The stack drops into the upload area. */}
+      <MasterStack
+        className={cn('absolute', c ? 'left-[23%] top-[2%] h-[250px] w-[200px]' : 'left-[4%] top-[9%] h-[380px] w-[270px]')}
+        style={{
+          transformOrigin: 'center',
+          transform: c ? `translateY(${drop * 320}px) scale(${1 - drop * 0.6})` : `translate(${drop * 370}px, ${-drop * 20}px) scale(${1 - drop * 0.65})`,
+          opacity: 1 - ramp(x, 0.44, 0.54),
+        }}
+      />
+    </div>
+  )
+}
+
+// ── Chapter 1 and 2: the posting in the browser ─────────────────────────────
 
 function ToolbarIcon({ x }: { x: number }) {
   const press = ramp(x, 0.48, 0.55) - ramp(x, 0.55, 0.62)
@@ -146,10 +227,11 @@ function ReadPopup({ x }: { x: number }) {
 function BrowserLayer({ x, c }: { x: number; c?: boolean }) {
   const open = ease(ramp(x, 0.58, 0.82))
   const out = ramp(x, 2 - FADE, 2)
+  const enter = ramp(x, 0, FADE)
   return (
     <div
       className="absolute inset-0"
-      style={{ opacity: 1 - out, transform: `scale(${1 - out * 0.06}) translateX(${-out * 40}px)` }}
+      style={{ opacity: Math.min(enter, 1 - out), transform: `scale(${1 - out * 0.06}) translateX(${-out * 40}px)` }}
     >
       <BrowserFrame url="job-boards.greenhouse.io/northwind/jobs/4821" toolbar={<ToolbarIcon x={x} />} className="h-full">
         <div className={cn('flex flex-col gap-3', c ? 'p-5' : 'p-7 pr-[290px]')}>
@@ -182,7 +264,7 @@ function BrowserLayer({ x, c }: { x: number; c?: boolean }) {
   )
 }
 
-// ── Chapter 2: the rewrite ──────────────────────────────────────────────────
+// ── Chapter 3: the rewrite (layer takes x - 1, see Stage) ─────────────────
 
 function Bullet({ x, at, before, after }: { x: number; at: number; before: string; after: string[] }) {
   const u = ramp(x, at, at + 0.2)
@@ -207,6 +289,25 @@ function Bullet({ x, at, before, after }: { x: number; at: number; before: strin
       {typedOut[2]}
       {u < 1 && <span className="ml-px inline-block h-[14px] w-[2px] translate-y-[2px] animate-pulse bg-brand" />}
     </p>
+  )
+}
+
+// With "Remove irrelevant bullets" on, a bullet this job doesn't need is struck and folds away.
+function Dropped({ x }: { x: number }) {
+  const u = ramp(x, 2.56, 2.72)
+  const strike = ramp(u, 0, 0.4)
+  const fold = ease(ramp(u, 0.6, 1))
+  return (
+    <div className="overflow-hidden" style={{ maxHeight: `${(1 - fold) * 48}px`, opacity: 1 - fold, marginTop: `${-fold * 12}px` }}>
+      <p className="text-[13px] leading-[1.6] text-subtle">
+        <span className="bg-no-repeat" style={{ backgroundImage: 'linear-gradient(#6B635D,#6B635D)', backgroundSize: `${strike * 100}% 1.5px`, backgroundPosition: '0 58%' }}>
+          Planned the annual customer conference for 600 attendees
+        </span>
+        <span className="ml-2 whitespace-nowrap rounded-full bg-gap-tint px-2 py-0.5 text-[10.5px] font-medium text-gap-ink" style={{ opacity: ramp(u, 0.15, 0.35) }}>
+          Not needed for this job
+        </span>
+      </p>
+    </div>
   )
 }
 
@@ -239,6 +340,7 @@ function RewriteLayer({ x, c }: { x: number; c?: boolean }) {
         {EXAMPLE.bullets.map((b, i) => (
           <Bullet key={b.before} x={x} at={at[i]} before={b.before} after={b.after} />
         ))}
+        <Dropped x={x} />
         <div className="mt-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-2">Skills</div>
         <div className="relative min-h-[48px]">
           <p className="absolute text-[13px] text-subtle" style={{ opacity: 1 - skills }}>{EXAMPLE.skillsBefore}</p>
@@ -267,7 +369,7 @@ function RewriteLayer({ x, c }: { x: number; c?: boolean }) {
   )
 }
 
-// ── Chapter 3: the score ────────────────────────────────────────────────────
+// ── Chapter 4: the score ──────────────────────────────────────────────────
 
 function Mark({ gap, on }: { gap: boolean; on: boolean }) {
   return (
@@ -373,13 +475,13 @@ function ScoreLayer({ x, c }: { x: number; c?: boolean }) {
   )
 }
 
-// ── Chapter 4: the letter ───────────────────────────────────────────────────
+// ── Chapter 5: the letter ─────────────────────────────────────────────────
 
 const LETTER = [`Dear ${EXAMPLE.company} team,`, ...EXAMPLE.letter]
 const LETTER_LEN = LETTER.join('').length
 
 function LetterLayer({ x, c }: { x: number; c?: boolean }) {
-  const v = ramp(x, 4, 4 + FADE)
+  const v = chapter(x, 4)
   const out = typed(LETTER, ramp(x, 4.12, 4.68) * LETTER_LEN)
   const ready = ease(ramp(x, 4.7, 4.84))
   return (
@@ -420,6 +522,82 @@ function LetterLayer({ x, c }: { x: number; c?: boolean }) {
   )
 }
 
+// ── Chapter 6: what you download, by what you uploaded ─────────────────────
+
+// A tailored resume in miniature: the user's own Word design (any fonts and
+// colors, drawn here in teal) or the Cover Me layout (one column, Times, centred
+// name, as lib/pdf/resume.ts draws it).
+function OutDoc({ kind, title, formats, show }: { kind: 'yours' | 'coverme'; title: string; formats: string[]; show: number }) {
+  const yours = kind === 'yours'
+  const rule = yours ? 'bg-[#0F6E6E]' : 'bg-body'
+  const head = yours ? "font-['Georgia',serif] text-[#0F6E6E]" : "font-['Times_New_Roman',Times,serif] text-ink"
+  return (
+    <figure className="flex w-[126px] flex-col gap-2" style={{ opacity: show, transform: `translateY(${(1 - show) * 12}px)` }}>
+      <div className={cn('flex h-[150px] flex-col gap-1.5 overflow-hidden rounded-[4px] bg-white px-3 py-3 shadow-[0_14px_34px_-16px_rgba(30,27,75,0.4)]', yours && 'border-t-[5px] border-[#0F6E6E]')}>
+        <div className={cn('font-bold leading-none', head, yours ? 'text-[14px]' : 'text-center text-[11px]')}>{EXAMPLE.candidate}</div>
+        <Line w={yours ? '62%' : '74%'} className={cn('h-[4px]', !yours && 'mx-auto')} />
+        {[0, 1].map((i) => (
+          <div key={i} className="mt-1 flex flex-col gap-1">
+            <div className={cn('text-[6.5px] font-bold uppercase tracking-[0.06em]', head)}>{i ? 'Skills' : 'Experience'}</div>
+            <div className={cn('h-px', rule)} />
+            <Line w="92%" className="h-[4px]" />
+            <Line w="84%" className="h-[4px]" />
+            {!i && <Line w="88%" className="h-[4px]" />}
+          </div>
+        ))}
+      </div>
+      <figcaption className="flex flex-col gap-1">
+        <span className="text-[12.5px] font-medium leading-tight text-ink">{title}</span>
+        <span className="flex gap-1">
+          {formats.map((f) => <span key={f} className="rounded-full bg-brand-tint px-2 py-0.5 text-[10.5px] text-brand-ink">{f}</span>)}
+        </span>
+      </figcaption>
+    </figure>
+  )
+}
+
+function Upload({ kind, show }: { kind: 'docx' | 'pdf'; show: number }) {
+  const Icon = kind === 'docx' ? FileDocIcon : FilePdfIcon
+  return (
+    <div className="flex w-[150px] shrink-0 flex-col gap-2 rounded-[14px] bg-white p-3.5 shadow-[0_14px_34px_-18px_rgba(30,27,75,0.35)]" style={{ opacity: show }}>
+      <Label>You upload</Label>
+      <span className="flex items-center gap-2">
+        <Icon size={24} className="shrink-0 text-brand" />
+        <span className="text-[14px] font-semibold text-ink">{kind === 'docx' ? 'A Word file' : 'A PDF'}</span>
+      </span>
+    </div>
+  )
+}
+
+function OutputLayer({ x, c }: { x: number; c?: boolean }) {
+  const v = ramp(x, 6, 6 + FADE)
+  const s = (a: number) => ease(ramp(x, a, a + 0.14))
+  const arrow = <ArrowRightIcon size={18} className={cn('shrink-0 text-subtle', c && 'rotate-90')} />
+  const row = cn('flex', c ? 'flex-col items-start gap-2' : 'items-center gap-4')
+  return (
+    <div className={cn('absolute inset-0 flex flex-col justify-center', c ? 'gap-5' : 'gap-7 px-4')} style={{ opacity: v, transform: `translateY(${(1 - v) * 24}px)` }}>
+      <div className={row}>
+        <Upload kind="docx" show={s(6.06)} />
+        <span style={{ opacity: s(6.12) }}>{arrow}</span>
+        <div className="flex gap-4">
+          <OutDoc kind="yours" title="Your design" formats={['Word']} show={s(6.16)} />
+          <OutDoc kind="coverme" title="Cover Me layout" formats={['PDF', 'Word']} show={s(6.26)} />
+        </div>
+      </div>
+      <div className={row}>
+        <Upload kind="pdf" show={s(6.4)} />
+        <span style={{ opacity: s(6.46) }}>{arrow}</span>
+        <div className="flex items-center gap-4">
+          <OutDoc kind="coverme" title="Cover Me layout" formats={['PDF', 'Word']} show={s(6.5)} />
+          <p className="max-w-[150px] text-[12px] leading-[1.5] text-subtle" style={{ opacity: s(6.6) }}>
+            Want your own design? Upload the Word file.
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function Caret() {
   return <span className="ml-px inline-block h-[14px] w-[2px] translate-y-[2px] animate-pulse bg-brand" />
 }
@@ -431,12 +609,16 @@ const COMPACT_W = 380
 const COMPACT_H = 620
 
 function Stage({ x, compact: c }: { x: number; compact?: boolean }) {
+  // The posting-to-letter layers were written for chapters 0 to 4; they now run one chapter later.
+  const y = x - 1
   return (
     <div className="relative" style={{ width: c ? COMPACT_W : STAGE_W, height: c ? COMPACT_H : STAGE_H }}>
-      {x < 2 && <BrowserLayer x={x} c={c} />}
-      {x >= 2 && x < 3 && <RewriteLayer x={x} c={c} />}
-      {x >= 3 && x < 4 && <ScoreLayer x={x} c={c} />}
-      {x >= 4 && <LetterLayer x={x} c={c} />}
+      {x < 1 && <UploadLayer x={x} c={c} />}
+      {y >= 0 && y < 2 && <BrowserLayer x={y} c={c} />}
+      {y >= 2 && y < 3 && <RewriteLayer x={y} c={c} />}
+      {y >= 3 && y < 4 && <ScoreLayer x={y} c={c} />}
+      {y >= 4 && y < 5 && <LetterLayer x={y} c={c} />}
+      {x >= 6 && <OutputLayer x={x} c={c} />}
     </div>
   )
 }
@@ -521,9 +703,11 @@ export function RunStory() {
 
   const summary = (
     <p className="sr-only">
-      Example: on a {EXAMPLE.company} {EXAMPLE.role} posting, Cover Me finds 8 requirements, rewrites three resume bullets and the skills
-      list in the posting&apos;s words without adding anything new, scores the tailored resume {EXAMPLE.score} out of 100 with HubSpot
-      as the one gap, and writes a cover letter from the resume.
+      Example: a long master resume is uploaded once, as a PDF or Word file. On a {EXAMPLE.company} {EXAMPLE.role} posting, Cover Me
+      finds 8 requirements, rewrites three resume bullets and the skills list in the posting&apos;s words without adding anything new,
+      leaves out a bullet the job doesn&apos;t need, scores the tailored resume {EXAMPLE.score} out of 100 with HubSpot as the one gap,
+      and writes a cover letter from the resume. A Word upload downloads in its own design as Word, or in the Cover Me layout as PDF or
+      Word; a PDF upload downloads in the Cover Me layout.
     </p>
   )
 
@@ -538,7 +722,7 @@ export function RunStory() {
             // Each chapter's finished frame: just before its fade-out (the last has none).
             const still = i === N - 1 ? N - 0.01 : i + 1 - FADE - 0.01
             return (
-            <div key={c.title} id={i === 3 ? 'ats-score' : undefined} className="grid gap-6 lg:grid-cols-[360px_1fr]">
+            <div key={c.title} id={i === 4 ? 'ats-score' : undefined} className="grid gap-6 lg:grid-cols-[360px_1fr]">
               <div className="flex flex-col gap-2">
                 <span className="font-mono text-[12px] text-brand-strong">0{i + 1}</span>
                 <h3 className="text-[22px] font-medium tracking-[-0.02em]">{c.title}</h3>
@@ -562,7 +746,7 @@ export function RunStory() {
   return (
     <section ref={ref} id="how-it-works" className="relative" style={{ height: `${N * CHAPTER_VH + 100}vh` }}>
       {/* Nav target for "ATS score": partway into the score chapter. */}
-      <span id="ats-score" className="absolute left-0" style={{ top: `${3.6 * CHAPTER_VH}vh` }} aria-hidden="true" />
+      <span id="ats-score" className="absolute left-0" style={{ top: `${4.6 * CHAPTER_VH}vh` }} aria-hidden="true" />
       {summary}
       <div className="sticky top-16 h-[calc(100svh-4rem)] isolate overflow-hidden">
         <Ambient
