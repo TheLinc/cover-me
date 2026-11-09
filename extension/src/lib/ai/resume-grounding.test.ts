@@ -132,12 +132,22 @@ describe('an edited previous version', () => {
     })
   })
 
-  test('seenVersion: the upload with the edited bullets and summary; bad or missing ones keep the upload', () => {
-    const seen = seenVersion(original, { ...previous, summary: 'Mine.', experience: [{ bullets: [bullet, 'Added.'] }], editedAt: 'x' })
-    expect(seen.summary).toBe('Mine.')
-    expect(seen.experience[0]).toEqual({ ...original.experience[0], bullets: [bullet, 'Added.'] })
-    expect(seenVersion(original, { experience: [{ bullets: 'oops' }], hasEdits: true }).experience[0].bullets).toEqual(original.experience[0].bullets)
+  test('seenVersion: the content the user saw, deleted sections included; otherwise the upload', () => {
+    const experience = [{ ...original.experience[0], title: 'Lead Developer', bullets: [bullet, 'Added.'] }]
+    const { skills: _s, ...noSkills } = previous
+    const seen = seenVersion(original, { ...noSkills, summary: 'Mine.', experience, editedAt: 'x', atsScore: 80 })
+    expect(seen).toEqual({ ...original, summary: 'Mine.', experience, skills: undefined })
+    expect('skills' in seen).toBe(false)
+    expect(seenVersion(original, { ...previous, experience: [{ bullets: 'oops' }], hasEdits: true })).toBe(original)
+    expect(seenVersion(original, { ...previous, certifications: 'CPR', hasEdits: true })).toBe(original)
     expect(seenVersion(original, previous)).toBe(original)
+  })
+
+  test('the line check leaves a summary identical to the original summary alone', async () => {
+    const replies = [JSON.stringify({ flags: [], summary: 'claims more' }), '{}']
+    const { resume, repair } = await checkAndRewriteLines({ ...original }, original, posting, async () => replies.shift()!)
+    expect(resume.summary).toBe(original.summary)
+    expect(repair.flagged).toEqual([])
   })
 })
 

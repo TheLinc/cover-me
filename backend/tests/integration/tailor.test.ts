@@ -84,13 +84,14 @@ describe('tailor', () => {
       expect(resume.hasEdits).toBe(true)
     })
 
-    it('keeps a bullet the user added in the editor', async () => {
+    it('keeps a bullet the user added and a title they fixed in the editor', async () => {
       // The mock returns 2 bullets for a role the user grew to 3; a count that
       // doesn't fit keeps the version they saw, not the upload's 2.
       const added = 'Wrote the on-call runbook'
-      const grown = [{ ...MOCK_PARSED_RESUME.experience[0], bullets: [...MOCK_PARSED_RESUME.experience[0].bullets, added] }, MOCK_PARSED_RESUME.experience[1]]
+      const grown = [{ ...MOCK_PARSED_RESUME.experience[0], title: 'Senior Software Engineer', bullets: [...MOCK_PARSED_RESUME.experience[0].bullets, added] }, MOCK_PARSED_RESUME.experience[1]]
       const resume = await regenerate({ ...MOCK_PARSED_RESUME, experience: grown, editedAt: '2026-11-09T00:00:00Z' })
       expect(resume.experience[0].bullets).toEqual(grown[0].bullets)
+      expect(resume.experience[0].title).toBe('Senior Software Engineer')
     })
 
     it('an unedited previous is checked as before', async () => {

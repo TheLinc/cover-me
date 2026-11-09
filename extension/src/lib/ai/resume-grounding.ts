@@ -101,25 +101,40 @@ function editedVersion(previous: unknown): Record<string, unknown> | undefined {
   return prev?.editedAt || prev?.hasEdits === true ? prev : undefined
 }
 
+// A resume's content, as opposed to scores and other metadata.
+const CONTENT_KEYS = ['name', 'phone', 'email', 'website', 'links', 'location', 'summary', 'experience', 'projects', 'education', 'skills', 'certifications', 'otherSections']
+
 /**
  * What Regenerate revises (#171): when the version the candidate saw holds
- * their edits, the upload with that version's summary and bullets, so a bullet
- * they added, deleted or reworded is what the merge counts against and what
- * the line check and grounding compare to and revert to. Otherwise the upload.
+ * their edits, its content, so what they changed in the editor (a bullet added
+ * or deleted, a title, a certification, a deleted section) carries over: the
+ * merge builds on it, and the line check and grounding compare to it and
+ * revert to it. Otherwise, or when it isn't shaped like a resume, the upload.
+ * Roles line up by index: the editor can't add or remove one.
  */
 export function seenVersion<T extends Groundable>(upload: T, previous: unknown): T {
   const prev = editedVersion(previous)
-  if (!prev) return upload
-  const bulletsAt = (list: unknown, i: number, fallback: string[]): string[] => {
-    const b = Array.isArray(list) ? (list[i] as { bullets?: unknown } | null | undefined)?.bullets : undefined
-    return Array.isArray(b) && b.every((s) => typeof s === 'string') ? b : fallback
+  if (!prev || !groundable(prev)) return upload
+  const seen = { ...upload } as Record<string, unknown>
+  for (const key of CONTENT_KEYS) {
+    if (prev[key] === undefined) delete seen[key]
+    else seen[key] = prev[key]
   }
-  return {
-    ...upload,
-    ...(typeof prev.summary === 'string' && { summary: prev.summary }),
-    experience: upload.experience.map((e, i) => ({ ...e, bullets: bulletsAt(prev.experience, i, e.bullets) })),
-    ...(upload.projects && { projects: upload.projects.map((p, i) => ({ ...p, bullets: bulletsAt(prev.projects, i, p.bullets) })) }),
-  }
+  return seen as T
+}
+
+// Shaped the way the checks read it: entries with string bullets, and a
+// string summary and skills, string certifications and object education if any.
+function groundable(r: Record<string, unknown>): boolean {
+  const entries = (v: unknown) => Array.isArray(v) && v.every((e) => {
+    const bullets = e && typeof e === 'object' ? (e as { bullets?: unknown }).bullets : undefined
+    return Array.isArray(bullets) && bullets.every((b) => typeof b === 'string')
+  })
+  const optional = (v: unknown, ok: (v: unknown) => boolean) => v === undefined || ok(v)
+  const text = (v: unknown) => typeof v === 'string'
+  return entries(r.experience) && optional(r.projects, entries) && optional(r.summary, text) && optional(r.skills, text) &&
+    optional(r.certifications, (v) => Array.isArray(v) && v.every(text)) &&
+    optional(r.education, (v) => Array.isArray(v) && v.every((e) => !!e && typeof e === 'object'))
 }
 
 function grounded(token: string, candidate: string): boolean {
