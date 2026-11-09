@@ -140,6 +140,9 @@ describe('an edited previous version', () => {
     expect('skills' in seen).toBe(false)
     expect(seenVersion(original, { ...previous, experience: [{ bullets: 'oops' }], hasEdits: true })).toBe(original)
     expect(seenVersion(original, { ...previous, certifications: 'CPR', hasEdits: true })).toBe(original)
+    // A different resume uploaded since: its roles no longer line up.
+    expect(seenVersion(original, { ...previous, experience: [...previous.experience, ...previous.experience], editedAt: 'x' })).toBe(original)
+    expect(seenVersion(original, { ...previous, experience: [], editedAt: 'x' }).experience).toEqual([])
     expect(seenVersion(original, previous)).toBe(original)
   })
 

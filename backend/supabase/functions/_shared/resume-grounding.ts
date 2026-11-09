@@ -110,11 +110,14 @@ const CONTENT_KEYS = ['name', 'phone', 'email', 'website', 'links', 'location', 
  * or deleted, a title, a certification, a deleted section) carries over: the
  * merge builds on it, and the line check and grounding compare to it and
  * revert to it. Otherwise, or when it isn't shaped like a resume, the upload.
- * Roles line up by index: the editor can't add or remove one.
+ * Roles line up by index (the editor can't add or remove one), so a version
+ * whose roles or projects no longer match the upload's count (a different
+ * resume uploaded since) falls back to the upload too; 0 is a deleted section.
  */
 export function seenVersion<T extends Groundable>(upload: T, previous: unknown): T {
   const prev = editedVersion(previous)
-  if (!prev || !groundable(prev)) return upload
+  const fits = (list: unknown, own: GroundEntry[] | undefined) => !Array.isArray(list) || list.length === 0 || list.length === (own?.length ?? 0)
+  if (!prev || !groundable(prev) || !fits(prev.experience, upload.experience) || !fits(prev.projects, upload.projects)) return upload
   const seen = { ...upload } as Record<string, unknown>
   for (const key of CONTENT_KEYS) {
     if (prev[key] === undefined) delete seen[key]
@@ -126,9 +129,10 @@ export function seenVersion<T extends Groundable>(upload: T, previous: unknown):
 /**
  * After the merge on Regenerate from edits (#171), what it can't know about
  * the version the user saw: a role or project never comes back with more
- * bullets than they left it (trim and compact take any count, which could
- * restore one they deleted), a summary they deleted stays deleted, and one
- * they kept stays when the run returns none.
+ * bullets than they left it (trim and compact take any count; a deleted bullet
+ * swapped in within the count is left to the line check, which compares to
+ * the seen version), a summary they deleted stays deleted, and one they kept
+ * stays when the run returns none.
  */
 export function keepSeen<T extends Groundable>(merged: T, upload: Groundable, seen: Groundable): T {
   if (seen === upload) return merged
