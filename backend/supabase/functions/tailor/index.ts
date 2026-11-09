@@ -570,6 +570,8 @@ Deno.serve(async (req) => {
     const candidate = candidateText(structuredResume, notes)
     delta.skills = (await groundSkills(delta.skills, candidate, askChecker)).skills
     const merged = mergeTailorDelta(base, delta, { exactBulletCounts: !compact && !trim })
+    // A summary the user deleted in the editor stays deleted.
+    if (buildsOnEdits(previous) && !(base as { summary?: string }).summary?.trim()) merged.summary = ''
     // Rewrite only the lines that claim more than the original resume supports.
     const { resume: lined, repair } = await checkAndRewriteLines(merged, base, job.description, askChecker, supplemental)
     // Counts only: repair.flagged holds resume text.

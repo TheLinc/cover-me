@@ -94,6 +94,12 @@ describe('tailor', () => {
       expect(resume.experience[0].title).toBe('Senior Software Engineer')
     })
 
+    it('a summary the user deleted stays deleted', async () => {
+      const { summary: _s, ...noSummary } = previous as typeof previous & { summary?: string }
+      expect((await regenerate({ ...noSummary, editedAt: '2026-11-09T00:00:00Z' })).summary).toBe('')
+      expect((await regenerate(noSummary)).summary).toBe(MOCK_TAILOR_DELTA.summary)
+    })
+
     it('an unedited previous is checked as before', async () => {
       const resume = await regenerate(previous)
       expect(resume.skills).toBe('TypeScript, Postgres, React, Data Pipelines')

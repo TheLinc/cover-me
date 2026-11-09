@@ -324,6 +324,8 @@ export async function assembleTailored(
   const claimed = await groundSkills(delta.skills, candidate, grounding.ask)
   delta.skills = claimed.skills
   let merged = mergeTailorDelta(base, delta, { exactBulletCounts: grounding.exactBulletCounts }) as TailoredResume
+  // A summary the user deleted in the editor stays deleted.
+  if (buildsOnEdits(grounding.previous) && !(base as { summary?: string }).summary?.trim()) merged.summary = ''
   if (grounding.ask) {
     const lines = await checkAndRewriteLines(merged, base, grounding.jobDescription, grounding.ask, grounding.supplemental)
     merged = lines.resume
