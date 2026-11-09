@@ -317,7 +317,7 @@ export default function PrivacyPage() {
               </Li>
               <Li>
                 <strong className="text-foreground">Rate-limit counter (all modes).</strong>{' '}
-                To stop abuse of the posting reader, our server counts requests per IP address. It
+                To stop abuse of the posting reader, the Request this site and Report bug buttons, and the record made when you remove the extension, our server counts requests per IP address. It
                 stores a keyed hash (HMAC) of the address, never the address itself. When it reads a
                 newly uploaded resume, or a message from the dashboard&apos;s support form, it also counts
                 per account, keyed by a hash of your account ID.
@@ -611,7 +611,7 @@ export default function PrivacyPage() {
               communicates with our Supabase backend for the following user-initiated purposes:
               <ul className="mt-2 space-y-1 pl-4 list-disc">
                 <li>Reading the job posting (every mode): sending the stripped copy of the page you click Generate or Tailor Resume on, and getting back the job title, company and description. The page is not stored.</li>
-                <li>Site requests and bug reports (every mode, only when you press the button): sending what Request this site or Report bug shows, as described under Information We Collect.</li>
+                <li>Site requests and bug reports (every mode, only when you press the button): sending what Request this site or Report bug sends, as described under Information We Collect.</li>
                 <li>Authentication: signing in, signing up, signing out, and refreshing JWT session tokens.</li>
                 <li>Account tier: fetching your plan after sign-in and when the Settings or History page opens.</li>
                 <li>Upgrade: getting a Stripe checkout page when you click an Upgrade button.</li>
