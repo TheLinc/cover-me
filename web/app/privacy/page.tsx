@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
 }
 
-const EFFECTIVE_DATE = 'November 8, 2026'
+const EFFECTIVE_DATE = 'November 9, 2026'
 const CONTACT_EMAIL  = 'support@cover-me.dev'
 
 // ── Section heading ────────────────────────────────────────────────────────
@@ -681,6 +681,12 @@ export default function PrivacyPage() {
                   url: 'https://vercel.com/legal/privacy-policy',
                   when: 'Anyone who visits cover-me.dev',
                   receives: 'Standard web server access logs (IP address, browser, requested URL) for every page of cover-me.dev. Vercel also runs the website\'s server code: for anyone signed in to the dashboard it reads your email, profile picture link, sign-up date, plan and usage from our backend to build the page; for Pro users it passes your saved applications (job details, cover letters and tailored resumes) from our backend to your browser; and it receives Stripe\'s billing notifications (your customer ID, subscription status and the checkout details Stripe holds). It stores none of these.',
+                },
+                {
+                  name: 'YouTube (Google)',
+                  url: 'https://policies.google.com/privacy',
+                  when: 'Only if you play one of the videos on the cover-me.dev home page',
+                  receives: 'Nothing until you press play: the video previews are images served by cover-me.dev. When you press play, the video loads from YouTube\'s privacy-enhanced mode (youtube-nocookie.com), and Google receives your IP address and browser details and may store data in your browser, under its own privacy policy.',
                 },
                 {
                   name: 'Sentry',
