@@ -37,7 +37,7 @@ The extension reads the job description from the page and combines it with your 
 
 ### Chrome Web Store
 
-[**Install Cover Me**](https://chromewebstore.google.com/detail/cover-me-%E2%80%93-ai-cover-lette/bpbnopjgjbimdjjdolhkgimllbgamgpi) — add it to Chrome in one click.
+[**Install Cover Me**](https://chromewebstore.google.com/detail/cover-me-ai-resume-tailor/bpbnopjgjbimdjjdolhkgimllbgamgpi) — add it to Chrome in one click.
 
 ### Load unpacked (development build)
 
