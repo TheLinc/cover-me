@@ -6,7 +6,7 @@ import { decrypt, encrypt, sameCiphertext } from '../_shared/encrypt.ts'
 import { findOrCreateJobApplication } from '../_shared/job-application.ts'
 import { isUuid } from '../_shared/history-upload.ts'
 import { isValidParsedResume, parseResumeStructure, type ParsedResume } from '../_shared/resume-parse.ts'
-import { candidateText, checkAndRewriteLines, groundSkills, groundTailored } from '../_shared/resume-grounding.ts'
+import { candidateText, checkAndRewriteLines, groundSkills, groundTailored, trustedNotes } from '../_shared/resume-grounding.ts'
 import { scoreFromMatch } from '../_shared/ats-score.ts'
 import { capture } from '../_shared/posthog.ts'
 
@@ -563,11 +563,13 @@ Deno.serve(async (req) => {
     const delta = parseDelta(raw)
     // Keep only skills the resume backs, then strip job-posting requirements
     // the model copied in (see _shared/resume-grounding.ts).
-    const candidate = candidateText(structuredResume, supplemental)
+    // An edited previous is the user's own text (#171): trusted like the note.
+    const notes = trustedNotes(supplemental, previous)
+    const candidate = candidateText(structuredResume, notes)
     delta.skills = (await groundSkills(delta.skills, candidate, askChecker)).skills
     const merged = mergeTailorDelta(structuredResume, delta, { exactBulletCounts: !compact && !trim })
     // Rewrite only the lines that claim more than the original resume supports.
-    const { resume: lined, repair } = await checkAndRewriteLines(merged, structuredResume, job.description, askChecker, supplemental)
+    const { resume: lined, repair } = await checkAndRewriteLines(merged, structuredResume, job.description, askChecker, notes)
     // Counts only: repair.flagged holds resume text.
     if (repair.flagged.length || repair.checkFailed) {
       const { rewritten, reverted, summary, checkFailed } = repair

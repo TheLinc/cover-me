@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { buildLineCheckPrompt, candidateText, checkAndRewriteLines, groundSkills, groundTailored } from './resume-grounding'
+import { buildLineCheckPrompt, candidateText, checkAndRewriteLines, groundSkills, groundTailored, trustedNotes } from './resume-grounding'
 
 // Made-up posting and resume. The resume never says "web", "Ruby", "Rails" or "HIPAA".
 const posting = `Frontend Web Developer
@@ -62,6 +62,41 @@ describe('groundTailored', () => {
     const summary = 'Builds accessible web interfaces in React.'
     expect(groundTailored({ ...original, summary }, original, candidateText(original), job).resume.summary).toBe(summary)
     expect(groundTailored({ ...original, summary: 'Senior Web Developer. Builds React apps.' }, original, candidateText(original), job).resume.summary).toBe('Builds React apps.')
+  })
+})
+
+// #171: Regenerate starts from the edited version, so what the user typed in
+// the editor is theirs, not the model's.
+describe('an edited previous version', () => {
+  const bullet = 'Built React screens for a client portal on Rails, used by 25k clients.'
+  const previous = { ...original, experience: [{ ...original.experience[0], bullets: [bullet] }], skills: 'React, TypeScript, Ruby on Rails', atsGaps: ['HIPAA'], atsGapsBeforeEdits: ['HIPAA', 'Rails'] }
+  const tailored = { ...original, experience: [{ ...original.experience[0], bullets: [bullet] }], skills: 'React, TypeScript, Ruby on Rails, HIPAA' }
+  const regrounded = (prev: object) => groundTailored(tailored, original, candidateText(original, trustedNotes(undefined, prev)), posting).resume
+
+  test('its posting-only terms survive grounding', () => {
+    const resume = regrounded({ ...previous, editedAt: '2026-11-09T00:00:00Z' })
+    expect(resume.experience[0].bullets).toEqual([bullet])
+    expect(resume.skills).toBe('React, TypeScript, Ruby on Rails')
+  })
+
+  test('an unedited one is earlier model output and is reverted as before', () => {
+    const resume = regrounded(previous)
+    expect(resume.experience[0].bullets).toEqual(original.experience[0].bullets)
+    expect(resume.skills).toBe('React, TypeScript')
+  })
+
+  test('keeps the note, and the note alone without an edited version', () => {
+    expect(trustedNotes('Used Ruby daily.', { ...previous, editedAt: 'x' })).toContain('Used Ruby daily.')
+    expect(trustedNotes('Used Ruby daily.', previous)).toBe('Used Ruby daily.')
+    expect(trustedNotes(undefined, undefined)).toBeUndefined()
+  })
+
+  test('the line check keeps a line copied verbatim from the notes', async () => {
+    const notes = trustedNotes(undefined, { ...previous, editedAt: 'x' })
+    const replies = [JSON.stringify({ flags: [{ id: 'e0b0', reason: 'adds Rails' }], summary: null }), '{}']
+    const { resume, repair } = await checkAndRewriteLines(tailored, original, posting, async () => replies.shift()!, notes)
+    expect(resume.experience[0].bullets).toEqual([bullet])
+    expect(repair.flagged).toEqual([])
   })
 })
 

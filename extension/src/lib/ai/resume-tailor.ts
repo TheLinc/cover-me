@@ -1,7 +1,7 @@
 import type { AIProvider, JobData, ParsedResume, TailoredResume } from '../../types'
 import { debugGroup, debugLog } from '../debug'
 import { derivePlanningProgress, deriveTailorProgress } from './tailor-progress'
-import { candidateText, checkAndRewriteLines, groundSkills, groundTailored, type AskModel, type LineRepair } from './resume-grounding'
+import { candidateText, checkAndRewriteLines, groundSkills, groundTailored, trustedNotes, type AskModel, type LineRepair } from './resume-grounding'
 import { SONNET_FIELDS, streamSonnet } from './claude'
 import { scoreFromMatch, type KeywordMatch } from './ats-score'
 import { callOpenAI, OPENAI_MODEL } from './openai'
@@ -380,7 +380,8 @@ export async function tailorResume(
   }
 
   await debugLog('Tailor — raw model response', raw)
-  return assembleTailored(parsed, raw, { jobDescription: job.description, supplemental, ask: checkModel(provider, apiKey), exactBulletCounts: !compact && !trim }, (removed) =>
+  // An edited previous is the user's own text (#171): grounding trusts it like the note.
+  return assembleTailored(parsed, raw, { jobDescription: job.description, supplemental: trustedNotes(supplemental, previous), ask: checkModel(provider, apiKey), exactBulletCounts: !compact && !trim }, (removed) =>
     void debugLog('Tailor — grounding guard removed', removed))
 }
 

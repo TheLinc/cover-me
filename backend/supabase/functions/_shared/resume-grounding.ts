@@ -74,6 +74,19 @@ export function candidateText(resume: unknown, supplemental?: string): string {
   return out.join('\n')
 }
 
+/**
+ * The candidate's note, plus the text of the version Regenerate starts from
+ * when they edited it (#171): what they typed in the editor is theirs, like
+ * the note. An unedited one is earlier model output, so it adds nothing. Its
+ * gap lists name what the candidate lacks, so they never count.
+ */
+export function trustedNotes(supplemental: string | undefined, previous: unknown): string | undefined {
+  const prev = previous && typeof previous === 'object' ? (previous as Record<string, unknown>) : undefined
+  if (!prev?.editedAt) return supplemental
+  const { atsGaps: _g, atsGapsBeforeEdits: _b, ...rest } = prev
+  return [supplemental, candidateText(rest)].filter(Boolean).join('\n')
+}
+
 function grounded(token: string, candidate: string): boolean {
   if (mentions(candidate, token)) return true
   // "CDL-A" is grounded by "CDL"; "Allen-Bradley" and "3-way" are not.
@@ -454,8 +467,12 @@ export async function checkAndRewriteLines<T extends Groundable>(
     flags = null
   }
   if (!flags) return { resume: tailored, repair: { flagged: [], rewritten: 0, reverted: 0, checkFailed: true } }
-  // Drop ids that don't point at a real line (an empty summary is none).
-  for (const id of [...flags.keys()]) if (!lineAt(tailored, id)?.trim()) flags.delete(id)
+  // Drop ids that don't point at a real line (an empty summary is none), and
+  // lines the candidate wrote themselves: copied word for word from the notes.
+  for (const id of [...flags.keys()]) {
+    const line = lineAt(tailored, id)?.trim()
+    if (!line || supplemental?.includes(line)) flags.delete(id)
+  }
   if (flags.size === 0) return { resume: tailored, repair: { flagged: [], rewritten: 0, reverted: 0 } }
 
   // Source original for every rewritten bullet, per entry.

@@ -53,6 +53,20 @@ describe('tailor', () => {
     expect(await quotaUsedToday(user.id)).toBe(1)
   })
 
+  // #171: a skill the user typed into the editor is theirs on Regenerate. The
+  // mock adds Kafka with evidence the resume lacks; only an edited previous
+  // that names it keeps it. Its gap list alone never does.
+  it('keeps a posting-only skill the user added in the editor when regenerating', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    const previous = { ...MOCK_PARSED_RESUME, skills: 'TypeScript, Postgres, React, Kafka', atsGaps: [] }
+    const skills = async (prev: Record<string, unknown>) =>
+      (await (await callFunction('tailor', { token: user!.token, body: { job: JOB, previous: prev } })).json()).resume.skills
+    expect(await skills({ ...previous, editedAt: '2026-11-09T00:00:00Z' })).toBe('TypeScript, Postgres, React, Data Pipelines, Kafka')
+    expect(await skills(previous)).toBe('TypeScript, Postgres, React, Data Pipelines')
+    expect(await skills({ ...MOCK_PARSED_RESUME, atsGaps: ['Kafka'], editedAt: '2026-11-09T00:00:00Z' })).toBe('TypeScript, Postgres, React, Data Pipelines')
+  })
+
   it('scores an either/or requirement as covered when the resume has the other option', async () => {
     user = await createUser()
     await uploadResume(user)
