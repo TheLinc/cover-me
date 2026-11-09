@@ -435,6 +435,7 @@ supabase functions deploy nudge
 supabase functions deploy support
 supabase functions deploy scrape
 supabase functions deploy site-request
+supabase functions deploy extension-removed
 ```
 
 ### 7. Set up Stripe

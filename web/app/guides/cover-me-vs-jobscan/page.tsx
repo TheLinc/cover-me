@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { CHROME_STORE_URL } from '@/lib/utils'
+import { GuideTldr } from '@/components/site/GuideTldr'
 import { getGuide, guideArticleJsonLd, guideBreadcrumbJsonLd } from '@/lib/guides'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
@@ -110,6 +111,14 @@ export default function Page() {
         <p className="text-[17px] text-foreground font-medium leading-[1.7]">
           Jobscan scores your resume against a job description and, on its paid plans, rewrites it and writes cover letters. It gives 5 free scans a month, then costs $49.95 a month. Cover Me (cover-me.dev) is an open-source Chrome extension that tailors your resume, scores it and writes a cover letter on the posting you have open. It&rsquo;s free and unlimited with your own API key, or $15 a month.
         </p>
+
+        <GuideTldr
+          items={[
+            "Jobscan scores your resume against a job description, with 5 free scans a month. Rewriting and cover letters need a paid plan, at $49.95 a month or $89.95 every 3 months.",
+            "Cover Me rewrites your resume for the posting you have open, scores it and writes the cover letter. It has a free plan, and Pro is $15 a month.",
+            "Jobscan also has a LinkedIn optimizer and a resume builder, which Cover Me doesn't.",
+          ]}
+        />
         <p>
           I build Cover Me, so weigh this comparison with that in mind. Jobscan prices and features are from its plan page, checked in October 2026.
         </p>

@@ -116,7 +116,7 @@ describe('nudge', () => {
     expect(data!.email_unsubscribed_at).not.toBeNull()
   })
 
-  it('skips accounts too new, too old, unconfirmed, on Pro, that generated, or unsubscribed', async () => {
+  it('skips accounts too new, too old, unconfirmed, on Pro, that generated, unsubscribed, or removed the extension', async () => {
     const tooNew = await signedUpTwoDaysAgo()
     await setAge(tooNew.id, 23 * HOUR)
     const tooOld = await signedUpTwoDaysAgo()
@@ -127,6 +127,8 @@ describe('nudge', () => {
     await admin.from('users').update({ tier: 'hosted_pro' }).eq('id', pro.id)
     const unsubscribed = await signedUpTwoDaysAgo()
     await admin.from('users').update({ email_unsubscribed_at: new Date().toISOString() }).eq('id', unsubscribed.id)
+    const removed = await signedUpTwoDaysAgo()
+    await admin.from('users').update({ extension_removed_at: new Date().toISOString() }).eq('id', removed.id)
 
     const unconfirmedEmail = `test-unconfirmed-${Date.now()}@cover-me.test`
     const { data } = await admin.auth.admin.createUser({ email: unconfirmedEmail, password: 'password123', email_confirm: false })
@@ -136,7 +138,7 @@ describe('nudge', () => {
     const control = await signedUpTwoDaysAgo()
     await runNudge()
     expect(await sentTo(control.email)).toHaveLength(1)
-    for (const email of [tooNew.email, tooOld.email, pro.email, generated.email, unsubscribed.email, unconfirmedEmail]) {
+    for (const email of [tooNew.email, tooOld.email, pro.email, generated.email, unsubscribed.email, removed.email, unconfirmedEmail]) {
       expect(await sentTo(email), email).toEqual([])
     }
   })

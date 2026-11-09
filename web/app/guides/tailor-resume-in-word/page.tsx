@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { CHROME_STORE_URL } from '@/lib/utils'
+import { GuideTldr } from '@/components/site/GuideTldr'
 import { getGuide, guideArticleJsonLd, guideBreadcrumbJsonLd } from '@/lib/guides'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
@@ -109,6 +110,14 @@ export default function Page() {
         <p className="text-[17px] text-foreground font-medium leading-[1.7]">
           To tailor a Word resume without losing its formatting, change the words inside the paragraphs it already has and leave the paragraphs themselves alone. The design breaks when new text brings its own formatting, when one bullet is split across several lines, or when the resume is rebuilt in another tool&rsquo;s template. I tailored a made-up Word resume to a sample posting with Cover Me, and its fonts, spacing and layout came back unchanged.
         </p>
+
+        <GuideTldr
+          items={[
+            "Change the words inside the paragraphs your resume already has, and leave the paragraphs themselves alone.",
+            "The design breaks when pasted text brings its own formatting, when one bullet is split across lines, or when the resume is rebuilt in another template.",
+            "In a test with a made-up Word resume, Cover Me's tailored Word file kept its fonts, spacing and layout (beta).",
+          ]}
+        />
         <p>
           I build Cover Me, a Chrome extension that tailors resumes to job postings, so weigh what I say about it with that in mind. The resume, the person and the posting below are all made up. You can download{' '}
           <a href={`${FILES}/Alex_Rivera_Resume.docx`} className="text-brand-light hover:text-brand transition-colors">the sample resume</a> and try it yourself.

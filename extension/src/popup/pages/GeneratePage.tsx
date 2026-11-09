@@ -3,9 +3,12 @@ import { GOOGLE_SIGNIN } from '../../lib/config'
 import { downloadCoverLetterPdf } from '../../lib/pdf/cover-letter'
 import { downloadTailoredResumePdf } from '../../lib/pdf/resume'
 import { letterSteps, tailorSteps } from '../../lib/progress-steps'
+import { openResumeEditor } from '../../lib/resume-edit'
 import { downloadResumeWord, usesDesign } from '../../lib/design'
-import { getCandidateContext, resolveMode, saveCandidateContext } from '../../lib/storage'
+import { getCandidateContext, getTailoredHistory, resolveMode, saveCandidateContext } from '../../lib/storage'
+import DownloadMenu from '../components/DownloadMenu'
 import GapChips from '../components/GapChips'
+import { EditIcon, RegenerateIcon } from '../components/icons'
 import PageReadNotice from '../components/PageReadNotice'
 import ProgressSteps from '../components/ProgressSteps'
 import ReviewAsk, { claimReviewAsk } from '../components/ReviewAsk'
@@ -148,6 +151,9 @@ export default function GeneratePage({ onNavigate }: Props) {
   const [tailorErrorCode, setTailorErrorCode] = useState<'RATE_LIMIT' | 'FAIR_USE' | undefined>()
   const [tailoredResume, setTailoredResume] = useState<TailoredResume | null>(null)
   const [tailoredJob, setTailoredJob] = useState<JobData | null>(null)
+  // The result's ID in tailored History: the editor tab opens it, and an
+  // edit made there replaces what this page saved of it.
+  const [tailoredEntryId, setTailoredEntryId] = useState<string | null>(null)
   const [supplemental, setSupplemental] = useState('')
   const [letterSupplemental, setLetterSupplemental] = useState('')
   const [initialContext, setInitialContext] = useState('')
@@ -230,6 +236,7 @@ export default function GeneratePage({ onNavigate }: Props) {
         if (s.tailorState === 'done' && s.tailoredResume && s.tailoredJob) {
           setTailoredResume(s.tailoredResume as TailoredResume)
           setTailoredJob(s.tailoredJob as JobData)
+          setTailoredEntryId((s.tailoredEntryId as string) ?? null)
           setSupplemental((s.supplemental as string) ?? '')
           setTailorState('done')
           restoredTailorDone = true
@@ -270,6 +277,7 @@ export default function GeneratePage({ onNavigate }: Props) {
         } else if (tj.status === 'done' && !restoredTailorDone && tj.resume) {
           setTailoredResume(tj.resume)
           setTailoredJob(tj.job)
+          setTailoredEntryId(tj.entryId ?? null)
           setSupplemental((s?.supplemental as string) ?? '')
           setTailorState('done')
           setActiveResultTab('resume')
@@ -325,6 +333,7 @@ export default function GeneratePage({ onNavigate }: Props) {
             setTailorProgress('')
             setTailoredResume(tj.resume)
             setTailoredJob(tj.job)
+            setTailoredEntryId(tj.entryId ?? null)
             setTailorState('done')
             setActiveResultTab('resume')
           }
@@ -346,6 +355,7 @@ export default function GeneratePage({ onNavigate }: Props) {
         tailorState: tailorState === 'done' ? 'done' : 'idle',
         tailoredResume: tailorState === 'done' ? tailoredResume : null,
         tailoredJob: tailorState === 'done' ? tailoredJob : null,
+        tailoredEntryId: tailorState === 'done' ? tailoredEntryId : null,
         supplemental,
         letterSupplemental,
         activeResultTab,
@@ -353,7 +363,16 @@ export default function GeneratePage({ onNavigate }: Props) {
         tailorDismissedId: tailorDismissedId.current,
       },
     })
-  }, [state, inputMode, scrapeFailure, manualTitle, manualCompany, manualDescription, letter, job, createdAt, compact, trim, includeSummary, tailorState, tailoredResume, tailoredJob, supplemental, letterSupplemental, activeResultTab])
+  }, [state, inputMode, scrapeFailure, manualTitle, manualCompany, manualDescription, letter, job, createdAt, compact, trim, includeSummary, tailorState, tailoredResume, tailoredJob, tailoredEntryId, supplemental, letterSupplemental, activeResultTab])
+
+  // Edited in the editor tab since this page saved it: show the edit.
+  useEffect(() => {
+    if (!tailoredEntryId) return
+    getTailoredHistory().then((list) => {
+      const entry = list.find((e) => e.id === tailoredEntryId)
+      if (entry?.resume.editedAt) setTailoredResume(entry.resume)
+    })
+  }, [tailoredEntryId])
 
   // Candidate context is a standing profile fact, not per-job state — persisted
   // to its own storage key so it survives "New" resets and applies automatically
@@ -985,17 +1004,21 @@ export default function GeneratePage({ onNavigate }: Props) {
                       Want a different version?
                     </button>
                     {regenerateExpanded && (
-                      <div className="regen-section">
+                      <div className="composer">
                         <textarea
-                          className="form-input supplemental-input"
+                          className="composer-input"
+                          aria-label="What to change"
                           placeholder={'What to change? (optional)\ne.g. "Referred by Jane Chen" · "emphasize leadership" · "Open to relocating"'}
                           value={letterSupplemental}
                           onChange={e => setLetterSupplemental(e.target.value)}
                           autoFocus
                         />
-                        <button className="btn btn-secondary" onClick={regenerateLetter}>
-                          Regenerate
-                        </button>
+                        <div className="composer-foot">
+                          <button className="btn btn-secondary btn-sm" onClick={regenerateLetter}>
+                            <RegenerateIcon />
+                            Regenerate
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -1046,6 +1069,7 @@ export default function GeneratePage({ onNavigate }: Props) {
                     <div className="ats-result">
                       {typeof tailoredResume.atsScore === 'number' && <ScoreRing score={tailoredResume.atsScore} />}
                       <div className="ats-detail">
+                        {tailoredResume.editedAt && <p className="ats-edited">Scored before your edits</p>}
                         <GapChips gaps={tailoredResume.atsGaps ?? []} />
                         {(tailoredResume.atsGaps?.length ?? 0) === 0 && typeof tailoredResume.atsScore === 'number' && tailoredResume.atsScore >= 80 && (
                           <p className="ats-strong">Strong match: no significant gaps.</p>
@@ -1054,59 +1078,42 @@ export default function GeneratePage({ onNavigate }: Props) {
                     </div>
                   )}
                   <div className="supplemental-section">
-                    <label className="supplemental-label">Missing something?</label>
-                    <textarea
-                      className="form-input supplemental-input"
-                      placeholder={'Add real experience not on your resume\ne.g. "2yr GraphQL from freelance, AWS cert in progress"'}
-                      value={supplemental}
-                      onChange={e => setSupplemental(e.target.value)}
-                    />
+                    <label className="supplemental-label" htmlFor="tailor-supplemental">Missing something?</label>
+                    <div className="composer">
+                      <textarea
+                        id="tailor-supplemental"
+                        className="composer-input"
+                        placeholder={'Add real experience not on your resume\ne.g. "2yr GraphQL from freelance, AWS cert in progress"'}
+                        value={supplemental}
+                        onChange={e => setSupplemental(e.target.value)}
+                      />
+                      <div className="composer-foot">
+                        <span className="composer-hint">Real experience only</span>
+                        <button className="btn btn-secondary btn-sm" onClick={regenerate}>
+                          <RegenerateIcon />
+                          Regenerate
+                        </button>
+                      </div>
+                    </div>
                   </div>
                   {tailoredResume.designFellBack && (
                     <p className="hint">Your file&apos;s layout couldn&apos;t be edited safely, so this one uses the Cover Me layout.</p>
                   )}
-                  <div className={`letter-actions${tailoredResume.sourceHash ? ' design-actions' : ''}`}>
+                  <div className="letter-actions">
                     {/* Tailored in the user's own file (#131): their Word file leads. */}
-                    {tailoredResume.sourceHash ? (
-                      <>
-                        <button className="btn btn-primary" onClick={() => void downloadResumeDocx()}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                        <polyline points="7 10 12 15 17 10" />
-                        <line x1="12" y1="15" x2="12" y2="3" />
-                      </svg>
-                          Word (your design)
-                        </button>
-                        <button className="btn btn-secondary btn-compact" onClick={downloadResumePdf}>
-                          PDF (Cover Me layout)
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button className="btn btn-primary" onClick={downloadResumePdf}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                        <polyline points="7 10 12 15 17 10" />
-                        <line x1="12" y1="15" x2="12" y2="3" />
-                      </svg>
-                          PDF
-                        </button>
-                        <button className="btn btn-secondary btn-compact" onClick={() => void downloadResumeDocx()}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                        <polyline points="7 10 12 15 17 10" />
-                        <line x1="12" y1="15" x2="12" y2="3" />
-                      </svg>
-                          Word
-                        </button>
-                      </>
+                    <DownloadMenu
+                      up
+                      options={tailoredResume.sourceHash
+                        ? [{ label: 'Word', note: 'Your design', onSelect: () => void downloadResumeDocx() }, { label: 'PDF', note: 'Cover Me layout', onSelect: downloadResumePdf }]
+                        : [{ label: 'PDF', onSelect: downloadResumePdf }, { label: 'Word', onSelect: () => void downloadResumeDocx() }]}
+                    />
+                    {/* Not for "Your design": its Word file takes only some edits, and the user can edit it in Word. */}
+                    {tailoredEntryId && !tailoredResume.sourceHash && (
+                      <button className="btn btn-secondary btn-compact" onClick={() => openResumeEditor(tailoredEntryId)}>
+                        <EditIcon />
+                        Edit
+                      </button>
                     )}
-                    <button
-                      className="btn btn-secondary btn-compact"
-                      onClick={regenerate}
-                    >
-                      Regenerate
-                    </button>
                     <button className="btn btn-ghost" onClick={bothDone ? resetAll : resetTailor}>
                       New
                     </button>

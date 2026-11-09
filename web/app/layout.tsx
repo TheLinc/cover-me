@@ -63,6 +63,7 @@ const jsonLdOrg = {
     'https://alternativeto.net/software/cover-me/about/',
     'https://toolradar.com/tools/cover-me',
     'https://www.opensourcealternatives.to/item/cover-me',
+    'https://www.libhunt.com/r/cover-me',
   ],
   founder: {
     '@type': 'Person',

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { CHROME_STORE_URL } from '@/lib/utils'
+import { GuideTldr } from '@/components/site/GuideTldr'
 import { getGuide, guideArticleJsonLd, guideBreadcrumbJsonLd } from '@/lib/guides'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
@@ -117,6 +118,14 @@ export default function Page() {
         <p className="text-[17px] text-foreground font-medium leading-[1.7]">
           ChatGPT can write a good cover letter if you give it the job description, your resume, and a careful prompt, and repeat that for every application. Cover Me (cover-me.dev) is an open-source Chrome extension that does it in one click on the posting: it reads the page, uses the resume you uploaded once, works in the role&rsquo;s ATS keywords, and removes any skill your resume doesn&rsquo;t support.
         </p>
+
+        <GuideTldr
+          items={[
+            "ChatGPT can write a good cover letter, but you paste the posting and your resume into every new chat and check the result yourself.",
+            "Cover Me reads the posting when you click, uses the resume you uploaded once, and removes any skill your resume doesn't support.",
+            "ChatGPT has a free plan and Plus at $20 a month. Cover Me has a free plan, and Pro is $15 a month.",
+          ]}
+        />
         <p>
           I build Cover Me, so weigh this comparison with that in mind. The trade-offs below are real, and for some people ChatGPT is enough.
         </p>

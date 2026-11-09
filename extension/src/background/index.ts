@@ -502,7 +502,7 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
         ...(savedId === localId ? { account: session.user.id } : {}),
         ...(pro ? { saveTo: session.user.id } : {}),
       })
-      await setTailorJob({ id, status: 'done', job, resume, startedAt })
+      await setTailorJob({ id, status: 'done', job, resume, startedAt, entryId: localId })
       return { success: true, resume, job }
     }
 
@@ -536,8 +536,9 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
     })
 
     const tailored = await finishDesign(await tailorResume(job, parsed, settings.provider, apiKey, compact, merged, trim, includeSummary, lastResult && previous, onProgress), design)
-    await recordTailored(job, tailored)
-    await setTailorJob({ id, status: 'done', job, resume: tailored, startedAt })
+    const entryId = crypto.randomUUID()
+    await recordTailored(job, tailored, entryId)
+    await setTailorJob({ id, status: 'done', job, resume: tailored, startedAt, entryId })
     return { success: true, resume: tailored, job }
   } catch (err) {
     if (err instanceof RateLimitError) {

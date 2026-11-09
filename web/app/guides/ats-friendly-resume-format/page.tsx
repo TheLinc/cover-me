@@ -170,9 +170,9 @@ export default function Page() {
           An ATS-friendly resume is one the hiring software can read correctly. I took one resume, saved it in six different layouts, and uploaded each one to four of the systems companies use to collect applications: Lever, Workday, Ashby and SmartRecruiters. The plain one-column versions worked in all four. Three of the fancier layouts each broke one system.
         </p>
 
-        {/* Short version */}
+        {/* TL;DR */}
         <div className="border border-border rounded-[12px] bg-surface p-6 !mt-8">
-          <h2 className="text-[18px] text-foreground mb-4">The short version</h2>
+          <h2 className="text-[18px] text-foreground mb-4">TL;DR</h2>
           <div className="grid grid-cols-2 gap-6 max-sm:grid-cols-1">
             <div>
               <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-brand mb-2">Do</p>

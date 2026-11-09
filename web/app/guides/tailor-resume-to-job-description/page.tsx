@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { CHROME_STORE_URL } from '@/lib/utils'
+import { GuideTldr } from '@/components/site/GuideTldr'
 import { getGuide, guideArticleJsonLd, guideBreadcrumbJsonLd } from '@/lib/guides'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
@@ -144,6 +145,14 @@ export default function Page() {
         <p className="text-[17px] text-foreground font-medium leading-[1.7]">
           To tailor your resume to a job description, find the posting&rsquo;s 4 to 6 must-have keywords, use its exact wording wherever it truthfully describes your experience, rewrite your most relevant bullets to lead with those skills, and cut what doesn&rsquo;t serve the role. Never add a skill you don&rsquo;t have.
         </p>
+
+        <GuideTldr
+          items={[
+            "Find the posting's 4 to 6 must-have keywords and use its exact wording wherever it truthfully describes your experience.",
+            "Rewrite your most relevant bullets to lead with those skills, and cut what doesn't serve the role.",
+            "Never add a skill you don't have. In Huntr's analysis of 1.39 million applications, tailored resumes reached an interview 2.1 times as often.",
+          ]}
+        />
         <p>
           It matters because recruiters search their applicant tracking system for the posting&rsquo;s terms, so a strong candidate with an untailored resume often doesn&rsquo;t come up. Huntr analyzed over 1.39 million applications and found tailored resumes reached the interview stage{' '}
           <a href="https://huntr.co/research/job-search-trends-q2-2025" target="_blank" rel="noopener noreferrer" className="text-brand-light hover:text-brand transition-colors">2.1 times as often</a>

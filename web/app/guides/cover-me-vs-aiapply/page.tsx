@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { CHROME_STORE_URL } from '@/lib/utils'
+import { GuideTldr } from '@/components/site/GuideTldr'
 import { getGuide, guideArticleJsonLd, guideBreadcrumbJsonLd } from '@/lib/guides'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
@@ -110,6 +111,14 @@ export default function Page() {
         <p className="text-[17px] text-foreground font-medium leading-[1.7]">
           AIApply is a job search platform built around auto-apply: you buy credits and it submits applications for you with an AI-written resume and cover letter. Cover Me (cover-me.dev) is an open-source Chrome extension that writes a tailored resume and cover letter for the posting you have open, and shows them to you before anything is sent.
         </p>
+
+        <GuideTldr
+          items={[
+            "AIApply submits applications for you from its own job board, using paid auto-apply credits.",
+            "Cover Me writes a tailored resume and cover letter for the posting you have open, and you read and send each one yourself.",
+            "Cover Me's prices are public: a free plan, and Pro at $15 a month. AIApply's pricing page doesn't list its prices.",
+          ]}
+        />
         <p>
           I build Cover Me, so weigh this comparison with that in mind. The trade-off is real, and for some job searches AIApply&rsquo;s approach fits better.
         </p>

@@ -25,7 +25,9 @@ export interface ApplicationSummary extends StageState {
   url: string
   createdAt: string
   coverLetters: { id: string; createdAt: string }[]
-  tailoredResumes: { id: string; createdAt: string; atsScore: number | null; atsGaps: string[] | null }[]
+  // editedAt: when the user last edited it in the extension's editor (#118),
+  // so the score is from before those edits. Null until then.
+  tailoredResumes: { id: string; createdAt: string; atsScore: number | null; atsGaps: string[] | null; editedAt?: string | null }[]
 }
 
 // One application in full, fetched when its details open or a Download is
