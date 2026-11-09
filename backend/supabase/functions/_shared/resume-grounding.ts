@@ -123,6 +123,27 @@ export function seenVersion<T extends Groundable>(upload: T, previous: unknown):
   return seen as T
 }
 
+/**
+ * After the merge on Regenerate from edits (#171), what it can't know about
+ * the version the user saw: a role or project never comes back with more
+ * bullets than they left it (trim and compact take any count, which could
+ * restore one they deleted), a summary they deleted stays deleted, and one
+ * they kept stays when the run returns none.
+ */
+export function keepSeen<T extends Groundable>(merged: T, upload: Groundable, seen: Groundable): T {
+  if (seen === upload) return merged
+  const cap = (out: GroundEntry[] | undefined, own: GroundEntry[] | undefined) =>
+    out?.map((e, i) => (own?.[i] && e.bullets.length > own[i].bullets.length ? { ...e, bullets: own[i].bullets } : e))
+  const { summary, ...rest } = merged
+  const kept = summary?.trim() ? summary : seen.summary
+  return {
+    ...rest,
+    experience: cap(merged.experience, seen.experience) ?? [],
+    ...(merged.projects && { projects: cap(merged.projects, seen.projects) }),
+    ...(seen.summary !== undefined && { summary: kept }),
+  } as unknown as T
+}
+
 // Shaped the way the checks read it: entries with string bullets, and a
 // string summary and skills, string certifications and object education if any.
 function groundable(r: Record<string, unknown>): boolean {

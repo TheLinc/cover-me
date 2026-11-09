@@ -1,7 +1,7 @@
 import type { AIProvider, JobData, ParsedResume, TailoredResume } from '../../types'
 import { debugGroup, debugLog } from '../debug'
 import { derivePlanningProgress, deriveTailorProgress } from './tailor-progress'
-import { buildsOnEdits, candidateText, checkAndRewriteLines, groundSkills, groundTailored, seenVersion, trustedNotes, type AskModel, type LineRepair } from './resume-grounding'
+import { buildsOnEdits, candidateText, checkAndRewriteLines, groundSkills, groundTailored, keepSeen, seenVersion, trustedNotes, type AskModel, type LineRepair } from './resume-grounding'
 import { SONNET_FIELDS, streamSonnet } from './claude'
 import { scoreFromMatch, type KeywordMatch } from './ats-score'
 import { callOpenAI, OPENAI_MODEL } from './openai'
@@ -323,9 +323,7 @@ export async function assembleTailored(
   const candidate = candidateText(parsed, notes)
   const claimed = await groundSkills(delta.skills, candidate, grounding.ask)
   delta.skills = claimed.skills
-  let merged = mergeTailorDelta(base, delta, { exactBulletCounts: grounding.exactBulletCounts }) as TailoredResume
-  // A summary the user deleted in the editor stays deleted.
-  if (buildsOnEdits(grounding.previous) && !(base as { summary?: string }).summary?.trim()) merged.summary = ''
+  let merged = keepSeen(mergeTailorDelta(base, delta, { exactBulletCounts: grounding.exactBulletCounts }) as TailoredResume, parsed, base)
   if (grounding.ask) {
     const lines = await checkAndRewriteLines(merged, base, grounding.jobDescription, grounding.ask, grounding.supplemental)
     merged = lines.resume

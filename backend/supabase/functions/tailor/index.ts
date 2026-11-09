@@ -6,7 +6,7 @@ import { decrypt, encrypt, sameCiphertext } from '../_shared/encrypt.ts'
 import { findOrCreateJobApplication } from '../_shared/job-application.ts'
 import { isUuid } from '../_shared/history-upload.ts'
 import { isValidParsedResume, parseResumeStructure, type ParsedResume } from '../_shared/resume-parse.ts'
-import { buildsOnEdits, candidateText, checkAndRewriteLines, groundSkills, groundTailored, seenVersion, trustedNotes } from '../_shared/resume-grounding.ts'
+import { buildsOnEdits, candidateText, checkAndRewriteLines, groundSkills, groundTailored, keepSeen, seenVersion, trustedNotes } from '../_shared/resume-grounding.ts'
 import { scoreFromMatch } from '../_shared/ats-score.ts'
 import { capture } from '../_shared/posthog.ts'
 
@@ -569,9 +569,7 @@ Deno.serve(async (req) => {
     const base = seenVersion(structuredResume, previous)
     const candidate = candidateText(structuredResume, notes)
     delta.skills = (await groundSkills(delta.skills, candidate, askChecker)).skills
-    const merged = mergeTailorDelta(base, delta, { exactBulletCounts: !compact && !trim })
-    // A summary the user deleted in the editor stays deleted.
-    if (buildsOnEdits(previous) && !(base as { summary?: string }).summary?.trim()) merged.summary = ''
+    const merged = keepSeen(mergeTailorDelta(base, delta, { exactBulletCounts: !compact && !trim }), structuredResume, base)
     // Rewrite only the lines that claim more than the original resume supports.
     const { resume: lined, repair } = await checkAndRewriteLines(merged, base, job.description, askChecker, supplemental)
     // Counts only: repair.flagged holds resume text.

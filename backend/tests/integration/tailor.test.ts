@@ -96,7 +96,7 @@ describe('tailor', () => {
 
     it('a summary the user deleted stays deleted', async () => {
       const { summary: _s, ...noSummary } = previous as typeof previous & { summary?: string }
-      expect((await regenerate({ ...noSummary, editedAt: '2026-11-09T00:00:00Z' })).summary).toBe('')
+      expect((await regenerate({ ...noSummary, editedAt: '2026-11-09T00:00:00Z' })).summary).toBeUndefined()
       expect((await regenerate(noSummary)).summary).toBe(MOCK_TAILOR_DELTA.summary)
     })
 

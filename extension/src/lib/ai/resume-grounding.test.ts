@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { buildLineCheckPrompt, candidateText, checkAndRewriteLines, groundSkills, groundTailored, buildsOnEdits, seenVersion, trustedNotes } from './resume-grounding'
+import { buildLineCheckPrompt, candidateText, checkAndRewriteLines, groundSkills, groundTailored, buildsOnEdits, keepSeen, seenVersion, trustedNotes } from './resume-grounding'
 
 // Made-up posting and resume. The resume never says "web", "Ruby", "Rails" or "HIPAA".
 const posting = `Frontend Web Developer
@@ -141,6 +141,27 @@ describe('an edited previous version', () => {
     expect(seenVersion(original, { ...previous, experience: [{ bullets: 'oops' }], hasEdits: true })).toBe(original)
     expect(seenVersion(original, { ...previous, certifications: 'CPR', hasEdits: true })).toBe(original)
     expect(seenVersion(original, previous)).toBe(original)
+  })
+
+  describe('keepSeen', () => {
+    const seen = seenVersion(original, { ...previous, summary: 'Mine.', experience: [{ ...original.experience[0], bullets: [bullet] }], editedAt: 'x' })
+    const merged = { ...original, summary: 'Model summary.', experience: [{ ...original.experience[0], bullets: ['New one.', 'A bullet they deleted.'] }] }
+
+    test('caps a role at the bullets the user left it with, and keeps their summary when the run has none', () => {
+      expect(keepSeen(merged, original, seen).experience[0].bullets).toEqual([bullet])
+      expect(keepSeen(merged, original, seen).summary).toBe('Model summary.')
+      expect(keepSeen({ ...merged, summary: ' ' }, original, seen).summary).toBe('Mine.')
+    })
+
+    test('a summary the user deleted stays deleted; an emptied one is not a deletion', () => {
+      const { summary: _s, ...deleted } = seen
+      expect('summary' in keepSeen(merged, original, deleted)).toBe(false)
+      expect(keepSeen(merged, original, { ...seen, summary: '' }).summary).toBe('Model summary.')
+    })
+
+    test('without edits it changes nothing', () => {
+      expect(keepSeen(merged, original, original)).toBe(merged)
+    })
   })
 
   test('the line check leaves a summary identical to the original summary alone', async () => {
