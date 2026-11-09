@@ -71,7 +71,7 @@ describe('tailor', () => {
       const resume = await regenerate({ ...previous, editedAt: '2026-11-09T00:00:00Z' })
       expect(resume.skills).toBe('TypeScript, Postgres, React, Data Pipelines, Kafka')
       expect(resume.experience[0].bullets[0]).toBe(typed)
-      expect(await revisionPrompt()).toContain('includes edits the candidate made themselves')
+      expect(await revisionPrompt()).toContain('includes edits and notes the candidate made themselves')
       // Marked, so the next Regenerate, which starts from this result, trusts it too.
       expect(resume.hasEdits).toBe(true)
       expect(resume.editedAt).toBeUndefined()
@@ -104,7 +104,7 @@ describe('tailor', () => {
       const resume = await regenerate(previous)
       expect(resume.skills).toBe('TypeScript, Postgres, React, Data Pipelines')
       expect(resume.experience[0].bullets[0]).toBe(MOCK_REWRITTEN_BULLET)
-      expect(await revisionPrompt()).not.toContain('includes edits the candidate')
+      expect(await revisionPrompt()).not.toContain('includes edits and notes')
       expect(resume.hasEdits).toBeUndefined()
     })
 

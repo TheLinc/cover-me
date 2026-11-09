@@ -144,6 +144,8 @@ export interface TailorJob {
   progress?: string
   // The finished resume's ID in tailored History, which the editor tab opens.
   entryId?: string
+  // The one-off note the run used; the popup clears its note box once done.
+  note?: string
 }
 
 export interface CoverLetterEntry {

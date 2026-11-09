@@ -88,9 +88,10 @@ export function trustedNotes(supplemental: string | undefined, previous: unknown
 }
 
 /**
- * Whether the version Regenerate starts from holds the candidate's edits: they
- * edited it (editedAt), or it was regenerated from one that did (hasEdits, set
- * on the result so the trust carries to the next Regenerate).
+ * Whether the version Regenerate starts from holds the candidate's own input:
+ * they edited it (editedAt), or it was made with their note or regenerated from
+ * one that holds it (hasEdits, set on the result so the trust carries to the
+ * next Regenerate).
  */
 export function buildsOnEdits(previous: unknown): boolean {
   return !!editedVersion(previous)

@@ -134,6 +134,12 @@ function TailorOptions({ inputMode, manualReady, onTailor, compact, setCompact, 
   )
 }
 
+// A run that used the note box's text has adopted it, so the box clears to
+// show that. Text typed while it ran is kept.
+function noteAfterRun(current: string, used: string | undefined): string {
+  return used && current.trim() === used ? '' : current
+}
+
 export default function GeneratePage({ onNavigate }: Props) {
   const [state, setState] = useState<State>('idle')
   const [inputMode, setInputMode] = useState<InputMode>('auto')
@@ -278,7 +284,7 @@ export default function GeneratePage({ onNavigate }: Props) {
           setTailoredResume(tj.resume)
           setTailoredJob(tj.job)
           setTailoredEntryId(tj.entryId ?? null)
-          setSupplemental((s?.supplemental as string) ?? '')
+          setSupplemental(noteAfterRun((s?.supplemental as string) ?? '', tj.note))
           setTailorState('done')
           setActiveResultTab('resume')
         }
@@ -334,6 +340,7 @@ export default function GeneratePage({ onNavigate }: Props) {
             setTailoredResume(tj.resume)
             setTailoredJob(tj.job)
             setTailoredEntryId(tj.entryId ?? null)
+            setSupplemental((cur) => noteAfterRun(cur, tj.note))
             setTailorState('done')
             setActiveResultTab('resume')
           }
