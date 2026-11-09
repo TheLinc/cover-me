@@ -6,7 +6,7 @@ import { decrypt, encrypt, sameCiphertext } from '../_shared/encrypt.ts'
 import { findOrCreateJobApplication } from '../_shared/job-application.ts'
 import { isUuid } from '../_shared/history-upload.ts'
 import { isValidParsedResume, parseResumeStructure, type ParsedResume } from '../_shared/resume-parse.ts'
-import { candidateText, checkAndRewriteLines, groundSkills, groundTailored, trustedNotes } from '../_shared/resume-grounding.ts'
+import { buildsOnEdits, candidateText, checkAndRewriteLines, groundSkills, groundTailored, trustedNotes } from '../_shared/resume-grounding.ts'
 import { scoreFromMatch } from '../_shared/ats-score.ts'
 import { capture } from '../_shared/posthog.ts'
 
@@ -82,22 +82,30 @@ function topLevelObjects(text: string): string[] {
 // The same holds for a count the prompt forbids: in default mode a role must
 // come back with as many bullets as it had (a different count means bullets
 // were merged or dropped), and projects keep their count in every mode.
+// Regenerate starts from the version the user saw (opts.previous), so there
+// the count and the fallback are that version's bullets, which may include
+// ones the user added or deleted in the editor (#171).
 export function mergeTailorDelta<T extends {
   experience: Array<{ bullets: string[] }>
   projects?: Array<{ bullets: string[] }>
   skills?: string
-}>(base: T, delta: TailorDelta, opts: { exactBulletCounts?: boolean } = {}): T & { summary: string } {
+}>(base: T, delta: TailorDelta, opts: { exactBulletCounts?: boolean; previous?: unknown } = {}): T & { summary: string } {
   const pick = (orig: string[], d: TailorDeltaEntry | undefined, exact: boolean): string[] => {
     const rewritten = Array.isArray(d?.bullets) ? d.bullets.filter((b): b is string => typeof b === 'string' && b.trim().length > 0) : []
     if (rewritten.length === 0 || (exact && rewritten.length !== orig.length)) return orig
     return rewritten
   }
+  const prev = opts.previous && typeof opts.previous === 'object' ? (opts.previous as { experience?: unknown; projects?: unknown }) : {}
+  const seen = (list: unknown, i: number, upload: string[]): string[] => {
+    const b = Array.isArray(list) ? (list[i] as { bullets?: unknown } | null | undefined)?.bullets : undefined
+    return Array.isArray(b) && b.length > 0 && b.every((s) => typeof s === 'string') ? b : upload
+  }
   return {
     ...base,
     summary: typeof delta.summary === 'string' ? delta.summary : '',
-    experience: base.experience.map((role, i) => ({ ...role, bullets: pick(role.bullets, delta.experience?.[i], !!opts.exactBulletCounts) })),
+    experience: base.experience.map((role, i) => ({ ...role, bullets: pick(seen(prev.experience, i, role.bullets), delta.experience?.[i], !!opts.exactBulletCounts) })),
     ...(base.projects?.length
-      ? { projects: base.projects.map((p, i) => ({ ...p, bullets: pick(p.bullets, delta.projects?.[i], true) })) }
+      ? { projects: base.projects.map((p, i) => ({ ...p, bullets: pick(seen(prev.projects, i, p.bullets), delta.projects?.[i], true) })) }
       : {}),
     ...(base.skills
       ? { skills: typeof delta.skills === 'string' && delta.skills.trim() ? delta.skills : base.skills }
@@ -156,7 +164,7 @@ function buildTailorSchema(parsed: ParsedResume): string {
 // An edited resume's fields from the extension's editor tab go too: the old
 // gaps, and a section order the regenerated resume starts over from.
 function stripScores(r: Record<string, unknown>): Record<string, unknown> {
-  const { atsScore: _s, atsGaps: _g, atsGapsBeforeEdits: _b, editedAt: _e, sectionOrder: _o, ...rest } = r
+  const { atsScore: _s, atsGaps: _g, atsGapsBeforeEdits: _b, editedAt: _e, hasEdits: _h, sectionOrder: _o, ...rest } = r
   return rest
 }
 
@@ -171,7 +179,7 @@ ${JSON.stringify(stripScores(previous), null, 2)}
 REVISION MODE — revise, do not rebuild:
 - Start from the PREVIOUS TAILORED RESUME above and change as little as possible. Keep its summary, bullets, and skills exactly as written EXCEPT where the supplemental context adds new truth, or a previously missing JD keyword can now be incorporated honestly.
 - Do not re-rank or re-word bullets that need no change, and preserve each role's existing bullet count. The steps below define HOW to write; this block only changes WHAT you start from.
-- ${previous.editedAt ? 'The candidate edited the PREVIOUS TAILORED RESUME themselves, so its contents are true like the candidate resume above: keep what they wrote, and a phrase copied from it counts as evidence. Beyond those two, the supplemental context is the only new truth.' : 'The candidate resume above remains the ground truth for what is true; the supplemental context is the only new truth.'} Integrity rules still apply — never fabricate to close a gap.
+- ${previous.editedAt || previous.hasEdits ? 'The PREVIOUS TAILORED RESUME includes edits the candidate made themselves, so its contents are true like the candidate resume above: keep what they wrote, and a phrase copied from it counts as evidence. Beyond those two, the supplemental context is the only new truth.' : 'The candidate resume above remains the ground truth for what is true; the supplemental context is the only new truth.'} Integrity rules still apply — never fabricate to close a gap.
 - Recompute STEP 9 against the SAME JD keyword set as before, so added coverage raises the score rather than shifting the baseline.
 ` : ''
 
@@ -567,7 +575,7 @@ Deno.serve(async (req) => {
     const notes = trustedNotes(supplemental, previous)
     const candidate = candidateText(structuredResume, notes)
     delta.skills = (await groundSkills(delta.skills, candidate, askChecker)).skills
-    const merged = mergeTailorDelta(structuredResume, delta, { exactBulletCounts: !compact && !trim })
+    const merged = mergeTailorDelta(structuredResume, delta, { exactBulletCounts: !compact && !trim, previous })
     // Rewrite only the lines that claim more than the original resume supports.
     const { resume: lined, repair } = await checkAndRewriteLines(merged, structuredResume, job.description, askChecker, notes, previous)
     // Counts only: repair.flagged holds resume text.
@@ -587,6 +595,7 @@ Deno.serve(async (req) => {
       resume.atsGaps = atsGaps
     }
     if (sourceHash) resume.sourceHash = sourceHash
+    if (buildsOnEdits(previous)) resume.hasEdits = true
 
     // One count per hosted run, with the tailor's options and no resume or
     // job text. A failed send never fails the run.

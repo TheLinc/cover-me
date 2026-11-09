@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { buildLineCheckPrompt, candidateText, checkAndRewriteLines, groundSkills, groundTailored, trustedNotes } from './resume-grounding'
+import { buildLineCheckPrompt, candidateText, checkAndRewriteLines, groundSkills, groundTailored, buildsOnEdits, trustedNotes } from './resume-grounding'
 
 // Made-up posting and resume. The resume never says "web", "Ruby", "Rails" or "HIPAA".
 const posting = `Frontend Web Developer
@@ -89,6 +89,13 @@ describe('an edited previous version', () => {
     expect(trustedNotes('Used Ruby daily.', { ...previous, editedAt: 'x' })).toContain('Used Ruby daily.')
     expect(trustedNotes('Used Ruby daily.', previous)).toBe('Used Ruby daily.')
     expect(trustedNotes(undefined, undefined)).toBeUndefined()
+  })
+
+  test('a version regenerated from edits is trusted on the next Regenerate too', () => {
+    expect(buildsOnEdits({ ...previous, editedAt: 'x' })).toBe(true)
+    expect(buildsOnEdits({ ...previous, hasEdits: true })).toBe(true)
+    expect(buildsOnEdits(previous)).toBe(false)
+    expect(regrounded({ ...previous, hasEdits: true }).experience[0].bullets).toEqual([bullet])
   })
 
   describe('the line check', () => {

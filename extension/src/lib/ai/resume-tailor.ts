@@ -1,7 +1,7 @@
 import type { AIProvider, JobData, ParsedResume, TailoredResume } from '../../types'
 import { debugGroup, debugLog } from '../debug'
 import { derivePlanningProgress, deriveTailorProgress } from './tailor-progress'
-import { candidateText, checkAndRewriteLines, groundSkills, groundTailored, trustedNotes, type AskModel, type LineRepair } from './resume-grounding'
+import { buildsOnEdits, candidateText, checkAndRewriteLines, groundSkills, groundTailored, trustedNotes, type AskModel, type LineRepair } from './resume-grounding'
 import { SONNET_FIELDS, streamSonnet } from './claude'
 import { scoreFromMatch, type KeywordMatch } from './ats-score'
 import { callOpenAI, OPENAI_MODEL } from './openai'
@@ -39,8 +39,8 @@ function buildTailorSchema(parsed: ParsedResume): string {
 // model edits resume content, not stale numbers (STEP 9 is recomputed fresh).
 // An edited resume's fields from the editor tab go too: the old gaps, and a
 // section order the regenerated resume starts over from.
-function stripScores(r: TailoredResume): Omit<TailoredResume, 'atsScore' | 'atsGaps' | 'atsGapsBeforeEdits' | 'editedAt' | 'sectionOrder'> {
-  const { atsScore: _s, atsGaps: _g, atsGapsBeforeEdits: _b, editedAt: _e, sectionOrder: _o, ...rest } = r
+function stripScores(r: TailoredResume): Omit<TailoredResume, 'atsScore' | 'atsGaps' | 'atsGapsBeforeEdits' | 'editedAt' | 'hasEdits' | 'sectionOrder'> {
+  const { atsScore: _s, atsGaps: _g, atsGapsBeforeEdits: _b, editedAt: _e, hasEdits: _h, sectionOrder: _o, ...rest } = r
   return rest
 }
 
@@ -110,22 +110,30 @@ function topLevelObjects(text: string): string[] {
 // The same holds for a count the prompt forbids: in default mode a role must
 // come back with as many bullets as it had (a different count means bullets
 // were merged or dropped), and projects keep their count in every mode.
+// Regenerate starts from the version the user saw (opts.previous), so there
+// the count and the fallback are that version's bullets, which may include
+// ones the user added or deleted in the editor (#171).
 export function mergeTailorDelta<T extends {
   experience: Array<{ bullets: string[] }>
   projects?: Array<{ bullets: string[] }>
   skills?: string
-}>(base: T, delta: TailorDelta, opts: { exactBulletCounts?: boolean } = {}): T & { summary: string } {
+}>(base: T, delta: TailorDelta, opts: { exactBulletCounts?: boolean; previous?: unknown } = {}): T & { summary: string } {
   const pick = (orig: string[], d: TailorDeltaEntry | undefined, exact: boolean): string[] => {
     const rewritten = Array.isArray(d?.bullets) ? d.bullets.filter((b): b is string => typeof b === 'string' && b.trim().length > 0) : []
     if (rewritten.length === 0 || (exact && rewritten.length !== orig.length)) return orig
     return rewritten
   }
+  const prev = opts.previous && typeof opts.previous === 'object' ? (opts.previous as { experience?: unknown; projects?: unknown }) : {}
+  const seen = (list: unknown, i: number, upload: string[]): string[] => {
+    const b = Array.isArray(list) ? (list[i] as { bullets?: unknown } | null | undefined)?.bullets : undefined
+    return Array.isArray(b) && b.length > 0 && b.every((s) => typeof s === 'string') ? b : upload
+  }
   return {
     ...base,
     summary: typeof delta.summary === 'string' ? delta.summary : '',
-    experience: base.experience.map((role, i) => ({ ...role, bullets: pick(role.bullets, delta.experience?.[i], !!opts.exactBulletCounts) })),
+    experience: base.experience.map((role, i) => ({ ...role, bullets: pick(seen(prev.experience, i, role.bullets), delta.experience?.[i], !!opts.exactBulletCounts) })),
     ...(base.projects?.length
-      ? { projects: base.projects.map((p, i) => ({ ...p, bullets: pick(p.bullets, delta.projects?.[i], true) })) }
+      ? { projects: base.projects.map((p, i) => ({ ...p, bullets: pick(seen(prev.projects, i, p.bullets), delta.projects?.[i], true) })) }
       : {}),
     ...(base.skills
       ? { skills: typeof delta.skills === 'string' && delta.skills.trim() ? delta.skills : base.skills }
@@ -145,7 +153,7 @@ ${JSON.stringify(stripScores(previous), null, 2)}
 REVISION MODE — revise, do not rebuild:
 - Start from the PREVIOUS TAILORED RESUME above and change as little as possible. Keep its summary, bullets, and skills exactly as written EXCEPT where the supplemental context adds new truth, or a previously missing JD keyword can now be incorporated honestly.
 - Do not re-rank or re-word bullets that need no change, and preserve each role's existing bullet count. The steps below define HOW to write; this block only changes WHAT you start from.
-- ${previous.editedAt ? 'The candidate edited the PREVIOUS TAILORED RESUME themselves, so its contents are true like the candidate resume above: keep what they wrote, and a phrase copied from it counts as evidence. Beyond those two, the supplemental context is the only new truth.' : 'The candidate resume above remains the ground truth for what is true; the supplemental context is the only new truth.'} Integrity rules still apply — never fabricate to close a gap.
+- ${previous.editedAt || previous.hasEdits ? 'The PREVIOUS TAILORED RESUME includes edits the candidate made themselves, so its contents are true like the candidate resume above: keep what they wrote, and a phrase copied from it counts as evidence. Beyond those two, the supplemental context is the only new truth.' : 'The candidate resume above remains the ground truth for what is true; the supplemental context is the only new truth.'} Integrity rules still apply — never fabricate to close a gap.
 - Recompute STEP 9 against the SAME JD keyword set as before, so added coverage raises the score rather than shifting the baseline.
 ` : ''
 
@@ -321,7 +329,7 @@ export async function assembleTailored(
   const candidate = candidateText(parsed, notes)
   const claimed = await groundSkills(delta.skills, candidate, grounding.ask)
   delta.skills = claimed.skills
-  let merged = mergeTailorDelta(parsed, delta, { exactBulletCounts: grounding.exactBulletCounts }) as TailoredResume
+  let merged = mergeTailorDelta(parsed, delta, { exactBulletCounts: grounding.exactBulletCounts, previous: grounding.previous }) as TailoredResume
   if (grounding.ask) {
     const lines = await checkAndRewriteLines(merged, parsed, grounding.jobDescription, grounding.ask, notes, grounding.previous)
     merged = lines.resume
@@ -335,6 +343,7 @@ export async function assembleTailored(
     resume.atsScore = score
     resume.atsGaps = gaps
   }
+  if (buildsOnEdits(grounding.previous)) resume.hasEdits = true
   return resume
 }
 

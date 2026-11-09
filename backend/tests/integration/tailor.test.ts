@@ -71,14 +71,34 @@ describe('tailor', () => {
       const resume = await regenerate({ ...previous, editedAt: '2026-11-09T00:00:00Z' })
       expect(resume.skills).toBe('TypeScript, Postgres, React, Data Pipelines, Kafka')
       expect(resume.experience[0].bullets[0]).toBe(typed)
-      expect(await revisionPrompt()).toContain('The candidate edited the PREVIOUS TAILORED RESUME themselves')
+      expect(await revisionPrompt()).toContain('includes edits the candidate made themselves')
+      // Marked, so the next Regenerate, which starts from this result, trusts it too.
+      expect(resume.hasEdits).toBe(true)
+      expect(resume.editedAt).toBeUndefined()
+    })
+
+    it('a second Regenerate, from a result marked hasEdits, still keeps them', async () => {
+      const resume = await regenerate({ ...previous, hasEdits: true })
+      expect(resume.skills).toBe('TypeScript, Postgres, React, Data Pipelines, Kafka')
+      expect(resume.experience[0].bullets[0]).toBe(typed)
+      expect(resume.hasEdits).toBe(true)
+    })
+
+    it('keeps a bullet the user added in the editor', async () => {
+      // The mock returns 2 bullets for a role the user grew to 3; a count that
+      // doesn't fit keeps the version they saw, not the upload's 2.
+      const added = 'Wrote the on-call runbook'
+      const grown = [{ ...MOCK_PARSED_RESUME.experience[0], bullets: [...MOCK_PARSED_RESUME.experience[0].bullets, added] }, MOCK_PARSED_RESUME.experience[1]]
+      const resume = await regenerate({ ...MOCK_PARSED_RESUME, experience: grown, editedAt: '2026-11-09T00:00:00Z' })
+      expect(resume.experience[0].bullets).toEqual(grown[0].bullets)
     })
 
     it('an unedited previous is checked as before', async () => {
       const resume = await regenerate(previous)
       expect(resume.skills).toBe('TypeScript, Postgres, React, Data Pipelines')
       expect(resume.experience[0].bullets[0]).toBe(MOCK_REWRITTEN_BULLET)
-      expect(await revisionPrompt()).not.toContain('edited the PREVIOUS')
+      expect(await revisionPrompt()).not.toContain('includes edits the candidate')
+      expect(resume.hasEdits).toBeUndefined()
     })
 
     it("a term only in an edited previous's gap list is still dropped", async () => {

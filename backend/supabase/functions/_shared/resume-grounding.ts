@@ -87,10 +87,18 @@ export function trustedNotes(supplemental: string | undefined, previous: unknown
   return [supplemental, candidateText(rest)].filter(Boolean).join('\n')
 }
 
-// The version Regenerate starts from, only when the candidate edited it.
+/**
+ * Whether the version Regenerate starts from holds the candidate's edits: they
+ * edited it (editedAt), or it was regenerated from one that did (hasEdits, set
+ * on the result so the trust carries to the next Regenerate).
+ */
+export function buildsOnEdits(previous: unknown): boolean {
+  return !!editedVersion(previous)
+}
+
 function editedVersion(previous: unknown): Record<string, unknown> | undefined {
   const prev = previous && typeof previous === 'object' ? (previous as Record<string, unknown>) : undefined
-  return prev?.editedAt ? prev : undefined
+  return prev?.editedAt || prev?.hasEdits === true ? prev : undefined
 }
 
 function grounded(token: string, candidate: string): boolean {
