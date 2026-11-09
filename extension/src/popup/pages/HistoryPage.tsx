@@ -2,9 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 import { deleteApplicationFromBackend, ensureValidSession, fetchApplicationsFromBackend, fetchTier, uploadLocalHistory, UploadError } from '../../lib/auth'
 import { downloadCoverLetterPdf } from '../../lib/pdf/cover-letter'
 import { downloadTailoredResumePdf } from '../../lib/pdf/resume'
+import { openResumeEditor } from '../../lib/resume-edit'
 import { accountUpdates, capWarning, groupLocalHistory, groupsFromApplications, ownPending, unclaimed, uploadMessage, uploadSummary, withLocalOnly, type JobGroup } from '../../lib/history'
 import { deleteFromHistory, deleteFromTailoredHistory, getCachedTier, getDesignHashes, getHistory, getMode, getTailoredHistory, getUploadAsked, markUploadAsked, saveCachedTier, setEntryAccounts } from '../../lib/storage'
 import type { AuthSession, CoverLetter, CoverLetterEntry, TailoredHistoryEntry } from '../../types'
+import DownloadMenu from '../components/DownloadMenu'
+import { EditIcon } from '../components/icons'
 import UpgradePrompt from '../components/UpgradePrompt'
 import { WEB_URL } from '../../lib/config'
 import { downloadResumeWord } from '../../lib/design'
@@ -358,40 +361,26 @@ export default function HistoryPage() {
                           </span>
                           <span className="artifact-date">{formatDate(tr.createdAt)}</span>
                         </div>
-                        {tr.resume.sourceHash && designHashes.includes(tr.resume.sourceHash) ? (
-                          <div className="artifact-actions">
-                            <button className="btn btn-secondary btn-sm" onClick={() => void downloadResumeWord(tr.resume, group.title)}>
-                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                                <polyline points="7 10 12 15 17 10" />
-                                <line x1="12" y1="15" x2="12" y2="3" />
-                              </svg>
-                              Word (your design)
-                            </button>
-                            <button className="btn btn-secondary btn-sm" onClick={() => downloadTailoredResumePdf(tr.resume, group.title)}>
-                              PDF (Cover Me layout)
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="artifact-actions">
-                            <button className="btn btn-secondary btn-sm" onClick={() => downloadTailoredResumePdf(tr.resume, group.title)}>
-                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                                <polyline points="7 10 12 15 17 10" />
-                                <line x1="12" y1="15" x2="12" y2="3" />
-                              </svg>
-                              Download PDF
-                            </button>
-                            <button className="btn btn-secondary btn-sm" onClick={() => void downloadResumeWord(tr.resume, group.title)}>
-                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                                <polyline points="7 10 12 15 17 10" />
-                                <line x1="12" y1="15" x2="12" y2="3" />
-                              </svg>
-                              Word
-                            </button>
-                          </div>
+                        {typeof tr.resume.atsScore === 'number' && (
+                          <p className="artifact-meta">
+                            ATS match {tr.resume.atsScore}{tr.resume.editedAt ? ' · Scored before your edits' : ''}
+                          </p>
                         )}
+                        <div className="artifact-actions">
+                          <DownloadMenu
+                            className="btn btn-secondary btn-sm"
+                            options={tr.resume.sourceHash && designHashes.includes(tr.resume.sourceHash)
+                              ? [{ label: 'Word', note: 'Your design', onSelect: () => void downloadResumeWord(tr.resume, group.title) }, { label: 'PDF', note: 'Cover Me layout', onSelect: () => downloadTailoredResumePdf(tr.resume, group.title) }]
+                              : [{ label: 'PDF', onSelect: () => downloadTailoredResumePdf(tr.resume, group.title) }, { label: 'Word', onSelect: () => void downloadResumeWord(tr.resume, group.title) }]}
+                          />
+                          {/* Not for "Your design": its Word file takes only some edits, and the user can edit it in Word. */}
+                          {!(tr.resume.sourceHash && designHashes.includes(tr.resume.sourceHash)) && (
+                            <button className="btn btn-secondary btn-sm" onClick={() => openResumeEditor(tr.id)}>
+                              <EditIcon />
+                              Edit
+                            </button>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>

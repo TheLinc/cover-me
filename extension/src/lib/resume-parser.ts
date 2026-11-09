@@ -17,9 +17,15 @@ export async function parseResume(file: File): Promise<string> {
   throw new Error('Unsupported format. Upload a PDF, DOCX, or TXT file.')
 }
 
-async function parsePdf(file: File): Promise<string> {
+// pdf.js with its worker set, loaded on first use. The editor's preview draws with it too.
+export async function loadPdfjs() {
   const pdfjsLib = await import('pdfjs-dist')
   pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl
+  return pdfjsLib
+}
+
+async function parsePdf(file: File): Promise<string> {
+  const pdfjsLib = await loadPdfjs()
 
   const arrayBuffer = await file.arrayBuffer()
   const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise

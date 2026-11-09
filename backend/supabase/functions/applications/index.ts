@@ -2,7 +2,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 import { handleCors, json } from '../_shared/cors.ts'
 import { decrypt, encrypt } from '../_shared/encrypt.ts'
 import { findOrCreateJobApplication } from '../_shared/job-application.ts'
-import { isUuid, MAX_UPLOAD_BYTES, parseUpload, resumeColumns } from '../_shared/history-upload.ts'
+import { isObject, isUuid, MAX_RESUME_JSON, MAX_UPLOAD_BYTES, parseUpload, resumeColumns } from '../_shared/history-upload.ts'
 import { readBody } from '../_shared/read-body.ts'
 import { isStage, likeContains, parseSearch, type Stage } from '../_shared/application-search.ts'
 
@@ -18,7 +18,7 @@ const FULL_SELECT = `
 const SUMMARY_SELECT = `
   id, title, company, url, created_at, stage, stage_changed_at,
   cover_letters(id, created_at),
-  tailored_resumes(id, created_at, ats_score, ats_gaps)
+  tailored_resumes(id, created_at, ats_score, ats_gaps, edited_at)
 `
 
 type Row = {
@@ -81,6 +81,7 @@ function summaryApplication(row: Row) {
         createdAt: tr.created_at as string,
         atsScore: (tr.ats_score as number | null) ?? null,
         atsGaps: (tr.ats_gaps as string[] | null) ?? null,
+        editedAt: (tr.edited_at as string | null) ?? null,
       }))
       .sort(newestFirst),
   }
@@ -183,8 +184,43 @@ Deno.serve(async (req) => {
     if (error) return json({ error: 'Failed to fetch applications' }, 500)
     const hasMore = (found?.length ?? 0) > search.limit
     const rows = ((found ?? []) as unknown as Row[]).slice(0, search.limit)
-    const applications = search.summary ? rows.map(summaryApplication) : await Promise.all(rows.map(fullApplication))
+    const applications = search.summary ? rows.map(summaryApplication) : await Promise.all(rows.map((r) => fullApplication(r)))
     return json({ applications, hasMore })
+  }
+
+  // PATCH ?resume=: the extension's editor tab overwrites one of the caller's
+  // tailored resumes (#118). The ATS score stays from before the edit; the
+  // gaps come as the editor left them, and edited_at drives the "Scored
+  // before your edits" label.
+  const resumeId = params.get('resume')
+  if (req.method === 'PATCH' && resumeId !== null) {
+    if (!isPro) return proOnly()
+    if (!isUuid(resumeId)) return json({ error: 'Invalid id' }, 400)
+    // Bytes, while MAX_RESUME_JSON counts characters: up to 4 bytes each in
+    // UTF-8, plus room for the {"resume": ...} around it.
+    const raw = await readBody(req, MAX_RESUME_JSON * 4 + 1024)
+    if (raw === null) return json({ error: 'Request too large' }, 400)
+    let resume: unknown
+    try {
+      resume = (JSON.parse(raw) as { resume?: unknown } | null)?.resume
+    } catch {
+      return json({ error: 'Invalid request body' }, 400)
+    }
+    if (!isObject(resume) || JSON.stringify(resume).length > MAX_RESUME_JSON) return json({ error: 'Invalid resume' }, 400)
+    const { data, error } = await supabase
+      .from('tailored_resumes')
+      .update({
+        resume_json_encrypted: await encrypt(JSON.stringify(resume)),
+        ...resumeColumns(resume),
+        edited_at: new Date().toISOString(),
+      })
+      .eq('id', resumeId)
+      .eq('user_id', userId)
+      .select('edited_at')
+      .maybeSingle()
+    if (error) return json({ error: 'Failed to update resume' }, 500)
+    if (!data) return json({ error: 'Not found' }, 404)
+    return json({ editedAt: data.edited_at })
   }
 
   // PATCH ?id=: move the caller's own application to another stage.

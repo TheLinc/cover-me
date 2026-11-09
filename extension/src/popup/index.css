@@ -799,6 +799,9 @@ html, body {
   color: var(--text-2);
 }
 
+/* The score is from before the user's edits in the editor tab (#118). */
+.ats-edited { font-size: 12px; color: var(--text-3); margin-bottom: 6px; }
+
 .supplemental-section { margin-bottom: 10px; }
 .supplemental-label {
   display: block;
@@ -923,6 +926,7 @@ html, body {
 }
 .artifact-label { font-size: 11px; font-weight: 600; color: var(--text-2); }
 .artifact-date { font-size: 10px; color: var(--text-3); }
+.artifact-meta { font-size: 11px; color: var(--text-3); margin-bottom: 8px; }
 
 .artifact-actions { display: flex; gap: 6px; }
 
@@ -1226,7 +1230,6 @@ html, body {
 }
 .regen-toggle:hover { color: var(--text-2); }
 
-.regen-section { display: flex; flex-direction: column; gap: 6px; }
 
 /* ── Result tabs ──────────────────────────────── */
 
@@ -1319,7 +1322,6 @@ textarea:focus-visible, input:focus-visible, [tabindex]:focus-visible {
 .upload-link.design-retry { margin: 0; font-size: 11px; }
 .layout-line { font-size: 11px; color: var(--text-3); }
 .layout-line .upload-link { margin: 0; font-size: 11px; }
-.letter-actions.design-actions { flex-wrap: wrap; }
 
 /* After a click that read no job (#130): no error styling for a site we don't read yet. */
 .scrape-failure {
@@ -1344,3 +1346,69 @@ textarea:focus-visible, input:focus-visible, [tabindex]:focus-visible {
 .scrape-failure-card .site-request,
 .scrape-failure-card .scrape-failure-thanks { margin-top: 10px; }
 .scrape-failure-card p { text-wrap: pretty; }
+
+/* A text box with its action on its bottom edge (#118): Regenerate sits with
+   the text it sends, which keeps the result row to Download, Edit and New. */
+.composer {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  transition: border-color 0.14s, box-shadow 0.14s;
+}
+.composer:focus-within { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-dim); }
+.composer-input {
+  display: block;
+  width: 100%;
+  height: 58px;
+  padding: 9px 12px 2px;
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: none;
+  font-family: inherit;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text);
+}
+.composer-input::placeholder { color: var(--text-3); }
+/* The box shows focus (focus-within above), not the text area inside it. */
+.composer-input:focus-visible { outline: none; }
+.composer-foot { display: flex; align-items: center; gap: 8px; padding: 4px 6px 6px 12px; }
+.composer-hint { font-size: 10.5px; color: var(--text-3); }
+.composer-foot .btn { width: auto; margin-left: auto; }
+
+/* Download with its formats in a menu (#118). */
+.download-menu { position: relative; display: flex; }
+.letter-actions .download-menu { flex: 1; }
+.artifact-actions > * { flex: 1 1 0; }
+.download-menu > .btn { flex: 1; }
+.download-menu-list {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 6px);
+  z-index: 20;
+  min-width: 100%;
+  width: max-content;
+  padding: 4px;
+  background: var(--elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+.download-menu-list.up { top: auto; bottom: calc(100% + 6px); }
+.download-menu-item {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.download-menu-item small { display: block; font-size: 10.5px; font-weight: 400; color: var(--text-3); margin-top: 1px; }
+.download-menu-item:hover, .download-menu-item:focus-visible { background: var(--border); outline: none; }

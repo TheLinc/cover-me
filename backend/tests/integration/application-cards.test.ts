@@ -48,7 +48,7 @@ describe('application cards', () => {
     expect(body.applications).toEqual([{
       id: appId, title: job.title, company: job.company, url: job.url, createdAt: expect.any(String), stage: 'applied', stageChangedAt: null,
       coverLetters: [{ id: l, createdAt: expect.any(String) }],
-      tailoredResumes: [{ id: t, createdAt: expect.any(String), atsScore: 81, atsGaps: ['Kafka'] }],
+      tailoredResumes: [{ id: t, createdAt: expect.any(String), atsScore: 81, atsGaps: ['Kafka'], editedAt: null }],
     }])
     // The full list decrypts, so the corrupt letter drops out there.
     expect((await get(u, {})).body.applications[0].coverLetters).toEqual([])

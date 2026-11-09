@@ -37,6 +37,12 @@ describe('buildResumeDocx', () => {
     expect(html).toContain('<li>Sketch of the Analytical Engine</li>')
   })
 
+  it('prints the sections in the order set in the editor, leaving out deleted ones', async () => {
+    const html = await read({ ...resume, summary: undefined, sectionOrder: ['other', 'skills', 'experience', 'projects', 'education', 'certifications'] })
+    const headings = [...html.matchAll(/<h1>([^<]+)<\/h1>/g)].map((m) => m[1])
+    expect(headings).toEqual(['PUBLICATIONS', 'SKILLS', 'EXPERIENCE', 'PROJECTS', 'EDUCATION', 'CERTIFICATIONS'])
+  })
+
   it('puts the dates and location on the same line as the role, after a tab', async () => {
     const { value } = await mammoth.extractRawText({ buffer: Buffer.from(await (await buildResumeDocx(resume)).arrayBuffer()) })
     expect(value).toContain('Senior Engineer\t2020 – Present')

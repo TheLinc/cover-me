@@ -20,12 +20,12 @@ export const MAX_UPLOAD_BYTES = 1_000_000
 const MAX_LETTERS = 50
 const MAX_TAILORED = 20
 const MAX_LETTER_CHARS = 20_000
-const MAX_RESUME_JSON = 50_000
+export const MAX_RESUME_JSON = 50_000
 const MAX_JOB_FIELD = 8_192 // the extension trims to this; page URLs can carry long tracking parameters
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export const isUuid = (v: unknown): v is string => typeof v === 'string' && UUID.test(v)
-const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
+export const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
 
 function parseJob(v: unknown): UploadJob | null {
   if (v === undefined || v === null) return {}
@@ -77,15 +77,19 @@ export function parseUpload(body: unknown, now = Date.now()): Upload | { error: 
 }
 
 // The plain columns tailor stores, read from an uploaded resume: the ATS
-// score and gaps, and the hash of the Word file it was tailored in (#131).
-// Anything that isn't a 0-100 score, a list of strings or a SHA-256 is left empty.
-export function resumeColumns(resume: Record<string, unknown>): { ats_score: number | null; ats_gaps: string[] | null; source_hash: string | null } {
+// score and gaps, the hash of the Word file it was tailored in (#131), and
+// when the extension's editor last changed it (#118), for a resume edited
+// before it reached the account. Anything that isn't a 0-100 score, a list of
+// strings, a SHA-256 or a readable date is left empty.
+export function resumeColumns(resume: Record<string, unknown>): { ats_score: number | null; ats_gaps: string[] | null; source_hash: string | null; edited_at: string | null } {
   const score = resume.atsScore
   const gaps = resume.atsGaps
   const hash = resume.sourceHash
+  const edited = typeof resume.editedAt === 'string' ? Date.parse(resume.editedAt) : NaN
   return {
     ats_score: typeof score === 'number' && score >= 0 && score <= 100 ? Math.round(score) : null,
     ats_gaps: Array.isArray(gaps) && gaps.every((g) => typeof g === 'string') ? gaps as string[] : null,
     source_hash: typeof hash === 'string' && /^[0-9a-f]{64}$/.test(hash) ? hash : null,
+    edited_at: Number.isNaN(edited) ? null : new Date(Math.min(edited, Date.now())).toISOString(),
   }
 }
