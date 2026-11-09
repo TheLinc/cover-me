@@ -54,30 +54,6 @@ describe('mergeTailorDelta bullet counts', () => {
     const delta = { experience: [], projects: [{ bullets: ['Built and shared a grading script with 4 teachers'] }] }
     expect(mergeTailorDelta(base, delta).projects![0].bullets).toEqual(base.projects[0].bullets)
   })
-
-  // #171: Regenerate starts from the version the user saw, which may have a
-  // bullet they added or deleted in the editor.
-  describe('regenerating', () => {
-    const added = { experience: [{ bullets: [...base.experience[0].bullets, 'Run the robotics club'] }], projects: [{ bullets: ['Built a grading script'] }] }
-
-    test("counts against the previous version's bullets", () => {
-      const five = { experience: [{ bullets: ['a', 'b', 'c', 'd', 'e'] }], projects: [{ bullets: ['p'] }] }
-      const out = mergeTailorDelta(base, five, { exactBulletCounts: true, previous: added })
-      expect(out.experience[0].bullets).toEqual(['a', 'b', 'c', 'd', 'e'])
-      expect(out.projects![0].bullets).toEqual(['p'])
-    })
-
-    test("a count that doesn't fit keeps the previous version's bullets, not the upload's", () => {
-      const out = mergeTailorDelta(base, { experience: [{ bullets: ['a', 'b', 'c', 'd'] }] }, { exactBulletCounts: true, previous: added })
-      expect(out.experience[0].bullets).toEqual(added.experience[0].bullets)
-      expect(out.projects![0].bullets).toEqual(added.projects[0].bullets)
-    })
-
-    test('a previous version without usable bullets for a role falls back to the upload', () => {
-      const out = mergeTailorDelta(base, merged3, { exactBulletCounts: true, previous: { experience: [{ bullets: 'oops' }] } })
-      expect(out.experience[0].bullets).toEqual(base.experience[0].bullets)
-    })
-  })
 })
 
 describe('mergeTailorDelta other sections', () => {

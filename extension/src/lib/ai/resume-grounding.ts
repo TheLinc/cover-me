@@ -101,6 +101,27 @@ function editedVersion(previous: unknown): Record<string, unknown> | undefined {
   return prev?.editedAt || prev?.hasEdits === true ? prev : undefined
 }
 
+/**
+ * What Regenerate revises (#171): when the version the candidate saw holds
+ * their edits, the upload with that version's summary and bullets, so a bullet
+ * they added, deleted or reworded is what the merge counts against and what
+ * the line check and grounding compare to and revert to. Otherwise the upload.
+ */
+export function seenVersion<T extends Groundable>(upload: T, previous: unknown): T {
+  const prev = editedVersion(previous)
+  if (!prev) return upload
+  const bulletsAt = (list: unknown, i: number, fallback: string[]): string[] => {
+    const b = Array.isArray(list) ? (list[i] as { bullets?: unknown } | null | undefined)?.bullets : undefined
+    return Array.isArray(b) && b.every((s) => typeof s === 'string') ? b : fallback
+  }
+  return {
+    ...upload,
+    ...(typeof prev.summary === 'string' && { summary: prev.summary }),
+    experience: upload.experience.map((e, i) => ({ ...e, bullets: bulletsAt(prev.experience, i, e.bullets) })),
+    ...(upload.projects && { projects: upload.projects.map((p, i) => ({ ...p, bullets: bulletsAt(prev.projects, i, p.bullets) })) }),
+  }
+}
+
 function grounded(token: string, candidate: string): boolean {
   if (mentions(candidate, token)) return true
   // "CDL-A" is grounded by "CDL"; "Allen-Bradley" and "3-way" are not.
@@ -473,7 +494,6 @@ export async function checkAndRewriteLines<T extends Groundable>(
   jobDescription: string,
   ask: AskModel,
   supplemental?: string,
-  previous?: unknown,
 ): Promise<{ resume: T; repair: LineRepair }> {
   let flags: Map<LineId, string> | null
   try {
@@ -483,19 +503,17 @@ export async function checkAndRewriteLines<T extends Groundable>(
   }
   if (!flags) return { resume: tailored, repair: { flagged: [], rewritten: 0, reverted: 0, checkFailed: true } }
   // Drop ids that don't point at a real line (an empty summary is none), and
-  // lines the candidate wrote in the editor (#171): word for word on the same
-  // entry, or the summary, of the edited version Regenerate started from.
-  const edited = editedVersion(previous) as Groundable | undefined
-  const typed = (id: LineId, line: string): boolean => {
-    if (!edited) return false
-    if (id === 'summary') return typeof edited.summary === 'string' && edited.summary.trim() === line
+  // lines word for word the same as one of their entry's originals (or the
+  // original summary): they claim nothing new. On Regenerate the originals
+  // include what the candidate typed in the editor (seenVersion).
+  const unchanged = (id: LineId, line: string): boolean => {
+    if (id === 'summary') return original.summary?.trim() === line
     const m = /^([ep])(\d+)b/.exec(id)
-    const bullets = m && (m[1] === 'e' ? edited.experience : edited.projects)?.[Number(m[2])]?.bullets
-    return Array.isArray(bullets) && bullets.some((b) => typeof b === 'string' && b.trim() === line)
+    return !!m && !!(m[1] === 'e' ? original.experience : original.projects)?.[Number(m[2])]?.bullets.some((b) => b.trim() === line)
   }
   for (const id of [...flags.keys()]) {
     const line = lineAt(tailored, id)?.trim()
-    if (!line || typed(id, line)) flags.delete(id)
+    if (!line || unchanged(id, line)) flags.delete(id)
   }
   if (flags.size === 0) return { resume: tailored, repair: { flagged: [], rewritten: 0, reverted: 0 } }
 

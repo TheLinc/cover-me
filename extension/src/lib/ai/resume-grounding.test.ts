@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { buildLineCheckPrompt, candidateText, checkAndRewriteLines, groundSkills, groundTailored, buildsOnEdits, trustedNotes } from './resume-grounding'
+import { buildLineCheckPrompt, candidateText, checkAndRewriteLines, groundSkills, groundTailored, buildsOnEdits, seenVersion, trustedNotes } from './resume-grounding'
 
 // Made-up posting and resume. The resume never says "web", "Ruby", "Rails" or "HIPAA".
 const posting = `Frontend Web Developer
@@ -102,10 +102,11 @@ describe('an edited previous version', () => {
     const intern = { title: 'Intern', company: 'Beta Labs', bullets: ['Fixed bugs in the billing app.'] }
     const twoRoles = { ...original, experience: [original.experience[0], intern] }
     const edited = { ...twoRoles, experience: [{ ...original.experience[0], bullets: [bullet] }, intern], editedAt: 'x' }
-    // The check flags the given line; no rewrite comes back, so a flagged line reverts.
+    // The check flags the given line; no rewrite comes back, so a flagged line
+    // reverts to its original. On Regenerate the originals are the seen version.
     const check = (out: typeof twoRoles, id: string, prev?: object, notes?: string) => {
       const replies = [JSON.stringify({ flags: [{ id, reason: 'adds Rails' }], summary: null }), '{}']
-      return checkAndRewriteLines(out, twoRoles, posting, async () => replies.shift()!, notes, prev)
+      return checkAndRewriteLines(out, seenVersion(twoRoles, prev), posting, async () => replies.shift()!, notes)
     }
 
     test('keeps a line the user typed on the same role', async () => {
@@ -122,6 +123,21 @@ describe('an edited previous version', () => {
       expect((await check(moved, 'e1b0', edited)).resume.experience[1].bullets).toEqual(intern.bullets)
       expect((await check(moved, 'e1b0', undefined, bullet)).resume.experience[1].bullets).toEqual(intern.bullets)
     })
+
+    test("a flagged rewording of a bullet the user added reverts to their wording, it isn't dropped", async () => {
+      const added = 'Wrote the on-call runbook for the portal.'
+      const grown = { ...edited, experience: [{ ...original.experience[0], bullets: [...original.experience[0].bullets, added] }, intern] }
+      const out = { ...twoRoles, experience: [{ ...original.experience[0], bullets: [...original.experience[0].bullets, 'Wrote and owned the on-call runbook for the portal.'] }, intern] }
+      expect((await check(out, 'e0b1', grown)).resume.experience[0].bullets).toEqual(grown.experience[0].bullets)
+    })
+  })
+
+  test('seenVersion: the upload with the edited bullets and summary; bad or missing ones keep the upload', () => {
+    const seen = seenVersion(original, { ...previous, summary: 'Mine.', experience: [{ bullets: [bullet, 'Added.'] }], editedAt: 'x' })
+    expect(seen.summary).toBe('Mine.')
+    expect(seen.experience[0]).toEqual({ ...original.experience[0], bullets: [bullet, 'Added.'] })
+    expect(seenVersion(original, { experience: [{ bullets: 'oops' }], hasEdits: true }).experience[0].bullets).toEqual(original.experience[0].bullets)
+    expect(seenVersion(original, previous)).toBe(original)
   })
 })
 
