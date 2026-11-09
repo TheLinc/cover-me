@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
 }
 
-const EFFECTIVE_DATE = 'November 7, 2026'
+const EFFECTIVE_DATE = 'November 24, 2026'
 const CONTACT_EMAIL  = 'support@cover-me.dev'
 
 // ── Section heading ────────────────────────────────────────────────────────
@@ -323,11 +323,17 @@ export default function PrivacyPage() {
                 A counter not updated for two days is deleted at the next cleanup, which runs during later requests.
               </Li>
               <Li>
-                <strong className="text-foreground">Tailor option counts (Hosted mode).</strong>{' '}
-                Each resume tailored in Hosted mode sends one count to PostHog with your Cover Me account ID and
-                the options used: your plan, whether compact, remove irrelevant bullets and include summary were
-                on, which layout was used, and whether your own design fell back to ours. No resume or job text
-                is sent, and PostHog keeps no profile of you from it. Tailors in BYOK mode aren&apos;t counted.
+                <strong className="text-foreground">Usage counts (Hosted mode, unless you opt out).</strong>{' '}
+                To decide what to improve, our server counts which features you use, such as the file type
+                you upload, the tailoring options you pick and whether you regenerate. Each count goes to
+                PostHog with your Cover Me account ID, your plan and those choices, and PostHog keeps no
+                profile of you from it. A count holds only yes-or-no answers and choices from a fixed list. It
+                never includes your resume, letters, the context you add, job or company details, file names
+                or posting addresses. There are no usage counts in BYOK mode. To stop them for your account,
+                email{' '}
+                <a href={`mailto:${CONTACT_EMAIL}`} className="text-brand-light hover:text-foreground transition-colors">
+                  {CONTACT_EMAIL}
+                </a>.
               </Li>
               <Li>
                 <strong className="text-foreground">Site requests and bug reports (only when you press the button).</strong>{' '}
@@ -393,7 +399,7 @@ export default function PrivacyPage() {
             <Ul>
               <Li>We do not track your browsing history. We receive a page&apos;s address only when you activate the extension on it.</Li>
               <Li>The extension contains no analytics or telemetry code. It only gives Chrome the uninstall survey&apos;s address (see above). In BYOK mode the only thing it sends to Cover Me is the job page you activate it on, once you have agreed, so we can read the posting. Your resume and API key never reach us.</Li>
-              <Li>In hosted mode our servers count how many letters and resumes you generate, to enforce the generation limits, and log errors. Logs never contain your resume, letters, or job descriptions.</Li>
+              <Li>In hosted mode our servers count how many letters and resumes you generate, to enforce the generation limits, count which features you use unless you opt out (see Usage counts above), and log errors. Logs and counts never contain your resume, letters, or job descriptions.</Li>
               <Li>We do not use cookies for tracking or advertising.</Li>
               <Li>We do not collect any data from tabs other than the active job posting tab, and only when you explicitly activate the extension.</Li>
               <Li>We do not sell, rent, or trade your data to any third party.</Li>
@@ -401,7 +407,7 @@ export default function PrivacyPage() {
 
             {/* ── 3. How We Use Your Information ──────────────────────── */}
             <H2 id="how-we-use">How We Use Your Information</H2>
-            <P>We use the information we collect exclusively to provide the Cover Me service:</P>
+            <P>We use the information we collect only for these purposes:</P>
             <Ul>
               <Li>To read the job posting on the page you ask the extension to read.</Li>
               <Li>To protect the service from abuse, with rate limits.</Li>
@@ -415,6 +421,7 @@ export default function PrivacyPage() {
               <Li>To email you about new features, only if you&apos;ve agreed to it (Hosted mode). You can stop them at any time.</Li>
               <Li>To send one getting-started email a day after you sign up, if you haven&apos;t generated anything yet (Hosted mode). You can unsubscribe from it.</Li>
               <Li>To count, in aggregate, how many accounts sign up and use the service.</Li>
+              <Li>To see which features people use, so we know what to improve (Hosted mode, unless you opt out).</Li>
             </Ul>
             <P>
               We do not use your data for advertising, profiling, training AI models, or any purpose
@@ -684,8 +691,8 @@ export default function PrivacyPage() {
                 {
                   name: 'PostHog',
                   url: 'https://posthog.com/privacy',
-                  when: 'Visitors to the public pages of cover-me.dev (not the extension, and not signed-in pages), anyone who answers the uninstall survey, and each resume tailored in Hosted mode',
-                  receives: 'A count of each page visit: the page address with only its campaign tags (such as utm_ parameters; ad click IDs are blanked first), the referring site, browser details (browser, operating system, device type, screen size, language) and time zone, plus a count of clicks on links to our Chrome Web Store page with the link\'s label. Requests go through cover-me.dev. Your IP address is used only to make a daily visitor hash and is not stored, nor is any location derived from it. No cookies or browser storage are used, and visits are not linked to your account. If you answer the uninstall survey: your answers, your comment, the extension version and, if you were signed in, your Cover Me account ID. For each resume tailored in Hosted mode: your Cover Me account ID, your plan and the tailor options used, with no resume or job text.',
+                  when: 'Visitors to the public pages of cover-me.dev (not the extension, and not signed-in pages), anyone who answers the uninstall survey, and Hosted accounts that have not opted out of usage counts',
+                  receives: 'A count of each page visit: the page address with only its campaign tags (such as utm_ parameters; ad click IDs are blanked first), the referring site, browser details (browser, operating system, device type, screen size, language) and time zone, plus a count of clicks on links to our Chrome Web Store page with the link\'s label. Requests go through cover-me.dev. Your IP address is used only to make a daily visitor hash and is not stored, nor is any location derived from it. No cookies or browser storage are used, and visits are not linked to your account. If you answer the uninstall survey: your answers, your comment, the extension version and, if you were signed in, your Cover Me account ID. For Hosted accounts that have not opted out: usage counts with your Cover Me account ID, your plan and the features and options you used, never your resume, letters, added context, job or company details, file names or posting addresses.',
                 },
               ].map((svc) => (
                 <div key={svc.name} className="bg-surface border border-border rounded-[10px] px-5 py-4">
@@ -783,7 +790,7 @@ export default function PrivacyPage() {
             <P>
               We may update this Privacy Policy from time to time. When we do, we will update the
               effective date at the top of this page. For material changes, we will notify Hosted mode
-              users via email. Continued use of Cover Me after a policy change constitutes acceptance of
+              users by email or with a notice in the extension or on the dashboard. Continued use of Cover Me after a policy change constitutes acceptance of
               the updated policy.
             </P>
             <P>
