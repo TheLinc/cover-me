@@ -378,8 +378,12 @@ export default function Editor() {
             <Field label="Name" value={draft.name} onChange={(v) => edit((r) => { r.name = v })} />
             <Field label="Phone" value={draft.phone} onChange={(v) => edit((r) => { r.phone = v })} />
             <Field label="Email" value={draft.email} onChange={(v) => edit((r) => { r.email = v })} />
-            <Field label="Website" value={draft.website} onChange={(v) => edit((r) => { r.website = v })} />
+            <Field label="Location" value={draft.location ?? ''} onChange={(v) => edit((r) => { r.location = v })} />
           </div>
+          {/* links (#129) prints instead of website; a resume parsed before it has only website. website stays
+              set to the first link for builds that print only that. */}
+          <Lines label="Links" noun="link" short items={draft.links ?? (draft.website ? [draft.website] : [])}
+            onChange={(l) => edit((r) => { r.links = l; r.website = l.find((x) => x.trim())?.trim() ?? '' })} />
         </Section>
 
         {sections.map((placed, i) => {

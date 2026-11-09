@@ -1,3 +1,4 @@
+import { contactParts } from './pdf/contact'
 import { orderedSections, type PlacedSection, type StandardSection } from './pdf/sections'
 import type { TailoredHistoryEntry, TailoredResume } from '../types'
 import { getTailoredHistory } from './storage'
@@ -5,7 +6,7 @@ import { getTailoredHistory } from './storage'
 // Every piece of text the PDF prints, as one string.
 function resumeText(r: TailoredResume): string {
   return [
-    r.name, r.phone, r.email, r.website, r.summary, r.skills,
+    r.name, ...contactParts(r), r.summary, r.skills,
     ...(r.experience ?? []).flatMap((e) => [e.title, e.company, e.location, e.dates, ...(e.bullets ?? [])]),
     ...(r.projects ?? []).flatMap((p) => [p.name, ...(p.bullets ?? [])]),
     ...(r.education ?? []).flatMap((e) => [e.institution, e.degree, e.location, e.dates, ...(e.bullets ?? [])]),

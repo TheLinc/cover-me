@@ -26,6 +26,11 @@ describe('gap chips after an edit', () => {
     expect(remainingGaps(resume.atsGaps, edited)).toEqual(['Go'])
   })
 
+  test('the location and every link count, as printed on the contact line', () => {
+    const edited = { ...resume, location: 'Toronto, ON', links: ['pat.dev', 'github.com/patlee/terraform-demo'] }
+    expect(remainingGaps(['Toronto', 'Terraform', 'Kafka'], edited)).toEqual(['Kafka'])
+  })
+
   test('a keyword only inside another word does not clear it', () => {
     expect(remainingGaps(['Go'], { ...resume, summary: 'Ex-Google engineer.' })).toEqual(['Go'])
   })
