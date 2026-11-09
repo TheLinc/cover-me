@@ -312,7 +312,7 @@ export default function PrivacyPage() {
                 per day per account to enforce the free allowance and Pro's fair-use limit. Apart from Supabase&apos;s
                 short-lived request logs (see Third-Party Services), all a Free user&apos;s generation
                 leaves on our backend is this count and the job details under Application history, plus
-                the usage count in PostHog unless you opt out (see Usage counts below): no letter or resume
+                usage counts sent to PostHog unless you opt out (see Usage counts below): no letter or resume
                 content is recorded server-side.
               </Li>
               <Li>
@@ -328,7 +328,7 @@ export default function PrivacyPage() {
                 To decide what to improve, our server counts which features you use, such as the file type
                 you upload, the tailoring options you pick and whether you regenerate. Each count goes to
                 PostHog with your Cover Me account ID, your plan and those choices, and PostHog keeps no
-                profile of you from it. Apart from your account ID, a count holds only yes-or-no answers and choices from a fixed list. It
+                profile of you from it. Apart from your account ID and the time, a count holds only yes-or-no answers and choices from a fixed list. It
                 never includes your resume, letters, the context you add, job or company details, file names
                 or posting addresses. There are no usage counts in BYOK mode. To stop them for your account,
                 email{' '}
@@ -722,7 +722,7 @@ export default function PrivacyPage() {
             <H2 id="retention">Data Retention</H2>
             <Ul>
               <Li><strong className="text-foreground">BYOK mode:</strong> Your resume, API key and history stay on your device, and we hold no copy of them. You can delete them at any time by removing the extension or clearing extension storage in Chrome settings. The only BYOK data on our side are the rate-limit counters and Supabase&apos;s request logs described above.</Li>
-              <Li><strong className="text-foreground">Hosted account data:</strong> Your account, resume, and application history (the job details, and on Pro your cover letters and tailored resumes) are retained for as long as your account is active. You can delete your account at any time from Settings in your dashboard, which deletes all of this at once. You can also ask us by email at <a href={`mailto:${CONTACT_EMAIL}`} className="text-brand-light hover:text-foreground transition-colors">{CONTACT_EMAIL}</a>, and we will permanently delete all your data within 30 days of a verified deletion request.</Li>
+              <Li><strong className="text-foreground">Hosted account data:</strong> Your account, resume, and application history (the job details, and on Pro your cover letters and tailored resumes) are retained for as long as your account is active. You can delete your account at any time from Settings in your dashboard, which deletes all of this at once. You can also ask us by email at <a href={`mailto:${CONTACT_EMAIL}`} className="text-brand-light hover:text-foreground transition-colors">{CONTACT_EMAIL}</a>, and we will permanently delete all your data within 30 days of a verified deletion request, apart from the usage counts in PostHog described below.</Li>
               <Li><strong className="text-foreground">Generation count records:</strong> Kept for as long as your account exists, because the free allowance counts generations over the life of the account. They are deleted with your account.</Li>
               <Li><strong className="text-foreground">Usage counts in PostHog:</strong> PostHog keeps them for up to two years. Deleting your account doesn&apos;t remove them sooner.</Li>
               <Li><strong className="text-foreground">Rate-limit counters:</strong> A counter not updated for two days is deleted at the next cleanup, which runs during later requests.</Li>
@@ -737,7 +737,7 @@ export default function PrivacyPage() {
             <Ul>
               <Li><strong className="text-foreground">Access:</strong> Request a copy of all data we hold about you.</Li>
               <Li><strong className="text-foreground">Correction:</strong> Request correction of inaccurate data.</Li>
-              <Li><strong className="text-foreground">Deletion:</strong> Delete your account and all associated data yourself from Settings in your dashboard, or ask us to.</Li>
+              <Li><strong className="text-foreground">Deletion:</strong> Delete your account and all associated data yourself from Settings in your dashboard, or ask us to. Usage counts in PostHog stay until PostHog deletes them (see Data Retention).</Li>
               <Li><strong className="text-foreground">Portability:</strong> Request your data in a machine-readable format.</Li>
               <Li><strong className="text-foreground">Objection:</strong> Object to processing of your data.</Li>
               <Li><strong className="text-foreground">Restriction:</strong> Request restriction of processing while a dispute is resolved.</Li>
