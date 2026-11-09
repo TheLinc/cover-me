@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
-  admin, callFunction, createUser, deleteUser, LONG_RESUME_TEXT, mockClaude, parsedResume, RESUME_TEXT, type TestUser, uploadResume, waitForParsedResume,
+  admin, callFunction, createUser, deleteUser, LONG_RESUME_TEXT, mockClaude, mockPosthog, parsedResume, RESUME_TEXT, type TestUser, uploadResume, waitForParsedResume,
 } from './helpers'
 
 const isParse = (r: { messages: Array<{ content: string }> }) => r.messages[0].content.startsWith('You are a resume parser')
@@ -29,6 +29,33 @@ describe('resume', () => {
     const body = await res.json()
     expect(body.text).toBe(RESUME_TEXT)
     expect(body.filename).toBe('resume.pdf')
+  })
+
+  it('counts a new upload with its file type and plan, never its name, and not a sync of the same text', async () => {
+    const upload = () => callFunction('resume', { token: user.token, body: { text: RESUME_TEXT, filename: 'Jane Doe Resume.DOCX' } })
+    expect((await upload()).status).toBe(200)
+    expect(await mockPosthog.eventsFor('resume_upload', user.id)).toEqual([{
+      api_key: 'phc_mock',
+      event: 'resume_upload',
+      distinct_id: user.id,
+      properties: { file_type: 'docx', tier: 'hosted_free', $process_person_profile: false, $geoip_disable: true },
+    }])
+
+    expect((await upload()).status).toBe(200)
+    await new Promise((r) => setTimeout(r, 1000))
+    expect(await mockPosthog.eventsFor('resume_upload', user.id)).toHaveLength(1)
+  })
+
+  it('counts an unknown or missing file name as other', async () => {
+    await callFunction('resume', { token: user.token, body: { text: RESUME_TEXT } })
+    const [event] = await mockPosthog.eventsFor('resume_upload', user.id)
+    expect(event.properties.file_type).toBe('other')
+  })
+
+  it('sends no count for an account that opted out of usage counts', async () => {
+    await admin.from('users').update({ usage_counts_opted_out_at: new Date().toISOString() }).eq('id', user.id)
+    expect((await callFunction('resume', { token: user.token, body: { text: RESUME_TEXT, filename: 'resume.pdf' } })).status).toBe(200)
+    expect(await mockPosthog.eventsFor('resume_upload', user.id)).toEqual([])
   })
 
   it('stores ciphertext, never the plaintext resume', async () => {

@@ -208,9 +208,19 @@ export const mockResend = {
   dropNext: () => fetch(`${MOCK_URL}/__mock/email-drop-next`, { method: 'POST' }),
 }
 
+type PosthogEvent = { api_key: string; event: string; distinct_id: string; properties: Record<string, unknown> }
+
 export const mockPosthog = {
-  events: async (): Promise<Array<{ api_key: string; event: string; distinct_id: string; properties: Record<string, unknown> }>> =>
-    (await fetch(`${MOCK_URL}/__mock/posthog`)).json(),
+  events: async (): Promise<PosthogEvent[]> => (await fetch(`${MOCK_URL}/__mock/posthog`)).json(),
+  // One account's events of one kind. They're sent behind the response, so
+  // this waits up to 2 s for `done` (by default, any event), and the full 2 s
+  // when it never holds.
+  eventsFor: async (event: string, userId: string, done = (e: PosthogEvent[]) => e.length > 0): Promise<PosthogEvent[]> => {
+    const mine = async () => (await mockPosthog.events()).filter((e) => e.event === event && e.distinct_id === userId)
+    let events = await mine()
+    for (let i = 0; i < 20 && !done(events); i++) events = await new Promise((r) => setTimeout(r, 100)).then(mine)
+    return events
+  },
 }
 
 export const JOB = {

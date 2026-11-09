@@ -39,15 +39,15 @@ export async function capture(event: string, distinctId: string, properties: Rec
   }
 }
 
-// A Hosted account's usage count. Sends nothing when the account opted out,
-// or when that can't be read.
+// A Hosted account's usage count, with the account's plan added. Sends
+// nothing when the account opted out, or when that can't be read.
 export async function captureUsage(supabase: SupabaseClient, event: string, userId: string, properties: Record<string, unknown>): Promise<void> {
   if (!POSTHOG_KEY) return
-  const { data, error } = await supabase.from('users').select('usage_counts_opted_out_at').eq('id', userId).single()
+  const { data, error } = await supabase.from('users').select('tier, usage_counts_opted_out_at').eq('id', userId).single()
   if (error || !data) {
     console.error(`PostHog ${event}: opt-out lookup failed`)
     return
   }
   if (data.usage_counts_opted_out_at) return
-  await capture(event, userId, properties)
+  await capture(event, userId, { ...properties, tier: data.tier })
 }

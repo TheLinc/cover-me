@@ -586,9 +586,14 @@ Deno.serve(async (req) => {
     }
     if (sourceHash) resume.sourceHash = sourceHash
 
-    // One count per hosted run, with the tailor's options and no resume or
-    // job text, unless the account opted out. A failed send never fails the run.
-    EdgeRuntime.waitUntil(captureUsage(supabase, 'tailor_run', userId, { tier, compact, trim, includeSummary, layout, fellBack }))
+    // One count per hosted run, with the tailor's options and no resume, job
+    // or context text, unless the account opted out. A failed send never
+    // fails the run. hasContext: any context was sent; extensions up to 1.6.0
+    // join the standing "Candidate context" box into supplemental, so it isn't
+    // only context added for this run.
+    EdgeRuntime.waitUntil(captureUsage(supabase, 'tailor_run', userId, {
+      compact, trim, includeSummary, layout, fellBack, regenerate: !!previous, hasContext: !!supplemental,
+    }))
 
     // Every account's job goes on its board; the resume itself is kept for
     // Pro only. Non-fatal if either fails. Under the extension's local ID
