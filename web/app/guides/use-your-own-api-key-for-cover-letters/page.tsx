@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { CHROME_STORE_URL } from '@/lib/utils'
+import { GuideTldr } from '@/components/site/GuideTldr'
 import { getGuide, guideArticleJsonLd, guideBreadcrumbJsonLd } from '@/lib/guides'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
@@ -113,6 +114,14 @@ export default function Page() {
         <p className="text-[17px] text-foreground font-medium leading-[1.7]">
           Cover Me (cover-me.dev) is an open-source Chrome extension that writes cover letters and tailors your resume with your own OpenAI or Claude API key. You get unlimited generations with no account and no monthly fee, you pay your AI provider for what you use, and your resume and key go only to that provider.
         </p>
+
+        <GuideTldr
+          items={[
+            "Cover Me can write cover letters and tailor your resume with your own OpenAI or Claude API key.",
+            "It's unlimited, with no account and no monthly fee. You pay your AI provider for what you use, and your resume and key go only to that provider.",
+            "You give up saving to an account: your history stays in the browser, and there's no applications board.",
+          ]}
+        />
         <p>
           I build Cover Me. This guide explains what bringing your own key means, how to set it up, and what you give up compared with a hosted plan.
         </p>

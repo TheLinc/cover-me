@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { CHROME_STORE_URL } from '@/lib/utils'
+import { GuideTldr } from '@/components/site/GuideTldr'
 import { getGuide, guideArticleJsonLd, guideBreadcrumbJsonLd } from '@/lib/guides'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
@@ -107,6 +108,14 @@ export default function Page() {
         <p className="text-[17px] text-foreground font-medium leading-[1.7]">
           An ATS score is a number, usually out of 100, that estimates how closely your resume matches one job description&rsquo;s keywords, skills, and requirements. A higher score means your resume is more likely to show up when a recruiter searches the applicant tracking system (ATS) for the terms that matter for that role.
         </p>
+
+        <GuideTldr
+          items={[
+            "An ATS score, usually out of 100, measures how closely your resume matches one job posting's keywords, skills and requirements.",
+            "As a rule of thumb, 80 or higher is a strong match, 60 to 79 has gaps worth fixing, and below 50 needs real tailoring.",
+            "The same resume scores differently for every job. You raise it by using the posting's own words for skills you really have.",
+          ]}
+        />
         <p>
           The score belongs to a resume and a posting together. The same resume scores differently against every job.
         </p>

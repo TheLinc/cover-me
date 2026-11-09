@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { CHROME_STORE_URL } from '@/lib/utils'
+import { GuideTldr } from '@/components/site/GuideTldr'
 import { getGuide, guideArticleJsonLd, guideBreadcrumbJsonLd } from '@/lib/guides'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
@@ -111,6 +112,14 @@ export default function Page() {
         <p className="text-[17px] text-foreground font-medium leading-[1.7]">
           Rezi is an AI resume builder: you write or import your resume, format it in Rezi&rsquo;s templates and target it at a job, with Pro at $29 a month or Lifetime at $149 once. Cover Me (cover-me.dev) is an open-source Chrome extension that tailors the resume you already have to the posting you have open, scores it and writes a cover letter. It&rsquo;s free with your own API key, or $15 a month.
         </p>
+
+        <GuideTldr
+          items={[
+            "Rezi is an AI resume builder: you format your resume in its templates. Pro is $29 a month, or Lifetime is $149 once.",
+            "Cover Me tailors the resume you already have to the posting you have open, scores it and writes the cover letter.",
+            "Cover Me has a free plan, and Pro is $15 a month. A Word upload keeps its own design (beta).",
+          ]}
+        />
         <p>
           I build Cover Me, so weigh this comparison with that in mind. Rezi prices and features are from its{' '}
           <a href="https://www.rezi.ai/pricing" target="_blank" rel="noopener noreferrer" className="text-brand-light hover:text-brand transition-colors">pricing page</a>,{' '}

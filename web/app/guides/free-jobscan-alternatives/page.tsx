@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { CHROME_STORE_URL } from '@/lib/utils'
+import { GuideTldr } from '@/components/site/GuideTldr'
 import { getGuide, guideArticleJsonLd, guideBreadcrumbJsonLd } from '@/lib/guides'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
@@ -48,7 +49,7 @@ const faqJsonLd = {
       name: 'Which free tool rewrites my resume for a job posting?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: "Cover Me and SkillSyncer. Cover Me rewrites your bullets, summary and skills in one click, within its free generations. SkillSyncer's free plan has 10 AI credits a week, and a full rewrite costs 5. Jobscan and Resume Worded keep AI rewriting on paid plans, and Enhancv's checker only suggests changes.",
+        text: "Cover Me and SkillSyncer. Cover Me rewrites your bullets, summary and skills in one click, within its free generations. SkillSyncer's free plan has 10 AI credits a week, and a full rewrite costs 5. Teal's free plan includes 5 AI bullets, once. Jobscan and Resume Worded keep AI rewriting on paid plans, and Enhancv's checker only suggests changes.",
       },
     },
     {
@@ -115,8 +116,16 @@ export default function Page() {
 
       <article className="space-y-5 text-[15.5px] text-muted-foreground leading-[1.85]">
         <p className="text-[17px] text-foreground font-medium leading-[1.7]">
-          Jobscan&rsquo;s free plan gives you 5 resume scans a month. Rewriting your resume and writing cover letters need a paid plan, at $49.95 a month or $89.95 every 3 months. Six other tools check your resume against a job posting for free. Cover Me (cover-me.dev) is the one that also rewrites the resume and writes the cover letter on its free plan.
+          Jobscan&rsquo;s free plan gives you 5 resume scans a month. Rewriting your resume and writing cover letters need a paid plan, at $49.95 a month or $89.95 every 3 months. Six other tools check your resume against a job posting for free. Cover Me (cover-me.dev) also rewrites the resume and writes the cover letter on its free plan, every week rather than once.
         </p>
+
+        <GuideTldr
+          items={[
+            "Jobscan's free plan gives 5 scans a month. Rewriting and cover letters need a paid plan, from $49.95 a month.",
+            "SkillSyncer, Teal, Resume Worded, Enhancv and Resume.io check your resume against a job posting for free, with different limits.",
+            "Cover Me rewrites your resume and writes the cover letter on its free plan every week. Teal's free AI is a one-time set of credits, and SkillSyncer has no cover letter tool.",
+          ]}
+        />
         <p>
           I build Cover Me, so weigh this list with that in mind. The other tools&rsquo; limits and prices are from their own pricing and help pages, checked on November 9, 2026. Free plans change often, so check one before you rely on it.
         </p>
