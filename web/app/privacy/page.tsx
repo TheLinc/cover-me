@@ -311,8 +311,9 @@ export default function PrivacyPage() {
                 We record the number of AI generations (cover letters and resume tailoring combined)
                 per day per account to enforce the free allowance and Pro's fair-use limit. Apart from Supabase&apos;s
                 short-lived request logs (see Third-Party Services), all a Free user&apos;s generation
-                leaves on our backend is this count and the job details under Application history: no
-                letter or resume content is recorded server-side.
+                leaves on our backend is this count and the job details under Application history, plus
+                the usage count in PostHog unless you opt out (see Usage counts below): no letter or resume
+                content is recorded server-side.
               </Li>
               <Li>
                 <strong className="text-foreground">Rate-limit counter (all modes).</strong>{' '}
@@ -680,7 +681,7 @@ export default function PrivacyPage() {
                   name: 'Vercel',
                   url: 'https://vercel.com/legal/privacy-policy',
                   when: 'Anyone who visits cover-me.dev',
-                  receives: 'Standard web server access logs (IP address, browser, requested URL) for every page of cover-me.dev. Vercel also runs the website\'s server code: for anyone signed in to the dashboard it reads your email, profile picture link, sign-up date, plan and usage from our backend to build the page; for Pro users it passes your saved applications (job details, cover letters and tailored resumes) from our backend to your browser; and it receives Stripe\'s billing notifications (your customer ID, subscription status and the checkout details Stripe holds). It stores none of these.',
+                  receives: 'Standard web server access logs (IP address, browser, requested URL) for every page of cover-me.dev. Vercel also runs the website\'s server code: for anyone signed in to the dashboard it reads your email, profile picture link, sign-up date, plan and generation count from our backend to build the page; for Pro users it passes your saved applications (job details, cover letters and tailored resumes) from our backend to your browser; and it receives Stripe\'s billing notifications (your customer ID, subscription status and the checkout details Stripe holds). It stores none of these.',
                 },
                 {
                   name: 'Sentry',
@@ -723,7 +724,7 @@ export default function PrivacyPage() {
               <Li><strong className="text-foreground">BYOK mode:</strong> Your resume, API key and history stay on your device, and we hold no copy of them. You can delete them at any time by removing the extension or clearing extension storage in Chrome settings. The only BYOK data on our side are the rate-limit counters and Supabase&apos;s request logs described above.</Li>
               <Li><strong className="text-foreground">Hosted account data:</strong> Your account, resume, and application history (the job details, and on Pro your cover letters and tailored resumes) are retained for as long as your account is active. You can delete your account at any time from Settings in your dashboard, which deletes all of this at once. You can also ask us by email at <a href={`mailto:${CONTACT_EMAIL}`} className="text-brand-light hover:text-foreground transition-colors">{CONTACT_EMAIL}</a>, and we will permanently delete all your data within 30 days of a verified deletion request.</Li>
               <Li><strong className="text-foreground">Generation count records:</strong> Kept for as long as your account exists, because the free allowance counts generations over the life of the account. They are deleted with your account.</Li>
-              <Li><strong className="text-foreground">Usage counts in PostHog:</strong> PostHog deletes them after at most two years. Deleting your account doesn&apos;t remove them sooner, but once the account is gone, the account ID they carry no longer links to you.</Li>
+              <Li><strong className="text-foreground">Usage counts in PostHog:</strong> PostHog keeps them for up to two years. Deleting your account doesn&apos;t remove them sooner.</Li>
               <Li><strong className="text-foreground">Rate-limit counters:</strong> A counter not updated for two days is deleted at the next cleanup, which runs during later requests.</Li>
               <Li><strong className="text-foreground">Stripe billing records:</strong> Deleting your account also deletes your Stripe customer record, which holds your email and saved card. Stripe retains transaction records as required by financial regulations, and we cannot delete those.</Li>
             </Ul>
