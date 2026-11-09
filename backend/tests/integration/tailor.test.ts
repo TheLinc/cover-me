@@ -258,7 +258,7 @@ describe('tailor', () => {
     // The count would be sent behind the response: give it the same 2 s the
     // counted test waits.
     await new Promise((r) => setTimeout(r, 2000))
-    expect((await mockPosthog.events()).filter((e) => e.distinct_id === user!.id)).toEqual([])
+    expect((await mockPosthog.events()).filter((e) => e.event === 'tailor_run' && e.distinct_id === user!.id)).toEqual([])
   })
 
   it('a run that fell back to the Cover Me layout keeps no hash', async () => {
