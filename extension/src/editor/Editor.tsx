@@ -364,14 +364,6 @@ export default function Editor() {
             </div>
           </section>
         )}
-        {/* Your design (#131) puts only bullets, the summary and skills into the user's file (docx-design.ts). */}
-        {draft.sourceHash && (
-          <p className="hint ed-design-hint">
-            Word (your design) takes your edits to bullets, the summary and skills. Moved sections, other edits and bullets
-            beyond the ones in your file show only in the PDF. Changing a job title or company, or deleting Experience or
-            Projects, makes the Word download use the Cover Me layout.
-          </p>
-        )}
 
         <Section title="Contact">
           <div className="ed-grid">

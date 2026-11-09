@@ -373,10 +373,13 @@ export default function HistoryPage() {
                               ? [{ label: 'Word', note: 'Your design', onSelect: () => void downloadResumeWord(tr.resume, group.title) }, { label: 'PDF', note: 'Cover Me layout', onSelect: () => downloadTailoredResumePdf(tr.resume, group.title) }]
                               : [{ label: 'PDF', onSelect: () => downloadTailoredResumePdf(tr.resume, group.title) }, { label: 'Word', onSelect: () => void downloadResumeWord(tr.resume, group.title) }]}
                           />
-                          <button className="btn btn-secondary btn-sm" onClick={() => openResumeEditor(tr.id)}>
-                            <EditIcon />
-                            Edit
-                          </button>
+                          {/* Not for "Your design": its Word file takes only some edits, and the user can edit it in Word. */}
+                          {!(tr.resume.sourceHash && designHashes.includes(tr.resume.sourceHash)) && (
+                            <button className="btn btn-secondary btn-sm" onClick={() => openResumeEditor(tr.id)}>
+                              <EditIcon />
+                              Edit
+                            </button>
+                          )}
                         </div>
                       </div>
                     ))}

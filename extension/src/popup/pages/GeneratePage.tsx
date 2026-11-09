@@ -1107,7 +1107,8 @@ export default function GeneratePage({ onNavigate }: Props) {
                         ? [{ label: 'Word', note: 'Your design', onSelect: () => void downloadResumeDocx() }, { label: 'PDF', note: 'Cover Me layout', onSelect: downloadResumePdf }]
                         : [{ label: 'PDF', onSelect: downloadResumePdf }, { label: 'Word', onSelect: () => void downloadResumeDocx() }]}
                     />
-                    {tailoredEntryId && (
+                    {/* Not for "Your design": its Word file takes only some edits, and the user can edit it in Word. */}
+                    {tailoredEntryId && !tailoredResume.sourceHash && (
                       <button className="btn btn-secondary btn-compact" onClick={() => openResumeEditor(tailoredEntryId)}>
                         <EditIcon />
                         Edit

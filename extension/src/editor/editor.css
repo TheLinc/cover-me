@@ -86,4 +86,3 @@ html, body { width: auto; height: 100%; overflow: hidden; }
 @media (max-width: 600px) {
   .ed-grid, .ed-lines-short ol { grid-template-columns: minmax(0, 1fr); }
 }
-.ed-design-hint { margin: 4px 0 8px; }
