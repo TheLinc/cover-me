@@ -821,6 +821,13 @@ html, body {
 /* Free account near the local history cap: warning, then the upgrade button */
 .cap-prompt { margin-bottom: 14px; }
 
+/* UpgradePrompt: the two Pro plans side by side; monthly fills the row, quarterly fits its label */
+.upgrade-prompt { display: flex; flex-direction: column; gap: 6px; }
+.upgrade-actions { display: flex; gap: 8px; }
+.upgrade-actions .btn { width: auto; }
+.upgrade-actions .btn-primary { flex: 1; }
+.upgrade-actions .btn-secondary { padding: 10px 12px; font-size: 12px; }
+
 /* Pro: save the applications that exist only in this browser */
 .upload-prompt {
   background: var(--surface);
@@ -1313,3 +1320,27 @@ textarea:focus-visible, input:focus-visible, [tabindex]:focus-visible {
 .layout-line { font-size: 11px; color: var(--text-3); }
 .layout-line .upload-link { margin: 0; font-size: 11px; }
 .letter-actions.design-actions { flex-wrap: wrap; }
+
+/* After a click that read no job (#130): no error styling for a site we don't read yet. */
+.scrape-failure {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+  color: var(--text-2);
+  font-size: 12px;
+  line-height: 1.55;
+}
+.scrape-failure .error-box { margin-bottom: 0; }
+.scrape-failure-actions { display: flex; gap: 8px; }
+.scrape-failure-actions .btn { flex: 1; width: auto; }
+.site-request-row { display: flex; gap: 8px; }
+.site-request-row .form-input { flex: 1; min-width: 0; padding: 6px 10px; font-size: 12px; }
+.site-request-row .btn { width: auto; white-space: nowrap; }
+.scrape-failure-error { margin-top: 6px; color: var(--error); font-size: 11px; }
+.bug-report { display: flex; flex-direction: column; gap: 6px; }
+.bug-report-url { overflow-wrap: anywhere; }
+.scrape-failure-card { margin-bottom: 18px; }
+.scrape-failure-card .site-request,
+.scrape-failure-card .scrape-failure-thanks { margin-top: 10px; }
+.scrape-failure-card p { text-wrap: pretty; }

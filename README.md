@@ -2,7 +2,7 @@
 
 **AI cover letters and ATS-tailored resumes, generated from any job posting in seconds.**
 
-<a href="https://www.opensourcealternatives.to"><img src="https://www.opensourcealternatives.to/badge-osa.svg" alt="As seen on Open Source Alternatives" width="270" height="20"></a>
+<a href="https://www.opensourcealternatives.to/item/cover-me"><img src="https://www.opensourcealternatives.to/badge-osa.svg" alt="As seen on Open Source Alternatives" width="270" height="20"></a>
 
 Cover Me is an open-source Chrome extension that reads job descriptions and, using your stored resume, generates tailored cover letters and ATS-optimized resumes — complete with a match score and gap analysis. Bring your own API key for unlimited use, with your resume going only to your AI provider — or use the hosted tier for a no-configuration experience.
 
@@ -433,6 +433,8 @@ supabase functions deploy billing
 supabase functions deploy email-preferences
 supabase functions deploy nudge
 supabase functions deploy support
+supabase functions deploy scrape
+supabase functions deploy site-request
 ```
 
 ### 7. Set up Stripe
@@ -529,6 +531,8 @@ Turn on the website's button only once users have an extension build with Google
 | `NUDGE_SECRET` | Shared with the `NUDGE_SECRET` GitHub secret; the daily follow-up workflow calls `nudge` with it |
 | `NUDGE_ENABLED` | `true` to let `nudge` send the follow-up email; anything else sends nothing |
 | `RESEND_API_KEY` | Resend API key, for the follow-up email and the dashboard's support form (`support` answers 503 without it) |
+| `POSTHOG_KEY` | PostHog project token for server-side counts (`tailor_run`, `scrape_failed`) and the extension's site requests and bug reports. Optional: without it nothing is sent |
+| `POSTHOG_SITE_SURVEY_ID` | ID of a PostHog survey in API mode with three open-text questions: type, site, page URL. `site-request` records the extension's "Request this site" and "Report bug" presses there; without it they're accepted and dropped |
 
 **Web dashboard** (`web/.env.local`):
 

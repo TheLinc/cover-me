@@ -61,7 +61,7 @@ function tryHeuristic(): JobData {
 
   if (!titleEl || !description || description.length < 200) {
     throw new Error(
-      'Could not find job details on this page. Make sure you are on a specific job posting (not a listings page), or navigate to a supported site.',
+      'Could not find job details on this page. Make sure you are on a specific job posting, not a listings page.',
     )
   }
 

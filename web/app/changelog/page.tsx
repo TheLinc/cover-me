@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { OG_IMAGE } from '@/lib/structured-data'
 import Link from 'next/link'
 import { SiteNav } from '@/components/site/SiteNav'
 import { SiteFooter } from '@/components/site/SiteFooter'
@@ -7,13 +8,17 @@ import { getChangelog, type ChangelogVersion } from '@/lib/changelog'
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 const DESCRIPTION = 'What changed in each version of the Cover Me extension.'
 
+// For search results and link previews; DESCRIPTION is the line under the H1.
+const META_DESCRIPTION = "New features and fixes in each release of the Cover Me Chrome extension, from resume tailoring and cover letters to the ATS score and job tracking."
+
 export const revalidate = 3600
 
 export const metadata: Metadata = {
-  title: 'Changelog',
-  description: DESCRIPTION,
+  title: { absolute: "Cover Me changelog: what's new in each version" },
+  description: META_DESCRIPTION,
   alternates: { canonical: `${BASE}/changelog` },
-  openGraph: { title: 'Cover Me changelog', description: DESCRIPTION, url: `${BASE}/changelog`, siteName: 'Cover Me', type: 'website' },
+  openGraph: { title: "Cover Me changelog: what's new in each version", description: META_DESCRIPTION, url: `${BASE}/changelog`, siteName: 'Cover Me', type: 'website', images: [OG_IMAGE] },
+  twitter: { card: 'summary_large_image', title: "Cover Me changelog: what's new in each version", description: META_DESCRIPTION, images: [OG_IMAGE.url] },
 }
 
 function Group({ title, items }: { title: string; items: string[] }) {
