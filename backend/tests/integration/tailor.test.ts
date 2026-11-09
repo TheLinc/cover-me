@@ -56,29 +56,32 @@ describe('tailor', () => {
   // #171: what the user typed in the editor is theirs on Regenerate. The mock
   // adds Kafka with evidence the resume lacks, and the line check flags its
   // "4 hours to 40 minutes" bullet; an edited previous that has both keeps them.
-  it('keeps a posting-only skill and a bullet the user wrote in the editor when regenerating', async () => {
-    user = await createUser()
-    await uploadResume(user)
+  describe('regenerating', () => {
     const typed = MOCK_TAILOR_DELTA.experience[0].bullets[0]
     const experience = [{ ...MOCK_PARSED_RESUME.experience[0], bullets: [typed, 'Maintained customer dashboard'] }, MOCK_PARSED_RESUME.experience[1]]
     const previous = { ...MOCK_PARSED_RESUME, experience, skills: 'TypeScript, Postgres, React, Kafka', atsGaps: [] }
-    const regenerate = async (prev: Record<string, unknown>) =>
-      (await (await callFunction('tailor', { token: user!.token, body: { job: JOB, previous: prev } })).json()).resume
-    const edited = await regenerate({ ...previous, editedAt: '2026-11-09T00:00:00Z' })
-    expect(edited.skills).toBe('TypeScript, Postgres, React, Data Pipelines, Kafka')
-    expect(edited.experience[0].bullets[0]).toBe(typed)
-  })
+    const regenerate = async (prev: Record<string, unknown>) => {
+      user = await createUser()
+      await uploadResume(user)
+      return (await (await callFunction('tailor', { token: user.token, body: { job: JOB, previous: prev } })).json()).resume
+    }
 
-  it('an unedited previous, or one naming a term only in its gap list, keeps it out as before', async () => {
-    user = await createUser()
-    await uploadResume(user)
-    const regenerate = async (prev: Record<string, unknown>) =>
-      (await (await callFunction('tailor', { token: user!.token, body: { job: JOB, previous: prev } })).json()).resume
-    const unedited = await regenerate({ ...MOCK_PARSED_RESUME, skills: 'TypeScript, Postgres, React, Kafka' })
-    expect(unedited.skills).toBe('TypeScript, Postgres, React, Data Pipelines')
-    expect(unedited.experience[0].bullets[0]).toBe(MOCK_REWRITTEN_BULLET)
-    const gapsOnly = await regenerate({ ...MOCK_PARSED_RESUME, atsGaps: ['Kafka'], editedAt: '2026-11-09T00:00:00Z' })
-    expect(gapsOnly.skills).toBe('TypeScript, Postgres, React, Data Pipelines')
+    it('keeps a posting-only skill and a bullet the user wrote in the editor', async () => {
+      const resume = await regenerate({ ...previous, editedAt: '2026-11-09T00:00:00Z' })
+      expect(resume.skills).toBe('TypeScript, Postgres, React, Data Pipelines, Kafka')
+      expect(resume.experience[0].bullets[0]).toBe(typed)
+    })
+
+    it('an unedited previous is checked as before', async () => {
+      const resume = await regenerate(previous)
+      expect(resume.skills).toBe('TypeScript, Postgres, React, Data Pipelines')
+      expect(resume.experience[0].bullets[0]).toBe(MOCK_REWRITTEN_BULLET)
+    })
+
+    it("a term only in an edited previous's gap list is still dropped", async () => {
+      const resume = await regenerate({ ...MOCK_PARSED_RESUME, atsGaps: ['Kafka'], atsGapsBeforeEdits: ['Kafka'], editedAt: '2026-11-09T00:00:00Z' })
+      expect(resume.skills).toBe('TypeScript, Postgres, React, Data Pipelines')
+    })
   })
 
   it('scores an either/or requirement as covered when the resume has the other option', async () => {

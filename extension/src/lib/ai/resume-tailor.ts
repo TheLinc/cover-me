@@ -312,16 +312,18 @@ export function isValidResume(r: unknown): r is TailoredResume {
 export async function assembleTailored(
   parsed: ParsedResume,
   raw: string,
-  grounding: { jobDescription: string; supplemental?: string; ask?: AskModel; onLineRepair?: (repair: LineRepair) => void; exactBulletCounts?: boolean },
+  grounding: { jobDescription: string; supplemental?: string; previous?: TailoredResume; ask?: AskModel; onLineRepair?: (repair: LineRepair) => void; exactBulletCounts?: boolean },
   onRemoved?: (terms: string[]) => void,
 ): Promise<TailoredResume> {
   const delta = parseDelta(raw)
-  const candidate = candidateText(parsed, grounding.supplemental)
+  // An edited previous is the user's own text (#171): trusted like the note.
+  const notes = trustedNotes(grounding.supplemental, grounding.previous)
+  const candidate = candidateText(parsed, notes)
   const claimed = await groundSkills(delta.skills, candidate, grounding.ask)
   delta.skills = claimed.skills
   let merged = mergeTailorDelta(parsed, delta, { exactBulletCounts: grounding.exactBulletCounts }) as TailoredResume
   if (grounding.ask) {
-    const lines = await checkAndRewriteLines(merged, parsed, grounding.jobDescription, grounding.ask, grounding.supplemental)
+    const lines = await checkAndRewriteLines(merged, parsed, grounding.jobDescription, grounding.ask, notes, grounding.previous)
     merged = lines.resume
     grounding.onLineRepair?.(lines.repair)
   }
@@ -380,8 +382,7 @@ export async function tailorResume(
   }
 
   await debugLog('Tailor — raw model response', raw)
-  // An edited previous is the user's own text (#171): grounding trusts it like the note.
-  return assembleTailored(parsed, raw, { jobDescription: job.description, supplemental: trustedNotes(supplemental, previous), ask: checkModel(provider, apiKey), exactBulletCounts: !compact && !trim }, (removed) =>
+  return assembleTailored(parsed, raw, { jobDescription: job.description, supplemental, previous, ask: checkModel(provider, apiKey), exactBulletCounts: !compact && !trim }, (removed) =>
     void debugLog('Tailor — grounding guard removed', removed))
 }
 

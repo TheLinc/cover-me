@@ -91,16 +91,30 @@ describe('an edited previous version', () => {
     expect(trustedNotes(undefined, undefined)).toBeUndefined()
   })
 
-  test('the line check keeps a line copied verbatim from the notes', async () => {
-    const notes = trustedNotes(undefined, { ...previous, editedAt: 'x' })
-    const replies = [JSON.stringify({ flags: [{ id: 'e0b0', reason: 'adds Rails' }], summary: null }), '{}']
-    const { resume, repair } = await checkAndRewriteLines(tailored, original, posting, async () => replies.shift()!, notes)
-    expect(resume.experience[0].bullets).toEqual([bullet])
-    expect(repair.flagged).toEqual([])
-    // Only a whole line counts: inside a longer note it is still checked.
-    const again = [JSON.stringify({ flags: [{ id: 'e0b0', reason: 'adds Rails' }], summary: null }), '{}']
-    const partial = await checkAndRewriteLines(tailored, original, posting, async () => again.shift()!, `At my last job: ${bullet}`)
-    expect(partial.resume.experience[0].bullets).toEqual(original.experience[0].bullets)
+  describe('the line check', () => {
+    const intern = { title: 'Intern', company: 'Beta Labs', bullets: ['Fixed bugs in the billing app.'] }
+    const twoRoles = { ...original, experience: [original.experience[0], intern] }
+    const edited = { ...twoRoles, experience: [{ ...original.experience[0], bullets: [bullet] }, intern], editedAt: 'x' }
+    // The check flags the given line; no rewrite comes back, so a flagged line reverts.
+    const check = (out: typeof twoRoles, id: string, prev?: object, notes?: string) => {
+      const replies = [JSON.stringify({ flags: [{ id, reason: 'adds Rails' }], summary: null }), '{}']
+      return checkAndRewriteLines(out, twoRoles, posting, async () => replies.shift()!, notes, prev)
+    }
+
+    test('keeps a line the user typed on the same role', async () => {
+      const out = { ...twoRoles, experience: [{ ...original.experience[0], bullets: [bullet] }, intern] }
+      const { resume, repair } = await check(out, 'e0b0', edited)
+      expect(resume.experience[0].bullets).toEqual([bullet])
+      expect(repair.flagged).toEqual([])
+      // Unedited, it is checked as before.
+      expect((await check(out, 'e0b0', { ...edited, editedAt: undefined })).resume.experience[0].bullets).toEqual(original.experience[0].bullets)
+    })
+
+    test('still checks it on another role, and a line copied from a note', async () => {
+      const moved = { ...twoRoles, experience: [original.experience[0], { ...intern, bullets: [bullet] }] }
+      expect((await check(moved, 'e1b0', edited)).resume.experience[1].bullets).toEqual(intern.bullets)
+      expect((await check(moved, 'e1b0', undefined, bullet)).resume.experience[1].bullets).toEqual(intern.bullets)
+    })
   })
 })
 

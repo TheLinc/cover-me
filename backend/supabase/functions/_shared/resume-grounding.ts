@@ -81,10 +81,16 @@ export function candidateText(resume: unknown, supplemental?: string): string {
  * gap lists name what the candidate lacks, so they never count.
  */
 export function trustedNotes(supplemental: string | undefined, previous: unknown): string | undefined {
-  const prev = previous && typeof previous === 'object' ? (previous as Record<string, unknown>) : undefined
-  if (!prev?.editedAt) return supplemental
+  const prev = editedVersion(previous)
+  if (!prev) return supplemental
   const { atsGaps: _g, atsGapsBeforeEdits: _b, ...rest } = prev
   return [supplemental, candidateText(rest)].filter(Boolean).join('\n')
+}
+
+// The version Regenerate starts from, only when the candidate edited it.
+function editedVersion(previous: unknown): Record<string, unknown> | undefined {
+  const prev = previous && typeof previous === 'object' ? (previous as Record<string, unknown>) : undefined
+  return prev?.editedAt ? prev : undefined
 }
 
 function grounded(token: string, candidate: string): boolean {
@@ -459,6 +465,7 @@ export async function checkAndRewriteLines<T extends Groundable>(
   jobDescription: string,
   ask: AskModel,
   supplemental?: string,
+  previous?: unknown,
 ): Promise<{ resume: T; repair: LineRepair }> {
   let flags: Map<LineId, string> | null
   try {
@@ -468,12 +475,19 @@ export async function checkAndRewriteLines<T extends Groundable>(
   }
   if (!flags) return { resume: tailored, repair: { flagged: [], rewritten: 0, reverted: 0, checkFailed: true } }
   // Drop ids that don't point at a real line (an empty summary is none), and
-  // lines the candidate wrote themselves: a whole line of the notes, as an
-  // edited version's bullets are (trustedNotes).
-  const own = new Set(supplemental?.split('\n').map((l) => l.trim()))
+  // lines the candidate wrote in the editor (#171): word for word on the same
+  // entry, or the summary, of the edited version Regenerate started from.
+  const edited = editedVersion(previous) as Groundable | undefined
+  const typed = (id: LineId, line: string): boolean => {
+    if (!edited) return false
+    if (id === 'summary') return typeof edited.summary === 'string' && edited.summary.trim() === line
+    const m = /^([ep])(\d+)b/.exec(id)
+    const bullets = m && (m[1] === 'e' ? edited.experience : edited.projects)?.[Number(m[2])]?.bullets
+    return Array.isArray(bullets) && bullets.some((b) => typeof b === 'string' && b.trim() === line)
+  }
   for (const id of [...flags.keys()]) {
     const line = lineAt(tailored, id)?.trim()
-    if (!line || own.has(line)) flags.delete(id)
+    if (!line || typed(id, line)) flags.delete(id)
   }
   if (flags.size === 0) return { resume: tailored, repair: { flagged: [], rewritten: 0, reverted: 0 } }
 
