@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { currentTier, deleteApplicationFromBackend, ensureValidSession, fetchApplicationsFromBackend, fetchTier, uploadLocalHistory, UploadError } from '../../lib/auth'
+import { currentTier, deleteApplicationFromBackend, ensureValidSession, fetchApplicationsFromBackend, refreshTier, uploadLocalHistory, UploadError } from '../../lib/auth'
 import { downloadCoverLetterPdf } from '../../lib/pdf/cover-letter'
 import { downloadTailoredResumePdf } from '../../lib/pdf/resume'
 import { openResumeEditor } from '../../lib/resume-edit'
 import { accountUpdates, capWarning, groupLocalHistory, groupsFromApplications, ownPending, unclaimed, uploadMessage, uploadSummary, withLocalOnly, type JobGroup } from '../../lib/history'
-import { deleteFromHistory, deleteFromTailoredHistory, getDesignHashes, getHistory, getMode, getTailoredHistory, getUploadAsked, markUploadAsked, saveCachedTier, setEntryAccounts } from '../../lib/storage'
+import { deleteFromHistory, deleteFromTailoredHistory, getDesignHashes, getHistory, getMode, getTailoredHistory, getUploadAsked, markUploadAsked, setEntryAccounts } from '../../lib/storage'
 import type { AuthSession, CoverLetter, CoverLetterEntry, TailoredHistoryEntry } from '../../types'
 import DownloadMenu from '../components/DownloadMenu'
 import { EditIcon } from '../components/icons'
@@ -100,8 +100,7 @@ export default function HistoryPage() {
     } catch (err) {
       if (err instanceof UploadError && err.status === 403) {
         setUpload(null)
-        const fresh = await fetchTier(session.user.id, session.access_token)
-        if (fresh) await saveCachedTier(fresh)
+        await refreshTier(session)
       } else {
         setUploadNote({ text: "Couldn't save them. Check your connection and try again.", error: true })
       }
@@ -153,8 +152,7 @@ export default function HistoryPage() {
     } catch {
       // Keep showing local groups. A cached Pro tier that's out of date is
       // refreshed, and the Pro-only parts go now rather than next open.
-      const fresh = await fetchTier(session.user.id, session.access_token)
-      if (fresh) await saveCachedTier(fresh)
+      const fresh = await refreshTier(session)
       if (fresh && fresh !== 'hosted_pro') setIsProMode(false)
     } finally {
       setSyncing(false)

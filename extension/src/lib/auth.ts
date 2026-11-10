@@ -129,8 +129,7 @@ export async function completeSignIn(sess: AuthSession): Promise<void> {
   await syncResume(sess).catch(() => {})
   // A Google sign-in finishes in the worker with no panel open to do this, and
   // the worker's Pro history sync reads the cached tier.
-  const tier = await fetchTier(sess.user.id, sess.access_token)
-  if (tier) await saveCachedTier(tier)
+  await refreshTier(sess)
 }
 
 // One resume on both sides, owned by this account:
@@ -287,9 +286,15 @@ export async function fetchTier(userId: string, accessToken: string): Promise<st
 export async function currentTier(session: AuthSession): Promise<string | null> {
   const cached = await getCachedTier()
   if (cached === 'hosted_pro') return cached
+  return (await refreshTier(session)) ?? cached
+}
+
+// The server's tier, saved to the cache; null (cache untouched) when the
+// lookup fails.
+export async function refreshTier(session: AuthSession): Promise<string | null> {
   const fresh = await fetchTier(session.user.id, session.access_token)
   if (fresh) await saveCachedTier(fresh)
-  return fresh ?? cached
+  return fresh
 }
 
 // kind is the limit the server applied (migration 015): 'starter' or 'weekly'
