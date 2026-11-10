@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
 }
 
-const EFFECTIVE_DATE = 'November 9, 2026'
+const EFFECTIVE_DATE = 'November 10, 2026'
 const CONTACT_EMAIL  = 'support@cover-me.dev'
 
 // ── Section heading ────────────────────────────────────────────────────────
@@ -603,7 +603,7 @@ export default function PrivacyPage() {
               <ul className="mt-2 space-y-1 pl-4 list-disc">
                 <li>Reading the job posting (every mode): sending the stripped copy of the page you click Generate or Tailor Resume on, and getting back the job title, company and description. The page is not stored.</li>
                 <li>Authentication: signing in, signing up, signing out, and refreshing JWT session tokens.</li>
-                <li>Account tier: fetching your plan after sign-in and when the Settings or History page opens.</li>
+                <li>Account tier: fetching your plan, so Pro features turn on or off when it changes.</li>
                 <li>Upgrade: getting a Stripe checkout page when you click an Upgrade button.</li>
                 <li>Cover letter &amp; resume generation: sending job data and your session token to our backend Edge Functions, which retrieve your encrypted resume, call the Claude API with our key, return the generated output, and save the job&apos;s title, company, posting address and date to your account.</li>
                 <li>Application history sync (Pro mode): saving each new cover letter and tailored resume, uploading ones already in the extension when you agree, and fetching and deleting them on the History page.</li>

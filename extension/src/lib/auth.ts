@@ -1,5 +1,5 @@
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL, WEB_URL } from './config'
-import { clearResume, clearSession, getResume, getSession, getSettings, saveGoogleSignInError, saveCachedTier, saveResume, saveSession, saveSettings, takeGoogleSignInError } from './storage'
+import { clearResume, clearSession, getCachedTier, getResume, getSession, getSettings, saveGoogleSignInError, saveCachedTier, saveResume, saveSession, saveSettings, takeGoogleSignInError } from './storage'
 import { isValidResume } from './ai/resume-tailor'
 import { derivePlanningProgress, deriveTailorProgress } from './ai/tailor-progress'
 import type { ApplicationRecord, AuthSession, CoverLetter, JobData, ParsedResume, ResumeData, TailoredHistoryEntry, TailoredResume } from '../types'
@@ -129,8 +129,7 @@ export async function completeSignIn(sess: AuthSession): Promise<void> {
   await syncResume(sess).catch(() => {})
   // A Google sign-in finishes in the worker with no panel open to do this, and
   // the worker's Pro history sync reads the cached tier.
-  const tier = await fetchTier(sess.user.id, sess.access_token)
-  if (tier) await saveCachedTier(tier)
+  await refreshTier(sess)
 }
 
 // One resume on both sides, owned by this account:
@@ -271,7 +270,8 @@ export async function fetchTier(userId: string, accessToken: string): Promise<st
   try {
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/users?select=tier&id=eq.${encodeURIComponent(userId)}&limit=1`,
-      { headers: authHeaders(accessToken) },
+      // Bounded: a generation waits on this before saving its letter.
+      { headers: authHeaders(accessToken), signal: AbortSignal.timeout(5000) },
     )
     if (!res.ok) return null
     const rows = await res.json() as Array<{ tier: string }>
@@ -279,6 +279,31 @@ export async function fetchTier(userId: string, accessToken: string): Promise<st
   } catch {
     return null
   }
+}
+
+// The tier to act on in History. A cached tier other than Pro is checked with
+// the server, so an upgrade made in Checkout shows the Pro view at once; a
+// cached Pro tier makes no call, since History's Pro requests are refused
+// with a 403 once the plan has ended and that rechecks the tier.
+export async function currentTier(session: AuthSession): Promise<string | null> {
+  const cached = await getCachedTier()
+  return cached === 'hosted_pro' ? cached : checkedTier(session)
+}
+
+// The tier to act on for a generation: always the server's, so an upgrade
+// counts at once and a plan that ended stops marking new letters for the
+// account (History saves those without asking). The cached tier when the
+// lookup fails.
+export async function checkedTier(session: AuthSession): Promise<string | null> {
+  return (await refreshTier(session)) ?? getCachedTier()
+}
+
+// The server's tier, saved to the cache; null (cache untouched) when the
+// lookup fails.
+export async function refreshTier(session: AuthSession): Promise<string | null> {
+  const fresh = await fetchTier(session.user.id, session.access_token)
+  if (fresh) await saveCachedTier(fresh)
+  return fresh
 }
 
 // kind is the limit the server applied (migration 015): 'starter' or 'weekly'
