@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
-import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { getServerSession } from '@/lib/supabase-server'
 import { Button } from '@/components/ui/button'
 import { SiteNav } from '@/components/site/SiteNav'
 import { APP_LINKS } from '@/components/site/app-links'
@@ -17,8 +17,7 @@ export const metadata: Metadata = {
 
 export default async function RedeemPage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = await params
-  const supabase = await createServerSupabaseClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { supabase, user } = await getServerSession()
   const { data: row } = user ? await supabase.from('users').select('tier').eq('id', user.id).single() : { data: null }
   const here = `/redeem/${code}`
 

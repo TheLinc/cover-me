@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/nextjs'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
@@ -16,4 +17,13 @@ export async function createServerSupabaseClient() {
       },
     },
   })
+}
+
+// The signed-in user (or null), also set as this request's Sentry user: the
+// opaque id only, never the email, as the privacy policy says.
+export async function getServerSession() {
+  const supabase = await createServerSupabaseClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  Sentry.setUser(user ? { id: user.id } : null)
+  return { supabase, user }
 }

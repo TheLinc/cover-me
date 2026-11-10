@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation'
 import type { ReactNode } from 'react'
 import type { Icon } from '@phosphor-icons/react'
 import { CreditCardIcon, EnvelopeSimpleIcon, StarIcon, TrashIcon, UserCircleIcon } from '@phosphor-icons/react/dist/ssr'
-import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { getServerSession } from '@/lib/supabase-server'
 import { avatarUrl } from '@/lib/avatar'
 import { SiteNav } from '@/components/site/SiteNav'
 import { APP_LINKS } from '@/components/site/app-links'
@@ -34,8 +34,7 @@ function Section({ title, icon: SectionIcon, children }: { title: string; icon: 
 
 // Account details, plan and emails (#133), moved off the dashboard.
 export default async function SettingsPage() {
-  const supabase = await createServerSupabaseClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { supabase, user } = await getServerSession()
   if (!user) redirect('/auth?next=/dashboard/settings')
   const { data: userData } = await supabase.from('users').select('tier, created_at, product_updates').eq('id', user.id).single()
   const email = user.email ?? ''
