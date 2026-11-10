@@ -499,11 +499,14 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
       // Hosted: the resume + final prompt live server-side. Enable DEBUG_MODE on
       // the edge function to see those in the Supabase function logs.
       const localId = crypto.randomUUID()
+      // Looked up alongside the tailor, so an upgrade made in Checkout counts
+      // without a wait once the resume is back.
+      const tier = currentTier(session)
       const { resume: tailored, savedId } = await tailorViaBackend(job, session.access_token, compact, merged, trim, includeSummary, lastResult && previous, onProgress, localId, design.design)
       const resume = await finishDesign(tailored, design)
       if (note) resume.hasEdits = true
-      // Checked before the design upload, which reads the cached tier.
-      const pro = (await currentTier(session)) === 'hosted_pro'
+      // Awaited before the design upload, which reads the cached tier.
+      const pro = (await tier) === 'hosted_pro'
       if (resume.sourceHash) void uploadDesignIfPro(session)
       await recordTailored(job, resume, localId, {
         ...(savedId === localId ? { account: session.user.id } : {}),
@@ -588,8 +591,10 @@ async function generateFromJob(job: JobData, supplemental?: string, jobId?: stri
       if (!session) {
         return failCover(id, job, startedAt, 'Sign in to your Cover Me account in Settings.')
       }
-      const letter = await generateViaBackend(job, session.access_token, merged)
-      const pro = (await currentTier(session)) === 'hosted_pro'
+      // The tier is looked up alongside the letter, so an upgrade made in
+      // Checkout counts without holding the letter back from History.
+      const [letter, tier] = await Promise.all([generateViaBackend(job, session.access_token, merged), currentTier(session)])
+      const pro = tier === 'hosted_pro'
       const entry: CoverLetter = {
         id: crypto.randomUUID(),
         job,
