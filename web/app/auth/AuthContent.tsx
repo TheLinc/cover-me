@@ -344,13 +344,13 @@ function AuthForm() {
               className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-2 mb-5"
               style={{ animation: "fadeUp 0.5s ease 0.12s both" }}
             >
-              AI Cover Letters
+              Resumes &amp; Cover Letters
             </span>
             <h1
               className="text-[clamp(40px,4.6vw,68px)] leading-[1.02] text-foreground mb-[22px]"
               style={{ animation: "fadeUp 0.55s ease 0.2s both" }}
             >
-              The cover letter
+              The application
               <br />
               that gets you
               <br />
@@ -360,8 +360,8 @@ function AuthForm() {
               className="text-[15px] text-muted-foreground leading-[1.65] max-w-[340px]"
               style={{ animation: "fadeUp 0.55s ease 0.3s both" }}
             >
-              One click on any job posting. A tailored, human-sounding letter
-              built from your resume.
+              One click on any job posting. A resume tailored to it and a cover
+              letter that sounds like you.
             </p>
           </div>
 
