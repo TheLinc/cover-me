@@ -270,7 +270,8 @@ export async function fetchTier(userId: string, accessToken: string): Promise<st
   try {
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/users?select=tier&id=eq.${encodeURIComponent(userId)}&limit=1`,
-      { headers: authHeaders(accessToken) },
+      // Bounded: a generation waits on this before saving its letter.
+      { headers: authHeaders(accessToken), signal: AbortSignal.timeout(5000) },
     )
     if (!res.ok) return null
     const rows = await res.json() as Array<{ tier: string }>
