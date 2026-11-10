@@ -407,7 +407,7 @@ export default function PrivacyPage() {
             <Ul>
               <Li>We do not track your browsing history. We receive a page&apos;s address only when you activate the extension on it.</Li>
               <Li>The extension contains no analytics or telemetry code. It only gives Chrome the uninstall survey&apos;s address, which records the removal if you were signed in (see above). In BYOK mode the only things it sends to Cover Me are the job page you activate it on, once you have agreed, so we can read the posting, and what Request this site or Report bug sends if you press one. Your resume and API key never reach us.</Li>
-              <Li>In hosted mode our servers count how many letters and resumes you generate, to enforce the generation limits, count which features you use unless you opt out (see Usage counts above), and log errors. Logs and counts never contain your resume, letters, or job descriptions.</Li>
+              <Li>In hosted mode our servers count how many letters and resumes you generate, to enforce the generation limits, count which features you use unless you opt out (see Usage counts above), and log errors, which also go to Sentry (see Third-Party Services). Logs, error reports and counts never contain your resume, letters, or job descriptions.</Li>
               <Li>We do not use cookies for tracking or advertising.</Li>
               <Li>We do not collect any data from tabs other than the active job posting tab, and only when you explicitly activate the extension.</Li>
               <Li>We do not sell, rent, or trade your data to any third party.</Li>
@@ -701,8 +701,8 @@ export default function PrivacyPage() {
                 {
                   name: 'Sentry',
                   url: 'https://sentry.io/privacy/',
-                  when: 'Visitors to cover-me.dev (the website, not the extension)',
-                  receives: 'Error reports and page-load timing from the website: the error, page URL, browser version, and your user ID if you are signed in. Form contents, cookies, and email addresses are removed before sending.',
+                  when: 'Visitors to cover-me.dev, and Hosted mode requests to our server. Never the extension itself, and never BYOK requests to our server.',
+                  receives: 'From the website: error reports and page-load timing, with the error, page URL, browser version, and your user ID if you are signed in. Form contents, cookies, and email addresses are removed before sending. From our server: an error report when a Hosted mode request fails, with the error, which part of the server failed, the time, and your account ID. Server error reports never contain your resume, letters, added context, job or company details, file names, or posting addresses.',
                 },
                 {
                   name: 'PostHog',
@@ -737,9 +737,10 @@ export default function PrivacyPage() {
             <H2 id="retention">Data Retention</H2>
             <Ul>
               <Li><strong className="text-foreground">BYOK mode:</strong> Your resume, API key and history stay on your device, and we hold no copy of them. You can delete them at any time by removing the extension or clearing extension storage in Chrome settings. The only BYOK data on our side are the rate-limit counters and Supabase&apos;s request logs described above.</Li>
-              <Li><strong className="text-foreground">Hosted account data:</strong> Your account, resume, and application history (the job details, and on Pro your cover letters and tailored resumes) are retained for as long as your account is active. You can delete your account at any time from Settings in your dashboard, which deletes all of this at once. You can also ask us by email at <a href={`mailto:${CONTACT_EMAIL}`} className="text-brand-light hover:text-foreground transition-colors">{CONTACT_EMAIL}</a>, and we will permanently delete all your data within 30 days of a verified deletion request, apart from the usage counts and uninstall survey answers in PostHog described below.</Li>
+              <Li><strong className="text-foreground">Hosted account data:</strong> Your account, resume, and application history (the job details, and on Pro your cover letters and tailored resumes) are retained for as long as your account is active. You can delete your account at any time from Settings in your dashboard, which deletes all of this at once. You can also ask us by email at <a href={`mailto:${CONTACT_EMAIL}`} className="text-brand-light hover:text-foreground transition-colors">{CONTACT_EMAIL}</a>, and we will permanently delete all your data within 30 days of a verified deletion request, apart from the usage counts and uninstall survey answers in PostHog and the error reports in Sentry described below.</Li>
               <Li><strong className="text-foreground">Generation count records:</strong> Kept for as long as your account exists, because the free allowance counts generations over the life of the account. They are deleted with your account.</Li>
               <Li><strong className="text-foreground">PostHog:</strong> PostHog keeps everything we send it, including usage counts and uninstall survey answers, for up to two years. Deleting your account doesn&apos;t remove them sooner.</Li>
+              <Li><strong className="text-foreground">Sentry:</strong> Sentry keeps error reports from the website and our server for up to 90 days. Deleting your account doesn&apos;t remove them sooner.</Li>
               <Li><strong className="text-foreground">Rate-limit counters:</strong> A counter not updated for two days is deleted at the next cleanup, which runs during later requests.</Li>
               <Li><strong className="text-foreground">Stripe billing records:</strong> Deleting your account also deletes your Stripe customer record, which holds your email and saved card. Stripe retains transaction records as required by financial regulations, and we cannot delete those.</Li>
             </Ul>
@@ -752,7 +753,7 @@ export default function PrivacyPage() {
             <Ul>
               <Li><strong className="text-foreground">Access:</strong> Request a copy of all data we hold about you.</Li>
               <Li><strong className="text-foreground">Correction:</strong> Request correction of inaccurate data.</Li>
-              <Li><strong className="text-foreground">Deletion:</strong> Delete your account and all associated data yourself from Settings in your dashboard, or ask us to. Usage counts and uninstall survey answers in PostHog stay until PostHog deletes them (see Data Retention).</Li>
+              <Li><strong className="text-foreground">Deletion:</strong> Delete your account and all associated data yourself from Settings in your dashboard, or ask us to. Usage counts and uninstall survey answers in PostHog, and error reports in Sentry, stay until those services delete them (see Data Retention).</Li>
               <Li><strong className="text-foreground">Portability:</strong> Request your data in a machine-readable format.</Li>
               <Li><strong className="text-foreground">Objection:</strong> Object to processing of your data.</Li>
               <Li><strong className="text-foreground">Restriction:</strong> Request restriction of processing while a dispute is resolved.</Li>
