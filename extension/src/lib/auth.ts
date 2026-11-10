@@ -280,13 +280,21 @@ export async function fetchTier(userId: string, accessToken: string): Promise<st
   }
 }
 
-// The tier to act on now. A cached tier other than Pro is checked with the
-// server and saved, so an upgrade made in Checkout counts from the next use
-// without a Settings visit; a cached Pro tier makes no call.
+// The tier to act on in History. A cached tier other than Pro is checked with
+// the server, so an upgrade made in Checkout shows the Pro view at once; a
+// cached Pro tier makes no call, since History's Pro requests are refused
+// with a 403 once the plan has ended and that rechecks the tier.
 export async function currentTier(session: AuthSession): Promise<string | null> {
   const cached = await getCachedTier()
-  if (cached === 'hosted_pro') return cached
-  return (await refreshTier(session)) ?? cached
+  return cached === 'hosted_pro' ? cached : checkedTier(session)
+}
+
+// The tier to act on for a generation: always the server's, so an upgrade
+// counts at once and a plan that ended stops marking new letters for the
+// account (History saves those without asking). The cached tier when the
+// lookup fails.
+export async function checkedTier(session: AuthSession): Promise<string | null> {
+  return (await refreshTier(session)) ?? getCachedTier()
 }
 
 // The server's tier, saved to the cache; null (cache untouched) when the

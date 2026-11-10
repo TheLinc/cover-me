@@ -1,5 +1,5 @@
 import { afterEach, expect, test, vi } from 'vitest'
-import { currentTier } from './auth'
+import { checkedTier, currentTier } from './auth'
 import type { AuthSession } from '../types'
 
 const session = { access_token: 'token', user: { id: 'user-1' } } as AuthSession
@@ -39,4 +39,17 @@ test('a failed lookup keeps the cached tier', async () => {
   serverTier(new Error('offline'))
   expect(await currentTier(session)).toBe('hosted_free')
   expect(local.cachedTier).toBe('hosted_free')
+})
+
+test('a generation checks a cached Pro tier too, so a plan that ended stops marking letters for the account', async () => {
+  const local = fakeLocal({ cachedTier: 'hosted_pro' })
+  serverTier(new Response(JSON.stringify([{ tier: 'hosted_free' }]), { status: 200 }))
+  expect(await checkedTier(session)).toBe('hosted_free')
+  expect(local.cachedTier).toBe('hosted_free')
+})
+
+test('a generation keeps the cached Pro tier when the lookup fails', async () => {
+  fakeLocal({ cachedTier: 'hosted_pro' })
+  serverTier(new Response('', { status: 401 }))
+  expect(await checkedTier(session)).toBe('hosted_pro')
 })

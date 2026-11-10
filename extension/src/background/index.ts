@@ -1,4 +1,4 @@
-import { currentTier, ensureValidSession, generateViaBackend, handleGoogleSignIn, limitErrorCode, RateLimitError, saveLetterToBackend, tailorViaBackend } from '../lib/auth'
+import { checkedTier, ensureValidSession, generateViaBackend, handleGoogleSignIn, limitErrorCode, RateLimitError, saveLetterToBackend, tailorViaBackend } from '../lib/auth'
 import { generateCoverLetter } from '../lib/ai'
 import { parseResumeStructure } from '../lib/ai/resume-parse'
 import { tailorResume } from '../lib/ai/resume-tailor'
@@ -499,9 +499,9 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
       // Hosted: the resume + final prompt live server-side. Enable DEBUG_MODE on
       // the edge function to see those in the Supabase function logs.
       const localId = crypto.randomUUID()
-      // Looked up alongside the tailor, so an upgrade made in Checkout counts
-      // without a wait once the resume is back.
-      const tier = currentTier(session)
+      // Looked up alongside the tailor, so a change of plan counts without a
+      // wait once the resume is back.
+      const tier = checkedTier(session)
       const { resume: tailored, savedId } = await tailorViaBackend(job, session.access_token, compact, merged, trim, includeSummary, lastResult && previous, onProgress, localId, design.design)
       const resume = await finishDesign(tailored, design)
       if (note) resume.hasEdits = true
@@ -591,9 +591,9 @@ async function generateFromJob(job: JobData, supplemental?: string, jobId?: stri
       if (!session) {
         return failCover(id, job, startedAt, 'Sign in to your Cover Me account in Settings.')
       }
-      // The tier is looked up alongside the letter, so an upgrade made in
-      // Checkout counts without holding the letter back from History.
-      const [letter, tier] = await Promise.all([generateViaBackend(job, session.access_token, merged), currentTier(session)])
+      // The tier is looked up alongside the letter, so a change of plan
+      // counts without holding the letter back from History.
+      const [letter, tier] = await Promise.all([generateViaBackend(job, session.access_token, merged), checkedTier(session)])
       const pro = tier === 'hosted_pro'
       const entry: CoverLetter = {
         id: crypto.randomUUID(),
