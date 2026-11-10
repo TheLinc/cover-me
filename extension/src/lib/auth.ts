@@ -1,5 +1,5 @@
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL, WEB_URL } from './config'
-import { clearResume, clearSession, getResume, getSession, getSettings, saveGoogleSignInError, saveCachedTier, saveResume, saveSession, saveSettings, takeGoogleSignInError } from './storage'
+import { clearResume, clearSession, getCachedTier, getResume, getSession, getSettings, saveGoogleSignInError, saveCachedTier, saveResume, saveSession, saveSettings, takeGoogleSignInError } from './storage'
 import { isValidResume } from './ai/resume-tailor'
 import { derivePlanningProgress, deriveTailorProgress } from './ai/tailor-progress'
 import type { ApplicationRecord, AuthSession, CoverLetter, JobData, ParsedResume, ResumeData, TailoredHistoryEntry, TailoredResume } from '../types'
@@ -279,6 +279,17 @@ export async function fetchTier(userId: string, accessToken: string): Promise<st
   } catch {
     return null
   }
+}
+
+// The tier to act on now. A cached tier other than Pro is checked with the
+// server and saved, so an upgrade made in Checkout counts from the next use
+// without a Settings visit; a cached Pro tier makes no call.
+export async function currentTier(session: AuthSession): Promise<string | null> {
+  const cached = await getCachedTier()
+  if (cached === 'hosted_pro') return cached
+  const fresh = await fetchTier(session.user.id, session.access_token)
+  if (fresh) await saveCachedTier(fresh)
+  return fresh ?? cached
 }
 
 // kind is the limit the server applied (migration 015): 'starter' or 'weekly'
