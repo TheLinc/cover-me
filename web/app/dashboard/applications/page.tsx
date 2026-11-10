@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import { getServerSession } from '@/lib/supabase-server'
+import { getServerUser } from '@/lib/supabase-server'
 import { SiteNav } from '@/components/site/SiteNav'
 import { APP_LINKS } from '@/components/site/app-links'
 import { AccountMenu } from '@/components/site/AccountMenu'
@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: 'Your applications', robots: { index:
 // Every account's jobs; letters and resumes too for Pro. An account that
 // only uses its own API key sends nothing here, so its board stays empty.
 export default async function ApplicationsPage() {
-  const { supabase, user } = await getServerSession()
+  const { supabase, user } = await getServerUser()
   if (!user) redirect('/auth?next=/dashboard/applications')
   const { data: userData } = await supabase.from('users').select('tier').eq('id', user.id).single()
   const pro = userData?.tier === 'hosted_pro'

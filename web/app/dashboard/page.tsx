@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
-import { getServerSession } from '@/lib/supabase-server'
+import { getServerUser } from '@/lib/supabase-server'
 import DashboardClient from './DashboardClient'
 import type { Allowance } from '@/lib/limits'
 import { avatarUrl } from '@/lib/avatar'
@@ -24,7 +24,7 @@ async function readTrial(customer: string): Promise<TrialState> {
 }
 
 export default async function DashboardPage() {
-  const { supabase, user } = await getServerSession()
+  const { supabase, user } = await getServerUser()
 
   if (!user) redirect('/auth')
 

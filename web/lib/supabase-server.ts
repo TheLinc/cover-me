@@ -21,7 +21,7 @@ export async function createServerSupabaseClient() {
 
 // The signed-in user (or null), also set as this request's Sentry user: the
 // opaque id only, never the email, as the privacy policy says.
-export async function getServerSession() {
+export async function getServerUser() {
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   Sentry.setUser(user ? { id: user.id } : null)

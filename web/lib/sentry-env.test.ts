@@ -40,7 +40,7 @@ describe('scrubServerEvent', () => {
         cookies: { 'sb-auth': 'token' },
         headers: { authorization: 'Bearer token' },
       },
-      user: { id: 'user-1', email: 'someone@example.com' },
+      user: { id: 'user-1', email: 'someone@example.com', username: 'someone', ip_address: '203.0.113.7' },
       contexts: { trace: { data: { 'url.full': `https://www.cover-me.dev/uninstalled?u=${id}` } } },
     }
     expect(scrubServerEvent(event)).toEqual({

@@ -55,8 +55,10 @@ Sentry.init({
 });
 
 // The opaque account id on signed-in events, as the privacy policy says. Never
-// the email. INITIAL_SESSION sets it on load, SIGNED_OUT clears it.
-if (enabled) {
+// the email. INITIAL_SESSION sets it on load, SIGNED_OUT clears it. Only with a
+// Supabase auth cookie (sb-<ref>-auth-token), so signed-out visitors don't
+// load the auth client; signing in reloads the page, which sets it.
+if (enabled && document.cookie.includes("-auth-token")) {
   import("@/lib/supabase").then(({ createClient }) => {
     createClient().auth.onAuthStateChange((_event, session) => {
       Sentry.setUser(session ? { id: session.user.id } : null);

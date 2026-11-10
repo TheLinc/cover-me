@@ -30,18 +30,18 @@ export function dropSurveyAccountId<T>(event: T): T {
 
 type ServerEvent = {
   request?: { data?: unknown; cookies?: unknown; headers?: unknown }
-  user?: { id?: string | number; email?: string } | null
+  user?: { id?: string | number; email?: string; username?: string; ip_address?: string | null } | null
 }
 
 // beforeSend for the server and edge runtimes. Drops the request body (cover
-// letter or resume text), cookies and headers (auth tokens), keeps only the
-// opaque user id, and blanks the survey account id.
+// letter or resume text), cookies and headers (auth tokens), cuts the user
+// down to the opaque id, and blanks the survey account id.
 export function scrubServerEvent<T extends ServerEvent>(event: T): T {
   if (event.request) {
     delete event.request.data
     delete event.request.cookies
     delete event.request.headers
   }
-  if (event.user?.email) event.user = { id: event.user.id }
+  if (event.user) event.user = { id: event.user.id }
   return dropSurveyAccountId(event)
 }
