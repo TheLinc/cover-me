@@ -10,7 +10,7 @@ import DownloadMenu from '../components/DownloadMenu'
 import { EditIcon } from '../components/icons'
 import UpgradePrompt from '../components/UpgradePrompt'
 import { WEB_URL } from '../../lib/config'
-import { downloadResumeWord } from '../../lib/design'
+import { downloadResumeWord, uploadDesignIfPro } from '../../lib/design'
 
 
 export default function HistoryPage() {
@@ -132,6 +132,9 @@ export default function HistoryPage() {
     }
 
     if (tier !== 'hosted_pro' || !session) return
+    // Resumes saved from here may have been tailored in a Word file the
+    // account doesn't have yet; the dashboard needs it to keep their design.
+    void uploadDesignIfPro(session)
 
     sessionRef.current = session
     setIsProMode(true)
