@@ -74,6 +74,95 @@ export function candidateText(resume: unknown, supplemental?: string): string {
   return out.join('\n')
 }
 
+/**
+ * The candidate's note, plus the text of the version Regenerate starts from
+ * when they edited it (#171): what they typed in the editor is theirs, like
+ * the note. An unedited one is earlier model output, so it adds nothing. Its
+ * gap lists name what the candidate lacks, so they never count.
+ */
+export function trustedNotes(supplemental: string | undefined, previous: unknown): string | undefined {
+  const prev = editedVersion(previous)
+  if (!prev) return supplemental
+  const { atsGaps: _g, atsGapsBeforeEdits: _b, ...rest } = prev
+  return [supplemental, candidateText(rest)].filter(Boolean).join('\n')
+}
+
+/**
+ * Whether the version Regenerate starts from holds the candidate's own input:
+ * they edited it (editedAt), or it was made with their note or regenerated from
+ * one that holds it (hasEdits, set on the result so the trust carries to the
+ * next Regenerate).
+ */
+export function buildsOnEdits(previous: unknown): boolean {
+  return !!editedVersion(previous)
+}
+
+function editedVersion(previous: unknown): Record<string, unknown> | undefined {
+  const prev = previous && typeof previous === 'object' ? (previous as Record<string, unknown>) : undefined
+  return prev?.editedAt || prev?.hasEdits === true ? prev : undefined
+}
+
+// A resume's content, as opposed to scores and other metadata.
+const CONTENT_KEYS = ['name', 'phone', 'email', 'website', 'links', 'location', 'summary', 'experience', 'projects', 'education', 'skills', 'certifications', 'otherSections']
+
+/**
+ * What Regenerate revises (#171): when the version the candidate saw holds
+ * their edits, its content, so what they changed in the editor (a bullet added
+ * or deleted, a title, a certification, a deleted section) carries over: the
+ * merge builds on it, and the line check and grounding compare to it and
+ * revert to it. Otherwise, or when it isn't shaped like a resume, the upload.
+ * Roles line up by index (the editor can't add or remove one), so a version
+ * whose roles or projects no longer match the upload's count (a different
+ * resume uploaded since) falls back to the upload too; 0 is a deleted section.
+ */
+export function seenVersion<T extends Groundable>(upload: T, previous: unknown): T {
+  const prev = editedVersion(previous)
+  const fits = (list: unknown, own: GroundEntry[] | undefined) => !Array.isArray(list) || list.length === 0 || list.length === (own?.length ?? 0)
+  if (!prev || !groundable(prev) || !fits(prev.experience, upload.experience) || !fits(prev.projects, upload.projects)) return upload
+  const seen = { ...upload } as Record<string, unknown>
+  for (const key of CONTENT_KEYS) {
+    if (prev[key] === undefined) delete seen[key]
+    else seen[key] = prev[key]
+  }
+  return seen as T
+}
+
+/**
+ * After the merge on Regenerate from edits (#171), what it can't know about
+ * the version the user saw: a role or project never comes back with more
+ * bullets than they left it (trim and compact take any count; a deleted bullet
+ * swapped in within the count is left to the line check, which compares to
+ * the seen version), a summary they deleted stays deleted, and one they kept
+ * stays when the run returns none.
+ */
+export function keepSeen<T extends Groundable>(merged: T, upload: Groundable, seen: Groundable): T {
+  if (seen === upload) return merged
+  const cap = (out: GroundEntry[] | undefined, own: GroundEntry[] | undefined) =>
+    out?.map((e, i) => (own?.[i] && e.bullets.length > own[i].bullets.length ? { ...e, bullets: own[i].bullets } : e))
+  const { summary, ...rest } = merged
+  const kept = summary?.trim() ? summary : seen.summary
+  return {
+    ...rest,
+    experience: cap(merged.experience, seen.experience) ?? [],
+    ...(merged.projects && { projects: cap(merged.projects, seen.projects) }),
+    ...(seen.summary !== undefined && { summary: kept }),
+  } as unknown as T
+}
+
+// Shaped the way the checks read it: entries with string bullets, and a
+// string summary and skills, string certifications and object education if any.
+function groundable(r: Record<string, unknown>): boolean {
+  const entries = (v: unknown) => Array.isArray(v) && v.every((e) => {
+    const bullets = e && typeof e === 'object' ? (e as { bullets?: unknown }).bullets : undefined
+    return Array.isArray(bullets) && bullets.every((b) => typeof b === 'string')
+  })
+  const optional = (v: unknown, ok: (v: unknown) => boolean) => v === undefined || ok(v)
+  const text = (v: unknown) => typeof v === 'string'
+  return entries(r.experience) && optional(r.projects, entries) && optional(r.summary, text) && optional(r.skills, text) &&
+    optional(r.certifications, (v) => Array.isArray(v) && v.every(text)) &&
+    optional(r.education, (v) => Array.isArray(v) && v.every((e) => !!e && typeof e === 'object'))
+}
+
 function grounded(token: string, candidate: string): boolean {
   if (mentions(candidate, token)) return true
   // "CDL-A" is grounded by "CDL"; "Allen-Bradley" and "3-way" are not.
@@ -454,8 +543,19 @@ export async function checkAndRewriteLines<T extends Groundable>(
     flags = null
   }
   if (!flags) return { resume: tailored, repair: { flagged: [], rewritten: 0, reverted: 0, checkFailed: true } }
-  // Drop ids that don't point at a real line (an empty summary is none).
-  for (const id of [...flags.keys()]) if (!lineAt(tailored, id)?.trim()) flags.delete(id)
+  // Drop ids that don't point at a real line (an empty summary is none), and
+  // lines word for word the same as one of their entry's originals (or the
+  // original summary): they claim nothing new. On Regenerate the originals
+  // include what the candidate typed in the editor (seenVersion).
+  const unchanged = (id: LineId, line: string): boolean => {
+    if (id === 'summary') return original.summary?.trim() === line
+    const m = /^([ep])(\d+)b/.exec(id)
+    return !!m && !!(m[1] === 'e' ? original.experience : original.projects)?.[Number(m[2])]?.bullets.some((b) => b.trim() === line)
+  }
+  for (const id of [...flags.keys()]) {
+    const line = lineAt(tailored, id)?.trim()
+    if (!line || unchanged(id, line)) flags.delete(id)
+  }
   if (flags.size === 0) return { resume: tailored, repair: { flagged: [], rewritten: 0, reverted: 0 } }
 
   // Source original for every rewritten bullet, per entry.

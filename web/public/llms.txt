@@ -22,7 +22,7 @@ Key facts:
 - [Support](https://www.cover-me.dev/support): FAQ and contact (support@cover-me.dev)
 - [Privacy Policy](https://www.cover-me.dev/privacy)
 - [Terms of Service](https://www.cover-me.dev/terms)
-- [Chrome Web Store listing](https://chromewebstore.google.com/detail/cover-me-%E2%80%93-ai-cover-lette/bpbnopjgjbimdjjdolhkgimllbgamgpi)
+- [Chrome Web Store listing](https://chromewebstore.google.com/detail/cover-me-ai-resume-tailor/bpbnopjgjbimdjjdolhkgimllbgamgpi)
 - [AlternativeTo listing](https://alternativeto.net/software/cover-me/about/): user reviews and comparisons with Jobscan, Teal, Kickresume and other resume tools
 - [Toolradar listing](https://toolradar.com/tools/cover-me): features, pricing, FAQ and alternatives such as Kickresume and Rezi
 - [Open Source Alternatives listing](https://www.opensourcealternatives.to/item/cover-me): Cover Me as an open-source alternative to Teal, Jobscan, Kickresume and Rezi

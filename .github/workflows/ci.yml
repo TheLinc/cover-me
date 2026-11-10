@@ -2,6 +2,7 @@
 # check-dist), web unit tests and brand check, and the backend suite (pgTAP plus function tests against the
 # mock server) on a local Supabase stack in Docker. The Supabase CLI maps
 # host.docker.internal to the runner, so the functions reach the mock on Linux.
+# The backend suite skips when nothing it reads changed (see the backend job).
 name: CI
 
 on:
@@ -9,9 +10,11 @@ on:
     branches: [master]
   pull_request:
 
-# A newer push to the same branch or PR cancels the run it replaces.
+# A newer push to the same PR cancels the run it replaces. Each master push gets
+# its own group and always finishes: the backend job only diffs that push, so a
+# cancelled run could hide a backend change from the suite.
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
   cancel-in-progress: true
 
 jobs:
@@ -59,21 +62,43 @@ jobs:
   backend:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # paths-filter reads a PR's changed files from the API.
+    permissions:
+      contents: read
+      pull-requests: read
     defaults:
       run:
         working-directory: backend
     steps:
+      - uses: actions/checkout@v4
+      # backend is a required check, so the job always runs and reports. When
+      # nothing the suite reads changed, the steps after this one skip. The
+      # suite also reads the extension's scrapers and fixtures, and pnpm test
+      # runs scripts/sync-scrapers.mjs --check.
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        id: changes
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+              - 'extension/src/content/scrapers/**'
+              - 'scripts/sync-scrapers.mjs'
+              - '.github/workflows/ci.yml'
       # The Supabase ports sit inside Linux's ephemeral range, so an outgoing
       # connection (an image pull) can hold 54324 when mailpit tries to bind it.
-      - uses: actions/checkout@v4
-      - run: sudo sysctl -w net.ipv4.ip_local_reserved_ports=54320-54329
-      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+      - if: steps.changes.outputs.backend == 'true'
+        run: sudo sysctl -w net.ipv4.ip_local_reserved_ports=54320-54329
+      - if: steps.changes.outputs.backend == 'true'
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
         with:
           version: 10
-      - uses: actions/setup-node@v4
+      - if: steps.changes.outputs.backend == 'true'
+        uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
           cache-dependency-path: backend/pnpm-lock.yaml
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm test
+      - if: steps.changes.outputs.backend == 'true'
+        run: pnpm install --frozen-lockfile
+      - if: steps.changes.outputs.backend == 'true'
+        run: pnpm test

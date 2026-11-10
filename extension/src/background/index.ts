@@ -465,6 +465,11 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
     // apply to every generation, layered under any one-off note for this run.
     const candidateContext = (await getCandidateContext()).trim()
     const merged = [candidateContext, supplemental?.trim()].filter(Boolean).join('\n\n') || undefined
+    // A result made with a one-off note holds the user's own input, like an
+    // editor edit: marked so the next Regenerate keeps what the note added,
+    // even once the note box holds something else (#171). The hosted Pro
+    // copy on the server doesn't carry the mark.
+    const note = supplemental?.trim() || undefined
 
     await debugGroup('Tailor — scraped job + flags', {
       mode: resolveMode(settings),
@@ -496,13 +501,14 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
       const localId = crypto.randomUUID()
       const { resume: tailored, savedId } = await tailorViaBackend(job, session.access_token, compact, merged, trim, includeSummary, lastResult && previous, onProgress, localId, design.design)
       const resume = await finishDesign(tailored, design)
+      if (note) resume.hasEdits = true
       if (resume.sourceHash) void uploadDesignIfPro(session)
       const pro = (await getCachedTier()) === 'hosted_pro'
       await recordTailored(job, resume, localId, {
         ...(savedId === localId ? { account: session.user.id } : {}),
         ...(pro ? { saveTo: session.user.id } : {}),
       })
-      await setTailorJob({ id, status: 'done', job, resume, startedAt, entryId: localId })
+      await setTailorJob({ id, status: 'done', job, resume, startedAt, entryId: localId, note })
       return { success: true, resume, job }
     }
 
@@ -536,9 +542,10 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
     })
 
     const tailored = await finishDesign(await tailorResume(job, parsed, settings.provider, apiKey, compact, merged, trim, includeSummary, lastResult && previous, onProgress), design)
+    if (note) tailored.hasEdits = true
     const entryId = crypto.randomUUID()
     await recordTailored(job, tailored, entryId)
-    await setTailorJob({ id, status: 'done', job, resume: tailored, startedAt, entryId })
+    await setTailorJob({ id, status: 'done', job, resume: tailored, startedAt, entryId, note })
     return { success: true, resume: tailored, job }
   } catch (err) {
     if (err instanceof RateLimitError) {

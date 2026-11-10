@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import Image from 'next/image'
 import { CheckIcon } from '@phosphor-icons/react/dist/ssr'
 import { cn } from '@/lib/utils'
@@ -10,14 +10,17 @@ export function ExtensionPopup({
   children,
   footer,
   className,
+  style,
 }: {
   status?: ReactNode
   children: ReactNode
   footer?: ReactNode
   className?: string
+  style?: CSSProperties
 }) {
   return (
     <div
+      style={style}
       className={cn(
         'overflow-hidden rounded-[18px] border border-ext-border bg-ext-bg text-ext-text shadow-[0_30px_70px_-20px_rgba(15,14,40,0.55)]',
         className,

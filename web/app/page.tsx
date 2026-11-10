@@ -5,6 +5,7 @@ import { SiteFooter } from '@/components/site/SiteFooter'
 import { Hero } from '@/components/landing/Hero'
 import { BoardsStrip } from '@/components/landing/BoardsStrip'
 import { RunStory } from '@/components/landing/RunStory'
+import { RealRecordings } from '@/components/landing/RealRecordings'
 import { FoundInSearch } from '@/components/landing/FoundInSearch'
 import { NoFakes } from '@/components/landing/NoFakes'
 import { JourneyDock } from '@/components/landing/JourneyDock'
@@ -31,6 +32,7 @@ export default async function Home() {
         <Hero />
         <BoardsStrip />
         <RunStory />
+        <RealRecordings />
         <FoundInSearch />
         <Stats />
         <NoFakes />

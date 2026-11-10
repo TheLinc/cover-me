@@ -6,7 +6,7 @@ import { decrypt, encrypt, sameCiphertext } from '../_shared/encrypt.ts'
 import { findOrCreateJobApplication } from '../_shared/job-application.ts'
 import { isUuid } from '../_shared/history-upload.ts'
 import { isValidParsedResume, parseResumeStructure, type ParsedResume } from '../_shared/resume-parse.ts'
-import { candidateText, checkAndRewriteLines, groundSkills, groundTailored } from '../_shared/resume-grounding.ts'
+import { buildsOnEdits, candidateText, checkAndRewriteLines, groundSkills, groundTailored, keepSeen, seenVersion, trustedNotes } from '../_shared/resume-grounding.ts'
 import { scoreFromMatch } from '../_shared/ats-score.ts'
 import { captureUsage } from '../_shared/posthog.ts'
 
@@ -156,7 +156,7 @@ function buildTailorSchema(parsed: ParsedResume): string {
 // An edited resume's fields from the extension's editor tab go too: the old
 // gaps, and a section order the regenerated resume starts over from.
 function stripScores(r: Record<string, unknown>): Record<string, unknown> {
-  const { atsScore: _s, atsGaps: _g, atsGapsBeforeEdits: _b, editedAt: _e, sectionOrder: _o, ...rest } = r
+  const { atsScore: _s, atsGaps: _g, atsGapsBeforeEdits: _b, editedAt: _e, hasEdits: _h, sectionOrder: _o, ...rest } = r
   return rest
 }
 
@@ -171,7 +171,7 @@ ${JSON.stringify(stripScores(previous), null, 2)}
 REVISION MODE — revise, do not rebuild:
 - Start from the PREVIOUS TAILORED RESUME above and change as little as possible. Keep its summary, bullets, and skills exactly as written EXCEPT where the supplemental context adds new truth, or a previously missing JD keyword can now be incorporated honestly.
 - Do not re-rank or re-word bullets that need no change, and preserve each role's existing bullet count. The steps below define HOW to write; this block only changes WHAT you start from.
-- The candidate resume above remains the ground truth for what is true; the supplemental context is the only new truth. Integrity rules still apply — never fabricate to close a gap.
+- ${buildsOnEdits(previous) ? 'The PREVIOUS TAILORED RESUME includes edits and notes the candidate made themselves, so its contents are true like the candidate resume above: keep what they wrote, including bullets they added or deleted (each role and project keeps its PREVIOUS bullet count, which overrides the input count in STEP 5), and a phrase copied from it counts as evidence. Beyond those two, the supplemental context is the only new truth.' : 'The candidate resume above remains the ground truth for what is true; the supplemental context is the only new truth.'} Integrity rules still apply — never fabricate to close a gap.
 - Recompute STEP 9 against the SAME JD keyword set as before, so added coverage raises the score rather than shifting the baseline.
 ` : ''
 
@@ -563,17 +563,21 @@ Deno.serve(async (req) => {
     const delta = parseDelta(raw)
     // Keep only skills the resume backs, then strip job-posting requirements
     // the model copied in (see _shared/resume-grounding.ts).
-    const candidate = candidateText(structuredResume, supplemental)
+    // Regenerate from a version holding the user's edits (#171): their text is
+    // trusted like the note, and their version is the base everything checks against.
+    const notes = trustedNotes(supplemental, previous)
+    const base = seenVersion(structuredResume, previous)
+    const candidate = candidateText(structuredResume, notes)
     delta.skills = (await groundSkills(delta.skills, candidate, askChecker)).skills
-    const merged = mergeTailorDelta(structuredResume, delta, { exactBulletCounts: !compact && !trim })
+    const merged = keepSeen(mergeTailorDelta(base, delta, { exactBulletCounts: !compact && !trim }), structuredResume, base)
     // Rewrite only the lines that claim more than the original resume supports.
-    const { resume: lined, repair } = await checkAndRewriteLines(merged, structuredResume, job.description, askChecker, supplemental)
+    const { resume: lined, repair } = await checkAndRewriteLines(merged, base, job.description, askChecker, supplemental)
     // Counts only: repair.flagged holds resume text.
     if (repair.flagged.length || repair.checkFailed) {
       const { rewritten, reverted, summary, checkFailed } = repair
       console.log('[CoverMe] line check:', JSON.stringify({ flagged: repair.flagged.length, rewritten, reverted, summary, checkFailed }))
     }
-    const resume = groundTailored(lined, structuredResume, candidate, job.description).resume as Record<string, unknown>
+    const resume = groundTailored(lined, base, candidate, job.description).resume as Record<string, unknown>
 
     let atsScore: number | undefined
     let atsGaps: string[] | undefined
@@ -585,6 +589,7 @@ Deno.serve(async (req) => {
       resume.atsGaps = atsGaps
     }
     if (sourceHash) resume.sourceHash = sourceHash
+    if (buildsOnEdits(previous)) resume.hasEdits = true
 
     // One count per hosted run, with the tailor's options and no resume or
     // job text, unless the account opted out. A failed send never fails the run.
