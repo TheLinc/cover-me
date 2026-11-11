@@ -1,5 +1,7 @@
+import { ensureValidSession } from '../lib/auth'
 import { WEB_URL } from '../lib/config'
-import { clearSavedLogin, getResume, saveResume, saveWhatsNew } from '../lib/storage'
+import { uploadDesignIfPro } from '../lib/design'
+import { clearSavedLogin, getMode, getResume, saveResume, saveWhatsNew } from '../lib/storage'
 
 export const WELCOME_PATH = 'src/welcome/index.html'
 
@@ -29,6 +31,19 @@ export async function handleInstalled(details: { reason: string; previousVersion
     }
   }
   await decideDesignNews(details.reason)
+  if (details.reason === 'update') await sendSkippedDesign()
+}
+
+// Builds up to 1.7.0 skipped sending a Pro account's Word file when the
+// extension's copy of the plan was out of date (#181), so the dashboard
+// couldn't download resumes in the user's design. Sent on update, with the
+// plan checked with the server. Remove once those builds are gone (#187).
+async function sendSkippedDesign(): Promise<void> {
+  try {
+    if ((await getMode()) !== 'hosted') return
+    const session = await ensureValidSession()
+    if (session) await uploadDesignIfPro(session, true)
+  } catch { /* the next tailor in the design tries again */ }
 }
 
 // The dot on the Resume tab telling existing users their Word file can now

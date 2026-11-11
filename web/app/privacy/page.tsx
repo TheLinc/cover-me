@@ -613,7 +613,7 @@ export default function PrivacyPage() {
                 <li>Reading the job posting (every mode): sending the stripped copy of the page you click Generate or Tailor Resume on, and getting back the job title, company and description. The page is not stored.</li>
                 <li>Site requests and bug reports (every mode, only when you press the button): sending what Request this site or Report bug sends, as described under Information We Collect.</li>
                 <li>Authentication: signing in, signing up, signing out, and refreshing JWT session tokens.</li>
-                <li>Account tier: fetching your plan after sign-in and when the Settings or History page opens.</li>
+                <li>Account tier: fetching your plan, so Pro features turn on or off when it changes.</li>
                 <li>Upgrade: getting a Stripe checkout page when you click an Upgrade button.</li>
                 <li>Cover letter &amp; resume generation: sending job data and your session token to our backend Edge Functions, which retrieve your encrypted resume, call the Claude API with our key, return the generated output, and save the job&apos;s title, company, posting address and date to your account.</li>
                 <li>Application history sync (Pro mode): saving each new cover letter and tailored resume, uploading ones already in the extension when you agree, and fetching and deleting them on the History page.</li>
