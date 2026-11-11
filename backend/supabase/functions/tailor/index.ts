@@ -8,7 +8,7 @@ import { isUuid } from '../_shared/history-upload.ts'
 import { isValidParsedResume, parseResumeStructure, type ParsedResume } from '../_shared/resume-parse.ts'
 import { buildsOnEdits, candidateText, checkAndRewriteLines, groundSkills, groundTailored, keepSeen, seenVersion, trustedNotes } from '../_shared/resume-grounding.ts'
 import { scoreFromMatch } from '../_shared/ats-score.ts'
-import { capture } from '../_shared/posthog.ts'
+import { captureUsage } from '../_shared/posthog.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SECRET_KEY = Deno.env.get('SERVICE_KEY')!
@@ -592,8 +592,8 @@ Deno.serve(async (req) => {
     if (buildsOnEdits(previous)) resume.hasEdits = true
 
     // One count per hosted run, with the tailor's options and no resume or
-    // job text. A failed send never fails the run.
-    EdgeRuntime.waitUntil(capture('tailor_run', userId, { tier, compact, trim, includeSummary, layout, fellBack }))
+    // job text, unless the account opted out. A failed send never fails the run.
+    EdgeRuntime.waitUntil(captureUsage(supabase, 'tailor_run', userId, { tier, compact, trim, includeSummary, layout, fellBack }))
 
     // Every account's job goes on its board; the resume itself is kept for
     // Pro only. Non-fatal if either fails. Under the extension's local ID

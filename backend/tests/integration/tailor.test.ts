@@ -305,8 +305,21 @@ describe('tailor', () => {
       api_key: 'phc_mock',
       event: 'tailor_run',
       distinct_id: user.id,
-      properties: { tier: 'hosted_pro', compact: false, trim: true, includeSummary: true, layout: 'yours', fellBack: false, $process_person_profile: false },
+      properties: { tier: 'hosted_pro', compact: false, trim: true, includeSummary: true, layout: 'yours', fellBack: false, $process_person_profile: false, $geoip_disable: true },
     }])
+  })
+
+  it('an account that opted out of usage counts sends nothing to PostHog', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    await admin.from('users').update({ usage_counts_opted_out_at: new Date().toISOString() }).eq('id', user.id)
+
+    const res = await callFunction('tailor', { token: user.token, body: { job: JOB } })
+    expect(res.status).toBe(200)
+    // The count would be sent behind the response: give it the same 2 s the
+    // counted test waits.
+    await new Promise((r) => setTimeout(r, 2000))
+    expect((await mockPosthog.events()).filter((e) => e.event === 'tailor_run' && e.distinct_id === user!.id)).toEqual([])
   })
 
   it('a run that fell back to the Cover Me layout keeps no hash', async () => {

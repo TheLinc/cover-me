@@ -55,6 +55,7 @@ export const GUIDES: Guide[] = [
     title: 'How to use your own OpenAI or Claude API key for cover letters',
     description: 'Cover Me writes cover letters and tailors resumes with your own API key: unlimited, no account, and your resume goes only to Anthropic or OpenAI. Setup, models and trade-offs.',
     date: '2026-10-29',
+    updated: '2026-11-09',
   },
   {
     slug: 'ats-friendly-resume-format',

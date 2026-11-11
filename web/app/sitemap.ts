@@ -10,7 +10,7 @@ const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 const LAST_MODIFIED = {
   home: '2026-11-09',
   about: '2026-10-29',
-  legal: '2026-11-10',
+  legal: '2026-11-11',
   support: '2026-10-29',
   boards: '2026-10-29',
 } as const
