@@ -313,6 +313,20 @@ describe('mixed tense within a role', () => {
     expect([...mixedTenseLines({ experience: [{ ...earlier, bullets }] }).keys()]).toEqual(['e0b8'])
   })
 
+  test('past forms spelled like the present, and rarer irregulars, are not flagged', () => {
+    const bullets = ['Built the report', 'Proofread 40 grant reports', 'Split the team into 2 pods', 'Withstood a 3x traffic spike', 'Outgrew the old CRM', 'Reran the payroll audit']
+    expect(mixedTenseLines({ experience: [{ ...earlier, bullets }] }).size).toBe(0)
+  })
+
+  test('a claim-flagged line whose source is present tense also gets the tense fix', async () => {
+    const prompts: string[] = []
+    const orig = { ...earlier, bullets: ['Built the weekly pipeline report', 'Manage a 6-person city operations team', 'Led onboarding for new hires'] }
+    const tailored = { experience: [{ ...orig, bullets: [orig.bullets[0], 'Managed a 6-person city operations team across 3 regions', orig.bullets[2]] }] }
+    const replies = [JSON.stringify({ flags: [{ id: 'e0b1', reason: 'adds 3 regions' }], summary: null }), '{}']
+    await checkAndRewriteLines(tailored, { experience: [orig] }, posting, async (p) => (prompts.push(p), replies.shift()!))
+    expect(prompts[1]).toMatch(/\[e0b1\][^\n]*adds 3 regions; also present tense in an earlier role/)
+  })
+
   test('a tense-only line is sent as its own source, so the rewrite keeps its tailoring', async () => {
     const prompts: string[] = []
     const tailoredLine = 'Manage supplier onboarding for 12 vendors'

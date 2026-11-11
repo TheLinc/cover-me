@@ -265,7 +265,7 @@ export function lintLetter(
   // A maxim opens with a general truth about no one: no person, name or figure.
   const firstSentence = body.split(SENTENCE_END)[0] ?? ''
   // Letters often use the short name: "Stackhouse" for "Stackhouse Ventures".
-  const shortName = opts.companyName?.split(/\s+/).find((w) => !/^(the|a|an)$/i.test(w))
+  const shortName = opts.companyName?.split(/\s+/).find((w) => !/^(the|a|an)$/i.test(w))?.replace(/[^\p{L}\p{N}]+$/u, '')
   const namesEmployer = !!opts.companyName && (containsPhrase(firstSentence, opts.companyName) || (!!shortName && containsWord(firstSentence, shortName)))
   if (firstSentence && !ANCHORED_RE.test(firstSentence) && !NAMED_RE.test(firstSentence) && !namesEmployer) {
     violations.push(`Opens with a general maxim ("${firstSentence.trim()}") — open with something the applicant did, or with the employer's own situation.`)

@@ -593,10 +593,10 @@ function usableRewrite(text: string, source: string, siblings: string[]): boolea
 // ponytail: an -ed adjective opener ("Advanced Excel models...") reads as past
 // tense, and a noun opener ("Member of...") as present. Either only costs a
 // rewrite that changes the tense alone; a word list per tense is the upgrade.
-const IRREGULAR_PAST = new Set(['ran', 'led', 'built', 'rebuilt', 'grew', 'wrote', 'rewrote', 'made', 'won', 'drove', 'took', 'began', 'brought', 'taught', 'sold', 'bought', 'spent', 'kept', 'held', 'oversaw', 'gave', 'met', 'sent', 'chose', 'became', 'drew', 'undertook', 'spoke', 'stood', 'sought', 'thought', 'felt', 'dealt', 'left', 'lost', 'paid', 'told', 'found', 'flew', 'rode', 'rose', 'struck', 'understood', 'upheld', 'oversold', 'saw', 'caught', 'spun', 'got', 'knew', 'fought', 'overcame', 'withdrew', 'overtook', 'outsold', 'did', 'redid', 'went', 'broke', 'heard', 'meant', 'swept', 'dug', 'stuck', 'arose', 'threw', 'wound', 'hung', 'shot', 'was', 'were', 'had', 'sat', 'laid', 'underwent', 'upsold', 'learnt'])
+const IRREGULAR_PAST = new Set(['ran', 'led', 'built', 'rebuilt', 'grew', 'wrote', 'rewrote', 'made', 'won', 'drove', 'took', 'began', 'brought', 'taught', 'sold', 'bought', 'spent', 'kept', 'held', 'oversaw', 'gave', 'met', 'sent', 'chose', 'became', 'drew', 'undertook', 'spoke', 'stood', 'sought', 'thought', 'felt', 'dealt', 'left', 'lost', 'paid', 'told', 'found', 'flew', 'rode', 'rose', 'struck', 'understood', 'upheld', 'oversold', 'saw', 'caught', 'spun', 'got', 'knew', 'fought', 'overcame', 'withdrew', 'overtook', 'outsold', 'did', 'redid', 'went', 'broke', 'heard', 'meant', 'swept', 'dug', 'stuck', 'arose', 'threw', 'wound', 'hung', 'shot', 'was', 'were', 'had', 'sat', 'laid', 'underwent', 'upsold', 'learnt', 'withstood', 'outgrew', 'foresaw', 'reran', 'overran', 'outran', 'overrode', 'withheld', 'bore'])
 const PREPOSITIONS = new Set(['as', 'in', 'for', 'over', 'after', 'during', 'within', 'across', 'with', 'by', 'at', 'on', 'from', 'since', 'while', 'under'])
 // Spelled the same in both tenses, or -ed words that aren't past forms: neither.
-const EITHER_TENSE = new Set(['cut', 'set', 'put', 'hit', 'let', 'shut', 'spread', 'upset', 'quit', 'read', 'cost', 'beat', 'bid', 'broadcast', 'forecast', 'embed', 'shed'])
+const EITHER_TENSE = new Set(['cut', 'set', 'put', 'hit', 'let', 'shut', 'spread', 'upset', 'quit', 'read', 'cost', 'beat', 'bid', 'broadcast', 'forecast', 'embed', 'shed', 'proofread', 'split', 'typeset', 'reset', 'offset', 'recast', 'reread'])
 // An earlier role's dates end in a year ("2019 – 2022", "Mar 2020 - Jun 2022").
 // Anything else ("– Present", "– Till date", "Since 2022", an open "2022 –")
 // may be the current role, which is left alone.
@@ -668,13 +668,6 @@ export async function checkAndRewriteLines<T extends Groundable>(
     const line = lineAt(tailored, id)?.trim()
     if (!line || unchanged(id, line)) flags.delete(id)
   }
-  // Tense is checked in code, on unchanged lines too: the input can mix it.
-  const claimFlags = new Set(flags.keys())
-  const tense = mixedTenseLines(tailored)
-  for (const [id, reason] of tense) flags.set(id, flags.has(id) ? `${flags.get(id)}; also ${reason}` : reason)
-  const tenseOnly = (id: LineId) => tense.has(id) && !claimFlags.has(id)
-  if (flags.size === 0) return { resume: tailored, repair: { flagged: [], rewritten: 0, reverted: 0 } }
-
   // Source original for every rewritten bullet, per entry.
   const sources = new Map<LineId, string>()
   const mapSources = (kind: 'e' | 'p', out: GroundEntry[] | undefined, input: GroundEntry[] | undefined) =>
@@ -683,6 +676,17 @@ export async function checkAndRewriteLines<T extends Groundable>(
     })
   mapSources('e', tailored.experience, original.experience)
   mapSources('p', tailored.projects, original.projects)
+
+  // Tense is checked in code, on unchanged lines too: the input can mix it.
+  // A claim-flagged line is checked as its source too, since a failed rewrite
+  // falls back to it: the rewrite then fixes the tense along with the claim.
+  const claimFlags = new Set(flags.keys())
+  const tense = mixedTenseLines(tailored)
+  const asSource = { experience: tailored.experience.map((e, i) => ({ ...e, bullets: e.bullets.map((b, k) => (claimFlags.has(`e${i}b${k}`) && sources.get(`e${i}b${k}`)) || b) })) }
+  for (const [id, reason] of mixedTenseLines(asSource)) if (claimFlags.has(id)) tense.set(id, reason)
+  for (const [id, reason] of tense) flags.set(id, flags.has(id) ? `${flags.get(id)}; also ${reason}` : reason)
+  const tenseOnly = (id: LineId) => tense.has(id) && !claimFlags.has(id)
+  if (flags.size === 0) return { resume: tailored, repair: { flagged: [], rewritten: 0, reverted: 0 } }
   const allOriginal = summarySources(original)
 
   let rewrites = new Map<LineId, string>()

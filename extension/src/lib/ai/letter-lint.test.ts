@@ -150,6 +150,7 @@ describe('templated sentence shapes', () => {
       lintLetter(letter(s, opener), { companyName }).violations.some((v) => v.startsWith('Opens with a general maxim'))
     expect(opens('Stackhouse Ventures', 'Stackhouse needs someone who can take a venture from idea to first revenue.')).toBe(false)
     expect(opens('The Acme Corp', 'Acme is hiring a data engineer.')).toBe(false)
+    expect(opens('Acme, Inc.', "Acme's warehouse network is growing faster than its hiring.")).toBe(false)
     expect(opens('Stackhouse Ventures', 'Good onboarding is mostly about removing steps.')).toBe(true)
   })
 
