@@ -24,6 +24,8 @@ export interface ParsedResume {
   certifications?: string[]
   /** Always an array on a parse made since #54; a cached parse without it predates them and is parsed again. */
   otherSections?: Array<{ heading: string; lines: string[] }>
+  /** The uploaded resume's section order (#165), carried to each tailored resume. Always an array on a parse made since then; a cached parse without it is parsed again. */
+  sectionOrder?: Array<'summary' | 'experience' | 'projects' | 'education' | 'certifications' | 'skills' | 'other'>
 }
 
 function buildParsePrompt(resumeText: string): string {
@@ -38,7 +40,8 @@ RULES:
 3. Recognize experience headers: Work Experience, Professional Experience, Employment, Career History. A section of jobs, each a position held at an employer, is experience under any heading (Clinical Experience, Work History, Relevant Experience)
 4. Recognize education headers: Education, Academic Background, Degrees
 5. "otherSections": every other section goes here, in the order it appears: publications, volunteer work, clinical rotations or placements, awards, languages, memberships, interests, references, and anything else. Copy the heading exactly as written and each line or bullet verbatim, without its bullet marker. Volunteer roles and student clinical rotations, placements, practicums or clerkships go here even when they are laid out like jobs, with titles, organizations and dates; a paid position stays in experience. Never put contact details or a summary, profile or objective here; the summary is not part of the output. A list of tools, software or programming languages belongs in "skills". Use [] when the resume has no other sections
-6. Return ONLY valid JSON — no explanation, no markdown fences, no text before or after
+6. "sectionOrder": the resume's sections from top to bottom, one entry each: "experience", "projects", "education", "certifications" or "skills" for those sections, and "other" for each entry of "otherSections", where it sits. Leave out the contact details and the summary
+7. Return ONLY valid JSON — no explanation, no markdown fences, no text before or after
 
 JSON structure (omit "projects", "skills", "certifications" entirely if those sections do not exist in the resume):
 {
@@ -79,7 +82,8 @@ JSON structure (omit "projects", "skills", "certifications" entirely if those se
       "heading": "Section heading exactly as written",
       "lines": ["each line copied verbatim"]
     }
-  ]
+  ],
+  "sectionOrder": ["certifications", "experience", "other", "education", "skills"]
 }
 
 RESUME:
@@ -121,6 +125,42 @@ export function withLinks<T extends { website: string }>(parsed: T): T {
   if (website && !links.includes(website)) links.unshift(website)
   return links.length ? { ...parsed, website: website || links[0]!, links } : parsed
 }
+// The order the resume's sections sat in (#165), for the layouts to print
+// in: each standard section the parse has, once, and an "other" for each
+// extra section at most. The tailor writes the summary, so it leads. Always
+// an array, [] when nothing valid is left: the tailor treats a cached parse
+// without one as made before the order was kept, and parses again. Run after
+// withOtherSections, which settles the number of extra sections.
+export function withSectionOrder<T extends ParsedResume>(parsed: T): T & { sectionOrder: NonNullable<ParsedResume['sectionOrder']> } {
+  const raw = (parsed as { sectionOrder?: unknown }).sectionOrder
+  const left: Record<string, boolean> = {
+    experience: parsed.experience.length > 0,
+    projects: Array.isArray(parsed.projects) && parsed.projects.length > 0,
+    education: parsed.education.length > 0,
+    certifications: Array.isArray(parsed.certifications) && parsed.certifications.length > 0,
+    skills: typeof parsed.skills === 'string' && parsed.skills.trim().length > 0,
+  }
+  let others = Array.isArray(parsed.otherSections) ? parsed.otherSections.length : 0
+  const order: NonNullable<ParsedResume['sectionOrder']> = []
+  for (const key of Array.isArray(raw) ? raw : []) {
+    if (key === 'other') {
+      if (others > 0) {
+        others--
+        order.push(key)
+      }
+    } else if (typeof key === 'string' && left[key] === true) {
+      left[key] = false
+      order.push(key as (typeof order)[number])
+    }
+  }
+  return { ...parsed, sectionOrder: order.length ? ['summary', ...order] : [] }
+}
+
+// A cached parse made since the parse kept extra sections (#54) and section
+// order (#165). One from before is parsed again, once.
+export function isCurrentParse(parsed: ParsedResume | null | undefined): parsed is ParsedResume {
+  return Array.isArray(parsed?.otherSections) && Array.isArray(parsed?.sectionOrder)
+}
 // ── End mirrored parse normalizers ──
 
 export async function parseResumeStructure(resumeText: string, apiKey: string): Promise<ParsedResume> {
@@ -153,5 +193,5 @@ export async function parseResumeStructure(resumeText: string, apiKey: string): 
     throw new Error('Resume parse returned invalid JSON')
   }
   if (!isValidParsedResume(parsed)) throw new Error('Resume parse returned incomplete data')
-  return withLinks(withOtherSections(parsed))
+  return withSectionOrder(withLinks(withOtherSections(parsed)))
 }

@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { parseParsedJson, parseResumeStructure } from './resume-parse'
+import type { ParsedResume } from '../../types'
+import { orderedSections } from '../pdf/sections'
+import { isCurrentParse, parseParsedJson, parseResumeStructure, withSectionOrder } from './resume-parse'
 
 const RESUME = { name: 'A', email: 'a@x.co', experience: [], education: [{ institution: 'U of T' }] }
 const json = JSON.stringify(RESUME)
@@ -11,13 +13,13 @@ describe('parseResumeStructure streams', () => {
   test('Claude: joins the text deltas', async () => {
     const fetch = vi.fn(async (_url: string, _init: RequestInit) => sse([json.slice(0, 20), json.slice(20)].map((text) => ({ type: 'content_block_delta', delta: { type: 'text_delta', text } }))))
     vi.stubGlobal('fetch', fetch)
-    expect(await parseResumeStructure('r', 'claude', 'k')).toEqual({ ...RESUME, otherSections: [] })
+    expect(await parseResumeStructure('r', 'claude', 'k')).toEqual({ ...RESUME, otherSections: [], sectionOrder: [] })
     expect(JSON.parse(fetch.mock.calls[0]![1].body as string).stream).toBe(true)
   })
   test('OpenAI: joins the Chat Completions deltas', async () => {
     const fetch = vi.fn(async (_url: string, _init: RequestInit) => sse([json.slice(0, 20), json.slice(20)].map((content) => ({ choices: [{ delta: { content } }] }))))
     vi.stubGlobal('fetch', fetch)
-    expect(await parseResumeStructure('r', 'openai', 'k')).toEqual({ ...RESUME, otherSections: [] })
+    expect(await parseResumeStructure('r', 'openai', 'k')).toEqual({ ...RESUME, otherSections: [], sectionOrder: [] })
     expect(JSON.parse(fetch.mock.calls[0]![1].body as string).stream).toBe(true)
   })
   test("OpenAI: a mid-stream error surfaces OpenAI's message", async () => {
@@ -59,5 +61,48 @@ describe('parseParsedJson links', () => {
 
   test('puts website first when the model left it out of links', () => {
     expect(parse({ website: 'ada.dev', links: ['linkedin.com/in/ada'] }).links).toEqual(['ada.dev', 'linkedin.com/in/ada'])
+  })
+})
+
+describe('parseParsedJson sectionOrder', () => {
+  const FULL = {
+    ...RESUME,
+    experience: [{ title: 'RN', company: 'General', location: '', dates: '', bullets: ['Triage'] }],
+    skills: 'Epic',
+    certifications: ['RN License'],
+    otherSections: [{ heading: 'Volunteering', lines: ['Food bank'] }, { heading: 'Languages', lines: ['French'] }],
+  }
+  const parse = (sectionOrder: unknown) => parseParsedJson(JSON.stringify({ ...FULL, sectionOrder })).sectionOrder
+
+  test("keeps the resume's order, extra sections in place, with the summary the tailor writes first", () => {
+    expect(parse(['certifications', 'experience', 'other', 'education', 'skills', 'other']))
+      .toEqual(['summary', 'certifications', 'experience', 'other', 'education', 'skills', 'other'])
+  })
+
+  test(`drops duplicate, unknown and missing-section keys, the model's own summary, and an "other" past the extra sections`, () => {
+    expect(parse(['skills', 'skills', 'hobbies', 3, 'toString', 'projects', 'summary', 'other', 'other', 'other', 'experience']))
+      .toEqual(['summary', 'skills', 'other', 'other', 'experience'])
+  })
+
+  test('is [] when nothing valid is left or the model leaves it out, so a parse always carries it', () => {
+    expect(parse(['hobbies', 'projects'])).toEqual([])
+    expect(parse('certifications')).toEqual([])
+    expect(parseParsedJson(JSON.stringify(FULL)).sectionOrder).toEqual([])
+  })
+
+  test('a tailored resume built from a partial order still prints every section', () => {
+    const parsed = withSectionOrder({ ...FULL, sectionOrder: ['skills', 'skills', 'other', 'other', 'other'] } as unknown as ParsedResume)
+    const keys = orderedSections({ ...parsed, summary: 'Nurse.' }).map((s) => s.key)
+    expect(keys.slice(0, 4)).toEqual(['summary', 'skills', 'other', 'other'])
+    expect(new Set(keys)).toEqual(new Set(['summary', 'skills', 'other', 'experience', 'projects', 'education', 'certifications']))
+  })
+})
+
+describe('isCurrentParse', () => {
+  test('a stored parse from before extra sections or section order is parsed again; a new parse never is', () => {
+    expect(isCurrentParse(undefined)).toBe(false)
+    expect(isCurrentParse({ ...RESUME, otherSections: [] } as unknown as ParsedResume)).toBe(false)
+    expect(isCurrentParse({ ...RESUME, sectionOrder: [] } as unknown as ParsedResume)).toBe(false)
+    expect(isCurrentParse(parseParsedJson(json))).toBe(true)
   })
 })

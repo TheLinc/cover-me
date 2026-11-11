@@ -2,7 +2,7 @@ import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2'
 import { handleCors, json } from '../_shared/cors.ts'
 import { heartbeatJson } from '../_shared/heartbeat-json.ts'
 import { decrypt, encrypt, sameCiphertext } from '../_shared/encrypt.ts'
-import { isValidParsedResume, parseResumeStructure, type ParsedResume } from '../_shared/resume-parse.ts'
+import { isCurrentParse, isValidParsedResume, parseResumeStructure, type ParsedResume } from '../_shared/resume-parse.ts'
 import { readBody } from '../_shared/read-body.ts'
 
 const SUPABASE_URL        = Deno.env.get('SUPABASE_URL')!
@@ -178,12 +178,12 @@ Deno.serve(async (req) => {
   return json({ error: 'Method not allowed' }, 405)
 })
 
-// A cached parse, or null when it's missing, unreadable or from before otherSections.
+// A cached parse, or null when it's missing, unreadable or from before otherSections or sectionOrder.
 async function readParse(encrypted: string | null): Promise<ParsedResume | null> {
   if (!encrypted) return null
   try {
     const decoded = JSON.parse(await decrypt(encrypted))
-    return isValidParsedResume(decoded) && Array.isArray(decoded.otherSections) ? decoded : null
+    return isValidParsedResume(decoded) && isCurrentParse(decoded) ? decoded : null
   } catch {
     return null
   }

@@ -2,7 +2,7 @@
 // service worker so it survives the popup closing, and the tailor's choice of
 // layout. The edit itself is lib/pdf/docx-design.ts, shared with the website.
 import { checkedTier, ensureValidSession, uploadDesignFileToBackend, uploadResumeToBackend, type TailorDesign } from './auth'
-import { parseResumeStructure } from './ai/resume-parse'
+import { isCurrentParse, parseResumeStructure } from './ai/resume-parse'
 import { decryptApiKey } from './crypto'
 import { designUsable, downloadDesignDocx, tailorDesign } from './pdf/docx-design'
 import { getCachedTier, getDesignFile, getResume, getSettings, resolveMode, saveDesignFile, saveResume } from './storage'
@@ -73,7 +73,7 @@ export async function checkUploadedDesign(hash: string): Promise<void> {
       if (!settings?.apiKey) throw new Error('Add your API key in Settings to check your design.')
       // The same file uploaded again keeps its parse, so History entries made
       // from it still place their text the same way.
-      parsed = file.parsed ?? (Array.isArray(resume.parsed?.otherSections)
+      parsed = file.parsed ?? (isCurrentParse(resume.parsed)
         ? resume.parsed
         : await parseResumeStructure(resume.text, settings.provider, await decryptApiKey(settings.apiKey)))
     }

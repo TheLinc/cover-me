@@ -5,7 +5,7 @@ import { corsHeaders, handleCors, json } from '../_shared/cors.ts'
 import { decrypt, encrypt, sameCiphertext } from '../_shared/encrypt.ts'
 import { findOrCreateJobApplication } from '../_shared/job-application.ts'
 import { isUuid } from '../_shared/history-upload.ts'
-import { isValidParsedResume, parseResumeStructure, type ParsedResume } from '../_shared/resume-parse.ts'
+import { isCurrentParse, isValidParsedResume, parseResumeStructure, type ParsedResume } from '../_shared/resume-parse.ts'
 import { buildsOnEdits, candidateText, checkAndRewriteLines, groundSkills, groundTailored, keepSeen, seenVersion, trustedNotes } from '../_shared/resume-grounding.ts'
 import { scoreFromMatch } from '../_shared/ats-score.ts'
 import { captureUsage } from '../_shared/posthog.ts'
@@ -425,12 +425,13 @@ Deno.serve(async (req) => {
     // (Haiku, verbatim extraction) and cache it encrypted for future tailors.
     // resume/index.ts clears the cache when the text changes and usually parses
     // it ahead in the background, so this parse is the fallback. A cached copy
-    // without otherSections predates them (#54) and is parsed again once.
+    // without otherSections (#54) or sectionOrder (#165) predates them and is
+    // parsed again once.
     let structured: ParsedResume | null = null
     if (resumeRow.structured_encrypted) {
       try {
         const decoded = JSON.parse(await decrypt(resumeRow.structured_encrypted))
-        if (isValidParsedResume(decoded) && Array.isArray(decoded.otherSections)) structured = decoded
+        if (isValidParsedResume(decoded) && isCurrentParse(decoded)) structured = decoded
       } catch {
         structured = null
       }

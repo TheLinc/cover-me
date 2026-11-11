@@ -65,6 +65,8 @@ export const MOCK_PARSED_RESUME = {
   ],
   skills: 'TypeScript, Postgres, React',
   otherSections: [{ heading: 'Volunteer Work', lines: ['Mentor, Code Club (2019 – 2021)'] }],
+  // Volunteer Work sat between Experience and Education.
+  sectionOrder: ['experience', 'other', 'education', 'skills'],
 }
 
 export const MOCK_TAILOR_DELTA = {

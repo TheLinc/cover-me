@@ -8,7 +8,7 @@ export interface Settings {
 }
 
 export type { JobData } from '../content/scrapers/types.ts'
-import type { ResumeEducation, ResumeExperience, ResumeProject, ResumeSection, TailoredResume } from '../lib/pdf/types'
+import type { ResumeEducation, ResumeExperience, ResumeProject, ResumeSection, SectionKey, TailoredResume } from '../lib/pdf/types'
 export type { ResumeEducation, ResumeExperience, ResumeProject, ResumeSection, TailoredResume } from '../lib/pdf/types'
 import type { DesignCheck } from '../lib/pdf/docx-design'
 export type { DesignCheck } from '../lib/pdf/docx-design'
@@ -58,6 +58,8 @@ export interface ParsedResume {
   certifications?: string[]
   /** Always an array on a parse made since #54; a cached parse without it predates them and is parsed again. */
   otherSections?: ResumeSection[]
+  /** The uploaded resume's section order (#165), carried to each tailored resume. Always an array on a parse made since then; a cached parse without it is parsed again. */
+  sectionOrder?: SectionKey[]
 }
 
 export interface ResumeData {
