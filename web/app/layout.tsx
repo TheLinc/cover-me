@@ -64,6 +64,7 @@ const jsonLdOrg = {
     'https://toolradar.com/tools/cover-me',
     'https://www.opensourcealternatives.to/item/cover-me',
     'https://www.libhunt.com/r/cover-me',
+    'https://www.saashub.com/cover-me-dev',
   ],
   founder: {
     '@type': 'Person',
