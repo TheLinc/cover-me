@@ -1,7 +1,7 @@
 // "Your design" (#131) in the extension: the upload check, which runs in the
 // service worker so it survives the popup closing, and the tailor's choice of
 // layout. The edit itself is lib/pdf/docx-design.ts, shared with the website.
-import { ensureValidSession, uploadDesignFileToBackend, uploadResumeToBackend, type TailorDesign } from './auth'
+import { checkedTier, ensureValidSession, uploadDesignFileToBackend, uploadResumeToBackend, type TailorDesign } from './auth'
 import { parseResumeStructure } from './ai/resume-parse'
 import { decryptApiKey } from './crypto'
 import { designUsable, downloadDesignDocx, tailorDesign } from './pdf/docx-design'
@@ -93,12 +93,15 @@ export async function checkUploadedDesign(hash: string): Promise<void> {
 
 // Pro accounts keep the Word file for the dashboard. Tried after each check
 // and each hosted tailor until it lands, so an upgrade after the upload, or a
-// failed send, still gets the file there.
-export async function uploadDesignIfPro(session: AuthSession): Promise<void> {
+// failed send, still gets the file there. Also tried when History opens in
+// the Pro view, so resumes saved from this browser after an upgrade can be
+// downloaded in their design on the dashboard. checkTier asks the server for
+// the plan instead of using the cached one (only once there's a file to send).
+export async function uploadDesignIfPro(session: AuthSession, checkTier = false): Promise<void> {
   const resume = await getResume()
   const d = resume?.design
   if (!d || d.status !== 'done' || d.uploaded || d.size > DESIGN_UPLOAD_MAX || !ownedBy(resume, session)) return
-  if ((await getCachedTier()) !== 'hosted_pro') return
+  if ((checkTier ? await checkedTier(session) : await getCachedTier()) !== 'hosted_pro') return
   const file = await getDesignFile(d.hash)
   if (!file) return
   try {

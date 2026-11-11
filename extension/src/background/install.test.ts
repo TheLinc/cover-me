@@ -110,6 +110,27 @@ describe("the popup's What's new link", () => {
   })
 })
 
+// Builds up to 1.7.0 skipped the Word file when the cached plan was stale (#181).
+describe('the Word file a stale plan skipped', () => {
+  const session = { access_token: 'token', refresh_token: 'r', expires_at: 9999999999, user: { id: 'user-1' } }
+  const withDesign = { text: 'Ada', filename: 'ada.docx', updatedAt: 'd', accountId: 'user-1', design: { hash: 'h', status: 'done', size: 10 } }
+  async function update(serverTier: string) {
+    fakeChrome(withDesign)
+    await chrome.storage.local.set({ session, cachedTier: 'hosted_free', 'designFile:h': { data: 'AAAA' } })
+    const fetch = vi.fn(async (url: string) => new Response(url.includes('/rest/v1/users') ? JSON.stringify([{ tier: serverTier }]) : '{}'))
+    vi.stubGlobal('fetch', fetch)
+    await handleInstalled({ reason: 'update', previousVersion: '1.7.0' })
+    return fetch.mock.calls.filter(([url]) => url.includes('/functions/v1/resume?file=1')).length
+  }
+  test('an update sends it when the server says Pro, though the cache says Free', async () => {
+    expect(await update('hosted_pro')).toBe(1)
+    expect((await chrome.storage.local.get('resume')).resume).toMatchObject({ design: { uploaded: true } })
+  })
+  test('it stays in the browser when the plan is Free', async () => {
+    expect(await update('hosted_free')).toBe(0)
+  })
+})
+
 describe('uninstallUrl', () => {
   test('signed out, it carries only the version', () => {
     expect(uninstallUrl('1.4.0')).toBe(`${WEB_URL}/uninstalled?v=1.4.0`)

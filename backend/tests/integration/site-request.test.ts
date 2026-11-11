@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { callFunction, mockClaude, mockPosthog } from './helpers'
 
+// Only survey events: another file's background count can land after a reset.
+const surveyEvents = async () => (await mockPosthog.events()).filter((e) => e.event === 'survey sent')
+
 // Rate-limited per client IP, like scrape: each call claims its own IP unless
 // a test shares one on purpose.
 let nextIp = 1
@@ -24,7 +27,7 @@ describe('site-request', () => {
   it('records a site request as a survey response with the hostname only, without an account', async () => {
     const res = await send({ kind: 'site', host: 'jobs.acme-careers.com' })
     expect(res.status).toBe(200)
-    const [event] = await mockPosthog.events()
+    const [event] = await surveyEvents()
     expect(event.event).toBe('survey sent')
     expect(event.distinct_id).toMatch(/^[0-9a-f-]{36}$/)
     expect(event.properties).toEqual({
@@ -33,12 +36,13 @@ describe('site-request', () => {
       $survey_response_1: 'jobs.acme-careers.com',
       $survey_completed: true,
       $process_person_profile: false,
+      $geoip_disable: true,
     })
   })
 
   it('records a bug report with the URL, scraper, error and version', async () => {
     expect((await send(BUG)).status).toBe(200)
-    const [event] = await mockPosthog.events()
+    const [event] = await surveyEvents()
     expect(event.properties).toEqual({
       $survey_id: 'survey_mock',
       $survey_response: 'Bug report',
@@ -49,13 +53,14 @@ describe('site-request', () => {
       error: BUG.error,
       version: '1.6.0',
       $process_person_profile: false,
+      $geoip_disable: true,
     })
   })
 
   it('gives each send its own distinct_id', async () => {
     await send({ kind: 'site', host: 'a.example.com' })
     await send({ kind: 'site', host: 'b.example.com' })
-    const [a, b] = await mockPosthog.events()
+    const [a, b] = await surveyEvents()
     expect(a.distinct_id).not.toBe(b.distinct_id)
   })
 
@@ -72,7 +77,7 @@ describe('site-request', () => {
     ['a malformed version', { ...BUG, version: '1.6.0; drop' }],
   ])('rejects %s with 400 and sends nothing', async (_, body) => {
     expect((await send(body)).status).toBe(400)
-    expect(await mockPosthog.events()).toEqual([])
+    expect(await surveyEvents()).toEqual([])
   })
 
   it('stops reading a body over 8 KB', async () => {

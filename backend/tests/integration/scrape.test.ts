@@ -75,6 +75,7 @@ describe('scrape', () => {
     expect(events[0].properties).toEqual({
       pages: [{ hostname: 'www.acme-careers.com', scraper: 'generic' }, { hostname: 'job-boards.greenhouse.io', scraper: 'generic' }],
       $process_person_profile: false,
+      $geoip_disable: true,
     })
   })
 
