@@ -3,6 +3,7 @@ import { debugGroup } from '../debug'
 import { callClaude, type ChatMessage } from './claude'
 import { callOpenAI } from './openai'
 import { buildLintRetryMessage, lintLetter } from './letter-lint'
+import { MAX_RESUME_CHARS } from './resume-parse'
 
 // Anti-fingerprint variation: with a fixed sign-off and hook, every letter the
 // product generates shares one skeleton — individually fine, detectable as a
@@ -104,7 +105,7 @@ ${job.description.slice(0, 15000)}
 """
 
 APPLICANT RESUME:
-${resumeText.slice(0, 12000)}
+${resumeText.slice(0, MAX_RESUME_CHARS)}
 ${supplementalSection}
 ---
 

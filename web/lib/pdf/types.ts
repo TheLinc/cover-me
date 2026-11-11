@@ -11,6 +11,10 @@ export interface ResumeExperience {
 
 export interface ResumeProject {
   name: string
+  /** The project's URL as the resume writes it (github.com/…). */
+  link?: string
+  /** The project's tech-stack line, verbatim. */
+  tech?: string
   bullets: string[]
 }
 
@@ -28,6 +32,18 @@ export interface ResumeEducation {
 export interface ResumeSection {
   heading: string
   lines: string[]
+  /** Set when the section is a list of entries (an award, an open-source
+   *  package) rather than loose lines: each prints like a project. */
+  entries?: ResumeSectionEntry[]
+}
+
+export interface ResumeSectionEntry {
+  name: string
+  /** Role, placing or issuer ("Creator and Maintainer", "3rd Place | Hosted by AWS"). */
+  subtitle?: string
+  link?: string
+  dates?: string
+  bullets: string[]
 }
 
 // A section of the Cover Me layout. 'other' stands for the next of otherSections.
@@ -41,6 +57,8 @@ export interface TailoredResume {
   /** Every URL on the contact line, website first. Absent on a parse made before #129. */
   links?: string[]
   location?: string
+  /** The professional title under the name ("Applied AI Engineer"), verbatim. */
+  headline?: string
   summary?: string
   experience: ResumeExperience[]
   projects?: ResumeProject[]

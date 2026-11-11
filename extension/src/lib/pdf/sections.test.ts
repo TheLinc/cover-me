@@ -8,10 +8,10 @@ const base: TailoredResume = {
 }
 
 describe('print order', () => {
-  test('without a saved order: the standard sections, then each extra section', () => {
+  test('without a saved order: summary, skills, experience, projects, each extra section, education', () => {
     expect(orderedSections(base)).toEqual([
-      { key: 'summary' }, { key: 'experience' }, { key: 'projects' }, { key: 'education' },
-      { key: 'certifications' }, { key: 'skills' }, { key: 'other', index: 0 }, { key: 'other', index: 1 },
+      { key: 'summary' }, { key: 'skills' }, { key: 'experience' }, { key: 'projects' },
+      { key: 'other', index: 0 }, { key: 'other', index: 1 }, { key: 'education' }, { key: 'certifications' },
     ])
   })
 

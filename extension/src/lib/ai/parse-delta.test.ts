@@ -50,9 +50,16 @@ describe('mergeTailorDelta bullet counts', () => {
     expect(mergeTailorDelta(base, merged3).experience[0].bullets).toHaveLength(3)
   })
 
-  test('projects keep their bullet count in every mode', () => {
+  test('projects keep their bullet count in default mode', () => {
     const delta = { experience: [], projects: [{ bullets: ['Built and shared a grading script with 4 teachers'] }] }
-    expect(mergeTailorDelta(base, delta).projects![0].bullets).toEqual(base.projects[0].bullets)
+    expect(mergeTailorDelta(base, delta, { exactBulletCounts: true }).projects![0].bullets).toEqual(base.projects[0].bullets)
+  })
+
+  test('trim mode cuts each entry to its budget, keeping the first-ranked bullets and any measured result', () => {
+    const delta = { experience: [{ bullets: ['a', 'b', 'c', 'd'] }], projects: [{ bullets: ['p1', 'p2', 'p3'] }] }
+    const merged = mergeTailorDelta(base, delta, { maxBullets: { experience: [2], projects: [1] } })
+    expect(merged.experience[0].bullets).toEqual(['Raised scores from 38% to 52%', 'a'])
+    expect(merged.projects![0].bullets).toEqual(['p1'])
   })
 })
 

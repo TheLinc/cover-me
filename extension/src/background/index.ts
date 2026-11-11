@@ -1,6 +1,6 @@
 import { ensureValidSession, generateViaBackend, handleGoogleSignIn, limitErrorCode, RateLimitError, saveLetterToBackend, tailorViaBackend } from '../lib/auth'
 import { generateCoverLetter } from '../lib/ai'
-import { parseResumeStructure } from '../lib/ai/resume-parse'
+import { PARSE_VERSION, parseResumeStructure } from '../lib/ai/resume-parse'
 import { tailorResume } from '../lib/ai/resume-tailor'
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from '../lib/config'
 import { decryptApiKey } from '../lib/crypto'
@@ -527,7 +527,7 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
     // "Your design" places the text with the parse its file was checked
     // against, so the tailor starts from that same parse.
     let parsed = design.parsed ?? resumeData.parsed
-    if (!Array.isArray(parsed?.otherSections)) {
+    if (!Array.isArray(parsed?.otherSections) || (parsed?.parseVersion ?? 1) < PARSE_VERSION) {
       onProgress('Reading your resume (first run only)…')
       parsed = await parseResumeStructure(resumeData.text, settings.provider, apiKey)
       await saveParsedResume(parsed)

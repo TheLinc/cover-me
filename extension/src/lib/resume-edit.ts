@@ -6,12 +6,13 @@ import { getTailoredHistory } from './storage'
 // Every piece of text the PDF prints, as one string.
 function resumeText(r: TailoredResume): string {
   return [
-    r.name, ...contactParts(r), r.summary, r.skills,
+    r.name, r.headline, ...contactParts(r), r.summary, r.skills,
     ...(r.experience ?? []).flatMap((e) => [e.title, e.company, e.location, e.dates, ...(e.bullets ?? [])]),
-    ...(r.projects ?? []).flatMap((p) => [p.name, ...(p.bullets ?? [])]),
+    ...(r.projects ?? []).flatMap((p) => [p.name, p.tech, p.link, ...(p.bullets ?? [])]),
     ...(r.education ?? []).flatMap((e) => [e.institution, e.degree, e.location, e.dates, ...(e.bullets ?? [])]),
     ...(r.certifications ?? []),
-    ...(r.otherSections ?? []).flatMap((s) => [s.heading, ...(s.lines ?? [])]),
+    ...(r.otherSections ?? []).flatMap((s) => [s.heading, ...(s.lines ?? []),
+      ...(s.entries ?? []).flatMap((e) => [e.name, e.subtitle, e.link, e.dates, ...(e.bullets ?? [])])]),
   ].filter(Boolean).join('\n').toLowerCase()
 }
 

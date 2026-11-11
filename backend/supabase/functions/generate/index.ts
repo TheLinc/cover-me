@@ -6,6 +6,7 @@ import { heartbeatJson } from '../_shared/heartbeat-json.ts'
 import { decrypt } from '../_shared/encrypt.ts'
 import { buildLintRetryMessage, lintLetter } from '../_shared/letter-lint.ts'
 import { findOrCreateJobApplication } from '../_shared/job-application.ts'
+import { MAX_RESUME_CHARS } from '../_shared/resume-parse.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SECRET_KEY = Deno.env.get('SERVICE_KEY')!
@@ -218,7 +219,7 @@ ${job.description.slice(0, 15000)}
 """
 
 APPLICANT RESUME:
-${resumeText.slice(0, 12000)}
+${resumeText.slice(0, MAX_RESUME_CHARS)}
 ${supplementalSection}
 ---
 

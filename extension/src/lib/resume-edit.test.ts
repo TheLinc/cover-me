@@ -99,14 +99,14 @@ describe('saving an edit', () => {
 describe('moving and deleting sections', () => {
   test('the editor lists the sections the resume has, in print order', () => {
     expect(shownSections(resume)).toEqual([
-      { key: 'summary' }, { key: 'experience' }, { key: 'projects' }, { key: 'education' },
-      { key: 'certifications' }, { key: 'skills' }, { key: 'other', index: 0 },
+      { key: 'summary' }, { key: 'skills' }, { key: 'experience' }, { key: 'projects' },
+      { key: 'other', index: 0 }, { key: 'education' }, { key: 'certifications' },
     ])
   })
 
   test('a new order is saved, and extra sections move with their "other" place', () => {
     const two = { ...resume, otherSections: [{ heading: 'Talks', lines: ['x'] }, { heading: 'Awards', lines: ['y'] }] }
-    const [summary, experience, , , , skills, talks, awards] = shownSections(two)
+    const [summary, skills, experience, , talks, awards] = shownSections(two)
     const moved = withSections(two, [awards, skills, summary, experience, talks])
     expect(moved.sectionOrder).toEqual(['other', 'skills', 'summary', 'experience', 'other'])
     expect(moved.otherSections!.map((s) => s.heading)).toEqual(['Awards', 'Talks'])

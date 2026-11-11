@@ -5,7 +5,14 @@ import type { SectionKey, TailoredResume } from './types'
 export type StandardSection = Exclude<SectionKey, 'other'>
 export type PlacedSection = { key: StandardSection } | { key: 'other'; index: number }
 
-export const DEFAULT_ORDER: StandardSection[] = ['summary', 'experience', 'projects', 'education', 'certifications', 'skills']
+export const DEFAULT_ORDER: StandardSection[] = ['summary', 'skills', 'experience', 'projects', 'education', 'certifications']
+
+// The print order without a saved one: skills up top where a recruiter scans
+// first, extra sections (open source, awards, publications) after projects,
+// education last.
+function defaultLayout(others: number): SectionKey[] {
+  return ['summary', 'skills', 'experience', 'projects', ...Array<SectionKey>(others).fill('other'), 'education', 'certifications']
+}
 
 // The order the layouts print the resume's sections in, set in the editor
 // (#118). Each 'other' takes the next of otherSections. Anything the saved
@@ -16,7 +23,7 @@ export function orderedSections(resume: TailoredResume): PlacedSection[] {
   const out: PlacedSection[] = []
   const seen = new Set<StandardSection>()
   let next = 0
-  for (const key of resume.sectionOrder ?? []) {
+  for (const key of resume.sectionOrder?.length ? resume.sectionOrder : defaultLayout(others)) {
     if (key === 'other') {
       if (next < others) out.push({ key, index: next++ })
     } else if (DEFAULT_ORDER.includes(key) && !seen.has(key)) {

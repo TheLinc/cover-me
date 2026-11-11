@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { ensureValidSession, fetchApplicationsFromBackend, saveResumeEditToBackend } from '../lib/auth'
-import { splitSkills } from '../lib/ai/resume-grounding'
+import { skillGroups, splitSkills } from '../lib/ai/resume-grounding'
 import { downloadTailoredResumePdf, tailoredResumePdf } from '../lib/pdf/resume'
 import type { PlacedSection } from '../lib/pdf/sections'
 import { editedResume, saveResumeEdit, shownSections, withResumeEdit, withSections } from '../lib/resume-edit'
@@ -50,7 +50,9 @@ function resumeFromForm(draft: TailoredResume, skills: string[]): TailoredResume
     education: draft.education.map((e) => ({ ...e, bullets: lines(e.bullets) ?? [] })),
     certifications: lines(draft.certifications),
     otherSections: draft.otherSections?.map((s) => ({ ...s, lines: lines(s.lines) ?? [] })),
-    skills: draft.skills === undefined ? undefined : lines(skills)!.map((s) => s.trim()).join(', '),
+    // Grouped skills ("Languages: Python, SQL") are edited a group per line
+    // and kept that way; a plain list goes back to one comma-separated line.
+    skills: draft.skills === undefined ? undefined : lines(skills)!.map((s) => s.trim()).join(skillGroups(draft.skills).length ? '\n' : ', '),
   }
 }
 
@@ -90,7 +92,7 @@ export default function Editor() {
     openResume(id).then((o) => {
       setOpened(o)
       if (!o) return
-      setForm({ draft: structuredClone(o.scored), skills: o.scored.skills ? splitSkills(o.scored.skills) : [] })
+      setForm({ draft: structuredClone(o.scored), skills: o.scored.skills ? (skillGroups(o.scored.skills).length ? o.scored.skills.split(/\n+/).filter((l) => l.trim()) : splitSkills(o.scored.skills)) : [] })
       document.title = `Edit resume · ${o.jobTitle || 'Cover Me'}`
       // Ready for a save as the tab closes, which can't wait for a refresh.
       void proSession().then((s) => { session.current = s }).catch(() => {})
