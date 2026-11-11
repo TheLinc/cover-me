@@ -141,6 +141,7 @@ describe('templated sentence shapes', () => {
     'Acme is rebuilding its data pipeline, and that is work I have done twice.',
     'Six years on a med-surg unit taught me to spot a patient sliding before the monitor does.',
     'Your onboarding funnel loses most riders in week one.',
+    'The team is hiring one engineer to build its web app from scratch.',
     'At U.S. Bank I rebuilt the reconciliation ledger.',
     'Last year Ferris cut checkout latency by half after the rebuild.',
   ])('maxim opener leaves alone: %s', (s) => expect(flagged('Opens with a general maxim', s)).toBe(false))

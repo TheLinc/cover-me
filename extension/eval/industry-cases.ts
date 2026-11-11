@@ -1052,9 +1052,10 @@ PhD or MS preferred.`),
     fieldNotes: 'Entry level: education, projects and internships carry the weight. Must not claim years of full-time analyst experience; a part-time barista job shows reliability but must not be inflated.',
   },
   {
-    // The current role mixes tenses on purpose (#198): it must come back in one.
-    // The bullet that best answers the posting (rider activation) sits in the
-    // older role, and the skills list is in sentence case.
+    // The earlier role has a present-tense bullet ("Manage") that must come back
+    // in past tense (#198); the current role mixes on purpose (ongoing "Run",
+    // finished "Ran"). The bullet that best answers the posting (rider
+    // activation) sits in the earlier role, and the skills list is in sentence case.
     id: 'accelerator-lead-to-venture-builder',
     industry: 'Business',
     resume: {
@@ -1069,7 +1070,7 @@ PhD or MS preferred.`),
         role('Operations Manager', 'Pedalgo Delivery', 'Minneapolis, MN', 'Jun 2019 – Jan 2023', [
           'Grew active rider supply from 150 to 1,100 by rebuilding the onboarding flow',
           'Cut rider onboarding time from 9 days to 3',
-          'Managed a 6-person city operations team',
+          'Manage a 6-person city operations team',
           'Launched the service in 2 new cities',
         ]),
       ],

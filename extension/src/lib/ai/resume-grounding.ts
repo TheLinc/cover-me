@@ -578,31 +578,26 @@ const EITHER_TENSE = new Set(['cut', 'set', 'put', 'hit', 'let', 'shut', 'spread
 const CURRENT_DATES = /\b(present|current|now|ongoing|today)\b/i
 
 /**
- * Bullets that break their role's tense (#198), with the fix as the reason: a
- * role whose bullets open with both past verbs (-ed or an irregular past) and
- * other words gets its minority flagged, toward the tense most of its bullets
- * use; on a tie, present for a current role and past for earlier ones. A role
- * in one tense, even the "wrong" one, is left alone, as are roles without dates.
+ * Present-tense bullets in an earlier role (#198), with the fix as the reason:
+ * an earlier role whose bullets open with both past verbs (-ed or an irregular
+ * past) and other words gets the others flagged toward past tense. The current
+ * role is left alone, since it mixes on purpose: ongoing duties in present
+ * tense, finished results in past. So are an earlier role with no past-tense
+ * bullet at all and roles without dates.
  */
 export function mixedTenseLines(r: Groundable): Map<LineId, string> {
   const flags = new Map<LineId, string>()
   r.experience.forEach((role, i) => {
-    if (!role.dates?.trim()) return
-    const present = CURRENT_DATES.test(role.dates)
+    if (!role.dates?.trim() || CURRENT_DATES.test(role.dates)) return
     const tenses = role.bullets.map((b) => {
       const word = /^\s*([A-Za-z]+)(\S*)/.exec(b)
       const w = word?.[1].toLowerCase()
       if (!w || word![2].startsWith(':') || /ing$/.test(w) || EITHER_TENSE.has(w)) return undefined
       return IRREGULAR_PAST.has(w) || (/[a-z]ed$/.test(w) && !/eed$/.test(w)) ? 'past' : 'other'
     })
-    const past = tenses.filter((t) => t === 'past').length
-    const other = tenses.filter((t) => t === 'other').length
-    if (!past || !other) return
-    const toPast = past === other ? !present : past > other
+    if (!tenses.includes('past')) return
     tenses.forEach((t, k) => {
-      if (t && (t === 'past') !== toPast) {
-        flags.set(`e${i}b${k}`, `mixed tense in this role: write it in ${toPast ? 'past' : 'present'} tense like its other lines, changing only the verb tense`)
-      }
+      if (t === 'other') flags.set(`e${i}b${k}`, 'present tense in an earlier role: write it in past tense like its other lines, changing only the verb tense')
     })
   })
   return flags

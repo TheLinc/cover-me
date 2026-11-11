@@ -103,7 +103,8 @@ const RECAP_RE = /\bI (?:bring|offer)\b|\bmy (?:mix|combination|blend) of\b|\bmy
 
 // What makes an opening sentence about someone: a person, a figure, or a name
 // (a capitalized word after the first, like "Ferris" or the employer's).
-const ANCHORED_RE = /\b(?:i|i'm|i've|i'd|me|my|we|our|us|you|your)\b|\d/i
+// "The team" or "the role" is the employer when the company is unknown.
+const ANCHORED_RE = /\b(?:i|i'm|i've|i'd|me|my|we|our|us|you|your)\b|\b(?:the|this) (?:team|role|company|position)\b|\d/i
 const NAMED_RE = /\s[A-Z]/
 
 // Sentence ends, but not after an initial or a title ("U.S. Bank", "Dr. Ruiz").

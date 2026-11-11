@@ -260,7 +260,10 @@ describe('groundSkills with sections outside the six', () => {
   })
 })
 
-// A current role that came back "Ran… / Run… / Organize…" in the 2026-11-11 eval (#198).
+// Earlier roles came back with a stray present-tense bullet (#198). A current
+// role mixes on purpose: ongoing duties in present tense, finished results in
+// past ("Delivered the rollout early"). Pushing those into present tense cost
+// faithfulness and readability in the 2026-11-11 full eval.
 describe('mixed tense within a role', () => {
   const current = { title: 'Program Lead', company: 'Foundry Labs', dates: 'Jan 2023 – Present', bullets: [
     'Ran diagnostic workshops for 40 founders',
@@ -273,23 +276,19 @@ describe('mixed tense within a role', () => {
     'Led onboarding for new hires',
   ] }
 
-  test('flags the bullets that break the role\'s tense: present for the current role, past for earlier ones', () => {
+  test('flags the present-tense bullets of an earlier role and leaves the current role alone', () => {
     const flags = mixedTenseLines({ experience: [current, earlier] })
-    expect([...flags.keys()]).toEqual(['e0b0', 'e1b1'])
-    expect(flags.get('e0b0')).toContain('present tense')
+    expect([...flags.keys()]).toEqual(['e1b1'])
     expect(flags.get('e1b1')).toContain('past tense')
   })
 
-  test('leaves a role in one tense alone, even a current role written in the past', () => {
-    const pastCurrent = { ...current, bullets: ['Ran workshops for 40 founders', 'Organized demo days'] }
-    expect(mixedTenseLines({ experience: [pastCurrent, { ...earlier, bullets: ['Built the report', 'Led onboarding'] }] }).size).toBe(0)
+  test('flags every present-tense bullet of an earlier role, even when they are most of it', () => {
+    const role = { ...earlier, bullets: ['Manage the vendor list', 'Lead onboarding', 'Built the weekly report'] }
+    expect([...mixedTenseLines({ experience: [role] }).keys()]).toEqual(['e0b0', 'e0b1'])
   })
 
-  test('flags the odd one out when most of a role is in the other tense', () => {
-    const pastCurrent = { ...current, bullets: ['Ran workshops for 40 founders', 'Organized demo days', 'Responsible for a $2M budget'] }
-    const flags = mixedTenseLines({ experience: [pastCurrent] })
-    expect([...flags.keys()]).toEqual(['e0b2'])
-    expect(flags.get('e0b2')).toContain('past tense')
+  test('leaves an earlier role written wholly in another tense alone', () => {
+    expect(mixedTenseLines({ experience: [{ ...earlier, bullets: ['Manage the vendor list', 'Lead onboarding'] }] }).size).toBe(0)
   })
 
   test('verbs spelled the same in both tenses count as neither', () => {
@@ -303,21 +302,21 @@ describe('mixed tense within a role', () => {
     expect(mixedTenseLines({ experience: [odd, undated] }).size).toBe(0)
   })
 
-  test('the line check rewrites flagged bullets in one tense even when the model flags nothing', async () => {
+  test('the line check rewrites flagged bullets even when the model flags nothing', async () => {
     const prompts: string[] = []
-    const replies = ['{"flags": [], "summary": null}', JSON.stringify({ rewrites: [{ id: 'e0b0', text: 'Run diagnostic workshops for 40 founders' }] })]
-    const tailored = { experience: [current] }
+    const replies = ['{"flags": [], "summary": null}', JSON.stringify({ rewrites: [{ id: 'e0b1', text: 'Managed the vendor list for 12 suppliers' }] })]
+    const tailored = { experience: [earlier] }
     const { resume, repair } = await checkAndRewriteLines(tailored, tailored, posting, async (p) => (prompts.push(p), replies.shift()!))
-    expect(prompts[1]).toContain('[e0b0]')
-    expect(resume.experience[0].bullets).toEqual(['Run diagnostic workshops for 40 founders', current.bullets[1], current.bullets[2]])
+    expect(prompts[1]).toContain('[e0b1]')
+    expect(resume.experience[0].bullets).toEqual([earlier.bullets[0], 'Managed the vendor list for 12 suppliers', earlier.bullets[2]])
     expect(repair).toMatchObject({ rewritten: 1, reverted: 0 })
   })
 
   test('a tense fix that fails keeps the tailored line instead of reverting it', async () => {
     const replies = ['{"flags": [], "summary": null}', '{}']
-    const tailored = { experience: [{ ...current, bullets: ['Ran diagnostic workshops for 40 founders in fintech', ...current.bullets.slice(1)] }] }
-    const { resume, repair } = await checkAndRewriteLines(tailored, { experience: [current] }, posting, async () => replies.shift()!)
-    expect(resume.experience[0].bullets[0]).toBe('Ran diagnostic workshops for 40 founders in fintech')
+    const tailored = { experience: [{ ...earlier, bullets: [earlier.bullets[0], 'Manage the vendor list for 12 suppliers in logistics', earlier.bullets[2]] }] }
+    const { resume, repair } = await checkAndRewriteLines(tailored, { experience: [earlier] }, posting, async () => replies.shift()!)
+    expect(resume.experience[0].bullets[1]).toBe('Manage the vendor list for 12 suppliers in logistics')
     expect(repair.reverted).toBe(0)
   })
 })
