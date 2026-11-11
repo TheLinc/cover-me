@@ -437,7 +437,7 @@ Deno.serve(async (req) => {
         cached = null
       }
     }
-    let structured = isCurrentParse(cached) ? cached : null
+    let structured: ParsedResume | null = isCurrentParse(cached) ? cached : null
     if (!structured) {
       let resumeText: string
       try {
@@ -449,8 +449,12 @@ Deno.serve(async (req) => {
       try {
         structured = upgradedParse(cached, await parseResumeStructure(resumeText, ANTHROPIC_API_KEY))
       } catch {
-        await refund()
-        return { error: 'Could not process your resume. Please try again.', status: 502 }
+        // One without the order (#165) still tailors, in the standard order.
+        if (!Array.isArray(cached?.otherSections)) {
+          await refund()
+          return { error: 'Could not process your resume. Please try again.', status: 502 }
+        }
+        structured = cached
       }
       // Cache best-effort — a failed write just means we re-parse next time.
       try {

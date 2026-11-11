@@ -249,6 +249,20 @@ describe('tailor', () => {
     expect(await quotaUsedToday(user.id)).toBe(0)
   })
 
+  it('tailors from a cached parse without an order when the parse that would add it fails', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    const { sectionOrder: _o, ...old } = MOCK_PARSED_RESUME
+    await cacheParsedResume(user.id, old)
+    await mockClaude.failNext(500)
+
+    const res = await callFunction('tailor', { token: user.token, body: { job: JOB } })
+    expect(res.status).toBe(200)
+    const { resume } = await res.json()
+    expect(resume.otherSections).toEqual(MOCK_PARSED_RESUME.otherSections)
+    expect(resume.sectionOrder).toBeUndefined()
+  })
+
   it('refunds when the tailor call fails', async () => {
     user = await createUser()
     await uploadResume(user)

@@ -143,7 +143,9 @@ Deno.serve(async (req) => {
       if (!wantParse) return json({ success: true })
       const cached = await readParse(previous!.structured_encrypted)
       if (isCurrentParse(cached)) return json({ success: true, structured: cached })
-      return heartbeatJson('resume', 'Resume parse failed', async () => ({ success: true, structured: await parseNow(supabase, userId, text, previous!.text_encrypted, cached) }))
+      // One without the order (#165) still serves when the parse that adds it fails.
+      const usable = Array.isArray(cached?.otherSections) ? cached : null
+      return heartbeatJson('resume', 'Resume parse failed', async () => ({ success: true, structured: (await parseNow(supabase, userId, text, previous!.text_encrypted, cached)) ?? usable }))
     }
 
     let text_encrypted: string

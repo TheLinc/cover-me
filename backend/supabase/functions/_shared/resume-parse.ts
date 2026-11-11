@@ -159,7 +159,7 @@ export function withSectionOrder<T extends ParsedResume>(parsed: T): T & { secti
 
 // A cached parse made since the parse kept extra sections (#54) and section
 // order (#165). One from before is parsed again, once.
-export function isCurrentParse(parsed: ParsedResume | null | undefined): parsed is ParsedResume {
+export function isCurrentParse(parsed: ParsedResume | null | undefined): parsed is ParsedResume & Required<Pick<ParsedResume, 'otherSections' | 'sectionOrder'>> {
   return Array.isArray(parsed?.otherSections) && Array.isArray(parsed?.sectionOrder)
 }
 
