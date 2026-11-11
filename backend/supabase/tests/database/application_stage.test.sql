@@ -1,5 +1,5 @@
 -- Application stages (020): the default, the CHECK, the old "got an
--- interview" column being gone (030), and RLS on a stage change.
+-- interview" column being gone (029), and RLS on a stage change.
 -- Run: pnpm db:test   (from backend/)
 begin;
 select plan(5);
@@ -26,7 +26,7 @@ select throws_ok(
 );
 
 select hasnt_column('public', 'job_applications', 'interview_at',
-  'the old interview_at column is gone (030)');
+  'the old interview_at column is gone (029)');
 
 -- RLS: Alice can't move Bob's application.
 set local role authenticated;
