@@ -2,18 +2,21 @@ import * as Sentry from "@sentry/nextjs";
 import { dropSurveyAccountId, sentryEnvironment } from "@/lib/sentry-env";
 
 const environment = sentryEnvironment();
+// Local `pnpm dev` would report into the same project as real users
+const enabled = environment !== "development";
 
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
 
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
   environment,
+  enabled,
 
   // Never send IPs, cookies, or auth headers automatically
   sendDefaultPii: false,
 
   // 10% of transactions in production — raise after launch if needed
-  tracesSampleRate: environment === "development" ? 1.0 : 0.1,
+  tracesSampleRate: 0.1,
 
   // No session replay: it records keystrokes in form fields (passwords, resume text)
   replaysSessionSampleRate: 0,
@@ -44,7 +47,24 @@ Sentry.init({
     /^Failed to fetch$/,
     /^Load failed$/,
   ],
+
+  // A script injected into the page (a browser extension, by its spread across
+  // users) throws "reading 'M_ID'" from executors/<n>.js on the home page.
+  // None of the site's own code lives at that path.
+  denyUrls: [/\/executors\/\d+\.js/],
 });
+
+// The opaque account id on signed-in events, as the privacy policy says. Never
+// the email. INITIAL_SESSION sets it on load, SIGNED_OUT clears it. Only with a
+// Supabase auth cookie (sb-<ref>-auth-token), so signed-out visitors don't
+// load the auth client; signing in reloads the page, which sets it.
+if (enabled && document.cookie.includes("-auth-token")) {
+  import("@/lib/supabase").then(({ createClient }) => {
+    createClient().auth.onAuthStateChange((_event, session) => {
+      Sentry.setUser(session ? { id: session.user.id } : null);
+    });
+  });
+}
 
 // Cookieless page views for UTM and referrer attribution (lib/analytics.ts).
 // Off unless the key is set, which is only on Vercel's Production environment.

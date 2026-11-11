@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
+import * as Sentry from '@sentry/nextjs'
 import { createClient } from '@supabase/supabase-js'
 import { handleStripeEvent, isGiftTrial } from '@/lib/stripe-tier'
 
@@ -52,6 +53,13 @@ export async function POST(req: NextRequest) {
 
   if (!ok) {
     console.error('[stripe-webhook] Update failed for event', event.id, event.type)
+    // A 500 isn't thrown, so onRequestError never sees it. Stripe retries, but one
+    // that keeps failing leaves a subscriber on the wrong plan. No customer data.
+    Sentry.captureMessage('stripe-webhook update failed', {
+      level: 'error',
+      tags: { stripe_event_type: event.type },
+      extra: { stripe_event_id: event.id },
+    })
     return NextResponse.json({ error: 'Update failed' }, { status: 500 })
   }
   return NextResponse.json({ received: true })

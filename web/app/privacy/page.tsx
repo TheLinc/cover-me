@@ -701,8 +701,8 @@ export default function PrivacyPage() {
                 {
                   name: 'Sentry',
                   url: 'https://sentry.io/privacy/',
-                  when: 'Visitors to cover-me.dev, and Hosted mode requests to our server. Never the extension itself, and never BYOK requests to our server.',
-                  receives: 'From the website: error reports and page-load timing, with the error, page URL, browser version, and your user ID if you are signed in. Form contents, cookies, and email addresses are removed before sending. From our server: an error report when a Hosted mode request fails, with the error, which part of the server failed, the time, and your account ID. Server error reports never contain your resume, letters, added context, job or company details, file names, or posting addresses.',
+                  when: 'Visitors to cover-me.dev, Hosted mode requests to our server, and subscribers whose plan change fails to save. Never the extension itself, and never BYOK requests to our server.',
+                  receives: 'From the website: error reports and page-load timing, with the error, page URL, browser and operating system, a rough location (country and city) that Sentry works out from your IP address without storing the address, and your user ID if you are signed in. Form contents, cookies, and email addresses are removed before sending. From our server: an error report when a Hosted mode request fails, with the error, which part of the server failed, the time, and your account ID, and a report when a plan change from Stripe fails to save, with the Stripe event ID and no payment details. Server error reports never contain your resume, letters, added context, job or company details, file names, or posting addresses.',
                 },
                 {
                   name: 'PostHog',
