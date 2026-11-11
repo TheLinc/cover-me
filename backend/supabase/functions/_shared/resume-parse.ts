@@ -162,6 +162,14 @@ export function withSectionOrder<T extends ParsedResume>(parsed: T): T & { secti
 export function isCurrentParse(parsed: ParsedResume | null | undefined): parsed is ParsedResume {
   return Array.isArray(parsed?.otherSections) && Array.isArray(parsed?.sectionOrder)
 }
+
+// What replaces a cached parse that isn't current, given a fresh parse of the
+// same text. One that only lacks the order keeps its content and takes the
+// fresh order, so a Word design checked against it still lines up. Anything
+// older is replaced.
+export function upgradedParse(cached: ParsedResume | null | undefined, fresh: ParsedResume): ParsedResume {
+  return cached && Array.isArray(cached.otherSections) ? withSectionOrder({ ...cached, sectionOrder: fresh.sectionOrder }) : fresh
+}
 // ── End mirrored parse normalizers ──
 
 export async function parseResumeStructure(resumeText: string, apiKey: string): Promise<ParsedResume> {

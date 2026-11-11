@@ -5,7 +5,7 @@ import { corsHeaders, handleCors, json } from '../_shared/cors.ts'
 import { decrypt, encrypt, sameCiphertext } from '../_shared/encrypt.ts'
 import { findOrCreateJobApplication } from '../_shared/job-application.ts'
 import { isUuid } from '../_shared/history-upload.ts'
-import { isCurrentParse, isValidParsedResume, parseResumeStructure, type ParsedResume } from '../_shared/resume-parse.ts'
+import { isCurrentParse, isValidParsedResume, parseResumeStructure, type ParsedResume, upgradedParse } from '../_shared/resume-parse.ts'
 import { buildsOnEdits, candidateText, checkAndRewriteLines, groundSkills, groundTailored, keepSeen, seenVersion, trustedNotes } from '../_shared/resume-grounding.ts'
 import { scoreFromMatch } from '../_shared/ats-score.ts'
 import { captureUsage } from '../_shared/posthog.ts'
@@ -426,19 +426,18 @@ Deno.serve(async (req) => {
     // resume/index.ts clears the cache when the text changes and usually parses
     // it ahead in the background, so this parse is the fallback. A cached copy
     // without otherSections (#54) or sectionOrder (#165) predates them and is
-    // parsed again once. Except for the user's own design (#131): the
-    // extension places the text with the parse its file was checked against,
-    // and the file keeps its own section order.
-    let structured: ParsedResume | null = null
+    // parsed again once (upgradedParse keeps the content of one that only
+    // lacks the order).
+    let cached: ParsedResume | null = null
     if (resumeRow.structured_encrypted) {
       try {
         const decoded = JSON.parse(await decrypt(resumeRow.structured_encrypted))
-        const current = isCurrentParse(decoded) || (!!sourceHash && Array.isArray(decoded?.otherSections))
-        if (isValidParsedResume(decoded) && current) structured = decoded
+        if (isValidParsedResume(decoded)) cached = decoded
       } catch {
-        structured = null
+        cached = null
       }
     }
+    let structured = isCurrentParse(cached) ? cached : null
     if (!structured) {
       let resumeText: string
       try {
@@ -448,7 +447,7 @@ Deno.serve(async (req) => {
         return { error: 'Failed to read resume. Please re-upload.', status: 500 }
       }
       try {
-        structured = await parseResumeStructure(resumeText, ANTHROPIC_API_KEY)
+        structured = upgradedParse(cached, await parseResumeStructure(resumeText, ANTHROPIC_API_KEY))
       } catch {
         await refund()
         return { error: 'Could not process your resume. Please try again.', status: 502 }

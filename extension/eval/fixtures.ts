@@ -113,6 +113,9 @@ const alexParsed: ParsedResume = {
   ],
   skills:
     'React, TypeScript, JavaScript, GraphQL, Zustand, Jest, React Testing Library, HTML, CSS, Node.js, Supabase, Git',
+  // The usual order, so a parse that copies the prompt's certifications-first
+  // example fails here (#165).
+  sectionOrder: ['summary', 'experience', 'projects', 'education', 'skills'],
 }
 
 // ── Resume 2: med-surg RN. Has BLS + Epic. NO ACLS, CCRN, Cerner, ICU. ───────

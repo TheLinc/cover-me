@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { ParsedResume } from '../../types'
 import { orderedSections } from '../pdf/sections'
-import { isCurrentParse, parseParsedJson, parseResumeStructure, withSectionOrder } from './resume-parse'
+import { isCurrentParse, parseParsedJson, parseResumeStructure, upgradedParse, withSectionOrder } from './resume-parse'
 
 const RESUME = { name: 'A', email: 'a@x.co', experience: [], education: [{ institution: 'U of T' }] }
 const json = JSON.stringify(RESUME)
@@ -104,5 +104,22 @@ describe('isCurrentParse', () => {
     expect(isCurrentParse({ ...RESUME, otherSections: [] } as unknown as ParsedResume)).toBe(false)
     expect(isCurrentParse({ ...RESUME, sectionOrder: [] } as unknown as ParsedResume)).toBe(false)
     expect(isCurrentParse(parseParsedJson(json))).toBe(true)
+  })
+})
+
+describe('upgradedParse', () => {
+  const fresh = parseParsedJson(JSON.stringify({ ...RESUME, experience: [{ title: 'RN', company: 'General', location: '', dates: '', bullets: ['Triage', 'Charting'] }], sectionOrder: ['education', 'experience'] }))
+
+  test('a parse with extra sections but no order keeps its own content and takes only the fresh order', () => {
+    const cached = { ...RESUME, experience: [{ title: 'RN', company: 'General', location: '', dates: '', bullets: ['Triage and charting'] }], otherSections: [] } as unknown as ParsedResume
+    const up = upgradedParse(cached, fresh)
+    expect(up.experience).toEqual(cached.experience)
+    expect(up.sectionOrder).toEqual(['summary', 'education', 'experience'])
+    expect(isCurrentParse(up)).toBe(true)
+  })
+
+  test('a parse from before extra sections, or none, is replaced by the fresh one', () => {
+    expect(upgradedParse({ ...RESUME } as unknown as ParsedResume, fresh)).toBe(fresh)
+    expect(upgradedParse(undefined, fresh)).toBe(fresh)
   })
 })

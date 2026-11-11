@@ -2,7 +2,7 @@ import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2'
 import { handleCors, json } from '../_shared/cors.ts'
 import { heartbeatJson } from '../_shared/heartbeat-json.ts'
 import { decrypt, encrypt, sameCiphertext } from '../_shared/encrypt.ts'
-import { isCurrentParse, isValidParsedResume, parseResumeStructure, type ParsedResume } from '../_shared/resume-parse.ts'
+import { isCurrentParse, isValidParsedResume, parseResumeStructure, type ParsedResume, upgradedParse } from '../_shared/resume-parse.ts'
 import { readBody } from '../_shared/read-body.ts'
 
 const SUPABASE_URL        = Deno.env.get('SUPABASE_URL')!
@@ -142,8 +142,8 @@ Deno.serve(async (req) => {
       if (error) return json({ error: 'Failed to save resume' }, 500)
       if (!wantParse) return json({ success: true })
       const cached = await readParse(previous!.structured_encrypted)
-      if (cached) return json({ success: true, structured: cached })
-      return heartbeatJson('resume', 'Resume parse failed', async () => ({ success: true, structured: await parseNow(supabase, userId, text, previous!.text_encrypted) }))
+      if (isCurrentParse(cached)) return json({ success: true, structured: cached })
+      return heartbeatJson('resume', 'Resume parse failed', async () => ({ success: true, structured: await parseNow(supabase, userId, text, previous!.text_encrypted, cached) }))
     }
 
     let text_encrypted: string
@@ -178,21 +178,23 @@ Deno.serve(async (req) => {
   return json({ error: 'Method not allowed' }, 405)
 })
 
-// A cached parse, or null when it's missing, unreadable or from before otherSections or sectionOrder.
+// A cached parse, or null when it's missing or unreadable. It may predate
+// otherSections or sectionOrder: isCurrentParse says.
 async function readParse(encrypted: string | null): Promise<ParsedResume | null> {
   if (!encrypted) return null
   try {
     const decoded = JSON.parse(await decrypt(encrypted))
-    return isValidParsedResume(decoded) && isCurrentParse(decoded) ? decoded : null
+    return isValidParsedResume(decoded) ? decoded : null
   } catch {
     return null
   }
 }
 
 // Parses the resume and caches it, the same way tailor does on first use.
+// An old cached parse of the same text is upgraded rather than replaced.
 // Only writes if the stored text is still the text it parsed. A failure, or
 // an account over its parse limit, returns null and leaves the parse to tailor.
-async function parseNow(supabase: SupabaseClient, userId: string, text: string, textEncrypted: string): Promise<ParsedResume | null> {
+async function parseNow(supabase: SupabaseClient, userId: string, text: string, textEncrypted: string, cached?: ParsedResume | null): Promise<ParsedResume | null> {
   try {
     // The scrape limiter's counter, keyed by a hash of the account instead of
     // the IP (the table holds only 64-character hex keys).
@@ -204,7 +206,7 @@ async function parseNow(supabase: SupabaseClient, userId: string, text: string, 
       p_per_day: PARSES_PER_DAY,
     })
     if (error || !allowed) return null
-    const structured = await parseResumeStructure(text, ANTHROPIC_API_KEY)
+    const structured = upgradedParse(cached, await parseResumeStructure(text, ANTHROPIC_API_KEY))
     const structured_encrypted = await encrypt(JSON.stringify(structured))
     const { error: saveError } = await supabase.from('resumes').update({ structured_encrypted })
       .eq('user_id', userId).like('text_encrypted', sameCiphertext(textEncrypted))

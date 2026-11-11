@@ -2,7 +2,7 @@
 // service worker so it survives the popup closing, and the tailor's choice of
 // layout. The edit itself is lib/pdf/docx-design.ts, shared with the website.
 import { checkedTier, ensureValidSession, uploadDesignFileToBackend, uploadResumeToBackend, type TailorDesign } from './auth'
-import { isCurrentParse, parseResumeStructure } from './ai/resume-parse'
+import { isCurrentParse, parseResumeStructure, upgradedParse } from './ai/resume-parse'
 import { decryptApiKey } from './crypto'
 import { designUsable, downloadDesignDocx, tailorDesign } from './pdf/docx-design'
 import { getCachedTier, getDesignFile, getResume, getSettings, resolveMode, saveDesignFile, saveResume } from './storage'
@@ -75,7 +75,7 @@ export async function checkUploadedDesign(hash: string): Promise<void> {
       // from it still place their text the same way.
       parsed = file.parsed ?? (isCurrentParse(resume.parsed)
         ? resume.parsed
-        : await parseResumeStructure(resume.text, settings.provider, await decryptApiKey(settings.apiKey)))
+        : upgradedParse(resume.parsed, await parseResumeStructure(resume.text, settings.provider, await decryptApiKey(settings.apiKey))))
     }
 
     const { check } = await tailorDesign(fromBase64(file.data), parsed!)

@@ -193,15 +193,15 @@ describe('tailor', () => {
     expect((await prompts()).filter(isParse)).toHaveLength(0)
   })
 
-  it("keeps a cached parse from before sectionOrder for the user's own design, which the file was checked against", async () => {
+  it('a cached parse from before sectionOrder keeps its content and takes only the order, so a Word design checked against it still lines up', async () => {
     user = await createUser()
     await uploadResume(user)
     const { sectionOrder: _o, ...old } = MOCK_PARSED_RESUME
-    await cacheParsedResume(user.id, old)
-    await mockClaude.reset()
-    await callFunction('tailor', { token: user.token, body: { job: JOB, layout: 'yours', fellBack: false, sourceHash: 'f'.repeat(64) } })
-    const prompts = (await mockClaude.requests()).map((r) => r.messages[0].content)
-    expect(prompts.filter((p) => p.startsWith('You are a resume parser'))).toHaveLength(0)
+    const education = [{ ...old.education[0], institution: 'State University of Somewhere' }]
+    await cacheParsedResume(user.id, { ...old, education })
+    const { resume } = await (await callFunction('tailor', { token: user.token, body: { job: JOB } })).json()
+    expect(resume.education).toEqual(education)
+    expect(resume.sectionOrder).toEqual(['summary', 'experience', 'other', 'education', 'skills'])
   })
 
   it('streams NDJSON start, delta and done events when asked', async () => {
