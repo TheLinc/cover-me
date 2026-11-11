@@ -303,16 +303,26 @@ const SMALL_WORDS = new Set(['a', 'an', 'and', 'as', 'at', 'by', 'for', 'in', 'o
  * letter (SQL, PowerPoint, GitHub) or a dot (Node.js) is never touched, nor
  * is one the resume or posting capitalizes mid-sentence and never writes in
  * lowercase (the "Power" in "built dashboards in Power BI"), nor an item the
- * resume or posting writes exactly that way ("Google Analytics").
+ * resume or posting writes exactly that way ("Google Analytics"). Neither is a
+ * word written beside its neighbour as the resume or posting writes the pair
+ * ("Power BI" in "Microsoft Power BI"), a lowercase name they never capitalize
+ * ("dbt"), or anything in parentheses ("Data visualization (Tableau)").
+ * ponytail: a name only ever at the start of a sentence reads as an ordinary
+ * word; a list of known product names is the upgrade.
  */
 export function matchSkillCase(skills: string | undefined, ownSkills: string | undefined, sources: string): string | undefined {
   if (!skills || !ownSkills) return skills
+  const has = (re: string) => new RegExp(re).test(sources)
+  const word = (w: string) => `${escapeRe(w)}(?![A-Za-z0-9])`
   const keepsCase = (w: string): boolean => {
     if (w.length === 1 || /[A-Z.]/.test(w.slice(1))) return true
     const low = w.toLowerCase()
     const cap = low[0].toUpperCase() + low.slice(1)
-    return new RegExp(`\\b[a-z]+ ${escapeRe(cap)}\\b`).test(sources) && !new RegExp(`\\b${escapeRe(low)}\\b`).test(sources)
+    return has(`(?:(?<![A-Za-z])[a-z0-9]+ |[,;&/•*-] |\\()${word(cap)}`) && !has(`(?<![A-Za-z0-9])${word(low)}`)
   }
+  const keepsLower = (w: string) => w === w.toLowerCase() && has(`(?<![A-Za-z0-9])${word(w)}`) && !has(`(?<![A-Za-z0-9])${word(w[0].toUpperCase() + w.slice(1))}`)
+  const inSources = (s: string) => has(`(^|[^A-Za-z0-9])${escapeRe(s)}($|[^A-Za-z0-9])`)
+  const inParens = (s: string) => s.split('(').length > s.split(')').length
   // Every word of an item with its position: first, small (and, of), or other.
   const wordsOf = (item: string) => [...item.matchAll(/[A-Za-z][A-Za-z'.]*[A-Za-z]|[A-Za-z]/g)].map((m, i) => ({ m, first: i === 0, small: i > 0 && SMALL_WORDS.has(m[0].toLowerCase()) }))
   const own = splitSkills(ownSkills)
@@ -331,12 +341,14 @@ export function matchSkillCase(skills: string | undefined, ownSkills: string | u
   const recase = (w: string, to: 'up' | 'low' | undefined) => (to === 'up' ? w[0].toUpperCase() + w.slice(1) : to === 'low' ? w.toLowerCase() : w)
   return splitSkills(skills)
     .map((item) => {
-      if (own.includes(item) || new RegExp(`(^|[^A-Za-z0-9])${escapeRe(item)}($|[^A-Za-z0-9])`).test(sources)) return item
+      if (own.includes(item) || inSources(item)) return item
+      const ws = wordsOf(item)
+      const pairWritten = (a?: (typeof ws)[number], b?: (typeof ws)[number]) => !!a && !!b && inSources(item.slice(a.m.index, b.m.index! + b.m[0].length))
       let out = item
-      for (const { m, first, small } of wordsOf(item)) {
-        if (small || keepsCase(m[0])) continue
+      ws.forEach(({ m, first, small }, k) => {
+        if (small || keepsCase(m[0]) || keepsLower(m[0]) || inParens(item.slice(0, m.index)) || pairWritten(ws[k - 1], ws[k]) || pairWritten(ws[k], ws[k + 1])) return
         out = out.slice(0, m.index) + recase(m[0], first ? firstStyle : restStyle) + out.slice(m.index! + m[0].length)
-      }
+      })
       return out
     })
     .join(', ')
@@ -518,7 +530,8 @@ SOURCE LINE (the original this came from; use only its facts): ${sources.get(id)
 OTHER LINES ALREADY ON THE RESUME FOR THIS ROLE (never repeat their facts):
 ${others.map((b) => `- ${b}`).join('\n')}`
   })
-  return `RESUME LINE REWRITE. These lines from a tailored resume claim more than the candidate's original resume supports. Rewrite each one to remove the named problem.
+  return `RESUME LINE REWRITE. These lines from a tailored resume claim more than the candidate's original resume supports, or are in the wrong tense. Rewrite each one to remove the named problem.
+- A line whose only problem is its tense has itself as its SOURCE LINE: change only the verb tense and keep every other word.
 - Use only the facts in its SOURCE LINE (for the summary, the original resume lines). Never bring in facts from the other lines listed: they are already on the resume, and repeating them duplicates it.
 - Remove the problem without adding anything new: no new clause, outcome, purpose, or qualifier, not even a general one ("to ensure...", "maintaining...", "...across all X").
 - Keep every number exactly as the source states it; add none. In the summary, leave out counts of years.
@@ -571,11 +584,14 @@ function usableRewrite(text: string, source: string, siblings: string[]): boolea
 // Irregular past forms a bullet can open with; the rest end in -ed.
 // ponytail: an -ed adjective opener ("Advanced Excel models...") reads as past
 // tense, and a noun opener ("Member of...") as present. Either only costs a
-// rewrite that keeps the facts; a word list per tense is the upgrade.
-const IRREGULAR_PAST = new Set(['ran', 'led', 'built', 'rebuilt', 'grew', 'wrote', 'made', 'won', 'drove', 'took', 'began', 'brought', 'taught', 'sold', 'bought', 'spent', 'kept', 'held', 'oversaw', 'gave', 'met', 'sent', 'chose', 'became', 'drew', 'undertook', 'spoke', 'stood', 'sought', 'thought', 'felt', 'dealt', 'left', 'lost', 'paid', 'told', 'found', 'flew', 'rode', 'rose', 'struck', 'understood', 'upheld', 'oversold'])
+// rewrite that changes the tense alone; a word list per tense is the upgrade.
+const IRREGULAR_PAST = new Set(['ran', 'led', 'built', 'rebuilt', 'grew', 'wrote', 'rewrote', 'made', 'won', 'drove', 'took', 'began', 'brought', 'taught', 'sold', 'bought', 'spent', 'kept', 'held', 'oversaw', 'gave', 'met', 'sent', 'chose', 'became', 'drew', 'undertook', 'spoke', 'stood', 'sought', 'thought', 'felt', 'dealt', 'left', 'lost', 'paid', 'told', 'found', 'flew', 'rode', 'rose', 'struck', 'understood', 'upheld', 'oversold', 'saw', 'caught', 'spun', 'got', 'knew', 'fought', 'overcame', 'withdrew', 'overtook', 'outsold', 'did', 'redid', 'went', 'broke', 'heard', 'meant', 'swept', 'dug', 'stuck', 'arose', 'threw', 'wound', 'hung', 'shot'])
 // Spelled the same in both tenses, or -ed words that aren't past forms: neither.
 const EITHER_TENSE = new Set(['cut', 'set', 'put', 'hit', 'let', 'shut', 'spread', 'upset', 'quit', 'read', 'cost', 'beat', 'bid', 'broadcast', 'forecast', 'embed', 'shed'])
-const CURRENT_DATES = /\b(present|current|now|ongoing|today)\b/i
+// An earlier role's dates end in a year ("2019 – 2022", "Mar 2020 - Jun 2022").
+// Anything else ("– Present", "– Till date", "Since 2022", an open "2022 –")
+// may be the current role, which is left alone.
+const isEarlierRole = (dates: string) => /(19|20)\d\d\s*$/.test(dates) && !/\b(since|from)\b/i.test(dates)
 
 /**
  * Present-tense bullets in an earlier role (#198), with the fix as the reason:
@@ -588,10 +604,12 @@ const CURRENT_DATES = /\b(present|current|now|ongoing|today)\b/i
 export function mixedTenseLines(r: Groundable): Map<LineId, string> {
   const flags = new Map<LineId, string>()
   r.experience.forEach((role, i) => {
-    if (!role.dates?.trim() || CURRENT_DATES.test(role.dates)) return
+    if (!role.dates || !isEarlierRole(role.dates.trim())) return
     const tenses = role.bullets.map((b) => {
-      const word = /^\s*([A-Za-z]+)(\S*)/.exec(b)
-      const w = word?.[1].toLowerCase()
+      // The verb after a prefix ("Co-led") or a leading adverb ("Successfully migrated").
+      const word = /^\s*(?:(?:co|re|pre)-)?([A-Za-z]+)(\S*)(?:\s+([A-Za-z]+))?/i.exec(b)
+      let w = word?.[1].toLowerCase()
+      if (w && /ly$/.test(w) && !word![2] && word![3]) w = word![3].toLowerCase()
       if (!w || word![2].startsWith(':') || /ing$/.test(w) || EITHER_TENSE.has(w)) return undefined
       return IRREGULAR_PAST.has(w) || (/[a-z]ed$/.test(w) && !/eed$/.test(w)) ? 'past' : 'other'
     })
@@ -658,7 +676,10 @@ export async function checkAndRewriteLines<T extends Groundable>(
 
   let rewrites = new Map<LineId, string>()
   try {
-    rewrites = parseLineRewrites(await ask(buildLineRewritePrompt(original, tailored, flags, jobDescription, sources)))
+    // A tense-only line is its own source, so the rewrite keeps its tailoring.
+    const promptSources = new Map(sources)
+    for (const id of tense.keys()) if (tenseOnly(id)) promptSources.set(id, lineAt(tailored, id)!)
+    rewrites = parseLineRewrites(await ask(buildLineRewritePrompt(original, tailored, flags, jobDescription, promptSources)))
   } catch {
     // Rewrite unavailable: every flagged line reverts below.
   }
@@ -675,7 +696,8 @@ export async function checkAndRewriteLines<T extends Groundable>(
         const source = sources.get(ids[k])
         const text = rewrites.get(ids[k])
         const siblings = [...bullets, ...entry.bullets.slice(k + 1).filter((_, j) => !flags!.has(ids[k + 1 + j]))]
-        if (text && source && usableRewrite(text, tenseOnly(ids[k]) ? `${source} ${b}` : source, siblings)) {
+        const allowed = tenseOnly(ids[k]) ? `${source ?? ''} ${b}` : source
+        if (text && allowed && usableRewrite(text, allowed, siblings)) {
           rewritten++
           bullets.push(text)
         } else if (tenseOnly(ids[k])) {

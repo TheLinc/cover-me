@@ -98,8 +98,9 @@ const SENTENCE_SHAPES: Array<[RegExp, string]> = [
 
 // A closing that sums the applicant up recaps the letter. All three recaps
 // in the 2026-11-11 run opened "I bring..." (#198); a list of three alone is
-// no sign ("free Monday, Tuesday or Thursday").
-const RECAP_RE = /\bI (?:bring|offer)\b|\bmy (?:mix|combination|blend) of\b|\bmy (?:experience|background|skills) (?:in|with|across)\b/i
+// no sign ("free Monday, Tuesday or Thursday"), and neither is "my experience
+// with X", which is how the close names the work to talk through.
+const RECAP_RE = /\bI (?:bring|offer)\b|\bmy (?:mix|combination|blend) of\b/i
 
 // What makes an opening sentence about someone: a person, a figure, or a name
 // (a capitalized word after the first, like "Ferris" or the employer's).
@@ -263,7 +264,9 @@ export function lintLetter(
   }
   // A maxim opens with a general truth about no one: no person, name or figure.
   const firstSentence = body.split(SENTENCE_END)[0] ?? ''
-  const namesEmployer = !!opts.companyName && containsPhrase(firstSentence, opts.companyName)
+  // Letters often use the short name: "Stackhouse" for "Stackhouse Ventures".
+  const shortName = opts.companyName?.split(/\s+/).find((w) => !/^(the|a|an)$/i.test(w))
+  const namesEmployer = !!opts.companyName && (containsPhrase(firstSentence, opts.companyName) || (!!shortName && containsWord(firstSentence, shortName)))
   if (firstSentence && !ANCHORED_RE.test(firstSentence) && !NAMED_RE.test(firstSentence) && !namesEmployer) {
     violations.push(`Opens with a general maxim ("${firstSentence.trim()}") — open with something the applicant did, or with the employer's own situation.`)
   }

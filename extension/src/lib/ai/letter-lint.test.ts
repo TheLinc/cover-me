@@ -145,6 +145,13 @@ describe('templated sentence shapes', () => {
     'At U.S. Bank I rebuilt the reconciliation ledger.',
     'Last year Ferris cut checkout latency by half after the rebuild.',
   ])('maxim opener leaves alone: %s', (s) => expect(flagged('Opens with a general maxim', s)).toBe(false))
+  test('maxim opener accepts the employer by its short name', () => {
+    const opens = (companyName: string, s: string) =>
+      lintLetter(letter(s, opener), { companyName }).violations.some((v) => v.startsWith('Opens with a general maxim'))
+    expect(opens('Stackhouse Ventures', 'Stackhouse needs someone who can take a venture from idea to first revenue.')).toBe(false)
+    expect(opens('The Acme Corp', 'Acme is hiring a data engineer.')).toBe(false)
+    expect(opens('Stackhouse Ventures', 'Good onboarding is mostly about removing steps.')).toBe(true)
+  })
 
   // The three recaps in the 2026-11-11 run opened with "I bring" (#198).
   test.each([
@@ -155,5 +162,7 @@ describe('templated sentence shapes', () => {
     'If it helps, I can walk you through the Halcyon migration, what worked and what I would change. Could we talk next week?',
     'Next week, my manager and I start a pilot. Could we talk before then?',
     'I am free Monday, Tuesday or Thursday, and I can bring the migration plan to a first call.',
+    'I would welcome the chance to walk you through my experience with the Ferris migration.',
+    'If useful, I can share my background in clinical audits. Could we talk next week?',
   ])('closing recap leaves alone: %s', (close) => expect(flagged('The closing', opener, close)).toBe(false))
 })

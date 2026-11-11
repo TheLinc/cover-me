@@ -204,10 +204,11 @@ export function checkTailored(out: TailoredResume, c: EvalCase, input: ParsedRes
     }
   }
 
-  // One tense per role: the line check fixes mixed roles, so any left are misses.
+  // One tense per earlier role: the line check fixes mixed roles, so any left
+  // are misses, or a noun opener ("Member of...") the heuristic reads as present.
   for (const [id] of mixedTenseLines(out)) {
     const [, role, bullet] = /^e(\d+)b(\d+)$/.exec(id)!
-    result.failures.push(`experience[${role}] mixes tenses: "${out.experience[+role].bullets[+bullet]}"`)
+    result.warnings.push(`experience[${role}] mixes tenses: "${out.experience[+role].bullets[+bullet]}"`)
   }
 
   // Summary shape.

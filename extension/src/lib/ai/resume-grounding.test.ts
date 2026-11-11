@@ -302,6 +302,26 @@ describe('mixed tense within a role', () => {
     expect(mixedTenseLines({ experience: [odd, undated] }).size).toBe(0)
   })
 
+  test.each(['Mar 2022 – Till date', 'Mar 2022 –', 'Since 2022', '2022 to date', 'Jan 2023 - Presently'])(
+    'a role dated "%s" may be current and is left alone', (dates) => {
+      expect(mixedTenseLines({ experience: [{ ...earlier, dates, bullets: ['Built the report', 'Manage 6 people'] }] }).size).toBe(0)
+    })
+
+  test('reads past tense after a prefix or a leading adverb, and irregular forms', () => {
+    const bullets = ['Built the report', 'Co-led the migration', 'Re-architected the ETL', 'Rewrote the billing service', 'Spun up a team', 'Saw a 30% lift', 'Caught 12 billing errors', 'Successfully migrated 40 clients', 'Manage the vendor list']
+    expect([...mixedTenseLines({ experience: [{ ...earlier, bullets }] }).keys()]).toEqual(['e0b8'])
+  })
+
+  test('a tense-only line is sent as its own source, so the rewrite keeps its tailoring', async () => {
+    const prompts: string[] = []
+    const tailoredLine = 'Manage supplier onboarding for 12 vendors'
+    const replies = ['{"flags": [], "summary": null}', JSON.stringify({ rewrites: [{ id: 'e0b1', text: 'Managed supplier onboarding for 12 vendors' }] })]
+    const tailored = { experience: [{ ...earlier, bullets: [earlier.bullets[0], tailoredLine, earlier.bullets[2]] }] }
+    const { resume } = await checkAndRewriteLines(tailored, { experience: [earlier] }, posting, async (p) => (prompts.push(p), replies.shift()!))
+    expect(prompts[1]).toContain(`SOURCE LINE (the original this came from; use only its facts): ${tailoredLine}`)
+    expect(resume.experience[0].bullets[1]).toBe('Managed supplier onboarding for 12 vendors')
+  })
+
   test('the line check rewrites flagged bullets even when the model flags nothing', async () => {
     const prompts: string[] = []
     const replies = ['{"flags": [], "summary": null}', JSON.stringify({ rewrites: [{ id: 'e0b1', text: 'Managed the vendor list for 12 suppliers' }] })]
@@ -343,6 +363,15 @@ describe('matchSkillCase', () => {
   test('product names written that way in the resume or posting, and dotted names, keep their casing', () => {
     const posting = 'Track campaigns in Google Analytics. Our stack is Node.js.'
     expect(matchSkillCase('Google Analytics, Node.js, Web Analytics', 'Unit economics, Financial modeling', posting)).toBe('Google Analytics, Node.js, Web analytics')
+  })
+
+  test('multi-word names, lowercase names and names in parentheses keep the casing the posting uses', () => {
+    const posting = 'You will build models in dbt and Google Sheets.\nTools:\n- Tableau\n- Salesforce\nPower BI for power users.'
+    expect(matchSkillCase('Google Sheets formulas, Microsoft Power BI, dbt models', 'Unit economics, Financial modeling', posting))
+      .toBe('Google Sheets formulas, Microsoft Power BI, dbt models')
+    expect(matchSkillCase('Data Visualization (Tableau), Salesforce Administration', 'data quality, stakeholder reporting', posting))
+      .toBe('data visualization (Tableau), Salesforce administration')
+    expect(matchSkillCase('Data modeling (dbt)', 'Financial Modeling, Unit Economics', posting)).toBe('Data Modeling (dbt)')
   })
 
   test('the resume\'s own items keep their casing, and a list with no style signal is left alone', () => {
