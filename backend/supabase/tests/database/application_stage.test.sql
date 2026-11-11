@@ -25,9 +25,8 @@ select throws_ok(
   '23514', null, 'the CHECK rejects a stage outside the four'
 );
 
--- 029 dropped the old "got an interview" column once stages replaced it.
 select hasnt_column('public', 'job_applications', 'interview_at',
-  'the old interview_at column is gone');
+  'the old interview_at column is gone (029)');
 
 -- RLS: Alice can't move Bob's application.
 set local role authenticated;
