@@ -285,6 +285,18 @@ describe('mixed tense within a role', () => {
     expect(mixedTenseLines({ experience: [pastCurrent, { ...earlier, bullets: ['Built the report', 'Led onboarding'] }] }).size).toBe(0)
   })
 
+  test('flags the odd one out when most of a role is in the other tense', () => {
+    const pastCurrent = { ...current, bullets: ['Ran workshops for 40 founders', 'Organized demo days', 'Responsible for a $2M budget'] }
+    const flags = mixedTenseLines({ experience: [pastCurrent] })
+    expect([...flags.keys()]).toEqual(['e0b2'])
+    expect(flags.get('e0b2')).toContain('past tense')
+  })
+
+  test('verbs spelled the same in both tenses count as neither', () => {
+    const role = { ...earlier, bullets: ['Grew riders from 150 to 1,100', 'Cut onboarding from 9 days to 3', 'Set up 2 new cities'] }
+    expect(mixedTenseLines({ experience: [role] }).size).toBe(0)
+  })
+
   test('ignores "Tech:" lines, -ing openers, numbers and roles without dates', () => {
     const odd = { ...earlier, bullets: ['Built the weekly report', 'Tech: SQL, Looker', 'Managing 12 suppliers', '40+ vendor audits a year'] }
     const undated = { title: 'Volunteer', bullets: ['Built a food bank roster', 'Run the Saturday shift'] }
@@ -327,6 +339,11 @@ describe('matchSkillCase', () => {
   test('lowercase list: added skills go lowercase, acronyms and product names stay', () => {
     expect(matchSkillCase('Data Dictionaries, data quality, SQL, Power BI, PowerPoint, GitHub', 'data quality, stakeholder reporting', sources))
       .toBe('data dictionaries, data quality, SQL, Power BI, PowerPoint, GitHub')
+  })
+
+  test('product names written that way in the resume or posting, and dotted names, keep their casing', () => {
+    const posting = 'Track campaigns in Google Analytics. Our stack is Node.js.'
+    expect(matchSkillCase('Google Analytics, Node.js, Web Analytics', 'Unit economics, Financial modeling', posting)).toBe('Google Analytics, Node.js, Web analytics')
   })
 
   test('the resume\'s own items keep their casing, and a list with no style signal is left alone', () => {

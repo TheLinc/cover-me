@@ -99,9 +99,10 @@ describe('templated sentence shapes', () => {
     'That is data onboarding in practice.',
     'This is what worker activation looks like in practice.',
   ])('label: %s', (s) => expect(flagged('Labels', opener, s)).toBe(true))
-  test('label leaves "put into practice" alone', () => {
-    expect(flagged('Labels', opener, 'I put that plan into practice across three warehouses.')).toBe(false)
-  })
+  test.each([
+    'I put that plan into practice across three warehouses.',
+    'This is my eighth year in practice as a family physician.',
+  ])('label leaves alone: %s', (s) => expect(flagged('Labels', opener, s)).toBe(false))
 
   test.each([
     'Documentation is a habit for me, not an afterthought.',
@@ -121,12 +122,15 @@ describe('templated sentence shapes', () => {
   })
 
   test('numbers: flags a paragraph stacking five figures', () => {
-    const stacked = 'I grew riders from 150 to 1,100 in 2024, cut churn 30% and onboarded 12 cities.'
+    const stacked = 'I grew riders from 150 to 1,100 across 3 regions, cut churn 30% and onboarded 12 cities.'
     expect(flagged('Paragraph 2 has 5 figures', opener, stacked)).toBe(true)
   })
   test('numbers: two achievements with a from-to each pass', () => {
     const two = 'I grew riders from 150 to 1,100. Later I cut page load from 1.2s to 400ms.'
     expect(flagged('Paragraph', opener, two)).toBe(false)
+  })
+  test('numbers: years are dates, not figures', () => {
+    expect(flagged('Paragraph', opener, 'From 2019 to 2023 I grew riders from 150 to 1,100 and launched 2 cities.')).toBe(false)
   })
 
   test.each([
@@ -137,14 +141,18 @@ describe('templated sentence shapes', () => {
     'Acme is rebuilding its data pipeline, and that is work I have done twice.',
     'Six years on a med-surg unit taught me to spot a patient sliding before the monitor does.',
     'Your onboarding funnel loses most riders in week one.',
+    'At U.S. Bank I rebuilt the reconciliation ledger.',
+    'Last year Ferris cut checkout latency by half after the rebuild.',
   ])('maxim opener leaves alone: %s', (s) => expect(flagged('Opens with a general maxim', s)).toBe(false))
 
-  test('closing recap: flags a list of skills in the last paragraph', () => {
-    const close = 'My data quality work, documentation habits and stakeholder skills fit Acme well. I would like to talk.'
-    expect(flagged('The closing paragraph', opener, close)).toBe(true)
-  })
-  test('closing recap leaves a two-part offer alone', () => {
-    const close = 'If it helps, I can walk you through the Halcyon migration, what worked and what I would change. Could we talk next week?'
-    expect(flagged('The closing paragraph', opener, close)).toBe(false)
-  })
+  // The three recaps in the 2026-11-11 run opened with "I bring" (#198).
+  test.each([
+    'I bring data profiling, SQL and data modeling, plus a habit of writing down what I find. Could we talk this month?',
+    'My mix of onboarding work and unit economics fits Acme well. Can we set up a call?',
+  ])('closing recap: %s', (close) => expect(flagged('The closing', opener, close)).toBe(true))
+  test.each([
+    'If it helps, I can walk you through the Halcyon migration, what worked and what I would change. Could we talk next week?',
+    'Next week, my manager and I start a pilot. Could we talk before then?',
+    'I am free Monday, Tuesday or Thursday, and I can bring the migration plan to a first call.',
+  ])('closing recap leaves alone: %s', (close) => expect(flagged('The closing', opener, close)).toBe(false))
 })

@@ -88,7 +88,7 @@ const POSTING_ECHO = [
 const SENTENCE_SHAPES: Array<[RegExp, string]> = [
   [/\bis simple:|\bmy (?:single )?(?:strongest|biggest|best|top) qualification\b/i,
     'Announces its point ("My strongest qualification is simple:") — make the point directly, in a sentence about what the applicant did.'],
-  [/\b(?:that|this) is [^.!?]{1,60}? in practice\b/i,
+  [/\b(?:that|this) is [^.!?]{1,60}? in practice[.!]/i,
     'Labels the experience after describing it ("That is data onboarding in practice") — cut the label; the example already makes the point.'],
   [/, not (?:a|an) [\w-]+(?: [\w-]+)?[.!]|\bnot just\b[^.!?]{1,60}\bbut\b/i,
     'Uses an "X, not Y" contrast ("a habit for me, not an afterthought") — state the point once, directly.'],
@@ -96,14 +96,20 @@ const SENTENCE_SHAPES: Array<[RegExp, string]> = [
     'Tells the reader about a trait ("is a habit for me") — show it with what the applicant did instead.'],
 ]
 
-// A closing that lists three or more things ("my data quality work,
-// documentation habits and stakeholder skills") recaps the letter.
-const RECAP_RE = /(?:^|[\s(])(?!(?:what|how|why|when|where|who|i|we|you|it)\b)[A-Za-z][\w-]*(?: [\w-]+){0,2}, (?!(?:what|how|why|when|where|who|i|we|you|it)\b)[\w-]+(?: [\w-]+){0,2},? (?:and|or) [\w-]+/i
+// A closing that sums the applicant up recaps the letter. All three recaps
+// in the 2026-11-11 run opened "I bring..." (#198); a list of three alone is
+// no sign ("free Monday, Tuesday or Thursday").
+const RECAP_RE = /\bI (?:bring|offer)\b|\bmy (?:mix|combination|blend) of\b|\bmy (?:experience|background|skills) (?:in|with|across)\b/i
 
-// What makes an opening sentence about someone: a person, the employer, a figure.
+// What makes an opening sentence about someone: a person, a figure, or a name
+// (a capitalized word after the first, like "Ferris" or the employer's).
 const ANCHORED_RE = /\b(?:i|i'm|i've|i'd|me|my|we|our|us|you|your)\b|\d/i
+const NAMED_RE = /\s[A-Z]/
 
-const SIGN_OFF_RE =/^(kind regards|sincerely|best regards|respectfully)[,.]?$/i
+// Sentence ends, but not after an initial or a title ("U.S. Bank", "Dr. Ruiz").
+const SENTENCE_END = /(?<=(?<!\b(?:[A-Z]|Dr|Mr|Mrs|Ms|St|Jr|Sr|Inc|Ltd|Co|vs|No))[.!?])\s+/
+
+const SIGN_OFF_RE = /^(kind regards|sincerely|best regards|respectfully)[,.]?$/i
 const EMAIL_RE = /\b[\w.+-]+@[\w-]+\.\w{2,}\b/
 const PHONE_RE = /(\+?\d[\d ().-]{8,}\d)/
 const MARKDOWN_RE = /(\*\*|^#{1,6}\s|^[-*]\s|\[.+?\]\(.+?\))/m
@@ -254,20 +260,21 @@ export function lintLetter(
   for (const [re, message] of SENTENCE_SHAPES) {
     if (re.test(body)) violations.push(message)
   }
-  // A maxim opens with a general truth about no one: no person, no employer, no figure.
-  const firstSentence = body.split(/(?<=[.!?])\s+/)[0] ?? ''
+  // A maxim opens with a general truth about no one: no person, name or figure.
+  const firstSentence = body.split(SENTENCE_END)[0] ?? ''
   const namesEmployer = !!opts.companyName && containsPhrase(firstSentence, opts.companyName)
-  if (firstSentence && !ANCHORED_RE.test(firstSentence) && !namesEmployer) {
+  if (firstSentence && !ANCHORED_RE.test(firstSentence) && !NAMED_RE.test(firstSentence) && !namesEmployer) {
     violations.push(`Opens with a general maxim ("${firstSentence.trim()}") — open with something the applicant did, or with the employer's own situation.`)
   }
   paragraphs.forEach((p, i) => {
-    const figures = extractNumbers(p).length
+    // Years are dates, not figures.
+    const figures = extractNumbers(p).filter((n) => !/^(19|20)\d\d$/.test(n.norm)).length
     if (figures > 4) {
       violations.push(`Paragraph ${i + 1} has ${figures} figures — keep the one number that matters most for each achievement, at most four in a paragraph.`)
     }
   })
   if (paragraphs.length > 1 && RECAP_RE.test(lastPara)) {
-    violations.push('The closing paragraph lists three or more things, a recap of the letter — end with one specific reason to talk and a request for a conversation.')
+    violations.push('The closing sums up what the applicant brings, a recap of the letter — end with one specific thing to talk about and a request for a conversation.')
   }
 
   if (opts.companyName && opts.companyName !== 'Unknown Company') {

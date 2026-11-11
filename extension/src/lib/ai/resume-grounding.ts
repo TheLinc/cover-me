@@ -300,25 +300,26 @@ const SMALL_WORDS = new Set(['a', 'an', 'and', 'as', 'at', 'by', 'for', 'in', 'o
  * Added skills in the casing of the resume's own skills list (#198): "Founder
  * Coaching" beside "Unit economics" becomes "Founder coaching". Items already
  * in the resume's list keep their casing. A word with a capital past its first
- * letter (SQL, PowerPoint, GitHub) is never touched, nor is one the resume or
- * posting capitalizes mid-sentence and never writes in lowercase (the "Power"
- * in "built dashboards in Power BI").
+ * letter (SQL, PowerPoint, GitHub) or a dot (Node.js) is never touched, nor
+ * is one the resume or posting capitalizes mid-sentence and never writes in
+ * lowercase (the "Power" in "built dashboards in Power BI"), nor an item the
+ * resume or posting writes exactly that way ("Google Analytics").
  */
 export function matchSkillCase(skills: string | undefined, ownSkills: string | undefined, sources: string): string | undefined {
   if (!skills || !ownSkills) return skills
-  const fixed = (w: string): boolean => {
-    if (w.length === 1 || /[A-Z]/.test(w.slice(1))) return true
+  const keepsCase = (w: string): boolean => {
+    if (w.length === 1 || /[A-Z.]/.test(w.slice(1))) return true
     const low = w.toLowerCase()
     const cap = low[0].toUpperCase() + low.slice(1)
     return new RegExp(`\\b[a-z]+ ${escapeRe(cap)}\\b`).test(sources) && !new RegExp(`\\b${escapeRe(low)}\\b`).test(sources)
   }
   // Every word of an item with its position: first, small (and, of), or other.
-  const wordsOf = (item: string) => [...item.matchAll(/[A-Za-z][A-Za-z']*/g)].map((m, i) => ({ m, first: i === 0, small: i > 0 && SMALL_WORDS.has(m[0].toLowerCase()) }))
+  const wordsOf = (item: string) => [...item.matchAll(/[A-Za-z][A-Za-z'.]*[A-Za-z]|[A-Za-z]/g)].map((m, i) => ({ m, first: i === 0, small: i > 0 && SMALL_WORDS.has(m[0].toLowerCase()) }))
   const own = splitSkills(ownSkills)
   let firstUp = 0, firstLow = 0, restUp = 0, restLow = 0
   for (const item of own) {
     for (const { m, first, small } of wordsOf(item)) {
-      if (small || fixed(m[0])) continue
+      if (small || keepsCase(m[0])) continue
       const up = /^[A-Z]/.test(m[0])
       if (first) up ? firstUp++ : firstLow++
       else up ? restUp++ : restLow++
@@ -330,10 +331,10 @@ export function matchSkillCase(skills: string | undefined, ownSkills: string | u
   const recase = (w: string, to: 'up' | 'low' | undefined) => (to === 'up' ? w[0].toUpperCase() + w.slice(1) : to === 'low' ? w.toLowerCase() : w)
   return splitSkills(skills)
     .map((item) => {
-      if (own.includes(item)) return item
+      if (own.includes(item) || new RegExp(`(^|[^A-Za-z0-9])${escapeRe(item)}($|[^A-Za-z0-9])`).test(sources)) return item
       let out = item
       for (const { m, first, small } of wordsOf(item)) {
-        if (small || fixed(m[0])) continue
+        if (small || keepsCase(m[0])) continue
         out = out.slice(0, m.index) + recase(m[0], first ? firstStyle : restStyle) + out.slice(m.index! + m[0].length)
       }
       return out
@@ -568,15 +569,20 @@ function usableRewrite(text: string, source: string, siblings: string[]): boolea
 }
 
 // Irregular past forms a bullet can open with; the rest end in -ed.
-const IRREGULAR_PAST = new Set(['ran', 'led', 'built', 'rebuilt', 'grew', 'wrote', 'made', 'won', 'drove', 'took', 'began', 'brought', 'taught', 'sold', 'bought', 'spent', 'kept', 'held', 'oversaw', 'gave', 'met', 'sent', 'chose', 'became', 'drew', 'undertook'])
+// ponytail: an -ed adjective opener ("Advanced Excel models...") reads as past
+// tense, and a noun opener ("Member of...") as present. Either only costs a
+// rewrite that keeps the facts; a word list per tense is the upgrade.
+const IRREGULAR_PAST = new Set(['ran', 'led', 'built', 'rebuilt', 'grew', 'wrote', 'made', 'won', 'drove', 'took', 'began', 'brought', 'taught', 'sold', 'bought', 'spent', 'kept', 'held', 'oversaw', 'gave', 'met', 'sent', 'chose', 'became', 'drew', 'undertook', 'spoke', 'stood', 'sought', 'thought', 'felt', 'dealt', 'left', 'lost', 'paid', 'told', 'found', 'flew', 'rode', 'rose', 'struck', 'understood', 'upheld', 'oversold'])
+// Spelled the same in both tenses, or -ed words that aren't past forms: neither.
+const EITHER_TENSE = new Set(['cut', 'set', 'put', 'hit', 'let', 'shut', 'spread', 'upset', 'quit', 'read', 'cost', 'beat', 'bid', 'broadcast', 'forecast', 'embed', 'shed'])
 const CURRENT_DATES = /\b(present|current|now|ongoing|today)\b/i
 
 /**
  * Bullets that break their role's tense (#198), with the fix as the reason: a
  * role whose bullets open with both past verbs (-ed or an irregular past) and
- * other words gets its odd ones out flagged, toward present tense for a
- * current role and past tense for earlier ones. A role in one tense, even the
- * "wrong" one, is left alone, as are roles without dates.
+ * other words gets its minority flagged, toward the tense most of its bullets
+ * use; on a tie, present for a current role and past for earlier ones. A role
+ * in one tense, even the "wrong" one, is left alone, as are roles without dates.
  */
 export function mixedTenseLines(r: Groundable): Map<LineId, string> {
   const flags = new Map<LineId, string>()
@@ -585,14 +591,17 @@ export function mixedTenseLines(r: Groundable): Map<LineId, string> {
     const present = CURRENT_DATES.test(role.dates)
     const tenses = role.bullets.map((b) => {
       const word = /^\s*([A-Za-z]+)(\S*)/.exec(b)
-      if (!word || word[2].startsWith(':') || /ing$/i.test(word[1])) return undefined
-      const w = word[1].toLowerCase()
+      const w = word?.[1].toLowerCase()
+      if (!w || word![2].startsWith(':') || /ing$/.test(w) || EITHER_TENSE.has(w)) return undefined
       return IRREGULAR_PAST.has(w) || (/[a-z]ed$/.test(w) && !/eed$/.test(w)) ? 'past' : 'other'
     })
-    if (!tenses.includes('past') || !tenses.includes('other')) return
+    const past = tenses.filter((t) => t === 'past').length
+    const other = tenses.filter((t) => t === 'other').length
+    if (!past || !other) return
+    const toPast = past === other ? !present : past > other
     tenses.forEach((t, k) => {
-      if (t && (t === 'past') === present) {
-        flags.set(`e${i}b${k}`, `mixed tense in this role: write it in ${present ? 'present' : 'past'} tense, changing only the verb tense`)
+      if (t && (t === 'past') !== toPast) {
+        flags.set(`e${i}b${k}`, `mixed tense in this role: write it in ${toPast ? 'past' : 'present'} tense like its other lines, changing only the verb tense`)
       }
     })
   })
