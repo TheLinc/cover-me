@@ -4,6 +4,7 @@
 import type { ParsedResume, TailoredResume } from '../src/types'
 import type { EvalCase } from './fixtures'
 import { extractNumbers, lintLetter } from '../src/lib/ai/letter-lint'
+import { mixedTenseLines } from '../src/lib/ai/resume-grounding'
 
 export interface CheckResult {
   failures: string[]
@@ -201,6 +202,12 @@ export function checkTailored(out: TailoredResume, c: EvalCase, input: ParsedRes
         result.warnings.push(`skills gained "${s}" — allowed only as a category label backed by a named resume tool; verify`)
       }
     }
+  }
+
+  // One tense per role: the line check fixes mixed roles, so any left are misses.
+  for (const [id] of mixedTenseLines(out)) {
+    const [, role, bullet] = /^e(\d+)b(\d+)$/.exec(id)!
+    result.failures.push(`experience[${role}] mixes tenses: "${out.experience[+role].bullets[+bullet]}"`)
   }
 
   // Summary shape.

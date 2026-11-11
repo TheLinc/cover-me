@@ -83,7 +83,27 @@ const POSTING_ECHO = [
   /\b(?:the|your|this|[a-z][a-z&.-]*'s) (?:job )?(?:posting|listing|description|ad)\b[^.]{0,20}\b(asks|pairs|describes|names|lists|calls for|mentions|says|puts|emphasizes|highlights|wants|needs|requires|focuses)\b/i,
 ]
 
-const SIGN_OFF_RE = /^(kind regards|sincerely|best regards|respectfully)[,.]?$/i
+// Sentence shapes that read as templated even when every word is plain. The
+// judge flagged each one in every letter of the 2026-11-11 eval run (#198).
+const SENTENCE_SHAPES: Array<[RegExp, string]> = [
+  [/\bis simple:|\bmy (?:single )?(?:strongest|biggest|best|top) qualification\b/i,
+    'Announces its point ("My strongest qualification is simple:") — make the point directly, in a sentence about what the applicant did.'],
+  [/\b(?:that|this) is [^.!?]{1,60}? in practice\b/i,
+    'Labels the experience after describing it ("That is data onboarding in practice") — cut the label; the example already makes the point.'],
+  [/, not (?:a|an) [\w-]+(?: [\w-]+)?[.!]|\bnot just\b[^.!?]{1,60}\bbut\b/i,
+    'Uses an "X, not Y" contrast ("a habit for me, not an afterthought") — state the point once, directly.'],
+  [/\bis (?:a habit|second nature) for me\b/i,
+    'Tells the reader about a trait ("is a habit for me") — show it with what the applicant did instead.'],
+]
+
+// A closing that lists three or more things ("my data quality work,
+// documentation habits and stakeholder skills") recaps the letter.
+const RECAP_RE = /(?:^|[\s(])(?!(?:what|how|why|when|where|who|i|we|you|it)\b)[A-Za-z][\w-]*(?: [\w-]+){0,2}, (?!(?:what|how|why|when|where|who|i|we|you|it)\b)[\w-]+(?: [\w-]+){0,2},? (?:and|or) [\w-]+/i
+
+// What makes an opening sentence about someone: a person, the employer, a figure.
+const ANCHORED_RE = /\b(?:i|i'm|i've|i'd|me|my|we|our|us|you|your)\b|\d/i
+
+const SIGN_OFF_RE =/^(kind regards|sincerely|best regards|respectfully)[,.]?$/i
 const EMAIL_RE = /\b[\w.+-]+@[\w-]+\.\w{2,}\b/
 const PHONE_RE = /(\+?\d[\d ().-]{8,}\d)/
 const MARKDOWN_RE = /(\*\*|^#{1,6}\s|^[-*]\s|\[.+?\]\(.+?\))/m
@@ -229,6 +249,25 @@ export function lintLetter(
   const lastPara = paragraphs[paragraphs.length - 1] ?? ''
   if (URL_RE.test(lastPara)) {
     violations.push('Contains a URL in the closing paragraph — a portfolio/GitHub link may only appear inline in the core proof paragraph.')
+  }
+
+  for (const [re, message] of SENTENCE_SHAPES) {
+    if (re.test(body)) violations.push(message)
+  }
+  // A maxim opens with a general truth about no one: no person, no employer, no figure.
+  const firstSentence = body.split(/(?<=[.!?])\s+/)[0] ?? ''
+  const namesEmployer = !!opts.companyName && containsPhrase(firstSentence, opts.companyName)
+  if (firstSentence && !ANCHORED_RE.test(firstSentence) && !namesEmployer) {
+    violations.push(`Opens with a general maxim ("${firstSentence.trim()}") — open with something the applicant did, or with the employer's own situation.`)
+  }
+  paragraphs.forEach((p, i) => {
+    const figures = extractNumbers(p).length
+    if (figures > 4) {
+      violations.push(`Paragraph ${i + 1} has ${figures} figures — keep the one number that matters most for each achievement, at most four in a paragraph.`)
+    }
+  })
+  if (paragraphs.length > 1 && RECAP_RE.test(lastPara)) {
+    violations.push('The closing paragraph lists three or more things, a recap of the letter — end with one specific reason to talk and a request for a conversation.')
   }
 
   if (opts.companyName && opts.companyName !== 'Unknown Company') {

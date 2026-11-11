@@ -1052,6 +1052,45 @@ PhD or MS preferred.`),
     fieldNotes: 'Entry level: education, projects and internships carry the weight. Must not claim years of full-time analyst experience; a part-time barista job shows reliability but must not be inflated.',
   },
   {
+    // The current role mixes tenses on purpose (#198): it must come back in one.
+    // The bullet that best answers the posting (rider activation) sits in the
+    // older role, and the skills list is in sentence case.
+    id: 'accelerator-lead-to-venture-builder',
+    industry: 'Business',
+    resume: {
+      name: 'Tomas Lindqvist', email: 'tomas.lindqvist@email.com', phone: '(555) 772-1904', website: 'linkedin.com/in/tomaslindqvist',
+      experience: [
+        role('Program Lead', 'Foundry North Accelerator', 'Minneapolis, MN', 'Feb 2023 – Present', [
+          'Ran diagnostic workshops with 40 early-stage founders on pricing and unit economics',
+          'Run a 12-week accelerator for 3 cohorts a year',
+          'Organize demo days for 300 investors and partners',
+          'Coach founders on financial models and fundraising decks',
+        ]),
+        role('Operations Manager', 'Pedalgo Delivery', 'Minneapolis, MN', 'Jun 2019 – Jan 2023', [
+          'Grew active rider supply from 150 to 1,100 by rebuilding the onboarding flow',
+          'Cut rider onboarding time from 9 days to 3',
+          'Managed a 6-person city operations team',
+          'Launched the service in 2 new cities',
+        ]),
+      ],
+      education: [edu('B.A. Economics', 'University of Minnesota', 'Minneapolis, MN', '2013 – 2017')],
+      skills: 'Unit economics, Financial modeling, Operations management, Excel, Workshop facilitation',
+    },
+    job: job('Venture Builder', 'Stackhouse Ventures', `Stackhouse Ventures builds new companies from scratch with corporate partners.
+
+As a Venture Builder you will:
+- Take new ventures from idea to first revenue
+- Design and run worker activation for our gig-labor ventures
+- Build financial models and unit economics for each venture
+- Coach founding teams through their first year
+
+Experience in venture capital or at a Big Four consultancy is a plus.`),
+    failTerms: ['venture capital', 'Big Four'],
+    warnTerms: ['gig'],
+    mustKeepSkills: ['Unit economics'],
+    fieldNotes: 'Venture building: hands-on operating results (supply growth, launches, unit economics) count more than titles. Accelerator work must not be recast as investing or venture capital; the rider growth numbers must stay exact.',
+  },
+  {
     id: 'vp-operations-to-coo',
     industry: 'Manufacturing',
     resume: {

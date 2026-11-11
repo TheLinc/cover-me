@@ -294,6 +294,53 @@ export async function groundSkills(skills: unknown, candidate: string, ask?: Ask
   return { skills: kept.length ? kept.join(', ') : undefined, dropped }
 }
 
+const SMALL_WORDS = new Set(['a', 'an', 'and', 'as', 'at', 'by', 'for', 'in', 'of', 'on', 'or', 'the', 'to', 'with'])
+
+/**
+ * Added skills in the casing of the resume's own skills list (#198): "Founder
+ * Coaching" beside "Unit economics" becomes "Founder coaching". Items already
+ * in the resume's list keep their casing. A word with a capital past its first
+ * letter (SQL, PowerPoint, GitHub) is never touched, nor is one the resume or
+ * posting capitalizes mid-sentence and never writes in lowercase (the "Power"
+ * in "built dashboards in Power BI").
+ */
+export function matchSkillCase(skills: string | undefined, ownSkills: string | undefined, sources: string): string | undefined {
+  if (!skills || !ownSkills) return skills
+  const fixed = (w: string): boolean => {
+    if (w.length === 1 || /[A-Z]/.test(w.slice(1))) return true
+    const low = w.toLowerCase()
+    const cap = low[0].toUpperCase() + low.slice(1)
+    return new RegExp(`\\b[a-z]+ ${escapeRe(cap)}\\b`).test(sources) && !new RegExp(`\\b${escapeRe(low)}\\b`).test(sources)
+  }
+  // Every word of an item with its position: first, small (and, of), or other.
+  const wordsOf = (item: string) => [...item.matchAll(/[A-Za-z][A-Za-z']*/g)].map((m, i) => ({ m, first: i === 0, small: i > 0 && SMALL_WORDS.has(m[0].toLowerCase()) }))
+  const own = splitSkills(ownSkills)
+  let firstUp = 0, firstLow = 0, restUp = 0, restLow = 0
+  for (const item of own) {
+    for (const { m, first, small } of wordsOf(item)) {
+      if (small || fixed(m[0])) continue
+      const up = /^[A-Z]/.test(m[0])
+      if (first) up ? firstUp++ : firstLow++
+      else up ? restUp++ : restLow++
+    }
+  }
+  const style = (up: number, low: number) => (up > low ? 'up' : low > up ? 'low' : undefined)
+  const firstStyle = style(firstUp, firstLow)
+  const restStyle = style(restUp, restLow)
+  const recase = (w: string, to: 'up' | 'low' | undefined) => (to === 'up' ? w[0].toUpperCase() + w.slice(1) : to === 'low' ? w.toLowerCase() : w)
+  return splitSkills(skills)
+    .map((item) => {
+      if (own.includes(item)) return item
+      let out = item
+      for (const { m, first, small } of wordsOf(item)) {
+        if (small || fixed(m[0])) continue
+        out = out.slice(0, m.index) + recase(m[0], first ? firstStyle : restStyle) + out.slice(m.index! + m[0].length)
+      }
+      return out
+    })
+    .join(', ')
+}
+
 // One skill per item, splitting on commas outside parentheses ("Cloud (AWS, GCP)" stays whole).
 export function splitSkills(skills: string): string[] {
   const items: string[] = []
@@ -520,6 +567,38 @@ function usableRewrite(text: string, source: string, siblings: string[]): boolea
   })
 }
 
+// Irregular past forms a bullet can open with; the rest end in -ed.
+const IRREGULAR_PAST = new Set(['ran', 'led', 'built', 'rebuilt', 'grew', 'wrote', 'made', 'won', 'drove', 'took', 'began', 'brought', 'taught', 'sold', 'bought', 'spent', 'kept', 'held', 'oversaw', 'gave', 'met', 'sent', 'chose', 'became', 'drew', 'undertook'])
+const CURRENT_DATES = /\b(present|current|now|ongoing|today)\b/i
+
+/**
+ * Bullets that break their role's tense (#198), with the fix as the reason: a
+ * role whose bullets open with both past verbs (-ed or an irregular past) and
+ * other words gets its odd ones out flagged, toward present tense for a
+ * current role and past tense for earlier ones. A role in one tense, even the
+ * "wrong" one, is left alone, as are roles without dates.
+ */
+export function mixedTenseLines(r: Groundable): Map<LineId, string> {
+  const flags = new Map<LineId, string>()
+  r.experience.forEach((role, i) => {
+    if (!role.dates?.trim()) return
+    const present = CURRENT_DATES.test(role.dates)
+    const tenses = role.bullets.map((b) => {
+      const word = /^\s*([A-Za-z]+)(\S*)/.exec(b)
+      if (!word || word[2].startsWith(':') || /ing$/i.test(word[1])) return undefined
+      const w = word[1].toLowerCase()
+      return IRREGULAR_PAST.has(w) || (/[a-z]ed$/.test(w) && !/eed$/.test(w)) ? 'past' : 'other'
+    })
+    if (!tenses.includes('past') || !tenses.includes('other')) return
+    tenses.forEach((t, k) => {
+      if (t && (t === 'past') === present) {
+        flags.set(`e${i}b${k}`, `mixed tense in this role: write it in ${present ? 'present' : 'past'} tense, changing only the verb tense`)
+      }
+    })
+  })
+  return flags
+}
+
 export interface LineRepair {
   flagged: string[]
   rewritten: number
@@ -556,6 +635,11 @@ export async function checkAndRewriteLines<T extends Groundable>(
     const line = lineAt(tailored, id)?.trim()
     if (!line || unchanged(id, line)) flags.delete(id)
   }
+  // Tense is checked in code, on unchanged lines too: the input can mix it.
+  const claimFlags = new Set(flags.keys())
+  const tense = mixedTenseLines(tailored)
+  for (const [id, reason] of tense) flags.set(id, flags.has(id) ? `${flags.get(id)}; also ${reason}` : reason)
+  const tenseOnly = (id: LineId) => tense.has(id) && !claimFlags.has(id)
   if (flags.size === 0) return { resume: tailored, repair: { flagged: [], rewritten: 0, reverted: 0 } }
 
   // Source original for every rewritten bullet, per entry.
@@ -587,9 +671,12 @@ export async function checkAndRewriteLines<T extends Groundable>(
         const source = sources.get(ids[k])
         const text = rewrites.get(ids[k])
         const siblings = [...bullets, ...entry.bullets.slice(k + 1).filter((_, j) => !flags!.has(ids[k + 1 + j]))]
-        if (text && source && usableRewrite(text, source, siblings)) {
+        if (text && source && usableRewrite(text, tenseOnly(ids[k]) ? `${source} ${b}` : source, siblings)) {
           rewritten++
           bullets.push(text)
+        } else if (tenseOnly(ids[k])) {
+          // The line claims nothing new; only its tense was off, so keep it.
+          bullets.push(b)
         } else {
           reverted++
           if (source) bullets.push(source)

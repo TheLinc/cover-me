@@ -6,7 +6,7 @@ import { decrypt, encrypt, sameCiphertext } from '../_shared/encrypt.ts'
 import { findOrCreateJobApplication } from '../_shared/job-application.ts'
 import { isUuid } from '../_shared/history-upload.ts'
 import { isValidParsedResume, parseResumeStructure, type ParsedResume } from '../_shared/resume-parse.ts'
-import { buildsOnEdits, candidateText, checkAndRewriteLines, groundSkills, groundTailored, keepSeen, seenVersion, trustedNotes } from '../_shared/resume-grounding.ts'
+import { buildsOnEdits, candidateText, checkAndRewriteLines, groundSkills, groundTailored, keepSeen, matchSkillCase, seenVersion, trustedNotes } from '../_shared/resume-grounding.ts'
 import { scoreFromMatch } from '../_shared/ats-score.ts'
 import { captureUsage } from '../_shared/posthog.ts'
 
@@ -177,7 +177,7 @@ REVISION MODE — revise, do not rebuild:
 
   const step8 = parsed.skills ? `
 STEP 8 — OPTIMIZE SKILLS
-Reorder the skills so the most relevant to this job appear first, using the JD's exact phrasing where it differs from the resume.
+Reorder the skills so the most relevant to this job appear first, using the JD's exact phrasing where it differs from the resume. Write every added or reworded skill in the capitalization style of the resume's own skills list (sentence case, Title Case, or lowercase), keeping acronyms and product names as written.
 
 ADD a skill only when it is in the JD AND either named in the supplemental context as something the candidate has used or holds (add it as worded there) or justified by the resume in one of two ways:
   - Direct superset/subset of an existing skill — JavaScript on resume + JD says TypeScript → {"skill": "TypeScript", "evidence": "JavaScript"}.
@@ -252,14 +252,15 @@ ALTERNATIVE REQUIREMENTS — when the JD offers a choice ("X, Y, or Z"; "SQL/NoS
 SYNONYM PAIRS — when the resume and JD name the same thing differently and both fit one phrase, keep both: "localization (i18n)"; "PostgreSQL (SQL)"; "REST API integrations".
 
 STEP 3 — DEFINE RESUME ANGLE
-Write one internal positioning sentence (not output): "[Role archetype] in [key area] specializing in [top 2 Tier 1 strengths], with proven [achievement type]." Every bullet and the summary must reinforce it.
+First pick the TWO pieces of resume evidence (bullets, from any role, however old) that best answer the posting's core need (not output). They lead the resume: one of them leads the summary (STEP 4), each is rewritten so the matching work comes first, in the posting's term for it (STEP 6), and each moves to the top of its role (STEP 7).
+Then write one internal positioning sentence (not output) built around them: "[Role archetype] in [key area] specializing in [top 2 Tier 1 strengths], with proven [achievement type]." Every bullet and the summary must reinforce it.
 
 ${includeSummary ? `STEP 4 — WRITE SUMMARY
 2–3 sentences, 40–70 words, no first-person pronouns, no weak openers ("Experienced professional", "Results-driven", "Dynamic"), no clichés ("passionate", "innovative", "team player", "fast-paced", "dynamic"):
 - Identity: open with the candidate's own most recent title, or the archetype their experience directly supports. Use the TARGET ROLE's title only if the candidate has held that role at that level; never adopt a target title that names a level, specialty, license, or credential the resume does not show (a line cook is not a "Sous Chef", a tanker driver is not a "Hazmat Tanker Driver", a VP is not a "Chief Operating Officer"), and never write "[target title] candidate". Include 2–3 Tier 1 keywords.
 - Strongest capability or achievement that answers the role's core challenge
 - Optional: a differentiator or collaboration strength relevant to the role
-- Aim it at THIS role: lead with the evidence that answers the posting's core need, in its terms where honest, and in fresh words: no phrase or figure lifted from the bullets beyond the one headline number. A summary that restates the bullets, or could sit on any application for the candidate's current job, is not tailored.
+- Aim it at THIS role: lead with one of the two STEP 3 picks, in the posting's terms where honest, and in fresh words: no phrase or figure lifted from the bullets beyond the one headline number. A summary that restates the bullets, or could sit on any application for the candidate's current job, is not tailored.
 YEARS OF EXPERIENCE: never state a count of years in the summary. The dates already sit on the resume, and any total you compute counts training, junior, or unrelated roles that a reader will not credit.
 Claim only what a bullet demonstrates — a skills-only technology may not be claimed as built/deployed/specialised in, and architecture buzzwords the resume does not support are forbidden (Integrity 4).
 INDUSTRY/DOMAIN: name a domain (e-commerce, fintech, biotech, etc.) ONLY if a bullet shows the candidate actually worked in it. Never borrow a domain from the JD's requirements or "nice-to-have" list, and never hedge an unearned one in with "-adjacent", "-aligned", or "cross-domain" (Integrity 4).` : `STEP 4 — SUMMARY: skip; set summary to "".`}
@@ -568,7 +569,9 @@ Deno.serve(async (req) => {
     const notes = trustedNotes(supplemental, previous)
     const base = seenVersion(structuredResume, previous)
     const candidate = candidateText(structuredResume, notes)
-    delta.skills = (await groundSkills(delta.skills, candidate, askChecker)).skills
+    // Added skills follow the casing of the resume's own list.
+    delta.skills = matchSkillCase((await groundSkills(delta.skills, candidate, askChecker)).skills, base.skills, `${candidate}
+${job.description}`)
     const merged = keepSeen(mergeTailorDelta(base, delta, { exactBulletCounts: !compact && !trim }), structuredResume, base)
     // Rewrite only the lines that claim more than the original resume supports.
     const { resume: lined, repair } = await checkAndRewriteLines(merged, base, job.description, askChecker, supplemental)

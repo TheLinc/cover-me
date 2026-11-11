@@ -78,3 +78,73 @@ describe('invented numbers', () => {
 test('extractNumbers leaves a trailing comma out of the number', () => {
   expect(extractNumbers('a staff of 400, all hourly')).toEqual([{ raw: '400', norm: '400', hard: true }])
 })
+
+// Sentence shapes the judge flagged in every letter of the 2026-11-11 eval
+// run (#198). Each rule has one realistic sentence that must still pass.
+describe('templated sentence shapes', () => {
+  const letter = (...paragraphs: string[]) => `Dear Hiring Manager,\n\n${paragraphs.join('\n\n')}\n\nKind regards,\nAlex Doe`
+  const flagged = (prefix: string, ...paragraphs: string[]) =>
+    lintLetter(letter(...paragraphs), { companyName: 'Acme' }).violations.some((v) => v.startsWith(prefix))
+  const opener = 'At Halcyon I cut page load from 1.2s to 400ms.'
+
+  test.each([
+    'My strongest qualification is simple: I find data problems early.',
+    'My strongest qualification for Acme is the onboarding work.',
+  ])('announced point: %s', (s) => expect(flagged('Announces', opener, s)).toBe(true))
+  test('announced point leaves a plain claim alone', () => {
+    expect(flagged('Announces', opener, 'The fix was simple, and it held for two years.')).toBe(false)
+  })
+
+  test.each([
+    'That is data onboarding in practice.',
+    'This is what worker activation looks like in practice.',
+  ])('label: %s', (s) => expect(flagged('Labels', opener, s)).toBe(true))
+  test('label leaves "put into practice" alone', () => {
+    expect(flagged('Labels', opener, 'I put that plan into practice across three warehouses.')).toBe(false)
+  })
+
+  test.each([
+    'Documentation is a habit for me, not an afterthought.',
+    'I treat testing as a craft, not a chore!',
+    'It was not just a migration but a rebuild of how we shipped.',
+  ])('contrast: %s', (s) => expect(flagged('Uses an "X, not Y"', opener, s)).toBe(true))
+  test('contrast leaves a mid-sentence factual contrast alone', () => {
+    expect(flagged('Uses an "X, not Y"', opener, 'We kept the ledger in Postgres, not a spreadsheet, so the audit took a day.')).toBe(false)
+  })
+
+  test.each([
+    'Documentation is a habit for me.',
+    'Checking the data first is second nature for me.',
+  ])('trait claim: %s', (s) => expect(flagged('Tells', opener, s)).toBe(true))
+  test('trait claim leaves a habit the team kept alone', () => {
+    expect(flagged('Tells', opener, 'Weekly data reviews became a habit the whole team kept.')).toBe(false)
+  })
+
+  test('numbers: flags a paragraph stacking five figures', () => {
+    const stacked = 'I grew riders from 150 to 1,100 in 2024, cut churn 30% and onboarded 12 cities.'
+    expect(flagged('Paragraph 2 has 5 figures', opener, stacked)).toBe(true)
+  })
+  test('numbers: two achievements with a from-to each pass', () => {
+    const two = 'I grew riders from 150 to 1,100. Later I cut page load from 1.2s to 400ms.'
+    expect(flagged('Paragraph', opener, two)).toBe(false)
+  })
+
+  test.each([
+    'Bad data is cheapest to fix before anyone builds a report on it.',
+    'Good onboarding is mostly about removing steps.',
+  ])('maxim opener: %s', (s) => expect(flagged('Opens with a general maxim', s)).toBe(true))
+  test.each([
+    'Acme is rebuilding its data pipeline, and that is work I have done twice.',
+    'Six years on a med-surg unit taught me to spot a patient sliding before the monitor does.',
+    'Your onboarding funnel loses most riders in week one.',
+  ])('maxim opener leaves alone: %s', (s) => expect(flagged('Opens with a general maxim', s)).toBe(false))
+
+  test('closing recap: flags a list of skills in the last paragraph', () => {
+    const close = 'My data quality work, documentation habits and stakeholder skills fit Acme well. I would like to talk.'
+    expect(flagged('The closing paragraph', opener, close)).toBe(true)
+  })
+  test('closing recap leaves a two-part offer alone', () => {
+    const close = 'If it helps, I can walk you through the Halcyon migration, what worked and what I would change. Could we talk next week?'
+    expect(flagged('The closing paragraph', opener, close)).toBe(false)
+  })
+})
