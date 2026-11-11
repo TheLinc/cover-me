@@ -134,6 +134,12 @@ function TailorOptions({ inputMode, manualReady, onTailor, compact, setCompact, 
   )
 }
 
+// A run that used the note box's text has adopted it, so the box clears to
+// show that. Text typed while it ran is kept.
+function noteAfterRun(current: string, used: string | undefined): string {
+  return used && current.trim() === used ? '' : current
+}
+
 export default function GeneratePage({ onNavigate }: Props) {
   const [state, setState] = useState<State>('idle')
   const [inputMode, setInputMode] = useState<InputMode>('auto')
@@ -274,11 +280,14 @@ export default function GeneratePage({ onNavigate }: Props) {
           setTailorError(tj.error ?? 'Resume tailoring failed.')
           setTailorErrorCode(tj.errorCode)
           setTailorState('error')
-        } else if (tj.status === 'done' && !restoredTailorDone && tj.resume) {
+        // A finished run the saved page doesn't show yet: the page isn't saved
+        // while a run is loading, so after closing the popup during Regenerate
+        // the saved result is the one before it, under another History entry.
+        } else if (tj.status === 'done' && tj.resume && (!restoredTailorDone || (!!tj.entryId && tj.entryId !== s?.tailoredEntryId))) {
           setTailoredResume(tj.resume)
           setTailoredJob(tj.job)
           setTailoredEntryId(tj.entryId ?? null)
-          setSupplemental((s?.supplemental as string) ?? '')
+          setSupplemental(noteAfterRun((s?.supplemental as string) ?? '', tj.note))
           setTailorState('done')
           setActiveResultTab('resume')
         }
@@ -334,6 +343,7 @@ export default function GeneratePage({ onNavigate }: Props) {
             setTailoredResume(tj.resume)
             setTailoredJob(tj.job)
             setTailoredEntryId(tj.entryId ?? null)
+            setSupplemental((cur) => noteAfterRun(cur, tj.note))
             setTailorState('done')
             setActiveResultTab('resume')
           }

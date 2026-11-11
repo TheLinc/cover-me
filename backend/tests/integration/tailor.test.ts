@@ -53,6 +53,67 @@ describe('tailor', () => {
     expect(await quotaUsedToday(user.id)).toBe(1)
   })
 
+  // #171: what the user typed in the editor is theirs on Regenerate. The mock
+  // adds Kafka with evidence the resume lacks, and the line check flags its
+  // "4 hours to 40 minutes" bullet; an edited previous that has both keeps them.
+  describe('regenerating', () => {
+    const typed = MOCK_TAILOR_DELTA.experience[0].bullets[0]
+    const experience = [{ ...MOCK_PARSED_RESUME.experience[0], bullets: [typed, 'Maintained customer dashboard'] }, MOCK_PARSED_RESUME.experience[1]]
+    const previous = { ...MOCK_PARSED_RESUME, experience, skills: 'TypeScript, Postgres, React, Kafka', atsGaps: [] }
+    const revisionPrompt = async () => (await mockClaude.requests()).map((r) => r.messages[0].content).find((p) => p.includes('REVISION MODE'))
+    const regenerate = async (prev: Record<string, unknown>) => {
+      user = await createUser()
+      await uploadResume(user)
+      return (await (await callFunction('tailor', { token: user.token, body: { job: JOB, previous: prev } })).json()).resume
+    }
+
+    it('keeps a posting-only skill and a bullet the user wrote in the editor', async () => {
+      const resume = await regenerate({ ...previous, editedAt: '2026-11-09T00:00:00Z' })
+      expect(resume.skills).toBe('TypeScript, Postgres, React, Data Pipelines, Kafka')
+      expect(resume.experience[0].bullets[0]).toBe(typed)
+      expect(await revisionPrompt()).toContain('includes edits and notes the candidate made themselves')
+      // Marked, so the next Regenerate, which starts from this result, trusts it too.
+      expect(resume.hasEdits).toBe(true)
+      expect(resume.editedAt).toBeUndefined()
+    })
+
+    it('a second Regenerate, from a result marked hasEdits, still keeps them', async () => {
+      const resume = await regenerate({ ...previous, hasEdits: true })
+      expect(resume.skills).toBe('TypeScript, Postgres, React, Data Pipelines, Kafka')
+      expect(resume.experience[0].bullets[0]).toBe(typed)
+      expect(resume.hasEdits).toBe(true)
+    })
+
+    it('keeps a bullet the user added and a title they fixed in the editor', async () => {
+      // The mock returns 2 bullets for a role the user grew to 3; a count that
+      // doesn't fit keeps the version they saw, not the upload's 2.
+      const added = 'Wrote the on-call runbook'
+      const grown = [{ ...MOCK_PARSED_RESUME.experience[0], title: 'Senior Software Engineer', bullets: [...MOCK_PARSED_RESUME.experience[0].bullets, added] }, MOCK_PARSED_RESUME.experience[1]]
+      const resume = await regenerate({ ...MOCK_PARSED_RESUME, experience: grown, editedAt: '2026-11-09T00:00:00Z' })
+      expect(resume.experience[0].bullets).toEqual(grown[0].bullets)
+      expect(resume.experience[0].title).toBe('Senior Software Engineer')
+    })
+
+    it('a summary the user deleted stays deleted', async () => {
+      const { summary: _s, ...noSummary } = previous as typeof previous & { summary?: string }
+      expect((await regenerate({ ...noSummary, editedAt: '2026-11-09T00:00:00Z' })).summary).toBeUndefined()
+      expect((await regenerate(noSummary)).summary).toBe(MOCK_TAILOR_DELTA.summary)
+    })
+
+    it('an unedited previous is checked as before', async () => {
+      const resume = await regenerate(previous)
+      expect(resume.skills).toBe('TypeScript, Postgres, React, Data Pipelines')
+      expect(resume.experience[0].bullets[0]).toBe(MOCK_REWRITTEN_BULLET)
+      expect(await revisionPrompt()).not.toContain('includes edits and notes')
+      expect(resume.hasEdits).toBeUndefined()
+    })
+
+    it("a term only in an edited previous's gap list is still dropped", async () => {
+      const resume = await regenerate({ ...MOCK_PARSED_RESUME, atsGaps: ['Kafka'], atsGapsBeforeEdits: ['Kafka'], editedAt: '2026-11-09T00:00:00Z' })
+      expect(resume.skills).toBe('TypeScript, Postgres, React, Data Pipelines')
+    })
+  })
+
   it('scores an either/or requirement as covered when the resume has the other option', async () => {
     user = await createUser()
     await uploadResume(user)

@@ -55,6 +55,10 @@ export interface TailoredResume {
   // gaps that score found; atsGaps drops the ones the edits filled.
   editedAt?: string
   atsGapsBeforeEdits?: string[]
+  // Holds the user's own input (#171): made with a note, or regenerated from a
+  // version that held their edits, so the next Regenerate trusts its text like
+  // editedAt. Unlike editedAt, the score is fresh.
+  hasEdits?: boolean
   // The print order the user set in the editor (sections.ts). Missing means
   // the standard order.
   sectionOrder?: SectionKey[]

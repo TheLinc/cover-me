@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { buildLineCheckPrompt, candidateText, checkAndRewriteLines, groundSkills, groundTailored } from './resume-grounding'
+import { buildLineCheckPrompt, candidateText, checkAndRewriteLines, groundSkills, groundTailored, buildsOnEdits, keepSeen, seenVersion, trustedNotes } from './resume-grounding'
 
 // Made-up posting and resume. The resume never says "web", "Ruby", "Rails" or "HIPAA".
 const posting = `Frontend Web Developer
@@ -62,6 +62,116 @@ describe('groundTailored', () => {
     const summary = 'Builds accessible web interfaces in React.'
     expect(groundTailored({ ...original, summary }, original, candidateText(original), job).resume.summary).toBe(summary)
     expect(groundTailored({ ...original, summary: 'Senior Web Developer. Builds React apps.' }, original, candidateText(original), job).resume.summary).toBe('Builds React apps.')
+  })
+})
+
+// #171: Regenerate starts from the edited version, so what the user typed in
+// the editor is theirs, not the model's.
+describe('an edited previous version', () => {
+  const bullet = 'Built React screens for a client portal on Rails, used by 25k clients.'
+  const previous = { ...original, experience: [{ ...original.experience[0], bullets: [bullet] }], skills: 'React, TypeScript, Ruby on Rails', atsGaps: ['HIPAA'], atsGapsBeforeEdits: ['HIPAA', 'Rails'] }
+  const tailored = { ...original, experience: [{ ...original.experience[0], bullets: [bullet] }], skills: 'React, TypeScript, Ruby on Rails, HIPAA' }
+  const regrounded = (prev: object) => groundTailored(tailored, original, candidateText(original, trustedNotes(undefined, prev)), posting).resume
+
+  test('its posting-only terms survive grounding', () => {
+    const resume = regrounded({ ...previous, editedAt: '2026-11-09T00:00:00Z' })
+    expect(resume.experience[0].bullets).toEqual([bullet])
+    expect(resume.skills).toBe('React, TypeScript, Ruby on Rails')
+  })
+
+  test('an unedited one is earlier model output and is reverted as before', () => {
+    const resume = regrounded(previous)
+    expect(resume.experience[0].bullets).toEqual(original.experience[0].bullets)
+    expect(resume.skills).toBe('React, TypeScript')
+  })
+
+  test('keeps the note, and the note alone without an edited version', () => {
+    expect(trustedNotes('Used Ruby daily.', { ...previous, editedAt: 'x' })).toContain('Used Ruby daily.')
+    expect(trustedNotes('Used Ruby daily.', previous)).toBe('Used Ruby daily.')
+    expect(trustedNotes(undefined, undefined)).toBeUndefined()
+  })
+
+  test('a version regenerated from edits is trusted on the next Regenerate too', () => {
+    expect(buildsOnEdits({ ...previous, editedAt: 'x' })).toBe(true)
+    expect(buildsOnEdits({ ...previous, hasEdits: true })).toBe(true)
+    expect(buildsOnEdits(previous)).toBe(false)
+    expect(regrounded({ ...previous, hasEdits: true }).experience[0].bullets).toEqual([bullet])
+  })
+
+  describe('the line check', () => {
+    const intern = { title: 'Intern', company: 'Beta Labs', bullets: ['Fixed bugs in the billing app.'] }
+    const twoRoles = { ...original, experience: [original.experience[0], intern] }
+    const edited = { ...twoRoles, experience: [{ ...original.experience[0], bullets: [bullet] }, intern], editedAt: 'x' }
+    // The check flags the given line; no rewrite comes back, so a flagged line
+    // reverts to its original. On Regenerate the originals are the seen version.
+    const check = (out: typeof twoRoles, id: string, prev?: object, notes?: string) => {
+      const replies = [JSON.stringify({ flags: [{ id, reason: 'adds Rails' }], summary: null }), '{}']
+      return checkAndRewriteLines(out, seenVersion(twoRoles, prev), posting, async () => replies.shift()!, notes)
+    }
+
+    test('keeps a line the user typed on the same role', async () => {
+      const out = { ...twoRoles, experience: [{ ...original.experience[0], bullets: [bullet] }, intern] }
+      const { resume, repair } = await check(out, 'e0b0', edited)
+      expect(resume.experience[0].bullets).toEqual([bullet])
+      expect(repair.flagged).toEqual([])
+      // Unedited, it is checked as before.
+      expect((await check(out, 'e0b0', { ...edited, editedAt: undefined })).resume.experience[0].bullets).toEqual(original.experience[0].bullets)
+    })
+
+    test('still checks it on another role, and a line copied from a note', async () => {
+      const moved = { ...twoRoles, experience: [original.experience[0], { ...intern, bullets: [bullet] }] }
+      expect((await check(moved, 'e1b0', edited)).resume.experience[1].bullets).toEqual(intern.bullets)
+      expect((await check(moved, 'e1b0', undefined, bullet)).resume.experience[1].bullets).toEqual(intern.bullets)
+    })
+
+    test("a flagged rewording of a bullet the user added reverts to their wording, it isn't dropped", async () => {
+      const added = 'Wrote the on-call runbook for the portal.'
+      const grown = { ...edited, experience: [{ ...original.experience[0], bullets: [...original.experience[0].bullets, added] }, intern] }
+      const out = { ...twoRoles, experience: [{ ...original.experience[0], bullets: [...original.experience[0].bullets, 'Wrote and owned the on-call runbook for the portal.'] }, intern] }
+      expect((await check(out, 'e0b1', grown)).resume.experience[0].bullets).toEqual(grown.experience[0].bullets)
+    })
+  })
+
+  test('seenVersion: the content the user saw, deleted sections included; otherwise the upload', () => {
+    const experience = [{ ...original.experience[0], title: 'Lead Developer', bullets: [bullet, 'Added.'] }]
+    const { skills: _s, ...noSkills } = previous
+    const seen = seenVersion(original, { ...noSkills, summary: 'Mine.', experience, editedAt: 'x', atsScore: 80 })
+    expect(seen).toEqual({ ...original, summary: 'Mine.', experience, skills: undefined })
+    expect('skills' in seen).toBe(false)
+    expect(seenVersion(original, { ...previous, experience: [{ bullets: 'oops' }], hasEdits: true })).toBe(original)
+    expect(seenVersion(original, { ...previous, certifications: 'CPR', hasEdits: true })).toBe(original)
+    // A different resume uploaded since: its roles no longer line up.
+    expect(seenVersion(original, { ...previous, experience: [...previous.experience, ...previous.experience], editedAt: 'x' })).toBe(original)
+    expect(seenVersion(original, { ...previous, experience: [], editedAt: 'x' }).experience).toEqual([])
+    expect(seenVersion(original, previous)).toBe(original)
+  })
+
+  describe('keepSeen', () => {
+    const seen = seenVersion(original, { ...previous, summary: 'Mine.', experience: [{ ...original.experience[0], bullets: [bullet] }], editedAt: 'x' })
+    const merged = { ...original, summary: 'Model summary.', experience: [{ ...original.experience[0], bullets: ['New one.', 'A bullet they deleted.'] }] }
+
+    test('caps a role at the bullets the user left it with, and keeps their summary when the run has none', () => {
+      expect(keepSeen(merged, original, seen).experience[0].bullets).toEqual([bullet])
+      expect(keepSeen(merged, original, seen).summary).toBe('Model summary.')
+      expect(keepSeen({ ...merged, summary: ' ' }, original, seen).summary).toBe('Mine.')
+    })
+
+    test('a summary the user deleted stays deleted; an emptied one is not a deletion', () => {
+      const { summary: _s, ...deleted } = seen
+      expect('summary' in keepSeen(merged, original, deleted)).toBe(false)
+      expect(keepSeen(merged, original, { ...seen, summary: '' }).summary).toBe('Model summary.')
+    })
+
+    test('without edits it changes nothing', () => {
+      expect(keepSeen(merged, original, original)).toBe(merged)
+    })
+  })
+
+  test('the line check leaves a summary identical to the original summary alone', async () => {
+    const replies = [JSON.stringify({ flags: [], summary: 'claims more' }), '{}']
+    const { resume, repair } = await checkAndRewriteLines({ ...original }, original, posting, async () => replies.shift()!)
+    expect(resume.summary).toBe(original.summary)
+    expect(repair.flagged).toEqual([])
   })
 })
 

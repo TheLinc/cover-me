@@ -1,4 +1,4 @@
-import { ensureValidSession, generateViaBackend, handleGoogleSignIn, limitErrorCode, RateLimitError, saveLetterToBackend, tailorViaBackend } from '../lib/auth'
+import { checkedTier, ensureValidSession, generateViaBackend, handleGoogleSignIn, limitErrorCode, RateLimitError, saveLetterToBackend, tailorViaBackend } from '../lib/auth'
 import { generateCoverLetter } from '../lib/ai'
 import { parseResumeStructure } from '../lib/ai/resume-parse'
 import { tailorResume } from '../lib/ai/resume-tailor'
@@ -6,7 +6,7 @@ import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from '../lib/config'
 import { decryptApiKey } from '../lib/crypto'
 import { checkUploadedDesign, designForTailor, finishDesign, uploadDesignIfPro } from '../lib/design'
 import { debugGroup } from '../lib/debug'
-import { addToHistory, addToTailoredHistory, getCachedTier, getCandidateContext, getResume, getSession, getSettings, hasAgreedToPageRead, resolveMode, saveParsedResume, setEntryAccounts, watchSession } from '../lib/storage'
+import { addToHistory, addToTailoredHistory, getCandidateContext, getResume, getSession, getSettings, hasAgreedToPageRead, resolveMode, saveParsedResume, setEntryAccounts, watchSession } from '../lib/storage'
 import { handleInstalled, uninstallUrl } from './install'
 import { scrapeFailure } from './scrape-failure'
 import type { PageSnapshot } from '../content/snapshot.ts'
@@ -465,6 +465,11 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
     // apply to every generation, layered under any one-off note for this run.
     const candidateContext = (await getCandidateContext()).trim()
     const merged = [candidateContext, supplemental?.trim()].filter(Boolean).join('\n\n') || undefined
+    // A result made with a one-off note holds the user's own input, like an
+    // editor edit: marked so the next Regenerate keeps what the note added,
+    // even once the note box holds something else (#171). The hosted Pro
+    // copy on the server doesn't carry the mark.
+    const note = supplemental?.trim() || undefined
 
     await debugGroup('Tailor — scraped job + flags', {
       mode: resolveMode(settings),
@@ -494,15 +499,20 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
       // Hosted: the resume + final prompt live server-side. Enable DEBUG_MODE on
       // the edge function to see those in the Supabase function logs.
       const localId = crypto.randomUUID()
+      // Looked up alongside the tailor, so a change of plan counts without a
+      // wait once the resume is back.
+      const tier = checkedTier(session)
       const { resume: tailored, savedId } = await tailorViaBackend(job, session.access_token, compact, merged, trim, includeSummary, lastResult && previous, onProgress, localId, design.design)
       const resume = await finishDesign(tailored, design)
+      if (note) resume.hasEdits = true
+      // Awaited before the design upload, which reads the cached tier.
+      const pro = (await tier) === 'hosted_pro'
       if (resume.sourceHash) void uploadDesignIfPro(session)
-      const pro = (await getCachedTier()) === 'hosted_pro'
       await recordTailored(job, resume, localId, {
         ...(savedId === localId ? { account: session.user.id } : {}),
         ...(pro ? { saveTo: session.user.id } : {}),
       })
-      await setTailorJob({ id, status: 'done', job, resume, startedAt, entryId: localId })
+      await setTailorJob({ id, status: 'done', job, resume, startedAt, entryId: localId, note })
       return { success: true, resume, job }
     }
 
@@ -536,9 +546,10 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
     })
 
     const tailored = await finishDesign(await tailorResume(job, parsed, settings.provider, apiKey, compact, merged, trim, includeSummary, lastResult && previous, onProgress), design)
+    if (note) tailored.hasEdits = true
     const entryId = crypto.randomUUID()
     await recordTailored(job, tailored, entryId)
-    await setTailorJob({ id, status: 'done', job, resume: tailored, startedAt, entryId })
+    await setTailorJob({ id, status: 'done', job, resume: tailored, startedAt, entryId, note })
     return { success: true, resume: tailored, job }
   } catch (err) {
     if (err instanceof RateLimitError) {
@@ -580,8 +591,10 @@ async function generateFromJob(job: JobData, supplemental?: string, jobId?: stri
       if (!session) {
         return failCover(id, job, startedAt, 'Sign in to your Cover Me account in Settings.')
       }
-      const letter = await generateViaBackend(job, session.access_token, merged)
-      const pro = (await getCachedTier()) === 'hosted_pro'
+      // The tier is looked up alongside the letter, so a change of plan
+      // counts without holding the letter back from History.
+      const [letter, tier] = await Promise.all([generateViaBackend(job, session.access_token, merged), checkedTier(session)])
+      const pro = tier === 'hosted_pro'
       const entry: CoverLetter = {
         id: crypto.randomUUID(),
         job,

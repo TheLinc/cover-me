@@ -26,6 +26,14 @@ export const FAQ_ITEMS = [
     a: "Yes. With your own API key, your resume and key never reach Cover Me's servers. Your resume goes only to the AI provider whose key you use. Since version 1.3.0, once you agree, Cover Me receives the job page you click on, so the posting can be read, and keeps no copy of it. If it can't read any page from a click, it counts each site's name and which part of the extension tried to read it, under a random ID. Request this site sends only the site's name. Report bug sends the page's address, which part of the extension tried to read it, the error and the extension version. Each sends only when you press it. On hosted plans, your resume is encrypted with AES-256-GCM before it's stored, and sent to Anthropic only to read it and write your documents. Our server also counts which features hosted accounts use. The counts never include your resume, letters or job details, and you can opt out by email. With your own key there are no usage counts, so nothing records which features you use. The extension has no ads, analytics or telemetry, and your resume is never used to train AI models.",
   },
   {
+    q: "Should I upload my resume as a PDF or a Word file?",
+    a: "Either works. Upload a Word file (.docx) and Cover Me can tailor inside your own file, so the tailored resume keeps your fonts and layout and downloads as Word (beta). You can also switch to the Cover Me layout, a clean one-column design that applicant tracking systems read easily, and download it as a PDF or Word file. A PDF upload always uses the Cover Me layout. If your Word file keeps bullets in text boxes or tables, Cover Me tells you what to change, and uses the Cover Me layout until you do. From Google Docs, use File, Download, Microsoft Word.",
+  },
+  {
+    q: "Should I give Cover Me a long master resume?",
+    a: "Yes, if you have one. Cover Me only uses what's in your resume and removes any skill or claim your resume doesn't support, so more material gives it more to choose from. Put every role, project and skill in one file, then turn on \"Remove irrelevant bullets\" and it keeps the bullets that fit each job. It reads the first 12,000 characters, about 2,400 words.",
+  },
+  {
     q: "Do I need an account to use Cover Me?",
     a: "No. With your own API key, install the extension, add your resume and key, and start generating. You only need an account for the hosted free plan or Pro.",
   },
