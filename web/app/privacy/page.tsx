@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
 }
 
-const EFFECTIVE_DATE = 'November 9, 2026'
+const EFFECTIVE_DATE = 'November 11, 2026'
 const CONTACT_EMAIL  = 'support@cover-me.dev'
 
 // ── Section heading ────────────────────────────────────────────────────────
@@ -691,8 +691,8 @@ export default function PrivacyPage() {
                 {
                   name: 'Sentry',
                   url: 'https://sentry.io/privacy/',
-                  when: 'Visitors to cover-me.dev (the website, not the extension)',
-                  receives: 'Error reports and page-load timing from the website: the error, page URL, browser version, and your user ID if you are signed in. Form contents, cookies, and email addresses are removed before sending.',
+                  when: 'Visitors to cover-me.dev (the website, not the extension), and subscribers whose plan change fails to save',
+                  receives: 'Error reports and page-load timing from the website: the error, page URL, browser and operating system, a rough location (country and city) that Sentry works out from your IP address without storing the address, and your user ID if you are signed in. If a plan change from Stripe fails to save, a report with the Stripe event ID and no payment details. Form contents, cookies, and email addresses are removed before sending.',
                 },
                 {
                   name: 'PostHog',
