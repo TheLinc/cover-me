@@ -126,21 +126,62 @@ export function withLinks<T extends { website: string }>(parsed: T): T {
   return links.length ? { ...parsed, website: website || links[0]!, links } : parsed
 }
 
-// The order the resume's sections sat in (#165), which the layouts print
-// them in: each standard section the parse has, once, and an "other" for each
-// extra section at most. The tailor writes the summary, so it leads. Always
-// an array, [] when nothing valid is left: the tailor treats a cached parse
-// without one as made before the order was kept, and parses again. Run after
-// withOtherSections, which settles the number of extra sections.
-export function withSectionOrder<T extends ParsedResume>(parsed: T): T & { sectionOrder: NonNullable<ParsedResume['sectionOrder']> } {
-  const raw = (parsed as { sectionOrder?: unknown }).sectionOrder
-  const unplaced: Record<string, boolean> = {
+// Which standard sections the parse has content for.
+function sectionsPresent(parsed: ParsedResume): Record<string, boolean> {
+  return {
     experience: parsed.experience.length > 0,
     projects: Array.isArray(parsed.projects) && parsed.projects.length > 0,
     education: parsed.education.length > 0,
     certifications: Array.isArray(parsed.certifications) && parsed.certifications.length > 0,
     skills: typeof parsed.skills === 'string' && parsed.skills.trim().length > 0,
   }
+}
+
+// Where the resume's sections sit in its text (#165). The parse model often
+// lists them in its JSON's order (experience, projects, education, skills)
+// rather than the resume's, so each section the parse has is found by its own
+// verbatim copies instead: each line of the text counts for the section whose
+// strings cover most of it, and a section sits at its best-covered line. null
+// when a section can't be found, so the model's order stands.
+export function sectionOrderFromText(parsed: ParsedResume, resumeText: string): NonNullable<ParsedResume['sectionOrder']> | null {
+  const norm = (s: unknown) => (typeof s === 'string' ? s.toLowerCase().replace(/\s+/g, ' ').trim() : '')
+  const strings = (xs: unknown[]) => xs.flat(2).map(norm).filter((s) => s.length >= 3)
+  const present = sectionsPresent(parsed)
+  const sections: Array<{ key: NonNullable<ParsedResume['sectionOrder']>[number]; strings: string[] }> = [
+    { key: 'experience' as const, strings: strings(parsed.experience.map((e) => [e?.title, e?.company, e?.bullets])) },
+    { key: 'projects' as const, strings: strings((parsed.projects ?? []).map((p) => [p?.name, p?.bullets])) },
+    { key: 'education' as const, strings: strings(parsed.education.map((e) => [e?.institution, e?.degree, e?.bullets])) },
+    { key: 'certifications' as const, strings: strings(parsed.certifications ?? []) },
+    { key: 'skills' as const, strings: strings(typeof parsed.skills === 'string' ? parsed.skills.split(/[,;•|\n]/) : []) },
+  ].filter((s) => present[s.key])
+  for (const o of parsed.otherSections ?? []) sections.push({ key: 'other', strings: strings([o.heading, o.lines]) })
+
+  // A string inside the line counts its length; a line inside a longer string
+  // (a bullet the text wraps) counts the line's.
+  const cover = (line: string, ss: string[]) => ss.reduce((n, s) => n + (line.includes(s) ? s.length : line.length >= 12 && s.includes(line) ? line.length : 0), 0)
+  const best = sections.map(() => ({ line: -1, score: 0 }))
+  resumeText.split('\n').map(norm).forEach((line, i) => {
+    if (line.length < 3) return
+    const scores = sections.map((s) => cover(line, s.strings))
+    const top = Math.max(...scores)
+    const k = scores.indexOf(top)
+    // A tie could be either section's line.
+    if (top > 0 && scores.lastIndexOf(top) === k && top > best[k]!.score) best[k] = { line: i, score: top }
+  })
+  if (best.some((b) => b.line < 0)) return null
+  return sections.map((s, i) => ({ key: s.key, line: best[i]!.line })).sort((a, b) => a.line - b.line).map((s) => s.key)
+}
+
+// The order the resume's sections sat in (#165), which the layouts print
+// them in: each standard section the parse has, once, and an "other" for each
+// extra section at most. The tailor writes the summary, so it leads. Taken
+// from the resume text when given (sectionOrderFromText), else the model's.
+// Always an array, [] when nothing valid is left: the tailor treats a cached
+// parse without one as made before the order was kept, and parses again. Run
+// after withOtherSections, which settles the number of extra sections.
+export function withSectionOrder<T extends ParsedResume>(parsed: T, resumeText?: string): T & { sectionOrder: NonNullable<ParsedResume['sectionOrder']> } {
+  const raw = (resumeText ? sectionOrderFromText(parsed, resumeText) : null) ?? (parsed as { sectionOrder?: unknown }).sectionOrder
+  const unplaced = sectionsPresent(parsed)
   let others = Array.isArray(parsed.otherSections) ? parsed.otherSections.length : 0
   const order: NonNullable<ParsedResume['sectionOrder']> = []
   for (const key of Array.isArray(raw) ? raw : []) {
@@ -202,5 +243,5 @@ export async function parseResumeStructure(resumeText: string, apiKey: string): 
     throw new Error('Resume parse returned invalid JSON')
   }
   if (!isValidParsedResume(parsed)) throw new Error('Resume parse returned incomplete data')
-  return withSectionOrder(withLinks(withOtherSections(parsed)))
+  return withSectionOrder(withLinks(withOtherSections(parsed)), resumeText)
 }

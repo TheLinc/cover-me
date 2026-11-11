@@ -44,7 +44,8 @@ describe('tailor', () => {
     expect(resume.summary).toBe(MOCK_TAILOR_DELTA.summary)
     // Sections outside the six come through from the parse untouched.
     expect(resume.otherSections).toEqual(MOCK_PARSED_RESUME.otherSections)
-    // They print in the uploaded resume's order (#165), the written summary first.
+    // They print in the uploaded resume's order (#165), taken from its text
+    // rather than the model's wrong one, the written summary first.
     expect(resume.sectionOrder).toEqual(['summary', 'experience', 'other', 'education', 'skills'])
     // Evidence-backed skills: the category label with real evidence stays, the
     // skill whose evidence isn't in the resume is dropped.

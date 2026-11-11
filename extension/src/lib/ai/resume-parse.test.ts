@@ -123,3 +123,47 @@ describe('upgradedParse', () => {
     expect(upgradedParse(undefined, fresh)).toBe(fresh)
   })
 })
+
+describe('the section order comes from the resume text', () => {
+  const job = (title: string, company: string, bullets: string[]) => ({ title, company, location: '', dates: '', bullets })
+  const school = { institution: 'University of Michigan', degree: 'B.S. in Statistics', location: '', dates: '', bullets: [] }
+  // The model's order in each: its JSON's order, not the resume's, as it gave in the live check.
+  const parse = (text: string, fields: object) => parseParsedJson(JSON.stringify({ name: 'P', email: '', phone: '', website: '', ...fields }), text).sectionOrder
+
+  test('skills first, ahead of a profile that names a skill', () => {
+    const text = `Pat Lee\npat@x.co\n\nPERSONAL PROFILE\nFinance assistant fluent in Excel.\n\nKEY SKILLS\n- Excel\n- Sage 50\n- Purchase ledger\n\nEMPLOYMENT HISTORY\nAccounts Assistant — Hale & Co, Leeds (2021 – Present)\n- Reconciled 300 supplier statements a month in Sage 50\n\nEDUCATION\nB.S. in Statistics — University of Michigan (2017 – 2021)`
+    expect(parse(text, {
+      experience: [job('Accounts Assistant', 'Hale & Co', ['Reconciled 300 supplier statements a month in Sage 50'])],
+      education: [school], skills: 'Excel, Sage 50, Purchase ledger', otherSections: [],
+      sectionOrder: ['experience', 'education', 'skills'],
+    })).toEqual(['summary', 'skills', 'experience', 'education'])
+  })
+
+  test('education first, an extra section last, and a bullet the text wraps', () => {
+    const text = `EDUCATION\nB.S. in Statistics — University of Michigan (2021 – 2025)\n\nPROJECTS\nRideshare Demand Forecast\n- Built a Python model forecasting hourly ride demand from 2M trip records,\ncutting error 18% versus a seasonal baseline\n\nSKILLS\nPython, pandas, SQL\n\nEXPERIENCE\nData Intern — Meridian Health Partners (2024)\n- Automated an Excel report in Python, saving the team 4 hours a week\n\nAWARDS\nMichigan Data Challenge, 2nd place (2024)`
+    expect(parse(text, {
+      experience: [job('Data Intern', 'Meridian Health Partners', ['Automated an Excel report in Python, saving the team 4 hours a week'])],
+      projects: [{ name: 'Rideshare Demand Forecast', bullets: ['Built a Python model forecasting hourly ride demand from 2M trip records, cutting error 18% versus a seasonal baseline'] }],
+      education: [school], skills: 'Python, pandas, SQL',
+      otherSections: [{ heading: 'AWARDS', lines: ['Michigan Data Challenge, 2nd place (2024)'] }],
+      sectionOrder: ['education', 'other', 'experience', 'projects', 'skills'],
+    })).toEqual(['summary', 'education', 'projects', 'skills', 'experience', 'other'])
+  })
+
+  test('extra sections between standard ones stay where they sat', () => {
+    const text = `EXPERIENCE\nProgram Coordinator — Brightpath Youth Alliance (2021 – Present)\n- Recruited and trained 25 volunteer tutors\n\nVOLUNTEERING\nBoard Member — Oakland Community Garden Collective\n\nEDUCATION\nB.S. in Statistics — University of Michigan\n\nAWARDS & HONORS\nBrightpath Staff Excellence Award (2023)\n\nSKILLS\nSalesforce, grant reporting\n\nCERTIFICATIONS\nNonprofit Management Certificate — UC Berkeley Extension (2022)`
+    expect(parse(text, {
+      experience: [job('Program Coordinator', 'Brightpath Youth Alliance', ['Recruited and trained 25 volunteer tutors'])],
+      education: [school], skills: 'Salesforce, grant reporting',
+      certifications: ['Nonprofit Management Certificate — UC Berkeley Extension (2022)'],
+      otherSections: [{ heading: 'VOLUNTEERING', lines: ['Board Member — Oakland Community Garden Collective'] }, { heading: 'AWARDS & HONORS', lines: ['Brightpath Staff Excellence Award (2023)'] }],
+      sectionOrder: ['experience', 'other', 'other', 'education', 'skills', 'certifications'],
+    })).toEqual(['summary', 'experience', 'other', 'education', 'other', 'skills', 'certifications'])
+  })
+
+  test("a section the text doesn't hold keeps the model's order", () => {
+    const fields = { experience: [job('RN', 'General', ['Triage'])], education: [school], skills: 'Epic', otherSections: [], sectionOrder: ['skills', 'experience', 'education'] }
+    expect(parse('EXPERIENCE\nRN — General\n- Triage\n\nEDUCATION\nB.S. in Statistics — University of Michigan', fields)).toEqual(['summary', 'skills', 'experience', 'education'])
+    expect(parseParsedJson(JSON.stringify({ name: 'P', email: '', phone: '', website: '', ...fields })).sectionOrder).toEqual(['summary', 'skills', 'experience', 'education'])
+  })
+})
