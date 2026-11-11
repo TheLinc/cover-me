@@ -164,7 +164,7 @@ This is NOT a resume restatement — give the number its narrative context. "Whe
 ${whyCompany}
 
 Paragraph 4 — Close + Call to Action (2–3 sentences):
-Give one specific thing the applicant would want to talk about with this company: a piece of the work, or a question about it. Do not recap the letter or list skills again. End with a direct, confident request for a conversation — not passive, not demanding.
+Name one specific piece of the applicant's own work they would want to talk through (how they ran it, what they would change). Do not recap the letter or list skills again, and never name a duty, tool, or requirement from the posting that the resume does not show. End with a direct, confident request for a conversation — not passive, not demanding.
 
 Sign-off: "${variation.signOff}" on its own line, then a blank line, then the applicant's name from the resume.
 
