@@ -101,15 +101,16 @@ export function withLinks<T extends { website: string }>(parsed: T): T {
   if (website && !links.includes(website)) links.unshift(website)
   return links.length ? { ...parsed, website: website || links[0]!, links } : parsed
 }
-// The order the resume's sections sat in (#165), for the layouts to print
-// in: each standard section the parse has, once, and an "other" for each
+
+// The order the resume's sections sat in (#165), which the layouts print
+// them in: each standard section the parse has, once, and an "other" for each
 // extra section at most. The tailor writes the summary, so it leads. Always
 // an array, [] when nothing valid is left: the tailor treats a cached parse
 // without one as made before the order was kept, and parses again. Run after
 // withOtherSections, which settles the number of extra sections.
 export function withSectionOrder<T extends ParsedResume>(parsed: T): T & { sectionOrder: NonNullable<ParsedResume['sectionOrder']> } {
   const raw = (parsed as { sectionOrder?: unknown }).sectionOrder
-  const left: Record<string, boolean> = {
+  const unplaced: Record<string, boolean> = {
     experience: parsed.experience.length > 0,
     projects: Array.isArray(parsed.projects) && parsed.projects.length > 0,
     education: parsed.education.length > 0,
@@ -124,8 +125,8 @@ export function withSectionOrder<T extends ParsedResume>(parsed: T): T & { secti
         others--
         order.push(key)
       }
-    } else if (typeof key === 'string' && left[key] === true) {
-      left[key] = false
+    } else if (typeof key === 'string' && unplaced[key] === true) {
+      unplaced[key] = false
       order.push(key as (typeof order)[number])
     }
   }

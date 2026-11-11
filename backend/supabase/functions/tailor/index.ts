@@ -426,12 +426,15 @@ Deno.serve(async (req) => {
     // resume/index.ts clears the cache when the text changes and usually parses
     // it ahead in the background, so this parse is the fallback. A cached copy
     // without otherSections (#54) or sectionOrder (#165) predates them and is
-    // parsed again once.
+    // parsed again once. Except for the user's own design (#131): the
+    // extension places the text with the parse its file was checked against,
+    // and the file keeps its own section order.
     let structured: ParsedResume | null = null
     if (resumeRow.structured_encrypted) {
       try {
         const decoded = JSON.parse(await decrypt(resumeRow.structured_encrypted))
-        if (isValidParsedResume(decoded) && isCurrentParse(decoded)) structured = decoded
+        const current = isCurrentParse(decoded) || (!!sourceHash && Array.isArray(decoded?.otherSections))
+        if (isValidParsedResume(decoded) && current) structured = decoded
       } catch {
         structured = null
       }

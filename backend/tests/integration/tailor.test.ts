@@ -169,10 +169,7 @@ describe('tailor', () => {
     expect(prompts.filter((p) => !checks.some((c) => p.startsWith(c)))).toHaveLength(1)
   })
 
-  it.each([
-    ['otherSections', 'otherSections' as const],
-    ['sectionOrder', 'sectionOrder' as const],
-  ])('parses again, once, a cached parse from before %s', async (_, field) => {
+  it.each(['otherSections', 'sectionOrder'] as const)('parses again, once, a cached parse from before %s', async (field) => {
     user = await createUser()
     await uploadResume(user)
     const { [field]: _f, ...old } = MOCK_PARSED_RESUME
@@ -194,6 +191,17 @@ describe('tailor', () => {
     await mockClaude.reset()
     await callFunction('tailor', { token: user.token, body: { job: JOB } })
     expect((await prompts()).filter(isParse)).toHaveLength(0)
+  })
+
+  it("keeps a cached parse from before sectionOrder for the user's own design, which the file was checked against", async () => {
+    user = await createUser()
+    await uploadResume(user)
+    const { sectionOrder: _o, ...old } = MOCK_PARSED_RESUME
+    await cacheParsedResume(user.id, old)
+    await mockClaude.reset()
+    await callFunction('tailor', { token: user.token, body: { job: JOB, layout: 'yours', fellBack: false, sourceHash: 'f'.repeat(64) } })
+    const prompts = (await mockClaude.requests()).map((r) => r.messages[0].content)
+    expect(prompts.filter((p) => p.startsWith('You are a resume parser'))).toHaveLength(0)
   })
 
   it('streams NDJSON start, delta and done events when asked', async () => {
