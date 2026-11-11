@@ -314,23 +314,31 @@ export function matchSkillCase(skills: string | undefined, ownSkills: string | u
   if (!skills || !ownSkills) return skills
   const has = (re: string) => new RegExp(re).test(sources)
   const word = (w: string) => `${escapeRe(w)}(?![A-Za-z0-9])`
+  // Capitalized after a lowercase word, a comma or a list marker: not a sentence start.
+  const capMid = (w: string) => has(`(?:(?<![A-Za-z0-9])[a-z0-9]+ |[,;&/•*-] |\\()${word(w[0].toUpperCase() + w.slice(1).toLowerCase())}`)
   const keepsCase = (w: string): boolean => {
-    if (w.length === 1 || /[A-Z.]/.test(w.slice(1))) return true
-    const low = w.toLowerCase()
-    const cap = low[0].toUpperCase() + low.slice(1)
-    return has(`(?:(?<![A-Za-z])[a-z0-9]+ |[,;&/•*-] |\\()${word(cap)}`) && !has(`(?<![A-Za-z0-9])${word(low)}`)
+    if (w.length === 1 || /[\p{Lu}.]/u.test(w.slice(1))) return true
+    return capMid(w) && !has(`(?<![A-Za-z0-9])${word(w.toLowerCase())}`)
   }
   const keepsLower = (w: string) => w === w.toLowerCase() && has(`(?<![A-Za-z0-9])${word(w)}`) && !has(`(?<![A-Za-z0-9])${word(w[0].toUpperCase() + w.slice(1))}`)
   const inSources = (s: string) => has(`(^|[^A-Za-z0-9])${escapeRe(s)}($|[^A-Za-z0-9])`)
   const inParens = (s: string) => s.split('(').length > s.split(')').length
   // Every word of an item with its position: first, small (and, of), or other.
-  const wordsOf = (item: string) => [...item.matchAll(/[A-Za-z][A-Za-z'.]*[A-Za-z]|[A-Za-z]/g)].map((m, i) => ({ m, first: i === 0, small: i > 0 && SMALL_WORDS.has(m[0].toLowerCase()) }))
-  const own = splitSkills(ownSkills)
+  const wordsOf = (item: string) => [...item.matchAll(/\p{L}[\p{L}'.]*\p{L}|\p{L}/gu)].map((m, i) => ({ m, first: i === 0, small: i > 0 && SMALL_WORDS.has(m[0].toLowerCase()) }))
+  // The resume's list may be split by bars, bullets or lines rather than commas.
+  const own = ownSkills.split(/[|•·;\n]/).flatMap(splitSkills).filter(Boolean)
+  // Words the resume's list writes past an item's start keep that casing even
+  // where the posting uses them as plain words ("You will excel"). So does a
+  // one-word item also capitalized mid-sentence ("Excel", "in Excel").
+  const ownCased = new Set(own.flatMap((item) => {
+    const ws = wordsOf(item).map((w) => w.m[0])
+    return ws.length > 1 ? ws.slice(1) : ws.filter((w) => /^\p{Lu}/u.test(w) && capMid(w))
+  }))
   let firstUp = 0, firstLow = 0, restUp = 0, restLow = 0
   for (const item of own) {
     for (const { m, first, small } of wordsOf(item)) {
       if (small || keepsCase(m[0])) continue
-      const up = /^[A-Z]/.test(m[0])
+      const up = /^\p{Lu}/u.test(m[0])
       if (first) up ? firstUp++ : firstLow++
       else up ? restUp++ : restLow++
     }
@@ -346,7 +354,7 @@ export function matchSkillCase(skills: string | undefined, ownSkills: string | u
       const pairWritten = (a?: (typeof ws)[number], b?: (typeof ws)[number]) => !!a && !!b && inSources(item.slice(a.m.index, b.m.index! + b.m[0].length))
       let out = item
       ws.forEach(({ m, first, small }, k) => {
-        if (small || keepsCase(m[0]) || keepsLower(m[0]) || inParens(item.slice(0, m.index)) || pairWritten(ws[k - 1], ws[k]) || pairWritten(ws[k], ws[k + 1])) return
+        if (small || ownCased.has(m[0]) || keepsCase(m[0]) || keepsLower(m[0]) || inParens(item.slice(0, m.index)) || pairWritten(ws[k - 1], ws[k]) || pairWritten(ws[k], ws[k + 1])) return
         out = out.slice(0, m.index) + recase(m[0], first ? firstStyle : restStyle) + out.slice(m.index! + m[0].length)
       })
       return out
@@ -585,7 +593,8 @@ function usableRewrite(text: string, source: string, siblings: string[]): boolea
 // ponytail: an -ed adjective opener ("Advanced Excel models...") reads as past
 // tense, and a noun opener ("Member of...") as present. Either only costs a
 // rewrite that changes the tense alone; a word list per tense is the upgrade.
-const IRREGULAR_PAST = new Set(['ran', 'led', 'built', 'rebuilt', 'grew', 'wrote', 'rewrote', 'made', 'won', 'drove', 'took', 'began', 'brought', 'taught', 'sold', 'bought', 'spent', 'kept', 'held', 'oversaw', 'gave', 'met', 'sent', 'chose', 'became', 'drew', 'undertook', 'spoke', 'stood', 'sought', 'thought', 'felt', 'dealt', 'left', 'lost', 'paid', 'told', 'found', 'flew', 'rode', 'rose', 'struck', 'understood', 'upheld', 'oversold', 'saw', 'caught', 'spun', 'got', 'knew', 'fought', 'overcame', 'withdrew', 'overtook', 'outsold', 'did', 'redid', 'went', 'broke', 'heard', 'meant', 'swept', 'dug', 'stuck', 'arose', 'threw', 'wound', 'hung', 'shot'])
+const IRREGULAR_PAST = new Set(['ran', 'led', 'built', 'rebuilt', 'grew', 'wrote', 'rewrote', 'made', 'won', 'drove', 'took', 'began', 'brought', 'taught', 'sold', 'bought', 'spent', 'kept', 'held', 'oversaw', 'gave', 'met', 'sent', 'chose', 'became', 'drew', 'undertook', 'spoke', 'stood', 'sought', 'thought', 'felt', 'dealt', 'left', 'lost', 'paid', 'told', 'found', 'flew', 'rode', 'rose', 'struck', 'understood', 'upheld', 'oversold', 'saw', 'caught', 'spun', 'got', 'knew', 'fought', 'overcame', 'withdrew', 'overtook', 'outsold', 'did', 'redid', 'went', 'broke', 'heard', 'meant', 'swept', 'dug', 'stuck', 'arose', 'threw', 'wound', 'hung', 'shot', 'was', 'were', 'had', 'sat', 'laid', 'underwent', 'upsold', 'learnt'])
+const PREPOSITIONS = new Set(['as', 'in', 'for', 'over', 'after', 'during', 'within', 'across', 'with', 'by', 'at', 'on', 'from', 'since', 'while', 'under'])
 // Spelled the same in both tenses, or -ed words that aren't past forms: neither.
 const EITHER_TENSE = new Set(['cut', 'set', 'put', 'hit', 'let', 'shut', 'spread', 'upset', 'quit', 'read', 'cost', 'beat', 'bid', 'broadcast', 'forecast', 'embed', 'shed'])
 // An earlier role's dates end in a year ("2019 – 2022", "Mar 2020 - Jun 2022").
@@ -606,11 +615,13 @@ export function mixedTenseLines(r: Groundable): Map<LineId, string> {
   r.experience.forEach((role, i) => {
     if (!role.dates || !isEarlierRole(role.dates.trim())) return
     const tenses = role.bullets.map((b) => {
-      // The verb after a prefix ("Co-led") or a leading adverb ("Successfully migrated").
-      const word = /^\s*(?:(?:co|re|pre)-)?([A-Za-z]+)(\S*)(?:\s+([A-Za-z]+))?/i.exec(b)
-      let w = word?.[1].toLowerCase()
-      if (w && /ly$/.test(w) && !word![2] && word![3]) w = word![3].toLowerCase()
-      if (!w || word![2].startsWith(':') || /ing$/.test(w) || EITHER_TENSE.has(w)) return undefined
+      // The verb after a hyphen ("Co-led", "Cross-trained") or a leading adverb
+      // ("Successfully migrated"). A prepositional opener ("In 2021, launched")
+      // hides the verb, so it counts as neither.
+      const word = /^\s*((?:[A-Za-z]+-)*)([A-Za-z]+)(\S*)(?:\s+([A-Za-z]+))?/.exec(b)
+      let w = word?.[2].toLowerCase()
+      if (w && /ly$/.test(w) && !word![1] && !word![3] && word![4]) w = word![4].toLowerCase()
+      if (!w || word![3].startsWith(':') || /ing$/.test(w) || EITHER_TENSE.has(w) || (!word![1] && PREPOSITIONS.has(w))) return undefined
       return IRREGULAR_PAST.has(w) || (/[a-z]ed$/.test(w) && !/eed$/.test(w)) ? 'past' : 'other'
     })
     if (!tenses.includes('past')) return

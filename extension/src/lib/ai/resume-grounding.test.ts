@@ -308,7 +308,8 @@ describe('mixed tense within a role', () => {
     })
 
   test('reads past tense after a prefix or a leading adverb, and irregular forms', () => {
-    const bullets = ['Built the report', 'Co-led the migration', 'Re-architected the ETL', 'Rewrote the billing service', 'Spun up a team', 'Saw a 30% lift', 'Caught 12 billing errors', 'Successfully migrated 40 clients', 'Manage the vendor list']
+    const bullets = ['Built the report', 'Co-led the migration', 'Re-architected the ETL', 'Rewrote the billing service', 'Spun up a team', 'Saw a 30% lift', 'Caught 12 billing errors', 'Successfully migrated 40 clients', 'Manage the vendor list',
+      'Was promoted to shift lead', 'Had full P&L for 3 stores', 'Cross-trained 8 cashiers', 'Fine-tuned the forecast model', 'As shift lead, trained 8 cashiers', 'In 2021, launched the loyalty program']
     expect([...mixedTenseLines({ experience: [{ ...earlier, bullets }] }).keys()]).toEqual(['e0b8'])
   })
 
@@ -372,6 +373,22 @@ describe('matchSkillCase', () => {
     expect(matchSkillCase('Data Visualization (Tableau), Salesforce Administration', 'data quality, stakeholder reporting', posting))
       .toBe('data visualization (Tableau), Salesforce administration')
     expect(matchSkillCase('Data modeling (dbt)', 'Financial Modeling, Unit Economics', posting)).toBe('Data Modeling (dbt)')
+  })
+
+  test('a resume list split by bars, bullets or lines still sets the style', () => {
+    for (const own of ['Excel | Financial modeling | Budgeting | Forecasting', 'Excel • Financial modeling • Budgeting', 'Excel\nFinancial modeling\nBudgeting'])
+      expect(matchSkillCase('Variance Analysis, Budget Forecasting', own, sources)).toBe('Variance analysis, Budget forecasting')
+  })
+
+  test('a name in the resume\'s own list keeps its casing where the posting uses it as a plain word', () => {
+    const posting = 'Built weekly reports in Excel.\nAdvanced Excel skills. You will excel on a team that lives in Slack and Teams, and teams across the office.'
+    expect(matchSkillCase('Advanced Excel, Microsoft Excel, Slack and Teams administration', 'Excel, SQL, Teams, Unit economics, Financial modeling', posting))
+      .toBe('Advanced Excel, Microsoft Excel, Slack and Teams administration')
+  })
+
+  test('accented words are recased as whole words', () => {
+    expect(matchSkillCase('Évaluation De Programmes', 'Unit economics, Financial modeling', sources)).toBe('Évaluation de programmes')
+    expect(matchSkillCase('équipe management', 'Financial Modeling, Unit Economics', sources)).toBe('Équipe Management')
   })
 
   test('the resume\'s own items keep their casing, and a list with no style signal is left alone', () => {
