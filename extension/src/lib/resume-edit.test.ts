@@ -154,6 +154,15 @@ describe('restoring a deleted section', () => {
     expect(titled(back)).toEqual(titled(three))
   })
 
+  test('two deleted sections go back in their places, restored in either order', () => {
+    const deleteBoth = (first: string, second: string) => without(without(resume, first), second)
+    for (const [first, second] of [['education', 'certifications'], ['certifications', 'education']]) {
+      const both = deleteBoth(first, second)
+      expect(titled(restoreSection(restoreSection(both, 0), 0))).toEqual(titled(resume))
+      expect(titled(restoreSection(restoreSection(both, 1), 0))).toEqual(titled(resume))
+    }
+  })
+
   test('moving sections leaves nothing to restore', () => {
     const [summary, experience, ...rest] = shownSections(resume)
     expect(withSections(resume, [experience, summary, ...rest]).deletedSections).toBeUndefined()

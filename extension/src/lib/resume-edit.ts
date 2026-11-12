@@ -87,10 +87,23 @@ export function withSections(r: TailoredResume, list: PlacedSection[]): Tailored
 }
 
 // The resume with deleted section i back, with its text, where it sat (the
-// end of the list when that's past it).
+// end of the list when that's past it). Its index counts the list as it was
+// when it went, so a section deleted after it that sat above it isn't there
+// to count, and one that sat below it moves down one now it's back.
+// ponytail: exact for two deletions at a time; with more, nearby is close enough.
 export function restoreSection(r: TailoredResume, i: number): TailoredResume {
   const d = r.deletedSections![i]
-  const next: TailoredResume = { ...r, deletedSections: r.deletedSections!.filter((_, j) => j !== i) }
+  let at = d.index
+  const rest = r.deletedSections!.flatMap((e, j) => {
+    if (j === i) return []
+    if (j < i) return [e]
+    if (e.index < d.index) {
+      at--
+      return [e]
+    }
+    return [{ ...e, index: e.index + 1 }]
+  })
+  const next: TailoredResume = { ...r, deletedSections: rest }
   let placed: PlacedSection
   if (d.key === 'other') {
     next.otherSections = [...(r.otherSections ?? []), d.section]
@@ -101,7 +114,7 @@ export function restoreSection(r: TailoredResume, i: number): TailoredResume {
     placed = { key }
   }
   const list = shownSections(r)
-  list.splice(Math.min(d.index, list.length), 0, placed)
+  list.splice(Math.min(at, list.length), 0, placed)
   return withSections(next, list)
 }
 
