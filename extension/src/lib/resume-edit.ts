@@ -114,7 +114,7 @@ export function restoreSection(r: TailoredResume, i: number): TailoredResume {
     placed = { key }
   }
   const list = shownSections(r)
-  list.splice(Math.min(at, list.length), 0, placed)
+  list.splice(Math.max(0, Math.min(at, list.length)), 0, placed)
   return withSections(next, list)
 }
 

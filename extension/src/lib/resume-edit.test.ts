@@ -163,6 +163,11 @@ describe('restoring a deleted section', () => {
     }
   })
 
+  test('with three deleted from the top, the oldest still goes back near the top', () => {
+    const three = without(without(without(resume, 'experience'), 'summary'), 'projects')
+    expect(titled(restoreSection(three, 0))[0]).toBe('experience')
+  })
+
   test('moving sections leaves nothing to restore', () => {
     const [summary, experience, ...rest] = shownSections(resume)
     expect(withSections(resume, [experience, summary, ...rest]).deletedSections).toBeUndefined()
