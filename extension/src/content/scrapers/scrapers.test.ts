@@ -68,6 +68,7 @@ describe('company and title when the page doesn\'t name them (#200)', () => {
     // Path segments other than the first are places and job slugs
     ['a place the path names', 'Senior Auditor', 'Senior Auditor - Atlanta', 'https://careers.example.com/job/atlanta/senior-auditor/79'],
     ['a job the path names', 'Auditor', 'Auditor | Northwind', 'https://careers.example.com/jobs/auditor'],
+    ['a job the only path segment names', 'Auditor', 'Auditor | Northwind', 'https://careers.example.com/auditor'],
     ['a locale the path names', 'Auditor', 'Auditor - US | Northwind', 'https://careers.example.com/us/en/job/79'],
   ])('a tab title with %s keeps Unknown Company', (_, h1, tab, url) => {
     expect(posting(h1, tab, url)).toMatchObject({ title: h1, company: 'Unknown Company' })
@@ -113,6 +114,18 @@ describe('company and title when the page doesn\'t name them (#200)', () => {
     const job = scrape('https://careers.example.com/jobs/79', `<!doctype html><html><body><main><div><h1>Senior Auditor</h1>${header}</div>
       <section>${description.repeat(4)}</section></main></body></html>`)
     expect(job.description).toMatch(/^Audit the finance team/)
+  })
+
+  // The page is a posting: the heading beats failing, and the user can fix it
+  test('a section heading stays the title when the tab title has no job', () => {
+    expect(posting('Job Details', 'Job Details | Northwind').title).toBe('Job Details')
+  })
+
+  // A logo in the <h1>: no heading was rejected, so the tab title isn't read
+  // as a job (on master the top frame failed, and a posting in a frame won)
+  test('an <h1> holding only a logo doesn\'t fall back to the tab title', () => {
+    expect(() => posting('<a href="/"><img alt="Northwind"></a>', 'Open Positions | Northwind', 'https://www.northwind.com/careers'))
+      .toThrow('Could not find job details')
   })
 
   // "Careers | Northwind" names only the site: no job to take from it

@@ -36,9 +36,11 @@ export function fromTabTitle(): { company: string; title?: string } {
   // (/position/2552/ramon.space). Other segments are places and job slugs
   // ("/job/atlanta/accountant"), and locales ("/us/en") are too short to count.
   const { hostname, pathname } = window.location
-  // Hyphenated segments are job slugs ("/senior-auditor") and would match the title.
+  // The first segment counts only with more after it (employer, then job:
+  // "/accountant" alone is the job). Hyphenated segments are job slugs
+  // ("/senior-auditor") and would match the title.
   const [first = '', ...rest] = pathname.split('/').filter(Boolean)
-  const fromPath = [first, ...rest.filter((s) => s.includes('.'))].filter((s) => !/[-_]/.test(s))
+  const fromPath = [...(rest.length ? [first] : []), ...rest.filter((s) => s.includes('.'))].filter((s) => !/[-_]/.test(s))
   const keys = (s: string[]) => new Set(s.map(key).filter((k) => k.length > 2 && !BOARDS.has(k)))
   const host = keys(hostname.split('.'))
   const named = (set: Set<string>) => [...parts].reverse().find((p) => set.has(key(p)))

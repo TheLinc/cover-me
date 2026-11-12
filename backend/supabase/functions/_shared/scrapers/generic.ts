@@ -43,19 +43,21 @@ function tryAtsSelectors(): JobData | null {
 }
 
 function tryHeuristic(): JobData {
-  // Only use an h1 if it looks like a job title (not a nav/section heading,
-  // nor the employer's or site's name). Else the tab title's job.
+  // An <h1> is the title when it reads like one: not a listing, section or site
+  // heading, nor the employer's name. In place of an <h1> rejected for being a
+  // section or site heading or the employer, the tab title's job; failing that,
+  // a section heading, since the page is a posting and the user can fix the
+  // title. A site heading alone ("Careers at Acme") isn't a job, so a posting
+  // embedded in a frame of that page wins. Pages with no such <h1> (none, a
+  // logo, a long hero line) never fall back, as before.
   const tab = fromTabTitle()
-  const h1s = Array.from(document.querySelectorAll<HTMLElement>('h1'))
-  const titleEl = h1s.find((el) => {
-    const text = el.innerText?.trim() ?? ''
-    return text.length > 2 && text.length < 120 && !isNavHeading(text) && !isSectionOrSiteHeading(text) &&
-      text.toLowerCase() !== tab.company.toLowerCase()
-  })
-  // Only in place of a rejected <h1>: a page with none was never read as a job,
-  // and a listing's heading ("Open Roles") means there's no job to fall back to.
-  const title = titleEl?.innerText.trim() ??
-    (h1s.length && !h1s.some((el) => isNavHeading(el.innerText ?? '')) ? tab.title : undefined)
+  const company = tab.company.toLowerCase()
+  const h1s = Array.from(document.querySelectorAll<HTMLElement>('h1'), (el) => el.innerText?.trim() ?? '')
+  const usable = h1s.filter((t) => t.length > 2 && t.length < 120)
+  const section = usable.find(isSectionHeading)
+  const rejected = section ?? usable.find((t) => isSiteHeading(t) || t.toLowerCase() === company)
+  const title = usable.find((t) => !isNavHeading(t) && !isSectionHeading(t) && !isSiteHeading(t) && t.toLowerCase() !== company) ??
+    (rejected && !h1s.some(isNavHeading) ? tab.title ?? section : undefined)
 
   // Find the largest text block that looks like a job description: not a list
   // of links, which is a job board's listing or a "similar jobs" panel.
@@ -91,10 +93,14 @@ function tryHeuristic(): JobData {
 }
 
 // Section headings some postings put in an <h1> ("Key Responsibilities",
-// "job details"), and site names ("CAREERS", "MSC CAREER PORTAL").
-function isSectionOrSiteHeading(text: string): boolean {
-  return /^(?:key |main |your |the )?(?:responsibilities|duties|requirements|qualifications|overview|summary|benefits|(?:job )?(?:description|details)|about(?: us| the (?:role|job|team|company|position))?|join (?:our|the) team|what you.ll do|who we are)[.:!]?$/i.test(text) ||
-    /^careers(?: at .+)?[.!]?$|\bcareers? (?:portal|site)$/i.test(text)
+// "job details").
+function isSectionHeading(text: string): boolean {
+  return /^(?:key |main |your |the )?(?:responsibilities|duties|requirements|qualifications|overview|summary|benefits|(?:job )?(?:description|details)|about(?: us| the (?:role|job|team|company|position))?|join (?:our|the) team|what you.ll do|who we are)[.:!]?$/i.test(text)
+}
+
+// Site names in an <h1> ("CAREERS", "MSC CAREER PORTAL").
+function isSiteHeading(text: string): boolean {
+  return /^careers(?: at .+)?[.!]?$|\bcareers? (?:portal|site)$/i.test(text)
 }
 
 // Headings that indicate a listing/nav page rather than a specific job posting
