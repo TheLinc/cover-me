@@ -238,6 +238,16 @@ describe('company name', () => {
     expect(nameViolations('Meridian Logistics UK',
       'Meridian Logistics UK runs 40 depots.', 'At Meridian Logistics UK I would own routing.', 'Could Meridian Logistics UK talk next week?')).toHaveLength(1)
   })
+  // Full eval run 43274484966: "the Department" didn't count, because the short
+  // name came out as "U.S".
+  test('skips an abbreviation when picking the short name', () => {
+    expect(nameViolations('U.S. Department of Labor', 'I want to join the U.S. Department of Labor.', 'The Department enforces wage rules.')).toEqual([])
+  })
+  test('steers the retry away from adding a label line for the second mention', () => {
+    // The same run's retry added "That's the habit I'd bring to Aurelia's design team."
+    const v = nameViolations('Aurelia Medical', 'I want to join Aurelia Medical.')
+    expect(v[0]).toContain('not a line about what the applicant would bring')
+  })
   test('does not tell the retry which short form to use', () => {
     // The first word is often the wrong short form: "Valley" for Valley Medical Center.
     const v = nameViolations('Valley Medical Center',

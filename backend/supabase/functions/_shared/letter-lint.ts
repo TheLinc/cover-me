@@ -221,8 +221,9 @@ export function lintLetter(
   const body = letterBody(letter)
   const wordCount = countWords(body)
 
-  // Letters often use the short name: "Stackhouse" for "Stackhouse Ventures".
-  const shortName = opts.companyName?.split(/\s+/).find((w) => !/^(the|a|an)$/i.test(w))?.replace(/[^\p{L}\p{N}]+$/u, '')
+  // Letters often use the short name: "Stackhouse" for "Stackhouse Ventures",
+  // "the Department" for "U.S. Department of Labor" (abbreviations skipped).
+  const shortName = opts.companyName?.split(/\s+/).find((w) => !/^(the|a|an)$/i.test(w) && !w.includes('.'))?.replace(/[^\p{L}\p{N}]+$/u, '')
   const hasShort = !!shortName && shortName !== opts.companyName
   // Case-sensitive, so "in general" isn't a mention of General Mills.
   const shortRe = hasShort ? new RegExp(`(?<![\\p{L}\\p{N}])${escapeRegex(shortName)}(?![\\p{L}\\p{N}])`, 'gu') : undefined
@@ -330,7 +331,7 @@ export function lintLetter(
     const fullInBody = (body.match(fullRe) ?? []).length
     const mentions = shortRe ? Math.max(fullInLetter, (letter.match(shortRe) ?? []).length) : fullInLetter
     if (mentions < 2) {
-      violations.push(`Mentions the company name only ${mentions} time(s) — name ${opts.companyName} at least twice, naturally${hasShort ? '; a short form of the name counts' : ''}.`)
+      violations.push(`Mentions the company name only ${mentions} time(s) — name ${opts.companyName} at least twice, naturally${hasShort ? '; a short form of the name counts' : ''}. Put it in a sentence about what the employer does, not a line about what the applicant would bring.`)
     } else if (fullInLetter === 0) {
       violations.push(`Never names the company in full — write "${opts.companyName}" once, then a short form of the name or "you".`)
     } else if (hasShort && fullInBody >= 3) {
