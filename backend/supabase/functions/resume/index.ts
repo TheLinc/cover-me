@@ -4,6 +4,7 @@ import { heartbeatJson } from '../_shared/heartbeat-json.ts'
 import { decrypt, encrypt, sameCiphertext } from '../_shared/encrypt.ts'
 import { isValidParsedResume, parseResumeStructure, type ParsedResume } from '../_shared/resume-parse.ts'
 import { readBody } from '../_shared/read-body.ts'
+import { captureUsage } from '../_shared/posthog.ts'
 
 const SUPABASE_URL        = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SECRET_KEY = Deno.env.get('SERVICE_KEY')!
@@ -118,7 +119,7 @@ Deno.serve(async (req) => {
     if (text.length > MAX_RESUME_BYTES) {
       return json({ error: 'Resume text too large (max 100 KB)' }, 413)
     }
-    if (filename && typeof filename !== 'string') {
+    if (filename != null && typeof filename !== 'string') {
       return json({ error: 'Invalid filename' }, 400)
     }
     // Strip any non-printable characters from filename
@@ -161,6 +162,12 @@ Deno.serve(async (req) => {
     )
 
     if (error) return json({ error: 'Failed to save resume' }, 500)
+
+    // New text is counted with its file type only, never its name. The same
+    // text again returned above and isn't counted. A sign-in sync of a
+    // different local resume does count: the server can't tell it from an upload.
+    const fileType = safeFilename?.toLowerCase().match(/\.(pdf|docx|txt)$/)?.[1] ?? 'other'
+    EdgeRuntime.waitUntil(captureUsage(supabase, 'resume_upload', userId, { file_type: fileType }))
 
     if (wantParse) return heartbeatJson('resume', 'Resume parse failed', async () => ({ success: true, structured: await parseNow(supabase, userId, text, text_encrypted) }))
     EdgeRuntime.waitUntil(parseNow(supabase, userId, text, text_encrypted))
