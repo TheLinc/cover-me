@@ -12,8 +12,7 @@ const MAX_RESUME_BYTES    = 100_000 // 100 KB — well above any real resume tex
 const MAX_DOCX_BYTES      = 2 * 1024 * 1024
 const MAX_DOCX_BODY       = Math.ceil(MAX_DOCX_BYTES / 3) * 4 + 1_000
 const SHA256_HEX          = /^[0-9a-f]{64}$/
-// A section order and the extra sections' headings (#197).
-const MAX_ORDER_BYTES     = 10_000
+const MAX_ORDER_BYTES     = 10_000 // a section order and its extra sections' headings (#197)
 const ANTHROPIC_API_KEY   = Deno.env.get('ANTHROPIC_API_KEY')!
 // Background parses per account. Uploads aren't charged like generations,
 // so this bounds the Haiku calls one account can cause by re-uploading (or
@@ -197,9 +196,10 @@ Deno.serve(async (req) => {
       return json({ error: 'Encryption failed' }, 500)
     }
     // Only if the resume text wasn't replaced meanwhile: a new upload has its own order.
-    const { error } = await supabase.from('resumes').update({ structured_encrypted })
-      .eq('user_id', userId).like('text_encrypted', sameCiphertext(row.text_encrypted))
+    const { data: saved, error } = await supabase.from('resumes').update({ structured_encrypted })
+      .eq('user_id', userId).like('text_encrypted', sameCiphertext(row.text_encrypted)).select('user_id')
     if (error) return json({ error: 'Failed to save the order' }, 500)
+    if (!saved?.length) return json({ error: 'Your resume was replaced. Its own order applies.' }, 409)
     return json({ success: true, sectionOrder: structured.sectionOrder })
   }
 

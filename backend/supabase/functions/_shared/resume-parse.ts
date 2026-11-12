@@ -211,6 +211,7 @@ export function isCurrentParse(parsed: ParsedResume | null | undefined): parsed 
 export function upgradedParse(cached: ParsedResume | null | undefined, fresh: ParsedResume): ParsedResume {
   return cached && Array.isArray(cached.otherSections) ? withSectionOrder({ ...cached, sectionOrder: fresh.sectionOrder }) : fresh
 }
+
 // The parse with the section order the user chose in the editor (#197).
 // order: a tailored resume's sectionOrder with its deleted sections put back;
 // headings: its extra sections' headings, in that order. Each extra section
@@ -234,11 +235,14 @@ export function withChosenOrder<T extends ParsedResume>(parsed: T, order: unknow
     if (k === 'other' ? others-- > 0 : keys.includes(k)) continue
     keys.splice(Math.min(i, keys.length), 0, k)
   }
-  // withSectionOrder puts the summary first, as a parse has it; the user may have moved it.
+  // withSectionOrder puts the summary first, as a parse has it, and drops what
+  // the parse lacks. The user may have moved the summary: it goes after the
+  // sections kept from those above it.
   const { sectionOrder } = withSectionOrder({ ...parsed, otherSections, sectionOrder: keys as ParsedResume['sectionOrder'] })
-  const at = keys.indexOf('summary')
   const rest = sectionOrder.slice(1)
-  return { ...parsed, otherSections, sectionOrder: at > 0 && rest.length ? [...rest.slice(0, at), 'summary', ...rest.slice(at)] : sectionOrder }
+  let at = 0
+  for (const k of keys.slice(0, Math.max(keys.indexOf('summary'), 0))) if (k === rest[at]) at++
+  return { ...parsed, otherSections, sectionOrder: at > 0 ? [...rest.slice(0, at), 'summary', ...rest.slice(at)] : sectionOrder }
 }
 // ── End mirrored parse normalizers ──
 

@@ -443,7 +443,7 @@ export default function Editor() {
             remove: () => deleteSection(sections, i, title),
           }
           return (
-            <Section key={placed.key === 'other' ? `other-${placed.index}` : placed.key} title={title} controls={controls} aside={i === askAt && ask}>
+            <Section key={placed.key === 'other' ? `other-${placed.index}` : placed.key} title={title} controls={controls} ask={i === askAt && ask}>
               {sectionFields(placed)}
             </Section>
           )
@@ -476,7 +476,8 @@ export default function Editor() {
 
 interface SectionControls { first: boolean; last: boolean; move: (by: number) => void; remove: () => void }
 
-function Section({ title, children, controls, aside }: { title: string; children: ReactNode; controls?: SectionControls; aside?: ReactNode }) {
+// ask: the order prompt, under the controls of the section just moved.
+function Section({ title, children, controls, ask }: { title: string; children: ReactNode; controls?: SectionControls; ask?: ReactNode }) {
   return (
     <section className="ed-section">
       <div className="ed-section-head">
@@ -489,7 +490,7 @@ function Section({ title, children, controls, aside }: { title: string; children
           </div>
         )}
       </div>
-      {aside}
+      {ask}
       {children}
     </section>
   )

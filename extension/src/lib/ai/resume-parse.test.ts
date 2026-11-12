@@ -186,6 +186,14 @@ describe('withChosenOrder', () => {
     expect(next.experience).toEqual(parsed.experience)
   })
 
+  test('the summary keeps its place among the sections the parse has', () => {
+    // An emptied certifications list shows in the editor, but the parse has none.
+    expect(withChosenOrder(parsed, ['certifications', 'summary', 'experience', 'education', 'skills', 'other', 'other'], []).sectionOrder)
+      .toEqual(['summary', 'experience', 'education', 'skills', 'other', 'other'])
+    expect(withChosenOrder(parsed, ['experience', 'projects', 'summary', 'education', 'skills', 'other', 'other'], []).sectionOrder)
+      .toEqual(['experience', 'summary', 'education', 'skills', 'other', 'other'])
+  })
+
   test('an extra section renamed in the editor is matched by its place', () => {
     const next = withChosenOrder(parsed, ['summary', 'other', 'experience', 'education', 'skills', 'other'], ['Awards', 'My talks'])
     expect(headings(next)).toEqual(['Awards', 'Talks'])

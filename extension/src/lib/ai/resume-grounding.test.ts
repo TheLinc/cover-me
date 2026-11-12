@@ -423,4 +423,11 @@ describe('candidateText and the section order', () => {
     expect(text).not.toMatch(/experience|education/i)
     expect(text).toContain('Zendesk')
   })
+
+  test("nor is a deleted section's key, though its text counts (#197)", () => {
+    const resume = { name: 'Pat Lee', experience: [], deletedSections: [{ key: 'experience', index: 1, experience: [{ title: 'Agent', company: 'Acme', bullets: ['Resolved tickets in Zendesk'] }] }] }
+    const text = candidateText(resume)
+    expect(text).not.toMatch(/experience/i)
+    expect(text).toContain('Zendesk')
+  })
 })
