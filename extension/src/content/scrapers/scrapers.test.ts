@@ -27,6 +27,41 @@ describe('scrapers on saved postings', () => {
   })
 })
 
+describe('company and title when the page doesn\'t name them (#200)', () => {
+  // An Ashby posting reached from the board's own listing has no JSON-LD (it's
+  // rendered in the first page load only), so the selectors read it, and the
+  // company comes from the tab title "<job> @ OpenAI".
+  test('Ashby posting without JSON-LD', () => {
+    const html = readFileSync(join(__dirname, 'fixtures', 'ashby.html'), 'utf8')
+      .replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>/g, '')
+    expect(scrape(fixtureUrl(html), html)).toMatchObject({ title: 'AI Systems Engineer, Codex Agents', company: 'OpenAI' })
+  })
+
+  const description = `<p>${'Audit the finance team\'s controls and report to the board each quarter. '.repeat(10)}</p>`
+  const posting = (h1: string, tab: string, url = 'https://careers.example.com/jobs/79') =>
+    scrape(url, `<html><head><title>${tab}</title></head><body><main><h1>${h1}</h1><div><h2>Senior Auditor</h2>${description}</div></main></body></html>`)
+
+  // Headings seen as saved titles in production
+  test.each(['Key Responsibilities', 'Job Description', 'job details', 'CAREERS', 'Careers at Iterable.', 'MSC CAREER PORTAL', 'About the role'])(
+    'an <h1> of "%s" is a heading, not the title', (h1) => {
+      expect(posting(h1, 'Senior Auditor | American Cancer Society')).toMatchObject({ title: 'Senior Auditor', company: 'American Cancer Society' })
+    })
+
+  test('an <h1> naming the employer is not the title', () => {
+    expect(posting('American Cancer Society', 'Senior Auditor | American Cancer Society').title).toBe('Senior Auditor')
+  })
+
+  test('a tab title part the URL names is the company, wherever it sits', () => {
+    expect(posting('Senior Auditor', 'Acme - Senior Auditor', 'https://jobs.acme.com/79').company).toBe('Acme')
+    // A job slug in the path doesn't make the title the company
+    expect(posting('Senior Auditor', 'Senior Auditor - Acme', 'https://careers.example.com/jobs/senior-auditor').company).toBe('Acme')
+  })
+
+  test('a tab title without a company keeps Unknown Company', () => {
+    expect(posting('Senior Auditor', 'Senior Auditor').company).toBe('Unknown Company')
+  })
+})
+
 describe('generic heuristic', () => {
   // Greenhouse's public board listing: an <h1> of "Open Roles" over a list of
   // job links, once read as a job called "Open Roles" (#64).
