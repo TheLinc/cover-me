@@ -52,6 +52,12 @@ export const BOARDS: Board[] = [
     rewrite: (href) => `https://www.indeed.com/viewjob?jk=${new URL(href).searchParams.get('jk')}`, ready: '[data-testid="vj-job-description-heading"]', headed: true },
   // Search results with the first job open in the right-hand pane
   { name: 'indeed-search', listing: 'https://www.indeed.com/jobs?q=welder', ready: '[data-testid="vj-job-description-heading"]', headed: true },
+  // Company career sites that name the employer only in the tab title (#200)
+  { name: 'apple', listing: 'https://jobs.apple.com/en-us/search?location=united-states-USA', posting: /jobs\.apple\.com\/en-us\/details\/\d+/ },
+  { name: 'amazon', listing: 'https://www.amazon.jobs/en/search?base_query=software+engineer', posting: /amazon\.jobs\/en\/jobs\/\d+/ },
+  { name: 'google-careers', listing: 'https://www.google.com/about/careers/applications/jobs/results/', posting: /careers\/applications\/jobs\/results\/\d+-/ },
+  // Humana's Phenom career site
+  { name: 'phenom', listing: 'https://careers.humana.com/us/en/search-results', posting: /careers\.humana\.com\/us\/en\/job\// },
 ]
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36'
@@ -74,7 +80,9 @@ export async function takeSnapshot(page: Page): Promise<PageSnapshot> {
 
 // Returns the posting URL and the HTML the extension would send for it.
 export async function fetchPosting(browser: Browsers, board: Board): Promise<PageSnapshot> {
-  const open = () => board.headed ? browser.headed() : browser.headless.newPage({ userAgent: UA })
+  // bypassCSP: takeSnapshot runs in the page's own world, where Google's
+  // careers page enforces Trusted Types and blocks the snapshot's parser.
+  const open = () => board.headed ? browser.headed() : browser.headless.newPage({ userAgent: UA, bypassCSP: true })
   let page = await open()
   try {
     await load(page, board.listing)

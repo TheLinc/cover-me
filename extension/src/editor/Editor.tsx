@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { ensureValidSession, fetchApplicationsFromBackend, saveResumeEditToBackend } from '../lib/auth'
+import { ensureValidSession, fetchApplicationsFromBackend, saveResumeEditToBackend, saveSectionOrderToBackend } from '../lib/auth'
 import { skillGroups, splitSkills } from '../lib/ai/resume-grounding'
+import { isCurrentParse, withChosenOrder } from '../lib/ai/resume-parse'
 import { downloadTailoredResumePdf, tailoredResumePdf } from '../lib/pdf/resume'
 import type { PlacedSection } from '../lib/pdf/sections'
-import { editedResume, saveResumeEdit, shownSections, withResumeEdit, withSections } from '../lib/resume-edit'
-import { getCachedTier, getMode, getTailoredHistory } from '../lib/storage'
+import type { DeletedSection } from '../lib/pdf/types'
+import { chosenOrder, editedResume, restoreSection, saveResumeEdit, shownSections, withResumeEdit, withSections } from '../lib/resume-edit'
+import { getCachedTier, getMode, getResume, getTailoredHistory, saveParsedResume } from '../lib/storage'
 import DownloadMenu from '../popup/components/DownloadMenu'
 import GapChips from '../popup/components/GapChips'
 import PdfPreview from './PdfPreview'
@@ -56,7 +58,24 @@ function resumeFromForm(draft: TailoredResume, skills: string[]): TailoredResume
   }
 }
 
+// "Use this order for future resumes?" (#197). Own-key: the parse in this
+// browser. Signed in: the account's, which the server matches the same way.
+// Returns why it wasn't saved when the user can act on it; throws otherwise.
+async function saveOrderForLater(r: TailoredResume): Promise<string | undefined> {
+  const { sectionOrder, headings } = chosenOrder(r)
+  if ((await getMode()) === 'hosted') {
+    const session = await ensureValidSession()
+    if (!session) return 'Sign in again first.'
+    return saveSectionOrderToBackend(session.access_token, sectionOrder, headings)
+  }
+  const parsed = (await getResume())?.parsed
+  // A new upload isn't read until its first tailor.
+  if (!isCurrentParse(parsed)) return 'Tailor once with your current resume first.'
+  await saveParsedResume(withChosenOrder(parsed, sectionOrder, headings))
+}
+
 type Status = '' | 'saving' | 'saved' | 'local'
+type OrderAsk = '' | 'ask' | 'saving' | 'saved' | 'failed'
 
 // Everything an undo step restores.
 interface Form { draft: TailoredResume; skills: string[] }
@@ -69,6 +88,7 @@ const MOD = /Mac/.test(navigator.platform) ? '⌘' : 'Ctrl+'
 const SECTION_TITLES: Record<Exclude<PlacedSection['key'], 'other'>, string> = {
   summary: 'Summary', experience: 'Experience', projects: 'Projects', education: 'Education', certifications: 'Certifications', skills: 'Skills',
 }
+const deletedTitle = (d: DeletedSection) => (d.key === 'other' ? d.section.heading || 'Other' : SECTION_TITLES[d.key])
 
 export default function Editor() {
   const id = useMemo(() => new URLSearchParams(location.search).get('id') ?? '', [])
@@ -78,6 +98,7 @@ export default function Editor() {
   const lastStep = useRef<{ field: Element | null; at: number }>({ field: null, at: 0 })
   const [note, setNote] = useState('') // what the last section delete removed
   const focusNext = useRef<string | null>(null) // a control to focus once the form re-renders
+  const [orderAsk, setOrderAsk] = useState<{ state: OrderAsk; at: number; error?: string }>({ state: '', at: 0 }) // at: the moved section's place
   const [dirty, setDirty] = useState(false)
   const [status, setStatus] = useState<Status>('')
   const [preview, setPreview] = useState<ArrayBuffer | null>(null)
@@ -241,12 +262,36 @@ export default function Editor() {
     const end = by < 0 ? i + by === 0 : i + by === list.length - 1
     const dir = (by < 0) !== end ? 'up' : 'down'
     focusNext.current = `[aria-label="Move ${CSS.escape(title)} section ${dir}"]`
+    setOrderAsk({ state: 'ask', at: i + by })
   }
 
+  // The deleted section keeps its text (#197), skills as typed so far.
   function deleteSection(list: PlacedSection[], i: number, title: string) {
-    change((f) => ({ ...f, draft: withSections(f.draft, list.filter((_, j) => j !== i)) }))
+    change((f) => ({ ...f, draft: withSections({ ...f.draft, skills: resumeFromForm(f.draft, f.skills).skills }, list.filter((_, j) => j !== i)) }))
     setNote(`${title} deleted.`)
     focusNext.current = '.ed-note button'
+  }
+
+  function restore(i: number, title: string) {
+    change((f) => {
+      const draft = restoreSection(f.draft, i)
+      return { draft, skills: f.draft.deletedSections![i].key === 'skills' ? splitSkills(draft.skills ?? '') : f.skills }
+    })
+    setNote(`${title} restored.`)
+    focusNext.current = '.ed-note button'
+  }
+
+  async function saveOrder() {
+    if (!current) return
+    setOrderAsk((a) => ({ ...a, state: 'saving' }))
+    // A move while it saves asks again; the answer doesn't cover that one.
+    const settle = (state: OrderAsk, error?: string) => setOrderAsk((a) => (a.state === 'saving' ? { ...a, state, error } : a))
+    try {
+      const why = await saveOrderForLater(current)
+      settle(why ? 'failed' : 'saved', why)
+    } catch {
+      settle('failed')
+    }
   }
 
   // Closes once everything is saved. When the account couldn't be reached the
@@ -269,6 +314,17 @@ export default function Editor() {
   const edited = dirty || !!scored.editedAt
   const { draft, skills } = form
   const sections = shownSections(draft)
+  const askAt = Math.min(orderAsk.at, sections.length - 1)
+  const ask = orderAsk.state && (
+    <p className="ed-order-ask" role="status">
+      {orderAsk.state === 'ask' && <>Use this order for future resumes?{' '}
+        <button type="button" className="text-link" onClick={saveOrder}>Yes</button>{' '}
+        <button type="button" className="text-link" onClick={() => setOrderAsk({ state: '', at: 0 })}>No</button></>}
+      {orderAsk.state === 'saving' && 'Saving the order…'}
+      {orderAsk.state === 'saved' && 'Your next tailored resumes will use this order.'}
+      {orderAsk.state === 'failed' && <>Couldn't save the order. {orderAsk.error} <button type="button" className="text-link" onClick={saveOrder}>Try again</button></>}
+    </p>
+  )
 
   function sectionFields(placed: PlacedSection): ReactNode {
     switch (placed.key) {
@@ -393,11 +449,28 @@ export default function Editor() {
             remove: () => deleteSection(sections, i, title),
           }
           return (
-            <Section key={placed.key === 'other' ? `other-${placed.index}` : placed.key} title={title} controls={controls}>
+            <Section key={placed.key === 'other' ? `other-${placed.index}` : placed.key} title={title} controls={controls} ask={i === askAt && ask}>
               {sectionFields(placed)}
             </Section>
           )
         })}
+
+        {!!draft.deletedSections?.length && (
+          <section className="ed-deleted" aria-label="Deleted sections">
+            <h2>Deleted sections</h2>
+            <ul>
+              {draft.deletedSections.map((d, i) => {
+                const title = deletedTitle(d)
+                return (
+                  <li key={i}>
+                    {title}{' '}
+                    <button type="button" className="text-link" aria-label={`Restore ${title} section`} onClick={() => restore(i, title)}>Restore</button>
+                  </li>
+                )
+              })}
+            </ul>
+          </section>
+        )}
       </main>
 
       <aside className="ed-preview" aria-label="PDF preview">
@@ -409,7 +482,8 @@ export default function Editor() {
 
 interface SectionControls { first: boolean; last: boolean; move: (by: number) => void; remove: () => void }
 
-function Section({ title, children, controls }: { title: string; children: ReactNode; controls?: SectionControls }) {
+// ask: the order prompt, under the controls of the section just moved.
+function Section({ title, children, controls, ask }: { title: string; children: ReactNode; controls?: SectionControls; ask?: ReactNode }) {
   return (
     <section className="ed-section">
       <div className="ed-section-head">
@@ -422,6 +496,7 @@ function Section({ title, children, controls }: { title: string; children: React
           </div>
         )}
       </div>
+      {ask}
       {children}
     </section>
   )

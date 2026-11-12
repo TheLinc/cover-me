@@ -144,6 +144,10 @@ describe('an edited previous version', () => {
     expect(seenVersion(original, { ...previous, experience: [...previous.experience, ...previous.experience], editedAt: 'x' })).toBe(original)
     expect(seenVersion(original, { ...previous, experience: [], editedAt: 'x' }).experience).toEqual([])
     expect(seenVersion(original, previous)).toBe(original)
+    // #197: the order the user set and the sections they deleted carry over.
+    const deletedSections = [{ key: 'skills', index: 2, skills: 'React' }]
+    const moved = seenVersion(original, { ...noSkills, sectionOrder: ['experience', 'summary'], deletedSections, editedAt: 'x' })
+    expect(moved).toMatchObject({ sectionOrder: ['experience', 'summary'], deletedSections })
   })
 
   describe('keepSeen', () => {
@@ -417,6 +421,13 @@ describe('candidateText and the section order', () => {
     const resume = { name: 'Pat Lee', experience: [{ title: 'Agent', company: 'Acme', bullets: ['Resolved customer tickets in Zendesk'] }], skills: 'Zendesk', sectionOrder: ['summary', 'experience', 'education', 'skills'] }
     const text = candidateText(resume)
     expect(text).not.toMatch(/experience|education/i)
+    expect(text).toContain('Zendesk')
+  })
+
+  test("nor is a deleted section's key, though its text counts (#197)", () => {
+    const resume = { name: 'Pat Lee', experience: [], deletedSections: [{ key: 'experience', index: 1, experience: [{ title: 'Agent', company: 'Acme', bullets: ['Resolved tickets in Zendesk'] }] }] }
+    const text = candidateText(resume)
+    expect(text).not.toMatch(/experience/i)
     expect(text).toContain('Zendesk')
   })
 })

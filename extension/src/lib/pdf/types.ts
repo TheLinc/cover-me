@@ -80,6 +80,9 @@ export interface TailoredResume {
   // The print order the user set in the editor (sections.ts). Missing means
   // the standard order.
   sectionOrder?: SectionKey[]
+  // Sections deleted in the editor (#197), with the text they had, so they
+  // can be restored. Nothing prints them.
+  deletedSections?: DeletedSection[]
   // Tailored in the user's own Word file (#131): the SHA-256 of that file.
   // Missing means the Cover Me layout.
   sourceHash?: string
@@ -87,6 +90,13 @@ export interface TailoredResume {
   // this one uses the Cover Me layout.
   designFellBack?: boolean
 }
+
+// A deleted section: its content under its own field (an extra section under
+// section), and where it sat in the editor's list.
+export type DeletedSection = { index: number } & (
+  | { key: 'other'; section: ResumeSection }
+  | ({ key: Exclude<SectionKey, 'other'> } & Partial<Pick<TailoredResume, 'summary' | 'experience' | 'projects' | 'education' | 'certifications' | 'skills'>>)
+)
 
 // The job fields the letter's PDF prints. The extension's JobData has more.
 export interface PdfJob {

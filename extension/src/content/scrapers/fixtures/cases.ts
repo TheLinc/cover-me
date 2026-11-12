@@ -35,6 +35,23 @@ export const FIXTURE_CASES = [
   // An employer with an Indeed company page: the pane links the name (no
   // vj-company-name), and an empty sentinel div follows the description heading
   { board: 'indeed-search-company-link', title: 'Retail Associates', company: 'Walmart', ends: 'Work Location: In person' },
+  // Company career sites that name the employer only in the tab title (#200).
+  // Apple's posting card ends with its own links back to the search
+  { board: 'apple', title: 'US - Specialist: Seasonal, Part-time', company: 'Apple', ends: 'See all roles in United States' },
+  // Amazon puts its <title> in <body>
+  { board: 'amazon', title: 'Software Engineer', company: 'Amazon', ends: 'please contact your Recruiting Partner.' },
+  // The <h1> reads "job details"; the posting sits beside a list of other jobs
+  { board: 'google-careers', title: 'Senior Staff Software Engineer, Generative AI, Search Intelligence', company: 'Google', ends: 'Current or past grants do not confer an acquired right.' },
+  // The same posting opened by clicking it in the search results (saved by
+  // hand: fixtures:save loads postings directly). A "Search Jobs" <h1> comes
+  // first, and the job list beside the posting is larger than it.
+  { board: 'google-careers-search', title: 'Senior Staff Software Engineer, Generative AI, Search Intelligence', company: 'Google', ends: 'Current or past grants do not confer an acquired right.' },
+  // Phenom: JSON-LD with an empty hiringOrganization name
+  { board: 'phenom', title: 'Home Health Licensed Practical Nurse', company: 'Humana', ends: 'at all levels of employment.' },
+  // Every <h1> is a section heading ("Key Responsibilities"); the tab title is
+  // "RAMON.SPACE - Director of Finance", company first. The posting's block
+  // ends with an office map.
+  { board: 'dueto', title: 'Director of Finance', company: 'RAMON.SPACE', ends: 'Report a map error' },
 ]
 
 // Line 1 of every fixture is `<!-- {url} saved {date} -->`.
