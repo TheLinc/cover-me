@@ -330,6 +330,9 @@ export function checkParse(actual: ParsedResume, c: EvalCase): CheckResult {
     })
   }
 
+  // The sections in the resume's order, where the answer key gives one (#165).
+  if (want.sectionOrder) eq('sectionOrder', want.sectionOrder.join(', '), (actual.sectionOrder ?? []).join(', '))
+
   return result
 }
 

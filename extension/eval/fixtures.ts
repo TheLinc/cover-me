@@ -113,6 +113,9 @@ const alexParsed: ParsedResume = {
   ],
   skills:
     'React, TypeScript, JavaScript, GraphQL, Zustand, Jest, React Testing Library, HTML, CSS, Node.js, Supabase, Git',
+  // The usual order, so a parse that copies the prompt's certifications-first
+  // example fails here (#165).
+  sectionOrder: ['summary', 'experience', 'projects', 'education', 'skills'],
 }
 
 // ── Resume 2: med-surg RN. Has BLS + Epic. NO ACLS, CCRN, Cerner, ICU. ───────
@@ -188,6 +191,8 @@ const jordanParsed: ParsedResume = {
     'Registered Nurse (RN) — Colorado, License #RN-88213, Active',
     'Basic Life Support (BLS) — American Heart Association, Expires Sep 2027',
   ],
+  // Licenses lead the resume, so they lead every resume tailored from it (#165).
+  sectionOrder: ['summary', 'certifications', 'experience', 'education', 'skills'],
 }
 
 // ── Resume 3: content marketer. Google Ads yes; NO Meta Ads, no fintech. ─────

@@ -411,3 +411,12 @@ describe('matchSkillCase', () => {
     expect(matchSkillCase(undefined, 'Unit economics', sources)).toBeUndefined()
   })
 })
+
+describe('candidateText and the section order', () => {
+  test('the section keys are not resume evidence, so "Customer Experience" needs the resume to say it', () => {
+    const resume = { name: 'Pat Lee', experience: [{ title: 'Agent', company: 'Acme', bullets: ['Resolved customer tickets in Zendesk'] }], skills: 'Zendesk', sectionOrder: ['summary', 'experience', 'education', 'skills'] }
+    const text = candidateText(resume)
+    expect(text).not.toMatch(/experience|education/i)
+    expect(text).toContain('Zendesk')
+  })
+})

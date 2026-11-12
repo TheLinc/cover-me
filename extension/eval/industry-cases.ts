@@ -406,6 +406,8 @@ Requirements: CPA required; 4+ years of accounting experience.`),
         edu('A-levels: Maths (B), Business (B), English (C)', 'Roundhay School', 'Leeds', '2017 – 2019'),
       ],
       skills: 'Xero, purchase ledger, credit control, bank reconciliation, VAT, Excel',
+      // Skills first, which the parse model put last (#165).
+      sectionOrder: ['summary', 'skills', 'experience', 'education'],
     },
     job: job('Accounts Payable Clerk', 'Meridian Logistics UK', `Meridian Logistics UK is hiring an Accounts Payable Clerk in Bradford.
 
@@ -825,6 +827,8 @@ Requirements: CPhT; hospital experience preferred.`),
           ],
         },
       ],
+      // Rotations and volunteering sit after the certifications (#165).
+      sectionOrder: ['summary', 'experience', 'education', 'certifications', 'other', 'other'],
     },
     job: job('Registered Nurse, Medical-Surgical', 'Kettering Health', `Kettering Health is hiring new graduate RNs for its medical-surgical units.
 
@@ -990,6 +994,8 @@ Requirements: Secret security clearance required; federal experience preferred.`
         heading: 'PUBLICATIONS',
         lines: ['Adeyemi S, Park J, Lowell R. "CRISPR screening identifies regulators of drug resistance in lung adenocarcinoma." Journal of Cell Biology. 2023;41(2):112-120.'],
       }],
+      // Publications last, after the six (#165).
+      sectionOrder: ['summary', 'experience', 'education', 'skills', 'other'],
     },
     job: job('Scientist I', 'Crestline Bio', `Crestline Bio develops cell therapies.
 

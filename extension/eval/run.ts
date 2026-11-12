@@ -375,7 +375,7 @@ async function tailorOnce(c: EvalCase, run: number): Promise<TailorRun> {
     if (USE_PARSE) {
       const raw = await call([{ role: 'user', content: buildParsePrompt(c.resumeText) }], { model: PARSE_MODEL, maxTokens: 6000, label: 'parse' })
       try {
-        const parsed = parseParsedJson(raw)
+        const parsed = parseParsedJson(raw, c.resumeText)
         const result = checkParse(parsed, c)
         out.parse = { result, parsed }
         // A bad parse would make every tailor check fail for the wrong reason,
