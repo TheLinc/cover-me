@@ -97,7 +97,12 @@ const LABEL_MESSAGE = 'Labels the experience after describing it ("That is data 
 // do (#206). A line in the past tense adds a fact ("That's how I met the plant
 // manager"), and one mid-paragraph leads into what follows. Checked on every
 // paragraph but the close, where naming what to talk about is the job.
-const LABEL_LINE_RE = /[.!?][ \t]+(?:That|This)(?:['’]s| is) [^.!?]{0,40}?\bI(?:['’](?:ve|d)| have| would)? (?:already |still |also |now )?(?:do|work|bring|want|hold|been doing)\b[^.!?\n]*[.!?]\s*$/i
+const LABEL_LINE_RE = /[.!?][ \t]+((?:That|This)(?:['’]s| is) [^.!?]{0,40}?\bI(?:['’](?:ve|d)| have| would)? (?:already |still |also |now )?(?:do|work|bring|want|hold|been doing)\b[^.!?\n]*[.!?])\s*$/i
+
+// A short verdict on an employer detail ("I like that setup.", "I know that
+// view."): the judge read these as punchy lines placed for rhythm in 12 of 72
+// letters in the #206 full eval. A longer sentence carries a fact and passes.
+const REACTION_RE = /^I (?:like|know) (?:that|this)(?: [\w'’-]+){0,4}[.!]$/
 
 // Sentence shapes that read as templated even when every word is plain. The
 // judge flagged each one in every letter of the 2026-11-11 eval run (#198).
@@ -216,11 +221,19 @@ export function lintLetter(
   const body = letterBody(letter)
   const wordCount = countWords(body)
 
-  // The employer's name is not word choice: "Beacon Retail Group" must not trip
-  // the "beacon" rule, or the model learns to avoid naming the company.
-  const scanned = opts.companyName
+  // Letters often use the short name: "Stackhouse" for "Stackhouse Ventures".
+  const shortName = opts.companyName?.split(/\s+/).find((w) => !/^(the|a|an)$/i.test(w))?.replace(/[^\p{L}\p{N}]+$/u, '')
+  const hasShort = !!shortName && shortName !== opts.companyName
+  // Case-sensitive, so "in general" isn't a mention of General Mills.
+  const shortRe = hasShort ? new RegExp(`(?<![\\p{L}\\p{N}])${escapeRegex(shortName)}(?![\\p{L}\\p{N}])`, 'gu') : undefined
+
+  // The employer's name is not word choice: "Beacon Retail Group", or "Beacon"
+  // for short, must not trip the "beacon" rule, or the model learns to avoid
+  // naming the company (#206 full eval).
+  let scanned = opts.companyName
     ? letter.replace(new RegExp(escapeRegex(opts.companyName), 'gi'), ' ')
     : letter
+  if (shortRe) scanned = scanned.replace(shortRe, ' ')
   for (const w of AI_VOCAB) {
     if (containsWord(scanned, w)) {
       violations.push(`Contains AI-flagged word "${w}" — replace it with plain, specific language.`)
@@ -277,13 +290,19 @@ export function lintLetter(
   for (const [re, message] of SENTENCE_SHAPES) {
     if (re.test(body)) violations.push(message)
   }
-  if (!violations.includes(LABEL_MESSAGE) && paragraphs.slice(0, -1).some((p) => LABEL_LINE_RE.test(p))) {
-    violations.push(LABEL_MESSAGE)
+  // Both quote the line: with only stock examples in the message, the full
+  // eval's retry kept "That's the standard I'd bring to Gulf Coast…" (#206).
+  const bodyParas = paragraphs.slice(0, -1)
+  const label = bodyParas.map((p) => LABEL_LINE_RE.exec(p)?.[1]).find(Boolean)
+  if (label && !violations.includes(LABEL_MESSAGE)) {
+    violations.push(`Labels the experience after describing it ("${label}") — cut that line; the example already makes the point.`)
+  }
+  const reaction = bodyParas.flatMap((p) => p.split(SENTENCE_END)).map((s) => s.trim()).find((s) => REACTION_RE.test(s))
+  if (reaction) {
+    violations.push(`Reacts to the employer with a short verdict ("${reaction}") — cut it, or say what the applicant did that makes that detail matter.`)
   }
   // A maxim opens with a general truth about no one: no person, name or figure.
   const firstSentence = body.split(SENTENCE_END)[0] ?? ''
-  // Letters often use the short name: "Stackhouse" for "Stackhouse Ventures".
-  const shortName = opts.companyName?.split(/\s+/).find((w) => !/^(the|a|an)$/i.test(w))?.replace(/[^\p{L}\p{N}]+$/u, '')
   const namesEmployer = !!opts.companyName && (containsPhrase(firstSentence, opts.companyName) || (!!shortName && containsWord(firstSentence, shortName)))
   if (firstSentence && !ANCHORED_RE.test(firstSentence) && !NAMED_RE.test(firstSentence) && !namesEmployer) {
     violations.push(`Opens with a general maxim ("${firstSentence.trim()}") — open with something the applicant did, or with the employer's own situation.`)
@@ -309,11 +328,7 @@ export function lintLetter(
     const fullRe = new RegExp(escapeRegex(opts.companyName), 'gi')
     const fullInLetter = (letter.match(fullRe) ?? []).length
     const fullInBody = (body.match(fullRe) ?? []).length
-    const hasShort = !!shortName && shortName !== opts.companyName
-    // Case-sensitive, so "in general" isn't a mention of General Mills.
-    const mentions = hasShort
-      ? Math.max(fullInLetter, (letter.match(new RegExp(`(?<![\\p{L}\\p{N}])${escapeRegex(shortName)}(?![\\p{L}\\p{N}])`, 'gu')) ?? []).length)
-      : fullInLetter
+    const mentions = shortRe ? Math.max(fullInLetter, (letter.match(shortRe) ?? []).length) : fullInLetter
     if (mentions < 2) {
       violations.push(`Mentions the company name only ${mentions} time(s) — name ${opts.companyName} at least twice, naturally${hasShort ? '; a short form of the name counts' : ''}.`)
     } else if (fullInLetter === 0) {
@@ -339,12 +354,12 @@ export function lintLetter(
   // pivot. The close is skipped: "Acme wants X, and that is the first thing
   // I'd ask about" is the Question close doing its job.
   const needRe = new RegExp(`^\\s*(?:${[...employers, String.raw`\b[Yy]ou(?:r team)?\b`, String.raw`\b[Tt]he team\b`].join('|')})[^.!?]{0,30}?${NEED_VERB}`)
-  const pivots = paragraphs.slice(0, -1).flatMap((p) => p.split(SENTENCE_END)).some((s) => {
+  const pivot = bodyParas.flatMap((p) => p.split(SENTENCE_END)).find((s) => {
     const m = needRe.exec(s)
     return !!m && PIVOT_RE.test(s.slice(m.index + m[0].length))
   })
-  if (pivots) {
-    violations.push('Turns the posting back on the employer and claims it ("Acme needs X, and that is the work I do") — open with something the applicant did, or one concrete detail about the employer, and let the example show the match.')
+  if (pivot) {
+    violations.push(`Turns the posting back on the employer and claims it ("${pivot.trim()}") — open with something the applicant did, or one concrete detail about the employer, and let the example show the match.`)
   }
 
   // The prompt forbids invented metrics; this catches the ones that slip

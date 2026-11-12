@@ -149,7 +149,7 @@ Salutation: ${salutation}
 Paragraph 1 — Hook (2–3 sentences):
 Lead with what the applicant offers, not what they want. Use one of these proven opening patterns:
 - Achievement-first: a quantified result from past work that maps directly to a top requirement of this role
-- Problem-solution: take one concrete detail from the JD about this employer's situation (a system, a volume, a change underway), name the employer, then say what the applicant did about the same kind of problem. Never the posting's own sentence turned around ("[Company] needs X, and that is the work I do"), and never a general maxim ("Bad data is cheapest to fix early")
+- Problem-solution: take one concrete detail from the JD about this employer's situation (a system, a volume, a change underway), name the employer (or "the team" when the company is unknown), then say what the applicant did about the same kind of problem. Never the posting's own sentence turned around ("[Company] needs X, and that is the work I do"), and never a general maxim ("Bad data is cheapest to fix early")
 - Bold specific claim: a confident statement of a real accomplishment, striking enough to demand attention
 - Referral: name a mutual contact explicitly in the first sentence if one exists
 
@@ -183,7 +183,7 @@ Keywords: Embed 5–10 JD hard-skill keywords (tools, certifications, methodolog
 
 Action verbs: Strong past-tense for past roles: Led, Built, Designed, Optimized, Launched, Reduced, Generated, Negotiated, Delivered, Streamlined, Partnered, Authored, Exceeded, Drove, Shipped, Architected, Scaled, Mentored. Present tense for current role only.
 
-Voice: Vary sentence length — short punchy sentences mixed with longer ones. If any paragraph reads like a press release or a template essay, rewrite it. Each paragraph should feel distinct in rhythm.
+Voice: Vary sentence length, mixing short sentences with longer ones. A short sentence carries a fact, not a verdict on what came before ("I like that setup.", "I know that view."). If any paragraph reads like a press release or a template essay, rewrite it. Each paragraph should feel distinct in rhythm.
 
 Personalization: Name the company in full once and by name at least once more, using a short form after the first ("Acme" for "Acme Software"); "you" is fine beyond that. The full name three times reads as a template filling in a blank. Include at least one concrete detail drawn from the job description itself — a specific product area, team structure, workflow, or stated challenge — that shows the applicant read this posting carefully. (Echoing the employer's tech stack back is not personalization — see ABSOLUTE PROHIBITIONS.)
 

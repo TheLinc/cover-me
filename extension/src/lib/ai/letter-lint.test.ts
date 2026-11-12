@@ -122,6 +122,26 @@ describe('templated sentence shapes', () => {
     'Could we talk next week about the Halcyon cutover? That is exactly the conversation I want to have.',
     'Could we set up a short call? The Halcyon cutover is the first thing I would raise. That is the project I would bring to a first conversation.',
   ])('label leaves the close alone: %s', (s) => expect(flagged('Labels', opener, s)).toBe(false))
+  test('label message quotes the line, so the retry can find it', () => {
+    // The full eval's welder retry kept the line when the message only gave stock examples.
+    const v = lintLetter(letter(opener, "I kept zero rework on both jobs. That's the standard I'd bring to Gulf Coast Energy Services.", close)).violations
+    expect(v.find((x) => x.startsWith('Labels'))).toContain("That's the standard I'd bring to Gulf Coast Energy Services.")
+  })
+
+  // A short reaction to an employer detail: the judge called these "punchy
+  // lines placed for rhythm" in the #206 full eval (12 of 72 letters).
+  test.each([
+    'Your analysts sit with the merchandising team. I like that setup.',
+    'The role reports to the plant manager. I know that view.',
+    'Each analyst owns one category. I like that kind of seat.',
+  ])('reaction line: %s', (s) => expect(flagged('Reacts', opener, s, close)).toBe(true))
+  test.each([
+    'I know that warehouse well, because I ran its night shift for two years.',
+    'I like that the team reviews every query before it ships, since my first manager did the same.',
+  ])('reaction line leaves a sentence with a fact alone: %s', (s) => expect(flagged('Reacts', opener, s, close)).toBe(false))
+  test('reaction line leaves the close alone', () => {
+    expect(flagged('Reacts', opener, 'Could we talk next week? I like that idea.')).toBe(false)
+  })
 
   test.each([
     'Documentation is a habit for me, not an afterthought.',
@@ -194,6 +214,17 @@ describe('company name', () => {
   const nameViolations = (companyName: string, ...paragraphs: string[]) =>
     lintLetter(letter(...paragraphs), { companyName }).violations.filter((v) => /company|full name/i.test(v))
 
+  // The full eval's "Beacon" letters: the short form tripped the "beacon" rule,
+  // and the retry dropped the name to one mention.
+  test('the short name is the employer, not an AI-flagged word', () => {
+    const v = lintLetter(letter('I want to join Beacon Retail Group.', 'Beacon ships weekly, and so did I.'), { companyName: 'Beacon Retail Group' }).violations
+    expect(v.filter((x) => x.includes('"beacon"'))).toEqual([])
+  })
+  test('the word itself is still flagged', () => {
+    const v = lintLetter(letter('I want to join Beacon Retail Group.', 'Beacon ships weekly. My work was a beacon for the team.'), { companyName: 'Beacon Retail Group' }).violations
+    expect(v.filter((x) => x.includes('"beacon"'))).toHaveLength(1)
+  })
+
   test('counts the short name toward the two mentions', () => {
     expect(nameViolations('Acme Software', 'I want to join Acme Software.', 'Acme ships weekly, and so did I.')).toEqual([])
   })
@@ -252,6 +283,11 @@ describe('posting restatement pivot', () => {
     ['Acme', 'You need someone who can own the month-end close, and that is exactly what I do.'],
     ['Acme', "Acme is looking for an analyst who can clean messy data, which is what I've done since 2021."],
   ])('flags (%s): %s', (company, s) => expect(pivots(company, s)).toBe(true))
+  test('pivot message quotes the sentence', () => {
+    const s = 'Acme Software needs a developer for internal tools, and that is the work I do.'
+    const v = lintLetter(`Dear Hiring Manager,\n\n${s}\n\nCould we talk next week?\n\nKind regards,\nAlex Doe`, { companyName: 'Acme Software' }).violations
+    expect(v.find((x) => x.startsWith('Turns the posting'))).toContain(s)
+  })
 
   test.each([
     ['Riverbend Medical', 'Riverbend needs a nurse who can carry a full caseload on nights without dropping details.'],
