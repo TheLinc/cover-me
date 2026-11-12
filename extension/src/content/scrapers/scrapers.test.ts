@@ -94,6 +94,16 @@ describe('company and title when the page doesn\'t name them (#200)', () => {
     expect(performance.now() - start).toBeLessThan(2000)
   })
 
+  // Every element marked with the URL's job ID was measured, each walking its
+  // subtree, once per repeat of the ID in the URL (8 s before; spans cost the
+  // rest of the heuristic nothing)
+  test('elements marked with the URL\'s job ID, nested 250 deep, stay cheap', () => {
+    const chain = '<span data-id="1234567">'.repeat(250) + 'x' + '</span>'.repeat(250)
+    const start = performance.now()
+    expect(() => scrape('https://careers.example.com/1234567/1234567/1234567', `<!doctype html><html><body>${chain.repeat(230)}</body></html>`)).toThrow()
+    expect(performance.now() - start).toBeLessThan(2000)
+  })
+
   // The tab title is read once per scrape, not once per JSON-LD posting
   test('many JSON-LD postings without a company and a long tab title stay cheap', () => {
     const nodes = JSON.stringify(Array.from({ length: 2000 }, () => ({ '@type': 'JobPosting', title: 'x', description: 'y' })))

@@ -90,14 +90,16 @@ function tryHeuristic(): JobData {
 
 // Google's careers page puts the posting in a pane marked with the job's ID
 // from the URL (data-id), beside a list of other jobs that's larger than it.
-// The ID's entry in that list is the shorter of the two. The first three
-// numbers in the path are tried, each one query; only lengths are kept, and
-// the longest element's text is read again.
+// The ID's entry in that list is the shorter of the two. The URL and page are
+// the caller's to choose, so the cost is capped: three distinct numbers from
+// the path, the first three blocks marked with each (one walk of each one's
+// subtree); only lengths are kept, and the longest one's text is read again.
 function postingById(): string | undefined {
-  for (const id of (window.location.pathname.match(/\d{6,}/g) ?? []).slice(0, 3)) {
+  for (const id of [...new Set(window.location.pathname.match(/\d{6,}/g))].slice(0, 3)) {
     let best: HTMLElement | undefined
     let bestLen = 500
-    for (const el of document.querySelectorAll<HTMLElement>(`[data-id="${id}"]`)) {
+    const marked = ['div', 'section', 'article'].map((tag) => `${tag}[data-id="${id}"]`).join(',')
+    for (const el of Array.from(document.querySelectorAll<HTMLElement>(marked)).slice(0, 3)) {
       const len = el.innerText?.trim().length ?? 0
       if (len > bestLen) [best, bestLen] = [el, len]
     }
