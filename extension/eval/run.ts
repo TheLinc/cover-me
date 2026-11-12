@@ -75,6 +75,7 @@ const BASELINE_FILE = join(HERE, QUICK ? 'baseline.json' : 'baseline-full.json')
 
 const SIGN_OFFS = ['Sincerely,', 'Best regards,', 'Kind regards,']
 const HOOKS = ['Achievement-first', 'Problem-solution', 'Bold specific claim']
+const CLOSES = ['Question', 'Next step', 'Project']
 
 // A low judge score fails a plain run. Under --baseline (the CI gate) it is a
 // warning: the gate fails on drops against the baseline and on the factual
@@ -153,7 +154,7 @@ function staticChecks() {
 
   for (const c of cases) {
     const result = checkFixture(c)
-    const variation: LetterVariation = { signOff: 'Sincerely,', hookPattern: 'Problem-solution' }
+    const variation: LetterVariation = { signOff: 'Sincerely,', hookPattern: 'Problem-solution', closePattern: 'Next step' }
     const lp = buildLetterPrompt(c.job, c.resumeText, undefined, variation)
 
     const mustContain: Array<[string, string]> = [
@@ -163,6 +164,7 @@ function staticChecks() {
       ['exemplar', 'Exemplar A'],
       ['chosen sign-off', variation.signOff],
       ['chosen hook pattern', `Default to the ${variation.hookPattern}`],
+      ['chosen close', `Close with the ${variation.closePattern} move`],
       ['word range', '250–400 words'],
       ['resume text embedded', c.resumeText.slice(0, 60)],
       ['JD embedded', c.job.description.slice(0, 60)],
@@ -289,7 +291,8 @@ async function liveLetters() {
   process.stdout.write(`  ${jobs.length} letters `)
   const results = await pool(jobs, CONCURRENCY, async ({ c, i, run }) => {
     const v = i + run
-    const variation: LetterVariation = { signOff: SIGN_OFFS[v % SIGN_OFFS.length], hookPattern: HOOKS[v % HOOKS.length] }
+    // The close steps once every three letters, so it doesn't pair with one hook.
+    const variation: LetterVariation = { signOff: SIGN_OFFS[v % SIGN_OFFS.length], hookPattern: HOOKS[v % HOOKS.length], closePattern: CLOSES[Math.floor(v / 3) % CLOSES.length] }
     const prompt = buildLetterPrompt(c.job, c.resumeText, undefined, variation)
     let letter: string
     try {
@@ -340,7 +343,7 @@ async function liveLetters() {
   console.log('')
   for (const { c, run, variation, letter, result } of results) {
     const suffix = RUNS > 1 ? ` (run ${run + 1})` : ''
-    record(`letter: ${c.id}${suffix} (${variation.hookPattern}, "${variation.signOff}")`, result)
+    record(`letter: ${c.id}${suffix} (${variation.hookPattern}, ${variation.closePattern} close, "${variation.signOff}")`, result)
     reportLines.push('<details><summary>letter text</summary>\n\n```\n' + letter + '\n```\n</details>\n')
   }
   return results.map(({ c, run, letter, result, judgeScore }) => ({ id: c.id, run, letter, judgeScore, failures: result.failures, warnings: result.warnings }))

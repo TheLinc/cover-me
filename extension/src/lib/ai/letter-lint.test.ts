@@ -98,10 +98,20 @@ describe('templated sentence shapes', () => {
   test.each([
     'That is data onboarding in practice.',
     'This is what worker activation looks like in practice.',
+    // #206: the tidy line after an example
+    'I closed the books in four days. That is the work I do every month.',
+    "I closed the books in four days. That's how I already work at Fernwood, where the counts close by noon.",
+    "I closed the books in four days. That's exactly what I've been doing.",
+    "I trained four new hires on the close. That's the habit I'd bring to Pinnacle.",
+    "I closed the books in four days. That's the standard I already hold myself to.",
   ])('label: %s', (s) => expect(flagged('Labels', opener, s)).toBe(true))
   test.each([
     'I put that plan into practice across three warehouses.',
     'This is my eighth year in practice as a family physician.',
+    // A line that adds a new fact is not a label.
+    "I ran the vendor bid in 2022. That's how I met the plant manager who later hired me.",
+    'I audited the stockroom. That is what I learned there: the counts were off by a shelf.',
+    "I spent two years on structural steel. That's where I learned that most bad welds are decided before the arc starts.",
   ])('label leaves alone: %s', (s) => expect(flagged('Labels', opener, s)).toBe(false))
 
   test.each([
@@ -166,4 +176,62 @@ describe('templated sentence shapes', () => {
     'I would welcome the chance to walk you through my experience with the Ferris migration.',
     'If useful, I can share my background in clinical audits. Could we talk next week?',
   ])('closing recap leaves alone: %s', (close) => expect(flagged('The closing', opener, close)).toBe(false))
+})
+
+// The judge flagged the full name repeated in 22 of 72 letters (#206). The
+// short name counts toward the two-mention minimum; the full name is capped.
+describe('company name', () => {
+  const letter = (...paragraphs: string[]) => `Dear Hiring Manager,\n\n${paragraphs.join('\n\n')}\n\nKind regards,\nAlex Doe`
+  const nameViolations = (companyName: string, ...paragraphs: string[]) =>
+    lintLetter(letter(...paragraphs), { companyName }).violations.filter((v) => /company|full name/i.test(v))
+
+  test('counts the short name toward the two mentions', () => {
+    expect(nameViolations('Acme Software', 'I want to join Acme Software.', 'Acme ships weekly, and so did I.')).toEqual([])
+  })
+  test('flags a single mention', () => {
+    expect(nameViolations('Acme Software', 'I want to join Acme Software.')).toHaveLength(1)
+  })
+  test('flags a letter that never uses the full name', () => {
+    expect(nameViolations('Acme Software', 'I want to join Acme.', 'Acme ships weekly.')).toHaveLength(1)
+  })
+  test('flags the full name three times', () => {
+    expect(nameViolations('Meridian Logistics UK',
+      'Meridian Logistics UK runs 40 depots.', 'At Meridian Logistics UK I would own routing.', 'Could Meridian Logistics UK talk next week?')).toHaveLength(1)
+  })
+  test('leaves the salutation out of the full-name cap', () => {
+    const v = lintLetter(`Dear Meridian Logistics UK Team,\n\n${['Meridian Logistics UK runs 40 depots.', 'At Meridian Logistics UK I would own routing.'].join('\n\n')}\n\nKind regards,\nAlex Doe`,
+      { companyName: 'Meridian Logistics UK' }).violations
+    expect(v.filter((x) => x.startsWith('Repeats the company'))).toEqual([])
+  })
+  test('leaves a one-word name used three times alone', () => {
+    expect(nameViolations('Northlight', 'Northlight runs 40 depots.', 'At Northlight I would own routing.', 'Could Northlight talk next week?')).toEqual([])
+  })
+  test('does not count a common word that only matches in lower case', () => {
+    expect(nameViolations('General Mills', 'I want to join General Mills.', 'In general, I ship weekly.')).toHaveLength(1)
+  })
+})
+
+// "[Company] needs X, and that is the work I do": the judge flagged a posting
+// restatement in 27 of 72 letters (#206).
+describe('posting restatement pivot', () => {
+  const pivots = (companyName: string, sentence: string) =>
+    lintLetter(`Dear Hiring Manager,\n\nAt Halcyon I cut page load from 1.2s to 400ms. ${sentence}\n\nKind regards,\nAlex Doe`, { companyName })
+      .violations.some((v) => v.startsWith('Turns the posting'))
+
+  test.each([
+    ['Acme Software', "Acme Software needs a Frontend Developer to build internal tools in React and TypeScript, and that is the work I've been doing."],
+    ['Harbor & Vine', "Harbor & Vine needs inventory ordering and receiving done right every day, and I've done that work for four years."],
+    ['Valley Medical Center', 'Valley Medical Center needs a technician who keeps that accuracy on every order, and that is how I already work.'],
+    ['Riverbend Medical', "Riverbend needs a nurse who can carry a full caseload on nights; that is a fair description of my last two years at St. Anne's."],
+    ['Acme', 'You need someone who can own the month-end close, and that is exactly what I do.'],
+    ['Acme', "Acme is looking for an analyst who can clean messy data, which is what I've done since 2021."],
+  ])('flags (%s): %s', (company, s) => expect(pivots(company, s)).toBe(true))
+
+  test.each([
+    ['Riverbend Medical', 'Riverbend needs a nurse who can carry a full caseload on nights without dropping details.'],
+    ['Acme', 'Acme is hiring a second analyst because the first one moved to finance, and that team is still four people.'],
+    ['Acme', 'When Acme needed a new vendor in 2022, I ran the bid, and that is how I met the team.'],
+    ['Acme', 'If you need weekend cover, I can start on Saturdays.'],
+    ['Acme', 'Acme wants faster month-end reporting, and this year I cut ours from ten days to four.'],
+  ])('leaves alone (%s): %s', (company, s) => expect(pivots(company, s)).toBe(false))
 })

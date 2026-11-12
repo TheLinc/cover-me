@@ -83,13 +83,23 @@ const POSTING_ECHO = [
   /\b(?:the|your|this|[a-z][a-z&.-]*'s) (?:job )?(?:posting|listing|description|ad)\b[^.]{0,20}\b(asks|pairs|describes|names|lists|calls for|mentions|says|puts|emphasizes|highlights|wants|needs|requires|focuses)\b/i,
 ]
 
+// "Acme needs X, and that is the work I do": the posting's sentence turned
+// around and claimed (judge, 27 of 72 letters, #206). The need alone is a fair
+// line about the employer; the pivot back to the applicant is the tell.
+const NEED_RE = String.raw`\b(?:needs?|wants?|(?:is|are) (?:hiring|looking for|seeking))\b`
+const PIVOT_RE = /[,;:—]\s*(?:and\s+|which\s+)?(?:(?:that|this|which)(?:['’]s|\s+is|\s+was)\b[^.!?]*?\b(?:I|I['’](?:m|ve|d)|my|me)\b|I(?:['’]ve|\s+have)?\s+(?:done|been doing|do)\s+(?:that|this|exactly)\b)/
+
 // Sentence shapes that read as templated even when every word is plain. The
 // judge flagged each one in every letter of the 2026-11-11 eval run (#198).
 const SENTENCE_SHAPES: Array<[RegExp, string]> = [
   [/\bis simple:|\bmy (?:single )?(?:strongest|biggest|best|top) qualification\b/i,
     'Announces its point ("My strongest qualification is simple:") — make the point directly, in a sentence about what the applicant did.'],
-  [/\b(?:that|this) is [^.!?]{1,60}? in practice[.!]/i,
-    'Labels the experience after describing it ("That is data onboarding in practice") — cut the label; the example already makes the point.'],
+  // The second form ("That's the work I do", "That's the habit I'd bring")
+  // follows an example in the same paragraph and says what the applicant does
+  // or would do; a line in the past tense adds a fact ("That's how I met the
+  // plant manager") and passes (#206).
+  [/\b(?:that|this) is [^.!?]{1,60}? in practice[.!]|[.!?][ \t]+(?:That|This)(?:['’]s| is) [^.!?]{0,40}?\bI(?:['’](?:ve|d)| have| would)? (?:already |still |also |now )?(?:do|work|bring|want|hold|been doing)\b/i,
+    'Labels the experience after describing it ("That is data onboarding in practice", "That\'s the work I do") — cut the label; the example already makes the point.'],
   [/, not (?:a|an) [\w-]+(?: [\w-]+)?[.!]|\bnot just\b[^.!?]{1,60}\bbut\b/i,
     'Uses an "X, not Y" contrast ("a habit for me, not an afterthought") — state the point once, directly.'],
   [/\bis (?:a habit|second nature) for me\b/i,
@@ -281,10 +291,25 @@ export function lintLetter(
     violations.push('The closing sums up what the applicant brings, a recap of the letter — end with one specific thing to talk about and a request for a conversation.')
   }
 
+  // The short name counts as a mention, so a letter can name the company in
+  // full once and say "Acme" after. Repeating the full name reads as a
+  // template filling in a blank (judge, 22 of 72 letters, #206). The cap
+  // leaves out the salutation, which the prompt lets name the company.
   if (opts.companyName && opts.companyName !== 'Unknown Company') {
-    const mentions = (letter.match(new RegExp(escapeRegex(opts.companyName), 'gi')) ?? []).length
+    const fullRe = new RegExp(escapeRegex(opts.companyName), 'gi')
+    const full = (letter.match(fullRe) ?? []).length
+    const fullInBody = (body.match(fullRe) ?? []).length
+    const hasShort = !!shortName && shortName !== opts.companyName
+    // Case-sensitive, so "in general" isn't a mention of General Mills.
+    const mentions = hasShort
+      ? Math.max(full, (letter.match(new RegExp(`(?<![\\p{L}\\p{N}])${escapeRegex(shortName)}(?![\\p{L}\\p{N}])`, 'gu')) ?? []).length)
+      : full
     if (mentions < 2) {
-      violations.push(`Mentions the company name only ${mentions} time(s) — reference ${opts.companyName} at least twice, naturally.`)
+      violations.push(`Mentions the company name only ${mentions} time(s) — name ${opts.companyName} at least twice, naturally${hasShort ? `; "${shortName}" counts` : ''}.`)
+    } else if (full === 0) {
+      violations.push(`Never names the company in full — write "${opts.companyName}" once, then "${shortName}" or "you".`)
+    } else if (hasShort && fullInBody >= 3) {
+      violations.push(`Repeats the company's full name "${opts.companyName}" ${fullInBody} times — keep it once and use "${shortName}" or "you" for the rest.`)
     }
   }
 
@@ -297,6 +322,16 @@ export function lintLetter(
 
   if (POSTING_ECHO.some((re) => re.test(body))) {
     violations.push('Restates the job posting ("What stands out in the posting", "Your posting asks for") — write about what the employer does instead, and never name a requirement the applicant lacks.')
+  }
+
+  const employers = [opts.companyName, shortName].filter((n): n is string => !!n && n !== 'Unknown Company').map(escapeRegex)
+  const needRe = new RegExp(`(?:${[...employers, String.raw`\b[Yy]ou(?:r team)?\b`, String.raw`\b[Tt]he team\b`].join('|')})[^.!?]{0,30}?${NEED_RE}`)
+  const pivots = body.split(SENTENCE_END).some((s) => {
+    const m = needRe.exec(s)
+    return !!m && PIVOT_RE.test(s.slice(m.index + m[0].length))
+  })
+  if (pivots) {
+    violations.push('Turns the posting back on the employer and claims it ("Acme needs X, and that is the work I do") — open with something the applicant did, or one concrete detail about the employer, and let the example show the match.')
   }
 
   // The prompt forbids invented metrics; this catches the ones that slip
