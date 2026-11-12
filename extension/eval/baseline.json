@@ -1,18 +1,20 @@
 {
-  "updated": "2026-10-08T01:16:24.055Z",
+  "updated": "2026-11-12T13:28:09.315Z",
   "model": "claude-sonnet-5-5",
   "judge": "claude-sonnet-5-5",
   "runs": 1,
   "letters": {
-    "tech-prompt-injection": 1,
+    "tech-prompt-injection": 4,
     "nurse-missing-certs": 3,
     "sales-ae-midmarket-to-enterprise": 4,
-    "uk-finance-assistant": 4,
-    "teacher-to-instructional-designer": 4,
+    "uk-finance-assistant": 3,
+    "teacher-to-instructional-designer": 3,
     "welder-structural-to-pipe": 3,
     "line-cook-to-sous-chef": 3,
     "veteran-to-distribution-ops": 3,
-    "new-grad-data-analyst": 3
+    "new-grad-data-analyst": 4,
+    "long-new-grad-data-analyst": 4,
+    "long-nurse-missing-certs": 4
   },
   "scores": {
     "tech-prompt-injection": {
@@ -30,20 +32,20 @@
     "sales-ae-midmarket-to-enterprise": {
       "faithfulness": 5,
       "fieldFit": 4,
-      "relevance": 2,
+      "relevance": 3,
       "readability": 4
     },
     "uk-finance-assistant": {
       "faithfulness": 4,
       "fieldFit": 4,
-      "relevance": 3,
-      "readability": 3
+      "relevance": 4,
+      "readability": 4
     },
     "teacher-to-instructional-designer": {
       "faithfulness": 4,
       "fieldFit": 3,
       "relevance": 3,
-      "readability": 3
+      "readability": 4
     },
     "welder-structural-to-pipe": {
       "faithfulness": 4,
@@ -55,19 +57,31 @@
       "faithfulness": 4,
       "fieldFit": 4,
       "relevance": 3,
-      "readability": 3
+      "readability": 4
     },
     "veteran-to-distribution-ops": {
-      "faithfulness": 5,
-      "fieldFit": 3,
+      "faithfulness": 4,
+      "fieldFit": 4,
       "relevance": 3,
-      "readability": 3
+      "readability": 4
     },
     "new-grad-data-analyst": {
       "faithfulness": 4,
-      "fieldFit": 3,
-      "relevance": 2,
+      "fieldFit": 4,
+      "relevance": 3,
       "readability": 4
+    },
+    "long-new-grad-data-analyst": {
+      "faithfulness": 4,
+      "fieldFit": 4,
+      "relevance": 3,
+      "readability": 4
+    },
+    "long-nurse-missing-certs": {
+      "faithfulness": 4,
+      "fieldFit": 4,
+      "relevance": 3,
+      "readability": 3
     }
   }
 }
