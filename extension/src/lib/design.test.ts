@@ -3,7 +3,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 import { checkUploadedDesign, designForTailor, finishDesign, toBase64 } from './design'
 
 const parseMock = vi.hoisted(() => vi.fn())
-vi.mock('./ai/resume-parse', () => ({ parseResumeStructure: parseMock }))
+vi.mock('./ai/resume-parse', async (importOriginal) => ({ ...(await importOriginal<object>()), parseResumeStructure: parseMock }))
 vi.mock('./crypto', () => ({ decryptApiKey: async () => 'sk-test' }))
 
 let local: Record<string, unknown> = {}

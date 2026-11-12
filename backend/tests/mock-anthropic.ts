@@ -65,6 +65,10 @@ export const MOCK_PARSED_RESUME = {
   ],
   skills: 'TypeScript, Postgres, React',
   otherSections: [{ heading: 'Volunteer Work', lines: ['Mentor, Code Club (2019 – 2021)'] }],
+  // The model's order, wrong the way Haiku's often is (its JSON's order). The
+  // text has Volunteer Work between Experience and Education, and the order
+  // comes from the text (#165).
+  sectionOrder: ['experience', 'education', 'skills', 'other'],
 }
 
 export const MOCK_TAILOR_DELTA = {

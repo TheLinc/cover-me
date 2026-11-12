@@ -1,6 +1,6 @@
 import { checkedTier, ensureValidSession, generateViaBackend, handleGoogleSignIn, limitErrorCode, RateLimitError, saveLetterToBackend, tailorViaBackend } from '../lib/auth'
 import { generateCoverLetter } from '../lib/ai'
-import { parseResumeStructure } from '../lib/ai/resume-parse'
+import { isCurrentParse, parseResumeStructure, upgradedParse } from '../lib/ai/resume-parse'
 import { tailorResume } from '../lib/ai/resume-tailor'
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from '../lib/config'
 import { decryptApiKey } from '../lib/crypto'
@@ -527,13 +527,15 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
 
     // Lazy parse: run once on first tailor, cache result for all subsequent tailors.
     // Re-run automatically when resume is replaced (saveResume clears the parsed field),
-    // and once for a parse from before extra sections (publications…) were kept.
+    // and once for a parse from before extra sections (publications…) or
+    // section order were kept.
     // "Your design" places the text with the parse its file was checked
-    // against, so the tailor starts from that same parse.
+    // against, so the tailor starts from that same parse, even one from
+    // before section order: the user's file keeps its own.
     let parsed = design.parsed ?? resumeData.parsed
-    if (!Array.isArray(parsed?.otherSections)) {
+    if (!parsed || (!design.parsed && !isCurrentParse(parsed))) {
       onProgress('Reading your resume (first run only)…')
-      parsed = await parseResumeStructure(resumeData.text, settings.provider, apiKey)
+      parsed = upgradedParse(parsed, await parseResumeStructure(resumeData.text, settings.provider, apiKey))
       await saveParsedResume(parsed)
       onProgress('') // read; the model thinks next, which is plain "Plan the changes"
     }
