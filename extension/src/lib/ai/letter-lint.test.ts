@@ -454,3 +454,9 @@ test('flags a letter with no salutation', () => {
   expect(lintLetter(body).violations.some((v) => v.startsWith('Missing the salutation'))).toBe(true)
   expect(lintLetter(`Dear Hiring Manager,\n\n${body}`).violations.some((v) => v.startsWith('Missing the salutation'))).toBe(false)
 })
+
+// Council round 13 (#206): the reason paragraph ended on a tidy restatement.
+test('flags "the work I want to do next" as a stock line', () => {
+  const letter = 'Dear Hiring Manager,\n\nAt Meadowbrook I close the books in five days.\n\nI want to account for a software business. It is a kind of work I have not done yet, and it\'s the work I want to do next.\n\nI\'d welcome an interview.\n\nKind regards,\nDaniel Okoro'
+  expect(lintLetter(letter).violations.some((v) => v.startsWith('Ends on a stock line'))).toBe(true)
+})
