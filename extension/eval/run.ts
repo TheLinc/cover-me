@@ -165,7 +165,7 @@ function staticChecks() {
       ['chosen sign-off', variation.signOff],
       ['chosen hook pattern', `Default to the ${variation.hookPattern}`],
       ['chosen close', `Close with the ${variation.closePattern} move`],
-      ['word range', '150–280 words'],
+      ['word range', '120–250 words'],
       ['resume text embedded', c.resumeText.slice(0, 60)],
       ['JD embedded', c.job.description.slice(0, 60)],
       ['em-dash cap', 'TWO em-dashes'],
