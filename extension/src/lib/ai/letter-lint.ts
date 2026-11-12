@@ -71,7 +71,7 @@ const PASSIVE_CLOSES = [
 const AI_PATTERN_PHRASES = [
   'not only', 'moreover,', 'furthermore,', 'additionally,',
   "in today's", 'it is important to note', "it's important to note",
-  'at the end of the day',
+  'at the end of the day', 'separately,',
 ]
 
 // Restating the posting back to the employer ("What stands out in the posting
@@ -114,6 +114,11 @@ const COMMENTARY_RE = /\b(?:taught|showed) me (?:early )?(?:that|to|how|what|whe
 // in the #206 full eval, and hiring guides advise a direct ask. The request
 // itself ("When would suit you for a call?") names the meeting and passes.
 const CLOSE_QUESTION_RE = /^(?:Which|What|How|When|Where|Who|Why)\b(?![^?]*\b(?:call|talk|meet|meeting|interview|conversation|speak|chat)\b)[^?]*\?$/
+
+// Stock lines from council round 2 (#206): "Arcadia is where I'd like to take
+// that step" gives no reason, and "I'd bring the same attention to…" is the
+// "standard I'd bring" label in another form.
+const STOCK_LINE_RE = /\bis where I(?:['’]d| would) (?:like|love|hope)\b|\bI(?:['’]d| would) bring (?:the same|that same|this same)\b/i
 
 // The pivot split in two: "Acme has an opening for X. That's how my current
 // job runs." (a real letter after the #206 changes).
@@ -281,10 +286,10 @@ export function lintLetter(
     violations.push(`Uses ${emDashes} em-dashes — use at most 2 in the whole letter; rewrite the rest as separate sentences or with commas.`)
   }
 
-  if (wordCount < 180) {
-    violations.push(`Letter body is ${wordCount} words — too short; expand to 200–350 words by telling the accomplishments already in the letter more fully, using only details the resume gives, not by listing more items from the resume.`)
-  } else if (wordCount > 380) {
-    violations.push(`Letter body is ${wordCount} words — too long; tighten to 200–350 words.`)
+  if (wordCount < 150) {
+    violations.push(`Letter body is ${wordCount} words — too short; expand to 180–320 words by telling the accomplishments already in the letter more fully, using only details the resume gives, not by listing more items from the resume.`)
+  } else if (wordCount > 360) {
+    violations.push(`Letter body is ${wordCount} words — too long; tighten to 180–320 words.`)
   }
 
   if (MARKDOWN_RE.test(letter)) {
@@ -320,6 +325,10 @@ export function lintLetter(
   const commentary = body.split(SENTENCE_END).map((s) => s.trim()).find((s) => COMMENTARY_RE.test(s))
   if (commentary) {
     violations.push(`Explains what a fact means ("${commentary}") — cut the explanation or lesson and let the fact stand; if the letter gets short, tell the accomplishments already in it more fully.`)
+  }
+  const stockLine = body.split(SENTENCE_END).map((s) => s.trim()).find((s) => STOCK_LINE_RE.test(s))
+  if (stockLine) {
+    violations.push(`Ends on a stock line ("${stockLine}") — give a reason of the applicant's own, or cut the line.`)
   }
   const closeQuestion = paragraphs.length > 1 ? lastPara.split(SENTENCE_END).map((s) => s.trim()).find((s) => CLOSE_QUESTION_RE.test(s)) : undefined
   if (closeQuestion) {
@@ -441,5 +450,5 @@ export function buildLintRetryMessage(violations: string[]): string {
 
 ${violations.map((v) => `- ${v}`).join('\n')}
 
-Rewrite the complete letter fixing exactly these issues. Keep everything that already works — the same accomplishments, the same structure, the same specifics — and change only what the violations require. All original rules still apply (200–350 words, plain text, no fabricated qualifications or metrics). Where a fix removes words and the letter falls under 200 words, tell the accomplishments already in the letter more fully, using only details the resume gives, not more figures or a list of other resume items and never invented context. Otherwise a shorter letter is fine. Output only the finished letter, nothing else.`
+Rewrite the complete letter fixing exactly these issues. Keep everything that already works — the same accomplishments, the same structure, the same specifics — and change only what the violations require. All original rules still apply (180–320 words, plain text, no fabricated qualifications or metrics). Where a fix removes words and the letter falls under 180 words, tell the accomplishments already in the letter more fully, using only details the resume gives, not more figures or a list of other resume items and never invented context. Otherwise a shorter letter is fine. Output only the finished letter, nothing else.`
 }

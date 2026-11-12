@@ -75,7 +75,7 @@ const BASELINE_FILE = join(HERE, QUICK ? 'baseline.json' : 'baseline-full.json')
 
 const SIGN_OFFS = ['Sincerely,', 'Best regards,', 'Kind regards,']
 const HOOKS = ['Achievement-first', 'Current work', 'Bold specific claim']
-const CLOSES = ['Next step', 'Contribution', 'Thanks']
+const CLOSES = ['Next step', 'Thanks']
 
 // A low judge score fails a plain run. Under --baseline (the CI gate) it is a
 // warning: the gate fails on drops against the baseline and on the factual
@@ -165,7 +165,7 @@ function staticChecks() {
       ['chosen sign-off', variation.signOff],
       ['chosen hook pattern', `Default to the ${variation.hookPattern}`],
       ['chosen close', `Close with the ${variation.closePattern} move`],
-      ['word range', '200–350 words'],
+      ['word range', '180–320 words'],
       ['resume text embedded', c.resumeText.slice(0, 60)],
       ['JD embedded', c.job.description.slice(0, 60)],
       ['em-dash cap', 'TWO em-dashes'],

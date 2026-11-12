@@ -393,3 +393,23 @@ describe('new figure in the close', () => {
     'Could we find 30 minutes in the next two weeks?',
   ])('leaves a meeting length alone: %s', (c) => expect(flagged(c)).toBe(false))
 })
+
+// Council round 2 (#206): stock lines and a filler transition in all three letters.
+describe('stock lines', () => {
+  const letter = (...paragraphs: string[]) => `Dear Hiring Manager,\n\n${paragraphs.join('\n\n')}\n\nKind regards,\nAlex Doe`
+  const flagged = (prefix: string, s: string) =>
+    lintLetter(letter('At Halcyon I cut page load from 1.2s to 400ms.', s, 'Could we talk next week?'), { companyName: 'Arcadia' }).violations.some((v) => v.startsWith(prefix))
+  test.each([
+    'After five years on the staff side, I want a senior role. Arcadia is where I\'d like to take that step.',
+    'I\'d bring the same attention to medication safety that has kept my record clean.',
+  ])('flags: %s', (s) => expect(flagged('Ends on a stock line', s)).toBe(true))
+  test.each([
+    'The night shift is where I learned to triage fast.',
+    // A field the applicant wants is a reason, not a stock line.
+    'Fundraising is where I want to spend my working days.',
+    'I\'d bring my own laptop.',
+  ])('leaves alone: %s', (s) => expect(flagged('Ends on a stock line', s)).toBe(false))
+  test('flags "Separately," as a filler transition', () => {
+    expect(flagged('Contains templated connective', 'Separately, I standardized vendor coding.')).toBe(true)
+  })
+})
