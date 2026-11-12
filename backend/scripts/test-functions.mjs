@@ -92,6 +92,8 @@ async function waitForFunctions(timeoutMs = 180_000) {
 
 await waitForFunctions()
 
+const vitestStart = new Date().toISOString()
+
 const vitest = spawnSync(
   join(BACKEND, 'node_modules', '.bin', process.platform === 'win32' ? 'vitest.cmd' : 'vitest'),
   ['run', ...process.argv.slice(2)],
@@ -117,9 +119,10 @@ if (vitest.status !== 0 && process.env.SHOW_FUNCTION_LOGS !== '0') {
   // The serve output can stop after the warm-up (#79), so print the containers'
   // own logs too: the gateway's access log and the runtime's per-request lines
   // and worker shutdown reasons. Before cleanup, which removes the runtime.
+  // From vitest's start, so the hung request is in them wherever its file ran.
   for (const name of ['kong', 'edge_runtime']) {
-    console.log(`\n── docker logs supabase_${name}_cover-me (last 300 lines) ──`)
-    spawnSync('docker', ['logs', '--timestamps', '--tail', '300', `supabase_${name}_cover-me`], { stdio: 'inherit' })
+    console.log(`\n── docker logs supabase_${name}_cover-me since vitest started ──`)
+    spawnSync('docker', ['logs', '--timestamps', '--since', vitestStart, `supabase_${name}_cover-me`], { stdio: 'inherit' })
   }
 }
 cleanup()

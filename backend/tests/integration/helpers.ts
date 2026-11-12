@@ -66,6 +66,8 @@ interface CallOptions {
   redirect?: RequestRedirect
 }
 
+const RESPONSE_TIMEOUT_MS = 15_000
+
 export async function callFunction(name: string, opts: CallOptions = {}): Promise<Response> {
   const url = new URL(`${API_URL}/functions/v1/${name}`)
   for (const [k, v] of Object.entries(opts.query ?? {})) url.searchParams.set(k, v)
@@ -87,15 +89,13 @@ export async function callFunction(name: string, opts: CallOptions = {}): Promis
     })
   } catch (e) {
     if (noResponse.signal.aborted) {
-      throw new Error(`${name}: no response in ${RESPONSE_TIMEOUT_MS / 1000} s. The edge runtime and Kong logs print after the run.`, { cause: e })
+      throw new Error(`${name}: no response in ${RESPONSE_TIMEOUT_MS / 1000} s. See the Kong and edge runtime logs after the run.`, { cause: e })
     }
     throw e
   } finally {
     clearTimeout(timer)
   }
 }
-
-const RESPONSE_TIMEOUT_MS = 15_000
 
 // The resume function parses new text in the background after it answers.
 // By default this waits for that parse, then clears the mock's log, so a test
