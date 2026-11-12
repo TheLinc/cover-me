@@ -298,6 +298,10 @@ export function lintLetter(
     violations.push(`Letter body is ${wordCount} words — too long; tighten to 120–250 words.`)
   }
 
+  // A retry once dropped the "Dear …" line (#206 council round 11).
+  if (!/^\s*dear\b/i.test(letter)) {
+    violations.push('Missing the salutation — start the letter with the "Dear …" line from the instructions.')
+  }
   if (MARKDOWN_RE.test(letter)) {
     violations.push('Contains markdown formatting (**, #, list markers, or links) — output plain text only.')
   }

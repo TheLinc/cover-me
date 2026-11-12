@@ -447,3 +447,10 @@ describe('tacked-on items', () => {
     expect(flagged('At Halcyon I cut page load from 1.2s to 400ms.', 'In 2023 I precepted three new nurses, who also covered nights.', 'Could we talk next week?')).toBe(false)
   })
 })
+
+// A retry in council round 11 (#206) dropped the "Dear …" line.
+test('flags a letter with no salutation', () => {
+  const body = 'At Halcyon I cut page load from 1.2s to 400ms.\n\nCould we talk next week?\n\nKind regards,\nAlex Doe'
+  expect(lintLetter(body).violations.some((v) => v.startsWith('Missing the salutation'))).toBe(true)
+  expect(lintLetter(`Dear Hiring Manager,\n\n${body}`).violations.some((v) => v.startsWith('Missing the salutation'))).toBe(false)
+})
