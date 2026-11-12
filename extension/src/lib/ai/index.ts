@@ -21,7 +21,7 @@ const HOOK_PATTERNS = ['Achievement-first', 'Current work', 'Bold specific claim
 // for all (#206); banning the phrase only moves the model to the next one.
 // No Question close: hiring guides advise a direct ask, and the judge flagged
 // the question as a template move (42 of 72 letters asked one).
-const CLOSE_PATTERNS = ['Next step', 'Project', 'Thanks']
+const CLOSE_PATTERNS = ['Next step', 'Contribution', 'Thanks']
 
 const pick = (list: string[]) => list[Math.floor(Math.random() * list.length)]
 
@@ -85,7 +85,7 @@ export function buildPrompt(
     : `"Dear Hiring Manager,"`
 
   const whyCompany = companyKnown
-    ? `Paragraph 3 — Company Fit (2–3 sentences): Say plainly why the applicant wants this job, from the applicant's side: what they want to do more of, or one concrete detail from the job description (a product, a team setup, a piece of work) and what they have done that connects to it. Keep the sentences about the applicant; never describe the employer's business, product, or the role back to them ("Acme builds field software for contractors, so every implementation has to land"). Never draw on assumed external knowledge about the company. Never claim the applicant has personally used, followed, or researched the company's products unless the resume explicitly states it. Never "I admire your innovative culture." Never restate, quote, or summarize the posting ("What stands out in the posting", "Your posting pairs X with Y", "The posting asks for"), never turn its sentence around and claim it ("[Company] needs X, and that is how I work"), and never name a duty, tool, or requirement from it that the applicant lacks.`
+    ? `Paragraph 3 — Company Fit (2–3 sentences): Say why the applicant wants this job, in their own words: a reason rooted in their own work or in what they want to do next ("After [time] doing [the applicant's work], I want [what this job offers that their current work doesn't]"). Do not add another accomplishment here, and do not turn the posting's duties, numbers, or requirements into the reason ("I want to own parts of the month-end close and account reconciliations" when that is the posting's duty list; "your unit onboards four new graduates a year"). Keep the sentences about the applicant; never describe the employer's business, product, or the role back to them ("Acme builds field software for contractors, so every implementation has to land"). Never draw on assumed external knowledge about the company. Never claim the applicant has personally used, followed, or researched the company's products unless the resume explicitly states it. Never "I admire your innovative culture." Never restate, quote, or summarize the posting ("What stands out in the posting", "Your posting pairs X with Y", "The posting asks for"), never turn its sentence around and claim it ("[Company] needs X, and that is how I work"), and never name a duty, tool, or requirement from it that the applicant lacks.`
     : `Paragraph 3 — Role Fit (2–3 sentences): Since the company is unknown, explain what specifically draws the applicant to this type of role and the challenges it presents, grounded in their experience.`
 
   const today = new Date().toISOString().split('T')[0]
@@ -164,7 +164,7 @@ Whichever pattern you pick, build the hook only from the STEP 0 allowlist. The o
 Never open with a generic applying-to phrase ("I am writing to apply," "I am excited to apply," "My name is") — full list under ABSOLUTE PROHIBITIONS.
 
 Paragraph 2 — Core Proof (4–6 sentences):
-Present at most two accomplishments from the resume that directly map to the top requirements in the JD. Give each one number at most, the one that matters most; where the resume has several figures for an achievement, pick one and let the rest go. A paragraph that stacks figures reads like a resume pasted into prose.
+Tell one or two accomplishments from the resume that map to the top requirements in the JD, each as a short story: the situation, what the applicant did, and the result. Nothing else goes in this paragraph: no other duties, tools, side projects, credentials, or earlier jobs added to fill it out. A paragraph that walks through the resume item by item reads like a resume pasted into prose, which is the most common reason a letter reads as AI-written. Give each accomplishment one number at most, the one that matters most; where the resume has several figures for an achievement, pick one and let the rest go. Every detail of the story — the situation, the people involved, how it was done — must come from the resume or the candidate's verified context; where the resume gives no situation, state the work plainly instead of inventing one.
 
 This is NOT a resume restatement — give the number its narrative context. "When the deployment pipeline was blocking four engineers, I rebuilt it from scratch, and deployment time fell 40%" is the cover letter version of a resume bullet. Use the JD's exact terminology when naming the requirement being addressed. NEVER invent a metric: every percentage, dollar figure, or count must come from the resume or the candidate's verified context. Where the resume has no number, use concrete scope (team size, user count, transaction volume, timeline) or qualitative impact — never a fabricated stat, which reads well but collapses the moment an interviewer asks how it was measured.
 
@@ -173,7 +173,7 @@ ${whyCompany}
 Paragraph 4 — Close + Call to Action (1–2 sentences):
 The close adds nothing new: no project, fact, figure, or skill that the letter has not already given. Close with the ${variation.closePattern} move:
 - Next step: ask directly for an interview to discuss the role
-- Project: ask directly for an interview to discuss the strongest accomplishment already in the letter, named in a few words ("the page-load work at Halcyon")
+- Contribution: ask directly for an interview to discuss how the applicant could help with one part of the job, named in a few words ("the storefront rebuild")
 - Thanks: thank the reader in a few plain words ("Thank you for reading", never "thanks for your time") and ask directly for an interview
 Make one request. Do not ask the employer questions about their team or work, do not offer to bring, show, or walk them through anything, and do not recap the letter. The request is direct and confident — not passive, not demanding.
 
@@ -183,11 +183,11 @@ Sign-off: "${variation.signOff}" on its own line, then a blank line, then the ap
 
 LANGUAGE RULES:
 
-Keywords: Embed 5–10 JD hard-skill keywords (tools, certifications, methodologies, domain terms) that are on the STEP 0 allowlist — naturally in sentences, never as a list, never more than twice each, in the JD's exact phrasing. Only hard skills; soft-skill keywords ("communication," "team player") score nothing in ATS. When the JD requires something the applicant lacks, describe the closest real capability they do have without naming the missing item or the gap.
+Keywords: Where an accomplishment you tell used a tool, certification, or method the JD names and the STEP 0 allowlist contains, call it by the JD's exact name. Name a skill only inside the story it was part of; never list tools, and never more than two tool names in one sentence. A cover letter is read by a person, not scored for keywords. When the JD requires something the applicant lacks, describe the closest real capability they do have without naming the missing item or the gap.
 
 Action verbs: Strong past-tense for past roles: Led, Built, Designed, Optimized, Launched, Reduced, Generated, Negotiated, Delivered, Streamlined, Partnered, Authored, Exceeded, Drove, Shipped, Architected, Scaled, Mentored. Present tense for current role only.
 
-Voice: Vary sentence length naturally. State each fact and move on. Never add a sentence or clause that explains why a fact matters ("so the fix mattered", "which matters on a team that edits the same files"), draws a lesson from it ("That taught me to check the data first"), or sums it up with a general truth or a memorable line ("Payroll is where mistakes get noticed fastest", "Nothing clever was involved"). Those lines are what make a letter read as AI-written. If cutting them leaves the letter short, tell the accomplishments already in the letter more fully (the situation, who it affected, how it was done) rather than listing more items from the resume. If any paragraph reads like a press release or a template essay, rewrite it.
+Voice: Vary sentence length naturally. State each fact and move on. Never add a sentence or clause that explains why a fact matters ("so the fix mattered", "which matters on a team that edits the same files"), draws a lesson from it ("That taught me to check the data first"), or sums it up with a general truth or a memorable line ("Payroll is where mistakes get noticed fastest", "Nothing clever was involved"). Those lines are what make a letter read as AI-written. A short letter is fine; never fill space with more resume items. Don't start most sentences with "I": vary how sentences open ("Last year…", "The dashboards…", "At Ferris…"). If any paragraph reads like a press release or a template essay, rewrite it.
 
 Personalization: Name the company in full once and by name at least once more, using a short form after the first ("Acme" for "Acme Software"); "you" is fine beyond that. The full name three times reads as a template filling in a blank. Include one concrete detail from the job description — a product area, a tool on the allowlist, a team setup — inside a sentence about the applicant ("I've run month-end close in [a system both the posting and the resume name], which your team uses"), never as a description of the employer. (Echoing the employer's tech stack back is not personalization — see ABSOLUTE PROHIBITIONS.)
 
@@ -202,13 +202,13 @@ Exemplar A (technology):
 """
 Dear Northlight Team,
 
-Last year I cut checkout latency at Ferris Retail from 900ms to 210ms by rebuilding how our React storefront loaded product data. I'm applying for the Senior Frontend Engineer role at Northlight. Before that rebuild I spent two years on the same team building the product pages.
+Last year I cut checkout latency at Ferris Retail from 900ms to 210ms. I'm applying for the Senior Frontend Engineer role at Northlight.
 
-I owned Ferris's storefront platform for three years. I rebuilt the product-listing pipeline in TypeScript and GraphQL and moved image delivery behind edge caching. Before each peak season I ran load tests I had written against that pipeline, and most of the work shipped behind feature flags to 60,000 daily shoppers. When our two-person SRE team was overloaded with alerts, I took the pager for a quarter and removed the alerts nobody acted on, which cut false alarms by about half. I also set up the visual regression checks the team still runs on every pull request.
+The slowdown came from our product-listing pipeline, which loaded every product's full record before a page could render. Working with our designer, I listed the fields each page actually showed, then rebuilt the pipeline in TypeScript and GraphQL so pages requested only those fields. Product images moved behind edge caching at the same time, and the whole change took one quarter alongside our regular releases. The new pipeline went out behind feature flags to our 60,000 daily shoppers, and latency held at 210ms through the next peak season. A year earlier, Ferris moved off its Rails monolith, and the final cutover fell to me: I wrote the runbook and ran the database switch over one night, after a month of both systems running side by side. Checkout and customer accounts moved over that night without a lost order.
 
-Last spring I worked on our move off a Rails monolith, including a month when both systems ran side by side. We moved checkout over first and customer accounts last, across eleven weekends. It took three quarters instead of the two we planned, and I kept notes on where the extra quarter went. I wrote the cutover runbook and handled the database switch on the final night. For the last two years I've worked in a pod of five engineers and a designer.
+Three years at Ferris have gone into one storefront's speed. Next I want a larger catalogue and a frontend team that owns everything from the component library to the data layer.
 
-I'd welcome an interview to discuss the role and how the Ferris migration went.
+I'd welcome an interview to discuss the role.
 
 Sincerely,
 

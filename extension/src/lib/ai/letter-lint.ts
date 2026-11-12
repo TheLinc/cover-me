@@ -282,7 +282,7 @@ export function lintLetter(
   }
 
   if (wordCount < 180) {
-    violations.push(`Letter body is ${wordCount} words — too short; expand to 200–350 words by telling the accomplishments already in the letter more fully (the situation, who it affected, how it was done), not by listing more items from the resume.`)
+    violations.push(`Letter body is ${wordCount} words — too short; expand to 200–350 words by telling the accomplishments already in the letter more fully, using only details the resume gives, not by listing more items from the resume.`)
   } else if (wordCount > 380) {
     violations.push(`Letter body is ${wordCount} words — too long; tighten to 200–350 words.`)
   }
@@ -441,5 +441,5 @@ export function buildLintRetryMessage(violations: string[]): string {
 
 ${violations.map((v) => `- ${v}`).join('\n')}
 
-Rewrite the complete letter fixing exactly these issues. Keep everything that already works — the same accomplishments, the same structure, the same specifics — and change only what the violations require. All original rules still apply (200–350 words, plain text, no fabricated qualifications or metrics). Where a fix removes words, or the letter is too short, tell the accomplishments already in the letter more fully (the situation, who it affected, how it was done), not more figures or a list of other resume items, so the letter stays at 200–350 words; never just cut. Output only the finished letter, nothing else.`
+Rewrite the complete letter fixing exactly these issues. Keep everything that already works — the same accomplishments, the same structure, the same specifics — and change only what the violations require. All original rules still apply (200–350 words, plain text, no fabricated qualifications or metrics). Where a fix removes words and the letter falls under 200 words, tell the accomplishments already in the letter more fully, using only details the resume gives, not more figures or a list of other resume items and never invented context. Otherwise a shorter letter is fine. Output only the finished letter, nothing else.`
 }
