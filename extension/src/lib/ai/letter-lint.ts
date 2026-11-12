@@ -336,6 +336,12 @@ export function lintLetter(
   if (stockLine) {
     violations.push(`Ends on a stock line ("${stockLine}") — give a reason of the applicant's own, or cut the line.`)
   }
+  // An item tacked on with "I also": in 35 of 72 master letters, and what
+  // both council reviewers called resume padding in round 7 (#206).
+  const alsoItem = bodyParas.flatMap((p) => p.split(SENTENCE_END)).map((s) => s.trim()).find((s) => /^I also\b/.test(s))
+  if (alsoItem) {
+    violations.push(`Adds another item with "I also" ("${alsoItem}") — cut it, and tell the two accomplishments in full instead; a second accomplishment gets its own time or place and its result.`)
+  }
   const closeQuestion = paragraphs.length > 1 ? lastPara.split(SENTENCE_END).map((s) => s.trim()).find((s) => CLOSE_QUESTION_RE.test(s)) : undefined
   if (closeQuestion) {
     violations.push(`Asks the employer a question in the close ("${closeQuestion}") — end with a direct request for an interview instead.`)

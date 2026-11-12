@@ -433,3 +433,15 @@ describe('story devices', () => {
     expect(flagged('Lists three actions', 'I reconciled the accounts and closed the books in five days.')).toBe(false)
   })
 })
+
+// Council round 7 (#206): items tacked on with "I also" (35 of 72 master letters).
+describe('tacked-on items', () => {
+  const letter = (...paragraphs: string[]) => `Dear Hiring Manager,\n\n${paragraphs.join('\n\n')}\n\nKind regards,\nAlex Doe`
+  const flagged = (...paragraphs: string[]) => lintLetter(letter(...paragraphs)).violations.some((v) => v.startsWith('Adds another item'))
+  test('flags "I also" in the proof paragraph', () => {
+    expect(flagged('At Halcyon I cut page load from 1.2s to 400ms.', 'I precepted three new nurses. I also lead patient and family education.', 'Could we talk next week?')).toBe(true)
+  })
+  test('leaves "also" inside a sentence alone', () => {
+    expect(flagged('At Halcyon I cut page load from 1.2s to 400ms.', 'In 2023 I precepted three new nurses, who also covered nights.', 'Could we talk next week?')).toBe(false)
+  })
+})
