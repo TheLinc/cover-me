@@ -34,7 +34,8 @@ function tryAtsSelectors(): JobData | null {
     const company = firstText(['[data-qa="company"]', '[class*="company-name"]', '.selected-application-pane .section-header + * > .section-title'])
       // job-boards.greenhouse.io names the company only in the tab title,
       // which its embeds (/embed/job_app?for=...) don't put in the path
-      ?? document.title.match(/^Job Application for .+ at (.+)$/)?.[1]?.trim()
+      // (capped: the pattern retries at every " at ")
+      ?? document.title.slice(0, 300).match(/^Job Application for .+ at (.+)$/)?.[1]?.trim()
       ?? fromTabTitle().company
     return { title, company, description, url: window.location.href }
   }
@@ -51,8 +52,10 @@ function tryHeuristic(): JobData {
     return text.length > 2 && text.length < 120 && !isNavHeading(text) && !isSectionOrSiteHeading(text) &&
       text.toLowerCase() !== tab.company.toLowerCase()
   })
-  // A listing's heading ("Open Roles") means there's no job to fall back to.
-  const title = titleEl?.innerText.trim() ?? (h1s.some((el) => isNavHeading(el.innerText ?? '')) ? undefined : tab.title)
+  // Only in place of a rejected <h1>: a page with none was never read as a job,
+  // and a listing's heading ("Open Roles") means there's no job to fall back to.
+  const title = titleEl?.innerText.trim() ??
+    (h1s.length && !h1s.some((el) => isNavHeading(el.innerText ?? '')) ? tab.title : undefined)
 
   // Find the largest text block that looks like a job description: not a list
   // of links, which is a job board's listing or a "similar jobs" panel.
@@ -71,8 +74,12 @@ function tryHeuristic(): JobData {
     })
     .filter(({ len }) => len > 500 && len < 20000)
     .sort((a, b) => b.len - a.len)
+  // ...when it holds at least half as much text: a short header that opens with
+  // the title mustn't win over the description beside it.
   const isPosting = ({ el, len }: { el: HTMLElement; len: number }) => linkTextLength(el, nested) < len / 2
-  const description = (blocks.filter((b) => b.opens).find(isPosting) ?? blocks.find(isPosting))?.el.innerText.trim()
+  const largest = blocks.find(isPosting)
+  const opening = blocks.find((b) => b.opens && largest && b.len >= largest.len / 2 && isPosting(b))
+  const description = (opening ?? largest)?.el.innerText.trim()
 
   if (!title || !description || description.length < 200) {
     throw new Error(

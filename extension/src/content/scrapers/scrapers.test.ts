@@ -64,6 +64,7 @@ describe('company and title when the page doesn\'t name them (#200)', () => {
     ['a place', 'Senior Auditor', 'Senior Auditor - Remote', 'https://careers.example.com/jobs/79'],
     ['a requisition number', 'Senior Auditor', 'Senior Auditor - R0012345', 'https://careers.example.com/jobs/79'],
     ['a job board', 'Senior Auditor', 'Senior Auditor - Northwind | SEEK', 'https://www.seek.com.au/job/79'],
+    ['a job board', 'Senior Auditor', 'Senior Auditor at Northwind | Y Combinator', 'https://www.ycombinator.com/companies/northwind/jobs/79'],
     // Path segments other than the first are places and job slugs
     ['a place the path names', 'Senior Auditor', 'Senior Auditor - Atlanta', 'https://careers.example.com/job/atlanta/senior-auditor/79'],
     ['a job the path names', 'Auditor', 'Auditor | Northwind', 'https://careers.example.com/jobs/auditor'],
@@ -84,6 +85,14 @@ describe('company and title when the page doesn\'t name them (#200)', () => {
     expect(scrape('https://job-boards.greenhouse.io/embed/job_app', html).company).toBe('Anthropic')
   })
 
+  // "Job Application for ... at (.+)$" retries at every " at "
+  test('a Greenhouse-style tab title of 40,000 " at " stays cheap', () => {
+    const start = performance.now()
+    scrape('https://careers.example.com/jobs/79', `<!doctype html><html><head><title>Job Application for x${' at '.repeat(40_000)}\n</title></head>
+      <body><h1 class="title">Senior Auditor</h1><div id="content">${description}</div></body></html>`)
+    expect(performance.now() - start).toBeLessThan(2000)
+  })
+
   // The tab title is read once per scrape, not once per JSON-LD posting
   test('many JSON-LD postings without a company and a long tab title stay cheap', () => {
     const nodes = JSON.stringify(Array.from({ length: 2000 }, () => ({ '@type': 'JobPosting', title: 'x', description: 'y' })))
@@ -91,6 +100,19 @@ describe('company and title when the page doesn\'t name them (#200)', () => {
     expect(() => scrape('https://careers.example.com/jobs/79',
       `<!doctype html><html><head><title>${'a '.repeat(500_000)}</title><script type="application/ld+json">${nodes}</script></head><body></body></html>`)).toThrow()
     expect(performance.now() - start).toBeLessThan(2000)
+  })
+
+  // Taleo: the job is in the tab title even when the company isn't
+  test('a heading <h1> takes the job from a tab title that names no company', () => {
+    expect(posting('Job Description', 'Job Description - Senior Auditor (2600000S)', 'https://northwind.taleo.net/careersection/ex1/jobdetail.ftl'))
+      .toMatchObject({ title: 'Senior Auditor (2600000S)', company: 'Unknown Company' })
+  })
+
+  test('a short header that opens with the title doesn\'t replace the description beside it', () => {
+    const header = `<p>${'Atlanta, GA. Full time. Apply by Friday. '.repeat(15)}</p>`
+    const job = scrape('https://careers.example.com/jobs/79', `<!doctype html><html><body><main><div><h1>Senior Auditor</h1>${header}</div>
+      <section>${description.repeat(4)}</section></main></body></html>`)
+    expect(job.description).toMatch(/^Audit the finance team/)
   })
 
   // "Careers | Northwind" names only the site: no job to take from it

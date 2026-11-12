@@ -16,13 +16,13 @@ const NOT_A_NAME = /^(?:careers?|jobs?|job (?:details|description)|home)$|^job i
 // Job boards name themselves in the tab and the URL, not the employer.
 // ponytail: a fixed list; boards not on it can still come out as the company.
 const BOARDS = new Set(['indeed', 'linkedin', 'glassdoor', 'ziprecruiter', 'seek', 'monster', 'dice', 'simplyhired',
-  'careerbuilder', 'joinhandshake', 'handshake', 'hiringcafe', 'wellfound', 'finn', 'jobsdb', 'stepstone'])
+  'careerbuilder', 'joinhandshake', 'handshake', 'hiringcafe', 'wellfound', 'finn', 'jobsdb', 'stepstone',
+  'ycombinator', 'builtin', 'himalayas', 'remotive', 'weworkremotely', 'welcometothejungle', 'otta'])
 
 // Letters and digits only, lowercased, for matching parts against the URL.
 const key = (s: string) => s.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '')
 
-// The company the tab title names, else "Unknown Company", and the job beside
-// it (only when the company was found, so a lone site name is never a job).
+// The company the tab title names, else "Unknown Company", and the job in it.
 export function fromTabTitle(): { company: string; title?: string } {
   // A browser's document.title is the first <title> anywhere; linkedom's only
   // looks in <head>, and Amazon's sits in <body>. Whitespace is collapsed and
@@ -30,7 +30,6 @@ export function fromTabTitle(): { company: string; title?: string } {
   const tab = (document.title || document.querySelector('title')?.textContent || '').slice(0, 1000).replace(/\s+/g, ' ').trim().slice(0, 300)
   const parts = tab.split(SEPARATOR).map((p) => p.trim().replace(SUFFIX, '').trim())
     .filter((p) => p && !NOT_A_NAME.test(p))
-  if (parts.length < 2) return { company: 'Unknown Company' }
 
   // The hostname first (careers.acme.com). Then the path's first segment, where
   // job boards put the employer (jobs.ashbyhq.com/riveron), or a domain in it
@@ -40,11 +39,13 @@ export function fromTabTitle(): { company: string; title?: string } {
   // Hyphenated segments are job slugs ("/senior-auditor") and would match the title.
   const [first = '', ...rest] = pathname.split('/').filter(Boolean)
   const fromPath = [first, ...rest.filter((s) => s.includes('.'))].filter((s) => !/[-_]/.test(s))
-  const named = (keys: string[]) => {
-    const set = new Set(keys.map(key).filter((k) => k.length > 2 && !BOARDS.has(k)))
-    return [...parts].reverse().find((p) => set.has(key(p)))
-  }
-  const company = named(hostname.split('.')) ?? named(fromPath)
-  if (!company) return { company: 'Unknown Company' }
-  return { company, title: parts.find((p) => p !== company) }
+  const keys = (s: string[]) => new Set(s.map(key).filter((k) => k.length > 2 && !BOARDS.has(k)))
+  const host = keys(hostname.split('.'))
+  const named = (set: Set<string>) => [...parts].reverse().find((p) => set.has(key(p)))
+  // One part alone can't be told apart from the site's name
+  const company = parts.length > 1 ? named(host) ?? named(keys(fromPath)) : undefined
+  // The job is the first other part, and never the site's own name
+  // ("Careers | Northwind" on careers.northwind.com has none)
+  const title = parts.find((p) => p !== company && !host.has(key(p)))
+  return { company: company ?? 'Unknown Company', title }
 }
