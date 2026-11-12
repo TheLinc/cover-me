@@ -112,8 +112,15 @@ const vitest = spawnSync(
   },
 )
 
-cleanup()
 if (vitest.status !== 0 && process.env.SHOW_FUNCTION_LOGS !== '0') {
   console.log('\n── supabase functions serve output ──\n' + serveLog.slice(-8000))
+  // The serve output can stop after the warm-up (#79), so print the containers'
+  // own logs too: the gateway's access log and the runtime's per-request lines
+  // and worker shutdown reasons. Before cleanup, which removes the runtime.
+  for (const name of ['kong', 'edge_runtime']) {
+    console.log(`\n── docker logs supabase_${name}_cover-me (last 300 lines) ──`)
+    spawnSync('docker', ['logs', '--timestamps', '--tail', '300', `supabase_${name}_cover-me`], { stdio: 'inherit' })
+  }
 }
+cleanup()
 process.exit(vitest.status ?? 1)

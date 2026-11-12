@@ -72,14 +72,30 @@ export async function callFunction(name: string, opts: CallOptions = {}): Promis
   const headers: Record<string, string> = { apikey: PUBLISHABLE_KEY, ...opts.headers }
   if (opts.token) headers.Authorization = `Bearer ${opts.token}`
   if (opts.body !== undefined) headers['Content-Type'] = 'application/json'
-  return fetch(url, {
-    method: opts.method ?? (opts.body !== undefined || opts.rawBody ? 'POST' : 'GET'),
-    headers,
-    body: opts.rawBody ?? (opts.body !== undefined ? JSON.stringify(opts.body) : undefined),
-    signal: opts.signal,
-    redirect: opts.redirect,
-  })
+  // A request that gets no response (#79) fails here, naming the function,
+  // instead of at vitest's 30 s limit. Only waits for headers: a streamed body
+  // can take longer.
+  const noResponse = new AbortController()
+  const timer = setTimeout(() => noResponse.abort(), RESPONSE_TIMEOUT_MS)
+  try {
+    return await fetch(url, {
+      method: opts.method ?? (opts.body !== undefined || opts.rawBody ? 'POST' : 'GET'),
+      headers,
+      body: opts.rawBody ?? (opts.body !== undefined ? JSON.stringify(opts.body) : undefined),
+      signal: opts.signal ? AbortSignal.any([opts.signal, noResponse.signal]) : noResponse.signal,
+      redirect: opts.redirect,
+    })
+  } catch (e) {
+    if (noResponse.signal.aborted) {
+      throw new Error(`${name}: no response in ${RESPONSE_TIMEOUT_MS / 1000} s. The edge runtime and Kong logs print after the run.`, { cause: e })
+    }
+    throw e
+  } finally {
+    clearTimeout(timer)
+  }
 }
+
+const RESPONSE_TIMEOUT_MS = 15_000
 
 // The resume function parses new text in the background after it answers.
 // By default this waits for that parse, then clears the mock's log, so a test
