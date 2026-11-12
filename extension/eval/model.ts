@@ -4,14 +4,15 @@
 //           Exactly the production request shape.
 //   claude  Claude Code headless (`claude -p`), billed to your Claude plan.
 //           Isolated so outputs match production as closely as possible: no
-//           tools, no MCP, no user settings/hooks, thinking off for generation
-//           calls, and the filesystem root as working dir. Claude Code loads
-//           CLAUDE.md and .claude/rules from every ancestor of its working dir,
-//           so any folder under your user profile (including the OS temp dir)
-//           would pull in ~/.claude/CLAUDE.md. With CLAUDE_CODE_OAUTH_TOKEN set
-//           (from `claude setup-token`) it also uses an empty config dir, so
-//           account context never reaches the model. Without the token it falls
-//           back to your normal login and warns.
+//           tools, no MCP, no user settings/hooks, thinking as in production
+//           (Sonnet generation at high effort, the Haiku parse off), and the
+//           filesystem root as working dir. Claude Code loads CLAUDE.md and
+//           .claude/rules from every ancestor of its working dir, so any folder
+//           under your user profile (including the OS temp dir) would pull in
+//           ~/.claude/CLAUDE.md. With CLAUDE_CODE_OAUTH_TOKEN set (from
+//           `claude setup-token`) it also uses an empty config dir, so account
+//           context never reaches the model. Without the token it falls back to
+//           your normal login and warns.
 
 import { spawn } from 'node:child_process'
 import { existsSync, mkdtempSync } from 'node:fs'
@@ -24,7 +25,7 @@ export type Backend = 'api' | 'claude'
 export interface CallOptions {
   model: string
   maxTokens: number
-  /** Judge calls think; generation calls mirror production (no thinking). */
+  /** Judge calls think; generation calls mirror production. */
   think?: boolean
   /** Step name for per-step usage (usage.log), e.g. "tailor". */
   label?: string
@@ -129,7 +130,10 @@ function runClaude(prompt: string, opts: CallOptions): Promise<string> {
   const env: NodeJS.ProcessEnv = { ...process.env }
   delete env.ANTHROPIC_API_KEY // bill the plan, never API credits
   if (CLEAN_CONFIG) env.CLAUDE_CONFIG_DIR = CLEAN_CONFIG
-  if (!opts.think) env.MAX_THINKING_TOKENS = '0'
+  // Mirror production, as callApi does: Sonnet 5.5 generation thinks at high
+  // effort. Other generation calls (the Haiku parse) don't think.
+  if (opts.model === 'claude-sonnet-5-5' && !opts.think) args.push('--effort', 'high')
+  else if (!opts.think) env.MAX_THINKING_TOKENS = '0'
 
   return new Promise((resolve, reject) => {
     const child = spawn('claude', args, { cwd: WORKDIR, env })
