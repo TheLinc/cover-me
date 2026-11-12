@@ -183,6 +183,8 @@ describe('company and title when the page doesn\'t name them (#200)', () => {
 })
 
 describe('generic heuristic', () => {
+  const description = 'Lead a team of twelve on the night shift and keep the loading dock on schedule. '.repeat(8).trim()
+
   // Greenhouse's public board listing: an <h1> of "Open Roles" over a list of
   // job links, once read as a job called "Open Roles" (#64).
   test('reads a listing page as no job, not a job', () => {
@@ -205,25 +207,48 @@ describe('generic heuristic', () => {
     expect(() => scrape(fixtureUrl(html), html)).toThrow('Could not find job details')
   })
 
+  // Cards of a related-jobs panel each carry plain text, so link share alone
+  // doesn't keep them out
+  const related = Array.from({ length: 10 }, (_, i) => `<li class="job"><a href="/jobs/${i}">Forklift Operator ${i}</a>
+    <p>Location: AUS, NSW, Sydney</p><p>Posted ${i + 2} days ago. Move pallets and load trucks on the night shift.</p></li>`).join('')
   test('reads a posting without the related jobs listed beside it', () => {
-    const description = 'Lead a team of twelve on the night shift and keep the loading dock on schedule. '.repeat(8).trim()
-    const related = Array.from({ length: 6 }, (_, i) => `<li class="job"><a href="/jobs/${i}">Forklift Operator ${i}</a>
-      <p>Location: AUS, NSW, Sydney</p><p>Posted ${i + 2} days ago. Move pallets and load trucks on the night shift.</p></li>`).join('')
     const job = scrape('https://careers.example.com/jobs/1', `<html><body><main><div><h1>Warehouse Supervisor</h1>
       <div><p>${description}</p></div><div><h2>Related jobs</h2><ul>${related}</ul></div></div></main></body></html>`)
     expect(job.description.startsWith(description)).toBe(true)
     expect(job.description).not.toMatch(/Forklift|Sydney/)
   })
 
-  // Same-class sections that each link somewhere aren't cards when one of them
-  // holds most of the page
+  // The posting has a job's title, so cards larger than it don't make the page
+  // a listing
+  test('reads a short posting beside a larger related-jobs sidebar', () => {
+    const job = scrape('https://careers.example.com/jobs/1', `<html><body><main><h1>Warehouse Supervisor</h1>
+      <div><p>${description}</p></div><aside><h2>Related jobs</h2><ul>${related}</ul></aside></main></body></html>`)
+    expect(job).toMatchObject({ title: 'Warehouse Supervisor', description })
+  })
+
+  // A posting's own lists and sections aren't job cards
+  test('keeps a requirements list that links some of its tools', () => {
+    const items = ['<a href="https://react.dev">React</a> and TypeScript in production', 'Writing clear design documents',
+      '<a href="https://postgresql.org">Postgres</a> at scale', 'Mentoring junior engineers',
+      '<a href="https://kafka.apache.org">Kafka</a> or another event log', 'On call one week in six']
+    const job = scrape('https://careers.example.com/jobs/1', `<html><body><main><h1>Backend Engineer</h1>
+      <div><p>${description}</p><ul>${items.map((i) => `<li>${i}</li>`).join('')}</ul></div></main></body></html>`)
+    expect(job.description).toContain('Kafka or another event log\nOn call one week in six')
+  })
+
   test('reads a posting laid out in sections of one class', () => {
-    const description = 'Lead a team of twelve on the night shift and keep the loading dock on schedule. '.repeat(8).trim()
+    // One section holding most of the page
     const job = scrape('https://careers.example.com/jobs/1', `<html><body>
       <div class="row"><a href="/">Home</a></div>
       <div class="row"><h1>Warehouse Supervisor</h1><p>${description}</p><a href="/apply">Apply</a></div>
       <div class="row"><a href="/privacy">Privacy</a></div></body></html>`)
     expect(job).toMatchObject({ title: 'Warehouse Supervisor', description: `Warehouse Supervisor\n\n${description}\n\nApply` })
+    // Sections of about one size, each with a link
+    const section = (heading: string, href: string) => `<div class="section"><h2>${heading}</h2><p>${description.slice(0, 300)} <a href="${href}">More</a></p><ul><li>${heading}</li></ul></div>`
+    const sections = scrape('https://careers.example.com/jobs/1', `<html><body><main><h1>Warehouse Supervisor</h1><div>
+      ${section('About us', '/about')}<div class="section"><h2>The role</h2><p>${description.slice(0, 300)}</p></div>
+      ${section('Benefits', '/benefits')}${section('Equal opportunity', '/eeo')}</div></main></body></html>`)
+    expect(sections.description).toContain('Equal opportunity')
   })
 
   // Each link read once per block, not once per link it's nested in (34 s
@@ -246,7 +271,6 @@ describe('generic heuristic', () => {
   })
 
   test('reads a plain posting, not the larger list of similar jobs beside it', () => {
-    const description = 'Lead a team of twelve on the night shift and keep the loading dock on schedule. '.repeat(8).trim()
     const similar = Array.from({ length: 40 }, (_, i) => `<li><a href="/jobs/${i}">Forklift Operator, Night Shift - Toronto</a></li>`).join('')
     const job = scrape('https://careers.example.com/jobs/1', `<html><body><main><h1>Warehouse Supervisor</h1>
       <div><div><p>${description}</p></div><div><h2>Similar jobs</h2><ul>${similar}</ul></div></div></main></body></html>`)

@@ -66,7 +66,9 @@ function tryHeuristic(): JobData {
   const title = first && (notTitle(first) ? tabJob ?? (embedded ? undefined : first) : first)
 
   // The posting's own container when the page marks it with the job's ID.
-  const description = postingById() ?? largestBlock()
+  // A heading that isn't a job's title leaves the page in doubt: job cards
+  // that outweigh the text make it a listing, and the text its intro.
+  const description = postingById() ?? largestBlock(first !== undefined && notTitle(first))
 
   if (!title || !description || description.length < 200) {
     throw new Error(
@@ -81,51 +83,59 @@ function tryHeuristic(): JobData {
 // links or job cards, which is a job board's listing or a "similar jobs"
 // panel. Postings measured 0 to 21% link text, Greenhouse's board listing 95%.
 // A card's plain text (location, summary) counts as the list's, since listings
-// whose cards carry it measured under half link text (#72). Each block's text
-// is measured once, and links nested in a link (linkedom allows them) aren't
-// read, so each block costs one walk of its subtree.
-function largestBlock(): string | undefined {
+// whose cards carry it measured under half link text, as did a Greenhouse
+// board under a long intro (49%) (#72). The block's card lists (a related-jobs
+// panel) are cut from its text. Each block's text is measured once, and links
+// nested in a link (linkedom allows them) aren't read, so each block costs one
+// walk of its subtree and one of its ancestors; each list's text is read once
+// more to cut it.
+function largestBlock(listingIfOutweighed: boolean): string | undefined {
   const nested = new Set(document.querySelectorAll('a a'))
-  const cards = cardLists(nested)
+  const lists = cardLists(nested)
   const cardText = new Map<Element, number>()
-  for (const [list, plain] of cards) {
+  for (const [list, plain] of lists) {
     for (let el: Element | null = list; el; el = el.parentElement) cardText.set(el, (cardText.get(el) ?? 0) + plain)
   }
-  // A block in a card is the card or part of it (a long one: We Work Remotely's
+  // A block in a list is a card or part of one (a long one: We Work Remotely's
   // list the countries a job is open to)
-  const inCard = (el: Element) => {
-    for (let p = el.parentElement; p; p = p.parentElement) if (cards.has(p as HTMLElement)) return true
-    return false
-  }
   const block = Array.from(document.querySelectorAll<HTMLElement>('div, section, article'))
     .map((el) => ({ el, len: el.innerText?.trim().length ?? 0 }))
     .filter(({ len }) => len > 500 && len < 20000)
     .sort((a, b) => b.len - a.len)
-    .find(({ el, len }) => linkTextLength(el, nested) + (cardText.get(el) ?? 0) < len * 0.4 && !inCard(el))
+    .find(({ el, len }) => linkTextLength(el, nested) + (cardText.get(el) ?? 0) < len * 0.4 && !hasAncestorIn(el, lists))
     ?.el
   if (!block) return
-  // Without the cards in it (a related-jobs panel). A page whose cards
-  // outweigh what's left is a listing, and the block its intro.
   let text = block.innerText.trim()
-  let most = 0
-  for (const [list, plain] of cards) {
-    most = Math.max(most, plain)
-    if (block.contains(list)) text = text.replace(list.innerText.trim(), '').replace(/\n{3,}/g, '\n\n').trim()
+  let largestList = 0
+  for (const [list, plain] of lists) {
+    largestList = Math.max(largestList, plain)
+    if (block.contains(list)) text = text.replace(list.innerText.trim(), '')
   }
-  return text.length > most ? text : undefined
+  text = text.replace(/\n{3,}/g, '\n\n').trim()
+  return listingIfOutweighed && text.length <= largestList ? undefined : text
 }
 
-// Repeated cards: an element with at least three children of one shape (block
-// tag and class) that each hold a link to a different place, making up half
-// its children or more, none of them holding half its text. A job list,
-// whatever plain text each card carries, but also a site's menus; not
-// paragraphs with a link each (a posting's EEO notes), nor a page's sections
-// of one class around a posting. The outermost lists only, each with its text
-// outside links. Each element's first link is found in one pass over the links.
+interface CardGroup { hrefs: Set<string>, cards: Element[] }
+
+// Repeated cards: an element whose children are mostly (two thirds or more)
+// cards of one shape, at least three: the same block tag, class and child tags,
+// each with its first link outside a paragraph and to a different place, none
+// holding half the list's text. A job list, whatever plain text each card
+// carries, but also a site's menus; not paragraphs with a link each (a
+// posting's EEO notes), a requirements list that links some of its tools, nor
+// a posting's sections that link from their prose. The outermost lists only,
+// each with its text outside links. Each element's first link is found in one
+// pass over the links; each child is looked at once, with a walk from its
+// first link up to it; a candidate list's text is read once per level it's
+// nested in.
 function cardLists(nested: Set<Element>): Map<HTMLElement, number> {
-  const firstLink = new Map<Element, string>()
+  const firstLink = new Map<Element, Element>()
   for (const a of Array.from(document.querySelectorAll('a[href]'))) {
-    for (let el: Element | null = a; el && !firstLink.has(el); el = el.parentElement) firstLink.set(el, a.getAttribute('href')!)
+    for (let el: Element | null = a; el && !firstLink.has(el); el = el.parentElement) firstLink.set(el, a)
+  }
+  const inProse = (link: Element, card: Element) => {
+    for (let el = link.parentElement; el && el !== card; el = el.parentElement) if (el.tagName === 'P') return true
+    return false
   }
   const lists = new Set<Element>()
   const seen = new Set<Element>()
@@ -133,18 +143,18 @@ function cardLists(nested: Set<Element>): Map<HTMLElement, number> {
     const parent = child.parentElement
     if (!parent || seen.has(parent)) continue
     seen.add(parent)
-    const shapes = new Map<string, { hrefs: Set<string>, cards: Element[] }>()
+    const shapes = new Map<string, CardGroup>()
     for (const kid of Array.from(parent.children)) {
-      const href = firstLink.get(kid)
-      if (href === undefined || !CARD_TAGS.has(kid.tagName)) continue
-      const shape = `${kid.tagName} ${kid.getAttribute('class') ?? ''}`
+      const link = firstLink.get(kid)
+      if (!link || !CARD_TAGS.has(kid.tagName) || inProse(link, kid)) continue
+      const shape = `${kid.tagName} ${kid.getAttribute('class') ?? ''} ${Array.from(kid.children, (c) => c.tagName).join()}`
       const group = shapes.get(shape) ?? { hrefs: new Set(), cards: [] }
-      group.hrefs.add(href)
+      group.hrefs.add(link.getAttribute('href')!)
       group.cards.push(kid)
       shapes.set(shape, group)
     }
-    const isList = ({ hrefs, cards }: { hrefs: Set<string>, cards: Element[] }) => {
-      if (hrefs.size < 3 || hrefs.size * 2 < parent.children.length) return false
+    const isList = ({ hrefs, cards }: CardGroup) => {
+      if (hrefs.size < 3 || hrefs.size * 3 < parent.children.length * 2) return false
       const total = parent.textContent?.length ?? 0
       return cards.every((card) => (card.textContent?.length ?? 0) * 2 < total)
     }
@@ -152,15 +162,18 @@ function cardLists(nested: Set<Element>): Map<HTMLElement, number> {
   }
   const outermost = new Map<HTMLElement, number>()
   for (const list of lists) {
-    let inner = false
-    for (let el = list.parentElement; el && !inner; el = el.parentElement) inner = lists.has(el)
     const el = list as HTMLElement
-    if (!inner) outermost.set(el, (el.innerText?.trim().length ?? 0) - linkTextLength(el, nested))
+    if (!hasAncestorIn(el, lists)) outermost.set(el, (el.innerText?.trim().length ?? 0) - linkTextLength(el, nested))
   }
   return outermost
 }
 
 const CARD_TAGS = new Set(['LI', 'DIV', 'ARTICLE', 'SECTION', 'TR'])
+
+function hasAncestorIn(el: Element, set: { has(el: Element): boolean }): boolean {
+  for (let p = el.parentElement; p; p = p.parentElement) if (set.has(p)) return true
+  return false
+}
 
 // Google's careers page puts the posting in a pane marked with the job's ID
 // from the URL (data-id), beside a list of other jobs that's larger than it.
