@@ -89,7 +89,7 @@ export async function callFunction(name: string, opts: CallOptions = {}): Promis
     })
   } catch (e) {
     if (noResponse.signal.aborted) {
-      throw new Error(`${name}: no response in ${RESPONSE_TIMEOUT_MS / 1000} s. See the Kong and edge runtime logs after the run.`, { cause: e })
+      throw new Error(`${name}: no response in ${RESPONSE_TIMEOUT_MS / 1000} s. pnpm test:functions prints the Kong and edge runtime logs after the run unless SHOW_FUNCTION_LOGS=0.`, { cause: e })
     }
     throw e
   } finally {
