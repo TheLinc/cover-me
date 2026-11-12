@@ -86,6 +86,7 @@ describe('templated sentence shapes', () => {
   const flagged = (prefix: string, ...paragraphs: string[]) =>
     lintLetter(letter(...paragraphs), { companyName: 'Acme' }).violations.some((v) => v.startsWith(prefix))
   const opener = 'At Halcyon I cut page load from 1.2s to 400ms.'
+  const close = 'Could we talk next week?'
 
   test.each([
     'My strongest qualification is simple: I find data problems early.',
@@ -104,7 +105,8 @@ describe('templated sentence shapes', () => {
     "I closed the books in four days. That's exactly what I've been doing.",
     "I trained four new hires on the close. That's the habit I'd bring to Pinnacle.",
     "I closed the books in four days. That's the standard I already hold myself to.",
-  ])('label: %s', (s) => expect(flagged('Labels', opener, s)).toBe(true))
+    "I closed the books in four days. That's the standard I want to work to.",
+  ])('label: %s', (s) => expect(flagged('Labels', opener, s, close)).toBe(true))
   test.each([
     'I put that plan into practice across three warehouses.',
     'This is my eighth year in practice as a family physician.',
@@ -114,7 +116,12 @@ describe('templated sentence shapes', () => {
     "I spent two years on structural steel. That's where I learned that most bad welds are decided before the arc starts.",
     // Mid-paragraph, it leads into what follows: a close asking a question.
     'I can bring the cutover plan. That is the part I would want to hear about first. Could we talk next week?',
-  ])('label leaves alone: %s', (s) => expect(flagged('Labels', opener, s)).toBe(false))
+  ])('label leaves alone: %s', (s) => expect(flagged('Labels', opener, s, close)).toBe(false))
+  // The close names what the applicant wants to talk about; that is its job.
+  test.each([
+    'Could we talk next week about the Halcyon cutover? That is exactly the conversation I want to have.',
+    'Could we set up a short call? The Halcyon cutover is the first thing I would raise. That is the project I would bring to a first conversation.',
+  ])('label leaves the close alone: %s', (s) => expect(flagged('Labels', opener, s)).toBe(false))
 
   test.each([
     'Documentation is a habit for me, not an afterthought.',
@@ -244,6 +251,10 @@ describe('posting restatement pivot', () => {
     ['Acme', 'When Acme needed a new vendor in 2022, I ran the bid, and that is how I met the team.'],
     ['Acme', 'If you need weekend cover, I can start on Saturdays.'],
     ['Acme Software', "You need someone on nights at Acme Software, and that's a shift my family can support."],
+    // The need is not the sentence's subject, or the turn is a reason or a time.
+    ['Acme', 'I would like to hear what your team needs most in the first quarter, and that is where I would start our conversation.'],
+    ['Acme', 'You want the close in five days, which is why I would start with the reconciliations.'],
+    ['Acme', "Acme's needs shifted in 2023, and that is when I joined the vendor team."],
     ['Acme', 'Acme wants faster month-end reporting, and this year I cut ours from ten days to four.'],
   ])('leaves alone (%s): %s', (company, s) => expect(pivots(company, s)).toBe(false))
 })
