@@ -170,12 +170,12 @@ This is NOT a resume restatement — give the number its narrative context. "Whe
 
 ${whyCompany}
 
-Paragraph 4 — Close + Call to Action (2–3 sentences):
-Close with the ${variation.closePattern} move:
-- Next step: ask directly for an interview or a short call to discuss one specific piece of the applicant's own work
-- Project: name one specific piece of the applicant's own work from the resume that bears most on this role, then ask directly for an interview
+Paragraph 4 — Close + Call to Action (1–2 sentences):
+The close adds nothing new: no project, fact, figure, or skill that the letter has not already given. Close with the ${variation.closePattern} move:
+- Next step: ask directly for an interview to discuss the role
+- Project: ask directly for an interview to discuss the strongest accomplishment already in the letter, named in a few words ("the page-load work at Halcyon")
 - Thanks: thank the reader in a few plain words ("Thank you for reading", never "thanks for your time") and ask directly for an interview
-Do not ask the employer questions about their team or work, and make one request, not a question plus an offer plus a request. Do not recap the letter or list skills again, and never name a duty, tool, or requirement from the posting that the resume does not show. The request is direct and confident — not passive, not demanding.
+Make one request. Do not ask the employer questions about their team or work, do not offer to bring, show, or walk them through anything, and do not recap the letter. The request is direct and confident — not passive, not demanding.
 
 Sign-off: "${variation.signOff}" on its own line, then a blank line, then the applicant's name from the resume.
 
@@ -245,7 +245,7 @@ No fabricated personal knowledge: Never claim the applicant has personally follo
 
 FORMAT RULES:
 - Plain text only — no markdown, no # headers, no **bold**, no bullet points, no asterisks, no dashes as list markers
-- 250–400 words total (excluding salutation and sign-off)
+- 200–350 words total (excluding salutation and sign-off)
 - No subject line, date, or postal address block
 - No contact details anywhere in the letter body — never include phone numbers, email addresses, or mailing addresses. The recruiter already has them; adding them reads as filler and wastes word count
 - No URLs in the closing paragraph — if the field values a portfolio or GitHub link and it appears in the resume, it may appear once inline inside paragraph 2 (core proof) as evidence of real work; never as a standalone "see more of my work at" line and never in the closing

@@ -281,10 +281,10 @@ export function lintLetter(
     violations.push(`Uses ${emDashes} em-dashes — use at most 2 in the whole letter; rewrite the rest as separate sentences or with commas.`)
   }
 
-  if (wordCount < 230) {
-    violations.push(`Letter body is ${wordCount} words — too short; expand to 250–400 words by telling the accomplishments already in the letter more fully (the situation, who it affected, how it was done), not by listing more items from the resume.`)
-  } else if (wordCount > 430) {
-    violations.push(`Letter body is ${wordCount} words — too long; tighten to 250–400 words.`)
+  if (wordCount < 180) {
+    violations.push(`Letter body is ${wordCount} words — too short; expand to 200–350 words by telling the accomplishments already in the letter more fully (the situation, who it affected, how it was done), not by listing more items from the resume.`)
+  } else if (wordCount > 380) {
+    violations.push(`Letter body is ${wordCount} words — too long; tighten to 200–350 words.`)
   }
 
   if (MARKDOWN_RE.test(letter)) {
@@ -324,6 +324,17 @@ export function lintLetter(
   const closeQuestion = paragraphs.length > 1 ? lastPara.split(SENTENCE_END).map((s) => s.trim()).find((s) => CLOSE_QUESTION_RE.test(s)) : undefined
   if (closeQuestion) {
     violations.push(`Asks the employer a question in the close ("${closeQuestion}") — end with a direct request for an interview instead.`)
+  }
+  // The close adds nothing new: a test letter ended on a side project "with
+  // more than 400 GitHub stars", which the letter had not mentioned (#206).
+  if (paragraphs.length > 1) {
+    const earlier = new Set(paragraphs.slice(0, -1).flatMap((p) => extractNumbers(p).map((n) => n.norm)))
+    // A meeting length ("a 20-minute call") is the request, not a new fact.
+    const closeFacts = lastPara.replace(/\b\d+[- ](?:minutes?|hours?|days?|weeks?)\b/gi, ' ')
+    const fresh = extractNumbers(closeFacts).find((n) => !earlier.has(n.norm))
+    if (fresh) {
+      violations.push(`Adds a new figure in the close ("${fresh.raw}") — the close adds nothing new; ask for an interview about the strongest work already in the letter.`)
+    }
   }
 
   const employers = [opts.companyName, shortName].filter((n): n is string => !!n && n !== 'Unknown Company').map(escapeRegex)
@@ -430,5 +441,5 @@ export function buildLintRetryMessage(violations: string[]): string {
 
 ${violations.map((v) => `- ${v}`).join('\n')}
 
-Rewrite the complete letter fixing exactly these issues. Keep everything that already works — the same accomplishments, the same structure, the same specifics — and change only what the violations require. All original rules still apply (250–400 words, plain text, no fabricated qualifications or metrics). Where a fix removes words, or the letter is too short, tell the accomplishments already in the letter more fully (the situation, who it affected, how it was done), not more figures or a list of other resume items, so the letter stays at 250–400 words; never just cut. Output only the finished letter, nothing else.`
+Rewrite the complete letter fixing exactly these issues. Keep everything that already works — the same accomplishments, the same structure, the same specifics — and change only what the violations require. All original rules still apply (200–350 words, plain text, no fabricated qualifications or metrics). Where a fix removes words, or the letter is too short, tell the accomplishments already in the letter more fully (the situation, who it affected, how it was done), not more figures or a list of other resume items, so the letter stays at 200–350 words; never just cut. Output only the finished letter, nothing else.`
 }

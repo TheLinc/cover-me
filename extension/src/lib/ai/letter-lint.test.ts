@@ -376,3 +376,20 @@ describe('long proof paragraph', () => {
   test('flags eight sentences', () => expect(flagged(s(8))).toBe(true))
   test('leaves six alone', () => expect(flagged(s(6))).toBe(false))
 })
+
+// A close that introduced a side project with "more than 400 GitHub stars".
+describe('new figure in the close', () => {
+  const letter = (...paragraphs: string[]) => `Dear Hiring Manager,\n\n${paragraphs.join('\n\n')}\n\nKind regards,\nAlex Doe`
+  const flagged = (close: string) =>
+    lintLetter(letter('At Halcyon I cut page load from 1.2s to 400ms for 60,000 users.', close)).violations.some((v) => v.startsWith('Adds a new figure'))
+  test('flags a figure the letter has not given', () => {
+    expect(flagged('OpenShelf has more than 900 GitHub stars. I\'d welcome an interview.')).toBe(true)
+  })
+  test('leaves a figure from earlier in the letter alone', () => {
+    expect(flagged('I\'d welcome an interview to discuss the 60,000-user dashboards.')).toBe(false)
+  })
+  test.each([
+    'Could we set up a 20-minute call next week?',
+    'Could we find 30 minutes in the next two weeks?',
+  ])('leaves a meeting length alone: %s', (c) => expect(flagged(c)).toBe(false))
+})
