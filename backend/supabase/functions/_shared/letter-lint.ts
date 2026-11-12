@@ -293,7 +293,7 @@ export function lintLetter(
   }
 
   if (wordCount < 120) {
-    violations.push(`Letter body is ${wordCount} words — too short; expand to 150–280 words by telling the accomplishments already in the letter more fully, using only details the resume gives, not by listing more items from the resume.`)
+    violations.push(`Letter body is ${wordCount} words — too short; expand to 150–280 words. If the letter tells only one accomplishment, add a second from the resume with its result. Give each story its setting from the resume's facts about the same job (team, volume, tools, scope). Never restate a fact, list unrelated resume items, or guess what the resume does not say (an employer's industry or location, a new claim about the applicant).`)
   } else if (wordCount > 320) {
     violations.push(`Letter body is ${wordCount} words — too long; tighten to 150–280 words.`)
   }
