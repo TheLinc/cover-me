@@ -95,8 +95,9 @@ describe('company and title when the page doesn\'t name them (#200)', () => {
   })
 
   // Every element marked with the URL's job ID was measured, each walking its
-  // subtree, once per repeat of the ID in the URL (8 s before; spans cost the
-  // rest of the heuristic nothing)
+  // subtree, once per repeat of the ID in the URL (8 s before). Spans cost the
+  // rest of the heuristic nothing, so this shows they're no longer measured;
+  // nested divs cost master's own block pass more than the per-ID cap saves.
   test('elements marked with the URL\'s job ID, nested 250 deep, stay cheap', () => {
     const chain = '<span data-id="1234567">'.repeat(250) + 'x' + '</span>'.repeat(250)
     const start = performance.now()
