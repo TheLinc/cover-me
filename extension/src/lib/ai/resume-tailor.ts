@@ -1,7 +1,7 @@
 import type { AIProvider, JobData, ParsedResume, TailoredResume } from '../../types'
 import { debugGroup, debugLog } from '../debug'
 import { derivePlanningProgress, deriveTailorProgress } from './tailor-progress'
-import { buildsOnEdits, candidateText, checkAndRewriteLines, groundSkills, groundTailored, keepSeen, seenVersion, trustedNotes, type AskModel, type LineRepair } from './resume-grounding'
+import { buildsOnEdits, candidateText, checkAndRewriteLines, groundSkills, groundTailored, keepSeen, matchSkillCase, seenVersion, trustedNotes, type AskModel, type LineRepair } from './resume-grounding'
 import { SONNET_FIELDS, streamSonnet } from './claude'
 import { scoreFromMatch, type KeywordMatch } from './ats-score'
 import { callOpenAI, OPENAI_MODEL } from './openai'
@@ -151,7 +151,7 @@ REVISION MODE — revise, do not rebuild:
 
   const step8 = parsed.skills ? `
 STEP 8 — OPTIMIZE SKILLS
-Reorder the skills so the most relevant to this job appear first, using the JD's exact phrasing where it differs from the resume.
+Reorder the skills so the most relevant to this job appear first, using the JD's exact phrasing where it differs from the resume. Write every added or reworded skill in the capitalization style of the resume's own skills list (sentence case, Title Case, or lowercase), keeping acronyms and product names as written.
 
 ADD a skill only when it is in the JD AND either named in the supplemental context as something the candidate has used or holds (add it as worded there) or justified by the resume in one of two ways:
   - Direct superset/subset of an existing skill — JavaScript on resume + JD says TypeScript → {"skill": "TypeScript", "evidence": "JavaScript"}.
@@ -252,7 +252,7 @@ Compressed STAR: [strong action verb] + [what was done] + [measurable result or 
 - Borrow the JD's vocabulary, not its sentences: keep the JD's specific terms-of-art (per above), but never reproduce a whole sentence or clause from the JD — phrase every accomplishment in the candidate's own words. Lifted phrasing reads as templated to a human reviewer.
 - Quantify with industry-fit metrics — Tech: latency, scale, uptime, cost, build time; Healthcare: caseload, outcomes, error-free records, compliance; Finance: $ value, audit volume, reporting time; Marketing: conversion, CTR, ROI, revenue; Legal: transaction value, case outcomes, caseload. No real metric? Use concrete scope (team size, user count, integrations, timeline). Never a vague improvement with no number. Use each specific figure once — never repeat the same metric across bullets; the summary may cite at most one headline number.
 - Say each thing once: never repeat a distinctive phrase or fact across two bullets (a phrase like "cross-functional teams" belongs in one bullet only). Fix a repeat by rewording one of the bullets, never by dropping or merging them; STEP 5's counts still hold.
-- Tense: the current role in present tense, every earlier role in past tense, held consistently within each role. With no current role (a career break), use past tense throughout, the summary included, so nothing implies work the candidate is not doing.
+- Tense: every earlier role in past tense throughout. In the current role, ongoing duties in present tense and finished projects or results in past tense ("Run a 12-week accelerator"; "Delivered the rollout two weeks early"); never move a finished result into present tense. With no current role (a career break), use past tense throughout, the summary included, so nothing implies work the candidate is not doing.
 - Numbers are evidence, not decoration: use ONLY figures stated in the resume or supplemental context. If the input gives no number for an accomplishment, write it with concrete scope or without a figure — a made-up percentage is a fabrication, not a rewrite (Integrity 7).
 - Replace weak openers: Responsible for→Led/Owned; Worked on→Built/Developed; Helped/Assisted with→Partnered/Collaborated; "Demonstrating proficiency in"→delete (the work shows it).
 - Verb bank: Led, Owned, Drove, Directed, Built, Designed, Launched, Shipped, Architected, Reduced, Optimized, Streamlined, Scaled, Generated, Delivered, Partnered, Mentored.
@@ -322,7 +322,9 @@ export async function assembleTailored(
   const base = seenVersion(parsed, grounding.previous)
   const candidate = candidateText(parsed, notes)
   const claimed = await groundSkills(delta.skills, candidate, grounding.ask)
-  delta.skills = claimed.skills
+  // Added skills follow the casing of the resume's own list.
+  delta.skills = matchSkillCase(claimed.skills, base.skills, `${candidate}
+${grounding.jobDescription}`)
   let merged = keepSeen(mergeTailorDelta(base, delta, { exactBulletCounts: grounding.exactBulletCounts }) as TailoredResume, parsed, base)
   if (grounding.ask) {
     const lines = await checkAndRewriteLines(merged, base, grounding.jobDescription, grounding.ask, grounding.supplemental)

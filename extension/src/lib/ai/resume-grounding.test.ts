@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { buildLineCheckPrompt, candidateText, checkAndRewriteLines, groundSkills, groundTailored, buildsOnEdits, keepSeen, seenVersion, trustedNotes } from './resume-grounding'
+import { buildLineCheckPrompt, candidateText, checkAndRewriteLines, groundSkills, groundTailored, buildsOnEdits, keepSeen, matchSkillCase, mixedTenseLines, seenVersion, trustedNotes } from './resume-grounding'
 
 // Made-up posting and resume. The resume never says "web", "Ruby", "Rails" or "HIPAA".
 const posting = `Frontend Web Developer
@@ -257,6 +257,158 @@ describe('groundSkills with sections outside the six', () => {
     const { skills, dropped } = await groundSkills([{ skill: 'qPCR' }, { skill: 'Single-cell RNA-seq' }], candidateText(parsed))
     expect(skills).toBe('qPCR, Single-cell RNA-seq')
     expect(dropped).toEqual([])
+  })
+})
+
+// Earlier roles came back with a stray present-tense bullet (#198). A current
+// role mixes on purpose: ongoing duties in present tense, finished results in
+// past ("Delivered the rollout early"). Pushing those into present tense cost
+// faithfulness and readability in the 2026-11-11 full eval.
+describe('mixed tense within a role', () => {
+  const current = { title: 'Program Lead', company: 'Foundry Labs', dates: 'Jan 2023 – Present', bullets: [
+    'Ran diagnostic workshops for 40 founders',
+    'Run a 12-week accelerator for early-stage teams',
+    'Organize demo days with 300 attendees',
+  ] }
+  const earlier = { title: 'Analyst', company: 'Northwind', dates: '2019 – 2022', bullets: [
+    'Built the weekly pipeline report',
+    'Manage the vendor list for 12 suppliers',
+    'Led onboarding for new hires',
+  ] }
+
+  test('flags the present-tense bullets of an earlier role and leaves the current role alone', () => {
+    const flags = mixedTenseLines({ experience: [current, earlier] })
+    expect([...flags.keys()]).toEqual(['e1b1'])
+    expect(flags.get('e1b1')).toContain('past tense')
+  })
+
+  test('flags every present-tense bullet of an earlier role, even when they are most of it', () => {
+    const role = { ...earlier, bullets: ['Manage the vendor list', 'Lead onboarding', 'Built the weekly report'] }
+    expect([...mixedTenseLines({ experience: [role] }).keys()]).toEqual(['e0b0', 'e0b1'])
+  })
+
+  test('leaves an earlier role written wholly in another tense alone', () => {
+    expect(mixedTenseLines({ experience: [{ ...earlier, bullets: ['Manage the vendor list', 'Lead onboarding'] }] }).size).toBe(0)
+  })
+
+  test('verbs spelled the same in both tenses count as neither', () => {
+    const role = { ...earlier, bullets: ['Grew riders from 150 to 1,100', 'Cut onboarding from 9 days to 3', 'Set up 2 new cities'] }
+    expect(mixedTenseLines({ experience: [role] }).size).toBe(0)
+  })
+
+  test('ignores "Tech:" lines, -ing openers, numbers and roles without dates', () => {
+    const odd = { ...earlier, bullets: ['Built the weekly report', 'Tech: SQL, Looker', 'Managing 12 suppliers', '40+ vendor audits a year'] }
+    const undated = { title: 'Volunteer', bullets: ['Built a food bank roster', 'Run the Saturday shift'] }
+    expect(mixedTenseLines({ experience: [odd, undated] }).size).toBe(0)
+  })
+
+  test.each(['Mar 2022 – Till date', 'Mar 2022 –', 'Since 2022', '2022 to date', 'Jan 2023 - Presently'])(
+    'a role dated "%s" may be current and is left alone', (dates) => {
+      expect(mixedTenseLines({ experience: [{ ...earlier, dates, bullets: ['Built the report', 'Manage 6 people'] }] }).size).toBe(0)
+    })
+
+  test('reads past tense after a prefix or a leading adverb, and irregular forms', () => {
+    const bullets = ['Built the report', 'Co-led the migration', 'Re-architected the ETL', 'Rewrote the billing service', 'Spun up a team', 'Saw a 30% lift', 'Caught 12 billing errors', 'Successfully migrated 40 clients', 'Manage the vendor list',
+      'Was promoted to shift lead', 'Had full P&L for 3 stores', 'Cross-trained 8 cashiers', 'Fine-tuned the forecast model', 'As shift lead, trained 8 cashiers', 'In 2021, launched the loyalty program']
+    expect([...mixedTenseLines({ experience: [{ ...earlier, bullets }] }).keys()]).toEqual(['e0b8'])
+  })
+
+  test('past forms spelled like the present, and rarer irregulars, are not flagged', () => {
+    const bullets = ['Built the report', 'Proofread 40 grant reports', 'Split the team into 2 pods', 'Withstood a 3x traffic spike', 'Outgrew the old CRM', 'Reran the payroll audit']
+    expect(mixedTenseLines({ experience: [{ ...earlier, bullets }] }).size).toBe(0)
+  })
+
+  test('a claim-flagged line whose source is present tense also gets the tense fix', async () => {
+    const prompts: string[] = []
+    const orig = { ...earlier, bullets: ['Built the weekly pipeline report', 'Manage a 6-person city operations team', 'Led onboarding for new hires'] }
+    const tailored = { experience: [{ ...orig, bullets: [orig.bullets[0], 'Managed a 6-person city operations team across 3 regions', orig.bullets[2]] }] }
+    const replies = [JSON.stringify({ flags: [{ id: 'e0b1', reason: 'adds 3 regions' }], summary: null }), '{}']
+    await checkAndRewriteLines(tailored, { experience: [orig] }, posting, async (p) => (prompts.push(p), replies.shift()!))
+    expect(prompts[1]).toMatch(/\[e0b1\][^\n]*adds 3 regions; also present tense in an earlier role/)
+  })
+
+  test('a tense-only line is sent as its own source, so the rewrite keeps its tailoring', async () => {
+    const prompts: string[] = []
+    const tailoredLine = 'Manage supplier onboarding for 12 vendors'
+    const replies = ['{"flags": [], "summary": null}', JSON.stringify({ rewrites: [{ id: 'e0b1', text: 'Managed supplier onboarding for 12 vendors' }] })]
+    const tailored = { experience: [{ ...earlier, bullets: [earlier.bullets[0], tailoredLine, earlier.bullets[2]] }] }
+    const { resume } = await checkAndRewriteLines(tailored, { experience: [earlier] }, posting, async (p) => (prompts.push(p), replies.shift()!))
+    expect(prompts[1]).toContain(`SOURCE LINE (the original this came from; use only its facts): ${tailoredLine}`)
+    expect(resume.experience[0].bullets[1]).toBe('Managed supplier onboarding for 12 vendors')
+  })
+
+  test('the line check rewrites flagged bullets even when the model flags nothing', async () => {
+    const prompts: string[] = []
+    const replies = ['{"flags": [], "summary": null}', JSON.stringify({ rewrites: [{ id: 'e0b1', text: 'Managed the vendor list for 12 suppliers' }] })]
+    const tailored = { experience: [earlier] }
+    const { resume, repair } = await checkAndRewriteLines(tailored, tailored, posting, async (p) => (prompts.push(p), replies.shift()!))
+    expect(prompts[1]).toContain('[e0b1]')
+    expect(resume.experience[0].bullets).toEqual([earlier.bullets[0], 'Managed the vendor list for 12 suppliers', earlier.bullets[2]])
+    expect(repair).toMatchObject({ rewritten: 1, reverted: 0 })
+  })
+
+  test('a tense fix that fails keeps the tailored line instead of reverting it', async () => {
+    const replies = ['{"flags": [], "summary": null}', '{}']
+    const tailored = { experience: [{ ...earlier, bullets: [earlier.bullets[0], 'Manage the vendor list for 12 suppliers in logistics', earlier.bullets[2]] }] }
+    const { resume, repair } = await checkAndRewriteLines(tailored, { experience: [earlier] }, posting, async () => replies.shift()!)
+    expect(resume.experience[0].bullets[1]).toBe('Manage the vendor list for 12 suppliers in logistics')
+    expect(repair.reverted).toBe(0)
+  })
+})
+
+// Added skills came back "Founder Coaching" beside "Unit economics" (#198).
+describe('matchSkillCase', () => {
+  const sources = 'Built dashboards in Power BI and wrote SQL. Experience with PowerPoint and GitHub.'
+
+  test('sentence case list: added skills drop their inner capitals', () => {
+    expect(matchSkillCase('Founder Coaching, Unit economics, Data Analysis (SQL), Power BI', 'Unit economics, Financial modeling', sources))
+      .toBe('Founder coaching, Unit economics, Data analysis (SQL), Power BI')
+  })
+
+  test('Title Case list: added skills are title cased, small words stay low', () => {
+    expect(matchSkillCase('founder coaching, Monitoring and evaluation, Financial Modeling', 'Financial Modeling, Unit Economics', sources))
+      .toBe('Founder Coaching, Monitoring and Evaluation, Financial Modeling')
+  })
+
+  test('lowercase list: added skills go lowercase, acronyms and product names stay', () => {
+    expect(matchSkillCase('Data Dictionaries, data quality, SQL, Power BI, PowerPoint, GitHub', 'data quality, stakeholder reporting', sources))
+      .toBe('data dictionaries, data quality, SQL, Power BI, PowerPoint, GitHub')
+  })
+
+  test('product names written that way in the resume or posting, and dotted names, keep their casing', () => {
+    const posting = 'Track campaigns in Google Analytics. Our stack is Node.js.'
+    expect(matchSkillCase('Google Analytics, Node.js, Web Analytics', 'Unit economics, Financial modeling', posting)).toBe('Google Analytics, Node.js, Web analytics')
+  })
+
+  test('multi-word names, lowercase names and names in parentheses keep the casing the posting uses', () => {
+    const posting = 'You will build models in dbt and Google Sheets.\nTools:\n- Tableau\n- Salesforce\nPower BI for power users.'
+    expect(matchSkillCase('Google Sheets formulas, Microsoft Power BI, dbt models', 'Unit economics, Financial modeling', posting))
+      .toBe('Google Sheets formulas, Microsoft Power BI, dbt models')
+    expect(matchSkillCase('Data Visualization (Tableau), Salesforce Administration', 'data quality, stakeholder reporting', posting))
+      .toBe('data visualization (Tableau), Salesforce administration')
+    expect(matchSkillCase('Data modeling (dbt)', 'Financial Modeling, Unit Economics', posting)).toBe('Data Modeling (dbt)')
+  })
+
+  test('a resume list split by bars, bullets or lines still sets the style', () => {
+    for (const own of ['Excel | Financial modeling | Budgeting | Forecasting', 'Excel • Financial modeling • Budgeting', 'Excel\nFinancial modeling\nBudgeting'])
+      expect(matchSkillCase('Variance Analysis, Budget Forecasting', own, sources)).toBe('Variance analysis, Budget forecasting')
+  })
+
+  test('a name in the resume\'s own list keeps its casing where the posting uses it as a plain word', () => {
+    const posting = 'Built weekly reports in Excel.\nAdvanced Excel skills. You will excel on a team that lives in Slack and Teams, and teams across the office.'
+    expect(matchSkillCase('Advanced Excel, Microsoft Excel, Slack and Teams administration', 'Excel, SQL, Teams, Unit economics, Financial modeling', posting))
+      .toBe('Advanced Excel, Microsoft Excel, Slack and Teams administration')
+  })
+
+  test('accented words are recased as whole words', () => {
+    expect(matchSkillCase('Évaluation De Programmes', 'Unit economics, Financial modeling', sources)).toBe('Évaluation de programmes')
+    expect(matchSkillCase('équipe management', 'Financial Modeling, Unit Economics', sources)).toBe('Équipe Management')
+  })
+
+  test('the resume\'s own items keep their casing, and a list with no style signal is left alone', () => {
+    expect(matchSkillCase('Unit Economics, Founder Coaching', 'Unit Economics, financial modeling, SQL', sources)).toBe('Unit Economics, Founder Coaching')
+    expect(matchSkillCase('Founder Coaching', undefined, sources)).toBe('Founder Coaching')
+    expect(matchSkillCase(undefined, 'Unit economics', sources)).toBeUndefined()
   })
 })
 

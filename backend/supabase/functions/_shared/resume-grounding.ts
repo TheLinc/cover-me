@@ -298,6 +298,74 @@ export async function groundSkills(skills: unknown, candidate: string, ask?: Ask
   return { skills: kept.length ? kept.join(', ') : undefined, dropped }
 }
 
+const SMALL_WORDS = new Set(['a', 'an', 'and', 'as', 'at', 'by', 'for', 'in', 'of', 'on', 'or', 'the', 'to', 'with'])
+
+/**
+ * Added skills in the casing of the resume's own skills list (#198): "Founder
+ * Coaching" beside "Unit economics" becomes "Founder coaching". Items already
+ * in the resume's list keep their casing. A word with a capital past its first
+ * letter (SQL, PowerPoint, GitHub) or a dot (Node.js) is never touched, nor
+ * is one the resume or posting capitalizes mid-sentence and never writes in
+ * lowercase (the "Power" in "built dashboards in Power BI"), nor an item the
+ * resume or posting writes exactly that way ("Google Analytics"). Neither is a
+ * word written beside its neighbour as the resume or posting writes the pair
+ * ("Power BI" in "Microsoft Power BI"), a lowercase name they never capitalize
+ * ("dbt"), or anything in parentheses ("Data visualization (Tableau)").
+ * ponytail: a name only ever at the start of a sentence reads as an ordinary
+ * word; a list of known product names is the upgrade.
+ */
+export function matchSkillCase(skills: string | undefined, ownSkills: string | undefined, sources: string): string | undefined {
+  if (!skills || !ownSkills) return skills
+  const has = (re: string) => new RegExp(re).test(sources)
+  const word = (w: string) => `${escapeRe(w)}(?![A-Za-z0-9])`
+  // Capitalized after a lowercase word, a comma or a list marker: not a sentence start.
+  const capMid = (w: string) => has(`(?:(?<![A-Za-z0-9])[a-z0-9]+ |[,;&/•*-] |\\()${word(w[0].toUpperCase() + w.slice(1).toLowerCase())}`)
+  const keepsCase = (w: string): boolean => {
+    if (w.length === 1 || /[\p{Lu}.]/u.test(w.slice(1))) return true
+    return capMid(w) && !has(`(?<![A-Za-z0-9])${word(w.toLowerCase())}`)
+  }
+  const keepsLower = (w: string) => w === w.toLowerCase() && has(`(?<![A-Za-z0-9])${word(w)}`) && !has(`(?<![A-Za-z0-9])${word(w[0].toUpperCase() + w.slice(1))}`)
+  const inSources = (s: string) => has(`(^|[^A-Za-z0-9])${escapeRe(s)}($|[^A-Za-z0-9])`)
+  const inParens = (s: string) => s.split('(').length > s.split(')').length
+  // Every word of an item with its position: first, small (and, of), or other.
+  const wordsOf = (item: string) => [...item.matchAll(/\p{L}[\p{L}'.]*\p{L}|\p{L}/gu)].map((m, i) => ({ m, first: i === 0, small: i > 0 && SMALL_WORDS.has(m[0].toLowerCase()) }))
+  // The resume's list may be split by bars, bullets or lines rather than commas.
+  const own = ownSkills.split(/[|•·;\n]/).flatMap(splitSkills).filter(Boolean)
+  // Words the resume's list writes past an item's start keep that casing even
+  // where the posting uses them as plain words ("You will excel"). So does a
+  // one-word item also capitalized mid-sentence ("Excel", "in Excel").
+  const ownCased = new Set(own.flatMap((item) => {
+    const ws = wordsOf(item).map((w) => w.m[0])
+    return ws.length > 1 ? ws.slice(1) : ws.filter((w) => /^\p{Lu}/u.test(w) && capMid(w))
+  }))
+  let firstUp = 0, firstLow = 0, restUp = 0, restLow = 0
+  for (const item of own) {
+    for (const { m, first, small } of wordsOf(item)) {
+      if (small || keepsCase(m[0])) continue
+      const up = /^\p{Lu}/u.test(m[0])
+      if (first) up ? firstUp++ : firstLow++
+      else up ? restUp++ : restLow++
+    }
+  }
+  const style = (up: number, low: number) => (up > low ? 'up' : low > up ? 'low' : undefined)
+  const firstStyle = style(firstUp, firstLow)
+  const restStyle = style(restUp, restLow)
+  const recase = (w: string, to: 'up' | 'low' | undefined) => (to === 'up' ? w[0].toUpperCase() + w.slice(1) : to === 'low' ? w.toLowerCase() : w)
+  return splitSkills(skills)
+    .map((item) => {
+      if (own.includes(item) || inSources(item)) return item
+      const ws = wordsOf(item)
+      const pairWritten = (a?: (typeof ws)[number], b?: (typeof ws)[number]) => !!a && !!b && inSources(item.slice(a.m.index, b.m.index! + b.m[0].length))
+      let out = item
+      ws.forEach(({ m, first, small }, k) => {
+        if (small || ownCased.has(m[0]) || keepsCase(m[0]) || keepsLower(m[0]) || inParens(item.slice(0, m.index)) || pairWritten(ws[k - 1], ws[k]) || pairWritten(ws[k], ws[k + 1])) return
+        out = out.slice(0, m.index) + recase(m[0], first ? firstStyle : restStyle) + out.slice(m.index! + m[0].length)
+      })
+      return out
+    })
+    .join(', ')
+}
+
 // One skill per item, splitting on commas outside parentheses ("Cloud (AWS, GCP)" stays whole).
 export function splitSkills(skills: string): string[] {
   const items: string[] = []
@@ -474,7 +542,8 @@ SOURCE LINE (the original this came from; use only its facts): ${sources.get(id)
 OTHER LINES ALREADY ON THE RESUME FOR THIS ROLE (never repeat their facts):
 ${others.map((b) => `- ${b}`).join('\n')}`
   })
-  return `RESUME LINE REWRITE. These lines from a tailored resume claim more than the candidate's original resume supports. Rewrite each one to remove the named problem.
+  return `RESUME LINE REWRITE. These lines from a tailored resume claim more than the candidate's original resume supports, or are in the wrong tense. Rewrite each one to remove the named problem.
+- A line whose only problem is its tense has itself as its SOURCE LINE: change only the verb tense and keep every other word.
 - Use only the facts in its SOURCE LINE (for the summary, the original resume lines). Never bring in facts from the other lines listed: they are already on the resume, and repeating them duplicates it.
 - Remove the problem without adding anything new: no new clause, outcome, purpose, or qualifier, not even a general one ("to ensure...", "maintaining...", "...across all X").
 - Keep every number exactly as the source states it; add none. In the summary, leave out counts of years.
@@ -524,6 +593,49 @@ function usableRewrite(text: string, source: string, siblings: string[]): boolea
   })
 }
 
+// Irregular past forms a bullet can open with; the rest end in -ed.
+// ponytail: an -ed adjective opener ("Advanced Excel models...") reads as past
+// tense, and a noun opener ("Member of...") as present. Either only costs a
+// rewrite that changes the tense alone; a word list per tense is the upgrade.
+const IRREGULAR_PAST = new Set(['ran', 'led', 'built', 'rebuilt', 'grew', 'wrote', 'rewrote', 'made', 'won', 'drove', 'took', 'began', 'brought', 'taught', 'sold', 'bought', 'spent', 'kept', 'held', 'oversaw', 'gave', 'met', 'sent', 'chose', 'became', 'drew', 'undertook', 'spoke', 'stood', 'sought', 'thought', 'felt', 'dealt', 'left', 'lost', 'paid', 'told', 'found', 'flew', 'rode', 'rose', 'struck', 'understood', 'upheld', 'oversold', 'saw', 'caught', 'spun', 'got', 'knew', 'fought', 'overcame', 'withdrew', 'overtook', 'outsold', 'did', 'redid', 'went', 'broke', 'heard', 'meant', 'swept', 'dug', 'stuck', 'arose', 'threw', 'wound', 'hung', 'shot', 'was', 'were', 'had', 'sat', 'laid', 'underwent', 'upsold', 'learnt', 'withstood', 'outgrew', 'foresaw', 'reran', 'overran', 'outran', 'overrode', 'withheld', 'bore'])
+const PREPOSITIONS = new Set(['as', 'in', 'for', 'over', 'after', 'during', 'within', 'across', 'with', 'by', 'at', 'on', 'from', 'since', 'while', 'under'])
+// Spelled the same in both tenses, or -ed words that aren't past forms: neither.
+const EITHER_TENSE = new Set(['cut', 'set', 'put', 'hit', 'let', 'shut', 'spread', 'upset', 'quit', 'read', 'cost', 'beat', 'bid', 'broadcast', 'forecast', 'embed', 'shed', 'proofread', 'split', 'typeset', 'reset', 'offset', 'recast', 'reread'])
+// An earlier role's dates end in a year ("2019 – 2022", "Mar 2020 - Jun 2022").
+// Anything else ("– Present", "– Till date", "Since 2022", an open "2022 –")
+// may be the current role, which is left alone.
+const isEarlierRole = (dates: string) => /(19|20)\d\d\s*$/.test(dates) && !/\b(since|from)\b/i.test(dates)
+
+/**
+ * Present-tense bullets in an earlier role (#198), with the fix as the reason:
+ * an earlier role whose bullets open with both past verbs (-ed or an irregular
+ * past) and other words gets the others flagged toward past tense. The current
+ * role is left alone, since it mixes on purpose: ongoing duties in present
+ * tense, finished results in past. So are an earlier role with no past-tense
+ * bullet at all and roles without dates.
+ */
+export function mixedTenseLines(r: Groundable): Map<LineId, string> {
+  const flags = new Map<LineId, string>()
+  r.experience.forEach((role, i) => {
+    if (!role.dates || !isEarlierRole(role.dates.trim())) return
+    const tenses = role.bullets.map((b) => {
+      // The verb after a hyphen ("Co-led", "Cross-trained") or a leading adverb
+      // ("Successfully migrated"). A prepositional opener ("In 2021, launched")
+      // hides the verb, so it counts as neither.
+      const word = /^\s*((?:[A-Za-z]+-)*)([A-Za-z]+)(\S*)(?:\s+([A-Za-z]+))?/.exec(b)
+      let w = word?.[2].toLowerCase()
+      if (w && /ly$/.test(w) && !word![1] && !word![3] && word![4]) w = word![4].toLowerCase()
+      if (!w || word![3].startsWith(':') || /ing$/.test(w) || EITHER_TENSE.has(w) || (!word![1] && PREPOSITIONS.has(w))) return undefined
+      return IRREGULAR_PAST.has(w) || (/[a-z]ed$/.test(w) && !/eed$/.test(w)) ? 'past' : 'other'
+    })
+    if (!tenses.includes('past')) return
+    tenses.forEach((t, k) => {
+      if (t === 'other') flags.set(`e${i}b${k}`, 'present tense in an earlier role: write it in past tense like its other lines, changing only the verb tense')
+    })
+  })
+  return flags
+}
+
 export interface LineRepair {
   flagged: string[]
   rewritten: number
@@ -560,8 +672,6 @@ export async function checkAndRewriteLines<T extends Groundable>(
     const line = lineAt(tailored, id)?.trim()
     if (!line || unchanged(id, line)) flags.delete(id)
   }
-  if (flags.size === 0) return { resume: tailored, repair: { flagged: [], rewritten: 0, reverted: 0 } }
-
   // Source original for every rewritten bullet, per entry.
   const sources = new Map<LineId, string>()
   const mapSources = (kind: 'e' | 'p', out: GroundEntry[] | undefined, input: GroundEntry[] | undefined) =>
@@ -570,11 +680,25 @@ export async function checkAndRewriteLines<T extends Groundable>(
     })
   mapSources('e', tailored.experience, original.experience)
   mapSources('p', tailored.projects, original.projects)
+
+  // Tense is checked in code, on unchanged lines too: the input can mix it.
+  // A claim-flagged line is checked as its source too, since a failed rewrite
+  // falls back to it: the rewrite then fixes the tense along with the claim.
+  const claimFlags = new Set(flags.keys())
+  const tense = mixedTenseLines(tailored)
+  const asSource = { experience: tailored.experience.map((e, i) => ({ ...e, bullets: e.bullets.map((b, k) => (claimFlags.has(`e${i}b${k}`) && sources.get(`e${i}b${k}`)) || b) })) }
+  for (const [id, reason] of mixedTenseLines(asSource)) if (claimFlags.has(id)) tense.set(id, reason)
+  for (const [id, reason] of tense) flags.set(id, flags.has(id) ? `${flags.get(id)}; also ${reason}` : reason)
+  const tenseOnly = (id: LineId) => tense.has(id) && !claimFlags.has(id)
+  if (flags.size === 0) return { resume: tailored, repair: { flagged: [], rewritten: 0, reverted: 0 } }
   const allOriginal = summarySources(original)
 
   let rewrites = new Map<LineId, string>()
   try {
-    rewrites = parseLineRewrites(await ask(buildLineRewritePrompt(original, tailored, flags, jobDescription, sources)))
+    // A tense-only line is its own source, so the rewrite keeps its tailoring.
+    const promptSources = new Map(sources)
+    for (const id of tense.keys()) if (tenseOnly(id)) promptSources.set(id, lineAt(tailored, id)!)
+    rewrites = parseLineRewrites(await ask(buildLineRewritePrompt(original, tailored, flags, jobDescription, promptSources)))
   } catch {
     // Rewrite unavailable: every flagged line reverts below.
   }
@@ -591,9 +715,13 @@ export async function checkAndRewriteLines<T extends Groundable>(
         const source = sources.get(ids[k])
         const text = rewrites.get(ids[k])
         const siblings = [...bullets, ...entry.bullets.slice(k + 1).filter((_, j) => !flags!.has(ids[k + 1 + j]))]
-        if (text && source && usableRewrite(text, source, siblings)) {
+        const allowed = tenseOnly(ids[k]) ? `${source ?? ''} ${b}` : source
+        if (text && allowed && usableRewrite(text, allowed, siblings)) {
           rewritten++
           bullets.push(text)
+        } else if (tenseOnly(ids[k])) {
+          // The line claims nothing new; only its tense was off, so keep it.
+          bullets.push(b)
         } else {
           reverted++
           if (source) bullets.push(source)

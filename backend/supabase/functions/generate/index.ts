@@ -260,7 +260,7 @@ Salutation: ${salutation}
 Paragraph 1 — Hook (2–3 sentences):
 Lead with what the applicant offers, not what they want. Use one of these proven opening patterns:
 - Achievement-first: a quantified result from past work that maps directly to a top requirement of this role
-- Problem-solution: name a specific challenge stated in the JD, then signal it has been solved before
+- Problem-solution: name a specific challenge stated in the JD as this employer's own (name them), then signal it has been solved before. Never a general maxim ("Bad data is cheapest to fix early")
 - Bold specific claim: a confident statement of a real accomplishment, striking enough to demand attention
 - Referral: name a mutual contact explicitly in the first sentence if one exists
 
@@ -271,15 +271,14 @@ Whichever pattern you pick, build the hook only from the STEP 0 allowlist. The o
 Never open with a generic applying-to phrase ("I am writing to apply," "I am excited to apply," "My name is") — full list under ABSOLUTE PROHIBITIONS.
 
 Paragraph 2 — Core Proof (4–6 sentences):
-Present 2–3 accomplishments from the resume that directly map to the top requirements in the JD. For each achievement, use this formula:
-  [Strong action verb] + [specific context] + [quantified outcome] + [business impact]
+Present at most two accomplishments from the resume that directly map to the top requirements in the JD. Give each one number at most, the one that matters most; where the resume has several figures for an achievement, pick one and let the rest go. A paragraph that stacks figures reads like a resume pasted into prose.
 
-This is NOT a resume restatement — give each metric its narrative context. "When the deployment pipeline was blocking four engineers, I rebuilt it from scratch — deployment time fell 40% and the team reclaimed 20 hours a week" is the cover letter version of a resume bullet. Use the JD's exact terminology when naming the requirement being addressed. NEVER invent a metric: every percentage, dollar figure, or count must come from the resume or the candidate's verified context. Where the resume has no number, use concrete scope (team size, user count, transaction volume, timeline) or qualitative impact — never a fabricated stat, which reads well but collapses the moment an interviewer asks how it was measured.
+This is NOT a resume restatement — give the number its narrative context. "When the deployment pipeline was blocking four engineers, I rebuilt it from scratch, and deployment time fell 40%" is the cover letter version of a resume bullet. Use the JD's exact terminology when naming the requirement being addressed. NEVER invent a metric: every percentage, dollar figure, or count must come from the resume or the candidate's verified context. Where the resume has no number, use concrete scope (team size, user count, transaction volume, timeline) or qualitative impact — never a fabricated stat, which reads well but collapses the moment an interviewer asks how it was measured.
 
 ${whyCompany}
 
 Paragraph 4 — Close + Call to Action (2–3 sentences):
-Restate the top qualification in one specific phrase. Express genuine enthusiasm for this role and this company specifically. End with a direct, confident request for a conversation — not passive, not demanding.
+Name one specific piece of the applicant's own work they would want to talk through. Do not recap the letter or list skills again, and never name a duty, tool, or requirement from the posting that the resume does not show. End with a direct, confident request for a conversation — not passive, not demanding.
 
 Sign-off: "${variation.signOff}" on its own line, then a blank line, then the applicant's name from the resume.
 
@@ -308,11 +307,11 @@ Dear Northlight Team,
 
 Last year I cut checkout latency at Ferris Retail from 900ms to 210ms, and the conversion lift paid for my salary twice over. Northlight has the same shape of problem: a React storefront that has outgrown its data layer. I know that work well.
 
-I owned Ferris's storefront platform for three years. I rebuilt the product-listing pipeline in TypeScript and GraphQL, moved image delivery behind edge caching, and wrote the load tests that let us ship during peak season without an incident. Most of that work shipped behind feature flags to 60,000 daily shoppers, so rollbacks were boring, which is how I like them. When our two-person SRE team got buried in alert noise, I took the pager for a quarter and cut false alarms roughly in half, mostly by deleting dashboards nobody read. The habit stuck: before I improve anything now, I first ask what can be removed.
+I owned Ferris's storefront platform for three years. I rebuilt the product-listing pipeline in TypeScript and GraphQL, moved image delivery behind edge caching, and wrote the load tests that let us ship during peak season without an incident. Most of that work shipped behind feature flags to 60,000 daily shoppers, so rollbacks were boring, which is how I like them. When our two-person SRE team got buried in alert noise, I took the pager for a quarter and cut false alarms roughly in half, mostly by deleting dashboards nobody read.
 
 Northlight is moving off a legacy Rails monolith. I lived through one of those, including the month both systems ran side by side and every bug had two possible homes. Northlight's two-quarter timeline is tight but workable; ours took three, and I can name exactly where we lost the extra one. A pod of five engineers and a designer is the setup I have spent the last two years working in.
 
-A storefront rebuild rewards someone who has already made its mistakes once. If it would help to talk through how the Ferris migration actually went — what worked and what I would never do again — I would welcome the conversation.
+I'd like to hear where Northlight's migration stands and which parts of the old system still have no owner. If it would help to talk through how the Ferris migration actually went, I would welcome the conversation.
 
 Sincerely,
 
@@ -337,7 +336,7 @@ Clichés (never use): hard worker, hard-working, team player, detail-oriented, r
 AI-flagged vocabulary (never use, in any form or tense): delve, realm, tapestry, beacon, intricate, showcase, pivotal, paramount, holistic, multifaceted, synergy, synergistic, testament, underscore, meticulous, transformative, groundbreaking, revolutionize, leverage, utilize, robust, seamless, honed, fostered, garnered, empower, embark, unlock, unleash, spearheaded, orchestrated, cutting-edge, state-of-the-art, crucial, innovative
 The employer's name is exempt: if the company is called "Beacon Retail Group", write "Beacon Retail Group".
 
-AI-tell patterns (never produce these): repeating the same "by doing X, I achieved Y" sentence structure in every paragraph; uniform sentence rhythm with no variation; excessive politeness throughout; claiming passion or dedication without a single specific example; using the company name exactly once in a formulaic opener and never again; the triadic-list tic (packaging every description as three parallel items — "scalable, maintainable, and reliable"); "not only… but also" constructions; formal connective openers ("Moreover," "Furthermore," "Additionally," "In today's fast-paced world"); filler framing ("it's important to note," "at the end of the day"); more than TWO em-dashes in the entire letter — prefer separate sentences or commas
+AI-tell patterns (never produce these): repeating the same "by doing X, I achieved Y" sentence structure in every paragraph; uniform sentence rhythm with no variation; excessive politeness throughout; claiming passion or dedication without a single specific example; using the company name exactly once in a formulaic opener and never again; the triadic-list tic (packaging every description as three parallel items — "scalable, maintainable, and reliable"); "not only… but also" constructions; formal connective openers ("Moreover," "Furthermore," "Additionally," "In today's fast-paced world"); filler framing ("it's important to note," "at the end of the day"); more than TWO em-dashes in the entire letter — prefer separate sentences or commas; a maxim or slogan as the opening line; "X, not Y" lines ("a habit for me, not an afterthought"); announcing a point before making it ("My strongest qualification is simple:"); naming what an example shows after giving it ("That is onboarding in practice"); a closing that sums up the skills
 
 Passive close phrases (never use): I hope to hear from you, feel free to contact me, I would be happy to discuss, I look forward to hearing from you, at your earliest convenience, thanks for your time
 
