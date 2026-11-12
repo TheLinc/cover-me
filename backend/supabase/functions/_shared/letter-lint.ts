@@ -85,9 +85,10 @@ const POSTING_ECHO = [
 
 // "Acme needs X, and that is the work I do": the posting's sentence turned
 // around and claimed (judge, 27 of 72 letters, #206). The need alone is a fair
-// line about the employer; the pivot back to the applicant is the tell.
-const NEED_RE = String.raw`\b(?:needs?|wants?|(?:is|are) (?:hiring|looking for|seeking))\b`
-const PIVOT_RE = /[,;:—]\s*(?:and\s+|which\s+)?(?:(?:that|this|which)(?:['’]s|\s+is|\s+was)\b[^.!?]*?\b(?:I|I['’](?:m|ve|d)|my|me)\b|I(?:['’]ve|\s+have)?\s+(?:done|been doing|do)\s+(?:that|this|exactly)\b)/
+// line about the employer; the pivot back to the applicant is the tell. The
+// pivot needs "I": "that's a shift my family can support" adds a fact.
+const NEED_VERB = String.raw`(?:\b(?:needs?|wants?|(?:is|are) (?:hiring|looking for|seeking))|['’](?:s|re) (?:hiring|looking for|seeking))\b`
+const PIVOT_RE = /[,;:—]\s*(?:and\s+|which\s+)?(?:(?:that|this|which)(?:['’]s|\s+is|\s+was)\b[^.!?]*?\bI\b|I(?:['’]ve|\s+have)?\s+(?:done|been doing|do)\s+(?:that|this|exactly)\b)/
 
 // Sentence shapes that read as templated even when every word is plain. The
 // judge flagged each one in every letter of the 2026-11-11 eval run (#198).
@@ -95,10 +96,10 @@ const SENTENCE_SHAPES: Array<[RegExp, string]> = [
   [/\bis simple:|\bmy (?:single )?(?:strongest|biggest|best|top) qualification\b/i,
     'Announces its point ("My strongest qualification is simple:") — make the point directly, in a sentence about what the applicant did.'],
   // The second form ("That's the work I do", "That's the habit I'd bring")
-  // follows an example in the same paragraph and says what the applicant does
-  // or would do; a line in the past tense adds a fact ("That's how I met the
-  // plant manager") and passes (#206).
-  [/\b(?:that|this) is [^.!?]{1,60}? in practice[.!]|[.!?][ \t]+(?:That|This)(?:['’]s| is) [^.!?]{0,40}?\bI(?:['’](?:ve|d)| have| would)? (?:already |still |also |now )?(?:do|work|bring|want|hold|been doing)\b/i,
+  // ends a paragraph, after an example, and says what the applicant does or
+  // would do. A line in the past tense adds a fact ("That's how I met the
+  // plant manager"), and one mid-paragraph leads into what follows (#206).
+  [/\b(?:that|this) is [^.!?]{1,60}? in practice[.!]|[.!?][ \t]+(?:That|This)(?:['’]s| is) [^.!?]{0,40}?\bI(?:['’](?:ve|d)| have| would)? (?:already |still |also |now )?(?:do|work|bring|want|hold|been doing)\b[^.!?\n]*[.!?](?=[ \t]*(?:\n|$))/i,
     'Labels the experience after describing it ("That is data onboarding in practice", "That\'s the work I do") — cut the label; the example already makes the point.'],
   [/, not (?:a|an) [\w-]+(?: [\w-]+)?[.!]|\bnot just\b[^.!?]{1,60}\bbut\b/i,
     'Uses an "X, not Y" contrast ("a habit for me, not an afterthought") — state the point once, directly.'],
@@ -293,23 +294,25 @@ export function lintLetter(
 
   // The short name counts as a mention, so a letter can name the company in
   // full once and say "Acme" after. Repeating the full name reads as a
-  // template filling in a blank (judge, 22 of 72 letters, #206). The cap
-  // leaves out the salutation, which the prompt lets name the company.
+  // template filling in a blank (judge, 22 of 72 letters, #206). A full name
+  // in the salutation is the one full mention, so the cap counts the body only.
+  // The messages don't name a short form: the first word is often the wrong
+  // one ("Valley" for Valley Medical Center).
   if (opts.companyName && opts.companyName !== 'Unknown Company') {
     const fullRe = new RegExp(escapeRegex(opts.companyName), 'gi')
-    const full = (letter.match(fullRe) ?? []).length
+    const fullInLetter = (letter.match(fullRe) ?? []).length
     const fullInBody = (body.match(fullRe) ?? []).length
     const hasShort = !!shortName && shortName !== opts.companyName
     // Case-sensitive, so "in general" isn't a mention of General Mills.
     const mentions = hasShort
-      ? Math.max(full, (letter.match(new RegExp(`(?<![\\p{L}\\p{N}])${escapeRegex(shortName)}(?![\\p{L}\\p{N}])`, 'gu')) ?? []).length)
-      : full
+      ? Math.max(fullInLetter, (letter.match(new RegExp(`(?<![\\p{L}\\p{N}])${escapeRegex(shortName)}(?![\\p{L}\\p{N}])`, 'gu')) ?? []).length)
+      : fullInLetter
     if (mentions < 2) {
-      violations.push(`Mentions the company name only ${mentions} time(s) — name ${opts.companyName} at least twice, naturally${hasShort ? `; "${shortName}" counts` : ''}.`)
-    } else if (full === 0) {
-      violations.push(`Never names the company in full — write "${opts.companyName}" once, then "${shortName}" or "you".`)
+      violations.push(`Mentions the company name only ${mentions} time(s) — name ${opts.companyName} at least twice, naturally${hasShort ? '; a short form of the name counts' : ''}.`)
+    } else if (fullInLetter === 0) {
+      violations.push(`Never names the company in full — write "${opts.companyName}" once, then a short form of the name or "you".`)
     } else if (hasShort && fullInBody >= 3) {
-      violations.push(`Repeats the company's full name "${opts.companyName}" ${fullInBody} times — keep it once and use "${shortName}" or "you" for the rest.`)
+      violations.push(`Repeats the company's full name "${opts.companyName}" ${fullInBody} times — keep it once and use a short form of the name or "you" for the rest.`)
     }
   }
 
@@ -325,7 +328,7 @@ export function lintLetter(
   }
 
   const employers = [opts.companyName, shortName].filter((n): n is string => !!n && n !== 'Unknown Company').map(escapeRegex)
-  const needRe = new RegExp(`(?:${[...employers, String.raw`\b[Yy]ou(?:r team)?\b`, String.raw`\b[Tt]he team\b`].join('|')})[^.!?]{0,30}?${NEED_RE}`)
+  const needRe = new RegExp(`(?:${[...employers, String.raw`\b[Yy]ou(?:r team)?\b`, String.raw`\b[Tt]he team\b`].join('|')})[^.!?]{0,30}?${NEED_VERB}`)
   const pivots = body.split(SENTENCE_END).some((s) => {
     const m = needRe.exec(s)
     return !!m && PIVOT_RE.test(s.slice(m.index + m[0].length))

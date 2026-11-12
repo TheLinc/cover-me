@@ -112,6 +112,8 @@ describe('templated sentence shapes', () => {
     "I ran the vendor bid in 2022. That's how I met the plant manager who later hired me.",
     'I audited the stockroom. That is what I learned there: the counts were off by a shelf.',
     "I spent two years on structural steel. That's where I learned that most bad welds are decided before the arc starts.",
+    // Mid-paragraph, it leads into what follows: a close asking a question.
+    'I can bring the cutover plan. That is the part I would want to hear about first. Could we talk next week?',
   ])('label leaves alone: %s', (s) => expect(flagged('Labels', opener, s)).toBe(false))
 
   test.each([
@@ -198,6 +200,13 @@ describe('company name', () => {
     expect(nameViolations('Meridian Logistics UK',
       'Meridian Logistics UK runs 40 depots.', 'At Meridian Logistics UK I would own routing.', 'Could Meridian Logistics UK talk next week?')).toHaveLength(1)
   })
+  test('does not tell the retry which short form to use', () => {
+    // The first word is often the wrong short form: "Valley" for Valley Medical Center.
+    const v = nameViolations('Valley Medical Center',
+      'Valley Medical Center runs 40 beds.', 'At Valley Medical Center I would own intake.', 'Could Valley Medical Center talk next week?')
+    expect(v).toHaveLength(1)
+    expect(v[0]).not.toContain('"Valley"')
+  })
   test('leaves the salutation out of the full-name cap', () => {
     const v = lintLetter(`Dear Meridian Logistics UK Team,\n\n${['Meridian Logistics UK runs 40 depots.', 'At Meridian Logistics UK I would own routing.'].join('\n\n')}\n\nKind regards,\nAlex Doe`,
       { companyName: 'Meridian Logistics UK' }).violations
@@ -222,7 +231,9 @@ describe('posting restatement pivot', () => {
     ['Acme Software', "Acme Software needs a Frontend Developer to build internal tools in React and TypeScript, and that is the work I've been doing."],
     ['Harbor & Vine', "Harbor & Vine needs inventory ordering and receiving done right every day, and I've done that work for four years."],
     ['Valley Medical Center', 'Valley Medical Center needs a technician who keeps that accuracy on every order, and that is how I already work.'],
-    ['Riverbend Medical', "Riverbend needs a nurse who can carry a full caseload on nights; that is a fair description of my last two years at St. Anne's."],
+    ['Riverbend Medical', "Riverbend needs a nurse who can carry a full caseload on nights; that is exactly what I did for two years at St. Anne's."],
+    ['Acme', "You're looking for someone to own the close, and that's the job I have now."],
+    ['Acme Software', "Acme's hiring a developer for internal tools, which is what I've built since 2021."],
     ['Acme', 'You need someone who can own the month-end close, and that is exactly what I do.'],
     ['Acme', "Acme is looking for an analyst who can clean messy data, which is what I've done since 2021."],
   ])('flags (%s): %s', (company, s) => expect(pivots(company, s)).toBe(true))
@@ -232,6 +243,7 @@ describe('posting restatement pivot', () => {
     ['Acme', 'Acme is hiring a second analyst because the first one moved to finance, and that team is still four people.'],
     ['Acme', 'When Acme needed a new vendor in 2022, I ran the bid, and that is how I met the team.'],
     ['Acme', 'If you need weekend cover, I can start on Saturdays.'],
+    ['Acme Software', "You need someone on nights at Acme Software, and that's a shift my family can support."],
     ['Acme', 'Acme wants faster month-end reporting, and this year I cut ours from ten days to four.'],
   ])('leaves alone (%s): %s', (company, s) => expect(pivots(company, s)).toBe(false))
 })
