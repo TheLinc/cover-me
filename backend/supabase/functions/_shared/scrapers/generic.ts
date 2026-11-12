@@ -1,6 +1,6 @@
 import type { JobData } from './types.ts'
 import { jobFromJsonLd, jobFromMicrodata } from './jsonld.ts'
-import { companyFromTabTitle, titleFromTabTitle } from './tabtitle.ts'
+import { fromTabTitle } from './tabtitle.ts'
 
 export function scrapeGeneric(): JobData {
   return jobFromJsonLd() ?? jobFromMicrodata() ?? tryAtsSelectors() ?? tryHeuristic()
@@ -33,7 +33,7 @@ function tryAtsSelectors(): JobData | null {
   if (title && description) {
     const company = firstText(['[data-qa="company"]', '[class*="company-name"]', '.selected-application-pane .section-header + * > .section-title'])
       // job-boards.greenhouse.io names the company only in the tab title
-      ?? companyFromTabTitle()
+      ?? fromTabTitle().company
     return { title, company, description, url: window.location.href }
   }
   return null
@@ -42,15 +42,15 @@ function tryAtsSelectors(): JobData | null {
 function tryHeuristic(): JobData {
   // Only use an h1 if it looks like a job title (not a nav/section heading,
   // nor the employer's or site's name). Else the tab title's job.
-  const company = companyFromTabTitle()
+  const tab = fromTabTitle()
   const h1s = Array.from(document.querySelectorAll<HTMLElement>('h1'))
   const titleEl = h1s.find((el) => {
     const text = el.innerText?.trim() ?? ''
-    return text.length > 2 && text.length < 120 && !isNavHeading(text) && !isSectionHeading(text) &&
-      text.toLowerCase() !== company.toLowerCase()
+    return text.length > 2 && text.length < 120 && !isNavHeading(text) && !isSectionOrSiteHeading(text) &&
+      text.toLowerCase() !== tab.company.toLowerCase()
   })
   // A listing's heading ("Open Roles") means there's no job to fall back to.
-  const title = titleEl?.innerText.trim() ?? (h1s.some((el) => isNavHeading(el.innerText ?? '')) ? undefined : titleFromTabTitle())
+  const title = titleEl?.innerText.trim() ?? (h1s.some((el) => isNavHeading(el.innerText ?? '')) ? undefined : tab.title)
 
   // Find the largest text block that looks like a job description: not a list
   // of links, which is a job board's listing or a "similar jobs" panel.
@@ -61,8 +61,12 @@ function tryHeuristic(): JobData {
   // around it (Google's careers page holds the posting beside a list of jobs).
   const nested = new Set(document.querySelectorAll('a a'))
   const blocks = Array.from(document.querySelectorAll<HTMLElement>('div, section, article'))
-    .map((el) => ({ el, text: el.innerText?.trim() ?? '' }))
-    .filter(({ text }) => text.length > 500 && text.length < 20000)
+    .flatMap((el) => {
+      // Only blocks in range keep their text: holding every block's would cost
+      // elements x depth of memory on deep pages
+      const text = el.innerText?.trim() ?? ''
+      return text.length > 500 && text.length < 20000 ? [{ el, text }] : []
+    })
     .sort((a, b) => b.text.length - a.text.length)
   const isPosting = ({ el, text }: { el: HTMLElement; text: string }) => linkTextLength(el, nested) < text.length / 2
   const description = (
@@ -75,12 +79,12 @@ function tryHeuristic(): JobData {
     )
   }
 
-  return { title, company, description, url: window.location.href }
+  return { title, company: tab.company, description, url: window.location.href }
 }
 
 // Section headings some postings put in an <h1> ("Key Responsibilities",
 // "job details"), and site names ("CAREERS", "MSC CAREER PORTAL").
-function isSectionHeading(text: string): boolean {
+function isSectionOrSiteHeading(text: string): boolean {
   return /^(?:key |main |your |the )?(?:responsibilities|duties|requirements|qualifications|overview|summary|benefits|(?:job )?(?:description|details)|about(?: us| the (?:role|job|team|company|position))?|join (?:our|the) team|what you.ll do|who we are)[.:!]?$/i.test(text) ||
     /^careers(?: at .+)?[.!]?$|\bcareers? (?:portal|site)$/i.test(text)
 }

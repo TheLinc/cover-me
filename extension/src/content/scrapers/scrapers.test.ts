@@ -37,28 +37,47 @@ describe('company and title when the page doesn\'t name them (#200)', () => {
     expect(scrape(fixtureUrl(html), html)).toMatchObject({ title: 'AI Systems Engineer, Codex Agents', company: 'OpenAI' })
   })
 
-  const description = `<p>${'Audit the finance team\'s controls and report to the board each quarter. '.repeat(10)}</p>`
-  const posting = (h1: string, tab: string, url = 'https://careers.example.com/jobs/79') =>
-    scrape(url, `<html><head><title>${tab}</title></head><body><main><h1>${h1}</h1><div><h2>Senior Auditor</h2>${description}</div></main></body></html>`)
+  const description = `<p>${"Audit the finance team's controls and report to the board each quarter. ".repeat(10)}</p>`
+  const posting = (h1: string, tab: string, url = 'https://careers.northwind.com/jobs/79') =>
+    scrape(url, `<!doctype html><html><head><title>${tab}</title></head><body><main><h1>${h1}</h1><div><h2>Senior Auditor</h2>${description}</div></main></body></html>`)
 
   // Headings seen as saved titles in production
-  test.each(['Key Responsibilities', 'Job Description', 'job details', 'CAREERS', 'Careers at Iterable.', 'MSC CAREER PORTAL', 'About the role'])(
+  test.each(['Key Responsibilities', 'Job Description', 'job details', 'CAREERS', 'Careers at Northwind.', 'NORTHWIND CAREER PORTAL', 'About the role'])(
     'an <h1> of "%s" is a heading, not the title', (h1) => {
-      expect(posting(h1, 'Senior Auditor | American Cancer Society')).toMatchObject({ title: 'Senior Auditor', company: 'American Cancer Society' })
+      expect(posting(h1, 'Senior Auditor | Northwind')).toMatchObject({ title: 'Senior Auditor', company: 'Northwind' })
     })
 
   test('an <h1> naming the employer is not the title', () => {
-    expect(posting('American Cancer Society', 'Senior Auditor | American Cancer Society').title).toBe('Senior Auditor')
+    expect(posting('Northwind', 'Senior Auditor | Northwind').title).toBe('Senior Auditor')
   })
 
-  test('a tab title part the URL names is the company, wherever it sits', () => {
-    expect(posting('Senior Auditor', 'Acme - Senior Auditor', 'https://jobs.acme.com/79').company).toBe('Acme')
+  test('the company is the tab title part the URL names, wherever it sits', () => {
+    expect(posting('Senior Auditor', 'Northwind - Senior Auditor')).toMatchObject({ title: 'Senior Auditor', company: 'Northwind' })
+    expect(posting('Key Responsibilities', 'Northwind - Senior Auditor').title).toBe('Senior Auditor')
     // A job slug in the path doesn't make the title the company
-    expect(posting('Senior Auditor', 'Senior Auditor - Acme', 'https://careers.example.com/jobs/senior-auditor').company).toBe('Acme')
+    expect(posting('Senior Auditor', 'Senior Auditor - Northwind', 'https://careers.example.com/jobs/senior-auditor').company).toBe('Unknown Company')
   })
 
-  test('a tab title without a company keeps Unknown Company', () => {
-    expect(posting('Senior Auditor', 'Senior Auditor').company).toBe('Unknown Company')
+  // A wrong name is worse than none: a part the URL doesn't name may be a
+  // place or a requisition number, and a job board names itself
+  test.each([
+    ['a place', 'Senior Auditor - Remote', 'https://careers.example.com/jobs/79'],
+    ['a requisition number', 'Senior Auditor - R0012345', 'https://careers.example.com/jobs/79'],
+    ['a job board', 'Senior Auditor - Northwind | SEEK', 'https://www.seek.com.au/job/79'],
+  ])('a tab title ending in %s keeps Unknown Company', (_, tab, url) => {
+    expect(posting('Senior Auditor', tab, url)).toMatchObject({ title: 'Senior Auditor', company: 'Unknown Company' })
+  })
+
+  // "Careers | Northwind" names only the site: no job to take from it
+  test('a heading and a tab title that name only the site are no job', () => {
+    expect(() => posting('Careers at Northwind.', 'Careers | Northwind')).toThrow('Could not find job details')
+  })
+
+  // The tab title is split by patterns that backtrack on whitespace runs
+  test('a tab title of 100,000 spaces stays cheap', () => {
+    const start = performance.now()
+    posting('Senior Auditor', `a${' '.repeat(100_000)}- ${' '.repeat(100_000)}jobs`)
+    expect(performance.now() - start).toBeLessThan(2000)
   })
 })
 

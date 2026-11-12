@@ -36,9 +36,9 @@ export const FIXTURE_CASES = [
   // vj-company-name), and an empty sentinel div follows the description heading
   { board: 'indeed-search-company-link', title: 'Retail Associates', company: 'Walmart', ends: 'Work Location: In person' },
   // Company career sites that name the employer only in the tab title (#200).
-  // Amazon puts its <title> in <body>.
   // Apple's posting card ends with its own links back to the search
   { board: 'apple', title: 'US - Specialist: Seasonal, Part-time', company: 'Apple', ends: 'See all roles in United States' },
+  // Amazon puts its <title> in <body>
   { board: 'amazon', title: 'Software Engineer', company: 'Amazon', ends: 'please contact your Recruiting Partner.' },
   // The <h1> reads "job details"; the posting sits beside a list of other jobs
   { board: 'google-careers', title: 'Senior Staff Software Engineer, Generative AI, Search Intelligence', company: 'Google', ends: 'Current or past grants do not confer an acquired right.' },
