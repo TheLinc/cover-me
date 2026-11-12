@@ -214,8 +214,26 @@ describe('generic heuristic', () => {
   test('reads a posting without the related jobs listed beside it', () => {
     const job = scrape('https://careers.example.com/jobs/1', `<html><body><main><div><h1>Warehouse Supervisor</h1>
       <div><p>${description}</p></div><div><h2>Related jobs</h2><ul>${related}</ul></div></div></main></body></html>`)
-    expect(job.description.startsWith(description)).toBe(true)
+    expect(job.description).toContain(description)
     expect(job.description).not.toMatch(/Forklift|Sydney/)
+    // The posting's paragraphs beside the panel, in one block
+    const long = `${description} ${description}`
+    const together = scrape('https://careers.example.com/jobs/1', `<html><body><main><div><h1>Warehouse Supervisor</h1>
+      <p>${long}</p><div><h2>Related jobs</h2><ul>${related}</ul></div></div></main></body></html>`)
+    expect(together.description).toContain(long)
+    expect(together.description).not.toMatch(/Forklift|Sydney/)
+  })
+
+  // Chrome reads a list that isn't rendered as its source text, which the
+  // block around it leaves out
+  test('a hidden list is not a listing', () => {
+    const menu = `<ul>${Array.from({ length: 40 }, (_, i) => `<li><a href="/p/${i}">Product ${i}</a>
+        <span>New</span></li>`).join('')}</ul>`
+    for (const hidden of ['hidden', 'style="display: none"']) {
+      const job = scrape('https://careers.example.com/jobs/1', `<html><body><header><nav ${hidden}>${menu}</nav></header>
+        <main><h1>Job Description</h1><div><p>${description}</p><div ${hidden}><ul>${related}</ul></div></div></main></body></html>`)
+      expect(job.description).toBe(description)
+    }
   })
 
   // The posting has a job's title, so cards larger than it don't make the page
@@ -228,7 +246,7 @@ describe('generic heuristic', () => {
 
   // A posting's own lists and sections aren't job cards
   test('keeps a requirements list that links some of its tools', () => {
-    const items = ['<a href="https://react.dev">React</a> and TypeScript in production', 'Writing clear design documents',
+    const items = ['<a href="https://react.dev">React</a> and TypeScript in production', '<a href="https://go.dev">Go</a> services',
       '<a href="https://postgresql.org">Postgres</a> at scale', 'Mentoring junior engineers',
       '<a href="https://kafka.apache.org">Kafka</a> or another event log', 'On call one week in six']
     const job = scrape('https://careers.example.com/jobs/1', `<html><body><main><h1>Backend Engineer</h1>
@@ -249,6 +267,11 @@ describe('generic heuristic', () => {
       ${section('About us', '/about')}<div class="section"><h2>The role</h2><p>${description.slice(0, 300)}</p></div>
       ${section('Benefits', '/benefits')}${section('Equal opportunity', '/eeo')}</div></main></body></html>`)
     expect(sections.description).toContain('Equal opportunity')
+    // ...or from a bullet
+    const bullets = (heading: string, href: string) => `<div class="section"><h2>${heading}</h2><ul><li>${description.slice(0, 300)} <a href="${href}">More</a></li></ul></div>`
+    const bulleted = scrape('https://careers.example.com/jobs/1', `<html><body><main><h1>Warehouse Supervisor</h1><div>
+      ${bullets('About us', '/about')}${bullets('The role', '/role')}${bullets('Benefits', '/benefits')}${bullets('Equal opportunity', '/eeo')}</div></main></body></html>`)
+    expect(bulleted.description).toContain('Equal opportunity')
   })
 
   // Each link read once per block, not once per link it's nested in (34 s

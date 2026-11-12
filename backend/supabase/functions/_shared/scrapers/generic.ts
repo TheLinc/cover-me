@@ -66,8 +66,6 @@ function tryHeuristic(): JobData {
   const title = first && (notTitle(first) ? tabJob ?? (embedded ? undefined : first) : first)
 
   // The posting's own container when the page marks it with the job's ID.
-  // A heading that isn't a job's title leaves the page in doubt: job cards
-  // that outweigh the text make it a listing, and the text its intro.
   const description = postingById() ?? largestBlock(first !== undefined && notTitle(first))
 
   if (!title || !description || description.length < 200) {
@@ -82,59 +80,70 @@ function tryHeuristic(): JobData {
 // The largest text block that looks like a job description: not a list of
 // links or job cards, which is a job board's listing or a "similar jobs"
 // panel. Postings measured 0 to 21% link text, Greenhouse's board listing 95%.
-// A card's plain text (location, summary) counts as the list's, since listings
-// whose cards carry it measured under half link text, as did a Greenhouse
-// board under a long intro (49%) (#72). The block's card lists (a related-jobs
-// panel) are cut from its text. Each block's text is measured once, and links
-// nested in a link (linkedom allows them) aren't read, so each block costs one
-// walk of its subtree and one of its ancestors; each list's text is read once
-// more to cut it.
-function largestBlock(listingIfOutweighed: boolean): string | undefined {
+// The block's card lists (a related-jobs panel) are cut from its text; cards
+// three times the size of what's left make the page a listing (Mozilla's
+// table of jobs under an intro). Under a heading that isn't a job's title
+// ("Join Our Team") the page is in doubt, and a block a third or more links
+// and card text is a list, as is one outweighed by any list on the page: the
+// listings in #72 measured under half link text, a Greenhouse board under a
+// long intro 49%. Each block's text is measured once, and links nested in a
+// link (linkedom allows them) aren't read, so each block costs one walk of its
+// subtree and one of its ancestors; each list's text is read once more to cut
+// it.
+function largestBlock(doubtful: boolean): string | undefined {
   const nested = new Set(document.querySelectorAll('a a'))
   const lists = cardLists(nested)
   const cardText = new Map<Element, number>()
   for (const [list, plain] of lists) {
     for (let el: Element | null = list; el; el = el.parentElement) cardText.set(el, (cardText.get(el) ?? 0) + plain)
   }
+  const isList = (el: HTMLElement, len: number) => doubtful
+    ? linkTextLength(el, nested) + (cardText.get(el) ?? 0) >= len / 3
+    : linkTextLength(el, nested) >= len / 2
   // A block in a list is a card or part of one (a long one: We Work Remotely's
-  // list the countries a job is open to)
+  // list the countries a job is open to). A block that isn't rendered is read
+  // as its source text, by Chrome and by linkedom alike.
   const block = Array.from(document.querySelectorAll<HTMLElement>('div, section, article'))
     .map((el) => ({ el, len: el.innerText?.trim().length ?? 0 }))
     .filter(({ len }) => len > 500 && len < 20000)
     .sort((a, b) => b.len - a.len)
-    .find(({ el, len }) => linkTextLength(el, nested) + (cardText.get(el) ?? 0) < len * 0.4 && !hasAncestorIn(el, lists))
+    .find(({ el, len }) => !isList(el, len) && !hasAncestorIn(el, lists) && rendered(el))
     ?.el
   if (!block) return
-  let text = block.innerText.trim()
+  const whole = block.innerText.trim()
+  let text = whole
   let largestList = 0
   for (const [list, plain] of lists) {
     largestList = Math.max(largestList, plain)
     if (block.contains(list)) text = text.replace(list.innerText.trim(), '')
   }
-  text = text.replace(/\n{3,}/g, '\n\n').trim()
-  return listingIfOutweighed && text.length <= largestList ? undefined : text
+  if (whole.length - text.length > 3 * text.length || (doubtful && text.length <= largestList)) return
+  return text.replace(/\n{3,}/g, '\n\n').trim()
 }
 
 interface CardGroup { hrefs: Set<string>, cards: Element[] }
 
 // Repeated cards: an element whose children are mostly (two thirds or more)
 // cards of one shape, at least three: the same block tag, class and child tags,
-// each with its first link outside a paragraph and to a different place, none
+// a line beside the link (a table row's cells, or two child elements), the
+// first link outside a paragraph or bullet and to a different place, none
 // holding half the list's text. A job list, whatever plain text each card
-// carries, but also a site's menus; not paragraphs with a link each (a
-// posting's EEO notes), a requirements list that links some of its tools, nor
-// a posting's sections that link from their prose. The outermost lists only,
-// each with its text outside links. Each element's first link is found in one
-// pass over the links; each child is looked at once, with a walk from its
-// first link up to it; a candidate list's text is read once per level it's
-// nested in.
+// carries, but also some of a site's menus; not a menu of bare links, nor
+// paragraphs with a link each (a posting's EEO notes), a requirements list
+// that links its tools, or a posting's sections that link from their text.
+// Lists that aren't rendered are left out: Chrome reads their source text
+// (innerText falls back to textContent), and the blocks around them leave it
+// out. The outermost lists only, each with its text outside links. Each
+// element's first link is found in one pass over the links; each child is
+// looked at once, with a walk from its first link up to it; a candidate list's
+// text is read once per level it's nested in.
 function cardLists(nested: Set<Element>): Map<HTMLElement, number> {
   const firstLink = new Map<Element, Element>()
   for (const a of Array.from(document.querySelectorAll('a[href]'))) {
     for (let el: Element | null = a; el && !firstLink.has(el); el = el.parentElement) firstLink.set(el, a)
   }
-  const inProse = (link: Element, card: Element) => {
-    for (let el = link.parentElement; el && el !== card; el = el.parentElement) if (el.tagName === 'P') return true
+  const inText = (link: Element, card: Element) => {
+    for (let el = link.parentElement; el && el !== card; el = el.parentElement) if (el.tagName === 'P' || el.tagName === 'LI') return true
     return false
   }
   const lists = new Set<Element>()
@@ -146,7 +155,7 @@ function cardLists(nested: Set<Element>): Map<HTMLElement, number> {
     const shapes = new Map<string, CardGroup>()
     for (const kid of Array.from(parent.children)) {
       const link = firstLink.get(kid)
-      if (!link || !CARD_TAGS.has(kid.tagName) || inProse(link, kid)) continue
+      if (!link || !CARD_TAGS.has(kid.tagName) || (kid.tagName !== 'TR' && kid.children.length < 2) || inText(link, kid)) continue
       const shape = `${kid.tagName} ${kid.getAttribute('class') ?? ''} ${Array.from(kid.children, (c) => c.tagName).join()}`
       const group = shapes.get(shape) ?? { hrefs: new Set(), cards: [] }
       group.hrefs.add(link.getAttribute('href')!)
@@ -163,12 +172,22 @@ function cardLists(nested: Set<Element>): Map<HTMLElement, number> {
   const outermost = new Map<HTMLElement, number>()
   for (const list of lists) {
     const el = list as HTMLElement
-    if (!hasAncestorIn(el, lists)) outermost.set(el, (el.innerText?.trim().length ?? 0) - linkTextLength(el, nested))
+    if (!hasAncestorIn(el, lists) && rendered(el)) outermost.set(el, (el.innerText?.trim().length ?? 0) - linkTextLength(el, nested))
   }
   return outermost
 }
 
 const CARD_TAGS = new Set(['LI', 'DIV', 'ARTICLE', 'SECTION', 'TR'])
+
+// Chrome knows from layout; linkedom has none, so its innerText's markup rules
+// (hidden, inline display:none) are checked up the tree.
+function rendered(el: HTMLElement): boolean {
+  if (typeof el.checkVisibility === 'function') return el.checkVisibility()
+  for (let e: Element | null = el; e; e = e.parentElement) {
+    if (e.hasAttribute('hidden') || /display\s*:\s*none/i.test(e.getAttribute('style') ?? '')) return false
+  }
+  return true
+}
 
 function hasAncestorIn(el: Element, set: { has(el: Element): boolean }): boolean {
   for (let p = el.parentElement; p; p = p.parentElement) if (set.has(p)) return true
@@ -197,7 +216,7 @@ function postingById(): string | undefined {
 // Section headings some postings put in an <h1> ("Key Responsibilities",
 // "job details").
 function isSectionHeading(text: string): boolean {
-  return /^(?:key |main |your |the )?(?:responsibilities|duties|requirements|qualifications|overview|summary|benefits|(?:job )?(?:description|details)|about(?: us| the (?:role|job|team|company|position))?|join (?:our|the) team|what you.ll do|who we are)[.:!]?$/i.test(text)
+  return /^(?:key |main |your |the )?(?:responsibilities|duties|requirements|qualifications|overview|summary|benefits|(?:job )?(?:description|details)|about(?: us| the (?:role|job|team|company|position))?|join (?:our|the) (?:\S+ )?team|what you.ll do|who we are)[.:!]?$/i.test(text)
 }
 
 // Site names in an <h1> ("CAREERS", "MSC CAREER PORTAL").
