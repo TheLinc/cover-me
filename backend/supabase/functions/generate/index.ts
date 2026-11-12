@@ -166,10 +166,14 @@ interface LetterVariation {
 }
 
 const SIGN_OFFS = ['Sincerely,', 'Best regards,', 'Kind regards,']
-const HOOK_PATTERNS = ['Achievement-first', 'Problem-solution', 'Bold specific claim']
+// No Problem-solution hook: it opened by describing the employer back to them
+// (14 of 72 letters in the #206 full eval).
+const HOOK_PATTERNS = ['Achievement-first', 'Current work', 'Bold specific claim']
 // 46 of 72 letters closed "I'd like to walk you through…" with one close
 // for all (#206); banning the phrase only moves the model to the next one.
-const CLOSE_PATTERNS = ['Question', 'Next step', 'Project']
+// No Question close: hiring guides advise a direct ask, and the judge flagged
+// the question as a template move (42 of 72 letters asked one).
+const CLOSE_PATTERNS = ['Next step', 'Project', 'Thanks']
 
 const pick = (list: string[]) => list[Math.floor(Math.random() * list.length)]
 
@@ -183,7 +187,7 @@ function buildPrompt(
   job: { title: string; company: string; description: string },
   resumeText: string,
   supplemental?: string,
-  variation: LetterVariation = { signOff: 'Kind regards,', hookPattern: 'Achievement-first', closePattern: 'Question' },
+  variation: LetterVariation = { signOff: 'Kind regards,', hookPattern: 'Achievement-first', closePattern: 'Next step' },
 ): string {
   const companyKnown = job.company && job.company !== 'Unknown Company'
   const companyLine = companyKnown
@@ -195,7 +199,7 @@ function buildPrompt(
     : `"Dear Hiring Manager,"`
 
   const whyCompany = companyKnown
-    ? `Paragraph 3 — Company Fit (2–3 sentences): Name one specific, concrete reason the applicant wants THIS company — derive it only from what is visible in the job description provided (a stated product challenge, a team structure detail, a technical problem described in the posting) — and connect it to something genuine in the applicant's experience. Never draw on assumed external knowledge about the company. Never claim the applicant has personally used, followed, or researched the company's products unless the resume explicitly states it. Specific enough that it could only appear in a letter for this company. Never "I admire your innovative culture." Write about what the employer does or is working on, not about the posting: never restate, quote, or summarize it ("What stands out in the posting", "Your posting pairs X with Y", "The posting asks for"), never turn its sentence around and claim it ("[Company] needs X, and that is how I work"), and never name a duty, tool, or requirement from it that the applicant lacks. One detail in your own words beats a summary.`
+    ? `Paragraph 3 — Company Fit (2–3 sentences): Say plainly why the applicant wants this job, from the applicant's side: what they want to do more of, or one concrete detail from the job description (a product, a team setup, a piece of work) and what they have done that connects to it. Keep the sentences about the applicant; never describe the employer's business, product, or the role back to them ("Acme builds field software for contractors, so every implementation has to land"). Never draw on assumed external knowledge about the company. Never claim the applicant has personally used, followed, or researched the company's products unless the resume explicitly states it. Never "I admire your innovative culture." Never restate, quote, or summarize the posting ("What stands out in the posting", "Your posting pairs X with Y", "The posting asks for"), never turn its sentence around and claim it ("[Company] needs X, and that is how I work"), and never name a duty, tool, or requirement from it that the applicant lacks.`
     : `Paragraph 3 — Role Fit (2–3 sentences): Since the company is unknown, explain what specifically draws the applicant to this type of role and the challenges it presents, grounded in their experience.`
 
   const today = new Date().toISOString().split('T')[0]
@@ -261,9 +265,9 @@ STRUCTURE — 4 paragraphs, salutation, sign-off:
 Salutation: ${salutation}
 
 Paragraph 1 — Hook (2–3 sentences):
-Lead with what the applicant offers, not what they want. Use one of these proven opening patterns:
+Lead with what the applicant offers, not what they want. The opening is about the applicant: never open by describing the employer, its product, or the role back to them ("Acme builds internal tools in React", "Your Tier 2 queue gets whatever Tier 1 couldn't close"), and never with a general maxim ("Bad data is cheapest to fix early"). Use one of these opening patterns:
 - Achievement-first: a quantified result from past work that maps directly to a top requirement of this role
-- Problem-solution: take one concrete detail from the JD about this employer's situation (a system, a volume, a change underway), name the employer (or "the team" when the company is unknown), then say what the applicant did about the same kind of problem. Never the posting's own sentence turned around ("[Company] needs X, and that is the work I do"), and never a general maxim ("Bad data is cheapest to fix early")
+- Current work: what the applicant does now, concretely, that is closest to this role, and the role they are applying for
 - Bold specific claim: a confident statement of a real accomplishment, striking enough to demand attention
 - Referral: name a mutual contact explicitly in the first sentence if one exists
 
@@ -282,10 +286,10 @@ ${whyCompany}
 
 Paragraph 4 — Close + Call to Action (2–3 sentences):
 Close with the ${variation.closePattern} move:
-- Question: ask one specific question about the employer's work, built on a concrete detail from the posting, that the applicant would want answered in a first conversation
-- Next step: propose a concrete next step, such as a short call, and name the one topic from the applicant's own work they would raise first
-- Project: name one specific piece of the applicant's own work from the resume and what about it would matter to this employer
-Do not recap the letter or list skills again, and never name a duty, tool, or requirement from the posting that the resume does not show. End with a direct, confident request for a conversation — not passive, not demanding.
+- Next step: ask directly for an interview or a short call, and name the one piece of the applicant's own work they would bring to it
+- Project: name one specific piece of the applicant's own work from the resume that bears most on this role, then ask directly for an interview
+- Thanks: thank the reader in a few plain words ("Thank you for reading", never "thanks for your time") and ask directly for an interview
+Do not ask the employer questions about their team or work, and make one request, not a question plus an offer plus a request. Do not recap the letter or list skills again, and never name a duty, tool, or requirement from the posting that the resume does not show. The request is direct and confident — not passive, not demanding.
 
 Sign-off: "${variation.signOff}" on its own line, then a blank line, then the applicant's name from the resume.
 
@@ -297,9 +301,9 @@ Keywords: Embed 5–10 JD hard-skill keywords (tools, certifications, methodolog
 
 Action verbs: Strong past-tense for past roles: Led, Built, Designed, Optimized, Launched, Reduced, Generated, Negotiated, Delivered, Streamlined, Partnered, Authored, Exceeded, Drove, Shipped, Architected, Scaled, Mentored. Present tense for current role only.
 
-Voice: Vary sentence length — short punchy sentences mixed with longer ones. If any paragraph reads like a press release or a template essay, rewrite it. Each paragraph should feel distinct in rhythm.
+Voice: Vary sentence length naturally. State each fact and move on. Never add a sentence or clause that explains why a fact matters ("so the fix mattered", "which matters on a team that edits the same files"), draws a lesson from it ("That taught me to check the data first"), or sums it up with a general truth or a memorable line ("Payroll is where mistakes get noticed fastest", "Nothing clever was involved"). Those lines are what make a letter read as AI-written. If cutting them leaves the letter short, add another concrete detail from the resume: what was done, for whom, with which tools. If any paragraph reads like a press release or a template essay, rewrite it.
 
-Personalization: Name the company in full once and by name at least once more, using a short form after the first ("Acme" for "Acme Software"); "you" is fine beyond that. The full name three times reads as a template filling in a blank. Include at least one concrete detail drawn from the job description itself — a specific product area, team structure, workflow, or stated challenge — that shows the applicant read this posting carefully. (Echoing the employer's tech stack back is not personalization — see ABSOLUTE PROHIBITIONS.)
+Personalization: Name the company in full once and by name at least once more, using a short form after the first ("Acme" for "Acme Software"); "you" is fine beyond that. The full name three times reads as a template filling in a blank. Include one concrete detail from the job description — a product area, a tool on the allowlist, a team setup — inside a sentence about the applicant ("I've run month-end close in [a system both the posting and the resume name], which your team uses"), never as a description of the employer. (Echoing the employer's tech stack back is not personalization — see ABSOLUTE PROHIBITIONS.)
 
 ---
 
@@ -312,13 +316,13 @@ Exemplar A (technology):
 """
 Dear Northlight Team,
 
-Last year I cut checkout latency at Ferris Retail from 900ms to 210ms, and the conversion lift paid for my salary twice over. Your React storefront has outgrown its data layer the way ours had, and the fix started in the same place: the product-listing queries.
+Last year I cut checkout latency at Ferris Retail from 900ms to 210ms by rebuilding how our React storefront loaded product data. I'm applying for the Senior Frontend Engineer role at Northlight because I want to keep doing that work on a larger storefront.
 
-I owned Ferris's storefront platform for three years. I rebuilt the product-listing pipeline in TypeScript and GraphQL, moved image delivery behind edge caching, and wrote the load tests that let us ship during peak season without an incident. Most of that work shipped behind feature flags to 60,000 daily shoppers, so rollbacks were boring, which is how I like them. When our two-person SRE team got buried in alert noise, I took the pager for a quarter and cut false alarms roughly in half, mostly by deleting dashboards nobody read.
+I owned Ferris's storefront platform for three years. I rebuilt the product-listing pipeline in TypeScript and GraphQL and moved image delivery behind edge caching. Before each peak season I ran load tests I had written against that pipeline, and most of the work shipped behind feature flags to 60,000 daily shoppers. When our two-person SRE team was overloaded with alerts, I took the pager for a quarter and removed the alerts nobody acted on, which cut false alarms by about half. I also set up the visual regression checks the team still runs on every pull request.
 
-Northlight is moving off a legacy Rails monolith. I lived through one of those, including the month both systems ran side by side and every bug had two possible homes. A two-quarter timeline is tight but workable; ours took three, and I can name exactly where we lost the extra one. For the last two years I've worked in a pod of five engineers and a designer.
+Last spring I worked on our move off a Rails monolith, including a month when both systems ran side by side. It took three quarters instead of the two we planned, and I kept notes on where the extra quarter went. I wrote the cutover runbook and handled the database switch on the final night. For the last two years I've worked in a pod of five engineers and a designer.
 
-Which parts of the old system still have no owner? I'd like to hear where the migration stands. Could we find half an hour in the next two weeks?
+I'd welcome an interview for the role, and I can bring my notes from the Ferris migration to it.
 
 Sincerely,
 
@@ -329,7 +333,7 @@ Exemplar B (healthcare, opening only — the register shifts by industry, the co
 """
 Dear Riverbend Medical Team,
 
-Six years on a 32-bed med-surg unit taught me to spot a deteriorating patient before the monitor does. For the last two of them I worked nights at St. Anne's, carrying six to seven patients a shift, precepting three new graduates, and keeping a clean medication record across roughly 4,000 administrations.
+I've spent six years as a nurse on a 32-bed med-surg unit, the last two on nights at St. Anne's, carrying six to seven patients a shift. In that time I precepted three new graduates and gave roughly 4,000 medication administrations without an error.
 """
 
 ---
@@ -343,7 +347,7 @@ Clichés (never use): hard worker, hard-working, team player, detail-oriented, r
 AI-flagged vocabulary (never use, in any form or tense): delve, realm, tapestry, beacon, intricate, showcase, pivotal, paramount, holistic, multifaceted, synergy, synergistic, testament, underscore, meticulous, transformative, groundbreaking, revolutionize, leverage, utilize, robust, seamless, honed, fostered, garnered, empower, embark, unlock, unleash, spearheaded, orchestrated, cutting-edge, state-of-the-art, crucial, innovative
 The employer's name is exempt: if the company is called "Beacon Retail Group", write "Beacon Retail Group".
 
-AI-tell patterns (never produce these): repeating the same "by doing X, I achieved Y" sentence structure in every paragraph; uniform sentence rhythm with no variation; excessive politeness throughout; claiming passion or dedication without a single specific example; using the company name exactly once in a formulaic opener and never again; the triadic-list tic (packaging every description as three parallel items — "scalable, maintainable, and reliable"); "not only… but also" constructions; formal connective openers ("Moreover," "Furthermore," "Additionally," "In today's fast-paced world"); filler framing ("it's important to note," "at the end of the day"); more than TWO em-dashes in the entire letter — prefer separate sentences or commas; a maxim or slogan as the opening line; "X, not Y" lines ("a habit for me, not an afterthought"); announcing a point before making it ("My strongest qualification is simple:"); naming what an example shows after giving it ("That is onboarding in practice", "That's the work I do every month"); a short verdict on an employer detail ("I like that setup.", "I know that view."); a closing that sums up the skills
+AI-tell patterns (never produce these): repeating the same "by doing X, I achieved Y" sentence structure in every paragraph; uniform sentence rhythm with no variation; excessive politeness throughout; claiming passion or dedication without a single specific example; using the company name exactly once in a formulaic opener and never again; the triadic-list tic (packaging every description as three parallel items — "scalable, maintainable, and reliable"); "not only… but also" constructions; formal connective openers ("Moreover," "Furthermore," "Additionally," "In today's fast-paced world"); filler framing ("it's important to note," "at the end of the day"); more than TWO em-dashes in the entire letter — prefer separate sentences or commas; a maxim or slogan as the opening line; "X, not Y" lines ("a habit for me, not an afterthought"); announcing a point before making it ("My strongest qualification is simple:"); naming what an example shows after giving it ("That is onboarding in practice", "That's the work I do every month"); a short verdict on an employer detail ("I like that setup.", "I know that view."); a sentence on why a fact matters or what it taught the applicant ("That taught me to check the data first"); a question to the employer about their team or work; offering to "walk you through" or "talk through" something; a closing that sums up the skills
 
 Passive close phrases (never use): I hope to hear from you, feel free to contact me, I would be happy to discuss, I look forward to hearing from you, at your earliest convenience, thanks for your time
 

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { extractNumbers, lintLetter } from './letter-lint'
+import { buildLintRetryMessage, extractNumbers, lintLetter } from './letter-lint'
 
 const echoes = (sentence: string) =>
   lintLetter(sentence).violations.some((v) => v.startsWith('Restates the job posting'))
@@ -311,4 +311,56 @@ describe('posting restatement pivot', () => {
     ['Acme', "Acme's needs shifted in 2023, and that is when I joined the vendor team."],
     ['Acme', 'Acme wants faster month-end reporting, and this year I cut ours from ten days to four.'],
   ])('leaves alone (%s): %s', (company, s) => expect(pivots(company, s)).toBe(false))
+})
+
+// What the judge still flagged on the #206 full eval (run 43274484966):
+// commentary on the facts, questions in the close, openers about the employer.
+describe('commentary and framing', () => {
+  const letter = (...paragraphs: string[]) => `Dear Hiring Manager,\n\n${paragraphs.join('\n\n')}\n\nKind regards,\nAlex Doe`
+  const flagged = (prefix: string, ...paragraphs: string[]) =>
+    lintLetter(letter(...paragraphs), { companyName: 'Acme' }).violations.some((v) => v.startsWith(prefix))
+  const opener = 'At Halcyon I cut page load from 1.2s to 400ms.'
+  const close = 'Could we talk next week?'
+
+  test.each([
+    'Acme builds internal tools in React and TypeScript for its own staff.',
+    "Your Tier 2 queue gets whatever Tier 1 couldn't close, so the handoff decides how fast a case moves.",
+  ])('opener about the employer: %s', (s) => expect(flagged('Opens by describing the employer', s, close)).toBe(true))
+  test.each([
+    opener,
+    "Jordan Lee, who leads Acme's data team, suggested I apply.",
+    "Acme's Jordan Lee suggested I apply for the analyst role.",
+  ])('opener leaves alone: %s', (s) => expect(flagged('Opens by describing the employer', s, close)).toBe(false))
+
+  test('flags a question about the employer in the close', () => {
+    expect(flagged('Asks the employer a question', opener, 'Which parts of the old system still have no owner? Could we talk next week?')).toBe(true)
+  })
+  test.each([
+    'Could we talk next week?',
+    'When would suit you for a short call?',
+  ])('close question leaves the request alone: %s', (c) => expect(flagged('Asks the employer a question', opener, c)).toBe(false))
+
+  test.each([
+    'I checked every feed by hand. That taught me to check the data before trusting any report.',
+    'It gave us a safer way to change shared components, which matters on a team that edits the same files.',
+    'A slow first paint gets noticed at that volume, so the fix mattered.',
+  ])('commentary: %s', (s) => expect(flagged('Explains what a fact means', opener, s, close)).toBe(true))
+  test.each([
+    'My first manager taught me SQL in my first month.',
+    'I tracked which matters were billable for each client.',
+  ])('commentary leaves a fact alone: %s', (s) => expect(flagged('Explains what a fact means', opener, s, close)).toBe(false))
+
+  // The pivot split in two, from a real letter after the #206 changes.
+  test('flags the pivot split across two sentences', () => {
+    const v = lintLetter(letter(opener, 'RandomTrees has an immediate opening for someone who can move between web, mobile, and cloud work. That\'s how my current job runs.', close), { companyName: 'RandomTrees' }).violations
+    expect(v.some((x) => x.startsWith('Turns the posting'))).toBe(true)
+  })
+  test('leaves a follow-on fact alone', () => {
+    const v = lintLetter(letter(opener, 'Acme is hiring for its Leeds depot. That is a 20-minute drive from my home.', close), { companyName: 'Acme' }).violations
+    expect(v.some((x) => x.startsWith('Turns the posting'))).toBe(false)
+  })
+})
+
+test('the retry asks for detail, not more figures, when it must add words', () => {
+  expect(buildLintRetryMessage(['x'])).toContain('not more figures')
 })

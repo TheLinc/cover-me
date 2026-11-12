@@ -87,7 +87,7 @@ const POSTING_ECHO = [
 // around and claimed (judge, 27 of 72 letters, #206). The need alone is a fair
 // line about the employer; the pivot back to the applicant is the tell. The
 // pivot needs "I": "that's a shift my family can support" adds a fact.
-const NEED_VERB = String.raw`(?:\b(?:needs?|wants?|(?:is|are) (?:hiring|looking for|seeking))|['’](?:s|re) (?:hiring|looking for|seeking))\b`
+const NEED_VERB = String.raw`(?:\b(?:needs?|wants?|(?:is|are) (?:hiring|looking for|seeking)|has an? (?:\w+ )?opening)|['’](?:s|re) (?:hiring|looking for|seeking))\b`
 const PIVOT_RE = /[,;:—]\s*(?:and\s+|which\s+)?(?:(?:that|this|which)(?:['’]s|\s+is|\s+was)\b(?!\s+(?:why|when)\b)[^.!?]*?\bI\b|I(?:['’]ve|\s+have)?\s+(?:done|been doing|do)\s+(?:that|this|exactly)\b)/
 
 const LABEL_MESSAGE = 'Labels the experience after describing it ("That is data onboarding in practice", "That\'s the work I do") — cut the label; the example already makes the point.'
@@ -103,6 +103,21 @@ const LABEL_LINE_RE = /[.!?][ \t]+((?:That|This)(?:['’]s| is) [^.!?]{0,40}?\bI
 // view."): the judge read these as punchy lines placed for rhythm in 12 of 72
 // letters in the #206 full eval. A longer sentence carries a fact and passes.
 const REACTION_RE = /^I (?:like|know) (?:that|this)(?: [\w'’-]+){0,4}[.!]$/
+
+// Commentary after a fact: why it matters or what it taught. The judge's most
+// common flag on the #206 full eval ("That taught me…" alone in 19 of 72
+// letters). "taught me SQL" is a fact, and "which matters were billable" is a
+// legal matter; both pass.
+const COMMENTARY_RE = /\b(?:taught|showed) me (?:early )?(?:that|to|how|what|when)\b|\bI learned (?:early )?(?:that|how|what)\b|\b(?:which|this|that|it) (?:really |still )?matter(?:s|ed)(?: most| more)?(?=[.,;!]| (?:when|because|on|for|to|in|at|early)\b)|\bso the \w+ mattered\b/i
+
+// A question about the employer's team or work in the close: 42 of 72 letters
+// in the #206 full eval, and hiring guides advise a direct ask. The request
+// itself ("When would suit you for a call?") names the meeting and passes.
+const CLOSE_QUESTION_RE = /^(?:Which|What|How|When|Where|Who|Why)\b(?![^?]*\b(?:call|talk|meet|meeting|interview|conversation|speak|chat)\b)[^?]*\?$/
+
+// The pivot split in two: "Acme has an opening for X. That's how my current
+// job runs." (a real letter after the #206 changes).
+const NEXT_PIVOT_RE = /^(?:That|This)(?:['’]s| is| was)\b(?!\s+(?:why|when)\b)[^.!?]*\b(?:I|my (?:current |last |own )?(?:job|work|role))\b/
 
 // Sentence shapes that read as templated even when every word is plain. The
 // judge flagged each one in every letter of the 2026-11-11 eval run (#198).
@@ -300,13 +315,30 @@ export function lintLetter(
   }
   const reaction = bodyParas.flatMap((p) => p.split(SENTENCE_END)).map((s) => s.trim()).find((s) => REACTION_RE.test(s))
   if (reaction) {
-    violations.push(`Reacts to the employer with a short verdict ("${reaction}") — cut it, or say what the applicant did that makes that detail matter.`)
+    violations.push(`Reacts to the employer with a short verdict ("${reaction}") — cut it, or replace it with something the applicant did.`)
   }
+  const commentary = body.split(SENTENCE_END).map((s) => s.trim()).find((s) => COMMENTARY_RE.test(s))
+  if (commentary) {
+    violations.push(`Explains what a fact means ("${commentary}") — cut the explanation or lesson and let the fact stand; if the letter gets short, add another concrete detail from the resume.`)
+  }
+  const closeQuestion = paragraphs.length > 1 ? lastPara.split(SENTENCE_END).map((s) => s.trim()).find((s) => CLOSE_QUESTION_RE.test(s)) : undefined
+  if (closeQuestion) {
+    violations.push(`Asks the employer a question in the close ("${closeQuestion}") — end with a direct request for an interview instead.`)
+  }
+
+  const employers = [opts.companyName, shortName].filter((n): n is string => !!n && n !== 'Unknown Company').map(escapeRegex)
   // A maxim opens with a general truth about no one: no person, name or figure.
   const firstSentence = body.split(SENTENCE_END)[0] ?? ''
   const namesEmployer = !!opts.companyName && (containsPhrase(firstSentence, opts.companyName) || (!!shortName && containsWord(firstSentence, shortName)))
   if (firstSentence && !ANCHORED_RE.test(firstSentence) && !NAMED_RE.test(firstSentence) && !namesEmployer) {
-    violations.push(`Opens with a general maxim ("${firstSentence.trim()}") — open with something the applicant did, or with the employer's own situation.`)
+    violations.push(`Opens with a general maxim ("${firstSentence.trim()}") — open with something the applicant did or does.`)
+  }
+  // The opening is about the applicant. One that describes the employer back
+  // to them ("Acme builds internal tools…") read as a template hook to the
+  // judge (14 of 72 letters, #206 full eval). A referral names them first.
+  const employerSubject = new RegExp(`^\\s*(?:${[...employers, 'Your'].join('|')})\\b`)
+  if (employerSubject.test(firstSentence) && !/\b(?:suggested|recommended|referred|told me)\b/.test(firstSentence)) {
+    violations.push(`Opens by describing the employer back to them ("${firstSentence.trim()}") — open with something the applicant did or does.`)
   }
   paragraphs.forEach((p, i) => {
     // Years are dates, not figures.
@@ -350,17 +382,22 @@ export function lintLetter(
     violations.push('Restates the job posting ("What stands out in the posting", "Your posting asks for") — write about what the employer does instead, and never name a requirement the applicant lacks.')
   }
 
-  const employers = [opts.companyName, shortName].filter((n): n is string => !!n && n !== 'Unknown Company').map(escapeRegex)
   // The employer is the sentence's subject: "what your team needs" is not the
   // pivot. The close is skipped: "Acme wants X, and that is the first thing
-  // I'd ask about" is the Question close doing its job.
+  // I'd ask about" names what to talk about, which is the close's job.
   const needRe = new RegExp(`^\\s*(?:${[...employers, String.raw`\b[Yy]ou(?:r team)?\b`, String.raw`\b[Tt]he team\b`].join('|')})[^.!?]{0,30}?${NEED_VERB}`)
-  const pivot = bodyParas.flatMap((p) => p.split(SENTENCE_END)).find((s) => {
-    const m = needRe.exec(s)
-    return !!m && PIVOT_RE.test(s.slice(m.index + m[0].length))
-  })
+  const pivot = bodyParas.flatMap((p) => {
+    const sentences = p.split(SENTENCE_END).map((s) => s.trim())
+    return sentences.map((s, i) => {
+      const m = needRe.exec(s)
+      if (!m) return undefined
+      if (PIVOT_RE.test(s.slice(m.index + m[0].length))) return s
+      const next = sentences[i + 1] ?? ''
+      return NEXT_PIVOT_RE.test(next) ? `${s} ${next}` : undefined
+    })
+  }).find(Boolean)
   if (pivot) {
-    violations.push(`Turns the posting back on the employer and claims it ("${pivot.trim()}") — open with something the applicant did, or one concrete detail about the employer, and let the example show the match.`)
+    violations.push(`Turns the posting back on the employer and claims it ("${pivot}") — say what the applicant did, and let the example show the match.`)
   }
 
   // The prompt forbids invented metrics; this catches the ones that slip
@@ -385,5 +422,5 @@ export function buildLintRetryMessage(violations: string[]): string {
 
 ${violations.map((v) => `- ${v}`).join('\n')}
 
-Rewrite the complete letter fixing exactly these issues. Keep everything that already works — the same accomplishments, the same structure, the same specifics — and change only what the violations require. All original rules still apply (250–400 words, plain text, no fabricated qualifications or metrics). Where a fix removes words, replace them with concrete detail from the resume so the letter stays at 250–400 words; never just cut. Output only the finished letter, nothing else.`
+Rewrite the complete letter fixing exactly these issues. Keep everything that already works — the same accomplishments, the same structure, the same specifics — and change only what the violations require. All original rules still apply (250–400 words, plain text, no fabricated qualifications or metrics). Where a fix removes words, or the letter is too short, add concrete detail from the resume (what was done, for whom, with which tools), not more figures, so the letter stays at 250–400 words; never just cut. Output only the finished letter, nothing else.`
 }

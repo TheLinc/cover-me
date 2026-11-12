@@ -74,8 +74,8 @@ const ONLY_INDUSTRY = opt('industry')?.toLowerCase()
 const BASELINE_FILE = join(HERE, QUICK ? 'baseline.json' : 'baseline-full.json')
 
 const SIGN_OFFS = ['Sincerely,', 'Best regards,', 'Kind regards,']
-const HOOKS = ['Achievement-first', 'Problem-solution', 'Bold specific claim']
-const CLOSES = ['Question', 'Next step', 'Project']
+const HOOKS = ['Achievement-first', 'Current work', 'Bold specific claim']
+const CLOSES = ['Next step', 'Project', 'Thanks']
 
 // A low judge score fails a plain run. Under --baseline (the CI gate) it is a
 // warning: the gate fails on drops against the baseline and on the factual
@@ -154,7 +154,7 @@ function staticChecks() {
 
   for (const c of cases) {
     const result = checkFixture(c)
-    const variation: LetterVariation = { signOff: 'Sincerely,', hookPattern: 'Problem-solution', closePattern: 'Next step' }
+    const variation: LetterVariation = { signOff: 'Sincerely,', hookPattern: 'Current work', closePattern: 'Next step' }
     const lp = buildLetterPrompt(c.job, c.resumeText, undefined, variation)
 
     const mustContain: Array<[string, string]> = [
