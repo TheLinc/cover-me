@@ -286,7 +286,7 @@ ${whyCompany}
 
 Paragraph 4 — Close + Call to Action (2–3 sentences):
 Close with the ${variation.closePattern} move:
-- Next step: ask directly for an interview or a short call, and name the one piece of the applicant's own work they would bring to it
+- Next step: ask directly for an interview or a short call to discuss one specific piece of the applicant's own work
 - Project: name one specific piece of the applicant's own work from the resume that bears most on this role, then ask directly for an interview
 - Thanks: thank the reader in a few plain words ("Thank you for reading", never "thanks for your time") and ask directly for an interview
 Do not ask the employer questions about their team or work, and make one request, not a question plus an offer plus a request. Do not recap the letter or list skills again, and never name a duty, tool, or requirement from the posting that the resume does not show. The request is direct and confident — not passive, not demanding.
@@ -316,13 +316,13 @@ Exemplar A (technology):
 """
 Dear Northlight Team,
 
-Last year I cut checkout latency at Ferris Retail from 900ms to 210ms by rebuilding how our React storefront loaded product data. I'm applying for the Senior Frontend Engineer role at Northlight because I want to keep doing that work on a larger storefront.
+Last year I cut checkout latency at Ferris Retail from 900ms to 210ms by rebuilding how our React storefront loaded product data. I'm applying for the Senior Frontend Engineer role at Northlight because I want to keep doing that work on a larger storefront. Before that rebuild I spent two years on the same team building the product pages.
 
 I owned Ferris's storefront platform for three years. I rebuilt the product-listing pipeline in TypeScript and GraphQL and moved image delivery behind edge caching. Before each peak season I ran load tests I had written against that pipeline, and most of the work shipped behind feature flags to 60,000 daily shoppers. When our two-person SRE team was overloaded with alerts, I took the pager for a quarter and removed the alerts nobody acted on, which cut false alarms by about half. I also set up the visual regression checks the team still runs on every pull request.
 
-Last spring I worked on our move off a Rails monolith, including a month when both systems ran side by side. It took three quarters instead of the two we planned, and I kept notes on where the extra quarter went. I wrote the cutover runbook and handled the database switch on the final night. For the last two years I've worked in a pod of five engineers and a designer.
+Last spring I worked on our move off a Rails monolith, including a month when both systems ran side by side. We moved checkout over first and customer accounts last, across eleven weekends. It took three quarters instead of the two we planned, and I kept notes on where the extra quarter went. I wrote the cutover runbook and handled the database switch on the final night. For the last two years I've worked in a pod of five engineers and a designer.
 
-I'd welcome an interview for the role, and I can bring my notes from the Ferris migration to it.
+I'd welcome an interview to discuss the role and how the Ferris migration went.
 
 Sincerely,
 

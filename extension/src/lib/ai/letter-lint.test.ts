@@ -364,3 +364,14 @@ describe('commentary and framing', () => {
 test('the retry asks for detail, not more figures, when it must add words', () => {
   expect(buildLintRetryMessage(['x'])).toContain('not more figures')
 })
+
+// A proof paragraph that lists the whole resume: 8 sentences in a letter
+// generated after the #206 changes. The prompt asks for 4–6 and two accomplishments.
+describe('long proof paragraph', () => {
+  const letter = (...paragraphs: string[]) => `Dear Hiring Manager,\n\n${paragraphs.join('\n\n')}\n\nKind regards,\nAlex Doe`
+  const flagged = (middle: string) =>
+    lintLetter(letter('At Halcyon I cut page load from 1.2s to 400ms.', middle, 'Could we talk next week?')).violations.some((v) => v.startsWith('Paragraph 2 lists'))
+  const s = (n: number) => Array.from({ length: n }, (_, i) => `I shipped release ${i + 1} on time.`).join(' ')
+  test('flags eight sentences', () => expect(flagged(s(8))).toBe(true))
+  test('leaves six alone', () => expect(flagged(s(6))).toBe(false))
+})

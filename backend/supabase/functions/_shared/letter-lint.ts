@@ -340,6 +340,14 @@ export function lintLetter(
   if (employerSubject.test(firstSentence) && !/\b(?:suggested|recommended|referred|told me)\b/.test(firstSentence)) {
     violations.push(`Opens by describing the employer back to them ("${firstSentence.trim()}") — open with something the applicant did or does.`)
   }
+  // A middle paragraph past six sentences lists the resume instead of telling
+  // two accomplishments (8 sentences in a letter after the #206 changes).
+  paragraphs.slice(1, -1).forEach((p, i) => {
+    const sentences = p.split(SENTENCE_END).filter((s) => s.trim()).length
+    if (sentences > 6) {
+      violations.push(`Paragraph ${i + 2} lists ${sentences} sentences of experience — keep the two accomplishments that matter most for this role, told with their context, and cut the rest.`)
+    }
+  })
   paragraphs.forEach((p, i) => {
     // Years are dates, not figures.
     const figures = extractNumbers(p).filter((n) => !/^(19|20)\d\d$/.test(n.norm)).length
