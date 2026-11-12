@@ -43,13 +43,14 @@ function tryAtsSelectors(): JobData | null {
 }
 
 function tryHeuristic(): JobData {
-  // An <h1> is the title when it reads like one: not a listing, section or site
-  // heading, nor the employer's name. In place of an <h1> rejected for being a
-  // section or site heading or the employer, the tab title's job; failing that,
-  // a section heading, since the page is a posting and the user can fix the
-  // title. A site heading alone ("Careers at Acme") isn't a job, so a posting
-  // embedded in a frame of that page wins. Pages with no such <h1> (none, a
-  // logo, a long hero line) never fall back, as before.
+  // The first <h1> that isn't a listing heading is the title when it reads like
+  // one: not a section or site heading, nor the employer's name. In its place,
+  // the tab title's job; failing that, the heading itself, as before, since the
+  // page holds a posting and the user can fix the title. Not a later <h1>: it
+  // can be a hidden dialog's (Shopify's "Do Not Sell/Share My Personal
+  // Information"). A page whose URL names an embedded posting (Greenhouse's
+  // gh_jid, Ashby's ashby_jid) fails instead, so the posting's frame wins.
+  // Pages with no such <h1> (none, a logo, a long hero line) fail, as before.
   const tab = fromTabTitle()
   const company = tab.company.toLowerCase()
   const notTitle = (t: string) => isNavHeading(t) || isSectionHeading(t) || isSiteHeading(t) || t.toLowerCase() === company
@@ -59,9 +60,10 @@ function tryHeuristic(): JobData {
     const text = el.innerText?.trim() ?? ''
     return text.length > 2 && text.length < 120 ? [text] : []
   })
-  const rejected = h1s.some((t) => isSectionHeading(t) || isSiteHeading(t) || t.toLowerCase() === company)
+  const first = h1s.find((t) => !isNavHeading(t))
+  const embedded = /[?&](?:gh_jid|ashby_jid)=/.test(window.location.search)
   const tabJob = tab.title && !notTitle(tab.title) ? tab.title : undefined
-  const title = h1s.find((t) => !notTitle(t)) ?? (rejected ? tabJob ?? h1s.find(isSectionHeading) : undefined)
+  const title = first && (notTitle(first) ? tabJob ?? (embedded ? undefined : first) : first)
 
   // The posting's own container when the page marks it with the job's ID.
   // Else the largest text block that looks like a job description: not a list
@@ -89,12 +91,17 @@ function tryHeuristic(): JobData {
 // Google's careers page puts the posting in a pane marked with the job's ID
 // from the URL (data-id), beside a list of other jobs that's larger than it.
 // The ID's entry in that list is the shorter of the two. The first three
-// numbers in the path are tried, each one query.
+// numbers in the path are tried, each one query; only lengths are kept, and
+// the longest element's text is read again.
 function postingById(): string | undefined {
   for (const id of (window.location.pathname.match(/\d{6,}/g) ?? []).slice(0, 3)) {
-    const text = Array.from(document.querySelectorAll<HTMLElement>(`[data-id="${id}"]`), (el) => el.innerText?.trim() ?? '')
-      .sort((a, b) => b.length - a.length)[0]
-    if (text && text.length > 500) return text
+    let best: HTMLElement | undefined
+    let bestLen = 500
+    for (const el of document.querySelectorAll<HTMLElement>(`[data-id="${id}"]`)) {
+      const len = el.innerText?.trim().length ?? 0
+      if (len > bestLen) [best, bestLen] = [el, len]
+    }
+    if (best) return best.innerText.trim()
   }
 }
 

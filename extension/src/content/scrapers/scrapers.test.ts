@@ -145,15 +145,22 @@ describe('company and title when the page doesn\'t name them (#200)', () => {
     expect(posting(`${'We are hiring people who love numbers, '.repeat(4)}</h1><h1>Overview`, 'Overview').title).toBe('Overview')
   })
 
-  // The part left after "Careers" is the site's name, though the hostname
-  // spells it differently: the top frame fails so an embedded posting wins
-  test('a site heading and a career-site tab title the URL doesn\'t name are no job', () => {
-    expect(() => posting('CAREERS', 'Careers | Hourglass', 'https://www.hourglasscosmetics.com/pages/careers')).toThrow('Could not find job details')
+  // A career page around an embedded posting: the top frame fails so the
+  // posting's frame wins. The part left after "Careers" is the site's name,
+  // and a later <h1> (a hidden privacy dialog's) isn't the title either.
+  test.each([
+    ['CAREERS', 'Careers | Hourglass', 'https://www.hourglasscosmetics.com/pages/careers?gh_jid=8930465002'],
+    ['CAREERS</h1><h1>Do Not Sell/Share My Personal Information', 'Careers | Hourglass', 'https://www.hourglasscosmetics.com/pages/careers?gh_jid=8930465002'],
+    ['Careers at Northwind.', 'Careers | Northwind', 'https://www.northwind.com/careers?ashby_jid=0fe4817e'],
+  ])('a site heading over an embedded posting is no job: %s', (h1, tab, url) => {
+    expect(() => posting(h1, tab, url)).toThrow('Could not find job details')
   })
 
-  // "Careers | Northwind" names only the site: no job to take from it
-  test('a heading and a tab title that name only the site are no job', () => {
-    expect(() => posting('Careers at Northwind.', 'Careers | Northwind')).toThrow('Could not find job details')
+  // Without an embed the posting is on the page: the heading beats failing, as
+  // on master ("MSC CAREER PORTAL", a tab title with no company)
+  test('a site heading stays the title of a posting on the page', () => {
+    expect(posting('NORTHWIND CAREER PORTAL', 'CN - Accounts Receivable Specialist job in Mississauga',
+      'https://northwind-jobs.example.com/job-details/cn-accounts-receivable-specialist-1761413').title).toBe('NORTHWIND CAREER PORTAL')
   })
 
   // The tab title is split by patterns that backtrack on whitespace runs
