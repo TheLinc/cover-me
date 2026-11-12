@@ -319,7 +319,7 @@ export function lintLetter(
     } else if (fullInLetter === 0) {
       violations.push(`Never names the company in full — write "${opts.companyName}" once, then a short form of the name or "you".`)
     } else if (hasShort && fullInBody >= 3) {
-      violations.push(`Repeats the company's full name "${opts.companyName}" ${fullInBody} times — keep it once and use a short form of the name or "you" for the rest.`)
+      violations.push(`Repeats the company's full name "${opts.companyName}" ${fullInBody} times — keep it once, use a short form of the name at least once more, and "you" for the rest.`)
     }
   }
 
