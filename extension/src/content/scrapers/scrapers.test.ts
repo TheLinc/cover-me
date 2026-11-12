@@ -242,6 +242,23 @@ describe('generic heuristic', () => {
     const job = scrape('https://careers.example.com/jobs/1', `<html><body><main><h1>Warehouse Supervisor</h1>
       <div><p>${description}</p></div><aside><h2>Related jobs</h2><ul>${related}</ul></aside></main></body></html>`)
     expect(job).toMatchObject({ title: 'Warehouse Supervisor', description })
+    // ...nor when the tab title names the job in place of the heading
+    const relatedMore = Array.from({ length: 4 }, () => related).join('')
+    const tabbed = scrape('https://careers.acme.com/jobs/1', `<html><head><title>Warehouse Supervisor | Acme</title></head><body><main>
+      <h1>Job Description</h1><div><p>${description}</p></div><aside><ul>${relatedMore}</ul></aside></main></body></html>`)
+    expect(tabbed).toMatchObject({ title: 'Warehouse Supervisor', description })
+    // ...nor a posting sharing its parent with a few cards
+    const cards = Array.from({ length: 3 }, (_, i) => `<div class="card"><a href="/jobs/${i}">Forklift Operator ${i}</a><span>Sydney</span></div>`).join('')
+    const grid = scrape('https://careers.example.com/jobs/1', `<html><body><main><h1>Warehouse Supervisor</h1>
+      <div class="grid"><div class="posting"><p>${description}</p></div>${cards}</div></main></body></html>`)
+    expect(grid.description).toContain(description)
+  })
+
+  // The server's snapshot drops each link's query and fragment, so cards can
+  // share one href
+  test('reads a card listing as no job when its cards share one link', () => {
+    const html = readFileSync(join(__dirname, 'fixtures', 'flyio-jobs.html'), 'utf8').replace(/href="\/jobs\/[^"]+"/g, 'href="/jobs/"')
+    expect(() => scrape(fixtureUrl(html), html)).toThrow('Could not find job details')
   })
 
   // A posting's own lists and sections aren't job cards

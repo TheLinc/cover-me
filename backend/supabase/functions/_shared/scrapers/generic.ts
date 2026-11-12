@@ -66,7 +66,7 @@ function tryHeuristic(): JobData {
   const title = first && (notTitle(first) ? tabJob ?? (embedded ? undefined : first) : first)
 
   // The posting's own container when the page marks it with the job's ID.
-  const description = postingById() ?? largestBlock(first !== undefined && notTitle(first))
+  const description = postingById() ?? largestBlock(first !== undefined && notTitle(first) && !tabJob)
 
   if (!title || !description || description.length < 200) {
     throw new Error(
@@ -83,7 +83,7 @@ function tryHeuristic(): JobData {
 // The block's card lists (a related-jobs panel) are cut from its text; cards
 // three times the size of what's left make the page a listing (Mozilla's
 // table of jobs under an intro). Under a heading that isn't a job's title
-// ("Join Our Team") the page is in doubt, and a block a third or more links
+// ("Join Our Team"), with none in the tab title either, the page is in doubt, and a block a third or more links
 // and card text is a list, as is one outweighed by any list on the page: the
 // listings in #72 measured under half link text, a Greenhouse board under a
 // long intro 49%. Each block's text is measured once, and links nested in a
@@ -121,13 +121,13 @@ function largestBlock(doubtful: boolean): string | undefined {
   return text.replace(/\n{3,}/g, '\n\n').trim()
 }
 
-interface CardGroup { hrefs: Set<string>, cards: Element[] }
-
 // Repeated cards: an element whose children are mostly (two thirds or more)
 // cards of one shape, at least three: the same block tag, class and child tags,
 // a line beside the link (a table row's cells, or two child elements), the
-// first link outside a paragraph or bullet and to a different place, none
-// holding half the list's text. A job list, whatever plain text each card
+// first link outside a paragraph or bullet, each with different text; no child
+// holds half the list's text (a posting beside a few cards). Text, not the
+// link, tells cards apart: the snapshot the server reads drops each link's
+// query and fragment (/careers?gh_jid=1). A job list, whatever plain text each card
 // carries, but also some of a site's menus; not a menu of bare links, nor
 // paragraphs with a link each (a posting's EEO notes), a requirements list
 // that links its tools, or a posting's sections that link from their text.
@@ -152,20 +152,21 @@ function cardLists(nested: Set<Element>): Map<HTMLElement, number> {
     const parent = child.parentElement
     if (!parent || seen.has(parent)) continue
     seen.add(parent)
-    const shapes = new Map<string, CardGroup>()
+    const shapes = new Map<string, Element[]>()
     for (const kid of Array.from(parent.children)) {
       const link = firstLink.get(kid)
       if (!link || !CARD_TAGS.has(kid.tagName) || (kid.tagName !== 'TR' && kid.children.length < 2) || inText(link, kid)) continue
       const shape = `${kid.tagName} ${kid.getAttribute('class') ?? ''} ${Array.from(kid.children, (c) => c.tagName).join()}`
-      const group = shapes.get(shape) ?? { hrefs: new Set(), cards: [] }
-      group.hrefs.add(link.getAttribute('href')!)
-      group.cards.push(kid)
-      shapes.set(shape, group)
+      const cards = shapes.get(shape) ?? []
+      cards.push(kid)
+      shapes.set(shape, cards)
     }
-    const isList = ({ hrefs, cards }: CardGroup) => {
-      if (hrefs.size < 3 || hrefs.size * 3 < parent.children.length * 2) return false
+    const mostly = (n: number) => n >= 3 && n * 3 >= parent.children.length * 2
+    const isList = (cards: Element[]) => {
+      if (!mostly(cards.length)) return false
       const total = parent.textContent?.length ?? 0
-      return cards.every((card) => (card.textContent?.length ?? 0) * 2 < total)
+      if (Array.from(parent.children).some((kid) => (kid.textContent?.length ?? 0) * 2 >= total)) return false
+      return mostly(new Set(cards.map((card) => card.textContent)).size)
     }
     if (Array.from(shapes.values()).some(isList)) lists.add(parent)
   }
@@ -179,10 +180,15 @@ function cardLists(nested: Set<Element>): Map<HTMLElement, number> {
 
 const CARD_TAGS = new Set(['LI', 'DIV', 'ARTICLE', 'SECTION', 'TR'])
 
-// Chrome knows from layout; linkedom has none, so its innerText's markup rules
-// (hidden, inline display:none) are checked up the tree.
+// Chrome knows from layout, though it counts a display: contents wrapper
+// (SvelteKit's app root) as not rendered: its parent answers instead. linkedom
+// has none, so its innerText's markup rules (hidden, inline display:none) are
+// checked up the tree.
 function rendered(el: HTMLElement): boolean {
-  if (typeof el.checkVisibility === 'function') return el.checkVisibility()
+  if (typeof el.checkVisibility === 'function') {
+    if (el.checkVisibility()) return true
+    return getComputedStyle(el).display === 'contents' && !!el.parentElement && rendered(el.parentElement)
+  }
   for (let e: Element | null = el; e; e = e.parentElement) {
     if (e.hasAttribute('hidden') || /display\s*:\s*none/i.test(e.getAttribute('style') ?? '')) return false
   }
