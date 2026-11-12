@@ -132,6 +132,12 @@ const SENTENCE_SHAPES: Array<[RegExp, string]> = [
   [/\b(?:that|this) is [^.!?]{1,60}? in practice[.!]/i, LABEL_MESSAGE],
   [/, not (?:a|an) [\w-]+(?: [\w-]+)?[.!]|\bnot just\b[^.!?]{1,60}\bbut\b/i,
     'Uses an "X, not Y" contrast ("a habit for me, not an afterthought") — state the point once, directly.'],
+  // Council round 4 (#206): invented process told as a heroic contrast, and
+  // as three actions in a row. The resume gave one line for each.
+  [/(?:^|[.!?]\s+)Rather than\b/,
+    'Frames an action against a lesser one ("Rather than keep clearing the exceptions, I went after the cause") — say what the applicant did, plainly, as the resume states it.'],
+  [/\b\w+ed\b[^,.;]{1,45}, \w+ed\b[^,.;]{1,45},? and \w+ed\b/,
+    'Lists three actions in a row ("worked through…, settled on…, and applied…") — keep what the resume states, in one plain clause.'],
   [/\bis (?:a habit|second nature) for me\b/i,
     'Tells the reader about a trait ("is a habit for me") — show it with what the applicant did instead.'],
 ]

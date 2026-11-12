@@ -413,3 +413,22 @@ describe('stock lines', () => {
     expect(flagged('Contains templated connective', 'Separately, I standardized vendor coding.')).toBe(true)
   })
 })
+
+// Council round 4 (#206): invented process told as a heroic contrast and a three-step list.
+describe('story devices', () => {
+  const letter = (...paragraphs: string[]) => `Dear Hiring Manager,\n\n${paragraphs.join('\n\n')}\n\nKind regards,\nAlex Doe`
+  const flagged = (prefix: string, s: string) =>
+    lintLetter(letter('At Halcyon I cut page load from 1.2s to 400ms.', s, 'Could we talk next week?')).violations.some((v) => v.startsWith(prefix))
+  test('flags a "Rather than" contrast', () => {
+    expect(flagged('Frames an action', 'Rather than keep clearing the exceptions one at a time, I went after the cause.')).toBe(true)
+  })
+  test('leaves "I would rather" alone', () => {
+    expect(flagged('Frames an action', 'I would rather work nights than weekends.')).toBe(false)
+  })
+  test('flags three actions in a row', () => {
+    expect(flagged('Lists three actions', 'I worked through how vendors were coded, settled on a single standard, and applied it across the records.')).toBe(true)
+  })
+  test('leaves two actions alone', () => {
+    expect(flagged('Lists three actions', 'I reconciled the accounts and closed the books in five days.')).toBe(false)
+  })
+})
