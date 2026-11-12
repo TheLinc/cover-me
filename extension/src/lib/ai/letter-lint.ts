@@ -335,9 +335,11 @@ export function lintLetter(
   }
 
   const employers = [opts.companyName, shortName].filter((n): n is string => !!n && n !== 'Unknown Company').map(escapeRegex)
-  // The employer is the sentence's subject: "what your team needs" is not the pivot.
+  // The employer is the sentence's subject: "what your team needs" is not the
+  // pivot. The close is skipped: "Acme wants X, and that is the first thing
+  // I'd ask about" is the Question close doing its job.
   const needRe = new RegExp(`^\\s*(?:${[...employers, String.raw`\b[Yy]ou(?:r team)?\b`, String.raw`\b[Tt]he team\b`].join('|')})[^.!?]{0,30}?${NEED_VERB}`)
-  const pivots = body.split(SENTENCE_END).some((s) => {
+  const pivots = paragraphs.slice(0, -1).flatMap((p) => p.split(SENTENCE_END)).some((s) => {
     const m = needRe.exec(s)
     return !!m && PIVOT_RE.test(s.slice(m.index + m[0].length))
   })

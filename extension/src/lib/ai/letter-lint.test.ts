@@ -230,9 +230,17 @@ describe('company name', () => {
 // "[Company] needs X, and that is the work I do": the judge flagged a posting
 // restatement in 27 of 72 letters (#206).
 describe('posting restatement pivot', () => {
-  const pivots = (companyName: string, sentence: string) =>
-    lintLetter(`Dear Hiring Manager,\n\nAt Halcyon I cut page load from 1.2s to 400ms. ${sentence}\n\nKind regards,\nAlex Doe`, { companyName })
+  const lintPivot = (companyName: string, ...paragraphs: string[]) =>
+    lintLetter(`Dear Hiring Manager,\n\n${paragraphs.join('\n\n')}\n\nKind regards,\nAlex Doe`, { companyName })
       .violations.some((v) => v.startsWith('Turns the posting'))
+  const pivots = (companyName: string, sentence: string) =>
+    lintPivot(companyName, `At Halcyon I cut page load from 1.2s to 400ms. ${sentence}`, 'Could we talk next week?')
+
+  // The Question and Next step closes name an employer detail and what to raise first.
+  test.each([
+    'Acme wants the close cut to five days by spring, and that is the first thing I would ask about. Could we talk next week?',
+    "Your team needs the migration done by June; that's the part I would want to hear about first.",
+  ])('leaves the close alone: %s', (close) => expect(lintPivot('Acme', 'At Halcyon I cut page load from 1.2s to 400ms.', close)).toBe(false))
 
   test.each([
     ['Acme Software', "Acme Software needs a Frontend Developer to build internal tools in React and TypeScript, and that is the work I've been doing."],
