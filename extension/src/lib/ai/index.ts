@@ -183,7 +183,7 @@ Keywords: Embed 5–10 JD hard-skill keywords (tools, certifications, methodolog
 
 Action verbs: Strong past-tense for past roles: Led, Built, Designed, Optimized, Launched, Reduced, Generated, Negotiated, Delivered, Streamlined, Partnered, Authored, Exceeded, Drove, Shipped, Architected, Scaled, Mentored. Present tense for current role only.
 
-Voice: Vary sentence length, mixing short sentences with longer ones. A short sentence carries a fact, not a verdict on what came before ("I like that setup.", "I know that view."). If any paragraph reads like a press release or a template essay, rewrite it. Each paragraph should feel distinct in rhythm.
+Voice: Vary sentence length — short punchy sentences mixed with longer ones. If any paragraph reads like a press release or a template essay, rewrite it. Each paragraph should feel distinct in rhythm.
 
 Personalization: Name the company in full once and by name at least once more, using a short form after the first ("Acme" for "Acme Software"); "you" is fine beyond that. The full name three times reads as a template filling in a blank. Include at least one concrete detail drawn from the job description itself — a specific product area, team structure, workflow, or stated challenge — that shows the applicant read this posting carefully. (Echoing the employer's tech stack back is not personalization — see ABSOLUTE PROHIBITIONS.)
 
