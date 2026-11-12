@@ -28,8 +28,13 @@ export function fromTabTitle(): { company: string; title?: string } {
   // looks in <head>, and Amazon's sits in <body>. Whitespace is collapsed and
   // the length capped first, so the patterns above never backtrack far.
   const tab = (document.title || document.querySelector('title')?.textContent || '').slice(0, 1000).replace(/\s+/g, ' ').trim().slice(0, 300)
-  const parts = tab.split(SEPARATOR).map((p) => p.trim().replace(SUFFIX, '').trim())
-    .filter((p) => p && !NOT_A_NAME.test(p))
+  // Whether a part named the site as a career site ("Careers", "Acme Jobs")
+  let careerSite = false
+  const parts = tab.split(SEPARATOR).map((p) => {
+    const name = p.trim().replace(SUFFIX, '').trim()
+    if (name !== p.trim() || /^(?:careers?|jobs?)$/i.test(name)) careerSite = true
+    return name
+  }).filter((p) => p && !NOT_A_NAME.test(p))
 
   // The hostname first (careers.acme.com). Then the path's first segment, where
   // job boards put the employer (jobs.ashbyhq.com/riveron), or a domain in it
@@ -49,8 +54,8 @@ export function fromTabTitle(): { company: string; title?: string } {
   // The job is the first other part, never the site's own name ("Careers |
   // Northwind" on careers.northwind.com has none). Without a company it's only
   // a job when it's the one part left: "Wiz - Director of Finance" could be
-  // either way round.
+  // either way round, and in "Careers | Hourglass" the part left is the site.
   const others = parts.filter((p) => p !== company && !host.has(key(p)))
-  const title = company || others.length === 1 ? others[0] : undefined
+  const title = company || (others.length === 1 && !careerSite) ? others[0] : undefined
   return { company: company ?? 'Unknown Company', title }
 }

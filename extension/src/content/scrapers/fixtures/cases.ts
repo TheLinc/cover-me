@@ -42,6 +42,10 @@ export const FIXTURE_CASES = [
   { board: 'amazon', title: 'Software Engineer', company: 'Amazon', ends: 'please contact your Recruiting Partner.' },
   // The <h1> reads "job details"; the posting sits beside a list of other jobs
   { board: 'google-careers', title: 'Senior Staff Software Engineer, Generative AI, Search Intelligence', company: 'Google', ends: 'Current or past grants do not confer an acquired right.' },
+  // The same posting opened by clicking it in the search results (saved by
+  // hand: fixtures:save loads postings directly). A "Search Jobs" <h1> comes
+  // first, and the job list beside the posting is larger than it.
+  { board: 'google-careers-search', title: 'Senior Staff Software Engineer, Generative AI, Search Intelligence', company: 'Google', ends: 'Current or past grants do not confer an acquired right.' },
   // Phenom: JSON-LD with an empty hiringOrganization name
   { board: 'phenom', title: 'Home Health Licensed Practical Nurse', company: 'Humana', ends: 'at all levels of employment.' },
   // Every <h1> is a section heading ("Key Responsibilities"); the tab title is

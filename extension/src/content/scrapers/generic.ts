@@ -34,8 +34,8 @@ function tryAtsSelectors(): JobData | null {
     const company = firstText(['[data-qa="company"]', '[class*="company-name"]', '.selected-application-pane .section-header + * > .section-title'])
       // job-boards.greenhouse.io names the company only in the tab title,
       // which its embeds (/embed/job_app?for=...) don't put in the path
-      // (capped: the pattern retries at every " at ")
-      ?? document.title.slice(0, 300).match(/^Job Application for .+ at (.+)$/)?.[1]?.trim()
+      // (not on long titles: the pattern retries at every " at ")
+      ?? (document.title.length <= 300 ? document.title : '').match(/^Job Application for .+ at (.+)$/)?.[1]?.trim()
       ?? fromTabTitle().company
     return { title, company, description, url: window.location.href }
   }
@@ -52,43 +52,30 @@ function tryHeuristic(): JobData {
   // logo, a long hero line) never fall back, as before.
   const tab = fromTabTitle()
   const company = tab.company.toLowerCase()
+  const notTitle = (t: string) => isNavHeading(t) || isSectionHeading(t) || isSiteHeading(t) || t.toLowerCase() === company
   // Only headings of title length are kept: every <h1>'s text would cost
   // elements x depth of memory on nested ones.
   const h1s = Array.from(document.querySelectorAll<HTMLElement>('h1')).flatMap((el) => {
     const text = el.innerText?.trim() ?? ''
     return text.length > 2 && text.length < 120 ? [text] : []
   })
-  const section = h1s.find(isSectionHeading)
-  const rejected = section ?? h1s.find((t) => isSiteHeading(t) || t.toLowerCase() === company)
-  const title = h1s.find((t) => !isNavHeading(t) && !isSectionHeading(t) && !isSiteHeading(t) && t.toLowerCase() !== company) ??
-    (rejected && !h1s.some(isNavHeading) ? tab.title ?? section : undefined)
+  const rejected = h1s.some((t) => isSectionHeading(t) || isSiteHeading(t) || t.toLowerCase() === company)
+  const tabJob = tab.title && !notTitle(tab.title) ? tab.title : undefined
+  const title = h1s.find((t) => !notTitle(t)) ?? (rejected ? tabJob ?? h1s.find(isSectionHeading) : undefined)
 
-  // Find the largest text block that looks like a job description: not a list
+  // The posting's own container when the page marks it with the job's ID.
+  // Else the largest text block that looks like a job description: not a list
   // of links, which is a job board's listing or a "similar jobs" panel.
   // Postings measured 0 to 21% link text, Greenhouse's board listing 95%.
   // Each block's text is measured once, and links nested in a link (linkedom
   // allows them) aren't read, so each block costs one walk of its subtree.
-  // Only lengths are kept (every block's text would be elements x depth of
-  // memory); the winner's is read again.
-  // A block that opens with the title is the posting itself, without the page
-  // around it (Google's careers page holds the posting beside a list of jobs).
   const nested = new Set(document.querySelectorAll('a a'))
-  const blocks = Array.from(document.querySelectorAll<HTMLElement>('div, section, article'))
-    .map((el) => {
-      const text = el.innerText?.trim() ?? ''
-      return { el, len: text.length, opens: !!title && text.startsWith(title) }
-    })
+  const description = postingById() ?? Array.from(document.querySelectorAll<HTMLElement>('div, section, article'))
+    .map((el) => ({ el, len: el.innerText?.trim().length ?? 0 }))
     .filter(({ len }) => len > 500 && len < 20000)
     .sort((a, b) => b.len - a.len)
-  // ...when it sits inside the largest and what it leaves out is mostly links:
-  // a header or intro that opens with the title mustn't cut off the rest of
-  // the posting beside it.
-  const isPosting = ({ el, len }: { el: HTMLElement; len: number }) => linkTextLength(el, nested) < len / 2
-  const largest = blocks.find(isPosting)
-  const largestLinks = largest ? linkTextLength(largest.el, nested) : 0
-  const opening = largest && blocks.find((b) => b.opens && b !== largest && largest.el.contains(b.el) &&
-    largestLinks - linkTextLength(b.el, nested) > (largest.len - b.len) / 2)
-  const description = (opening || largest)?.el.innerText.trim()
+    .find(({ el, len }) => linkTextLength(el, nested) < len / 2)
+    ?.el.innerText.trim()
 
   if (!title || !description || description.length < 200) {
     throw new Error(
@@ -97,6 +84,18 @@ function tryHeuristic(): JobData {
   }
 
   return { title, company: tab.company, description, url: window.location.href }
+}
+
+// Google's careers page puts the posting in a pane marked with the job's ID
+// from the URL (data-id), beside a list of other jobs that's larger than it.
+// The ID's entry in that list is the shorter of the two. The first three
+// numbers in the path are tried, each one query.
+function postingById(): string | undefined {
+  for (const id of (window.location.pathname.match(/\d{6,}/g) ?? []).slice(0, 3)) {
+    const text = Array.from(document.querySelectorAll<HTMLElement>(`[data-id="${id}"]`), (el) => el.innerText?.trim() ?? '')
+      .sort((a, b) => b.length - a.length)[0]
+    if (text && text.length > 500) return text
+  }
 }
 
 // Section headings some postings put in an <h1> ("Key Responsibilities",
@@ -116,7 +115,7 @@ function isNavHeading(text: string): boolean {
   const navPhrases = [
     'job matches', 'job listings', 'search results', 'find jobs',
     'browse jobs', 'open positions', 'career opportunities', 'all jobs',
-    'jobs at', 'we\'re hiring', 'open roles', 'current openings', 'job openings',
+    'jobs at', 'we\'re hiring', 'open roles', 'current openings', 'job openings', 'search jobs',
   ]
   return navPhrases.some((p) => lower.includes(p))
 }

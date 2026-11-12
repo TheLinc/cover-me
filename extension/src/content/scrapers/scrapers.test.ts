@@ -145,6 +145,12 @@ describe('company and title when the page doesn\'t name them (#200)', () => {
     expect(posting(`${'We are hiring people who love numbers, '.repeat(4)}</h1><h1>Overview`, 'Overview').title).toBe('Overview')
   })
 
+  // The part left after "Careers" is the site's name, though the hostname
+  // spells it differently: the top frame fails so an embedded posting wins
+  test('a site heading and a career-site tab title the URL doesn\'t name are no job', () => {
+    expect(() => posting('CAREERS', 'Careers | Hourglass', 'https://www.hourglasscosmetics.com/pages/careers')).toThrow('Could not find job details')
+  })
+
   // "Careers | Northwind" names only the site: no job to take from it
   test('a heading and a tab title that name only the site are no job', () => {
     expect(() => posting('Careers at Northwind.', 'Careers | Northwind')).toThrow('Could not find job details')
