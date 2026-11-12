@@ -211,6 +211,35 @@ export function isCurrentParse(parsed: ParsedResume | null | undefined): parsed 
 export function upgradedParse(cached: ParsedResume | null | undefined, fresh: ParsedResume): ParsedResume {
   return cached && Array.isArray(cached.otherSections) ? withSectionOrder({ ...cached, sectionOrder: fresh.sectionOrder }) : fresh
 }
+// The parse with the section order the user chose in the editor (#197).
+// order: a tailored resume's sectionOrder with its deleted sections put back;
+// headings: its extra sections' headings, in that order. Each extra section
+// is matched to the parse's by heading, then by place, so moves between them
+// carry over. A section the order leaves out goes back to its old index.
+export function withChosenOrder<T extends ParsedResume>(parsed: T, order: unknown, headings: unknown): T & { sectionOrder: NonNullable<ParsedResume['sectionOrder']> } {
+  const norm = (s: unknown) => (typeof s === 'string' ? s.trim().toLowerCase() : '')
+  const own = Array.isArray(parsed.otherSections) ? parsed.otherSections : []
+  const left = own.map((_, i) => i)
+  const named = (Array.isArray(headings) ? headings : []).map((h) => {
+    const i = left.find((j) => norm(own[j]!.heading) === norm(h))
+    if (i === undefined) return -1
+    left.splice(left.indexOf(i), 1)
+    return i
+  })
+  const placed = named.map((i) => (i >= 0 ? i : left.shift())).filter((i): i is number => i !== undefined)
+  const otherSections = [...placed, ...left].map((i) => own[i]!)
+  const keys: unknown[] = Array.isArray(order) ? [...order] : []
+  let others = keys.filter((k) => k === 'other').length
+  for (const [i, k] of (parsed.sectionOrder ?? []).entries()) {
+    if (k === 'other' ? others-- > 0 : keys.includes(k)) continue
+    keys.splice(Math.min(i, keys.length), 0, k)
+  }
+  // withSectionOrder puts the summary first, as a parse has it; the user may have moved it.
+  const { sectionOrder } = withSectionOrder({ ...parsed, otherSections, sectionOrder: keys as ParsedResume['sectionOrder'] })
+  const at = keys.indexOf('summary')
+  const rest = sectionOrder.slice(1)
+  return { ...parsed, otherSections, sectionOrder: at > 0 && rest.length ? [...rest.slice(0, at), 'summary', ...rest.slice(at)] : sectionOrder }
+}
 // ── End mirrored parse normalizers ──
 
 export async function parseResumeStructure(resumeText: string, apiKey: string): Promise<ParsedResume> {

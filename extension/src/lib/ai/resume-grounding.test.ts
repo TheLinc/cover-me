@@ -144,6 +144,10 @@ describe('an edited previous version', () => {
     expect(seenVersion(original, { ...previous, experience: [...previous.experience, ...previous.experience], editedAt: 'x' })).toBe(original)
     expect(seenVersion(original, { ...previous, experience: [], editedAt: 'x' }).experience).toEqual([])
     expect(seenVersion(original, previous)).toBe(original)
+    // #197: the order the user set and the sections they deleted carry over.
+    const deletedSections = [{ key: 'skills', index: 2, skills: 'React' }]
+    const moved = seenVersion(original, { ...noSkills, sectionOrder: ['experience', 'summary'], deletedSections, editedAt: 'x' })
+    expect(moved).toMatchObject({ sectionOrder: ['experience', 'summary'], deletedSections })
   })
 
   describe('keepSeen', () => {

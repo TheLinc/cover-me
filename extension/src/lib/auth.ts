@@ -564,6 +564,17 @@ export async function saveResumeEditToBackend(accessToken: string, id: string, r
   if (!res.ok && res.status !== 404) throw new Error(`Server error ${res.status}`)
 }
 
+// The section order the user chose in the editor, for the account's later
+// tailored resumes (#197). headings: the extra sections' headings, in order.
+export async function saveSectionOrderToBackend(accessToken: string, sectionOrder: string[], headings: string[]): Promise<void> {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/resume`, {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sectionOrder, headings }),
+  })
+  if (!res.ok) throw new Error(`Server error ${res.status}`)
+}
+
 export async function deleteApplicationFromBackend(accessToken: string, id: string): Promise<void> {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/applications?id=${encodeURIComponent(id)}`, {
     method: 'DELETE',

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { editedResume, remainingGaps, saveResumeEdit, shownSections, withSections } from './resume-edit'
+import { chosenOrder, editedResume, remainingGaps, restoreSection, saveResumeEdit, shownSections, withSections } from './resume-edit'
 import { getTailoredHistory } from './storage'
 import type { TailoredResume } from '../types'
 
@@ -129,5 +129,60 @@ describe('moving and deleting sections', () => {
     const r = withSections(resume, shownSections(resume).filter((s) => s.key !== 'experience' && s.key !== 'education'))
     expect(r.experience).toEqual([])
     expect(r.education).toEqual([])
+  })
+})
+
+describe('restoring a deleted section', () => {
+  const titled = (r: TailoredResume) => shownSections(r).map((s) => (s.key === 'other' ? r.otherSections![s.index].heading : s.key))
+  const without = (r: TailoredResume, key: string) => withSections(r, shownSections(r).filter((s) => (s.key === 'other' ? r.otherSections![s.index].heading : s.key) !== key))
+
+  test.each(['summary', 'experience', 'projects', 'education', 'certifications', 'skills', 'Talks'])('%s comes back with its text, in its place', (key) => {
+    const deleted = without(resume, key)
+    expect(titled(deleted)).not.toContain(key)
+    expect(deleted.deletedSections).toHaveLength(1)
+    const back = restoreSection(deleted, 0)
+    expect(titled(back)).toEqual(titled(resume))
+    expect(back.deletedSections).toEqual([])
+    const { sectionOrder: _o, deletedSections: _d, ...content } = back
+    expect(content).toEqual(resume)
+  })
+
+  test('an extra section between two others goes back between them', () => {
+    const three = { ...resume, otherSections: [{ heading: 'Talks', lines: ['x'] }, { heading: 'Volunteering', lines: ['Food bank'] }, { heading: 'Awards', lines: ['y'] }] }
+    const back = restoreSection(without(three, 'Volunteering'), 0)
+    expect(back.otherSections).toEqual(three.otherSections)
+    expect(titled(back)).toEqual(titled(three))
+  })
+
+  test('moving sections leaves nothing to restore', () => {
+    const [summary, experience, ...rest] = shownSections(resume)
+    expect(withSections(resume, [experience, summary, ...rest]).deletedSections).toBeUndefined()
+  })
+
+  test('a stored place past the end of the list clamps to the end', () => {
+    const deleted = without(resume, 'summary')
+    const back = restoreSection({ ...deleted, deletedSections: [{ ...deleted.deletedSections![0], index: 99 }] }, 0)
+    expect(titled(back).slice(-1)[0]).toBe('summary')
+    expect(back.summary).toBe(resume.summary)
+  })
+
+  test('a deleted section prints nowhere', () => {
+    const deleted = without(resume, 'certifications')
+    expect(deleted.certifications).toBeUndefined()
+    expect(titled(deleted)).not.toContain('certifications')
+  })
+})
+
+describe('the order saved for future resumes', () => {
+  test('is the shown order, with deleted sections back in their places', () => {
+    const two = { ...resume, otherSections: [{ heading: 'Talks', lines: ['x'] }, { heading: 'Awards', lines: ['y'] }] }
+    const [summary, experience, , education, certifications, skills, talks, awards] = shownSections(two)
+    const deleted = withSections(two, [summary, experience, education, certifications, skills, talks, awards])
+    const [s, e, ed, c, sk, t, a] = shownSections(deleted)
+    const moved = withSections(deleted, [s, e, ed, c, sk, a, t])
+    expect(chosenOrder(moved)).toEqual({
+      sectionOrder: ['summary', 'experience', 'projects', 'education', 'certifications', 'skills', 'other', 'other'],
+      headings: ['Awards', 'Talks'],
+    })
   })
 })

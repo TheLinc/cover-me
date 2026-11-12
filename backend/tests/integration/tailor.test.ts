@@ -113,6 +113,19 @@ describe('tailor', () => {
       expect(resume.hasEdits).toBeUndefined()
     })
 
+    // #197: Regenerate changes wording, not layout or what the user deleted.
+    it('keeps the order and the deleted sections of an edited previous, and the prompt never sees their text', async () => {
+      const sectionOrder = ['skills', 'other', 'summary', 'experience', 'education']
+      const deletedSections = [{ key: 'certifications', index: 5, certifications: ['Deleted cert text'] }]
+      const resume = await regenerate({ ...previous, sectionOrder, deletedSections, editedAt: '2026-11-09T00:00:00Z' })
+      expect(resume.sectionOrder).toEqual(sectionOrder)
+      expect(resume.deletedSections).toEqual(deletedSections)
+      const prompt = await revisionPrompt()
+      expect(prompt).toContain('REVISION MODE')
+      expect(prompt).not.toContain('Deleted cert text')
+      expect(prompt).not.toContain('deletedSections')
+    })
+
     it("a term only in an edited previous's gap list is still dropped", async () => {
       const resume = await regenerate({ ...MOCK_PARSED_RESUME, atsGaps: ['Kafka'], atsGapsBeforeEdits: ['Kafka'], editedAt: '2026-11-09T00:00:00Z' })
       expect(resume.skills).toBe('TypeScript, Postgres, React, Data Pipelines')

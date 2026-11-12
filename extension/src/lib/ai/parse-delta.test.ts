@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import { mergeTailorDelta, parseDelta } from './resume-tailor'
+import { assembleTailored, buildPrompt, mergeTailorDelta, parseDelta } from './resume-tailor'
+import type { ParsedResume, TailoredResume } from '../../types'
 
 const delta = (summary: string) => JSON.stringify({ summary, experience: [{ bullets: ['Led {setup} of 3 sites'] }], keywordMatch: { tier1Missing: [] } }, null, 2)
 
@@ -62,5 +63,44 @@ describe('mergeTailorDelta other sections', () => {
     const base = { experience: [{ bullets: ['Ran qPCR assays'] }], otherSections }
     const delta = { experience: [{ bullets: ['Ran qPCR assays for 3 programs'] }], otherSections: [{ heading: 'AWARDS', lines: ['Nobel Prize'] }] }
     expect(mergeTailorDelta(base, delta as Parameters<typeof mergeTailorDelta>[1]).otherSections).toBe(otherSections)
+  })
+})
+
+// #197: Regenerate changes wording, not layout or what the user deleted.
+describe('Regenerate after section edits', () => {
+  const parsed = {
+    name: 'Pat Lee', email: 'pat@example.com', phone: '', website: '',
+    experience: [{ title: 'Engineer', company: 'Northwind', location: '', dates: '2022', bullets: ['Built the billing service'] }],
+    education: [{ institution: 'State U', degree: 'BSc', location: '', dates: '2018', bullets: [] }],
+    skills: 'TypeScript',
+    certifications: ['AWS SAA'],
+    otherSections: [{ heading: 'Talks', lines: ['Spoke at a meetup'] }, { heading: 'Awards', lines: ['Hackathon winner'] }],
+    sectionOrder: ['summary', 'experience', 'education', 'certifications', 'skills', 'other', 'other'],
+  } as ParsedResume
+  const previous: TailoredResume = {
+    ...parsed,
+    summary: 'Backend engineer.',
+    certifications: undefined,
+    otherSections: [{ heading: 'Awards', lines: ['Hackathon winner'] }, { heading: 'Talks', lines: ['Spoke at a meetup'] }],
+    sectionOrder: ['other', 'skills', 'summary', 'experience', 'education', 'other'],
+    deletedSections: [{ key: 'certifications', index: 4, certifications: ['Deleted cert text'] }],
+    editedAt: '2026-11-12T00:00:00Z',
+  }
+  const raw = JSON.stringify({ summary: 'Reworded.', experience: [{ bullets: ['Built the billing service'] }] })
+
+  test('keeps the order, extra sections included, and what was deleted', async () => {
+    const resume = await assembleTailored(parsed, raw, { jobDescription: 'Engineer', previous })
+    expect(resume.sectionOrder).toEqual(previous.sectionOrder)
+    expect(resume.otherSections).toEqual(previous.otherSections)
+    expect(resume.deletedSections).toEqual(previous.deletedSections)
+    expect(resume.certifications).toBeUndefined()
+  })
+
+  test("the prompt never sees a deleted section's text", () => {
+    const job = { title: 'Engineer', company: 'Acme', description: 'Engineer' } as Parameters<typeof buildPrompt>[0]
+    const prompt = buildPrompt(job, parsed, false, undefined, false, true, previous)
+    expect(prompt).toContain('REVISION MODE')
+    expect(prompt).not.toContain('Deleted cert text')
+    expect(prompt).not.toContain('deletedSections')
   })
 })
