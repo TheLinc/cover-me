@@ -61,11 +61,36 @@ describe('company and title when the page doesn\'t name them (#200)', () => {
   // A wrong name is worse than none: a part the URL doesn't name may be a
   // place or a requisition number, and a job board names itself
   test.each([
-    ['a place', 'Senior Auditor - Remote', 'https://careers.example.com/jobs/79'],
-    ['a requisition number', 'Senior Auditor - R0012345', 'https://careers.example.com/jobs/79'],
-    ['a job board', 'Senior Auditor - Northwind | SEEK', 'https://www.seek.com.au/job/79'],
-  ])('a tab title ending in %s keeps Unknown Company', (_, tab, url) => {
-    expect(posting('Senior Auditor', tab, url)).toMatchObject({ title: 'Senior Auditor', company: 'Unknown Company' })
+    ['a place', 'Senior Auditor', 'Senior Auditor - Remote', 'https://careers.example.com/jobs/79'],
+    ['a requisition number', 'Senior Auditor', 'Senior Auditor - R0012345', 'https://careers.example.com/jobs/79'],
+    ['a job board', 'Senior Auditor', 'Senior Auditor - Northwind | SEEK', 'https://www.seek.com.au/job/79'],
+    // Path segments other than the first are places and job slugs
+    ['a place the path names', 'Senior Auditor', 'Senior Auditor - Atlanta', 'https://careers.example.com/job/atlanta/senior-auditor/79'],
+    ['a job the path names', 'Auditor', 'Auditor | Northwind', 'https://careers.example.com/jobs/auditor'],
+    ['a locale the path names', 'Auditor', 'Auditor - US | Northwind', 'https://careers.example.com/us/en/job/79'],
+  ])('a tab title with %s keeps Unknown Company', (_, h1, tab, url) => {
+    expect(posting(h1, tab, url)).toMatchObject({ title: h1, company: 'Unknown Company' })
+  })
+
+  test('the hostname wins over the path', () => {
+    expect(posting('Auditor', 'Auditor - US | Northwind', 'https://careers.northwind.com/us/en/job/79'))
+      .toMatchObject({ title: 'Auditor', company: 'Northwind' })
+  })
+
+  // An embedded Greenhouse form's URL is /embed/job_app?for=anthropic: the
+  // company is only in the tab title's own wording
+  test('Greenhouse embed', () => {
+    const html = readFileSync(join(__dirname, 'fixtures', 'greenhouse.html'), 'utf8')
+    expect(scrape('https://job-boards.greenhouse.io/embed/job_app', html).company).toBe('Anthropic')
+  })
+
+  // The tab title is read once per scrape, not once per JSON-LD posting
+  test('many JSON-LD postings without a company and a long tab title stay cheap', () => {
+    const nodes = JSON.stringify(Array.from({ length: 2000 }, () => ({ '@type': 'JobPosting', title: 'x', description: 'y' })))
+    const start = performance.now()
+    expect(() => scrape('https://careers.example.com/jobs/79',
+      `<!doctype html><html><head><title>${'a '.repeat(500_000)}</title><script type="application/ld+json">${nodes}</script></head><body></body></html>`)).toThrow()
+    expect(performance.now() - start).toBeLessThan(2000)
   })
 
   // "Careers | Northwind" names only the site: no job to take from it

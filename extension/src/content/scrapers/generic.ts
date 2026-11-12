@@ -32,7 +32,9 @@ function tryAtsSelectors(): JobData | null {
 
   if (title && description) {
     const company = firstText(['[data-qa="company"]', '[class*="company-name"]', '.selected-application-pane .section-header + * > .section-title'])
-      // job-boards.greenhouse.io names the company only in the tab title
+      // job-boards.greenhouse.io names the company only in the tab title,
+      // which its embeds (/embed/job_app?for=...) don't put in the path
+      ?? document.title.match(/^Job Application for .+ at (.+)$/)?.[1]?.trim()
       ?? fromTabTitle().company
     return { title, company, description, url: window.location.href }
   }
@@ -57,21 +59,20 @@ function tryHeuristic(): JobData {
   // Postings measured 0 to 21% link text, Greenhouse's board listing 95%.
   // Each block's text is measured once, and links nested in a link (linkedom
   // allows them) aren't read, so each block costs one walk of its subtree.
+  // Only lengths are kept (every block's text would be elements x depth of
+  // memory); the winner's is read again.
   // A block that opens with the title is the posting itself, without the page
   // around it (Google's careers page holds the posting beside a list of jobs).
   const nested = new Set(document.querySelectorAll('a a'))
   const blocks = Array.from(document.querySelectorAll<HTMLElement>('div, section, article'))
-    .flatMap((el) => {
-      // Only blocks in range keep their text: holding every block's would cost
-      // elements x depth of memory on deep pages
+    .map((el) => {
       const text = el.innerText?.trim() ?? ''
-      return text.length > 500 && text.length < 20000 ? [{ el, text }] : []
+      return { el, len: text.length, opens: !!title && text.startsWith(title) }
     })
-    .sort((a, b) => b.text.length - a.text.length)
-  const isPosting = ({ el, text }: { el: HTMLElement; text: string }) => linkTextLength(el, nested) < text.length / 2
-  const description = (
-    (title && blocks.filter(({ text }) => text.startsWith(title)).find(isPosting)) || blocks.find(isPosting)
-  )?.text
+    .filter(({ len }) => len > 500 && len < 20000)
+    .sort((a, b) => b.len - a.len)
+  const isPosting = ({ el, len }: { el: HTMLElement; len: number }) => linkTextLength(el, nested) < len / 2
+  const description = (blocks.filter((b) => b.opens).find(isPosting) ?? blocks.find(isPosting))?.el.innerText.trim()
 
   if (!title || !description || description.length < 200) {
     throw new Error(

@@ -27,15 +27,24 @@ export function fromTabTitle(): { company: string; title?: string } {
   // A browser's document.title is the first <title> anywhere; linkedom's only
   // looks in <head>, and Amazon's sits in <body>. Whitespace is collapsed and
   // the length capped first, so the patterns above never backtrack far.
-  const tab = (document.title || document.querySelector('title')?.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 300)
+  const tab = (document.title || document.querySelector('title')?.textContent || '').slice(0, 1000).replace(/\s+/g, ' ').trim().slice(0, 300)
   const parts = tab.split(SEPARATOR).map((p) => p.trim().replace(SUFFIX, '').trim())
     .filter((p) => p && !NOT_A_NAME.test(p))
+  if (parts.length < 2) return { company: 'Unknown Company' }
 
-  // Hyphenated path segments are skipped: they're job slugs
-  // ("/jobs/senior-auditor"), and would match the title.
+  // The hostname first (careers.acme.com). Then the path's first segment, where
+  // job boards put the employer (jobs.ashbyhq.com/riveron), or a domain in it
+  // (/position/2552/ramon.space). Other segments are places and job slugs
+  // ("/job/atlanta/accountant"), and locales ("/us/en") are too short to count.
   const { hostname, pathname } = window.location
-  const urlKeys = new Set([...hostname.split('.'), ...pathname.split('/').filter((s) => !/[-_]/.test(s))].map(key).filter(Boolean))
-  const company = parts.length > 1 ? parts.find((p) => urlKeys.has(key(p)) && !BOARDS.has(key(p))) : undefined
+  // Hyphenated segments are job slugs ("/senior-auditor") and would match the title.
+  const [first = '', ...rest] = pathname.split('/').filter(Boolean)
+  const fromPath = [first, ...rest.filter((s) => s.includes('.'))].filter((s) => !/[-_]/.test(s))
+  const named = (keys: string[]) => {
+    const set = new Set(keys.map(key).filter((k) => k.length > 2 && !BOARDS.has(k)))
+    return [...parts].reverse().find((p) => set.has(key(p)))
+  }
+  const company = named(hostname.split('.')) ?? named(fromPath)
   if (!company) return { company: 'Unknown Company' }
   return { company, title: parts.find((p) => p !== company) }
 }

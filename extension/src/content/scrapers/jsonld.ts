@@ -17,9 +17,12 @@ export function jobFromJsonLd(): JobData | null {
       if (!types.includes('JobPosting')) continue
       const title = htmlToText(String(node.title ?? node.name ?? ''))
       const org = node.hiringOrganization as { name?: unknown } | string | undefined
-      const company = htmlToText(String((typeof org === 'object' ? org?.name : org) ?? '')) || fromTabTitle().company
+      const company = htmlToText(String((typeof org === 'object' ? org?.name : org) ?? ''))
       const description = htmlToText(String(node.description ?? ''))
-      if (title && description.length > 100) return { title, company, description, url: window.location.href }
+      // The tab title is read once, for the posting returned, not per node
+      if (title && description.length > 100) {
+        return { title, company: company || fromTabTitle().company, description, url: window.location.href }
+      }
     }
   }
   return null
