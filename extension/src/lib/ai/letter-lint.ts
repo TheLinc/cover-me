@@ -274,7 +274,7 @@ export function lintLetter(
     // Years are dates, not figures.
     const figures = extractNumbers(p).filter((n) => !/^(19|20)\d\d$/.test(n.norm)).length
     if (figures > 4) {
-      violations.push(`Paragraph ${i + 1} has ${figures} figures — keep the one number that matters most for each achievement, at most four in a paragraph.`)
+      violations.push(`Paragraph ${i + 1} has ${figures} figures — keep the one number that matters most for each achievement, at most four in a paragraph, and say the rest in words instead of dropping the achievement.`)
     }
   })
   if (paragraphs.length > 1 && RECAP_RE.test(lastPara)) {
@@ -321,5 +321,5 @@ export function buildLintRetryMessage(violations: string[]): string {
 
 ${violations.map((v) => `- ${v}`).join('\n')}
 
-Rewrite the complete letter fixing exactly these issues. Keep everything that already works — the same accomplishments, the same structure, the same specifics — and change only what the violations require. All original rules still apply (250–400 words, plain text, no fabricated qualifications or metrics). Output only the finished letter, nothing else.`
+Rewrite the complete letter fixing exactly these issues. Keep everything that already works — the same accomplishments, the same structure, the same specifics — and change only what the violations require. All original rules still apply (250–400 words, plain text, no fabricated qualifications or metrics). Where a fix removes words, replace them with concrete detail from the resume so the letter stays at 250–400 words; never just cut. Output only the finished letter, nothing else.`
 }
