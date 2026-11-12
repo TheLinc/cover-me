@@ -299,7 +299,7 @@ Action verbs: Strong past-tense for past roles: Led, Built, Designed, Optimized,
 
 Voice: Vary sentence length — short punchy sentences mixed with longer ones. If any paragraph reads like a press release or a template essay, rewrite it. Each paragraph should feel distinct in rhythm.
 
-Personalization: Name the company in full once, and refer to it at least twice in all: after the full name, use a short form ("Acme" for "Acme Software") or "you". The full name three times reads as a template filling in a blank. Include at least one concrete detail drawn from the job description itself — a specific product area, team structure, workflow, or stated challenge — that shows the applicant read this posting carefully. (Echoing the employer's tech stack back is not personalization — see ABSOLUTE PROHIBITIONS.)
+Personalization: Name the company in full once and by name at least once more, using a short form after the first ("Acme" for "Acme Software"); "you" is fine beyond that. The full name three times reads as a template filling in a blank. Include at least one concrete detail drawn from the job description itself — a specific product area, team structure, workflow, or stated challenge — that shows the applicant read this posting carefully. (Echoing the employer's tech stack back is not personalization — see ABSOLUTE PROHIBITIONS.)
 
 ---
 
