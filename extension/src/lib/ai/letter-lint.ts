@@ -293,7 +293,7 @@ export function lintLetter(
   }
 
   if (wordCount < 100) {
-    violations.push(`Letter body is ${wordCount} words — too short; expand to 120–250 words. If the letter tells only one accomplishment, add a second from the resume with its result. Give each story its setting from the resume's facts about the same job (team, volume, tools, scope). Never restate a fact, list unrelated resume items, or guess what the resume does not say (an employer's industry or location, a new claim about the applicant).`)
+    violations.push(`Letter body is ${wordCount} words — too short; expand to 120–250 words. If the letter tells only one accomplishment, add a second from the resume with its result. Where the resume says how an accomplishment was done, tell that inside its own sentence. Never add a scene-setting sentence, restate a fact, list unrelated resume items, or guess what the resume does not say (an employer's industry or location, a new claim about the applicant).`)
   } else if (wordCount > 320) {
     violations.push(`Letter body is ${wordCount} words — too long; tighten to 120–250 words.`)
   }
