@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { ParsedResume } from '../../types'
 import { orderedSections } from '../pdf/sections'
-import { isCurrentParse, parseParsedJson, parseResumeStructure, upgradedParse, withSectionOrder } from './resume-parse'
+import { isCurrentParse, parseParsedJson, parseResumeStructure, upgradedParse, withChosenOrder, withSectionOrder } from './resume-parse'
 
 const RESUME = { name: 'A', email: 'a@x.co', experience: [], education: [{ institution: 'U of T' }] }
 const json = JSON.stringify(RESUME)
@@ -165,5 +165,49 @@ describe('the section order comes from the resume text', () => {
     const fields = { experience: [job('RN', 'General', ['Triage'])], education: [school], skills: 'Epic', otherSections: [], sectionOrder: ['skills', 'experience', 'education'] }
     expect(parse('EXPERIENCE\nRN — General\n- Triage\n\nEDUCATION\nB.S. in Statistics — University of Michigan', fields)).toEqual(['summary', 'skills', 'experience', 'education'])
     expect(parseParsedJson(JSON.stringify({ name: 'P', email: '', phone: '', website: '', ...fields })).sectionOrder).toEqual(['summary', 'skills', 'experience', 'education'])
+  })
+})
+
+// #197: "Use this order for future resumes?" in the editor.
+describe('withChosenOrder', () => {
+  const job = { title: 'RN', company: 'General', location: '', dates: '', bullets: ['Triage'] }
+  const school = { institution: 'U of T', degree: 'BScN', location: '', dates: '', bullets: [] }
+  const parsed = {
+    name: 'P', email: '', phone: '', website: '', experience: [job], education: [school], skills: 'Epic',
+    otherSections: [{ heading: 'Talks', lines: ['x'] }, { heading: 'Awards', lines: ['y'] }],
+    sectionOrder: ['summary', 'experience', 'education', 'skills', 'other', 'other'],
+  } as ParsedResume
+  const headings = (p: ParsedResume) => p.otherSections!.map((s) => s.heading)
+
+  test('takes the order, summary and extra sections included', () => {
+    const next = withChosenOrder(parsed, ['other', 'skills', 'summary', 'experience', 'education', 'other'], ['Awards', 'Talks'])
+    expect(next.sectionOrder).toEqual(['other', 'skills', 'summary', 'experience', 'education', 'other'])
+    expect(headings(next)).toEqual(['Awards', 'Talks'])
+    expect(next.experience).toEqual(parsed.experience)
+  })
+
+  test('the summary keeps its place among the sections the parse has', () => {
+    // An emptied certifications list shows in the editor, but the parse has none.
+    expect(withChosenOrder(parsed, ['certifications', 'summary', 'experience', 'education', 'skills', 'other', 'other'], []).sectionOrder)
+      .toEqual(['summary', 'experience', 'education', 'skills', 'other', 'other'])
+    expect(withChosenOrder(parsed, ['experience', 'projects', 'summary', 'education', 'skills', 'other', 'other'], []).sectionOrder)
+      .toEqual(['experience', 'summary', 'education', 'skills', 'other', 'other'])
+  })
+
+  test('an extra section renamed in the editor is matched by its place', () => {
+    const next = withChosenOrder(parsed, ['summary', 'other', 'experience', 'education', 'skills', 'other'], ['Awards', 'My talks'])
+    expect(headings(next)).toEqual(['Awards', 'Talks'])
+  })
+
+  test('a section the order leaves out keeps its place, and one the parse lacks is dropped', () => {
+    const next = withChosenOrder(parsed, ['summary', 'skills', 'experience', 'projects', 'other', 'other'], ['Talks', 'Awards'])
+    expect(next.sectionOrder).toEqual(['summary', 'skills', 'education', 'experience', 'other', 'other'])
+    expect(isCurrentParse(next)).toBe(true)
+  })
+
+  test('junk leaves the parse in a valid order', () => {
+    const next = withChosenOrder(parsed, 'nope', 42)
+    expect(next.sectionOrder).toEqual(parsed.sectionOrder)
+    expect(headings(next)).toEqual(['Talks', 'Awards'])
   })
 })

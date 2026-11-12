@@ -65,14 +65,15 @@ function plainWord(term: string): boolean {
 /**
  * Every string value in the candidate's resume (keys excluded), plus any
  * supplemental context they verified. Not the section order (#165): its
- * "experience" or "education" would ground "Customer Experience".
+ * "experience" or "education" would ground "Customer Experience". Nor a
+ * deleted section's key (#197), for the same reason.
  */
 export function candidateText(resume: unknown, supplemental?: string): string {
   const out: string[] = supplemental ? [supplemental] : []
   const walk = (v: unknown): void => {
     if (typeof v === 'string') out.push(v)
     else if (Array.isArray(v)) v.forEach(walk)
-    else if (v && typeof v === 'object') Object.entries(v).forEach(([k, x]) => k !== 'sectionOrder' && walk(x))
+    else if (v && typeof v === 'object') Object.entries(v).forEach(([k, x]) => k !== 'sectionOrder' && k !== 'key' && walk(x))
   }
   walk(resume)
   return out.join('\n')
@@ -106,8 +107,10 @@ function editedVersion(previous: unknown): Record<string, unknown> | undefined {
   return prev?.editedAt || prev?.hasEdits === true ? prev : undefined
 }
 
-// A resume's content, as opposed to scores and other metadata.
-const CONTENT_KEYS = ['name', 'phone', 'email', 'website', 'links', 'location', 'summary', 'experience', 'projects', 'education', 'skills', 'certifications', 'otherSections']
+// A resume's content, as opposed to scores and other metadata, with the
+// section order and the sections deleted in the editor (#197): Regenerate
+// changes wording, not layout or what the user removed.
+const CONTENT_KEYS = ['name', 'phone', 'email', 'website', 'links', 'location', 'summary', 'experience', 'projects', 'education', 'skills', 'certifications', 'otherSections', 'sectionOrder', 'deletedSections']
 
 /**
  * What Regenerate revises (#171): when the version the candidate saw holds

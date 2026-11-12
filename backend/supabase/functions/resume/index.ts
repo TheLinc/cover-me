@@ -2,7 +2,7 @@ import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2'
 import { handleCors, json } from '../_shared/cors.ts'
 import { heartbeatJson } from '../_shared/heartbeat-json.ts'
 import { decrypt, encrypt, sameCiphertext } from '../_shared/encrypt.ts'
-import { isCurrentParse, isValidParsedResume, parseResumeStructure, type ParsedResume, upgradedParse } from '../_shared/resume-parse.ts'
+import { isCurrentParse, isValidParsedResume, parseResumeStructure, type ParsedResume, upgradedParse, withChosenOrder } from '../_shared/resume-parse.ts'
 import { readBody } from '../_shared/read-body.ts'
 
 const SUPABASE_URL        = Deno.env.get('SUPABASE_URL')!
@@ -12,6 +12,7 @@ const MAX_RESUME_BYTES    = 100_000 // 100 KB — well above any real resume tex
 const MAX_DOCX_BYTES      = 2 * 1024 * 1024
 const MAX_DOCX_BODY       = Math.ceil(MAX_DOCX_BYTES / 3) * 4 + 1_000
 const SHA256_HEX          = /^[0-9a-f]{64}$/
+const MAX_ORDER_BYTES     = 10_000 // a section order and its extra sections' headings (#197)
 const ANTHROPIC_API_KEY   = Deno.env.get('ANTHROPIC_API_KEY')!
 // Background parses per account. Uploads aren't charged like generations,
 // so this bounds the Haiku calls one account can cause by re-uploading (or
@@ -168,6 +169,40 @@ Deno.serve(async (req) => {
     EdgeRuntime.waitUntil(parseNow(supabase, userId, text, text_encrypted))
 
     return json({ success: true })
+  }
+
+  // PATCH — the section order the user chose in the editor (#197), for later
+  // tailored resumes: { sectionOrder, headings }, matched to the parse by
+  // withChosenOrder. Only the order and the extra sections' order change.
+  if (req.method === 'PATCH') {
+    const raw = await readBody(req, MAX_ORDER_BYTES)
+    if (raw === null) return json({ error: 'Request too large' }, 413)
+    let body: { sectionOrder?: unknown; headings?: unknown } | null
+    try {
+      body = JSON.parse(raw)
+    } catch {
+      return json({ error: 'Invalid request body' }, 400)
+    }
+    if (!Array.isArray(body?.sectionOrder)) return json({ error: 'Missing sectionOrder' }, 400)
+
+    const { data: row } = await supabase.from('resumes').select('text_encrypted, structured_encrypted').eq('user_id', userId).maybeSingle()
+    const parsed = await readParse(row?.structured_encrypted ?? null)
+    if (!row) return json({ error: 'Upload your resume in Cover Me first.' }, 404)
+    // One from before the order was kept (#165) is upgraded by the next tailor.
+    if (!isCurrentParse(parsed)) return json({ error: parsed ? 'Tailor once with your current resume first.' : 'Your resume is still being read. Wait a minute.' }, 404)
+    const structured = withChosenOrder(parsed, body.sectionOrder, body.headings)
+    let structured_encrypted: string
+    try {
+      structured_encrypted = await encrypt(JSON.stringify(structured))
+    } catch {
+      return json({ error: 'Encryption failed' }, 500)
+    }
+    // Only if the resume text wasn't replaced meanwhile: a new upload has its own order.
+    const { data: saved, error } = await supabase.from('resumes').update({ structured_encrypted })
+      .eq('user_id', userId).like('text_encrypted', sameCiphertext(row.text_encrypted)).select('user_id')
+    if (error) return json({ error: 'Failed to save the order' }, 500)
+    if (!saved?.length) return json({ error: 'Your resume was replaced. Its own order applies.' }, 409)
+    return json({ success: true, sectionOrder: structured.sectionOrder })
   }
 
   // DELETE — remove resume

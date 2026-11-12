@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
-  admin, callFunction, createUser, deleteUser, LONG_RESUME_TEXT, mockClaude, parsedResume, RESUME_TEXT, type TestUser, uploadResume, waitForParsedResume,
+  admin, callFunction, createUser, deleteUser, JOB, LONG_RESUME_TEXT, mockClaude, parsedResume, RESUME_TEXT, type TestUser, uploadResume, waitForParsedResume,
 } from './helpers'
 
 const isParse = (r: { messages: Array<{ content: string }> }) => r.messages[0].content.startsWith('You are a resume parser')
@@ -122,5 +122,39 @@ describe('resume', () => {
     expect(del.status).toBe(200)
     const res = await callFunction('resume', { token: user.token })
     expect(res.status).toBe(404)
+  })
+})
+
+// #197: "Use this order for future resumes?" in the editor.
+describe('saving a section order', () => {
+  let user: TestUser
+  beforeEach(async () => {
+    await mockClaude.reset()
+    user = await createUser()
+  })
+  afterEach(() => deleteUser(user))
+
+  const save = (body: unknown) => callFunction('resume', { token: user.token, method: 'PATCH', body })
+
+  it('the next tailored resume uses it', async () => {
+    await uploadResume(user)
+    const sectionOrder = ['skills', 'other', 'summary', 'experience', 'education']
+    const res = await save({ sectionOrder, headings: ['Volunteer Work'] })
+    expect(res.status).toBe(200)
+    expect((await res.json()).sectionOrder).toEqual(sectionOrder)
+    const { resume } = await (await callFunction('tailor', { token: user.token, body: { job: JOB } })).json()
+    expect(resume.sectionOrder).toEqual(sectionOrder)
+    // The saved parse is current, so tailoring didn't parse again.
+    expect((await mockClaude.requests()).filter(isParse)).toHaveLength(0)
+  })
+
+  it('needs a parsed resume', async () => {
+    expect((await save({ sectionOrder: ['skills'], headings: [] })).status).toBe(404)
+  })
+
+  it('rejects a body without an order', async () => {
+    await uploadResume(user)
+    expect((await save({ headings: [] })).status).toBe(400)
+    expect((await callFunction('resume', { token: user.token, method: 'PATCH', rawBody: new TextEncoder().encode('nope') })).status).toBe(400)
   })
 })
