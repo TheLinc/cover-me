@@ -62,11 +62,12 @@ async function saveOrderForLater(r: TailoredResume): Promise<void> {
   const { sectionOrder, headings } = chosenOrder(r)
   if ((await getMode()) === 'hosted') {
     const session = await ensureValidSession()
-    if (!session) throw new Error('Signed out')
+    if (!session) throw new Error('Sign in again, then try again.')
     return saveSectionOrderToBackend(session.access_token, sectionOrder, headings)
   }
   const parsed = (await getResume())?.parsed
-  if (!isCurrentParse(parsed)) throw new Error('No parse to save it to')
+  // A new upload isn't read until its first tailor.
+  if (!isCurrentParse(parsed)) throw new Error('Tailor once with your current resume, then try again.')
   await saveParsedResume(withChosenOrder(parsed, sectionOrder, headings))
 }
 
@@ -94,7 +95,7 @@ export default function Editor() {
   const lastStep = useRef<{ field: Element | null; at: number }>({ field: null, at: 0 })
   const [note, setNote] = useState('') // what the last section delete removed
   const focusNext = useRef<string | null>(null) // a control to focus once the form re-renders
-  const [orderAsk, setOrderAsk] = useState<{ state: OrderAsk; at: number }>({ state: '', at: 0 }) // at: the moved section's place
+  const [orderAsk, setOrderAsk] = useState<{ state: OrderAsk; at: number; error?: string }>({ state: '', at: 0 }) // at: the moved section's place
   const [dirty, setDirty] = useState(false)
   const [status, setStatus] = useState<Status>('')
   const [preview, setPreview] = useState<ArrayBuffer | null>(null)
@@ -280,11 +281,13 @@ export default function Editor() {
   async function saveOrder() {
     if (!current) return
     setOrderAsk((a) => ({ ...a, state: 'saving' }))
+    // A move while it saves asks again; the answer doesn't cover that one.
+    const settle = (state: OrderAsk, error?: string) => setOrderAsk((a) => (a.state === 'saving' ? { ...a, state, error } : a))
     try {
       await saveOrderForLater(current)
-      setOrderAsk((a) => ({ ...a, state: 'saved' }))
-    } catch {
-      setOrderAsk((a) => ({ ...a, state: 'failed' }))
+      settle('saved')
+    } catch (err) {
+      settle('failed', err instanceof Error ? err.message : undefined)
     }
   }
 
@@ -316,7 +319,7 @@ export default function Editor() {
         <button type="button" className="text-link" onClick={() => setOrderAsk({ state: '', at: 0 })}>No</button></>}
       {orderAsk.state === 'saving' && 'Saving the order…'}
       {orderAsk.state === 'saved' && 'Your next tailored resumes will use this order.'}
-      {orderAsk.state === 'failed' && <>Couldn't save the order. <button type="button" className="text-link" onClick={saveOrder}>Try again</button></>}
+      {orderAsk.state === 'failed' && <>Couldn't save the order. {orderAsk.error} <button type="button" className="text-link" onClick={saveOrder}>Try again</button></>}
     </p>
   )
 

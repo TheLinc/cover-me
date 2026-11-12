@@ -572,7 +572,10 @@ export async function saveSectionOrderToBackend(accessToken: string, sectionOrde
     headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ sectionOrder, headings }),
   })
-  if (!res.ok) throw new Error(`Server error ${res.status}`)
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({})) as Record<string, unknown>
+    throw new Error((data.error as string) ?? `Server error ${res.status}`)
+  }
 }
 
 export async function deleteApplicationFromBackend(accessToken: string, id: string): Promise<void> {
