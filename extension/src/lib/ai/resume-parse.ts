@@ -28,7 +28,8 @@ RULES:
 5. "headline": the professional title line printed directly under the name, if any ("Applied AI Engineer"), copied verbatim; "" when the resume has none. Never a job title taken from the experience section
 6. "projects": copy each project's URL into "link" and a line listing its technologies into "tech", verbatim, instead of putting them in the name or the bullets; "" when absent
 7. "otherSections": every other section goes here, in the order it appears: publications, volunteer work, clinical rotations or placements, awards, languages, memberships, interests, references, and anything else. Copy the heading exactly as written and each line or bullet verbatim, without its bullet marker. Volunteer roles and student clinical rotations, placements, practicums or clerkships go here even when they are laid out like jobs, with titles, organizations and dates; a paid position stays in experience. Never put contact details or a summary, profile or objective here; the summary is not part of the output. A list of tools, software or programming languages belongs in "skills". Use [] when the resume has no other sections. When a section is made of entries, each a name with lines such as a role, placing, issuer, date or URL and then bullets (open-source packages, awards, hackathons, publications with details), give it "entries" instead of "lines": the name, the role or placing line as "subtitle", any URL as "link", any date as "dates", and the bullets verbatim. Lines that are not part of an entry go in "lines"
-8. Return ONLY valid JSON — no explanation, no markdown fences, no text before or after
+8. "sectionOrder": the resume's sections from top to bottom, one entry each: "experience", "projects", "education", "certifications" or "skills" for those sections, and "other" for each entry of "otherSections", where it sits. Leave out the contact details and the summary
+9. Return ONLY valid JSON — no explanation, no markdown fences, no text before or after
 
 JSON structure (omit "projects", "skills", "certifications" entirely if those sections do not exist in the resume):
 {
@@ -73,7 +74,8 @@ JSON structure (omit "projects", "skills", "certifications" entirely if those se
       "lines": ["each line copied verbatim"],
       "entries": [{ "name": "Entry name", "subtitle": "role or placing line", "link": "URL or empty string", "dates": "date or empty string", "bullets": ["bullet copied verbatim"] }]
     }
-  ]
+  ],
+  "sectionOrder": ["certifications", "experience", "other", "education", "skills"]
 }
 
 RESUME:
@@ -144,9 +146,103 @@ export function withDetails<T extends object>(parsed: T): T {
   }
   return out as T
 }
+
+// Which standard sections the parse has content for.
+function sectionsPresent(parsed: ParsedResume): Record<string, boolean> {
+  return {
+    experience: parsed.experience.length > 0,
+    projects: Array.isArray(parsed.projects) && parsed.projects.length > 0,
+    education: parsed.education.length > 0,
+    certifications: Array.isArray(parsed.certifications) && parsed.certifications.length > 0,
+    skills: typeof parsed.skills === 'string' && parsed.skills.trim().length > 0,
+  }
+}
+
+// Where the resume's sections sit in its text (#165). The parse model often
+// lists them in its JSON's order (experience, projects, education, skills)
+// rather than the resume's, so each section the parse has is found by its own
+// verbatim copies instead: each line of the text counts for the section whose
+// strings cover most of it, and a section sits at its best-covered line. null
+// when a section can't be found, so the model's order stands.
+export function sectionOrderFromText(parsed: ParsedResume, resumeText: string): NonNullable<ParsedResume['sectionOrder']> | null {
+  const norm = (s: unknown) => (typeof s === 'string' ? s.toLowerCase().replace(/\s+/g, ' ').trim() : '')
+  const strings = (xs: unknown[]) => xs.flat(2).map(norm).filter((s) => s.length >= 3)
+  const present = sectionsPresent(parsed)
+  const sections: Array<{ key: NonNullable<ParsedResume['sectionOrder']>[number]; strings: string[] }> = [
+    { key: 'experience' as const, strings: strings(parsed.experience.map((e) => [e?.title, e?.company, e?.bullets])) },
+    { key: 'projects' as const, strings: strings((parsed.projects ?? []).map((p) => [p?.name, p?.bullets])) },
+    { key: 'education' as const, strings: strings(parsed.education.map((e) => [e?.institution, e?.degree, e?.bullets])) },
+    { key: 'certifications' as const, strings: strings(parsed.certifications ?? []) },
+    { key: 'skills' as const, strings: strings(typeof parsed.skills === 'string' ? parsed.skills.split(/[,;•|\n]/) : []) },
+  ].filter((s) => present[s.key])
+  for (const o of parsed.otherSections ?? []) sections.push({ key: 'other', strings: strings([o.heading, o.lines, (o.entries ?? []).map((e) => [e?.name, e?.subtitle, e?.bullets])]) })
+
+  // A string inside the line counts its length; a line inside a longer string
+  // (a bullet the text wraps) counts the line's.
+  const cover = (line: string, ss: string[]) => ss.reduce((n, s) => n + (line.includes(s) ? s.length : line.length >= 12 && s.includes(line) ? line.length : 0), 0)
+  const best = sections.map(() => ({ line: -1, score: 0 }))
+  resumeText.split('\n').map(norm).forEach((line, i) => {
+    if (line.length < 3) return
+    const scores = sections.map((s) => cover(line, s.strings))
+    const top = Math.max(...scores)
+    const k = scores.indexOf(top)
+    // A tie could be either section's line.
+    if (top > 0 && scores.lastIndexOf(top) === k && top > best[k]!.score) best[k] = { line: i, score: top }
+  })
+  if (best.some((b) => b.line < 0)) return null
+  return sections.map((s, i) => ({ key: s.key, line: best[i]!.line })).sort((a, b) => a.line - b.line).map((s) => s.key)
+}
+
+// The order the resume's sections sat in (#165), which the layouts print
+// them in: each standard section the parse has, once, and an "other" for each
+// extra section at most. The tailor writes the summary, so it leads. Taken
+// from the resume text when given (sectionOrderFromText), else the model's.
+// Always an array, [] when nothing valid is left: the tailor treats a cached
+// parse without one as made before the order was kept, and parses again. Run
+// after withOtherSections, which settles the number of extra sections.
+export function withSectionOrder<T extends ParsedResume>(parsed: T, resumeText?: string): T & { sectionOrder: NonNullable<ParsedResume['sectionOrder']> } {
+  const raw = (resumeText ? sectionOrderFromText(parsed, resumeText) : null) ?? (parsed as { sectionOrder?: unknown }).sectionOrder
+  const unplaced = sectionsPresent(parsed)
+  let others = Array.isArray(parsed.otherSections) ? parsed.otherSections.length : 0
+  const order: NonNullable<ParsedResume['sectionOrder']> = []
+  for (const key of Array.isArray(raw) ? raw : []) {
+    if (key === 'other') {
+      if (others > 0) {
+        others--
+        order.push(key)
+      }
+    } else if (typeof key === 'string' && unplaced[key] === true) {
+      unplaced[key] = false
+      order.push(key as (typeof order)[number])
+    }
+  }
+  return { ...parsed, sectionOrder: order.length ? ['summary', ...order] : [] }
+}
+
+// A cached parse made since the parse kept extra sections (#54) and section
+// order (#165). One from before is parsed again, once.
+export function isCurrentParse(parsed: ParsedResume | null | undefined): parsed is ParsedResume & Required<Pick<ParsedResume, 'otherSections' | 'sectionOrder'>> {
+  return Array.isArray(parsed?.otherSections) && Array.isArray(parsed?.sectionOrder) && fullParse(parsed)
+}
+
+// Made by a parser that read the whole resume (PARSE_VERSION): an older one
+// stopped at 12,000 characters and dropped headlines, project links and section
+// entries, so its content can't be kept.
+function fullParse(parsed: ParsedResume | null | undefined): boolean {
+  return ((parsed as { parseVersion?: unknown } | null | undefined)?.parseVersion as number ?? 1) >= PARSE_VERSION
+}
+
+// What replaces a cached parse that isn't current, given a fresh parse of the
+// same text. One that only lacks the order keeps its content and takes the
+// fresh order, so a Word design checked against it still lines up. Anything
+// older, including a parse from before PARSE_VERSION, is replaced.
+export function upgradedParse(cached: ParsedResume | null | undefined, fresh: ParsedResume): ParsedResume {
+  return cached && Array.isArray(cached.otherSections) && fullParse(cached) ? withSectionOrder({ ...cached, sectionOrder: fresh.sectionOrder }) : fresh
+}
 // ── End mirrored parse normalizers ──
 
-export function parseParsedJson(raw: string): ParsedResume {
+// resumeText: the text parsed, which places the sections (sectionOrderFromText).
+export function parseParsedJson(raw: string, resumeText?: string): ParsedResume {
   const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
   let parsed: unknown
   try {
@@ -157,7 +253,7 @@ export function parseParsedJson(raw: string): ParsedResume {
   if (!isValidParsedResume(parsed)) {
     throw new Error('Resume parse returned incomplete data. Please try again.')
   }
-  return withDetails(withLinks(withOtherSections(parsed)))
+  return { ...withDetails(withSectionOrder(withLinks(withOtherSections(parsed)), resumeText)), parseVersion: PARSE_VERSION }
 }
 
 export async function parseResumeStructure(
@@ -191,7 +287,7 @@ export async function parseResumeStructure(
       const err = (await res.json().catch(() => ({}))) as { error?: { message?: string } }
       throw new Error(err.error?.message ?? `Claude API error ${res.status}`)
     }
-    return { ...parseParsedJson(await readSseText(res, claudeDelta)), parseVersion: PARSE_VERSION }
+    return parseParsedJson(await readSseText(res, claudeDelta), resumeText)
   }
 
   // OpenAI
@@ -207,7 +303,7 @@ export async function parseResumeStructure(
     const err = (await res.json().catch(() => ({}))) as { error?: { message?: string } }
     throw new Error(err.error?.message ?? `OpenAI API error ${res.status}`)
   }
-  return { ...parseParsedJson(await readSseText(res, chatDelta)), parseVersion: PARSE_VERSION }
+  return parseParsedJson(await readSseText(res, chatDelta), resumeText)
 }
 
 function chatDelta(ev: Record<string, unknown>): string | undefined {

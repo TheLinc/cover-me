@@ -5,10 +5,10 @@ import { corsHeaders, handleCors, json } from '../_shared/cors.ts'
 import { decrypt, encrypt, sameCiphertext } from '../_shared/encrypt.ts'
 import { findOrCreateJobApplication } from '../_shared/job-application.ts'
 import { isUuid } from '../_shared/history-upload.ts'
-import { isValidParsedResume, parseResumeStructure, type ParsedResume } from '../_shared/resume-parse.ts'
+import { isCurrentParse, isValidParsedResume, parseResumeStructure, type ParsedResume, upgradedParse } from '../_shared/resume-parse.ts'
 import { buildsOnEdits, candidateText, checkAndRewriteLines, groundSkills, groundTailored, keepSeen, seenVersion, skillGroups, trustedNotes } from '../_shared/resume-grounding.ts'
 import { scoreFromMatch } from '../_shared/ats-score.ts'
-import { capture } from '../_shared/posthog.ts'
+import { captureUsage } from '../_shared/posthog.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SECRET_KEY = Deno.env.get('SERVICE_KEY')!
@@ -534,16 +534,19 @@ Deno.serve(async (req) => {
     // (Haiku, verbatim extraction) and cache it encrypted for future tailors.
     // resume/index.ts clears the cache when the text changes and usually parses
     // it ahead in the background, so this parse is the fallback. A cached copy
-    // without otherSections predates them (#54) and is parsed again once.
-    let structured: ParsedResume | null = null
+    // without otherSections (#54) or sectionOrder (#165) predates them and is
+    // parsed again once (upgradedParse keeps the content of one that only
+    // lacks the order).
+    let cached: ParsedResume | null = null
     if (resumeRow.structured_encrypted) {
       try {
         const decoded = JSON.parse(await decrypt(resumeRow.structured_encrypted))
-        if (isValidParsedResume(decoded) && Array.isArray(decoded.otherSections)) structured = decoded
+        if (isValidParsedResume(decoded)) cached = decoded
       } catch {
-        structured = null
+        cached = null
       }
     }
+    let structured: ParsedResume | null = isCurrentParse(cached) ? cached : null
     if (!structured) {
       let resumeText: string
       try {
@@ -553,10 +556,14 @@ Deno.serve(async (req) => {
         return { error: 'Failed to read resume. Please re-upload.', status: 500 }
       }
       try {
-        structured = await parseResumeStructure(resumeText, ANTHROPIC_API_KEY)
+        structured = upgradedParse(cached, await parseResumeStructure(resumeText, ANTHROPIC_API_KEY))
       } catch {
-        await refund()
-        return { error: 'Could not process your resume. Please try again.', status: 502 }
+        // One without the order (#165) still tailors, in the standard order.
+        if (!Array.isArray(cached?.otherSections)) {
+          await refund()
+          return { error: 'Could not process your resume. Please try again.', status: 502 }
+        }
+        structured = cached
       }
       // Cache best-effort — a failed write just means we re-parse next time.
       try {
@@ -704,8 +711,8 @@ Deno.serve(async (req) => {
     if (buildsOnEdits(previous)) resume.hasEdits = true
 
     // One count per hosted run, with the tailor's options and no resume or
-    // job text. A failed send never fails the run.
-    EdgeRuntime.waitUntil(capture('tailor_run', userId, { tier, compact, trim, includeSummary, layout, fellBack }))
+    // job text, unless the account opted out. A failed send never fails the run.
+    EdgeRuntime.waitUntil(captureUsage(supabase, 'tailor_run', userId, { tier, compact, trim, includeSummary, layout, fellBack }))
 
     // Every account's job goes on its board; the resume itself is kept for
     // Pro only. Non-fatal if either fails. Under the extension's local ID

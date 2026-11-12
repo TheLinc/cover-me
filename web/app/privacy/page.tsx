@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
 }
 
-const EFFECTIVE_DATE = 'November 9, 2026'
+const EFFECTIVE_DATE = 'November 24, 2026'
 const CONTACT_EMAIL  = 'support@cover-me.dev'
 
 // ── Section heading ────────────────────────────────────────────────────────
@@ -307,27 +307,34 @@ export default function PrivacyPage() {
                 generation request to authenticate you.
               </Li>
               <Li>
-                <strong className="text-foreground">Usage count (Hosted mode).</strong>{' '}
+                <strong className="text-foreground">Generation count (Hosted mode).</strong>{' '}
                 We record the number of AI generations (cover letters and resume tailoring combined)
                 per day per account to enforce the free allowance and Pro's fair-use limit. Apart from Supabase&apos;s
                 short-lived request logs (see Third-Party Services), all a Free user&apos;s generation
-                leaves on our backend is this count and the job details under Application history: no
-                letter or resume content is recorded server-side.
+                leaves on our backend is this count and the job details under Application history, plus
+                usage counts sent to PostHog unless you opt out (see Usage counts below): no letter or resume
+                content is recorded server-side.
               </Li>
               <Li>
                 <strong className="text-foreground">Rate-limit counter (all modes).</strong>{' '}
-                To stop abuse of the posting reader, our server counts requests per IP address. It
+                To stop abuse of the posting reader, the Request this site and Report bug buttons, and the record made when you remove the extension, our server counts requests per IP address. It
                 stores a keyed hash (HMAC) of the address, never the address itself. When it reads a
                 newly uploaded resume, or a message from the dashboard&apos;s support form, it also counts
                 per account, keyed by a hash of your account ID.
                 A counter not updated for two days is deleted at the next cleanup, which runs during later requests.
               </Li>
               <Li>
-                <strong className="text-foreground">Tailor option counts (Hosted mode).</strong>{' '}
-                Each resume tailored in Hosted mode sends one count to PostHog with your Cover Me account ID and
-                the options used: your plan, whether compact, remove irrelevant bullets and include summary were
-                on, which layout was used, and whether your own design fell back to ours. No resume or job text
-                is sent, and PostHog keeps no profile of you from it. Tailors in BYOK mode aren&apos;t counted.
+                <strong className="text-foreground">Usage counts (Hosted mode, unless you opt out).</strong>{' '}
+                To decide what to improve, our server counts which features you use, such as the file type
+                you upload, the tailoring options you pick and whether you regenerate. Each count goes to
+                PostHog with your Cover Me account ID, your plan and those choices, and PostHog keeps no
+                profile of you from it. Apart from your account ID and the time, a count holds only yes-or-no answers and choices from a fixed list. It
+                never includes your resume, letters, the context you add, job or company details, file names
+                or posting addresses. There are no usage counts in BYOK mode. To stop them for your account,
+                email{' '}
+                <a href={`mailto:${CONTACT_EMAIL}`} className="text-brand-light hover:text-foreground transition-colors">
+                  {CONTACT_EMAIL}
+                </a>.
               </Li>
               <Li>
                 <strong className="text-foreground">Site requests and bug reports (only when you press the button).</strong>{' '}
@@ -399,8 +406,8 @@ export default function PrivacyPage() {
             <H3>Information we do NOT collect</H3>
             <Ul>
               <Li>We do not track your browsing history. We receive a page&apos;s address only when you activate the extension on it.</Li>
-              <Li>The extension contains no analytics or telemetry code. It only gives Chrome the uninstall survey&apos;s address, which records the removal if you were signed in (see above). In BYOK mode the only thing it sends to Cover Me is the job page you activate it on, once you have agreed, so we can read the posting. Your resume and API key never reach us.</Li>
-              <Li>In hosted mode our servers count how many letters and resumes you generate, to enforce the generation limits, and log errors. Logs never contain your resume, letters, or job descriptions.</Li>
+              <Li>The extension contains no analytics or telemetry code. It only gives Chrome the uninstall survey&apos;s address, which records the removal if you were signed in (see above). In BYOK mode the only things it sends to Cover Me are the job page you activate it on, once you have agreed, so we can read the posting, and what Request this site or Report bug sends if you press one. Your resume and API key never reach us.</Li>
+              <Li>In hosted mode our servers count how many letters and resumes you generate, to enforce the generation limits, count which features you use unless you opt out (see Usage counts above), and log errors, which also go to Sentry (see Third-Party Services). Logs, error reports and counts never contain your resume, letters, or job descriptions.</Li>
               <Li>We do not use cookies for tracking or advertising.</Li>
               <Li>We do not collect any data from tabs other than the active job posting tab, and only when you explicitly activate the extension.</Li>
               <Li>We do not sell, rent, or trade your data to any third party.</Li>
@@ -408,7 +415,7 @@ export default function PrivacyPage() {
 
             {/* ── 3. How We Use Your Information ──────────────────────── */}
             <H2 id="how-we-use">How We Use Your Information</H2>
-            <P>We use the information we collect exclusively to provide the Cover Me service:</P>
+            <P>We use the information we collect only for these purposes:</P>
             <Ul>
               <Li>To read the job posting on the page you ask the extension to read.</Li>
               <Li>To protect the service from abuse, with rate limits.</Li>
@@ -422,6 +429,7 @@ export default function PrivacyPage() {
               <Li>To email you about new features, only if you&apos;ve agreed to it (Hosted mode). You can stop them at any time.</Li>
               <Li>To send one getting-started email a day after you sign up, if you haven&apos;t generated anything yet and haven&apos;t removed the extension while signed in (Hosted mode). You can unsubscribe from it.</Li>
               <Li>To count, in aggregate, how many accounts sign up and use the service.</Li>
+              <Li>To see which features people use, so we know what to improve (Hosted mode, unless you opt out).</Li>
             </Ul>
             <P>
               We do not use your data for advertising, profiling, training AI models, or any purpose
@@ -596,14 +604,16 @@ export default function PrivacyPage() {
 
             <PermissionCard name="https://ncnmkxzrygnwjiciyxqs.supabase.co/*">
               <strong className="text-foreground">Used by:</strong> Every mode, to read job postings
-              (from version 1.3.0). Everything else is Hosted mode only.
+              (from version 1.3.0) and to send site requests and bug reports when you press the button.
+              Everything else is Hosted mode only.
               <br /><br />
               <strong className="text-foreground">Why it is needed:</strong> The extension
               communicates with our Supabase backend for the following user-initiated purposes:
               <ul className="mt-2 space-y-1 pl-4 list-disc">
                 <li>Reading the job posting (every mode): sending the stripped copy of the page you click Generate or Tailor Resume on, and getting back the job title, company and description. The page is not stored.</li>
+                <li>Site requests and bug reports (every mode, only when you press the button): sending what Request this site or Report bug sends, as described under Information We Collect.</li>
                 <li>Authentication: signing in, signing up, signing out, and refreshing JWT session tokens.</li>
-                <li>Account tier: fetching your plan after sign-in and when the Settings or History page opens.</li>
+                <li>Account tier: fetching your plan, so Pro features turn on or off when it changes.</li>
                 <li>Upgrade: getting a Stripe checkout page when you click an Upgrade button.</li>
                 <li>Cover letter &amp; resume generation: sending job data and your session token to our backend Edge Functions, which retrieve your encrypted resume, call the Claude API with our key, return the generated output, and save the job&apos;s title, company, posting address and date to your account.</li>
                 <li>Application history sync (Pro mode): saving each new cover letter and tailored resume, uploading ones already in the extension when you agree, and fetching and deleting them on the History page.</li>
@@ -655,8 +665,8 @@ export default function PrivacyPage() {
                 {
                   name: 'Supabase',
                   url: 'https://supabase.com/privacy',
-                  when: 'Every mode (reading job postings, from version 1.3.0); everything else Hosted mode only',
-                  receives: 'Copies of the job pages you ask us to read, which are processed and not stored, and rate-limit counters keyed by a hash of your IP address. In Hosted mode also: the job details, any facts you add and, when you regenerate, the previous tailored resume, sent with each generation request (not stored, except Pro history); messages from the dashboard\'s support form, passed on to Resend and not stored; email address, hashed password (email sign-in only), encrypted resume text, encrypted cover letters and tailored resumes with the unencrypted fields that go with them (Pro), your encrypted Word file and which tailored resumes were made from it (Pro), your resume\'s file name, your Stripe customer ID, your Google name, picture link and account ID, session tokens, usage counts, when you removed the extension (if you were signed in), and the account-keyed counter used when a new resume is read or a support message is sent (see Information We Collect for each). Supabase Auth also records the IP address and browser of each signed-in session, kept with your account. Supabase hosts our backend functions, authentication system and database, and keeps standard request logs (IP address, browser, time, and the address requested, which can include a dashboard search) for a short period.',
+                  when: 'Every mode (reading job postings, from version 1.3.0, and site requests and bug reports when you press the button); everything else Hosted mode only',
+                  receives: 'Copies of the job pages you ask us to read, which are processed and not stored, site requests and bug reports, passed on to PostHog and not stored, and rate-limit counters keyed by a hash of your IP address. In Hosted mode also: the job details, any facts you add and, when you regenerate, the previous tailored resume, sent with each generation request (not stored, except Pro history); messages from the dashboard\'s support form, passed on to Resend and not stored; email address, hashed password (email sign-in only), encrypted resume text, encrypted cover letters and tailored resumes with the unencrypted fields that go with them (Pro), your encrypted Word file and which tailored resumes were made from it (Pro), your resume\'s file name, your Stripe customer ID, your Google name, picture link and account ID, session tokens, generation counts, whether and when you opted out of usage counts, when you removed the extension (if you were signed in), and the account-keyed counter used when a new resume is read or a support message is sent (see Information We Collect for each). Supabase Auth also records the IP address and browser of each signed-in session, kept with your account. Supabase hosts our backend functions, authentication system and database, and keeps standard request logs (IP address, browser, time, and the address requested, which can include a dashboard search) for a short period.',
                 },
                 {
                   name: 'Google',
@@ -680,7 +690,7 @@ export default function PrivacyPage() {
                   name: 'Vercel',
                   url: 'https://vercel.com/legal/privacy-policy',
                   when: 'Anyone who visits cover-me.dev',
-                  receives: 'Standard web server access logs (IP address, browser, requested URL) for every page of cover-me.dev. Vercel also runs the website\'s server code: for anyone signed in to the dashboard it reads your email, profile picture link, sign-up date, plan and usage from our backend to build the page; for Pro users it passes your saved applications (job details, cover letters and tailored resumes) from our backend to your browser; and it receives Stripe\'s billing notifications (your customer ID, subscription status and the checkout details Stripe holds). It stores none of these.',
+                  receives: 'Standard web server access logs (IP address, browser, requested URL) for every page of cover-me.dev. Vercel also runs the website\'s server code: for anyone signed in to the dashboard it reads your email, profile picture link, sign-up date, plan and generation count from our backend to build the page; for Pro users it passes your saved applications (job details, cover letters and tailored resumes) from our backend to your browser; and it receives Stripe\'s billing notifications (your customer ID, subscription status and the checkout details Stripe holds). It stores none of these.',
                 },
                 {
                   name: 'YouTube (Google)',
@@ -691,14 +701,14 @@ export default function PrivacyPage() {
                 {
                   name: 'Sentry',
                   url: 'https://sentry.io/privacy/',
-                  when: 'Visitors to cover-me.dev (the website, not the extension)',
-                  receives: 'Error reports and page-load timing from the website: the error, page URL, browser version, and your user ID if you are signed in. Form contents, cookies, and email addresses are removed before sending.',
+                  when: 'Visitors to cover-me.dev, Hosted mode requests to our server, and subscribers whose plan change fails to save. Never the extension itself, and never BYOK requests to our server.',
+                  receives: 'From the website: error reports and page-load timing, with the error, page URL, browser and operating system, a rough location (country and city) that Sentry works out from your IP address without storing the address, and your user ID if you are signed in. Form contents, cookies, and email addresses are removed before sending. From our server: an error report when a Hosted mode request fails, with the error, which part of the server failed, the time, and your account ID, and a report when a plan change from Stripe fails to save, with the Stripe event ID and no payment details. Server error reports never contain your resume, letters, added context, job or company details, file names, or posting addresses.',
                 },
                 {
                   name: 'PostHog',
                   url: 'https://posthog.com/privacy',
-                  when: 'Visitors to the public pages of cover-me.dev (not the extension, and not signed-in pages), anyone who answers the uninstall survey, and each resume tailored in Hosted mode',
-                  receives: 'A count of each page visit: the page address with only its campaign tags (such as utm_ parameters; ad click IDs are blanked first), the referring site, browser details (browser, operating system, device type, screen size, language) and time zone, plus a count of clicks on links to our Chrome Web Store page with the link\'s label. Requests go through cover-me.dev. Your IP address is used only to make a daily visitor hash and is not stored, nor is any location derived from it. No cookies or browser storage are used, and visits are not linked to your account. If you answer the uninstall survey: your answers, your comment, the extension version and, if you were signed in, your Cover Me account ID. For each resume tailored in Hosted mode: your Cover Me account ID, your plan and the tailor options used, with no resume or job text.',
+                  when: 'Visitors to the public pages of cover-me.dev (not the extension, and not signed-in pages), anyone who answers the uninstall survey, anyone who presses Request this site or Report bug in the extension, clicks where our server reads no job page, and Hosted accounts that have not opted out of usage counts',
+                  receives: 'A count of each page visit: the page address with only its campaign tags (such as utm_ parameters; ad click IDs are blanked first), the referring site, browser details (browser, operating system, device type, screen size, language) and time zone, plus a count of clicks on links to our Chrome Web Store page with the link\'s label. Requests go through cover-me.dev. Your IP address is used only to make a daily visitor hash and is not stored, nor is any location derived from it. No cookies or browser storage are used, and visits are not linked to your account. If you answer the uninstall survey: your answers, your comment, the extension version and, if you were signed in, your Cover Me account ID. For site requests and bug reports, in any mode, under a random ID: the site name, or for a bug report the page address, the part of the extension that tried to read it, the error and the extension version. For clicks where our server reads no job page, under a random ID: the site name of each page and the part of the extension that tried to read it. For Hosted accounts that have not opted out: usage counts with your Cover Me account ID, your plan and the features and options you used, never your resume, letters, added context, job or company details, file names or posting addresses.',
                 },
               ].map((svc) => (
                 <div key={svc.name} className="bg-surface border border-border rounded-[10px] px-5 py-4">
@@ -727,8 +737,10 @@ export default function PrivacyPage() {
             <H2 id="retention">Data Retention</H2>
             <Ul>
               <Li><strong className="text-foreground">BYOK mode:</strong> Your resume, API key and history stay on your device, and we hold no copy of them. You can delete them at any time by removing the extension or clearing extension storage in Chrome settings. The only BYOK data on our side are the rate-limit counters and Supabase&apos;s request logs described above.</Li>
-              <Li><strong className="text-foreground">Hosted account data:</strong> Your account, resume, and application history (the job details, and on Pro your cover letters and tailored resumes) are retained for as long as your account is active. You can delete your account at any time from Settings in your dashboard, which deletes all of this at once. You can also ask us by email at <a href={`mailto:${CONTACT_EMAIL}`} className="text-brand-light hover:text-foreground transition-colors">{CONTACT_EMAIL}</a>, and we will permanently delete all your data within 30 days of a verified deletion request.</Li>
-              <Li><strong className="text-foreground">Usage count records:</strong> Kept for as long as your account exists, because the free allowance counts generations over the life of the account. They are deleted with your account.</Li>
+              <Li><strong className="text-foreground">Hosted account data:</strong> Your account, resume, and application history (the job details, and on Pro your cover letters and tailored resumes) are retained for as long as your account is active. You can delete your account at any time from Settings in your dashboard, which deletes all of this at once. You can also ask us by email at <a href={`mailto:${CONTACT_EMAIL}`} className="text-brand-light hover:text-foreground transition-colors">{CONTACT_EMAIL}</a>, and we will permanently delete all your data within 30 days of a verified deletion request, apart from the usage counts and uninstall survey answers in PostHog and the error reports in Sentry described below.</Li>
+              <Li><strong className="text-foreground">Generation count records:</strong> Kept for as long as your account exists, because the free allowance counts generations over the life of the account. They are deleted with your account.</Li>
+              <Li><strong className="text-foreground">PostHog:</strong> PostHog keeps everything we send it, including usage counts and uninstall survey answers, for up to two years. Deleting your account doesn&apos;t remove them sooner.</Li>
+              <Li><strong className="text-foreground">Sentry:</strong> Sentry keeps error reports from the website and our server for up to 90 days. Deleting your account doesn&apos;t remove them sooner.</Li>
               <Li><strong className="text-foreground">Rate-limit counters:</strong> A counter not updated for two days is deleted at the next cleanup, which runs during later requests.</Li>
               <Li><strong className="text-foreground">Stripe billing records:</strong> Deleting your account also deletes your Stripe customer record, which holds your email and saved card. Stripe retains transaction records as required by financial regulations, and we cannot delete those.</Li>
             </Ul>
@@ -741,7 +753,7 @@ export default function PrivacyPage() {
             <Ul>
               <Li><strong className="text-foreground">Access:</strong> Request a copy of all data we hold about you.</Li>
               <Li><strong className="text-foreground">Correction:</strong> Request correction of inaccurate data.</Li>
-              <Li><strong className="text-foreground">Deletion:</strong> Delete your account and all associated data yourself from Settings in your dashboard, or ask us to.</Li>
+              <Li><strong className="text-foreground">Deletion:</strong> Delete your account and all associated data yourself from Settings in your dashboard, or ask us to. Usage counts and uninstall survey answers in PostHog, and error reports in Sentry, stay until those services delete them (see Data Retention).</Li>
               <Li><strong className="text-foreground">Portability:</strong> Request your data in a machine-readable format.</Li>
               <Li><strong className="text-foreground">Objection:</strong> Object to processing of your data.</Li>
               <Li><strong className="text-foreground">Restriction:</strong> Request restriction of processing while a dispute is resolved.</Li>
@@ -796,7 +808,7 @@ export default function PrivacyPage() {
             <P>
               We may update this Privacy Policy from time to time. When we do, we will update the
               effective date at the top of this page. For material changes, we will notify Hosted mode
-              users via email. Continued use of Cover Me after a policy change constitutes acceptance of
+              users by email or with a notice in the extension or on the dashboard. Continued use of Cover Me after a policy change constitutes acceptance of
               the updated policy.
             </P>
             <P>

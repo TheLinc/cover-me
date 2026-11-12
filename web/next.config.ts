@@ -31,4 +31,8 @@ export default withSentryConfig(config, {
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
   silent: true,
+  // Browser events post to /monitoring?o=..&p=.. on this site, which forwards to
+  // Sentry, so ad blockers don't drop them (as /relay does for PostHog). No
+  // trailing slash, so the redirect above leaves it alone.
+  tunnelRoute: '/monitoring',
 })

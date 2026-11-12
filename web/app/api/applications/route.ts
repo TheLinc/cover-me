@@ -1,12 +1,11 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { getServerUser } from '@/lib/supabase-server'
 import { fetchApplications, queryFromParams } from '@/lib/applications'
 
 // The applications page's requests. The session's token stays on the server;
 // the function checks it, and the Pro tier for an application's documents.
 async function signedIn() {
-  const supabase = await createServerSupabaseClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { supabase, user } = await getServerUser()
   if (!user) return null
   const { data: { session } } = await supabase.auth.getSession()
   return session ? { token: session.access_token } : null

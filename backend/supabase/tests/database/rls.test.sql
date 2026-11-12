@@ -5,7 +5,7 @@
 -- these policies are the only thing between a user and other users' data, or
 -- between a free user and a free Pro upgrade.
 begin;
-select plan(16);
+select plan(17);
 
 -- ── Fixtures (as postgres, bypassing RLS) ────────────────────────────────────
 
@@ -80,6 +80,7 @@ select is((select count(*)::int from public.job_applications where id = 'bbbbbbb
 select is((select tier from public.users where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'), 'hosted_free', 'cannot upgrade own tier to hosted_pro');
 select is((select count from public.rate_limits where user_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' and date = current_date), 5, 'cannot reset or delete own daily quota');
 select is((select count(*)::int from public.rate_limits where user_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' and date = current_date + 1), 0, 'cannot pre-seed own quota for another day');
+select ok(not has_column_privilege('authenticated', 'public.users', 'usage_counts_opted_out_at', 'update'), 'cannot change own usage counts opt-out (028)');
 
 -- ── Cascades (006, and auth.users → everything) ──────────────────────────────
 

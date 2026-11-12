@@ -231,6 +231,9 @@ Software Engineer, Initech, Austin, TX, Jan 2022 – Present
 Junior Developer, Globex, Remote, Jun 2020 – Dec 2021
 - Fixed bugs in the web app
 
+Volunteer Work
+Mentor, Code Club (2019 – 2021)
+
 EDUCATION
 State University, BS Computer Science, 2016 – 2020
 

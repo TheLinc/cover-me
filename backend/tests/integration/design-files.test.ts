@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { admin, callFunction, createUser, deleteUser, JOB, mockClaude, parsedResume, RESUME_TEXT, type TestUser, uploadResume } from './helpers'
+import { admin, cacheParsedResume, callFunction, createUser, deleteUser, JOB, mockClaude, parsedResume, RESUME_TEXT, type TestUser, uploadResume } from './helpers'
+import { MOCK_PARSED_RESUME } from '../mock-anthropic'
 
 // "Your design" (#131): the resume function's parse on request and a Pro
 // account's Word files, and the applications function serving them back.
@@ -29,6 +30,20 @@ describe('design files', () => {
     const again = await callFunction('resume', { token: user.token, body: { text: RESUME_TEXT, filename: 'resume.docx', parse: true } })
     expect((await again.json()).structured).toMatchObject({ name: 'Test Person' })
     expect(await mockClaude.requests()).toHaveLength(0)
+  })
+
+  it("the same text again upgrades a parse without an order, or returns it as it was when that parse can't run", async () => {
+    user = await createUser()
+    await callFunction('resume', { token: user.token, body: { text: RESUME_TEXT, filename: 'resume.docx', parse: true } })
+    const { sectionOrder: _o, ...old } = MOCK_PARSED_RESUME
+    const send = async () => (await (await callFunction('resume', { token: user!.token, body: { text: RESUME_TEXT, filename: 'resume.docx', parse: true } })).json()).structured
+
+    await cacheParsedResume(user.id, old)
+    expect((await send()).sectionOrder).toEqual(['summary', 'experience', 'other', 'education', 'skills'])
+
+    // A third parse within the minute is over the limit.
+    await cacheParsedResume(user.id, old)
+    expect(await send()).toEqual(old)
   })
 
   it("refuses a free account's Word file", async () => {

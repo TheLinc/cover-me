@@ -1,12 +1,12 @@
-import { ensureValidSession, generateViaBackend, handleGoogleSignIn, limitErrorCode, RateLimitError, saveLetterToBackend, tailorViaBackend } from '../lib/auth'
+import { checkedTier, ensureValidSession, generateViaBackend, handleGoogleSignIn, limitErrorCode, RateLimitError, saveLetterToBackend, tailorViaBackend } from '../lib/auth'
 import { generateCoverLetter } from '../lib/ai'
-import { PARSE_VERSION, parseResumeStructure } from '../lib/ai/resume-parse'
+import { isCurrentParse, parseResumeStructure, upgradedParse } from '../lib/ai/resume-parse'
 import { tailorResume } from '../lib/ai/resume-tailor'
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from '../lib/config'
 import { decryptApiKey } from '../lib/crypto'
 import { checkUploadedDesign, designForTailor, finishDesign, uploadDesignIfPro } from '../lib/design'
 import { debugGroup } from '../lib/debug'
-import { addToHistory, addToTailoredHistory, getCachedTier, getCandidateContext, getResume, getSession, getSettings, hasAgreedToPageRead, resolveMode, saveParsedResume, setEntryAccounts, watchSession } from '../lib/storage'
+import { addToHistory, addToTailoredHistory, getCandidateContext, getResume, getSession, getSettings, hasAgreedToPageRead, resolveMode, saveParsedResume, setEntryAccounts, watchSession } from '../lib/storage'
 import { handleInstalled, uninstallUrl } from './install'
 import { scrapeFailure } from './scrape-failure'
 import type { PageSnapshot } from '../content/snapshot.ts'
@@ -499,11 +499,15 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
       // Hosted: the resume + final prompt live server-side. Enable DEBUG_MODE on
       // the edge function to see those in the Supabase function logs.
       const localId = crypto.randomUUID()
+      // Looked up alongside the tailor, so a change of plan counts without a
+      // wait once the resume is back.
+      const tier = checkedTier(session)
       const { resume: tailored, savedId } = await tailorViaBackend(job, session.access_token, compact, merged, trim, includeSummary, lastResult && previous, onProgress, localId, design.design)
       const resume = await finishDesign(tailored, design)
       if (note) resume.hasEdits = true
+      // Awaited before the design upload, which reads the cached tier.
+      const pro = (await tier) === 'hosted_pro'
       if (resume.sourceHash) void uploadDesignIfPro(session)
-      const pro = (await getCachedTier()) === 'hosted_pro'
       await recordTailored(job, resume, localId, {
         ...(savedId === localId ? { account: session.user.id } : {}),
         ...(pro ? { saveTo: session.user.id } : {}),
@@ -523,13 +527,15 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
 
     // Lazy parse: run once on first tailor, cache result for all subsequent tailors.
     // Re-run automatically when resume is replaced (saveResume clears the parsed field),
-    // and once for a parse from before extra sections (publications…) were kept.
+    // and once for a parse from before extra sections (publications…) or
+    // section order were kept.
     // "Your design" places the text with the parse its file was checked
-    // against, so the tailor starts from that same parse.
+    // against, so the tailor starts from that same parse, even one from
+    // before section order: the user's file keeps its own.
     let parsed = design.parsed ?? resumeData.parsed
-    if (!Array.isArray(parsed?.otherSections) || (parsed?.parseVersion ?? 1) < PARSE_VERSION) {
+    if (!parsed || (!design.parsed && !isCurrentParse(parsed))) {
       onProgress('Reading your resume (first run only)…')
-      parsed = await parseResumeStructure(resumeData.text, settings.provider, apiKey)
+      parsed = upgradedParse(parsed, await parseResumeStructure(resumeData.text, settings.provider, apiKey))
       await saveParsedResume(parsed)
       onProgress('') // read; the model thinks next, which is plain "Plan the changes"
     }
@@ -587,8 +593,10 @@ async function generateFromJob(job: JobData, supplemental?: string, jobId?: stri
       if (!session) {
         return failCover(id, job, startedAt, 'Sign in to your Cover Me account in Settings.')
       }
-      const letter = await generateViaBackend(job, session.access_token, merged)
-      const pro = (await getCachedTier()) === 'hosted_pro'
+      // The tier is looked up alongside the letter, so a change of plan
+      // counts without holding the letter back from History.
+      const [letter, tier] = await Promise.all([generateViaBackend(job, session.access_token, merged), checkedTier(session)])
+      const pro = tier === 'hosted_pro'
       const entry: CoverLetter = {
         id: crypto.randomUUID(),
         job,

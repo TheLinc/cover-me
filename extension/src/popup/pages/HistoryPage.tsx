@@ -1,16 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
-import { deleteApplicationFromBackend, ensureValidSession, fetchApplicationsFromBackend, fetchTier, uploadLocalHistory, UploadError } from '../../lib/auth'
+import { currentTier, deleteApplicationFromBackend, ensureValidSession, fetchApplicationsFromBackend, refreshTier, uploadLocalHistory, UploadError } from '../../lib/auth'
 import { downloadCoverLetterPdf } from '../../lib/pdf/cover-letter'
 import { downloadTailoredResumePdf } from '../../lib/pdf/resume'
 import { openResumeEditor } from '../../lib/resume-edit'
 import { accountUpdates, capWarning, groupLocalHistory, groupsFromApplications, ownPending, unclaimed, uploadMessage, uploadSummary, withLocalOnly, type JobGroup } from '../../lib/history'
-import { deleteFromHistory, deleteFromTailoredHistory, getCachedTier, getDesignHashes, getHistory, getMode, getTailoredHistory, getUploadAsked, markUploadAsked, saveCachedTier, setEntryAccounts } from '../../lib/storage'
+import { deleteFromHistory, deleteFromTailoredHistory, getDesignHashes, getHistory, getMode, getTailoredHistory, getUploadAsked, markUploadAsked, setEntryAccounts } from '../../lib/storage'
 import type { AuthSession, CoverLetter, CoverLetterEntry, TailoredHistoryEntry } from '../../types'
 import DownloadMenu from '../components/DownloadMenu'
 import { EditIcon } from '../components/icons'
 import UpgradePrompt from '../components/UpgradePrompt'
 import { WEB_URL } from '../../lib/config'
-import { downloadResumeWord } from '../../lib/design'
+import { downloadResumeWord, uploadDesignIfPro } from '../../lib/design'
 
 
 export default function HistoryPage() {
@@ -100,8 +100,7 @@ export default function HistoryPage() {
     } catch (err) {
       if (err instanceof UploadError && err.status === 403) {
         setUpload(null)
-        const fresh = await fetchTier(session.user.id, session.access_token)
-        if (fresh) await saveCachedTier(fresh)
+        await refreshTier(session)
       } else {
         setUploadNote({ text: "Couldn't save them. Check your connection and try again.", error: true })
       }
@@ -119,31 +118,23 @@ export default function HistoryPage() {
     const [letters, tailored] = await Promise.all([getHistory(), getTailoredHistory()])
     setGroups(groupLocalHistory(letters, tailored))
 
-    const [mode, cachedTier, session] = await Promise.all([
-      getMode(),
-      getCachedTier(),
-      ensureValidSession(),
-    ])
-    let tier = cachedTier
+    const [mode, session] = await Promise.all([getMode(), ensureValidSession()])
 
-    // A free account close to what this browser keeps sees the upgrade
-    // prompt. The tier is checked with the server first, so someone who just
-    // paid isn't asked again; an unknown tier shows nothing.
-    const warning = capWarning(letters.length, tailored.length)
-    if (warning && mode === 'hosted' && session && tier !== 'hosted_pro') {
-      const fresh = await fetchTier(session.user.id, session.access_token)
-      if (fresh) {
-        tier = fresh
-        await saveCachedTier(fresh)
-      }
-      if (tier === 'hosted_free') {
-        // Counted again: the user may have deleted something during the checks.
-        const [l, t] = await Promise.all([getHistory(), getTailoredHistory()])
-        setCapText(capWarning(l.length, t.length))
-      }
+    // A tier that isn't Pro is checked with the server first, so someone who
+    // just paid gets the Pro view and isn't asked to upgrade again. A free
+    // account close to what this browser keeps sees the upgrade prompt; an
+    // unknown tier shows nothing.
+    const tier = mode === 'hosted' && session ? await currentTier(session) : null
+    if (tier === 'hosted_free' && capWarning(letters.length, tailored.length)) {
+      // Counted again: the user may have deleted something during the check.
+      const [l, t] = await Promise.all([getHistory(), getTailoredHistory()])
+      setCapText(capWarning(l.length, t.length))
     }
 
-    if (mode !== 'hosted' || tier !== 'hosted_pro' || !session) return
+    if (tier !== 'hosted_pro' || !session) return
+    // Resumes saved from here may have been tailored in a Word file the
+    // account doesn't have yet; the dashboard needs it to keep their design.
+    void uploadDesignIfPro(session)
 
     sessionRef.current = session
     setIsProMode(true)
@@ -164,8 +155,7 @@ export default function HistoryPage() {
     } catch {
       // Keep showing local groups. A cached Pro tier that's out of date is
       // refreshed, and the Pro-only parts go now rather than next open.
-      const fresh = await fetchTier(session.user.id, session.access_token)
-      if (fresh) await saveCachedTier(fresh)
+      const fresh = await refreshTier(session)
       if (fresh && fresh !== 'hosted_pro') setIsProMode(false)
     } finally {
       setSyncing(false)

@@ -44,6 +44,9 @@ describe('tailor', () => {
     expect(resume.summary).toBe(MOCK_TAILOR_DELTA.summary)
     // Sections outside the six come through from the parse untouched.
     expect(resume.otherSections).toEqual(MOCK_PARSED_RESUME.otherSections)
+    // They print in the uploaded resume's order (#165), taken from its text
+    // rather than the model's wrong one, the written summary first.
+    expect(resume.sectionOrder).toEqual(['summary', 'experience', 'other', 'education', 'skills'])
     // Evidence-backed skills: the category label with real evidence stays, the
     // skill whose evidence isn't in the resume is dropped.
     expect(resume.skills).toBe('TypeScript, Postgres, React, Data Pipelines')
@@ -101,8 +104,10 @@ describe('tailor', () => {
     })
 
     it('an unedited previous is checked as before', async () => {
-      const resume = await regenerate(previous)
+      const resume = await regenerate({ ...previous, sectionOrder: ['skills', 'experience'] })
       expect(resume.skills).toBe('TypeScript, Postgres, React, Data Pipelines')
+      // The order comes from the upload's parse, not the previous resume.
+      expect(resume.sectionOrder).toEqual(['summary', 'experience', 'other', 'education', 'skills'])
       expect(resume.experience[0].bullets[0]).toBe(MOCK_REWRITTEN_BULLET)
       expect(await revisionPrompt()).not.toContain('includes edits and notes')
       expect(resume.hasEdits).toBeUndefined()
@@ -165,14 +170,14 @@ describe('tailor', () => {
     expect(prompts.filter((p) => !checks.some((c) => p.startsWith(c)))).toHaveLength(1)
   })
 
-  it('parses again, once, a cached parse from before otherSections', async () => {
+  it.each(['otherSections', 'sectionOrder'] as const)('parses again, once, a cached parse from before %s', async (field) => {
     user = await createUser()
     await uploadResume(user)
-    const { otherSections: _, ...old } = MOCK_PARSED_RESUME
+    const { [field]: _f, ...old } = MOCK_PARSED_RESUME
     const isParse = (p: string) => p.startsWith('You are a resume parser')
     const prompts = async () => (await mockClaude.requests()).map((r) => r.messages[0].content)
 
-    await cacheParsedResume(user.id, { ...old, otherSections: [] })
+    await cacheParsedResume(user.id, { ...MOCK_PARSED_RESUME, otherSections: [], sectionOrder: [] })
     await callFunction('tailor', { token: user.token, body: { job: JOB } })
     expect((await prompts()).filter(isParse)).toHaveLength(0)
 
@@ -180,11 +185,24 @@ describe('tailor', () => {
     await mockClaude.reset()
     const res = await callFunction('tailor', { token: user.token, body: { job: JOB } })
     expect((await prompts()).filter(isParse)).toHaveLength(1)
-    expect((await res.json()).resume.otherSections).toEqual(MOCK_PARSED_RESUME.otherSections)
+    const { resume } = await res.json()
+    expect(resume.otherSections).toEqual(MOCK_PARSED_RESUME.otherSections)
+    expect(resume.sectionOrder).toEqual(['summary', 'experience', 'other', 'education', 'skills'])
 
     await mockClaude.reset()
     await callFunction('tailor', { token: user.token, body: { job: JOB } })
     expect((await prompts()).filter(isParse)).toHaveLength(0)
+  })
+
+  it('a cached parse from before sectionOrder keeps its content and takes only the order, so a Word design checked against it still lines up', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    const { sectionOrder: _o, ...old } = MOCK_PARSED_RESUME
+    const education = [{ ...old.education[0], institution: 'State University of Somewhere' }]
+    await cacheParsedResume(user.id, { ...old, education })
+    const { resume } = await (await callFunction('tailor', { token: user.token, body: { job: JOB } })).json()
+    expect(resume.education).toEqual(education)
+    expect(resume.sectionOrder).toEqual(['summary', 'experience', 'other', 'education', 'skills'])
   })
 
   it('streams NDJSON start, delta and done events when asked', async () => {
@@ -230,6 +248,20 @@ describe('tailor', () => {
     const res = await callFunction('tailor', { token: user.token, body: { job: JOB } })
     expect(res.status).toBe(502)
     expect(await quotaUsedToday(user.id)).toBe(0)
+  })
+
+  it('tailors from a cached parse without an order when the parse that would add it fails', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    const { sectionOrder: _o, ...old } = MOCK_PARSED_RESUME
+    await cacheParsedResume(user.id, old)
+    await mockClaude.failNext(500)
+
+    const res = await callFunction('tailor', { token: user.token, body: { job: JOB } })
+    expect(res.status).toBe(200)
+    const { resume } = await res.json()
+    expect(resume.otherSections).toEqual(MOCK_PARSED_RESUME.otherSections)
+    expect(resume.sectionOrder).toBeUndefined()
   })
 
   it('refunds when the tailor call fails', async () => {
@@ -305,8 +337,21 @@ describe('tailor', () => {
       api_key: 'phc_mock',
       event: 'tailor_run',
       distinct_id: user.id,
-      properties: { tier: 'hosted_pro', compact: false, trim: true, includeSummary: true, layout: 'yours', fellBack: false, $process_person_profile: false },
+      properties: { tier: 'hosted_pro', compact: false, trim: true, includeSummary: true, layout: 'yours', fellBack: false, $process_person_profile: false, $geoip_disable: true },
     }])
+  })
+
+  it('an account that opted out of usage counts sends nothing to PostHog', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    await admin.from('users').update({ usage_counts_opted_out_at: new Date().toISOString() }).eq('id', user.id)
+
+    const res = await callFunction('tailor', { token: user.token, body: { job: JOB } })
+    expect(res.status).toBe(200)
+    // The count would be sent behind the response: give it the same 2 s the
+    // counted test waits.
+    await new Promise((r) => setTimeout(r, 2000))
+    expect((await mockPosthog.events()).filter((e) => e.event === 'tailor_run' && e.distinct_id === user!.id)).toEqual([])
   })
 
   it('a run that fell back to the Cover Me layout keeps no hash', async () => {
