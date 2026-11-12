@@ -189,7 +189,7 @@ Deno.serve(async (req) => {
     const parsed = await readParse(row?.structured_encrypted ?? null)
     if (!row) return json({ error: 'Upload your resume in Cover Me first.' }, 404)
     // One from before the order was kept (#165) is upgraded by the next tailor.
-    if (!isCurrentParse(parsed)) return json({ error: parsed ? 'Tailor once with your current resume, then try again.' : 'Your resume is still being read. Try again in a minute.' }, 404)
+    if (!isCurrentParse(parsed)) return json({ error: parsed ? 'Tailor once with your current resume first.' : 'Your resume is still being read. Wait a minute.' }, 404)
     const structured = withChosenOrder(parsed, body.sectionOrder, body.headings)
     let structured_encrypted: string
     try {

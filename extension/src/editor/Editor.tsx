@@ -63,12 +63,12 @@ async function saveOrderForLater(r: TailoredResume): Promise<string | undefined>
   const { sectionOrder, headings } = chosenOrder(r)
   if ((await getMode()) === 'hosted') {
     const session = await ensureValidSession()
-    if (!session) return 'Sign in again, then try again.'
+    if (!session) return 'Sign in again first.'
     return saveSectionOrderToBackend(session.access_token, sectionOrder, headings)
   }
   const parsed = (await getResume())?.parsed
   // A new upload isn't read until its first tailor.
-  if (!isCurrentParse(parsed)) return 'Tailor once with your current resume, then try again.'
+  if (!isCurrentParse(parsed)) return 'Tailor once with your current resume first.'
   await saveParsedResume(withChosenOrder(parsed, sectionOrder, headings))
 }
 
