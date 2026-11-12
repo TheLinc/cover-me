@@ -195,12 +195,53 @@ describe('generic heuristic', () => {
     expect(() => scrape(fixtureUrl(intro), intro)).toThrow('Could not find job details')
   })
 
+  // Listings whose job cards carry plain text (a location, a summary) beside
+  // the link, under an intro that isn't links: once read as a job (#72).
+  // fly.io's cards each end with a "Read more" link over the card; Mozilla's
+  // table rows link the title beside plain team and location cells; a
+  // Greenhouse board with an intro wraps each row in one link.
+  test.each(['flyio-jobs', 'mozilla-listings', 'greenhouse-board-intro'])('reads a card listing as no job: %s', (name) => {
+    const html = readFileSync(join(__dirname, 'fixtures', `${name}.html`), 'utf8')
+    expect(() => scrape(fixtureUrl(html), html)).toThrow('Could not find job details')
+  })
+
+  test('reads a posting without the related jobs listed beside it', () => {
+    const description = 'Lead a team of twelve on the night shift and keep the loading dock on schedule. '.repeat(8).trim()
+    const related = Array.from({ length: 6 }, (_, i) => `<li class="job"><a href="/jobs/${i}">Forklift Operator ${i}</a>
+      <p>Location: AUS, NSW, Sydney</p><p>Posted ${i + 2} days ago. Move pallets and load trucks on the night shift.</p></li>`).join('')
+    const job = scrape('https://careers.example.com/jobs/1', `<html><body><main><div><h1>Warehouse Supervisor</h1>
+      <div><p>${description}</p></div><div><h2>Related jobs</h2><ul>${related}</ul></div></div></main></body></html>`)
+    expect(job.description.startsWith(description)).toBe(true)
+    expect(job.description).not.toMatch(/Forklift|Sydney/)
+  })
+
+  // Same-class sections that each link somewhere aren't cards when one of them
+  // holds most of the page
+  test('reads a posting laid out in sections of one class', () => {
+    const description = 'Lead a team of twelve on the night shift and keep the loading dock on schedule. '.repeat(8).trim()
+    const job = scrape('https://careers.example.com/jobs/1', `<html><body>
+      <div class="row"><a href="/">Home</a></div>
+      <div class="row"><h1>Warehouse Supervisor</h1><p>${description}</p><a href="/apply">Apply</a></div>
+      <div class="row"><a href="/privacy">Privacy</a></div></body></html>`)
+    expect(job).toMatchObject({ title: 'Warehouse Supervisor', description: `Warehouse Supervisor\n\n${description}\n\nApply` })
+  })
+
   // Each link read once per block, not once per link it's nested in (34 s
   // before, 1 s now)
   test('70 nested links in 100 nested blocks stay cheap', () => {
     const main = '<div>'.repeat(100) + 'x'.repeat(600) + '<a href="/a">L<div>'.repeat(70) + '<i></i>'.repeat(20_000) + '</div></a>'.repeat(70) + '</div>'.repeat(100)
     const start = performance.now()
     scrape('https://careers.example.com/jobs/1', `<!doctype html><html><body><h1>Clerk</h1><main>${main}</main></body></html>`)
+    expect(performance.now() - start).toBeLessThan(5000)
+  })
+
+  // Each level a list of three cards, one holding the next: card lists
+  // measure each level's text (1 s, as master's block search takes)
+  test('120 nested card lists over 2 MB stay cheap', () => {
+    const main = Array.from({ length: 120 }, (_, i) => `<div><div><a href="/a${i}">a</a></div><div><a href="/b${i}">b</a></div><div><a href="/c${i}">c</a>`).join('')
+      + 'x'.repeat(2_000_000) + '</div></div>'.repeat(120)
+    const start = performance.now()
+    expect(() => scrape('https://careers.example.com/jobs/1', `<!doctype html><html><body><h1>Clerk</h1><main>${main}</main></body></html>`)).toThrow()
     expect(performance.now() - start).toBeLessThan(5000)
   })
 
