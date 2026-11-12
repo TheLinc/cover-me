@@ -282,7 +282,7 @@ export function lintLetter(
   }
 
   if (wordCount < 230) {
-    violations.push(`Letter body is ${wordCount} words — too short; expand to 250–400 words with concrete detail from the resume.`)
+    violations.push(`Letter body is ${wordCount} words — too short; expand to 250–400 words by telling the accomplishments already in the letter more fully (the situation, who it affected, how it was done), not by listing more items from the resume.`)
   } else if (wordCount > 430) {
     violations.push(`Letter body is ${wordCount} words — too long; tighten to 250–400 words.`)
   }
@@ -319,7 +319,7 @@ export function lintLetter(
   }
   const commentary = body.split(SENTENCE_END).map((s) => s.trim()).find((s) => COMMENTARY_RE.test(s))
   if (commentary) {
-    violations.push(`Explains what a fact means ("${commentary}") — cut the explanation or lesson and let the fact stand; if the letter gets short, add another concrete detail from the resume.`)
+    violations.push(`Explains what a fact means ("${commentary}") — cut the explanation or lesson and let the fact stand; if the letter gets short, tell the accomplishments already in it more fully.`)
   }
   const closeQuestion = paragraphs.length > 1 ? lastPara.split(SENTENCE_END).map((s) => s.trim()).find((s) => CLOSE_QUESTION_RE.test(s)) : undefined
   if (closeQuestion) {
@@ -430,5 +430,5 @@ export function buildLintRetryMessage(violations: string[]): string {
 
 ${violations.map((v) => `- ${v}`).join('\n')}
 
-Rewrite the complete letter fixing exactly these issues. Keep everything that already works — the same accomplishments, the same structure, the same specifics — and change only what the violations require. All original rules still apply (250–400 words, plain text, no fabricated qualifications or metrics). Where a fix removes words, or the letter is too short, add concrete detail from the resume (what was done, for whom, with which tools), not more figures, so the letter stays at 250–400 words; never just cut. Output only the finished letter, nothing else.`
+Rewrite the complete letter fixing exactly these issues. Keep everything that already works — the same accomplishments, the same structure, the same specifics — and change only what the violations require. All original rules still apply (250–400 words, plain text, no fabricated qualifications or metrics). Where a fix removes words, or the letter is too short, tell the accomplishments already in the letter more fully (the situation, who it affected, how it was done), not more figures or a list of other resume items, so the letter stays at 250–400 words; never just cut. Output only the finished letter, nothing else.`
 }

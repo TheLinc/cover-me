@@ -362,7 +362,8 @@ describe('commentary and framing', () => {
 })
 
 test('the retry asks for detail, not more figures, when it must add words', () => {
-  expect(buildLintRetryMessage(['x'])).toContain('not more figures')
+  // A retry that padded with more resume items turned paragraph 3 into a list.
+  expect(buildLintRetryMessage(['x'])).toContain('not more figures or a list of other resume items')
 })
 
 // A proof paragraph that lists the whole resume: 8 sentences in a letter
