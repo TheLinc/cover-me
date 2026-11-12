@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { pdfPageText } from './resume-parser'
-import { groundSkills, groundTailored, skillGroups } from './ai/resume-grounding'
+import { groundSkills, groundTailored, recaseSkills, skillGroups } from './ai/resume-grounding'
 import { budgetText, bulletBudget, isResultBullet, keepResults, mergeTailorDelta } from './ai/resume-tailor'
 import { tailoredResumePdf, pdfSafe } from './pdf/resume'
 import type { TailoredResume } from '../types'
@@ -124,5 +124,13 @@ describe('tailored headline', () => {
     const candidate = 'Applied AI Engineer AI Engineering Fellow Built agent orchestration'
     expect(groundTailored({ ...base, headline: 'Kubernetes Engineer' }, base, candidate, 'You will run services on Kubernetes daily.').resume.headline).toBe('Applied AI Engineer')
     expect(groundTailored({ ...base, headline: 'AI Agent Engineer' }, base, candidate, 'AI Agent Engineer').resume.headline).toBe('AI Agent Engineer')
+  })
+})
+
+describe('recasing grouped skills', () => {
+  test('labels and group lines survive the casing pass', () => {
+    const own = 'Languages: Python, SQL\nApplied AI and Agents: agent orchestration, LangGraph'
+    const out = recaseSkills('Applied AI and Agents: LangGraph, Agent Orchestration\nLanguages: Python', own, own)
+    expect(out).toBe('Applied AI and Agents: LangGraph, Agent orchestration\nLanguages: Python')
   })
 })

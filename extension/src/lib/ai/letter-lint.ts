@@ -83,6 +83,34 @@ const POSTING_ECHO = [
   /\b(?:the|your|this|[a-z][a-z&.-]*'s) (?:job )?(?:posting|listing|description|ad)\b[^.]{0,20}\b(asks|pairs|describes|names|lists|calls for|mentions|says|puts|emphasizes|highlights|wants|needs|requires|focuses)\b/i,
 ]
 
+// Sentence shapes that read as templated even when every word is plain. The
+// judge flagged each one in every letter of the 2026-11-11 eval run (#198).
+const SENTENCE_SHAPES: Array<[RegExp, string]> = [
+  [/\bis simple:|\bmy (?:single )?(?:strongest|biggest|best|top) qualification\b/i,
+    'Announces its point ("My strongest qualification is simple:") — make the point directly, in a sentence about what the applicant did.'],
+  [/\b(?:that|this) is [^.!?]{1,60}? in practice[.!]/i,
+    'Labels the experience after describing it ("That is data onboarding in practice") — cut the label; the example already makes the point.'],
+  [/, not (?:a|an) [\w-]+(?: [\w-]+)?[.!]|\bnot just\b[^.!?]{1,60}\bbut\b/i,
+    'Uses an "X, not Y" contrast ("a habit for me, not an afterthought") — state the point once, directly.'],
+  [/\bis (?:a habit|second nature) for me\b/i,
+    'Tells the reader about a trait ("is a habit for me") — show it with what the applicant did instead.'],
+]
+
+// A closing that sums the applicant up recaps the letter. All three recaps
+// in the 2026-11-11 run opened "I bring..." (#198); a list of three alone is
+// no sign ("free Monday, Tuesday or Thursday"), and neither is "my experience
+// with X", which is how the close names the work to talk through.
+const RECAP_RE = /\bI (?:bring|offer)\b|\bmy (?:mix|combination|blend) of\b/i
+
+// What makes an opening sentence about someone: a person, a figure, or a name
+// (a capitalized word after the first, like "Ferris" or the employer's).
+// "The team" or "the role" is the employer when the company is unknown.
+const ANCHORED_RE = /\b(?:i|i'm|i've|i'd|me|my|we|our|us|you|your)\b|\b(?:the|this) (?:team|role|company|position)\b|\d/i
+const NAMED_RE = /\s[A-Z]/
+
+// Sentence ends, but not after an initial or a title ("U.S. Bank", "Dr. Ruiz").
+const SENTENCE_END = /(?<=(?<!\b(?:[A-Z]|Dr|Mr|Mrs|Ms|St|Jr|Sr|Inc|Ltd|Co|vs|No))[.!?])\s+/
+
 const SIGN_OFF_RE = /^(kind regards|sincerely|best regards|respectfully)[,.]?$/i
 const EMAIL_RE = /\b[\w.+-]+@[\w-]+\.\w{2,}\b/
 const PHONE_RE = /(\+?\d[\d ().-]{8,}\d)/
@@ -231,6 +259,28 @@ export function lintLetter(
     violations.push('Contains a URL in the closing paragraph — a portfolio/GitHub link may only appear inline in the core proof paragraph.')
   }
 
+  for (const [re, message] of SENTENCE_SHAPES) {
+    if (re.test(body)) violations.push(message)
+  }
+  // A maxim opens with a general truth about no one: no person, name or figure.
+  const firstSentence = body.split(SENTENCE_END)[0] ?? ''
+  // Letters often use the short name: "Stackhouse" for "Stackhouse Ventures".
+  const shortName = opts.companyName?.split(/\s+/).find((w) => !/^(the|a|an)$/i.test(w))?.replace(/[^\p{L}\p{N}]+$/u, '')
+  const namesEmployer = !!opts.companyName && (containsPhrase(firstSentence, opts.companyName) || (!!shortName && containsWord(firstSentence, shortName)))
+  if (firstSentence && !ANCHORED_RE.test(firstSentence) && !NAMED_RE.test(firstSentence) && !namesEmployer) {
+    violations.push(`Opens with a general maxim ("${firstSentence.trim()}") — open with something the applicant did, or with the employer's own situation.`)
+  }
+  paragraphs.forEach((p, i) => {
+    // Years are dates, not figures.
+    const figures = extractNumbers(p).filter((n) => !/^(19|20)\d\d$/.test(n.norm)).length
+    if (figures > 4) {
+      violations.push(`Paragraph ${i + 1} has ${figures} figures — keep the one number that matters most for each achievement, at most four in a paragraph, and say the rest in words instead of dropping the achievement.`)
+    }
+  })
+  if (paragraphs.length > 1 && RECAP_RE.test(lastPara)) {
+    violations.push('The closing sums up what the applicant brings, a recap of the letter — end with one specific thing to talk about and a request for a conversation.')
+  }
+
   if (opts.companyName && opts.companyName !== 'Unknown Company') {
     const mentions = (letter.match(new RegExp(escapeRegex(opts.companyName), 'gi')) ?? []).length
     if (mentions < 2) {
@@ -271,5 +321,5 @@ export function buildLintRetryMessage(violations: string[]): string {
 
 ${violations.map((v) => `- ${v}`).join('\n')}
 
-Rewrite the complete letter fixing exactly these issues. Keep everything that already works — the same accomplishments, the same structure, the same specifics — and change only what the violations require. All original rules still apply (250–400 words, plain text, no fabricated qualifications or metrics). Output only the finished letter, nothing else.`
+Rewrite the complete letter fixing exactly these issues. Keep everything that already works — the same accomplishments, the same structure, the same specifics — and change only what the violations require. All original rules still apply (250–400 words, plain text, no fabricated qualifications or metrics). Where a fix removes words, replace them with concrete detail from the resume so the letter stays at 250–400 words; never just cut. Output only the finished letter, nothing else.`
 }

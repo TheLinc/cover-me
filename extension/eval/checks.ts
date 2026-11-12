@@ -4,6 +4,7 @@
 import type { ParsedResume, TailoredResume } from '../src/types'
 import type { EvalCase } from './fixtures'
 import { extractNumbers, lintLetter } from '../src/lib/ai/letter-lint'
+import { mixedTenseLines } from '../src/lib/ai/resume-grounding'
 
 export interface CheckResult {
   failures: string[]
@@ -70,7 +71,8 @@ export function checkLetter(letter: string, c: EvalCase): CheckResult {
   // The posting's own job title is fair to name ("the Hazmat Tanker Driver
   // role") even when a word in it is something the candidate lacks.
   const titleRe = new RegExp(c.job.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi')
-  const prose = letter.replace(titleRe, ' ')
+  // The salutation names no duty: "Dear Hiring Manager" isn't a hiring claim.
+  const prose = letter.replace(titleRe, ' ').replace(/\bhiring (?:manager|team)\b/gi, ' ')
   for (const t of c.failTerms) {
     if (containsTerm(prose, t)) result.failures.push(`letter contains forbidden term "${t}" (not in resume)`)
   }
@@ -201,6 +203,13 @@ export function checkTailored(out: TailoredResume, c: EvalCase, input: ParsedRes
         result.warnings.push(`skills gained "${s}" — allowed only as a category label backed by a named resume tool; verify`)
       }
     }
+  }
+
+  // One tense per earlier role: the line check fixes mixed roles, so any left
+  // are misses, or a noun opener ("Member of...") the heuristic reads as present.
+  for (const [id] of mixedTenseLines(out)) {
+    const [, role, bullet] = /^e(\d+)b(\d+)$/.exec(id)!
+    result.warnings.push(`experience[${role}] mixes tenses: "${out.experience[+role].bullets[+bullet]}"`)
   }
 
   // Summary shape.
