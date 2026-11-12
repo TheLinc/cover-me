@@ -118,7 +118,7 @@ const CLOSE_QUESTION_RE = /^(?:Which|What|How|When|Where|Who|Why)\b(?![^?]*\b(?:
 // Stock lines from council round 2 (#206): "Arcadia is where I'd like to take
 // that step" gives no reason, and "I'd bring the same attention to…" is the
 // "standard I'd bring" label in another form.
-const STOCK_LINE_RE = /\bis where I(?:['’]d| would) (?:like|love|hope)\b|\bI(?:['’]d| would) (?:like|love|hope) to find (?:both|that|this|them|it) (?:at|with)\b|\bI(?:['’]d| would) bring (?:the same|that same|this same)\b/i
+const STOCK_LINE_RE = /\bis where I(?:['’]d| would) (?:like|love|hope)\b|\bthe (?:main |real |whole )?reason I['’]m applying\b|\b(?:work|something) I want to keep doing\b|\bI(?:['’]d| would) (?:like|love|hope) to find (?:both|that|this|them|it) (?:at|with)\b|\bI(?:['’]d| would) bring (?:the same|that same|this same)\b/i
 
 // The pivot split in two: "Acme has an opening for X. That's how my current
 // job runs." (a real letter after the #206 changes).
