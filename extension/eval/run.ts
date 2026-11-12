@@ -74,7 +74,7 @@ const ONLY_INDUSTRY = opt('industry')?.toLowerCase()
 const BASELINE_FILE = join(HERE, QUICK ? 'baseline.json' : 'baseline-full.json')
 
 const SIGN_OFFS = ['Sincerely,', 'Best regards,', 'Kind regards,']
-const HOOKS = ['Achievement-first', 'Current work', 'Bold specific claim']
+const HOOKS = ['Achievement-first', 'Bold specific claim']
 const CLOSES = ['Next step', 'Thanks']
 
 // A low judge score fails a plain run. Under --baseline (the CI gate) it is a
@@ -154,7 +154,7 @@ function staticChecks() {
 
   for (const c of cases) {
     const result = checkFixture(c)
-    const variation: LetterVariation = { signOff: 'Sincerely,', hookPattern: 'Current work', closePattern: 'Next step' }
+    const variation: LetterVariation = { signOff: 'Sincerely,', hookPattern: 'Bold specific claim', closePattern: 'Next step' }
     const lp = buildLetterPrompt(c.job, c.resumeText, undefined, variation)
 
     const mustContain: Array<[string, string]> = [
@@ -165,7 +165,7 @@ function staticChecks() {
       ['chosen sign-off', variation.signOff],
       ['chosen hook pattern', `Default to the ${variation.hookPattern}`],
       ['chosen close', `Close with the ${variation.closePattern} move`],
-      ['word range', '180–320 words'],
+      ['word range', '150–280 words'],
       ['resume text embedded', c.resumeText.slice(0, 60)],
       ['JD embedded', c.job.description.slice(0, 60)],
       ['em-dash cap', 'TWO em-dashes'],
