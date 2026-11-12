@@ -402,6 +402,7 @@ describe('stock lines', () => {
   test.each([
     'After five years on the staff side, I want a senior role. Arcadia is where I\'d like to take that step.',
     'I\'d bring the same attention to medication safety that has kept my record clean.',
+    'I want a wider scope and colleagues to learn from. I\'d like to find both at Arcadia.',
   ])('flags: %s', (s) => expect(flagged('Ends on a stock line', s)).toBe(true))
   test.each([
     'The night shift is where I learned to triage fast.',
