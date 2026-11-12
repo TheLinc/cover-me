@@ -209,8 +209,9 @@ describe('generic heuristic', () => {
 
   // Cards of a related-jobs panel each carry plain text, so link share alone
   // doesn't keep them out
-  const related = Array.from({ length: 10 }, (_, i) => `<li class="job"><a href="/jobs/${i}">Forklift Operator ${i}</a>
+  const relatedJobs = (n: number) => Array.from({ length: n }, (_, i) => `<li class="job"><a href="/jobs/${i}">Forklift Operator ${i}</a>
     <p>Location: AUS, NSW, Sydney</p><p>Posted ${i + 2} days ago. Move pallets and load trucks on the night shift.</p></li>`).join('')
+  const related = relatedJobs(10)
   test('reads a posting without the related jobs listed beside it', () => {
     const job = scrape('https://careers.example.com/jobs/1', `<html><body><main><div><h1>Warehouse Supervisor</h1>
       <div><p>${description}</p></div><div><h2>Related jobs</h2><ul>${related}</ul></div></div></main></body></html>`)
@@ -243,7 +244,7 @@ describe('generic heuristic', () => {
       <div><p>${description}</p></div><aside><h2>Related jobs</h2><ul>${related}</ul></aside></main></body></html>`)
     expect(job).toMatchObject({ title: 'Warehouse Supervisor', description })
     // ...nor when the tab title names the job in place of the heading
-    const relatedMore = Array.from({ length: 4 }, () => related).join('')
+    const relatedMore = relatedJobs(40)
     const tabbed = scrape('https://careers.acme.com/jobs/1', `<html><head><title>Warehouse Supervisor | Acme</title></head><body><main>
       <h1>Job Description</h1><div><p>${description}</p></div><aside><ul>${relatedMore}</ul></aside></main></body></html>`)
     expect(tabbed).toMatchObject({ title: 'Warehouse Supervisor', description })
@@ -252,6 +253,11 @@ describe('generic heuristic', () => {
     const grid = scrape('https://careers.example.com/jobs/1', `<html><body><main><h1>Warehouse Supervisor</h1>
       <div class="grid"><div class="posting"><p>${description}</p></div>${cards}</div></main></body></html>`)
     expect(grid.description).toContain(description)
+    // ...nor a wrapper around the posting and a panel three times its size:
+    // the posting's own block is read
+    const wrapped = scrape('https://careers.example.com/jobs/1', `<html><body><div id="app"><h1>Warehouse Supervisor</h1>
+      <div class="posting"><p>${description}</p></div><div class="sidebar"><ul>${relatedMore}</ul></div></div></body></html>`)
+    expect(wrapped.description).toBe(description)
   })
 
   // The server's snapshot drops each link's query and fragment, so cards can
