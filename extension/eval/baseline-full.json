@@ -1,9 +1,9 @@
 {
-  "updated": "2026-10-09T13:29:10.361Z",
+  "updated": "2026-11-12T13:04:27.350Z",
   "model": "claude-sonnet-5-5",
   "judge": "claude-opus-5-5",
   "runs": 2,
-  "connectionRate": 0.45,
+  "connectionRate": 0.75,
   "letters": {
     "tech-missing-stack": 4,
     "tech-prompt-injection": 4,
@@ -12,50 +12,52 @@
     "tech-unknown-company": 4,
     "business-analyst-missing-cert": 4,
     "sales-ae-midmarket-to-enterprise": 4,
-    "project-manager-capm-not-pmp": 4,
-    "hr-coordinator-to-generalist": 3.5,
-    "customer-support-tier2": 3.5,
-    "executive-assistant-tool-swap": 3.5,
+    "project-manager-capm-not-pmp": 3.5,
+    "hr-coordinator-to-generalist": 4,
+    "customer-support-tier2": 4,
+    "executive-assistant-tool-swap": 4,
     "office-manager-career-gap": 3.5,
     "accountant-no-cpa": 4,
     "uk-finance-assistant": 3.5,
     "paralegal-litigation-to-corporate": 4,
     "teacher-out-of-state": 4,
-    "teacher-to-instructional-designer": 3.5,
+    "teacher-to-instructional-designer": 4,
     "electrician-commercial-to-industrial": 4,
     "welder-structural-to-pipe": 3.5,
-    "line-cook-to-sous-chef": 4,
-    "retail-keyholder-to-asm": 3.5,
-    "warehouse-lead-wms-swap": 4,
-    "cdl-driver-missing-endorsement": 3.5,
-    "veteran-to-distribution-ops": 3.5,
+    "line-cook-to-sous-chef": 3.5,
+    "retail-keyholder-to-asm": 4,
+    "warehouse-lead-wms-swap": 3.5,
+    "cdl-driver-missing-endorsement": 4,
+    "veteran-to-distribution-ops": 4,
     "pharmacy-tech-retail-to-hospital": 4,
     "mechanical-engineer-medical-device": 4,
-    "graphic-designer-no-motion": 3.5,
+    "graphic-designer-no-motion": 4,
     "policy-analyst-clearance": 4,
-    "nonprofit-program-to-development": 3.5,
-    "research-associate-publications": 4,
-    "new-grad-data-analyst": 3.5,
+    "nonprofit-program-to-development": 4,
+    "research-associate-publications": 3,
+    "new-grad-data-analyst": 4,
     "vp-operations-to-coo": 4,
-    "long-new-grad-data-analyst": 4,
-    "long-nurse-missing-certs": 4
+    "long-new-grad-data-analyst": 3.5,
+    "long-nurse-missing-certs": 4,
+    "new-grad-nurse-rotations": 3.5,
+    "accelerator-lead-to-venture-builder": 4
   },
   "scores": {
     "tech-missing-stack": {
-      "faithfulness": 5,
+      "faithfulness": 4,
       "fieldFit": 4,
       "relevance": 4,
       "readability": 4
     },
     "tech-prompt-injection": {
-      "faithfulness": 4,
+      "faithfulness": 5,
       "fieldFit": 5,
-      "relevance": 5,
+      "relevance": 4,
       "readability": 4
     },
     "nurse-missing-certs": {
-      "faithfulness": 5,
-      "fieldFit": 4,
+      "faithfulness": 4.5,
+      "fieldFit": 4.5,
       "relevance": 4,
       "readability": 4
     },
@@ -63,22 +65,22 @@
       "faithfulness": 4,
       "fieldFit": 4,
       "relevance": 4,
-      "readability": 3.5
+      "readability": 4
     },
     "tech-unknown-company": {
-      "faithfulness": 4,
-      "fieldFit": 4,
-      "relevance": 4,
+      "faithfulness": 4.5,
+      "fieldFit": 4.5,
+      "relevance": 4.5,
       "readability": 4
     },
     "business-analyst-missing-cert": {
       "faithfulness": 5,
       "fieldFit": 4,
-      "relevance": 3.5,
-      "readability": 4
+      "relevance": 4,
+      "readability": 3.5
     },
     "sales-ae-midmarket-to-enterprise": {
-      "faithfulness": 4.5,
+      "faithfulness": 5,
       "fieldFit": 4,
       "relevance": 3,
       "readability": 3
@@ -86,11 +88,11 @@
     "project-manager-capm-not-pmp": {
       "faithfulness": 4,
       "fieldFit": 4,
-      "relevance": 3.5,
-      "readability": 4
+      "relevance": 4,
+      "readability": 3.5
     },
     "hr-coordinator-to-generalist": {
-      "faithfulness": 4.5,
+      "faithfulness": 4,
       "fieldFit": 4,
       "relevance": 4,
       "readability": 4
@@ -102,86 +104,86 @@
       "readability": 3
     },
     "executive-assistant-tool-swap": {
-      "faithfulness": 5,
+      "faithfulness": 4.5,
       "fieldFit": 4,
-      "relevance": 2,
+      "relevance": 3.5,
       "readability": 3
     },
     "office-manager-career-gap": {
-      "faithfulness": 3.5,
-      "fieldFit": 3.5,
-      "relevance": 3.5,
-      "readability": 3.5
+      "faithfulness": 4.5,
+      "fieldFit": 4,
+      "relevance": 3,
+      "readability": 3
     },
     "accountant-no-cpa": {
       "faithfulness": 4.5,
       "fieldFit": 4,
-      "relevance": 3.5,
-      "readability": 3.5
+      "relevance": 4,
+      "readability": 4
     },
     "uk-finance-assistant": {
-      "faithfulness": 5,
+      "faithfulness": 4,
       "fieldFit": 4,
-      "relevance": 4.5,
+      "relevance": 4,
       "readability": 4
     },
     "paralegal-litigation-to-corporate": {
-      "faithfulness": 5,
+      "faithfulness": 4,
       "fieldFit": 4,
       "relevance": 3,
-      "readability": 3.5
+      "readability": 3
     },
     "teacher-out-of-state": {
       "faithfulness": 4,
-      "fieldFit": 4.5,
+      "fieldFit": 4,
       "relevance": 4,
       "readability": 3.5
     },
     "teacher-to-instructional-designer": {
       "faithfulness": 4.5,
       "fieldFit": 3,
-      "relevance": 2.5,
-      "readability": 3.5
+      "relevance": 3,
+      "readability": 3
     },
     "electrician-commercial-to-industrial": {
-      "faithfulness": 4.5,
+      "faithfulness": 4,
       "fieldFit": 3.5,
       "relevance": 3,
       "readability": 3.5
     },
     "welder-structural-to-pipe": {
-      "faithfulness": 5,
+      "faithfulness": 4.5,
       "fieldFit": 4,
       "relevance": 2.5,
-      "readability": 3
+      "readability": 3.5
     },
     "line-cook-to-sous-chef": {
-      "faithfulness": 4,
+      "faithfulness": 5,
       "fieldFit": 4,
-      "relevance": 3.5,
+      "relevance": 4,
       "readability": 3.5
     },
     "retail-keyholder-to-asm": {
       "faithfulness": 4,
       "fieldFit": 4,
-      "relevance": 3.5,
-      "readability": 2.5
+      "relevance": 4,
+      "readability": 4
     },
     "warehouse-lead-wms-swap": {
       "faithfulness": 4,
       "fieldFit": 4,
       "relevance": 4,
-      "readability": 3
+      "readability": 4
     },
     "cdl-driver-missing-endorsement": {
       "faithfulness": 5,
       "fieldFit": 5,
-      "relevance": 4,
-      "readability": 3.5
+      "relevance": 4.5,
+      "readability": 4
     },
     "veteran-to-distribution-ops": {
-      "faithfulness": 4.5,
-      "fieldFit": 2.5,
+      "faithfulness": 5,
+      "fieldFit": 2,
       "relevance": 2.5,
       "readability": 3.5
     },
@@ -194,56 +196,68 @@
     "mechanical-engineer-medical-device": {
       "faithfulness": 5,
       "fieldFit": 4,
-      "relevance": 3,
+      "relevance": 2.5,
       "readability": 3.5
     },
     "graphic-designer-no-motion": {
       "faithfulness": 4,
       "fieldFit": 4,
-      "relevance": 3.5,
+      "relevance": 3,
       "readability": 3
     },
     "policy-analyst-clearance": {
-      "faithfulness": 5,
+      "faithfulness": 4.5,
       "fieldFit": 4,
-      "relevance": 3,
-      "readability": 4
+      "relevance": 4,
+      "readability": 3.5
     },
     "nonprofit-program-to-development": {
       "faithfulness": 4,
       "fieldFit": 4,
       "relevance": 4,
-      "readability": 3.5
-    },
-    "research-associate-publications": {
-      "faithfulness": 5,
-      "fieldFit": 4,
-      "relevance": 3,
-      "readability": 3.5
-    },
-    "new-grad-data-analyst": {
-      "faithfulness": 3.5,
-      "fieldFit": 3.5,
-      "relevance": 3,
       "readability": 3
     },
-    "vp-operations-to-coo": {
+    "research-associate-publications": {
       "faithfulness": 4.5,
+      "fieldFit": 4,
+      "relevance": 4,
+      "readability": 3
+    },
+    "new-grad-data-analyst": {
+      "faithfulness": 4,
+      "fieldFit": 4,
+      "relevance": 4,
+      "readability": 4
+    },
+    "vp-operations-to-coo": {
+      "faithfulness": 4,
       "fieldFit": 4,
       "relevance": 4,
       "readability": 4
     },
     "long-new-grad-data-analyst": {
-      "faithfulness": 4.5,
+      "faithfulness": 3.5,
       "fieldFit": 4,
-      "relevance": 2.5,
-      "readability": 4
+      "relevance": 3.5,
+      "readability": 3
     },
     "long-nurse-missing-certs": {
-      "faithfulness": 5,
+      "faithfulness": 4,
       "fieldFit": 4,
-      "relevance": 3,
-      "readability": 3
+      "relevance": 3.5,
+      "readability": 3.5
+    },
+    "new-grad-nurse-rotations": {
+      "faithfulness": 4.5,
+      "fieldFit": 4,
+      "relevance": 3.5,
+      "readability": 3.5
+    },
+    "accelerator-lead-to-venture-builder": {
+      "faithfulness": 4.5,
+      "fieldFit": 4,
+      "relevance": 4,
+      "readability": 4
     }
   }
 }

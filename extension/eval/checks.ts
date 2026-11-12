@@ -71,7 +71,8 @@ export function checkLetter(letter: string, c: EvalCase): CheckResult {
   // The posting's own job title is fair to name ("the Hazmat Tanker Driver
   // role") even when a word in it is something the candidate lacks.
   const titleRe = new RegExp(c.job.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi')
-  const prose = letter.replace(titleRe, ' ')
+  // The salutation names no duty: "Dear Hiring Manager" isn't a hiring claim.
+  const prose = letter.replace(titleRe, ' ').replace(/\bhiring (?:manager|team)\b/gi, ' ')
   for (const t of c.failTerms) {
     if (containsTerm(prose, t)) result.failures.push(`letter contains forbidden term "${t}" (not in resume)`)
   }
