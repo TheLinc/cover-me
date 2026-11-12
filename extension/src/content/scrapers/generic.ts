@@ -52,11 +52,15 @@ function tryHeuristic(): JobData {
   // logo, a long hero line) never fall back, as before.
   const tab = fromTabTitle()
   const company = tab.company.toLowerCase()
-  const h1s = Array.from(document.querySelectorAll<HTMLElement>('h1'), (el) => el.innerText?.trim() ?? '')
-  const usable = h1s.filter((t) => t.length > 2 && t.length < 120)
-  const section = usable.find(isSectionHeading)
-  const rejected = section ?? usable.find((t) => isSiteHeading(t) || t.toLowerCase() === company)
-  const title = usable.find((t) => !isNavHeading(t) && !isSectionHeading(t) && !isSiteHeading(t) && t.toLowerCase() !== company) ??
+  // Only headings of title length are kept: every <h1>'s text would cost
+  // elements x depth of memory on nested ones.
+  const h1s = Array.from(document.querySelectorAll<HTMLElement>('h1')).flatMap((el) => {
+    const text = el.innerText?.trim() ?? ''
+    return text.length > 2 && text.length < 120 ? [text] : []
+  })
+  const section = h1s.find(isSectionHeading)
+  const rejected = section ?? h1s.find((t) => isSiteHeading(t) || t.toLowerCase() === company)
+  const title = h1s.find((t) => !isNavHeading(t) && !isSectionHeading(t) && !isSiteHeading(t) && t.toLowerCase() !== company) ??
     (rejected && !h1s.some(isNavHeading) ? tab.title ?? section : undefined)
 
   // Find the largest text block that looks like a job description: not a list
@@ -76,12 +80,15 @@ function tryHeuristic(): JobData {
     })
     .filter(({ len }) => len > 500 && len < 20000)
     .sort((a, b) => b.len - a.len)
-  // ...when it holds at least half as much text: a short header that opens with
-  // the title mustn't win over the description beside it.
+  // ...when it sits inside the largest and what it leaves out is mostly links:
+  // a header or intro that opens with the title mustn't cut off the rest of
+  // the posting beside it.
   const isPosting = ({ el, len }: { el: HTMLElement; len: number }) => linkTextLength(el, nested) < len / 2
   const largest = blocks.find(isPosting)
-  const opening = blocks.find((b) => b.opens && largest && b.len >= largest.len / 2 && isPosting(b))
-  const description = (opening ?? largest)?.el.innerText.trim()
+  const largestLinks = largest ? linkTextLength(largest.el, nested) : 0
+  const opening = largest && blocks.find((b) => b.opens && b !== largest && largest.el.contains(b.el) &&
+    largestLinks - linkTextLength(b.el, nested) > (largest.len - b.len) / 2)
+  const description = (opening || largest)?.el.innerText.trim()
 
   if (!title || !description || description.length < 200) {
     throw new Error(

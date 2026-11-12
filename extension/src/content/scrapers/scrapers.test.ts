@@ -128,6 +128,23 @@ describe('company and title when the page doesn\'t name them (#200)', () => {
       .toThrow('Could not find job details')
   })
 
+  test('a block that opens with the title doesn\'t cut off the requirements after it', () => {
+    const requirements = `<p>${'Five years of external audit experience and a CPA. '.repeat(11)}</p>`
+    const job = scrape('https://careers.example.com/jobs/79', `<!doctype html><html><body><div class="job"><div>Careers / Finance</div>
+      <div><h1>Senior Auditor</h1>${description}</div><div><h2>Requirements</h2>${requirements}</div></div></body></html>`)
+    expect(job.description).toMatch(/^Careers \/ Finance[\s\S]*Five years of external audit experience and a CPA\.$/)
+  })
+
+  // Company first or job first can't be told apart when the URL names neither
+  test('a two-part tab title the URL doesn\'t name gives no job', () => {
+    expect(posting('Key Responsibilities', 'Wiz - Director of Finance', 'https://employer.example.io/position/2600/79').title)
+      .toBe('Key Responsibilities')
+  })
+
+  test('a long hero <h1> doesn\'t stop a section heading from being the title', () => {
+    expect(posting(`${'We are hiring people who love numbers, '.repeat(4)}</h1><h1>Overview`, 'Overview').title).toBe('Overview')
+  })
+
   // "Careers | Northwind" names only the site: no job to take from it
   test('a heading and a tab title that name only the site are no job', () => {
     expect(() => posting('Careers at Northwind.', 'Careers | Northwind')).toThrow('Could not find job details')

@@ -46,8 +46,11 @@ export function fromTabTitle(): { company: string; title?: string } {
   const named = (set: Set<string>) => [...parts].reverse().find((p) => set.has(key(p)))
   // One part alone can't be told apart from the site's name
   const company = parts.length > 1 ? named(host) ?? named(keys(fromPath)) : undefined
-  // The job is the first other part, and never the site's own name
-  // ("Careers | Northwind" on careers.northwind.com has none)
-  const title = parts.find((p) => p !== company && !host.has(key(p)))
+  // The job is the first other part, never the site's own name ("Careers |
+  // Northwind" on careers.northwind.com has none). Without a company it's only
+  // a job when it's the one part left: "Wiz - Director of Finance" could be
+  // either way round.
+  const others = parts.filter((p) => p !== company && !host.has(key(p)))
+  const title = company || others.length === 1 ? others[0] : undefined
   return { company: company ?? 'Unknown Company', title }
 }
