@@ -566,16 +566,18 @@ export async function saveResumeEditToBackend(accessToken: string, id: string, r
 
 // The section order the user chose in the editor, for the account's later
 // tailored resumes (#197). headings: the extra sections' headings, in order.
-export async function saveSectionOrderToBackend(accessToken: string, sectionOrder: string[], headings: string[]): Promise<void> {
+// Returns why it wasn't saved when the user can act on it (no parse yet, or a
+// new upload meanwhile); throws on anything else.
+export async function saveSectionOrderToBackend(accessToken: string, sectionOrder: string[], headings: string[]): Promise<string | undefined> {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/resume`, {
     method: 'PATCH',
     headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ sectionOrder, headings }),
   })
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({})) as Record<string, unknown>
-    throw new Error((data.error as string) ?? `Server error ${res.status}`)
-  }
+  if (res.ok) return undefined
+  const data = await res.json().catch(() => ({})) as Record<string, unknown>
+  if ((res.status === 404 || res.status === 409) && typeof data.error === 'string') return data.error
+  throw new Error(`Server error ${res.status}`)
 }
 
 export async function deleteApplicationFromBackend(accessToken: string, id: string): Promise<void> {

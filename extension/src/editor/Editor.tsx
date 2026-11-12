@@ -58,16 +58,17 @@ function resumeFromForm(draft: TailoredResume, skills: string[]): TailoredResume
 
 // "Use this order for future resumes?" (#197). Own-key: the parse in this
 // browser. Signed in: the account's, which the server matches the same way.
-async function saveOrderForLater(r: TailoredResume): Promise<void> {
+// Returns why it wasn't saved when the user can act on it; throws otherwise.
+async function saveOrderForLater(r: TailoredResume): Promise<string | undefined> {
   const { sectionOrder, headings } = chosenOrder(r)
   if ((await getMode()) === 'hosted') {
     const session = await ensureValidSession()
-    if (!session) throw new Error('Sign in again, then try again.')
+    if (!session) return 'Sign in again, then try again.'
     return saveSectionOrderToBackend(session.access_token, sectionOrder, headings)
   }
   const parsed = (await getResume())?.parsed
   // A new upload isn't read until its first tailor.
-  if (!isCurrentParse(parsed)) throw new Error('Tailor once with your current resume, then try again.')
+  if (!isCurrentParse(parsed)) return 'Tailor once with your current resume, then try again.'
   await saveParsedResume(withChosenOrder(parsed, sectionOrder, headings))
 }
 
@@ -284,10 +285,10 @@ export default function Editor() {
     // A move while it saves asks again; the answer doesn't cover that one.
     const settle = (state: OrderAsk, error?: string) => setOrderAsk((a) => (a.state === 'saving' ? { ...a, state, error } : a))
     try {
-      await saveOrderForLater(current)
-      settle('saved')
-    } catch (err) {
-      settle('failed', err instanceof Error ? err.message : undefined)
+      const why = await saveOrderForLater(current)
+      settle(why ? 'failed' : 'saved', why)
+    } catch {
+      settle('failed')
     }
   }
 
