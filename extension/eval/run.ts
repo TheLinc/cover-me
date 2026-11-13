@@ -7,7 +7,9 @@
 //
 //   Flags:
 //     --quick                  11 cases: one per field family, plus two long postings (PR check)
-//     --letters / --tailor     run only one side (default both)
+//     --letters / --tailor     run only one side (default both). Run only the side
+//                              you changed: tailoring is ~70% of a full run's calls.
+//                              scripts/eval-side.sh <base> prints which side a diff needs.
 //     --case <id>              one case          --industry <name>  one industry
 //     --runs <n>               samples per resume case (default 1)
 //     --concurrency <n>        parallel cases (default 6)

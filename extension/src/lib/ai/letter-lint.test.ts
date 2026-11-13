@@ -473,19 +473,20 @@ describe('letterLength', () => {
 
   test('a thin resume aims short, a full resume aims longer', () => {
     expect(letterLength(thin).min).toBe(100)
-    expect(letterLength(full).min).toBe(150)
+    expect(letterLength(full).min).toBe(110)
     expect(letterLength(undefined).min).toBe(100)
   })
 
   test('the floor follows the resume', () => {
     expect(short(body(120), thin)).toBe(false)
-    expect(short(body(120), full)).toBe(true)
-    expect(short(body(160), full)).toBe(false)
+    expect(short(body(105), thin)).toBe(false)
+    expect(short(body(105), full)).toBe(true)
+    expect(short(body(120), full)).toBe(false)
     expect(short(body(90))).toBe(true)
   })
 
   test('the short message names the resume-sized aim', () => {
-    const v = lintLetter(body(120), { resumeText: full }).violations.find((x) => x.includes('too short'))!
+    const v = lintLetter(body(105), { resumeText: full }).violations.find((x) => x.includes('too short'))!
     expect(v).toContain(letterLength(full).aim)
   })
 })
