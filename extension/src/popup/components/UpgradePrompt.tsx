@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ensureValidSession, fetchFirstMonthOffer, startBilling, type FirstMonthOffer, type Plan } from '../../lib/auth'
+import { GiftIcon } from './icons'
 
 // Opens Stripe checkout for the chosen plan in a new tab (payments live on the
 // website, not in the extension). Prices match the dashboard's upgrade buttons.
@@ -40,6 +41,7 @@ export default function UpgradePrompt() {
       <p className="hint">Pro: up to 25 a day</p>
       {offer && (
         <p className="upgrade-offer">
+          <span className="offer-tag"><GiftIcon />Offer</span>
           <strong>{offer.name ?? 'Your first month is discounted'}</strong> on the monthly plan, taken off at checkout.
           Ends {new Date(offer.endsAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}.
         </p>
