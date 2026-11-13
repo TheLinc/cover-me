@@ -1,4 +1,6 @@
+import JSZip from 'jszip'
 import { afterEach, describe, expect, test, vi } from 'vitest'
+import { usesDesign } from './design'
 import { completeSignIn, ensureValidSession, fetchTier, GoogleSignInCancelledError, handleGoogleSignIn, pkcePair, signInWithGoogle, signUp } from './auth'
 
 const REDIRECT = 'https://abc.chromiumapp.org/'
@@ -339,6 +341,75 @@ describe('completeSignIn', () => {
     vi.stubGlobal('chrome', { storage: fakeStorage({ resume: { text: 't', filename: 'f', updatedAt: '' } }) })
     vi.stubGlobal('fetch', vi.fn(async () => new Response('{"error":"boom"}', { status: 500 })))
     await expect(completeSignIn(session)).resolves.toBeUndefined()
+  })
+})
+
+// A Pro account's own Word design on another computer (#174): the account
+// names the file that goes with its resume, and the sign-in brings it down.
+describe('completeSignIn restores the Word design', () => {
+  const designHash = 'd'.repeat(64)
+  const bullets = ['Built the billing service in Go', 'Mentored two junior engineers']
+  const parsed = { name: 'Pat', email: '', phone: '', website: '', education: [], experience: [{ title: 'Engineer', company: 'Northwind', location: '', dates: '2022', bullets }] }
+  async function wordFile() {
+    const zip = new JSZip()
+    zip.file('word/document.xml', `<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${bullets.map((b) => `<w:p><w:r><w:t>${b}</w:t></w:r></w:p>`).join('')}</w:body></w:document>`)
+    return Buffer.from(await zip.generateAsync({ type: 'uint8array' })).toString('base64')
+  }
+
+  // The account's resume (with design_hash when it has one) and its files.
+  function server(account: { design_hash?: string }, file: { docx: string; structured: unknown } | null) {
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url.includes('/rest/v1/users')) return new Response('[{"tier":"hosted_pro"}]', { status: 200 })
+      if (url.endsWith('/functions/v1/resume')) return new Response(JSON.stringify({ text: 'account copy', filename: 'cv.docx', updated_at: '2026-10-01T00:00:00Z', ...account }), { status: 200 })
+      if (url.includes(`/functions/v1/applications?file=${designHash}`)) return file ? new Response(JSON.stringify(file), { status: 200 }) : new Response('{"error":"Not found"}', { status: 404 })
+      throw new Error(`unexpected ${url}`)
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    return fetchMock
+  }
+  const fileRequests = (f: ReturnType<typeof server>) => f.mock.calls.filter(([url]) => String(url).includes('applications?file='))
+
+  test('a new computer gets the file, checked, with no new upload', async () => {
+    const storage = fakeStorage({})
+    vi.stubGlobal('chrome', { storage })
+    const docx = await wordFile()
+    server({ design_hash: designHash }, { docx, structured: parsed })
+
+    await completeSignIn(session)
+
+    const resume = storage.data.resume as Parameters<typeof usesDesign>[0]
+    expect(resume).toMatchObject({ text: 'account copy', accountId: 'u1', design: { hash: designHash, size: Buffer.from(docx, 'base64').length, status: 'done', uploaded: true, check: { matched: 2, total: 2 } } })
+    expect(usesDesign(resume)).toBe(true)
+    expect(storage.data[`designFile:${designHash}`]).toEqual({ data: docx, parsed })
+  })
+
+  test('an account without one (a PDF since, or not Pro) makes no file request', async () => {
+    vi.stubGlobal('chrome', { storage: fakeStorage({}) })
+    const fetchMock = server({}, null)
+    await completeSignIn(session)
+    expect(fileRequests(fetchMock)).toEqual([])
+  })
+
+  test('a file that cannot be fetched leaves the resume as text only', async () => {
+    const storage = fakeStorage({})
+    vi.stubGlobal('chrome', { storage })
+    server({ design_hash: designHash }, null)
+
+    await completeSignIn(session)
+
+    expect(storage.data.resume).toEqual({ text: 'account copy', filename: 'cv.docx', updatedAt: '2026-10-01T00:00:00Z', accountId: 'u1' })
+  })
+
+  test('a design this computer already has for the same text is kept, with no request', async () => {
+    const own = { hash: 'e'.repeat(64), size: 5, status: 'done', uploaded: true }
+    const storage = fakeStorage({ resume: { text: 'account copy', filename: 'cv.docx', updatedAt: '2026-10-01T00:00:00Z', accountId: 'u1', design: own } })
+    vi.stubGlobal('chrome', { storage })
+    const fetchMock = server({ design_hash: designHash }, null)
+
+    await completeSignIn(session)
+
+    expect((storage.data.resume as { design: unknown }).design).toEqual(own)
+    expect(fileRequests(fetchMock)).toEqual([])
   })
 })
 

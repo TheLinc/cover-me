@@ -229,6 +229,10 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
               {!wordUpload && !news && (
                 <div className="hint hint-tight">Upload your resume as a Word file (.docx) and tailored resumes keep its design.</div>
               )}
+              {/* A .docx name with no file here: synced from another computer, or uploaded before #131. */}
+              {wordUpload && !resume.design && !news && (
+                <div className="hint hint-tight">This browser doesn&apos;t have your Word file, so tailored resumes use the Cover Me layout. Upload the .docx again here to keep its design.</div>
+              )}
             </div>
             {status === 'saved' && (
               <span className="success-badge">
@@ -301,7 +305,8 @@ function LayoutChoice({ design, yours, onPick, onRetry, dashboardFallback }: {
     return (
       <p className="hint design-choice">
         {design.error ?? "Couldn't check your design."}{' '}
-        <button type="button" className="upload-link design-retry" onClick={onRetry}>Try again</button>
+        {/* A check again would upload this browser's text over the account's resume. */}
+        {!design.refused && <button type="button" className="upload-link design-retry" onClick={onRetry}>Try again</button>}
       </p>
     )
   }
