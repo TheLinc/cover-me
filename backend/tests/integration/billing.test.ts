@@ -212,6 +212,17 @@ describe('billing', () => {
       expect((await checkout())['discounts[0][coupon]']).toBeUndefined()
     })
 
+    it('falls back to full price when Stripe rejects the coupon', async () => {
+      user = await createUser()
+      await offerOpen(user.id)
+      await mockStripe.setState({ discountError: { status: 400, code: 'resource_missing' } })
+      const res = await callFunction('billing', { token: user.token, body: { action: 'checkout' } })
+      expect(res.status).toBe(200)
+      const sessions = (await mockStripe.calls()).filter((c) => c.path === '/v1/checkout/sessions')
+      expect(sessions).toHaveLength(COUPON ? 2 : 1)
+      expect(sessions.at(-1)!.params['discounts[0][coupon]']).toBeUndefined()
+    })
+
     it('leaves it off for a customer Stripe says had a subscription', async () => {
       user = await createUser()
       await offerOpen(user.id)

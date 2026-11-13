@@ -131,6 +131,8 @@ const stripeState = {
   customerError: null as StripeFailure,
   subscriptionError: null as StripeFailure,
   deleteCustomerError: null as StripeFailure,
+  // Fails the next checkout session that carries a coupon.
+  discountError: null as StripeFailure,
 }
 
 function readBody(req: IncomingMessage): Promise<string> {
@@ -197,6 +199,7 @@ export function startMockAnthropic(port: number): Promise<Server> {
       stripeState.customerError = null
       stripeState.subscriptionError = null
       stripeState.deleteCustomerError = null
+      stripeState.discountError = null
       failures.length = 0
       delayNext = 0
       streamPause = 0
@@ -323,7 +326,8 @@ export function startMockAnthropic(port: number): Promise<Server> {
       const params = Object.fromEntries(new URLSearchParams(await readBody(req)))
       const key = req.headers['idempotency-key']
       stripeCalls.push({ path: url, params, idempotencyKey: typeof key === 'string' ? key : null })
-      const failKey = url === '/v1/customers' ? 'customerError' : url === '/v1/subscriptions' ? 'subscriptionError' : null
+      const failKey = url === '/v1/customers' ? 'customerError' : url === '/v1/subscriptions' ? 'subscriptionError'
+        : url === '/v1/checkout/sessions' && params['discounts[0][coupon]'] ? 'discountError' : null
       const failure = failKey && stripeState[failKey]
       if (failKey && failure) {
         stripeState[failKey] = null

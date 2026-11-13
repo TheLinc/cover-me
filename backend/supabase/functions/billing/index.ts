@@ -211,19 +211,29 @@ Deno.serve(async (req) => {
     // so today's checkout is full price), and a monthly checkout while it's
     // open takes the coupon off, for a customer Stripe has never billed.
     const discount = Boolean(await openFirstMonthOffer(supabase, user.id)) && price === 'monthly' && !hadSubscription
-    const session = await stripe('checkout/sessions', {
+    const createSession = (withDiscount: boolean) => stripe('checkout/sessions', {
       mode: 'subscription',
-      customer: customerId,
+      customer: customerId!,
       'line_items[0][price]': PRICES[price],
       'line_items[0][quantity]': '1',
       'metadata[supabase_user_id]': user.id,
       ...(giftTrial && { 'metadata[gift_trial_subscription]': giftTrial.id }),
       ...(carryTrial && { 'subscription_data[trial_end]': String(giftTrial!.trial_end) }),
-      ...(discount && { 'discounts[0][coupon]': FIRST_MONTH_COUPON }),
+      ...(withDiscount && { 'discounts[0][coupon]': FIRST_MONTH_COUPON! }),
       // Nothing is charged today on a carried-over trial: the page names the first payment.
       success_url: carryTrial ? `${SITE_URL}/upgraded?first=${giftTrial!.trial_end}` : `${SITE_URL}/upgraded`,
       cancel_url: `${SITE_URL}/dashboard`,
     })
+    let session
+    try {
+      session = await createSession(discount)
+    } catch (err) {
+      // A coupon Stripe won't apply (deleted, expired, used up, a typo in the
+      // secret) mustn't block the upgrade: check out at full price instead.
+      if (!discount || !(err instanceof StripeError) || err.status !== 400) throw err
+      console.error('[billing] coupon rejected:', err.message)
+      session = await createSession(false)
+    }
     return json({ url: session.url })
   } catch (err) {
     console.error('[billing]', err instanceof Error ? err.message : 'unknown error')
