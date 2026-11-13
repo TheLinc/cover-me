@@ -62,8 +62,6 @@ export interface ParsedResume {
   otherSections?: ResumeSection[]
   /** The uploaded resume's section order (#165), carried to each tailored resume. Always an array on a parse made since then; a cached parse without it is parsed again. */
   sectionOrder?: SectionKey[]
-  /** PARSE_VERSION of the parser that made it; an older or missing one is parsed again. */
-  parseVersion?: number
 }
 
 export interface ResumeData {

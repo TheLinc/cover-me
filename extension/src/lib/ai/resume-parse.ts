@@ -4,15 +4,12 @@ import { OPENAI_CHAT, OPENAI_PARSE_FIELDS } from './openai'
 
 const CLAUDE_API = 'https://api.anthropic.com/v1/messages'
 
-// The most resume text a prompt carries. A long master resume (three pages,
-// fifteen bullets a role) runs about 13,000 characters; the old 12,000 cap
-// cut off whatever came last, usually education.
-export const MAX_RESUME_CHARS = 40000
-
-// Bumped when the parse keeps more of the resume, so a cached parse from an
-// older parser (cut off at 12,000 characters, no headline, project links or
-// section entries) is made again on the next tailor.
-export const PARSE_VERSION = 2
+// The most resume text a prompt carries, own-key and signed in alike. A long
+// master resume (three pages, fifteen bullets a role) runs about 13,000
+// characters; the old 12,000 cap cut off whatever came last, usually
+// education. 20,000 covers 99% of stored resumes while keeping the parse well
+// inside its output limit.
+export const MAX_RESUME_CHARS = 20000
 
 export function buildParsePrompt(resumeText: string): string {
   return `You are a resume parser. Convert the resume text below into structured JSON.
@@ -222,22 +219,15 @@ export function withSectionOrder<T extends ParsedResume>(parsed: T, resumeText?:
 // A cached parse made since the parse kept extra sections (#54) and section
 // order (#165). One from before is parsed again, once.
 export function isCurrentParse(parsed: ParsedResume | null | undefined): parsed is ParsedResume & Required<Pick<ParsedResume, 'otherSections' | 'sectionOrder'>> {
-  return Array.isArray(parsed?.otherSections) && Array.isArray(parsed?.sectionOrder) && fullParse(parsed)
-}
-
-// Made by a parser that read the whole resume (PARSE_VERSION): an older one
-// stopped at 12,000 characters and dropped headlines, project links and section
-// entries, so its content can't be kept.
-function fullParse(parsed: ParsedResume | null | undefined): boolean {
-  return ((parsed as { parseVersion?: unknown } | null | undefined)?.parseVersion as number ?? 1) >= PARSE_VERSION
+  return Array.isArray(parsed?.otherSections) && Array.isArray(parsed?.sectionOrder)
 }
 
 // What replaces a cached parse that isn't current, given a fresh parse of the
 // same text. One that only lacks the order keeps its content and takes the
 // fresh order, so a Word design checked against it still lines up. Anything
-// older, including a parse from before PARSE_VERSION, is replaced.
+// older is replaced.
 export function upgradedParse(cached: ParsedResume | null | undefined, fresh: ParsedResume): ParsedResume {
-  return cached && Array.isArray(cached.otherSections) && fullParse(cached) ? withSectionOrder({ ...cached, sectionOrder: fresh.sectionOrder }) : fresh
+  return cached && Array.isArray(cached.otherSections) ? withSectionOrder({ ...cached, sectionOrder: fresh.sectionOrder }) : fresh
 }
 
 // The parse with the section order the user chose in the editor (#197).
@@ -286,7 +276,7 @@ export function parseParsedJson(raw: string, resumeText?: string): ParsedResume 
   if (!isValidParsedResume(parsed)) {
     throw new Error('Resume parse returned incomplete data. Please try again.')
   }
-  return { ...withDetails(withSectionOrder(withLinks(withOtherSections(parsed)), resumeText)), parseVersion: PARSE_VERSION }
+  return withDetails(withSectionOrder(withLinks(withOtherSections(parsed)), resumeText))
 }
 
 export async function parseResumeStructure(

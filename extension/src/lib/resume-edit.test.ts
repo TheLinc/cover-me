@@ -99,14 +99,14 @@ describe('saving an edit', () => {
 describe('moving and deleting sections', () => {
   test('the editor lists the sections the resume has, in print order', () => {
     expect(shownSections(resume)).toEqual([
-      { key: 'summary' }, { key: 'skills' }, { key: 'experience' }, { key: 'projects' },
-      { key: 'other', index: 0 }, { key: 'education' }, { key: 'certifications' },
+      { key: 'summary' }, { key: 'experience' }, { key: 'projects' }, { key: 'education' },
+      { key: 'certifications' }, { key: 'skills' }, { key: 'other', index: 0 },
     ])
   })
 
   test('a new order is saved, and extra sections move with their "other" place', () => {
     const two = { ...resume, otherSections: [{ heading: 'Talks', lines: ['x'] }, { heading: 'Awards', lines: ['y'] }] }
-    const [summary, skills, experience, , talks, awards] = shownSections(two)
+    const [summary, experience, , , , skills, talks, awards] = shownSections(two)
     const moved = withSections(two, [awards, skills, summary, experience, talks])
     expect(moved.sectionOrder).toEqual(['other', 'skills', 'summary', 'experience', 'other'])
     expect(moved.otherSections!.map((s) => s.heading)).toEqual(['Awards', 'Talks'])
@@ -190,13 +190,12 @@ describe('restoring a deleted section', () => {
 describe('the order saved for future resumes', () => {
   test('is the shown order, with deleted sections back in their places', () => {
     const two = { ...resume, otherSections: [{ heading: 'Talks', lines: ['x'] }, { heading: 'Awards', lines: ['y'] }] }
-    // The default order: summary, skills, experience, projects, extra sections, education, certifications.
-    const [summary, skills, experience, , talks, awards, education, certifications] = shownSections(two)
-    const deleted = withSections(two, [summary, skills, experience, talks, awards, education, certifications])
-    const [s, sk, e, t, a, ed, c] = shownSections(deleted)
-    const moved = withSections(deleted, [s, sk, e, a, t, ed, c])
+    const [summary, experience, , education, certifications, skills, talks, awards] = shownSections(two)
+    const deleted = withSections(two, [summary, experience, education, certifications, skills, talks, awards])
+    const [s, e, ed, c, sk, t, a] = shownSections(deleted)
+    const moved = withSections(deleted, [s, e, ed, c, sk, a, t])
     expect(chosenOrder(moved)).toEqual({
-      sectionOrder: ['summary', 'skills', 'experience', 'projects', 'other', 'other', 'education', 'certifications'],
+      sectionOrder: ['summary', 'experience', 'projects', 'education', 'certifications', 'skills', 'other', 'other'],
       headings: ['Awards', 'Talks'],
     })
   })

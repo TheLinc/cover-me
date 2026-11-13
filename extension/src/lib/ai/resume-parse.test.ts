@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { ParsedResume } from '../../types'
 import { orderedSections } from '../pdf/sections'
-import { isCurrentParse, parseParsedJson, parseResumeStructure, upgradedParse, withChosenOrder, withSectionOrder, PARSE_VERSION } from './resume-parse'
+import { isCurrentParse, parseParsedJson, parseResumeStructure, upgradedParse, withChosenOrder, withSectionOrder } from './resume-parse'
 
 const RESUME = { name: 'A', email: 'a@x.co', experience: [], education: [{ institution: 'U of T' }] }
 const json = JSON.stringify(RESUME)
@@ -13,13 +13,13 @@ describe('parseResumeStructure streams', () => {
   test('Claude: joins the text deltas', async () => {
     const fetch = vi.fn(async (_url: string, _init: RequestInit) => sse([json.slice(0, 20), json.slice(20)].map((text) => ({ type: 'content_block_delta', delta: { type: 'text_delta', text } }))))
     vi.stubGlobal('fetch', fetch)
-    expect(await parseResumeStructure('r', 'claude', 'k')).toEqual({ ...RESUME, otherSections: [], sectionOrder: [], parseVersion: PARSE_VERSION })
+    expect(await parseResumeStructure('r', 'claude', 'k')).toEqual({ ...RESUME, otherSections: [], sectionOrder: [] })
     expect(JSON.parse(fetch.mock.calls[0]![1].body as string).stream).toBe(true)
   })
   test('OpenAI: joins the Chat Completions deltas', async () => {
     const fetch = vi.fn(async (_url: string, _init: RequestInit) => sse([json.slice(0, 20), json.slice(20)].map((content) => ({ choices: [{ delta: { content } }] }))))
     vi.stubGlobal('fetch', fetch)
-    expect(await parseResumeStructure('r', 'openai', 'k')).toEqual({ ...RESUME, otherSections: [], sectionOrder: [], parseVersion: PARSE_VERSION })
+    expect(await parseResumeStructure('r', 'openai', 'k')).toEqual({ ...RESUME, otherSections: [], sectionOrder: [] })
     expect(JSON.parse(fetch.mock.calls[0]![1].body as string).stream).toBe(true)
   })
   test("OpenAI: a mid-stream error surfaces OpenAI's message", async () => {
@@ -111,17 +111,11 @@ describe('upgradedParse', () => {
   const fresh = parseParsedJson(JSON.stringify({ ...RESUME, experience: [{ title: 'RN', company: 'General', location: '', dates: '', bullets: ['Triage', 'Charting'] }], sectionOrder: ['education', 'experience'] }))
 
   test('a parse with extra sections but no order keeps its own content and takes only the fresh order', () => {
-    const cached = { ...RESUME, experience: [{ title: 'RN', company: 'General', location: '', dates: '', bullets: ['Triage and charting'] }], otherSections: [], parseVersion: PARSE_VERSION } as unknown as ParsedResume
+    const cached = { ...RESUME, experience: [{ title: 'RN', company: 'General', location: '', dates: '', bullets: ['Triage and charting'] }], otherSections: [] } as unknown as ParsedResume
     const up = upgradedParse(cached, fresh)
     expect(up.experience).toEqual(cached.experience)
     expect(up.sectionOrder).toEqual(['summary', 'education', 'experience'])
     expect(isCurrentParse(up)).toBe(true)
-  })
-
-  test('a parse from before PARSE_VERSION is replaced whole: it stopped at 12,000 characters', () => {
-    const cut = { ...RESUME, experience: [{ title: 'RN', company: 'General', location: '', dates: '', bullets: ['Triage and charting'] }], otherSections: [] } as unknown as ParsedResume
-    expect(isCurrentParse({ ...cut, sectionOrder: ['summary', 'experience'] } as unknown as ParsedResume)).toBe(false)
-    expect(upgradedParse(cut, fresh)).toBe(fresh)
   })
 
   test('a parse from before extra sections, or none, is replaced by the fresh one', () => {
@@ -182,7 +176,6 @@ describe('withChosenOrder', () => {
     name: 'P', email: '', phone: '', website: '', experience: [job], education: [school], skills: 'Epic',
     otherSections: [{ heading: 'Talks', lines: ['x'] }, { heading: 'Awards', lines: ['y'] }],
     sectionOrder: ['summary', 'experience', 'education', 'skills', 'other', 'other'],
-    parseVersion: PARSE_VERSION,
   } as ParsedResume
   const headings = (p: ParsedResume) => p.otherSections!.map((s) => s.heading)
 

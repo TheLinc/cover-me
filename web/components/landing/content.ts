@@ -31,7 +31,7 @@ export const FAQ_ITEMS = [
   },
   {
     q: "Should I give Cover Me a long master resume?",
-    a: "Yes, if you have one. Cover Me only uses what's in your resume and removes any skill or claim your resume doesn't support, so more material gives it more to choose from. Put every role, project and skill in one file, then turn on \"Remove irrelevant bullets\" and it keeps the bullets that fit each job. It reads the first 12,000 characters, about 2,400 words.",
+    a: "Yes, if you have one. Cover Me only uses what's in your resume and removes any skill or claim your resume doesn't support, so more material gives it more to choose from. Put every role, project and skill in one file, then turn on \"Remove irrelevant bullets\" and it keeps the bullets that fit each job. It reads the first 20,000 characters, about 4,000 words.",
   },
   {
     q: "Do I need an account to use Cover Me?",

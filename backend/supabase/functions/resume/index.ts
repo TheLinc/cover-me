@@ -4,6 +4,7 @@ import { heartbeatJson } from '../_shared/heartbeat-json.ts'
 import { decrypt, encrypt, sameCiphertext } from '../_shared/encrypt.ts'
 import { isCurrentParse, isValidParsedResume, parseResumeStructure, type ParsedResume, upgradedParse, withChosenOrder } from '../_shared/resume-parse.ts'
 import { readBody } from '../_shared/read-body.ts'
+import { withOlderFields } from '../_shared/resume-fields.ts'
 
 const SUPABASE_URL        = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SECRET_KEY = Deno.env.get('SERVICE_KEY')!
@@ -143,10 +144,10 @@ Deno.serve(async (req) => {
       if (error) return json({ error: 'Failed to save resume' }, 500)
       if (!wantParse) return json({ success: true })
       const cached = await readParse(previous!.structured_encrypted)
-      if (isCurrentParse(cached)) return json({ success: true, structured: cached })
+      if (isCurrentParse(cached)) return json({ success: true, structured: withOlderFields(cached, req) })
       // One without the order (#165) still serves when the parse that adds it fails.
       const usable = Array.isArray(cached?.otherSections) ? cached : null
-      return heartbeatJson('resume', 'Resume parse failed', async () => ({ success: true, structured: (await parseNow(supabase, userId, text, previous!.text_encrypted, cached)) ?? usable }))
+      return heartbeatJson('resume', 'Resume parse failed', async () => ({ success: true, structured: withOlderFields((await parseNow(supabase, userId, text, previous!.text_encrypted, cached)) ?? usable, req) }))
     }
 
     let text_encrypted: string
@@ -165,7 +166,7 @@ Deno.serve(async (req) => {
 
     if (error) return json({ error: 'Failed to save resume' }, 500)
 
-    if (wantParse) return heartbeatJson('resume', 'Resume parse failed', async () => ({ success: true, structured: await parseNow(supabase, userId, text, text_encrypted) }))
+    if (wantParse) return heartbeatJson('resume', 'Resume parse failed', async () => ({ success: true, structured: withOlderFields(await parseNow(supabase, userId, text, text_encrypted), req) }))
     EdgeRuntime.waitUntil(parseNow(supabase, userId, text, text_encrypted))
 
     return json({ success: true })

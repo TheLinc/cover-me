@@ -816,14 +816,24 @@ export async function checkAndRewriteLines<T extends Groundable>(
 
 const LEVELS = ['senior', 'sr', 'staff', 'lead', 'principal', 'head', 'director', 'manager', 'chief', 'vp', 'vice president', 'ii', 'iii', 'iv']
 
+// A rewritten headline goes back to the candidate's own when it claims a level
+// their headline and titles never show, names a job-only term, or uses any
+// word found in neither their headline and titles nor their bullets (the
+// posting's title they never held: "Site Reliability Engineer", or
+// "Registered Nurse" on a CNA's resume however the posting cases it).
 function groundHeadline<T extends Groundable>(tailored: T, original: Groundable, terms: string[], removed: Set<string>): T {
   const headline = tailored.headline
   if (!headline || !original.headline || headline === original.headline) return tailored
   const own = [original.headline, ...original.experience.map((e) => e.title ?? '')].join(' \n ')
   const level = LEVELS.find((l) => mentions(headline, l) && !mentions(own, l))
   const jobOnly = terms.filter((t) => namesTerm(headline, t))
-  if (!level && !jobOnly.length) return tailored
+  const ownWords = new Set(tokens([own, ...original.experience.flatMap((e) => e.bullets ?? []), ...(original.projects ?? []).flatMap((p) => p.bullets ?? [])].join(' \n ')))
+  const backed = (w: string) => ownWords.has(w) || ownWords.has(`${w}s`) || ownWords.has(w.replace(/s$/, '')) ||
+    (w.length >= 4 && [...ownWords].some((o) => o.startsWith(w)))
+  const unbacked = tokens(headline).filter((w) => !SMALL_WORDS.has(w) && !backed(w))
+  if (!level && !jobOnly.length && !unbacked.length) return tailored
   jobOnly.forEach((t) => removed.add(t))
+  unbacked.forEach((w) => removed.add(`${w} (headline word)`))
   if (level) removed.add(`${level} (headline level)`)
   return { ...tailored, headline: original.headline }
 }

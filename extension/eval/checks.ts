@@ -5,6 +5,7 @@ import type { ParsedResume, TailoredResume } from '../src/types'
 import type { EvalCase } from './fixtures'
 import { extractNumbers, lintLetter } from '../src/lib/ai/letter-lint'
 import { mixedTenseLines } from '../src/lib/ai/resume-grounding'
+import { bulletBudget, isResultBullet } from '../src/lib/ai/resume-tailor'
 
 export interface CheckResult {
   failures: string[]
@@ -107,6 +108,8 @@ export function checkTailored(out: TailoredResume, c: EvalCase, input: ParsedRes
     }
   }
 
+  const budget = c.trim ? bulletBudget(input) : undefined
+
   same('name', input.name, out.name)
   same('email', input.email, out.email)
   same('phone', input.phone, out.phone)
@@ -120,7 +123,17 @@ export function checkTailored(out: TailoredResume, c: EvalCase, input: ParsedRes
       same(`experience[${i}].title`, inRole.title, outRole.title)
       same(`experience[${i}].company`, inRole.company, outRole.company)
       same(`experience[${i}].dates`, inRole.dates, outRole.dates)
-      if (outRole.bullets.length !== inRole.bullets.length) {
+      if (budget) {
+        // Trim: within the role's budget, at least 2 kept (or all of a shorter role), and its first measured results kept.
+        if (outRole.bullets.length > budget.experience[i] || outRole.bullets.length < Math.min(2, inRole.bullets.length)) {
+          result.failures.push(`experience[${i}] kept ${outRole.bullets.length} bullets; trim budget is ${budget.experience[i]}`)
+        }
+        const kept = outRole.bullets.join('\n')
+        for (const r of inRole.bullets.filter(isResultBullet).slice(0, Math.min(2, budget.experience[i]))) {
+          const nums = r.match(/\d+(?:[./]\d+)*/g) ?? []
+          if (!nums.every((n) => kept.includes(n))) result.failures.push(`experience[${i}] dropped a measured result: "${r.slice(0, 60)}…"`)
+        }
+      } else if (outRole.bullets.length !== inRole.bullets.length) {
         result.failures.push(
           `experience[${i}] bullet count changed in default mode: ${inRole.bullets.length} → ${outRole.bullets.length}`,
         )
@@ -135,7 +148,7 @@ export function checkTailored(out: TailoredResume, c: EvalCase, input: ParsedRes
   } else {
     inProjects.forEach((p, i) => {
       same(`projects[${i}].name`, p.name, outProjects[i]?.name)
-      if (outProjects[i] && outProjects[i].bullets.length !== p.bullets.length) {
+      if (outProjects[i] && (budget ? outProjects[i].bullets.length > budget.projects[i] : outProjects[i].bullets.length !== p.bullets.length)) {
         result.failures.push(`projects[${i}] bullet count changed`)
       }
     })

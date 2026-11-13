@@ -27,16 +27,10 @@ export interface ParsedResume {
   /** The uploaded resume's section order (#165), carried to each tailored resume. Always an array on a parse made since then; a cached parse without it is parsed again. */
   sectionOrder?: Array<'summary' | 'experience' | 'projects' | 'education' | 'certifications' | 'skills' | 'other'>
   headline?: string
-  /** PARSE_VERSION of the parser that made it; an older or missing one is parsed again. */
-  parseVersion?: number
 }
 
-// Mirrors extension/src/lib/ai/resume-parse.ts: a long master resume runs ~13,000 characters.
-export const MAX_RESUME_CHARS = 40000
-
-// Mirrors extension/src/lib/ai/resume-parse.ts: a cached parse from an older
-// parser (cut off at 12,000 characters) is made again.
-export const PARSE_VERSION = 2
+// Mirrors extension/src/lib/ai/resume-parse.ts: one cap for own-key and signed-in users.
+export const MAX_RESUME_CHARS = 20000
 
 function buildParsePrompt(resumeText: string): string {
   return `You are a resume parser. Convert the resume text below into structured JSON.
@@ -246,22 +240,15 @@ export function withSectionOrder<T extends ParsedResume>(parsed: T, resumeText?:
 // A cached parse made since the parse kept extra sections (#54) and section
 // order (#165). One from before is parsed again, once.
 export function isCurrentParse(parsed: ParsedResume | null | undefined): parsed is ParsedResume & Required<Pick<ParsedResume, 'otherSections' | 'sectionOrder'>> {
-  return Array.isArray(parsed?.otherSections) && Array.isArray(parsed?.sectionOrder) && fullParse(parsed)
-}
-
-// Made by a parser that read the whole resume (PARSE_VERSION): an older one
-// stopped at 12,000 characters and dropped headlines, project links and section
-// entries, so its content can't be kept.
-function fullParse(parsed: ParsedResume | null | undefined): boolean {
-  return ((parsed as { parseVersion?: unknown } | null | undefined)?.parseVersion as number ?? 1) >= PARSE_VERSION
+  return Array.isArray(parsed?.otherSections) && Array.isArray(parsed?.sectionOrder)
 }
 
 // What replaces a cached parse that isn't current, given a fresh parse of the
 // same text. One that only lacks the order keeps its content and takes the
 // fresh order, so a Word design checked against it still lines up. Anything
-// older, including a parse from before PARSE_VERSION, is replaced.
+// older is replaced.
 export function upgradedParse(cached: ParsedResume | null | undefined, fresh: ParsedResume): ParsedResume {
-  return cached && Array.isArray(cached.otherSections) && fullParse(cached) ? withSectionOrder({ ...cached, sectionOrder: fresh.sectionOrder }) : fresh
+  return cached && Array.isArray(cached.otherSections) ? withSectionOrder({ ...cached, sectionOrder: fresh.sectionOrder }) : fresh
 }
 
 // The parse with the section order the user chose in the editor (#197).
@@ -328,5 +315,5 @@ export async function parseResumeStructure(resumeText: string, apiKey: string): 
     throw new Error('Resume parse returned invalid JSON')
   }
   if (!isValidParsedResume(parsed)) throw new Error('Resume parse returned incomplete data')
-  return { ...withDetails(withSectionOrder(withLinks(withOtherSections(parsed)), resumeText)), parseVersion: PARSE_VERSION }
+  return withDetails(withSectionOrder(withLinks(withOtherSections(parsed)), resumeText))
 }

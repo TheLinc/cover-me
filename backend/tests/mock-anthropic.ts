@@ -110,6 +110,8 @@ const failures: Array<{ status: number; body: string }> = []
 let delayNext = 0
 let streamPause = 0
 let dropNextStream = false
+// A tailor delta a test set for the next streamed call, in place of MOCK_TAILOR_DELTA.
+let nextDelta: unknown = null
 
 type StripeCall = { path: string; params: Record<string, string>; idempotencyKey: string | null }
 const stripeCalls: StripeCall[] = []
@@ -201,6 +203,11 @@ export function startMockAnthropic(port: number): Promise<Server> {
       delayNext = 0
       streamPause = 0
       dropNextStream = false
+      nextDelta = null
+      return res.writeHead(204).end()
+    }
+    if (req.method === 'POST' && url === '/__mock/tailor-delta') {
+      nextDelta = JSON.parse(await readBody(req))
       return res.writeHead(204).end()
     }
     if (req.method === 'POST' && url === '/__mock/fail-next') {
@@ -271,7 +278,9 @@ export function startMockAnthropic(port: number): Promise<Server> {
           return req.socket.destroy()
         }
         res.writeHead(200, { 'content-type': 'text/event-stream' })
-        const sse = sseBody(JSON.stringify(MOCK_TAILOR_DELTA), body.thinking?.display === 'summarized')
+        const delta = nextDelta ?? MOCK_TAILOR_DELTA
+        nextDelta = null
+        const sse = sseBody(JSON.stringify(delta), body.thinking?.display === 'summarized')
         if (streamPause) {
           const ms = streamPause
           streamPause = 0

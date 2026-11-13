@@ -54,7 +54,7 @@ export function buildResumeDocx(resume: TailoredResume): Promise<Blob> {
   }
   const contact = contactParts(resume)
   if (contact.length) {
-    body.push(new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: contact.join('  |  '), size: 19 })] }))
+    body.push(new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun(contact.join('   |   '))] }))
   }
 
   // "Name | subtitle ⇥ link": a project or an open-source/award entry.
@@ -128,15 +128,17 @@ export function buildResumeDocx(resume: TailoredResume): Promise<Blob> {
     else {
       // Other sections (publications, volunteer work…), as the resume had them
       const section = resume.otherSections![s.index]
+      // Its entries, then any lines outside an entry.
       const entries = section.entries?.filter((e) => e?.name) ?? []
-      if (entries.length) {
-        body.push(heading(String(section.heading ?? '').toUpperCase()))
-        entries.forEach((e, i) => body.push(
-          entryHeader(e.name, e.subtitle, e.dates || e.link, i ? 5 * PT : 0, !!e.bullets?.length || !!(e.dates && e.link)),
-          ...(e.dates && e.link ? [new Paragraph({ keepNext: !!e.bullets?.length, children: [new TextRun({ text: e.link, italics: true })] })] : []),
-          ...(e.bullets ?? []).map(bullet),
-        ))
-      } else if (section.lines?.length) body.push(heading(String(section.heading ?? '').toUpperCase()), ...section.lines.map(bullet))
+      const lines = section.lines ?? []
+      if (!entries.length && !lines.length) continue
+      body.push(heading(String(section.heading ?? '').toUpperCase()))
+      entries.forEach((e, i) => body.push(
+        entryHeader(e.name, e.subtitle, e.dates || e.link, i ? 5 * PT : 0, !!e.bullets?.length || !!(e.dates && e.link)),
+        ...(e.dates && e.link ? [new Paragraph({ keepNext: !!e.bullets?.length, children: [new TextRun({ text: e.link, italics: true })] })] : []),
+        ...(e.bullets ?? []).map(bullet),
+      ))
+      body.push(...lines.map(bullet))
     }
   }
 
