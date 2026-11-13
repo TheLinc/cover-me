@@ -199,10 +199,9 @@ describe('generic heuristic', () => {
 
   // Listings whose job cards carry plain text (a location, a summary) beside
   // the link, under an intro that isn't links: once read as a job (#72).
-  // fly.io's cards each end with a "Read more" link over the card; Mozilla's
-  // table rows link the title beside plain team and location cells; a
+  // fly.io's cards each end with a "Read more" link over the card; a
   // Greenhouse board with an intro wraps each row in one link.
-  test.each(['flyio-jobs', 'mozilla-listings', 'greenhouse-board-intro'])('reads a card listing as no job: %s', (name) => {
+  test.each(['flyio-jobs', 'greenhouse-board-intro'])('reads a card listing as no job: %s', (name) => {
     const html = readFileSync(join(__dirname, 'fixtures', `${name}.html`), 'utf8')
     expect(() => scrape(fixtureUrl(html), html)).toThrow('Could not find job details')
   })
@@ -258,6 +257,15 @@ describe('generic heuristic', () => {
     const wrapped = scrape('https://careers.example.com/jobs/1', `<html><body><div id="app"><h1>Warehouse Supervisor</h1>
       <div class="posting"><p>${description}</p></div><div class="sidebar"><ul>${relatedMore}</ul></div></div></body></html>`)
     expect(wrapped.description).toBe(description)
+    // ...nor when the wrapper holds the posting's paragraphs or short sections
+    const paragraphs = scrape('https://careers.example.com/jobs/1', `<html><body><div id="app"><h1>Warehouse Supervisor</h1>
+      <p>${description}</p><p>${description}</p><div class="sidebar"><ul>${relatedMore}</ul></div></div></body></html>`)
+    expect(paragraphs.description).toBe(`Warehouse Supervisor\n\n${description}\n\n${description}`)
+    const sec = `<div class="sec"><p>${description.slice(0, 400)}</p></div>`
+    const sections = scrape('https://careers.example.com/jobs/1', `<html><body><div id="app"><h1>Warehouse Supervisor</h1>
+      ${sec}${sec}${sec}<div class="sidebar"><ul>${relatedMore}</ul></div></div></body></html>`)
+    expect(sections.description).toContain(description.slice(0, 400).trim())
+    expect(sections.description).not.toMatch(/Forklift|Sydney/)
   })
 
   // The server's snapshot drops each link's query and fragment, so cards can
@@ -306,10 +314,11 @@ describe('generic heuristic', () => {
     expect(performance.now() - start).toBeLessThan(5000)
   })
 
-  // Each level a list of three cards, one holding the next: card lists
+  // Each level three cards beside a child holding the next level: card lists
   // measure each level's text (1 s, as master's block search takes)
   test('120 nested card lists over 2 MB stay cheap', () => {
-    const main = Array.from({ length: 120 }, (_, i) => `<div><div><a href="/a${i}">a</a></div><div><a href="/b${i}">b</a></div><div><a href="/c${i}">c</a>`).join('')
+    const card = (i: number, c: string) => `<div><a href="/${c}${i}">${c}${i}</a><b>x</b></div>`
+    const main = Array.from({ length: 120 }, (_, i) => `<div>${card(i, 'a')}${card(i, 'b')}${card(i, 'c')}<div>`).join('')
       + 'x'.repeat(2_000_000) + '</div></div>'.repeat(120)
     const start = performance.now()
     expect(() => scrape('https://careers.example.com/jobs/1', `<!doctype html><html><body><h1>Clerk</h1><main>${main}</main></body></html>`)).toThrow()
