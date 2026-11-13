@@ -305,7 +305,7 @@ function LayoutChoice({ design, yours, onPick, onRetry, dashboardFallback }: {
     return (
       <p className="hint design-choice">
         {design.error ?? "Couldn't check your design."}{' '}
-        {/* A check again would upload this browser's older text over the account's newer resume. */}
+        {/* A check again would upload this browser's text over the account's resume. */}
         {!design.refused && <button type="button" className="upload-link design-retry" onClick={onRetry}>Try again</button>}
       </p>
     )

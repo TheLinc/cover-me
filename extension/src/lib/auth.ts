@@ -402,8 +402,8 @@ export async function uploadDesignFileToBackend(accessToken: string, hash: strin
   }
 }
 
-// The account refused the Word file for good: its resume text changed since
-// the file was checked. Sending it again gets the same answer.
+// The account refused the Word file for good: its resume text isn't the text
+// the file was checked against. Sending it again gets the same answer.
 export class DesignRefusedError extends Error {}
 
 // Pro: one of the account's Word files, with the parse that places tailored
