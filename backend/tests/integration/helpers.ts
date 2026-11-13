@@ -66,19 +66,35 @@ interface CallOptions {
   redirect?: RequestRedirect
 }
 
+const RESPONSE_TIMEOUT_MS = 15_000
+
 export async function callFunction(name: string, opts: CallOptions = {}): Promise<Response> {
   const url = new URL(`${API_URL}/functions/v1/${name}`)
   for (const [k, v] of Object.entries(opts.query ?? {})) url.searchParams.set(k, v)
   const headers: Record<string, string> = { apikey: PUBLISHABLE_KEY, ...opts.headers }
   if (opts.token) headers.Authorization = `Bearer ${opts.token}`
   if (opts.body !== undefined) headers['Content-Type'] = 'application/json'
-  return fetch(url, {
-    method: opts.method ?? (opts.body !== undefined || opts.rawBody ? 'POST' : 'GET'),
-    headers,
-    body: opts.rawBody ?? (opts.body !== undefined ? JSON.stringify(opts.body) : undefined),
-    signal: opts.signal,
-    redirect: opts.redirect,
-  })
+  // A request that gets no response (#79) fails here, naming the function,
+  // instead of at vitest's 30 s limit. Only waits for headers: a streamed body
+  // can take longer.
+  const noResponse = new AbortController()
+  const timer = setTimeout(() => noResponse.abort(), RESPONSE_TIMEOUT_MS)
+  try {
+    return await fetch(url, {
+      method: opts.method ?? (opts.body !== undefined || opts.rawBody ? 'POST' : 'GET'),
+      headers,
+      body: opts.rawBody ?? (opts.body !== undefined ? JSON.stringify(opts.body) : undefined),
+      signal: opts.signal ? AbortSignal.any([opts.signal, noResponse.signal]) : noResponse.signal,
+      redirect: opts.redirect,
+    })
+  } catch (e) {
+    if (noResponse.signal.aborted) {
+      throw new Error(`${name}: no response in ${RESPONSE_TIMEOUT_MS / 1000} s. pnpm test:functions prints the Kong and edge runtime logs after the run unless SHOW_FUNCTION_LOGS=0.`, { cause: e })
+    }
+    throw e
+  } finally {
+    clearTimeout(timer)
+  }
 }
 
 // The resume function parses new text in the background after it answers.

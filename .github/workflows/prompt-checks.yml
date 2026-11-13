@@ -26,4 +26,5 @@ jobs:
           cache-dependency-path: extension/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - run: pnpm check:prompts
+      - run: bash ../scripts/eval-side.test.sh
       - run: pnpm eval

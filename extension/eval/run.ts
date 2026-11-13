@@ -7,7 +7,9 @@
 //
 //   Flags:
 //     --quick                  11 cases: one per field family, plus two long postings (PR check)
-//     --letters / --tailor     run only one side (default both)
+//     --letters / --tailor     run only one side (default both). Run only the side
+//                              you changed: tailoring is ~70% of a full run's calls.
+//                              scripts/eval-side.sh <base> prints which side a diff needs.
 //     --case <id>              one case          --industry <name>  one industry
 //     --runs <n>               samples per resume case (default 1)
 //     --concurrency <n>        parallel cases (default 6)
@@ -32,10 +34,10 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } fr
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { ParsedResume, TailoredResume } from '../src/types'
-import { buildPrompt as buildLetterPrompt, type LetterVariation } from '../src/lib/ai/index'
+import { buildPrompt as buildLetterPrompt, CLOSE_PATTERNS, type LetterVariation } from '../src/lib/ai/index'
 import { buildPrompt as buildTailorPrompt, assembleTailored } from '../src/lib/ai/resume-tailor'
 import { buildParsePrompt, parseParsedJson } from '../src/lib/ai/resume-parse'
-import { lintLetter, buildLintRetryMessage } from '../src/lib/ai/letter-lint'
+import { lintLetter, buildLintRetryMessage, letterLength } from '../src/lib/ai/letter-lint'
 import { CASES, type EvalCase } from './fixtures'
 import { checkFixture, checkLetter, checkParse, checkTailored, type CheckResult } from './checks'
 import { buildResumeJudgePrompt, DIMENSIONS, FAIL_AT, parseJudgment, type Dimension, type ResumeJudgment } from './judge'
@@ -74,7 +76,8 @@ const ONLY_INDUSTRY = opt('industry')?.toLowerCase()
 const BASELINE_FILE = join(HERE, QUICK ? 'baseline.json' : 'baseline-full.json')
 
 const SIGN_OFFS = ['Sincerely,', 'Best regards,', 'Kind regards,']
-const HOOKS = ['Achievement-first', 'Problem-solution', 'Bold specific claim']
+const HOOKS = ['Achievement-first', 'Bold specific claim']
+
 
 // A low judge score fails a plain run. Under --baseline (the CI gate) it is a
 // warning: the gate fails on drops against the baseline and on the factual
@@ -153,7 +156,7 @@ function staticChecks() {
 
   for (const c of cases) {
     const result = checkFixture(c)
-    const variation: LetterVariation = { signOff: 'Sincerely,', hookPattern: 'Problem-solution' }
+    const variation: LetterVariation = { signOff: 'Sincerely,', hookPattern: 'Bold specific claim', closePattern: CLOSE_PATTERNS[0] }
     const lp = buildLetterPrompt(c.job, c.resumeText, undefined, variation)
 
     const mustContain: Array<[string, string]> = [
@@ -163,7 +166,8 @@ function staticChecks() {
       ['exemplar', 'Exemplar A'],
       ['chosen sign-off', variation.signOff],
       ['chosen hook pattern', `Default to the ${variation.hookPattern}`],
-      ['word range', '250–400 words'],
+      ['chosen close', variation.closePattern],
+      ['word range', `About ${letterLength(c.resumeText).aim} words`],
       ['resume text embedded', c.resumeText.slice(0, 60)],
       ['JD embedded', c.job.description.slice(0, 60)],
       ['em-dash cap', 'TWO em-dashes'],
@@ -289,7 +293,8 @@ async function liveLetters() {
   process.stdout.write(`  ${jobs.length} letters `)
   const results = await pool(jobs, CONCURRENCY, async ({ c, i, run }) => {
     const v = i + run
-    const variation: LetterVariation = { signOff: SIGN_OFFS[v % SIGN_OFFS.length], hookPattern: HOOKS[v % HOOKS.length] }
+    // The close steps once every three letters, so it doesn't pair with one hook.
+    const variation: LetterVariation = { signOff: SIGN_OFFS[v % SIGN_OFFS.length], hookPattern: HOOKS[v % HOOKS.length], closePattern: CLOSE_PATTERNS[Math.floor(v / 3) % CLOSE_PATTERNS.length] }
     const prompt = buildLetterPrompt(c.job, c.resumeText, undefined, variation)
     let letter: string
     try {
@@ -305,7 +310,7 @@ async function liveLetters() {
     // retry keeps the draft, as production does.
     let retried = false
     const numberSources = [c.resumeText, c.job.title, c.job.description]
-    const firstLint = lintLetter(letter, { companyName: c.job.company, numberSources })
+    const firstLint = lintLetter(letter, { companyName: c.job.company, numberSources, resumeText: c.resumeText })
     if (firstLint.violations.length > 0) {
       retried = true
       try {
@@ -314,7 +319,7 @@ async function liveLetters() {
           { role: 'assistant', content: letter },
           { role: 'user', content: buildLintRetryMessage(firstLint.violations) },
         ], { model: MODEL, maxTokens: 1024 }))
-        const retryLint = lintLetter(retry, { companyName: c.job.company, numberSources })
+        const retryLint = lintLetter(retry, { companyName: c.job.company, numberSources, resumeText: c.resumeText })
         if (retryLint.violations.length <= firstLint.violations.length) letter = retry
       } catch {
         // keep the draft
@@ -340,7 +345,7 @@ async function liveLetters() {
   console.log('')
   for (const { c, run, variation, letter, result } of results) {
     const suffix = RUNS > 1 ? ` (run ${run + 1})` : ''
-    record(`letter: ${c.id}${suffix} (${variation.hookPattern}, "${variation.signOff}")`, result)
+    record(`letter: ${c.id}${suffix} (${variation.hookPattern}, ${variation.closePattern} close, "${variation.signOff}")`, result)
     reportLines.push('<details><summary>letter text</summary>\n\n```\n' + letter + '\n```\n</details>\n')
   }
   return results.map(({ c, run, letter, result, judgeScore }) => ({ id: c.id, run, letter, judgeScore, failures: result.failures, warnings: result.warnings }))

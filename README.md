@@ -242,15 +242,18 @@ From `extension/`:
 
 ```bash
 pnpm eval                                   # free: prompt invariants, lint self-tests, fixture integrity
-pnpm eval --live --tailor --judge           # parse, tailor, integrity checks, and an industry-fit judge
+pnpm eval --live --tailor --judge           # resumes only: parse, tailor, integrity checks, and an industry-fit judge
+pnpm eval --live --letters --judge          # cover letters only: generate, lint and retry, and a judge
 pnpm eval --live --tailor --judge --industry Trades --runs 2
 ```
+
+Run only the side you changed. Letters and resume tailoring share no prompt code, and tailoring is about 70% of a full run's model calls (390 of 570). A letters-only full run is about 180 calls. `scripts/eval-side.sh <base-ref>` prints which side a diff needs.
 
 Live runs go through `claude -p` on your Claude plan unless `ANTHROPIC_API_KEY` is set (then `--via api` uses API credits). For clean outputs, put a token from `claude setup-token` in `extension/eval/.env` as `CLAUDE_CODE_OAUTH_TOKEN=...`. The harness then uses an empty Claude Code config, so your own `CLAUDE.md`, hooks and rules never reach the model. Every output is saved to `eval/reports/results-*.json`.
 
 A resume fails when the parse doesn't match its answer key, when an integrity check fails (invented skills or numbers, changed titles or dates, dropped certifications, wrong bullet counts), or when the judge scores faithfulness, field fit, relevance or readability at 2/5 or lower. `--baseline` also fails a case whose judge scores drop by a full point against `eval/baseline.json`. Refresh that file with `--update-baseline` after an intended change.
 
-GitHub Actions runs the free checks on every push (`.github/workflows/prompt-checks.yml`) and the live eval when the prompt code or eval changes, weekly, and on demand (`.github/workflows/resume-eval.yml`, needs a `CLAUDE_CODE_OAUTH_TOKEN` repository secret).
+GitHub Actions runs the free checks on every push (`.github/workflows/prompt-checks.yml`). The live eval (`.github/workflows/output-eval.yml`, needs a `CLAUDE_CODE_OAUTH_TOKEN` repository secret) runs the 11-case quick set on PRs that change prompt or eval code, and only the side the diff touches: letters, tailoring, or both. A manual run (Actions > Output eval > Run workflow) runs every case and picks the side the same way unless you choose one. The weekly run is paused during development.
 
 ### Project structure
 
