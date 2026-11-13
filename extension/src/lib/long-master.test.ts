@@ -33,6 +33,16 @@ describe('grouped skills', () => {
     expect(skills).toBe('Applied AI and Agents: LangGraph, agent orchestration\nLanguages: Python\nDeployment and Operations: Docker')
   })
 
+  test('a model that returns the whole master list is cut to 32 skills in 6 groups, top-ranked first', async () => {
+    const master = Array.from({ length: 8 }, (_, g) => `Group ${g}: ${Array.from({ length: 9 }, (_, i) => `skill${g}x${i}`).join(', ')}`).join('\n')
+    const ranked = Array.from({ length: 72 }, (_, n) => ({ skill: `skill${n % 8}x${Math.floor(n / 8)}` }))
+    const { skills } = await groundSkills(ranked, master, undefined, master)
+    const lines = skills!.split('\n')
+    expect(lines).toHaveLength(6)
+    expect(lines.flatMap((l) => l.split(': ')[1].split(', '))).toHaveLength(32)
+    expect(lines[0]).toMatch(/^Group 0: skill0x0, skill0x1/)
+  })
+
   test('the grounding guard keeps the labels', () => {
     const tailored = { experience: [], skills: 'Languages: Python, Rust\nOps: Docker' }
     const { resume } = groundTailored(tailored, { experience: [] }, 'Python Docker', 'We use Rust and Python')

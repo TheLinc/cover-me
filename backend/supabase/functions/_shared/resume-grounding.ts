@@ -322,6 +322,12 @@ export function skillGroups(skills?: string): SkillGroup[] {
   return groups.length >= 2 ? groups : []
 }
 
+// A grouped skills list keeps at most this many skills in this many groups,
+// the model's top-ranked first. The prompt asks for it, but a model that
+// copies the whole master list back (73 skills in 8 groups) is cut here.
+export const MAX_GROUPED_SKILLS = 32
+export const MAX_SKILL_GROUPS = 6
+
 // The kept skills back under the resume's own labels, one line per group, in
 // the order the model ranked them. A skill goes under the label the model
 // named when that label is the resume's, else the group that lists it, else
@@ -335,9 +341,12 @@ function groupSkills(items: Array<{ skill: string; category?: string; evidence?:
       ?? groups.find((g) => mentions(g.items, item.skill))?.label
       ?? (item.evidence ? groups.find((g) => lower(g.items).includes(lower(item.evidence!)))?.label : undefined)
       ?? groups[0].label
-    const list = out.get(label) ?? []
-    if (!list.some((s) => lower(s) === lower(item.skill))) list.push(item.skill)
-    out.set(label, list)
+    const list = out.get(label)
+    // Past the caps, only lower-ranked skills are left: they go.
+    if (!list && out.size >= MAX_SKILL_GROUPS) continue
+    if (list?.some((s) => lower(s) === lower(item.skill))) continue
+    if ([...out.values()].reduce((n, l) => n + l.length, 0) >= MAX_GROUPED_SKILLS) break
+    out.set(label, [...(list ?? []), item.skill])
   }
   return [...out].map(([label, list]) => `${label}: ${list.join(', ')}`).join('\n')
 }

@@ -4,7 +4,7 @@
 import type { ParsedResume, TailoredResume } from '../src/types'
 import type { EvalCase } from './fixtures'
 import { extractNumbers, lintLetter } from '../src/lib/ai/letter-lint'
-import { mixedTenseLines } from '../src/lib/ai/resume-grounding'
+import { MAX_GROUPED_SKILLS, mixedTenseLines, skillGroups } from '../src/lib/ai/resume-grounding'
 import { bulletBudget, isResultBullet } from '../src/lib/ai/resume-tailor'
 
 export interface CheckResult {
@@ -198,8 +198,11 @@ export function checkTailored(out: TailoredResume, c: EvalCase, input: ParsedRes
 
   // Skills list invariants.
   if (out.skills) {
-    const skillItems = out.skills.split(',').map((s) => s.trim()).filter(Boolean)
-    if (skillItems.length > 18) result.failures.push(`skills list has ${skillItems.length} items (hard cap 18)`)
+    // One item per comma, a group's label and anything in parentheses aside ("LLM APIs (OpenAI, Anthropic)" is one).
+    const skillItems = out.skills.split('\n').flatMap((line) => line.replace(/^[^:,]{2,48}:\s*/, '').replace(/\([^()]*\)/g, '').split(',')).map((s) => s.trim()).filter(Boolean)
+    // A resume that groups its skills gets the grouped caps instead (resume-grounding.ts).
+    const cap = skillGroups(input.skills).length ? MAX_GROUPED_SKILLS : 18
+    if (skillItems.length > cap) result.failures.push(`skills list has ${skillItems.length} items (hard cap ${cap})`)
     for (const k of c.mustKeepSkills) {
       // A kept skill may be rephrased ("patient education" → "patient and
       // family education"), so require all its words inside one skill item.
