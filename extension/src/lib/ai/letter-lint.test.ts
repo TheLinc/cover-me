@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { buildLintRetryMessage, extractNumbers, lintLetter } from './letter-lint'
+import { buildLintRetryMessage, extractNumbers, letterLength, lintLetter } from './letter-lint'
 
 const echoes = (sentence: string) =>
   lintLetter(sentence).violations.some((v) => v.startsWith('Restates the job posting'))
@@ -459,4 +459,33 @@ test('flags a letter with no salutation', () => {
 test('flags "the work I want to do next" as a stock line', () => {
   const letter = 'Dear Hiring Manager,\n\nAt Meadowbrook I close the books in five days.\n\nI want to account for a software business. It is a kind of work I have not done yet, and it\'s the work I want to do next.\n\nI\'d welcome an interview.\n\nKind regards,\nDaniel Okoro'
   expect(lintLetter(letter).violations.some((v) => v.startsWith('Ends on a stock line'))).toBe(true)
+})
+
+// Option 2 of the #206 full eval: length follows the resume. A thin resume
+// gives about one line per accomplishment, so a short letter is honest; a full
+// one has the scope and method for a longer letter.
+describe('letterLength', () => {
+  const thin = Array.from({ length: 120 }, () => 'word').join(' ')
+  const full = Array.from({ length: 300 }, () => 'word').join(' ')
+  const body = (n: number) => `Dear Hiring Manager,\n\n${Array.from({ length: n }, () => 'word').join(' ')}.\n\nKind regards,\nAlex Doe`
+  const short = (letter: string, resumeText?: string) =>
+    lintLetter(letter, { resumeText }).violations.some((v) => v.includes('too short'))
+
+  test('a thin resume aims short, a full resume aims longer', () => {
+    expect(letterLength(thin).min).toBe(100)
+    expect(letterLength(full).min).toBe(150)
+    expect(letterLength(undefined).min).toBe(100)
+  })
+
+  test('the floor follows the resume', () => {
+    expect(short(body(120), thin)).toBe(false)
+    expect(short(body(120), full)).toBe(true)
+    expect(short(body(160), full)).toBe(false)
+    expect(short(body(90))).toBe(true)
+  })
+
+  test('the short message names the resume-sized aim', () => {
+    const v = lintLetter(body(120), { resumeText: full }).violations.find((x) => x.includes('too short'))!
+    expect(v).toContain(letterLength(full).aim)
+  })
 })

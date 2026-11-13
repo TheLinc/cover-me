@@ -204,6 +204,18 @@ const NOTE_TO_USER = [
   /\bas an ai\b/i,
 ]
 
+/**
+ * Target length from the resume (#206 full eval, option 2). A thin resume gives
+ * about one line per accomplishment, and padding it past ~160 words invents
+ * detail; a full resume has the scope and method for a longer letter.
+ * ponytail: resume word count is the richness signal; count detailed bullets
+ * instead if real resumes land on the wrong side of 250.
+ */
+export function letterLength(resumeText?: string): { min: number; aim: string; full: boolean } {
+  const full = !!resumeText && countWords(resumeText) >= 250
+  return full ? { min: 150, aim: '170–250', full } : { min: 100, aim: '110–160', full }
+}
+
 function countWords(text: string): number {
   return text.split(/\s+/).filter((w) => w.length > 0).length
 }
@@ -239,6 +251,8 @@ export function lintLetter(
   letter: string,
   opts: {
     companyName?: string
+    /** The resume; sets the length floor (see letterLength). Omit for the thin-resume floor. */
+    resumeText?: string
     /** Texts a number may come from (resume, posting, supplemental context). Omit to skip the number check. */
     numberSources?: string[]
   } = {},
@@ -292,10 +306,11 @@ export function lintLetter(
     violations.push(`Uses ${emDashes} em-dashes — use at most 2 in the whole letter; rewrite the rest as separate sentences or with commas.`)
   }
 
-  if (wordCount < 100) {
-    violations.push(`Letter body is ${wordCount} words — too short; expand to 120–250 words. If the letter tells only one accomplishment, add a second from the resume with its result. Where the resume says how an accomplishment was done, tell that inside its own sentence. Never add a scene-setting sentence, restate a fact, list unrelated resume items, or guess what the resume does not say (an employer's industry or location, a new claim about the applicant).`)
+  const length = letterLength(opts.resumeText)
+  if (wordCount < length.min) {
+    violations.push(`Letter body is ${wordCount} words — too short; expand to about ${length.aim} words. If the letter tells only one accomplishment, add a second from the resume with its result. Where the resume says how an accomplishment was done, tell that inside its own sentence. Never add a scene-setting sentence, restate a fact, list unrelated resume items, or guess what the resume does not say (an employer's industry or location, a new claim about the applicant).`)
   } else if (wordCount > 320) {
-    violations.push(`Letter body is ${wordCount} words — too long; tighten to 120–250 words.`)
+    violations.push(`Letter body is ${wordCount} words — too long; tighten to about ${length.aim} words.`)
   }
 
   // A retry once dropped the "Dear …" line (#206 council round 11).
@@ -466,5 +481,5 @@ export function buildLintRetryMessage(violations: string[]): string {
 
 ${violations.map((v) => `- ${v}`).join('\n')}
 
-Rewrite the complete letter fixing exactly these issues. Keep everything that already works — the same accomplishments, the same structure, the same specifics — and change only what the violations require. All original rules still apply (120–250 words, plain text, no fabricated qualifications or metrics). Where a fix removes words and the letter falls under 100 words, tell the accomplishments already in the letter more fully, using only details the resume gives, not more figures or a list of other resume items and never invented context. Otherwise a shorter letter is fine. Output only the finished letter, nothing else.`
+Rewrite the complete letter fixing exactly these issues. Keep everything that already works — the same accomplishments, the same structure, the same specifics — and change only what the violations require. All original rules still apply (the prompt's word range, plain text, no fabricated qualifications or metrics). Where a fix removes words and the letter falls under that range, tell the accomplishments already in the letter more fully, using only details the resume gives, not more figures or a list of other resume items and never invented context. Otherwise a shorter letter is fine. Output only the finished letter, nothing else.`
 }

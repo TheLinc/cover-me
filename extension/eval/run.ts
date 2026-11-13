@@ -35,7 +35,7 @@ import type { ParsedResume, TailoredResume } from '../src/types'
 import { buildPrompt as buildLetterPrompt, type LetterVariation } from '../src/lib/ai/index'
 import { buildPrompt as buildTailorPrompt, assembleTailored } from '../src/lib/ai/resume-tailor'
 import { buildParsePrompt, parseParsedJson } from '../src/lib/ai/resume-parse'
-import { lintLetter, buildLintRetryMessage } from '../src/lib/ai/letter-lint'
+import { lintLetter, buildLintRetryMessage, letterLength } from '../src/lib/ai/letter-lint'
 import { CASES, type EvalCase } from './fixtures'
 import { checkFixture, checkLetter, checkParse, checkTailored, type CheckResult } from './checks'
 import { buildResumeJudgePrompt, DIMENSIONS, FAIL_AT, parseJudgment, type Dimension, type ResumeJudgment } from './judge'
@@ -165,7 +165,7 @@ function staticChecks() {
       ['chosen sign-off', variation.signOff],
       ['chosen hook pattern', `Default to the ${variation.hookPattern}`],
       ['chosen close', `Close with the ${variation.closePattern} move`],
-      ['word range', '120–250 words'],
+      ['word range', `About ${letterLength(c.resumeText).aim} words`],
       ['resume text embedded', c.resumeText.slice(0, 60)],
       ['JD embedded', c.job.description.slice(0, 60)],
       ['em-dash cap', 'TWO em-dashes'],
@@ -308,7 +308,7 @@ async function liveLetters() {
     // retry keeps the draft, as production does.
     let retried = false
     const numberSources = [c.resumeText, c.job.title, c.job.description]
-    const firstLint = lintLetter(letter, { companyName: c.job.company, numberSources })
+    const firstLint = lintLetter(letter, { companyName: c.job.company, numberSources, resumeText: c.resumeText })
     if (firstLint.violations.length > 0) {
       retried = true
       try {
@@ -317,7 +317,7 @@ async function liveLetters() {
           { role: 'assistant', content: letter },
           { role: 'user', content: buildLintRetryMessage(firstLint.violations) },
         ], { model: MODEL, maxTokens: 1024 }))
-        const retryLint = lintLetter(retry, { companyName: c.job.company, numberSources })
+        const retryLint = lintLetter(retry, { companyName: c.job.company, numberSources, resumeText: c.resumeText })
         if (retryLint.violations.length <= firstLint.violations.length) letter = retry
       } catch {
         // keep the draft
