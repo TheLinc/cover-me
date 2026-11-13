@@ -53,12 +53,12 @@ describe('buildResumeDocx', () => {
     const { value } = await mammoth.extractRawText({ buffer: Buffer.from(await (await buildResumeDocx({
       ...resume, location: 'Toronto, ON', links: ['ada.dev', 'linkedin.com/in/ada', 'github.com/ada'],
     })).arrayBuffer()) })
-    expect(value).toContain('Toronto, ON   |   555-0100   |   ada@example.com   |   ada.dev   |   linkedin.com/in/ada   |   github.com/ada')
+    expect(value).toContain('Toronto, ON  |  555-0100  |  ada@example.com  |  ada.dev  |  linkedin.com/in/ada  |  github.com/ada')
   })
 
   it('prints website on a resume parsed before links were kept', async () => {
     const { value } = await mammoth.extractRawText({ buffer: Buffer.from(await (await buildResumeDocx(resume)).arrayBuffer()) })
-    expect(value).toContain('555-0100   |   ada@example.com   |   ada.dev')
+    expect(value).toContain('555-0100  |  ada@example.com  |  ada.dev')
   })
 
   it('skips empty sections and falls back to "Resume" without a name', async () => {

@@ -50,7 +50,7 @@ export function buildResumeDocx(resume: TailoredResume): Promise<Blob> {
 
   const contact = contactParts(resume)
   if (contact.length) {
-    body.push(new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun(contact.join('   |   '))] }))
+    body.push(new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: contact.join('  |  '), size: 19 })] }))
   }
 
   // Each section, in the order the user set (sections.ts).
