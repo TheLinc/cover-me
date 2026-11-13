@@ -10,7 +10,7 @@
 //   GET  /__mock/requests      every /v1/messages body received since the last reset
 //   POST /__mock/reset         clears recorded requests and queued failures
 //   POST /v1/customers, /v1/subscriptions, /v1/checkout/sessions, /v1/billing_portal/sessions
-//   GET  /v1/subscriptions     Stripe stand-ins (billing function, via STRIPE_API_BASE)
+//   GET  /v1/subscriptions, /v1/coupons/:id   Stripe stand-ins (billing function, via STRIPE_API_BASE)
 //   DELETE /v1/customers/:id   Stripe stand-in (account function)
 //   GET  /__mock/stripe        every Stripe call received since the last reset
 //   POST /emails               Resend stand-in (nudge function, via RESEND_API_BASE)
@@ -304,6 +304,11 @@ export function startMockAnthropic(port: number): Promise<Server> {
       }
       res.writeHead(200, { 'content-type': 'application/json' })
       return res.end(JSON.stringify({ data: stripeState.subscriptions.map((s) => (typeof s === 'string' ? { status: s } : s)) }))
+    }
+    if (req.method === 'GET' && url.startsWith('/v1/coupons/')) {
+      stripeCalls.push({ path: url, params: {}, idempotencyKey: null })
+      res.writeHead(200, { 'content-type': 'application/json' })
+      return res.end(JSON.stringify({ id: decodeURIComponent(url.slice('/v1/coupons/'.length)), object: 'coupon', name: 'Mock first-month offer' }))
     }
     if (req.method === 'DELETE' && url.startsWith('/v1/customers/')) {
       stripeCalls.push({ path: url, params: { method: 'DELETE' }, idempotencyKey: null })

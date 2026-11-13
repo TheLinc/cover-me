@@ -169,6 +169,63 @@ describe('billing', () => {
     })
   })
 
+  // The first-month offer (#213). Unset, checkout sends what it always did.
+  describe('first-month offer', () => {
+    const COUPON = process.env.STRIPE_FIRST_MONTH_COUPON_ID || undefined
+    const offerOpen = (userId: string) =>
+      admin.from('users').update({ first_month_offer_at: new Date(Date.now() - 3_600_000).toISOString() }).eq('id', userId)
+    const checkout = async (plan = 'monthly') => {
+      const res = await callFunction('billing', { token: user!.token, body: { action: 'checkout', plan } })
+      expect(res.status).toBe(200)
+      return (await mockStripe.calls()).find((c) => c.path === '/v1/checkout/sessions')!.params
+    }
+
+    it('takes the coupon off a monthly checkout while the offer is open', async () => {
+      user = await createUser()
+      await offerOpen(user.id)
+      expect((await checkout())['discounts[0][coupon]']).toBe(COUPON)
+    })
+
+    it('never discounts quarterly', async () => {
+      user = await createUser()
+      await offerOpen(user.id)
+      expect((await checkout('quarterly'))['discounts[0][coupon]']).toBeUndefined()
+    })
+
+    it('charges full price on the day checkout first opens, and starts the offer a day out', async () => {
+      user = await createUser()
+      expect((await checkout())['discounts[0][coupon]']).toBeUndefined()
+      const { data } = await admin.from('users').select('first_month_offer_at').eq('id', user.id).single()
+      if (!COUPON) return expect(data?.first_month_offer_at).toBeNull()
+      const wait = Date.parse(data!.first_month_offer_at as string) - Date.now()
+      expect(wait).toBeGreaterThan(23 * 3_600_000)
+      expect(wait).toBeLessThanOrEqual(24 * 3_600_000)
+    })
+
+    it('leaves it off for a customer Stripe says had a subscription', async () => {
+      user = await createUser()
+      await offerOpen(user.id)
+      await admin.from('users').update({ stripe_customer_id: 'cus_lapsed' }).eq('id', user.id)
+      await mockStripe.setState({ subscriptions: ['canceled'] })
+      expect((await checkout())['discounts[0][coupon]']).toBeUndefined()
+    })
+
+    it("returns the open offer's end and the coupon's name for the dashboard", async () => {
+      user = await createUser()
+      const before = await callFunction('billing', { token: user.token, body: { action: 'offer' } })
+      expect(await before.json()).toEqual({ offer: null })
+
+      await offerOpen(user.id)
+      const res = await callFunction('billing', { token: user.token, body: { action: 'offer' } })
+      expect(res.status).toBe(200)
+      const { offer } = await res.json()
+      if (!COUPON) return expect(offer).toBeNull()
+      expect(offer.name).toBe('Mock first-month offer')
+      expect(Date.parse(offer.endsAt) - Date.now()).toBeGreaterThan(6 * 86_400_000)
+      expect((await mockStripe.calls()).find((c) => c.path.startsWith('/v1/coupons/'))?.path).toBe(`/v1/coupons/${COUPON}`)
+    })
+  })
+
   it('rejects an unknown plan instead of charging monthly', async () => {
     user = await createUser()
     const res = await callFunction('billing', { token: user.token, body: { action: 'checkout', plan: 'weekly' } })

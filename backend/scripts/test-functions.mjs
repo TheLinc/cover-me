@@ -33,6 +33,9 @@ const ENCRYPTION_KEY = randomBytes(32).toString('hex')
 const NUDGE_SECRET = randomBytes(32).toString('hex')
 // Also given to vitest, so a test can sign an unsubscribe token.
 const EMAIL_TOKEN_SECRET = randomBytes(32).toString('hex')
+// The first-month offer's coupon (#213), also given to vitest. Run
+// `STRIPE_FIRST_MONTH_COUPON_ID= pnpm test:functions` to test with it unset.
+const FIRST_MONTH_COUPON = process.env.STRIPE_FIRST_MONTH_COUPON_ID ?? 'coupon_mock_first_month'
 const envFile = join(BACKEND, 'supabase', 'functions', '.env.test')
 writeFileSync(envFile, [
   `SERVICE_KEY=${serviceKey(status)}`,
@@ -44,6 +47,7 @@ writeFileSync(envFile, [
   'STRIPE_SECRET_KEY=sk_test_mock',
   'STRIPE_PRO_PRICE_ID=price_mock_pro',
   'STRIPE_PRO_QUARTERLY_PRICE_ID=price_mock_pro_quarterly',
+  `STRIPE_FIRST_MONTH_COUPON_ID=${FIRST_MONTH_COUPON}`,
   `STRIPE_API_BASE=http://host.docker.internal:${MOCK_PORT}`,
   'SITE_URL=http://localhost:3000',
   `NUDGE_SECRET=${NUDGE_SECRET}`,
@@ -110,6 +114,7 @@ const vitest = spawnSync(
       ENCRYPTION_KEY,
       EMAIL_TOKEN_SECRET,
       NUDGE_SECRET,
+      STRIPE_FIRST_MONTH_COUPON_ID: FIRST_MONTH_COUPON,
     },
   },
 )
