@@ -199,7 +199,7 @@ describe('billing', () => {
       if (!COUPON) return expect(data?.first_month_offer_at).toBeNull()
       const wait = Date.parse(data!.first_month_offer_at as string) - Date.now()
       expect(wait).toBeGreaterThan(23 * 3_600_000)
-      expect(wait).toBeLessThanOrEqual(24 * 3_600_000)
+      expect(wait).toBeLessThanOrEqual(24 * 3_600_000 + 60_000) // a minute of clock skew between Docker and the host
     })
 
     it('charges full price on the day the weekly limit refuses a generation', async () => {

@@ -196,7 +196,7 @@ describe('generate', () => {
       const at = await offerAt(user.id)
       if (!COUPON) return expect(at).toBeNull()
       expect(Date.parse(at!) - Date.now()).toBeGreaterThan(23 * 3_600_000)
-      expect(Date.parse(at!) - Date.now()).toBeLessThanOrEqual(24 * 3_600_000)
+      expect(Date.parse(at!) - Date.now()).toBeLessThanOrEqual(24 * 3_600_000 + 60_000) // a minute of clock skew between Docker and the host
     })
 
     it('does not start it before the last generation of the week', async () => {
