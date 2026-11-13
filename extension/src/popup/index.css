@@ -833,6 +833,8 @@ html, body {
 /* The first-month offer (#213), under the buttons */
 .upgrade-offer { font-size: 12px; line-height: 1.5; color: var(--text-2); background: var(--accent-dim); border-radius: 8px; padding: 8px 10px; }
 .upgrade-offer strong { color: var(--accent-h); font-weight: 600; }
+.generate-offer { display: flex; flex-direction: column; gap: 6px; }
+.offer-action { font-size: 12px; font-weight: 600; }
 .offer-tag { display: inline-flex; align-items: center; gap: 4px; margin-right: 6px; padding: 2px 7px; border-radius: 999px; background: var(--accent-strong); color: #fff; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; vertical-align: 1px; }
 
 /* Pro: save the applications that exist only in this browser */

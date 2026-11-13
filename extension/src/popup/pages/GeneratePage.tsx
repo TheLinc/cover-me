@@ -15,6 +15,7 @@ import ReviewAsk, { claimReviewAsk } from '../components/ReviewAsk'
 import ScrapeFailurePanel, { type ShownFailure } from '../components/ScrapeFailure'
 import ScoreRing from '../components/ScoreRing'
 import UpgradePrompt from '../components/UpgradePrompt'
+import { GenerateOffer } from '../components/FirstMonthOffer'
 import { WhatsNewLink } from '../components/WhatsNew'
 import type { AuthSession, CoverJob, GenerateResponse, JobData, ResumeData, Settings, ScrapeFailure, ScrapeResponse, TailorJob, TailorResponse, TailoredResume } from '../../types'
 import logoIcon from '../../public/icon/48.png'
@@ -858,6 +859,7 @@ export default function GeneratePage({ onNavigate }: Props) {
                   <button className="manual-toggle" onClick={() => setInputMode('manual')}>
                     Can't detect the posting? Paste it manually →
                   </button>
+                  <GenerateOffer hosted={appMode === 'hosted'} />
                 </div>
               )}
 
