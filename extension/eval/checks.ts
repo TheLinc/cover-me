@@ -171,7 +171,7 @@ export function checkTailored(out: TailoredResume, c: EvalCase, input: ParsedRes
     ...outProjects.flatMap((p) => p.bullets),
   ].join('\n')
 
-  for (const t of c.failTerms) {
+  for (const t of [...c.failTerms, ...(c.resumeFailTerms ?? [])]) {
     if (containsTerm(prose, t) || (out.skills && containsTerm(out.skills, t))) {
       result.failures.push(`output contains forbidden term "${t}" (not in resume)`)
     }
@@ -220,6 +220,9 @@ export function checkTailored(out: TailoredResume, c: EvalCase, input: ParsedRes
     if (/\b(my|me|myself)\b/i.test(out.summary) || /(^|[.!?]\s+)I\b|\bI (am|have|was|will|led|built|managed|bring)\b/.test(out.summary)) {
       result.failures.push('summary uses first-person pronouns')
     }
+  }
+  if (c.summaryTitle && !containsTerm(out.summary ?? '', c.summaryTitle)) {
+    result.failures.push(`summary doesn't use the posting's title "${c.summaryTitle}"`)
   }
 
   checkNumberProvenance(

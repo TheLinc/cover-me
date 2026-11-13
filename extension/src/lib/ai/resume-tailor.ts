@@ -1,7 +1,7 @@
 import type { AIProvider, JobData, ParsedResume, TailoredResume } from '../../types'
 import { debugGroup, debugLog } from '../debug'
 import { derivePlanningProgress, deriveTailorProgress } from './tailor-progress'
-import { buildsOnEdits, candidateText, checkAndRewriteLines, groundSkills, groundTailored, keepSeen, matchSkillCase, seenVersion, trustedNotes, type AskModel, type LineRepair } from './resume-grounding'
+import { buildsOnEdits, candidateText, checkAndRewriteLines, checkedTitle, groundSkills, groundTailored, keepSeen, matchSkillCase, seenVersion, trustedNotes, type AskModel, type LineRepair } from './resume-grounding'
 import { SONNET_FIELDS, streamSonnet } from './claude'
 import { scoreFromMatch, type KeywordMatch } from './ats-score'
 import { callOpenAI, OPENAI_MODEL } from './openai'
@@ -231,7 +231,7 @@ Write one internal positioning sentence (not output): "[Role archetype] in [key 
 
 ${includeSummary ? `STEP 4 — WRITE SUMMARY
 2–3 sentences, 40–70 words, no first-person pronouns, no weak openers ("Experienced professional", "Results-driven", "Dynamic"), no clichés ("passionate", "innovative", "team player", "fast-paced", "dynamic"):
-- Identity: open with the candidate's own most recent title, or the archetype their experience directly supports. Use the TARGET ROLE's title only if the candidate has held that role at that level; never adopt a target title that names a level, specialty, license, or credential the resume does not show (a line cook is not a "Sous Chef", a tanker driver is not a "Hazmat Tanker Driver", a VP is not a "Chief Operating Officer"), and never write "[target title] candidate". Include 2–3 Tier 1 keywords.
+- Identity: open with the TARGET ROLE's title when it is the same or a broader name for work the bullets already show, at the same level (a Full Stack Developer opens as "Software Engineer"); recruiters search on the posting's exact title. Otherwise open with the candidate's own most recent title, or the archetype their experience directly supports. Never adopt a target title that adds a level, specialty, license, or credential the bullets don't show (a frontend-only engineer is not "Full Stack"; a line cook is not a "Sous Chef"; a tanker driver is not a "Hazmat Tanker Driver"; a VP is not a "Chief Operating Officer"). When the target title names a level the resume does not show (Senior, Lead, Staff, Principal), use it without that word ("Software Engineer" for "Senior Software Engineer"); a past title that already holds the level allows the full title. A generic word alone (Manager, Engineer, Specialist, Lead) never counts as a broader title. When the title can't be used, describe the matching work the bullets show in the posting's words. Never write "[target title] candidate". Include 2–3 Tier 1 keywords.
 - Strongest capability or achievement that answers the role's core challenge
 - Optional: a differentiator or collaboration strength relevant to the role
 - Aim it at THIS role: lead with the evidence that answers the posting's core need, in its terms where honest, and in fresh words: no phrase or figure lifted from the bullets beyond the one headline number. A summary that restates the bullets, or could sit on any application for the candidate's current job, is not tailored.
@@ -313,7 +313,7 @@ export function isValidResume(r: unknown): r is TailoredResume {
 export async function assembleTailored(
   parsed: ParsedResume,
   raw: string,
-  grounding: { jobDescription: string; supplemental?: string; previous?: TailoredResume; ask?: AskModel; onLineRepair?: (repair: LineRepair) => void; exactBulletCounts?: boolean },
+  grounding: { jobDescription: string; jobTitle?: string; supplemental?: string; previous?: TailoredResume; ask?: AskModel; onLineRepair?: (repair: LineRepair) => void; exactBulletCounts?: boolean },
   onRemoved?: (terms: string[]) => void,
 ): Promise<TailoredResume> {
   const delta = parseDelta(raw)
@@ -327,12 +327,14 @@ export async function assembleTailored(
   delta.skills = matchSkillCase(claimed.skills, base.skills, `${candidate}
 ${grounding.jobDescription}`)
   let merged = keepSeen(mergeTailorDelta(base, delta, { exactBulletCounts: grounding.exactBulletCounts }) as TailoredResume, parsed, base)
+  let title = ''
   if (grounding.ask) {
     const lines = await checkAndRewriteLines(merged, base, grounding.jobDescription, grounding.ask, grounding.supplemental)
     merged = lines.resume
+    title = await checkedTitle(grounding.jobTitle ?? '', base, merged, lines.repair, grounding.ask, grounding.supplemental)
     grounding.onLineRepair?.(lines.repair)
   }
-  const { resume, removed } = groundTailored(merged, base, candidate, grounding.jobDescription)
+  const { resume, removed } = groundTailored(merged, base, candidate, grounding.jobDescription, title)
   const all = [...claimed.dropped, ...removed]
   if (all.length) onRemoved?.(all)
   if (delta.keywordMatch && typeof delta.keywordMatch === 'object') {
@@ -388,7 +390,7 @@ export async function tailorResume(
   }
 
   await debugLog('Tailor — raw model response', raw)
-  return assembleTailored(parsed, raw, { jobDescription: job.description, supplemental, previous, ask: checkModel(provider, apiKey), exactBulletCounts: !compact && !trim }, (removed) =>
+  return assembleTailored(parsed, raw, { jobDescription: job.description, jobTitle: job.title, supplemental, previous, ask: checkModel(provider, apiKey), exactBulletCounts: !compact && !trim }, (removed) =>
     void debugLog('Tailor — grounding guard removed', removed))
 }
 

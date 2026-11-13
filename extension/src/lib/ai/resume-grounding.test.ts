@@ -38,6 +38,24 @@ describe('groundTailored', () => {
     expect(ground('Senior Web Developer. Ships React interfaces.').resume.summary).toBe('Ships React interfaces.')
   })
 
+  test("lets the summary use the posting's title, but not a level the resume lacks or a requirement named elsewhere (#218)", () => {
+    const resume = { ...original, experience: [{ title: 'Full Stack Developer', company: 'Pinecrest', bullets: ['Built a React app and a Node.js API.'] }] }
+    const jd = 'We are hiring a Senior Software Engineer. Software Engineers here hold a Hazmat endorsement.'
+    const run = (summary: string, title: string) => groundTailored({ ...resume, summary }, resume, candidateText(resume), jd, title).resume.summary
+    expect(run('Software Engineer building React apps and Node.js APIs.', 'Senior Software Engineer')).toBe('Software Engineer building React apps and Node.js APIs.')
+    expect(run('Senior Software Engineer building React apps.', 'Senior Software Engineer')).toBe('')
+    expect(run('Software Engineer building React apps. Holds a Hazmat endorsement.', 'Senior Software Engineer')).toBe('Software Engineer building React apps.')
+    // A scraped title's suffix (team, location) isn't part of the role's name.
+    expect(run('Software Engineer building React apps.', 'Senior Software Engineer, Payments (Remote)')).toBe('Software Engineer building React apps.')
+    expect(run('Software Engineer building React apps.', 'Software Engineer - EMEA')).toBe('Software Engineer building React apps.')
+    // A one-word title is a generic word, and the title only blanks whole words.
+    expect(run('Engineer building React apps.', 'Lead Engineer')).toBe('')
+    const eng = 'Hiring a Software Engineer. Platform Engineering owns Engineers.'
+    expect(groundTailored({ ...resume, summary: 'Builds React apps. Joins Platform Engineering.' }, resume, candidateText(resume), eng, 'Software Engineer').resume.summary).toBe('Builds React apps.')
+    // Without the title, the posting's words are checked as before.
+    expect(run('Software Engineer building React apps.', '')).toBe('')
+  })
+
   test('still removes an all-caps copy of a plain-word requirement', () => {
     expect(ground('Builds React interfaces. Knows RUBY ON RAILS.').resume.summary).toBe('Builds React interfaces.')
   })

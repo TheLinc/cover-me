@@ -6,7 +6,7 @@ import { decrypt, encrypt, sameCiphertext } from '../_shared/encrypt.ts'
 import { findOrCreateJobApplication } from '../_shared/job-application.ts'
 import { isUuid } from '../_shared/history-upload.ts'
 import { isCurrentParse, isValidParsedResume, parseResumeStructure, type ParsedResume, upgradedParse } from '../_shared/resume-parse.ts'
-import { buildsOnEdits, candidateText, checkAndRewriteLines, groundSkills, groundTailored, keepSeen, matchSkillCase, seenVersion, trustedNotes } from '../_shared/resume-grounding.ts'
+import { buildsOnEdits, candidateText, checkAndRewriteLines, checkedTitle, groundSkills, groundTailored, keepSeen, matchSkillCase, seenVersion, trustedNotes } from '../_shared/resume-grounding.ts'
 import { scoreFromMatch } from '../_shared/ats-score.ts'
 import { captureUsage } from '../_shared/posthog.ts'
 
@@ -257,7 +257,7 @@ Write one internal positioning sentence (not output): "[Role archetype] in [key 
 
 ${includeSummary ? `STEP 4 — WRITE SUMMARY
 2–3 sentences, 40–70 words, no first-person pronouns, no weak openers ("Experienced professional", "Results-driven", "Dynamic"), no clichés ("passionate", "innovative", "team player", "fast-paced", "dynamic"):
-- Identity: open with the candidate's own most recent title, or the archetype their experience directly supports. Use the TARGET ROLE's title only if the candidate has held that role at that level; never adopt a target title that names a level, specialty, license, or credential the resume does not show (a line cook is not a "Sous Chef", a tanker driver is not a "Hazmat Tanker Driver", a VP is not a "Chief Operating Officer"), and never write "[target title] candidate". Include 2–3 Tier 1 keywords.
+- Identity: open with the TARGET ROLE's title when it is the same or a broader name for work the bullets already show, at the same level (a Full Stack Developer opens as "Software Engineer"); recruiters search on the posting's exact title. Otherwise open with the candidate's own most recent title, or the archetype their experience directly supports. Never adopt a target title that adds a level, specialty, license, or credential the bullets don't show (a frontend-only engineer is not "Full Stack"; a line cook is not a "Sous Chef"; a tanker driver is not a "Hazmat Tanker Driver"; a VP is not a "Chief Operating Officer"). When the target title names a level the resume does not show (Senior, Lead, Staff, Principal), use it without that word ("Software Engineer" for "Senior Software Engineer"); a past title that already holds the level allows the full title. A generic word alone (Manager, Engineer, Specialist, Lead) never counts as a broader title. When the title can't be used, describe the matching work the bullets show in the posting's words. Never write "[target title] candidate". Include 2–3 Tier 1 keywords.
 - Strongest capability or achievement that answers the role's core challenge
 - Optional: a differentiator or collaboration strength relevant to the role
 - Aim it at THIS role: lead with the evidence that answers the posting's core need, in its terms where honest, and in fresh words: no phrase or figure lifted from the bullets beyond the one headline number. A summary that restates the bullets, or could sit on any application for the candidate's current job, is not tailored.
@@ -587,7 +587,7 @@ ${job.description}`)
       const { rewritten, reverted, summary, checkFailed } = repair
       console.log('[CoverMe] line check:', JSON.stringify({ flagged: repair.flagged.length, rewritten, reverted, summary, checkFailed }))
     }
-    const resume = groundTailored(lined, base, candidate, job.description).resume as Record<string, unknown>
+    const resume = groundTailored(lined, base, candidate, job.description, await checkedTitle(job.title, base, lined, repair, askChecker, supplemental)).resume as Record<string, unknown>
 
     let atsScore: number | undefined
     let atsGaps: string[] | undefined
