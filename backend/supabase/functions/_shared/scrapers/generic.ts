@@ -91,7 +91,11 @@ function tryHeuristic(): JobData {
 // costs one walk of its subtree and one of its ancestors.
 function largestBlock(doubtful: boolean): string | undefined {
   const nested = new Set(document.querySelectorAll('a a'))
-  const lists = cardLists(nested)
+  const [lists, hiddenLists] = cardLists(nested)
+  const holdsHidden = new Set<Element>()
+  for (const list of hiddenLists) {
+    for (let el: Element | null = list; el && !holdsHidden.has(el); el = el.parentElement) holdsHidden.add(el)
+  }
   const cardText = new Map<Element, number>()
   const listText = new Map<Element, number>()
   for (const [list, { text, plain }] of lists) {
@@ -106,21 +110,18 @@ function largestBlock(doubtful: boolean): string | undefined {
   const left = (el: HTMLElement, len: number) => len - (listText.get(el) ?? 0)
   // A block in a list is a card or part of one (a long one: We Work Remotely's
   // list the countries a job is open to). A block that isn't rendered is read
-  // as its source text, by Chrome and by linkedom alike, so it's read only
-  // when no rendered block will do (a posting under a "Read more" toggle). In
-  // doubt, a block whose cards are three times what's left is passed over for
-  // a smaller one: a wrapper around an intro and its listing.
-  let hidden: HTMLElement | undefined
+  // as its source text, by Chrome and by linkedom alike: a posting under a
+  // "Read more" toggle, which is read, or a hidden panel or mobile copy of the
+  // cards, which isn't. In doubt, a block whose cards are three times what's
+  // left is passed over for a smaller one: a wrapper around an intro and its
+  // listing.
   const block = Array.from(document.querySelectorAll<HTMLElement>('div, section, article'))
     .map((el) => ({ el, len: el.innerText?.trim().length ?? 0 }))
     .filter(({ len }) => len > 500 && len < 20000)
     .sort((a, b) => b.len - a.len)
-    .find(({ el, len }) => {
-      if (hasAncestorIn(el, lists) || isList(el, len) || (doubtful ? left(el, len) * 4 < len : left(el, len) < 200)) return false
-      if (rendered(el)) return true
-      hidden ??= el
-      return false
-    })?.el ?? hidden
+    .find(({ el, len }) => !hasAncestorIn(el, lists) && !hasAncestorIn(el, hiddenLists) && !(holdsHidden.has(el) && !rendered(el))
+      && !isList(el, len) && (doubtful ? left(el, len) * 4 >= len : left(el, len) >= 200))
+    ?.el
   if (!block) return
   let text = block.innerText.trim()
   let largestList = 0
@@ -142,13 +143,13 @@ function largestBlock(doubtful: boolean): string | undefined {
 // card carries, but also some of a site's menus; not a menu of bare links, nor
 // paragraphs with a link each (a posting's EEO notes), a requirements list
 // that links its tools, or a posting's sections that link from their text.
-// Lists that aren't rendered are left out: Chrome reads their source text
-// (innerText falls back to textContent), and the blocks around them leave it
-// out. The outermost lists only, each with its text and how much of it is
+// Lists that aren't rendered are returned apart: Chrome reads their source
+// text (innerText falls back to textContent), and the blocks around them leave
+// it out. The outermost lists only, each with its text and how much of it is
 // outside links. Each element's first link is found in one pass over the
 // links; each child is looked at once, with a walk from its first link up to
 // it; a candidate list's text is read once per level it's nested in.
-function cardLists(nested: Set<Element>): Map<HTMLElement, { text: string, plain: number }> {
+function cardLists(nested: Set<Element>): [Map<HTMLElement, { text: string, plain: number }>, Set<Element>] {
   const firstLink = new Map<Element, Element>()
   for (const a of Array.from(document.querySelectorAll('a[href]'))) {
     for (let el: Element | null = a; el && !firstLink.has(el); el = el.parentElement) firstLink.set(el, a)
@@ -182,13 +183,18 @@ function cardLists(nested: Set<Element>): Map<HTMLElement, { text: string, plain
     if (Array.from(shapes.values()).some(isList)) lists.add(parent)
   }
   const outermost = new Map<HTMLElement, { text: string, plain: number }>()
+  const hidden = new Set<Element>()
   for (const list of lists) {
     const el = list as HTMLElement
-    if (hasAncestorIn(el, lists) || !rendered(el)) continue
+    if (hasAncestorIn(el, lists)) continue
+    if (!rendered(el)) {
+      hidden.add(el)
+      continue
+    }
     const text = el.innerText?.trim() ?? ''
     outermost.set(el, { text, plain: text.length - linkTextLength(el, nested) })
   }
-  return outermost
+  return [outermost, hidden]
 }
 
 // Text straight in the card or around its link, as a sentence around a link

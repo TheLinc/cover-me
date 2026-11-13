@@ -244,6 +244,17 @@ describe('generic heuristic', () => {
     const job = scrape('https://careers.example.com/jobs/1', `<html><body><main><h1>Warehouse Supervisor</h1><div>
       <div class="preview"><p>${description.slice(0, 150)}</p></div><div class="full" hidden><p>${description}</p></div></div></main></body></html>`)
     expect(job.description).toBe(description)
+    // ...even inside a wrapper with a footer
+    const footer = `<footer><div>${'Acme Logistics, 1 Dock Road. Privacy. Terms. Accessibility. '.repeat(8)}</div></footer>`
+    const wrapped = scrape('https://careers.example.com/jobs/1', `<html><body><div id="app"><main><h1>Warehouse Supervisor</h1><div>
+      <div class="preview"><p>${description.slice(0, 150)}</p></div><div class="full" hidden><p>${description} ${description}</p></div></div></main>
+      ${footer}</div></body></html>`)
+    expect(wrapped.description).toBe(`${description} ${description}`)
+    // ...while a listing's hidden mobile copy of its cards isn't
+    const cards = `<ul>${relatedJobs(8)}</ul>`
+    expect(() => scrape('https://careers.example.com/careers', `<html><body><main><h1>Join Our Team</h1>
+      <div class="intro"><p>${description.slice(0, 300)}</p></div><div class="desktop">${cards}</div>
+      <div class="mobile" hidden>${cards}</div></main></body></html>`)).toThrow('Could not find job details')
   })
 
   // The posting has a job's title, so cards larger than it don't make the page
