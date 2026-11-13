@@ -332,7 +332,8 @@ Write one internal positioning sentence (not output): "[Role archetype] in [key 
 ${includeSummary ? `STEP 4 — WRITE SUMMARY
 2–3 sentences, 40–70 words, no first-person pronouns, no weak openers ("Experienced professional", "Results-driven", "Dynamic"), no clichés ("passionate", "innovative", "team player", "fast-paced", "dynamic"):
 - Identity: open with the candidate's own most recent title, or the archetype their experience directly supports. Use the TARGET ROLE's title only if the candidate has held that role at that level; never adopt a target title that names a level, specialty, license, or credential the resume does not show (a line cook is not a "Sous Chef", a tanker driver is not a "Hazmat Tanker Driver", a VP is not a "Chief Operating Officer"), and never write "[target title] candidate". Include 2–3 Tier 1 keywords.
-- Strongest capability or achievement that answers the role's core challenge
+- Strongest capability or achievement that answers the role's core challenge, stated with its figure: when a bullet gives a measured result that bears on this role, the summary cites it (this is the one headline number). Never a summary with no concrete evidence in it.
+- One distinctive proof point when the resume has one that fits the role: a published package, a shipped product, an award or placing, named as the resume names it.
 - Optional: a differentiator or collaboration strength relevant to the role
 - Aim it at THIS role: lead with the evidence that answers the posting's core need, in its terms where honest, and in fresh words: no phrase or figure lifted from the bullets beyond the one headline number. A summary that restates the bullets, or could sit on any application for the candidate's current job, is not tailored.
 YEARS OF EXPERIENCE: never state a count of years in the summary. The dates already sit on the resume, and any total you compute counts training, junior, or unrelated roles that a reader will not credit.
