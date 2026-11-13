@@ -38,6 +38,10 @@ const FADE = 0.12
 const chapter = (x: number, i: number) => Math.min(ramp(x, i, i + FADE), 1 - ramp(x, i + 1 - FADE, i + 1))
 
 // Types `segments` out up to n characters, keeping segment boundaries.
+// Render each segment inside its own element, never as a bare text node next
+// to siblings: a segment shrinks to '' when the visitor scrolls back, React
+// then removes its text node, and browser translation has already swapped
+// that node out, so removeChild throws (#185).
 function typed(segments: string[], n: number) {
   let left = Math.max(0, Math.round(n))
   return segments.map((s) => {
@@ -284,9 +288,9 @@ function Bullet({ x, at, before, after }: { x: number; at: number; before: strin
   }
   return (
     <p className="text-[13px] leading-[1.6] text-body">
-      {typedOut[0]}
+      <span>{typedOut[0]}</span>
       {typedOut[1] && <Hl className="font-medium">{typedOut[1]}</Hl>}
-      {typedOut[2]}
+      <span>{typedOut[2]}</span>
       {u < 1 && <span className="ml-px inline-block h-[14px] w-[2px] translate-y-[2px] animate-pulse bg-brand" />}
     </p>
   )
@@ -499,7 +503,7 @@ function LetterLayer({ x, c }: { x: number; c?: boolean }) {
         <div className="min-h-[18px] text-[14px] font-semibold text-ink">{out[0]}</div>
         {out.slice(1).map((p, i) => (
           <p key={i} className="min-h-[60px] text-[13px] leading-[1.65] text-body">
-            {p}
+            <span>{p}</span>
             {out[i + 2] === '' && p.length > 0 && p.length < LETTER[i + 1].length && <Caret />}
           </p>
         ))}
