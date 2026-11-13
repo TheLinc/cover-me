@@ -104,3 +104,23 @@ describe('Regenerate after section edits', () => {
     expect(prompt).not.toContain('deletedSections')
   })
 })
+
+describe("the posting's title in the summary (#218)", () => {
+  const parsed = {
+    name: 'Pat Lee', email: 'pat@example.com', phone: '', website: '',
+    experience: [{ title: 'Web Developer', company: 'Northwind', location: '', dates: '2022', bullets: ['Built React screens'] }],
+    education: [], skills: 'React',
+  } as unknown as ParsedResume
+  const raw = JSON.stringify({ summary: 'Full Stack Developer building React screens.', experience: [{ bullets: ['Built React screens'] }] })
+  const grounding = { jobDescription: 'We are hiring a Full Stack Developer.', jobTitle: 'Full Stack Developer' }
+
+  test('keeps it when the line check passed the summary', async () => {
+    const resume = await assembleTailored(parsed, raw, { ...grounding, ask: async () => '{"flags": [], "summary": null}' })
+    expect(resume.summary).toBe('Full Stack Developer building React screens.')
+  })
+
+  test('the code guard still removes it when the line check could not run', async () => {
+    const resume = await assembleTailored(parsed, raw, { ...grounding, ask: async () => { throw new Error('down') } })
+    expect(resume.summary).toBe('')
+  })
+})

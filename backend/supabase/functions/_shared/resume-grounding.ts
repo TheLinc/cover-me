@@ -474,7 +474,7 @@ For each rewritten line, go through every detail it states. Flag the line if it 
 - a clause arguing relevance to another kind of work ("...skills directly applicable to X")
 Do not flag: the same facts reworded; a different verb for the same action ("Managed" → "Oversaw"); a more specific word for the same thing ("deposits" → "bank deposits"); reordering; facts combined from two original lines of the same role; generic phrasing that adds no checkable fact ("maintaining quality", "to meet standards", "ensuring accuracy"); a clause that only restates what the line's own facts already show ("Processed 400 claims a week" → "...in a high-volume claims queue"; a stated record of beating targets → "...consistently exceeding goals"; written how-to guides → "...giving customers self-service answers"); the field's usual name for the same task ("answered and routed incoming calls" → "call triage"), as long as it names no tool, system, standard, or credential the originals lack; or a stronger verb for work the originals show the candidate doing or running themselves ("Ran the monthly payroll" → "Owned the monthly payroll run"). Generic filler and restatement are style problems, not false claims.
 
-Then check the SUMMARY against all original lines and the RESUME FACTS below, with the same rules. A title, degree, license, or certification listed in RESUME FACTS is supported. So is a job title that is the same or a broader name for work the original lines show, at the same level (full stack work as "Software Engineer"); flag a title that adds a level, specialty, license, or credential they don't show (frontend-only work as "Full Stack", a line cook as "Sous Chef", a mid-level engineer as "Senior"). Flag any count of years of experience in the summary.
+Then check the SUMMARY against all original lines and the RESUME FACTS below, with the same rules. A title, degree, license, or certification listed in RESUME FACTS is supported. So is a job title that is the same or a broader name for work the original lines show, at the same level (full stack work as "Software Engineer"); a generic word alone ("Manager", "Engineer") is not such a title. Flag a title that adds a level, specialty, license, or credential they don't show (frontend-only work as "Full Stack", a line cook as "Sous Chef", a mid-level engineer as "Senior"). Flag any count of years of experience in the summary.
 
 ${blocks.join('\n\n')}
 
@@ -759,6 +759,7 @@ export async function checkAndRewriteLines<T extends Groundable>(
   }
 }
 
+// The levels the tailor prompt's Identity rule drops from a posting's title.
 const LEVEL_WORD = /^(senior|sr\.?|lead|staff|principal|i{1,3}|iv)$/i
 
 export function groundTailored<T extends Groundable>(
@@ -770,10 +771,14 @@ export function groundTailored<T extends Groundable>(
 ): { resume: T; removed: string[] } {
   const terms = jobOnlyTerms(jobDescription, candidate)
   // The posting's title names the role, not a requirement, so the summary may
-  // use it (#218); the line check has already judged whether it's honest. A
-  // level in the title (Senior, Lead) and words the posting uses elsewhere stay checked.
-  const core = jobTitle.split(/\s+/).filter((w) => w && !LEVEL_WORD.test(w)).join(' ')
-  const summaryTerms = core ? jobOnlyTerms(jobDescription.replace(new RegExp(escapeRe(core), 'gi'), ' '), candidate).filter((t) => terms.includes(t)) : terms
+  // use it (#218). Pass jobTitle only when the line check has judged the
+  // summary. A level in the title (Senior, Lead), words the posting uses
+  // elsewhere, and a one-word title (a generic "Manager") stay checked.
+  const titleWithoutLevel = jobTitle.split(/\s+/).filter((w) => w && !LEVEL_WORD.test(w))
+  const postingWithoutTitle = titleWithoutLevel.length > 1
+    ? jobDescription.replace(new RegExp(`(?<![A-Za-z0-9])${escapeRe(titleWithoutLevel.join(' '))}(?![A-Za-z0-9])`, 'gi'), ' ')
+    : jobDescription
+  const summaryTerms = jobOnlyTerms(postingWithoutTitle, candidate).filter((t) => terms.includes(t))
   const removed = new Set<string>()
   const hits = (text: string, list = terms): string[] => {
     const found = list.filter((t) => namesTerm(text, t))

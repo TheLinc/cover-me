@@ -31,6 +31,7 @@ interface Spec {
   fieldNotes: string
   /** Category labels a human editor would add from specific resume evidence; see EvalCase. */
   expectedLabels?: string[][]
+  /** See EvalCase. */
   summaryTitle?: string
 }
 

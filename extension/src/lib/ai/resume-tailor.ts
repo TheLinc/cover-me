@@ -327,12 +327,15 @@ export async function assembleTailored(
   delta.skills = matchSkillCase(claimed.skills, base.skills, `${candidate}
 ${grounding.jobDescription}`)
   let merged = keepSeen(mergeTailorDelta(base, delta, { exactBulletCounts: grounding.exactBulletCounts }) as TailoredResume, parsed, base)
+  let summaryChecked = false
   if (grounding.ask) {
     const lines = await checkAndRewriteLines(merged, base, grounding.jobDescription, grounding.ask, grounding.supplemental)
     merged = lines.resume
+    summaryChecked = !lines.repair.checkFailed
     grounding.onLineRepair?.(lines.repair)
   }
-  const { resume, removed } = groundTailored(merged, base, candidate, grounding.jobDescription, grounding.jobTitle)
+  // The summary may use the posting's title only once the line check judged it (#218).
+  const { resume, removed } = groundTailored(merged, base, candidate, grounding.jobDescription, summaryChecked ? grounding.jobTitle : '')
   const all = [...claimed.dropped, ...removed]
   if (all.length) onRemoved?.(all)
   if (delta.keywordMatch && typeof delta.keywordMatch === 'object') {
