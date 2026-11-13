@@ -130,10 +130,9 @@ function largestBlock(doubtful: boolean, heading?: Element): string | undefined 
     .filter(({ len }) => len > 500 && len < 20000)
     .sort((a, b) => b.len - a.len)
     .find(({ el, len }) => {
-      if (isList(el, len)) return false
+      if (isList(el, len) || hasAncestorIn(el, hiddenLists) || (holdsHidden.has(el) && !rendered(el))) return false
       first ??= el
-      return !hasAncestorIn(el, lists) && !hasAncestorIn(el, hiddenLists) && !(holdsHidden.has(el) && !rendered(el))
-        && (doubtful || (left(el, len) >= 200 && nearFirst(el, first)))
+      return !hasAncestorIn(el, lists) && (doubtful || (left(el, len) >= 200 && nearFirst(el, first)))
     })?.el
   if (!block) return doubtful ? undefined : first?.innerText.trim()
   let text = block.innerText.trim()
@@ -146,14 +145,16 @@ function largestBlock(doubtful: boolean, heading?: Element): string | undefined 
   return text.replace(/\n{3,}/g, '\n\n').trim()
 }
 
-// The first text after an element, in document order: one walk, ended by the
-// first text that isn't whitespace
+// The first text shown after an element, in document order: one walk, ended
+// by the first text that isn't whitespace, past what isn't shown (a <style>
+// before each styled element, an icon's title, a hidden "Share" label)
 function textAfter(el: Node): Node | undefined {
   let n: Node | null = el
   while (n && !n.nextSibling) n = n.parentNode
   for (n = n?.nextSibling ?? null; n;) {
     if (n.nodeType === 3 && n.textContent?.trim()) return n
-    if (n.firstChild) n = n.firstChild
+    const shown = n.nodeType !== 1 || (!UNSHOWN.has(n.nodeName.toUpperCase()) && rendered(n as HTMLElement))
+    if (shown && n.firstChild) n = n.firstChild
     else {
       while (n && !n.nextSibling) n = n.parentNode
       n = n?.nextSibling ?? null
@@ -228,6 +229,7 @@ function cardLists(nested: Set<Element>): [Map<HTMLElement, { text: string, plai
 // Text straight in the card or around its link, as a sentence around a link
 // has; a card's lines are elements of their own
 const prose = (el: Element) => Array.from(el.childNodes).some((n) => n.nodeType === 3 && n.textContent?.trim())
+const UNSHOWN = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEMPLATE', 'SVG'])
 const CARD_TAGS = new Set(['LI', 'DIV', 'ARTICLE', 'SECTION', 'TR'])
 
 // Chrome knows from layout, though it counts a display: contents wrapper

@@ -350,7 +350,9 @@ describe('generic heuristic', () => {
       const posting = `<main><h1>Warehouse Supervisor</h1><div class="posting"><div class="sec"><h2>The role</h2><p>${description}</p></div>
         ${section('About us', '/about')}${section('Benefits', '/benefits')}${section('Life at Acme', '/life')}</div></main>`
       const meta = posting.replace('</h1>', '</h1><p>Full time · Sydney</p>')
-      for (const body of [posting, `${posting}${cookie}`, `<div id="app">${posting}${cookie}</div>`, `${meta}${cookie}`]) {
+      // what isn't shown between the title and the posting doesn't count
+      const unshown = posting.replace('</h1>', '</h1><style>.x{color:red}</style><div hidden>Share this job</div><button><svg><title>Share</title></svg></button>')
+      for (const body of [posting, `${posting}${cookie}`, `<div id="app">${posting}${cookie}</div>`, `${meta}${cookie}`, `<div id="app">${unshown}${cookie}</div>`]) {
         const job = scrape('https://careers.example.com/jobs/1', `<html><body>${body}</body></html>`)
         expect(job.description).toMatch(/^(Warehouse Supervisor\n\n)?The role[^]*Life at Acme/)
       }
