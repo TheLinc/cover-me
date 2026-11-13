@@ -400,7 +400,7 @@ Compressed STAR: [strong action verb] + [what was done] + [measurable result or 
 - Banned filler (reads as AI-written): leveraged, utilized, seamlessly, cutting-edge, state-of-the-art, spearheaded, honed, fostered, garnered, various, numerous. Use the plain verb or name the specific thing instead.
 
 STEP 7 — REORDER BULLETS
-Within each role, sort bullets most-relevant-first. This touches only the bullets inside a role; role order is fixed (Integrity 2).
+Within each role, sort bullets most-relevant-first. When a role has a measured outcome that bears on this job (time saved, a score improved, a pilot result), lead the role with it. This touches only the bullets inside a role; role order is fixed (Integrity 2).
 ${step8}
 STEP 9 — ATS MATCH REPORT (the score is computed in code from this report — do NOT output a number)
 Judge coverage ONLY against this JD: the Tier 1 and Tier 2 keywords from STEP 2, plus the qualifications the JD explicitly states. NEVER weigh skills the JD does not mention, or skills "typically"/"usually" expected for this kind of role — if it is not in this JD, it neither helps nor hurts the candidate.
