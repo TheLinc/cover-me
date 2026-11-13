@@ -3,7 +3,20 @@ import { jobFromJsonLd, jobFromMicrodata } from './jsonld.ts'
 import { fromTabTitle } from './tabtitle.ts'
 
 export function scrapeGeneric(): JobData {
-  return jobFromJsonLd() ?? jobFromMicrodata() ?? tryAtsSelectors() ?? tryHeuristic()
+  return jobFromJsonLd() ?? jobFromMicrodata() ?? tryPythonJobBoard() ?? tryAtsSelectors() ?? tryHeuristic()
+}
+
+// python.org's job board: a "21 jobs on the Python Job Board" banner <h1>
+// comes first, and the posting's own <h1> holds the title, a "New" badge, then
+// the company after a <br> (#73). The title and company are its text nodes.
+function tryPythonJobBoard(): JobData | null {
+  const heading = document.querySelector('.listing-company .company-name')
+  const description = firstText(['.job-description'])
+  if (!heading || !description) return null
+  const [title, company] = Array.from(heading.childNodes)
+    .flatMap((n) => n.nodeType === 3 && n.textContent?.trim() ? [n.textContent.trim()] : [])
+  if (!title) return null
+  return { title, company: company ?? 'Unknown Company', description, url: window.location.href }
 }
 
 function tryAtsSelectors(): JobData | null {

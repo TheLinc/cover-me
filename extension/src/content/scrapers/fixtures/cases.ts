@@ -51,6 +51,9 @@ export const FIXTURE_CASES = [
   // Every <h1> is a section heading ("Key Responsibilities"); the tab title is
   // "RAMON.SPACE - Director of Finance", company first. The posting's block
   // ends with an office map.
+  // A "20 jobs on the Python Job Board" banner <h1> comes first; the posting's
+  // own <h1> holds the title, a "New" badge and the company (#73)
+  { board: 'python', title: 'Senior Python Developer', company: 'Eliassen Group', ends: 'https://devitjobs.com/jobs/Eliassen-Group-Senior-Python-Developer' },
   { board: 'dueto', title: 'Director of Finance', company: 'RAMON.SPACE', ends: 'Report a map error' },
 ]
 
