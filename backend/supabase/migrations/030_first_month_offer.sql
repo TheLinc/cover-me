@@ -35,6 +35,8 @@ BEGIN
      AND u.tier = 'hosted_free'
      AND u.tier_synced_at IS NULL
      AND u.first_month_offer_at <= now()
+     -- Over for good: no write on every later popup open or dashboard load.
+     AND (u.first_month_offer_shown_at IS NULL OR u.first_month_offer_shown_at > now() - interval '7 days')
      AND NOT EXISTS (SELECT 1 FROM public.trial_codes t WHERE t.redeemed_by = u.id)
   RETURNING u.first_month_offer_shown_at + interval '7 days' INTO v_ends;
   RETURN CASE WHEN now() < v_ends THEN v_ends END;

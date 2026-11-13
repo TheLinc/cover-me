@@ -177,9 +177,12 @@ describe('generate', () => {
     it('names the offer in the limit message while it is open', async () => {
       const error = await capped()
       expect(error).toContain("You've used this week's 5 free generations")
-      // Opened an hour ago, so 6 days 23 hours are left.
+      // Available since an hour ago; this refusal is its first showing, so all 7 days are left.
       if (COUPON) expect(error).toContain('Your first month of monthly Pro is discounted at checkout for 7 more days.')
       else expect(error).not.toMatch(OFFER)
+      const { data } = await admin.from('users').select('first_month_offer_shown_at').eq('id', user!.id).single()
+      if (COUPON) expect(data?.first_month_offer_shown_at).not.toBeNull()
+      else expect(data?.first_month_offer_shown_at).toBeNull()
     })
 
     it('leaves it out for someone who has had a subscription', async () => {

@@ -235,6 +235,14 @@ describe('billing', () => {
       expect(await shownAt(user.id)).not.toBeNull()
     })
 
+    it('a monthly checkout starts the 7 days', async () => {
+      user = await createUser()
+      await offerOpen(user.id)
+      await checkout()
+      if (COUPON) expect(await shownAt(user.id)).not.toBeNull()
+      else expect(await shownAt(user.id)).toBeNull()
+    })
+
     it('a quarterly checkout does not start the 7 days', async () => {
       user = await createUser()
       await offerOpen(user.id)

@@ -286,7 +286,6 @@ export default function AccountPanel({ initialView = 'signin', links = true }: {
         <>
           {session ? (
             /* Signed-in state: who you are and the dashboard; upgrading has its own section */
-            <>
             <div className="account-card">
               <div className="account-row">
                 <div className="account-avatar">
@@ -315,7 +314,6 @@ export default function AccountPanel({ initialView = 'signin', links = true }: {
                 </>
               )}
             </div>
-            </>
           ) : (
             /* Auth form */
             <>
