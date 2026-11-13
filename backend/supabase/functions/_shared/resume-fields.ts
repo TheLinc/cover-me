@@ -17,7 +17,8 @@ const strings = (v: unknown) => (Array.isArray(v) ? v.filter((s): s is string =>
 
 /**
  * The resume in the shape an older client prints in full: each project's tech
- * and link joined to its name ("Name | Python, React | github.com/x"), each
+ * and link as its first bullet ("Python, React | github.com/x"; an older
+ * client never wraps a project name, so a long one would run off the page), each
  * extra-section entry as a line ("Name | subtitle | dates | link") followed by
  * its bullets as lines, and grouped skills on one line. The headline stays: an
  * older client never printed one, and keeping it lets a save round-trip.
@@ -30,7 +31,7 @@ export function withOlderFields<T>(resume: T, req: Request): T {
     r.projects = r.projects.map((p: Rec) => {
       if (!p || typeof p !== 'object' || (!str(p.tech) && !str(p.link))) return p
       const { link, tech, ...rest } = p
-      return { ...rest, name: [str(p.name), str(tech), str(link)].filter(Boolean).join(' | ') }
+      return { ...rest, bullets: [[str(tech), str(link)].filter(Boolean).join(' | '), ...strings(p.bullets)] }
     })
   }
   if (Array.isArray(r.otherSections)) {
