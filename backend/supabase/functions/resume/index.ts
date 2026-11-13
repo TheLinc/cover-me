@@ -42,22 +42,26 @@ Deno.serve(async (req) => {
     .eq('id', userId).not('extension_removed_at', 'is', null)
   if (clearError) console.error('resume: clearing extension_removed_at failed')
 
-  // GET — fetch resume text
+  // GET — fetch resume text. design_hash, for Pro: the Word file that goes
+  // with this text, so the extension can restore it on another computer (#174).
   if (req.method === 'GET') {
     const { data, error } = await supabase
       .from('resumes')
-      .select('text_encrypted, filename, updated_at')
+      .select('text_encrypted, filename, updated_at, design_hash')
       .eq('user_id', userId)
       .single()
 
     if (error || !data) return json({ error: 'No resume found' }, 404)
 
+    let text: string
     try {
-      const text = await decrypt(data.text_encrypted)
-      return json({ text, filename: data.filename, updated_at: data.updated_at })
+      text = await decrypt(data.text_encrypted)
     } catch {
       return json({ error: 'Failed to decrypt resume' }, 500)
     }
+    const { data: account } = data.design_hash ? await supabase.from('users').select('tier').eq('id', userId).single() : { data: null }
+    const design_hash = account?.tier === 'hosted_pro' ? data.design_hash : undefined
+    return json({ text, filename: data.filename, updated_at: data.updated_at, design_hash })
   }
 
   // POST ?file=1: a Pro account's Word file, for the dashboard's download in
@@ -88,6 +92,8 @@ Deno.serve(async (req) => {
       { onConflict: 'user_id,hash' },
     )
     if (error) return json({ error: 'Failed to save Word file' }, 500)
+    // The file goes with the resume text it was just checked against.
+    await supabase.from('resumes').update({ design_hash: hash }).eq('user_id', userId)
 
     // Files no tailored resume was made from go, apart from this one.
     const { data: used } = await supabase.from('tailored_resumes').select('source_hash').eq('user_id', userId).not('source_hash', 'is', null)
@@ -156,10 +162,10 @@ Deno.serve(async (req) => {
       return json({ error: 'Encryption failed' }, 500)
     }
 
-    // New text clears the parsed copy, and the parse starts now so the first
-    // tailor doesn't wait for it.
+    // New text clears the parsed copy and the Word file that went with the
+    // old text, and the parse starts now so the first tailor doesn't wait for it.
     const { error } = await supabase.from('resumes').upsert(
-      { user_id: userId, text_encrypted, filename: safeFilename, updated_at, structured_encrypted: null },
+      { user_id: userId, text_encrypted, filename: safeFilename, updated_at, structured_encrypted: null, design_hash: null },
       { onConflict: 'user_id' },
     )
 

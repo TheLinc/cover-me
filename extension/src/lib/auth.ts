@@ -155,7 +155,11 @@ async function syncResume(sess: AuthSession): Promise<void> {
   const signedOut = !!mine?.signedOutUpload
   const keepMine = mine && (!remote || remote.text === mine.text || (!signedOut && Date.parse(mine.updatedAt) >= Date.parse(remote.updatedAt)))
 
-  let next: ResumeData | null = remote ? { ...remote, accountId: userId } : null
+  let next: ResumeData | null = null
+  if (remote) {
+    const { designHash: _d, ...copy } = remote
+    next = { ...copy, accountId: userId }
+  }
   if (keepMine) {
     // Matching the account's copy, a signed-out copy is in the account after all.
     const { signedOutUpload, ...rest } = mine
@@ -170,10 +174,18 @@ async function syncResume(sess: AuthSession): Promise<void> {
   if (next) await saveResume(next)
   else if (local) await clearResume()
   if (keepMine && !signedOut && remote?.text !== mine.text) await uploadResumeToBackend(sess.access_token, mine.text, mine.filename)
+  // Pro: the Word file that goes with the account's resume comes down too
+  // (#174), unless this computer has its own design for it. Loaded only here:
+  // the design check is heavy.
+  if (next && remote?.designHash && next.text === remote.text && !next.design) {
+    const { restoreDesign } = await import('./design')
+    await restoreDesign(sess.access_token, remote.designHash, next.text)
+  }
 }
 
-// The account's resume, or null when it has none (404).
-async function fetchResumeFromBackend(accessToken: string): Promise<ResumeData | null> {
+// The account's resume, or null when it has none (404). designHash: Pro
+// only, the Word file that goes with this text (#174).
+async function fetchResumeFromBackend(accessToken: string): Promise<(ResumeData & { designHash?: string }) | null> {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/resume`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   })
@@ -181,7 +193,8 @@ async function fetchResumeFromBackend(accessToken: string): Promise<ResumeData |
   const data = await res.json().catch(() => ({})) as Record<string, unknown>
   if (!res.ok) throw new Error((data.error as string) || 'Resume sync failed')
   if (typeof data.text !== 'string' || !data.text) return null
-  return { text: data.text, filename: (data.filename as string) || 'resume', updatedAt: (data.updated_at as string) || new Date(0).toISOString() }
+  const designHash = typeof data.design_hash === 'string' ? data.design_hash : undefined
+  return { text: data.text, filename: (data.filename as string) || 'resume', updatedAt: (data.updated_at as string) || new Date(0).toISOString(), ...(designHash ? { designHash } : {}) }
 }
 
 export type GoogleSignInResponse =
@@ -383,6 +396,17 @@ export async function uploadDesignFileToBackend(accessToken: string, hash: strin
     const data = await res.json().catch(() => ({})) as Record<string, unknown>
     throw new Error((data.error as string) ?? 'Word file upload failed')
   }
+}
+
+// Pro: one of the account's Word files, with the parse that places tailored
+// text in it (#174). null when it's gone or the plan has ended (404, 403).
+export async function fetchDesignFileFromBackend(accessToken: string, hash: string): Promise<{ docx: string; structured: ParsedResume } | null> {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/applications?file=${hash}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+  if (!res.ok) return null
+  const data = await res.json().catch(() => ({})) as { docx?: unknown; structured?: ParsedResume }
+  return typeof data.docx === 'string' && Array.isArray(data.structured?.experience) ? { docx: data.docx, structured: data.structured } : null
 }
 
 // Which Pro plan checkout sells (the portal ignores it).

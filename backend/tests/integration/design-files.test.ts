@@ -68,6 +68,32 @@ describe('design files', () => {
     expect(await storedHashes(user)).toEqual([hash('a'), hash('c')])
   })
 
+  // #174: which file goes with the current resume, so another computer can restore it.
+  it("names the current resume's Word file for Pro: set by its upload, kept on the same text, cleared by new text", async () => {
+    user = await createUser('hosted_pro')
+    await uploadResume(user)
+    const current = async () => (await (await callFunction('resume', { token: user!.token })).json()).design_hash
+    expect(await current()).toBeUndefined()
+
+    await uploadFile(user, hash('a'), 'file a')
+    expect(await current()).toBe(hash('a'))
+    await uploadResume(user, RESUME_TEXT, { wait: false })
+    expect(await current()).toBe(hash('a'))
+
+    await uploadResume(user, `${RESUME_TEXT}\nNew line`, { wait: false })
+    expect(await current()).toBeUndefined()
+  })
+
+  it("never names the file for an account that isn't Pro", async () => {
+    user = await createUser('hosted_pro')
+    await uploadResume(user)
+    await uploadFile(user, hash('a'), 'file a')
+    await admin.from('users').update({ tier: 'hosted_free' }).eq('id', user.id)
+    const body = await (await callFunction('resume', { token: user.token })).json()
+    expect(body.text).toBe(RESUME_TEXT)
+    expect(body.design_hash).toBeUndefined()
+  })
+
   it("serves a Pro account's file and marks the tailored resumes made from it", async () => {
     user = await createUser('hosted_pro')
     await uploadResume(user)
