@@ -467,20 +467,20 @@ describe('letterLength', () => {
     lintLetter(letter, { resumeText }).violations.some((v) => v.includes('too short'))
 
   test('both resumes share the floor; a full resume aims longer', () => {
-    expect(letterLength(thin).min).toBe(150)
-    expect(letterLength(full).min).toBe(150)
-    expect(letterLength(undefined).min).toBe(150)
+    expect(letterLength(thin).min).toBe(130)
+    expect(letterLength(full).min).toBe(130)
+    expect(letterLength(undefined).min).toBe(130)
     expect(letterLength(full).aim).not.toBe(letterLength(thin).aim)
   })
 
-  test('flags a body under 150 words', () => {
-    expect(short(body(140), thin)).toBe(true)
-    expect(short(body(140), full)).toBe(true)
-    expect(short(body(160))).toBe(false)
+  test('flags a body under 130 words', () => {
+    expect(short(body(120), thin)).toBe(true)
+    expect(short(body(120), full)).toBe(true)
+    expect(short(body(140))).toBe(false)
   })
 
   test('the short message names the resume-sized aim', () => {
-    const v = lintLetter(body(140), { resumeText: full }).violations.find((x) => x.includes('too short'))!
+    const v = lintLetter(body(120), { resumeText: full }).violations.find((x) => x.includes('too short'))!
     expect(v).toContain(letterLength(full).aim)
   })
 })
@@ -489,4 +489,13 @@ describe('letterLength', () => {
 test('welding positions are not counted as figures', () => {
   const letter = 'Dear Hiring Manager,\n\nAt Ironclad I build 15 to 20 assemblies a week.\n\nMy AWS D1.1 certification covers 1G, 2G, 3G and 4G, and I hold OSHA 10.\n\nCould we talk next week?\n\nKind regards,\nAlex Doe'
   expect(lintLetter(letter).violations.some((v) => v.includes('figures'))).toBe(false)
+})
+
+// Invented lessons that slipped past the lint in council round 4 (#206).
+test.each([
+  'At Brookfield I reconciled four bank accounts, which is where I learned to keep a ledger tied to the bank.',
+  'I prepare the VAT workpapers for the finance manager, so I am used to figures being checked.',
+])('flags an invented lesson: %s', (line) => {
+  const letter = `Dear Hiring Manager,\n\nAt Hartley I process 600 invoices a month.\n\n${line}\n\nCould we talk next week?\n\nKind regards,\nAlex Doe`
+  expect(lintLetter(letter).violations.some((v) => v.startsWith('Explains what a fact means'))).toBe(true)
 })

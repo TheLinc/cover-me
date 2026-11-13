@@ -108,7 +108,7 @@ const REACTION_RE = /^I (?:like|know) (?:that|this)(?: [\w'’-]+){0,4}[.!]$/
 // common flag on the #206 full eval ("That taught me…" alone in 19 of 72
 // letters). "taught me SQL" is a fact, and "which matters were billable" is a
 // legal matter; both pass.
-const COMMENTARY_RE = /\b(?:taught|showed) me (?:early )?(?:that|to|how|what|when)\b|\bI learned (?:early )?(?:that|how|what)\b|\b(?:which|this|that|it) (?:really |still )?matter(?:s|ed)(?: most| more)?(?=[.,;!]| (?:when|because|on|for|to|in|at|early)\b)|\bso the \w+ mattered\b/i
+const COMMENTARY_RE = /\b(?:taught|showed) me (?:early )?(?:that|to|how|what|when)\b|\bI learned (?:early )?(?:that|how|what|to)\b|\bso I(?:['’]m| am) used to\b|\b(?:which|this|that|it) (?:really |still )?matter(?:s|ed)(?: most| more)?(?=[.,;!]| (?:when|because|on|for|to|in|at|early)\b)|\bso the \w+ mattered\b/i
 
 // A question about the employer's team or work in the close: 42 of 72 letters
 // in the #206 full eval, and hiring guides advise a direct ask. The request
@@ -220,13 +220,14 @@ const NOTE_TO_USER = [
  * degree, the only certification). The cap was the prompt's "two
  * accomplishments, nothing else" rule, not the resume, so the letter now also
  * tells the resume facts that answer the posting, and the aim is the 200-300
- * words recruiters expect.
+ * words recruiters expect. Drafts land at ~140-170 words under it, which the
+ * council judged right for trades and clerical roles, so the floor is 130.
  * ponytail: resume word count is the richness signal; count detailed bullets
  * instead if real resumes land on the wrong side of 250.
  */
 export function letterLength(resumeText?: string): { min: number; aim: string; full: boolean } {
   const full = !!resumeText && countWords(resumeText) >= 250
-  return full ? { min: 150, aim: '230–300', full } : { min: 150, aim: '200–260', full }
+  return full ? { min: 130, aim: '230–300', full } : { min: 130, aim: '200–260', full }
 }
 
 function countWords(text: string): number {

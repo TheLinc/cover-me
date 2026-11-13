@@ -77,7 +77,7 @@ const BASELINE_FILE = join(HERE, QUICK ? 'baseline.json' : 'baseline-full.json')
 
 const SIGN_OFFS = ['Sincerely,', 'Best regards,', 'Kind regards,']
 const HOOKS = ['Achievement-first', 'Bold specific claim']
-const CLOSES = ['Next step', 'Thanks']
+const CLOSES = ['Next step']
 
 // A low judge score fails a plain run. Under --baseline (the CI gate) it is a
 // warning: the gate fails on drops against the baseline and on the factual
