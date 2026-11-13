@@ -1,6 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { handleCors, json } from '../_shared/cors.ts'
 import { stripe, StripeError } from '../_shared/stripe.ts'
+import { FIRST_MONTH_COUPON, openFirstMonthOffer } from '../_shared/offer.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SECRET_KEY = Deno.env.get('SERVICE_KEY')!
@@ -9,9 +10,6 @@ const PRICES = {
   monthly: Deno.env.get('STRIPE_PRO_PRICE_ID')!,
   quarterly: Deno.env.get('STRIPE_PRO_QUARTERLY_PRICE_ID')!,
 } as const
-// The first-month offer (#213): a Stripe coupon, so the amount lives in Stripe
-// and not in this public repo. Unset turns the offer off.
-const FIRST_MONTH_COUPON = Deno.env.get('STRIPE_FIRST_MONTH_COUPON_ID')
 const SITE_URL = (Deno.env.get('SITE_URL') || 'https://www.cover-me.dev').replace(/\/+$/, '')
 
 // Subscriptions that still bill (or retry) the card. Checkout on top of one
@@ -212,12 +210,7 @@ Deno.serve(async (req) => {
     // The first-month offer: opening checkout starts it (it opens a day later,
     // so today's checkout is full price), and a monthly checkout while it's
     // open takes the coupon off, for a customer Stripe has never billed.
-    let discount = false
-    if (FIRST_MONTH_COUPON) {
-      const { data: endsAt, error } = await supabase.rpc('open_first_month_offer', { p_user_id: user.id })
-      if (error) console.error('[billing] offer:', error.message)
-      discount = Boolean(endsAt) && price === 'monthly' && !hadSubscription
-    }
+    const discount = Boolean(await openFirstMonthOffer(supabase, user.id)) && price === 'monthly' && !hadSubscription
     const session = await stripe('checkout/sessions', {
       mode: 'subscription',
       customer: customerId,

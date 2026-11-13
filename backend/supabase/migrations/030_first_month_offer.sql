@@ -36,7 +36,7 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.first_month_offer_ends_at(uuid) FROM public, anon, authenticated;
-REVOKE ALL ON FUNCTION public.open_first_month_offer(uuid) FROM public, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.first_month_offer_ends_at(uuid) FROM public, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.open_first_month_offer(uuid) FROM public, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.first_month_offer_ends_at(uuid) TO service_role;
 GRANT EXECUTE ON FUNCTION public.open_first_month_offer(uuid) TO service_role;

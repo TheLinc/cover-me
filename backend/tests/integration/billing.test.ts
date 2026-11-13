@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { admin, callFunction, createUser, deleteUser, mockClaude, mockStripe, type TestUser } from './helpers'
+import { admin, callFunction, createUser, deleteUser, JOB, mockClaude, mockStripe, setUsage, type TestUser, uploadResume } from './helpers'
 
 describe('billing', () => {
   let user: TestUser | undefined
@@ -200,6 +200,16 @@ describe('billing', () => {
       const wait = Date.parse(data!.first_month_offer_at as string) - Date.now()
       expect(wait).toBeGreaterThan(23 * 3_600_000)
       expect(wait).toBeLessThanOrEqual(24 * 3_600_000)
+    })
+
+    it('charges full price on the day the weekly limit refuses a generation', async () => {
+      user = await createUser()
+      await uploadResume(user)
+      await setUsage(user.id, [{ daysAgo: 40, count: 10 }, { daysAgo: 0, count: 5 }])
+      const refused = await callFunction('generate', { token: user.token, body: { job: JOB } })
+      expect(refused.status).toBe(429)
+      await refused.text()
+      expect((await checkout())['discounts[0][coupon]']).toBeUndefined()
     })
 
     it('leaves it off for a customer Stripe says had a subscription', async () => {

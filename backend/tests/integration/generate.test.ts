@@ -161,7 +161,7 @@ describe('generate', () => {
   // The first-month offer (#213). Unset, the limit message stays as it is.
   describe('first-month offer', () => {
     const COUPON = process.env.STRIPE_FIRST_MONTH_COUPON_ID
-    const OFFER = /first month of monthly Pro is discounted at checkout until/
+    const OFFER = /first month of monthly Pro is discounted at checkout/
     const offerAt = async (userId: string) =>
       (await admin.from('users').select('first_month_offer_at').eq('id', userId).single()).data?.first_month_offer_at as string | null
     const capped = async (extra: Record<string, unknown> = {}) => {
@@ -177,7 +177,8 @@ describe('generate', () => {
     it('names the offer in the limit message while it is open', async () => {
       const error = await capped()
       expect(error).toContain("You've used this week's 5 free generations")
-      if (COUPON) expect(error).toMatch(OFFER)
+      // Opened an hour ago, so 6 days 23 hours are left.
+      if (COUPON) expect(error).toContain('Your first month of monthly Pro is discounted at checkout for 7 more days.')
       else expect(error).not.toMatch(OFFER)
     })
 
