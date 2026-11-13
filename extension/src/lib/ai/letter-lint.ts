@@ -215,14 +215,18 @@ const NOTE_TO_USER = [
  * whatever aim it gets, and an aim of 110-160 put 50 of 72 drafts under the
  * floor (vs 16 at 150-220), each costing a retry. Raising the aim didn't
  * lengthen drafts: on thin resumes they land at 85-110 words whatever the aim,
- * so the thin floor is 85. At 100, 38-50 of 72 drafts were retried for length
- * and most retries still came in short (#206 letters-only runs).
+ * so the thin floor was 85. A blind council then judged those ~100-word letters
+ * thin, not concise: they dropped evidence the posting asked for (a required
+ * degree, the only certification). The cap was the prompt's "two
+ * accomplishments, nothing else" rule, not the resume, so the letter now also
+ * tells the resume facts that answer the posting, and the aim is the 200-300
+ * words recruiters expect.
  * ponytail: resume word count is the richness signal; count detailed bullets
  * instead if real resumes land on the wrong side of 250.
  */
 export function letterLength(resumeText?: string): { min: number; aim: string; full: boolean } {
   const full = !!resumeText && countWords(resumeText) >= 250
-  return full ? { min: 110, aim: '170–250', full } : { min: 85, aim: '150–220', full }
+  return full ? { min: 150, aim: '230–300', full } : { min: 150, aim: '200–260', full }
 }
 
 function countWords(text: string): number {
@@ -317,7 +321,7 @@ export function lintLetter(
 
   const length = letterLength(opts.resumeText)
   if (wordCount < length.min) {
-    violations.push(`Letter body is ${wordCount} words — too short; expand to about ${length.aim} words. ${length.full ? 'If the letter tells fewer than three accomplishments, add one from the resume that fits the posting, with its result.' : 'If the letter tells only one accomplishment, add a second from the resume with its result.'} Where the resume says how an accomplishment was done, tell that inside its own sentence. Never add a scene-setting sentence, restate a fact, list unrelated resume items, or guess what the resume does not say (an employer's industry or location, a new claim about the applicant).`)
+    violations.push(`Letter body is ${wordCount} words — too short; expand to about ${length.aim} words. Add the resume facts that answer the posting's main requirements and aren't in the letter yet: a degree, license, or certification the posting asks for, the scope of the current job, or a duty the posting names, each told as what the applicant does or did. Never add a scene-setting sentence, restate a fact, list unrelated resume items, or guess what the resume does not say (an employer's industry or location, a new claim about the applicant).`)
   } else if (wordCount > 320) {
     violations.push(`Letter body is ${wordCount} words — too long; tighten to about ${length.aim} words.`)
   }
@@ -364,12 +368,6 @@ export function lintLetter(
   if (stockLine) {
     violations.push(`Ends on a stock line ("${stockLine}") — give a reason of the applicant's own, or cut the line.`)
   }
-  // An item tacked on with "I also": in 35 of 72 master letters, and what
-  // both council reviewers called resume padding in round 7 (#206).
-  const alsoItem = bodyParas.flatMap((p) => p.split(SENTENCE_END)).map((s) => s.trim()).find((s) => /^I also\b/.test(s))
-  if (alsoItem) {
-    violations.push(`Adds another item with "I also" ("${alsoItem}") — cut it, and tell the letter's accomplishments in full instead; a second accomplishment gets its own time or place and its result.`)
-  }
   const closeQuestion = paragraphs.length > 1 ? lastPara.split(SENTENCE_END).map((s) => s.trim()).find((s) => CLOSE_QUESTION_RE.test(s)) : undefined
   if (closeQuestion) {
     violations.push(`Asks the employer a question in the close ("${closeQuestion}") — end with a direct request for an interview instead.`)
@@ -409,8 +407,8 @@ export function lintLetter(
     }
   })
   paragraphs.forEach((p, i) => {
-    // Years are dates, not figures.
-    const figures = extractNumbers(p).filter((n) => !/^(19|20)\d\d$/.test(n.norm)).length
+    // Years are dates, not figures, and a welding position ("3G", "6G") is a name.
+    const figures = extractNumbers(p.replace(/\b[1-6]G\b/g, ' ')).filter((n) => !/^(19|20)\d\d$/.test(n.norm)).length
     if (figures > 4) {
       violations.push(`Paragraph ${i + 1} has ${figures} figures — keep the one number that matters most for each achievement, at most four in a paragraph, and say the rest in words instead of dropping the achievement.`)
     }

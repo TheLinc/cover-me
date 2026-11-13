@@ -436,16 +436,11 @@ describe('story devices', () => {
   })
 })
 
-// Council round 7 (#206): items tacked on with "I also" (35 of 72 master letters).
-describe('tacked-on items', () => {
-  const letter = (...paragraphs: string[]) => `Dear Hiring Manager,\n\n${paragraphs.join('\n\n')}\n\nKind regards,\nAlex Doe`
-  const flagged = (...paragraphs: string[]) => lintLetter(letter(...paragraphs)).violations.some((v) => v.startsWith('Adds another item'))
-  test('flags "I also" in the proof paragraph', () => {
-    expect(flagged('At Halcyon I cut page load from 1.2s to 400ms.', 'I precepted three new nurses. I also lead patient and family education.', 'Could we talk next week?')).toBe(true)
-  })
-  test('leaves "also" inside a sentence alone', () => {
-    expect(flagged('At Halcyon I cut page load from 1.2s to 400ms.', 'In 2023 I precepted three new nurses, who also covered nights.', 'Could we talk next week?')).toBe(false)
-  })
+// A relevant duty told with "I also" is evidence, not padding: a blind
+// council marked ~100-word letters thin when the old "I also" ban cut them (#206).
+test('allows "I also" for a duty the letter tells', () => {
+  const letter = 'Dear Hiring Manager,\n\nAt Halcyon I cut page load from 1.2s to 400ms.\n\nI precepted three new nurses. I also lead patient and family education.\n\nCould we talk next week?\n\nKind regards,\nAlex Doe'
+  expect(lintLetter(letter).violations.some((v) => v.includes('I also'))).toBe(false)
 })
 
 // A retry in council round 11 (#206) dropped the "Dear …" line.
@@ -471,23 +466,27 @@ describe('letterLength', () => {
   const short = (letter: string, resumeText?: string) =>
     lintLetter(letter, { resumeText }).violations.some((v) => v.includes('too short'))
 
-  test('a thin resume aims short, a full resume aims longer', () => {
-    expect(letterLength(thin).min).toBe(85)
-    expect(letterLength(full).min).toBe(110)
-    expect(letterLength(undefined).min).toBe(85)
+  test('both resumes share the floor; a full resume aims longer', () => {
+    expect(letterLength(thin).min).toBe(150)
+    expect(letterLength(full).min).toBe(150)
+    expect(letterLength(undefined).min).toBe(150)
+    expect(letterLength(full).aim).not.toBe(letterLength(thin).aim)
   })
 
-  test('the floor follows the resume', () => {
-    expect(short(body(120), thin)).toBe(false)
-    expect(short(body(105), thin)).toBe(false)
-    expect(short(body(105), full)).toBe(true)
-    expect(short(body(120), full)).toBe(false)
-    expect(short(body(90))).toBe(false)
-    expect(short(body(80))).toBe(true)
+  test('flags a body under 150 words', () => {
+    expect(short(body(140), thin)).toBe(true)
+    expect(short(body(140), full)).toBe(true)
+    expect(short(body(160))).toBe(false)
   })
 
   test('the short message names the resume-sized aim', () => {
-    const v = lintLetter(body(105), { resumeText: full }).violations.find((x) => x.includes('too short'))!
+    const v = lintLetter(body(140), { resumeText: full }).violations.find((x) => x.includes('too short'))!
     expect(v).toContain(letterLength(full).aim)
   })
+})
+
+// "3G and 4G" in a welding certification are positions, not figures (#206).
+test('welding positions are not counted as figures', () => {
+  const letter = 'Dear Hiring Manager,\n\nAt Ironclad I build 15 to 20 assemblies a week.\n\nMy AWS D1.1 certification covers 1G, 2G, 3G and 4G, and I hold OSHA 10.\n\nCould we talk next week?\n\nKind regards,\nAlex Doe'
+  expect(lintLetter(letter).violations.some((v) => v.includes('figures'))).toBe(false)
 })
