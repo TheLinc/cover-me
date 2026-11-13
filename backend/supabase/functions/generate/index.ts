@@ -175,9 +175,15 @@ const HOOK_PATTERNS = ['Achievement-first', 'Bold specific claim']
 // No Question close: hiring guides advise a direct ask, and the judge flagged
 // the question as a template move (42 of 72 letters asked one).
 // No Thanks close either: it turned into its own stock lines ("Thank you for
-// reading", then "I'm grateful for…" once that was banned), while a close that
-// names one piece of work from the letter varies by itself (#206 council).
-const CLOSE_PATTERNS = ['Next step']
+// reading", then "I'm grateful for…" once that was banned). The request is
+// picked in code like the hook: with one move, all 72 letters in the #206
+// letters-only run closed "I'd welcome an interview to talk about…".
+const CLOSE_PATTERNS = [
+  "I'd welcome an interview to talk about [one piece of work from the letter].",
+  "I'd be glad to go over [one piece of work from the letter] in an interview.",
+  "An interview would give me the chance to tell you more about [one piece of work from the letter].",
+  "I'd like to interview for the role and discuss [one piece of work from the letter].",
+]
 
 const pick = (list: string[]) => list[Math.floor(Math.random() * list.length)]
 
@@ -191,7 +197,7 @@ function buildPrompt(
   job: { title: string; company: string; description: string },
   resumeText: string,
   supplemental?: string,
-  variation: LetterVariation = { signOff: 'Kind regards,', hookPattern: 'Achievement-first', closePattern: 'Next step' },
+  variation: LetterVariation = { signOff: 'Kind regards,', hookPattern: 'Achievement-first', closePattern: CLOSE_PATTERNS[0] },
 ): string {
   const companyKnown = job.company && job.company !== 'Unknown Company'
   const companyLine = companyKnown
@@ -208,7 +214,7 @@ function buildPrompt(
     : `"Dear Hiring Manager,"`
 
   const whyCompany = companyKnown
-    ? `Paragraph 3 — Company Fit (2–3 sentences): Show why the applicant fits this job and wants it. Where the posting names something about the work (its setting, the people it serves, a duty, how the team works) that a resume fact answers, put the two in one sentence: the posting's point, then what the applicant has done that matches it ("The role trains new bakers on the early proofing shift, and I've trained six apprentices at Holloway Bakehouse"). Do this once or twice, and at least once with the applicant's strongest evidence (an accomplishment from the letter, not a routine duty) answering the posting point it matches best, and never as a sentence that only describes the employer or the posting. Never pair a credential with a requirement it doesn't meet (a structural welding certificate beside a pipe-procedure requirement). Then give the applicant's reason for the move in plain words, grounded in a fact from the resume (the work they do now and what it lacks), as far as the resume supports it: the change the resume shows, or one kind of work this job offers that their current one doesn't. Name the move only in words the STEP 0 allowlist supports; a field or setting the applicant has never worked in stays out of the letter even as a destination ("I want to move into critical care" when the resume shows none). Write the reason for this applicant; never use a set frame such as "After [N] years doing X, I want Y", and never pair two vague phrases for the same idea ("wider scope … and more responsibility"). Never invent a feeling, habit, or philosophy the resume doesn't give ("I like work with a fixed day attached", "I'd rather lose ten minutes on a question than a day on a repair"). Do not talk about titles or a "step up", and do not map the applicant's past work onto the employer's systems ("bring my GraphQL work to your API gateway") or flatter the employer's size or users ("its millions of shoppers"). Never describe the employer's business or product back to them on its own ("Acme builds field software for contractors, so every implementation has to land"), and never end on a line that names the employer without a reason ("Acme is where I'd like to take that step"). The paragraph ends on the reason itself, with no line after it. Never draw on assumed external knowledge about the company. Never claim the applicant has personally used, followed, or researched the company's products unless the resume explicitly states it. Never "I admire your innovative culture." Never restate, quote, or summarize the posting ("What stands out in the posting", "Your posting pairs X with Y", "The posting asks for"), never turn its sentence around and claim it ("[Company] needs X, and that is how I work"), and never name a duty, tool, or requirement from it that the applicant lacks.`
+    ? `Paragraph 3 — Company Fit (2–3 sentences): Show why the applicant fits this job and wants it. Where the posting names something about the work (its setting, the people it serves, a duty, how the team works) that a resume fact answers, put the two in one sentence that starts with what the applicant has done and names the posting's point in a few words after it ("I've trained six apprentices at Holloway Bakehouse, much like the early-shift training this job includes"). Never start a sentence with the role, the posting, or the employer and what it wants, needs, or calls for ("The role calls for…", "Acme needs…"); that reads as the job ad played back. Do this once or twice, and at least once with the applicant's strongest evidence (an accomplishment from the letter, not a routine duty) answering the posting point it matches best, and never as a sentence that only describes the employer or the posting. Never pair a credential with a requirement it doesn't meet (a structural welding certificate beside a pipe-procedure requirement). Then give the applicant's reason for the move in plain words, grounded in a fact from the resume (the work they do now and what it lacks), as far as the resume supports it: the change the resume shows, or one kind of work this job offers that their current one doesn't. Name the move only in words the STEP 0 allowlist supports; a field or setting the applicant has never worked in stays out of the letter even as a destination ("I want to move into critical care" when the resume shows none). Write the reason for this applicant; never use a set frame such as "After [N] years doing X, I want Y", and never pair two vague phrases for the same idea ("wider scope … and more responsibility"). Never invent a feeling, habit, or philosophy the resume doesn't give ("I like work with a fixed day attached", "I'd rather lose ten minutes on a question than a day on a repair"). Do not talk about titles or a "step up", and do not map the applicant's past work onto the employer's systems ("bring my GraphQL work to your API gateway") or flatter the employer's size or users ("its millions of shoppers"). Never describe the employer's business or product back to them on its own ("Acme builds field software for contractors, so every implementation has to land"), and never end on a line that names the employer without a reason ("Acme is where I'd like to take that step"). The paragraph ends on the reason itself, with no line after it. Never draw on assumed external knowledge about the company. Never claim the applicant has personally used, followed, or researched the company's products unless the resume explicitly states it. Never "I admire your innovative culture." Never restate, quote, or summarize the posting ("What stands out in the posting", "Your posting pairs X with Y", "The posting asks for"), never turn its sentence around and claim it ("[Company] needs X, and that is how I work"), and never name a duty, tool, or requirement from it that the applicant lacks.`
     : `Paragraph 3 — Role Fit (1–2 sentences): Since the company is unknown, explain what specifically draws the applicant to this type of role and the challenges it presents, grounded in their experience.`
 
   const today = new Date().toISOString().split('T')[0]
@@ -299,9 +305,7 @@ This is NOT a resume restatement: tell each accomplishment as a sentence about w
 ${whyCompany}
 
 Paragraph 4 — Close + Call to Action (1–2 sentences):
-The close adds nothing new: no project, fact, figure, or skill that the letter has not already given. Close with the ${variation.closePattern} move:
-- Next step: ask for an interview, naming one piece of work from the letter to talk about ("I'd welcome an interview to talk about the proofing-shift training")
-Word the request for this letter, politely; never a stock line such as "Thank you for reading", "I'm grateful for your consideration", or "I'd like to interview for the role", and never an order ("Please invite me to interview").
+The close adds nothing new: no project, fact, figure, or skill that the letter has not already given. Close with one sentence in this form, filling the brackets from the letter: "${variation.closePattern}" Never a stock line such as "Thank you for reading", "I'm grateful for your consideration", or "I'd like to interview for the role", and never an order ("Please invite me to interview").
 Make one request, with nothing added after it ("I can meet whenever suits your team" is filler). Do not ask the employer questions about their team or work, do not offer to bring, show, or walk them through anything, and do not recap the letter. The request is direct and confident — not passive, not demanding.
 
 Sign-off: "${variation.signOff}" on its own line, then a blank line, then the applicant's name from the resume.
@@ -333,7 +337,7 @@ Last year our checkout pages at Ferris Retail were loading every product's full 
 
 In 2023, Ferris moved off its Rails monolith, and the final cutover fell to me. Both systems had run side by side for a month while we moved checkout first and customer accounts last. I wrote the runbook for the last night and ran the database switch myself, and the store's 60,000 daily shoppers came back the next morning to the new system without a lost order. Day to day I share the storefront's React codebase with two other engineers and review most of the front-end pull requests before they ship.
 
-The role pairs each senior engineer with a junior one, and I've been the reviewer our two newest hires send their first pull requests to. Most of my work so far has been one storefront's page speed, and I want a role where the data layer is more of the job.
+Our two newest hires send me their first pull requests to review, close to the senior-junior pairing Northlight runs. Most of my work so far has been one storefront's page speed, and I want a role where the data layer is more of the job.
 
 I'd welcome an interview for the senior frontend role.
 

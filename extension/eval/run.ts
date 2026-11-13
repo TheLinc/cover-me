@@ -34,7 +34,7 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } fr
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { ParsedResume, TailoredResume } from '../src/types'
-import { buildPrompt as buildLetterPrompt, type LetterVariation } from '../src/lib/ai/index'
+import { buildPrompt as buildLetterPrompt, CLOSE_PATTERNS, type LetterVariation } from '../src/lib/ai/index'
 import { buildPrompt as buildTailorPrompt, assembleTailored } from '../src/lib/ai/resume-tailor'
 import { buildParsePrompt, parseParsedJson } from '../src/lib/ai/resume-parse'
 import { lintLetter, buildLintRetryMessage, letterLength } from '../src/lib/ai/letter-lint'
@@ -77,7 +77,7 @@ const BASELINE_FILE = join(HERE, QUICK ? 'baseline.json' : 'baseline-full.json')
 
 const SIGN_OFFS = ['Sincerely,', 'Best regards,', 'Kind regards,']
 const HOOKS = ['Achievement-first', 'Bold specific claim']
-const CLOSES = ['Next step']
+
 
 // A low judge score fails a plain run. Under --baseline (the CI gate) it is a
 // warning: the gate fails on drops against the baseline and on the factual
@@ -156,7 +156,7 @@ function staticChecks() {
 
   for (const c of cases) {
     const result = checkFixture(c)
-    const variation: LetterVariation = { signOff: 'Sincerely,', hookPattern: 'Bold specific claim', closePattern: 'Next step' }
+    const variation: LetterVariation = { signOff: 'Sincerely,', hookPattern: 'Bold specific claim', closePattern: CLOSE_PATTERNS[0] }
     const lp = buildLetterPrompt(c.job, c.resumeText, undefined, variation)
 
     const mustContain: Array<[string, string]> = [
@@ -166,7 +166,7 @@ function staticChecks() {
       ['exemplar', 'Exemplar A'],
       ['chosen sign-off', variation.signOff],
       ['chosen hook pattern', `Default to the ${variation.hookPattern}`],
-      ['chosen close', `Close with the ${variation.closePattern} move`],
+      ['chosen close', variation.closePattern],
       ['word range', `About ${letterLength(c.resumeText).aim} words`],
       ['resume text embedded', c.resumeText.slice(0, 60)],
       ['JD embedded', c.job.description.slice(0, 60)],
@@ -294,7 +294,7 @@ async function liveLetters() {
   const results = await pool(jobs, CONCURRENCY, async ({ c, i, run }) => {
     const v = i + run
     // The close steps once every three letters, so it doesn't pair with one hook.
-    const variation: LetterVariation = { signOff: SIGN_OFFS[v % SIGN_OFFS.length], hookPattern: HOOKS[v % HOOKS.length], closePattern: CLOSES[Math.floor(v / 3) % CLOSES.length] }
+    const variation: LetterVariation = { signOff: SIGN_OFFS[v % SIGN_OFFS.length], hookPattern: HOOKS[v % HOOKS.length], closePattern: CLOSE_PATTERNS[Math.floor(v / 3) % CLOSE_PATTERNS.length] }
     const prompt = buildLetterPrompt(c.job, c.resumeText, undefined, variation)
     let letter: string
     try {

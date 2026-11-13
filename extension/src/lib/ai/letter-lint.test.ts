@@ -495,7 +495,23 @@ test('welding positions are not counted as figures', () => {
 test.each([
   'At Brookfield I reconciled four bank accounts, which is where I learned to keep a ledger tied to the bank.',
   'I prepare the VAT workpapers for the finance manager, so I am used to figures being checked.',
+  'I posted journals and reconciled four bank accounts, which gave me a grounding in keeping a ledger clean.',
 ])('flags an invented lesson: %s', (line) => {
   const letter = `Dear Hiring Manager,\n\nAt Hartley I process 600 invoices a month.\n\n${line}\n\nCould we talk next week?\n\nKind regards,\nAlex Doe`
   expect(lintLetter(letter).violations.some((v) => v.startsWith('Explains what a fact means'))).toBe(true)
+})
+
+// "The role calls for X, and I've done X" read as the ad played back (#206).
+describe('sentences led by the role or the employer', () => {
+  const letter = (p3: string) => `Dear Hiring Manager,\n\nAt Hartley I process 600 invoices a month. I'm applying for the clerk role.\n\nI also run the weekly payment runs.\n\n${p3}\n\nI'd welcome an interview to talk about the payment runs.\n\nKind regards,\nAlex Doe`
+  const flagged = (p3: string) => lintLetter(letter(p3), { companyName: 'Meridian Logistics' }).violations.some((v) => v.startsWith('Starts a sentence with the role'))
+  test.each([
+    'The role calls for weekly payment runs, and I run them now.',
+    'Meridian needs a clerk for the ledger, and I keep one.',
+    "Meridian's team wants weekly runs, and I run them.",
+  ])('flags: %s', (s) => expect(flagged(s)).toBe(true))
+  test.each([
+    'I run weekly payment runs at Hartley, much like the cycle this job includes.',
+    'At Meridian I would work on the purchase ledger alone.',
+  ])('allows: %s', (s) => expect(flagged(s)).toBe(false))
 })

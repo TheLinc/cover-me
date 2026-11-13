@@ -108,7 +108,7 @@ const REACTION_RE = /^I (?:like|know) (?:that|this)(?: [\w'’-]+){0,4}[.!]$/
 // common flag on the #206 full eval ("That taught me…" alone in 19 of 72
 // letters). "taught me SQL" is a fact, and "which matters were billable" is a
 // legal matter; both pass.
-const COMMENTARY_RE = /\b(?:taught|showed) me (?:early )?(?:that|to|how|what|when)\b|\bI learned (?:early )?(?:that|how|what|to)\b|\bso I(?:['’]m| am) used to\b|\b(?:which|this|that|it) (?:really |still )?matter(?:s|ed)(?: most| more)?(?=[.,;!]| (?:when|because|on|for|to|in|at|early)\b)|\bso the \w+ mattered\b/i
+const COMMENTARY_RE = /\b(?:taught|showed) me (?:early )?(?:that|to|how|what|when)\b|\bI learned (?:early )?(?:that|how|what|to)\b|\bso I(?:['’]m| am) used to\b|\b(?:which|that|this|it) gave me (?:a |an )?(?:grounding|feel|habit|eye|sense|instinct)\b|\b(?:which|this|that|it) (?:really |still )?matter(?:s|ed)(?: most| more)?(?=[.,;!]| (?:when|because|on|for|to|in|at|early)\b)|\bso the \w+ mattered\b/i
 
 // A question about the employer's team or work in the close: 42 of 72 letters
 // in the #206 full eval, and hiring guides advise a direct ask. The request
@@ -465,6 +465,15 @@ export function lintLetter(
   }).find(Boolean)
   if (pivot) {
     violations.push(`Turns the posting back on the employer and claims it ("${pivot}") — say what the applicant did, and let the example show the match.`)
+  }
+  // "The role calls for X, and I've done X" read as the job ad played back:
+  // the judge flagged it in 23 of 72 letters (#206 letters-only run). Lead
+  // with the applicant's work; the posting's point goes in a clause after it.
+  const employerAlt = employers.length ? `|(?:${employers.join('|')})(?:['’]s \\w+)? (?:needs?|wants?|is (?:hiring|looking for|seeking)|calls? for|asks? for|requires?|expects?)\\b` : ''
+  const adSubject = new RegExp(`^(?:(?:The|This) (?:role|position|job|posting)\\b${employerAlt})`)
+  const adLine = bodyParas.slice(1).flatMap((p) => p.split(SENTENCE_END)).map((s) => s.trim()).find((s) => adSubject.test(s))
+  if (adLine) {
+    violations.push(`Starts a sentence with the role or the employer's needs ("${adLine}") — start with what the applicant did, and name the posting's point in a few words after it.`)
   }
 
   // The prompt forbids invented metrics; this catches the ones that slip
