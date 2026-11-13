@@ -344,10 +344,16 @@ describe('generic heuristic', () => {
     // ...or from a call to action after the text, or between spans of it
     const cta = (heading: string, href: string) => `<div class="sec"><h2>${heading}</h2><p>${description.slice(0, 200)}</p><a href="${href}">Learn more</a></div>`
     const spans = (heading: string, href: string) => `<div class="sec"><h3>${heading}</h3><div><span>${description.slice(0, 250)} </span><a href="${href}">link</a><span> more.</span></div></div>`
+    // with a cookie banner beside it, or inside a wrapper with it
+    const cookie = `<div class="cookie">${'We use cookies to improve your experience. '.repeat(14)}</div>`
     for (const section of [cta, spans]) {
-      const job = scrape('https://careers.example.com/jobs/1', `<html><body><main><h1>Warehouse Supervisor</h1><div class="posting">
-        <div class="sec"><h2>The role</h2><p>${description}</p></div>${section('About us', '/about')}${section('Benefits', '/benefits')}${section('Life at Acme', '/life')}</div></main></body></html>`)
-      expect(job.description).toContain('Life at Acme')
+      const posting = `<main><h1>Warehouse Supervisor</h1><div class="posting"><div class="sec"><h2>The role</h2><p>${description}</p></div>
+        ${section('About us', '/about')}${section('Benefits', '/benefits')}${section('Life at Acme', '/life')}</div></main>`
+      const meta = posting.replace('</h1>', '</h1><p>Full time · Sydney</p>')
+      for (const body of [posting, `${posting}${cookie}`, `<div id="app">${posting}${cookie}</div>`, `${meta}${cookie}`]) {
+        const job = scrape('https://careers.example.com/jobs/1', `<html><body>${body}</body></html>`)
+        expect(job.description).toMatch(/^(Warehouse Supervisor\n\n)?The role[^]*Life at Acme/)
+      }
     }
   })
 

@@ -58,15 +58,16 @@ function tryHeuristic(): JobData {
   // elements x depth of memory on nested ones.
   const h1s = Array.from(document.querySelectorAll<HTMLElement>('h1')).flatMap((el) => {
     const text = el.innerText?.trim() ?? ''
-    return text.length > 2 && text.length < 120 ? [text] : []
+    return text.length > 2 && text.length < 120 ? [{ el, text }] : []
   })
-  const first = h1s.find((t) => !isNavHeading(t))
+  const heading = h1s.find(({ text }) => !isNavHeading(text))
+  const first = heading?.text
   const embedded = /[?&](?:gh_jid|ashby_jid)=/.test(window.location.search)
   const tabJob = tab.title && !notTitle(tab.title) ? tab.title : undefined
   const title = first && (notTitle(first) ? tabJob ?? (embedded ? undefined : first) : first)
 
   // The posting's own container when the page marks it with the job's ID.
-  const description = postingById() ?? largestBlock(first !== undefined && notTitle(first) && !tabJob)
+  const description = postingById() ?? largestBlock(first !== undefined && notTitle(first) && !tabJob, heading?.el)
 
   if (!title || !description || description.length < 200) {
     throw new Error(
@@ -82,17 +83,23 @@ function tryHeuristic(): JobData {
 // panel. Postings measured 0 to 21% link text, Greenhouse's board listing 95%.
 // The block's card lists (a related-jobs panel) are cut from its text, and a
 // block left with too little to be a posting is passed over: the panel's own
-// block. Should that leave none, master's pick is read whole: a posting whose
-// sections look like cards (each ends in a "Learn more" link). Under a heading that isn't a job's title ("Join Our Team"), with none
-// in the tab title either, the page is in doubt: a block a third or more links
+// block, for the posting between it and the job's title. Any other block (a
+// cookie banner) means master's pick was the posting, its sections taken for
+// cards (each ends in a "Learn more" link), so it's read whole. Under a
+// heading that isn't a job's title ("Join Our Team"), with none in the tab
+// title either, the page is in doubt: a block a third or more links
 // and card text is a list, and one outweighed by any list on the page makes
 // the page a listing. The listings in #72 measured under half link text, a
 // Greenhouse board under a long intro 49%. Each block's text is measured once,
 // and links nested in a link (linkedom allows them) aren't read, so each block
 // costs one walk of its subtree and one of its ancestors.
-function largestBlock(doubtful: boolean): string | undefined {
+function largestBlock(doubtful: boolean, heading?: Element): string | undefined {
   const nested = new Set(document.querySelectorAll('a a'))
   const [lists, hiddenLists] = cardLists(nested)
+  // Under a job's title, cards holding the first text after it are the
+  // posting's sections, not a panel beside it
+  const start = doubtful || !heading ? undefined : textAfter(heading)
+  for (const list of lists.keys()) if (start && list.contains(start)) lists.delete(list)
   const holdsHidden = new Set<Element>()
   for (const list of hiddenLists) {
     for (let el: Element | null = list; el && !holdsHidden.has(el); el = el.parentElement) holdsHidden.add(el)
@@ -115,6 +122,9 @@ function largestBlock(doubtful: boolean): string | undefined {
   // "Read more" toggle, which is read, or a hidden panel or mobile copy of the
   // cards, which isn't.
   let first: HTMLElement | undefined
+  const after = (a: Node, b: Node) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0
+  const nearFirst = (el: HTMLElement, first: HTMLElement) => first.contains(el) || el.contains(first)
+    || (!!heading && after(heading, el) && after(el, first))
   const block = Array.from(document.querySelectorAll<HTMLElement>('div, section, article'))
     .map((el) => ({ el, len: el.innerText?.trim().length ?? 0 }))
     .filter(({ len }) => len > 500 && len < 20000)
@@ -123,7 +133,7 @@ function largestBlock(doubtful: boolean): string | undefined {
       if (isList(el, len)) return false
       first ??= el
       return !hasAncestorIn(el, lists) && !hasAncestorIn(el, hiddenLists) && !(holdsHidden.has(el) && !rendered(el))
-        && (doubtful || left(el, len) >= 200)
+        && (doubtful || (left(el, len) >= 200 && nearFirst(el, first)))
     })?.el
   if (!block) return doubtful ? undefined : first?.innerText.trim()
   let text = block.innerText.trim()
@@ -134,6 +144,21 @@ function largestBlock(doubtful: boolean): string | undefined {
   }
   if (doubtful && text.length <= largestList) return
   return text.replace(/\n{3,}/g, '\n\n').trim()
+}
+
+// The first text after an element, in document order: one walk, ended by the
+// first text that isn't whitespace
+function textAfter(el: Node): Node | undefined {
+  let n: Node | null = el
+  while (n && !n.nextSibling) n = n.parentNode
+  for (n = n?.nextSibling ?? null; n;) {
+    if (n.nodeType === 3 && n.textContent?.trim()) return n
+    if (n.firstChild) n = n.firstChild
+    else {
+      while (n && !n.nextSibling) n = n.parentNode
+      n = n?.nextSibling ?? null
+    }
+  }
 }
 
 // Repeated cards: an element whose children are mostly (two thirds or more)
