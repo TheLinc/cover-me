@@ -84,7 +84,7 @@ export function buildPrompt(
   const length = letterLength(resumeText)
   const lengthLine = length.full
     ? `Aim for about ${length.aim} words. This resume has the detail for a full letter: tell three accomplishments, the opening one and two in paragraph 2, each the most relevant to the posting and told in one to three sentences with the scope it covered (the team, sites, budget, or users it involved) and how it was done, all from the resume, plus a short reason and the close.`
-    : `Aim for about ${length.aim} words. This resume gives about one line per accomplishment, so a short letter is right: two accomplishments of one or two sentences each, plus a short reason and the close.`
+    : `Aim for about ${length.aim} words: two accomplishments of one to three sentences each, plus a short reason and the close.`
 
   const salutation = companyKnown
     ? `"Dear Hiring Manager," or "Dear ${job.company} Team,"`

@@ -211,12 +211,15 @@ const NOTE_TO_USER = [
  * the prompt's other rules the model writes ~105-140 words even on a full
  * resume, so the full floor is 110: a 150 floor sent nearly every real letter
  * (most real resumes are over 250 words) to a retry it couldn't satisfy.
+ * The aim sits well above the floor on purpose: the model writes below
+ * whatever aim it gets, and an aim of 110-160 put 50 of 72 drafts under the
+ * floor (vs 16 at 150-220), each costing a retry.
  * ponytail: resume word count is the richness signal; count detailed bullets
  * instead if real resumes land on the wrong side of 250.
  */
 export function letterLength(resumeText?: string): { min: number; aim: string; full: boolean } {
   const full = !!resumeText && countWords(resumeText) >= 250
-  return full ? { min: 110, aim: '140–220', full } : { min: 100, aim: '110–160', full }
+  return full ? { min: 110, aim: '170–250', full } : { min: 100, aim: '150–220', full }
 }
 
 function countWords(text: string): number {
