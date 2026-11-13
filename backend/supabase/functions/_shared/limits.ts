@@ -2,7 +2,7 @@
 // (generation_limits(), migration 015); consume_generation applies them
 // atomically and reports what it applied, so this file never hardcodes them.
 import type { SupabaseClient } from 'npm:@supabase/supabase-js@2'
-import { openFirstMonthOffer } from './offer.ts'
+import { openFirstMonthOffer, showFirstMonthOffer } from './offer.ts'
 
 export interface Allowance {
   kind: 'starter' | 'weekly' | 'daily'
@@ -40,12 +40,11 @@ export async function consumeGeneration(supabase: SupabaseClient, userId: string
     return { ok: false, status: 500, body: { error: 'Could not check your allowance. Please try again.' } }
   }
   const allowance = data as Allowance
-  // Taking the week's last free generation, or being refused one, starts the
-  // first-month offer.
-  const offerEndsAt = allowance.kind === 'weekly' && allowance.remaining <= 1
-    ? await openFirstMonthOffer(supabase, userId)
-    : null
+  // Taking the week's last free generation, or being refused one, makes the
+  // first-month offer available a day later. A refusal names it once it is.
+  if (allowance.kind === 'weekly' && allowance.remaining <= 1) await openFirstMonthOffer(supabase, userId)
   if (!allowance.allowed) {
+    const offerEndsAt = allowance.kind === 'weekly' ? await showFirstMonthOffer(supabase, userId) : null
     return { ok: false, status: 429, body: { error: limitMessage(allowance) + (offerEndsAt ? offerLine(offerEndsAt) : ''), allowance } }
   }
   return { ok: true }

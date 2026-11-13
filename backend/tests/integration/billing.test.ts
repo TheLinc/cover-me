@@ -223,6 +223,25 @@ describe('billing', () => {
       expect(sessions.at(-1)!.params['discounts[0][coupon]']).toBeUndefined()
     })
 
+    const shownAt = async (userId: string) =>
+      (await admin.from('users').select('first_month_offer_shown_at').eq('id', userId).single()).data?.first_month_offer_shown_at as string | null
+
+    it('starts its 7 days the first time it shows, however long ago it became available', async () => {
+      user = await createUser()
+      await admin.from('users').update({ first_month_offer_at: new Date(Date.now() - 30 * 86_400_000).toISOString() }).eq('id', user.id)
+      const { offer } = await (await callFunction('billing', { token: user.token, body: { action: 'offer' } })).json()
+      if (!COUPON) return expect(offer).toBeNull()
+      expect(Date.parse(offer.endsAt) - Date.now()).toBeGreaterThan(7 * 86_400_000 - 60_000)
+      expect(await shownAt(user.id)).not.toBeNull()
+    })
+
+    it('a quarterly checkout does not start the 7 days', async () => {
+      user = await createUser()
+      await offerOpen(user.id)
+      await checkout('quarterly')
+      expect(await shownAt(user.id)).toBeNull()
+    })
+
     it('leaves it off for a customer Stripe says had a subscription', async () => {
       user = await createUser()
       await offerOpen(user.id)

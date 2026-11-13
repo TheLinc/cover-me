@@ -1,7 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { handleCors, json } from '../_shared/cors.ts'
 import { stripe, StripeError } from '../_shared/stripe.ts'
-import { FIRST_MONTH_COUPON, openFirstMonthOffer } from '../_shared/offer.ts'
+import { FIRST_MONTH_COUPON, openFirstMonthOffer, showFirstMonthOffer } from '../_shared/offer.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SECRET_KEY = Deno.env.get('SERVICE_KEY')!
@@ -76,15 +76,14 @@ Deno.serve(async (req) => {
   if (action !== 'checkout' && action !== 'portal' && action !== 'redeem' && action !== 'offer') return json({ error: 'Unknown action' }, 400)
   if (plan !== 'monthly' && plan !== 'quarterly') return json({ error: 'Unknown plan' }, 400)
 
-  // For the dashboard's banner: when the open offer ends, and the coupon's
+  // For the dashboard and the popup: when the open offer ends, and the coupon's
   // customer-facing name from Stripe. Any failure just hides the banner.
   if (action === 'offer') {
-    if (!FIRST_MONTH_COUPON) return json({ offer: null })
-    const { data: endsAt, error } = await supabase.rpc('first_month_offer_ends_at', { p_user_id: user.id })
-    if (error) console.error('[billing] offer:', error.message)
+    // Showing it starts its 7 days the first time.
+    const endsAt = await showFirstMonthOffer(supabase, user.id)
     if (!endsAt) return json({ offer: null })
     try {
-      const coupon = await stripe(`coupons/${encodeURIComponent(FIRST_MONTH_COUPON)}`, {}, { method: 'GET' })
+      const coupon = await stripe(`coupons/${encodeURIComponent(FIRST_MONTH_COUPON!)}`, {}, { method: 'GET' })
       return json({ offer: { endsAt, name: (coupon.name as string | null) ?? null } })
     } catch (err) {
       console.error('[billing] offer:', err instanceof Error ? err.message : 'unknown error')
@@ -208,10 +207,12 @@ Deno.serve(async (req) => {
     // ended, if Stripe allows it, and the webhook cancels the trial once paid.
     const carryTrial = giftTrial?.trial_end && giftTrial.trial_end - Date.now() / 1000 >= MIN_TRIAL_CARRYOVER_S
 
-    // The first-month offer: opening checkout starts it (it opens a day later,
-    // so today's checkout is full price), and a monthly checkout while it's
-    // open takes the coupon off, for a customer Stripe has never billed.
-    const discount = Boolean(await openFirstMonthOffer(supabase, user.id)) && price === 'monthly' && !hadSubscription
+    // The first-month offer: opening checkout makes it available a day later
+    // (so today's checkout is full price), and a monthly checkout while it's
+    // available takes the coupon off, for a customer Stripe has never billed.
+    // Only a monthly checkout counts as showing it.
+    await openFirstMonthOffer(supabase, user.id)
+    const discount = price === 'monthly' && !hadSubscription && Boolean(await showFirstMonthOffer(supabase, user.id))
     const createSession = (withDiscount: boolean) => stripe('checkout/sessions', {
       mode: 'subscription',
       customer: customerId!,
