@@ -1,6 +1,6 @@
 import JSZip from 'jszip'
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { checkUploadedDesign, designForTailor, downloadResumeWord, finishDesign, toBase64 } from './design'
+import { checkUploadedDesign, designForTailor, downloadResumeWord, finishDesign, toBase64, uploadDesignIfPro } from './design'
 
 const parseMock = vi.hoisted(() => vi.fn())
 vi.mock('./ai/resume-parse', async (importOriginal) => ({ ...(await importOriginal<object>()), parseResumeStructure: parseMock }))
@@ -143,5 +143,21 @@ describe('the Word download of a resume tailored on another computer', () => {
 
     expect(fetchMock).not.toHaveBeenCalled()
     expect(saveFileMock).toHaveBeenCalledOnce()
+  })
+})
+
+// #174: the account refuses a file checked against text another computer has since replaced.
+describe('a Word file the account refuses', () => {
+  test('shows why on the resume page and is not sent again', async () => {
+    const session = { access_token: 't', refresh_token: 'r', expires_at: Math.floor(Date.now() / 1000) + 3600, user: { id: 'me', email: 'ada@example.com' } }
+    await store({ extra: { session, cachedTier: 'hosted_pro', resume: { accountId: 'me' } } })
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ error: 'Your resume changed on another computer. Upload your .docx again.' }), { status: 409 }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await uploadDesignIfPro(session)
+    await uploadDesignIfPro(session)
+
+    expect(fetchMock).toHaveBeenCalledOnce()
+    expect((local.resume as { design: unknown }).design).toMatchObject({ status: 'error', error: 'Your resume changed on another computer. Upload your .docx again.' })
   })
 })

@@ -1,4 +1,5 @@
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL, WEB_URL } from './config'
+import { restoreDesign } from './design'
 import { clearResume, clearSession, getCachedTier, getResume, getSession, getSettings, saveGoogleSignInError, saveCachedTier, saveResume, saveSession, saveSettings, takeGoogleSignInError, type DesignFile } from './storage'
 import { isValidResume } from './ai/resume-tailor'
 import { derivePlanningProgress, deriveTailorProgress } from './ai/tailor-progress'
@@ -126,10 +127,11 @@ export async function completeSignIn(sess: AuthSession): Promise<void> {
   const existing = await getSettings()
   await saveSettings({ provider: existing?.provider ?? 'claude', apiKey: existing?.apiKey ?? '', mode: 'hosted' })
   await saveSession(sess)
-  await syncResume(sess).catch(() => {})
   // A Google sign-in finishes in the worker with no panel open to do this, and
-  // the worker's Pro history sync reads the cached tier.
+  // the worker's Pro history sync reads the cached tier. Before the resume
+  // sync, which can wait on a Word file download (#174).
   await refreshTier(sess)
+  await syncResume(sess).catch(() => {})
 }
 
 // One resume on both sides, owned by this account:
@@ -175,10 +177,9 @@ async function syncResume(sess: AuthSession): Promise<void> {
   else if (local) await clearResume()
   if (keepMine && !signedOut && remote?.text !== mine.text) await uploadResumeToBackend(sess.access_token, mine.text, mine.filename)
   // Pro: the Word file that goes with the account's resume comes down too
-  // (#174), unless this computer has its own design for it. Loaded only here:
-  // the design check is heavy.
+  // (#174), unless this computer has its own design for it. A static import:
+  // Chrome refuses import() in the service worker, where a Google sign-in runs.
   if (next && remote?.designHash && next.text === remote.text && !next.design) {
-    const { restoreDesign } = await import('./design')
     await restoreDesign(sess.access_token, remote.designHash, next.text)
   }
 }
@@ -396,9 +397,14 @@ export async function uploadDesignFileToBackend(accessToken: string, hash: strin
   })
   if (!res.ok) {
     const data = await res.json().catch(() => ({})) as Record<string, unknown>
-    throw new Error((data.error as string) ?? 'Word file upload failed')
+    const message = (data.error as string) ?? 'Word file upload failed'
+    throw res.status === 409 ? new DesignRefusedError(message) : new Error(message)
   }
 }
+
+// The account refused the Word file for good: its resume text changed since
+// the file was checked. Sending it again gets the same answer.
+export class DesignRefusedError extends Error {}
 
 // Pro: one of the account's Word files, with the parse that places tailored
 // text in it (#174). null when it's gone or the plan has ended (404, 403).

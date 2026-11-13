@@ -106,9 +106,13 @@ Deno.serve(async (req) => {
       { onConflict: 'user_id,hash' },
     )
     if (error) return json({ error: 'Failed to save Word file' }, 500)
-    // The file goes with the resume text it was checked against.
-    const { error: designError } = await supabase.from('resumes').update({ design_hash: hash }).eq('user_id', userId)
-    if (designError) return json({ error: 'Failed to save Word file' }, 500)
+    // The file goes with the resume text it was checked against, unless new
+    // text arrived meanwhile.
+    if (resumeRow) {
+      const { error: designError } = await supabase.from('resumes').update({ design_hash: hash })
+        .eq('user_id', userId).like('text_encrypted', sameCiphertext(resumeRow.text_encrypted))
+      if (designError) return json({ error: 'Failed to save Word file' }, 500)
+    }
 
     // Files no tailored resume was made from go, apart from this one.
     const { data: used } = await supabase.from('tailored_resumes').select('source_hash').eq('user_id', userId).not('source_hash', 'is', null)

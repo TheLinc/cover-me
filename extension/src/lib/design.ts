@@ -1,7 +1,7 @@
 // "Your design" (#131) in the extension: the upload check, which runs in the
 // service worker so it survives the popup closing, and the tailor's choice of
 // layout. The edit itself is lib/pdf/docx-design.ts, shared with the website.
-import { checkedTier, ensureValidSession, fetchDesignFileFromBackend, uploadDesignFileToBackend, uploadResumeToBackend, type TailorDesign } from './auth'
+import { checkedTier, DesignRefusedError, ensureValidSession, fetchDesignFileFromBackend, uploadDesignFileToBackend, uploadResumeToBackend, type TailorDesign } from './auth'
 import { isCurrentParse, parseResumeStructure, upgradedParse } from './ai/resume-parse'
 import { decryptApiKey } from './crypto'
 import { designUsable, downloadDesignDocx, tailorDesign } from './pdf/docx-design'
@@ -107,7 +107,10 @@ export async function uploadDesignIfPro(session: AuthSession, checkTier = false)
   try {
     await uploadDesignFileToBackend(session.access_token, d.hash, file.data, await sha256Hex(new TextEncoder().encode(resume.text)))
     await setDesign(d.hash, { uploaded: true })
-  } catch { /* tried again on the next tailor */ }
+  } catch (err) {
+    // Shown on the resume page, and not sent again. Anything else is tried again on the next tailor.
+    if (err instanceof DesignRefusedError) await setDesign(d.hash, { status: 'error', error: err.message })
+  }
 }
 
 // On sign-in on another computer (#174): the Pro account's Word file for its
