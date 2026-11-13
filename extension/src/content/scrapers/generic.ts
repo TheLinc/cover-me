@@ -6,15 +6,17 @@ export function scrapeGeneric(): JobData {
   return jobFromJsonLd() ?? jobFromMicrodata() ?? tryPythonJobBoard() ?? tryAtsSelectors() ?? tryHeuristic()
 }
 
-// python.org's job board: a "21 jobs on the Python Job Board" banner <h1>
-// comes first, and the posting's own <h1> holds the title, a "New" badge, then
-// the company after a <br> (#73). The title and company are its text nodes.
+// python.org's job board: a jobs-count banner <h1> ("20 jobs on the Python Job
+// Board") comes first, and the posting's own <h1> holds the title, a "New"
+// badge, then the company after a <br> (#73). The title and company are its
+// text nodes.
 function tryPythonJobBoard(): JobData | null {
+  if (!/(?:^|\.)python\.org$/.test(window.location.hostname)) return null
   const heading = document.querySelector('.listing-company .company-name')
   const description = firstText(['.job-description'])
   if (!heading || !description) return null
   const [title, company] = Array.from(heading.childNodes)
-    .flatMap((n) => n.nodeType === 3 && n.textContent?.trim() ? [n.textContent.trim()] : [])
+    .flatMap((n) => n.nodeType === Node.TEXT_NODE && n.textContent?.trim() ? [n.textContent.trim()] : [])
   if (!title) return null
   return { title, company: company ?? 'Unknown Company', description, url: window.location.href }
 }
