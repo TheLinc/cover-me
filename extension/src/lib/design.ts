@@ -105,7 +105,7 @@ export async function uploadDesignIfPro(session: AuthSession, checkTier = false)
   const file = await getDesignFile(d.hash)
   if (!file) return
   try {
-    await uploadDesignFileToBackend(session.access_token, d.hash, file.data)
+    await uploadDesignFileToBackend(session.access_token, d.hash, file.data, await sha256Hex(new TextEncoder().encode(resume.text)))
     await setDesign(d.hash, { uploaded: true })
   } catch { /* tried again on the next tailor */ }
 }
@@ -116,28 +116,26 @@ export async function uploadDesignIfPro(session: AuthSession, checkTier = false)
 // fetched or the resume changed meanwhile.
 export async function restoreDesign(accessToken: string, hash: string, text: string): Promise<void> {
   const file = await fetchDesignFileFromBackend(accessToken, hash)
-  if (!file) return
-  const bytes = fromBase64(file.docx)
-  const { check } = await tailorDesign(bytes, file.structured)
+  if (!file?.parsed) return
+  const bytes = fromBase64(file.data)
+  const { check } = await tailorDesign(bytes, file.parsed)
   const resume = await getResume()
   if (resume?.text !== text || resume.design) return
   // The resume first, as on upload: a file stored before anything points to
   // it could be pruned by a History save in between.
   await saveResume({ ...resume, design: { hash, size: bytes.length, status: 'done', check, uploaded: true } })
-  await saveDesignFile(hash, { data: file.docx, parsed: file.structured })
+  await saveDesignFile(hash, file)
 }
 
 // Pro: a file this browser doesn't have, from the account (#174), such as one
-// a History entry was tailored in on another computer. Kept here while a
-// History entry uses it.
+// a History entry was tailored in on another computer. Stored here until the
+// next prune; one only the account's History uses is fetched again next time.
 async function accountDesignFile(hash: string): Promise<DesignFile | null> {
   if (await getCachedTier() !== 'hosted_pro') return null
   const session = await ensureValidSession()
   const file = session ? await fetchDesignFileFromBackend(session.access_token, hash).catch(() => null) : null
-  if (!file) return null
-  const stored = { data: file.docx, parsed: file.structured }
-  await saveDesignFile(hash, stored)
-  return stored
+  if (file) await saveDesignFile(hash, file)
+  return file
 }
 
 // What a tailor needs about the layout: the file to edit when "Your design"

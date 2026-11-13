@@ -1,5 +1,5 @@
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL, WEB_URL } from './config'
-import { clearResume, clearSession, getCachedTier, getResume, getSession, getSettings, saveGoogleSignInError, saveCachedTier, saveResume, saveSession, saveSettings, takeGoogleSignInError } from './storage'
+import { clearResume, clearSession, getCachedTier, getResume, getSession, getSettings, saveGoogleSignInError, saveCachedTier, saveResume, saveSession, saveSettings, takeGoogleSignInError, type DesignFile } from './storage'
 import { isValidResume } from './ai/resume-tailor'
 import { derivePlanningProgress, deriveTailorProgress } from './ai/tailor-progress'
 import type { ApplicationRecord, AuthSession, CoverLetter, JobData, ParsedResume, ResumeData, TailoredHistoryEntry, TailoredResume } from '../types'
@@ -385,12 +385,14 @@ export async function uploadResumeToBackend(
 }
 
 // Pro: the Word file goes to the account too, so the dashboard can download
-// tailored resumes in its design. base64: the file's bytes.
-export async function uploadDesignFileToBackend(accessToken: string, hash: string, base64: string): Promise<void> {
+// tailored resumes in its design. base64: the file's bytes. textHash: the
+// SHA-256 of the resume text it was checked against; the account refuses the
+// file if its text has changed since.
+export async function uploadDesignFileToBackend(accessToken: string, hash: string, base64: string, textHash: string): Promise<void> {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/resume?file=1`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ hash, docx: base64 }),
+    body: JSON.stringify({ hash, docx: base64, textHash }),
   })
   if (!res.ok) {
     const data = await res.json().catch(() => ({})) as Record<string, unknown>
@@ -400,13 +402,13 @@ export async function uploadDesignFileToBackend(accessToken: string, hash: strin
 
 // Pro: one of the account's Word files, with the parse that places tailored
 // text in it (#174). null when it's gone or the plan has ended (404, 403).
-export async function fetchDesignFileFromBackend(accessToken: string, hash: string): Promise<{ docx: string; structured: ParsedResume } | null> {
+export async function fetchDesignFileFromBackend(accessToken: string, hash: string): Promise<DesignFile | null> {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/applications?file=${hash}`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   })
   if (!res.ok) return null
   const data = await res.json().catch(() => ({})) as { docx?: unknown; structured?: ParsedResume }
-  return typeof data.docx === 'string' && Array.isArray(data.structured?.experience) ? { docx: data.docx, structured: data.structured } : null
+  return typeof data.docx === 'string' && Array.isArray(data.structured?.experience) ? { data: data.docx, parsed: data.structured } : null
 }
 
 // Which Pro plan checkout sells (the portal ignores it).

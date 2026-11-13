@@ -117,17 +117,17 @@ describe('the Word download of a resume tailored on another computer', () => {
 
   test("Pro: fetches the file from the account, keeps it here, and downloads in the user's design", async () => {
     await store({ extra: { session, cachedTier: 'hosted_pro' } })
-    const file = local[`designFile:${hash}`]
+    const { data } = local[`designFile:${hash}`] as { data: string }
     delete local[`designFile:${hash}`]
     local.designFiles = []
-    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ docx: (file as { data: string }).data, structured: resume() }), { status: 200 }))
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ docx: data, structured: resume() }), { status: 200 }))
     vi.stubGlobal('fetch', fetchMock)
     saveFileMock.mockClear()
 
     await downloadResumeWord(tailored, 'Engineer')
 
     expect(String((fetchMock.mock.calls[0] as unknown[])[0])).toContain(`/functions/v1/applications?file=${hash}`)
-    expect(local[`designFile:${hash}`]).toEqual({ data: (file as { data: string }).data, parsed: resume() })
+    expect(local[`designFile:${hash}`]).toEqual({ data, parsed: resume() })
     const [blob] = saveFileMock.mock.calls[0] as [Blob]
     const zip = await JSZip.loadAsync(await blob.arrayBuffer())
     expect(await zip.file('word/document.xml')!.async('string')).toContain('Shipped a Go billing service')

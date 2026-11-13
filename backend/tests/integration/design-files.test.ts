@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { admin, cacheParsedResume, callFunction, createUser, deleteUser, JOB, mockClaude, parsedResume, RESUME_TEXT, type TestUser, uploadResume } from './helpers'
 import { MOCK_PARSED_RESUME } from '../mock-anthropic'
@@ -82,6 +83,21 @@ describe('design files', () => {
 
     await uploadResume(user, `${RESUME_TEXT}\nNew line`, { wait: false })
     expect(await current()).toBeUndefined()
+  })
+
+  // Another computer replaced the resume before this one's file upload landed.
+  it("refuses a file checked against text the account no longer has", async () => {
+    user = await createUser('hosted_pro')
+    await uploadResume(user)
+    const textHash = (t: string) => createHash('sha256').update(t).digest('hex')
+    const send = (t: string) => callFunction('resume', { token: user!.token, query: { file: '1' }, body: { hash: hash('a'), docx: docx('file a'), textHash: textHash(t) } })
+
+    expect((await send('older text')).status).toBe(409)
+    expect(await storedHashes(user)).toEqual([])
+    expect((await (await callFunction('resume', { token: user.token })).json()).design_hash).toBeUndefined()
+
+    expect((await send(RESUME_TEXT)).status).toBe(200)
+    expect((await (await callFunction('resume', { token: user.token })).json()).design_hash).toBe(hash('a'))
   })
 
   it("never names the file for an account that isn't Pro", async () => {

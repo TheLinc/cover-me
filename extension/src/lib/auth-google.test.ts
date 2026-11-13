@@ -400,7 +400,7 @@ describe('completeSignIn restores the Word design', () => {
     expect(storage.data.resume).toEqual({ text: 'account copy', filename: 'cv.docx', updatedAt: '2026-10-01T00:00:00Z', accountId: 'u1' })
   })
 
-  test("a design this computer already has for the same text is kept, with no request", async () => {
+  test('a design this computer already has for the same text is kept, with no request', async () => {
     const own = { hash: 'e'.repeat(64), size: 5, status: 'done', uploaded: true }
     const storage = fakeStorage({ resume: { text: 'account copy', filename: 'cv.docx', updatedAt: '2026-10-01T00:00:00Z', accountId: 'u1', design: own } })
     vi.stubGlobal('chrome', { storage })
