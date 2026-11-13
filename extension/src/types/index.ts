@@ -85,6 +85,7 @@ export interface ResumeData {
     check?: DesignCheck
     error?: string
     uploaded?: boolean // in the Pro account, for the dashboard
+    refused?: boolean // the account refused it: its resume changed on another computer since (#174)
   }
   // The layout picked on the resume page. Missing: "Your design" whenever its check passes.
   layout?: 'yours' | 'cover-me'

@@ -8,7 +8,8 @@ alter table public.resumes add column design_hash text check (design_hash ~ '^[0
 -- Files uploaded before this column: the newest file kept with the resume's
 -- current parse goes with its text. The upload copies the parse's ciphertext
 -- as it is, and new text clears it, so a match means the same text. A file
--- whose resume parse was upgraded since isn't matched; its next upload is.
+-- whose resume parse changed since (a section reorder, a parse upgrade) isn't
+-- matched: that user uploads the .docx again to restore it elsewhere.
 update public.resumes r set design_hash = f.hash
 from (
   select distinct on (f.user_id) f.user_id, f.hash

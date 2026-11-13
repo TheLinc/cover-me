@@ -411,6 +411,8 @@ export class DesignRefusedError extends Error {}
 export async function fetchDesignFileFromBackend(accessToken: string, hash: string): Promise<DesignFile | null> {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/applications?file=${hash}`, {
     headers: { Authorization: `Bearer ${accessToken}` },
+    // Bounded: a sign-in waits on this.
+    signal: AbortSignal.timeout(20_000),
   })
   if (!res.ok) return null
   const data = await res.json().catch(() => ({})) as { docx?: unknown; structured?: ParsedResume }

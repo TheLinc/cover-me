@@ -93,7 +93,7 @@ Deno.serve(async (req) => {
     if (textHash !== undefined) {
       let current: string | null = null
       try { current = resumeRow ? await sha256Hex(await decrypt(resumeRow.text_encrypted)) : null } catch { /* unreadable: no match */ }
-      if (current !== textHash) return json({ error: 'Your resume changed on another computer. Upload your .docx again.' }, 409)
+      if (current !== textHash) return json({ error: 'Your account has a newer resume from another computer, so this Word file wasn't saved to it. Upload your .docx here again to use it with your account.' }, 409)
     }
     let docx_encrypted: string
     try {

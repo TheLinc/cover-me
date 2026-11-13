@@ -109,7 +109,7 @@ export async function uploadDesignIfPro(session: AuthSession, checkTier = false)
     await setDesign(d.hash, { uploaded: true })
   } catch (err) {
     // Shown on the resume page, and not sent again. Anything else is tried again on the next tailor.
-    if (err instanceof DesignRefusedError) await setDesign(d.hash, { status: 'error', error: err.message })
+    if (err instanceof DesignRefusedError) await setDesign(d.hash, { status: 'error', error: err.message, refused: true })
   }
 }
 

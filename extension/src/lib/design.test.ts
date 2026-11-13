@@ -158,6 +158,6 @@ describe('a Word file the account refuses', () => {
     await uploadDesignIfPro(session)
 
     expect(fetchMock).toHaveBeenCalledOnce()
-    expect((local.resume as { design: unknown }).design).toMatchObject({ status: 'error', error: 'Your resume changed on another computer. Upload your .docx again.' })
+    expect((local.resume as { design: unknown }).design).toMatchObject({ status: 'error', error: 'Your resume changed on another computer. Upload your .docx again.', refused: true })
   })
 })
