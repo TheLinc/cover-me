@@ -472,9 +472,9 @@ describe('letterLength', () => {
     lintLetter(letter, { resumeText }).violations.some((v) => v.includes('too short'))
 
   test('a thin resume aims short, a full resume aims longer', () => {
-    expect(letterLength(thin).min).toBe(100)
+    expect(letterLength(thin).min).toBe(85)
     expect(letterLength(full).min).toBe(110)
-    expect(letterLength(undefined).min).toBe(100)
+    expect(letterLength(undefined).min).toBe(85)
   })
 
   test('the floor follows the resume', () => {
@@ -482,7 +482,8 @@ describe('letterLength', () => {
     expect(short(body(105), thin)).toBe(false)
     expect(short(body(105), full)).toBe(true)
     expect(short(body(120), full)).toBe(false)
-    expect(short(body(90))).toBe(true)
+    expect(short(body(90))).toBe(false)
+    expect(short(body(80))).toBe(true)
   })
 
   test('the short message names the resume-sized aim', () => {
