@@ -1,7 +1,7 @@
 import type { AIProvider, JobData, ParsedResume, TailoredResume } from '../../types'
 import { debugGroup, debugLog } from '../debug'
 import { derivePlanningProgress, deriveTailorProgress } from './tailor-progress'
-import { buildsOnEdits, candidateText, checkAndRewriteLines, groundSkills, groundTailored, keepSeen, recaseSkills, seenVersion, trustedNotes, type AskModel, type LineRepair } from './resume-grounding'
+import { buildsOnEdits, candidateText, checkAndRewriteLines, groundSkills, groundTailored, keepSeen, recaseSkills, seenVersion, skillGroups, trustedNotes, type AskModel, type LineRepair } from './resume-grounding'
 import { SONNET_FIELDS, streamSonnet } from './claude'
 import { scoreFromMatch, type KeywordMatch } from './ats-score'
 import { callOpenAI, OPENAI_MODEL } from './openai'
@@ -20,7 +20,12 @@ function buildTailorSchema(parsed: ParsedResume): string {
   if (parsed.projects?.length) {
     delta.projects = [{ bullets: ['string — rewritten bullets for the SAME-INDEX input project'] }]
   }
-  if (parsed.skills) {
+  if (parsed.skills && skillGroups(parsed.skills).length) {
+    delta.skills = [
+      { category: 'string — the resume\'s own group label', skill: 'string — a skill worded exactly as in the resume' },
+      { category: 'string — the resume\'s own group label', skill: 'string — an added or reworded skill (STEP 8)', evidence: 'string — exact phrase copied from the resume that proves it' },
+    ]
+  } else if (parsed.skills) {
     delta.skills = [
       { skill: 'string — a skill worded exactly as in the resume' },
       { skill: 'string — an added or reworded skill (STEP 8)', evidence: 'string — exact phrase copied from the resume that proves it' },
@@ -232,6 +237,16 @@ export function budgetText(r: { experience: Array<{ bullets?: string[]; title?: 
 }
 // ── End mirrored tailor delta ──
 
+// Extra STEP 8 rules for a skills section written in labelled groups, so the
+// tailored list keeps those groups instead of collapsing into one long line.
+export function groupedSkillsRule(skills?: string): string {
+  const groups = skillGroups(skills)
+  if (!groups.length) return ''
+  return `
+GROUPED SKILLS — this resume lists its skills in labelled groups: ${groups.map((g) => `"${g.label}"`).join(', ')}. Keep that grouping. Give every skill a "category" copied exactly from one of these labels; an added skill takes the label of the group its evidence comes from. Emit skills most-relevant-first (groups print in the order their first skill appears), and leave out a group with nothing relevant to this job. These limits replace the ~15–18 target and the 18-item cap above: aim for 20–30 skills across at most 6 groups, hard cap 32. Prefer the resume's own wording, and add at most 3 skills worded in the JD's phrasing.
+`
+}
+
 export function buildPrompt(job: JobData, parsed: ParsedResume, compact: boolean, supplemental?: string, trim = false, includeSummary = true, previous?: TailoredResume): string {
   const company = job.company && job.company !== 'Unknown Company' ? job.company : 'Unknown'
   const budget = budgetText(parsed)
@@ -261,7 +276,7 @@ SKILLS OUTPUT FORMAT: "skills" is a JSON array of objects. A skill worded exactl
 Never add a competing or unrelated tool the candidate lacks (Vue, Redux, a different language). Do NOT add process or architecture buzzwords the resume gives no concrete evidence for — in tech, "CI/CD", "DevOps", "Cloud Security", "Microservices Architecture", "Cloud-Native" each require a named tool or practice on the resume or in the supplemental context; in any field, a license, certification, or method named only in the JD is never added unless the resume states it or the supplemental context says the candidate holds it. Absent evidence, these are fabrications (Integrity 4). If in doubt, leave it out.
 
 REMOVE skills not relevant to this role type (e.g. a mobile-only framework for a pure web role). When over the cap, keep the most JD-relevant skills and drop the least relevant first. Aim for ~15–18 focused skills, not an exhaustive inventory; a bloated list buries the terms that matter and reads as unfocused. NEVER remove a skill the JD names — or a specific instance of a category the JD names (e.g. MySQL under "relational databases") — that the candidate genuinely has; ATS matches literal tokens, so the JD's exact term must survive. When the resume has both a JD-named specific term and its generic synonym, keep BOTH ("MySQL (SQL)", not just "SQL"); dedupe only synonyms the JD does not name. Hard cap: 18 items.
-` : ''
+${groupedSkillsRule(parsed.skills)}` : ''
 
   const compactMode = compact ? `---
 
