@@ -56,6 +56,8 @@ export const BOARDS: Board[] = [
   { name: 'apple', listing: 'https://jobs.apple.com/en-us/search?location=united-states-USA', posting: /jobs\.apple\.com\/en-us\/details\/\d+/ },
   { name: 'amazon', listing: 'https://www.amazon.jobs/en/search?base_query=software+engineer', posting: /amazon\.jobs\/en\/jobs\/\d+/ },
   { name: 'google-careers', listing: 'https://www.google.com/about/careers/applications/jobs/results/', posting: /careers\/applications\/jobs\/results\/\d+-/ },
+  // A jobs-count banner <h1> ("20 jobs on the Python Job Board") above the posting's own (#73)
+  { name: 'python', listing: 'https://www.python.org/jobs/', posting: /python\.org\/jobs\/\d+\/$/ },
   // Humana's Phenom career site
   { name: 'phenom', listing: 'https://careers.humana.com/us/en/search-results', posting: /careers\.humana\.com\/us\/en\/job\// },
 ]
