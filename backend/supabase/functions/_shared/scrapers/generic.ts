@@ -81,8 +81,8 @@ function tryHeuristic(): JobData {
 // links or job cards, which is a job board's listing or a "similar jobs"
 // panel. Postings measured 0 to 21% link text, Greenhouse's board listing 95%.
 // The block's card lists (a related-jobs panel) are cut from its text, and a
-// block whose cards are three times what's left is passed over for a smaller
-// one: a wrapper around a short posting and its panel. Under a heading that isn't a job's title ("Join Our Team"), with none
+// block left with too little to be a posting is passed over: the panel's own
+// block. Under a heading that isn't a job's title ("Join Our Team"), with none
 // in the tab title either, the page is in doubt: a block a third or more links
 // and card text is a list, and one outweighed by any list on the page makes
 // the page a listing. The listings in #72 measured under half link text, a
@@ -103,25 +103,19 @@ function largestBlock(doubtful: boolean): string | undefined {
   const isList = (el: HTMLElement, len: number) => doubtful
     ? linkTextLength(el, nested) + (cardText.get(el) ?? 0) >= len / 3
     : linkTextLength(el, nested) >= len / 2
-  const outweighed = (el: HTMLElement, len: number) => (listText.get(el) ?? 0) > 3 * (len - (listText.get(el) ?? 0))
+  const left = (el: HTMLElement, len: number) => len - (listText.get(el) ?? 0)
   // A block in a list is a card or part of one (a long one: We Work Remotely's
   // list the countries a job is open to). A block that isn't rendered is read
-  // as its source text, by Chrome and by linkedom alike.
-  // Under a job's title, the largest outweighed block with a posting's worth
-  // of text beside its cards is the last resort: a wrapper holding the
-  // posting's paragraphs beside its panel, not the panel itself. Past it, only
-  // a block inside it can be the posting, not a cookie banner beside it.
-  let fallback: HTMLElement | undefined
+  // as its source text, by Chrome and by linkedom alike. In doubt, a block
+  // whose cards are three times what's left is passed over for a smaller one:
+  // a wrapper around an intro and its listing.
   const block = Array.from(document.querySelectorAll<HTMLElement>('div, section, article'))
     .map((el) => ({ el, len: el.innerText?.trim().length ?? 0 }))
     .filter(({ len }) => len > 500 && len < 20000)
     .sort((a, b) => b.len - a.len)
-    .find(({ el, len }) => {
-      if ((fallback && !fallback.contains(el)) || isList(el, len) || hasAncestorIn(el, lists) || !rendered(el)) return false
-      if (!outweighed(el, len)) return true
-      if (len - (listText.get(el) ?? 0) > 500) fallback ??= el
-      return false
-    })?.el ?? (doubtful ? undefined : fallback)
+    .find(({ el, len }) => !isList(el, len) && (doubtful ? left(el, len) * 4 >= len : left(el, len) >= 200)
+      && !hasAncestorIn(el, lists) && rendered(el))
+    ?.el
   if (!block) return
   let text = block.innerText.trim()
   let largestList = 0

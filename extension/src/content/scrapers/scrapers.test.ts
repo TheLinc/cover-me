@@ -258,20 +258,24 @@ describe('generic heuristic', () => {
     const grid = scrape('https://careers.example.com/jobs/1', `<html><body><main><h1>Warehouse Supervisor</h1>
       <div class="grid"><div class="posting"><p>${description}</p></div>${cards}</div></main></body></html>`)
     expect(grid.description).toContain(description)
-    // ...nor a wrapper around the posting and a panel three times its size:
-    // the posting's own block is read
+    // ...nor a wrapper around the posting and a panel three times its size
     const wrapped = scrape('https://careers.example.com/jobs/1', `<html><body><div id="app"><h1>Warehouse Supervisor</h1>
       <div class="posting"><p>${description}</p></div><div class="sidebar"><ul>${relatedMore}</ul></div></div></body></html>`)
-    expect(wrapped.description).toBe(description)
-    // ...nor when the wrapper holds the posting's paragraphs or short sections
+    expect(wrapped.description).toBe(`Warehouse Supervisor\n\n${description}`)
+    const short = description.slice(0, 300).trim()
+    const shortJob = scrape('https://careers.example.com/jobs/1', `<html><body><main><div class="wrap"><h1>Warehouse Supervisor</h1>
+      <div class="posting"><p>${short}</p></div><div class="sidebar"><ul>${relatedMore}</ul></div></div></main></body></html>`)
+    expect(shortJob.description).toBe(`Warehouse Supervisor\n\n${short}`)
+    // ...nor when the wrapper holds the posting's paragraphs, or sections one
+    // of which is a long one about the company
     const paragraphs = scrape('https://careers.example.com/jobs/1', `<html><body><div id="app"><h1>Warehouse Supervisor</h1>
       <p>${description}</p><p>${description}</p><div class="sidebar"><ul>${relatedMore}</ul></div></div>
       <div class="cookie">${'We use cookies to improve your experience. '.repeat(14)}</div></body></html>`)
     expect(paragraphs.description).toBe(`Warehouse Supervisor\n\n${description}\n\n${description}`)
     const sec = `<div class="sec"><p>${description.slice(0, 400)}</p></div>`
     const sections = scrape('https://careers.example.com/jobs/1', `<html><body><div id="app"><h1>Warehouse Supervisor</h1>
-      ${sec}${sec}${sec}<div class="sidebar"><ul>${relatedMore}</ul></div></div></body></html>`)
-    expect(sections.description).toContain(description.slice(0, 400).trim())
+      ${sec}${sec}<div class="about"><h2>About Acme</h2><p>${description}</p></div><div class="sidebar"><ul>${relatedMore}</ul></div></div></body></html>`)
+    expect(sections.description).toMatch(/^Warehouse Supervisor\n\nLead a team[^]*About Acme/)
     expect(sections.description).not.toMatch(/Forklift|Sydney/)
   })
 
