@@ -33,6 +33,8 @@ interface Spec {
   expectedLabels?: string[][]
   /** See EvalCase. */
   summaryTitle?: string
+  /** See EvalCase. */
+  resumeFailTerms?: string[]
 }
 
 const role = (title: string, company: string, location: string, dates: string, bullets: string[]): ResumeExperience =>
@@ -95,6 +97,7 @@ const toCase = (s: Spec): EvalCase => ({
   fieldNotes: s.fieldNotes,
   expectedLabels: s.expectedLabels,
   summaryTitle: s.summaryTitle,
+  resumeFailTerms: s.resumeFailTerms,
 })
 
 // ── Cases ────────────────────────────────────────────────────────────────────
@@ -626,7 +629,8 @@ Requirements: journeyman license, OSHA 30, 3+ years industrial experience.`),
 - Inventory ordering and receiving
 
 Requirements: ServSafe Manager certification, fine dining experience.`),
-    failTerms: ['ServSafe Manager', 'food cost', 'menu costing', 'Sous Chef'],
+    failTerms: ['ServSafe Manager', 'food cost', 'menu costing'],
+    resumeFailTerms: ['Sous Chef'],
     warnTerms: ['fine dining', 'tasting menu'],
     mustKeepSkills: ['inventory'],
     fieldNotes: 'Kitchen: covers and volume, stations, menu scope, training, food safety; direct language. A line cook must not be inflated into running a kitchen; a Food Handler card is not a Manager certification.',
@@ -1043,7 +1047,8 @@ PhD or MS preferred.`),
 - Deploy services on AWS with Terraform
 
 Requirements: 3+ years building web applications, React, Node.js, SQL. AWS and Terraform experience preferred.`),
-    failTerms: ['AWS', 'Terraform', 'Senior'],
+    failTerms: ['AWS', 'Terraform'],
+    resumeFailTerms: ['Senior'],
     warnTerms: ['insurance', 'policy'],
     mustKeepSkills: ['React', 'Node.js', 'PostgreSQL'],
     fieldNotes: 'Software engineering: concrete stack names, scale (users, latency, coverage), ownership and code review. "Software Engineer" is an honest name for full stack work; an added level or cloud stack is not.',
@@ -1186,7 +1191,8 @@ Experience in venture capital or at a Big Four consultancy is a plus.`),
 - Lead the lean transformation
 
 M&A integration experience preferred.`),
-    failTerms: ['SQF', 'FSMA', 'SAP', 'M&A', 'Chief Operating Officer'],
+    failTerms: ['SQF', 'FSMA', 'SAP', 'M&A'],
+    resumeFailTerms: ['Chief Operating Officer'],
     warnTerms: ['food', 'supply chain'],
     mustKeepSkills: ['P&L', 'lean'],
     expectedLabels: [['Quality Management', 'Quality Systems']],

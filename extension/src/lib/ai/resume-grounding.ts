@@ -550,6 +550,7 @@ ${others.map((b) => `- ${b}`).join('\n')}`
 - Use only the facts in its SOURCE LINE (for the summary, the original resume lines). Never bring in facts from the other lines listed: they are already on the resume, and repeating them duplicates it.
 - Remove the problem without adding anything new: no new clause, outcome, purpose, or qualifier, not even a general one ("to ensure...", "maintaining...", "...across all X").
 - Keep every number exactly as the source states it; add none. In the summary, leave out counts of years.
+- In the summary, keep its job title unless the problem is the title itself.
 - You may keep the job posting's wording for the same work and a strong verb for the same action.
 - One resume bullet (or a 2-3 sentence summary), no first person. When in doubt, return the source line lightly reworded.
 

@@ -30,6 +30,8 @@ export interface EvalCase {
   expectedLabels?: string[][]
   /** The posting's title, minus any level the resume lacks, that the summary must use (#218). */
   summaryTitle?: string
+  /** Like failTerms, for the tailored resume only: titles a letter may use to name the role ("the full stack role"). */
+  resumeFailTerms?: string[]
 }
 
 const TECH_NOTES = 'Software engineering: concrete stack names, scale (users, latency, coverage), ownership and code review. Frontend work must not be inflated into infrastructure or e-commerce domain claims.'
@@ -419,7 +421,8 @@ Requirements: 3+ years building web applications across frontend and backend, No
     },
     resumeText: alexText,
     parsed: alexParsed,
-    failTerms: ['Full Stack', 'Full-Stack', 'Express', 'PostgreSQL', 'Docker'],
+    failTerms: ['Express', 'PostgreSQL', 'Docker'],
+    resumeFailTerms: ['Full Stack', 'Full-Stack'],
     warnTerms: ['healthcare', 'backend'],
     mustKeepSkills: ['React', 'TypeScript', 'Node.js'],
   },
@@ -444,7 +447,8 @@ Requirements: 6+ years of software engineering experience, React, TypeScript, te
     },
     resumeText: alexText,
     parsed: alexParsed,
-    failTerms: ['Senior', 'Playwright', 'AWS'],
+    failTerms: ['Playwright', 'AWS'],
+    resumeFailTerms: ['Senior'],
     warnTerms: ['logistics', 'dispatch'],
     mustKeepSkills: ['React', 'TypeScript'],
     summaryTitle: 'Software Engineer',

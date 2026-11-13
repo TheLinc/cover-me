@@ -171,7 +171,7 @@ export function checkTailored(out: TailoredResume, c: EvalCase, input: ParsedRes
     ...outProjects.flatMap((p) => p.bullets),
   ].join('\n')
 
-  for (const t of c.failTerms) {
+  for (const t of [...c.failTerms, ...(c.resumeFailTerms ?? [])]) {
     if (containsTerm(prose, t) || (out.skills && containsTerm(out.skills, t))) {
       result.failures.push(`output contains forbidden term "${t}" (not in resume)`)
     }
