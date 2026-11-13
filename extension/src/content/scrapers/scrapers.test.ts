@@ -222,6 +222,12 @@ describe('generic heuristic', () => {
       <p>${long}</p><div><h2>Related jobs</h2><ul>${related}</ul></div></div></main></body></html>`)
     expect(together.description).toContain(long)
     expect(together.description).not.toMatch(/Forklift|Sydney/)
+    // ...or the panel a block of its own, larger than the posting beside it
+    for (const tag of ['div', 'section']) {
+      const siblings = scrape('https://careers.example.com/jobs/1', `<html><body><main><h1>Warehouse Supervisor</h1>
+        <div><p>${description}</p></div><${tag}><h2>Related jobs</h2><ul>${related}</ul></${tag}></main></body></html>`)
+      expect(siblings.description).toBe(description)
+    }
   })
 
   // Chrome reads a list that isn't rendered as its source text, which the

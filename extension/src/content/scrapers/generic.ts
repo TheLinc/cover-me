@@ -107,8 +107,9 @@ function largestBlock(doubtful: boolean): string | undefined {
   // A block in a list is a card or part of one (a long one: We Work Remotely's
   // list the countries a job is open to). A block that isn't rendered is read
   // as its source text, by Chrome and by linkedom alike.
-  // Under a job's title, the largest outweighed block is the last resort: a
-  // wrapper holding the posting's paragraphs beside its panel. Past it, only
+  // Under a job's title, the largest outweighed block with a posting's worth
+  // of text beside its cards is the last resort: a wrapper holding the
+  // posting's paragraphs beside its panel, not the panel itself. Past it, only
   // a block inside it can be the posting, not a cookie banner beside it.
   let fallback: HTMLElement | undefined
   const block = Array.from(document.querySelectorAll<HTMLElement>('div, section, article'))
@@ -118,7 +119,7 @@ function largestBlock(doubtful: boolean): string | undefined {
     .find(({ el, len }) => {
       if ((fallback && !fallback.contains(el)) || isList(el, len) || hasAncestorIn(el, lists) || !rendered(el)) return false
       if (!outweighed(el, len)) return true
-      fallback ??= el
+      if (len - (listText.get(el) ?? 0) > 500) fallback ??= el
       return false
     })?.el ?? (doubtful ? undefined : fallback)
   if (!block) return
