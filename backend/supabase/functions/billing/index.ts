@@ -1,6 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { handleCors, json } from '../_shared/cors.ts'
 import { stripe, StripeError } from '../_shared/stripe.ts'
+import { FIRST_MONTH_COUPON, openFirstMonthOffer, showFirstMonthOffer } from '../_shared/offer.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SECRET_KEY = Deno.env.get('SERVICE_KEY')!
@@ -55,9 +56,9 @@ async function claimCode(supabase: Db, code: unknown, userId: string): Promise<{
   return !found ? CODE_ERRORS.unknown : found.redeemed_at ? CODE_ERRORS.used : CODE_ERRORS.expired
 }
 
-// Checkout, billing portal and gift trial redemption for the extension and the
-// web dashboard. All send the user's Supabase token, so upgrading never needs
-// a website sign-in.
+// Checkout, billing portal, gift trial redemption and the first-month offer
+// for the extension and the web dashboard. All send the user's Supabase token,
+// so upgrading never needs a website sign-in.
 Deno.serve(async (req) => {
   const cors = handleCors(req)
   if (cors) return cors
@@ -72,8 +73,23 @@ Deno.serve(async (req) => {
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405)
 
   const { action, plan = 'monthly', code } = await req.json().catch(() => ({})) as { action?: string; plan?: string; code?: unknown }
-  if (action !== 'checkout' && action !== 'portal' && action !== 'redeem') return json({ error: 'Unknown action' }, 400)
+  if (action !== 'checkout' && action !== 'portal' && action !== 'redeem' && action !== 'offer') return json({ error: 'Unknown action' }, 400)
   if (plan !== 'monthly' && plan !== 'quarterly') return json({ error: 'Unknown plan' }, 400)
+
+  // For the dashboard and the popup: when the open offer ends, and the coupon's
+  // customer-facing name from Stripe. Any failure just hides the banner.
+  if (action === 'offer') {
+    // Showing it starts its 7 days the first time.
+    const endsAt = await showFirstMonthOffer(supabase, user.id)
+    if (!endsAt) return json({ offer: null })
+    try {
+      const coupon = await stripe(`coupons/${encodeURIComponent(FIRST_MONTH_COUPON!)}`, {}, { method: 'GET' })
+      return json({ offer: { endsAt, name: (coupon.name as string | null) ?? null } })
+    } catch (err) {
+      console.error('[billing] offer:', err instanceof Error ? err.message : 'unknown error')
+      return json({ offer: null })
+    }
+  }
 
   const { data: row } = await supabase
     .from('users')
@@ -112,9 +128,11 @@ Deno.serve(async (req) => {
     // card, so ask Stripe. A customer deleted in Stripe gets replaced.
     let replaced = false
     let giftTrial: Subscription | undefined
+    let hadSubscription = false
     if (customerId) {
       try {
         const subs = (await stripe('subscriptions', { customer: customerId, status: 'all', limit: '20' }, { method: 'GET' })).data as Subscription[]
+        hadSubscription = subs.length > 0
         const open = subs.filter((s) => OPEN_STATUSES.has(s.status))
         if (action === 'checkout') giftTrial = open.find(isGiftTrial)
         if (open.some((s) => s !== giftTrial)) {
@@ -188,18 +206,36 @@ Deno.serve(async (req) => {
     // Upgrading from a gift trial: billing starts when the trial would have
     // ended, if Stripe allows it, and the webhook cancels the trial once paid.
     const carryTrial = giftTrial?.trial_end && giftTrial.trial_end - Date.now() / 1000 >= MIN_TRIAL_CARRYOVER_S
-    const session = await stripe('checkout/sessions', {
+
+    // The first-month offer: opening checkout makes it available a day later
+    // (so today's checkout is full price), and a monthly checkout while it's
+    // available takes the coupon off, for a customer Stripe has never billed.
+    // Only a monthly checkout counts as showing it.
+    await openFirstMonthOffer(supabase, user.id)
+    const discount = price === 'monthly' && !hadSubscription && Boolean(await showFirstMonthOffer(supabase, user.id))
+    const createSession = (withDiscount: boolean) => stripe('checkout/sessions', {
       mode: 'subscription',
-      customer: customerId,
+      customer: customerId!,
       'line_items[0][price]': PRICES[price],
       'line_items[0][quantity]': '1',
       'metadata[supabase_user_id]': user.id,
       ...(giftTrial && { 'metadata[gift_trial_subscription]': giftTrial.id }),
       ...(carryTrial && { 'subscription_data[trial_end]': String(giftTrial!.trial_end) }),
+      ...(withDiscount && { 'discounts[0][coupon]': FIRST_MONTH_COUPON! }),
       // Nothing is charged today on a carried-over trial: the page names the first payment.
       success_url: carryTrial ? `${SITE_URL}/upgraded?first=${giftTrial!.trial_end}` : `${SITE_URL}/upgraded`,
       cancel_url: `${SITE_URL}/dashboard`,
     })
+    let session
+    try {
+      session = await createSession(discount)
+    } catch (err) {
+      // A coupon Stripe won't apply (deleted, expired, used up, a typo in the
+      // secret) mustn't block the upgrade: check out at full price instead.
+      if (!discount || !(err instanceof StripeError) || err.status !== 400) throw err
+      console.error('[billing] coupon rejected:', err.message)
+      session = await createSession(false)
+    }
     return json({ url: session.url })
   } catch (err) {
     console.error('[billing]', err instanceof Error ? err.message : 'unknown error')

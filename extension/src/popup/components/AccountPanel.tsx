@@ -6,6 +6,7 @@ import { encryptApiKey } from '../../lib/crypto'
 import { clearSession, getCachedTier, getMode, getSettings, resolveMode, saveCachedTier, saveSettings, takeGoogleSignInError, watchGoogleSignInError, watchSession } from '../../lib/storage'
 import type { AIProvider, AppMode, AuthSession } from '../../types'
 import GoogleIcon from './GoogleIcon'
+import { ArrowUpRightIcon } from './icons'
 import UpgradePrompt from './UpgradePrompt'
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
@@ -284,7 +285,7 @@ export default function AccountPanel({ initialView = 'signin', links = true }: {
       {mode === 'hosted' && (
         <>
           {session ? (
-            /* Signed-in state */
+            /* Signed-in state: who you are and the dashboard; upgrading has its own section */
             <div className="account-card">
               <div className="account-row">
                 <div className="account-avatar">
@@ -296,21 +297,22 @@ export default function AccountPanel({ initialView = 'signin', links = true }: {
                   <div className="account-email">{session.user.email}</div>
                   {tier && (
                     <span className={isPro ? 'tier-badge tier-badge-pro' : 'tier-badge'}>
-                      {isPro ? '★ Pro · up to 25 a day' : 'Free · 10 to start, then 5 a week'}
+                      {isPro ? '★ Pro' : 'Free'}
                     </span>
                   )}
                 </div>
+                <button className="auth-link account-signout" onClick={handleSignOut}>Sign out</button>
               </div>
               {links && (
                 <>
-                  {tier === 'hosted_free' && <UpgradePrompt />}
-                  {/* Plan, usage and (for Pro) billing and every saved application. */}
-                  <a className="text-link" href={`${WEB_URL}/dashboard`} target="_blank" rel="noreferrer">Open your dashboard</a>
+                  {/* Usage, the application board and (for Pro) billing and every saved letter and resume.
+                      Free accounts keep the filled button for Upgrade, below. */}
+                  <a className={`btn ${isPro ? 'btn-primary' : 'btn-secondary'} account-dashboard`} href={`${WEB_URL}/dashboard`} target="_blank" rel="noreferrer">
+                    Open your dashboard <ArrowUpRightIcon />
+                  </a>
+                  <p className="account-dashboard-hint">Your usage and your applications, on any device</p>
                 </>
               )}
-              <button className="btn btn-secondary account-signout" onClick={handleSignOut}>
-                Sign Out
-              </button>
             </div>
           ) : (
             /* Auth form */
@@ -408,6 +410,14 @@ export default function AccountPanel({ initialView = 'signin', links = true }: {
           <p className="auth-switch">
             <button className="auth-link" onClick={() => switchMode('byok')}>I have an API key →</button>
           </p>
+
+          {/* After the key link, which belongs with the account card above. */}
+          {session && links && tier === 'hosted_free' && (
+            <section className="page-read-setting" aria-labelledby="go-pro-title">
+              <h2 id="go-pro-title" className="page-read-setting-title">Go Pro</h2>
+              <UpgradePrompt />
+            </section>
+          )}
         </>
       )}
     </>

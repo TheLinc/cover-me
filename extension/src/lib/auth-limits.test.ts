@@ -15,6 +15,17 @@ describe('rate limit errors', () => {
     expect(err.kind).toBe('daily')
   })
 
+  // The popup keeps a refusal's text on screen across opens, so a day count
+  // from the server would go stale. The upgrade prompt shows the live offer.
+  test("drop the server's first-month offer sentence and keep the rest", async () => {
+    const limit = "You've used this week's 5 free generations. They reset Monday at 00:00 UTC, or upgrade to Pro for up to 25 a day."
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(
+      JSON.stringify({ error: `${limit} Your first month of monthly Pro is discounted at checkout for 6 more days.`, allowance: { kind: 'weekly' } }),
+      { status: 429, headers: { 'content-type': 'application/json' } })))
+    const err = await generateViaBackend(job, 'token').catch((e) => e)
+    expect(err.message).toBe(limit)
+  })
+
   // A Pro user at the 25-a-day cap must not be offered "Upgrade to Pro".
   test("Pro's daily cap is FAIR_USE, the free limits are RATE_LIMIT", () => {
     expect(limitErrorCode(new RateLimitError('x', 'daily'))).toBe('FAIR_USE')

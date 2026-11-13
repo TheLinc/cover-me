@@ -1,6 +1,10 @@
 import { createClient } from '@/lib/supabase'
 
-type BillingReply = { url?: string; error?: string; trialEnd?: string; note?: string | null }
+// The first-month offer (#213) while it's open: when it ends, and the Stripe
+// coupon's customer-facing name (the amount lives only in Stripe).
+export type FirstMonthOffer = { endsAt: string; name: string | null }
+
+type BillingReply = { url?: string; error?: string; trialEnd?: string; note?: string | null; offer?: FirstMonthOffer | null }
 
 async function callBilling(body: Record<string, string>): Promise<BillingReply> {
   const { data: { session } } = await createClient().auth.getSession()
@@ -22,4 +26,9 @@ export function openBilling(action: 'checkout' | 'portal', plan?: 'monthly' | 'q
 // Starts a gift trial from a /redeem link: trialEnd and the code's note, or an error.
 export function redeemTrial(code: string): Promise<BillingReply> {
   return callBilling({ action: 'redeem', code })
+}
+
+// The open first-month offer, or null (none, or billing didn't answer).
+export async function firstMonthOffer(): Promise<FirstMonthOffer | null> {
+  return (await callBilling({ action: 'offer' })).offer ?? null
 }

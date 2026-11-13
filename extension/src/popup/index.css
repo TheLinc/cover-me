@@ -830,6 +830,12 @@ html, body {
 .upgrade-actions .btn { width: auto; }
 .upgrade-actions .btn-primary { flex: 1; }
 .upgrade-actions .btn-secondary { padding: 10px 12px; font-size: 12px; }
+/* The first-month offer (#213), under the buttons */
+.upgrade-offer { font-size: 12px; line-height: 1.5; color: var(--text-2); background: var(--accent-dim); border-radius: 8px; padding: 8px 10px; }
+.upgrade-offer strong { color: var(--accent-h); font-weight: 600; }
+.generate-offer { display: flex; flex-direction: column; gap: 6px; }
+.offer-action { font-size: 12px; font-weight: 600; }
+.offer-tag { display: inline-flex; align-items: center; gap: 4px; margin-right: 6px; padding: 2px 7px; border-radius: 999px; background: var(--accent-strong); color: #fff; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; vertical-align: 1px; }
 
 /* Pro: save the applications that exist only in this browser */
 .upload-prompt {
@@ -1285,7 +1291,17 @@ textarea:focus-visible, input:focus-visible, [tabindex]:focus-visible {
 .hint-under { margin-top: 7px; }
 .hint-tight { margin-top: 4px; }
 .form-input.with-eye { padding-right: 34px; }
-.account-signout { margin-top: 16px; }
+.account-signout { margin-left: auto; align-self: flex-start; flex-shrink: 0; }
+.account-dashboard { margin-top: 6px; text-decoration: none; }
+.account-dashboard-hint { font-size: 11px; color: var(--text-3); text-align: center; }
+/* A settings section that collapses: the title row is the <summary> */
+.setting-summary { display: flex; align-items: center; gap: 8px; cursor: pointer; list-style: none; }
+.setting-summary::-webkit-details-marker { display: none; }
+.setting-summary .page-read-setting-title { margin-bottom: 0; }
+.setting-state { margin-left: auto; font-size: 11px; color: var(--text-3); }
+.setting-summary .chevron { color: var(--text-3); }
+.setting-details[open] > .setting-summary { margin-bottom: 4px; }
+.setting-details[open] > .setting-summary .chevron { transform: rotate(180deg); }
 .manual-submit { margin-top: 12px; }
 .manual-tailor { margin-top: 8px; }
 .btn-compact { width: auto; padding: 10px 14px; }

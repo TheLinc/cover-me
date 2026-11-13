@@ -158,6 +158,61 @@ describe('generate', () => {
     expect(await quotaUsedToday(user.id)).toBe(5)
   })
 
+  // The first-month offer (#213). Unset, the limit message stays as it is.
+  describe('first-month offer', () => {
+    const COUPON = process.env.STRIPE_FIRST_MONTH_COUPON_ID
+    const OFFER = /first month of monthly Pro is discounted at checkout/
+    const offerAt = async (userId: string) =>
+      (await admin.from('users').select('first_month_offer_at').eq('id', userId).single()).data?.first_month_offer_at as string | null
+    const capped = async (extra: Record<string, unknown> = {}) => {
+      user = await createUser()
+      await uploadResume(user)
+      await setUsage(user.id, [{ daysAgo: 40, count: 10 }, { daysAgo: 0, count: 5 }])
+      await admin.from('users').update({ first_month_offer_at: new Date(Date.now() - 3_600_000).toISOString(), ...extra }).eq('id', user.id)
+      const res = await callFunction('generate', { token: user.token, body: { job: JOB } })
+      expect(res.status).toBe(429)
+      return (await res.json()).error as string
+    }
+
+    it('names the offer in the limit message while it is open', async () => {
+      const error = await capped()
+      expect(error).toContain("You've used this week's 5 free generations")
+      // Available since an hour ago; this refusal is its first showing, so all 7 days are left.
+      if (COUPON) expect(error).toContain('Your first month of monthly Pro is discounted at checkout for 7 more days.')
+      else expect(error).not.toMatch(OFFER)
+      const { data } = await admin.from('users').select('first_month_offer_shown_at').eq('id', user!.id).single()
+      if (COUPON) expect(data?.first_month_offer_shown_at).not.toBeNull()
+      else expect(data?.first_month_offer_shown_at).toBeNull()
+    })
+
+    it('leaves it out for someone who has had a subscription', async () => {
+      expect(await capped({ tier_synced_at: new Date(Date.now() - 30 * 86_400_000).toISOString() })).not.toMatch(OFFER)
+    })
+
+    it("starts it a day out when a free user takes the week's last generation", async () => {
+      user = await createUser()
+      await uploadResume(user)
+      await setUsage(user.id, [{ daysAgo: 40, count: 10 }, { daysAgo: 0, count: 4 }])
+      const res = await callFunction('generate', { token: user.token, body: { job: JOB } })
+      expect(res.status).toBe(200)
+      await res.text()
+      const at = await offerAt(user.id)
+      if (!COUPON) return expect(at).toBeNull()
+      expect(Date.parse(at!) - Date.now()).toBeGreaterThan(23 * 3_600_000)
+      expect(Date.parse(at!) - Date.now()).toBeLessThanOrEqual(24 * 3_600_000 + 60_000) // a minute of clock skew between Docker and the host
+    })
+
+    it('does not start it before the last generation of the week', async () => {
+      user = await createUser()
+      await uploadResume(user)
+      await setUsage(user.id, [{ daysAgo: 40, count: 10 }, { daysAgo: 0, count: 3 }])
+      const res = await callFunction('generate', { token: user.token, body: { job: JOB } })
+      expect(res.status).toBe(200)
+      await res.text()
+      expect(await offerAt(user.id)).toBeNull()
+    })
+  })
+
   it('counts Pro generations, past the free numbers', async () => {
     user = await createUser('hosted_pro')
     await uploadResume(user)
