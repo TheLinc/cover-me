@@ -471,6 +471,12 @@ export function lintLetter(
   // with the applicant's work; the posting's point goes in a clause after it.
   const employerAlt = employers.length ? `|(?:${employers.join('|')})(?:['’]s \\w+)? (?:needs?|wants?|is (?:hiring|looking for|seeking)|calls? for|asks? for|requires?|expects?)\\b` : ''
   const adSubject = new RegExp(`^(?:(?:The|This) (?:role|position|job|posting)\\b${employerAlt})`)
+  // A set bridge onto the ad: "much like the early-shift training this job
+  // includes" read as mechanical mapping to the judge (#206 letters-only run).
+  const bridge = body.split(SENTENCE_END).map((s) => s.trim()).find((s) => /\b(?:much like|close to|similar to|parallels?)\b[^.!?]{0,80}\b(?:this|the) (?:job|role|position)\b/i.test(s))
+  if (bridge) {
+    violations.push(`Maps the letter onto the ad with a set bridge ("${bridge}") — make the link in the applicant's own words, or cut it.`)
+  }
   const adLine = bodyParas.slice(1).flatMap((p) => p.split(SENTENCE_END)).map((s) => s.trim()).find((s) => adSubject.test(s))
   if (adLine) {
     violations.push(`Starts a sentence with the role or the employer's needs ("${adLine}") — start with what the applicant did, and name the posting's point in a few words after it.`)

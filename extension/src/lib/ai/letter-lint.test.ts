@@ -515,3 +515,21 @@ describe('sentences led by the role or the employer', () => {
     'At Meridian I would work on the purchase ledger alone.',
   ])('allows: %s', (s) => expect(flagged(s)).toBe(false))
 })
+
+// Set bridges onto the ad read as mechanical mapping (#206 letters-only run).
+test.each([
+  "I lead family education at St. Anne's, close to the family education this role includes.",
+  'I have trained six apprentices, much like the training the job involves.',
+])('flags a set bridge: %s', (line) => {
+  const letter = `Dear Hiring Manager,
+
+At St. Anne's I had zero medication errors.
+
+${line}
+
+I'd welcome an interview for the RN role.
+
+Kind regards,
+Alex Doe`
+  expect(lintLetter(letter).violations.some((v) => v.startsWith('Maps the letter onto the ad'))).toBe(true)
+})
