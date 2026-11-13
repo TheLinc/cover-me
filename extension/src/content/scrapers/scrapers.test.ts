@@ -259,7 +259,8 @@ describe('generic heuristic', () => {
     expect(wrapped.description).toBe(description)
     // ...nor when the wrapper holds the posting's paragraphs or short sections
     const paragraphs = scrape('https://careers.example.com/jobs/1', `<html><body><div id="app"><h1>Warehouse Supervisor</h1>
-      <p>${description}</p><p>${description}</p><div class="sidebar"><ul>${relatedMore}</ul></div></div></body></html>`)
+      <p>${description}</p><p>${description}</p><div class="sidebar"><ul>${relatedMore}</ul></div></div>
+      <div class="cookie">${'We use cookies to improve your experience. '.repeat(14)}</div></body></html>`)
     expect(paragraphs.description).toBe(`Warehouse Supervisor\n\n${description}\n\n${description}`)
     const sec = `<div class="sec"><p>${description.slice(0, 400)}</p></div>`
     const sections = scrape('https://careers.example.com/jobs/1', `<html><body><div id="app"><h1>Warehouse Supervisor</h1>
@@ -283,6 +284,11 @@ describe('generic heuristic', () => {
     const job = scrape('https://careers.example.com/jobs/1', `<html><body><main><h1>Backend Engineer</h1>
       <div><p>${description}</p><ul>${items.map((i) => `<li>${i}</li>`).join('')}</ul></div></main></body></html>`)
     expect(job.description).toContain('Kafka or another event log\nOn call one week in six')
+    // ...nor one whose bullets set a word in bold beside the link
+    const bold = items.map((i) => `<li>${i.replace(/(\w+)$/, '<b>$1</b>')}</li>`).join('')
+    const formatted = scrape('https://careers.example.com/jobs/1', `<html><body><main><h1>Backend Engineer</h1>
+      <div><p>${description}</p><ul>${bold}</ul></div></main></body></html>`)
+    expect(formatted.description).toContain('Kafka or another event log\nOn call one week in six')
   })
 
   test('reads a posting laid out in sections of one class', () => {

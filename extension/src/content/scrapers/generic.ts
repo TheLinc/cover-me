@@ -108,14 +108,15 @@ function largestBlock(doubtful: boolean): string | undefined {
   // list the countries a job is open to). A block that isn't rendered is read
   // as its source text, by Chrome and by linkedom alike.
   // Under a job's title, the largest outweighed block is the last resort: a
-  // wrapper holding the posting's paragraphs beside its panel.
+  // wrapper holding the posting's paragraphs beside its panel. Past it, only
+  // a block inside it can be the posting, not a cookie banner beside it.
   let fallback: HTMLElement | undefined
   const block = Array.from(document.querySelectorAll<HTMLElement>('div, section, article'))
     .map((el) => ({ el, len: el.innerText?.trim().length ?? 0 }))
     .filter(({ len }) => len > 500 && len < 20000)
     .sort((a, b) => b.len - a.len)
     .find(({ el, len }) => {
-      if (isList(el, len) || hasAncestorIn(el, lists) || !rendered(el)) return false
+      if ((fallback && !fallback.contains(el)) || isList(el, len) || hasAncestorIn(el, lists) || !rendered(el)) return false
       if (!outweighed(el, len)) return true
       fallback ??= el
       return false
@@ -165,7 +166,7 @@ function cardLists(nested: Set<Element>): Map<HTMLElement, { text: string, plain
     const shapes = new Map<string, Element[]>()
     for (const kid of Array.from(parent.children)) {
       const link = firstLink.get(kid)
-      if (!link || !CARD_TAGS.has(kid.tagName) || (kid.tagName !== 'TR' && kid.children.length < 2) || inText(link, kid)) continue
+      if (!link || !CARD_TAGS.has(kid.tagName) || (kid.tagName !== 'TR' && kid.children.length < 2) || inText(link, kid) || prose(kid)) continue
       const shape = `${kid.tagName} ${kid.getAttribute('class') ?? ''} ${Array.from(kid.children, (c) => c.tagName).join()}`
       const cards = shapes.get(shape) ?? []
       cards.push(kid)
@@ -190,6 +191,9 @@ function cardLists(nested: Set<Element>): Map<HTMLElement, { text: string, plain
   return outermost
 }
 
+// Text straight in the card, as a bullet's sentence around its links has; a
+// card's lines are elements of their own
+const prose = (el: Element) => Array.from(el.childNodes).some((n) => n.nodeType === 3 && n.textContent?.trim())
 const CARD_TAGS = new Set(['LI', 'DIV', 'ARTICLE', 'SECTION', 'TR'])
 
 // Chrome knows from layout, though it counts a display: contents wrapper
