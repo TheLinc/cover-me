@@ -4,7 +4,7 @@ import { ANTHROPIC_MESSAGES_URL, SONNET_BETA_HEADER, SONNET_FIELDS, SONNET_MAX_T
 import { handleCors, json } from '../_shared/cors.ts'
 import { heartbeatJson } from '../_shared/heartbeat-json.ts'
 import { decrypt } from '../_shared/encrypt.ts'
-import { buildLintRetryMessage, lintLetter } from '../_shared/letter-lint.ts'
+import { buildLintRetryMessage, letterLength, lintLetter } from '../_shared/letter-lint.ts'
 import { findOrCreateJobApplication } from '../_shared/job-application.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
@@ -99,6 +99,7 @@ Deno.serve(async (req) => {
     let letter = draft
     const lintOpts = {
       companyName: job.company,
+      resumeText,
       numberSources: [resumeText, job.title, job.description, supplemental ?? ''],
     }
     const draftLint = lintLetter(draft, lintOpts)
@@ -162,16 +163,34 @@ async function callClaude(messages: Array<{ role: 'user' | 'assistant'; content:
 interface LetterVariation {
   signOff: string
   hookPattern: string
+  closePattern: string
 }
 
 const SIGN_OFFS = ['Sincerely,', 'Best regards,', 'Kind regards,']
-const HOOK_PATTERNS = ['Achievement-first', 'Problem-solution', 'Bold specific claim']
+// No Problem-solution hook: it opened by describing the employer back to them
+// (14 of 72 letters in the #206 full eval).
+const HOOK_PATTERNS = ['Achievement-first', 'Bold specific claim']
+// 46 of 72 letters closed "I'd like to walk you through…" with one close
+// for all (#206); banning the phrase only moves the model to the next one.
+// No Question close: hiring guides advise a direct ask, and the judge flagged
+// the question as a template move (42 of 72 letters asked one).
+// No Thanks close either: it turned into its own stock lines ("Thank you for
+// reading", then "I'm grateful for…" once that was banned). The request is
+// picked in code like the hook: with one move, all 72 letters in the #206
+// letters-only run closed "I'd welcome an interview to talk about…". The
+// request names the role, not work from the letter: naming work repeated it,
+// which the judge marked down in that run's successor.
+const CLOSE_PATTERNS = [
+  "I'd welcome an interview for the [short name of the role].",
+  "I'd be glad to talk with you about the [short name of the role].",
+  "Could we arrange an interview for the [short name of the role]?",
+  "I'd like the chance to interview for the [short name of the role].",
+]
+
+const pick = (list: string[]) => list[Math.floor(Math.random() * list.length)]
 
 function pickLetterVariation(): LetterVariation {
-  return {
-    signOff: SIGN_OFFS[Math.floor(Math.random() * SIGN_OFFS.length)],
-    hookPattern: HOOK_PATTERNS[Math.floor(Math.random() * HOOK_PATTERNS.length)],
-  }
+  return { signOff: pick(SIGN_OFFS), hookPattern: pick(HOOK_PATTERNS), closePattern: pick(CLOSE_PATTERNS) }
 }
 
 // ── Prompt (mirrors extension/src/lib/ai/index.ts buildPrompt) ───────────────
@@ -180,20 +199,25 @@ function buildPrompt(
   job: { title: string; company: string; description: string },
   resumeText: string,
   supplemental?: string,
-  variation: LetterVariation = { signOff: 'Kind regards,', hookPattern: 'Achievement-first' },
+  variation: LetterVariation = { signOff: 'Kind regards,', hookPattern: 'Achievement-first', closePattern: CLOSE_PATTERNS[0] },
 ): string {
   const companyKnown = job.company && job.company !== 'Unknown Company'
   const companyLine = companyKnown
     ? `COMPANY: ${job.company}`
     : `COMPANY: Unknown — do not reference a specific company name anywhere in the letter`
 
+  const length = letterLength(resumeText)
+  const lengthLine = length.full
+    ? `Aim for about ${length.aim} words. This resume has the detail for a full letter: tell three accomplishments, the opening one and two in paragraph 2, each the most relevant to the posting and told in one to three sentences with the scope it covered (the team, sites, budget, or users it involved) and how it was done, all from the resume, the resume facts that answer the posting's main requirements (see Paragraph 2), a short reason, and the close.`
+    : `Aim for about ${length.aim} words: two accomplishments of one to three sentences each, the resume facts that answer the posting's main requirements (see Paragraph 2), a short reason, and the close.`
+
   const salutation = companyKnown
     ? `"Dear Hiring Manager," or "Dear ${job.company} Team,"`
     : `"Dear Hiring Manager,"`
 
   const whyCompany = companyKnown
-    ? `Paragraph 3 — Company Fit (2–3 sentences): Name one specific, concrete reason the applicant wants THIS company — derive it only from what is visible in the job description provided (a stated product challenge, a team structure detail, a technical problem described in the posting) — and connect it to something genuine in the applicant's experience. Never draw on assumed external knowledge about the company. Never claim the applicant has personally used, followed, or researched the company's products unless the resume explicitly states it. Specific enough that it could only appear in a letter for this company. Never "I admire your innovative culture." Write about what the employer does or is working on, not about the posting: never restate, quote, or summarize it ("What stands out in the posting", "Your posting pairs X with Y", "The posting asks for"), and never name a duty, tool, or requirement from it that the applicant lacks.`
-    : `Paragraph 3 — Role Fit (2–3 sentences): Since the company is unknown, explain what specifically draws the applicant to this type of role and the challenges it presents, grounded in their experience.`
+    ? `Paragraph 3 — Company Fit (2–3 sentences): Show why the applicant fits this job and wants it. Where the posting names something about the work (its setting, the people it serves, a duty, how the team works) that a resume fact answers, make the link once, in the applicant's own words, inside a sentence about what they have done; never with a set bridge ("much like the … this job includes", "close to the … the role involves", "which parallels…"), which reads as mapping the letter onto the ad. Never start a sentence with the role, the posting, or the employer and what it wants, needs, or calls for ("The role calls for…", "Acme needs…"); that reads as the job ad played back. Make the link with the applicant's strongest evidence and the posting point it matches best, and never as a sentence that only describes the employer or the posting. Never pair a credential with a requirement it doesn't meet (a structural welding certificate beside a pipe-procedure requirement). Then give the applicant's reason for the move in plain words, grounded in a fact from the resume (the work they do now and what it lacks), as far as the resume supports it: the change the resume shows, or one kind of work this job offers that their current one doesn't. Name the move only in words the STEP 0 allowlist supports; a field or setting the applicant has never worked in stays out of the letter even as a destination ("I want to move into critical care" when the resume shows none). Write the reason for this applicant; never use a set frame such as "After [N] years doing X, I want Y", and never pair two vague phrases for the same idea ("wider scope … and more responsibility"). Never invent a feeling, habit, or philosophy the resume doesn't give ("I like work with a fixed day attached", "I'd rather lose ten minutes on a question than a day on a repair"). Do not talk about titles or a "step up", and do not map the applicant's past work onto the employer's systems ("bring my GraphQL work to your API gateway") or flatter the employer's size or users ("its millions of shoppers"). Never describe the employer's business or product back to them on its own ("Acme builds field software for contractors, so every implementation has to land"), and never end on a line that names the employer without a reason ("Acme is where I'd like to take that step"). The paragraph ends on the reason itself, with no line after it. Never draw on assumed external knowledge about the company. Never claim the applicant has personally used, followed, or researched the company's products unless the resume explicitly states it. Never "I admire your innovative culture." Never restate, quote, or summarize the posting ("What stands out in the posting", "Your posting pairs X with Y", "The posting asks for"), never turn its sentence around and claim it ("[Company] needs X, and that is how I work"), and never name a duty, tool, or requirement from it that the applicant lacks.`
+    : `Paragraph 3 — Role Fit (1–2 sentences): Since the company is unknown, explain what specifically draws the applicant to this type of role and the challenges it presents, grounded in their experience.`
 
   const today = new Date().toISOString().split('T')[0]
 
@@ -241,7 +265,7 @@ Apply the tone and approach for the detected industry:
 
 Technology: Direct and efficient. No marketing fluff. Lead with impact at scale — quantified performance, scale handled, cost savings. Include a GitHub or portfolio URL in plain text if present in the resume. Startup roles tolerate personality; large tech companies expect precise, structured language. Use exact stack names from the JD.
 
-Healthcare: Formally professional but not cold. Genuine patient-care language is valued — unlike in tech or finance. Replace hollow virtues ("compassionate," "dedicated") with specific clinical examples that demonstrate those qualities. Lead with specific unit/specialty experience and named certifications (BLS, ACLS, CCRN). Mirror the posting's exact clinical terminology.
+Healthcare: Formally professional but not cold. Genuine patient-care language is valued — unlike in tech or finance. Replace hollow virtues ("compassionate," "dedicated") with specific clinical examples that demonstrate those qualities. Lead with specific unit/specialty experience. State the license, degree, and certifications the posting asks for that the resume holds, in one short sentence. Mirror the posting's exact clinical terminology.
 
 Finance: High formality. Error-free prose is a baseline competency signal — a typo implies errors in models and memos. Fewer words are stronger than more. Lead with specific quantified financial results: AUM, deal size, cost savings, budget managed. Reference the specific group, desk, or coverage sector by name. State credentials (CPA, CFA, Series 7/63) early.
 
@@ -257,28 +281,34 @@ STRUCTURE — 4 paragraphs, salutation, sign-off:
 
 Salutation: ${salutation}
 
-Paragraph 1 — Hook (2–3 sentences):
-Lead with what the applicant offers, not what they want. Use one of these proven opening patterns:
+${lengthLine} Size each paragraph to its job: the opening about 40–60 words, Paragraph 2 about 90–130, Paragraph 3 about 40–70, the close one or two short sentences. Reach that length with the resume's facts, never with padding. Never restate a fact to fill a paragraph or reach a word count, and never bridge to the next point with a sentence like "The other record I keep is…" or "Accounts payable was the other place I made a change". Name the job title once in the whole letter; after that, "the role".
+
+Paragraph 1 — Hook (1–3 sentences):
+Lead with what the applicant offers, not what they want. Tell the applicant's accomplishment that best matches the role's main work here, with its result and any context the resume gives, and add no other resume item, and say which role they are applying for in its own short sentence, first or last in the paragraph (never joined onto another clause with "and I'm applying"). Credentials the role requires go in their own short sentence, never stacked onto the accomplishment. The opening is about the applicant: never open by describing the employer, its product, or the role back to them ("Acme builds internal tools in React", "Your Tier 2 queue gets whatever Tier 1 couldn't close"), and never with a general maxim ("Bad data is cheapest to fix early"). Use one of these opening patterns:
 - Achievement-first: a quantified result from past work that maps directly to a top requirement of this role
-- Problem-solution: name a specific challenge stated in the JD as this employer's own (name them), then signal it has been solved before. Never a general maxim ("Bad data is cheapest to fix early")
 - Bold specific claim: a confident statement of a real accomplishment, striking enough to demand attention
 - Referral: name a mutual contact explicitly in the first sentence if one exists
 
 Default to the ${variation.hookPattern} pattern for this letter unless the resume cannot support it; a genuine referral always takes precedence over the default.
 
-Whichever pattern you pick, build the hook only from the STEP 0 allowlist. The opening sentence is where claims most often inflate to flatter the employer — never cast the applicant as having built the employer's type of product, served its client type, or worked in its industry unless the resume shows it. Name the domain the applicant actually worked in; if it differs from the employer's, lead with transferable skill, never a borrowed domain.
+The opening sentence carries one figure at most, and its accomplishment is one of the letter's ${length.full ? 'three' : 'two'} (see Paragraph 2). Whichever pattern you pick, build the hook only from the STEP 0 allowlist. The opening sentence is where claims most often inflate to flatter the employer — never cast the applicant as having built the employer's type of product, served its client type, or worked in its industry unless the resume shows it. Name the domain the applicant actually worked in; if it differs from the employer's, lead with transferable skill, never a borrowed domain.
 
 Never open with a generic applying-to phrase ("I am writing to apply," "I am excited to apply," "My name is") — full list under ABSOLUTE PROHIBITIONS.
 
-Paragraph 2 — Core Proof (4–6 sentences):
-Present at most two accomplishments from the resume that directly map to the top requirements in the JD. Give each one number at most, the one that matters most; where the resume has several figures for an achievement, pick one and let the rest go. A paragraph that stacks figures reads like a resume pasted into prose.
+Paragraph 2 — Core Proof (3–6 sentences):
+${length.full
+    ? 'The whole letter tells three accomplishments, and the one in the opening counts as one of them. This paragraph tells two more, different ones, each with its own time or place — what the applicant did and the result, with the situation only if the resume gives one — and never repeats the opening one or its numbers.'
+    : 'The whole letter tells two accomplishments (one if the resume has only one worth telling), and the one in the opening counts as one of them. This paragraph tells a second, different accomplishment — what the applicant did and the result, with the situation only if the resume gives one — and never repeats the opening one or its numbers.'} ${length.full
+    ? 'Where the resume has several lines about the same work at the same job (a program and the measures it introduced, a project and its cost and payback), tell them together as one story of two or three sentences; never join lines from different jobs or from unrelated work.'
+    : 'Where the resume gives only one line for an accomplishment, write that line in plain words, in one or two sentences.'} Never add a cause, a process, steps, what was taught, or a motive ("Rather than keep clearing the exceptions, I went after the cause") that the resume does not state. A thin, true sentence beats a vivid invented one. Never guess facts the resume does not state: an employer's industry, size, or location from its name, a length of time the resume doesn't give ("three years of mentoring" when it only says "mentor two junior engineers"), or a claim like "a process I can run without supervision". Start it with its own place ("At Lakeshore, …"). If the resume has nothing else worth telling, use this paragraph for the opening accomplishment's situation and method, without repeating its result. Each accomplishment ends with its result. After the accomplishments, use the resume's other facts that answer the posting's main requirements: the scope of the applicant's current job (caseload, volume, team, budget), a duty the posting names that the resume shows, and earlier work the posting asks for. Tell each as what the applicant does or did, inside the job it belongs to ("At Holloway I also place the weekly flour and dairy order"), never as a description of the unit or employer ("The unit has 28 beds"). Join related facts into a sentence that makes one point; never one sentence per resume line, and never a job's or certificate's dates or years ("From January 2018 to May 2019", "in 2017"). Skip the routine duties of an early job when the current one shows more. Leave out resume items the posting doesn't ask for, and never list tools or duties in a row. A short letter that drops the evidence the posting asks for is thin, not concise. A paragraph that walks through the resume item by item reads like a resume pasted into prose, which is the most common reason a letter reads as AI-written. Give each accomplishment one number at most, the one that matters most, and never more than two figures in one sentence; where the resume has several figures for an achievement, pick one and let the rest go. Every detail of the story — the situation, the people involved, how it was done — must come from the resume or the candidate's verified context; where the resume gives no situation, state the work plainly instead of inventing one.
 
-This is NOT a resume restatement — give the number its narrative context. "When the deployment pipeline was blocking four engineers, I rebuilt it from scratch, and deployment time fell 40%" is the cover letter version of a resume bullet. Use the JD's exact terminology when naming the requirement being addressed. NEVER invent a metric: every percentage, dollar figure, or count must come from the resume or the candidate's verified context. Where the resume has no number, use concrete scope (team size, user count, transaction volume, timeline) or qualitative impact — never a fabricated stat, which reads well but collapses the moment an interviewer asks how it was measured.
+This is NOT a resume restatement: tell each accomplishment as a sentence about what the applicant did and what came of it, with the situation only where the resume gives one. Use the JD's exact terminology when naming the requirement being addressed. NEVER invent a metric: every percentage, dollar figure, or count must come from the resume or the candidate's verified context. Where the resume has no number, use concrete scope (team size, user count, transaction volume, timeline) or qualitative impact — never a fabricated stat, which reads well but collapses the moment an interviewer asks how it was measured.
 
 ${whyCompany}
 
-Paragraph 4 — Close + Call to Action (2–3 sentences):
-Name one specific piece of the applicant's own work they would want to talk through. Do not recap the letter or list skills again, and never name a duty, tool, or requirement from the posting that the resume does not show. End with a direct, confident request for a conversation — not passive, not demanding.
+Paragraph 4 — Close + Call to Action (1–2 sentences):
+The close adds nothing new and repeats nothing: no project, fact, figure, or skill, whether or not the letter has given it. Close with this one sentence, filling the brackets: "${variation.closePattern}" Never a stock line such as "Thank you for reading", "I'm grateful for your consideration", or "I'd like to interview for the role", and never an order ("Please invite me to interview").
+Make one request, with nothing added after it ("I can meet whenever suits your team" is filler). Do not ask the employer questions about their team or work, do not offer to bring, show, or walk them through anything, and do not recap the letter. The request is direct and confident — not passive, not demanding.
 
 Sign-off: "${variation.signOff}" on its own line, then a blank line, then the applicant's name from the resume.
 
@@ -286,13 +316,13 @@ Sign-off: "${variation.signOff}" on its own line, then a blank line, then the ap
 
 LANGUAGE RULES:
 
-Keywords: Embed 5–10 JD hard-skill keywords (tools, certifications, methodologies, domain terms) that are on the STEP 0 allowlist — naturally in sentences, never as a list, never more than twice each, in the JD's exact phrasing. Only hard skills; soft-skill keywords ("communication," "team player") score nothing in ATS. When the JD requires something the applicant lacks, describe the closest real capability they do have without naming the missing item or the gap.
+Keywords: Where an accomplishment you tell used a tool, certification, or method the JD names and the STEP 0 allowlist contains, call it by the JD's exact name. Name a skill only inside the story it was part of; never list tools, and never more than two tool names in one sentence. A cover letter is read by a person, not scored for keywords. When the JD requires something the applicant lacks, describe the closest real capability they do have without naming the missing item or the gap. When the missing item is a credential, name the nearest one the applicant holds (BLS when the posting wants another life-support card, a lower level of the same qualification) in the credentials sentence, never beside the requirement as if it met it.
 
 Action verbs: Strong past-tense for past roles: Led, Built, Designed, Optimized, Launched, Reduced, Generated, Negotiated, Delivered, Streamlined, Partnered, Authored, Exceeded, Drove, Shipped, Architected, Scaled, Mentored. Present tense for current role only.
 
-Voice: Vary sentence length — short punchy sentences mixed with longer ones. If any paragraph reads like a press release or a template essay, rewrite it. Each paragraph should feel distinct in rhythm.
+Voice: Vary sentence length naturally. State each fact and move on. Never add a sentence or clause that explains why a fact matters ("so the fix mattered", "which matters on a team that edits the same files"), draws a lesson from it ("That taught me to check the data first"), or sums it up with a general truth or a memorable line ("Payroll is where mistakes get noticed fastest", "Nothing clever was involved"). Never follow a fact with a "so…" clause or a sentence that says it again in other words ("I integrated a GraphQL layer in their place, so the data came through one layer instead of four"). No stock lines: "[Company] is where I'd like to take that step", "I'd bring the same attention to…", and no filler transitions like "Separately,". No emotive or polished flourishes ("the families waiting on news about them", "shape it as well as run it", "every page I touch"), and no filler details like the applicant's city or start date unless the posting needs them. Those lines are what make a letter read as AI-written. Never pad: no resume items the posting doesn't ask for, no fact said twice, no guessed detail. Don't start most sentences with "I": vary how sentences open ("Last year…", "The dashboards…", "At Ferris…"). If any paragraph reads like a press release or a template essay, rewrite it.
 
-Personalization: Reference the company by name at least twice. Include at least one concrete detail drawn from the job description itself — a specific product area, team structure, workflow, or stated challenge — that shows the applicant read this posting carefully. (Echoing the employer's tech stack back is not personalization — see ABSOLUTE PROHIBITIONS.)
+Personalization: Name the company in full once and by name at least once more, using a short form after the first ("Acme" for "Acme Software"); "you" is fine beyond that. The full name three times reads as a template filling in a blank. Include one concrete detail from the job description — a product area, a tool on the allowlist, a team setup — inside a sentence about the applicant ("I've run month-end close in [a system both the posting and the resume name], which your team uses"), never as a description of the employer. (Echoing the employer's tech stack back is not personalization — see ABSOLUTE PROHIBITIONS.)
 
 ---
 
@@ -305,13 +335,13 @@ Exemplar A (technology):
 """
 Dear Northlight Team,
 
-Last year I cut checkout latency at Ferris Retail from 900ms to 210ms, and the conversion lift paid for my salary twice over. Northlight has the same shape of problem: a React storefront that has outgrown its data layer. I know that work well.
+Last year our checkout pages at Ferris Retail were loading every product's full record before they could render. Working with our designer, I listed the fields each page actually showed and rebuilt the product-listing pipeline in TypeScript and GraphQL to fetch only those, which cut checkout latency from 900ms to 210ms. I'm applying for the Senior Frontend Engineer role at Northlight.
 
-I owned Ferris's storefront platform for three years. I rebuilt the product-listing pipeline in TypeScript and GraphQL, moved image delivery behind edge caching, and wrote the load tests that let us ship during peak season without an incident. Most of that work shipped behind feature flags to 60,000 daily shoppers, so rollbacks were boring, which is how I like them. When our two-person SRE team got buried in alert noise, I took the pager for a quarter and cut false alarms roughly in half, mostly by deleting dashboards nobody read.
+In 2023, Ferris moved off its Rails monolith, and the final cutover fell to me. Both systems had run side by side for a month while we moved checkout first and customer accounts last. I wrote the runbook for the last night and ran the database switch myself, and the store's 60,000 daily shoppers came back the next morning to the new system without a lost order. Day to day I share the storefront's React codebase with two other engineers and review most of the front-end pull requests before they ship.
 
-Northlight is moving off a legacy Rails monolith. I lived through one of those, including the month both systems ran side by side and every bug had two possible homes. Northlight's two-quarter timeline is tight but workable; ours took three, and I can name exactly where we lost the extra one. A pod of five engineers and a designer is the setup I have spent the last two years working in.
+Our two newest hires send me their first pull requests to review. Most of my work so far has been one storefront's page speed, and I want a role where the data layer is more of the job.
 
-I'd like to hear where Northlight's migration stands and which parts of the old system still have no owner. If it would help to talk through how the Ferris migration actually went, I would welcome the conversation.
+I'd welcome an interview for the senior frontend role.
 
 Sincerely,
 
@@ -322,7 +352,7 @@ Exemplar B (healthcare, opening only — the register shifts by industry, the co
 """
 Dear Riverbend Medical Team,
 
-Six years on a 32-bed med-surg unit taught me to spot a deteriorating patient before the monitor does. Riverbend needs a nurse who can carry a full caseload on nights without dropping details; that is a fair description of my last two years at St. Anne's, where I managed six to seven patients a shift, precepted three new graduates, and kept a clean medication record across roughly 4,000 administrations.
+On the cardiac step-down unit at Lakeview General, our telemetry alarms were going unanswered for minutes at a time on nights. With our charge nurse I rewrote the unit's alarm-response checklist, and missed-alarm reports fell from eleven a quarter to two. I'm applying for the night-shift RN role at Riverbend.
 """
 
 ---
@@ -336,11 +366,11 @@ Clichés (never use): hard worker, hard-working, team player, detail-oriented, r
 AI-flagged vocabulary (never use, in any form or tense): delve, realm, tapestry, beacon, intricate, showcase, pivotal, paramount, holistic, multifaceted, synergy, synergistic, testament, underscore, meticulous, transformative, groundbreaking, revolutionize, leverage, utilize, robust, seamless, honed, fostered, garnered, empower, embark, unlock, unleash, spearheaded, orchestrated, cutting-edge, state-of-the-art, crucial, innovative
 The employer's name is exempt: if the company is called "Beacon Retail Group", write "Beacon Retail Group".
 
-AI-tell patterns (never produce these): repeating the same "by doing X, I achieved Y" sentence structure in every paragraph; uniform sentence rhythm with no variation; excessive politeness throughout; claiming passion or dedication without a single specific example; using the company name exactly once in a formulaic opener and never again; the triadic-list tic (packaging every description as three parallel items — "scalable, maintainable, and reliable"); "not only… but also" constructions; formal connective openers ("Moreover," "Furthermore," "Additionally," "In today's fast-paced world"); filler framing ("it's important to note," "at the end of the day"); more than TWO em-dashes in the entire letter — prefer separate sentences or commas; a maxim or slogan as the opening line; "X, not Y" lines ("a habit for me, not an afterthought"); announcing a point before making it ("My strongest qualification is simple:"); naming what an example shows after giving it ("That is onboarding in practice"); a closing that sums up the skills
+AI-tell patterns (never produce these): repeating the same "by doing X, I achieved Y" sentence structure in every paragraph; uniform sentence rhythm with no variation; excessive politeness throughout; claiming passion or dedication without a single specific example; using the company name exactly once in a formulaic opener and never again; the triadic-list tic (packaging every description as three parallel items — "scalable, maintainable, and reliable"); "not only… but also" constructions; formal connective openers ("Moreover," "Furthermore," "Additionally," "In today's fast-paced world"); filler framing ("it's important to note," "at the end of the day"); more than TWO em-dashes in the entire letter — prefer separate sentences or commas; a maxim or slogan as the opening line; "X, not Y" lines ("a habit for me, not an afterthought"); announcing a point before making it ("My strongest qualification is simple:"); naming what an example shows after giving it ("That is onboarding in practice", "That's the work I do every month"); a short verdict on an employer detail ("I like that setup.", "I know that view."); a sentence on why a fact matters or what it taught the applicant ("That taught me to check the data first"); a question to the employer about their team or work; offering to "walk you through" or "talk through" something; a closing that sums up the skills
 
 Passive close phrases (never use): I hope to hear from you, feel free to contact me, I would be happy to discuss, I look forward to hearing from you, at your earliest convenience, thanks for your time
 
-No fabricated qualifications: Never mention a technology, tool, certification, license, method, or industry/domain that does not appear in the applicant's resume. This prohibition covers every framing — including "adjacent to", "similar to", "equivalent to", "mirrors", and compound phrasings like "Redux-adjacent state management (Zustand)" or "e-commerce-adjacent". It holds in every field: a tech stack (tech), a credential the JD prefers (ACLS, CPA, PMP), or a sector the applicant never worked in. If the JD lists something the applicant does not have, do not reference it at all — describe what the candidate can genuinely do instead. The ban covers every sentence frame, including honest and forward-looking ones: never name a missing requirement as an aspiration, destination, or quotation ("ready to step into [X]", "a foundation to build on in an [X] setting", "the posting names [X] accountability — a step up for me"). The word itself must not appear. Facts about the employer's team, product, or unit drawn from the JD may appear when describing the employer — never inside a sentence about the applicant's own experience, readiness, or growth. When an employer fact is itself a requirement the applicant lacks — their EHR system, their stack, a certification — the term may not appear anywhere in the letter in any capacity ("the transition to [X] is an adjustment I can make" still names it); state only what the applicant genuinely uses and let the reader draw the transfer. Never enumerate or echo back the employer's requirements as proof of fit (e.g. "Your stack of React, Redux, Jest, Cypress is exactly my toolkit") — this fabricates ownership of every item and reads as mirroring the JD, not as evidence of real experience.
+No fabricated qualifications: Never mention a technology, tool, certification, license, method, or industry/domain that does not appear in the applicant's resume. This prohibition covers every framing — including "adjacent to", "similar to", "equivalent to", "mirrors", and compound phrasings like "Redux-adjacent state management (Zustand)" or "e-commerce-adjacent". It holds in every field: a tech stack (tech), a credential the JD prefers (ACLS, CPA, PMP), or a sector the applicant never worked in. If the JD lists something the applicant does not have, do not reference it at all — describe what the candidate can genuinely do instead. The ban covers every sentence frame, including honest and forward-looking ones: never name a missing requirement as an aspiration, destination, or quotation ("ready to step into [X]", "a foundation to build on in an [X] setting", "the posting names [X] accountability — a step up for me"). The word itself must not appear. Facts about the employer's team, product, or unit drawn from the JD may appear when describing the employer, including in one sentence that pairs the posting's point with what the applicant has done (see Paragraph 3) — never claimed as the applicant's own experience, readiness, or growth. When an employer fact is itself a requirement the applicant lacks — their EHR system, their stack, a certification — the term may not appear anywhere in the letter in any capacity ("the transition to [X] is an adjustment I can make" still names it); state only what the applicant genuinely uses and let the reader draw the transfer. Never enumerate or echo back the employer's requirements as proof of fit (e.g. "Your stack of React, Redux, Jest, Cypress is exactly my toolkit") — this fabricates ownership of every item and reads as mirroring the JD, not as evidence of real experience.
 
 No fabricated personal knowledge: Never claim the applicant has personally followed, used, or researched the company's products, history, or evolution unless it is explicitly stated in the resume. All company-specific details must be derivable solely from the job description provided.
 
@@ -348,7 +378,7 @@ No fabricated personal knowledge: Never claim the applicant has personally follo
 
 FORMAT RULES:
 - Plain text only — no markdown, no # headers, no **bold**, no bullet points, no asterisks, no dashes as list markers
-- 250–400 words total (excluding salutation and sign-off)
+- About ${length.aim} words total (excluding salutation and sign-off)
 - No subject line, date, or postal address block
 - No contact details anywhere in the letter body — never include phone numbers, email addresses, or mailing addresses. The recruiter already has them; adding them reads as filler and wastes word count
 - No URLs in the closing paragraph — if the field values a portfolio or GitHub link and it appears in the resume, it may appear once inline inside paragraph 2 (core proof) as evidence of real work; never as a standalone "see more of my work at" line and never in the closing

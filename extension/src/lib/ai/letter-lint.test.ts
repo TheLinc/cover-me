@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { extractNumbers, lintLetter } from './letter-lint'
+import { buildLintRetryMessage, extractNumbers, letterLength, lintLetter } from './letter-lint'
 
 const echoes = (sentence: string) =>
   lintLetter(sentence).violations.some((v) => v.startsWith('Restates the job posting'))
@@ -86,6 +86,7 @@ describe('templated sentence shapes', () => {
   const flagged = (prefix: string, ...paragraphs: string[]) =>
     lintLetter(letter(...paragraphs), { companyName: 'Acme' }).violations.some((v) => v.startsWith(prefix))
   const opener = 'At Halcyon I cut page load from 1.2s to 400ms.'
+  const close = 'Could we talk next week?'
 
   test.each([
     'My strongest qualification is simple: I find data problems early.',
@@ -98,11 +99,49 @@ describe('templated sentence shapes', () => {
   test.each([
     'That is data onboarding in practice.',
     'This is what worker activation looks like in practice.',
-  ])('label: %s', (s) => expect(flagged('Labels', opener, s)).toBe(true))
+    // #206: the tidy line after an example
+    'I closed the books in four days. That is the work I do every month.',
+    "I closed the books in four days. That's how I already work at Fernwood, where the counts close by noon.",
+    "I closed the books in four days. That's exactly what I've been doing.",
+    "I trained four new hires on the close. That's the habit I'd bring to Pinnacle.",
+    "I closed the books in four days. That's the standard I already hold myself to.",
+    "I closed the books in four days. That's the standard I want to work to.",
+  ])('label: %s', (s) => expect(flagged('Labels', opener, s, close)).toBe(true))
   test.each([
     'I put that plan into practice across three warehouses.',
     'This is my eighth year in practice as a family physician.',
-  ])('label leaves alone: %s', (s) => expect(flagged('Labels', opener, s)).toBe(false))
+    // A line that adds a new fact is not a label.
+    "I ran the vendor bid in 2022. That's how I met the plant manager who later hired me.",
+    'I audited the stockroom. That is what I learned there: the counts were off by a shelf.',
+    "I spent two years on structural steel. That's where I learned that most bad welds are decided before the arc starts.",
+    // Mid-paragraph, it leads into what follows: a close asking a question.
+    'I can bring the cutover plan. That is the part I would want to hear about first. Could we talk next week?',
+  ])('label leaves alone: %s', (s) => expect(flagged('Labels', opener, s, close)).toBe(false))
+  // The close names what the applicant wants to talk about; that is its job.
+  test.each([
+    'Could we talk next week about the Halcyon cutover? That is exactly the conversation I want to have.',
+    'Could we set up a short call? The Halcyon cutover is the first thing I would raise. That is the project I would bring to a first conversation.',
+  ])('label leaves the close alone: %s', (s) => expect(flagged('Labels', opener, s)).toBe(false))
+  test('label message quotes the line, so the retry can find it', () => {
+    // The full eval's welder retry kept the line when the message only gave stock examples.
+    const v = lintLetter(letter(opener, "I kept zero rework on both jobs. That's the standard I'd bring to Gulf Coast Energy Services.", close)).violations
+    expect(v.find((x) => x.startsWith('Labels'))).toContain("That's the standard I'd bring to Gulf Coast Energy Services.")
+  })
+
+  // A short reaction to an employer detail: the judge called these "punchy
+  // lines placed for rhythm" in the #206 full eval (12 of 72 letters).
+  test.each([
+    'Your analysts sit with the merchandising team. I like that setup.',
+    'The role reports to the plant manager. I know that view.',
+    'Each analyst owns one category. I like that kind of seat.',
+  ])('reaction line: %s', (s) => expect(flagged('Reacts', opener, s, close)).toBe(true))
+  test.each([
+    'I know that warehouse well, because I ran its night shift for two years.',
+    'I like that the team reviews every query before it ships, since my first manager did the same.',
+  ])('reaction line leaves a sentence with a fact alone: %s', (s) => expect(flagged('Reacts', opener, s, close)).toBe(false))
+  test('reaction line leaves the close alone', () => {
+    expect(flagged('Reacts', opener, 'Could we talk next week? I like that idea.')).toBe(false)
+  })
 
   test.each([
     'Documentation is a habit for me, not an afterthought.',
@@ -166,4 +205,331 @@ describe('templated sentence shapes', () => {
     'I would welcome the chance to walk you through my experience with the Ferris migration.',
     'If useful, I can share my background in clinical audits. Could we talk next week?',
   ])('closing recap leaves alone: %s', (close) => expect(flagged('The closing', opener, close)).toBe(false))
+})
+
+// The judge flagged the full name repeated in 22 of 72 letters (#206). The
+// short name counts toward the two-mention minimum; the full name is capped.
+describe('company name', () => {
+  const letter = (...paragraphs: string[]) => `Dear Hiring Manager,\n\n${paragraphs.join('\n\n')}\n\nKind regards,\nAlex Doe`
+  const nameViolations = (companyName: string, ...paragraphs: string[]) =>
+    lintLetter(letter(...paragraphs), { companyName }).violations.filter((v) => /company|full name/i.test(v))
+
+  // The full eval's "Beacon" letters: the short form tripped the "beacon" rule,
+  // and the retry dropped the name to one mention.
+  test('the short name is the employer, not an AI-flagged word', () => {
+    const v = lintLetter(letter('I want to join Beacon Retail Group.', 'Beacon ships weekly, and so did I.'), { companyName: 'Beacon Retail Group' }).violations
+    expect(v.filter((x) => x.includes('"beacon"'))).toEqual([])
+  })
+  test('the word itself is still flagged', () => {
+    const v = lintLetter(letter('I want to join Beacon Retail Group.', 'Beacon ships weekly. My work was a beacon for the team.'), { companyName: 'Beacon Retail Group' }).violations
+    expect(v.filter((x) => x.includes('"beacon"'))).toHaveLength(1)
+  })
+
+  test('counts the short name toward the two mentions', () => {
+    expect(nameViolations('Acme Software', 'I want to join Acme Software.', 'Acme ships weekly, and so did I.')).toEqual([])
+  })
+  test('flags a single mention', () => {
+    expect(nameViolations('Acme Software', 'I want to join Acme Software.')).toHaveLength(1)
+  })
+  test('flags a letter that never uses the full name', () => {
+    expect(nameViolations('Acme Software', 'I want to join Acme.', 'Acme ships weekly.')).toHaveLength(1)
+  })
+  test('flags the full name three times', () => {
+    expect(nameViolations('Meridian Logistics UK',
+      'Meridian Logistics UK runs 40 depots.', 'At Meridian Logistics UK I would own routing.', 'Could Meridian Logistics UK talk next week?')).toHaveLength(1)
+  })
+  // Full eval run 43274484966: "the Department" didn't count, because the short
+  // name came out as "U.S".
+  test('skips an abbreviation when picking the short name', () => {
+    expect(nameViolations('U.S. Department of Labor', 'I want to join the U.S. Department of Labor.', 'The Department enforces wage rules.')).toEqual([])
+  })
+  test('steers the retry away from adding a label line for the second mention', () => {
+    // The same run's retry added "That's the habit I'd bring to Aurelia's design team."
+    const v = nameViolations('Aurelia Medical', 'I want to join Aurelia Medical.')
+    expect(v[0]).toContain('not a line about what the applicant would bring')
+  })
+  test('does not tell the retry which short form to use', () => {
+    // The first word is often the wrong short form: "Valley" for Valley Medical Center.
+    const v = nameViolations('Valley Medical Center',
+      'Valley Medical Center runs 40 beds.', 'At Valley Medical Center I would own intake.', 'Could Valley Medical Center talk next week?')
+    expect(v).toHaveLength(1)
+    expect(v[0]).not.toContain('"Valley"')
+  })
+  test('leaves the salutation out of the full-name cap', () => {
+    const v = lintLetter(`Dear Meridian Logistics UK Team,\n\n${['Meridian Logistics UK runs 40 depots.', 'At Meridian Logistics UK I would own routing.'].join('\n\n')}\n\nKind regards,\nAlex Doe`,
+      { companyName: 'Meridian Logistics UK' }).violations
+    expect(v.filter((x) => x.startsWith('Repeats the company'))).toEqual([])
+  })
+  test('leaves a one-word name used three times alone', () => {
+    expect(nameViolations('Northlight', 'Northlight runs 40 depots.', 'At Northlight I would own routing.', 'Could Northlight talk next week?')).toEqual([])
+  })
+  test('does not count a common word that only matches in lower case', () => {
+    expect(nameViolations('General Mills', 'I want to join General Mills.', 'In general, I ship weekly.')).toHaveLength(1)
+  })
+})
+
+// "[Company] needs X, and that is the work I do": the judge flagged a posting
+// restatement in 27 of 72 letters (#206).
+describe('posting restatement pivot', () => {
+  const lintPivot = (companyName: string, ...paragraphs: string[]) =>
+    lintLetter(`Dear Hiring Manager,\n\n${paragraphs.join('\n\n')}\n\nKind regards,\nAlex Doe`, { companyName })
+      .violations.some((v) => v.startsWith('Turns the posting'))
+  const pivots = (companyName: string, sentence: string) =>
+    lintPivot(companyName, `At Halcyon I cut page load from 1.2s to 400ms. ${sentence}`, 'Could we talk next week?')
+
+  // The Question and Next step closes name an employer detail and what to raise first.
+  test.each([
+    'Acme wants the close cut to five days by spring, and that is the first thing I would ask about. Could we talk next week?',
+    "Your team needs the migration done by June; that's the part I would want to hear about first.",
+  ])('leaves the close alone: %s', (close) => expect(lintPivot('Acme', 'At Halcyon I cut page load from 1.2s to 400ms.', close)).toBe(false))
+
+  test.each([
+    ['Acme Software', "Acme Software needs a Frontend Developer to build internal tools in React and TypeScript, and that is the work I've been doing."],
+    ['Harbor & Vine', "Harbor & Vine needs inventory ordering and receiving done right every day, and I've done that work for four years."],
+    ['Valley Medical Center', 'Valley Medical Center needs a technician who keeps that accuracy on every order, and that is how I already work.'],
+    ['Riverbend Medical', "Riverbend needs a nurse who can carry a full caseload on nights; that is exactly what I did for two years at St. Anne's."],
+    ['Acme', "You're looking for someone to own the close, and that's the job I have now."],
+    ['Acme Software', "Acme's hiring a developer for internal tools, which is what I've built since 2021."],
+    ['Acme', 'You need someone who can own the month-end close, and that is exactly what I do.'],
+    ['Acme', "Acme is looking for an analyst who can clean messy data, which is what I've done since 2021."],
+  ])('flags (%s): %s', (company, s) => expect(pivots(company, s)).toBe(true))
+  test('pivot message quotes the sentence', () => {
+    const s = 'Acme Software needs a developer for internal tools, and that is the work I do.'
+    const v = lintLetter(`Dear Hiring Manager,\n\n${s}\n\nCould we talk next week?\n\nKind regards,\nAlex Doe`, { companyName: 'Acme Software' }).violations
+    expect(v.find((x) => x.startsWith('Turns the posting'))).toContain(s)
+  })
+
+  test.each([
+    ['Riverbend Medical', 'Riverbend needs a nurse who can carry a full caseload on nights without dropping details.'],
+    ['Acme', 'Acme is hiring a second analyst because the first one moved to finance, and that team is still four people.'],
+    ['Acme', 'When Acme needed a new vendor in 2022, I ran the bid, and that is how I met the team.'],
+    ['Acme', 'If you need weekend cover, I can start on Saturdays.'],
+    ['Acme Software', "You need someone on nights at Acme Software, and that's a shift my family can support."],
+    // The need is not the sentence's subject, or the turn is a reason or a time.
+    ['Acme', 'I would like to hear what your team needs most in the first quarter, and that is where I would start our conversation.'],
+    ['Acme', 'You want the close in five days, which is why I would start with the reconciliations.'],
+    ['Acme', "Acme's needs shifted in 2023, and that is when I joined the vendor team."],
+    ['Acme', 'Acme wants faster month-end reporting, and this year I cut ours from ten days to four.'],
+  ])('leaves alone (%s): %s', (company, s) => expect(pivots(company, s)).toBe(false))
+})
+
+// What the judge still flagged on the #206 full eval (run 43274484966):
+// commentary on the facts, questions in the close, openers about the employer.
+describe('commentary and framing', () => {
+  const letter = (...paragraphs: string[]) => `Dear Hiring Manager,\n\n${paragraphs.join('\n\n')}\n\nKind regards,\nAlex Doe`
+  const flagged = (prefix: string, ...paragraphs: string[]) =>
+    lintLetter(letter(...paragraphs), { companyName: 'Acme' }).violations.some((v) => v.startsWith(prefix))
+  const opener = 'At Halcyon I cut page load from 1.2s to 400ms.'
+  const close = 'Could we talk next week?'
+
+  test.each([
+    'Acme builds internal tools in React and TypeScript for its own staff.',
+    "Your Tier 2 queue gets whatever Tier 1 couldn't close, so the handoff decides how fast a case moves.",
+  ])('opener about the employer: %s', (s) => expect(flagged('Opens by describing the employer', s, close)).toBe(true))
+  test.each([
+    opener,
+    "Jordan Lee, who leads Acme's data team, suggested I apply.",
+    "Acme's Jordan Lee suggested I apply for the analyst role.",
+  ])('opener leaves alone: %s', (s) => expect(flagged('Opens by describing the employer', s, close)).toBe(false))
+
+  test('flags a question about the employer in the close', () => {
+    expect(flagged('Asks the employer a question', opener, 'Which parts of the old system still have no owner? Could we talk next week?')).toBe(true)
+  })
+  test.each([
+    'Could we talk next week?',
+    'When would suit you for a short call?',
+  ])('close question leaves the request alone: %s', (c) => expect(flagged('Asks the employer a question', opener, c)).toBe(false))
+
+  test.each([
+    'I checked every feed by hand. That taught me to check the data before trusting any report.',
+    'It gave us a safer way to change shared components, which matters on a team that edits the same files.',
+    'A slow first paint gets noticed at that volume, so the fix mattered.',
+  ])('commentary: %s', (s) => expect(flagged('Explains what a fact means', opener, s, close)).toBe(true))
+  test.each([
+    'My first manager taught me SQL in my first month.',
+    'I tracked which matters were billable for each client.',
+  ])('commentary leaves a fact alone: %s', (s) => expect(flagged('Explains what a fact means', opener, s, close)).toBe(false))
+
+  // The pivot split in two, from a real letter after the #206 changes.
+  test('flags the pivot split across two sentences', () => {
+    const v = lintLetter(letter(opener, 'RandomTrees has an immediate opening for someone who can move between web, mobile, and cloud work. That\'s how my current job runs.', close), { companyName: 'RandomTrees' }).violations
+    expect(v.some((x) => x.startsWith('Turns the posting'))).toBe(true)
+  })
+  test('leaves a follow-on fact alone', () => {
+    const v = lintLetter(letter(opener, 'Acme is hiring for its Leeds depot. That is a 20-minute drive from my home.', close), { companyName: 'Acme' }).violations
+    expect(v.some((x) => x.startsWith('Turns the posting'))).toBe(false)
+  })
+})
+
+test('the retry asks for detail, not more figures, when it must add words', () => {
+  // A retry that padded with more resume items turned paragraph 3 into a list.
+  expect(buildLintRetryMessage(['x'])).toContain('not more figures or a list of other resume items')
+})
+
+// A proof paragraph that lists the whole resume: 8 sentences in a letter
+// generated after the #206 changes. The prompt asks for 4–6 and two accomplishments.
+describe('long proof paragraph', () => {
+  const letter = (...paragraphs: string[]) => `Dear Hiring Manager,\n\n${paragraphs.join('\n\n')}\n\nKind regards,\nAlex Doe`
+  const flagged = (middle: string) =>
+    lintLetter(letter('At Halcyon I cut page load from 1.2s to 400ms.', middle, 'Could we talk next week?')).violations.some((v) => v.startsWith('Paragraph 2 lists'))
+  const s = (n: number) => Array.from({ length: n }, (_, i) => `I shipped release ${i + 1} on time.`).join(' ')
+  test('flags eight sentences', () => expect(flagged(s(8))).toBe(true))
+  test('leaves six alone', () => expect(flagged(s(6))).toBe(false))
+})
+
+// A close that introduced a side project with "more than 400 GitHub stars".
+describe('new figure in the close', () => {
+  const letter = (...paragraphs: string[]) => `Dear Hiring Manager,\n\n${paragraphs.join('\n\n')}\n\nKind regards,\nAlex Doe`
+  const flagged = (close: string) =>
+    lintLetter(letter('At Halcyon I cut page load from 1.2s to 400ms for 60,000 users.', close)).violations.some((v) => v.startsWith('Adds a new figure'))
+  test('flags a figure the letter has not given', () => {
+    expect(flagged('OpenShelf has more than 900 GitHub stars. I\'d welcome an interview.')).toBe(true)
+  })
+  test('leaves a figure from earlier in the letter alone', () => {
+    expect(flagged('I\'d welcome an interview to discuss the 60,000-user dashboards.')).toBe(false)
+  })
+  test.each([
+    'Could we set up a 20-minute call next week?',
+    'Could we find 30 minutes in the next two weeks?',
+  ])('leaves a meeting length alone: %s', (c) => expect(flagged(c)).toBe(false))
+})
+
+// Council round 2 (#206): stock lines and a filler transition in all three letters.
+describe('stock lines', () => {
+  const letter = (...paragraphs: string[]) => `Dear Hiring Manager,\n\n${paragraphs.join('\n\n')}\n\nKind regards,\nAlex Doe`
+  const flagged = (prefix: string, s: string) =>
+    lintLetter(letter('At Halcyon I cut page load from 1.2s to 400ms.', s, 'Could we talk next week?'), { companyName: 'Arcadia' }).violations.some((v) => v.startsWith(prefix))
+  test.each([
+    'After five years on the staff side, I want a senior role. Arcadia is where I\'d like to take that step.',
+    'I\'d bring the same attention to medication safety that has kept my record clean.',
+    'I want a wider scope and colleagues to learn from. I\'d like to find both at Arcadia.',
+    'I want mentoring to be a bigger part of my week. Your role has that in it, and it\'s the main reason I\'m applying.',
+    'I want high-acuity patients. Teaching newer nurses is work I want to keep doing.',
+  ])('flags: %s', (s) => expect(flagged('Ends on a stock line', s)).toBe(true))
+  test.each([
+    'The night shift is where I learned to triage fast.',
+    // A field the applicant wants is a reason, not a stock line.
+    'Fundraising is where I want to spend my working days.',
+    'I\'d bring my own laptop.',
+  ])('leaves alone: %s', (s) => expect(flagged('Ends on a stock line', s)).toBe(false))
+  test('flags "Separately," as a filler transition', () => {
+    expect(flagged('Contains templated connective', 'Separately, I standardized vendor coding.')).toBe(true)
+  })
+})
+
+// Council round 4 (#206): invented process told as a heroic contrast and a three-step list.
+describe('story devices', () => {
+  const letter = (...paragraphs: string[]) => `Dear Hiring Manager,\n\n${paragraphs.join('\n\n')}\n\nKind regards,\nAlex Doe`
+  const flagged = (prefix: string, s: string) =>
+    lintLetter(letter('At Halcyon I cut page load from 1.2s to 400ms.', s, 'Could we talk next week?')).violations.some((v) => v.startsWith(prefix))
+  test('flags a "Rather than" contrast', () => {
+    expect(flagged('Frames an action', 'Rather than keep clearing the exceptions one at a time, I went after the cause.')).toBe(true)
+  })
+  test('leaves "I would rather" alone', () => {
+    expect(flagged('Frames an action', 'I would rather work nights than weekends.')).toBe(false)
+  })
+  test('flags three actions in a row', () => {
+    expect(flagged('Lists three actions', 'I worked through how vendors were coded, settled on a single standard, and applied it across the records.')).toBe(true)
+  })
+  test('leaves two actions alone', () => {
+    expect(flagged('Lists three actions', 'I reconciled the accounts and closed the books in five days.')).toBe(false)
+  })
+})
+
+// A relevant duty told with "I also" is evidence, not padding: a blind
+// council marked ~100-word letters thin when the old "I also" ban cut them (#206).
+test('allows "I also" for a duty the letter tells', () => {
+  const letter = 'Dear Hiring Manager,\n\nAt Halcyon I cut page load from 1.2s to 400ms.\n\nI precepted three new nurses. I also lead patient and family education.\n\nCould we talk next week?\n\nKind regards,\nAlex Doe'
+  expect(lintLetter(letter).violations.some((v) => v.includes('I also'))).toBe(false)
+})
+
+// A retry in council round 11 (#206) dropped the "Dear …" line.
+test('flags a letter with no salutation', () => {
+  const body = 'At Halcyon I cut page load from 1.2s to 400ms.\n\nCould we talk next week?\n\nKind regards,\nAlex Doe'
+  expect(lintLetter(body).violations.some((v) => v.startsWith('Missing the salutation'))).toBe(true)
+  expect(lintLetter(`Dear Hiring Manager,\n\n${body}`).violations.some((v) => v.startsWith('Missing the salutation'))).toBe(false)
+})
+
+// Council round 13 (#206): the reason paragraph ended on a tidy restatement.
+test('flags "the work I want to do next" as a stock line', () => {
+  const letter = 'Dear Hiring Manager,\n\nAt Meadowbrook I close the books in five days.\n\nI want to account for a software business. It is a kind of work I have not done yet, and it\'s the work I want to do next.\n\nI\'d welcome an interview.\n\nKind regards,\nDaniel Okoro'
+  expect(lintLetter(letter).violations.some((v) => v.startsWith('Ends on a stock line'))).toBe(true)
+})
+
+// Option 2 of the #206 full eval: length follows the resume. A thin resume
+// gives about one line per accomplishment, so a short letter is honest; a full
+// one has the scope and method for a longer letter.
+describe('letterLength', () => {
+  const thin = Array.from({ length: 120 }, () => 'word').join(' ')
+  const full = Array.from({ length: 300 }, () => 'word').join(' ')
+  const body = (n: number) => `Dear Hiring Manager,\n\n${Array.from({ length: n }, () => 'word').join(' ')}.\n\nKind regards,\nAlex Doe`
+  const short = (letter: string, resumeText?: string) =>
+    lintLetter(letter, { resumeText }).violations.some((v) => v.includes('too short'))
+
+  test('both resumes share the floor; a full resume aims longer', () => {
+    expect(letterLength(thin).min).toBe(130)
+    expect(letterLength(full).min).toBe(130)
+    expect(letterLength(undefined).min).toBe(130)
+    expect(letterLength(full).aim).not.toBe(letterLength(thin).aim)
+  })
+
+  test('flags a body under 130 words', () => {
+    expect(short(body(120), thin)).toBe(true)
+    expect(short(body(120), full)).toBe(true)
+    expect(short(body(140))).toBe(false)
+  })
+
+  test('the short message names the resume-sized aim', () => {
+    const v = lintLetter(body(120), { resumeText: full }).violations.find((x) => x.includes('too short'))!
+    expect(v).toContain(letterLength(full).aim)
+  })
+})
+
+// "3G and 4G" in a welding certification are positions, not figures (#206).
+test('welding positions are not counted as figures', () => {
+  const letter = 'Dear Hiring Manager,\n\nAt Ironclad I build 15 to 20 assemblies a week.\n\nMy AWS D1.1 certification covers 1G, 2G, 3G and 4G, and I hold OSHA 10.\n\nCould we talk next week?\n\nKind regards,\nAlex Doe'
+  expect(lintLetter(letter).violations.some((v) => v.includes('figures'))).toBe(false)
+})
+
+// Invented lessons that slipped past the lint in council round 4 (#206).
+test.each([
+  'At Brookfield I reconciled four bank accounts, which is where I learned to keep a ledger tied to the bank.',
+  'I prepare the VAT workpapers for the finance manager, so I am used to figures being checked.',
+  'I posted journals and reconciled four bank accounts, which gave me a grounding in keeping a ledger clean.',
+])('flags an invented lesson: %s', (line) => {
+  const letter = `Dear Hiring Manager,\n\nAt Hartley I process 600 invoices a month.\n\n${line}\n\nCould we talk next week?\n\nKind regards,\nAlex Doe`
+  expect(lintLetter(letter).violations.some((v) => v.startsWith('Explains what a fact means'))).toBe(true)
+})
+
+// "The role calls for X, and I've done X" read as the ad played back (#206).
+describe('sentences led by the role or the employer', () => {
+  const letter = (p3: string) => `Dear Hiring Manager,\n\nAt Hartley I process 600 invoices a month. I'm applying for the clerk role.\n\nI also run the weekly payment runs.\n\n${p3}\n\nI'd welcome an interview to talk about the payment runs.\n\nKind regards,\nAlex Doe`
+  const flagged = (p3: string) => lintLetter(letter(p3), { companyName: 'Meridian Logistics' }).violations.some((v) => v.startsWith('Starts a sentence with the role'))
+  test.each([
+    'The role calls for weekly payment runs, and I run them now.',
+    'Meridian needs a clerk for the ledger, and I keep one.',
+    "Meridian's team wants weekly runs, and I run them.",
+  ])('flags: %s', (s) => expect(flagged(s)).toBe(true))
+  test.each([
+    'I run weekly payment runs at Hartley, much like the cycle this job includes.',
+    'At Meridian I would work on the purchase ledger alone.',
+  ])('allows: %s', (s) => expect(flagged(s)).toBe(false))
+})
+
+// Set bridges onto the ad read as mechanical mapping (#206 letters-only run).
+test.each([
+  "I lead family education at St. Anne's, close to the family education this role includes.",
+  'I have trained six apprentices, much like the training the job involves.',
+])('flags a set bridge: %s', (line) => {
+  const letter = `Dear Hiring Manager,
+
+At St. Anne's I had zero medication errors.
+
+${line}
+
+I'd welcome an interview for the RN role.
+
+Kind regards,
+Alex Doe`
+  expect(lintLetter(letter).violations.some((v) => v.startsWith('Maps the letter onto the ad'))).toBe(true)
 })
