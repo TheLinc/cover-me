@@ -45,6 +45,9 @@ describe('groundTailored', () => {
     expect(run('Software Engineer building React apps and Node.js APIs.', 'Senior Software Engineer')).toBe('Software Engineer building React apps and Node.js APIs.')
     expect(run('Senior Software Engineer building React apps.', 'Senior Software Engineer')).toBe('')
     expect(run('Software Engineer building React apps. Holds a Hazmat endorsement.', 'Senior Software Engineer')).toBe('Software Engineer building React apps.')
+    // A scraped title's suffix (team, location) isn't part of the role's name.
+    expect(run('Software Engineer building React apps.', 'Senior Software Engineer, Payments (Remote)')).toBe('Software Engineer building React apps.')
+    expect(run('Software Engineer building React apps.', 'Software Engineer - EMEA')).toBe('Software Engineer building React apps.')
     // A one-word title is a generic word, and the title only blanks whole words.
     expect(run('Engineer building React apps.', 'Lead Engineer')).toBe('')
     const eng = 'Hiring a Software Engineer. Platform Engineering owns Engineers.'

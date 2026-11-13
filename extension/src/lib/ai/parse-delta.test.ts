@@ -119,6 +119,14 @@ describe("the posting's title in the summary (#218)", () => {
     expect(resume.summary).toBe('Full Stack Developer building React screens.')
   })
 
+  test('the code guard still removes it when the line check flagged the summary', async () => {
+    const ask = async (prompt: string) => prompt.startsWith('RESUME ACCURACY CHECK')
+      ? '{"flags": [], "summary": "claims backend work"}'
+      : '{"rewrites": [{"id": "summary", "text": "Full Stack Developer who builds React screens."}]}'
+    const resume = await assembleTailored(parsed, raw, { ...grounding, ask })
+    expect(resume.summary).toBe('')
+  })
+
   test('the code guard still removes it when the line check could not run', async () => {
     const resume = await assembleTailored(parsed, raw, { ...grounding, ask: async () => { throw new Error('down') } })
     expect(resume.summary).toBe('')

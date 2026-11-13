@@ -587,7 +587,7 @@ ${job.description}`)
       const { rewritten, reverted, summary, checkFailed } = repair
       console.log('[CoverMe] line check:', JSON.stringify({ flagged: repair.flagged.length, rewritten, reverted, summary, checkFailed }))
     }
-    const resume = groundTailored(lined, base, candidate, job.description, repair.checkFailed ? '' : job.title).resume as Record<string, unknown>
+    const resume = groundTailored(lined, base, candidate, job.description, repair.checkFailed || repair.summary ? '' : job.title).resume as Record<string, unknown>
 
     let atsScore: number | undefined
     let atsGaps: string[] | undefined

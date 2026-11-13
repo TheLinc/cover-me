@@ -331,10 +331,10 @@ ${grounding.jobDescription}`)
   if (grounding.ask) {
     const lines = await checkAndRewriteLines(merged, base, grounding.jobDescription, grounding.ask, grounding.supplemental)
     merged = lines.resume
-    summaryChecked = !lines.repair.checkFailed
+    summaryChecked = !lines.repair.checkFailed && !lines.repair.summary
     grounding.onLineRepair?.(lines.repair)
   }
-  // The summary may use the posting's title only once the line check judged it (#218).
+  // The summary may use the posting's title only once the line check passed it (#218).
   const { resume, removed } = groundTailored(merged, base, candidate, grounding.jobDescription, summaryChecked ? grounding.jobTitle : '')
   const all = [...claimed.dropped, ...removed]
   if (all.length) onRemoved?.(all)

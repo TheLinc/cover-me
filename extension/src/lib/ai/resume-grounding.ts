@@ -771,10 +771,11 @@ export function groundTailored<T extends Groundable>(
 ): { resume: T; removed: string[] } {
   const terms = jobOnlyTerms(jobDescription, candidate)
   // The posting's title names the role, not a requirement, so the summary may
-  // use it (#218). Pass jobTitle only when the line check has judged the
-  // summary. A level in the title (Senior, Lead), words the posting uses
+  // use it (#218). Pass jobTitle only when the line check read this summary
+  // and passed it. A scraped title's suffix (", Payments", " - Remote") is
+  // cut. A level in the title (Senior, Lead), words the posting uses
   // elsewhere, and a one-word title (a generic "Manager") stay checked.
-  const titleWithoutLevel = jobTitle.split(/\s+/).filter((w) => w && !LEVEL_WORD.test(w))
+  const titleWithoutLevel = jobTitle.split(/,|\(|\s[-–—|]\s/)[0].split(/\s+/).filter((w) => w && !LEVEL_WORD.test(w))
   const postingWithoutTitle = titleWithoutLevel.length > 1
     ? jobDescription.replace(new RegExp(`(?<![A-Za-z0-9])${escapeRe(titleWithoutLevel.join(' '))}(?![A-Za-z0-9])`, 'gi'), ' ')
     : jobDescription
