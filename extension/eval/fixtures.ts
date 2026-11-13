@@ -28,6 +28,8 @@ export interface EvalCase {
    * acceptable wordings; the eval reports how often the tailor makes the link.
    */
   expectedLabels?: string[][]
+  /** The posting's title, minus any level the resume lacks, that the summary must use (#218). */
+  summaryTitle?: string
 }
 
 const TECH_NOTES = 'Software engineering: concrete stack names, scale (users, latency, coverage), ownership and code review. Frontend work must not be inflated into infrastructure or e-commerce domain claims.'
@@ -395,6 +397,57 @@ Requirements: 3+ years React, TypeScript, strong testing habits, comfort with am
     failTerms: ['Unknown Company'],
     warnTerms: [],
     mustKeepSkills: ['React', 'TypeScript', 'GraphQL'],
+  },
+  {
+    // #218: frontend-only work never becomes "Full Stack" in the summary.
+    id: 'tech-frontend-to-full-stack',
+    industry: 'Technology',
+    fieldNotes: TECH_NOTES,
+    job: {
+      title: 'Full Stack Developer',
+      company: 'Larkspur Health',
+      url: 'https://example.com/jobs/6',
+      description: `Larkspur Health is hiring a Full Stack Developer for our patient scheduling product.
+
+What you'll do:
+- Build React and TypeScript features end to end, from the UI to the API
+- Design and build REST APIs in Node.js and Express
+- Model data and write migrations in PostgreSQL
+- Review code and pair with other developers
+
+Requirements: 3+ years building web applications across frontend and backend, Node.js and Express in production, PostgreSQL, Docker.`,
+    },
+    resumeText: alexText,
+    parsed: alexParsed,
+    failTerms: ['Full Stack', 'Full-Stack', 'Express', 'PostgreSQL', 'Docker'],
+    warnTerms: ['healthcare', 'backend'],
+    mustKeepSkills: ['React', 'TypeScript', 'Node.js'],
+  },
+  {
+    // #218: a level the resume doesn't show is dropped from the title.
+    id: 'tech-mid-to-senior-title',
+    industry: 'Technology',
+    fieldNotes: TECH_NOTES,
+    job: {
+      title: 'Senior Software Engineer',
+      company: 'Tidewater Logistics',
+      url: 'https://example.com/jobs/7',
+      description: `Tidewater Logistics is hiring a Senior Software Engineer for the web app our dispatchers use all day.
+
+What you'll do:
+- Build features in React and TypeScript for 3,000 daily users
+- Improve performance and test coverage across the frontend
+- Review pull requests and mentor engineers
+- Lead technical design for new features
+
+Requirements: 6+ years of software engineering experience, React, TypeScript, testing. Experience with Playwright and AWS is a plus.`,
+    },
+    resumeText: alexText,
+    parsed: alexParsed,
+    failTerms: ['Senior', 'Playwright', 'AWS'],
+    warnTerms: ['logistics', 'dispatch'],
+    mustKeepSkills: ['React', 'TypeScript'],
+    summaryTitle: 'Software Engineer',
   },
   ...INDUSTRY_CASES,
 ]

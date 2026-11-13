@@ -31,6 +31,7 @@ interface Spec {
   fieldNotes: string
   /** Category labels a human editor would add from specific resume evidence; see EvalCase. */
   expectedLabels?: string[][]
+  summaryTitle?: string
 }
 
 const role = (title: string, company: string, location: string, dates: string, bullets: string[]): ResumeExperience =>
@@ -92,6 +93,7 @@ const toCase = (s: Spec): EvalCase => ({
   mustKeepSkills: s.mustKeepSkills ?? [],
   fieldNotes: s.fieldNotes,
   expectedLabels: s.expectedLabels,
+  summaryTitle: s.summaryTitle,
 })
 
 // ── Cases ────────────────────────────────────────────────────────────────────
@@ -1008,6 +1010,43 @@ PhD or MS preferred.`),
     warnTerms: ['cell therapy', 'IND'],
     mustKeepSkills: ['CRISPR'],
     fieldNotes: 'Science: techniques, model systems, programs supported, publications. Exact methods matter; a B.S. must not be presented as graduate training. The publication must come through word for word under its own heading.',
+  },
+
+  {
+    // #218: "Software Engineer" is a broader name for full stack work, so the
+    // summary uses it, and it must survive the line check.
+    id: 'full-stack-to-software-engineer',
+    industry: 'Technology',
+    resume: {
+      name: 'Daniel Okafor', email: 'daniel.okafor.dev@email.com', phone: '(555) 410-2287', website: 'github.com/dokafor',
+      experience: [
+        role('Full Stack Developer', 'Pinecrest Payroll', 'Raleigh, NC', 'Jan 2022 – Present', [
+          'Built a timesheet approval flow in React and a Node.js REST API used by 1,200 client companies',
+          'Designed PostgreSQL schemas and migrations for the pay-run service',
+          'Cut API response times from 900ms to 250ms by adding query indexes and response caching',
+          'Wrote integration tests in Jest that run on every pull request',
+        ]),
+        role('Web Developer', 'Blue Heron Agency', 'Durham, NC', 'Jun 2019 – Dec 2021', [
+          'Developed client websites and admin dashboards in React and Express for 15 small businesses',
+          'Set up GitHub Actions deploys for 6 client projects',
+        ]),
+      ],
+      education: [edu('B.S. Information Technology', 'North Carolina State University', 'Raleigh, NC', '2015 – 2019')],
+      skills: 'JavaScript, TypeScript, React, Node.js, Express, PostgreSQL, REST APIs, Jest, Git, GitHub Actions',
+    },
+    job: job('Software Engineer', 'Meadowlark Insurance', `Meadowlark Insurance is hiring a Software Engineer to build our policy management platform.
+
+- Build features in React and TypeScript
+- Design and maintain REST APIs in Node.js
+- Write and tune PostgreSQL queries
+- Deploy services on AWS with Terraform
+
+Requirements: 3+ years building web applications, React, Node.js, SQL. AWS and Terraform experience preferred.`),
+    failTerms: ['AWS', 'Terraform', 'Senior'],
+    warnTerms: ['insurance', 'policy'],
+    mustKeepSkills: ['React', 'Node.js', 'PostgreSQL'],
+    fieldNotes: 'Software engineering: concrete stack names, scale (users, latency, coverage), ownership and code review. "Software Engineer" is an honest name for full stack work; an added level or cloud stack is not.',
+    summaryTitle: 'Software Engineer',
   },
 
   // ── Early career and senior leadership ─────────────────────────────────────

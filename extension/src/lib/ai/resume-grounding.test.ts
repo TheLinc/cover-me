@@ -38,6 +38,17 @@ describe('groundTailored', () => {
     expect(ground('Senior Web Developer. Ships React interfaces.').resume.summary).toBe('Ships React interfaces.')
   })
 
+  test("lets the summary use the posting's title, but not a level the resume lacks or a requirement named elsewhere (#218)", () => {
+    const resume = { ...original, experience: [{ title: 'Full Stack Developer', company: 'Pinecrest', bullets: ['Built a React app and a Node.js API.'] }] }
+    const jd = 'We are hiring a Senior Software Engineer. Software Engineers here hold a Hazmat endorsement.'
+    const run = (summary: string, title: string) => groundTailored({ ...resume, summary }, resume, candidateText(resume), jd, title).resume.summary
+    expect(run('Software Engineer building React apps and Node.js APIs.', 'Senior Software Engineer')).toBe('Software Engineer building React apps and Node.js APIs.')
+    expect(run('Senior Software Engineer building React apps.', 'Senior Software Engineer')).toBe('')
+    expect(run('Software Engineer building React apps. Holds a Hazmat endorsement.', 'Senior Software Engineer')).toBe('Software Engineer building React apps.')
+    // Without the title, the posting's words are checked as before.
+    expect(run('Software Engineer building React apps.', '')).toBe('')
+  })
+
   test('still removes an all-caps copy of a plain-word requirement', () => {
     expect(ground('Builds React interfaces. Knows RUBY ON RAILS.').resume.summary).toBe('Builds React interfaces.')
   })

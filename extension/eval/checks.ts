@@ -221,6 +221,9 @@ export function checkTailored(out: TailoredResume, c: EvalCase, input: ParsedRes
       result.failures.push('summary uses first-person pronouns')
     }
   }
+  if (c.summaryTitle && !containsTerm(out.summary ?? '', c.summaryTitle)) {
+    result.failures.push(`summary doesn't use the posting's title "${c.summaryTitle}"`)
+  }
 
   checkNumberProvenance(
     'tailored resume',
