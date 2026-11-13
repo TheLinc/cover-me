@@ -21,9 +21,11 @@ export function limitMessage(a: Allowance): string {
   return `You've used this week's ${a.limit} free generations. They reset Monday at 00:00 UTC, or upgrade to Pro for up to ${a.pro_daily} a day.`
 }
 
-// The first-month offer's line (#213). No price, since the extension's buttons
-// still show the full one, and days left rather than a date, since the server
-// can't know the reader's time zone.
+// The first-month offer's line (#213), for extension builds older than the
+// one whose upgrade prompt shows the offer itself. That build drops this exact
+// sentence (OFFER_SENTENCE in extension/src/lib/auth.ts), so keep the two in
+// step. No price, since the buttons still show the full one, and days left
+// rather than a date, since the server can't know the reader's time zone.
 function offerLine(endsAt: string): string {
   const days = Math.max(1, Math.ceil((Date.parse(endsAt) - Date.now()) / 86_400_000))
   return ` Your first month of monthly Pro is discounted at checkout for ${days} more day${days === 1 ? '' : 's'}.`

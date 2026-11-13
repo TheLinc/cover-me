@@ -830,7 +830,7 @@ html, body {
 .upgrade-actions .btn { width: auto; }
 .upgrade-actions .btn-primary { flex: 1; }
 .upgrade-actions .btn-secondary { padding: 10px 12px; font-size: 12px; }
-/* The first-month offer (#213), above the buttons */
+/* The first-month offer (#213), under the buttons */
 .upgrade-offer { font-size: 12px; line-height: 1.5; color: var(--text-2); background: var(--accent-dim); border-radius: 8px; padding: 8px 10px; }
 .upgrade-offer strong { color: var(--accent-h); font-weight: 600; }
 

@@ -80,7 +80,8 @@ Deno.serve(async (req) => {
   // customer-facing name from Stripe. Any failure just hides the banner.
   if (action === 'offer') {
     if (!FIRST_MONTH_COUPON) return json({ offer: null })
-    const { data: endsAt } = await supabase.rpc('first_month_offer_ends_at', { p_user_id: user.id })
+    const { data: endsAt, error } = await supabase.rpc('first_month_offer_ends_at', { p_user_id: user.id })
+    if (error) console.error('[billing] offer:', error.message)
     if (!endsAt) return json({ offer: null })
     try {
       const coupon = await stripe(`coupons/${encodeURIComponent(FIRST_MONTH_COUPON)}`, {}, { method: 'GET' })

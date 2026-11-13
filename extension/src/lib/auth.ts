@@ -319,9 +319,15 @@ export function limitErrorCode(err: RateLimitError): 'RATE_LIMIT' | 'FAIR_USE' {
   return err.kind === 'daily' ? 'FAIR_USE' : 'RATE_LIMIT'
 }
 
+// The server adds the first-month offer (#213) to the limit text for builds
+// without it in the upgrade prompt. This one drops it: the popup keeps the
+// text on screen across opens, where its day count would go stale, and the
+// upgrade prompt below shows the live offer.
+const OFFER_SENTENCE = / Your first month of monthly Pro is discounted at checkout for \d+ more days?\./
+
 function rateLimitError(data: Record<string, unknown>): RateLimitError {
   const kind = (data.allowance as { kind?: 'starter' | 'weekly' | 'daily' } | undefined)?.kind
-  return new RateLimitError((data.error as string) ?? 'Generation limit reached.', kind)
+  return new RateLimitError(((data.error as string) ?? 'Generation limit reached.').replace(OFFER_SENTENCE, ''), kind)
 }
 
 export async function generateViaBackend(job: JobData, accessToken: string, supplemental?: string): Promise<string> {
