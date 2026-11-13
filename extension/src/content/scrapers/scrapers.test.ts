@@ -240,6 +240,10 @@ describe('generic heuristic', () => {
         <main><h1>Job Description</h1><div><p>${description}</p><div ${hidden}><ul>${related}</ul></div></div></main></body></html>`)
       expect(job.description).toBe(description)
     }
+    // ...but a posting whose full text is hidden behind "Read more" is read
+    const job = scrape('https://careers.example.com/jobs/1', `<html><body><main><h1>Warehouse Supervisor</h1><div>
+      <div class="preview"><p>${description.slice(0, 150)}</p></div><div class="full" hidden><p>${description}</p></div></div></main></body></html>`)
+    expect(job.description).toBe(description)
   })
 
   // The posting has a job's title, so cards larger than it don't make the page
@@ -319,6 +323,13 @@ describe('generic heuristic', () => {
     const bulleted = scrape('https://careers.example.com/jobs/1', `<html><body><main><h1>Warehouse Supervisor</h1><div>
       ${bullets('About us', '/about')}${bullets('The role', '/role')}${bullets('Benefits', '/benefits')}${bullets('Equal opportunity', '/eeo')}</div></main></body></html>`)
     expect(bulleted.description).toContain('Equal opportunity')
+    // ...or from text in a div or span, as some editors write paragraphs
+    for (const tag of ['div', 'span']) {
+      const prose = (heading: string, href: string) => `<div class="sec"><h3>${heading}</h3><${tag}>${description.slice(0, 300)} <a href="${href}">More</a></${tag}></div>`
+      const job = scrape('https://careers.example.com/jobs/1', `<html><body><main><h1>Warehouse Supervisor</h1><div>
+        ${prose('About us', '/about')}${prose('The role', 'mailto:jobs@example.com')}${prose('Benefits', '/benefits')}</div></main></body></html>`)
+      expect(job.description).toContain('Benefits')
+    }
   })
 
   // Each link read once per block, not once per link it's nested in (34 s

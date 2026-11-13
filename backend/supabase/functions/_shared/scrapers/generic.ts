@@ -106,16 +106,21 @@ function largestBlock(doubtful: boolean): string | undefined {
   const left = (el: HTMLElement, len: number) => len - (listText.get(el) ?? 0)
   // A block in a list is a card or part of one (a long one: We Work Remotely's
   // list the countries a job is open to). A block that isn't rendered is read
-  // as its source text, by Chrome and by linkedom alike. In doubt, a block
-  // whose cards are three times what's left is passed over for a smaller one:
-  // a wrapper around an intro and its listing.
+  // as its source text, by Chrome and by linkedom alike, so it's read only
+  // when no rendered block will do (a posting under a "Read more" toggle). In
+  // doubt, a block whose cards are three times what's left is passed over for
+  // a smaller one: a wrapper around an intro and its listing.
+  let hidden: HTMLElement | undefined
   const block = Array.from(document.querySelectorAll<HTMLElement>('div, section, article'))
     .map((el) => ({ el, len: el.innerText?.trim().length ?? 0 }))
     .filter(({ len }) => len > 500 && len < 20000)
     .sort((a, b) => b.len - a.len)
-    .find(({ el, len }) => !isList(el, len) && (doubtful ? left(el, len) * 4 >= len : left(el, len) >= 200)
-      && !hasAncestorIn(el, lists) && rendered(el))
-    ?.el
+    .find(({ el, len }) => {
+      if (hasAncestorIn(el, lists) || isList(el, len) || (doubtful ? left(el, len) * 4 < len : left(el, len) < 200)) return false
+      if (rendered(el)) return true
+      hidden ??= el
+      return false
+    })?.el ?? hidden
   if (!block) return
   let text = block.innerText.trim()
   let largestList = 0
@@ -149,7 +154,7 @@ function cardLists(nested: Set<Element>): Map<HTMLElement, { text: string, plain
     for (let el: Element | null = a; el && !firstLink.has(el); el = el.parentElement) firstLink.set(el, a)
   }
   const inText = (link: Element, card: Element) => {
-    for (let el = link.parentElement; el && el !== card; el = el.parentElement) if (el.tagName === 'P' || el.tagName === 'LI') return true
+    for (let el = link.parentElement; el && el !== card; el = el.parentElement) if (el.tagName === 'P' || el.tagName === 'LI' || prose(el)) return true
     return false
   }
   const lists = new Set<Element>()
@@ -186,8 +191,8 @@ function cardLists(nested: Set<Element>): Map<HTMLElement, { text: string, plain
   return outermost
 }
 
-// Text straight in the card, as a bullet's sentence around its links has; a
-// card's lines are elements of their own
+// Text straight in the card or around its link, as a sentence around a link
+// has; a card's lines are elements of their own
 const prose = (el: Element) => Array.from(el.childNodes).some((n) => n.nodeType === 3 && n.textContent?.trim())
 const CARD_TAGS = new Set(['LI', 'DIV', 'ARTICLE', 'SECTION', 'TR'])
 
