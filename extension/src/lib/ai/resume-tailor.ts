@@ -1,7 +1,7 @@
 import type { AIProvider, JobData, ParsedResume, TailoredResume } from '../../types'
 import { debugGroup, debugLog } from '../debug'
 import { derivePlanningProgress, deriveTailorProgress } from './tailor-progress'
-import { buildsOnEdits, candidateText, checkAndRewriteLines, groundSkills, groundTailored, keepSeen, matchSkillCase, seenVersion, trustedNotes, type AskModel, type LineRepair } from './resume-grounding'
+import { buildsOnEdits, candidateText, checkAndRewriteLines, checkedTitle, groundSkills, groundTailored, keepSeen, matchSkillCase, seenVersion, trustedNotes, type AskModel, type LineRepair } from './resume-grounding'
 import { SONNET_FIELDS, streamSonnet } from './claude'
 import { scoreFromMatch, type KeywordMatch } from './ats-score'
 import { callOpenAI, OPENAI_MODEL } from './openai'
@@ -327,15 +327,14 @@ export async function assembleTailored(
   delta.skills = matchSkillCase(claimed.skills, base.skills, `${candidate}
 ${grounding.jobDescription}`)
   let merged = keepSeen(mergeTailorDelta(base, delta, { exactBulletCounts: grounding.exactBulletCounts }) as TailoredResume, parsed, base)
-  let summaryChecked = false
+  let title = ''
   if (grounding.ask) {
     const lines = await checkAndRewriteLines(merged, base, grounding.jobDescription, grounding.ask, grounding.supplemental)
     merged = lines.resume
-    summaryChecked = !lines.repair.checkFailed && !lines.repair.summary
+    title = await checkedTitle(grounding.jobTitle ?? '', base, merged, lines.repair, grounding.ask, grounding.supplemental)
     grounding.onLineRepair?.(lines.repair)
   }
-  // The summary may use the posting's title only once the line check passed it (#218).
-  const { resume, removed } = groundTailored(merged, base, candidate, grounding.jobDescription, summaryChecked ? grounding.jobTitle : '')
+  const { resume, removed } = groundTailored(merged, base, candidate, grounding.jobDescription, title)
   const all = [...claimed.dropped, ...removed]
   if (all.length) onRemoved?.(all)
   if (delta.keywordMatch && typeof delta.keywordMatch === 'object') {

@@ -762,6 +762,32 @@ export async function checkAndRewriteLines<T extends Groundable>(
 // The levels the tailor prompt's Identity rule drops from a posting's title.
 const LEVEL_WORD = /^(senior|sr\.?|lead|staff|principal|i{1,3}|iv)$/i
 
+// The posting's title as the summary may use it (#218): a scraped suffix
+// (", Payments", " - Remote") cut and levels dropped. Empty for a one-word
+// title, which is a generic word ("Manager") that stays checked.
+function titleWithoutLevel(jobTitle: string): string {
+  const words = jobTitle.split(/,|\(|\s[-–—|]\s/)[0].split(/\s+/).filter((w) => w && !LEVEL_WORD.test(w))
+  return words.length > 1 ? words.join(' ') : ''
+}
+
+/**
+ * The job title groundTailored may let through in the summary: only one the
+ * line check passed (#218). A flagged summary ships as a rewrite nothing has
+ * checked, so when it still names the title it gets a second look.
+ */
+export async function checkedTitle(jobTitle: string, original: Groundable, tailored: Groundable, repair: LineRepair, ask: AskModel, supplemental?: string): Promise<string> {
+  if (repair.checkFailed) return ''
+  if (!repair.summary) return jobTitle
+  const title = titleWithoutLevel(jobTitle)
+  if (repair.summary !== 'rewritten' || !title || !mentions(tailored.summary ?? '', title)) return ''
+  try {
+    const flags = parseLineFlags(await ask(buildLineCheckPrompt(original, tailored, supplemental)))
+    return flags && !flags.has('summary') ? jobTitle : ''
+  } catch {
+    return ''
+  }
+}
+
 export function groundTailored<T extends Groundable>(
   tailored: T,
   original: Groundable,
@@ -771,13 +797,11 @@ export function groundTailored<T extends Groundable>(
 ): { resume: T; removed: string[] } {
   const terms = jobOnlyTerms(jobDescription, candidate)
   // The posting's title names the role, not a requirement, so the summary may
-  // use it (#218). Pass jobTitle only when the line check read this summary
-  // and passed it. A scraped title's suffix (", Payments", " - Remote") is
-  // cut. A level in the title (Senior, Lead), words the posting uses
-  // elsewhere, and a one-word title (a generic "Manager") stay checked.
-  const titleWithoutLevel = jobTitle.split(/,|\(|\s[-–—|]\s/)[0].split(/\s+/).filter((w) => w && !LEVEL_WORD.test(w))
-  const postingWithoutTitle = titleWithoutLevel.length > 1
-    ? jobDescription.replace(new RegExp(`(?<![A-Za-z0-9])${escapeRe(titleWithoutLevel.join(' '))}(?![A-Za-z0-9])`, 'gi'), ' ')
+  // use it (#218). Pass jobTitle from checkedTitle. A level in the title
+  // (Senior, Lead) and words the posting uses elsewhere stay checked.
+  const title = titleWithoutLevel(jobTitle)
+  const postingWithoutTitle = title
+    ? jobDescription.replace(new RegExp(`(?<![A-Za-z0-9])${escapeRe(title)}(?![A-Za-z0-9])`, 'gi'), ' ')
     : jobDescription
   const summaryTerms = jobOnlyTerms(postingWithoutTitle, candidate).filter((t) => terms.includes(t))
   const removed = new Set<string>()

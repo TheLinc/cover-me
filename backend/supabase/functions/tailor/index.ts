@@ -6,7 +6,7 @@ import { decrypt, encrypt, sameCiphertext } from '../_shared/encrypt.ts'
 import { findOrCreateJobApplication } from '../_shared/job-application.ts'
 import { isUuid } from '../_shared/history-upload.ts'
 import { isCurrentParse, isValidParsedResume, parseResumeStructure, type ParsedResume, upgradedParse } from '../_shared/resume-parse.ts'
-import { buildsOnEdits, candidateText, checkAndRewriteLines, groundSkills, groundTailored, keepSeen, matchSkillCase, seenVersion, trustedNotes } from '../_shared/resume-grounding.ts'
+import { buildsOnEdits, candidateText, checkAndRewriteLines, checkedTitle, groundSkills, groundTailored, keepSeen, matchSkillCase, seenVersion, trustedNotes } from '../_shared/resume-grounding.ts'
 import { scoreFromMatch } from '../_shared/ats-score.ts'
 import { captureUsage } from '../_shared/posthog.ts'
 
@@ -587,7 +587,7 @@ ${job.description}`)
       const { rewritten, reverted, summary, checkFailed } = repair
       console.log('[CoverMe] line check:', JSON.stringify({ flagged: repair.flagged.length, rewritten, reverted, summary, checkFailed }))
     }
-    const resume = groundTailored(lined, base, candidate, job.description, repair.checkFailed || repair.summary ? '' : job.title).resume as Record<string, unknown>
+    const resume = groundTailored(lined, base, candidate, job.description, await checkedTitle(job.title, base, lined, repair, askChecker, supplemental)).resume as Record<string, unknown>
 
     let atsScore: number | undefined
     let atsGaps: string[] | undefined

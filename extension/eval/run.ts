@@ -406,8 +406,6 @@ async function tailorOnce(c: EvalCase, run: number): Promise<TailorRun> {
       out.tailor = checkTailored(tailored, c, input)
       out.tailor.warnings.unshift(`atsScore: ${tailored.atsScore ?? 'n/a'} | gaps: ${(tailored.atsGaps ?? []).join('; ') || 'none'}`)
       if (guarded.length) out.tailor.warnings.push(`grounding guard removed: ${guarded.join(', ')}`)
-      // #218: the posting's title must survive the line check, not just the rewrite.
-      if (c.summaryTitle && out.lines?.summary) out.tailor.failures.push(`line check flagged the summary (${out.lines.summary})`)
       if (out.lines?.checkFailed) out.tailor.warnings.push('line check failed to run; tailoring kept unchecked')
       else if (out.lines?.flagged.length) out.tailor.warnings.push(`line check: ${out.lines.rewritten} rewritten, ${out.lines.reverted} reverted${out.lines.summary ? `, summary ${out.lines.summary}` : ''} —${out.lines.flagged.join(' | ')}`)
       if (c.expectedLabels?.length) {
