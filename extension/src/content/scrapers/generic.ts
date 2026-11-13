@@ -82,7 +82,8 @@ function tryHeuristic(): JobData {
 // panel. Postings measured 0 to 21% link text, Greenhouse's board listing 95%.
 // The block's card lists (a related-jobs panel) are cut from its text, and a
 // block left with too little to be a posting is passed over: the panel's own
-// block. Under a heading that isn't a job's title ("Join Our Team"), with none
+// block. Should that leave none, master's pick is read whole: a posting whose
+// sections look like cards (each ends in a "Learn more" link). Under a heading that isn't a job's title ("Join Our Team"), with none
 // in the tab title either, the page is in doubt: a block a third or more links
 // and card text is a list, and one outweighed by any list on the page makes
 // the page a listing. The listings in #72 measured under half link text, a
@@ -112,17 +113,19 @@ function largestBlock(doubtful: boolean): string | undefined {
   // list the countries a job is open to). A block that isn't rendered is read
   // as its source text, by Chrome and by linkedom alike: a posting under a
   // "Read more" toggle, which is read, or a hidden panel or mobile copy of the
-  // cards, which isn't. In doubt, a block whose cards are three times what's
-  // left is passed over for a smaller one: a wrapper around an intro and its
-  // listing.
+  // cards, which isn't.
+  let first: HTMLElement | undefined
   const block = Array.from(document.querySelectorAll<HTMLElement>('div, section, article'))
     .map((el) => ({ el, len: el.innerText?.trim().length ?? 0 }))
     .filter(({ len }) => len > 500 && len < 20000)
     .sort((a, b) => b.len - a.len)
-    .find(({ el, len }) => !hasAncestorIn(el, lists) && !hasAncestorIn(el, hiddenLists) && !(holdsHidden.has(el) && !rendered(el))
-      && !isList(el, len) && (doubtful ? left(el, len) * 4 >= len : left(el, len) >= 200))
-    ?.el
-  if (!block) return
+    .find(({ el, len }) => {
+      if (isList(el, len)) return false
+      first ??= el
+      return !hasAncestorIn(el, lists) && !hasAncestorIn(el, hiddenLists) && !(holdsHidden.has(el) && !rendered(el))
+        && (doubtful || left(el, len) >= 200)
+    })?.el
+  if (!block) return doubtful ? undefined : first?.innerText.trim()
   let text = block.innerText.trim()
   let largestList = 0
   for (const [list, { text: cut, plain }] of lists) {
