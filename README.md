@@ -97,7 +97,7 @@ If the extension can't detect the job description automatically, use **"Paste it
 | Workable | Generic scraper |
 | Any careers page | Generic scraper (heuristic fallback) |
 
-The generic scraper tries three strategies in order: JSON-LD structured data, known ATS CSS selectors, then a heuristic that finds the largest heading and text block on the page. If all else fails, use the manual paste option.
+The generic scraper tries these strategies in order: JSON-LD structured data, schema.org microdata, python.org's job board markup, known ATS CSS selectors, then a heuristic that finds the largest heading and text block on the page. If all else fails, use the manual paste option.
 
 ---
 

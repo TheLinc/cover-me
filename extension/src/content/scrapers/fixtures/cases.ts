@@ -48,6 +48,9 @@ export const FIXTURE_CASES = [
   { board: 'google-careers-search', title: 'Senior Staff Software Engineer, Generative AI, Search Intelligence', company: 'Google', ends: 'Current or past grants do not confer an acquired right.' },
   // Phenom: JSON-LD with an empty hiringOrganization name
   { board: 'phenom', title: 'Home Health Licensed Practical Nurse', company: 'Humana', ends: 'at all levels of employment.' },
+  // A jobs-count banner <h1> ("20 jobs on the Python Job Board") comes first;
+  // the posting's own <h1> holds the title, a "New" badge and the company (#73)
+  { board: 'python', title: 'Senior Python Developer', company: 'Eliassen Group', ends: 'https://devitjobs.com/jobs/Eliassen-Group-Senior-Python-Developer' },
   // Every <h1> is a section heading ("Key Responsibilities"); the tab title is
   // "RAMON.SPACE - Director of Finance", company first. The posting's block
   // ends with an office map.
