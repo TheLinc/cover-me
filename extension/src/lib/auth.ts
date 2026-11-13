@@ -400,6 +400,24 @@ export async function startBilling(accessToken: string, action: 'checkout' | 'po
   return data.url
 }
 
+// The first-month offer (#213) while it's open: when it ends, and the Stripe
+// coupon's customer-facing name (the amount lives only in Stripe). Null when
+// there's none or billing doesn't answer, so the popup just leaves it out.
+export interface FirstMonthOffer { endsAt: string; name: string | null }
+
+export async function fetchFirstMonthOffer(accessToken: string): Promise<FirstMonthOffer | null> {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/billing`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'offer' }),
+    })
+    return ((await res.json()) as { offer?: FirstMonthOffer | null }).offer ?? null
+  } catch {
+    return null
+  }
+}
+
 // The layout of a hosted tailor (#131): counted in the tailor_run event, and
 // sourceHash is saved on a Pro account's copy for the dashboard's download.
 export interface TailorDesign { layout: 'yours' | 'cover-me'; fellBack: boolean; sourceHash?: string }

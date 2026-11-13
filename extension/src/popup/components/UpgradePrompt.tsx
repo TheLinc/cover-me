@@ -1,10 +1,22 @@
-import { useState } from 'react'
-import { ensureValidSession, startBilling, type Plan } from '../../lib/auth'
+import { useEffect, useState } from 'react'
+import { ensureValidSession, fetchFirstMonthOffer, startBilling, type FirstMonthOffer, type Plan } from '../../lib/auth'
 
 // Opens Stripe checkout for the chosen plan in a new tab (payments live on the
 // website, not in the extension). Prices match the dashboard's upgrade buttons.
-export default function UpgradePrompt() {
+// An open first-month offer (#213) shows above them; the weekly-limit screen
+// turns it off, because the server's limit message already names it.
+export default function UpgradePrompt({ showOffer = true }: { showOffer?: boolean }) {
   const [error, setError] = useState('')
+  const [offer, setOffer] = useState<FirstMonthOffer | null>(null)
+
+  useEffect(() => {
+    if (!showOffer) return
+    let live = true
+    ensureValidSession()
+      .then((session) => session && fetchFirstMonthOffer(session.access_token))
+      .then((found) => { if (live && found) setOffer(found) }, () => {})
+    return () => { live = false }
+  }, [showOffer])
 
   async function handleUpgrade(plan: Plan) {
     setError('')
@@ -22,6 +34,12 @@ export default function UpgradePrompt() {
 
   return (
     <div className="upgrade-prompt">
+      {offer && (
+        <p className="upgrade-offer">
+          <strong>{offer.name ?? 'Your first month is discounted'}</strong> on the monthly plan, taken off at checkout.
+          Ends {new Date(offer.endsAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}.
+        </p>
+      )}
       <div className="upgrade-actions">
         <button className="btn btn-primary" onClick={() => handleUpgrade('monthly')}>Upgrade, $15/mo</button>
         <button className="btn btn-secondary" onClick={() => handleUpgrade('quarterly')}>$35 every 3 months</button>
