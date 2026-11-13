@@ -38,7 +38,7 @@ export default function UpgradePrompt() {
         <button className="btn btn-primary" onClick={() => handleUpgrade('monthly')}>Upgrade, $15/mo</button>
         <button className="btn btn-secondary" onClick={() => handleUpgrade('quarterly')}>$35 every 3 months</button>
       </div>
-      <p className="hint">Pro: up to 25 a day</p>
+      <p className="hint">Pro: up to 25 generations a day</p>
       {offer && (
         <p className="upgrade-offer">
           <span className="offer-tag"><GiftIcon />Offer</span>
