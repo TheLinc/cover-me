@@ -308,7 +308,7 @@ export function lintLetter(
 
   const length = letterLength(opts.resumeText)
   if (wordCount < length.min) {
-    violations.push(`Letter body is ${wordCount} words — too short; expand to about ${length.aim} words. If the letter tells only one accomplishment, add a second from the resume with its result. Where the resume says how an accomplishment was done, tell that inside its own sentence. Never add a scene-setting sentence, restate a fact, list unrelated resume items, or guess what the resume does not say (an employer's industry or location, a new claim about the applicant).`)
+    violations.push(`Letter body is ${wordCount} words — too short; expand to about ${length.aim} words. ${length.full ? 'If the letter tells fewer than three accomplishments, add one from the resume that fits the posting, with its result.' : 'If the letter tells only one accomplishment, add a second from the resume with its result.'} Where the resume says how an accomplishment was done, tell that inside its own sentence. Never add a scene-setting sentence, restate a fact, list unrelated resume items, or guess what the resume does not say (an employer's industry or location, a new claim about the applicant).`)
   } else if (wordCount > 320) {
     violations.push(`Letter body is ${wordCount} words — too long; tighten to about ${length.aim} words.`)
   }
@@ -359,7 +359,7 @@ export function lintLetter(
   // both council reviewers called resume padding in round 7 (#206).
   const alsoItem = bodyParas.flatMap((p) => p.split(SENTENCE_END)).map((s) => s.trim()).find((s) => /^I also\b/.test(s))
   if (alsoItem) {
-    violations.push(`Adds another item with "I also" ("${alsoItem}") — cut it, and tell the two accomplishments in full instead; a second accomplishment gets its own time or place and its result.`)
+    violations.push(`Adds another item with "I also" ("${alsoItem}") — cut it, and tell the letter's accomplishments in full instead; a second accomplishment gets its own time or place and its result.`)
   }
   const closeQuestion = paragraphs.length > 1 ? lastPara.split(SENTENCE_END).map((s) => s.trim()).find((s) => CLOSE_QUESTION_RE.test(s)) : undefined
   if (closeQuestion) {
@@ -396,7 +396,7 @@ export function lintLetter(
   paragraphs.slice(1, -1).forEach((p, i) => {
     const sentences = p.split(SENTENCE_END).filter((s) => s.trim()).length
     if (sentences > 6) {
-      violations.push(`Paragraph ${i + 2} lists ${sentences} sentences of experience — keep the two accomplishments that matter most for this role, told with their context, and cut the rest.`)
+      violations.push(`Paragraph ${i + 2} lists ${sentences} sentences of experience — keep the accomplishments that matter most for this role, told with their context, and cut the rest.`)
     }
   })
   paragraphs.forEach((p, i) => {
