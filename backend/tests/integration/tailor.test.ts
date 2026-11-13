@@ -505,3 +505,77 @@ describe('tailor', () => {
     expect(body.savedId).toBeUndefined()
   })
 })
+
+// Long master resumes (#190): the trim budget, measured results, the headline
+// guard, and the new fields folded for extensions that don't ask for them.
+describe('long master resumes', () => {
+  let user: TestUser | undefined
+  const RESULT = 'Cut nightly export run time from 40 to 25 minutes by batching writes'
+  const role = (title: string, company: string, n: number, first?: string) => ({
+    title, company, location: 'Remote', dates: '2020 – 2022',
+    bullets: [...(first ? [first] : []), ...Array.from({ length: n - (first ? 1 : 0) }, (_, i) => `${company} bullet ${i + 1} about services`)],
+  })
+  const long = {
+    ...MOCK_PARSED_RESUME,
+    headline: 'Backend Engineer',
+    experience: [role('Backend Engineer', 'Initech', 15, RESULT), role('Backend Engineer', 'Globex', 15), role('Developer', 'Umbrella', 15)],
+    projects: [{ name: 'tidewatch', link: 'github.com/x/tidewatch', tech: 'Go, SQLite', bullets: ['Uptime monitor', 'Slack alerts'] }],
+    otherSections: [{ heading: 'Open Source', lines: ['Speaker, GopherCon 2024'], entries: [{ name: 'pg-outbox', subtitle: 'Creator', link: 'github.com/x/pg-outbox', bullets: ['Outbox library for Postgres'] }] }],
+    sectionOrder: ['summary', 'experience', 'projects', 'other', 'education', 'skills'],
+  }
+  const NEW_FIELDS = { 'X-Resume-Fields': '2' }
+  // The model's ranking: 9 rewritten bullets for the latest role, its measured result not among them.
+  const ranked = { ...MOCK_TAILOR_DELTA, headline: 'Site Reliability Engineer', experience: [{ bullets: Array.from({ length: 9 }, (_, i) => `Ranked bullet ${i + 1} about services`) }] }
+  const tailor = async (body: Record<string, unknown>, headers: Record<string, string> = NEW_FIELDS) => {
+    await mockClaude.tailorDelta(ranked)
+    const res = await callFunction('tailor', { token: user!.token, headers, body: { job: JOB, ...body } })
+    expect(res.status).toBe(200)
+    return (await res.json()).resume
+  }
+
+  beforeEach(async () => {
+    await mockClaude.reset()
+    user = await createUser()
+    await uploadResume(user)
+    await cacheParsedResume(user.id, long)
+  })
+  afterEach(async () => {
+    await deleteUser(user)
+    user = undefined
+  })
+
+  it('with trim off, every bullet stays: a long resume is never cut on its own', async () => {
+    const resume = await tailor({ trim: false })
+    expect(resume.experience.map((e: { bullets: string[] }) => e.bullets.length)).toEqual([15, 15, 15])
+  })
+
+  it('trim cuts to the budget and brings a dropped measured result back first', async () => {
+    const resume = await tailor({ trim: true })
+    expect(resume.experience.map((e: { bullets: string[] }) => e.bullets.length)).toEqual([6, 4, 4])
+    expect(resume.experience[0].bullets[0]).toBe(RESULT)
+    expect(resume.projects[0].bullets).toHaveLength(2)
+  })
+
+  it('Regenerate in trim mode is held to the same budget', async () => {
+    const first = await tailor({ trim: true })
+    const again = await tailor({ trim: true, previous: first })
+    expect(again.experience.map((e: { bullets: string[] }) => e.bullets.length)).toEqual([6, 4, 4])
+  })
+
+  it("the posting's title, never held, goes back to the candidate's headline", async () => {
+    expect((await tailor({ trim: true })).headline).toBe('Backend Engineer')
+  })
+
+  it('a client that asks gets the new fields; one that does not gets them folded into the old ones', async () => {
+    const current = await tailor({}, NEW_FIELDS)
+    expect(current.projects[0]).toMatchObject({ name: 'tidewatch', link: 'github.com/x/tidewatch', tech: 'Go, SQLite' })
+    expect(current.otherSections[0].entries[0].name).toBe('pg-outbox')
+
+    const older = await tailor({}, {})
+    expect(older.projects[0]).toEqual({ name: 'tidewatch', bullets: ['Go, SQLite | github.com/x/tidewatch', ...current.projects[0].bullets] })
+    expect(older.otherSections[0]).toEqual({
+      heading: 'Open Source',
+      lines: ['pg-outbox | Creator | github.com/x/pg-outbox', 'Outbox library for Postgres', 'Speaker, GopherCon 2024'],
+    })
+  })
+})

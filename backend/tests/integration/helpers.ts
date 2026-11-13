@@ -193,6 +193,8 @@ export const mockClaude = {
   delayNext: (ms: number) =>
     fetch(`${MOCK_URL}/__mock/delay-next`, { method: 'POST', body: JSON.stringify({ ms }) }),
   requests: async (): Promise<ClaudeRequest[]> => (await fetch(`${MOCK_URL}/__mock/requests`)).json(),
+  // The delta the next tailor call streams back, in place of MOCK_TAILOR_DELTA.
+  tailorDelta: (delta: unknown) => fetch(`${MOCK_URL}/__mock/tailor-delta`, { method: 'POST', body: JSON.stringify(delta) }),
 }
 
 export interface StripeCall {

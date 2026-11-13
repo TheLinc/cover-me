@@ -168,7 +168,7 @@ const checks = [
     a: 'extension/src/lib/ai/resume-parse.ts',
     b: 'backend/supabase/functions/_shared/resume-parse.ts',
     start: 'You are a resume parser.',
-    end: '${resumeText.slice(0, 12000)}`',
+    end: '${resumeText.slice(0, MAX_RESUME_CHARS)}`',
   },
   {
     name: 'resume parse normalizers',

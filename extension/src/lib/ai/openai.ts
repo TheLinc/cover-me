@@ -19,7 +19,7 @@ const OPENAI_FIELDS = { model: OPENAI_MODEL, reasoning: { effort: 'medium' }, ma
 // extraction, not judgment. Through Chat Completions, streamed: low effort
 // barely reasons, but copying a 12,000-character resume out took 30 s.
 // store: false is Chat Completions' default; it's sent anyway so every OpenAI call says so.
-export const OPENAI_PARSE_FIELDS = { model: 'gpt-6-luna', reasoning_effort: 'low', max_completion_tokens: 8000, store: false } as const
+export const OPENAI_PARSE_FIELDS = { model: 'gpt-6-luna', reasoning_effort: 'low', max_completion_tokens: 16000, store: false } as const
 
 // Streams through the Responses API, which sends progress events from the
 // first second while the model reasons. Chat Completions sends nothing until

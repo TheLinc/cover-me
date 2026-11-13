@@ -5,6 +5,7 @@ import { MOCK_PARSED_RESUME } from '../mock-anthropic'
 // "Your design" (#131): the resume function's parse on request and a Pro
 // account's Word files, and the applications function serving them back.
 const hash = (c: string) => c.repeat(64)
+const NEW = { 'X-Resume-Fields': '2' }
 const docx = (s: string) => Buffer.from(s).toString('base64')
 const uploadFile = (user: TestUser, h: string, content: string) =>
   callFunction('resume', { token: user.token, query: { file: '1' }, body: { hash: h, docx: docx(content) } })
@@ -85,4 +86,46 @@ describe('design files', () => {
     const marks = application.tailoredResumes.map((r: { design?: boolean; resume: { sourceHash?: string } }) => [r.design ?? false, r.resume.sourceHash ?? null])
     expect(marks.sort()).toEqual([[false, null], [true, hash('a')]])
   })
+
+  // #190: a client that doesn't send X-Resume-Fields: 2 (the store extension
+  // until its next release) gets the new fields folded into ones it prints.
+  it('every resume the functions send back folds the new fields unless the client asks for them', async () => {
+    user = await createUser('hosted_pro')
+    await uploadResume(user)
+    await cacheParsedResume(user.id, {
+      ...MOCK_PARSED_RESUME,
+      headline: 'Software Engineer',
+      projects: [{ name: 'tidewatch', link: 'github.com/x/tidewatch', tech: 'Go, SQLite', bullets: ['Uptime monitor'] }],
+      otherSections: [{ heading: 'Open Source', lines: ['Speaker, GopherCon 2024'], entries: [{ name: 'pg-outbox', subtitle: 'Creator', bullets: ['Outbox library'] }] }],
+      skills: 'Languages: TypeScript\nData: Postgres',
+      sectionOrder: ['summary', 'experience', 'projects', 'other', 'education', 'skills'],
+    })
+    await uploadFile(user, hash('a'), 'file a')
+    await callFunction('tailor', { token: user.token, headers: NEW, body: { job: JOB, layout: 'yours', sourceHash: hash('a') } })
+
+    const isNew = (r: Record<string, any>) => {
+      expect(r.projects[0]).toMatchObject({ name: 'tidewatch', tech: 'Go, SQLite', link: 'github.com/x/tidewatch' })
+      expect(r.otherSections[0].entries[0].name).toBe('pg-outbox')
+      expect(r.skills).toContain('\n')
+    }
+    const isFolded = (r: Record<string, any>) => {
+      expect(r.projects[0]).toEqual({ name: 'tidewatch', bullets: ['Go, SQLite | github.com/x/tidewatch', ...r.projects[0].bullets.slice(1)] })
+      expect(r.otherSections[0]).toEqual({ heading: 'Open Source', lines: ['pg-outbox | Creator', 'Outbox library', 'Speaker, GopherCon 2024'] })
+      expect(r.skills).not.toContain('\n')
+    }
+    const both = async (call: (headers: Record<string, string>) => Promise<Record<string, any>>) => {
+      isNew(await call(NEW))
+      isFolded(await call({}))
+    }
+
+    // The resume function's parse, sent back for the design check.
+    await both(async (headers) => (await (await callFunction('resume', { token: user!.token, headers, body: { text: RESUME_TEXT, filename: 'resume.docx', parse: true } })).json()).structured)
+    // The parse kept with a Word file.
+    await both(async (headers) => (await (await callFunction('applications', { token: user!.token, headers, query: { file: hash('a') } })).json()).structured)
+    // A saved tailored resume, in one application's detail and in the full list.
+    const { applications } = await (await callFunction('applications', { token: user.token, query: { summary: '1' } })).json()
+    await both(async (headers) => (await (await callFunction('applications', { token: user!.token, headers, query: { detail: applications[0].id } })).json()).application.tailoredResumes[0].resume)
+    await both(async (headers) => (await (await callFunction('applications', { token: user!.token, headers })).json()).applications[0].tailoredResumes[0].resume)
+  })
 })
+

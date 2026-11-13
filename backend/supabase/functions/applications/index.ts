@@ -4,6 +4,7 @@ import { decrypt, encrypt } from '../_shared/encrypt.ts'
 import { findOrCreateJobApplication } from '../_shared/job-application.ts'
 import { isObject, isUuid, MAX_RESUME_JSON, MAX_UPLOAD_BYTES, parseUpload, resumeColumns } from '../_shared/history-upload.ts'
 import { readBody } from '../_shared/read-body.ts'
+import { withOlderFields } from '../_shared/resume-fields.ts'
 import { isStage, likeContains, parseSearch, type Stage } from '../_shared/application-search.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
@@ -48,7 +49,7 @@ const base = (row: Row) => ({
 // files: the hashes of the Word files the account keeps (#131). A resume
 // tailored in one of them is marked design: true, so the dashboard offers the
 // download in the user's own design.
-async function fullApplication(row: Row, files = new Set<string>()) {
+async function fullApplication(row: Row, req: Request, files = new Set<string>()) {
   const coverLetters = []
   for (const cl of row.cover_letters ?? []) {
     try {
@@ -60,7 +61,7 @@ async function fullApplication(row: Row, files = new Set<string>()) {
     try {
       tailoredResumes.push({
         id: tr.id as string,
-        resume: JSON.parse(await decrypt(tr.resume_json_encrypted as string)),
+        resume: withOlderFields(JSON.parse(await decrypt(tr.resume_json_encrypted as string)), req),
         createdAt: tr.created_at as string,
         ...(files.has(tr.source_hash as string) ? { design: true } : {}),
       })
@@ -132,7 +133,7 @@ Deno.serve(async (req) => {
         .eq('user_id', userId).eq('hash', fileHash).maybeSingle()
       if (!file?.structured_encrypted) return json({ error: 'Not found' }, 404)
       try {
-        return json({ docx: await decrypt(file.docx_encrypted), structured: JSON.parse(await decrypt(file.structured_encrypted)) })
+        return json({ docx: await decrypt(file.docx_encrypted), structured: withOlderFields(JSON.parse(await decrypt(file.structured_encrypted)), req) })
       } catch {
         return json({ error: 'Failed to read file' }, 500)
       }
@@ -153,7 +154,7 @@ Deno.serve(async (req) => {
       // Only files that can place tailored text: a parse to match against.
       const { data: files } = await supabase.from('resume_files').select('hash')
         .eq('user_id', userId).not('structured_encrypted', 'is', null)
-      return json({ application: await fullApplication(row as unknown as Row, new Set((files ?? []).map((f) => f.hash as string))) })
+      return json({ application: await fullApplication(row as unknown as Row, req, new Set((files ?? []).map((f) => f.hash as string))) })
     }
 
     const search = parseSearch(params)
@@ -184,7 +185,7 @@ Deno.serve(async (req) => {
     if (error) return json({ error: 'Failed to fetch applications' }, 500)
     const hasMore = (found?.length ?? 0) > search.limit
     const rows = ((found ?? []) as unknown as Row[]).slice(0, search.limit)
-    const applications = search.summary ? rows.map(summaryApplication) : await Promise.all(rows.map((r) => fullApplication(r)))
+    const applications = search.summary ? rows.map(summaryApplication) : await Promise.all(rows.map((r) => fullApplication(r, req)))
     return json({ applications, hasMore })
   }
 

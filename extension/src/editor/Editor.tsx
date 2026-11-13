@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { ensureValidSession, fetchApplicationsFromBackend, saveResumeEditToBackend, saveSectionOrderToBackend } from '../lib/auth'
-import { splitSkills } from '../lib/ai/resume-grounding'
+import { skillGroups, splitSkills } from '../lib/ai/resume-grounding'
 import { isCurrentParse, withChosenOrder } from '../lib/ai/resume-parse'
 import { downloadTailoredResumePdf, tailoredResumePdf } from '../lib/pdf/resume'
 import type { PlacedSection } from '../lib/pdf/sections'
@@ -41,6 +41,13 @@ async function openResume(id: string): Promise<Opened | null> {
   return null
 }
 
+// The skills as the form edits them: a group per line when the resume groups
+// them ("Languages: Python, SQL"), else one skill per line.
+function skillLines(skills: string | undefined): string[] {
+  if (!skills) return []
+  return skillGroups(skills).length ? skills.split(/\n+/).filter((l) => l.trim()) : splitSkills(skills)
+}
+
 // The form's state as a resume: skills joined back into one line, and lines
 // left empty dropped. A section emptied out stays, empty, so it can be filled again.
 function resumeFromForm(draft: TailoredResume, skills: string[]): TailoredResume {
@@ -51,8 +58,14 @@ function resumeFromForm(draft: TailoredResume, skills: string[]): TailoredResume
     projects: draft.projects?.map((p) => ({ ...p, bullets: lines(p.bullets) ?? [] })),
     education: draft.education.map((e) => ({ ...e, bullets: lines(e.bullets) ?? [] })),
     certifications: lines(draft.certifications),
-    otherSections: draft.otherSections?.map((s) => ({ ...s, lines: lines(s.lines) ?? [] })),
-    skills: draft.skills === undefined ? undefined : lines(skills)!.map((s) => s.trim()).join(', '),
+    otherSections: draft.otherSections?.map((s) => ({
+      ...s,
+      lines: lines(s.lines) ?? [],
+      ...(s.entries ? { entries: s.entries.map((e) => ({ ...e, bullets: lines(e.bullets) ?? [] })) } : {}),
+    })),
+    // Grouped skills ("Languages: Python, SQL") are edited a group per line
+    // and kept that way; a plain list goes back to one comma-separated line.
+    skills: draft.skills === undefined ? undefined : lines(skills)!.map((s) => s.trim()).join(skillGroups(draft.skills).length ? '\n' : ', '),
   }
 }
 
@@ -111,7 +124,7 @@ export default function Editor() {
     openResume(id).then((o) => {
       setOpened(o)
       if (!o) return
-      setForm({ draft: structuredClone(o.scored), skills: o.scored.skills ? splitSkills(o.scored.skills) : [] })
+      setForm({ draft: structuredClone(o.scored), skills: skillLines(o.scored.skills) })
       document.title = `Edit resume · ${o.jobTitle || 'Cover Me'}`
       // Ready for a save as the tab closes, which can't wait for a refresh.
       void proSession().then((s) => { session.current = s }).catch(() => {})
@@ -273,7 +286,7 @@ export default function Editor() {
   function restore(i: number, title: string) {
     change((f) => {
       const draft = restoreSection(f.draft, i)
-      return { draft, skills: f.draft.deletedSections![i].key === 'skills' ? splitSkills(draft.skills ?? '') : f.skills }
+      return { draft, skills: f.draft.deletedSections![i].key === 'skills' ? skillLines(draft.skills) : f.skills }
     })
     setNote(`${title} restored.`)
     focusNext.current = '.ed-note button'
@@ -344,7 +357,11 @@ export default function Editor() {
       case 'projects':
         return (draft.projects ?? []).map((p, i) => (
           <div key={i} className="ed-item">
-            <Field label="Project" value={p.name} onChange={(v) => edit((r) => { r.projects![i].name = v })} />
+            <div className="ed-grid">
+              <Field label="Project" value={p.name} onChange={(v) => edit((r) => { r.projects![i].name = v })} />
+              <Field label="Link" value={p.link ?? ''} onChange={(v) => edit((r) => { r.projects![i].link = v })} />
+            </div>
+            <Field label="Tech" value={p.tech ?? ''} onChange={(v) => edit((r) => { r.projects![i].tech = v })} />
             <Lines label={`Bullets for ${p.name || `project ${i + 1}`}`} noun="bullet" items={p.bullets ?? []}
               onChange={(l) => edit((r) => { r.projects![i].bullets = l })} />
           </div>
@@ -373,8 +390,23 @@ export default function Editor() {
         return (
           <>
             <Field label="Heading" value={s.heading} onChange={(v) => edit((r) => { r.otherSections![placed.index].heading = v })} />
-            <Lines label={`Lines under ${s.heading || 'this section'}`} noun="line" items={s.lines ?? []}
-              onChange={(l) => edit((r) => { r.otherSections![placed.index].lines = l })} />
+            {(s.entries ?? []).map((e, j) => (
+              <div key={j} className="ed-item">
+                <div className="ed-grid">
+                  <Field label="Name" value={e.name} onChange={(v) => edit((r) => { r.otherSections![placed.index].entries![j].name = v })} />
+                  <Field label="Dates" value={e.dates ?? ''} onChange={(v) => edit((r) => { r.otherSections![placed.index].entries![j].dates = v })} />
+                  <Field label="Role or placing" value={e.subtitle ?? ''} onChange={(v) => edit((r) => { r.otherSections![placed.index].entries![j].subtitle = v })} />
+                  <Field label="Link" value={e.link ?? ''} onChange={(v) => edit((r) => { r.otherSections![placed.index].entries![j].link = v })} />
+                </div>
+                <Lines label={`Bullets for ${e.name || `entry ${j + 1}`}`} noun="bullet" items={e.bullets ?? []}
+                  onChange={(l) => edit((r) => { r.otherSections![placed.index].entries![j].bullets = l })} />
+              </div>
+            ))}
+            {/* A section of entries shows its loose lines only when it has some. */}
+            {(!s.entries?.length || !!s.lines?.length) && (
+              <Lines label={`Lines under ${s.heading || 'this section'}`} noun="line" items={s.lines ?? []}
+                onChange={(l) => edit((r) => { r.otherSections![placed.index].lines = l })} />
+            )}
           </>
         )
       }
@@ -432,6 +464,7 @@ export default function Editor() {
             <Field label="Email" value={draft.email} onChange={(v) => edit((r) => { r.email = v })} />
             <Field label="Location" value={draft.location ?? ''} onChange={(v) => edit((r) => { r.location = v })} />
           </div>
+          <Field label="Headline" value={draft.headline ?? ''} onChange={(v) => edit((r) => { r.headline = v })} />
           {/* links (#129) prints instead of website; a resume parsed before it has only website. website stays
               set to the first link for builds that print only that. */}
           <Lines label="Links" noun="link" short items={draft.links ?? (draft.website ? [draft.website] : [])}
