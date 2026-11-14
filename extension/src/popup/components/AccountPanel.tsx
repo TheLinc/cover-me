@@ -294,7 +294,7 @@ export default function AccountPanel({ initialView = 'signin', links = true }: {
                   ) : emailInitial}
                 </div>
                 <div className="account-info">
-                  <div className="account-email">{session.user.email}</div>
+                  <div className="account-email" title={session.user.email}>{session.user.email}</div>
                   {tier && (
                     <span className={isPro ? 'tier-badge tier-badge-pro' : 'tier-badge'}>
                       {isPro ? '★ Pro' : 'Free'}

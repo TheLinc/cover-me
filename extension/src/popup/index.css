@@ -1021,7 +1021,9 @@ html, body {
   font-size: 13px;
   font-weight: 600;
   color: var(--text);
-  word-break: break-all;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .tier-badge {
