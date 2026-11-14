@@ -365,7 +365,7 @@ export default function HistoryPage() {
                           />
                           {/* Not for "Your design": its Word file takes only some edits, and the user can edit it in Word. */}
                           {!(tr.resume.sourceHash && designHashes.includes(tr.resume.sourceHash)) && (
-                            <button className="btn btn-secondary btn-sm" onClick={() => openResumeEditor(tr.id)}>
+                            <button className="btn btn-secondary btn-sm" onClick={() => void openResumeEditor(tr.id)}>
                               <EditIcon />
                               Edit
                             </button>

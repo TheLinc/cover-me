@@ -1119,7 +1119,7 @@ export default function GeneratePage({ onNavigate }: Props) {
                     />
                     {/* Not for "Your design": its Word file takes only some edits, and the user can edit it in Word. */}
                     {tailoredEntryId && !tailoredResume.sourceHash && (
-                      <button className="btn btn-secondary btn-compact" onClick={() => openResumeEditor(tailoredEntryId)}>
+                      <button className="btn btn-secondary btn-compact" onClick={() => void openResumeEditor(tailoredEntryId)}>
                         <EditIcon />
                         Edit
                       </button>

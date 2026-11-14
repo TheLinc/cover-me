@@ -89,7 +89,10 @@ const SECTION_TITLES: Record<Exclude<PlacedSection['key'], 'other'>, string> = {
 const deletedTitle = (d: DeletedSection) => (d.key === 'other' ? d.section.heading || 'Other' : SECTION_TITLES[d.key])
 
 export default function Editor() {
-  const id = useMemo(() => new URLSearchParams(location.search).get('id') ?? '', [])
+  const { id, from } = useMemo(() => {
+    const q = new URLSearchParams(location.search)
+    return { id: q.get('id') ?? '', from: Number(q.get('from')) } // from: the job tab (#223); 0 when none, as no tab has id 0
+  }, [])
   const [opened, setOpened] = useState<Opened | null | 'loading' | 'error'>('loading')
   const [form, setForm] = useState<Form | null>(null)
   const [steps, setSteps] = useState<{ past: Form[]; future: Form[] }>({ past: [], future: [] })
@@ -301,7 +304,6 @@ export default function Editor() {
     }
     await saveToAccount()
     if (!accountOk.current) return
-    const from = Number(new URLSearchParams(location.search).get('from'))
     if (from) await returnToTab(from)
     window.close()
   }
