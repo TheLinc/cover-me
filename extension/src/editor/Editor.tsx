@@ -5,7 +5,7 @@ import { isCurrentParse, withChosenOrder } from '../lib/ai/resume-parse'
 import { downloadTailoredResumePdf, tailoredResumePdf } from '../lib/pdf/resume'
 import type { PlacedSection } from '../lib/pdf/sections'
 import type { DeletedSection } from '../lib/pdf/types'
-import { chosenOrder, editedResume, restoreSection, saveResumeEdit, shownSections, withResumeEdit, withSections } from '../lib/resume-edit'
+import { chosenOrder, editedResume, restoreSection, returnToTab, saveResumeEdit, shownSections, withResumeEdit, withSections } from '../lib/resume-edit'
 import { getCachedTier, getMode, getResume, getTailoredHistory, saveParsedResume } from '../lib/storage'
 import DownloadMenu from '../popup/components/DownloadMenu'
 import GapChips from '../popup/components/GapChips'
@@ -292,15 +292,18 @@ export default function Editor() {
     }
   }
 
-  // Closes once everything is saved. When the account couldn't be reached the
-  // tab stays, showing why.
+  // Closes once everything is saved, back on the job tab with the popup open.
+  // When the account couldn't be reached the tab stays, showing why.
   async function done() {
     if (dirty && saved) {
       forAccount.current = saved
       localSaves.current = localSaves.current.then(() => saveResumeEdit(id, saved)).catch(() => {})
     }
     await saveToAccount()
-    if (accountOk.current) window.close()
+    if (!accountOk.current) return
+    const from = Number(new URLSearchParams(location.search).get('from'))
+    if (from) await returnToTab(from)
+    window.close()
   }
 
   if (opened === 'loading') return <main className="ed-message">Opening your resume…</main>

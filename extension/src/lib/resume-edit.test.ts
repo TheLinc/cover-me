@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { chosenOrder, editedResume, remainingGaps, restoreSection, saveResumeEdit, shownSections, withSections } from './resume-edit'
+import { chosenOrder, editedResume, openResumeEditor, remainingGaps, restoreSection, returnToTab, saveResumeEdit, shownSections, withSections } from './resume-edit'
 import { getTailoredHistory } from './storage'
 import type { TailoredResume } from '../types'
 
@@ -198,5 +198,53 @@ describe('the order saved for future resumes', () => {
       sectionOrder: ['summary', 'experience', 'projects', 'education', 'certifications', 'skills', 'other', 'other'],
       headings: ['Awards', 'Talks'],
     })
+  })
+})
+
+describe('the editor tab returns to the job tab (#223)', () => {
+  function fakeTabs(active: { id?: number; index: number; windowId: number } | undefined) {
+    const chrome = {
+      runtime: { getURL: (p: string) => `chrome-extension://id/${p}` },
+      tabs: {
+        query: vi.fn(async () => (active ? [active] : [])),
+        create: vi.fn(async () => ({})),
+        update: vi.fn(async (id: number) => ({ id, windowId: 7 })),
+      },
+      windows: { update: vi.fn(async () => ({})) },
+      action: { openPopup: vi.fn(async () => {}) },
+    }
+    vi.stubGlobal('chrome', chrome)
+    return chrome
+  }
+
+  test('the editor opens next to the job tab and remembers it', async () => {
+    const chrome = fakeTabs({ id: 42, index: 3, windowId: 7 })
+    await openResumeEditor('a b')
+    expect(chrome.tabs.create).toHaveBeenCalledWith({
+      url: 'chrome-extension://id/src/editor/index.html?id=a%20b&from=42', openerTabId: 42, index: 4,
+    })
+  })
+
+  test('with no active tab it opens as before', async () => {
+    const chrome = fakeTabs(undefined)
+    await openResumeEditor('x')
+    expect(chrome.tabs.create).toHaveBeenCalledWith({ url: 'chrome-extension://id/src/editor/index.html?id=x' })
+  })
+
+  test('Done makes the job tab active and opens the popup in its window', async () => {
+    const chrome = fakeTabs(undefined)
+    await returnToTab(42)
+    expect(chrome.tabs.update).toHaveBeenCalledWith(42, { active: true })
+    expect(chrome.windows.update).toHaveBeenCalledWith(7, { focused: true })
+    expect(chrome.action.openPopup).toHaveBeenCalledWith({ windowId: 7 })
+  })
+
+  test('a closed job tab or an old Chrome never throws', async () => {
+    const chrome = fakeTabs(undefined)
+    chrome.tabs.update.mockRejectedValueOnce(new Error('No tab with id: 42'))
+    await expect(returnToTab(42)).resolves.toBeUndefined()
+    expect(chrome.action.openPopup).not.toHaveBeenCalled()
+    chrome.action.openPopup.mockRejectedValueOnce(new Error('not available'))
+    await expect(returnToTab(42)).resolves.toBeUndefined()
   })
 })
