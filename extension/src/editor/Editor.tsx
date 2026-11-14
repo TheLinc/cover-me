@@ -5,7 +5,7 @@ import { isCurrentParse, withChosenOrder } from '../lib/ai/resume-parse'
 import { downloadTailoredResumePdf, tailoredResumePdf } from '../lib/pdf/resume'
 import type { PlacedSection } from '../lib/pdf/sections'
 import type { DeletedSection } from '../lib/pdf/types'
-import { chosenOrder, editedResume, restoreSection, saveResumeEdit, shownSections, withResumeEdit, withSections } from '../lib/resume-edit'
+import { chosenOrder, editedResume, restoreSection, returnToTab, saveResumeEdit, shownSections, withResumeEdit, withSections } from '../lib/resume-edit'
 import { getCachedTier, getMode, getResume, getTailoredHistory, saveParsedResume } from '../lib/storage'
 import DownloadMenu from '../popup/components/DownloadMenu'
 import GapChips from '../popup/components/GapChips'
@@ -89,7 +89,10 @@ const SECTION_TITLES: Record<Exclude<PlacedSection['key'], 'other'>, string> = {
 const deletedTitle = (d: DeletedSection) => (d.key === 'other' ? d.section.heading || 'Other' : SECTION_TITLES[d.key])
 
 export default function Editor() {
-  const id = useMemo(() => new URLSearchParams(location.search).get('id') ?? '', [])
+  const { id, from } = useMemo(() => {
+    const q = new URLSearchParams(location.search)
+    return { id: q.get('id') ?? '', from: Number(q.get('from')) } // from: the job tab (#223); 0 when none, as no tab has id 0
+  }, [])
   const [opened, setOpened] = useState<Opened | null | 'loading' | 'error'>('loading')
   const [form, setForm] = useState<Form | null>(null)
   const [steps, setSteps] = useState<{ past: Form[]; future: Form[] }>({ past: [], future: [] })
@@ -292,15 +295,17 @@ export default function Editor() {
     }
   }
 
-  // Closes once everything is saved. When the account couldn't be reached the
-  // tab stays, showing why.
+  // Closes once everything is saved, back on the job tab with the popup open.
+  // When the account couldn't be reached the tab stays, showing why.
   async function done() {
     if (dirty && saved) {
       forAccount.current = saved
       localSaves.current = localSaves.current.then(() => saveResumeEdit(id, saved)).catch(() => {})
     }
     await saveToAccount()
-    if (accountOk.current) window.close()
+    if (!accountOk.current) return
+    if (from) await returnToTab(from)
+    window.close()
   }
 
   if (opened === 'loading') return <main className="ed-message">Opening your resume…</main>
