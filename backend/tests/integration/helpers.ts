@@ -209,6 +209,7 @@ export const mockStripe = {
     customerError?: { status: number; code: string }
     subscriptionError?: { status: number; code: string }
     deleteCustomerError?: { status: number; code: string }
+    discountError?: { status: number; code: string }
   }) =>
     fetch(`${MOCK_URL}/__mock/stripe-state`, { method: 'POST', body: JSON.stringify(state) }),
 }

@@ -319,9 +319,15 @@ export function limitErrorCode(err: RateLimitError): 'RATE_LIMIT' | 'FAIR_USE' {
   return err.kind === 'daily' ? 'FAIR_USE' : 'RATE_LIMIT'
 }
 
+// The server adds the first-month offer (#213) to the limit text for builds
+// without it in the upgrade prompt. This one drops it: the popup keeps the
+// text on screen across opens, where its day count would go stale, and the
+// upgrade prompt below shows the live offer.
+const OFFER_SENTENCE = / Your first month of monthly Pro is discounted at checkout for \d+ more days?\./
+
 function rateLimitError(data: Record<string, unknown>): RateLimitError {
   const kind = (data.allowance as { kind?: 'starter' | 'weekly' | 'daily' } | undefined)?.kind
-  return new RateLimitError((data.error as string) ?? 'Generation limit reached.', kind)
+  return new RateLimitError(((data.error as string) ?? 'Generation limit reached.').replace(OFFER_SENTENCE, ''), kind)
 }
 
 export async function generateViaBackend(job: JobData, accessToken: string, supplemental?: string): Promise<string> {
@@ -398,6 +404,24 @@ export async function startBilling(accessToken: string, action: 'checkout' | 'po
   const data = await res.json().catch(() => ({})) as { url?: string; error?: string }
   if (!res.ok || !data.url) throw new Error(data.error ?? 'Could not reach billing. Please try again.')
   return data.url
+}
+
+// The first-month offer (#213) while it's open: when it ends, and the Stripe
+// coupon's customer-facing name (the amount lives only in Stripe). Null when
+// there's none or billing doesn't answer, so the popup just leaves it out.
+export interface FirstMonthOffer { endsAt: string; name: string | null }
+
+export async function fetchFirstMonthOffer(accessToken: string): Promise<FirstMonthOffer | null> {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/billing`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'offer' }),
+    })
+    return ((await res.json()) as { offer?: FirstMonthOffer | null }).offer ?? null
+  } catch {
+    return null
+  }
 }
 
 // The layout of a hosted tailor (#131): counted in the tailor_run event, and
