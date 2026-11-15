@@ -5,8 +5,11 @@ import { handleAnswerMessage } from './answer-field.ts'
 
 // Injected by the background on each click (activeTab), not declared in the
 // manifest, so it can run more than once per page. Register the listener once.
-const flag = '__coverMeScraper' as const
-const w = window as typeof window & { [flag]?: true }
+// Keyed by version: after an update, a tab can still hold the old script's
+// flag (its listener is dead, the window is shared), and the new one must
+// still register.
+const flag = `__coverMeScraper_${chrome.runtime.getManifest().version}`
+const w = window as typeof window & Record<string, true | undefined>
 
 if (!w[flag]) {
   w[flag] = true

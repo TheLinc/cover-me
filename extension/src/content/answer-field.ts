@@ -75,8 +75,14 @@ function focusedField(): HTMLElement | null {
 // React-built forms and rich-text boxes, and the browser's undo (Ctrl+Z)
 // brings back what was there. The value setter is the fallback for a box that
 // refuses it, set through the prototype so React notices.
-function typeAnswer(el: HTMLElement, text: string): void {
+// false when the box is gone or won't take focus (re-rendered, or its form
+// step hidden while the answer was written): then nothing is typed, rather
+// than typing into whatever box has focus now.
+function typeAnswer(el: HTMLElement, text: string): boolean {
   el.focus()
+  let active = document.activeElement
+  while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement
+  if (!el.isConnected || active !== el) return false
   const plain = el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement ? el : null
   if (plain) {
     plain.select()
@@ -87,7 +93,7 @@ function typeAnswer(el: HTMLElement, text: string): void {
     selection?.removeAllRanges()
     selection?.addRange(range)
   }
-  if (document.execCommand('insertText', false, text)) return
+  if (document.execCommand('insertText', false, text)) return true
   if (plain) {
     const proto = plain instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype
     Object.getOwnPropertyDescriptor(proto, 'value')?.set?.call(plain, text)
@@ -95,6 +101,7 @@ function typeAnswer(el: HTMLElement, text: string): void {
     el.textContent = text
   }
   el.dispatchEvent(new Event('input', { bubbles: true }))
+  return true
 }
 
 const STYLE = `
@@ -197,7 +204,10 @@ interface Target { el: HTMLElement; question: string; maxLength?: number }
 const targets = new Map<string, Target>()
 
 function done(target: Target, answer: string, jobs: Job[], index: number, jobSource: JobSource): void {
-  typeAnswer(target.el, answer)
+  if (!typeAnswer(target.el, answer)) {
+    showStatus(null, 'error', 'The box changed while the answer was being written. Right-click it again.')
+    return
+  }
   const job = jobs[index]
   // The prompt leaves [blanks] for personal details only the applicant knows
   // (a start date, a salary).

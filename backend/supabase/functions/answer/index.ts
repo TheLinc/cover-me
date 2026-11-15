@@ -11,6 +11,8 @@ import { heartbeatJson } from '../_shared/heartbeat-json.ts'
 import { decrypt } from '../_shared/encrypt.ts'
 import { captureUsage } from '../_shared/posthog.ts'
 
+declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void }
+
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SECRET_KEY = Deno.env.get('SERVICE_KEY')!
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')!
