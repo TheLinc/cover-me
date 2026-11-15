@@ -85,6 +85,8 @@ describe('Regenerate after section edits', () => {
     sectionOrder: ['other', 'skills', 'summary', 'experience', 'education', 'other'],
     deletedSections: [{ key: 'certifications', index: 4, certifications: ['Deleted cert text'] }],
     editedAt: '2026-11-12T00:00:00Z',
+    atsScore: 74,
+    atsScoreBefore: 61,
   }
   const raw = JSON.stringify({ summary: 'Reworded.', experience: [{ bullets: ['Built the billing service'] }] })
 
@@ -96,12 +98,13 @@ describe('Regenerate after section edits', () => {
     expect(resume.certifications).toBeUndefined()
   })
 
-  test("the prompt never sees a deleted section's text", () => {
+  test("the prompt never sees a deleted section's text or the old scores", () => {
     const job = { title: 'Engineer', company: 'Acme', description: 'Engineer' } as Parameters<typeof buildPrompt>[0]
     const prompt = buildPrompt(job, parsed, false, undefined, false, true, previous)
     expect(prompt).toContain('REVISION MODE')
     expect(prompt).not.toContain('Deleted cert text')
     expect(prompt).not.toContain('deletedSections')
+    expect(prompt).not.toContain('atsScore')
   })
 })
 
