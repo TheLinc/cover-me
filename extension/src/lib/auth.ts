@@ -353,6 +353,28 @@ export async function generateViaBackend(job: JobData, accessToken: string, supp
   return letter
 }
 
+// An answer to an application question (#232). Counts against the answer
+// allowance, not letters and resumes. jobSource: whether the job came from
+// the page or from saved jobs, for the answer_generated count.
+export async function answerViaBackend(
+  accessToken: string,
+  req: { job: JobData; question: string; maxLength?: number; supplemental?: string; jobSource: 'page' | 'saved' },
+): Promise<string> {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/answer`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(req),
+  })
+  const data = await res.json().catch(() => ({})) as Record<string, unknown>
+  if (res.status === 429) throw rateLimitError(data)
+  // Sent as 200 before the answer is ready (heartbeatJson), so a late failure
+  // arrives as { error } with status 200.
+  if (!res.ok || data.error) throw new Error((data.error as string) ?? `Server error ${res.status}`)
+  const answer = data.answer as string
+  if (!answer) throw new Error('Empty response from server')
+  return answer
+}
+
 // parse: wait for the server's parse of this text and return it, for the
 // check of an uploaded Word file (#131). Missing when the server didn't parse
 // (an older function, or the account's parse limit).

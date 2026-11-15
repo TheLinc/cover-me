@@ -11,10 +11,13 @@ t letters extension/src/lib/ai/index.ts backend/supabase/functions/_shared/lette
 t letters extension/src/lib/ai/letter-lint.test.ts backend/supabase/functions/generate/index.ts
 t tailor extension/src/lib/ai/resume-tailor.ts backend/supabase/functions/tailor/index.ts
 t tailor backend/supabase/functions/_shared/resume-grounding.ts extension/eval/claim-pairs.ts
-t both extension/src/lib/ai/index.ts extension/src/lib/ai/resume-parse.ts
-t both extension/src/lib/ai/claude.ts
-t both extension/eval/run.ts
-t both README.md
-t both
+t "letters tailor" extension/src/lib/ai/index.ts extension/src/lib/ai/resume-parse.ts
+t answers extension/src/lib/ai/answer.ts backend/supabase/functions/answer/index.ts
+t answers backend/supabase/functions/_shared/answer.ts extension/eval/answer-cases.ts
+t "letters answers" backend/supabase/functions/generate/index.ts extension/src/lib/ai/answer.test.ts
+t all extension/src/lib/ai/claude.ts
+t all extension/eval/run.ts
+t all README.md
+t all
 [ "$fail" = 0 ] && echo "eval-side: all cases pass"
 exit "$fail"

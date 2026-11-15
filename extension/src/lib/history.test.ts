@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { accountUpdates, capWarning, groupLocalHistory, groupsFromApplications, ownPending, uploadMessage, uploadSummary, withLocalOnly } from './history'
+import { accountUpdates, capWarning, groupLocalHistory, groupsFromApplications, ownPending, recentJobs, uploadMessage, uploadSummary, withLocalOnly } from './history'
 
 const job = (url: string, company = 'Northwind', title = 'Engineer') => ({ title, company, url, description: '' })
 const resume = { name: 'Pat', phone: '', email: '', website: '', experience: [], education: [] }
@@ -186,5 +186,33 @@ describe('ownPending', () => {
     )
     expect(out.letters.map((e) => e.id)).toEqual(['mine'])
     expect(out.tailored.map((e) => e.id)).toEqual(['t1'])
+  })
+})
+
+describe('recentJobs', () => {
+  const posting = (url: string, title = 'Engineer') => ({ title, company: 'Northwind', url, description: `Posting for ${title}` })
+
+  test('lists saved jobs newest first, once each, from letters and resumes alike', () => {
+    const jobs = recentJobs(
+      [{ id: 'l1', job: posting('https://a', 'A'), letter: 'x', createdAt: '2026-10-01T00:00:00Z' }],
+      [
+        { id: 't1', job: posting('https://b', 'B'), resume, createdAt: '2026-10-03T00:00:00Z' },
+        { id: 't2', job: posting('https://a', 'A'), resume, createdAt: '2026-10-02T00:00:00Z' },
+      ],
+    )
+    expect(jobs.map((j) => j.title)).toEqual(['B', 'A'])
+    expect(jobs[0].description).toBe('Posting for B')
+  })
+
+  test("skips jobs with no posting text and another account's entries, and keeps at most the limit", () => {
+    const letters = Array.from({ length: 12 }, (_, i) => ({ id: `l${i}`, job: posting(`https://${i}`, `J${i}`), letter: 'x', createdAt: `2026-10-${String(10 + i)}T00:00:00Z` }))
+    const jobs = recentJobs([
+      ...letters,
+      { id: 'blank', job: job('https://blank'), letter: 'x', createdAt: '2026-11-01T00:00:00Z' },
+      { id: 'theirs', job: posting('https://theirs', 'Theirs'), letter: 'x', createdAt: '2026-11-02T00:00:00Z', account: 'other' },
+    ], [], 10)
+    expect(jobs).toHaveLength(10)
+    expect(jobs[0].title).toBe('J11')
+    expect(jobs.map((j) => j.title)).not.toContain('Theirs')
   })
 })

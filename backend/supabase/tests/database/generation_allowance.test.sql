@@ -10,7 +10,7 @@ insert into auth.users (id, email) values
 -- public.users rows come from the signup trigger; set the tiers.
 update public.users set tier = 'hosted_pro' where id = '22222222-2222-4222-8222-222222222222';
 
-select is(public.generation_limits(), '{"free_starter":10,"free_weekly":5,"pro_daily":25}'::jsonb, 'limits live in one place');
+select is(public.generation_limits(), '{"free_starter":10,"free_weekly":5,"pro_daily":25,"answer_starter":5,"answer_weekly":5,"answer_pro_daily":50}'::jsonb, 'limits live in one place');
 
 -- Starter
 select is(public.generation_allowance('21111111-1111-4111-8111-111111111111')->>'kind', 'starter', 'a new free user is on the starter allowance');

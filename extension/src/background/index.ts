@@ -8,11 +8,21 @@ import { checkUploadedDesign, designForTailor, finishDesign, uploadDesignIfPro }
 import { debugGroup } from '../lib/debug'
 import { addToHistory, addToTailoredHistory, getCandidateContext, getResume, getSession, getSettings, hasAgreedToPageRead, resolveMode, saveParsedResume, setEntryAccounts, watchSession } from '../lib/storage'
 import { handleInstalled, uninstallUrl } from './install'
+import { handleAnswerClick, registerAnswerMenu, writeAnswer, type AnswerRequest } from './answer'
 import { scrapeFailure } from './scrape-failure'
 import type { PageSnapshot } from '../content/snapshot.ts'
 import type { CoverJob, CoverLetter, FrameScrapeResponse, GenerateResponse, JobData, ScrapeFailure, ScrapeResponse, TailoredResume, TailorJob, TailorResponse } from '../types'
 
-chrome.runtime.onInstalled.addListener((details) => { void handleInstalled(details) })
+chrome.runtime.onInstalled.addListener((details) => {
+  void handleInstalled(details)
+  registerAnswerMenu()
+})
+
+// Right-click "Cover Me: write an answer" (#232). The click grants activeTab
+// for that tab, the same access the toolbar button gives.
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  void keepAlive(handleAnswerClick(info, tab, scrapeTab, CONTENT_SCRIPT_FILE))
+})
 
 // Removing the extension opens the survey, with the account id while signed in
 function setUninstallUrl(userId?: string) {
@@ -45,6 +55,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   if (message.type === 'CHECK_DESIGN') {
     keepAlive(checkUploadedDesign(message.hash as string)).then(() => sendResponse({}))
+    return true
+  }
+  // "Use another job" in the answer's status box: the page script sends the
+  // box's question and the job picked.
+  if (message.type === 'ANSWER_REWRITE') {
+    keepAlive(writeAnswer(message.request as AnswerRequest)).then(sendResponse)
     return true
   }
   if (message.type === 'GOOGLE_SIGN_IN') {

@@ -58,6 +58,32 @@ function checkNumberProvenance(
   }
 }
 
+// ── Application answer checks (#232) ─────────────────────────────────────────
+
+export function checkAnswer(answer: string, c: EvalCase, extra: { failTerms?: string[]; maxLength?: number; maxWords?: number } = {}): CheckResult {
+  const result: CheckResult = { failures: [], warnings: [] }
+  if (!answer.trim()) {
+    result.failures.push('empty answer')
+    return result
+  }
+  // The posting's own title is fair to name, as in the letter check.
+  const prose = answer.replace(new RegExp(escapeRegex(c.job.title), 'gi'), ' ')
+  for (const t of [...c.failTerms, ...(extra.failTerms ?? [])]) {
+    if (containsTerm(prose, t)) result.failures.push(`answer names "${t}" (not in resume)`)
+  }
+  for (const t of c.warnTerms) {
+    if (containsTerm(prose, t)) result.warnings.push(`answer contains "${t}" — verify it describes the employer, not the candidate`)
+  }
+  if (extra.maxLength && answer.length > extra.maxLength) result.failures.push(`answer is ${answer.length} characters, over the box's ${extra.maxLength}`)
+  const words = answer.split(/\s+/).filter(Boolean).length
+  if (extra.maxWords && words > extra.maxWords) result.failures.push(`answer is ${words} words, over the question's ${extra.maxWords}`)
+  if (!extra.maxLength && !extra.maxWords && words > 300) result.warnings.push(`answer is ${words} words with no limit set (aim 150 to 250)`)
+  if (/^(dear|hi|hello)\b/i.test(answer.trim())) result.failures.push('answer opens with a greeting')
+  if (/[*#]|^\s*[-•]\s/m.test(answer)) result.failures.push('answer contains markdown or bullets')
+  checkNumberProvenance('answer', answer, numberSourceSet(c.resumeText), numberSourceSet(c.job.description), result)
+  return result
+}
+
 // ── Cover letter checks ──────────────────────────────────────────────────────
 
 export function checkLetter(letter: string, c: EvalCase): CheckResult {

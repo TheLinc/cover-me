@@ -98,7 +98,7 @@ export const MOCK_TAILOR_DELTA = {
 type MessagesBody = {
   model?: string
   stream?: boolean
-  messages?: Array<{ role: string; content: string }>
+  messages?: Array<{ role: string; content: string | Array<{ type: string; text?: string }> }>
   thinking?: { type: string; display?: string }
   fallbacks?: unknown
   /** The anthropic-beta request header, recorded so tests can check it. */
@@ -247,7 +247,9 @@ export function startMockAnthropic(port: number): Promise<Server> {
 
       // Tailor is the only streaming call; the skill-claim check and the resume
       // parse run on Haiku; everything else is a cover letter.
-      const prompt = body.messages?.[0]?.content ?? ''
+      // The answer function sends its prompt as text blocks (a cached part, then the question).
+      const first = body.messages?.[0]?.content
+      const prompt = typeof first === 'string' ? first : Array.isArray(first) ? first.map((b) => b.text ?? '').join('') : ''
       if (prompt.startsWith('SKILL CLAIM CHECK')) {
         // Approve every pair: the tests assert which skills survive grounding.
         const count = (prompt.match(/^\d+\. EVIDENCE:/gm) ?? []).length

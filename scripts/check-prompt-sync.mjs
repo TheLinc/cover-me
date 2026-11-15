@@ -197,11 +197,12 @@ for (const c of checks) {
   }
 }
 
-// The lint and grounding module mirrors must be byte-identical end to end.
+// The lint, grounding, ATS and answer-prompt module mirrors must be byte-identical end to end.
 for (const [name, extPath, bePath] of [
   ['letter-lint', EXT_LINT, BE_LINT],
   ['resume-grounding', 'extension/src/lib/ai/resume-grounding.ts', 'backend/supabase/functions/_shared/resume-grounding.ts'],
   ['ats-score', 'extension/src/lib/ai/ats-score.ts', 'backend/supabase/functions/_shared/ats-score.ts'],
+  ['answer prompt', 'extension/src/lib/ai/answer.ts', 'backend/supabase/functions/_shared/answer.ts'],
 ]) {
   const a = read(extPath)
   const b = read(bePath)

@@ -1,4 +1,4 @@
-import type { ApplicationRecord, CoverLetter, CoverLetterEntry, TailoredHistoryEntry, TailoredResumeEntry } from '../types'
+import type { ApplicationRecord, CoverLetter, CoverLetterEntry, JobData, TailoredHistoryEntry, TailoredResumeEntry } from '../types'
 import { HISTORY_LIMIT, TAILORED_HISTORY_LIMIT } from './storage'
 import type { UploadResult } from './auth'
 
@@ -46,6 +46,22 @@ export function groupLocalHistory(letters: CoverLetter[], tailored: TailoredHist
     g.tailoredResumes.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   }
   return Array.from(map.values()).sort((a, b) => b.latestAt.localeCompare(a.latestAt))
+}
+
+// The jobs a right-click answer can be written for when the page has no
+// posting (#232): one per posting, newest first. Leaves out jobs saved with
+// no posting text, which can't be answered from, and a previous user's.
+export function recentJobs(letters: CoverLetter[], tailored: TailoredHistoryEntry[], limit = 10): JobData[] {
+  const seen = new Set<string>()
+  return [...letters, ...tailored]
+    .filter((e) => e.account !== 'other' && e.job.description?.trim())
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .map((e) => e.job)
+    .filter((job) => {
+      const key = job.url || `${job.company}|||${job.title}`
+      return !seen.has(key) && !!seen.add(key)
+    })
+    .slice(0, limit)
 }
 
 // The free account's upgrade prompt in History: once letters or tailored
