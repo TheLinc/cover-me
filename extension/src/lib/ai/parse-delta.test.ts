@@ -104,3 +104,28 @@ describe('Regenerate after section edits', () => {
     expect(prompt).not.toContain('deletedSections')
   })
 })
+
+describe('score before tailoring (#228)', () => {
+  const parsed = {
+    name: 'Pat Lee', email: 'pat@example.com', phone: '', website: '',
+    experience: [{ title: 'Engineer', company: 'Northwind', location: '', dates: '2022', bullets: ['Built the billing service in TypeScript'] }],
+    education: [],
+  } as unknown as ParsedResume
+  const keywordMatch = { tier1Covered: ['TypeScript', 'Postgres'], tier1Missing: ['Kubernetes'] }
+
+  test('is the tailored score when the wording added no keyword, gap list aside', async () => {
+    const raw = JSON.stringify({ experience: [{ bullets: ['Built the billing service in TypeScript'] }], keywordMatch })
+    const resume = await assembleTailored(parsed, raw, { jobDescription: 'Engineer' })
+    expect(resume.atsGaps).toContain('Kubernetes')
+    expect(resume.atsScoreBefore).toBe(resume.atsScore)
+  })
+
+  test('drops by what the wording added', async () => {
+    const km = { tier1Covered: ['TypeScript', 'Payment systems'], tier1Missing: ['Kubernetes'] }
+    const raw = JSON.stringify({ experience: [{ bullets: ['Built the billing and payment systems in TypeScript'] }], keywordMatch: km })
+    const resume = await assembleTailored(parsed, raw, { jobDescription: 'Engineer' })
+    // Model: 70 * 2/3 + 30 = 77. Word match: original 70 * 1/3 + 30 = 53, tailored 77, so before is 77 - 24.
+    expect(resume.atsScore).toBe(77)
+    expect(resume.atsScoreBefore).toBe(53)
+  })
+})

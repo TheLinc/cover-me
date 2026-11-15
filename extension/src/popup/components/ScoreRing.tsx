@@ -8,10 +8,11 @@ const GROW_MS = 800
 export default function ScoreRing({ score, from, size = 104 }: { score: number; from?: number; size?: number }) {
   const base = typeof from === 'number' && from < score ? from : score
   const grows = base < score
-  const [shown, setShown] = useState(base)
+  const [animate] = useState(() => !matchMedia('(prefers-reduced-motion: reduce)').matches)
+  const [shown, setShown] = useState(animate ? base : score)
 
   useEffect(() => {
-    if (!grows || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if (!grows || !animate) {
       setShown(score)
       return
     }
@@ -25,7 +26,7 @@ export default function ScoreRing({ score, from, size = 104 }: { score: number; 
     }
     frame = requestAnimationFrame(step)
     return () => cancelAnimationFrame(frame)
-  }, [grows, base, score])
+  }, [grows, animate, base, score])
 
   const r = 54
   const c = 2 * Math.PI * r

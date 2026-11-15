@@ -597,9 +597,10 @@ ${job.description}`)
       atsGaps = computed.gaps
       resume.atsScore = atsScore
       resume.atsGaps = atsGaps
-      // The upload, not the notes: an ATS sees only the resume (#228). Not the
-      // sections deleted in the editor either, since the PDF doesn't print them.
-      resume.atsScoreBefore = scoreBefore(delta.keywordMatch, atsScore, candidateText(structuredResume), candidateText({ ...resume, deletedSections: undefined }), job.description)
+      // The upload, not the notes: an ATS sees only the resume (#228). Nor the
+      // gap list (it names the missing keywords) or the sections deleted in the
+      // editor: the PDF prints neither.
+      resume.atsScoreBefore = scoreBefore(delta.keywordMatch, atsScore, candidateText(structuredResume), candidateText({ ...resume, atsGaps: undefined, deletedSections: undefined }), job.description)
     }
     if (sourceHash) resume.sourceHash = sourceHash
     if (buildsOnEdits(previous)) resume.hasEdits = true

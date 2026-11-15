@@ -340,9 +340,10 @@ ${grounding.jobDescription}`)
     const { score, gaps } = scoreFromMatch(km, { jobDescription: grounding.jobDescription, candidate })
     resume.atsScore = score
     resume.atsGaps = gaps
-    // The upload, not the notes: an ATS sees only the resume (#228). Not the
-    // sections deleted in the editor either, since the PDF doesn't print them.
-    resume.atsScoreBefore = scoreBefore(km, score, candidateText(parsed), candidateText({ ...resume, deletedSections: undefined }), grounding.jobDescription)
+    // The upload, not the notes: an ATS sees only the resume (#228). Nor the
+    // gap list (it names the missing keywords) or the sections deleted in the
+    // editor: the PDF prints neither.
+    resume.atsScoreBefore = scoreBefore(km, score, candidateText(parsed), candidateText({ ...resume, atsGaps: undefined, deletedSections: undefined }), grounding.jobDescription)
   }
   if (buildsOnEdits(grounding.previous)) resume.hasEdits = true
   return resume
