@@ -120,13 +120,19 @@ function largestBlock(doubtful: boolean, heading?: Element): string | undefined 
   // list the countries a job is open to). A block that isn't rendered is read
   // as its source text, by Chrome and by linkedom alike: a posting under a
   // "Read more" toggle, which is read, or a hidden panel or mobile copy of the
-  // cards, which isn't.
+  // cards, which isn't. Chrome keeps that source text's indentation, so it's
+  // measured with its whitespace collapsed, as linkedom reads it (a hidden
+  // mobile menu would outweigh the page's text).
+  const measure = (el: HTMLElement) => {
+    const text = el.innerText?.trim() ?? ''
+    return text.length > 500 && !rendered(el) ? text.replace(/\s+/g, ' ').length : text.length
+  }
   let first: HTMLElement | undefined
   const after = (a: Node, b: Node) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0
   const nearFirst = (el: HTMLElement, first: HTMLElement) => first.contains(el) || el.contains(first)
     || (!!heading && after(heading, el) && after(el, first))
   const block = Array.from(document.querySelectorAll<HTMLElement>('div, section, article'))
-    .map((el) => ({ el, len: el.innerText?.trim().length ?? 0 }))
+    .map((el) => ({ el, len: measure(el) }))
     .filter(({ len }) => len > 500 && len < 20000)
     .sort((a, b) => b.len - a.len)
     .find(({ el, len }) => {

@@ -257,6 +257,23 @@ describe('generic heuristic', () => {
       <div class="mobile" hidden>${cards}</div></main></body></html>`)).toThrow('Could not find job details')
   })
 
+  // Chrome's innerText of a hidden element is its textContent, source
+  // indentation included (linkedom's collapses it): fly.io's hidden mobile menu
+  // measured 2,081 characters for 316 of text, and beat its job cards
+  test('a hidden menu\'s indentation doesn\'t make it the largest block', () => {
+    const asChrome = (html: string) => {
+      const dom = parseHTML(html)
+      for (const el of dom.document.querySelectorAll('[style*="none"]')) Object.defineProperty(el, 'innerText', { get: () => el.textContent })
+      return dom
+    }
+    const menu = Array.from({ length: 30 }, (_, i) => `
+                <a href="/p/${i}">Product ${i}</a>
+              `).join('')
+    expect(() => scrapeHtml(asChrome, 'https://careers.example.com/careers', `<html><body><header><div class="menu" style="display: none">${menu}</div></header>
+      <main><h1>Join Our Team</h1><div class="intro"><p>${description.slice(0, 300)}</p></div><div>${`<ul>${relatedJobs(8)}</ul>`}</div></main></body></html>`))
+      .toThrow('Could not find job details')
+  })
+
   // The posting has a job's title, so cards larger than it don't make the page
   // a listing
   test('reads a short posting beside a larger related-jobs sidebar', () => {
