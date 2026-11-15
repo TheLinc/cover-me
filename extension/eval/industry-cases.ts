@@ -1152,6 +1152,184 @@ M&A integration experience preferred.`),
     expectedLabels: [['Quality Management', 'Quality Systems']],
     fieldNotes: 'Executive: scale (plants, people, P&L), strategic outcomes with exact numbers, transformation leadership; executive tone. Packaging must not be recast as food manufacturing; the $85M P&L must not grow. 18 bullets in, 18 out.',
   },
+
+  // ── Master resumes (#212) ──────────────────────────────────────────────────
+  // What real users upload: 400–700 words, a profile, several roles, 15+
+  // bullets. The letter has to pick the two or three accomplishments that fit
+  // the posting and tell them with the resume's own scope and method.
+  {
+    id: 'master-product-manager',
+    industry: 'Technology',
+    profile: 'Product manager with ten years in B2B SaaS and logistics software. I run discovery with customers, write the specs, and own the metrics after launch. Comfortable with SQL and experiment design, and I have managed two other product managers.',
+    resume: {
+      name: 'Priya Nandakumar', email: 'priya.nandakumar.pm@email.com', phone: '(555) 418-2290', website: 'linkedin.com/in/priyanandakumar',
+      experience: [
+        role('Senior Product Manager', 'Tallyfield', 'Austin, TX', 'Mar 2021 – Present', [
+          'Own the shift-scheduling product used by 1,400 retail stores and 90,000 hourly workers',
+          'Led the rebuild of auto-scheduling around each store\'s sales forecast and staff availability, cutting store managers\' weekly scheduling time from 4 hours to 50 minutes',
+          'Ran 40 discovery interviews with district managers before the rebuild and wrote the spec from them',
+          'Launched shift swapping in the mobile app with approval rules set per store; 62% of workers used it within three months',
+          'Grew net revenue retention from 104% to 118% by packaging labor forecasting as a paid add-on, working with sales and finance on pricing',
+          'Manage two product managers and work with a 25-person design and engineering group',
+          'Set up the team\'s A/B testing practice in Mixpanel and ran 30 experiments in 2024',
+        ]),
+        role('Product Manager', 'Routewise', 'Chicago, IL', 'Jun 2017 – Feb 2021', [
+          'Owned the dispatcher web app used by 300 trucking fleets',
+          'Shipped automated load matching that ranked open loads by lane, equipment, and driver hours, raising loads booked per dispatcher per day from 18 to 27',
+          'Cut onboarding for new fleets from 6 weeks to 10 days with a self-serve setup flow that imported trucks and drivers from a spreadsheet',
+          'Wrote SQL reports on dispatcher activity that became the company\'s weekly product review',
+          'Worked with sales on 12 enterprise deals, writing the product sections of RFP responses',
+        ]),
+        role('Associate Product Manager', 'Routewise', 'Chicago, IL', 'Jul 2015 – May 2017', [
+          'Managed the bug backlog and release notes for the driver mobile app',
+          'Ran usability tests with 25 drivers on the redesigned delivery confirmation screen',
+          'Reduced failed delivery confirmations by 30% after the redesign',
+        ]),
+        role('Business Analyst', 'Corbel Consulting', 'Chicago, IL', 'Aug 2013 – Jun 2015', [
+          'Mapped order-to-cash processes for three manufacturing clients',
+          'Built Excel models for a $2M inventory reduction project',
+        ]),
+      ],
+      education: [edu('B.S. Information Systems', 'University of Illinois Urbana-Champaign', 'Champaign, IL', '2009 – 2013')],
+      otherSections: [{
+        heading: 'SPEAKING AND COMMUNITY',
+        lines: [
+          'Speaker, ProductCamp Austin 2023: "Building scheduling tools for the store floor"',
+          'Mentor, Austin Women in Product, 2022 – Present',
+          'Volunteer product advisor for a food bank\'s volunteer sign-up app, 2023',
+        ],
+      }],
+      skills: 'Product discovery, Roadmapping, SQL, Mixpanel, A/B testing, Jira, Figma, Pricing and packaging, B2B SaaS, Customer interviews, Spec writing, Stakeholder management',
+    },
+    job: job('Group Product Manager, Payments', 'Ledgerline', `Ledgerline builds payments and payroll software for independent restaurants.
+
+As Group Product Manager, Payments, you will:
+- Lead three product managers across card processing, payouts, and tipping
+- Own the payments roadmap and its revenue targets
+- Run discovery with restaurant owners and their staff
+- Partner with risk and compliance on PCI DSS and KYC requirements
+- Use Amplitude and SQL to measure adoption
+
+Requirements: 7+ years in product management, 2+ years managing product managers. Fintech or payments experience strongly preferred.`),
+    failTerms: ['PCI', 'KYC', 'Amplitude', 'fintech'],
+    warnTerms: ['payments', 'restaurant'],
+    mustKeepSkills: ['SQL', 'discovery'],
+    fieldNotes: 'Product management: outcomes with exact numbers (adoption, retention, time saved), discovery and experiments, managing product managers, cross-functional scope. Scheduling and logistics SaaS must not be recast as payments or fintech; Mixpanel must not become Amplitude. 17 bullets in, 17 out.',
+  },
+  {
+    id: 'master-hotel-operations',
+    industry: 'Hospitality',
+    profile: 'Hotel operations leader with twelve years in select-service and full-service hotels, from the front desk to assistant general manager. Strong in revenue, guest satisfaction, and building teams that stay.',
+    resume: {
+      name: 'Marcus Bellamy', email: 'marcus.bellamy@email.com', phone: '(555) 630-4471',
+      experience: [
+        role('Assistant General Manager', 'Harbor Point Hotel', 'Portland, ME', 'Apr 2021 – Present', [
+          'Run day-to-day operations for a 240-room full-service hotel with 110 employees',
+          'Raised the guest satisfaction score from 78 to 89 by retraining front desk and housekeeping on a shared room-ready checklist',
+          'Lead the weekly revenue meeting with the director of sales, setting rates and group blocks against the city events calendar; RevPAR grew 14% in 2024',
+          'Cut housekeeping overtime by $180,000 a year by building the staffing schedule around arrival forecasts',
+          'Oversaw a $6M renovation of 120 guest rooms while the hotel stayed open, taking one floor out of service at a time to keep occupancy above 80%',
+          'Reduced front-line turnover from 62% to 38% with a two-week onboarding program, a buddy for every new hire, and quarterly pay reviews',
+          'Handle guest escalations and reply to online reviews on TripAdvisor and Google',
+        ]),
+        role('Front Office Manager', 'Harbor Point Hotel', 'Portland, ME', 'Jan 2018 – Mar 2021', [
+          'Managed a front desk, night audit, and bell staff team of 24',
+          'Moved the front desk to Maestro PMS with no lost reservations, running both systems in parallel for two weeks',
+          'Grew upsell revenue at check-in to $210,000 a year',
+          'Trained 6 front desk supervisors, 4 of whom were promoted',
+        ]),
+        role('Guest Services Supervisor', 'Lakeline Inn & Suites', 'Burlington, VT', 'May 2014 – Dec 2017', [
+          'Supervised front desk shifts at a 130-room select-service hotel',
+          'Handled group block reservations for weddings, college sports teams, and corporate retreats',
+          'Won the regional guest service award in 2016',
+        ]),
+        role('Front Desk Agent', 'Lakeline Inn & Suites', 'Burlington, VT', 'Jun 2012 – Apr 2014', [
+          'Checked in up to 150 guests a day',
+          'Balanced the night audit on weekends',
+        ]),
+      ],
+      education: [edu('B.S. Hospitality Management', 'University of New Hampshire', 'Durham, NH', '2008 – 2012')],
+      certifications: ['ServSafe Manager — 2022'],
+      otherSections: [{
+        heading: 'COMMUNITY',
+        lines: [
+          'Board member, Greater Portland Hospitality Association, 2022 – Present',
+          'Organizes the hotel\'s yearly coat drive with a local shelter',
+          'Guest lecturer on front office operations, Southern Maine Community College',
+        ],
+      }],
+      skills: 'Hotel operations, Revenue management, RevPAR, Maestro PMS, Labor scheduling, Guest satisfaction, Renovation management, Budgeting, Team training, Group sales, Night audit, Excel',
+    },
+    job: job('General Manager', 'Saltmarsh Resort', `Saltmarsh Resort is a 180-room luxury resort with a spa, two restaurants, and a marina.
+
+The General Manager will:
+- Lead every department: rooms, food and beverage, spa, and marina
+- Own the resort's P&L and owner reporting
+- Raise guest satisfaction to Forbes Travel Guide standards
+- Run the resort on Opera Cloud PMS
+
+Requirements: 8+ years in hotel operations, including 3+ years as GM or AGM of a luxury property. CHA (Certified Hotel Administrator) preferred.`),
+    failTerms: ['Opera', 'CHA', 'Certified Hotel Administrator', 'Forbes'],
+    warnTerms: ['luxury', 'resort', 'spa', 'marina'],
+    mustKeepSkills: ['Hotel operations'],
+    fieldNotes: 'Hotel management: scale (rooms, staff), guest satisfaction and revenue figures (RevPAR, upsell), labor cost, renovations, team development. A full-service city hotel must not be recast as luxury or resort experience; Maestro must not become Opera. 16 bullets in, 16 out.',
+  },
+  {
+    id: 'master-construction-pm',
+    industry: 'Construction',
+    profile: 'Construction project manager with eleven years at general contractors, delivering education, commercial, and multifamily projects from preconstruction through closeout. Known for schedule recovery and clean closeouts.',
+    resume: {
+      name: 'Elena Marsh', email: 'elena.marsh.pm@email.com', phone: '(555) 287-6603', website: 'linkedin.com/in/elenamarshpm',
+      experience: [
+        role('Senior Project Manager', 'Brightwater Builders', 'Columbus, OH', 'Feb 2020 – Present', [
+          'Delivered a $48M, 4-story university science building two weeks ahead of schedule by pulling the lab casework submittals forward and starting mechanical rough-in floor by floor',
+          'Manage project budgets of $20M to $60M with 3 assistant project managers and 2 superintendents',
+          'Recovered a 9-week steel delay on a $31M office building by resequencing the interior trades and running a second drywall crew for six weeks',
+          'Run owner-architect-contractor meetings and monthly pay applications',
+          'Cut change-order processing from 21 days to 8 with a shared change log in Bluebeam that the owner, architect, and subcontractors all marked up',
+          'Closed out 6 projects with no punch-list items open past 30 days',
+          'Led preconstruction estimating for a $75M multifamily bid the company won, building the estimate from 14 trade packages and value-engineering the parking structure',
+        ]),
+        role('Project Manager', 'Brightwater Builders', 'Columbus, OH', 'Jun 2016 – Jan 2020', [
+          'Managed K-12 school renovations from $5M to $18M, built while the schools were occupied, with phased work zones and after-hours shifts for noisy work',
+          'Coordinated 25+ subcontractors per project, wrote their scopes of work, and ran the weekly foremen meeting',
+          'Kept zero lost-time incidents across 400,000 work hours',
+          'Introduced weekly three-week lookahead schedules in Primavera P6',
+          'Handled owner punch walks and warranty calls',
+        ]),
+        role('Project Engineer', 'Oakridge Construction', 'Dayton, OH', 'Jul 2013 – May 2016', [
+          'Processed RFIs and submittals on a $22M municipal parking garage',
+          'Tracked a $1.2M buyout for mechanical and electrical subcontracts',
+          'Ran field quality inspections for concrete and masonry, logging each pour and wall section in the daily report',
+          'Updated as-built drawings and closeout manuals for 4 projects',
+        ]),
+      ],
+      education: [edu('B.S. Construction Management', 'Bowling Green State University', 'Bowling Green, OH', '2009 – 2013')],
+      certifications: ['OSHA 30-Hour Construction — 2017'],
+      otherSections: [{
+        heading: 'PROFESSIONAL ACTIVITIES',
+        lines: [
+          'Member, Construction Management Association of America, Ohio chapter',
+          'Mentor in the Brightwater Builders project engineer program, 2021 – Present',
+          'Volunteer site lead, Habitat for Humanity Mid-Ohio, two builds a year',
+        ],
+      }],
+      skills: 'Project management, Preconstruction, Estimating, Scheduling, Primavera P6, Bluebeam, Subcontractor management, Cost control, Change orders, RFIs and submittals, Owner relations, Closeout, OSHA safety',
+    },
+    job: job('Senior Project Manager', 'Kessler Turner Construction', `Kessler Turner Construction builds hospitals and medical office buildings across the Midwest.
+
+As a Senior Project Manager you will:
+- Lead $50M+ hospital expansions and renovations in occupied facilities
+- Manage infection control risk assessments (ICRA) and interim life safety measures
+- Run projects in Procore
+- Manage owner, architect, and subcontractor relationships
+
+Requirements: 8+ years managing commercial construction. Healthcare construction experience required; LEED AP preferred.`),
+    failTerms: ['ICRA', 'Procore', 'LEED', 'infection control', 'life safety'],
+    warnTerms: ['hospital', 'healthcare', 'medical'],
+    mustKeepSkills: ['Subcontractor management'],
+    fieldNotes: 'Construction management: project size in dollars, schedule and budget outcomes, safety record, team and subcontractor scope, tools (P6, Bluebeam). Occupied school and university work must not be recast as hospital or healthcare construction; Bluebeam must not become Procore. 16 bullets in, 16 out.',
+  },
 ]
 
 export const INDUSTRY_CASES: EvalCase[] = SPECS.map(toCase)
