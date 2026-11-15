@@ -212,11 +212,11 @@ function buildPrompt(
   const length = letterLength(resumeText)
   const count = length.full ? 'three' : 'two'
   const shape = length.full
-    ? 'five paragraphs: the opening about 60–80 words, each evidence paragraph about 80–110, the fit paragraph about 40–60, and the close'
+    ? 'five paragraphs: the opening about 60–80 words, each evidence paragraph about 100–130, the fit paragraph about 40–60, and the close'
     : 'four paragraphs: the opening about 40–60 words, the evidence paragraph about 90–130, the fit paragraph about 40–60, and the close'
   const evidence = length.full
-    ? `Evidence (two paragraphs, 2–5 sentences each): one more accomplishment from the plan in each, started with its own place ("At Lakeshore, …") and told in two or three sentences with how it was done, its scope, and its result. In whichever paragraph they fit, add the plan's other facts that answer the posting; with only two accomplishments, the second paragraph carries those facts.`
-    : `Evidence (one paragraph, 3–6 sentences): the plan's second accomplishment, started with its own place ("At Lakeshore, …") and told with how it was done, its scope, and its result. Then the plan's other facts that answer the posting.`
+    ? `Evidence (two paragraphs, 3–5 sentences each): one more accomplishment from the plan in each, its place named in the first sentence, and told in three or four sentences with how it was done, its scope, and its result. In whichever paragraph they fit, tell the plan's other facts as work the applicant did; with only two accomplishments, the second paragraph carries those facts.`
+    : `Evidence (one paragraph, 3–6 sentences): the plan's second accomplishment, its place named in the first sentence, and told with how it was done, its scope, and its result. Then the plan's other facts, told as work the applicant did.`
 
   const salutation = companyKnown
     ? `"Dear Hiring Manager," or "Dear ${job.company} Team,"`
@@ -263,7 +263,7 @@ Before the letter, write a short plan between <plan> and </plan>. Code removes i
 - Up to ${count} of the posting's main requirements that the resume answers, a few words each; skip any it doesn't.
 - For each, the resume accomplishment that answers it best, from different work: its job, what the applicant did, how, its scope (team, sites, budget, volume, users), and one figure, all as the resume or supplemental context states them. List fewer if they have fewer.
 - Any license, degree, or certification the posting asks for that the resume holds.
-- Other resume facts that answer the posting: the scope of the current job, a duty the posting names, earlier work it asks for.
+- Other resume facts that answer something the posting names: a duty it lists or earlier work it asks for. Never a list of tools or software.
 - A referral from the supplemental context, if any.
 - The applicant's reason for the move, from a resume or supplemental fact, or "none".
 Then write the letter from the plan alone.
@@ -277,13 +277,13 @@ Salutation: ${salutation}
 
 Length: about ${length.aim} words in ${shape}. Reach it by telling the plan's accomplishments in full, never by padding.
 
-Opening (1–3 sentences): the plan's strongest accomplishment, with its scope and result, and the role the applicant is applying for in its own short sentence, first or last. Credentials the role requires go in their own short sentence. The opening sentence is about the applicant and carries one result at most. Use one of these patterns:
+Opening (1–3 sentences): the plan's strongest accomplishment, with its scope and result, and the role the applicant is applying for in its own short sentence, first or last. Credentials the role requires go in their own short sentence. The opening sentence is about the applicant and carries one result at most, and the whole opening has one figure; say any other amount in words. Use one of these patterns:
 - Achievement-first: a quantified result from past work that maps directly to a top requirement of this role
 - Bold specific claim: a confident statement of a real accomplishment, striking enough to demand attention
 - Referral: name a mutual contact explicitly in the first sentence if one exists
 Default to the ${variation.hookPattern} pattern for this letter unless the resume cannot support it; a genuine referral always takes precedence over the default.
 
-${evidence} Several resume lines about the same work at one job make one story; lines from different jobs never join. A single line is written plainly. Give each accomplishment its one most telling number, at most four figures to a paragraph, join related facts into a sentence that makes one point, and leave out what the posting doesn't ask about.
+${evidence} Several resume lines about the same work at one job make one story; lines from different jobs never join. A single line is written plainly. Give each accomplishment one number, its most telling, and say its other amounts in words ("most of the team", "within two days"); at most three figures to a paragraph, join related facts into a sentence that makes one point, and leave out what the posting doesn't ask about.
 
 ${whyCompany}
 
@@ -294,7 +294,7 @@ Sign-off: "${variation.signOff}" on its own line, then a blank line, then the ap
 ---
 
 VOICE — the target sound:
-Write like a competent professional typing the letter in one sitting: plain verbs, concrete nouns, an occasional contraction, no ceremony. Confident but dry — the evidence does the impressing, not the adjectives. State each fact once and move on. Vary sentence length and how sentences open; don't start most of them with "I". Name the job title once, then "the role". ${companyKnown ? 'Name the company in full once and by a short form at least once more ("Acme" for "Acme Software"), and "you" beyond that.' : 'Refer to "the team" or "the role", never a company name.'} Call an allowlisted tool or credential by the posting's name.
+Write like a competent professional typing the letter in one sitting: plain verbs, concrete nouns, an occasional contraction, no ceremony. Confident but dry — the evidence does the impressing, not the adjectives. State each fact once and move on. Vary sentence length and how sentences open; don't start most of them with "I", and never start two sentences or two paragraphs in a row with "At <employer>". Name the job title once, then "the role". ${companyKnown ? 'Name the company in full once and by a short form at least once more ("Acme" for "Acme Software"), and "you" beyond that.' : 'Refer to "the team" or "the role", never a company name.'} Call an allowlisted tool or credential by the posting's name.
 
 TRUTH:
 - Every fact, figure, situation, method, and reason comes from the resume or the supplemental context. Never invent a metric, a cause, a process, a motive, a feeling, or the situation behind a result, and never guess an employer's industry, size, or location or how long something took. A thin true sentence beats a vivid invented one.
@@ -317,9 +317,9 @@ Exemplar A (insurance, full resume):
 """
 Dear Harrow Mutual Team,
 
-At Calder Insurance I lead nine property adjusters who handle about 4,000 homeowners claims a year. This year our average water-damage claim went from first call to payment in 11 days instead of 19, after I moved claims under $15,000 onto photo estimates. I'm applying for the Claims Manager role at Harrow Mutual. I hold the Associate in Claims designation and adjuster licenses in four states.
+I lead the property adjusters at Calder Insurance, and this year our average water-damage claim went from first call to payment in 11 days instead of 19, after I moved the smaller claims onto photo estimates. I'm applying for the Claims Manager role at Harrow Mutual. I hold the Associate in Claims designation and adjuster licenses in several states.
 
-At Calder I also ran the surge desk after Hurricane Dana, when 6,000 claims came in over two weeks. With our IT lead I set up a triage queue that sent roof and flood losses to field adjusters first and kept contents-only claims with the desk team. I brought in 30 independent adjusters on three-week rotations and paired each with one of our own for their first week. Every policyholder heard from us within 48 hours, and the state regulator closed its review of our storm handling with no findings.
+When Hurricane Dana sent 6,000 claims to Calder in two weeks, I ran the surge desk. With our IT lead I set up a triage queue that sent roof and flood losses to field adjusters first and kept contents-only claims with the desk team. I brought in independent adjusters on short rotations and paired each with one of our own for their first week. Every policyholder heard from us within two days, and the state regulator closed its review of our storm handling with no findings.
 
 Before Calder I spent six years at Wendell & Ames, first as a desk adjuster and then in subrogation. As a desk adjuster I also trained each new hire on coverage reviews for water and mold claims. I built the referral checklist the desk team used to spot claims with a third party at fault, and in my last year there I recovered $3.1 million from contractors and appliance makers, the highest total on a team of twelve.
 
@@ -336,9 +336,9 @@ Exemplar B (veterinary, short resume):
 """
 Dear Hiring Manager,
 
-At Brookside Veterinary Clinic I cut surgical prep time from 25 minutes to 15 by building pre-packed kits for our six most common procedures and labeling each shelf by procedure. I'm applying for the Lead Veterinary Technician role at Pinecrest Animal Hospital. I'm a Registered Veterinary Technician with Fear Free certification and four years of anesthesia monitoring.
+At Brookside Veterinary Clinic I cut surgical prep time from 25 minutes to 15 by building pre-packed kits for our most common procedures and labeling each shelf by procedure. I'm applying for the Lead Veterinary Technician role at Pinecrest Animal Hospital. I'm a Registered Veterinary Technician with Fear Free certification.
 
-At Brookside I also built our dental and spay treatment templates when the clinic moved to new practice software, working from a month of our own charts, and charting time per surgery fell from about 12 minutes to 5. I run anesthesia monitoring for about 20 surgeries a week and keep the controlled-drug log, which the state board inspected last spring without a finding. I also set the technicians' weekly rotation and train our new assistants in restraint and radiograph positioning; four have come through with me so far.
+When the clinic moved to new practice software, I built our dental and spay treatment templates from a month of our own charts, and charting time per surgery fell from about 12 minutes to 5. I run anesthesia monitoring for most of the week's surgeries and keep the controlled-drug log, which the state board inspected last spring without a finding. I also set the technicians' weekly rotation and train our new assistants in restraint and radiograph positioning.
 
 Twice a month I run Brookside's Saturday surgery list with no senior technician on site. My emergency work so far has been the walk-ins Brookside takes in the last hour before closing, and I'd like it to be a bigger part of my work at Pinecrest.
 
