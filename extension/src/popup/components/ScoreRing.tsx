@@ -3,42 +3,45 @@ import { useEffect, useState } from 'react'
 const GROW_MS = 800
 // A smaller rise reads as tailoring doing nothing, so it counts as none (#228).
 const MIN_GAIN = 5
-// The last rise shown, so switching to the letter tab and back doesn't replay it.
-// ponytail: lives as long as the popup, so reopening it replays the rise; keyed by
-// the two scores, so another result with the same pair skips its growth.
-let grown = ''
+// The last fill shown, so switching to the letter tab and back doesn't replay it.
+// ponytail: lives as long as the popup, so reopening it replays the fill; keyed by
+// the start and the score, so a later result with the same pair doesn't fill.
+let filledLast = ''
 
 // The ATS match as a ring, the same geometry as the website's ScoreRing.
-// With `from` at least MIN_GAIN below `score`, the ring and number grow from the original
-// resume's score to the tailored one (#228), unless motion is reduced.
+// A tailored result (`from` given) fills from 0 to the score, or from the
+// original resume's score when tailoring added at least MIN_GAIN (#228).
+// Without `from` (the editor, an older backend) and with reduced motion, the
+// ring shows the score straight away.
 export default function ScoreRing({ score, from, size = 104 }: { score: number; from?: number; size?: number }) {
-  const base = typeof from === 'number' && score - from >= MIN_GAIN ? from : score
-  const grows = base < score
-  const [animate] = useState(() => grown !== `${base}-${score}` && !matchMedia('(prefers-reduced-motion: reduce)').matches)
-  const [shown, setShown] = useState(animate ? base : score)
+  const rose = typeof from === 'number' && score - from >= MIN_GAIN
+  const start = typeof from !== 'number' ? score : rose ? from : 0
+  const key = `${start}-${score}`
+  const [animate] = useState(() => start < score && filledLast !== key && !matchMedia('(prefers-reduced-motion: reduce)').matches)
+  const [shown, setShown] = useState(animate ? start : score)
 
   useEffect(() => {
-    if (!grows || !animate) {
+    if (!animate) {
       setShown(score)
       return
     }
-    grown = `${base}-${score}`
+    filledLast = key
     let frame = 0
-    const start = performance.now()
+    const t0 = performance.now()
     const step = (now: number) => {
-      const t = Math.min(1, (now - start) / GROW_MS)
+      const t = Math.min(1, (now - t0) / GROW_MS)
       const eased = 1 - (1 - t) ** 3
-      setShown(Math.round(base + (score - base) * eased))
+      setShown(Math.round(start + (score - start) * eased))
       if (t < 1) frame = requestAnimationFrame(step)
     }
     frame = requestAnimationFrame(step)
     return () => cancelAnimationFrame(frame)
-  }, [grows, animate, base, score])
+  }, [animate, key, start, score])
 
   const r = 54
   const c = 2 * Math.PI * r
   const filled = (c * Math.max(0, Math.min(100, shown))) / 100
-  const label = grows ? `ATS match ${score} out of 100, up from ${base}` : `ATS match ${score} out of 100`
+  const label = rose ? `ATS match ${score} out of 100, up from ${from}` : `ATS match ${score} out of 100`
   return (
     <svg className="score-ring" viewBox="0 0 132 132" width={size} height={size} role="img" aria-label={label}>
       <circle cx="66" cy="66" r={r} fill="none" stroke="var(--elevated)" strokeWidth="10" />
