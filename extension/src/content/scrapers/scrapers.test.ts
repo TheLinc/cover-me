@@ -9,7 +9,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { parseHTML } from 'linkedom'
-import { afterAll, beforeAll, describe, expect, test } from 'vitest'
+import { afterAll, beforeAll, describe, expect, onTestFinished, test, vi } from 'vitest'
 import { FIXTURE_CASES, fixtureUrl } from './fixtures/cases.ts'
 import { scrapeHtml } from './page.ts'
 
@@ -261,17 +261,29 @@ describe('generic heuristic', () => {
   // indentation included (linkedom's collapses it): fly.io's hidden mobile menu
   // measured 2,081 characters for 316 of text, and beat its job cards
   test('a hidden menu\'s indentation doesn\'t make it the largest block', () => {
+    // Chrome for the elements hidden by their style; markup rules elsewhere
     const asChrome = (html: string) => {
       const dom = parseHTML(html)
-      for (const el of dom.document.querySelectorAll('[style*="none"]')) Object.defineProperty(el, 'innerText', { get: () => el.textContent })
+      for (const el of dom.document.querySelectorAll('[style*="none"]')) {
+        Object.defineProperties(el, { innerText: { get: () => el.textContent }, checkVisibility: { value: () => false } })
+      }
       return dom
     }
+    vi.stubGlobal('getComputedStyle', () => ({ display: 'none' }))
+    onTestFinished(() => { vi.unstubAllGlobals() })
     const menu = Array.from({ length: 30 }, (_, i) => `
                 <a href="/p/${i}">Product ${i}</a>
               `).join('')
     expect(() => scrapeHtml(asChrome, 'https://careers.example.com/careers', `<html><body><header><div class="menu" style="display: none">${menu}</div></header>
       <main><h1>Join Our Team</h1><div class="intro"><p>${description.slice(0, 300)}</p></div><div>${`<ul>${relatedJobs(8)}</ul>`}</div></main></body></html>`))
       .toThrow('Could not find job details')
+    // ...while a posting under "Read more", indented in its source, is still read
+    const job = scrapeHtml(asChrome, 'https://careers.example.com/jobs/1', `<html><body><main><h1>Warehouse Supervisor</h1><div>
+      <div class="preview"><p>${description.slice(0, 150)}</p></div>
+      <div class="full" style="display: none">
+              <p>${description}</p>
+      </div></div></main></body></html>`)
+    expect(job.description).toBe(description)
   })
 
   // The posting has a job's title, so cards larger than it don't make the page
