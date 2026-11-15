@@ -3,6 +3,9 @@ import { useEffect, useState } from 'react'
 const GROW_MS = 800
 // A smaller rise reads as tailoring doing nothing, so it counts as none (#228).
 const MIN_GAIN = 5
+// The last rise shown, so switching to the letter tab and back doesn't replay it.
+// ponytail: keyed by the two scores; another result with the same pair skips its growth.
+let grown = ''
 
 // The ATS match as a ring, the same geometry as the website's ScoreRing.
 // With `from` at least MIN_GAIN below `score`, the ring and number grow from the original
@@ -10,7 +13,7 @@ const MIN_GAIN = 5
 export default function ScoreRing({ score, from, size = 104 }: { score: number; from?: number; size?: number }) {
   const base = typeof from === 'number' && score - from >= MIN_GAIN ? from : score
   const grows = base < score
-  const [animate] = useState(() => !matchMedia('(prefers-reduced-motion: reduce)').matches)
+  const [animate] = useState(() => grown !== `${base}-${score}` && !matchMedia('(prefers-reduced-motion: reduce)').matches)
   const [shown, setShown] = useState(animate ? base : score)
 
   useEffect(() => {
@@ -18,6 +21,7 @@ export default function ScoreRing({ score, from, size = 104 }: { score: number; 
       setShown(score)
       return
     }
+    grown = `${base}-${score}`
     let frame = 0
     const start = performance.now()
     const step = (now: number) => {
