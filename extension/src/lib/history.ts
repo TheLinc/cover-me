@@ -77,10 +77,16 @@ export function recentJobs(letters: CoverLetter[], tailored: TailoredHistoryEntr
 // first job is this page's.
 export function answerJobs(page: JobData | null, saved: JobData[]): { jobs: JobData[]; jobSource: 'page' | 'saved' } {
   if (!page) return { jobs: saved, jobSource: 'saved' }
-  const base = (url: string) => url.replace(/[?#].*$/, '').replace(/\/(apply|application)\/?$/, '').replace(/\/$/, '')
+  // An application page (/apply, /application) is its posting's page by path;
+  // any other page needs the same link, query included (LinkedIn and Indeed
+  // tell jobs apart by the query alone).
+  const path = (url: string) => url.replace(/[?#].*$/, '').replace(/\/$/, '')
+  const formOf = /\/(apply|application)$/.exec(path(page.url))
+  const posting = formOf ? path(page.url).slice(0, -formOf[0].length) : null
+  const known = (company: string) => !!company && company !== 'Unknown Company'
   const same = (j: JobData) =>
-    (!!page.url && !!j.url && base(j.url) === base(page.url)) ||
-    (j.title.toLowerCase() === page.title.toLowerCase() && j.company.toLowerCase() === page.company.toLowerCase())
+    (!!j.url && (j.url === page.url || (posting !== null && path(j.url) === posting))) ||
+    (known(page.company) && j.title.toLowerCase() === page.title.toLowerCase() && j.company.toLowerCase() === page.company.toLowerCase())
   const match = saved.find(same)
   return { jobs: [match ?? page, ...saved.filter((j) => j !== match && jobKey(j) !== jobKey(page))], jobSource: 'page' }
 }

@@ -63,7 +63,7 @@ function checkNumberProvenance(
 // A missing item the question asks about by name may appear only in a plain
 // statement that the applicant lacks it ("I haven't used Kubernetes"); any
 // other mention is a claim. Items the question doesn't name never appear.
-const NEGATION = /\b(not|never|no|without|lack)\b|n['’]t\b/i
+const NEGATION = /\b(not|never|no|without|lack\w*)\b|n['’]t\b/i
 
 export function checkAnswer(answer: string, c: EvalCase, extra: { question?: string; failTerms?: string[]; maxLength?: number; maxWords?: number } = {}): CheckResult {
   const result: CheckResult = { failures: [], warnings: [] }

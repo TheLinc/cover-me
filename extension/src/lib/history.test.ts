@@ -246,6 +246,24 @@ describe('answerJobs', () => {
     expect(jobSource).toBe('page')
   })
 
+  // LinkedIn and Indeed tell jobs apart by the query alone.
+  test('jobs whose links differ only in the query are different jobs', () => {
+    const a = posting('https://www.linkedin.com/jobs/search/?currentJobId=111', 'Analyst A', 'Acme')
+    const b = posting('https://www.linkedin.com/jobs/search/?currentJobId=222', 'Analyst B', 'Globex')
+    expect(answerJobs(b, [a]).jobs.map((j) => j.title)).toEqual(['Analyst B', 'Analyst A'])
+  })
+
+  test('an application page with tracking in its query still finds its posting', () => {
+    const form = posting('https://jobs.lever.co/northwind/123/apply?lever-origin=applied', 'Backend Eng', 'Northwind', 'form text')
+    expect(answerJobs(form, saved).jobs[0].description).toBe('Posting for Backend Engineer')
+  })
+
+  test("two unknown companies' jobs with the same title aren't the same job", () => {
+    const savedUnknown = [posting('https://a.example/1', 'Software Engineer', 'Unknown Company')]
+    const page = posting('https://b.example/2', 'Software Engineer', 'Unknown Company', 'Another posting')
+    expect(answerJobs(page, savedUnknown).jobs[0].description).toBe('Another posting')
+  })
+
   test('the same title and company count as the same job', () => {
     const page = posting('https://careers.northwind.com/apply?id=1', 'designer', 'NORTHWIND', 'form text')
     expect(answerJobs(page, saved).jobs[0]).toBe(saved[1])
