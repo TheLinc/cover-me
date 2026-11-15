@@ -83,5 +83,13 @@
       "relevance": 3,
       "readability": 3
     }
+  },
+  "answers": {
+    "answer-missing-skill": 4,
+    "answer-missing-cert": 5,
+    "answer-why-company": 3,
+    "answer-trades-gap": 5,
+    "answer-behavioral": 3,
+    "answer-injection": 4
   }
 }

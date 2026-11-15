@@ -191,10 +191,12 @@ function showStatus(
 const jobName = (job: Job) => (job.company && job.company !== 'Unknown Company' ? `${job.title} at ${job.company}` : job.title)
 const undoKey = () => (/Mac|iPhone|iPad/.test(navigator.platform) ? '⌘Z' : 'Ctrl+Z')
 
-let target: { el: HTMLElement; question: string; maxLength?: number } | null = null
+// Each right-click's box, by the id the background gives it: an answer can
+// take half a minute, and another box may be right-clicked meanwhile.
+interface Target { el: HTMLElement; question: string; maxLength?: number }
+const targets = new Map<string, Target>()
 
-function done(answer: string, jobs: Job[], index: number, jobSource: JobSource): void {
-  if (!target) return
+function done(target: Target, answer: string, jobs: Job[], index: number, jobSource: JobSource): void {
   typeAnswer(target.el, answer)
   const job = jobs[index]
   // The prompt leaves [blanks] for personal details only the applicant knows
@@ -203,18 +205,17 @@ function done(answer: string, jobs: Job[], index: number, jobSource: JobSource):
   const message = jobSource === 'saved' && index === 0
     ? `No job posting on this page, so this answer uses your latest saved job: ${jobName(job)}.${blanks} ${undoKey()} undoes it.`
     : `Answer added for ${jobName(job)}.${blanks} ${undoKey()} undoes it.`
-  showStatus(target.el, 'done', message, { jobs, current: index, onPick: (i) => void rewrite(jobs, i, jobSource) })
+  showStatus(target.el, 'done', message, { jobs, current: index, onPick: (i) => void rewrite(target, jobs, i, jobSource) })
 }
 
-async function rewrite(jobs: Job[], index: number, jobSource: JobSource): Promise<void> {
-  if (!target) return
+async function rewrite(target: Target, jobs: Job[], index: number, jobSource: JobSource): Promise<void> {
   const { el, question, maxLength } = target
   showStatus(el, 'working', `Writing an answer for ${jobName(jobs[index])}…`)
   const source: JobSource = jobSource === 'page' && index === 0 ? 'page' : 'saved'
   try {
     const result = await chrome.runtime.sendMessage({ type: 'ANSWER_REWRITE', request: { job: jobs[index], question, maxLength, jobSource: source } }) as { answer?: string; error?: string }
-    if (result?.answer) done(result.answer, jobs, index, jobSource)
-    else showStatus(el, 'error', result?.error ?? 'Could not write an answer. Please try again.', { jobs, current: index, onPick: (i) => void rewrite(jobs, i, jobSource) })
+    if (result?.answer) done(target, result.answer, jobs, index, jobSource)
+    else showStatus(el, 'error', result?.error ?? 'Could not write an answer. Please try again.', { jobs, current: index, onPick: (i) => void rewrite(target, jobs, i, jobSource) })
   } catch {
     showStatus(el, 'error', 'Cover Me was updated or restarted. Right-click the box again.')
   }
@@ -224,6 +225,8 @@ async function rewrite(jobs: Job[], index: number, jobSource: JobSource): Promis
 export function handleAnswerMessage(message: Record<string, unknown>, sendResponse: (r: unknown) => void): void {
   const jobs = (message.jobs as Job[] | undefined) ?? []
   const jobSource = (message.jobSource as JobSource | undefined) ?? 'page'
+  const id = message.id as string | undefined
+  const target = id ? targets.get(id) : undefined
   switch (message.type) {
     case 'ANSWER_START': {
       const el = focusedField()
@@ -236,19 +239,20 @@ export function handleAnswerMessage(message: Record<string, unknown>, sendRespon
         showStatus(el, 'error', "Cover Me couldn't find this box's question on the page.")
         return sendResponse({ ok: false })
       }
-      target = { el, question, maxLength: fieldMaxLength(el) }
+      const maxLength = fieldMaxLength(el)
+      if (id) targets.set(id, { el, question, maxLength })
       showStatus(el, 'working', 'Reading the job posting…')
-      return sendResponse({ ok: true, question, maxLength: target.maxLength })
+      return sendResponse({ ok: true, question, maxLength })
     }
     case 'ANSWER_STATUS':
       showStatus(target?.el ?? null, 'working', `Writing an answer for ${jobName(message.job as Job)}…`)
       return sendResponse({})
     case 'ANSWER_DONE':
-      done(message.answer as string, jobs, 0, jobSource)
+      if (target) done(target, message.answer as string, jobs, 0, jobSource)
       return sendResponse({})
     case 'ANSWER_ERROR':
       showStatus(target?.el ?? null, 'error', message.error as string,
-        jobs.length > 1 ? { jobs, current: 0, onPick: (i) => void rewrite(jobs, i, jobSource) } : undefined)
+        target && jobs.length > 1 ? { jobs, current: 0, onPick: (i) => void rewrite(target, jobs, i, jobSource) } : undefined)
       return sendResponse({})
   }
 }

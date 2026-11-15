@@ -69,6 +69,22 @@ export function recentJobs(letters: CoverLetter[], tailored: TailoredHistoryEntr
     .slice(0, limit)
 }
 
+// The jobs offered for a right-click answer (#232), the one to write for
+// first. The page's job leads when it read one, except that a saved job for
+// the same posting takes its place: Lever and Ashby put the form on its own
+// page (/apply, /application), which the scrapers can read as a "posting" of
+// form text, and the saved copy has the real one. jobSource: whether the
+// first job is this page's.
+export function answerJobs(page: JobData | null, saved: JobData[]): { jobs: JobData[]; jobSource: 'page' | 'saved' } {
+  if (!page) return { jobs: saved, jobSource: 'saved' }
+  const base = (url: string) => url.replace(/[?#].*$/, '').replace(/\/(apply|application)\/?$/, '').replace(/\/$/, '')
+  const same = (j: JobData) =>
+    (!!page.url && !!j.url && base(j.url) === base(page.url)) ||
+    (j.title.toLowerCase() === page.title.toLowerCase() && j.company.toLowerCase() === page.company.toLowerCase())
+  const match = saved.find(same)
+  return { jobs: [match ?? page, ...saved.filter((j) => j !== match && jobKey(j) !== jobKey(page))], jobSource: 'page' }
+}
+
 // The free account's upgrade prompt in History: once letters or tailored
 // resumes come within reach of what this browser keeps, say what's about to
 // be lost. null while neither is close.

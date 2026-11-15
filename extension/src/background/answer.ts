@@ -7,16 +7,17 @@ import { buildAnswerPrompt, finishAnswer } from '../lib/ai/answer'
 import { callClaude } from '../lib/ai/claude'
 import { callOpenAI } from '../lib/ai/openai'
 import { decryptApiKey } from '../lib/crypto'
-import { jobKey, recentJobs } from '../lib/history'
+import { answerJobs, recentJobs } from '../lib/history'
 import { getCandidateContext, getHistory, getResume, getSession, getSettings, getTailoredHistory, resolveMode } from '../lib/storage'
 import type { JobData } from '../types'
 
 export const ANSWER_MENU_ID = 'cover-me-answer'
 
-// Menus outlive the service worker; recreated on install and update.
+// Menus outlive the service worker; recreated on install and update. Web
+// pages only: Chrome lets no extension into its own pages or the Web Store.
 export function registerAnswerMenu(): void {
   chrome.contextMenus.removeAll(() => {
-    chrome.contextMenus.create({ id: ANSWER_MENU_ID, title: 'Cover Me: write an answer', contexts: ['editable'] })
+    chrome.contextMenus.create({ id: ANSWER_MENU_ID, title: 'Cover Me: write an answer', contexts: ['editable'], documentUrlPatterns: ['http://*/*', 'https://*/*'] })
   })
 }
 
@@ -63,7 +64,10 @@ export async function handleAnswerClick(
   const tabId = tab?.id
   if (info.menuItemId !== ANSWER_MENU_ID || tabId === undefined) return
   const frameId = info.frameId ?? 0
-  const send = (message: Record<string, unknown>) => chrome.tabs.sendMessage(tabId, message, { frameId })
+  // Every message for this click carries its id, so an answer that takes a
+  // while still goes into its own box when another was right-clicked since.
+  const id = crypto.randomUUID()
+  const send = (message: Record<string, unknown>) => chrome.tabs.sendMessage(tabId, { ...message, id }, { frameId })
 
   let field: { ok: boolean; question?: string; maxLength?: number }
   try {
@@ -82,13 +86,12 @@ export async function handleAnswerClick(
 
   const page = await scrapeTab(tabId, { forAnswer: true }).catch(() => null)
   const saved = recentJobs(await getHistory(), await getTailoredHistory(), (await getSession())?.user?.id)
-  const jobs = page ? [page, ...saved.filter((j) => jobKey(j) !== jobKey(page))] : saved
+  const { jobs, jobSource } = answerJobs(page, saved)
   const job = jobs[0]
   if (!job) {
     await send({ type: 'ANSWER_ERROR', error: "There's no job posting on this page and no saved jobs yet. Open Cover Me from the toolbar on the job posting first." }).catch(() => {})
     return
   }
-  const jobSource = page ? 'page' : 'saved'
   await send({ type: 'ANSWER_STATUS', job, jobSource }).catch(() => {})
 
   const result = await writeAnswer({ job, question: field.question, maxLength: field.maxLength, jobSource })

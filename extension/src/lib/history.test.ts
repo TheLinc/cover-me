@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { accountUpdates, capWarning, groupLocalHistory, groupsFromApplications, ownPending, recentJobs, uploadMessage, uploadSummary, withLocalOnly } from './history'
+import { accountUpdates, capWarning, groupLocalHistory, groupsFromApplications, ownPending, answerJobs, recentJobs, uploadMessage, uploadSummary, withLocalOnly } from './history'
 
 const job = (url: string, company = 'Northwind', title = 'Engineer') => ({ title, company, url, description: '' })
 const resume = { name: 'Pat', phone: '', email: '', website: '', experience: [], education: [] }
@@ -218,5 +218,36 @@ describe('recentJobs', () => {
     expect(jobs.map((j) => j.title).slice(0, 2)).toEqual(['Mine', 'J11'])
     expect(jobs.map((j) => j.title)).not.toEqual(expect.arrayContaining(['Theirs']))
     expect(jobs.map((j) => j.title).filter((t) => ['Theirs', 'Account B', 'Saving to B'].includes(t))).toEqual([])
+  })
+})
+
+describe('answerJobs', () => {
+  const posting = (url: string, title = 'Engineer', company = 'Northwind', description = `Posting for ${title}`) => ({ title, company, url, description })
+  const saved = [posting('https://jobs.lever.co/northwind/123', 'Backend Engineer'), posting('https://b', 'Designer')]
+
+  test("the page's job comes first, with saved jobs after it", () => {
+    const page = posting('https://other/9', 'Analyst')
+    const { jobs, jobSource } = answerJobs(page, saved)
+    expect(jobs.map((j) => j.title)).toEqual(['Analyst', 'Backend Engineer', 'Designer'])
+    expect(jobSource).toBe('page')
+  })
+
+  test('with no posting on the page, the latest saved job is used', () => {
+    expect(answerJobs(null, saved)).toEqual({ jobs: saved, jobSource: 'saved' })
+  })
+
+  // Lever and Ashby put the form on its own page, which the scrapers can read
+  // as a "posting" made of form text. The saved copy has the real posting.
+  test("an application page matching a saved job uses the saved job's posting", () => {
+    const form = posting('https://jobs.lever.co/northwind/123/apply', 'Backend Engineer', 'Northwind', 'Submit your application Resume/CV Full name')
+    const { jobs, jobSource } = answerJobs(form, saved)
+    expect(jobs[0].description).toBe('Posting for Backend Engineer')
+    expect(jobs).toHaveLength(2)
+    expect(jobSource).toBe('page')
+  })
+
+  test('the same title and company count as the same job', () => {
+    const page = posting('https://careers.northwind.com/apply?id=1', 'designer', 'NORTHWIND', 'form text')
+    expect(answerJobs(page, saved).jobs[0]).toBe(saved[1])
   })
 })
