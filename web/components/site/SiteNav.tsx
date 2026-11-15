@@ -42,7 +42,8 @@ export function SiteNav({ actions, links }: { actions?: ReactNode; links?: NavLi
       )}
     >
       <div className="container flex h-16 items-center gap-8 max-sm:gap-2">
-        <Link href="/" className="flex shrink-0 items-center gap-2.5">
+        {/* Signed-in pages (they pass `links`) keep the logo inside the app. */}
+        <Link href={links ? '/dashboard' : '/'} className="flex shrink-0 items-center gap-2.5">
           <Image src="/logo.png" width={28} height={28} alt="" className="rounded-[8px]" />
           <span className={cn('text-[18px] font-semibold tracking-[-0.02em] text-ink', links && 'max-sm:sr-only')}>Cover Me</span>
         </Link>
