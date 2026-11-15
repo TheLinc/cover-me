@@ -53,10 +53,11 @@ const checks = [
     end: 'at most two remain.',
   },
   {
-    name: 'letter whyCompany paragraph',
+    // The length, evidence and Company Fit text built above the template.
+    name: 'letter length, evidence and fit paragraphs',
     a: EXT_LETTER,
     b: BE_LETTER,
-    start: 'Paragraph 3 — Company Fit',
+    start: 'const length = letterLength(resumeText)',
     end: 'grounded in their experience.',
   },
   {

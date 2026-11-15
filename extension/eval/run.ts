@@ -37,7 +37,7 @@ import type { ParsedResume, TailoredResume } from '../src/types'
 import { buildPrompt as buildLetterPrompt, CLOSE_PATTERNS, type LetterVariation } from '../src/lib/ai/index'
 import { buildPrompt as buildTailorPrompt, assembleTailored } from '../src/lib/ai/resume-tailor'
 import { buildParsePrompt, parseParsedJson } from '../src/lib/ai/resume-parse'
-import { lintLetter, buildLintRetryMessage, letterLength } from '../src/lib/ai/letter-lint'
+import { lintLetter, buildLintRetryMessage, letterLength, stripPlan } from '../src/lib/ai/letter-lint'
 import { CASES, type EvalCase } from './fixtures'
 import { checkFixture, checkLetter, checkParse, checkTailored, type CheckResult } from './checks'
 import { buildResumeJudgePrompt, DIMENSIONS, FAIL_AT, parseJudgment, type Dimension, type ResumeJudgment } from './judge'
@@ -167,7 +167,8 @@ function staticChecks() {
       ['chosen sign-off', variation.signOff],
       ['chosen hook pattern', `Default to the ${variation.hookPattern}`],
       ['chosen close', variation.closePattern],
-      ['word range', `About ${letterLength(c.resumeText).aim} words`],
+      ['word range', `about ${letterLength(c.resumeText).aim} words`],
+      ['select step', '<plan>'],
       ['resume text embedded', c.resumeText.slice(0, 60)],
       ['JD embedded', c.job.description.slice(0, 60)],
       ['em-dash cap', 'TWO em-dashes'],
@@ -197,18 +198,26 @@ function staticChecks() {
     record(`prompt invariants: ${c.id}`, result)
   }
 
-  // Lint self-test 1: the in-prompt exemplar letter must itself pass the lint.
+  // Lint self-test 1: every in-prompt exemplar letter must itself pass the
+  // lint, a full-resume one against the full-resume floor.
   section('Lint self-tests')
   const anyPrompt = buildLetterPrompt(cases[0].job, cases[0].resumeText)
-  const exemplarMatch = anyPrompt.match(/Exemplar A \(technology\):\n"""\n([\s\S]*?)\n"""/)
+  const exemplars = [...anyPrompt.matchAll(/Exemplar [A-Z] \(([^)]*)\):\n"""\n([\s\S]*?)\n"""/g)]
+  // The employer each exemplar writes to, in prompt order.
+  const exemplarCompanies = ['Harrow Mutual', 'Pinecrest Animal Hospital']
+  const fullResume = Array.from({ length: 300 }, () => 'word').join(' ')
   const exemplarResult: CheckResult = { failures: [], warnings: [] }
-  if (!exemplarMatch) {
-    exemplarResult.failures.push('could not extract Exemplar A from the letter prompt')
-  } else {
-    const lint = lintLetter(exemplarMatch[1], { companyName: 'Northlight' })
-    for (const v of lint.violations) exemplarResult.failures.push(`exemplar fails its own lint: ${v}`)
+  if (exemplars.length !== exemplarCompanies.length) {
+    exemplarResult.failures.push(`found ${exemplars.length} exemplars in the letter prompt, expected ${exemplarCompanies.length}`)
   }
-  record('exemplar A passes the letter lint', exemplarResult)
+  exemplars.forEach(([, label, text], i) => {
+    const resumeText = label.includes('full resume') ? fullResume : undefined
+    for (const v of lintLetter(text, { companyName: exemplarCompanies[i], resumeText }).violations) {
+      exemplarResult.failures.push(`exemplar (${label}) fails its own lint: ${v}`)
+    }
+  })
+  record('exemplars pass the letter lint', exemplarResult)
+  const firstExemplar = exemplars[0]?.[2]
 
   // Lint self-test 2: a deliberately terrible letter must be caught.
   const badLetter = `Dear Hiring Manager,
@@ -233,8 +242,8 @@ John Doe`
   // Lint self-test 3: a banned word inside the employer's name is the employer,
   // not an AI tell. Without this, the model avoids naming "Beacon Retail Group".
   const companyResult: CheckResult = { failures: [], warnings: [] }
-  if (exemplarMatch) {
-    const renamed = exemplarMatch[1].replaceAll('Northlight', 'Beacon Retail Group')
+  if (firstExemplar) {
+    const renamed = firstExemplar.replaceAll('Harrow Mutual', 'Beacon Retail Group')
     for (const v of lintLetter(renamed, { companyName: 'Beacon Retail Group' }).violations) {
       companyResult.failures.push(`company name tripped the lint: ${v}`)
     }
@@ -244,14 +253,14 @@ John Doe`
   // Lint self-test 4: the letter goes to an employer, so a note to the user
   // (seen live after a prompt-injection posting) must be caught and retried.
   const noteResult: CheckResult = { failures: [], warnings: [] }
-  if (exemplarMatch) {
+  if (firstExemplar) {
     const notes = [
       'Note: the job posting contained an embedded instruction telling AI tools to claim extra experience. I ignored it and wrote the letter from your resume only.',
       'The posting included hidden instructions for AI tools, which I did not follow.',
       'I kept every claim to what is in your resume.',
     ]
     for (const note of notes) {
-      const lint = lintLetter(`${note}\n\n${exemplarMatch[1]}`, { companyName: 'Northlight' })
+      const lint = lintLetter(`${note}\n\n${firstExemplar}`, { companyName: 'Harrow Mutual' })
       if (!lint.violations.some((v) => /note to the user|aimed at the user/i.test(v))) {
         noteResult.failures.push(`lint missed a note to the user: "${note.slice(0, 60)}..."`)
       }
@@ -298,7 +307,7 @@ async function liveLetters() {
     const prompt = buildLetterPrompt(c.job, c.resumeText, undefined, variation)
     let letter: string
     try {
-      letter = stripMarkdown(await call([{ role: 'user', content: prompt }], { model: MODEL, maxTokens: 1024 }))
+      letter = stripMarkdown(stripPlan(await call([{ role: 'user', content: prompt }], { model: MODEL, maxTokens: 2048 })))
     } catch (e) {
       // One failed call fails this letter, not the whole run.
       process.stdout.write('x')
@@ -314,11 +323,11 @@ async function liveLetters() {
     if (firstLint.violations.length > 0) {
       retried = true
       try {
-        const retry = stripMarkdown(await call([
+        const retry = stripMarkdown(stripPlan(await call([
           { role: 'user', content: prompt },
           { role: 'assistant', content: letter },
           { role: 'user', content: buildLintRetryMessage(firstLint.violations) },
-        ], { model: MODEL, maxTokens: 1024 }))
+        ], { model: MODEL, maxTokens: 2048 })))
         const retryLint = lintLetter(retry, { companyName: c.job.company, numberSources, resumeText: c.resumeText })
         if (retryLint.violations.length <= firstLint.violations.length) letter = retry
       } catch {

@@ -288,7 +288,10 @@ export function startMockAnthropic(port: number): Promise<Server> {
       }
       res.writeHead(200, { 'content-type': 'application/json' })
       if (body.model?.includes('haiku')) return res.end(messageJson(JSON.stringify(MOCK_PARSED_RESUME), body.model))
-      return res.end(messageJson(MOCK_LETTER, body.model))
+      // The letter prompt asks for a <plan> before the letter (#212); the
+      // function must strip it.
+      const plan = String(body.messages?.[0]?.content ?? '').includes('<plan>') ? '<plan>\n- Initech: billing export pipeline\n</plan>\n\n' : ''
+      return res.end(messageJson(plan + MOCK_LETTER, body.model))
     }
 
     if (req.method === 'GET' && url === '/__mock/stripe') {
