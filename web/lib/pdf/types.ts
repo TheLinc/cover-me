@@ -49,6 +49,9 @@ export interface TailoredResume {
   certifications?: string[]
   otherSections?: ResumeSection[]
   atsScore?: number
+  // The original upload's score for the same posting (#228): atsScore less
+  // what tailoring's wording gained. Equal to atsScore when it gained nothing.
+  atsScoreBefore?: number
   atsGaps?: string[]
   // Set when the user edits it in the extension's editor tab (#118). The ATS
   // score is from before the edit, and says so. atsGapsBeforeEdits keeps the

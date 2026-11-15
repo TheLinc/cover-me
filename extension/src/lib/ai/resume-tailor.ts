@@ -3,7 +3,7 @@ import { debugGroup, debugLog } from '../debug'
 import { derivePlanningProgress, deriveTailorProgress } from './tailor-progress'
 import { buildsOnEdits, candidateText, checkAndRewriteLines, groundSkills, groundTailored, keepSeen, matchSkillCase, seenVersion, trustedNotes, type AskModel, type LineRepair } from './resume-grounding'
 import { SONNET_FIELDS, streamSonnet } from './claude'
-import { scoreFromMatch, type KeywordMatch } from './ats-score'
+import { scoreBefore, scoreFromMatch, type KeywordMatch } from './ats-score'
 import { callOpenAI, OPENAI_MODEL } from './openai'
 
 
@@ -40,8 +40,8 @@ function buildTailorSchema(parsed: ParsedResume): string {
 // An edited resume's fields from the editor tab go too: the old gaps, the
 // section order (layout, not wording), and deleted sections, so the model
 // doesn't put their text back (#197).
-function stripScores(r: TailoredResume): Omit<TailoredResume, 'atsScore' | 'atsGaps' | 'atsGapsBeforeEdits' | 'editedAt' | 'hasEdits' | 'sectionOrder' | 'deletedSections'> {
-  const { atsScore: _s, atsGaps: _g, atsGapsBeforeEdits: _b, editedAt: _e, hasEdits: _h, sectionOrder: _o, deletedSections: _d, ...rest } = r
+function stripScores(r: TailoredResume): Omit<TailoredResume, 'atsScore' | 'atsScoreBefore' | 'atsGaps' | 'atsGapsBeforeEdits' | 'editedAt' | 'hasEdits' | 'sectionOrder' | 'deletedSections'> {
+  const { atsScore: _s, atsScoreBefore: _sb, atsGaps: _g, atsGapsBeforeEdits: _b, editedAt: _e, hasEdits: _h, sectionOrder: _o, deletedSections: _d, ...rest } = r
   return rest
 }
 
@@ -336,9 +336,13 @@ ${grounding.jobDescription}`)
   const all = [...claimed.dropped, ...removed]
   if (all.length) onRemoved?.(all)
   if (delta.keywordMatch && typeof delta.keywordMatch === 'object') {
-    const { score, gaps } = scoreFromMatch(delta.keywordMatch as KeywordMatch, { jobDescription: grounding.jobDescription, candidate })
+    const km = delta.keywordMatch as KeywordMatch
+    const { score, gaps } = scoreFromMatch(km, { jobDescription: grounding.jobDescription, candidate })
     resume.atsScore = score
     resume.atsGaps = gaps
+    // The upload, not the notes: an ATS sees only the resume (#228). Not the
+    // sections deleted in the editor either, since the PDF doesn't print them.
+    resume.atsScoreBefore = scoreBefore(km, score, candidateText(parsed), candidateText({ ...resume, deletedSections: undefined }), grounding.jobDescription)
   }
   if (buildsOnEdits(grounding.previous)) resume.hasEdits = true
   return resume
