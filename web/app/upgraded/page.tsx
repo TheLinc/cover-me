@@ -125,7 +125,7 @@ export default async function UpgradedPage(props: Props) {
         <div className="text-center">
           <Badge variant="outline" className="gap-2 border-transparent bg-white px-3.5 py-1.5 text-[13px] font-normal text-ink-2 shadow-sm">
             {firstPayment ? (
-              <>Trial carries on · first payment <LocalDate iso={firstPayment} options={{ month: 'short', day: 'numeric', year: 'numeric' }} /></>
+              <>Nothing charged today · first payment <LocalDate iso={firstPayment} options={{ month: 'short', day: 'numeric', year: 'numeric' }} /></>
             ) : (
               <>
                 <span aria-hidden="true" className="relative flex size-2.5">
