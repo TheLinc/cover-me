@@ -235,15 +235,14 @@ export function letterLength(resumeText?: string): { min: number; max: number; a
 }
 
 /**
- * The letter without the <plan> the prompt asks for before it (#212). After a
- * plan, closed or not, the letter starts at its salutation, so a label such
- * as "Letter:" goes too.
- * ponytail: with a plan and no "Dear" line the leftover text stays in and the
- * lint's missing-salutation check sends it to the retry; parse the plan's
- * shape if that shows up in eval reports.
+ * The letter without the <plan> the prompt asks for before it (#212). The
+ * letter starts at its salutation, so an unclosed or untagged plan, or a label
+ * such as "Letter:", goes too.
+ * ponytail: with no "Dear" line any leftover plan text stays in and the lint's
+ * missing-salutation check sends it to the retry; parse the plan's shape if
+ * that shows up in eval reports.
  */
 export function stripPlan(text: string): string {
-  if (!/<plan>/i.test(text)) return text.trim()
   const rest = text.replace(/<plan>[\s\S]*?<\/plan>/gi, '')
   const dear = rest.search(/^Dear\b/im)
   return (dear === -1 ? rest : rest.slice(dear)).trim()

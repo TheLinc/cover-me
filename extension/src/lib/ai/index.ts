@@ -146,7 +146,7 @@ Read the APPLICANT RESUME above. Extract every concrete qualification named in i
 
 STEP 1 — SELECT
 Before the letter, write a short plan between <plan> and </plan>. Code removes it, so keep it terse:
-- The posting's ${count} main requirements, a few words each.
+- Up to ${count} of the posting's main requirements that the resume answers, a few words each; skip any it doesn't.
 - For each, the resume accomplishment that answers it best, from different work: its job, what the applicant did, how, its scope (team, sites, budget, volume, users), and one figure, all as the resume states them. List fewer if the resume has fewer.
 - Any license, degree, or certification the posting asks for that the resume holds.
 - Other resume facts that answer the posting: the scope of the current job, a duty the posting names, earlier work it asks for.
@@ -166,7 +166,7 @@ Opening (1–3 sentences): the plan's strongest accomplishment, with its scope a
 - Achievement-first: a quantified result from past work that maps directly to a top requirement of this role
 - Bold specific claim: a confident statement of a real accomplishment, striking enough to demand attention
 - Referral: name a mutual contact explicitly in the first sentence if one exists
-Default to the ${variation.hookPattern} pattern for this letter unless the resume cannot support it; a genuine referral always takes precedence over the default. Never cast the applicant as having built the employer's kind of product, served its clients, or worked in its industry unless the resume shows it.
+Default to the ${variation.hookPattern} pattern for this letter unless the resume cannot support it; a genuine referral always takes precedence over the default.
 
 ${evidence} Several resume lines about the same work at one job make one story; lines from different jobs never join. A single line is written plainly. Give each accomplishment its one most telling number, join related facts into a sentence that makes one point, and leave out what the posting doesn't ask about.
 
@@ -179,7 +179,7 @@ Sign-off: "${variation.signOff}" on its own line, then a blank line, then the ap
 ---
 
 VOICE — the target sound:
-Write like a competent professional who knows their own work well, typing the letter in one sitting: plain verbs, concrete nouns, first person, an occasional contraction, no ceremony. Confident but dry — the evidence does the impressing, not the adjectives. State each fact once and move on. Vary sentence length and how sentences open; don't start most of them with "I". Name the job title once, then "the role". ${companyKnown ? 'Name the company in full once and by a short form at least once more ("Acme" for "Acme Software"), and "you" beyond that.' : 'Refer to "the team" or "the role", never a company name.'} Where an accomplishment used a tool, method, or credential that the posting names and the allowlist holds, call it by the posting's name, inside that story.
+Write like a competent professional typing the letter in one sitting: plain verbs, concrete nouns, an occasional contraction, no ceremony. Confident but dry — the evidence does the impressing, not the adjectives. State each fact once and move on. Vary sentence length and how sentences open; don't start most of them with "I". Name the job title once, then "the role". ${companyKnown ? 'Name the company in full once and by a short form at least once more ("Acme" for "Acme Software"), and "you" beyond that.' : 'Refer to "the team" or "the role", never a company name.'} Where an accomplishment used a tool, method, or credential that the posting names and the allowlist holds, call it by the posting's name, inside that story.
 
 TRUTH:
 - Every fact, figure, situation, method, and reason comes from the resume or the supplemental context. Never invent a metric, a cause, a process, a motive, a feeling, or the situation behind a result, and never guess an employer's industry, size, or location or how long something took. A thin true sentence beats a vivid invented one.
@@ -203,13 +203,13 @@ Exemplar A (insurance, full resume):
 """
 Dear Harrow Mutual Team,
 
-At Calder Insurance I lead nine property adjusters. This year our average water-damage claim went from first call to payment in 11 days instead of 19, after I moved claims under $15,000 onto photo estimates. I'm applying for the Claims Manager role at Harrow Mutual.
+At Calder Insurance I lead nine property adjusters who handle about 4,000 homeowners claims a year. This year our average water-damage claim went from first call to payment in 11 days instead of 19, after I moved claims under $15,000 onto photo estimates. I'm applying for the Claims Manager role at Harrow Mutual.
 
 At Calder I also ran the surge desk after Hurricane Dana, when 6,000 claims came in over two weeks. With our IT lead I set up a triage queue that sent roof and flood losses to field adjusters first and kept contents-only claims with the desk team. I brought in 30 independent adjusters on three-week rotations and paired each with one of our own for their first week. Every policyholder heard from us within 48 hours, and the state regulator closed its review of our storm handling with no findings.
 
-Before Calder I spent six years at Wendell & Ames, first as a desk adjuster and then in subrogation. I built the referral checklist the desk team used to spot claims with a third party at fault, and in my last year there I recovered $3.1 million from contractors and appliance makers, the highest total on a team of twelve. I hold the Associate in Claims designation and adjuster licenses in four states, and I still review every subrogation referral my team sends.
+Before Calder I spent six years at Wendell & Ames, first as a desk adjuster and then in subrogation. As a desk adjuster I also trained each new hire on coverage reviews for water and mold claims. I built the referral checklist the desk team used to spot claims with a third party at fault, and in my last year there I recovered $3.1 million from contractors and appliance makers, the highest total on a team of twelve. I hold the Associate in Claims designation and adjuster licenses in four states, and I still review every subrogation referral my team sends.
 
-So far my work has been one team's queue at Calder. I want to set how claims are handled across a region, and the role at Harrow spans three offices.
+The photo checklist and the surge triage both started as fixes for my own team's queue, and the claims manager at Harrow sets that kind of process for three offices.
 
 I'd welcome an interview for the claims manager role.
 
@@ -226,7 +226,7 @@ At Brookside Veterinary Clinic I cut surgical prep time from 25 minutes to 15 by
 
 Day to day I run anesthesia monitoring for about 20 surgeries a week and keep the clinic's controlled-drug log, which the state board inspected last spring without a finding. The clinic sees about 60 patients a day across three vets, and I set the technicians' weekly rotation. I also train our new assistants in restraint and radiograph positioning, and four have come through with me so far. Before Brookside I spent two years as a veterinary assistant at a shelter clinic. When Brookside moved to new practice software, I wrote the treatment templates the technicians now use for dental and spay cases.
 
-Brookside closes at seven, so my emergency work has been the walk-ins in the last hour before closing, and Pinecrest's overnight service would make it most of the job. I'd also be running the technician team, which at Brookside falls to whoever has the most seniority on a given day.
+My emergency work so far has been the walk-ins Brookside takes in the last hour before closing, and I'd like it to be a bigger part of my work at Pinecrest. Setting the weekly rotation is the closest I've come to leading a technician team.
 
 Could we arrange an interview for the lead technician role?
 

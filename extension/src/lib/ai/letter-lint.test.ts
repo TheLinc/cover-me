@@ -518,6 +518,10 @@ ${letter}`)).toBe(letter)
     expect(stripPlan(`<plan>\n- req: SQL\n</plan>\nLetter:\n\n${letter}`)).toBe(letter)
   })
 
+  test('drops an untagged plan before the salutation', () => {
+    expect(stripPlan(`Plan:\n- req: SQL\n\n${letter}`)).toBe(letter)
+  })
+
   test('an unclosed plan keeps the letter from its salutation', () => {
     expect(stripPlan(`<plan>
 - req: SQL

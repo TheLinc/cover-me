@@ -306,13 +306,16 @@ async function liveLetters() {
     const variation: LetterVariation = { signOff: SIGN_OFFS[v % SIGN_OFFS.length], hookPattern: HOOKS[v % HOOKS.length], closePattern: CLOSE_PATTERNS[Math.floor(v / 3) % CLOSE_PATTERNS.length] }
     const prompt = buildLetterPrompt(c.job, c.resumeText, undefined, variation)
     let letter: string
+    // The first reply as the model wrote it, plan included, for review.
+    let draft = ''
     try {
-      letter = stripMarkdown(stripPlan(await call([{ role: 'user', content: prompt }], { model: MODEL, maxTokens: 2048 })))
+      draft = await call([{ role: 'user', content: prompt }], { model: MODEL, maxTokens: 2048 })
+      letter = stripMarkdown(stripPlan(draft))
     } catch (e) {
       // One failed call fails this letter, not the whole run.
       process.stdout.write('x')
       const result: CheckResult = { failures: [`model call failed: ${e instanceof Error ? e.message : e}`], warnings: [] }
-      return { c, run, variation, letter: '', result, judgeScore: undefined as number | undefined }
+      return { c, run, variation, letter: '', draft, result, judgeScore: undefined as number | undefined }
     }
 
     // Mirror production: one corrective retry on lint violations. A failed
@@ -349,7 +352,7 @@ async function liveLetters() {
       }
     }
     process.stdout.write('.')
-    return { c, run, variation, letter, result, judgeScore }
+    return { c, run, variation, letter, draft, result, judgeScore }
   })
   console.log('')
   for (const { c, run, variation, letter, result } of results) {
@@ -357,7 +360,7 @@ async function liveLetters() {
     record(`letter: ${c.id}${suffix} (${variation.hookPattern}, ${variation.closePattern} close, "${variation.signOff}")`, result)
     reportLines.push('<details><summary>letter text</summary>\n\n```\n' + letter + '\n```\n</details>\n')
   }
-  return results.map(({ c, run, letter, result, judgeScore }) => ({ id: c.id, run, letter, judgeScore, failures: result.failures, warnings: result.warnings }))
+  return results.map(({ c, run, letter, draft, result, judgeScore }) => ({ id: c.id, run, letter, draft, judgeScore, failures: result.failures, warnings: result.warnings }))
 }
 
 // ── Live resume pipeline: parse → tailor → checks → judge ────────────────────
