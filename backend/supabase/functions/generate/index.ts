@@ -215,8 +215,8 @@ function buildPrompt(
     ? 'five paragraphs: the opening about 60–80 words, each evidence paragraph about 100–130, the fit paragraph about 40–60, and the close'
     : 'four paragraphs: the opening about 40–60 words, the evidence paragraph about 90–130, the fit paragraph about 40–60, and the close'
   const evidence = length.full
-    ? `Evidence (two paragraphs, 3–5 sentences each): one more accomplishment from the plan in each, its place named in the first sentence, and told in three or four sentences with how it was done, its scope, and its result. In whichever paragraph they fit, tell the plan's other facts as work the applicant did; with only two accomplishments, the second paragraph carries those facts.`
-    : `Evidence (one paragraph, 3–6 sentences): the plan's second accomplishment, its place named in the first sentence, and told with how it was done, its scope, and its result. Then the plan's other facts, told as work the applicant did.`
+    ? `Evidence (two paragraphs, 3–5 sentences each): one more accomplishment from the plan in each, its place named in the first sentence, and told in three or four sentences with how it was done, its scope, and its result. Fold the plan's other facts into these sentences as part of the work told, never as a sentence that only names a skill, duty, or tool ("Wound care is part of that work too", "I also work in Visio").`
+    : `Evidence (one paragraph, 3–6 sentences): the plan's second accomplishment, its place named in the first sentence, and told with how it was done, its scope, and its result. Fold the plan's other facts into its sentences as part of the work told, never as a sentence that only names a skill, duty, or tool ("Wound care is part of that work too", "I also work in Visio").`
 
   const salutation = companyKnown
     ? `"Dear Hiring Manager," or "Dear ${job.company} Team,"`
@@ -277,13 +277,13 @@ Salutation: ${salutation}
 
 Length: about ${length.aim} words in ${shape}. Reach it by telling the plan's accomplishments in full, never by padding.
 
-Opening (1–3 sentences): the plan's strongest accomplishment, with its scope and result, and the role the applicant is applying for in its own short sentence, first or last. Credentials the role requires go in their own short sentence. The opening sentence is about the applicant and carries one result at most, and the whole opening has one figure; say any other amount in words. Use one of these patterns:
+Opening (1–3 sentences): the plan's strongest accomplishment, with its scope and result, and the role the applicant is applying for in its own short sentence, first or last. Credentials the role requires go in their own short sentence. The opening sentence is about the applicant and carries one result at most, and the whole opening has one figure; leave other amounts out. Use one of these patterns:
 - Achievement-first: a quantified result from past work that maps directly to a top requirement of this role
 - Bold specific claim: a confident statement of a real accomplishment, striking enough to demand attention
 - Referral: name a mutual contact explicitly in the first sentence if one exists
 Default to the ${variation.hookPattern} pattern for this letter unless the resume cannot support it; a genuine referral always takes precedence over the default.
 
-${evidence} Several resume lines about the same work at one job make one story; lines from different jobs never join. A single line is written plainly. Give each accomplishment one number, its most telling, and say its other amounts in words ("most of the team", "within two days"); at most three figures to a paragraph, join related facts into a sentence that makes one point, and leave out what the posting doesn't ask about.
+${evidence} Several resume lines about the same work at one job make one story; lines from different jobs never join. A single line is written plainly. Give each accomplishment one number, its most telling, and leave its other amounts out; at most three figures to a paragraph, join related facts into a sentence that makes one point, and leave out what the posting doesn't ask about.
 
 ${whyCompany}
 
@@ -294,7 +294,7 @@ Sign-off: "${variation.signOff}" on its own line, then a blank line, then the ap
 ---
 
 VOICE — the target sound:
-Write like a competent professional typing the letter in one sitting: plain verbs, concrete nouns, an occasional contraction, no ceremony. Confident but dry — the evidence does the impressing, not the adjectives. State each fact once and move on. Vary sentence length and how sentences open; don't start most of them with "I", and never start two sentences or two paragraphs in a row with "At <employer>". Name the job title once, then "the role". ${companyKnown ? 'Name the company in full once and by a short form at least once more ("Acme" for "Acme Software"), and "you" beyond that.' : 'Refer to "the team" or "the role", never a company name.'} Call an allowlisted tool or credential by the posting's name.
+Write like a competent professional typing the letter in one sitting: plain verbs, concrete nouns, an occasional contraction, no ceremony. Confident but dry — the evidence does the impressing, not the adjectives. State each fact once and move on. Vary sentence length and how sentences open; don't start most of them with "I". Name the job title once, then "the role". ${companyKnown ? 'Name the company in full once and by a short form at least once more ("Acme" for "Acme Software"), and "you" beyond that.' : 'Refer to "the team" or "the role", never a company name.'} Call an allowlisted tool or credential by the posting's name.
 
 TRUTH:
 - Every fact, figure, situation, method, and reason comes from the resume or the supplemental context. Never invent a metric, a cause, a process, a motive, a feeling, or the situation behind a result, and never guess an employer's industry, size, or location or how long something took. A thin true sentence beats a vivid invented one.
