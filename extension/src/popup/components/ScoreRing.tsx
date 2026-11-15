@@ -3,21 +3,23 @@ import { useEffect, useState } from 'react'
 const GROW_MS = 800
 // A smaller rise reads as tailoring doing nothing, so it counts as none (#228).
 const MIN_GAIN = 5
-// The last fill shown, so switching to the letter tab and back doesn't replay it.
-// ponytail: lives as long as the popup, so reopening it replays the fill; keyed by
-// the start and the score, so a later result with the same pair doesn't fill.
-let filledLast = ''
-
 // The ATS match as a ring, the same geometry as the website's ScoreRing.
 // A tailored result (`from` given) fills from 0 to the score, or from the
-// original resume's score when tailoring added at least MIN_GAIN (#228).
-// Without `from` (the editor, an older backend) and with reduced motion, the
-// ring shows the score straight away.
-export default function ScoreRing({ score, from, size = 104 }: { score: number; from?: number; size?: number }) {
+// original resume's score when tailoring added at least MIN_GAIN (#228). It
+// fills only while `grow` is set, and calls `onGrow` when it starts, so the
+// page can keep it from filling again. Without `from` (the editor, an older
+// backend) and with reduced motion, the ring shows the score straight away.
+export default function ScoreRing({ score, from, grow = true, onGrow, size = 104 }: {
+  score: number
+  from?: number
+  grow?: boolean
+  onGrow?: () => void
+  size?: number
+}) {
   const rose = typeof from === 'number' && score - from >= MIN_GAIN
   const start = typeof from !== 'number' ? score : rose ? from : 0
-  const key = `${start}-${score}`
-  const [animate] = useState(() => start < score && filledLast !== key && !matchMedia('(prefers-reduced-motion: reduce)').matches)
+  // Fixed at mount: the page clears `grow` once the fill starts.
+  const [animate] = useState(() => grow && start < score && !matchMedia('(prefers-reduced-motion: reduce)').matches)
   const [shown, setShown] = useState(animate ? start : score)
 
   useEffect(() => {
@@ -25,7 +27,7 @@ export default function ScoreRing({ score, from, size = 104 }: { score: number; 
       setShown(score)
       return
     }
-    filledLast = key
+    onGrow?.()
     let frame = 0
     const t0 = performance.now()
     const step = (now: number) => {
@@ -36,7 +38,8 @@ export default function ScoreRing({ score, from, size = 104 }: { score: number; 
     }
     frame = requestAnimationFrame(step)
     return () => cancelAnimationFrame(frame)
-  }, [animate, key, start, score])
+    // onGrow is left out: a new callback each render mustn't restart the fill.
+  }, [animate, start, score])
 
   const r = 54
   const c = 2 * Math.PI * r
