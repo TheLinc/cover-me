@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 
 const GROW_MS = 800
+// A smaller rise reads as tailoring doing nothing, so it counts as none (#228).
+const MIN_GAIN = 5
 
 // The ATS match as a ring, the same geometry as the website's ScoreRing.
-// With `from` below `score`, the ring and number grow from the original
+// With `from` at least MIN_GAIN below `score`, the ring and number grow from the original
 // resume's score to the tailored one (#228), unless motion is reduced.
 export default function ScoreRing({ score, from, size = 104 }: { score: number; from?: number; size?: number }) {
-  const base = typeof from === 'number' && from < score ? from : score
+  const base = typeof from === 'number' && score - from >= MIN_GAIN ? from : score
   const grows = base < score
   const [animate] = useState(() => !matchMedia('(prefers-reduced-motion: reduce)').matches)
   const [shown, setShown] = useState(animate ? base : score)
@@ -45,11 +47,14 @@ export default function ScoreRing({ score, from, size = 104 }: { score: number; 
   )
 }
 
-// The line under the gap chips that names the original resume's score: only
-// when tailoring raised it, never a drop (#228).
+// The line under the score (#228): the original resume's score when tailoring
+// raised it, otherwise why it didn't, so the line is there on every run.
+// Nothing for a run from a backend that doesn't send the before score.
 export function gainLine(score?: number, before?: number): string | null {
-  if (typeof score !== 'number' || typeof before !== 'number' || before >= score) return null
-  return `Up from ${before} before tailoring.${before >= 80 ? ' Your resume already matched well.' : ''}`
+  if (typeof score !== 'number' || typeof before !== 'number') return null
+  if (score - before >= MIN_GAIN) return `Up from ${before} before tailoring.${before >= 80 ? ' Your resume already matched well.' : ''}`
+  if (score >= 80) return 'Your resume already matched this job well.'
+  return 'Your resume already used the keywords it can back up. Add real experience below to raise it.'
 }
 
 export function ScoreGain({ score, before }: { score?: number; before?: number }) {
