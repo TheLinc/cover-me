@@ -35,7 +35,7 @@ import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { ParsedResume, TailoredResume } from '../src/types'
 import { buildPrompt as buildLetterPrompt, CLOSE_PATTERNS, type LetterVariation } from '../src/lib/ai/index'
-import { buildPrompt as buildTailorPrompt, assembleTailored } from '../src/lib/ai/resume-tailor'
+import { buildPrompt as buildTailorPrompt, assembleTailored, bulletBudget } from '../src/lib/ai/resume-tailor'
 import { buildParsePrompt, parseParsedJson } from '../src/lib/ai/resume-parse'
 import { lintLetter, buildLintRetryMessage, letterLength } from '../src/lib/ai/letter-lint'
 import { CASES, type EvalCase } from './fixtures'
@@ -378,7 +378,7 @@ async function tailorOnce(c: EvalCase, run: number): Promise<TailorRun> {
     // 1. Parse the raw resume text, as the hosted tier does on first tailor.
     let input: ParsedResume = c.parsed
     if (USE_PARSE) {
-      const raw = await call([{ role: 'user', content: buildParsePrompt(c.resumeText) }], { model: PARSE_MODEL, maxTokens: 6000, label: 'parse' })
+      const raw = await call([{ role: 'user', content: buildParsePrompt(c.resumeText) }], { model: PARSE_MODEL, maxTokens: 16000, label: 'parse' })
       try {
         const parsed = parseParsedJson(raw, c.resumeText)
         const result = checkParse(parsed, c)
@@ -392,7 +392,7 @@ async function tailorOnce(c: EvalCase, run: number): Promise<TailorRun> {
     }
 
     // 2. Tailor, exactly as production does (delta → merge → code-computed ATS).
-    const raw = await call([{ role: 'user', content: buildTailorPrompt(c.job, input, false) }], { model: MODEL, maxTokens: 6000, label: 'tailor' })
+    const raw = await call([{ role: 'user', content: buildTailorPrompt(c.job, input, false, undefined, !!c.trim) }], { model: MODEL, maxTokens: 6000, label: 'tailor' })
     out.raw = raw
     try {
       let guarded: string[] = []
@@ -400,7 +400,7 @@ async function tailorOnce(c: EvalCase, run: number): Promise<TailorRun> {
         prompt.startsWith('SKILL CLAIM CHECK') ? 'skill check' : prompt.startsWith('RESUME ACCURACY CHECK') ? 'line check' : 'line rewrite'
       const ask = (prompt: string) => call([{ role: 'user', content: prompt }], { model: MODEL, maxTokens: 2000, label: stepOf(prompt) })
       const onLineRepair = (repair: LineRepair) => (out.lines = repair)
-      const tailored = await assembleTailored(input, raw, { jobDescription: c.job.description, ask, onLineRepair, exactBulletCounts: true }, (removed) => (guarded = removed))
+      const tailored = await assembleTailored(input, raw, { jobDescription: c.job.description, ask, onLineRepair, exactBulletCounts: !c.trim, maxBullets: c.trim ? bulletBudget(input) : undefined }, (removed) => (guarded = removed))
       out.tailored = tailored
       out.guardRemoved = guarded
       out.tailor = checkTailored(tailored, c, input)

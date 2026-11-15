@@ -24,7 +24,8 @@ async function forward(token: string, method: string, params: Record<string, str
       method,
       cache: 'no-store',
       signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
-      headers: { Authorization: `Bearer ${token}`, ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) },
+      // The website prints every resume field, so it asks for them (backend _shared/resume-fields.ts).
+      headers: { Authorization: `Bearer ${token}`, 'X-Resume-Fields': '2', ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) },
       body: body === undefined ? undefined : JSON.stringify(body),
     })
     const data = await res.json().catch(() => null)

@@ -51,6 +51,8 @@ export interface ParsedResume {
   /** Every URL on the contact line, website first. Absent on a parse made before #129. */
   links?: string[]
   location?: string
+  /** The professional title under the name, verbatim. */
+  headline?: string
   experience: ResumeExperience[]
   projects?: ResumeProject[]
   education: ResumeEducation[]

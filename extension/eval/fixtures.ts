@@ -6,6 +6,7 @@
 import type { JobData, ParsedResume } from '../src/types'
 import { INDUSTRY_CASES } from './industry-cases'
 import { longPostingCases } from './long-postings'
+import { LONG_MASTER_CASE } from './long-master'
 
 export interface EvalCase {
   id: string
@@ -28,6 +29,8 @@ export interface EvalCase {
    * acceptable wordings; the eval reports how often the tailor makes the link.
    */
   expectedLabels?: string[][]
+  /** Tailored with "Remove irrelevant bullets" on: bullet counts follow the trim budget instead of staying 1:1. */
+  trim?: boolean
 }
 
 const TECH_NOTES = 'Software engineering: concrete stack names, scale (users, latency, coverage), ownership and code review. Frontend work must not be inflated into infrastructure or e-commerce domain claims.'
@@ -399,3 +402,4 @@ Requirements: 3+ years React, TypeScript, strong testing habits, comfort with am
   ...INDUSTRY_CASES,
 ]
 CASES.push(...longPostingCases(CASES))
+CASES.push(LONG_MASTER_CASE)

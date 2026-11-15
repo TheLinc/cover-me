@@ -4,6 +4,11 @@ import { isValidResume } from './ai/resume-tailor'
 import { derivePlanningProgress, deriveTailorProgress } from './ai/tailor-progress'
 import type { ApplicationRecord, AuthSession, CoverLetter, JobData, ParsedResume, ResumeData, TailoredHistoryEntry, TailoredResume } from '../types'
 
+// Asks the backend for the resume fields older extensions can't print (a
+// headline, project links and tech, section entries, grouped skills); without
+// it they come folded into the old ones (backend/.../_shared/resume-fields.ts).
+const RESUME_FIELDS = { 'X-Resume-Fields': '2' }
+
 // Thrown by signUp() when the account was created but needs email confirmation
 // before it can sign in — not a failure, so callers should render it as a
 // neutral/success notice rather than an error.
@@ -367,6 +372,7 @@ export async function uploadResumeToBackend(
     headers: {
       Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
+      ...RESUME_FIELDS,
     },
     body: JSON.stringify({ text, filename, ...(parse ? { parse: true } : {}) }),
   })
@@ -437,6 +443,7 @@ export async function tailorViaBackend(job: JobData, accessToken: string, compac
       // Opts into the NDJSON progress stream; older function versions ignore
       // this and respond with plain JSON, which the fallback below handles.
       Accept: 'application/x-ndjson',
+      ...RESUME_FIELDS,
     },
     body: JSON.stringify({ job, compact, supplemental: supplemental?.trim() || undefined, trim, includeSummary, previous, localId, ...design }),
   })
@@ -564,7 +571,7 @@ export async function fetchLettersFromBackend(accessToken: string): Promise<Cove
 
 export async function fetchApplicationsFromBackend(accessToken: string): Promise<ApplicationRecord[]> {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/applications`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
+    headers: { Authorization: `Bearer ${accessToken}`, ...RESUME_FIELDS },
   })
   if (!res.ok) throw new Error('Failed to fetch applications')
   const data = await res.json() as { applications: ApplicationRecord[] }

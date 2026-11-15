@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ensureValidSession, uploadResumeToBackend } from '../../lib/auth'
 import { DESIGN_CHECK_STALE_MS, DESIGN_UPLOAD_MAX, sha256Hex, toBase64, usesDesign } from '../../lib/design'
 import { designUsable } from '../../lib/pdf/docx-design'
+import { MAX_RESUME_CHARS } from '../../lib/ai/resume-parse'
 import { parseResume } from '../../lib/resume-parser'
 import { getCachedTier, getDesignFile, getMode, getResume, getSession, saveDesignFile, saveResume, watchResume } from '../../lib/storage'
 import type { DesignCheck, ParsedResume, ResumeData } from '../../types'
@@ -223,8 +224,8 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
                 <div className="hint hint-tight">Added while signed out, so it isn&apos;t in your account yet. Upload it again to use it for letters.</div>
               )}
               {/* The letter and parse prompts read only this much (lib/ai/index.ts, lib/ai/resume-parse.ts). */}
-              {resume.text.length > 12000 && (
-                <div className="hint hint-tight">Only the first 12,000 characters (about 2,400 words) are used. Shorten your resume so letters and tailored resumes include everything.</div>
+              {resume.text.length > MAX_RESUME_CHARS && (
+                <div className="hint hint-tight">Only the first {MAX_RESUME_CHARS.toLocaleString('en-US')} characters (about {Math.round(MAX_RESUME_CHARS / 5).toLocaleString('en-US')} words) are used. Shorten your resume so letters and tailored resumes include everything.</div>
               )}
               {!wordUpload && !news && (
                 <div className="hint hint-tight">Upload your resume as a Word file (.docx) and tailored resumes keep its design.</div>
