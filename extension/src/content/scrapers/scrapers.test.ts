@@ -250,6 +250,15 @@ describe('generic heuristic', () => {
       <div class="preview"><p>${description.slice(0, 150)}</p></div><div class="full" hidden><p>${description} ${description}</p></div></div></main>
       ${footer}</div></body></html>`)
     expect(wrapped.description).toBe(`${description} ${description}`)
+    // ...and one whose sections each end in a "Learn more" link, which look like
+    // cards: under a job's title, the largest hidden block is the last resort
+    const sections = ['The role', 'About us', 'Benefits'].map((h, i) => `<div class="sec"><h2>${h}</h2>
+      <p>${description.slice(i * 200, i * 200 + 300)}</p><a href="/more/${i}">Learn more</a></div>`).join('')
+    for (const full of [sections, `<div class="wrap">${sections}</div><p>Apply now.</p>`]) {
+      const learnMore = scrape('https://careers.example.com/jobs/1', `<html><body><main><h1>Warehouse Supervisor</h1><div>
+        <div class="preview"><p>${description.slice(0, 150)}</p></div><div class="full" hidden>${full}</div></div></main></body></html>`)
+      expect(learnMore.description).toContain(description.slice(400, 700))
+    }
     // ...while a listing's hidden mobile copy of its cards isn't
     const cards = `<ul>${relatedJobs(8)}</ul>`
     expect(() => scrape('https://careers.example.com/careers', `<html><body><main><h1>Join Our Team</h1>

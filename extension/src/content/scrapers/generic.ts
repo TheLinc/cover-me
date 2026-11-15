@@ -123,12 +123,16 @@ function largestBlock(doubtful: boolean, heading?: Element): string | undefined 
   // cards, which isn't. Chrome keeps that source text's indentation, so there
   // it's measured with its whitespace collapsed (a hidden mobile menu would
   // outweigh the page's text); linkedom's innerText has none to collapse.
+  // Under a job's title, with nothing else left, the largest hidden block is
+  // read, as master does: a posting under "Read more" whose sections each end
+  // in a "Learn more" link looks like hidden cards.
   const measure = (el: HTMLElement) => {
     const text = el.innerText?.trim() ?? ''
     const chromeHidden = text.length > 500 && typeof el.checkVisibility === 'function' && !rendered(el)
     return chromeHidden ? text.replace(/\s+/g, ' ').length : text.length
   }
   let first: HTMLElement | undefined
+  let hidden: HTMLElement | undefined
   const after = (a: Node, b: Node) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0
   const nearFirst = (el: HTMLElement, first: HTMLElement) => first.contains(el) || el.contains(first)
     || (!!heading && after(heading, el) && after(el, first))
@@ -137,11 +141,15 @@ function largestBlock(doubtful: boolean, heading?: Element): string | undefined 
     .filter(({ len }) => len > 500 && len < 20000)
     .sort((a, b) => b.len - a.len)
     .find(({ el, len }) => {
-      if (isList(el, len) || hasAncestorIn(el, hiddenLists) || (holdsHidden.has(el) && !rendered(el))) return false
+      if (isList(el, len)) return false
+      if (hasAncestorIn(el, hiddenLists) || (holdsHidden.has(el) && !rendered(el))) {
+        hidden ??= el
+        return false
+      }
       first ??= el
       return !hasAncestorIn(el, lists) && (doubtful || (left(el, len) >= 200 && nearFirst(el, first)))
     })?.el
-  if (!block) return doubtful ? undefined : first?.innerText.trim()
+  if (!block) return doubtful ? undefined : (first ?? hidden)?.innerText.trim()
   let text = block.innerText.trim()
   let largestList = 0
   for (const [list, { text: cut, plain }] of lists) {
