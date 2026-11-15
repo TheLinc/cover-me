@@ -64,8 +64,9 @@ export function checkLetter(letter: string, c: EvalCase): CheckResult {
   const result: CheckResult = { failures: [], warnings: [] }
 
   // No numberSources: checkNumberProvenance below covers numbers, with the
-  // JD-only and small-number warnings the lint doesn't give.
-  const lint = lintLetter(letter, { companyName: c.job.company })
+  // JD-only and small-number warnings the lint doesn't give. The resume sets
+  // the length range, as in production.
+  const lint = lintLetter(letter, { companyName: c.job.company, resumeText: c.resumeText })
   for (const v of lint.violations) result.failures.push(`lint: ${v}`)
 
   // The posting's own job title is fair to name ("the Hazmat Tanker Driver

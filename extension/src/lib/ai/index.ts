@@ -98,8 +98,8 @@ export function buildPrompt(
   const length = letterLength(resumeText)
   const count = length.full ? 'three' : 'two'
   const shape = length.full
-    ? 'five paragraphs: the opening about 50–70 words, each evidence paragraph about 70–100, Company Fit about 40–60, and the close'
-    : 'four paragraphs: the opening about 40–60 words, the evidence paragraph about 90–130, Company Fit about 40–60, and the close'
+    ? 'five paragraphs: the opening about 50–70 words, each evidence paragraph about 70–100, the fit paragraph about 40–60, and the close'
+    : 'four paragraphs: the opening about 40–60 words, the evidence paragraph about 90–130, the fit paragraph about 40–60, and the close'
   const evidence = length.full
     ? `Evidence (two paragraphs, 2–5 sentences each): one more accomplishment from the plan in each, started with its own place ("At Lakeshore, …") and told in two or three sentences with how it was done, its scope, and its result. In whichever paragraph they fit, add the plan's other facts that answer the posting.`
     : `Evidence (one paragraph, 3–6 sentences): the plan's second accomplishment, started with its own place ("At Lakeshore, …") and told with how it was done, its scope, and its result. Then the plan's other facts that answer the posting.`
@@ -110,7 +110,7 @@ export function buildPrompt(
 
   const whyCompany = companyKnown
     ? `Company Fit (2–3 sentences): make one link between the applicant's strongest evidence and the posting point it answers best, inside a sentence about what the applicant has done. Then give the applicant's reason for the move from the plan, in plain words: the work they do now and what this job adds, named only in words the allowlist supports, never as a field they haven't worked in ("move into critical care" with no critical care on the resume). End the paragraph on the reason; if the plan has none, end on the link.`
-    : `Role Fit (1–2 sentences): Since the company is unknown, explain what specifically draws the applicant to this type of role and the challenges it presents, grounded in their experience.`
+    : `Role Fit (1–2 sentences): link the applicant's strongest evidence to the role's main work, then give the reason from the plan if it has one, in plain words grounded in their experience.`
 
   const today = new Date().toISOString().split('T')[0]
 
@@ -205,11 +205,11 @@ Dear Harrow Mutual Team,
 
 At Calder Insurance I lead nine property adjusters. This year our average water-damage claim went from first call to payment in 11 days instead of 19, after I moved claims under $15,000 onto photo estimates. I'm applying for the Claims Manager role at Harrow Mutual.
 
-When Hurricane Dana reached the coast last year, Calder opened 6,000 claims in two weeks, and I ran the surge desk. With our IT lead I set up a triage queue that sent roof and flood losses to field adjusters first and kept contents-only claims with the desk team. I brought in 30 independent adjusters on three-week rotations and paired each with one of our own for their first week. Every policyholder heard from us within 48 hours, and the state regulator closed its review of our storm handling with no findings.
+At Calder I also ran the surge desk after Hurricane Dana, when 6,000 claims came in over two weeks. With our IT lead I set up a triage queue that sent roof and flood losses to field adjusters first and kept contents-only claims with the desk team. I brought in 30 independent adjusters on three-week rotations and paired each with one of our own for their first week. Every policyholder heard from us within 48 hours, and the state regulator closed its review of our storm handling with no findings.
 
-Before Calder I spent six years at Wendell & Ames, first as a desk adjuster and then in subrogation. I built the referral checklist the desk team used to spot claims with a third party at fault, and in my last year there I recovered $3.1 million from contractors and appliance makers, the highest total on a team of twelve. I hold the Associate in Claims designation and adjuster licenses in four states.
+Before Calder I spent six years at Wendell & Ames, first as a desk adjuster and then in subrogation. I built the referral checklist the desk team used to spot claims with a third party at fault, and in my last year there I recovered $3.1 million from contractors and appliance makers, the highest total on a team of twelve. I hold the Associate in Claims designation and adjuster licenses in four states, and I still review every subrogation referral my team sends.
 
-The Dana surge is the closest thing in my record to a Gulf storm season at Harrow, and I ran it from one desk. I want to set how claims are handled across a region, which a single team's queue at Calder doesn't give me.
+So far my work has been one team's queue at Calder. I want to set how claims are handled across a region, and the role at Harrow spans three offices.
 
 I'd welcome an interview for the claims manager role.
 
@@ -226,7 +226,7 @@ At Brookside Veterinary Clinic I cut surgical prep time from 25 minutes to 15 by
 
 Day to day I run anesthesia monitoring for about 20 surgeries a week and keep the clinic's controlled-drug log, which the state board inspected last spring without a finding. The clinic sees about 60 patients a day across three vets, and I set the technicians' weekly rotation. I also train our new assistants in restraint and radiograph positioning, and four have come through with me so far. Before Brookside I spent two years as a veterinary assistant at a shelter clinic. When Brookside moved to new practice software, I wrote the treatment templates the technicians now use for dental and spay cases.
 
-Brookside closes at seven, so my emergency work has been the walk-ins in the last hour before closing, and Pinecrest's overnight service would make it most of the job. I already set the rotation and train new staff, and I want to lead the technician team outright.
+Brookside closes at seven, so my emergency work has been the walk-ins in the last hour before closing, and Pinecrest's overnight service would make it most of the job. I'd also be running the technician team, which at Brookside falls to whoever has the most seniority on a given day.
 
 Could we arrange an interview for the lead technician role?
 
