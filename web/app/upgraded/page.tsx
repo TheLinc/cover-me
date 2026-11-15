@@ -39,7 +39,7 @@ function Screen() {
     <div className="flex flex-col items-center">
       <div className="flex h-[15px] w-[19px] flex-col justify-center gap-[2px] rounded-[3px] border-[1.5px] border-ink px-[2px]">
         <span className="h-[2.5px] w-full rounded-full bg-brand" />
-        <span className="h-[2.5px] w-2/3 rounded-full bg-[#DDD8D2]" />
+        <span className="h-[2.5px] w-2/3 rounded-full bg-line" />
       </div>
       <span className="h-[2.5px] w-[23px] rounded-full bg-ink" />
     </div>
@@ -60,9 +60,9 @@ function WordDoc() {
   return (
     <div className="relative -translate-x-1">
       <div className="flex h-[38px] w-[30px] flex-col gap-[4px] rounded-[4px] bg-white p-[5px] pt-[7px] shadow-sm">
-        <span className="h-[3px] w-full rounded-full bg-[#DDD8D2]" />
-        <span className="h-[3px] w-full rounded-full bg-[#DDD8D2]" />
-        <span className="h-[3px] w-2/3 rounded-full bg-[#DDD8D2]" />
+        <span className="h-[3px] w-full rounded-full bg-line" />
+        <span className="h-[3px] w-full rounded-full bg-line" />
+        <span className="h-[3px] w-2/3 rounded-full bg-line" />
       </div>
       <span className="absolute -bottom-1 -right-3 rounded-[4px] bg-brand-strong px-1 text-[8px] font-bold leading-[13px] text-white">DOCX</span>
     </div>
@@ -70,11 +70,11 @@ function WordDoc() {
 }
 
 // A line being typed, then the saved check.
-function Edit() {
+function EditSaved() {
   return (
     <div className="flex flex-col items-start gap-1.5">
       <div className="flex items-center gap-[2px]">
-        <span className="h-[4px] w-7 rounded-full bg-[#DDD8D2]" />
+        <span className="h-[4px] w-7 rounded-full bg-subtle opacity-40" />
         <span className="h-[12px] w-[2px] bg-brand-strong" />
       </div>
       <span className="flex size-4 items-center justify-center rounded-[5px] bg-brand-tint text-brand-ink">
@@ -84,22 +84,24 @@ function Edit() {
   )
 }
 
-function Early() {
+function NewBadge() {
   return (
-    <span className="flex items-center gap-1 rounded-full bg-brand px-1.5 py-0.5 text-[10px] font-semibold text-white">
+    <span className="flex items-center gap-1 rounded-full bg-brand-strong px-1.5 py-0.5 text-[10px] font-semibold text-white">
       <SparkleIcon size={10} weight="fill" /> NEW
     </span>
   )
 }
 
-// Only what Pro adds: the job board is on every account, so it isn't here.
-// Agrees with PRO in components/landing/Pricing.tsx.
+// Only what Pro adds, each checked against the code that gates it (#227).
+// The job board and Word export are on every account, so the Word row names
+// the Pro part: resumes downloaded from the dashboard in the user's own design.
+// Pricing.tsx's PRO list says the same in three lines.
 const ITEMS: { title: string; hint: string; Visual: ComponentType }[] = [
-  { title: 'Up to 25 a day', hint: 'Letters or tailored resumes', Visual: Quota },
-  { title: 'On every device', hint: 'Every letter and resume saved to your account', Visual: Devices },
-  { title: 'Full letters, Word files', hint: 'On your dashboard, in your own design', Visual: WordDoc },
-  { title: 'Edits save to your account', hint: 'In the resume editor', Visual: Edit },
-  { title: 'New features first', hint: 'Early access', Visual: Early },
+  { title: 'Up to 25 a day', hint: 'Letters or tailored resumes, instead of 5 a week', Visual: Quota },
+  { title: 'Saved to your account', hint: 'Every letter and resume, in History on any computer', Visual: Devices },
+  { title: 'Full letters and resumes', hint: 'On your dashboard. Resumes download as Word in your design', Visual: WordDoc },
+  { title: 'Edits save to your account', hint: 'In the resume editor', Visual: EditSaved },
+  { title: 'New features first', hint: 'Early access', Visual: NewBadge },
 ]
 
 // Stripe Checkout's success_url. Needs no sign-in: the extension picks up the
