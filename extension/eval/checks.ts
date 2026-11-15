@@ -60,7 +60,12 @@ function checkNumberProvenance(
 
 // ── Application answer checks (#232) ─────────────────────────────────────────
 
-export function checkAnswer(answer: string, c: EvalCase, extra: { failTerms?: string[]; maxLength?: number; maxWords?: number } = {}): CheckResult {
+// A missing item the question asks about by name may appear only in a plain
+// statement that the applicant lacks it ("I haven't used Kubernetes"); any
+// other mention is a claim. Items the question doesn't name never appear.
+const NEGATION = /\b(not|never|no|without|lack)\b|n['’]t\b/i
+
+export function checkAnswer(answer: string, c: EvalCase, extra: { question?: string; failTerms?: string[]; maxLength?: number; maxWords?: number } = {}): CheckResult {
   const result: CheckResult = { failures: [], warnings: [] }
   if (!answer.trim()) {
     result.failures.push('empty answer')
@@ -68,8 +73,14 @@ export function checkAnswer(answer: string, c: EvalCase, extra: { failTerms?: st
   }
   // The posting's own title is fair to name, as in the letter check.
   const prose = answer.replace(new RegExp(escapeRegex(c.job.title), 'gi'), ' ')
+  const sentences = prose.split(/(?<=[.!?])\s+/)
   for (const t of [...c.failTerms, ...(extra.failTerms ?? [])]) {
-    if (containsTerm(prose, t)) result.failures.push(`answer names "${t}" (not in resume)`)
+    const hits = sentences.filter((s) => containsTerm(s, t))
+    if (!hits.length) continue
+    const asked = !!extra.question && containsTerm(extra.question, t)
+    if (!asked) result.failures.push(`answer names "${t}" (not in resume, and the question didn't ask)`)
+    else if (!hits.every((s) => NEGATION.test(s))) result.failures.push(`answer claims "${t}" (not in resume)`)
+    else result.warnings.push(`answer says the applicant lacks "${t}", as the question asked about it`)
   }
   for (const t of c.warnTerms) {
     if (containsTerm(prose, t)) result.warnings.push(`answer contains "${t}" — verify it describes the employer, not the candidate`)

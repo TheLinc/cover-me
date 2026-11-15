@@ -78,6 +78,8 @@ describe('answer', () => {
     await uploadResume(user)
     expect((await callFunction('answer', { token: user.token, body: body({ question: '  ' }) })).status).toBe(400)
     expect((await callFunction('answer', { token: user.token, body: body({ job: { title: 'Engineer' } }) })).status).toBe(400)
+    expect((await callFunction('answer', { token: user.token, body: body({ job: { title: 'Engineer', company: 'Acme', description: 42 } }) })).status).toBe(400)
+    expect((await callFunction('answer', { token: user.token, body: body({ question: ['Why?'] }) })).status).toBe(400)
     expect(await answersToday(user.id)).toBe(0)
   })
 

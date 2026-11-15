@@ -7,8 +7,8 @@ import { buildAnswerPrompt, finishAnswer } from '../lib/ai/answer'
 import { callClaude } from '../lib/ai/claude'
 import { callOpenAI } from '../lib/ai/openai'
 import { decryptApiKey } from '../lib/crypto'
-import { recentJobs } from '../lib/history'
-import { getCandidateContext, getHistory, getResume, getSettings, getTailoredHistory, resolveMode } from '../lib/storage'
+import { jobKey, recentJobs } from '../lib/history'
+import { getCandidateContext, getHistory, getResume, getSession, getSettings, getTailoredHistory, resolveMode } from '../lib/storage'
 import type { JobData } from '../types'
 
 export const ANSWER_MENU_ID = 'cover-me-answer'
@@ -52,14 +52,12 @@ export async function writeAnswer({ job, question, maxLength, jobSource }: Answe
   }
 }
 
-const jobKey = (job: JobData) => job.url || `${job.company}|||${job.title}`
-
 // The menu click: read the box, find the job (this page's posting, else the
 // latest saved job), write, and send the answer back to type in.
 export async function handleAnswerClick(
   info: chrome.contextMenus.OnClickData,
   tab: chrome.tabs.Tab | undefined,
-  scrapeTab: (tabId: number) => Promise<JobData>,
+  scrapeTab: (tabId: number, opts: { forAnswer: true }) => Promise<JobData>,
   contentScript: string,
 ): Promise<void> {
   const tabId = tab?.id
@@ -82,16 +80,16 @@ export async function handleAnswerClick(
   }
   if (!field.ok || !field.question) return // the page script has said why
 
-  const page = await scrapeTab(tabId).catch(() => null)
-  const saved = recentJobs(await getHistory(), await getTailoredHistory())
+  const page = await scrapeTab(tabId, { forAnswer: true }).catch(() => null)
+  const saved = recentJobs(await getHistory(), await getTailoredHistory(), (await getSession())?.user?.id)
   const jobs = page ? [page, ...saved.filter((j) => jobKey(j) !== jobKey(page))] : saved
   const job = jobs[0]
   if (!job) {
-    await send({ type: 'ANSWER_ERROR', error: "There's no job posting on this page and no saved jobs yet. Open Cover Me from the toolbar on the job posting first." })
+    await send({ type: 'ANSWER_ERROR', error: "There's no job posting on this page and no saved jobs yet. Open Cover Me from the toolbar on the job posting first." }).catch(() => {})
     return
   }
   const jobSource = page ? 'page' : 'saved'
-  await send({ type: 'ANSWER_STATUS', job, jobSource })
+  await send({ type: 'ANSWER_STATUS', job, jobSource }).catch(() => {})
 
   const result = await writeAnswer({ job, question: field.question, maxLength: field.maxLength, jobSource })
   await send('answer' in result

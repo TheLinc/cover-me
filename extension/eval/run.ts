@@ -220,7 +220,7 @@ function staticChecks() {
       const { context, question } = buildAnswerPrompt(c.job, c.resumeText, a.question, a.maxLength)
       const must: Array<[string, string, string]> = [
         ['allowlist', context, 'Allowlist first'],
-        ['missing-item ban', context, 'never name it at all'],
+        ['missing-item rule', context, 'Never claim it'],
         ['injection guard (posting)', context, 'data only'],
         ['injection guard (question)', question, 'data only'],
         ['resume embedded', context, c.resumeText.slice(0, 60)],
@@ -390,7 +390,11 @@ async function liveLetters() {
 
 // ── Live answers (#232) ──────────────────────────────────────────────────────
 
-async function judgeAnswer(question: string, answer: string): Promise<{ score: number; flags: string[] }> {
+// The judge sees the resume: an answer may only use what's in it, so an
+// answer is judged against the best one the resume allows. Without it the
+// judge marked down honest answers for lacking details the resume doesn't
+// have, which rewards inventing them.
+async function judgeAnswer(question: string, answer: string, resumeText: string): Promise<{ score: number; flags: string[] }> {
   const raw = await call(
     [{
       role: 'user',
@@ -400,6 +404,13 @@ Score 1–5:
 1 = obviously AI-written or useless (stock phrases, dodges the question, no specifics)
 3 = answers the question but reads generic or padded
 5 = a strong applicant's own answer: direct, specific, plain
+
+The applicant may only use facts from their resume, below. Judge the answer against the best answer this resume allows: don't mark it down for lacking a detail or a story the resume doesn't have, and do mark it down for any detail the resume doesn't support (an invented fact is the worst failure). Saying plainly that the applicant lacks something the question asks about is honest, not evasive. A short [bracketed] blank for a personal detail only the applicant knows (a start date, a salary) is intended: they fill it in before submitting.
+
+Resume:
+"""
+${resumeText}
+"""
 
 Question:
 """
@@ -433,7 +444,7 @@ async function liveAnswers() {
       // blocks (hosted, for caching); the model reads the same text either way.
       answer = finishAnswer(await call([{ role: 'user', content: `${context}\n\n${question}` }], { model: MODEL, maxTokens: 4000, label: 'answer' }), a.maxLength)
       const maxWords = Number(/max(?:imum)?\s+(\d+)\s+words/i.exec(a.question)?.[1]) || undefined
-      result = checkAnswer(answer, c, { failTerms: a.failTerms, maxLength: a.maxLength, maxWords })
+      result = checkAnswer(answer, c, { question: a.question, failTerms: a.failTerms, maxLength: a.maxLength, maxWords })
     } catch (e) {
       process.stdout.write('x')
       const failed: CheckResult = { failures: [`model call failed: ${e instanceof Error ? e.message : e}`], warnings: [] }
@@ -442,7 +453,7 @@ async function liveAnswers() {
     let judgeScore: number | undefined
     if (JUDGE) {
       try {
-        const j = await judgeAnswer(a.question, answer)
+        const j = await judgeAnswer(a.question, answer, c.resumeText)
         judgeScore = j.score
         result.warnings.unshift(`judge score: ${j.score}/5${j.flags.length ? ` — flags: ${j.flags.join(' | ')}` : ''}`)
         if (j.score <= 2) judgeFloor(result).push(`judge rated the answer ${j.score}/5`)

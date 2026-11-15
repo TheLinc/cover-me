@@ -204,15 +204,19 @@ describe('recentJobs', () => {
     expect(jobs[0].description).toBe('Posting for B')
   })
 
-  test("skips jobs with no posting text and another account's entries, and keeps at most the limit", () => {
+  test("skips jobs with no posting text and other accounts' entries, and keeps at most the limit", () => {
     const letters = Array.from({ length: 12 }, (_, i) => ({ id: `l${i}`, job: posting(`https://${i}`, `J${i}`), letter: 'x', createdAt: `2026-10-${String(10 + i)}T00:00:00Z` }))
     const jobs = recentJobs([
       ...letters,
       { id: 'blank', job: job('https://blank'), letter: 'x', createdAt: '2026-11-01T00:00:00Z' },
       { id: 'theirs', job: posting('https://theirs', 'Theirs'), letter: 'x', createdAt: '2026-11-02T00:00:00Z', account: 'other' },
-    ], [], 10)
+      { id: 'b', job: posting('https://b', 'Account B'), letter: 'x', createdAt: '2026-11-03T00:00:00Z', account: 'user-b' },
+      { id: 'pro', job: posting('https://pro', 'Saving to B'), letter: 'x', createdAt: '2026-11-04T00:00:00Z', saveTo: 'user-b' },
+      { id: 'mine', job: posting('https://mine', 'Mine'), letter: 'x', createdAt: '2026-11-05T00:00:00Z', account: 'user-a' },
+    ], [], 'user-a', 10)
     expect(jobs).toHaveLength(10)
-    expect(jobs[0].title).toBe('J11')
-    expect(jobs.map((j) => j.title)).not.toContain('Theirs')
+    expect(jobs.map((j) => j.title).slice(0, 2)).toEqual(['Mine', 'J11'])
+    expect(jobs.map((j) => j.title)).not.toEqual(expect.arrayContaining(['Theirs']))
+    expect(jobs.map((j) => j.title).filter((t) => ['Theirs', 'Account B', 'Saving to B'].includes(t))).toEqual([])
   })
 })

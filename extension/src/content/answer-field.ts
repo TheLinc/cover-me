@@ -1,5 +1,6 @@
 // The text box a right-click answer goes into (#232): its question, its
 // character limit, typing the answer in, and the status box beside it.
+import type { JobData } from '../types'
 
 const clean = (s: string | null | undefined) =>
   (s ?? '').replace(/\s+/g, ' ').replace(/[\s*✱]+$/, '').trim()
@@ -57,7 +58,7 @@ export function fieldMaxLength(el: HTMLElement): number | undefined {
 // Everything below runs in the injected page script and isn't unit-tested:
 // it needs a real browser's focus, selection and execCommand.
 
-interface Job { title: string; company: string; description: string; url: string }
+type Job = JobData
 type JobSource = 'page' | 'saved'
 
 // The box right-clicked: right-clicking a box focuses it, so it's the focused
@@ -196,9 +197,12 @@ function done(answer: string, jobs: Job[], index: number, jobSource: JobSource):
   if (!target) return
   typeAnswer(target.el, answer)
   const job = jobs[index]
+  // The prompt leaves [blanks] for personal details only the applicant knows
+  // (a start date, a salary).
+  const blanks = /\[[^\]]+\]/.test(answer) ? ' Fill in the parts in [brackets] before you submit.' : ''
   const message = jobSource === 'saved' && index === 0
-    ? `No job posting on this page, so this answer uses your latest saved job: ${jobName(job)}. ${undoKey()} undoes it.`
-    : `Answer added for ${jobName(job)}. ${undoKey()} undoes it.`
+    ? `No job posting on this page, so this answer uses your latest saved job: ${jobName(job)}.${blanks} ${undoKey()} undoes it.`
+    : `Answer added for ${jobName(job)}.${blanks} ${undoKey()} undoes it.`
   showStatus(target.el, 'done', message, { jobs, current: index, onPick: (i) => void rewrite(jobs, i, jobSource) })
 }
 

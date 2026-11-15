@@ -170,7 +170,9 @@ type FrameScrape = { frameId: number; snapshot?: PageSnapshot | null } & (
 // the extension root. Injected on click; nothing is declared in content_scripts.
 const CONTENT_SCRIPT_FILE = 'content.js'
 
-async function scrapeTab(tabId: number): Promise<JobData> {
+// forAnswer: a right-click answer's read (#232), often of an application form
+// with no posting on it; the server doesn't count those as failed reads.
+async function scrapeTab(tabId: number, { forAnswer = false } = {}): Promise<JobData> {
   const { frameIds, urls } = await listScrapableFrames(tabId)
   const fail = async (error: string, frameId?: number) =>
     new ScrapeError(scrapeFailure(await topFrameUrl(tabId), [...urls.values()], error, frameId === undefined ? undefined : urls.get(frameId)))
@@ -198,7 +200,7 @@ async function scrapeTab(tabId: number): Promise<JobData> {
       }
     }),
   )
-  const results = await preferServerScrapes(local)
+  const results = await preferServerScrapes(local, forAnswer)
 
   // The top frame keeps its historical precedence so already-working sites
   // behave exactly as before; among iframe hits, take the longest description.
@@ -261,7 +263,7 @@ async function scrapeTab(tabId: number): Promise<JobData> {
 // scrapers also did: outdated scrapers tend to return a wrong or partial job
 // rather than fail. The bundled result stands when the server is unreachable,
 // unconfigured (self-hosted builds), slow, or couldn't read that frame.
-async function preferServerScrapes(results: FrameScrape[]): Promise<FrameScrape[]> {
+async function preferServerScrapes(results: FrameScrape[], forAnswer = false): Promise<FrameScrape[]> {
   const sent = results.filter((r) => r.snapshot)
   if (!SUPABASE_URL || sent.length === 0) return results
   // Until the user has agreed on the notice about how pages are read
@@ -269,7 +271,7 @@ async function preferServerScrapes(results: FrameScrape[]): Promise<FrameScrape[
   // bundled scrapers' results stand.
   if (!(await hasAgreedToPageRead())) return results
   try {
-    const body = JSON.stringify({ pages: sent.map((r) => r.snapshot) })
+    const body = JSON.stringify({ pages: sent.map((r) => r.snapshot), ...(forAnswer ? { answer: true } : {}) })
     const gzipped = await new Response(new Blob([body]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer()
     const res = await fetch(`${SUPABASE_URL}/functions/v1/scrape`, {
       method: 'POST',

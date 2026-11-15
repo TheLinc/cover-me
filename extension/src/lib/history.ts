@@ -17,12 +17,15 @@ export interface JobGroup {
   localOnly?: boolean // Pro list: an entry that exists only in this browser
 }
 
-// Local letters and tailored resumes, grouped by posting (URL, or company and
-// title when there's no URL), newest activity first.
+// One posting: its URL, or company and title when there's no URL.
+export const jobKey = (job: Pick<JobData, 'url' | 'company' | 'title'>) => job.url || `${job.company}|||${job.title}`
+
+// Local letters and tailored resumes, grouped by posting (jobKey), newest
+// activity first.
 export function groupLocalHistory(letters: CoverLetter[], tailored: TailoredHistoryEntry[]): JobGroup[] {
   const map = new Map<string, JobGroup>()
   const groupFor = (job: CoverLetter['job'], createdAt: string): JobGroup => {
-    const key = job.url || `${job.company}|||${job.title}`
+    const key = jobKey(job)
     let g = map.get(key)
     if (!g) {
       g = { key, id: null, title: job.title, company: job.company, url: job.url, latestAt: createdAt, coverLetters: [], tailoredResumes: [], localCoverLetterIds: [], localTailoredIds: [] }
@@ -50,15 +53,17 @@ export function groupLocalHistory(letters: CoverLetter[], tailored: TailoredHist
 
 // The jobs a right-click answer can be written for when the page has no
 // posting (#232): one per posting, newest first. Leaves out jobs saved with
-// no posting text, which can't be answered from, and a previous user's.
-export function recentJobs(letters: CoverLetter[], tailored: TailoredHistoryEntry[], limit = 10): JobData[] {
+// no posting text, which can't be answered from, and entries that belong to
+// another account than userId (signed out: any account's).
+export function recentJobs(letters: CoverLetter[], tailored: TailoredHistoryEntry[], userId?: string, limit = 10): JobData[] {
   const seen = new Set<string>()
+  const mine = (owner?: string) => !owner || owner === userId
   return [...letters, ...tailored]
-    .filter((e) => e.account !== 'other' && e.job.description?.trim())
+    .filter((e) => mine(e.account) && mine(e.saveTo) && e.job.description?.trim())
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     .map((e) => e.job)
     .filter((job) => {
-      const key = job.url || `${job.company}|||${job.title}`
+      const key = jobKey(job)
       return !seen.has(key) && !!seen.add(key)
     })
     .slice(0, limit)

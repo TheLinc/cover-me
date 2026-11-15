@@ -46,7 +46,11 @@ Deno.serve(async (req) => {
     return json({ error: 'Invalid request body' }, 400)
   }
   if (!question) return json({ error: 'Missing the question' }, 400)
-  if (!job?.title || !job?.description) return json({ error: 'Missing job title or description' }, 400)
+  // Checked as strings: the prompt is built after the answer is counted.
+  if (typeof job?.title !== 'string' || typeof job.description !== 'string' || !job.title || !job.description) {
+    return json({ error: 'Missing job title or description' }, 400)
+  }
+  if (typeof job.company !== 'string') job.company = ''
 
   const { data: resumeRow } = await supabase.from('resumes').select('text_encrypted').eq('user_id', userId).maybeSingle()
   if (!resumeRow) return json({ error: 'No resume found. Upload your resume in the extension first.' }, 400)
