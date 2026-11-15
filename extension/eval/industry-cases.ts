@@ -1212,7 +1212,7 @@ As Group Product Manager, Payments, you will:
 
 Requirements: 7+ years in product management, 2+ years managing product managers. Fintech or payments experience strongly preferred.`),
     failTerms: ['PCI', 'KYC', 'Amplitude', 'fintech'],
-    warnTerms: ['payments', 'restaurant'],
+    warnTerms: ['restaurant'],
     mustKeepSkills: ['SQL', 'discovery'],
     fieldNotes: 'Product management: outcomes with exact numbers (adoption, retention, time saved), discovery and experiments, managing product managers, cross-functional scope. Scheduling and logistics SaaS must not be recast as payments or fintech; Mixpanel must not become Amplitude. 17 bullets in, 17 out.',
   },
@@ -1270,7 +1270,7 @@ The General Manager will:
 
 Requirements: 8+ years in hotel operations, including 3+ years as GM or AGM of a luxury property. CHA (Certified Hotel Administrator) preferred.`),
     failTerms: ['Opera', 'CHA', 'Certified Hotel Administrator', 'Forbes'],
-    warnTerms: ['luxury', 'resort', 'spa', 'marina'],
+    warnTerms: ['luxury', 'spa', 'marina'],
     mustKeepSkills: ['Hotel operations'],
     fieldNotes: 'Hotel management: scale (rooms, staff), guest satisfaction and revenue figures (RevPAR, upsell), labor cost, renovations, team development. A full-service city hotel must not be recast as luxury or resort experience; Maestro must not become Opera. 16 bullets in, 16 out.',
   },

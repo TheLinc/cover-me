@@ -267,6 +267,16 @@ John Doe`
     }
   }
   record('notes to the user are caught', noteResult)
+
+  // #212 halved the letter instructions (~4,460 words to under 2,050); keep
+  // them there. Measured with an empty posting and a full resume's worth of
+  // filler, which is subtracted.
+  const sizeResult: CheckResult = { failures: [], warnings: [] }
+  const words = (t: string) => t.split(/\s+/).filter(Boolean).length
+  const filler = Array.from({ length: 300 }, () => 'word').join(' ')
+  const instructionWords = words(buildLetterPrompt({ title: 'X', company: 'Acme', description: '', url: '' }, filler)) - 300
+  if (instructionWords > 2050) sizeResult.failures.push(`letter instructions are ${instructionWords} words; keep them under 2,050 (#212)`)
+  record(`letter instructions are ${instructionWords} words`, sizeResult)
 }
 
 // ── Live letters ─────────────────────────────────────────────────────────────
