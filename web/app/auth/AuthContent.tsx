@@ -311,7 +311,7 @@ function AuthForm() {
         : view === "signin"
           ? "Sign in to your Cover Me account."
           : plan === "pro"
-            ? `Up to ${PLAN_LIMITS.pro_daily} letters or resumes and ${PLAN_LIMITS.answer_pro_daily} answers to application questions a day, your letters and resumes on any device.`
+            ? `Up to ${PLAN_LIMITS.pro_daily} letters or resumes and ${PLAN_LIMITS.answer_pro_daily} answers to application questions a day, saved to your account.`
             : `${PLAN_LIMITS.free_starter} free generations to start. No credit card required.`;
 
   return (

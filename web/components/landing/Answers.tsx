@@ -22,8 +22,8 @@ import { useReducedMotion } from './useScrollProgress'
 // rule: say plainly what the resume lacks, then the nearest real experience.
 const QUESTION = `Tell us about your experience with ${EXAMPLE.gaps[0]}.`
 const MAX = 1000
-const ANSWER = `I haven't used ${EXAMPLE.gaps[0]}. At Brightline I owned campaign strategy for email and social, growing qualified leads 38%, and managed $1.2M in paid media spend across four channels.`
-const SHORTER = `I haven't used ${EXAMPLE.gaps[0]}. At Brightline I owned email and social campaign strategy, growing qualified leads 38%.`
+const ANSWER = `I haven't used ${EXAMPLE.gaps[0]}. At Brightline I owned campaign strategy for email and social, and the campaigns I planned grew qualified leads 38%.`
+const SHORTER = `I haven't used ${EXAMPLE.gaps[0]}. My email and social campaigns at Brightline grew qualified leads 38%.`
 const CHANGES = ['Shorter', 'More specific', 'Another example']
 
 type Phase = 'aim' | 'menu' | 'pick' | 'writing' | 'done' | 'chip' | 'rewriting' | 'revised'
@@ -41,6 +41,8 @@ const TIMELINE: [Phase, number][] = [
 const LOOP = 14000
 
 // Which of the four steps on the left the frame is showing.
+// Before the answer is typed in, the box is empty and the status box is closed.
+const BEFORE_ANSWER: Phase[] = ['aim', 'menu', 'pick']
 const STEP: Record<Phase, number> = { aim: 0, menu: 0, pick: 1, writing: 2, done: 2, chip: 3, rewriting: 3, revised: 3 }
 const STEPS: ReactNode[] = [
   'Right-click the question box.',
@@ -52,7 +54,7 @@ const STEPS: ReactNode[] = [
 const HONEST = [
   'Says so plainly when your resume lacks what the question asks about',
   'Never invents experience',
-  <>Leaves salary, start date and stories only you know in [brackets] for you to fill in</>,
+  'Leaves salary, start date and details only you know in [brackets] for you to fill in',
   'Never submits the form. You do',
 ]
 
@@ -162,7 +164,7 @@ function Stage({ phase }: { phase: Phase }) {
   const chipRef = useRef<HTMLSpanElement>(null)
   const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null)
 
-  const answer = phase === 'revised' ? SHORTER : phase === 'aim' || phase === 'menu' || phase === 'pick' || phase === 'writing' ? '' : ANSWER
+  const answer = phase === 'revised' ? SHORTER : BEFORE_ANSWER.includes(phase) || phase === 'writing' ? '' : ANSWER
   const menuOpen = phase === 'menu' || phase === 'pick'
   const showCursor = phase === 'aim' || menuOpen || phase === 'chip'
 
@@ -208,7 +210,7 @@ function Stage({ phase }: { phase: Phase }) {
             <span className="self-end text-[11px] tabular-nums text-subtle">{answer.length} / {MAX.toLocaleString('en-US')}</span>
 
             {menuOpen && <ContextMenu itemRef={itemRef} picked={phase === 'pick'} />}
-            <AnswerBox phase={phase} chipRef={chipRef} />
+            <StatusBox phase={phase} chipRef={chipRef} />
           </div>
         </div>
       </BrowserFrame>
@@ -255,11 +257,11 @@ function ContextMenu({ itemRef, picked }: { itemRef: RefObject<HTMLDivElement | 
 }
 
 // The in-page status box, as content/answer-field.ts draws it.
-function AnswerBox({ phase, chipRef }: { phase: Phase; chipRef: RefObject<HTMLSpanElement | null> }) {
-  if (phase === 'aim' || phase === 'menu' || phase === 'pick') return null
+function StatusBox({ phase, chipRef }: { phase: Phase; chipRef: RefObject<HTMLSpanElement | null> }) {
+  if (BEFORE_ANSWER.includes(phase)) return null
   const working = phase === 'writing' || phase === 'rewriting'
   const title = phase === 'writing' ? 'Writing your answer…' : phase === 'rewriting' ? 'Rewriting your answer…' : 'Answer added'
-  const note = phase === 'rewriting' ? 'Change: Shorter' : working ? null : `${phase === 'revised' ? 3 : 4} of your first ${L.answer_starter} free answers left.`
+  const note = phase === 'rewriting' ? 'Change: Shorter' : working ? null : `${L.answer_starter - (phase === 'revised' ? 2 : 1)} of your first ${L.answer_starter} free answers left.`
   return (
     <div
       key={working ? 'working' : 'done'}
@@ -273,7 +275,7 @@ function AnswerBox({ phase, chipRef }: { phase: Phase; chipRef: RefObject<HTMLSp
         </p>
         <XIcon size={12} className="mt-1 shrink-0 text-ext-muted" />
       </div>
-      {note && <p className="ml-[28px] mt-1.5 text-[#CFCCE6]">{note}</p>}
+      {note && <p className="ml-[28px] mt-1.5 text-ext-text-2">{note}</p>}
       <div className="ml-[28px] mt-2.5 border-t border-ext-elevated pt-2.5">
         <p className="line-clamp-3">&ldquo;{QUESTION}&rdquo;</p>
         <p className="mt-1 text-[11.5px] text-ext-muted">
@@ -288,8 +290,8 @@ function AnswerBox({ phase, chipRef }: { phase: Phase; chipRef: RefObject<HTMLSp
                 key={c}
                 ref={c === 'Shorter' ? chipRef : undefined}
                 className={cn(
-                  'rounded-full border px-2.5 py-0.5 text-[11.5px] leading-[18px] text-[#CFCCE6] transition-colors',
-                  c === 'Shorter' && phase === 'chip' ? 'border-[#4A4580] bg-ext-elevated text-ext-text' : 'border-ext-border bg-ext-surface',
+                  'rounded-full border px-2.5 py-0.5 text-[11.5px] leading-[18px] text-ext-text-2 transition-colors',
+                  c === 'Shorter' && phase === 'chip' ? 'border-ext-border-hover bg-ext-elevated text-ext-text' : 'border-ext-border bg-ext-surface',
                 )}
               >
                 {c}
