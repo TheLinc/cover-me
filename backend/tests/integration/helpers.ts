@@ -139,7 +139,7 @@ export async function clearParsedResume(userId: string) {
   await admin.from('resumes').update({ structured_encrypted: null }).eq('user_id', userId)
 }
 
-// table: rate_limits for letters and resumes, answer_counts for answers (migration 031).
+// table: rate_limits for letters and resumes, answer_counts for answers (migration 032).
 export async function quotaUsedToday(userId: string, table = 'rate_limits'): Promise<number> {
   const today = new Date().toISOString().split('T')[0]
   const { data } = await admin.from(table).select('count').eq('user_id', userId).eq('date', today).maybeSingle()

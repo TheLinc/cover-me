@@ -15,7 +15,7 @@ export interface Allowance {
 }
 
 // noun: what the allowance counts. Letters and resumes share 'generations';
-// answers to application questions have their own (migration 031).
+// answers to application questions have their own (migration 032).
 export function limitMessage(a: Allowance, noun = 'generations'): string {
   if (a.kind === 'daily') {
     return `You've reached Pro's fair-use limit of ${a.limit} ${noun} today. It resets at midnight UTC.`

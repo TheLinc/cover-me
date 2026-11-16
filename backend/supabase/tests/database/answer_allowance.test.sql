@@ -1,4 +1,4 @@
--- Answer allowance (migration 031, #232): free 5 to start then 5 a week,
+-- Answer allowance (migration 032, #232): free 5 to start then 5 a week,
 -- Pro 50 a day, counted apart from letters and resumes. Run: pnpm db:test (from backend/)
 begin;
 select plan(14);

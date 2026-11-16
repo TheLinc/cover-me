@@ -4,7 +4,7 @@ import {
 } from './helpers'
 
 // Answers to application questions (#232): their own allowance, apart from
-// letters and resumes (migration 031).
+// letters and resumes (migration 032).
 const QUESTION = 'Why do you want to work at Acme?'
 const body = (extra: Record<string, unknown> = {}) => ({ job: JOB, question: QUESTION, jobSource: 'page', ...extra })
 const answersToday = (userId: string) => quotaUsedToday(userId, 'answer_counts')

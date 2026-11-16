@@ -1,7 +1,7 @@
 // Answers to the written questions on job applications (#232), for a Cover Me
 // account. The extension reads the question from the form; this writes the
 // answer from the account's resume and the job, against the answer allowance
-// (migration 031), which never uses up letters or resumes.
+// (migration 032), which never uses up letters or resumes.
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { consumeAnswer } from '../_shared/limits.ts'
 import { ANTHROPIC_MESSAGES_URL, SONNET_BETA_HEADER, SONNET_FIELDS, SONNET_MAX_TOKENS } from '../_shared/anthropic.ts'
