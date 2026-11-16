@@ -27,10 +27,12 @@ export function remainingGaps(gaps: string[] | undefined, resume: TailoredResume
 // The posting's title, levels dropped, when the summary names it and none of
 // the user's jobs carry it; '' otherwise (#244). The tailor may open the summary with the
 // posting's title (#218); job titles stay the user's own. A one-word title
-// ("Designer") is never exempted from grounding, so it gets no note.
+// ("Designer") is never exempted from grounding, so it gets no note, and
+// neither does a resume with no jobs left to compare (section deleted).
 export function postingTitleInSummary(resume: TailoredResume, jobTitle: string): string {
   const title = titleWithoutLevel(jobTitle)
-  return title && mentions(resume.summary ?? '', title) && !resume.experience.some((e) => mentions(e.title, title)) ? title : ''
+  const jobs = resume.experience
+  return title && jobs.length && mentions(resume.summary ?? '', title) && !jobs.some((e) => mentions(e.title, title)) ? title : ''
 }
 
 // The edit as saved: the draft's text, the score from before any edit, and

@@ -46,6 +46,10 @@ describe("the note on a summary that uses the posting's title (#244)", () => {
     expect(postingTitleInSummary(fullStack('Full Stack Developer who works with every designer.'), 'Designer')).toBe('')
   })
 
+  test('not once the experience section is deleted, with no job titles left to compare', () => {
+    expect(postingTitleInSummary({ ...fullStack('Software Engineer who builds web applications.'), experience: [] }, 'Software Engineer')).toBe('')
+  })
+
   test('not for a posting with no title', () => {
     expect(postingTitleInSummary(fullStack('Developer who builds web applications.'), '')).toBe('')
   })

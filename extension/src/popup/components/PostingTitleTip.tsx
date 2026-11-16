@@ -6,7 +6,7 @@ export default function PostingTitleTip({ title }: { title: string }) {
   return (
     <p className="tip">
       <LightbulbIcon />
-      <span><strong>Optimized for recruiter search.</strong> Your summary uses this posting&apos;s title, {title}, so searches for it find you. Your job titles are unchanged.</span>
+      <span><strong>Optimized for recruiter search.</strong> Your summary uses {title} from this posting&apos;s title, so searches for it find you. Your job titles are unchanged.</span>
     </p>
   )
 }
