@@ -1,25 +1,25 @@
 import { useEffect, useState } from 'react'
 import { WEB_URL } from '../../lib/config'
+import { isAnswersNewsSeen, markAnswersNewsSeen } from '../../lib/storage'
 
 // Answers to application questions (#232), announced under the Generate page's
 // header until the user closes it. The link opens the homepage's demo of the
 // right-click flow; utm_source=extension is how site analytics sees these
 // visits (no click tracking here, as with What's new).
 const DEMO_URL = `${WEB_URL}/?utm_source=extension#answers`
-const KEY = 'answersNews'
 
 export default function AnswersNews() {
   const [show, setShow] = useState(false)
 
   useEffect(() => {
-    void chrome.storage.local.get(KEY).then((r) => setShow(r[KEY] !== 'seen'))
+    void isAnswersNewsSeen().then((seen) => setShow(!seen))
   }, [])
 
   if (!show) return null
 
   function dismiss() {
     setShow(false)
-    void chrome.storage.local.set({ [KEY]: 'seen' })
+    void markAnswersNewsSeen()
     // The card is gone: move keyboard focus to the page's first control, not <body>.
     const controls = document.querySelectorAll<HTMLElement>('.page button, .page a[href], .page input')
     Array.from(controls).find((el) => !el.closest('.answers-news'))?.focus()
