@@ -235,18 +235,21 @@ export function withSectionOrder<T extends ParsedResume>(parsed: T, resumeText?:
   return { ...parsed, sectionOrder: order.length ? ['summary', ...order] : [] }
 }
 
-// A cached parse made since the parse kept extra sections (#54) and section
-// order (#165). One from before is parsed again, once.
+// A cached parse made since the parse kept extra sections (#54), section
+// order (#165) and the URLs written under a section (#238), which
+// parseParsedJson marks with linksKept. One from before is parsed again, once.
 export function isCurrentParse(parsed: ParsedResume | null | undefined): parsed is ParsedResume & Required<Pick<ParsedResume, 'otherSections' | 'sectionOrder'>> {
-  return Array.isArray(parsed?.otherSections) && Array.isArray(parsed?.sectionOrder)
+  return Array.isArray(parsed?.otherSections) && Array.isArray(parsed?.sectionOrder) && parsed?.linksKept === true
 }
 
 // What replaces a cached parse that isn't current, given a fresh parse of the
-// same text. One that only lacks the order keeps its content and takes the
-// fresh order, so a Word design checked against it still lines up. Anything
-// older is replaced.
+// same text: the fresh one, as only the model call reads a URL under a
+// section into its entry (#238). It keeps the order the user chose in the
+// editor (#197), from a cached parse that has an order.
 export function upgradedParse(cached: ParsedResume | null | undefined, fresh: ParsedResume): ParsedResume {
-  return cached && Array.isArray(cached.otherSections) ? withSectionOrder({ ...cached, sectionOrder: fresh.sectionOrder }) : fresh
+  return cached && Array.isArray(cached.otherSections) && Array.isArray(cached.sectionOrder)
+    ? withChosenOrder(fresh, cached.sectionOrder, cached.otherSections.map((o) => o.heading))
+    : fresh
 }
 
 // The parse with the section order the user chose in the editor (#197).
@@ -295,7 +298,7 @@ export function parseParsedJson(raw: string, resumeText?: string): ParsedResume 
   if (!isValidParsedResume(parsed)) {
     throw new Error('Resume parse returned incomplete data. Please try again.')
   }
-  return withSectionOrder(withLinks(withOtherSections(parsed), resumeText), resumeText)
+  return { ...withSectionOrder(withLinks(withOtherSections(parsed), resumeText), resumeText), linksKept: true }
 }
 
 export async function parseResumeStructure(

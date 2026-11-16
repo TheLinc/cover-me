@@ -26,6 +26,8 @@ export interface ParsedResume {
   otherSections?: Array<{ heading: string; lines: string[] }>
   /** The uploaded resume's section order (#165), carried to each tailored resume. Always an array on a parse made since then; a cached parse without it is parsed again. */
   sectionOrder?: Array<'summary' | 'experience' | 'projects' | 'education' | 'certifications' | 'skills' | 'other'>
+  /** Set on every parse made since URLs under a section stay in their entry (#238); a cached parse without it is parsed again. */
+  linksKept?: true
 }
 
 function buildParsePrompt(resumeText: string): string {
@@ -259,18 +261,21 @@ export function withSectionOrder<T extends ParsedResume>(parsed: T, resumeText?:
   return { ...parsed, sectionOrder: order.length ? ['summary', ...order] : [] }
 }
 
-// A cached parse made since the parse kept extra sections (#54) and section
-// order (#165). One from before is parsed again, once.
+// A cached parse made since the parse kept extra sections (#54), section
+// order (#165) and the URLs written under a section (#238), which
+// parseParsedJson marks with linksKept. One from before is parsed again, once.
 export function isCurrentParse(parsed: ParsedResume | null | undefined): parsed is ParsedResume & Required<Pick<ParsedResume, 'otherSections' | 'sectionOrder'>> {
-  return Array.isArray(parsed?.otherSections) && Array.isArray(parsed?.sectionOrder)
+  return Array.isArray(parsed?.otherSections) && Array.isArray(parsed?.sectionOrder) && parsed?.linksKept === true
 }
 
 // What replaces a cached parse that isn't current, given a fresh parse of the
-// same text. One that only lacks the order keeps its content and takes the
-// fresh order, so a Word design checked against it still lines up. Anything
-// older is replaced.
+// same text: the fresh one, as only the model call reads a URL under a
+// section into its entry (#238). It keeps the order the user chose in the
+// editor (#197), from a cached parse that has an order.
 export function upgradedParse(cached: ParsedResume | null | undefined, fresh: ParsedResume): ParsedResume {
-  return cached && Array.isArray(cached.otherSections) ? withSectionOrder({ ...cached, sectionOrder: fresh.sectionOrder }) : fresh
+  return cached && Array.isArray(cached.otherSections) && Array.isArray(cached.sectionOrder)
+    ? withChosenOrder(fresh, cached.sectionOrder, cached.otherSections.map((o) => o.heading))
+    : fresh
 }
 
 // The parse with the section order the user chose in the editor (#197).
@@ -337,5 +342,5 @@ export async function parseResumeStructure(resumeText: string, apiKey: string): 
     throw new Error('Resume parse returned invalid JSON')
   }
   if (!isValidParsedResume(parsed)) throw new Error('Resume parse returned incomplete data')
-  return withSectionOrder(withLinks(withOtherSections(parsed), resumeText), resumeText)
+  return { ...withSectionOrder(withLinks(withOtherSections(parsed), resumeText), resumeText), linksKept: true }
 }

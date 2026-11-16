@@ -98,6 +98,23 @@ describe('the upload check', () => {
     expect(local.resume).toEqual(replaced)
   })
 
+  test('BYOK: a first upload reads a parse from before the link fix (#238) again, once, and keeps the new one', async () => {
+    const old = { ...resume(), otherSections: [], sectionOrder: ['summary', 'experience'] }
+    await store({ status: 'checking', extra: { settings: { provider: 'claude', apiKey: 'x', mode: 'byok' }, resume: { parsed: old } } })
+    delete (local[`designFile:${hash}`] as { parsed?: unknown }).parsed
+    parseMock.mockReset().mockResolvedValue({ ...old, linksKept: true })
+    await checkUploadedDesign(hash)
+    expect(parseMock).toHaveBeenCalledTimes(1)
+    expect((local.resume as { parsed: unknown }).parsed).toMatchObject({ linksKept: true })
+
+    // A new parse is reused as it is.
+    await store({ status: 'checking', extra: { settings: { provider: 'claude', apiKey: 'x', mode: 'byok' }, resume: { parsed: { ...old, linksKept: true } } } })
+    delete (local[`designFile:${hash}`] as { parsed?: unknown }).parsed
+    parseMock.mockClear()
+    await checkUploadedDesign(hash)
+    expect(parseMock).not.toHaveBeenCalled()
+  })
+
   test('hosted: a copy added while signed out is never sent to the account', async () => {
     const fetchMock = vi.fn()
     const session = { access_token: 't', refresh_token: 'r', expires_at: Math.floor(Date.now() / 1000) + 3600, user: { id: 'me', email: 'ada@example.com' } }

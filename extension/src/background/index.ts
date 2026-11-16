@@ -546,7 +546,7 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
     // Lazy parse: run once on first tailor, cache result for all subsequent tailors.
     // Re-run automatically when resume is replaced (saveResume clears the parsed field),
     // and once for a parse from before extra sections (publications…) or
-    // section order were kept.
+    // section order were kept, or before URLs under a section stayed there (#238).
     // "Your design" places the text with the parse its file was checked
     // against, so the tailor starts from that same parse, even one from
     // before section order: the user's file keeps its own.

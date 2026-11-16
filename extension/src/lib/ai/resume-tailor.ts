@@ -353,7 +353,7 @@ ${grounding.jobDescription}`)
 
 export async function tailorResume(
   job: JobData,
-  parsed: ParsedResume,
+  stored: ParsedResume,
   provider: AIProvider,
   apiKey: string,
   compact = false,
@@ -363,7 +363,10 @@ export async function tailorResume(
   previous?: TailoredResume,
   onProgress?: (label: string) => void,
 ): Promise<TailoredResume> {
-  const prompt = buildPrompt(job, parsed, compact, supplemental, trim, includeSummary, previous)
+  // linksKept only marks the stored parse as current (#238): the model and
+  // the tailored resume don't need it.
+  const { linksKept: _k, ...parsed } = stored
+  const prompt =buildPrompt(job, parsed, compact, supplemental, trim, includeSummary, previous)
 
   await debugGroup('Tailor — full prompt sent to model (BYOK)', {
     provider,
