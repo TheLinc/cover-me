@@ -27,4 +27,16 @@ describe('STRIP_SELECTOR', () => {
     expect(document.body.innerHTML).not.toContain('Sam:')
     expect(document.body.innerHTML).toContain('Build pipelines.')
   })
+
+  test("removes rich-text answer boxes, so an application's answers never leave the browser", () => {
+    const { document } = parseHTML(`<!doctype html><html><body>
+      <main><div class="posting" contenteditable="false">Build pipelines.</div></main>
+      <div contenteditable="true">My salary expectation is 90k.</div>
+      <div contenteditable>I left my last job because</div>
+    </body></html>`)
+    document.querySelectorAll(STRIP_SELECTOR).forEach((el) => el.remove())
+    expect(document.body.innerHTML).not.toContain('salary')
+    expect(document.body.innerHTML).not.toContain('last job')
+    expect(document.body.innerHTML).toContain('Build pipelines.')
+  })
 })

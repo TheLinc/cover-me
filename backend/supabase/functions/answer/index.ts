@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
 
 // The instructions, posting and resume go first with a cache breakpoint: they
 // repeat for every question on one application, and a cached read costs a
-// twentieth of a fresh one. The question comes after it.
+// fraction of a fresh one. The question comes after it.
 async function callClaude(context: string, question: string): Promise<string> {
   const res = await fetch(ANTHROPIC_MESSAGES_URL, {
     method: 'POST',

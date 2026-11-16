@@ -45,7 +45,7 @@ const FAQ = [
   },
   {
     q: 'I used my free generations. When do they reset?',
-    a: 'A free account gets 10 generations to start, then 5 a week. The weekly allowance resets every Monday at 00:00 UTC. Pro allows up to 25 a day, and your own API key has no limit from Cover Me.',
+    a: 'A free account gets 10 generations to start, then 5 a week. The weekly allowance resets every Monday at 00:00 UTC. Pro allows up to 25 a day, and your own API key has no limit from Cover Me. Answers to application questions count separately: 5 to start, then 5 a week on Free, and up to 50 a day on Pro.',
   },
   {
     q: "My API key isn't working. How do I fix it?",

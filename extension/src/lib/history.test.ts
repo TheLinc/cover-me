@@ -264,7 +264,12 @@ describe('answerJobs', () => {
     expect(answerJobs(page, savedUnknown).jobs[0].description).toBe('Another posting')
   })
 
-  test('the same title and company count as the same job', () => {
+  test("a posting page doesn't take another posting's place for sharing its title and company", () => {
+    const page = posting('https://careers.northwind.com/jobs/2', 'Designer', 'Northwind', 'The ED posting')
+    expect(answerJobs(page, saved).jobs.map((j) => j.description)).toEqual(['The ED posting', 'Posting for Backend Engineer', 'Posting for Designer'])
+  })
+
+  test('the same title and company count as the same job on an application page', () => {
     const page = posting('https://careers.northwind.com/apply?id=1', 'designer', 'NORTHWIND', 'form text')
     expect(answerJobs(page, saved).jobs[0]).toBe(saved[1])
   })
