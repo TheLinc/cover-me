@@ -8,11 +8,21 @@ import { checkUploadedDesign, designForTailor, finishDesign, uploadDesignIfPro }
 import { debugGroup } from '../lib/debug'
 import { addToHistory, addToTailoredHistory, getCandidateContext, getResume, getSession, getSettings, hasAgreedToPageRead, resolveMode, saveParsedResume, setEntryAccounts, watchSession } from '../lib/storage'
 import { handleInstalled, uninstallUrl } from './install'
+import { handleAnswerClick, registerAnswerMenu, writeAnswer, type AnswerRequest } from './answer'
 import { scrapeFailure } from './scrape-failure'
 import type { PageSnapshot } from '../content/snapshot.ts'
 import type { CoverJob, CoverLetter, FrameScrapeResponse, GenerateResponse, JobData, ScrapeFailure, ScrapeResponse, TailoredResume, TailorJob, TailorResponse } from '../types'
 
-chrome.runtime.onInstalled.addListener((details) => { void handleInstalled(details) })
+chrome.runtime.onInstalled.addListener((details) => {
+  void handleInstalled(details)
+  registerAnswerMenu()
+})
+
+// Right-click "Cover Me: write an answer" (#232). The click grants activeTab
+// for that tab, the same access the toolbar button gives.
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  void keepAlive(handleAnswerClick(info, tab, scrapeTab, CONTENT_SCRIPT_FILE))
+})
 
 // Removing the extension opens the survey, with the account id while signed in
 function setUninstallUrl(userId?: string) {
@@ -45,6 +55,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   if (message.type === 'CHECK_DESIGN') {
     keepAlive(checkUploadedDesign(message.hash as string)).then(() => sendResponse({}))
+    return true
+  }
+  // "Use another job" in the answer's status box: the page script sends the
+  // box's question and the job picked.
+  if (message.type === 'ANSWER_REWRITE') {
+    keepAlive(writeAnswer(message.request as AnswerRequest)).then(sendResponse)
     return true
   }
   if (message.type === 'GOOGLE_SIGN_IN') {
@@ -154,7 +170,9 @@ type FrameScrape = { frameId: number; snapshot?: PageSnapshot | null } & (
 // the extension root. Injected on click; nothing is declared in content_scripts.
 const CONTENT_SCRIPT_FILE = 'content.js'
 
-async function scrapeTab(tabId: number): Promise<JobData> {
+// forAnswer: a right-click answer's read (#232), often of an application form
+// with no posting on it; the server doesn't count those as failed reads.
+async function scrapeTab(tabId: number, { forAnswer = false } = {}): Promise<JobData> {
   const { frameIds, urls } = await listScrapableFrames(tabId)
   const fail = async (error: string, frameId?: number) =>
     new ScrapeError(scrapeFailure(await topFrameUrl(tabId), [...urls.values()], error, frameId === undefined ? undefined : urls.get(frameId)))
@@ -182,7 +200,7 @@ async function scrapeTab(tabId: number): Promise<JobData> {
       }
     }),
   )
-  const results = await preferServerScrapes(local)
+  const results = await preferServerScrapes(local, forAnswer)
 
   // The top frame keeps its historical precedence so already-working sites
   // behave exactly as before; among iframe hits, take the longest description.
@@ -245,7 +263,7 @@ async function scrapeTab(tabId: number): Promise<JobData> {
 // scrapers also did: outdated scrapers tend to return a wrong or partial job
 // rather than fail. The bundled result stands when the server is unreachable,
 // unconfigured (self-hosted builds), slow, or couldn't read that frame.
-async function preferServerScrapes(results: FrameScrape[]): Promise<FrameScrape[]> {
+async function preferServerScrapes(results: FrameScrape[], forAnswer = false): Promise<FrameScrape[]> {
   const sent = results.filter((r) => r.snapshot)
   if (!SUPABASE_URL || sent.length === 0) return results
   // Until the user has agreed on the notice about how pages are read
@@ -253,7 +271,7 @@ async function preferServerScrapes(results: FrameScrape[]): Promise<FrameScrape[
   // bundled scrapers' results stand.
   if (!(await hasAgreedToPageRead())) return results
   try {
-    const body = JSON.stringify({ pages: sent.map((r) => r.snapshot) })
+    const body = JSON.stringify({ pages: sent.map((r) => r.snapshot), ...(forAnswer ? { answer: true } : {}) })
     const gzipped = await new Response(new Blob([body]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer()
     const res = await fetch(`${SUPABASE_URL}/functions/v1/scrape`, {
       method: 'POST',

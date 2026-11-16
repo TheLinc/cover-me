@@ -20,3 +20,13 @@ export function describeAllowance(a: Allowance | null): { label: string; used: n
   if (a.kind === 'weekly') return { label: 'Free generations this week', used, limit: a.limit, resets: 'Resets Monday, 00:00 UTC' }
   return { label: 'Generations today', used, limit: a.limit, resets: 'Resets at midnight UTC' }
 }
+
+// Answers to application questions have their own allowance (my_answer_allowance,
+// migration 032). Null when it couldn't be read, so the line is left out.
+export function describeAnswers(a: Allowance | null): string | null {
+  if (!a) return null
+  const left = Math.max(0, Math.min(a.remaining, a.limit))
+  if (a.kind === 'starter') return `${left} of ${a.limit} free left to start`
+  if (a.kind === 'weekly') return `${left} of ${a.limit} free left this week`
+  return `${left} of ${a.limit} left today`
+}

@@ -5,12 +5,13 @@
 // leaves the browser: scripts and embedded data blobs, form fields (hidden
 // inputs hold CSRF tokens and prefilled emails), <meta> (CSRF tokens; the
 // schema.org microdata ones, meta[itemprop], are kept: they're the posting's),
-// leftover <template>s, long attribute values (sites stash JSON state in
+// leftover <template>s, rich-text boxes (an application form's answers), long attribute values (sites stash JSON state in
 // data-* attributes), link query strings (tokens ride in them), and LinkedIn's
 // messaging dock (a signed-in page can show conversation previews in it). The
 // scrapers read only short attributes and link paths.
 export const STRIP_SELECTOR =
   'script:not([type="application/ld+json"]), code[id^="bpr-guid"], style, link, meta:not([itemprop]), noscript, template, input, textarea, select, ' +
+  '[contenteditable]:not([contenteditable="false"]), ' +
   'svg, img, picture, video, audio, canvas, iframe, object, embed, ' +
   '[id^="msg-overlay"], [class*="msg-overlay"], [data-test-msg-overlay], aside[aria-label*="messaging" i]'
 const MAX_ATTRIBUTE_CHARS = 300

@@ -4,6 +4,7 @@ import { clearResume, clearSession, getCachedTier, getResume, getSession, getSet
 import { isValidResume } from './ai/resume-tailor'
 import { derivePlanningProgress, deriveTailorProgress } from './ai/tailor-progress'
 import type { ApplicationRecord, AuthSession, CoverLetter, JobData, ParsedResume, ResumeData, TailoredHistoryEntry, TailoredResume } from '../types'
+import type { AnswerRevision } from './ai/answer'
 
 // Thrown by signUp() when the account was created but needs email confirmation
 // before it can sign in — not a failure, so callers should render it as a
@@ -365,6 +366,38 @@ export async function generateViaBackend(job: JobData, accessToken: string, supp
   const letter = data.letter as string
   if (!letter) throw new Error('Empty response from server')
   return letter
+}
+
+// An answer to an application question (#232). Counts against the answer
+// allowance, not letters and resumes. jobSource: whether the job came from
+// the page or from saved jobs, for the answer_generated count. revision: a
+// change the applicant asked for to the answer in the box; counts the same.
+// The account's answer allowance after an answer (migration 032).
+export interface AnswerAllowance {
+  kind: 'starter' | 'weekly' | 'daily'
+  limit: number
+  remaining: number
+}
+
+export async function answerViaBackend(
+  accessToken: string,
+  req: { job: JobData; question: string; maxLength?: number; supplemental?: string; jobSource: 'page' | 'saved'; revision?: AnswerRevision },
+): Promise<{ answer: string; allowance?: AnswerAllowance }> {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/answer`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(req),
+  })
+  const data = await res.json().catch(() => ({})) as Record<string, unknown>
+  if (res.status === 429) throw rateLimitError(data)
+  // Sent as 200 before the answer is ready (heartbeatJson), so a late failure
+  // arrives as { error } with status 200.
+  if (!res.ok || data.error) throw new Error((data.error as string) ?? `Server error ${res.status}`)
+  const answer = data.answer as string
+  // The 200 came early (heartbeatJson), so a reply cut off mid-way (the
+  // function stopped, the network dropped) parses to nothing.
+  if (!answer) throw new Error('The connection dropped before the answer arrived. Please try again.')
+  return { answer, allowance: data.allowance as AnswerAllowance | undefined }
 }
 
 // parse: wait for the server's parse of this text and return it, for the

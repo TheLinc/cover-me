@@ -87,6 +87,16 @@ describe('scrape', () => {
     expect(await posthogEvents('jobs.lever.co')).toEqual([])
   })
 
+  // A right-click answer (#232) often reads an application form with no
+  // posting on it; that isn't a failed read of a job page.
+  it("doesn't count a right-click answer's read", async () => {
+    await mockClaude.reset()
+    const pages = [{ url: 'https://apply.example-answers.com/form', html: '<html><body><h1>Apply</h1></body></html>' }]
+    expect((await scrape({ body: { pages, answer: true } })).status).toBe(200)
+    await new Promise((r) => setTimeout(r, 1000))
+    expect(await posthogEvents('apply.example-answers.com')).toEqual([])
+  })
+
   it('rejects malformed requests', async () => {
     for (const body of [{}, { pages: [] }, { pages: [{ url: 'javascript:alert(1)', html: '' }] }, { pages: Array(9).fill(page('lever')) }]) {
       expect((await scrape({ body })).status).toBe(400)

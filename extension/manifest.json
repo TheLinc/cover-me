@@ -28,7 +28,8 @@
     "unlimitedStorage",
     "activeTab",
     "scripting",
-    "identity"
+    "identity",
+    "contextMenus"
   ],
   "host_permissions": [
     "https://api.anthropic.com/*",
