@@ -10,6 +10,11 @@
 #
 # Anything not listed as one side (model clients, the eval harness, fixtures,
 # the prompt-sync script) runs all, and so does an empty diff.
+#
+# When a non-empty diff runs letters without a letter file in it (the letter
+# prompt, lint or generate function, or a model client), " lint-warn" follows
+# "all": pass it as --lint-warn so a letter that still fails the lint after
+# its retry is a warning, not a failed job (#243).
 set -euo pipefail
 
 if [ "${1:-}" = "--files" ]; then
@@ -20,6 +25,7 @@ else
 fi
 
 letters=false
+letter_files=false
 tailor=false
 answers=false
 while IFS= read -r f; do
@@ -27,7 +33,7 @@ while IFS= read -r f; do
   case "$f" in
     extension/src/lib/ai/index.ts | extension/src/lib/ai/letter-lint* | \
     backend/supabase/functions/generate/* | backend/supabase/functions/_shared/letter-lint.ts)
-      letters=true ;;
+      letters=true; letter_files=true ;;
     extension/src/lib/ai/resume-* | extension/src/lib/ai/ats-score* | extension/src/lib/ai/tailor-progress* | \
     extension/src/lib/ai/parse-delta* | backend/supabase/functions/tailor/* | \
     backend/supabase/functions/_shared/resume-parse.ts | backend/supabase/functions/_shared/resume-grounding.ts | \
@@ -37,7 +43,10 @@ while IFS= read -r f; do
     extension/src/lib/ai/answer* | backend/supabase/functions/answer/* | \
     backend/supabase/functions/_shared/answer.ts | extension/eval/answer-cases.ts)
       answers=true ;;
-    extension/src/lib/ai/* | extension/eval/* | backend/supabase/functions/_shared/anthropic.ts | scripts/check-prompt-sync.mjs)
+    # The model clients set the letter model, so they count as letter files.
+    extension/src/lib/ai/claude.ts | backend/supabase/functions/_shared/anthropic.ts)
+      letters=true; letter_files=true; tailor=true; answers=true ;;
+    extension/src/lib/ai/* | extension/eval/* | scripts/check-prompt-sync.mjs)
       letters=true; tailor=true; answers=true ;;
   esac
 done <<< "$files"
@@ -47,6 +56,6 @@ sides=""
 [ "$tailor" = true ] && sides="$sides tailor"
 [ "$answers" = true ] && sides="$sides answers"
 sides="${sides# }"
-if [ -z "$sides" ] || [ "$sides" = "letters tailor answers" ]; then echo all
-else echo "$sides"
-fi
+if [ -z "$sides" ] || [ "$sides" = "letters tailor answers" ]; then sides=all; fi
+if [ "$sides" = all ] && [ "$letter_files" = false ] && [ -n "$files" ]; then sides="all lint-warn"; fi
+echo "$sides"

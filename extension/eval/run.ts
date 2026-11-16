@@ -22,6 +22,9 @@
 //                              extension/eval/.env by `pnpm eval`.
 //     --no-parse               tailor from the fixture's answer key instead of the
 //                              model's parse (isolates tailoring from parsing)
+//     --lint-warn              a letter still failing the lint after its retry is a
+//                              warning, not a failure. CI passes it when letters run
+//                              only because shared code changed (#243).
 //     --baseline               fail if judge scores drop vs the baseline
 //                              (eval/baseline.json with --quick, else baseline-full.json)
 //     --update-baseline        write this run's judge scores to that baseline
@@ -76,6 +79,7 @@ const CONCURRENCY = Math.max(1, Number(opt('concurrency') ?? 6))
 // must never switch the eval off the Claude plan.
 const VIA = (opt('via') ?? 'claude') as Backend
 const USE_PARSE = !flag('no-parse')
+const LINT_WARN = flag('lint-warn')
 const ONLY_CASE = opt('case')
 const ONLY_INDUSTRY = opt('industry')?.toLowerCase()
 // The PR gate and the weekly full run keep separate baselines: different case
@@ -127,7 +131,7 @@ let hardFailures = 0
 const stamp = new Date().toISOString().replace(/[:.]/g, '-')
 const reportLines: string[] = [
   `# Eval report — ${new Date().toISOString()}`, '',
-  `Tailor/letter model: ${MODEL} | parse: ${PARSE_MODEL} | judge: ${JUDGE_MODEL} | via: ${VIA} | live: ${LIVE} | runs: ${RUNS}`, '',
+  `Tailor/letter model: ${MODEL} | parse: ${PARSE_MODEL} | judge: ${JUDGE_MODEL} | via: ${VIA} | live: ${LIVE} | runs: ${RUNS}${LINT_WARN ? ' | letter lint: warnings only (--lint-warn)' : ''}`, '',
 ]
 
 function section(title: string) {
@@ -367,7 +371,7 @@ async function liveLetters() {
       }
     }
 
-    const result = checkLetter(letter, c)
+    const result = checkLetter(letter, c, LINT_WARN)
     if (retried) result.warnings.unshift(`first draft had ${firstLint.violations.length} lint violation(s), corrective retry used: ${firstLint.violations.join(' | ')}`)
     let judgeScore: number | undefined
     if (JUDGE) {

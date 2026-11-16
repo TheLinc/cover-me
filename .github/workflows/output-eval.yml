@@ -18,6 +18,8 @@
 # calls (390 of 570 on 2026-11-13). On a PR, scripts/eval-side.sh picks the
 # sides from the diff ("all", or e.g. "letters answers"); a manual run does the
 # same by default ("auto", diffed against master) or takes the side you pick.
+# When letters run but no letter file changed, eval-side.sh adds "lint-warn":
+# a letter still failing the lint after its retry is then a warning (#243).
 # A letters-only full run is ~180 calls; answers are six calls plus judging.
 # Locally:  pnpm eval --live --letters ...  (or --tailor, --answers)
 # A one-sided run compares and updates only that side's baseline scores.
@@ -128,8 +130,9 @@ jobs:
           fi
           EXTRA=""
           if [ "$UPDATE_BASELINE" = "true" ]; then EXTRA="--update-baseline"; fi
-          # "all" passes no side flag; otherwise one flag per side.
-          if [ "$SIDE" != "all" ]; then for s in $SIDE; do EXTRA="$EXTRA --$s"; done; fi
+          # "all" passes no side flag; every other word (a side, or lint-warn
+          # when no letter file changed) becomes one flag.
+          for s in $SIDE; do if [ "$s" != "all" ]; then EXTRA="$EXTRA --$s"; fi; done
           if [ "$FULL" = "true" ]; then
             pnpm eval --live --judge --baseline --via claude --runs 2 --judge-model claude-opus-5-5 $EXTRA
           else

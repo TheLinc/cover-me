@@ -106,13 +106,15 @@ export function checkAnswer(answer: string, c: EvalCase, extra: { question?: str
 
 // ── Cover letter checks ──────────────────────────────────────────────────────
 
-export function checkLetter(letter: string, c: EvalCase): CheckResult {
+// lintWarn: lint violations are warnings, for runs where the letter side
+// didn't change (#243). Every other letter check still fails.
+export function checkLetter(letter: string, c: EvalCase, lintWarn = false): CheckResult {
   const result: CheckResult = { failures: [], warnings: [] }
 
   // No numberSources: checkNumberProvenance below covers numbers, with the
   // JD-only and small-number warnings the lint doesn't give.
   const lint = lintLetter(letter, { companyName: c.job.company })
-  for (const v of lint.violations) result.failures.push(`lint: ${v}`)
+  for (const v of lint.violations) (lintWarn ? result.warnings : result.failures).push(`lint: ${v}`)
 
   // The posting's own job title is fair to name ("the Hazmat Tanker Driver
   // role") even when a word in it is something the candidate lacks.

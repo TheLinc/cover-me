@@ -15,9 +15,15 @@ t "letters tailor" extension/src/lib/ai/index.ts extension/src/lib/ai/resume-par
 t answers extension/src/lib/ai/answer.ts backend/supabase/functions/answer/index.ts
 t answers backend/supabase/functions/_shared/answer.ts extension/eval/answer-cases.ts
 t "letters answers" backend/supabase/functions/generate/index.ts extension/src/lib/ai/answer.test.ts
+t "all lint-warn" extension/eval/run.ts
+t "all lint-warn" README.md
+# The model clients set the letter model, and an empty diff (a manual run on
+# master) has no PR to spare. Both keep letter-lint failures failing.
 t all extension/src/lib/ai/claude.ts
-t all extension/eval/run.ts
-t all README.md
+t all backend/supabase/functions/_shared/anthropic.ts
 t all
+# A letter file in the diff keeps letter-lint failures failing the job.
+t all extension/eval/run.ts extension/src/lib/ai/index.ts
+t all extension/eval/run.ts backend/supabase/functions/_shared/letter-lint.ts
 [ "$fail" = 0 ] && echo "eval-side: all cases pass"
 exit "$fail"
