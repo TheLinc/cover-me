@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { chosenOrder, editedResume, openResumeEditor, remainingGaps, restoreSection, returnToTab, saveResumeEdit, shownSections, withSections } from './resume-edit'
+import { chosenOrder, editedResume, openResumeEditor, postingTitleInSummary, remainingGaps, restoreSection, returnToTab, saveResumeEdit, shownSections, withSections } from './resume-edit'
 import { getTailoredHistory } from './storage'
 import type { TailoredResume } from '../types'
 
@@ -15,6 +15,37 @@ const resume: TailoredResume = {
   atsScore: 72,
   atsGaps: ['Kafka', 'Go', 'Terraform'],
 }
+
+describe("the note on a summary that uses the posting's title (#244)", () => {
+  const fullStack = (summary: string): TailoredResume => ({
+    ...resume, summary, experience: [{ ...resume.experience[0], title: 'Full Stack Developer' }],
+  })
+
+  test('shows when the summary opens with a title none of the jobs carry', () => {
+    expect(postingTitleInSummary(fullStack('Software Engineer who builds web applications.'), 'Software Engineer')).toBe(true)
+  })
+
+  test('matches the title without its level or a scraped suffix', () => {
+    expect(postingTitleInSummary(fullStack('Software Engineer who builds web applications.'), 'Senior Software Engineer, Payments (Remote)')).toBe(true)
+  })
+
+  test("not when the summary keeps the user's own title", () => {
+    expect(postingTitleInSummary(fullStack('Full Stack Developer who builds web applications.'), 'Software Engineer')).toBe(false)
+  })
+
+  test("not when one of the user's jobs already has that title, with or without a level", () => {
+    const r = { ...fullStack('Software Engineer who builds web applications.'), experience: [{ ...resume.experience[0], title: 'Senior Software Engineer' }] }
+    expect(postingTitleInSummary(r, 'Software Engineer')).toBe(false)
+  })
+
+  test('goes once the title is edited out of the summary', () => {
+    expect(postingTitleInSummary(fullStack('Developer who builds web applications.'), 'Software Engineer')).toBe(false)
+  })
+
+  test('not for a posting with no title', () => {
+    expect(postingTitleInSummary(fullStack('Developer who builds web applications.'), '')).toBe(false)
+  })
+})
 
 describe('gap chips after an edit', () => {
   test('a gap goes once its keyword appears anywhere in the edited text, in any case', () => {

@@ -1,3 +1,4 @@
+import { mentions, titleWithoutLevel } from './ai/resume-grounding'
 import { contactParts } from './pdf/contact'
 import { orderedSections, type PlacedSection, type StandardSection } from './pdf/sections'
 import type { DeletedSection, SectionKey } from './pdf/types'
@@ -23,6 +24,15 @@ const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 export function remainingGaps(gaps: string[] | undefined, resume: TailoredResume): string[] {
   const text = resumeText(resume)
   return (gaps ?? []).filter((g) => !new RegExp(`(^|[^a-z0-9])${escape(g.toLowerCase())}($|[^a-z0-9])`).test(text))
+}
+
+// Whether the summary names the posting's title, in full or without its
+// level, when none of the user's jobs carry it (#244). The tailor may open the
+// summary with the posting's title (#218); job titles stay the user's own.
+export function postingTitleInSummary(resume: TailoredResume, jobTitle: string): boolean {
+  const forms = [jobTitle.trim(), titleWithoutLevel(jobTitle)].filter(Boolean)
+  const used = forms.filter((t) => mentions(resume.summary ?? '', t))
+  return used.length > 0 && !used.some((t) => resume.experience.some((e) => mentions(e.title, t)))
 }
 
 // The edit as saved: the draft's text, the score from before any edit, and
