@@ -97,16 +97,20 @@ export function urlCore(url: string): string {
   return url.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/+$/, '')
 }
 
-// Where the first section's content starts in the resume text (#236): the
-// first verbatim copy of an entry's text, the text lowercased with its spaces
-// collapsed. Job titles are left out, as a tagline under the name often
-// repeats one, and so are strings under 4 characters (a degree or licence
-// after the name), and the email is blanked, as its domain can be a company's.
-// Infinity when no entry is found.
+// Text lowercased with its spaces collapsed, for finding one copy in another.
+const squashed = (s: unknown) => (typeof s === 'string' ? s.toLowerCase().replace(/\s+/g, ' ').trim() : '')
+
+// Where the first section's content starts in the resume text (#236), the
+// text squashed: the first verbatim copy of an entry's text after the email
+// and phone. Looking only after them skips a header that names a skill, a
+// licence or the employer above the contact line; job titles are left out, as
+// a tagline under it often repeats one. Infinity when no entry is found, as
+// when a two-column PDF puts its contact sidebar after every section.
 function sectionsStart(parsed: ParsedResume, text: string): number {
-  const norm = (s: unknown) => (typeof s === 'string' ? s.toLowerCase().replace(/\s+/g, ' ').trim() : '')
-  const email = norm(parsed.email)
-  const blanked = email ? text.split(email).join(' '.repeat(email.length)) : text
+  const from = Math.max(0, ...[parsed.email, parsed.phone].map(squashed).filter(Boolean).map((s) => {
+    const at = text.indexOf(s)
+    return at === -1 ? 0 : at + s.length
+  }))
   const entries = [
     parsed.experience.map((e) => [e?.company, e?.bullets]),
     (parsed.projects ?? []).map((p) => [p?.name, p?.bullets]),
@@ -115,8 +119,8 @@ function sectionsStart(parsed: ParsedResume, text: string): number {
     parsed.skills,
     (parsed.otherSections ?? []).map((o) => o?.lines),
   ]
-  const at = entries.flat(3).map(norm).filter((s) => s.length >= 4).map((s) => blanked.indexOf(s)).filter((i) => i >= 0)
-  return Math.min(...at)
+  const found = entries.flat(3).map(squashed).filter((s) => s.length >= 3).map((s) => text.indexOf(s, from)).filter((i) => i >= 0)
+  return Math.min(...found)
 }
 
 // A LinkedIn or GitHub profile, which is a contact link wherever it sits: a
@@ -128,18 +132,19 @@ const PROFILE_URL = /^(?:[a-z]{2}\.)?linkedin\.com\/in\/[^/]+$|^github\.com\/[^/
 // are none: renderers then fall back to website. Given the resume text, a URL
 // it first shows inside a section (a project's, a job's) is dropped (#236):
 // the parse copies that one into its entry's text, and the contact line
-// prints every link. A URL the text lacks is kept, having nowhere to place it.
+// prints every link. A URL the text lacks is kept, as nothing places it.
 export function withLinks<T extends ParsedResume>(parsed: T, resumeText?: string): T {
   const raw = (parsed as { links?: unknown }).links
   let links = (Array.isArray(raw) ? raw : []).filter((l): l is string => typeof l === 'string' && l.trim().length > 0).map((l) => l.trim())
   const website = typeof parsed.website === 'string' ? parsed.website.trim() : ''
   if (website && !links.includes(website)) links.unshift(website)
   if (resumeText && links.length) {
-    const text = resumeText.toLowerCase().replace(/\s+/g, ' ')
+    const text = squashed(resumeText)
     const start = sectionsStart(parsed, text)
     const contact = links.filter((l) => {
-      const at = text.indexOf(urlCore(l))
-      return at < start || PROFILE_URL.test(urlCore(l))
+      const core = urlCore(l)
+      const at = text.indexOf(core)
+      return at === -1 || at < start || PROFILE_URL.test(core)
     })
     if (!contact.length) return { ...parsed, website: '', links: [] }
     links = contact

@@ -53,25 +53,29 @@ function linkUrl(url: unknown, text: string): string | null {
 
 // Each text item's string, with each clickable link's URL written after the
 // last item it covers (#236): pdf.js leaves link annotations out of the text.
-// An item is covered when its centre is inside the link's rect; a link
-// wrapped over two lines has a rect per line, and one URL.
+// An item is covered when its centre is inside the link's rect. A link
+// wrapped over two lines is two links in a row with one URL over neighbouring
+// text, and gets it once.
 function withLinkUrls(items: object[], annotations: Array<{ rect?: number[]; url?: unknown }>): string[] {
   const strs = items.map((item) => ('str' in item && typeof item.str === 'string' ? item.str : ''))
-  const covered = new Map<unknown, number[]>()
+  const links: Array<{ url: unknown; covered: number[] }> = []
   for (const { rect, url } of annotations) {
     if (!rect) continue
     const [x1, y1, x2, y2] = rect as [number, number, number, number]
-    const inside = items.flatMap((item, i) => {
-      const { transform: t, width = 0, height = 0 } = item as { transform?: number[]; width?: number; height?: number }
-      const x = t ? t[4]! + width / 2 : NaN
-      const y = t ? t[5]! + height / 2 : NaN
+    const covered = items.flatMap((item, i) => {
+      const { transform, width = 0, height = 0 } = item as { transform?: number[]; width?: number; height?: number }
+      const x = transform ? transform[4]! + width / 2 : NaN
+      const y = transform ? transform[5]! + height / 2 : NaN
       return x >= x1 && x <= x2 && y >= y1 && y <= y2 ? [i] : []
     })
-    covered.set(url, [...(covered.get(url) ?? []), ...inside])
+    const last = links[links.length - 1]
+    const continues = last?.url === url && last.covered.length > 0 && covered.length > 0 && strs.slice(Math.max(...last.covered) + 1, Math.min(...covered)).every((s) => !s.trim())
+    if (continues) last.covered.push(...covered)
+    else links.push({ url, covered })
   }
-  for (const [url, at] of covered) {
-    const link = at.length ? linkUrl(url, at.map((i) => strs[i]).join(' ')) : null
-    if (link) strs[Math.max(...at)] += ` (${link})`
+  for (const { url, covered } of links) {
+    const link = covered.length ? linkUrl(url, covered.map((i) => strs[i]).join(' ')) : null
+    if (link) strs[Math.max(...covered)] += ` (${link})`
   }
   return strs
 }

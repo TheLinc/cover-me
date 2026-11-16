@@ -45,6 +45,23 @@ describe('parseResume keeps clickable links (#236)', () => {
     expect(text).toBe('ada@x.co github.com/ada')
   })
 
+  test('PDF: a URL linked in two places is written after each', async () => {
+    const text = await parseResume(pdfFile((doc) => {
+      doc.textWithLink('Portfolio', 10, 10, { url: 'https://ada.dev' })
+      doc.text('Projects', 10, 30)
+      doc.textWithLink('Live site', 10, 40, { url: 'https://ada.dev' })
+    }))
+    expect(text).toBe('Portfolio (https://ada.dev/) Projects Live site (https://ada.dev/)')
+  })
+
+  test('PDF: a link wrapped over two lines gets its URL once, at the end', async () => {
+    const text = await parseResume(pdfFile((doc) => {
+      doc.textWithLink('Cover', 10, 10, { url: PROJECT_URL })
+      doc.textWithLink('Me', 10, 20, { url: PROJECT_URL })
+    }))
+    expect(text).toBe(`Cover Me (${PROJECT_URL})`)
+  })
+
   test('Word: a clickable project name is followed by its URL', async () => {
     const text = await parseResume(await docxFile([
       new Paragraph('Projects'),

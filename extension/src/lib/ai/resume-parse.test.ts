@@ -280,6 +280,16 @@ describe.each([
     const r = (await load())({ ...LINKED_PARSE, email: 'ada@acmecorp.com', website: '', links: ['ada.dev'], experience: [{ ...LINKED_PARSE.experience[0]!, company: 'AcmeCorp' }] }, text)
     expect(r.links).toEqual(['ada.dev'])
   })
+
+  test("a header naming a skill, a licence or the employer doesn't end the contact block", async () => {
+    const text = `Ruby Chen, CISSP\nSenior Engineer at Shopify\nruby@mail.com | ruby.dev\n\nEXPERIENCE\nSenior Engineer, Shopify\nBuilt checkout at shopify.com/checkout\n\nSKILLS\nRuby, React\n\nCERTIFICATIONS\nCISSP`
+    const r = (await load())({
+      ...LINKED_PARSE, email: 'ruby@mail.com', website: '', links: ['ruby.dev'], projects: [], education: [], otherSections: [],
+      experience: [{ title: 'Senior Engineer', company: 'Shopify', location: '', dates: '', bullets: ['Built checkout at shopify.com/checkout'] }],
+      skills: 'Ruby, React', certifications: ['CISSP'],
+    }, text)
+    expect(r.links).toEqual(['ruby.dev'])
+  })
 })
 
 describe('the URL check (#236)', () => {
@@ -291,6 +301,11 @@ describe('the URL check (#236)', () => {
 
   test('passes on a parse that keeps every URL, with only contact URLs on the contact line', () => {
     expect(checkParseUrls(withLinks(LINKED_PARSE, LINKED_TEXT), LINKED_TEXT)).toEqual([])
+  })
+
+  test("reports a URL on the contact line that the parse also gives a section, whatever withLinks made of it", () => {
+    const text = LINKED_TEXT.replace(' (https://github.com/ada/cover-me)', '')
+    expect(checkParseUrls(LINKED_PARSE, text)).toEqual(['section URL on the contact line: "https://github.com/ada/cover-me"'])
   })
 
   test('checkParse reports a URL missing from the parse, and a section URL on the contact line', () => {

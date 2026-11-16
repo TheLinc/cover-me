@@ -5,7 +5,7 @@ import type { ParsedResume, TailoredResume } from '../src/types'
 import type { EvalCase } from './fixtures'
 import { extractNumbers, lintLetter } from '../src/lib/ai/letter-lint'
 import { mixedTenseLines } from '../src/lib/ai/resume-grounding'
-import { urlCore, withLinks } from '../src/lib/ai/resume-parse'
+import { urlCore } from '../src/lib/ai/resume-parse'
 
 export interface CheckResult {
   failures: string[]
@@ -343,19 +343,20 @@ export function checkParse(actual: ParsedResume, c: EvalCase): CheckResult {
 // Every URL the resume text shows (#236): one with a protocol or www., or a
 // domain under a common TLD (so not Node.js or a file name), without an
 // email's domain or a sentence's last full stop.
-const URL_RE = /(?<![\w@./-])(?:https?:\/\/|www\.|[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:com|org|net|io|dev|app|ai|co|me|ca|us|uk|edu|gov|info|xyz|tech|site)\b)[^\s)\]>,;]*/gi
+const URL_RE = /(?<![\w@./-])(?:https?:\/\/|www\.|[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:com|org|net|io|dev|app|ai|co|me|ca|us|uk|edu|gov|info|xyz|tech|site|design|page|so|ly|fr|de)\b)[^\s)\]>,;"]*/gi
 export function resumeUrls(text: string): string[] {
   return [...new Set((text.match(URL_RE) ?? []).filter((u) => !u.includes('@')).map((u) => u.replace(/\.+$/, '')))]
 }
 
 // A parse's URL failures (#236): a URL of the resume text found nowhere in the
-// parse, or one on the contact line the resume shows under a section.
+// parse, or a URL on the contact line that the parse also puts in a section.
 export function checkParseUrls(actual: ParsedResume, resumeText: string): string[] {
   const parse = JSON.stringify(actual).toLowerCase()
-  const contact = withLinks(actual, resumeText).links ?? []
+  const { name, email, phone, location, website, links, ...sections } = actual
+  const sectionUrls = new Set(resumeUrls(JSON.stringify(sections)).map(urlCore))
   return [
     ...resumeUrls(resumeText).filter((u) => !parse.includes(urlCore(u))).map((u) => `URL missing from the parse: "${u}"`),
-    ...(actual.links ?? []).filter((l) => !contact.includes(l)).map((l) => `section URL on the contact line: "${l}"`),
+    ...(links ?? []).filter((l) => sectionUrls.has(urlCore(l))).map((l) => `section URL on the contact line: "${l}"`),
   ]
 }
 
