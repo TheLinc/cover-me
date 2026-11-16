@@ -11,10 +11,10 @@
 # Anything not listed as one side (model clients, the eval harness, fixtures,
 # the prompt-sync script) runs all, and so does an empty diff.
 #
-# When letters run but no letter file changed, " lint-warn" follows "all":
-# pass it as --lint-warn so a letter that still fails the lint after its retry
-# is a warning, not a failed job (#243). A letter file in the diff keeps it a
-# failure.
+# When a non-empty diff runs letters without a letter file in it (the letter
+# prompt, lint or generate function, or a model client), " lint-warn" follows
+# "all": pass it as --lint-warn so a letter that still fails the lint after
+# its retry is a warning, not a failed job (#243).
 set -euo pipefail
 
 if [ "${1:-}" = "--files" ]; then
@@ -43,7 +43,10 @@ while IFS= read -r f; do
     extension/src/lib/ai/answer* | backend/supabase/functions/answer/* | \
     backend/supabase/functions/_shared/answer.ts | extension/eval/answer-cases.ts)
       answers=true ;;
-    extension/src/lib/ai/* | extension/eval/* | backend/supabase/functions/_shared/anthropic.ts | scripts/check-prompt-sync.mjs)
+    # The model clients set the letter model, so they count as letter files.
+    extension/src/lib/ai/claude.ts | backend/supabase/functions/_shared/anthropic.ts)
+      letters=true; letter_files=true; tailor=true; answers=true ;;
+    extension/src/lib/ai/* | extension/eval/* | scripts/check-prompt-sync.mjs)
       letters=true; tailor=true; answers=true ;;
   esac
 done <<< "$files"
@@ -54,5 +57,5 @@ sides=""
 [ "$answers" = true ] && sides="$sides answers"
 sides="${sides# }"
 if [ -z "$sides" ] || [ "$sides" = "letters tailor answers" ]; then sides=all; fi
-if [ "$sides" = all ] && [ "$letter_files" = false ]; then sides="all lint-warn"; fi
+if [ "$sides" = all ] && [ "$letter_files" = false ] && [ -n "$files" ]; then sides="all lint-warn"; fi
 echo "$sides"

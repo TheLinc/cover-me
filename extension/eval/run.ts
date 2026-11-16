@@ -79,6 +79,7 @@ const CONCURRENCY = Math.max(1, Number(opt('concurrency') ?? 6))
 // must never switch the eval off the Claude plan.
 const VIA = (opt('via') ?? 'claude') as Backend
 const USE_PARSE = !flag('no-parse')
+const LINT_WARN = flag('lint-warn')
 const ONLY_CASE = opt('case')
 const ONLY_INDUSTRY = opt('industry')?.toLowerCase()
 // The PR gate and the weekly full run keep separate baselines: different case
@@ -370,7 +371,7 @@ async function liveLetters() {
       }
     }
 
-    const result = checkLetter(letter, c, flag('lint-warn'))
+    const result = checkLetter(letter, c, LINT_WARN)
     if (retried) result.warnings.unshift(`first draft had ${firstLint.violations.length} lint violation(s), corrective retry used: ${firstLint.violations.join(' | ')}`)
     let judgeScore: number | undefined
     if (JUDGE) {
