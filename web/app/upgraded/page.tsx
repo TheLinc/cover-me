@@ -161,7 +161,7 @@ export default async function UpgradedPage(props: Props) {
           <p className="text-[14px] text-subtle">Upgraded from the extension? You can close this tab.</p>
           {/* #226: only History's prompt can upload them (HistoryPage saveLocal); the site can't reach the extension. */}
           <p className="text-[14px] text-subtle">
-            Letters and resumes you made before Pro are still only in the extension. To save them to your account,
+            Any letters and resumes you made before Pro are still only in the extension. To save them to your account,
             open Cover Me and go to History.
           </p>
         </div>
