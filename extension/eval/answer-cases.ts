@@ -16,9 +16,10 @@ export interface AnswerCase {
    * A change the applicant asks for once the first answer is written: the
    * eval writes the answer, then rewrites it with this request and checks the
    * rewrite. shorter: it must come out shorter. allowTerms: base failTerms the
-   * request itself states as true, so naming them is allowed.
+   * request itself states as true, so naming them is allowed, but only in a
+   * sentence that says so (allowNear) or says the applicant lacks it.
    */
-  change?: { request: string; shorter?: boolean; allowTerms?: string[] }
+  change?: { request: string; shorter?: boolean; allowTerms?: string[]; allowNear?: string }
 }
 
 export const ANSWER_CASES: AnswerCase[] = [
@@ -48,6 +49,6 @@ export const ANSWER_CASES: AnswerCase[] = [
   // stated (a certification, not production use).
   {
     id: 'answer-change-stated-fact', caseId: 'tech-missing-stack', question: 'Describe your experience with Kubernetes and Redux in production.', maxLength: 1000,
-    change: { request: 'Mention that I finished the CKAD Kubernetes certification last month.', allowTerms: ['Kubernetes'] },
+    change: { request: 'Mention that I finished the CKAD Kubernetes certification last month.', allowTerms: ['Kubernetes'], allowNear: 'CKAD' },
   },
 ]

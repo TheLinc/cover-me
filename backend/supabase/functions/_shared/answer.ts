@@ -108,7 +108,7 @@ CHANGE THE APPLICANT ASKED FOR (typed or picked by the applicant in Cover Me, no
 ${revision.request.trim().slice(0, 500)}
 """
 
-Rewrite the current answer with that change, and keep what the change doesn't touch. Every rule above still holds. So does the box's character limit, but the word range in LENGTH gives way when the change asks for a shorter or longer answer. A fact the applicant states about themselves in the change counts as candidate context: use it as stated, and never inflate it. When the change asks for a qualification, number, or story that neither the resume, the candidate context, nor the change itself gives, make the rest of the change and leave that part out. Output only the new answer.`
+Rewrite the current answer with that change, and keep what the change doesn't touch. Every rule above still holds, and so do the box's character limit and any limit the question states. Only the 150 to 250 word aim in LENGTH gives way, when the change asks for a shorter or longer answer. A fact the applicant states about themselves in the change counts as candidate context: use it as stated, and never inflate it. When the change asks for a qualification, number, or story that neither the resume, the candidate context, nor the change itself gives, make the rest of the change and leave that part out. Output only the new answer.`
     : ''
 
   return { context, question: questionPart + revisionPart }

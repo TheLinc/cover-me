@@ -286,8 +286,10 @@ function showStatus(anchor: HTMLElement | null, view: StatusView): void {
   const box = node('div', view.kind === 'error' ? 'box err' : 'box')
   box.setAttribute('role', view.kind === 'error' ? 'alert' : 'status')
   if (view.kind === 'working') box.setAttribute('aria-busy', 'true')
-  // Typing in the change box stays in it: the page's own shortcuts (a "/"
-  // that jumps to search) never see those keys.
+  // Keys typed in the change box don't bubble on to the page's own shortcut
+  // handlers (a "/" that jumps to search). Best effort: a page listening in
+  // the capture phase still sees them first, and nothing in a content script
+  // can stop that.
   for (const type of ['keydown', 'keyup', 'keypress']) box.addEventListener(type, (e) => e.stopPropagation())
 
   const head = node('div', 'head')
@@ -396,14 +398,21 @@ function done(target: Target, answer: string, jobs: Job[], index: number, jobSou
 }
 
 // A change revises what's in the box now, so the applicant's own edits stay;
-// if they cleared it (Ctrl+Z), the answer Cover Me last typed.
+// if they cleared it (Ctrl+Z), the answer Cover Me last typed. innerText for
+// a rich-text box, so its paragraphs keep their breaks.
 const reviser = (target: Target, answer: string, jobs: Job[], index: number, jobSource: JobSource) => (request: string, shown: string) => {
-  const now = (target.el instanceof HTMLInputElement || target.el instanceof HTMLTextAreaElement ? target.el.value : target.el.textContent ?? '').trim()
+  const now = (target.el instanceof HTMLInputElement || target.el instanceof HTMLTextAreaElement ? target.el.value : target.el.innerText ?? '').trim()
   void rewrite(target, jobs, index, jobSource, { previous: now || answer, request }, shown)
 }
 
 async function rewrite(target: Target, jobs: Job[], index: number, jobSource: JobSource, revision?: AnswerRevision, shown?: string): Promise<void> {
   const { el, question, maxLength } = target
+  // The form moved on (its next step, a re-render): nothing to type into, so
+  // nothing is sent and no answer is used up.
+  if (!el.isConnected) {
+    showStatus(null, { kind: 'error', title: 'That box is no longer on the page. Right-click it again.' })
+    return
+  }
   showStatus(el, { kind: 'working', title: revision ? 'Rewriting your answer…' : 'Writing your answer…', note: shown && `Change: ${shown}`, ...asked(target), job: jobs[index] })
   const source: JobSource = jobSource === 'page' && index === 0 ? 'page' : 'saved'
   try {
@@ -413,8 +422,8 @@ async function rewrite(target: Target, jobs: Job[], index: number, jobSource: Jo
       showStatus(el, {
         kind: 'error', title: result?.error ?? 'Could not write an answer. Please try again.', ...asked(target), job: jobs[index],
         pick: { jobs, current: index, onPick: (i) => void rewrite(target, jobs, i, jobSource) },
-        // A failed change can be tried again from the same answer.
-        revise: revision ? (request, again) => void rewrite(target, jobs, index, jobSource, { ...revision, request }, again) : undefined,
+        // A failed change can be tried again, from what's in the box by then.
+        revise: revision ? reviser(target, revision.previous, jobs, index, jobSource) : undefined,
       })
     }
   } catch {

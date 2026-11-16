@@ -65,7 +65,7 @@ function checkNumberProvenance(
 // other mention is a claim. Items the question doesn't name never appear.
 const NEGATION = /\b(not|never|no|without|lack\w*)\b|n['’]t\b/i
 
-export function checkAnswer(answer: string, c: EvalCase, extra: { question?: string; failTerms?: string[]; maxLength?: number; maxWords?: number; uncut?: string; allowTerms?: string[] } = {}): CheckResult {
+export function checkAnswer(answer: string, c: EvalCase, extra: { question?: string; failTerms?: string[]; maxLength?: number; maxWords?: number; uncut?: string; allowTerms?: string[]; allowNear?: string } = {}): CheckResult {
   const result: CheckResult = { failures: [], warnings: [] }
   if (!answer.trim()) {
     result.failures.push('empty answer')
@@ -74,7 +74,12 @@ export function checkAnswer(answer: string, c: EvalCase, extra: { question?: str
   // The posting's own title is fair to name, as in the letter check.
   const prose = answer.replace(new RegExp(escapeRegex(c.job.title), 'gi'), ' ')
   const sentences = prose.split(/(?<=[.!?])\s+/)
+  // A term the applicant's own change states may appear, but only as stated.
   const allowed = new Set((extra.allowTerms ?? []).map((t) => t.toLowerCase()))
+  for (const t of allowed) {
+    const loose = sentences.filter((s) => containsTerm(s, t) && !NEGATION.test(s) && !(extra.allowNear && s.includes(extra.allowNear)))
+    if (loose.length) result.failures.push(`answer claims "${t}" beyond what the change states: ${loose.join(' ')}`)
+  }
   for (const t of [...c.failTerms, ...(extra.failTerms ?? [])].filter((t) => !allowed.has(t.toLowerCase()))) {
     const hits = sentences.filter((s) => containsTerm(s, t))
     if (!hits.length) continue

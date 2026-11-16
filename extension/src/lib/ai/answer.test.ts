@@ -95,6 +95,6 @@ describe('buildAnswerPrompt', () => {
     const q = buildAnswerPrompt(JOB, RESUME, 'Q', undefined, undefined, { previous: 'A', request: 'Say I know Kafka.' }).question
     expect(q).toContain('counts as candidate context')
     expect(q).toContain('leave that part out')
-    expect(q).toContain('word range in LENGTH gives way')
+    expect(q).toContain('any limit the question states')
   })
 })

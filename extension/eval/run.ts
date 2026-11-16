@@ -461,7 +461,7 @@ async function liveAnswers() {
         answer = finishAnswer(raw, a.maxLength)
       }
       const maxWords = Number(/max(?:imum)?\s+(\d+)\s+words/i.exec(a.question)?.[1]) || undefined
-      result = checkAnswer(answer, c, { question: a.question, failTerms: a.failTerms, maxLength: a.maxLength, maxWords, uncut: finishAnswer(raw), allowTerms: a.change?.allowTerms })
+      result = checkAnswer(answer, c, { question: a.question, failTerms: a.failTerms, maxLength: a.maxLength, maxWords, uncut: finishAnswer(raw), allowTerms: a.change?.allowTerms, allowNear: a.change?.allowNear })
       if (a.change?.shorter && answer.length > first.length * 0.85) result.failures.push(`asked for shorter, but it went from ${first.length} to ${answer.length} characters`)
       if (a.change) result.warnings.push(`first answer (${first.length} characters): ${first}`)
     } catch (e) {
