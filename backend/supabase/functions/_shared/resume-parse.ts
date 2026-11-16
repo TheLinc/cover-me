@@ -118,13 +118,15 @@ export function withOtherSections<T extends object>(parsed: T): T & { otherSecti
 // A URL without its protocol, www. and trailing slash, lowercased: how two
 // copies of one link are compared (#236).
 export function urlCore(url: string): string {
-  return url.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/+$/, '')
+  return url.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/(?<!\/)\/+$/, '')
 }
 
 // Text lowercased with its spaces collapsed, for finding one copy in another.
 const squashed = (s: unknown) => (typeof s === 'string' ? s.toLowerCase().replace(/\s+/g, ' ').trim() : '')
 
-// The parse's section entries' strings: everything but the contact details.
+// The parse's section entries' strings, squashed: their verbatim text, but not
+// the contact details, job titles (a tagline under the name often repeats
+// one), dates, locations or extra-section headings.
 function entryStrings(parsed: ParsedResume): string[] {
   const entries = [
     parsed.experience.map((e) => [e?.company, e?.bullets]),
@@ -141,35 +143,44 @@ function entryStrings(parsed: ParsedResume): string[] {
 // two-column PDF can put its contact sidebar after the first section.
 const PROFILE_URL = /^(?:[a-z]{2}\.)?linkedin\.com\/in\/[^/]+$|^github\.com\/[^/]+$/
 
-// Whether the resume text first shows a URL inside a section (#236): at or
-// after the first copy of an entry's string, the text squashed. Job titles are
-// left out of those, as a tagline under the name often repeats one. Never for
-// a profile URL, or one the text lacks. A short string can still turn up in
-// the header ("git" in github.com), so this alone shouldn't drop a link.
-export function shownInSection(parsed: ParsedResume, resumeText: string, url: string): boolean {
+// A test of whether the resume text first shows a URL inside a section
+// (#236): at or after the first copy of an entry's string, the text squashed.
+// Never for a profile URL, or one the text lacks. A short string can still
+// turn up in the header ("git" in github.com), so this alone shouldn't drop a
+// link.
+function sectionUrlTest(parsed: ParsedResume, resumeText: string): (url: string) => boolean {
   const text = squashed(resumeText)
-  const core = urlCore(url)
-  const at = text.indexOf(core)
-  return at !== -1 && !PROFILE_URL.test(core) && entryStrings(parsed).some((s) => {
-    const i = text.indexOf(s)
-    return i !== -1 && i <= at
-  })
+  const start = Math.min(...entryStrings(parsed).map((s) => text.indexOf(s)).filter((i) => i !== -1))
+  return (url) => {
+    const core = urlCore(url)
+    const at = text.indexOf(core)
+    return at !== -1 && at >= start && !PROFILE_URL.test(core)
+  }
+}
+
+export function shownInSection(parsed: ParsedResume, resumeText: string, url: string): boolean {
+  return sectionUrlTest(parsed, resumeText)(url)
 }
 
 // Every contact-line URL, with website first and set, so a build that prints
-// only website (the store's before #129) still shows one. Left off when there
-// are none: renderers then fall back to website. Given the resume text, a URL
-// it first shows inside a section (a project's, a job's), and that the parse
-// copies into an entry, is dropped (#236): the contact line prints every link.
-// One the entries don't hold is kept, so none is lost.
+// only website (the store's before #129) still shows one. Left off when the
+// model gives none: renderers then fall back to website. Given the resume
+// text, a URL it first shows inside a section (a project's, a job's), and that
+// the parse copies into an entry, is dropped (#236), as the contact line
+// prints every link; when all are, links is [] and website "". One the
+// entries don't hold is kept, so none is lost.
 export function withLinks<T extends ParsedResume>(parsed: T, resumeText?: string): T {
   const raw = (parsed as { links?: unknown }).links
   let links = (Array.isArray(raw) ? raw : []).filter((l): l is string => typeof l === 'string' && l.trim().length > 0).map((l) => l.trim())
   const website = typeof parsed.website === 'string' ? parsed.website.trim() : ''
   if (website && !links.includes(website)) links.unshift(website)
   if (resumeText && links.length) {
+    const inSection = sectionUrlTest(parsed, resumeText)
     const strings = entryStrings(parsed)
-    const contact = links.filter((l) => !shownInSection(parsed, resumeText, l) || !strings.some((s) => s.includes(urlCore(l))))
+    const contact = links.filter((l) => {
+      const core = urlCore(l)
+      return !inSection(l) || !strings.some((s) => s.includes(core))
+    })
     if (!contact.length) return { ...parsed, website: '', links: [] }
     links = contact
   }
@@ -194,7 +205,7 @@ function sectionsPresent(parsed: ParsedResume): Record<string, boolean> {
 // strings cover most of it, and a section sits at its best-covered line. null
 // when a section can't be found, so the model's order stands.
 export function sectionOrderFromText(parsed: ParsedResume, resumeText: string): NonNullable<ParsedResume['sectionOrder']> | null {
-  const norm = (s: unknown) => (typeof s === 'string' ? s.toLowerCase().replace(/\s+/g, ' ').trim() : '')
+  const norm = squashed
   const strings = (xs: unknown[]) => xs.flat(2).map(norm).filter((s) => s.length >= 3)
   const present = sectionsPresent(parsed)
   const sections: Array<{ key: NonNullable<ParsedResume['sectionOrder']>[number]; strings: string[] }> = [

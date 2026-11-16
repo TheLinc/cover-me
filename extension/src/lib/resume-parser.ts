@@ -44,19 +44,20 @@ async function parsePdf(file: File): Promise<string> {
   return result
 }
 
-// A clickable link's URL, for writing after its text (#236): web links only,
-// as the email and phone are in the text already, and none when the text
-// shows the URL.
-function linkUrl(url: unknown, text: string): string | null {
-  return typeof url === 'string' && /^https?:\/\//i.test(url) && !text.toLowerCase().includes(urlCore(url)) ? url : null
+// The URL to write after a clickable link's text (#236), or null: web links
+// only, as the email and phone are in the text already, and none when the
+// text shows the URL. One with a space, quote or angle bracket, or over 2,048
+// characters, is left out: a Word href can carry hidden text into the prompt.
+function urlToAppend(url: unknown, text: string): string | null {
+  return typeof url === 'string' && /^https?:\/\/[^\s"<>]{1,2048}$/i.test(url) && !text.toLowerCase().includes(urlCore(url)) ? url : null
 }
 
 // Each text item's string, with each clickable link's URL written after the
 // last item it covers (#236): pdf.js leaves link annotations out of the text.
 // An item is covered when it overlaps the link's rect across and its middle
 // is inside it up and down: pdf.js often merges a linked word into the rest of
-// its line, so the URL then goes after the line. A link wrapped over two lines is two links in a row with one URL over neighbouring
-// text, and gets it once.
+// its line, so the URL then goes after the line. A link wrapped over two lines
+// is two links in a row with one URL over neighbouring text, and gets it once.
 function withLinkUrls(items: object[], annotations: Array<{ rect?: number[]; url?: unknown }>): string[] {
   const strs = items.map((item) => ('str' in item && typeof item.str === 'string' ? item.str : ''))
   const links: Array<{ url: unknown; covered: number[] }> = []
@@ -75,7 +76,7 @@ function withLinkUrls(items: object[], annotations: Array<{ rect?: number[]; url
     else links.push({ url, covered })
   }
   for (const { url, covered } of links) {
-    const link = covered.length ? linkUrl(url, covered.map((i) => strs[i]).join(' ')) : null
+    const link = covered.length ? urlToAppend(url, covered.map((i) => strs[i]).join(' ')) : null
     if (link) strs[Math.max(...covered)] += ` (${link})`
   }
   return strs
@@ -106,7 +107,7 @@ function docxText(document: DocxElement): string {
     else if (piece.href !== undefined || piece.text) merged.push({ ...piece })
   }
   return merged.map(({ text, href }) => {
-    const url = href === undefined ? null : linkUrl(href, text)
+    const url = href === undefined ? null : urlToAppend(href, text)
     return url ? `${text} (${url})` : text
   }).join('')
 }
@@ -115,7 +116,14 @@ async function parseDocx(file: File): Promise<string> {
   const { default: mammoth } = await import('mammoth')
   const arrayBuffer = await file.arrayBuffer()
   let value = ''
-  await mammoth.convertToHtml({ arrayBuffer }, { transformDocument: (doc: DocxElement) => ((value = docxText(doc)), doc) })
+  // Only the hook is wanted: handing back an empty document keeps mammoth
+  // from rendering HTML or reading the images (a photo cost ~20 ms per MB).
+  await mammoth.convertToHtml({ arrayBuffer }, {
+    transformDocument: (doc: DocxElement) => {
+      value = docxText(doc)
+      return { ...doc, children: [] }
+    },
+  })
   const result = value.trim()
   if (!result) throw new Error('No text found in DOCX.')
   return result

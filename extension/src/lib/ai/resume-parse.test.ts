@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { ParsedResume } from '../../types'
 import { orderedSections } from '../pdf/sections'
-import { isCurrentParse, parseParsedJson, parseResumeStructure, upgradedParse, withChosenOrder, withLinks, withSectionOrder } from './resume-parse'
+import { isCurrentParse, parseParsedJson, parseResumeStructure, upgradedParse, urlCore, withChosenOrder, withLinks, withSectionOrder } from './resume-parse'
 import { checkParse, checkParseUrls, resumeUrls } from '../../../eval/checks'
 import type { EvalCase } from '../../../eval/fixtures'
 
@@ -303,6 +303,15 @@ describe.each([
   })
 })
 
+test('urlCore strips a trailing slash, and a long run of slashes costs no time (#236)', () => {
+  expect(urlCore('HTTPS://www.Ada.dev//')).toBe('ada.dev')
+  const started = performance.now()
+  urlCore(`https://a.co${'/'.repeat(100_000)}x`)
+  expect(performance.now() - started).toBeLessThan(200)
+})
+
+// The eval's URL check is tested here, beside what it checks, as the issue
+// asks; vitest only collects tests under src/.
 describe('the URL check (#236)', () => {
   test('lists every URL in the resume text, and not emails or file names', () => {
     expect(resumeUrls(`${LINKED_TEXT}\nNode.js, résumé.pdf, ada.lovelace.dev@mail.com, www.ada.dev/blog.`)).toEqual([
