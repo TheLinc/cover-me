@@ -409,7 +409,7 @@ Score 1–5:
 3 = answers the question but reads generic or padded
 5 = a strong applicant's own answer: direct, specific, plain
 
-The applicant may only use facts from their resume, below. Judge the answer against the best answer this resume allows: don't mark it down for lacking a detail or a story the resume doesn't have, and do mark it down for any detail the resume doesn't support (an invented fact is the worst failure). Saying plainly that the applicant lacks something the question asks about is honest, not evasive. Mark down an answer that recites experience the question didn't ask for: a question about the applicant's view (what they like, value or want) wants that view, backed by a fact at most, not a list of their work. A short [bracketed] blank for a personal detail only the applicant knows (a start date, a salary) is intended: they fill it in before submitting.
+The applicant may only use facts from their resume, below. Judge the answer against the best answer this resume allows: don't mark it down for lacking a detail or a story the resume doesn't have, and do mark it down for any detail the resume doesn't support (an invented fact is the worst failure). Saying plainly that the applicant lacks something the question asks about is honest, not evasive. Mark down an answer that recites experience the question didn't ask for: a question about the applicant's view (what they like, value or want) wants that view, backed by a fact at most, not a list of their work. A short [bracketed] blank for a personal detail only the applicant knows (a start date, a salary), or for an event resumes don't record (a failure, a conflict) when this resume tells none, is intended: they fill it in before submitting. Don't mark an answer down for that blank; do mark it down if it puts a success story in place of the failure or conflict asked for.
 
 Resume:
 """
@@ -463,6 +463,8 @@ async function liveAnswers() {
       const maxWords = Number(/max(?:imum)?\s+(\d+)\s+words/i.exec(a.question)?.[1]) || a.maxWords
       result = checkAnswer(answer, c, { question: a.question, failTerms: a.failTerms, maxLength: a.maxLength, maxWords, uncut: finishAnswer(raw), allowTerms: a.change?.allowTerms, allowNear: a.change?.allowNear })
       if (a.change?.shorter && answer.length > first.length * 0.85) result.failures.push(`asked for shorter, but it went from ${first.length} to ${answer.length} characters`)
+      if (a.opens && !a.opens.test(answer.trim())) result.failures.push(`answer should open with ${a.opens.source}`)
+      if (a.brackets && !/\[[^\]]+\]/.test(answer)) result.failures.push('answer guesses a detail the applicant has to fill in: no [bracket]')
       if (a.change) result.warnings.push(`first answer (${first.length} characters): ${first}`)
     } catch (e) {
       process.stdout.write('x')

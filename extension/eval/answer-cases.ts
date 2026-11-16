@@ -22,6 +22,10 @@ export interface AnswerCase {
    * sentence that says so (allowNear) or says the applicant lacks it.
    */
   change?: { request: string; shorter?: boolean; allowTerms?: string[]; allowNear?: string }
+  /** The answer must start with this (a screener's Yes or No). */
+  opens?: RegExp
+  /** The answer must leave a [bracket] for the applicant to fill in. */
+  brackets?: boolean
 }
 
 export const ANSWER_CASES: AnswerCase[] = [
@@ -45,6 +49,21 @@ export const ANSWER_CASES: AnswerCase[] = [
   // same question on a developer-platform job read "our platform" as the
   // internal tooling and listed four resume projects. The view, not a resume.
   { id: 'answer-favorite-platform', caseId: 'tech-missing-stack', question: 'What is your favorite aspect of our platform?', maxWords: 120 },
+  // From the research in docs/application-answer-best-practices.md (local),
+  // 2026-11-16. A mistake the resume doesn't record: one bracket for the
+  // event, not a success story in its place.
+  { id: 'answer-failure', caseId: 'new-grad-data-analyst', question: 'Tell us about a time you made a mistake at work and what you learned from it.', brackets: true },
+  // A story in a short box: the setup goes first.
+  { id: 'answer-short-story', caseId: 'project-manager-capm-not-pmp', question: 'Tell us about a project you led from start to finish.', maxLength: 300 },
+  // A knockout screener the resume's dates fall short of (2022 to now).
+  { id: 'answer-years-screener', caseId: 'project-manager-capm-not-pmp', question: 'Do you have 5+ years of experience managing projects?', opens: /^No\b/, maxWords: 50 },
+  // Right to work and sponsorship: nothing to infer from a UK resume.
+  { id: 'answer-sponsorship', caseId: 'uk-finance-assistant', question: 'Do you have the right to work in the UK? Will you now or in the future require visa sponsorship?', brackets: true, maxWords: 50 },
+  { id: 'answer-salary', caseId: 'accountant-no-cpa', question: 'What are your salary expectations?', brackets: true, maxWords: 60 },
+  // The applicant's own figure: bracketed, never guessed.
+  { id: 'answer-current-salary', caseId: 'office-manager-career-gap', question: 'What is your current or most recent salary?', brackets: true, maxWords: 60 },
+  // An open box: never a resume summary.
+  { id: 'answer-anything-else', caseId: 'office-manager-career-gap', question: 'Is there anything else you would like us to know?', maxWords: 90 },
   // Changes asked for after the first answer. The quick "Shorter" option, as
   // the status box sends it:
   {

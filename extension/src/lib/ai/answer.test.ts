@@ -80,10 +80,34 @@ describe('buildAnswerPrompt', () => {
   // try with one story blank also claimed "I found a problem", which the
   // resume didn't say. Blanks are for personal details only.
   test('keeps square-bracket blanks to personal details, never experience', () => {
-    expect(buildAnswerPrompt(JOB, RESUME, 'Q').context).toContain('Never use brackets for experience')
+    expect(buildAnswerPrompt(JOB, RESUME, 'Q').context).toContain('Never use brackets for any other experience')
     expect(buildAnswerPrompt(JOB, RESUME, 'Q').context).toContain("Never claim the part of the story the resume doesn't tell")
     // and, with no matching story, a disclaimer about the answer itself.
     expect(buildAnswerPrompt(JOB, RESUME, 'Q').context).toContain('never write about the answer or the resume itself')
+  })
+
+  // From the research in docs/application-answer-best-practices.md (local):
+  // a failure question answered with a success story is a non-answer (OPM,
+  // Ashby), so the event the resume can't record goes in one bracket.
+  test("brackets a failure or conflict the resume doesn't record, never a success story in its place", () => {
+    const { context } = buildAnswerPrompt(JOB, RESUME, 'Tell us about a time you failed.')
+    expect(context).toContain('never put a success story in its place')
+    expect(context).toContain('Write the answer as one bracket')
+    expect(context).toContain('Never list duties around it')
+  })
+
+  test('starts a screening question with Yes, No or the number, counted from the resume dates', () => {
+    const { context } = buildAnswerPrompt(JOB, RESUME, 'Do you have 3+ years of Go?')
+    expect(context).toContain('starts with its answer as the first word: Yes, No, or the number')
+    expect(context).toContain('Count years only from the dates on the resume')
+    expect(context).toContain('now and in the future')
+  })
+
+  test('brackets pay, never guessing a figure, and keeps it short', () => {
+    const { context } = buildAnswerPrompt(JOB, RESUME, 'What are your salary expectations?')
+    expect(context).toContain('[your target] to [a higher figure]')
+    expect(context).toContain('[your most recent salary], and never a figure')
+    expect(context).toContain('with no resume facts to back them')
   })
 
   test('adds the candidate context when given, and names no company when it is unknown', () => {
