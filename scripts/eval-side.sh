@@ -10,6 +10,11 @@
 #
 # Anything not listed as one side (model clients, the eval harness, fixtures,
 # the prompt-sync script) runs all, and so does an empty diff.
+#
+# When letters run but no letter file changed, " lint-warn" follows "all":
+# pass it as --lint-warn so a letter that still fails the lint after its retry
+# is a warning, not a failed job (#243). A letter file in the diff keeps it a
+# failure.
 set -euo pipefail
 
 if [ "${1:-}" = "--files" ]; then
@@ -20,6 +25,7 @@ else
 fi
 
 letters=false
+letter_files=false
 tailor=false
 answers=false
 while IFS= read -r f; do
@@ -27,7 +33,7 @@ while IFS= read -r f; do
   case "$f" in
     extension/src/lib/ai/index.ts | extension/src/lib/ai/letter-lint* | \
     backend/supabase/functions/generate/* | backend/supabase/functions/_shared/letter-lint.ts)
-      letters=true ;;
+      letters=true; letter_files=true ;;
     extension/src/lib/ai/resume-* | extension/src/lib/ai/ats-score* | extension/src/lib/ai/tailor-progress* | \
     extension/src/lib/ai/parse-delta* | backend/supabase/functions/tailor/* | \
     backend/supabase/functions/_shared/resume-parse.ts | backend/supabase/functions/_shared/resume-grounding.ts | \
@@ -47,6 +53,6 @@ sides=""
 [ "$tailor" = true ] && sides="$sides tailor"
 [ "$answers" = true ] && sides="$sides answers"
 sides="${sides# }"
-if [ -z "$sides" ] || [ "$sides" = "letters tailor answers" ]; then echo all
-else echo "$sides"
-fi
+if [ -z "$sides" ] || [ "$sides" = "letters tailor answers" ]; then sides=all; fi
+if [ "$sides" = all ] && [ "$letter_files" = false ]; then sides="all lint-warn"; fi
+echo "$sides"

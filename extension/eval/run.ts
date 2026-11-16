@@ -22,6 +22,9 @@
 //                              extension/eval/.env by `pnpm eval`.
 //     --no-parse               tailor from the fixture's answer key instead of the
 //                              model's parse (isolates tailoring from parsing)
+//     --lint-warn              a letter still failing the lint after its retry is a
+//                              warning, not a failure. CI passes it when letters run
+//                              only because shared code changed (#243).
 //     --baseline               fail if judge scores drop vs the baseline
 //                              (eval/baseline.json with --quick, else baseline-full.json)
 //     --update-baseline        write this run's judge scores to that baseline
@@ -367,7 +370,7 @@ async function liveLetters() {
       }
     }
 
-    const result = checkLetter(letter, c)
+    const result = checkLetter(letter, c, flag('lint-warn'))
     if (retried) result.warnings.unshift(`first draft had ${firstLint.violations.length} lint violation(s), corrective retry used: ${firstLint.violations.join(' | ')}`)
     let judgeScore: number | undefined
     if (JUDGE) {
