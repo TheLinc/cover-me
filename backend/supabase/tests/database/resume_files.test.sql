@@ -1,4 +1,4 @@
--- resume_files (026): server-only, and gone with the account. resumes.design_hash (030).
+-- resume_files (026): server-only, and gone with the account. resumes.design_hash (031).
 -- Run: pnpm db:test   (from backend/)
 begin;
 select plan(4);
