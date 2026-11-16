@@ -213,13 +213,32 @@ function node<K extends keyof HTMLElementTagNameMap>(tag: K, className: string, 
   return n
 }
 
-let status: { host: HTMLElement; box: HTMLElement; onKey: (e: KeyboardEvent) => void } | null = null
+let status: { host: HTMLElement; box: HTMLElement; stop: () => void } | null = null
 
 function closeStatus(): void {
   if (!status) return
-  document.removeEventListener('keydown', status.onKey, true)
+  status.stop()
   status.host.remove()
   status = null
+}
+
+// Under the field, or above it when there's no room below, so it reads as
+// part of that field. It moves with the field as the page (or a scrolling
+// panel) scrolls: off screen with it, and back. A field taller than the
+// screen keeps the box at the bottom edge while any of it shows.
+function place(anchor: HTMLElement | null, box: HTMLElement): void {
+  const rect = anchor?.isConnected ? anchor.getBoundingClientRect() : null
+  if (!rect) {
+    box.style.top = box.style.left = '16px'
+    return
+  }
+  const h = box.offsetHeight
+  const below = rect.bottom + 6
+  const above = rect.top - 6 - h
+  const onScreen = rect.bottom > 0 && rect.top < innerHeight
+  const top = below + h <= innerHeight - 8 ? below : above >= 8 ? above : onScreen ? Math.max(8, innerHeight - h - 8) : below
+  box.style.top = `${top}px`
+  box.style.left = `${Math.max(8, Math.min(rect.left, innerWidth - box.offsetWidth - 8))}px`
 }
 
 interface StatusView {
@@ -346,12 +365,7 @@ function showStatus(anchor: HTMLElement | null, view: StatusView): void {
   root.append(style, box)
   document.documentElement.append(host)
 
-  // Under the box, kept on screen.
-  const rect = anchor?.getBoundingClientRect()
-  const top = rect ? Math.min(rect.bottom + 6, innerHeight - box.offsetHeight - 8) : 16
-  const left = rect ? Math.min(rect.left, innerWidth - box.offsetWidth - 8) : 16
-  box.style.top = `${Math.max(top, 8)}px`
-  box.style.left = `${Math.max(left, 8)}px`
+  place(anchor, box)
 
   // A new state in the same place (the job picker appearing, an error after
   // writing) eases from the old box's size instead of jumping to the new one.
@@ -364,8 +378,21 @@ function showStatus(anchor: HTMLElement | null, view: StatusView): void {
   }
 
   const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeStatus() }
+  // Capture catches scrolling inside panels and modals too; one move a frame.
+  let frame = 0
+  const follow = () => { if (!frame) frame = requestAnimationFrame(() => { frame = 0; place(anchor, box) }) }
   document.addEventListener('keydown', onKey, true)
-  status = { host, box, onKey }
+  addEventListener('scroll', follow, { capture: true, passive: true })
+  addEventListener('resize', follow, { passive: true })
+  status = {
+    host, box,
+    stop: () => {
+      document.removeEventListener('keydown', onKey, true)
+      removeEventListener('scroll', follow, { capture: true })
+      removeEventListener('resize', follow)
+      cancelAnimationFrame(frame)
+    },
+  }
 }
 
 const jobName = (job: Job) => (job.company && job.company !== 'Unknown Company' ? `${job.title} · ${job.company}` : job.title)

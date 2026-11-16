@@ -373,7 +373,9 @@ export async function answerViaBackend(
   // arrives as { error } with status 200.
   if (!res.ok || data.error) throw new Error((data.error as string) ?? `Server error ${res.status}`)
   const answer = data.answer as string
-  if (!answer) throw new Error('Empty response from server')
+  // The 200 came early (heartbeatJson), so a reply cut off mid-way (the
+  // function stopped, the network dropped) parses to nothing.
+  if (!answer) throw new Error('The connection dropped before the answer arrived. Please try again.')
   return answer
 }
 
