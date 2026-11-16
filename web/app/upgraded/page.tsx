@@ -155,11 +155,15 @@ export default async function UpgradedPage(props: Props) {
         </Card>
 
         <div className="mt-10 flex flex-col items-center gap-3 text-center">
-          {/* #226's "save the applications in this browser" button goes beside this one. */}
           <div className="flex flex-wrap justify-center gap-3">
             <Button asChild size="lg"><Link href="/dashboard">Go to dashboard</Link></Button>
           </div>
           <p className="text-[14px] text-subtle">Upgraded from the extension? You can close this tab.</p>
+          {/* #226: only History's prompt can upload them (HistoryPage saveLocal); the site can't reach the extension. */}
+          <p className="text-[14px] text-subtle">
+            Letters and resumes you made before Pro are still only in the extension. To save them to your account,
+            open Cover Me and go to History.
+          </p>
         </div>
       </main>
     </div>
