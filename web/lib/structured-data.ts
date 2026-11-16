@@ -1,4 +1,5 @@
 import { CHROME_STORE_URL } from '@/lib/utils'
+import { PLAN_LIMITS as L } from '@/lib/limits'
 
 export const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 
@@ -43,14 +44,14 @@ export const jsonLdApp = (version: string | null) => ({
       price: '0',
       priceCurrency: 'USD',
       name: 'Free',
-      description: '10 AI generations to start, then 5 a week, or unlimited with your own API key.',
+      description: `${L.free_starter} AI generations to start, then ${L.free_weekly} a week, letters and resumes, plus ${L.answer_starter} answers to application questions to start, then ${L.answer_weekly} a week, counted apart. Unlimited with your own API key.`,
     },
     {
       '@type': 'Offer',
       price: '15',
       priceCurrency: 'USD',
       name: 'Pro',
-      description: 'Up to 25 generations a day, every letter and tailored resume saved to your account, $15/month or $35 every 3 months.',
+      description: `Up to ${L.pro_daily} letters or tailored resumes and up to ${L.answer_pro_daily} answers to application questions a day, counted apart, every letter and tailored resume saved to your account, $15/month or $35 every 3 months.`,
       eligibleQuantity: {
         '@type': 'QuantitativeValue',
         unitText: 'month',
@@ -65,6 +66,7 @@ export const jsonLdApp = (version: string | null) => ({
     'Works on LinkedIn, Indeed, Greenhouse, Lever, Workday, Ashby, BambooHR, Workable',
     'Cover letter and tailored resume download as PDF, the resume also as Word; a Word upload keeps its own design in the Word download (beta)',
     "Removes skills and claims the original resume doesn't support",
+    'Writes answers to the written questions on job applications, from a right-click on the question box',
     'Free and unlimited with your own OpenAI or Claude API key, no account needed',
     'Open source under the MIT license',
   ],

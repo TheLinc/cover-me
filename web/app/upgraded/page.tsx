@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { LocalDate } from '@/app/dashboard/LocalDate'
+import { PLAN_LIMITS } from '@/lib/limits'
 
 type Props = { searchParams: Promise<{ first?: string }> }
 
@@ -28,7 +29,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 function Quota() {
   return (
     <div className="grid grid-cols-5 gap-[3px]">
-      {Array.from({ length: 25 }, (_, i) => <span key={i} className="size-[6px] rounded-full bg-brand" />)}
+      {Array.from({ length: PLAN_LIMITS.pro_daily }, (_, i) => <span key={i} className="size-[6px] rounded-full bg-brand" />)}
     </div>
   )
 }
@@ -84,6 +85,19 @@ function EditSaved() {
   )
 }
 
+// A question box with an answer typed in, as the right-click writes it.
+function AnswerBox() {
+  return (
+    <div className="flex h-[26px] w-[34px] flex-col justify-center gap-[3px] rounded-[5px] border-[1.5px] border-ink bg-white px-[4px]">
+      <span className="h-[2.5px] w-full rounded-full bg-brand" />
+      <span className="flex items-center gap-[1.5px]">
+        <span className="h-[2.5px] w-3/5 rounded-full bg-brand" />
+        <span className="h-[8px] w-[1.5px] bg-ink" />
+      </span>
+    </div>
+  )
+}
+
 function NewBadge() {
   return (
     <span className="flex items-center gap-1 rounded-full bg-brand-strong px-1.5 py-0.5 text-[10px] font-semibold text-white">
@@ -95,9 +109,10 @@ function NewBadge() {
 // Only what Pro adds, each checked against the code that gates it (#227).
 // The job board and Word export are on every account, so the Word row names
 // the Pro part: resumes downloaded from the dashboard in the user's own design.
-// Pricing.tsx's PRO list says the same in three lines.
+// Pricing.tsx's PRO list says the same in four lines.
 const ITEMS: { title: string; hint: string; Visual: ComponentType }[] = [
-  { title: 'Up to 25 a day', hint: 'Letters or tailored resumes, instead of 5 a week', Visual: Quota },
+  { title: `Up to ${PLAN_LIMITS.pro_daily} a day`, hint: `Letters or tailored resumes, instead of ${PLAN_LIMITS.free_weekly} a week`, Visual: Quota },
+  { title: `Up to ${PLAN_LIMITS.answer_pro_daily} answers a day`, hint: 'To application questions, counted apart from letters and resumes', Visual: AnswerBox },
   { title: 'Saved to your account', hint: 'Every letter and resume, in History on any computer', Visual: Devices },
   { title: 'Full letters and resumes', hint: 'On your dashboard. Resumes download as Word in your design', Visual: WordDoc },
   { title: 'Edits save to your account', hint: 'In the resume editor', Visual: EditSaved },

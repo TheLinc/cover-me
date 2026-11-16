@@ -1,3 +1,15 @@
+// The plan numbers the site's copy quotes: a copy of generation_limits() in
+// the latest migration that defines it (plan-limits.test.ts keeps them equal).
+// Answers have their own allowance and never use up letters or resumes.
+export const PLAN_LIMITS = {
+  free_starter: 10,
+  free_weekly: 5,
+  pro_daily: 25,
+  answer_starter: 5,
+  answer_weekly: 5,
+  answer_pro_daily: 50,
+}
+
 // The hosted allowance as the database reports it (my_generation_allowance,
 // migration 015). The numbers come from the database; this only words them.
 export interface Allowance {

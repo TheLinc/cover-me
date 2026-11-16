@@ -255,6 +255,13 @@ img, svg, video { display: block; }
 @keyframes hero-count { from { --hero-n: 0; } }
 @keyframes hero-pop   { from { opacity: 0; transform: translateY(6px) scale(0.92); } }
 
+/* The in-page answer box's loading bar (Answers.tsx), as content/answer-field.ts
+   draws it. Reduced motion leaves it still. */
+@media (prefers-reduced-motion: no-preference) {
+  .answers-bar { animation: answers-slide 1.2s cubic-bezier(0.65, 0, 0.35, 1) infinite alternate; }
+}
+@keyframes answers-slide { from { transform: translateX(-15%); } to { transform: translateX(137%); } }
+
 /* scroll-driven:start
  * Every animation-timeline rule lives in this block. Outside it, content
  * renders in its finished state, so Firefox (no scroll timelines) and
