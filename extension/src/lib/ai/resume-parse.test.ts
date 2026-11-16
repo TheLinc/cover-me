@@ -319,6 +319,11 @@ describe('the URL check (#236)', () => {
     expect(checkParseUrls(LINKED_PARSE, text)).toEqual(['section URL on the contact line: "https://github.com/ada/cover-me"'])
   })
 
+  test('reports a section URL the model moved from its entry to the contact line', () => {
+    const parsed = { ...LINKED_PARSE, projects: [{ name: 'Cover Me', bullets: ['Built a resume tailoring tool'] }] }
+    expect(checkParseUrls(parsed, LINKED_TEXT)).toEqual(['section URL on the contact line: "https://github.com/ada/cover-me"'])
+  })
+
   test('checkParse reports a URL missing from the parse, and a section URL on the contact line', () => {
     const parsed = { ...LINKED_PARSE, education: [{ ...LINKED_PARSE.education[0]!, bullets: ['Thesis code'] }] }
     const { failures } = checkParse(parsed, { resumeText: LINKED_TEXT, parsed } as unknown as EvalCase)

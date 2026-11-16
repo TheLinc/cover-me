@@ -53,8 +53,9 @@ function linkUrl(url: unknown, text: string): string | null {
 
 // Each text item's string, with each clickable link's URL written after the
 // last item it covers (#236): pdf.js leaves link annotations out of the text.
-// An item is covered when its centre is inside the link's rect. A link
-// wrapped over two lines is two links in a row with one URL over neighbouring
+// An item is covered when it overlaps the link's rect across and its middle
+// is inside it up and down: pdf.js often merges a linked word into the rest of
+// its line, so the URL then goes after the line. A link wrapped over two lines is two links in a row with one URL over neighbouring
 // text, and gets it once.
 function withLinkUrls(items: object[], annotations: Array<{ rect?: number[]; url?: unknown }>): string[] {
   const strs = items.map((item) => ('str' in item && typeof item.str === 'string' ? item.str : ''))
@@ -64,9 +65,9 @@ function withLinkUrls(items: object[], annotations: Array<{ rect?: number[]; url
     const [x1, y1, x2, y2] = rect as [number, number, number, number]
     const covered = items.flatMap((item, i) => {
       const { transform, width = 0, height = 0 } = item as { transform?: number[]; width?: number; height?: number }
-      const x = transform ? transform[4]! + width / 2 : NaN
+      const left = transform ? transform[4]! : NaN
       const y = transform ? transform[5]! + height / 2 : NaN
-      return x >= x1 && x <= x2 && y >= y1 && y <= y2 ? [i] : []
+      return left < x2 && left + width > x1 && y >= y1 && y <= y2 ? [i] : []
     })
     const last = links[links.length - 1]
     const continues = last?.url === url && last.covered.length > 0 && covered.length > 0 && strs.slice(Math.max(...last.covered) + 1, Math.min(...covered)).every((s) => !s.trim())

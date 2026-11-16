@@ -5,7 +5,7 @@ import type { ParsedResume, TailoredResume } from '../src/types'
 import type { EvalCase } from './fixtures'
 import { extractNumbers, lintLetter } from '../src/lib/ai/letter-lint'
 import { mixedTenseLines } from '../src/lib/ai/resume-grounding'
-import { urlCore } from '../src/lib/ai/resume-parse'
+import { shownInSection, urlCore } from '../src/lib/ai/resume-parse'
 
 export interface CheckResult {
   failures: string[]
@@ -349,14 +349,17 @@ export function resumeUrls(text: string): string[] {
 }
 
 // A parse's URL failures (#236): a URL of the resume text found nowhere in the
-// parse, or a URL on the contact line that the parse also puts in a section.
+// parse, or a URL on the contact line that the parse also puts in a section or
+// the text first shows in one (shownInSection, without withLinks' rule that
+// keeps one no entry holds rather than lose it).
 export function checkParseUrls(actual: ParsedResume, resumeText: string): string[] {
   const parse = JSON.stringify(actual).toLowerCase()
   const { name, email, phone, location, website, links, ...sections } = actual
   const sectionUrls = new Set(resumeUrls(JSON.stringify(sections)).map(urlCore))
+  const inSection = (l: string) => sectionUrls.has(urlCore(l)) || shownInSection(actual, resumeText, l)
   return [
     ...resumeUrls(resumeText).filter((u) => !parse.includes(urlCore(u))).map((u) => `URL missing from the parse: "${u}"`),
-    ...(links ?? []).filter((l) => sectionUrls.has(urlCore(l))).map((l) => `section URL on the contact line: "${l}"`),
+    ...(links ?? []).filter(inSection).map((l) => `section URL on the contact line: "${l}"`),
   ]
 }
 

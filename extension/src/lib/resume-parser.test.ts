@@ -55,6 +55,16 @@ describe('parseResume keeps clickable links (#236)', () => {
     expect(text).toBe('Portfolio (https://ada.dev/) Projects Live site (https://ada.dev/)')
   })
 
+  test('PDF: links on words inside a longer text item still give their URLs', async () => {
+    const text = await parseResume(pdfFile((doc) => {
+      doc.text('Cover Me | GitHub | Live demo', 10, 10)
+      const at = (s: string) => 10 + doc.getTextWidth(s)
+      doc.link(at('Cover Me | '), 4, doc.getTextWidth('GitHub'), 8, { url: PROJECT_URL })
+      doc.link(at('Cover Me | GitHub | '), 4, doc.getTextWidth('Live demo'), 8, { url: 'https://coverme.app' })
+    }))
+    expect(text).toBe(`Cover Me | GitHub | Live demo (${PROJECT_URL}) (https://coverme.app/)`)
+  })
+
   test('PDF: a link wrapped over two lines gets its URL once, at the end', async () => {
     const text = await parseResume(pdfFile((doc) => {
       doc.textWithLink('Cover', 10, 10, { url: PROJECT_URL })
