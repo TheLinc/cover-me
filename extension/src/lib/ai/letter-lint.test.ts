@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { buildLintRetryMessage, extractNumbers, letterLength, lintLetter } from './letter-lint'
+import { buildLintRetryMessage, extractNumbers, letterLength, lintLetter, stripPlan } from './letter-lint'
 
 const echoes = (sentence: string) =>
   lintLetter(sentence).violations.some((v) => v.startsWith('Restates the job posting'))
@@ -458,7 +458,7 @@ test('flags "the work I want to do next" as a stock line', () => {
 
 // Option 2 of the #206 full eval: length follows the resume. A thin resume
 // gives about one line per accomplishment, so a short letter is honest; a full
-// one has the scope and method for a longer letter.
+// one has the scope and method for a longer letter (#212: 250–350 words).
 describe('letterLength', () => {
   const thin = Array.from({ length: 120 }, () => 'word').join(' ')
   const full = Array.from({ length: 300 }, () => 'word').join(' ')
@@ -466,22 +466,67 @@ describe('letterLength', () => {
   const short = (letter: string, resumeText?: string) =>
     lintLetter(letter, { resumeText }).violations.some((v) => v.includes('too short'))
 
-  test('both resumes share the floor; a full resume aims longer', () => {
-    expect(letterLength(thin).min).toBe(130)
-    expect(letterLength(full).min).toBe(130)
-    expect(letterLength(undefined).min).toBe(130)
-    expect(letterLength(full).aim).not.toBe(letterLength(thin).aim)
+  test('a full resume aims at 250–350 words with a 200-word floor', () => {
+    expect(letterLength(full)).toEqual({ min: 200, max: 380, aim: '250–350', full: true })
   })
 
-  test('flags a body under 130 words', () => {
+  test('a letter at the top of the full aim is not too long', () => {
+    const long = (letter: string, resumeText?: string) =>
+      lintLetter(letter, { resumeText }).violations.some((v) => v.includes('too long'))
+    expect(long(body(340), full)).toBe(false)
+    expect(long(body(390), full)).toBe(true)
+    expect(long(body(330), thin)).toBe(true)
+  })
+
+  test('a thin resume keeps the 130-word floor', () => {
+    expect(letterLength(thin).min).toBe(130)
+    expect(letterLength(undefined).min).toBe(130)
+    expect(letterLength(thin).full).toBe(false)
+  })
+
+  test('flags a body under the floor for its resume', () => {
     expect(short(body(120), thin)).toBe(true)
-    expect(short(body(120), full)).toBe(true)
-    expect(short(body(140))).toBe(false)
+    expect(short(body(140), thin)).toBe(false)
+    expect(short(body(180), full)).toBe(true)
+    expect(short(body(220), full)).toBe(false)
   })
 
   test('the short message names the resume-sized aim', () => {
     const v = lintLetter(body(120), { resumeText: full }).violations.find((x) => x.includes('too short'))!
-    expect(v).toContain(letterLength(full).aim)
+    expect(v).toContain('250–350')
+  })
+})
+
+// The prompt asks for a <plan> before the letter (#212); only the letter is sent.
+describe('stripPlan', () => {
+  const letter = 'Dear Hiring Manager,\n\nAt Acme I ship.\n\nKind regards,\nAlex Doe'
+
+  test('removes the plan block before the letter', () => {
+    expect(stripPlan(`<plan>
+- req: SQL
+- Acme: built reports
+</plan>
+
+${letter}`)).toBe(letter)
+  })
+
+  test('leaves a letter with no plan unchanged', () => {
+    expect(stripPlan(letter)).toBe(letter)
+  })
+
+  test('drops a label between the plan and the salutation', () => {
+    expect(stripPlan(`<plan>\n- req: SQL\n</plan>\nLetter:\n\n${letter}`)).toBe(letter)
+  })
+
+  test('drops an untagged plan before the salutation', () => {
+    expect(stripPlan(`Plan:\n- req: SQL\n\n${letter}`)).toBe(letter)
+  })
+
+  test('an unclosed plan keeps the letter from its salutation', () => {
+    expect(stripPlan(`<plan>
+- req: SQL
+
+${letter}`)).toBe(letter)
   })
 })
 

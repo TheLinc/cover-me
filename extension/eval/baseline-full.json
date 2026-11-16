@@ -40,7 +40,10 @@
     "long-new-grad-data-analyst": 3.5,
     "long-nurse-missing-certs": 4,
     "new-grad-nurse-rotations": 3.5,
-    "accelerator-lead-to-venture-builder": 4
+    "accelerator-lead-to-venture-builder": 4,
+    "master-product-manager": 4,
+    "master-hotel-operations": 4,
+    "master-construction-pm": 4
   },
   "scores": {
     "tech-missing-stack": {

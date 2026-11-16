@@ -219,15 +219,33 @@ const NOTE_TO_USER = [
  * thin, not concise: they dropped evidence the posting asked for (a required
  * degree, the only certification). The cap was the prompt's "two
  * accomplishments, nothing else" rule, not the resume, so the letter now also
- * tells the resume facts that answer the posting, and the aim is the 200-300
- * words recruiters expect. Drafts land at ~140-170 words under it, which the
- * council judged right for trades and clerical roles, so the floor is 130.
+ * tells the resume facts that answer the posting, and the aim is 200-260
+ * words. Drafts land at ~140-170 words under it, which the council judged
+ * right for trades and clerical roles, so the floor is 130.
+ * A full resume aims at 250-350 words with a 200 floor and a 380 cap (#212,
+ * the developer's call, set before any eval of it): it has three
+ * accomplishments' worth of scope and method to tell. A thin resume keeps the
+ * 320 cap.
  * ponytail: resume word count is the richness signal; count detailed bullets
  * instead if real resumes land on the wrong side of 250.
  */
-export function letterLength(resumeText?: string): { min: number; aim: string; full: boolean } {
+export function letterLength(resumeText?: string): { min: number; max: number; aim: string; full: boolean } {
   const full = !!resumeText && countWords(resumeText) >= 250
-  return full ? { min: 130, aim: '230–300', full } : { min: 130, aim: '200–260', full }
+  return full ? { min: 200, max: 380, aim: '250–350', full } : { min: 130, max: 320, aim: '200–260', full }
+}
+
+/**
+ * The letter without the <plan> the prompt asks for before it (#212). The
+ * letter starts at its salutation, so an unclosed or untagged plan, or a label
+ * such as "Letter:", goes too.
+ * ponytail: with no "Dear" line any leftover plan text stays in and the lint's
+ * missing-salutation check sends it to the retry; parse the plan's shape if
+ * that shows up in eval reports.
+ */
+export function stripPlan(text: string): string {
+  const rest = text.replace(/<plan>[\s\S]*?<\/plan>/gi, '')
+  const dear = rest.search(/^Dear\b/im)
+  return (dear === -1 ? rest : rest.slice(dear)).trim()
 }
 
 function countWords(text: string): number {
@@ -323,7 +341,7 @@ export function lintLetter(
   const length = letterLength(opts.resumeText)
   if (wordCount < length.min) {
     violations.push(`Letter body is ${wordCount} words — too short; expand to about ${length.aim} words. Add the resume facts that answer the posting's main requirements and aren't in the letter yet: a degree, license, or certification the posting asks for, the scope of the current job, or a duty the posting names, each told as what the applicant does or did. Never add a scene-setting sentence, restate a fact, list unrelated resume items, or guess what the resume does not say (an employer's industry or location, a new claim about the applicant).`)
-  } else if (wordCount > 320) {
+  } else if (wordCount > length.max) {
     violations.push(`Letter body is ${wordCount} words — too long; tighten to about ${length.aim} words.`)
   }
 
@@ -344,7 +362,7 @@ export function lintLetter(
   const paragraphs = body.split(/\n\s*\n/).filter((p) => p.trim().length > 0)
   const lastPara = paragraphs[paragraphs.length - 1] ?? ''
   if (URL_RE.test(lastPara)) {
-    violations.push('Contains a URL in the closing paragraph — a portfolio/GitHub link may only appear inline in the core proof paragraph.')
+    violations.push('Contains a URL in the closing paragraph — a portfolio/GitHub link may only appear inline in the evidence.')
   }
 
   for (const [re, message] of SENTENCE_SHAPES) {

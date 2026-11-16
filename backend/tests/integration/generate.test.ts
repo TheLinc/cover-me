@@ -21,6 +21,7 @@ describe('generate', () => {
     expect(res.status).toBe(200)
     const { letter } = await res.json()
     expect(letter).toContain('Dear Acme Team')
+    expect(letter).not.toContain('<plan>')
     expect(await quotaUsedToday(user.id)).toBe(1)
 
     const [first] = await mockClaude.requests()
