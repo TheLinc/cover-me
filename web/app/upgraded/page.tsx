@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import type { ComponentType } from 'react'
-import { CheckIcon, SparkleIcon } from '@phosphor-icons/react/dist/ssr'
+import { CheckIcon, ClockCounterClockwiseIcon, SparkleIcon } from '@phosphor-icons/react/dist/ssr'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -154,16 +154,29 @@ export default async function UpgradedPage(props: Props) {
           </ul>
         </Card>
 
+        {/* #226: only History's prompt can upload them (HistoryPage saveLocal); the site can't reach the
+            extension, so the page says where to go, set apart so it isn't skimmed past. */}
+        <div
+          className="mt-4 flex animate-fade-up items-start gap-4 rounded-[24px] border border-[color-mix(in_srgb,var(--brand-strong)_30%,transparent)] bg-brand-tint px-5 py-4"
+          style={{ animationDelay: `${150 + ITEMS.length * 70}ms` }}
+        >
+          <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-[12px] bg-brand-strong text-white">
+            <ClockCounterClockwiseIcon size={20} weight="bold" />
+          </span>
+          <div>
+            <h2 className="text-[16px] leading-tight text-brand-ink">Save what you made before Pro</h2>
+            <p className="mt-1 text-[14px] leading-snug text-ink-2">
+              If you made letters or resumes before upgrading, they&apos;re still only in the extension. Open
+              Cover Me, go to <strong className="font-semibold text-ink">History</strong>, and press <strong className="font-semibold text-ink">Save to my account</strong>.
+            </p>
+          </div>
+        </div>
+
         <div className="mt-10 flex flex-col items-center gap-3 text-center">
           <div className="flex flex-wrap justify-center gap-3">
             <Button asChild size="lg"><Link href="/dashboard">Go to dashboard</Link></Button>
           </div>
           <p className="text-[14px] text-subtle">Upgraded from the extension? You can close this tab.</p>
-          {/* #226: only History's prompt can upload them (HistoryPage saveLocal); the site can't reach the extension. */}
-          <p className="text-[14px] text-subtle">
-            Any letters and resumes you made before Pro are still only in the extension. To save them to your account,
-            open Cover Me and go to History.
-          </p>
         </div>
       </main>
     </div>
