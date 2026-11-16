@@ -1,7 +1,7 @@
--- resume_files (026): server-only, and gone with the account.
+-- resume_files (026): server-only, and gone with the account. resumes.design_hash (030).
 -- Run: pnpm db:test   (from backend/)
 begin;
-select plan(3);
+select plan(4);
 
 insert into auth.users (id, email) values ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'alice@cover-me.test');
 insert into public.resume_files (user_id, hash, docx_encrypted) values
@@ -9,6 +9,8 @@ insert into public.resume_files (user_id, hash, docx_encrypted) values
 
 select throws_ok($$insert into public.resume_files (user_id, hash, docx_encrypted) values ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'not-a-hash', 'x')$$,
   '23514', null, 'hash must be a SHA-256 in hex');
+select throws_ok($$insert into public.resumes (user_id, text_encrypted, design_hash) values ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'x', 'not-a-hash')$$,
+  '23514', null, 'design_hash must be a SHA-256 in hex');
 
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","role":"authenticated"}', true);

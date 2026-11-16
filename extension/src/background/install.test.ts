@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { WEB_URL } from '../lib/config'
 import { getWhatsNew } from '../lib/storage'
@@ -120,14 +121,17 @@ describe('the Word file a stale plan skipped', () => {
     const fetch = vi.fn(async (url: string) => new Response(url.includes('/rest/v1/users') ? JSON.stringify([{ tier: serverTier }]) : '{}'))
     vi.stubGlobal('fetch', fetch)
     await handleInstalled({ reason: 'update', previousVersion: '1.7.0' })
-    return fetch.mock.calls.filter(([url]) => url.includes('/functions/v1/resume?file=1')).length
+    return fetch.mock.calls.filter(([url]) => url.includes('/functions/v1/resume?file=1')) as unknown as [string, RequestInit][]
   }
   test('an update sends it when the server says Pro, though the cache says Free', async () => {
-    expect(await update('hosted_pro')).toBe(1)
+    const sent = await update('hosted_pro')
+    expect(sent).toHaveLength(1)
+    // With the SHA-256 of the text it was checked against (#174), so the account refuses it if that text was replaced.
+    expect(JSON.parse(sent[0][1].body as string)).toEqual({ hash: 'h', docx: 'AAAA', textHash: createHash('sha256').update('Ada').digest('hex') })
     expect((await chrome.storage.local.get('resume')).resume).toMatchObject({ design: { uploaded: true } })
   })
   test('it stays in the browser when the plan is Free', async () => {
-    expect(await update('hosted_free')).toBe(0)
+    expect(await update('hosted_free')).toHaveLength(0)
   })
 })
 
