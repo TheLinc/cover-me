@@ -32,7 +32,7 @@ function buildParsePrompt(resumeText: string): string {
   return `You are a resume parser. Convert the resume text below into structured JSON.
 
 RULES:
-1. Copy all text verbatim — do not rephrase, summarize, or improve any content
+1. Copy all text verbatim — do not rephrase, summarize, or improve any content. A URL written in a section stays in the text it was written in: a project name, a job, degree or certification line, a bullet, or a line of an extra section
 2. Only include these optional fields when the matching section is actually present in the resume:
    - "projects": only if the resume has a personal projects, side projects, portfolio, or open source section
    - "skills": only if the resume has a skills, technical skills, or core competencies section
@@ -62,7 +62,7 @@ JSON structure (omit "projects", "skills", "certifications" entirely if those se
   ],
   "projects": [
     {
-      "name": "Project Name",
+      "name": "Project Name, copied with any URL written on its line",
       "bullets": ["bullet text copied verbatim"]
     }
   ],
