@@ -33,4 +33,10 @@ describe('PLAN_LIMITS', () => {
     expect(pricing).toContain(`${L.answer_starter} answers to application questions to start, then ${L.answer_weekly} a week`)
     expect(pricing).toContain(`up to ${L.pro_daily} generations and up to ${L.answer_pro_daily} answers a day`)
   })
+
+  it('matches the answers key fact in public/llms.txt', () => {
+    const fact = readFileSync(join(__dirname, '../public/llms.txt'), 'utf8').match(/^- Answers to application questions: .*$/m)?.[0]
+    const L = PLAN_LIMITS
+    expect(fact).toContain(`Free accounts get ${L.answer_starter} answers to start, then ${L.answer_weekly} a week; Pro up to ${L.answer_pro_daily} a day`)
+  })
 })

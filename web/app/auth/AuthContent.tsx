@@ -311,7 +311,7 @@ function AuthForm() {
         : view === "signin"
           ? "Sign in to your Cover Me account."
           : plan === "pro"
-            ? `Up to ${PLAN_LIMITS.pro_daily} letters or resumes and ${PLAN_LIMITS.answer_pro_daily} answers to application questions a day, saved to your account.`
+            ? `Up to ${PLAN_LIMITS.pro_daily} letters or resumes and ${PLAN_LIMITS.answer_pro_daily} answers to application questions a day. Your letters and resumes saved to your account, on any device.`
             : `${PLAN_LIMITS.free_starter} free generations to start. No credit card required.`;
 
   return (
@@ -373,7 +373,7 @@ function AuthForm() {
             {[
               "Open source · MIT",
               "Bring your own key",
-              "10 free to start",
+              `${PLAN_LIMITS.free_starter} free to start`,
             ].map((item, i, arr) => (
               <span key={item} className="flex items-center gap-2.5">
                 <span className="text-xs font-medium text-dim tracking-[0.01em]">

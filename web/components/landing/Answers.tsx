@@ -22,8 +22,10 @@ import { useReducedMotion } from './useScrollProgress'
 // rule: say plainly what the resume lacks, then the nearest real experience.
 const QUESTION = `Tell us about your experience with ${EXAMPLE.gaps[0]}.`
 const MAX = 1000
-const ANSWER = `I haven't used ${EXAMPLE.gaps[0]}. At Brightline I owned campaign strategy for email and social, and the campaigns I planned grew qualified leads 38%.`
-const SHORTER = `I haven't used ${EXAMPLE.gaps[0]}. My email and social campaigns at Brightline grew qualified leads 38%.`
+// Answers come from the uploaded resume, so they use its own bullet
+// (EXAMPLE.bullets[0].before), not the tailored rewrite.
+const ANSWER = `I haven't used ${EXAMPLE.gaps[0]}. At Brightline I handled our social media and email marketing, and that work grew leads 38%.`
+const SHORTER = `I haven't used ${EXAMPLE.gaps[0]}. My email and social marketing at Brightline grew leads 38%.`
 const CHANGES = ['Shorter', 'More specific', 'Another example']
 
 type Phase = 'aim' | 'menu' | 'pick' | 'writing' | 'done' | 'chip' | 'rewriting' | 'revised'
@@ -97,7 +99,7 @@ export function Answers() {
       />
       <div className="grid grid-cols-[minmax(0,1fr)] items-center gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,600px)]">
         <div className="flex flex-col gap-5">
-          <Eyebrow>New: application questions</Eyebrow>
+          <Eyebrow>Application questions</Eyebrow>
           <h2 className="text-[clamp(32px,3.6vw,48px)] leading-[1.05]">Right-click a question. Get an answer from your resume.</h2>
           <p className="max-w-[460px] text-[17px] leading-[1.55] text-ink-2">
             Cover Me writes answers to the written questions on job applications and types them into the box, where you
@@ -176,10 +178,12 @@ function Stage({ phase }: { phase: Phase }) {
     const root = rootRef.current?.getBoundingClientRect()
     if (!root) return
     if (phase === 'done' || phase === 'revised') return setCursor({ x: root.width - 40, y: root.height - 30 })
+    // While the box writes, the cursor fades where it clicked.
+    if (phase === 'writing' || phase === 'rewriting') return
     const target = phase === 'pick' ? itemRef.current : phase === 'chip' ? chipRef.current : boxRef.current
     const r = target?.getBoundingClientRect()
     if (!r) return
-    const x = phase === 'aim' || phase === 'menu' ? r.left + r.width * 0.42 : r.left + Math.min(r.width / 2, 48)
+    const x = phase === 'aim' || phase === 'menu' ? r.left + r.width * (window.innerWidth < 640 ? 0.18 : 0.42) : r.left + Math.min(r.width / 2, 48)
     const y = phase === 'aim' || phase === 'menu' ? r.top + 34 : r.top + r.height / 2
     setCursor({ x: x - root.left, y: y - root.top })
   }, [phase])
