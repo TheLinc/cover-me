@@ -131,6 +131,7 @@ const STYLE = `
 .head { display: flex; gap: 10px; align-items: flex-start; }
 .logo { flex: none; width: 20px; height: 20px; margin-top: -1px; border-radius: 5px; }
 .title { flex: 1; margin: 0; font-weight: 600; }
+.hint { margin-left: 6px; font-weight: 400; font-size: 12px; color: #A6A3C6; white-space: nowrap; }
 .err .title { color: #FCA5A5; font-weight: 500; }
 .note { margin: 6px 0 0 30px; color: #CFCCE6; }
 .ask { margin: 10px 0 0 30px; padding-top: 10px; border-top: 1px solid #272449; }
@@ -244,6 +245,8 @@ function place(anchor: HTMLElement | null, box: HTMLElement): void {
 interface StatusView {
   kind: 'working' | 'done' | 'error'
   title: string
+  // A short aside after the title, on the same line (the undo key).
+  hint?: string
   note?: string
   // What Cover Me read from the form, shown so the applicant can see it took
   // the right question (and job) before trusting the answer.
@@ -317,6 +320,7 @@ function showStatus(anchor: HTMLElement | null, view: StatusView): void {
   drawLogo(logo)
   const title = node('p', 'title')
   title.append(node('span', 'sr', 'Cover Me: '), view.title)
+  if (view.hint) title.append(node('span', 'hint', view.hint))
   const close = node('button', 'close')
   close.type = 'button'
   close.setAttribute('aria-label', 'Close')
@@ -415,10 +419,9 @@ function done(target: Target, answer: string, jobs: Job[], index: number, jobSou
   const notes = [
     jobSource === 'saved' && index === 0 ? 'No job posting on this page, so this uses your latest saved job.' : '',
     /\[[^\]]+\]/.test(answer) ? 'Fill in the parts in [brackets] before you submit.' : '',
-    `${undoKey()} undoes it.`,
   ]
   showStatus(target.el, {
-    kind: 'done', title: 'Answer added', note: notes.filter(Boolean).join(' '), ...asked(target), job: jobs[index],
+    kind: 'done', title: 'Answer added', hint: `${undoKey()} to undo`, note: notes.filter(Boolean).join(' ') || undefined, ...asked(target), job: jobs[index],
     pick: { jobs, current: index, onPick: (i) => void rewrite(target, jobs, i, jobSource) },
     revise: reviser(target, answer, jobs, index, jobSource),
   })

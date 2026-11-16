@@ -86,12 +86,13 @@
   },
   "answers": {
     "answer-missing-skill": 4,
-    "answer-missing-cert": 5,
+    "answer-missing-cert": 4,
     "answer-why-company": 3,
-    "answer-trades-gap": 5,
+    "answer-trades-gap": 4,
     "answer-behavioral": 3,
     "answer-injection": 4,
-    "answer-change-shorter": 4,
-    "answer-change-stated-fact": 4
+    "answer-favorite-platform": 4,
+    "answer-change-shorter": 3,
+    "answer-change-stated-fact": 3
   }
 }

@@ -96,7 +96,7 @@ export function checkAnswer(answer: string, c: EvalCase, extra: { question?: str
   if (extra.maxLength && written > extra.maxLength) result.failures.push(`model wrote ${written} characters, over the box's ${extra.maxLength} (the end was cut)`)
   const words = answer.split(/\s+/).filter(Boolean).length
   if (extra.maxWords && words > extra.maxWords) result.failures.push(`answer is ${words} words, over the question's ${extra.maxWords}`)
-  if (!extra.maxLength && !extra.maxWords && words > 300) result.warnings.push(`answer is ${words} words with no limit set (aim 150 to 250)`)
+  if (!extra.maxLength && !extra.maxWords && words > 230) result.warnings.push(`answer is ${words} words with no limit set (the prompt says about 200 at most)`)
   if (/^(dear|hi|hello)\b/i.test(answer.trim())) result.failures.push('answer opens with a greeting')
   if (/[*#]|^\s*[-•]\s/m.test(answer)) result.failures.push('answer contains markdown or bullets')
   checkNumberProvenance('answer', answer, numberSourceSet(c.resumeText), numberSourceSet(c.job.description), result)

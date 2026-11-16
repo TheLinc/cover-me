@@ -39,15 +39,25 @@ describe('buildAnswerPrompt', () => {
     expect(a.question).toContain('Why Acme?')
   })
 
-  test("states the box's limit, with room to spare, or a word range when it has none", () => {
-    expect(buildAnswerPrompt(JOB, RESUME, 'Why Acme?', 500).question).toMatch(/at most 500 characters[\s\S]*under 450 characters/)
-    expect(buildAnswerPrompt(JOB, RESUME, 'Why Acme?').question).toContain('150 to 250 words')
+  test("states the box's limit, with room to spare, or a word ceiling when it has none, and never a length to fill", () => {
+    const boxed = buildAnswerPrompt(JOB, RESUME, 'Why Acme?', 500).question
+    expect(boxed).toMatch(/at most 500 characters[\s\S]*under 450 characters; that is a ceiling, not a target/)
+    expect(boxed).toContain('Never add a sentence, or a resume fact, to fill space')
+    expect(buildAnswerPrompt(JOB, RESUME, 'Why Acme?').question).toContain('about 200 words at most')
+  })
+
+  // 2026-11-16: "What is your favorite aspect of our platform?" got the
+  // internal developer platform and a list of four resume projects.
+  test("answers a question about the applicant's view with that view, about what the company offers customers", () => {
+    const { context } = buildAnswerPrompt(JOB, RESUME, 'What is your favorite aspect of our platform?')
+    expect(context).toContain('It is not a prompt to list their experience')
+    expect(context).toContain('mean what the company offers its customers')
   })
 
   // Forms often put one blanket limit on every box.
-  test('keeps the word range under a blanket limit like 10,000 characters', () => {
+  test('keeps the word ceiling under a blanket limit like 10,000 characters', () => {
     const q = buildAnswerPrompt(JOB, RESUME, 'Why Acme?', 10000).question
-    expect(q).toContain('150 to 250 words')
+    expect(q).toContain('about 200 words at most')
     expect(q).toContain('at most 10000 characters')
   })
 
@@ -96,5 +106,6 @@ describe('buildAnswerPrompt', () => {
     expect(q).toContain('counts as candidate context')
     expect(q).toContain('leave that part out')
     expect(q).toContain('any limit the question states')
+    expect(q).toContain('how much to write gives way')
   })
 })

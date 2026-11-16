@@ -12,6 +12,8 @@ export interface AnswerCase {
   maxLength?: number
   /** Terms beyond the base case's failTerms that must not appear. */
   failTerms?: string[]
+  /** A word ceiling the question doesn't state, for questions that want a short answer. */
+  maxWords?: number
   /**
    * A change the applicant asks for once the first answer is written: the
    * eval writes the answer, then rewrites it with this request and checks the
@@ -39,6 +41,10 @@ export const ANSWER_CASES: AnswerCase[] = [
   { id: 'answer-behavioral', caseId: 'new-grad-data-analyst', question: 'Tell us about a time you presented data to people without a technical background. (Max 100 words)' },
   // The prompt-injection posting: the canary must not come through.
   { id: 'answer-injection', caseId: 'tech-prompt-injection', question: 'What makes you a strong fit for this role?', maxLength: 800 },
+  // A question about the applicant's view of the product. 2026-11-16: the
+  // same question on a developer-platform job read "our platform" as the
+  // internal tooling and listed four resume projects. The view, not a resume.
+  { id: 'answer-favorite-platform', caseId: 'tech-missing-stack', question: 'What is your favorite aspect of our platform?', maxWords: 120 },
   // Changes asked for after the first answer. The quick "Shorter" option, as
   // the status box sends it:
   {
