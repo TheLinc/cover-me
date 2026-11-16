@@ -235,9 +235,10 @@ export default function PrivacyPage() {
                 posting data below). If the page has no posting, it uses the job from your latest saved
                 letter or resume. The question, the job details, your resume and any facts you add then go
                 to the AI provider whose key you use (BYOK), or to our server, which sends them to Anthropic
-                (Hosted). Our server stores neither the question nor the answer. The answer is typed into
-                that box in your browser, and a small Cover Me status box appears beside it until you close
-                it; nothing else on the page is changed.
+                (Hosted). If you then ask for a change, the change you pick or type and the answer now in
+                the box go the same way. Our server stores neither the question, the change nor the answer.
+                The answer is typed into that box in your browser, and a small Cover Me status box appears
+                beside it until you close it; nothing else on the page is changed.
               </Li>
               <Li>
                 <strong className="text-foreground">Account credentials (Hosted mode only).</strong>{' '}
@@ -342,8 +343,8 @@ export default function PrivacyPage() {
                 you upload, the tailoring options you pick and whether you regenerate. Each count goes to
                 PostHog with your Cover Me account ID, your plan and those choices, and PostHog keeps no
                 profile of you from it. Writing an answer to an application question sends one count
-                (answer_generated) with whether the box had a character limit and whether the job came from
-                the page or from your saved jobs, and reaching the answer allowance sends one
+                (answer_generated) with whether the box had a character limit, whether the job came from
+                the page or from your saved jobs, and whether it was a change you asked for, and reaching the answer allowance sends one
                 (answer_limit_hit) with which limit you reached. Apart from your account ID and the time, a count holds only yes-or-no answers and choices from a fixed list. It
                 never includes your resume, letters, the context you add, job or company details, file names
                 or posting addresses. There are no usage counts in BYOK mode. To stop them for your account,
@@ -689,13 +690,13 @@ export default function PrivacyPage() {
                   name: 'Anthropic',
                   url: 'https://www.anthropic.com/privacy',
                   when: 'BYOK mode (Claude provider) and Hosted mode (our key)',
-                  receives: 'Your resume text, the job posting data, any facts you add, and the question when you ask for an answer to an application question. In Hosted mode, also your resume on its own when you upload a new one (or on your first tailor, if it hasn\'t been read yet), and in BYOK mode the first time you tailor after uploading one, so its structure can be read. In BYOK mode, requests are made with your own API key and are subject to your agreement with Anthropic. In Hosted mode, requests are made with our key.',
+                  receives: 'Your resume text, the job posting data, any facts you add, and the question (with any change you ask for and the answer it changes) when you ask for an answer to an application question. In Hosted mode, also your resume on its own when you upload a new one (or on your first tailor, if it hasn\'t been read yet), and in BYOK mode the first time you tailor after uploading one, so its structure can be read. In BYOK mode, requests are made with your own API key and are subject to your agreement with Anthropic. In Hosted mode, requests are made with our key.',
                 },
                 {
                   name: 'OpenAI',
                   url: 'https://openai.com/policies/privacy-policy',
                   when: 'BYOK mode only (OpenAI provider)',
-                  receives: 'Your resume text, the job posting data, any facts you add and the question when you ask for an answer to an application question, plus your resume on its own the first time you tailor after uploading it, to read its structure. Requests use your own API key and are subject to your agreement with OpenAI.',
+                  receives: 'Your resume text, the job posting data, any facts you add and the question (with any change you ask for and the answer it changes) when you ask for an answer to an application question, plus your resume on its own the first time you tailor after uploading it, to read its structure. Requests use your own API key and are subject to your agreement with OpenAI.',
                 },
                 {
                   name: 'Supabase',

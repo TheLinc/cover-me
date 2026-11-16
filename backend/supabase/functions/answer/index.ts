@@ -5,7 +5,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { consumeAnswer } from '../_shared/limits.ts'
 import { ANTHROPIC_MESSAGES_URL, SONNET_BETA_HEADER, SONNET_FIELDS, SONNET_MAX_TOKENS } from '../_shared/anthropic.ts'
-import { buildAnswerPrompt, finishAnswer } from '../_shared/answer.ts'
+import { buildAnswerPrompt, finishAnswer, type AnswerRevision } from '../_shared/answer.ts'
 import { handleCors, json } from '../_shared/cors.ts'
 import { heartbeatJson } from '../_shared/heartbeat-json.ts'
 import { decrypt } from '../_shared/encrypt.ts'
@@ -36,6 +36,7 @@ Deno.serve(async (req) => {
   let maxLength: number | undefined
   let supplemental: string | undefined
   let jobSource: 'page' | 'saved'
+  let revision: AnswerRevision | undefined
   try {
     const body = await req.json()
     job = body.job
@@ -44,6 +45,14 @@ Deno.serve(async (req) => {
     supplemental = typeof body.supplemental === 'string' ? body.supplemental.trim() || undefined : undefined
     // Only a fixed value reaches PostHog.
     jobSource = body.jobSource === 'saved' ? 'saved' : 'page'
+    // A change to an answer already in the box: both parts or neither.
+    const r = body.revision
+    if (r !== undefined) {
+      if (typeof r?.previous !== 'string' || typeof r?.request !== 'string' || !r.previous.trim() || !r.request.trim()) {
+        return json({ error: 'Invalid revision' }, 400)
+      }
+      revision = { previous: r.previous, request: r.request }
+    }
   } catch {
     return json({ error: 'Invalid request body' }, 400)
   }
@@ -78,7 +87,7 @@ Deno.serve(async (req) => {
     if (error) console.error('Answer refund RPC error:', error.message)
   }
 
-  const prompt = buildAnswerPrompt(job, resumeText, question, maxLength, supplemental)
+  const prompt = buildAnswerPrompt(job, resumeText, question, maxLength, supplemental, revision)
 
   return heartbeatJson('answer', FAILED, async () => {
     let answer: string
@@ -95,7 +104,7 @@ Deno.serve(async (req) => {
       return { error: FAILED }
     }
     // One count per answer, with fixed values only, unless the account opted out.
-    EdgeRuntime.waitUntil(captureUsage(supabase, 'answer_generated', userId, { tier, hasCharLimit: !!maxLength, jobSource }))
+    EdgeRuntime.waitUntil(captureUsage(supabase, 'answer_generated', userId, { tier, hasCharLimit: !!maxLength, jobSource, revised: !!revision }))
     return { answer }
   })
 })

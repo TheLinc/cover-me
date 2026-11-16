@@ -126,9 +126,39 @@ describe('answer', () => {
     let events = await mine()
     for (let i = 0; i < 30 && events.length < 2; i++) events = await new Promise((r) => setTimeout(r, 100)).then(mine)
     const generated = events.find((e) => e.event === 'answer_generated')
-    expect(generated?.properties).toMatchObject({ tier: 'hosted_free', hasCharLimit: true, jobSource: 'saved' })
+    expect(generated?.properties).toMatchObject({ tier: 'hosted_free', hasCharLimit: true, jobSource: 'saved', revised: false })
     const hit = events.find((e) => e.event === 'answer_limit_hit')
     expect(hit?.properties).toMatchObject({ tier: 'hosted_free', kind: 'weekly' })
     expect(JSON.stringify(events)).not.toContain(QUESTION)
+  })
+
+  // The applicant asks for a change to the answer in the box (#232).
+  it('rewrites the answer in the box with the change asked for, counting one more answer', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    const revision = { previous: 'I rebuilt the billing export at Initech and want to do more of that.', request: 'Make it shorter.' }
+    const res = await callFunction('answer', { token: user.token, body: body({ revision }) })
+    expect((await res.json()).answer).toBeTruthy()
+    expect(await answersToday(user.id)).toBe(1)
+    const [req] = await mockClaude.requests()
+    const [context, question] = req.messages[0].content as unknown as Array<{ text: string }>
+    expect(context.text).not.toContain(revision.previous)
+    expect(question.text).toContain(revision.previous)
+    expect(question.text).toContain(revision.request)
+
+    const mine = async () => (await mockPosthog.events()).filter((e) => e.distinct_id === user!.id && e.event === 'answer_generated')
+    let events = await mine()
+    for (let i = 0; i < 30 && events.length < 1; i++) events = await new Promise((r) => setTimeout(r, 100)).then(mine)
+    expect(events[0]?.properties).toMatchObject({ revised: true })
+    expect(JSON.stringify(events)).not.toContain(revision.request)
+  })
+
+  it('rejects a change missing its answer or its request, charging nothing', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    for (const revision of [{ previous: 'An answer.' }, { previous: ' ', request: 'Shorter.' }, 'Shorter.']) {
+      expect((await callFunction('answer', { token: user.token, body: body({ revision }) })).status).toBe(400)
+    }
+    expect(await answersToday(user.id)).toBe(0)
   })
 })

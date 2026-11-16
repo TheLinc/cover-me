@@ -227,6 +227,10 @@ function staticChecks() {
         ['question embedded', question, a.question],
         ['length rule', question, a.maxLength ? `at most ${a.maxLength} characters` : '150 to 250 words'],
       ]
+      if (a.change) {
+        const revised = buildAnswerPrompt(c.job, c.resumeText, a.question, a.maxLength, undefined, { previous: 'PREVIOUS', request: a.change.request }).question
+        must.push(['change block', revised, 'CHANGE THE APPLICANT ASKED FOR'], ['change embedded', revised, a.change.request], ['change keeps the rules', revised, 'Every rule above still holds'])
+      }
       for (const [label, text, needle] of must) {
         if (!text.includes(needle)) result.failures.push(`answer prompt missing ${label} ("${needle.slice(0, 40)}…")`)
       }
@@ -394,7 +398,7 @@ async function liveLetters() {
 // answer is judged against the best one the resume allows. Without it the
 // judge marked down honest answers for lacking details the resume doesn't
 // have, which rewards inventing them.
-async function judgeAnswer(question: string, answer: string, resumeText: string): Promise<{ score: number; flags: string[] }> {
+async function judgeAnswer(question: string, answer: string, resumeText: string, change?: string): Promise<{ score: number; flags: string[] }> {
   const raw = await call(
     [{
       role: 'user',
@@ -416,7 +420,12 @@ Question:
 """
 ${question}
 """
-
+${change ? `
+The applicant then asked for this change to their first answer. Facts it states about them are true, as stated, and may be used; judge whether the answer below makes the change:
+"""
+${change}
+"""
+` : ''}
 Answer:
 """
 ${answer}
@@ -442,10 +451,19 @@ async function liveAnswers() {
     try {
       // Production sends the two parts as one message (own key) or as two text
       // blocks (hosted, for caching); the model reads the same text either way.
-      const raw = await call([{ role: 'user', content: `${context}\n\n${question}` }], { model: MODEL, maxTokens: 4000, label: 'answer' })
+      let raw = await call([{ role: 'user', content: `${context}\n\n${question}` }], { model: MODEL, maxTokens: 4000, label: 'answer' })
       answer = finishAnswer(raw, a.maxLength)
+      const first = answer
+      if (a.change) {
+        // The status box's change: the answer as written, then the request.
+        const revised = buildAnswerPrompt(c.job, c.resumeText, a.question, a.maxLength, undefined, { previous: first, request: a.change.request })
+        raw = await call([{ role: 'user', content: `${revised.context}\n\n${revised.question}` }], { model: MODEL, maxTokens: 4000, label: 'answer change' })
+        answer = finishAnswer(raw, a.maxLength)
+      }
       const maxWords = Number(/max(?:imum)?\s+(\d+)\s+words/i.exec(a.question)?.[1]) || undefined
-      result = checkAnswer(answer, c, { question: a.question, failTerms: a.failTerms, maxLength: a.maxLength, maxWords, uncut: finishAnswer(raw) })
+      result = checkAnswer(answer, c, { question: a.question, failTerms: a.failTerms, maxLength: a.maxLength, maxWords, uncut: finishAnswer(raw), allowTerms: a.change?.allowTerms })
+      if (a.change?.shorter && answer.length > first.length * 0.85) result.failures.push(`asked for shorter, but it went from ${first.length} to ${answer.length} characters`)
+      if (a.change) result.warnings.push(`first answer (${first.length} characters): ${first}`)
     } catch (e) {
       process.stdout.write('x')
       const failed: CheckResult = { failures: [`model call failed: ${e instanceof Error ? e.message : e}`], warnings: [] }
@@ -454,7 +472,7 @@ async function liveAnswers() {
     let judgeScore: number | undefined
     if (JUDGE) {
       try {
-        const j = await judgeAnswer(a.question, answer, c.resumeText)
+        const j = await judgeAnswer(a.question, answer, c.resumeText, a.change?.request)
         judgeScore = j.score
         result.warnings.unshift(`judge score: ${j.score}/5${j.flags.length ? ` — flags: ${j.flags.join(' | ')}` : ''}`)
         if (j.score <= 2) judgeFloor(result).push(`judge rated the answer ${j.score}/5`)

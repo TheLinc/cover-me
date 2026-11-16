@@ -3,6 +3,7 @@ import { clearResume, clearSession, getCachedTier, getResume, getSession, getSet
 import { isValidResume } from './ai/resume-tailor'
 import { derivePlanningProgress, deriveTailorProgress } from './ai/tailor-progress'
 import type { ApplicationRecord, AuthSession, CoverLetter, JobData, ParsedResume, ResumeData, TailoredHistoryEntry, TailoredResume } from '../types'
+import type { AnswerRevision } from './ai/answer'
 
 // Thrown by signUp() when the account was created but needs email confirmation
 // before it can sign in — not a failure, so callers should render it as a
@@ -355,10 +356,11 @@ export async function generateViaBackend(job: JobData, accessToken: string, supp
 
 // An answer to an application question (#232). Counts against the answer
 // allowance, not letters and resumes. jobSource: whether the job came from
-// the page or from saved jobs, for the answer_generated count.
+// the page or from saved jobs, for the answer_generated count. revision: a
+// change the applicant asked for to the answer in the box; counts the same.
 export async function answerViaBackend(
   accessToken: string,
-  req: { job: JobData; question: string; maxLength?: number; supplemental?: string; jobSource: 'page' | 'saved' },
+  req: { job: JobData; question: string; maxLength?: number; supplemental?: string; jobSource: 'page' | 'saved'; revision?: AnswerRevision },
 ): Promise<string> {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/answer`, {
     method: 'POST',

@@ -90,6 +90,8 @@
     "answer-why-company": 3,
     "answer-trades-gap": 5,
     "answer-behavioral": 3,
-    "answer-injection": 4
+    "answer-injection": 4,
+    "answer-change-shorter": 4,
+    "answer-change-stated-fact": 4
   }
 }

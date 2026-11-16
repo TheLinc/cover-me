@@ -1,6 +1,7 @@
 // The text box a right-click answer goes into (#232): its question, its
 // character limit, typing the answer in, and the status box beside it.
 import type { JobData } from '../types'
+import type { AnswerRevision } from '../lib/ai/answer'
 import logoUrl from '../public/icon/48.png?inline'
 
 const clean = (s: string | null | undefined) =>
@@ -136,10 +137,22 @@ const STYLE = `
 .q { margin: 0; color: #EEEDF8; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .meta { margin: 4px 0 0; font-size: 12px; color: #A6A3C6; }
 .meta .job { color: #AAB4FF; }
-button { all: unset; cursor: pointer; flex: none; display: grid; place-items: center; width: 22px; height: 22px;
-  margin: -2px -2px 0 0; border-radius: 6px; color: #A6A3C6; }
-button:hover { background: #272449; color: #EEEDF8; }
+button { all: unset; cursor: pointer; box-sizing: border-box; }
 button:focus-visible { outline: 2px solid #6366F1; outline-offset: 1px; color: #EEEDF8; }
+.close { flex: none; display: grid; place-items: center; width: 22px; height: 22px;
+  margin: -2px -2px 0 0; border-radius: 6px; color: #A6A3C6; }
+.close:hover { background: #272449; color: #EEEDF8; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 0 30px; }
+.chip { padding: 3px 10px; border: 1px solid #35315E; border-radius: 999px; background: #1C1A38;
+  color: #CFCCE6; font-size: 12px; line-height: 18px; }
+.chip:hover { background: #272449; border-color: #4A4580; color: #EEEDF8; }
+.change { display: flex; align-items: center; margin: 8px 0 0 30px; border: 1px solid #35315E; border-radius: 8px; background: #1C1A38; }
+.change:focus-within { border-color: #6366F1; box-shadow: 0 0 0 1px #6366F1; }
+.change input { all: unset; flex: 1; min-width: 0; padding: 6px 8px; font-size: 13px; color: #EEEDF8; }
+.change input::placeholder { color: #A6A3C6; }
+.send { flex: none; display: grid; place-items: center; width: 26px; height: 26px; margin-right: 2px; border-radius: 6px; color: #AAB4FF; }
+.send:hover { background: #272449; }
+.send:disabled { color: #6B6894; cursor: default; background: none; }
 label { display: block; margin: 10px 0 0 30px; color: #A6A3C6; font-size: 12px; }
 select { display: block; width: 100%; box-sizing: border-box; margin-top: 4px; padding: 5px 8px; border-radius: 8px;
   border: 1px solid #35315E; background: #1C1A38; color: #EEEDF8; font: inherit; font-size: 13px; }
@@ -219,6 +232,44 @@ interface StatusView {
   maxLength?: number
   job?: Job
   pick?: { jobs: Job[]; current: number; onPick: (index: number) => void }
+  // Asks for a change to the answer in the box (quick options or typed);
+  // shown: what the box says it's doing (the option's label, or the text).
+  revise?: (request: string, shown: string) => void
+}
+
+// The quick changes, and what each one asks the model for.
+const QUICK_CHANGES: Array<[label: string, request: string]> = [
+  ['Shorter', 'Make it shorter: about half the length, keeping the strongest point.'],
+  ['More specific', 'Make it more specific: use the most concrete details the resume gives.'],
+  ['Another example', 'Use a different example from the resume.'],
+]
+
+function changeControls(revise: (request: string, shown: string) => void): HTMLElement[] {
+  const chips = node('div', 'chips')
+  for (const [label, request] of QUICK_CHANGES) {
+    const chip = node('button', 'chip', label)
+    chip.type = 'button'
+    chip.addEventListener('click', () => revise(request, label))
+    chips.append(chip)
+  }
+  const form = node('form', 'change')
+  const input = node('input', '')
+  input.type = 'text'
+  input.maxLength = 500
+  input.placeholder = 'Ask for a change…'
+  input.setAttribute('aria-label', 'Ask for a change to the answer')
+  const send = node('button', 'send')
+  send.type = 'submit'
+  send.disabled = true
+  send.setAttribute('aria-label', 'Rewrite the answer')
+  send.append(svgIcon('M3 8h10M9 4l4 4-4 4'))
+  input.addEventListener('input', () => { send.disabled = !input.value.trim() })
+  form.addEventListener('submit', (e) => {
+    e.preventDefault()
+    if (input.value.trim()) revise(input.value.trim(), `“${input.value.trim()}”`)
+  })
+  form.append(input, send)
+  return [chips, form]
 }
 
 // The small status box by the field: working (with a loading bar), done (with
@@ -235,6 +286,9 @@ function showStatus(anchor: HTMLElement | null, view: StatusView): void {
   const box = node('div', view.kind === 'error' ? 'box err' : 'box')
   box.setAttribute('role', view.kind === 'error' ? 'alert' : 'status')
   if (view.kind === 'working') box.setAttribute('aria-busy', 'true')
+  // Typing in the change box stays in it: the page's own shortcuts (a "/"
+  // that jumps to search) never see those keys.
+  for (const type of ['keydown', 'keyup', 'keypress']) box.addEventListener(type, (e) => e.stopPropagation())
 
   const head = node('div', 'head')
   const logo = node('canvas', 'logo')
@@ -242,7 +296,7 @@ function showStatus(anchor: HTMLElement | null, view: StatusView): void {
   drawLogo(logo)
   const title = node('p', 'title')
   title.append(node('span', 'sr', 'Cover Me: '), view.title)
-  const close = node('button', '')
+  const close = node('button', 'close')
   close.type = 'button'
   close.setAttribute('aria-label', 'Close')
   close.append(svgIcon('M4 4l8 8M12 4l-8 8'))
@@ -262,6 +316,8 @@ function showStatus(anchor: HTMLElement | null, view: StatusView): void {
     if (meta.childNodes.length) ask.append(meta)
     box.append(ask)
   }
+
+  if (view.revise) box.append(...changeControls(view.revise))
 
   if (picking) {
     const pick = view.pick!
@@ -335,17 +391,32 @@ function done(target: Target, answer: string, jobs: Job[], index: number, jobSou
   showStatus(target.el, {
     kind: 'done', title: 'Answer added', note: notes.filter(Boolean).join(' '), ...asked(target), job: jobs[index],
     pick: { jobs, current: index, onPick: (i) => void rewrite(target, jobs, i, jobSource) },
+    revise: reviser(target, answer, jobs, index, jobSource),
   })
 }
 
-async function rewrite(target: Target, jobs: Job[], index: number, jobSource: JobSource): Promise<void> {
+// A change revises what's in the box now, so the applicant's own edits stay;
+// if they cleared it (Ctrl+Z), the answer Cover Me last typed.
+const reviser = (target: Target, answer: string, jobs: Job[], index: number, jobSource: JobSource) => (request: string, shown: string) => {
+  const now = (target.el instanceof HTMLInputElement || target.el instanceof HTMLTextAreaElement ? target.el.value : target.el.textContent ?? '').trim()
+  void rewrite(target, jobs, index, jobSource, { previous: now || answer, request }, shown)
+}
+
+async function rewrite(target: Target, jobs: Job[], index: number, jobSource: JobSource, revision?: AnswerRevision, shown?: string): Promise<void> {
   const { el, question, maxLength } = target
-  showStatus(el, { kind: 'working', title: 'Writing your answer…', ...asked(target), job: jobs[index] })
+  showStatus(el, { kind: 'working', title: revision ? 'Rewriting your answer…' : 'Writing your answer…', note: shown && `Change: ${shown}`, ...asked(target), job: jobs[index] })
   const source: JobSource = jobSource === 'page' && index === 0 ? 'page' : 'saved'
   try {
-    const result = await chrome.runtime.sendMessage({ type: 'ANSWER_REWRITE', request: { job: jobs[index], question, maxLength, jobSource: source } }) as { answer?: string; error?: string }
+    const result = await chrome.runtime.sendMessage({ type: 'ANSWER_REWRITE', request: { job: jobs[index], question, maxLength, jobSource: source, revision } }) as { answer?: string; error?: string }
     if (result?.answer) done(target, result.answer, jobs, index, jobSource)
-    else showStatus(el, { kind: 'error', title: result?.error ?? 'Could not write an answer. Please try again.', ...asked(target), job: jobs[index], pick: { jobs, current: index, onPick: (i) => void rewrite(target, jobs, i, jobSource) } })
+    else {
+      showStatus(el, {
+        kind: 'error', title: result?.error ?? 'Could not write an answer. Please try again.', ...asked(target), job: jobs[index],
+        pick: { jobs, current: index, onPick: (i) => void rewrite(target, jobs, i, jobSource) },
+        // A failed change can be tried again from the same answer.
+        revise: revision ? (request, again) => void rewrite(target, jobs, index, jobSource, { ...revision, request }, again) : undefined,
+      })
+    }
   } catch {
     showStatus(el, { kind: 'error', title: 'Cover Me was updated or restarted. Right-click the box again.' })
   }

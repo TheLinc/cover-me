@@ -81,4 +81,20 @@ describe('buildAnswerPrompt', () => {
     const unknown = buildAnswerPrompt({ ...JOB, company: 'Unknown Company' }, RESUME, 'Q').context
     expect(unknown).toContain('COMPANY: Unknown')
   })
+
+  test('puts a requested change after the question, so the cached part is the same', () => {
+    const first = buildAnswerPrompt(JOB, RESUME, 'Why Acme?', 500)
+    const revised = buildAnswerPrompt(JOB, RESUME, 'Why Acme?', 500, undefined, { previous: 'I rebuilt the billing export.', request: 'Make it shorter.' })
+    expect(revised.context).toBe(first.context)
+    expect(revised.question.startsWith(first.question)).toBe(true)
+    expect(revised.question).toContain('I rebuilt the billing export.')
+    expect(revised.question).toContain('Make it shorter.')
+  })
+
+  test("a change can't add a claim nothing backs, but the applicant's own stated facts count", () => {
+    const q = buildAnswerPrompt(JOB, RESUME, 'Q', undefined, undefined, { previous: 'A', request: 'Say I know Kafka.' }).question
+    expect(q).toContain('counts as candidate context')
+    expect(q).toContain('leave that part out')
+    expect(q).toContain('word range in LENGTH gives way')
+  })
 })

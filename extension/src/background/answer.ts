@@ -3,7 +3,7 @@
 // answer is written here (own key, or the account's answer allowance), and
 // the page script types it in.
 import { answerViaBackend, ensureValidSession } from '../lib/auth'
-import { buildAnswerPrompt, finishAnswer } from '../lib/ai/answer'
+import { buildAnswerPrompt, finishAnswer, type AnswerRevision } from '../lib/ai/answer'
 import { callClaude } from '../lib/ai/claude'
 import { callOpenAI } from '../lib/ai/openai'
 import { decryptApiKey } from '../lib/crypto'
@@ -28,22 +28,24 @@ export interface AnswerRequest {
   question: string
   maxLength?: number
   jobSource: 'page' | 'saved'
+  // Set when the applicant asked for a change to the answer in the box.
+  revision?: AnswerRevision
 }
 
-export async function writeAnswer({ job, question, maxLength, jobSource }: AnswerRequest): Promise<AnswerResult> {
+export async function writeAnswer({ job, question, maxLength, jobSource, revision }: AnswerRequest): Promise<AnswerResult> {
   try {
     const settings = await getSettings()
     const supplemental = (await getCandidateContext()).trim() || undefined
     if (resolveMode(settings) === 'hosted') {
       const session = await ensureValidSession()
       if (!session) return { error: 'Sign in to your Cover Me account: open Cover Me from the toolbar, then Settings.' }
-      return { answer: await answerViaBackend(session.access_token, { job, question, maxLength, supplemental, jobSource }) }
+      return { answer: await answerViaBackend(session.access_token, { job, question, maxLength, supplemental, jobSource, revision }) }
     }
     if (!settings?.apiKey) return { error: 'No API key set. Open Cover Me from the toolbar, then Settings, to add your key.' }
     const resume = await getResume()
     if (!resume?.text) return { error: 'No resume uploaded. Open Cover Me from the toolbar to upload yours.' }
     const apiKey = await decryptApiKey(settings.apiKey)
-    const prompt = buildAnswerPrompt(job, resume.text, question, maxLength, supplemental)
+    const prompt = buildAnswerPrompt(job, resume.text, question, maxLength, supplemental, revision)
     const text = `${prompt.context}\n\n${prompt.question}`
     const raw = settings.provider === 'claude' ? await callClaude(text, apiKey) : await callOpenAI(text, apiKey)
     const answer = finishAnswer(raw, maxLength)
