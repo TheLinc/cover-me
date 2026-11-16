@@ -54,7 +54,7 @@ export function groupLocalHistory(letters: CoverLetter[], tailored: TailoredHist
 // The jobs a right-click answer can be written for when the page has no
 // posting (#232): one per posting, newest first. Leaves out jobs saved with
 // no posting text, which can't be answered from, and entries that belong to
-// another account than userId (signed out: any account's).
+// another account than userId (signed out: entries no account holds).
 export function recentJobs(letters: CoverLetter[], tailored: TailoredHistoryEntry[], userId?: string, limit = 10): JobData[] {
   const seen = new Set<string>()
   const mine = (owner?: string) => !owner || owner === userId

@@ -442,9 +442,10 @@ async function liveAnswers() {
     try {
       // Production sends the two parts as one message (own key) or as two text
       // blocks (hosted, for caching); the model reads the same text either way.
-      answer = finishAnswer(await call([{ role: 'user', content: `${context}\n\n${question}` }], { model: MODEL, maxTokens: 4000, label: 'answer' }), a.maxLength)
+      const raw = await call([{ role: 'user', content: `${context}\n\n${question}` }], { model: MODEL, maxTokens: 4000, label: 'answer' })
+      answer = finishAnswer(raw, a.maxLength)
       const maxWords = Number(/max(?:imum)?\s+(\d+)\s+words/i.exec(a.question)?.[1]) || undefined
-      result = checkAnswer(answer, c, { question: a.question, failTerms: a.failTerms, maxLength: a.maxLength, maxWords })
+      result = checkAnswer(answer, c, { question: a.question, failTerms: a.failTerms, maxLength: a.maxLength, maxWords, uncut: finishAnswer(raw) })
     } catch (e) {
       process.stdout.write('x')
       const failed: CheckResult = { failures: [`model call failed: ${e instanceof Error ? e.message : e}`], warnings: [] }

@@ -61,11 +61,16 @@ export function fieldMaxLength(el: HTMLElement): number | undefined {
 type Job = JobData
 type JobSource = 'page' | 'saved'
 
+function deepActive(): HTMLElement | null {
+  let el = document.activeElement as HTMLElement | null
+  while (el?.shadowRoot?.activeElement) el = el.shadowRoot.activeElement as HTMLElement
+  return el
+}
+
 // The box right-clicked: right-clicking a box focuses it, so it's the focused
 // element (inside open shadow roots too).
 function focusedField(): HTMLElement | null {
-  let el = document.activeElement as HTMLElement | null
-  while (el?.shadowRoot?.activeElement) el = el.shadowRoot.activeElement as HTMLElement
+  const el = deepActive()
   if (!el) return null
   if (el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement || el.isContentEditable) return el
   return null
@@ -77,12 +82,19 @@ function focusedField(): HTMLElement | null {
 // refuses it, set through the prototype so React notices.
 // false when the box is gone or won't take focus (re-rendered, or its form
 // step hidden while the answer was written): then nothing is typed, rather
-// than typing into whatever box has focus now.
+// than typing into whatever box has focus now. Focus goes back to the box the
+// applicant moved on to while waiting, so their next keys don't land in the
+// answer.
 function typeAnswer(el: HTMLElement, text: string): boolean {
+  const before = deepActive()
   el.focus()
-  let active = document.activeElement
-  while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement
-  if (!el.isConnected || active !== el) return false
+  if (!el.isConnected || deepActive() !== el) return false
+  const typed = insert(el, text)
+  if (before && before !== el && before !== document.body && before.isConnected) before.focus()
+  return typed
+}
+
+function insert(el: HTMLElement, text: string): boolean {
   const plain = el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement ? el : null
   if (plain) {
     plain.select()

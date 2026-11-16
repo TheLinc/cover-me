@@ -65,7 +65,7 @@ function checkNumberProvenance(
 // other mention is a claim. Items the question doesn't name never appear.
 const NEGATION = /\b(not|never|no|without|lack\w*)\b|n['’]t\b/i
 
-export function checkAnswer(answer: string, c: EvalCase, extra: { question?: string; failTerms?: string[]; maxLength?: number; maxWords?: number } = {}): CheckResult {
+export function checkAnswer(answer: string, c: EvalCase, extra: { question?: string; failTerms?: string[]; maxLength?: number; maxWords?: number; uncut?: string } = {}): CheckResult {
   const result: CheckResult = { failures: [], warnings: [] }
   if (!answer.trim()) {
     result.failures.push('empty answer')
@@ -85,7 +85,9 @@ export function checkAnswer(answer: string, c: EvalCase, extra: { question?: str
   for (const t of c.warnTerms) {
     if (containsTerm(prose, t)) result.warnings.push(`answer contains "${t}" — verify it describes the employer, not the candidate`)
   }
-  if (extra.maxLength && answer.length > extra.maxLength) result.failures.push(`answer is ${answer.length} characters, over the box's ${extra.maxLength}`)
+  // uncut: the reply before finishAnswer trimmed it to the box, which would hide an overrun.
+  const written = (extra.uncut ?? answer).length
+  if (extra.maxLength && written > extra.maxLength) result.failures.push(`model wrote ${written} characters, over the box's ${extra.maxLength} (the end was cut)`)
   const words = answer.split(/\s+/).filter(Boolean).length
   if (extra.maxWords && words > extra.maxWords) result.failures.push(`answer is ${words} words, over the question's ${extra.maxWords}`)
   if (!extra.maxLength && !extra.maxWords && words > 300) result.warnings.push(`answer is ${words} words with no limit set (aim 150 to 250)`)
