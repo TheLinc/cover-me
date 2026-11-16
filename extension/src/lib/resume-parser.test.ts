@@ -1,6 +1,7 @@
 import { describe, expect, test, vi } from 'vitest'
 import { jsPDF } from 'jspdf'
 import { Document, ExternalHyperlink, Packer, Paragraph, Table, TableCell, TableRow, TextRun } from 'docx'
+import JSZip from 'jszip'
 import { parseResume } from './resume-parser'
 
 // Node shims for what the popup gets from the browser: the worker as a file
@@ -69,6 +70,17 @@ describe('parseResume keeps clickable links (#236)', () => {
       new Paragraph({ children: [new ExternalHyperlink({ link: 'mailto:ada@x.co', children: [new TextRun('ada@x.co')] })] }),
     ]))
     expect(text).toBe(`Projects\n\nCover Me (${PROJECT_URL}) – a tool\n\nada@x.co`)
+  })
+
+  test('Word: a link stored as a HYPERLINK field over two runs gets its URL once', async () => {
+    const file = await docxFile([new Paragraph('FIELD')])
+    const zip = await JSZip.loadAsync(await file.arrayBuffer())
+    const xml = await zip.file('word/document.xml')!.async('string')
+    const run = (inner: string) => `<w:r>${inner}</w:r>`
+    const field = `<w:p>${run('<w:fldChar w:fldCharType="begin"/>')}${run(`<w:instrText xml:space="preserve"> HYPERLINK "${PROJECT_URL}" </w:instrText>`)}${run('<w:fldChar w:fldCharType="separate"/>')}${run('<w:t>Cover</w:t>')}${run('<w:t xml:space="preserve"> Me</w:t>')}${run('<w:fldChar w:fldCharType="end"/>')}<w:r><w:t xml:space="preserve"> – a tool</w:t></w:r></w:p>`
+    zip.file('word/document.xml', xml.replace(/<w:p>(?:(?!<w:p>).)*?FIELD.*?<\/w:p>/s, field))
+    const text = await parseResume(new File([await zip.generateAsync({ type: 'arraybuffer' })], 'resume.docx'))
+    expect(text).toBe(`Cover Me (${PROJECT_URL}) – a tool`)
   })
 
   test('Word: a file with no links gives the text extractRawText gave', async () => {

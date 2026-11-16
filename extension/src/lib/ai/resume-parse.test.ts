@@ -290,6 +290,17 @@ describe.each([
     }, text)
     expect(r.links).toEqual(['ruby.dev'])
   })
+
+  test('a short entry inside a contact URL ("Git" in github.com) costs no link', async () => {
+    const text = `Ada Lovelace\nada@mail.com | 555-0100 | github.com/ada | ada.dev\n\nTOOLS\nGit\nDocker`
+    const r = (await load())({ ...LINKED_PARSE, email: 'ada@mail.com', website: '', links: ['github.com/ada', 'ada.dev'], experience: [], projects: [], education: [], otherSections: [{ heading: 'TOOLS', lines: ['Git', 'Docker'] }] }, text)
+    expect(r.links).toEqual(['github.com/ada', 'ada.dev'])
+  })
+
+  test("keeps a section URL the parse has nowhere else, so it isn't lost", async () => {
+    const r = (await load())({ ...LINKED_PARSE, projects: [{ name: 'Cover Me', bullets: ['Built a resume tailoring tool'] }] }, LINKED_TEXT)
+    expect(r.links).toEqual(LINKED_PARSE.links)
+  })
 })
 
 describe('the URL check (#236)', () => {

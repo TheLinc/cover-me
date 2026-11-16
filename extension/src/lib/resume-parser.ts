@@ -82,14 +82,32 @@ function withLinkUrls(items: object[], annotations: Array<{ rect?: number[]; url
 
 // mammoth's extractRawText, with each hyperlink's URL written after its text
 // (#236). extractRawText drops hrefs and takes no options, so this walks the
-// document convertToHtml reads, the way mammoth/lib/raw-text.js does.
+// document convertToHtml reads, the way mammoth/lib/raw-text.js does: as text
+// pieces, each with its link's href. A link stored as a HYPERLINK field comes
+// as a link per run, so neighbouring pieces with one href are one link. A link
+// with no text (an icon) still gives its URL.
 type DocxElement = { type: string; value?: string; href?: unknown; children?: DocxElement[] }
-function docxText(element: DocxElement): string {
-  if (element.type === 'text') return element.value ?? ''
-  if (element.type === 'tab') return '\t'
-  const text = (element.children ?? []).map(docxText).join('')
-  const link = element.type === 'hyperlink' ? linkUrl(element.href, text) : null
-  return text + (link ? ` (${link})` : '') + (element.type === 'paragraph' ? '\n\n' : '')
+type DocxPiece = { text: string; href?: unknown }
+function docxPieces(element: DocxElement, href?: unknown): DocxPiece[] {
+  if (element.type === 'text') return [{ text: element.value ?? '', href }]
+  if (element.type === 'tab') return [{ text: '\t', href }]
+  const own = element.type === 'hyperlink' ? element.href : href
+  const pieces = (element.children ?? []).flatMap((child) => docxPieces(child, own))
+  if (element.type === 'hyperlink' && !pieces.length) pieces.push({ text: '', href: own })
+  return element.type === 'paragraph' ? [...pieces, { text: '\n\n' }] : pieces
+}
+
+function docxText(document: DocxElement): string {
+  const merged: DocxPiece[] = []
+  for (const piece of docxPieces(document)) {
+    const last = merged[merged.length - 1]
+    if (piece.href !== undefined && last?.href === piece.href) last.text += piece.text
+    else if (piece.href !== undefined || piece.text) merged.push({ ...piece })
+  }
+  return merged.map(({ text, href }) => {
+    const url = href === undefined ? null : linkUrl(href, text)
+    return url ? `${text} (${url})` : text
+  }).join('')
 }
 
 async function parseDocx(file: File): Promise<string> {

@@ -100,17 +100,8 @@ export function urlCore(url: string): string {
 // Text lowercased with its spaces collapsed, for finding one copy in another.
 const squashed = (s: unknown) => (typeof s === 'string' ? s.toLowerCase().replace(/\s+/g, ' ').trim() : '')
 
-// Where the first section's content starts in the resume text (#236), the
-// text squashed: the first verbatim copy of an entry's text after the email
-// and phone. Looking only after them skips a header that names a skill, a
-// licence or the employer above the contact line; job titles are left out, as
-// a tagline under it often repeats one. Infinity when no entry is found, as
-// when a two-column PDF puts its contact sidebar after every section.
-function sectionsStart(parsed: ParsedResume, text: string): number {
-  const from = Math.max(0, ...[parsed.email, parsed.phone].map(squashed).filter(Boolean).map((s) => {
-    const at = text.indexOf(s)
-    return at === -1 ? 0 : at + s.length
-  }))
+// The parse's section entries' strings: everything but the contact details.
+function entryStrings(parsed: ParsedResume): string[] {
   const entries = [
     parsed.experience.map((e) => [e?.company, e?.bullets]),
     (parsed.projects ?? []).map((p) => [p?.name, p?.bullets]),
@@ -119,8 +110,16 @@ function sectionsStart(parsed: ParsedResume, text: string): number {
     parsed.skills,
     (parsed.otherSections ?? []).map((o) => o?.lines),
   ]
-  const found = entries.flat(3).map(squashed).filter((s) => s.length >= 3).map((s) => text.indexOf(s, from)).filter((i) => i >= 0)
-  return Math.min(...found)
+  return entries.flat(3).map(squashed).filter((s) => s.length >= 3)
+}
+
+// Where the first section's content starts in the resume text (#236), the
+// text squashed: the first verbatim copy of an entry's string. Job titles are
+// left out, as a tagline under the name often repeats one. A short string can
+// still turn up in the header ("git" in github.com), so this alone never drops
+// a link. Infinity when no entry is found.
+function sectionsStart(strings: string[], text: string): number {
+  return Math.min(...strings.map((s) => text.indexOf(s)).filter((i) => i >= 0))
 }
 
 // A LinkedIn or GitHub profile, which is a contact link wherever it sits: a
@@ -130,9 +129,9 @@ const PROFILE_URL = /^(?:[a-z]{2}\.)?linkedin\.com\/in\/[^/]+$|^github\.com\/[^/
 // Every contact-line URL, with website first and set, so a build that prints
 // only website (the store's before #129) still shows one. Left off when there
 // are none: renderers then fall back to website. Given the resume text, a URL
-// it first shows inside a section (a project's, a job's) is dropped (#236):
-// the parse copies that one into its entry's text, and the contact line
-// prints every link. A URL the text lacks is kept, as nothing places it.
+// it first shows inside a section (a project's, a job's), and that the parse
+// copies into an entry, is dropped (#236): the contact line prints every link.
+// One the text lacks, or the entries don't hold, is kept, so none is lost.
 export function withLinks<T extends ParsedResume>(parsed: T, resumeText?: string): T {
   const raw = (parsed as { links?: unknown }).links
   let links = (Array.isArray(raw) ? raw : []).filter((l): l is string => typeof l === 'string' && l.trim().length > 0).map((l) => l.trim())
@@ -140,11 +139,12 @@ export function withLinks<T extends ParsedResume>(parsed: T, resumeText?: string
   if (website && !links.includes(website)) links.unshift(website)
   if (resumeText && links.length) {
     const text = squashed(resumeText)
-    const start = sectionsStart(parsed, text)
+    const strings = entryStrings(parsed)
+    const start = sectionsStart(strings, text)
     const contact = links.filter((l) => {
       const core = urlCore(l)
       const at = text.indexOf(core)
-      return at === -1 || at < start || PROFILE_URL.test(core)
+      return at === -1 || at < start || PROFILE_URL.test(core) || !strings.some((s) => s.includes(core))
     })
     if (!contact.length) return { ...parsed, website: '', links: [] }
     links = contact
