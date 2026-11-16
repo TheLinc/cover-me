@@ -42,41 +42,59 @@ Deno.serve(async (req) => {
     .eq('id', userId).not('extension_removed_at', 'is', null)
   if (clearError) console.error('resume: clearing extension_removed_at failed')
 
-  // GET — fetch resume text
+  // GET — fetch resume text. design_hash, for Pro: the Word file that goes
+  // with this text, so the extension can restore it on another computer (#174).
   if (req.method === 'GET') {
     const { data, error } = await supabase
       .from('resumes')
-      .select('text_encrypted, filename, updated_at')
+      .select('text_encrypted, filename, updated_at, design_hash')
       .eq('user_id', userId)
       .single()
 
     if (error || !data) return json({ error: 'No resume found' }, 404)
 
+    let text: string
     try {
-      const text = await decrypt(data.text_encrypted)
-      return json({ text, filename: data.filename, updated_at: data.updated_at })
+      text = await decrypt(data.text_encrypted)
     } catch {
       return json({ error: 'Failed to decrypt resume' }, 500)
     }
+    let design_hash: string | undefined
+    if (data.design_hash) {
+      const { data: account } = await supabase.from('users').select('tier').eq('id', userId).single()
+      if (account?.tier === 'hosted_pro') design_hash = data.design_hash
+    }
+    return json({ text, filename: data.filename, updated_at: data.updated_at, design_hash })
   }
 
   // POST ?file=1: a Pro account's Word file, for the dashboard's download in
   // the user's own design. Kept with the parse it was checked against.
+  // textHash: the SHA-256 of the resume text it was checked against. When the
+  // account's text has changed since (another computer), the file is refused:
+  // it would be kept with the wrong parse and restored as the wrong design.
+  // Older extensions don't send it.
   if (req.method === 'POST' && new URL(req.url).searchParams.has('file')) {
     const { data: account } = await supabase.from('users').select('tier').eq('id', userId).single()
     if (account?.tier !== 'hosted_pro') return json({ error: 'Keeping your Word file requires a Pro subscription.' }, 403)
     const raw = await readBody(req, MAX_DOCX_BODY)
     if (raw === null) return json({ error: 'Word file too large (max 2 MB)' }, 413)
-    let hash: unknown, docx: unknown
+    let hash: unknown, docx: unknown, textHash: unknown
     try {
-      ({ hash, docx } = JSON.parse(raw))
+      ({ hash, docx, textHash } = JSON.parse(raw))
     } catch {
       return json({ error: 'Invalid request body' }, 400)
     }
     if (typeof hash !== 'string' || !SHA256_HEX.test(hash)) return json({ error: 'Invalid hash' }, 400)
     if (typeof docx !== 'string' || !docx || !/^[A-Za-z0-9+/]+={0,2}$/.test(docx)) return json({ error: 'Invalid file' }, 400)
 
-    const { data: resumeRow } = await supabase.from('resumes').select('structured_encrypted').eq('user_id', userId).maybeSingle()
+    if (textHash !== undefined && (typeof textHash !== 'string' || !SHA256_HEX.test(textHash))) return json({ error: 'Invalid textHash' }, 400)
+
+    const { data: resumeRow } = await supabase.from('resumes').select('text_encrypted, structured_encrypted').eq('user_id', userId).maybeSingle()
+    if (textHash !== undefined) {
+      let current: string | null = null
+      try { current = resumeRow ? await sha256Hex(await decrypt(resumeRow.text_encrypted)) : null } catch { /* unreadable: no match */ }
+      if (current !== textHash) return json({ error: "Your account has a different resume than this browser, so this Word file wasn't saved to it. Upload your .docx here again to use it with your account." }, 409)
+    }
     let docx_encrypted: string
     try {
       docx_encrypted = await encrypt(docx)
@@ -88,6 +106,13 @@ Deno.serve(async (req) => {
       { onConflict: 'user_id,hash' },
     )
     if (error) return json({ error: 'Failed to save Word file' }, 500)
+    // The file goes with the resume text it was checked against, unless new
+    // text arrived meanwhile.
+    if (resumeRow) {
+      const { error: designError } = await supabase.from('resumes').update({ design_hash: hash })
+        .eq('user_id', userId).like('text_encrypted', sameCiphertext(resumeRow.text_encrypted))
+      if (designError) return json({ error: 'Failed to save Word file' }, 500)
+    }
 
     // Files no tailored resume was made from go, apart from this one.
     const { data: used } = await supabase.from('tailored_resumes').select('source_hash').eq('user_id', userId).not('source_hash', 'is', null)
@@ -156,10 +181,10 @@ Deno.serve(async (req) => {
       return json({ error: 'Encryption failed' }, 500)
     }
 
-    // New text clears the parsed copy, and the parse starts now so the first
-    // tailor doesn't wait for it.
+    // New text clears the parsed copy and the Word file that went with the
+    // old text, and the parse starts now so the first tailor doesn't wait for it.
     const { error } = await supabase.from('resumes').upsert(
-      { user_id: userId, text_encrypted, filename: safeFilename, updated_at, structured_encrypted: null },
+      { user_id: userId, text_encrypted, filename: safeFilename, updated_at, structured_encrypted: null, design_hash: null },
       { onConflict: 'user_id' },
     )
 
@@ -235,10 +260,8 @@ async function parseNow(supabase: SupabaseClient, userId: string, text: string, 
   try {
     // The scrape limiter's counter, keyed by a hash of the account instead of
     // the IP (the table holds only 64-character hex keys).
-    const key = new TextEncoder().encode(`resume-parse:${userId}`)
-    const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', key))
     const { data: allowed, error } = await supabase.rpc('check_scrape_rate_limit', {
-      p_ip_hash: Array.from(digest, (b) => b.toString(16).padStart(2, '0')).join(''),
+      p_ip_hash: await sha256Hex(`resume-parse:${userId}`),
       p_per_minute: PARSES_PER_MINUTE,
       p_per_day: PARSES_PER_DAY,
     })
@@ -253,4 +276,9 @@ async function parseNow(supabase: SupabaseClient, userId: string, text: string, 
     console.error('Resume parse failed')
     return null
   }
+}
+
+async function sha256Hex(s: string): Promise<string> {
+  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)))
+  return Array.from(digest, (b) => b.toString(16).padStart(2, '0')).join('')
 }

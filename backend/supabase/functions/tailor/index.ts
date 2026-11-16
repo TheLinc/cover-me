@@ -7,7 +7,7 @@ import { findOrCreateJobApplication } from '../_shared/job-application.ts'
 import { isUuid } from '../_shared/history-upload.ts'
 import { isCurrentParse, isValidParsedResume, parseResumeStructure, type ParsedResume, upgradedParse } from '../_shared/resume-parse.ts'
 import { buildsOnEdits, candidateText, checkAndRewriteLines, checkedTitle, groundSkills, groundTailored, keepSeen, matchSkillCase, seenVersion, trustedNotes } from '../_shared/resume-grounding.ts'
-import { scoreFromMatch } from '../_shared/ats-score.ts'
+import { scoreBefore, scoreFromMatch } from '../_shared/ats-score.ts'
 import { captureUsage } from '../_shared/posthog.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
@@ -157,7 +157,7 @@ function buildTailorSchema(parsed: ParsedResume): string {
 // gaps, the section order (layout, not wording), and deleted sections, so the
 // model doesn't put their text back (#197).
 function stripScores(r: Record<string, unknown>): Record<string, unknown> {
-  const { atsScore: _s, atsGaps: _g, atsGapsBeforeEdits: _b, editedAt: _e, hasEdits: _h, sectionOrder: _o, deletedSections: _d, ...rest } = r
+  const { atsScore: _s, atsScoreBefore: _sb, atsGaps: _g, atsGapsBeforeEdits: _b, editedAt: _e, hasEdits: _h, sectionOrder: _o, deletedSections: _d, ...rest } = r
   return rest
 }
 
@@ -597,6 +597,10 @@ ${job.description}`)
       atsGaps = computed.gaps
       resume.atsScore = atsScore
       resume.atsGaps = atsGaps
+      // The upload, not the notes: an ATS sees only the resume (#228). Nor the
+      // gap list (it names the missing keywords) or the sections deleted in the
+      // editor: the PDF prints neither.
+      resume.atsScoreBefore = scoreBefore(delta.keywordMatch, atsScore, candidateText(structuredResume), candidateText({ ...resume, atsGaps: undefined, deletedSections: undefined }), job.description)
     }
     if (sourceHash) resume.sourceHash = sourceHash
     if (buildsOnEdits(previous)) resume.hasEdits = true

@@ -140,6 +140,21 @@ export async function saveResumeEdit(id: string, saved: TailoredResume): Promise
 // The editor tab, a page of its own (vite.config.ts builds it).
 const EDITOR_PATH = 'src/editor/index.html'
 
-export function openResumeEditor(id: string): void {
-  void chrome.tabs.create({ url: chrome.runtime.getURL(`${EDITOR_PATH}?id=${encodeURIComponent(id)}`) })
+// Opens next to the tab the popup was on (the job posting), and passes that
+// tab's id so Done can go back to it (#223).
+export async function openResumeEditor(id: string): Promise<void> {
+  const [from] = await chrome.tabs.query({ active: true, currentWindow: true })
+  const url = chrome.runtime.getURL(`${EDITOR_PATH}?id=${encodeURIComponent(id)}`)
+  await chrome.tabs.create(from?.id === undefined ? { url } : { url: `${url}&from=${from.id}`, openerTabId: from.id, index: from.index + 1 })
+}
+
+// Done in the editor: back to the job tab with the popup open. The tab may be
+// closed by now, and openPopup needs Chrome 127+; either way the editor still
+// closes, so this never throws.
+export async function returnToTab(from: number): Promise<void> {
+  try {
+    const { windowId } = await chrome.tabs.update(from, { active: true })
+    await chrome.windows.update(windowId, { focused: true })
+    await chrome.action.openPopup({ windowId })
+  } catch { /* the editor closes anyway */ }
 }

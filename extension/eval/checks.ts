@@ -5,6 +5,7 @@ import type { ParsedResume, TailoredResume } from '../src/types'
 import type { EvalCase } from './fixtures'
 import { extractNumbers, lintLetter } from '../src/lib/ai/letter-lint'
 import { mixedTenseLines } from '../src/lib/ai/resume-grounding'
+import { shownInSection, urlCore } from '../src/lib/ai/resume-parse'
 
 export interface CheckResult {
   failures: string[]
@@ -56,6 +57,51 @@ function checkNumberProvenance(
       result.warnings.push(`${label}: small number "${n.raw}" not found in inputs — likely derived (years/count); verify`)
     }
   }
+}
+
+// ── Application answer checks (#232) ─────────────────────────────────────────
+
+// A missing item the question asks about by name may appear only in a plain
+// statement that the applicant lacks it ("I haven't used Kubernetes"); any
+// other mention is a claim. Items the question doesn't name never appear.
+const NEGATION = /\b(not|never|no|without|lack\w*)\b|n['’]t\b/i
+
+export function checkAnswer(answer: string, c: EvalCase, extra: { question?: string; failTerms?: string[]; maxLength?: number; maxWords?: number; uncut?: string; allowTerms?: string[]; allowNear?: string } = {}): CheckResult {
+  const result: CheckResult = { failures: [], warnings: [] }
+  if (!answer.trim()) {
+    result.failures.push('empty answer')
+    return result
+  }
+  // The posting's own title is fair to name, as in the letter check.
+  const prose = answer.replace(new RegExp(escapeRegex(c.job.title), 'gi'), ' ')
+  const sentences = prose.split(/(?<=[.!?])\s+/)
+  // A term the applicant's own change states may appear, but only as stated.
+  const allowed = new Set((extra.allowTerms ?? []).map((t) => t.toLowerCase()))
+  for (const t of allowed) {
+    const loose = sentences.filter((s) => containsTerm(s, t) && !NEGATION.test(s) && !(extra.allowNear && s.includes(extra.allowNear)))
+    if (loose.length) result.failures.push(`answer claims "${t}" beyond what the change states: ${loose.join(' ')}`)
+  }
+  for (const t of [...c.failTerms, ...(extra.failTerms ?? [])].filter((t) => !allowed.has(t.toLowerCase()))) {
+    const hits = sentences.filter((s) => containsTerm(s, t))
+    if (!hits.length) continue
+    const asked = !!extra.question && containsTerm(extra.question, t)
+    if (!asked) result.failures.push(`answer names "${t}" (not in resume, and the question didn't ask)`)
+    else if (!hits.every((s) => NEGATION.test(s))) result.failures.push(`answer claims "${t}" (not in resume)`)
+    else result.warnings.push(`answer says the applicant lacks "${t}", as the question asked about it`)
+  }
+  for (const t of c.warnTerms) {
+    if (containsTerm(prose, t)) result.warnings.push(`answer contains "${t}" — verify it describes the employer, not the candidate`)
+  }
+  // uncut: the reply before finishAnswer trimmed it to the box, which would hide an overrun.
+  const written = (extra.uncut ?? answer).length
+  if (extra.maxLength && written > extra.maxLength) result.failures.push(`model wrote ${written} characters, over the box's ${extra.maxLength} (the end was cut)`)
+  const words = answer.split(/\s+/).filter(Boolean).length
+  if (extra.maxWords && words > extra.maxWords) result.failures.push(`answer is ${words} words, over the question's ${extra.maxWords}`)
+  if (!extra.maxLength && !extra.maxWords && words > 230) result.warnings.push(`answer is ${words} words with no limit set (the prompt says about 200 at most)`)
+  if (/^(dear|hi|hello)\b/i.test(answer.trim())) result.failures.push('answer opens with a greeting')
+  if (/[*#]|^\s*[-•]\s/m.test(answer)) result.failures.push('answer contains markdown or bullets')
+  checkNumberProvenance('answer', answer, numberSourceSet(c.resumeText), numberSourceSet(c.job.description), result)
+  return result
 }
 
 // ── Cover letter checks ──────────────────────────────────────────────────────
@@ -337,7 +383,32 @@ export function checkParse(actual: ParsedResume, c: EvalCase): CheckResult {
   // The sections in the resume's order, where the answer key gives one (#165).
   if (want.sectionOrder) eq('sectionOrder', want.sectionOrder.join(', '), (actual.sectionOrder ?? []).join(', '))
 
+  result.failures.push(...checkParseUrls(actual, c.resumeText))
+
   return result
+}
+
+// Every URL the resume text shows (#236): one with a protocol or www., or a
+// domain under a common TLD (so not Node.js or a file name), without an
+// email's domain or a sentence's last full stop.
+const URL_RE = /(?<![\w@./-])(?:https?:\/\/|www\.|[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:com|org|net|io|dev|app|ai|co|me|ca|us|uk|edu|gov|info|xyz|tech|site|design|page|so|ly|fr|de)\b)[^\s)\]>,;"]*/gi
+export function resumeUrls(text: string): string[] {
+  return [...new Set((text.match(URL_RE) ?? []).filter((u) => !u.includes('@')).map((u) => u.replace(/\.+$/, '')))]
+}
+
+// A parse's URL failures (#236): a URL of the resume text found nowhere in the
+// parse, or a URL on the contact line that the parse also puts in a section or
+// the text first shows in one (shownInSection, without withLinks' rule that
+// keeps one no entry holds rather than lose it).
+export function checkParseUrls(actual: ParsedResume, resumeText: string): string[] {
+  const parse = JSON.stringify(actual).toLowerCase()
+  const { name, email, phone, location, website, links, ...sections } = actual
+  const sectionUrls = new Set(resumeUrls(JSON.stringify(sections)).map(urlCore))
+  const inSection = (l: string) => sectionUrls.has(urlCore(l)) || shownInSection(actual, resumeText, l)
+  return [
+    ...resumeUrls(resumeText).filter((u) => !parse.includes(urlCore(u))).map((u) => `URL missing from the parse: "${u}"`),
+    ...(links ?? []).filter(inSection).map((l) => `section URL on the contact line: "${l}"`),
+  ]
 }
 
 // Static sanity check on the fixtures themselves: every answer-key bullet must

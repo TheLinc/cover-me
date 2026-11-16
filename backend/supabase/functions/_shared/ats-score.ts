@@ -94,3 +94,52 @@ export function scoreFromMatch(m: KeywordMatch, ctx: ScoreContext = {}): { score
   const gaps = [...new Set([...missing, ...gating])]
   return { score, gaps }
 }
+
+// The same posting keywords, checked against `text` by word instead of by the
+// model's judgment (#228). The model names keywords as phrases ("Briefing
+// senior leadership", "SolidWorks (Creo or SolidWorks)"), so an exact match
+// would miss most of them; a keyword counts when every word of it, or of one
+// option it gives in parentheses or after a slash, appears in some form.
+// Gating gaps carry over: tailoring can't meet a hard requirement.
+const FILLER = new Set(['a', 'an', 'and', 'or', 'of', 'the', 'in', 'on', 'to', 'for', 'with', 'year', 'years', 'experience'])
+const words = (s: string) => s.split(/[^A-Za-z0-9+#]+/).filter(Boolean)
+// ponytail: 5-letter prefix as the stem ("managed" ~ "management"); a real stemmer if it misfires.
+const stem = (w: string) => w.toLowerCase().slice(0, 5)
+
+function options(keyword: string): string[] {
+  const out = [keyword]
+  const m = /^(.*?)\s*\((.*)\)\s*$/.exec(keyword)
+  if (m) out.push(m[1], ...m[2].split(/,|\bor\b/))
+  for (const o of [...out]) if (o.includes('/')) out.push(...o.split('/'))
+  return out
+}
+
+function hasKeyword(stems: Set<string>, keyword: string): boolean {
+  return options(keyword).some((o) => {
+    const need = words(o).filter((w) => !FILLER.has(w.toLowerCase()) && !/^\d+\+?$/.test(w))
+    return need.length > 0 && need.every((w) => stems.has(stem(w)))
+  })
+}
+
+export function scoreText(m: KeywordMatch, text: string, jobDescription?: string): { score: number; gaps: string[] } {
+  const stems = new Set(words(text).map(stem))
+  const split = (keywords: string[]) => ({
+    covered: keywords.filter((k) => hasKeyword(stems, k)),
+    missing: keywords.filter((k) => !hasKeyword(stems, k)),
+  })
+  const t1 = split([...strArr(m.tier1Covered), ...strArr(m.tier1Missing)])
+  const t2 = split([...strArr(m.tier2Covered), ...strArr(m.tier2Missing)])
+  return scoreFromMatch(
+    { tier1Covered: t1.covered, tier1Missing: t1.missing, tier2Covered: t2.covered, tier2Missing: t2.missing, gatingGaps: m.gatingGaps },
+    { jobDescription, candidate: text },
+  )
+}
+
+// The original resume's score, on the tailored score's scale: the tailored
+// score less what tailoring's wording gained by word match. The model's own
+// judgment of the original would need a second call; comparing the two
+// resumes by one measure keeps the gain honest.
+export function scoreBefore(m: KeywordMatch, atsScore: number, original: string, tailored: string, jobDescription?: string): number {
+  const gain = scoreText(m, tailored, jobDescription).score - scoreText(m, original, jobDescription).score
+  return Math.max(0, atsScore - Math.max(0, gain))
+}

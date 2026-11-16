@@ -463,6 +463,9 @@ verify_jwt = false
 # secret, so it would reject every user once Auth signs with the new keys.
 # They're declared because the Supabase GitHub integration deploys only
 # functions listed here (tests/integration/functions-config.test.ts).
+[functions.answer]
+verify_jwt = false
+
 [functions.applications]
 verify_jwt = false
 

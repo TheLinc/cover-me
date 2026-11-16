@@ -35,9 +35,11 @@ export default async function DashboardPage() {
     .single()
 
   // Usage against the free starter, the free week, or Pro's daily cap
-  // (migration 015). The database owns the numbers.
-  const [{ data: allowance }, trial] = await Promise.all([
+  // (migration 015), and the separate answer allowance (032). The database
+  // owns the numbers.
+  const [{ data: allowance }, { data: answers }, trial] = await Promise.all([
     supabase.rpc('my_generation_allowance'),
+    supabase.rpc('my_answer_allowance'),
     userData?.tier === 'hosted_pro' && userData.stripe_customer_id ? readTrial(userData.stripe_customer_id) : NO_TRIAL,
   ])
 
@@ -63,6 +65,7 @@ export default async function DashboardPage() {
       tier={userData?.tier ?? 'hosted_free'}
       trial={trial}
       allowance={(allowance as Allowance | null) ?? null}
+      answers={(answers as Allowance | null) ?? null}
       history={history}
     />
     <Toaster />

@@ -160,6 +160,8 @@ export default function TermsPage() {
                 generate for to your account (its title, company, posting address, dates and stage), so
                 you can track your applications on the dashboard. The Pro tier ($15/month or $35 every 3 months) allows up to 25 generations a day under fair use
                 and also keeps your cover letters and tailored resumes on your account, on any device.
+                Answers to application questions have their own allowance, which never uses up
+                generations: Free gets 5 to start, then 5 a week; Pro up to 50 a day.
               </Li>
             </Ul>
             <P>

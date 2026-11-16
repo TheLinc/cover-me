@@ -85,6 +85,8 @@ describe('Regenerate after section edits', () => {
     sectionOrder: ['other', 'skills', 'summary', 'experience', 'education', 'other'],
     deletedSections: [{ key: 'certifications', index: 4, certifications: ['Deleted cert text'] }],
     editedAt: '2026-11-12T00:00:00Z',
+    atsScore: 74,
+    atsScoreBefore: 61,
   }
   const raw = JSON.stringify({ summary: 'Reworded.', experience: [{ bullets: ['Built the billing service'] }] })
 
@@ -96,12 +98,38 @@ describe('Regenerate after section edits', () => {
     expect(resume.certifications).toBeUndefined()
   })
 
-  test("the prompt never sees a deleted section's text", () => {
+  test("the prompt never sees a deleted section's text or the old scores", () => {
     const job = { title: 'Engineer', company: 'Acme', description: 'Engineer' } as Parameters<typeof buildPrompt>[0]
     const prompt = buildPrompt(job, parsed, false, undefined, false, true, previous)
     expect(prompt).toContain('REVISION MODE')
     expect(prompt).not.toContain('Deleted cert text')
     expect(prompt).not.toContain('deletedSections')
+    expect(prompt).not.toContain('atsScore')
+  })
+})
+
+describe('score before tailoring (#228)', () => {
+  const parsed = {
+    name: 'Pat Lee', email: 'pat@example.com', phone: '', website: '',
+    experience: [{ title: 'Engineer', company: 'Northwind', location: '', dates: '2022', bullets: ['Built the billing service in TypeScript'] }],
+    education: [],
+  } as unknown as ParsedResume
+  const keywordMatch = { tier1Covered: ['TypeScript', 'Postgres'], tier1Missing: ['Kubernetes'] }
+
+  test('is the tailored score when the wording added no keyword, gap list aside', async () => {
+    const raw = JSON.stringify({ experience: [{ bullets: ['Built the billing service in TypeScript'] }], keywordMatch })
+    const resume = await assembleTailored(parsed, raw, { jobDescription: 'Engineer' })
+    expect(resume.atsGaps).toContain('Kubernetes')
+    expect(resume.atsScoreBefore).toBe(resume.atsScore)
+  })
+
+  test('drops by what the wording added', async () => {
+    const km = { tier1Covered: ['TypeScript', 'Payment systems'], tier1Missing: ['Kubernetes'] }
+    const raw = JSON.stringify({ experience: [{ bullets: ['Built the billing and payment systems in TypeScript'] }], keywordMatch: km })
+    const resume = await assembleTailored(parsed, raw, { jobDescription: 'Engineer' })
+    // Model: 70 * 2/3 + 30 = 77. Word match: original 70 * 1/3 + 30 = 53, tailored 77, so before is 77 - 24.
+    expect(resume.atsScore).toBe(77)
+    expect(resume.atsScoreBefore).toBe(53)
   })
 })
 

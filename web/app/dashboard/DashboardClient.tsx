@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
-import { openBilling } from "@/lib/billing";
-import { describeAllowance, type Allowance } from "@/lib/limits";
+import { useEffect, useState, type ReactNode } from "react";
+import { firstMonthOffer, openBilling, type FirstMonthOffer } from "@/lib/billing";
+import { describeAllowance, describeAnswers, type Allowance } from "@/lib/limits";
 import { DaysLeft, LocalDate } from "./LocalDate";
 import type { TrialState } from "@/lib/stripe-tier";
 import { CHROME_STORE_URL, cn } from "@/lib/utils";
@@ -29,6 +29,8 @@ interface Props {
   // A gift trial keeps the upgrade buttons; a plan bought during one shows its first payment.
   trial: TrialState;
   allowance: Allowance | null;
+  // Answers to application questions, counted apart (#232).
+  answers: Allowance | null;
   // Recent applications, rendered by the server page and streamed in.
   history: ReactNode;
 }
@@ -40,12 +42,21 @@ export default function DashboardClient({
   tier,
   trial: { giftTrialEnd, firstPayment },
   allowance,
+  answers,
   history,
 }: Props) {
   const [upgrading, setUpgrading]           = useState<'monthly' | 'quarterly' | null>(null);
   const [upgradeError, setUpgradeError]     = useState('');
+  const [offer, setOffer]                   = useState<FirstMonthOffer | null>(null);
   const isPro = tier === "hosted_pro";
+
+  // The first-month offer (#213), if one is open. Loads after the page, and
+  // any failure just leaves it out.
+  useEffect(() => {
+    if (!isPro) firstMonthOffer().then(setOffer, () => {});
+  }, [isPro]);
   const usage = describeAllowance(allowance);
+  const answersLeft = describeAnswers(answers);
   const leftPct = usage && usage.limit > 0 ? ((usage.limit - usage.used) / usage.limit) * 100 : 0;
   const proDaily = allowance?.pro_daily ?? 25;
 
@@ -103,6 +114,11 @@ export default function DashboardClient({
                   <div aria-hidden className="h-1.5 rounded-full bg-panel" />
                 </>
               )}
+              {answersLeft && (
+                <p className="mt-1 border-t border-line pt-2.5 text-[13px] tabular-nums text-ink-2">
+                  <span className="text-subtle">Application answers:</span> {answersLeft}
+                </p>
+              )}
             </div>
             {isPro && !giftTrialEnd ? (
               <div className={cn(TILE, "items-start gap-2.5")}>
@@ -129,6 +145,11 @@ export default function DashboardClient({
                 ) : (
                   <>
                     <span className="text-[12.5px] font-medium text-brand-ink">Go Pro</span>
+                    {offer && (
+                      <p className="text-[13.5px] text-ink">
+                        <strong className="font-semibold">{offer.name ?? "Your first month is discounted"}</strong> on the monthly plan, taken off at checkout. Ends <LocalDate iso={offer.endsAt} options={{ month: "long", day: "numeric" }} />.
+                      </p>
+                    )}
                     <ul className="flex flex-col gap-1 text-[13.5px] text-ink">
                       {[`${proDaily} generations a day`, 'Your letters and resumes on every device', 'Cancel any time'].map((line) => (
                         <li key={line} className="flex items-center gap-2"><span aria-hidden className="size-1.5 rounded-full bg-brand" />{line}</li>
