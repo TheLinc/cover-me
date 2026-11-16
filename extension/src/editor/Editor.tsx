@@ -316,7 +316,7 @@ export default function Editor() {
 
   const edited = dirty || !!scored.editedAt
   const { draft, skills } = form
-  const titleNote = postingTitleInSummary(draft, opened.jobTitle)
+  const showTitleNote = postingTitleInSummary(draft, opened.jobTitle)
   const sections = shownSections(draft)
   const askAt = Math.min(orderAsk.at, sections.length - 1)
   const ask = orderAsk.state && (
@@ -336,7 +336,7 @@ export default function Editor() {
         return (
           <>
             <Field label="Summary" hideLabel long value={draft.summary ?? ''} onChange={(v) => edit((r) => { r.summary = v })} />
-            {titleNote && <p className="ed-hint">Your summary uses this posting's title so recruiter searches find you. Your job titles are unchanged.</p>}
+            {showTitleNote && <p className="ed-hint">Your summary uses this posting's title so recruiter searches find you. Your job titles are unchanged.</p>}
           </>
         )
       case 'experience':

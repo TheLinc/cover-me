@@ -22,7 +22,7 @@ html, body { width: auto; height: 100%; overflow: hidden; }
 .ed-bar-title h1 { font-size: 16px; font-weight: 700; }
 .ed-bar-title p { font-size: 12px; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ed-status { font-size: 12px; color: var(--text-3); max-width: 340px; text-align: right; }
-.ed-note { font-size: 12px; color: var(--text-2); }
+.ed-note, .ed-hint { font-size: 12px; color: var(--text-2); }
 .ed-note .text-link { background: none; border: none; padding: 0; font: inherit; cursor: pointer; }
 .ed-history { display: flex; gap: 2px; }
 
@@ -50,7 +50,7 @@ html, body { width: auto; height: 100%; overflow: hidden; }
 .ed-item + .ed-item { margin-top: 22px; padding-top: 22px; border-top: 1px dashed var(--border); }
 .ed-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; }
 .ed-field { display: block; }
-.ed-hint { font-size: 12px; color: var(--text-2); margin: 6px 0 0; }
+.ed-hint { margin: 6px 0 0; }
 .ed-section > .ed-field + .ed-lines { margin-top: 12px; }
 
 /* Text areas grow with what's typed. */

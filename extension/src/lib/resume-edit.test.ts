@@ -42,6 +42,10 @@ describe("the note on a summary that uses the posting's title (#244)", () => {
     expect(postingTitleInSummary(fullStack('Developer who builds web applications.'), 'Software Engineer')).toBe(false)
   })
 
+  test('not for a one-word posting title, which may be any word in the summary', () => {
+    expect(postingTitleInSummary(fullStack('Full Stack Developer who works with every designer.'), 'Designer')).toBe(false)
+  })
+
   test('not for a posting with no title', () => {
     expect(postingTitleInSummary(fullStack('Developer who builds web applications.'), '')).toBe(false)
   })
