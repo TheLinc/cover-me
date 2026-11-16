@@ -200,7 +200,7 @@ function node<K extends keyof HTMLElementTagNameMap>(tag: K, className: string, 
   return n
 }
 
-let status: { host: HTMLElement; onKey: (e: KeyboardEvent) => void } | null = null
+let status: { host: HTMLElement; box: HTMLElement; onKey: (e: KeyboardEvent) => void } | null = null
 
 function closeStatus(): void {
   if (!status) return
@@ -225,6 +225,8 @@ interface StatusView {
 // the job used and a way to pick another) or an error. Text only goes in
 // through textContent, since questions and job titles come from web pages.
 function showStatus(anchor: HTMLElement | null, view: StatusView): void {
+  // The box being replaced, if any, so the new one grows or shrinks from it.
+  const from = status?.box.getBoundingClientRect()
   closeStatus()
   const host = document.createElement('cover-me-answer-status')
   const root = host.attachShadow({ mode: 'closed' })
@@ -293,9 +295,19 @@ function showStatus(anchor: HTMLElement | null, view: StatusView): void {
   box.style.top = `${Math.max(top, 8)}px`
   box.style.left = `${Math.max(left, 8)}px`
 
+  // A new state in the same place (the job picker appearing, an error after
+  // writing) eases from the old box's size instead of jumping to the new one.
+  const to = box.getBoundingClientRect()
+  if (from && Math.abs(from.left - to.left) < 1 && Math.abs(from.height - to.height) >= 1 && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    box.animate(
+      [{ top: `${from.top}px`, height: `${from.height}px` }, { top: `${to.top}px`, height: `${to.height}px` }],
+      { duration: 280, easing: 'cubic-bezier(.16,1,.3,1)' },
+    )
+  }
+
   const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeStatus() }
   document.addEventListener('keydown', onKey, true)
-  status = { host, onKey }
+  status = { host, box, onKey }
 }
 
 const jobName = (job: Job) => (job.company && job.company !== 'Unknown Company' ? `${job.title} · ${job.company}` : job.title)
