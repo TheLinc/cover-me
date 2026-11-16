@@ -1,7 +1,7 @@
 -- Answer allowance (migration 032, #232): free 5 to start then 5 a week,
 -- Pro 50 a day, counted apart from letters and resumes. Run: pnpm db:test (from backend/)
 begin;
-select plan(14);
+select plan(16);
 
 insert into auth.users (id, email) values
   ('31111111-1111-4111-8111-111111111111', 'answers-free@cover-me.test'),
@@ -41,6 +41,15 @@ select ok(not has_function_privilege('authenticated', 'public.consume_answer(uui
   and not has_function_privilege('authenticated', 'public.refund_answer(uuid, date)', 'execute')
   and not has_table_privilege('authenticated', 'public.answer_counts', 'insert, update, delete'),
   'clients cannot take, refund or edit answers');
+
+-- The dashboard's read: the signed-in user's own allowance, and only that
+select ok(has_function_privilege('authenticated', 'public.my_answer_allowance()', 'execute')
+  and not has_function_privilege('anon', 'public.my_answer_allowance()', 'execute'),
+  'signed-in users can read their own answer allowance');
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"31111111-1111-4111-8111-111111111111","role":"authenticated"}', true);
+select is((public.my_answer_allowance()->>'remaining')::int, 1, 'my_answer_allowance reads the caller''s own');
+reset role;
 
 select * from finish();
 rollback;

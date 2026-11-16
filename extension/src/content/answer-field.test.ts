@@ -1,6 +1,6 @@
 import { parseHTML } from 'linkedom'
 import { describe, expect, test } from 'vitest'
-import { fieldMaxLength, fieldQuestion } from './answer-field'
+import { answersLeft, fieldMaxLength, fieldQuestion } from './answer-field'
 
 const field = (html: string, selector = '#f') => {
   const { document } = parseHTML(`<!doctype html><html><body>${html}</body></html>`)
@@ -53,5 +53,19 @@ describe('fieldMaxLength', () => {
     expect(fieldMaxLength(field(`<textarea id="f"></textarea>`))).toBeUndefined()
     expect(fieldMaxLength(field(`<textarea id="f" maxlength="-1"></textarea>`))).toBeUndefined()
     expect(fieldMaxLength(field(`<div id="f" contenteditable="true"></div>`))).toBeUndefined()
+  })
+})
+
+describe('answersLeft', () => {
+  test('says what a free account has left, and when the week runs out', () => {
+    expect(answersLeft({ kind: 'starter', limit: 5, remaining: 4 })).toBe('4 of your first 5 free answers left.')
+    expect(answersLeft({ kind: 'weekly', limit: 5, remaining: 1 })).toBe('1 free answer left this week.')
+    expect(answersLeft({ kind: 'weekly', limit: 5, remaining: 0 })).toBe("That was this week's last free answer. More on Monday.")
+  })
+
+  test("shows Pro's daily cap only once it runs low, and nothing for an own key", () => {
+    expect(answersLeft({ kind: 'daily', limit: 50, remaining: 40 })).toBe('')
+    expect(answersLeft({ kind: 'daily', limit: 50, remaining: 3 })).toBe('3 answers left today.')
+    expect(answersLeft(undefined)).toBe('')
   })
 })

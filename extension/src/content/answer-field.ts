@@ -2,6 +2,7 @@
 // character limit, typing the answer in, and the status box beside it.
 import type { JobData } from '../types'
 import type { AnswerRevision } from '../lib/ai/answer'
+import type { AnswerAllowance } from '../lib/auth'
 import logoUrl from '../public/icon/48.png?inline'
 
 const clean = (s: string | null | undefined) =>
@@ -420,7 +421,18 @@ const targets = new Map<string, Target>()
 
 const asked = (target: Target) => ({ question: target.question, maxLength: target.maxLength })
 
-function done(target: Target, answer: string, jobs: Job[], index: number, jobSource: JobSource): void {
+// What the account has left, after the answer just written. Pro's 50 a day
+// only shows once it runs low.
+export function answersLeft(a?: AnswerAllowance): string {
+  if (!a) return ''
+  const n = a.remaining
+  const answers = n === 1 ? 'answer' : 'answers'
+  if (a.kind === 'daily') return n <= 10 ? `${n} ${answers} left today.` : ''
+  if (a.kind === 'starter') return `${n} of your first ${a.limit} free answers left.`
+  return n === 0 ? "That was this week's last free answer. More on Monday." : `${n} free ${answers} left this week.`
+}
+
+function done(target: Target, answer: string, jobs: Job[], index: number, jobSource: JobSource, allowance?: AnswerAllowance): void {
   if (!typeAnswer(target.el, answer)) {
     showStatus(null, { kind: 'error', title: 'The box changed while the answer was being written. Right-click it again.' })
     return
@@ -430,6 +442,7 @@ function done(target: Target, answer: string, jobs: Job[], index: number, jobSou
   const notes = [
     jobSource === 'saved' && index === 0 ? 'No job posting on this page, so this uses your latest saved job.' : '',
     /\[[^\]]+\]/.test(answer) ? 'Fill in the parts in [brackets] before you submit.' : '',
+    answersLeft(allowance),
   ]
   showStatus(target.el, {
     kind: 'done', title: 'Answer added', hint: `${undoKey()} to undo`, note: notes.filter(Boolean).join(' ') || undefined, ...asked(target), job: jobs[index],
@@ -457,8 +470,8 @@ async function rewrite(target: Target, jobs: Job[], index: number, jobSource: Jo
   showStatus(el, { kind: 'working', title: revision ? 'Rewriting your answer…' : 'Writing your answer…', note: shown && `Change: ${shown}`, ...asked(target), job: jobs[index] })
   const source: JobSource = jobSource === 'page' && index === 0 ? 'page' : 'saved'
   try {
-    const result = await chrome.runtime.sendMessage({ type: 'ANSWER_REWRITE', request: { job: jobs[index], question, maxLength, jobSource: source, revision } }) as { answer?: string; error?: string }
-    if (result?.answer) done(target, result.answer, jobs, index, jobSource)
+    const result = await chrome.runtime.sendMessage({ type: 'ANSWER_REWRITE', request: { job: jobs[index], question, maxLength, jobSource: source, revision } }) as { answer?: string; allowance?: AnswerAllowance; error?: string }
+    if (result?.answer) done(target, result.answer, jobs, index, jobSource, result.allowance)
     else {
       showStatus(el, {
         kind: 'error', title: result?.error ?? 'Could not write an answer. Please try again.', ...asked(target), job: jobs[index],
@@ -499,7 +512,7 @@ export function handleAnswerMessage(message: Record<string, unknown>, sendRespon
       showStatus(target?.el ?? null, { kind: 'working', title: 'Writing your answer…', ...(target && asked(target)), job: message.job as Job })
       return sendResponse({})
     case 'ANSWER_DONE':
-      if (target) done(target, message.answer as string, jobs, 0, jobSource)
+      if (target) done(target, message.answer as string, jobs, 0, jobSource, message.allowance as AnswerAllowance | undefined)
       return sendResponse({})
     case 'ANSWER_ERROR':
       showStatus(target?.el ?? null, {

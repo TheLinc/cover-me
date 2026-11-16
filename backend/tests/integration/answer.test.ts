@@ -23,7 +23,10 @@ describe('answer', () => {
     await uploadResume(user)
     const res = await callFunction('answer', { token: user.token, body: body() })
     expect(res.status).toBe(200)
-    expect((await res.json()).answer).toBeTruthy()
+    const data = await res.json()
+    expect(data.answer).toBeTruthy()
+    // what's left after this one, for the status box
+    expect(data.allowance).toMatchObject({ kind: 'starter', limit: 5, remaining: 4 })
     expect(await answersToday(user.id)).toBe(1)
     expect(await quotaUsedToday(user.id)).toBe(0)
   })

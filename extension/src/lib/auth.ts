@@ -358,10 +358,17 @@ export async function generateViaBackend(job: JobData, accessToken: string, supp
 // allowance, not letters and resumes. jobSource: whether the job came from
 // the page or from saved jobs, for the answer_generated count. revision: a
 // change the applicant asked for to the answer in the box; counts the same.
+// The account's answer allowance after an answer (migration 032).
+export interface AnswerAllowance {
+  kind: 'starter' | 'weekly' | 'daily'
+  limit: number
+  remaining: number
+}
+
 export async function answerViaBackend(
   accessToken: string,
   req: { job: JobData; question: string; maxLength?: number; supplemental?: string; jobSource: 'page' | 'saved'; revision?: AnswerRevision },
-): Promise<string> {
+): Promise<{ answer: string; allowance?: AnswerAllowance }> {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/answer`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
@@ -376,7 +383,7 @@ export async function answerViaBackend(
   // The 200 came early (heartbeatJson), so a reply cut off mid-way (the
   // function stopped, the network dropped) parses to nothing.
   if (!answer) throw new Error('The connection dropped before the answer arrived. Please try again.')
-  return answer
+  return { answer, allowance: data.allowance as AnswerAllowance | undefined }
 }
 
 // parse: wait for the server's parse of this text and return it, for the

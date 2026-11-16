@@ -105,7 +105,10 @@ Deno.serve(async (req) => {
     }
     // One count per answer, with fixed values only, unless the account opted out.
     EdgeRuntime.waitUntil(captureUsage(supabase, 'answer_generated', userId, { tier, hasCharLimit: !!maxLength, jobSource, revised: !!revision }))
-    return { answer }
+    // What's left after this one, for the status box. Missing if the read
+    // fails: the answer still goes out.
+    const { data: allowance } = await supabase.rpc('answer_allowance', { p_user_id: userId })
+    return { answer, allowance: allowance ?? undefined }
   })
 })
 

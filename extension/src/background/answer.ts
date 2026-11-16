@@ -2,7 +2,7 @@
 // script (content/answer-field.ts) reads the box's question and limit, the
 // answer is written here (own key, or the account's answer allowance), and
 // the page script types it in.
-import { answerViaBackend, ensureValidSession } from '../lib/auth'
+import { answerViaBackend, ensureValidSession, type AnswerAllowance } from '../lib/auth'
 import { buildAnswerPrompt, finishAnswer, type AnswerRevision } from '../lib/ai/answer'
 import { callClaude } from '../lib/ai/claude'
 import { callOpenAI } from '../lib/ai/openai'
@@ -21,7 +21,8 @@ export function registerAnswerMenu(): void {
   })
 }
 
-export type AnswerResult = { answer: string } | { error: string }
+// allowance: what the account has left, when the answer came from it.
+export type AnswerResult = { answer: string; allowance?: AnswerAllowance } | { error: string }
 
 export interface AnswerRequest {
   job: JobData
@@ -39,7 +40,7 @@ export async function writeAnswer({ job, question, maxLength, jobSource, revisio
     if (resolveMode(settings) === 'hosted') {
       const session = await ensureValidSession()
       if (!session) return { error: 'Sign in to your Cover Me account: open Cover Me from the toolbar, then Settings.' }
-      return { answer: await answerViaBackend(session.access_token, { job, question, maxLength, supplemental, jobSource, revision }) }
+      return await answerViaBackend(session.access_token, { job, question, maxLength, supplemental, jobSource, revision })
     }
     if (!settings?.apiKey) return { error: 'No API key set. Open Cover Me from the toolbar, then Settings, to add your key.' }
     const resume = await getResume()
@@ -98,6 +99,6 @@ export async function handleAnswerClick(
 
   const result = await writeAnswer({ job, question: field.question, maxLength: field.maxLength, jobSource })
   await send('answer' in result
-    ? { type: 'ANSWER_DONE', answer: result.answer, job, jobs, jobSource }
+    ? { type: 'ANSWER_DONE', answer: result.answer, allowance: result.allowance, job, jobs, jobSource }
     : { type: 'ANSWER_ERROR', error: result.error, job, jobs, jobSource }).catch(() => {})
 }

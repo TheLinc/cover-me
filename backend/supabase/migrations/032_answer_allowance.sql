@@ -104,6 +104,18 @@ as $$
   where user_id = p_user_id and date = p_date;
 $$;
 
+-- The signed-in user's own answer allowance, for the dashboard, like
+-- my_generation_allowance in 015.
+create or replace function public.my_answer_allowance()
+returns jsonb
+language sql
+stable
+security definer
+set search_path = ''
+as $$ select public.answer_allowance(auth.uid()) $$;
+
 revoke all on function public.answer_allowance(uuid) from public, anon, authenticated;
+revoke all on function public.my_answer_allowance() from public, anon;
+grant execute on function public.my_answer_allowance() to authenticated;
 revoke all on function public.consume_answer(uuid) from public, anon, authenticated;
 revoke all on function public.refund_answer(uuid, date) from public, anon, authenticated;
