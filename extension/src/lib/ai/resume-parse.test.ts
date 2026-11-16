@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { ParsedResume } from '../../types'
 import { orderedSections } from '../pdf/sections'
-import { isCurrentParse, parseParsedJson, parseResumeStructure, upgradedParse, withChosenOrder, withSectionOrder } from './resume-parse'
+import { isCurrentParse, parseParsedJson, parseResumeStructure, upgradedParse, withChosenOrder, withLinks, withSectionOrder } from './resume-parse'
+import { checkParse, checkParseUrls, resumeUrls } from '../../../eval/checks'
+import type { EvalCase } from '../../../eval/fixtures'
 
 const RESUME = { name: 'A', email: 'a@x.co', experience: [], education: [{ institution: 'U of T' }] }
 const json = JSON.stringify(RESUME)
@@ -209,5 +211,94 @@ describe('withChosenOrder', () => {
     const next = withChosenOrder(parsed, 'nope', 42)
     expect(next.sectionOrder).toEqual(parsed.sectionOrder)
     expect(headings(next)).toEqual(['Talks', 'Awards'])
+  })
+})
+
+// A made-up resume with a link in every section (#236), and a parse that put
+// the project's URL on the contact line as well as under its project.
+const LINKED_TEXT = `Ada Lovelace
+ada@acme.dev | 555-0100 | https://ada.dev | linkedin.com/in/ada
+Engineer who ships tools.
+
+EXPERIENCE
+Software Engineer, Acme Corp — 2021 – Present
+Built the billing service, live at acme.com/billing
+
+PROJECTS
+Cover Me (https://github.com/ada/cover-me)
+Built a resume tailoring tool
+
+EDUCATION
+BSc Computer Science, University of Toronto — 2017 – 2021
+Thesis code at github.com/ada/thesis
+
+VOLUNTEERING
+Mentor, Code Club (codeclub.org/mentors)`
+
+const LINKED_PARSE = {
+  name: 'Ada Lovelace',
+  email: 'ada@acme.dev',
+  phone: '555-0100',
+  website: 'https://ada.dev',
+  links: ['https://ada.dev', 'linkedin.com/in/ada', 'https://github.com/ada/cover-me'],
+  experience: [{ title: 'Software Engineer', company: 'Acme Corp', location: '', dates: '2021 – Present', bullets: ['Built the billing service, live at acme.com/billing'] }],
+  projects: [{ name: 'Cover Me (https://github.com/ada/cover-me)', bullets: ['Built a resume tailoring tool'] }],
+  education: [{ institution: 'University of Toronto', degree: 'BSc Computer Science', location: '', dates: '2017 – 2021', bullets: ['Thesis code at github.com/ada/thesis'] }],
+  otherSections: [{ heading: 'VOLUNTEERING', lines: ['Mentor, Code Club (codeclub.org/mentors)'] }],
+} as unknown as ParsedResume
+
+// The backend copy reads Deno.env when loaded; its path is built at runtime so
+// tsc, which doesn't cover backend/, doesn't follow it.
+const backendParse = '../../../../backend/supabase/functions/_shared/resume-parse.ts'
+describe.each([
+  ['extension', async () => (await import('./resume-parse')).withLinks],
+  ['backend', async () => {
+    vi.stubGlobal('Deno', { env: { get: () => undefined } })
+    return ((await import(/* @vite-ignore */ backendParse)) as typeof import('./resume-parse')).withLinks
+  }],
+])('%s withLinks keeps the contact line to the contact block (#236)', (_copy, load) => {
+  test("drops a project's URL found only under its project, and keeps the contact URLs", async () => {
+    const r = (await load())(LINKED_PARSE, LINKED_TEXT)
+    expect(r.links).toEqual(['https://ada.dev', 'linkedin.com/in/ada'])
+    expect(r.website).toBe('https://ada.dev')
+  })
+
+  test('drops website too when it is a section URL', async () => {
+    const r = (await load())({ ...LINKED_PARSE, website: 'https://github.com/ada/cover-me', links: ['https://github.com/ada/cover-me'] }, LINKED_TEXT)
+    expect(r.links ?? []).toEqual([])
+    expect(r.website).toBe('')
+  })
+
+  test('keeps a profile URL a sidebar puts after the first section', async () => {
+    const text = `Ada Lovelace\nEXPERIENCE\nSoftware Engineer, Acme Corp\nBuilt the billing service, live at acme.com/billing\nCONTACT\nada@acme.dev\nlinkedin.com/in/ada\ngithub.com/ada/`
+    const r = (await load())({ ...LINKED_PARSE, website: '', links: ['linkedin.com/in/ada', 'github.com/ada/'] }, text)
+    expect(r.links).toEqual(['linkedin.com/in/ada', 'github.com/ada/'])
+  })
+
+  test('a company in the email domain or a job title in a tagline does not end the contact block', async () => {
+    const text = `Ada Lovelace — Software Engineer\nada@acmecorp.com | ada.dev\n${LINKED_TEXT.split('\n').slice(3).join('\n')}`
+    const r = (await load())({ ...LINKED_PARSE, email: 'ada@acmecorp.com', website: '', links: ['ada.dev'], experience: [{ ...LINKED_PARSE.experience[0]!, company: 'AcmeCorp' }] }, text)
+    expect(r.links).toEqual(['ada.dev'])
+  })
+})
+
+describe('the URL check (#236)', () => {
+  test('lists every URL in the resume text, and not emails or file names', () => {
+    expect(resumeUrls(`${LINKED_TEXT}\nNode.js, résumé.pdf, ada.lovelace.dev@mail.com, www.ada.dev/blog.`)).toEqual([
+      'https://ada.dev', 'linkedin.com/in/ada', 'acme.com/billing', 'https://github.com/ada/cover-me', 'github.com/ada/thesis', 'codeclub.org/mentors', 'www.ada.dev/blog',
+    ])
+  })
+
+  test('passes on a parse that keeps every URL, with only contact URLs on the contact line', () => {
+    expect(checkParseUrls(withLinks(LINKED_PARSE, LINKED_TEXT), LINKED_TEXT)).toEqual([])
+  })
+
+  test('checkParse reports a URL missing from the parse, and a section URL on the contact line', () => {
+    const parsed = { ...LINKED_PARSE, education: [{ ...LINKED_PARSE.education[0]!, bullets: ['Thesis code'] }] }
+    const { failures } = checkParse(parsed, { resumeText: LINKED_TEXT, parsed } as unknown as EvalCase)
+    expect(failures).toEqual([
+      'URL missing from the parse: "github.com/ada/thesis"',
+      'section URL on the contact line: "https://github.com/ada/cover-me"',
+    ])
   })
 })

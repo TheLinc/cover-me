@@ -5,6 +5,7 @@ import type { ParsedResume, TailoredResume } from '../src/types'
 import type { EvalCase } from './fixtures'
 import { extractNumbers, lintLetter } from '../src/lib/ai/letter-lint'
 import { mixedTenseLines } from '../src/lib/ai/resume-grounding'
+import { urlCore, withLinks } from '../src/lib/ai/resume-parse'
 
 export interface CheckResult {
   failures: string[]
@@ -334,7 +335,28 @@ export function checkParse(actual: ParsedResume, c: EvalCase): CheckResult {
   // The sections in the resume's order, where the answer key gives one (#165).
   if (want.sectionOrder) eq('sectionOrder', want.sectionOrder.join(', '), (actual.sectionOrder ?? []).join(', '))
 
+  result.failures.push(...checkParseUrls(actual, c.resumeText))
+
   return result
+}
+
+// Every URL the resume text shows (#236): one with a protocol or www., or a
+// domain under a common TLD (so not Node.js or a file name), without an
+// email's domain or a sentence's last full stop.
+const URL_RE = /(?<![\w@./-])(?:https?:\/\/|www\.|[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:com|org|net|io|dev|app|ai|co|me|ca|us|uk|edu|gov|info|xyz|tech|site)\b)[^\s)\]>,;]*/gi
+export function resumeUrls(text: string): string[] {
+  return [...new Set((text.match(URL_RE) ?? []).filter((u) => !u.includes('@')).map((u) => u.replace(/\.+$/, '')))]
+}
+
+// A parse's URL failures (#236): a URL of the resume text found nowhere in the
+// parse, or one on the contact line the resume shows under a section.
+export function checkParseUrls(actual: ParsedResume, resumeText: string): string[] {
+  const parse = JSON.stringify(actual).toLowerCase()
+  const contact = withLinks(actual, resumeText).links ?? []
+  return [
+    ...resumeUrls(resumeText).filter((u) => !parse.includes(urlCore(u))).map((u) => `URL missing from the parse: "${u}"`),
+    ...(actual.links ?? []).filter((l) => !contact.includes(l)).map((l) => `section URL on the contact line: "${l}"`),
+  ]
 }
 
 // Static sanity check on the fixtures themselves: every answer-key bullet must

@@ -26,7 +26,7 @@ JSON structure (omit "projects", "skills", "certifications" entirely if those se
   "phone": "phone number or empty string if absent",
   "location": "the candidate's own city or region from the contact details, or empty string if absent",
   "website": "the first URL in the contact details, or empty string if absent",
-  "links": ["every URL in the contact details (website, LinkedIn, GitHub, portfolio), copied verbatim in the order written"],
+  "links": ["every URL in the contact details at the top (website, LinkedIn, GitHub, portfolio), copied verbatim in the order written. A URL written under a project, job or section stays in that entry's text, verbatim, and never goes here"],
   "experience": [
     {
       "title": "Job Title",
@@ -91,15 +91,60 @@ export function withOtherSections<T extends object>(parsed: T): T & { otherSecti
   return { ...parsed, otherSections }
 }
 
+// A URL without its protocol, www. and trailing slash, lowercased: how two
+// copies of one link are compared (#236).
+export function urlCore(url: string): string {
+  return url.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/+$/, '')
+}
+
+// Where the first section's content starts in the resume text (#236): the
+// first verbatim copy of an entry's text, the text lowercased with its spaces
+// collapsed. Job titles are left out, as a tagline under the name often
+// repeats one, and so are strings under 4 characters (a degree or licence
+// after the name), and the email is blanked, as its domain can be a company's.
+// Infinity when no entry is found.
+function sectionsStart(parsed: ParsedResume, text: string): number {
+  const norm = (s: unknown) => (typeof s === 'string' ? s.toLowerCase().replace(/\s+/g, ' ').trim() : '')
+  const email = norm(parsed.email)
+  const blanked = email ? text.split(email).join(' '.repeat(email.length)) : text
+  const entries = [
+    parsed.experience.map((e) => [e?.company, e?.bullets]),
+    (parsed.projects ?? []).map((p) => [p?.name, p?.bullets]),
+    parsed.education.map((e) => [e?.institution, e?.degree, e?.bullets]),
+    parsed.certifications ?? [],
+    parsed.skills,
+    (parsed.otherSections ?? []).map((o) => o?.lines),
+  ]
+  const at = entries.flat(3).map(norm).filter((s) => s.length >= 4).map((s) => blanked.indexOf(s)).filter((i) => i >= 0)
+  return Math.min(...at)
+}
+
+// A LinkedIn or GitHub profile, which is a contact link wherever it sits: a
+// two-column PDF can put its contact sidebar after the first section.
+const PROFILE_URL = /^(?:[a-z]{2}\.)?linkedin\.com\/in\/[^/]+$|^github\.com\/[^/]+$/
+
 // Every contact-line URL, with website first and set, so a build that prints
 // only website (the store's before #129) still shows one. Left off when there
-// are none: renderers then fall back to website.
-export function withLinks<T extends { website: string }>(parsed: T): T {
+// are none: renderers then fall back to website. Given the resume text, a URL
+// it first shows inside a section (a project's, a job's) is dropped (#236):
+// the parse copies that one into its entry's text, and the contact line
+// prints every link. A URL the text lacks is kept, having nowhere to place it.
+export function withLinks<T extends ParsedResume>(parsed: T, resumeText?: string): T {
   const raw = (parsed as { links?: unknown }).links
-  const links = (Array.isArray(raw) ? raw : []).filter((l): l is string => typeof l === 'string' && l.trim().length > 0).map((l) => l.trim())
+  let links = (Array.isArray(raw) ? raw : []).filter((l): l is string => typeof l === 'string' && l.trim().length > 0).map((l) => l.trim())
   const website = typeof parsed.website === 'string' ? parsed.website.trim() : ''
   if (website && !links.includes(website)) links.unshift(website)
-  return links.length ? { ...parsed, website: website || links[0]!, links } : parsed
+  if (resumeText && links.length) {
+    const text = resumeText.toLowerCase().replace(/\s+/g, ' ')
+    const start = sectionsStart(parsed, text)
+    const contact = links.filter((l) => {
+      const at = text.indexOf(urlCore(l))
+      return at < start || PROFILE_URL.test(urlCore(l))
+    })
+    if (!contact.length) return { ...parsed, website: '', links: [] }
+    links = contact
+  }
+  return links.length ? { ...parsed, website: links.includes(website) ? website : links[0]!, links } : parsed
 }
 
 // Which standard sections the parse has content for.
@@ -234,7 +279,7 @@ export function parseParsedJson(raw: string, resumeText?: string): ParsedResume 
   if (!isValidParsedResume(parsed)) {
     throw new Error('Resume parse returned incomplete data. Please try again.')
   }
-  return withSectionOrder(withLinks(withOtherSections(parsed)), resumeText)
+  return withSectionOrder(withLinks(withOtherSections(parsed), resumeText), resumeText)
 }
 
 export async function parseResumeStructure(
