@@ -366,7 +366,7 @@ export async function tailorResume(
   // linksKept only marks the stored parse as current (#238): the model and
   // the tailored resume don't need it.
   const { linksKept: _k, ...parsed } = stored
-  const prompt =buildPrompt(job, parsed, compact, supplemental, trim, includeSummary, previous)
+  const prompt = buildPrompt(job, parsed, compact, supplemental, trim, includeSummary, previous)
 
   await debugGroup('Tailor — full prompt sent to model (BYOK)', {
     provider,

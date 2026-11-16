@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { ensureValidSession, fetchApplicationsFromBackend, saveResumeEditToBackend, saveSectionOrderToBackend } from '../lib/auth'
 import { splitSkills } from '../lib/ai/resume-grounding'
-import { isCurrentParse, withChosenOrder } from '../lib/ai/resume-parse'
+import { hasSectionOrder, withChosenOrder } from '../lib/ai/resume-parse'
 import { downloadTailoredResumePdf, tailoredResumePdf } from '../lib/pdf/resume'
 import type { PlacedSection } from '../lib/pdf/sections'
 import type { DeletedSection } from '../lib/pdf/types'
@@ -67,8 +67,9 @@ async function saveOrderForLater(r: TailoredResume): Promise<string | undefined>
     return saveSectionOrderToBackend(session.access_token, sectionOrder, headings)
   }
   const parsed = (await getResume())?.parsed
-  // A new upload isn't read until its first tailor.
-  if (!isCurrentParse(parsed)) return 'Tailor once with your current resume first.'
+  // A new upload isn't read until its first tailor. One from before the link
+  // fix (#238) takes the order, and the tailor that parses it again keeps it.
+  if (!hasSectionOrder(parsed)) return 'Tailor once with your current resume first.'
   await saveParsedResume(withChosenOrder(parsed, sectionOrder, headings))
 }
 

@@ -261,11 +261,24 @@ export function withSectionOrder<T extends ParsedResume>(parsed: T, resumeText?:
   return { ...parsed, sectionOrder: order.length ? ['summary', ...order] : [] }
 }
 
-// A cached parse made since the parse kept extra sections (#54), section
-// order (#165) and the URLs written under a section (#238), which
-// parseParsedJson marks with linksKept. One from before is parsed again, once.
-export function isCurrentParse(parsed: ParsedResume | null | undefined): parsed is ParsedResume & Required<Pick<ParsedResume, 'otherSections' | 'sectionOrder'>> {
-  return Array.isArray(parsed?.otherSections) && Array.isArray(parsed?.sectionOrder) && parsed?.linksKept === true
+// A model's parse, valid, made ready to store and tailor from. linksKept
+// marks it as made since a URL under a section stays in its entry (#238).
+function normalizedParse(parsed: ParsedResume, resumeText?: string): ParsedResume {
+  return { ...withSectionOrder(withLinks(withOtherSections(parsed), resumeText), resumeText), linksKept: true }
+}
+
+type OrderedParse = ParsedResume & Required<Pick<ParsedResume, 'otherSections' | 'sectionOrder'>>
+
+// A parse made since extra sections (#54) and section order (#165) were
+// kept, which a chosen order (#197) can be saved on.
+export function hasSectionOrder(parsed: ParsedResume | null | undefined): parsed is OrderedParse {
+  return Array.isArray(parsed?.otherSections) && Array.isArray(parsed?.sectionOrder)
+}
+
+// A cached parse made since then and since the link fix (#238). One from
+// before is parsed again, once.
+export function isCurrentParse(parsed: ParsedResume | null | undefined): parsed is OrderedParse {
+  return hasSectionOrder(parsed) && parsed.linksKept === true
 }
 
 // What replaces a cached parse that isn't current, given a fresh parse of the
@@ -273,9 +286,7 @@ export function isCurrentParse(parsed: ParsedResume | null | undefined): parsed 
 // section into its entry (#238). It keeps the order the user chose in the
 // editor (#197), from a cached parse that has an order.
 export function upgradedParse(cached: ParsedResume | null | undefined, fresh: ParsedResume): ParsedResume {
-  return cached && Array.isArray(cached.otherSections) && Array.isArray(cached.sectionOrder)
-    ? withChosenOrder(fresh, cached.sectionOrder, cached.otherSections.map((o) => o.heading))
-    : fresh
+  return hasSectionOrder(cached) ? withChosenOrder(fresh, cached.sectionOrder, cached.otherSections.map((o) => o.heading)) : fresh
 }
 
 // The parse with the section order the user chose in the editor (#197).
@@ -342,5 +353,5 @@ export async function parseResumeStructure(resumeText: string, apiKey: string): 
     throw new Error('Resume parse returned invalid JSON')
   }
   if (!isValidParsedResume(parsed)) throw new Error('Resume parse returned incomplete data')
-  return { ...withSectionOrder(withLinks(withOtherSections(parsed), resumeText), resumeText), linksKept: true }
+  return normalizedParse(parsed, resumeText)
 }

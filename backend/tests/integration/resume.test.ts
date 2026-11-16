@@ -151,8 +151,7 @@ describe('saving a section order', () => {
 
   it('takes an order on a parse from before the link fix (#238), and the tailor that parses it again keeps it', async () => {
     await uploadResume(user)
-    const { linksKept: _k, ...old } = { ...MOCK_PARSED_RESUME, sectionOrder: ['summary', 'experience', 'other', 'education', 'skills'], linksKept: true }
-    await cacheParsedResume(user.id, old)
+    await cacheParsedResume(user.id, { ...MOCK_PARSED_RESUME, sectionOrder: ['summary', 'experience', 'other', 'education', 'skills'] })
     const sectionOrder = ['skills', 'other', 'summary', 'experience', 'education']
     expect((await save({ sectionOrder, headings: ['Volunteer Work'] })).status).toBe(200)
 

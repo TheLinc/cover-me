@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { ParsedResume } from '../../types'
 import { orderedSections } from '../pdf/sections'
-import { isCurrentParse, parseParsedJson, parseResumeStructure, upgradedParse, urlCore, withChosenOrder, withLinks, withSectionOrder } from './resume-parse'
+import { hasSectionOrder, isCurrentParse, parseParsedJson, parseResumeStructure, upgradedParse, urlCore, withChosenOrder, withLinks, withSectionOrder } from './resume-parse'
 import { checkParse, checkParseUrls, resumeUrls } from '../../../eval/checks'
 import type { EvalCase } from '../../../eval/fixtures'
 
@@ -107,6 +107,12 @@ describe('isCurrentParse', () => {
     expect(isCurrentParse({ ...RESUME, sectionOrder: [] } as unknown as ParsedResume)).toBe(false)
     expect(isCurrentParse({ ...RESUME, otherSections: [], sectionOrder: [] } as unknown as ParsedResume)).toBe(false)
     expect(isCurrentParse(parseParsedJson(json))).toBe(true)
+  })
+
+  test('a parse from before the link fix can still take a chosen order; one from before section order cannot', () => {
+    expect(hasSectionOrder({ ...RESUME, otherSections: [], sectionOrder: [] } as unknown as ParsedResume)).toBe(true)
+    expect(hasSectionOrder({ ...RESUME, otherSections: [] } as unknown as ParsedResume)).toBe(false)
+    expect(hasSectionOrder(undefined)).toBe(false)
   })
 })
 
