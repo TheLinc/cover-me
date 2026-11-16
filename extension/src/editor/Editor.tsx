@@ -10,6 +10,7 @@ import { getCachedTier, getMode, getResume, getTailoredHistory, saveParsedResume
 import DownloadMenu from '../popup/components/DownloadMenu'
 import GapChips from '../popup/components/GapChips'
 import PdfPreview from './PdfPreview'
+import PostingTitleTip from '../popup/components/PostingTitleTip'
 import ScoreRing from '../popup/components/ScoreRing'
 import type { AuthSession, TailoredHistoryEntry, TailoredResume } from '../types'
 
@@ -316,7 +317,7 @@ export default function Editor() {
 
   const edited = dirty || !!scored.editedAt
   const { draft, skills } = form
-  const showTitleNote = postingTitleInSummary(draft, opened.jobTitle)
+  const postingTitle = postingTitleInSummary(draft, opened.jobTitle)
   const sections = shownSections(draft)
   const askAt = Math.min(orderAsk.at, sections.length - 1)
   const ask = orderAsk.state && (
@@ -336,7 +337,7 @@ export default function Editor() {
         return (
           <>
             <Field label="Summary" hideLabel long value={draft.summary ?? ''} onChange={(v) => edit((r) => { r.summary = v })} />
-            {showTitleNote && <p className="ed-hint">Your summary uses this posting's title so recruiter searches find you. Your job titles are unchanged.</p>}
+            {postingTitle && <PostingTitleTip title={postingTitle} />}
           </>
         )
       case 'experience':

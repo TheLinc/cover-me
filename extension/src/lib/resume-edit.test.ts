@@ -22,32 +22,32 @@ describe("the note on a summary that uses the posting's title (#244)", () => {
   })
 
   test('shows when the summary opens with a title none of the jobs carry', () => {
-    expect(postingTitleInSummary(fullStack('Software Engineer who builds web applications.'), 'Software Engineer')).toBe(true)
+    expect(postingTitleInSummary(fullStack('Software Engineer who builds web applications.'), 'Software Engineer')).toBe('Software Engineer')
   })
 
   test('matches the title without its level or a scraped suffix', () => {
-    expect(postingTitleInSummary(fullStack('Software Engineer who builds web applications.'), 'Senior Software Engineer, Payments (Remote)')).toBe(true)
+    expect(postingTitleInSummary(fullStack('Software Engineer who builds web applications.'), 'Senior Software Engineer, Payments (Remote)')).toBe('Software Engineer')
   })
 
   test("not when the summary keeps the user's own title", () => {
-    expect(postingTitleInSummary(fullStack('Full Stack Developer who builds web applications.'), 'Software Engineer')).toBe(false)
+    expect(postingTitleInSummary(fullStack('Full Stack Developer who builds web applications.'), 'Software Engineer')).toBe('')
   })
 
   test("not when one of the user's jobs already has that title, with or without a level", () => {
     const r = { ...fullStack('Software Engineer who builds web applications.'), experience: [{ ...resume.experience[0], title: 'Senior Software Engineer' }] }
-    expect(postingTitleInSummary(r, 'Software Engineer')).toBe(false)
+    expect(postingTitleInSummary(r, 'Software Engineer')).toBe('')
   })
 
   test('goes once the title is edited out of the summary', () => {
-    expect(postingTitleInSummary(fullStack('Developer who builds web applications.'), 'Software Engineer')).toBe(false)
+    expect(postingTitleInSummary(fullStack('Developer who builds web applications.'), 'Software Engineer')).toBe('')
   })
 
   test('not for a one-word posting title, which may be any word in the summary', () => {
-    expect(postingTitleInSummary(fullStack('Full Stack Developer who works with every designer.'), 'Designer')).toBe(false)
+    expect(postingTitleInSummary(fullStack('Full Stack Developer who works with every designer.'), 'Designer')).toBe('')
   })
 
   test('not for a posting with no title', () => {
-    expect(postingTitleInSummary(fullStack('Developer who builds web applications.'), '')).toBe(false)
+    expect(postingTitleInSummary(fullStack('Developer who builds web applications.'), '')).toBe('')
   })
 })
 
