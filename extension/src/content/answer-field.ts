@@ -228,7 +228,8 @@ function closeStatus(): void {
 // panel) scrolls: off screen with it, and back. A field taller than the
 // screen keeps the box at the bottom edge while any of it shows.
 function place(anchor: HTMLElement | null, box: HTMLElement): void {
-  const rect = anchor?.isConnected ? anchor.getBoundingClientRect() : null
+  if (anchor && !anchor.isConnected) return
+  const rect = anchor?.getBoundingClientRect()
   if (!rect) {
     box.style.top = box.style.left = '16px'
     return
@@ -388,6 +389,15 @@ function showStatus(anchor: HTMLElement | null, view: StatusView): void {
   document.addEventListener('keydown', onKey, true)
   addEventListener('scroll', follow, { capture: true, passive: true })
   addEventListener('resize', follow, { passive: true })
+  // A tab or step switch (Ashby's Overview and Application) fires no scroll:
+  // check the field itself. Gone from the page: the box closes. Only hidden:
+  // the box hides with it, and comes back when the field does.
+  const watch = anchor && setInterval(() => {
+    if (!anchor.isConnected) return closeStatus()
+    const shown = anchor.checkVisibility()
+    box.style.visibility = shown ? '' : 'hidden'
+    if (shown) place(anchor, box)
+  }, 250)
   status = {
     host, box,
     stop: () => {
@@ -395,6 +405,7 @@ function showStatus(anchor: HTMLElement | null, view: StatusView): void {
       removeEventListener('scroll', follow, { capture: true })
       removeEventListener('resize', follow)
       cancelAnimationFrame(frame)
+      if (watch) clearInterval(watch)
     },
   }
 }
