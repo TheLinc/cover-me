@@ -131,7 +131,7 @@ let hardFailures = 0
 const stamp = new Date().toISOString().replace(/[:.]/g, '-')
 const reportLines: string[] = [
   `# Eval report — ${new Date().toISOString()}`, '',
-  `Tailor/letter model: ${MODEL} | parse: ${PARSE_MODEL} | judge: ${JUDGE_MODEL} | via: ${VIA} | live: ${LIVE} | runs: ${RUNS}`, '',
+  `Tailor/letter model: ${MODEL} | parse: ${PARSE_MODEL} | judge: ${JUDGE_MODEL} | via: ${VIA} | live: ${LIVE} | runs: ${RUNS}${LINT_WARN ? ' | letter lint: warnings only (--lint-warn)' : ''}`, '',
 ]
 
 function section(title: string) {
