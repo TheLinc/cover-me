@@ -53,6 +53,9 @@ describe('tailor', () => {
     // 2 of 3 tier-1 keywords covered, 1 of 1 tier-2: 70 * 2/3 + 30 = 76.67 → 77
     expect(resume.atsScore).toBe(77)
     expect(resume.atsGaps).toEqual(['Kafka'])
+    // The upload already names TypeScript, Postgres and React, so tailoring
+    // gained nothing by word match (#228). The gap list naming Kafka doesn't count.
+    expect(resume.atsScoreBefore).toBe(77)
     expect(await quotaUsedToday(user.id)).toBe(1)
   })
 

@@ -1,10 +1,12 @@
 import JSZip from 'jszip'
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { checkUploadedDesign, designForTailor, finishDesign, toBase64 } from './design'
+import { checkUploadedDesign, designForTailor, downloadResumeWord, finishDesign, toBase64, uploadDesignIfPro } from './design'
 
 const parseMock = vi.hoisted(() => vi.fn())
 vi.mock('./ai/resume-parse', async (importOriginal) => ({ ...(await importOriginal<object>()), parseResumeStructure: parseMock }))
 vi.mock('./crypto', () => ({ decryptApiKey: async () => 'sk-test' }))
+const saveFileMock = vi.hoisted(() => vi.fn())
+vi.mock('./pdf/file-name', async (importOriginal) => ({ ...(await importOriginal<object>()), saveFile: saveFileMock }))
 
 let local: Record<string, unknown> = {}
 function fakeLocal(data: Record<string, unknown> = {}) {
@@ -104,5 +106,58 @@ describe('the upload check', () => {
     await checkUploadedDesign(hash)
     expect((local.resume as { design: unknown }).design).toMatchObject({ status: 'error', error: 'Upload your .docx again while signed in to use your design.' })
     expect(fetchMock).not.toHaveBeenCalled()
+  })
+})
+
+// History on another computer (#174): a Pro account's resume tailored in a
+// file this browser never had.
+describe('the Word download of a resume tailored on another computer', () => {
+  const session = { access_token: 't', refresh_token: 'r', expires_at: Math.floor(Date.now() / 1000) + 3600, user: { id: 'me', email: 'ada@example.com' } }
+  const tailored = { ...resume(['Shipped a Go billing service', 'Mentored two engineers']), sourceHash: hash }
+
+  test("Pro: fetches the file from the account, keeps it here, and downloads in the user's design", async () => {
+    await store({ extra: { session, cachedTier: 'hosted_pro' } })
+    const { data } = local[`designFile:${hash}`] as { data: string }
+    delete local[`designFile:${hash}`]
+    local.designFiles = []
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ docx: data, structured: resume() }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    saveFileMock.mockClear()
+
+    await downloadResumeWord(tailored, 'Engineer')
+
+    expect(String((fetchMock.mock.calls[0] as unknown[])[0])).toContain(`/functions/v1/applications?file=${hash}`)
+    expect(local[`designFile:${hash}`]).toEqual({ data, parsed: resume() })
+    const [blob] = saveFileMock.mock.calls[0] as [Blob]
+    const zip = await JSZip.loadAsync(await blob.arrayBuffer())
+    expect(await zip.file('word/document.xml')!.async('string')).toContain('Shipped a Go billing service')
+  })
+
+  test('free: makes no request and uses the Cover Me layout', async () => {
+    await store({ withFile: false, extra: { session, cachedTier: 'hosted_free' } })
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+    saveFileMock.mockClear()
+
+    await downloadResumeWord(tailored, 'Engineer')
+
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(saveFileMock).toHaveBeenCalledOnce()
+  })
+})
+
+// #174: the account refuses a file checked against text another computer has since replaced.
+describe('a Word file the account refuses', () => {
+  test('shows why on the resume page and is not sent again', async () => {
+    const session = { access_token: 't', refresh_token: 'r', expires_at: Math.floor(Date.now() / 1000) + 3600, user: { id: 'me', email: 'ada@example.com' } }
+    await store({ extra: { session, cachedTier: 'hosted_pro', resume: { accountId: 'me' } } })
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ error: 'Your resume changed on another computer. Upload your .docx again.' }), { status: 409 }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await uploadDesignIfPro(session)
+    await uploadDesignIfPro(session)
+
+    expect(fetchMock).toHaveBeenCalledOnce()
+    expect((local.resume as { design: unknown }).design).toMatchObject({ status: 'error', error: 'Your resume changed on another computer. Upload your .docx again.', refused: true })
   })
 })

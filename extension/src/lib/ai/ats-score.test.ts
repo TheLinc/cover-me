@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { scoreFromMatch } from './ats-score'
+import { scoreBefore, scoreFromMatch, scoreText } from './ats-score'
 
 describe('scoreFromMatch', () => {
   it('weights tier 1 at 70 and tier 2 at 30 over the covered fraction', () => {
@@ -73,5 +73,77 @@ describe('scoreFromMatch', () => {
   it('needs no job context for the plain score', () => {
     expect(scoreFromMatch({}).score).toBe(100)
     expect(scoreFromMatch({ tier1Missing: ['X'], tier2Missing: ['Y'] }).score).toBe(0)
+  })
+})
+
+describe('scoreText', () => {
+  const report = {
+    tier1Covered: ['TypeScript', 'Postgres'],
+    tier1Missing: ['Kafka'],
+    tier2Covered: ['React'],
+    tier2Missing: ['GraphQL'],
+  }
+
+  it('scores a resume naming every keyword like an all-covered report', () => {
+    const text = 'Built React apps in TypeScript on Postgres, with Kafka queues and a GraphQL API.'
+    expect(scoreText(report, text).score).toBe(100)
+  })
+
+  it('scores a resume naming no keyword at the floor', () => {
+    expect(scoreText(report, 'Ran a bakery for six years.').score).toBe(0)
+  })
+
+  it('ignores case and finds a keyword inside a longer word only by its stem', () => {
+    // typescript + REACT found; "Java" is not "JavaScript"'s stem.
+    const r = scoreText({ tier1Covered: ['TypeScript', 'Java'], tier2Covered: ['React'] }, 'typescript, JavaScript and REACT')
+    // 70 * 1/2 + 30 = 65
+    expect(r.score).toBe(65)
+    expect(r.gaps).toEqual(['Java'])
+  })
+
+  it('matches a phrase by its words in any form and order', () => {
+    const r = scoreText({ tier1Covered: ['Stakeholder management', 'Briefing senior leadership'] }, 'Managed stakeholders across 4 teams. Briefed the senior leadership team weekly.')
+    expect(r.score).toBe(100)
+  })
+
+  it('needs every word of a phrase', () => {
+    expect(scoreText({ tier1Covered: ['Budget management'] }, 'Managed a team of six.').gaps).toEqual(['Budget management'])
+  })
+
+  it('accepts either option a keyword gives in parentheses or after a slash', () => {
+    const r = scoreText({ tier1Covered: ['SolidWorks (Creo or SolidWorks)', 'Agile/Scrum', 'EHR charting (Epic)'] }, 'Modeled parts in Creo. Ran Scrum ceremonies. Charted in Epic.')
+    expect(r.score).toBe(100)
+  })
+
+  it('ignores filler words and year counts in a keyword', () => {
+    expect(scoreText({ tier1Covered: ['3+ years of design experience'] }, 'Led design of pump housings.').score).toBe(100)
+  })
+
+  it('keeps the gating gaps from the report', () => {
+    const r = scoreText({ ...report, gatingGaps: ['Active RN license required'] }, 'TypeScript Postgres Kafka React GraphQL')
+    expect(r.score).toBe(90)
+  })
+
+  it('counts an either/or keyword as covered when the text has the other option', () => {
+    const r = scoreText({ tier1Missing: ['Tableau'] }, 'Built Power BI dashboards.', 'Dashboards in Tableau or Power BI.')
+    expect(r.score).toBe(100)
+  })
+})
+
+describe('scoreBefore', () => {
+  const report = { tier1Covered: ['TypeScript', 'Postgres'], tier1Missing: ['Kafka'], tier2Covered: ['React'] }
+
+  it('takes the wording gain from tailoring off the tailored score', () => {
+    // Text match: original 70 * 1/3 + 30 = 53, tailored 70 * 2/3 + 30 = 77, so the gain is 24.
+    expect(scoreBefore(report, 80, 'TypeScript and React', 'TypeScript, Postgres and React')).toBe(56)
+  })
+
+  it('is the tailored score when tailoring added no keyword', () => {
+    expect(scoreBefore(report, 80, 'TypeScript, Postgres, React', 'TypeScript, Postgres, React')).toBe(80)
+    expect(scoreBefore(report, 80, 'TypeScript, Postgres, React', 'TypeScript and React')).toBe(80)
+  })
+
+  it('never goes below 0', () => {
+    expect(scoreBefore(report, 20, 'Ran a bakery.', 'TypeScript, Postgres and React')).toBe(0)
   })
 })

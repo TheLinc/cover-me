@@ -13,7 +13,7 @@ import PageReadNotice from '../components/PageReadNotice'
 import ProgressSteps from '../components/ProgressSteps'
 import ReviewAsk, { claimReviewAsk } from '../components/ReviewAsk'
 import ScrapeFailurePanel, { type ShownFailure } from '../components/ScrapeFailure'
-import ScoreRing from '../components/ScoreRing'
+import ScoreRing, { ScoreGain } from '../components/ScoreRing'
 import UpgradePrompt from '../components/UpgradePrompt'
 import { GenerateOffer } from '../components/FirstMonthOffer'
 import { WhatsNewLink } from '../components/WhatsNew'
@@ -161,6 +161,8 @@ export default function GeneratePage({ onNavigate }: Props) {
   // The result's ID in tailored History: the editor tab opens it, and an
   // edit made there replaces what this page saved of it.
   const [tailoredEntryId, setTailoredEntryId] = useState<string | null>(null)
+  // The History entry whose ATS ring has filled, so reopening the popup doesn't fill it again (#228).
+  const [ringFilledFor, setRingFilledFor] = useState<string | null>(null)
   const [supplemental, setSupplemental] = useState('')
   const [letterSupplemental, setLetterSupplemental] = useState('')
   const [initialContext, setInitialContext] = useState('')
@@ -197,7 +199,8 @@ export default function GeneratePage({ onNavigate }: Props) {
 
   useEffect(() => {
     getCandidateContext().then(setInitialContext)
-    chrome.storage.local.get(['generatePage', 'resume', 'settings', 'session', 'coverJob', 'tailorJob']).then((r) => {
+    chrome.storage.local.get(['generatePage', 'resume', 'settings', 'session', 'coverJob', 'tailorJob', 'ringFilledFor']).then((r) => {
+      setRingFilledFor((r.ringFilledFor as string | undefined) ?? null)
       const storedSettings = r.settings as Settings | undefined
       setHasResume(!!r.resume)
       setResumeData((r.resume as ResumeData | undefined) ?? null)
@@ -1079,9 +1082,18 @@ export default function GeneratePage({ onNavigate }: Props) {
                   )}
                   {(typeof tailoredResume.atsScore === 'number' || (tailoredResume.atsGaps?.length ?? 0) > 0) && (
                     <div className="ats-result">
-                      {typeof tailoredResume.atsScore === 'number' && <ScoreRing score={tailoredResume.atsScore} />}
+                      {typeof tailoredResume.atsScore === 'number' && <ScoreRing
+                          score={tailoredResume.atsScore}
+                          from={tailoredResume.atsScoreBefore}
+                          grow={!!tailoredEntryId && tailoredEntryId !== ringFilledFor}
+                          onGrow={() => {
+                            setRingFilledFor(tailoredEntryId)
+                            void chrome.storage.local.set({ ringFilledFor: tailoredEntryId })
+                          }}
+                        />}
                       <div className="ats-detail">
                         {tailoredResume.editedAt && <p className="ats-edited">Scored before your edits</p>}
+                        <ScoreGain score={tailoredResume.atsScore} before={tailoredResume.atsScoreBefore} />
                         <GapChips gaps={tailoredResume.atsGaps ?? []} />
                         {(tailoredResume.atsGaps?.length ?? 0) === 0 && typeof tailoredResume.atsScore === 'number' && tailoredResume.atsScore >= 80 && (
                           <p className="ats-strong">Strong match: no significant gaps.</p>

@@ -114,7 +114,8 @@ export default async function UpgradedPage(props: Props) {
     <div className="min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-md">
         <div className="max-w-3xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5">
+          {/* /dashboard sends signed-out visitors to /auth, which lands on the dashboard after sign-in. */}
+          <Link href="/dashboard" className="flex items-center gap-2.5">
             <Image src="/logo.png" alt="Cover Me" width={26} height={26} className="rounded-md" />
             <span className="font-bold text-[15px] tracking-[-0.3px]">Cover Me</span>
           </Link>
