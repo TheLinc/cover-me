@@ -18,14 +18,18 @@ import { useReducedMotion } from './useScrollProgress'
 // motion, and the server render, show the "Answer added" frame and stay there.
 // The extension's "New" banner links here (#answers).
 
-// The question asks about the posting's gap, so the answer shows the prompt's
-// rule: say plainly what the resume lacks, then the nearest real experience.
-const QUESTION = `Tell us about your experience with ${EXAMPLE.gaps[0]}.`
+// Real output, not copy: the answer prompt (src/lib/ai/answer.ts) on Sonnet
+// 5.5 at high effort, 2026-11-16, given a made-up Northwind posting built on
+// EXAMPLE and an untailored Alex Rivera resume whose Brightline role has
+// EXAMPLE's original bullets plus one on how the email and social work was
+// done. SHORTER is the Shorter chip's change on that answer. Regenerate both
+// if the prompt changes how answers read.
+const QUESTION = "Tell us about a campaign you're proud of and what it achieved."
 const MAX = 1000
-// Answers come from the uploaded resume, so they use its own bullet
-// (EXAMPLE.bullets[0].before), not the tailored rewrite.
-const ANSWER = `I haven't used ${EXAMPLE.gaps[0]}. At Brightline I handled our social media and email marketing, and that work grew leads 38%.`
-const SHORTER = `I haven't used ${EXAMPLE.gaps[0]}. My email and social marketing at Brightline grew leads 38%.`
+const ANSWER =
+  "The campaign I'm proudest of is the email and social program I ran at Brightline, which sells B2B software to property managers. I rebuilt the email nurture program into three tracks by customer segment, so each segment got its own sequence instead of one shared flow. On social, I moved spend to the two channels that converted best and didn't ask for more budget to do it. Across email and social, leads grew 38%."
+const SHORTER =
+  "The campaign I'm proudest of is the email and social program I ran at Brightline. I rebuilt the email nurture into three tracks by customer segment and moved social spend to the two best-converting channels, with no added budget. Leads grew 38%."
 const CHANGES = ['Shorter', 'More specific', 'Another example']
 
 type Phase = 'aim' | 'menu' | 'pick' | 'writing' | 'done' | 'chip' | 'rewriting' | 'revised'
@@ -205,7 +209,7 @@ function Stage({ phase }: { phase: Phase }) {
             <div
               ref={boxRef}
               className={cn(
-                'h-[104px] rounded-[8px] border bg-white px-3 py-2 text-[12.5px] leading-[1.5] text-body transition-colors',
+                'h-[136px] overflow-hidden rounded-[8px] border bg-white max-sm:h-[220px] px-3 py-2 text-[12.5px] leading-[1.5] text-body transition-colors',
                 phase === 'aim' || menuOpen ? 'border-brand' : 'border-line',
               )}
             >
