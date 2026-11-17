@@ -270,6 +270,22 @@ describe('buildGenerationReport', () => {
     expect(src('Jonathan "Jon" Smith\nSRE', { resume: { ...env().resume!, text: 'Jonathan "Jon" Smith\nSRE', parsed: { ...parsed, name: 'Jonathan Smith' } } })).toBe('[name]\nSRE')
   })
 
+  test('without a parse, the header city goes alone or run into the jobs, and employers beside it stay', () => {
+    const invented = { ...form, category: 'invented' as const, sendSource: true }
+    const hosted = (text: string) => buildGenerationReport({ kind: 'letter', output: 'Hi', job }, invented, env({ mode: 'hosted', resume: { text, filename: '', updatedAt: '' } })).sourceResume
+    expect(hosted('Jane Doe\n\nToronto, ON\n\njane@x.com\n\nSUMMARY')).toBe('[name]\n\n[location]\n\n[email]\n\nSUMMARY')
+    expect(hosted('Jane Doe Toronto, ON | (416) 555-0199 | jane@x.com Experience Senior Data Analyst Contoso Retail Toronto, ON Jan 2021 Data Analyst Fabrikam Toronto, ON 2018'))
+      .toBe('[location] | [phone] | [email] Experience Senior Data Analyst Contoso Retail [location] Jan 2021 Data Analyst Fabrikam [location] 2018')
+    expect(hosted('Jane Doe\nSKILLS\nPython\nADDRESS\n123 Maple Street, Toronto, ON M5V 2T6')).toBe('[name]\nSKILLS\nPython\nADDRESS\n[address], [location] [postal code]')
+  })
+
+  test('a year may number a real street; country codes and US territories count as regions', () => {
+    const invented = { ...form, category: 'invented' as const, sendSource: true }
+    const src = (text: string) => buildGenerationReport({ kind: 'letter', output: 'Hi', job }, invented, env({ mode: 'hosted', resume: { text, filename: '', updatedAt: '' } })).sourceResume
+    expect(src('Jane Doe\n2000 Pennsylvania Avenue\n1999 Main Street, Apt 4\nSan Juan, PR 00901')).toBe('[name]\n[address]\n[address]\n[location] [postal code]')
+    expect(src('Jane Doe\nLondon, UK · jane@x.com\nSRE in London, UK')).toBe('[name]\n[location] · [email]\nSRE in [location]')
+  })
+
   test("a name can't eat an email's first half and leave its domain", () => {
     const pdf = env({ resume: { text: 'Jane Doe jane@janedoe.dev (416) 555-0199 Experience', filename: '', updatedAt: '' } })
     expect(buildGenerationReport({ kind: 'letter', output: 'Hi', job }, { ...form, category: 'invented', sendSource: true }, pdf).sourceResume)

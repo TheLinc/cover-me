@@ -152,7 +152,7 @@ export function buildGenerationReport(target: ReportTarget, form: ReportForm, en
     contact: env.mode === 'hosted' && form.contact,
     // Addresses first: a ZIP is found by the state beside it, which the
     // location replacement would take.
-    ...(sendSource && { sourceResume: scrub(withoutAddress(env.resume!.text), [...people, ...tag(all('location').length ? all('location') : contactPlaces(env.resume!.text), '[location]')], true).slice(0, MAX_SOURCE) }),
+    ...(sendSource && { sourceResume: scrub(withoutAddress(env.resume!.text), [...people, ...tag([...all('location'), ...contactPlaces(env.resume!.text)], '[location]')], true).slice(0, MAX_SOURCE) }),
   }
 }
 
@@ -179,28 +179,45 @@ function headNames(text: string): string[] {
 }
 const NAME_PARTICLE = /^(van|von|der|den|de|del|della|di|da|dos|du|la|le|bin|binti|al|el|ibn|ben|y)$/i
 
-// Canadian provinces and territories, and US states.
-const REGIONS = 'AB|BC|MB|NB|NL|NS|NT|NU|ON|PE|QC|SK|YT|AL|AK|AZ|AR|CA|CO|CT|DE|DC|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY'
-const STREET_WORDS = 'Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Drive|Dr|Lane|Ln|Way|Court|Ct|Crescent|Cres|Place|Pl|Terrace|Close|Parkway|Pkwy|Highway|Hwy|Square|Sq|Circle|Cir|Trail|Trl'
+// Canadian provinces and territories, US states, territories and military
+// codes: a US ZIP follows one of these.
+const STATES = 'AB|BC|MB|NB|NL|NS|NT|NU|ON|PE|QC|SK|YT|AL|AK|AZ|AR|CA|CO|CT|DE|DC|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY|PR|GU|VI|AS|MP|AA|AE|AP'
+// A city's region: those, or a common country code ("London, UK").
+const REGIONS = `${STATES}|UK|USA|US|AU|NZ|IE|DE|FR|NL|ES|IT|SE|CH|SG|BR|MX|JP`
+// Words that can't be anything but a street, so a year may number one
+// ("2000 Pennsylvania Avenue"), and words that can ("2023 Year End Close").
+const STREETS = 'Street|Avenue|Ave|Road|Rd|Boulevard|Blvd|Lane|Ln|Crescent|Cres|Parkway|Pkwy|Highway|Hwy'
+const STREETS_OR_WORDS = `${STREETS}|St|Drive|Dr|Way|Court|Ct|Place|Pl|Terrace|Close|Square|Sq|Circle|Cir|Trail|Trl`
+const street = (words: string, number: string) => String.raw`\b${number}[A-Za-z]?(?:[ \t]+(?:[A-Z][\w'.-]*|\d+(?:st|nd|rd|th|ST|ND|RD|TH))){1,4}[ \t]+(?:${words}|${words.toUpperCase()})\b\.?(?:,?[ \t]*(?:Apt|Unit|Suite|APT|UNIT|SUITE|#)[ \t]*[\w-]+)?`
 // A street address, and a postal code (Canadian, UK, or a US ZIP after a
 // state), wherever they sit in the original resume. Nothing is cut around
 // them: guessing where a header ends broke the summary in too many layouts.
-// The number can't be a year ("2023 Year End Close", "Hackathon 2023 First
-// Place"); a word may be an ordinal or a direction ("350 5th Avenue", "123 W
-// 42nd St"); an all-caps address counts too. ponytail: an address without a
-// number and street word ("Flat B, Rose Court"), or with a full state name
-// before its ZIP ("Austin, Texas 78701"), stays.
-const ADDRESS = new RegExp(String.raw`\b(?!(?:19|20)\d\d\b)\d{1,6}[A-Za-z]?(?:[ \t]+(?:[A-Z][\w'.-]*|\d+(?:st|nd|rd|th|ST|ND|RD|TH))){1,4}[ \t]+(?:${STREET_WORDS}|${STREET_WORDS.toUpperCase()})\b\.?(?:,?[ \t]*(?:Apt|Unit|Suite|APT|UNIT|SUITE|#)[ \t]*[\w-]+)?`, 'g')
-const POSTAL = new RegExp(String.raw`\b[A-Z]\d[A-Z][ ]?\d[A-Z]\d\b|\b[A-Z]{1,2}\d[A-Z\d]?[ ]\d[A-Z]{2}\b|\b(?:${REGIONS})[ \t]+\d{5}(?:-\d{4})?\b`, 'g')
+// A year numbers only a street word that can't be an ordinary one, so
+// "Hackathon 2023 First Place" and "2023 Year End Close" stay; a word may be
+// an ordinal or a direction ("350 5th Avenue", "123 W 42nd St"); an all-caps
+// address counts too. ponytail: an address without a number and street word
+// ("Flat B, Rose Court"), or with a full state name before its ZIP ("Austin,
+// Texas 78701"), stays.
+const ADDRESS = new RegExp(`${street(STREETS_OR_WORDS, String.raw`(?!(?:19|20)\d\d\b)\d{1,6}`)}|${street(STREETS, String.raw`(?:19|20)\d\d`)}`, 'g')
+const POSTAL = new RegExp(String.raw`\b[A-Z]\d[A-Z][ ]?\d[A-Z]\d\b|\b[A-Z]{1,2}\d[A-Z\d]?[ ]\d[A-Z]{2}\b|\b(?:${STATES})[ \t]+\d{5}(?:-\d{4})?\b`, 'g')
 const withoutAddress = (text: string) => text.replace(ADDRESS, '[address]').replace(POSTAL, (m) => (/^[A-Z]{2}\s+\d/.test(m) ? `${m.slice(0, 2)} [postal code]` : '[postal code]'))
 
-// A city with its province or state ("Toronto, ON") on a line near the top
-// that holds an email or phone: the location when no parse names it. Only a
-// real province or state, so "Manager, HR" and "React, UI" stay.
+// The header's location, besides any the parse names: the first city with its province or
+// state ("Toronto, ON") near the top, on a line holding an email, phone,
+// address or postal code, or alone on its line (Word stacks the header). Only
+// a real province or state, so "Manager, HR" and "React, UI" stay. A PDF can
+// run the header into the jobs, so the match can carry words before the city
+// ("Jane Doe Toronto, ON"); each shorter ending goes too, so a job line's
+// "Contoso Retail Toronto, ON" loses only "Toronto, ON".
 const PLACE = new RegExp(String.raw`\b\p{Lu}[\p{L}'.-]+(?:[ ]\p{Lu}[\p{L}'.-]+){0,2},[ ]?(?:${REGIONS})\b`, 'gu')
 function contactPlaces(text: string): string[] {
-  return text.slice(0, 400).split('\n').filter((l) => l.search(EMAIL) !== -1 || l.search(PHONE) !== -1)
-    .flatMap((l) => l.match(PLACE) ?? [])
+  const line = text.slice(0, 400).split('\n').find((l) =>
+    [EMAIL, PHONE, ADDRESS, POSTAL].some((p) => l.search(p) !== -1) ? l.search(PLACE) !== -1 : l.trim().replace(PLACE, '') === '' && l.trim() !== '')
+  const place = line?.match(PLACE)?.[0]
+  if (!place) return []
+  const comma = place.lastIndexOf(',')
+  const words = place.slice(0, comma).split(' ')
+  return words.map((_, i) => words.slice(i).join(' ') + place.slice(comma))
 }
 
 const nameWords = (n: string) => plain(n).split(/[^\p{L}]+/u).filter((w) => w.length >= 2)
