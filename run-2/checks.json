@@ -1,0 +1,345 @@
+{
+  "checks": [
+    {
+      "name": "1 BYOK: \"Flag a problem\" link under the letter",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1 BYOK: form shows the five categories",
+      "ok": true,
+      "detail": "The design or layout looked wrong / The wording sounded generic or not like me / It added things that aren't true / It left out things that matter / Other"
+    },
+    {
+      "name": "1 BYOK: Send disabled before a category is picked",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1 BYOK: no \"You can email me about this\" box",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1 BYOK: \"Other\" with empty comment keeps Send disabled",
+      "ok": true,
+      "detail": "comment label: \"WHAT HAPPENED?\""
+    },
+    {
+      "name": "1 BYOK: \"Other\" with a comment enables Send",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1 BYOK: original-resume box only for \"It added things that aren't true\"",
+      "ok": true,
+      "detail": "{\"The design or layout looked wrong\":0,\"The wording sounded generic or not like me\":0,\"It left out things that matter\":0,\"Other\":0,\"It added things that aren't true\":1}"
+    },
+    {
+      "name": "1 BYOK: original-resume box starts unticked",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1 BYOK letter, invented + original resume: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1 BYOK: no name/email/phone/janedoe.dev/linkedin.com/in/janedoe anywhere in body",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1 BYOK: sourceResume sent and clean",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1 BYOK: summary, jobs and skills stay in sourceResume",
+      "ok": false,
+      "detail": "missing: SUMMARY, Data Analyst, Contoso Retail, Built weekly sales dashboards; starts: \"[contact details]\\n\\nJunior Analyst, Fabrikam Foods - [location] - 2019 - 2021\\n- Cleaned and\""
+    },
+    {
+      "name": "1 BYOK: job.site is linkedin.com",
+      "ok": true,
+      "detail": "linkedin.com"
+    },
+    {
+      "name": "1 BYOK: no Authorization header",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1 BYOK: mode byok, contact false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1 BYOK: \"Reported. Thanks.\" can't reopen the form",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1 BYOK: still \"Reported. Thanks.\" after reopening the popup",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted: new letter shows \"Flag a problem\" again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted: \"You can email me about this\" box appears",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted letter, contact ticked, invented + original resume: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted ticked: Authorization: Bearer <token>",
+      "ok": true,
+      "detail": "Bearer walkthrough-fake-access-token"
+    },
+    {
+      "name": "2 Hosted ticked: contact true",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted (no parsed resume): name replaced",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted (no parsed resume): email, phone, linkedin.com/in/janedoe replaced",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted (no parsed resume): portfolio janedoe.dev replaced",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted: mode hosted, provider claude",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted (run-1 failing case): output has no janedoe.dev, Jane Doe, email or phone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted (run-1 failing case): sourceResume has no janedoe.dev, Jane Doe, email or phone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted: summary, jobs and skills stay in sourceResume",
+      "ok": false,
+      "detail": "missing: SUMMARY, Data Analyst, Contoso Retail, Built weekly sales dashboards; starts: \"[contact details]\\n\\nJunior Analyst, Fabrikam Foods - Toronto, ON - 2019 - 2021\\n- Cleaned an\""
+    },
+    {
+      "name": "2 Hosted: contact box starts unticked",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted letter, contact unticked: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted unticked: no Authorization header",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted unticked: contact false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted unticked: no contact details in body",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2b BYOK letter, no parsed resume: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2b BYOK (no parsed resume): name replaced",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2b BYOK (no parsed resume): portfolio janedoe.dev replaced",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.1 Hosted no-parse: stacked-header: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.1 stacked-header: output has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.1 stacked-header: sourceResume has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.1 stacked-header: skills and employers stay in sourceResume",
+      "ok": true,
+      "detail": "Contoso Retail, Fabrikam Foods, React, TypeScript, Vue, GraphQL"
+    },
+    {
+      "name": "4.1 stacked-header: sourceResume header (with Toronto, ON) dropped",
+      "ok": true,
+      "detail": "[contact details]"
+    },
+    {
+      "name": "4.2 Hosted no-parse: portfolio-label: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.2 portfolio-label: output has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.2 portfolio-label: sourceResume has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.2 portfolio-label: skills and employers stay in sourceResume",
+      "ok": true,
+      "detail": "Contoso Retail, Fabrikam Foods, React, TypeScript, Vue, GraphQL"
+    },
+    {
+      "name": "4.3 Hosted no-parse: behance-in-letter: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.3 behance-in-letter: output has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.3 behance-in-letter: sourceResume has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.3 behance-in-letter: skills and employers stay in sourceResume",
+      "ok": true,
+      "detail": "Contoso Retail, Fabrikam Foods, React, TypeScript, Vue, GraphQL"
+    },
+    {
+      "name": "4.4 Hosted no-parse: domain-shaped-skills: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.4 domain-shaped-skills: output has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.4 domain-shaped-skills: sourceResume has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.4 domain-shaped-skills: skills and employers stay in sourceResume",
+      "ok": true,
+      "detail": "Socket.io, fast.ai, Shopify.com | Engineer | 2020–2024, Built real-time Socket.io apps, Contoso Retail, Fabrikam Foods, React, TypeScript, Vue, GraphQL"
+    },
+    {
+      "name": "4.4 domain-shaped-skills: letter keeps At Shopify.com I built Socket.io apps. unchanged",
+      "ok": true,
+      "detail": "Dear Hiring Team at Northwind Analytics, | At Shopify.com I built  | Socket.io apps. You can see more at [link]."
+    },
+    {
+      "name": "3 Editor: \"Flag a problem\" link in the top bar",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "3 Editor: bullet edited",
+      "ok": true,
+      "detail": "Built weekly sales dashboards used by 40 store managers across Ontario"
+    },
+    {
+      "name": "3 Editor 1280px: form opens below the bar, fully on screen",
+      "ok": true,
+      "detail": "{\"box\":{\"x\":916,\"y\":74,\"width\":340,\"height\":400.78125},\"bar\":{\"x\":0,\"y\":0,\"width\":1280,\"height\":67}}"
+    },
+    {
+      "name": "3 Editor: Ctrl+Z in the comment keeps the resume edit",
+      "ok": true,
+      "detail": "bullet now: \"Built weekly sales dashboards used by 40 store managers across Ontario\", comment now: \"Layout brok\""
+    },
+    {
+      "name": "3 Editor 900px: form stays fully on screen",
+      "ok": true,
+      "detail": "{\"x\":521,\"y\":119,\"width\":340,\"height\":400.78125}"
+    },
+    {
+      "name": "3 Editor resume, edited: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "3 Editor: output has no name/phone/email/website/links/location/sourceHash",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "3 Editor: output.editedAt set",
+      "ok": true,
+      "detail": "2026-11-17T18:19:32.267Z"
+    },
+    {
+      "name": "3 Editor: the edit is in the output",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "3 Editor: no contact details anywhere in body",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "3 Editor: job.site linkedin.com, kind resume, ATS score/gaps",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "3 Editor: no Authorization header (BYOK)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "3 Editor (control): Ctrl+Z in a resume field undoes the edit",
+      "ok": true,
+      "detail": "Built weekly sales dashboards used by 40 store managers"
+    }
+  ],
+  "otherCalls": []
+}
