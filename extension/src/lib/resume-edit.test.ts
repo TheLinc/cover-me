@@ -67,6 +67,16 @@ describe("the note on a summary that uses the posting's title (#244)", () => {
     expect(postingTitleInSummary(fullStack('Engineer building full-stack applications.'), 'Software Development Engineer')).toBeUndefined()
   })
 
+  test("no shorter form when one of the user's jobs has the posting's full title", () => {
+    const r = { ...fullStack('Software Engineer building full-stack applications.'), experience: [{ ...resume.experience[0], title: 'Software Development Engineer' }] }
+    expect(postingTitleInSummary(r, 'Software Development Engineer')).toBeUndefined()
+  })
+
+  test('a shorter form counts only where the summary opens, after an article', () => {
+    expect(postingTitleInSummary(fullStack('A Software Engineer building full-stack applications.'), 'Software Development Engineer')).toEqual({ title: 'Software Engineer', shorter: true })
+    expect(postingTitleInSummary(fullStack('Full Stack Developer with experience in test automation.'), 'Software Engineer in Test')).toBeUndefined()
+  })
+
   test('not for a posting with no title', () => {
     expect(postingTitleInSummary(fullStack('Developer who builds web applications.'), '')).toBeUndefined()
   })

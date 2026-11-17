@@ -29,25 +29,32 @@ export type PostingTitle = { title: string; shorter: boolean }
 // The posting's title, levels dropped, when the summary names it and none of
 // the user's jobs carry it (#244). The tailor may open the summary with the
 // posting's title (#218); job titles stay the user's own. Failing that, a
-// shorter form of it the summary names, flagged as shorter (#253). A one-word
-// title ("Designer") is never exempted from grounding, so it gets no note, and
-// neither does a resume with no jobs left to compare (section deleted).
+// shorter form of it the summary opens with, flagged as shorter (#253). Only
+// the opening counts there: "in Test" from "Software Engineer in Test" is
+// everyday prose further in. undefined when there's nothing to note: a one-word
+// title ("Designer") is never exempted from grounding, and a resume with no
+// jobs left (section deleted) has no titles to compare.
 export function postingTitleInSummary(resume: TailoredResume, jobTitle: string): PostingTitle | undefined {
   const title = titleWithoutLevel(jobTitle)
   const summary = resume.summary ?? ''
-  if (!title || !resume.experience.length) return undefined
   const unclaimed = (t: string) => !resume.experience.some((e) => mentions(e.title, t))
-  if (mentions(summary, title)) return unclaimed(title) ? { title, shorter: false } : undefined
-  const form = shorterForms(title).find((t) => mentions(summary, t) && unclaimed(t))
+  if (!title || !resume.experience.length || !unclaimed(title)) return undefined
+  if (mentions(summary, title)) return { title, shorter: false }
+  const opening = summary.trim().replace(/^an?\s+/i, '')
+  const opensWith = (t: string) => opening.toLowerCase().startsWith(t.toLowerCase()) && !/[a-z0-9]/i.test(opening[t.length] ?? '')
+  const form = shorterForms(title).find((t) => opensWith(t) && unclaimed(t))
   return form ? { title: form, shorter: true } : undefined
 }
 
 // Two or more of the title's words, in order and ending with its last word,
 // longest first: "Software Engineer" and "Development Engineer" from
 // "Software Development Engineer". One word ("Engineer") never counts.
+// ponytail: 2^(n-1) forms, so none past 7 words (a scraped title with no
+// separator); a word-by-word walk of the opening would lift the cap.
 function shorterForms(title: string): string[] {
   const words = title.split(' ')
   const last = words.pop()
+  if (words.length > 6) return []
   const subsets = words.reduce<string[][]>((sets, w) => [...sets, ...sets.map((s) => [...s, w])], [[]])
   return subsets
     .filter((s) => s.length && s.length < words.length)
