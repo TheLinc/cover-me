@@ -118,7 +118,7 @@ export default function FlagProblem({ target, resultKey }: { target: ReportTarge
             job&apos;s title, company, description and site name, your answers, whether you use Hosted or your own key,
             which AI wrote it and the extension&apos;s version.
             {category === 'invented' && hasResume && sendSource && ' Also your original resume.'}
-            {' '}Your contact details are taken out first.
+            {' '}Your contact details are taken out of the {target.kind} first; your comment goes as you wrote it.
             {canContact && contact ? ' Your account goes with it so we can reply.' : " It isn't linked to you."}
           </p>
           {error && <p className="scrape-failure-error" role="alert">{error}</p>}

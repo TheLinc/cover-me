@@ -78,7 +78,7 @@ export function buildGenerationReport(target: ReportTarget, form: ReportForm, en
   // A letter prompt asks for the portfolio link, which often holds the name, so
   // the user's links go from everything sent. Location only from the original
   // resume: in a letter or a resume's jobs it's part of what we want to see.
-  const people = [...tag(names, '[name]'), ...tag(all('email'), '[email]'), ...tag(all('phone'), '[phone]'), ...tag([...all('website'), ...all('links')], '[link]')]
+  const people = [...tag(names, '[name]'), ...tag(all('email'), '[email]'), ...tag(all('phone'), '[phone]'), ...tag([...all('website'), ...all('links')].flatMap((l) => [l, bareLink(l)]), '[link]')]
 
   const sendSource = form.category === 'invented' && form.sendSource && !!env.resume?.text
   // A name only: none for a pasted posting, or one the server wouldn't take (an IP address).
@@ -131,6 +131,9 @@ function headNames(text: string): string[] {
   return []
 }
 const NAME_PARTICLE = /^(van|von|der|den|de|del|della|di|da|dos|du|la|le|bin|binti|al|el|ibn|ben|y)$/i
+
+// A link as a letter may write it: no https://, www. or trailing slash.
+const bareLink = (l: string) => l.trim().replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/+$/, '')
 
 // The name a letter signs with: the line after its closing ("Sincerely,").
 // Whatever shape the resume is, this is the name as the letter writes it.
