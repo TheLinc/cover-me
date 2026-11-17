@@ -39,6 +39,9 @@
   --text-3:      #A6A3C6;
   --gap-bg:      rgba(249, 115, 22, 0.16);
   --gap-fg:      #FDBA74;
+  --tip-bg:      rgba(250, 204, 21, 0.12);
+  --tip-fg:      #FDE047;
+  --tip-border:  rgba(250, 204, 21, 0.28);
   --error:       #f87171;
   --error-dim:   rgba(248, 113, 113, 0.10);
   --success:     #34d399;
@@ -745,6 +748,11 @@ html, body {
 .provider-option.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent-h); }
 
 .hint { font-size: 11px; color: var(--text-3); line-height: 1.55; }
+
+/* A tip about the result, like the summary using the posting's title (#244) */
+.tip { display: flex; gap: 8px; align-items: flex-start; font-size: 12px; line-height: 1.5; color: var(--text-2); background: var(--tip-bg); border: 1px solid var(--tip-border); border-radius: 8px; padding: 8px 10px; }
+.tip svg { color: var(--tip-fg); flex-shrink: 0; margin-top: 2px; }
+.tip strong { color: var(--tip-fg); font-weight: 600; }
 
 .input-wrap { position: relative; }
 
