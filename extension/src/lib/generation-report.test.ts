@@ -192,12 +192,73 @@ describe('buildGenerationReport', () => {
         expect(letter(`I ship.\n\n${close}\nJane Doe`)).toBe(`I ship.\n\n${close}\n[signature]`)
       }
       expect(letter('I ship.\n\nBest regards, Jane Doe')).toBe('I ship.\n\nBest regards, [signature]')
-      expect(letter('I ship.\n\nSincerely,\n\nJane Doe\n\nP.S. My portfolio is pixelcat.design.')).toBe('I ship.\n\nSincerely,\n\n[signature]\n\nP.S. My portfolio is [link].')
+      expect(letter('I ship.\n\nSincerely,\n\nJane Doe\n\nP.S. My portfolio is pixelcat.design.')).toBe('I ship.\n\nSincerely,\n[signature]\n\nP.S. My portfolio is [link].')
       expect(letter('I ship.\n\nThank you for your time.')).toBe('I ship.\n\nThank you for your time.')
     })
 
     test('a stranger’s name in a sign-off is still taken, without a parse knowing it', () => {
-      expect(letter('I ship.\n\nKind regards,\n\nPriya Raman\n\nP.S. Priya Raman built this.')).toBe('I ship.\n\nKind regards,\n\n[signature]\n\nP.S. [name] built this.')
+      expect(letter('I ship.\n\nKind regards,\n\nPriya Raman\n\nP.S. Priya Raman built this.')).toBe('I ship.\n\nKind regards,\n[signature]\n\nP.S. [name] built this.')
+    })
+  })
+
+  describe('review round 19', () => {
+    test('the city comes out of any location format', () => {
+      const at = (location: string, text: string) => letter(text, env({ parsed: { ...parsed, location } }))
+      expect(at('Greater Toronto Area', "I'm based in Toronto, ON.")).toBe("I'm based in [location].")
+      expect(at('San Francisco Bay Area', 'I live in San Francisco and Oakland.')).toBe('I live in [location] and Oakland.')
+      expect(at('Toronto ON M5V 2T6', 'I live in Toronto, close to you.')).toBe('I live in [location], close to you.')
+      expect(at('London / Remote', 'From London.')).toBe('From [location].')
+      expect(at('Lagos Nigeria', 'Lagos-based.')).toBe('[location]-based.')
+      expect(at('Pune - Maharashtra', 'In Pune.')).toBe('In [location].')
+      expect(at('Rohini, New Delhi', 'Delhi - 110085')).toBe('[location]')
+      // A country or province alone names no one.
+      expect(at('Toronto, ON, Canada', 'Air Canada and Ontario Teachers in Toronto.')).toBe('Air Canada and Ontario Teachers in [location].')
+    })
+
+    test('personal sections in any language, and personal lines in any section, go; postcodes from more countries', () => {
+      const sections = [
+        { heading: 'Persönliche Daten', lines: ['Geburtsdatum: 01.01.1990'] },
+        { heading: 'Bio Data', lines: ["Father's Name: Ramesh"] },
+        { heading: 'Contacts', lines: ['12 Main Street, Dublin 2, D02 X285'] },
+        { heading: 'Additional Information', lines: ['Address: 3 Elm Road, Leeds LS6 2AB', 'DNI: 12345678Z', 'Languages: Spanish, English'] },
+        { heading: 'Personal Projects', lines: ['Built a chess engine'] },
+        { heading: 'Datos personales', lines: ['Fecha de nacimiento: 1990'] },
+      ]
+      expect(source(env({ parsed: { ...parsed, otherSections: sections } }))?.otherSections)
+        .toEqual([{ heading: 'Additional Information', lines: ['Languages: Spanish, English'] }, { heading: 'Personal Projects', lines: ['Built a chess engine'] }])
+      const s = (t: string) => letter(t, env({ parsed: { ...parsed, location: '' } }))
+      expect(s('3511 AX Utrecht; 00-590 Warszawa; D02 X285; 01310-100; 〒150-0002 東京都渋谷区渋谷2-21-1')).toBe('[postal code] Utrecht; [postal code] Warszawa; [postal code]; [postal code]; [postal code] [address]')
+      expect(letter('111 51 Stockholm', env({ parsed: { ...parsed, location: 'Stockholm, Sweden' } }))).toBe('[location]')
+    })
+
+    test('ordinary text stays: European dates, money, Via, Unity3D, Asp.net, file names, skills labels', () => {
+      const text = 'Analyst 03.2019 - 11.2021 and 05.2018 - 09.2020; budget $2 500 000 000; Via automated testing, 30 regressions were caught; Unity3D, Unit4 ERP, Adobe Creative Suite 6, Unit 8200; Asp.net Core, VB.net, Draw.io, libfoo.so, main.cc; Web: HTML; Medium: blog posts.'
+      expect(letter(text, env({ parsed: { ...parsed, location: '' } }))).toBe(text)
+    })
+
+    test('the signature cut never takes body text', () => {
+      const body = "What I'd bring:\n- Kubernetes at scale\n- On-call leadership\n\nI'd welcome a conversation about the role"
+      expect(letter(`${body}\n\nSincerely,\nJane Doe`)).toBe(`${body}\n\nSincerely,\n[signature]`)
+      expect(letter('Dear Hiring Manager,\n\nI ship.')).toBe('Dear Hiring Manager,\n\nI ship.')
+      expect(letter('Dear team,\n\nIn short, I would love to talk.')).toBe('Dear team,\n\nIn short, I would love to talk.')
+    })
+
+    test('a greeting the header ends at, and a phone that can’t eat a ZIP across lines', () => {
+      expect(letter('Jane Doe\n4821 Telegraph Ave, Apt 3\nOakland, CA 94609\n(415) 555-0132 · jane.doe@gmail.com\n\nTo the Hiring Team at Northwind,\n\nI ship.',
+        env({ parsed: { ...parsed, phone: '(415) 555-0132' } })))
+        .toBe('[contact details]\n\nTo the Hiring Team at Northwind,\n\nI ship.')
+      expect(letter('Oakland, CA 94609\n(415) 555-0132', env({ parsed: { ...parsed, location: '', phone: '(415) 555-0132' } }))).toBe('Oakland, CA [postal code]\n[phone]')
+    })
+
+    test('walkthrough 6: a phone written with slashes, and a province named after the city', () => {
+      expect(letter('Reach me on 0151 / 234 567 89.', env({ parsed: { ...parsed, phone: '+49 151 23456789' } }))).toBe('Reach me on [phone].')
+      expect(letter('Call 030/1234567 or 0151/23456789.', env({ parsed: { ...parsed, phone: '' } }))).toBe('Call [phone] or [phone].')
+      expect(letter('From Toronto, Ontario, Canada. Ontario Teachers is a client.')).toBe('From [location]. Ontario Teachers is a client.')
+      expect(letter('Dates 12/04/1995 and 01/2019 stay.')).toBe('Dates 12/04/1995 and 01/2019 stay.')
+    })
+
+    test('a two-letter surname goes alone', () => {
+      expect(letter('At Li & Fung, the Li family business.', env({ parsed: { ...parsed, name: 'Wei Li' } }))).toBe('At [name] & Fung, the [name] family business.')
     })
   })
 

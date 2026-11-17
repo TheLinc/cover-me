@@ -49,7 +49,8 @@ Deno.serve(async (req) => {
   // links and location out of a report with it, and sends it in place of the
   // resume text when the user includes their original resume.
   if (req.method === 'GET' && new URL(req.url).searchParams.has('parse')) {
-    const { data } = await supabase.from('resumes').select('text_encrypted, structured_encrypted').eq('user_id', userId).maybeSingle()
+    const { data, error } = await supabase.from('resumes').select('text_encrypted, structured_encrypted').eq('user_id', userId).maybeSingle()
+    if (error) return json({ error: 'Failed to read resume' }, 500)
     if (!data) return json({ error: 'No resume found' }, 404)
     const cached = await readParse(data.structured_encrypted)
     if (cached && Array.isArray(cached.experience)) return json({ structured: cached })
