@@ -64,15 +64,19 @@ const PHONE = /(?:\+\d[\d ().-]{7,}\d|\(?\b\d{3}\)?[ .-]?\d{3}[ .-]?\d{4}\b)/g
 // Only addresses that can't be anything else. A bare portfolio domain comes
 // from the parse, the tailored resume, or headerDomains.
 const URL = /(?:https?:\/\/|www\.)\S+|\b(?:[\w-]+\.)*(?:linkedin|github|gitlab|behance|dribbble)\.com\/\S*/gi
-// A lowercase domain with a common site ending, and its path. Lowercase and the
-// ending list keep "Node.js" and "ASP.NET" out.
-const DOMAIN = /\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:com|dev|io|me|net|org|co|ca|app|page|site|xyz|tech|ai|design|blog|info|uk|us|de|fr|au|in|nl)\b(?:\/[^\s·|,]*)?/g
+// A domain with a common site ending (lowercase, so "ASP.NET" stays out; the
+// list keeps "Node.js" out), an optional country part ("com.br"), and its path.
+const DOMAIN = /\b[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.(?:com|dev|io|me|net|org|co|ca|app|page|site|xyz|tech|ai|design|blog|info|studio|so|to|ie|uk|us|de|fr|au|in|nl)(?:\.[a-z]{2})?\b(?:\/[^\s·|,]*)?/g
+// A line that holds contact details, not a summary or a skills list.
+const CONTACT_LINE = /[·|•]|\b(?:portfolio|website|web|site|blog)\b/i
 
 // Without a parse or History (Hosted, or BYOK before the first tailor), the
-// user's own domains are the ones in the resume's header, where the contact
-// line sits. ponytail: an employer's domain there is taken too.
+// user's own domains are the ones on the contact lines near the resume's top.
+// ponytail: an employer's domain there is taken too.
 function headerDomains(text: string): string[] {
-  return text.slice(0, 400).replace(EMAIL, ' ').match(DOMAIN) ?? []
+  return text.slice(0, 400).split('\n')
+    .filter((l) => CONTACT_LINE.test(l) || l.search(EMAIL) !== -1 || l.search(PHONE) !== -1)
+    .flatMap((l) => l.replace(EMAIL, ' ').replace(PHONE, ' ').match(DOMAIN) ?? [])
 }
 
 export function buildGenerationReport(target: ReportTarget, form: ReportForm, env: ReportEnv): GenerationReport {
@@ -85,10 +89,12 @@ export function buildGenerationReport(target: ReportTarget, form: ReportForm, en
     ...(target.kind === 'letter' ? signedName(target.output) : []),
   ])
   const tag = (values: string[], t: string) => values.map((v): [string, string] => [v, t])
+  const known = [...all('website'), ...all('links')]
+  const links = known.length ? known : headerDomains(env.resume?.text ?? '')
   // A letter prompt asks for the portfolio link, which often holds the name, so
   // the user's links go from everything sent. Location only from the original
   // resume: in a letter or a resume's jobs it's part of what we want to see.
-  const people = [...tag(names, '[name]'), ...tag(all('email'), '[email]'), ...tag(all('phone'), '[phone]'), ...tag([...all('website'), ...all('links'), ...headerDomains(env.resume?.text ?? '')].flatMap((l) => [l, bareLink(l)]), '[link]')]
+  const people = [...tag(names, '[name]'), ...tag(all('email'), '[email]'), ...tag(all('phone'), '[phone]'), ...tag(links.flatMap((l) => [l, bareLink(l)]), '[link]')]
 
   const sendSource = form.category === 'invented' && form.sendSource && !!env.resume?.text
   // A name only: none for a pasted posting, or one the server wouldn't take (an IP address).

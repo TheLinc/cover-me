@@ -174,6 +174,16 @@ describe('buildGenerationReport', () => {
       .toBe(`[contact details]\n${filler}\nSkills: Node.js, ASP.NET\nWrote about churn models at [link]/blog`)
   })
 
+  test('only contact lines give up domains, in any case; a skills line and a known link leave the rest alone', () => {
+    const letter = 'I built a chat service on socket.io. See JaneDoe.com and dev.to/janedoe.'
+    const hosted = (text: string) => env({ mode: 'hosted', resume: { text, filename: '', updatedAt: '' } })
+    expect(buildGenerationReport({ kind: 'letter', output: letter, job }, form, hosted('Jane Doe | JaneDoe.com | dev.to/janedoe | (416) 555-0199\nSkills: React, socket.io')).output)
+      .toBe('I built a chat service on socket.io. See [link] and [link].')
+    // A known link means no guessing: socket.io on a contact line stays too.
+    const parsedText = env({ resume: { ...env().resume!, text: 'Jane Doe · socket.io fan · janedoe.dev' } })
+    expect(buildGenerationReport({ kind: 'letter', output: 'Built on socket.io.', job }, form, parsedText).output).toBe('Built on socket.io.')
+  })
+
   test("a name can't eat an email's first half and leave its domain", () => {
     const pdf = env({ resume: { text: 'Jane Doe jane@janedoe.dev (416) 555-0199 Experience', filename: '', updatedAt: '' } })
     expect(buildGenerationReport({ kind: 'letter', output: 'Hi', job }, { ...form, category: 'invented', sendSource: true }, pdf).sourceResume)
