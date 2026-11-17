@@ -66,26 +66,27 @@ const PHONE = /(?:\+\d[\d ().-]{7,}\d|\(?\b\d{3}\)?[ .-]?\d{3}[ .-]?\d{4}\b)/g
 const URL = /(?:https?:\/\/|www\.)\S+|\b(?:[\w-]+\.)*(?:linkedin|github|gitlab|behance|dribbble)\.com\/\S*/gi
 // A domain with a common site ending (lowercase, so "ASP.NET" stays out; the
 // list keeps "Node.js" out), an optional country part ("com.br"), and its path.
-const DOMAIN = /\b[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.(?:com|dev|io|me|net|org|co|ca|app|page|site|xyz|tech|ai|design|blog|info|studio|art|tv|pro|online|cc|gg|so|to|ie|uk|us|de|fr|au|in|nl|it|es|se|ch|eu)(?:\.[a-z]{2})?\b(?:\/[^\s·|,]*)?/g
-// A line that holds contact details, not a summary or a skills list: it has a
-// separator, a label ("Portfolio:"), an email or phone, or nothing else at all.
-const CONTACT_LINE = /[·|•—–\t]|\b(?:portfolio|website|web|site|blog)\s*:/i
-const isContactLine = (l: string) => CONTACT_LINE.test(l) || l.search(EMAIL) !== -1 || l.search(PHONE) !== -1 ||
-  !l.replace(EMAIL, '').replace(PHONE, '').replace(URL, '').replace(DOMAIN, '').replace(/[\s()[\]<>,;:·|•—–-]/g, '')
+const DOMAIN = /\b[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.(?:com|dev|io|me|net|org|co|ca|app|page|site|xyz|tech|ai|design|blog|info|studio|art|tv|pro|online|cc|gg|so|to|ie|uk|us|de|fr|au|in|nl|it|es|se|ch|eu)(?:\.[a-z]{2})?\b(?:\/(?:[^\s·|,]*[^\s·|,.;:!?)])?)?/g
+// A domain after a label: "Portfolio pixelforge.studio", "Homepage: ...".
+const LABELLED = new RegExp(String.raw`\b(?:portfolio|website|web|site|homepage|blog|links?|url)\b\s*:?\s*(${DOMAIN.source})`, 'gi')
+const plain = (s: string) => s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
 
-// The user's own domains when nothing names them: the ones on the contact
-// lines near the resume's top, and any domain in the resume or the letter that
-// holds a word of the user's name ("janedoe.dev"). ponytail: an employer's
-// domain on a contact line is taken too.
+// Domains the user's own, besides the known links, from signals a skills list
+// or an employer line can't give: on a line with an email or phone near the
+// resume's top, after a label there, or holding a word of the user's name
+// anywhere in the resume or the letter ("janedoe.dev", "behance.net/janedoe";
+// accents ignored). One from a contact line or a label also goes without its
+// path; a named one doesn't ("medium.com" is anyone's). ponytail: a domain that
+// spells no name, alone on a line or after an icon, is left: it reads the same
+// as a skill ("Socket.io") or an employer ("Shopify.com").
 function guessedDomains(text: string, letter: string, names: string[]): string[] {
-  const contact = text.slice(0, 400).split('\n').filter(isContactLine)
+  const top = text.slice(0, 400)
+  const contact = top.split('\n').filter((l) => l.search(EMAIL) !== -1 || l.search(PHONE) !== -1)
     .flatMap((l) => l.replace(EMAIL, ' ').replace(PHONE, ' ').match(DOMAIN) ?? [])
-  const words = [...new Set(names.flatMap((n) => n.toLowerCase().split(/[^\p{L}]+/u)).filter((w) => w.length >= 3))]
-  const named = `${text}\n${letter}`.replace(EMAIL, ' ').match(DOMAIN)?.filter((d) => {
-    const label = d.split('/')[0].toLowerCase()
-    return words.some((w) => label.includes(w))
-  }) ?? []
-  return [...contact, ...named]
+  const labelled = [...top.matchAll(LABELLED)].map((m) => m[1])
+  const words = [...new Set(names.flatMap((n) => plain(n).split(/[^\p{L}]+/u)).filter((w) => w.length >= 3))]
+  const named = `${text}\n${letter}`.replace(EMAIL, ' ').match(DOMAIN)?.filter((d) => words.some((w) => plain(d).includes(w))) ?? []
+  return [...[...contact, ...labelled].flatMap((d) => [d, d.split('/')[0]]), ...named]
 }
 
 export function buildGenerationReport(target: ReportTarget, form: ReportForm, env: ReportEnv): GenerationReport {

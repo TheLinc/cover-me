@@ -181,16 +181,24 @@ describe('buildGenerationReport', () => {
       .toBe('I built a chat service on socket.io. See [link] and [link].')
   })
 
-  test('a domain alone on its line, between dashes, or holding the name is taken; a "web developer" summary is not a contact line', () => {
-    const portfolio = 'My portfolio is codecraft.studio and janedoe.dev; I shipped socket.io apps.'
+  test('a domain holding the name is taken in any layout; one after a label or beside an email goes with and without its path', () => {
     const hosted = (text: string) => env({ mode: 'hosted', resume: { text, filename: '', updatedAt: '' } })
-    const sent = (text: string) => buildGenerationReport({ kind: 'letter', output: portfolio, job }, form, hosted(text)).output
-    // Word puts each paragraph on its own line.
-    expect(sent('Jane Doe\n\nToronto, ON\n\njane@x.com\n\ncodecraft.studio\n\nSummary')).toBe('My portfolio is [link] and [link]; I shipped socket.io apps.')
-    expect(sent('Jane Doe\nToronto, ON — codecraft.studio — linkedin.com/in/janedoe')).toBe('My portfolio is [link] and [link]; I shipped socket.io apps.')
-    // janedoe.dev holds the name, wherever it is; the summary's socket.io stays.
-    expect(sent('Jane Doe\nSenior Web Developer\nFull-stack web developer shipping real-time apps on socket.io and Next.js'))
-      .toBe('My portfolio is codecraft.studio and [link]; I shipped socket.io apps.')
+    const sent = (text: string, letter: string) => buildGenerationReport({ kind: 'letter', output: letter, job }, form, hosted(text)).output
+    // Word puts each paragraph on its own line; janedoe.dev holds the name.
+    expect(sent('Jane Doe\n\nToronto, ON\n\njane@x.com\n\njanedoe.dev\n\nSummary', 'See janedoe.dev.')).toBe('See [link].')
+    // A label, with or without a colon.
+    expect(sent('Jane Doe\nPortfolio pixelforge.studio', 'See pixelforge.studio.')).toBe('See [link].')
+    expect(sent('Jane Doe\nHomepage: pixelforge.studio', 'See pixelforge.studio.')).toBe('See [link].')
+    // Beside an email, with a path: the bare domain goes too.
+    expect(sent('Jane Doe\njane@x.com | pixelforge.studio/work', 'See pixelforge.studio.')).toBe('See [link].')
+    // Accents, and a handle in the path.
+    expect(sent('José Núñez\nToronto', 'See josenunez.dev and behance.net/josenunez.')).toBe('See [link] and [link].')
+  })
+
+  test("skills, an em-dash summary, a sidebar and an employer line near the top aren't taken for the user's domains", () => {
+    const text = 'Jane Doe\nFull-stack engineer — real-time apps with Socket.io and fast.ai\n• Socket.io, fast.ai, Vercel.app\nShopify.com | Engineer | 2020–2024\nSocket.io\nfast.ai'
+    const letter = 'At Shopify.com I built Socket.io apps on fast.ai and Vercel.app.'
+    expect(buildGenerationReport({ kind: 'letter', output: letter, job }, form, env({ mode: 'hosted', resume: { text, filename: '', updatedAt: '' } })).output).toBe(letter)
   })
 
   test("a name can't eat an email's first half and leave its domain", () => {
