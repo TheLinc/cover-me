@@ -5,7 +5,7 @@
 // The output, the posting and the rest go as event properties.
 //
 // The extension takes out the user's name, email and phone before sending; the
-// resume's contact fields are dropped here again in case an old build sends them.
+// resume's contact fields and Word file hash are dropped here again in case an old build sends them.
 // No account needed (BYOK users report too), so verify_jwt is off and calls are
 // rate-limited per IP. Each response gets a random distinct_id. A token is read
 // only when the user ticked "You can email me about this" (contact: true), and
@@ -34,7 +34,8 @@ const CATEGORIES: Record<string, string> = {
   other: 'Other',
 }
 const KINDS: Record<string, string> = { letter: 'Cover letter', resume: 'Tailored resume' }
-const CONTACT_FIELDS = ['name', 'phone', 'email', 'website', 'links', 'location']
+// Contact fields, and the Word file's hash, which a Pro account also stores.
+const DROPPED_FIELDS = ['name', 'phone', 'email', 'website', 'links', 'location', 'sourceHash']
 
 const HOST = /^(?=.{4,253}$)(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9-]{2,}$/
 const VERSION = /^\d{1,5}(?:\.\d{1,5}){0,3}$/
@@ -105,7 +106,7 @@ function report({ category, comment, kind, output, job, mode, provider, version,
     made = { output }
   } else {
     if (!output || typeof output !== 'object' || Array.isArray(output) || JSON.stringify(output).length > MAX_RESUME_JSON) return null
-    const resume = Object.fromEntries(Object.entries(output).filter(([k]) => !CONTACT_FIELDS.includes(k)))
+    const resume = Object.fromEntries(Object.entries(output).filter(([k]) => !DROPPED_FIELDS.includes(k)))
     const gaps = Array.isArray(resume.atsGaps) && resume.atsGaps.every((g) => typeof g === 'string') ? resume.atsGaps : undefined
     made = {
       output: resume,

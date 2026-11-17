@@ -73,8 +73,8 @@ describe('generation-report', () => {
     })
   })
 
-  it("records a resume report with its score, gaps, edited mark and the original resume, and drops contact fields that slipped through", async () => {
-    const output = { ...RESUME.output, name: 'Jane Doe', email: 'jane@example.com', phone: '416 555 0199', website: 'jane.dev', links: ['jane.dev'], location: 'Toronto' }
+  it("records a resume report with its score, gaps, edited mark and the original resume, and drops contact fields and the Word file's hash that slipped through", async () => {
+    const output = { ...RESUME.output, sourceHash: 'f00d', name: 'Jane Doe', email: 'jane@example.com', phone: '416 555 0199', website: 'jane.dev', links: ['jane.dev'], location: 'Toronto' }
     expect((await send({ ...RESUME, output })).status).toBe(200)
     const [event] = await surveyEvents()
     expect(event.properties).toMatchObject({
@@ -88,7 +88,7 @@ describe('generation-report', () => {
       source_resume: RESUME.sourceResume,
       mode: 'hosted',
     })
-    expect(JSON.stringify(event.properties)).not.toMatch(/Jane Doe|jane@example\.com|416 555 0199|Toronto/)
+    expect(JSON.stringify(event.properties)).not.toMatch(/Jane Doe|jane@example\.com|416 555 0199|Toronto|f00d/)
   })
 
   it('adds the account ID only when the report says "You can email me" and carries a valid token', async () => {

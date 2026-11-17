@@ -41,7 +41,7 @@ export interface GenerationReport {
   category: ReportCategory
   comment: string
   kind: 'letter' | 'resume'
-  output: string | Omit<TailoredResume, ContactField | 'deletedSections'>
+  output: string | Omit<TailoredResume, ContactField | 'deletedSections' | 'sourceHash'>
   job: { title: string; company: string; description: string; site: string }
   mode: AppMode
   provider: AIProvider
@@ -52,7 +52,10 @@ export interface GenerationReport {
 
 const CONTACT_FIELDS = ['name', 'phone', 'email', 'website', 'links', 'location'] as const
 type ContactField = (typeof CONTACT_FIELDS)[number]
-const DROPPED = [...CONTACT_FIELDS, 'deletedSections'] as const
+// sourceHash: the user's Word file's hash, which a Pro account also stores.
+const DROPPED = [...CONTACT_FIELDS, 'deletedSections', 'sourceHash'] as const
+// The generation-report function's check for a site name.
+const HOST = /^(?=.{4,253}$)(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9-]{2,}$/
 
 const EMAIL = /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g
 // A North American number, or anything after a +. Not any long run of digits:
@@ -66,16 +69,16 @@ export function buildGenerationReport(target: ReportTarget, form: ReportForm, en
   // Every source's details: a user may have emptied one in the editor.
   const sources = [env.resume?.parsed, env.tailored, target.kind === 'resume' ? target.output : undefined]
   const all = (field: ContactField) => sources.flatMap((s) => [s?.[field]].flat()).filter((v): v is string => typeof v === 'string' && !!v.trim())
-  const names = [...all('name'), ...(env.resume?.parsed?.name?.trim() ? [] : headNames(env.resume?.text ?? ''))]
+  const names = withShortForms([...all('name'), ...(env.resume?.parsed?.name?.trim() ? [] : headNames(env.resume?.text ?? ''))])
   const tag = (values: string[], t: string) => values.map((v): [string, string] => [v, t])
   const people = [...tag(names, '[name]'), ...tag(all('email'), '[email]'), ...tag(all('phone'), '[phone]')]
   const places = [...tag([...all('website'), ...all('links')], '[link]'), ...tag(all('location'), '[location]')]
 
   const sendSource = form.category === 'invented' && form.sendSource && !!env.resume?.text
-  // A name only: none for a pasted posting, or one at an IP address.
+  // A name only: none for a pasted posting, or one the server wouldn't take (an IP address).
   let site = ''
   try { site = new globalThis.URL(target.job.url).hostname.replace(/^www\./, '') } catch { /* pasted: no address */ }
-  if (!/\.[a-z][a-z0-9-]*$/i.test(site)) site = ''
+  if (!HOST.test(site)) site = ''
 
   return {
     category: form.category,
@@ -102,20 +105,37 @@ export function buildGenerationReport(target: ReportTarget, form: ReportForm, en
 
 // Unless this browser's parse names the user, the resume text starts with the
 // name: History's newest resume may be older, or someone else's. A PDF's text
-// can run the first lines together ("Jane Doe Toronto, ON · (416) ..."), so
-// these are the text before any separator, digit or @, and its first two to
-// four capitalized words (with particles like "van" or "de" between them).
-// ponytail: a first line that's a heading ("Senior Software Engineer") is
-// taken too, which blanks those words in the report.
+// can run the first lines together ("Jane Doe Toronto, ON · (416) ..."), and
+// a two-column template can put a sidebar first ("Contact\nToronto, ON\nJane
+// Doe"). So from the first of the first five lines that has any: the text
+// before any separator, digit or @, and its first two to four capitalized
+// words (with particles like "van" or "de" between them). ponytail: a heading
+// there ("Senior Software Engineer") is taken too, which blanks those words in
+// the report.
 function headNames(text: string): string[] {
-  const segment = text.trim().split(/\s[|·•–-]\s|[|·•,\n@\d(+]/)[0].trim()
-  const words = segment.split(/\s+/)
-  const end = words.findIndex((w) => !/^\p{Lu}/u.test(w) && !NAME_PARTICLE.test(w))
-  const caps = end === -1 ? words : words.slice(0, end)
-  return [...new Set([segment, ...[2, 3, 4].map((n) => caps.slice(0, n).join(' '))])]
-    .filter((n) => n.length <= 60 && n.split(/\s+/).length >= 2 && !/\b(resume|résumé|curriculum|vitae|cv)\b/i.test(n))
+  for (const line of text.split('\n').map((l) => l.trim()).filter(Boolean).slice(0, 5)) {
+    const segment = line.split(/\s[|·•–-]\s|[|·•,@\d(+]/)[0].trim()
+    const words = segment.split(/\s+/)
+    const end = words.findIndex((w) => !/^\p{Lu}/u.test(w) && !NAME_PARTICLE.test(w))
+    const caps = end === -1 ? words : words.slice(0, end)
+    const names = [segment, ...[2, 3, 4].map((n) => caps.slice(0, n).join(' '))]
+      .filter((n) => n.length <= 60 && n.split(/\s+/).length >= 2 && !/\b(resume|résumé|curriculum|vitae|cv)\b/i.test(n))
+    if (names.length) return names
+  }
+  return []
 }
 const NAME_PARTICLE = /^(van|von|der|den|de|del|della|di|da|dos|du|la|le|bin|binti|al|el|ibn|ben|y)$/i
+
+// A letter often signs without the title or middle name the resume has
+// ("Dr. Jane A. Doe" signs "Jane Doe"), so each name also goes without its
+// title, and as its first and last words.
+function withShortForms(names: string[]): string[] {
+  return [...new Set(names.flatMap((name) => {
+    const bare = name.replace(/^(dr|mr|mrs|ms|mx|prof)\.?\s+/i, '')
+    const words = bare.split(/\s+/)
+    return [name, bare, ...(words.length > 2 ? [`${words[0]} ${words[words.length - 1]}`] : [])]
+  }))]
+}
 
 // Whole-word matches of what we know (longest first, any case), then anything
 // shaped like an email or phone number. withLinks: web addresses too.

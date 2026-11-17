@@ -118,6 +118,21 @@ describe('buildGenerationReport', () => {
     expect(buildGenerationReport({ kind: 'letter', output: 'Best,\nMaria de la Cruz', job }, form, pdf('Maria de la Cruz Madrid, Spain')).output).toBe('Best,\n[name]')
   })
 
+  test('a sign-off without the middle initial or title, and a sidebar before the name, still match', () => {
+    const sign = 'Sincerely,\nJane Doe'
+    expect(buildGenerationReport({ kind: 'letter', output: sign, job }, form, env({ resume: { ...env().resume!, parsed: { ...parsed, name: 'Jane A. Doe' } } })).output).toBe('Sincerely,\n[name]')
+    const text = (t: string) => env({ resume: { text: t, filename: '', updatedAt: '' } })
+    expect(buildGenerationReport({ kind: 'letter', output: sign, job }, form, text('Dr. Jane Doe\nToronto')).output).toBe('Sincerely,\n[name]')
+    expect(buildGenerationReport({ kind: 'letter', output: `As a software engineer, I ship.\n\n${sign}`, job }, form, text('Contact\nToronto, ON\nJane Doe\nSoftware Engineer')).output)
+      .toBe('As a software engineer, I ship.\n\nSincerely,\n[name]')
+  })
+
+  test("a resume report leaves out its Word file's hash, and an underscore host sends no site", () => {
+    const report = buildGenerationReport({ kind: 'resume', output: { ...tailored, sourceHash: 'abc123' }, job: { ...job, url: 'https://careers_portal.example.com/1' } }, form, env())
+    expect(report.output).not.toHaveProperty('sourceHash')
+    expect(report.job.site).toBe('')
+  })
+
   test("a date range isn't taken for a phone number", () => {
     const hosted = env({ resume: { text: 'Sam Lee\nsam@example.com\nAcme, 2019 - 2024 2025', filename: '', updatedAt: '' } })
     const source = buildGenerationReport({ kind: 'letter', output: 'Hi', job }, { ...form, category: 'invented', sendSource: true }, hosted).sourceResume

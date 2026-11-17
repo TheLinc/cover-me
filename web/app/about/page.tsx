@@ -102,7 +102,7 @@ export default function AboutPage() {
               Your resume holds your work history, education and contact details, so here is exactly where it goes.
             </p>
             <p>
-              With your own API key, you need no account. Your resume goes only to the AI provider whose key you added, OpenAI or Anthropic, and never to Cover Me. The key is stored in the browser, encrypted with AES-256-GCM through the Web Crypto API. The key that encrypts it is stored beside it, so this stops casual reads of the storage file but not someone with full access to your Chrome profile.
+              With your own API key, you need no account. Your resume goes only to the AI provider whose key you added, OpenAI or Anthropic, and reaches Cover Me only if you choose to send it with a problem report. The key is stored in the browser, encrypted with AES-256-GCM through the Web Crypto API. The key that encrypts it is stored beside it, so this stops casual reads of the storage file but not someone with full access to your Chrome profile.
             </p>
             <p>
               With a Cover Me account, your resume is encrypted at rest in our database and sent to Anthropic only to read it and write your documents. It&apos;s never sold or used to train AI models. The extension has no ads, analytics or tracking.

@@ -369,8 +369,8 @@ export default function PrivacyPage() {
                 <strong className="text-foreground">Problem reports (only when you send one).</strong>{' '}
                 Under a cover letter in the extension, or in the resume editor, you can press Flag a problem,
                 in any mode. Each report you send is one response to PostHog, under a random ID. It holds the
-                problem you picked and your comment, the letter or tailored resume (as you last edited it,
-                marked edited), the job&apos;s title, company and description, the posting&apos;s site name (not
+                problem you picked and your comment, the letter or tailored resume as you last edited it (a
+                resume is marked if you edited it), the job&apos;s title, company and description, the posting&apos;s site name (not
                 its address), whether you use Hosted or BYOK mode, which AI wrote it and the extension&apos;s
                 version, and for a resume its ATS score and gaps. Your name, email address and phone number are
                 taken out in your browser before sending, and a resume also loses its links and location. If you
