@@ -108,6 +108,15 @@ describe('buildGenerationReport', () => {
     expect(buildGenerationReport({ kind: 'letter', output: 'Thanks,\nJane Doe', job }, form, hosted).output).toBe('Thanks,\n[name]')
   })
 
+  test("a PDF's run-together first lines still give up the name, and names match whole words only", () => {
+    const pdf = (text: string) => env({ resume: { text, filename: 'r.pdf', updatedAt: '' } })
+    const sign = 'Thanks,\nJane Doe'
+    expect(buildGenerationReport({ kind: 'letter', output: sign, job }, form, pdf('Jane Doe Toronto, ON · (416) 555-0199 · jane@x.com Experience')).output).toBe('Thanks,\n[name]')
+    expect(buildGenerationReport({ kind: 'letter', output: sign, job }, form, pdf('Jane Doe jane@x.com (416) 555-0199 Experience')).output).toBe('Thanks,\n[name]')
+    expect(buildGenerationReport({ kind: 'letter', output: 'Al Ng ran nginx.', job }, form, pdf('Al Ng\nnginx')).output).toBe('[name] ran nginx.')
+    expect(buildGenerationReport({ kind: 'letter', output: 'Resume Writer', job }, form, pdf('RESUME\nJane Doe')).output).toBe('Resume Writer')
+  })
+
   test("a date range isn't taken for a phone number", () => {
     const hosted = env({ resume: { text: 'Sam Lee\nsam@example.com\nAcme, 2019 - 2024 2025', filename: '', updatedAt: '' } })
     const source = buildGenerationReport({ kind: 'letter', output: 'Hi', job }, { ...form, category: 'invented', sendSource: true }, hosted).sourceResume

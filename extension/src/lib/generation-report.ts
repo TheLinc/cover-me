@@ -19,6 +19,7 @@ export const MAX_COMMENT = 500
 // The most the prompts read of a posting, and the most of a resume the server takes.
 const MAX_DESCRIPTION = 15_000
 const MAX_JOB_FIELD = 500
+const MAX_LETTER = 20_000
 const MAX_SOURCE = 30_000
 
 export interface ReportForm {
@@ -40,7 +41,7 @@ export interface GenerationReport {
   category: ReportCategory
   comment: string
   kind: 'letter' | 'resume'
-  output: string | Omit<TailoredResume, ContactField>
+  output: string | Omit<TailoredResume, ContactField | 'deletedSections'>
   job: { title: string; company: string; description: string; site: string }
   mode: AppMode
   provider: AIProvider
@@ -51,6 +52,7 @@ export interface GenerationReport {
 
 const CONTACT_FIELDS = ['name', 'phone', 'email', 'website', 'links', 'location'] as const
 type ContactField = (typeof CONTACT_FIELDS)[number]
+const DROPPED = [...CONTACT_FIELDS, 'deletedSections'] as const
 
 const EMAIL = /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g
 // A North American number, or anything after a +. Not any long run of digits:
@@ -64,12 +66,7 @@ export function buildGenerationReport(target: ReportTarget, form: ReportForm, en
   // Every source's details: a user may have emptied one in the editor.
   const sources = [env.resume?.parsed, env.tailored, target.kind === 'resume' ? target.output : undefined]
   const all = (field: ContactField) => sources.flatMap((s) => [s?.[field]].flat()).filter((v): v is string => typeof v === 'string' && !!v.trim())
-  // Unless this browser's parse names them, the resume text's first line starts
-  // with the name ("Jane Doe | jane@x.com | ..."): History's newest resume may
-  // be older, or someone else's. Two words or more, so "RESUME" isn't taken.
-  const head = env.resume?.text.split('\n').map((l) => l.trim()).find(Boolean)?.split(/\s[|·•–-]\s|[|·•,]/)[0].trim()
-  const headName = !env.resume?.parsed?.name?.trim() && head && head.length <= 60 && /\S\s+\S/.test(head) && !/[\d@]|resume|curriculum|vitae/i.test(head)
-  const names = [...all('name'), ...(headName ? [head] : [])]
+  const names = [...all('name'), ...(env.resume?.parsed?.name?.trim() ? [] : headNames(env.resume?.text ?? ''))]
   const tag = (values: string[], t: string) => values.map((v): [string, string] => [v, t])
   const people = [...tag(names, '[name]'), ...tag(all('email'), '[email]'), ...tag(all('phone'), '[phone]')]
   const places = [...tag([...all('website'), ...all('links')], '[link]'), ...tag(all('location'), '[location]')]
@@ -85,11 +82,12 @@ export function buildGenerationReport(target: ReportTarget, form: ReportForm, en
     comment: form.comment.trim(),
     kind: target.kind,
     output: target.kind === 'letter'
-      ? scrub(target.output, people)
+      ? scrub(target.output, people).slice(0, MAX_LETTER)
       // A resume loses its contact fields, and every line left is scrubbed too:
-      // a summary or a references section can name the user.
+      // a summary or a references section can name the user. Deleted sections
+      // print nowhere and can be long, so they go too.
       : JSON.parse(
-        JSON.stringify(Object.fromEntries(Object.entries(target.output).filter(([k]) => !(CONTACT_FIELDS as readonly string[]).includes(k)))),
+        JSON.stringify(Object.fromEntries(Object.entries(target.output).filter(([k]) => !(DROPPED as readonly string[]).includes(k)))),
         (_, v) => (typeof v === 'string' ? scrub(v, people) : v),
       ),
     job: { title: target.job.title.slice(0, MAX_JOB_FIELD), company: target.job.company.slice(0, MAX_JOB_FIELD), description: target.job.description.slice(0, MAX_DESCRIPTION), site },
@@ -102,12 +100,30 @@ export function buildGenerationReport(target: ReportTarget, form: ReportForm, en
   }
 }
 
-// Exact matches of what we know (longest first, any case), then anything shaped
-// like an email or phone number. withLinks: web addresses too.
+// Unless this browser's parse names the user, the resume text starts with the
+// name: History's newest resume may be older, or someone else's. A PDF's text
+// can run the first lines together ("Jane Doe Toronto, ON · (416) ..."), so
+// these are its first two and first three capitalized words, before any
+// separator, digit or @. ponytail: a first line that's a heading ("Senior
+// Software Engineer") is taken too, which blanks those words in the report.
+function headNames(text: string): string[] {
+  const words = text.trim().split(/\s[|·•–-]\s|[|·•,\n@\d(+]/)[0].trim().split(/\s+/)
+  const end = words.findIndex((w) => !/^\p{Lu}/u.test(w))
+  const caps = end === -1 ? words : words.slice(0, end)
+  return [caps.slice(0, 2), caps.slice(0, 3)]
+    .filter((n) => n.length >= 2 && !n.some((w) => /^(resume|résumé|curriculum|vitae|cv)$/i.test(w)))
+    .map((n) => n.join(' '))
+}
+
+// Whole-word matches of what we know (longest first, any case), then anything
+// shaped like an email or phone number. withLinks: web addresses too.
 function scrub(text: string, pairs: Array<[string, string]>, withLinks = false): string {
   const known = pairs.flatMap(([v, tag]) => (v && v.trim().length >= 3 ? [[v.trim(), tag] as const] : []))
     .sort((a, b) => b[0].length - a[0].length)
-  for (const [value, tag] of known) text = text.replace(new RegExp(value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), tag)
+  for (const [value, tag] of known) {
+    const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    text = text.replace(new RegExp(`(?<![\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])`, 'giu'), tag)
+  }
   text = text.replace(EMAIL, '[email]').replace(PHONE, '[phone]')
   return withLinks ? text.replace(URL, '[link]') : text
 }
