@@ -1,12 +1,12 @@
 import { checkedTier, ensureValidSession, generateViaBackend, handleGoogleSignIn, limitErrorCode, RateLimitError, saveLetterToBackend, tailorViaBackend } from '../lib/auth'
 import { generateCoverLetter } from '../lib/ai'
-import { isCurrentParse, parseResumeStructure, upgradedParse } from '../lib/ai/resume-parse'
+import { parseResumeStructure } from '../lib/ai/resume-parse'
 import { tailorResume } from '../lib/ai/resume-tailor'
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from '../lib/config'
 import { decryptApiKey } from '../lib/crypto'
-import { checkUploadedDesign, designForTailor, designWithParse, finishDesign, uploadDesignIfPro } from '../lib/design'
+import { checkUploadedDesign, designForTailor, finishDesign, parseForTailor, uploadDesignIfPro } from '../lib/design'
 import { debugGroup } from '../lib/debug'
-import { addToHistory, addToTailoredHistory, getCandidateContext, getResume, getSession, getSettings, hasAgreedToPageRead, resolveMode, saveParsedResume, setEntryAccounts, watchSession } from '../lib/storage'
+import { addToHistory, addToTailoredHistory, getCandidateContext, getResume, getSession, getSettings, hasAgreedToPageRead, resolveMode, setEntryAccounts, watchSession } from '../lib/storage'
 import { handleInstalled, uninstallUrl } from './install'
 import { handleAnswerClick, registerAnswerMenu, writeAnswer, type AnswerRequest } from './answer'
 import { scrapeFailure } from './scrape-failure'
@@ -474,10 +474,13 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
     // compacting, and no summary when the file has none to rewrite.
     let design = await designForTailor()
     // The popup hides "Compact" whenever "Your design" is picked, fallen back or not.
-    if (design.design.layout === 'yours') {
-      compact = false
-      if (!design.summary) includeSummary = false
+    const asked = { compact, includeSummary }
+    const fitLayout = () => {
+      const yours = design.design.layout === 'yours'
+      compact = yours ? false : asked.compact
+      includeSummary = yours && !design.summary ? false : asked.includeSummary
     }
+    fitLayout()
 
     // Standing candidate facts (set once, edited in the "Candidate context" box)
     // apply to every generation, layered under any one-off note for this run.
@@ -544,21 +547,18 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
     const apiKey = await decryptApiKey(settings.apiKey)
 
     // Lazy parse: run once on first tailor, cache result for all subsequent tailors.
-    // Re-run automatically when resume is replaced (saveResume clears the parsed field),
-    // and once for a parse from before extra sections (publications…) or
-    // section order were kept, or before URLs under a section stayed there (#238).
-    // "Your design" places the text with the parse its file was checked
-    // against, so the tailor starts from that same parse. A file checked
-    // against one from before the link fix takes the current parse and is
-    // checked again (#239).
-    let parsed = isCurrentParse(design.parsed) ? design.parsed : resumeData.parsed
-    if (!isCurrentParse(parsed)) {
+    // Re-run automatically when resume is replaced (saveResume clears the parsed field).
+    // "Your design" places the text with the parse its file was checked against.
+    const before = design
+    const read = await parseForTailor(design, resumeData.parsed, async () => {
       onProgress('Reading your resume (first run only)…')
-      parsed = upgradedParse(parsed, await parseResumeStructure(resumeData.text, settings.provider, apiKey))
-      await saveParsedResume(parsed)
+      const fresh = await parseResumeStructure(resumeData.text, settings.provider, apiKey)
       onProgress('') // read; the model thinks next, which is plain "Plan the changes"
-    }
-    if (design.parsed && design.parsed !== parsed && design.design.sourceHash) design = await designWithParse(design.design.sourceHash, parsed)
+      return fresh
+    })
+    const parsed = read.parsed
+    design = read.design
+    if (design !== before) fitLayout() // the file was checked again and may no longer fit
 
     // Shows how many bullets the parser extracted per role — if this is already
     // short, the model never saw the missing bullets in the first place.

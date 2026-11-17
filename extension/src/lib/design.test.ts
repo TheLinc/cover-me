@@ -1,6 +1,6 @@
 import JSZip from 'jszip'
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { checkUploadedDesign, designForTailor, designWithParse, downloadResumeWord, finishDesign, toBase64, uploadDesignIfPro } from './design'
+import { checkUploadedDesign, designForTailor, designWithParse, downloadResumeWord, finishDesign, parseForTailor, toBase64, uploadDesignIfPro } from './design'
 
 const parseMock = vi.hoisted(() => vi.fn())
 vi.mock('./ai/resume-parse', async (importOriginal) => ({ ...(await importOriginal<object>()), parseResumeStructure: parseMock }))
@@ -102,6 +102,42 @@ describe('a Word file checked against a parse from before the link fix (#238)', 
     expect(d.design).toEqual({ layout: 'cover-me', fellBack: false })
     expect((local.resume as { design: { check: unknown } }).design.check).toMatchObject({ matched: 0 })
     expect(await finishDesign(resume(), d)).not.toHaveProperty('sourceHash')
+    // Older History entries still download in the user's design.
+    expect(local[`designFile:${hash}`]).toMatchObject({ parsed: beforeLinks() })
+  })
+})
+
+describe('the parse an own-key tailor starts from', () => {
+  const read = vi.fn(async () => current())
+  afterEach(() => read.mockClear())
+
+  test("a Word file's parse from before the link fix (#238) takes the current one, with no model call", async () => {
+    await store({ fileParse: beforeLinks(), extra: { resume: { parsed: current() } } })
+    const { parsed, design } = await parseForTailor(await designForTailor(), current(), read)
+    expect(read).not.toHaveBeenCalled()
+    expect(parsed).toEqual(current())
+    expect(design).toMatchObject({ design: { layout: 'yours', sourceHash: hash }, parsed: current() })
+  })
+
+  test('an old parse on both sides is read again once, and the file takes it', async () => {
+    await store({ fileParse: beforeLinks(), extra: { resume: { parsed: beforeLinks() } } })
+    const { parsed, design } = await parseForTailor(await designForTailor(), beforeLinks(), read)
+    expect(read).toHaveBeenCalledOnce()
+    expect(parsed).toMatchObject({ linksKept: true })
+    expect((local.resume as { parsed: unknown }).parsed).toMatchObject({ linksKept: true })
+    expect(local[`designFile:${hash}`]).toMatchObject({ parsed: { linksKept: true } })
+    expect(design.parsed).toBe(parsed)
+  })
+
+  test("a current Word file's parse is used as it is", async () => {
+    await store()
+    const before = local[`designFile:${hash}`]
+    const d = await designForTailor()
+    const { parsed, design } = await parseForTailor(d, beforeLinks(), read)
+    expect(read).not.toHaveBeenCalled()
+    expect(parsed).toBe(d.parsed)
+    expect(design).toBe(d)
+    expect(local[`designFile:${hash}`]).toBe(before)
   })
 })
 
