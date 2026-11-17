@@ -26,31 +26,20 @@ export function remainingGaps(gaps: string[] | undefined, resume: TailoredResume
 
 export type PostingTitle = { title: string; shorter: boolean }
 
-// The posting's title, levels dropped, when the summary names it and none of
-// the user's jobs carry it (#244). The tailor may open the summary with the
-// posting's title (#218); job titles stay the user's own. Failing that, a
-// shorter form of it the summary opens with, flagged as shorter (#253). Only
-// the opening counts there: "in Test" from "Software Engineer in Test" is
-// everyday prose further in. undefined when there's nothing to note: a one-word
-// title ("Designer") is never exempted from grounding, and a resume with no
-// jobs left (section deleted) has no titles to compare.
 export function postingTitleInSummary(resume: TailoredResume, jobTitle: string): PostingTitle | undefined {
   const title = titleWithoutLevel(jobTitle)
   const summary = resume.summary ?? ''
   const unclaimed = (t: string) => !resume.experience.some((e) => mentions(e.title, t))
   if (!title || !resume.experience.length || !unclaimed(title)) return undefined
   if (mentions(summary, title)) return { title, shorter: false }
+  // Shorter forms count only at the opening: further in, "in Test" from "Software Engineer in Test" is everyday prose.
   const opening = summary.trim().replace(/^an?\s+/i, '')
   const opensWith = (t: string) => opening.toLowerCase().startsWith(t.toLowerCase()) && !/[a-z0-9]/i.test(opening[t.length] ?? '')
   const form = shorterForms(title).find((t) => opensWith(t) && unclaimed(t))
   return form ? { title: form, shorter: true } : undefined
 }
 
-// Two or more of the title's words, in order and ending with its last word,
-// longest first: "Software Engineer" and "Development Engineer" from
-// "Software Development Engineer". One word ("Engineer") never counts.
-// ponytail: 2^(n-1) forms, so none past 7 words (a scraped title with no
-// separator); a word-by-word walk of the opening would lift the cap.
+// 2^(n-1) forms, so a long scraped title with no separator gets none.
 function shorterForms(title: string): string[] {
   const words = title.split(' ')
   const last = words.pop()
@@ -58,7 +47,6 @@ function shorterForms(title: string): string[] {
   const subsets = words.reduce<string[][]>((sets, w) => [...sets, ...sets.map((s) => [...s, w])], [[]])
   return subsets
     .filter((s) => s.length && s.length < words.length)
-    .sort((a, b) => b.length - a.length)
     .map((s) => [...s, last].join(' '))
 }
 
