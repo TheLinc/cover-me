@@ -1,0 +1,2510 @@
+{
+  "leakScan": [
+    {
+      "step": "1 BYOK letter, invented + original resume",
+      "hits": []
+    },
+    {
+      "step": "2 Hosted letter, contact ticked, invented + original resume",
+      "hits": []
+    },
+    {
+      "step": "2 Hosted letter, contact unticked",
+      "hits": []
+    },
+    {
+      "step": "2b BYOK letter, no parse in the browser, claude",
+      "hits": []
+    },
+    {
+      "step": "2b BYOK letter, no parse in the browser, openai",
+      "hits": []
+    },
+    {
+      "step": "2b BYOK second report reuses the saved parse",
+      "hits": []
+    },
+    {
+      "step": "4.1 Hosted: stacked-header",
+      "hits": []
+    },
+    {
+      "step": "4.2 Hosted: portfolio-label",
+      "hits": []
+    },
+    {
+      "step": "4.3 Hosted: behance-in-letter",
+      "hits": []
+    },
+    {
+      "step": "4.4 Hosted: domain-shaped-skills",
+      "hits": []
+    },
+    {
+      "step": "3 Editor resume, edited",
+      "hits": []
+    },
+    {
+      "step": "5.1 Hosted: title-like-heading",
+      "hits": []
+    },
+    {
+      "step": "5.1b BYOK with parse: title-like-heading",
+      "hits": []
+    },
+    {
+      "step": "5.2 Hosted: portfolio-colon-https",
+      "hits": []
+    },
+    {
+      "step": "5.3 Hosted: github-profile",
+      "hits": []
+    },
+    {
+      "step": "5.4 Hosted: name-domain-space",
+      "hits": []
+    },
+    {
+      "step": "6.1a BYOK no parse: pdf-run-together",
+      "hits": []
+    },
+    {
+      "step": "6.1b Hosted: pdf-run-together",
+      "hits": []
+    },
+    {
+      "step": "6.2 Hosted: summary-above-contact",
+      "hits": []
+    },
+    {
+      "step": "6.3 Hosted: address-heading",
+      "hits": []
+    },
+    {
+      "step": "6.4 Hosted: ordinary-numbers",
+      "hits": []
+    },
+    {
+      "step": "7 UK (Oliver Bennett) letter, Hosted",
+      "hits": []
+    },
+    {
+      "step": "7 UK (Oliver Bennett) resume report, Hosted",
+      "hits": []
+    },
+    {
+      "step": "7 UK (Oliver Bennett) letter, BYOK claude",
+      "hits": []
+    },
+    {
+      "step": "7 UK (Oliver Bennett) resume report, BYOK claude",
+      "hits": []
+    },
+    {
+      "step": "7 Australia (Priya Raman) letter, Hosted",
+      "hits": []
+    },
+    {
+      "step": "7 Australia (Priya Raman) resume report, Hosted",
+      "hits": []
+    },
+    {
+      "step": "7 Australia (Priya Raman) letter, BYOK claude",
+      "hits": []
+    },
+    {
+      "step": "7 Australia (Priya Raman) resume report, BYOK claude",
+      "hits": []
+    },
+    {
+      "step": "7 Spain (Lucía Fernández) letter, Hosted",
+      "hits": []
+    },
+    {
+      "step": "7 Spain (Lucía Fernández) resume report, Hosted",
+      "hits": []
+    },
+    {
+      "step": "7 Spain (Lucía Fernández) letter, BYOK openai",
+      "hits": []
+    },
+    {
+      "step": "7 Spain (Lucía Fernández) resume report, BYOK openai",
+      "hits": []
+    },
+    {
+      "step": "7 Germany (Max Müller) letter, Hosted",
+      "hits": [
+        {
+          "who": "Max Müller",
+          "detail": "phone",
+          "field": "output",
+          "text": "151 / 234 567 89",
+          "context": "n] office from March. Reach me on 0151 / 234 567 89.\\n\\nMit freundlichen Grüße"
+        },
+        {
+          "who": "Max Müller",
+          "detail": "date of birth",
+          "field": "sourceResume.otherSections[0].lines[0]",
+          "text": "12.03.1996",
+          "context": "Geburtsdatum: 12.03.1996"
+        }
+      ]
+    },
+    {
+      "step": "7 Germany (Max Müller) resume report, Hosted",
+      "hits": [
+        {
+          "who": "Max Müller",
+          "detail": "date of birth",
+          "field": "output.otherSections[0].lines[0]",
+          "text": "12.03.1996",
+          "context": "Geburtsdatum: 12.03.1996"
+        },
+        {
+          "who": "Max Müller",
+          "detail": "date of birth",
+          "field": "sourceResume.otherSections[0].lines[0]",
+          "text": "12.03.1996",
+          "context": "Geburtsdatum: 12.03.1996"
+        }
+      ]
+    },
+    {
+      "step": "7 Germany (Max Müller) letter, BYOK claude",
+      "hits": [
+        {
+          "who": "Max Müller",
+          "detail": "phone",
+          "field": "output",
+          "text": "151 / 234 567 89",
+          "context": "n] office from March. Reach me on 0151 / 234 567 89.\\n\\nMit freundlichen Grüße"
+        },
+        {
+          "who": "Max Müller",
+          "detail": "date of birth",
+          "field": "sourceResume.otherSections[0].lines[0]",
+          "text": "12.03.1996",
+          "context": "Geburtsdatum: 12.03.1996"
+        }
+      ]
+    },
+    {
+      "step": "7 Germany (Max Müller) resume report, BYOK claude",
+      "hits": [
+        {
+          "who": "Max Müller",
+          "detail": "date of birth",
+          "field": "output.otherSections[0].lines[0]",
+          "text": "12.03.1996",
+          "context": "Geburtsdatum: 12.03.1996"
+        },
+        {
+          "who": "Max Müller",
+          "detail": "date of birth",
+          "field": "sourceResume.otherSections[0].lines[0]",
+          "text": "12.03.1996",
+          "context": "Geburtsdatum: 12.03.1996"
+        }
+      ]
+    },
+    {
+      "step": "7 India (Aarav Sharma) letter, Hosted",
+      "hits": [
+        {
+          "who": "Aarav Sharma",
+          "detail": "city \"Delhi\" / \"New Delhi\" (not \"Delhi Technological University\")",
+          "field": "output",
+          "text": "Delhi",
+          "context": "e work is at [link].\\n\\nI'm based in Delhi and open to hybrid work."
+        }
+      ]
+    },
+    {
+      "step": "7 India (Aarav Sharma) resume report, Hosted",
+      "hits": [
+        {
+          "who": "Aarav Sharma",
+          "detail": "city \"Delhi\" / \"New Delhi\" (not \"Delhi Technological University\")",
+          "field": "output.summary",
+          "text": "Delhi",
+          "context": "Delhi-based backend developer "
+        }
+      ]
+    },
+    {
+      "step": "7 India (Aarav Sharma) letter, BYOK openai",
+      "hits": [
+        {
+          "who": "Aarav Sharma",
+          "detail": "city \"Delhi\" / \"New Delhi\" (not \"Delhi Technological University\")",
+          "field": "output",
+          "text": "Delhi",
+          "context": "e work is at [link].\\n\\nI'm based in Delhi and open to hybrid work."
+        }
+      ]
+    },
+    {
+      "step": "7 India (Aarav Sharma) resume report, BYOK openai",
+      "hits": [
+        {
+          "who": "Aarav Sharma",
+          "detail": "city \"Delhi\" / \"New Delhi\" (not \"Delhi Technological University\")",
+          "field": "output.summary",
+          "text": "Delhi",
+          "context": "Delhi-based backend developer "
+        }
+      ]
+    },
+    {
+      "step": "7 North America (Jane Doe) letter, Hosted",
+      "hits": [
+        {
+          "who": "Jane Doe",
+          "detail": "region \"Ontario\"",
+          "field": "output",
+          "text": "Ontario",
+          "context": "ojects.\\n\\nI've lived in [location], Ontario all my life, and you can"
+        }
+      ]
+    },
+    {
+      "step": "7 North America (Jane Doe) resume report, Hosted",
+      "hits": []
+    },
+    {
+      "step": "7 North America (Jane Doe) letter, BYOK claude",
+      "hits": [
+        {
+          "who": "Jane Doe",
+          "detail": "region \"Ontario\"",
+          "field": "output",
+          "text": "Ontario",
+          "context": "ojects.\\n\\nI've lived in [location], Ontario all my life, and you can"
+        }
+      ]
+    },
+    {
+      "step": "7 North America (Jane Doe) resume report, BYOK claude",
+      "hits": []
+    }
+  ],
+  "checks": [
+    {
+      "name": "LEAK SCAN 1 BYOK letter, invented + original resume",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 2 Hosted letter, contact ticked, invented + original resume",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 2 Hosted letter, contact unticked",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 2b BYOK letter, no parse in the browser, claude",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 2b BYOK letter, no parse in the browser, openai",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 2b BYOK second report reuses the saved parse",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 4.1 Hosted: stacked-header",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 4.2 Hosted: portfolio-label",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 4.3 Hosted: behance-in-letter",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 4.4 Hosted: domain-shaped-skills",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 3 Editor resume, edited",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 5.1 Hosted: title-like-heading",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 5.1b BYOK with parse: title-like-heading",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 5.2 Hosted: portfolio-colon-https",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 5.3 Hosted: github-profile",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 5.4 Hosted: name-domain-space",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 6.1a BYOK no parse: pdf-run-together",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 6.1b Hosted: pdf-run-together",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 6.2 Hosted: summary-above-contact",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 6.3 Hosted: address-heading",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 6.4 Hosted: ordinary-numbers",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 7 UK (Oliver Bennett) letter, Hosted",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 7 UK (Oliver Bennett) resume report, Hosted",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 7 UK (Oliver Bennett) letter, BYOK claude",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 7 UK (Oliver Bennett) resume report, BYOK claude",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 7 Australia (Priya Raman) letter, Hosted",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 7 Australia (Priya Raman) resume report, Hosted",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 7 Australia (Priya Raman) letter, BYOK claude",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 7 Australia (Priya Raman) resume report, BYOK claude",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 7 Spain (Lucía Fernández) letter, Hosted",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 7 Spain (Lucía Fernández) resume report, Hosted",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 7 Spain (Lucía Fernández) letter, BYOK openai",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 7 Spain (Lucía Fernández) resume report, BYOK openai",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 7 Germany (Max Müller) letter, Hosted",
+      "ok": false,
+      "detail": "Max Müller phone in output: \"151 / 234 567 89\" (…n] office from March. Reach me on 0151 / 234 567 89.\\n\\nMit freundlichen Grüße…) || Max Müller date of birth in sourceResume.otherSections[0].lines[0]: \"12.03.1996\" (…Geburtsdatum: 12.03.1996…)"
+    },
+    {
+      "name": "LEAK SCAN 7 Germany (Max Müller) resume report, Hosted",
+      "ok": false,
+      "detail": "Max Müller date of birth in output.otherSections[0].lines[0]: \"12.03.1996\" (…Geburtsdatum: 12.03.1996…) || Max Müller date of birth in sourceResume.otherSections[0].lines[0]: \"12.03.1996\" (…Geburtsdatum: 12.03.1996…)"
+    },
+    {
+      "name": "LEAK SCAN 7 Germany (Max Müller) letter, BYOK claude",
+      "ok": false,
+      "detail": "Max Müller phone in output: \"151 / 234 567 89\" (…n] office from March. Reach me on 0151 / 234 567 89.\\n\\nMit freundlichen Grüße…) || Max Müller date of birth in sourceResume.otherSections[0].lines[0]: \"12.03.1996\" (…Geburtsdatum: 12.03.1996…)"
+    },
+    {
+      "name": "LEAK SCAN 7 Germany (Max Müller) resume report, BYOK claude",
+      "ok": false,
+      "detail": "Max Müller date of birth in output.otherSections[0].lines[0]: \"12.03.1996\" (…Geburtsdatum: 12.03.1996…) || Max Müller date of birth in sourceResume.otherSections[0].lines[0]: \"12.03.1996\" (…Geburtsdatum: 12.03.1996…)"
+    },
+    {
+      "name": "LEAK SCAN 7 India (Aarav Sharma) letter, Hosted",
+      "ok": false,
+      "detail": "Aarav Sharma city \"Delhi\" / \"New Delhi\" (not \"Delhi Technological University\") in output: \"Delhi\" (…e work is at [link].\\n\\nI'm based in Delhi and open to hybrid work.…)"
+    },
+    {
+      "name": "LEAK SCAN 7 India (Aarav Sharma) resume report, Hosted",
+      "ok": false,
+      "detail": "Aarav Sharma city \"Delhi\" / \"New Delhi\" (not \"Delhi Technological University\") in output.summary: \"Delhi\" (…Delhi-based backend developer …)"
+    },
+    {
+      "name": "LEAK SCAN 7 India (Aarav Sharma) letter, BYOK openai",
+      "ok": false,
+      "detail": "Aarav Sharma city \"Delhi\" / \"New Delhi\" (not \"Delhi Technological University\") in output: \"Delhi\" (…e work is at [link].\\n\\nI'm based in Delhi and open to hybrid work.…)"
+    },
+    {
+      "name": "LEAK SCAN 7 India (Aarav Sharma) resume report, BYOK openai",
+      "ok": false,
+      "detail": "Aarav Sharma city \"Delhi\" / \"New Delhi\" (not \"Delhi Technological University\") in output.summary: \"Delhi\" (…Delhi-based backend developer …)"
+    },
+    {
+      "name": "LEAK SCAN 7 North America (Jane Doe) letter, Hosted",
+      "ok": false,
+      "detail": "Jane Doe region \"Ontario\" in output: \"Ontario\" (…ojects.\\n\\nI've lived in [location], Ontario all my life, and you can…)"
+    },
+    {
+      "name": "LEAK SCAN 7 North America (Jane Doe) resume report, Hosted",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 7 North America (Jane Doe) letter, BYOK claude",
+      "ok": false,
+      "detail": "Jane Doe region \"Ontario\" in output: \"Ontario\" (…ojects.\\n\\nI've lived in [location], Ontario all my life, and you can…)"
+    },
+    {
+      "name": "LEAK SCAN 7 North America (Jane Doe) resume report, BYOK claude",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1 BYOK: \"Flag a problem\" link under the letter",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1 BYOK: form shows the five categories",
+      "ok": true,
+      "detail": "The design or layout looked wrong / The wording sounded generic or not like me / It added things that aren't true / It left out things that matter / Other"
+    },
+    {
+      "name": "1 BYOK: Send disabled before a category is picked",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1 BYOK: no \"You can email me about this\" box",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1 BYOK: \"Other\" with empty comment keeps Send disabled",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1 BYOK: \"Other\" with a comment enables Send",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1 BYOK: original-resume box only for \"It added things that aren't true\"",
+      "ok": true,
+      "detail": "{\"The design or layout looked wrong\":0,\"The wording sounded generic or not like me\":0,\"It left out things that matter\":0,\"Other\":0,\"It added things that aren't true\":1}"
+    },
+    {
+      "name": "1 BYOK: original-resume box starts unticked",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1 BYOK: form says the original resume goes as Cover Me read it, and that name, email, phone, links, location and address are taken out",
+      "ok": true,
+      "detail": "Sends this letter, the job's title, company, description and site name, your answers, whether you use Hosted or your own key, which AI wrote it and the extension's version. Also your original resume, as Cover Me read it (its sections and jobs). Your name, email, phone, links, location and address are taken out first; your comment goes as you wrote it. It isn't linked to you.\n\nSend\nCancel"
+    },
+    {
+      "name": "1 BYOK letter, invented + original resume: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1 BYOK (parse in the browser): no AI call made",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1 BYOK: no name/email/phone/janedoe.dev/linkedin.com/in/janedoe anywhere in body",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1 BYOK: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "1 BYOK: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1 BYOK: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "8 items kept"
+    },
+    {
+      "name": "1 BYOK: job.site is linkedin.com",
+      "ok": true,
+      "detail": "linkedin.com"
+    },
+    {
+      "name": "1 BYOK: no Authorization header",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1 BYOK: mode byok, provider claude, contact false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1 BYOK: \"Reported. Thanks.\" can't reopen the form",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1 BYOK: still \"Reported. Thanks.\" after reopening the popup",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted: new letter shows \"Flag a problem\" again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted: \"You can email me about this\" box appears",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted letter, contact ticked, invented + original resume: button reads \"Taking your details out…\" and is disabled while parsing",
+      "ok": true,
+      "detail": "\"Taking your details out…\", disabled=true"
+    },
+    {
+      "name": "2 Hosted letter, contact ticked, invented + original resume: nothing sent while parsing",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted letter, contact ticked, invented + original resume: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted letter, contact ticked, invented + original resume: Hosted parse request (GET /resume?parse=1) carried Authorization: Bearer <token>",
+      "ok": true,
+      "detail": "GET Bearer walkthrough-fake-access-token"
+    },
+    {
+      "name": "2 Hosted ticked: report carries Authorization: Bearer <token>",
+      "ok": true,
+      "detail": "Bearer walkthrough-fake-access-token"
+    },
+    {
+      "name": "2 Hosted ticked: contact true",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted: no name/email/phone/links anywhere in body",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted: mode hosted, provider claude",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "2 Hosted: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "5 items kept"
+    },
+    {
+      "name": "2 Hosted: contact box starts unticked",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted letter, contact unticked: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted letter, contact unticked: Hosted parse request (GET /resume?parse=1) carried Authorization: Bearer <token>",
+      "ok": true,
+      "detail": "GET Bearer walkthrough-fake-access-token"
+    },
+    {
+      "name": "2 Hosted unticked: report has no Authorization header",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted unticked: contact false, no sourceResume",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted unticked: no contact details in body",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2c Hosted parse request returns 404: shows \"Add your resume first.\"",
+      "ok": true,
+      "detail": "Add your resume first."
+    },
+    {
+      "name": "2c Hosted parse request returns 404: no report sent",
+      "ok": true,
+      "detail": "0 sent"
+    },
+    {
+      "name": "2c Hosted parse request returns 404: form stays open and the button reads Send again",
+      "ok": true,
+      "detail": "\"Send\""
+    },
+    {
+      "name": "2c Hosted parse request returns 404: the parse request was made with the token",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2c Hosted parse request returns 500: shows \"Couldn't read your resume to take your details out. Try again in a moment.\"",
+      "ok": true,
+      "detail": "Couldn't read your resume to take your details out. Try again in a moment."
+    },
+    {
+      "name": "2c Hosted parse request returns 500: no report sent",
+      "ok": true,
+      "detail": "0 sent"
+    },
+    {
+      "name": "2c Hosted parse request returns 500: form stays open and the button reads Send again",
+      "ok": true,
+      "detail": "\"Send\""
+    },
+    {
+      "name": "2c Hosted parse request returns 500: the parse request was made with the token",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2b BYOK letter, no parse in the browser, claude: button reads \"Taking your details out…\" and is disabled while parsing",
+      "ok": true,
+      "detail": "\"Taking your details out…\", disabled=true"
+    },
+    {
+      "name": "2b BYOK letter, no parse in the browser, claude: nothing sent while parsing",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2b BYOK letter, no parse in the browser, claude: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2b BYOK letter, no parse in the browser, claude: one call to the user's AI provider, with their key, holding the resume",
+      "ok": true,
+      "detail": "{\"step\":\"2b BYOK letter, no parse in the browser, claude\",\"provider\":\"claude\",\"url\":\"https://api.anthropic.com/v1/messages\",\"key\":\"sk-ant-walkthrough-not-a-real-key\",\"model\":\"claude-haiku-4-5\",\"stream\":true,\"promptHasResume\":true,\"status\":200}"
+    },
+    {
+      "name": "2b BYOK letter, no parse in the browser, claude: no name/email/phone/links anywhere in body",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2b BYOK letter, no parse in the browser, claude: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "2b BYOK letter, no parse in the browser, claude: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2b BYOK letter, no parse in the browser, claude: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "3 items kept"
+    },
+    {
+      "name": "2b BYOK letter, no parse in the browser, claude: provider claude in the report",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2b BYOK letter, no parse in the browser, claude: the parse is saved to chrome.storage.local resume.parsed",
+      "ok": true,
+      "detail": "parsed.name=Jane Doe, location=Toronto, ON, jobs=2, sectionOrder=[\"summary\",\"experience\",\"education\",\"skills\"]"
+    },
+    {
+      "name": "2b BYOK letter, no parse in the browser, openai: button reads \"Taking your details out…\" and is disabled while parsing",
+      "ok": true,
+      "detail": "\"Taking your details out…\", disabled=true"
+    },
+    {
+      "name": "2b BYOK letter, no parse in the browser, openai: nothing sent while parsing",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2b BYOK letter, no parse in the browser, openai: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2b BYOK letter, no parse in the browser, openai: one call to the user's AI provider, with their key, holding the resume",
+      "ok": true,
+      "detail": "{\"step\":\"2b BYOK letter, no parse in the browser, openai\",\"provider\":\"openai\",\"url\":\"https://api.openai.com/v1/chat/completions\",\"key\":\"Bearer sk-walkthrough-not-a-real-key\",\"model\":\"gpt-6-luna\",\"stream\":true,\"promptHasResume\":true,\"status\":200}"
+    },
+    {
+      "name": "2b BYOK letter, no parse in the browser, openai: no name/email/phone/links anywhere in body",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2b BYOK letter, no parse in the browser, openai: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "2b BYOK letter, no parse in the browser, openai: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2b BYOK letter, no parse in the browser, openai: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "3 items kept"
+    },
+    {
+      "name": "2b BYOK letter, no parse in the browser, openai: provider openai in the report",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2b BYOK letter, no parse in the browser, openai: the parse is saved to chrome.storage.local resume.parsed",
+      "ok": true,
+      "detail": "parsed.name=Jane Doe, location=Toronto, ON, jobs=2, sectionOrder=[\"summary\",\"experience\",\"education\",\"skills\"]"
+    },
+    {
+      "name": "2b BYOK second report reuses the saved parse: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2b BYOK second report: no new AI call",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2d BYOK parse: the AI provider returns 401: shows \"Couldn't read your resume to take your details out. Check your API key, then try again.\"",
+      "ok": true,
+      "detail": "Couldn't read your resume to take your details out. Check your API key, then try again."
+    },
+    {
+      "name": "2d BYOK parse: the AI provider returns 401: no report sent",
+      "ok": true,
+      "detail": "0 sent"
+    },
+    {
+      "name": "2d BYOK parse: the AI provider returns 401: form stays open and the button reads Send again",
+      "ok": true,
+      "detail": "\"Send\""
+    },
+    {
+      "name": "2d BYOK parse 401: the AI call was made",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2d BYOK parse 401: no parse saved",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.1 Hosted: stacked-header: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.1 stacked-header: output has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.1 stacked-header: sourceResume has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.1 stacked-header: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "4.1 stacked-header: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.1 stacked-header: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "3 items kept"
+    },
+    {
+      "name": "4.2 Hosted: portfolio-label: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.2 portfolio-label: output has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.2 portfolio-label: sourceResume has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.2 portfolio-label: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "4.2 portfolio-label: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.2 portfolio-label: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "3 items kept"
+    },
+    {
+      "name": "4.3 Hosted: behance-in-letter: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.3 behance-in-letter: output has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.3 behance-in-letter: sourceResume has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.3 behance-in-letter: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "4.3 behance-in-letter: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.3 behance-in-letter: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "3 items kept"
+    },
+    {
+      "name": "4.4 Hosted: domain-shaped-skills: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.4 domain-shaped-skills: output has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.4 domain-shaped-skills: sourceResume has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.4 domain-shaped-skills: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "4.4 domain-shaped-skills: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.4 domain-shaped-skills: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "5 items kept"
+    },
+    {
+      "name": "4.4 domain-shaped-skills: letter keeps I built Socket.io apps. unchanged",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "3 Editor: \"Flag a problem\" link in the top bar",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "3 Editor: bullet edited",
+      "ok": true,
+      "detail": "Built weekly sales dashboards used by 40 store managers across 12 stores"
+    },
+    {
+      "name": "3 Editor 1280px: form opens below the bar, fully on screen",
+      "ok": true,
+      "detail": "{\"box\":{\"x\":916,\"y\":74,\"width\":340,\"height\":400.78125},\"bar\":{\"x\":0,\"y\":0,\"width\":1280,\"height\":67}}"
+    },
+    {
+      "name": "3 Editor: Ctrl+Z in the comment keeps the resume edit",
+      "ok": true,
+      "detail": "bullet now: \"Built weekly sales dashboards used by 40 store managers across 12 stores\", comment now: \"Layout brok\""
+    },
+    {
+      "name": "3 Editor 900px: form stays fully on screen",
+      "ok": true,
+      "detail": "{\"x\":521,\"y\":119,\"width\":340,\"height\":400.78125}"
+    },
+    {
+      "name": "3 Editor resume, edited: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "3 Editor: output has no name/phone/email/website/links/location/sourceHash",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "3 Editor: output.editedAt set",
+      "ok": true,
+      "detail": "2026-11-17T23:48:24.507Z"
+    },
+    {
+      "name": "3 Editor: the edit is in the output",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "3 Editor: no contact details anywhere in body",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "3 Editor: job locations replaced (run-5 failure)",
+      "ok": true,
+      "detail": "[\"[location]\",\"[location]\",\"[location]\"]"
+    },
+    {
+      "name": "3 Editor: job.site linkedin.com, kind resume, ATS score/gaps",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "3 Editor: no Authorization header (BYOK)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "3 Editor (control): Ctrl+Z in a resume field undoes the edit",
+      "ok": true,
+      "detail": "Built weekly sales dashboards used by 40 store managers"
+    },
+    {
+      "name": "5.1 Hosted: title-like-heading: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "5.1 title-like-heading: output has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "5.1 title-like-heading: sourceResume has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "5.1 title-like-heading: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "5.1 title-like-heading: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "5.1 title-like-heading: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "6 items kept"
+    },
+    {
+      "name": "5.1b BYOK with parse: title-like-heading: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "5.1b BYOK title-like-heading: no street address, city, postal code or contact details in the body",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "5.1b BYOK title-like-heading: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "5.1b BYOK title-like-heading: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "5.1b BYOK title-like-heading: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "6 items kept"
+    },
+    {
+      "name": "5.2 Hosted: portfolio-colon-https: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "5.2 portfolio-colon-https: output has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "5.2 portfolio-colon-https: sourceResume has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "5.2 portfolio-colon-https: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "5.2 portfolio-colon-https: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "5.2 portfolio-colon-https: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "3 items kept"
+    },
+    {
+      "name": "5.3 Hosted: github-profile: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "5.3 github-profile: output has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "5.3 github-profile: sourceResume has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "5.3 github-profile: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "5.3 github-profile: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "5.3 github-profile: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "3 items kept"
+    },
+    {
+      "name": "5.3 github-profile: letter keeps I use github.com daily unchanged",
+      "ok": false,
+      "detail": "missing: I use github.com daily; output: \"Dear Hiring Team at Northwind Analytics,\\n\\nAt Contoso Retail I built the store locator in React. I use [link] daily, and my code is at [link].\\n\\nSincerely,\\n[signature]\""
+    },
+    {
+      "name": "5.4 Hosted: name-domain-space: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "5.4 name-domain-space: output has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "5.4 name-domain-space: sourceResume has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "5.4 name-domain-space: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "5.4 name-domain-space: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "5.4 name-domain-space: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "3 items kept"
+    },
+    {
+      "name": "6.1a BYOK no parse: pdf-run-together: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "6.1a pdf-run-together: output has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "6.1a pdf-run-together: sourceResume has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "6.1a pdf-run-together: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "6.1a pdf-run-together: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "6.1a pdf-run-together: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "7 items kept"
+    },
+    {
+      "name": "6.1a BYOK pdf-run-together: parse saved after the report",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "6.1b Hosted: pdf-run-together: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "6.1b pdf-run-together: output has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "6.1b pdf-run-together: sourceResume has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "6.1b pdf-run-together: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "6.1b pdf-run-together: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "6.1b pdf-run-together: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "7 items kept"
+    },
+    {
+      "name": "6.2 Hosted: summary-above-contact: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "6.2 summary-above-contact: output has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "6.2 summary-above-contact: sourceResume has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "6.2 summary-above-contact: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "6.2 summary-above-contact: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "6.2 summary-above-contact: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "5 items kept"
+    },
+    {
+      "name": "6.3 Hosted: address-heading: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "6.3 address-heading: output has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "6.3 address-heading: sourceResume has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "6.3 address-heading: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "6.3 address-heading: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "6.3 address-heading: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "2 items kept"
+    },
+    {
+      "name": "6.3 address-heading: the ADDRESS section is not sent",
+      "ok": true,
+      "detail": "[]"
+    },
+    {
+      "name": "6.4 Hosted: ordinary-numbers: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "6.4 ordinary-numbers: output has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "6.4 ordinary-numbers: sourceResume has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "6.4 ordinary-numbers: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "6.4 ordinary-numbers: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "6.4 ordinary-numbers: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "1 items kept"
+    },
+    {
+      "name": "6.4 ordinary-numbers: the same text arrives unchanged in the letter",
+      "ok": true,
+      "detail": "\"Dear Hiring Team at Northwind Analytics,\\n\\nAt Contoso Retail I helped cut costs by $25,000 across 3 regions in Q3 2023, course CS 101.\\n\\nSincerely,\\n[signature]\""
+    },
+    {
+      "name": "7 UK (Oliver Bennett) letter, Hosted: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 UK (Oliver Bennett) letter, Hosted: Hosted parse request (GET /resume?parse=1) carried Authorization: Bearer <token>",
+      "ok": true,
+      "detail": "GET Bearer walkthrough-fake-access-token"
+    },
+    {
+      "name": "7 UK (Oliver Bennett) letter, Hosted: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "7 UK (Oliver Bennett) letter, Hosted: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 UK (Oliver Bennett) letter, Hosted: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "18 items kept"
+    },
+    {
+      "name": "7 UK (Oliver Bennett) letter, Hosted: ordinary text unchanged in the letter",
+      "ok": true,
+      "detail": "3 items kept"
+    },
+    {
+      "name": "7 UK (Oliver Bennett) resume report, Hosted: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 UK (Oliver Bennett) resume report, Hosted: Hosted parse request (GET /resume?parse=1) carried Authorization: Bearer <token>",
+      "ok": true,
+      "detail": "GET Bearer walkthrough-fake-access-token"
+    },
+    {
+      "name": "7 UK (Oliver Bennett) resume report, Hosted: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "7 UK (Oliver Bennett) resume report, Hosted: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 UK (Oliver Bennett) resume report, Hosted: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "18 items kept"
+    },
+    {
+      "name": "7 UK (Oliver Bennett) resume report, Hosted: ordinary text unchanged in the tailored resume",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 UK (Oliver Bennett) resume report, Hosted: no contact fields in output",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 UK (Oliver Bennett) letter, BYOK claude: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 UK (Oliver Bennett) letter, BYOK claude: parsed with the user's claude key",
+      "ok": true,
+      "detail": "{\"step\":\"7 UK (Oliver Bennett) letter, BYOK claude\",\"provider\":\"claude\",\"url\":\"https://api.anthropic.com/v1/messages\",\"key\":\"sk-ant-walkthrough-not-a-real-key\",\"model\":\"claude-haiku-4-5\",\"stream\":true,\"promptHasResume\":true,\"status\":200}"
+    },
+    {
+      "name": "7 UK (Oliver Bennett) letter, BYOK claude: the parse is saved to chrome.storage.local",
+      "ok": true,
+      "detail": "Oliver Bennett / Bristol, UK / 2 jobs"
+    },
+    {
+      "name": "7 UK (Oliver Bennett) letter, BYOK claude: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "7 UK (Oliver Bennett) letter, BYOK claude: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 UK (Oliver Bennett) letter, BYOK claude: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "18 items kept"
+    },
+    {
+      "name": "7 UK (Oliver Bennett) letter, BYOK claude: ordinary text unchanged in the letter",
+      "ok": true,
+      "detail": "3 items kept"
+    },
+    {
+      "name": "7 UK (Oliver Bennett) resume report, BYOK claude: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 UK (Oliver Bennett) resume report, BYOK claude: reuses the saved parse (no AI call)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 UK (Oliver Bennett) resume report, BYOK claude: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "7 UK (Oliver Bennett) resume report, BYOK claude: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 UK (Oliver Bennett) resume report, BYOK claude: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "18 items kept"
+    },
+    {
+      "name": "7 UK (Oliver Bennett) resume report, BYOK claude: ordinary text unchanged in the tailored resume",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 UK (Oliver Bennett) resume report, BYOK claude: no contact fields in output",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Australia (Priya Raman) letter, Hosted: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Australia (Priya Raman) letter, Hosted: Hosted parse request (GET /resume?parse=1) carried Authorization: Bearer <token>",
+      "ok": true,
+      "detail": "GET Bearer walkthrough-fake-access-token"
+    },
+    {
+      "name": "7 Australia (Priya Raman) letter, Hosted: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "7 Australia (Priya Raman) letter, Hosted: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Australia (Priya Raman) letter, Hosted: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "16 items kept"
+    },
+    {
+      "name": "7 Australia (Priya Raman) letter, Hosted: ordinary text unchanged in the letter",
+      "ok": true,
+      "detail": "3 items kept"
+    },
+    {
+      "name": "7 Australia (Priya Raman) resume report, Hosted: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Australia (Priya Raman) resume report, Hosted: Hosted parse request (GET /resume?parse=1) carried Authorization: Bearer <token>",
+      "ok": true,
+      "detail": "GET Bearer walkthrough-fake-access-token"
+    },
+    {
+      "name": "7 Australia (Priya Raman) resume report, Hosted: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "7 Australia (Priya Raman) resume report, Hosted: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Australia (Priya Raman) resume report, Hosted: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "16 items kept"
+    },
+    {
+      "name": "7 Australia (Priya Raman) resume report, Hosted: ordinary text unchanged in the tailored resume",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Australia (Priya Raman) resume report, Hosted: no contact fields in output",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Australia (Priya Raman) letter, BYOK claude: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Australia (Priya Raman) letter, BYOK claude: parsed with the user's claude key",
+      "ok": true,
+      "detail": "{\"step\":\"7 Australia (Priya Raman) letter, BYOK claude\",\"provider\":\"claude\",\"url\":\"https://api.anthropic.com/v1/messages\",\"key\":\"sk-ant-walkthrough-not-a-real-key\",\"model\":\"claude-haiku-4-5\",\"stream\":true,\"promptHasResume\":true,\"status\":200}"
+    },
+    {
+      "name": "7 Australia (Priya Raman) letter, BYOK claude: the parse is saved to chrome.storage.local",
+      "ok": true,
+      "detail": "Priya Raman / Sydney, NSW / 2 jobs"
+    },
+    {
+      "name": "7 Australia (Priya Raman) letter, BYOK claude: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "7 Australia (Priya Raman) letter, BYOK claude: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Australia (Priya Raman) letter, BYOK claude: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "16 items kept"
+    },
+    {
+      "name": "7 Australia (Priya Raman) letter, BYOK claude: ordinary text unchanged in the letter",
+      "ok": true,
+      "detail": "3 items kept"
+    },
+    {
+      "name": "7 Australia (Priya Raman) resume report, BYOK claude: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Australia (Priya Raman) resume report, BYOK claude: reuses the saved parse (no AI call)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Australia (Priya Raman) resume report, BYOK claude: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "7 Australia (Priya Raman) resume report, BYOK claude: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Australia (Priya Raman) resume report, BYOK claude: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "16 items kept"
+    },
+    {
+      "name": "7 Australia (Priya Raman) resume report, BYOK claude: ordinary text unchanged in the tailored resume",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Australia (Priya Raman) resume report, BYOK claude: no contact fields in output",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Spain (Lucía Fernández) letter, Hosted: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Spain (Lucía Fernández) letter, Hosted: Hosted parse request (GET /resume?parse=1) carried Authorization: Bearer <token>",
+      "ok": true,
+      "detail": "GET Bearer walkthrough-fake-access-token"
+    },
+    {
+      "name": "7 Spain (Lucía Fernández) letter, Hosted: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "7 Spain (Lucía Fernández) letter, Hosted: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Spain (Lucía Fernández) letter, Hosted: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "15 items kept"
+    },
+    {
+      "name": "7 Spain (Lucía Fernández) letter, Hosted: ordinary text unchanged in the letter",
+      "ok": true,
+      "detail": "3 items kept"
+    },
+    {
+      "name": "7 Spain (Lucía Fernández) resume report, Hosted: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Spain (Lucía Fernández) resume report, Hosted: Hosted parse request (GET /resume?parse=1) carried Authorization: Bearer <token>",
+      "ok": true,
+      "detail": "GET Bearer walkthrough-fake-access-token"
+    },
+    {
+      "name": "7 Spain (Lucía Fernández) resume report, Hosted: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "7 Spain (Lucía Fernández) resume report, Hosted: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Spain (Lucía Fernández) resume report, Hosted: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "15 items kept"
+    },
+    {
+      "name": "7 Spain (Lucía Fernández) resume report, Hosted: ordinary text unchanged in the tailored resume",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Spain (Lucía Fernández) resume report, Hosted: no contact fields in output",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Spain (Lucía Fernández) letter, BYOK openai: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Spain (Lucía Fernández) letter, BYOK openai: parsed with the user's openai key",
+      "ok": true,
+      "detail": "{\"step\":\"7 Spain (Lucía Fernández) letter, BYOK openai\",\"provider\":\"openai\",\"url\":\"https://api.openai.com/v1/chat/completions\",\"key\":\"Bearer sk-walkthrough-not-a-real-key\",\"model\":\"gpt-6-luna\",\"stream\":true,\"promptHasResume\":true,\"status\":200}"
+    },
+    {
+      "name": "7 Spain (Lucía Fernández) letter, BYOK openai: the parse is saved to chrome.storage.local",
+      "ok": true,
+      "detail": "Lucía Fernández / Madrid, Spain / 2 jobs"
+    },
+    {
+      "name": "7 Spain (Lucía Fernández) letter, BYOK openai: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "7 Spain (Lucía Fernández) letter, BYOK openai: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Spain (Lucía Fernández) letter, BYOK openai: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "15 items kept"
+    },
+    {
+      "name": "7 Spain (Lucía Fernández) letter, BYOK openai: ordinary text unchanged in the letter",
+      "ok": true,
+      "detail": "3 items kept"
+    },
+    {
+      "name": "7 Spain (Lucía Fernández) resume report, BYOK openai: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Spain (Lucía Fernández) resume report, BYOK openai: reuses the saved parse (no AI call)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Spain (Lucía Fernández) resume report, BYOK openai: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "7 Spain (Lucía Fernández) resume report, BYOK openai: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Spain (Lucía Fernández) resume report, BYOK openai: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "15 items kept"
+    },
+    {
+      "name": "7 Spain (Lucía Fernández) resume report, BYOK openai: ordinary text unchanged in the tailored resume",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Spain (Lucía Fernández) resume report, BYOK openai: no contact fields in output",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Germany (Max Müller) letter, Hosted: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Germany (Max Müller) letter, Hosted: Hosted parse request (GET /resume?parse=1) carried Authorization: Bearer <token>",
+      "ok": true,
+      "detail": "GET Bearer walkthrough-fake-access-token"
+    },
+    {
+      "name": "7 Germany (Max Müller) letter, Hosted: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "7 Germany (Max Müller) letter, Hosted: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Germany (Max Müller) letter, Hosted: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "17 items kept"
+    },
+    {
+      "name": "7 Germany (Max Müller) letter, Hosted: ordinary text unchanged in the letter",
+      "ok": true,
+      "detail": "3 items kept"
+    },
+    {
+      "name": "7 Germany (Max Müller) resume report, Hosted: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Germany (Max Müller) resume report, Hosted: Hosted parse request (GET /resume?parse=1) carried Authorization: Bearer <token>",
+      "ok": true,
+      "detail": "GET Bearer walkthrough-fake-access-token"
+    },
+    {
+      "name": "7 Germany (Max Müller) resume report, Hosted: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "7 Germany (Max Müller) resume report, Hosted: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Germany (Max Müller) resume report, Hosted: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "17 items kept"
+    },
+    {
+      "name": "7 Germany (Max Müller) resume report, Hosted: ordinary text unchanged in the tailored resume",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Germany (Max Müller) resume report, Hosted: no contact fields in output",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Germany (Max Müller) letter, BYOK claude: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Germany (Max Müller) letter, BYOK claude: parsed with the user's claude key",
+      "ok": true,
+      "detail": "{\"step\":\"7 Germany (Max Müller) letter, BYOK claude\",\"provider\":\"claude\",\"url\":\"https://api.anthropic.com/v1/messages\",\"key\":\"sk-ant-walkthrough-not-a-real-key\",\"model\":\"claude-haiku-4-5\",\"stream\":true,\"promptHasResume\":true,\"status\":200}"
+    },
+    {
+      "name": "7 Germany (Max Müller) letter, BYOK claude: the parse is saved to chrome.storage.local",
+      "ok": true,
+      "detail": "Max Müller / Berlin, Germany / 2 jobs"
+    },
+    {
+      "name": "7 Germany (Max Müller) letter, BYOK claude: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "7 Germany (Max Müller) letter, BYOK claude: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Germany (Max Müller) letter, BYOK claude: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "17 items kept"
+    },
+    {
+      "name": "7 Germany (Max Müller) letter, BYOK claude: ordinary text unchanged in the letter",
+      "ok": true,
+      "detail": "3 items kept"
+    },
+    {
+      "name": "7 Germany (Max Müller) resume report, BYOK claude: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Germany (Max Müller) resume report, BYOK claude: reuses the saved parse (no AI call)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Germany (Max Müller) resume report, BYOK claude: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "7 Germany (Max Müller) resume report, BYOK claude: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Germany (Max Müller) resume report, BYOK claude: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "17 items kept"
+    },
+    {
+      "name": "7 Germany (Max Müller) resume report, BYOK claude: ordinary text unchanged in the tailored resume",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Germany (Max Müller) resume report, BYOK claude: no contact fields in output",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 India (Aarav Sharma) letter, Hosted: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 India (Aarav Sharma) letter, Hosted: Hosted parse request (GET /resume?parse=1) carried Authorization: Bearer <token>",
+      "ok": true,
+      "detail": "GET Bearer walkthrough-fake-access-token"
+    },
+    {
+      "name": "7 India (Aarav Sharma) letter, Hosted: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "7 India (Aarav Sharma) letter, Hosted: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 India (Aarav Sharma) letter, Hosted: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "16 items kept"
+    },
+    {
+      "name": "7 India (Aarav Sharma) letter, Hosted: ordinary text unchanged in the letter",
+      "ok": true,
+      "detail": "3 items kept"
+    },
+    {
+      "name": "7 India (Aarav Sharma) resume report, Hosted: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 India (Aarav Sharma) resume report, Hosted: Hosted parse request (GET /resume?parse=1) carried Authorization: Bearer <token>",
+      "ok": true,
+      "detail": "GET Bearer walkthrough-fake-access-token"
+    },
+    {
+      "name": "7 India (Aarav Sharma) resume report, Hosted: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "7 India (Aarav Sharma) resume report, Hosted: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 India (Aarav Sharma) resume report, Hosted: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "16 items kept"
+    },
+    {
+      "name": "7 India (Aarav Sharma) resume report, Hosted: ordinary text unchanged in the tailored resume",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 India (Aarav Sharma) resume report, Hosted: no contact fields in output",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 India (Aarav Sharma) letter, BYOK openai: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 India (Aarav Sharma) letter, BYOK openai: parsed with the user's openai key",
+      "ok": true,
+      "detail": "{\"step\":\"7 India (Aarav Sharma) letter, BYOK openai\",\"provider\":\"openai\",\"url\":\"https://api.openai.com/v1/chat/completions\",\"key\":\"Bearer sk-walkthrough-not-a-real-key\",\"model\":\"gpt-6-luna\",\"stream\":true,\"promptHasResume\":true,\"status\":200}"
+    },
+    {
+      "name": "7 India (Aarav Sharma) letter, BYOK openai: the parse is saved to chrome.storage.local",
+      "ok": true,
+      "detail": "Aarav Sharma / Rohini, New Delhi / 2 jobs"
+    },
+    {
+      "name": "7 India (Aarav Sharma) letter, BYOK openai: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "7 India (Aarav Sharma) letter, BYOK openai: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 India (Aarav Sharma) letter, BYOK openai: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "16 items kept"
+    },
+    {
+      "name": "7 India (Aarav Sharma) letter, BYOK openai: ordinary text unchanged in the letter",
+      "ok": true,
+      "detail": "3 items kept"
+    },
+    {
+      "name": "7 India (Aarav Sharma) resume report, BYOK openai: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 India (Aarav Sharma) resume report, BYOK openai: reuses the saved parse (no AI call)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 India (Aarav Sharma) resume report, BYOK openai: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "7 India (Aarav Sharma) resume report, BYOK openai: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 India (Aarav Sharma) resume report, BYOK openai: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "16 items kept"
+    },
+    {
+      "name": "7 India (Aarav Sharma) resume report, BYOK openai: ordinary text unchanged in the tailored resume",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 India (Aarav Sharma) resume report, BYOK openai: no contact fields in output",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 North America (Jane Doe) letter, Hosted: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 North America (Jane Doe) letter, Hosted: Hosted parse request (GET /resume?parse=1) carried Authorization: Bearer <token>",
+      "ok": true,
+      "detail": "GET Bearer walkthrough-fake-access-token"
+    },
+    {
+      "name": "7 North America (Jane Doe) letter, Hosted: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "7 North America (Jane Doe) letter, Hosted: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 North America (Jane Doe) letter, Hosted: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "14 items kept"
+    },
+    {
+      "name": "7 North America (Jane Doe) letter, Hosted: ordinary text unchanged in the letter",
+      "ok": true,
+      "detail": "3 items kept"
+    },
+    {
+      "name": "7 North America (Jane Doe) resume report, Hosted: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 North America (Jane Doe) resume report, Hosted: Hosted parse request (GET /resume?parse=1) carried Authorization: Bearer <token>",
+      "ok": true,
+      "detail": "GET Bearer walkthrough-fake-access-token"
+    },
+    {
+      "name": "7 North America (Jane Doe) resume report, Hosted: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "7 North America (Jane Doe) resume report, Hosted: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 North America (Jane Doe) resume report, Hosted: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "14 items kept"
+    },
+    {
+      "name": "7 North America (Jane Doe) resume report, Hosted: ordinary text unchanged in the tailored resume",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 North America (Jane Doe) resume report, Hosted: no contact fields in output",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 North America (Jane Doe) letter, BYOK claude: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 North America (Jane Doe) letter, BYOK claude: parsed with the user's claude key",
+      "ok": true,
+      "detail": "{\"step\":\"7 North America (Jane Doe) letter, BYOK claude\",\"provider\":\"claude\",\"url\":\"https://api.anthropic.com/v1/messages\",\"key\":\"sk-ant-walkthrough-not-a-real-key\",\"model\":\"claude-haiku-4-5\",\"stream\":true,\"promptHasResume\":true,\"status\":200}"
+    },
+    {
+      "name": "7 North America (Jane Doe) letter, BYOK claude: the parse is saved to chrome.storage.local",
+      "ok": true,
+      "detail": "Jane Doe / Toronto, ON / 2 jobs"
+    },
+    {
+      "name": "7 North America (Jane Doe) letter, BYOK claude: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "7 North America (Jane Doe) letter, BYOK claude: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 North America (Jane Doe) letter, BYOK claude: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "14 items kept"
+    },
+    {
+      "name": "7 North America (Jane Doe) letter, BYOK claude: ordinary text unchanged in the letter",
+      "ok": true,
+      "detail": "3 items kept"
+    },
+    {
+      "name": "7 North America (Jane Doe) resume report, BYOK claude: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 North America (Jane Doe) resume report, BYOK claude: reuses the saved parse (no AI call)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 North America (Jane Doe) resume report, BYOK claude: sourceResume is an object with the jobs",
+      "ok": true,
+      "detail": "object"
+    },
+    {
+      "name": "7 North America (Jane Doe) resume report, BYOK claude: sourceResume has no contact fields",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 North America (Jane Doe) resume report, BYOK claude: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "14 items kept"
+    },
+    {
+      "name": "7 North America (Jane Doe) resume report, BYOK claude: ordinary text unchanged in the tailored resume",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 North America (Jane Doe) resume report, BYOK claude: no contact fields in output",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "parseCalls": [
+    {
+      "step": "2 Hosted letter, contact ticked, invented + original resume",
+      "method": "GET",
+      "url": "http://127.0.0.1:54321/functions/v1/resume?parse=1",
+      "authorization": "Bearer walkthrough-fake-access-token",
+      "status": 200
+    },
+    {
+      "step": "2 Hosted letter, contact unticked",
+      "method": "GET",
+      "url": "http://127.0.0.1:54321/functions/v1/resume?parse=1",
+      "authorization": "Bearer walkthrough-fake-access-token",
+      "status": 200
+    },
+    {
+      "step": "2c Hosted parse request returns 404",
+      "method": "GET",
+      "url": "http://127.0.0.1:54321/functions/v1/resume?parse=1",
+      "authorization": "Bearer walkthrough-fake-access-token",
+      "status": 404
+    },
+    {
+      "step": "2c Hosted parse request returns 500",
+      "method": "GET",
+      "url": "http://127.0.0.1:54321/functions/v1/resume?parse=1",
+      "authorization": "Bearer walkthrough-fake-access-token",
+      "status": 500
+    },
+    {
+      "step": "4.1 Hosted: stacked-header",
+      "method": "GET",
+      "url": "http://127.0.0.1:54321/functions/v1/resume?parse=1",
+      "authorization": "Bearer walkthrough-fake-access-token",
+      "status": 200
+    },
+    {
+      "step": "4.2 Hosted: portfolio-label",
+      "method": "GET",
+      "url": "http://127.0.0.1:54321/functions/v1/resume?parse=1",
+      "authorization": "Bearer walkthrough-fake-access-token",
+      "status": 200
+    },
+    {
+      "step": "4.3 Hosted: behance-in-letter",
+      "method": "GET",
+      "url": "http://127.0.0.1:54321/functions/v1/resume?parse=1",
+      "authorization": "Bearer walkthrough-fake-access-token",
+      "status": 200
+    },
+    {
+      "step": "4.4 Hosted: domain-shaped-skills",
+      "method": "GET",
+      "url": "http://127.0.0.1:54321/functions/v1/resume?parse=1",
+      "authorization": "Bearer walkthrough-fake-access-token",
+      "status": 200
+    },
+    {
+      "step": "5.1 Hosted: title-like-heading",
+      "method": "GET",
+      "url": "http://127.0.0.1:54321/functions/v1/resume?parse=1",
+      "authorization": "Bearer walkthrough-fake-access-token",
+      "status": 200
+    },
+    {
+      "step": "5.2 Hosted: portfolio-colon-https",
+      "method": "GET",
+      "url": "http://127.0.0.1:54321/functions/v1/resume?parse=1",
+      "authorization": "Bearer walkthrough-fake-access-token",
+      "status": 200
+    },
+    {
+      "step": "5.3 Hosted: github-profile",
+      "method": "GET",
+      "url": "http://127.0.0.1:54321/functions/v1/resume?parse=1",
+      "authorization": "Bearer walkthrough-fake-access-token",
+      "status": 200
+    },
+    {
+      "step": "5.4 Hosted: name-domain-space",
+      "method": "GET",
+      "url": "http://127.0.0.1:54321/functions/v1/resume?parse=1",
+      "authorization": "Bearer walkthrough-fake-access-token",
+      "status": 200
+    },
+    {
+      "step": "6.1b Hosted: pdf-run-together",
+      "method": "GET",
+      "url": "http://127.0.0.1:54321/functions/v1/resume?parse=1",
+      "authorization": "Bearer walkthrough-fake-access-token",
+      "status": 200
+    },
+    {
+      "step": "6.2 Hosted: summary-above-contact",
+      "method": "GET",
+      "url": "http://127.0.0.1:54321/functions/v1/resume?parse=1",
+      "authorization": "Bearer walkthrough-fake-access-token",
+      "status": 200
+    },
+    {
+      "step": "6.3 Hosted: address-heading",
+      "method": "GET",
+      "url": "http://127.0.0.1:54321/functions/v1/resume?parse=1",
+      "authorization": "Bearer walkthrough-fake-access-token",
+      "status": 200
+    },
+    {
+      "step": "6.4 Hosted: ordinary-numbers",
+      "method": "GET",
+      "url": "http://127.0.0.1:54321/functions/v1/resume?parse=1",
+      "authorization": "Bearer walkthrough-fake-access-token",
+      "status": 200
+    },
+    {
+      "step": "7 UK (Oliver Bennett) letter, Hosted",
+      "method": "GET",
+      "url": "http://127.0.0.1:54321/functions/v1/resume?parse=1",
+      "authorization": "Bearer walkthrough-fake-access-token",
+      "status": 200
+    },
+    {
+      "step": "7 UK (Oliver Bennett) resume report, Hosted",
+      "method": "GET",
+      "url": "http://127.0.0.1:54321/functions/v1/resume?parse=1",
+      "authorization": "Bearer walkthrough-fake-access-token",
+      "status": 200
+    },
+    {
+      "step": "7 Australia (Priya Raman) letter, Hosted",
+      "method": "GET",
+      "url": "http://127.0.0.1:54321/functions/v1/resume?parse=1",
+      "authorization": "Bearer walkthrough-fake-access-token",
+      "status": 200
+    },
+    {
+      "step": "7 Australia (Priya Raman) resume report, Hosted",
+      "method": "GET",
+      "url": "http://127.0.0.1:54321/functions/v1/resume?parse=1",
+      "authorization": "Bearer walkthrough-fake-access-token",
+      "status": 200
+    },
+    {
+      "step": "7 Spain (Lucía Fernández) letter, Hosted",
+      "method": "GET",
+      "url": "http://127.0.0.1:54321/functions/v1/resume?parse=1",
+      "authorization": "Bearer walkthrough-fake-access-token",
+      "status": 200
+    },
+    {
+      "step": "7 Spain (Lucía Fernández) resume report, Hosted",
+      "method": "GET",
+      "url": "http://127.0.0.1:54321/functions/v1/resume?parse=1",
+      "authorization": "Bearer walkthrough-fake-access-token",
+      "status": 200
+    },
+    {
+      "step": "7 Germany (Max Müller) letter, Hosted",
+      "method": "GET",
+      "url": "http://127.0.0.1:54321/functions/v1/resume?parse=1",
+      "authorization": "Bearer walkthrough-fake-access-token",
+      "status": 200
+    },
+    {
+      "step": "7 Germany (Max Müller) resume report, Hosted",
+      "method": "GET",
+      "url": "http://127.0.0.1:54321/functions/v1/resume?parse=1",
+      "authorization": "Bearer walkthrough-fake-access-token",
+      "status": 200
+    },
+    {
+      "step": "7 India (Aarav Sharma) letter, Hosted",
+      "method": "GET",
+      "url": "http://127.0.0.1:54321/functions/v1/resume?parse=1",
+      "authorization": "Bearer walkthrough-fake-access-token",
+      "status": 200
+    },
+    {
+      "step": "7 India (Aarav Sharma) resume report, Hosted",
+      "method": "GET",
+      "url": "http://127.0.0.1:54321/functions/v1/resume?parse=1",
+      "authorization": "Bearer walkthrough-fake-access-token",
+      "status": 200
+    },
+    {
+      "step": "7 North America (Jane Doe) letter, Hosted",
+      "method": "GET",
+      "url": "http://127.0.0.1:54321/functions/v1/resume?parse=1",
+      "authorization": "Bearer walkthrough-fake-access-token",
+      "status": 200
+    },
+    {
+      "step": "7 North America (Jane Doe) resume report, Hosted",
+      "method": "GET",
+      "url": "http://127.0.0.1:54321/functions/v1/resume?parse=1",
+      "authorization": "Bearer walkthrough-fake-access-token",
+      "status": 200
+    }
+  ],
+  "aiCalls": [
+    {
+      "step": "2b BYOK letter, no parse in the browser, claude",
+      "provider": "claude",
+      "url": "https://api.anthropic.com/v1/messages",
+      "key": "sk-ant-walkthrough-not-a-real-key",
+      "model": "claude-haiku-4-5",
+      "stream": true,
+      "promptHasResume": true,
+      "status": 200
+    },
+    {
+      "step": "2b BYOK letter, no parse in the browser, openai",
+      "provider": "openai",
+      "url": "https://api.openai.com/v1/chat/completions",
+      "key": "Bearer sk-walkthrough-not-a-real-key",
+      "model": "gpt-6-luna",
+      "stream": true,
+      "promptHasResume": true,
+      "status": 200
+    },
+    {
+      "step": "2d BYOK parse: the AI provider returns 401",
+      "provider": "claude",
+      "url": "https://api.anthropic.com/v1/messages",
+      "key": "sk-ant-walkthrough-not-a-real-key",
+      "model": "claude-haiku-4-5",
+      "stream": true,
+      "promptHasResume": true,
+      "status": 401
+    },
+    {
+      "step": "6.1a BYOK no parse: pdf-run-together",
+      "provider": "claude",
+      "url": "https://api.anthropic.com/v1/messages",
+      "key": "sk-ant-walkthrough-not-a-real-key",
+      "model": "claude-haiku-4-5",
+      "stream": true,
+      "promptHasResume": true,
+      "status": 200
+    },
+    {
+      "step": "7 UK (Oliver Bennett) letter, BYOK claude",
+      "provider": "claude",
+      "url": "https://api.anthropic.com/v1/messages",
+      "key": "sk-ant-walkthrough-not-a-real-key",
+      "model": "claude-haiku-4-5",
+      "stream": true,
+      "promptHasResume": true,
+      "status": 200
+    },
+    {
+      "step": "7 Australia (Priya Raman) letter, BYOK claude",
+      "provider": "claude",
+      "url": "https://api.anthropic.com/v1/messages",
+      "key": "sk-ant-walkthrough-not-a-real-key",
+      "model": "claude-haiku-4-5",
+      "stream": true,
+      "promptHasResume": true,
+      "status": 200
+    },
+    {
+      "step": "7 Spain (Lucía Fernández) letter, BYOK openai",
+      "provider": "openai",
+      "url": "https://api.openai.com/v1/chat/completions",
+      "key": "Bearer sk-walkthrough-not-a-real-key",
+      "model": "gpt-6-luna",
+      "stream": true,
+      "promptHasResume": true,
+      "status": 200
+    },
+    {
+      "step": "7 Germany (Max Müller) letter, BYOK claude",
+      "provider": "claude",
+      "url": "https://api.anthropic.com/v1/messages",
+      "key": "sk-ant-walkthrough-not-a-real-key",
+      "model": "claude-haiku-4-5",
+      "stream": true,
+      "promptHasResume": true,
+      "status": 200
+    },
+    {
+      "step": "7 India (Aarav Sharma) letter, BYOK openai",
+      "provider": "openai",
+      "url": "https://api.openai.com/v1/chat/completions",
+      "key": "Bearer sk-walkthrough-not-a-real-key",
+      "model": "gpt-6-luna",
+      "stream": true,
+      "promptHasResume": true,
+      "status": 200
+    },
+    {
+      "step": "7 North America (Jane Doe) letter, BYOK claude",
+      "provider": "claude",
+      "url": "https://api.anthropic.com/v1/messages",
+      "key": "sk-ant-walkthrough-not-a-real-key",
+      "model": "claude-haiku-4-5",
+      "stream": true,
+      "promptHasResume": true,
+      "status": 200
+    }
+  ],
+  "otherCalls": []
+}
