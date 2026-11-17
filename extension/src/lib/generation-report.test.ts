@@ -141,6 +141,13 @@ describe('buildGenerationReport', () => {
     expect(buildGenerationReport({ kind: 'letter', output: 'See my work at janedoe.dev.', job }, form, withScheme).output).toBe('See my work at [link].')
   })
 
+  test('a name spaced or stacked differently in the resume text is still taken out', () => {
+    const invented = { ...form, category: 'invented' as const, sendSource: true }
+    const withText = (text: string) => env({ resume: { ...env().resume!, text } })
+    expect(buildGenerationReport({ kind: 'letter', output: 'Hi', job }, invented, withText('JANE\nDOE\nSoftware Engineer')).sourceResume).toBe('[name]\nSoftware Engineer')
+    expect(buildGenerationReport({ kind: 'letter', output: 'Hi', job }, invented, withText('Jane  Doe\nSRE')).sourceResume).toBe('[name]\nSRE')
+  })
+
   test("a name can't eat an email's first half and leave its domain", () => {
     const pdf = env({ resume: { text: 'Jane Doe jane@janedoe.dev (416) 555-0199 Experience', filename: '', updatedAt: '' } })
     expect(buildGenerationReport({ kind: 'letter', output: 'Hi', job }, { ...form, category: 'invented', sendSource: true }, pdf).sourceResume)

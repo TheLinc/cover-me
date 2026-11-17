@@ -50,7 +50,8 @@ export default function FlagProblem({ target, resultKey }: { target: ReportTarge
     link.current?.focus()
   }
 
-  const ready = category && (category !== 'other' || comment.trim())
+  // A letter edited down to nothing has nothing to report (the server refuses it).
+  const ready = category && (category !== 'other' || comment.trim()) && (target.kind !== 'letter' || target.output.trim())
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()

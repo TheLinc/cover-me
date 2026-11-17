@@ -164,7 +164,9 @@ function scrub(text: string, pairs: Array<[string, string]>, withLinks = false):
   const known = pairs.flatMap(([v, tag]) => (v && v.trim().length >= 3 ? [[v.trim(), tag] as const] : []))
     .sort((a, b) => b[0].length - a[0].length)
   for (const [value, tag] of known) {
-    const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    // Any run of spaces or line breaks between words: a PDF's text can read
+    // "Jane  Doe" or "JANE\nDOE".
+    const escaped = value.split(/\s+/).map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('\\s+')
     text = text.replace(new RegExp(`(?<![\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])`, 'giu'), tag)
   }
   return withLinks ? text.replace(URL, '[link]') : text
