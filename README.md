@@ -438,6 +438,7 @@ supabase functions deploy nudge
 supabase functions deploy support
 supabase functions deploy scrape
 supabase functions deploy site-request
+supabase functions deploy generation-report
 supabase functions deploy extension-removed
 ```
 
@@ -535,8 +536,9 @@ Turn on the website's button only once users have an extension build with Google
 | `NUDGE_SECRET` | Shared with the `NUDGE_SECRET` GitHub secret; the daily follow-up workflow calls `nudge` with it |
 | `NUDGE_ENABLED` | `true` to let `nudge` send the follow-up email; anything else sends nothing |
 | `RESEND_API_KEY` | Resend API key, for the follow-up email and the dashboard's support form (`support` answers 503 without it) |
-| `POSTHOG_KEY` | PostHog project token for server-side counts (`tailor_run`, `scrape_failed`, `answer_generated`, `answer_limit_hit`) and the extension's site requests and bug reports. Optional: without it nothing is sent |
+| `POSTHOG_KEY` | PostHog project token for server-side counts (`tailor_run`, `scrape_failed`, `answer_generated`, `answer_limit_hit`) and the extension's site requests, bug reports and generation reports. Optional: without it nothing is sent |
 | `POSTHOG_SITE_SURVEY_ID` | ID of a PostHog survey in API mode with three open-text questions: type, site, page URL. `site-request` records the extension's "Request this site" and "Report bug" presses there; without it they're accepted and dropped |
+| `POSTHOG_GENERATION_SURVEY_ID` | ID of a PostHog survey in API mode ("Generation reports") with three questions: what was wrong (single choice: The design or layout looked wrong / The wording sounded generic or not like me / It added things that aren't true / It left out things that matter / Other), comment (open text), and type (open text: "Cover letter" or "Tailored resume"). `generation-report` records the extension's "Flag a problem" presses there, with the output and posting as event properties; without it they're accepted and dropped |
 
 **Web dashboard** (`web/.env.local`):
 

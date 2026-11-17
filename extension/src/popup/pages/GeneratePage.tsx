@@ -7,6 +7,7 @@ import { openResumeEditor, postingTitleInSummary } from '../../lib/resume-edit'
 import { downloadResumeWord, usesDesign } from '../../lib/design'
 import { getCandidateContext, getTailoredHistory, resolveMode, saveCandidateContext } from '../../lib/storage'
 import DownloadMenu from '../components/DownloadMenu'
+import FlagProblem from '../components/FlagProblem'
 import GapChips from '../components/GapChips'
 import { EditIcon, RegenerateIcon } from '../components/icons'
 import PageReadNotice from '../components/PageReadNotice'
@@ -1070,6 +1071,8 @@ export default function GeneratePage({ onNavigate }: Props) {
                       New
                     </button>
                   </div>
+                  {/* Keyed by the letter's time, so a regenerated letter can be flagged again. */}
+                  {job && <FlagProblem key={createdAt} target={{ kind: 'letter', output: letter, job }} />}
                 </div>
               )}
 

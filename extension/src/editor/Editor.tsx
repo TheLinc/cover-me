@@ -8,18 +8,21 @@ import type { DeletedSection } from '../lib/pdf/types'
 import { chosenOrder, editedResume, postingTitleInSummary, restoreSection, returnToTab, saveResumeEdit, shownSections, withResumeEdit, withSections } from '../lib/resume-edit'
 import { getCachedTier, getMode, getResume, getTailoredHistory, saveParsedResume } from '../lib/storage'
 import DownloadMenu from '../popup/components/DownloadMenu'
+import FlagProblem from '../popup/components/FlagProblem'
 import GapChips from '../popup/components/GapChips'
 import PdfPreview from './PdfPreview'
 import PostingTitleTip from '../popup/components/PostingTitleTip'
 import ScoreRing from '../popup/components/ScoreRing'
-import type { AuthSession, TailoredHistoryEntry, TailoredResume } from '../types'
+import type { AuthSession, JobData, TailoredHistoryEntry, TailoredResume } from '../types'
 
 // The editor tab (#118): a form over one tailored resume on the left, the PDF
 // it makes on the right. Edits are the user's own, so the grounding checks
 // that guard the model's output don't run on them. Saved to local History as
 // you type; a Pro account's copy is overwritten too.
 
-interface Opened { scored: TailoredResume; jobTitle: string; company: string }
+// job: the posting, for "Flag a problem". A resume from the account has no
+// description: the server keeps title, company and address only.
+interface Opened { scored: TailoredResume; jobTitle: string; company: string; job: JobData }
 
 // A Pro account's session, or null. Checked from what this browser has
 // cached first, so BYOK and Free make no network call here.
@@ -32,12 +35,12 @@ async function proSession(): Promise<AuthSession | null> {
 // another device, or past the 20 kept here) comes from the account.
 async function openResume(id: string): Promise<Opened | null> {
   const entry = (await getTailoredHistory()).find((e) => e.id === id)
-  if (entry) return { scored: entry.resume, jobTitle: entry.job.title, company: entry.job.company }
+  if (entry) return { scored: entry.resume, jobTitle: entry.job.title, company: entry.job.company, job: entry.job }
   const session = await proSession()
   if (!session) return null
   for (const app of await fetchApplicationsFromBackend(session.access_token)) {
     const tr = app.tailoredResumes.find((t) => t.id === id)
-    if (tr) return { scored: tr.resume, jobTitle: app.title, company: app.company }
+    if (tr) return { scored: tr.resume, jobTitle: app.title, company: app.company, job: { title: app.title, company: app.company, url: app.url, description: '' } }
   }
   return null
 }
@@ -411,6 +414,8 @@ export default function Editor() {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m15 14 5-5-5-5" /><path d="M20 9H9.5a5.5 5.5 0 000 11H13" /></svg>
           </button>
         </div>
+        {/* What the user sees now: their edits, marked edited, or the resume as generated. */}
+        <FlagProblem target={{ kind: 'resume', output: edited ? saved : scored, job: opened.job }} />
         <p className="ed-status" aria-live="polite">
           {status === 'saving' ? 'Saving…'
             : status === 'saved' ? 'Saved'
