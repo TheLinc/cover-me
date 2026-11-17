@@ -1,6 +1,6 @@
 import JSZip from 'jszip'
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { checkUploadedDesign, designForTailor, downloadResumeWord, finishDesign, toBase64, uploadDesignIfPro } from './design'
+import { checkUploadedDesign, designForTailor, designWithParse, downloadResumeWord, finishDesign, toBase64, uploadDesignIfPro } from './design'
 
 const parseMock = vi.hoisted(() => vi.fn())
 vi.mock('./ai/resume-parse', async (importOriginal) => ({ ...(await importOriginal<object>()), parseResumeStructure: parseMock }))
@@ -25,10 +25,13 @@ const resume = (b = bullets) => ({
   name: 'Ada Example', email: '', phone: '', website: '', education: [],
   experience: [{ title: 'Engineer', company: 'Northwind', location: '', dates: '2022', bullets: b }],
 })
+// A parse made since the link fix (#238), and one from before it.
+const current = () => ({ ...resume(), otherSections: [], sectionOrder: ['experience' as const], linksKept: true as const })
+const beforeLinks = () => ({ ...resume(), otherSections: [], sectionOrder: ['experience' as const], links: ['github.com/ada/billing'] })
 const hash = 'c'.repeat(64)
 const check = { matched: 2, total: 2, unmatched: [], textBoxBullets: 0, summary: false, skills: 'none' as const }
 
-async function store({ layout, withFile = true, extra = {}, status = 'done' }: { layout?: 'yours' | 'cover-me'; withFile?: boolean; extra?: Record<string, unknown>; status?: string } = {}) {
+async function store({ layout, withFile = true, extra = {}, status = 'done', fileParse = current() }: { layout?: 'yours' | 'cover-me'; withFile?: boolean; extra?: Record<string, unknown>; status?: string; fileParse?: object } = {}) {
   const zip = new JSZip()
   const body = bullets.map((b) => `<w:p><w:r><w:t>${b}</w:t></w:r></w:p>`).join('')
   zip.file('word/document.xml', `<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${body}</w:body></w:document>`)
@@ -37,7 +40,7 @@ async function store({ layout, withFile = true, extra = {}, status = 'done' }: {
   fakeLocal({
     resume: { text: 'Ada', filename: 'ada.docx', updatedAt: '2026-11-01T00:00:00Z', design: { hash, size: 100, status, check }, ...(layout ? { layout } : {}), ...(resumeExtra as object) },
     ...rest,
-    ...(withFile ? { [`designFile:${hash}`]: { data, parsed: resume() }, designFiles: [hash] } : {}),
+    ...(withFile ? { [`designFile:${hash}`]: { data, parsed: fileParse }, designFiles: [hash] } : {}),
   })
 }
 
@@ -73,6 +76,32 @@ describe('the layout of a tailor', () => {
     const d = await designForTailor()
     expect(d.design).toEqual({ layout: 'cover-me', fellBack: false })
     expect(await finishDesign({ ...resume(), sourceHash: hash }, d)).not.toHaveProperty('sourceHash')
+  })
+})
+
+describe('a Word file checked against a parse from before the link fix (#238)', () => {
+  test('BYOK: takes the current parse, is checked again, and places tailored text with it', async () => {
+    await store({ fileParse: beforeLinks() })
+    const d = await designWithParse(hash, current())
+    expect(d.design).toEqual({ layout: 'yours', fellBack: false, sourceHash: hash })
+    expect(d.parsed).toEqual(current())
+    expect(local[`designFile:${hash}`]).toMatchObject({ parsed: current() })
+    expect(await finishDesign({ ...resume(['Shipped a Go billing service', 'Mentored two engineers']), summary: '' }, d)).toMatchObject({ sourceHash: hash })
+  })
+
+  test('BYOK: a file replaced while the parse ran keeps its own parse', async () => {
+    await store({ fileParse: beforeLinks() })
+    await designWithParse('d'.repeat(64), current())
+    expect(local[`designFile:${hash}`]).toMatchObject({ parsed: beforeLinks() })
+  })
+
+  test("BYOK: the Cover Me layout when the new parse doesn't fit the file, with the new check on the resume page", async () => {
+    await store({ fileParse: beforeLinks() })
+    const moved = { ...current(), experience: [{ ...resume().experience[0], bullets: ['Something else entirely'] }] }
+    const d = await designWithParse(hash, moved)
+    expect(d.design).toEqual({ layout: 'cover-me', fellBack: false })
+    expect((local.resume as { design: { check: unknown } }).design.check).toMatchObject({ matched: 0 })
+    expect(await finishDesign(resume(), d)).not.toHaveProperty('sourceHash')
   })
 })
 
@@ -113,6 +142,15 @@ describe('the upload check', () => {
     parseMock.mockClear()
     await checkUploadedDesign(hash)
     expect(parseMock).not.toHaveBeenCalled()
+  })
+
+  test('BYOK: a file uploaded again with a parse from before the link fix (#238) is checked against the current one', async () => {
+    await store({ status: 'checking', fileParse: beforeLinks(), extra: { settings: { provider: 'claude', apiKey: 'x', mode: 'byok' }, resume: { parsed: current() } } })
+    parseMock.mockClear()
+    await checkUploadedDesign(hash)
+    expect(parseMock).not.toHaveBeenCalled()
+    expect(local[`designFile:${hash}`]).toMatchObject({ parsed: current() })
+    expect((local.resume as { design: unknown }).design).toMatchObject({ status: 'done', check: { matched: 2, total: 2 } })
   })
 
   test('hosted: a copy added while signed out is never sent to the account', async () => {

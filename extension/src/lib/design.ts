@@ -72,8 +72,9 @@ export async function checkUploadedDesign(hash: string): Promise<void> {
     } else {
       if (!settings?.apiKey) throw new Error('Add your API key in Settings to check your design.')
       // The same file uploaded again keeps its parse, so History entries made
-      // from it still place their text the same way.
-      parsed = file.parsed ?? (isCurrentParse(resume.parsed)
+      // from it still place their text the same way. One from before the link
+      // fix (#238) takes the current parse instead, as the tailor does (#239).
+      parsed = (isCurrentParse(file.parsed) ? file.parsed : undefined) ?? (isCurrentParse(resume.parsed)
         ? resume.parsed
         : upgradedParse(resume.parsed, await parseResumeStructure(resume.text, settings.provider, await decryptApiKey(settings.apiKey))))
     }
@@ -153,6 +154,21 @@ export async function designForTailor(): Promise<{ design: TailorDesign; file?: 
   const check = file ? (await tailorDesign(file, stored!.parsed!).catch(() => null))?.check : undefined
   if (!file || !check || !designUsable(check)) return { design: { layout: 'yours', fellBack: true }, summary: true }
   return { design: { layout: 'yours', fellBack: false, sourceHash: hash }, file, parsed: stored!.parsed, summary: check.summary }
+}
+
+// BYOK (#239): a Word file checked against a parse from before the link fix
+// (#238) takes the current one and is checked again, so its tailors stop
+// printing project links in the header. Its History entries then place their
+// text with the new parse, as an account's do once the server reads it again.
+// Nothing changes when another file was uploaded while the parse ran.
+export async function designWithParse(hash: string, parsed: ParsedResume): Promise<Awaited<ReturnType<typeof designForTailor>>> {
+  const file = (await getResume())?.design?.hash === hash ? await getDesignFile(hash) : null
+  if (file) {
+    await saveDesignFile(hash, { ...file, parsed })
+    const check = (await tailorDesign(fromBase64(file.data), parsed).catch(() => null))?.check
+    if (check) await setDesign(hash, { check })
+  }
+  return designForTailor()
 }
 
 // After the tailor: marks the resume as tailored in the user's file, or as
