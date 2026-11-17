@@ -42,7 +42,7 @@ function escapeRe(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
-function mentions(text: string, term: string): boolean {
+export function mentions(text: string, term: string): boolean {
   return new RegExp(`(^|[^A-Za-z0-9])${escapeRe(term)}($|[^A-Za-z0-9])`, 'i').test(text)
 }
 
@@ -766,7 +766,7 @@ const LEVEL_WORD = /^(senior|sr\.?|lead|staff|principal|i{1,3}|iv)$/i
 // The posting's title as the summary may use it (#218): a scraped suffix
 // (", Payments", " - Remote") cut and levels dropped. Empty for a one-word
 // title, which is a generic word ("Manager") that stays checked.
-function titleWithoutLevel(jobTitle: string): string {
+export function titleWithoutLevel(jobTitle: string): string {
   const words = jobTitle.split(/,|\(|\s[-–—|]\s/)[0].split(/\s+/).filter((w) => w && !LEVEL_WORD.test(w))
   return words.length > 1 ? words.join(' ') : ''
 }

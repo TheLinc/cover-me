@@ -5,11 +5,12 @@ import { isCurrentParse, withChosenOrder } from '../lib/ai/resume-parse'
 import { downloadTailoredResumePdf, tailoredResumePdf } from '../lib/pdf/resume'
 import type { PlacedSection } from '../lib/pdf/sections'
 import type { DeletedSection } from '../lib/pdf/types'
-import { chosenOrder, editedResume, restoreSection, returnToTab, saveResumeEdit, shownSections, withResumeEdit, withSections } from '../lib/resume-edit'
+import { chosenOrder, editedResume, postingTitleInSummary, restoreSection, returnToTab, saveResumeEdit, shownSections, withResumeEdit, withSections } from '../lib/resume-edit'
 import { getCachedTier, getMode, getResume, getTailoredHistory, saveParsedResume } from '../lib/storage'
 import DownloadMenu from '../popup/components/DownloadMenu'
 import GapChips from '../popup/components/GapChips'
 import PdfPreview from './PdfPreview'
+import PostingTitleTip from '../popup/components/PostingTitleTip'
 import ScoreRing from '../popup/components/ScoreRing'
 import type { AuthSession, TailoredHistoryEntry, TailoredResume } from '../types'
 
@@ -316,6 +317,7 @@ export default function Editor() {
 
   const edited = dirty || !!scored.editedAt
   const { draft, skills } = form
+  const postingTitle = postingTitleInSummary(draft, opened.jobTitle)
   const sections = shownSections(draft)
   const askAt = Math.min(orderAsk.at, sections.length - 1)
   const ask = orderAsk.state && (
@@ -332,7 +334,12 @@ export default function Editor() {
   function sectionFields(placed: PlacedSection): ReactNode {
     switch (placed.key) {
       case 'summary':
-        return <Field label="Summary" hideLabel long value={draft.summary ?? ''} onChange={(v) => edit((r) => { r.summary = v })} />
+        return (
+          <>
+            <Field label="Summary" hideLabel long value={draft.summary ?? ''} onChange={(v) => edit((r) => { r.summary = v })} />
+            {postingTitle && <PostingTitleTip title={postingTitle} />}
+          </>
+        )
       case 'experience':
         return draft.experience.map((e, i) => (
           <div key={i} className="ed-item">
