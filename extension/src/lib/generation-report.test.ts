@@ -164,6 +164,16 @@ describe('buildGenerationReport', () => {
       .toBe('Thank you for your time and consideration,\n[name]')
   })
 
+  test("without a parse or History, a bare portfolio domain in the resume's header is taken out too", () => {
+    const filler = `Data scientist at Northwind Analytics, ${'building churn models for retail clients. '.repeat(9)}`
+    const text = `Jane Doe\nToronto, ON · jane.doe@example.com · janedoe.dev · linkedin.com/in/janedoe\n${filler}\nSkills: Node.js, ASP.NET\nWrote about churn models at janedoe.dev/blog`
+    const hosted = env({ mode: 'hosted', resume: { text, filename: '', updatedAt: '' } })
+    expect(buildGenerationReport({ kind: 'letter', output: 'See my work at janedoe.dev, built with Node.js and ASP.NET.', job }, form, hosted).output)
+      .toBe('See my work at [link], built with Node.js and ASP.NET.')
+    expect(buildGenerationReport({ kind: 'letter', output: 'Hi', job }, { ...form, category: 'invented', sendSource: true }, hosted).sourceResume)
+      .toBe(`[contact details]\n${filler}\nSkills: Node.js, ASP.NET\nWrote about churn models at [link]/blog`)
+  })
+
   test("a name can't eat an email's first half and leave its domain", () => {
     const pdf = env({ resume: { text: 'Jane Doe jane@janedoe.dev (416) 555-0199 Experience', filename: '', updatedAt: '' } })
     expect(buildGenerationReport({ kind: 'letter', output: 'Hi', job }, { ...form, category: 'invented', sendSource: true }, pdf).sourceResume)

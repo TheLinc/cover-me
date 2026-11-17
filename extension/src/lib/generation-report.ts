@@ -61,9 +61,19 @@ const EMAIL = /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g
 // A North American number, or anything after a +. Not any long run of digits:
 // "2019 - 2024 2025" is dates.
 const PHONE = /(?:\+\d[\d ().-]{7,}\d|\(?\b\d{3}\)?[ .-]?\d{3}[ .-]?\d{4}\b)/g
-// ponytail: only addresses that can't be anything else; a bare portfolio domain
-// is caught only when the parse or tailored resume names it.
+// Only addresses that can't be anything else. A bare portfolio domain comes
+// from the parse, the tailored resume, or headerDomains.
 const URL = /(?:https?:\/\/|www\.)\S+|\b(?:[\w-]+\.)*(?:linkedin|github|gitlab|behance|dribbble)\.com\/\S*/gi
+// A lowercase domain with a common site ending, and its path. Lowercase and the
+// ending list keep "Node.js" and "ASP.NET" out.
+const DOMAIN = /\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:com|dev|io|me|net|org|co|ca|app|page|site|xyz|tech|ai|design|blog|info|uk|us|de|fr|au|in|nl)\b(?:\/[^\s·|,]*)?/g
+
+// Without a parse or History (Hosted, or BYOK before the first tailor), the
+// user's own domains are the ones in the resume's header, where the contact
+// line sits. ponytail: an employer's domain there is taken too.
+function headerDomains(text: string): string[] {
+  return text.slice(0, 400).replace(EMAIL, ' ').match(DOMAIN) ?? []
+}
 
 export function buildGenerationReport(target: ReportTarget, form: ReportForm, env: ReportEnv): GenerationReport {
   // Every source's details: a user may have emptied one in the editor.
@@ -78,7 +88,7 @@ export function buildGenerationReport(target: ReportTarget, form: ReportForm, en
   // A letter prompt asks for the portfolio link, which often holds the name, so
   // the user's links go from everything sent. Location only from the original
   // resume: in a letter or a resume's jobs it's part of what we want to see.
-  const people = [...tag(names, '[name]'), ...tag(all('email'), '[email]'), ...tag(all('phone'), '[phone]'), ...tag([...all('website'), ...all('links')].flatMap((l) => [l, bareLink(l)]), '[link]')]
+  const people = [...tag(names, '[name]'), ...tag(all('email'), '[email]'), ...tag(all('phone'), '[phone]'), ...tag([...all('website'), ...all('links'), ...headerDomains(env.resume?.text ?? '')].flatMap((l) => [l, bareLink(l)]), '[link]')]
 
   const sendSource = form.category === 'invented' && form.sendSource && !!env.resume?.text
   // A name only: none for a pasted posting, or one the server wouldn't take (an IP address).
