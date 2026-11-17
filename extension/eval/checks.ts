@@ -233,8 +233,10 @@ export function checkTailored(out: TailoredResume, c: EvalCase, input: ParsedRes
       result.failures.push(`output contains forbidden term "${t}" (not in resume)`)
     }
   }
+  // Bullets only: the summary naming a term doesn't put back the bullet that proved it.
+  const bullets = [...out.experience, ...outProjects].flatMap((e) => e.bullets).join('\n')
   for (const t of c.keepInBullets ?? []) {
-    if (!containsTerm(prose, t)) result.failures.push(`bullet evidence of "${t}" was cut`)
+    if (!containsTerm(bullets, t)) result.failures.push(`bullet evidence of "${t}" was cut`)
   }
   for (const t of c.warnTerms) {
     if (containsTerm(prose, t)) result.warnings.push(`output contains "${t}" — verify context`)

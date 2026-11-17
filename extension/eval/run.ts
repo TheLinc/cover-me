@@ -833,7 +833,7 @@ async function main() {
     console.log(`\n${costLine}`)
     reportLines.splice(3, 0, costLine, '')
   } else {
-    console.log('\n(static checks only — add --live to generate and evaluate real outputs; runs on your Claude plan via `claude -p`; add --quick for the 12-case PR set)')
+    console.log('\n(static checks only — add --live to generate and evaluate real outputs; runs on your Claude plan via `claude -p`; add --quick for the ' + QUICK_CASES.length + '-case PR set)')
   }
 
   const reportsDir = join(HERE, 'reports')
