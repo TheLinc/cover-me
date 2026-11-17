@@ -51,9 +51,26 @@ describe('mergeTailorDelta bullet counts', () => {
     expect(mergeTailorDelta(base, merged3).experience[0].bullets).toHaveLength(3)
   })
 
-  test('projects keep their bullet count in every mode', () => {
-    const delta = { experience: [], projects: [{ bullets: ['Built and shared a grading script with 4 teachers'] }] }
-    expect(mergeTailorDelta(base, delta).projects![0].bullets).toEqual(base.projects[0].bullets)
+  // #251: projects follow the same mode rule as roles.
+  const projectCut = { experience: [], projects: [{ bullets: ['Built a grading script used by 4 teachers'] }] }
+
+  test('default mode keeps the original project bullets when a project comes back with a different count', () => {
+    expect(mergeTailorDelta(base, projectCut, { exactBulletCounts: true }).projects![0].bullets).toEqual(base.projects[0].bullets)
+  })
+
+  test('default mode takes a project rewrite with the same count', () => {
+    const same = { experience: [], projects: [{ bullets: ['Built a Python grading script', 'Shared it with 4 math teachers'] }] }
+    expect(mergeTailorDelta(base, same, { exactBulletCounts: true }).projects![0].bullets).toEqual(['Built a Python grading script', 'Shared it with 4 math teachers'])
+  })
+
+  test('trim and compact modes may drop project bullets', () => {
+    expect(mergeTailorDelta(base, projectCut).projects![0].bullets).toEqual(['Built a grading script used by 4 teachers'])
+  })
+
+  test('a project that comes back empty keeps its original bullets in every mode', () => {
+    const empty = { experience: [], projects: [{ bullets: [] }] }
+    expect(mergeTailorDelta(base, empty).projects![0].bullets).toEqual(base.projects[0].bullets)
+    expect(mergeTailorDelta(base, empty, { exactBulletCounts: true }).projects![0].bullets).toEqual(base.projects[0].bullets)
   })
 })
 

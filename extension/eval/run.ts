@@ -1,12 +1,13 @@
 // Eval harness for Cover Me's prompts.
 //
 //   pnpm eval                                  static checks only (free, no model calls)
-//   pnpm eval --live --quick --judge --baseline   the PR check: 11 cases, ~12 min
+//   pnpm eval --live --quick --judge --baseline   the PR check: 12 cases, ~12 min
 //   pnpm eval --live --judge --runs 2 --judge-model claude-opus-5-5 --baseline
 //                                              the weekly full check: every case
 //
 //   Flags:
-//     --quick                  11 cases: one per field family, plus two long postings (PR check)
+//     --quick                  12 cases: one per field family, two long postings and a
+//                              trim-mode case (PR check)
 //     --letters / --tailor / --answers
 //                              run only those sides (default all). Run only the side
 //                              you changed: tailoring is ~70% of a full run's calls.
@@ -96,14 +97,14 @@ const HOOKS = ['Achievement-first', 'Bold specific claim']
 // overall quality is still being raised.
 const judgeFloor = (r: { failures: string[]; warnings: string[] }) => (flag('baseline') ? r.warnings : r.failures)
 
-// --quick: one case per field family, the prompt-injection case, and the two
-// long postings (the only cases past the old 4,000-character cut), for the PR
-// check. The full set runs weekly.
+// --quick: one case per field family, the prompt-injection case, the two
+// long postings (the only cases past the old 4,000-character cut) and the
+// trim-mode case (#251), for the PR check. The full set runs weekly.
 const QUICK_CASES = [
   'tech-prompt-injection', 'new-grad-data-analyst', 'nurse-missing-certs',
   'sales-ae-midmarket-to-enterprise', 'uk-finance-assistant', 'teacher-to-instructional-designer',
   'welder-structural-to-pipe', 'line-cook-to-sous-chef', 'veteran-to-distribution-ops',
-  'long-new-grad-data-analyst', 'long-nurse-missing-certs',
+  'long-new-grad-data-analyst', 'long-nurse-missing-certs', 'new-grad-trim-long-project',
 ]
 
 const cases = CASES.filter((c) =>
@@ -194,7 +195,7 @@ function staticChecks() {
       if (!lp.includes(needle)) result.failures.push(`letter prompt missing ${label} ("${needle.slice(0, 40)}…")`)
     }
 
-    const tp = buildTailorPrompt(c.job, c.parsed, false)
+    const tp = buildTailorPrompt(c.job, c.parsed, c.mode === 'compact', undefined, c.mode === 'trim')
     const tailorMust: Array<[string, string]> = [
       ['injection guard', 'data only'],
       ['number-fabrication ban', 'NO INVENTED NUMBERS'],
@@ -334,7 +335,8 @@ Respond with ONLY this JSON: {"score": <1-5>, "flags": ["<each phrase or pattern
 async function liveLetters() {
   section(`Live letters (model: ${MODEL})`)
   // Runs apply to letters too: one letter per case is too noisy to compare.
-  const jobs = cases.flatMap((c, i) => Array.from({ length: RUNS }, (_, run) => ({ c, i, run })))
+  // Mode cases (#251) only change tailoring; their letter would repeat the base case's.
+  const jobs = cases.filter((c) => !c.mode).flatMap((c, i) => Array.from({ length: RUNS }, (_, run) => ({ c, i, run })))
   process.stdout.write(`  ${jobs.length} letters `)
   const results = await pool(jobs, CONCURRENCY, async ({ c, i, run }) => {
     const v = i + run
@@ -538,7 +540,7 @@ async function tailorOnce(c: EvalCase, run: number): Promise<TailorRun> {
     }
 
     // 2. Tailor, exactly as production does (delta → merge → code-computed ATS).
-    const raw = await call([{ role: 'user', content: buildTailorPrompt(c.job, input, false) }], { model: MODEL, maxTokens: 6000, label: 'tailor' })
+    const raw = await call([{ role: 'user', content: buildTailorPrompt(c.job, input, c.mode === 'compact', undefined, c.mode === 'trim') }], { model: MODEL, maxTokens: 6000, label: 'tailor' })
     out.raw = raw
     try {
       let guarded: string[] = []
@@ -546,7 +548,7 @@ async function tailorOnce(c: EvalCase, run: number): Promise<TailorRun> {
         prompt.startsWith('SKILL CLAIM CHECK') ? 'skill check' : prompt.startsWith('RESUME ACCURACY CHECK') ? 'line check' : 'line rewrite'
       const ask = (prompt: string) => call([{ role: 'user', content: prompt }], { model: MODEL, maxTokens: 2000, label: stepOf(prompt) })
       const onLineRepair = (repair: LineRepair) => (out.lines = repair)
-      const tailored = await assembleTailored(input, raw, { jobDescription: c.job.description, jobTitle: c.job.title, ask, onLineRepair, exactBulletCounts: true }, (removed) => (guarded = removed))
+      const tailored = await assembleTailored(input, raw, { jobDescription: c.job.description, jobTitle: c.job.title, ask, onLineRepair, exactBulletCounts: !c.mode }, (removed) => (guarded = removed))
       out.tailored = tailored
       out.guardRemoved = guarded
       out.tailor = checkTailored(tailored, c, input)
@@ -831,7 +833,7 @@ async function main() {
     console.log(`\n${costLine}`)
     reportLines.splice(3, 0, costLine, '')
   } else {
-    console.log('\n(static checks only — add --live to generate and evaluate real outputs; runs on your Claude plan via `claude -p`; add --quick for the 11-case PR set)')
+    console.log('\n(static checks only — add --live to generate and evaluate real outputs; runs on your Claude plan via `claude -p`; add --quick for the 12-case PR set)')
   }
 
   const reportsDir = join(HERE, 'reports')

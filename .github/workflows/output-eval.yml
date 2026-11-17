@@ -1,8 +1,8 @@
 # Live output eval: generates cover letters, tailored resumes and application
 # answers for real test cases and has a model judge them.
 #
-#   Prompt PRs: the quick set (11 cases: one per field family plus two long
-#   postings), judged by Sonnet 5.5, gated on extension/eval/baseline.json.
+#   Prompt PRs: the quick set (12 cases: one per field family, two long
+#   postings and a trim-mode case), judged by Sonnet 5.5, gated on extension/eval/baseline.json.
 #   About 10 min. Not re-run on the merge to master: the PR already tested
 #   that content, and every run spends the Claude plan.
 #   On demand (Actions > Output eval > Run workflow): every case, 2 runs per

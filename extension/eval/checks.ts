@@ -159,7 +159,22 @@ export function checkTailored(out: TailoredResume, c: EvalCase, input: ParsedRes
   same('email', input.email, out.email)
   same('phone', input.phone, out.phone)
 
-  // Experience: same entries, same order, same bullet counts (default mode).
+  // Bullet counts by mode (#251). Default: every role and project keeps its
+  // exact count. Trim and compact drop whole bullets: never add one, never
+  // empty an entry, compact caps roles at 3 and projects at 2, and trim must
+  // actually cut an entry of 8 or more.
+  const bulletCount = (label: string, inCount: number, outCount: number, cap: number) => {
+    if (!c.mode) {
+      if (outCount !== inCount) result.failures.push(`${label} bullet count changed in default mode: ${inCount} → ${outCount}`)
+      return
+    }
+    if (outCount > inCount) result.failures.push(`${label} gained bullets in ${c.mode} mode: ${inCount} → ${outCount}`)
+    if (outCount === 0) result.failures.push(`${label} lost every bullet in ${c.mode} mode`)
+    if (c.mode === 'compact' && outCount > cap) result.failures.push(`${label} has ${outCount} bullets in compact mode (cap ${cap})`)
+    if (c.mode === 'trim' && inCount >= 8 && outCount >= inCount) result.failures.push(`${label} kept all ${inCount} bullets in trim mode`)
+  }
+
+  // Experience: same entries, same order.
   if (out.experience.length !== input.experience.length) {
     result.failures.push(`experience entry count changed: ${input.experience.length} → ${out.experience.length}`)
   } else {
@@ -168,11 +183,7 @@ export function checkTailored(out: TailoredResume, c: EvalCase, input: ParsedRes
       same(`experience[${i}].title`, inRole.title, outRole.title)
       same(`experience[${i}].company`, inRole.company, outRole.company)
       same(`experience[${i}].dates`, inRole.dates, outRole.dates)
-      if (outRole.bullets.length !== inRole.bullets.length) {
-        result.failures.push(
-          `experience[${i}] bullet count changed in default mode: ${inRole.bullets.length} → ${outRole.bullets.length}`,
-        )
-      }
+      bulletCount(`experience[${i}]`, inRole.bullets.length, outRole.bullets.length, 3)
     })
   }
 
@@ -183,9 +194,7 @@ export function checkTailored(out: TailoredResume, c: EvalCase, input: ParsedRes
   } else {
     inProjects.forEach((p, i) => {
       same(`projects[${i}].name`, p.name, outProjects[i]?.name)
-      if (outProjects[i] && outProjects[i].bullets.length !== p.bullets.length) {
-        result.failures.push(`projects[${i}] bullet count changed`)
-      }
+      if (outProjects[i]) bulletCount(`projects[${i}]`, p.bullets.length, outProjects[i].bullets.length, 2)
     })
   }
 
@@ -223,6 +232,9 @@ export function checkTailored(out: TailoredResume, c: EvalCase, input: ParsedRes
     if (containsTerm(prose, t) || (out.skills && containsTerm(out.skills, t))) {
       result.failures.push(`output contains forbidden term "${t}" (not in resume)`)
     }
+  }
+  for (const t of c.keepInBullets ?? []) {
+    if (!containsTerm(prose, t)) result.failures.push(`bullet evidence of "${t}" was cut`)
   }
   for (const t of c.warnTerms) {
     if (containsTerm(prose, t)) result.warnings.push(`output contains "${t}" — verify context`)

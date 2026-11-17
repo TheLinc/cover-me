@@ -32,6 +32,10 @@ export interface EvalCase {
   summaryTitle?: string
   /** Like failTerms, for the tailored resume only: titles a letter may use to name the role ("the full stack role"). */
   resumeFailTerms?: string[]
+  /** Tailor with "Remove irrelevant bullets" (trim) or "Compact to one page" on; default mode when unset (#251). */
+  mode?: 'trim' | 'compact'
+  /** For trim and compact cases: JD terms whose bullet evidence must survive the cut. */
+  keepInBullets?: string[]
 }
 
 const TECH_NOTES = 'Software engineering: concrete stack names, scale (users, latency, coverage), ownership and code review. Frontend work must not be inflated into infrastructure or e-commerce domain claims.'
