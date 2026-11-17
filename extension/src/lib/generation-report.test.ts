@@ -127,6 +127,15 @@ describe('buildGenerationReport', () => {
       .toBe('As a software engineer, I ship.\n\nSincerely,\n[name]')
   })
 
+  test("a letter's sign-off name is taken out whatever the resume's first lines are, and in the original resume too", () => {
+    const text = (t: string) => env({ resume: { text: t, filename: '', updatedAt: '' } })
+    for (const t of ['Contact\nNew York, NY\nJane Doe', 'CONTACT INFORMATION\nJane Doe', 'Profile Summary\nJane Doe']) {
+      expect(buildGenerationReport({ kind: 'letter', output: 'I ship.\n\nBest regards,\nJane Doe', job }, form, text(t)).output).toBe('I ship.\n\nBest regards,\n[name]')
+    }
+    const invented = { ...form, category: 'invented' as const, sendSource: true }
+    expect(buildGenerationReport({ kind: 'letter', output: 'Sincerely,\nJane Doe', job }, invented, text('Profile Summary\nJane Doe')).sourceResume).toBe('[name]\n[name]') // the heading too: see headNames
+  })
+
   test("a resume report leaves out its Word file's hash, and an underscore host sends no site", () => {
     const report = buildGenerationReport({ kind: 'resume', output: { ...tailored, sourceHash: 'abc123' }, job: { ...job, url: 'https://careers_portal.example.com/1' } }, form, env())
     expect(report.output).not.toHaveProperty('sourceHash')

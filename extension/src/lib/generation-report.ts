@@ -69,7 +69,11 @@ export function buildGenerationReport(target: ReportTarget, form: ReportForm, en
   // Every source's details: a user may have emptied one in the editor.
   const sources = [env.resume?.parsed, env.tailored, target.kind === 'resume' ? target.output : undefined]
   const all = (field: ContactField) => sources.flatMap((s) => [s?.[field]].flat()).filter((v): v is string => typeof v === 'string' && !!v.trim())
-  const names = withShortForms([...all('name'), ...(env.resume?.parsed?.name?.trim() ? [] : headNames(env.resume?.text ?? ''))])
+  const names = withShortForms([
+    ...all('name'),
+    ...(env.resume?.parsed?.name?.trim() ? [] : headNames(env.resume?.text ?? '')),
+    ...(target.kind === 'letter' ? signedName(target.output) : []),
+  ])
   const tag = (values: string[], t: string) => values.map((v): [string, string] => [v, t])
   const people = [...tag(names, '[name]'), ...tag(all('email'), '[email]'), ...tag(all('phone'), '[phone]')]
   const places = [...tag([...all('website'), ...all('links')], '[link]'), ...tag(all('location'), '[location]')]
@@ -125,6 +129,16 @@ function headNames(text: string): string[] {
   return []
 }
 const NAME_PARTICLE = /^(van|von|der|den|de|del|della|di|da|dos|du|la|le|bin|binti|al|el|ibn|ben|y)$/i
+
+// The name a letter signs with: the line after its closing ("Sincerely,").
+// Whatever shape the resume is, this is the name as the letter writes it.
+function signedName(letter: string): string[] {
+  const lines = letter.split('\n').map((l) => l.trim()).filter(Boolean)
+  let close = lines.length
+  while (close-- > 0 && !/^(sincerely|best|regards|kind regards|best regards|warm regards|warmly|thank you|thanks|respectfully|yours truly|yours sincerely|cheers|with gratitude)\b[^.!?]{0,20},?$/i.test(lines[close]));
+  const name = close === -1 ? undefined : lines[close + 1]
+  return name && name.length <= 60 && !/[\d@]/.test(name) ? [name] : []
+}
 
 // A letter often signs without the title or middle name the resume has
 // ("Dr. Jane A. Doe" signs "Jane Doe"), so each name also goes without its
