@@ -74,7 +74,7 @@ const LABELLED = new RegExp(String.raw`\b(?:portfolio|website|web|site|homepage|
 // already keeps "Node.js" out.
 const ANY_DOMAIN = /\b[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}\b(?:\/(?:[^\s·|,]*[^\s·|,.;:!?)])?)?/g
 // Sites anyone has a page on: their names stay when a profile on them goes.
-const PLATFORM = /^(?:[\w-]+\.)*(?:linkedin|github|gitlab|medium|behance|dribbble|twitter|x|instagram|youtube|kaggle|substack|notion|dev)\.(?:com|to|so|in)$/i
+const PLATFORM = /^(?:www\.)?(?:linkedin|github|gitlab|medium|behance|dribbble|twitter|x|instagram|youtube|kaggle|substack|notion|dev)\.(?:com|to|so|in)$/i
 const plain = (s: string) => s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
 
 // Domains the user's own, besides the known links, from signals a skills list
@@ -174,20 +174,27 @@ const NAME_PARTICLE = /^(van|von|der|den|de|del|della|di|da|dos|du|la|le|bin|bin
 // goes too. ponytail: a detail past the first 400 characters, or an address
 // after the last one, stays.
 function withoutHeader(text: string): string {
-  // The header ends at the first section heading, so a link in the first job
-  // can't take the summary with it.
-  const heading = Math.min(
-    ...[/^[ \t]*(?:professional summary|summary|profile|objective|about me|experience|work experience|employment|education|skills|projects)\b/im,
+  const TAGS = ['[email]', '[phone]', '[link]', '[location]']
+  const first = Math.min(...TAGS.map((t) => text.indexOf(t)).filter((i) => i !== -1))
+  if (!Number.isFinite(first) || first >= 400) return text
+  // The header ends at the first section heading after its first contact
+  // detail, so a link in the first job can't take the summary with it. A
+  // heading sits alone on its line, or (a PDF's run-together text) is in
+  // capitals; one before the contact details ("Education Consultant") is a
+  // job title, not a section.
+  const rest = text.slice(first)
+  const heading = first + Math.min(
+    ...[/^[ \t]*(?:professional summary|summary|profile|objective|about me|experience|work experience|employment|education|skills|projects)[ \t]*:?[ \t]*$/im,
       /\b(?:SUMMARY|PROFILE|OBJECTIVE|EXPERIENCE|EMPLOYMENT|EDUCATION|SKILLS|PROJECTS)\b/]
-      .map((h) => text.search(h)).filter((i) => i > 0),
-    400,
+      .map((h) => rest.search(h)).filter((i) => i !== -1),
+    400 - first,
   )
   const top = text.slice(0, heading)
-  const end = Math.max(...['[email]', '[phone]', '[link]', '[location]'].map((t) => {
+  const end = Math.max(...TAGS.map((t) => {
     const i = top.lastIndexOf(t)
     return i === -1 ? -1 : i + t.length
   }))
-  return end > 0 ? `[contact details]${text.slice(end)}` : text
+  return `[contact details]${text.slice(end)}`
 }
 
 // A link as a letter may write it: no https://, www. or trailing slash.

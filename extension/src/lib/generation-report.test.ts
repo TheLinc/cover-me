@@ -226,6 +226,15 @@ describe('buildGenerationReport', () => {
       .toBe('[contact details] SUMMARY Analyst who ships models. EXPERIENCE Data Analyst, Contoso Retail - Write about churn models at [link]')
   })
 
+  test("a heading-like job title above the contact line doesn't end the header; a platform subdomain is the user's", () => {
+    const invented = { ...form, category: 'invented' as const, sendSource: true }
+    const text = 'Jane Doe\nEducation Consultant\n123 Maple Street, Toronto, ON M5V 2T6 · (416) 555-0199 · jane@x.com\n\nEXPERIENCE\nAdvisor, Contoso'
+    expect(buildGenerationReport({ kind: 'letter', output: 'Hi', job }, invented, env({ mode: 'hosted', resume: { text, filename: '', updatedAt: '' } })).sourceResume)
+      .toBe('[contact details]\n\nEXPERIENCE\nAdvisor, Contoso')
+    const sub = env({ mode: 'hosted', resume: { text: 'Jane Doe\njane@x.com | pixelforge.substack.com/p/intro', filename: '', updatedAt: '' } })
+    expect(buildGenerationReport({ kind: 'letter', output: 'Read pixelforge.substack.com.', job }, form, sub).output).toBe('Read [link].')
+  })
+
   test("a name can't eat an email's first half and leave its domain", () => {
     const pdf = env({ resume: { text: 'Jane Doe jane@janedoe.dev (416) 555-0199 Experience', filename: '', updatedAt: '' } })
     expect(buildGenerationReport({ kind: 'letter', output: 'Hi', job }, { ...form, category: 'invented', sendSource: true }, pdf).sourceResume)
