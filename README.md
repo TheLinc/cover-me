@@ -107,7 +107,7 @@ The generic scraper tries these strategies in order: JSON-LD structured data, sc
 
 - Text is extracted client-side on upload using pdf.js / mammoth.js. The raw file is never stored.
 - In BYOK mode, extracted resume text is stored in `chrome.storage.local` on your device. It's sent only to the AI provider whose key you use.
-- API calls go directly from the extension to Anthropic or OpenAI using **your key**. Cover Me's servers never see your resume, letters, or key.
+- API calls go directly from the extension to Anthropic or OpenAI using **your key**. Cover Me's servers never see your key, and see a letter, a tailored resume or your resume only when you send one with Flag a problem (contact details taken out first).
 - From 1.3.0, once you agree (a notice in the popup, or Settings), the extension sends the address and a copy of the job page you clicked on (most scripts, images, form fields and embedded data removed in the browser; the posting's JSON-LD is kept) to the `scrape` Edge Function, in every mode. It returns the title, company and description and keeps no copy. Until you agree, or if it can't be reached, the extension reads the page itself.
 - Your API key is encrypted at rest using the Web Crypto API (AES-GCM) before being written to `chrome.storage.local`. It is decrypted only at call time and immediately discarded from memory.
 - No analytics, no telemetry, no third-party SDKs in the extension.

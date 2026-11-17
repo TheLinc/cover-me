@@ -44,9 +44,9 @@ const MAX_DESCRIPTION = 15_000 // the most the prompts read
 const MAX_LETTER = 20_000
 const MAX_RESUME_JSON = 50_000
 const MAX_SOURCE = 30_000
-// A long posting, a resume and the original resume stay well under this, and
-// it is far under PostHog's 1 MB per event.
-const MAX_BYTES = 256_000
+// The field caps add up to about 96,000 characters, which fit even as 3-byte
+// text, and this is far under PostHog's 1 MB per event.
+const MAX_BYTES = 320_000
 
 type Body = Record<string, unknown>
 

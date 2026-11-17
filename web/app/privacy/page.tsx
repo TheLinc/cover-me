@@ -188,7 +188,8 @@ export default function PrivacyPage() {
                 <strong className="text-foreground">BYOK (Bring Your Own Key): free, unlimited.</strong>{' '}
                 You supply your own Claude or OpenAI API key. No account is required. Your resume,
                 API key and history are stored on your device, and only the API key is encrypted. Your
-                resume goes only to the AI provider whose key you use. From version 1.3.0, once you
+                resume goes only to the AI provider whose key you use, unless you choose to send it with a
+                problem report (see Problem reports below). From version 1.3.0, once you
                 agree, the job page you use the extension on is also sent to our server so it can read
                 the posting (see Job posting data below).
               </Li>
@@ -307,7 +308,7 @@ export default function PrivacyPage() {
                 resume for is also saved to your account on our backend: its job title, company, posting
                 address, dates and application stage, so you can track it on the dashboard from any
                 device. On Hosted Free the letters and resumes themselves are not stored on our backend;
-                they stay in your browser. On Hosted Pro they are also synced to our backend, encrypted,
+                they stay in your browser, apart from any you send with a problem report. On Hosted Pro they are also synced to our backend, encrypted,
                 for cross-device access, with each tailored resume&apos;s ATS match score and missing
                 keywords. The job details, stage, ATS match score and missing keywords are not
                 encrypted, so you can search and filter them. In BYOK mode nothing is saved to our

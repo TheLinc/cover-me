@@ -63,11 +63,13 @@ const URL = /(?:https?:\/\/|www\.)\S+|\b(?:[\w-]+\.)*(?:linkedin|github|gitlab|b
 export function buildGenerationReport(target: ReportTarget, form: ReportForm, env: ReportEnv): GenerationReport {
   // Every source's details: a user may have emptied one in the editor.
   const sources = [env.resume?.parsed, env.tailored, target.kind === 'resume' ? target.output : undefined]
-  const all = (field: ContactField) => sources.flatMap((s) => [s?.[field]].flat()).filter((v): v is string => typeof v === 'string')
-  // With none of them, the resume text's first line starts with the name
-  // ("Jane Doe | jane@x.com | ...").
+  const all = (field: ContactField) => sources.flatMap((s) => [s?.[field]].flat()).filter((v): v is string => typeof v === 'string' && !!v.trim())
+  // Unless this browser's parse names them, the resume text's first line starts
+  // with the name ("Jane Doe | jane@x.com | ..."): History's newest resume may
+  // be older, or someone else's. Two words or more, so "RESUME" isn't taken.
   const head = env.resume?.text.split('\n').map((l) => l.trim()).find(Boolean)?.split(/\s[|·•–-]\s|[|·•,]/)[0].trim()
-  const names = all('name').length ? all('name') : head && head.length <= 60 && !/[\d@]/.test(head) ? [head] : []
+  const headName = !env.resume?.parsed?.name?.trim() && head && head.length <= 60 && /\S\s+\S/.test(head) && !/[\d@]|resume|curriculum|vitae/i.test(head)
+  const names = [...all('name'), ...(headName ? [head] : [])]
   const tag = (values: string[], t: string) => values.map((v): [string, string] => [v, t])
   const people = [...tag(names, '[name]'), ...tag(all('email'), '[email]'), ...tag(all('phone'), '[phone]')]
   const places = [...tag([...all('website'), ...all('links')], '[link]'), ...tag(all('location'), '[location]')]

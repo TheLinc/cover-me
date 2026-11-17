@@ -101,6 +101,13 @@ describe('buildGenerationReport', () => {
       .toBe('[name]\n[location] · [phone] · [email] · [link]')
   })
 
+  test("an emptied name, or another person's newest History resume, doesn't hide the resume's own first line", () => {
+    const hosted = env({ resume: { text: 'Jane Doe\nSRE, Acme', filename: '', updatedAt: '' }, tailored: { ...tailored, name: 'Sam Lee' } })
+    expect(buildGenerationReport({ kind: 'resume', output: { ...tailored, name: '', summary: 'Jane Doe, SRE.' }, job }, form, hosted).output)
+      .toMatchObject({ summary: '[name], SRE.' })
+    expect(buildGenerationReport({ kind: 'letter', output: 'Thanks,\nJane Doe', job }, form, hosted).output).toBe('Thanks,\n[name]')
+  })
+
   test("a date range isn't taken for a phone number", () => {
     const hosted = env({ resume: { text: 'Sam Lee\nsam@example.com\nAcme, 2019 - 2024 2025', filename: '', updatedAt: '' } })
     const source = buildGenerationReport({ kind: 'letter', output: 'Hi', job }, { ...form, category: 'invented', sendSource: true }, hosted).sourceResume

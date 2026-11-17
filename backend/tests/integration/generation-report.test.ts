@@ -132,8 +132,8 @@ describe('generation-report', () => {
     expect((await send({ ...LETTER, job: { ...JOB, site: '' } })).status).toBe(200)
   })
 
-  it('stops reading a body over 256 KB', async () => {
-    expect((await send({ ...LETTER, pad: 'x'.repeat(260_000) })).status).toBe(413)
+  it('stops reading a body over 320 KB', async () => {
+    expect((await send({ ...LETTER, pad: 'x'.repeat(330_000) })).status).toBe(413)
   })
 
   it('limits each IP to 5 reports a minute', async () => {
