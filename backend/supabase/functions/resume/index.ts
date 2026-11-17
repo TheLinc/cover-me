@@ -44,6 +44,24 @@ Deno.serve(async (req) => {
 
   // GET — fetch resume text. design_hash, for Pro: the Word file that goes
   // with this text, so the extension can restore it on another computer (#174).
+  // GET ?parse=1 — the parsed copy alone, parsed now when none is kept. The
+  // extension's "Flag a problem" (#256) takes the user's name, email, phone,
+  // links and location out of a report with it, and sends it in place of the
+  // resume text when the user includes their original resume.
+  if (req.method === 'GET' && new URL(req.url).searchParams.has('parse')) {
+    const { data } = await supabase.from('resumes').select('text_encrypted, structured_encrypted').eq('user_id', userId).maybeSingle()
+    if (!data) return json({ error: 'No resume found' }, 404)
+    const cached = await readParse(data.structured_encrypted)
+    if (cached && Array.isArray(cached.experience)) return json({ structured: cached })
+    let text: string
+    try {
+      text = await decrypt(data.text_encrypted)
+    } catch {
+      return json({ error: 'Failed to decrypt resume' }, 500)
+    }
+    return heartbeatJson('resume', 'Resume parse failed', async () => ({ structured: await parseNow(supabase, userId, text, data.text_encrypted, cached) }))
+  }
+
   if (req.method === 'GET') {
     const { data, error } = await supabase
       .from('resumes')

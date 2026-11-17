@@ -4,8 +4,9 @@
 // CATEGORIES' labels), the comment, and "Cover letter" or "Tailored resume".
 // The output, the posting and the rest go as event properties.
 //
-// The extension takes out the user's name, email and phone before sending; the
-// resume's contact fields and Word file hash are dropped here again in case an old build sends them.
+// The extension takes the user's details out before sending, with their parsed
+// resume. The original resume comes as that parse, not its text. Contact fields
+// and the Word file's hash are dropped here again in case one slips through.
 // No account needed (BYOK users report too), so verify_jwt is off and calls are
 // rate-limited per IP. Each response gets a random distinct_id. A token is read
 // only when the user ticked "You can email me about this" (contact: true), and
@@ -44,10 +45,9 @@ const MAX_JOB_FIELD = 500
 const MAX_DESCRIPTION = 15_000 // the most the prompts read
 const MAX_LETTER = 20_000
 const MAX_RESUME_JSON = 50_000
-const MAX_SOURCE = 30_000
-// The field caps add up to about 96,000 characters, which fit even as 3-byte
+// The field caps add up to about 116,000 characters, which fit even as 3-byte
 // text, and this is far under PostHog's 1 MB per event.
-const MAX_BYTES = 320_000
+const MAX_BYTES = 400_000
 
 type Body = Record<string, unknown>
 
@@ -85,6 +85,8 @@ Deno.serve(async (req) => {
 })
 
 const isText = (v: unknown, max: number): v is string => typeof v === 'string' && v.length <= max
+const isResume = (v: unknown): v is Body => !!v && typeof v === 'object' && !Array.isArray(v) && JSON.stringify(v).length <= MAX_RESUME_JSON
+const withoutContact = (r: Body) => Object.fromEntries(Object.entries(r).filter(([k]) => !DROPPED_FIELDS.includes(k)))
 
 function report({ category, comment, kind, output, job, mode, provider, version, sourceResume }: Body): Record<string, unknown> | null {
   if (typeof category !== 'string' || !Object.hasOwn(CATEGORIES, category)) return null
@@ -98,15 +100,15 @@ function report({ category, comment, kind, output, job, mode, provider, version,
   if (!isText(title, MAX_JOB_FIELD) || !isText(company, MAX_JOB_FIELD) || !isText(description, MAX_DESCRIPTION)) return null
   if (typeof site !== 'string' || (site !== '' && !HOST.test(site))) return null
   // The original resume goes only with "It added things that aren't true".
-  if (sourceResume !== undefined && (category !== 'invented' || !isText(sourceResume, MAX_SOURCE))) return null
+  if (sourceResume !== undefined && (category !== 'invented' || !isResume(sourceResume))) return null
 
   let made: Record<string, unknown>
   if (kind === 'letter') {
     if (typeof output !== 'string' || !output.trim() || output.length > MAX_LETTER) return null
     made = { output }
   } else {
-    if (!output || typeof output !== 'object' || Array.isArray(output) || JSON.stringify(output).length > MAX_RESUME_JSON) return null
-    const resume = Object.fromEntries(Object.entries(output).filter(([k]) => !DROPPED_FIELDS.includes(k)))
+    if (!isResume(output)) return null
+    const resume = withoutContact(output)
     const gaps = Array.isArray(resume.atsGaps) && resume.atsGaps.every((g) => typeof g === 'string') ? resume.atsGaps : undefined
     made = {
       output: resume,
@@ -128,6 +130,6 @@ function report({ category, comment, kind, output, job, mode, provider, version,
     mode,
     provider,
     version,
-    ...(sourceResume !== undefined && { source_resume: sourceResume }),
+    ...(sourceResume !== undefined && { source_resume: withoutContact(sourceResume as Body) }),
   }
 }

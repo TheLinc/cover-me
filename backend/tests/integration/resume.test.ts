@@ -22,6 +22,30 @@ describe('resume', () => {
     expect(res.status).toBe(404)
   })
 
+  it('GET ?parse=1 returns the parsed copy, for taking contact details out of a report (#256)', async () => {
+    await uploadResume(user)
+    const res = await callFunction('resume', { token: user.token, query: { parse: '1' } })
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(Array.isArray(body.structured?.experience)).toBe(true)
+    expect(typeof body.structured.name).toBe('string')
+    expect(body).not.toHaveProperty('text')
+    expect((await mockClaude.requests()).filter(isParse)).toHaveLength(0)
+  })
+
+  it('GET ?parse=1 parses the resume when no parsed copy is kept yet', async () => {
+    await uploadResume(user)
+    await admin.from('resumes').update({ structured_encrypted: null }).eq('user_id', user.id)
+    const res = await callFunction('resume', { token: user.token, query: { parse: '1' } })
+    expect(res.status).toBe(200)
+    expect(Array.isArray((await res.json()).structured?.experience)).toBe(true)
+    expect((await mockClaude.requests()).filter(isParse)).toHaveLength(1)
+  })
+
+  it('GET ?parse=1 returns 404 before any upload', async () => {
+    expect((await callFunction('resume', { token: user.token, query: { parse: '1' } })).status).toBe(404)
+  })
+
   it('round-trips text and filename', async () => {
     await uploadResume(user)
     const res = await callFunction('resume', { token: user.token })

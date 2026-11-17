@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { ensureValidSession } from '../../lib/auth'
 import { SUPABASE_URL } from '../../lib/config'
 import { buildGenerationReport, MAX_COMMENT, rememberReportedResult, REPORT_CATEGORIES, reportedResults, sendGenerationReport, type ReportCategory, type ReportTarget } from '../../lib/generation-report'
-import { getMode, getResume, getSession, getSettings, getTailoredHistory } from '../../lib/storage'
+import { readResumeForReport } from '../../lib/report-resume'
+import { getMode, getResume, getSession, getSettings } from '../../lib/storage'
 
 // "Flag a problem" (#256): under a letter in the popup, in the editor tab's top
 // bar for a resume. Opens a short form; one Send adds one report. After that
@@ -18,7 +19,7 @@ export default function FlagProblem({ target, resultKey }: { target: ReportTarge
   const [contact, setContact] = useState(false)
   const [canContact, setCanContact] = useState(false)
   const [hasResume, setHasResume] = useState(false)
-  const [sending, setSending] = useState(false)
+  const [sending, setSending] = useState<'' | 'reading' | 'sending'>('')
   const [error, setError] = useState('')
   const [reported, setReported] = useState(false)
   const form = useRef<HTMLFormElement>(null)
@@ -56,19 +57,26 @@ export default function FlagProblem({ target, resultKey }: { target: ReportTarge
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     if (!ready) return
-    setSending(true)
+    setSending('reading')
     setError('')
+    const [mode, settings] = await Promise.all([getMode(), getSettings()])
+    const session = mode === 'hosted' ? await ensureValidSession() : null
+    // The user's parsed resume names their details, so the report can leave
+    // them out. Nothing is sent without it.
+    let parsed
     try {
-      const [mode, settings, resume, history] = await Promise.all([getMode(), getSettings(), getResume(), getTailoredHistory()])
+      parsed = await readResumeForReport(mode, settings, session)
+    } catch (err) {
+      setError((err as Error).message)
+      setSending('')
+      return
+    }
+    setSending('sending')
+    try {
       const report = buildGenerationReport(target, { category, comment, sendSource, contact: canContact && contact }, {
-        mode, provider: settings?.provider ?? 'claude', version: chrome.runtime.getManifest().version, resume, tailored: history[0]?.resume,
+        mode, provider: settings?.provider ?? 'claude', version: chrome.runtime.getManifest().version, parsed, accountEmail: session?.user.email,
       })
-      const token = report.contact ? (await ensureValidSession())?.access_token : undefined
-      if (report.contact && !token) {
-        setError('Sign in again so we can email you, or untick that box.')
-        return
-      }
-      await sendGenerationReport(report, token)
+      await sendGenerationReport(report, report.contact ? session?.access_token : undefined)
       await rememberReportedResult(resultKey)
       submitted.current = true
       setOpen(false)
@@ -76,7 +84,7 @@ export default function FlagProblem({ target, resultKey }: { target: ReportTarge
     } catch {
       setError("Couldn't send the report. Try again in a moment.")
     } finally {
-      setSending(false)
+      setSending('')
     }
   }
 
@@ -118,13 +126,13 @@ export default function FlagProblem({ target, resultKey }: { target: ReportTarge
             Sends this {target.kind}{target.kind === 'resume' && ' with its ATS score and gaps, marked if you edited it'}, the
             job&apos;s title, company, description and site name, your answers, whether you use Hosted or your own key,
             which AI wrote it and the extension&apos;s version.
-            {category === 'invented' && hasResume && sendSource && ' Also your original resume.'}
-            {' '}Your contact details are taken out of the {target.kind} first; your comment goes as you wrote it.
+            {category === 'invented' && hasResume && sendSource && ' Also your original resume, as Cover Me read it (its sections and jobs).'}
+            {' '}Your name, email, phone, links, location and address are taken out first; your comment goes as you wrote it.
             {canContact && contact ? ' Your account goes with it so we can reply.' : " It isn't linked to you."}
           </p>
           {error && <p className="scrape-failure-error" role="alert">{error}</p>}
           <div className="flag-actions">
-            <button type="submit" className="btn btn-secondary btn-sm" disabled={!ready || sending}>{sending ? 'Sending…' : 'Send'}</button>
+            <button type="submit" className="btn btn-secondary btn-sm" disabled={!ready || !!sending}>{sending === 'reading' ? 'Taking your details out…' : sending ? 'Sending…' : 'Send'}</button>
             <button type="button" className="btn btn-ghost btn-sm" onClick={close}>Cancel</button>
           </div>
         </form>

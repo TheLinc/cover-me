@@ -42,7 +42,7 @@ const RESUME = {
     atsGaps: ['Terraform'],
     editedAt: '2026-11-17T10:00:00Z',
   },
-  sourceResume: '[name]\nSRE, Acme, 2019 - 2024\nRan 40 clusters',
+  sourceResume: { experience: [{ title: 'SRE', company: 'Acme', location: '', dates: '2019 - 2024', bullets: ['Ran 40 clusters'] }], education: [], skills: 'Kubernetes' },
 }
 
 describe('generation-report', () => {
@@ -75,7 +75,8 @@ describe('generation-report', () => {
 
   it("records a resume report with its score, gaps, edited mark and the original resume, and drops contact fields and the Word file's hash that slipped through", async () => {
     const output = { ...RESUME.output, sourceHash: 'f00d', name: 'Jane Doe', email: 'jane@example.com', phone: '416 555 0199', website: 'jane.dev', links: ['jane.dev'], location: 'Toronto' }
-    expect((await send({ ...RESUME, output })).status).toBe(200)
+    const sourceResume = { ...RESUME.sourceResume, name: 'Jane Doe', email: 'jane@example.com', phone: '416 555 0199', location: 'Toronto' }
+    expect((await send({ ...RESUME, output, sourceResume })).status).toBe(200)
     const [event] = await surveyEvents()
     expect(event.properties).toMatchObject({
       $survey_response: "It added things that aren't true",
@@ -122,7 +123,8 @@ describe('generation-report', () => {
     ['an unknown mode', { ...LETTER, mode: 'free' }],
     ['an unknown provider', { ...LETTER, provider: 'gemini' }],
     ['a malformed version', { ...LETTER, version: '1.9; drop' }],
-    ['an original resume with another category', { ...LETTER, sourceResume: 'text' }],
+    ['an original resume with another category', { ...LETTER, sourceResume: { experience: [] } }],
+    ['an original resume that is not an object', { ...RESUME, sourceResume: 'Jane Doe, SRE' }],
   ])('rejects %s with 400 and sends nothing', async (_, body) => {
     expect((await send(body)).status).toBe(400)
     expect(await surveyEvents()).toEqual([])
@@ -132,8 +134,8 @@ describe('generation-report', () => {
     expect((await send({ ...LETTER, job: { ...JOB, site: '' } })).status).toBe(200)
   })
 
-  it('stops reading a body over 320 KB', async () => {
-    expect((await send({ ...LETTER, pad: 'x'.repeat(330_000) })).status).toBe(413)
+  it('stops reading a body over 400 KB', async () => {
+    expect((await send({ ...LETTER, pad: 'x'.repeat(410_000) })).status).toBe(413)
   })
 
   it('limits each IP to 5 reports a minute', async () => {

@@ -1,7 +1,9 @@
 import { describe, expect, test } from 'vitest'
-import { buildGenerationReport, type ReportEnv } from './generation-report'
+import { buildGenerationReport, type GenerationReport, type ReportEnv, type ReportForm, type ReportTarget } from './generation-report'
 import type { ParsedResume, TailoredResume } from '../types'
 
+// The user's details come from their parsed resume (report-resume.ts reads it),
+// so each test names the person through `parsed`.
 const job = {
   title: 'Platform Engineer',
   company: 'Northwind',
@@ -18,40 +20,41 @@ const parsed: ParsedResume = {
   location: 'Toronto, ON',
   experience: [{ title: 'SRE', company: 'Acme', location: 'Toronto, ON', dates: '2019 - 2024', bullets: ['Ran 40 clusters'] }],
   education: [],
+  otherSections: [{ heading: 'Awards', lines: ['MLH Hackathon 2023 First Place'] }, { heading: 'Personal Details', lines: ['Date of Birth: 12/04/1995'] }],
+  sectionOrder: ['experience', 'education', 'other'],
 }
 
-const resumeText = 'Jane Doe\nToronto, ON · (416) 555-0199 · jane.doe@example.com · linkedin.com/in/janedoe\n\nSRE, Acme, 2019 - 2024\nRan 40 clusters'
-
-const env = (over: Partial<ReportEnv> = {}): ReportEnv => ({
-  mode: 'byok',
-  provider: 'openai',
-  version: '1.9.0',
-  resume: { text: resumeText, filename: 'jane.pdf', updatedAt: '2026-11-01T00:00:00Z', parsed },
-  ...over,
-})
-
-const letter = 'Dear Northwind team,\n\nI ran 40 clusters at Acme.\n\nReach me at jane.doe@example.com or (416) 555-0199.\n\nSincerely,\nJANE DOE'
+const env = (over: Partial<ReportEnv> = {}): ReportEnv => ({ mode: 'byok', provider: 'openai', version: '1.9.0', parsed, ...over })
+const form: ReportForm = { category: 'generic', comment: 'Sounds like a template', sendSource: false, contact: false }
+const invented: ReportForm = { ...form, category: 'invented', sendSource: true }
 
 const tailored: TailoredResume = {
   name: 'Jane Doe', phone: '(416) 555-0199', email: 'jane.doe@example.com', website: 'janedoe.dev',
   links: ['janedoe.dev'], location: 'Toronto, ON',
   summary: 'Platform engineer.',
-  experience: parsed.experience,
+  experience: [{ title: 'SRE', company: 'Acme', location: 'Toronto, ON', dates: '2019 - 2024', bullets: ['Ran 40 clusters'] }],
   education: [],
   atsScore: 72,
   atsGaps: ['Terraform'],
 }
 
-const form = { category: 'generic' as const, comment: 'Sounds like a template', sendSource: false, contact: false }
+const letter = (output: string, e: ReportEnv = env()) => buildGenerationReport({ kind: 'letter', output, job }, form, e).output as string
+const resume = (output: TailoredResume, e: ReportEnv = env()) => buildGenerationReport({ kind: 'resume', output, job }, form, e).output as Record<string, unknown>
+const source = (e: ReportEnv, target: ReportTarget = { kind: 'letter', output: 'Hi', job }) => buildGenerationReport(target, invented, e).sourceResume
+
+// A persona's details: none may appear anywhere in what's sent.
+const leaks = (report: GenerationReport, details: string[]) => {
+  const sent = JSON.stringify({ output: report.output, sourceResume: report.sourceResume })
+  return details.filter((d) => sent.toLowerCase().includes(d.toLowerCase()))
+}
 
 describe('buildGenerationReport', () => {
-  test('a letter goes with its posting, site name only, and the name, email and phone replaced', () => {
-    const report = buildGenerationReport({ kind: 'letter', output: letter, job }, form, env())
-    expect(report).toEqual({
+  test('a letter goes with its posting, site name only, mode, provider and version', () => {
+    expect(buildGenerationReport({ kind: 'letter', output: 'Dear team,\n\nI ran 40 clusters.', job }, form, env())).toEqual({
       category: 'generic',
       comment: 'Sounds like a template',
       kind: 'letter',
-      output: 'Dear Northwind team,\n\nI ran 40 clusters at Acme.\n\nReach me at [email] or [phone].\n\nSincerely,\n[name]',
+      output: 'Dear team,\n\nI ran 40 clusters.',
       job: { title: 'Platform Engineer', company: 'Northwind', description: 'Run our Kubernetes fleet.', site: 'linkedin.com' },
       mode: 'byok',
       provider: 'openai',
@@ -60,261 +63,194 @@ describe('buildGenerationReport', () => {
     })
   })
 
-  test('a resume drops its contact fields and keeps its score and gaps', () => {
-    const report = buildGenerationReport({ kind: 'resume', output: tailored, job }, form, env())
-    expect(report.output).toEqual({ summary: 'Platform engineer.', experience: parsed.experience, education: [], atsScore: 72, atsGaps: ['Terraform'] })
+  test('hosted reports say the provider is Claude; a pasted posting or one at an IP address has no site', () => {
+    expect(buildGenerationReport({ kind: 'letter', output: 'Hi', job }, form, env({ mode: 'hosted' }))).toMatchObject({ mode: 'hosted', provider: 'claude' })
+    expect(buildGenerationReport({ kind: 'letter', output: 'Hi', job: { ...job, url: '' } }, form, env()).job.site).toBe('')
+    expect(buildGenerationReport({ kind: 'letter', output: 'Hi', job: { ...job, url: 'http://10.0.0.1/jobs/1' } }, form, env()).job.site).toBe('')
+    expect(buildGenerationReport({ kind: 'letter', output: 'Hi', job: { ...job, url: 'https://careers_portal.example.com/1' } }, form, env()).job.site).toBe('')
   })
 
-  test("a resume's own lines are scrubbed too", () => {
-    const named = { ...tailored, summary: 'Jane Doe runs platforms.', otherSections: [{ heading: 'References', lines: ['Ask jane.doe@example.com'] }] }
-    const out = buildGenerationReport({ kind: 'resume', output: named, job }, form, env()).output as TailoredResume
-    expect(out.summary).toBe('[name] runs platforms.')
-    expect(out.otherSections).toEqual([{ heading: 'References', lines: ['Ask [email]'] }])
+  test("a resume drops its contact fields, Word file hash, deleted sections and personal sections, and keeps its score and gaps", () => {
+    const out = resume({
+      ...tailored, sourceHash: 'abc123', deletedSections: [{ key: 'summary', index: 0, summary: 'x' }],
+      otherSections: [{ heading: 'Contact', lines: ['jane.doe@example.com'] }, { heading: 'References', lines: ['Sam Lee, 555-0100'] }, { heading: 'Awards', lines: ['Dean’s List'] }],
+    })
+    expect(out).toEqual({
+      summary: 'Platform engineer.',
+      experience: [{ title: 'SRE', company: 'Acme', location: '[location]', dates: '2019 - 2024', bullets: ['Ran 40 clusters'] }],
+      education: [],
+      atsScore: 72,
+      atsGaps: ['Terraform'],
+      otherSections: [{ heading: 'Awards', lines: ['Dean’s List'] }],
+    })
   })
 
-  test('hosted reports say the provider is Claude', () => {
-    const report = buildGenerationReport({ kind: 'letter', output: letter, job }, form, env({ mode: 'hosted', provider: 'openai' }))
-    expect(report).toMatchObject({ mode: 'hosted', provider: 'claude' })
+  test("the original resume goes only for \"added things that aren't true\", ticked, as the parse without contact or personal details", () => {
+    expect(source(env())).toEqual({
+      experience: [{ title: 'SRE', company: 'Acme', location: '[location]', dates: '2019 - 2024', bullets: ['Ran 40 clusters'] }],
+      education: [],
+      otherSections: [{ heading: 'Awards', lines: ['MLH Hackathon 2023 First Place'] }],
+      sectionOrder: ['experience', 'education', 'other'],
+    })
+    expect(buildGenerationReport({ kind: 'letter', output: 'Hi', job }, { ...invented, sendSource: false }, env()).sourceResume).toBeUndefined()
+    expect(buildGenerationReport({ kind: 'letter', output: 'Hi', job }, { ...form, sendSource: true }, env()).sourceResume).toBeUndefined()
   })
 
-  test('the original resume goes only for "added things that aren\'t true", ticked, with contact details replaced', () => {
-    const invented = { ...form, category: 'invented' as const, sendSource: true }
-    expect(buildGenerationReport({ kind: 'letter', output: letter, job }, invented, env()).sourceResume)
-      .toBe('[name]\n[location] · [phone] · [email] · [link]\n\nSRE, Acme, 2019 - 2024\nRan 40 clusters')
-    expect(buildGenerationReport({ kind: 'letter', output: letter, job }, { ...invented, sendSource: false }, env()).sourceResume).toBeUndefined()
-    expect(buildGenerationReport({ kind: 'letter', output: letter, job }, { ...form, sendSource: true }, env()).sourceResume).toBeUndefined()
+  describe('names', () => {
+    test('the full name, short forms, each part alone, any case or spacing', () => {
+      expect(letter('JANE DOE here. Jane  Doe there. Jane\nDoe. Jane wrote it. Ms. Doe agreed.')).toBe('[name] here. [name] there. [name]. [name] wrote it. Ms. [name] agreed.')
+      const dr = env({ parsed: { ...parsed, name: 'Dr. Jane A. Doe' } })
+      expect(letter('I ship.\n\nSincerely,\nJane Doe', dr)).toBe('I ship.\n\nSincerely,\n[signature]')
+      expect(letter('Jane Doe leads SRE.', dr)).toBe('[name] leads SRE.')
+    })
+
+    test('accents, particles, nicknames and an edited name in the reported resume', () => {
+      expect(letter('José Núñez and Núñez.', env({ parsed: { ...parsed, name: 'José Núñez' } }))).toBe('[name] and [name].')
+      expect(letter('Maria de la Cruz wrote.', env({ parsed: { ...parsed, name: 'Maria de la Cruz' } }))).toBe('[name] wrote.')
+      expect(letter('Jon Smith and Jonathan.', env({ parsed: { ...parsed, name: 'Jonathan "Jon" Smith' } }))).toBe('[name] [name] and [name].')
+      expect((resume({ ...tailored, name: 'Janet Doe', summary: 'Janet Doe ships.' })).summary).toBe('[name] ships.')
+    })
+
+    test('a common word that is also a first name stays in lower case', () => {
+      expect(letter('Will Smith will help.', env({ parsed: { ...parsed, name: 'Will Smith' } }))).toBe('[name] will help.')
+    })
   })
 
-  test("without a parse in this browser (Hosted), finds the details in the resume text and the tailored resume", () => {
-    const hosted = env({ mode: 'hosted', resume: { text: resumeText, filename: 'jane.pdf', updatedAt: '' } })
-    expect(buildGenerationReport({ kind: 'letter', output: letter, job }, form, hosted).output)
-      .toBe('Dear Northwind team,\n\nI ran 40 clusters at Acme.\n\nReach me at [email] or [phone].\n\nSincerely,\n[name]')
-    const source = buildGenerationReport({ kind: 'resume', output: tailored, job }, { ...form, category: 'invented', sendSource: true }, hosted).sourceResume
-    expect(source).toBe('[name]\n[location] · [phone] · [email] · [link]\n\nSRE, Acme, 2019 - 2024\nRan 40 clusters')
+  describe('emails', () => {
+    test('known, any address, obfuscated, and the account email', () => {
+      expect(letter('Write to jane.doe@example.com or sam@acme.io.')).toBe('Write to [email] or [email].')
+      expect(letter('jane [at] example [dot] com, jane(at)example.com, jane at example dot com, jane.doe AT gmail DOT com')).toBe('[email], [email], [email], [email]')
+      expect(letter('Reach me via jdoe.work at gmail dot com.', env({ accountEmail: 'jdoe.work@gmail.com' }))).toBe('Reach me via [email].')
+    })
+
+    test("a name can't eat an email's first half and leave its domain", () => {
+      expect(letter('Write to jane@janedoe.dev.')).toBe('Write to [email].')
+    })
   })
 
-  test("a one-line header still gives up the name, and History's newest resume the links and location", () => {
-    const header = { text: 'Jane Doe | jane@x.com | 07700 900123\nSRE, Acme', filename: '', updatedAt: '' }
-    expect(buildGenerationReport({ kind: 'letter', output: 'Thanks,\nJane Doe', job }, form, env({ resume: header })).output).toBe('Thanks,\n[name]')
-    const withHistory = env({ resume: { ...header, text: 'Jane Doe\nToronto, ON · 07700 900123 · jane@x.com · janedoe.dev' }, tailored: { ...tailored, phone: '07700 900123' } })
-    expect(buildGenerationReport({ kind: 'letter', output: 'Hi', job }, { ...form, category: 'invented', sendSource: true }, withHistory).sourceResume)
-      .toBe('[name]\n[location] · [phone] · [email] · [link]')
-    // Wherever they sit, not only near the top.
-    const later = env({ resume: { ...header, text: `SRE, Acme\n${'x'.repeat(400)}\nJane Doe · Toronto, ON · 07700 900123 · janedoe.dev` }, tailored: { ...tailored, phone: '07700 900123' } })
-    expect(buildGenerationReport({ kind: 'letter', output: 'Hi', job }, { ...form, category: 'invented', sendSource: true }, later).sourceResume)
-      .toBe(`SRE, Acme\n${'x'.repeat(400)}\n[name] · [location] · [phone] · [link]`)
+  describe('links', () => {
+    test('every web address, domain, profile path and @handle, the user’s or not', () => {
+      expect(letter('See https://pixelforge.studio/work, janedoe.dev, pixelcat.github.io, kaggle.com/pixelcat, medium.com/@pixelcat, x.com/pixelcat, bit.ly/pixelcat and @pixelcat.'))
+        .toBe('See [link], [link], [link], [link], [link], [link], [link] and [link].')
+      expect(letter('Profiles: behance.net/jdoe, linktr.ee/pixelcat, orcid.org/0000-0002-1825-0097, scholar.google.com/citations?user=AbC123.'))
+        .toBe('Profiles: [link], [link], [link], [link].')
+      expect(letter('See “https://pixelforge.studio”.')).toBe('See “[link]”.')
+    })
+
+    test('a labelled handle without a domain', () => {
+      expect(letter('GitHub: pixelcat · Twitter: @pixelcat · LinkedIn: in/pixelcat')).toBe('GitHub: [link] · Twitter: [link] · LinkedIn: [link]')
+    })
+
+    test('tech names shaped like domains, and file names, stay', () => {
+      const text = 'Built with Socket.io, fast.ai, Node.js, Next.js, ASP.NET and Vue.js; see README.md and main.py.'
+      expect(letter(text)).toBe(text)
+    })
   })
 
-  test("an emptied name, or another person's newest History resume, doesn't hide the resume's own first line", () => {
-    const hosted = env({ resume: { text: 'Jane Doe\nSRE, Acme', filename: '', updatedAt: '' }, tailored: { ...tailored, name: 'Sam Lee' } })
-    expect(buildGenerationReport({ kind: 'resume', output: { ...tailored, name: '', summary: 'Jane Doe, SRE.' }, job }, form, hosted).output)
-      .toMatchObject({ summary: '[name], SRE.' })
-    expect(buildGenerationReport({ kind: 'letter', output: 'Thanks,\nJane Doe', job }, form, hosted).output).toBe('Thanks,\n[name]')
+  describe('phones', () => {
+    test("any country's format, and the known phone written another way", () => {
+      expect(letter('Call 07700 900123, +44 7700 900123, 020 7946 0958, 0412 345 678, (02) 9876 5432, 06 12 34 56 78, 030 12345678, 0049 30 1234567, 98765 43210.'))
+        .toBe('Call [phone], [phone], [phone], [phone], [phone], [phone], [phone], [phone], [phone].')
+      expect(letter('Text 416.555.0199 or 555-0199 or 4165550199.')).toBe('Text [phone] or [phone] or [phone].')
+    })
+
+    test('years, dates, money, IDs and big numbers stay', () => {
+      const text = 'From 2019 - 2024 2025 (2018–2020), on 12/04/1995, cut $25,000 in Q3 2023, Employee ID 10234, 1500000000 units, ISBN 978-0-13-468599-1.'
+      expect(letter(text)).toBe(text)
+    })
   })
 
-  test("a PDF's run-together first lines still give up the name, and names match whole words only", () => {
-    const pdf = (text: string) => env({ resume: { text, filename: 'r.pdf', updatedAt: '' } })
-    const sign = 'Thanks,\nJane Doe'
-    expect(buildGenerationReport({ kind: 'letter', output: sign, job }, form, pdf('Jane Doe Toronto, ON · (416) 555-0199 · jane@x.com Experience')).output).toBe('Thanks,\n[name]')
-    expect(buildGenerationReport({ kind: 'letter', output: sign, job }, form, pdf('Jane Doe jane@x.com (416) 555-0199 Experience')).output).toBe('Thanks,\n[name]')
-    expect(buildGenerationReport({ kind: 'letter', output: 'Al Ng ran nginx.', job }, form, pdf('Al Ng\nnginx')).output).toBe('[name] ran nginx.')
-    expect(buildGenerationReport({ kind: 'letter', output: 'Resume Writer', job }, form, pdf('RESUME\nJane Doe')).output).toBe('Resume Writer')
-    expect(buildGenerationReport({ kind: 'letter', output: 'Best,\nMaria de la Cruz', job }, form, pdf('Maria de la Cruz Madrid, Spain')).output).toBe('Best,\n[name]')
+  describe('location and addresses', () => {
+    test('the user’s city anywhere, with the postcode or region beside it; a year beside it stays', () => {
+      expect(letter('I’m a Toronto-based analyst in Toronto, ON M5V 2T6, at Acme Toronto 2018 - 2020.')).toBe('I’m a [location]-based analyst in [location] [postal code], at Acme [location] 2018 - 2020.')
+      expect(letter('Based in Sydney NSW 2000.', env({ parsed: { ...parsed, location: 'Sydney, NSW' } }))).toBe('Based in [location].')
+      expect(letter('Calle Mayor 10, 28013 Madrid, Spain', env({ parsed: { ...parsed, location: 'Madrid, Spain' } }))).toBe('[address], [location]')
+      expect(letter('Rohini, New Delhi - 110085', env({ parsed: { ...parsed, location: 'House No. 45, Sector 15, Rohini, New Delhi' } }))).toBe('[location], [location]')
+    })
+
+    test('street addresses and postcodes, whoever’s', () => {
+      const s = (t: string) => letter(t, env({ parsed: { ...parsed, location: '' } }))
+      expect(s('14 Rosebery Road, Bristol BS6 7NQ')).toBe('[address], Bristol [postal code]')
+      expect(s('12 Oak Street, Austin, TX 78701')).toBe('[address], Austin, TX [postal code]')
+      expect(s('123 MAIN STREET; 350 5th Avenue; 123 W 42nd St; 9 Elm Circle, Leeds; 2000 Pennsylvania Avenue')).toBe('[address]; [address]; [address]; [address], Leeds; [address]')
+      expect(s('Hauptstraße 5, 12 rue de la Paix, Flat 402, House No. 45, Sector 15')).toBe('[address], [address], [address], [address], [address]')
+    })
+
+    test('ordinary text shaped like an address stays', () => {
+      const text = 'MLH Hackathon 2023 First Place; Argued 15 Supreme Court cases; completed 12 Month End Close cycles; Led 2022 United Way Campaign; Clerk, 2019 Ontario Superior Court; course CS 101, EN 50128.'
+      expect(letter(text, env({ parsed: { ...parsed, location: '' } }))).toBe(text)
+    })
   })
 
-  test('a sign-off without the middle initial or title, and a sidebar before the name, still match', () => {
-    const sign = 'Sincerely,\nJane Doe'
-    expect(buildGenerationReport({ kind: 'letter', output: sign, job }, form, env({ resume: { ...env().resume!, parsed: { ...parsed, name: 'Jane A. Doe' } } })).output).toBe('Sincerely,\n[name]')
-    const text = (t: string) => env({ resume: { text: t, filename: '', updatedAt: '' } })
-    expect(buildGenerationReport({ kind: 'letter', output: sign, job }, form, text('Dr. Jane Doe\nToronto')).output).toBe('Sincerely,\n[name]')
-    expect(buildGenerationReport({ kind: 'letter', output: `As a software engineer, I ship.\n\n${sign}`, job }, form, text('Contact\nToronto, ON\nJane Doe\nSoftware Engineer')).output)
-      .toBe('As a software engineer, I ship.\n\nSincerely,\n[name]')
+  describe('letter blocks', () => {
+    test('an address block above the greeting goes', () => {
+      expect(letter('Jane Doe\n14 Elm Grove, Bristol\n07700 900123\n\nDear Hiring Manager,\n\nI ship.')).toBe('[contact details]\n\nDear Hiring Manager,\n\nI ship.')
+    })
+
+    test('the signature goes after any closing, the closing and the body stay', () => {
+      for (const close of ['Sincerely,', 'Yours faithfully,', 'Warmest regards,', 'All the best,', 'With appreciation,', 'Many thanks,', 'Cordially,']) {
+        expect(letter(`I ship.\n\n${close}\nJane Doe`)).toBe(`I ship.\n\n${close}\n[signature]`)
+      }
+      expect(letter('I ship.\n\nBest regards, Jane Doe')).toBe('I ship.\n\nBest regards, [signature]')
+      expect(letter('I ship.\n\nSincerely,\n\nJane Doe\n\nP.S. My portfolio is pixelcat.design.')).toBe('I ship.\n\nSincerely,\n\n[signature]\n\nP.S. My portfolio is [link].')
+      expect(letter('I ship.\n\nThank you for your time.')).toBe('I ship.\n\nThank you for your time.')
+    })
+
+    test('a stranger’s name in a sign-off is still taken, without a parse knowing it', () => {
+      expect(letter('I ship.\n\nKind regards,\n\nPriya Raman\n\nP.S. Priya Raman built this.')).toBe('I ship.\n\nKind regards,\n\n[signature]\n\nP.S. [name] built this.')
+    })
   })
 
-  test("a letter's sign-off name is taken out whatever the resume's first lines are, and in the original resume too", () => {
-    const text = (t: string) => env({ resume: { text: t, filename: '', updatedAt: '' } })
-    for (const t of ['Contact\nNew York, NY\nJane Doe', 'CONTACT INFORMATION\nJane Doe', 'Profile Summary\nJane Doe']) {
-      expect(buildGenerationReport({ kind: 'letter', output: 'I ship.\n\nBest regards,\nJane Doe', job }, form, text(t)).output).toBe('I ship.\n\nBest regards,\n[name]')
+  describe('personas', () => {
+    const persona = (p: Partial<ParsedResume>, details: string[], text: string) => {
+      const e = env({ parsed: { ...parsed, ...p, experience: [{ title: 'Analyst', company: 'Northwind', location: p.location ?? '', dates: '2021 - Present', bullets: [text] }] } })
+      const reports = [
+        buildGenerationReport({ kind: 'letter', output: `Dear team,\n\n${text}\n\nBest regards,\n${p.name}`, job }, invented, e),
+        buildGenerationReport({ kind: 'resume', output: { ...tailored, ...p, summary: text } as TailoredResume, job }, invented, e),
+      ]
+      return reports.flatMap((r) => leaks(r, details))
     }
-    const invented = { ...form, category: 'invented' as const, sendSource: true }
-    expect(buildGenerationReport({ kind: 'letter', output: 'Sincerely,\nJane Doe', job }, invented, text('Profile Summary\nJane Doe')).sourceResume).toBe('[name]\n[name]') // the heading too: see headNames
+
+    test('UK', () => {
+      expect(persona({ name: 'Oliver Bennett', email: 'oliver.bennett@example.co.uk', phone: '+44 7700 900123', location: 'Bristol, UK', website: 'olliebuilds.co.uk', links: ['olliebuilds.co.uk'] },
+        ['Oliver', 'Bennett', 'oliver.bennett', '7700 900123', 'olliebuilds', 'Bristol', 'Rosebery', 'BS6 7NQ'],
+        'Oliver Bennett at 14 Rosebery Road, Bristol BS6 7NQ, 07700 900123, olliebuilds.co.uk, shipped Socket.io apps in Q3 2023.')).toEqual([])
+    })
+
+    test('Australia', () => {
+      expect(persona({ name: 'Priya Raman', email: 'priya.raman@example.com.au', phone: '0412 345 678', location: 'Sydney, NSW' },
+        ['Priya', 'Raman', 'priya.raman', '345 678', 'Sydney', 'Harbour', 'NSW 2000', 'github.com/praman'],
+        'Priya Raman, Unit 5, 22 Harbour Street, Sydney NSW 2000, +61 412 345 678, github.com/praman, cut $25,000.')).toEqual([])
+    })
+
+    test('Spain', () => {
+      expect(persona({ name: 'Lucía Fernández', email: 'lucia@example.es', phone: '+34 612 345 678', location: 'Madrid, Spain', website: 'luciadesigns.es' },
+        ['Lucía', 'Fernández', 'lucia@', '612 345 678', 'Madrid', 'Calle Mayor', '28013', 'luciadesigns'],
+        'Lucía Fernández, Calle Mayor 10, 28013 Madrid, 612 345 678, luciadesigns.es, built with Next.js.')).toEqual([])
+    })
+
+    test('Germany', () => {
+      expect(persona({ name: 'Max Müller', email: 'max@example.de', phone: '+49 30 1234567', location: 'Berlin, Germany' },
+        ['Max', 'Müller', 'max@', '1234567', 'Berlin', 'Hauptstraße', '10115'],
+        'Max Müller, Hauptstraße 5, 10115 Berlin, 030 1234567, I live in Berlin.')).toEqual([])
+    })
+
+    test('India', () => {
+      expect(persona({ name: 'Rahul Kumar Sharma', email: 'rks@proton.me', phone: '+91 98765 43210', location: 'Rohini, New Delhi' },
+        ['Rahul', 'Sharma', 'rks', '98765', '43210', 'Rohini', 'Delhi', '110085'],
+        'Rahul Kumar Sharma, House No. 45, Sector 15, Rohini, New Delhi - 110085, 98765 43210, rks [at] proton [dot] me.')).toEqual([])
+    })
+
+    test('North America', () => {
+      expect(persona({ name: 'Jane Doe' }, ['Jane', 'Doe', 'jane.doe', '555-0199', '5550199', 'janedoe', 'Toronto', 'M5V', 'Maple'],
+        'Jane Doe, 123 Maple Street, Toronto, ON M5V 2T6, 416-555-0199, janedoe.dev, linkedin.com/in/janedoe.')).toEqual([])
+    })
   })
 
-  test('a link the resume writes with https:// is caught when the letter leaves that off', () => {
-    const withScheme = env({ resume: { ...env().resume!, parsed: { ...parsed, website: 'https://janedoe.dev/', links: ['https://janedoe.dev/'] } } })
-    expect(buildGenerationReport({ kind: 'letter', output: 'See my work at janedoe.dev.', job }, form, withScheme).output).toBe('See my work at [link].')
-  })
-
-  test('a name spaced or stacked differently in the resume text is still taken out', () => {
-    const invented = { ...form, category: 'invented' as const, sendSource: true }
-    const withText = (text: string) => env({ resume: { ...env().resume!, text } })
-    expect(buildGenerationReport({ kind: 'letter', output: 'Hi', job }, invented, withText('JANE\nDOE\nSoftware Engineer')).sourceResume).toBe('[name]\nSoftware Engineer')
-    expect(buildGenerationReport({ kind: 'letter', output: 'Hi', job }, invented, withText('Jane  Doe\nSRE')).sourceResume).toBe('[name]\nSRE')
-  })
-
-  test("a street address and postal code in the original resume are replaced", () => {
-    const text = 'Jane Doe\n123 Maple Street, Toronto, ON M5V 2T6 · (416) 555-0199 · jane@x.com\nSRE, Acme'
-    expect(buildGenerationReport({ kind: 'letter', output: 'Hi', job }, { ...form, category: 'invented', sendSource: true }, env({ resume: { ...env().resume!, text } })).sourceResume)
-      .toBe('[name]\n[address], [location] [postal code] · [phone] · [email]\nSRE, Acme')
-  })
-
-  test('a long closing still marks the line after it as the name', () => {
-    const noName = env({ resume: { text: 'Contact\nToronto, ON\n416-555-0199', filename: '', updatedAt: '' } })
-    expect(buildGenerationReport({ kind: 'letter', output: 'Thank you for your time and consideration,\nJane Doe', job }, form, noName).output)
-      .toBe('Thank you for your time and consideration,\n[name]')
-  })
-
-  test("without a parse or History, a bare portfolio domain in the resume's header is taken out too", () => {
-    const filler = `Data scientist at Northwind Analytics, ${'building churn models for retail clients. '.repeat(9)}`
-    const text = `Jane Doe\nToronto, ON · jane.doe@example.com · janedoe.dev · linkedin.com/in/janedoe\n${filler}\nSkills: Node.js, ASP.NET\nWrote about churn models at janedoe.dev/blog`
-    const hosted = env({ mode: 'hosted', resume: { text, filename: '', updatedAt: '' } })
-    expect(buildGenerationReport({ kind: 'letter', output: 'See my work at janedoe.dev, built with Node.js and ASP.NET.', job }, form, hosted).output)
-      .toBe('See my work at [link], built with Node.js and ASP.NET.')
-    expect(buildGenerationReport({ kind: 'letter', output: 'Hi', job }, { ...form, category: 'invented', sendSource: true }, hosted).sourceResume)
-      .toBe(`[name]\n[location] · [email] · [link] · [link]\n${filler}\nSkills: Node.js, ASP.NET\nWrote about churn models at [link]`)
-  })
-
-  test('only contact lines give up domains, in any case; a skills line and a known link leave the rest alone', () => {
-    const letter = 'I built a chat service on socket.io. See JaneDoe.com and dev.to/janedoe.'
-    const hosted = (text: string) => env({ mode: 'hosted', resume: { text, filename: '', updatedAt: '' } })
-    expect(buildGenerationReport({ kind: 'letter', output: letter, job }, form, hosted('Jane Doe | JaneDoe.com | dev.to/janedoe | (416) 555-0199\nSkills: React, socket.io')).output)
-      .toBe('I built a chat service on socket.io. See [link] and [link].')
-  })
-
-  test('a domain holding the name is taken in any layout; one after a label or beside an email goes with and without its path', () => {
-    const hosted = (text: string) => env({ mode: 'hosted', resume: { text, filename: '', updatedAt: '' } })
-    const sent = (text: string, letter: string) => buildGenerationReport({ kind: 'letter', output: letter, job }, form, hosted(text)).output
-    // Word puts each paragraph on its own line; janedoe.dev holds the name.
-    expect(sent('Jane Doe\n\nToronto, ON\n\njane@x.com\n\njanedoe.dev\n\nSummary', 'See janedoe.dev.')).toBe('See [link].')
-    // A label, with or without a colon.
-    expect(sent('Jane Doe\nPortfolio pixelforge.studio', 'See pixelforge.studio.')).toBe('See [link].')
-    expect(sent('Jane Doe\nHomepage: pixelforge.studio', 'See pixelforge.studio.')).toBe('See [link].')
-    // Beside an email, with a path: the bare domain goes too.
-    expect(sent('Jane Doe\njane@x.com | pixelforge.studio/work', 'See pixelforge.studio.')).toBe('See [link].')
-    // Accents, and a handle in the path.
-    expect(sent('José Núñez\nToronto', 'See josenunez.dev and behance.net/josenunez.')).toBe('See [link] and [link].')
-  })
-
-  test("skills, an em-dash summary, a sidebar and an employer line near the top aren't taken for the user's domains", () => {
-    const text = 'Jane Doe\nFull-stack engineer — real-time apps with Socket.io and fast.ai\n• Socket.io, fast.ai, Vercel.app\nShopify.com | Engineer | 2020–2024\nSocket.io\nfast.ai'
-    const letter = 'At Shopify.com I built Socket.io apps on fast.ai and Vercel.app.'
-    expect(buildGenerationReport({ kind: 'letter', output: letter, job }, form, env({ mode: 'hosted', resume: { text, filename: '', updatedAt: '' } })).output).toBe(letter)
-  })
-
-  test('name domains with any ending, in a resume report too; a labelled https link; platforms stay; a short name run together', () => {
-    const hosted = (text: string) => env({ mode: 'hosted', resume: { text, filename: '', updatedAt: '' } })
-    const sent = (text: string, letter: string) => buildGenerationReport({ kind: 'letter', output: letter, job }, form, hosted(text)).output
-    expect(sent('Jane Doe\nToronto', 'See janedoe.space and janedoe.framer.website.')).toBe('See [link] and [link].')
-    expect(sent('Jane Doe\nPortfolio: https://pixelforge.studio', 'See pixelforge.studio.')).toBe('See [link].')
-    // A GitHub profile on the contact line goes; github.com elsewhere stays.
-    expect(sent('Jane Doe\njane@x.com | github.com/jdoe', 'See github.com/jdoe. I use github.com daily.')).toBe('See [link]. I use github.com daily.')
-    expect(sent('Yu Li\nToronto', 'See yuli.dev.')).toBe('See [link].')
-    // A resume report searches the tailored resume's own lines for the name.
-    const out = buildGenerationReport({ kind: 'resume', output: { ...tailored, summary: 'Writes at janedoe.blog.' }, job }, form, env({ resume: null })).output as TailoredResume
-    expect(out.summary).toBe('Writes at [link].')
-  })
-
-  test("the original resume keeps its summary and jobs; a link in the first job is replaced where it is", () => {
-    const text = 'Jane Doe\nToronto, ON | (416) 555-0199 | jane.doe@example.com | janedoe.dev\n\nSUMMARY\nAnalyst who ships models.\n\nEXPERIENCE\nData Analyst, Contoso Retail\n- Write about churn models at janedoe.dev/blog'
-    const invented = { ...form, category: 'invented' as const, sendSource: true }
-    const hosted = env({ mode: 'hosted', resume: { text, filename: '', updatedAt: '' } })
-    expect(buildGenerationReport({ kind: 'letter', output: 'Hi', job }, invented, hosted).sourceResume)
-      .toBe('[name]\n[location] | [phone] | [email] | [link]\n\nSUMMARY\nAnalyst who ships models.\n\nEXPERIENCE\nData Analyst, Contoso Retail\n- Write about churn models at [link]')
-    // A PDF's run-together text, with Title Case headings.
-    const pdf = env({ mode: 'hosted', resume: { text: text.replace(/\n+/g, ' ').replace('SUMMARY', 'Summary').replace('EXPERIENCE', 'Experience'), filename: '', updatedAt: '' } })
-    expect(buildGenerationReport({ kind: 'letter', output: 'Hi', job }, invented, pdf).sourceResume)
-      .toBe('[location] | [phone] | [email] | [link] Summary Analyst who ships models. Experience Data Analyst, Contoso Retail - Write about churn models at [link]')
-  })
-
-  test("a job title and section stay while the address beside the contact details goes; a platform subdomain is the user's", () => {
-    const invented = { ...form, category: 'invented' as const, sendSource: true }
-    const text = 'Jane Doe\nEducation Consultant\n123 Maple Street, Toronto, ON M5V 2T6 · (416) 555-0199 · jane@x.com\n\nEXPERIENCE\nAdvisor, Contoso'
-    expect(buildGenerationReport({ kind: 'letter', output: 'Hi', job }, invented, env({ mode: 'hosted', resume: { text, filename: '', updatedAt: '' } })).sourceResume)
-      .toBe('[name]\nEducation Consultant\n[address], [location] [postal code] · [phone] · [email]\n\nEXPERIENCE\nAdvisor, Contoso')
-    const sub = env({ mode: 'hosted', resume: { text: 'Jane Doe\njane@x.com | pixelforge.substack.com/p/intro', filename: '', updatedAt: '' } })
-    expect(buildGenerationReport({ kind: 'letter', output: 'Read pixelforge.substack.com.', job }, form, sub).output).toBe('Read [link].')
-  })
-
-  test('a summary above the contact block stays; an address under its own heading goes; a line break in a resume field hides no name domain', () => {
-    const invented = { ...form, category: 'invented' as const, sendSource: true }
-    const hosted = (text: string) => env({ mode: 'hosted', resume: { text, filename: '', updatedAt: '' } })
-    expect(buildGenerationReport({ kind: 'letter', output: 'Hi', job }, invented, hosted('Jane Doe\nData Analyst\nPROFILE\nAnalyst who ships models.\nCONTACT\n(416) 555-0199\njane@x.com\n\nEXPERIENCE\nAdvisor')).sourceResume)
-      .toBe('[name]\nData Analyst\nPROFILE\nAnalyst who ships models.\nCONTACT\n[phone]\n[email]\n\nEXPERIENCE\nAdvisor')
-    expect(buildGenerationReport({ kind: 'letter', output: 'Hi', job }, invented, hosted('Jane Doe\njane@x.com\nSKILLS\nPython, SQL\nADDRESS\n123 Maple Street, Toronto M5V 2T6\n(416) 555-0199')).sourceResume)
-      .toBe('[name]\n[email]\nSKILLS\nPython, SQL\nADDRESS\n[address], Toronto [postal code]\n[phone]')
-    const out = buildGenerationReport({ kind: 'resume', output: { ...tailored, summary: 'Analyst.\njanedoe.blog' }, job }, form, env({ resume: null })).output as TailoredResume
-    expect(out.summary).toBe('Analyst.\n[link]')
-  })
-
-  test('a name run together backwards, a Behance profile beside a bare behance.net, and curly quotes', () => {
-    const hosted = (text: string) => env({ mode: 'hosted', resume: { text, filename: '', updatedAt: '' } })
-    const sent = (text: string, letter: string) => buildGenerationReport({ kind: 'letter', output: letter, job }, form, hosted(text)).output
-    expect(sent('Yu Li\nToronto', 'See liyu.dev.')).toBe('See [link].')
-    expect(sent('Jane Doe\njane@x.com | behance.net/jdoe', 'I post on behance.net.')).toBe('I post on behance.net.')
-    expect(sent('Jane Doe\nToronto', 'See “https://pixelforge.studio”.')).toBe('See “[link]”.')
-  })
-
-  test('US ZIPs, all-caps and numbered streets go; years, awards, job titles and skills stay; a header name written unlike the parse goes', () => {
-    const invented = { ...form, category: 'invented' as const, sendSource: true }
-    const src = (text: string, over: Partial<ReportEnv> = {}) => buildGenerationReport({ kind: 'letter', output: 'Hi', job }, invented, env({ resume: { ...env().resume!, text }, ...over })).sourceResume
-    const austin = { resume: { ...env().resume!, parsed: { ...parsed, location: 'Austin, TX' } } }
-    expect(buildGenerationReport({ kind: 'letter', output: 'Hi', job }, invented, env({ resume: { ...austin.resume, text: 'Jane Doe\n12 Oak Street, Austin, TX 78701' } })).sourceResume)
-      .toBe('[name]\n[address], [location] [postal code]')
-    expect(src('Jane Doe\n123 MAIN STREET\n350 5th Avenue\n123 W 42nd St\n9 Elm Circle')).toBe('[name]\n[address]\n[address]\n[address]\n[address]')
-    const kept = 'MLH Hackathon 2023 First Place\nOrganized 2023 Holiday Food Drive\nLed the 2023 Year End Close\nCut costs by $25,000 across 3 regions in Q3 2023, course CS 101, EN 50128'
-    expect(src(`Jane Doe\n${kept}`)).toBe(`[name]\n${kept}`)
-    // PDF text, no parse: "Manager, HR" and "React, UI" aren't places.
-    const pdf = 'Jane Doe Toronto, ON | (416) 555-0199 | jane@x.com Summary Senior Manager, HR with 10 years. Skills React, UI design'
-    expect(src(pdf, { mode: 'hosted', resume: { text: pdf, filename: '', updatedAt: '' } })).toBe('[location] | [phone] | [email] Summary Senior Manager, HR with 10 years. Skills React, UI design')
-    expect(src('Jane A. Doe\nJane A. Doe leads SRE.')).toBe('[name]\n[name] leads SRE.')
-    expect(src('Jonathan "Jon" Smith\nSRE', { resume: { ...env().resume!, text: 'Jonathan "Jon" Smith\nSRE', parsed: { ...parsed, name: 'Jonathan Smith' } } })).toBe('[name]\nSRE')
-  })
-
-  test('without a parse, the header city goes alone or run into the jobs, and employers beside it stay', () => {
-    const invented = { ...form, category: 'invented' as const, sendSource: true }
-    const hosted = (text: string) => buildGenerationReport({ kind: 'letter', output: 'Hi', job }, invented, env({ mode: 'hosted', resume: { text, filename: '', updatedAt: '' } })).sourceResume
-    expect(hosted('Jane Doe\n\nToronto, ON\n\njane@x.com\n\nSUMMARY')).toBe('[name]\n\n[location]\n\n[email]\n\nSUMMARY')
-    expect(hosted('Jane Doe Toronto, ON | (416) 555-0199 | jane@x.com Experience Senior Data Analyst Contoso Retail Toronto, ON Jan 2021 Data Analyst Fabrikam Toronto, ON 2018'))
-      .toBe('[location] | [phone] | [email] Experience Senior Data Analyst Contoso Retail [location] Jan 2021 Data Analyst Fabrikam [location] 2018')
-    expect(hosted('Jane Doe\nSKILLS\nPython\nADDRESS\n123 Maple Street, Toronto, ON M5V 2T6')).toBe('[name]\nSKILLS\nPython\nADDRESS\n[address], [location] [postal code]')
-  })
-
-  test('a year may number a real street; country codes and US territories count as regions', () => {
-    const invented = { ...form, category: 'invented' as const, sendSource: true }
-    const src = (text: string) => buildGenerationReport({ kind: 'letter', output: 'Hi', job }, invented, env({ mode: 'hosted', resume: { text, filename: '', updatedAt: '' } })).sourceResume
-    expect(src('Jane Doe\n2000 Pennsylvania Avenue\n1999 Main Street, Apt 4\nSan Juan, PR 00901')).toBe('[name]\n[address]\n[address]\n[location] [postal code]')
-    expect(src('Jane Doe\nLondon, UK · jane@x.com\nSRE in London, UK')).toBe('[name]\n[location] · [email]\nSRE in [location]')
-  })
-
-  test("a name can't eat an email's first half and leave its domain", () => {
-    const pdf = env({ resume: { text: 'Jane Doe jane@janedoe.dev (416) 555-0199 Experience', filename: '', updatedAt: '' } })
-    expect(buildGenerationReport({ kind: 'letter', output: 'Hi', job }, { ...form, category: 'invented', sendSource: true }, pdf).sourceResume)
-      .toBe('[name] [email] [phone] Experience')
-    expect(buildGenerationReport({ kind: 'letter', output: 'Write to jane@janedoe.dev.\n\nBest,\nJane', job }, form, pdf).output)
-      .toBe('Write to [email].\n\nBest,\n[name]')
-  })
-
-  test("the user's own links go from a letter and from a resume's lines", () => {
-    expect(buildGenerationReport({ kind: 'letter', output: 'My work is at janedoe.dev and https://github.com/janedoe/forms.', job }, form, env()).output)
-      .toBe('My work is at [link] and [link].')
-    const out = buildGenerationReport({ kind: 'resume', output: { ...tailored, projects: [{ name: 'forms (linkedin.com/in/janedoe)', bullets: ['See janedoe.dev/forms'] }] }, job }, form, env()).output as TailoredResume
-    expect(out.projects).toEqual([{ name: 'forms ([link])', bullets: ['See [link]'] }])
-  })
-
-  test("a resume report leaves out its Word file's hash, and an underscore host sends no site", () => {
-    const report = buildGenerationReport({ kind: 'resume', output: { ...tailored, sourceHash: 'abc123' }, job: { ...job, url: 'https://careers_portal.example.com/1' } }, form, env())
-    expect(report.output).not.toHaveProperty('sourceHash')
-    expect(report.job.site).toBe('')
-  })
-
-  test("a date range isn't taken for a phone number", () => {
-    const hosted = env({ resume: { text: 'Sam Lee\nsam@example.com\nAcme, 2019 - 2024 2025', filename: '', updatedAt: '' } })
-    const source = buildGenerationReport({ kind: 'letter', output: 'Hi', job }, { ...form, category: 'invented', sendSource: true }, hosted).sourceResume
-    expect(source).toBe('[name]\n[email]\nAcme, 2019 - 2024 2025')
-  })
-
-  test('a pasted posting, or one at an IP address, has no site', () => {
-    expect(buildGenerationReport({ kind: 'letter', output: letter, job: { ...job, url: '' } }, form, env()).job.site).toBe('')
-    expect(buildGenerationReport({ kind: 'letter', output: letter, job: { ...job, url: 'http://10.0.0.1/jobs/1' } }, form, env()).job.site).toBe('')
+  test("ordinary text stays: employers, titles, skills, years, money", () => {
+    const text = 'Senior Data Analyst at Contoso Retail and Fabrikam, 2018 - 2024: Python, SQL, Socket.io, Next.js, React, UI design; cut $25,000 in Q3 2023.'
+    expect(letter(text)).toBe(text)
+    expect(source(env({ parsed: { ...parsed, experience: [{ title: 'Senior Data Analyst', company: 'Contoso Retail', location: 'Austin, TX', dates: 'Jan 2021 - Present', bullets: [text] }] } }))?.experience)
+      .toEqual([{ title: 'Senior Data Analyst', company: 'Contoso Retail', location: 'Austin, TX', dates: 'Jan 2021 - Present', bullets: [text] }])
   })
 })
