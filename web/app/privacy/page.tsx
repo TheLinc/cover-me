@@ -372,8 +372,8 @@ export default function PrivacyPage() {
                 problem you picked and your comment, the letter or tailored resume as you last edited it (a
                 resume is marked if you edited it), the job&apos;s title, company and description, the posting&apos;s site name (not
                 its address), whether you use Hosted or BYOK mode, which AI wrote it and the extension&apos;s
-                version, and for a resume its ATS score and gaps. Your name, email address and phone number are
-                taken out in your browser before sending, and a resume also loses its links and location. If you
+                version, and for a resume its ATS score and gaps. Your name, email address, phone number and links
+                are taken out in your browser before sending, and a resume also loses its location. If you
                 pick &quot;It added things that aren&apos;t true&quot; you can also choose to send your original
                 resume, with the same details taken out. A report is linked to your account only if you are
                 signed in to Hosted mode and tick &quot;You can email me about this&quot;; then it carries your

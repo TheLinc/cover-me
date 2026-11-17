@@ -136,6 +136,13 @@ describe('buildGenerationReport', () => {
     expect(buildGenerationReport({ kind: 'letter', output: 'Sincerely,\nJane Doe', job }, invented, text('Profile Summary\nJane Doe')).sourceResume).toBe('[name]\n[name]') // the heading too: see headNames
   })
 
+  test("the user's own links go from a letter and from a resume's lines", () => {
+    expect(buildGenerationReport({ kind: 'letter', output: 'My work is at janedoe.dev and https://github.com/janedoe/forms.', job }, form, env()).output)
+      .toBe('My work is at [link] and [link]')
+    const out = buildGenerationReport({ kind: 'resume', output: { ...tailored, projects: [{ name: 'forms (linkedin.com/in/janedoe)', bullets: ['See janedoe.dev/forms'] }] }, job }, form, env()).output as TailoredResume
+    expect(out.projects).toEqual([{ name: 'forms ([link])', bullets: ['See [link]/forms'] }])
+  })
+
   test("a resume report leaves out its Word file's hash, and an underscore host sends no site", () => {
     const report = buildGenerationReport({ kind: 'resume', output: { ...tailored, sourceHash: 'abc123' }, job: { ...job, url: 'https://careers_portal.example.com/1' } }, form, env())
     expect(report.output).not.toHaveProperty('sourceHash')

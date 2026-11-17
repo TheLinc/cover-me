@@ -75,8 +75,10 @@ export function buildGenerationReport(target: ReportTarget, form: ReportForm, en
     ...(target.kind === 'letter' ? signedName(target.output) : []),
   ])
   const tag = (values: string[], t: string) => values.map((v): [string, string] => [v, t])
-  const people = [...tag(names, '[name]'), ...tag(all('email'), '[email]'), ...tag(all('phone'), '[phone]')]
-  const places = [...tag([...all('website'), ...all('links')], '[link]'), ...tag(all('location'), '[location]')]
+  // A letter prompt asks for the portfolio link, which often holds the name, so
+  // the user's links go from everything sent. Location only from the original
+  // resume: in a letter or a resume's jobs it's part of what we want to see.
+  const people = [...tag(names, '[name]'), ...tag(all('email'), '[email]'), ...tag(all('phone'), '[phone]'), ...tag([...all('website'), ...all('links')], '[link]')]
 
   const sendSource = form.category === 'invented' && form.sendSource && !!env.resume?.text
   // A name only: none for a pasted posting, or one the server wouldn't take (an IP address).
@@ -89,13 +91,13 @@ export function buildGenerationReport(target: ReportTarget, form: ReportForm, en
     comment: form.comment.trim(),
     kind: target.kind,
     output: target.kind === 'letter'
-      ? scrub(target.output, people).slice(0, MAX_LETTER)
+      ? scrub(target.output, people, true).slice(0, MAX_LETTER)
       // A resume loses its contact fields, and every line left is scrubbed too:
       // a summary or a references section can name the user. Deleted sections
       // print nowhere and can be long, so they go too.
       : JSON.parse(
         JSON.stringify(Object.fromEntries(Object.entries(target.output).filter(([k]) => !(DROPPED as readonly string[]).includes(k)))),
-        (_, v) => (typeof v === 'string' ? scrub(v, people) : v),
+        (_, v) => (typeof v === 'string' ? scrub(v, people, true) : v),
       ),
     job: { title: target.job.title.slice(0, MAX_JOB_FIELD), company: target.job.company.slice(0, MAX_JOB_FIELD), description: target.job.description.slice(0, MAX_DESCRIPTION), site },
     mode: env.mode,
@@ -103,7 +105,7 @@ export function buildGenerationReport(target: ReportTarget, form: ReportForm, en
     provider: env.mode === 'hosted' ? 'claude' : env.provider,
     version: env.version,
     contact: env.mode === 'hosted' && form.contact,
-    ...(sendSource && { sourceResume: scrub(env.resume!.text, [...people, ...places], true).slice(0, MAX_SOURCE) }),
+    ...(sendSource && { sourceResume: scrub(env.resume!.text, [...people, ...tag(all('location'), '[location]')], true).slice(0, MAX_SOURCE) }),
   }
 }
 

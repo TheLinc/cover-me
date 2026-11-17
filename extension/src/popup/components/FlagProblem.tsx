@@ -17,6 +17,7 @@ export default function FlagProblem({ target, resultKey }: { target: ReportTarge
   const [sendSource, setSendSource] = useState(false)
   const [contact, setContact] = useState(false)
   const [canContact, setCanContact] = useState(false)
+  const [hasResume, setHasResume] = useState(false)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
   const [reported, setReported] = useState(false)
@@ -28,10 +29,14 @@ export default function FlagProblem({ target, resultKey }: { target: ReportTarge
     void reportedResults().then((keys) => { if (keys.includes(resultKey)) setReported(true) })
   }, [resultKey])
 
-  // Only a signed-in Hosted user has an account we could email.
+  // Only a signed-in Hosted user has an account we could email, and the
+  // original resume can go only when this browser has one.
   useEffect(() => {
     if (!open) return
-    void Promise.all([getMode(), getSession()]).then(([mode, session]) => setCanContact(mode === 'hosted' && !!session))
+    void Promise.all([getMode(), getSession(), getResume()]).then(([mode, session, resume]) => {
+      setCanContact(mode === 'hosted' && !!session)
+      setHasResume(!!resume?.text)
+    })
     form.current?.querySelector('input')?.focus()
   }, [open])
   // After a send the form is gone: focus the link, which now reads the thanks.
@@ -91,7 +96,7 @@ export default function FlagProblem({ target, resultKey }: { target: ReportTarge
               </label>
             ))}
           </fieldset>
-          {category === 'invented' && (
+          {category === 'invented' && hasResume && (
             <label className="compact-toggle">
               <input type="checkbox" checked={sendSource} onChange={(e) => setSendSource(e.target.checked)} />
               Also send my original resume so we can check
@@ -111,7 +116,7 @@ export default function FlagProblem({ target, resultKey }: { target: ReportTarge
             Sends this {target.kind}{target.kind === 'resume' && ' with its ATS score and gaps, marked if you edited it'}, the
             job&apos;s title, company, description and site name, your answers, whether you use Hosted or your own key,
             which AI wrote it and the extension&apos;s version.
-            {category === 'invented' && sendSource && ' Also your original resume.'}
+            {category === 'invented' && hasResume && sendSource && ' Also your original resume.'}
             {' '}Your contact details are taken out first.
             {canContact && contact ? ' Your account goes with it so we can reply.' : " It isn't linked to you."}
           </p>
