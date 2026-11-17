@@ -254,6 +254,22 @@ describe('buildGenerationReport', () => {
     expect(sent('Jane Doe\nToronto', 'See “https://pixelforge.studio”.')).toBe('See “[link]”.')
   })
 
+  test('US ZIPs, all-caps and numbered streets go; years, awards, job titles and skills stay; a header name written unlike the parse goes', () => {
+    const invented = { ...form, category: 'invented' as const, sendSource: true }
+    const src = (text: string, over: Partial<ReportEnv> = {}) => buildGenerationReport({ kind: 'letter', output: 'Hi', job }, invented, env({ resume: { ...env().resume!, text }, ...over })).sourceResume
+    const austin = { resume: { ...env().resume!, parsed: { ...parsed, location: 'Austin, TX' } } }
+    expect(buildGenerationReport({ kind: 'letter', output: 'Hi', job }, invented, env({ resume: { ...austin.resume, text: 'Jane Doe\n12 Oak Street, Austin, TX 78701' } })).sourceResume)
+      .toBe('[name]\n[address], [location] [postal code]')
+    expect(src('Jane Doe\n123 MAIN STREET\n350 5th Avenue\n123 W 42nd St\n9 Elm Circle')).toBe('[name]\n[address]\n[address]\n[address]\n[address]')
+    const kept = 'MLH Hackathon 2023 First Place\nOrganized 2023 Holiday Food Drive\nLed the 2023 Year End Close\nCut costs by $25,000 across 3 regions in Q3 2023, course CS 101, EN 50128'
+    expect(src(`Jane Doe\n${kept}`)).toBe(`[name]\n${kept}`)
+    // PDF text, no parse: "Manager, HR" and "React, UI" aren't places.
+    const pdf = 'Jane Doe Toronto, ON | (416) 555-0199 | jane@x.com Summary Senior Manager, HR with 10 years. Skills React, UI design'
+    expect(src(pdf, { mode: 'hosted', resume: { text: pdf, filename: '', updatedAt: '' } })).toBe('[location] | [phone] | [email] Summary Senior Manager, HR with 10 years. Skills React, UI design')
+    expect(src('Jane A. Doe\nJane A. Doe leads SRE.')).toBe('[name]\n[name] leads SRE.')
+    expect(src('Jonathan "Jon" Smith\nSRE', { resume: { ...env().resume!, text: 'Jonathan "Jon" Smith\nSRE', parsed: { ...parsed, name: 'Jonathan Smith' } } })).toBe('[name]\nSRE')
+  })
+
   test("a name can't eat an email's first half and leave its domain", () => {
     const pdf = env({ resume: { text: 'Jane Doe jane@janedoe.dev (416) 555-0199 Experience', filename: '', updatedAt: '' } })
     expect(buildGenerationReport({ kind: 'letter', output: 'Hi', job }, { ...form, category: 'invented', sendSource: true }, pdf).sourceResume)

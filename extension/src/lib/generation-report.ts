@@ -109,7 +109,11 @@ export function buildGenerationReport(target: ReportTarget, form: ReportForm, en
   const all = (field: ContactField) => sources.flatMap((s) => [s?.[field]].flat()).filter((v): v is string => typeof v === 'string' && !!v.trim())
   const names = withShortForms([
     ...all('name'),
-    ...(env.resume?.parsed?.name?.trim() ? [] : headNames(env.resume?.text ?? '')),
+    // Also with a parse, as the header may write the name differently ("Jane A.
+    // Doe", 'Jonathan "Jon" Smith'), but then only one sharing a word with the
+    // parse's, so a job title under a stacked name isn't taken. (History's
+    // name may be someone else's, so it doesn't filter.)
+    ...headNames(env.resume?.text ?? '').filter((h) => !env.resume?.parsed?.name?.trim() || sharesWord(h, [env.resume.parsed.name])),
     ...(target.kind === 'letter' ? signedName(target.output) : []),
   ])
   const tag = (values: string[], t: string) => values.map((v): [string, string] => [v, t])
@@ -146,7 +150,9 @@ export function buildGenerationReport(target: ReportTarget, form: ReportForm, en
     provider: env.mode === 'hosted' ? 'claude' : env.provider,
     version: env.version,
     contact: env.mode === 'hosted' && form.contact,
-    ...(sendSource && { sourceResume: withoutAddress(scrub(env.resume!.text, [...people, ...tag([...all('location'), ...contactPlaces(env.resume!.text)], '[location]')], true)).slice(0, MAX_SOURCE) }),
+    // Addresses first: a ZIP is found by the state beside it, which the
+    // location replacement would take.
+    ...(sendSource && { sourceResume: scrub(withoutAddress(env.resume!.text), [...people, ...tag(all('location').length ? all('location') : contactPlaces(env.resume!.text), '[location]')], true).slice(0, MAX_SOURCE) }),
   }
 }
 
@@ -173,21 +179,32 @@ function headNames(text: string): string[] {
 }
 const NAME_PARTICLE = /^(van|von|der|den|de|del|della|di|da|dos|du|la|le|bin|binti|al|el|ibn|ben|y)$/i
 
+// Canadian provinces and territories, and US states.
+const REGIONS = 'AB|BC|MB|NB|NL|NS|NT|NU|ON|PE|QC|SK|YT|AL|AK|AZ|AR|CA|CO|CT|DE|DC|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY'
+const STREET_WORDS = 'Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Drive|Dr|Lane|Ln|Way|Court|Ct|Crescent|Cres|Place|Pl|Terrace|Close|Parkway|Pkwy|Highway|Hwy|Square|Sq|Circle|Cir|Trail|Trl'
 // A street address, and a postal code (Canadian, UK, or a US ZIP after a
 // state), wherever they sit in the original resume. Nothing is cut around
 // them: guessing where a header ends broke the summary in too many layouts.
-// ponytail: an address without a number and street word ("Flat B, Rose Court")
-// stays.
-const ADDRESS = /\b\d{1,6}[A-Za-z]?(?:[ \t]+[A-Z][\w'.-]*){1,4}[ \t]+(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Drive|Dr|Lane|Ln|Way|Court|Ct|Crescent|Cres|Place|Pl|Terrace|Close|Parkway|Pkwy|Highway|Hwy|Square|Sq)\b\.?(?:,?[ \t]*(?:Apt|Unit|Suite|#)[ \t]*[\w-]+)?/g
-const POSTAL = /\b[A-Z]\d[A-Z][ ]?\d[A-Z]\d\b|\b[A-Z]{1,2}\d[A-Z\d]?[ ]\d[A-Z]{2}\b|\b[A-Z]{2}[ \t]+\d{5}(?:-\d{4})?\b/g
+// The number can't be a year ("2023 Year End Close", "Hackathon 2023 First
+// Place"); a word may be an ordinal or a direction ("350 5th Avenue", "123 W
+// 42nd St"); an all-caps address counts too. ponytail: an address without a
+// number and street word ("Flat B, Rose Court"), or with a full state name
+// before its ZIP ("Austin, Texas 78701"), stays.
+const ADDRESS = new RegExp(String.raw`\b(?!(?:19|20)\d\d\b)\d{1,6}[A-Za-z]?(?:[ \t]+(?:[A-Z][\w'.-]*|\d+(?:st|nd|rd|th|ST|ND|RD|TH))){1,4}[ \t]+(?:${STREET_WORDS}|${STREET_WORDS.toUpperCase()})\b\.?(?:,?[ \t]*(?:Apt|Unit|Suite|APT|UNIT|SUITE|#)[ \t]*[\w-]+)?`, 'g')
+const POSTAL = new RegExp(String.raw`\b[A-Z]\d[A-Z][ ]?\d[A-Z]\d\b|\b[A-Z]{1,2}\d[A-Z\d]?[ ]\d[A-Z]{2}\b|\b(?:${REGIONS})[ \t]+\d{5}(?:-\d{4})?\b`, 'g')
 const withoutAddress = (text: string) => text.replace(ADDRESS, '[address]').replace(POSTAL, (m) => (/^[A-Z]{2}\s+\d/.test(m) ? `${m.slice(0, 2)} [postal code]` : '[postal code]'))
 
 // A city with its province or state ("Toronto, ON") on a line near the top
-// that holds an email or phone: the location when no parse names it.
+// that holds an email or phone: the location when no parse names it. Only a
+// real province or state, so "Manager, HR" and "React, UI" stay.
+const PLACE = new RegExp(String.raw`\b\p{Lu}[\p{L}'.-]+(?:[ ]\p{Lu}[\p{L}'.-]+){0,2},[ ]?(?:${REGIONS})\b`, 'gu')
 function contactPlaces(text: string): string[] {
   return text.slice(0, 400).split('\n').filter((l) => l.search(EMAIL) !== -1 || l.search(PHONE) !== -1)
-    .flatMap((l) => l.match(/\b\p{Lu}[\p{L}'.-]+(?:[ ]\p{Lu}[\p{L}'.-]+){0,2},[ ]?[A-Z]{2}\b/gu) ?? [])
+    .flatMap((l) => l.match(PLACE) ?? [])
 }
+
+const nameWords = (n: string) => plain(n).split(/[^\p{L}]+/u).filter((w) => w.length >= 2)
+const sharesWord = (h: string, known: string[]) => nameWords(h).some((w) => known.some((k) => nameWords(k).includes(w)))
 
 // Every string in a resume, as written (JSON would turn a line break into "\n",
 // gluing an "n" to the next word).
