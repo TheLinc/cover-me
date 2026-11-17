@@ -18,6 +18,7 @@ export type ReportCategory = (typeof REPORT_CATEGORIES)[number]['key']
 export const MAX_COMMENT = 500
 // The most the prompts read of a posting, and the most of a resume the server takes.
 const MAX_DESCRIPTION = 15_000
+const MAX_JOB_FIELD = 500
 const MAX_SOURCE = 30_000
 
 export interface ReportForm {
@@ -31,7 +32,9 @@ export type ReportTarget =
   | { kind: 'letter'; output: string; job: JobData }
   | { kind: 'resume'; output: TailoredResume; job: JobData }
 
-export interface ReportEnv { mode: AppMode; provider: AIProvider; version: string; resume: ResumeData | null }
+// tailored: the newest tailored resume in History. Hosted keeps no parse in the
+// browser, but the server's parse put the contact details in each tailored resume.
+export interface ReportEnv { mode: AppMode; provider: AIProvider; version: string; resume: ResumeData | null; tailored?: TailoredResume }
 
 export interface GenerationReport {
   category: ReportCategory
@@ -58,19 +61,22 @@ const PHONE = /(?:\+\d[\d ().-]{7,}\d|\(?\b\d{3}\)?[ .-]?\d{3}[ .-]?\d{4}\b)/g
 const URL = /(?:https?:\/\/|www\.)\S+|\b(?:[\w-]+\.)*(?:linkedin|github|gitlab|behance|dribbble)\.com\/\S*/gi
 
 export function buildGenerationReport(target: ReportTarget, form: ReportForm, env: ReportEnv): GenerationReport {
-  const known = { ...env.resume?.parsed, ...(target.kind === 'resume' ? target.output : {}) }
-  // Without a parse in this browser (Hosted), the resume's first line is its name.
-  const firstLine = env.resume?.text.split('\n').map((l) => l.trim()).find(Boolean)
-  const name = known.name || (firstLine && firstLine.length <= 60 && !/[\d@]/.test(firstLine) ? firstLine : '')
-  const people: Array<[string | undefined, string]> = [[name, '[name]'], [known.email, '[email]'], [known.phone, '[phone]']]
-  const places: Array<[string | undefined, string]> = [
-    ...[known.website, ...(known.links ?? [])].map((l): [string | undefined, string] => [l, '[link]']),
-    [known.location, '[location]'],
-  ]
+  // Every source's details: a user may have emptied one in the editor.
+  const sources = [env.resume?.parsed, env.tailored, target.kind === 'resume' ? target.output : undefined]
+  const all = (field: ContactField) => sources.flatMap((s) => [s?.[field]].flat()).filter((v): v is string => typeof v === 'string')
+  // With none of them, the resume text's first line starts with the name
+  // ("Jane Doe | jane@x.com | ...").
+  const head = env.resume?.text.split('\n').map((l) => l.trim()).find(Boolean)?.split(/\s[|·•–-]\s|[|·•,]/)[0].trim()
+  const names = all('name').length ? all('name') : head && head.length <= 60 && !/[\d@]/.test(head) ? [head] : []
+  const tag = (values: string[], t: string) => values.map((v): [string, string] => [v, t])
+  const people = [...tag(names, '[name]'), ...tag(all('email'), '[email]'), ...tag(all('phone'), '[phone]')]
+  const places = [...tag([...all('website'), ...all('links')], '[link]'), ...tag(all('location'), '[location]')]
 
   const sendSource = form.category === 'invented' && form.sendSource && !!env.resume?.text
+  // A name only: none for a pasted posting, or one at an IP address.
   let site = ''
   try { site = new globalThis.URL(target.job.url).hostname.replace(/^www\./, '') } catch { /* pasted: no address */ }
+  if (!/\.[a-z][a-z0-9-]*$/i.test(site)) site = ''
 
   return {
     category: form.category,
@@ -84,7 +90,7 @@ export function buildGenerationReport(target: ReportTarget, form: ReportForm, en
         JSON.stringify(Object.fromEntries(Object.entries(target.output).filter(([k]) => !(CONTACT_FIELDS as readonly string[]).includes(k)))),
         (_, v) => (typeof v === 'string' ? scrub(v, people) : v),
       ),
-    job: { title: target.job.title, company: target.job.company, description: target.job.description.slice(0, MAX_DESCRIPTION), site },
+    job: { title: target.job.title.slice(0, MAX_JOB_FIELD), company: target.job.company.slice(0, MAX_JOB_FIELD), description: target.job.description.slice(0, MAX_DESCRIPTION), site },
     mode: env.mode,
     // Hosted letters and resumes are written by Claude whatever the BYOK setting says.
     provider: env.mode === 'hosted' ? 'claude' : env.provider,
@@ -96,7 +102,7 @@ export function buildGenerationReport(target: ReportTarget, form: ReportForm, en
 
 // Exact matches of what we know (longest first, any case), then anything shaped
 // like an email or phone number. withLinks: web addresses too.
-function scrub(text: string, pairs: Array<[string | undefined, string]>, withLinks = false): string {
+function scrub(text: string, pairs: Array<[string, string]>, withLinks = false): string {
   const known = pairs.flatMap(([v, tag]) => (v && v.trim().length >= 3 ? [[v.trim(), tag] as const] : []))
     .sort((a, b) => b[0].length - a[0].length)
   for (const [value, tag] of known) text = text.replace(new RegExp(value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), tag)

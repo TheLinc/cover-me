@@ -65,6 +65,10 @@ Deno.serve(async (req) => {
   const properties = body && typeof body === 'object' ? report(body) : null
   if (!properties) return json({ error: 'Invalid request' }, 400)
 
+  const limit = await checkIpRateLimit(supabase, req, 'generation-report', PER_MINUTE, PER_DAY)
+  if (limit !== 'ok') return json({ error: limit === 'over' ? 'Too many requests' : 'Try again shortly' }, limit === 'over' ? 429 : 503)
+
+  // After the limit, so bad tokens can't make unlimited auth lookups.
   if (body!.contact === true) {
     const token = req.headers.get('Authorization')?.replace('Bearer ', '')
     if (token) {
@@ -73,9 +77,6 @@ Deno.serve(async (req) => {
       properties.account_id = user.id
     }
   }
-
-  const limit = await checkIpRateLimit(supabase, req, 'generation-report', PER_MINUTE, PER_DAY)
-  if (limit !== 'ok') return json({ error: limit === 'over' ? 'Too many requests' : 'Try again shortly' }, limit === 'over' ? 429 : 503)
 
   if (!SURVEY_ID) return json({ ok: true })
   const sent = await capture('survey sent', crypto.randomUUID(), { $survey_id: SURVEY_ID, ...properties, $survey_completed: true })

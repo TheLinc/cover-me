@@ -25,8 +25,10 @@ html, body { width: auto; height: 100%; overflow: hidden; }
 .ed-note { font-size: 12px; color: var(--text-2); }
 .ed-note .text-link { background: none; border: none; padding: 0; font: inherit; cursor: pointer; }
 .ed-history { display: flex; gap: 2px; }
-.ed-bar .flag { margin-top: 0; }
-.ed-bar .flag-form { position: absolute; top: calc(100% + 8px); right: 0; z-index: 10; width: 340px; box-shadow: 0 8px 24px rgb(0 0 0 / 0.35); }
+.ed-bar { position: relative; }
+/* The form hangs from the bar's right edge, wherever the link wraps to. */
+.ed-bar .flag { position: static; margin-top: 0; }
+.ed-bar .flag-form { position: absolute; top: 100%; right: 24px; z-index: 10; width: min(340px, calc(100vw - 48px)); max-height: calc(100vh - 120px); overflow-y: auto; box-shadow: 0 8px 24px rgb(0 0 0 / 0.35); }
 
 .ed-form {
   overflow-y: auto;

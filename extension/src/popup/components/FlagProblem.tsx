@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ensureValidSession } from '../../lib/auth'
 import { SUPABASE_URL } from '../../lib/config'
 import { buildGenerationReport, MAX_COMMENT, rememberReportedResult, REPORT_CATEGORIES, reportedResults, sendGenerationReport, type ReportCategory, type ReportTarget } from '../../lib/generation-report'
-import { getMode, getResume, getSession, getSettings } from '../../lib/storage'
+import { getMode, getResume, getSession, getSettings, getTailoredHistory } from '../../lib/storage'
 
 // "Flag a problem" (#256): under a letter in the popup, in the editor tab's top
 // bar for a resume. Opens a short form; one Send adds one report. After that
@@ -39,6 +39,12 @@ export default function FlagProblem({ target, resultKey }: { target: ReportTarge
 
   if (!SUPABASE_URL) return null
 
+  // The form goes away with focus inside it: keep focus on the link.
+  function close() {
+    setOpen(false)
+    link.current?.focus()
+  }
+
   const ready = category && (category !== 'other' || comment.trim())
 
   async function submit(e: React.FormEvent) {
@@ -47,9 +53,9 @@ export default function FlagProblem({ target, resultKey }: { target: ReportTarge
     setSending(true)
     setError('')
     try {
-      const [mode, settings, resume] = await Promise.all([getMode(), getSettings(), getResume()])
+      const [mode, settings, resume, history] = await Promise.all([getMode(), getSettings(), getResume(), getTailoredHistory()])
       const report = buildGenerationReport(target, { category, comment, sendSource, contact: canContact && contact }, {
-        mode, provider: settings?.provider ?? 'claude', version: chrome.runtime.getManifest().version, resume,
+        mode, provider: settings?.provider ?? 'claude', version: chrome.runtime.getManifest().version, resume, tailored: history[0]?.resume,
       })
       const token = report.contact ? (await ensureValidSession())?.access_token : undefined
       if (report.contact && !token) {
@@ -75,7 +81,7 @@ export default function FlagProblem({ target, resultKey }: { target: ReportTarge
         {reported ? 'Reported. Thanks.' : 'Flag a problem'}
       </button>
       {open && (
-        <form className="flag-form" ref={form} onSubmit={submit} onKeyDown={(e) => { if (e.key === 'Escape') setOpen(false) }}>
+        <form className="flag-form" ref={form} onSubmit={submit} onKeyDown={(e) => { if (e.key === 'Escape') close() }}>
           <fieldset>
             <legend className="form-label">What was wrong with this {target.kind}?</legend>
             {REPORT_CATEGORIES.map((c) => (
@@ -112,7 +118,7 @@ export default function FlagProblem({ target, resultKey }: { target: ReportTarge
           {error && <p className="scrape-failure-error" role="alert">{error}</p>}
           <div className="flag-actions">
             <button type="submit" className="btn btn-secondary btn-sm" disabled={!ready || sending}>{sending ? 'Sending…' : 'Send'}</button>
-            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setOpen(false)}>Cancel</button>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={close}>Cancel</button>
           </div>
         </form>
       )}

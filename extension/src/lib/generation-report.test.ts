@@ -93,13 +93,22 @@ describe('buildGenerationReport', () => {
     expect(source).toBe('[name]\n[location] · [phone] · [email] · [link]\n\nSRE, Acme, 2019 - 2024\nRan 40 clusters')
   })
 
+  test("a one-line header still gives up the name, and History's newest resume the links and location", () => {
+    const header = { text: 'Jane Doe | jane@x.com | 07700 900123\nSRE, Acme', filename: '', updatedAt: '' }
+    expect(buildGenerationReport({ kind: 'letter', output: 'Thanks,\nJane Doe', job }, form, env({ resume: header })).output).toBe('Thanks,\n[name]')
+    const withHistory = env({ resume: { ...header, text: 'Jane Doe\nToronto, ON · 07700 900123 · jane@x.com · janedoe.dev' }, tailored: { ...tailored, phone: '07700 900123' } })
+    expect(buildGenerationReport({ kind: 'letter', output: 'Hi', job }, { ...form, category: 'invented', sendSource: true }, withHistory).sourceResume)
+      .toBe('[name]\n[location] · [phone] · [email] · [link]')
+  })
+
   test("a date range isn't taken for a phone number", () => {
     const hosted = env({ resume: { text: 'Sam Lee\nsam@example.com\nAcme, 2019 - 2024 2025', filename: '', updatedAt: '' } })
     const source = buildGenerationReport({ kind: 'letter', output: 'Hi', job }, { ...form, category: 'invented', sendSource: true }, hosted).sourceResume
     expect(source).toBe('[name]\n[email]\nAcme, 2019 - 2024 2025')
   })
 
-  test('a pasted posting has no site', () => {
+  test('a pasted posting, or one at an IP address, has no site', () => {
     expect(buildGenerationReport({ kind: 'letter', output: letter, job: { ...job, url: '' } }, form, env()).job.site).toBe('')
+    expect(buildGenerationReport({ kind: 'letter', output: letter, job: { ...job, url: 'http://10.0.0.1/jobs/1' } }, form, env()).job.site).toBe('')
   })
 })

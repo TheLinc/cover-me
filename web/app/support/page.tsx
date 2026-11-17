@@ -53,7 +53,7 @@ const FAQ = [
   },
   {
     q: 'Where is my resume stored?',
-    a: "With your own API key, your resume stays in your browser and goes only to the AI provider whose key you added, never to Cover Me. With a Cover Me account, it's kept in your browser and encrypted at rest in our database with AES-256-GCM. It's sent to Anthropic only to read it and write your documents, and it's never sold or used to train AI models.",
+    a: "With your own API key, your resume stays in your browser and goes only to the AI provider whose key you added. It reaches Cover Me only if you choose to send it with a problem report, with your contact details taken out. With a Cover Me account, it's kept in your browser and encrypted at rest in our database with AES-256-GCM. It's sent to Anthropic only to read it and write your documents, and it's never sold or used to train AI models.",
   },
 ]
 

@@ -244,6 +244,8 @@ export default function Editor() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!(e.ctrlKey || e.metaKey) || e.altKey) return
+      // The Flag a problem comment keeps its own undo; the resume's isn't in it.
+      if (e.target instanceof Element && e.target.closest('.flag-form')) return
       const key = e.key.toLowerCase()
       if (key === 'z' && !e.shiftKey) { e.preventDefault(); undo() }
       else if ((key === 'z' && e.shiftKey) || key === 'y') { e.preventDefault(); redo() }
