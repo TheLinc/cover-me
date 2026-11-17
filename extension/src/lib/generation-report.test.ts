@@ -65,6 +65,13 @@ describe('buildGenerationReport', () => {
     expect(report.output).toEqual({ summary: 'Platform engineer.', experience: parsed.experience, education: [], atsScore: 72, atsGaps: ['Terraform'] })
   })
 
+  test("a resume's own lines are scrubbed too", () => {
+    const named = { ...tailored, summary: 'Jane Doe runs platforms.', otherSections: [{ heading: 'References', lines: ['Ask jane.doe@example.com'] }] }
+    const out = buildGenerationReport({ kind: 'resume', output: named, job }, form, env()).output as TailoredResume
+    expect(out.summary).toBe('[name] runs platforms.')
+    expect(out.otherSections).toEqual([{ heading: 'References', lines: ['Ask [email]'] }])
+  })
+
   test('hosted reports say the provider is Claude', () => {
     const report = buildGenerationReport({ kind: 'letter', output: letter, job }, form, env({ mode: 'hosted', provider: 'openai' }))
     expect(report).toMatchObject({ mode: 'hosted', provider: 'claude' })

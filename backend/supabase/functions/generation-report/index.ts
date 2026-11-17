@@ -82,21 +82,21 @@ Deno.serve(async (req) => {
   return sent ? json({ ok: true }) : json({ error: 'Could not send' }, 502)
 })
 
-const text = (v: unknown, max: number): v is string => typeof v === 'string' && v.length <= max
+const isText = (v: unknown, max: number): v is string => typeof v === 'string' && v.length <= max
 
 function report({ category, comment, kind, output, job, mode, provider, version, sourceResume }: Body): Record<string, unknown> | null {
   if (typeof category !== 'string' || !Object.hasOwn(CATEGORIES, category)) return null
-  if (!text(comment, MAX_COMMENT) || (category === 'other' && !comment.trim())) return null
+  if (!isText(comment, MAX_COMMENT) || (category === 'other' && !comment.trim())) return null
   if (typeof kind !== 'string' || !Object.hasOwn(KINDS, kind)) return null
   if (mode !== 'hosted' && mode !== 'byok') return null
   if (provider !== 'claude' && provider !== 'openai') return null
   if (typeof version !== 'string' || !VERSION.test(version)) return null
   if (!job || typeof job !== 'object') return null
   const { title, company, description, site } = job as Body
-  if (!text(title, MAX_JOB_FIELD) || !text(company, MAX_JOB_FIELD) || !text(description, MAX_DESCRIPTION)) return null
+  if (!isText(title, MAX_JOB_FIELD) || !isText(company, MAX_JOB_FIELD) || !isText(description, MAX_DESCRIPTION)) return null
   if (typeof site !== 'string' || (site !== '' && !HOST.test(site))) return null
   // The original resume goes only with "It added things that aren't true".
-  if (sourceResume !== undefined && (category !== 'invented' || !text(sourceResume, MAX_SOURCE))) return null
+  if (sourceResume !== undefined && (category !== 'invented' || !isText(sourceResume, MAX_SOURCE))) return null
 
   let made: Record<string, unknown>
   if (kind === 'letter') {

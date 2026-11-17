@@ -22,7 +22,7 @@ import type { AuthSession, JobData, TailoredHistoryEntry, TailoredResume } from 
 
 // job: the posting, for "Flag a problem". A resume from the account has no
 // description: the server keeps title, company and address only.
-interface Opened { scored: TailoredResume; jobTitle: string; company: string; job: JobData }
+interface Opened { scored: TailoredResume; job: JobData }
 
 // A Pro account's session, or null. Checked from what this browser has
 // cached first, so BYOK and Free make no network call here.
@@ -35,12 +35,12 @@ async function proSession(): Promise<AuthSession | null> {
 // another device, or past the 20 kept here) comes from the account.
 async function openResume(id: string): Promise<Opened | null> {
   const entry = (await getTailoredHistory()).find((e) => e.id === id)
-  if (entry) return { scored: entry.resume, jobTitle: entry.job.title, company: entry.job.company, job: entry.job }
+  if (entry) return { scored: entry.resume, job: entry.job }
   const session = await proSession()
   if (!session) return null
   for (const app of await fetchApplicationsFromBackend(session.access_token)) {
     const tr = app.tailoredResumes.find((t) => t.id === id)
-    if (tr) return { scored: tr.resume, jobTitle: app.title, company: app.company, job: { title: app.title, company: app.company, url: app.url, description: '' } }
+    if (tr) return { scored: tr.resume, job: { title: app.title, company: app.company, url: app.url, description: '' } }
   }
   return null
 }
@@ -119,7 +119,7 @@ export default function Editor() {
       setOpened(o)
       if (!o) return
       setForm({ draft: structuredClone(o.scored), skills: o.scored.skills ? splitSkills(o.scored.skills) : [] })
-      document.title = `Edit resume · ${o.jobTitle || 'Cover Me'}`
+      document.title = `Edit resume · ${o.job.title || 'Cover Me'}`
       // Ready for a save as the tab closes, which can't wait for a refresh.
       void proSession().then((s) => { session.current = s }).catch(() => {})
     }).catch(() => setOpened('error'))
@@ -320,7 +320,7 @@ export default function Editor() {
 
   const edited = dirty || !!scored.editedAt
   const { draft, skills } = form
-  const postingTitle = postingTitleInSummary(draft, opened.jobTitle)
+  const postingTitle = postingTitleInSummary(draft, opened.job.title)
   const sections = shownSections(draft)
   const askAt = Math.min(orderAsk.at, sections.length - 1)
   const ask = orderAsk.state && (
@@ -401,7 +401,7 @@ export default function Editor() {
       <header className="ed-bar">
         <div className="ed-bar-title">
           <h1>Edit resume</h1>
-          <p>{[opened.jobTitle, opened.company].filter(Boolean).join(' · ')}</p>
+          <p>{[opened.job.title, opened.job.company].filter(Boolean).join(' · ')}</p>
         </div>
         <p className="ed-note" aria-live="polite">
           {note && <>{note} <button type="button" className="text-link" onClick={undo}>Undo</button></>}
@@ -415,7 +415,7 @@ export default function Editor() {
           </button>
         </div>
         {/* What the user sees now: their edits, marked edited, or the resume as generated. */}
-        <FlagProblem target={{ kind: 'resume', output: edited ? saved : scored, job: opened.job }} />
+        <FlagProblem resultKey={`resume:${id}`} target={{ kind: 'resume', output: edited ? saved : scored, job: opened.job }} />
         <p className="ed-status" aria-live="polite">
           {status === 'saving' ? 'Saving…'
             : status === 'saved' ? 'Saved'
@@ -424,9 +424,9 @@ export default function Editor() {
         </p>
         {/* Only Cover Me layout resumes open here (no Edit on "Your design"), so Word is the Cover Me layout too. */}
         <DownloadMenu className="btn btn-secondary btn-compact" options={[
-          { label: 'PDF', onSelect: () => downloadTailoredResumePdf(current, opened.jobTitle) },
+          { label: 'PDF', onSelect: () => downloadTailoredResumePdf(current, opened.job.title) },
           // docx is big, so it loads only when someone asks for the Word file.
-          { label: 'Word', onSelect: () => void import('../lib/pdf/resume-docx').then((m) => m.downloadTailoredResumeDocx(current, opened.jobTitle)) },
+          { label: 'Word', onSelect: () => void import('../lib/pdf/resume-docx').then((m) => m.downloadTailoredResumeDocx(current, opened.job.title)) },
         ]} />
         <button className="btn btn-primary btn-compact" onClick={done}>Done</button>
       </header>

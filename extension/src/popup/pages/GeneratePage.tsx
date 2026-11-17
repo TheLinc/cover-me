@@ -1072,7 +1072,7 @@ export default function GeneratePage({ onNavigate }: Props) {
                     </button>
                   </div>
                   {/* Keyed by the letter's time, so a regenerated letter can be flagged again. */}
-                  {job && <FlagProblem key={createdAt} target={{ kind: 'letter', output: letter, job }} />}
+                  {job && <FlagProblem key={createdAt} resultKey={`letter:${createdAt}`} target={{ kind: 'letter', output: letter, job }} />}
                 </div>
               )}
 

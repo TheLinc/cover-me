@@ -16,6 +16,9 @@ export const REPORT_CATEGORIES = [
 ] as const
 export type ReportCategory = (typeof REPORT_CATEGORIES)[number]['key']
 export const MAX_COMMENT = 500
+// The most the prompts read of a posting, and the most of a resume the server takes.
+const MAX_DESCRIPTION = 15_000
+const MAX_SOURCE = 30_000
 
 export interface ReportForm {
   category: ReportCategory
@@ -65,7 +68,6 @@ export function buildGenerationReport(target: ReportTarget, form: ReportForm, en
     [known.location, '[location]'],
   ]
 
-  const { name: _n, phone: _p, email: _e, website: _w, links: _l, location: _loc, ...resume } = target.kind === 'resume' ? target.output : ({} as TailoredResume)
   const sendSource = form.category === 'invented' && form.sendSource && !!env.resume?.text
   let site = ''
   try { site = new globalThis.URL(target.job.url).hostname.replace(/^www\./, '') } catch { /* pasted: no address */ }
@@ -74,14 +76,21 @@ export function buildGenerationReport(target: ReportTarget, form: ReportForm, en
     category: form.category,
     comment: form.comment.trim(),
     kind: target.kind,
-    output: target.kind === 'letter' ? scrub(target.output, people) : resume,
-    job: { title: target.job.title, company: target.job.company, description: target.job.description.slice(0, 15_000), site },
+    output: target.kind === 'letter'
+      ? scrub(target.output, people)
+      // A resume loses its contact fields, and every line left is scrubbed too:
+      // a summary or a references section can name the user.
+      : JSON.parse(
+        JSON.stringify(Object.fromEntries(Object.entries(target.output).filter(([k]) => !(CONTACT_FIELDS as readonly string[]).includes(k)))),
+        (_, v) => (typeof v === 'string' ? scrub(v, people) : v),
+      ),
+    job: { title: target.job.title, company: target.job.company, description: target.job.description.slice(0, MAX_DESCRIPTION), site },
     mode: env.mode,
     // Hosted letters and resumes are written by Claude whatever the BYOK setting says.
     provider: env.mode === 'hosted' ? 'claude' : env.provider,
     version: env.version,
     contact: env.mode === 'hosted' && form.contact,
-    ...(sendSource && { sourceResume: scrub(env.resume!.text, [...people, ...places], true) }),
+    ...(sendSource && { sourceResume: scrub(env.resume!.text, [...people, ...places], true).slice(0, MAX_SOURCE) }),
   }
 }
 
@@ -93,6 +102,17 @@ function scrub(text: string, pairs: Array<[string | undefined, string]>, withLin
   for (const [value, tag] of known) text = text.replace(new RegExp(value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), tag)
   text = text.replace(EMAIL, '[email]').replace(PHONE, '[phone]')
   return withLinks ? text.replace(URL, '[link]') : text
+}
+
+// Results already reported from this browser (a letter's time, a resume's
+// History ID), so reopening the popup or the editor doesn't offer it again.
+export async function reportedResults(): Promise<string[]> {
+  const { reportedResults } = await chrome.storage.local.get('reportedResults')
+  return (reportedResults as string[] | undefined) ?? []
+}
+
+export async function rememberReportedResult(key: string): Promise<void> {
+  await chrome.storage.local.set({ reportedResults: [...new Set([...(await reportedResults()), key])].slice(-100) })
 }
 
 // Throws with the response status, 0 when the server couldn't be reached.

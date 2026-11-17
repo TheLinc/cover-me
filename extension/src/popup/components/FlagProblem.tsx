@@ -1,14 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
 import { ensureValidSession } from '../../lib/auth'
 import { SUPABASE_URL } from '../../lib/config'
-import { buildGenerationReport, MAX_COMMENT, REPORT_CATEGORIES, sendGenerationReport, type ReportCategory, type ReportTarget } from '../../lib/generation-report'
+import { buildGenerationReport, MAX_COMMENT, rememberReportedResult, REPORT_CATEGORIES, reportedResults, sendGenerationReport, type ReportCategory, type ReportTarget } from '../../lib/generation-report'
 import { getMode, getResume, getSession, getSettings } from '../../lib/storage'
 
 // "Flag a problem" (#256): under a letter in the popup, in the editor tab's top
 // bar for a resume. Opens a short form; one Send adds one report. After that
-// it reads "Reported. Thanks." for this result (give each result its own key).
-// Builds without a backend have nothing to send to, so they show nothing.
-export default function FlagProblem({ target }: { target: ReportTarget }) {
+// it reads "Reported. Thanks." for this result, also after the popup or tab is
+// reopened. resultKey: what names the result (a letter's time, a resume's ID);
+// give each result its own React key too. Builds without a backend have
+// nothing to send to, so they show nothing.
+export default function FlagProblem({ target, resultKey }: { target: ReportTarget; resultKey: string }) {
   const [open, setOpen] = useState(false)
   const [category, setCategory] = useState<ReportCategory | null>(null)
   const [comment, setComment] = useState('')
@@ -19,7 +21,12 @@ export default function FlagProblem({ target }: { target: ReportTarget }) {
   const [error, setError] = useState('')
   const [reported, setReported] = useState(false)
   const form = useRef<HTMLFormElement>(null)
-  const done = useRef<HTMLButtonElement>(null)
+  const link = useRef<HTMLButtonElement>(null)
+  const submitted = useRef(false)
+
+  useEffect(() => {
+    void reportedResults().then((keys) => { if (keys.includes(resultKey)) setReported(true) })
+  }, [resultKey])
 
   // Only a signed-in Hosted user has an account we could email.
   useEffect(() => {
@@ -27,11 +34,11 @@ export default function FlagProblem({ target }: { target: ReportTarget }) {
     void Promise.all([getMode(), getSession()]).then(([mode, session]) => setCanContact(mode === 'hosted' && !!session))
     form.current?.querySelector('input')?.focus()
   }, [open])
-  useEffect(() => { if (reported) done.current?.focus() }, [reported])
+  // After a send the form is gone: focus the link, which now reads the thanks.
+  useEffect(() => { if (reported && submitted.current) link.current?.focus() }, [reported])
 
   if (!SUPABASE_URL) return null
 
-  const thing = target.kind === 'letter' ? 'letter' : 'resume'
   const ready = category && (category !== 'other' || comment.trim())
 
   async function submit(e: React.FormEvent) {
@@ -50,6 +57,8 @@ export default function FlagProblem({ target }: { target: ReportTarget }) {
         return
       }
       await sendGenerationReport(report, token)
+      await rememberReportedResult(resultKey)
+      submitted.current = true
       setOpen(false)
       setReported(true)
     } catch {
@@ -61,17 +70,17 @@ export default function FlagProblem({ target }: { target: ReportTarget }) {
 
   return (
     <div className="flag">
-      <button type="button" ref={done} className="text-link flag-link" disabled={reported} aria-expanded={open}
+      <button type="button" ref={link} className="text-link flag-link" disabled={reported} aria-expanded={open}
         onClick={() => setOpen((o) => !o)}>
         {reported ? 'Reported. Thanks.' : 'Flag a problem'}
       </button>
       {open && (
         <form className="flag-form" ref={form} onSubmit={submit} onKeyDown={(e) => { if (e.key === 'Escape') setOpen(false) }}>
           <fieldset>
-            <legend className="form-label">What was wrong with this {thing}?</legend>
+            <legend className="form-label">What was wrong with this {target.kind}?</legend>
             {REPORT_CATEGORIES.map((c) => (
               <label key={c.key} className="compact-toggle">
-                <input type="radio" name="flag-category" checked={category === c.key} onChange={() => setCategory(c.key)} />
+                <input type="radio" name="flag-category" checked={category === c.key} onChange={() => { setCategory(c.key); setSendSource(false) }} />
                 {c.label}
               </label>
             ))}
@@ -93,8 +102,9 @@ export default function FlagProblem({ target }: { target: ReportTarget }) {
             </label>
           )}
           <p className="hint">
-            Sends this {thing}{target.kind === 'resume' && ' and its ATS score'}, the job&apos;s title, company, description and
-            site name, your answers, and which AI wrote it.
+            Sends this {target.kind}{target.kind === 'resume' && ' with its ATS score and gaps, marked if you edited it'}, the
+            job&apos;s title, company, description and site name, your answers, whether you use Hosted or your own key,
+            which AI wrote it and the extension&apos;s version.
             {category === 'invented' && sendSource && ' Also your original resume.'}
             {' '}Your contact details are taken out first.
             {canContact && contact ? ' Your account goes with it so we can reply.' : " It isn't linked to you."}
