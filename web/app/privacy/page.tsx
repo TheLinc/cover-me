@@ -375,7 +375,7 @@ export default function PrivacyPage() {
                 version, and for a resume its ATS score and gaps. Your name, email address, phone number and links
                 are taken out in your browser before sending, and a resume also loses its location. If you
                 pick &quot;It added things that aren&apos;t true&quot; you can also choose to send your original
-                resume, with the same details and its whole contact header (such as a street address) taken out. A report is linked to your account only if you are
+                resume, with the same details, and any street address or postal code, taken out. A report is linked to your account only if you are
                 signed in to Hosted mode and tick &quot;You can email me about this&quot;; then it carries your
                 account ID so we can reply.
               </Li>

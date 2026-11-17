@@ -63,7 +63,7 @@ const EMAIL = /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g
 const PHONE = /(?:\+\d[\d ().-]{7,}\d|\(?\b\d{3}\)?[ .-]?\d{3}[ .-]?\d{4}\b)/g
 // Only addresses that can't be anything else. A bare portfolio domain comes
 // from the parse, the tailored resume, or guessedDomains.
-const URL = /(?:https?:\/\/|www\.)\S*[^\s.,;:!?)]|\b(?:[\w-]+\.)*(?:linkedin|github|gitlab|behance|dribbble)\.com\/(?:\S*[^\s.,;:!?)])?/gi
+const URL = /(?:https?:\/\/|www\.)[^\s"'”’]*[^\s.,;:!?)"'”’]|\b(?:[\w-]+\.)*(?:linkedin|github|gitlab|behance|dribbble)\.com\/(?:[^\s"'”’]*[^\s.,;:!?)"'”’])?/gi
 // A domain with a common site ending (lowercase, so "ASP.NET" stays out; the
 // list keeps "Node.js" out), an optional country part ("com.br"), and its path.
 const DOMAIN = /\b[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.(?:com|dev|io|me|net|org|co|ca|app|page|site|xyz|tech|ai|design|blog|info|studio|art|tv|pro|online|cc|gg|so|to|ie|uk|us|de|fr|au|in|nl|it|es|se|ch|eu)(?:\.[a-z]{2})?\b(?:\/(?:[^\s·|,]*[^\s·|,.;:!?)])?)?/g
@@ -74,7 +74,7 @@ const LABELLED = new RegExp(String.raw`\b(?:portfolio|website|web|site|homepage|
 // already keeps "Node.js" out.
 const ANY_DOMAIN = /\b[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}\b(?:\/(?:[^\s·|,]*[^\s·|,.;:!?)])?)?/g
 // Sites anyone has a page on: their names stay when a profile on them goes.
-const PLATFORM = /^(?:www\.)?(?:linkedin|github|gitlab|medium|behance|dribbble|twitter|x|instagram|youtube|kaggle|substack|notion|dev)\.(?:com|to|so|in)$/i
+const PLATFORM = /^(?:www\.)?(?:linkedin|github|gitlab|medium|behance|dribbble|twitter|x|instagram|youtube|kaggle|substack|notion|dev|codepen|bitbucket|huggingface|hashnode)\.(?:com|to|so|in|net|io|org|co|dev)$/i
 const plain = (s: string) => s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
 
 // Domains the user's own, besides the known links, from signals a skills list
@@ -92,8 +92,12 @@ function guessedDomains(text: string, output: string, names: string[]): string[]
   const contact = top.split('\n').filter((l) => l.search(EMAIL) !== -1 || l.search(PHONE) !== -1)
     .flatMap((l) => l.replace(EMAIL, ' ').replace(PHONE, ' ').match(DOMAIN) ?? [])
   const labelled = [...top.matchAll(LABELLED)].map((m) => m[1])
-  // Each name word, and the whole name run together, so "Yu Li" finds yuli.dev.
-  const words = [...new Set(names.flatMap((n) => [...plain(n).split(/[^\p{L}]+/u), plain(n).replace(/[^\p{L}]/gu, '')]).filter((w) => w.length >= 3))]
+  // Each name word, and the whole name run together either way round, so
+  // "Yu Li" finds yuli.dev and liyu.dev.
+  const words = [...new Set(names.flatMap((n) => {
+    const parts = plain(n).split(/[^\p{L}]+/u).filter(Boolean)
+    return [...parts, parts.join(''), [...parts].reverse().join('')]
+  }).filter((w) => w.length >= 3))]
   const named = `${text}\n${output}`.replace(EMAIL, ' ').match(ANY_DOMAIN)?.filter((d) => words.some((w) => plain(d).includes(w))) ?? []
   const host = (d: string) => d.split('/')[0]
   return [...[...contact, ...labelled].flatMap((d) => (PLATFORM.test(host(d)) ? [d] : [d, host(d)])), ...named]
@@ -111,7 +115,7 @@ export function buildGenerationReport(target: ReportTarget, form: ReportForm, en
   const tag = (values: string[], t: string) => values.map((v): [string, string] => [v, t])
   // Known links and guessed ones together: History's resume may be older, or
   // someone else's.
-  const links = [...all('website'), ...all('links'), ...guessedDomains(env.resume?.text ?? '', target.kind === 'letter' ? target.output : JSON.stringify(target.output), names)]
+  const links = [...all('website'), ...all('links'), ...guessedDomains(env.resume?.text ?? '', target.kind === 'letter' ? target.output : stringsOf(target.output).join('\n'), names)]
   // A letter prompt asks for the portfolio link, which often holds the name, so
   // the user's links go from everything sent. Location only from the original
   // resume: in a letter or a resume's jobs it's part of what we want to see.
@@ -142,7 +146,7 @@ export function buildGenerationReport(target: ReportTarget, form: ReportForm, en
     provider: env.mode === 'hosted' ? 'claude' : env.provider,
     version: env.version,
     contact: env.mode === 'hosted' && form.contact,
-    ...(sendSource && { sourceResume: withoutHeader(scrub(env.resume!.text, [...people, ...tag(all('location'), '[location]')], true)).slice(0, MAX_SOURCE) }),
+    ...(sendSource && { sourceResume: withoutAddress(scrub(env.resume!.text, [...people, ...tag([...all('location'), ...contactPlaces(env.resume!.text)], '[location]')], true)).slice(0, MAX_SOURCE) }),
   }
 }
 
@@ -169,33 +173,25 @@ function headNames(text: string): string[] {
 }
 const NAME_PARTICLE = /^(van|von|der|den|de|del|della|di|da|dos|du|la|le|bin|binti|al|el|ibn|ben|y)$/i
 
-// The original resume's header goes whole: everything up to the last contact
-// detail near the top, so a street address or postal code beside the city
-// goes too. ponytail: a detail past the first 400 characters, or an address
-// after the last one, stays.
-function withoutHeader(text: string): string {
-  const TAGS = ['[email]', '[phone]', '[link]', '[location]']
-  const first = Math.min(...TAGS.map((t) => text.indexOf(t)).filter((i) => i !== -1))
-  if (!Number.isFinite(first) || first >= 400) return text
-  // The header ends at the first section heading after its first contact
-  // detail, so a link in the first job can't take the summary with it. A
-  // heading sits alone on its line, or (a PDF's run-together text) is in
-  // capitals; one before the contact details ("Education Consultant") is a
-  // job title, not a section.
-  const rest = text.slice(first)
-  const heading = first + Math.min(
-    ...[/^[ \t]*(?:professional summary|summary|profile|objective|about me|experience|work experience|employment|education|skills|projects)[ \t]*:?[ \t]*$/im,
-      /\b(?:SUMMARY|PROFILE|OBJECTIVE|EXPERIENCE|EMPLOYMENT|EDUCATION|SKILLS|PROJECTS)\b/]
-      .map((h) => rest.search(h)).filter((i) => i !== -1),
-    400 - first,
-  )
-  const top = text.slice(0, heading)
-  const end = Math.max(...TAGS.map((t) => {
-    const i = top.lastIndexOf(t)
-    return i === -1 ? -1 : i + t.length
-  }))
-  return `[contact details]${text.slice(end)}`
+// A street address, and a postal code (Canadian, UK, or a US ZIP after a
+// state), wherever they sit in the original resume. Nothing is cut around
+// them: guessing where a header ends broke the summary in too many layouts.
+// ponytail: an address without a number and street word ("Flat B, Rose Court")
+// stays.
+const ADDRESS = /\b\d{1,6}[A-Za-z]?(?:[ \t]+[A-Z][\w'.-]*){1,4}[ \t]+(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Drive|Dr|Lane|Ln|Way|Court|Ct|Crescent|Cres|Place|Pl|Terrace|Close|Parkway|Pkwy|Highway|Hwy|Square|Sq)\b\.?(?:,?[ \t]*(?:Apt|Unit|Suite|#)[ \t]*[\w-]+)?/g
+const POSTAL = /\b[A-Z]\d[A-Z][ ]?\d[A-Z]\d\b|\b[A-Z]{1,2}\d[A-Z\d]?[ ]\d[A-Z]{2}\b|\b[A-Z]{2}[ \t]+\d{5}(?:-\d{4})?\b/g
+const withoutAddress = (text: string) => text.replace(ADDRESS, '[address]').replace(POSTAL, (m) => (/^[A-Z]{2}\s+\d/.test(m) ? `${m.slice(0, 2)} [postal code]` : '[postal code]'))
+
+// A city with its province or state ("Toronto, ON") on a line near the top
+// that holds an email or phone: the location when no parse names it.
+function contactPlaces(text: string): string[] {
+  return text.slice(0, 400).split('\n').filter((l) => l.search(EMAIL) !== -1 || l.search(PHONE) !== -1)
+    .flatMap((l) => l.match(/\b\p{Lu}[\p{L}'.-]+(?:[ ]\p{Lu}[\p{L}'.-]+){0,2},[ ]?[A-Z]{2}\b/gu) ?? [])
 }
+
+// Every string in a resume, as written (JSON would turn a line break into "\n",
+// gluing an "n" to the next word).
+const stringsOf = (v: unknown): string[] => (typeof v === 'string' ? [v] : v && typeof v === 'object' ? Object.values(v).flatMap(stringsOf) : [])
 
 // A link as a letter may write it: no https://, www. or trailing slash.
 const bareLink = (l: string) => l.trim().replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/+$/, '')
