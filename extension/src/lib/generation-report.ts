@@ -105,7 +105,7 @@ export function buildGenerationReport(target: ReportTarget, form: ReportForm, en
     provider: env.mode === 'hosted' ? 'claude' : env.provider,
     version: env.version,
     contact: env.mode === 'hosted' && form.contact,
-    ...(sendSource && { sourceResume: scrub(env.resume!.text, [...people, ...tag(all('location'), '[location]')], true).slice(0, MAX_SOURCE) }),
+    ...(sendSource && { sourceResume: withoutHeader(scrub(env.resume!.text, [...people, ...tag(all('location'), '[location]')], true)).slice(0, MAX_SOURCE) }),
   }
 }
 
@@ -132,6 +132,19 @@ function headNames(text: string): string[] {
 }
 const NAME_PARTICLE = /^(van|von|der|den|de|del|della|di|da|dos|du|la|le|bin|binti|al|el|ibn|ben|y)$/i
 
+// The original resume's header goes whole: everything up to the last contact
+// detail near the top, so a street address or postal code beside the city
+// goes too. ponytail: a detail past the first 400 characters, or an address
+// after the last one, stays.
+function withoutHeader(text: string): string {
+  const top = text.slice(0, 400)
+  const end = Math.max(...['[email]', '[phone]', '[link]', '[location]'].map((t) => {
+    const i = top.lastIndexOf(t)
+    return i === -1 ? -1 : i + t.length
+  }))
+  return end > 0 ? `[contact details]${text.slice(end)}` : text
+}
+
 // A link as a letter may write it: no https://, www. or trailing slash.
 const bareLink = (l: string) => l.trim().replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/+$/, '')
 
@@ -140,7 +153,7 @@ const bareLink = (l: string) => l.trim().replace(/^https?:\/\//i, '').replace(/^
 function signedName(letter: string): string[] {
   const lines = letter.split('\n').map((l) => l.trim()).filter(Boolean)
   let close = lines.length
-  while (close-- > 0 && !/^(sincerely|best|regards|kind regards|best regards|warm regards|warmly|thank you|thanks|respectfully|yours truly|yours sincerely|cheers|with gratitude)\b[^.!?]{0,20},?$/i.test(lines[close]));
+  while (close-- > 0 && !/^(sincerely|best|regards|kind regards|best regards|warm regards|warmly|thank you|thanks|respectfully|yours truly|yours sincerely|cheers|with gratitude)\b[^.!?]{0,45},?$/i.test(lines[close]));
   const name = close === -1 ? undefined : lines[close + 1]
   return name && name.length <= 60 && !/[\d@]/.test(name) ? [name] : []
 }
