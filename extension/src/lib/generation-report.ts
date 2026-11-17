@@ -153,16 +153,17 @@ function withShortForms(names: string[]): string[] {
   }))]
 }
 
-// Whole-word matches of what we know (longest first, any case), then anything
-// shaped like an email or phone number. withLinks: web addresses too.
+// Anything shaped like an email or phone number first, so a name can't eat an
+// email's first half ("[name]@janedoe.dev"). Then whole-word matches of what
+// we know (longest first, any case). withLinks: web addresses too.
 function scrub(text: string, pairs: Array<[string, string]>, withLinks = false): string {
+  text = text.replace(EMAIL, '[email]').replace(PHONE, '[phone]')
   const known = pairs.flatMap(([v, tag]) => (v && v.trim().length >= 3 ? [[v.trim(), tag] as const] : []))
     .sort((a, b) => b[0].length - a[0].length)
   for (const [value, tag] of known) {
     const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
     text = text.replace(new RegExp(`(?<![\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])`, 'giu'), tag)
   }
-  text = text.replace(EMAIL, '[email]').replace(PHONE, '[phone]')
   return withLinks ? text.replace(URL, '[link]') : text
 }
 

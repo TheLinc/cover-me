@@ -136,6 +136,14 @@ describe('buildGenerationReport', () => {
     expect(buildGenerationReport({ kind: 'letter', output: 'Sincerely,\nJane Doe', job }, invented, text('Profile Summary\nJane Doe')).sourceResume).toBe('[name]\n[name]') // the heading too: see headNames
   })
 
+  test("a name can't eat an email's first half and leave its domain", () => {
+    const pdf = env({ resume: { text: 'Jane Doe jane@janedoe.dev (416) 555-0199 Experience', filename: '', updatedAt: '' } })
+    expect(buildGenerationReport({ kind: 'letter', output: 'Hi', job }, { ...form, category: 'invented', sendSource: true }, pdf).sourceResume)
+      .toBe('[name] [email] [phone] Experience')
+    expect(buildGenerationReport({ kind: 'letter', output: 'Write to jane@janedoe.dev.\n\nBest,\nJane', job }, form, pdf).output)
+      .toBe('Write to [email].\n\nBest,\n[name]')
+  })
+
   test("the user's own links go from a letter and from a resume's lines", () => {
     expect(buildGenerationReport({ kind: 'letter', output: 'My work is at janedoe.dev and https://github.com/janedoe/forms.', job }, form, env()).output)
       .toBe('My work is at [link] and [link]')

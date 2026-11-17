@@ -81,8 +81,9 @@ export default function FlagProblem({ target, resultKey }: { target: ReportTarge
 
   return (
     <div className="flag">
-      <button type="button" ref={link} className="text-link flag-link" disabled={reported} aria-expanded={open}
-        onClick={() => setOpen((o) => !o)}>
+      {/* aria-disabled, not disabled: it keeps focus after a send, so the thanks is read out. */}
+      <button type="button" ref={link} className="text-link flag-link" aria-disabled={reported} aria-expanded={reported ? undefined : open}
+        onClick={() => { if (!reported) setOpen((o) => !o) }}>
         {reported ? 'Reported. Thanks.' : 'Flag a problem'}
       </button>
       {open && (
