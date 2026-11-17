@@ -691,7 +691,7 @@ export default function GeneratePage({ onNavigate }: Props) {
   const setupLoaded = hasResume !== null && hasApiKey !== null && hasSession !== null
 
   const bothDone = state === 'done' && tailorState === 'done'
-  const postingTitle = tailorState === 'done' && tailoredResume && tailoredJob ? postingTitleInSummary(tailoredResume, tailoredJob.title) : ''
+  const postingTitle = tailorState === 'done' && tailoredResume && tailoredJob ? postingTitleInSummary(tailoredResume, tailoredJob.title) : undefined
 
   // The header's status line: what's running, what failed, or that a result is
   // ready. A failure wins over the other result being done.
@@ -1125,7 +1125,7 @@ export default function GeneratePage({ onNavigate }: Props) {
                   {tailoredResume.designFellBack && (
                     <p className="hint">Your file&apos;s layout couldn&apos;t be edited safely, so this one uses the Cover Me layout.</p>
                   )}
-                  {postingTitle && <PostingTitleTip title={postingTitle} />}
+                  {postingTitle && <PostingTitleTip {...postingTitle} />}
                   <div className="letter-actions">
                     {/* Tailored in the user's own file (#131): their Word file leads. */}
                     <DownloadMenu

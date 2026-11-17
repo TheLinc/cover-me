@@ -24,15 +24,35 @@ export function remainingGaps(gaps: string[] | undefined, resume: TailoredResume
   return (gaps ?? []).filter((g) => !mentions(text, g))
 }
 
+export type PostingTitle = { title: string; shorter: boolean }
+
 // The posting's title, levels dropped, when the summary names it and none of
-// the user's jobs carry it; '' otherwise (#244). The tailor may open the summary with the
-// posting's title (#218); job titles stay the user's own. A one-word title
-// ("Designer") is never exempted from grounding, so it gets no note, and
+// the user's jobs carry it (#244). The tailor may open the summary with the
+// posting's title (#218); job titles stay the user's own. Failing that, a
+// shorter form of it the summary names, flagged as shorter (#253). A one-word
+// title ("Designer") is never exempted from grounding, so it gets no note, and
 // neither does a resume with no jobs left to compare (section deleted).
-export function postingTitleInSummary(resume: TailoredResume, jobTitle: string): string {
+export function postingTitleInSummary(resume: TailoredResume, jobTitle: string): PostingTitle | undefined {
   const title = titleWithoutLevel(jobTitle)
-  const jobs = resume.experience
-  return title && jobs.length && mentions(resume.summary ?? '', title) && !jobs.some((e) => mentions(e.title, title)) ? title : ''
+  const summary = resume.summary ?? ''
+  if (!title || !resume.experience.length) return undefined
+  const unclaimed = (t: string) => !resume.experience.some((e) => mentions(e.title, t))
+  if (mentions(summary, title)) return unclaimed(title) ? { title, shorter: false } : undefined
+  const form = shorterForms(title).find((t) => mentions(summary, t) && unclaimed(t))
+  return form ? { title: form, shorter: true } : undefined
+}
+
+// Two or more of the title's words, in order and ending with its last word,
+// longest first: "Software Engineer" and "Development Engineer" from
+// "Software Development Engineer". One word ("Engineer") never counts.
+function shorterForms(title: string): string[] {
+  const words = title.split(' ')
+  const last = words.pop()
+  const subsets = words.reduce<string[][]>((sets, w) => [...sets, ...sets.map((s) => [...s, w])], [[]])
+  return subsets
+    .filter((s) => s.length && s.length < words.length)
+    .sort((a, b) => b.length - a.length)
+    .map((s) => [...s, last].join(' '))
 }
 
 // The edit as saved: the draft's text, the score from before any edit, and

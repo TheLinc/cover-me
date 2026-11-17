@@ -22,36 +22,53 @@ describe("the note on a summary that uses the posting's title (#244)", () => {
   })
 
   test('shows when the summary opens with a title none of the jobs carry', () => {
-    expect(postingTitleInSummary(fullStack('Software Engineer who builds web applications.'), 'Software Engineer')).toBe('Software Engineer')
+    expect(postingTitleInSummary(fullStack('Software Engineer who builds web applications.'), 'Software Engineer')).toEqual({ title: 'Software Engineer', shorter: false })
   })
 
   test('matches the title without its level or a scraped suffix', () => {
-    expect(postingTitleInSummary(fullStack('Software Engineer who builds web applications.'), 'Senior Software Engineer, Payments (Remote)')).toBe('Software Engineer')
+    expect(postingTitleInSummary(fullStack('Software Engineer who builds web applications.'), 'Senior Software Engineer, Payments (Remote)')).toEqual({ title: 'Software Engineer', shorter: false })
   })
 
   test("not when the summary keeps the user's own title", () => {
-    expect(postingTitleInSummary(fullStack('Full Stack Developer who builds web applications.'), 'Software Engineer')).toBe('')
+    expect(postingTitleInSummary(fullStack('Full Stack Developer who builds web applications.'), 'Software Engineer')).toBeUndefined()
   })
 
   test("not when one of the user's jobs already has that title, with or without a level", () => {
     const r = { ...fullStack('Software Engineer who builds web applications.'), experience: [{ ...resume.experience[0], title: 'Senior Software Engineer' }] }
-    expect(postingTitleInSummary(r, 'Software Engineer')).toBe('')
+    expect(postingTitleInSummary(r, 'Software Engineer')).toBeUndefined()
   })
 
   test('goes once the title is edited out of the summary', () => {
-    expect(postingTitleInSummary(fullStack('Developer who builds web applications.'), 'Software Engineer')).toBe('')
+    expect(postingTitleInSummary(fullStack('Developer who builds web applications.'), 'Software Engineer')).toBeUndefined()
   })
 
   test('not for a one-word posting title, which may be any word in the summary', () => {
-    expect(postingTitleInSummary(fullStack('Full Stack Developer who works with every designer.'), 'Designer')).toBe('')
+    expect(postingTitleInSummary(fullStack('Full Stack Developer who works with every designer.'), 'Designer')).toBeUndefined()
   })
 
   test('not once the experience section is deleted, with no job titles left to compare', () => {
-    expect(postingTitleInSummary({ ...fullStack('Software Engineer who builds web applications.'), experience: [] }, 'Software Engineer')).toBe('')
+    expect(postingTitleInSummary({ ...fullStack('Software Engineer who builds web applications.'), experience: [] }, 'Software Engineer')).toBeUndefined()
+  })
+
+  test("shows a shorter form of the posting's title, flagged as shorter (#253)", () => {
+    expect(postingTitleInSummary(fullStack('Software Engineer building full-stack applications.'), 'Software Development Engineer')).toEqual({ title: 'Software Engineer', shorter: true })
+  })
+
+  test('a shorter form may skip any words but the last, after levels are dropped', () => {
+    expect(postingTitleInSummary(fullStack('Data Engineer who builds pipelines.'), 'Senior Data Platform Engineer')).toEqual({ title: 'Data Engineer', shorter: true })
+  })
+
+  test("no shorter form when one of the user's jobs has it", () => {
+    const r = { ...fullStack('Software Engineer building full-stack applications.'), experience: [{ ...resume.experience[0], title: 'Software Engineer II' }] }
+    expect(postingTitleInSummary(r, 'Software Development Engineer')).toBeUndefined()
+  })
+
+  test("one word of the posting's title never counts as a shorter form", () => {
+    expect(postingTitleInSummary(fullStack('Engineer building full-stack applications.'), 'Software Development Engineer')).toBeUndefined()
   })
 
   test('not for a posting with no title', () => {
-    expect(postingTitleInSummary(fullStack('Developer who builds web applications.'), '')).toBe('')
+    expect(postingTitleInSummary(fullStack('Developer who builds web applications.'), '')).toBeUndefined()
   })
 })
 
