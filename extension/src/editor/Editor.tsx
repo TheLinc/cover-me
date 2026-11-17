@@ -337,7 +337,7 @@ export default function Editor() {
         return (
           <>
             <Field label="Summary" hideLabel long value={draft.summary ?? ''} onChange={(v) => edit((r) => { r.summary = v })} />
-            {postingTitle && <PostingTitleTip title={postingTitle} />}
+            {postingTitle && <PostingTitleTip {...postingTitle} />}
           </>
         )
       case 'experience':
