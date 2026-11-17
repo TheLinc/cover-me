@@ -171,7 +171,7 @@ describe('buildGenerationReport', () => {
     expect(buildGenerationReport({ kind: 'letter', output: 'See my work at janedoe.dev, built with Node.js and ASP.NET.', job }, form, hosted).output)
       .toBe('See my work at [link], built with Node.js and ASP.NET.')
     expect(buildGenerationReport({ kind: 'letter', output: 'Hi', job }, { ...form, category: 'invented', sendSource: true }, hosted).sourceResume)
-      .toBe(`[contact details]\n${filler}\nSkills: Node.js, ASP.NET\nWrote about churn models at [link]/blog`)
+      .toBe(`[contact details]\n${filler}\nSkills: Node.js, ASP.NET\nWrote about churn models at [link]`)
   })
 
   test('only contact lines give up domains, in any case; a skills line and a known link leave the rest alone', () => {
@@ -179,9 +179,18 @@ describe('buildGenerationReport', () => {
     const hosted = (text: string) => env({ mode: 'hosted', resume: { text, filename: '', updatedAt: '' } })
     expect(buildGenerationReport({ kind: 'letter', output: letter, job }, form, hosted('Jane Doe | JaneDoe.com | dev.to/janedoe | (416) 555-0199\nSkills: React, socket.io')).output)
       .toBe('I built a chat service on socket.io. See [link] and [link].')
-    // A known link means no guessing: socket.io on a contact line stays too.
-    const parsedText = env({ resume: { ...env().resume!, text: 'Jane Doe · socket.io fan · janedoe.dev' } })
-    expect(buildGenerationReport({ kind: 'letter', output: 'Built on socket.io.', job }, form, parsedText).output).toBe('Built on socket.io.')
+  })
+
+  test('a domain alone on its line, between dashes, or holding the name is taken; a "web developer" summary is not a contact line', () => {
+    const portfolio = 'My portfolio is codecraft.studio and janedoe.dev; I shipped socket.io apps.'
+    const hosted = (text: string) => env({ mode: 'hosted', resume: { text, filename: '', updatedAt: '' } })
+    const sent = (text: string) => buildGenerationReport({ kind: 'letter', output: portfolio, job }, form, hosted(text)).output
+    // Word puts each paragraph on its own line.
+    expect(sent('Jane Doe\n\nToronto, ON\n\njane@x.com\n\ncodecraft.studio\n\nSummary')).toBe('My portfolio is [link] and [link]; I shipped socket.io apps.')
+    expect(sent('Jane Doe\nToronto, ON — codecraft.studio — linkedin.com/in/janedoe')).toBe('My portfolio is [link] and [link]; I shipped socket.io apps.')
+    // janedoe.dev holds the name, wherever it is; the summary's socket.io stays.
+    expect(sent('Jane Doe\nSenior Web Developer\nFull-stack web developer shipping real-time apps on socket.io and Next.js'))
+      .toBe('My portfolio is codecraft.studio and [link]; I shipped socket.io apps.')
   })
 
   test("a name can't eat an email's first half and leave its domain", () => {
