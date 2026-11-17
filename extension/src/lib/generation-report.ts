@@ -63,30 +63,40 @@ const EMAIL = /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g
 const PHONE = /(?:\+\d[\d ().-]{7,}\d|\(?\b\d{3}\)?[ .-]?\d{3}[ .-]?\d{4}\b)/g
 // Only addresses that can't be anything else. A bare portfolio domain comes
 // from the parse, the tailored resume, or guessedDomains.
-const URL = /(?:https?:\/\/|www\.)\S+|\b(?:[\w-]+\.)*(?:linkedin|github|gitlab|behance|dribbble)\.com\/\S*/gi
+const URL = /(?:https?:\/\/|www\.)\S*[^\s.,;:!?)]|\b(?:[\w-]+\.)*(?:linkedin|github|gitlab|behance|dribbble)\.com\/(?:\S*[^\s.,;:!?)])?/gi
 // A domain with a common site ending (lowercase, so "ASP.NET" stays out; the
 // list keeps "Node.js" out), an optional country part ("com.br"), and its path.
 const DOMAIN = /\b[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.(?:com|dev|io|me|net|org|co|ca|app|page|site|xyz|tech|ai|design|blog|info|studio|art|tv|pro|online|cc|gg|so|to|ie|uk|us|de|fr|au|in|nl|it|es|se|ch|eu)(?:\.[a-z]{2})?\b(?:\/(?:[^\s·|,]*[^\s·|,.;:!?)])?)?/g
-// A domain after a label: "Portfolio pixelforge.studio", "Homepage: ...".
-const LABELLED = new RegExp(String.raw`\b(?:portfolio|website|web|site|homepage|blog|links?|url)\b\s*:?\s*(${DOMAIN.source})`, 'gi')
+// A domain after a label: "Portfolio pixelforge.studio", "Homepage: ...",
+// "Portfolio — https://...", "Portfolio 🌐 ...".
+const LABELLED = new RegExp(String.raw`\b(?:portfolio|website|web|site|homepage|blog|links?|url)\b[\s:—–|•·-]*(?:[^\w\s]{1,3}\s*)?(?:https?:\/\/)?(?:www\.)?(${DOMAIN.source})`, 'gi')
+// Any domain, any ending or case: only for the name check, where the name
+// already keeps "Node.js" out.
+const ANY_DOMAIN = /\b[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}\b(?:\/(?:[^\s·|,]*[^\s·|,.;:!?)])?)?/g
+// Sites anyone has a page on: their names stay when a profile on them goes.
+const PLATFORM = /^(?:[\w-]+\.)*(?:linkedin|github|gitlab|medium|behance|dribbble|twitter|x|instagram|youtube|kaggle|substack|notion|dev)\.(?:com|to|so|in)$/i
 const plain = (s: string) => s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
 
 // Domains the user's own, besides the known links, from signals a skills list
 // or an employer line can't give: on a line with an email or phone near the
 // resume's top, after a label there, or holding a word of the user's name
 // anywhere in the resume or the letter ("janedoe.dev", "behance.net/janedoe";
-// accents ignored). One from a contact line or a label also goes without its
-// path; a named one doesn't ("medium.com" is anyone's). ponytail: a domain that
+// accents ignored, any ending). One from a contact line or a label also goes
+// without its path, unless it's a profile on a platform ("medium.com" is
+// anyone's). ponytail: a domain that
 // spells no name, alone on a line or after an icon, is left: it reads the same
 // as a skill ("Socket.io") or an employer ("Shopify.com").
-function guessedDomains(text: string, letter: string, names: string[]): string[] {
+// output: the letter, or the tailored resume's text, also searched for names.
+function guessedDomains(text: string, output: string, names: string[]): string[] {
   const top = text.slice(0, 400)
   const contact = top.split('\n').filter((l) => l.search(EMAIL) !== -1 || l.search(PHONE) !== -1)
     .flatMap((l) => l.replace(EMAIL, ' ').replace(PHONE, ' ').match(DOMAIN) ?? [])
   const labelled = [...top.matchAll(LABELLED)].map((m) => m[1])
-  const words = [...new Set(names.flatMap((n) => plain(n).split(/[^\p{L}]+/u)).filter((w) => w.length >= 3))]
-  const named = `${text}\n${letter}`.replace(EMAIL, ' ').match(DOMAIN)?.filter((d) => words.some((w) => plain(d).includes(w))) ?? []
-  return [...[...contact, ...labelled].flatMap((d) => [d, d.split('/')[0]]), ...named]
+  // Each name word, and the whole name run together, so "Yu Li" finds yuli.dev.
+  const words = [...new Set(names.flatMap((n) => [...plain(n).split(/[^\p{L}]+/u), plain(n).replace(/[^\p{L}]/gu, '')]).filter((w) => w.length >= 3))]
+  const named = `${text}\n${output}`.replace(EMAIL, ' ').match(ANY_DOMAIN)?.filter((d) => words.some((w) => plain(d).includes(w))) ?? []
+  const host = (d: string) => d.split('/')[0]
+  return [...[...contact, ...labelled].flatMap((d) => (PLATFORM.test(host(d)) ? [d] : [d, host(d)])), ...named]
 }
 
 export function buildGenerationReport(target: ReportTarget, form: ReportForm, env: ReportEnv): GenerationReport {
@@ -101,7 +111,7 @@ export function buildGenerationReport(target: ReportTarget, form: ReportForm, en
   const tag = (values: string[], t: string) => values.map((v): [string, string] => [v, t])
   // Known links and guessed ones together: History's resume may be older, or
   // someone else's.
-  const links = [...all('website'), ...all('links'), ...guessedDomains(env.resume?.text ?? '', target.kind === 'letter' ? target.output : '', names)]
+  const links = [...all('website'), ...all('links'), ...guessedDomains(env.resume?.text ?? '', target.kind === 'letter' ? target.output : JSON.stringify(target.output), names)]
   // A letter prompt asks for the portfolio link, which often holds the name, so
   // the user's links go from everything sent. Location only from the original
   // resume: in a letter or a resume's jobs it's part of what we want to see.
@@ -164,7 +174,15 @@ const NAME_PARTICLE = /^(van|von|der|den|de|del|della|di|da|dos|du|la|le|bin|bin
 // goes too. ponytail: a detail past the first 400 characters, or an address
 // after the last one, stays.
 function withoutHeader(text: string): string {
-  const top = text.slice(0, 400)
+  // The header ends at the first section heading, so a link in the first job
+  // can't take the summary with it.
+  const heading = Math.min(
+    ...[/^[ \t]*(?:professional summary|summary|profile|objective|about me|experience|work experience|employment|education|skills|projects)\b/im,
+      /\b(?:SUMMARY|PROFILE|OBJECTIVE|EXPERIENCE|EMPLOYMENT|EDUCATION|SKILLS|PROJECTS)\b/]
+      .map((h) => text.search(h)).filter((i) => i > 0),
+    400,
+  )
+  const top = text.slice(0, heading)
   const end = Math.max(...['[email]', '[phone]', '[link]', '[location]'].map((t) => {
     const i = top.lastIndexOf(t)
     return i === -1 ? -1 : i + t.length

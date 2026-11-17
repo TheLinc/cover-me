@@ -201,6 +201,31 @@ describe('buildGenerationReport', () => {
     expect(buildGenerationReport({ kind: 'letter', output: letter, job }, form, env({ mode: 'hosted', resume: { text, filename: '', updatedAt: '' } })).output).toBe(letter)
   })
 
+  test('name domains with any ending, in a resume report too; a labelled https link; platforms stay; a short name run together', () => {
+    const hosted = (text: string) => env({ mode: 'hosted', resume: { text, filename: '', updatedAt: '' } })
+    const sent = (text: string, letter: string) => buildGenerationReport({ kind: 'letter', output: letter, job }, form, hosted(text)).output
+    expect(sent('Jane Doe\nToronto', 'See janedoe.space and janedoe.framer.website.')).toBe('See [link] and [link].')
+    expect(sent('Jane Doe\nPortfolio: https://pixelforge.studio', 'See pixelforge.studio.')).toBe('See [link].')
+    // A GitHub profile on the contact line goes; github.com elsewhere stays.
+    expect(sent('Jane Doe\njane@x.com | github.com/jdoe', 'See github.com/jdoe. I use github.com daily.')).toBe('See [link]. I use github.com daily.')
+    expect(sent('Yu Li\nToronto', 'See yuli.dev.')).toBe('See [link].')
+    // A resume report searches the tailored resume's own lines for the name.
+    const out = buildGenerationReport({ kind: 'resume', output: { ...tailored, summary: 'Writes at janedoe.blog.' }, job }, form, env({ resume: null })).output as TailoredResume
+    expect(out.summary).toBe('Writes at [link].')
+  })
+
+  test("the original resume's header stops at the first section, so a link in the first job doesn't cut the summary", () => {
+    const text = 'Jane Doe\nToronto, ON | (416) 555-0199 | jane.doe@example.com | janedoe.dev\n\nSUMMARY\nAnalyst who ships models.\n\nEXPERIENCE\nData Analyst, Contoso Retail\n- Write about churn models at janedoe.dev/blog'
+    const invented = { ...form, category: 'invented' as const, sendSource: true }
+    const hosted = env({ mode: 'hosted', resume: { text, filename: '', updatedAt: '' } })
+    expect(buildGenerationReport({ kind: 'letter', output: 'Hi', job }, invented, hosted).sourceResume)
+      .toBe('[contact details]\n\nSUMMARY\nAnalyst who ships models.\n\nEXPERIENCE\nData Analyst, Contoso Retail\n- Write about churn models at [link]')
+    // A PDF's run-together text: the heading word still ends the header.
+    const pdf = env({ mode: 'hosted', resume: { text: text.replace(/\n+/g, ' '), filename: '', updatedAt: '' } })
+    expect(buildGenerationReport({ kind: 'letter', output: 'Hi', job }, invented, pdf).sourceResume)
+      .toBe('[contact details] SUMMARY Analyst who ships models. EXPERIENCE Data Analyst, Contoso Retail - Write about churn models at [link]')
+  })
+
   test("a name can't eat an email's first half and leave its domain", () => {
     const pdf = env({ resume: { text: 'Jane Doe jane@janedoe.dev (416) 555-0199 Experience', filename: '', updatedAt: '' } })
     expect(buildGenerationReport({ kind: 'letter', output: 'Hi', job }, { ...form, category: 'invented', sendSource: true }, pdf).sourceResume)
@@ -211,7 +236,7 @@ describe('buildGenerationReport', () => {
 
   test("the user's own links go from a letter and from a resume's lines", () => {
     expect(buildGenerationReport({ kind: 'letter', output: 'My work is at janedoe.dev and https://github.com/janedoe/forms.', job }, form, env()).output)
-      .toBe('My work is at [link] and [link]')
+      .toBe('My work is at [link] and [link].')
     const out = buildGenerationReport({ kind: 'resume', output: { ...tailored, projects: [{ name: 'forms (linkedin.com/in/janedoe)', bullets: ['See janedoe.dev/forms'] }] }, job }, form, env()).output as TailoredResume
     expect(out.projects).toEqual([{ name: 'forms ([link])', bullets: ['See [link]/forms'] }])
   })
