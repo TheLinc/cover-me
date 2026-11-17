@@ -1,0 +1,1704 @@
+[
+  {
+    "step": "1 BYOK letter, invented + original resume",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://mipdkilndjibakhpgpnlokcndjekhkpa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "walkthrough-local-publishable-key",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "invented",
+      "comment": "It says I led a team of twelve. I never managed anyone.",
+      "kind": "letter",
+      "output": "Dear Hiring Team at Northwind Analytics,\n\nI'm applying for the Senior Data Analyst role (letter 1). At Contoso Retail I led a team of twelve analysts and built the dashboards 40 store managers use each week, and I rewrote our SQL to cut a three-hour report to twenty minutes.\n\nYou can see my work at [link] and on [link], or reach me at [email] or [phone].\n\nSincerely,\n[name]",
+      "job": {
+        "title": "Senior Data Analyst",
+        "company": "Northwind Analytics",
+        "description": "Northwind Analytics is hiring a Senior Data Analyst to build dashboards in Tableau, run A/B tests and explain results to product teams. 4+ years of SQL and Python required.",
+        "site": "linkedin.com"
+      },
+      "mode": "byok",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false,
+      "sourceResume": "[name]\n[location] | [phone] | [email] | [link] | [link]\n\nSUMMARY\nData analyst with five years of SQL and Python, turning messy retail data into decisions.\n\nEXPERIENCE\nData Analyst, Contoso Retail - [location] - 2021 - Present\n- Built weekly sales dashboards used by 40 store managers\n- Cut report run time from 3 hours to 20 minutes by rewriting SQL\n- Write about churn models at [link]\n\nJunior Analyst, Fabrikam Foods - [location] - 2019 - 2021\n- Cleaned and joined supplier data in Python\n\nEDUCATION\nB.Sc. Statistics, University of Toronto - 2019\n\nSKILLS\nSQL, Python, pandas, Excel, Looker"
+    }
+  },
+  {
+    "step": "2 Hosted letter, contact ticked, invented + original resume",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "authorization": "Bearer walkthrough-fake-access-token",
+      "content-type": "application/json",
+      "origin": "chrome-extension://mipdkilndjibakhpgpnlokcndjekhkpa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "walkthrough-local-publishable-key",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "invented",
+      "comment": "",
+      "kind": "letter",
+      "output": "Dear Hiring Team at Northwind Analytics,\n\nI'm applying for the Senior Data Analyst role (letter 2). At Contoso Retail I led a team of twelve analysts and built the dashboards 40 store managers use each week, and I rewrote our SQL to cut a three-hour report to twenty minutes.\n\nYou can see my work at [link] and on [link], or reach me at [email] or [phone].\n\nSincerely,\n[name]",
+      "job": {
+        "title": "Senior Data Analyst",
+        "company": "Northwind Analytics",
+        "description": "Northwind Analytics is hiring a Senior Data Analyst to build dashboards in Tableau, run A/B tests and explain results to product teams. 4+ years of SQL and Python required.",
+        "site": "linkedin.com"
+      },
+      "mode": "hosted",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": true,
+      "sourceResume": "[name]\n[location] | [phone] | [email] | [link] | [link]\n\nSUMMARY\nData analyst with five years of SQL and Python, turning messy retail data into decisions.\n\nEXPERIENCE\nData Analyst, Contoso Retail - [location] - 2021 - Present\n- Built weekly sales dashboards used by 40 store managers\n- Cut report run time from 3 hours to 20 minutes by rewriting SQL\n- Write about churn models at [link]\n\nJunior Analyst, Fabrikam Foods - [location] - 2019 - 2021\n- Cleaned and joined supplier data in Python\n\nEDUCATION\nB.Sc. Statistics, University of Toronto - 2019\n\nSKILLS\nSQL, Python, pandas, Excel, Looker"
+    }
+  },
+  {
+    "step": "2 Hosted letter, contact unticked",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://mipdkilndjibakhpgpnlokcndjekhkpa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "walkthrough-local-publishable-key",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "missing",
+      "comment": "",
+      "kind": "letter",
+      "output": "Dear Hiring Team at Northwind Analytics,\n\nI'm applying for the Senior Data Analyst role (letter 3). At Contoso Retail I led a team of twelve analysts and built the dashboards 40 store managers use each week, and I rewrote our SQL to cut a three-hour report to twenty minutes.\n\nYou can see my work at [link] and on [link], or reach me at [email] or [phone].\n\nSincerely,\n[name]",
+      "job": {
+        "title": "Senior Data Analyst",
+        "company": "Northwind Analytics",
+        "description": "Northwind Analytics is hiring a Senior Data Analyst to build dashboards in Tableau, run A/B tests and explain results to product teams. 4+ years of SQL and Python required.",
+        "site": "linkedin.com"
+      },
+      "mode": "hosted",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false
+    }
+  },
+  {
+    "step": "2b BYOK letter, no parsed resume",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://mipdkilndjibakhpgpnlokcndjekhkpa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "walkthrough-local-publishable-key",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "generic",
+      "comment": "",
+      "kind": "letter",
+      "output": "Dear Hiring Team at Northwind Analytics,\n\nI'm applying for the Senior Data Analyst role (letter 4). At Contoso Retail I led a team of twelve analysts and built the dashboards 40 store managers use each week, and I rewrote our SQL to cut a three-hour report to twenty minutes.\n\nYou can see my work at [link] and on [link], or reach me at [email] or [phone].\n\nSincerely,\n[name]",
+      "job": {
+        "title": "Senior Data Analyst",
+        "company": "Northwind Analytics",
+        "description": "Northwind Analytics is hiring a Senior Data Analyst to build dashboards in Tableau, run A/B tests and explain results to product teams. 4+ years of SQL and Python required.",
+        "site": "linkedin.com"
+      },
+      "mode": "byok",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false
+    }
+  },
+  {
+    "step": "4.1 Hosted no-parse: stacked-header",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://mipdkilndjibakhpgpnlokcndjekhkpa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "walkthrough-local-publishable-key",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "invented",
+      "comment": "",
+      "kind": "letter",
+      "output": "Dear Hiring Team at Northwind Analytics,\n\nAt Contoso Retail I built the store locator in React. My portfolio is at [link].\n\nSincerely,\n[name]",
+      "job": {
+        "title": "Senior Data Analyst",
+        "company": "Northwind Analytics",
+        "description": "Northwind Analytics is hiring a Senior Data Analyst to build dashboards in Tableau, run A/B tests and explain results to product teams. 4+ years of SQL and Python required.",
+        "site": "linkedin.com"
+      },
+      "mode": "hosted",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false,
+      "sourceResume": "[name]\n\n[location]\n\n[email]\n\n[link]\n\nSUMMARY\nFront-end engineer who ships fast, accessible web apps.\n\nEXPERIENCE\nFront-end Engineer, Contoso Retail - 2021 - Present\n- Built the store locator in React and TypeScript\n- Cut page load time by 40%\n\nWeb Developer, Fabrikam Foods - 2019 - 2021\n- Rebuilt the ordering site in Vue\n\nSKILLS\nReact, TypeScript, Vue, GraphQL"
+    }
+  },
+  {
+    "step": "4.2 Hosted no-parse: portfolio-label",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://mipdkilndjibakhpgpnlokcndjekhkpa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "walkthrough-local-publishable-key",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "invented",
+      "comment": "",
+      "kind": "letter",
+      "output": "Dear Hiring Team at Northwind Analytics,\n\nAt Contoso Retail I built the store locator in React. You can see my work at [link].\n\nSincerely,\n[name]",
+      "job": {
+        "title": "Senior Data Analyst",
+        "company": "Northwind Analytics",
+        "description": "Northwind Analytics is hiring a Senior Data Analyst to build dashboards in Tableau, run A/B tests and explain results to product teams. 4+ years of SQL and Python required.",
+        "site": "linkedin.com"
+      },
+      "mode": "hosted",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false,
+      "sourceResume": "[name]\n[location] | [phone] | [email]\nPortfolio [link]\n\nSUMMARY\nFront-end engineer who ships fast, accessible web apps.\n\nEXPERIENCE\nFront-end Engineer, Contoso Retail - 2021 - Present\n- Built the store locator in React and TypeScript\n- Cut page load time by 40%\n\nWeb Developer, Fabrikam Foods - 2019 - 2021\n- Rebuilt the ordering site in Vue\n\nSKILLS\nReact, TypeScript, Vue, GraphQL"
+    }
+  },
+  {
+    "step": "4.3 Hosted no-parse: behance-in-letter",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://mipdkilndjibakhpgpnlokcndjekhkpa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "walkthrough-local-publishable-key",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "invented",
+      "comment": "",
+      "kind": "letter",
+      "output": "Dear Hiring Team at Northwind Analytics,\n\nAt Contoso Retail I built the store locator in React. My design work is on [link].\n\nSincerely,\n[name]",
+      "job": {
+        "title": "Senior Data Analyst",
+        "company": "Northwind Analytics",
+        "description": "Northwind Analytics is hiring a Senior Data Analyst to build dashboards in Tableau, run A/B tests and explain results to product teams. 4+ years of SQL and Python required.",
+        "site": "linkedin.com"
+      },
+      "mode": "hosted",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false,
+      "sourceResume": "[name]\n[location] | [phone] | [email]\n\nSUMMARY\nFront-end engineer who ships fast, accessible web apps.\n\nEXPERIENCE\nFront-end Engineer, Contoso Retail - 2021 - Present\n- Built the store locator in React and TypeScript\n- Cut page load time by 40%\n\nWeb Developer, Fabrikam Foods - 2019 - 2021\n- Rebuilt the ordering site in Vue\n\nSKILLS\nReact, TypeScript, Vue, GraphQL"
+    }
+  },
+  {
+    "step": "4.4 Hosted no-parse: domain-shaped-skills",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://mipdkilndjibakhpgpnlokcndjekhkpa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "walkthrough-local-publishable-key",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "invented",
+      "comment": "",
+      "kind": "letter",
+      "output": "Dear Hiring Team at Northwind Analytics,\n\nAt Shopify.com I built Socket.io apps. You can see more at [link].\n\nSincerely,\n[name]",
+      "job": {
+        "title": "Senior Data Analyst",
+        "company": "Northwind Analytics",
+        "description": "Northwind Analytics is hiring a Senior Data Analyst to build dashboards in Tableau, run A/B tests and explain results to product teams. 4+ years of SQL and Python required.",
+        "site": "linkedin.com"
+      },
+      "mode": "hosted",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false,
+      "sourceResume": "[name]\n[email] | [phone] | [link]\n• Socket.io, fast.ai\nShopify.com | Engineer | 2020–2024\n- Built real-time Socket.io apps for merchants\n- Trained image models with fast.ai\n\nSUMMARY\nFront-end engineer who ships fast, accessible web apps.\n\nEXPERIENCE\nFront-end Engineer, Contoso Retail - 2021 - Present\n- Built the store locator in React and TypeScript\n- Cut page load time by 40%\n\nWeb Developer, Fabrikam Foods - 2019 - 2021\n- Rebuilt the ordering site in Vue\n\nSKILLS\nReact, TypeScript, Vue, GraphQL"
+    }
+  },
+  {
+    "step": "3 Editor resume, edited",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://mipdkilndjibakhpgpnlokcndjekhkpa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "walkthrough-local-publishable-key",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "design",
+      "comment": "The skills line wraps badly.",
+      "kind": "resume",
+      "output": {
+        "atsScoreBefore": 64,
+        "certifications": [],
+        "education": [
+          {
+            "bullets": [],
+            "dates": "2019",
+            "degree": "B.Sc. Statistics",
+            "institution": "University of Toronto",
+            "location": "Toronto, ON"
+          }
+        ],
+        "experience": [
+          {
+            "bullets": [
+              "Built weekly sales dashboards used by 40 store managers across Ontario",
+              "Cut report run time from 3 hours to 20 minutes by rewriting SQL"
+            ],
+            "company": "Contoso Retail",
+            "dates": "2021 - Present",
+            "location": "Toronto, ON",
+            "title": "Data Analyst"
+          },
+          {
+            "bullets": [
+              "Cleaned and joined supplier data in Python"
+            ],
+            "company": "Fabrikam Foods",
+            "dates": "2019 - 2021",
+            "location": "Toronto, ON",
+            "title": "Junior Analyst"
+          }
+        ],
+        "otherSections": [],
+        "projects": [],
+        "skills": "SQL, Python, pandas, Excel, Looker",
+        "summary": "Data analyst with five years of SQL and Python who builds Tableau-ready dashboards and explains results to product teams.",
+        "atsScore": 78,
+        "atsGaps": [
+          "A/B testing"
+        ],
+        "atsGapsBeforeEdits": [
+          "Tableau",
+          "A/B testing"
+        ],
+        "editedAt": "2026-11-17T20:25:43.667Z"
+      },
+      "job": {
+        "title": "Senior Data Analyst",
+        "company": "Northwind Analytics",
+        "description": "Northwind Analytics is hiring a Senior Data Analyst to build dashboards in Tableau, run A/B tests and explain results to product teams. 4+ years of SQL and Python required.",
+        "site": "linkedin.com"
+      },
+      "mode": "byok",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false
+    }
+  },
+  {
+    "step": "5.1 Hosted no-parse: title-like-heading",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://mipdkilndjibakhpgpnlokcndjekhkpa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "walkthrough-local-publishable-key",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "invented",
+      "comment": "",
+      "kind": "letter",
+      "output": "Dear Hiring Team at Northwind Analytics,\n\nAt Contoso Retail I built the store locator in React.\n\nSincerely,\n[name]",
+      "job": {
+        "title": "Senior Data Analyst",
+        "company": "Northwind Analytics",
+        "description": "Northwind Analytics is hiring a Senior Data Analyst to build dashboards in Tableau, run A/B tests and explain results to product teams. 4+ years of SQL and Python required.",
+        "site": "linkedin.com"
+      },
+      "mode": "hosted",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false,
+      "sourceResume": "[name]\nEducation Consultant\n[address], [location] [postal code] · [phone] · [email]\n\nEXPERIENCE\nFront-end Engineer, Contoso Retail - 2021 - Present\n- Built the store locator in React and TypeScript\n- Cut page load time by 40%\n\nWeb Developer, Fabrikam Foods - 2019 - 2021\n- Rebuilt the ordering site in Vue\n\nSKILLS\nReact, TypeScript, Vue, GraphQL"
+    }
+  },
+  {
+    "step": "5.1b BYOK with parse: title-like-heading",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://mipdkilndjibakhpgpnlokcndjekhkpa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "walkthrough-local-publishable-key",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "invented",
+      "comment": "",
+      "kind": "letter",
+      "output": "Dear Hiring Team at Northwind Analytics,\n\nAt Contoso Retail I built the store locator in React.\n\nSincerely,\n[name]",
+      "job": {
+        "title": "Senior Data Analyst",
+        "company": "Northwind Analytics",
+        "description": "Northwind Analytics is hiring a Senior Data Analyst to build dashboards in Tableau, run A/B tests and explain results to product teams. 4+ years of SQL and Python required.",
+        "site": "linkedin.com"
+      },
+      "mode": "byok",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false,
+      "sourceResume": "[name]\nEducation Consultant\n[address], [location] [postal code] · [phone] · [email]\n\nEXPERIENCE\nFront-end Engineer, Contoso Retail - 2021 - Present\n- Built the store locator in React and TypeScript\n- Cut page load time by 40%\n\nWeb Developer, Fabrikam Foods - 2019 - 2021\n- Rebuilt the ordering site in Vue\n\nSKILLS\nReact, TypeScript, Vue, GraphQL"
+    }
+  },
+  {
+    "step": "5.2 Hosted no-parse: portfolio-colon-https",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://mipdkilndjibakhpgpnlokcndjekhkpa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "walkthrough-local-publishable-key",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "invented",
+      "comment": "",
+      "kind": "letter",
+      "output": "Dear Hiring Team at Northwind Analytics,\n\nAt Contoso Retail I built the store locator in React. You can see my work at [link].\n\nSincerely,\n[name]",
+      "job": {
+        "title": "Senior Data Analyst",
+        "company": "Northwind Analytics",
+        "description": "Northwind Analytics is hiring a Senior Data Analyst to build dashboards in Tableau, run A/B tests and explain results to product teams. 4+ years of SQL and Python required.",
+        "site": "linkedin.com"
+      },
+      "mode": "hosted",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false,
+      "sourceResume": "[name]\n[location] | [phone] | [email]\nPortfolio: [link]\n\nSUMMARY\nFront-end engineer who ships fast, accessible web apps.\n\nEXPERIENCE\nFront-end Engineer, Contoso Retail - 2021 - Present\n- Built the store locator in React and TypeScript\n- Cut page load time by 40%\n\nWeb Developer, Fabrikam Foods - 2019 - 2021\n- Rebuilt the ordering site in Vue\n\nSKILLS\nReact, TypeScript, Vue, GraphQL"
+    }
+  },
+  {
+    "step": "5.3 Hosted no-parse: github-profile",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://mipdkilndjibakhpgpnlokcndjekhkpa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "walkthrough-local-publishable-key",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "invented",
+      "comment": "",
+      "kind": "letter",
+      "output": "Dear Hiring Team at Northwind Analytics,\n\nAt Contoso Retail I built the store locator in React. I use github.com daily, and my code is at [link].\n\nSincerely,\n[name]",
+      "job": {
+        "title": "Senior Data Analyst",
+        "company": "Northwind Analytics",
+        "description": "Northwind Analytics is hiring a Senior Data Analyst to build dashboards in Tableau, run A/B tests and explain results to product teams. 4+ years of SQL and Python required.",
+        "site": "linkedin.com"
+      },
+      "mode": "hosted",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false,
+      "sourceResume": "[name]\n[location] | [phone] | [email] | [link]\n\nSUMMARY\nFront-end engineer who ships fast, accessible web apps.\n\nEXPERIENCE\nFront-end Engineer, Contoso Retail - 2021 - Present\n- Built the store locator in React and TypeScript\n- Cut page load time by 40%\n\nWeb Developer, Fabrikam Foods - 2019 - 2021\n- Rebuilt the ordering site in Vue\n\nSKILLS\nReact, TypeScript, Vue, GraphQL"
+    }
+  },
+  {
+    "step": "5.4 Hosted no-parse: name-domain-space",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://mipdkilndjibakhpgpnlokcndjekhkpa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "walkthrough-local-publishable-key",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "invented",
+      "comment": "",
+      "kind": "letter",
+      "output": "Dear Hiring Team at Northwind Analytics,\n\nAt Contoso Retail I built the store locator in React. I write about front-end work at [link].\n\nSincerely,\n[name]",
+      "job": {
+        "title": "Senior Data Analyst",
+        "company": "Northwind Analytics",
+        "description": "Northwind Analytics is hiring a Senior Data Analyst to build dashboards in Tableau, run A/B tests and explain results to product teams. 4+ years of SQL and Python required.",
+        "site": "linkedin.com"
+      },
+      "mode": "hosted",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false,
+      "sourceResume": "[name]\n[location] | [phone] | [email]\n\nSUMMARY\nFront-end engineer who ships fast, accessible web apps.\n\nEXPERIENCE\nFront-end Engineer, Contoso Retail - 2021 - Present\n- Built the store locator in React and TypeScript\n- Cut page load time by 40%\n\nWeb Developer, Fabrikam Foods - 2019 - 2021\n- Rebuilt the ordering site in Vue\n\nSKILLS\nReact, TypeScript, Vue, GraphQL"
+    }
+  },
+  {
+    "step": "6.1a BYOK with parse: pdf-run-together",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://mipdkilndjibakhpgpnlokcndjekhkpa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "walkthrough-local-publishable-key",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "invented",
+      "comment": "",
+      "kind": "letter",
+      "output": "Dear Hiring Team at Northwind Analytics,\n\nAt Contoso Retail I built a churn model that flagged at-risk customers two months early.\n\nSincerely,\n[name]",
+      "job": {
+        "title": "Senior Data Analyst",
+        "company": "Northwind Analytics",
+        "description": "Northwind Analytics is hiring a Senior Data Analyst to build dashboards in Tableau, run A/B tests and explain results to product teams. 4+ years of SQL and Python required.",
+        "site": "linkedin.com"
+      },
+      "mode": "byok",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false,
+      "sourceResume": "[location] | [phone] | [email] | [link] Summary Data analyst with 5 years of SQL and Python experience turning retail data into decisions. Experience Senior Data Analyst Contoso Retail [location] Jan 2021 - Present Built churn model that flagged at-risk customers two months early Led weekly reporting for 40 stores Data Analyst Fabrikam [location] 2018 - 2020 Cleaned and joined supplier data in Python Education B.Sc. Statistics, University of Toronto 2018 Skills SQL, Python, pandas, Tableau"
+    }
+  },
+  {
+    "step": "6.1b Hosted with History: pdf-run-together",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://mipdkilndjibakhpgpnlokcndjekhkpa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "walkthrough-local-publishable-key",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "invented",
+      "comment": "",
+      "kind": "letter",
+      "output": "Dear Hiring Team at Northwind Analytics,\n\nAt Contoso Retail I built a churn model that flagged at-risk customers two months early.\n\nSincerely,\n[name]",
+      "job": {
+        "title": "Senior Data Analyst",
+        "company": "Northwind Analytics",
+        "description": "Northwind Analytics is hiring a Senior Data Analyst to build dashboards in Tableau, run A/B tests and explain results to product teams. 4+ years of SQL and Python required.",
+        "site": "linkedin.com"
+      },
+      "mode": "hosted",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false,
+      "sourceResume": "[location] | [phone] | [email] | [link] Summary Data analyst with 5 years of SQL and Python experience turning retail data into decisions. Experience Senior Data Analyst Contoso Retail [location] Jan 2021 - Present Built churn model that flagged at-risk customers two months early Led weekly reporting for 40 stores Data Analyst Fabrikam [location] 2018 - 2020 Cleaned and joined supplier data in Python Education B.Sc. Statistics, University of Toronto 2018 Skills SQL, Python, pandas, Tableau"
+    }
+  },
+  {
+    "step": "6.2 Hosted no-parse: summary-above-contact",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://mipdkilndjibakhpgpnlokcndjekhkpa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "walkthrough-local-publishable-key",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "invented",
+      "comment": "",
+      "kind": "letter",
+      "output": "Dear Hiring Team at Northwind Analytics,\n\nAt Contoso Retail I built weekly sales dashboards.\n\nSincerely,\n[name]",
+      "job": {
+        "title": "Senior Data Analyst",
+        "company": "Northwind Analytics",
+        "description": "Northwind Analytics is hiring a Senior Data Analyst to build dashboards in Tableau, run A/B tests and explain results to product teams. 4+ years of SQL and Python required.",
+        "site": "linkedin.com"
+      },
+      "mode": "hosted",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false,
+      "sourceResume": "[name]\nData Analyst\nPROFILE\nAnalyst who ships models.\nCONTACT\n[phone]\n[email]\n\nEXPERIENCE\nData Analyst, Contoso Retail - 2021 - Present\n- Built weekly sales dashboards used by 40 store managers\n\nJunior Analyst, Fabrikam Foods - 2019 - 2021\n- Cleaned and joined supplier data in Python\n\nSKILLS\nSQL, Python, pandas"
+    }
+  },
+  {
+    "step": "6.3 Hosted no-parse: address-heading",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://mipdkilndjibakhpgpnlokcndjekhkpa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "walkthrough-local-publishable-key",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "invented",
+      "comment": "",
+      "kind": "letter",
+      "output": "Dear Hiring Team at Northwind Analytics,\n\nAt Contoso Retail I built weekly sales dashboards.\n\nSincerely,\n[name]",
+      "job": {
+        "title": "Senior Data Analyst",
+        "company": "Northwind Analytics",
+        "description": "Northwind Analytics is hiring a Senior Data Analyst to build dashboards in Tableau, run A/B tests and explain results to product teams. 4+ years of SQL and Python required.",
+        "site": "linkedin.com"
+      },
+      "mode": "hosted",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false,
+      "sourceResume": "[name]\n[email]\n\nEXPERIENCE\nData Analyst, Contoso Retail - 2021 - Present\n- Built weekly sales dashboards used by 40 store managers\n\nSKILLS\nPython, SQL\nADDRESS\n[address], [location] [postal code]\n[phone]"
+    }
+  },
+  {
+    "step": "6.4 Hosted no-parse: ordinary-numbers",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://mipdkilndjibakhpgpnlokcndjekhkpa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "walkthrough-local-publishable-key",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "invented",
+      "comment": "",
+      "kind": "letter",
+      "output": "Dear Hiring Team at Northwind Analytics,\n\nAt Contoso Retail I helped cut costs by $25,000 across 3 regions in Q3 2023, course CS 101.\n\nSincerely,\n[name]",
+      "job": {
+        "title": "Senior Data Analyst",
+        "company": "Northwind Analytics",
+        "description": "Northwind Analytics is hiring a Senior Data Analyst to build dashboards in Tableau, run A/B tests and explain results to product teams. 4+ years of SQL and Python required.",
+        "site": "linkedin.com"
+      },
+      "mode": "hosted",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false,
+      "sourceResume": "[name]\n[location] | [phone] | [email]\n\nEXPERIENCE\nData Analyst, Contoso Retail - 2021 - Present\n- Cut costs by $25,000 across 3 regions in Q3 2023, course CS 101\n- Built weekly sales dashboards used by 40 store managers\n\nSKILLS\nSQL, Python"
+    }
+  },
+  {
+    "step": "7 UK (Oliver Bennett) letter, Hosted no parse",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://mipdkilndjibakhpgpnlokcndjekhkpa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "walkthrough-local-publishable-key",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "invented",
+      "comment": "",
+      "kind": "letter",
+      "output": "[name]\n14 Rosebery Road, Bristol BS6 7NQ\n07700 900123 | [email]\n\nDear Hiring Team at Lumen Health,\n\nAt Kestrel Labs I cut hosting costs by $25,000 in Q3 2023 by moving rendering to Next.js, and built live order tracking with Socket.io for 200 restaurants. You can see more of my work at [link].\n\nKind regards,\n\n[name]",
+      "job": {
+        "title": "Full-stack Developer",
+        "company": "Lumen Health",
+        "description": "Lumen Health is hiring a Full-stack Developer to build patient dashboards in Next.js and real-time features with Socket.io. 3+ years of TypeScript required.",
+        "site": "boards.greenhouse.io"
+      },
+      "mode": "hosted",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false,
+      "sourceResume": "[name]\n[address], Bristol [postal code]\n[phone] · [email] · [link]\n\nPROFILE\nFull-stack developer with six years of TypeScript, building real-time products.\n\nEXPERIENCE\nSenior Full-stack Developer, Kestrel Labs, Bristol, 2021 - Present\n- Cut hosting costs by $25,000 in Q3 2023 by moving rendering to Next.js\n- Built live order tracking with Socket.io for 200 restaurants\n\nSoftware Engineer, Harlow Systems, 2017 - 2021\n- Rebuilt the billing service in Node.js\n\nEDUCATION\nBSc Computer Science, University of Leeds, 2017\n\nSKILLS\nTypeScript, Next.js, Socket.io, PostgreSQL"
+    }
+  },
+  {
+    "step": "7 UK (Oliver Bennett) resume report, Hosted no parse",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://mipdkilndjibakhpgpnlokcndjekhkpa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "walkthrough-local-publishable-key",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "invented",
+      "comment": "",
+      "kind": "resume",
+      "output": {
+        "atsGaps": [
+          "HIPAA"
+        ],
+        "atsScore": 81,
+        "atsScoreBefore": 66,
+        "certifications": [],
+        "education": [
+          {
+            "bullets": [],
+            "dates": "2017",
+            "degree": "BSc Computer Science",
+            "institution": "University of Leeds",
+            "location": ""
+          }
+        ],
+        "experience": [
+          {
+            "bullets": [
+              "Cut hosting costs by $25,000 in Q3 2023 by moving rendering to Next.js",
+              "Built live order tracking with Socket.io for 200 restaurants"
+            ],
+            "company": "Kestrel Labs",
+            "dates": "2021 - Present",
+            "location": "Bristol",
+            "title": "Senior Full-stack Developer"
+          },
+          {
+            "bullets": [
+              "Rebuilt the billing service in Node.js"
+            ],
+            "company": "Harlow Systems",
+            "dates": "2017 - 2021",
+            "location": "",
+            "title": "Software Engineer"
+          }
+        ],
+        "otherSections": [],
+        "projects": [],
+        "skills": "TypeScript, Next.js, Socket.io, PostgreSQL",
+        "summary": "Full-stack developer with six years of TypeScript, building real-time products."
+      },
+      "job": {
+        "title": "Full-stack Developer",
+        "company": "Lumen Health",
+        "description": "Lumen Health is hiring a Full-stack Developer to build patient dashboards in Next.js and real-time features with Socket.io. 3+ years of TypeScript required.",
+        "site": "boards.greenhouse.io"
+      },
+      "mode": "hosted",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false,
+      "sourceResume": "[name]\n[address], [location] [postal code]\n[phone] · [email] · [link]\n\nPROFILE\nFull-stack developer with six years of TypeScript, building real-time products.\n\nEXPERIENCE\nSenior Full-stack Developer, Kestrel Labs, [location], 2021 - Present\n- Cut hosting costs by $25,000 in Q3 2023 by moving rendering to Next.js\n- Built live order tracking with Socket.io for 200 restaurants\n\nSoftware Engineer, Harlow Systems, 2017 - 2021\n- Rebuilt the billing service in Node.js\n\nEDUCATION\nBSc Computer Science, University of Leeds, 2017\n\nSKILLS\nTypeScript, Next.js, Socket.io, PostgreSQL"
+    }
+  },
+  {
+    "step": "7 UK (Oliver Bennett) letter, BYOK with parse",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://mipdkilndjibakhpgpnlokcndjekhkpa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "walkthrough-local-publishable-key",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "invented",
+      "comment": "",
+      "kind": "letter",
+      "output": "[name]\n14 Rosebery Road, Bristol BS6 7NQ\n07700 900123 | [email]\n\nDear Hiring Team at Lumen Health,\n\nAt Kestrel Labs I cut hosting costs by $25,000 in Q3 2023 by moving rendering to Next.js, and built live order tracking with Socket.io for 200 restaurants. You can see more of my work at [link].\n\nKind regards,\n\n[name]",
+      "job": {
+        "title": "Full-stack Developer",
+        "company": "Lumen Health",
+        "description": "Lumen Health is hiring a Full-stack Developer to build patient dashboards in Next.js and real-time features with Socket.io. 3+ years of TypeScript required.",
+        "site": "boards.greenhouse.io"
+      },
+      "mode": "byok",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false,
+      "sourceResume": "[name]\n[address], [location] [postal code]\n[phone] · [email] · [link]\n\nPROFILE\nFull-stack developer with six years of TypeScript, building real-time products.\n\nEXPERIENCE\nSenior Full-stack Developer, Kestrel Labs, [location], 2021 - Present\n- Cut hosting costs by $25,000 in Q3 2023 by moving rendering to Next.js\n- Built live order tracking with Socket.io for 200 restaurants\n\nSoftware Engineer, Harlow Systems, 2017 - 2021\n- Rebuilt the billing service in Node.js\n\nEDUCATION\nBSc Computer Science, University of Leeds, 2017\n\nSKILLS\nTypeScript, Next.js, Socket.io, PostgreSQL"
+    }
+  },
+  {
+    "step": "7 UK (Oliver Bennett) resume report, BYOK with parse",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://mipdkilndjibakhpgpnlokcndjekhkpa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "walkthrough-local-publishable-key",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "invented",
+      "comment": "",
+      "kind": "resume",
+      "output": {
+        "atsGaps": [
+          "HIPAA"
+        ],
+        "atsScore": 81,
+        "atsScoreBefore": 66,
+        "certifications": [],
+        "education": [
+          {
+            "bullets": [],
+            "dates": "2017",
+            "degree": "BSc Computer Science",
+            "institution": "University of Leeds",
+            "location": ""
+          }
+        ],
+        "experience": [
+          {
+            "bullets": [
+              "Cut hosting costs by $25,000 in Q3 2023 by moving rendering to Next.js",
+              "Built live order tracking with Socket.io for 200 restaurants"
+            ],
+            "company": "Kestrel Labs",
+            "dates": "2021 - Present",
+            "location": "Bristol",
+            "title": "Senior Full-stack Developer"
+          },
+          {
+            "bullets": [
+              "Rebuilt the billing service in Node.js"
+            ],
+            "company": "Harlow Systems",
+            "dates": "2017 - 2021",
+            "location": "",
+            "title": "Software Engineer"
+          }
+        ],
+        "otherSections": [],
+        "projects": [],
+        "skills": "TypeScript, Next.js, Socket.io, PostgreSQL",
+        "summary": "Full-stack developer with six years of TypeScript, building real-time products."
+      },
+      "job": {
+        "title": "Full-stack Developer",
+        "company": "Lumen Health",
+        "description": "Lumen Health is hiring a Full-stack Developer to build patient dashboards in Next.js and real-time features with Socket.io. 3+ years of TypeScript required.",
+        "site": "boards.greenhouse.io"
+      },
+      "mode": "byok",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false,
+      "sourceResume": "[name]\n[address], [location] [postal code]\n[phone] · [email] · [link]\n\nPROFILE\nFull-stack developer with six years of TypeScript, building real-time products.\n\nEXPERIENCE\nSenior Full-stack Developer, Kestrel Labs, [location], 2021 - Present\n- Cut hosting costs by $25,000 in Q3 2023 by moving rendering to Next.js\n- Built live order tracking with Socket.io for 200 restaurants\n\nSoftware Engineer, Harlow Systems, 2017 - 2021\n- Rebuilt the billing service in Node.js\n\nEDUCATION\nBSc Computer Science, University of Leeds, 2017\n\nSKILLS\nTypeScript, Next.js, Socket.io, PostgreSQL"
+    }
+  },
+  {
+    "step": "7 Australia, PDF run-together (Priya Raman) letter, Hosted no parse",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://mipdkilndjibakhpgpnlokcndjekhkpa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "walkthrough-local-publishable-key",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "invented",
+      "comment": "",
+      "kind": "letter",
+      "output": "Dear Hiring Team at Lumen Health,\n\nAt Wattle Payments I cut cloud spend by $25,000 in Q3 2023 by moving the dashboard to Next.js, and built live payment alerts with Socket.io. My code is at [link].\n\nI'm based in Sydney and can start in January. You can reach me on [phone] or at [email].\n\nBest regards,\n\n[name]",
+      "job": {
+        "title": "Full-stack Developer",
+        "company": "Lumen Health",
+        "description": "Lumen Health is hiring a Full-stack Developer to build patient dashboards in Next.js and real-time features with Socket.io. 3+ years of TypeScript required.",
+        "site": "boards.greenhouse.io"
+      },
+      "mode": "hosted",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false,
+      "sourceResume": "[name] 5, [address], Sydney NSW 2000 | 0412 345 678 | [email] | [link] Summary Full-stack engineer with five years of React and Node.js, shipping real-time features. Experience Senior Software Engineer Wattle Payments Sydney NSW Jan 2021 - Present Cut cloud spend by $25,000 in Q3 2023 by moving the dashboard to Next.js Built live payment alerts with Socket.io Software Engineer Banksia Health 2017 - 2020 Built the clinic booking API in Node.js Education BSc Computer Science, University of Melbourne 2016 Skills TypeScript, Next.js, Socket.io, PostgreSQL"
+    }
+  },
+  {
+    "step": "7 Australia, PDF run-together (Priya Raman) resume report, Hosted no parse",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://mipdkilndjibakhpgpnlokcndjekhkpa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "walkthrough-local-publishable-key",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "invented",
+      "comment": "",
+      "kind": "resume",
+      "output": {
+        "atsGaps": [
+          "HIPAA"
+        ],
+        "atsScore": 81,
+        "atsScoreBefore": 66,
+        "certifications": [],
+        "education": [
+          {
+            "bullets": [],
+            "dates": "2016",
+            "degree": "BSc Computer Science",
+            "institution": "University of Melbourne",
+            "location": ""
+          }
+        ],
+        "experience": [
+          {
+            "bullets": [
+              "Cut cloud spend by $25,000 in Q3 2023 by moving the dashboard to Next.js",
+              "Built live payment alerts with Socket.io"
+            ],
+            "company": "Wattle Payments",
+            "dates": "Jan 2021 - Present",
+            "location": "Sydney NSW",
+            "title": "Senior Software Engineer"
+          },
+          {
+            "bullets": [
+              "Built the clinic booking API in Node.js"
+            ],
+            "company": "Banksia Health",
+            "dates": "2017 - 2020",
+            "location": "",
+            "title": "Software Engineer"
+          }
+        ],
+        "otherSections": [],
+        "projects": [],
+        "skills": "TypeScript, Next.js, Socket.io, PostgreSQL",
+        "summary": "Full-stack engineer with five years of React and Node.js, shipping real-time features."
+      },
+      "job": {
+        "title": "Full-stack Developer",
+        "company": "Lumen Health",
+        "description": "Lumen Health is hiring a Full-stack Developer to build patient dashboards in Next.js and real-time features with Socket.io. 3+ years of TypeScript required.",
+        "site": "boards.greenhouse.io"
+      },
+      "mode": "hosted",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false,
+      "sourceResume": "[name] 5, [address], [location] 2000 | [phone] | [email] | [link] Summary Full-stack engineer with five years of React and Node.js, shipping real-time features. Experience Senior Software Engineer Wattle Payments [location] Jan 2021 - Present Cut cloud spend by $25,000 in Q3 2023 by moving the dashboard to Next.js Built live payment alerts with Socket.io Software Engineer Banksia Health 2017 - 2020 Built the clinic booking API in Node.js Education BSc Computer Science, University of Melbourne 2016 Skills TypeScript, Next.js, Socket.io, PostgreSQL"
+    }
+  },
+  {
+    "step": "7 Australia, PDF run-together (Priya Raman) letter, BYOK with parse",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://mipdkilndjibakhpgpnlokcndjekhkpa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "walkthrough-local-publishable-key",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "invented",
+      "comment": "",
+      "kind": "letter",
+      "output": "Dear Hiring Team at Lumen Health,\n\nAt Wattle Payments I cut cloud spend by $25,000 in Q3 2023 by moving the dashboard to Next.js, and built live payment alerts with Socket.io. My code is at [link].\n\nI'm based in Sydney and can start in January. You can reach me on [phone] or at [email].\n\nBest regards,\n\n[name]",
+      "job": {
+        "title": "Full-stack Developer",
+        "company": "Lumen Health",
+        "description": "Lumen Health is hiring a Full-stack Developer to build patient dashboards in Next.js and real-time features with Socket.io. 3+ years of TypeScript required.",
+        "site": "boards.greenhouse.io"
+      },
+      "mode": "byok",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false,
+      "sourceResume": "[name] 5, [address], [location] 2000 | [phone] | [email] | [link] Summary Full-stack engineer with five years of React and Node.js, shipping real-time features. Experience Senior Software Engineer Wattle Payments [location] Jan 2021 - Present Cut cloud spend by $25,000 in Q3 2023 by moving the dashboard to Next.js Built live payment alerts with Socket.io Software Engineer Banksia Health 2017 - 2020 Built the clinic booking API in Node.js Education BSc Computer Science, University of Melbourne 2016 Skills TypeScript, Next.js, Socket.io, PostgreSQL"
+    }
+  },
+  {
+    "step": "7 Australia, PDF run-together (Priya Raman) resume report, BYOK with parse",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://mipdkilndjibakhpgpnlokcndjekhkpa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "walkthrough-local-publishable-key",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "invented",
+      "comment": "",
+      "kind": "resume",
+      "output": {
+        "atsGaps": [
+          "HIPAA"
+        ],
+        "atsScore": 81,
+        "atsScoreBefore": 66,
+        "certifications": [],
+        "education": [
+          {
+            "bullets": [],
+            "dates": "2016",
+            "degree": "BSc Computer Science",
+            "institution": "University of Melbourne",
+            "location": ""
+          }
+        ],
+        "experience": [
+          {
+            "bullets": [
+              "Cut cloud spend by $25,000 in Q3 2023 by moving the dashboard to Next.js",
+              "Built live payment alerts with Socket.io"
+            ],
+            "company": "Wattle Payments",
+            "dates": "Jan 2021 - Present",
+            "location": "Sydney NSW",
+            "title": "Senior Software Engineer"
+          },
+          {
+            "bullets": [
+              "Built the clinic booking API in Node.js"
+            ],
+            "company": "Banksia Health",
+            "dates": "2017 - 2020",
+            "location": "",
+            "title": "Software Engineer"
+          }
+        ],
+        "otherSections": [],
+        "projects": [],
+        "skills": "TypeScript, Next.js, Socket.io, PostgreSQL",
+        "summary": "Full-stack engineer with five years of React and Node.js, shipping real-time features."
+      },
+      "job": {
+        "title": "Full-stack Developer",
+        "company": "Lumen Health",
+        "description": "Lumen Health is hiring a Full-stack Developer to build patient dashboards in Next.js and real-time features with Socket.io. 3+ years of TypeScript required.",
+        "site": "boards.greenhouse.io"
+      },
+      "mode": "byok",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false,
+      "sourceResume": "[name] 5, [address], [location] 2000 | [phone] | [email] | [link] Summary Full-stack engineer with five years of React and Node.js, shipping real-time features. Experience Senior Software Engineer Wattle Payments [location] Jan 2021 - Present Cut cloud spend by $25,000 in Q3 2023 by moving the dashboard to Next.js Built live payment alerts with Socket.io Software Engineer Banksia Health 2017 - 2020 Built the clinic booking API in Node.js Education BSc Computer Science, University of Melbourne 2016 Skills TypeScript, Next.js, Socket.io, PostgreSQL"
+    }
+  },
+  {
+    "step": "7 Labelled Word-style header (Lucía Fernández) letter, Hosted no parse",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://mipdkilndjibakhpgpnlokcndjekhkpa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "walkthrough-local-publishable-key",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "invented",
+      "comment": "",
+      "kind": "letter",
+      "output": "[name]\nCalle Mayor 10, 28013 Madrid\n612 345 678 · [email]\n\nDear Hiring Team at Lumen Health,\n\nAt Nubia Studio I cut agency spend by $25,000 in Q3 2023 by rebuilding the site in Next.js, and added live chat with Socket.io. My portfolio is at [link].\n\nSincerely,\n\n[name]",
+      "job": {
+        "title": "Full-stack Developer",
+        "company": "Lumen Health",
+        "description": "Lumen Health is hiring a Full-stack Developer to build patient dashboards in Next.js and real-time features with Socket.io. 3+ years of TypeScript required.",
+        "site": "boards.greenhouse.io"
+      },
+      "mode": "hosted",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false,
+      "sourceResume": "[name]\nPhone: [phone]\nEmail: [email]\nAddress: Calle Mayor 10, 28013 Madrid, Spain\nPortfolio: [link]\n\nPROFILE\nFront-end developer and designer with seven years of React.\n\nEXPERIENCE\nLead Front-end Developer — Nubia Studio — Madrid — 2020 - Present\n- Cut agency spend by $25,000 in Q3 2023 by rebuilding the site in Next.js\n- Added live chat with Socket.io\n\nFront-end Developer — Tramo Digital — 2016 - 2020\n- Built design system components in React\n\nEDUCATION\nGrado en Ingeniería Informática, Universidad de Salamanca, 2016\n\nSKILLS\nReact, Next.js, Socket.io, Figma"
+    }
+  },
+  {
+    "step": "7 Labelled Word-style header (Lucía Fernández) resume report, Hosted no parse",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://mipdkilndjibakhpgpnlokcndjekhkpa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "walkthrough-local-publishable-key",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "invented",
+      "comment": "",
+      "kind": "resume",
+      "output": {
+        "atsGaps": [
+          "HIPAA"
+        ],
+        "atsScore": 81,
+        "atsScoreBefore": 66,
+        "certifications": [],
+        "education": [
+          {
+            "bullets": [],
+            "dates": "2016",
+            "degree": "Grado en Ingeniería Informática",
+            "institution": "Universidad de Salamanca",
+            "location": ""
+          }
+        ],
+        "experience": [
+          {
+            "bullets": [
+              "Cut agency spend by $25,000 in Q3 2023 by rebuilding the site in Next.js",
+              "Added live chat with Socket.io"
+            ],
+            "company": "Nubia Studio",
+            "dates": "2020 - Present",
+            "location": "Madrid",
+            "title": "Lead Front-end Developer"
+          },
+          {
+            "bullets": [
+              "Built design system components in React"
+            ],
+            "company": "Tramo Digital",
+            "dates": "2016 - 2020",
+            "location": "",
+            "title": "Front-end Developer"
+          }
+        ],
+        "otherSections": [],
+        "projects": [],
+        "skills": "React, Next.js, Socket.io, Figma",
+        "summary": "Front-end developer and designer with seven years of React."
+      },
+      "job": {
+        "title": "Full-stack Developer",
+        "company": "Lumen Health",
+        "description": "Lumen Health is hiring a Full-stack Developer to build patient dashboards in Next.js and real-time features with Socket.io. 3+ years of TypeScript required.",
+        "site": "boards.greenhouse.io"
+      },
+      "mode": "hosted",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false,
+      "sourceResume": "[name]\nPhone: [phone]\nEmail: [email]\nAddress: Calle Mayor 10, 28013 [location]\nPortfolio: [link]\n\nPROFILE\nFront-end developer and designer with seven years of React.\n\nEXPERIENCE\nLead Front-end Developer — Nubia Studio — Madrid — 2020 - Present\n- Cut agency spend by $25,000 in Q3 2023 by rebuilding the site in Next.js\n- Added live chat with Socket.io\n\nFront-end Developer — Tramo Digital — 2016 - 2020\n- Built design system components in React\n\nEDUCATION\nGrado en Ingeniería Informática, Universidad de Salamanca, 2016\n\nSKILLS\nReact, Next.js, Socket.io, Figma"
+    }
+  },
+  {
+    "step": "7 Labelled Word-style header (Lucía Fernández) letter, BYOK with parse",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://mipdkilndjibakhpgpnlokcndjekhkpa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "walkthrough-local-publishable-key",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "invented",
+      "comment": "",
+      "kind": "letter",
+      "output": "[name]\nCalle Mayor 10, 28013 Madrid\n612 345 678 · [email]\n\nDear Hiring Team at Lumen Health,\n\nAt Nubia Studio I cut agency spend by $25,000 in Q3 2023 by rebuilding the site in Next.js, and added live chat with Socket.io. My portfolio is at [link].\n\nSincerely,\n\n[name]",
+      "job": {
+        "title": "Full-stack Developer",
+        "company": "Lumen Health",
+        "description": "Lumen Health is hiring a Full-stack Developer to build patient dashboards in Next.js and real-time features with Socket.io. 3+ years of TypeScript required.",
+        "site": "boards.greenhouse.io"
+      },
+      "mode": "byok",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false,
+      "sourceResume": "[name]\nPhone: [phone]\nEmail: [email]\nAddress: Calle Mayor 10, 28013 [location]\nPortfolio: [link]\n\nPROFILE\nFront-end developer and designer with seven years of React.\n\nEXPERIENCE\nLead Front-end Developer — Nubia Studio — Madrid — 2020 - Present\n- Cut agency spend by $25,000 in Q3 2023 by rebuilding the site in Next.js\n- Added live chat with Socket.io\n\nFront-end Developer — Tramo Digital — 2016 - 2020\n- Built design system components in React\n\nEDUCATION\nGrado en Ingeniería Informática, Universidad de Salamanca, 2016\n\nSKILLS\nReact, Next.js, Socket.io, Figma"
+    }
+  },
+  {
+    "step": "7 Labelled Word-style header (Lucía Fernández) resume report, BYOK with parse",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://mipdkilndjibakhpgpnlokcndjekhkpa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "walkthrough-local-publishable-key",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "invented",
+      "comment": "",
+      "kind": "resume",
+      "output": {
+        "atsGaps": [
+          "HIPAA"
+        ],
+        "atsScore": 81,
+        "atsScoreBefore": 66,
+        "certifications": [],
+        "education": [
+          {
+            "bullets": [],
+            "dates": "2016",
+            "degree": "Grado en Ingeniería Informática",
+            "institution": "Universidad de Salamanca",
+            "location": ""
+          }
+        ],
+        "experience": [
+          {
+            "bullets": [
+              "Cut agency spend by $25,000 in Q3 2023 by rebuilding the site in Next.js",
+              "Added live chat with Socket.io"
+            ],
+            "company": "Nubia Studio",
+            "dates": "2020 - Present",
+            "location": "Madrid",
+            "title": "Lead Front-end Developer"
+          },
+          {
+            "bullets": [
+              "Built design system components in React"
+            ],
+            "company": "Tramo Digital",
+            "dates": "2016 - 2020",
+            "location": "",
+            "title": "Front-end Developer"
+          }
+        ],
+        "otherSections": [],
+        "projects": [],
+        "skills": "React, Next.js, Socket.io, Figma",
+        "summary": "Front-end developer and designer with seven years of React."
+      },
+      "job": {
+        "title": "Full-stack Developer",
+        "company": "Lumen Health",
+        "description": "Lumen Health is hiring a Full-stack Developer to build patient dashboards in Next.js and real-time features with Socket.io. 3+ years of TypeScript required.",
+        "site": "boards.greenhouse.io"
+      },
+      "mode": "byok",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false,
+      "sourceResume": "[name]\nPhone: [phone]\nEmail: [email]\nAddress: Calle Mayor 10, 28013 [location]\nPortfolio: [link]\n\nPROFILE\nFront-end developer and designer with seven years of React.\n\nEXPERIENCE\nLead Front-end Developer — Nubia Studio — Madrid — 2020 - Present\n- Cut agency spend by $25,000 in Q3 2023 by rebuilding the site in Next.js\n- Added live chat with Socket.io\n\nFront-end Developer — Tramo Digital — 2016 - 2020\n- Built design system components in React\n\nEDUCATION\nGrado en Ingeniería Informática, Universidad de Salamanca, 2016\n\nSKILLS\nReact, Next.js, Socket.io, Figma"
+    }
+  },
+  {
+    "step": "7 Sidebar-first (Max Müller) letter, Hosted no parse",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://mipdkilndjibakhpgpnlokcndjekhkpa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "walkthrough-local-publishable-key",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "invented",
+      "comment": "",
+      "kind": "letter",
+      "output": "Dear Hiring Team at Lumen Health,\n\nAt Spreeline GmbH I cut infrastructure costs by $25,000 in Q3 2023 by moving the storefront to Next.js, and built live inventory updates with Socket.io.\n\nI live in Berlin and can work in your Berlin office. Reach me on 0151 23456789.\n\nBest regards,\n\n[name]",
+      "job": {
+        "title": "Full-stack Developer",
+        "company": "Lumen Health",
+        "description": "Lumen Health is hiring a Full-stack Developer to build patient dashboards in Next.js and real-time features with Socket.io. 3+ years of TypeScript required.",
+        "site": "boards.greenhouse.io"
+      },
+      "mode": "hosted",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false,
+      "sourceResume": "CONTACT\n[phone]\n[email]\nBerlin, Germany\n\n[name]\nFull-stack Developer\n\nSUMMARY\nFull-stack developer with four years of TypeScript and real-time apps.\n\nEXPERIENCE\nFull-stack Developer, Spreeline GmbH, Berlin, 2022 - Present\n- Cut infrastructure costs by $25,000 in Q3 2023 by moving the storefront to Next.js\n- Built live inventory updates with Socket.io\n\nJunior Developer, Havelsoft AG, 2020 - 2022\n- Maintained the order API in Node.js\n\nEDUCATION\nB.Sc. Informatik, TU Dresden, 2020\n\nSKILLS\nTypeScript, Next.js, Socket.io, Redis"
+    }
+  },
+  {
+    "step": "7 Sidebar-first (Max Müller) resume report, Hosted no parse",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://mipdkilndjibakhpgpnlokcndjekhkpa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "walkthrough-local-publishable-key",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "invented",
+      "comment": "",
+      "kind": "resume",
+      "output": {
+        "atsGaps": [
+          "HIPAA"
+        ],
+        "atsScore": 81,
+        "atsScoreBefore": 66,
+        "certifications": [],
+        "education": [
+          {
+            "bullets": [],
+            "dates": "2020",
+            "degree": "B.Sc. Informatik",
+            "institution": "TU Dresden",
+            "location": ""
+          }
+        ],
+        "experience": [
+          {
+            "bullets": [
+              "Cut infrastructure costs by $25,000 in Q3 2023 by moving the storefront to Next.js",
+              "Built live inventory updates with Socket.io"
+            ],
+            "company": "Spreeline GmbH",
+            "dates": "2022 - Present",
+            "location": "Berlin",
+            "title": "Full-stack Developer"
+          },
+          {
+            "bullets": [
+              "Maintained the order API in Node.js"
+            ],
+            "company": "Havelsoft AG",
+            "dates": "2020 - 2022",
+            "location": "",
+            "title": "Junior Developer"
+          }
+        ],
+        "otherSections": [],
+        "projects": [],
+        "skills": "TypeScript, Next.js, Socket.io, Redis",
+        "summary": "Full-stack developer with four years of TypeScript and real-time apps."
+      },
+      "job": {
+        "title": "Full-stack Developer",
+        "company": "Lumen Health",
+        "description": "Lumen Health is hiring a Full-stack Developer to build patient dashboards in Next.js and real-time features with Socket.io. 3+ years of TypeScript required.",
+        "site": "boards.greenhouse.io"
+      },
+      "mode": "hosted",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false,
+      "sourceResume": "CONTACT\n[phone]\n[email]\n[location]\n\n[name]\nFull-stack Developer\n\nSUMMARY\nFull-stack developer with four years of TypeScript and real-time apps.\n\nEXPERIENCE\nFull-stack Developer, Spreeline GmbH, Berlin, 2022 - Present\n- Cut infrastructure costs by $25,000 in Q3 2023 by moving the storefront to Next.js\n- Built live inventory updates with Socket.io\n\nJunior Developer, Havelsoft AG, 2020 - 2022\n- Maintained the order API in Node.js\n\nEDUCATION\nB.Sc. Informatik, TU Dresden, 2020\n\nSKILLS\nTypeScript, Next.js, Socket.io, Redis"
+    }
+  },
+  {
+    "step": "7 Sidebar-first (Max Müller) letter, BYOK with parse",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://mipdkilndjibakhpgpnlokcndjekhkpa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "walkthrough-local-publishable-key",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "invented",
+      "comment": "",
+      "kind": "letter",
+      "output": "Dear Hiring Team at Lumen Health,\n\nAt Spreeline GmbH I cut infrastructure costs by $25,000 in Q3 2023 by moving the storefront to Next.js, and built live inventory updates with Socket.io.\n\nI live in Berlin and can work in your Berlin office. Reach me on 0151 23456789.\n\nBest regards,\n\n[name]",
+      "job": {
+        "title": "Full-stack Developer",
+        "company": "Lumen Health",
+        "description": "Lumen Health is hiring a Full-stack Developer to build patient dashboards in Next.js and real-time features with Socket.io. 3+ years of TypeScript required.",
+        "site": "boards.greenhouse.io"
+      },
+      "mode": "byok",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false,
+      "sourceResume": "CONTACT\n[phone]\n[email]\n[location]\n\n[name]\nFull-stack Developer\n\nSUMMARY\nFull-stack developer with four years of TypeScript and real-time apps.\n\nEXPERIENCE\nFull-stack Developer, Spreeline GmbH, Berlin, 2022 - Present\n- Cut infrastructure costs by $25,000 in Q3 2023 by moving the storefront to Next.js\n- Built live inventory updates with Socket.io\n\nJunior Developer, Havelsoft AG, 2020 - 2022\n- Maintained the order API in Node.js\n\nEDUCATION\nB.Sc. Informatik, TU Dresden, 2020\n\nSKILLS\nTypeScript, Next.js, Socket.io, Redis"
+    }
+  },
+  {
+    "step": "7 Sidebar-first (Max Müller) resume report, BYOK with parse",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://mipdkilndjibakhpgpnlokcndjekhkpa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "walkthrough-local-publishable-key",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "invented",
+      "comment": "",
+      "kind": "resume",
+      "output": {
+        "atsGaps": [
+          "HIPAA"
+        ],
+        "atsScore": 81,
+        "atsScoreBefore": 66,
+        "certifications": [],
+        "education": [
+          {
+            "bullets": [],
+            "dates": "2020",
+            "degree": "B.Sc. Informatik",
+            "institution": "TU Dresden",
+            "location": ""
+          }
+        ],
+        "experience": [
+          {
+            "bullets": [
+              "Cut infrastructure costs by $25,000 in Q3 2023 by moving the storefront to Next.js",
+              "Built live inventory updates with Socket.io"
+            ],
+            "company": "Spreeline GmbH",
+            "dates": "2022 - Present",
+            "location": "Berlin",
+            "title": "Full-stack Developer"
+          },
+          {
+            "bullets": [
+              "Maintained the order API in Node.js"
+            ],
+            "company": "Havelsoft AG",
+            "dates": "2020 - 2022",
+            "location": "",
+            "title": "Junior Developer"
+          }
+        ],
+        "otherSections": [],
+        "projects": [],
+        "skills": "TypeScript, Next.js, Socket.io, Redis",
+        "summary": "Full-stack developer with four years of TypeScript and real-time apps."
+      },
+      "job": {
+        "title": "Full-stack Developer",
+        "company": "Lumen Health",
+        "description": "Lumen Health is hiring a Full-stack Developer to build patient dashboards in Next.js and real-time features with Socket.io. 3+ years of TypeScript required.",
+        "site": "boards.greenhouse.io"
+      },
+      "mode": "byok",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false,
+      "sourceResume": "CONTACT\n[phone]\n[email]\n[location]\n\n[name]\nFull-stack Developer\n\nSUMMARY\nFull-stack developer with four years of TypeScript and real-time apps.\n\nEXPERIENCE\nFull-stack Developer, Spreeline GmbH, Berlin, 2022 - Present\n- Cut infrastructure costs by $25,000 in Q3 2023 by moving the storefront to Next.js\n- Built live inventory updates with Socket.io\n\nJunior Developer, Havelsoft AG, 2020 - 2022\n- Maintained the order API in Node.js\n\nEDUCATION\nB.Sc. Informatik, TU Dresden, 2020\n\nSKILLS\nTypeScript, Next.js, Socket.io, Redis"
+    }
+  },
+  {
+    "step": "7 North American, two-column (Jane Doe) letter, Hosted no parse",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://mipdkilndjibakhpgpnlokcndjekhkpa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "walkthrough-local-publishable-key",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "invented",
+      "comment": "",
+      "kind": "letter",
+      "output": "Dear Hiring Team at Lumen Health,\n\nAt Contoso Retail I cut costs by $25,000 across 3 regions in Q3 2023, and built live dashboards with Socket.io and Next.js. My work is at [link].\n\nI'm based in Toronto and you can reach me at [phone].\n\nSincerely,\n\n[name]",
+      "job": {
+        "title": "Full-stack Developer",
+        "company": "Lumen Health",
+        "description": "Lumen Health is hiring a Full-stack Developer to build patient dashboards in Next.js and real-time features with Socket.io. 3+ years of TypeScript required.",
+        "site": "boards.greenhouse.io"
+      },
+      "mode": "hosted",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false,
+      "sourceResume": "[name]\nData Analyst                    Senior Data Analyst, Contoso Retail\n                                [location] | Jan 2021 - Present\nCONTACT                         - Cut costs by $25,000 across 3 regions in Q3 2023\n[address]                - Built live dashboards with Socket.io and Next.js\n[location] [postal code]\n[phone]                  Data Analyst, Fabrikam Foods\n[email]            2018 - 2020\n[link]                     - Cleaned supplier data in Python\n[link]\n                                EDUCATION\nSKILLS                          B.Sc. Statistics, McGill University, 2018\nSQL, Python, Socket.io,\nNext.js, Tableau"
+    }
+  },
+  {
+    "step": "7 North American, two-column (Jane Doe) resume report, Hosted no parse",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://mipdkilndjibakhpgpnlokcndjekhkpa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "walkthrough-local-publishable-key",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "invented",
+      "comment": "",
+      "kind": "resume",
+      "output": {
+        "atsGaps": [
+          "HIPAA"
+        ],
+        "atsScore": 81,
+        "atsScoreBefore": 66,
+        "certifications": [],
+        "education": [
+          {
+            "bullets": [],
+            "dates": "2018",
+            "degree": "B.Sc. Statistics",
+            "institution": "McGill University",
+            "location": ""
+          }
+        ],
+        "experience": [
+          {
+            "bullets": [
+              "Cut costs by $25,000 across 3 regions in Q3 2023",
+              "Built live dashboards with Socket.io and Next.js"
+            ],
+            "company": "Contoso Retail",
+            "dates": "Jan 2021 - Present",
+            "location": "Toronto, ON",
+            "title": "Senior Data Analyst"
+          },
+          {
+            "bullets": [
+              "Cleaned supplier data in Python"
+            ],
+            "company": "Fabrikam Foods",
+            "dates": "2018 - 2020",
+            "location": "",
+            "title": "Data Analyst"
+          }
+        ],
+        "otherSections": [],
+        "projects": [],
+        "skills": "SQL, Python, Socket.io, Next.js, Tableau",
+        "summary": "Data analyst with five years of SQL and Python who builds live dashboards."
+      },
+      "job": {
+        "title": "Full-stack Developer",
+        "company": "Lumen Health",
+        "description": "Lumen Health is hiring a Full-stack Developer to build patient dashboards in Next.js and real-time features with Socket.io. 3+ years of TypeScript required.",
+        "site": "boards.greenhouse.io"
+      },
+      "mode": "hosted",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false,
+      "sourceResume": "[name]\nData Analyst                    Senior Data Analyst, Contoso Retail\n                                [location] | Jan 2021 - Present\nCONTACT                         - Cut costs by $25,000 across 3 regions in Q3 2023\n[address]                - Built live dashboards with Socket.io and Next.js\n[location] [postal code]\n[phone]                  Data Analyst, Fabrikam Foods\n[email]            2018 - 2020\n[link]                     - Cleaned supplier data in Python\n[link]\n                                EDUCATION\nSKILLS                          B.Sc. Statistics, McGill University, 2018\nSQL, Python, Socket.io,\nNext.js, Tableau"
+    }
+  },
+  {
+    "step": "7 North American, two-column (Jane Doe) letter, BYOK with parse",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://mipdkilndjibakhpgpnlokcndjekhkpa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "walkthrough-local-publishable-key",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "invented",
+      "comment": "",
+      "kind": "letter",
+      "output": "Dear Hiring Team at Lumen Health,\n\nAt Contoso Retail I cut costs by $25,000 across 3 regions in Q3 2023, and built live dashboards with Socket.io and Next.js. My work is at [link].\n\nI'm based in Toronto and you can reach me at [phone].\n\nSincerely,\n\n[name]",
+      "job": {
+        "title": "Full-stack Developer",
+        "company": "Lumen Health",
+        "description": "Lumen Health is hiring a Full-stack Developer to build patient dashboards in Next.js and real-time features with Socket.io. 3+ years of TypeScript required.",
+        "site": "boards.greenhouse.io"
+      },
+      "mode": "byok",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false,
+      "sourceResume": "[name]\nData Analyst                    Senior Data Analyst, Contoso Retail\n                                [location] | Jan 2021 - Present\nCONTACT                         - Cut costs by $25,000 across 3 regions in Q3 2023\n[address]                - Built live dashboards with Socket.io and Next.js\n[location] [postal code]\n[phone]                  Data Analyst, Fabrikam Foods\n[email]            2018 - 2020\n[link]                     - Cleaned supplier data in Python\n[link]\n                                EDUCATION\nSKILLS                          B.Sc. Statistics, McGill University, 2018\nSQL, Python, Socket.io,\nNext.js, Tableau"
+    }
+  },
+  {
+    "step": "7 North American, two-column (Jane Doe) resume report, BYOK with parse",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://mipdkilndjibakhpgpnlokcndjekhkpa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "walkthrough-local-publishable-key",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "invented",
+      "comment": "",
+      "kind": "resume",
+      "output": {
+        "atsGaps": [
+          "HIPAA"
+        ],
+        "atsScore": 81,
+        "atsScoreBefore": 66,
+        "certifications": [],
+        "education": [
+          {
+            "bullets": [],
+            "dates": "2018",
+            "degree": "B.Sc. Statistics",
+            "institution": "McGill University",
+            "location": ""
+          }
+        ],
+        "experience": [
+          {
+            "bullets": [
+              "Cut costs by $25,000 across 3 regions in Q3 2023",
+              "Built live dashboards with Socket.io and Next.js"
+            ],
+            "company": "Contoso Retail",
+            "dates": "Jan 2021 - Present",
+            "location": "Toronto, ON",
+            "title": "Senior Data Analyst"
+          },
+          {
+            "bullets": [
+              "Cleaned supplier data in Python"
+            ],
+            "company": "Fabrikam Foods",
+            "dates": "2018 - 2020",
+            "location": "",
+            "title": "Data Analyst"
+          }
+        ],
+        "otherSections": [],
+        "projects": [],
+        "skills": "SQL, Python, Socket.io, Next.js, Tableau",
+        "summary": "Data analyst with five years of SQL and Python who builds live dashboards."
+      },
+      "job": {
+        "title": "Full-stack Developer",
+        "company": "Lumen Health",
+        "description": "Lumen Health is hiring a Full-stack Developer to build patient dashboards in Next.js and real-time features with Socket.io. 3+ years of TypeScript required.",
+        "site": "boards.greenhouse.io"
+      },
+      "mode": "byok",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false,
+      "sourceResume": "[name]\nData Analyst                    Senior Data Analyst, Contoso Retail\n                                [location] | Jan 2021 - Present\nCONTACT                         - Cut costs by $25,000 across 3 regions in Q3 2023\n[address]                - Built live dashboards with Socket.io and Next.js\n[location] [postal code]\n[phone]                  Data Analyst, Fabrikam Foods\n[email]            2018 - 2020\n[link]                     - Cleaned supplier data in Python\n[link]\n                                EDUCATION\nSKILLS                          B.Sc. Statistics, McGill University, 2018\nSQL, Python, Socket.io,\nNext.js, Tableau"
+    }
+  }
+]

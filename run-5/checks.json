@@ -1,0 +1,1928 @@
+{
+  "leakScan": [
+    {
+      "step": "1 BYOK letter, invented + original resume",
+      "hits": []
+    },
+    {
+      "step": "2 Hosted letter, contact ticked, invented + original resume",
+      "hits": []
+    },
+    {
+      "step": "2 Hosted letter, contact unticked",
+      "hits": []
+    },
+    {
+      "step": "2b BYOK letter, no parsed resume",
+      "hits": []
+    },
+    {
+      "step": "4.1 Hosted no-parse: stacked-header",
+      "hits": []
+    },
+    {
+      "step": "4.2 Hosted no-parse: portfolio-label",
+      "hits": []
+    },
+    {
+      "step": "4.3 Hosted no-parse: behance-in-letter",
+      "hits": []
+    },
+    {
+      "step": "4.4 Hosted no-parse: domain-shaped-skills",
+      "hits": []
+    },
+    {
+      "step": "3 Editor resume, edited",
+      "hits": [
+        {
+          "who": "Jane Doe",
+          "detail": "city \"Toronto\" (not \"University of Toronto\")",
+          "field": "output.education[0].location",
+          "text": "Toronto",
+          "context": "Toronto, ON"
+        },
+        {
+          "who": "Jane Doe",
+          "detail": "city \"Toronto\" (not \"University of Toronto\")",
+          "field": "output.experience[0].location",
+          "text": "Toronto",
+          "context": "Toronto, ON"
+        },
+        {
+          "who": "Jane Doe",
+          "detail": "city \"Toronto\" (not \"University of Toronto\")",
+          "field": "output.experience[1].location",
+          "text": "Toronto",
+          "context": "Toronto, ON"
+        }
+      ]
+    },
+    {
+      "step": "5.1 Hosted no-parse: title-like-heading",
+      "hits": []
+    },
+    {
+      "step": "5.1b BYOK with parse: title-like-heading",
+      "hits": []
+    },
+    {
+      "step": "5.2 Hosted no-parse: portfolio-colon-https",
+      "hits": []
+    },
+    {
+      "step": "5.3 Hosted no-parse: github-profile",
+      "hits": []
+    },
+    {
+      "step": "5.4 Hosted no-parse: name-domain-space",
+      "hits": []
+    },
+    {
+      "step": "6.1a BYOK with parse: pdf-run-together",
+      "hits": []
+    },
+    {
+      "step": "6.1b Hosted with History: pdf-run-together",
+      "hits": []
+    },
+    {
+      "step": "6.2 Hosted no-parse: summary-above-contact",
+      "hits": []
+    },
+    {
+      "step": "6.3 Hosted no-parse: address-heading",
+      "hits": []
+    },
+    {
+      "step": "6.4 Hosted no-parse: ordinary-numbers",
+      "hits": []
+    },
+    {
+      "step": "7 UK (Oliver Bennett) letter, Hosted no parse",
+      "hits": [
+        {
+          "who": "Oliver Bennett",
+          "detail": "phone",
+          "field": "output",
+          "text": "7700 900123",
+          "context": "14 Rosebery Road, Bristol BS6 7NQ\\n07700 900123 | [email]\\n\\nDear Hiring T"
+        },
+        {
+          "who": "Oliver Bennett",
+          "detail": "city \"Bristol\"",
+          "field": "output",
+          "text": "Bristol",
+          "context": "[name]\\n14 Rosebery Road, Bristol BS6 7NQ\\n07700 900123 | ["
+        },
+        {
+          "who": "Oliver Bennett",
+          "detail": "street address",
+          "field": "output",
+          "text": "Rosebery",
+          "context": "[name]\\n14 Rosebery Road, Bristol BS6 7NQ\\n07"
+        },
+        {
+          "who": "Oliver Bennett",
+          "detail": "postal code",
+          "field": "output",
+          "text": "BS6 7NQ",
+          "context": "[name]\\n14 Rosebery Road, Bristol BS6 7NQ\\n07700 900123 | [email]\\n\\n"
+        },
+        {
+          "who": "Oliver Bennett",
+          "detail": "city \"Bristol\"",
+          "field": "sourceResume",
+          "text": "Bristol",
+          "context": "[name]\\n[address], Bristol [postal code]\\n[phone] · "
+        },
+        {
+          "who": "Oliver Bennett",
+          "detail": "city \"Bristol\"",
+          "field": "sourceResume",
+          "text": "Bristol",
+          "context": "ull-stack Developer, Kestrel Labs, Bristol, 2021 - Present\\n- Cut ho"
+        }
+      ]
+    },
+    {
+      "step": "7 UK (Oliver Bennett) resume report, Hosted no parse",
+      "hits": [
+        {
+          "who": "Oliver Bennett",
+          "detail": "city \"Bristol\"",
+          "field": "output.experience[0].location",
+          "text": "Bristol",
+          "context": "Bristol"
+        }
+      ]
+    },
+    {
+      "step": "7 UK (Oliver Bennett) letter, BYOK with parse",
+      "hits": [
+        {
+          "who": "Oliver Bennett",
+          "detail": "phone",
+          "field": "output",
+          "text": "7700 900123",
+          "context": "14 Rosebery Road, Bristol BS6 7NQ\\n07700 900123 | [email]\\n\\nDear Hiring T"
+        },
+        {
+          "who": "Oliver Bennett",
+          "detail": "city \"Bristol\"",
+          "field": "output",
+          "text": "Bristol",
+          "context": "[name]\\n14 Rosebery Road, Bristol BS6 7NQ\\n07700 900123 | ["
+        },
+        {
+          "who": "Oliver Bennett",
+          "detail": "street address",
+          "field": "output",
+          "text": "Rosebery",
+          "context": "[name]\\n14 Rosebery Road, Bristol BS6 7NQ\\n07"
+        },
+        {
+          "who": "Oliver Bennett",
+          "detail": "postal code",
+          "field": "output",
+          "text": "BS6 7NQ",
+          "context": "[name]\\n14 Rosebery Road, Bristol BS6 7NQ\\n07700 900123 | [email]\\n\\n"
+        }
+      ]
+    },
+    {
+      "step": "7 UK (Oliver Bennett) resume report, BYOK with parse",
+      "hits": [
+        {
+          "who": "Oliver Bennett",
+          "detail": "city \"Bristol\"",
+          "field": "output.experience[0].location",
+          "text": "Bristol",
+          "context": "Bristol"
+        }
+      ]
+    },
+    {
+      "step": "7 Australia, PDF run-together (Priya Raman) letter, Hosted no parse",
+      "hits": [
+        {
+          "who": "Priya Raman",
+          "detail": "city \"Sydney\"",
+          "field": "output",
+          "text": "Sydney",
+          "context": "y code is at [link].\\n\\nI'm based in Sydney and can start in January"
+        },
+        {
+          "who": "Priya Raman",
+          "detail": "phone",
+          "field": "sourceResume",
+          "text": "412 345 678",
+          "context": "] 5, [address], Sydney NSW 2000 | 0412 345 678 | [email] | [link] Summa"
+        },
+        {
+          "who": "Priya Raman",
+          "detail": "city \"Sydney\"",
+          "field": "sourceResume",
+          "text": "Sydney",
+          "context": "[name] 5, [address], Sydney NSW 2000 | 0412 345 678 "
+        },
+        {
+          "who": "Priya Raman",
+          "detail": "city \"Sydney\"",
+          "field": "sourceResume",
+          "text": "Sydney",
+          "context": " Software Engineer Wattle Payments Sydney NSW Jan 2021 - Present C"
+        },
+        {
+          "who": "Priya Raman",
+          "detail": "region \"NSW\"",
+          "field": "sourceResume",
+          "text": "NSW",
+          "context": "[name] 5, [address], Sydney NSW 2000 | 0412 345 678 | [e"
+        },
+        {
+          "who": "Priya Raman",
+          "detail": "region \"NSW\"",
+          "field": "sourceResume",
+          "text": "NSW",
+          "context": "re Engineer Wattle Payments Sydney NSW Jan 2021 - Present Cut c"
+        },
+        {
+          "who": "Priya Raman",
+          "detail": "postal code 2000",
+          "field": "sourceResume",
+          "text": "2000",
+          "context": "[name] 5, [address], Sydney NSW 2000 | 0412 345 678 | [email]"
+        }
+      ]
+    },
+    {
+      "step": "7 Australia, PDF run-together (Priya Raman) resume report, Hosted no parse",
+      "hits": [
+        {
+          "who": "Priya Raman",
+          "detail": "city \"Sydney\"",
+          "field": "output.experience[0].location",
+          "text": "Sydney",
+          "context": "Sydney NSW"
+        },
+        {
+          "who": "Priya Raman",
+          "detail": "region \"NSW\"",
+          "field": "output.experience[0].location",
+          "text": "NSW",
+          "context": "Sydney NSW"
+        },
+        {
+          "who": "Priya Raman",
+          "detail": "postal code 2000",
+          "field": "sourceResume",
+          "text": "2000",
+          "context": "[name] 5, [address], [location] 2000 | [phone] | [email] | [l"
+        }
+      ]
+    },
+    {
+      "step": "7 Australia, PDF run-together (Priya Raman) letter, BYOK with parse",
+      "hits": [
+        {
+          "who": "Priya Raman",
+          "detail": "city \"Sydney\"",
+          "field": "output",
+          "text": "Sydney",
+          "context": "y code is at [link].\\n\\nI'm based in Sydney and can start in January"
+        },
+        {
+          "who": "Priya Raman",
+          "detail": "postal code 2000",
+          "field": "sourceResume",
+          "text": "2000",
+          "context": "[name] 5, [address], [location] 2000 | [phone] | [email] | [l"
+        }
+      ]
+    },
+    {
+      "step": "7 Australia, PDF run-together (Priya Raman) resume report, BYOK with parse",
+      "hits": [
+        {
+          "who": "Priya Raman",
+          "detail": "city \"Sydney\"",
+          "field": "output.experience[0].location",
+          "text": "Sydney",
+          "context": "Sydney NSW"
+        },
+        {
+          "who": "Priya Raman",
+          "detail": "region \"NSW\"",
+          "field": "output.experience[0].location",
+          "text": "NSW",
+          "context": "Sydney NSW"
+        },
+        {
+          "who": "Priya Raman",
+          "detail": "postal code 2000",
+          "field": "sourceResume",
+          "text": "2000",
+          "context": "[name] 5, [address], [location] 2000 | [phone] | [email] | [l"
+        }
+      ]
+    },
+    {
+      "step": "7 Labelled Word-style header (Lucía Fernández) letter, Hosted no parse",
+      "hits": [
+        {
+          "who": "Lucía Fernández",
+          "detail": "phone",
+          "field": "output",
+          "text": "612 345 678",
+          "context": "name]\\nCalle Mayor 10, 28013 Madrid\\n612 345 678 · [email]\\n\\nDear Hiring T"
+        },
+        {
+          "who": "Lucía Fernández",
+          "detail": "city \"Madrid\"",
+          "field": "output",
+          "text": "Madrid",
+          "context": "[name]\\nCalle Mayor 10, 28013 Madrid\\n612 345 678 · [email]\\n\\nD"
+        },
+        {
+          "who": "Lucía Fernández",
+          "detail": "street address \"Calle Mayor\"",
+          "field": "output",
+          "text": "Calle Mayor",
+          "context": "[name]\\nCalle Mayor 10, 28013 Madrid\\n612 345"
+        },
+        {
+          "who": "Lucía Fernández",
+          "detail": "postal code 28013",
+          "field": "output",
+          "text": "28013",
+          "context": "[name]\\nCalle Mayor 10, 28013 Madrid\\n612 345 678 · [em"
+        },
+        {
+          "who": "Lucía Fernández",
+          "detail": "city \"Madrid\"",
+          "field": "sourceResume",
+          "text": "Madrid",
+          "context": "il]\\nAddress: Calle Mayor 10, 28013 Madrid, Spain\\nPortfolio: [link]"
+        },
+        {
+          "who": "Lucía Fernández",
+          "detail": "city \"Madrid\"",
+          "field": "sourceResume",
+          "text": "Madrid",
+          "context": "ont-end Developer — Nubia Studio — Madrid — 2020 - Present\\n- Cut a"
+        },
+        {
+          "who": "Lucía Fernández",
+          "detail": "region \"Spain\"",
+          "field": "sourceResume",
+          "text": "Spain",
+          "context": "ess: Calle Mayor 10, 28013 Madrid, Spain\\nPortfolio: [link]\\n\\nPROFI"
+        },
+        {
+          "who": "Lucía Fernández",
+          "detail": "street address \"Calle Mayor\"",
+          "field": "sourceResume",
+          "text": "Calle Mayor",
+          "context": "e: [phone]\\nEmail: [email]\\nAddress: Calle Mayor 10, 28013 Madrid, Spain\\n"
+        },
+        {
+          "who": "Lucía Fernández",
+          "detail": "postal code 28013",
+          "field": "sourceResume",
+          "text": "28013",
+          "context": ": [email]\\nAddress: Calle Mayor 10, 28013 Madrid, Spain\\nPortfolio:"
+        }
+      ]
+    },
+    {
+      "step": "7 Labelled Word-style header (Lucía Fernández) resume report, Hosted no parse",
+      "hits": [
+        {
+          "who": "Lucía Fernández",
+          "detail": "city \"Madrid\"",
+          "field": "output.experience[0].location",
+          "text": "Madrid",
+          "context": "Madrid"
+        },
+        {
+          "who": "Lucía Fernández",
+          "detail": "city \"Madrid\"",
+          "field": "sourceResume",
+          "text": "Madrid",
+          "context": "ont-end Developer — Nubia Studio — Madrid — 2020 - Present\\n- Cut a"
+        },
+        {
+          "who": "Lucía Fernández",
+          "detail": "street address \"Calle Mayor\"",
+          "field": "sourceResume",
+          "text": "Calle Mayor",
+          "context": "e: [phone]\\nEmail: [email]\\nAddress: Calle Mayor 10, 28013 [location]\\nPor"
+        },
+        {
+          "who": "Lucía Fernández",
+          "detail": "postal code 28013",
+          "field": "sourceResume",
+          "text": "28013",
+          "context": ": [email]\\nAddress: Calle Mayor 10, 28013 [location]\\nPortfolio: [l"
+        }
+      ]
+    },
+    {
+      "step": "7 Labelled Word-style header (Lucía Fernández) letter, BYOK with parse",
+      "hits": [
+        {
+          "who": "Lucía Fernández",
+          "detail": "phone",
+          "field": "output",
+          "text": "612 345 678",
+          "context": "name]\\nCalle Mayor 10, 28013 Madrid\\n612 345 678 · [email]\\n\\nDear Hiring T"
+        },
+        {
+          "who": "Lucía Fernández",
+          "detail": "city \"Madrid\"",
+          "field": "output",
+          "text": "Madrid",
+          "context": "[name]\\nCalle Mayor 10, 28013 Madrid\\n612 345 678 · [email]\\n\\nD"
+        },
+        {
+          "who": "Lucía Fernández",
+          "detail": "street address \"Calle Mayor\"",
+          "field": "output",
+          "text": "Calle Mayor",
+          "context": "[name]\\nCalle Mayor 10, 28013 Madrid\\n612 345"
+        },
+        {
+          "who": "Lucía Fernández",
+          "detail": "postal code 28013",
+          "field": "output",
+          "text": "28013",
+          "context": "[name]\\nCalle Mayor 10, 28013 Madrid\\n612 345 678 · [em"
+        },
+        {
+          "who": "Lucía Fernández",
+          "detail": "city \"Madrid\"",
+          "field": "sourceResume",
+          "text": "Madrid",
+          "context": "ont-end Developer — Nubia Studio — Madrid — 2020 - Present\\n- Cut a"
+        },
+        {
+          "who": "Lucía Fernández",
+          "detail": "street address \"Calle Mayor\"",
+          "field": "sourceResume",
+          "text": "Calle Mayor",
+          "context": "e: [phone]\\nEmail: [email]\\nAddress: Calle Mayor 10, 28013 [location]\\nPor"
+        },
+        {
+          "who": "Lucía Fernández",
+          "detail": "postal code 28013",
+          "field": "sourceResume",
+          "text": "28013",
+          "context": ": [email]\\nAddress: Calle Mayor 10, 28013 [location]\\nPortfolio: [l"
+        }
+      ]
+    },
+    {
+      "step": "7 Labelled Word-style header (Lucía Fernández) resume report, BYOK with parse",
+      "hits": [
+        {
+          "who": "Lucía Fernández",
+          "detail": "city \"Madrid\"",
+          "field": "output.experience[0].location",
+          "text": "Madrid",
+          "context": "Madrid"
+        },
+        {
+          "who": "Lucía Fernández",
+          "detail": "city \"Madrid\"",
+          "field": "sourceResume",
+          "text": "Madrid",
+          "context": "ont-end Developer — Nubia Studio — Madrid — 2020 - Present\\n- Cut a"
+        },
+        {
+          "who": "Lucía Fernández",
+          "detail": "street address \"Calle Mayor\"",
+          "field": "sourceResume",
+          "text": "Calle Mayor",
+          "context": "e: [phone]\\nEmail: [email]\\nAddress: Calle Mayor 10, 28013 [location]\\nPor"
+        },
+        {
+          "who": "Lucía Fernández",
+          "detail": "postal code 28013",
+          "field": "sourceResume",
+          "text": "28013",
+          "context": ": [email]\\nAddress: Calle Mayor 10, 28013 [location]\\nPortfolio: [l"
+        }
+      ]
+    },
+    {
+      "step": "7 Sidebar-first (Max Müller) letter, Hosted no parse",
+      "hits": [
+        {
+          "who": "Max Müller",
+          "detail": "phone",
+          "field": "output",
+          "text": "151 23456789",
+          "context": "n your Berlin office. Reach me on 0151 23456789.\\n\\nBest regards,\\n\\n[name]"
+        },
+        {
+          "who": "Max Müller",
+          "detail": "city \"Berlin\"",
+          "field": "output",
+          "text": "Berlin",
+          "context": "updates with Socket.io.\\n\\nI live in Berlin and can work in your Ber"
+        },
+        {
+          "who": "Max Müller",
+          "detail": "city \"Berlin\"",
+          "field": "output",
+          "text": "Berlin",
+          "context": "ive in Berlin and can work in your Berlin office. Reach me on 0151"
+        },
+        {
+          "who": "Max Müller",
+          "detail": "city \"Berlin\"",
+          "field": "sourceResume",
+          "text": "Berlin",
+          "context": "CONTACT\\n[phone]\\n[email]\\nBerlin, Germany\\n\\n[name]\\nFull-st"
+        },
+        {
+          "who": "Max Müller",
+          "detail": "city \"Berlin\"",
+          "field": "sourceResume",
+          "text": "Berlin",
+          "context": "l-stack Developer, Spreeline GmbH, Berlin, 2022 - Present\\n- Cut in"
+        },
+        {
+          "who": "Max Müller",
+          "detail": "region \"Germany\"",
+          "field": "sourceResume",
+          "text": "Germany",
+          "context": "CONTACT\\n[phone]\\n[email]\\nBerlin, Germany\\n\\n[name]\\nFull-stack Devel"
+        }
+      ]
+    },
+    {
+      "step": "7 Sidebar-first (Max Müller) resume report, Hosted no parse",
+      "hits": [
+        {
+          "who": "Max Müller",
+          "detail": "city \"Berlin\"",
+          "field": "output.experience[0].location",
+          "text": "Berlin",
+          "context": "Berlin"
+        },
+        {
+          "who": "Max Müller",
+          "detail": "city \"Berlin\"",
+          "field": "sourceResume",
+          "text": "Berlin",
+          "context": "l-stack Developer, Spreeline GmbH, Berlin, 2022 - Present\\n- Cut in"
+        }
+      ]
+    },
+    {
+      "step": "7 Sidebar-first (Max Müller) letter, BYOK with parse",
+      "hits": [
+        {
+          "who": "Max Müller",
+          "detail": "phone",
+          "field": "output",
+          "text": "151 23456789",
+          "context": "n your Berlin office. Reach me on 0151 23456789.\\n\\nBest regards,\\n\\n[name]"
+        },
+        {
+          "who": "Max Müller",
+          "detail": "city \"Berlin\"",
+          "field": "output",
+          "text": "Berlin",
+          "context": "updates with Socket.io.\\n\\nI live in Berlin and can work in your Ber"
+        },
+        {
+          "who": "Max Müller",
+          "detail": "city \"Berlin\"",
+          "field": "output",
+          "text": "Berlin",
+          "context": "ive in Berlin and can work in your Berlin office. Reach me on 0151"
+        },
+        {
+          "who": "Max Müller",
+          "detail": "city \"Berlin\"",
+          "field": "sourceResume",
+          "text": "Berlin",
+          "context": "l-stack Developer, Spreeline GmbH, Berlin, 2022 - Present\\n- Cut in"
+        }
+      ]
+    },
+    {
+      "step": "7 Sidebar-first (Max Müller) resume report, BYOK with parse",
+      "hits": [
+        {
+          "who": "Max Müller",
+          "detail": "city \"Berlin\"",
+          "field": "output.experience[0].location",
+          "text": "Berlin",
+          "context": "Berlin"
+        },
+        {
+          "who": "Max Müller",
+          "detail": "city \"Berlin\"",
+          "field": "sourceResume",
+          "text": "Berlin",
+          "context": "l-stack Developer, Spreeline GmbH, Berlin, 2022 - Present\\n- Cut in"
+        }
+      ]
+    },
+    {
+      "step": "7 North American, two-column (Jane Doe) letter, Hosted no parse",
+      "hits": [
+        {
+          "who": "Jane Doe",
+          "detail": "city \"Toronto\" (not \"University of Toronto\")",
+          "field": "output",
+          "text": "Toronto",
+          "context": "y work is at [link].\\n\\nI'm based in Toronto and you can reach me at "
+        }
+      ]
+    },
+    {
+      "step": "7 North American, two-column (Jane Doe) resume report, Hosted no parse",
+      "hits": [
+        {
+          "who": "Jane Doe",
+          "detail": "city \"Toronto\" (not \"University of Toronto\")",
+          "field": "output.experience[0].location",
+          "text": "Toronto",
+          "context": "Toronto, ON"
+        }
+      ]
+    },
+    {
+      "step": "7 North American, two-column (Jane Doe) letter, BYOK with parse",
+      "hits": [
+        {
+          "who": "Jane Doe",
+          "detail": "city \"Toronto\" (not \"University of Toronto\")",
+          "field": "output",
+          "text": "Toronto",
+          "context": "y work is at [link].\\n\\nI'm based in Toronto and you can reach me at "
+        }
+      ]
+    },
+    {
+      "step": "7 North American, two-column (Jane Doe) resume report, BYOK with parse",
+      "hits": [
+        {
+          "who": "Jane Doe",
+          "detail": "city \"Toronto\" (not \"University of Toronto\")",
+          "field": "output.experience[0].location",
+          "text": "Toronto",
+          "context": "Toronto, ON"
+        }
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "name": "LEAK SCAN 1 BYOK letter, invented + original resume",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 2 Hosted letter, contact ticked, invented + original resume",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 2 Hosted letter, contact unticked",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 2b BYOK letter, no parsed resume",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 4.1 Hosted no-parse: stacked-header",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 4.2 Hosted no-parse: portfolio-label",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 4.3 Hosted no-parse: behance-in-letter",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 4.4 Hosted no-parse: domain-shaped-skills",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 3 Editor resume, edited",
+      "ok": false,
+      "detail": "Jane Doe city \"Toronto\" (not \"University of Toronto\") in output.education[0].location: \"Toronto\" (…Toronto, ON…) || Jane Doe city \"Toronto\" (not \"University of Toronto\") in output.experience[0].location: \"Toronto\" (…Toronto, ON…) || Jane Doe city \"Toronto\" (not \"University of Toronto\") in output.experience[1].location: \"Toronto\" (…Toronto, ON…)"
+    },
+    {
+      "name": "LEAK SCAN 5.1 Hosted no-parse: title-like-heading",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 5.1b BYOK with parse: title-like-heading",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 5.2 Hosted no-parse: portfolio-colon-https",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 5.3 Hosted no-parse: github-profile",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 5.4 Hosted no-parse: name-domain-space",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 6.1a BYOK with parse: pdf-run-together",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 6.1b Hosted with History: pdf-run-together",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 6.2 Hosted no-parse: summary-above-contact",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 6.3 Hosted no-parse: address-heading",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 6.4 Hosted no-parse: ordinary-numbers",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LEAK SCAN 7 UK (Oliver Bennett) letter, Hosted no parse",
+      "ok": false,
+      "detail": "Oliver Bennett phone in output: \"7700 900123\" (…14 Rosebery Road, Bristol BS6 7NQ\\n07700 900123 | [email]\\n\\nDear Hiring T…) || Oliver Bennett city \"Bristol\" in output: \"Bristol\" (…[name]\\n14 Rosebery Road, Bristol BS6 7NQ\\n07700 900123 | […) || Oliver Bennett street address in output: \"Rosebery\" (…[name]\\n14 Rosebery Road, Bristol BS6 7NQ\\n07…) || Oliver Bennett postal code in output: \"BS6 7NQ\" (…[name]\\n14 Rosebery Road, Bristol BS6 7NQ\\n07700 900123 | [email]\\n\\n…) || Oliver Bennett city \"Bristol\" in sourceResume: \"Bristol\" (…[name]\\n[address], Bristol [postal code]\\n[phone] · …) || Oliver Bennett city \"Bristol\" in sourceResume: \"Bristol\" (…ull-stack Developer, Kestrel Labs, Bristol, 2021 - Present\\n- Cut ho…)"
+    },
+    {
+      "name": "LEAK SCAN 7 UK (Oliver Bennett) resume report, Hosted no parse",
+      "ok": false,
+      "detail": "Oliver Bennett city \"Bristol\" in output.experience[0].location: \"Bristol\" (…Bristol…)"
+    },
+    {
+      "name": "LEAK SCAN 7 UK (Oliver Bennett) letter, BYOK with parse",
+      "ok": false,
+      "detail": "Oliver Bennett phone in output: \"7700 900123\" (…14 Rosebery Road, Bristol BS6 7NQ\\n07700 900123 | [email]\\n\\nDear Hiring T…) || Oliver Bennett city \"Bristol\" in output: \"Bristol\" (…[name]\\n14 Rosebery Road, Bristol BS6 7NQ\\n07700 900123 | […) || Oliver Bennett street address in output: \"Rosebery\" (…[name]\\n14 Rosebery Road, Bristol BS6 7NQ\\n07…) || Oliver Bennett postal code in output: \"BS6 7NQ\" (…[name]\\n14 Rosebery Road, Bristol BS6 7NQ\\n07700 900123 | [email]\\n\\n…)"
+    },
+    {
+      "name": "LEAK SCAN 7 UK (Oliver Bennett) resume report, BYOK with parse",
+      "ok": false,
+      "detail": "Oliver Bennett city \"Bristol\" in output.experience[0].location: \"Bristol\" (…Bristol…)"
+    },
+    {
+      "name": "LEAK SCAN 7 Australia, PDF run-together (Priya Raman) letter, Hosted no parse",
+      "ok": false,
+      "detail": "Priya Raman city \"Sydney\" in output: \"Sydney\" (…y code is at [link].\\n\\nI'm based in Sydney and can start in January…) || Priya Raman phone in sourceResume: \"412 345 678\" (…] 5, [address], Sydney NSW 2000 | 0412 345 678 | [email] | [link] Summa…) || Priya Raman city \"Sydney\" in sourceResume: \"Sydney\" (…[name] 5, [address], Sydney NSW 2000 | 0412 345 678 …) || Priya Raman city \"Sydney\" in sourceResume: \"Sydney\" (… Software Engineer Wattle Payments Sydney NSW Jan 2021 - Present C…) || Priya Raman region \"NSW\" in sourceResume: \"NSW\" (…[name] 5, [address], Sydney NSW 2000 | 0412 345 678 | [e…) || Priya Raman region \"NSW\" in sourceResume: \"NSW\" (…re Engineer Wattle Payments Sydney NSW Jan 2021 - Present Cut c…) || Priya Raman postal code 2000 in sourceResume: \"2000\" (…[name] 5, [address], Sydney NSW 2000 | 0412 345 678 | [email]…)"
+    },
+    {
+      "name": "LEAK SCAN 7 Australia, PDF run-together (Priya Raman) resume report, Hosted no parse",
+      "ok": false,
+      "detail": "Priya Raman city \"Sydney\" in output.experience[0].location: \"Sydney\" (…Sydney NSW…) || Priya Raman region \"NSW\" in output.experience[0].location: \"NSW\" (…Sydney NSW…) || Priya Raman postal code 2000 in sourceResume: \"2000\" (…[name] 5, [address], [location] 2000 | [phone] | [email] | [l…)"
+    },
+    {
+      "name": "LEAK SCAN 7 Australia, PDF run-together (Priya Raman) letter, BYOK with parse",
+      "ok": false,
+      "detail": "Priya Raman city \"Sydney\" in output: \"Sydney\" (…y code is at [link].\\n\\nI'm based in Sydney and can start in January…) || Priya Raman postal code 2000 in sourceResume: \"2000\" (…[name] 5, [address], [location] 2000 | [phone] | [email] | [l…)"
+    },
+    {
+      "name": "LEAK SCAN 7 Australia, PDF run-together (Priya Raman) resume report, BYOK with parse",
+      "ok": false,
+      "detail": "Priya Raman city \"Sydney\" in output.experience[0].location: \"Sydney\" (…Sydney NSW…) || Priya Raman region \"NSW\" in output.experience[0].location: \"NSW\" (…Sydney NSW…) || Priya Raman postal code 2000 in sourceResume: \"2000\" (…[name] 5, [address], [location] 2000 | [phone] | [email] | [l…)"
+    },
+    {
+      "name": "LEAK SCAN 7 Labelled Word-style header (Lucía Fernández) letter, Hosted no parse",
+      "ok": false,
+      "detail": "Lucía Fernández phone in output: \"612 345 678\" (…name]\\nCalle Mayor 10, 28013 Madrid\\n612 345 678 · [email]\\n\\nDear Hiring T…) || Lucía Fernández city \"Madrid\" in output: \"Madrid\" (…[name]\\nCalle Mayor 10, 28013 Madrid\\n612 345 678 · [email]\\n\\nD…) || Lucía Fernández street address \"Calle Mayor\" in output: \"Calle Mayor\" (…[name]\\nCalle Mayor 10, 28013 Madrid\\n612 345…) || Lucía Fernández postal code 28013 in output: \"28013\" (…[name]\\nCalle Mayor 10, 28013 Madrid\\n612 345 678 · [em…) || Lucía Fernández city \"Madrid\" in sourceResume: \"Madrid\" (…il]\\nAddress: Calle Mayor 10, 28013 Madrid, Spain\\nPortfolio: [link]…) || Lucía Fernández city \"Madrid\" in sourceResume: \"Madrid\" (…ont-end Developer — Nubia Studio — Madrid — 2020 - Present\\n- Cut a…) || Lucía Fernández region \"Spain\" in sourceResume: \"Spain\" (…ess: Calle Mayor 10, 28013 Madrid, Spain\\nPortfolio: [link]\\n\\nPROFI…) || Lucía Fernández street address \"Calle Mayor\" in sourceResume: \"Calle Mayor\" (…e: [phone]\\nEmail: [email]\\nAddress: Calle Mayor 10, 28013 Madrid, Spain\\n…) || Lucía Fernández postal code 28013 in sourceResume: \"28013\" (…: [email]\\nAddress: Calle Mayor 10, 28013 Madrid, Spain\\nPortfolio:…)"
+    },
+    {
+      "name": "LEAK SCAN 7 Labelled Word-style header (Lucía Fernández) resume report, Hosted no parse",
+      "ok": false,
+      "detail": "Lucía Fernández city \"Madrid\" in output.experience[0].location: \"Madrid\" (…Madrid…) || Lucía Fernández city \"Madrid\" in sourceResume: \"Madrid\" (…ont-end Developer — Nubia Studio — Madrid — 2020 - Present\\n- Cut a…) || Lucía Fernández street address \"Calle Mayor\" in sourceResume: \"Calle Mayor\" (…e: [phone]\\nEmail: [email]\\nAddress: Calle Mayor 10, 28013 [location]\\nPor…) || Lucía Fernández postal code 28013 in sourceResume: \"28013\" (…: [email]\\nAddress: Calle Mayor 10, 28013 [location]\\nPortfolio: [l…)"
+    },
+    {
+      "name": "LEAK SCAN 7 Labelled Word-style header (Lucía Fernández) letter, BYOK with parse",
+      "ok": false,
+      "detail": "Lucía Fernández phone in output: \"612 345 678\" (…name]\\nCalle Mayor 10, 28013 Madrid\\n612 345 678 · [email]\\n\\nDear Hiring T…) || Lucía Fernández city \"Madrid\" in output: \"Madrid\" (…[name]\\nCalle Mayor 10, 28013 Madrid\\n612 345 678 · [email]\\n\\nD…) || Lucía Fernández street address \"Calle Mayor\" in output: \"Calle Mayor\" (…[name]\\nCalle Mayor 10, 28013 Madrid\\n612 345…) || Lucía Fernández postal code 28013 in output: \"28013\" (…[name]\\nCalle Mayor 10, 28013 Madrid\\n612 345 678 · [em…) || Lucía Fernández city \"Madrid\" in sourceResume: \"Madrid\" (…ont-end Developer — Nubia Studio — Madrid — 2020 - Present\\n- Cut a…) || Lucía Fernández street address \"Calle Mayor\" in sourceResume: \"Calle Mayor\" (…e: [phone]\\nEmail: [email]\\nAddress: Calle Mayor 10, 28013 [location]\\nPor…) || Lucía Fernández postal code 28013 in sourceResume: \"28013\" (…: [email]\\nAddress: Calle Mayor 10, 28013 [location]\\nPortfolio: [l…)"
+    },
+    {
+      "name": "LEAK SCAN 7 Labelled Word-style header (Lucía Fernández) resume report, BYOK with parse",
+      "ok": false,
+      "detail": "Lucía Fernández city \"Madrid\" in output.experience[0].location: \"Madrid\" (…Madrid…) || Lucía Fernández city \"Madrid\" in sourceResume: \"Madrid\" (…ont-end Developer — Nubia Studio — Madrid — 2020 - Present\\n- Cut a…) || Lucía Fernández street address \"Calle Mayor\" in sourceResume: \"Calle Mayor\" (…e: [phone]\\nEmail: [email]\\nAddress: Calle Mayor 10, 28013 [location]\\nPor…) || Lucía Fernández postal code 28013 in sourceResume: \"28013\" (…: [email]\\nAddress: Calle Mayor 10, 28013 [location]\\nPortfolio: [l…)"
+    },
+    {
+      "name": "LEAK SCAN 7 Sidebar-first (Max Müller) letter, Hosted no parse",
+      "ok": false,
+      "detail": "Max Müller phone in output: \"151 23456789\" (…n your Berlin office. Reach me on 0151 23456789.\\n\\nBest regards,\\n\\n[name]…) || Max Müller city \"Berlin\" in output: \"Berlin\" (…updates with Socket.io.\\n\\nI live in Berlin and can work in your Ber…) || Max Müller city \"Berlin\" in output: \"Berlin\" (…ive in Berlin and can work in your Berlin office. Reach me on 0151…) || Max Müller city \"Berlin\" in sourceResume: \"Berlin\" (…CONTACT\\n[phone]\\n[email]\\nBerlin, Germany\\n\\n[name]\\nFull-st…) || Max Müller city \"Berlin\" in sourceResume: \"Berlin\" (…l-stack Developer, Spreeline GmbH, Berlin, 2022 - Present\\n- Cut in…) || Max Müller region \"Germany\" in sourceResume: \"Germany\" (…CONTACT\\n[phone]\\n[email]\\nBerlin, Germany\\n\\n[name]\\nFull-stack Devel…)"
+    },
+    {
+      "name": "LEAK SCAN 7 Sidebar-first (Max Müller) resume report, Hosted no parse",
+      "ok": false,
+      "detail": "Max Müller city \"Berlin\" in output.experience[0].location: \"Berlin\" (…Berlin…) || Max Müller city \"Berlin\" in sourceResume: \"Berlin\" (…l-stack Developer, Spreeline GmbH, Berlin, 2022 - Present\\n- Cut in…)"
+    },
+    {
+      "name": "LEAK SCAN 7 Sidebar-first (Max Müller) letter, BYOK with parse",
+      "ok": false,
+      "detail": "Max Müller phone in output: \"151 23456789\" (…n your Berlin office. Reach me on 0151 23456789.\\n\\nBest regards,\\n\\n[name]…) || Max Müller city \"Berlin\" in output: \"Berlin\" (…updates with Socket.io.\\n\\nI live in Berlin and can work in your Ber…) || Max Müller city \"Berlin\" in output: \"Berlin\" (…ive in Berlin and can work in your Berlin office. Reach me on 0151…) || Max Müller city \"Berlin\" in sourceResume: \"Berlin\" (…l-stack Developer, Spreeline GmbH, Berlin, 2022 - Present\\n- Cut in…)"
+    },
+    {
+      "name": "LEAK SCAN 7 Sidebar-first (Max Müller) resume report, BYOK with parse",
+      "ok": false,
+      "detail": "Max Müller city \"Berlin\" in output.experience[0].location: \"Berlin\" (…Berlin…) || Max Müller city \"Berlin\" in sourceResume: \"Berlin\" (…l-stack Developer, Spreeline GmbH, Berlin, 2022 - Present\\n- Cut in…)"
+    },
+    {
+      "name": "LEAK SCAN 7 North American, two-column (Jane Doe) letter, Hosted no parse",
+      "ok": false,
+      "detail": "Jane Doe city \"Toronto\" (not \"University of Toronto\") in output: \"Toronto\" (…y work is at [link].\\n\\nI'm based in Toronto and you can reach me at …)"
+    },
+    {
+      "name": "LEAK SCAN 7 North American, two-column (Jane Doe) resume report, Hosted no parse",
+      "ok": false,
+      "detail": "Jane Doe city \"Toronto\" (not \"University of Toronto\") in output.experience[0].location: \"Toronto\" (…Toronto, ON…)"
+    },
+    {
+      "name": "LEAK SCAN 7 North American, two-column (Jane Doe) letter, BYOK with parse",
+      "ok": false,
+      "detail": "Jane Doe city \"Toronto\" (not \"University of Toronto\") in output: \"Toronto\" (…y work is at [link].\\n\\nI'm based in Toronto and you can reach me at …)"
+    },
+    {
+      "name": "LEAK SCAN 7 North American, two-column (Jane Doe) resume report, BYOK with parse",
+      "ok": false,
+      "detail": "Jane Doe city \"Toronto\" (not \"University of Toronto\") in output.experience[0].location: \"Toronto\" (…Toronto, ON…)"
+    },
+    {
+      "name": "1 BYOK: \"Flag a problem\" link under the letter",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1 BYOK: form shows the five categories",
+      "ok": true,
+      "detail": "The design or layout looked wrong / The wording sounded generic or not like me / It added things that aren't true / It left out things that matter / Other"
+    },
+    {
+      "name": "1 BYOK: Send disabled before a category is picked",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1 BYOK: no \"You can email me about this\" box",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1 BYOK: \"Other\" with empty comment keeps Send disabled",
+      "ok": true,
+      "detail": "comment label: \"WHAT HAPPENED?\""
+    },
+    {
+      "name": "1 BYOK: \"Other\" with a comment enables Send",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1 BYOK: original-resume box only for \"It added things that aren't true\"",
+      "ok": true,
+      "detail": "{\"The design or layout looked wrong\":0,\"The wording sounded generic or not like me\":0,\"It left out things that matter\":0,\"Other\":0,\"It added things that aren't true\":1}"
+    },
+    {
+      "name": "1 BYOK: original-resume box starts unticked",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1 BYOK letter, invented + original resume: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1 BYOK: no name/email/phone/janedoe.dev/linkedin.com/in/janedoe anywhere in body",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1 BYOK: sourceResume sent and clean",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1 BYOK: summary, jobs and skills stay in sourceResume",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1 BYOK (changed in run 4): no user details anywhere in sourceResume; header lines kept as [name] / tags; summary, both jobs and linked bullet kept",
+      "ok": true,
+      "detail": "header: \"[name]\\n[location] | [phone] | [email] | [link] | [link]\""
+    },
+    {
+      "name": "1 BYOK: job.site is linkedin.com",
+      "ok": true,
+      "detail": "linkedin.com"
+    },
+    {
+      "name": "1 BYOK: no Authorization header",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1 BYOK: mode byok, contact false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1 BYOK: \"Reported. Thanks.\" can't reopen the form",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1 BYOK: still \"Reported. Thanks.\" after reopening the popup",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted: new letter shows \"Flag a problem\" again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted: \"You can email me about this\" box appears",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted letter, contact ticked, invented + original resume: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted ticked: Authorization: Bearer <token>",
+      "ok": true,
+      "detail": "Bearer walkthrough-fake-access-token"
+    },
+    {
+      "name": "2 Hosted ticked: contact true",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted (no parsed resume): name replaced",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted (no parsed resume): email, phone, linkedin.com/in/janedoe replaced",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted (no parsed resume): portfolio janedoe.dev replaced",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted: mode hosted, provider claude",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted (run-1 failing case): output has no janedoe.dev, Jane Doe, email or phone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted (run-1 failing case): sourceResume has no janedoe.dev, Jane Doe, email or phone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted: summary, jobs and skills stay in sourceResume",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted (changed in run 4): no user details anywhere in sourceResume; header lines kept as [name] / tags; summary, both jobs and linked bullet kept",
+      "ok": true,
+      "detail": "header: \"[name]\\n[location] | [phone] | [email] | [link] | [link]\""
+    },
+    {
+      "name": "2 Hosted: contact box starts unticked",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted letter, contact unticked: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted unticked: no Authorization header",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted unticked: contact false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2 Hosted unticked: no contact details in body",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2b BYOK letter, no parsed resume: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2b BYOK (no parsed resume): name replaced",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "2b BYOK (no parsed resume): portfolio janedoe.dev replaced",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.1 Hosted no-parse: stacked-header: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.1 stacked-header: output has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.1 stacked-header: sourceResume has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.1 stacked-header: skills and employers stay in sourceResume",
+      "ok": true,
+      "detail": "Contoso Retail, Fabrikam Foods, React, TypeScript, Vue, GraphQL"
+    },
+    {
+      "name": "4.1 stacked-header (changed in run 4): no user details anywhere in sourceResume (incl. Toronto, ON)",
+      "ok": true,
+      "detail": "top: \"[name]\\n\\n[location]\\n\\n[email]\\n\\n[link]\\n\\nSUMMARY\\nFront-end engineer who ships fast, accessible\""
+    },
+    {
+      "name": "4.2 Hosted no-parse: portfolio-label: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.2 portfolio-label: output has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.2 portfolio-label: sourceResume has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.2 portfolio-label: skills and employers stay in sourceResume",
+      "ok": true,
+      "detail": "Contoso Retail, Fabrikam Foods, React, TypeScript, Vue, GraphQL"
+    },
+    {
+      "name": "4.3 Hosted no-parse: behance-in-letter: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.3 behance-in-letter: output has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.3 behance-in-letter: sourceResume has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.3 behance-in-letter: skills and employers stay in sourceResume",
+      "ok": true,
+      "detail": "Contoso Retail, Fabrikam Foods, React, TypeScript, Vue, GraphQL"
+    },
+    {
+      "name": "4.4 Hosted no-parse: domain-shaped-skills: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.4 domain-shaped-skills: output has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.4 domain-shaped-skills: sourceResume has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "4.4 domain-shaped-skills: skills and employers stay in sourceResume",
+      "ok": true,
+      "detail": "Socket.io, fast.ai, Shopify.com | Engineer | 2020–2024, Built real-time Socket.io apps, Contoso Retail, Fabrikam Foods, React, TypeScript, Vue, GraphQL"
+    },
+    {
+      "name": "4.4 domain-shaped-skills: letter keeps At Shopify.com I built Socket.io apps. unchanged",
+      "ok": true,
+      "detail": "Dear Hiring Team at Northwind Analytics, | At Shopify.com I built  | Socket.io apps. You can see more at [link]."
+    },
+    {
+      "name": "3 Editor: \"Flag a problem\" link in the top bar",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "3 Editor: bullet edited",
+      "ok": true,
+      "detail": "Built weekly sales dashboards used by 40 store managers across Ontario"
+    },
+    {
+      "name": "3 Editor 1280px: form opens below the bar, fully on screen",
+      "ok": true,
+      "detail": "{\"box\":{\"x\":916,\"y\":74,\"width\":340,\"height\":400.78125},\"bar\":{\"x\":0,\"y\":0,\"width\":1280,\"height\":67}}"
+    },
+    {
+      "name": "3 Editor: Ctrl+Z in the comment keeps the resume edit",
+      "ok": true,
+      "detail": "bullet now: \"Built weekly sales dashboards used by 40 store managers across Ontario\", comment now: \"Layout brok\""
+    },
+    {
+      "name": "3 Editor 900px: form stays fully on screen",
+      "ok": true,
+      "detail": "{\"x\":521,\"y\":119,\"width\":340,\"height\":400.78125}"
+    },
+    {
+      "name": "3 Editor resume, edited: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "3 Editor: output has no name/phone/email/website/links/location/sourceHash",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "3 Editor: output.editedAt set",
+      "ok": true,
+      "detail": "2026-11-17T20:25:43.667Z"
+    },
+    {
+      "name": "3 Editor: the edit is in the output",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "3 Editor: no contact details anywhere in body",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "3 Editor: job.site linkedin.com, kind resume, ATS score/gaps",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "3 Editor: no Authorization header (BYOK)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "3 Editor (control): Ctrl+Z in a resume field undoes the edit",
+      "ok": true,
+      "detail": "Built weekly sales dashboards used by 40 store managers"
+    },
+    {
+      "name": "5.1 Hosted no-parse: title-like-heading: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "5.1 title-like-heading: output has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "5.1 title-like-heading: sourceResume has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "5.1 title-like-heading: skills and employers stay in sourceResume",
+      "ok": true,
+      "detail": "EXPERIENCE, Front-end Engineer, Contoso Retail, Built the store locator, Contoso Retail, Fabrikam Foods, React, TypeScript, Vue, GraphQL"
+    },
+    {
+      "name": "5.1 title-like-heading (changed in run 4): no user details anywhere in sourceResume; header lines kept as [name] / Education Consultant / tags; EXPERIENCE and both jobs stay",
+      "ok": true,
+      "detail": "header: \"[name]\\nEducation Consultant\\n[address], [location] [postal code] · [phone] · [email]\""
+    },
+    {
+      "name": "5.1b BYOK with parse: title-like-heading: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "5.1b BYOK title-like-heading: street address, city, postal code and contact details gone from sourceResume",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "5.1b BYOK title-like-heading: EXPERIENCE and the jobs stay",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "5.1b BYOK title-like-heading (changed in run 4): no user details anywhere in sourceResume; header lines kept as [name] / Education Consultant / tags; EXPERIENCE and both jobs stay",
+      "ok": true,
+      "detail": "header: \"[name]\\nEducation Consultant\\n[address], [location] [postal code] · [phone] · [email]\""
+    },
+    {
+      "name": "5.2 Hosted no-parse: portfolio-colon-https: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "5.2 portfolio-colon-https: output has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "5.2 portfolio-colon-https: sourceResume has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "5.2 portfolio-colon-https: skills and employers stay in sourceResume",
+      "ok": true,
+      "detail": "Contoso Retail, Fabrikam Foods, React, TypeScript, Vue, GraphQL"
+    },
+    {
+      "name": "5.3 Hosted no-parse: github-profile: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "5.3 github-profile: output has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "5.3 github-profile: sourceResume has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "5.3 github-profile: skills and employers stay in sourceResume",
+      "ok": true,
+      "detail": "Contoso Retail, Fabrikam Foods, React, TypeScript, Vue, GraphQL"
+    },
+    {
+      "name": "5.3 github-profile: letter keeps I use github.com daily unchanged",
+      "ok": true,
+      "detail": "Dear Hiring Team at Northwind Analytics, | At Contoso Retail I bui |  I use github.com daily, and my code is at [link]."
+    },
+    {
+      "name": "5.4 Hosted no-parse: name-domain-space: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "5.4 name-domain-space: output has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "5.4 name-domain-space: sourceResume has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "5.4 name-domain-space: skills and employers stay in sourceResume",
+      "ok": true,
+      "detail": "Contoso Retail, Fabrikam Foods, React, TypeScript, Vue, GraphQL"
+    },
+    {
+      "name": "6.1a BYOK with parse: pdf-run-together: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "6.1a pdf-run-together: output has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "6.1a pdf-run-together: sourceResume has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "6.1a pdf-run-together: no user details anywhere in sourceResume (incl. Toronto, ON, linkedin.com/in/janedoe)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "6.1a pdf-run-together: summary and both job titles in sourceResume",
+      "ok": true,
+      "detail": "summary, job title \"Senior Data Analyst\", job title \"Data Analyst\" (Fabrikam)"
+    },
+    {
+      "name": "6.1a pdf-run-together: both employers and their bullets in sourceResume",
+      "ok": true,
+      "detail": "Contoso Retail, Fabrikam, Contoso bullet, Fabrikam bullet"
+    },
+    {
+      "name": "6.1b Hosted with History: pdf-run-together: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "6.1b pdf-run-together: output has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "6.1b pdf-run-together: sourceResume has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "6.1b pdf-run-together: no user details anywhere in sourceResume (incl. Toronto, ON, linkedin.com/in/janedoe)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "6.1b pdf-run-together: summary and both job titles in sourceResume",
+      "ok": true,
+      "detail": "summary, job title \"Senior Data Analyst\", job title \"Data Analyst\" (Fabrikam)"
+    },
+    {
+      "name": "6.1b pdf-run-together: both employers and their bullets in sourceResume",
+      "ok": true,
+      "detail": "Contoso Retail, Fabrikam, Contoso bullet, Fabrikam bullet"
+    },
+    {
+      "name": "6.2 Hosted no-parse: summary-above-contact: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "6.2 summary-above-contact: output has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "6.2 summary-above-contact: sourceResume has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "6.2 summary-above-contact: \"Analyst who ships models.\" and PROFILE stay",
+      "ok": true,
+      "detail": "PROFILE + profile line"
+    },
+    {
+      "name": "6.2 summary-above-contact: both jobs and skills stay",
+      "ok": true,
+      "detail": "Contoso job, Fabrikam job, skills"
+    },
+    {
+      "name": "6.3 Hosted no-parse: address-heading: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "6.3 address-heading: output has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "6.3 address-heading: sourceResume has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "6.3 address-heading: street and postal code gone from sourceResume",
+      "ok": true,
+      "detail": "ADDRESS\n[address], [location] [postal code]"
+    },
+    {
+      "name": "6.3 address-heading: SKILLS and \"Python, SQL\" stay",
+      "ok": true,
+      "detail": "SKILLS + Python, SQL, Contoso job"
+    },
+    {
+      "name": "6.4 Hosted no-parse: ordinary-numbers: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "6.4 ordinary-numbers: output has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "6.4 ordinary-numbers: sourceResume has none of the user's details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "6.4 ordinary-numbers: bullet arrives unchanged in sourceResume",
+      "ok": true,
+      "detail": "Cut costs by $25,000 across 3 regions in Q3 2023, course CS 101"
+    },
+    {
+      "name": "6.4 ordinary-numbers: the same text arrives unchanged in the letter",
+      "ok": true,
+      "detail": "letter sentence"
+    },
+    {
+      "name": "7 UK (Oliver Bennett) letter, Hosted no parse: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 UK (Oliver Bennett) letter, Hosted no parse: sourceResume sent",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 UK (Oliver Bennett) letter, Hosted no parse: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "12 items kept"
+    },
+    {
+      "name": "7 UK (Oliver Bennett) letter, Hosted no parse: ordinary text unchanged in the letter",
+      "ok": true,
+      "detail": "2 items kept"
+    },
+    {
+      "name": "7 UK (Oliver Bennett) resume report, Hosted no parse: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 UK (Oliver Bennett) resume report, Hosted no parse: sourceResume sent",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 UK (Oliver Bennett) resume report, Hosted no parse: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "12 items kept"
+    },
+    {
+      "name": "7 UK (Oliver Bennett) resume report, Hosted no parse: ordinary text unchanged in the tailored resume",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 UK (Oliver Bennett) resume report, Hosted no parse: no contact fields in output",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 UK (Oliver Bennett) letter, BYOK with parse: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 UK (Oliver Bennett) letter, BYOK with parse: sourceResume sent",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 UK (Oliver Bennett) letter, BYOK with parse: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "12 items kept"
+    },
+    {
+      "name": "7 UK (Oliver Bennett) letter, BYOK with parse: ordinary text unchanged in the letter",
+      "ok": true,
+      "detail": "2 items kept"
+    },
+    {
+      "name": "7 UK (Oliver Bennett) resume report, BYOK with parse: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 UK (Oliver Bennett) resume report, BYOK with parse: sourceResume sent",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 UK (Oliver Bennett) resume report, BYOK with parse: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "12 items kept"
+    },
+    {
+      "name": "7 UK (Oliver Bennett) resume report, BYOK with parse: ordinary text unchanged in the tailored resume",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 UK (Oliver Bennett) resume report, BYOK with parse: no contact fields in output",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Australia, PDF run-together (Priya Raman) letter, Hosted no parse: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Australia, PDF run-together (Priya Raman) letter, Hosted no parse: sourceResume sent",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Australia, PDF run-together (Priya Raman) letter, Hosted no parse: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "9 items kept"
+    },
+    {
+      "name": "7 Australia, PDF run-together (Priya Raman) letter, Hosted no parse: ordinary text unchanged in the letter",
+      "ok": true,
+      "detail": "2 items kept"
+    },
+    {
+      "name": "7 Australia, PDF run-together (Priya Raman) resume report, Hosted no parse: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Australia, PDF run-together (Priya Raman) resume report, Hosted no parse: sourceResume sent",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Australia, PDF run-together (Priya Raman) resume report, Hosted no parse: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "9 items kept"
+    },
+    {
+      "name": "7 Australia, PDF run-together (Priya Raman) resume report, Hosted no parse: ordinary text unchanged in the tailored resume",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Australia, PDF run-together (Priya Raman) resume report, Hosted no parse: no contact fields in output",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Australia, PDF run-together (Priya Raman) letter, BYOK with parse: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Australia, PDF run-together (Priya Raman) letter, BYOK with parse: sourceResume sent",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Australia, PDF run-together (Priya Raman) letter, BYOK with parse: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "9 items kept"
+    },
+    {
+      "name": "7 Australia, PDF run-together (Priya Raman) letter, BYOK with parse: ordinary text unchanged in the letter",
+      "ok": true,
+      "detail": "2 items kept"
+    },
+    {
+      "name": "7 Australia, PDF run-together (Priya Raman) resume report, BYOK with parse: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Australia, PDF run-together (Priya Raman) resume report, BYOK with parse: sourceResume sent",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Australia, PDF run-together (Priya Raman) resume report, BYOK with parse: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "9 items kept"
+    },
+    {
+      "name": "7 Australia, PDF run-together (Priya Raman) resume report, BYOK with parse: ordinary text unchanged in the tailored resume",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Australia, PDF run-together (Priya Raman) resume report, BYOK with parse: no contact fields in output",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Labelled Word-style header (Lucía Fernández) letter, Hosted no parse: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Labelled Word-style header (Lucía Fernández) letter, Hosted no parse: sourceResume sent",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Labelled Word-style header (Lucía Fernández) letter, Hosted no parse: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "11 items kept"
+    },
+    {
+      "name": "7 Labelled Word-style header (Lucía Fernández) letter, Hosted no parse: ordinary text unchanged in the letter",
+      "ok": true,
+      "detail": "1 items kept"
+    },
+    {
+      "name": "7 Labelled Word-style header (Lucía Fernández) resume report, Hosted no parse: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Labelled Word-style header (Lucía Fernández) resume report, Hosted no parse: sourceResume sent",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Labelled Word-style header (Lucía Fernández) resume report, Hosted no parse: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "11 items kept"
+    },
+    {
+      "name": "7 Labelled Word-style header (Lucía Fernández) resume report, Hosted no parse: ordinary text unchanged in the tailored resume",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Labelled Word-style header (Lucía Fernández) resume report, Hosted no parse: no contact fields in output",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Labelled Word-style header (Lucía Fernández) letter, BYOK with parse: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Labelled Word-style header (Lucía Fernández) letter, BYOK with parse: sourceResume sent",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Labelled Word-style header (Lucía Fernández) letter, BYOK with parse: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "11 items kept"
+    },
+    {
+      "name": "7 Labelled Word-style header (Lucía Fernández) letter, BYOK with parse: ordinary text unchanged in the letter",
+      "ok": true,
+      "detail": "1 items kept"
+    },
+    {
+      "name": "7 Labelled Word-style header (Lucía Fernández) resume report, BYOK with parse: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Labelled Word-style header (Lucía Fernández) resume report, BYOK with parse: sourceResume sent",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Labelled Word-style header (Lucía Fernández) resume report, BYOK with parse: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "11 items kept"
+    },
+    {
+      "name": "7 Labelled Word-style header (Lucía Fernández) resume report, BYOK with parse: ordinary text unchanged in the tailored resume",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Labelled Word-style header (Lucía Fernández) resume report, BYOK with parse: no contact fields in output",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Sidebar-first (Max Müller) letter, Hosted no parse: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Sidebar-first (Max Müller) letter, Hosted no parse: sourceResume sent",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Sidebar-first (Max Müller) letter, Hosted no parse: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "12 items kept"
+    },
+    {
+      "name": "7 Sidebar-first (Max Müller) letter, Hosted no parse: ordinary text unchanged in the letter",
+      "ok": true,
+      "detail": "1 items kept"
+    },
+    {
+      "name": "7 Sidebar-first (Max Müller) resume report, Hosted no parse: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Sidebar-first (Max Müller) resume report, Hosted no parse: sourceResume sent",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Sidebar-first (Max Müller) resume report, Hosted no parse: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "12 items kept"
+    },
+    {
+      "name": "7 Sidebar-first (Max Müller) resume report, Hosted no parse: ordinary text unchanged in the tailored resume",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Sidebar-first (Max Müller) resume report, Hosted no parse: no contact fields in output",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Sidebar-first (Max Müller) letter, BYOK with parse: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Sidebar-first (Max Müller) letter, BYOK with parse: sourceResume sent",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Sidebar-first (Max Müller) letter, BYOK with parse: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "12 items kept"
+    },
+    {
+      "name": "7 Sidebar-first (Max Müller) letter, BYOK with parse: ordinary text unchanged in the letter",
+      "ok": true,
+      "detail": "1 items kept"
+    },
+    {
+      "name": "7 Sidebar-first (Max Müller) resume report, BYOK with parse: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Sidebar-first (Max Müller) resume report, BYOK with parse: sourceResume sent",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Sidebar-first (Max Müller) resume report, BYOK with parse: ordinary text unchanged in sourceResume",
+      "ok": true,
+      "detail": "12 items kept"
+    },
+    {
+      "name": "7 Sidebar-first (Max Müller) resume report, BYOK with parse: ordinary text unchanged in the tailored resume",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 Sidebar-first (Max Müller) resume report, BYOK with parse: no contact fields in output",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 North American, two-column (Jane Doe) letter, Hosted no parse: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 North American, two-column (Jane Doe) letter, Hosted no parse: sourceResume sent",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 North American, two-column (Jane Doe) letter, Hosted no parse: ordinary text unchanged in sourceResume",
+      "ok": false,
+      "detail": "missing: \"EXPERIENCE\""
+    },
+    {
+      "name": "7 North American, two-column (Jane Doe) letter, Hosted no parse: ordinary text unchanged in the letter",
+      "ok": true,
+      "detail": "1 items kept"
+    },
+    {
+      "name": "7 North American, two-column (Jane Doe) resume report, Hosted no parse: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 North American, two-column (Jane Doe) resume report, Hosted no parse: sourceResume sent",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 North American, two-column (Jane Doe) resume report, Hosted no parse: ordinary text unchanged in sourceResume",
+      "ok": false,
+      "detail": "missing: \"EXPERIENCE\""
+    },
+    {
+      "name": "7 North American, two-column (Jane Doe) resume report, Hosted no parse: ordinary text unchanged in the tailored resume",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 North American, two-column (Jane Doe) resume report, Hosted no parse: no contact fields in output",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 North American, two-column (Jane Doe) letter, BYOK with parse: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 North American, two-column (Jane Doe) letter, BYOK with parse: sourceResume sent",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 North American, two-column (Jane Doe) letter, BYOK with parse: ordinary text unchanged in sourceResume",
+      "ok": false,
+      "detail": "missing: \"EXPERIENCE\""
+    },
+    {
+      "name": "7 North American, two-column (Jane Doe) letter, BYOK with parse: ordinary text unchanged in the letter",
+      "ok": true,
+      "detail": "1 items kept"
+    },
+    {
+      "name": "7 North American, two-column (Jane Doe) resume report, BYOK with parse: one request captured",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 North American, two-column (Jane Doe) resume report, BYOK with parse: sourceResume sent",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 North American, two-column (Jane Doe) resume report, BYOK with parse: ordinary text unchanged in sourceResume",
+      "ok": false,
+      "detail": "missing: \"EXPERIENCE\""
+    },
+    {
+      "name": "7 North American, two-column (Jane Doe) resume report, BYOK with parse: ordinary text unchanged in the tailored resume",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "7 North American, two-column (Jane Doe) resume report, BYOK with parse: no contact fields in output",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "otherCalls": []
+}
