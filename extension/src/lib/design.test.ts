@@ -95,13 +95,14 @@ describe('a Word file checked against a parse from before the link fix (#238)', 
     expect(local[`designFile:${hash}`]).toMatchObject({ parsed: beforeLinks() })
   })
 
-  test("BYOK: the Cover Me layout when the new parse doesn't fit the file, with the new check on the resume page", async () => {
+  test("BYOK: falls back when the new parse doesn't fit the file, then the Cover Me layout, with the new check on the resume page", async () => {
     await store({ fileParse: beforeLinks() })
     const moved = { ...current(), experience: [{ ...resume().experience[0], bullets: ['Something else entirely'] }] }
     const d = await designWithParse(hash, moved)
-    expect(d.design).toEqual({ layout: 'cover-me', fellBack: false })
+    expect(d.design).toEqual({ layout: 'yours', fellBack: true })
+    expect(await finishDesign(resume(), d)).toMatchObject({ designFellBack: true })
     expect((local.resume as { design: { check: unknown } }).design.check).toMatchObject({ matched: 0 })
-    expect(await finishDesign(resume(), d)).not.toHaveProperty('sourceHash')
+    expect((await designForTailor()).design).toEqual({ layout: 'cover-me', fellBack: false })
     // Older History entries still download in the user's design.
     expect(local[`designFile:${hash}`]).toMatchObject({ parsed: beforeLinks() })
   })
@@ -180,13 +181,21 @@ describe('the upload check', () => {
     expect(parseMock).not.toHaveBeenCalled()
   })
 
-  test('BYOK: a file uploaded again with a parse from before the link fix (#238) is checked against the current one', async () => {
-    await store({ status: 'checking', fileParse: beforeLinks(), extra: { settings: { provider: 'claude', apiKey: 'x', mode: 'byok' }, resume: { parsed: current() } } })
-    parseMock.mockClear()
+  test('BYOK: a file uploaded again with a parse from before the link fix (#238) is read again once and takes the new parse', async () => {
+    await store({ status: 'checking', fileParse: beforeLinks(), extra: { settings: { provider: 'claude', apiKey: 'x', mode: 'byok' } } })
+    parseMock.mockReset().mockResolvedValue(current())
     await checkUploadedDesign(hash)
-    expect(parseMock).not.toHaveBeenCalled()
+    expect(parseMock).toHaveBeenCalledOnce()
     expect(local[`designFile:${hash}`]).toMatchObject({ parsed: current() })
     expect((local.resume as { design: unknown }).design).toMatchObject({ status: 'done', check: { matched: 2, total: 2 } })
+  })
+
+  test("BYOK: a file uploaded again keeps its old parse when the new one doesn't fit it", async () => {
+    await store({ status: 'checking', fileParse: beforeLinks(), extra: { settings: { provider: 'claude', apiKey: 'x', mode: 'byok' } } })
+    parseMock.mockReset().mockResolvedValue({ ...current(), experience: [{ ...resume().experience[0], bullets: ['Something else entirely'] }] })
+    await checkUploadedDesign(hash)
+    expect(local[`designFile:${hash}`]).toMatchObject({ parsed: beforeLinks() })
+    expect((local.resume as { design: unknown }).design).toMatchObject({ status: 'done', check: { matched: 0 } })
   })
 
   test('hosted: a copy added while signed out is never sent to the account', async () => {

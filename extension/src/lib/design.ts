@@ -80,7 +80,9 @@ export async function checkUploadedDesign(hash: string): Promise<void> {
     }
 
     const { check } = await tailorDesign(fromBase64(file.data), parsed!)
-    await saveDesignFile(hash, { ...file, parsed })
+    // A BYOK file's earlier parse stays when the new one doesn't fit, so
+    // History entries made from it still download in its design.
+    if (hosted || !file.parsed || designUsable(check)) await saveDesignFile(hash, { ...file, parsed })
     // BYOK: the tailor reuses this parse instead of making its own.
     await setDesign(hash, { status: 'done', check }, hosted ? undefined : parsed)
     if (hosted) {
@@ -162,15 +164,16 @@ type ForTailor = Awaited<ReturnType<typeof designForTailor>>
 // (#238) is checked again against the current one, so its tailors stop
 // printing project links in the header. The file keeps the new parse only
 // when it fits; History entries made from it then place their text with it.
-// When it doesn't fit, the resume page shows the new check and tailors use
-// the Cover Me layout. Nothing changes when another file was uploaded while
-// the parse ran.
+// When it doesn't fit, this tailor falls back, and the resume page shows the
+// new check, so later tailors use the Cover Me layout. Nothing changes when
+// another file was uploaded while the parse ran.
 export async function designWithParse(hash: string, parsed: ParsedResume): Promise<ForTailor> {
   const file = (await getResume())?.design?.hash === hash ? await getDesignFile(hash) : null
   const check = file && (await tailorDesign(fromBase64(file.data), parsed).catch(() => null))?.check
   if (file && check) {
-    if (designUsable(check)) await saveDesignFile(hash, { ...file, parsed })
     await setDesign(hash, { check })
+    if (!designUsable(check)) return { design: { layout: 'yours', fellBack: true }, summary: true }
+    await saveDesignFile(hash, { ...file, parsed })
   }
   return designForTailor()
 }

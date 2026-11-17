@@ -546,8 +546,8 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
     }
     const apiKey = await decryptApiKey(settings.apiKey)
 
-    // Lazy parse: run once on first tailor, cache result for all subsequent tailors.
-    // Re-run automatically when resume is replaced (saveResume clears the parsed field).
+    // Lazy parse: run once on first tailor, cache result for all subsequent
+    // tailors. A new upload has no parse, so its first tailor reads it.
     // "Your design" places the text with the parse its file was checked against.
     const before = design
     const read = await parseForTailor(design, resumeData.parsed, async () => {
@@ -558,7 +558,7 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
     })
     const parsed = read.parsed
     design = read.design
-    if (design !== before) fitLayout() // the file was checked again and may no longer fit
+    if (design !== before) fitLayout() // checked again: its summary, or a fallback
 
     // Shows how many bullets the parser extracted per role — if this is already
     // short, the model never saw the missing bullets in the first place.
