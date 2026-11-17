@@ -1,0 +1,206 @@
+[
+  {
+    "step": "1 BYOK letter, invented + original resume",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://peklmlgeibolojihjhhaoljnbbocmopa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "sb_publishable_walkthrough_dummy",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "invented",
+      "comment": "It says I led a team of twelve. I never managed anyone.",
+      "kind": "letter",
+      "output": "Dear Hiring Team at Northwind Analytics,\n\nI'm applying for the Senior Data Analyst role (letter 1). At Contoso Retail I led a team of twelve analysts and built the dashboards 40 store managers use each week, and I rewrote our SQL to cut a three-hour report to twenty minutes.\n\nYou can see my work at [link] and on [link], or reach me at [email] or [phone].\n\nSincerely,\n[name]",
+      "job": {
+        "title": "Senior Data Analyst",
+        "company": "Northwind Analytics",
+        "description": "Northwind Analytics is hiring a Senior Data Analyst to build dashboards in Tableau, run A/B tests and explain results to product teams. 4+ years of SQL and Python required.",
+        "site": "linkedin.com"
+      },
+      "mode": "byok",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false,
+      "sourceResume": "[contact details]/blog\n\nJunior Analyst, Fabrikam Foods - [location] - 2019 - 2021\n- Cleaned and joined supplier data in Python\n\nEDUCATION\nB.Sc. Statistics, University of Toronto - 2019\n\nSKILLS\nSQL, Python, pandas, Excel, Looker"
+    }
+  },
+  {
+    "step": "2 Hosted letter, contact ticked, invented + original resume",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "authorization": "Bearer walkthrough-fake-access-token",
+      "content-type": "application/json",
+      "origin": "chrome-extension://peklmlgeibolojihjhhaoljnbbocmopa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "sb_publishable_walkthrough_dummy",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "invented",
+      "comment": "",
+      "kind": "letter",
+      "output": "Dear Hiring Team at Northwind Analytics,\n\nI'm applying for the Senior Data Analyst role (letter 2). At Contoso Retail I led a team of twelve analysts and built the dashboards 40 store managers use each week, and I rewrote our SQL to cut a three-hour report to twenty minutes.\n\nYou can see my work at janedoe.dev and on [link] or reach me at [email] or [phone].\n\nSincerely,\n[name]",
+      "job": {
+        "title": "Senior Data Analyst",
+        "company": "Northwind Analytics",
+        "description": "Northwind Analytics is hiring a Senior Data Analyst to build dashboards in Tableau, run A/B tests and explain results to product teams. 4+ years of SQL and Python required.",
+        "site": "linkedin.com"
+      },
+      "mode": "hosted",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": true,
+      "sourceResume": "[contact details]\n\nSUMMARY\nData analyst with five years of SQL and Python, turning messy retail data into decisions.\n\nEXPERIENCE\nData Analyst, Contoso Retail - Toronto, ON - 2021 - Present\n- Built weekly sales dashboards used by 40 store managers\n- Cut report run time from 3 hours to 20 minutes by rewriting SQL\n- Write about churn models at janedoe.dev/blog\n\nJunior Analyst, Fabrikam Foods - Toronto, ON - 2019 - 2021\n- Cleaned and joined supplier data in Python\n\nEDUCATION\nB.Sc. Statistics, University of Toronto - 2019\n\nSKILLS\nSQL, Python, pandas, Excel, Looker"
+    }
+  },
+  {
+    "step": "2 Hosted letter, contact unticked",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://peklmlgeibolojihjhhaoljnbbocmopa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "sb_publishable_walkthrough_dummy",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "missing",
+      "comment": "",
+      "kind": "letter",
+      "output": "Dear Hiring Team at Northwind Analytics,\n\nI'm applying for the Senior Data Analyst role (letter 3). At Contoso Retail I led a team of twelve analysts and built the dashboards 40 store managers use each week, and I rewrote our SQL to cut a three-hour report to twenty minutes.\n\nYou can see my work at janedoe.dev and on [link] or reach me at [email] or [phone].\n\nSincerely,\n[name]",
+      "job": {
+        "title": "Senior Data Analyst",
+        "company": "Northwind Analytics",
+        "description": "Northwind Analytics is hiring a Senior Data Analyst to build dashboards in Tableau, run A/B tests and explain results to product teams. 4+ years of SQL and Python required.",
+        "site": "linkedin.com"
+      },
+      "mode": "hosted",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false
+    }
+  },
+  {
+    "step": "2b BYOK letter, no parsed resume",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://peklmlgeibolojihjhhaoljnbbocmopa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "sb_publishable_walkthrough_dummy",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "generic",
+      "comment": "",
+      "kind": "letter",
+      "output": "Dear Hiring Team at Northwind Analytics,\n\nI'm applying for the Senior Data Analyst role (letter 4). At Contoso Retail I led a team of twelve analysts and built the dashboards 40 store managers use each week, and I rewrote our SQL to cut a three-hour report to twenty minutes.\n\nYou can see my work at janedoe.dev and on [link] or reach me at [email] or [phone].\n\nSincerely,\n[name]",
+      "job": {
+        "title": "Senior Data Analyst",
+        "company": "Northwind Analytics",
+        "description": "Northwind Analytics is hiring a Senior Data Analyst to build dashboards in Tableau, run A/B tests and explain results to product teams. 4+ years of SQL and Python required.",
+        "site": "linkedin.com"
+      },
+      "mode": "byok",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false
+    }
+  },
+  {
+    "step": "3 Editor resume, edited",
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://peklmlgeibolojihjhhaoljnbbocmopa",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "sb_publishable_walkthrough_dummy",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "design",
+      "comment": "The skills line wraps badly.",
+      "kind": "resume",
+      "output": {
+        "atsScoreBefore": 64,
+        "certifications": [],
+        "education": [
+          {
+            "bullets": [],
+            "dates": "2019",
+            "degree": "B.Sc. Statistics",
+            "institution": "University of Toronto",
+            "location": "Toronto, ON"
+          }
+        ],
+        "experience": [
+          {
+            "bullets": [
+              "Built weekly sales dashboards used by 40 store managers across Ontario",
+              "Cut report run time from 3 hours to 20 minutes by rewriting SQL"
+            ],
+            "company": "Contoso Retail",
+            "dates": "2021 - Present",
+            "location": "Toronto, ON",
+            "title": "Data Analyst"
+          },
+          {
+            "bullets": [
+              "Cleaned and joined supplier data in Python"
+            ],
+            "company": "Fabrikam Foods",
+            "dates": "2019 - 2021",
+            "location": "Toronto, ON",
+            "title": "Junior Analyst"
+          }
+        ],
+        "otherSections": [],
+        "projects": [],
+        "skills": "SQL, Python, pandas, Excel, Looker",
+        "summary": "Data analyst with five years of SQL and Python who builds Tableau-ready dashboards and explains results to product teams.",
+        "atsScore": 78,
+        "atsGaps": [
+          "A/B testing"
+        ],
+        "atsGapsBeforeEdits": [
+          "Tableau",
+          "A/B testing"
+        ],
+        "editedAt": "2026-11-17T17:45:37.112Z"
+      },
+      "job": {
+        "title": "Senior Data Analyst",
+        "company": "Northwind Analytics",
+        "description": "Northwind Analytics is hiring a Senior Data Analyst to build dashboards in Tableau, run A/B tests and explain results to product teams. 4+ years of SQL and Python required.",
+        "site": "linkedin.com"
+      },
+      "mode": "byok",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false
+    }
+  }
+]
