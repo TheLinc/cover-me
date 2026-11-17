@@ -103,17 +103,19 @@ export function buildGenerationReport(target: ReportTarget, form: ReportForm, en
 // Unless this browser's parse names the user, the resume text starts with the
 // name: History's newest resume may be older, or someone else's. A PDF's text
 // can run the first lines together ("Jane Doe Toronto, ON · (416) ..."), so
-// these are its first two and first three capitalized words, before any
-// separator, digit or @. ponytail: a first line that's a heading ("Senior
-// Software Engineer") is taken too, which blanks those words in the report.
+// these are the text before any separator, digit or @, and its first two to
+// four capitalized words (with particles like "van" or "de" between them).
+// ponytail: a first line that's a heading ("Senior Software Engineer") is
+// taken too, which blanks those words in the report.
 function headNames(text: string): string[] {
-  const words = text.trim().split(/\s[|·•–-]\s|[|·•,\n@\d(+]/)[0].trim().split(/\s+/)
-  const end = words.findIndex((w) => !/^\p{Lu}/u.test(w))
+  const segment = text.trim().split(/\s[|·•–-]\s|[|·•,\n@\d(+]/)[0].trim()
+  const words = segment.split(/\s+/)
+  const end = words.findIndex((w) => !/^\p{Lu}/u.test(w) && !NAME_PARTICLE.test(w))
   const caps = end === -1 ? words : words.slice(0, end)
-  return [caps.slice(0, 2), caps.slice(0, 3)]
-    .filter((n) => n.length >= 2 && !n.some((w) => /^(resume|résumé|curriculum|vitae|cv)$/i.test(w)))
-    .map((n) => n.join(' '))
+  return [...new Set([segment, ...[2, 3, 4].map((n) => caps.slice(0, n).join(' '))])]
+    .filter((n) => n.length <= 60 && n.split(/\s+/).length >= 2 && !/\b(resume|résumé|curriculum|vitae|cv)\b/i.test(n))
 }
+const NAME_PARTICLE = /^(van|von|der|den|de|del|della|di|da|dos|du|la|le|bin|binti|al|el|ibn|ben|y)$/i
 
 // Whole-word matches of what we know (longest first, any case), then anything
 // shaped like an email or phone number. withLinks: web addresses too.

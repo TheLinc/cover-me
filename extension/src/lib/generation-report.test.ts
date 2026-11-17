@@ -115,6 +115,7 @@ describe('buildGenerationReport', () => {
     expect(buildGenerationReport({ kind: 'letter', output: sign, job }, form, pdf('Jane Doe jane@x.com (416) 555-0199 Experience')).output).toBe('Thanks,\n[name]')
     expect(buildGenerationReport({ kind: 'letter', output: 'Al Ng ran nginx.', job }, form, pdf('Al Ng\nnginx')).output).toBe('[name] ran nginx.')
     expect(buildGenerationReport({ kind: 'letter', output: 'Resume Writer', job }, form, pdf('RESUME\nJane Doe')).output).toBe('Resume Writer')
+    expect(buildGenerationReport({ kind: 'letter', output: 'Best,\nMaria de la Cruz', job }, form, pdf('Maria de la Cruz Madrid, Spain')).output).toBe('Best,\n[name]')
   })
 
   test("a date range isn't taken for a phone number", () => {
