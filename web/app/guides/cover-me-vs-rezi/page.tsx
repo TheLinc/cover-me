@@ -5,9 +5,6 @@ import { getGuide } from '@/lib/guides'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 const guide = getGuide('cover-me-vs-rezi')
-const HERO_IMAGE = '/guides/cover-me-vs-rezi.png'
-const HERO_ALT =
-  "Table comparing Rezi and Cover Me, with prices from each company's site in November 2026. Built for: building a resume in Rezi's templates, against tailoring the resume you already have to each posting. Free plan: 1 resume and 3 PDF downloads, against unlimited with your own API key, or 10 to start then 5 a week. Paid plan: $29 a month or $149 once, against $15 a month or $35 every 3 months. Open source: no against yes, MIT."
 
 export const metadata: Metadata = {
   title: { absolute: 'Cover Me vs Rezi: Tailor the Resume You Already Have' },
@@ -19,13 +16,13 @@ export const metadata: Metadata = {
     url: `${BASE}/guides/${guide.slug}`,
     siteName: 'Cover Me',
     type: 'article',
-    images: [{ url: `${BASE}${HERO_IMAGE}`, width: 1600, height: 900, alt: 'Rezi and Cover Me compared on what each is built for, free plans, paid plans and open source' }],
+    images: [{ url: `${BASE}${guide.image}`, width: 1600, height: 900, alt: 'Rezi and Cover Me compared on what each is built for, free plans, paid plans and open source' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Cover Me vs Rezi | Cover Me',
     description: 'A Rezi alternative that tailors the resume you already have and writes your cover letter on the posting.',
-    images: [`${BASE}${HERO_IMAGE}`],
+    images: [`${BASE}${guide.image}`],
   },
 }
 
@@ -77,7 +74,6 @@ export default function Page() {
   return (
     <GuideArticle
       guide={guide}
-      hero={{ src: HERO_IMAGE, alt: HERO_ALT }}
       lede={
         <>
           Rezi is an AI resume builder: you write or import your resume, format it in Rezi&rsquo;s templates and target it at a job, with Pro at $29 a month or Lifetime at $149 once. Cover Me (cover-me.dev) is an open-source Chrome extension that tailors the resume you already have to the posting you have open, scores it and writes a cover letter. It&rsquo;s free with your own API key, or $15 a month.

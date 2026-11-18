@@ -6,9 +6,6 @@ import { getGuide } from '@/lib/guides'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 const guide = getGuide('what-is-an-ats-score')
-const HERO_IMAGE = '/guides/what-is-an-ats-score.png'
-const HERO_ALT =
-  "Diagram of an 86 ATS match score for a Marketing Manager posting at Northwind, a sample company. Four of five must-have keywords are covered (SEO, Campaign strategy, Google Analytics and Budget management) and HubSpot is missing, for 56 of 70 points. All three nice-to-have keywords are covered, for 30 of 30."
 
 export const metadata: Metadata = {
   title: 'What Is an ATS Score? How Resume Screening Works',
@@ -99,7 +96,6 @@ export default function Page() {
   return (
     <GuideArticle
       guide={guide}
-      hero={{ src: HERO_IMAGE, alt: HERO_ALT }}
       lede={
         <>
           An ATS score is a number, usually out of 100, that estimates how closely your resume matches one job description&rsquo;s keywords, skills, and requirements. A higher score means your resume is more likely to show up when a recruiter searches the applicant tracking system (ATS) for the terms that matter for that role.

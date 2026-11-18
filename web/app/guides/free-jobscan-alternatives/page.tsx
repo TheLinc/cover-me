@@ -5,9 +5,6 @@ import { getGuide } from '@/lib/guides'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 const guide = getGuide('free-jobscan-alternatives')
-const HERO_IMAGE = '/guides/free-jobscan-alternatives.png'
-const HERO_ALT =
-  "Table of free Jobscan alternatives, from each company's site in November 2026. Free check against a job posting: Cover Me, 10 to start then 5 a week; SkillSyncer, 2 scans a week; Teal, the top 5 keywords; Resume Worded, a partial report; Jobscan, 5 scans a month. Free rewrite and cover letter: Cover Me, both; SkillSyncer, rewrites with weekly AI credits; Teal, 2 cover letters once; Resume Worded and Jobscan, paid plans only."
 
 export const metadata: Metadata = {
   title: { absolute: 'Free Jobscan Alternatives: 6 Resume Checkers Compared (2026)' },
@@ -19,13 +16,13 @@ export const metadata: Metadata = {
     url: `${BASE}/guides/${guide.slug}`,
     siteName: 'Cover Me',
     type: 'article',
-    images: [{ url: `${BASE}${HERO_IMAGE}`, width: 1600, height: 900, alt: 'Free Jobscan alternatives compared on free job posting checks, rewrites and cover letters' }],
+    images: [{ url: `${BASE}${guide.image}`, width: 1600, height: 900, alt: 'Free Jobscan alternatives compared on free job posting checks, rewrites and cover letters' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Free Jobscan alternatives | Cover Me',
     description: 'Six tools that check your resume against a job posting for free, and which ones also rewrite it or write the cover letter.',
-    images: [`${BASE}${HERO_IMAGE}`],
+    images: [`${BASE}${guide.image}`],
   },
 }
 
@@ -82,7 +79,6 @@ export default function Page() {
   return (
     <GuideArticle
       guide={guide}
-      hero={{ src: HERO_IMAGE, alt: HERO_ALT }}
       lede={
         <>
           Jobscan&rsquo;s free plan gives you 5 resume scans a month. Rewriting your resume and writing cover letters need a paid plan, at $49.95 a month or $89.95 every 3 months. Six other tools check your resume against a job posting for free. Cover Me (cover-me.dev) also rewrites the resume and writes the cover letter on its free plan, every week rather than once.
