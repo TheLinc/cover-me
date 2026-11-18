@@ -216,7 +216,7 @@ export default function Page() {
                 I build <Link href="/">Cover Me (cover-me.dev)</Link>, a Chrome extension that writes the letter from the posting page. You upload your resume once. On a posting, &ldquo;Generate Cover Letter&rdquo; reads the page and writes from your resume and the posting, in about 20 seconds.
               </p>
               <p>
-                Prompt 3 is built in, with the checking done in code. Every letter is scanned for stock AI words and clichés, generic openers like &ldquo;I am writing to apply&rdquo;, and passive closes. It also flags any dollar amount, percentage or figure of three digits or more that isn&rsquo;t in your resume or the posting. When it finds a problem, Cover Me sends the letter back to the model once with each one listed, and keeps whichever version has fewer.
+                Part of prompt 3 is built in, with the checking done in code. Every letter is scanned for stock AI words and clichés, generic openers like &ldquo;I am writing to apply&rdquo;, and passive closes. It also flags any dollar amount, percentage or figure of three digits or more that isn&rsquo;t in your resume, your candidate context or the posting. When it finds a problem, Cover Me sends the letter back to the model once with each one listed, and keeps the new version unless it has more.
               </p>
               <p>
                 ChatGPT and Claude can write a good letter, as the answers above show. The difference is the copying and checking you do by hand. If you&rsquo;re deciding between a chatbot and a tool, <Link href="/guides/cover-me-vs-chatgpt">Cover Me vs ChatGPT</Link> compares them.
