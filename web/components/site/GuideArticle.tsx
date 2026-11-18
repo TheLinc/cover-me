@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Source_Serif_4 } from 'next/font/google'
 import { CHROME_STORE_URL, cn } from '@/lib/utils'
 import { type Guide, guideArticleJsonLd, guideBreadcrumbJsonLd, readingMinutes, slugify } from '@/lib/guides'
+import { Button } from '@/components/ui/button'
 import { GuideToc, GuideTocCollapsed } from './GuideToc'
 
 const serif = Source_Serif_4({ subsets: ['latin'], weight: '600', display: 'swap' })
@@ -81,6 +82,7 @@ export function GuideArticle({
   intro,
   sections,
   faq,
+  howTo,
   cta,
 }: {
   guide: Guide
@@ -90,17 +92,19 @@ export function GuideArticle({
   intro?: ReactNode
   sections: GuideSection[]
   faq: FaqJsonLd
+  howTo?: object
   cta: { title: string; body: ReactNode }
 }) {
   const withIds = sections.map((s) => ({ ...s, id: s.id ?? slugify(s.title) }))
   const contents = [...withIds, { id: 'faq', title: FAQ_TITLE }]
   const updated = guide.updated ?? guide.date
-  const minutes = readingMinutes([lede, tldr, intro, sections.map((s) => s.body)])
+  const minutes = readingMinutes([lede, tldr, intro, sections.map((s) => s.body), faq.mainEntity.map((q) => q.acceptedAnswer.text)])
 
   return (
     <main className="mx-auto max-w-[1040px] px-8 pb-24 pt-16 max-md:px-5 max-md:pt-10 lg:grid lg:grid-cols-[200px_minmax(0,1fr)] lg:gap-x-16">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(guideArticleJsonLd(guide, hero.src)) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(guideBreadcrumbJsonLd(guide)) }} />
+      {howTo && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(howTo) }} />}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faq) }} />
 
       <aside className="pt-[52px] max-lg:hidden">
@@ -181,14 +185,11 @@ export function GuideArticle({
           <div className="mx-auto mb-6 max-w-[460px] space-y-3 text-[15px] leading-[1.7] text-ink-2 [&_a]:text-brand-strong hover:[&_a]:text-brand-deep">
             {cta.body}
           </div>
-          <a
-            href={CHROME_STORE_URL}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-2 rounded-[8px] bg-brand-strong px-5 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-brand-deep"
-          >
-            Install free · Chrome
-          </a>
+          <Button asChild>
+            <a href={CHROME_STORE_URL} target="_blank" rel="noreferrer">
+              Install free · Chrome
+            </a>
+          </Button>
         </div>
       </article>
     </main>

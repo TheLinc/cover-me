@@ -80,7 +80,7 @@ export default function Page() {
       intro={
         <p>
           I build Cover Me, a Chrome extension that tailors resumes to job postings, so weigh what I say about it with that in mind. The resume, the person and the posting below are all made up. You can download{' '}
-          <a href={`${FILES}/Alex_Rivera_Resume.docx`} className="text-brand-light hover:text-brand transition-colors">the sample resume</a> and try it yourself.
+          <a href={`${FILES}/Alex_Rivera_Resume.docx`}>the sample resume</a> and try it yourself.
         </p>
       }
       sections={[

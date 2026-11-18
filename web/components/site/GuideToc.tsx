@@ -43,7 +43,7 @@ export function GuideToc({ items }: { items: Item[] }) {
           else visible.delete(e.target)
         }
         const first = sections.find((s) => visible.has(s))
-        if (first) setActive(first.querySelector('h2')?.id)
+        setActive(first?.querySelector('h2')?.id)
       },
       { rootMargin: '-96px 0px -55% 0px' },
     )

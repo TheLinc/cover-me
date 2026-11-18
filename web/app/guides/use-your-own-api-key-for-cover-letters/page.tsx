@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { BrowserIcon, CloudIcon, LockSimpleIcon, SparkleIcon } from '@phosphor-icons/react/dist/ssr'
+import { MODES } from '@/components/landing/privacy-modes'
 import { GuideArticle, GuideFigure } from '@/components/site/GuideArticle'
 import { cn } from '@/lib/utils'
 import { getGuide } from '@/lib/guides'
@@ -90,12 +91,11 @@ function FlowNode({ icon, title, sub, dim }: { icon: ReactNode; title: string; s
 
 const FlowLine = () => <div aria-hidden="true" className="mt-[27px] h-[2px] min-w-4 flex-1 bg-brand" />
 
-// Own-key mode as the landing page's PrivacyBand draws it (MODES.byok), without the animation.
 function OwnKeyFlow() {
   return (
     <div className="flex flex-col gap-6 rounded-[12px] bg-white p-6 shadow-[0_20px_50px_-24px_rgba(30,27,75,0.25)] max-sm:p-4">
       <div aria-hidden="true" className="flex items-start">
-        <FlowNode icon={<BrowserIcon size={26} />} title="Your browser" sub="Resume + API key" />
+        <FlowNode icon={<BrowserIcon size={26} />} title="Your browser" sub={MODES.byok.holds} />
         <FlowLine />
         <FlowNode
           icon={<span className="relative"><CloudIcon size={26} /><LockSimpleIcon size={12} weight="fill" className="absolute -bottom-1 -right-1.5" /></span>}
@@ -104,10 +104,10 @@ function OwnKeyFlow() {
           dim
         />
         <FlowLine />
-        <FlowNode icon={<SparkleIcon size={26} />} title="Claude or OpenAI" sub="Writes the letter" />
+        <FlowNode icon={<SparkleIcon size={26} />} title={MODES.byok.ai} sub="Writes the letter" />
       </div>
       <ul className="grid gap-2.5 sm:grid-cols-3">
-        {['Resume saved in your browser only', 'API key encrypted on your device (AES-256-GCM)', 'Goes straight to the AI you pick'].map((f) => (
+        {MODES.byok.facts.map((f) => (
           <li key={f} className="rounded-[12px] bg-panel p-4 text-[13px] leading-[1.45] text-ink">
             {f}
           </li>

@@ -69,7 +69,6 @@ const faqJsonLd = {
   ],
 }
 
-// Step 2 of "How do you improve", on the landing page's Northwind example.
 function RewriteExample() {
   const { before, after: [a, k, b] } = EXAMPLE.bullets[0]
   return (

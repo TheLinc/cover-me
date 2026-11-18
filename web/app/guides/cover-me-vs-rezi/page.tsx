@@ -91,9 +91,9 @@ export default function Page() {
       intro={
         <p>
           I build Cover Me, so weigh this comparison with that in mind. Rezi prices and features are from its{' '}
-          <a href="https://www.rezi.ai/pricing" target="_blank" rel="noopener noreferrer" className="text-brand-light hover:text-brand transition-colors">pricing page</a>,{' '}
-          <a href="https://www.rezi.ai/ai-resume-builder" target="_blank" rel="noopener noreferrer" className="text-brand-light hover:text-brand transition-colors">resume builder page</a> and{' '}
-          <a href="https://www.rezi.ai/rezi-chrome-extension" target="_blank" rel="noopener noreferrer" className="text-brand-light hover:text-brand transition-colors">Chrome extension page</a>, checked on November 7, 2026.
+          <a href="https://www.rezi.ai/pricing" target="_blank" rel="noopener noreferrer">pricing page</a>,{' '}
+          <a href="https://www.rezi.ai/ai-resume-builder" target="_blank" rel="noopener noreferrer">resume builder page</a> and{' '}
+          <a href="https://www.rezi.ai/rezi-chrome-extension" target="_blank" rel="noopener noreferrer">Chrome extension page</a>, checked on November 7, 2026.
         </p>
       }
       sections={[
