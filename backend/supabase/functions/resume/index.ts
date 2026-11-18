@@ -42,8 +42,6 @@ Deno.serve(async (req) => {
     .eq('id', userId).not('extension_removed_at', 'is', null)
   if (clearError) console.error('resume: clearing extension_removed_at failed')
 
-  // GET — fetch resume text. design_hash, for Pro: the Word file that goes
-  // with this text, so the extension can restore it on another computer (#174).
   // GET ?parse=1 — the parsed copy alone, parsed now when none is kept. The
   // extension's "Flag a problem" (#256) takes the user's name, email, phone,
   // links and location out of a report with it, and sends it in place of the
@@ -63,6 +61,8 @@ Deno.serve(async (req) => {
     return heartbeatJson('resume', 'Resume parse failed', async () => ({ structured: await parseNow(supabase, userId, text, data.text_encrypted, cached) }))
   }
 
+  // GET — fetch resume text. design_hash, for Pro: the Word file that goes
+  // with this text, so the extension can restore it on another computer (#174).
   if (req.method === 'GET') {
     const { data, error } = await supabase
       .from('resumes')

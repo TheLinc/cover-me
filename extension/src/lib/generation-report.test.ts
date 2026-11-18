@@ -162,7 +162,7 @@ describe('buildGenerationReport', () => {
 
   describe('location and addresses', () => {
     test('the user’s city anywhere, with the postcode or region beside it; a year beside it stays', () => {
-      expect(letter('I’m a Toronto-based analyst in Toronto, ON M5V 2T6, at Acme Toronto 2018 - 2020.')).toBe('I’m a [location]-based analyst in [location] [postal code], at Acme [location] 2018 - 2020.')
+      expect(letter('I’m a Toronto-based analyst in Toronto, ON M5V 2T6, at Acme Toronto 2018 - 2020.')).toBe('I’m a [location]-based analyst in [location], at Acme [location] 2018 - 2020.')
       expect(letter('Based in Sydney NSW 2000.', env({ parsed: { ...parsed, location: 'Sydney, NSW' } }))).toBe('Based in [location].')
       expect(letter('Calle Mayor 10, 28013 Madrid, Spain', env({ parsed: { ...parsed, location: 'Madrid, Spain' } }))).toBe('[address], [location]')
       expect(letter('Rohini, New Delhi - 110085', env({ parsed: { ...parsed, location: 'House No. 45, Sector 15, Rohini, New Delhi' } }))).toBe('[location], [location]')
@@ -304,6 +304,57 @@ describe('buildGenerationReport', () => {
       expect(s('456 King St. E., 77 Bloor St W, Bahnhofstr. 5, Hauptstr. 12a, Kerkstraat 12')).toBe('[address], [address], [address], [address], [address]')
       const sections = [{ heading: 'Persönliche Angaben', lines: ['Geboren: 1.1.1990 in Köln'] }, { heading: 'Sonstiges', lines: ['Geburtsort: Köln', 'Sprachen: Deutsch'] }]
       expect(source(env({ parsed: { ...parsed, otherSections: sections } }))?.otherSections).toEqual([{ heading: 'Sonstiges', lines: ['Sprachen: Deutsch'] }])
+    })
+  })
+
+  describe('review round 21', () => {
+    const at = (p: Partial<ParsedResume>, text: string) => letter(text, env({ parsed: { ...parsed, ...p } }))
+
+    test("each part of the user's city, and no ordinary word beside it", () => {
+      expect(at({ location: 'Kitchener-Waterloo, ON' }, 'Based in Waterloo, near Kitchener.')).toBe('Based in [location], near [location].')
+      expect(at({ location: 'Winston-Salem, NC' }, 'I live in Winston Salem.')).toBe('I live in [location].')
+      expect(at({ location: 'Newcastle upon Tyne, UK' }, 'I live in Newcastle.')).toBe('I live in [location].')
+      expect(at({ location: 'Frankfurt am Main' }, 'Ich wohne in Frankfurt. The Main Street project.')).toBe('Ich wohne in [location]. The Main Street project.')
+      expect(at({ location: 'Rio de Janeiro, RJ' }, 'Moro no Rio desde 2019.')).toBe('Moro no [location] desde 2019.')
+      expect(at({ location: 'Silver Spring, MD' }, 'Built Spring Boot services in Silver Spring.')).toBe('Built Spring Boot services in [location].')
+      expect(at({ location: 'Mountain View, CA' }, 'SwiftUI View work.')).toBe('SwiftUI View work.')
+      expect(at({ location: 'Reading' }, 'I enjoy reading code in Reading.')).toBe('I enjoy reading code in [location].')
+      expect(at({ location: 'Remote' }, 'A remote-first team; Remote work.')).toBe('A remote-first team; Remote work.')
+    })
+
+    test('a street with the city after it, and postcodes after a state without a comma', () => {
+      const sections = [{ heading: 'Other', lines: ['Address 5 Elm Grove Leeds LS6 2AB', 'Achieved 5 Day Close', 'Organized 3 Annual Food Drive'] }]
+      expect(source(env({ parsed: { ...parsed, location: 'Leeds, UK', otherSections: sections } }))?.otherSections)
+        .toEqual([{ heading: 'Other', lines: ['Achieved 5 Day Close', 'Organized 3 Annual Food Drive'] }])
+      const s = (t: string) => at({ location: '' }, t)
+      expect(s('742 Evergreen Terrace Springfield, IL 62704')).toBe('[address] Springfield, IL [postal code]')
+      expect(s('12 Main St. Springfield IL')).toBe('[address] Springfield IL')
+      expect(s('Address 22/14 Smith St Fitzroy VIC 3065')).toBe('Address 22/[address] Fitzroy VIC [postal code]')
+      expect(s('I am based in Parramatta NSW 2150 and Oak Park IL 60302.')).toBe('I am based in Parramatta NSW [postal code] and Oak Park IL [postal code].')
+    })
+
+    test('references and personal sections in other languages, and personal lines without a colon', () => {
+      const sections = ['Referencias', 'Références', 'Referenzen', 'Referências', 'Referenties', 'PERSONAL', 'Información personal', 'Dati personali', 'État civil', 'Informações pessoais']
+        .map((heading) => ({ heading, lines: ['Carlos Ruiz, Director, Acme'] }))
+      const lines = ['Nacida en Sevilla', 'Née le 3 mai 1992 à Lyon', 'Born 12 April 1995 in Leeds', 'DOB 01/02/1990', 'Volunteer, Red Cross']
+      expect(source(env({ parsed: { ...parsed, otherSections: [...sections, { heading: 'Other', lines }, { heading: 'Personal Projects', lines: ['A chess engine'] }] } }))?.otherSections)
+        .toEqual([{ heading: 'Other', lines: ['Volunteer, Red Cross'] }, { heading: 'Personal Projects', lines: ['A chess engine'] }])
+    })
+
+    test('names without their accents, in scripts without capitals, and platform labels in any case', () => {
+      expect(at({ name: 'José Núñez' }, 'Jose Nunez led it. Nunez again.')).toBe('[name] led it. [name] again.')
+      expect(at({ name: 'Jürgen Müller' }, 'Juergen Mueller and Jurgen.')).toBe('[name] and [name].')
+      expect(at({ name: '李明' }, '我是李明，谢谢。')).toBe('我是[name]，谢谢。')
+      expect(at({ name: 'محمد علي' }, 'محمد here.')).toBe('[name] here.')
+      expect(at({}, 'Linkedin: jdoe42 | Github: jdoe | GITHUB: jdoe')).toBe('Linkedin: [link] | Github: [link] | GITHUB: [link]')
+    })
+
+    test('ordinary text the postcode, street and handle patterns used to take stays', () => {
+      const text = 'In 2023 AI tooling; the 2024 UX redesign; 1500 IT users; 5000 US customers; 500-2000 RPS; 200-5000 requests; 50-100 Kubernetes clusters; P95 1200 ms; S3 5TB.'
+      expect(at({ location: '' }, text)).toBe(text)
+      expect(source(env({ parsed: { ...parsed, experience: [{ ...parsed.experience[0], company: 'Unit 8200' }] } }))?.experience).toEqual([expect.objectContaining({ company: 'Unit 8200' })])
+      expect(at({ links: ['janedoe.dev/work', 'sites.google.com/view/janedoe', 'behance.net/gallery/123/x', 'github.com/jdoe42'] }, 'My work on view in the gallery; jdoe42.'))
+        .toBe('My work on view in the gallery; [link].')
     })
   })
 
