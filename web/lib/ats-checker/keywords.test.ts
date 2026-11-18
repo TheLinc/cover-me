@@ -3,8 +3,11 @@ import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import { checkResume, readPosting, type Level } from './keywords'
 
-const posting = (name: string) => readPosting(readFileSync(join(__dirname, 'postings', `${name}.txt`), 'utf8'))
-const names = (name: string, level?: Level) => posting(name).keywords.filter((k) => !level || k.level === level).map((k) => k.name)
+const text = (name: string) => readFileSync(join(__dirname, 'postings', `${name}.txt`), 'utf8')
+const posting = (name: string) => readPosting(text(name))
+const pick = (p: ReturnType<typeof readPosting>, level?: Level) => p.keywords.filter((k) => !level || k.level === level).map((k) => k.name)
+const names = (name: string, level?: Level) => pick(posting(name), level)
+const unbulleted = (name: string, level?: Level) => pick(readPosting(text(name).replace(/^\s*[-•*]\s+/gm, '')), level)
 
 describe('keywords from saved postings', () => {
   test.each([
@@ -26,8 +29,18 @@ describe('keywords from saved postings', () => {
     ['workable', 'required', ['Python', 'JavaScript', 'TypeScript', 'React', 'Svelte']],
     ['workable', 'preferred', ['WebRTC', 'WebSockets', 'FastAPI', 'Starlette', 'LiveKit']],
     ['workday', 'required', ['Python', 'Git', 'LLM', 'RAG', 'machine learning']],
-  ] as const)('%s lists its %s skills', (name, level, expected) => {
+  ] as const)('%s lists its %s skills, with or without bullets', (name, level, expected) => {
     expect(names(name, level)).toEqual(expect.arrayContaining([...expected]))
+    expect(unbulleted(name, level)).toEqual(expect.arrayContaining([...expected]))
+  })
+
+  test.each([
+    ['Requirements\nKnowledge of payroll and benefits\nPython and SQL\nCPA required', 'required', ['payroll', 'Python', 'SQL', 'CPA']],
+    ['Qualifications\nFamiliarity with data privacy rules\nTerraform and Kubernetes', 'required', ['Terraform', 'Kubernetes']],
+    ['Requirements\nPay-per-click campaign experience\nGoogle Analytics', 'required', ['Google Analytics']],
+    ['Nice to have\nExperience with Kafka\nStrong SQL skills\nFamiliarity with dbt', 'preferred', ['Kafka', 'SQL', 'dbt']],
+  ] as const)('a short line without a bullet is not a heading: %j', (ask, level, expected) => {
+    expect(pick(readPosting(ask), level)).toEqual([...expected])
   })
 
   test.each([
@@ -63,6 +76,8 @@ describe('checking a resume', () => {
     const ask = 'Requirements\n- RN license\n- Microsoft Word and Go'
     expect(found(ask, 'Went on to learn a new word in every shift.')).toEqual({ RN: false, Word: false, Go: false })
     expect(found(ask, 'RN since 2019. Wrote reports in Word. Services in Go.')).toEqual({ RN: true, Word: true, Go: true })
+    expect(pick(readPosting('Requirements\n- Go-to-market strategy\n- Salesforce'))).toEqual(['Salesforce'])
+    expect(found(ask, 'A go-getter. Go-to-market lead.')).toMatchObject({ Go: false })
   })
 
   test('either of two options joined by "or" covers both', () => {

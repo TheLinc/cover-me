@@ -24,26 +24,36 @@ const DICTIONARY = TERMS.map((t) => {
 const normalize = (s: string) => s.replace(/[‘’`]/g, "'").replace(/\p{Zs}/gu, ' ')
 const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
+const patterns = new Map<string, RegExp>()
 function pattern(spelling: string, strict: boolean): RegExp {
+  const key = `${strict}|${spelling}`
+  const cached = patterns.get(key)
+  if (cached) return cached
   const body = spelling.split(/[\s-]+/).map(escapeRe).join('[\\s-]+')
   const caseSensitive = strict || !/[a-z]/.test(spelling)
-  return new RegExp(`(?<![A-Za-z0-9])${body}s?(?![A-Za-z0-9])`, caseSensitive ? 'g' : 'gi')
+  const after = strict ? '(?![A-Za-z0-9]|-[A-Za-z])' : '(?![A-Za-z0-9])'
+  const re = new RegExp(`(?<![A-Za-z0-9])${body}s?${after}`, caseSensitive ? 'g' : 'gi')
+  patterns.set(key, re)
+  return re
 }
 
 type Term = Pick<Keyword, 'spellings' | 'strict'>
 const spans = (text: string, k: Term): Array<[number, number]> =>
   k.spellings.flatMap((s) => [...text.matchAll(pattern(s, k.strict))].map((m): [number, number] => [m.index, m.index + m[0].length]))
-const has = (text: string, k: Term) => spans(text, k).length > 0
-const mentions = (text: string, spelling: string, strict: boolean) => pattern(spelling, strict).test(text)
+const mentions = (text: string, spelling: string, strict: boolean) => text.search(pattern(spelling, strict)) >= 0
+const has = (text: string, k: Term) => k.spellings.some((s) => mentions(text, s, k.strict))
 
 const PREFERRED = /prefer|nice[\s-]to[\s-]have|nice if|bonus|\bplus\b|desired|stand out|advantage|may also/i
 const REQUIRED = /requir|qualif|\bmust\b|need|bring|you have|looking for|good fit|about you|who you are|minimum|skills|education/i
-const SKIP = /^about (?!the role|the team|the job|this role|the position)|^more about|benefit|perks|what we offer|compensation|pay\b|salary|equal (opportunity|employment)|our commitment|life at|^why\b|who we are|our (founding|story|culture|values)|how we work|acknowledg|statement|accommodation|privacy|career growth|work\/life|inclusive|diverse|^apply$|^contact/i
+const COMPANY = /^(about (?!you|the role|the team|the job|this role|the position)|more about|why\b|life at)/i
+const SKIP = /^(description of )?benefits?|^perks|what we offer|^compensation|^pay( range| transparency|$)|^salary|equal (opportunity|employment)|^our commitment|^who we are|^our (founding|story|culture|values)|^how we work|^acknowledg|statement$|^accommodations?|^privacy|career growth$|^work\/life|^inclusive|^diverse|^apply$|^contact/i
 const OTHER = /responsib|what you('ll| will)? (do|be doing)|day in the life|the role|the opportunity|job description|overview|summary|duties|additional information/i
 
 function headingLevel(line: string): Level | 'skip' | null {
   const text = line.replace(/^[#*\s]+|[*:\s]+$/g, '')
   if (!text || /[.!?]$/.test(text) || text.split(/\s+/).length > 8 || /^[-•]/.test(text)) return null
+  if (COMPANY.test(text)) return 'skip'
+  if (DICTIONARY.some((term) => has(text, term))) return null
   if (SKIP.test(text)) return 'skip'
   if (PREFERRED.test(text)) return 'preferred'
   if (REQUIRED.test(text)) return 'required'
@@ -96,8 +106,9 @@ export function readPosting(posting: string): Posting {
     const level: Level = section === 'mentioned' || companyVoice ? 'mentioned'
       : /requir|\bmust\b/i.test(line) || !PREFERRED.test(line) ? section : 'preferred'
     const hits = DICTIONARY.map((term) => ({ term, at: spans(line, term) })).filter((h) => h.at.length)
-    const kept = hits.filter(({ term, at }) =>
-      !at.every(([a, b]) => hits.some((h) => h.term !== term && h.at.some(([c, d]) => c <= a && b <= d && d - c > b - a))))
+    const kept = hits
+      .filter(({ term, at }) => !at.every(([a, b]) => hits.some((h) => h.term !== term && h.at.some(([c, d]) => c <= a && b <= d && d - c > b - a))))
+      .sort((x, y) => Math.min(...x.at.map(([a]) => a)) - Math.min(...y.at.map(([a]) => a)))
     for (const { term } of kept) add({ ...term, level })
     for (const a of kept) {
       for (const b of kept) {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, type ChangeEvent } from 'react'
+import { useDeferredValue, useMemo, useState, type ChangeEvent } from 'react'
 import { CheckIcon, UploadSimpleIcon, XIcon } from '@phosphor-icons/react/dist/ssr'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -20,11 +20,12 @@ export function AtsChecker() {
   const [resume, setResume] = useState('')
   const [fileNote, setFileNote] = useState<{ text: string; error?: boolean } | null>(null)
 
-  const result = useMemo(() => {
-    if (!posting.trim() || !resume.trim()) return null
-    const { keywords, years } = readPosting(posting)
-    return { keywords: checkResume(keywords, resume), years }
-  }, [posting, resume])
+  const deferredPosting = useDeferredValue(posting)
+  const read = useMemo(() => (deferredPosting.trim() ? readPosting(deferredPosting) : null), [deferredPosting])
+  const result = useMemo(
+    () => (read && resume.trim() ? { keywords: checkResume(read.keywords, resume), years: read.years } : null),
+    [read, resume],
+  )
 
   async function onFile(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
