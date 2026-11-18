@@ -3,13 +3,10 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { GoogleChromeLogoIcon } from '@phosphor-icons/react/dist/ssr'
-import { cn, CHROME_STORE_URL } from '@/lib/utils'
+import { cn, storeUrl } from '@/lib/utils'
 import { scrollProgress } from './useScrollProgress'
 import { EXAMPLE } from './visuals'
 
-// A floating bar that follows the Northwind application through the story
-// (#how-it-works) and keeps the install one click away. Hidden over the hero
-// and once the closing call to action (#get-started) is on screen.
 const STAGES = ['Posting open', 'Posting read', 'Resume tailored', `Scored ${EXAMPLE.score}`, 'Letter written']
 
 export function JourneyDock() {
@@ -25,7 +22,6 @@ export function JourneyDock() {
         const p = story ? scrollProgress(story) : 0
         const pastHero = story ? story.getBoundingClientRect().top < window.innerHeight * 0.5 : window.scrollY > 600
         const beforeEnd = end ? end.getBoundingClientRect().top > window.innerHeight * 0.85 : true
-        // Phones: the story shows its own progress bar, so the dock waits until it's over.
         const storyOver = !story || story.getBoundingClientRect().bottom < window.innerHeight
         const roomy = window.matchMedia('(min-width: 1024px)').matches
         setState({ show: pastHero && beforeEnd && (roomy || storyOver), p })
@@ -72,7 +68,7 @@ export function JourneyDock() {
           </div>
         </div>
         <a
-          href={CHROME_STORE_URL}
+          href={storeUrl('dock')}
           target="_blank"
           rel="noreferrer"
           className={cn(

@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Source_Serif_4 } from 'next/font/google'
-import { CHROME_STORE_URL, cn } from '@/lib/utils'
+import { storeUrl, cn } from '@/lib/utils'
 import { type Guide, guideArticleJsonLd, guideBreadcrumbJsonLd, readingMinutes, slugify } from '@/lib/guides'
 import { Button } from '@/components/ui/button'
 import { GuideToc, GuideTocCollapsed } from './GuideToc'
@@ -184,7 +184,7 @@ export function GuideArticle({
             {cta.body}
           </div>
           <Button asChild>
-            <a href={CHROME_STORE_URL} target="_blank" rel="noreferrer">
+            <a href={storeUrl('guide')} target="_blank" rel="noreferrer">
               Install free · Chrome
             </a>
           </Button>
