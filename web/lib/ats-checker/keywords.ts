@@ -47,14 +47,16 @@ const PREFERRED = /prefer|nice[\s-]to[\s-]have|nice if|bonus|\bplus\b|desired|st
 const REQUIRED = /requir|qualif|\bmust\b|need|bring|you have|looking for|good fit|about you|who you are|minimum|skills|education/i
 const COMPANY = /^(about (?!you|the role|the team|the job|this role|the position)|more about|why\b|life at)/i
 const SKIP = /^(description of )?benefits?|^perks|what we offer|^compensation|^pay( range| transparency|$)|^salary|equal (opportunity|employment)|^our commitment|^who we are|^our (founding|story|culture|values)|^how we work|^acknowledg|statement$|^accommodations?|^privacy|career growth$|^work\/life|^inclusive|^diverse|^apply$|^contact/i
-const OTHER = /responsib|what you('ll| will)? (do|be doing)|day in the life|the role|the opportunity|job description|overview|summary|duties|additional information/i
+const BULLET = /^(\*\s|[-•●◦▪▫■□·‣⁃▸►○–—])/
+const OTHER =/responsib|what you('ll| will)? (do|be doing)|day in the life|the role|the opportunity|job description|overview|summary|duties|additional information/i
 
 function headingLevel(line: string): Level | 'skip' | null {
-  if (/^\*\s/.test(line)) return null
+  if (BULLET.test(line)) return null
   const text = line.replace(/^[#*\s]+|[*:\s]+$/g, '')
-  if (!text || /[.!?]$/.test(text) || text.split(/\s+/).length > 8 || /^[-•]/.test(text)) return null
+  if (!text || /[.!?]$/.test(text) || text.split(/\s+/).length > 8) return null
   if (COMPANY.test(text)) return 'skip'
-  if (DICTIONARY.some((term) => has(text, term))) return null
+  const namedHeading = /^(required|preferred|minimum|basic)\b|\b(requirements|qualifications)$/i.test(text)
+  if (!namedHeading && DICTIONARY.some((term) => has(text, term))) return null
   if (SKIP.test(text)) return 'skip'
   if (PREFERRED.test(text)) return 'preferred'
   if (REQUIRED.test(text)) return 'required'
@@ -106,7 +108,7 @@ export function readPosting(posting: string): Posting {
     const companyVoice = /\b([Ww]e|[Oo]ur|[Uu]s)\b/.test(line)
     const level: Level = section === 'mentioned' || companyVoice ? 'mentioned'
       : /requir|\bmust\b/i.test(line) || !PREFERRED.test(line) ? section : 'preferred'
-    const hits = DICTIONARY.map((term) => ({ term, at: spans(line, term) })).filter((h) => h.at.length)
+    const hits = heading ? [] : DICTIONARY.map((term) => ({ term, at: spans(line, term) })).filter((h) => h.at.length)
     const kept = hits
       .filter(({ term, at }) => !at.every(([a, b]) => hits.some((h) => h.term !== term && h.at.some(([c, d]) => c <= a && b <= d && d - c > b - a))))
       .sort((x, y) => Math.min(...x.at.map(([a]) => a)) - Math.min(...y.at.map(([a]) => a)))
@@ -120,14 +122,14 @@ export function readPosting(posting: string): Posting {
         kb.alternatives = [...new Set([...(kb.alternatives ?? []), ka.name])]
       }
     }
-    if (level !== 'mentioned') {
+    if (level !== 'mentioned' && !heading) {
       for (const k of unlistedNames(line)) {
         const known = [...found.values()].some((f) => has(k.name, f) || f.spellings.some((s) => mentions(s, k.name, true)))
         if (!known && !openers.has(k.name)) add({ ...k, level })
       }
     }
     if (YEARS.test(line) && !/years?\s+(of\s+age|old)/i.test(line) && (level !== 'mentioned' || /experience/i.test(line))) {
-      const full = line.replace(/^[-•*\s]+/, '').replace(/\*\*/g, '')
+      const full = line.replace(/^[-•●◦▪▫■□·‣⁃▸►○–—*\s]+/, '').replace(/\*\*/g, '')
       const text = full.length > 160 ? `${full.slice(0, 157)}...` : full
       if (!years.includes(text)) years.push(text)
     }

@@ -14,9 +14,13 @@ async function readPdf(file: File): Promise<string> {
   pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString()
   const pdf = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise
   const pages: string[] = []
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const { items } = await (await pdf.getPage(i)).getTextContent()
-    pages.push(items.map((item) => ('str' in item ? item.str + (item.hasEOL ? '\n' : ' ') : '')).join(''))
+  try {
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const { items } = await (await pdf.getPage(i)).getTextContent()
+      pages.push(items.map((item) => ('str' in item ? item.str + (item.hasEOL ? '\n' : ' ') : '')).join(''))
+    }
+  } finally {
+    await pdf.destroy()
   }
   return pages.join('\n\n').replace(/[ \t]{2,}/g, ' ').replace(/ *\n */g, '\n').trim()
 }

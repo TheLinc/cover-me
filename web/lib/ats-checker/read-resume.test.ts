@@ -15,8 +15,7 @@ const EXPECTED = {
 
 describe('reading an uploaded resume', () => {
   beforeAll(async () => {
-    const worker = 'pdfjs-dist/legacy/build/pdf.worker.mjs'
-    Object.assign(globalThis, { pdfjsWorker: await import(/* @vite-ignore */ worker) })
+    Object.assign(globalThis, { pdfjsWorker: await import('pdfjs-dist/legacy/build/pdf.worker.mjs') })
   })
 
   test.each([['docx', ''], ['pdf', 'application/pdf']])('a %s upload finds the same keywords as the sample resume', async (ext, type) => {

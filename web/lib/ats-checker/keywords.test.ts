@@ -41,6 +41,10 @@ describe('keywords from saved postings', () => {
     ['Nice to have\nExperience with Kafka\nStrong SQL skills\nFamiliarity with dbt', 'preferred', ['Kafka', 'SQL', 'dbt']],
     ['Nice to have\n* Experience with Kafka\n* Great interpersonal skills\n* Familiarity with dbt', 'preferred', ['Kafka', 'interpersonal skills', 'dbt']],
     ['Requirements\n- Install guard rails and hand rails\n- Shift starts 7am EST, start ASAP', 'required', []],
+    ['Requirements\n- You will excel in a fast-paced role\n- Positive outlook', 'required', []],
+    ['About the role\nSales Requirements\n- Salesforce\n- Cold calling', 'required', ['Salesforce', 'cold calling']],
+    ['Requirements\n● Python\n● Bilingual a plus\n▪ Salesforce', 'required', ['Python', 'Salesforce']],
+    ['Requirements\n**Core Experience:** 5+ years of SQL', 'required', ['SQL']],
   ] as const)('a short line without a bullet is not a heading: %j', (ask, level, expected) => {
     expect(pick(readPosting(ask), level)).toEqual([...expected])
   })
