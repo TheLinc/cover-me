@@ -23,7 +23,7 @@ export default function HistoryPage() {
   const [designHashes, setDesignHashes] = useState<string[]>([])
   useEffect(() => { void getDesignHashes().then(setDesignHashes) }, [])
   const [copiedId, setCopiedId] = useState<string | null>(null)
-  const [reviewFor, setReviewFor] = useState<string | null>(null) // the entry just copied or downloaded
+  const [reviewFor, setReviewFor] = useState<string | null>(null)
   const [syncing, setSyncing] = useState(false)
   const [isProMode, setIsProMode] = useState(false)
   const [capText, setCapText] = useState<string | null>(null)
@@ -189,7 +189,6 @@ export default function HistoryPage() {
     setTimeout(() => setCopiedId(null), 2000)
   }
 
-  // A copy or download, then the rating card under that entry.
   const thenAsk = (id: string, action: () => unknown) => async () => {
     await action()
     setReviewFor(id)

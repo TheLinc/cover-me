@@ -1,17 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { WEB_URL } from '../../lib/config'
-import { countShowingWhenSeen, generationsSoFar, shouldAskForReview, type ReviewAsk as Asked } from '../../lib/review-ask'
+import { countShowingWhenSeen, nextShowing, type ReviewAsk as Asked } from '../../lib/review-ask'
 import { getGenerationCount, getHistory, getReviewAsk, getTailoredHistory, saveReviewAsk } from '../../lib/storage'
 
 const RATE_URL = 'https://chromewebstore.google.com/detail/bpbnopjgjbimdjjdolhkgimllbgamgpi/reviews'
-
-// What the card saves once seen, or null when the user doesn't qualify yet.
-async function nextShowing(): Promise<Asked | null> {
-  const [count, letters, resumes, ask] = await Promise.all([getGenerationCount(), getHistory(), getTailoredHistory(), getReviewAsk()])
-  const gen = generationsSoFar(count, [...letters, ...resumes])
-  if (!gen || !shouldAskForReview(gen, ask, Date.now())) return null
-  return { shown: (ask?.shown ?? 0) + 1, atCount: gen.count, done: false }
-}
 
 // Only rating ends the asking for good. One write and no read first: the
 // popup closes as the new tab opens.
@@ -27,7 +19,8 @@ export default function ReviewAsk({ onClose }: { onClose: () => void }) {
   const seen = useRef(() => {})
 
   useEffect(() => {
-    void nextShowing().then(setShowing)
+    void Promise.all([getGenerationCount(), getHistory(), getTailoredHistory(), getReviewAsk()])
+      .then(([gen, letters, resumes, ask]) => setShowing(nextShowing(gen, [...letters, ...resumes], ask, Date.now())))
   }, [])
 
   useEffect(() => {
@@ -57,8 +50,8 @@ export default function ReviewAsk({ onClose }: { onClose: () => void }) {
           className="review-ask-dismiss"
           onClick={() => {
             // The card is gone: put keyboard focus on the controls it sat next to, not <body>.
-            const near = ref.current?.nextElementSibling ?? ref.current?.previousElementSibling
-            near?.querySelector<HTMLElement>('button, a[href], textarea')?.focus()
+            const near = [ref.current?.nextElementSibling, ref.current?.previousElementSibling]
+            near.map((el) => el?.querySelector<HTMLElement>('button, a[href], textarea')).find(Boolean)?.focus()
             close()
           }}
         >
@@ -69,7 +62,6 @@ export default function ReviewAsk({ onClose }: { onClose: () => void }) {
   )
 }
 
-// Settings: all three links, always there, never prompting.
 export function ReviewLinksSetting() {
   return (
     <section className="page-read-setting" aria-labelledby="review-links-title">

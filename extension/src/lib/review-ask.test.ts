@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { countShowingWhenSeen, generationsSoFar, shouldAskForReview } from './review-ask'
+import { countShowingWhenSeen, generationsSoFar, nextShowing, shouldAskForReview } from './review-ask'
 import { addToHistory, addToTailoredHistory, getGenerationCount } from './storage'
 
 const now = Date.parse('2026-11-02T12:00:00Z')
@@ -47,10 +47,28 @@ describe('generationsSoFar', () => {
     expect(generationsSoFar(null, [entry('2026-10-01T00:00:00Z', 'other')])).toBeNull()
   })
 
+  test('an unreadable date is left out of firstAt', () => {
+    expect(generationsSoFar(null, [entry('soon'), entry('2026-10-01T00:00:00Z')])).toEqual({ count: 2, firstAt: '2026-10-01T00:00:00Z' })
+  })
+
   test('a user with 3 day-old entries qualifies whatever the stored count says', () => {
     const entries = [entry('2026-10-20T00:00:00Z'), entry('2026-10-21T00:00:00Z'), entry('2026-10-22T00:00:00Z')]
     expect(shouldAskForReview(generationsSoFar(null, entries), null, now)).toBe(true)
     expect(shouldAskForReview(generationsSoFar(gen(1, '2026-11-02T11:00:00Z'), entries), null, now)).toBe(true)
+  })
+})
+
+describe('nextShowing', () => {
+  const full = Array.from({ length: 70 }, () => ({ createdAt: '2026-10-01T00:00:00Z' }))
+
+  test('the first showing counts History, and saves the worker count', () => {
+    expect(nextShowing(gen(5), full, null, now)).toEqual({ shown: 1, atCount: 5, done: false })
+  })
+
+  test('the second showing waits 10 worker generations, even with History at its cap', () => {
+    const ask = { shown: 1, atCount: 5, done: false }
+    expect(nextShowing(gen(14), full, ask, now)).toBeNull()
+    expect(nextShowing(gen(15), full, ask, now)).toEqual({ shown: 2, atCount: 15, done: false })
   })
 })
 
