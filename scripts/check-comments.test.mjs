@@ -1,4 +1,6 @@
 import { test } from 'node:test'
+import { execFileSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
 import assert from 'node:assert/strict'
 import { unlinkedComments } from './check-comments.mjs'
 
@@ -42,4 +44,18 @@ test('a hex colour is not a ticket', () => {
 test('finds a comment at the end of a line of code', () => {
   assert.deepEqual(lines('const a = 1 // one\nconst b = 2\n'), [1])
   assert.deepEqual(lines('#!/usr/bin/env node\nconst a = 1\n'), [])
+})
+
+test('JSX text that looks like a comment is not one, even as the first child', () => {
+  assert.deepEqual(lines('const a = <p>// not a comment</p>\n', 'a.tsx'), [])
+  assert.deepEqual(lines('const a = <p>\n  // text\n</p>\n', 'a.tsx'), [])
+})
+
+test("an end-of-line comment doesn't borrow the next line's link", () => {
+  assert.deepEqual(lines('const a = 1 // one\n// #5\nconst b = 2\n'), [1])
+})
+
+test('runs as a script and passes when nothing changed', () => {
+  const out = execFileSync(process.execPath, [fileURLToPath(new URL('./check-comments.mjs', import.meta.url)), 'HEAD'], { encoding: 'utf8' })
+  assert.match(out, /Comments OK in 0 changed file/)
 })

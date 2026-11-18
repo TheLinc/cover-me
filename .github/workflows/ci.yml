@@ -1,5 +1,5 @@
 # Pull requests and pushes to master: extension build (includes prompt sync and
-# check-dist) and, on pull requests, the comment check, web unit tests and brand check, and the backend suite (pgTAP plus function tests against the
+# check-dist, plus the comment check on pull requests), web unit tests and brand check, and the backend suite (pgTAP plus function tests against the
 # mock server) on a local Supabase stack in Docker. The Supabase CLI maps
 # host.docker.internal to the runner, so the functions reach the mock on Linux.
 # The backend suite skips when nothing it reads changed (see the backend job).

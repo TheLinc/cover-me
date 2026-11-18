@@ -17,8 +17,10 @@ export function unlinkedComments(text, file) {
   const kind = /x$/.test(file) ? ts.ScriptKind.TSX : ts.ScriptKind.TS
   const sf = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, kind)
   const ranges = new Map()
+  // A JSX child list starts where its first text does, so it's skipped too (#271).
+  const isText = (node) => node.kind === ts.SyntaxKind.JsxText || (node.kind === ts.SyntaxKind.SyntaxList && node.getChildren(sf)[0]?.kind === ts.SyntaxKind.JsxText)
   const visit = (node) => {
-    if (node.kind !== ts.SyntaxKind.JsxText) {
+    if (!isText(node)) {
       for (const r of [...(ts.getTrailingCommentRanges(text, node.pos) ?? []), ...(ts.getLeadingCommentRanges(text, node.pos) ?? [])]) ranges.set(r.pos, r)
     }
     for (const child of node.getChildren(sf)) visit(child)
@@ -28,9 +30,10 @@ export function unlinkedComments(text, file) {
   const blocks = []
   for (const r of [...ranges.values()].sort((a, b) => a.pos - b.pos)) {
     const prev = blocks.at(-1)
-    const joins = prev && prev.single && r.kind === ts.SyntaxKind.SingleLineCommentTrivia && /^[ \t]*\r?\n[ \t]*$/.test(text.slice(prev.end, r.pos))
+    const single = r.kind === ts.SyntaxKind.SingleLineCommentTrivia
+    const joins = prev?.single && prev.ownLine && single && /^[ \t]*\r?\n[ \t]*$/.test(text.slice(prev.end, r.pos))
     if (joins) Object.assign(prev, { end: r.end, parts: [...prev.parts, text.slice(r.pos, r.end)] })
-    else blocks.push({ pos: r.pos, end: r.end, single: r.kind === ts.SyntaxKind.SingleLineCommentTrivia, parts: [text.slice(r.pos, r.end)] })
+    else blocks.push({ pos: r.pos, end: r.end, single, ownLine: /(^|\n)[ \t]*$/.test(text.slice(0, r.pos)), parts: [text.slice(r.pos, r.end)] })
   }
   return blocks
     .filter((b) => !LINKED.test(b.parts.join('\n')) && !ALLOWED.some((re) => re.test(b.parts[0])))
@@ -38,8 +41,8 @@ export function unlinkedComments(text, file) {
 }
 
 function changedFiles(base) {
-  const out = execFileSync('git', ['diff', '--name-only', '--diff-filter=ACMR', `${base}...HEAD`], { cwd: root, encoding: 'utf8' })
-  return out.split('\n').filter((f) => CHECKED.test(f) && !f.endsWith('.d.ts') && !/(^|\/)(node_modules|dist)\//.test(f))
+  const out = execFileSync('git', ['diff', '--name-only', '-z', '--diff-filter=ACMR', `${base}...HEAD`], { cwd: root, encoding: 'utf8' })
+  return out.split('\0').filter((f) => CHECKED.test(f) && !/\.d\.[mc]?ts$/.test(f) && !/(^|\/)(node_modules|dist)\//.test(f))
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
