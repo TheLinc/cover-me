@@ -28,7 +28,7 @@ export default function HistoryPage() {
   const [isProMode, setIsProMode] = useState(false)
   const [capText, setCapText] = useState<string | null>(null)
   // Pro: applications that exist only in this browser. asked = this account
-  // already answered the prompt, so the quiet link shows instead.
+  // already answered the prompt, so the quiet link shows instead. (#24)
   const [upload, setUpload] = useState<{ count: number; asked: boolean } | null>(null)
   const [uploading, setUploading] = useState(false)
   const [uploadNote, setUploadNote] = useState<{ text: string; error: boolean } | null>(null)
@@ -41,7 +41,7 @@ export default function HistoryPage() {
   // Asks the server which local entries it already holds (people who were Pro
   // before 1.3.0 saved their letters under the same IDs) and marks them.
   // Returns what's left in this browser only; null when the check failed, in
-  // which case nothing is tagged or offered.
+  // which case nothing is tagged or offered. (#24)
   async function localOnlyAfterCheck(session: AuthSession): Promise<{ letters: CoverLetter[]; tailored: TailoredHistoryEntry[] } | null> {
     const [letters, tailored] = await Promise.all([getHistory(), getTailoredHistory()])
     const l = letters.filter(unclaimed(session.user.id))
@@ -60,7 +60,7 @@ export default function HistoryPage() {
   // Entries made while this account was Pro were always meant for it. If
   // their save didn't go through (offline, a server error), it's retried here
   // without asking. Returns what's still only in this browser, and whether
-  // anything new reached the account.
+  // anything new reached the account. (#24)
   async function retryOwn(session: AuthSession, local: { letters: CoverLetter[]; tailored: TailoredHistoryEntry[] }) {
     const own = ownPending(local.letters, local.tailored, session.user.id)
     if (own.letters.length + own.tailored.length === 0) return { ...local, saved: false }
@@ -68,7 +68,7 @@ export default function HistoryPage() {
       const result = await uploadLocalHistory(session.access_token, own.letters, own.tailored)
       const submitted = { letters: own.letters.map((e) => e.id), tailored: own.tailored.map((e) => e.id) }
       await setEntryAccounts(accountUpdates(submitted, result, session.user.id, false))
-      // Settled: now in this account, or already another account's. Failed ones stay.
+      // Settled: now in this account, or already another account's. Failed ones stay. (#24)
       const failed = new Set(result.failed)
       const settled = new Set([...submitted.letters, ...submitted.tailored].filter((id) => !failed.has(id)))
       return {
@@ -125,17 +125,17 @@ export default function HistoryPage() {
     // A tier that isn't Pro is checked with the server first, so someone who
     // just paid gets the Pro view and isn't asked to upgrade again. A free
     // account close to what this browser keeps sees the upgrade prompt; an
-    // unknown tier shows nothing.
+    // unknown tier shows nothing. (#181)
     const tier = mode === 'hosted' && session ? await currentTier(session) : null
     if (tier === 'hosted_free' && capWarning(letters.length, tailored.length)) {
-      // Counted again: the user may have deleted something during the check.
+      // Counted again: the user may have deleted something during the check. (#181)
       const [l, t] = await Promise.all([getHistory(), getTailoredHistory()])
       setCapText(capWarning(l.length, t.length))
     }
 
     if (tier !== 'hosted_pro' || !session) return
     // Resumes saved from here may have been tailored in a Word file the
-    // account doesn't have yet; the dashboard needs it to keep their design.
+    // account doesn't have yet; the dashboard needs it to keep their design. (#187)
     void uploadDesignIfPro(session)
 
     sessionRef.current = session
@@ -156,7 +156,7 @@ export default function HistoryPage() {
       }
     } catch {
       // Keep showing local groups. A cached Pro tier that's out of date is
-      // refreshed, and the Pro-only parts go now rather than next open.
+      // refreshed, and the Pro-only parts go now rather than next open. (#24)
       const fresh = await refreshTier(session)
       if (fresh && fresh !== 'hosted_pro') setIsProMode(false)
     } finally {
@@ -174,7 +174,7 @@ export default function HistoryPage() {
       for (const id of group.localTailoredIds ?? []) {
         await deleteFromTailoredHistory(id)
       }
-      // Deleting makes room: recount, so a showing prompt updates or goes.
+      // Deleting makes room: recount, so a showing prompt updates or goes. (#23)
       const [letters, tailored] = await Promise.all([getHistory(), getTailoredHistory()])
       setCapText((current) => current && capWarning(letters.length, tailored.length))
       if (isProMode) setUpload((u) => (u && u.count > 1 ? { ...u, count: u.count - 1 } : null))
@@ -277,7 +277,6 @@ export default function HistoryPage() {
             const isExpanded = expandedKey === group.key
             return (
               <div key={group.key} className="job-card">
-                {/* ── Header ── */}
                 <div className="job-card-header">
                   <div className="job-card-title">{group.title || 'Unknown Role'}</div>
                   <div className="job-card-company">{group.company || 'Unknown Company'}</div>
@@ -314,7 +313,6 @@ export default function HistoryPage() {
                   </div>
                 </div>
 
-                {/* ── Expanded artifacts ── */}
                 {isExpanded && (
                   <div className="job-card-body">
                     {group.coverLetters.map((cl, i) => (
@@ -371,7 +369,7 @@ export default function HistoryPage() {
                               ? [{ label: 'Word', note: 'Your design', onSelect: thenAsk(tr.id, () => downloadResumeWord(tr.resume, group.title)) }, { label: 'PDF', note: 'Cover Me layout', onSelect: thenAsk(tr.id, () => downloadTailoredResumePdf(tr.resume, group.title)) }]
                               : [{ label: 'PDF', onSelect: thenAsk(tr.id, () => downloadTailoredResumePdf(tr.resume, group.title)) }, { label: 'Word', onSelect: thenAsk(tr.id, () => downloadResumeWord(tr.resume, group.title)) }]}
                           />
-                          {/* Not for "Your design": its Word file takes only some edits, and the user can edit it in Word. */}
+                          {/* Not for "Your design": its Word file takes only some edits, and the user can edit it in Word. (#118) */}
                           {!(tr.resume.sourceHash && designHashes.includes(tr.resume.sourceHash)) && (
                             <button className="btn btn-secondary btn-sm" onClick={() => void openResumeEditor(tr.id)}>
                               <EditIcon />

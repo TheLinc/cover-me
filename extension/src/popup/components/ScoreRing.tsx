@@ -20,7 +20,7 @@ export default function ScoreRing({ score, from, grow = true, onGrow, size = 104
 }) {
   const rose = scoreRose(score, from)
   const start = typeof from !== 'number' ? score : rose ? from : 0
-  // Fixed at mount: the page clears `grow` once the fill starts.
+  // Fixed at mount: the page clears `grow` once the fill starts. (#228)
   const [animate] = useState(() => grow && start < score && !matchMedia('(prefers-reduced-motion: reduce)').matches)
   const [shown, setShown] = useState(animate ? start : score)
 
@@ -40,7 +40,7 @@ export default function ScoreRing({ score, from, grow = true, onGrow, size = 104
     }
     frame = requestAnimationFrame(step)
     return () => cancelAnimationFrame(frame)
-    // onGrow is left out: a new callback each render mustn't restart the fill.
+    // onGrow is left out: a new callback each render mustn't restart the fill. (#228)
   }, [animate, start, score])
 
   const r = 54
