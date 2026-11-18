@@ -286,3 +286,17 @@ img, svg, video { display: block; }
 @keyframes drift  { from { translate: 0 80px; } to { translate: 0 -80px; } }
 @keyframes reveal { from { opacity: 0; translate: 0 24px; } to { opacity: 1; translate: 0 0; } }
 /* scroll-driven:end */
+
+/* Guide article body (GuideArticle). Child selectors keep product graphics out of it. */
+.guide-prose { font-size: 18px; line-height: 1.75; color: var(--body); }
+.guide-prose > * + *,
+.guide-prose section > * + * { margin-top: 1.25em; }
+.guide-prose > section { margin-top: 3.5rem; }
+.guide-prose section > h2 + * { margin-top: 0.9em; }
+.guide-prose section > ul { list-style: disc; padding-left: 1.5em; }
+.guide-prose section > ol { list-style: decimal; padding-left: 1.5em; }
+.guide-prose section > :is(ul, ol) > li + li { margin-top: 0.5em; }
+.guide-prose section > :is(ul, ol) > li::marker { color: var(--subtle); }
+.guide-prose section > :is(p, ul, ol) strong { color: var(--ink); font-weight: 600; }
+.guide-prose section > :is(p, ul, ol) a { color: var(--brand-strong); text-decoration: underline; text-decoration-color: rgba(79, 70, 229, 0.35); text-underline-offset: 3px; }
+.guide-prose section > :is(p, ul, ol) a:hover { color: var(--brand-deep); text-decoration-color: currentColor; }
