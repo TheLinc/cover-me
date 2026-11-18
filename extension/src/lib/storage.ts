@@ -58,10 +58,12 @@ export async function clearResume(): Promise<void> {
   await pruneDesignFiles()
 }
 
-export async function saveParsedResume(parsed: ParsedResume): Promise<void> {
-  const { resume } = await chrome.storage.local.get('resume')
-  if (!resume) return
-  await chrome.storage.local.set({ resume: { ...(resume as object), parsed } })
+// Skips a resume replaced since `text` was read, so a parse never lands on
+// another file (the hosted tailor matches the ciphertext the same way).
+export async function saveParsedResume(parsed: ParsedResume, text: string): Promise<void> {
+  const resume = await getResume()
+  if (resume?.text !== text) return
+  await chrome.storage.local.set({ resume: { ...resume, parsed } })
 }
 
 export async function getHistory(): Promise<CoverLetter[]> {
