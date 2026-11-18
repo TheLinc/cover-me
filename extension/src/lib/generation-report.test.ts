@@ -262,6 +262,51 @@ describe('buildGenerationReport', () => {
     })
   })
 
+  describe('review round 20', () => {
+    const at = (p: Partial<ParsedResume>, text: string) => letter(text, env({ parsed: { ...parsed, ...p } }))
+
+    test('a parse in capitals still finds the name and city as a letter writes them', () => {
+      expect(at({ name: 'JANE DOE', location: 'TORONTO, ON' }, 'Jane moved to Toronto. Doe, J. (2021).')).toBe('[name] moved to [location]. [name], J. (2021).')
+    })
+
+    test('a city named like a region, or with "City"', () => {
+      expect(at({ location: 'Washington, DC' }, 'I am based in Washington.')).toBe('I am based in [location].')
+      expect(at({ location: 'Victoria, BC' }, 'Living in Victoria.')).toBe('Living in [location].')
+      expect(at({ location: 'Singapore 018956' }, 'I relocated to Singapore.')).toBe('I relocated to [location].')
+      expect(at({ location: 'Mexico City, Mexico' }, 'based in Mexico City')).toBe('based in [location]')
+      expect(at({ location: 'Kansas City, MO 64105' }, 'I live in Kansas City.')).toBe('I live in [location].')
+      expect(at({ location: 'New York, NY' }, 'New York City')).toBe('[location] City')
+    })
+
+    test('year ranges and metrics stay; extra-section lines keep their place and dates', () => {
+      const text = 'Built 3 apps in 2019-2020; NPS from 32 to 61 (2022-2023); teams of 10-100; 2048 MB.'
+      expect(at({ location: '' }, text)).toBe(text)
+      const s = source(env({ parsed: { ...parsed, otherSections: [{ heading: 'Volunteering', lines: ["Dean's List 2019-2021", 'Volunteer Tutor, Toronto Public Library, Toronto, ON, 2019 – 2021'] }] } }))
+      expect(s?.otherSections).toEqual([{ heading: 'Volunteering', lines: ["Dean's List 2019-2021", 'Volunteer Tutor, [location] Public Library, [location], 2019 – 2021'] }])
+      expect(source(env())?.experience).toEqual([expect.objectContaining({ dates: '2019 - 2024' })])
+      expect(source(env({ parsed: { ...parsed, experience: [{ ...parsed.experience[0], dates: '2019-2024' }] } }))?.experience).toEqual([expect.objectContaining({ dates: '2019-2024' })])
+    })
+
+    test('a location in brackets or lower case, and a city in another language', () => {
+      expect(at({ location: 'Remote (Halifax, NS)' }, 'From Halifax.')).toBe('From [location].')
+      expect(at({ location: 'calgary, alberta' }, 'From Calgary.')).toBe('From [location].')
+      expect(at({ location: 'München, Deutschland' }, 'based in Munich and Munchen')).toBe('based in [location] and [location]')
+      expect(at({ location: 'Bengaluru, Karnataka' }, 'I work from Bangalore.')).toBe('I work from [location].')
+    })
+
+    test('a handle written without @ or a colon, and hyphenated names', () => {
+      expect(at({ links: ['github.com/janedoe', 'linkedin.com/in/jane-doe-1a2b'] }, 'GitHub - janedoe; LinkedIn | jane-doe-1a2b')).toBe('GitHub - [link]; LinkedIn | [link]')
+      expect(at({ name: 'Mary-Jane Watson-Parker' }, 'Mary led it; Watson too. Parker as well.')).toBe('[name] led it; [name] too. [name] as well.')
+    })
+
+    test('more street and personal-line forms', () => {
+      const s = (t: string) => at({ location: '' }, t)
+      expect(s('456 King St. E., 77 Bloor St W, Bahnhofstr. 5, Hauptstr. 12a, Kerkstraat 12')).toBe('[address], [address], [address], [address], [address]')
+      const sections = [{ heading: 'Persönliche Angaben', lines: ['Geboren: 1.1.1990 in Köln'] }, { heading: 'Sonstiges', lines: ['Geburtsort: Köln', 'Sprachen: Deutsch'] }]
+      expect(source(env({ parsed: { ...parsed, otherSections: sections } }))?.otherSections).toEqual([{ heading: 'Sonstiges', lines: ['Sprachen: Deutsch'] }])
+    })
+  })
+
   describe('personas', () => {
     const persona = (p: Partial<ParsedResume>, details: string[], text: string) => {
       const e = env({ parsed: { ...parsed, ...p, experience: [{ title: 'Analyst', company: 'Northwind', location: p.location ?? '', dates: '2021 - Present', bullets: [text] }] } })

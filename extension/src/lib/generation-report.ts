@@ -65,12 +65,13 @@ type ContactField = (typeof CONTACT_FIELDS)[number]
 const DROPPED: readonly string[] = [...CONTACT_FIELDS, 'deletedSections', 'sourceHash']
 // Extra sections that hold nothing but personal details (or other people's),
 // in the languages resumes most often come in. "Personal Projects" stays.
-const PERSONAL_SECTION = /\b(?:contacts?|contact (?:info(?:rmation)?|details)|personal (?:details|data|info(?:rmation)?|particulars|profile)|bio[- ]?data|declaration|references?|referees|address(?:es)?|kontakt\w*|persönliche daten|pers[öo]nliches|datos personales|datos de contacto|dados pessoais|informations personnelles|coordonnées|personalia|persoonlijke gegevens|dane osobowe|personuppgifter|個人情報|連絡先)\b/iu
+const PERSONAL_SECTION = /\b(?:contacts?|contact (?:info(?:rmation)?|details)|personal (?:details|data|info(?:rmation)?|particulars|profile)|bio[- ]?data|declaration|references?|referees|address(?:es)?|kontakt\w*|persönliche (?:daten|angaben)|pers[öo]nliches|datos personales|datos de contacto|dados pessoais|informations personnelles|coordonnées|personalia|persoonlijke gegevens|dane osobowe|personuppgifter|個人情報|連絡先)\b/iu
 // A line in any other extra section that holds a personal detail: a labelled
-// one ("Date of Birth: ...", "Adres: ...", "DNI: ...") or one the scrub
-// replaced. Kept: the rest of the section ("Languages: Spanish").
-const PERSONAL_LINE = /^\s*(?:address|adres|adresse|dirección|direccion|endereço|indirizzo|woonplaats|wohnort|anschrift|city|place|location|ort|ciudad|cidade|phone|mobile|tel(?:ephone)?|teléfono|telefon|e-?mail|date of birth|dob|d\.o\.b|born|birth ?date|geburtsdatum|fecha de nacimiento|data de nascimento|né(?:e)? le|nationality|nationalität|staatsangehörigkeit|nacionalidad|citizenship|gender|sex|geschlecht|marital status|familienstand|estado civil|religion|father'?s name|mother'?s name|spouse|passport|dni|nie|nif|ssn|social security|national id|id (?:no|number)|aadhaar|pan|pesel|bsn|cpf|rg|visa status)\b[^:：]{0,20}[:：]/iu
-const TAG_LINE = /\[(?:phone|email|address|postal code|location)\]/
+// one ("Date of Birth: ...", "Adres: ...", "DNI: ...") or one with a phone,
+// email or address the scrub replaced. Kept: the rest of the section
+// ("Languages: Spanish"), and a line only placed in the user's city.
+const PERSONAL_LINE = /^\s*(?:address|adres|adresse|dirección|direccion|endereço|indirizzo|woonplaats|wohnort|anschrift|city|place|location|ort|ciudad|cidade|phone|mobile|tel(?:ephone)?|teléfono|telefon|e-?mail|date of birth|dob|d\.o\.b|born|birth ?date|birth ?place|place of birth|geburtsdatum|geburtsort|geboren|fecha de nacimiento|data de nascimento|né(?:e)? le|nationality|nationalität|staatsangehörigkeit|nacionalidad|citizenship|gender|sex|geschlecht|marital status|familienstand|estado civil|religion|father'?s name|mother'?s name|spouse|passport|dni|nie|nif|ssn|social security|national id|id (?:no|number)|aadhaar|pan|pesel|bsn|cpf|rg|visa status)\b[^:：]{0,20}[:：]/iu
+const TAG_LINE = /\[(?:phone|email|address)\]/
 // The generation-report function's check for a site name.
 const HOST = /^(?=.{4,253}$)(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9-]{2,}$/
 
@@ -126,10 +127,10 @@ function knownDetails(target: ReportTarget, env: ReportEnv): Known {
     names,
     // Each part of the name alone, as written ("Jane", "Doe"): a letter can use
     // just one. Capitalized only, so the word "will" stays for a "Will".
-    nameWords: [...new Set(names.flatMap((n) => n.split(/[\s"'“”‘’().,]+/)).filter((w) => /^\p{Lu}/u.test(w) && w.replace(/\P{L}/gu, '').length >= 2))],
+    nameWords: [...new Set(names.flatMap((n) => n.split(/[\s"'“”‘’().,-]+/)).filter((w) => /^\p{Lu}/u.test(w) && w.replace(/\P{L}/gu, '').length >= 2))],
     emails: [...field('email'), ...(env.accountEmail ? [env.accountEmail] : [])],
     phones: field('phone'),
-    links: [...field('website'), ...field('links')].flatMap((l) => [l, bareLink(l)]),
+    links: [...field('website'), ...field('links')].flatMap((l) => [l, bareLink(l), ...handleOf(l)]),
     places,
     placeWords: placeWords(places),
   }
@@ -151,14 +152,22 @@ const REGION_NAMES = new Set([
   'maharashtra', 'karnataka', 'tamil nadu', 'kerala', 'gujarat', 'rajasthan', 'punjab', 'haryana', 'telangana', 'bengal', 'west bengal', 'uttar pradesh', 'bavaria', 'bayern', 'catalonia', 'cataluña', 'andalusia', 'queensland', 'victoria', 'new south wales', 'nsw', 'tasmania',
 ])
 const REGION_AFTER_PLACE = new RegExp(String.raw`\[location\](?:,?[ \t]+(?:${[...REGION_NAMES].sort((a, b) => b.length - a.length).map((r) => r.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/ /g, '[ \\t]+')).join('|')})(?![\p{L}])(?:[ \t]+\d{4,6}\b)?)+`, 'giu')
+// A city's other spellings, which a letter in English may use instead.
+// ponytail: the common ones only; add a city when a report shows it missing.
+const EXONYMS = [['München', 'Munich'], ['Köln', 'Cologne'], ['Wien', 'Vienna'], ['Praha', 'Prague'], ['Warszawa', 'Warsaw'], ['Kraków', 'Cracow'], ['Lisboa', 'Lisbon'], ['Roma', 'Rome'], ['Milano', 'Milan'], ['Napoli', 'Naples'], ['Firenze', 'Florence'], ['Torino', 'Turin'], ['Sevilla', 'Seville'], ['Genève', 'Geneva'], ['Den Haag', 'The Hague'], ['Bruxelles', 'Brussels'], ['Antwerpen', 'Antwerp'], ['København', 'Copenhagen'], ['Göteborg', 'Gothenburg'], ['Moskva', 'Moscow'], ['Bengaluru', 'Bangalore'], ['Mumbai', 'Bombay'], ['Chennai', 'Madras'], ['Kolkata', 'Calcutta'], ['Gurugram', 'Gurgaon'], ['Beijing', 'Peking'], ['Ciudad de México', 'Mexico City'], ['São Paulo', 'Sao Paulo']]
+const deaccent = (s: string) => s.normalize('NFD').replace(/\p{M}/gu, '')
 function placeWords(places: string[]): string[] {
   const out = new Set<string>()
-  for (const place of places) {
-    for (const part of place.split(/\s*[,;·|/–—]\s*|\s+-\s+/)) {
+  for (const written of places) {
+    // "calgary, alberta" as "Calgary, Alberta", so its words count as capitalized.
+    const place = written === written.toLowerCase() ? written.replace(/\p{L}+/gu, (w) => (PLACE_PARTICLE.test(w) ? w : w[0].toUpperCase() + w.slice(1))) : written
+    place.split(/\s*[,;·|/–—()[\]]\s*|\s+-\s+/).filter(Boolean).forEach((part, partIndex) => {
       // Runs of capitalized words (with particles inside: "Rio de Janeiro").
       const words = part.split(/\s+/)
       let run: string[] = []
+      let first = partIndex === 0
       const flush = () => {
+        const whole = run.join(' ')
         while (run.length && AROUND_PLACE.has(run[0].toLowerCase())) run.shift()
         while (run.length && (AROUND_PLACE.has(run[run.length - 1].toLowerCase()) || PLACE_PARTICLE.test(run[run.length - 1]))) run.pop()
         // A country or state after the city ("Lagos Nigeria", "New Delhi India").
@@ -167,8 +176,11 @@ function placeWords(places: string[]): string[] {
         }
         const name = run.join(' ')
         const last = run[run.length - 1] ?? ''
-        if (name.replace(/\P{L}/gu, '').length >= 3 && !REGION_NAMES.has(name.toLowerCase())) out.add(name)
+        // The location's first place is the city even when it's also a
+        // region's name ("Washington, DC", "Singapore 018956", "Mexico City").
+        if (name.replace(/\P{L}/gu, '').length >= 3 && (first || !REGION_NAMES.has(name.toLowerCase()))) out.add(name).add(whole)
         if (run.length > 1 && last.replace(/\P{L}/gu, '').length >= 4 && !REGION_NAMES.has(last.toLowerCase())) out.add(last)
+        if (name) first = false
         run = []
       }
       for (const w of words) {
@@ -177,13 +189,21 @@ function placeWords(places: string[]): string[] {
         else flush()
       }
       flush()
-    }
+    })
+  }
+  // Without accents ("Munchen") and by the city's other name ("Munich").
+  for (const p of [...out]) {
+    out.add(deaccent(p))
+    for (const pair of EXONYMS) if (pair.some((n) => deaccent(n).toLowerCase() === deaccent(p).toLowerCase())) pair.forEach((n) => out.add(n).add(deaccent(n)))
   }
   return [...out]
 }
 
 // A link as a letter may write it: no https://, www. or trailing slash.
 const bareLink = (l: string) => l.replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/+$/, '')
+// The handle in a profile link, which a letter can write alone ("GitHub -
+// janedoe"): its first path part, past "in/" or "u/" ("linkedin.com/in/jane-doe").
+const handleOf = (l: string) => bareLink(l).split(/[/?#]/).slice(1).map((p) => p.replace(/^@/, '')).filter((p) => !/^(?:in|pub|u|user|users|profile|company)$/i.test(p)).slice(0, 1)
 
 // The name a letter signs with: the line after its closing ("Sincerely,").
 function signedName(letter: string): string[] {
@@ -239,9 +259,9 @@ function withoutLetterBlocks(letter: string): string {
   return text
 }
 
-const EMAIL = /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g
+const EMAIL = /[\w.+-]{1,64}@[\w-]+(?:\.[\w-]+)+/g
 // "jane [at] example [dot] com", "jane(at)example.com", "jane at example dot com".
-const OBFUSCATED_EMAIL = /[\w.+-]+\s*(?:\[\s*at\s*\]|\(\s*at\s*\)|\{\s*at\s*\})\s*[\w-]+(?:\s*(?:\[\s*dot\s*\]|\(\s*dot\s*\)|\{\s*dot\s*\}|\.)\s*[\w-]+)+|\b[\w.+-]+\s+(?:at|AT)\s+[\w-]+(?:\s+(?:dot|DOT)\s+[\w-]+)+/gi
+const OBFUSCATED_EMAIL = /[\w.+-]{1,64}\s*(?:\[\s*at\s*\]|\(\s*at\s*\)|\{\s*at\s*\})\s*[\w-]+(?:\s*(?:\[\s*dot\s*\]|\(\s*dot\s*\)|\{\s*dot\s*\}|\.)\s*[\w-]+)+|\b[\w.+-]{1,64}\s+(?:at|AT)\s+[\w-]+(?:\s+(?:dot|DOT)\s+[\w-]+)+/gi
 const URL = /\b(?:https?:\/\/|www\.)[^\s"'”’<>]*[^\s.,;:!?)"'”’<>]/gi
 // Any domain with a real ending, lowercase, and its path. "Node.js", "ASP.NET"
 // and file names ("README.md") don't match; ALLOWED are tech names shaped like
@@ -258,7 +278,8 @@ const PATH_ONLY_ENDINGS = new Set(['so', 'cc', 'in', 'it', 'at', 'be', 'no', 'to
 const HANDLE_LABEL = /\b(GitHub|GitLab|Twitter|LinkedIn|Instagram|Kaggle|Behance|Dribbble|Telegram|Skype|Discord|Mastodon|Threads|TikTok|YouTube|Bluesky|Codepen|LeetCode|HackerRank|Stack Overflow)(\s*[:：]\s*)(?!\[)[^\s,;|·]+/g
 const HANDLE = /(?<![\w@.])@[A-Za-z0-9_](?:[A-Za-z0-9_.]{0,28}[A-Za-z0-9_])?/g
 // A phone number in any country's format: 8 to 15 digits starting with +, (,
-// 0, or as a North American number. Never years ("2019 - 2024 2025").
+// 0, or as a North American number. Never years ("2019 - 2024 2025") or a
+// figure before them ("from 32 to 61 (2022-2023)").
 // Nor dates ("03.2019 - 11.2021", "12.04.1995") or an amount after a
 // currency sign ("$2 500 000 000").
 const PHONE_SHAPE = /(?:\+\s?\d|\(\d|\b\d)[\d \t()./-]{6,22}\d/g
@@ -268,6 +289,7 @@ const isPhone = (m: string, at: number, text: string) => {
   if (/[$€£¥₹]\s?$/.test(text.slice(Math.max(0, at - 2), at))) return false
   const groups = m.split(/[^\d]+/).filter(Boolean)
   if (groups.every((g) => /^(?:19|20)\d\d$/.test(g))) return false
+  if (groups.length > 2 && groups.slice(-2).every((g) => /^(?:19|20)\d\d$/.test(g))) return false
   if (/\b(?:0?[1-9]|1[0-2]|[0-3]?\d[./](?:0?[1-9]|1[0-2]))[./](?:19|20)\d\d\b/.test(m)) return false
   return /^[+(0]/.test(m) || (digits.length === 10 && /^[2-9]/.test(digits))
 }
@@ -283,12 +305,12 @@ const STREET_OR_WORD = 'St|Drive|Dr|Way|Court|Ct|Place|Pl|Terrace|Close|Square|S
 // end: a word that can be an ordinary one ("15 Supreme Court cases", "12 Month
 // End Close cycles") counts only where the address ends: a comma, a
 // separator or the line's end ("14 Elm Grove, Bristol").
-const street = (words: string, number: string, end = '') => String.raw`\b${number}[A-Za-z]?(?:[ \t]+(?:[A-Z][\w'.-]*|\d+(?:st|nd|rd|th|ST|ND|RD|TH))){1,4}[ \t]+(?:${words}|${words.toUpperCase()})\b\.?(?:,?[ \t]*(?:Apt|Unit|Suite|APT|UNIT|SUITE|#)[ \t]*[\w-]+)?${end}`
+const street = (words: string, number: string, end = '') => String.raw`\b${number}[A-Za-z]?(?:[ \t]+(?:[A-Z][\w'.-]*|\d+(?:st|nd|rd|th|ST|ND|RD|TH))){1,4}[ \t]+(?:${words}|${words.toUpperCase()})\b\.?(?:[ \t]+(?:[NSEW]|NE|NW|SE|SW|North|South|East|West)\b\.?)?(?:,?[ \t]*(?:Apt|Unit|Suite|APT|UNIT|SUITE|#)[ \t]*[\w-]+)?${end}`
 const ADDRESSES = [
   new RegExp(`${street(STREETS, String.raw`\d{1,6}`)}|${street(STREET_OR_WORD, String.raw`(?!(?:19|20)\d\d\b)\d{1,6}`, String.raw`(?=[ \t]*(?:[,·|;\r\n]|$))`)}`, 'g'),
   // The street's name is capitalized: "Via automated testing, 30" stays.
   /\b(?:Calle|C\/|Carrer|Avenida|Avda\.?|Rua|Via|Viale|Corso|Piazza|Plaza|Plaça|Paseo|Strada|Ulica|ul\.)\s+(?:(?:de|del|la|las|los|di|da|do|dos|das)\s+)*\p{Lu}[\p{L}'.-]*(?:\s+(?:(?:de|del|la|las|los|di|da|do|dos|das)\s+)*\p{Lu}[\p{L}'.-]*){0,4},?\s+\d{1,5}[A-Za-z]?\b/gu,
-  /\b[\p{L}-]*(?:straße|strasse|weg|gasse|platz|allee|laan|gracht|vej|gatan|gata|katu|damm)\s+\d{1,5}[a-z]?\b/giu,
+  /\b[\p{L}-]*(?:straße|strasse|str\.|straat|weg|gasse|platz|allee|laan|gracht|vej|gatan|gata|katu|damm)\s+\d{1,5}[a-z]?\b/giu,
   /\b\d{1,5}(?:\s?(?:bis|ter))?,?\s+(?:rue|avenue|boulevard|bd|allée|chemin|impasse|quai|place)\s+(?:(?:de|du|des|la|le|l')\s*)*\p{Lu}[\p{L}'-]+(?:[ -]\p{Lu}[\p{L}'-]+)*/gu,
   // A flat or house number that starts an address part and is followed by
   // more of it ("Flat 402, Sunrise"; "Sharma, House No. 45, Sector 15"), so
@@ -299,7 +321,7 @@ const ADDRESSES = [
 // Postal codes: Canadian, UK, US (after ", ST"), Dutch ("3511 AX"), Polish
 // ("00-590"), Irish ("D02 X285"), Brazilian ("01310-100") and Japanese
 // ("〒150-0002"). Others go when they sit beside the user's city (see scrub).
-const POSTAL = new RegExp(String.raw`\b[A-Z]\d[A-Z][ ]?\d[A-Z]\d\b|\b[A-Z]{1,2}\d[A-Z\d]?[ ]\d[A-Z]{2}\b|(?<=,[ \t]?)(?:${STATES})[ \t]+\d{5}(?:-\d{4})?\b|\b[1-9]\d{3}[ ]?(?!SA|SD|SS)[A-Z]{2}\b(?![\w-])|\b\d{2}-\d{3}\b|\b[AC-FHKNPRTV-Y]\d{2}[ ]?[AC-FHKNPRTV-Y\d]{4}\b|\b\d{5}-\d{3}\b|〒?\d{3}-\d{4}\b`, 'g')
+const POSTAL = new RegExp(String.raw`\b[A-Z]\d[A-Z][ ]?\d[A-Z]\d\b|\b[A-Z]{1,2}\d[A-Z\d]?[ ]\d[A-Z]{2}\b|(?<=,[ \t]?)(?:${STATES})[ \t]+\d{5}(?:-\d{4})?\b|\b[1-9]\d{3}[ ]?(?!SA|SD|SS|[KMGTP]B|HP|KW|MW|AM|PM)[A-Z]{2}\b(?![\w-])|\b\d{2}-\d{3}\b(?=[ \t]+\p{Lu})|\b[AC-FHKNPRTV-Y]\d{2}[ ]?[AC-FHKNPRTV-Y\d]{4}\b|\b\d{5}-\d{3}\b|(?:〒|\b)\d{3}-\d{4}\b`, 'gu')
 // A Japanese address: prefecture, ward and block numbers.
 const JP_ADDRESS = /[\p{Script=Han}]{1,4}[都道府県][\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]*[\d０-９-－]+/gu
 
@@ -307,6 +329,9 @@ const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 // Whole words, any run of spaces between them ("Jane  Doe", "JANE\nDOE").
 const wordsPattern = (v: string) => `(?<![\\p{L}\\p{N}])${v.trim().split(/\s+/).map(escape).join('\\s+')}(?![\\p{L}\\p{N}])`
 const byLength = (a: string, b: string) => b.length - a.length
+// A capitalized word as written, in capitals, and in title case (a parse
+// that wrote "JANE DOE" still finds "Jane"), but never in lower case.
+const cases = (w: string) => [...new Set([w, w.toUpperCase(), w.toLowerCase().replace(/(^|[\s'-])(\p{L})/gu, (_, p: string, c: string) => p + c.toUpperCase())])]
 // A known phone by its digits, in any format, with or without its country
 // code, area code or a leading 0 ("+44 7700 900123", "07700 900123",
 // "612 345 678" for +34, "555-0199" for (416) 555-0199): its last 10, 9 and,
@@ -335,11 +360,11 @@ function scrub(text: string, known: Known): string {
   for (const re of known.phones.flatMap(phonePatterns)) text = text.replace(re, '[phone]')
   text = text.replace(PHONE_SHAPE, (m, at: number, all: string) => (isPhone(m, at, all) ? '[phone]' : m))
   for (const n of [...known.names].sort(byLength)) if (n.length >= 3) text = text.replace(new RegExp(wordsPattern(n), 'giu'), '[name]')
-  for (const w of known.nameWords) text = text.replace(new RegExp(wordsPattern(w), 'gu'), '[name]').replace(new RegExp(wordsPattern(w.toUpperCase()), 'gu'), '[name]')
+  for (const w of known.nameWords.flatMap(cases)) text = text.replace(new RegExp(wordsPattern(w), 'gu'), '[name]')
   for (const a of ADDRESSES) text = text.replace(a, '[address]')
   text = text.replace(JP_ADDRESS, '[address]').replace(POSTAL, (m) => (/^[A-Z]{2}\s+\d/.test(m) ? `${m.slice(0, 2)} [postal code]` : '[postal code]'))
   for (const p of [...known.places].sort(byLength)) if (p.length >= 3) text = text.replace(new RegExp(wordsPattern(p), 'giu'), '[location]')
-  for (const w of [...known.placeWords].sort(byLength)) text = text.replace(new RegExp(wordsPattern(w), 'gu'), '[location]').replace(new RegExp(wordsPattern(w.toUpperCase()), 'gu'), '[location]')
+  for (const w of [...known.placeWords].sort(byLength).flatMap(cases)) text = text.replace(new RegExp(wordsPattern(w), 'gu'), '[location]')
   // A province, state or country named right after the user's city goes with
   // it ("Toronto, Ontario"); alone it names no one ("Ontario Teachers" stays).
   text = text.replace(REGION_AFTER_PLACE, '[location]')
