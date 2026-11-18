@@ -134,7 +134,7 @@ describe('the parse an own-key tailor starts from', () => {
     fakeLocal({ resume: { text: 'Ada', filename: 'ada.pdf', updatedAt: '2026-11-01T00:00:00Z' } })
     const replaced = { text: 'Someone else', filename: 'other.pdf', updatedAt: '2026-11-02T00:00:00Z' }
     const { parsed } = await parseForTailor(await designForTailor(), { text: 'Ada' }, async () => {
-      local.resume = replaced // another file uploaded while the parse runs
+      local.resume = replaced
       return current()
     })
     expect(parsed).toMatchObject({ linksKept: true })
