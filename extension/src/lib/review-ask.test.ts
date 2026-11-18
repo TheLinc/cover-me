@@ -22,7 +22,7 @@ describe('shouldAskForReview', () => {
     expect(shouldAskForReview(gen(14), ask, now)).toBe(true)
   })
 
-  test('never a third time, or after a link click', () => {
+  test('never a third time, or after rating', () => {
     expect(shouldAskForReview(gen(100), { shown: 2, atCount: 14, done: false }, now)).toBe(false)
     expect(shouldAskForReview(gen(100), { shown: 1, atCount: 4, done: true }, now)).toBe(false)
   })
