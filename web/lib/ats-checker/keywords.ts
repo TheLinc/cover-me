@@ -44,10 +44,10 @@ const mentions = (text: string, spelling: string, strict: boolean) => text.searc
 const has = (text: string, k: Term) => k.spellings.some((s) => mentions(text, s, k.strict))
 
 const PREFERRED = /prefer|nice[\s-]to[\s-]have|nice if|bonus|\bplus\b|desired|desirable|stand out|advantage|may also|good to have|ideally|even better|pluses|extra credit|would be great/i
-const REQUIRED = /requir|qualif|\bmust\b|need|bring|you have|you'?ll have$|you should have|looking for|good fit|great fit|about you|who you are|who you'?ll be|minimum|skills|education|^(your |relevant )?experience( and \w+)?$|ideal candidate|about the candidate|^tech stack|profile|background|essential|person specification|competenc|to be successful|sets you apart/i
+const REQUIRED = /requir|qualif|\bmust\b|need|bring|you have|you'?ll have$|you should have|looking for|good fit|great fit|about you|who you are|who you'?ll be|minimum|skills|education|^(your |relevant )?experience( and \w+)?$|ideal candidate|about the candidate|^tech stack|profile|background|essential|person specification|competenc|to be successful|sets you apart|right candidate|is this you|seeking/i
 const CREDENTIALS = /^certifications?|^licen[sc]e|certifications?$/i
 const COMPANY = /^(about (?!you|the role|the team|the job|this role|the position|the candidate)|more about|why\b|life at)/i
-const HEADING_START = /^(what (you|we|makes you|sets you)|it would be (great|nice)|it'?d be (great|nice)|you'?ll\b|you (will|should|might|may|must)\b|who you|about (you|the (role|candidate|team|job))|your (profile|background)|candidate profile|nice to have|good to have|bonus|requirements|qualifications|key (responsibilities|requirements|qualifications)|responsibilities|preferred|desirable|essential|ideally|even better|must[- ]haves?|minimum|basic qualifications|required|competencies|person specification|to be successful|the ideal candidate|the role|the opportunity|job description|tech stack|extra credit|pluses)\b/i
+const HEADING_START = /^(what (you|we|makes you|sets you)|it would be (great|nice)|it'?d be (great|nice)|you'?ll\b|you (will|should|might|may|must)\b|who you|about (you|the (role|candidate|team|job))|your (profile|background)|candidate profile|nice to have|good to have|bonus|requirements|qualifications|key (responsibilities|requirements|qualifications)|responsibilities|preferred|desirable|essential|ideally|even better|must[- ]haves?|minimum|basic qualifications|required|competencies|person specification|to be successful|the ideal candidate|the role|the opportunity|job description|tech stack|extra credit|pluses|who we('re| are) (looking|seeking)|we('re| are) (looking|seeking)|((key|technical|desired|core|required) )?skills|your experience|education|experience|is this you|you have|the right candidate)\b/i
 const MINOR_WORD = /^(a|an|and|at|by|for|if|in|is|of|on|or|the|to|with)$/i
 
 // A body line pasted without its bullet can start like a heading ("Compensation analysis
@@ -57,19 +57,19 @@ function looksLikeHeading(text: string, labelled: boolean): boolean {
   const words = text.split(/\s+/).filter((w) => /^[A-Za-z]/.test(w) && !MINOR_WORD.test(w))
   return words.length > 0 && words.every((w) => /^[A-Z]/.test(w))
 }
-const SKIP = /^(description of )?benefits?|^perks|what we offer|^compensation|^pay( range| transparency|$)|^salary|equal (opportunity|employment)|^our commitment|^who we are|^our (founding|story|culture|values)|^how we work|^acknowledg|statement$|^accommodations?|^privacy|career growth$|^work\/life|^inclusive|^diverse|^apply$|^contact/i
+const SKIP = /^(description of )?benefits?|^perks|what we offer|^compensation|^pay( range| transparency|$)|^salary|equal (opportunity|employment)|^our commitment|^who we are$|^our (founding|story|culture|values)|^how we work|^acknowledg|statement$|^accommodations?|^privacy|career growth$|^work\/life|^inclusive|^diverse|^apply$|^contact/i
 const BULLET = /^(\*\s|[-•●◦▪▫■□·‣⁃▸►○–—])/
 const OTHER = /^schedule|^job type|responsib|what you('ll| will)? (do|be doing)|day in the life|the role|the opportunity|job description|overview|summary|duties|additional information/i
 
 function headingLevel(line: string, labelled: boolean): Level | 'skip' | null {
   if (BULLET.test(line)) return null
   const text = line.replace(/^[#*\s]+|[*:\s]+$/g, '')
-  if (!text || /[.!?]$/.test(text) || text.split(/\s+/).length > 10) return null
+  if (!text || /[.!]$/.test(text) || text.split(/\s+/).length > 10) return null
   if (!looksLikeHeading(text, labelled || /^(#|\*\*)|:\s*$/.test(line))) return null
   if (COMPANY.test(text)) return 'skip'
-  const namedHeading = /^(required|preferred|minimum|basic)\b|\b(requirements|qualifications)$/i.test(text)
+  const namedHeading = /^(required|preferred|minimum|basic)\b|\b(requirements|qualifications)$|looking for|seeking/i.test(text)
   if (!namedHeading && DICTIONARY.some((term) => has(text, term))) return null
-  if (SKIP.test(text)) return 'skip'
+  if (!namedHeading && SKIP.test(text)) return 'skip'
   if (PREFERRED.test(text)) return 'preferred'
   if (REQUIRED.test(text) || CREDENTIALS.test(text)) return 'required'
   if (OTHER.test(text)) return 'mentioned'
@@ -140,7 +140,7 @@ export function readPosting(posting: string): Posting {
     }
     if (level !== 'mentioned') {
       for (const k of unlistedNames(body)) {
-        const known = [...found.values()].some((f) => has(k.name, f) || f.spellings.some((s) => mentions(s, k.name, true)))
+        const known = [...DICTIONARY, ...found.values()].some((f) => has(k.name, f) || f.spellings.some((s) => mentions(s, k.name, true)))
         if (!known && !openers.has(k.name)) add({ ...k, level })
       }
     }

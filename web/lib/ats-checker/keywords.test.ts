@@ -11,6 +11,8 @@ const unbulleted = (name: string, level?: Level) => pick(readPosting(text(name).
 
 describe('keywords from saved postings', () => {
   test.each([
+    ['ashby', 'required', ['Rust', 'Python', 'LLM', 'distributed systems']],
+    ['greenhouse', 'required', ['Python', 'LLM', 'machine learning']],
     ['amazon', 'required', ['Python', 'Java', 'TypeScript', 'Go', 'Rust', 'C++', 'C#', 'Linux', 'algorithms', 'data structures']],
     ['amazon', 'preferred', ['SQL', 'NoSQL', 'distributed systems', 'SDLC']],
     ['bamboohr', 'required', ['SQL', 'Snowflake', 'Power BI', 'Excel', 'Visio', 'Jira', 'Confluence', 'Agile', 'Scrum', 'SDLC', 'FactSet', 'Refinitiv', 'Bloomberg', 'CRIMS', 'IBOR', 'MBA']],
@@ -54,6 +56,7 @@ describe('keywords from saved postings', () => {
     ['Responsibilities\n- Plan sprints\nExperience\n- Python and Kubernetes\n- CPR certification', 'required', ['Python', 'Kubernetes', 'CPR']],
     ['Requirements\n- You MUST have a valid license\n- COVID-19 vaccination required\n- PLEASE include a cover letter', 'required', []],
     ['Requirements\n- A master of SQL and spreadsheets', 'required', ['SQL']],
+    ['Requirements\n- Familiarity with REST APIs', 'required', ['REST']],
     ['Compensation Analyst\nRequirements\nCompensation analysis experience\nAdvanced Excel and SQL\nKnowledge of Workday', 'required', ['Excel', 'SQL', 'Workday']],
     ['Accountant\nRequirements\nAbout 3-5 years of experience in accounting\nCPA required\nProficient in QuickBooks and Excel\nKnowledge of GAAP', 'required', ['CPA', 'QuickBooks', 'Excel', 'GAAP']],
     ['Requirements\nContact center experience preferred\nSalesforce and Zendesk\nData entry and typing', 'required', ['Salesforce', 'Zendesk', 'data entry', 'typing']],
@@ -68,13 +71,15 @@ describe('keywords from saved postings', () => {
     "You'll have", 'You should have', "What you'll have", 'Your profile', 'Candidate profile', 'Your background',
     'Essential', 'Essential criteria', 'Person specification', 'Competencies', 'To be successful in this role',
     'What makes you a great fit', 'What sets you apart', "Who you'll be", "What you'll need to be successful in this role",
-    'About the candidate',
+    'About the candidate', 'Who We Are Looking For', 'WHO WE ARE LOOKING FOR', 'Who we are looking for:', "Who we're looking for",
+    "We're looking for", 'Skills and qualifications', 'Your experience', 'Education and experience', 'Key skills',
+    'Technical skills', 'Is this you?', 'You have', 'The right candidate', 'Contact Center Requirements',
   ])('"%s" starts a must-have section', (heading) => {
     expect(readPosting(`What you'll do\nPlan sprints\n${heading}\nKubernetes and Docker`).keywords.map((k) => [k.name, k.level]))
       .toEqual([['Kubernetes', 'required'], ['Docker', 'required']])
   })
 
-  test.each(['Desirable', 'Desirable criteria', 'Good to have', 'Ideally', 'Even better if', 'Pluses', 'Extra credit', 'It would be great if you have'])(
+  test.each(['Desired skills', 'Desirable', 'Desirable criteria', 'Good to have', 'Ideally', 'Even better if', 'Pluses', 'Extra credit', 'It would be great if you have'])(
     '"%s" starts a nice-to-have section', (heading) => {
       expect(readPosting(`Requirements\n- Python\n${heading}\nKubernetes`).keywords.map((k) => [k.name, k.level]))
         .toEqual([['Python', 'required'], ['Kubernetes', 'preferred']])
