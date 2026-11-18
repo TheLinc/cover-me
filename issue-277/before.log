@@ -1,0 +1,7 @@
+ok  /guides/chatgpt-resume-prompts is 404
+ok  /guides/chatgpt-cover-letter-prompts is 404
+ok  /guides/cover-me-vs-chatgpt has no prompt guide links
+ok  /guides index doesn't list both new guides
+ok  footer Guides column links "Cover Me vs ChatGPT" to /guides/cover-me-vs-chatgpt
+ok  /sitemap.xml doesn't have both new guide URLs
+ok  /llms.txt doesn't have both new guide URLs

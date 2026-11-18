@@ -1,0 +1,10 @@
+ok  /guides/chatgpt-resume-prompts: one H1 "ChatGPT resume prompts to tailor your resume to a job", title "ChatGPT Resume Prompts to Tailor Your Resume | Cover Me" (55 chars), 4 copy buttons, links to /guides/cover-me-vs-chatgpt
+ok  chatgpt-resume-prompts: Copy prompt puts prompt 1, exactly as run, on the clipboard (Windows line endings normalized) and shows "Copied"
+ok  /guides/chatgpt-cover-letter-prompts: one H1 "ChatGPT cover letter prompts that drop the AI phrases", title "ChatGPT Cover Letter Prompts, With Real Output | Cover Me" (57 chars), 4 copy buttons, links to /guides/cover-me-vs-chatgpt
+ok  chatgpt-cover-letter-prompts: Copy prompt puts prompt 1, exactly as run, on the clipboard (Windows line endings normalized) and shows "Copied"
+ok  /guides/cover-me-vs-chatgpt links to both new guides
+ok  /guides index lists both new guides
+ok  footer Guides column links "ChatGPT resume prompts" to /guides/chatgpt-resume-prompts
+ok  /sitemap.xml has both new guide URLs
+ok  /llms.txt has both new guide URLs
+ok  375 px: a blocked clipboard shows "Couldn't copy, select it" inside the card (button right edge 334 px, card 355 px)

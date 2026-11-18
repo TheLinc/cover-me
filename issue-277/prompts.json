@@ -1,0 +1,14 @@
+{
+  "resume": [
+    "Here is a job posting. List the 6 must-have keywords a recruiter would search for: the hard skills, tools and qualifications that are required, repeated, or listed first. Use the posting's exact wording, and quote the line each one comes from. Then list up to 5 nice-to-have keywords on their own.\n\nJob posting:\n[PASTE THE JOB POSTING]",
+    "Here is my resume. Rewrite my summary for this posting in 2 or 3 sentences. Use the must-have keywords only where my resume shows that experience, and keep my numbers exactly as they are. Don't add years, tools or skills my resume doesn't have. After the summary, list each must-have keyword you left out because my resume doesn't show it.\n\nResume:\n[PASTE YOUR RESUME]",
+    "Now rewrite the bullets for my [JOB TITLE] role at [EMPLOYER]. Start each bullet with the strongest matching keyword from the posting, in the posting's words, where it's true. Keep every number and result exactly as it is. Don't change my job title, employer or dates, and don't merge, drop or add bullets. Show each one as Before and After.",
+    "Check your new summary and bullets against my original resume. List every skill, tool, number or claim my original resume doesn't support, quote where you wrote it, and say what my resume actually says. If everything is supported, say so. Then give me the corrected summary and bullets."
+  ],
+  "letter": [
+    "Here is a job posting and my resume. Pick the 3 things this employer cares about most. For each one, quote the line of my resume that shows I've done it. If nothing in my resume shows one, say so instead of stretching another line to fit.\n\nJob posting:\n[PASTE THE JOB POSTING]\n\nResume:\n[PASTE YOUR RESUME]",
+    "Write a cover letter for this role from those 3 points. Keep it under 250 words, in 3 short paragraphs. Open with why I want this role, not with \"I am writing to apply\". Use only facts from my resume and keep my numbers exactly. Sign it with my name.",
+    "Edit the letter to remove phrases that sound AI-written: \"I am excited\", \"I am writing to express\", \"passionate\", \"thrilled\", \"leverage\", \"proven track record\", \"dynamic\", \"fast-paced\", \"align with\", \"I believe\", \"Furthermore\", \"In today's\", dashes used as commas, and any sentence that would fit any company. Replace each one with a plain sentence about this role. Don't add facts. Show only the final letter.",
+    "Check the letter against my resume. List every skill, tool, number or claim my resume doesn't support, quote the sentence it's in, and say what my resume actually says. If everything is supported, say so. Then give me the corrected letter."
+  ]
+}
