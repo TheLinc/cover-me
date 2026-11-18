@@ -68,9 +68,8 @@ const faqJsonLd = {
   ],
 }
 
-// Results from October 31, 2026. A string means that system got something wrong.
-type Cell = true | string
-const RESULTS: { format: string; file: string; cells: [Cell, Cell, Cell, Cell] }[] = [
+type PassOrWhatWentWrong = true | string
+const RESULTS: { format: string; file: string; cells: [PassOrWhatWentWrong, PassOrWhatWentWrong, PassOrWhatWentWrong, PassOrWhatWentWrong] }[] = [
   { format: 'One column, PDF', file: 'single-column.pdf', cells: [true, true, true, true] },
   { format: 'One column, Word', file: 'single-column.docx', cells: [true, true, true, true] },
   { format: 'Two columns', file: 'two-column.pdf', cells: [true, true, 'Cut off the LinkedIn link', true] },
