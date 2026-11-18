@@ -6,9 +6,6 @@ import { getGuide } from '@/lib/guides'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 const guide = getGuide('ats-friendly-resume-format')
-const HERO_IMAGE = '/guides/ats-friendly-resume-format.png'
-const HERO_ALT =
-  "Results table for one made-up resume saved in six formats and uploaded to the resume autofill of Lever, Workday, Ashby and SmartRecruiters. All four read the one-column PDF, the one-column Word file and the Word file with contact details in the header. The two-column design made Ashby cut off the LinkedIn link. The table layout made SmartRecruiters mix skills into the degree. The image-only PDF gave Workday nothing, while the other three read it."
 const FILES = '/guides/ats-friendly-resume-format/files'
 const SUMMARY = 'One resume, six formats, four real ATSs. Workday read nothing from an image PDF, Ashby cut a link out of a two-column design, and SmartRecruiters mixed skills into a degree from a table.'
 
@@ -22,13 +19,13 @@ export const metadata: Metadata = {
     url: `${BASE}/guides/${guide.slug}`,
     siteName: 'Cover Me',
     type: 'article',
-    images: [{ url: `${BASE}${HERO_IMAGE}`, width: 3200, height: 1800, alt: 'Results of uploading one resume in six formats to Lever, Workday, Ashby and SmartRecruiters' }],
+    images: [{ url: `${BASE}${guide.image}`, width: 3200, height: 1800, alt: 'Results of uploading one resume in six formats to Lever, Workday, Ashby and SmartRecruiters' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'How to make your resume ATS friendly: 6 formats tested in 4 ATSs | Cover Me',
     description: SUMMARY,
-    images: [`${BASE}${HERO_IMAGE}`],
+    images: [`${BASE}${guide.image}`],
   },
 }
 
@@ -126,7 +123,6 @@ export default function Page() {
   return (
     <GuideArticle
       guide={guide}
-      hero={{ src: HERO_IMAGE, alt: HERO_ALT }}
       lede={
         <>
           An ATS-friendly resume is one the hiring software can read correctly. I took one resume, saved it in six different layouts, and uploaded each one to four of the systems companies use to collect applications: Lever, Workday, Ashby and SmartRecruiters. The plain one-column versions worked in all four. Three of the fancier layouts each broke one system.
