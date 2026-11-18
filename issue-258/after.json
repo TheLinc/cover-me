@@ -1,0 +1,17 @@
+{
+  "1. Jordan uploaded, stored parse": null,
+  "2. first tailor (started with Jordan) used": [
+    "Northwind Logistics",
+    "Contoso Retail"
+  ],
+  "3. stored resume after the first tailor": {
+    "filename": "sam-rivera.pdf",
+    "parsedCompanies": null
+  },
+  "4. second tailor (Sam stored) used": [
+    "Fabrikam Health",
+    "Tailspin Air"
+  ],
+  "model calls": 10,
+  "assert": "fixed: Sam's resume had no parse, second tailor used Sam's jobs, first finished with Jordan's"
+}
