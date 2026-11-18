@@ -2,7 +2,7 @@ import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2'
 import { handleCors, json } from '../_shared/cors.ts'
 import { heartbeatJson } from '../_shared/heartbeat-json.ts'
 import { decrypt, encrypt, sameCiphertext } from '../_shared/encrypt.ts'
-import { isCurrentParse, isValidParsedResume, parseResumeStructure, type ParsedResume, upgradedParse, withChosenOrder } from '../_shared/resume-parse.ts'
+import { hasSectionOrder, isCurrentParse, isValidParsedResume, parseResumeStructure, type ParsedResume, upgradedParse, withChosenOrder } from '../_shared/resume-parse.ts'
 import { readBody } from '../_shared/read-body.ts'
 
 const SUPABASE_URL        = Deno.env.get('SUPABASE_URL')!
@@ -214,7 +214,9 @@ Deno.serve(async (req) => {
     const parsed = await readParse(row?.structured_encrypted ?? null)
     if (!row) return json({ error: 'Upload your resume in Cover Me first.' }, 404)
     // One from before the order was kept (#165) is upgraded by the next tailor.
-    if (!isCurrentParse(parsed)) return json({ error: parsed ? 'Tailor once with your current resume first.' : 'Your resume is still being read. Wait a minute.' }, 404)
+    // One from before linksKept (#238) takes the order, and the tailor that
+    // parses it again keeps it.
+    if (!hasSectionOrder(parsed)) return json({ error: parsed ? 'Tailor once with your current resume first.' : 'Your resume is still being read. Wait a minute.' }, 404)
     const structured = withChosenOrder(parsed, body.sectionOrder, body.headings)
     let structured_encrypted: string
     try {
@@ -241,7 +243,7 @@ Deno.serve(async (req) => {
 })
 
 // A cached parse, or null when it's missing or unreadable. It may predate
-// otherSections or sectionOrder: isCurrentParse says.
+// otherSections, sectionOrder or linksKept: isCurrentParse says.
 async function readParse(encrypted: string | null): Promise<ParsedResume | null> {
   if (!encrypted) return null
   try {

@@ -186,14 +186,19 @@ describe('tailor', () => {
     expect(prompts.filter((p) => !checks.some((c) => p.startsWith(c)))).toHaveLength(1)
   })
 
-  it.each(['otherSections', 'sectionOrder'] as const)('parses again, once, a cached parse from before %s', async (field) => {
+  // A parse as the functions store it now: the order from the text, and the
+  // marker of a parse made since #238.
+  const CURRENT = { ...MOCK_PARSED_RESUME, sectionOrder: ['summary', 'experience', 'other', 'education', 'skills'], linksKept: true }
+  const isParse = (p: string) => p.startsWith('You are a resume parser')
+  const prompts = async () => (await mockClaude.requests()).map((r) => r.messages[0].content)
+
+  it.each(['otherSections', 'sectionOrder', 'linksKept'] as const)('parses again, once, a cached parse from before %s', async (field) => {
     user = await createUser()
     await uploadResume(user)
-    const { [field]: _f, ...old } = MOCK_PARSED_RESUME
-    const isParse = (p: string) => p.startsWith('You are a resume parser')
-    const prompts = async () => (await mockClaude.requests()).map((r) => r.messages[0].content)
+    const { [field]: _f, ...old } = CURRENT
 
-    await cacheParsedResume(user.id, { ...MOCK_PARSED_RESUME, otherSections: [], sectionOrder: [] })
+    await cacheParsedResume(user.id, { ...CURRENT, otherSections: [], sectionOrder: [] })
+    await mockClaude.reset()
     await callFunction('tailor', { token: user.token, body: { job: JOB } })
     expect((await prompts()).filter(isParse)).toHaveLength(0)
 
@@ -210,15 +215,19 @@ describe('tailor', () => {
     expect((await prompts()).filter(isParse)).toHaveLength(0)
   })
 
-  it('a cached parse from before sectionOrder keeps its content and takes only the order, so a Word design checked against it still lines up', async () => {
+  it('a cached parse from before the link fix (#238) takes the fresh content and keeps the order the user chose; the marker stays out of the prompt and the resume', async () => {
     user = await createUser()
     await uploadResume(user)
-    const { sectionOrder: _o, ...old } = MOCK_PARSED_RESUME
-    const education = [{ ...old.education[0], institution: 'State University of Somewhere' }]
-    await cacheParsedResume(user.id, { ...old, education })
+    const { linksKept: _k, ...old } = CURRENT
+    const sectionOrder = ['skills', 'other', 'summary', 'experience', 'education']
+    await cacheParsedResume(user.id, { ...old, education: [{ ...old.education[0], institution: 'State University of Somewhere' }], sectionOrder })
+    await mockClaude.reset()
+
     const { resume } = await (await callFunction('tailor', { token: user.token, body: { job: JOB } })).json()
-    expect(resume.education).toEqual(education)
-    expect(resume.sectionOrder).toEqual(['summary', 'experience', 'other', 'education', 'skills'])
+    expect(resume.education).toEqual(MOCK_PARSED_RESUME.education)
+    expect(resume.sectionOrder).toEqual(sectionOrder)
+    expect(resume).not.toHaveProperty('linksKept')
+    expect((await prompts()).some((p) => p.includes('linksKept'))).toBe(false)
   })
 
   it('streams NDJSON start, delta and done events when asked', async () => {

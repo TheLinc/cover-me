@@ -5,7 +5,7 @@ import { checkedTier, DesignRefusedError, ensureValidSession, fetchDesignFileFro
 import { isCurrentParse, parseResumeStructure, upgradedParse } from './ai/resume-parse'
 import { decryptApiKey } from './crypto'
 import { designUsable, downloadDesignDocx, tailorDesign } from './pdf/docx-design'
-import { getCachedTier, getDesignFile, getResume, getSettings, resolveMode, saveDesignFile, saveResume, type DesignFile } from './storage'
+import { getCachedTier, getDesignFile, getResume, getSettings, resolveMode, saveDesignFile, saveParsedResume, saveResume, type DesignFile } from './storage'
 import type { AuthSession, ParsedResume, ResumeData, TailoredResume } from '../types'
 
 // The account's dashboard keeps Word files up to this size.
@@ -72,14 +72,17 @@ export async function checkUploadedDesign(hash: string): Promise<void> {
     } else {
       if (!settings?.apiKey) throw new Error('Add your API key in Settings to check your design.')
       // The same file uploaded again keeps its parse, so History entries made
-      // from it still place their text the same way.
-      parsed = file.parsed ?? (isCurrentParse(resume.parsed)
+      // from it still place their text the same way. One from before the link
+      // fix (#238) takes the current parse instead, as the tailor does (#239).
+      parsed = (isCurrentParse(file.parsed) ? file.parsed : undefined) ?? (isCurrentParse(resume.parsed)
         ? resume.parsed
         : upgradedParse(resume.parsed, await parseResumeStructure(resume.text, settings.provider, await decryptApiKey(settings.apiKey))))
     }
 
     const { check } = await tailorDesign(fromBase64(file.data), parsed!)
-    await saveDesignFile(hash, { ...file, parsed })
+    // A BYOK file's earlier parse stays when the new one doesn't fit, so
+    // History entries made from it still download in its design.
+    if (hosted || !file.parsed || designUsable(check)) await saveDesignFile(hash, { ...file, parsed })
     // BYOK: the tailor reuses this parse instead of making its own.
     await setDesign(hash, { status: 'done', check }, hosted ? undefined : parsed)
     if (hosted) {
@@ -153,6 +156,40 @@ export async function designForTailor(): Promise<{ design: TailorDesign; file?: 
   const check = file ? (await tailorDesign(file, stored!.parsed!).catch(() => null))?.check : undefined
   if (!file || !check || !designUsable(check)) return { design: { layout: 'yours', fellBack: true }, summary: true }
   return { design: { layout: 'yours', fellBack: false, sourceHash: hash }, file, parsed: stored!.parsed, summary: check.summary }
+}
+
+type ForTailor = Awaited<ReturnType<typeof designForTailor>>
+
+// BYOK (#239): a Word file checked against a parse from before the link fix
+// (#238) is checked again against the current one, so its tailors stop
+// printing project links in the header. The file keeps the new parse only
+// when it fits; History entries made from it then place their text with it.
+// When it doesn't fit, this tailor falls back, and the resume page shows the
+// new check, so later tailors use the Cover Me layout. Nothing changes when
+// another file was uploaded while the parse ran.
+export async function designWithParse(hash: string, parsed: ParsedResume): Promise<ForTailor> {
+  const file = (await getResume())?.design?.hash === hash ? await getDesignFile(hash) : null
+  const check = file && (await tailorDesign(fromBase64(file.data), parsed).catch(() => null))?.check
+  if (file && check) {
+    await setDesign(hash, { check })
+    if (!designUsable(check)) return { design: { layout: 'yours', fellBack: true }, summary: true }
+    await saveDesignFile(hash, { ...file, parsed })
+  }
+  return designForTailor()
+}
+
+// The own-key tailor's parse: the one "Your design" was checked against when
+// it's current, else the resume's, read again once when it's from before
+// extra sections, section order or the link fix (upgradedParse keeps the
+// order the user chose). A Word file is then checked against it.
+export async function parseForTailor(d: ForTailor, stored: ParsedResume | undefined, read: () => Promise<ParsedResume>): Promise<{ parsed: ParsedResume; design: ForTailor }> {
+  let parsed = isCurrentParse(d.parsed) ? d.parsed : stored
+  if (!isCurrentParse(parsed)) {
+    parsed = upgradedParse(parsed, await read())
+    await saveParsedResume(parsed)
+  }
+  const design = d.parsed && d.parsed !== parsed && d.design.sourceHash ? await designWithParse(d.design.sourceHash, parsed) : d
+  return { parsed, design }
 }
 
 // After the tailor: marks the resume as tailored in the user's file, or as

@@ -1,8 +1,9 @@
 import { createHash } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
-  admin, callFunction, createUser, deleteUser, JOB, LONG_RESUME_TEXT, mockClaude, parsedResume, RESUME_TEXT, type TestUser, uploadResume, waitForParsedResume,
+  admin, cacheParsedResume, callFunction, createUser, deleteUser, JOB, LONG_RESUME_TEXT, mockClaude, parsedResume, RESUME_TEXT, type TestUser, uploadResume, waitForParsedResume,
 } from './helpers'
+import { MOCK_PARSED_RESUME } from '../mock-anthropic'
 
 const isParse = (r: { messages: Array<{ content: string }> }) => r.messages[0].content.startsWith('You are a resume parser')
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
@@ -146,6 +147,18 @@ describe('saving a section order', () => {
     expect(resume.sectionOrder).toEqual(sectionOrder)
     // The saved parse is current, so tailoring didn't parse again.
     expect((await mockClaude.requests()).filter(isParse)).toHaveLength(0)
+  })
+
+  it('takes an order on a parse from before the link fix (#238), and the tailor that parses it again keeps it', async () => {
+    await uploadResume(user)
+    await cacheParsedResume(user.id, { ...MOCK_PARSED_RESUME, sectionOrder: ['summary', 'experience', 'other', 'education', 'skills'] })
+    const sectionOrder = ['skills', 'other', 'summary', 'experience', 'education']
+    expect((await save({ sectionOrder, headings: ['Volunteer Work'] })).status).toBe(200)
+
+    await mockClaude.reset()
+    const { resume } = await (await callFunction('tailor', { token: user.token, body: { job: JOB } })).json()
+    expect((await mockClaude.requests()).filter(isParse)).toHaveLength(1)
+    expect(resume.sectionOrder).toEqual(sectionOrder)
   })
 
   it('needs a parsed resume', async () => {

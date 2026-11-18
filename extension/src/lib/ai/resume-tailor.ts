@@ -110,7 +110,7 @@ function topLevelObjects(text: string): string[] {
 // response degrades to "some bullets untailored", never to a broken resume.
 // The same holds for a count the prompt forbids: in default mode a role must
 // come back with as many bullets as it had (a different count means bullets
-// were merged or dropped), and projects keep their count in every mode.
+// were merged or dropped). Projects follow the same rule.
 export function mergeTailorDelta<T extends {
   experience: Array<{ bullets: string[] }>
   projects?: Array<{ bullets: string[] }>
@@ -126,7 +126,7 @@ export function mergeTailorDelta<T extends {
     summary: typeof delta.summary === 'string' ? delta.summary : '',
     experience: base.experience.map((role, i) => ({ ...role, bullets: pick(role.bullets, delta.experience?.[i], !!opts.exactBulletCounts) })),
     ...(base.projects?.length
-      ? { projects: base.projects.map((p, i) => ({ ...p, bullets: pick(p.bullets, delta.projects?.[i], true) })) }
+      ? { projects: base.projects.map((p, i) => ({ ...p, bullets: pick(p.bullets, delta.projects?.[i], !!opts.exactBulletCounts) })) }
       : {}),
     ...(base.skills
       ? { skills: typeof delta.skills === 'string' && delta.skills.trim() ? delta.skills : base.skills }
@@ -168,6 +168,7 @@ REMOVE skills not relevant to this role type (e.g. a mobile-only framework for a
 COMPACT MODE — SINGLE PAGE REQUIRED:
 The output must fit on a single letter page. Apply these additional constraints (they override the general rules where they conflict):
 - Reduce to a maximum of 3 bullets per role — keep the most relevant 3, drop the rest. A bullet matching an activity the JD explicitly names (e.g. code reviews) is among the most relevant — keep it.
+- Reduce to a maximum of 2 bullets per project — keep the most relevant 2 by the same rule, and never drop the only evidence of a Tier 1 keyword. Every project keeps at least one bullet; never remove or reorder a project.
 - Every bullet must fit on a single line (100 characters maximum)
 - Shorten the skills list to the 10 most relevant skills only
 - The bullet budget rule (STEP 5) does NOT apply in compact mode — use these constraints instead
@@ -243,7 +244,10 @@ STEP 5 — BULLET BUDGET
 ${trim
   ? `TRIM MODE — RANK, THEN CUT: judging each bullet alone fails — in a strong resume almost every bullet looks individually "relevant," which is why nothing gets dropped. Instead RANK each role's bullets by relevance to THIS JD and keep only the strongest: a role with 8+ input bullets keeps the 5–7 most relevant and drops the rest; a role with 5–7 keeps 4–5; a role with 4 or fewer keeps at least 2. Cutting a long role to roughly half is the EXPECTED result, not an edge case. Drop first the bullets in a tech stack or domain the JD never names (e.g. a React Native / mobile bullet for a web role; a payments or CRM-integration bullet for a role about neither), then filler with no JD keyword and no concrete outcome. NEVER drop a bullet matching an activity the JD explicitly names (code reviews, mentoring, stakeholder communication — Integrity 6), and never drop the only evidence of a Tier 1 keyword. Never remove a role; never add or merge bullets — only drop whole ones.`
   : `DEFAULT MODE — STRICT 1:1: rewrite EVERY input bullet into exactly one output bullet. Each role's output bullet count MUST equal its input count exactly — no drops, no additions, no merges. Count the input bullets in each role first; if a role has 11 input bullets, output exactly 11. This is mandatory, not a target.`}
-PROJECTS: preserve every project's bullet count exactly, and never drop a technology named in a project.
+${trim
+  ? `PROJECTS — RANK, THEN CUT, on a smaller budget than roles because projects are short: a project with 8+ input bullets keeps about half; one with 3–7 keeps 2–3; one with 1–2 keeps them all. Drop first the bullets in a tech stack or domain the JD never names. The role protections apply: never drop a bullet matching an activity the JD explicitly names, and never drop the only evidence of a Tier 1 keyword. Every project keeps at least one bullet; never remove or reorder a project.`
+  : `PROJECTS: preserve every project's bullet count exactly.`}
+A kept project bullet never loses a technology it names.
 
 STEP 6 — REWRITE BULLETS
 Compressed STAR: [strong action verb] + [what was done] + [measurable result or concrete scope]. Reword for impact and ATS phrasing without changing what actually happened (Integrity 3–5).
@@ -353,7 +357,7 @@ ${grounding.jobDescription}`)
 
 export async function tailorResume(
   job: JobData,
-  parsed: ParsedResume,
+  stored: ParsedResume,
   provider: AIProvider,
   apiKey: string,
   compact = false,
@@ -363,6 +367,9 @@ export async function tailorResume(
   previous?: TailoredResume,
   onProgress?: (label: string) => void,
 ): Promise<TailoredResume> {
+  // linksKept only marks the stored parse as current (#238): the model and
+  // the tailored resume don't need it.
+  const { linksKept: _k, ...parsed } = stored
   const prompt = buildPrompt(job, parsed, compact, supplemental, trim, includeSummary, previous)
 
   await debugGroup('Tailor — full prompt sent to model (BYOK)', {

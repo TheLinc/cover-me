@@ -1,3 +1,4 @@
+import { mentions, titleWithoutLevel } from './ai/resume-grounding'
 import { contactParts } from './pdf/contact'
 import { orderedSections, type PlacedSection, type StandardSection } from './pdf/sections'
 import type { DeletedSection, SectionKey } from './pdf/types'
@@ -16,13 +17,37 @@ function resumeText(r: TailoredResume): string {
   ].filter(Boolean).join('\n').toLowerCase()
 }
 
-const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-
 // The ATS gaps an edit hasn't filled: a gap goes once its keyword appears in
 // the resume as a word of its own, in any case. No re-score: that's a model call.
 export function remainingGaps(gaps: string[] | undefined, resume: TailoredResume): string[] {
   const text = resumeText(resume)
-  return (gaps ?? []).filter((g) => !new RegExp(`(^|[^a-z0-9])${escape(g.toLowerCase())}($|[^a-z0-9])`).test(text))
+  return (gaps ?? []).filter((g) => !mentions(text, g))
+}
+
+export type PostingTitle = { title: string; shorter: boolean }
+
+export function postingTitleInSummary(resume: TailoredResume, jobTitle: string): PostingTitle | undefined {
+  const title = titleWithoutLevel(jobTitle)
+  const summary = resume.summary ?? ''
+  const unclaimed = (t: string) => !resume.experience.some((e) => mentions(e.title, t))
+  if (!title || !resume.experience.length || !unclaimed(title)) return undefined
+  if (mentions(summary, title)) return { title, shorter: false }
+  // Shorter forms count only at the opening: further in, "in Test" from "Software Engineer in Test" is everyday prose.
+  const opening = summary.trim().replace(/^an?\s+/i, '')
+  const opensWith = (t: string) => opening.toLowerCase().startsWith(t.toLowerCase()) && !/[a-z0-9]/i.test(opening[t.length] ?? '')
+  const form = shorterForms(title).find((t) => opensWith(t) && unclaimed(t))
+  return form ? { title: form, shorter: true } : undefined
+}
+
+// 2^(n-1) forms, so a long scraped title with no separator gets none.
+function shorterForms(title: string): string[] {
+  const words = title.split(' ')
+  const last = words.pop()
+  if (words.length > 6) return []
+  const subsets = words.reduce<string[][]>((sets, w) => [...sets, ...sets.map((s) => [...s, w])], [[]])
+  return subsets
+    .filter((s) => s.length && s.length < words.length)
+    .map((s) => [...s, last].join(' '))
 }
 
 // The edit as saved: the draft's text, the score from before any edit, and

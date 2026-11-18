@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { ParsedResume } from '../../types'
 import { orderedSections } from '../pdf/sections'
-import { isCurrentParse, parseParsedJson, parseResumeStructure, upgradedParse, urlCore, withChosenOrder, withLinks, withSectionOrder } from './resume-parse'
+import { hasSectionOrder, isCurrentParse, parseParsedJson, parseResumeStructure, upgradedParse, urlCore, withChosenOrder, withLinks, withSectionOrder } from './resume-parse'
 import { checkParse, checkParseUrls, resumeUrls } from '../../../eval/checks'
 import type { EvalCase } from '../../../eval/fixtures'
 
@@ -15,13 +15,13 @@ describe('parseResumeStructure streams', () => {
   test('Claude: joins the text deltas', async () => {
     const fetch = vi.fn(async (_url: string, _init: RequestInit) => sse([json.slice(0, 20), json.slice(20)].map((text) => ({ type: 'content_block_delta', delta: { type: 'text_delta', text } }))))
     vi.stubGlobal('fetch', fetch)
-    expect(await parseResumeStructure('r', 'claude', 'k')).toEqual({ ...RESUME, otherSections: [], sectionOrder: [] })
+    expect(await parseResumeStructure('r', 'claude', 'k')).toEqual({ ...RESUME, otherSections: [], sectionOrder: [], linksKept: true })
     expect(JSON.parse(fetch.mock.calls[0]![1].body as string).stream).toBe(true)
   })
   test('OpenAI: joins the Chat Completions deltas', async () => {
     const fetch = vi.fn(async (_url: string, _init: RequestInit) => sse([json.slice(0, 20), json.slice(20)].map((content) => ({ choices: [{ delta: { content } }] }))))
     vi.stubGlobal('fetch', fetch)
-    expect(await parseResumeStructure('r', 'openai', 'k')).toEqual({ ...RESUME, otherSections: [], sectionOrder: [] })
+    expect(await parseResumeStructure('r', 'openai', 'k')).toEqual({ ...RESUME, otherSections: [], sectionOrder: [], linksKept: true })
     expect(JSON.parse(fetch.mock.calls[0]![1].body as string).stream).toBe(true)
   })
   test("OpenAI: a mid-stream error surfaces OpenAI's message", async () => {
@@ -101,27 +101,51 @@ describe('parseParsedJson sectionOrder', () => {
 })
 
 describe('isCurrentParse', () => {
-  test('a stored parse from before extra sections or section order is parsed again; a new parse never is', () => {
+  test('a stored parse from before extra sections, section order or the link fix (#238) is parsed again; a new parse never is', () => {
     expect(isCurrentParse(undefined)).toBe(false)
     expect(isCurrentParse({ ...RESUME, otherSections: [] } as unknown as ParsedResume)).toBe(false)
     expect(isCurrentParse({ ...RESUME, sectionOrder: [] } as unknown as ParsedResume)).toBe(false)
+    expect(isCurrentParse({ ...RESUME, otherSections: [], sectionOrder: [] } as unknown as ParsedResume)).toBe(false)
     expect(isCurrentParse(parseParsedJson(json))).toBe(true)
+  })
+
+  test('a parse from before the link fix can still take a chosen order; one from before section order cannot', () => {
+    expect(hasSectionOrder({ ...RESUME, otherSections: [], sectionOrder: [] } as unknown as ParsedResume)).toBe(true)
+    expect(hasSectionOrder({ ...RESUME, otherSections: [] } as unknown as ParsedResume)).toBe(false)
+    expect(hasSectionOrder(undefined)).toBe(false)
   })
 })
 
 describe('upgradedParse', () => {
-  const fresh = parseParsedJson(JSON.stringify({ ...RESUME, experience: [{ title: 'RN', company: 'General', location: '', dates: '', bullets: ['Triage', 'Charting'] }], sectionOrder: ['education', 'experience'] }))
+  const fresh = parseParsedJson(JSON.stringify({
+    ...RESUME,
+    experience: [{ title: 'RN', company: 'General', location: '', dates: '', bullets: ['Triage', 'Charting'] }],
+    projects: [{ name: 'OpenShelf (github.com/ada/openshelf)', bullets: ['Built it'] }],
+    otherSections: [{ heading: 'Volunteering', lines: ['Food bank'] }, { heading: 'Languages', lines: ['French'] }],
+    sectionOrder: ['experience', 'projects', 'education', 'other', 'other'],
+  }))
 
-  test('a parse with extra sections but no order keeps its own content and takes only the fresh order', () => {
-    const cached = { ...RESUME, experience: [{ title: 'RN', company: 'General', location: '', dates: '', bullets: ['Triage and charting'] }], otherSections: [] } as unknown as ParsedResume
+  test("a parse from before the link fix takes the fresh content, and keeps the order the user chose in the editor", () => {
+    const cached = {
+      ...fresh,
+      projects: [{ name: 'OpenShelf', bullets: ['Built it'] }],
+      links: ['github.com/ada/openshelf'],
+      website: 'github.com/ada/openshelf',
+      otherSections: [{ heading: 'Languages', lines: ['French'] }, { heading: 'Volunteering', lines: ['Food bank'] }],
+      sectionOrder: ['education', 'other', 'summary', 'experience', 'projects', 'other'],
+      linksKept: undefined,
+    } as unknown as ParsedResume
     const up = upgradedParse(cached, fresh)
-    expect(up.experience).toEqual(cached.experience)
-    expect(up.sectionOrder).toEqual(['summary', 'education', 'experience'])
+    expect(up.projects).toEqual(fresh.projects)
+    expect(up).not.toHaveProperty('links')
+    expect(up.sectionOrder).toEqual(['education', 'other', 'summary', 'experience', 'projects', 'other'])
+    expect(up.otherSections!.map((o) => o.heading)).toEqual(['Languages', 'Volunteering'])
     expect(isCurrentParse(up)).toBe(true)
   })
 
-  test('a parse from before extra sections, or none, is replaced by the fresh one', () => {
+  test('a parse without extra sections or an order, or none, is replaced by the fresh one', () => {
     expect(upgradedParse({ ...RESUME } as unknown as ParsedResume, fresh)).toBe(fresh)
+    expect(upgradedParse({ ...RESUME, otherSections: [] } as unknown as ParsedResume, fresh)).toBe(fresh)
     expect(upgradedParse(undefined, fresh)).toBe(fresh)
   })
 })
@@ -177,7 +201,7 @@ describe('withChosenOrder', () => {
   const parsed = {
     name: 'P', email: '', phone: '', website: '', experience: [job], education: [school], skills: 'Epic',
     otherSections: [{ heading: 'Talks', lines: ['x'] }, { heading: 'Awards', lines: ['y'] }],
-    sectionOrder: ['summary', 'experience', 'education', 'skills', 'other', 'other'],
+    sectionOrder: ['summary', 'experience', 'education', 'skills', 'other', 'other'], linksKept: true,
   } as ParsedResume
   const headings = (p: ParsedResume) => p.otherSections!.map((s) => s.heading)
 

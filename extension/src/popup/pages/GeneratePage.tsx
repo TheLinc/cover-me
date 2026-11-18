@@ -3,7 +3,7 @@ import { GOOGLE_SIGNIN } from '../../lib/config'
 import { downloadCoverLetterPdf } from '../../lib/pdf/cover-letter'
 import { downloadTailoredResumePdf } from '../../lib/pdf/resume'
 import { letterSteps, tailorSteps } from '../../lib/progress-steps'
-import { openResumeEditor } from '../../lib/resume-edit'
+import { openResumeEditor, postingTitleInSummary } from '../../lib/resume-edit'
 import { downloadResumeWord, usesDesign } from '../../lib/design'
 import { getCandidateContext, getTailoredHistory, resolveMode, saveCandidateContext } from '../../lib/storage'
 import DownloadMenu from '../components/DownloadMenu'
@@ -11,6 +11,7 @@ import GapChips from '../components/GapChips'
 import { EditIcon, RegenerateIcon } from '../components/icons'
 import PageReadNotice from '../components/PageReadNotice'
 import AnswersNews from '../components/AnswersNews'
+import PostingTitleTip from '../components/PostingTitleTip'
 import ProgressSteps from '../components/ProgressSteps'
 import ReviewAsk, { claimReviewAsk } from '../components/ReviewAsk'
 import ScrapeFailurePanel, { type ShownFailure } from '../components/ScrapeFailure'
@@ -691,6 +692,7 @@ export default function GeneratePage({ onNavigate }: Props) {
   const setupLoaded = hasResume !== null && hasApiKey !== null && hasSession !== null
 
   const bothDone = state === 'done' && tailorState === 'done'
+  const postingTitle = tailorState === 'done' && tailoredResume && tailoredJob ? postingTitleInSummary(tailoredResume, tailoredJob.title) : undefined
 
   // The header's status line: what's running, what failed, or that a result is
   // ready. A failure wins over the other result being done.
@@ -1126,6 +1128,7 @@ export default function GeneratePage({ onNavigate }: Props) {
                   {tailoredResume.designFellBack && (
                     <p className="hint">Your file&apos;s layout couldn&apos;t be edited safely, so this one uses the Cover Me layout.</p>
                   )}
+                  {postingTitle && <PostingTitleTip {...postingTitle} />}
                   <div className="letter-actions">
                     {/* Tailored in the user's own file (#131): their Word file leads. */}
                     <DownloadMenu
