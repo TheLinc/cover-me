@@ -50,8 +50,11 @@ export default function ReviewAsk({ onClose }: { onClose: () => void }) {
           className="review-ask-dismiss"
           onClick={() => {
             // The card is gone: put keyboard focus on the controls it sat next to, not <body>.
-            const near = [ref.current?.nextElementSibling, ref.current?.previousElementSibling]
-            near.map((el) => el?.querySelector<HTMLElement>('button, a[href], textarea')).find(Boolean)?.focus()
+            const card = ref.current!
+            const controls = 'button, a[href], textarea, input'
+            const near = [card.nextElementSibling, card.previousElementSibling].map((el) => el?.querySelector<HTMLElement>(controls)).find(Boolean)
+              ?? [...document.querySelectorAll<HTMLElement>(controls)].find((el) => !card.contains(el) && card.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING)
+            near?.focus()
             close()
           }}
         >

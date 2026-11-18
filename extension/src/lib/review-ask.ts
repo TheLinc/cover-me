@@ -33,7 +33,6 @@ export function shouldAskForReview(gen: GenerationCount | null, ask: ReviewAsk |
   return false
 }
 
-// The record to save once the card is seen, or null when it shouldn't show.
 // Only the first showing counts History: it stops growing at its cap, so the
 // second showing's 10 generations are the worker's.
 export function nextShowing(gen: GenerationCount | null, history: { createdAt: string; account?: string }[], ask: ReviewAsk | null, now: number): ReviewAsk | null {
