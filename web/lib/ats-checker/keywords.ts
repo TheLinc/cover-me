@@ -50,6 +50,7 @@ const SKIP = /^(description of )?benefits?|^perks|what we offer|^compensation|^p
 const OTHER = /responsib|what you('ll| will)? (do|be doing)|day in the life|the role|the opportunity|job description|overview|summary|duties|additional information/i
 
 function headingLevel(line: string): Level | 'skip' | null {
+  if (/^\*\s/.test(line)) return null
   const text = line.replace(/^[#*\s]+|[*:\s]+$/g, '')
   if (!text || /[.!?]$/.test(text) || text.split(/\s+/).length > 8 || /^[-•]/.test(text)) return null
   if (COMPANY.test(text)) return 'skip'
@@ -61,7 +62,7 @@ function headingLevel(line: string): Level | 'skip' | null {
   return null
 }
 
-const ACRONYM_STOP = new Set(['USD', 'GBP', 'CAD', 'EUR', 'PTO', 'EEO', 'EOE', 'FAQ', 'LLC', 'INC', 'USA', 'EMEA', 'APAC', 'NYC', 'ADA', 'CEO', 'CTO', 'CFO', 'COO', 'ETC', 'AND', 'THE', 'FOR', 'NOT', 'DNA'])
+const ACRONYM_STOP = new Set(['USD', 'GBP', 'CAD', 'EUR', 'PTO', 'EEO', 'EOE', 'FAQ', 'LLC', 'INC', 'USA', 'EMEA', 'APAC', 'NYC', 'ADA', 'CEO', 'CTO', 'CFO', 'COO', 'ETC', 'AND', 'THE', 'FOR', 'NOT', 'DNA', 'EST', 'PST', 'CST', 'MST', 'ASAP', 'III'])
 
 function unlistedNames(line: string): Keyword[] {
   const letters = line.replace(/[^A-Za-z]/g, '')
@@ -125,7 +126,7 @@ export function readPosting(posting: string): Posting {
         if (!known && !openers.has(k.name)) add({ ...k, level })
       }
     }
-    if (YEARS.test(line) && (level !== 'mentioned' || /experience/i.test(line))) {
+    if (YEARS.test(line) && !/years?\s+(of\s+age|old)/i.test(line) && (level !== 'mentioned' || /experience/i.test(line))) {
       const full = line.replace(/^[-•*\s]+/, '').replace(/\*\*/g, '')
       const text = full.length > 160 ? `${full.slice(0, 157)}...` : full
       if (!years.includes(text)) years.push(text)

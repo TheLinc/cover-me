@@ -39,6 +39,8 @@ describe('keywords from saved postings', () => {
     ['Qualifications\nFamiliarity with data privacy rules\nTerraform and Kubernetes', 'required', ['Terraform', 'Kubernetes']],
     ['Requirements\nPay-per-click campaign experience\nGoogle Analytics', 'required', ['Google Analytics']],
     ['Nice to have\nExperience with Kafka\nStrong SQL skills\nFamiliarity with dbt', 'preferred', ['Kafka', 'SQL', 'dbt']],
+    ['Nice to have\n* Experience with Kafka\n* Great interpersonal skills\n* Familiarity with dbt', 'preferred', ['Kafka', 'interpersonal skills', 'dbt']],
+    ['Requirements\n- Install guard rails and hand rails\n- Shift starts 7am EST, start ASAP', 'required', []],
   ] as const)('a short line without a bullet is not a heading: %j', (ask, level, expected) => {
     expect(pick(readPosting(ask), level)).toEqual([...expected])
   })
@@ -58,6 +60,7 @@ describe('keywords from saved postings', () => {
     expect(posting('amazon').years).toEqual(['3+ years of software development experience'])
     expect(posting('phenom').years).toEqual(['Two years experience as an LPN/LVN in a clinical setting'])
     expect(posting('indeed').years).toEqual(['1 year experience in shop setting'])
+    expect(readPosting('Requirements\n- Must be 18 years of age or older\n- Must be 21 years old').years).toEqual([])
   })
 })
 

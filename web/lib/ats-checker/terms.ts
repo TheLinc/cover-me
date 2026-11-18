@@ -5,7 +5,7 @@ export const TERMS = [
   'Scala', 'R programming|RStudio', 'MATLAB', 'Perl', 'Bash|shell scripting', 'PowerShell', 'SQL', 'HTML', 'CSS', 'Objective-C',
   'Dart', 'Elixir', 'Haskell', 'Lua', 'Solidity', 'VBA', 'COBOL', 'Fortran', 'Groovy', 'Julia', 'SAS', 'Stata', 'SPSS',
   '=React|React.js|ReactJS', 'React Native', 'Next.js|NextJS', 'Vue|Vue.js', 'Angular', 'Svelte', 'Node.js|NodeJS', '=Express|Express.js',
-  'Django', 'Flask', 'FastAPI', 'Starlette', 'Ruby on Rails|Rails', '=Spring|Spring Boot', '.NET|ASP.NET', 'Laravel', 'Flutter',
+  'Django', 'Flask', 'FastAPI', 'Starlette', '=Ruby on Rails|Rails', '=Spring|Spring Boot', '.NET|ASP.NET', 'Laravel', 'Flutter',
   'Redux', 'Tailwind', 'jQuery', 'GraphQL', 'REST|RESTful|REST API', 'gRPC', 'WebSockets|WebSocket', 'WebRTC', 'Gradio',
   'machine learning|ML', 'deep learning', 'AI|artificial intelligence', 'LLM|large language model|large language models',
   'NLP|natural language processing', 'NER|named entity recognition', 'computer vision', 'RAG|retrieval-augmented generation|retrieval augmented generation',
@@ -54,5 +54,5 @@ export const TERMS = [
   "Bachelor's degree|Bachelor|Bachelors|BS|BA|B.S.|B.A.|BSc", "Master's degree|Masters degree|Master of|MSc|M.S.", 'MBA', 'PhD|Ph.D.',
   'High school diploma|GED', "driver's license|drivers license|driver license|driving licence",
   'communication', 'leadership', 'problem-solving|problem solving', 'attention to detail', 'time management', 'teamwork',
-  'multitasking|multi-tasking', 'mentoring|mentorship', 'organizational skills|organizational',
+  'multitasking|multi-tasking', 'mentoring|mentorship', 'organizational skills|organizational', 'interpersonal skills',
 ]
