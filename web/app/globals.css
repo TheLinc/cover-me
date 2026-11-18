@@ -299,5 +299,7 @@ img, svg, video { display: block; }
 .guide-prose section > :is(ul, ol) > li + li { margin-top: 0.5em; }
 .guide-prose section > :is(ul, ol) > li::marker { color: var(--subtle); }
 .guide-prose section > :is(p, ul, ol) strong { color: var(--ink); font-weight: 600; }
+.guide-prose > p a,
 .guide-prose section > :is(p, ul, ol) a { color: var(--brand-strong); text-decoration: underline; text-decoration-color: rgba(79, 70, 229, 0.35); text-underline-offset: 3px; }
+.guide-prose > p a:hover,
 .guide-prose section > :is(p, ul, ol) a:hover { color: var(--brand-deep); text-decoration-color: currentColor; }
