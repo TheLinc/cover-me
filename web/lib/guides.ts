@@ -27,7 +27,7 @@ export const GUIDES: Guide[] = [
     title: 'Cover Me vs ChatGPT for cover letters',
     description: 'ChatGPT can write a good cover letter if you paste in the posting and your resume every time. Cover Me reads the posting when you click, keeps your resume, and checks the output against it.',
     date: '2026-07-06',
-    updated: '2026-10-29',
+    updated: '2026-11-18',
     image: '/guides/cover-me-vs-chatgpt.png',
     imageAlt:
       "Comparison of the steps for each application. In a chatbot: copy the posting into a chat, paste or upload your resume, ask for a tailored resume, ask again for a cover letter, then fix, format and export a PDF. In Cover Me: click Tailor Resume to Job on the posting, then Generate Cover Letter, and get a tailored resume, a cover letter and an ATS score.",
@@ -117,6 +117,24 @@ export const GUIDES: Guide[] = [
     imageAlt:
       "Table of free Jobscan alternatives, from each company's site in November 2026. Free check against a job posting: Cover Me, 10 to start then 5 a week; SkillSyncer, 2 scans a week; Teal, the top 5 keywords; Resume Worded, a partial report; Jobscan, 5 scans a month. Free rewrite and cover letter: Cover Me, both; SkillSyncer, rewrites with weekly AI credits; Teal, 2 cover letters once; Resume Worded and Jobscan, paid plans only.",
   },
+  {
+    slug: 'chatgpt-resume-prompts',
+    title: 'ChatGPT resume prompts to tailor your resume to a job',
+    description: 'Four prompts that tailor your resume to a job posting in ChatGPT or Claude: pull the keywords, rewrite the summary and bullets, and check nothing was made up. Each one tested, with the real answer.',
+    date: '2026-11-18',
+    image: '/guides/chatgpt-resume-prompts.png',
+    imageAlt:
+      "The fourth prompt asks the chatbot to check its rewrite against the original resume. Claude found it had tied 38% more qualified leads to the $1.2M paid media budget, when the resume credits the 38% to email and social campaigns.",
+  },
+  {
+    slug: 'chatgpt-cover-letter-prompts',
+    title: 'ChatGPT cover letter prompts that drop the AI phrases',
+    description: 'Four prompts that write a cover letter in ChatGPT or Claude from your resume and the posting, strip the phrases that sound AI-written, and check every claim. Each one tested, with the real answer.',
+    date: '2026-11-18',
+    image: '/guides/chatgpt-cover-letter-prompts.png',
+    imageAlt:
+      "ChatGPT's first draft says \"I'm excited by the opportunity to help drive product growth through coordinated, measurable demand generation programs.\" After the prompt that strips AI phrases, the line reads \"I'm interested in helping build campaigns that connect product initiatives with measurable lead growth and marketing performance.\" Then the check prompt takes out \"global marketing\", which isn't on the resume.",
+  },
 ]
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
@@ -138,7 +156,10 @@ export function slugify(text: string): string {
 function textOf(node: ReactNode): string {
   if (typeof node === 'string' || typeof node === 'number') return String(node)
   if (Array.isArray(node)) return node.map(textOf).join(' ')
-  if (isValidElement<{ children?: ReactNode }>(node)) return textOf(node.props.children)
+  if (isValidElement<{ children?: ReactNode; prompt?: string; answer?: string; check?: ReactNode }>(node)) {
+    const { children, prompt, answer, check } = node.props
+    return textOf([children, prompt, answer, check])
+  }
   return ''
 }
 

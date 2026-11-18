@@ -1,7 +1,7 @@
+import { existsSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { createElement as h } from 'react'
 import { describe, expect, it } from 'vitest'
-import { existsSync } from 'node:fs'
-import { join } from 'node:path'
 import { GUIDES, newestFirst, readingMinutes, slugify } from './guides'
 
 describe('slugify', () => {
@@ -23,6 +23,12 @@ describe('readingMinutes', () => {
     ]
     expect(readingMinutes(body)).toBe(2)
     expect(readingMinutes([body, 'two'])).toBe(3)
+  })
+
+  it("counts a guide prompt's prompt, answer and check", () => {
+    const Prompt = () => null
+    const step = h(Prompt, { prompt: words(230), answer: words(230), check: h('em', null, 'one') })
+    expect(readingMinutes(step)).toBe(3)
   })
 
   it('never shows less than one minute', () => {
@@ -52,6 +58,13 @@ describe('newestFirst', () => {
 })
 
 describe('GUIDES', () => {
+  const llms = readFileSync(join(__dirname, '../public/llms.txt'), 'utf8')
+
+  it.each(GUIDES.map((g) => g.slug))('%s has a page and a line in llms.txt', (slug) => {
+    expect(existsSync(join(__dirname, '../app/guides', slug, 'page.tsx'))).toBe(true)
+    expect(llms).toContain(`https://www.cover-me.dev/guides/${slug})`)
+  })
+
   it.each(GUIDES.map((g) => [g.slug, g] as const))('%s has a hero image in public/ and alt text', (_, g) => {
     expect(existsSync(join(__dirname, '../public', g.image))).toBe(true)
     expect(g.imageAlt.length).toBeGreaterThan(20)

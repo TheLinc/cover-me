@@ -123,9 +123,14 @@ export default function Page() {
         {
           title: 'When is ChatGPT the better choice?',
           body: (
-            <p>
-              If you apply to one or two roles a month and like working on the letter in conversation, a chatbot is more flexible than an extension. You can ask follow-up questions, try different angles, and rewrite one paragraph at a time. If you already pay for Plus, it costs you nothing extra.
-            </p>
+            <>
+              <p>
+                If you apply to one or two roles a month and like working on the letter in conversation, a chatbot is more flexible than an extension. You can ask follow-up questions, try different angles, and rewrite one paragraph at a time. If you already pay for Plus, it costs you nothing extra.
+              </p>
+              <p>
+                To do it in ChatGPT or Claude, start with tested prompts: the <Link href="/guides/chatgpt-resume-prompts">ChatGPT resume prompts</Link> and the <Link href="/guides/chatgpt-cover-letter-prompts">ChatGPT cover letter prompts</Link> show each prompt with the answer it gave on a real posting.
+              </p>
+            </>
           ),
         },
         {
