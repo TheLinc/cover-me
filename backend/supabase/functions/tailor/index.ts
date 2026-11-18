@@ -430,9 +430,9 @@ Deno.serve(async (req) => {
     // (Haiku, verbatim extraction) and cache it encrypted for future tailors.
     // resume/index.ts clears the cache when the text changes and usually parses
     // it ahead in the background, so this parse is the fallback. A cached copy
-    // without otherSections (#54) or sectionOrder (#165) predates them and is
-    // parsed again once (upgradedParse keeps the content of one that only
-    // lacks the order).
+    // without otherSections (#54), sectionOrder (#165) or linksKept (#238)
+    // predates them and is parsed again once (upgradedParse keeps the order
+    // the user chose).
     let cached: ParsedResume | null = null
     if (resumeRow.structured_encrypted) {
       try {
@@ -454,7 +454,8 @@ Deno.serve(async (req) => {
       try {
         structured = upgradedParse(cached, await parseResumeStructure(resumeText, ANTHROPIC_API_KEY))
       } catch {
-        // One without the order (#165) still tailors, in the standard order.
+        // One without the order (#165) still tailors, in the standard order,
+        // and one from before the link fix (#238) as it was.
         if (!Array.isArray(cached?.otherSections)) {
           await refund()
           return { error: 'Could not process your resume. Please try again.', status: 502 }
@@ -473,12 +474,15 @@ Deno.serve(async (req) => {
       }
     }
 
-    const prompt = buildPrompt(job, structured, compact, supplemental, trim, includeSummary, previous)
+    // linksKept only marks the stored parse as current (#238): the model and
+    // the tailored resume don't need it.
+    const { linksKept: _k, ...input } = structured
+    const prompt = buildPrompt(job, input, compact, supplemental, trim, includeSummary, previous)
 
     if (DEBUG) {
       console.log('[CoverMe debug] job:', JSON.stringify(job))
       console.log('[CoverMe debug] flags:', JSON.stringify({ compact, trim, includeSummary, hasSupplemental: !!supplemental, hasPrevious: !!previous }))
-      console.log('[CoverMe debug] structured resume (input to model):\n', JSON.stringify(structured))
+      console.log('[CoverMe debug] structured resume (input to model):\n', JSON.stringify(input))
       console.log('[CoverMe debug] full prompt sent to model:\n', prompt)
     }
 
@@ -521,7 +525,7 @@ Deno.serve(async (req) => {
     }
 
     upstream = claudeRes.body
-    structuredResume = structured
+    structuredResume = input
     return null
   }
 
