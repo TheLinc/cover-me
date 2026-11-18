@@ -50,7 +50,7 @@ This is your best line for this role. It shows budget ownership, allocation acro
 Other gaps: The posting also asks for AI workflow/GTM tool experience, technical audience marketing, and 8+ years of experience. Your resume shows none of the first two and seven years of the third.`,
     check: (
       <>
-        Check each rating against its quote. ChatGPT rated the same email and social line &ldquo;strong evidence&rdquo; for campaigns across webinars, events and content syndication, then listed webinars as a gap a few lines later. A letter built on a stretched match makes a claim you&rsquo;d have to defend in the interview.
+        Check each rating against its quote. ChatGPT rated the same email and social line &ldquo;strong evidence&rdquo; for campaigns across webinars, events and content, then listed webinars as a gap later in the same answer. A letter built on a stretched match makes a claim you&rsquo;d have to defend in the interview.
       </>
     ),
   },
@@ -216,7 +216,7 @@ export default function Page() {
                 I build <Link href="/">Cover Me (cover-me.dev)</Link>, a Chrome extension that writes the letter from the posting page. You upload your resume once. On a posting, &ldquo;Generate Cover Letter&rdquo; reads the page and writes from your resume and the posting, in about 20 seconds.
               </p>
               <p>
-                Prompt 3 is built in, with the checking done in code. Every letter is scanned for stock AI words and clichés, generic openers like &ldquo;I am writing to apply&rdquo;, and passive closes. It also flags any number that isn&rsquo;t in your resume or the posting. When it finds a problem, Cover Me sends the letter back to the model once with each one listed, and keeps whichever version has fewer.
+                Prompt 3 is built in, with the checking done in code. Every letter is scanned for stock AI words and clichés, generic openers like &ldquo;I am writing to apply&rdquo;, and passive closes. It also flags any dollar amount, percentage or figure of three digits or more that isn&rsquo;t in your resume or the posting. When it finds a problem, Cover Me sends the letter back to the model once with each one listed, and keeps whichever version has fewer.
               </p>
               <p>
                 ChatGPT and Claude can write a good letter, as the answers above show. The difference is the copying and checking you do by hand. If you&rsquo;re deciding between a chatbot and a tool, <Link href="/guides/cover-me-vs-chatgpt">Cover Me vs ChatGPT</Link> compares them.

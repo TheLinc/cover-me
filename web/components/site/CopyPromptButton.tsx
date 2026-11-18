@@ -18,7 +18,7 @@ export function CopyPromptButton({ text }: { text: string }) {
   return (
     <Button variant="outline" size="sm" onClick={copy} aria-live="polite">
       {state === 'copied' ? <CheckIcon size={14} aria-hidden /> : <CopyIcon size={14} aria-hidden />}
-      {state === 'copied' ? 'Copied' : state === 'blocked' ? "Couldn't copy. Select the text instead" : 'Copy prompt'}
+      {state === 'copied' ? 'Copied' : state === 'blocked' ? "Couldn't copy, select it" : 'Copy prompt'}
     </Button>
   )
 }
