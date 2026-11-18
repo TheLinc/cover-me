@@ -11,6 +11,7 @@ import DownloadMenu from '../popup/components/DownloadMenu'
 import GapChips from '../popup/components/GapChips'
 import PdfPreview from './PdfPreview'
 import PostingTitleTip from '../popup/components/PostingTitleTip'
+import ReviewAsk from '../popup/components/ReviewAsk'
 import ScoreRing from '../popup/components/ScoreRing'
 import type { AuthSession, TailoredHistoryEntry, TailoredResume } from '../types'
 
@@ -100,6 +101,7 @@ export default function Editor() {
   const [steps, setSteps] = useState<{ past: Form[]; future: Form[] }>({ past: [], future: [] })
   const lastStep = useRef<{ field: Element | null; at: number }>({ field: null, at: 0 })
   const [note, setNote] = useState('') // what the last section delete removed
+  const [reviewOpen, setReviewOpen] = useState(false)
   const focusNext = useRef<string | null>(null) // a control to focus once the form re-renders
   const [orderAsk, setOrderAsk] = useState<{ state: OrderAsk; at: number; error?: string }>({ state: '', at: 0 }) // at: the moved section's place
   const [dirty, setDirty] = useState(false)
@@ -420,14 +422,15 @@ export default function Editor() {
         </p>
         {/* Only Cover Me layout resumes open here (no Edit on "Your design"), so Word is the Cover Me layout too. */}
         <DownloadMenu className="btn btn-secondary btn-compact" options={[
-          { label: 'PDF', onSelect: () => downloadTailoredResumePdf(current, opened.jobTitle) },
+          { label: 'PDF', onSelect: () => { downloadTailoredResumePdf(current, opened.jobTitle); setReviewOpen(true) } },
           // docx is big, so it loads only when someone asks for the Word file.
-          { label: 'Word', onSelect: () => void import('../lib/pdf/resume-docx').then((m) => m.downloadTailoredResumeDocx(current, opened.jobTitle)) },
+          { label: 'Word', onSelect: () => void import('../lib/pdf/resume-docx').then((m) => m.downloadTailoredResumeDocx(current, opened.jobTitle)).then(() => setReviewOpen(true)) },
         ]} />
         <button className="btn btn-primary btn-compact" onClick={done}>Done</button>
       </header>
 
       <main className="ed-form">
+        {reviewOpen && <ReviewAsk onClose={() => setReviewOpen(false)} />}
         {(typeof scored.atsScore === 'number' || (saved.atsGaps?.length ?? 0) > 0) && (
           <section className="ats-result" aria-label="ATS result">
             {typeof scored.atsScore === 'number' && <ScoreRing score={scored.atsScore} size={88} />}

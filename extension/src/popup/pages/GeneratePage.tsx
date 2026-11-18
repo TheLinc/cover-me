@@ -13,9 +13,9 @@ import PageReadNotice from '../components/PageReadNotice'
 import AnswersNews from '../components/AnswersNews'
 import PostingTitleTip from '../components/PostingTitleTip'
 import ProgressSteps from '../components/ProgressSteps'
-import ReviewAsk, { claimReviewAsk } from '../components/ReviewAsk'
+import ReviewAsk from '../components/ReviewAsk'
 import ScrapeFailurePanel, { type ShownFailure } from '../components/ScrapeFailure'
-import ScoreRing, { ScoreGain } from '../components/ScoreRing'
+import ScoreRing, { ScoreGain, scoreRose } from '../components/ScoreRing'
 import UpgradePrompt from '../components/UpgradePrompt'
 import { GenerateOffer } from '../components/FirstMonthOffer'
 import { WhatsNewLink } from '../components/WhatsNew'
@@ -191,7 +191,7 @@ export default function GeneratePage({ onNavigate }: Props) {
   const [letterEditing, setLetterEditing] = useState(false)
   const [regenerateExpanded, setRegenerateExpanded] = useState(false)
   const [activeResultTab, setActiveResultTab] = useState<'letter' | 'resume'>('letter')
-  const [reviewOpen, setReviewOpen] = useState(false)
+  const [reviewAt, setReviewAt] = useState<'letter' | 'resume' | null>(null)
 
   const loaded = useRef(false)
   const coverJobId = useRef<string | null>(null)
@@ -463,38 +463,38 @@ export default function GeneratePage({ onNavigate }: Props) {
   }
 
   // The rating card closes when either result changes: a new run, New, an error.
-  useEffect(() => setReviewOpen(false), [state, tailorState])
+  useEffect(() => setReviewAt(null), [state, tailorState])
 
-  // Right after the user got what they came for. Not while either side shows
-  // an error, which includes having just hit the allowance.
-  function askForReview() {
+  // Right after the user got what they came for, next to that result. Not while
+  // either side shows an error, which includes having just hit the allowance.
+  function askForReview(at: 'letter' | 'resume') {
     if (state === 'error' || tailorState === 'error') return
-    void claimReviewAsk().then((ask) => { if (ask) setReviewOpen(true) })
+    setReviewAt(at)
   }
 
   async function copy() {
     await navigator.clipboard.writeText(letter)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
-    askForReview()
+    askForReview('letter')
   }
 
   function downloadPdf() {
     if (!job) return
     downloadCoverLetterPdf(letter, job, createdAt)
-    askForReview()
+    askForReview('letter')
   }
 
   function downloadResumePdf() {
     if (!tailoredResume || !tailoredJob) return
     downloadTailoredResumePdf(tailoredResume, tailoredJob.title)
-    askForReview()
+    askForReview('resume')
   }
 
   async function downloadResumeDocx() {
     if (!tailoredResume || !tailoredJob) return
     await downloadResumeWord(tailoredResume, tailoredJob.title)
-    askForReview()
+    askForReview('resume')
   }
 
   async function regenerateLetter() {
@@ -692,6 +692,8 @@ export default function GeneratePage({ onNavigate }: Props) {
   const setupLoaded = hasResume !== null && hasApiKey !== null && hasSession !== null
 
   const bothDone = state === 'done' && tailorState === 'done'
+  // A good score is the moment to ask, so the card goes right under it.
+  const reviewUnderScore = !!tailoredResume && (scoreRose(tailoredResume.atsScore, tailoredResume.atsScoreBefore) || (tailoredResume.atsScore ?? 0) >= 80)
   const postingTitle = tailorState === 'done' && tailoredResume && tailoredJob ? postingTitleInSummary(tailoredResume, tailoredJob.title) : undefined
 
   // The header's status line: what's running, what failed, or that a result is
@@ -1042,6 +1044,7 @@ export default function GeneratePage({ onNavigate }: Props) {
                       </div>
                     )}
                   </div>
+                  {reviewAt === 'letter' && <ReviewAsk onClose={() => setReviewAt(null)} />}
                   <div className="letter-actions">
                     <button className="btn btn-primary" onClick={copy}>
                       {copied ? (
@@ -1106,6 +1109,7 @@ export default function GeneratePage({ onNavigate }: Props) {
                       </div>
                     </div>
                   )}
+                  {reviewAt === 'resume' && reviewUnderScore && <ReviewAsk onClose={() => setReviewAt(null)} />}
                   <div className="supplemental-section">
                     <label className="supplemental-label" htmlFor="tailor-supplemental">Missing something?</label>
                     <div className="composer">
@@ -1129,6 +1133,7 @@ export default function GeneratePage({ onNavigate }: Props) {
                     <p className="hint">Your file&apos;s layout couldn&apos;t be edited safely, so this one uses the Cover Me layout.</p>
                   )}
                   {postingTitle && <PostingTitleTip {...postingTitle} />}
+                  {reviewAt === 'resume' && !reviewUnderScore && <ReviewAsk onClose={() => setReviewAt(null)} />}
                   <div className="letter-actions">
                     {/* Tailored in the user's own file (#131): their Word file leads. */}
                     <DownloadMenu
@@ -1150,8 +1155,6 @@ export default function GeneratePage({ onNavigate }: Props) {
                   </div>
                 </div>
               )}
-
-              {reviewOpen && <ReviewAsk onClose={() => setReviewOpen(false)} />}
             </>
           )}
         </>

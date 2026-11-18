@@ -7,6 +7,7 @@ import { accountUpdates, capWarning, groupLocalHistory, groupsFromApplications, 
 import { deleteFromHistory, deleteFromTailoredHistory, getDesignHashes, getHistory, getMode, getTailoredHistory, getUploadAsked, markUploadAsked, setEntryAccounts } from '../../lib/storage'
 import type { AuthSession, CoverLetter, CoverLetterEntry, TailoredHistoryEntry } from '../../types'
 import DownloadMenu from '../components/DownloadMenu'
+import ReviewAsk from '../components/ReviewAsk'
 import { EditIcon } from '../components/icons'
 import UpgradePrompt from '../components/UpgradePrompt'
 import { WEB_URL } from '../../lib/config'
@@ -22,6 +23,7 @@ export default function HistoryPage() {
   const [designHashes, setDesignHashes] = useState<string[]>([])
   useEffect(() => { void getDesignHashes().then(setDesignHashes) }, [])
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [reviewFor, setReviewFor] = useState<string | null>(null) // the entry just copied or downloaded
   const [syncing, setSyncing] = useState(false)
   const [isProMode, setIsProMode] = useState(false)
   const [capText, setCapText] = useState<string | null>(null)
@@ -187,6 +189,12 @@ export default function HistoryPage() {
     setTimeout(() => setCopiedId(null), 2000)
   }
 
+  // A copy or download, then the rating card under that entry.
+  const thenAsk = (id: string, action: () => unknown) => async () => {
+    await action()
+    setReviewFor(id)
+  }
+
   function formatDate(iso: string) {
     const d = new Date(iso)
     const diff = Math.floor((Date.now() - d.getTime()) / 1000)
@@ -330,16 +338,17 @@ export default function HistoryPage() {
                           >
                             {previewId === cl.id ? 'Collapse' : 'Preview'}
                           </button>
-                          <button className="btn btn-secondary btn-sm" onClick={() => copyLetter(cl)}>
+                          <button className="btn btn-secondary btn-sm" onClick={thenAsk(cl.id, () => copyLetter(cl))}>
                             {copiedId === cl.id ? '✓ Copied' : 'Copy'}
                           </button>
                           <button
                             className="btn btn-secondary btn-sm"
-                            onClick={() => downloadCoverLetterPdf(cl.letter, { title: group.title, company: group.company }, cl.createdAt)}
+                            onClick={thenAsk(cl.id, () => downloadCoverLetterPdf(cl.letter, { title: group.title, company: group.company }, cl.createdAt))}
                           >
                             PDF
                           </button>
                         </div>
+                        {reviewFor === cl.id && <ReviewAsk onClose={() => setReviewFor(null)} />}
                       </div>
                     ))}
 
@@ -360,8 +369,8 @@ export default function HistoryPage() {
                           <DownloadMenu
                             className="btn btn-secondary btn-sm"
                             options={tr.resume.sourceHash && designHashes.includes(tr.resume.sourceHash)
-                              ? [{ label: 'Word', note: 'Your design', onSelect: () => void downloadResumeWord(tr.resume, group.title) }, { label: 'PDF', note: 'Cover Me layout', onSelect: () => downloadTailoredResumePdf(tr.resume, group.title) }]
-                              : [{ label: 'PDF', onSelect: () => downloadTailoredResumePdf(tr.resume, group.title) }, { label: 'Word', onSelect: () => void downloadResumeWord(tr.resume, group.title) }]}
+                              ? [{ label: 'Word', note: 'Your design', onSelect: thenAsk(tr.id, () => downloadResumeWord(tr.resume, group.title)) }, { label: 'PDF', note: 'Cover Me layout', onSelect: thenAsk(tr.id, () => downloadTailoredResumePdf(tr.resume, group.title)) }]
+                              : [{ label: 'PDF', onSelect: thenAsk(tr.id, () => downloadTailoredResumePdf(tr.resume, group.title)) }, { label: 'Word', onSelect: thenAsk(tr.id, () => downloadResumeWord(tr.resume, group.title)) }]}
                           />
                           {/* Not for "Your design": its Word file takes only some edits, and the user can edit it in Word. */}
                           {!(tr.resume.sourceHash && designHashes.includes(tr.resume.sourceHash)) && (
@@ -371,6 +380,7 @@ export default function HistoryPage() {
                             </button>
                           )}
                         </div>
+                        {reviewFor === tr.id && <ReviewAsk onClose={() => setReviewFor(null)} />}
                       </div>
                     ))}
                   </div>
