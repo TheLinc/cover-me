@@ -49,6 +49,11 @@ describe('keywords from saved postings', () => {
     ['Minimum qualifications: Bachelor\'s degree in Computer Science', 'required', ["Bachelor's degree"]],
     ['Required qualifications:\n- Python\nPreferred: AWS certification\n- Kubernetes', 'preferred', ['AWS', 'Kubernetes']],
     ['Requirements\nResponsibilities: welding, grinding', 'mentioned', ['welding', 'grinding']],
+    ['Senior Data Engineer\nSalary: $150,000\nRequirements\n- 5+ years of Python and SQL\n- Airflow, dbt', 'required', ['Python', 'SQL', 'Airflow', 'dbt']],
+    ['Pay: $20.00 - $25.00 per hour\nBenefits:\n- 401(k)\nSchedule:\n- 8 hour shift\nExperience:\n- Welding: 1 year (Required)\nLicense/Certification:\n- Driver\'s License (Required)', 'required', ['welding', "driver's license"]],
+    ['Responsibilities\n- Plan sprints\nExperience\n- Python and Kubernetes\n- CPR certification', 'required', ['Python', 'Kubernetes', 'CPR']],
+    ['Requirements\n- You MUST have a valid license\n- COVID-19 vaccination required\n- PLEASE include a cover letter', 'required', []],
+    ['Requirements\n- A master of SQL and spreadsheets', 'required', ['SQL']],
   ] as const)('a short line without a bullet is not a heading: %j', (ask, level, expected) => {
     expect(pick(readPosting(ask), level)).toEqual([...expected])
   })

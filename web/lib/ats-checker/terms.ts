@@ -51,7 +51,7 @@ export const TERMS = [
   'grinding', 'fitting|fitter', 'CNC', 'forklift', 'OSHA', 'hand tools', 'power tools', 'HVAC', 'plumbing', 'electrical',
   'carpentry', 'machining', 'inventory|inventory management', 'shipping and receiving', 'warehouse', 'cleaning', 'laundry',
   'housekeeping', 'food safety|ServSafe', 'cash handling', 'POS|point of sale',
-  "Bachelor's degree|Bachelor|Bachelors|BS|BA|B.S.|B.A.|BSc", "Master's degree|Masters degree|Master of|MSc|M.S.", 'MBA', 'PhD|Ph.D.',
+  "Bachelor's degree|Bachelor|Bachelors|BS|BA|B.S.|B.A.|BSc", "Master's degree|Masters degree|Master of Science|Master of Arts|Master of Engineering|MSc|M.S.|M.A.", 'MBA', 'PhD|Ph.D.',
   'High school diploma|GED', "driver's license|drivers license|driver license|driving licence",
   'communication', 'leadership', 'problem-solving|problem solving', 'attention to detail', 'time management', 'teamwork',
   'multitasking|multi-tasking', 'mentoring|mentorship', 'organizational skills|organizational', 'interpersonal skills',

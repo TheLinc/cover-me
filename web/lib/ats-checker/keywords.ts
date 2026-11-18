@@ -44,11 +44,12 @@ const mentions = (text: string, spelling: string, strict: boolean) => text.searc
 const has = (text: string, k: Term) => k.spellings.some((s) => mentions(text, s, k.strict))
 
 const PREFERRED = /prefer|nice[\s-]to[\s-]have|nice if|bonus|\bplus\b|desired|stand out|advantage|may also/i
-const REQUIRED = /requir|qualif|\bmust\b|need|bring|you have|looking for|good fit|about you|who you are|minimum|skills|education/i
+const REQUIRED = /requir|qualif|\bmust\b|need|bring|you have|looking for|good fit|about you|who you are|minimum|skills|education|^(your |relevant )?experience( and \w+)?$|ideal candidate|^tech stack/i
+const CREDENTIALS = /^certifications?|^licen[sc]e|certifications?$/i
 const COMPANY = /^(about (?!you|the role|the team|the job|this role|the position)|more about|why\b|life at)/i
 const SKIP = /^(description of )?benefits?|^perks|what we offer|^compensation|^pay( range| transparency|$)|^salary|equal (opportunity|employment)|^our commitment|^who we are|^our (founding|story|culture|values)|^how we work|^acknowledg|statement$|^accommodations?|^privacy|career growth$|^work\/life|^inclusive|^diverse|^apply$|^contact/i
 const BULLET = /^(\*\s|[-•●◦▪▫■□·‣⁃▸►○–—])/
-const OTHER =/responsib|what you('ll| will)? (do|be doing)|day in the life|the role|the opportunity|job description|overview|summary|duties|additional information/i
+const OTHER = /^schedule|^job type|responsib|what you('ll| will)? (do|be doing)|day in the life|the role|the opportunity|job description|overview|summary|duties|additional information/i
 
 function headingLevel(line: string): Level | 'skip' | null {
   if (BULLET.test(line)) return null
@@ -59,12 +60,13 @@ function headingLevel(line: string): Level | 'skip' | null {
   if (!namedHeading && DICTIONARY.some((term) => has(text, term))) return null
   if (SKIP.test(text)) return 'skip'
   if (PREFERRED.test(text)) return 'preferred'
-  if (REQUIRED.test(text)) return 'required'
+  if (REQUIRED.test(text) || CREDENTIALS.test(text)) return 'required'
   if (OTHER.test(text)) return 'mentioned'
   return null
 }
 
-const ACRONYM_STOP = new Set(['USD', 'GBP', 'CAD', 'EUR', 'PTO', 'EEO', 'EOE', 'FAQ', 'LLC', 'INC', 'USA', 'EMEA', 'APAC', 'NYC', 'ADA', 'CEO', 'CTO', 'CFO', 'COO', 'ETC', 'AND', 'THE', 'FOR', 'NOT', 'DNA', 'EST', 'PST', 'CST', 'MST', 'ASAP', 'III'])
+const ACRONYM_STOP = new Set(['USD', 'GBP', 'CAD', 'EUR', 'PTO', 'EEO', 'EOE', 'FAQ', 'LLC', 'INC', 'USA', 'EMEA', 'APAC', 'NYC', 'ADA', 'CEO', 'CTO', 'CFO', 'COO', 'ETC', 'AND', 'THE', 'FOR', 'NOT', 'DNA', 'EST', 'PST', 'CST', 'MST', 'ASAP', 'III',
+  'MUST', 'PLEASE', 'NOTE', 'ONLY', 'NEVER', 'WILL', 'ALL', 'ANY', 'YOU', 'YOUR', 'ARE', 'CAN', 'MAY', 'NEW', 'NOW', 'COVID'])
 
 function unlistedNames(line: string): Keyword[] {
   const letters = line.replace(/[^A-Za-z]/g, '')
@@ -103,7 +105,9 @@ export function readPosting(posting: string): Posting {
   for (const line of lines) {
     const [, head, rest] = /^([^:]{1,60}):\s*(\S.*)$/.exec(line) ?? []
     const heading = headingLevel(head ?? line)
-    if (heading) section = heading
+    if (heading === 'skip' && head) continue
+    const credentialsUnderPreferred = section === 'preferred' && CREDENTIALS.test((head ?? line).replace(/[*:\s]+$/, ''))
+    if (heading && !credentialsUnderPreferred) section = heading
     if (section === 'skip' || BOILERPLATE.test(line)) continue
     const body = !heading ? line : head ? rest : ''
     const companyVoice = /\b([Ww]e|[Oo]ur|[Uu]s)\b/.test(line)
