@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
-import Image from 'next/image'
+import { Fragment } from 'react'
 import Link from 'next/link'
-import { CHROME_STORE_URL } from '@/lib/utils'
-import { GuideTldr } from '@/components/site/GuideTldr'
-import { getGuide, guideArticleJsonLd, guideBreadcrumbJsonLd } from '@/lib/guides'
+import { GuideArticle, GuideFigure } from '@/components/site/GuideArticle'
+import { EXAMPLE, Hl, Label } from '@/components/landing/visuals'
+import { getGuide } from '@/lib/guides'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 const guide = getGuide('tailor-resume-to-job-description')
@@ -107,124 +107,108 @@ const faqJsonLd = {
   ],
 }
 
+// Step 3 on the landing page's Northwind example.
+function BulletRewrites() {
+  return (
+    <div className="flex flex-col gap-5 rounded-[12px] bg-white p-6 text-[15px] leading-[1.6] shadow-[0_20px_50px_-24px_rgba(30,27,75,0.25)] max-sm:p-4">
+      <Label>Posting · {EXAMPLE.role} at {EXAMPLE.company}</Label>
+      {EXAMPLE.bullets.map(({ before, after: [a, k, b] }) => (
+        <div key={k} className="grid gap-4 border-t border-line pt-5 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label>Your bullet</Label>
+            <p className="text-ink-2">{before}</p>
+          </div>
+          <div className="space-y-2">
+            <Label>In the posting&rsquo;s words</Label>
+            <p className="text-ink">{a}<Hl>{k}</Hl>{b}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export default function Page() {
   return (
-    <main className="max-w-[760px] mx-auto px-8 py-20 max-md:px-5">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(guideArticleJsonLd(guide, HERO_IMAGE)) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(guideBreadcrumbJsonLd(guide)) }} />
+    <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(howToJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
-
-      <div className="mb-12">
-        <Link href="/guides" className="text-[12px] font-semibold text-brand-light hover:text-brand transition-colors">
-          ← All guides
-        </Link>
-        <h1 className="text-[clamp(30px,4.5vw,46px)] text-foreground leading-[1.02] mt-4 mb-4">
-          How to tailor your resume to a job description
-        </h1>
-        <p className="text-[12px] text-muted-foreground">
-          <time dateTime={guide.updated ?? guide.date}>Updated November 7, 2026</time> · Lincoln Laylor
-        </p>
-      </div>
-
-      {/* Hero graphic */}
-      <div className="mb-10 h-px bg-line" />
-      <figure className="mb-12">
-        <Image
-          src={HERO_IMAGE}
-          alt={HERO_ALT}
-          width={1600}
-          height={900}
-          priority
-          sizes="(max-width: 800px) 100vw, 760px"
-          className="w-full h-auto rounded-[12px] border border-border"
-        />
-      </figure>
-
-      <article className="space-y-5 text-[15.5px] text-muted-foreground leading-[1.85]">
-        <p className="text-[17px] text-foreground font-medium leading-[1.7]">
-          To tailor your resume to a job description, find the posting&rsquo;s 4 to 6 must-have keywords, use its exact wording wherever it truthfully describes your experience, rewrite your most relevant bullets to lead with those skills, and cut what doesn&rsquo;t serve the role. Never add a skill you don&rsquo;t have.
-        </p>
-
-        <GuideTldr
-          items={[
-            "Find the posting's 4 to 6 must-have keywords and use its exact wording wherever it truthfully describes your experience.",
-            "Rewrite your most relevant bullets to lead with those skills, and cut what doesn't serve the role.",
-            "Never add a skill you don't have. In Huntr's analysis of 1.39 million applications, tailored resumes reached an interview 2.1 times as often.",
-          ]}
-        />
-        <p>
-          It matters because recruiters search their applicant tracking system for the posting&rsquo;s terms, so a strong candidate with an untailored resume often doesn&rsquo;t come up. Huntr analyzed over 1.39 million applications and found tailored resumes reached the interview stage{' '}
-          <a href="https://huntr.co/research/job-search-trends-q2-2025" target="_blank" rel="noopener noreferrer" className="text-brand-light hover:text-brand transition-colors">2.1 times as often</a>
-          , 5.75% against 2.68%.
-        </p>
-
-        <h2 className="text-[22px] text-foreground !mt-10">What are the steps to tailor a resume?</h2>
-        <ol className="list-none space-y-6 !mt-6">
-          {STEPS.map((s, i) => (
-            <li key={s.name} className="flex gap-5">
-              <span className="text-[11px] font-bold text-brand tracking-[0.08em] pt-[5px] shrink-0 w-7">
-                {String(i + 1).padStart(2, '0')}
-              </span>
-              <div>
-                <h3 className="text-[16px] font-bold text-foreground tracking-[-0.3px] mb-1.5">{s.name}</h3>
-                <p className="text-[14.5px] leading-[1.8]">{s.text}</p>
-              </div>
-            </li>
-          ))}
-        </ol>
-
-        <h2 className="text-[22px] text-foreground !mt-10">What should you never add when tailoring?</h2>
-        <p>
-          Anything you can&rsquo;t back up. Rewriting &ldquo;built dashboards used by leadership&rdquo; as &ldquo;stakeholder reporting and data visualization&rdquo; is honest tailoring, because the experience is the same and only the wording changed. Adding &ldquo;Kubernetes&rdquo; because the posting wants it and you once watched a talk is fabrication. It passes the ATS, then costs you the interview, and sometimes an offer you already had.
-        </p>
-        <p>
-          A practical test: could you talk about this bullet, as written, for two minutes in an interview? If not, leave it off the tailored resume.
-        </p>
-        <p>
-          AI tools get this wrong often. When a posting asks for a certification or tool, chatbots tend to add it to your resume, so read every line they write before you send it.
-        </p>
-
-        <h2 className="text-[22px] text-foreground !mt-10">Can you tailor a resume in one click?</h2>
-        <p>
-          Yes. Done well by hand, this method takes long enough that most people stop tailoring after a few applications a day. Using ChatGPT, it took me about 12 minutes per application, which is why I built <Link href="/" className="text-brand-light hover:text-brand transition-colors">Cover Me (cover-me.dev)</Link>, an open-source Chrome extension that follows the same method.
-        </p>
-        <p>
-          On a job posting, &ldquo;Tailor Resume to Job&rdquo; finds the role&rsquo;s keywords and rewrites your bullets, summary, and skills in the posting&rsquo;s language. Your job titles, employers, and dates stay as they are. Every skill the AI adds has to cite evidence from your resume, and a check removes any skill or claim your original doesn&rsquo;t support. You then see your <Link href="/guides/what-is-an-ats-score" className="text-brand-light hover:text-brand transition-colors">ATS match score</Link> with each missing keyword listed, and you can download the result as a PDF or Word file. Upload your resume as a Word file and the tailored Word file keeps its own fonts and layout (beta); the <Link href="/guides/tailor-resume-in-word" className="text-brand-light hover:text-brand transition-colors">Word formatting guide</Link> shows how.
-        </p>
-        <p>
-          It works on <Link href="/for/linkedin" className="text-brand-light hover:text-brand transition-colors">LinkedIn</Link>, <Link href="/for/indeed" className="text-brand-light hover:text-brand transition-colors">Indeed</Link>, <Link href="/for/greenhouse" className="text-brand-light hover:text-brand transition-colors">Greenhouse</Link>, <Link href="/for/lever" className="text-brand-light hover:text-brand transition-colors">Lever</Link>, <Link href="/for/workday" className="text-brand-light hover:text-brand transition-colors">Workday</Link>, and <Link href="/for/ashby" className="text-brand-light hover:text-brand transition-colors">Ashby</Link>, and you can paste a posting from any other site. It&rsquo;s free and unlimited with your own Claude or OpenAI API key.
-        </p>
-      </article>
-
-      {/* FAQ */}
-      <section className="mt-14">
-        <h2 className="text-[22px] text-foreground mb-4">Frequently asked questions</h2>
-        <div className="divide-y divide-border border-t border-border">
-          {(faqJsonLd.mainEntity as { name: string; acceptedAnswer: { text: string } }[]).map((item) => (
-            <div key={item.name} className="py-6">
-              <h3 className="text-[16px] font-bold text-foreground tracking-[-0.3px] mb-2.5">{item.name}</h3>
-              <p className="text-[14px] text-muted-foreground leading-[1.8]">{item.acceptedAnswer.text}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* CTA */}
-      <div className="border border-border rounded-[12px] p-8 bg-surface text-center mt-14">
-        <h2 className="text-[20px] text-foreground mb-2">Tailor your resume in one click</h2>
-        <p className="text-[14px] text-muted-foreground mb-5 max-w-[420px] mx-auto leading-[1.7]">
-          Keywords matched, score shown, gaps listed, and no invented skills.
-        </p>
-        <a
-          href={CHROME_STORE_URL}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center gap-2 bg-brand-strong text-white font-semibold text-[14px] px-5 py-2.5 rounded-[8px] hover:bg-brand-deep transition-colors"
-        >
-          Install free · Chrome
-        </a>
-      </div>
-    </main>
+      <GuideArticle
+        guide={guide}
+        hero={{ src: HERO_IMAGE, alt: HERO_ALT }}
+        lede={
+          <>
+            To tailor your resume to a job description, find the posting&rsquo;s 4 to 6 must-have keywords, use its exact wording wherever it truthfully describes your experience, rewrite your most relevant bullets to lead with those skills, and cut what doesn&rsquo;t serve the role. Never add a skill you don&rsquo;t have.
+          </>
+        }
+        tldr={[
+          "Find the posting's 4 to 6 must-have keywords and use its exact wording wherever it truthfully describes your experience.",
+          "Rewrite your most relevant bullets to lead with those skills, and cut what doesn't serve the role.",
+          "Never add a skill you don't have. In Huntr's analysis of 1.39 million applications, tailored resumes reached an interview 2.1 times as often.",
+        ]}
+        intro={
+          <p>
+            It matters because recruiters search their applicant tracking system for the posting&rsquo;s terms, so a strong candidate with an untailored resume often doesn&rsquo;t come up. Huntr analyzed over 1.39 million applications and found tailored resumes reached the interview stage{' '}
+            <a href="https://huntr.co/research/job-search-trends-q2-2025" target="_blank" rel="noopener noreferrer" className="text-brand-light hover:text-brand transition-colors">2.1 times as often</a>
+            , 5.75% against 2.68%.
+          </p>
+        }
+        sections={[
+          {
+            title: 'What are the steps to tailor a resume?',
+            body: STEPS.map((s, i) => (
+              <Fragment key={s.name}>
+                <h3>
+                  <span className="mr-3 text-[11px] font-bold text-brand tracking-[0.08em]">{String(i + 1).padStart(2, '0')}</span>
+                  {s.name}
+                </h3>
+                <p>{s.text}</p>
+                {i === 2 && (
+                  <GuideFigure caption="Three bullets from a sample resume, tailored to a sample Marketing Manager posting: each keeps its result and borrows the posting’s words.">
+                    <BulletRewrites />
+                  </GuideFigure>
+                )}
+              </Fragment>
+            )),
+          },
+          {
+            title: 'What should you never add when tailoring?',
+            body: (
+              <>
+                <p>
+                  Anything you can&rsquo;t back up. Rewriting &ldquo;built dashboards used by leadership&rdquo; as &ldquo;stakeholder reporting and data visualization&rdquo; is honest tailoring, because the experience is the same and only the wording changed. Adding &ldquo;Kubernetes&rdquo; because the posting wants it and you once watched a talk is fabrication. It passes the ATS, then costs you the interview, and sometimes an offer you already had.
+                </p>
+                <p>
+                  A practical test: could you talk about this bullet, as written, for two minutes in an interview? If not, leave it off the tailored resume.
+                </p>
+                <p>
+                  AI tools get this wrong often. When a posting asks for a certification or tool, chatbots tend to add it to your resume, so read every line they write before you send it.
+                </p>
+              </>
+            ),
+          },
+          {
+            title: 'Can you tailor a resume in one click?',
+            body: (
+              <>
+                <p>
+                  Yes. Done well by hand, this method takes long enough that most people stop tailoring after a few applications a day. Using ChatGPT, it took me about 12 minutes per application, which is why I built <Link href="/">Cover Me (cover-me.dev)</Link>, an open-source Chrome extension that follows the same method.
+                </p>
+                <p>
+                  On a job posting, &ldquo;Tailor Resume to Job&rdquo; finds the role&rsquo;s keywords and rewrites your bullets, summary, and skills in the posting&rsquo;s language. Your job titles, employers, and dates stay as they are. Every skill the AI adds has to cite evidence from your resume, and a check removes any skill or claim your original doesn&rsquo;t support. You then see your <Link href="/guides/what-is-an-ats-score">ATS match score</Link> with each missing keyword listed, and you can download the result as a PDF or Word file. Upload your resume as a Word file and the tailored Word file keeps its own fonts and layout (beta); the <Link href="/guides/tailor-resume-in-word">Word formatting guide</Link> shows how.
+                </p>
+                <p>
+                  It works on <Link href="/for/linkedin">LinkedIn</Link>, <Link href="/for/indeed">Indeed</Link>, <Link href="/for/greenhouse">Greenhouse</Link>, <Link href="/for/lever">Lever</Link>, <Link href="/for/workday">Workday</Link>, and <Link href="/for/ashby">Ashby</Link>, and you can paste a posting from any other site. It&rsquo;s free and unlimited with your own Claude or OpenAI API key.
+                </p>
+              </>
+            ),
+          },
+        ]}
+        faq={faqJsonLd}
+        cta={{
+          title: 'Tailor your resume in one click',
+          body: 'Keywords matched, score shown, gaps listed, and no invented skills.',
+        }}
+      />
+    </>
   )
 }
