@@ -159,6 +159,11 @@ export default function Page() {
                 {s.name}
               </h3>
               <p>{s.text}</p>
+              {i === 0 && (
+                <p>
+                  The free <Link href="/ats-checker">ATS keyword checker</Link> lists a posting&rsquo;s keywords and marks which ones your resume has.
+                </p>
+              )}
               {i === 2 && (
                 <GuideFigure caption="Three bullets from a sample resume, tailored to a sample Marketing Manager posting: each keeps its numbers and borrows the posting’s words.">
                   <BulletRewrites />

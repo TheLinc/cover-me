@@ -19,6 +19,7 @@ Key facts:
 ## Main pages
 
 - [Home](https://www.cover-me.dev/): product overview, how it works, pricing, FAQ
+- [Free ATS checker](https://www.cover-me.dev/ats-checker): paste a job posting and a resume, or upload the resume as a PDF or Word file, to see which of the posting's skills, tools and certifications the resume has and which it's missing. No account and no AI; the text stays in the browser. It shows a count of keywords found, not a score out of 100.
 - [About](https://www.cover-me.dev/about): who builds Cover Me, why, and where the user's resume goes
 - [Support](https://www.cover-me.dev/support): FAQ and contact (support@cover-me.dev)
 - [Privacy Policy](https://www.cover-me.dev/privacy)
