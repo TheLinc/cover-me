@@ -18,8 +18,6 @@ export default function HistoryPage() {
   const [groups, setGroups] = useState<JobGroup[]>([])
   const [expandedKey, setExpandedKey] = useState<string | null>(null)
   const [previewId, setPreviewId] = useState<string | null>(null)
-  // The user's own Word files still in this browser (#131): a resume tailored
-  // in one downloads in its design.
   const [designHashes, setDesignHashes] = useState<string[]>([])
   useEffect(() => { void getDesignHashes().then(setDesignHashes) }, [])
   const [copiedId, setCopiedId] = useState<string | null>(null)
@@ -27,8 +25,7 @@ export default function HistoryPage() {
   const [syncing, setSyncing] = useState(false)
   const [isProMode, setIsProMode] = useState(false)
   const [capText, setCapText] = useState<string | null>(null)
-  // Pro: applications that exist only in this browser. asked = this account
-  // already answered the prompt, so the quiet link shows instead. (#24)
+  // asked: this account already answered the save prompt, so only the quiet link shows (#24).
   const [upload, setUpload] = useState<{ count: number; asked: boolean } | null>(null)
   const [uploading, setUploading] = useState(false)
   const [uploadNote, setUploadNote] = useState<{ text: string; error: boolean } | null>(null)
@@ -38,10 +35,7 @@ export default function HistoryPage() {
     load()
   }, [])
 
-  // Asks the server which local entries it already holds (people who were Pro
-  // before 1.3.0 saved their letters under the same IDs) and marks them.
-  // Returns what's left in this browser only; null when the check failed, in
-  // which case nothing is tagged or offered. (#24)
+  // Pro users before 1.3.0 saved their letters under the same IDs, so the server says which it holds (#24).
   async function localOnlyAfterCheck(session: AuthSession): Promise<{ letters: CoverLetter[]; tailored: TailoredHistoryEntry[] } | null> {
     const [letters, tailored] = await Promise.all([getHistory(), getTailoredHistory()])
     const l = letters.filter(unclaimed(session.user.id))
@@ -57,10 +51,7 @@ export default function HistoryPage() {
     }
   }
 
-  // Entries made while this account was Pro were always meant for it. If
-  // their save didn't go through (offline, a server error), it's retried here
-  // without asking. Returns what's still only in this browser, and whether
-  // anything new reached the account. (#24)
+  // Made while this account was Pro, so always meant for it: retried without asking (#24).
   async function retryOwn(session: AuthSession, local: { letters: CoverLetter[]; tailored: TailoredHistoryEntry[] }) {
     const own = ownPending(local.letters, local.tailored, session.user.id)
     if (own.letters.length + own.tailored.length === 0) return { ...local, saved: false }
@@ -122,10 +113,7 @@ export default function HistoryPage() {
 
     const [mode, session] = await Promise.all([getMode(), ensureValidSession()])
 
-    // A tier that isn't Pro is checked with the server first, so someone who
-    // just paid gets the Pro view and isn't asked to upgrade again. A free
-    // account close to what this browser keeps sees the upgrade prompt; an
-    // unknown tier shows nothing. (#181)
+    // Checked with the server first, so someone who just paid gets the Pro view (#181).
     const tier = mode === 'hosted' && session ? await currentTier(session) : null
     if (tier === 'hosted_free' && capWarning(letters.length, tailored.length)) {
       // Counted again: the user may have deleted something during the check. (#181)
@@ -155,8 +143,7 @@ export default function HistoryPage() {
         setUpload(null)
       }
     } catch {
-      // Keep showing local groups. A cached Pro tier that's out of date is
-      // refreshed, and the Pro-only parts go now rather than next open. (#24)
+      // A stale cached Pro tier is refreshed now rather than on the next open (#24).
       const fresh = await refreshTier(session)
       if (fresh && fresh !== 'hosted_pro') setIsProMode(false)
     } finally {

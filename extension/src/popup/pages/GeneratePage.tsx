@@ -76,7 +76,6 @@ interface TailorOptionsProps {
   setTrim: (v: boolean) => void
   includeSummary: boolean
   setIncludeSummary: (v: boolean) => void
-  // A Word upload's layout (#131); null without one.
   design: { yours: boolean; summary: boolean } | null
   onChangeLayout: () => void
 }
@@ -160,8 +159,6 @@ export default function GeneratePage({ onNavigate }: Props) {
   const [tailorErrorCode, setTailorErrorCode] = useState<'RATE_LIMIT' | 'FAIR_USE' | undefined>()
   const [tailoredResume, setTailoredResume] = useState<TailoredResume | null>(null)
   const [tailoredJob, setTailoredJob] = useState<JobData | null>(null)
-  // The result's ID in tailored History: the editor tab opens it, and an
-  // edit made there replaces what this page saved of it. (#118)
   const [tailoredEntryId, setTailoredEntryId] = useState<string | null>(null)
   // The History entry whose ATS ring has filled, so reopening the popup doesn't fill it again (#228).
   const [ringFilledFor, setRingFilledFor] = useState<string | null>(null)
@@ -172,8 +169,7 @@ export default function GeneratePage({ onNavigate }: Props) {
   const [trim, setTrim] = useState(false)
   const [includeSummary, setIncludeSummary] = useState(true)
   const [loadingJob, setLoadingJob] = useState<JobData | null>(null)
-  // The last click read no job (#130). Saved, so it survives the popup closing
-  // while the user copies the posting.
+  // Saved, so it survives the popup closing while the user copies the posting (#130).
   const [scrapeFailure, setScrapeFailure] = useState<ShownFailure | null>(null)
 
   const [manualTitle, setManualTitle] = useState('')
@@ -214,9 +210,8 @@ export default function GeneratePage({ onNavigate }: Props) {
       let restoredTailorDone = false
       if (s) {
         if (s.inputMode) setInputMode(s.inputMode as InputMode)
-        // Only on the tab it's about, still on that site (an unsupported one)
-        // or that page (a bug report is about one URL). Elsewhere it's dropped,
-        // and the paste form it opened closes unless the user started filling it in. (#150)
+        // Shown again only on the same tab, still on that site or page (a bug report is about
+        // one URL). Elsewhere it's dropped (#150).
         const failure = s.scrapeFailure as ShownFailure | undefined
         if (failure) {
           void chrome.tabs.query({ active: true, currentWindow: true }).then(([tab]) => {
@@ -285,9 +280,8 @@ export default function GeneratePage({ onNavigate }: Props) {
           setTailorError(tj.error ?? 'Resume tailoring failed.')
           setTailorErrorCode(tj.errorCode)
           setTailorState('error')
-        // A finished run the saved page doesn't show yet: the page isn't saved
-        // while a run is loading, so after closing the popup during Regenerate
-        // the saved result is the one before it, under another History entry. (#171)
+        // The page isn't saved while a run is loading, so after closing the popup during Regenerate
+        // the saved result is the one before it, under another History entry (#171).
         } else if (tj.status === 'done' && tj.resume && (!restoredTailorDone || (!!tj.entryId && tj.entryId !== s?.tailoredEntryId))) {
           setTailoredResume(tj.resume)
           setTailoredJob(tj.job)
@@ -389,16 +383,13 @@ export default function GeneratePage({ onNavigate }: Props) {
     })
   }, [tailoredEntryId])
 
-  // Candidate context is a standing profile fact, not per-job state — persisted
-  // to its own storage key so it survives "New" resets and applies automatically
-  // to every future generation (merged in by the service worker). https://github.com/TheLinc/cover-me/commit/46f809a
+  // Its own storage key, so it survives New and applies to every later generation
+  // (https://github.com/TheLinc/cover-me/commit/46f809a).
   useEffect(() => {
     if (!loaded.current) return
     saveCandidateContext(initialContext)
   }, [initialContext])
 
-  // An unsupported site opens the paste form straight away; the other cases
-  // offer it beside a report or a retry. (#130)
   const markReported = () => setScrapeFailure((f) => f && { ...f, reported: true })
 
   async function showScrapeFailure(failure: ScrapeFailure, flow: ShownFailure['flow']) {
@@ -461,11 +452,9 @@ export default function GeneratePage({ onNavigate }: Props) {
     }
   }
 
-  // The rating card closes when either result changes: a new run, New, an error. (#96)
   useEffect(() => setReviewAt(null), [state, tailorState])
 
-  // Right after the user got what they came for, next to that result. Not while
-  // either side shows an error, which includes having just hit the allowance. (#266)
+  // An error on either side includes having just hit the allowance: no ask then (#266).
   function askForReview(at: 'letter' | 'resume') {
     if (state === 'error' || tailorState === 'error') return
     setReviewAt(at)
@@ -530,7 +519,7 @@ export default function GeneratePage({ onNavigate }: Props) {
   async function tailor() {
     setScrapeFailure(null)
     setTailorState('loading')
-    setTailorProgress('') // a new run starts at the top, whatever the last one reached (#25)
+    setTailorProgress('')
     setLoadingJob(null)
     setTailorError('')
     let scrapedJob: JobData
@@ -566,7 +555,7 @@ export default function GeneratePage({ onNavigate }: Props) {
     }
     setScrapeFailure(null)
     setTailorState('loading')
-    setTailorProgress('') // a new run starts at the top, whatever the last one reached (#25)
+    setTailorProgress('')
     setLoadingJob(jobData)
     setTailorError('')
     const jobId = crypto.randomUUID()
@@ -588,10 +577,8 @@ export default function GeneratePage({ onNavigate }: Props) {
     }
   }
 
-  // The error is persisted in coverJob and restored on every popup open, so
-  // leaving it has to clear the record too (otherwise a user who just paid
-  // stays on the limit warning).
-  // Back to the letter that was showing (a failed regenerate keeps it), or idle. https://github.com/TheLinc/cover-me/commit/4db12bd
+  // The error is stored in coverJob and restored on every open, so leaving it clears that too,
+  // or a user who just paid stays on the limit warning (https://github.com/TheLinc/cover-me/commit/4db12bd).
   function dismissLetterError() {
     setState(letter && job ? 'done' : 'idle')
     chrome.storage.local.remove('coverJob')
@@ -619,7 +606,7 @@ export default function GeneratePage({ onNavigate }: Props) {
     if (!tailoredJob) return
     const previous = tailoredResume
     setTailorState('loading')
-    setTailorProgress('') // a new run starts at the top, whatever the last one reached (#25)
+    setTailorProgress('')
     setLoadingJob(tailoredJob)
     setTailoredResume(null)
     setTailorError('')
@@ -695,8 +682,6 @@ export default function GeneratePage({ onNavigate }: Props) {
   const reviewUnderScore = !!tailoredResume && (scoreRose(tailoredResume.atsScore, tailoredResume.atsScoreBefore) || (tailoredResume.atsScore ?? 0) >= 80)
   const postingTitle = tailorState === 'done' && tailoredResume && tailoredJob ? postingTitleInSummary(tailoredResume, tailoredJob.title) : undefined
 
-  // The header's status line: what's running, what failed, or that a result is
-  // ready. A failure wins over the other result being done. (#19)
   const status = !setupComplete ? ''
     : state === 'loading' ? (loadingJob ? 'Writing…' : 'Reading the posting…')
     : tailorState === 'loading' ? (loadingJob ? 'Tailoring…' : 'Reading the posting…')

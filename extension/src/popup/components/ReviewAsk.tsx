@@ -5,14 +5,11 @@ import { getGenerationCount, getHistory, getReviewAsk, getTailoredHistory, saveR
 
 const RATE_URL = 'https://chromewebstore.google.com/detail/bpbnopjgjbimdjjdolhkgimllbgamgpi/reviews'
 
-// Only rating ends the asking for good. One write and no read first: the
-// popup closes as the new tab opens. (#266)
+// One write and no read first: the popup closes as soon as the store tab opens (#96).
 function endReviewAsk() {
   void saveReviewAsk({ shown: 0, atCount: 0, done: true })
 }
 
-// Mounted right after a copy or download, next to that result. Renders nothing
-// unless the user qualifies (lib/review-ask.ts). (#266)
 export default function ReviewAsk({ onClose }: { onClose: () => void }) {
   const ref = useRef<HTMLElement>(null)
   const [showing, setShowing] = useState<Asked | null>(null)
@@ -49,7 +46,7 @@ export default function ReviewAsk({ onClose }: { onClose: () => void }) {
         <button
           className="review-ask-dismiss"
           onClick={() => {
-            // The card is gone: put keyboard focus on the controls it sat next to, not <body>. (#266)
+            // Removing the card would otherwise drop keyboard focus to <body> (#266).
             const card = ref.current!
             const controls = 'button, a[href], textarea, input'
             const near = [card.nextElementSibling, card.previousElementSibling].map((el) => el?.querySelector<HTMLElement>(controls)).find(Boolean)
