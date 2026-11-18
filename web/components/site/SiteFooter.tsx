@@ -18,7 +18,7 @@ const COLUMNS: { title: string; links: FooterLink[] }[] = [
     title: 'Guides',
     links: [
       { label: 'What is an ATS score?', href: '/guides/what-is-an-ats-score' },
-      { label: 'Cover Me vs ChatGPT', href: '/guides/cover-me-vs-chatgpt' },
+      { label: 'ChatGPT resume prompts', href: '/guides/chatgpt-resume-prompts' },
       { label: 'Tailor your resume', href: '/guides/tailor-resume-to-job-description' },
       { label: 'All guides', href: '/guides' },
     ],

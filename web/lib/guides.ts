@@ -1,7 +1,6 @@
 import { isValidElement, type ReactNode } from 'react'
 
-// Guide metadata shared by the /guides index, sitemap, and article pages.
-// `updated` marks the last real content change; it drives dateModified and lastmod.
+// Bump `updated` only for a real content change: it feeds dateModified and the sitemap's lastmod (#88).
 export type Guide = {
   slug: string
   title: string
@@ -23,7 +22,7 @@ export const GUIDES: Guide[] = [
     title: 'Cover Me vs ChatGPT for cover letters',
     description: 'ChatGPT can write a good cover letter if you paste in the posting and your resume every time. Cover Me reads the posting when you click, keeps your resume, and checks the output against it.',
     date: '2026-07-06',
-    updated: '2026-10-29',
+    updated: '2026-11-18',
   },
   {
     slug: 'tailor-resume-to-job-description',
@@ -83,6 +82,18 @@ export const GUIDES: Guide[] = [
     description: "Jobscan's free plan gives 5 scans a month, and rewriting and cover letters cost $49.95 a month. Six tools that check your resume against a job posting for free, and which ones also rewrite it.",
     date: '2026-11-09',
   },
+  {
+    slug: 'chatgpt-resume-prompts',
+    title: 'ChatGPT resume prompts to tailor your resume to a job',
+    description: 'Four prompts that tailor your resume to a job posting in ChatGPT or Claude: pull the keywords, rewrite the summary and bullets, and check nothing was made up. Each one tested, with the real answer.',
+    date: '2026-11-18',
+  },
+  {
+    slug: 'chatgpt-cover-letter-prompts',
+    title: 'ChatGPT cover letter prompts that drop the AI phrases',
+    description: 'Four prompts that write a cover letter in ChatGPT or Claude from your resume and the posting, strip the phrases that sound AI-written, and check every claim. Each one tested, with the real answer.',
+    date: '2026-11-18',
+  },
 ]
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
@@ -100,7 +111,10 @@ export function slugify(text: string): string {
 function textOf(node: ReactNode): string {
   if (typeof node === 'string' || typeof node === 'number') return String(node)
   if (Array.isArray(node)) return node.map(textOf).join(' ')
-  if (isValidElement<{ children?: ReactNode }>(node)) return textOf(node.props.children)
+  if (isValidElement<{ children?: ReactNode; prompt?: string; answer?: string; check?: ReactNode }>(node)) {
+    const { children, prompt, answer, check } = node.props
+    return textOf([children, prompt, answer, check])
+  }
   return ''
 }
 

@@ -1,6 +1,7 @@
+import { existsSync, readFileSync } from 'node:fs'
 import { createElement as h } from 'react'
 import { describe, expect, it } from 'vitest'
-import { readingMinutes, slugify } from './guides'
+import { GUIDES, readingMinutes, slugify } from './guides'
 
 describe('slugify', () => {
   it('turns a guide heading into a stable anchor id', () => {
@@ -23,8 +24,23 @@ describe('readingMinutes', () => {
     expect(readingMinutes([body, 'two'])).toBe(3)
   })
 
+  it("counts a guide prompt's prompt, answer and check", () => {
+    const Prompt = () => null
+    const step = h(Prompt, { prompt: words(230), answer: words(230), check: h('em', null, 'one') })
+    expect(readingMinutes(step)).toBe(3)
+  })
+
   it('never shows less than one minute', () => {
     expect(readingMinutes(h('p', null, 'Short.'))).toBe(1)
     expect(readingMinutes(null)).toBe(1)
+  })
+})
+
+describe('GUIDES', () => {
+  const llms = readFileSync('public/llms.txt', 'utf8')
+
+  it.each(GUIDES.map((g) => g.slug))('%s has a page and a line in llms.txt', (slug) => {
+    expect(existsSync(`app/guides/${slug}/page.tsx`)).toBe(true)
+    expect(llms).toContain(`https://www.cover-me.dev/guides/${slug})`)
   })
 })
