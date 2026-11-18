@@ -114,7 +114,7 @@ After: Campaign Optimization: Ran A/B tests on landing pages that lifted sign-up
     title: 'Check that nothing was made up',
     prompt:
       "Check your new summary and bullets against my original resume. List every skill, tool, number or claim my original resume doesn't support, quote where you wrote it, and say what my resume actually says. If everything is supported, say so. Then give me the corrected summary and bullets.",
-    caption: "Claude's answer, trimmed to the problems it found and the corrected summary. ChatGPT's check flagged “executing campaigns”, which goes beyond the resume's “plans campaigns”, and took it out.",
+    caption: "Claude's answer, trimmed to the problems it found and the corrected summary. ChatGPT's check flagged “executing campaigns”, which goes beyond the resume's “plans campaigns”, and took it out. It missed that its summary credits the 38% to campaigns across email, social and search, when the resume says email and social.",
     answer: `Unsupported claims
 
 1. Summary: "Managed a $1.2M paid media budget across four channels, cutting cost per lead 22% and growing qualified leads 38% in one year."
