@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     url: `${BASE}/guides/${guide.slug}`,
     siteName: 'Cover Me',
     type: 'article',
-    images: [{ url: `${BASE}${HERO_IMAGE}`, width: 1600, height: 900, alt: 'A check prompt catching a number the rewrite moved to the wrong bullet' }],
+    images: [{ url: `${BASE}${HERO_IMAGE}`, width: 1600, height: 900, alt: 'A check prompt catching a number the rewritten summary tied to the wrong result' }],
   },
   twitter: {
     card: 'summary_large_image',
@@ -35,7 +35,7 @@ const PROMPTS = [
     title: 'Pull the must-have keywords from the posting',
     prompt:
       "Here is a job posting. List the 6 must-have keywords a recruiter would search for: the hard skills, tools and qualifications that are required, repeated, or listed first. Use the posting's exact wording, and quote the line each one comes from. Then list up to 5 nice-to-have keywords on their own.\n\nJob posting:\n[PASTE THE JOB POSTING]",
-    caption: "ChatGPT's answer, with the quotes shortened. Claude picked webinars where ChatGPT picked full-funnel campaigns, and kept closer to the posting's wording for the rest.",
+    caption: "ChatGPT's answer, trimmed. Claude picked webinars where ChatGPT picked full-funnel campaigns, and kept closer to the posting's wording for the rest.",
     answer: `6 must-have keywords
 
 1. Integrated Campaigns
@@ -177,7 +177,7 @@ const faqJsonLd = {
       name: 'How long does it take to tailor a resume with ChatGPT?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'In my test the four answers took under a minute to arrive and came to about 1,000 words, which is 4 to 5 minutes of reading. Copying the corrected text into your resume file and fixing its formatting comes on top of that, for every application.',
+        text: "In my test Claude's four answers took 44 seconds and came to about 1,000 words, which is 4 to 5 minutes of reading. Copying the corrected text into your resume file and fixing its formatting comes on top of that, for every application.",
       },
     },
   ],
@@ -200,7 +200,7 @@ export default function Page() {
       ]}
       intro={
         <p>
-          How I tested them: on November 18, 2026, I pasted a made-up resume (<a href="/guides/tailor-resume-in-word/Alex_Rivera_Resume.docx">Alex Rivera, a marketing lead</a>) and a real public posting, <a href={POSTING_URL} target="_blank" rel="noopener noreferrer">Datadog&rsquo;s Senior Demand Generation Marketing Manager</a>, into ChatGPT (logged out, on chatgpt.com) and Claude (Sonnet 5.5). Each prompt went into the same chat as the one before it. The posting asks for things the resume doesn&rsquo;t have, such as Salesforce, webinars and 8 years of experience, which is the case where chatbots tend to make things up. The placeholders in brackets are what you replace.
+          How I tested them: on November 18, 2026, I pasted a made-up resume (<a href="/guides/tailor-resume-in-word/Alex_Rivera_Resume.docx">Alex Rivera, a marketing lead</a>) and a real public posting, <a href={POSTING_URL} target="_blank" rel="noopener noreferrer">Datadog&rsquo;s Senior Demand Generation Marketing Manager</a>, into ChatGPT (logged out, on chatgpt.com) and Claude (Sonnet 5.5, through Anthropic&rsquo;s API). Each prompt went into the same chat as the one before it. The posting asks for things the resume doesn&rsquo;t have, such as Salesforce, webinars and 8 years of experience, which is the case where chatbots tend to make things up. The placeholders in brackets are what you replace.
         </p>
       }
       sections={[
@@ -216,8 +216,8 @@ export default function Page() {
                 The answers arrive fast. Claude took 44 seconds for all four, and ChatGPT answered each prompt I timed in 3 to 11 seconds. The time goes into the rest. You paste the posting and your resume in, read about 1,000 words of answers (4 to 5 minutes at an average pace), fix what the check finds, copy the new summary and bullets into your resume file, repair the formatting, and save a PDF. Then you do it again for the next posting, in a new chat.
               </p>
               <p>
-                When I tailored my own applications this way, it took{' '}
-                <a href="https://dev.to/plain-stack/how-i-went-from-0-interviews-to-4-in-a-month-by-tailoring-every-application-1an4" target="_blank" rel="noopener noreferrer">about 12 minutes each</a>
+                When I tailored my own applications in ChatGPT, a resume and a cover letter took{' '}
+                <a href="https://dev.to/plain-stack/how-i-went-from-0-interviews-to-4-in-a-month-by-tailoring-every-application-1an4" target="_blank" rel="noopener noreferrer">about 12 minutes per application</a>
                 . That&rsquo;s fine for a few roles a week. At several a day, it&rsquo;s the reason people stop tailoring. A cover letter is another set of prompts: see <Link href="/guides/chatgpt-cover-letter-prompts">ChatGPT cover letter prompts</Link>.
               </p>
             </>
@@ -231,7 +231,7 @@ export default function Page() {
                 I build <Link href="/">Cover Me (cover-me.dev)</Link>, a Chrome extension that runs these steps from the posting page. You upload your resume once. On a posting, &ldquo;Tailor Resume to Job&rdquo; reads the page, finds the must-have and nice-to-have keywords, and rewrites your summary, bullets and skills in the posting&rsquo;s words. Your job titles, employers and dates stay as they are.
               </p>
               <p>
-                The check in prompt 4 is built in and doesn&rsquo;t rely on the model grading itself. Every skill the AI adds has to quote a phrase from your resume, code checks that the phrase is there, and a second model call confirms it shows the skill. Then you see an <Link href="/guides/what-is-an-ats-score">ATS match score</Link> with the keywords still missing, and you download a PDF or Word file. A Word upload keeps its own design (beta).
+                Part of prompt 4 is built in, without the model grading itself: every skill the AI adds has to quote a phrase from your resume, code checks that the phrase is there, and a second model call confirms it shows the skill. Then you see an <Link href="/guides/what-is-an-ats-score">ATS match score</Link> with the keywords still missing, and you download a PDF or Word file. A Word upload keeps its own design (beta).
               </p>
               <p>
                 ChatGPT and Claude can do this job well, as the answers above show. The difference is the copying and checking you do by hand. If you&rsquo;re deciding between a chatbot and a tool, <Link href="/guides/cover-me-vs-chatgpt">Cover Me vs ChatGPT</Link> compares them.

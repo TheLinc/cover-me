@@ -92,7 +92,7 @@ Best regards,
 Alex Rivera`,
     check: (
       <>
-        Read it once more for lines that would fit any company. Both &ldquo;excited&rdquo; lines are gone, but &ldquo;These experiences have given me hands-on experience managing campaigns, budgets, and cross-functional launch activities&rdquo; survived, and it repeats the sentences before it. Cut a line like that yourself.
+        Read it once more for lines that would fit any company. Both &ldquo;excited&rdquo; lines are gone, but the edit swapped &ldquo;My experience combines multi-channel campaign execution&rdquo; for &ldquo;These experiences have given me hands-on experience managing campaigns, budgets, and cross-functional launch activities&rdquo;, which is just as generic and repeats the sentences before it. Cut a line like that yourself.
       </>
     ),
   },
@@ -123,7 +123,7 @@ Best regards,
 Alex Rivera`,
     check: (
       <>
-        Read the corrected letter too, because a fix can bring new filler. This one added &ldquo;I look forward to contributing to the team&rsquo;s efforts&rdquo;, a closing prompt 3 would have cut. The check also can&rsquo;t know what your resume leaves out: if you did work with product marketing, put it back in your own words.
+        Read the corrected letter too, because a fix can bring new filler. This one added &ldquo;I look forward to contributing to the team&rsquo;s efforts&rdquo;, the kind of stock closing prompt 3 asks you to cut. The check also can&rsquo;t know what your resume leaves out: if you did work with product marketing, put it back in your own words.
       </>
     ),
   },
@@ -154,7 +154,7 @@ const faqJsonLd = {
       name: 'How do I make a ChatGPT cover letter not sound like AI?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Ask for an edit that names the phrases to remove, such as "I am excited", "passionate", "leverage" and "proven track record", and any sentence that would fit any company. In my test that removed the stock lines from the first draft, but one generic sentence survived, so read the result yourself.',
+        text: 'Ask for an edit that names the phrases to remove, such as "I am excited", "passionate", "leverage" and "proven track record", and any sentence that would fit any company. In my test that removed the stock lines from the first draft, but the edit wrote a new generic sentence in place of an old one, so read the result yourself.',
       },
     },
     {
@@ -185,7 +185,7 @@ export default function Page() {
       ]}
       intro={
         <p>
-          How I tested them: on November 18, 2026, I pasted a made-up resume (<a href="/guides/tailor-resume-in-word/Alex_Rivera_Resume.docx">Alex Rivera, a marketing lead</a>) and a real public posting, <a href={POSTING_URL} target="_blank" rel="noopener noreferrer">Datadog&rsquo;s Senior Demand Generation Marketing Manager</a>, into ChatGPT (logged out, on chatgpt.com) and Claude (Sonnet 5.5). Each prompt went into the same chat as the one before it. The placeholders in brackets are what you replace. To tailor the resume itself first, use the <Link href="/guides/chatgpt-resume-prompts">ChatGPT resume prompts</Link>.
+          How I tested them: on November 18, 2026, I pasted a made-up resume (<a href="/guides/tailor-resume-in-word/Alex_Rivera_Resume.docx">Alex Rivera, a marketing lead</a>) and a real public posting, <a href={POSTING_URL} target="_blank" rel="noopener noreferrer">Datadog&rsquo;s Senior Demand Generation Marketing Manager</a>, into ChatGPT (logged out, on chatgpt.com) and Claude (Sonnet 5.5, through Anthropic&rsquo;s API). Each prompt went into the same chat as the one before it. The placeholders in brackets are what you replace. To tailor the resume itself first, use the <Link href="/guides/chatgpt-resume-prompts">ChatGPT resume prompts</Link>.
         </p>
       }
       sections={[
@@ -201,7 +201,7 @@ export default function Page() {
                 The waiting is short. Claude took 40 seconds for all four answers, and ChatGPT took 26. The rest is yours: paste in the posting and your resume, read about 1,000 words of answers (4 to 5 minutes at an average pace), cut what the edit missed, and copy the letter into a document. If you also tailor your resume, that&rsquo;s a second set of prompts and another 1,000 words for the same application.
               </p>
               <p>
-                When I wrote my own applications this way, a letter and a tailored resume took{' '}
+                When I wrote my own applications in ChatGPT, a letter and a tailored resume took{' '}
                 <a href="https://dev.to/plain-stack/how-i-went-from-0-interviews-to-4-in-a-month-by-tailoring-every-application-1an4" target="_blank" rel="noopener noreferrer">about 12 minutes per application</a>
                 . That&rsquo;s fine for a few roles a week, and it adds up fast at several a day.
               </p>
@@ -216,7 +216,7 @@ export default function Page() {
                 I build <Link href="/">Cover Me (cover-me.dev)</Link>, a Chrome extension that writes the letter from the posting page. You upload your resume once. On a posting, &ldquo;Generate Cover Letter&rdquo; reads the page and writes from your resume and the posting, in about 20 seconds.
               </p>
               <p>
-                Prompt 3 is built in, and it&rsquo;s a check in code, not a request the model can half-follow. Every letter is scanned for stock AI words and clichés, generic openers like &ldquo;I am writing to apply&rdquo;, and passive closes. When it finds one, Cover Me sends the letter back once with each problem listed. It also flags any number that isn&rsquo;t in your resume or the posting, so a made-up result doesn&rsquo;t reach the letter.
+                Prompt 3 is built in, with the checking done in code. Every letter is scanned for stock AI words and clichés, generic openers like &ldquo;I am writing to apply&rdquo;, and passive closes. It also flags any number that isn&rsquo;t in your resume or the posting. When it finds a problem, Cover Me sends the letter back to the model once with each one listed, and keeps whichever version has fewer.
               </p>
               <p>
                 ChatGPT and Claude can write a good letter, as the answers above show. The difference is the copying and checking you do by hand. If you&rsquo;re deciding between a chatbot and a tool, <Link href="/guides/cover-me-vs-chatgpt">Cover Me vs ChatGPT</Link> compares them.
