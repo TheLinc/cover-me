@@ -5,7 +5,12 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-// Live Chrome Web Store listing — used by every "Install" CTA and the
-// SoftwareApplication structured data.
 export const CHROME_STORE_URL =
   'https://chromewebstore.google.com/detail/cover-me-ai-resume-tailor/bpbnopjgjbimdjjdolhkgimllbgamgpi'
+
+// The store dashboard splits views by these tags; campaign names the placement (#280).
+export function storeUrl(campaign: string): string {
+  const url = new URL(CHROME_STORE_URL)
+  url.search = new URLSearchParams({ utm_source: 'cover-me.dev', utm_medium: 'site', utm_campaign: campaign }).toString()
+  return url.toString()
+}
