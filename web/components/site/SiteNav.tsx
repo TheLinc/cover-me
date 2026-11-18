@@ -19,8 +19,6 @@ const MARKETING_LINKS: NavLink[] = [
   { href: '/about', label: 'About' },
 ]
 
-// `actions` replaces the default Sign in / Install buttons (signed-in pages pass the AccountMenu).
-// `links` replaces the marketing links (signed-in pages pass APP_LINKS). (#139)
 export function SiteNav({ actions, links }: { actions?: ReactNode; links?: NavLink[] }) {
   const pathname = usePathname()
   const [scrolled, setScrolled] = useState(false)
@@ -42,7 +40,6 @@ export function SiteNav({ actions, links }: { actions?: ReactNode; links?: NavLi
       )}
     >
       <div className="container flex h-16 items-center gap-8 max-sm:gap-2">
-        {/* Signed-in pages (they pass `links`) keep the logo inside the app. (#233) */}
         <Link href={links ? '/dashboard' : '/'} className="flex shrink-0 items-center gap-2.5">
           <Image src="/logo.png" width={28} height={28} alt="" className="rounded-[8px]" />
           <span className={cn('text-[18px] font-semibold tracking-[-0.02em] text-ink', links && 'max-sm:sr-only')}>Cover Me</span>
@@ -73,7 +70,6 @@ export function SiteNav({ actions, links }: { actions?: ReactNode; links?: NavLi
             </>
           )}
           {!links && (
-            // Below lg the marketing links and Sign in live in this sheet. (#136)
             <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" aria-label="Open menu" className="lg:hidden">

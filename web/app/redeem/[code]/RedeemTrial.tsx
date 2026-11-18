@@ -11,8 +11,7 @@ import { redeemTrial } from '@/lib/billing'
 import { storeUrl } from '@/lib/utils'
 import { confettiFrom } from './confetti'
 
-// One click starts the trial. The billing function checks the code and the
-// account; the Stripe webhook then turns Pro on, usually within seconds. (#112)
+// The Stripe webhook turns Pro on, usually within seconds (#112).
 export function RedeemTrial({ code, email }: { code: string; email: string }) {
   const [state, setState] = useState<{ status: 'idle' | 'loading' } | { status: 'done'; trialEnd: string } | { status: 'error'; error: string }>({ status: 'idle' })
 

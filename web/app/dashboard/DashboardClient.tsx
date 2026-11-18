@@ -31,7 +31,6 @@ interface Props {
   allowance: Allowance | null;
   // Answers to application questions, counted apart (#232).
   answers: Allowance | null;
-  // Recent applications, rendered by the server page and streamed in. (#101)
   history: ReactNode;
 }
 
@@ -96,7 +95,6 @@ export default function DashboardClient({
                   <p className="text-[14px] tabular-nums text-ink-2">
                     <span className="text-[34px] font-semibold leading-none tracking-[-0.03em] text-ink">{usage.limit - usage.used}</span> of {usage.limit} left
                   </p>
-                  {/* Free allowances are a handful of generations, one cell each; Pro's daily 25 is a bar. (#83) */}
                   {allowance?.kind === 'daily' ? (
                     <Progress value={leftPct} className="h-1.5" aria-label={`${usage.limit - usage.used} of ${usage.limit} left`} />
                   ) : (

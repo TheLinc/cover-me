@@ -10,7 +10,5 @@ export const CHROME_STORE_URL =
 
 // The store dashboard splits views by these tags; campaign names the placement (#280).
 export function storeUrl(campaign: string): string {
-  const url = new URL(CHROME_STORE_URL)
-  url.search = new URLSearchParams({ utm_source: 'cover-me.dev', utm_medium: 'site', utm_campaign: campaign }).toString()
-  return url.toString()
+  return `${CHROME_STORE_URL}?${new URLSearchParams({ utm_source: 'cover-me.dev', utm_medium: 'site', utm_campaign: campaign })}`
 }
