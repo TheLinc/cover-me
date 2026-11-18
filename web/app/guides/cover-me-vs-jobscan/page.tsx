@@ -5,9 +5,6 @@ import { getGuide } from '@/lib/guides'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 const guide = getGuide('cover-me-vs-jobscan')
-const HERO_IMAGE = '/guides/cover-me-vs-jobscan.png'
-const HERO_ALT =
-  "Table comparing Jobscan and Cover Me, with prices from each company's site in October 2026. Free plan: 5 resume scans a month with Jobscan, and unlimited with your own API key, or 10 to start then 5 a week, with Cover Me. Paid plan: $49.95 a month or $89.95 every 3 months, against $15 a month or $35 every 3 months. AI cover letters: paid plans against every plan. Open source: no against yes, MIT."
 
 export const metadata: Metadata = {
   title: { absolute: 'Cover Me vs Jobscan: A Free, Open-Source Alternative' },
@@ -19,13 +16,13 @@ export const metadata: Metadata = {
     url: `${BASE}/guides/${guide.slug}`,
     siteName: 'Cover Me',
     type: 'article',
-    images: [{ url: `${BASE}${HERO_IMAGE}`, width: 1600, height: 900, alt: 'Jobscan and Cover Me compared on free plans, paid plans, cover letters and open source' }],
+    images: [{ url: `${BASE}${guide.image}`, width: 1600, height: 900, alt: 'Jobscan and Cover Me compared on free plans, paid plans, cover letters and open source' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Cover Me vs Jobscan | Cover Me',
     description: 'A free, open-source Jobscan alternative that tailors your resume and writes your cover letter on the posting.',
-    images: [`${BASE}${HERO_IMAGE}`],
+    images: [`${BASE}${guide.image}`],
   },
 }
 
@@ -76,7 +73,6 @@ export default function Page() {
   return (
     <GuideArticle
       guide={guide}
-      hero={{ src: HERO_IMAGE, alt: HERO_ALT }}
       lede={
         <>
           Jobscan scores your resume against a job description and, on its paid plans, rewrites it and writes cover letters. It gives 5 free scans a month, then costs $49.95 a month. Cover Me (cover-me.dev) is an open-source Chrome extension that tailors your resume, scores it and writes a cover letter on the posting you have open. It&rsquo;s free and unlimited with your own API key, or $15 a month.

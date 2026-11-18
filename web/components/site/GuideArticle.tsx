@@ -7,7 +7,7 @@ import { type Guide, guideArticleJsonLd, guideBreadcrumbJsonLd, readingMinutes, 
 import { Button } from '@/components/ui/button'
 import { GuideToc, GuideTocCollapsed } from './GuideToc'
 
-const serif = Source_Serif_4({ subsets: ['latin'], weight: '600', display: 'swap' })
+export const serif = Source_Serif_4({ subsets: ['latin'], weight: '600', display: 'swap' })
 
 type GuideSection = { title: string; id?: string; body: ReactNode }
 
@@ -76,7 +76,6 @@ export function ComparisonTable({ name, rows, caption }: { name: string; rows: {
 
 export function GuideArticle({
   guide,
-  hero,
   lede,
   tldr,
   intro,
@@ -86,7 +85,6 @@ export function GuideArticle({
   cta,
 }: {
   guide: Guide
-  hero: { src: string; alt: string }
   lede: ReactNode
   tldr?: string[] | ReactNode
   intro?: ReactNode
@@ -102,7 +100,7 @@ export function GuideArticle({
 
   return (
     <main className="mx-auto max-w-[1040px] px-8 pb-24 pt-16 max-md:px-5 max-md:pt-10 lg:grid lg:grid-cols-[200px_minmax(0,1fr)] lg:gap-x-16">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(guideArticleJsonLd(guide, hero.src)) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(guideArticleJsonLd(guide)) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(guideBreadcrumbJsonLd(guide)) }} />
       {howTo && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(howTo) }} />}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faq) }} />
@@ -130,8 +128,8 @@ export function GuideArticle({
         </header>
 
         <Image
-          src={hero.src}
-          alt={hero.alt}
+          src={guide.image}
+          alt={guide.imageAlt}
           width={1600}
           height={900}
           priority
