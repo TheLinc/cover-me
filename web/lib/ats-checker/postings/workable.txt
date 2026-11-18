@@ -1,0 +1,44 @@
+Senior Open-Source Python Engineer, ML Developer Tools - EMEA Remote
+
+At Hugging Face, we're on a journey to democratize good AI. We are building the fastest growing platform for AI builders with over 11 million users who collectively shared over 4 million models, 1 million datasets & 1.5 million Gradio apps. Our open-source libraries have more than 700,000 stars on Github.
+
+About the Role
+Roles at Hugging Face are very fluid and dynamic — we are looking for someone who is comfortable taking on different challenges that will evolve over time.
+You'll join the Applications team, whose goal is to build the tooling that helps developers create machine learning applications on top of the primitives we offer on the Hub: Gradio, Spaces, Inference Providers, Datasets, Xet, and more. Concretely, that means maintaining and growing libraries like Trackio, a local-first, agent-friendly experiment tracking platform, FastRTC, our library for real-time audio and video streaming in Python, and Gradio itself, used by more than 1 million developers each month. These tools have made machine learning accessible to a wide audience — for the first time in history, anyone with an internet connection can use cutting-edge models right from their browser.
+Several of these libraries are still early in their life, and new ones will start from scratch. A large part of this role is taking a project from its first users to widespread adoption: shaping the API, shipping fast, and getting it into developers' hands.
+Key responsibilities include:
+
+- Designing, developing, and maintaining core features across the team's libraries, ensuring scalability, reliability, and ease of use for ML developers.
+- Architecting complex Python projects and frameworks that serve as foundational tools for the ML community.
+- Growing early-stage libraries: defining the API surface, writing the demos and documentation that make them click, and driving adoption in the developer community.
+- Working on real-time streaming and networking capabilities, a core priority for Gradio 7 and beyond.
+- Collaborating with open-source contributors and engaging with the broader community through code reviews, discussions, and support.
+- Integrating modern frontend technologies to create seamless and intuitive user experiences for Python-based web applications.
+- Adapting to evolving engineering challenges and contributing to the direction of our developer tools as the landscape changes.
+
+If you love open-source, are passionate about making machine learning more accessible, have experience building Python frameworks, and want to contribute to some of the fastest-growing libraries in the ML ecosystem, then we can't wait to see your application!
+What you'll need
+
+- Bachelor's degree or equivalent in Computer Science or a related field
+- 5+ years of professional Python development experience
+- Experience architecting complex Python projects or frameworks
+- A track record of taking early-stage libraries or products from first users to broad adoption
+- Professional experience with JavaScript or TypeScript
+- Professional experience with a modern frontend framework such as React or Svelte
+- Experience core-contributing to or maintaining open-source software projects
+Nice to have
+
+- Experience with real-time audio/video streaming or networking (WebRTC, WebSockets)
+- Contributions to libraries such as pipecat, LiveKit, FastAPI, or Starlette
+
+If you're interested in joining us, but don't tick every box above, we still encourage you to apply! We're building a diverse team whose skills, experiences, and backgrounds complement one another. We're happy to consider where you might be able to make the biggest impact.
+
+One more thing
+At Hugging Face we believe great AI shouldn't require a massive cluster, we build for everyone, especially the GPU-poor. And because we read every application, here's a small sign that you read this one too: start your answer to the first application question with the words “GPU-poor and proud 🤗”. No trick, no catch, it just tells us a real person is on the other side.
+More about Hugging Face
+We are actively working to build a culture that values diversity, equity, and inclusivity. We are intentionally building a workplace where people feel respected and supported—regardless of who you are or where you come from. We believe this is foundational to building a great company and community. Hugging Face is an equal opportunity employer and we do not discriminate on the basis of race, religion, color, national origin, gender, sexual orientation, age, marital status, veteran status, or disability status.
+We value development. You will work with some of the smartest people in our industry. We are an organization that has a bias for impact and is always challenging ourselves to continuously grow. We provide all employees with reimbursement for relevant conferences, training, and education.
+We care about your well-being. We offer flexible working hours and remote options. We offer health, dental, and vision benefits for employees and their dependents. We also offer parental leave and flexible paid time off.
+We support our employees wherever they are. While we have office spaces in NYC and Paris, we're very distributed and all remote employees have the opportunity to visit our offices. If needed, we'll also outfit your workstation to ensure you succeed.
+We want our teammates to be shareholders. All employees have company equity as part of their compensation package. If we succeed in becoming a category-defining platform in machine learning and artificial intelligence, everyone enjoys the upside.
+We support the community. We believe major scientific advancements are the result of collaboration across the field. Join a community supporting the ML/AI community.

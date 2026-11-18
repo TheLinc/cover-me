@@ -1,0 +1,113 @@
+Senior Business Analyst
+
+Best Workplaces™ in Canada 2022 - 2026 | Best Workplaces™ with Most Trusted Executive Teams 2024 - 2026 | Best Workplaces™ in Financial Services & Insurance 2022 - 2026 | Best Workplaces™ for Mental Wellness 2023 - 2026 | Best Workplaces™ for Giving Back 2022 & 2024 | Best Workplaces™ for Inclusion 2021, 2024, 2026 | Best Workplaces™ for Women 2021 | Best Workplaces™ in Ontario™ 2024 - 2025 | Best Workplaces™ for Professional Development 2025, 2026 | Best Workplaces™ for Young Talent 2026
+
+One of Canada’s Most Trusted Investment Brands.
+
+At Picton Mahoney Asset Management (PICTON Investments), being alternative isn’t just what we do—it’s who we are.
+Founded by industry pioneer David Picton, we’ve spent 20 years challenging conventional wisdom and redefining the investing landscape. As one of Canada’s most trusted investment brands, we are proudly independent—privately run, 100% employee-owned, and deeply committed to delivering results for our clients.
+
+Thinking Alternatively is in Our DNA
+
+With a team of 233 bold thinkers—one-third dedicated solely to investment management—we are specialists, not generalists. Managing over $19.9 billion (September 30, 2026) for institutional and retail clients, we navigate markets with conviction, resilience, and a forward-thinking approach.
+
+We’re more than investors — we’re innovators. We challenge traditional investment mindsets, constantly pushing the boundaries to achieve our mission: To bring greater certainty to investors.
+
+Our success is built on four guiding principles:
+
+- Treat investors’ money like our own.
+
+- Redefine the way investors invest.
+
+- Be human—always approachable.
+
+- Succeed together, one investment at a time.
+
+These aren’t just words—they define how we think, how we invest, and how we work.
+
+Now, we’re entering our next chapter. We’re transforming our brand and reshaping the way the world invests. If you think alternatively, embrace an entrepreneurial spirit, and thrive in a dynamic, bureaucracy-free environment, join us and be part of what’s next.
+
+Thriving in Our Entrepreneurial Culture
+
+At PICTON Investments, you’ll thrive in our creative and dynamic workplace, where collaboration and support are at the core of everything we do. At our firm, you’ll have the opportunity to take on significant responsibilities, work in a flexible environment, and tackle challenging projects from the outset. Our culture is designed for ambitious professionals who want to make an immediate impact while continuing to push boundaries and achieve our greater mission. You’ll be empowered with a high level of responsibility, trust, and flexibility, providing an exciting and creative space for you to help reshape how the world views alternative investments. With competitive total rewards, performance-based bonuses, and a clear path for career growth, you’ll have everything you need to develop both now and over the longer term.
+
+The Opportunity
+
+Picton Investments is seeking a seasoned Senior Business Analyst to bridge business needs with technology solutions across our investment management platform. In this role, you will partner with front- and middle-office teams to analyze workflows and data flows, primarily around Securities Master File (SMF) and Investment Book of Record (IBOR) data, and drive enhancements across Charles River IMS (CRIMS), Bloomberg DL, Snowflake ODS, and other trading and market data systems. You’ll be responsible for translating complex business requirements into functional solutions, improving CRIMS user experience through custom reports, integrations, and workflow optimizations, and ensuring systems continue to meet evolving business needs. This is a highly collaborative role where you will work closely with investment professionals, technology teams, and external vendors to deliver solutions that enable efficiency, accuracy, and better decision-making.
+
+The expected annual base salary for this role is 120,000-130,000 with the final number depending on your experience, skills, and education. On top of that, you’ll be eligible for our discretionary bonus program.
+
+At PICTON Investments, being employee-owned means we take care of our team and offer opportunities for top performers to participate in our equity ownership program over time. Eligible employees get access to a full benefits package, including profit sharing, health and wellness coverage, life and disability insurance, paid time off and holidays, learning and development programs, and more, many of which are fully covered or subsidized by us.
+
+You’ll Have the Opportunity to Learn and Lead
+
+- Collaborate with traders, portfolio managers, operations, compliance, and external vendors (CRD, Bloomberg, State Street, etc.) to configure workflows that minimize pain points while retaining necessary controls.
+
+- Translate business workflows and data needs into functional specifications and ensure timely delivery of technology solutions.
+
+- Partner with developers, QA teams, and business application support to ensure integrations (SOD/SMF/IBOR/Benchmark data) are accurate and timely.
+
+- Act as a CRIMS Subject Matter Expert (SME), occasionally providing Level 2 support and consulting to business users.
+
+- Identify and analyze emerging trends, data patterns, and issues to guide strategic decision-making.
+
+- Mentor colleagues, share expertise across practice communities, and help build analytical capability within the organization.
+
+- Stay ahead of evolving technologies in investment systems, analytics, reporting, and data visualization.
+
+- Contribute to business cases and project funding requests by clearly defining scope, risks, and benefits.
+
+- Lead structured requirements gathering, stakeholder walkthroughs, and validation sessions to ensure solutions meet expectations.
+
+- Play a critical role in shaping the investment data and system landscape by recommending and implementing innovative approaches.
+
+What We’re Looking For
+
+- Experience: 7+ years in financial services, investment/wealth management, or capital markets technology.
+
+- Education: Bachelor’s degree required (MBA/MS in Computer Science, Information Systems, Finance, Data Analytics, or related field preferred).
+
+- Domain Knowledge:
+
+- Deep understanding of asset classes, securities, portfolio management, trading, compliance, and performance reporting.
+
+- Expertise in trade life cycles, mutual funds, ETFs, derivatives, and structured products.
+
+- Strong grasp of SMF, IBOR, portfolio accounting, and investment risk data attributes.
+
+- Systems Expertise:
+
+- Hands-on with Charles River IMS (CRIMS) implementations, upgrades, and workflows (entitlements, rebalancing, compliance, benchmarking, IBOR, collateral, etc.).
+
+- Proficiency with Bloomberg DL, PORT, RIMES, Refinitiv, FactSet, Markit EDM, State Street DataGX/Alpha, BARRA risk analytics.
+
+- Familiarity with Snowflake, SQL, PowerBI, MS Excel/Visio, and data visualization/reporting tools.
+
+- Technical Skills:
+
+- Knowledge of SDLC, Agile/Scrum/Waterfall methodologies.
+
+- Jira, Confluence, relational databases, advanced data analysis techniques.
+
+- Strong documentation, requirements analysis, and process modeling skills.
+
+- Soft Skills:
+
+- Exceptional communication and influence skills.
+
+- Strong problem-solving ability and analytical mindset.
+
+- Ability to work independently while managing complex stakeholder needs.
+
+- Leadership in mentoring, knowledge sharing, and fostering collaboration.
+
+Our Commitment to Employees
+
+At PICTON Investments, we take pride in enhancing our employees' experiences through a comprehensive suite of exceptional perks and programs. Our benefits include corporate fitness reimbursement and discounts, VersaFi memberships (formerly Women in Capital Markets), PICTON Investment counseling and portfolio management services, volunteer and charitable donation matching, maternity and parental leave top-up, recognition awards, semi-annual performance bonuses, a generous annual vacation entitlement (minimum of 15 days per year), training and development reimbursement, extensive health and dental benefits, a healthcare spending account, and more.
+These offerings are designed to support your career growth, well-being, and overall success. Join us and thrive in an environment that values and invests in you!
+
+PICTON Investments is committed to providing an equitable and fair work environment for everyone and all hiring and other personnel actions will be taken without regard to race, colour, creed, religion, sex, disability, gender identity, gender expression, family status, age, language or national origin. We welcome applications from candidates with diverse experiences globally. Canadian experience is not required. If you require an accommodation at any point in time throughout the application and hiring process, please contact Human Resources at (416) 955-4108 or at accessibility@pictoninvestments.com.
+
+PICTON Investments does not accept unsolicited resumes, emails, calls, or any other form of communication from third-party recruitment agencies. Any unsolicited outreach, including commercial electronic messages, will neither be acknowledged nor considered.
+
+Please note: We use AI-assisted tools to support parts of our recruitment process, including summarizing interview notes, aligning candidate profiles with job requirements, and initial resume screening. All decisions are made by our hiring team.
