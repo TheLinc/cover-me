@@ -550,7 +550,7 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
     // tailors. A new upload has no parse, so its first tailor reads it.
     // "Your design" places the text with the parse its file was checked against.
     const before = design
-    const read = await parseForTailor(design, resumeData.parsed, async () => {
+    const read = await parseForTailor(design, resumeData, async () => {
       onProgress('Reading your resume (first run only)…')
       const fresh = await parseResumeStructure(resumeData.text, settings.provider, apiKey)
       onProgress('') // read; the model thinks next, which is plain "Plan the changes"

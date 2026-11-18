@@ -114,7 +114,7 @@ describe('the parse an own-key tailor starts from', () => {
 
   test("a Word file's parse from before the link fix (#238) takes the current one, with no model call", async () => {
     await store({ fileParse: beforeLinks(), extra: { resume: { parsed: current() } } })
-    const { parsed, design } = await parseForTailor(await designForTailor(), current(), read)
+    const { parsed, design } = await parseForTailor(await designForTailor(), { text: 'Ada', parsed: current() }, read)
     expect(read).not.toHaveBeenCalled()
     expect(parsed).toEqual(current())
     expect(design).toMatchObject({ design: { layout: 'yours', sourceHash: hash }, parsed: current() })
@@ -122,7 +122,7 @@ describe('the parse an own-key tailor starts from', () => {
 
   test('an old parse on both sides is read again once, and the file takes it', async () => {
     await store({ fileParse: beforeLinks(), extra: { resume: { parsed: beforeLinks() } } })
-    const { parsed, design } = await parseForTailor(await designForTailor(), beforeLinks(), read)
+    const { parsed, design } = await parseForTailor(await designForTailor(), { text: 'Ada', parsed: beforeLinks() }, read)
     expect(read).toHaveBeenCalledOnce()
     expect(parsed).toMatchObject({ linksKept: true })
     expect((local.resume as { parsed: unknown }).parsed).toMatchObject({ linksKept: true })
@@ -130,11 +130,22 @@ describe('the parse an own-key tailor starts from', () => {
     expect(design.parsed).toBe(parsed)
   })
 
+  test('a resume replaced while its parse runs never gets that parse, and the run still uses it', async () => {
+    fakeLocal({ resume: { text: 'Ada', filename: 'ada.pdf', updatedAt: '2026-11-01T00:00:00Z' } })
+    const replaced = { text: 'Someone else', filename: 'other.pdf', updatedAt: '2026-11-02T00:00:00Z' }
+    const { parsed } = await parseForTailor(await designForTailor(), { text: 'Ada' }, async () => {
+      local.resume = replaced
+      return current()
+    })
+    expect(parsed).toMatchObject({ linksKept: true })
+    expect(local.resume).toEqual(replaced)
+  })
+
   test("a current Word file's parse is used as it is", async () => {
     await store()
     const before = local[`designFile:${hash}`]
     const d = await designForTailor()
-    const { parsed, design } = await parseForTailor(d, beforeLinks(), read)
+    const { parsed, design } = await parseForTailor(d, { text: 'Ada', parsed: beforeLinks() }, read)
     expect(read).not.toHaveBeenCalled()
     expect(parsed).toBe(d.parsed)
     expect(design).toBe(d)

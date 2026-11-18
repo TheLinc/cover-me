@@ -182,11 +182,11 @@ export async function designWithParse(hash: string, parsed: ParsedResume): Promi
 // it's current, else the resume's, read again once when it's from before
 // extra sections, section order or the link fix (upgradedParse keeps the
 // order the user chose). A Word file is then checked against it.
-export async function parseForTailor(d: ForTailor, stored: ParsedResume | undefined, read: () => Promise<ParsedResume>): Promise<{ parsed: ParsedResume; design: ForTailor }> {
-  let parsed = isCurrentParse(d.parsed) ? d.parsed : stored
+export async function parseForTailor(d: ForTailor, resume: Pick<ResumeData, 'text' | 'parsed'>, read: () => Promise<ParsedResume>): Promise<{ parsed: ParsedResume; design: ForTailor }> {
+  let parsed = isCurrentParse(d.parsed) ? d.parsed : resume.parsed
   if (!isCurrentParse(parsed)) {
     parsed = upgradedParse(parsed, await read())
-    await saveParsedResume(parsed)
+    await saveParsedResume(parsed, resume.text)
   }
   const design = d.parsed && d.parsed !== parsed && d.design.sourceHash ? await designWithParse(d.design.sourceHash, parsed) : d
   return { parsed, design }
