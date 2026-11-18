@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { shouldAskForReview } from './review-ask'
+import { countShowingWhenSeen, generationsSoFar, shouldAskForReview } from './review-ask'
 import { addToHistory, addToTailoredHistory, getGenerationCount } from './storage'
 
 const now = Date.parse('2026-11-02T12:00:00Z')
@@ -25,6 +25,65 @@ describe('shouldAskForReview', () => {
   test('never a third time, or after a link click', () => {
     expect(shouldAskForReview(gen(100), { shown: 2, atCount: 14, done: false }, now)).toBe(false)
     expect(shouldAskForReview(gen(100), { shown: 1, atCount: 4, done: true }, now)).toBe(false)
+  })
+})
+
+describe('generationsSoFar', () => {
+  const entry = (createdAt: string, account?: string) => ({ createdAt, account })
+
+  test('counts history made before the generation count existed', () => {
+    const entries = [entry('2026-10-20T00:00:00Z'), entry('2026-10-21T00:00:00Z'), entry('2026-11-08T00:00:00Z')]
+    expect(generationsSoFar(gen(1, '2026-11-08T00:00:00Z'), entries)).toEqual({ count: 3, firstAt: '2026-10-20T00:00:00Z' })
+    expect(generationsSoFar(null, entries)).toEqual({ count: 3, firstAt: '2026-10-20T00:00:00Z' })
+  })
+
+  test('keeps the stored count when history is shorter, and the earlier first date', () => {
+    expect(generationsSoFar(gen(12, '2026-11-01T00:00:00Z'), [entry('2026-11-05T00:00:00Z')])).toEqual({ count: 12, firstAt: '2026-11-01T00:00:00Z' })
+  })
+
+  test("skips a previous user's entries", () => {
+    const entries = [entry('2026-10-01T00:00:00Z', 'other'), entry('2026-10-02T00:00:00Z', 'other'), entry('2026-11-08T00:00:00Z', 'u1')]
+    expect(generationsSoFar(null, entries)).toEqual({ count: 1, firstAt: '2026-11-08T00:00:00Z' })
+    expect(generationsSoFar(null, [entry('2026-10-01T00:00:00Z', 'other')])).toBeNull()
+  })
+
+  test('a user with 3 day-old entries qualifies whatever the stored count says', () => {
+    const entries = [entry('2026-10-20T00:00:00Z'), entry('2026-10-21T00:00:00Z'), entry('2026-10-22T00:00:00Z')]
+    expect(shouldAskForReview(generationsSoFar(null, entries), null, now)).toBe(true)
+    expect(shouldAskForReview(generationsSoFar(gen(1, '2026-11-02T11:00:00Z'), entries), null, now)).toBe(true)
+  })
+})
+
+describe('countShowingWhenSeen', () => {
+  afterEach(() => vi.useRealTimers())
+
+  test('saves the showing once the card has been on screen for 2 seconds', () => {
+    vi.useFakeTimers()
+    const save = vi.fn()
+    countShowingWhenSeen(save)
+    vi.advanceTimersByTime(1999)
+    expect(save).not.toHaveBeenCalled()
+    vi.advanceTimersByTime(1)
+    expect(save).toHaveBeenCalledTimes(1)
+  })
+
+  test('a card gone sooner, like a popup closed straight after a copy, saves nothing', () => {
+    vi.useFakeTimers()
+    const save = vi.fn()
+    countShowingWhenSeen(save).cancel()
+    vi.advanceTimersByTime(10_000)
+    expect(save).not.toHaveBeenCalled()
+  })
+
+  test('Not now or Send feedback saves it straight away, and only once', () => {
+    vi.useFakeTimers()
+    const save = vi.fn()
+    const showing = countShowingWhenSeen(save)
+    showing.now()
+    showing.now()
+    vi.advanceTimersByTime(10_000)
+    showing.cancel()
+    expect(save).toHaveBeenCalledTimes(1)
   })
 })
 

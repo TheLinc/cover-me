@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react'
 const GROW_MS = 800
 // A smaller rise reads as tailoring doing nothing, so it counts as none (#228).
 const MIN_GAIN = 5
+export const scoreRose = (score?: number, before?: number) =>
+  typeof score === 'number' && typeof before === 'number' && score - before >= MIN_GAIN
 // The ATS match as a ring, the same geometry as the website's ScoreRing.
 // A tailored result (`from` given) fills from 0 to the score, or from the
 // original resume's score when tailoring added at least MIN_GAIN (#228). It
@@ -16,7 +18,7 @@ export default function ScoreRing({ score, from, grow = true, onGrow, size = 104
   onGrow?: () => void
   size?: number
 }) {
-  const rose = typeof from === 'number' && score - from >= MIN_GAIN
+  const rose = scoreRose(score, from)
   const start = typeof from !== 'number' ? score : rose ? from : 0
   // Fixed at mount: the page clears `grow` once the fill starts.
   const [animate] = useState(() => grow && start < score && !matchMedia('(prefers-reduced-motion: reduce)').matches)
@@ -63,7 +65,7 @@ export default function ScoreRing({ score, from, grow = true, onGrow, size = 104
 // Nothing for a run from a backend that doesn't send the before score.
 export function gainLine(score?: number, before?: number): string | null {
   if (typeof score !== 'number' || typeof before !== 'number') return null
-  if (score - before >= MIN_GAIN) return `Up from ${before} before tailoring.${before >= 80 ? ' Your resume already matched well.' : ''}`
+  if (scoreRose(score, before)) return `Up from ${before} before tailoring.${before >= 80 ? ' Your resume already matched well.' : ''}`
   if (score >= 80) return 'Your resume already matched this job well.'
   return 'Your resume already used the keywords it can back up. Add real experience below to raise it.'
 }
