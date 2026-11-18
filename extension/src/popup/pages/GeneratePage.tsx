@@ -13,9 +13,9 @@ import PageReadNotice from '../components/PageReadNotice'
 import AnswersNews from '../components/AnswersNews'
 import PostingTitleTip from '../components/PostingTitleTip'
 import ProgressSteps from '../components/ProgressSteps'
-import ReviewAsk, { claimReviewAsk } from '../components/ReviewAsk'
+import ReviewAsk from '../components/ReviewAsk'
 import ScrapeFailurePanel, { type ShownFailure } from '../components/ScrapeFailure'
-import ScoreRing, { ScoreGain } from '../components/ScoreRing'
+import ScoreRing, { ScoreGain, scoreRose } from '../components/ScoreRing'
 import UpgradePrompt from '../components/UpgradePrompt'
 import { GenerateOffer } from '../components/FirstMonthOffer'
 import { WhatsNewLink } from '../components/WhatsNew'
@@ -76,13 +76,12 @@ interface TailorOptionsProps {
   setTrim: (v: boolean) => void
   includeSummary: boolean
   setIncludeSummary: (v: boolean) => void
-  // A Word upload's layout (#131); null without one.
   design: { yours: boolean; summary: boolean } | null
   onChangeLayout: () => void
 }
 
 function TailorOptions({ inputMode, manualReady, onTailor, compact, setCompact, trim, setTrim, includeSummary, setIncludeSummary, design, onChangeLayout }: TailorOptionsProps) {
-  // The user's file sets the page: no compacting, and a summary only where the file has one.
+  // The user's file sets the page: no compacting, and a summary only where the file has one. (#131)
   const yours = !!design?.yours
   return (
     <div className="tailor-section">
@@ -138,7 +137,7 @@ function TailorOptions({ inputMode, manualReady, onTailor, compact, setCompact, 
 }
 
 // A run that used the note box's text has adopted it, so the box clears to
-// show that. Text typed while it ran is kept.
+// show that. Text typed while it ran is kept. (#171)
 function noteAfterRun(current: string, used: string | undefined): string {
   return used && current.trim() === used ? '' : current
 }
@@ -160,8 +159,6 @@ export default function GeneratePage({ onNavigate }: Props) {
   const [tailorErrorCode, setTailorErrorCode] = useState<'RATE_LIMIT' | 'FAIR_USE' | undefined>()
   const [tailoredResume, setTailoredResume] = useState<TailoredResume | null>(null)
   const [tailoredJob, setTailoredJob] = useState<JobData | null>(null)
-  // The result's ID in tailored History: the editor tab opens it, and an
-  // edit made there replaces what this page saved of it.
   const [tailoredEntryId, setTailoredEntryId] = useState<string | null>(null)
   // The History entry whose ATS ring has filled, so reopening the popup doesn't fill it again (#228).
   const [ringFilledFor, setRingFilledFor] = useState<string | null>(null)
@@ -172,8 +169,7 @@ export default function GeneratePage({ onNavigate }: Props) {
   const [trim, setTrim] = useState(false)
   const [includeSummary, setIncludeSummary] = useState(true)
   const [loadingJob, setLoadingJob] = useState<JobData | null>(null)
-  // The last click read no job (#130). Saved, so it survives the popup closing
-  // while the user copies the posting.
+  // Saved, so it survives the popup closing while the user copies the posting (#130).
   const [scrapeFailure, setScrapeFailure] = useState<ShownFailure | null>(null)
 
   const [manualTitle, setManualTitle] = useState('')
@@ -186,12 +182,11 @@ export default function GeneratePage({ onNavigate }: Props) {
   const [hasSession, setHasSession] = useState<boolean | null>(null)
   const [appMode, setAppMode] = useState<'byok' | 'hosted'>('hosted')
 
-  // UI state — not persisted across popup opens
   const [contextExpanded, setContextExpanded] = useState(false)
   const [letterEditing, setLetterEditing] = useState(false)
   const [regenerateExpanded, setRegenerateExpanded] = useState(false)
   const [activeResultTab, setActiveResultTab] = useState<'letter' | 'resume'>('letter')
-  const [reviewOpen, setReviewOpen] = useState(false)
+  const [reviewAt, setReviewAt] = useState<'letter' | 'resume' | null>(null)
 
   const loaded = useRef(false)
   const coverJobId = useRef<string | null>(null)
@@ -215,9 +210,7 @@ export default function GeneratePage({ onNavigate }: Props) {
       let restoredTailorDone = false
       if (s) {
         if (s.inputMode) setInputMode(s.inputMode as InputMode)
-        // Only on the tab it's about, still on that site (an unsupported one)
-        // or that page (a bug report is about one URL). Elsewhere it's dropped,
-        // and the paste form it opened closes unless the user started filling it in.
+        // Shown again only on the same tab, still on that site or page (a bug report is about one URL) (#150).
         const failure = s.scrapeFailure as ShownFailure | undefined
         if (failure) {
           void chrome.tabs.query({ active: true, currentWindow: true }).then(([tab]) => {
@@ -286,9 +279,8 @@ export default function GeneratePage({ onNavigate }: Props) {
           setTailorError(tj.error ?? 'Resume tailoring failed.')
           setTailorErrorCode(tj.errorCode)
           setTailorState('error')
-        // A finished run the saved page doesn't show yet: the page isn't saved
-        // while a run is loading, so after closing the popup during Regenerate
-        // the saved result is the one before it, under another History entry.
+        // The page isn't saved while a run is loading, so after closing the popup during Regenerate
+        // the saved result is the one before it, under another History entry (#171).
         } else if (tj.status === 'done' && tj.resume && (!restoredTailorDone || (!!tj.entryId && tj.entryId !== s?.tailoredEntryId))) {
           setTailoredResume(tj.resume)
           setTailoredJob(tj.job)
@@ -306,7 +298,7 @@ export default function GeneratePage({ onNavigate }: Props) {
   useEffect(() => {
     function handler(changes: { [key: string]: chrome.storage.StorageChange }, area: string) {
       if (area !== 'local') return
-      // The design check finishes in the worker while the popup stays open.
+      // The design check finishes in the worker while the popup stays open. (#131)
       if (changes.resume) {
         setResumeData((changes.resume.newValue as ResumeData | undefined) ?? null)
         setHasResume(!!changes.resume.newValue)
@@ -381,7 +373,7 @@ export default function GeneratePage({ onNavigate }: Props) {
     })
   }, [state, inputMode, scrapeFailure, manualTitle, manualCompany, manualDescription, letter, job, createdAt, compact, trim, includeSummary, tailorState, tailoredResume, tailoredJob, tailoredEntryId, supplemental, letterSupplemental, activeResultTab])
 
-  // Edited in the editor tab since this page saved it: show the edit.
+  // Edited in the editor tab since this page saved it: show the edit. (#118)
   useEffect(() => {
     if (!tailoredEntryId) return
     getTailoredHistory().then((list) => {
@@ -390,16 +382,13 @@ export default function GeneratePage({ onNavigate }: Props) {
     })
   }, [tailoredEntryId])
 
-  // Candidate context is a standing profile fact, not per-job state — persisted
-  // to its own storage key so it survives "New" resets and applies automatically
-  // to every future generation (merged in by the service worker).
+  // Its own storage key, so it survives New and applies to every later generation
+  // (https://github.com/TheLinc/cover-me/commit/46f809a).
   useEffect(() => {
     if (!loaded.current) return
     saveCandidateContext(initialContext)
   }, [initialContext])
 
-  // An unsupported site opens the paste form straight away; the other cases
-  // offer it beside a report or a retry.
   const markReported = () => setScrapeFailure((f) => f && { ...f, reported: true })
 
   async function showScrapeFailure(failure: ScrapeFailure, flow: ShownFailure['flow']) {
@@ -462,39 +451,37 @@ export default function GeneratePage({ onNavigate }: Props) {
     }
   }
 
-  // The rating card closes when either result changes: a new run, New, an error.
-  useEffect(() => setReviewOpen(false), [state, tailorState])
+  useEffect(() => setReviewAt(null), [state, tailorState])
 
-  // Right after the user got what they came for. Not while either side shows
-  // an error, which includes having just hit the allowance.
-  function askForReview() {
+  // An error on either side includes having just hit the allowance: no ask then (#266).
+  function askForReview(at: 'letter' | 'resume') {
     if (state === 'error' || tailorState === 'error') return
-    void claimReviewAsk().then((ask) => { if (ask) setReviewOpen(true) })
+    setReviewAt(at)
   }
 
   async function copy() {
     await navigator.clipboard.writeText(letter)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
-    askForReview()
+    askForReview('letter')
   }
 
   function downloadPdf() {
     if (!job) return
     downloadCoverLetterPdf(letter, job, createdAt)
-    askForReview()
+    askForReview('letter')
   }
 
   function downloadResumePdf() {
     if (!tailoredResume || !tailoredJob) return
     downloadTailoredResumePdf(tailoredResume, tailoredJob.title)
-    askForReview()
+    askForReview('resume')
   }
 
   async function downloadResumeDocx() {
     if (!tailoredResume || !tailoredJob) return
     await downloadResumeWord(tailoredResume, tailoredJob.title)
-    askForReview()
+    askForReview('resume')
   }
 
   async function regenerateLetter() {
@@ -523,7 +510,7 @@ export default function GeneratePage({ onNavigate }: Props) {
 
   function cancelLetter() {
     if (coverJobId.current) coverDismissedId.current = coverJobId.current
-    // A cancelled regenerate returns to the letter it would have replaced.
+    // A cancelled regenerate returns to the letter it would have replaced. (#19)
     setState(letter && job ? 'done' : 'idle')
     setLoadingJob(null)
   }
@@ -531,7 +518,7 @@ export default function GeneratePage({ onNavigate }: Props) {
   async function tailor() {
     setScrapeFailure(null)
     setTailorState('loading')
-    setTailorProgress('') // a new run starts at the top, whatever the last one reached
+    setTailorProgress('')
     setLoadingJob(null)
     setTailorError('')
     let scrapedJob: JobData
@@ -567,7 +554,7 @@ export default function GeneratePage({ onNavigate }: Props) {
     }
     setScrapeFailure(null)
     setTailorState('loading')
-    setTailorProgress('') // a new run starts at the top, whatever the last one reached
+    setTailorProgress('')
     setLoadingJob(jobData)
     setTailorError('')
     const jobId = crypto.randomUUID()
@@ -589,10 +576,8 @@ export default function GeneratePage({ onNavigate }: Props) {
     }
   }
 
-  // The error is persisted in coverJob and restored on every popup open, so
-  // leaving it has to clear the record too (otherwise a user who just paid
-  // stays on the limit warning).
-  // Back to the letter that was showing (a failed regenerate keeps it), or idle.
+  // The error is stored in coverJob and restored on every open, so leaving it clears that too,
+  // or a user who just paid stays on the limit warning (https://github.com/TheLinc/cover-me/commit/4db12bd).
   function dismissLetterError() {
     setState(letter && job ? 'done' : 'idle')
     chrome.storage.local.remove('coverJob')
@@ -620,7 +605,7 @@ export default function GeneratePage({ onNavigate }: Props) {
     if (!tailoredJob) return
     const previous = tailoredResume
     setTailorState('loading')
-    setTailorProgress('') // a new run starts at the top, whatever the last one reached
+    setTailorProgress('')
     setLoadingJob(tailoredJob)
     setTailoredResume(null)
     setTailorError('')
@@ -692,10 +677,10 @@ export default function GeneratePage({ onNavigate }: Props) {
   const setupLoaded = hasResume !== null && hasApiKey !== null && hasSession !== null
 
   const bothDone = state === 'done' && tailorState === 'done'
+  // A good score is the moment to ask, so the card goes right under it. (#266)
+  const reviewUnderScore = !!tailoredResume && (scoreRose(tailoredResume.atsScore, tailoredResume.atsScoreBefore) || (tailoredResume.atsScore ?? 0) >= 80)
   const postingTitle = tailorState === 'done' && tailoredResume && tailoredJob ? postingTitleInSummary(tailoredResume, tailoredJob.title) : undefined
 
-  // The header's status line: what's running, what failed, or that a result is
-  // ready. A failure wins over the other result being done.
   const status = !setupComplete ? ''
     : state === 'loading' ? (loadingJob ? 'Writing…' : 'Reading the posting…')
     : tailorState === 'loading' ? (loadingJob ? 'Tailoring…' : 'Reading the posting…')
@@ -711,12 +696,12 @@ export default function GeneratePage({ onNavigate }: Props) {
         <span className="logo-text">Cover Me</span>
         <WhatsNewLink />
         {/* Mounted once saved state has loaded (so reopening the popup doesn't
-            announce "Done"), then kept, so screen readers hear each change. */}
+            announce "Done"), then kept, so screen readers hear each change. (#19) */}
         {setupLoaded && <span className="popup-status" role="status">{status}</span>}
       </header>
 
       <PageReadNotice />
-      {/* After setup, so a new user's first screen stays the checklist. */}
+      {/* After setup, so a new user's first screen stays the checklist. (#242) */}
       {setupLoaded && setupComplete && <AnswersNews />}
 
       {!setupLoaded && null}
@@ -794,7 +779,6 @@ export default function GeneratePage({ onNavigate }: Props) {
 
       {setupLoaded && setupComplete && (
         <>
-          {/* ── LOADING (full-screen, either feature) ── */}
           {(state === 'loading' || tailorState === 'loading') && (
             <div className="loading">
               <ProgressSteps
@@ -820,10 +804,8 @@ export default function GeneratePage({ onNavigate }: Props) {
             </div>
           )}
 
-          {/* ── NON-LOADING CONTENT ── */}
           {state !== 'loading' && tailorState !== 'loading' && (
             <>
-              {/* IDLE — AUTO, after a click that read no job */}
               {state === 'idle' && tailorState === 'idle' && inputMode === 'auto' && scrapeFailure && (
                 <ScrapeFailurePanel
                   failure={scrapeFailure}
@@ -833,7 +815,6 @@ export default function GeneratePage({ onNavigate }: Props) {
                 />
               )}
 
-              {/* IDLE — AUTO */}
               {state === 'idle' && tailorState === 'idle' && inputMode === 'auto' && !scrapeFailure && (
                 <div className="generate-cta">
                   <ContextExpander
@@ -871,7 +852,6 @@ export default function GeneratePage({ onNavigate }: Props) {
                 </div>
               )}
 
-              {/* IDLE — MANUAL */}
               {state === 'idle' && tailorState === 'idle' && inputMode === 'manual' && (
                 <div className="manual-form">
                   <button className="manual-back" onClick={() => { setInputMode('auto'); setScrapeFailure(null) }}>
@@ -939,7 +919,6 @@ export default function GeneratePage({ onNavigate }: Props) {
                 </div>
               )}
 
-              {/* LETTER ERROR */}
               {state === 'error' && (
                 <div className="letter-container">
                   <div className={errorCode ? 'warning-box' : 'error-box'}>
@@ -952,7 +931,6 @@ export default function GeneratePage({ onNavigate }: Props) {
                 </div>
               )}
 
-              {/* TAILOR ERROR */}
               {tailorState === 'error' && (
                 <div className="letter-container">
                   <div className={tailorErrorCode ? 'warning-box' : 'error-box'}>{tailorError}</div>
@@ -963,7 +941,6 @@ export default function GeneratePage({ onNavigate }: Props) {
                 </div>
               )}
 
-              {/* RESULT TABS — only shown when both are done */}
               {bothDone && (
                 <div className="result-tabs">
                   <button
@@ -981,7 +958,6 @@ export default function GeneratePage({ onNavigate }: Props) {
                 </div>
               )}
 
-              {/* LETTER RESULT */}
               {state === 'done' && (!bothDone || activeResultTab === 'letter') && (
                 <div className="letter-container">
                   <div className="letter-header-row">
@@ -1073,10 +1049,11 @@ export default function GeneratePage({ onNavigate }: Props) {
                       New
                     </button>
                   </div>
+                  {/* Under the row, so "Copied!" stays in view on a long letter. (#266) */}
+                  {reviewAt === 'letter' && <ReviewAsk onClose={() => setReviewAt(null)} />}
                 </div>
               )}
 
-              {/* TAILOR RESULT */}
               {tailorState === 'done' && tailoredResume && (!bothDone || activeResultTab === 'resume') && (
                 <div className="letter-container">
                   {tailoredJob && (
@@ -1106,6 +1083,7 @@ export default function GeneratePage({ onNavigate }: Props) {
                       </div>
                     </div>
                   )}
+                  {reviewAt === 'resume' && reviewUnderScore && <ReviewAsk onClose={() => setReviewAt(null)} />}
                   <div className="supplemental-section">
                     <label className="supplemental-label" htmlFor="tailor-supplemental">Missing something?</label>
                     <div className="composer">
@@ -1129,15 +1107,15 @@ export default function GeneratePage({ onNavigate }: Props) {
                     <p className="hint">Your file&apos;s layout couldn&apos;t be edited safely, so this one uses the Cover Me layout.</p>
                   )}
                   {postingTitle && <PostingTitleTip {...postingTitle} />}
+                  {reviewAt === 'resume' && !reviewUnderScore && <ReviewAsk onClose={() => setReviewAt(null)} />}
                   <div className="letter-actions">
-                    {/* Tailored in the user's own file (#131): their Word file leads. */}
                     <DownloadMenu
                       up
                       options={tailoredResume.sourceHash
                         ? [{ label: 'Word', note: 'Your design', onSelect: () => void downloadResumeDocx() }, { label: 'PDF', note: 'Cover Me layout', onSelect: downloadResumePdf }]
                         : [{ label: 'PDF', onSelect: downloadResumePdf }, { label: 'Word', onSelect: () => void downloadResumeDocx() }]}
                     />
-                    {/* Not for "Your design": its Word file takes only some edits, and the user can edit it in Word. */}
+                    {/* Not for "Your design": its Word file takes only some edits, and the user can edit it in Word. (#118) */}
                     {tailoredEntryId && !tailoredResume.sourceHash && (
                       <button className="btn btn-secondary btn-compact" onClick={() => void openResumeEditor(tailoredEntryId)}>
                         <EditIcon />
@@ -1150,8 +1128,6 @@ export default function GeneratePage({ onNavigate }: Props) {
                   </div>
                 </div>
               )}
-
-              {reviewOpen && <ReviewAsk onClose={() => setReviewOpen(false)} />}
             </>
           )}
         </>
