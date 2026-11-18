@@ -358,6 +358,41 @@ describe('buildGenerationReport', () => {
     })
   })
 
+  describe('review round 22', () => {
+    const at = (p: Partial<ParsedResume>, text: string) => letter(text, env({ parsed: { ...parsed, ...p } }))
+    const lines = (ls: string[], p: Partial<ParsedResume> = {}) => (source(env({ parsed: { ...parsed, ...p, otherSections: [{ heading: 'Additional Information', lines: ls }] } }))?.otherSections as Array<{ lines: string[] }> | undefined)?.[0]?.lines
+
+    test("the user's phone with 8 digits, or with its country code run in", () => {
+      expect(at({ phone: '9123 4567' }, 'Reach me on 9123 4567 or 91234567.')).toBe('Reach me on [phone] or [phone].')
+      expect(at({ phone: '+852 9123 4567' }, 'Mobile 9123 4567')).toBe('Mobile [phone]')
+      expect(at({ phone: '+45 20 12 34 56' }, 'Ring 20 12 34 56')).toBe('Ring [phone]')
+      expect(at({ phone: '13800138000' }, '电话13800138000 或 138-0013-8000')).toBe('电话[phone] 或 [phone]')
+      expect(at({ phone: '+86 138 0013 8000' }, 'Call 138 0013 8000')).toBe('Call [phone]')
+      expect(at({ phone: '312-555-0147' }, 'Call 13125550147')).toBe('Call [phone]')
+    })
+
+    test('a city in a script without capitals', () => {
+      expect(at({ location: '北京' }, '李明，现居北京。')).toBe('李明，现居[location]。')
+      expect(at({ location: '上海市浦东新区' }, '我目前居住在上海市浦东新区，常去上海。')).toBe('我目前居住在[location]，常去[location]。')
+      expect(at({ location: '서울' }, '서울에서 5년간 근무')).toBe('[location]에서 5년간 근무')
+    })
+
+    test('address lines with any label, and personal sections in Chinese and Korean', () => {
+      expect(lines(['Permanent Address: 12/3, Gandhi Nagar, Madurai, Tamil Nadu 625020', 'Home Address: 7, Anna Salai', 'Residential Address: #45, 2nd Main', 'Address - 12/3, Gandhi Nagar', 'Postal Address: P.O. Box 1234-00100, Nairobi', '地址：北京市海淀区', '주소: 서울특별시 강남구', 'Languages: Tamil']))
+        .toEqual(['Languages: Tamil'])
+      const sections = ['个人信息', '인적사항'].map((heading) => ({ heading, lines: ['出生日期：1990年1월'] }))
+      expect(source(env({ parsed: { ...parsed, otherSections: sections } }))?.otherSections).toEqual([])
+    })
+
+    test('ordinary lines and numbers stay', () => {
+      const kept = ['Place and Route: Cadence Innovus', 'Gender Equality Society: Treasurer', 'Born to Code Hackathon: 1st place', 'Location Services: Google Maps SDK', 'City Year: AmeriCorps Member', 'PAN India rollout: 40 cities', 'Volunteer 01-2019 - 12-2021', 'Finalist, iAwards NSW 2022', '2022 AI Engineering Professional Certificate', 'Supported 2500 IT Users']
+      expect(lines(kept, { location: '' })).toEqual(kept)
+      const text = 'Spoke at Toronto JS Meetup and Toronto AWS User Group. B.tech in CSE; B.com graduate; M.tech 2019. Advised 12 Wall Street banks; ran 3 Oxford Street flagship stores.'
+      expect(at({}, text)).toBe(text.replace(/Toronto/g, '[location]'))
+      expect(at({ location: '' }, 'I live at 14 Rosebery Road in Leeds.')).toBe('I live at [address] in Leeds.')
+    })
+  })
+
   describe('personas', () => {
     const persona = (p: Partial<ParsedResume>, details: string[], text: string) => {
       const e = env({ parsed: { ...parsed, ...p, experience: [{ title: 'Analyst', company: 'Northwind', location: p.location ?? '', dates: '2021 - Present', bullets: [text] }] } })
