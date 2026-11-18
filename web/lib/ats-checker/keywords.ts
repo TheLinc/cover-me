@@ -73,7 +73,6 @@ function unlistedNames(line: string): Keyword[] {
   for (const [token] of line.matchAll(/\b[A-Z][A-Za-z0-9]*[A-Z][A-Za-z0-9]*\b/g)) {
     const acronym = !/[a-z]/.test(token)
     if (acronym && (token.length < 3 || token.length > 6 || ACRONYM_STOP.has(token))) continue
-    if (!acronym && !/[a-z]/.test(token.slice(1))) continue
     const spellings = [token]
     if (acronym) {
       const long = new RegExp(`((?:[A-Z][a-z]+\\s+){${token.length}})\\(${token}\\)`).exec(line)?.[1].trim()
@@ -102,28 +101,30 @@ export function readPosting(posting: string): Posting {
   const openers = new Set(lines.map((l) => /^\w+/.exec(l)?.[0]))
 
   for (const line of lines) {
-    const heading = headingLevel(line)
+    const [, head, rest] = /^([^:]{1,60}):\s*(\S.*)$/.exec(line) ?? []
+    const heading = headingLevel(head ?? line)
     if (heading) section = heading
     if (section === 'skip' || BOILERPLATE.test(line)) continue
+    const body = !heading ? line : head ? rest : ''
     const companyVoice = /\b([Ww]e|[Oo]ur|[Uu]s)\b/.test(line)
     const level: Level = section === 'mentioned' || companyVoice ? 'mentioned'
       : /requir|\bmust\b/i.test(line) || !PREFERRED.test(line) ? section : 'preferred'
-    const hits = heading ? [] : DICTIONARY.map((term) => ({ term, at: spans(line, term) })).filter((h) => h.at.length)
+    const hits = DICTIONARY.map((term) => ({ term, at: spans(body, term) })).filter((h) => h.at.length)
     const kept = hits
       .filter(({ term, at }) => !at.every(([a, b]) => hits.some((h) => h.term !== term && h.at.some(([c, d]) => c <= a && b <= d && d - c > b - a))))
       .sort((x, y) => Math.min(...x.at.map(([a]) => a)) - Math.min(...y.at.map(([a]) => a)))
     for (const { term } of kept) add({ ...term, level })
     for (const a of kept) {
       for (const b of kept) {
-        const either = a !== b && a.at.some(([, end]) => b.at.some(([start]) => start > end && /^,?\s+or\s+$/i.test(line.slice(end, start))))
+        const either = a !== b && a.at.some(([, end]) => b.at.some(([start]) => start > end && /^,?\s+or\s+$/i.test(body.slice(end, start))))
         if (!either) continue
         const [ka, kb] = [found.get(a.term.name.toLowerCase())!, found.get(b.term.name.toLowerCase())!]
         ka.alternatives = [...new Set([...(ka.alternatives ?? []), kb.name])]
         kb.alternatives = [...new Set([...(kb.alternatives ?? []), ka.name])]
       }
     }
-    if (level !== 'mentioned' && !heading) {
-      for (const k of unlistedNames(line)) {
+    if (level !== 'mentioned') {
+      for (const k of unlistedNames(body)) {
         const known = [...found.values()].some((f) => has(k.name, f) || f.spellings.some((s) => mentions(s, k.name, true)))
         if (!known && !openers.has(k.name)) add({ ...k, level })
       }
