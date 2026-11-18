@@ -53,6 +53,8 @@ const config: Config = {
           text:     'var(--ext-text)',
           muted:    'var(--ext-muted)',
           soft:     'var(--ext-accent-soft)',
+          'text-2': 'var(--ext-text-2)',
+          'border-hover': 'var(--ext-border-hover)',
         },
         // Legacy aliases still used by inner pages. New code uses the names above.
         surface:  'var(--surface)',

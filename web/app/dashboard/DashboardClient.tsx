@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { firstMonthOffer, openBilling, type FirstMonthOffer } from "@/lib/billing";
-import { describeAllowance, describeAnswers, type Allowance } from "@/lib/limits";
+import { PLAN_LIMITS, describeAllowance, describeAnswers, type Allowance } from "@/lib/limits";
 import { DaysLeft, LocalDate } from "./LocalDate";
 import type { TrialState } from "@/lib/stripe-tier";
 import { CHROME_STORE_URL, cn } from "@/lib/utils";
@@ -58,7 +58,8 @@ export default function DashboardClient({
   const usage = describeAllowance(allowance);
   const answersLeft = describeAnswers(answers);
   const leftPct = usage && usage.limit > 0 ? ((usage.limit - usage.used) / usage.limit) * 100 : 0;
-  const proDaily = allowance?.pro_daily ?? 25;
+  const proDaily = allowance?.pro_daily ?? PLAN_LIMITS.pro_daily;
+  const answersDaily = answers?.pro_daily ?? PLAN_LIMITS.answer_pro_daily;
 
   async function handleUpgrade(plan: 'monthly' | 'quarterly') {
     setUpgrading(plan);
@@ -126,7 +127,7 @@ export default function DashboardClient({
                 <p className="flex items-center gap-2 text-[24px] font-semibold leading-tight tracking-[-0.02em] text-ink">
                   Pro <StarIcon size={16} weight="fill" className="text-brand-strong" aria-hidden />
                 </p>
-                <p className="text-[13.5px] text-ink-2">{proDaily} generations a day. Your letters and resumes saved here, on every device.</p>
+                <p className="text-[13.5px] text-ink-2">{proDaily} generations and {answersDaily} answers to application questions a day. Your letters and resumes saved here, on every device.</p>
                 {firstPayment && (
                   <p className="text-[13.5px] text-ink-2">
                     <strong className="font-semibold text-ink">First payment <LocalDate iso={firstPayment.date} options={{ month: "long", day: "numeric" }} />:</strong> {firstPayment.price}.
@@ -151,7 +152,7 @@ export default function DashboardClient({
                       </p>
                     )}
                     <ul className="flex flex-col gap-1 text-[13.5px] text-ink">
-                      {[`${proDaily} generations a day`, 'Your letters and resumes on every device', 'Cancel any time'].map((line) => (
+                      {[`${proDaily} generations a day`, `${answersDaily} answers to application questions a day`, 'Your letters and resumes on every device', 'Cancel any time'].map((line) => (
                         <li key={line} className="flex items-center gap-2"><span aria-hidden className="size-1.5 rounded-full bg-brand" />{line}</li>
                       ))}
                     </ul>
