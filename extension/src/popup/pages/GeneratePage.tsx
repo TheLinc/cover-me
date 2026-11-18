@@ -10,6 +10,7 @@ import DownloadMenu from '../components/DownloadMenu'
 import GapChips from '../components/GapChips'
 import { EditIcon, RegenerateIcon } from '../components/icons'
 import PageReadNotice from '../components/PageReadNotice'
+import AnswersNews from '../components/AnswersNews'
 import PostingTitleTip from '../components/PostingTitleTip'
 import ProgressSteps from '../components/ProgressSteps'
 import ReviewAsk, { claimReviewAsk } from '../components/ReviewAsk'
@@ -715,6 +716,8 @@ export default function GeneratePage({ onNavigate }: Props) {
       </header>
 
       <PageReadNotice />
+      {/* After setup, so a new user's first screen stays the checklist. */}
+      {setupLoaded && setupComplete && <AnswersNews />}
 
       {!setupLoaded && null}
 

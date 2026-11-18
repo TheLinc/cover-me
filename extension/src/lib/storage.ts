@@ -176,6 +176,17 @@ export async function clearWhatsNew(): Promise<void> {
   await chrome.storage.local.remove('whatsNew')
 }
 
+// The Generate page's card announcing answers to application questions
+// (popup/components/AnswersNews.tsx): shown until the user closes it.
+export async function isAnswersNewsSeen(): Promise<boolean> {
+  const { answersNews } = await chrome.storage.local.get('answersNews')
+  return answersNews === 'seen'
+}
+
+export async function markAnswersNewsSeen(): Promise<void> {
+  await chrome.storage.local.set({ answersNews: 'seen' })
+}
+
 // Marks local entries with the account that holds them (see CoverLetter.account).
 export async function setEntryAccounts(updates: { letters?: Record<string, string>; tailored?: Record<string, string> }): Promise<void> {
   // Only the lists that change are written: the background may be adding to
