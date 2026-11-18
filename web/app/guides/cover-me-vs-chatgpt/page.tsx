@@ -1,9 +1,7 @@
 import type { Metadata } from 'next'
-import Image from 'next/image'
 import Link from 'next/link'
-import { CHROME_STORE_URL } from '@/lib/utils'
-import { GuideTldr } from '@/components/site/GuideTldr'
-import { getGuide, guideArticleJsonLd, guideBreadcrumbJsonLd } from '@/lib/guides'
+import { GuideArticle, GuideFigure } from '@/components/site/GuideArticle'
+import { getGuide } from '@/lib/guides'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 const guide = getGuide('cover-me-vs-chatgpt')
@@ -83,127 +81,92 @@ const COMPARISON: { feature: string; coverMe: string; chatgpt: string }[] = [
 
 export default function Page() {
   return (
-    <main className="max-w-[760px] mx-auto px-8 py-20 max-md:px-5">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(guideArticleJsonLd(guide, HERO_IMAGE)) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(guideBreadcrumbJsonLd(guide)) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
-
-      <div className="mb-12">
-        <Link href="/guides" className="text-[12px] font-semibold text-brand-light hover:text-brand transition-colors">
-          ← All guides
-        </Link>
-        <h1 className="text-[clamp(30px,4.5vw,46px)] text-foreground leading-[1.02] mt-4 mb-4">
-          Cover Me vs ChatGPT for cover letters
-        </h1>
-        <p className="text-[12px] text-muted-foreground">
-          <time dateTime={guide.updated ?? guide.date}>Updated October 29, 2026</time> · Lincoln Laylor
-        </p>
-      </div>
-
-      {/* Hero graphic */}
-      <div className="mb-10 h-px bg-line" />
-      <figure className="mb-12">
-        <Image
-          src={HERO_IMAGE}
-          alt={HERO_ALT}
-          width={1600}
-          height={900}
-          priority
-          sizes="(max-width: 800px) 100vw, 760px"
-          className="w-full h-auto rounded-[12px] border border-border"
-        />
-      </figure>
-
-      <article className="space-y-5 text-[15.5px] text-muted-foreground leading-[1.85]">
-        <p className="text-[17px] text-foreground font-medium leading-[1.7]">
+    <GuideArticle
+      guide={guide}
+      hero={{ src: HERO_IMAGE, alt: HERO_ALT }}
+      lede={
+        <>
           ChatGPT can write a good cover letter if you give it the job description, your resume, and a careful prompt, and repeat that for every application. Cover Me (cover-me.dev) is an open-source Chrome extension that does it in one click on the posting: it reads the page, uses the resume you uploaded once, works in the role&rsquo;s ATS keywords, and removes any skill your resume doesn&rsquo;t support.
-        </p>
-
-        <GuideTldr
-          items={[
-            "ChatGPT can write a good cover letter, but you paste the posting and your resume into every new chat and check the result yourself.",
-            "Cover Me reads the posting when you click, uses the resume you uploaded once, and removes any skill your resume doesn't support.",
-            "ChatGPT has a free plan and Plus at $20 a month. Cover Me has a free plan, and Pro is $15 a month.",
-          ]}
-        />
+        </>
+      }
+      tldr={[
+        "ChatGPT can write a good cover letter, but you paste the posting and your resume into every new chat and check the result yourself.",
+        "Cover Me reads the posting when you click, uses the resume you uploaded once, and removes any skill your resume doesn't support.",
+        "ChatGPT has a free plan and Plus at $20 a month. Cover Me has a free plan, and Pro is $15 a month.",
+      ]}
+      intro={
         <p>
           I build Cover Me, so weigh this comparison with that in mind. The trade-offs below are real, and for some people ChatGPT is enough.
         </p>
-
-        <h2 className="text-[22px] text-foreground !mt-10">What is the difference between Cover Me and ChatGPT?</h2>
-        <p>
-          The difference is the work around the model. Cover Me runs on Claude, or on your own OpenAI key if you prefer. With ChatGPT, each application means opening the posting, copying the description, switching tabs, pasting your resume again, writing the prompt, then fixing the clichés. When I tailored my own applications in ChatGPT it took{' '}
-          <a href="https://dev.to/plain-stack/how-i-went-from-0-interviews-to-4-in-a-month-by-tailoring-every-application-1an4" target="_blank" rel="noopener noreferrer" className="text-brand-light hover:text-brand transition-colors">about 12 minutes per application</a>
-          , and the free plan&rsquo;s file upload limit cut off my resume uploads partway through a day of applying.
-        </p>
-        <p>
-          Cover Me does those steps for you. It reads the posting, keeps your resume (encrypted on our server, or only in your browser with your own key), and runs the same cover letter prompt every time, with common AI clichés filtered out. Your thirtieth application of the week gets the same care as your first.
-        </p>
-        <p>
-          The bigger difference shows up in resume tailoring. When a posting asks for a skill you lack, a chatbot will often add it anyway, so you have to read every line. Cover Me makes the AI cite resume evidence for every skill it adds, checks that evidence in code, and rewrites or reverts any bullet that claims more than your original.
-        </p>
-
-        <h2 className="text-[22px] text-foreground !mt-10">Feature comparison</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-[13.5px] border border-border rounded-[8px] overflow-hidden" style={{ borderCollapse: 'collapse' }}>
-            <thead>
-              <tr className="bg-elevated">
-                <th className="text-left px-4 py-3 font-bold text-muted-foreground border-b border-border">Feature</th>
-                <th className="text-left px-4 py-3 font-bold text-brand-light border-b border-border">Cover Me</th>
-                <th className="text-left px-4 py-3 font-bold text-muted-foreground border-b border-border">ChatGPT</th>
-              </tr>
-            </thead>
-            <tbody>
-              {COMPARISON.map((row, i) => (
-                <tr key={row.feature} className={i % 2 === 0 ? 'bg-surface' : 'bg-elevated'}>
-                  <td className="px-4 py-3 font-medium text-foreground border-b border-border">{row.feature}</td>
-                  <td className="px-4 py-3 text-muted-foreground border-b border-border">{row.coverMe}</td>
-                  <td className="px-4 py-3 text-muted-foreground border-b border-border">{row.chatgpt}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        <h2 className="text-[22px] text-foreground !mt-10">When is ChatGPT the better choice?</h2>
-        <p>
-          If you apply to one or two roles a month and like working on the letter in conversation, a chatbot is more flexible than an extension. You can ask follow-up questions, try different angles, and rewrite one paragraph at a time. If you already pay for Plus, it costs you nothing extra.
-        </p>
-
-        <h2 className="text-[22px] text-foreground !mt-10">When is Cover Me the better choice?</h2>
-        <p>
-          When you apply to several roles a day. The time per application then decides whether you tailor at all, and the steps a chatbot skips unless asked are the ones that get applications past screening: using the posting&rsquo;s <Link href="/guides/what-is-an-ats-score" className="text-brand-light hover:text-brand transition-colors">ATS keywords</Link>, <Link href="/guides/tailor-resume-to-job-description" className="text-brand-light hover:text-brand transition-colors">tailoring the resume itself</Link>, and scoring the match before you submit. Cover Me reads postings on <Link href="/for/linkedin" className="text-brand-light hover:text-brand transition-colors">LinkedIn</Link>, <Link href="/for/indeed" className="text-brand-light hover:text-brand transition-colors">Indeed</Link>, <Link href="/for/greenhouse" className="text-brand-light hover:text-brand transition-colors">Greenhouse</Link>, <Link href="/for/lever" className="text-brand-light hover:text-brand transition-colors">Lever</Link>, <Link href="/for/workday" className="text-brand-light hover:text-brand transition-colors">Workday</Link>, and <Link href="/for/ashby" className="text-brand-light hover:text-brand transition-colors">Ashby</Link>, and you can paste a posting from any other site.
-        </p>
-      </article>
-
-      {/* FAQ */}
-      <section className="mt-14">
-        <h2 className="text-[22px] text-foreground mb-4">Frequently asked questions</h2>
-        <div className="divide-y divide-border border-t border-border">
-          {(faqJsonLd.mainEntity as { name: string; acceptedAnswer: { text: string } }[]).map((item) => (
-            <div key={item.name} className="py-6">
-              <h3 className="text-[16px] font-bold text-foreground tracking-[-0.3px] mb-2.5">{item.name}</h3>
-              <p className="text-[14px] text-muted-foreground leading-[1.8]">{item.acceptedAnswer.text}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* CTA */}
-      <div className="border border-border rounded-[12px] p-8 bg-surface text-center mt-14">
-        <h2 className="text-[20px] text-foreground mb-2">Try the one-click version</h2>
-        <p className="text-[14px] text-muted-foreground mb-5 max-w-[420px] mx-auto leading-[1.7]">
-          Free with your own API key, or 10 hosted generations to start, then 5 a week. No credit card required.
-        </p>
-        <a
-          href={CHROME_STORE_URL}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center gap-2 bg-brand-strong text-white font-semibold text-[14px] px-5 py-2.5 rounded-[8px] hover:bg-brand-deep transition-colors"
-        >
-          Install free · Chrome
-        </a>
-      </div>
-    </main>
+      }
+      sections={[
+        {
+          title: 'What is the difference between Cover Me and ChatGPT?',
+          body: (
+            <>
+              <p>
+                The difference is the work around the model. Cover Me runs on Claude, or on your own OpenAI key if you prefer. With ChatGPT, each application means opening the posting, copying the description, switching tabs, pasting your resume again, writing the prompt, then fixing the clichés. When I tailored my own applications in ChatGPT it took{' '}
+                <a href="https://dev.to/plain-stack/how-i-went-from-0-interviews-to-4-in-a-month-by-tailoring-every-application-1an4" target="_blank" rel="noopener noreferrer">about 12 minutes per application</a>
+                , and the free plan&rsquo;s file upload limit cut off my resume uploads partway through a day of applying.
+              </p>
+              <p>
+                Cover Me does those steps for you. It reads the posting, keeps your resume (encrypted on our server, or only in your browser with your own key), and runs the same cover letter prompt every time, with common AI clichés filtered out. Your thirtieth application of the week gets the same care as your first.
+              </p>
+              <p>
+                The bigger difference shows up in resume tailoring. When a posting asks for a skill you lack, a chatbot will often add it anyway, so you have to read every line. Cover Me makes the AI cite resume evidence for every skill it adds, checks that evidence in code, and rewrites or reverts any bullet that claims more than your original.
+              </p>
+            </>
+          ),
+        },
+        {
+          title: 'Feature comparison',
+          body: (
+            <GuideFigure caption="Cover Me and ChatGPT compared feature by feature, from reading the posting to price.">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[560px] bg-white text-[13.5px] border border-border rounded-[8px] overflow-hidden" style={{ borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr className="bg-paper">
+                      <th className="text-left px-4 py-3 font-bold text-muted-foreground border-b border-border">Feature</th>
+                      <th className="text-left px-4 py-3 font-bold text-brand-light border-b border-border">Cover Me</th>
+                      <th className="text-left px-4 py-3 font-bold text-muted-foreground border-b border-border">ChatGPT</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {COMPARISON.map((row, i) => (
+                      <tr key={row.feature} className={i % 2 === 0 ? 'bg-surface' : 'bg-paper'}>
+                        <td className="px-4 py-3 font-medium text-foreground border-b border-border">{row.feature}</td>
+                        <td className="px-4 py-3 text-muted-foreground border-b border-border">{row.coverMe}</td>
+                        <td className="px-4 py-3 text-muted-foreground border-b border-border">{row.chatgpt}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </GuideFigure>
+          ),
+        },
+        {
+          title: 'When is ChatGPT the better choice?',
+          body: (
+            <p>
+              If you apply to one or two roles a month and like working on the letter in conversation, a chatbot is more flexible than an extension. You can ask follow-up questions, try different angles, and rewrite one paragraph at a time. If you already pay for Plus, it costs you nothing extra.
+            </p>
+          ),
+        },
+        {
+          title: 'When is Cover Me the better choice?',
+          body: (
+            <p>
+              When you apply to several roles a day. The time per application then decides whether you tailor at all, and the steps a chatbot skips unless asked are the ones that get applications past screening: using the posting&rsquo;s <Link href="/guides/what-is-an-ats-score">ATS keywords</Link>, <Link href="/guides/tailor-resume-to-job-description">tailoring the resume itself</Link>, and scoring the match before you submit. Cover Me reads postings on <Link href="/for/linkedin">LinkedIn</Link>, <Link href="/for/indeed">Indeed</Link>, <Link href="/for/greenhouse">Greenhouse</Link>, <Link href="/for/lever">Lever</Link>, <Link href="/for/workday">Workday</Link>, and <Link href="/for/ashby">Ashby</Link>, and you can paste a posting from any other site.
+            </p>
+          ),
+        },
+      ]}
+      faq={faqJsonLd}
+      cta={{
+        title: 'Try the one-click version',
+        body: 'Free with your own API key, or 10 hosted generations to start, then 5 a week. No credit card required.',
+      }}
+    />
   )
 }
