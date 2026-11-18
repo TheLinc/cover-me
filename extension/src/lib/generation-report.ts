@@ -72,6 +72,9 @@ const PERSONAL_SECTION = /\b(?:contacts?|contact (?:info(?:rmation)?|details)|pe
 // ("Languages: Spanish"), and a line only placed in the user's city.
 const PERSONAL_LINE = new RegExp(String.raw`^\s*(?:(?:permanent|home|residential|current|present|postal|mailing|local|correspondence)\s+)?(?:(?:address|adres|adresse|dirección|direccion|endereço|indirizzo|woonplaats|wohnort|anschrift|date of birth|dob|d\.o\.b|birth ?date|birth ?place|place of birth|geburtsdatum|geburtsort|geboren|fecha de nacimiento|data de nascimento|né(?:e)? le|nationality|nationalität|staatsangehörigkeit|nacionalidad|citizenship|geschlecht|marital status|familienstand|estado civil|father'?s name|mother'?s name|passport|dni|ssn|social security|national id|id (?:no|number)|aadhaar|pesel|cpf|visa status)\b[^:：]{0,20}|(?:city|place|location|ort|ciudad|cidade|born|gender|sex|religion|spouse|pan|nie|nif|bsn|rg)[ \t]*(?:\([^)]*\))?[ \t]*)(?:[:：]|[ \t]+[-–—][ \t])|^\s*(?:地址|住址|通讯地址|出生日期|出生|籍贯|电话|電話|手机|邮箱|身份证|民族|주소|생년월일|전화|휴대폰|이메일|住所|生年月日|電話番号)[^:：]{0,6}[:：]`, 'iu')
 // Or one that starts with a birth, without a label ("Born 1995 in Leeds").
+// A phone by its label, whatever the number's shape ("Mobile: 9123 4567");
+// "Mobile: Swift, Kotlin" stays.
+const PHONE_LINE = /^\s*(?:phone|mobile|cell|tel(?:ephone)?|teléfono|telefon|whatsapp|contact)\b[^:：\d]{0,20}[:：]\s*[+(\d]/iu
 const BIRTH_LINE = /^\s*(?:born\s+(?:on\b|in\b|\d)|(?:dob|d\.o\.b|nacid[oa]|nascid[oa]|nat[oa] a|née|né le|geboren)(?!\p{L}))/iu
 const TAG_LINE = /\[(?:phone|email|address)\]/
 // The generation-report function's check for a site name.
@@ -111,7 +114,7 @@ function scrubResume(resume: object, known: Known): Resume {
   if (Array.isArray(scrubbed.otherSections)) {
     scrubbed.otherSections = (scrubbed.otherSections as Array<{ heading?: unknown; lines?: unknown }>)
       .filter((s) => !(typeof s?.heading === 'string' && PERSONAL_SECTION.test(s.heading)))
-      .map((s) => (Array.isArray(s.lines) ? { ...s, lines: s.lines.filter((l) => !(typeof l === 'string' && (PERSONAL_LINE.test(l) || BIRTH_LINE.test(l) || TAG_LINE.test(l)))) } : s))
+      .map((s) => (Array.isArray(s.lines) ? { ...s, lines: s.lines.filter((l) => !(typeof l === 'string' && (PERSONAL_LINE.test(l) || PHONE_LINE.test(l) || BIRTH_LINE.test(l) || TAG_LINE.test(l)))) } : s))
   }
   return scrubbed
 }
@@ -330,10 +333,10 @@ const STREET_OR_WORD = 'St|Drive|Dr|Way|Court|Ct|Place|Pl|Terrace|Close|Square|S
 // line's end, or a city and its region or postcode ("14 Elm Grove, Bristol",
 // "12 Main St. Springfield IL").
 const street = (words: string, number: string, end = '') => String.raw`\b${number}[A-Za-z]?(?:[ \t]+(?:[A-Z][\w'.-]*|\d+(?:st|nd|rd|th|ST|ND|RD|TH))){1,4}[ \t]+(?:${words}|${words.toUpperCase()})\b\.?(?:[ \t]+(?:[NSEW]|NE|NW|SE|SW|North|South|East|West)\b\.?)?(?:,?[ \t]*(?:Apt|Unit|Suite|APT|UNIT|SUITE|#)[ \t]*[\w-]+)?${end}`
-const ADDRESS_START = String.raw`(?<=(?:^|[,|·;:/(\n]|\b(?:Address|ADDRESS|address|at|in|live|lives|living|reside|resides))[ \t]{0,3})`
-const ADDRESS_END = String.raw`(?=[ \t]*(?:[,·|;\r\n]|$)|(?:[ \t]+\p{Lu}[\p{L}'.-]*){1,3},?[ \t]+[A-Z\d])`
+const ADDRESS_START = String.raw`(?<=(?:^|[,|·;:/(\n]|\b(?:Address|ADDRESS|address|at|in|live|lives|living|reside|resides))[ \t]{0,20})`
+const ADDRESS_END = String.raw`(?=[ \t]*(?:[,·|;\r\n]|$)|(?:[ \t]+\p{Lu}[\p{L}'.-]*){1,3}(?:,?[ \t]+[A-Z\d]|[ \t]*(?:[,·|;\r\n]|$)))`
 const ADDRESSES = [
-  new RegExp(`${street(STREETS, String.raw`${ADDRESS_START}\d{1,6}`)}|${street(STREETS, String.raw`\d{1,6}`, ADDRESS_END)}|${street(STREET_OR_WORD, String.raw`${ADDRESS_START}(?!(?:19|20)\d\d\b)\d{1,6}`, ADDRESS_END)}`, 'gu'),
+  new RegExp(`${street(STREETS, String.raw`\d{1,6}`)}|${street(STREET_OR_WORD, String.raw`${ADDRESS_START}(?!(?:19|20)\d\d\b)\d{1,6}`, ADDRESS_END)}`, 'gu'),
   // The street's name is capitalized: "Via automated testing, 30" stays.
   /\b(?:Calle|C\/|Carrer|Avenida|Avda\.?|Rua|Via|Viale|Corso|Piazza|Plaza|Plaça|Paseo|Strada|Ulica|ul\.)\s+(?:(?:de|del|la|las|los|di|da|do|dos|das)\s+)*\p{Lu}[\p{L}'.-]*(?:\s+(?:(?:de|del|la|las|los|di|da|do|dos|das)\s+)*\p{Lu}[\p{L}'.-]*){0,4},?\s+\d{1,5}[A-Za-z]?\b/gu,
   /\b[\p{L}-]{0,40}(?:straße|strasse|str\.|straat|weg|gasse|platz|allee|laan|gracht|vej|gatan|gata|katu|damm)\s+\d{1,5}[a-z]?\b/giu,
@@ -341,7 +344,7 @@ const ADDRESSES = [
   // A flat or house number that starts an address part and is followed by
   // more of it ("Flat 402, Sunrise"; "Sharma, House No. 45, Sector 15"), so
   // "Unity3D", "Adobe Creative Suite 6" and "Unit 8200" stay.
-  /(?<=(?:^|[,|·;\n])[ \t]{0,3})(?:House|Flat|Plot|Door|Apartment|Apt|Unit|Suite|Block|H\.?\s?No\.?)\s+(?:No\.?\s*)?\d[\w/-]*(?=[ \t]*[,\r\n])/gu,
+  /(?<=(?:^|[,|·;\n])[ \t]{0,20})(?:House|Flat|Plot|Door|Apartment|Apt|Unit|Suite|Block|H\.?\s?No\.?)\s+(?:No\.?\s*)?\d[\w/-]*(?=[ \t]*[,\r\n])/gu,
   /\bSector\s+\d{1,3}\b/g,
 ]
 // Postal codes: Canadian, UK, US and Australian (after a state code), Dutch

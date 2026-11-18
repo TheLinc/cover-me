@@ -387,9 +387,12 @@ describe('buildGenerationReport', () => {
     test('ordinary lines and numbers stay', () => {
       const kept = ['Place and Route: Cadence Innovus', 'Gender Equality Society: Treasurer', 'Born to Code Hackathon: 1st place', 'Location Services: Google Maps SDK', 'City Year: AmeriCorps Member', 'PAN India rollout: 40 cities', 'Volunteer 01-2019 - 12-2021', 'Finalist, iAwards NSW 2022', '2022 AI Engineering Professional Certificate', 'Supported 2500 IT Users']
       expect(lines(kept, { location: '' })).toEqual(kept)
-      const text = 'Spoke at Toronto JS Meetup and Toronto AWS User Group. B.tech in CSE; B.com graduate; M.tech 2019. Advised 12 Wall Street banks; ran 3 Oxford Street flagship stores.'
+      const text = 'Spoke at Toronto JS Meetup and Toronto AWS User Group. B.tech in CSE; B.com graduate; M.tech 2019.'
       expect(at({}, text)).toBe(text.replace(/Toronto/g, '[location]'))
       expect(at({ location: '' }, 'I live at 14 Rosebery Road in Leeds.')).toBe('I live at [address] in Leeds.')
+      // Street, Road and Avenue go anywhere: an address matters more than "12 Wall Street banks".
+      expect(at({ location: '' }, 'Home\n14 Rosebery Road Leeds\n5 Elm Grove Leeds')).toBe('Home\n[address] Leeds\n[address] Leeds')
+      expect(lines(['Mobile: 9123 4567', 'Contact: +971 50 123 4567', 'Mobile: Swift, Kotlin'], { location: '' })).toEqual(['Mobile: Swift, Kotlin'])
     })
   })
 
