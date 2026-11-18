@@ -68,11 +68,10 @@ async function saveOrderForLater(r: TailoredResume): Promise<string | undefined>
     return saveSectionOrderToBackend(session.access_token, sectionOrder, headings)
   }
   const resume = await getResume()
-  const parsed = resume?.parsed
   // A new upload isn't read until its first tailor. One from before the link
   // fix (#238) takes the order, and the tailor that parses it again keeps it.
-  if (!resume || !hasSectionOrder(parsed)) return 'Tailor once with your current resume first.'
-  await saveParsedResume(withChosenOrder(parsed, sectionOrder, headings), resume.text)
+  if (!resume || !hasSectionOrder(resume.parsed)) return 'Tailor once with your current resume first.'
+  await saveParsedResume(withChosenOrder(resume.parsed, sectionOrder, headings), resume.text)
 }
 
 type Status = '' | 'saving' | 'saved' | 'local'
