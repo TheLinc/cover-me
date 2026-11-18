@@ -4,21 +4,16 @@ import Link from 'next/link'
 import { CheckIcon, FilePdfIcon, GoogleChromeLogoIcon } from '@phosphor-icons/react/dist/ssr'
 import { Button } from '@/components/ui/button'
 import { badgeVariants } from '@/components/ui/badge'
-import { CHROME_STORE_URL, cn } from '@/lib/utils'
+import { storeUrl, cn } from '@/lib/utils'
 import { STORE_RATING } from '@/lib/structured-data'
 import { Ambient } from './Ambient'
 import { BrowserFrame, EXAMPLE } from './visuals'
 
-// Split hero: the promise on the left, the rewrite on the right. One click on
-// the posting, its requirements light up one at a time, and each lands in the
-// resume bullet it rewrites; then the score fills and the letter is ready.
-// Plays once in about 3.5 s and rests on the result. The markup is the result
-// and the `hero-*` keyframes in globals.css only run under no-preference, so
-// reduced motion (and a page with no CSS animation) shows the finished frame.
-// No client JavaScript: it renders on the server and paints on the first frame.
+// The markup is the finished frame and the hero-* keyframes in globals.css run only
+// under no-preference, so reduced motion shows the result (#32).
 
 // Seconds after load. Requirement i lights up at TERM(i) and its bullet is
-// rewritten REWRITE later; the missing one lights after the matched ones.
+// rewritten REWRITE later; the missing one lights after the matched ones. (#32)
 const PRESS = 0.75
 const TERM = (i: number) => 1.05 + i * 0.45
 const REWRITE = 0.25
@@ -29,7 +24,7 @@ const at = (s: number) => ({ '--d': `${s}s` }) as CSSProperties
 const SHADOW = 'shadow-[0_1px_2px_rgba(42,42,42,0.06),0_18px_40px_-18px_rgba(42,42,42,0.22)]'
 
 // The posting up to its missing requirement ("...hands-on HubSpot experience."),
-// so the snippet stays short enough for the resume to clear the fold on phones.
+// so the snippet stays short enough for the resume to clear the fold on phones. (#32)
 const PARTS = EXAMPLE.posting.flatMap((line, i) => (i ? [' ', ...line] : line))
 const LAST = PARTS.findIndex((p) => typeof p !== 'string' && EXAMPLE.gaps.includes(p.k))
 const EXCERPT = [...PARTS.slice(0, LAST + 1), ' experience.']
@@ -111,7 +106,7 @@ function Ring() {
 // The resume is drawn like the PDF Cover Me downloads (extension/src/lib/pdf/resume.ts):
 // Times, centred name and contact line, ruled section titles, title and dates
 // on one row. Paper next to the posting's web page, so the two never read as
-// the same kind of thing.
+// the same kind of thing. (#32)
 const SERIF = "font-['Times_New_Roman',Times,serif]"
 const PAPER = 'shadow-[0_1px_2px_rgba(42,42,42,0.1),0_28px_50px_-20px_rgba(42,42,42,0.35)]'
 
@@ -185,7 +180,7 @@ export function Hero() {
           </p>
           <div className="flex flex-wrap gap-3 max-xl:justify-center">
             <Button asChild size="lg">
-              <a href={CHROME_STORE_URL} target="_blank" rel="noreferrer">
+              <a href={storeUrl('hero')} target="_blank" rel="noreferrer">
                 <GoogleChromeLogoIcon size={18} />
                 Add to Chrome, it&apos;s free
               </a>

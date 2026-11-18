@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation'
 import { ListIcon } from '@phosphor-icons/react/dist/ssr'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
-import { cn, CHROME_STORE_URL } from '@/lib/utils'
+import { cn, storeUrl } from '@/lib/utils'
 import type { NavLink } from './app-links'
 
 const MARKETING_LINKS: NavLink[] = [
@@ -20,11 +20,11 @@ const MARKETING_LINKS: NavLink[] = [
 ]
 
 // `actions` replaces the default Sign in / Install buttons (signed-in pages pass the AccountMenu).
-// `links` replaces the marketing links (signed-in pages pass APP_LINKS).
+// `links` replaces the marketing links (signed-in pages pass APP_LINKS). (#139)
 export function SiteNav({ actions, links }: { actions?: ReactNode; links?: NavLink[] }) {
   const pathname = usePathname()
   const [scrolled, setScrolled] = useState(false)
-  // Guides keep one SiteNav across pages, so Back with the menu open must close it.
+  // Guides keep one SiteNav across pages, so Back with the menu open must close it. (#135)
   const [menuOpen, setMenuOpen] = useState(false)
   useEffect(() => setMenuOpen(false), [pathname])
   useEffect(() => {
@@ -42,7 +42,7 @@ export function SiteNav({ actions, links }: { actions?: ReactNode; links?: NavLi
       )}
     >
       <div className="container flex h-16 items-center gap-8 max-sm:gap-2">
-        {/* Signed-in pages (they pass `links`) keep the logo inside the app. */}
+        {/* Signed-in pages (they pass `links`) keep the logo inside the app. (#233) */}
         <Link href={links ? '/dashboard' : '/'} className="flex shrink-0 items-center gap-2.5">
           <Image src="/logo.png" width={28} height={28} alt="" className="rounded-[8px]" />
           <span className={cn('text-[18px] font-semibold tracking-[-0.02em] text-ink', links && 'max-sm:sr-only')}>Cover Me</span>
@@ -66,14 +66,14 @@ export function SiteNav({ actions, links }: { actions?: ReactNode; links?: NavLi
                 <Link href="/auth">Sign in</Link>
               </Button>
               <Button asChild size="sm">
-                <a href={CHROME_STORE_URL} target="_blank" rel="noreferrer">
+                <a href={storeUrl('nav')} target="_blank" rel="noreferrer">
                   Install free
                 </a>
               </Button>
             </>
           )}
           {!links && (
-            // Below lg the marketing links and Sign in live in this sheet.
+            // Below lg the marketing links and Sign in live in this sheet. (#136)
             <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" aria-label="Open menu" className="lg:hidden">
