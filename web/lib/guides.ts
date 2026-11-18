@@ -128,7 +128,7 @@ export function getGuide(slug: string): Guide {
 }
 
 export function newestFirst<T extends Pick<Guide, 'date' | 'updated'>>(guides: T[]): T[] {
-  return [...guides].sort((a, b) => (b.updated ?? b.date).localeCompare(a.updated ?? a.date) || b.date.localeCompare(a.date))
+  return guides.toSorted((a, b) => (b.updated ?? b.date).localeCompare(a.updated ?? a.date) || b.date.localeCompare(a.date))
 }
 
 export function slugify(text: string): string {
