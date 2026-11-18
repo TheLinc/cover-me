@@ -43,7 +43,7 @@ export function GuideArticle({
   guide: Guide
   hero?: { src: string; alt: string }
   lede: ReactNode
-  tldr?: string[]
+  tldr?: string[] | ReactNode
   intro?: ReactNode
   sections: GuideSection[]
   faq: FaqJsonLd
@@ -102,11 +102,15 @@ export function GuideArticle({
               <h2 id="tldr" className="mb-3 font-mono text-[12px] uppercase tracking-[0.1em] text-brand-ink">
                 TL;DR
               </h2>
-              <ul className="list-disc space-y-2 pl-5 text-[16px] leading-[1.65] text-ink marker:text-brand">
-                {tldr.map((t) => (
-                  <li key={t}>{t}</li>
-                ))}
-              </ul>
+              {Array.isArray(tldr) ? (
+                <ul className="list-disc space-y-2 pl-5 text-[16px] leading-[1.65] text-ink marker:text-brand">
+                  {tldr.map((t) => (
+                    <li key={t}>{t}</li>
+                  ))}
+                </ul>
+              ) : (
+                tldr
+              )}
             </div>
           )}
           {intro}
