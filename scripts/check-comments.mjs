@@ -88,11 +88,13 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   if (found.length) {
     console.error(found.join('\n'))
     console.error(`\n${found.length} comment(s) with no link, in files this change touches.
-A comment must give a reason the code can't show, and link to it. Every comment in a file you change is checked, old ones too.
-- If it says what the code does, delete it. Rename or restructure the code until it explains itself.
-- If it explains why, put the reason in a ticket or an ADR and link it: #123, a URL, or docs/adr/<file>.
-  A comment you just wrote for the ticket you're on: add its number, (#N).
-  An older one: the ticket or PR that added it often has the reason: git log -L <line>,<line>:<file>
+Every comment in a file you change is checked, old ones too. For each one, first ask whether it should exist:
+- It says what the code does, restates a name, marks a section or narrates the change: delete it. Rename or
+  restructure the code if it needs to say more. Adding a ticket number to one of these is not a fix.
+- It gives a reason the code can't show (an outside bug, a hidden constraint, why not the obvious way): keep it
+  to one or two lines and link the ticket or ADR that holds the reason: #123, a URL, or docs/adr/<file>.
+  For a comment you just wrote, that's the ticket you're on. For an older one, git log -L <line>,<line>:<file>
+  finds the PR that added it.
 Allowed without a link: "// ponytail:" notes, "/// <reference ...>", "/* @vite-ignore */".`)
     process.exit(asHook ? 2 : 1)
   }

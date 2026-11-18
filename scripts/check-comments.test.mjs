@@ -84,7 +84,7 @@ test('as a Claude Code hook, exits 2 with the line and the fix for an edited fil
     const run = hook(file)
     assert.equal(run.status, 2)
     assert.match(run.stderr, /scripts\/hook-test\.tmp\.ts:2 {2}\/\/ adds one/)
-    assert.match(run.stderr, /link to it/)
+    assert.match(run.stderr, /whether it should exist/)
     fs.writeFileSync(file, '// #276\nexport const b = 2\n')
     assert.deepEqual([hook(file).status, hook(file).stderr], [0, ''])
   } finally {
