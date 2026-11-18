@@ -1,6 +1,7 @@
 import { createElement as h } from 'react'
 import { describe, expect, it } from 'vitest'
 import { existsSync } from 'node:fs'
+import { join } from 'node:path'
 import { GUIDES, newestFirst, readingMinutes, slugify } from './guides'
 
 describe('slugify', () => {
@@ -52,7 +53,7 @@ describe('newestFirst', () => {
 
 describe('GUIDES', () => {
   it.each(GUIDES.map((g) => [g.slug, g] as const))('%s has a hero image in public/ and alt text', (_, g) => {
-    expect(existsSync(`public${g.image}`)).toBe(true)
+    expect(existsSync(join(__dirname, '../public', g.image))).toBe(true)
     expect(g.imageAlt.length).toBeGreaterThan(20)
   })
 })
