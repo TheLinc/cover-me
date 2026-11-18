@@ -210,8 +210,7 @@ export default function GeneratePage({ onNavigate }: Props) {
       let restoredTailorDone = false
       if (s) {
         if (s.inputMode) setInputMode(s.inputMode as InputMode)
-        // Shown again only on the same tab, still on that site or page (a bug report is about
-        // one URL). Elsewhere it's dropped (#150).
+        // Shown again only on the same tab, still on that site or page (a bug report is about one URL) (#150).
         const failure = s.scrapeFailure as ShownFailure | undefined
         if (failure) {
           void chrome.tabs.query({ active: true, currentWindow: true }).then(([tab]) => {
@@ -1110,7 +1109,6 @@ export default function GeneratePage({ onNavigate }: Props) {
                   {postingTitle && <PostingTitleTip {...postingTitle} />}
                   {reviewAt === 'resume' && !reviewUnderScore && <ReviewAsk onClose={() => setReviewAt(null)} />}
                   <div className="letter-actions">
-                    {/* Tailored in the user's own file (#131): their Word file leads. */}
                     <DownloadMenu
                       up
                       options={tailoredResume.sourceHash

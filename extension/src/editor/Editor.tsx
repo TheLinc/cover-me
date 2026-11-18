@@ -25,8 +25,8 @@ async function proSession(): Promise<AuthSession | null> {
   return ensureValidSession()
 }
 
-// Local History first; a Pro resume this browser no longer keeps (made on
-// another device, or past the 20 kept here) comes from the account. (#118)
+// A Pro resume this browser no longer keeps (made on another device, or past the
+// 20 kept here) comes from the account (#118).
 async function openResume(id: string): Promise<Opened | null> {
   const entry = (await getTailoredHistory()).find((e) => e.id === id)
   if (entry) return { scored: entry.resume, jobTitle: entry.job.title, company: entry.job.company }
@@ -254,6 +254,7 @@ export default function Editor() {
   }
 
   function deleteSection(list: PlacedSection[], i: number, title: string) {
+    // Skills synced first, so a restored Skills section has what was typed (#197).
     change((f) => ({ ...f, draft: withSections({ ...f.draft, skills: resumeFromForm(f.draft, f.skills).skills }, list.filter((_, j) => j !== i)) }))
     setNote(`${title} deleted.`)
     focusNext.current = '.ed-note button'

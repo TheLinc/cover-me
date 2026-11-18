@@ -59,7 +59,7 @@ export default function HistoryPage() {
       const result = await uploadLocalHistory(session.access_token, own.letters, own.tailored)
       const submitted = { letters: own.letters.map((e) => e.id), tailored: own.tailored.map((e) => e.id) }
       await setEntryAccounts(accountUpdates(submitted, result, session.user.id, false))
-      // Settled: now in this account, or already another account's. Failed ones stay. (#24)
+      // Settled includes entries another account already holds, not only this one (#24).
       const failed = new Set(result.failed)
       const settled = new Set([...submitted.letters, ...submitted.tailored].filter((id) => !failed.has(id)))
       return {
@@ -113,7 +113,7 @@ export default function HistoryPage() {
 
     const [mode, session] = await Promise.all([getMode(), ensureValidSession()])
 
-    // Checked with the server first, so someone who just paid gets the Pro view (#181).
+    // A tier that isn't Pro is checked with the server first, so someone who just paid gets the Pro view (#181).
     const tier = mode === 'hosted' && session ? await currentTier(session) : null
     if (tier === 'hosted_free' && capWarning(letters.length, tailored.length)) {
       // Counted again: the user may have deleted something during the check. (#181)
@@ -123,7 +123,7 @@ export default function HistoryPage() {
 
     if (tier !== 'hosted_pro' || !session) return
     // Resumes saved from here may have been tailored in a Word file the
-    // account doesn't have yet; the dashboard needs it to keep their design. (#187)
+    // account doesn't have yet; the dashboard needs it to keep their design (#181).
     void uploadDesignIfPro(session)
 
     sessionRef.current = session
