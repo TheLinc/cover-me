@@ -1,3 +1,5 @@
+import { isValidElement, type ReactNode } from 'react'
+
 // Guide metadata shared by the /guides index, sitemap, and article pages.
 // `updated` marks the last real content change; it drives dateModified and lastmod.
 export type Guide = {
@@ -89,6 +91,22 @@ export function getGuide(slug: string): Guide {
   const guide = GUIDES.find((g) => g.slug === slug)
   if (!guide) throw new Error(`Unknown guide slug: ${slug}`)
   return guide
+}
+
+export function slugify(text: string): string {
+  return text.toLowerCase().replace(/['’]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+}
+
+function textOf(node: ReactNode): string {
+  if (typeof node === 'string' || typeof node === 'number') return String(node)
+  if (Array.isArray(node)) return node.map(textOf).join(' ')
+  if (isValidElement<{ children?: ReactNode }>(node)) return textOf(node.props.children)
+  return ''
+}
+
+export function readingMinutes(node: ReactNode): number {
+  const words = textOf(node).split(/\s+/).filter((w) => /[a-z0-9]/i.test(w)).length
+  return Math.max(1, Math.ceil(words / 230))
 }
 
 export function guideArticleJsonLd(guide: Guide, image?: string) {
