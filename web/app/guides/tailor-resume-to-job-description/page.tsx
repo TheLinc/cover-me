@@ -110,7 +110,7 @@ const faqJsonLd = {
 function BulletRewrites() {
   return (
     <div className="flex flex-col gap-5 rounded-[12px] bg-white p-6 text-[15px] leading-[1.6] shadow-[0_20px_50px_-24px_rgba(30,27,75,0.25)] max-sm:p-4">
-      <Label>Posting · {EXAMPLE.role} at {EXAMPLE.company}</Label>
+      <Label>Tailored for {EXAMPLE.role} at {EXAMPLE.company}</Label>
       {EXAMPLE.bullets.map(({ before, after: [a, k, b] }) => (
         <div key={k} className="grid gap-4 border-t border-line pt-5 sm:grid-cols-2">
           <div className="space-y-2">
@@ -160,7 +160,7 @@ export default function Page() {
               </h3>
               <p>{s.text}</p>
               {i === 2 && (
-                <GuideFigure caption="Three bullets from a sample resume, tailored to a sample Marketing Manager posting: each keeps its result and borrows the posting’s words.">
+                <GuideFigure caption="Three bullets from a sample resume, tailored to a sample Marketing Manager posting: each keeps its numbers and borrows the posting’s words.">
                   <BulletRewrites />
                 </GuideFigure>
               )}

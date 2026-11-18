@@ -6,7 +6,6 @@ import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { MODES, type Mode } from './privacy-modes'
 
-
 function Node({ icon, title, sub, dim }: { icon: ReactNode; title: string; sub?: string; dim?: boolean }) {
   return (
     <div className={cn('flex w-[84px] shrink-0 flex-col items-center gap-2 text-center transition-opacity duration-500 sm:w-[124px]', dim && 'opacity-35')}>

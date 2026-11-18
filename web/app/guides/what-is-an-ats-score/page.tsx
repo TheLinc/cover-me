@@ -167,7 +167,7 @@ export default function Page() {
                 <li>Never add a skill you don&rsquo;t have. A keyword that gets you the interview and falls apart in the room costs more than the filter did.</li>
                 <li>Check the score again after tailoring, and close the remaining gaps where you honestly can.</li>
               </ol>
-              <GuideFigure caption="Steps 2 and 3 on a sample posting: the bullet keeps its result and leads with the posting's own words.">
+              <GuideFigure caption="Steps 2 and 3 on a sample posting: the bullet keeps its numbers and leads with the posting's own words.">
                 <RewriteExample />
               </GuideFigure>
               <p>
