@@ -123,7 +123,7 @@ Best regards,
 Alex Rivera`,
     check: (
       <>
-        Read the corrected letter too, because a fix can bring new filler. This one added &ldquo;I look forward to contributing to the team&rsquo;s efforts&rdquo;, the kind of stock closing prompt 3 asks you to cut. The check also can&rsquo;t know what your resume leaves out: if you did work with product marketing, put it back in your own words.
+        Read the corrected letter too, because a fix can bring new filler. This one added &ldquo;I look forward to contributing to the team&rsquo;s efforts&rdquo;, the kind of stock closing prompt 3 tells the model to cut. The check also can&rsquo;t know what your resume leaves out: if you did work with product marketing, put it back in your own words.
       </>
     ),
   },

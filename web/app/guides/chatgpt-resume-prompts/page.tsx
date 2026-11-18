@@ -231,7 +231,7 @@ export default function Page() {
                 I build <Link href="/">Cover Me (cover-me.dev)</Link>, a Chrome extension that runs these steps from the posting page. You upload your resume once. On a posting, &ldquo;Tailor Resume to Job&rdquo; reads the page, finds the must-have and nice-to-have keywords, and rewrites your summary, bullets and skills in the posting&rsquo;s words. Your job titles, employers and dates stay as they are.
               </p>
               <p>
-                Part of prompt 4 is built in: every skill the AI adds has to quote a phrase from your resume, code checks that the phrase is there, and a separate model call that sees only the skill and the quoted line confirms it shows the skill. Then you see an <Link href="/guides/what-is-an-ats-score">ATS match score</Link> with the keywords still missing, and you download a PDF or Word file. A Word upload keeps its own design (beta).
+                Part of prompt 4 is built in: a skill the AI adds whose words aren&rsquo;t already in your resume has to quote a phrase from it, code checks that the phrase is there, and a separate model call that sees only the skill and the quoted line confirms it shows the skill. Then you see an <Link href="/guides/what-is-an-ats-score">ATS match score</Link> with the keywords still missing, and you download a PDF or Word file. A Word upload keeps its own design (beta).
               </p>
               <p>
                 ChatGPT and Claude can do this job well, as the answers above show. The difference is the copying and checking you do by hand. If you&rsquo;re deciding between a chatbot and a tool, <Link href="/guides/cover-me-vs-chatgpt">Cover Me vs ChatGPT</Link> compares them.
