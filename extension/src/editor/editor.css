@@ -33,6 +33,7 @@ html, body { width: auto; height: 100%; overflow: hidden; }
   scrollbar-color: var(--border) transparent;
 }
 .ed-form .ats-result { margin-bottom: 8px; }
+.ed-form .review-ask { margin: 0 0 12px; }
 
 .ed-section { padding: 20px 0; border-bottom: 1px solid var(--border); }
 .ed-section:last-child { border-bottom: none; }

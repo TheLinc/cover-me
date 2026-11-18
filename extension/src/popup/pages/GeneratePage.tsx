@@ -1044,7 +1044,6 @@ export default function GeneratePage({ onNavigate }: Props) {
                       </div>
                     )}
                   </div>
-                  {reviewAt === 'letter' && <ReviewAsk onClose={() => setReviewAt(null)} />}
                   <div className="letter-actions">
                     <button className="btn btn-primary" onClick={copy}>
                       {copied ? (
@@ -1076,6 +1075,8 @@ export default function GeneratePage({ onNavigate }: Props) {
                       New
                     </button>
                   </div>
+                  {/* Under the row, so "Copied!" stays in view on a long letter. */}
+                  {reviewAt === 'letter' && <ReviewAsk onClose={() => setReviewAt(null)} />}
                 </div>
               )}
 
