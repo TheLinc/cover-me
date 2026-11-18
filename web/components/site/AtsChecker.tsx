@@ -71,7 +71,10 @@ export function AtsChecker() {
           <Textarea
             id="resume"
             value={resume}
-            onChange={(e) => setResume(e.target.value)}
+            onChange={(e) => {
+              setResume(e.target.value)
+              setFileNote(null)
+            }}
             placeholder="Paste your resume, or upload it as a PDF or Word file"
             className="min-h-[320px] bg-white text-[14px] leading-[1.55]"
           />

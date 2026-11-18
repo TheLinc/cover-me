@@ -52,8 +52,8 @@ export default function AtsCheckerPage() {
           <Eyebrow>Free ATS checker</Eyebrow>
           <h1 className="text-[clamp(32px,5vw,52px)] leading-[1.02]">Check your resume against a job posting&apos;s keywords</h1>
           <p className="text-[17px] leading-[1.6] text-ink-2">
-            Applicant tracking systems rank resumes by how many of the posting&apos;s skills, tools and certifications they
-            name. Paste a posting and your resume to see which ones you have and which you&apos;re missing. No account, and
+            Recruiters search and filter applicants in their tracking system by the posting&apos;s skills, tools and
+            certifications. Paste a posting and your resume to see which ones you have and which you&apos;re missing. No account, and
             the text never leaves this page.
           </p>
         </div>
