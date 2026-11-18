@@ -1,5 +1,8 @@
 import { test } from 'node:test'
-import { execFileSync } from 'node:child_process'
+import { spawnSync } from 'node:child_process'
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import assert from 'node:assert/strict'
 import { unlinkedComments } from './check-comments.mjs'
@@ -55,7 +58,80 @@ test("an end-of-line comment doesn't borrow the next line's link", () => {
   assert.deepEqual(lines('const a = 1 // one\n// #5\nconst b = 2\n'), [1])
 })
 
-test('runs as a script and passes when nothing changed', () => {
-  const out = execFileSync(process.execPath, [fileURLToPath(new URL('./check-comments.mjs', import.meta.url)), 'HEAD'], { encoding: 'utf8' })
-  assert.match(out, /Comments OK in 0 changed file/)
+const script = fileURLToPath(new URL('./check-comments.mjs', import.meta.url))
+
+test('as lint, checks files not committed yet', () => {
+  const file = fileURLToPath(new URL('./lint-test.tmp.ts', import.meta.url))
+  try {
+    fs.writeFileSync(file, '// adds one\nexport const b = 2\n')
+    const run = spawnSync(process.execPath, [script, 'HEAD'], { encoding: 'utf8' })
+    assert.equal(run.status, 1)
+    assert.match(run.stderr, /scripts\/lint-test\.tmp\.ts:1/)
+  } finally {
+    fs.rmSync(file, { force: true })
+  }
+})
+
+const hook = (filePath) => spawnSync(process.execPath, [script, '--hook'], {
+  input: JSON.stringify({ tool_name: 'Edit', tool_input: { file_path: filePath } }),
+  encoding: 'utf8',
+})
+
+test('as a Claude Code hook, exits 2 with the line and the fix for an edited file', () => {
+  const file = fileURLToPath(new URL('./hook-test.tmp.ts', import.meta.url))
+  try {
+    fs.writeFileSync(file, 'const a = 1\n// adds one\nexport const b = a + 1\n')
+    const run = hook(file)
+    assert.equal(run.status, 2)
+    assert.match(run.stderr, /scripts\/hook-test\.tmp\.ts:2 {2}\/\/ adds one/)
+    assert.match(run.stderr, /whether it should exist/)
+    fs.writeFileSync(file, '// #276\nexport const b = 2\n')
+    assert.deepEqual([hook(file).status, hook(file).stderr], [0, ''])
+  } finally {
+    fs.rmSync(file, { force: true })
+  }
+})
+
+const bad = '// adds one\nexport const b = 2\n'
+const git = (cwd, ...args) => spawnSync('git', args, { cwd, encoding: 'utf8' })
+
+test('as a hook, ignores files it does not check', () => {
+  assert.equal(hook(fileURLToPath(new URL('../extension/src/popup/index.css', import.meta.url))).status, 0)
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cc-outside-'))
+  try {
+    fs.writeFileSync(path.join(dir, 'outside.ts'), bad)
+    assert.deepEqual([hook(path.join(dir, 'outside.ts')).status, hook(path.join(dir, 'outside.ts')).stderr], [0, ''])
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true })
+  }
+})
+
+test("as a hook, checks a file in another worktree of the repo", () => {
+  const dir = path.join(os.tmpdir(), `cc-worktree-${process.pid}`)
+  assert.equal(git(path.dirname(script), 'worktree', 'add', '--detach', '--no-checkout', dir, 'HEAD').status, 0)
+  try {
+    fs.writeFileSync(path.join(dir, 'bad.ts'), bad)
+    const run = hook(path.join(dir, 'bad.ts'))
+    assert.equal(run.status, 2)
+    assert.match(run.stderr, /^bad\.ts:1/m)
+  } finally {
+    git(path.dirname(script), 'worktree', 'remove', '--force', dir)
+  }
+})
+
+test('as a hook, exits 0 when typescript is not installed', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cc-nots-'))
+  try {
+    git(dir, 'init', '-q')
+    fs.mkdirSync(path.join(dir, 'scripts'))
+    fs.copyFileSync(script, path.join(dir, 'scripts', 'check-comments.mjs'))
+    fs.writeFileSync(path.join(dir, 'bad.ts'), bad)
+    const run = spawnSync(process.execPath, [path.join(dir, 'scripts', 'check-comments.mjs'), '--hook'], {
+      input: JSON.stringify({ tool_input: { file_path: path.join(dir, 'bad.ts') } }),
+      encoding: 'utf8',
+    })
+    assert.deepEqual([run.status, run.stderr], [0, ''])
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true })
+  }
 })

@@ -1,5 +1,7 @@
 // Fails on comments that don't link their reason, in every file a PR changes (#271).
-// Run from anywhere: node scripts/check-comments.mjs [base, default origin/master]
+// node scripts/check-comments.mjs [base, default origin/master] checks what changed
+// since the base, uncommitted files too. --hook is for Claude Code, which passes the
+// edited file as JSON on stdin (#276).
 import { execFileSync } from 'node:child_process'
 import fs from 'node:fs'
 import { createRequire } from 'node:module'
@@ -7,13 +9,18 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-const ts = createRequire(path.join(root, 'extension', 'package.json'))('typescript')
+let loaded
+// Loaded on first use: the hook runs after every edit, most of them to files it skips (#276).
+const typescript = () => (loaded ??= ['extension', 'web'].map((pkg) => {
+  try { return createRequire(path.join(root, pkg, 'package.json'))('typescript') } catch { return null }
+}).find(Boolean) ?? null)
 
 const LINKED = /https?:\/\/|(^|[^\w&])#\d+\b|docs\/adr\//
 const ALLOWED = [/^\/\/\s*ponytail:/, /^\/\/\/\s*<reference /, /^\/\*\s*@vite-ignore\s*\*\/$/]
 const CHECKED = /\.(ts|tsx|mts|cts|js|jsx|mjs|cjs)$/
 
 export function unlinkedComments(text, file) {
+  const ts = typescript()
   const kind = /x$/.test(file) ? ts.ScriptKind.TSX : ts.ScriptKind.TS
   const sf = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, kind)
   const ranges = new Map()
@@ -40,23 +47,56 @@ export function unlinkedComments(text, file) {
     .map((b) => ({ line: sf.getLineAndCharacterOfPosition(b.pos).line + 1, text: b.parts[0] }))
 }
 
+const checked = (f) => CHECKED.test(f) && !/\.d\.[mc]?ts$/.test(f) && !/(^|\/)(node_modules|dist)\//.test(f)
+
 function changedFiles(base) {
-  const out = execFileSync('git', ['diff', '--name-only', '-z', '--diff-filter=ACMR', `${base}...HEAD`], { cwd: root, encoding: 'utf8' })
-  return out.split('\0').filter((f) => CHECKED.test(f) && !/\.d\.[mc]?ts$/.test(f) && !/(^|\/)(node_modules|dist)\//.test(f))
+  const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' })
+  const since = git('merge-base', base, 'HEAD').trim()
+  const files = [git('diff', '--name-only', '-z', '--diff-filter=ACMR', since), git('ls-files', '-z', '--others', '--exclude-standard')]
+  return [...new Set(files.join('\0').split('\0'))].filter(checked).map((rel) => ({ abs: path.join(root, rel), rel }))
+}
+
+function repoOf(dir) {
+  try {
+    const [top, common] = execFileSync('git', ['-C', dir, 'rev-parse', '--show-toplevel', '--git-common-dir'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim().split('\n')
+    return { top, common: fs.realpathSync.native(path.resolve(dir, common)) }
+  } catch {
+    return null
+  }
+}
+
+// Any worktree of this repo counts: a session can edit one it didn't start in (#276).
+function editedFile() {
+  const file = JSON.parse(fs.readFileSync(0, 'utf8') || '{}').tool_input?.file_path
+  if (!file || !checked(file.split(path.sep).join('/')) || !fs.statSync(file, { throwIfNoEntry: false })?.isFile()) return []
+  const abs = path.resolve(file)
+  const [mine, theirs] = [repoOf(root), repoOf(path.dirname(abs))]
+  if (!mine || !theirs || mine.common !== theirs.common) return []
+  const rel = path.relative(theirs.top, abs).split(path.sep).join('/')
+  return checked(rel) ? [{ abs, rel }] : []
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const files = changedFiles(process.argv[2] ?? 'origin/master')
-  const found = files.flatMap((f) => unlinkedComments(fs.readFileSync(path.join(root, f), 'utf8'), f).map((c) => `${f}:${c.line}  ${c.text.slice(0, 100)}`))
+  const asHook = process.argv[2] === '--hook'
+  const files = asHook ? editedFile() : changedFiles(process.argv[2] ?? 'origin/master')
+  if (files.length && !typescript()) {
+    if (asHook) process.exit(0)
+    console.error('typescript not found: run pnpm install in extension/ or web/')
+    process.exit(1)
+  }
+  const found = files.flatMap((f) => unlinkedComments(fs.readFileSync(f.abs, 'utf8'), f.rel).map((c) => `${f.rel}:${c.line}  ${c.text.slice(0, 100)}`))
   if (found.length) {
     console.error(found.join('\n'))
     console.error(`\n${found.length} comment(s) with no link, in files this change touches.
-A comment must give a reason the code can't show, and link to it. Every comment in a file you change is checked, old ones too.
-- If it says what the code does, delete it. Rename or restructure the code until it explains itself.
-- If it explains why, put the reason in a ticket or an ADR and link it: #123, a URL, or docs/adr/<file>.
-  The ticket or PR that added the code often has the reason already: git log -L <line>,<line>:<file>
+Every comment in a file you change is checked, old ones too. For each one, first ask whether it should exist:
+- It says what the code does, restates a name, marks a section or narrates the change: delete it. Rename or
+  restructure the code if it needs to say more. Adding a ticket number to one of these is not a fix.
+- It gives a reason the code can't show (an outside bug, a hidden constraint, why not the obvious way): keep it
+  to one or two lines and link the ticket or ADR that holds the reason: #123, a URL, or docs/adr/<file>.
+  For a comment you just wrote, that's the ticket you're on. For an older one, git log -L <line>,<line>:<file>
+  finds the PR that added it.
 Allowed without a link: "// ponytail:" notes, "/// <reference ...>", "/* @vite-ignore */".`)
-    process.exit(1)
+    process.exit(asHook ? 2 : 1)
   }
-  console.log(`Comments OK in ${files.length} changed file(s).`)
+  if (!asHook) console.log(`Comments OK in ${files.length} changed file(s).`)
 }
