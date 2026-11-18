@@ -5,9 +5,6 @@ import { getGuide } from '@/lib/guides'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 const guide = getGuide('chatgpt-resume-prompts')
-const HERO_IMAGE = '/guides/chatgpt-resume-prompts.png'
-const HERO_ALT =
-  'The fourth prompt asks the chatbot to check its rewrite against the original resume. Claude found it had tied 38% more qualified leads to the $1.2M paid media budget, when the resume credits the 38% to email and social campaigns.'
 const POSTING_URL = 'https://careers.datadoghq.com/detail/8349721/?gh_jid=8349721'
 
 export const metadata: Metadata = {
@@ -20,13 +17,13 @@ export const metadata: Metadata = {
     url: `${BASE}/guides/${guide.slug}`,
     siteName: 'Cover Me',
     type: 'article',
-    images: [{ url: `${BASE}${HERO_IMAGE}`, width: 1600, height: 900, alt: 'A check prompt catching a number the rewritten summary tied to the wrong result' }],
+    images: [{ url: `${BASE}${guide.image}`, width: 1600, height: 900, alt: 'A check prompt catching a number the rewritten summary tied to the wrong result' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'ChatGPT Resume Prompts to Tailor Your Resume | Cover Me',
     description: 'Four prompts in order, each run in ChatGPT and Claude on a real posting, with the answers they gave.',
-    images: [`${BASE}${HERO_IMAGE}`],
+    images: [`${BASE}${guide.image}`],
   },
 }
 
@@ -187,7 +184,6 @@ export default function Page() {
   return (
     <GuideArticle
       guide={guide}
-      hero={{ src: HERO_IMAGE, alt: HERO_ALT }}
       lede={
         <>
           These four ChatGPT prompts tailor your resume to one job posting: pull the must-have keywords, rewrite your summary, rewrite the bullets for one role, and check that nothing was made up. They work the same in Claude. I ran each one in both, and the answers below are what came back.

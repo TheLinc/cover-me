@@ -5,9 +5,6 @@ import { getGuide } from '@/lib/guides'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 const guide = getGuide('chatgpt-cover-letter-prompts')
-const HERO_IMAGE = '/guides/chatgpt-cover-letter-prompts.png'
-const HERO_ALT =
-  "ChatGPT's first draft says \"I'm excited by the opportunity to help drive product growth through coordinated, measurable demand generation programs.\" After the prompt that strips AI phrases, the line reads \"I'm interested in helping build campaigns that connect product initiatives with measurable lead growth and marketing performance.\" Then the check prompt takes out \"global marketing\", which isn't on the resume."
 const POSTING_URL = 'https://careers.datadoghq.com/detail/8349721/?gh_jid=8349721'
 
 export const metadata: Metadata = {
@@ -20,13 +17,13 @@ export const metadata: Metadata = {
     url: `${BASE}/guides/${guide.slug}`,
     siteName: 'Cover Me',
     type: 'article',
-    images: [{ url: `${BASE}${HERO_IMAGE}`, width: 1600, height: 900, alt: 'A cover letter line before and after the prompt that strips AI phrases' }],
+    images: [{ url: `${BASE}${guide.image}`, width: 1600, height: 900, alt: 'A cover letter line before and after the prompt that strips AI phrases' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'ChatGPT Cover Letter Prompts, With Real Output | Cover Me',
     description: 'Four prompts in order, each run in ChatGPT and Claude on a real posting, with the letters they wrote.',
-    images: [`${BASE}${HERO_IMAGE}`],
+    images: [`${BASE}${guide.image}`],
   },
 }
 
@@ -172,7 +169,6 @@ export default function Page() {
   return (
     <GuideArticle
       guide={guide}
-      hero={{ src: HERO_IMAGE, alt: HERO_ALT }}
       lede={
         <>
           These four ChatGPT cover letter prompts write a letter from your resume and the job posting, then strip the phrases that make it sound AI-written and check every claim. They work the same in Claude. I ran each one in both, and the answers below are what came back.
