@@ -92,7 +92,46 @@ test('as a Claude Code hook, exits 2 with the line and the fix for an edited fil
   }
 })
 
+const bad = '// adds one\nexport const b = 2\n'
+const git = (cwd, ...args) => spawnSync('git', args, { cwd, encoding: 'utf8' })
+
 test('as a hook, ignores files it does not check', () => {
   assert.equal(hook(fileURLToPath(new URL('../extension/src/popup/index.css', import.meta.url))).status, 0)
-  assert.equal(hook(path.join(os.tmpdir(), 'outside.ts')).status, 0)
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cc-outside-'))
+  try {
+    fs.writeFileSync(path.join(dir, 'outside.ts'), bad)
+    assert.deepEqual([hook(path.join(dir, 'outside.ts')).status, hook(path.join(dir, 'outside.ts')).stderr], [0, ''])
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true })
+  }
+})
+
+test("as a hook, checks a file in another worktree of the repo", () => {
+  const dir = path.join(os.tmpdir(), `cc-worktree-${process.pid}`)
+  assert.equal(git(path.dirname(script), 'worktree', 'add', '--detach', '--no-checkout', dir, 'HEAD').status, 0)
+  try {
+    fs.writeFileSync(path.join(dir, 'bad.ts'), bad)
+    const run = hook(path.join(dir, 'bad.ts'))
+    assert.equal(run.status, 2)
+    assert.match(run.stderr, /^bad\.ts:1/m)
+  } finally {
+    git(path.dirname(script), 'worktree', 'remove', '--force', dir)
+  }
+})
+
+test('as a hook, exits 0 when typescript is not installed', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cc-nots-'))
+  try {
+    git(dir, 'init', '-q')
+    fs.mkdirSync(path.join(dir, 'scripts'))
+    fs.copyFileSync(script, path.join(dir, 'scripts', 'check-comments.mjs'))
+    fs.writeFileSync(path.join(dir, 'bad.ts'), bad)
+    const run = spawnSync(process.execPath, [path.join(dir, 'scripts', 'check-comments.mjs'), '--hook'], {
+      input: JSON.stringify({ tool_input: { file_path: path.join(dir, 'bad.ts') } }),
+      encoding: 'utf8',
+    })
+    assert.deepEqual([run.status, run.stderr], [0, ''])
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true })
+  }
 })

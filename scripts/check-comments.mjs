@@ -9,15 +9,18 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-const ts = ['extension', 'web'].map((pkg) => {
+let loaded
+// Loaded on first use: the hook runs after every edit, most of them to files it skips (#276).
+const typescript = () => (loaded ??= ['extension', 'web'].map((pkg) => {
   try { return createRequire(path.join(root, pkg, 'package.json'))('typescript') } catch { return null }
-}).find(Boolean)
+}).find(Boolean) ?? null)
 
 const LINKED = /https?:\/\/|(^|[^\w&])#\d+\b|docs\/adr\//
 const ALLOWED = [/^\/\/\s*ponytail:/, /^\/\/\/\s*<reference /, /^\/\*\s*@vite-ignore\s*\*\/$/]
 const CHECKED = /\.(ts|tsx|mts|cts|js|jsx|mjs|cjs)$/
 
 export function unlinkedComments(text, file) {
+  const ts = typescript()
   const kind = /x$/.test(file) ? ts.ScriptKind.TSX : ts.ScriptKind.TS
   const sf = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, kind)
   const ranges = new Map()
@@ -50,24 +53,38 @@ function changedFiles(base) {
   const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' })
   const since = git('merge-base', base, 'HEAD').trim()
   const files = [git('diff', '--name-only', '-z', '--diff-filter=ACMR', since), git('ls-files', '-z', '--others', '--exclude-standard')]
-  return [...new Set(files.join('\0').split('\0'))].filter(checked)
+  return [...new Set(files.join('\0').split('\0'))].filter(checked).map((rel) => ({ abs: path.join(root, rel), rel }))
 }
 
+function repoOf(dir) {
+  try {
+    const [top, common] = execFileSync('git', ['-C', dir, 'rev-parse', '--show-toplevel', '--git-common-dir'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim().split('\n')
+    return { top, common: fs.realpathSync.native(path.resolve(dir, common)) }
+  } catch {
+    return null
+  }
+}
+
+// Any worktree of this repo counts: a session can edit one it didn't start in (#276).
 function editedFile() {
   const file = JSON.parse(fs.readFileSync(0, 'utf8') || '{}').tool_input?.file_path
-  if (!file) return []
-  const rel = path.relative(root, path.resolve(file)).split(path.sep).join('/')
-  return !rel.startsWith('../') && !path.isAbsolute(rel) && checked(rel) && fs.existsSync(path.join(root, rel)) ? [rel] : []
+  if (!file || !checked(file.split(path.sep).join('/')) || !fs.statSync(file, { throwIfNoEntry: false })?.isFile()) return []
+  const abs = path.resolve(file)
+  const [mine, theirs] = [repoOf(root), repoOf(path.dirname(abs))]
+  if (!mine || !theirs || mine.common !== theirs.common) return []
+  const rel = path.relative(theirs.top, abs).split(path.sep).join('/')
+  return checked(rel) ? [{ abs, rel }] : []
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const asHook = process.argv[2] === '--hook'
-  if (!ts) {
-    if (asHook) process.exit(0)
-    throw new Error('typescript not found: run pnpm install in extension/ or web/')
-  }
   const files = asHook ? editedFile() : changedFiles(process.argv[2] ?? 'origin/master')
-  const found = files.flatMap((f) => unlinkedComments(fs.readFileSync(path.join(root, f), 'utf8'), f).map((c) => `${f}:${c.line}  ${c.text.slice(0, 100)}`))
+  if (files.length && !typescript()) {
+    if (asHook) process.exit(0)
+    console.error('typescript not found: run pnpm install in extension/ or web/')
+    process.exit(1)
+  }
+  const found = files.flatMap((f) => unlinkedComments(fs.readFileSync(f.abs, 'utf8'), f.rel).map((c) => `${f.rel}:${c.line}  ${c.text.slice(0, 100)}`))
   if (found.length) {
     console.error(found.join('\n'))
     console.error(`\n${found.length} comment(s) with no link, in files this change touches.
