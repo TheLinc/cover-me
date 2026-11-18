@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { GuideArticle, GuideFigure } from '@/components/site/GuideArticle'
+import { ComparisonTable, GuideArticle } from '@/components/site/GuideArticle'
 import { getGuide } from '@/lib/guides'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
@@ -68,15 +68,15 @@ const faqJsonLd = {
   ],
 }
 
-const COMPARISON: { feature: string; coverMe: string; chatgpt: string }[] = [
-  { feature: 'Reads the job posting', coverMe: 'Reads the open page when you click', chatgpt: 'You copy and paste it every time' },
-  { feature: 'Knows your resume', coverMe: 'Uploaded once, used for every application', chatgpt: 'Paste or upload it again in each new chat' },
-  { feature: 'ATS keyword matching', coverMe: 'Keywords pulled from the posting and worked in', chatgpt: 'Only if you ask for it' },
-  { feature: 'Resume tailoring and match score', coverMe: 'One click, with a score out of 100 and every missing keyword', chatgpt: 'Needs detailed prompting, no consistent score' },
-  { feature: 'Invented skills', coverMe: 'Removed by a check against your original resume', chatgpt: 'You have to catch them yourself' },
-  { feature: 'Where it runs', coverMe: 'In the browser, on the job page', chatgpt: 'A separate tab' },
-  { feature: 'Price', coverMe: 'Free with your own key, or 10 then 5 a week · Pro $15/mo for 25 a day', chatgpt: 'Free plan with limits · Plus $20/mo' },
-  { feature: 'Open source', coverMe: 'Yes, MIT licensed', chatgpt: 'No' },
+const COMPARISON: { feature: string; coverMe: string; them: string }[] = [
+  { feature: 'Reads the job posting', coverMe: 'Reads the open page when you click', them: 'You copy and paste it every time' },
+  { feature: 'Knows your resume', coverMe: 'Uploaded once, used for every application', them: 'Paste or upload it again in each new chat' },
+  { feature: 'ATS keyword matching', coverMe: 'Keywords pulled from the posting and worked in', them: 'Only if you ask for it' },
+  { feature: 'Resume tailoring and match score', coverMe: 'One click, with a score out of 100 and every missing keyword', them: 'Needs detailed prompting, no consistent score' },
+  { feature: 'Invented skills', coverMe: 'Removed by a check against your original resume', them: 'You have to catch them yourself' },
+  { feature: 'Where it runs', coverMe: 'In the browser, on the job page', them: 'A separate tab' },
+  { feature: 'Price', coverMe: 'Free with your own key, or 10 then 5 a week · Pro $15/mo for 25 a day', them: 'Free plan with limits · Plus $20/mo' },
+  { feature: 'Open source', coverMe: 'Yes, MIT licensed', them: 'No' },
 ]
 
 export default function Page() {
@@ -121,28 +121,7 @@ export default function Page() {
         {
           title: 'Feature comparison',
           body: (
-            <GuideFigure caption="Cover Me and ChatGPT compared feature by feature, from reading the posting to price.">
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[560px] bg-white text-[13.5px] border border-border rounded-[8px] overflow-hidden" style={{ borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr className="bg-paper">
-                      <th className="text-left px-4 py-3 font-bold text-muted-foreground border-b border-border">Feature</th>
-                      <th className="text-left px-4 py-3 font-bold text-brand-light border-b border-border">Cover Me</th>
-                      <th className="text-left px-4 py-3 font-bold text-muted-foreground border-b border-border">ChatGPT</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {COMPARISON.map((row, i) => (
-                      <tr key={row.feature} className={i % 2 === 0 ? 'bg-surface' : 'bg-paper'}>
-                        <td className="px-4 py-3 font-medium text-foreground border-b border-border">{row.feature}</td>
-                        <td className="px-4 py-3 text-muted-foreground border-b border-border">{row.coverMe}</td>
-                        <td className="px-4 py-3 text-muted-foreground border-b border-border">{row.chatgpt}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </GuideFigure>
+            <ComparisonTable name="ChatGPT" rows={COMPARISON} caption="Cover Me and ChatGPT compared feature by feature, from reading the posting to price." />
           ),
         },
         {

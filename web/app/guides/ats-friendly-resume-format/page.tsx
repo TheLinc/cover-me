@@ -1,8 +1,7 @@
 import type { Metadata } from 'next'
-import Image from 'next/image'
 import Link from 'next/link'
 import { Check, X } from 'lucide-react'
-import { GuideArticle, GuideFigure } from '@/components/site/GuideArticle'
+import { GuideArticle, GuideImage } from '@/components/site/GuideArticle'
 import { getGuide } from '@/lib/guides'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
@@ -123,14 +122,6 @@ function Bad({ children }: { children: string }) {
   )
 }
 
-function Figure({ src, alt, width, height, caption }: { src: string; alt: string; width: number; height: number; caption: string }) {
-  return (
-    <GuideFigure caption={caption}>
-      <Image src={src} alt={alt} width={width} height={height} sizes="(max-width: 800px) 100vw, 632px" className="w-full h-auto rounded-[12px]" />
-    </GuideFigure>
-  )
-}
-
 export default function Page() {
   return (
     <GuideArticle
@@ -205,7 +196,7 @@ export default function Page() {
                 <li>A Word file laid out with a table</li>
                 <li>A PDF that is just a picture of the resume, like a scan</li>
               </ul>
-              <Figure
+              <GuideImage
                 src="/guides/ats-friendly-resume-format/layouts.png"
                 alt="Two of the six test resumes side by side. Left, a plain one-column resume for Alex Rivera, Marketing Manager, with Summary, Experience, Education and Skills headings. Right, the same resume as a two-column design with a dark blue sidebar holding contact details with icons, skills and education."
                 width={1720}
@@ -272,7 +263,7 @@ export default function Page() {
               <p>
                 <strong>Quick test:</strong> open your PDF and try to highlight a single word. If you can&rsquo;t, your resume is a picture.
               </p>
-              <Figure
+              <GuideImage
                 src="/guides/ats-friendly-resume-format/workday-image-only.png"
                 alt="Workday's My Information step after two uploads, side by side. Left, after single-column.pdf, First Name is Alex, Last Name is Rivera, and Address Line 1 says Marketing Manager. Right, after image-only.pdf, all three fields are empty."
                 width={1840}
@@ -284,7 +275,7 @@ export default function Page() {
               <p>
                 The sidebar is narrow, so the LinkedIn link wrapped onto a second line. Ashby only kept the first line and filled in &ldquo;linkedin.com/in/alexrivera-exa&rdquo;. A recruiter who clicks that gets a broken page. The other three systems read the two-column design correctly.
               </p>
-              <Figure
+              <GuideImage
                 src="/guides/ats-friendly-resume-format/ashby-two-column.png"
                 alt="Ashby's LinkedIn Profile field after two uploads. After single-column.pdf it reads linkedin.com/in/alexrivera-example. After two-column.pdf it reads linkedin.com/in/alexrivera-exa."
                 width={1504}
@@ -296,7 +287,7 @@ export default function Page() {
               <p>
                 Some Word templates use a table to line up the sections. In mine, education and skills sat in boxes next to each other. SmartRecruiters filled in the degree as &ldquo;B.A. Communications A/B testing, Copywriting&rdquo;, with two skills stuck on the end. The other three systems were fine.
               </p>
-              <Figure
+              <GuideImage
                 src="/guides/ats-friendly-resume-format/smartrecruiters-table.png"
                 alt="SmartRecruiters' Education entry after two uploads. After single-column.pdf it shows University of Illinois, 2013 to 2017, B.A. Communications. After table-layout.docx the degree line reads B.A. Communications A/B testing, Copywriting."
                 width={1232}

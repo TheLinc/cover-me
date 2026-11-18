@@ -8,7 +8,7 @@ import { GuideToc, GuideTocCollapsed } from './GuideToc'
 
 const serif = Source_Serif_4({ subsets: ['latin'], weight: '600', display: 'swap' })
 
-export type GuideSection = { title: string; id?: string; body: ReactNode }
+type GuideSection = { title: string; id?: string; body: ReactNode }
 
 type FaqJsonLd = { mainEntity: { name: string; acceptedAnswer: { text: string } }[] }
 
@@ -20,13 +20,56 @@ const H2 = ({ id, children, className }: { id: string; children: ReactNode; clas
   </h2>
 )
 
-// Captioned product graphic on a tinted panel, placed in the section it explains.
 export function GuideFigure({ caption, children }: { caption: ReactNode; children: ReactNode }) {
   return (
     <figure className="!my-10">
       <div className="rounded-[16px] bg-panel p-6 max-sm:p-4">{children}</div>
       <figcaption className="mt-3 text-[14px] leading-[1.6] text-subtle">{caption}</figcaption>
     </figure>
+  )
+}
+
+export function GuideImage({ src, alt, width, height, caption, narrow }: { src: string; alt: string; width: number; height: number; caption: string; narrow?: boolean }) {
+  return (
+    <GuideFigure caption={caption}>
+      <Image
+        src={src}
+        alt={alt}
+        width={width}
+        height={height}
+        sizes={narrow ? '340px' : '(max-width: 800px) 100vw, 632px'}
+        className={cn('h-auto w-full rounded-[12px]', narrow && 'mx-auto max-w-[340px]')}
+      />
+    </GuideFigure>
+  )
+}
+
+export function ComparisonTable({ name, rows, caption }: { name: string; rows: { feature: string; coverMe: string; them: string }[]; caption: string }) {
+  const th = 'border-b border-line px-4 py-3 text-left font-bold'
+  const td = 'border-b border-line px-4 py-3'
+  return (
+    <GuideFigure caption={caption}>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[560px] overflow-hidden rounded-[8px] border border-line bg-white text-[13.5px]" style={{ borderCollapse: 'collapse' }}>
+          <thead>
+            <tr className="bg-paper">
+              <th className={cn(th, 'text-muted-foreground')}>Feature</th>
+              <th className={cn(th, 'text-brand-strong')}>Cover Me</th>
+              <th className={cn(th, 'text-muted-foreground')}>{name}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, i) => (
+              <tr key={row.feature} className={i % 2 === 0 ? 'bg-surface' : 'bg-paper'}>
+                <td className={cn(td, 'font-medium text-foreground')}>{row.feature}</td>
+                <td className={cn(td, 'text-muted-foreground')}>{row.coverMe}</td>
+                <td className={cn(td, 'text-muted-foreground')}>{row.them}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </GuideFigure>
   )
 }
 
@@ -41,7 +84,7 @@ export function GuideArticle({
   cta,
 }: {
   guide: Guide
-  hero?: { src: string; alt: string }
+  hero: { src: string; alt: string }
   lede: ReactNode
   tldr?: string[] | ReactNode
   intro?: ReactNode
@@ -56,7 +99,7 @@ export function GuideArticle({
 
   return (
     <main className="mx-auto max-w-[1040px] px-8 pb-24 pt-16 max-md:px-5 max-md:pt-10 lg:grid lg:grid-cols-[200px_minmax(0,1fr)] lg:gap-x-16">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(guideArticleJsonLd(guide, hero?.src)) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(guideArticleJsonLd(guide, hero.src)) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(guideBreadcrumbJsonLd(guide)) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faq) }} />
 
@@ -82,17 +125,15 @@ export function GuideArticle({
           </p>
         </header>
 
-        {hero && (
-          <Image
-            src={hero.src}
-            alt={hero.alt}
-            width={1600}
-            height={900}
-            priority
-            sizes="(max-width: 800px) 100vw, 680px"
-            className="mb-10 h-auto w-full rounded-[16px] border border-line"
-          />
-        )}
+        <Image
+          src={hero.src}
+          alt={hero.alt}
+          width={1600}
+          height={900}
+          priority
+          sizes="(max-width: 800px) 100vw, 680px"
+          className="mb-10 h-auto w-full rounded-[16px] border border-line"
+        />
 
         <GuideTocCollapsed items={contents} />
 

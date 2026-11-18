@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { GuideArticle, GuideFigure } from '@/components/site/GuideArticle'
+import { ComparisonTable, GuideArticle } from '@/components/site/GuideArticle'
 import { getGuide } from '@/lib/guides'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
@@ -60,17 +60,17 @@ const faqJsonLd = {
   ],
 }
 
-const COMPARISON: { feature: string; coverMe: string; rezi: string }[] = [
-  { feature: 'Built for', coverMe: 'Tailoring your existing resume and writing a letter for each posting', rezi: 'Writing and formatting a resume in its builder and templates' },
-  { feature: 'Free plan', coverMe: 'Unlimited with your own API key, or 10 generations to start, then 5 a week', rezi: '1 resume, 3 PDF downloads, 1 AI interview, standard templates, limited keyword targeting and Rezi Score' },
-  { feature: 'Paid plan', coverMe: '$15 a month, or $35 every 3 months, for up to 25 generations a day', rezi: 'Pro at $29 a month, or Lifetime at $149 once' },
-  { feature: 'Where it runs', coverMe: 'Chrome extension, on the job posting you have open', rezi: 'Web app, plus a Chrome extension that fills in application forms' },
-  { feature: 'Tailoring', coverMe: 'One click rewrites your bullets, summary and skills in the posting’s words', rezi: 'Keyword targeting against a job description, full on paid plans' },
-  { feature: 'Score', coverMe: 'ATS score from 0 to 100 with every missing keyword listed', rezi: 'Rezi Score of resume strength on 23 metrics, full on paid plans' },
-  { feature: 'Your own design', coverMe: 'A Word upload keeps its fonts and layout in the Word download (beta)', rezi: 'Imports your resume into a Rezi document and its templates' },
-  { feature: 'AI cover letters', coverMe: 'On every plan, written for the posting', rezi: 'AI cover letter writer on paid plans' },
-  { feature: 'Downloads', coverMe: 'PDF, plus Word for the tailored resume, on every plan', rezi: '3 PDFs on the free plan; unlimited PDFs and Word files on paid plans' },
-  { feature: 'Open source', coverMe: 'Yes, MIT licensed', rezi: 'No' },
+const COMPARISON: { feature: string; coverMe: string; them: string }[] = [
+  { feature: 'Built for', coverMe: 'Tailoring your existing resume and writing a letter for each posting', them: 'Writing and formatting a resume in its builder and templates' },
+  { feature: 'Free plan', coverMe: 'Unlimited with your own API key, or 10 generations to start, then 5 a week', them: '1 resume, 3 PDF downloads, 1 AI interview, standard templates, limited keyword targeting and Rezi Score' },
+  { feature: 'Paid plan', coverMe: '$15 a month, or $35 every 3 months, for up to 25 generations a day', them: 'Pro at $29 a month, or Lifetime at $149 once' },
+  { feature: 'Where it runs', coverMe: 'Chrome extension, on the job posting you have open', them: 'Web app, plus a Chrome extension that fills in application forms' },
+  { feature: 'Tailoring', coverMe: 'One click rewrites your bullets, summary and skills in the posting’s words', them: 'Keyword targeting against a job description, full on paid plans' },
+  { feature: 'Score', coverMe: 'ATS score from 0 to 100 with every missing keyword listed', them: 'Rezi Score of resume strength on 23 metrics, full on paid plans' },
+  { feature: 'Your own design', coverMe: 'A Word upload keeps its fonts and layout in the Word download (beta)', them: 'Imports your resume into a Rezi document and its templates' },
+  { feature: 'AI cover letters', coverMe: 'On every plan, written for the posting', them: 'AI cover letter writer on paid plans' },
+  { feature: 'Downloads', coverMe: 'PDF, plus Word for the tailored resume, on every plan', them: '3 PDFs on the free plan; unlimited PDFs and Word files on paid plans' },
+  { feature: 'Open source', coverMe: 'Yes, MIT licensed', them: 'No' },
 ]
 
 export default function Page() {
@@ -114,28 +114,7 @@ export default function Page() {
           title: 'Feature comparison',
           body: (
             <>
-              <GuideFigure caption="Rezi details are from its own site, checked November 7, 2026.">
-                <div className="overflow-x-auto">
-                <table className="w-full min-w-[560px] bg-white text-[13.5px] border border-border rounded-[8px] overflow-hidden" style={{ borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr className="bg-paper">
-                      <th className="text-left px-4 py-3 font-bold text-muted-foreground border-b border-border">Feature</th>
-                      <th className="text-left px-4 py-3 font-bold text-brand-light border-b border-border">Cover Me</th>
-                      <th className="text-left px-4 py-3 font-bold text-muted-foreground border-b border-border">Rezi</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {COMPARISON.map((row, i) => (
-                      <tr key={row.feature} className={i % 2 === 0 ? 'bg-surface' : 'bg-paper'}>
-                        <td className="px-4 py-3 font-medium text-foreground border-b border-border">{row.feature}</td>
-                        <td className="px-4 py-3 text-muted-foreground border-b border-border">{row.coverMe}</td>
-                        <td className="px-4 py-3 text-muted-foreground border-b border-border">{row.rezi}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              </GuideFigure>
+              <ComparisonTable name="Rezi" rows={COMPARISON} caption="Rezi details are from its own site, checked November 7, 2026." />
             </>
           ),
         },

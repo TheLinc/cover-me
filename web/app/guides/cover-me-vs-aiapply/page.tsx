@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { GuideArticle, GuideFigure } from '@/components/site/GuideArticle'
+import { ComparisonTable, GuideArticle } from '@/components/site/GuideArticle'
 import { getGuide } from '@/lib/guides'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
@@ -60,16 +60,16 @@ const faqJsonLd = {
   ],
 }
 
-const COMPARISON: { feature: string; coverMe: string; aiapply: string }[] = [
-  { feature: 'Submits applications for you', coverMe: 'No, you review and submit every one', aiapply: 'Yes, with paid auto-apply credits' },
-  { feature: 'Where you find jobs', coverMe: 'Any posting you open on LinkedIn, Indeed, Greenhouse, Lever, Workday or Ashby, or paste', aiapply: 'Its own job search board' },
-  { feature: 'Where it runs', coverMe: 'Browser extension, on the page you are viewing', aiapply: 'Separate web dashboard' },
-  { feature: 'Resume tailoring', coverMe: 'One click, with an ATS match score and missing keywords shown before you use it', aiapply: 'Resumes tailored to each job description' },
-  { feature: 'Invented skills', coverMe: 'A check removes skills your original resume does not support', aiapply: 'Not described on its pricing page' },
-  { feature: 'Cover letter', coverMe: 'Written for the posting and editable before you send it', aiapply: 'Cover letter generator' },
-  { feature: 'Interview help, job board, translator', coverMe: 'Not included, letters and resumes only', aiapply: 'Live interview coaching, job search board, resume translator' },
-  { feature: 'Pricing', coverMe: 'Free with your own key, or 10 then 5 a week · Pro $15/mo for 25 a day, all public', aiapply: 'Premium subscription plus credit packs, prices not listed on its pricing page' },
-  { feature: 'Open source', coverMe: 'Yes, MIT licensed', aiapply: 'No' },
+const COMPARISON: { feature: string; coverMe: string; them: string }[] = [
+  { feature: 'Submits applications for you', coverMe: 'No, you review and submit every one', them: 'Yes, with paid auto-apply credits' },
+  { feature: 'Where you find jobs', coverMe: 'Any posting you open on LinkedIn, Indeed, Greenhouse, Lever, Workday or Ashby, or paste', them: 'Its own job search board' },
+  { feature: 'Where it runs', coverMe: 'Browser extension, on the page you are viewing', them: 'Separate web dashboard' },
+  { feature: 'Resume tailoring', coverMe: 'One click, with an ATS match score and missing keywords shown before you use it', them: 'Resumes tailored to each job description' },
+  { feature: 'Invented skills', coverMe: 'A check removes skills your original resume does not support', them: 'Not described on its pricing page' },
+  { feature: 'Cover letter', coverMe: 'Written for the posting and editable before you send it', them: 'Cover letter generator' },
+  { feature: 'Interview help, job board, translator', coverMe: 'Not included, letters and resumes only', them: 'Live interview coaching, job search board, resume translator' },
+  { feature: 'Pricing', coverMe: 'Free with your own key, or 10 then 5 a week · Pro $15/mo for 25 a day, all public', them: 'Premium subscription plus credit packs, prices not listed on its pricing page' },
+  { feature: 'Open source', coverMe: 'Yes, MIT licensed', them: 'No' },
 ]
 
 export default function Page() {
@@ -110,28 +110,7 @@ export default function Page() {
           title: 'Feature comparison',
           body: (
             <>
-              <GuideFigure caption="AIApply details are from its pricing page, checked October 2026.">
-                <div className="overflow-x-auto">
-                <table className="w-full min-w-[560px] bg-white text-[13.5px] border border-border rounded-[8px] overflow-hidden" style={{ borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr className="bg-paper">
-                      <th className="text-left px-4 py-3 font-bold text-muted-foreground border-b border-border">Feature</th>
-                      <th className="text-left px-4 py-3 font-bold text-brand-light border-b border-border">Cover Me</th>
-                      <th className="text-left px-4 py-3 font-bold text-muted-foreground border-b border-border">AIApply</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {COMPARISON.map((row, i) => (
-                      <tr key={row.feature} className={i % 2 === 0 ? 'bg-surface' : 'bg-paper'}>
-                        <td className="px-4 py-3 font-medium text-foreground border-b border-border">{row.feature}</td>
-                        <td className="px-4 py-3 text-muted-foreground border-b border-border">{row.coverMe}</td>
-                        <td className="px-4 py-3 text-muted-foreground border-b border-border">{row.aiapply}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              </GuideFigure>
+              <ComparisonTable name="AIApply" rows={COMPARISON} caption="AIApply details are from its pricing page, checked October 2026." />
             </>
           ),
         },

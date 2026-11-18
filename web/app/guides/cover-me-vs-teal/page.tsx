@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { GuideArticle, GuideFigure } from '@/components/site/GuideArticle'
+import { ComparisonTable, GuideArticle } from '@/components/site/GuideArticle'
 import { getGuide } from '@/lib/guides'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
@@ -60,16 +60,16 @@ const faqJsonLd = {
   ],
 }
 
-const COMPARISON: { feature: string; coverMe: string; teal: string }[] = [
-  { feature: 'Built for', coverMe: 'Tailoring your existing resume and writing a letter for each posting', teal: 'Building resumes and tracking your job search' },
-  { feature: 'Free plan', coverMe: 'Unlimited with your own API key, or 10 generations to start, then 5 a week', teal: 'Unlimited resumes and job tracking, 10 templates, top 5 keywords per job, and AI credits: 5 bullets, 2 summaries, 2 cover letters' },
-  { feature: 'Paid plan', coverMe: '$15 a month, or $35 every 3 months, for up to 25 generations a day', teal: 'Teal+ at $13 every 7 days, $29 every 30 days or $79 every 90 days' },
-  { feature: 'Where it runs', coverMe: 'Chrome extension, on the job posting you have open', teal: 'Web app, plus a Chrome extension that saves jobs to its tracker' },
-  { feature: 'Tailoring', coverMe: 'One click rewrites your bullets, summary and skills in the posting’s words', teal: 'Keyword matching highlights the posting’s keywords while you edit; AI writes bullets and summaries' },
-  { feature: 'Match score', coverMe: 'ATS score from 0 to 100 with every missing keyword listed', teal: 'Keyword insights for the job you attach' },
-  { feature: 'Invented skills', coverMe: 'A check removes skills your original resume does not support', teal: 'Not described on its pricing page' },
-  { feature: 'Templates and design', coverMe: 'Keeps your own Word design (beta), or a standard one-column layout; download as PDF or Word', teal: 'Resume templates and Design Mode' },
-  { feature: 'Open source', coverMe: 'Yes, MIT licensed', teal: 'No' },
+const COMPARISON: { feature: string; coverMe: string; them: string }[] = [
+  { feature: 'Built for', coverMe: 'Tailoring your existing resume and writing a letter for each posting', them: 'Building resumes and tracking your job search' },
+  { feature: 'Free plan', coverMe: 'Unlimited with your own API key, or 10 generations to start, then 5 a week', them: 'Unlimited resumes and job tracking, 10 templates, top 5 keywords per job, and AI credits: 5 bullets, 2 summaries, 2 cover letters' },
+  { feature: 'Paid plan', coverMe: '$15 a month, or $35 every 3 months, for up to 25 generations a day', them: 'Teal+ at $13 every 7 days, $29 every 30 days or $79 every 90 days' },
+  { feature: 'Where it runs', coverMe: 'Chrome extension, on the job posting you have open', them: 'Web app, plus a Chrome extension that saves jobs to its tracker' },
+  { feature: 'Tailoring', coverMe: 'One click rewrites your bullets, summary and skills in the posting’s words', them: 'Keyword matching highlights the posting’s keywords while you edit; AI writes bullets and summaries' },
+  { feature: 'Match score', coverMe: 'ATS score from 0 to 100 with every missing keyword listed', them: 'Keyword insights for the job you attach' },
+  { feature: 'Invented skills', coverMe: 'A check removes skills your original resume does not support', them: 'Not described on its pricing page' },
+  { feature: 'Templates and design', coverMe: 'Keeps your own Word design (beta), or a standard one-column layout; download as PDF or Word', them: 'Resume templates and Design Mode' },
+  { feature: 'Open source', coverMe: 'Yes, MIT licensed', them: 'No' },
 ]
 
 export default function Page() {
@@ -110,28 +110,7 @@ export default function Page() {
           title: 'Feature comparison',
           body: (
             <>
-              <GuideFigure caption="Teal details are from its pricing page, checked October 2026.">
-                <div className="overflow-x-auto">
-                <table className="w-full min-w-[560px] bg-white text-[13.5px] border border-border rounded-[8px] overflow-hidden" style={{ borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr className="bg-paper">
-                      <th className="text-left px-4 py-3 font-bold text-muted-foreground border-b border-border">Feature</th>
-                      <th className="text-left px-4 py-3 font-bold text-brand-light border-b border-border">Cover Me</th>
-                      <th className="text-left px-4 py-3 font-bold text-muted-foreground border-b border-border">Teal</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {COMPARISON.map((row, i) => (
-                      <tr key={row.feature} className={i % 2 === 0 ? 'bg-surface' : 'bg-paper'}>
-                        <td className="px-4 py-3 font-medium text-foreground border-b border-border">{row.feature}</td>
-                        <td className="px-4 py-3 text-muted-foreground border-b border-border">{row.coverMe}</td>
-                        <td className="px-4 py-3 text-muted-foreground border-b border-border">{row.teal}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              </GuideFigure>
+              <ComparisonTable name="Teal" rows={COMPARISON} caption="Teal details are from its pricing page, checked October 2026." />
             </>
           ),
         },

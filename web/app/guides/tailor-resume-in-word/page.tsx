@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
-import Image from 'next/image'
 import Link from 'next/link'
-import { GuideArticle, GuideFigure } from '@/components/site/GuideArticle'
+import { GuideArticle, GuideImage } from '@/components/site/GuideArticle'
 import { getGuide } from '@/lib/guides'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
@@ -61,21 +60,6 @@ const faqJsonLd = {
       },
     },
   ],
-}
-
-function Figure({ src, alt, width, height, caption, narrow }: { src: string; alt: string; width: number; height: number; caption: string; narrow?: boolean }) {
-  return (
-    <GuideFigure caption={caption}>
-      <Image
-        src={src}
-        alt={alt}
-        width={width}
-        height={height}
-        sizes={narrow ? '340px' : '(max-width: 800px) 100vw, 632px'}
-        className={narrow ? 'mx-auto w-full max-w-[340px] h-auto rounded-[12px]' : 'w-full h-auto rounded-[12px]'}
-      />
-    </GuideFigure>
-  )
 }
 
 export default function Page() {
@@ -150,7 +134,7 @@ export default function Page() {
               <p>
                 It changes the text of your bullets, your summary and your skills line, inside the paragraphs that already hold them. Everything else in the file stays as it was: fonts, sizes, colors, spacing, margins, headings, bullet style, dates and contact details.
               </p>
-              <Figure
+              <GuideImage
                 src={`${FILES}/before-after.png`}
                 alt="The same made-up Word resume before and after Cover Me tailored it. Both have the same serif name, teal section rules, square bullets and right-aligned dates. After tailoring, the profile is rewritten and runs four lines instead of two, five of the seven bullets are reworded, the Juniper Labs bullets are in a new order, and the skills line starts with Campaign strategy, Paid media and SEO and adds Cost per lead and Email Marketing."
                 width={1600}
@@ -186,7 +170,7 @@ export default function Page() {
                 <li>Click &ldquo;Word (your design)&rdquo;. The other button, &ldquo;PDF (Cover Me layout)&rdquo;, gives you the standard one-column layout instead.</li>
               </ol>
               <div className="grid grid-cols-2 gap-6 max-sm:grid-cols-1 !my-10 [&>figure]:!my-0">
-                <Figure
+                <GuideImage
                   narrow
                   src={`${FILES}/popup-design-check.png`}
                   alt="The Cover Me popup's Resume tab after uploading Alex_Rivera_Resume.docx. Your design (Beta) is selected and reads: 7 of 7 bullets can be tailored, Summary: rewritten, Skills: reordered. Below it is the Cover Me layout option."
@@ -194,7 +178,7 @@ export default function Page() {
                   height={1120}
                   caption="The check after uploading the Word file."
                 />
-                <Figure
+                <GuideImage
                   narrow
                   src={`${FILES}/popup-result.png`}
                   alt="The Cover Me popup after tailoring for Marketing Manager, Demand Generation at Northwind. The ATS match is 78. Missing keywords include HubSpot or similar marketing automation platform and lifecycle email and nurture programs, plus 4 more. Buttons read Word (your design) and PDF (Cover Me layout)."

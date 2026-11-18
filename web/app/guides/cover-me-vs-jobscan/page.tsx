@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { GuideArticle, GuideFigure } from '@/components/site/GuideArticle'
+import { ComparisonTable, GuideArticle } from '@/components/site/GuideArticle'
 import { getGuide } from '@/lib/guides'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
@@ -60,16 +60,16 @@ const faqJsonLd = {
   ],
 }
 
-const COMPARISON: { feature: string; coverMe: string; jobscan: string }[] = [
-  { feature: 'Free plan', coverMe: 'Unlimited with your own API key, or 10 generations to start, then 5 a week', jobscan: '5 resume scans a month' },
-  { feature: 'Paid plan', coverMe: '$15 a month, or $35 every 3 months, for up to 25 generations a day', jobscan: '$49.95 a month, or $89.95 every 3 months after a 7-day free trial' },
-  { feature: 'Where it runs', coverMe: 'Chrome extension, on the job posting you have open', jobscan: 'Web app, plus a Chrome extension that saves jobs to its tracker' },
-  { feature: 'Match score', coverMe: 'ATS score from 0 to 100 with every missing keyword listed', jobscan: 'Match rate with ATS and recruiter findings' },
-  { feature: 'Resume rewriting', coverMe: 'One click rewrites your bullets, summary and skills for the posting', jobscan: 'AI optimizations on paid plans' },
-  { feature: 'Invented skills', coverMe: 'A check removes skills your original resume does not support', jobscan: 'Not described on its plan page' },
-  { feature: 'Cover letters', coverMe: 'On every plan, written for the posting', jobscan: 'AI cover letter generator on paid plans' },
-  { feature: 'LinkedIn, job tracker, resume builder', coverMe: 'A simple board of your applications by stage; no LinkedIn optimizer or resume builder', jobscan: 'LinkedIn optimizer on paid plans; job tracker and resume builder on every plan' },
-  { feature: 'Open source', coverMe: 'Yes, MIT licensed', jobscan: 'No' },
+const COMPARISON: { feature: string; coverMe: string; them: string }[] = [
+  { feature: 'Free plan', coverMe: 'Unlimited with your own API key, or 10 generations to start, then 5 a week', them: '5 resume scans a month' },
+  { feature: 'Paid plan', coverMe: '$15 a month, or $35 every 3 months, for up to 25 generations a day', them: '$49.95 a month, or $89.95 every 3 months after a 7-day free trial' },
+  { feature: 'Where it runs', coverMe: 'Chrome extension, on the job posting you have open', them: 'Web app, plus a Chrome extension that saves jobs to its tracker' },
+  { feature: 'Match score', coverMe: 'ATS score from 0 to 100 with every missing keyword listed', them: 'Match rate with ATS and recruiter findings' },
+  { feature: 'Resume rewriting', coverMe: 'One click rewrites your bullets, summary and skills for the posting', them: 'AI optimizations on paid plans' },
+  { feature: 'Invented skills', coverMe: 'A check removes skills your original resume does not support', them: 'Not described on its plan page' },
+  { feature: 'Cover letters', coverMe: 'On every plan, written for the posting', them: 'AI cover letter generator on paid plans' },
+  { feature: 'LinkedIn, job tracker, resume builder', coverMe: 'A simple board of your applications by stage; no LinkedIn optimizer or resume builder', them: 'LinkedIn optimizer on paid plans; job tracker and resume builder on every plan' },
+  { feature: 'Open source', coverMe: 'Yes, MIT licensed', them: 'No' },
 ]
 
 export default function Page() {
@@ -110,28 +110,7 @@ export default function Page() {
           title: 'Feature comparison',
           body: (
             <>
-              <GuideFigure caption="Jobscan details are from its plan page, checked October 2026.">
-                <div className="overflow-x-auto">
-                <table className="w-full min-w-[560px] bg-white text-[13.5px] border border-border rounded-[8px] overflow-hidden" style={{ borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr className="bg-paper">
-                      <th className="text-left px-4 py-3 font-bold text-muted-foreground border-b border-border">Feature</th>
-                      <th className="text-left px-4 py-3 font-bold text-brand-light border-b border-border">Cover Me</th>
-                      <th className="text-left px-4 py-3 font-bold text-muted-foreground border-b border-border">Jobscan</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {COMPARISON.map((row, i) => (
-                      <tr key={row.feature} className={i % 2 === 0 ? 'bg-surface' : 'bg-paper'}>
-                        <td className="px-4 py-3 font-medium text-foreground border-b border-border">{row.feature}</td>
-                        <td className="px-4 py-3 text-muted-foreground border-b border-border">{row.coverMe}</td>
-                        <td className="px-4 py-3 text-muted-foreground border-b border-border">{row.jobscan}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              </GuideFigure>
+              <ComparisonTable name="Jobscan" rows={COMPARISON} caption="Jobscan details are from its plan page, checked October 2026." />
             </>
           ),
         },
