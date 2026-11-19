@@ -189,7 +189,7 @@ export default function Page() {
           body: (
             <>
               <p>
-                The extension calls api.anthropic.com or api.openai.com directly from your browser. Cover Me&rsquo;s server never receives your resume or your key in this mode, and you can check that in the{' '}
+                The extension calls api.anthropic.com or api.openai.com directly from your browser. Cover Me&rsquo;s server never receives your key in this mode, and gets your resume only if you choose to send it with a problem report, and you can check that in the{' '}
                 <a href="https://github.com/TheLinc/cover-me" target="_blank" rel="noopener noreferrer">source code</a>.
               </p>
               <GuideFigure caption="With your own key, your resume and key go from your browser straight to Claude or OpenAI and skip Cover Me’s server.">
@@ -199,7 +199,7 @@ export default function Page() {
                 Your key is stored in the browser&rsquo;s extension storage, encrypted with AES-256-GCM through the Web Crypto API. The key that encrypts it is stored beside it, so this stops casual reads of the storage file but not someone with full access to your Chrome profile.
               </p>
               <p>
-                Two things can reach Cover Me&rsquo;s server. Under Settings, &ldquo;Reading job pages&rdquo; sends the job page&rsquo;s address and a copy of the page to the server so it can read the posting, which lets job board changes be fixed without an extension update. The server deletes the copy once it&rsquo;s read. Turn the setting off and postings are read on your device only. While it&rsquo;s on, if the server can&rsquo;t read any page from a click, it counts each site&rsquo;s name and which part of the extension tried to read it, under a random ID. If a page can&rsquo;t be read, Request this site sends only the site&rsquo;s name, and Report bug sends the page&rsquo;s address, which part of the extension tried to read it, the error and the extension version. Each sends only when you press it.
+                A few things can reach Cover Me&rsquo;s server. Under Settings, &ldquo;Reading job pages&rdquo; sends the job page&rsquo;s address and a copy of the page to the server so it can read the posting, which lets job board changes be fixed without an extension update. The server deletes the copy once it&rsquo;s read. Turn the setting off and postings are read on your device only. While it&rsquo;s on, if the server can&rsquo;t read any page from a click, it counts each site&rsquo;s name and which part of the extension tried to read it, under a random ID. If a page can&rsquo;t be read, Request this site sends only the site&rsquo;s name, and Report bug sends the page&rsquo;s address, which part of the extension tried to read it, the error and the extension version. Flag a problem, under a letter or in the resume editor, sends the letter or resume with its job posting, your name, email, phone, links and city taken out, after showing it to you to edit, and your original resume, as Cover Me read it, only if you tick that box. Each sends only when you press it.
               </p>
             </>
           ),

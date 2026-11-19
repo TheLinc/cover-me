@@ -23,6 +23,30 @@ describe('resume', () => {
     expect(res.status).toBe(404)
   })
 
+  it('GET ?parse=1 returns the parsed copy, for taking contact details out of a report (#256)', async () => {
+    await uploadResume(user)
+    const res = await callFunction('resume', { token: user.token, query: { parse: '1' } })
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(Array.isArray(body.structured?.experience)).toBe(true)
+    expect(typeof body.structured.name).toBe('string')
+    expect(body).not.toHaveProperty('text')
+    expect((await mockClaude.requests()).filter(isParse)).toHaveLength(0)
+  })
+
+  it('GET ?parse=1 parses the resume when no parsed copy is kept yet', async () => {
+    await uploadResume(user)
+    await admin.from('resumes').update({ structured_encrypted: null }).eq('user_id', user.id)
+    const res = await callFunction('resume', { token: user.token, query: { parse: '1' } })
+    expect(res.status).toBe(200)
+    expect(Array.isArray((await res.json()).structured?.experience)).toBe(true)
+    expect((await mockClaude.requests()).filter(isParse)).toHaveLength(1)
+  })
+
+  it('GET ?parse=1 returns 404 before any upload', async () => {
+    expect((await callFunction('resume', { token: user.token, query: { parse: '1' } })).status).toBe(404)
+  })
+
   it('round-trips text and filename', async () => {
     await uploadResume(user)
     const res = await callFunction('resume', { token: user.token })
@@ -78,9 +102,8 @@ describe('resume', () => {
 
   it('stops parsing ahead once the account reaches its daily limit, and a delete does not reset that', async () => {
     await uploadResume(user)
-    // The limiter's per-account row (see resume/index.ts parseAhead), at its
-    // daily cap. Pinned rather than raced, so a minute rolling over can't
-    // start a fresh window mid-test.
+    // Pinned at the daily cap rather than raced, so a minute rolling over can't
+    // start a fresh window mid-test (#26).
     const key = createHash('sha256').update(`resume-parse:${user.id}`).digest('hex')
     await admin.from('scrape_rate_limits').update({ count: 10 }).eq('ip_hash', key).eq('window_kind', 'day')
     await callFunction('resume', { method: 'DELETE', token: user.token })
@@ -94,8 +117,8 @@ describe('resume', () => {
     await mockClaude.delayNext(1500)
     await uploadResume(user, RESUME_TEXT, { wait: false })
     await uploadResume(user, NEW_TEXT, { wait: false })
-    const newest = await waitForParsedResume(user.id) // the second parse, not delayed
-    await sleep(2000) // the first one lands now, and must not write
+    const newest = await waitForParsedResume(user.id)
+    await sleep(2000) // the first one lands now, and must not write (#26)
     expect((await mockClaude.requests()).filter(isParse)).toHaveLength(2)
     expect(await parsedResume(user.id)).toBe(newest)
   })
@@ -145,7 +168,6 @@ describe('saving a section order', () => {
     expect((await res.json()).sectionOrder).toEqual(sectionOrder)
     const { resume } = await (await callFunction('tailor', { token: user.token, body: { job: JOB } })).json()
     expect(resume.sectionOrder).toEqual(sectionOrder)
-    // The saved parse is current, so tailoring didn't parse again.
     expect((await mockClaude.requests()).filter(isParse)).toHaveLength(0)
   })
 

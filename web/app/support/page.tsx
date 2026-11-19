@@ -37,7 +37,7 @@ const breadcrumbJsonLd = {
   ],
 }
 
-// One list feeds both the visible questions and the FAQ schema, so they can't drift.
+// One list feeds both the visible questions and the FAQ schema, so they can't drift (#89).
 const FAQ = [
   {
     q: "Cover Me didn't read the job posting. What do I do?",
@@ -53,7 +53,7 @@ const FAQ = [
   },
   {
     q: 'Where is my resume stored?',
-    a: "With your own API key, your resume stays in your browser and goes only to the AI provider whose key you added, never to Cover Me. With a Cover Me account, it's kept in your browser and encrypted at rest in our database with AES-256-GCM. It's sent to Anthropic only to read it and write your documents, and it's never sold or used to train AI models.",
+    a: "With your own API key, your resume stays in your browser and goes only to the AI provider whose key you added. It reaches Cover Me only if you choose to send it with a problem report, with your contact details taken out. With a Cover Me account, it's kept in your browser and encrypted at rest in our database with AES-256-GCM. It's sent to Anthropic only to read it and write your documents, and it's never sold or used to train AI models.",
   },
 ]
 
@@ -80,7 +80,6 @@ export default function SupportPage() {
 
       <main className="max-w-2xl mx-auto px-6 py-20">
 
-        {/* Heading */}
         <div className="mb-14">
           <h1 className="text-[36px] text-foreground mb-2">
             Support
@@ -93,10 +92,8 @@ export default function SupportPage() {
           </p>
         </div>
 
-        {/* Cards */}
         <div className="space-y-5">
 
-          {/* Email */}
           <div className="border border-border rounded-[12px] p-7 bg-surface">
             <div className="flex items-start gap-4">
               <div className="w-10 h-10 rounded-[10px] bg-brand-tint border border-brand-tint flex items-center justify-center shrink-0">
@@ -125,7 +122,6 @@ export default function SupportPage() {
             </div>
           </div>
 
-          {/* GitHub Issues */}
           <div className="border border-border rounded-[12px] p-7 bg-surface">
             <div className="flex items-start gap-4">
               <div className="w-10 h-10 rounded-[10px] bg-brand-tint border border-brand-tint flex items-center justify-center shrink-0">
@@ -155,7 +151,6 @@ export default function SupportPage() {
             </div>
           </div>
 
-          {/* Common issues */}
           <div className="border border-border rounded-[12px] p-7 bg-surface">
             <h2 className="text-[16px] text-foreground mb-5">
               Common questions
@@ -172,7 +167,6 @@ export default function SupportPage() {
 
         </div>
 
-        {/* Footer note */}
         <p className="text-center text-[13px] text-muted-foreground mt-14">
           Still stuck?{' '}
           <a href={`mailto:${SUPPORT_EMAIL}`} className="text-brand-light hover:underline">

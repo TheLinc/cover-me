@@ -452,6 +452,12 @@ verify_jwt = false
 [functions.site-request]
 verify_jwt = false
 
+# The extension's "Flag a problem" on a letter or resume (#256), also without an
+# account. Rate-limited per IP; reads a token only to add the account ID when
+# the user asks to be emailed. Sends only to PostHog.
+[functions.generation-report]
+verify_jwt = false
+
 # Called by the uninstall page to stop the follow-up email (#126). No sign-in,
 # since the extension is already gone; rate-limited per IP like scrape.
 [functions.extension-removed]

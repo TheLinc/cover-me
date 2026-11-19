@@ -8,16 +8,19 @@ import type { DeletedSection } from '../lib/pdf/types'
 import { chosenOrder, editedResume, postingTitleInSummary, restoreSection, returnToTab, saveResumeEdit, shownSections, withResumeEdit, withSections } from '../lib/resume-edit'
 import { getCachedTier, getMode, getResume, getTailoredHistory, saveParsedResume } from '../lib/storage'
 import DownloadMenu from '../popup/components/DownloadMenu'
+import FlagProblem from '../popup/components/FlagProblem'
 import GapChips from '../popup/components/GapChips'
 import PdfPreview from './PdfPreview'
 import PostingTitleTip from '../popup/components/PostingTitleTip'
 import ReviewAsk from '../popup/components/ReviewAsk'
 import ScoreRing from '../popup/components/ScoreRing'
-import type { AuthSession, TailoredHistoryEntry, TailoredResume } from '../types'
+import type { AuthSession, JobData, TailoredHistoryEntry, TailoredResume } from '../types'
 
 // Edits are the user's own, so the grounding checks that guard the model's output don't run on them (#118).
 
-interface Opened { scored: TailoredResume; jobTitle: string; company: string }
+// job: the posting, for "Flag a problem". A resume from the account has no
+// description: the server keeps title, company and address only (#256).
+interface Opened { scored: TailoredResume; job: JobData }
 
 // Read from this browser's cache first, so BYOK and Free make no network call here (#118).
 async function proSession(): Promise<AuthSession | null> {
@@ -29,12 +32,12 @@ async function proSession(): Promise<AuthSession | null> {
 // 20 kept here) comes from the account (#118).
 async function openResume(id: string): Promise<Opened | null> {
   const entry = (await getTailoredHistory()).find((e) => e.id === id)
-  if (entry) return { scored: entry.resume, jobTitle: entry.job.title, company: entry.job.company }
+  if (entry) return { scored: entry.resume, job: entry.job }
   const session = await proSession()
   if (!session) return null
   for (const app of await fetchApplicationsFromBackend(session.access_token)) {
     const tr = app.tailoredResumes.find((t) => t.id === id)
-    if (tr) return { scored: tr.resume, jobTitle: app.title, company: app.company }
+    if (tr) return { scored: tr.resume, job: { title: app.title, company: app.company, url: app.url, description: '' } }
   }
   return null
 }
@@ -110,7 +113,7 @@ export default function Editor() {
       setOpened(o)
       if (!o) return
       setForm({ draft: structuredClone(o.scored), skills: o.scored.skills ? splitSkills(o.scored.skills) : [] })
-      document.title = `Edit resume · ${o.jobTitle || 'Cover Me'}`
+      document.title = `Edit resume · ${o.job.title || 'Cover Me'}`
       // Ready for a save as the tab closes, which can't wait for a refresh. (#118)
       void proSession().then((s) => { session.current = s }).catch(() => {})
     }).catch(() => setOpened('error'))
@@ -228,6 +231,8 @@ export default function Editor() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!(e.ctrlKey || e.metaKey) || e.altKey) return
+      // The Flag a problem comment keeps its own undo; the resume's isn't in it (#256).
+      if (e.target instanceof Element && e.target.closest('.flag-form')) return
       const key = e.key.toLowerCase()
       if (key === 'z' && !e.shiftKey) { e.preventDefault(); undo() }
       else if ((key === 'z' && e.shiftKey) || key === 'y') { e.preventDefault(); redo() }
@@ -301,7 +306,7 @@ export default function Editor() {
 
   const edited = dirty || !!scored.editedAt
   const { draft, skills } = form
-  const postingTitle = postingTitleInSummary(draft, opened.jobTitle)
+  const postingTitle = postingTitleInSummary(draft, opened.job.title)
   const sections = shownSections(draft)
   const askAt = Math.min(orderAsk.at, sections.length - 1)
   const ask = orderAsk.state && (
@@ -382,7 +387,7 @@ export default function Editor() {
       <header className="ed-bar">
         <div className="ed-bar-title">
           <h1>Edit resume</h1>
-          <p>{[opened.jobTitle, opened.company].filter(Boolean).join(' · ')}</p>
+          <p>{[opened.job.title, opened.job.company].filter(Boolean).join(' · ')}</p>
         </div>
         <p className="ed-note" aria-live="polite">
           {note && <>{note} <button type="button" className="text-link" onClick={undo}>Undo</button></>}
@@ -395,6 +400,8 @@ export default function Editor() {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m15 14 5-5-5-5" /><path d="M20 9H9.5a5.5 5.5 0 000 11H13" /></svg>
           </button>
         </div>
+        {/* What the user sees now: their edits, marked edited, or the resume as generated (#256). */}
+        <FlagProblem resultKey={`resume:${id}`} target={{ kind: 'resume', output: edited ? saved : scored, job: opened.job }} />
         <p className="ed-status" aria-live="polite">
           {status === 'saving' ? 'Saving…'
             : status === 'saved' ? 'Saved'
@@ -403,9 +410,9 @@ export default function Editor() {
         </p>
         {/* Only Cover Me layout resumes open here (no Edit on "Your design"), so Word is the Cover Me layout too. (#118) */}
         <DownloadMenu className="btn btn-secondary btn-compact" options={[
-          { label: 'PDF', onSelect: () => { downloadTailoredResumePdf(current, opened.jobTitle); setReviewOpen(true) } },
+          { label: 'PDF', onSelect: () => { downloadTailoredResumePdf(current, opened.job.title); setReviewOpen(true) } },
           // docx is big, so it loads only when someone asks for the Word file. (#118)
-          { label: 'Word', onSelect: () => void import('../lib/pdf/resume-docx').then((m) => m.downloadTailoredResumeDocx(current, opened.jobTitle)).then(() => setReviewOpen(true)) },
+          { label: 'Word', onSelect: () => void import('../lib/pdf/resume-docx').then((m) => m.downloadTailoredResumeDocx(current, opened.job.title)).then(() => setReviewOpen(true)) },
         ]} />
         <button className="btn btn-primary btn-compact" onClick={done}>Done</button>
       </header>

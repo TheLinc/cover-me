@@ -1,38 +1,48 @@
 // Shared with the website. Edit here, then run `node scripts/sync-pdf.mjs`,
-// which copies this folder to web/lib/pdf/ (both builds fail on a stale copy).
+// which copies this folder to web/lib/pdf/ (both builds fail on a stale copy) (#27).
 import { jsPDF } from 'jspdf'
 import type { PdfJob } from './types'
 
 const PAGE_W = 612
 const PAGE_H = 792
-const MARGIN_X = 72  // 1 inch left/right
-const MARGIN_T = 72  // 1 inch top
-const MARGIN_B = 72  // 1 inch bottom
+const MARGIN_X = 72
+const MARGIN_T = 72
+const MARGIN_B = 72
 const USABLE_W = PAGE_W - MARGIN_X * 2
 const USABLE_H = PAGE_H - MARGIN_T - MARGIN_B
 
-// All spacing is expressed as multiples of fontSize so the whole layout
-// scales proportionally when we shrink the font to enforce single-page.
-const LINE_RATIO  = 1.45  // line height (~Word single-spaced)
-const PARA_RATIO  = 0.80  // gap between paragraphs (~8pt at 11pt — standard block-letter format)
-const HEAD_RATIO  = 1.60  // gap between header block and divider
-const DIV_RATIO   = 1.10  // gap between divider and letter body
+const LINE_RATIO  = 1.45
+const PARA_RATIO  = 0.80
+const HEAD_RATIO  = 1.60
+const DIV_RATIO   = 1.10
 
 export function downloadCoverLetterPdf(letter: string, job: PdfJob, createdAt: string) {
+  const companyKnown = Boolean(job.company) && job.company !== 'Unknown Company'
+  const prefix = companyKnown ? job.company : ''
+  const slug = `${prefix}-${job.title}`
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 60)
+
+  coverLetterPdf(letter, job, createdAt).save(`cover-letter-${slug}.pdf`)
+}
+
+// Also rendered outside the browser, from a "Flag a problem" report (#256).
+export function coverLetterPdf(letter: string, job: PdfJob, createdAt: string): jsPDF {
   const doc = new jsPDF({ unit: 'pt', format: 'letter' })
 
   const companyKnown = Boolean(job.company) && job.company !== 'Unknown Company'
   const paragraphs = letter
-    .replace(/\r\n/g, '\n')        // normalise Windows line endings
-    .replace(/\r/g, '\n')          // normalise old Mac line endings
-    .split(/\n\n+/)                // split on paragraph breaks
-    .map(p => p.replace(/\n/g, ' ').trim())  // collapse soft returns to spaces
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .split(/\n\n+/)
+    .map(p => p.replace(/\n/g, ' ').trim())
     .filter(p => p.length > 0)
   const date = new Date(createdAt).toLocaleDateString('en-US', {
     year: 'numeric', month: 'long', day: 'numeric',
   })
 
-  // Try font sizes from 11pt down to 9pt until content fits one page.
   let fontSize = 11
   for (let f = 11; f >= 9; f -= 0.25) {
     if (totalHeight(doc, paragraphs, USABLE_W, f, companyKnown) <= USABLE_H) {
@@ -45,14 +55,12 @@ export function downloadCoverLetterPdf(letter: string, job: PdfJob, createdAt: s
   const lh = fontSize * LINE_RATIO
   let y = MARGIN_T
 
-  // ── Date ────────────────────────────────────────────────────────────
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(fontSize)
   doc.setTextColor(110, 110, 110)
   doc.text(date, MARGIN_X, y)
   y += lh * 2
 
-  // ── Company + role header ────────────────────────────────────────────
   if (companyKnown) {
     doc.setFont('helvetica', 'bold')
     doc.setTextColor(20, 20, 20)
@@ -68,21 +76,17 @@ export function downloadCoverLetterPdf(letter: string, job: PdfJob, createdAt: s
   }
   y += lh * HEAD_RATIO
 
-  // ── Divider ──────────────────────────────────────────────────────────
   doc.setDrawColor(210, 210, 210)
   doc.setLineWidth(0.5)
   doc.line(MARGIN_X, y, PAGE_W - MARGIN_X, y)
   y += lh * DIV_RATIO
 
-  // ── Letter body ──────────────────────────────────────────────────────
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(fontSize)
   doc.setTextColor(30, 30, 30)
 
-  // Render line-by-line so y always advances by our LINE_RATIO, not jsPDF's
-  // internal line-height factor (1.15). Passing an array to doc.text() lets
-  // jsPDF space lines at 1.15× while we advance y at 1.45×, accumulating
-  // extra whitespace proportional to paragraph length — the visible bug.
+  // Line by line: jsPDF spaces an array of lines at 1.15×, not LINE_RATIO
+  // (https://github.com/TheLinc/cover-me/commit/b5c6d60).
   for (let i = 0; i < paragraphs.length; i++) {
     const lines = doc.splitTextToSize(paragraphs[i], USABLE_W) as string[]
     for (const line of lines) {
@@ -92,17 +96,9 @@ export function downloadCoverLetterPdf(letter: string, job: PdfJob, createdAt: s
     if (i < paragraphs.length - 1) y += fontSize * PARA_RATIO
   }
 
-  const prefix = companyKnown ? job.company : ''
-  const slug = `${prefix}-${job.title}`
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
-    .slice(0, 60)
-
-  doc.save(`cover-letter-${slug}.pdf`)
+  return doc
 }
 
-// Dry-run the layout at a given font size and return the total height consumed.
 function totalHeight(
   doc: jsPDF,
   paragraphs: string[],
@@ -113,12 +109,12 @@ function totalHeight(
   doc.setFontSize(fontSize)
   const lh = fontSize * LINE_RATIO
 
-  let h = lh * 2                          // date + gap
-  h += lh * (companyKnown ? 1.1 : 0)     // company name
-  h += lh                                  // role / title
-  h += lh * HEAD_RATIO                    // gap to divider
-  h += 1                                  // divider stroke (1pt)
-  h += lh * DIV_RATIO                     // gap after divider
+  let h = lh * 2
+  h += lh * (companyKnown ? 1.1 : 0)
+  h += lh
+  h += lh * HEAD_RATIO
+  h += 1
+  h += lh * DIV_RATIO
 
   for (let i = 0; i < paragraphs.length; i++) {
     const lines = doc.splitTextToSize(paragraphs[i], usableW) as string[]
