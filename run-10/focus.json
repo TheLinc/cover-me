@@ -1,0 +1,980 @@
+[
+  {
+    "name": "editor-step1-radio",
+    "file": "01-editor-step1-radio.png",
+    "what": "input radio",
+    "focusVisible": true,
+    "reach": 4,
+    "outline": "solid 2px offset 2px",
+    "shadow": "none",
+    "box": {
+      "x": 929,
+      "y": 116.5,
+      "w": 13,
+      "h": 13
+    },
+    "clips": []
+  },
+  {
+    "name": "editor-step1-radio-after-arrow",
+    "file": "02-editor-step1-radio-after-arrow.png",
+    "what": "input radio",
+    "focusVisible": true,
+    "reach": 4,
+    "outline": "solid 2px offset 2px",
+    "shadow": "none",
+    "box": {
+      "x": 929,
+      "y": 138.5,
+      "w": 13,
+      "h": 13
+    },
+    "clips": []
+  },
+  {
+    "name": "editor-step1-comment",
+    "file": "03-editor-step1-comment.png",
+    "what": "textarea",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+    "box": {
+      "x": 929,
+      "y": 252,
+      "w": 314,
+      "h": 56
+    },
+    "clips": []
+  },
+  {
+    "name": "editor-preview-first-box",
+    "file": "05-editor-preview-first-box.png",
+    "what": "textarea Summary",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 929,
+      "y": 240.78125,
+      "w": 304,
+      "h": 60
+    },
+    "clips": []
+  },
+  {
+    "name": "editor box 2 (no screenshot)",
+    "what": "textarea Job 1 title",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 929,
+      "y": 329.828125,
+      "w": 304,
+      "h": 28
+    },
+    "clips": []
+  },
+  {
+    "name": "editor box 3 (no screenshot)",
+    "what": "textarea Job 1 company",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 929,
+      "y": 361.828125,
+      "w": 304,
+      "h": 28
+    },
+    "clips": []
+  },
+  {
+    "name": "editor box 4 (no screenshot)",
+    "what": "textarea Job 1 location",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 929,
+      "y": 393.828125,
+      "w": 304,
+      "h": 28
+    },
+    "clips": []
+  },
+  {
+    "name": "editor box 5 (no screenshot)",
+    "what": "textarea Job 1 dates",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 929,
+      "y": 425.828125,
+      "w": 304,
+      "h": 28
+    },
+    "clips": []
+  },
+  {
+    "name": "editor box 6 (no screenshot)",
+    "what": "textarea Job 1 bullets 1",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 929,
+      "y": 328.875,
+      "w": 304,
+      "h": 44
+    },
+    "clips": []
+  },
+  {
+    "name": "editor box 7 (no screenshot)",
+    "what": "textarea Job 1 bullets 2",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 929,
+      "y": 376.875,
+      "w": 304,
+      "h": 44
+    },
+    "clips": []
+  },
+  {
+    "name": "editor box 8 (no screenshot)",
+    "what": "textarea Job 1 bullets 3",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 929,
+      "y": 424.875,
+      "w": 304,
+      "h": 44
+    },
+    "clips": []
+  },
+  {
+    "name": "editor box 9 (no screenshot)",
+    "what": "textarea Job 2 title",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 929,
+      "y": 328.921875,
+      "w": 304,
+      "h": 28
+    },
+    "clips": []
+  },
+  {
+    "name": "editor box 10 (no screenshot)",
+    "what": "textarea Job 2 company",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 929,
+      "y": 360.921875,
+      "w": 304,
+      "h": 28
+    },
+    "clips": []
+  },
+  {
+    "name": "editor box 11 (no screenshot)",
+    "what": "textarea Job 2 location",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 929,
+      "y": 392.921875,
+      "w": 304,
+      "h": 28
+    },
+    "clips": []
+  },
+  {
+    "name": "editor box 12 (no screenshot)",
+    "what": "textarea Job 2 dates",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 929,
+      "y": 424.921875,
+      "w": 304,
+      "h": 28
+    },
+    "clips": []
+  },
+  {
+    "name": "editor-preview-middle-box-13-of-24",
+    "file": "06-editor-preview-middle-box-13-of-24.png",
+    "what": "textarea Job 2 bullets 1",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 929,
+      "y": 328.96875,
+      "w": 304,
+      "h": 28
+    },
+    "clips": []
+  },
+  {
+    "name": "editor box 14 (no screenshot)",
+    "what": "textarea Job 2 bullets 2",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 929,
+      "y": 360.96875,
+      "w": 304,
+      "h": 28
+    },
+    "clips": []
+  },
+  {
+    "name": "editor box 15 (no screenshot)",
+    "what": "textarea Education 1 degree",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 929,
+      "y": 418.015625,
+      "w": 304,
+      "h": 28
+    },
+    "clips": []
+  },
+  {
+    "name": "editor-box-16-clipped",
+    "file": "07-editor-box-16-clipped.png",
+    "what": "textarea Education 1 institution",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 929,
+      "y": 450.015625,
+      "w": 304,
+      "h": 28
+    },
+    "clips": [
+      "div.flag-preview: bottom by 7.3px"
+    ]
+  },
+  {
+    "name": "editor box 17 (no screenshot)",
+    "what": "textarea Education 1 location",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 929,
+      "y": 328.015625,
+      "w": 304,
+      "h": 28
+    },
+    "clips": []
+  },
+  {
+    "name": "editor box 18 (no screenshot)",
+    "what": "textarea Education 1 dates",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 929,
+      "y": 360.015625,
+      "w": 304,
+      "h": 28
+    },
+    "clips": []
+  },
+  {
+    "name": "editor box 19 (no screenshot)",
+    "what": "textarea Skills",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 929,
+      "y": 417.0625,
+      "w": 304,
+      "h": 28
+    },
+    "clips": []
+  },
+  {
+    "name": "editor box 20 (no screenshot)",
+    "what": "textarea Section 1 heading",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 929,
+      "y": 328.109375,
+      "w": 304,
+      "h": 28
+    },
+    "clips": []
+  },
+  {
+    "name": "editor box 21 (no screenshot)",
+    "what": "textarea Section 1 lines 1",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 929,
+      "y": 385.15625,
+      "w": 304,
+      "h": 44
+    },
+    "clips": []
+  },
+  {
+    "name": "editor box 22 (no screenshot)",
+    "what": "textarea Section 1 lines 2",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 929,
+      "y": 433.15625,
+      "w": 304,
+      "h": 28
+    },
+    "clips": []
+  },
+  {
+    "name": "editor box 23 (no screenshot)",
+    "what": "textarea ATS gap 1",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 929,
+      "y": 410.203125,
+      "w": 304,
+      "h": 28
+    },
+    "clips": []
+  },
+  {
+    "name": "editor-preview-last-box-24-of-24",
+    "file": "08-editor-preview-last-box-24-of-24.png",
+    "what": "textarea ATS gap 2",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 929,
+      "y": 442.203125,
+      "w": 304,
+      "h": 28
+    },
+    "clips": []
+  },
+  {
+    "name": "editor box 23 via Shift+Tab (no screenshot)",
+    "what": "textarea ATS gap 1",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 929,
+      "y": 410.203125,
+      "w": 304,
+      "h": 28
+    },
+    "clips": []
+  },
+  {
+    "name": "editor box 22 via Shift+Tab (no screenshot)",
+    "what": "textarea Section 1 lines 2",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 929,
+      "y": 353.15625,
+      "w": 304,
+      "h": 28
+    },
+    "clips": []
+  },
+  {
+    "name": "editor box 21 via Shift+Tab (no screenshot)",
+    "what": "textarea Section 1 lines 1",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 929,
+      "y": 305.15625,
+      "w": 304,
+      "h": 44
+    },
+    "clips": []
+  },
+  {
+    "name": "editor box 20 via Shift+Tab (no screenshot)",
+    "what": "textarea Section 1 heading",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 929,
+      "y": 248.109375,
+      "w": 304,
+      "h": 28
+    },
+    "clips": []
+  },
+  {
+    "name": "editor-box-19-via-shift-tab-clipped",
+    "file": "10-editor-box-19-via-shift-tab-clipped.png",
+    "what": "textarea Skills",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 929,
+      "y": 207.0625,
+      "w": 304,
+      "h": 28
+    },
+    "clips": [
+      "div.flag-preview: top by 7.7px"
+    ]
+  },
+  {
+    "name": "editor box 18 via Shift+Tab (no screenshot)",
+    "what": "textarea Education 1 dates",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 929,
+      "y": 328.015625,
+      "w": 304,
+      "h": 28
+    },
+    "clips": []
+  },
+  {
+    "name": "editor box 17 via Shift+Tab (no screenshot)",
+    "what": "textarea Education 1 location",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 929,
+      "y": 296.015625,
+      "w": 304,
+      "h": 28
+    },
+    "clips": []
+  },
+  {
+    "name": "editor box 16 via Shift+Tab (no screenshot)",
+    "what": "textarea Education 1 institution",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 929,
+      "y": 264.015625,
+      "w": 304,
+      "h": 28
+    },
+    "clips": []
+  },
+  {
+    "name": "editor box 15 via Shift+Tab (no screenshot)",
+    "what": "textarea Education 1 degree",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 929,
+      "y": 232.015625,
+      "w": 304,
+      "h": 28
+    },
+    "clips": []
+  },
+  {
+    "name": "editor box 14 via Shift+Tab (no screenshot)",
+    "what": "textarea Job 2 bullets 2",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 929,
+      "y": 328.96875,
+      "w": 304,
+      "h": 28
+    },
+    "clips": []
+  },
+  {
+    "name": "editor box 13 via Shift+Tab (no screenshot)",
+    "what": "textarea Job 2 bullets 1",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 929,
+      "y": 296.96875,
+      "w": 304,
+      "h": 28
+    },
+    "clips": []
+  },
+  {
+    "name": "editor box 12 via Shift+Tab (no screenshot)",
+    "what": "textarea Job 2 dates",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 929,
+      "y": 239.921875,
+      "w": 304,
+      "h": 28
+    },
+    "clips": []
+  },
+  {
+    "name": "editor-box-11-via-shift-tab-clipped",
+    "file": "11-editor-box-11-via-shift-tab-clipped.png",
+    "what": "textarea Job 2 location",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 929,
+      "y": 207.921875,
+      "w": 304,
+      "h": 28
+    },
+    "clips": [
+      "div.flag-preview: top by 6.8px"
+    ]
+  },
+  {
+    "name": "popup-step1-radio",
+    "file": "12-popup-step1-radio.png",
+    "what": "input radio",
+    "focusVisible": true,
+    "reach": 4,
+    "outline": "solid 2px offset 2px",
+    "shadow": "none",
+    "box": {
+      "x": 31,
+      "y": 246.25,
+      "w": 13,
+      "h": 13
+    },
+    "clips": []
+  },
+  {
+    "name": "popup-step1-comment",
+    "file": "13-popup-step1-comment.png",
+    "what": "textarea",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+    "box": {
+      "x": 31,
+      "y": 413.75,
+      "w": 308,
+      "h": 56
+    },
+    "clips": []
+  },
+  {
+    "name": "popup-preview-letter-box",
+    "file": "14-popup-preview-letter-box.png",
+    "what": "textarea The letter we'll send",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 31,
+      "y": 200.484375,
+      "w": 308,
+      "h": 180
+    },
+    "clips": []
+  },
+  {
+    "name": "popup-original-first-box",
+    "file": "15-popup-original-first-box.png",
+    "what": "textarea Job 1 title",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 31,
+      "y": 449.03125,
+      "w": 298,
+      "h": 28
+    },
+    "clips": []
+  },
+  {
+    "name": "popup-box-2-clipped",
+    "file": "16-popup-box-2-clipped.png",
+    "what": "textarea Job 1 company",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 31,
+      "y": 481.03125,
+      "w": 298,
+      "h": 28
+    },
+    "clips": [
+      "div.page-content: bottom by 5.0px"
+    ]
+  },
+  {
+    "name": "popup box 3 (no screenshot)",
+    "what": "textarea Job 1 location",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 31,
+      "y": 278.03125,
+      "w": 298,
+      "h": 28
+    },
+    "clips": []
+  },
+  {
+    "name": "popup box 4 (no screenshot)",
+    "what": "textarea Job 1 dates",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 31,
+      "y": 310.03125,
+      "w": 298,
+      "h": 28
+    },
+    "clips": []
+  },
+  {
+    "name": "popup box 5 (no screenshot)",
+    "what": "textarea Job 1 bullets 1",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 31,
+      "y": 367.078125,
+      "w": 298,
+      "h": 44
+    },
+    "clips": []
+  },
+  {
+    "name": "popup-box-6-clipped",
+    "file": "17-popup-box-6-clipped.png",
+    "what": "textarea Job 1 bullets 2",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 31,
+      "y": 415.078125,
+      "w": 298,
+      "h": 44
+    },
+    "clips": [
+      "div.flag-preview: bottom by 15.1px"
+    ]
+  },
+  {
+    "name": "popup box 7 (no screenshot)",
+    "what": "textarea Job 1 bullets 3",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 31,
+      "y": 301.078125,
+      "w": 298,
+      "h": 28
+    },
+    "clips": []
+  },
+  {
+    "name": "popup box 8 (no screenshot)",
+    "what": "textarea Job 2 title",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 31,
+      "y": 358.125,
+      "w": 298,
+      "h": 28
+    },
+    "clips": []
+  },
+  {
+    "name": "popup box 9 (no screenshot)",
+    "what": "textarea Job 2 company",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 31,
+      "y": 390.125,
+      "w": 298,
+      "h": 28
+    },
+    "clips": []
+  },
+  {
+    "name": "popup-box-10-clipped",
+    "file": "18-popup-box-10-clipped.png",
+    "what": "textarea Job 2 location",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 31,
+      "y": 422.125,
+      "w": 298,
+      "h": 28
+    },
+    "clips": [
+      "div.flag-preview: bottom by 6.1px"
+    ]
+  },
+  {
+    "name": "popup-original-middle-box-11-of-20",
+    "file": "19-popup-original-middle-box-11-of-20.png",
+    "what": "textarea Job 2 dates",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 31,
+      "y": 301.125,
+      "w": 298,
+      "h": 28
+    },
+    "clips": []
+  },
+  {
+    "name": "popup box 12 (no screenshot)",
+    "what": "textarea Job 2 bullets 1",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 31,
+      "y": 358.171875,
+      "w": 298,
+      "h": 28
+    },
+    "clips": []
+  },
+  {
+    "name": "popup box 13 (no screenshot)",
+    "what": "textarea Education 1 degree",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 31,
+      "y": 415.21875,
+      "w": 298,
+      "h": 28
+    },
+    "clips": []
+  },
+  {
+    "name": "popup box 14 (no screenshot)",
+    "what": "textarea Education 1 institution",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 31,
+      "y": 301.21875,
+      "w": 298,
+      "h": 28
+    },
+    "clips": []
+  },
+  {
+    "name": "popup box 15 (no screenshot)",
+    "what": "textarea Education 1 location",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 31,
+      "y": 333.21875,
+      "w": 298,
+      "h": 28
+    },
+    "clips": []
+  },
+  {
+    "name": "popup box 16 (no screenshot)",
+    "what": "textarea Education 1 dates",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 31,
+      "y": 365.21875,
+      "w": 298,
+      "h": 28
+    },
+    "clips": []
+  },
+  {
+    "name": "popup-box-17-clipped",
+    "file": "20-popup-box-17-clipped.png",
+    "what": "textarea Skills",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 31,
+      "y": 422.265625,
+      "w": 298,
+      "h": 28
+    },
+    "clips": [
+      "div.flag-preview: bottom by 6.3px"
+    ]
+  },
+  {
+    "name": "popup box 18 (no screenshot)",
+    "what": "textarea Section 1 heading",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 31,
+      "y": 310.3125,
+      "w": 298,
+      "h": 28
+    },
+    "clips": []
+  },
+  {
+    "name": "popup box 19 (no screenshot)",
+    "what": "textarea Section 1 lines 1",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 31,
+      "y": 367.359375,
+      "w": 298,
+      "h": 44
+    },
+    "clips": []
+  },
+  {
+    "name": "popup-original-last-box-20-of-20",
+    "file": "21-popup-original-last-box-20-of-20.png",
+    "what": "textarea Section 1 lines 2",
+    "focusVisible": true,
+    "reach": 2,
+    "outline": "solid 2px offset 0px",
+    "shadow": "rgba(99, 102, 241, 0.16) 0px 0px 0px 2px",
+    "box": {
+      "x": 31,
+      "y": 415.359375,
+      "w": 298,
+      "h": 28
+    },
+    "clips": []
+  }
+]
