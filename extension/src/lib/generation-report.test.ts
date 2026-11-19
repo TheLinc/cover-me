@@ -2,8 +2,7 @@ import { describe, expect, test } from 'vitest'
 import { buildGenerationReport, resumeTexts, withResumeText, type ReportEnv, type ReportForm, type ReportTarget } from './generation-report'
 import type { ParsedResume, TailoredResume } from '../types'
 
-// The user's details come from their parsed resume (report-resume.ts reads it),
-// so each test names the person through `parsed`.
+// The report finds the user's details in their parse, so tests name the person through `parsed` (#256).
 const job = {
   title: 'Platform Engineer',
   company: 'Northwind',
@@ -65,24 +64,25 @@ describe('buildGenerationReport', () => {
     expect(buildGenerationReport({ kind: 'letter', output: 'Hi', job: { ...job, url: 'https://careers_portal.example.com/1' } }, form, env()).job.site).toBe('')
   })
 
-  test("a resume drops its contact fields, Word file hash and deleted sections, and keeps its score and gaps", () => {
+  test("a resume sends its header as tags of the same length, drops its Word file hash and deleted sections, and keeps its score and gaps", () => {
     const out = resume({
       ...tailored, sourceHash: 'abc123', deletedSections: [{ key: 'summary', index: 0, summary: 'x' }],
       otherSections: [{ heading: 'Contact', lines: ['jane.doe@example.com'] }, { heading: 'References', lines: ['Sam Lee, 555-0100'] }, { heading: 'Awards', lines: ['Dean’s List'] }],
     })
     expect(out).toEqual({
+      name: '[name]xx', phone: '[phone]xxxxxxx', email: '[email]xxxxxxxxxxxxx', website: '[link]xxxxx', links: ['[link]xxxxx'], location: '[location]x',
       summary: 'Platform engineer.',
       experience: [{ title: 'SRE', company: 'Acme', location: '[location]', dates: '2019 - 2024', bullets: ['Ran 40 clusters'] }],
       education: [],
       atsScore: 72,
       atsGaps: ['Terraform'],
-      // Other sections go scrubbed; the preview is where the rest comes out.
       otherSections: [{ heading: 'Contact', lines: ['[email]'] }, { heading: 'References', lines: ['Sam Lee, 555-0100'] }, { heading: 'Awards', lines: ['Dean’s List'] }],
     })
   })
 
-  test("the original resume goes only for \"added things that aren't true\", ticked, as the parse without contact fields", () => {
+  test("the original resume goes only for \"added things that aren't true\", ticked, as the parse with its header as tags", () => {
     expect(source(env())).toEqual({
+      name: '[name]xx', email: '[email]xxxxxxxxxxxxx', phone: '[phone]xxxxxxx', website: '[link]xxxxx', links: ['[link]xxxxx', '[link]xxxxxxxxxxxxxxxxx'], location: '[location]x',
       experience: [{ title: 'SRE', company: 'Acme', location: '[location]', dates: '2019 - 2024', bullets: ['Ran 40 clusters'] }],
       education: [],
       otherSections: [{ heading: 'Awards', lines: ['MLH Hackathon 2023 First Place'] }, { heading: 'Personal Details', lines: ['Date of Birth: 12/04/1995'] }],
@@ -181,6 +181,7 @@ describe('resume preview', () => {
       { path: ['experience', 0, 'bullets', 1], text: 'b' },
       { path: ['atsGaps', 0], text: 'SQL' },
     ])
+    expect(resumeTexts({ name: '[name]xx', projects: [{ name: 'Fleet', bullets: [] }] })).toEqual([{ path: ['projects', 0, 'name'], text: 'Fleet' }])
     const edited = withResumeText(r, ['experience', 0, 'bullets', 1], '')
     expect(edited.experience).toEqual([{ title: 'SRE', bullets: ['a', ''] }])
     expect(r.experience[0].bullets[1]).toBe('b')

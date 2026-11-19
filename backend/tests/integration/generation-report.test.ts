@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { callFunction, createUser, deleteUser, mockClaude, mockPosthog, type TestUser } from './helpers'
 
-// Only survey events: another file's background count can land after a reset.
+// Only survey events: another file's background count can land after a reset (#256).
 const surveyEvents = async () => (await mockPosthog.events()).filter((e) => e.event === 'survey sent')
 
 // Rate-limited per client IP, like site-request: each call claims its own IP
-// unless a test shares one on purpose.
+// unless a test shares one on purpose (#256).
 let nextIp = 1
 const freshIp = () => `198.51.100.${nextIp++ % 250}`
 const send = (body: unknown, { ip = freshIp(), token }: { ip?: string; token?: string } = {}) =>
@@ -73,8 +73,14 @@ describe('generation-report', () => {
     })
   })
 
-  it("records a resume report with its score, gaps, edited mark and the original resume, and drops contact fields and the Word file's hash that slipped through", async () => {
-    const output = { ...RESUME.output, sourceHash: 'f00d', name: 'Jane Doe', email: 'jane@example.com', phone: '416 555 0199', website: 'jane.dev', links: ['jane.dev'], location: 'Toronto' }
+  it('keeps header fields sent as tags, so a rendered report keeps its header', async () => {
+    const tags = { name: '[name]xx', email: '[email]', links: ['[link]xx', ''] }
+    expect((await send({ ...RESUME, output: { ...RESUME.output, ...tags } })).status).toBe(200)
+    expect((await surveyEvents())[0].properties.output).toMatchObject(tags)
+  })
+
+  it("records a resume report with its score, gaps, edited mark and the original resume, and drops real header values and the Word file's hash that slipped through", async () => {
+    const output = { ...RESUME.output, sourceHash: 'f00d', name: 'Jane Doe', email: 'jane@example.com', phone: '416 555 0199', website: 'jane.dev', links: ['[link]xx', 'jane.dev'], location: 'Toronto' }
     const sourceResume = { ...RESUME.sourceResume, name: 'Jane Doe', email: 'jane@example.com', phone: '416 555 0199', location: 'Toronto' }
     expect((await send({ ...RESUME, output, sourceResume })).status).toBe(200)
     const [event] = await surveyEvents()
@@ -139,7 +145,7 @@ describe('generation-report', () => {
   })
 
   it('limits each IP to 5 reports a minute', async () => {
-    // Clear of a minute boundary, so the six calls share one window.
+    // Clear of a minute boundary, so the six calls share one window (#256).
     const left = 60_000 - (Date.now() % 60_000)
     if (left < 10_000) await new Promise((r) => setTimeout(r, left + 500))
     const ip = '203.0.113.80'

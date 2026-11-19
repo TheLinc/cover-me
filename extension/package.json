@@ -15,7 +15,8 @@
     "lint": "node ../scripts/check-comments.mjs",
     "test:scrapers-live": "vitest run --mode smoke src/content/scrapers",
     "fixtures:save": "tsx scripts/scraper-fixtures.ts",
-    "e2e:scrape": "tsx scripts/e2e-scrape.ts"
+    "e2e:scrape": "tsx scripts/e2e-scrape.ts",
+    "render-report": "tsx scripts/render-report.ts"
   },
   "dependencies": {
     "docx": "^9.15.2",

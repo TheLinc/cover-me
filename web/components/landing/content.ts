@@ -1,5 +1,3 @@
-// Landing FAQ copy. The same items feed the FAQPage JSON-LD.
-
 import { PLAN_LIMITS as L } from "@/lib/limits";
 
 export const FAQ_ITEMS = [

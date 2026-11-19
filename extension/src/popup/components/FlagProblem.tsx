@@ -21,14 +21,13 @@ export default function FlagProblem({ target, resultKey }: { target: ReportTarge
   const [canContact, setCanContact] = useState(false)
   const [hasResume, setHasResume] = useState(false)
   const [sending, setSending] = useState<'' | 'reading' | 'sending'>('')
-  // Built by Next, edited in the preview, sent by Send.
   const [report, setReport] = useState<GenerationReport | null>(null)
   const [error, setError] = useState('')
   const [reported, setReported] = useState(false)
   const form = useRef<HTMLFormElement>(null)
   const link = useRef<HTMLButtonElement>(null)
   const submitted = useRef(false)
-  // Bumped by close(), so a Next still reading when the form closed is dropped.
+  // Bumped by close(), so a Next still reading when the form closed is dropped (#256).
   const attempt = useRef(0)
 
   useEffect(() => {
@@ -36,7 +35,7 @@ export default function FlagProblem({ target, resultKey }: { target: ReportTarge
   }, [resultKey])
 
   // Only a signed-in Hosted user has an account we could email, and the
-  // original resume can go only when this browser has one.
+  // original resume can go only when this browser has one (#256).
   useEffect(() => {
     if (!open) return
     void Promise.all([getMode(), getSession(), getResume()]).then(([mode, session, resume]) => {
@@ -45,15 +44,14 @@ export default function FlagProblem({ target, resultKey }: { target: ReportTarge
     })
     form.current?.querySelector('input')?.focus()
   }, [open])
-  // Next and Back swap the questions and the preview: focus the first box.
   const previewing = !!report
   useEffect(() => { form.current?.querySelector(previewing ? 'textarea' : 'input')?.focus() }, [previewing])
-  // After a send the form is gone: focus the link, which now reads the thanks.
+  // After a send the form is gone: focus the link, which now reads the thanks (#256).
   useEffect(() => { if (reported && submitted.current) link.current?.focus() }, [reported])
 
   if (!SUPABASE_URL) return null
 
-  // The form goes away with focus inside it: keep focus on the link.
+  // The form goes away with focus inside it: keep focus on the link (#256).
   function close() {
     attempt.current++
     setOpen(false)
@@ -62,7 +60,7 @@ export default function FlagProblem({ target, resultKey }: { target: ReportTarge
     link.current?.focus()
   }
 
-  // A letter edited down to nothing has nothing to report (the server refuses it).
+  // A letter edited down to nothing has nothing to report (the server refuses it) (#256).
   const ready = category && (category !== 'other' || comment.trim()) && (target.kind !== 'letter' || target.output.trim())
 
   async function next(e: React.FormEvent) {
@@ -74,7 +72,7 @@ export default function FlagProblem({ target, resultKey }: { target: ReportTarge
     const [mode, settings] = await Promise.all([getMode(), getSettings()])
     const session = mode === 'hosted' ? await ensureValidSession() : null
     // The user's parsed resume names their details, so the report can leave
-    // them out. Nothing is sent without it.
+    // them out. Nothing is sent without it (#256).
     try {
       const parsed = await readResumeForReport(mode, settings, session)
       if (at !== attempt.current) return
@@ -94,7 +92,7 @@ export default function FlagProblem({ target, resultKey }: { target: ReportTarge
     setSending('sending')
     setError('')
     try {
-      // Told "Your account goes with it": no session, no send.
+      // Told "Your account goes with it": no session, no send (#256).
       const token = report.contact ? (await ensureValidSession())?.access_token : undefined
       if (report.contact && !token) throw new Error('Sign in again to send this with your account, or go Back and untick "You can email me about this".')
       await sendGenerationReport(report, token)
@@ -111,7 +109,7 @@ export default function FlagProblem({ target, resultKey }: { target: ReportTarge
 
   return (
     <div className="flag">
-      {/* aria-disabled, not disabled: it keeps focus after a send, so the thanks is read out. */}
+      {/* aria-disabled, not disabled: it keeps focus after a send, so the thanks is read out (#256). */}
       <button type="button" ref={link} className="text-link flag-link" aria-disabled={reported} aria-expanded={reported ? undefined : open}
         onClick={() => { if (reported) return; if (open) close(); else setOpen(true) }}>
         {reported ? 'Reported. Thanks.' : 'Flag a problem'}
@@ -172,13 +170,9 @@ const WHERE: Record<string, string> = {
   otherSections: 'Section', atsGaps: 'ATS gap', atsGapsBeforeEdits: 'ATS gap before edits', bullets: 'bullets', lines: 'lines',
 }
 
-// What Send sends, editable: the letter, or each text of the resume (and of
-// the original resume, when it goes too).
 function Preview({ report, onChange }: { report: GenerationReport; onChange: (r: GenerationReport) => void }) {
-  // Each box under a heading for where it sits ("experience 1 bullets"),
-  // shown when that changes.
   const name = (path: Array<string | number>) => path.map((p) => (typeof p === 'number' ? p + 1 : WHERE[p] ?? p)).join(' ')
-  // Tab can stop on a box half out of the list's view, ring and all: show it whole.
+  // Tab can stop on a box half out of the list's view, ring and all: show it whole (#256).
   const reveal = (e: React.FocusEvent) => (e.target as HTMLElement).scrollIntoView({ block: 'nearest' })
   const fields = (key: 'output' | 'sourceResume') => resumeTexts(report[key] as object).map(({ path, text }, i, all) => {
     const where = name(path.slice(0, -1)) || name(path)

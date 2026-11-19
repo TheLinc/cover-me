@@ -19,7 +19,7 @@ import type { AuthSession, JobData, TailoredHistoryEntry, TailoredResume } from 
 // Edits are the user's own, so the grounding checks that guard the model's output don't run on them (#118).
 
 // job: the posting, for "Flag a problem". A resume from the account has no
-// description: the server keeps title, company and address only.
+// description: the server keeps title, company and address only (#256).
 interface Opened { scored: TailoredResume; job: JobData }
 
 // Read from this browser's cache first, so BYOK and Free make no network call here (#118).
@@ -231,7 +231,7 @@ export default function Editor() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!(e.ctrlKey || e.metaKey) || e.altKey) return
-      // The Flag a problem comment keeps its own undo; the resume's isn't in it.
+      // The Flag a problem comment keeps its own undo; the resume's isn't in it (#256).
       if (e.target instanceof Element && e.target.closest('.flag-form')) return
       const key = e.key.toLowerCase()
       if (key === 'z' && !e.shiftKey) { e.preventDefault(); undo() }
@@ -400,7 +400,7 @@ export default function Editor() {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m15 14 5-5-5-5" /><path d="M20 9H9.5a5.5 5.5 0 000 11H13" /></svg>
           </button>
         </div>
-        {/* What the user sees now: their edits, marked edited, or the resume as generated. */}
+        {/* What the user sees now: their edits, marked edited, or the resume as generated (#256). */}
         <FlagProblem resultKey={`resume:${id}`} target={{ kind: 'resume', output: edited ? saved : scored, job: opened.job }} />
         <p className="ed-status" aria-live="polite">
           {status === 'saving' ? 'Saving…'

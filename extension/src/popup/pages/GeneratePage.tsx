@@ -1050,7 +1050,7 @@ export default function GeneratePage({ onNavigate }: Props) {
                       New
                     </button>
                   </div>
-                  {/* Keyed by the letter's time, so a regenerated letter can be flagged again. */}
+                  {/* Keyed by the letter's time, so a regenerated letter can be flagged again (#256). */}
                   {job && <FlagProblem key={createdAt} resultKey={`letter:${createdAt}`} target={{ kind: 'letter', output: letter, job }} />}
                   {/* Under the row, so "Copied!" stays in view on a long letter. (#266) */}
                   {reviewAt === 'letter' && <ReviewAsk onClose={() => setReviewAt(null)} />}

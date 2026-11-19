@@ -25,8 +25,6 @@ export const metadata: Metadata = {
 const EFFECTIVE_DATE = 'November 24, 2026'
 const CONTACT_EMAIL  = 'support@cover-me.dev'
 
-// ── Section heading ────────────────────────────────────────────────────────
-
 function H2({ id, children }: { id: string; children: React.ReactNode }) {
   return (
     <h2
@@ -97,8 +95,6 @@ function PermissionCard({
   )
 }
 
-// ── Table of contents ──────────────────────────────────────────────────────
-
 const TOC = [
   { id: 'overview',         label: 'Overview' },
   { id: 'data-collected',   label: 'Information We Collect' },
@@ -113,8 +109,6 @@ const TOC = [
   { id: 'changes',          label: 'Changes to This Policy' },
   { id: 'contact',          label: 'Contact' },
 ]
-
-// ── Page ───────────────────────────────────────────────────────────────────
 
 const breadcrumbJsonLd = {
   '@context': 'https://schema.org',
@@ -135,7 +129,6 @@ export default function PrivacyPage() {
       <div className="max-w-[1160px] mx-auto px-12 py-16 max-md:px-5">
         <div className="grid grid-cols-[220px_1fr] gap-16 max-lg:grid-cols-1">
 
-          {/* Sidebar TOC — sticky on desktop */}
           <aside className="max-lg:hidden">
             <div className="sticky top-24">
               <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-2 mb-4">
@@ -155,10 +148,8 @@ export default function PrivacyPage() {
             </div>
           </aside>
 
-          {/* Main content */}
           <main className="min-w-0">
 
-            {/* Header */}
             <div className="mb-10 pb-10 border-b border-border">
               <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-2 mb-4 block">
                 Legal
@@ -171,7 +162,6 @@ export default function PrivacyPage() {
               </p>
             </div>
 
-            {/* ── 1. Overview ─────────────────────────────────────────── */}
             <H2 id="overview">Overview</H2>
             <P>
               Cover Me (&ldquo;we&rdquo;, &ldquo;our&rdquo;, or &ldquo;us&rdquo;) is an open-source Chrome
@@ -207,7 +197,6 @@ export default function PrivacyPage() {
               Where this policy applies differently by mode, it is clearly noted.
             </P>
 
-            {/* ── 2. Information We Collect ───────────────────────────── */}
             <H2 id="data-collected">Information We Collect</H2>
 
             <H3>Information you provide directly</H3>
@@ -377,7 +366,8 @@ export default function PrivacyPage() {
                 reading of your resume, and replaces every email address, phone number and address starting with
                 http or www in the text, whoever&apos;s it is. It then shows you the text it will send, and you can edit or delete
                 anything else in it, such as a street address or someone else&apos;s name; only what you leave is
-                sent. If your resume hasn&apos;t been read yet, sending
+                sent. In a resume, the name, contact details and links at the top become placeholders of the same
+                length (such as [name]xx), so we can see how the page was laid out. If your resume hasn&apos;t been read yet, sending
                 a report reads it once: with your own API key in BYOK mode, or on our server in Hosted mode. If you
                 pick &quot;It added things that aren&apos;t true&quot; you can also choose to send your original
                 resume as Cover Me read it (its sections and jobs, not the file or its text), with the same details
@@ -451,7 +441,6 @@ export default function PrivacyPage() {
               <Li>We do not sell, rent, or trade your data to any third party.</Li>
             </Ul>
 
-            {/* ── 3. How We Use Your Information ──────────────────────── */}
             <H2 id="how-we-use">How We Use Your Information</H2>
             <P>We use the information we collect only for these purposes:</P>
             <Ul>
@@ -474,7 +463,6 @@ export default function PrivacyPage() {
               beyond what is listed above.
             </P>
 
-            {/* ── 4. Chrome Extension Permissions ─────────────────────── */}
             <H2 id="permissions">Chrome Extension Permissions</H2>
             <P>
               The following section details every permission declared in Cover Me&apos;s{' '}
@@ -679,7 +667,6 @@ export default function PrivacyPage() {
               </ul>
             </PermissionCard>
 
-            {/* ── 5. Data Storage & Security ──────────────────────────── */}
             <H2 id="storage-security">Data Storage &amp; Security</H2>
 
             <H3>On-device storage (all modes)</H3>
@@ -699,7 +686,6 @@ export default function PrivacyPage() {
               <Li>The Supabase service-role key (which bypasses RLS) is used only on our servers (the backend functions and the Stripe webhook) and is never exposed to clients.</Li>
             </Ul>
 
-            {/* ── 6. Third-Party Services ─────────────────────────────── */}
             <H2 id="third-parties">Third-Party Services</H2>
             <P>
               Cover Me integrates with the following third-party services. Each service receives only
@@ -791,7 +777,6 @@ export default function PrivacyPage() {
               ))}
             </div>
 
-            {/* ── 7. Data Retention ───────────────────────────────────── */}
             <H2 id="retention">Data Retention</H2>
             <Ul>
               <Li><strong className="text-foreground">BYOK mode:</strong> Your resume, API key and history stay on your device, and we hold no copy of them. You can delete them at any time by removing the extension or clearing extension storage in Chrome settings. The only BYOK data on our side are the rate-limit counters and Supabase&apos;s request logs described above, and in PostHog any site request, bug report or problem report you chose to send.</Li>
@@ -803,7 +788,6 @@ export default function PrivacyPage() {
               <Li><strong className="text-foreground">Stripe billing records:</strong> Deleting your account also deletes your Stripe customer record, which holds your email and saved card. Stripe retains transaction records as required by financial regulations, and we cannot delete those.</Li>
             </Ul>
 
-            {/* ── 8. Your Rights ──────────────────────────────────────── */}
             <H2 id="your-rights">Your Rights</H2>
             <P>
               Depending on your jurisdiction, you may have the following rights regarding your personal data:
@@ -823,7 +807,6 @@ export default function PrivacyPage() {
               </a>. We will respond within 30 days. We may need to verify your identity before processing a request.
             </P>
 
-            {/* ── 9. Limited Use Statement ────────────────────────────── */}
             <H2 id="limited-use">Limited Use Statement</H2>
             <P>
               Cover Me&apos;s use of information received from Chrome extension APIs, browser storage,
@@ -853,7 +836,6 @@ export default function PrivacyPage() {
               </p>
             </div>
 
-            {/* ── 10. Children's Privacy ──────────────────────────────── */}
             <H2 id="children">Children&apos;s Privacy</H2>
             <P>
               Cover Me is not directed at children under the age of 13. We do not knowingly collect
@@ -861,7 +843,6 @@ export default function PrivacyPage() {
               such information, please contact us immediately and we will delete it.
             </P>
 
-            {/* ── 11. Changes ─────────────────────────────────────────── */}
             <H2 id="changes">Changes to This Policy</H2>
             <P>
               We may update this Privacy Policy from time to time. When we do, we will update the
@@ -874,7 +855,6 @@ export default function PrivacyPage() {
               public GitHub repository commit history.
             </P>
 
-            {/* ── 12. Contact ─────────────────────────────────────────── */}
             <H2 id="contact">Contact</H2>
             <P>
               If you have any questions about this Privacy Policy, wish to exercise your data rights, or
@@ -891,7 +871,6 @@ export default function PrivacyPage() {
               </a>
             </div>
 
-            {/* Footer note */}
             <div className="mt-16 pt-8 border-t border-border">
               <p className="text-[12.5px] text-muted-foreground">
                 Cover Me is open-source software released under the MIT License.
