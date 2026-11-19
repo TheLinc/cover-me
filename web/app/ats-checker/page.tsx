@@ -63,8 +63,8 @@ export default function AtsCheckerPage() {
         <div className="flex max-w-[720px] flex-col gap-3 text-[15px] leading-[1.65] text-body">
           <h2 className="text-[22px] leading-[1.2] text-ink">How the checker reads a posting</h2>
           <p>
-            It looks for more than 400 named skills, tools, licenses and degrees, and for acronyms and product names in the
-            posting&apos;s requirement lines. Keywords under headings like Requirements or Qualifications count as must-have,
+            It looks for more than 500 named skills, tools, licenses and degrees, and for acronyms and product names in the
+            posting&apos;s requirements and duty bullets. Keywords under headings like Requirements or Qualifications count as must-have,
             and ones marked preferred or nice to have count as nice to have. It then checks each keyword against your resume
             word by word, so &quot;PowerBI&quot; matches &quot;Power BI&quot; but &quot;managed projects&quot; doesn&apos;t match
             &quot;project management&quot;.

@@ -187,4 +187,24 @@ describe('checking a resume', () => {
     const ask = 'Requirements\n- Securities Master File (SMF) data'
     expect(found(ask, 'Owned the Securities Master File for 3 funds.')).toMatchObject({ SMF: true })
   })
+
+  test('a named credential is its own keyword, not a general skill', () => {
+    expect(found('Requirements: ServSafe Manager certification.', 'ServSafe Food Handler, 2024')).toEqual({ 'ServSafe Manager': false })
+    expect(found('Nice to have: accessibility (WCAG 2.1 AA) experience.', 'Fixed accessibility bugs.')).toEqual({ accessibility: true, WCAG: false })
+    expect(found('Requirements\n- TESOL certificate', 'Taught ESL for 3 years.')).toEqual({ TESOL: false })
+  })
+})
+
+describe('acronyms the list lacks', () => {
+  test('are read from duty bullets, not company prose', () => {
+    const ask = 'About Acme\nAcme trades on the NYSE.\nResponsibilities:\n- Test controls for the FRB audit\n- Report to the CFO'
+    expect(pick(readPosting(ask))).toEqual(['audit', 'FRB'])
+    const company = 'About us\n- Our customers include PayPal and DoorDash\n- Backed by a NASDAQ-listed parent\nWhat you will do\n- We ship to TSMC\n- Run SPC checks'
+    expect(pick(readPosting(company))).toEqual(['SPC'])
+  })
+
+  test('seen first under duties, then under requirements, count as required', () => {
+    const ask = 'Responsibilities\n- Maintain FRB filings\nRequirements\n- FRB reporting'
+    expect(readPosting(ask).keywords.find((k) => k.name === 'FRB')?.level).toBe('required')
+  })
 })

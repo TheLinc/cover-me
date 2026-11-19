@@ -62,7 +62,7 @@ const SKIP = /^(description of )?benefits?|^perks|what we offer|^compensation|^p
 const BULLET = /^(\*\s|[-•●◦▪▫■□·‣⁃▸►○–—])/
 const OTHER = /^schedule|^job type|^the (job|team|position)$|^your mission|responsib|what you('ll| will)? (do|be doing)|day in the life|the role|the opportunity|job description|overview|summary|duties|additional information/i
 
-type Heading = Level | 'skip' | 'unknown'
+type Heading = Level | 'skip' | 'unknown' | 'company'
 function headingLevel(line: string, labelled: boolean): Heading | null {
   if (BULLET.test(line)) return null
   const text = line.replace(/^[^A-Za-z0-9]+|[*:\s]+$/g, '')
@@ -70,7 +70,7 @@ function headingLevel(line: string, labelled: boolean): Heading | null {
   const marked = labelled || /^(#|\*\*)|:\s*$/.test(line)
   if (!marked && /\d/.test(text)) return null
   if (!looksLikeHeading(text, marked)) return null
-  if (COMPANY.test(text)) return 'mentioned'
+  if (COMPANY.test(text)) return 'company'
   const namedHeading = /^((required|preferred|minimum|basic) (qualifications|requirements|skills|experience)|.*\b(requirements|qualifications)|.*\b(looking for|seeking))$/i.test(text)
   if (!namedHeading && DICTIONARY.some((term) => has(text, term))) return null
   if (!namedHeading && SKIP.test(text)) return 'skip'
@@ -80,7 +80,7 @@ function headingLevel(line: string, labelled: boolean): Heading | null {
   return 'unknown'
 }
 
-const ACRONYM_STOP = new Set(['USD', 'GBP', 'CAD', 'EUR', 'PTO', 'EEO', 'EOE', 'FAQ', 'LLC', 'INC', 'USA', 'EMEA', 'APAC', 'NYC', 'CEO', 'CTO', 'CFO', 'COO', 'ETC', 'AND', 'THE', 'FOR', 'NOT', 'DNA', 'EST', 'PST', 'CST', 'MST', 'ASAP', 'III',
+const ACRONYM_STOP = new Set(['USD', 'GBP', 'CAD', 'EUR', 'PTO', 'EEO', 'EOE', 'FAQ', 'LLC', 'INC', 'USA', 'EMEA', 'APAC', 'NYC', 'CEO', 'CTO', 'CFO', 'COO', 'ETC', 'AND', 'THE', 'FOR', 'NOT', 'DNA', 'EST', 'PST', 'CST', 'MST', 'ASAP', 'III', 'SME',
   'MUST', 'PLEASE', 'NOTE', 'ONLY', 'NEVER', 'WILL', 'ALL', 'ANY', 'YOU', 'YOUR', 'ARE', 'CAN', 'MAY', 'NEW', 'NOW', 'COVID', 'TBD', 'TBA', 'H1B'])
 
 function unlistedNames(line: string): Keyword[] {
@@ -102,7 +102,7 @@ function unlistedNames(line: string): Keyword[] {
   return found
 }
 
-const BOILERPLATE = /equal (opportunity|employment)|affirmative action|regardless of|without regard to/i
+const BOILERPLATE = /equal (opportunity|employment)|affirmative action|regardless of|without regard to|map data ©/i
 const YEARS = /\b(\d{1,2}|one|two|three|four|five|six|seven|eight|nine|ten)\s*\+?\s*(?:(?:-|–|to)\s*\d{1,2}\s*\+?\s*)?(?:years?|yrs?)\b/i
 const COMPANY_VOICE = /\b([Ww]e|[Oo]ur|[Uu]s)\b/
 const COMPANY_SPEAKS = /^[^A-Za-z]*(we|our)\b/i
@@ -119,26 +119,27 @@ export function readPosting(posting: string): Posting {
   const years: string[] = []
   const links: Array<[string, string, Level]> = []
   let section: Level | 'skip' = 'mentioned'
+  let aboutCompany = false
 
   const lines = normalize(posting).split(/\n+/).map((l) => l.trim()).filter(Boolean)
   const openers = new Set(lines.map((l) => /^\w+/.exec(l)?.[0]))
 
-  function scan(text: string, level: Level) {
+  function scan(text: string, level: Level, names = level !== 'mentioned') {
     const hits = DICTIONARY.map((term) => ({ term, at: spans(text, term) })).filter((h) => h.at.length)
     const kept = hits
       .filter(({ term, at }) => !at.every(([a, b]) => hits.some((h) => h.term !== term && h.at.some(([c, d]) => c <= a && b <= d && d - c > b - a))))
       .sort((x, y) => Math.min(...x.at.map(([a]) => a)) - Math.min(...y.at.map(([a]) => a)))
     for (const { term } of kept) add({ ...term, level })
+    for (const k of names ? unlistedNames(text) : []) {
+      const known = [...DICTIONARY, ...found.values()].some((f) => has(k.name, f) || f.spellings.some((s) => mentions(s, k.name, true)))
+      if (found.has(k.name) || (!known && !openers.has(k.name))) add({ ...k, level })
+    }
     if (level === 'mentioned') return
     for (const a of kept) {
       for (const b of kept) {
         const either = a !== b && a.at.some(([, end]) => b.at.some(([start]) => start > end && /^,?\s+or\s+$/i.test(text.slice(end, start))))
         if (either) links.push([a.term.name, b.term.name, level])
       }
-    }
-    for (const k of unlistedNames(text)) {
-      const known = [...DICTIONARY, ...found.values()].some((f) => has(k.name, f) || f.spellings.some((s) => mentions(s, k.name, true)))
-      if (!known && !openers.has(k.name)) add({ ...k, level })
     }
   }
 
@@ -148,12 +149,12 @@ export function readPosting(posting: string): Posting {
     if (heading === 'skip' && head) continue
     const credentialsUnderPreferred = section === 'preferred' && CREDENTIALS.test((head ?? line).replace(/[*:\s]+$/, ''))
     if (heading === 'unknown') {
-      if (section === 'skip' && !head) section = 'mentioned'
-    } else if (heading && !credentialsUnderPreferred) section = heading
+      if (section === 'skip' && !head) [section, aboutCompany] = ['mentioned', false]
+    } else if (heading && !credentialsUnderPreferred) [section, aboutCompany] = heading === 'company' ? ['mentioned', true] : [heading, false]
     if (section === 'skip' && !heading && !head) {
       const terms = DICTIONARY.filter((term) => has(line, term)).length
       const shortLabel = !BULLET.test(line) && !/[.!?]$/.test(line) && line.split(/\s+/).length <= 8
-      if (shortLabel || (BULLET.test(line) && terms >= 2)) section = 'mentioned'
+      if (shortLabel || (BULLET.test(line) && terms >= 2)) [section, aboutCompany] = ['mentioned', false]
     }
     if (section === 'skip' || BOILERPLATE.test(line)) continue
     const body = !heading ? line : head ? rest : ''
@@ -166,7 +167,7 @@ export function readPosting(posting: string): Posting {
       }
       const level: Level = section === 'mentioned' || (BULLET.test(line) ? COMPANY_SPEAKS : COMPANY_VOICE).test(sentence) ? 'mentioned'
         : /requir|\bmust\b/i.test(sentence) || !PREFERRED.test(sentence) ? section : 'preferred'
-      scan(sentence, level)
+      scan(sentence, level, level !== 'mentioned' || (BULLET.test(line) && !aboutCompany && !COMPANY_SPEAKS.test(sentence)))
     }
     if (YEARS.test(line) && !/years?\s+(of\s+age|old)/i.test(line) && (section !== 'mentioned' || /experience/i.test(line))) {
       const full = line.replace(/^[-•●◦▪▫■□·‣⁃▸►○–—*\s]+/, '').replace(/\*\*/g, '')
