@@ -47,7 +47,7 @@ const PREFERRED = /prefer|nice[\s-]to[\s-]have|nice if|bonus|\bplus\b|desired|de
 const REQUIRED = /requir|qualif|\bmust\b|need|bring|you have|you'?ll have$|you should have|looking for|good fit|great fit|about you|who you are|who you'?ll be|minimum|skills|education|^((your|relevant|work|professional) )?experience( and \w+)?$|you are$|you'?re a|we'?d love to hear|things you|ideal candidate|about the candidate|^tech stack|profile|background|essential|person specification|competenc|to be successful|sets you apart|right candidate|is this you|seeking/i
 const CREDENTIALS = /^certifications?|^licen[sc]|certifications?$/i
 const COMPANY = /^(about (?!you|the role|the team|the job|this job|this role|the position|the candidate|the opportunity|the work)|more about|why\b|life at|who we are$|our (founding|story|culture|values)|how we work)/i
-const HEADING_START = /^(more about|about us|why (join|work)|life at|what (you|we|makes you|sets you)|it would be (great|nice)|it'?d be (great|nice)|you'?ll\b|you (should|might|may)\b|who you|about (you|the (role|candidate|team|job|opportunity))|your (profile|background)|candidate profile|nice to have|good to have|bonus|requirements|qualifications|key (responsibilities|requirements|qualifications)|responsibilities|preferred|desirable|essential|ideally|even better|must[- ]haves?|minimum|basic qualifications|required|competencies|person specification|to be successful|the ideal candidate|the role|the opportunity|job description|tech stack|extra credit|pluses|who we('re| are) (looking|seeking)|we('re| are) (looking|seeking)|is this you|the right candidate|here'?s what you|you'?re a (great|good)|skills you|things you|a bit about you|we'?d love to hear|you bring)\b/i
+const HEADING_START = /^(more about|about us|why (join|work)|life at|what (you|we|makes you|sets you)|it would be (great|nice)|it'?d be (great|nice)|you'?ll\b|you (should|might|may)\b|who you|about (you|the (role|candidate|team|job|opportunity))|your (profile|background)|candidate profile|nice to haves?|good to haves?|what would make you|job requirements|your qualifications|(the )?skills you|(the )?ideal candidate|knowledge and skills|bonus|requirements|qualifications|key (responsibilities|requirements|qualifications)|responsibilities|preferred|desirable|essential|ideally|even better|must[- ]haves?|minimum|basic qualifications|required|competencies|person specification|to be successful|the ideal candidate|the role|the opportunity|job description|tech stack|extra credit|pluses|who we('re| are) (looking|seeking)|we('re| are) (looking|seeking)|is this you|the right candidate|here'?s what you|you'?re a (great|good)|skills you|things you|a bit about you|we'?d love to hear|you bring)\b/i
 const HEADING_WHOLE = /^(((key|technical|desired|core|required|your|relevant|work|professional) )?(skills|experience|education)( and \w+)?|you (are|have|will need|must have)|the (job|team|position)|your mission)$/i
 const MINOR_WORD = /^(a|an|and|at|by|for|if|in|is|of|on|or|the|to|with)$/i
 
@@ -80,7 +80,7 @@ function headingLevel(line: string, labelled: boolean): Heading | null {
   return 'unknown'
 }
 
-const ACRONYM_STOP = new Set(['USD', 'GBP', 'CAD', 'EUR', 'PTO', 'EEO', 'EOE', 'FAQ', 'LLC', 'INC', 'USA', 'EMEA', 'APAC', 'NYC', 'ADA', 'CEO', 'CTO', 'CFO', 'COO', 'ETC', 'AND', 'THE', 'FOR', 'NOT', 'DNA', 'EST', 'PST', 'CST', 'MST', 'ASAP', 'III',
+const ACRONYM_STOP = new Set(['USD', 'GBP', 'CAD', 'EUR', 'PTO', 'EEO', 'EOE', 'FAQ', 'LLC', 'INC', 'USA', 'EMEA', 'APAC', 'NYC', 'CEO', 'CTO', 'CFO', 'COO', 'ETC', 'AND', 'THE', 'FOR', 'NOT', 'DNA', 'EST', 'PST', 'CST', 'MST', 'ASAP', 'III',
   'MUST', 'PLEASE', 'NOTE', 'ONLY', 'NEVER', 'WILL', 'ALL', 'ANY', 'YOU', 'YOUR', 'ARE', 'CAN', 'MAY', 'NEW', 'NOW', 'COVID', 'TBD', 'TBA', 'H1B'])
 
 function unlistedNames(line: string): Keyword[] {
@@ -111,7 +111,7 @@ const ASKS = /\bwe('re| are)? (looking|seeking|need|require|want|expect)\b/i
 export function readPosting(posting: string): Posting {
   const found = new Map<string, Keyword>()
   const add = (k: Keyword) => {
-    const key = k.name.toLowerCase()
+    const key = k.name
     const seen = found.get(key)
     if (!seen) found.set(key, k)
     else if (LEVELS.indexOf(k.level) < LEVELS.indexOf(seen.level)) seen.level = k.level
@@ -133,7 +133,7 @@ export function readPosting(posting: string): Posting {
     for (const a of kept) {
       for (const b of kept) {
         const either = a !== b && a.at.some(([, end]) => b.at.some(([start]) => start > end && /^,?\s+or\s+$/i.test(text.slice(end, start))))
-        if (either) links.push([a.term.name.toLowerCase(), b.term.name.toLowerCase(), level])
+        if (either) links.push([a.term.name, b.term.name, level])
       }
     }
     for (const k of unlistedNames(text)) {

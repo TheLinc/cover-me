@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import { checkResume, readPosting, type Level } from './keywords'
+import { TERMS } from './terms'
 
 const text = (name: string) => readFileSync(join(__dirname, 'postings', `${name}.txt`), 'utf8')
 const posting = (name: string) => readPosting(text(name))
@@ -39,7 +40,7 @@ describe('keywords from saved postings', () => {
   test.each([
     ['Requirements\nKnowledge of payroll and benefits\nPython and SQL\nCPA required', 'required', ['payroll', 'Python', 'SQL', 'CPA']],
     ['Qualifications\nFamiliarity with data privacy rules\nTerraform and Kubernetes', 'required', ['Terraform', 'Kubernetes']],
-    ['Requirements\nPay-per-click campaign experience\nGoogle Analytics', 'required', ['Google Analytics']],
+    ['Requirements\nPay-per-click campaign experience\nGoogle Analytics', 'required', ['PPC', 'Google Analytics']],
     ['Nice to have\nExperience with Kafka\nStrong SQL skills\nFamiliarity with dbt', 'preferred', ['Kafka', 'SQL', 'dbt']],
     ['Nice to have\n* Experience with Kafka\n* Great interpersonal skills\n* Familiarity with dbt', 'preferred', ['Kafka', 'interpersonal skills', 'dbt']],
     ['Requirements\n- Install guard rails and hand rails\n- Shift starts 7am EST, start ASAP', 'required', []],
@@ -102,13 +103,19 @@ describe('keywords from saved postings', () => {
     "We're looking for", 'Skills and qualifications', 'Your experience', 'Education and experience', 'Key skills',
     'Technical skills', 'Is this you?', 'You have', 'The right candidate', 'Contact Center Requirements',
     "Here's what you need", 'You bring', 'You are', 'Skills you need', "Things you'll need", 'A bit about you',
-    "You're a great fit if", "We'd love to hear from you if", 'Work Experience',
+    "You're a great fit if", "We'd love to hear from you if", 'Work Experience', 'Job requirements', 'Your qualifications',
+    'The skills you need', 'Ideal candidate will have', 'Knowledge and skills',
   ])('"%s" starts a must-have section', (heading) => {
     expect(readPosting(`What you'll do\nPlan sprints\n${heading}\nKubernetes and Docker`).keywords.map((k) => [k.name, k.level]))
       .toEqual([['Kubernetes', 'required'], ['Docker', 'required']])
   })
 
-  test.each(['Desired skills', 'Desirable', 'Desirable criteria', 'Good to have', 'Ideally', 'Even better if', 'Pluses', 'Extra credit', 'It would be great if you have'])(
+  test('no two terms share a spelling', () => {
+    const spellings = TERMS.flatMap((t) => t.replace(/^=/, '').split('|').map((s) => (t.startsWith('=') || !/[a-z]/.test(s) ? s : s.toLowerCase())))
+    expect(spellings.filter((s, i) => spellings.indexOf(s) !== i)).toEqual([])
+  })
+
+  test.each(['Nice to haves', 'What would make you stand out', 'Desired skills', 'Desirable', 'Desirable criteria', 'Good to have', 'Ideally', 'Even better if', 'Pluses', 'Extra credit', 'It would be great if you have'])(
     '"%s" starts a nice-to-have section', (heading) => {
       expect(readPosting(`Requirements\n- Python\n${heading}\nKubernetes`).keywords.map((k) => [k.name, k.level]))
         .toEqual([['Python', 'required'], ['Kubernetes', 'preferred']])

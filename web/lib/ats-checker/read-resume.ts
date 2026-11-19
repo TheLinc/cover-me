@@ -12,7 +12,11 @@ export async function readResumeFile(file: File): Promise<string> {
 async function readPdf(file: File): Promise<string> {
   const pdfjs = await import('pdfjs-dist')
   pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString()
-  const pdf = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise
+  const task = pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) })
+  const pdf = await task.promise.catch(async (err: unknown) => {
+    await task.destroy()
+    throw err
+  })
   const pages: string[] = []
   try {
     for (let i = 1; i <= pdf.numPages; i++) {
