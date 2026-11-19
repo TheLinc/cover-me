@@ -30,6 +30,14 @@ const jsonLd = [
     operatingSystem: 'Any',
     browserRequirements: 'Requires JavaScript',
     isAccessibleForFree: true,
+    featureList: [
+      "Lists the posting's must-have and nice-to-have skills, tools and certifications",
+      'Highlights each keyword in your resume and in the posting',
+      'Counts the experience bullets with a number and quotes the ones without',
+      "Checks whether the posting's job title is on your resume",
+      'Checks for an email address, a phone number and the page count',
+      'Reads PDF and Word files in the browser; nothing is uploaded',
+    ],
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
   },
   {

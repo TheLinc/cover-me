@@ -150,7 +150,6 @@ export function readPosting(posting: string): Posting {
   }
 
   for (const line of lines) {
-    current = line.replace(/^[-•●◦▪▫■□·‣⁃▸►○–—*#\s]+/, '').replace(/\*\*/g, '')
     const [, head, rest] = /^([^:]{1,60}):\s*(\S.*)$/.exec(line) ?? []
     const heading = headingLevel(head ?? line, !!head)
     if (heading === 'skip' && head) continue
@@ -166,6 +165,7 @@ export function readPosting(posting: string): Posting {
     if (section === 'skip' || BOILERPLATE.test(line)) continue
     const body = !heading ? line : head ? rest : ''
     for (const sentence of body.split(/(?<=[.!?;])\s+(?=[A-Z])/)) {
+      current = sentence.replace(/^[-•●◦▪▫■□·‣⁃▸►○–—*#\s]+/, '').replace(/\*\*/g, '')
       const ask = ASKS.exec(sentence)
       if (ask) {
         scan(sentence.slice(0, ask.index), 'mentioned')

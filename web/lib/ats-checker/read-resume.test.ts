@@ -31,7 +31,7 @@ describe('reading an uploaded resume', () => {
     await expect(readResumeFile(new File(['x'], 'resume.pages'))).rejects.toThrow('Upload a PDF, a Word file (.docx) or a text file.')
   })
 
-  test.each([['single-column.pdf', 'application/pdf'], ['single-column.docx', ''], ['two-column.pdf', 'application/pdf']])(
+  test.each([['single-column.pdf', 'application/pdf'], ['single-column.docx', ''], ['two-column.pdf', 'application/pdf'], ['table-layout.docx', '']])(
     '%s gives only real bullets, each with its number, and a page count for PDFs',
     async (name, type) => {
       const { text, pages } = await readResumeFile(file(join(FILES, name), type))
@@ -42,4 +42,13 @@ describe('reading an uploaded resume', () => {
       expect(pages).toBe(type ? 1 : undefined)
     },
   )
+
+  test('contact details in the Word header are reported missing, as the guide found', async () => {
+    const { text } = await readResumeFile(file(join(FILES, 'header-contact.docx')))
+    expect(checkResumeText(text, '')).toMatchObject({ email: false, phone: false })
+  })
+
+  test('a picture PDF gives no text, so the upload asks for a paste', async () => {
+    expect(await readResumeFile(file(join(FILES, 'image-only.pdf'), 'application/pdf'))).toEqual({ text: '', pages: 1 })
+  })
 })

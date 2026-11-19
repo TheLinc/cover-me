@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import { checkResume, marks, readPosting, type Level } from './keywords'
@@ -210,6 +210,15 @@ describe('acronyms the list lacks', () => {
 })
 
 describe('showing keywords in the text', () => {
+  test('every keyword from a saved posting keeps a sentence that names it', () => {
+    const plain = (t: string) => t.toLowerCase().replace(/[\s-]+/g, ' ')
+    for (const name of readdirSync(join(__dirname, 'postings'))) {
+      for (const k of readPosting(readFileSync(join(__dirname, 'postings', name), 'utf8')).keywords) {
+        expect(k.spellings.some((s) => plain(k.line ?? '').includes(plain(s))), `${name}: ${k.name}`).toBe(true)
+      }
+    }
+  })
+
   test('each keyword keeps the posting line that set its level', () => {
     const ask = 'About us\nWe use SQL every day.\nRequirements\n- **SQL** and Tableau'
     expect(readPosting(ask).keywords.find((k) => k.name === 'SQL')?.line).toBe('SQL and Tableau')

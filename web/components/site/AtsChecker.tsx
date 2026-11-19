@@ -3,9 +3,11 @@
 import { useDeferredValue, useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from 'react'
 import { CheckIcon, DeviceMobileIcon, PencilSimpleIcon, UploadSimpleIcon, XIcon } from '@phosphor-icons/react/dist/ssr'
 import { ExtensionPopup } from '@/components/landing/ExtensionPopup'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { checkResumeText, postingTitle } from '@/lib/ats-checker/hints'
@@ -33,6 +35,8 @@ function analyse(posting: string, read: Posting, resume: string, pages?: number)
 type Result = ReturnType<typeof analyse>
 type Checked = Result['keywords'][number]
 
+type Selected = { name: string; target: string; at: number }
+
 const SAMPLE = analyse(SAMPLE_POSTING, readPosting(SAMPLE_POSTING), SAMPLE_RESUME, 1)
 const SHARE_URL = 'https://www.cover-me.dev/ats-checker?utm_source=share&utm_medium=phone&utm_campaign=ats-phone-send'
 
@@ -45,7 +49,7 @@ export function AtsChecker() {
   const [inputTab, setInputTab] = useState('posting')
   const [resultTab, setResultTab] = useState('keywords')
   const [view, setView] = useState('resume')
-  const [selected, setSelected] = useState<{ name: string; at: number } | null>(null)
+  const [selected, setSelected] = useState<Selected | null>(null)
   const [checks, setChecks] = useState(0)
   const [fromPhone, setFromPhone] = useState(false)
   const counted = useRef('')
@@ -70,6 +74,7 @@ export function AtsChecker() {
   function fold(p: string, r: string) {
     if (!p.trim() || !r.trim()) return
     setFolded(true)
+    requestAnimationFrame(() => document.getElementById('results')?.focus())
     if (p !== counted.current) {
       counted.current = p
       setChecks((n) => n + 1)
@@ -84,13 +89,14 @@ export function AtsChecker() {
 
   function onType(which: 'posting' | 'resume', e: ChangeEvent<HTMLTextAreaElement>) {
     const value = e.target.value
+    const wasEmpty = !(which === 'posting' ? posting : resume).trim()
     if (which === 'posting') setPosting(value)
     else {
       setResume(value)
       setFile(null)
       setFileNote(null)
     }
-    if ((e.nativeEvent as InputEvent).inputType === 'insertFromPaste') {
+    if (wasEmpty && (e.nativeEvent as InputEvent).inputType === 'insertFromPaste') {
       if (which === 'posting') fold(value, resume)
       else fold(posting, value)
     }
@@ -127,7 +133,7 @@ export function AtsChecker() {
   }
 
   function pick(k: Checked) {
-    setSelected({ name: k.via ?? k.name, at: Date.now() })
+    setSelected({ name: k.name, target: k.via ?? k.name, at: Date.now() })
     setView(k.found ? 'resume' : 'posting')
     if (k.found) setResultTab('resume')
   }
@@ -158,13 +164,17 @@ export function AtsChecker() {
               <TabsTrigger value="posting">Posting{posting.trim() && <CheckIcon size={12} weight="bold" className="ml-1" aria-hidden />}</TabsTrigger>
               <TabsTrigger value="resume">Resume{resume.trim() && <CheckIcon size={12} weight="bold" className="ml-1" aria-hidden />}</TabsTrigger>
             </TabsList>
-            <Button variant="outline" size="sm" onClick={trySample} className="ml-auto lg:hidden">Try a sample</Button>
+            {!posting.trim() && !resume.trim() && (
+              <Button variant="outline" size="sm" onClick={trySample} className="ml-auto lg:hidden">Try a sample</Button>
+            )}
           </div>
           <div className="grid gap-5 lg:grid-cols-2">
             <TabsContent forceMount value="posting" className="mt-0 flex flex-col gap-2 data-[state=inactive]:max-lg:hidden">
               <div className="flex h-9 items-center justify-between gap-3">
                 <Label htmlFor="posting" className="text-[15px] font-semibold text-ink">Job posting</Label>
-                <Button variant="outline" size="sm" onClick={trySample} className="max-lg:hidden">Try a sample</Button>
+                {!posting.trim() && !resume.trim() && (
+                  <Button variant="outline" size="sm" onClick={trySample} className="max-lg:hidden">Try a sample</Button>
+                )}
               </div>
               <Textarea
                 id="posting"
@@ -204,10 +214,10 @@ export function AtsChecker() {
 
       <section aria-labelledby="results" className="relative rounded-[22px] border border-line bg-panel p-4 sm:p-5">
         {!mine && (
-          <p className="mb-4 flex flex-wrap items-center gap-2 text-[13px] text-ink-2">
-            <span className="rounded-full bg-ink px-2.5 py-0.5 text-[12px] font-semibold text-white">Sample</span>
+          <div className="mb-4 flex flex-wrap items-center gap-2 text-[13px] text-ink-2">
+            <Badge className="bg-ink text-[12px] text-white">Sample</Badge>
             A made-up posting and resume. Paste yours above to see your own result.
-          </p>
+          </div>
         )}
         <Tabs value={resultTab} onValueChange={setResultTab}>
           <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
@@ -266,7 +276,7 @@ function Summary({ result, sample }: { result: Result; sample: boolean }) {
   const nice = result.keywords.filter((k) => k.level === 'preferred')
   return (
     <div className="sticky top-[72px] z-10 flex flex-col gap-2.5 rounded-[16px] border border-line bg-white p-4 shadow-[0_10px_30px_-18px_rgba(30,27,75,0.35)]">
-      <h2 id="results" aria-live="polite" className="text-[clamp(20px,2.2vw,26px)] leading-[1.15] text-ink">
+      <h2 id="results" tabIndex={-1} aria-live="polite" className="text-[clamp(20px,2.2vw,26px)] leading-[1.15] text-ink outline-none">
         {!pool.length
           ? 'No keywords found in this posting. Paste all of it, including the requirements.'
           : must
@@ -288,11 +298,7 @@ function Summary({ result, sample }: { result: Result; sample: boolean }) {
 
 function Segments({ found, total }: { found: number; total: number }) {
   if (total > 20) {
-    return (
-      <div className="h-2.5 overflow-hidden rounded-full border border-dashed border-gap bg-white" aria-hidden>
-        <div className="h-full bg-brand" style={{ width: `${(found / total) * 100}%` }} />
-      </div>
-    )
+    return <Progress value={(found / total) * 100} aria-hidden className="h-2.5 border border-dashed border-gap bg-white [&>div]:bg-brand" />
   }
   return (
     <div className="flex gap-1" aria-hidden>
@@ -336,7 +342,6 @@ function Chips({ keywords, selected, onPick, pitch }: { keywords: Checked[]; sel
           </div>
         )
       })}
-      {!levels.length && pitch}
     </div>
   )
 }
@@ -369,7 +374,7 @@ function MissingChip({ k, on, onPick }: { k: Checked; on: boolean; onPick: (k: C
         </button>
       </PopoverTrigger>
       <PopoverContent align="start" className="flex w-[300px] flex-col gap-2.5 text-[13.5px] leading-[1.5] text-body">
-        {k.line && <q className="text-ink-2 italic">{k.line.length > 140 ? `${k.line.slice(0, 137)}...` : k.line}</q>}
+        {k.line && <q className="text-ink-2 italic">{quoteAround(k)}</q>}
         <p>
           <span className="font-semibold text-ink">Not on your resume: {k.name}.</span> If you&apos;ve used it, name it in the bullet where you
           used it. If you haven&apos;t, leave it out.
@@ -402,14 +407,9 @@ function Pitch({ result, checks }: { result: Result; checks: number }) {
               ? "Cover Me checks each one against your bullets, works in the ones you've done and leaves the rest out."
               : 'Cover Me rewrites your bullets around this posting and writes a matching cover letter.'}
         </p>
-        <a
-          href={storeUrl(repeat ? 'ats-repeat' : 'ats-result')}
-          target="_blank"
-          rel="noreferrer"
-          className="mt-1 self-start rounded-full bg-brand px-4 py-2 text-[14px] font-semibold text-white transition-colors hover:bg-brand-strong max-lg:hidden"
-        >
-          Tailor this resume in Chrome, free
-        </a>
+        <Button asChild className="mt-1 self-start max-lg:hidden">
+          <a href={storeUrl(repeat ? 'ats-repeat' : 'ats-result')} target="_blank" rel="noreferrer">Tailor this resume in Chrome, free</a>
+        </Button>
         <Button size="sm" onClick={sendToComputer} className="mt-1 self-start lg:hidden">
           <DeviceMobileIcon size={16} aria-hidden /> Send this to my computer
         </Button>
@@ -424,10 +424,23 @@ function Pitch({ result, checks }: { result: Result; checks: number }) {
 
 function sendToComputer() {
   if (navigator.share) {
-    navigator.share({ title: 'Cover Me ATS checker', text: 'Tailor my resume on my computer', url: SHARE_URL }).catch(() => {})
-  } else {
-    window.location.href = `mailto:?subject=${encodeURIComponent('Tailor my resume with Cover Me')}&body=${encodeURIComponent(SHARE_URL)}`
-  }
+    navigator.share({ title: 'Cover Me ATS checker', text: 'Tailor my resume on my computer', url: SHARE_URL }).catch((err: Error) => {
+      if (err.name !== 'AbortError') mailLink()
+    })
+  } else mailLink()
+}
+
+function mailLink() {
+  window.location.href = `mailto:?subject=${encodeURIComponent('Tailor my resume with Cover Me')}&body=${encodeURIComponent(SHARE_URL)}`
+}
+
+function quoteAround(k: Checked) {
+  const line = k.line ?? ''
+  if (line.length <= 140) return line
+  const lower = line.toLowerCase()
+  const at = k.spellings.map((s) => lower.indexOf(s.toLowerCase())).find((i) => i >= 0) ?? 0
+  const start = Math.max(0, Math.min(at - 50, line.length - 137))
+  return `${start ? '...' : ''}${line.slice(start, start + 137).trim()}${start + 137 < line.length ? '...' : ''}`
 }
 
 function Viewer({
@@ -443,7 +456,7 @@ function Viewer({
   resume: string
   posting: string
   result: Result
-  selected: { name: string; at: number } | null
+  selected: Selected | null
 }) {
   const box = useRef<HTMLDivElement>(null)
   const missing = useMemo(() => new Set(result.keywords.filter((k) => !k.found).map((k) => k.name)), [result])
@@ -451,7 +464,7 @@ function Viewer({
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
       const scroller = box.current
-      const target = selected && scroller?.querySelector<HTMLElement>(`[data-kw="${CSS.escape(selected.name)}"]`)
+      const target = selected && scroller?.querySelector<HTMLElement>(`[data-kw="${CSS.escape(selected.target)}"]`)
       if (!scroller || !target) return
       scroller.scrollTo({ top: target.offsetTop - scroller.clientHeight / 3, behavior: 'smooth' })
       const { top, bottom } = scroller.getBoundingClientRect()
@@ -468,10 +481,10 @@ function Viewer({
       </TabsList>
       <div ref={box} className="relative max-h-[440px] overflow-y-auto px-1.5 text-[13.5px] leading-[1.7] text-body">
         <TabsContent value="resume" className="mt-0 whitespace-pre-wrap">
-          <Marked text={resume} marks={result.resumeMarks} missing={missing} selected={selected?.name} />
+          <Marked text={resume} marks={result.resumeMarks} missing={missing} selected={selected?.target} />
         </TabsContent>
         <TabsContent value="posting" className="mt-0 whitespace-pre-wrap">
-          <Marked text={posting} marks={result.postingMarks} missing={missing} selected={selected?.name} />
+          <Marked text={posting} marks={result.postingMarks} missing={missing} selected={selected?.target} />
         </TabsContent>
       </div>
     </Tabs>
@@ -513,8 +526,8 @@ function ResumeChecks({ result }: { result: Result }) {
       title: `${bullets.withoutNumber.length} of ${bullets.total} ${bullets.total === 1 ? 'bullet has' : bullets.withoutNumber.length === 1 ? 'bullets has' : 'bullets have'} no number`,
       body: (
         <>
-          {bullets.withoutNumber.slice(0, 2).map((b) => (
-            <q key={b} className="block text-ink-2 italic">{b.length > 120 ? `${b.slice(0, 117)}...` : b}</q>
+          {bullets.withoutNumber.slice(0, 2).map((b, i) => (
+            <q key={i} className="block text-ink-2 italic">{b.length > 120 ? `${b.slice(0, 117)}...` : b}</q>
           ))}
           <span>How many people, projects, hours or dollars? Add one where it&apos;s true.</span>
         </>

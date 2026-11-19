@@ -69,19 +69,20 @@ export function hasNumber(bullet: string): boolean {
   return /\d/.test(rest) || NUMBER_WORD.test(rest)
 }
 
-export function postingTitle(posting: string): string | null {
-  const first = posting.split('\n').map((l) => l.replace(/^[#*\s]+|[*\s]+$/g, '')).find(Boolean)
-  const title = first?.split(/,| [-–—|] |\(/)[0].trim()
-  if (!title || /[.!?:]$/.test(title) || title.split(/\s+/).length > 8 || isSectionHeading(title)) return null
-  return title
-}
-
 const coreTitle = (title: string) =>
   title.replace(/^(senior|sr\.?|junior|jr\.?|lead|principal|staff|entry[- ]level)\s+/i, '').replace(/\s+(i{1,3}|iv|[1-4])$/i, '').trim()
 
 const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-const mentionsTitle = (resume: string, title: string) =>
-  new RegExp(`(?<![A-Za-z0-9])${title.split(/\s+/).map(escapeRe).join('\\s+')}(?![A-Za-z0-9])`, 'i').test(resume)
+const mentionsTitle = (text: string, title: string) =>
+  new RegExp(`(?<![A-Za-z0-9])${title.split(/\s+/).map(escapeRe).join('\\s+')}s?(?![A-Za-z0-9])`, 'i').test(text)
+
+export function postingTitle(posting: string): string | null {
+  const lines = posting.split('\n').map((l) => l.replace(/^[#*\s]+|[*\s]+$/g, ''))
+  const at = lines.findIndex(Boolean)
+  const title = lines[at]?.split(/,| [-–—|] |\(/)[0].trim()
+  if (!title || /[.!?:]$/.test(title) || title.split(/\s+/).length > 8 || isSectionHeading(title)) return null
+  return mentionsTitle(lines.slice(at + 1).join('\n'), coreTitle(title)) ? title : null
+}
 
 export function checkResumeText(resume: string, posting: string): ResumeChecks {
   const bullets = resumeBullets(resume)

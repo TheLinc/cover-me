@@ -46,6 +46,10 @@ describe('experience bullets', () => {
 })
 
 describe('a number in a bullet', () => {
+  test('flags the same 56 of the 209 fixture bullets that were read by hand and have no number', () => {
+    expect(resumes.flatMap((c) => resumeBullets(c.text)).filter((b) => !hasNumber(b))).toHaveLength(56)
+  })
+
   test.each([
     ['Cut month-end close from 8 days to 5', true],
     ['Lead a team of four marketers', true],
@@ -61,26 +65,29 @@ describe('a number in a bullet', () => {
 
 describe('the posting title', () => {
   const postings = join(__dirname, 'postings')
-  test('is the first line of every saved posting, cut at a comma or dash', () => {
+  test('is the first line, cut at a comma or dash, when the posting names it again', () => {
     const titles = Object.fromEntries(readdirSync(postings).map((f) => [f, postingTitle(readFileSync(join(postings, f), 'utf8'))]))
     expect(titles).toMatchObject({
+      'indeed.txt': 'Welder',
+      'amazon.txt': null,
       'lever.txt': 'Administrative Business Partner',
       'linkedin.txt': 'RN',
       'smartrecruiters.txt': 'Housekeeping Associate',
-      'workable.txt': 'Senior Open-Source Python Engineer',
-      'indeed.txt': 'Welder',
+      'workable.txt': null,
+      'phenom.txt': null,
     })
-    expect(Object.values(titles).every(Boolean)).toBe(true)
+    expect(Object.values(titles).filter(Boolean)).toHaveLength(11)
   })
 
   test('counts as on the resume without its level', () => {
-    const checks = checkResumeText('Business Analyst, Acme\n2020 - Present', 'Senior Business Analyst\nAbout the role')
+    const checks = checkResumeText('Business Analyst, Acme\n2020 - Present', 'Senior Business Analyst\nWe need a Senior Business Analyst.')
     expect(checks.title).toEqual({ posting: 'Senior Business Analyst', onResume: true })
-    expect(checkResumeText('Data Analyst', 'Business Analyst').title?.onResume).toBe(false)
+    expect(checkResumeText('Data Analyst', 'Business Analyst\nJoin us as a Business Analyst.').title?.onResume).toBe(false)
   })
 
-  test('is left out when the first line is a sentence', () => {
+  test('is left out when the first line is a sentence or never comes up again', () => {
     expect(postingTitle('We are hiring a great analyst to join our team.\nRequirements')).toBeNull()
+    expect(postingTitle('Skip to main content\nData Analyst\nJoin us as a Data Analyst.')).toBeNull()
   })
 })
 
@@ -103,7 +110,7 @@ describe('contact and title checks outside the fixtures', () => {
   })
 
   test('a short title only counts as a whole word', () => {
-    expect(checkResumeText('Eager to learn and turn feedback into plans', 'RN\nRequirements').title?.onResume).toBe(false)
-    expect(checkResumeText('RN, Mercy Hospital', 'RN - SAU\nRequirements').title?.onResume).toBe(true)
+    expect(checkResumeText('Eager to learn and turn feedback into plans', 'RN\nRequirements\n- Active RN license').title?.onResume).toBe(false)
+    expect(checkResumeText('RN, Mercy Hospital', 'RN - SAU\nRequirements\n- Active RN license').title?.onResume).toBe(true)
   })
 })
