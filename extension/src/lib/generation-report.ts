@@ -25,7 +25,7 @@ export const MAX_COMMENT = 500
 // The most the prompts read of a posting, and the most of a field the server takes.
 const MAX_DESCRIPTION = 15_000
 const MAX_JOB_FIELD = 500
-const MAX_LETTER = 20_000
+export const MAX_LETTER = 20_000
 
 export interface ReportForm {
   category: ReportCategory
@@ -77,7 +77,7 @@ export function buildGenerationReport(target: ReportTarget, form: ReportForm, en
     category: form.category,
     comment: form.comment.trim(),
     kind: target.kind,
-    output: target.kind === 'letter' ? scrub(target.output.slice(0, MAX_LETTER), known) : scrubResume(target.output, known),
+    output: target.kind === 'letter' ? scrub(target.output.slice(0, MAX_LETTER), known).slice(0, MAX_LETTER) : scrubResume(target.output, known),
     job: { title: target.job.title.slice(0, MAX_JOB_FIELD), company: target.job.company.slice(0, MAX_JOB_FIELD), description: target.job.description.slice(0, MAX_DESCRIPTION), site },
     mode: env.mode,
     // Hosted letters and resumes are written by Claude whatever the BYOK setting says.
@@ -131,14 +131,25 @@ function knownDetails(target: ReportTarget, env: ReportEnv): Known {
     nameWords: [...new Set(names.flatMap((n) => n.split(/[\s"'“”‘’().,-]+/)).filter((w) => (/^\p{Lu}/u.test(w) || caseless(w)) && w.replace(/\P{L}/gu, '').length >= 2))],
     emails: [...field('email'), ...(env.accountEmail ? [env.accountEmail] : [])],
     phones: field('phone'),
-    links: [...field('website'), ...field('links')].flatMap((l) => [l, bareLink(l)]),
-    // The whole location, and its first part, the city ("Toronto" of "Toronto, ON").
-    places: [...new Set(field('location').flatMap((l) => [l, l.split(/[,;|/]/)[0].trim()]))],
+    links: [...field('website'), ...field('links')].flatMap((l) => [l, bareLink(l), ...handleOf(l)]),
+    // The whole location, and its city: the first part, without a region code
+    // or postcode after it ("Toronto" of "Toronto, ON", "Brooklyn" of "Brooklyn
+    // NY 11201"), also without accents. "Remote" or "Hybrid" alone is no place.
+    places: [...new Set(field('location').flatMap((l) => [l, l.split(/[,;|/]/)[0].replace(/(?:\s+(?:[A-Z]{2,3}|\d[\d -]{2,9}))+$/, '').trim()]).flatMap(spellings))]
+      .filter((p) => !/^(?:remote|hybrid)$/i.test(p)),
   }
 }
 
 // A link as a letter may write it: no https://, www. or trailing slash.
 const bareLink = (l: string) => l.replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/+$/, '')
+// The handle in a profile link, which a letter can write alone ("GitHub -
+// janedoe"): its first path part, past "in/" or "u/" ("linkedin.com/in/jane-doe").
+// Profile sites only: "janedoe.dev/work" has no handle.
+const PROFILE_SITE = /^(?:[\w-]+\.)?(?:github\.com|gitlab\.com|linkedin\.com|twitter\.com|x\.com|instagram\.com|behance\.net|dribbble\.com|medium\.com|kaggle\.com|leetcode\.com|hackerrank\.com|codepen\.io|youtube\.com|tiktok\.com|threads\.net|bsky\.app|dev\.to|hashnode\.com|t\.me)$/i
+const handleOf = (l: string) => {
+  const [host, ...path] = bareLink(l).split(/[/?#]/)
+  return PROFILE_SITE.test(host) ? path.map((p) => p.replace(/^@/, '')).filter((p) => !/^(?:in|pub|u|user|users|profile|company|gallery)$/i.test(p)).slice(0, 1) : []
+}
 
 // A letter often signs without the title or middle name the resume has
 // ("Dr. Jane A. Doe" signs "Jane Doe"), so each name also goes without its

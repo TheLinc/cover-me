@@ -130,6 +130,10 @@ describe('buildGenerationReport', () => {
       expect(letter('See “https://pixelforge.studio”.')).toBe('See “[link]”.')
     })
 
+    test("the user's profile handle written alone", () => {
+      expect(letter('My GitHub is janedoe; LinkedIn: janedoe.', env({ parsed: { ...parsed, links: ['https://github.com/janedoe'] } }))).toBe('My GitHub is [link]; LinkedIn: [link].')
+    })
+
     test('tech names shaped like domains, and file names, stay', () => {
       const text = 'Built with Socket.io, fast.ai, Node.js, Next.js, ASP.NET and Vue.js; see README.md and main.py.'
       expect(letter(text)).toBe(text)
@@ -153,6 +157,9 @@ describe('buildGenerationReport', () => {
     test("the user's whole location, and its city anywhere", () => {
       expect(letter("I'm a Toronto-based analyst in Toronto, ON, at Acme TORONTO.")).toBe("I'm a [location]-based analyst in [location], at Acme [location].")
       expect(letter('Based in Sydney NSW 2000.', env({ parsed: { ...parsed, location: 'Sydney NSW 2000' } }))).toBe('Based in [location].')
+      expect(letter('I moved to Brooklyn.', env({ parsed: { ...parsed, location: 'Brooklyn NY 11201' } }))).toBe('I moved to [location].')
+      expect(letter('Montréal or Montreal.', env({ parsed: { ...parsed, location: 'Montréal, QC' } }))).toBe('[location] or [location].')
+      expect(letter('Remote work suits me.', env({ parsed: { ...parsed, location: 'Remote' } }))).toBe('Remote work suits me.')
     })
   })
 

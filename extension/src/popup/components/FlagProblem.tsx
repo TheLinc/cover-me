@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { ensureValidSession } from '../../lib/auth'
 import { SUPABASE_URL } from '../../lib/config'
-import { buildGenerationReport, MAX_COMMENT, rememberReportedResult, REPORT_CATEGORIES, reportedResults, resumeTexts, sendGenerationReport, withResumeText, type GenerationReport, type ReportCategory, type ReportTarget } from '../../lib/generation-report'
+import { buildGenerationReport, MAX_COMMENT, MAX_LETTER, rememberReportedResult, REPORT_CATEGORIES, reportedResults, resumeTexts, sendGenerationReport, withResumeText, type GenerationReport, type ReportCategory, type ReportTarget } from '../../lib/generation-report'
 import { readResumeForReport } from '../../lib/report-resume'
 import { getMode, getResume, getSession, getSettings } from '../../lib/storage'
 
@@ -28,6 +28,8 @@ export default function FlagProblem({ target, resultKey }: { target: ReportTarge
   const form = useRef<HTMLFormElement>(null)
   const link = useRef<HTMLButtonElement>(null)
   const submitted = useRef(false)
+  // Bumped by close(), so a Next still reading when the form closed is dropped.
+  const attempt = useRef(0)
 
   useEffect(() => {
     void reportedResults().then((keys) => { if (keys.includes(resultKey)) setReported(true) })
@@ -43,9 +45,9 @@ export default function FlagProblem({ target, resultKey }: { target: ReportTarge
     })
     form.current?.querySelector('input')?.focus()
   }, [open])
-  // The preview replaces the questions: focus its first box.
+  // Next and Back swap the questions and the preview: focus the first box.
   const previewing = !!report
-  useEffect(() => { if (previewing) form.current?.querySelector('textarea')?.focus() }, [previewing])
+  useEffect(() => { form.current?.querySelector(previewing ? 'textarea' : 'input')?.focus() }, [previewing])
   // After a send the form is gone: focus the link, which now reads the thanks.
   useEffect(() => { if (reported && submitted.current) link.current?.focus() }, [reported])
 
@@ -53,8 +55,10 @@ export default function FlagProblem({ target, resultKey }: { target: ReportTarge
 
   // The form goes away with focus inside it: keep focus on the link.
   function close() {
+    attempt.current++
     setOpen(false)
     setReport(null)
+    setError('')
     link.current?.focus()
   }
 
@@ -66,12 +70,14 @@ export default function FlagProblem({ target, resultKey }: { target: ReportTarge
     if (!ready) return
     setSending('reading')
     setError('')
+    const at = attempt.current
     const [mode, settings] = await Promise.all([getMode(), getSettings()])
     const session = mode === 'hosted' ? await ensureValidSession() : null
     // The user's parsed resume names their details, so the report can leave
     // them out. Nothing is sent without it.
     try {
       const parsed = await readResumeForReport(mode, settings, session)
+      if (at !== attempt.current) return
       setReport(buildGenerationReport(target, { category, comment, sendSource, contact: canContact && contact }, {
         mode, provider: settings?.provider ?? 'claude', version: chrome.runtime.getManifest().version, parsed, accountEmail: session?.user.email,
       }))
@@ -88,12 +94,13 @@ export default function FlagProblem({ target, resultKey }: { target: ReportTarge
     setSending('sending')
     setError('')
     try {
+      // Told "Your account goes with it": no session, no send.
       const token = report.contact ? (await ensureValidSession())?.access_token : undefined
+      if (report.contact && !token) throw new Error('signed out')
       await sendGenerationReport(report, token)
       await rememberReportedResult(resultKey)
       submitted.current = true
-      setOpen(false)
-      setReport(null)
+      close()
       setReported(true)
     } catch {
       setError("Couldn't send the report. Try again in a moment.")
@@ -106,7 +113,7 @@ export default function FlagProblem({ target, resultKey }: { target: ReportTarge
     <div className="flag">
       {/* aria-disabled, not disabled: it keeps focus after a send, so the thanks is read out. */}
       <button type="button" ref={link} className="text-link flag-link" aria-disabled={reported} aria-expanded={reported ? undefined : open}
-        onClick={() => { if (!reported) setOpen((o) => !o) }}>
+        onClick={() => { if (reported) return; if (open) close(); else setOpen(true) }}>
         {reported ? 'Reported. Thanks.' : 'Flag a problem'}
       </button>
       {open && (
@@ -151,8 +158,8 @@ export default function FlagProblem({ target, resultKey }: { target: ReportTarge
             {report
               ? <button type="submit" className="btn btn-secondary btn-sm" disabled={!!sending || (typeof report.output === 'string' && !report.output.trim())}>{sending ? 'Sending…' : 'Send'}</button>
               : <button type="submit" className="btn btn-secondary btn-sm" disabled={!ready || !!sending}>{sending ? 'Taking your details out…' : 'Next'}</button>}
-            {report && <button type="button" className="btn btn-ghost btn-sm" onClick={() => setReport(null)}>Back</button>}
-            <button type="button" className="btn btn-ghost btn-sm" onClick={close}>Cancel</button>
+            {report && <button type="button" className="btn btn-ghost btn-sm" disabled={!!sending} onClick={() => { setReport(null); setError('') }}>Back</button>}
+            <button type="button" className="btn btn-ghost btn-sm" disabled={sending === 'sending'} onClick={close}>Cancel</button>
           </div>
         </form>
       )}
@@ -172,14 +179,14 @@ function Preview({ report, onChange }: { report: GenerationReport; onChange: (r:
   })
   return (
     <>
-      <p className="form-label">This is what we&apos;ll send</p>
-      <p className="hint">Your name, email, phone, links and city are taken out, and so is any email, web address or phone number. Delete anything else you don&apos;t want to share, like a street address or someone else&apos;s name.</p>
+      <p className="form-label">Your {report.kind} as we&apos;ll send it</p>
+      <p className="hint">Your name, email, phone, links and city are taken out, and so is any email, phone number or address starting with http or www. Delete anything else you don&apos;t want to share, like a street address or someone else&apos;s name. Your comment goes as you wrote it.</p>
       {typeof report.output === 'string'
-        ? <textarea className="form-input flag-preview" aria-label={`The ${report.kind} we'll send`} value={report.output} onChange={(e) => onChange({ ...report, output: e.target.value })} />
-        : <div className="flag-preview">{fields('output')}</div>}
+        ? <textarea className="form-input flag-preview" aria-label={`The ${report.kind} we'll send`} maxLength={MAX_LETTER} value={report.output} onChange={(e) => onChange({ ...report, output: e.target.value })} />
+        : <div className="flag-preview" role="group" aria-label="The resume we'll send">{fields('output')}</div>}
       {report.sourceResume && <>
         <p className="form-label">Your original resume</p>
-        <div className="flag-preview">{fields('sourceResume')}</div>
+        <div className="flag-preview" role="group" aria-label="Your original resume">{fields('sourceResume')}</div>
       </>}
     </>
   )

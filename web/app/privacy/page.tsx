@@ -374,8 +374,8 @@ export default function PrivacyPage() {
                 its address), whether you use Hosted or BYOK mode, which AI wrote it and the extension&apos;s
                 version, and for a resume its ATS score and gaps. Before anything is sent, your browser takes out
                 your name, email address, phone number, links and city, using the details in Cover Me&apos;s
-                reading of your resume, and replaces every web address, email address and phone number in the
-                text, whoever&apos;s it is. It then shows you the text it will send, and you can edit or delete
+                reading of your resume, and replaces every email address, phone number and address starting with
+                http or www in the text, whoever&apos;s it is. It then shows you the text it will send, and you can edit or delete
                 anything else in it, such as a street address or someone else&apos;s name; only what you leave is
                 sent. If your resume hasn&apos;t been read yet, sending
                 a report reads it once: with your own API key in BYOK mode, or on our server in Hosted mode. If you
