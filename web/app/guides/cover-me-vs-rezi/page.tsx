@@ -7,7 +7,7 @@ const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 const guide = getGuide('cover-me-vs-rezi')
 
 export const metadata: Metadata = {
-  title: { absolute: 'Cover Me vs Rezi: Tailor the Resume You Already Have' },
+  title: { absolute: 'Rezi vs Cover Me: Pricing and Which One to Use' },
   description: 'Rezi builds resumes in its templates, with Pro at $29 a month. Cover Me tailors the resume you have to each posting, free with your own API key or $15 a month.',
   alternates: { canonical: `${BASE}/guides/${guide.slug}` },
   openGraph: {

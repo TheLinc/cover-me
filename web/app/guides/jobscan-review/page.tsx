@@ -4,7 +4,7 @@ import { ComparisonTable, GuideArticle } from '@/components/site/GuideArticle'
 import { getGuide } from '@/lib/guides'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
-const guide = getGuide('cover-me-vs-jobscan')
+const guide = getGuide('jobscan-review')
 
 export const metadata: Metadata = {
   title: { absolute: 'Cover Me vs Jobscan: A Free, Open-Source Alternative' },

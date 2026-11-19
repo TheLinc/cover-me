@@ -43,31 +43,31 @@ export const GUIDES: Guide[] = [
       "Example of tailoring a resume to a job posting. The posting asks for campaign strategy, a budget and SEO. Two resume bullets are rewritten in the posting's words and keep their real results, 38% more leads and 64% more organic traffic. HubSpot, which the resume doesn't mention, is left off.",
   },
   {
-    slug: 'cover-me-vs-aiapply',
+    slug: 'aiapply-review',
     title: 'Cover Me vs AIApply for job applications',
     description: 'AIApply submits applications for you with paid credits. Cover Me writes a tailored resume and cover letter for the posting you have open, and you review and send it yourself.',
     date: '2026-07-21',
     updated: '2026-10-29',
-    image: '/guides/cover-me-vs-aiapply.png',
+    image: '/guides/aiapply-review.png',
     imageAlt:
       "Comparison of how applications go out. AIApply: buy auto-apply credits, the AI writes the application, and it submits for you. Cover Me: click Tailor Resume to Job on a posting, read and edit the resume and letter, and submit it yourself.",
   },
   {
-    slug: 'cover-me-vs-jobscan',
+    slug: 'jobscan-review',
     title: 'Cover Me vs Jobscan: a free, open-source alternative',
     description: 'Jobscan gives 5 free resume scans a month, then costs $49.95 a month. Cover Me tailors your resume, scores it and writes a cover letter on the posting, free with your own API key or $15 a month.',
     date: '2026-10-29',
-    image: '/guides/cover-me-vs-jobscan.png',
+    image: '/guides/jobscan-review.png',
     imageAlt:
       "Table comparing Jobscan and Cover Me, with prices from each company's site in October 2026. Free plan: 5 resume scans a month with Jobscan, and unlimited with your own API key, or 10 to start then 5 a week, with Cover Me. Paid plan: $49.95 a month or $89.95 every 3 months, against $15 a month or $35 every 3 months. AI cover letters: paid plans against every plan. Open source: no against yes, MIT.",
   },
   {
-    slug: 'cover-me-vs-teal',
+    slug: 'teal-review',
     title: 'Cover Me vs Teal: a cheaper Teal+ alternative',
     description: 'Teal is a resume builder and job tracker, with Teal+ at $29 every 30 days. Cover Me tailors the resume you already have to each posting, free with your own API key or $15 a month.',
     date: '2026-10-29',
     updated: '2026-11-07',
-    image: '/guides/cover-me-vs-teal.png',
+    image: '/guides/teal-review.png',
     imageAlt:
       "Table comparing Teal and Cover Me, with prices from each company's site in October 2026. Built for: building resumes and tracking jobs, against tailoring your resume and letter to each posting. Free AI cover letters: 2 credits, against unlimited with your own API key, or 10 to start then 5 a week. Paid plan: $13 a week, $29 every 30 days or $79 every 90 days, against $15 a month or $35 every 3 months. Open source: no against yes, MIT.",
   },

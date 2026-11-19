@@ -4,7 +4,7 @@ import { ComparisonTable, GuideArticle } from '@/components/site/GuideArticle'
 import { getGuide } from '@/lib/guides'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
-const guide = getGuide('cover-me-vs-teal')
+const guide = getGuide('teal-review')
 
 export const metadata: Metadata = {
   title: { absolute: 'Cover Me vs Teal: A Cheaper Teal+ Alternative' },

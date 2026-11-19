@@ -9,7 +9,7 @@ const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 const guide = getGuide('tailor-resume-to-job-description')
 
 export const metadata: Metadata = {
-  title: 'How to Tailor Your Resume to a Job Description',
+  title: 'Tailor Your Resume to a Job Description in 5 Steps',
   description: "How to tailor your resume to a job description in five steps: find the must-have keywords, use the posting's words, and never add skills you don't have.",
   alternates: { canonical: `${BASE}/guides/${guide.slug}` },
   openGraph: {

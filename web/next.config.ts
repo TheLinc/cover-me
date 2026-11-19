@@ -16,6 +16,9 @@ const config: NextConfig = {
       { source: '/:path((?!relay/)[\\w-].*)/', destination: '/:path', permanent: true },
       { source: '/x', destination: '/?utm_source=x&utm_medium=social&utm_campaign=bio', permanent: false },
       { source: '/r', destination: '/?utm_source=reddit&utm_medium=social', permanent: false },
+      { source: '/guides/cover-me-vs-aiapply', destination: '/guides/aiapply-review', permanent: true },
+      { source: '/guides/cover-me-vs-jobscan', destination: '/guides/jobscan-review', permanent: true },
+      { source: '/guides/cover-me-vs-teal', destination: '/guides/teal-review', permanent: true },
     ]
   },
 }
