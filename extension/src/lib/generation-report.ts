@@ -98,9 +98,14 @@ function scrubResume(resume: object, known: Known): Resume {
 // The preview shows each text a resume report sends, to edit before Send. Not
 // shown: the section order and the edit time, which name no one.
 type Path = Array<string | number>
+// In the resume's own order: a stored one comes back with its keys sorted.
 const NOT_SHOWN = new Set(['sectionOrder', 'editedAt'])
+const ORDER = ['summary', 'experience', 'projects', 'education', 'skills', 'certifications', 'otherSections']
+const rank = (k: string) => (ORDER.includes(k) ? ORDER.indexOf(k) : ORDER.length)
 export function resumeTexts(resume: object, path: Path = []): Array<{ path: Path; text: string }> {
-  return Object.entries(resume).flatMap(([k, v]) => {
+  const entries = Object.entries(resume)
+  if (!path.length) entries.sort(([a], [b]) => rank(a) - rank(b))
+  return entries.flatMap(([k, v]) => {
     if (NOT_SHOWN.has(k)) return []
     const at = [...path, Array.isArray(resume) ? Number(k) : k]
     if (typeof v === 'string') return [{ path: at, text: v }]

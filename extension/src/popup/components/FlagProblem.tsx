@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import { ensureValidSession } from '../../lib/auth'
 import { SUPABASE_URL } from '../../lib/config'
 import { buildGenerationReport, MAX_COMMENT, MAX_LETTER, rememberReportedResult, REPORT_CATEGORIES, reportedResults, resumeTexts, sendGenerationReport, withResumeText, type GenerationReport, type ReportCategory, type ReportTarget } from '../../lib/generation-report'
@@ -117,7 +117,7 @@ export default function FlagProblem({ target, resultKey }: { target: ReportTarge
         {reported ? 'Reported. Thanks.' : 'Flag a problem'}
       </button>
       {open && (
-        <form className="flag-form" ref={form} onSubmit={report ? send : next} onKeyDown={(e) => { if (e.key === 'Escape') close() }}>
+        <form className="flag-form" ref={form} onSubmit={report ? send : next} onKeyDown={(e) => { if (e.key === 'Escape' && !report) close() }}>
           {report ? <Preview report={report} onChange={setReport} /> : <>
             <fieldset>
               <legend className="form-label">What was wrong with this {target.kind}?</legend>
@@ -170,11 +170,18 @@ export default function FlagProblem({ target, resultKey }: { target: ReportTarge
 // What Send sends, editable: the letter, or each text of the resume (and of
 // the original resume, when it goes too).
 function Preview({ report, onChange }: { report: GenerationReport; onChange: (r: GenerationReport) => void }) {
-  const fields = (key: 'output' | 'sourceResume') => resumeTexts(report[key] as object).map(({ path, text }) => {
-    const label = path.map((p) => (typeof p === 'number' ? p + 1 : p)).join(' ')
+  // Each box under a heading for where it sits ("experience 1 bullets"),
+  // shown when that changes.
+  const name = (path: Array<string | number>) => path.map((p) => (typeof p === 'number' ? p + 1 : p)).join(' ')
+  const fields = (key: 'output' | 'sourceResume') => resumeTexts(report[key] as object).map(({ path, text }, i, all) => {
+    const where = name(path.slice(0, -1)) || name(path)
+    const heading = i === 0 || where !== (name(all[i - 1].path.slice(0, -1)) || name(all[i - 1].path))
     return (
-      <textarea key={path.join('.')} className="form-input" aria-label={label} title={label} rows={Math.min(4, Math.ceil(text.length / 44) || 1)} value={text}
-        onChange={(e) => onChange({ ...report, [key]: withResumeText(report[key] as Record<string, unknown>, path, e.target.value) })} />
+      <Fragment key={path.join('.')}>
+        {heading && <span className="hint flag-where">{where}</span>}
+        <textarea className="form-input" aria-label={name(path)} rows={Math.min(4, Math.ceil(text.length / 44) || 1)} value={text}
+          onChange={(e) => onChange({ ...report, [key]: withResumeText(report[key] as Record<string, unknown>, path, e.target.value) })} />
+      </Fragment>
     )
   })
   return (

@@ -172,13 +172,14 @@ describe('buildGenerationReport', () => {
 })
 
 describe('resume preview', () => {
-  test('lists each text with where it sits, and writes an edit back without touching the rest', () => {
-    const r = { summary: 'Hi', experience: [{ title: 'SRE', bullets: ['a', 'b'] }], atsScore: 72, sectionOrder: ['experience'], editedAt: '2026-01-01' }
+  test('lists each text in resume order with where it sits, and writes an edit back without touching the rest', () => {
+    const r = { atsGaps: ['SQL'], summary: 'Hi', experience: [{ title: 'SRE', bullets: ['a', 'b'] }], atsScore: 72, sectionOrder: ['experience'], editedAt: '2026-01-01' }
     expect(resumeTexts(r)).toEqual([
       { path: ['summary'], text: 'Hi' },
       { path: ['experience', 0, 'title'], text: 'SRE' },
       { path: ['experience', 0, 'bullets', 0], text: 'a' },
       { path: ['experience', 0, 'bullets', 1], text: 'b' },
+      { path: ['atsGaps', 0], text: 'SQL' },
     ])
     const edited = withResumeText(r, ['experience', 0, 'bullets', 1], '')
     expect(edited.experience).toEqual([{ title: 'SRE', bullets: ['a', ''] }])
