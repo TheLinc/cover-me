@@ -13,6 +13,7 @@ declare global {
 const SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? ''
 const SCRIPT = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'
 const WAIT_MS = 15_000
+const CLICK_WAIT_MS = 120_000
 
 let loading: Promise<Turnstile> | null = null
 
@@ -46,7 +47,7 @@ export async function botCheckToken(container: HTMLElement): Promise<string | nu
     return null
   }
   return new Promise((resolve) => {
-    const timer = setTimeout(() => finish(null), WAIT_MS)
+    let timer = setTimeout(() => finish(null), WAIT_MS)
     let widgetId = ''
     function finish(token: string | null) {
       clearTimeout(timer)
@@ -59,6 +60,10 @@ export async function botCheckToken(container: HTMLElement): Promise<string | nu
       execution: 'execute',
       appearance: 'interaction-only',
       callback: (token: string) => finish(token),
+      'before-interactive-callback': () => {
+        clearTimeout(timer)
+        timer = setTimeout(() => finish(null), CLICK_WAIT_MS)
+      },
       'error-callback': () => finish(null),
     })
     turnstile.execute(container)
