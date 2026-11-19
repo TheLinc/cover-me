@@ -108,7 +108,7 @@ function unlistedNames(line: string): Keyword[] {
   return found
 }
 
-const BOILERPLATE = /equal (opportunity|employment)|affirmative action|(regardless of|without regard to)\b.{0,40}\b(race|colou?r|religion|creed|sex|gender|age|national origin|ancestry|disability|veteran)|map data ©/i
+const BOILERPLATE = /equal (opportunity|employment)|affirmative action|(regardless of|without regard to)\b.{0,40}\b(race|colou?r|religion|creed|sex(ual)?|gender|age|national origin|ancestry|disability|veterans?)\b|map data ©/i
 const YEARS = /\b(\d{1,2}|one|two|three|four|five|six|seven|eight|nine|ten)\s*\+?\s*(?:(?:-|–|to)\s*\d{1,2}\s*\+?\s*)?(?:years?|yrs?)\b/i
 const COMPANY_VOICE = /\b([Ww]e|[Oo]ur|[Uu]s)\b/
 const COMPANY_SPEAKS = /^[^A-Za-z]*(we|our)\b/i
@@ -165,8 +165,13 @@ export function readPosting(posting: string): Posting {
     if (section === 'skip') continue
     const body = !heading ? line : head ? rest : ''
     for (const sentence of body.split(/(?<=[.!?;])\s+(?=[A-Z])/)) {
-      if (BOILERPLATE.test(sentence)) continue
+      if (BOILERPLATE.test(sentence)) break
       current = sentence.replace(/^[-•●◦▪▫■□·‣⁃▸►○–—*#\s]+/, '').replace(/\*\*/g, '')
+      if (YEARS.test(sentence) && !/years?\s+(of\s+age|old)/i.test(sentence) && (section !== 'mentioned' || /experience/i.test(sentence))) {
+        const start = current.length > 160 ? Math.max(0, Math.min(current.search(YEARS) - 60, current.length - 157)) : 0
+        const text = current.length > 160 ? `${start ? '...' : ''}${current.slice(start, start + 157).trim()}${start + 157 < current.length ? '...' : ''}` : current
+        if (!years.includes(text)) years.push(text)
+      }
       const ask = ASKS.exec(sentence)
       if (ask) {
         scan(sentence.slice(0, ask.index), 'mentioned')
@@ -176,11 +181,6 @@ export function readPosting(posting: string): Posting {
       const level: Level = section === 'mentioned' || (BULLET.test(line) ? COMPANY_SPEAKS : COMPANY_VOICE).test(sentence) ? 'mentioned'
         : /requir|\bmust\b/i.test(sentence) || !PREFERRED.test(sentence) ? section : 'preferred'
       scan(sentence, level, level !== 'mentioned' || (BULLET.test(line) && !aboutCompany && !COMPANY_SPEAKS.test(sentence)))
-    }
-    if (YEARS.test(line) && !/years?\s+(of\s+age|old)/i.test(line) && (section !== 'mentioned' || /experience/i.test(line))) {
-      const full = line.replace(/^[-•●◦▪▫■□·‣⁃▸►○–—*\s]+/, '').replace(/\*\*/g, '')
-      const text = full.length > 160 ? `${full.slice(0, 157)}...` : full
-      if (!years.includes(text)) years.push(text)
     }
   }
 

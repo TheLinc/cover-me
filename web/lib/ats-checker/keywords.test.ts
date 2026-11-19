@@ -274,14 +274,23 @@ test('every posting keyword has a mark to scroll to, its own or one it overlaps'
   }
 })
 
-test('equal-opportunity text drops only its own sentence', () => {
-  for (const posting of [
-    'Data Analyst at Acme. You must have 3+ years of SQL, Python and Tableau experience. Acme is an equal opportunity employer.',
-    'Data Analyst at Acme.\nYou must have 3+ years of SQL, Python and Tableau experience, regardless of industry.',
-    'Data Analyst at Acme. You must have SQL. We hire regardless of race, religion or Python skills.',
-  ]) {
-    const names = readPosting(posting).keywords.map((k) => k.name)
-    expect(names).toEqual(expect.arrayContaining(['SQL', ...(posting.includes('race') ? [] : ['Python', 'Tableau'])]))
-    if (posting.includes('race')) expect(names).not.toContain('Python')
+test('equal-opportunity text drops itself and what follows on its line, nothing before it', () => {
+  const names = (posting: string) => readPosting(posting).keywords.map((k) => k.name)
+  expect(names('Data Analyst at Acme. You must have 3+ years of SQL, Python and Tableau experience. Acme is an equal opportunity employer.'))
+    .toEqual(expect.arrayContaining(['SQL', 'Python', 'Tableau']))
+  expect(names('Data Analyst at Acme.\nYou must have 3+ years of SQL, Python and Tableau experience, regardless of industry.'))
+    .toEqual(expect.arrayContaining(['SQL', 'Python', 'Tableau']))
+  expect(names('Requirements\n- Salesforce administration across every account, regardless of agency size.')).toContain('Salesforce')
+  expect(names('Data Analyst at Acme. You must have SQL. We hire regardless of race, religion or Python skills.')).toEqual(['SQL'])
+  expect(names(
+    'Data Analyst\nRequirements\n- SQL and Python\n- 3+ years of reporting experience\nAcme is an equal opportunity employer. Acme is a VEVRAA Federal Contractor and complies with OFCCP rules. Applicants needing an accommodation under the Americans with Disabilities Act may contact HR.',
+  ).sort()).toEqual(['Python', 'SQL'])
+})
+
+test('each years entry is the sentence that asks for them, even in a one-paragraph posting', () => {
+  for (const name of readdirSync(join(__dirname, 'postings'))) {
+    const paragraph = readFileSync(join(__dirname, 'postings', name), 'utf8').split('\n').map((l) => l.trim()).filter(Boolean)
+      .map((l) => (/[.!?;]$/.test(l) ? l : `${l}.`)).join(' ')
+    for (const entry of readPosting(paragraph).years) expect(entry, name).toMatch(/\b(\d{1,2}|one|two|three|four|five|six|seven|eight|nine|ten)\s*\+?\s*(-|–|to)?\s*\d*\s*\+?\s*(years?|yrs?)\b/i)
   }
 })
