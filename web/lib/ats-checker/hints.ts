@@ -2,7 +2,7 @@ import { isSectionHeading } from './keywords'
 
 export interface ResumeChecks {
   bullets: { total: number; withoutNumber: string[] }
-  title: { posting: string; onResume: boolean } | null
+  title: { posting: string; core: string; onResume: boolean } | null
   email: boolean
   phone: boolean
 }
@@ -90,7 +90,7 @@ export function checkResumeText(resume: string, posting: string): ResumeChecks {
   const title = postingTitle(posting)
   return {
     bullets: { total: bullets.length, withoutNumber: bullets.filter((b) => !hasNumber(b)) },
-    title: title ? { posting: title, onResume: mentionsTitle(resume, coreTitle(title)) } : null,
+    title: title ? { posting: title, core: coreTitle(title), onResume: mentionsTitle(resume, coreTitle(title)) } : null,
     email: /[\w.+-]+@[\w-]+\.[\w.]+/.test(resume),
     phone: [...resume.matchAll(/\+?\(?\d[\d \t().-]{6,18}\d/g)].some(([m]) => {
       const digits = m.replace(/\D/g, '').length

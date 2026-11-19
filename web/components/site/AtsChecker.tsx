@@ -11,7 +11,7 @@ import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { checkResumeText, postingTitle } from '@/lib/ats-checker/hints'
-import { checkResume, firstAt, markFor, marks, readPosting, type Level, type Mark, type Posting } from '@/lib/ats-checker/keywords'
+import { checkResume, firstAt, markFor, marks, oneEntryPerAsk, readPosting, type Level, type Mark, type Posting } from '@/lib/ats-checker/keywords'
 import { readResumeFile } from '@/lib/ats-checker/read-resume'
 import { SAMPLE_POSTING, SAMPLE_RESUME } from '@/lib/ats-checker/sample'
 import { BASE } from '@/lib/structured-data'
@@ -27,7 +27,8 @@ function analyse(posting: string, read: Posting, resume: string, pages?: number)
   const keywords = checkResume(read.keywords, resume)
   const postingMarks = marks(posting, keywords)
   return {
-    keywords: keywords.map((k) => (k.found ? k : { ...k, mark: markFor(posting, postingMarks, k) })),
+    keywords: oneEntryPerAsk(keywords.map((k) => (k.found ? k : { ...k, mark: markFor(posting, postingMarks, k) }))),
+    missing: new Set(keywords.filter((k) => !k.found).map((k) => k.name)),
     years: read.years,
     checks: { ...checkResumeText(resume, posting), pages },
     resumeMarks: marks(resume, keywords.filter((k) => k.found)),
@@ -381,14 +382,14 @@ function MissingChip({ k, on, onPick }: { k: Checked; on: boolean; onPick: (k: C
           className={cn(chipClass, 'border border-dashed border-gap bg-gap-tint text-gap-ink hover:border-solid', on && 'ring-2 ring-gap')}
         >
           <XIcon size={13} weight="bold" aria-hidden />
-          {k.name}
+          {asked(k)}
           <span className="sr-only">, not on your resume. Open tips.</span>
         </button>
       </PopoverTrigger>
       <PopoverContent align="start" className="flex w-[300px] flex-col gap-2.5 text-[13.5px] leading-[1.5] text-body">
         {k.line && <q className="text-ink-2 italic">{quoteAround(k)}</q>}
         <p>
-          <span className="font-semibold text-ink">Not on your resume: {k.name}.</span> If you&apos;ve used it, name it in the bullet where you
+          <span className="font-semibold text-ink">Not on your resume: {asked(k)}.</span> If you&apos;ve used it, name it in the bullet where you
           used it. If you haven&apos;t, leave it out.
         </p>
         <a href={storeUrl('ats-gap')} target="_blank" rel="noreferrer" className="font-medium text-brand-strong underline underline-offset-2 [@media(pointer:coarse)]:hidden">
@@ -446,6 +447,10 @@ function mailLink() {
   window.location.href = `mailto:?subject=${encodeURIComponent('Tailor my resume with Cover Me')}&body=${encodeURIComponent(SHARE_URL)}`
 }
 
+function asked(k: Checked) {
+  return [k.name, ...(k.alternatives ?? [])].join(' or ')
+}
+
 function quoteAround(k: Checked) {
   const line = k.line ?? ''
   if (line.length <= 140) return line
@@ -470,7 +475,7 @@ function Viewer({
   selected: Selected | null
 }) {
   const box = useRef<HTMLDivElement>(null)
-  const missing = useMemo(() => new Set(result.keywords.filter((k) => !k.found).map((k) => k.name)), [result])
+  const missing = result.missing
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
@@ -551,7 +556,7 @@ function ResumeChecks({ result }: { result: Result }) {
       title: `The posting's title, ${title.posting}, isn't on your resume`,
       body: "If it's the job you're after and your work shows that level, use it in your summary. Keep your past job titles as they were.",
     })
-  } else if (title) fine.push(`title ${title.posting}`)
+  } else if (title) fine.push(`the title ${title.core}`)
 
   const missingContact = [!email && 'email address', !phone && 'phone number'].filter(Boolean)
   if (missingContact.length) {

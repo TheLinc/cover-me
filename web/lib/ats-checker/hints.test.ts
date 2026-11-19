@@ -92,7 +92,7 @@ describe('the posting title', () => {
 
   test('counts as on the resume without its level', () => {
     const checks = checkResumeText('Business Analyst, Acme\n2020 - Present', 'Senior Business Analyst\nWe need a Senior Business Analyst.')
-    expect(checks.title).toEqual({ posting: 'Senior Business Analyst', onResume: true })
+    expect(checks.title).toEqual({ posting: 'Senior Business Analyst', core: 'Business Analyst', onResume: true })
     expect(checkResumeText('Data Analyst', 'Business Analyst\nJoin us as a Business Analyst.').title?.onResume).toBe(false)
   })
 

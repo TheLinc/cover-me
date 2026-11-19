@@ -226,6 +226,15 @@ export function checkResume(keywords: Keyword[], resume: string): Array<Keyword 
   })
 }
 
+export function oneEntryPerAsk<T extends Keyword>(keywords: T[]): T[] {
+  const seen = new Set<string>()
+  return keywords.filter((k) => {
+    const alternativeShown = k.alternatives?.some((name) => seen.has(name))
+    seen.add(k.name)
+    return !alternativeShown
+  })
+}
+
 export const firstAt = (text: string, k: Term): number | undefined => spans(normalize(text), k)[0]?.[0]
 
 export function markFor(text: string, kept: Mark[], k: Keyword): string | undefined {

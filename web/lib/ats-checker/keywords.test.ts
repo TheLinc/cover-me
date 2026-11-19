@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
-import { checkResume, firstAt, markFor, marks, readPosting, type Level } from './keywords'
+import { checkResume, firstAt, markFor, marks, oneEntryPerAsk, readPosting, type Level } from './keywords'
 import { TERMS } from './terms'
 
 const text = (name: string) => readFileSync(join(__dirname, 'postings', `${name}.txt`), 'utf8')
@@ -331,4 +331,15 @@ test('a posting pasted as one paragraph keeps its required listed keywords, and 
     expect(lost, name).toEqual([])
     for (const entry of readPosting(paragraph).years) expect(entry, name).toMatch(/\b(\d{1,2}|one|two|three|four|five|six|seven|eight|nine|ten)\s*\+?\s*(-|–|to)?\s*\d*\s*\+?\s*(years?|yrs?)\b/i)
   }
+})
+
+test('the gaps the AIApply comparison found are read, and an "or" pair is one entry (#296)', () => {
+  const frontend = readPosting(
+    "What you'll do\n- Own our component library in Storybook\n- Improve Core Web Vitals\n- Write end-to-end tests in Cypress\nRequirements\n- Experience with Next.js and server-side rendering\n- Experience with Cypress or Playwright",
+  ).keywords
+  expect(frontend.map((k) => k.name)).toEqual(expect.arrayContaining(['Storybook', 'Core Web Vitals', 'server-side rendering']))
+  const asks = oneEntryPerAsk(checkResume(frontend, 'Wrote Playwright suites.')).filter((k) => /Cypress|Playwright/.test(k.name))
+  expect(asks.map((k) => [k.name, k.found, k.via])).toEqual([['Cypress', true, 'Playwright']])
+  const nurse = readPosting('Responsibilities\n- Monitor cardiac rhythms\n- Teach patients and families about discharge plans\nPreferred\n- Experience with heparin drips').keywords
+  expect(nurse.map((k) => k.name)).toEqual(expect.arrayContaining(['cardiac', 'patient education', 'discharge planning', 'heparin']))
 })
