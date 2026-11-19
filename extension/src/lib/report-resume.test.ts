@@ -39,12 +39,8 @@ describe('readResumeForReport', () => {
     parse.mockResolvedValue(structured)
     await expect(readResumeForReport('byok', settings, null)).resolves.toEqual(structured)
     expect(parse).toHaveBeenCalledWith('Jane Doe resume', 'openai', 'plain-enc')
-    expect(storage.saveParsedResume).toHaveBeenCalledWith(structured)
-
-    storage.saveParsedResume.mockClear()
-    storage.getResume.mockResolvedValueOnce(resume()).mockResolvedValueOnce(resume({ text: 'a new upload' }))
-    await expect(readResumeForReport('byok', settings, null)).resolves.toEqual(structured)
-    expect(storage.saveParsedResume).not.toHaveBeenCalled()
+    // With the text it read, so a resume replaced meanwhile keeps its own parse.
+    expect(storage.saveParsedResume).toHaveBeenCalledWith(structured, 'Jane Doe resume')
 
     storage.getResume.mockResolvedValue(resume())
     parse.mockRejectedValue(new Error('401'))

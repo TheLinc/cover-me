@@ -1,13 +1,10 @@
 import type { CaptureResult, PostHog } from 'posthog-js'
 
-// PostHog counts page views on the public site, cookieless, to see which links
-// bring visitors (utm_* tags and referrers). Signed-in pages never reach it:
-// their URLs carry OAuth codes, Stripe session IDs and application IDs.
-// /redeem/<code> URLs hold a gift trial code.
+// These URLs carry OAuth codes, Stripe session IDs, application IDs or a gift
+// trial code, so PostHog never sees them (#33, #112).
 const PRIVATE_PATHS = ['/dashboard', '/auth', '/upgraded', '/api', '/redeem']
 
-// The one event a private page sends, so redemptions can be traced to the
-// batch of links (the code's note) they came from.
+// The one event a private page sends, to trace redemptions to their batch of links (#112).
 export const TRIAL_REDEEMED = 'trial_redeemed'
 
 export function isPrivatePath(pathname: unknown): boolean {
@@ -15,8 +12,7 @@ export function isPrivatePath(pathname: unknown): boolean {
   return PRIVATE_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`))
 }
 
-// Keeps a URL's utm_* parameters and drops every other parameter and the hash.
-// Non-URLs (PostHog's "$direct" referrer) pass through unchanged.
+// Keeps only utm_* parameters. PostHog's "$direct" referrer isn't a URL and passes through (#33).
 export function cleanUrl(value: unknown): unknown {
   if (typeof value !== 'string') return value
   let url: URL
@@ -36,18 +32,19 @@ export function cleanUrl(value: unknown): unknown {
 
 const STORE_ORIGIN = 'https://chromewebstore.google.com/'
 
-// A click on any link to the Chrome Web Store listing: the traffic funnel's
-// last step. link_text is our own button label ("Add to Chrome"), so we can
-// tell which button works. A middle click opens the listing too, so it counts.
-export function storeClick(e: Pick<MouseEvent, 'type' | 'button' | 'target'>): { link_text: string } | null {
+// A middle click opens the listing too, so it counts (#36). campaign matches the
+// store dashboard's utm_campaign split (#280).
+export function storeClick(e: Pick<MouseEvent, 'type' | 'button' | 'target'>): { link_text: string; campaign?: string } | null {
   if (e.type === 'auxclick' && e.button !== 1) return null
   const target = e.target as Element | null
   const link = typeof target?.closest === 'function' ? target.closest('a[href]') : null
-  if (!link?.getAttribute('href')?.startsWith(STORE_ORIGIN)) return null
-  // innerText: only the label on screen (the dock link holds a wide and a narrow one)
+  const href = link?.getAttribute('href')
+  if (!link || !href?.startsWith(STORE_ORIGIN)) return null
+  // innerText, because the dock link holds a wide and a narrow label (#36)
   const text = (link as HTMLElement).innerText ?? link.textContent
   const label = text?.replace(/\s+/g, ' ').trim() || link.getAttribute('aria-label') || ''
-  return { link_text: label.slice(0, 60) }
+  const campaign = new URL(href).searchParams.get('utm_campaign')
+  return { link_text: label.slice(0, 60), ...(campaign && { campaign }) }
 }
 
 const URL_PROPS = ['$current_url', '$referrer', '$prev_pageview_url']
@@ -56,7 +53,7 @@ export function scrubEvent(event: CaptureResult | null): CaptureResult | null {
   if (!event) return null
   const props = event.properties
   if (event.event === TRIAL_REDEEMED) {
-    // Every property that could carry the code: URLs, paths, entry pages.
+    // URLs, paths and entry pages can all carry the code (#112).
     for (const key of Object.keys(props)) {
       if (typeof props[key] === 'string' && props[key].includes('/redeem/')) delete props[key]
     }
@@ -69,13 +66,10 @@ export function scrubEvent(event: CaptureResult | null): CaptureResult | null {
   return event
 }
 
-// instrumentation-client.ts dispatches this once PostHog has started. It loads
-// PostHog after the page, and capture() drops events sent before then, so a
-// page that captures on load or on a quick click waits for it.
+// capture() drops events sent before PostHog loads, which is after the page (#106).
 export const POSTHOG_LOADED = 'posthog-loaded'
 
-// Returns a function that cancels the wait. Without a PostHog key (local and
-// preview builds) PostHog never loads, so fn never runs.
+// Without a PostHog key (local and preview builds) fn never runs (#106).
 export function whenPosthogLoaded(posthog: PostHog, fn: () => void): () => void {
   if (posthog.__loaded) {
     fn()

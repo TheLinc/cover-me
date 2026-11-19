@@ -3,12 +3,9 @@ import { useEffect, useState } from 'react'
 const GROW_MS = 800
 // A smaller rise reads as tailoring doing nothing, so it counts as none (#228).
 const MIN_GAIN = 5
-// The ATS match as a ring, the same geometry as the website's ScoreRing.
-// A tailored result (`from` given) fills from 0 to the score, or from the
-// original resume's score when tailoring added at least MIN_GAIN (#228). It
-// fills only while `grow` is set, and calls `onGrow` when it starts, so the
-// page can keep it from filling again. Without `from` (the editor, an older
-// backend) and with reduced motion, the ring shows the score straight away.
+export const scoreRose = (score?: number, before?: number) =>
+  typeof score === 'number' && typeof before === 'number' && score - before >= MIN_GAIN
+// Keep the geometry in step with the website's ScoreRing (#19).
 export default function ScoreRing({ score, from, grow = true, onGrow, size = 104 }: {
   score: number
   from?: number
@@ -16,9 +13,9 @@ export default function ScoreRing({ score, from, grow = true, onGrow, size = 104
   onGrow?: () => void
   size?: number
 }) {
-  const rose = typeof from === 'number' && score - from >= MIN_GAIN
+  const rose = scoreRose(score, from)
   const start = typeof from !== 'number' ? score : rose ? from : 0
-  // Fixed at mount: the page clears `grow` once the fill starts.
+  // Fixed at mount: the page clears `grow` once the fill starts. (#228)
   const [animate] = useState(() => grow && start < score && !matchMedia('(prefers-reduced-motion: reduce)').matches)
   const [shown, setShown] = useState(animate ? start : score)
 
@@ -38,7 +35,7 @@ export default function ScoreRing({ score, from, grow = true, onGrow, size = 104
     }
     frame = requestAnimationFrame(step)
     return () => cancelAnimationFrame(frame)
-    // onGrow is left out: a new callback each render mustn't restart the fill.
+    // onGrow is left out: a new callback each render mustn't restart the fill. (#228)
   }, [animate, start, score])
 
   const r = 54
@@ -58,12 +55,9 @@ export default function ScoreRing({ score, from, grow = true, onGrow, size = 104
   )
 }
 
-// The line under the score (#228): the original resume's score when tailoring
-// raised it, otherwise why it didn't, so the line is there on every run.
-// Nothing for a run from a backend that doesn't send the before score.
 export function gainLine(score?: number, before?: number): string | null {
   if (typeof score !== 'number' || typeof before !== 'number') return null
-  if (score - before >= MIN_GAIN) return `Up from ${before} before tailoring.${before >= 80 ? ' Your resume already matched well.' : ''}`
+  if (scoreRose(score, before)) return `Up from ${before} before tailoring.${before >= 80 ? ' Your resume already matched well.' : ''}`
   if (score >= 80) return 'Your resume already matched this job well.'
   return 'Your resume already used the keywords it can back up. Add real experience below to raise it.'
 }

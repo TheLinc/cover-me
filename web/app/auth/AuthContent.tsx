@@ -6,6 +6,7 @@ import Image from "next/image";
 import { createClient } from "@/lib/supabase";
 import { afterOAuth, hashReturn, oauthCancelled, oauthErrorDescription, oauthRedirectUrl, safeNext } from "@/lib/auth-redirect";
 import { saveProductUpdates } from "@/lib/email-preferences";
+import { PLAN_LIMITS } from "@/lib/limits";
 import { Button } from "@/components/ui/button";
 import { GoogleIcon } from "@/components/ui/google-icon";
 import { Input } from "@/components/ui/input";
@@ -310,8 +311,8 @@ function AuthForm() {
         : view === "signin"
           ? "Sign in to your Cover Me account."
           : plan === "pro"
-            ? "Up to 25 generations a day, your letters and resumes on any device."
-            : "10 free generations to start. No credit card required.";
+            ? `Up to ${PLAN_LIMITS.pro_daily} letters or resumes and ${PLAN_LIMITS.answer_pro_daily} answers to application questions a day. Your letters and resumes saved to your account, on any device.`
+            : `${PLAN_LIMITS.free_starter} free generations to start. No credit card required.`;
 
   return (
     <div className="grid min-h-screen grid-cols-[55fr_45fr] max-md:grid-cols-1">
@@ -372,7 +373,7 @@ function AuthForm() {
             {[
               "Open source · MIT",
               "Bring your own key",
-              "10 free to start",
+              `${PLAN_LIMITS.free_starter} free to start`,
             ].map((item, i, arr) => (
               <span key={item} className="flex items-center gap-2.5">
                 <span className="text-xs font-medium text-dim tracking-[0.01em]">

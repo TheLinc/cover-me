@@ -96,6 +96,23 @@ describe('tailorDesign', () => {
     expect(await paragraphs(bytes!)).toEqual(['Ada Example', 'Skills', 'Shipped a Go billing service', 'Mentored two engineers'])
   })
 
+  test('a file checked against a parse from before the link fix (#238) still takes a resume tailored from the new parse', async () => {
+    const file = await docx(PLAIN + heading('Projects') + p('OpenShelf (github.com/ada/openshelf)', 'Normal') + p('Built a self-hosted reading list'))
+    const roles = [['Built the billing service in Go', 'Cut page load time from 3s to 1s', 'Mentored two junior engineers']]
+    const old = parsed(roles, { links: ['github.com/ada/openshelf'], website: 'github.com/ada/openshelf', projects: [{ name: 'OpenShelf', bullets: ['Built a self-hosted reading list'] }] })
+    const tailored = parsed([['Shipped a Go billing service', 'Reduced page load from 3s to 1s', 'Mentored two engineers']], {
+      projects: [{ name: 'OpenShelf (github.com/ada/openshelf)', bullets: ['Built a self-hosted reading list app'] }],
+    })
+
+    const { check, bytes } = await tailorDesign(file, old, tailored)
+
+    expect(check).toMatchObject({ matched: 4, total: 4 })
+    expect(await paragraphs(bytes!)).toEqual([
+      'Experience', 'Shipped a Go billing service', 'Reduced page load from 3s to 1s', 'Mentored two engineers',
+      'Projects', 'OpenShelf (github.com/ada/openshelf)', 'Built a self-hosted reading list app',
+    ])
+  })
+
   test('bullets in text boxes are counted apart, and the file is left alone below 80%', async () => {
     const box = (inner: string) => `<w:p><w:r><w:drawing><wps:txbx><w:txbxContent>${inner}</w:txbxContent></wps:txbx></w:drawing></w:r></w:p>`
     const file = await docx(heading('Experience') + box(p('Built the billing service in Go') + p('Mentored two junior engineers')) + p('Cut page load time from 3s to 1s'))

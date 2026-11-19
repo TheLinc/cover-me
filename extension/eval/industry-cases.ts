@@ -35,6 +35,10 @@ interface Spec {
   summaryTitle?: string
   /** See EvalCase. */
   resumeFailTerms?: string[]
+  /** See EvalCase. */
+  mode?: 'trim' | 'compact'
+  /** See EvalCase. */
+  keepInBullets?: string[]
 }
 
 const role = (title: string, company: string, location: string, dates: string, bullets: string[]): ResumeExperience =>
@@ -98,6 +102,8 @@ const toCase = (s: Spec): EvalCase => ({
   expectedLabels: s.expectedLabels,
   summaryTitle: s.summaryTitle,
   resumeFailTerms: s.resumeFailTerms,
+  mode: s.mode,
+  keepInBullets: s.keepInBullets,
 })
 
 // ── Cases ────────────────────────────────────────────────────────────────────
@@ -1200,4 +1206,31 @@ M&A integration experience preferred.`),
   },
 ]
 
-export const INDUSTRY_CASES: EvalCase[] = SPECS.map(toCase)
+// #251: trim and compact modes cut project bullets. The new grad gets a long
+// robotics project the data posting never touches: trim must shorten it,
+// compact must hold it to 2 bullets, and neither may cut the only bullet
+// evidence of SQL, Python or pandas, or remove a project.
+const newGrad = SPECS.find((s) => s.id === 'new-grad-data-analyst')!
+const roverProject = {
+  name: 'Badger Rover Team',
+  bullets: [
+    'Designed the drivetrain gearbox for a competition Mars rover in SolidWorks',
+    'Machined aluminum chassis parts on a manual mill and lathe',
+    'Soldered and wired the motor controller harness for 6 wheel motors',
+    'Programmed motor control firmware in Arduino C++',
+    'Ran torque tests on 3 gearbox prototypes and picked the lightest design',
+    'Led a 4-person mechanical sub-team through 2 design reviews',
+    'Ordered parts within a $3,000 club budget',
+    'Placed 5th of 36 teams at the University Rover Challenge',
+  ],
+}
+const MODE_SPECS: Spec[] = (['trim', 'compact'] as const).map((mode) => ({
+  ...newGrad,
+  id: `new-grad-${mode}-long-project`,
+  mode,
+  resume: { ...newGrad.resume, projects: [...newGrad.resume.projects!, roverProject] },
+  keepInBullets: ['SQL', 'Python', 'pandas'],
+  fieldNotes: `${newGrad.fieldNotes} ${mode === 'trim' ? '"Remove irrelevant bullets" is on' : '"Compact to one page" is on'}: dropping bullets the posting doesn't need, especially from the robotics project, is the expected result, not a loss.`,
+}))
+
+export const INDUSTRY_CASES: EvalCase[] = [...SPECS, ...MODE_SPECS].map(toCase)

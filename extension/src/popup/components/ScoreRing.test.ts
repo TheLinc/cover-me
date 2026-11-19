@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { gainLine } from './ScoreRing'
+import { gainLine, scoreRose } from './ScoreRing'
 
 describe('gainLine', () => {
   it('names the original score when tailoring raised it by 5 or more', () => {
@@ -25,5 +25,14 @@ describe('gainLine', () => {
   it('says nothing without a before score, as from an older backend', () => {
     expect(gainLine(70, undefined)).toBeNull()
     expect(gainLine(undefined, 50)).toBeNull()
+  })
+})
+
+describe('scoreRose', () => {
+  it('is true when tailoring raised the score by 5 or more', () => {
+    expect(scoreRose(57, 52)).toBe(true)
+    expect(scoreRose(56, 52)).toBe(false)
+    expect(scoreRose(84, undefined)).toBe(false)
+    expect(scoreRose(undefined, 52)).toBe(false)
   })
 })

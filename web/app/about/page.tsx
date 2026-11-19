@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { CHROME_STORE_URL } from '@/lib/utils'
+import { storeUrl } from '@/lib/utils'
 import { OG_IMAGE } from '@/lib/structured-data'
 import { SiteNav } from '@/components/site/SiteNav'
 import { SiteFooter } from '@/components/site/SiteFooter'
@@ -59,7 +59,6 @@ export default function AboutPage() {
 
       <main className="max-w-[900px] mx-auto px-8 py-20 max-md:px-5">
 
-        {/* Header */}
         <div className="mb-16 max-w-[640px]">
           <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-2 mb-4 block">
             About
@@ -75,7 +74,6 @@ export default function AboutPage() {
           </p>
         </div>
 
-        {/* Story */}
         <div className="grid grid-cols-[1fr_280px] gap-16 mb-20 max-lg:grid-cols-1">
           <div className="space-y-5 text-[15px] text-muted-foreground leading-[1.85]">
             <h2 className="text-[22px] text-foreground">
@@ -116,7 +114,7 @@ export default function AboutPage() {
             <p>
               Every privacy claim on this page can be checked in the code, so you don&apos;t have to take my word for it.
             </p>
-            {/* Open Source Alternatives and Toolradar check for these badges during review. Plain imgs: the images live on their hosts. */}
+            {/* Open Source Alternatives and Toolradar check for these badges during review. Plain imgs: the images live on their hosts. (#86) */}
             <div className="flex flex-wrap items-center gap-4">
               <a href="https://www.opensourcealternatives.to/item/cover-me" target="_blank" rel="noopener" className="inline-block">
                 <img src="https://www.opensourcealternatives.to/badge-osa.svg" alt="As seen on Open Source Alternatives" width={270} height={20} />
@@ -127,7 +125,6 @@ export default function AboutPage() {
             </div>
           </div>
 
-          {/* Founder card */}
           <div className="space-y-5 max-lg:order-first">
             <div className="border border-border rounded-[12px] p-7 bg-surface">
               <div className="w-14 h-14 rounded-full bg-gradient-to-br from-brand to-brand-strong flex items-center justify-center text-white text-[22px] font-extrabold mb-5 select-none">
@@ -177,7 +174,6 @@ export default function AboutPage() {
               </div>
             </div>
 
-            {/* Stats */}
             <div className="border border-border rounded-[12px] p-7 bg-surface space-y-4">
               <h3 className="text-[12px] font-bold uppercase tracking-[0.09em] text-muted-foreground">
                 By the numbers
@@ -197,7 +193,6 @@ export default function AboutPage() {
           </div>
         </div>
 
-        {/* CTA */}
         <div className="border border-border rounded-[12px] p-10 bg-surface text-center">
           <h2 className="text-[22px] text-foreground mb-3">
             Try Cover Me free
@@ -207,7 +202,7 @@ export default function AboutPage() {
           </p>
           <div className="flex gap-3 justify-center flex-wrap">
             <a
-              href={CHROME_STORE_URL}
+              href={storeUrl('about')}
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-2 bg-brand-strong text-white font-semibold text-[14px] px-5 py-2.5 rounded-[8px] hover:bg-brand-deep transition-colors"

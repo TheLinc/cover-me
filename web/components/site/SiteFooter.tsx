@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { CHROME_STORE_URL } from '@/lib/utils'
+import { storeUrl } from '@/lib/utils'
 
 type FooterLink = { label: string; href: string; external?: boolean }
 
@@ -11,14 +11,14 @@ const COLUMNS: { title: string; links: FooterLink[] }[] = [
       { label: 'How it works', href: '/#how-it-works' },
       { label: 'ATS score', href: '/#ats-score' },
       { label: 'Pricing', href: '/#pricing' },
-      { label: 'Install', href: CHROME_STORE_URL, external: true },
+      { label: 'Install', href: storeUrl('footer'), external: true },
     ],
   },
   {
     title: 'Guides',
     links: [
       { label: 'What is an ATS score?', href: '/guides/what-is-an-ats-score' },
-      { label: 'Cover Me vs ChatGPT', href: '/guides/cover-me-vs-chatgpt' },
+      { label: 'ChatGPT resume prompts', href: '/guides/chatgpt-resume-prompts' },
       { label: 'Tailor your resume', href: '/guides/tailor-resume-to-job-description' },
       { label: 'All guides', href: '/guides' },
     ],

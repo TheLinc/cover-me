@@ -26,9 +26,8 @@ export async function readResumeForReport(mode: AppMode, settings: Settings | nu
   if (!settings?.apiKey) throw new Error('Add your API key in Settings first: it reads your resume to take your details out.')
   try {
     const parsed = upgradedParse(undefined, await parseResumeStructure(resume.text, settings.provider, await decryptApiKey(settings.apiKey)))
-    // Kept only if the resume is still the one read: a new upload meanwhile
-    // would otherwise get the old one's parse, and tailoring would use it.
-    if ((await getResume())?.text === resume.text) await saveParsedResume(parsed)
+    // Kept only if the resume is still the one read (saveParsedResume checks).
+    await saveParsedResume(parsed, resume.text)
     return parsed
   } catch {
     throw new Error("Couldn't read your resume to take your details out. Check your API key, then try again.")

@@ -58,10 +58,12 @@ export async function clearResume(): Promise<void> {
   await pruneDesignFiles()
 }
 
-export async function saveParsedResume(parsed: ParsedResume): Promise<void> {
-  const { resume } = await chrome.storage.local.get('resume')
-  if (!resume) return
-  await chrome.storage.local.set({ resume: { ...(resume as object), parsed } })
+// Skips a resume replaced since `text` was read, the way the hosted tailor
+// matches the ciphertext.
+export async function saveParsedResume(parsed: ParsedResume, text: string): Promise<void> {
+  const resume = await getResume()
+  if (resume?.text !== text) return
+  await chrome.storage.local.set({ resume: { ...resume, parsed } })
 }
 
 export async function getHistory(): Promise<CoverLetter[]> {
@@ -174,6 +176,17 @@ export async function saveWhatsNew(version: string): Promise<void> {
 
 export async function clearWhatsNew(): Promise<void> {
   await chrome.storage.local.remove('whatsNew')
+}
+
+// The Generate page's card announcing answers to application questions
+// (popup/components/AnswersNews.tsx): shown until the user closes it.
+export async function isAnswersNewsSeen(): Promise<boolean> {
+  const { answersNews } = await chrome.storage.local.get('answersNews')
+  return answersNews === 'seen'
+}
+
+export async function markAnswersNewsSeen(): Promise<void> {
+  await chrome.storage.local.set({ answersNews: 'seen' })
 }
 
 // Marks local entries with the account that holds them (see CoverLetter.account).

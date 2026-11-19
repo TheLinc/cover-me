@@ -1,6 +1,6 @@
 {
   "name": "cover-me-extension",
-  "version": "1.8.0",
+  "version": "1.9.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -12,6 +12,7 @@
     "eval": "tsx --env-file-if-exists=.env --env-file-if-exists=eval/.env eval/run.ts",
     "check:prompts": "node ../scripts/check-prompt-sync.mjs",
     "test": "vitest run",
+    "lint": "node ../scripts/check-comments.mjs",
     "test:scrapers-live": "vitest run --mode smoke src/content/scrapers",
     "fixtures:save": "tsx scripts/scraper-fixtures.ts",
     "e2e:scrape": "tsx scripts/e2e-scrape.ts"
