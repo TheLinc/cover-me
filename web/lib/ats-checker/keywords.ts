@@ -115,12 +115,12 @@ const BOILERPLATE = new RegExp(
     String.raw`affirmative[- ]action (employer|program)`,
     String.raw`\bEOE\b`,
     String.raw`(regardless of|without regard to)[^.]{0,60}${TRAIT}[^.]{0,80}${TRAIT}`,
-    'Americans with Disabilities|reasonable accommodation|VEVRAA|OFCCP|federal contractor|E-Verify|eligibility (to work|verification)',
-    'discriminat|protected veteran|pay transparency|know your rights|map data ©',
+    'Americans with Disabilities|reasonable accommodation|VEVRAA|OFCCP|E-Verify|eligibility to work|employment eligibility',
+    'discriminat(?!ive)|protected veteran|pay transparency|know your rights|map data ©',
   ].join('|'),
   'i',
 )
-const HIRING_ACCESS = /(?=.*\b(accommodat|accessib|disabilit))(?=.*\b(applica|interview|hiring|recruit|onboard|human resources))/i
+const HIRING_ACCESS = /(?=.*\b(accommodat|disabilit))(?=.*\b(applicants?\b|interview|hiring|recruit|onboard|human resources))/i
 const YEARS = /\b(\d{1,2}|one|two|three|four|five|six|seven|eight|nine|ten)\s*\+?\s*(?:(?:-|–|to)\s*\d{1,2}\s*\+?\s*)?(?:years?|yrs?)\b/i
 const COMPANY_VOICE = /\b([Ww]e|[Oo]ur|[Uu]s)\b/
 const COMPANY_SPEAKS = /^[^A-Za-z]*(we|our)\b/i

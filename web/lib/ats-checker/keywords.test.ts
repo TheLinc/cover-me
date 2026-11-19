@@ -274,7 +274,7 @@ test('every posting keyword has a mark to scroll to, its own or one it overlaps'
   }
 })
 
-test('equal-opportunity statements and the compliance sentences after them are dropped, nothing else', () => {
+test('equal-opportunity, compliance and hiring-accommodation sentences are dropped, nothing else', () => {
   const names = (posting: string) => readPosting(posting).keywords.map((k) => k.name)
   expect(names('Acme is an equal opportunity employer. We are looking for a Data Analyst. You must have SQL, Python and Tableau.'))
     .toEqual(expect.arrayContaining(['SQL', 'Python', 'Tableau']))
@@ -292,6 +292,13 @@ test('equal-opportunity statements and the compliance sentences after them are d
     'Data Analyst\nRequirements\n- SQL and Python\n- 3+ years of reporting experience\nAcme is an equal opportunity employer. Acme is a VEVRAA Federal Contractor and complies with OFCCP rules. Applicants needing an accommodation under the Americans with Disabilities Act may contact HR.',
   ).sort()).toEqual(['Python', 'SQL'])
   expect(names('Requirements\n- Assign tickets in Zendesk regardless of agent tier or ticket age')).toContain('Zendesk')
+  for (const [line, keyword] of [
+    ['Build accessible web applications with React and TypeScript', 'React'],
+    ['Ensure designs meet applicable accessibility standards (WCAG) in Figma', 'Figma'],
+    ['Build discriminative models in PyTorch', 'PyTorch'],
+    ['Experience with Medicaid eligibility verification in Epic', 'Epic'],
+    ['3+ years supporting DoD programs at a federal contractor using Jira and Python', 'Jira'],
+  ]) expect(names(`Requirements\n- ${line}`), line).toContain(keyword)
   const head = 'Data Analyst\nQualifications\n- 3+ years of SQL and Tableau\n- Python\n\n'
   for (const tail of [
     'Acme is an equal opportunity employer.\nIn compliance with federal law, all persons hired will be required to verify identity and eligibility to work in the United States and to complete the required employment eligibility verification form upon hire.',
