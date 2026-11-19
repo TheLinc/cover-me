@@ -3,6 +3,7 @@
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { useSearchParams } from 'next/navigation'
 import posthog from 'posthog-js'
+import { ArrowRightIcon } from '@phosphor-icons/react/dist/ssr'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
@@ -43,7 +44,7 @@ const FREE_LIMIT = "A free account gets 5 generations a week, and with your own 
 function Fact({ children }: { children: ReactNode }) {
   return (
     <li className="flex gap-3">
-      <span aria-hidden="true" className="shrink-0 text-brand">→</span>
+      <span aria-hidden="true" className="flex h-[1lh] shrink-0 items-center text-brand"><ArrowRightIcon size={14} /></span>
       <span>{children}</span>
     </li>
   )
