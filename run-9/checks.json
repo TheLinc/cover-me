@@ -1,0 +1,620 @@
+{
+  "checks": [
+    {
+      "name": "A step 1: Next disabled before a category is picked",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A step 1: no Send or Back button on step 1",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A step 1: \"Other\" needs a comment before Next",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A step 1: Next enabled once a category is picked",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A step 1: hint says Next shows it with details taken out",
+      "ok": true,
+      "detail": "Sends this letter, the job's title, company, description and site name, your answers, whether you use Hosted or your own key, which AI wrote it and the extension's version. Next shows it with your details taken out, to check before you send. It isn't linked to you."
+    },
+    {
+      "name": "A Next: nothing sent yet",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A Next: no AI call (parse kept in the browser)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A preview: questions replaced by the preview",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A preview: Send, Back and Cancel shown",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A preview: name, email, phone, links and city show as [name], [email], [phone], [link], [location]",
+      "ok": true,
+      "detail": "\"Dear Hiring Team at Northwind Analytics,\\n\\nI'm applying for the Senior Data Analyst role (letter 1). At Contoso Retail I built the dashboards 40 store managers use each week. My manager there, Priya Kowalski, can speak to that work.\\n\\nI've lived in [location] all my life, and you can find me at 48 Birchwood Avenue, [location] M4K 1N2. See [link] and [link], write to [email] or call [phone].\\n\\nSincerely,\\n[name]\""
+    },
+    {
+      "name": "A preview: none of the user's auto-removed details visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A preview: street address and stranger's name stay visible (48 Birchwood Avenue, M4K 1N2, Priya Kowalski)",
+      "ok": true,
+      "detail": "\"Dear Hiring Team at Northwind Analytics,\\n\\nI'm applying for the Senior Data Analyst role (letter 1). At Contoso Retail I built the dashboards 40 store managers use each week. My manager there, Priya Kowalski, can speak to that work.\\n\\nI've lived in [location] all my life, and you can find me at 48 Birchwood Avenue, [location] M4K 1N2. See [link] and [link], write to [email] or call [phone].\\n\\nSincerely,\\n[name]\""
+    },
+    {
+      "name": "A preview: the letter box has focus",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A popup layout: nothing in the form wider than the form, no sideways scroll",
+      "ok": true,
+      "detail": "{\"wide\":[],\"formRight\":352,\"pageWidth\":380,\"hScroll\":false}"
+    },
+    {
+      "name": "A Escape on the preview: preview stays open with its edits",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A Escape on the preview (focus off the box, in the form): preview stays open",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A Back: questions return",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A Back: focus on a radio",
+      "ok": true,
+      "detail": "INPUT radio The design or layout looked wrong"
+    },
+    {
+      "name": "A Back: no error left over",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A Back: category and comment kept",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A Cancel: form closes, link reads \"Flag a problem\", nothing sent",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A Cancel: focus back on the link",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A reopen after Cancel: opens on step 1",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A Escape on step 1: form closes, nothing sent",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A link while the preview is open: form closes, nothing sent",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A link again: reopens on step 1 (preview cleared)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A Next after the link toggle: a fresh preview (the earlier edit is gone)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A empty letter: Send disabled",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A whitespace-only letter: Send disabled",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A letter restored: Send enabled",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A edited: street, postcode and stranger gone from the box",
+      "ok": true,
+      "detail": "\"Dear Hiring Team at Northwind Analytics,\\n\\nI'm applying for the Senior Data Analyst role (letter 1). At Contoso Retail I built the dashboards 40 store managers use each week.\\n\\nI've lived in [location] all my life. See [link] and [link], write to [email] or call [phone].\\n\\nSincerely,\\n[name]\""
+    },
+    {
+      "name": "A BYOK letter, edited preview: one request captured, link reads \"Reported. Thanks.\"",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A sent: body.output equals the edited preview exactly",
+      "ok": true,
+      "detail": "{\"sent\":\"Dear Hiring Team at Northwind Analytics,\\n\\nI'm applying for the Senior Data Analyst role (letter 1). At Contoso Retail I built the dashboards 40 store managers use each week.\\n\\nI've lived in [location] all my life. See [link] and [link], write to [email] or call [phone].\\n\\nSincerely,\\n[name]\",\"edited\":\"Dear Hiring Team at Northwind Analytics,\\n\\nI'm applying for the Senior Data Analyst role (letter 1). At Contoso Retail I built the dashboards 40 store managers use each week.\\n\\nI've lived in [location] all my life. See [link] and [link], write to [email] or call [phone].\\n\\nSincerely,\\n[name]\"}"
+    },
+    {
+      "name": "A sent: no persona detail anywhere in the body (auto and deleted ones)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A sent: category generic, comment, kind letter, mode byok, contact false, no sourceResume",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A sent: no Authorization header (BYOK)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A sent: no AI call",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A sent: focus on the link, which reads \"Reported. Thanks.\"",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A reopened popup: still \"Reported. Thanks.\"",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "C preview: \"Your original resume\" list shows",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "C preview: original resume list has its texts with path labels",
+      "ok": true,
+      "detail": "Job 1 title, Job 1 company, Job 1 location, Job 1 dates, Job 1 bullets 1, Job 1 bullets 2, Job 1 bullets 3, Job 2 title, Job 2 company, Job 2 location, Job 2 dates, Job 2 bullets 1, Education 1 degree, Education 1 institution, Education 1 location, Education 1 dates, Skills, Section 1 heading, Section 1 lines 1, Section 1 lines 2"
+    },
+    {
+      "name": "C preview: original resume list has no contact fields",
+      "ok": true,
+      "detail": "Job 1 title, Job 1 company, Job 1 location, Job 1 dates, Job 1 bullets 1, Job 1 bullets 2, Job 1 bullets 3, Job 2 title, Job 2 company, Job 2 location, Job 2 dates, Job 2 bullets 1, Education 1 degree, Education 1 institution, Education 1 location, Education 1 dates, Skills, Section 1 heading, Section 1 lines 1, Section 1 lines 2"
+    },
+    {
+      "name": "C preview: original resume list has none of the auto-removed details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "C preview: original resume list scrolls inside itself (max 260px)",
+      "ok": true,
+      "detail": "{\"sh\":884,\"ch\":260}"
+    },
+    {
+      "name": "C popup: every original-resume box is full height and readable (none squashed)",
+      "ok": true,
+      "detail": "[] of 20"
+    },
+    {
+      "name": "C popup: visible group headings over the original-resume boxes",
+      "ok": true,
+      "detail": "Job 1 / Job 1 bullets / Job 2 / Job 2 bullets / Education 1 / Skills / Section 1 / Section 1 lines"
+    },
+    {
+      "name": "C popup: original resume in resume order with plain headings (Job before Education, Section after Skills)",
+      "ok": true,
+      "detail": "Job 1 / Job 1 bullets / Job 2 / Job 2 bullets / Education 1 / Skills / Section 1 / Section 1 lines"
+    },
+    {
+      "name": "C popup: headings are plain words (no raw keys like experience, otherSections, atsGaps)",
+      "ok": true,
+      "detail": "Job 1 / Job 1 bullets / Job 2 / Job 2 bullets / Education 1 / Skills / Section 1 / Section 1 lines"
+    },
+    {
+      "name": "C popup: inside a job, title, company, location, dates, then bullets",
+      "ok": true,
+      "detail": "Job 1 title, Job 1 company, Job 1 location, Job 1 dates, Job 1 bullets 1, Job 1 bullets 2, Job 1 bullets 3"
+    },
+    {
+      "name": "C BYOK letter, invented + original resume, edited original: one request captured, link reads \"Reported. Thanks.\"",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "C sent: sourceResume carries exactly the two edits",
+      "ok": true,
+      "detail": "{\"changed\":[\"Job 1 bullets 1\",\"Section 1 lines 1\"],\"b\":\"Built weekly sales dashboards used by 40 store managers (my own project)\",\"o\":\"Mentor, Data for Good [location]\"}"
+    },
+    {
+      "name": "C sent: sourceResume equals the preview as it was at Send",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "C sent: edits at body.sourceResume.experience[0].bullets[0] and otherSections[0].lines[0]",
+      "ok": true,
+      "detail": "[\"Built weekly sales dashboards used by 40 store managers (my own project)\",\"Mentor, Data for Good [location]\"]"
+    },
+    {
+      "name": "C sent: sectionOrder kept, no contact fields in sourceResume",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "C sent: output letter equals the preview",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "C sent: category invented, comment kept",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "C sent: no auto-removed detail anywhere in the body",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "B Hosted: \"You can email me about this\" box shows",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "B Hosted Next: button reads \"Taking your details out…\" and is disabled while the parse loads",
+      "ok": true,
+      "detail": "Taking your details out…"
+    },
+    {
+      "name": "B Hosted Next: still on step 1 while reading",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "B Hosted: parse request carried Authorization: Bearer <token>",
+      "ok": true,
+      "detail": "{\"step\":\"B Hosted, contact ticked\",\"method\":\"GET\",\"authorization\":\"Bearer walkthrough-fake-access-token\",\"status\":200}"
+    },
+    {
+      "name": "B Hosted preview: details replaced, street and stranger visible",
+      "ok": true,
+      "detail": "\"Dear Hiring Team at Northwind Analytics,\\n\\nI'm applying for the Senior Data Analyst role (letter 3). At Contoso Retail I built the dashboards 40 store managers use each week. My manager there, Priya Kowalski, can speak to that work.\\n\\nI've lived in [location] all my life, and you can find me at 48 Birchwood Avenue, [location] M4K 1N2. See [link] and [link], write to [email] or call [phone].\\n\\nSincerely,\\n[name]\""
+    },
+    {
+      "name": "B Hosted: nothing sent before Send",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "B Hosted letter, contact ticked: one request captured, link reads \"Reported. Thanks.\"",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "B Hosted ticked: report carries Authorization: Bearer <token>",
+      "ok": true,
+      "detail": "Bearer walkthrough-fake-access-token"
+    },
+    {
+      "name": "B Hosted ticked: contact true, mode hosted",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "B Hosted ticked: output equals the edited preview",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "B Hosted ticked: no auto-removed detail in the body",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "B Hosted: contact box starts unticked",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "B Hosted letter, contact unticked: one request captured, link reads \"Reported. Thanks.\"",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "B Hosted unticked: parse request still carried the token",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "B Hosted unticked: report has no Authorization header",
+      "ok": true,
+      "detail": "[\"accept\",\"content-type\",\"origin\",\"user-agent\",\"apikey\",\"sec-ch-ua\",\"sec-ch-ua-mobile\",\"sec-ch-ua-platform\"]"
+    },
+    {
+      "name": "B Hosted unticked: contact false",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "B Hosted unticked: no auto-removed detail in the body",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "E1 (context): popup with BYOK and no key shows setup, not the letter or the link",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "E1 BYOK no parse, no key: shows \"Add your API key in Settings first: it reads your resume to take your details out.\"",
+      "ok": true,
+      "detail": "Add your API key in Settings first: it reads your resume to take your details out."
+    },
+    {
+      "name": "E1: stays on step 1, Next enabled again, nothing sent, no AI call",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "E2 Hosted parse 404: shows \"Add your resume first.\"",
+      "ok": true,
+      "detail": "Add your resume first."
+    },
+    {
+      "name": "E2: stays on step 1, Next enabled again, nothing sent",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "E3 send 500: shows \"Couldn't send the report. Try again in a moment.\"",
+      "ok": true,
+      "detail": "Couldn't send the report. Try again in a moment."
+    },
+    {
+      "name": "E3 send 500: preview stays with its edits, Send enabled",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "E3 send 500: link not marked reported",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "E3 send 500: the failed request carried the edited text",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "E3 retry after 500: one request captured, link reads \"Reported. Thanks.\"",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "E3 retry: sends the same edited text",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "E4 contact ticked, signed out before Send: shows the sign-in-again message and nothing is sent",
+      "ok": true,
+      "detail": "Sign in again to send this with your account, or go Back and untick \"You can email me about this\".; 0 sent"
+    },
+    {
+      "name": "E4: preview stays, link not marked reported",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "D preview: one textarea per text field, labelled by path",
+      "ok": true,
+      "detail": "Summary, Job 1 title, Job 1 company, Job 1 location, Job 1 dates, Job 1 bullets 1, Job 1 bullets 2, Job 1 bullets 3, Job 2 title, Job 2 company, Job 2 location, Job 2 dates, Job 2 bullets 1, Job 2 bullets 2, Education 1 degree, Education 1 institution, Education 1 location, Education 1 dates, Skills, Section 1 heading, Section 1 lines 1, Section 1 lines 2, ATS gap 1, ATS gap 2"
+    },
+    {
+      "name": "D preview: no contact fields listed",
+      "ok": true,
+      "detail": "Summary, Job 1 title, Job 1 company, Job 1 location, Job 1 dates, Job 1 bullets 1, Job 1 bullets 2, Job 1 bullets 3, Job 2 title, Job 2 company, Job 2 location, Job 2 dates, Job 2 bullets 1, Job 2 bullets 2, Education 1 degree, Education 1 institution, Education 1 location, Education 1 dates, Skills, Section 1 heading, Section 1 lines 1, Section 1 lines 2, ATS gap 1, ATS gap 2"
+    },
+    {
+      "name": "D preview: job locations show [location]",
+      "ok": true,
+      "detail": "[\"[location]\",\"[location]\"]"
+    },
+    {
+      "name": "D preview: none of the auto-removed details",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "D preview: the list scrolls inside the dropdown",
+      "ok": true,
+      "detail": "{\"sh\":1110,\"ch\":260}"
+    },
+    {
+      "name": "D editor: every resume preview box is full height and readable (none squashed)",
+      "ok": true,
+      "detail": "[] of 24"
+    },
+    {
+      "name": "D editor: visible group headings over the boxes",
+      "ok": true,
+      "detail": "Summary / Job 1 / Job 1 bullets / Job 2 / Job 2 bullets / Education 1 / Skills / Section 1 / Section 1 lines / ATS gap"
+    },
+    {
+      "name": "D editor: the summary comes first, before experience",
+      "ok": true,
+      "detail": "Summary / Job 1 / Job 1 bullets / Job 2 / Job 2 bullets / Education 1 / Skills / Section 1 / Section 1 lines / ATS gap"
+    },
+    {
+      "name": "D editor: sections in resume order (summary, experience, education, skills, otherSections, then the rest)",
+      "ok": true,
+      "detail": "Summary / Job 1 / Job 1 bullets / Job 2 / Job 2 bullets / Education 1 / Skills / Section 1 / Section 1 lines / ATS gap"
+    },
+    {
+      "name": "D editor: inside a job, title, company, location, dates, then bullets",
+      "ok": true,
+      "detail": "Job 1 title, Job 1 company, Job 1 location, Job 1 dates, Job 1 bullets 1, Job 1 bullets 2, Job 1 bullets 3"
+    },
+    {
+      "name": "D editor: inside an education entry, degree, institution, location, dates",
+      "ok": true,
+      "detail": "Education 1 degree, Education 1 institution, Education 1 location, Education 1 dates"
+    },
+    {
+      "name": "D editor: a section's heading comes before its lines",
+      "ok": true,
+      "detail": "Section 1 heading, Section 1 lines 1, Section 1 lines 2"
+    },
+    {
+      "name": "D editor: group headings are the plain words",
+      "ok": true,
+      "detail": "Summary / Job 1 / Job 1 bullets / Job 2 / Job 2 bullets / Education 1 / Skills / Section 1 / Section 1 lines / ATS gap"
+    },
+    {
+      "name": "D 1280px: the dropdown is fully on screen",
+      "ok": true,
+      "detail": "{\"x\":916,\"y\":74,\"width\":340,\"height\":450.734375}"
+    },
+    {
+      "name": "D editor layout: nothing in the dropdown wider than it",
+      "ok": true,
+      "detail": "[]"
+    },
+    {
+      "name": "D 900x600: the dropdown stays fully on screen",
+      "ok": true,
+      "detail": "{\"x\":521,\"y\":119,\"width\":340,\"height\":450.734375}"
+    },
+    {
+      "name": "D Editor resume, two edits in the preview: one request captured, link reads \"Reported. Thanks.\"",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "D sent: output carries exactly the two edits, everything else unchanged",
+      "ok": true,
+      "detail": "{\"dChanged\":[\"Job 1 bullets 2\",\"Section 1 lines 2\"],\"b\":\"Cut report run time from 3 hours to 20 minutes by rewriting SQL with the data team\",\"o\":\"Ran monthly SQL workshops\"}"
+    },
+    {
+      "name": "D sent: output equals the preview as it was at Send",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "D sent: at body.output.experience[0].bullets[1] and otherSections[0].lines[1]",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "D sent: numbers kept (atsScore 78, atsScoreBefore 64), no contact fields or sourceHash",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "D sent: kind resume, category design, comment, no sourceResume",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "D sent: no auto-removed detail anywhere in the body",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "D sent: no Authorization header (BYOK)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "D2 editor preview: two lists (tailored and original)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "D2 editor: boxes in both lists full height (none squashed)",
+      "ok": true,
+      "detail": "[]"
+    },
+    {
+      "name": "D2 editor: dropdown fully on screen (scrolls itself if taller)",
+      "ok": true,
+      "detail": "{\"fb\":{\"x\":916,\"y\":74,\"width\":340,\"height\":680},\"fs2\":{\"sh\":678,\"ch\":678}}"
+    },
+    {
+      "name": "D2 Editor resume, invented + original, original edited: one request captured, link reads \"Reported. Thanks.\"",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "D2 sent: sourceResume carries exactly the one edit",
+      "ok": true,
+      "detail": "[\"Job 2 bullets 1\"]"
+    },
+    {
+      "name": "D2 sent: no auto-removed detail anywhere in the body",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "notes": [
+    "Back then Next rebuilds the preview from the letter, so edits made before Back are lost (the stranger's name came back)."
+  ],
+  "parseCalls": [
+    {
+      "step": "B Hosted, contact ticked",
+      "method": "GET",
+      "authorization": "Bearer walkthrough-fake-access-token",
+      "status": 200
+    },
+    {
+      "step": "B Hosted, contact unticked",
+      "method": "GET",
+      "authorization": "Bearer walkthrough-fake-access-token",
+      "status": 200
+    },
+    {
+      "step": "E2 Hosted 404",
+      "method": "GET",
+      "authorization": "Bearer walkthrough-fake-access-token",
+      "status": 404
+    },
+    {
+      "step": "E3 retry after 500",
+      "method": "GET",
+      "authorization": "Bearer walkthrough-fake-access-token",
+      "status": 200
+    }
+  ],
+  "aiCalls": [],
+  "otherCalls": []
+}
