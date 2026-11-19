@@ -1,0 +1,21 @@
+import { createRequire } from 'node:module'
+import { readFileSync } from 'node:fs'
+const require = createRequire('F:/worktrees/cover-me/t3-2f6a38e1/extension/package.json')
+const { chromium } = require('playwright')
+const [, , label, expectFound] = process.argv
+const { posting, resume } = JSON.parse(readFileSync('F:/scratch/ats-compare/cook.json', 'utf8'))
+const browser = await chromium.launch()
+const page = await browser.newPage({ viewport: { width: 1280, height: 900 } })
+await page.goto('http://localhost:3456/ats-checker', { waitUntil: 'networkidle' })
+await page.fill('#posting', posting)
+await page.fill('#resume', resume)
+const heading = page.locator('#results')
+await page.waitForFunction(() => /keywords found/.test(document.querySelector('#results')?.textContent ?? ''))
+const chips = await page.locator('section[aria-labelledby=results] li').allInnerTexts()
+console.log(label, '|', await heading.innerText(), '|', chips.map((c) => c.replace(/\s+/g, ' ')).join(' / '))
+const ok = expectFound === 'servsafe-missing' ? chips.some((c) => /ServSafe Manager/.test(c)) && !chips.some((c) => /food safety/.test(c))
+  : chips.some((c) => /food safety/.test(c))
+console.log('assert', expectFound, ok ? 'PASS' : 'FAIL')
+await page.locator('section[aria-labelledby=results]').screenshot({ path: `F:/scratch/ats-compare/${label}.png` })
+await browser.close()
+process.exit(ok ? 0 : 1)
