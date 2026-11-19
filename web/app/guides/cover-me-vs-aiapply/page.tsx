@@ -5,9 +5,6 @@ import { getGuide } from '@/lib/guides'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 const guide = getGuide('cover-me-vs-aiapply')
-const HERO_IMAGE = '/guides/cover-me-vs-aiapply.png'
-const HERO_ALT =
-  "Comparison of how applications go out. AIApply: buy auto-apply credits, the AI writes the application, and it submits for you. Cover Me: click Tailor Resume to Job on a posting, read and edit the resume and letter, and submit it yourself."
 
 export const metadata: Metadata = {
   title: { absolute: 'Cover Me vs AIApply: Auto-Apply or Tailored Applications' },
@@ -19,13 +16,13 @@ export const metadata: Metadata = {
     url: `${BASE}/guides/${guide.slug}`,
     siteName: 'Cover Me',
     type: 'article',
-    images: [{ url: `${BASE}${HERO_IMAGE}`, width: 1600, height: 900, alt: "AIApply submits applications for you; with Cover Me you review and submit each one" }],
+    images: [{ url: `${BASE}${guide.image}`, width: 1600, height: 900, alt: "AIApply submits applications for you; with Cover Me you review and submit each one" }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Cover Me vs AIApply | Cover Me',
     description: 'Auto-apply compared with one-click applications you review first.',
-    images: [`${BASE}${HERO_IMAGE}`],
+    images: [`${BASE}${guide.image}`],
   },
 }
 
@@ -76,7 +73,6 @@ export default function Page() {
   return (
     <GuideArticle
       guide={guide}
-      hero={{ src: HERO_IMAGE, alt: HERO_ALT }}
       lede={
         <>
           AIApply is a job search platform built around auto-apply: you buy credits and it submits applications for you with an AI-written resume and cover letter. Cover Me (cover-me.dev) is an open-source Chrome extension that writes a tailored resume and cover letter for the posting you have open, and shows them to you before anything is sent.

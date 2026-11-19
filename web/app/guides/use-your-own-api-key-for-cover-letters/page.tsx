@@ -9,9 +9,6 @@ import { getGuide } from '@/lib/guides'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 const guide = getGuide('use-your-own-api-key-for-cover-letters')
-const HERO_IMAGE = '/guides/use-your-own-api-key-for-cover-letters.png'
-const HERO_ALT =
-  "Diagram of Cover Me with your own API key. Your resume and API key stay in your browser, with the key stored encrypted, and go straight to your AI provider, Anthropic or OpenAI, using Claude Sonnet 5.5 or GPT-6.1 Sol. Cover Me's server never receives your resume or key. Optionally, a copy of the job page, not your resume, goes to Cover Me's server to read the posting."
 
 export const metadata: Metadata = {
   title: 'Cover Letters With Your Own OpenAI or Claude Key',
@@ -23,13 +20,13 @@ export const metadata: Metadata = {
     url: `${BASE}/guides/${guide.slug}`,
     siteName: 'Cover Me',
     type: 'article',
-    images: [{ url: `${BASE}${HERO_IMAGE}`, width: 1600, height: 900, alt: 'Your resume and API key go from your browser straight to Anthropic or OpenAI, never to Cover Me' }],
+    images: [{ url: `${BASE}${guide.image}`, width: 1600, height: 900, alt: 'Your resume and API key go from your browser straight to Anthropic or OpenAI, never to Cover Me' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Use your own OpenAI or Claude API key for cover letters | Cover Me',
     description: 'Unlimited cover letters and tailored resumes with your own API key, no account and no monthly fee.',
-    images: [`${BASE}${HERO_IMAGE}`],
+    images: [`${BASE}${guide.image}`],
   },
 }
 
@@ -121,7 +118,6 @@ export default function Page() {
   return (
     <GuideArticle
       guide={guide}
-      hero={{ src: HERO_IMAGE, alt: HERO_ALT }}
       lede={
         <>
           Cover Me (cover-me.dev) is an open-source Chrome extension that writes cover letters and tailors your resume with your own OpenAI or Claude API key. You get unlimited generations with no account and no monthly fee, you pay your AI provider for what you use, and your resume and key go only to that provider.

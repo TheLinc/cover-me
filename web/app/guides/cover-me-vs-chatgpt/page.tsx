@@ -5,9 +5,6 @@ import { getGuide } from '@/lib/guides'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 const guide = getGuide('cover-me-vs-chatgpt')
-const HERO_IMAGE = '/guides/cover-me-vs-chatgpt.png'
-const HERO_ALT =
-  "Comparison of the steps for each application. In a chatbot: copy the posting into a chat, paste or upload your resume, ask for a tailored resume, ask again for a cover letter, then fix, format and export a PDF. In Cover Me: click Tailor Resume to Job on the posting, then Generate Cover Letter, and get a tailored resume, a cover letter and an ATS score."
 
 export const metadata: Metadata = {
   title: { absolute: 'Cover Me vs ChatGPT for Cover Letters and Resumes' },
@@ -83,7 +80,6 @@ export default function Page() {
   return (
     <GuideArticle
       guide={guide}
-      hero={{ src: HERO_IMAGE, alt: HERO_ALT }}
       lede={
         <>
           ChatGPT can write a good cover letter if you give it the job description, your resume, and a careful prompt, and repeat that for every application. Cover Me (cover-me.dev) is an open-source Chrome extension that does it in one click on the posting: it reads the page, uses the resume you uploaded once, works in the role&rsquo;s ATS keywords, and removes any skill your resume doesn&rsquo;t support.
@@ -127,9 +123,14 @@ export default function Page() {
         {
           title: 'When is ChatGPT the better choice?',
           body: (
-            <p>
-              If you apply to one or two roles a month and like working on the letter in conversation, a chatbot is more flexible than an extension. You can ask follow-up questions, try different angles, and rewrite one paragraph at a time. If you already pay for Plus, it costs you nothing extra.
-            </p>
+            <>
+              <p>
+                If you apply to one or two roles a month and like working on the letter in conversation, a chatbot is more flexible than an extension. You can ask follow-up questions, try different angles, and rewrite one paragraph at a time. If you already pay for Plus, it costs you nothing extra.
+              </p>
+              <p>
+                To do it in ChatGPT or Claude, start with tested prompts: the <Link href="/guides/chatgpt-resume-prompts">ChatGPT resume prompts</Link> and the <Link href="/guides/chatgpt-cover-letter-prompts">ChatGPT cover letter prompts</Link> show each prompt with the answer it gave on a real posting.
+              </p>
+            </>
           ),
         },
         {
