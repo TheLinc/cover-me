@@ -15,10 +15,14 @@ const MODEL = 'claude-haiku-5-5'
 
 const PER_MINUTE = 6
 const PER_DAY = 40
+// Across all IPs, so calls spread over many addresses still stop well short of
+// the checker key's spend limit (#278).
+const ALL_PER_MINUTE = 60
+const ALL_PER_DAY = 3000
 const MAX_CHARS = 30_000
 const MAX_BYTES = 4 * 2 * MAX_CHARS
 const MAX_KEYWORDS = 80
-const MAX_FIELD = 400
+const MAX_NAME = 80
 
 type Keyword = { name: string; level: 'required' | 'preferred'; posting_text: string; resume_text: string; found: boolean }
 
@@ -42,6 +46,9 @@ Deno.serve(async (req) => {
 
   const limit = await checkIpRateLimit(supabase, req, 'ats-check', PER_MINUTE, PER_DAY)
   if (limit !== 'ok') return json({ error: limit === 'over' ? 'Too many requests' : 'Try again shortly' }, limit === 'over' ? 429 : 503)
+  const all = await supabase.rpc('check_scrape_rate_limit', { p_ip_hash: 'ats-check:all', p_per_minute: ALL_PER_MINUTE, p_per_day: ALL_PER_DAY })
+  if (all.error) return json({ error: 'Try again shortly' }, 503)
+  if (all.data !== true) return json({ error: 'Too many requests' }, 429)
 
   let res: Response
   try {
@@ -50,7 +57,7 @@ Deno.serve(async (req) => {
       headers: { 'x-api-key': API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
       body: JSON.stringify({
         model: MODEL,
-        max_tokens: 16000,
+        max_tokens: 8000,
         thinking: { type: 'adaptive' },
         output_config: { effort: 'medium', format: { type: 'json_schema', schema: RESPONSE_SCHEMA } },
         system: SYSTEM_PROMPT,
@@ -67,7 +74,7 @@ Deno.serve(async (req) => {
     return json({ error: 'Check failed' }, 502)
   }
   const data = await res.json() as { stop_reason?: string; content?: Array<{ type: string; text?: string }> }
-  const keywords = data.stop_reason === 'end_turn' ? parseKeywords(data.content?.find((b) => b.type === 'text')?.text) : null
+  const keywords = data.stop_reason === 'end_turn' ? parseKeywords(data.content?.find((b) => b.type === 'text')?.text, posting, resume) : null
   if (!keywords) {
     console.error('ats-check: unusable reply, stop_reason', data.stop_reason)
     return json({ error: 'Check failed' }, 502)
@@ -79,7 +86,11 @@ function isText(v: unknown): v is string {
   return typeof v === 'string' && v.trim().length > 0
 }
 
-function parseKeywords(text: string | undefined): Keyword[] | null {
+const plain = (s: string) => s.replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/\s+/g, ' ').trim().toLowerCase()
+
+// Quotes are kept only when they're really in the text sent, so the reply
+// can't carry anything else (#278).
+function parseKeywords(text: string | undefined, posting: string, resume: string): Keyword[] | null {
   let parsed: unknown
   try {
     parsed = JSON.parse(text ?? '')
@@ -90,8 +101,17 @@ function parseKeywords(text: string | undefined): Keyword[] | null {
   if (!Array.isArray(list) || list.length > MAX_KEYWORDS) return null
   const valid = list.every((k) =>
     k && typeof k === 'object' &&
-    ['name', 'posting_text', 'resume_text'].every((f) => typeof k[f] === 'string' && k[f].length <= MAX_FIELD) &&
+    ['name', 'posting_text', 'resume_text'].every((f) => typeof k[f] === 'string') &&
     k.name.trim() && (k.level === 'required' || k.level === 'preferred') && typeof k.found === 'boolean'
   )
-  return valid ? list.map(({ name, level, posting_text, resume_text, found }) => ({ name, level, posting_text, resume_text, found })) : null
+  if (!valid) return null
+  const [inPosting, inResume] = [plain(posting), plain(resume)]
+  const quote = (q: string, source: string) => (plain(q) && source.includes(plain(q)) ? q : '')
+  return list.map(({ name, level, posting_text, resume_text, found }) => ({
+    name: name.slice(0, MAX_NAME),
+    level,
+    posting_text: quote(posting_text, inPosting),
+    resume_text: found ? quote(resume_text, inResume) : '',
+    found,
+  }))
 }
