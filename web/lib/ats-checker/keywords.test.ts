@@ -75,6 +75,12 @@ describe('keywords from saved postings', () => {
     ['Qualifications\nPreferred experience with Tableau and Looker', 'preferred', ['Tableau', 'Looker']],
     ['Perks\n- Remote work\n- Health insurance\nKnowledge, skills and abilities\n- Python\n- Strong SQL\n- Familiarity with AWS\n- Airflow', 'mentioned', ['Python', 'SQL', 'AWS', 'Airflow']],
     ['What we offer\nHealth insurance and 401k\nWho should apply\nPython developers\nPeople with SQL and AWS', 'mentioned', ['Python', 'SQL', 'AWS']],
+    ['Qualifications\n- Valid state teaching certificate\n- Differentiated instruction and lesson planning\n- Strong classroom management skills\n- Google Classroom and Seesaw\n- Experience with students with IEPs',
+      'required', ['teaching certificate', 'differentiated instruction', 'lesson planning', 'classroom management', 'Google Classroom', 'Seesaw', 'IEP']],
+    ['Requirements\n- Litigation and legal research\n- Westlaw and iManage\n- Case management, crisis intervention and trauma-informed care', 'required',
+      ['litigation', 'legal research', 'Westlaw', 'iManage', 'case management', 'crisis intervention', 'trauma-informed care']],
+    ['Requirements\n- Experience with our stack: Python, Django, PostgreSQL\n- You\'ll help us scale Kafka and Redis', 'required', ['Python', 'Django', 'PostgreSQL', 'Kafka', 'Redis']],
+    ["What you'll do\n- Plan sprints\n🧠 What you'll bring\n- Python and Django\n✨ Nice to have\n- Kubernetes", 'required', ['Python', 'Django']],
     ['Benefits\n- Dental and vision\n- Python, SQL and Docker experience\n- Kubernetes', 'mentioned', ['Python', 'SQL', 'Docker', 'Kubernetes']],
     ['Compensation Analyst\nRequirements\nCompensation analysis experience\nAdvanced Excel and SQL\nKnowledge of Workday', 'required', ['Excel', 'SQL', 'Workday']],
     ['Accountant\nRequirements\nAbout 3-5 years of experience in accounting\nCPA required\nProficient in QuickBooks and Excel\nKnowledge of GAAP', 'required', ['CPA', 'QuickBooks', 'Excel', 'GAAP']],
@@ -160,6 +166,11 @@ describe('checking a resume', () => {
     expect(viaOf('Requirements\n- Salesforce\nNice to have\n- HubSpot or Salesforce', 'HubSpot admin', 'Salesforce')).toMatchObject({ found: false })
     expect(viaOf('Requirements\n- HubSpot or Salesforce', 'HubSpot admin', 'Salesforce')).toMatchObject({ found: true, via: 'HubSpot' })
     expect(viaOf('About the role\nWe build in Python or Go.\nRequirements\n- Python\n- Go', 'Go services', 'Python')).toMatchObject({ found: false })
+  })
+
+  test('a plural acronym the list lacks matches its singular', () => {
+    expect(found('Requirements\n- Experience defining KPIs and OKRs\n- Building SDKs', 'Owned KPI reporting and OKR planning; shipped an SDK.'))
+      .toEqual({ KPI: true, OKR: true, SDK: true })
   })
 
   test('an acronym the list lacks also matches its spelled-out name', () => {

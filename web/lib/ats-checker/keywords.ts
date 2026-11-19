@@ -65,7 +65,7 @@ const OTHER = /^schedule|^job type|^the (job|team|position)$|^your mission|respo
 type Heading = Level | 'skip' | 'unknown'
 function headingLevel(line: string, labelled: boolean): Heading | null {
   if (BULLET.test(line)) return null
-  const text = line.replace(/^[#*\s]+|[*:\s]+$/g, '')
+  const text = line.replace(/^[^A-Za-z0-9]+|[*:\s]+$/g, '')
   if (!text || /[.!]$/.test(text) || text.split(/\s+/).length > 10) return null
   const marked = labelled || /^(#|\*\*)|:\s*$/.test(line)
   if (!marked && /\d/.test(text)) return null
@@ -88,14 +88,16 @@ function unlistedNames(line: string): Keyword[] {
   if (letters.length && letters.replace(/[^A-Z]/g, '').length / letters.length > 0.5) return []
   const found: Keyword[] = []
   for (const [token] of line.matchAll(/\b[A-Z][A-Za-z0-9]*[A-Z][A-Za-z0-9]*\b/g)) {
-    const acronym = !/[a-z]/.test(token)
-    if (acronym && (token.length < 3 || token.length > 6 || ACRONYM_STOP.has(token))) continue
-    const spellings = [token]
+    const plural = /^[A-Z]{2,}s$/.test(token)
+    const name = plural ? token.slice(0, -1) : token
+    const acronym = !/[a-z]/.test(name)
+    if (acronym && (name.length < 3 || name.length > 6 || ACRONYM_STOP.has(name))) continue
+    const spellings = [name]
     if (acronym) {
-      const long = new RegExp(`((?:[A-Z][a-z]+\\s+){${token.length}})\\(${token}\\)`).exec(line)?.[1].trim()
-      if (long && long.split(/\s+/).map((w) => w[0]).join('') === token) spellings.push(long)
+      const long = new RegExp(`((?:[A-Z][a-z]+\\s+){${name.length}})\\(${token}\\)`).exec(line)?.[1].trim()
+      if (long && long.split(/\s+/).map((w) => w[0]).join('') === name) spellings.push(long)
     }
-    found.push({ name: token, spellings, strict: acronym, level: 'required' })
+    found.push({ name, spellings, strict: acronym, level: 'required' })
   }
   return found
 }
@@ -103,6 +105,7 @@ function unlistedNames(line: string): Keyword[] {
 const BOILERPLATE = /equal (opportunity|employment)|affirmative action|regardless of|without regard to/i
 const YEARS = /\b(\d{1,2}|one|two|three|four|five|six|seven|eight|nine|ten)\s*\+?\s*(?:(?:-|–|to)\s*\d{1,2}\s*\+?\s*)?(?:years?|yrs?)\b/i
 const COMPANY_VOICE = /\b([Ww]e|[Oo]ur|[Uu]s)\b/
+const COMPANY_SPEAKS = /^[^A-Za-z]*(we|our)\b/i
 const ASKS = /\bwe('re| are)? (looking|seeking|need|require|want|expect)\b/i
 
 export function readPosting(posting: string): Posting {
@@ -161,7 +164,7 @@ export function readPosting(posting: string): Posting {
         scan(sentence.slice(ask.index), section === 'preferred' ? 'preferred' : 'required')
         continue
       }
-      const level: Level = section === 'mentioned' || COMPANY_VOICE.test(sentence) ? 'mentioned'
+      const level: Level = section === 'mentioned' || (BULLET.test(line) ? COMPANY_SPEAKS : COMPANY_VOICE).test(sentence) ? 'mentioned'
         : /requir|\bmust\b/i.test(sentence) || !PREFERRED.test(sentence) ? section : 'preferred'
       scan(sentence, level)
     }
