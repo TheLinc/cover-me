@@ -5,6 +5,10 @@ import { getGenerationCount, getHistory, getReviewAsk, getTailoredHistory, saveR
 
 const RATE_URL = 'https://chromewebstore.google.com/detail/bpbnopjgjbimdjjdolhkgimllbgamgpi/reviews'
 
+function tagged(url: string, campaign: 'card' | 'settings') {
+  return `${url}?${new URLSearchParams({ utm_source: 'extension', utm_medium: 'rating-ask', utm_campaign: campaign })}`
+}
+
 // One write and no read first: the popup closes as soon as the store tab opens (#96).
 function endReviewAsk() {
   void saveReviewAsk({ shown: 0, atCount: 0, done: true })
@@ -41,8 +45,8 @@ export default function ReviewAsk({ onClose }: { onClose: () => void }) {
       <p id="review-ask-title" className="review-ask-title">Is Cover Me saving you time?</p>
       <p>A rating on the Chrome Web Store helps other job seekers find it.</p>
       <div className="review-ask-actions">
-        <a className="btn btn-primary btn-sm" href={RATE_URL} target="_blank" rel="noreferrer" onClick={() => { endReviewAsk(); onClose() }}>Rate Cover Me</a>
-        <a className="text-link" href={`${WEB_URL}/support`} target="_blank" rel="noreferrer" onClick={close}>Send feedback</a>
+        <a className="btn btn-primary btn-sm" href={tagged(RATE_URL, 'card')} target="_blank" rel="noreferrer" onClick={() => { endReviewAsk(); onClose() }}>Rate Cover Me</a>
+        <a className="text-link" href={tagged(`${WEB_URL}/support`, 'card')} target="_blank" rel="noreferrer" onClick={close}>Send feedback</a>
         <button
           className="review-ask-dismiss"
           onClick={() => {
@@ -68,9 +72,9 @@ export function ReviewLinksSetting() {
       <h2 id="review-links-title" className="page-read-setting-title">Like Cover Me?</h2>
       <p className="page-read-setting-hint">A rating on the Chrome Web Store helps other job seekers find it.</p>
       <div className="review-ask-actions">
-        <a className="text-link" href={RATE_URL} target="_blank" rel="noreferrer" onClick={endReviewAsk}>Rate Cover Me</a>
+        <a className="text-link" href={tagged(RATE_URL, 'settings')} target="_blank" rel="noreferrer" onClick={endReviewAsk}>Rate Cover Me</a>
         <a className="text-link" href="https://github.com/TheLinc/cover-me" target="_blank" rel="noreferrer">Star on GitHub</a>
-        <a className="text-link" href={`${WEB_URL}/support`} target="_blank" rel="noreferrer">Send feedback</a>
+        <a className="text-link" href={tagged(`${WEB_URL}/support`, 'settings')} target="_blank" rel="noreferrer">Send feedback</a>
       </div>
     </section>
   )
