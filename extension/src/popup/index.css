@@ -1388,6 +1388,9 @@ textarea:focus-visible, input:focus-visible, [tabindex]:focus-visible {
 .flag-comment .form-label { margin-bottom: 5px; }
 .flag-actions { display: flex; gap: 8px; }
 .flag-actions .btn { width: auto; }
+textarea.flag-preview { min-height: 180px; resize: vertical; font-size: 12px; padding: 7px 10px; }
+div.flag-preview { display: flex; flex-direction: column; gap: 4px; max-height: 260px; overflow-y: auto; }
+div.flag-preview textarea { resize: vertical; font-size: 12px; padding: 5px 8px; }
 
 /* A text box with its action on its bottom edge (#118): Regenerate sits with
    the text it sends, which keeps the result row to Download, Edit and New. */

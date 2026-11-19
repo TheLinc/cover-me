@@ -4,8 +4,9 @@
 // CATEGORIES' labels), the comment, and "Cover letter" or "Tailored resume".
 // The output, the posting and the rest go as event properties.
 //
-// The extension takes the user's details out before sending, with their parsed
-// resume. The original resume comes as that parse, not its text. Contact fields
+// The extension takes the user's details out with their parsed resume, then
+// shows the user what will be sent to edit. The original resume comes as that
+// parse, not its text. Contact fields
 // and the Word file's hash are dropped here again in case one slips through.
 // No account needed (BYOK users report too), so verify_jwt is off and calls are
 // rate-limited per IP. Each response gets a random distinct_id. A token is read
