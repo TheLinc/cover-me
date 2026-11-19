@@ -1,0 +1,465 @@
+[
+  {
+    "step": "A BYOK letter, edited preview",
+    "status": 200,
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://eindakbloeplhconodnfconkjhchcdjk",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "sb_publishable_walkthrough_fake",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "generic",
+      "comment": "Reads like a template.",
+      "kind": "letter",
+      "output": "Dear Hiring Team at Northwind Analytics,\n\nI'm applying for the Senior Data Analyst role (letter 1). At Contoso Retail I built the dashboards 40 store managers use each week.\n\nI've lived in [location] all my life. See [link] and [link], write to [email] or call [phone].\n\nSincerely,\n[name]",
+      "job": {
+        "title": "Senior Data Analyst",
+        "company": "Northwind Analytics",
+        "description": "Northwind Analytics is hiring a Senior Data Analyst to build dashboards in Tableau, run A/B tests and explain results to product teams. 4+ years of SQL and Python required.",
+        "site": "linkedin.com"
+      },
+      "mode": "byok",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false
+    }
+  },
+  {
+    "step": "C BYOK letter, invented + original resume, edited original",
+    "status": 200,
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://eindakbloeplhconodnfconkjhchcdjk",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "sb_publishable_walkthrough_fake",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "invented",
+      "comment": "It says I led a team. I never managed anyone.",
+      "kind": "letter",
+      "output": "Dear Hiring Team at Northwind Analytics,\n\nI'm applying for the Senior Data Analyst role (letter 2). At Contoso Retail I built the dashboards 40 store managers use each week. My manager there, Priya Kowalski, can speak to that work.\n\nI've lived in [location] all my life, and you can find me at 48 Birchwood Avenue, [location] M4K 1N2. See [link] and [link], write to [email] or call [phone].\n\nSincerely,\n[name]",
+      "job": {
+        "title": "Senior Data Analyst",
+        "company": "Northwind Analytics",
+        "description": "Northwind Analytics is hiring a Senior Data Analyst to build dashboards in Tableau, run A/B tests and explain results to product teams. 4+ years of SQL and Python required.",
+        "site": "linkedin.com"
+      },
+      "mode": "byok",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false,
+      "sourceResume": {
+        "certifications": [],
+        "education": [
+          {
+            "bullets": [],
+            "dates": "2019",
+            "degree": "B.Sc. Statistics",
+            "institution": "University of [location]",
+            "location": "[location]"
+          }
+        ],
+        "experience": [
+          {
+            "bullets": [
+              "Built weekly sales dashboards used by 40 store managers (my own project)",
+              "Cut report run time from 3 hours to 20 minutes by rewriting SQL",
+              "Write about churn models at [link]/blog"
+            ],
+            "company": "Contoso Retail",
+            "dates": "2021 - Present",
+            "location": "[location]",
+            "title": "Data Analyst"
+          },
+          {
+            "bullets": [
+              "Cleaned and joined supplier data in Python"
+            ],
+            "company": "Fabrikam Foods",
+            "dates": "2019 - 2021",
+            "location": "[location]",
+            "title": "Junior Analyst"
+          }
+        ],
+        "otherSections": [
+          {
+            "heading": "Volunteering",
+            "lines": [
+              "Mentor, Data for Good [location]",
+              "Ran monthly SQL workshops for 30 newcomers"
+            ]
+          }
+        ],
+        "projects": [],
+        "sectionOrder": [
+          "experience",
+          "education",
+          "skills",
+          "other"
+        ],
+        "skills": "SQL, Python, pandas, Excel, Looker"
+      }
+    }
+  },
+  {
+    "step": "B Hosted letter, contact ticked",
+    "status": 200,
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "authorization": "Bearer walkthrough-fake-access-token",
+      "content-type": "application/json",
+      "origin": "chrome-extension://eindakbloeplhconodnfconkjhchcdjk",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "sb_publishable_walkthrough_fake",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "missing",
+      "comment": "",
+      "kind": "letter",
+      "output": "Dear Hiring Team at Northwind Analytics,\n\nI'm applying for the Senior Data Analyst role (letter 3). At Contoso Retail I built the dashboards 40 store managers use each week.\n\nI've lived in [location] all my life, and you can find me at 48 Birchwood Avenue, [location] M4K 1N2. See [link] and [link], write to [email] or call [phone].\n\nSincerely,\n[name]",
+      "job": {
+        "title": "Senior Data Analyst",
+        "company": "Northwind Analytics",
+        "description": "Northwind Analytics is hiring a Senior Data Analyst to build dashboards in Tableau, run A/B tests and explain results to product teams. 4+ years of SQL and Python required.",
+        "site": "linkedin.com"
+      },
+      "mode": "hosted",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": true
+    }
+  },
+  {
+    "step": "B Hosted letter, contact unticked",
+    "status": 200,
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://eindakbloeplhconodnfconkjhchcdjk",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "sb_publishable_walkthrough_fake",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "missing",
+      "comment": "",
+      "kind": "letter",
+      "output": "Dear Hiring Team at Northwind Analytics,\n\nI'm applying for the Senior Data Analyst role (letter 4). At Contoso Retail I built the dashboards 40 store managers use each week. My manager there, Priya Kowalski, can speak to that work.\n\nI've lived in [location] all my life, and you can find me at 48 Birchwood Avenue, [location] M4K 1N2. See [link] and [link], write to [email] or call [phone].\n\nSincerely,\n[name]",
+      "job": {
+        "title": "Senior Data Analyst",
+        "company": "Northwind Analytics",
+        "description": "Northwind Analytics is hiring a Senior Data Analyst to build dashboards in Tableau, run A/B tests and explain results to product teams. 4+ years of SQL and Python required.",
+        "site": "linkedin.com"
+      },
+      "mode": "hosted",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false
+    }
+  },
+  {
+    "step": "E3 send 500",
+    "status": 500,
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://eindakbloeplhconodnfconkjhchcdjk",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "sb_publishable_walkthrough_fake",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "design",
+      "comment": "",
+      "kind": "letter",
+      "output": "Dear Hiring Team at Northwind Analytics,\n\nI'm applying for the Senior Data Analyst role (letter 7). At Contoso Retail I built the dashboards 40 store managers use each week.\n\nI've lived in [location] all my life. See [link] and [link], write to [email] or call [phone].\n\nSincerely,\n[name]",
+      "job": {
+        "title": "Senior Data Analyst",
+        "company": "Northwind Analytics",
+        "description": "Northwind Analytics is hiring a Senior Data Analyst to build dashboards in Tableau, run A/B tests and explain results to product teams. 4+ years of SQL and Python required.",
+        "site": "linkedin.com"
+      },
+      "mode": "byok",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false
+    }
+  },
+  {
+    "step": "E3 retry after 500",
+    "status": 200,
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://eindakbloeplhconodnfconkjhchcdjk",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "sb_publishable_walkthrough_fake",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "design",
+      "comment": "",
+      "kind": "letter",
+      "output": "Dear Hiring Team at Northwind Analytics,\n\nI'm applying for the Senior Data Analyst role (letter 7). At Contoso Retail I built the dashboards 40 store managers use each week.\n\nI've lived in [location] all my life. See [link] and [link], write to [email] or call [phone].\n\nSincerely,\n[name]",
+      "job": {
+        "title": "Senior Data Analyst",
+        "company": "Northwind Analytics",
+        "description": "Northwind Analytics is hiring a Senior Data Analyst to build dashboards in Tableau, run A/B tests and explain results to product teams. 4+ years of SQL and Python required.",
+        "site": "linkedin.com"
+      },
+      "mode": "byok",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false
+    }
+  },
+  {
+    "step": "D Editor resume, two edits in the preview",
+    "status": 200,
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://eindakbloeplhconodnfconkjhchcdjk",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "sb_publishable_walkthrough_fake",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "design",
+      "comment": "Bullets wrap badly.",
+      "kind": "resume",
+      "output": {
+        "atsGaps": [
+          "Tableau",
+          "A/B testing"
+        ],
+        "atsScore": 78,
+        "atsScoreBefore": 64,
+        "certifications": [],
+        "education": [
+          {
+            "bullets": [],
+            "dates": "2019",
+            "degree": "B.Sc. Statistics",
+            "institution": "University of [location]",
+            "location": "[location]"
+          }
+        ],
+        "experience": [
+          {
+            "bullets": [
+              "Built weekly sales dashboards used by 40 store managers",
+              "Cut report run time from 3 hours to 20 minutes by rewriting SQL with the data team",
+              "Ran A/B tests on the loyalty sign-up flow with the product team"
+            ],
+            "company": "Contoso Retail",
+            "dates": "2021 - Present",
+            "location": "[location]",
+            "title": "Data Analyst"
+          },
+          {
+            "bullets": [
+              "Cleaned and joined supplier data in Python",
+              "Built a Tableau report on late deliveries"
+            ],
+            "company": "Fabrikam Foods",
+            "dates": "2019 - 2021",
+            "location": "[location]",
+            "title": "Junior Analyst"
+          }
+        ],
+        "otherSections": [
+          {
+            "heading": "Volunteering",
+            "lines": [
+              "Mentor, Data for Good [location], 2022 - Present",
+              "Ran monthly SQL workshops"
+            ]
+          }
+        ],
+        "projects": [],
+        "skills": "SQL, Python, pandas, Excel, Looker, Tableau",
+        "summary": "Data analyst with five years of SQL and Python who builds Tableau-ready dashboards and explains results to product teams."
+      },
+      "job": {
+        "title": "Senior Data Analyst",
+        "company": "Northwind Analytics",
+        "description": "Northwind Analytics is hiring a Senior Data Analyst to build dashboards in Tableau, run A/B tests and explain results to product teams. 4+ years of SQL and Python required.",
+        "site": "linkedin.com"
+      },
+      "mode": "byok",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false
+    }
+  },
+  {
+    "step": "D2 Editor resume, invented + original, original edited",
+    "status": 200,
+    "url": "http://127.0.0.1:54321/functions/v1/generation-report",
+    "method": "POST",
+    "headers": {
+      "accept": "*/*",
+      "content-type": "application/json",
+      "origin": "chrome-extension://eindakbloeplhconodnfconkjhchcdjk",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "apikey": "sb_publishable_walkthrough_fake",
+      "sec-ch-ua": "\"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"156\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": {
+      "category": "invented",
+      "comment": "",
+      "kind": "resume",
+      "output": {
+        "atsGaps": [
+          "Tableau",
+          "A/B testing"
+        ],
+        "atsScore": 78,
+        "atsScoreBefore": 64,
+        "certifications": [],
+        "education": [
+          {
+            "bullets": [],
+            "dates": "2019",
+            "degree": "B.Sc. Statistics",
+            "institution": "University of [location]",
+            "location": "[location]"
+          }
+        ],
+        "experience": [
+          {
+            "bullets": [
+              "Built weekly sales dashboards used by 40 store managers",
+              "Cut report run time from 3 hours to 20 minutes by rewriting SQL",
+              "Ran A/B tests on the loyalty sign-up flow with the product team"
+            ],
+            "company": "Contoso Retail",
+            "dates": "2021 - Present",
+            "location": "[location]",
+            "title": "Data Analyst"
+          },
+          {
+            "bullets": [
+              "Cleaned and joined supplier data in Python",
+              "Built a Tableau report on late deliveries"
+            ],
+            "company": "Fabrikam Foods",
+            "dates": "2019 - 2021",
+            "location": "[location]",
+            "title": "Junior Analyst"
+          }
+        ],
+        "otherSections": [
+          {
+            "heading": "Volunteering",
+            "lines": [
+              "Mentor, Data for Good [location], 2022 - Present",
+              "Ran monthly SQL workshops for 30 newcomers"
+            ]
+          }
+        ],
+        "projects": [],
+        "skills": "SQL, Python, pandas, Excel, Looker, Tableau",
+        "summary": "Data analyst with five years of SQL and Python who builds Tableau-ready dashboards and explains results to product teams."
+      },
+      "job": {
+        "title": "Senior Data Analyst",
+        "company": "Northwind Analytics",
+        "description": "Northwind Analytics is hiring a Senior Data Analyst to build dashboards in Tableau, run A/B tests and explain results to product teams. 4+ years of SQL and Python required.",
+        "site": "linkedin.com"
+      },
+      "mode": "byok",
+      "provider": "claude",
+      "version": "1.8.0",
+      "contact": false,
+      "sourceResume": {
+        "certifications": [],
+        "education": [
+          {
+            "bullets": [],
+            "dates": "2019",
+            "degree": "B.Sc. Statistics",
+            "institution": "University of [location]",
+            "location": "[location]"
+          }
+        ],
+        "experience": [
+          {
+            "bullets": [
+              "Built weekly sales dashboards used by 40 store managers",
+              "Cut report run time from 3 hours to 20 minutes by rewriting SQL",
+              "Write about churn models at [link]/blog"
+            ],
+            "company": "Contoso Retail",
+            "dates": "2021 - Present",
+            "location": "[location]",
+            "title": "Data Analyst"
+          },
+          {
+            "bullets": [
+              "Cleaned and joined supplier data in Python (weekly)"
+            ],
+            "company": "Fabrikam Foods",
+            "dates": "2019 - 2021",
+            "location": "[location]",
+            "title": "Junior Analyst"
+          }
+        ],
+        "otherSections": [
+          {
+            "heading": "Volunteering",
+            "lines": [
+              "Mentor, Data for Good [location], 2022 - Present",
+              "Ran monthly SQL workshops for 30 newcomers"
+            ]
+          }
+        ],
+        "projects": [],
+        "sectionOrder": [
+          "experience",
+          "education",
+          "skills",
+          "other"
+        ],
+        "skills": "SQL, Python, pandas, Excel, Looker"
+      }
+    }
+  }
+]
