@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
-import { checkResume, marks, readPosting, type Level } from './keywords'
+import { checkResume, firstAt, marks, readPosting, type Level } from './keywords'
 import { TERMS } from './terms'
 
 const text = (name: string) => readFileSync(join(__dirname, 'postings', `${name}.txt`), 'utf8')
@@ -237,14 +237,24 @@ test('a keyword covered by its alternative points at a mark in the resume', () =
   const resume = 'Ran Salesforce reports.'
   const checked = checkResume(keywords, resume)
   const shown = new Set(marks(resume, checked.filter((k) => k.found)).map((m) => m.name))
-  for (const k of checked.filter((k) => k.found)) expect(shown.has(k.via ?? k.name)).toBe(true)
+  for (const k of checked.filter((k) => k.found)) expect(shown.has(k.mark ?? '')).toBe(true)
 })
 
-test('a keyword seen only inside a longer one is not found, so every found chip has a mark', () => {
-  const { keywords } = readPosting('Requirements\n- Power BI and business intelligence reporting')
-  const resume = 'Built Power BI dashboards.'
-  const checked = checkResume(keywords, resume)
-  expect(checked.find((k) => k.name === 'business intelligence')?.found).toBe(false)
-  const shown = new Set(marks(resume, checked.filter((k) => k.found)).map((m) => m.name))
-  for (const k of checked.filter((k) => k.found)) expect(shown.has(k.via ?? k.name)).toBe(true)
+test('a keyword seen only inside a longer one is found and points at the longer mark', () => {
+  const cases = [
+    ['Requirements\n- Power BI and business intelligence reporting', 'Built Power BI dashboards.', 'business intelligence', 'Power BI'],
+    ['Requirements\n- Experience with AWS, Lambda and S3', '- Deployed services on AWS Lambda and S3 for 2M users.', 'AWS', 'Lambda'],
+    ['Requirements\n- SQL and SQL Server', '- Tuned SQL Server queries.', 'SQL', 'SQL Server'],
+  ]
+  for (const [posting, resume, name, mark] of cases) {
+    const checked = checkResume(readPosting(posting).keywords, resume)
+    expect(checked.find((k) => k.name === name)).toMatchObject({ found: true, mark })
+    const shown = new Set(marks(resume, checked.filter((k) => k.found)).map((m) => m.name))
+    for (const k of checked.filter((k) => k.found)) expect(shown.has(k.mark ?? '')).toBe(true)
+  }
+})
+
+test('firstAt finds the keyword at a word edge, not inside another word', () => {
+  const line = 'You will maintain and extend our tools, then apply AI where it helps.'
+  expect(firstAt(line, { spellings: ['AI'], strict: true })).toBe(line.indexOf(' AI') + 1)
 })

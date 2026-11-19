@@ -11,7 +11,7 @@ import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { checkResumeText, postingTitle } from '@/lib/ats-checker/hints'
-import { checkResume, marks, readPosting, type Level, type Mark, type Posting } from '@/lib/ats-checker/keywords'
+import { checkResume, firstAt, marks, readPosting, type Level, type Mark, type Posting } from '@/lib/ats-checker/keywords'
 import { readResumeFile } from '@/lib/ats-checker/read-resume'
 import { SAMPLE_POSTING, SAMPLE_RESUME } from '@/lib/ats-checker/sample'
 import { BASE } from '@/lib/structured-data'
@@ -91,7 +91,8 @@ export function AtsChecker() {
 
   function onType(which: 'posting' | 'resume', e: ChangeEvent<HTMLTextAreaElement>) {
     const value = e.target.value
-    const fresh = replacing.current && (e.nativeEvent as InputEvent).inputType === 'insertFromPaste'
+    const pasted = replacing.current && (e.nativeEvent as InputEvent).inputType === 'insertFromPaste'
+    const fresh = pasted || (!(which === 'posting' ? posting : resume).trim() && value.length > 100)
     replacing.current = false
     if (which === 'posting') setPosting(value)
     else {
@@ -141,7 +142,7 @@ export function AtsChecker() {
   }
 
   function pick(k: Checked) {
-    setSelected({ name: k.name, target: k.via ?? k.name, at: Date.now() })
+    setSelected({ name: k.name, target: k.mark ?? k.name, at: Date.now() })
     setView(k.found ? 'resume' : 'posting')
     if (k.found) setResultTab('resume')
   }
@@ -447,8 +448,7 @@ function mailLink() {
 function quoteAround(k: Checked) {
   const line = k.line ?? ''
   if (line.length <= 140) return line
-  const lower = line.toLowerCase()
-  const at = k.spellings.map((s) => lower.indexOf(s.toLowerCase())).find((i) => i >= 0) ?? 0
+  const at = firstAt(line, k) ?? 0
   const start = Math.max(0, Math.min(at - 50, line.length - 137))
   return `${start ? '...' : ''}${line.slice(start, start + 137).trim()}${start + 137 < line.length ? '...' : ''}`
 }

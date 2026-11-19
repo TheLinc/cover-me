@@ -193,14 +193,27 @@ export function readPosting(posting: string): Posting {
   return { keywords, years }
 }
 
-export function checkResume(keywords: Keyword[], resume: string): Array<Keyword & { found: boolean; via?: string }> {
-  const shown = new Set(marks(resume, keywords).map((m) => m.name))
+export function checkResume(keywords: Keyword[], resume: string): Array<Keyword & { found: boolean; via?: string; mark?: string }> {
+  const text = normalize(resume)
+  const kept = marks(resume, keywords)
+  const byName = new Map(keywords.map((k) => [k.name, k]))
+  const markOf = (k: Term) => {
+    const at = spans(text, k)
+    return kept.find((m) => at.some(([start, end]) => start < m.end && end > m.start))?.name
+  }
   return keywords.map((k) => {
-    if (shown.has(k.name)) return { ...k, found: true }
-    const via = k.alternatives?.find((name) => shown.has(name))
-    return { ...k, found: !!via, via }
+    const own = markOf(k)
+    if (own) return { ...k, found: true, mark: own }
+    for (const name of k.alternatives ?? []) {
+      const alt = byName.get(name)
+      const mark = alt && markOf(alt)
+      if (mark) return { ...k, found: true, via: name, mark }
+    }
+    return { ...k, found: false }
   })
 }
+
+export const firstAt = (text: string, k: Term): number | undefined => spans(normalize(text), k)[0]?.[0]
 
 export interface Mark {
   start: number
