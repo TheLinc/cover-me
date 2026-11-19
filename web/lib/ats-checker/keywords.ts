@@ -229,9 +229,9 @@ export function checkResume(keywords: Keyword[], resume: string): Array<Keyword 
 export function oneEntryPerAsk<T extends Keyword>(keywords: T[]): T[] {
   const seen = new Set<string>()
   return keywords.filter((k) => {
-    const alternativeShown = k.alternatives?.some((name) => seen.has(name))
+    if (k.alternatives?.some((name) => seen.has(name))) return false
     seen.add(k.name)
-    return !alternativeShown
+    return true
   })
 }
 

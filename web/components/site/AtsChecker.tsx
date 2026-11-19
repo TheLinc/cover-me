@@ -26,9 +26,10 @@ const GROUPS: { level: Level; title: string }[] = [
 function analyse(posting: string, read: Posting, resume: string, pages?: number) {
   const keywords = checkResume(read.keywords, resume)
   const postingMarks = marks(posting, keywords)
+  const shown = oneEntryPerAsk(keywords.map((k) => (k.found ? k : { ...k, mark: markFor(posting, postingMarks, k) })))
   return {
-    keywords: oneEntryPerAsk(keywords.map((k) => (k.found ? k : { ...k, mark: markFor(posting, postingMarks, k) }))),
-    missing: new Set(keywords.filter((k) => !k.found).map((k) => k.name)),
+    keywords: shown,
+    missing: new Set(shown.filter((k) => !k.found).flatMap((k) => [k.name, ...(k.alternatives ?? [])])),
     years: read.years,
     checks: { ...checkResumeText(resume, posting), pages },
     resumeMarks: marks(resume, keywords.filter((k) => k.found)),

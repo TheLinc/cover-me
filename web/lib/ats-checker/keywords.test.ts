@@ -343,3 +343,12 @@ test('the gaps the AIApply comparison found are read, and an "or" pair is one en
   const nurse = readPosting('Responsibilities\n- Monitor cardiac rhythms\n- Teach patients and families about discharge plans\nPreferred\n- Experience with heparin drips').keywords
   expect(nurse.map((k) => k.name)).toEqual(expect.arrayContaining(['cardiac', 'patient education', 'discharge planning', 'heparin']))
 })
+
+test('each "or" ask is one entry, counted once, and asks that share a keyword stay separate', () => {
+  const asks = (posting: string, resume: string) =>
+    oneEntryPerAsk(checkResume(readPosting(posting).keywords, resume)).map((k) => `${k.name}${k.found ? '+' : '-'}`)
+  expect(asks('Requirements\n- Experience with Cypress or Playwright', 'Wrote unit tests.')).toEqual(['Cypress-'])
+  expect(asks('Requirements\n- Experience with Jest\n- Experience with React or Vue\n- Vue or Angular', 'Built Angular apps with Jest.'))
+    .toEqual(['Jest+', 'React-', 'Angular+'])
+  expect(asks('Requirements\n- Cypress or Playwright\n- Playwright or Selenium', 'Wrote Selenium suites.')).toEqual(['Cypress-', 'Selenium+'])
+})
