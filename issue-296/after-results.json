@@ -1,0 +1,204 @@
+{
+  "label": "after",
+  "base": "http://localhost:3197",
+  "oldAddresses": {
+    "aiapply": {
+      "status": 308,
+      "location": "/guides/aiapply-review",
+      "url": "/guides/aiapply-review",
+      "h1": "AIApply review: is it legit, and is auto-apply worth it?",
+      "title": "AIApply Review (2026): Pricing, Auto Apply and Is It Legit"
+    },
+    "jobscan": {
+      "status": 308,
+      "location": "/guides/jobscan-review",
+      "url": "/guides/jobscan-review",
+      "h1": "Jobscan review: is it legit, and is it worth $49.95 a month?",
+      "title": "Jobscan Review (2026): Pricing, Free Plan and Is It Worth It"
+    },
+    "teal": {
+      "status": 308,
+      "location": "/guides/teal-review",
+      "url": "/guides/teal-review",
+      "h1": "Is Teal legit? A Teal review for job seekers",
+      "title": "Is Teal Legit? Teal Review, Job Board and Teal+ Pricing"
+    }
+  },
+  "titles": {
+    "jobscan-review": {
+      "h1": "Jobscan review: is it legit, and is it worth $49.95 a month?",
+      "title": "Jobscan Review (2026): Pricing, Free Plan and Is It Worth It",
+      "same": false
+    },
+    "teal-review": {
+      "h1": "Is Teal legit? A Teal review for job seekers",
+      "title": "Is Teal Legit? Teal Review, Job Board and Teal+ Pricing",
+      "same": false
+    },
+    "aiapply-review": {
+      "h1": "AIApply review: is it legit, and is auto-apply worth it?",
+      "title": "AIApply Review (2026): Pricing, Auto Apply and Is It Legit",
+      "same": false
+    },
+    "chatgpt-resume-prompts": {
+      "h1": "ChatGPT resume prompts to tailor your resume to a job",
+      "title": "ChatGPT Resume Prompts to Tailor Your Resume | Cover Me",
+      "same": false
+    },
+    "chatgpt-cover-letter-prompts": {
+      "h1": "ChatGPT cover letter prompts that drop the AI phrases",
+      "title": "ChatGPT Cover Letter Prompts, With Real Output | Cover Me",
+      "same": false
+    },
+    "cover-me-vs-chatgpt": {
+      "h1": "Cover Me vs ChatGPT for cover letters",
+      "title": "Cover Me vs ChatGPT for Cover Letters and Resumes",
+      "same": false
+    },
+    "free-jobscan-alternatives": {
+      "h1": "Free Jobscan alternatives: 6 resume checkers compared",
+      "title": "Free Jobscan Alternatives: 6 Resume Checkers Compared (2026)",
+      "same": false
+    },
+    "use-your-own-api-key-for-cover-letters": {
+      "h1": "How to use your own OpenAI or Claude API key for cover letters",
+      "title": "Cover Letters With Your Own OpenAI or Claude Key | Cover Me",
+      "same": false
+    },
+    "cover-me-vs-rezi": {
+      "h1": "Cover Me vs Rezi: tailor the resume you already have",
+      "title": "Rezi vs Cover Me: Pricing and Which One to Use",
+      "same": false
+    },
+    "tailor-resume-in-word": {
+      "h1": "How to tailor your resume in Word without losing its formatting",
+      "title": "Tailor a Word Resume Without Losing Formatting | Cover Me",
+      "same": false
+    },
+    "tailor-resume-to-job-description": {
+      "h1": "How to tailor your resume to a job description",
+      "title": "Tailor Your Resume to a Job Description in 5 Steps | Cover Me",
+      "same": false
+    },
+    "ats-friendly-resume-format": {
+      "h1": "How to make your resume ATS friendly: I tested 6 formats in 4 ATSs",
+      "title": "ATS-Friendly Resume Format: 6 Layouts Tested in 4 ATSs | Cover Me",
+      "same": false
+    },
+    "what-is-an-ats-score": {
+      "h1": "What is an ATS score?",
+      "title": "What Is an ATS Score? How Resume Screening Works | Cover Me",
+      "same": false
+    }
+  },
+  "incoming": {
+    "what-is-an-ats-score": [
+      "jobscan-review",
+      "teal-review",
+      "aiapply-review",
+      "chatgpt-resume-prompts",
+      "cover-me-vs-chatgpt",
+      "free-jobscan-alternatives",
+      "use-your-own-api-key-for-cover-letters",
+      "cover-me-vs-rezi",
+      "tailor-resume-to-job-description",
+      "ats-friendly-resume-format",
+      "ats-friendly-resume-format"
+    ],
+    "free-jobscan-alternatives": [
+      "jobscan-review",
+      "teal-review",
+      "aiapply-review"
+    ],
+    "use-your-own-api-key-for-cover-letters": [
+      "jobscan-review",
+      "teal-review",
+      "aiapply-review"
+    ],
+    "teal-review": [
+      "jobscan-review",
+      "aiapply-review",
+      "free-jobscan-alternatives"
+    ],
+    "aiapply-review": [
+      "jobscan-review",
+      "teal-review"
+    ],
+    "jobscan-review": [
+      "teal-review",
+      "aiapply-review",
+      "free-jobscan-alternatives"
+    ],
+    "tailor-resume-in-word/Alex_Rivera_Resume.docx": [
+      "chatgpt-resume-prompts",
+      "chatgpt-cover-letter-prompts",
+      "tailor-resume-in-word"
+    ],
+    "chatgpt-cover-letter-prompts": [
+      "chatgpt-resume-prompts",
+      "cover-me-vs-chatgpt"
+    ],
+    "cover-me-vs-chatgpt": [
+      "chatgpt-resume-prompts",
+      "chatgpt-cover-letter-prompts",
+      "use-your-own-api-key-for-cover-letters"
+    ],
+    "chatgpt-resume-prompts": [
+      "chatgpt-cover-letter-prompts",
+      "cover-me-vs-chatgpt"
+    ],
+    "tailor-resume-to-job-description": [
+      "cover-me-vs-chatgpt",
+      "free-jobscan-alternatives",
+      "tailor-resume-in-word",
+      "ats-friendly-resume-format",
+      "what-is-an-ats-score"
+    ],
+    "ats-friendly-resume-format": [
+      "cover-me-vs-rezi",
+      "tailor-resume-in-word",
+      "what-is-an-ats-score"
+    ],
+    "cover-me-vs-rezi": [
+      "tailor-resume-in-word"
+    ],
+    "tailor-resume-in-word": [
+      "tailor-resume-to-job-description",
+      "ats-friendly-resume-format"
+    ],
+    "ats-friendly-resume-format/files/single-column.pdf": [
+      "ats-friendly-resume-format"
+    ],
+    "ats-friendly-resume-format/files/single-column.docx": [
+      "ats-friendly-resume-format"
+    ],
+    "ats-friendly-resume-format/files/two-column.pdf": [
+      "ats-friendly-resume-format"
+    ],
+    "ats-friendly-resume-format/files/header-contact.docx": [
+      "ats-friendly-resume-format"
+    ],
+    "ats-friendly-resume-format/files/table-layout.docx": [
+      "ats-friendly-resume-format"
+    ],
+    "ats-friendly-resume-format/files/image-only.pdf": [
+      "ats-friendly-resume-format"
+    ]
+  },
+  "flaggedIncoming": {
+    "aiapply-review": [
+      "jobscan-review",
+      "teal-review"
+    ],
+    "free-jobscan-alternatives": [
+      "jobscan-review",
+      "teal-review",
+      "aiapply-review"
+    ],
+    "use-your-own-api-key-for-cover-letters": [
+      "jobscan-review",
+      "teal-review",
+      "aiapply-review"
+    ]
+  }
+}
