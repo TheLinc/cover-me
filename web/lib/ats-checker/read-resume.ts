@@ -5,7 +5,11 @@ export interface ResumeFile {
 
 export async function readResumeFile(file: File): Promise<ResumeFile> {
   const name = file.name.toLowerCase()
-  if (file.type === 'application/pdf' || name.endsWith('.pdf')) return readPdf(file)
+  if (file.type === 'application/pdf' || name.endsWith('.pdf')) {
+    return readPdf(file).catch(() => {
+      throw new Error(`Couldn't read ${file.name}. If it has a password, save a copy without one, or paste the text instead.`)
+    })
+  }
   if (name.endsWith('.docx')) {
     const { default: mammoth } = await import('mammoth')
     return { text: (await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() })).value.trim() }
@@ -15,8 +19,8 @@ export async function readResumeFile(file: File): Promise<ResumeFile> {
 }
 
 async function readPdf(file: File): Promise<ResumeFile> {
-  const pdfjs = await import('pdfjs-dist')
-  pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString()
+  const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
+  pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/legacy/build/pdf.worker.min.mjs', import.meta.url).toString()
   const task = pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) })
   const pdf = await task.promise.catch(async (err: unknown) => {
     await task.destroy()

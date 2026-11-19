@@ -245,6 +245,7 @@ test('a keyword seen only inside a longer one is found and points at the longer 
     ['Requirements\n- Power BI and business intelligence reporting', 'Built Power BI dashboards.', 'business intelligence', 'Power BI'],
     ['Requirements\n- Experience with AWS, Lambda and S3', '- Deployed services on AWS Lambda and S3 for 2M users.', 'AWS', 'Lambda'],
     ['Requirements\n- SQL and SQL Server', '- Tuned SQL Server queries.', 'SQL', 'SQL Server'],
+    ['Requirements\n- AWS\n- AWS Lambda', 'Wrote Lambda functions.\nMoved jobs to AWS Lambda.\nRan AWS accounts.', 'AWS', 'AWS'],
   ]
   for (const [posting, resume, name, mark] of cases) {
     const checked = checkResume(readPosting(posting).keywords, resume)

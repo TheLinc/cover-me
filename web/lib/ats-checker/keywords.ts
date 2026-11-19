@@ -197,7 +197,8 @@ export function checkResume(keywords: Keyword[], resume: string): Array<Keyword 
   const text = normalize(resume)
   const kept = marks(resume, keywords)
   const byName = new Map(keywords.map((k) => [k.name, k]))
-  const markOf = (k: Term) => {
+  const markOf = (k: Keyword) => {
+    if (kept.some((m) => m.name === k.name)) return k.name
     const at = spans(text, k)
     return kept.find((m) => at.some(([start, end]) => start < m.end && end > m.start))?.name
   }
