@@ -676,7 +676,7 @@ function AuthForm() {
                   className="inline-flex items-center gap-1 align-baseline bg-transparent border-none text-brand-light font-semibold text-[13px] cursor-pointer p-0 hover:text-foreground transition-colors"
                   onClick={() => switchView("signin")}
                 >
-                  Sign in <ArrowRightIcon size={12} aria-hidden="true" />
+                  Sign in <ArrowRightIcon size={12} className="-translate-y-px" aria-hidden="true" />
                 </button>
               </p>
             </>
@@ -818,7 +818,7 @@ function AuthForm() {
                       className="inline-flex items-center gap-1 align-baseline bg-transparent border-none text-brand-light font-semibold text-[13px] cursor-pointer p-0 hover:text-foreground transition-colors"
                       onClick={() => switchView("signup")}
                     >
-                      Create one free <ArrowRightIcon size={12} aria-hidden="true" />
+                      Create one free <ArrowRightIcon size={12} className="-translate-y-px" aria-hidden="true" />
                     </button>
                   </>
                 ) : (
@@ -829,7 +829,7 @@ function AuthForm() {
                       className="inline-flex items-center gap-1 align-baseline bg-transparent border-none text-brand-light font-semibold text-[13px] cursor-pointer p-0 hover:text-foreground transition-colors"
                       onClick={() => switchView("signin")}
                     >
-                      Sign in <ArrowRightIcon size={12} aria-hidden="true" />
+                      Sign in <ArrowRightIcon size={12} className="-translate-y-px" aria-hidden="true" />
                     </button>
                   </>
                 )}

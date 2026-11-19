@@ -745,7 +745,7 @@ export default function PrivacyPage() {
                       rel="noreferrer"
                       className="inline-flex items-center gap-1 text-[12px] text-brand-light hover:text-foreground transition-colors"
                     >
-                      Privacy Policy <ArrowUpRightIcon size={11} aria-hidden="true" />
+                      Privacy Policy <ArrowUpRightIcon size={11} className="-translate-y-px" aria-hidden="true" />
                     </a>
                   </div>
                   <p className="text-[12.5px] text-muted-foreground mb-1">
