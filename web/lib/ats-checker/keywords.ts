@@ -135,7 +135,7 @@ export function readPosting(posting: string): Posting {
     else if (LEVELS.indexOf(k.level) < LEVELS.indexOf(seen.level)) [seen.level, seen.line] = [k.level, current]
   }
   const years: string[] = []
-  const links: Array<[string, string, Level]> = []
+  const chains: Array<{ names: string[]; level: Level }> = []
   let section: Level | 'skip' = 'mentioned'
   let aboutCompany = false
   const addYears = (text: string) => {
@@ -160,12 +160,23 @@ export function readPosting(posting: string): Posting {
       if (found.has(k.name) || (!known && !openers.has(k.name))) add({ ...k, level })
     }
     if (level === 'mentioned') return
+    const groups: string[][] = []
+    const groupOf = (name: string) => groups.find((g) => g.includes(name))
     for (const a of kept) {
       for (const b of kept) {
         const either = a !== b && a.at.some(([, end]) => b.at.some(([start]) => start > end && /^,?\s+or\s+$/i.test(text.slice(end, start))))
-        if (either) links.push([a.term.name, b.term.name, level])
+        if (!either) continue
+        const [ga, gb] = [groupOf(a.term.name), groupOf(b.term.name)]
+        if (ga && gb) {
+          if (ga === gb) continue
+          ga.push(...gb)
+          groups.splice(groups.indexOf(gb), 1)
+        } else if (ga) ga.push(b.term.name)
+        else if (gb) gb.push(a.term.name)
+        else groups.push([a.term.name, b.term.name])
       }
     }
+    for (const names of groups) chains.push({ names, level })
   }
 
   for (const line of lines) {
@@ -200,11 +211,14 @@ export function readPosting(posting: string): Posting {
     }
   }
 
-  for (const [a, b, level] of links) {
-    const [ka, kb] = [found.get(a)!, found.get(b)!]
-    if (ka.level !== level || kb.level !== level) continue
-    ka.alternatives = [...new Set([...(ka.alternatives ?? []), kb.name])]
-    kb.alternatives = [...new Set([...(kb.alternatives ?? []), ka.name])]
+  const chained = new Set<string>()
+  for (const { names, level } of chains) {
+    if (names.some((n) => chained.has(n) || found.get(n)?.level !== level)) continue
+    for (const n of names) {
+      chained.add(n)
+      const k = found.get(n)
+      if (k) k.alternatives = names.filter((m) => m !== n)
+    }
   }
   const keywords = [...found.values()].sort((a, b) => LEVELS.indexOf(a.level) - LEVELS.indexOf(b.level))
   return { keywords, years }

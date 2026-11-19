@@ -351,4 +351,12 @@ test('each "or" ask is one entry, counted once, and asks that share a keyword st
   expect(asks('Requirements\n- Experience with Jest\n- Experience with React or Vue\n- Vue or Angular', 'Built Angular apps with Jest.'))
     .toEqual(['Jest+', 'React-', 'Angular+'])
   expect(asks('Requirements\n- Cypress or Playwright\n- Playwright or Selenium', 'Wrote Selenium suites.')).toEqual(['Cypress-', 'Selenium+'])
+  const reversed = 'Requirements\n- Playwright or Selenium\n- Cypress or Playwright'
+  expect(asks(reversed, 'Wrote Selenium suites.')).toEqual(['Playwright+', 'Cypress-'])
+  expect(asks(reversed, 'Wrote Cypress suites.')).toEqual(['Playwright-', 'Cypress+'])
+  expect(asks(reversed, 'Wrote unit tests.')).toEqual(['Playwright-', 'Cypress-'])
+  expect(asks('Requirements\n- Vue or Angular\n- React or Vue', 'Built Angular apps.')).toEqual(['Vue+', 'React-'])
+  expect(asks('Requirements\n- Experience with Python or Go or Java', 'Wrote Java services.')).toEqual(['Python+'])
+  const chain = readPosting('Requirements\n- Experience with Python or Go or Java').keywords.find((k) => k.name === 'Python')
+  expect(chain?.alternatives).toEqual(['Go', 'Java'])
 })
