@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { CheckIcon, FilePdfIcon, GoogleChromeLogoIcon } from '@phosphor-icons/react/dist/ssr'
+import { ArrowRightIcon, CheckIcon, FilePdfIcon, GoogleChromeLogoIcon } from '@phosphor-icons/react/dist/ssr'
 import { Button } from '@/components/ui/button'
 import { badgeVariants } from '@/components/ui/badge'
 import { storeUrl, cn } from '@/lib/utils'
@@ -170,7 +170,7 @@ export function Hero() {
         <div className="flex flex-col gap-6 max-xl:items-center max-xl:text-center max-md:gap-5">
           {/* Temporary: remove four weeks after it goes live (#152). */}
           <Link href="/changelog" className={cn(badgeVariants({ variant: 'tint' }), 'self-start px-3 py-1 text-[13px] hover:underline max-xl:self-center')}>
-            <span>New: tailor inside your own Word file (beta) <span aria-hidden="true">→</span></span>
+            <span>New: tailor inside your own Word file (beta)</span><ArrowRightIcon size={12} aria-hidden="true" />
           </Link>
           <h1 className="text-balance max-w-[640px] text-[clamp(34px,4.1vw,58px)] leading-[1.02] tracking-[-0.035em]">
             Tailor your resume to any job posting.

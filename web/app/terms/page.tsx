@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { ArrowRightIcon } from '@phosphor-icons/react/dist/ssr'
 import { SiteNav } from '@/components/site/SiteNav'
 import { SiteFooter } from '@/components/site/SiteFooter'
 
@@ -51,7 +52,7 @@ function Ul({ children }: { children: React.ReactNode }) {
 function Li({ children }: { children: React.ReactNode }) {
   return (
     <li className="flex gap-3 text-[15px] text-muted-foreground leading-[1.8]">
-      <span className="text-brand mt-[3px] shrink-0">→</span>
+      <span aria-hidden="true" className="flex h-[1lh] shrink-0 items-center text-brand"><ArrowRightIcon size={14} /></span>
       <span>{children}</span>
     </li>
   )
@@ -91,7 +92,6 @@ export default function TermsPage() {
       <div className="max-w-[1160px] mx-auto px-12 py-16 max-md:px-5">
         <div className="grid grid-cols-[220px_1fr] gap-16 max-lg:grid-cols-1">
 
-          {/* Sidebar TOC */}
           <aside className="max-lg:hidden">
             <div className="sticky top-24">
               <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-2 mb-4">
@@ -111,10 +111,8 @@ export default function TermsPage() {
             </div>
           </aside>
 
-          {/* Main content */}
           <main className="min-w-0">
 
-            {/* Header */}
             <div className="mb-10 pb-10 border-b border-border">
               <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-2 mb-4 block">
                 Legal
@@ -127,7 +125,6 @@ export default function TermsPage() {
               </p>
             </div>
 
-            {/* ── 1. Acceptance ───────────────────────────────────────── */}
             <H2 id="acceptance">Acceptance of Terms</H2>
             <P>
               By installing the Cover Me Chrome extension, creating an account, or using the Cover Me
@@ -139,7 +136,6 @@ export default function TermsPage() {
               extension, Hosted Free account holders, and Hosted Pro subscribers.
             </P>
 
-            {/* ── 2. Description of Service ───────────────────────────── */}
             <H2 id="service">Description of Service</H2>
             <P>
               Cover Me is a Chrome extension and companion web dashboard that generates tailored
@@ -169,7 +165,6 @@ export default function TermsPage() {
               time. We will provide reasonable notice for material changes where practicable.
             </P>
 
-            {/* ── 3. Accounts ─────────────────────────────────────────── */}
             <H2 id="accounts">Accounts</H2>
             <Ul>
               <Li>
@@ -194,7 +189,6 @@ export default function TermsPage() {
               </Li>
             </Ul>
 
-            {/* ── 4. Acceptable Use ───────────────────────────────────── */}
             <H2 id="acceptable">Acceptable Use</H2>
             <P>You agree not to use Cover Me to:</P>
             <Ul>
@@ -210,7 +204,6 @@ export default function TermsPage() {
               prior notice.
             </P>
 
-            {/* ── 5. Payment & Cancellation ───────────────────────────── */}
             <H2 id="payment">Payment &amp; Cancellation</H2>
             <Ul>
               <Li>
@@ -244,7 +237,6 @@ export default function TermsPage() {
               </Li>
             </Ul>
 
-            {/* ── 6. Open Source & MIT License ────────────────────────── */}
             <H2 id="open-source">Open Source &amp; MIT License</H2>
             <P>
               The Cover Me Chrome extension and backend source code are released under the{' '}
@@ -265,7 +257,6 @@ export default function TermsPage() {
               to our hosted infrastructure, our API keys, or our Supabase or Stripe accounts.
             </P>
 
-            {/* ── 7. No Warranty ──────────────────────────────────────── */}
             <H2 id="no-warranty">No Warranty</H2>
             <P>
               Cover Me is provided <strong className="text-foreground">&ldquo;as is&rdquo;</strong> and{' '}
@@ -284,7 +275,6 @@ export default function TermsPage() {
               submitting it to employers. Cover Me is a writing tool, not a guarantee of employment.
             </P>
 
-            {/* ── 8. Limitation of Liability ──────────────────────────── */}
             <H2 id="liability">Limitation of Liability</H2>
             <P>
               To the fullest extent permitted by applicable law, Cover Me and its developer shall not
@@ -303,7 +293,6 @@ export default function TermsPage() {
               permitted by law.
             </P>
 
-            {/* ── 9. Termination ──────────────────────────────────────── */}
             <H2 id="termination">Termination</H2>
             <Ul>
               <Li>
@@ -330,7 +319,6 @@ export default function TermsPage() {
               </Li>
             </Ul>
 
-            {/* ── 10. Changes ─────────────────────────────────────────── */}
             <H2 id="changes">Changes to These Terms</H2>
             <P>
               We may update these Terms of Service from time to time. When we do, we will update
@@ -339,7 +327,6 @@ export default function TermsPage() {
               use of Cover Me after that date constitutes acceptance of the updated Terms.
             </P>
 
-            {/* ── 11. Governing Law ───────────────────────────────────── */}
             <H2 id="governing">Governing Law</H2>
             <P>
               These Terms are governed by and construed in accordance with the laws of the Province
@@ -348,7 +335,6 @@ export default function TermsPage() {
               of Ontario, Canada.
             </P>
 
-            {/* ── 12. Contact ─────────────────────────────────────────── */}
             <H2 id="contact">Contact</H2>
             <P>Questions about these Terms should be directed to:</P>
             <div className="bg-surface border border-border rounded-[10px] px-5 py-4">
@@ -362,7 +348,6 @@ export default function TermsPage() {
               </a>
             </div>
 
-            {/* Footer note */}
             <div className="mt-16 pt-8 border-t border-border">
               <p className="text-[12.5px] text-dim">
                 Cover Me is open-source software released under the MIT License.

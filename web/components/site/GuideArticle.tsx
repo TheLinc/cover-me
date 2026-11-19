@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Source_Serif_4 } from 'next/font/google'
+import { ArrowLeftIcon } from '@phosphor-icons/react/dist/ssr'
 import { storeUrl, cn } from '@/lib/utils'
 import { type Guide, guideArticleJsonLd, guideBreadcrumbJsonLd, readingMinutes, slugify } from '@/lib/guides'
 import { Button } from '@/components/ui/button'
@@ -144,8 +145,8 @@ export function GuideArticle({
 
       <article className="min-w-0 max-w-[680px]">
         <header className="mb-10">
-          <Link href="/guides" className="text-[13px] font-semibold text-brand-strong transition-colors hover:text-brand-deep">
-            ← All guides
+          <Link href="/guides" className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-brand-strong transition-colors hover:text-brand-deep">
+            <ArrowLeftIcon size={12} aria-hidden="true" />All guides
           </Link>
           <h1 className={cn(serif.className, 'mb-5 mt-5 text-[clamp(34px,5vw,52px)] leading-[1.08] tracking-[-0.02em]')}>{guide.title}</h1>
           <p className="text-[20px] leading-[1.6] text-ink-2 max-sm:text-[18px]">{lede}</p>

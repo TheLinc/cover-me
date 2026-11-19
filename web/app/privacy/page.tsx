@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { ArrowRightIcon, ArrowUpRightIcon } from '@phosphor-icons/react/dist/ssr'
 import { SiteNav } from '@/components/site/SiteNav'
 import { SiteFooter } from '@/components/site/SiteFooter'
 
@@ -64,7 +65,7 @@ function Ul({ children }: { children: React.ReactNode }) {
 function Li({ children }: { children: React.ReactNode }) {
   return (
     <li className="flex gap-3 text-[15px] text-muted-foreground leading-[1.8]">
-      <span className="text-brand mt-[3px] shrink-0">→</span>
+      <span aria-hidden="true" className="flex h-[1lh] shrink-0 items-center text-brand"><ArrowRightIcon size={14} /></span>
       <span>{children}</span>
     </li>
   )
@@ -742,9 +743,9 @@ export default function PrivacyPage() {
                       href={svc.url}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-[12px] text-brand-light hover:text-foreground transition-colors"
+                      className="inline-flex items-center gap-1 text-[12px] text-brand-light hover:text-foreground transition-colors"
                     >
-                      Privacy Policy ↗
+                      Privacy Policy <ArrowUpRightIcon size={11} aria-hidden="true" />
                     </a>
                   </div>
                   <p className="text-[12.5px] text-muted-foreground mb-1">
