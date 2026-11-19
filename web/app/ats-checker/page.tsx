@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { AtsChecker } from '@/components/site/AtsChecker'
-import { Eyebrow } from '@/components/site/Eyebrow'
+import { CheckIcon } from '@phosphor-icons/react/dist/ssr'
 import { SiteFooter } from '@/components/site/SiteFooter'
 import { SiteNav } from '@/components/site/SiteNav'
 import { BASE, OG_IMAGE } from '@/lib/structured-data'
@@ -47,15 +47,20 @@ export default function AtsCheckerPage() {
     <div className="min-h-screen bg-background text-foreground">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <SiteNav />
-      <main className="container flex flex-col gap-12 py-16 max-md:py-10">
-        <div className="flex max-w-[720px] flex-col gap-4">
-          <Eyebrow>Free ATS checker</Eyebrow>
-          <h1 className="text-[clamp(32px,5vw,52px)] leading-[1.02]">Check your resume against a job posting&apos;s keywords</h1>
-          <p className="text-[17px] leading-[1.6] text-ink-2">
-            Recruiters search and filter applicants in their tracking system by the posting&apos;s skills, tools and
-            certifications. Paste a posting and your resume to see which ones you have and which you&apos;re missing. No account, and
-            the text never leaves this page.
+      <main className="container flex flex-col gap-12 py-10 max-md:py-6">
+        <div className="-mb-6 flex flex-col gap-3">
+          <h1 className="text-[clamp(30px,4vw,44px)] leading-[1.05]">Free ATS resume checker</h1>
+          <p className="max-w-[640px] text-[16px] leading-[1.55] text-ink-2">
+            See which of the posting&apos;s skills, tools and certifications your resume has, and where they are.
           </p>
+          <ul className="flex flex-wrap gap-2 text-[13px] text-ink-2 max-sm:gap-x-3 max-sm:gap-y-1 max-sm:text-[12.5px]">
+            {['No sign-up', 'Nothing you paste leaves your browser', 'PDF, Word or text'].map((t) => (
+              <li key={t} className="flex items-center gap-1.5 rounded-full border border-line bg-white px-3 py-1 max-sm:border-0 max-sm:bg-transparent max-sm:p-0">
+                <CheckIcon size={12} weight="bold" className="text-brand" aria-hidden />
+                {t}
+              </li>
+            ))}
+          </ul>
         </div>
 
         <AtsChecker />

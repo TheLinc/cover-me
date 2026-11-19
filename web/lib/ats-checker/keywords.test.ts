@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
-import { checkResume, readPosting, type Level } from './keywords'
+import { checkResume, marks, readPosting, type Level } from './keywords'
 import { TERMS } from './terms'
 
 const text = (name: string) => readFileSync(join(__dirname, 'postings', `${name}.txt`), 'utf8')
@@ -206,5 +206,19 @@ describe('acronyms the list lacks', () => {
   test('seen first under duties, then under requirements, count as required', () => {
     const ask = 'Responsibilities\n- Maintain FRB filings\nRequirements\n- FRB reporting'
     expect(readPosting(ask).keywords.find((k) => k.name === 'FRB')?.level).toBe('required')
+  })
+})
+
+describe('showing keywords in the text', () => {
+  test('each keyword keeps the posting line that set its level', () => {
+    const ask = 'About us\nWe use SQL every day.\nRequirements\n- **SQL** and Tableau'
+    expect(readPosting(ask).keywords.find((k) => k.name === 'SQL')?.line).toBe('SQL and Tableau')
+  })
+
+  test('marks sit on the raw text, one per place, the longer name winning', () => {
+    const text = 'Built Power BI dashboards and ran BI reviews in “Excel”.'
+    const { keywords } = readPosting('Requirements\n- Power BI, business intelligence and Excel')
+    const found = marks(text, keywords).map((m) => [m.name, text.slice(m.start, m.end)])
+    expect(found).toEqual([['Power BI', 'Power BI'], ['business intelligence', 'BI'], ['Excel', 'Excel']])
   })
 })

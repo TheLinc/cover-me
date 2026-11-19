@@ -1,10 +1,12 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { beforeAll, describe, expect, test } from 'vitest'
+import { checkResumeText } from './hints'
 import { checkResume, readPosting } from './keywords'
 import { readResumeFile } from './read-resume'
 
-const SAMPLE = join(__dirname, '../../public/guides/ats-friendly-resume-format/files/single-column')
+const FILES = join(__dirname, '../../public/guides/ats-friendly-resume-format/files')
+const SAMPLE = join(FILES, 'single-column')
 const file = (path: string, type = '') => new File([readFileSync(path)], path.split(/[\\/]/).pop()!, { type })
 
 const POSTING = 'Requirements\n- SEO and content marketing\n- Google Analytics and A/B testing\n- HubSpot or Salesforce\n- Copywriting'
@@ -19,13 +21,25 @@ describe('reading an uploaded resume', () => {
   })
 
   test.each([['docx', ''], ['pdf', 'application/pdf']])('a %s upload finds the same keywords as the sample resume', async (ext, type) => {
-    const text = await readResumeFile(file(`${SAMPLE}.${ext}`, type))
+    const { text } = await readResumeFile(file(`${SAMPLE}.${ext}`, type))
     const result = Object.fromEntries(checkResume(readPosting(POSTING).keywords, text).map((k) => [k.name, k.found]))
     expect(result).toEqual(EXPECTED)
   })
 
   test('a text file is read as is, and other types are refused', async () => {
-    expect(await readResumeFile(new File(['  SQL and Python \n'], 'resume.txt', { type: 'text/plain' }))).toBe('SQL and Python')
+    expect(await readResumeFile(new File(['  SQL and Python \n'], 'resume.txt', { type: 'text/plain' }))).toEqual({ text: 'SQL and Python' })
     await expect(readResumeFile(new File(['x'], 'resume.pages'))).rejects.toThrow('Upload a PDF, a Word file (.docx) or a text file.')
   })
+
+  test.each([['single-column.pdf', 'application/pdf'], ['single-column.docx', ''], ['two-column.pdf', 'application/pdf']])(
+    '%s gives only real bullets, each with its number, and a page count for PDFs',
+    async (name, type) => {
+      const { text, pages } = await readResumeFile(file(join(FILES, name), type))
+      const { bullets, email, phone } = checkResumeText(text, '')
+      expect(bullets.total).toBe(7)
+      expect(bullets.withoutNumber).toEqual([])
+      expect({ email, phone }).toEqual({ email: true, phone: true })
+      expect(pages).toBe(type ? 1 : undefined)
+    },
+  )
 })

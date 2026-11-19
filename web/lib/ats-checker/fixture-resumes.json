@@ -1,0 +1,415 @@
+[
+ {
+  "id": "tech-mid-to-senior-title",
+  "text": "Alex Rivera\nalex.rivera.dev@email.com | (555) 201-8842 | github.com/arivera-dev\n\nEXPERIENCE\n\nFrontend Engineer — Halcyon Analytics, Denver, CO (Mar 2023 – Present)\n- Built dashboard views in React and TypeScript used by 60,000 monthly active users\n- Reduced initial page load from 1.2s to 400ms by code-splitting and lazy-loading chart modules\n- Led migration from JavaScript to TypeScript across a 5-engineer frontend team\n- Review 8-10 pull requests a week and mentor two junior engineers\n- Integrated GraphQL API layer replacing four legacy REST endpoints\n\nJunior Web Developer — BrightForm Studio, Denver, CO (Jun 2020 – Feb 2023)\n- Developed marketing sites and internal tools in React for 20+ client projects\n- Improved Lighthouse accessibility scores from 71 to 96 average across client portfolio\n- Wrote Jest and React Testing Library suites reaching 85% coverage on shared component library\n\nPROJECTS\n\nOpenShelf (github.com/arivera-dev/openshelf)\n- Built a library inventory app with React, Zustand, and Supabase; 400+ GitHub stars\n\nEDUCATION\n\nB.S. Computer Science — University of Colorado Boulder, Boulder, CO (2016 – 2020)\n\nSKILLS\nReact, TypeScript, JavaScript, GraphQL, Zustand, Jest, React Testing Library, HTML, CSS, Node.js, Supabase, Git",
+  "bullets": [
+   "Built dashboard views in React and TypeScript used by 60,000 monthly active users",
+   "Reduced initial page load from 1.2s to 400ms by code-splitting and lazy-loading chart modules",
+   "Led migration from JavaScript to TypeScript across a 5-engineer frontend team",
+   "Review 8-10 pull requests a week and mentor two junior engineers",
+   "Integrated GraphQL API layer replacing four legacy REST endpoints",
+   "Developed marketing sites and internal tools in React for 20+ client projects",
+   "Improved Lighthouse accessibility scores from 71 to 96 average across client portfolio",
+   "Wrote Jest and React Testing Library suites reaching 85% coverage on shared component library",
+   "Built a library inventory app with React, Zustand, and Supabase; 400+ GitHub stars"
+  ]
+ },
+ {
+  "id": "long-nurse-missing-certs",
+  "text": "Jordan Bell, RN\njordan.bell.rn@email.com | (555) 774-3310\n\nLICENSES & CERTIFICATIONS\nRegistered Nurse (RN) — Colorado, License #RN-88213, Active\nBasic Life Support (BLS) — American Heart Association, Expires Sep 2027\n\nEXPERIENCE\n\nStaff Nurse, Medical-Surgical Unit — St. Anne's Regional Hospital, Aurora, CO (Aug 2022 – Present)\n- Manage a caseload of 6-7 patients per 12-hour shift on a 28-bed med-surg unit\n- Chart assessments, medications, and care plans in Epic EHR\n- Precepted 3 newly graduated nurses through their first 12 weeks\n- Zero medication errors across tenure, verified through quarterly pharmacy audits\n- Lead patient and family education for post-surgical discharge planning\n\nNurse Extern — Front Range Community Hospital, Denver, CO (May 2021 – Jul 2022)\n- Supported patient care on a 40-bed medical floor under RN supervision\n- Documented vitals and intake for 15+ patients per shift\n\nEDUCATION\nBachelor of Science in Nursing (BSN) — Regis University, Denver, CO (2018 – 2022)\n\nSKILLS\nPatient assessment, medication administration, Epic EHR, care planning, patient education, discharge planning, wound care, IV therapy",
+  "bullets": [
+   "Manage a caseload of 6-7 patients per 12-hour shift on a 28-bed med-surg unit",
+   "Chart assessments, medications, and care plans in Epic EHR",
+   "Precepted 3 newly graduated nurses through their first 12 weeks",
+   "Zero medication errors across tenure, verified through quarterly pharmacy audits",
+   "Lead patient and family education for post-surgical discharge planning",
+   "Supported patient care on a 40-bed medical floor under RN supervision",
+   "Documented vitals and intake for 15+ patients per shift"
+  ]
+ },
+ {
+  "id": "marketing-domain-borrow",
+  "text": "Sam Chen\nsam.chen.mktg@email.com | (555) 662-9107 | samchenwrites.com\n\nEXPERIENCE\n\nContent Marketing Manager — Fernwood Outdoor Co., Boulder, CO (Jan 2023 – Present)\n- Grew email list from 12,000 to 38,000 subscribers in 18 months through gated guides and referral loops\n- Raised email campaign click-through rate from 2.1% to 3.4% by segmenting sends in HubSpot\n- Run Google Ads search campaigns with a $15,000 monthly budget, holding CPA under $22\n- Publish 6-8 SEO articles a month; organic sessions up 140% year over year in GA4\n\nMarketing Coordinator — Peakline Gear, Denver, CO (Jul 2020 – Dec 2022)\n- Managed editorial calendar across blog, email, and social channels\n- Wrote product launch copy for 30+ SKUs per season\n\nEDUCATION\nB.A. Communications — Colorado State University (2016 – 2020)\n\nSKILLS\nContent strategy, SEO, email marketing, HubSpot, Google Ads, Google Analytics 4, copywriting, editorial planning, A/B testing",
+  "bullets": [
+   "Grew email list from 12,000 to 38,000 subscribers in 18 months through gated guides and referral loops",
+   "Raised email campaign click-through rate from 2.1% to 3.4% by segmenting sends in HubSpot",
+   "Run Google Ads search campaigns with a $15,000 monthly budget, holding CPA under $22",
+   "Publish 6-8 SEO articles a month; organic sessions up 140% year over year in GA4",
+   "Managed editorial calendar across blog, email, and social channels",
+   "Wrote product launch copy for 30+ SKUs per season"
+  ]
+ },
+ {
+  "id": "business-analyst-missing-cert",
+  "text": "Priya Natarajan\npriya.natarajan@email.com | (555) 318-4402\n\nEXPERIENCE\nOperations Analyst — Northgate Distribution, Columbus, OH (Apr 2021 – Present)\n- Built Power BI dashboards tracking on-time delivery for 14 regional warehouses\n- Wrote SQL queries against the order database to find root causes of late shipments, cutting late orders from 9% to 5%\n- Documented as-is and to-be processes for the returns workflow and presented recommendations to the VP of Operations\n- Gathered requirements from 6 department leads for a new carrier scheduling tool and tracked delivery in Jira\n\nJunior Analyst — Brightline Insurance Services, Columbus, OH (Jun 2019 – Mar 2021)\n- Maintained weekly claims volume reports in Excel for 3 underwriting teams\n- Reconciled policy data between two systems, resolving 1,200 mismatched records\n\nEDUCATION\nB.S. Business Administration — Ohio State University, Columbus, OH (2015 – 2019)\n\nSKILLS\nSQL, Power BI, Excel (pivot tables, VLOOKUP), Jira, process mapping, requirements gathering, Visio",
+  "bullets": [
+   "Built Power BI dashboards tracking on-time delivery for 14 regional warehouses",
+   "Wrote SQL queries against the order database to find root causes of late shipments, cutting late orders from 9% to 5%",
+   "Documented as-is and to-be processes for the returns workflow and presented recommendations to the VP of Operations",
+   "Gathered requirements from 6 department leads for a new carrier scheduling tool and tracked delivery in Jira",
+   "Maintained weekly claims volume reports in Excel for 3 underwriting teams",
+   "Reconciled policy data between two systems, resolving 1,200 mismatched records"
+  ]
+ },
+ {
+  "id": "sales-ae-midmarket-to-enterprise",
+  "text": "Marcus Webb\nmarcus.webb.sales@email.com | (555) 640-2291 | linkedin.com/in/marcuswebb\n\nEXPERIENCE\nAccount Executive — Paylane, Chicago, IL (Feb 2022 – Present)\n- Closed $1.4M in new annual recurring revenue in 2024, 118% of quota\n- Ran full sales cycles for mid-market companies with 50-500 employees, average deal size $38,000\n- Built pipeline through Outreach sequences and LinkedIn, sourcing 40% of closed opportunities\n- Kept Salesforce forecasts current and presented pipeline reviews to the sales director weekly\n\nSales Development Representative — Paylane, Chicago, IL (Jun 2020 – Jan 2022)\n- Booked 25+ qualified meetings a month through cold calls and email\n- Promoted to Account Executive after 19 months\n\nEDUCATION\nB.A. Economics — University of Illinois Chicago, Chicago, IL (2016 – 2020)\n\nSKILLS\nSalesforce, Outreach, Gong, LinkedIn Sales Navigator, discovery calls, negotiation, pipeline management, forecasting",
+  "bullets": [
+   "Closed $1.4M in new annual recurring revenue in 2024, 118% of quota",
+   "Ran full sales cycles for mid-market companies with 50-500 employees, average deal size $38,000",
+   "Built pipeline through Outreach sequences and LinkedIn, sourcing 40% of closed opportunities",
+   "Kept Salesforce forecasts current and presented pipeline reviews to the sales director weekly",
+   "Booked 25+ qualified meetings a month through cold calls and email",
+   "Promoted to Account Executive after 19 months"
+  ]
+ },
+ {
+  "id": "project-manager-capm-not-pmp",
+  "text": "Elena Petrova\nelena.petrova.pm@email.com | (555) 207-9914\n\nEXPERIENCE\nIT Project Coordinator — Harbor Logistics, Seattle, WA (Mar 2022 – Present)\n- Coordinated schedules, budgets, and status reporting for 4 concurrent software rollout projects\n- Ran daily standups and sprint planning as Scrum Master for a 7-person development team\n- Maintained project plans in MS Project and tracked risks in a weekly RAID log\n- Delivered a warehouse scanner rollout to 12 sites two weeks ahead of schedule\n\nAdministrative Assistant — Harbor Logistics, Seattle, WA (Jan 2020 – Feb 2022)\n- Scheduled cross-department meetings and took minutes for the IT steering committee\n\nEDUCATION\nB.A. Communication — University of Washington, Seattle, WA (2015 – 2019)\n\nCERTIFICATIONS\n- Certified ScrumMaster (CSM) — Scrum Alliance — 2022\n- Certified Associate in Project Management (CAPM) — PMI — 2023\n\nSKILLS\nMS Project, Jira, Confluence, Scrum, risk management, stakeholder communication, budget tracking",
+  "bullets": [
+   "Coordinated schedules, budgets, and status reporting for 4 concurrent software rollout projects",
+   "Ran daily standups and sprint planning as Scrum Master for a 7-person development team",
+   "Maintained project plans in MS Project and tracked risks in a weekly RAID log",
+   "Delivered a warehouse scanner rollout to 12 sites two weeks ahead of schedule",
+   "Scheduled cross-department meetings and took minutes for the IT steering committee"
+  ]
+ },
+ {
+  "id": "hr-coordinator-to-generalist",
+  "text": "Aisha Rahman\naisha.rahman.hr@email.com | (555) 733-0158\n\nEXPERIENCE\nHR Coordinator — Summit Outdoor Retail, Denver, CO (Aug 2021 – Present)\n- Ran new-hire onboarding for 150+ employees a year across 9 store locations in BambooHR\n- Processed biweekly payroll changes in ADP for 420 employees\n- Investigated and documented 30+ employee relations cases, escalating policy issues to the HR manager\n- Updated the employee handbook for Colorado paid leave law changes\n\nHR Assistant — Summit Outdoor Retail, Denver, CO (Jun 2019 – Jul 2021)\n- Scheduled interviews for store manager and associate roles\n- Maintained personnel files and ran I-9 compliance audits\n\nEDUCATION\nB.S. Psychology — Colorado State University, Fort Collins, CO (2015 – 2019)\n\nSKILLS\nBambooHR, ADP Workforce Now, onboarding, employee relations, I-9 compliance, benefits enrollment, Microsoft Excel",
+  "bullets": [
+   "Ran new-hire onboarding for 150+ employees a year across 9 store locations in BambooHR",
+   "Processed biweekly payroll changes in ADP for 420 employees",
+   "Investigated and documented 30+ employee relations cases, escalating policy issues to the HR manager",
+   "Updated the employee handbook for Colorado paid leave law changes",
+   "Scheduled interviews for store manager and associate roles",
+   "Maintained personnel files and ran I-9 compliance audits"
+  ]
+ },
+ {
+  "id": "customer-support-tier2",
+  "text": "Tomás Alvarez\ntomas.alvarez@email.com | (555) 402-7765\n\nEXPERIENCE\nCustomer Service Representative — Clearwave Internet, Phoenix, AZ (Mar 2022 – Present)\n- Resolve 55-65 billing and connectivity tickets a day in Zendesk\n- Hold a 94% CSAT score over the last 12 months, top 10% of a 60-agent team\n- Wrote 18 help-center articles that cut repeat billing contacts\n- Train new hires on the escalation process during their first 2 weeks\n\nCashier — FreshMart Grocery, Phoenix, AZ (Jun 2020 – Feb 2022)\n- Handled cash and card transactions and resolved customer complaints at the service desk\n\nEDUCATION\nHigh School Diploma — Desert Vista High School, Phoenix, AZ (2016 – 2020)\n\nSKILLS\nZendesk, ticket triage, de-escalation, knowledge base writing, Microsoft Teams, typing 70 WPM",
+  "bullets": [
+   "Resolve 55-65 billing and connectivity tickets a day in Zendesk",
+   "Hold a 94% CSAT score over the last 12 months, top 10% of a 60-agent team",
+   "Wrote 18 help-center articles that cut repeat billing contacts",
+   "Train new hires on the escalation process during their first 2 weeks",
+   "Handled cash and card transactions and resolved customer complaints at the service desk"
+  ]
+ },
+ {
+  "id": "executive-assistant-tool-swap",
+  "text": "Grace Kim\ngrace.kim.ea@email.com | (555) 918-3346\n\nEXPERIENCE\nExecutive Assistant to the CFO — Ironwood Capital Partners, New York, NY (Sep 2020 – Present)\n- Manage calendar, travel, and expenses for the CFO and two managing directors\n- Prepare board meeting materials for 4 quarterly board meetings a year\n- Process monthly expense reports in Concur, averaging 80 receipts a month\n- Coordinate an annual investor conference for 300 attendees\n\nFront Desk Coordinator — Ironwood Capital Partners, New York, NY (Jan 2018 – Aug 2020)\n- Managed visitor check-in and conference room scheduling for a 120-person office\n\nEDUCATION\nB.A. English — Fordham University, Bronx, NY (2013 – 2017)\n\nSKILLS\nMicrosoft 365 (Outlook, Excel, PowerPoint), Concur, calendar management, travel planning, event coordination, board meeting preparation",
+  "bullets": [
+   "Manage calendar, travel, and expenses for the CFO and two managing directors",
+   "Prepare board meeting materials for 4 quarterly board meetings a year",
+   "Process monthly expense reports in Concur, averaging 80 receipts a month",
+   "Coordinate an annual investor conference for 300 attendees",
+   "Managed visitor check-in and conference room scheduling for a 120-person office"
+  ]
+ },
+ {
+  "id": "office-manager-career-gap",
+  "text": "Linda Moreau\nlinda.moreau@email.com | (555) 581-2047\n\nPROFILE\nOffice manager and bookkeeper returning to work after a five-year career break for family caregiving.\n\nEXPERIENCE\nOffice Manager & Bookkeeper — Cedar & Pine Dental, Portland, OR (Mar 2012 – Dec 2018)\n- Kept the books in QuickBooks Desktop for a 3-dentist practice with $2.1M in annual revenue\n- Ran payroll for 14 staff and filed quarterly payroll tax reports\n- Negotiated supply contracts that cut dental supply spend by 12%\n- Managed front-desk scheduling and insurance billing for 40+ patients a day\n\nReceptionist — Cedar & Pine Dental, Portland, OR (Jun 2009 – Feb 2012)\n- Checked in patients and verified dental insurance coverage\n\nEDUCATION\nA.A.S. Business Administration — Portland Community College, Portland, OR (2007 – 2009)\n\nSKILLS\nQuickBooks, payroll, accounts payable, accounts receivable, vendor negotiation, scheduling, Microsoft Office",
+  "bullets": [
+   "Kept the books in QuickBooks Desktop for a 3-dentist practice with $2.1M in annual revenue",
+   "Ran payroll for 14 staff and filed quarterly payroll tax reports",
+   "Negotiated supply contracts that cut dental supply spend by 12%",
+   "Managed front-desk scheduling and insurance billing for 40+ patients a day",
+   "Checked in patients and verified dental insurance coverage"
+  ]
+ },
+ {
+  "id": "accountant-no-cpa",
+  "text": "Daniel Okoro\ndaniel.okoro.acct@email.com | (555) 264-8830\n\nEXPERIENCE\nStaff Accountant — Meadowbrook Foods, Milwaukee, WI (May 2021 – Present)\n- Own month-end close for 3 entities, closing the books in 5 business days\n- Prepare balance sheet reconciliations and journal entries under US GAAP\n- Reduced accounts payable exceptions by 30% by standardizing vendor coding in QuickBooks Online\n- Support the annual external audit by preparing 60+ PBC schedules\n\nAccounting Clerk — Lakeshore Property Management, Milwaukee, WI (Jul 2019 – Apr 2021)\n- Processed 400+ vendor invoices a month\n- Reconciled 12 bank accounts monthly\n\nEDUCATION\nB.B.A. Accounting — University of Wisconsin–Milwaukee, Milwaukee, WI (2015 – 2019)\n\nSKILLS\nQuickBooks Online, Excel (pivot tables, XLOOKUP), US GAAP, month-end close, account reconciliation, accounts payable, audit support",
+  "bullets": [
+   "Own month-end close for 3 entities, closing the books in 5 business days",
+   "Prepare balance sheet reconciliations and journal entries under US GAAP",
+   "Reduced accounts payable exceptions by 30% by standardizing vendor coding in QuickBooks Online",
+   "Support the annual external audit by preparing 60+ PBC schedules",
+   "Processed 400+ vendor invoices a month",
+   "Reconciled 12 bank accounts monthly"
+  ]
+ },
+ {
+  "id": "uk-finance-assistant",
+  "text": "Charlotte Evans\ncharlotte.evans@email.co.uk | +44 7700 900123\n\nPERSONAL PROFILE\nFinance assistant with experience in purchase ledger and credit control.\n\nKEY SKILLS\nXero, purchase ledger, credit control, bank reconciliation, VAT, Excel\n\nEMPLOYMENT HISTORY\nFinance Assistant — Hartley & Sons Ltd, Leeds (09/2022 – Present)\n- Process 600+ supplier invoices a month in Xero across 3 cost centres\n- Run weekly payment runs and supplier statement reconciliations\n- Chase overdue debtors, reducing aged debt over 60 days by 25%\n- Prepare VAT return workpapers for the finance manager\n\nAccounts Clerk — Brookfield Housing Association, Leeds (07/2020 – 08/2022)\n- Posted journals and reconciled 4 bank accounts\n\nEDUCATION\nAAT Level 2 Certificate in Accounting — Leeds City College, Leeds (2019 – 2020)\nA-levels: Maths (B), Business (B), English (C) — Roundhay School, Leeds (2017 – 2019)",
+  "bullets": [
+   "Process 600+ supplier invoices a month in Xero across 3 cost centres",
+   "Run weekly payment runs and supplier statement reconciliations",
+   "Chase overdue debtors, reducing aged debt over 60 days by 25%",
+   "Prepare VAT return workpapers for the finance manager",
+   "Posted journals and reconciled 4 bank accounts"
+  ]
+ },
+ {
+  "id": "paralegal-litigation-to-corporate",
+  "text": "Nadia Haddad\nnadia.haddad.paralegal@email.com | (555) 356-1180\n\nEXPERIENCE\nLitigation Paralegal — Morrow & Keane LLP, Philadelphia, PA (Jan 2020 – Present)\n- Manage document productions of up to 250,000 pages in Relativity for commercial litigation matters\n- Draft discovery requests, deposition notices, and privilege logs for 5 attorneys\n- Track court deadlines for 40+ active cases in Clio\n- Prepared trial binders and exhibits for 3 jury trials\n\nLegal Assistant — Delgado Law Office, Philadelphia, PA (Jun 2017 – Dec 2019)\n- Filed pleadings through PACER and the Pennsylvania e-filing system\n- Scheduled client intake meetings\n\nEDUCATION\nParalegal Certificate — Community College of Philadelphia, Philadelphia, PA (2016 – 2017)\nB.A. Political Science — Temple University, Philadelphia, PA (2012 – 2016)\n\nSKILLS\nRelativity, Clio, PACER, e-discovery, privilege logs, legal research (Westlaw), trial preparation",
+  "bullets": [
+   "Manage document productions of up to 250,000 pages in Relativity for commercial litigation matters",
+   "Draft discovery requests, deposition notices, and privilege logs for 5 attorneys",
+   "Track court deadlines for 40+ active cases in Clio",
+   "Prepared trial binders and exhibits for 3 jury trials",
+   "Filed pleadings through PACER and the Pennsylvania e-filing system",
+   "Scheduled client intake meetings"
+  ]
+ },
+ {
+  "id": "teacher-out-of-state",
+  "text": "Kayla Brooks\nkayla.brooks.teach@email.com | (555) 480-6623\n\nEXPERIENCE\nMath Teacher (Grades 8–9) — Lincoln Middle School, Aurora, CO (Aug 2020 – Present)\n- Teach Algebra I and Pre-Algebra to 140 students across 5 sections\n- Raised the share of students meeting state math standards from 38% to 52% over two years\n- Write IEP and 504 accommodations into lesson plans for 22 students\n- Use Google Classroom and Desmos for daily practice and formative assessment\n\nStudent Teacher — Rangeview High School, Aurora, CO (Jan 2020 – May 2020)\n- Co-taught Algebra II under a mentor teacher\n\nEDUCATION\nB.A. Mathematics with Secondary Education Licensure — University of Northern Colorado, Greeley, CO (2016 – 2020)\n\nCERTIFICATIONS\n- Colorado Professional Educator License — Secondary Mathematics (7–12), expires 2029\n\nSKILLS\nGoogle Classroom, Desmos, differentiated instruction, IEP/504 accommodations, formative assessment, classroom management",
+  "bullets": [
+   "Teach Algebra I and Pre-Algebra to 140 students across 5 sections",
+   "Raised the share of students meeting state math standards from 38% to 52% over two years",
+   "Write IEP and 504 accommodations into lesson plans for 22 students",
+   "Use Google Classroom and Desmos for daily practice and formative assessment",
+   "Co-taught Algebra II under a mentor teacher"
+  ]
+ },
+ {
+  "id": "teacher-to-instructional-designer",
+  "text": "Monica Reyes\nmonica.reyes.id@email.com | (555) 772-4019\n\nPROFILE\nScience teacher moving into instructional design.\n\nEXPERIENCE\nScience Teacher — Jefferson High School, Sacramento, CA (Aug 2016 – Jun 2025)\n- Designed a 9th-grade biology curriculum of 36 units aligned to state standards\n- Built self-paced review modules in Google Slides and Canva for 150 students a year\n- Led professional development workshops on backward design for 25 teachers\n- Tracked assessment data to revise units, raising unit test averages from 71% to 80%\n\nEDUCATION\nM.A. Education — Sacramento State University, Sacramento, CA (2014 – 2016)\nB.S. Biology — UC Davis, Davis, CA (2010 – 2014)\n\nSKILLS\ncurriculum design, backward design, Google Slides, Canva, assessment design, Google Classroom, adult facilitation",
+  "bullets": [
+   "Designed a 9th-grade biology curriculum of 36 units aligned to state standards",
+   "Built self-paced review modules in Google Slides and Canva for 150 students a year",
+   "Led professional development workshops on backward design for 25 teachers",
+   "Tracked assessment data to revise units, raising unit test averages from 71% to 80%"
+  ]
+ },
+ {
+  "id": "electrician-commercial-to-industrial",
+  "text": "Luis Ortega\nluis.ortega.electric@email.com | (555) 306-7741\n\nLICENSES & TICKETS\n- Colorado Journeyman Electrician License #JW.105532\n- OSHA 10-Hour Construction\n- First Aid/CPR\n\nWORK HISTORY\nFront Range Electric | Denver, CO\nJourneyman Electrician | Mar 2021 – Present\n- Install and troubleshoot 120/208V three-phase power in commercial tenant finish-outs\n- Bend and run EMT and rigid conduit on projects up to 40,000 sq ft\n- Read blueprints and lay out panel schedules with the foreman\n- Lead a 3-person crew on service upgrades\n\nApex Residential Electric | Aurora, CO\nApprentice Electrician | Aug 2017 – Feb 2021\n- Wired 60+ new-construction homes to NEC code\n- Passed every city inspection on the first attempt during the final 2 years\n\nTRAINING\nElectrical Apprenticeship Program — IEC Rocky Mountain, Denver, CO (2017 – 2021)\n\nSKILLS\nNEC code, conduit bending, blueprint reading, three-phase power, troubleshooting, panel installation",
+  "bullets": [
+   "Install and troubleshoot 120/208V three-phase power in commercial tenant finish-outs",
+   "Bend and run EMT and rigid conduit on projects up to 40,000 sq ft",
+   "Read blueprints and lay out panel schedules with the foreman",
+   "Lead a 3-person crew on service upgrades",
+   "Wired 60+ new-construction homes to NEC code",
+   "Passed every city inspection on the first attempt during the final 2 years"
+  ]
+ },
+ {
+  "id": "welder-structural-to-pipe",
+  "text": "Jake Morrison\njake.morrison.weld@email.com | (555) 219-5530\n\nEXPERIENCE\nStructural Welder — Ironclad Fabrication, Tulsa, OK (Jun 2019 – Present)\n- Weld structural steel beams and columns with FCAW and SMAW in all positions\n- Read shop drawings and weld symbols to fabricate 15-20 assemblies a week\n- Kept a zero-rework record on 2 consecutive bridge girder jobs\n\nWelder Helper — Tulsa Steel Works, Tulsa, OK (Jan 2018 – May 2019)\n- Prepped and ground joints and ran fit-up for senior welders\n\nEDUCATION\nWelding Technology Certificate — Tulsa Tech, Tulsa, OK (2017)\n\nCERTIFICATIONS\n- AWS D1.1 Structural Welding — 3G and 4G (FCAW, SMAW)\n- OSHA 10-Hour General Industry",
+  "bullets": [
+   "Weld structural steel beams and columns with FCAW and SMAW in all positions",
+   "Read shop drawings and weld symbols to fabricate 15-20 assemblies a week",
+   "Kept a zero-rework record on 2 consecutive bridge girder jobs",
+   "Prepped and ground joints and ran fit-up for senior welders"
+  ]
+ },
+ {
+  "id": "line-cook-to-sous-chef",
+  "text": "Andre Thompson\nandre.thompson.cook@email.com | (555) 845-2203\n\nEXPERIENCE\nLine Cook — Copper Kettle Bistro, Austin, TX (Apr 2021 – Present)\n- Run the grill station for 250+ covers on weekend nights\n- Prep sauces and proteins for a 40-item seasonal menu\n- Train 4 new line cooks on station setup and plating standards\n- Keep temperature logs and have passed every health inspection since 2021\n\nPrep Cook — Taqueria del Sol, Austin, TX (Aug 2019 – Mar 2021)\n- Prepped ingredients for 300 meals a day\n- Received and stocked produce deliveries\n\nEDUCATION\nCulinary Arts Certificate — Austin Community College, Austin, TX (2018 – 2019)\n\nCERTIFICATIONS\n- ServSafe Food Handler — 2024\n\nSKILLS\ngrill station, sauce work, knife skills, inventory ordering, food safety, plating",
+  "bullets": [
+   "Run the grill station for 250+ covers on weekend nights",
+   "Prep sauces and proteins for a 40-item seasonal menu",
+   "Train 4 new line cooks on station setup and plating standards",
+   "Keep temperature logs and have passed every health inspection since 2021",
+   "Prepped ingredients for 300 meals a day",
+   "Received and stocked produce deliveries"
+  ]
+ },
+ {
+  "id": "retail-keyholder-to-asm",
+  "text": "Sofia Martinez\nsofia.martinez.retail@email.com | (555) 627-3398\n\nEXPERIENCE\nKeyholder — Trailhead Outfitters, Salt Lake City, UT (May 2022 – Present)\n- Open and close the store 3 days a week, including cash counts and deposits\n- Lead a team of 6 sales associates during weekend shifts\n- Reset seasonal floor displays using corporate planograms\n- Beat monthly sales targets in 9 of the last 12 months\n\nSales Associate — Trailhead Outfitters, Salt Lake City, UT (Sep 2020 – Apr 2022)\n- Averaged $1,800 in sales per shift\n- Signed up 35 loyalty members a month\n\nEDUCATION\nHigh School Diploma — West High School, Salt Lake City, UT (2016 – 2020)\n\nSKILLS\ncash handling, visual merchandising, planograms, POS systems, inventory counts, customer service",
+  "bullets": [
+   "Open and close the store 3 days a week, including cash counts and deposits",
+   "Lead a team of 6 sales associates during weekend shifts",
+   "Reset seasonal floor displays using corporate planograms",
+   "Beat monthly sales targets in 9 of the last 12 months",
+   "Averaged $1,800 in sales per shift",
+   "Signed up 35 loyalty members a month"
+  ]
+ },
+ {
+  "id": "warehouse-lead-wms-swap",
+  "text": "Derrick Hall\nderrick.hall.ops@email.com | (555) 713-5582\n\nEXPERIENCE\nWarehouse Lead — Midwest Parts Supply, Indianapolis, IN (Feb 2021 – Present)\n- Lead a 10-person picking crew averaging 145 picks per hour\n- Run cycle counts in Manhattan WMS with 99.6% inventory accuracy\n- Operate sit-down and reach forklifts with zero recordable incidents in 3 years\n- Rolled out 5S in the shipping area, freeing 800 sq ft of floor space\n\nMaterial Handler — Midwest Parts Supply, Indianapolis, IN (Jul 2018 – Jan 2021)\n- Loaded and unloaded 20+ trailers a shift using RF scanners\n\nEDUCATION\nHigh School Diploma — Arsenal Technical High School, Indianapolis, IN (2014 – 2018)\n\nCERTIFICATIONS\n- OSHA Powered Industrial Truck (Forklift) Certification — 2024\n\nSKILLS\nManhattan WMS, RF scanners, forklift operation, cycle counting, 5S, shipping and receiving",
+  "bullets": [
+   "Lead a 10-person picking crew averaging 145 picks per hour",
+   "Run cycle counts in Manhattan WMS with 99.6% inventory accuracy",
+   "Operate sit-down and reach forklifts with zero recordable incidents in 3 years",
+   "Rolled out 5S in the shipping area, freeing 800 sq ft of floor space",
+   "Loaded and unloaded 20+ trailers a shift using RF scanners"
+  ]
+ },
+ {
+  "id": "cdl-driver-missing-endorsement",
+  "text": "Ray Castillo\nray.castillo.cdl@email.com | (555) 494-1106\n\nEXPERIENCE\nRegional Truck Driver — Blue Mesa Freight, Albuquerque, NM (Mar 2019 – Present)\n- Drive 2,500 miles a week on regional dry van and tanker routes across 4 states\n- Kept a clean MVR with zero preventable accidents over 600,000 miles\n- Complete pre-trip inspections and ELD logs under FMCSA hours-of-service rules\n\nDelivery Driver — Sunland Beverage, Albuquerque, NM (May 2016 – Feb 2019)\n- Delivered to 25 stops a day in a 26-foot box truck\n\nEDUCATION\nHigh School Diploma — Rio Grande High School, Albuquerque, NM (2012 – 2016)\n\nCERTIFICATIONS\n- CDL Class A — New Mexico — Tanker (N) endorsement\n- DOT Medical Card — valid through 2027",
+  "bullets": [
+   "Drive 2,500 miles a week on regional dry van and tanker routes across 4 states",
+   "Kept a clean MVR with zero preventable accidents over 600,000 miles",
+   "Complete pre-trip inspections and ELD logs under FMCSA hours-of-service rules",
+   "Delivered to 25 stops a day in a 26-foot box truck"
+  ]
+ },
+ {
+  "id": "veteran-to-distribution-ops",
+  "text": "Brandon Kelly\nbrandon.kelly.ops@email.com | (555) 356-9920\n\nEXPERIENCE\nSupply Sergeant (92Y) — U.S. Army, Fort Carson, CO (Jun 2018 – May 2024)\n- Managed a $12M property book of vehicles, weapons, and equipment with 100% accountability across 3 inspections\n- Supervised 6 soldiers receiving, storing, and issuing supplies for a 600-soldier battalion\n- Ran inventory in GCSS-Army and reconciled discrepancies with the brigade supply office\n- Planned equipment load-outs for 2 overseas deployments\n\nUnit Supply Specialist — U.S. Army, Fort Hood, TX (Jun 2014 – May 2018)\n- Issued and tracked equipment for a 150-soldier company\n\nEDUCATION\nA.A.S. Logistics Management — Pikes Peak State College, Colorado Springs, CO (2019 – 2022)\n\nSKILLS\ninventory management, GCSS-Army, property accountability, team leadership, Microsoft Excel, hazardous materials handling",
+  "bullets": [
+   "Managed a $12M property book of vehicles, weapons, and equipment with 100% accountability across 3 inspections",
+   "Supervised 6 soldiers receiving, storing, and issuing supplies for a 600-soldier battalion",
+   "Ran inventory in GCSS-Army and reconciled discrepancies with the brigade supply office",
+   "Planned equipment load-outs for 2 overseas deployments",
+   "Issued and tracked equipment for a 150-soldier company"
+  ]
+ },
+ {
+  "id": "pharmacy-tech-retail-to-hospital",
+  "text": "Mei Lin Wong\nmeilin.wong.cpht@email.com | (555) 138-6647\n\nEXPERIENCE\nCertified Pharmacy Technician — Corner Care Pharmacy, Sacramento, CA (Jan 2021 – Present)\n- Fill and verify 300+ prescriptions a day under pharmacist supervision\n- Process insurance claims and resolve rejections with PBMs\n- Manage controlled substance counts and inventory for the CII safe\n- Trained 3 new technicians on the pharmacy software\n\nPharmacy Clerk — Corner Care Pharmacy, Sacramento, CA (Jun 2019 – Dec 2020)\n- Handled checkout and patient questions at the pickup counter\n\nEDUCATION\nPharmacy Technician Program — American River College, Sacramento, CA (2018 – 2019)\n\nCERTIFICATIONS\n- Certified Pharmacy Technician (CPhT) — PTCB — 2020\n- California Pharmacy Technician License #TCH 145872\n\nSKILLS\nprescription processing, insurance billing, controlled substance inventory, Rx30 pharmacy system, customer service",
+  "bullets": [
+   "Fill and verify 300+ prescriptions a day under pharmacist supervision",
+   "Process insurance claims and resolve rejections with PBMs",
+   "Manage controlled substance counts and inventory for the CII safe",
+   "Trained 3 new technicians on the pharmacy software",
+   "Handled checkout and patient questions at the pickup counter"
+  ]
+ },
+ {
+  "id": "new-grad-nurse-rotations",
+  "text": "Grace Okafor\ngrace.okafor.rn@email.com | (555) 274-9013\n\nCLINICAL EXPERIENCE\nPatient Care Technician — Riverside General Hospital, Dayton, OH (Aug 2023 – Present)\n- Record vital signs and intake/output for up to 12 patients a shift on a med-surg unit\n- Assist patients with mobility, bathing and feeding under RN direction\n- Perform point-of-care glucose checks and report abnormal values to the charge nurse\n\nEDUCATION\nBachelor of Science in Nursing — Wright State University, Dayton, OH (2021 – 2025)\n\nCERTIFICATIONS\n- Registered Nurse (RN), Ohio — 2025\n- BLS — American Heart Association\n\nCLINICAL ROTATIONS\nMedical-Surgical, Miami Valley Hospital — 120 hours\nPediatrics, Dayton Children's Hospital — 90 hours\nCommunity Health, Montgomery County Public Health — 60 hours\n\nVOLUNTEER EXPERIENCE\nHealth Screening Volunteer — St. Vincent Free Clinic, Dayton, OH (2022 – 2024)\nTook blood pressure readings for about 40 visitors at monthly screening events",
+  "bullets": [
+   "Record vital signs and intake/output for up to 12 patients a shift on a med-surg unit",
+   "Assist patients with mobility, bathing and feeding under RN direction",
+   "Perform point-of-care glucose checks and report abnormal values to the charge nurse"
+  ]
+ },
+ {
+  "id": "mechanical-engineer-medical-device",
+  "text": "Hannah Fischer\nhannah.fischer.me@email.com | (555) 402-3319\n\nEXPERIENCE\nMechanical Engineer I — Tarsus Industrial Pumps, Cleveland, OH (Jul 2022 – Present)\n- Design pump housings and brackets in SolidWorks with GD&T drawings for production\n- Run static stress checks in SolidWorks Simulation on 12 redesigned components\n- Cut part cost 18% on a bracket redesign by switching from a machined part to sheet metal\n- Support supplier first-article inspections and resolve nonconformances with QA\n\nEngineering Intern — Tarsus Industrial Pumps, Cleveland, OH (May 2021 – Aug 2021)\n- Built a test fixture for seal leak testing\n\nEDUCATION\nB.S. Mechanical Engineering — Case Western Reserve University, Cleveland, OH (2018 – 2022)\n\nCERTIFICATIONS\n- Engineer in Training (EIT) — Ohio — 2022\n\nSKILLS\nSolidWorks, SolidWorks Simulation, GD&T, DFM, sheet metal design, MATLAB, first-article inspection",
+  "bullets": [
+   "Design pump housings and brackets in SolidWorks with GD&T drawings for production",
+   "Run static stress checks in SolidWorks Simulation on 12 redesigned components",
+   "Cut part cost 18% on a bracket redesign by switching from a machined part to sheet metal",
+   "Support supplier first-article inspections and resolve nonconformances with QA",
+   "Built a test fixture for seal leak testing"
+  ]
+ },
+ {
+  "id": "graphic-designer-no-motion",
+  "text": "Olivia Grant\nolivia.grant.design@email.com | (555) 781-4450 | oliviagrant.design\n\nEXPERIENCE\nGraphic Designer — Bramble & Co. Agency, Nashville, TN (Mar 2021 – Present)\n- Design brand identities, packaging, and print collateral for 20+ consumer brands\n- Led the visual refresh of a regional coffee chain across 14 locations\n- Build social media templates in Figma and Canva used by 3 client marketing teams\n- Prepare print-ready files in InDesign and Illustrator and manage press checks\n\nJunior Designer — Maple Print Studio, Nashville, TN (Jun 2019 – Feb 2021)\n- Designed event posters and restaurant menus\n\nEDUCATION\nB.F.A. Graphic Design — Belmont University, Nashville, TN (2015 – 2019)\n\nSKILLS\nAdobe Illustrator, Adobe InDesign, Adobe Photoshop, Figma, Canva, brand identity, packaging design, typography, print production",
+  "bullets": [
+   "Design brand identities, packaging, and print collateral for 20+ consumer brands",
+   "Led the visual refresh of a regional coffee chain across 14 locations",
+   "Build social media templates in Figma and Canva used by 3 client marketing teams",
+   "Prepare print-ready files in InDesign and Illustrator and manage press checks",
+   "Designed event posters and restaurant menus"
+  ]
+ },
+ {
+  "id": "policy-analyst-clearance",
+  "text": "James Whitfield\njames.whitfield.policy@email.com | (555) 250-8873\n\nEXPERIENCE\nPolicy Analyst — Colorado Department of Labor and Employment, Denver, CO (Jan 2021 – Present)\n- Analyze unemployment insurance claims data in R to brief legislators on program trends\n- Draft 10+ fiscal notes and policy memos a year for the state legislature\n- Coordinated a stakeholder working group of 15 employer and worker advocacy organizations\n- Built a public dashboard of monthly claims data used by the Governor's office\n\nResearch Assistant — Bell Policy Center, Denver, CO (Jun 2019 – Dec 2020)\n- Compiled literature reviews on state minimum wage laws\n\nEDUCATION\nMaster of Public Policy — University of Denver, Denver, CO (2017 – 2019)\nB.A. Economics — Colorado College, Colorado Springs, CO (2013 – 2017)\n\nSKILLS\nR, Excel, policy memo writing, fiscal analysis, stakeholder engagement, survey analysis",
+  "bullets": [
+   "Analyze unemployment insurance claims data in R to brief legislators on program trends",
+   "Draft 10+ fiscal notes and policy memos a year for the state legislature",
+   "Coordinated a stakeholder working group of 15 employer and worker advocacy organizations",
+   "Built a public dashboard of monthly claims data used by the Governor's office",
+   "Compiled literature reviews on state minimum wage laws"
+  ]
+ },
+ {
+  "id": "nonprofit-program-to-development",
+  "text": "Rosa Delgado\nrosa.delgado.np@email.com | (555) 663-2051\n\nEXPERIENCE\nProgram Coordinator — Eastside Youth Alliance, Los Angeles, CA (Aug 2020 – Present)\n- Wrote 8 foundation grant proposals that secured $420,000 over three years\n- Coordinate after-school programming for 180 students across 3 sites\n- Track program outcomes and donor contacts in Salesforce Nonprofit Success Pack\n- Recruited and scheduled 45 volunteers for the annual fundraising gala\n\nAmeriCorps Member — City Year Los Angeles, Los Angeles, CA (Aug 2019 – Jul 2020)\n- Tutored 30 middle school students in reading\n\nEDUCATION\nB.A. Sociology — UC Riverside, Riverside, CA (2015 – 2019)\n\nSKILLS\ngrant writing, Salesforce NPSP, program evaluation, volunteer management, event planning, bilingual English/Spanish",
+  "bullets": [
+   "Wrote 8 foundation grant proposals that secured $420,000 over three years",
+   "Coordinate after-school programming for 180 students across 3 sites",
+   "Track program outcomes and donor contacts in Salesforce Nonprofit Success Pack",
+   "Recruited and scheduled 45 volunteers for the annual fundraising gala",
+   "Tutored 30 middle school students in reading"
+  ]
+ },
+ {
+  "id": "research-associate-publications",
+  "text": "Samuel Adeyemi\nsamuel.adeyemi.lab@email.com | (555) 617-2294\n\nEXPERIENCE\nResearch Associate — Helix Therapeutics, Cambridge, MA (Jun 2021 – Present)\n- Run qPCR and ELISA assays supporting 3 preclinical oncology programs\n- Maintain 12 mammalian cell lines and cryopreserved stocks under aseptic technique\n- Designed CRISPR knockout experiments that validated 2 drug targets\n- Document experiments in Benchling and present results at weekly project meetings\n\nLab Technician — Boston University School of Medicine, Boston, MA (Jul 2019 – May 2021)\n- Prepared reagents and managed lab inventory for a 9-person lab\n\nEDUCATION\nB.S. Biochemistry — Boston University, Boston, MA (2015 – 2019)\n\nSKILLS\nqPCR, ELISA, cell culture, CRISPR-Cas9, Western blot, Benchling, GraphPad Prism\n\nPUBLICATIONS\nAdeyemi S, Park J, Lowell R. \"CRISPR screening identifies regulators of drug resistance in lung adenocarcinoma.\" Journal of Cell Biology. 2023;41(2):112-120.",
+  "bullets": [
+   "Run qPCR and ELISA assays supporting 3 preclinical oncology programs",
+   "Maintain 12 mammalian cell lines and cryopreserved stocks under aseptic technique",
+   "Designed CRISPR knockout experiments that validated 2 drug targets",
+   "Document experiments in Benchling and present results at weekly project meetings",
+   "Prepared reagents and managed lab inventory for a 9-person lab"
+  ]
+ },
+ {
+  "id": "full-stack-to-software-engineer",
+  "text": "Daniel Okafor\ndaniel.okafor.dev@email.com | (555) 410-2287 | github.com/dokafor\n\nEXPERIENCE\nFull Stack Developer — Pinecrest Payroll, Raleigh, NC (Jan 2022 – Present)\n- Built a timesheet approval flow in React and a Node.js REST API used by 1,200 client companies\n- Designed PostgreSQL schemas and migrations for the pay-run service\n- Cut API response times from 900ms to 250ms by adding query indexes and response caching\n- Wrote integration tests in Jest that run on every pull request\n\nWeb Developer — Blue Heron Agency, Durham, NC (Jun 2019 – Dec 2021)\n- Developed client websites and admin dashboards in React and Express for 15 small businesses\n- Set up GitHub Actions deploys for 6 client projects\n\nEDUCATION\nB.S. Information Technology — North Carolina State University, Raleigh, NC (2015 – 2019)\n\nSKILLS\nJavaScript, TypeScript, React, Node.js, Express, PostgreSQL, REST APIs, Jest, Git, GitHub Actions",
+  "bullets": [
+   "Built a timesheet approval flow in React and a Node.js REST API used by 1,200 client companies",
+   "Designed PostgreSQL schemas and migrations for the pay-run service",
+   "Cut API response times from 900ms to 250ms by adding query indexes and response caching",
+   "Wrote integration tests in Jest that run on every pull request",
+   "Developed client websites and admin dashboards in React and Express for 15 small businesses",
+   "Set up GitHub Actions deploys for 6 client projects"
+  ]
+ },
+ {
+  "id": "long-new-grad-data-analyst",
+  "text": "Emily Zhao\nemily.zhao@email.com | (555) 845-6612 | github.com/emilyzhao\n\nEXPERIENCE\nData Analyst Intern — Crescent Credit Union, Madison, WI (May 2025 – Aug 2025)\n- Built a Python script that automated a weekly member churn report, saving the team 4 hours a week\n- Wrote SQL queries to pull loan application data for 2 credit risk analyses\n- Presented churn findings to the member experience team\n\nBarista — Colectivo Coffee, Madison, WI (Sep 2022 – May 2026)\n- Trained 5 new baristas\n- Handled opening shifts\n\nPROJECTS\nMadison Bike Share Analysis\n- Analyzed 1.2 million trip records with pandas to model station demand\n- Built demand charts in matplotlib for a city council transportation briefing\n\nEDUCATION\nB.S. Statistics — University of Wisconsin–Madison, Madison, WI (2022 – 2026)\n- GPA 3.7/4.0\n- Relevant coursework: Regression Analysis, Database Systems, Machine Learning\n\nSKILLS\nPython, pandas, SQL, R, Excel, matplotlib, statistics",
+  "bullets": [
+   "Built a Python script that automated a weekly member churn report, saving the team 4 hours a week",
+   "Wrote SQL queries to pull loan application data for 2 credit risk analyses",
+   "Presented churn findings to the member experience team",
+   "Trained 5 new baristas",
+   "Handled opening shifts",
+   "Analyzed 1.2 million trip records with pandas to model station demand",
+   "Built demand charts in matplotlib for a city council transportation briefing"
+  ]
+ },
+ {
+  "id": "accelerator-lead-to-venture-builder",
+  "text": "Tomas Lindqvist\ntomas.lindqvist@email.com | (555) 772-1904 | linkedin.com/in/tomaslindqvist\n\nEXPERIENCE\nProgram Lead — Foundry North Accelerator, Minneapolis, MN (Feb 2023 – Present)\n- Ran diagnostic workshops with 40 early-stage founders on pricing and unit economics\n- Run a 12-week accelerator for 3 cohorts a year\n- Organize demo days for 300 investors and partners\n- Coach founders on financial models and fundraising decks\n\nOperations Manager — Pedalgo Delivery, Minneapolis, MN (Jun 2019 – Jan 2023)\n- Grew active rider supply from 150 to 1,100 by rebuilding the onboarding flow\n- Cut rider onboarding time from 9 days to 3\n- Manage a 6-person city operations team\n- Launched the service in 2 new cities\n\nEDUCATION\nB.A. Economics — University of Minnesota, Minneapolis, MN (2013 – 2017)\n\nSKILLS\nUnit economics, Financial modeling, Operations management, Excel, Workshop facilitation",
+  "bullets": [
+   "Ran diagnostic workshops with 40 early-stage founders on pricing and unit economics",
+   "Run a 12-week accelerator for 3 cohorts a year",
+   "Organize demo days for 300 investors and partners",
+   "Coach founders on financial models and fundraising decks",
+   "Grew active rider supply from 150 to 1,100 by rebuilding the onboarding flow",
+   "Cut rider onboarding time from 9 days to 3",
+   "Manage a 6-person city operations team",
+   "Launched the service in 2 new cities"
+  ]
+ },
+ {
+  "id": "vp-operations-to-coo",
+  "text": "Catherine Doyle\ncatherine.doyle.ops@email.com | (555) 309-7715 | linkedin.com/in/catherinedoyle\n\nEXPERIENCE\nVP of Operations — Northfield Packaging, Grand Rapids, MI (Jan 2019 – Present)\n- Run operations for 3 plants and 640 employees with an $85M P&L\n- Cut scrap from 6.1% to 3.4% by launching a plant-wide lean program\n- Led the $14M automation of 2 thermoforming lines, paid back in 26 months\n- Raised on-time delivery from 88% to 97% by rebuilding S&OP with sales and finance\n- Reduced the OSHA recordable rate by 45% through a behavior-based safety program\n- Negotiated resin supply contracts worth $22M a year\n- Built a plant manager succession bench, promoting 4 internal leaders\n\nDirector of Manufacturing — Northfield Packaging, Grand Rapids, MI (Mar 2014 – Dec 2018)\n- Managed 2 plants and 380 employees\n- Implemented Oracle ERP across both plants\n- Introduced OEE tracking, raising line OEE from 61% to 74%\n- Led union contract negotiations with the Teamsters local\n- Cut changeover time 40% using SMED\n\nPlant Manager — Delta Molding Inc., Holland, MI (Jun 2009 – Feb 2014)\n- Ran a 150-employee injection molding plant\n- Achieved ISO 9001 recertification with zero major findings\n- Reduced overtime spend by $1.1M a year\n- Launched 12 new customer programs for automotive suppliers\n\nProduction Supervisor — Delta Molding Inc., Holland, MI (Jul 2005 – May 2009)\n- Supervised 40 operators on second shift\n- Trained operators on statistical process control\n\nEDUCATION\nMBA — University of Michigan Ross School of Business, Ann Arbor, MI (2011 – 2013)\nB.S. Industrial Engineering — Western Michigan University, Kalamazoo, MI (2001 – 2005)\n\nCERTIFICATIONS\n- Lean Six Sigma Black Belt — ASQ — 2015\n\nSKILLS\nLean manufacturing, Six Sigma, S&OP, P&L management, Oracle ERP, OEE, SMED, capital projects, automation, ISO 9001, OSHA safety, union negotiations, supply contracts, thermoforming, injection molding, statistical process control, succession planning, budgeting, continuous improvement, root cause analysis, Kaizen",
+  "bullets": [
+   "Run operations for 3 plants and 640 employees with an $85M P&L",
+   "Cut scrap from 6.1% to 3.4% by launching a plant-wide lean program",
+   "Led the $14M automation of 2 thermoforming lines, paid back in 26 months",
+   "Raised on-time delivery from 88% to 97% by rebuilding S&OP with sales and finance",
+   "Reduced the OSHA recordable rate by 45% through a behavior-based safety program",
+   "Negotiated resin supply contracts worth $22M a year",
+   "Built a plant manager succession bench, promoting 4 internal leaders",
+   "Managed 2 plants and 380 employees",
+   "Implemented Oracle ERP across both plants",
+   "Introduced OEE tracking, raising line OEE from 61% to 74%",
+   "Led union contract negotiations with the Teamsters local",
+   "Cut changeover time 40% using SMED",
+   "Ran a 150-employee injection molding plant",
+   "Achieved ISO 9001 recertification with zero major findings",
+   "Reduced overtime spend by $1.1M a year",
+   "Launched 12 new customer programs for automotive suppliers",
+   "Supervised 40 operators on second shift",
+   "Trained operators on statistical process control"
+  ]
+ },
+ {
+  "id": "new-grad-compact-long-project",
+  "text": "Emily Zhao\nemily.zhao@email.com | (555) 845-6612 | github.com/emilyzhao\n\nEXPERIENCE\nData Analyst Intern — Crescent Credit Union, Madison, WI (May 2025 – Aug 2025)\n- Built a Python script that automated a weekly member churn report, saving the team 4 hours a week\n- Wrote SQL queries to pull loan application data for 2 credit risk analyses\n- Presented churn findings to the member experience team\n\nBarista — Colectivo Coffee, Madison, WI (Sep 2022 – May 2026)\n- Trained 5 new baristas\n- Handled opening shifts\n\nPROJECTS\nMadison Bike Share Analysis\n- Analyzed 1.2 million trip records with pandas to model station demand\n- Built demand charts in matplotlib for a city council transportation briefing\nBadger Rover Team\n- Designed the drivetrain gearbox for a competition Mars rover in SolidWorks\n- Machined aluminum chassis parts on a manual mill and lathe\n- Soldered and wired the motor controller harness for 6 wheel motors\n- Programmed motor control firmware in Arduino C++\n- Ran torque tests on 3 gearbox prototypes and picked the lightest design\n- Led a 4-person mechanical sub-team through 2 design reviews\n- Ordered parts within a $3,000 club budget\n- Placed 5th of 36 teams at the University Rover Challenge\n\nEDUCATION\nB.S. Statistics — University of Wisconsin–Madison, Madison, WI (2022 – 2026)\n- GPA 3.7/4.0\n- Relevant coursework: Regression Analysis, Database Systems, Machine Learning\n\nSKILLS\nPython, pandas, SQL, R, Excel, matplotlib, statistics",
+  "bullets": [
+   "Built a Python script that automated a weekly member churn report, saving the team 4 hours a week",
+   "Wrote SQL queries to pull loan application data for 2 credit risk analyses",
+   "Presented churn findings to the member experience team",
+   "Trained 5 new baristas",
+   "Handled opening shifts",
+   "Analyzed 1.2 million trip records with pandas to model station demand",
+   "Built demand charts in matplotlib for a city council transportation briefing",
+   "Designed the drivetrain gearbox for a competition Mars rover in SolidWorks",
+   "Machined aluminum chassis parts on a manual mill and lathe",
+   "Soldered and wired the motor controller harness for 6 wheel motors",
+   "Programmed motor control firmware in Arduino C++",
+   "Ran torque tests on 3 gearbox prototypes and picked the lightest design",
+   "Led a 4-person mechanical sub-team through 2 design reviews",
+   "Ordered parts within a $3,000 club budget",
+   "Placed 5th of 36 teams at the University Rover Challenge"
+  ]
+ }
+]

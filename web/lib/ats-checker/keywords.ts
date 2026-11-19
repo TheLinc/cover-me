@@ -7,6 +7,7 @@ export interface Keyword {
   strict: boolean
   level: Level
   alternatives?: string[]
+  line?: string
 }
 export interface Posting {
   keywords: Keyword[]
@@ -110,11 +111,11 @@ const ASKS = /\bwe('re| are)? (looking|seeking|need|require|want|expect)\b/i
 
 export function readPosting(posting: string): Posting {
   const found = new Map<string, Keyword>()
+  let current = ''
   const add = (k: Keyword) => {
-    const key = k.name
-    const seen = found.get(key)
-    if (!seen) found.set(key, k)
-    else if (LEVELS.indexOf(k.level) < LEVELS.indexOf(seen.level)) seen.level = k.level
+    const seen = found.get(k.name)
+    if (!seen) found.set(k.name, { ...k, line: current })
+    else if (LEVELS.indexOf(k.level) < LEVELS.indexOf(seen.level)) [seen.level, seen.line] = [k.level, current]
   }
   const years: string[] = []
   const links: Array<[string, string, Level]> = []
@@ -144,6 +145,7 @@ export function readPosting(posting: string): Posting {
   }
 
   for (const line of lines) {
+    current = line.replace(/^[-•●◦▪▫■□·‣⁃▸►○–—*#\s]+/, '').replace(/\*\*/g, '')
     const [, head, rest] = /^([^:]{1,60}):\s*(\S.*)$/.exec(line) ?? []
     const heading = headingLevel(head ?? line, !!head)
     if (heading === 'skip' && head) continue
@@ -197,4 +199,20 @@ export function checkResume(keywords: Keyword[], resume: string): Array<Keyword 
     })
     return { ...k, found: !!via, via }
   })
+}
+
+export interface Mark {
+  start: number
+  end: number
+  name: string
+}
+
+export function marks(text: string, keywords: Keyword[]): Mark[] {
+  const plain = normalize(text)
+  const all = keywords
+    .flatMap((k) => spans(plain, k).map(([start, end]) => ({ start, end, name: k.name })))
+    .sort((a, b) => a.start - b.start || b.end - a.end)
+  const kept: Mark[] = []
+  for (const m of all) if (!kept.length || m.start >= kept[kept.length - 1].end) kept.push(m)
+  return kept
 }
