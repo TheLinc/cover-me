@@ -1,0 +1,28 @@
+{
+  "phase": "before",
+  "cardLinks": [
+    {
+      "text": "Rate Cover Me",
+      "href": "https://chromewebstore.google.com/detail/bpbnopjgjbimdjjdolhkgimllbgamgpi/reviews"
+    },
+    {
+      "text": "Send feedback",
+      "href": "http://localhost:3100/support"
+    }
+  ],
+  "openedUrl": "https://chromewebstore.google.com/detail/bpbnopjgjbimdjjdolhkgimllbgamgpi/reviews",
+  "settingsLinks": [
+    {
+      "text": "Rate Cover Me",
+      "href": "https://chromewebstore.google.com/detail/bpbnopjgjbimdjjdolhkgimllbgamgpi/reviews"
+    },
+    {
+      "text": "Star on GitHub",
+      "href": "https://github.com/TheLinc/cover-me"
+    },
+    {
+      "text": "Send feedback",
+      "href": "http://localhost:3100/support"
+    }
+  ]
+}
