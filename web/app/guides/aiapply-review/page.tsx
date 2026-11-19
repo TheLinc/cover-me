@@ -8,7 +8,7 @@ const guide = getGuide('aiapply-review')
 
 export const metadata: Metadata = {
   title: { absolute: 'AIApply Review (2026): Pricing, Auto Apply and Is It Legit' },
-  description: 'AIApply costs $29 a month, plus $49 a month for 100 auto-applications. Who runs it, what its free checker did with a test resume, and what users report.',
+  description: "AIApply's writing tools cost $29 a month, and auto-apply is $49 a month for 100 applications. Who runs it, what its free checker found, and what users report.",
   alternates: { canonical: `${BASE}/guides/${guide.slug}` },
   openGraph: {
     title: 'AIApply review: is it legit, and is auto-apply worth it? | Cover Me',

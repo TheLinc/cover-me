@@ -149,9 +149,9 @@ export default function Page() {
               </p>
               <p>
                 As a way to get interviews, users are split. On{' '}
-                <a href="https://www.reddit.com/r/jobsearchhacks/comments/1li07kk/are_those_website_really_worth_jobscan_teal_etc/" {...ext}>r/jobsearchhacks</a> in June 2025, one user said &ldquo;the value is tracking how you customized the resume more than ai.&rdquo; In{' '}
-                <a href="https://www.reddit.com/r/jobs/comments/18mbu62/have_people_been_successful_with_teal_resume/" {...ext}>an r/jobs post</a> from December 2023, another wrote that paying $30 a month, on top of LinkedIn Premium and career coaching, &ldquo;has not resulted in getting a job in over 9 months.&rdquo; The builder itself divides people. A user on{' '}
-                <a href="https://www.reddit.com/r/linkedin/comments/1boagr5/whats_the_deal_with_teal/" {...ext}>r/linkedin</a> found it &ldquo;so complicated&rdquo; and went back to editing in Google Docs.
+                <a href="https://www.reddit.com/r/jobsearchhacks/comments/1li07kk/are_those_website_really_worth_jobscan_teal_etc/" {...ext}>r/jobsearchhacks</a> in June 2025, one user said &ldquo;the value is tracking how you customized the resume more than ai.&rdquo; In a July 2024 reply on{' '}
+                <a href="https://www.reddit.com/r/jobs/comments/18mbu62/have_people_been_successful_with_teal_resume/" {...ext}>r/jobs</a>, another wrote that paying $30 a month, on top of LinkedIn Premium and career coaching, &ldquo;has not resulted in getting a job in over 9 months.&rdquo; The builder itself divides people. A user on{' '}
+                <a href="https://www.reddit.com/r/linkedin/comments/1boagr5/whats_the_deal_with_teal/" {...ext}>r/linkedin</a> found it &ldquo;so complicated&rdquo; in March 2024 and said &ldquo;I&rsquo;d rather just make edits in Google docs.&rdquo;
               </p>
               <p>
                 Teal&rsquo;s keyword matching highlights what to add, and you do the rewriting, with AI help on Teal+. On the free plan you see only the top 5 keywords for each job.
