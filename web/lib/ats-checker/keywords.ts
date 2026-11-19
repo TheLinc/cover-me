@@ -108,12 +108,19 @@ function unlistedNames(line: string): Keyword[] {
   return found
 }
 
-const TRAIT = String.raw`\b(race|colou?r|religion|creed|sex(ual orientation)?|gender|age|national origin|ancestry|disability|veteran)`
+const TRAIT = String.raw`\b(race|colou?r|religion|creed|sex(ual orientation)?|gender|age|national origin|ancestry|disability|veteran)\b`
 const BOILERPLATE = new RegExp(
-  String.raw`(equal (opportunity|employment)|affirmative action)( opportunity)?( ?\/ ?affirmative action)? employer|\bEOE\b|(regardless of|without regard to)[^.]{0,60}${TRAIT}[^.]{0,80}${TRAIT}|map data ©`,
+  [
+    String.raw`equal[- ](opportunity|employment)(?! (laws?|legislation|regulations?|compliance|polic))`,
+    String.raw`affirmative[- ]action (employer|program)`,
+    String.raw`\bEOE\b`,
+    String.raw`(regardless of|without regard to)[^.]{0,60}${TRAIT}[^.]{0,80}${TRAIT}`,
+    'Americans with Disabilities|reasonable accommodation|VEVRAA|OFCCP|federal contractor|E-Verify|eligibility (to work|verification)',
+    'discriminat|protected veteran|pay transparency|know your rights|map data ©',
+  ].join('|'),
   'i',
 )
-const COMPLIANCE = /VEVRAA|OFCCP|federal contractor|accommodation|E-Verify|protected veteran|disabilit|pay transparency|know your rights/i
+const HIRING_ACCESS = /(?=.*\b(accommodat|accessib|disabilit))(?=.*\b(applica|interview|hiring|recruit|onboard|human resources))/i
 const YEARS = /\b(\d{1,2}|one|two|three|four|five|six|seven|eight|nine|ten)\s*\+?\s*(?:(?:-|–|to)\s*\d{1,2}\s*\+?\s*)?(?:years?|yrs?)\b/i
 const COMPANY_VOICE = /\b([Ww]e|[Oo]ur|[Uu]s)\b/
 const COMPANY_SPEAKS = /^[^A-Za-z]*(we|our)\b/i
@@ -131,7 +138,6 @@ export function readPosting(posting: string): Posting {
   const links: Array<[string, string, Level]> = []
   let section: Level | 'skip' = 'mentioned'
   let aboutCompany = false
-  let eeo = false
   const addYears = (text: string) => {
     if (!YEARS.test(text) || /years?\s+(of\s+age|old)/i.test(text) || (section === 'mentioned' && !/experience/i.test(text))) return
     const plain = text.replace(/^[-•●◦▪▫■□·‣⁃▸►○–—*#\s]+/, '').replace(/\*\*/g, '')
@@ -179,8 +185,7 @@ export function readPosting(posting: string): Posting {
     const body = !heading ? line : head ? rest : ''
     if (!body) addYears(line)
     for (const sentence of body.split(/(?<=[.!?;])\s+(?=[A-Z])/)) {
-      eeo = BOILERPLATE.test(sentence) || (eeo && COMPLIANCE.test(sentence))
-      if (eeo) continue
+      if (BOILERPLATE.test(sentence) || HIRING_ACCESS.test(sentence)) continue
       addYears(sentence)
       current = sentence.replace(/^[-•●◦▪▫■□·‣⁃▸►○–—*#\s]+/, '').replace(/\*\*/g, '')
       const ask = ASKS.exec(sentence)

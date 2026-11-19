@@ -291,6 +291,23 @@ test('equal-opportunity statements and the compliance sentences after them are d
   expect(names(
     'Data Analyst\nRequirements\n- SQL and Python\n- 3+ years of reporting experience\nAcme is an equal opportunity employer. Acme is a VEVRAA Federal Contractor and complies with OFCCP rules. Applicants needing an accommodation under the Americans with Disabilities Act may contact HR.',
   ).sort()).toEqual(['Python', 'SQL'])
+  expect(names('Requirements\n- Assign tickets in Zendesk regardless of agent tier or ticket age')).toContain('Zendesk')
+  const head = 'Data Analyst\nQualifications\n- 3+ years of SQL and Tableau\n- Python\n\n'
+  for (const tail of [
+    'Acme is an equal opportunity employer.\nIn compliance with federal law, all persons hired will be required to verify identity and eligibility to work in the United States and to complete the required employment eligibility verification form upon hire.',
+    'Acme is committed to the full inclusion of all qualified individuals. In compliance with the Americans with Disabilities Act (ADA), Acme will provide reasonable accommodations to qualified individuals with disabilities.',
+    'Acme is an equal-opportunity employer and complies with the ADA.',
+  ]) expect(names(head + tail).sort(), tail).toEqual(['Python', 'SQL', 'Tableau'])
+})
+
+test('no keyword in a saved posting comes from equal-opportunity or accommodation text, in line or paragraph form', () => {
+  for (const name of readdirSync(join(__dirname, 'postings'))) {
+    const posting = readFileSync(join(__dirname, 'postings', name), 'utf8')
+    const paragraph = posting.split('\n').map((l) => l.trim()).filter(Boolean).map((l) => (/[.!?;]$/.test(l) ? l : `${l}.`)).join(' ')
+    for (const k of [...readPosting(posting).keywords, ...readPosting(paragraph).keywords]) {
+      expect(k.line ?? '', `${name}: ${k.name}`).not.toMatch(/accommodat|discriminat|eligibility verification|Americans with Disabilities|equal opportunity employer/i)
+    }
+  }
 })
 
 test('a years heading that ends in a colon is listed', () => {
