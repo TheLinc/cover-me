@@ -1408,7 +1408,7 @@ textarea:focus-visible, input:focus-visible, [tabindex]:focus-visible {
 textarea.flag-preview { min-height: 180px; resize: vertical; font-size: 12px; padding: 7px 10px; }
 /* padding: room for the focus ring, which the scrolling list would clip. */
 div.flag-preview { display: flex; flex-direction: column; gap: 4px; max-height: 260px; overflow-y: auto; padding: 3px; margin: -3px; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
-div.flag-preview textarea { flex: none; resize: vertical; font-size: 12px; padding: 5px 8px; }
+div.flag-preview textarea { flex: none; scroll-margin: 4px; resize: vertical; font-size: 12px; padding: 5px 8px; }
 .flag-where { margin-top: 4px; }
 
 /* A text box with its action on its bottom edge (#118): Regenerate sits with

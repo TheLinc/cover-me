@@ -178,6 +178,8 @@ function Preview({ report, onChange }: { report: GenerationReport; onChange: (r:
   // Each box under a heading for where it sits ("experience 1 bullets"),
   // shown when that changes.
   const name = (path: Array<string | number>) => path.map((p) => (typeof p === 'number' ? p + 1 : WHERE[p] ?? p)).join(' ')
+  // Tab can stop on a box half out of the list's view, ring and all: show it whole.
+  const reveal = (e: React.FocusEvent) => (e.target as HTMLElement).scrollIntoView({ block: 'nearest' })
   const fields = (key: 'output' | 'sourceResume') => resumeTexts(report[key] as object).map(({ path, text }, i, all) => {
     const where = name(path.slice(0, -1)) || name(path)
     const heading = i === 0 || where !== (name(all[i - 1].path.slice(0, -1)) || name(all[i - 1].path))
@@ -195,10 +197,10 @@ function Preview({ report, onChange }: { report: GenerationReport; onChange: (r:
       <p className="hint">Your name, email, phone, links and city are taken out, and so is any email, phone number or address starting with http or www. Delete anything else you don&apos;t want to share, like a street address or someone else&apos;s name. Your comment goes as you wrote it.</p>
       {typeof report.output === 'string'
         ? <textarea className="form-input flag-preview" aria-label={`The ${report.kind} we'll send`} maxLength={MAX_LETTER} value={report.output} onChange={(e) => onChange({ ...report, output: e.target.value })} />
-        : <div className="flag-preview" role="group" aria-label="The resume we'll send">{fields('output')}</div>}
+        : <div className="flag-preview" role="group" onFocus={reveal} aria-label="The resume we'll send">{fields('output')}</div>}
       {report.sourceResume && <>
         <p className="form-label">Your original resume</p>
-        <div className="flag-preview" role="group" aria-label="Your original resume">{fields('sourceResume')}</div>
+        <div className="flag-preview" role="group" onFocus={reveal} aria-label="Your original resume">{fields('sourceResume')}</div>
       </>}
     </>
   )
