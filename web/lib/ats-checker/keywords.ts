@@ -63,6 +63,11 @@ const SKIP = /^(description of )?benefits?|^perks|what we offer|^compensation|^p
 const BULLET = /^(\*\s|[-•●◦▪▫■□·‣⁃▸►○–—])/
 const OTHER = /^schedule|^job type|^the (job|team|position)$|^your mission|responsib|what you('ll| will)? (do|be doing)|day in the life|the role|the opportunity|job description|overview|summary|duties|additional information/i
 
+export const isSectionHeading = (line: string) => {
+  const text = line.replace(/^[^A-Za-z0-9]+|[*:\s]+$/g, '')
+  return [HEADING_START, HEADING_WHOLE, COMPANY, SKIP, OTHER].some((re) => re.test(text))
+}
+
 type Heading = Level | 'skip' | 'unknown' | 'company'
 function headingLevel(line: string, labelled: boolean): Heading | null {
   if (BULLET.test(line)) return null

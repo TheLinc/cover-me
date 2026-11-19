@@ -87,3 +87,23 @@ describe('the posting title', () => {
 test('email and phone are found in every fixture resume', () => {
   for (const c of resumes) expect(checkResumeText(c.text, '')).toMatchObject({ email: true, phone: true })
 })
+
+describe('contact and title checks outside the fixtures', () => {
+  test.each(['07700 900123', '+91 98765 43210', '+49 30 12345678', '0412 345 678', '(02) 9876 5432', '+33 6 12 34 56 78', '(312) 555-0142'])(
+    'the phone number %s is found',
+    (number) => expect(checkResumeText(`Sam Lee\n${number}\nsam@example.com`, '').phone).toBe(true),
+  )
+
+  test('dates and amounts are not read as a phone number', () => {
+    expect(checkResumeText('Sam Lee\nB.A., 2013 - 2017\nManaged $1,200,000 for 150,000 users', '').phone).toBe(false)
+  })
+
+  test.each(['About the job', 'Requirements', 'Job description', 'About Acme'])('a posting that starts with "%s" has no title', (first) => {
+    expect(postingTitle(`${first}\nWe need an analyst.`)).toBeNull()
+  })
+
+  test('a short title only counts as a whole word', () => {
+    expect(checkResumeText('Eager to learn and turn feedback into plans', 'RN\nRequirements').title?.onResume).toBe(false)
+    expect(checkResumeText('RN, Mercy Hospital', 'RN - SAU\nRequirements').title?.onResume).toBe(true)
+  })
+})

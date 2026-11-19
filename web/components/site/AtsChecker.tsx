@@ -9,7 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { checkResumeText, postingTitle } from '@/lib/ats-checker/hints'
-import { checkResume, marks, readPosting, type Level, type Mark } from '@/lib/ats-checker/keywords'
+import { checkResume, marks, readPosting, type Level, type Mark, type Posting } from '@/lib/ats-checker/keywords'
 import { readResumeFile } from '@/lib/ats-checker/read-resume'
 import { SAMPLE_POSTING, SAMPLE_RESUME } from '@/lib/ats-checker/sample'
 import { cn, storeUrl } from '@/lib/utils'
@@ -20,8 +20,7 @@ const GROUPS: { level: Level; title: string }[] = [
   { level: 'mentioned', title: 'Also in the posting' },
 ]
 
-function analyse(posting: string, resume: string, pages?: number) {
-  const read = readPosting(posting)
+function analyse(posting: string, read: Posting, resume: string, pages?: number) {
   const keywords = checkResume(read.keywords, resume)
   return {
     keywords,
@@ -34,7 +33,7 @@ function analyse(posting: string, resume: string, pages?: number) {
 type Result = ReturnType<typeof analyse>
 type Checked = Result['keywords'][number]
 
-const SAMPLE = analyse(SAMPLE_POSTING, SAMPLE_RESUME, 1)
+const SAMPLE = analyse(SAMPLE_POSTING, readPosting(SAMPLE_POSTING), SAMPLE_RESUME, 1)
 const SHARE_URL = 'https://www.cover-me.dev/ats-checker?utm_source=share&utm_medium=phone&utm_campaign=ats-phone-send'
 
 export function AtsChecker() {
@@ -60,9 +59,10 @@ export function AtsChecker() {
 
   const deferredPosting = useDeferredValue(posting)
   const deferredResume = useDeferredValue(resume)
+  const read = useMemo(() => (deferredPosting.trim() ? readPosting(deferredPosting) : null), [deferredPosting])
   const mine = useMemo(
-    () => (deferredPosting.trim() && deferredResume.trim() ? analyse(deferredPosting, deferredResume, file?.pages) : null),
-    [deferredPosting, deferredResume, file?.pages],
+    () => (read && deferredResume.trim() ? analyse(deferredPosting, read, deferredResume, file?.pages) : null),
+    [read, deferredPosting, deferredResume, file?.pages],
   )
   const result = mine ?? SAMPLE
   const shown = mine ? { posting: deferredPosting, resume: deferredResume } : { posting: SAMPLE_POSTING, resume: SAMPLE_RESUME }
@@ -116,7 +116,7 @@ export function AtsChecker() {
   function trySample() {
     setPosting(SAMPLE_POSTING)
     setResume(SAMPLE_RESUME)
-    setFile(null)
+    setFile({ name: 'Sample resume', pages: 1 })
     setFileNote(null)
     fold(SAMPLE_POSTING, SAMPLE_RESUME)
   }
@@ -127,8 +127,9 @@ export function AtsChecker() {
   }
 
   function pick(k: Checked) {
-    setSelected({ name: k.name, at: Date.now() })
+    setSelected({ name: k.via ?? k.name, at: Date.now() })
     setView(k.found ? 'resume' : 'posting')
+    if (k.found) setResultTab('resume')
   }
 
   const ready = !!mine && folded
@@ -170,7 +171,6 @@ export function AtsChecker() {
                 ref={postingBox}
                 value={posting}
                 onChange={(e) => onType('posting', e)}
-                onBlur={() => fold(posting, resume)}
                 placeholder="Paste the whole posting, including its requirements"
                 className="h-[200px] resize-y bg-white text-[14px] leading-[1.55]"
               />
@@ -191,7 +191,6 @@ export function AtsChecker() {
                 ref={resumeBox}
                 value={resume}
                 onChange={(e) => onType('resume', e)}
-                onBlur={() => fold(posting, resume)}
                 placeholder="Paste your resume, or upload it as a PDF or Word file"
                 className="h-[200px] resize-y bg-white text-[14px] leading-[1.55]"
               />
@@ -212,7 +211,7 @@ export function AtsChecker() {
         )}
         <Tabs value={resultTab} onValueChange={setResultTab}>
           <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 max-lg:contents">
               <Summary result={result} sample={!mine} />
               <TabsList className="w-full lg:hidden">
                 <TabsTrigger value="keywords" className="flex-1">Keywords</TabsTrigger>
@@ -453,7 +452,10 @@ function Viewer({
     const frame = requestAnimationFrame(() => {
       const scroller = box.current
       const target = selected && scroller?.querySelector<HTMLElement>(`[data-kw="${CSS.escape(selected.name)}"]`)
-      if (scroller && target) scroller.scrollTo({ top: target.offsetTop - scroller.clientHeight / 3, behavior: 'smooth' })
+      if (!scroller || !target) return
+      scroller.scrollTo({ top: target.offsetTop - scroller.clientHeight / 3, behavior: 'smooth' })
+      const { top, bottom } = scroller.getBoundingClientRect()
+      if (top < 0 || bottom > window.innerHeight) scroller.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
     })
     return () => cancelAnimationFrame(frame)
   }, [selected, view])
@@ -508,7 +510,7 @@ function ResumeChecks({ result }: { result: Result }) {
 
   if (bullets.total && bullets.withoutNumber.length) {
     cards.push({
-      title: `${bullets.withoutNumber.length} of ${bullets.total} bullets have no number`,
+      title: `${bullets.withoutNumber.length} of ${bullets.total} ${bullets.total === 1 ? 'bullet has' : bullets.withoutNumber.length === 1 ? 'bullets has' : 'bullets have'} no number`,
       body: (
         <>
           {bullets.withoutNumber.slice(0, 2).map((b) => (
@@ -518,7 +520,7 @@ function ResumeChecks({ result }: { result: Result }) {
         </>
       ),
     })
-  } else if (bullets.total) fine.push(`all ${bullets.total} bullets have a number`)
+  } else if (bullets.total) fine.push(bullets.total === 1 ? 'your bullet has a number' : `all ${bullets.total} bullets have a number`)
 
   if (title && !title.onResume) {
     cards.push({
@@ -527,7 +529,7 @@ function ResumeChecks({ result }: { result: Result }) {
     })
   } else if (title) fine.push(`title ${title.posting}`)
 
-  const missingContact = [!email && 'an email address', !phone && 'a phone number'].filter(Boolean)
+  const missingContact = [!email && 'email address', !phone && 'phone number'].filter(Boolean)
   if (missingContact.length) {
     cards.push({ title: `No ${missingContact.join(' or ')} found`, body: 'Put your contact details as plain text at the top, not in a header or an image.' })
   } else fine.push('email and phone')

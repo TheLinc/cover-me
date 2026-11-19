@@ -222,3 +222,11 @@ describe('showing keywords in the text', () => {
     expect(found).toEqual([['Power BI', 'Power BI'], ['business intelligence', 'BI'], ['Excel', 'Excel']])
   })
 })
+
+test('a keyword covered by its alternative points at a mark in the resume', () => {
+  const { keywords } = readPosting('Requirements\n- HubSpot or Salesforce')
+  const resume = 'Ran Salesforce reports.'
+  const checked = checkResume(keywords, resume)
+  const shown = new Set(marks(resume, checked.filter((k) => k.found)).map((m) => m.name))
+  for (const k of checked.filter((k) => k.found)) expect(shown.has(k.via ?? k.name)).toBe(true)
+})

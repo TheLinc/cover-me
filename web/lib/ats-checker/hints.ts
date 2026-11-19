@@ -1,3 +1,5 @@
+import { isSectionHeading } from './keywords'
+
 export interface ResumeChecks {
   bullets: { total: number; withoutNumber: string[] }
   title: { posting: string; onResume: boolean } | null
@@ -70,21 +72,24 @@ export function hasNumber(bullet: string): boolean {
 export function postingTitle(posting: string): string | null {
   const first = posting.split('\n').map((l) => l.replace(/^[#*\s]+|[*\s]+$/g, '')).find(Boolean)
   const title = first?.split(/,| [-–—|] |\(/)[0].trim()
-  if (!title || /[.!?:]$/.test(title) || title.split(/\s+/).length > 8) return null
+  if (!title || /[.!?:]$/.test(title) || title.split(/\s+/).length > 8 || isSectionHeading(title)) return null
   return title
 }
 
 const coreTitle = (title: string) =>
   title.replace(/^(senior|sr\.?|junior|jr\.?|lead|principal|staff|entry[- ]level)\s+/i, '').replace(/\s+(i{1,3}|iv|[1-4])$/i, '').trim()
 
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+const mentionsTitle = (resume: string, title: string) =>
+  new RegExp(`(?<![A-Za-z0-9])${title.split(/\s+/).map(escapeRe).join('\\s+')}(?![A-Za-z0-9])`, 'i').test(resume)
+
 export function checkResumeText(resume: string, posting: string): ResumeChecks {
   const bullets = resumeBullets(resume)
   const title = postingTitle(posting)
-  const flat = resume.replace(/\s+/g, ' ').toLowerCase()
   return {
     bullets: { total: bullets.length, withoutNumber: bullets.filter((b) => !hasNumber(b)) },
-    title: title ? { posting: title, onResume: flat.includes(coreTitle(title).toLowerCase()) } : null,
+    title: title ? { posting: title, onResume: mentionsTitle(resume, coreTitle(title)) } : null,
     email: /[\w.+-]+@[\w-]+\.[\w.]+/.test(resume),
-    phone: /(\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}|\+\d{2}\s?\d{3,4}\s?\d{3}\s?\d{3,4}/.test(resume),
+    phone: [...resume.matchAll(/\+?\(?\d[\d\s().-]{6,18}\d/g)].some(([m]) => /^\d{9,15}$/.test(m.replace(/\D/g, ''))),
   }
 }
