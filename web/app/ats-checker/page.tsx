@@ -9,7 +9,7 @@ import { BASE, OG_IMAGE } from '@/lib/structured-data'
 const PAGE_URL = `${BASE}/ats-checker`
 const TITLE = 'Free ATS Resume Checker: Find Missing Keywords | Cover Me'
 const DESCRIPTION =
-  "Paste a job posting and your resume, or upload a PDF or Word file, to see which of the posting's keywords you have and which you're missing. Free, no sign-up, and nothing leaves your browser."
+  "Paste a job posting and your resume, or upload a PDF or Word file, to see which of the posting's keywords you have and which you're missing. Free and no sign-up. Your resume is sent to Anthropic to check it, and we don't store it."
 
 export const metadata: Metadata = {
   title: { absolute: TITLE },
@@ -62,7 +62,7 @@ export default function AtsCheckerPage() {
             See which of the posting&apos;s skills, tools and certifications your resume has, and where they are.
           </p>
           <ul className="flex flex-wrap gap-2 text-[13px] text-ink-2 max-sm:gap-x-3 max-sm:gap-y-1 max-sm:text-[12.5px]">
-            {['No sign-up', 'Nothing you paste leaves your browser', 'PDF, Word or text'].map((t) => (
+            {['No sign-up', "We don't store your resume", 'PDF, Word or text'].map((t) => (
               <li key={t} className="flex items-center gap-1.5 rounded-full border border-line bg-white px-3 py-1 max-sm:border-0 max-sm:bg-transparent max-sm:p-0">
                 <CheckIcon size={12} weight="bold" className="text-brand" aria-hidden />
                 {t}

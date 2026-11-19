@@ -263,7 +263,7 @@ export function AtsChecker() {
         <section aria-live="polite" className="flex min-h-[240px] flex-col items-center justify-center gap-3 rounded-[22px] border border-line bg-panel p-6 text-center">
           <span className="size-6 animate-spin rounded-full border-2 border-brand border-t-transparent" aria-hidden />
           <p className="text-[15px] font-semibold text-ink">Checking your resume against the posting</p>
-          <p className="max-w-[420px] text-[13.5px] text-ink-2">It takes about 10 seconds. Your resume and the posting go to Anthropic&apos;s AI to check them, and they aren&apos;t stored.</p>
+          <p className="max-w-[420px] text-[13.5px] text-ink-2">Your resume and the posting go to Anthropic&apos;s AI to check them. We don&apos;t store them.</p>
         </section>
       ) : (
       <section aria-labelledby="results" className="relative rounded-[22px] border border-line bg-panel p-4 sm:p-5">
