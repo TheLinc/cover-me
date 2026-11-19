@@ -273,3 +273,15 @@ test('every posting keyword has a mark to scroll to, its own or one it overlaps'
     for (const k of keywords) expect(markFor(posting, kept, k), `${k.name} in ${posting.slice(0, 40)}`).toBeDefined()
   }
 })
+
+test('equal-opportunity text drops only its own sentence', () => {
+  for (const posting of [
+    'Data Analyst at Acme. You must have 3+ years of SQL, Python and Tableau experience. Acme is an equal opportunity employer.',
+    'Data Analyst at Acme.\nYou must have 3+ years of SQL, Python and Tableau experience, regardless of industry.',
+    'Data Analyst at Acme. You must have SQL. We hire regardless of race, religion or Python skills.',
+  ]) {
+    const names = readPosting(posting).keywords.map((k) => k.name)
+    expect(names).toEqual(expect.arrayContaining(['SQL', ...(posting.includes('race') ? [] : ['Python', 'Tableau'])]))
+    if (posting.includes('race')) expect(names).not.toContain('Python')
+  }
+})

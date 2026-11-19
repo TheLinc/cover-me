@@ -108,7 +108,7 @@ function unlistedNames(line: string): Keyword[] {
   return found
 }
 
-const BOILERPLATE = /equal (opportunity|employment)|affirmative action|regardless of|without regard to|map data ©/i
+const BOILERPLATE = /equal (opportunity|employment)|affirmative action|(regardless of|without regard to)\b.{0,40}\b(race|colou?r|religion|creed|sex|gender|age|national origin|ancestry|disability|veteran)|map data ©/i
 const YEARS = /\b(\d{1,2}|one|two|three|four|five|six|seven|eight|nine|ten)\s*\+?\s*(?:(?:-|–|to)\s*\d{1,2}\s*\+?\s*)?(?:years?|yrs?)\b/i
 const COMPANY_VOICE = /\b([Ww]e|[Oo]ur|[Uu]s)\b/
 const COMPANY_SPEAKS = /^[^A-Za-z]*(we|our)\b/i
@@ -162,9 +162,10 @@ export function readPosting(posting: string): Posting {
       const shortLabel = !BULLET.test(line) && !/[.!?]$/.test(line) && line.split(/\s+/).length <= 8
       if (shortLabel || (BULLET.test(line) && terms >= 2)) [section, aboutCompany] = ['mentioned', false]
     }
-    if (section === 'skip' || BOILERPLATE.test(line)) continue
+    if (section === 'skip') continue
     const body = !heading ? line : head ? rest : ''
     for (const sentence of body.split(/(?<=[.!?;])\s+(?=[A-Z])/)) {
+      if (BOILERPLATE.test(sentence)) continue
       current = sentence.replace(/^[-•●◦▪▫■□·‣⁃▸►○–—*#\s]+/, '').replace(/\*\*/g, '')
       const ask = ASKS.exec(sentence)
       if (ask) {
