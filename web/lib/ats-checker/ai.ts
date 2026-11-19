@@ -10,12 +10,12 @@ export interface AiKeyword {
 
 export type AiReply = { keywords: AiKeyword[] } | { error: 'busy' | 'failed' }
 
-export async function askAi(posting: string, resume: string, signal: AbortSignal): Promise<AiReply> {
+export async function askAi(posting: string, resume: string, token: string | null, signal: AbortSignal): Promise<AiReply> {
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/ats-check`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ posting, resume }),
+      body: JSON.stringify({ posting, resume, token }),
       signal,
     })
     if (res.ok) return (await res.json()) as { keywords: AiKeyword[] }

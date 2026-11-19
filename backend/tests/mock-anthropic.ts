@@ -19,6 +19,7 @@
 //   POST /__mock/email-drop-next       → the next POST /emails has its connection cut
 //   POST /i/v0/e/              PostHog stand-in (tailor's tailor_run event, via POSTHOG_HOST)
 //   GET  /__mock/posthog       every PostHog event received since the last reset
+//   POST /turnstile/v0/siteverify  Turnstile stand-in (ats-check, via TURNSTILE_VERIFY_URL): passes only MOCK_TURNSTILE_TOKEN
 
 import { createServer, type IncomingMessage, type Server } from 'node:http'
 
@@ -35,6 +36,9 @@ I'd like to talk about how the Initech migration went and what I would change ne
 Kind regards,
 
 Test Person`
+
+// Cloudflare's dummy token, the only one test secrets accept (https://developers.cloudflare.com/turnstile/troubleshooting/testing/).
+export const MOCK_TURNSTILE_TOKEN = 'XXXX.DUMMY.TOKEN.XXXX'
 
 // The ATS checker's reply (#278), whatever the posting and resume.
 export const MOCK_ATS_KEYWORDS = [
@@ -348,6 +352,13 @@ export function startMockAnthropic(port: number): Promise<Server> {
       return res.end(JSON.stringify(reply))
     }
 
+    if (req.method === 'POST' && url === '/turnstile/v0/siteverify') {
+      const form = new URLSearchParams(await readBody(req))
+      res.writeHead(200, { 'content-type': 'application/json' })
+      return res.end(JSON.stringify(form.get('response') === MOCK_TURNSTILE_TOKEN
+        ? { success: true, hostname: 'example.com' }
+        : { success: false, 'error-codes': ['invalid-input-response'] }))
+    }
     if (req.method === 'GET' && url === '/__mock/posthog') {
       res.writeHead(200, { 'content-type': 'application/json' })
       return res.end(JSON.stringify(posthogEvents))

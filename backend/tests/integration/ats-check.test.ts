@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { MOCK_ATS_KEYWORDS } from '../mock-anthropic'
+import { MOCK_ATS_KEYWORDS, MOCK_TURNSTILE_TOKEN } from '../mock-anthropic'
 import { callFunction, mockClaude } from './helpers'
 
 let nextIp = 1
@@ -9,7 +9,7 @@ const check = (body: unknown, ip = freshIp()) =>
     ? { rawBody: new TextEncoder().encode(body), headers: { 'cf-connecting-ip': ip, 'Content-Type': 'application/json' } }
     : { body, headers: { 'cf-connecting-ip': ip } })
 
-const PAIR = { posting: 'Requirements\n- SQL\nPreferred\n- Tableau', resume: 'Data analyst. Wrote SQL reports.' }
+const PAIR = { posting: 'Requirements\n- SQL\nPreferred\n- Tableau', resume: 'Data analyst. Wrote SQL reports.', token: MOCK_TURNSTILE_TOKEN }
 
 describe('ats-check', () => {
   beforeEach(() => mockClaude.reset())
@@ -38,8 +38,16 @@ describe('ats-check', () => {
     expect(await mockClaude.requests()).toEqual([])
   })
 
+  it.each([
+    ['no bot-check token', { ...PAIR, token: undefined }],
+    ['a token Turnstile rejects', { ...PAIR, token: 'not-a-real-token' }],
+  ])('refuses %s without calling the model', async (_, body) => {
+    expect((await check(body)).status).toBe(403)
+    expect(await mockClaude.requests()).toEqual([])
+  })
+
   it('rejects text over the size cap without calling the model', async () => {
-    expect((await check({ posting: PAIR.posting, resume: 'x'.repeat(30_001) })).status).toBe(413)
+    expect((await check({ ...PAIR, resume: 'x'.repeat(30_001) })).status).toBe(413)
     expect(await mockClaude.requests()).toEqual([])
   })
 

@@ -12,6 +12,9 @@ import { RESPONSE_SCHEMA, SYSTEM_PROMPT, userMessage } from './prompt.ts'
 const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SERVICE_KEY')!)
 const API_KEY = Deno.env.get('ANTHROPIC_CHECKER_API_KEY') ?? ''
 const MODEL = 'claude-haiku-5-5'
+// Unset on self-hosted backends, which then skip the bot check (#278).
+const TURNSTILE_SECRET = Deno.env.get('TURNSTILE_SECRET_KEY') ?? ''
+const SITEVERIFY_URL = Deno.env.get('TURNSTILE_VERIFY_URL') || 'https://challenges.cloudflare.com/turnstile/v0/siteverify'
 
 const PER_MINUTE = 6
 const PER_DAY = 40
@@ -31,7 +34,7 @@ Deno.serve(async (req) => {
   if (cors) return cors
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405)
 
-  let body: { posting?: unknown; resume?: unknown } | null = null
+  let body: { posting?: unknown; resume?: unknown; token?: unknown } | null = null
   try {
     const text = await readBody(req, MAX_BYTES)
     if (text === null) return json({ error: 'Request too large' }, 413)
@@ -39,10 +42,11 @@ Deno.serve(async (req) => {
   } catch {
     body = null
   }
-  const { posting, resume } = body ?? {}
+  const { posting, resume, token } = body ?? {}
   if (!isText(posting) || !isText(resume)) return json({ error: 'Invalid request' }, 400)
   if (posting.length > MAX_CHARS || resume.length > MAX_CHARS) return json({ error: 'Text too long' }, 413)
   if (!API_KEY) return json({ error: 'Checker unavailable' }, 503)
+  if (TURNSTILE_SECRET && !(await passesBotCheck(token, req))) return json({ error: 'Bot check failed' }, 403)
 
   const limit = await checkIpRateLimit(supabase, req, 'ats-check', PER_MINUTE, PER_DAY)
   if (limit !== 'ok') return json({ error: limit === 'over' ? 'Too many requests' : 'Try again shortly' }, limit === 'over' ? 429 : 503)
@@ -81,6 +85,22 @@ Deno.serve(async (req) => {
   }
   return json({ keywords })
 })
+
+async function passesBotCheck(token: unknown, req: Request): Promise<boolean> {
+  if (typeof token !== 'string' || !token || token.length > 2048) return false
+  const form = new URLSearchParams({ secret: TURNSTILE_SECRET, response: token })
+  const ip = req.headers.get('cf-connecting-ip')
+  if (ip) form.set('remoteip', ip)
+  try {
+    const res = await fetch(SITEVERIFY_URL, { method: 'POST', body: form, signal: AbortSignal.timeout(10_000) })
+    const result = await res.json() as { success?: boolean; 'error-codes'?: string[] }
+    if (!result.success) console.warn('ats-check: bot check failed:', result['error-codes']?.join(',') ?? res.status)
+    return result.success === true
+  } catch (err) {
+    console.error('ats-check: bot check request failed:', err instanceof Error ? err.name : 'unknown')
+    return false
+  }
+}
 
 function isText(v: unknown): v is string {
   return typeof v === 'string' && v.trim().length > 0

@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { checkResumeText, postingTitle } from '@/lib/ats-checker/hints'
 import { askAi, fromAi, type AiKeyword } from '@/lib/ats-checker/ai'
+import { botCheckToken, preloadBotCheck } from '@/lib/ats-checker/turnstile'
 import { checkResume, firstAt, markFor, marks, oneEntryPerAsk, readPosting, type Keyword, type Level, type Mark } from '@/lib/ats-checker/keywords'
 import { readResumeFile } from '@/lib/ats-checker/read-resume'
 import { SAMPLE_AI, SAMPLE_POSTING, SAMPLE_RESUME } from '@/lib/ats-checker/sample'
@@ -71,6 +72,7 @@ export function AtsChecker() {
   const [fromPhone, setFromPhone] = useState(false)
   const [check, setCheck] = useState<Check | null>(null)
   const pending = useRef<AbortController | null>(null)
+  const botBox = useRef<HTMLDivElement>(null)
   const counted = useRef('')
   const replacing = useRef(false)
   const postingBox = useRef<HTMLTextAreaElement>(null)
@@ -93,7 +95,9 @@ export function AtsChecker() {
     pending.current = controller
     setCheck({ posting: p, resume: r, result: null })
     try {
-      const reply = await askAi(p, r, controller.signal)
+      const token = botBox.current ? await botCheckToken(botBox.current) : null
+      if (controller.signal.aborted) return
+      const reply = await askAi(p, r, token, controller.signal)
       setCheck({ posting: p, resume: r, result: 'keywords' in reply ? byAi(p, r, reply.keywords, pages) : byWords(p, r, pages, reply.error) })
     } catch {
       return
@@ -118,6 +122,7 @@ export function AtsChecker() {
   }
 
   function onType(which: 'posting' | 'resume', e: ChangeEvent<HTMLTextAreaElement>) {
+    preloadBotCheck()
     const value = e.target.value
     const pasted = replacing.current && (e.nativeEvent as InputEvent).inputType === 'insertFromPaste'
     const fresh = pasted || (!(which === 'posting' ? posting : resume).trim() && value.length > 100)
@@ -140,6 +145,7 @@ export function AtsChecker() {
   }
 
   async function onFile(e: ChangeEvent<HTMLInputElement>) {
+    preloadBotCheck()
     const picked = e.target.files?.[0]
     e.target.value = ''
     if (!picked) return
@@ -252,6 +258,8 @@ export function AtsChecker() {
       {fileNote && (
         <p role="status" className={cn('-mt-2 text-[13px]', fileNote.error ? 'text-gap-ink' : 'text-ink-2', ready && 'max-sm:sr-only')}>{fileNote.text}</p>
       )}
+
+      <div ref={botBox} className="empty:hidden" />
 
       {changed && !loading && (
         <Button onClick={() => fold(posting, resume, file?.pages)} className="-mt-1 self-start">

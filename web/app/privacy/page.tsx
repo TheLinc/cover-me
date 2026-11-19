@@ -385,7 +385,8 @@ export default function PrivacyPage() {
                 which of the posting&apos;s keywords the resume shows. A PDF or Word file is read in your
                 browser and only its text is sent. No account is needed. Neither text is stored in our
                 database or written to our logs. To limit how often the tool can be used, our server keeps a
-                counter keyed by a hash of your IP address. The sample on the page sends nothing.
+                counter keyed by a hash of your IP address. Before each check, Cloudflare Turnstile checks
+                that you&apos;re not a bot (see Third-Party Services). The sample on the page sends nothing.
               </Li>
               <Li>
                 <strong className="text-foreground">Uninstall survey (only if you answer it).</strong>{' '}
@@ -700,6 +701,12 @@ export default function PrivacyPage() {
                   url: 'https://supabase.com/privacy',
                   when: 'Every mode (reading job postings, from version 1.3.0, and site requests and bug reports when you press the button), the website ATS checker when you run a check; everything else Hosted mode only',
                   receives: 'Copies of the job pages you ask us to read, which are processed and not stored, site requests and bug reports, passed on to PostHog and not stored, the posting and resume you check on the website ATS checker, passed on to Anthropic and not stored, and rate-limit counters keyed by a hash of your IP address. In Hosted mode also: the job details, any facts you add, the application question when you ask for an answer (not stored) and, when you regenerate, the previous tailored resume, sent with each generation request (not stored, except Pro history); messages from the dashboard\'s support form, passed on to Resend and not stored; email address, hashed password (email sign-in only), encrypted resume text, encrypted cover letters and tailored resumes with the unencrypted fields that go with them (Pro), your encrypted Word file and which tailored resumes were made from it (Pro), your resume\'s file name, your Stripe customer ID, your Google name, picture link and account ID, session tokens, generation and answer counts, whether and when you opted out of usage counts, when you removed the extension (if you were signed in), and the account-keyed counter used when a new resume is read or a support message is sent (see Information We Collect for each). Supabase Auth also records the IP address and browser of each signed-in session, kept with your account. Supabase hosts our backend functions, authentication system and database, and keeps standard request logs (IP address, browser, time, and the address requested, which can include a dashboard search) for a short period.',
+                },
+                {
+                  name: 'Cloudflare Turnstile',
+                  url: 'https://www.cloudflare.com/privacypolicy/',
+                  when: 'The website ATS checker only, when you run a check',
+                  receives: 'Your IP address, browser details and signals about how the page is used, so Turnstile can tell people from bots. It never receives your posting or resume. No other page on cover-me.dev loads it.',
                 },
                 {
                   name: 'Google',
