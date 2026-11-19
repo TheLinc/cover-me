@@ -14,6 +14,7 @@ import { checkResumeText, postingTitle } from '@/lib/ats-checker/hints'
 import { checkResume, marks, readPosting, type Level, type Mark, type Posting } from '@/lib/ats-checker/keywords'
 import { readResumeFile } from '@/lib/ats-checker/read-resume'
 import { SAMPLE_POSTING, SAMPLE_RESUME } from '@/lib/ats-checker/sample'
+import { BASE } from '@/lib/structured-data'
 import { cn, storeUrl } from '@/lib/utils'
 
 const GROUPS: { level: Level; title: string }[] = [
@@ -38,7 +39,7 @@ type Checked = Result['keywords'][number]
 type Selected = { name: string; target: string; at: number }
 
 const SAMPLE = analyse(SAMPLE_POSTING, readPosting(SAMPLE_POSTING), SAMPLE_RESUME, 1)
-const SHARE_URL = 'https://www.cover-me.dev/ats-checker?utm_source=share&utm_medium=phone&utm_campaign=ats-phone-send'
+const SHARE_URL = `${BASE}/ats-checker?utm_source=share&utm_medium=phone&utm_campaign=ats-phone-send`
 
 export function AtsChecker() {
   const [posting, setPosting] = useState('')
@@ -71,11 +72,11 @@ export function AtsChecker() {
   const result = mine ?? SAMPLE
   const shown = mine ? { posting: deferredPosting, resume: deferredResume } : { posting: SAMPLE_POSTING, resume: SAMPLE_RESUME }
 
-  function fold(p: string, r: string) {
+  function fold(p: string, r: string, count = true) {
     if (!p.trim() || !r.trim()) return
     setFolded(true)
     requestAnimationFrame(() => document.getElementById('results')?.focus())
-    if (p !== counted.current) {
+    if (count && p !== counted.current) {
       counted.current = p
       setChecks((n) => n + 1)
     }
@@ -124,7 +125,7 @@ export function AtsChecker() {
     setResume(SAMPLE_RESUME)
     setFile({ name: 'Sample resume', pages: 1 })
     setFileNote(null)
-    fold(SAMPLE_POSTING, SAMPLE_RESUME)
+    fold(SAMPLE_POSTING, SAMPLE_RESUME, false)
   }
 
   function anotherPosting() {
@@ -154,7 +155,7 @@ export function AtsChecker() {
 
       {ready ? (
         <div className="grid gap-2 max-sm:gap-1.5 sm:grid-cols-2">
-          <FoldedInput label="Posting" value={postingTitle(posting) ?? `${posting.trim().slice(0, 40)}...`} onEdit={() => edit('posting')} />
+          <FoldedInput label="Posting" value={postingTitle(posting) ?? posting.trim().split('\n')[0]} onEdit={() => edit('posting')} />
           <FoldedInput label="Resume" value={file?.name ?? resume.trim().split('\n')[0].slice(0, 40)} onEdit={() => edit('resume')} />
         </div>
       ) : (
@@ -169,7 +170,7 @@ export function AtsChecker() {
             )}
           </div>
           <div className="grid gap-5 lg:grid-cols-2">
-            <TabsContent forceMount value="posting" className="mt-0 flex flex-col gap-2 data-[state=inactive]:max-lg:hidden">
+            <TabsContent forceMount tabIndex={-1} value="posting" className="mt-0 flex flex-col gap-2 data-[state=inactive]:max-lg:hidden">
               <div className="flex h-9 items-center justify-between gap-3">
                 <Label htmlFor="posting" className="text-[15px] font-semibold text-ink">Job posting</Label>
                 {!posting.trim() && !resume.trim() && (
@@ -185,7 +186,7 @@ export function AtsChecker() {
                 className="h-[200px] resize-y bg-white text-[14px] leading-[1.55]"
               />
             </TabsContent>
-            <TabsContent forceMount value="resume" className="mt-0 flex flex-col gap-2 data-[state=inactive]:max-lg:hidden">
+            <TabsContent forceMount tabIndex={-1} value="resume" className="mt-0 flex flex-col gap-2 data-[state=inactive]:max-lg:hidden">
               <div className="flex h-9 items-center justify-between gap-3">
                 <Label htmlFor="resume" className="text-[15px] font-semibold text-ink">Your resume</Label>
                 <Button asChild variant="outline" size="sm">
@@ -227,14 +228,14 @@ export function AtsChecker() {
                 <TabsTrigger value="keywords" className="flex-1">Keywords</TabsTrigger>
                 <TabsTrigger value="resume" className="flex-1">Your resume</TabsTrigger>
               </TabsList>
-              <TabsContent forceMount value="keywords" className="mt-0 flex flex-col gap-4 data-[state=inactive]:max-lg:hidden">
+              <TabsContent forceMount tabIndex={-1} value="keywords" className="mt-0 flex flex-col gap-4 data-[state=inactive]:max-lg:hidden">
                 <Chips keywords={result.keywords} selected={selected?.name} onPick={pick} pitch={<Pitch result={result} checks={checks} />} />
                 {mine && (
                   <Button variant="outline" size="sm" onClick={anotherPosting} className="self-start">Check another posting</Button>
                 )}
               </TabsContent>
             </div>
-            <TabsContent forceMount value="resume" className="mt-0 flex flex-col gap-4 data-[state=inactive]:max-lg:hidden">
+            <TabsContent forceMount tabIndex={-1} value="resume" className="mt-0 flex flex-col gap-4 data-[state=inactive]:max-lg:hidden">
               <Viewer
                 view={view}
                 onView={setView}
@@ -276,7 +277,7 @@ function Summary({ result, sample }: { result: Result; sample: boolean }) {
   const nice = result.keywords.filter((k) => k.level === 'preferred')
   return (
     <div className="sticky top-[72px] z-10 flex flex-col gap-2.5 rounded-[16px] border border-line bg-white p-4 shadow-[0_10px_30px_-18px_rgba(30,27,75,0.35)]">
-      <h2 id="results" tabIndex={-1} aria-live="polite" className="text-[clamp(20px,2.2vw,26px)] leading-[1.15] text-ink outline-none">
+      <h2 id="results" tabIndex={-1} aria-live="polite" className="text-[clamp(18px,2.2vw,26px)] leading-[1.15] text-ink outline-none">
         {!pool.length
           ? 'No keywords found in this posting. Paste all of it, including the requirements.'
           : must
@@ -285,7 +286,7 @@ function Summary({ result, sample }: { result: Result; sample: boolean }) {
       </h2>
       {pool.length > 0 && <Segments found={found} total={pool.length} />}
       {nice.length > 0 && (
-        <p className="text-[13px] text-ink-2">Nice to have: {nice.filter((k) => k.found).length} of {nice.length}</p>
+        <p className="text-[13px] text-ink-2 max-lg:hidden">Nice to have: {nice.filter((k) => k.found).length} of {nice.length}</p>
       )}
       {!sample && (
         <Button size="sm" className="self-start lg:hidden" onClick={sendToComputer}>

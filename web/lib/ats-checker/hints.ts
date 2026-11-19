@@ -55,7 +55,7 @@ export function resumeBullets(resume: string): string[] {
   return out
 }
 
-const NUMBER_WORD = /\b(two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|twenty|thirty|forty|fifty|hundred|thousand|million|billion|dozen|doubled?|tripled?|halved|zero)\b/i
+const NUMBER_WORD = /\b(two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|(thir|four|fif|six|seven|eigh|nine)teen|(twen|thir|for|fif|six|seven|eigh|nine)ty|(hundred|thousand|million|billion|dozen)s?|doubled?|tripled?|halved|zero)\b/i
 const NOT_A_MEASURE = [
   new RegExp(RANGE.source, 'gi'),
   /\b(19[5-9]\d|20[0-3]\d)\b/g,
@@ -81,6 +81,7 @@ export function postingTitle(posting: string): string | null {
   const at = lines.findIndex(Boolean)
   const title = lines[at]?.split(/,| [-–—|] |\(/)[0].trim()
   if (!title || /[.!?:]$/.test(title) || title.split(/\s+/).length > 8 || isSectionHeading(title)) return null
+  if (/\b(program|programme|fellowship|cohort|bootcamp)\b/i.test(title)) return null
   return mentionsTitle(lines.slice(at + 1).join('\n'), coreTitle(title)) ? title : null
 }
 
@@ -91,6 +92,9 @@ export function checkResumeText(resume: string, posting: string): ResumeChecks {
     bullets: { total: bullets.length, withoutNumber: bullets.filter((b) => !hasNumber(b)) },
     title: title ? { posting: title, onResume: mentionsTitle(resume, coreTitle(title)) } : null,
     email: /[\w.+-]+@[\w-]+\.[\w.]+/.test(resume),
-    phone: [...resume.matchAll(/\+?\(?\d[\d\s().-]{6,18}\d/g)].some(([m]) => /^\d{9,15}$/.test(m.replace(/\D/g, ''))),
+    phone: [...resume.matchAll(/\+?\(?\d[\d \t().-]{6,18}\d/g)].some(([m]) => {
+      const digits = m.replace(/\D/g, '').length
+      return digits <= 15 && digits >= (m.startsWith('+') ? 9 : 10)
+    }),
   }
 }

@@ -46,8 +46,9 @@ describe('experience bullets', () => {
 })
 
 describe('a number in a bullet', () => {
-  test('flags the same 56 of the 209 fixture bullets that were read by hand and have no number', () => {
-    expect(resumes.flatMap((c) => resumeBullets(c.text)).filter((b) => !hasNumber(b))).toHaveLength(56)
+  test('flags exactly the fixture bullets that were read by hand and have no number', () => {
+    for (const c of resumes) expect(resumeBullets(c.text).filter((b) => !hasNumber(b)), c.id).toEqual(c.noNumber)
+    expect(resumes.flatMap((c) => c.noNumber)).toHaveLength(56)
   })
 
   test.each([
@@ -60,6 +61,10 @@ describe('a number in a bullet', () => {
     ['Earned OSHA 10 and ISO 9001 training', false],
     ['Weld structural steel in all positions', false],
     ['Jan 2020 - Present: ran payroll', false],
+    ['Trained hundreds of new hires', true],
+    ['Led a team of fifteen nurses', true],
+    ['Grew revenue by sixty percent', true],
+    ['Ran dozens of events', true],
   ])('%s: %s', (bullet, expected) => expect(hasNumber(bullet)).toBe(expected))
 })
 
@@ -67,16 +72,22 @@ describe('the posting title', () => {
   const postings = join(__dirname, 'postings')
   test('is the first line, cut at a comma or dash, when the posting names it again', () => {
     const titles = Object.fromEntries(readdirSync(postings).map((f) => [f, postingTitle(readFileSync(join(postings, f), 'utf8'))]))
-    expect(titles).toMatchObject({
-      'indeed.txt': 'Welder',
+    expect(titles).toEqual({
       'amazon.txt': null,
+      'ashby.txt': 'AI Systems Engineer',
+      'bamboohr.txt': 'Senior Business Analyst',
+      'dueto.txt': 'Director of Finance',
+      'greenhouse.txt': null,
+      'indeed.txt': 'Welder',
       'lever.txt': 'Administrative Business Partner',
       'linkedin.txt': 'RN',
-      'smartrecruiters.txt': 'Housekeeping Associate',
-      'workable.txt': null,
       'phenom.txt': null,
+      'python.txt': 'Senior Python Developer',
+      'smartrecruiters.txt': 'Housekeeping Associate',
+      'terminal.txt': 'Data Engineer',
+      'workable.txt': null,
+      'workday.txt': 'Senior Applied AI Engineer',
     })
-    expect(Object.values(titles).filter(Boolean)).toHaveLength(11)
   })
 
   test('counts as on the resume without its level', () => {
@@ -103,6 +114,8 @@ describe('contact and title checks outside the fixtures', () => {
 
   test('dates and amounts are not read as a phone number', () => {
     expect(checkResumeText('Sam Lee\nB.A., 2013 - 2017\nManaged $1,200,000 for 150,000 users', '').phone).toBe(false)
+    expect(checkResumeText('Sam Lee\nAnalyst, Acme\n2020 - 2023\n2017 - 2020\nB.A. 2013 - 2017\n2011 - 2013 A.A.', '').phone).toBe(false)
+    expect(checkResumeText('Sam Lee\nZIP 60601 1200 W Main St', '').phone).toBe(false)
   })
 
   test.each(['About the job', 'Requirements', 'Job description', 'About Acme'])('a posting that starts with "%s" has no title', (first) => {

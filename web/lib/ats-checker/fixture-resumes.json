@@ -12,7 +12,8 @@
    "Improved Lighthouse accessibility scores from 71 to 96 average across client portfolio",
    "Wrote Jest and React Testing Library suites reaching 85% coverage on shared component library",
    "Built a library inventory app with React, Zustand, and Supabase; 400+ GitHub stars"
-  ]
+  ],
+  "noNumber": []
  },
  {
   "id": "long-nurse-missing-certs",
@@ -25,6 +26,10 @@
    "Lead patient and family education for post-surgical discharge planning",
    "Supported patient care on a 40-bed medical floor under RN supervision",
    "Documented vitals and intake for 15+ patients per shift"
+  ],
+  "noNumber": [
+   "Chart assessments, medications, and care plans in Epic EHR",
+   "Lead patient and family education for post-surgical discharge planning"
   ]
  },
  {
@@ -37,6 +42,9 @@
    "Publish 6-8 SEO articles a month; organic sessions up 140% year over year in GA4",
    "Managed editorial calendar across blog, email, and social channels",
    "Wrote product launch copy for 30+ SKUs per season"
+  ],
+  "noNumber": [
+   "Managed editorial calendar across blog, email, and social channels"
   ]
  },
  {
@@ -49,6 +57,9 @@
    "Gathered requirements from 6 department leads for a new carrier scheduling tool and tracked delivery in Jira",
    "Maintained weekly claims volume reports in Excel for 3 underwriting teams",
    "Reconciled policy data between two systems, resolving 1,200 mismatched records"
+  ],
+  "noNumber": [
+   "Documented as-is and to-be processes for the returns workflow and presented recommendations to the VP of Operations"
   ]
  },
  {
@@ -61,6 +72,9 @@
    "Kept Salesforce forecasts current and presented pipeline reviews to the sales director weekly",
    "Booked 25+ qualified meetings a month through cold calls and email",
    "Promoted to Account Executive after 19 months"
+  ],
+  "noNumber": [
+   "Kept Salesforce forecasts current and presented pipeline reviews to the sales director weekly"
   ]
  },
  {
@@ -71,6 +85,10 @@
    "Ran daily standups and sprint planning as Scrum Master for a 7-person development team",
    "Maintained project plans in MS Project and tracked risks in a weekly RAID log",
    "Delivered a warehouse scanner rollout to 12 sites two weeks ahead of schedule",
+   "Scheduled cross-department meetings and took minutes for the IT steering committee"
+  ],
+  "noNumber": [
+   "Maintained project plans in MS Project and tracked risks in a weekly RAID log",
    "Scheduled cross-department meetings and took minutes for the IT steering committee"
   ]
  },
@@ -84,6 +102,10 @@
    "Updated the employee handbook for Colorado paid leave law changes",
    "Scheduled interviews for store manager and associate roles",
    "Maintained personnel files and ran I-9 compliance audits"
+  ],
+  "noNumber": [
+   "Updated the employee handbook for Colorado paid leave law changes",
+   "Scheduled interviews for store manager and associate roles"
   ]
  },
  {
@@ -94,6 +116,9 @@
    "Hold a 94% CSAT score over the last 12 months, top 10% of a 60-agent team",
    "Wrote 18 help-center articles that cut repeat billing contacts",
    "Train new hires on the escalation process during their first 2 weeks",
+   "Handled cash and card transactions and resolved customer complaints at the service desk"
+  ],
+  "noNumber": [
    "Handled cash and card transactions and resolved customer complaints at the service desk"
   ]
  },
@@ -106,7 +131,8 @@
    "Process monthly expense reports in Concur, averaging 80 receipts a month",
    "Coordinate an annual investor conference for 300 attendees",
    "Managed visitor check-in and conference room scheduling for a 120-person office"
-  ]
+  ],
+  "noNumber": []
  },
  {
   "id": "office-manager-career-gap",
@@ -116,6 +142,9 @@
    "Ran payroll for 14 staff and filed quarterly payroll tax reports",
    "Negotiated supply contracts that cut dental supply spend by 12%",
    "Managed front-desk scheduling and insurance billing for 40+ patients a day",
+   "Checked in patients and verified dental insurance coverage"
+  ],
+  "noNumber": [
    "Checked in patients and verified dental insurance coverage"
   ]
  },
@@ -129,6 +158,9 @@
    "Support the annual external audit by preparing 60+ PBC schedules",
    "Processed 400+ vendor invoices a month",
    "Reconciled 12 bank accounts monthly"
+  ],
+  "noNumber": [
+   "Prepare balance sheet reconciliations and journal entries under US GAAP"
   ]
  },
  {
@@ -140,6 +172,10 @@
    "Chase overdue debtors, reducing aged debt over 60 days by 25%",
    "Prepare VAT return workpapers for the finance manager",
    "Posted journals and reconciled 4 bank accounts"
+  ],
+  "noNumber": [
+   "Run weekly payment runs and supplier statement reconciliations",
+   "Prepare VAT return workpapers for the finance manager"
   ]
  },
  {
@@ -150,6 +186,10 @@
    "Draft discovery requests, deposition notices, and privilege logs for 5 attorneys",
    "Track court deadlines for 40+ active cases in Clio",
    "Prepared trial binders and exhibits for 3 jury trials",
+   "Filed pleadings through PACER and the Pennsylvania e-filing system",
+   "Scheduled client intake meetings"
+  ],
+  "noNumber": [
    "Filed pleadings through PACER and the Pennsylvania e-filing system",
    "Scheduled client intake meetings"
   ]
@@ -163,6 +203,10 @@
    "Write IEP and 504 accommodations into lesson plans for 22 students",
    "Use Google Classroom and Desmos for daily practice and formative assessment",
    "Co-taught Algebra II under a mentor teacher"
+  ],
+  "noNumber": [
+   "Use Google Classroom and Desmos for daily practice and formative assessment",
+   "Co-taught Algebra II under a mentor teacher"
   ]
  },
  {
@@ -173,7 +217,8 @@
    "Built self-paced review modules in Google Slides and Canva for 150 students a year",
    "Led professional development workshops on backward design for 25 teachers",
    "Tracked assessment data to revise units, raising unit test averages from 71% to 80%"
-  ]
+  ],
+  "noNumber": []
  },
  {
   "id": "electrician-commercial-to-industrial",
@@ -185,6 +230,9 @@
    "Lead a 3-person crew on service upgrades",
    "Wired 60+ new-construction homes to NEC code",
    "Passed every city inspection on the first attempt during the final 2 years"
+  ],
+  "noNumber": [
+   "Read blueprints and lay out panel schedules with the foreman"
   ]
  },
  {
@@ -194,6 +242,10 @@
    "Weld structural steel beams and columns with FCAW and SMAW in all positions",
    "Read shop drawings and weld symbols to fabricate 15-20 assemblies a week",
    "Kept a zero-rework record on 2 consecutive bridge girder jobs",
+   "Prepped and ground joints and ran fit-up for senior welders"
+  ],
+  "noNumber": [
+   "Weld structural steel beams and columns with FCAW and SMAW in all positions",
    "Prepped and ground joints and ran fit-up for senior welders"
   ]
  },
@@ -207,6 +259,10 @@
    "Keep temperature logs and have passed every health inspection since 2021",
    "Prepped ingredients for 300 meals a day",
    "Received and stocked produce deliveries"
+  ],
+  "noNumber": [
+   "Keep temperature logs and have passed every health inspection since 2021",
+   "Received and stocked produce deliveries"
   ]
  },
  {
@@ -219,6 +275,9 @@
    "Beat monthly sales targets in 9 of the last 12 months",
    "Averaged $1,800 in sales per shift",
    "Signed up 35 loyalty members a month"
+  ],
+  "noNumber": [
+   "Reset seasonal floor displays using corporate planograms"
   ]
  },
  {
@@ -230,7 +289,8 @@
    "Operate sit-down and reach forklifts with zero recordable incidents in 3 years",
    "Rolled out 5S in the shipping area, freeing 800 sq ft of floor space",
    "Loaded and unloaded 20+ trailers a shift using RF scanners"
-  ]
+  ],
+  "noNumber": []
  },
  {
   "id": "cdl-driver-missing-endorsement",
@@ -240,6 +300,9 @@
    "Kept a clean MVR with zero preventable accidents over 600,000 miles",
    "Complete pre-trip inspections and ELD logs under FMCSA hours-of-service rules",
    "Delivered to 25 stops a day in a 26-foot box truck"
+  ],
+  "noNumber": [
+   "Complete pre-trip inspections and ELD logs under FMCSA hours-of-service rules"
   ]
  },
  {
@@ -251,6 +314,9 @@
    "Ran inventory in GCSS-Army and reconciled discrepancies with the brigade supply office",
    "Planned equipment load-outs for 2 overseas deployments",
    "Issued and tracked equipment for a 150-soldier company"
+  ],
+  "noNumber": [
+   "Ran inventory in GCSS-Army and reconciled discrepancies with the brigade supply office"
   ]
  },
  {
@@ -262,6 +328,11 @@
    "Manage controlled substance counts and inventory for the CII safe",
    "Trained 3 new technicians on the pharmacy software",
    "Handled checkout and patient questions at the pickup counter"
+  ],
+  "noNumber": [
+   "Process insurance claims and resolve rejections with PBMs",
+   "Manage controlled substance counts and inventory for the CII safe",
+   "Handled checkout and patient questions at the pickup counter"
   ]
  },
  {
@@ -269,6 +340,10 @@
   "text": "Grace Okafor\ngrace.okafor.rn@email.com | (555) 274-9013\n\nCLINICAL EXPERIENCE\nPatient Care Technician — Riverside General Hospital, Dayton, OH (Aug 2023 – Present)\n- Record vital signs and intake/output for up to 12 patients a shift on a med-surg unit\n- Assist patients with mobility, bathing and feeding under RN direction\n- Perform point-of-care glucose checks and report abnormal values to the charge nurse\n\nEDUCATION\nBachelor of Science in Nursing — Wright State University, Dayton, OH (2021 – 2025)\n\nCERTIFICATIONS\n- Registered Nurse (RN), Ohio — 2025\n- BLS — American Heart Association\n\nCLINICAL ROTATIONS\nMedical-Surgical, Miami Valley Hospital — 120 hours\nPediatrics, Dayton Children's Hospital — 90 hours\nCommunity Health, Montgomery County Public Health — 60 hours\n\nVOLUNTEER EXPERIENCE\nHealth Screening Volunteer — St. Vincent Free Clinic, Dayton, OH (2022 – 2024)\nTook blood pressure readings for about 40 visitors at monthly screening events",
   "bullets": [
    "Record vital signs and intake/output for up to 12 patients a shift on a med-surg unit",
+   "Assist patients with mobility, bathing and feeding under RN direction",
+   "Perform point-of-care glucose checks and report abnormal values to the charge nurse"
+  ],
+  "noNumber": [
    "Assist patients with mobility, bathing and feeding under RN direction",
    "Perform point-of-care glucose checks and report abnormal values to the charge nurse"
   ]
@@ -282,6 +357,11 @@
    "Cut part cost 18% on a bracket redesign by switching from a machined part to sheet metal",
    "Support supplier first-article inspections and resolve nonconformances with QA",
    "Built a test fixture for seal leak testing"
+  ],
+  "noNumber": [
+   "Design pump housings and brackets in SolidWorks with GD&T drawings for production",
+   "Support supplier first-article inspections and resolve nonconformances with QA",
+   "Built a test fixture for seal leak testing"
   ]
  },
  {
@@ -291,6 +371,10 @@
    "Design brand identities, packaging, and print collateral for 20+ consumer brands",
    "Led the visual refresh of a regional coffee chain across 14 locations",
    "Build social media templates in Figma and Canva used by 3 client marketing teams",
+   "Prepare print-ready files in InDesign and Illustrator and manage press checks",
+   "Designed event posters and restaurant menus"
+  ],
+  "noNumber": [
    "Prepare print-ready files in InDesign and Illustrator and manage press checks",
    "Designed event posters and restaurant menus"
   ]
@@ -304,6 +388,11 @@
    "Coordinated a stakeholder working group of 15 employer and worker advocacy organizations",
    "Built a public dashboard of monthly claims data used by the Governor's office",
    "Compiled literature reviews on state minimum wage laws"
+  ],
+  "noNumber": [
+   "Analyze unemployment insurance claims data in R to brief legislators on program trends",
+   "Built a public dashboard of monthly claims data used by the Governor's office",
+   "Compiled literature reviews on state minimum wage laws"
   ]
  },
  {
@@ -315,6 +404,9 @@
    "Track program outcomes and donor contacts in Salesforce Nonprofit Success Pack",
    "Recruited and scheduled 45 volunteers for the annual fundraising gala",
    "Tutored 30 middle school students in reading"
+  ],
+  "noNumber": [
+   "Track program outcomes and donor contacts in Salesforce Nonprofit Success Pack"
   ]
  },
  {
@@ -326,6 +418,9 @@
    "Designed CRISPR knockout experiments that validated 2 drug targets",
    "Document experiments in Benchling and present results at weekly project meetings",
    "Prepared reagents and managed lab inventory for a 9-person lab"
+  ],
+  "noNumber": [
+   "Document experiments in Benchling and present results at weekly project meetings"
   ]
  },
  {
@@ -338,6 +433,10 @@
    "Wrote integration tests in Jest that run on every pull request",
    "Developed client websites and admin dashboards in React and Express for 15 small businesses",
    "Set up GitHub Actions deploys for 6 client projects"
+  ],
+  "noNumber": [
+   "Designed PostgreSQL schemas and migrations for the pay-run service",
+   "Wrote integration tests in Jest that run on every pull request"
   ]
  },
  {
@@ -350,6 +449,11 @@
    "Trained 5 new baristas",
    "Handled opening shifts",
    "Analyzed 1.2 million trip records with pandas to model station demand",
+   "Built demand charts in matplotlib for a city council transportation briefing"
+  ],
+  "noNumber": [
+   "Presented churn findings to the member experience team",
+   "Handled opening shifts",
    "Built demand charts in matplotlib for a city council transportation briefing"
   ]
  },
@@ -365,6 +469,9 @@
    "Cut rider onboarding time from 9 days to 3",
    "Manage a 6-person city operations team",
    "Launched the service in 2 new cities"
+  ],
+  "noNumber": [
+   "Coach founders on financial models and fundraising decks"
   ]
  },
  {
@@ -389,6 +496,11 @@
    "Launched 12 new customer programs for automotive suppliers",
    "Supervised 40 operators on second shift",
    "Trained operators on statistical process control"
+  ],
+  "noNumber": [
+   "Implemented Oracle ERP across both plants",
+   "Led union contract negotiations with the Teamsters local",
+   "Trained operators on statistical process control"
   ]
  },
  {
@@ -410,6 +522,14 @@
    "Led a 4-person mechanical sub-team through 2 design reviews",
    "Ordered parts within a $3,000 club budget",
    "Placed 5th of 36 teams at the University Rover Challenge"
+  ],
+  "noNumber": [
+   "Presented churn findings to the member experience team",
+   "Handled opening shifts",
+   "Built demand charts in matplotlib for a city council transportation briefing",
+   "Designed the drivetrain gearbox for a competition Mars rover in SolidWorks",
+   "Machined aluminum chassis parts on a manual mill and lathe",
+   "Programmed motor control firmware in Arduino C++"
   ]
  }
 ]
