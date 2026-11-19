@@ -39,6 +39,8 @@ write(fnPath, [
   keep('ANTHROPIC_CHECKER_API_KEY'),
   "# The checker's Turnstile secret (#278). Unset: no bot check. Cloudflare's test secret 1x0000000000000000000000000000000AA always passes.",
   keep('TURNSTILE_SECRET_KEY'),
+  "# Hosts a Turnstile token may come from. Production leaves it unset (cover-me.dev only).",
+  `TURNSTILE_HOSTNAMES=${fnOld.TURNSTILE_HOSTNAMES || 'localhost,127.0.0.1'}`,
   '# Logs resume text and prompts to the function logs. Local only.',
   `DEBUG_MODE=${fnOld.DEBUG_MODE || 'false'}`,
   '# Local Stripe checkout (billing function): test-mode values from the sandbox account.',

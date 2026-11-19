@@ -36,6 +36,7 @@ writeFileSync(envFile, [
   'ANTHROPIC_CHECKER_API_KEY=mock-checker-key',
   'TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA',
   `TURNSTILE_VERIFY_URL=http://host.docker.internal:${MOCK_PORT}/turnstile/v0/siteverify`,
+  'TURNSTILE_HOSTNAMES=localhost',
   `ANTHROPIC_BASE_URL=http://host.docker.internal:${MOCK_PORT}`,
   'DEBUG_MODE=false',
   'STRIPE_SECRET_KEY=sk_test_mock',

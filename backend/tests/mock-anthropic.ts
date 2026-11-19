@@ -356,7 +356,7 @@ export function startMockAnthropic(port: number): Promise<Server> {
       const form = new URLSearchParams(await readBody(req))
       res.writeHead(200, { 'content-type': 'application/json' })
       return res.end(JSON.stringify(form.get('response') === MOCK_TURNSTILE_TOKEN
-        ? { success: true, hostname: 'example.com' }
+        ? { success: true, action: 'ats-check', hostname: 'localhost' }
         : { success: false, 'error-codes': ['invalid-input-response'] }))
     }
     if (req.method === 'GET' && url === '/__mock/posthog') {

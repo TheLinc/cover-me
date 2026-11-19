@@ -15,6 +15,10 @@ const MODEL = 'claude-haiku-5-5'
 // Unset on self-hosted backends, which then skip the bot check (#278).
 const TURNSTILE_SECRET = Deno.env.get('TURNSTILE_SECRET_KEY') ?? ''
 const SITEVERIFY_URL = Deno.env.get('TURNSTILE_VERIFY_URL') || 'https://challenges.cloudflare.com/turnstile/v0/siteverify'
+// A token passes only for the checker's action, from a page on these hosts. localhost
+// belongs in the local env only (https://developers.cloudflare.com/turnstile/spin/prompt.md).
+const TURNSTILE_HOSTNAMES = (Deno.env.get('TURNSTILE_HOSTNAMES') || 'cover-me.dev,www.cover-me.dev').split(',').map((h) => h.trim()).filter(Boolean)
+const TURNSTILE_ACTION = 'ats-check'
 
 const PER_MINUTE = 6
 const PER_DAY = 40
@@ -22,6 +26,9 @@ const PER_DAY = 40
 // the checker key's spend limit (#278).
 const ALL_PER_MINUTE = 60
 const ALL_PER_DAY = 3000
+// Hashed like an IP key, so every row in the rate-limit table stays a 64-character hash (#278).
+const ALL_KEY = crypto.subtle.digest('SHA-256', new TextEncoder().encode('ats-check:all'))
+  .then((d) => Array.from(new Uint8Array(d), (b) => b.toString(16).padStart(2, '0')).join(''))
 const MAX_CHARS = 30_000
 const MAX_BYTES = 4 * 2 * MAX_CHARS
 const MAX_KEYWORDS = 80
@@ -50,7 +57,7 @@ Deno.serve(async (req) => {
 
   const limit = await checkIpRateLimit(supabase, req, 'ats-check', PER_MINUTE, PER_DAY)
   if (limit !== 'ok') return json({ error: limit === 'over' ? 'Too many requests' : 'Try again shortly' }, limit === 'over' ? 429 : 503)
-  const all = await supabase.rpc('check_scrape_rate_limit', { p_ip_hash: 'ats-check:all', p_per_minute: ALL_PER_MINUTE, p_per_day: ALL_PER_DAY })
+  const all = await supabase.rpc('check_scrape_rate_limit', { p_ip_hash: await ALL_KEY, p_per_minute: ALL_PER_MINUTE, p_per_day: ALL_PER_DAY })
   if (all.error) return json({ error: 'Try again shortly' }, 503)
   if (all.data !== true) return json({ error: 'Too many requests' }, 429)
 
@@ -93,9 +100,10 @@ async function passesBotCheck(token: unknown, req: Request): Promise<boolean> {
   if (ip) form.set('remoteip', ip)
   try {
     const res = await fetch(SITEVERIFY_URL, { method: 'POST', body: form, signal: AbortSignal.timeout(10_000) })
-    const result = await res.json() as { success?: boolean; 'error-codes'?: string[] }
-    if (!result.success) console.warn('ats-check: bot check failed:', result['error-codes']?.join(',') ?? res.status)
-    return result.success === true
+    const result = await res.json() as { success?: boolean; action?: string; hostname?: string; 'error-codes'?: string[] }
+    const ok = result.success === true && result.action === TURNSTILE_ACTION && TURNSTILE_HOSTNAMES.includes(result.hostname ?? '')
+    if (!ok) console.warn('ats-check: bot check failed:', result['error-codes']?.join(',') || `action ${result.action}, host ${result.hostname}`)
+    return ok
   } catch (err) {
     console.error('ats-check: bot check request failed:', err instanceof Error ? err.name : 'unknown')
     return false
