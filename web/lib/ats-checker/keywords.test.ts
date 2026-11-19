@@ -75,6 +75,8 @@ describe('keywords from saved postings', () => {
     ['Qualifications\nPreferred experience with Tableau and Looker', 'preferred', ['Tableau', 'Looker']],
     ['Perks\n- Remote work\n- Health insurance\nKnowledge, skills and abilities\n- Python\n- Strong SQL\n- Familiarity with AWS\n- Airflow', 'mentioned', ['Python', 'SQL', 'AWS', 'Airflow']],
     ['What we offer\nHealth insurance and 401k\nWho should apply\nPython developers\nPeople with SQL and AWS', 'mentioned', ['Python', 'SQL', 'AWS']],
+    ['Perks\n- Remote work\n- Equity\nAWS Experience\n- Lambda\n- DynamoDB', 'mentioned', ['AWS', 'Lambda', 'DynamoDB']],
+    ['Responsibilities\n- Patient care\nLicensure\n- RN license\n- BLS and ACLS', 'required', ['RN', 'BLS', 'ACLS']],
     ['Qualifications\n- Valid state teaching certificate\n- Differentiated instruction and lesson planning\n- Strong classroom management skills\n- Google Classroom and Seesaw\n- Experience with students with IEPs',
       'required', ['teaching certificate', 'differentiated instruction', 'lesson planning', 'classroom management', 'Google Classroom', 'Seesaw', 'IEP']],
     ['Requirements\n- Litigation and legal research\n- Westlaw and iManage\n- Case management, crisis intervention and trauma-informed care', 'required',
@@ -149,6 +151,7 @@ describe('checking a resume', () => {
     expect(found(ask, 'RN since 2019. Wrote reports in Word. Services in Go.')).toEqual({ RN: true, Word: true, Go: true })
     expect(pick(readPosting('Requirements\n- Go-to-market strategy\n- Salesforce'))).toEqual(['Salesforce'])
     expect(found(ask, 'A go-getter. Go-to-market lead.')).toMatchObject({ Go: false })
+    expect(found('Requirements\n- React and Excel', 'React-based UI, Excel-based models')).toEqual({ React: true, Excel: true })
   })
 
   test('either of two options joined by "or" covers both', () => {

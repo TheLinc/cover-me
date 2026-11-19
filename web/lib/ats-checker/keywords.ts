@@ -31,7 +31,7 @@ function pattern(spelling: string, strict: boolean): RegExp {
   if (cached) return cached
   const body = spelling.split(/[\s-]+/).map(escapeRe).join('[\\s-]+')
   const caseSensitive = strict || !/[a-z]/.test(spelling)
-  const after = strict ? '(?![A-Za-z0-9]|-[A-Za-z])' : '(?![A-Za-z0-9])'
+  const after = strict ? '(?![A-Za-z0-9]|-to-)' : '(?![A-Za-z0-9])'
   const re = new RegExp(`(?<![A-Za-z0-9])${body}s?${after}`, caseSensitive ? 'g' : 'gi')
   patterns.set(key, re)
   return re
@@ -45,7 +45,7 @@ const has = (text: string, k: Term) => k.spellings.some((s) => mentions(text, s,
 
 const PREFERRED = /prefer|nice[\s-]to[\s-]have|nice if|bonus|\bplus\b|desired|desirable|stand out|advantage|may also|good to have|ideally|even better|pluses|extra credit|would be great/i
 const REQUIRED = /requir|qualif|\bmust\b|need|bring|you have|you'?ll have$|you should have|looking for|good fit|great fit|about you|who you are|who you'?ll be|minimum|skills|education|^((your|relevant|work|professional) )?experience( and \w+)?$|you are$|you'?re a|we'?d love to hear|things you|ideal candidate|about the candidate|^tech stack|profile|background|essential|person specification|competenc|to be successful|sets you apart|right candidate|is this you|seeking/i
-const CREDENTIALS = /^certifications?|^licen[sc]e|certifications?$/i
+const CREDENTIALS = /^certifications?|^licen[sc]|certifications?$/i
 const COMPANY = /^(about (?!you|the role|the team|the job|this job|this role|the position|the candidate|the opportunity|the work)|more about|why\b|life at|who we are$|our (founding|story|culture|values)|how we work)/i
 const HEADING_START = /^(more about|about us|why (join|work)|life at|what (you|we|makes you|sets you)|it would be (great|nice)|it'?d be (great|nice)|you'?ll\b|you (should|might|may)\b|who you|about (you|the (role|candidate|team|job|opportunity))|your (profile|background)|candidate profile|nice to have|good to have|bonus|requirements|qualifications|key (responsibilities|requirements|qualifications)|responsibilities|preferred|desirable|essential|ideally|even better|must[- ]haves?|minimum|basic qualifications|required|competencies|person specification|to be successful|the ideal candidate|the role|the opportunity|job description|tech stack|extra credit|pluses|who we('re| are) (looking|seeking)|we('re| are) (looking|seeking)|is this you|the right candidate|here'?s what you|you'?re a (great|good)|skills you|things you|a bit about you|we'?d love to hear|you bring)\b/i
 const HEADING_WHOLE = /^(((key|technical|desired|core|required|your|relevant|work|professional) )?(skills|experience|education)( and \w+)?|you (are|have|will need|must have)|the (job|team|position)|your mission)$/i
@@ -152,7 +152,7 @@ export function readPosting(posting: string): Posting {
     } else if (heading && !credentialsUnderPreferred) section = heading
     if (section === 'skip' && !heading && !head) {
       const terms = DICTIONARY.filter((term) => has(line, term)).length
-      const shortLabel = !BULLET.test(line) && !/[.!?]$/.test(line) && line.split(/\s+/).length <= 8 && terms === 0
+      const shortLabel = !BULLET.test(line) && !/[.!?]$/.test(line) && line.split(/\s+/).length <= 8
       if (shortLabel || (BULLET.test(line) && terms >= 2)) section = 'mentioned'
     }
     if (section === 'skip' || BOILERPLATE.test(line)) continue
