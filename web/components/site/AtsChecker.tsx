@@ -1,6 +1,6 @@
 'use client'
 
-import { useDeferredValue, useEffect, useMemo, useRef, useState, type ChangeEvent, type ClipboardEvent, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent, type ClipboardEvent, type ReactNode } from 'react'
 import { CheckIcon, DeviceMobileIcon, PencilSimpleIcon, UploadSimpleIcon, XIcon } from '@phosphor-icons/react/dist/ssr'
 import { ExtensionPopup } from '@/components/landing/ExtensionPopup'
 import { Badge } from '@/components/ui/badge'
@@ -11,9 +11,10 @@ import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { checkResumeText, postingTitle } from '@/lib/ats-checker/hints'
-import { checkResume, firstAt, markFor, marks, oneEntryPerAsk, readPosting, type Level, type Mark, type Posting } from '@/lib/ats-checker/keywords'
+import { askAi, fromAi, type AiKeyword } from '@/lib/ats-checker/ai'
+import { checkResume, firstAt, markFor, marks, oneEntryPerAsk, readPosting, type Keyword, type Level, type Mark } from '@/lib/ats-checker/keywords'
 import { readResumeFile } from '@/lib/ats-checker/read-resume'
-import { SAMPLE_POSTING, SAMPLE_RESUME } from '@/lib/ats-checker/sample'
+import { SAMPLE_AI, SAMPLE_POSTING, SAMPLE_RESUME } from '@/lib/ats-checker/sample'
 import { BASE } from '@/lib/structured-data'
 import { cn, storeUrl } from '@/lib/utils'
 
@@ -23,25 +24,37 @@ const GROUPS: { level: Level; title: string }[] = [
   { level: 'mentioned', title: 'Also in the posting' },
 ]
 
-function analyse(posting: string, read: Posting, resume: string, pages?: number) {
-  const keywords = checkResume(read.keywords, resume)
+type Found = Keyword & { found: boolean; via?: string; mark?: string }
+
+function analyse(posting: string, resume: string, keywords: Found[], pages: number | undefined, fallback?: 'busy' | 'failed') {
   const postingMarks = marks(posting, keywords)
-  const shown = oneEntryPerAsk(keywords.map((k) => (k.found ? k : { ...k, mark: markFor(posting, postingMarks, k) })))
+  const resumeMarks = marks(resume, keywords.filter((k) => k.found))
+  const shown = oneEntryPerAsk(keywords.map((k) => ({
+    ...k,
+    mark: k.mark ?? (k.found ? markFor(resume, resumeMarks, k) : markFor(posting, postingMarks, k)),
+  })))
   return {
+    fallback,
     keywords: shown,
     missing: new Set(shown.filter((k) => !k.found).flatMap((k) => [k.name, ...(k.alternatives ?? [])])),
-    years: read.years,
+    years: readPosting(posting).years,
     checks: { ...checkResumeText(resume, posting), pages },
-    resumeMarks: marks(resume, keywords.filter((k) => k.found)),
+    resumeMarks,
     postingMarks,
   }
 }
 type Result = ReturnType<typeof analyse>
 type Checked = Result['keywords'][number]
 
-type Selected = { name: string; target: string; at: number }
+const byWords = (posting: string, resume: string, pages: number | undefined, fallback: 'busy' | 'failed') =>
+  analyse(posting, resume, checkResume(readPosting(posting).keywords, resume), pages, fallback)
+const byAi = (posting: string, resume: string, keywords: AiKeyword[], pages: number | undefined) =>
+  analyse(posting, resume, fromAi(posting, keywords), pages)
 
-const SAMPLE = analyse(SAMPLE_POSTING, readPosting(SAMPLE_POSTING), SAMPLE_RESUME, 1)
+type Selected = { name: string; target: string; at: number }
+type Check = { posting: string; resume: string; result: Result | null }
+
+const SAMPLE = byAi(SAMPLE_POSTING, SAMPLE_RESUME, SAMPLE_AI, 1)
 const SHARE_URL = `${BASE}/ats-checker?utm_source=share&utm_medium=phone&utm_campaign=ats-phone-send`
 
 export function AtsChecker() {
@@ -56,6 +69,8 @@ export function AtsChecker() {
   const [selected, setSelected] = useState<Selected | null>(null)
   const [checks, setChecks] = useState(0)
   const [fromPhone, setFromPhone] = useState(false)
+  const [check, setCheck] = useState<Check | null>(null)
+  const pending = useRef<AbortController | null>(null)
   const counted = useRef('')
   const replacing = useRef(false)
   const postingBox = useRef<HTMLTextAreaElement>(null)
@@ -66,18 +81,28 @@ export function AtsChecker() {
     setFromPhone(campaign === 'ats-phone-send' && !window.matchMedia('(pointer: coarse)').matches)
   }, [])
 
-  const deferredPosting = useDeferredValue(posting)
-  const deferredResume = useDeferredValue(resume)
-  const read = useMemo(() => (deferredPosting.trim() ? readPosting(deferredPosting) : null), [deferredPosting])
-  const mine = useMemo(
-    () => (read && deferredResume.trim() ? analyse(deferredPosting, read, deferredResume, file?.pages) : null),
-    [read, deferredPosting, deferredResume, file?.pages],
-  )
+  const mine = check?.result ?? null
+  const loading = !!check && !check.result
   const result = mine ?? SAMPLE
-  const shown = mine ? { posting: deferredPosting, resume: deferredResume } : { posting: SAMPLE_POSTING, resume: SAMPLE_RESUME }
+  const shown = mine && check ? check : { posting: SAMPLE_POSTING, resume: SAMPLE_RESUME }
+  const changed = !!posting.trim() && !!resume.trim() && (!check || check.posting !== posting || check.resume !== resume)
 
-  function fold(p: string, r: string, count = true) {
+  async function run(p: string, r: string, pages: number | undefined) {
+    pending.current?.abort()
+    const controller = new AbortController()
+    pending.current = controller
+    setCheck({ posting: p, resume: r, result: null })
+    try {
+      const reply = await askAi(p, r, controller.signal)
+      setCheck({ posting: p, resume: r, result: 'keywords' in reply ? byAi(p, r, reply.keywords, pages) : byWords(p, r, pages, reply.error) })
+    } catch {
+      return
+    }
+  }
+
+  function fold(p: string, r: string, pages: number | undefined, count = true) {
     if (!p.trim() || !r.trim()) return
+    if (count) void run(p, r, pages)
     setFolded(true)
     requestAnimationFrame(() => document.getElementById('results')?.focus())
     if (count && p !== counted.current) {
@@ -104,8 +129,8 @@ export function AtsChecker() {
       setFileNote(null)
     }
     if (fresh) {
-      if (which === 'posting') fold(value, resume)
-      else fold(posting, value)
+      if (which === 'posting') fold(value, resume, file?.pages)
+      else fold(posting, value, undefined)
     }
   }
 
@@ -125,7 +150,7 @@ export function AtsChecker() {
       setResume(text)
       setFile({ name: picked.name, pages })
       setFileNote({ text: `Read ${picked.name}. Check its text under Your resume.` })
-      fold(posting, text)
+      fold(posting, text, pages)
     } catch (err) {
       setFileNote({ text: err instanceof Error ? err.message : `Couldn't read ${picked.name}.`, error: true })
     }
@@ -136,7 +161,9 @@ export function AtsChecker() {
     setResume(SAMPLE_RESUME)
     setFile({ name: 'Sample resume', pages: 1 })
     setFileNote(null)
-    fold(SAMPLE_POSTING, SAMPLE_RESUME, false)
+    pending.current?.abort()
+    setCheck({ posting: SAMPLE_POSTING, resume: SAMPLE_RESUME, result: SAMPLE })
+    fold(SAMPLE_POSTING, SAMPLE_RESUME, 1, false)
   }
 
   function anotherPosting() {
@@ -150,7 +177,7 @@ export function AtsChecker() {
     if (k.found) setResultTab('resume')
   }
 
-  const ready = !!mine && folded
+  const ready = !!check && folded
 
   return (
     <div className="flex flex-col gap-5">
@@ -226,7 +253,31 @@ export function AtsChecker() {
         <p role="status" className={cn('-mt-2 text-[13px]', fileNote.error ? 'text-gap-ink' : 'text-ink-2', ready && 'max-sm:sr-only')}>{fileNote.text}</p>
       )}
 
+      {changed && !loading && (
+        <Button onClick={() => fold(posting, resume, file?.pages)} className="-mt-1 self-start">
+          {check ? 'Check again' : 'Check my resume'}
+        </Button>
+      )}
+
+      {loading ? (
+        <section aria-live="polite" className="flex min-h-[240px] flex-col items-center justify-center gap-3 rounded-[22px] border border-line bg-panel p-6 text-center">
+          <span className="size-6 animate-spin rounded-full border-2 border-brand border-t-transparent" aria-hidden />
+          <p className="text-[15px] font-semibold text-ink">Checking your resume against the posting</p>
+          <p className="max-w-[420px] text-[13.5px] text-ink-2">It takes about 10 seconds. Your resume and the posting go to Anthropic&apos;s AI to check them, and they aren&apos;t stored.</p>
+        </section>
+      ) : (
       <section aria-labelledby="results" className="relative rounded-[22px] border border-line bg-panel p-4 sm:p-5">
+        {result.fallback && (
+          <div role="status" className="mb-4 flex flex-wrap items-center gap-3 rounded-[12px] border border-line bg-white px-3.5 py-2.5 text-[13.5px] text-body">
+            <span className="flex-1">
+              {result.fallback === 'busy' ? "You've run a lot of checks, so the AI check is paused for now." : "The AI check couldn't run."} This is a quick word
+              match instead. It can miss skills your resume names in other words.
+            </span>
+            {result.fallback === 'failed' && (
+              <Button variant="outline" size="sm" onClick={() => check && void run(check.posting, check.resume, result.checks.pages)}>Try again</Button>
+            )}
+          </div>
+        )}
         {!mine && (
           <div className="mb-4 flex flex-wrap items-center gap-2 text-[13px] text-ink-2">
             <Badge className="bg-ink text-[12px] text-white">Sample</Badge>
@@ -262,6 +313,7 @@ export function AtsChecker() {
           </div>
         </Tabs>
       </section>
+      )}
     </div>
   )
 }

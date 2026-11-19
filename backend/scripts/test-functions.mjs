@@ -1,11 +1,5 @@
-// Runs the integration tests (tests/integration) against the local stack:
-//   1. writes supabase/functions/.env.test (local keys, throwaway ENCRYPTION_KEY,
-//      ANTHROPIC_BASE_URL pointed at the mock server vitest starts)
-//   2. serves the functions with that env file
-//   3. runs vitest, then stops the functions
-//
-// Usage: pnpm test:functions [vitest args], e.g. pnpm test:functions tailor
-// Stops any running `pnpm functions:serve`; restart it afterwards.
+// Usage: pnpm test:functions [vitest args], e.g. pnpm test:functions tailor. It stops
+// any running `pnpm functions:serve`; restart it afterwards (https://github.com/TheLinc/cover-me/commit/f2256d02).
 
 import { spawnSync } from 'node:child_process'
 import { randomBytes } from 'node:crypto'
@@ -14,8 +8,8 @@ import { createServer } from 'node:net'
 import { join } from 'node:path'
 import { BACKEND, killTree, localStatus, publishableKey, serviceKey, supabaseAsync } from './lib.mjs'
 
-// OS-assigned free port for the mock Anthropic server. A fixed port breaks
-// when Windows reserves its range for Hyper-V/WSL, which can change on reboot.
+// A fixed port breaks when Windows reserves its range for Hyper-V/WSL, which
+// can change on reboot (https://github.com/TheLinc/cover-me/commit/766833f9).
 async function freePort() {
   const srv = createServer()
   await new Promise((resolve) => srv.listen(0, '0.0.0.0', resolve))
@@ -27,11 +21,8 @@ async function freePort() {
 const MOCK_PORT = process.env.MOCK_ANTHROPIC_PORT ?? await freePort()
 const status = localStatus()
 
-// Also given to vitest, so a test can seed an encrypted cached parse.
 const ENCRYPTION_KEY = randomBytes(32).toString('hex')
-// Also given to vitest, so a test can call the nudge function as the scheduler.
 const NUDGE_SECRET = randomBytes(32).toString('hex')
-// Also given to vitest, so a test can sign an unsubscribe token.
 const EMAIL_TOKEN_SECRET = randomBytes(32).toString('hex')
 // The first-month offer's coupon (#213), also given to vitest. Run
 // `STRIPE_FIRST_MONTH_COUPON_ID= pnpm test:functions` to test with it unset.
@@ -42,6 +33,7 @@ writeFileSync(envFile, [
   `ENCRYPTION_KEY=${ENCRYPTION_KEY}`,
   `EMAIL_TOKEN_SECRET=${EMAIL_TOKEN_SECRET}`,
   'ANTHROPIC_API_KEY=mock-key',
+  'ANTHROPIC_CHECKER_API_KEY=mock-checker-key',
   `ANTHROPIC_BASE_URL=http://host.docker.internal:${MOCK_PORT}`,
   'DEBUG_MODE=false',
   'STRIPE_SECRET_KEY=sk_test_mock',
@@ -71,7 +63,8 @@ process.on('SIGINT', () => { cleanup(); process.exit(130) })
 // Ready when every function itself answers: the gateway accepts the legacy
 // anon JWT, then the function rejects it as a user token with its own JSON
 // body. Warming all of them here keeps cold starts (slow after a volume wipe,
-// when the runtime re-downloads npm deps) out of the first test that calls each.
+// when the runtime re-downloads npm deps) out of the first test that calls each
+// (https://github.com/TheLinc/cover-me/commit/766833f9).
 const FUNCTIONS = ['resume', 'generate', 'tailor', 'letters', 'applications', 'billing', 'email-preferences', 'nudge', 'support']
 
 async function waitForFunctions(timeoutMs = 180_000) {
@@ -84,7 +77,9 @@ async function waitForFunctions(timeoutMs = 180_000) {
           headers: { Authorization: `Bearer ${status.ANON_KEY}`, apikey: status.ANON_KEY },
         })
         if (res.status === 401 && (await res.text()).includes('Invalid token')) pending.delete(name)
-      } catch { /* not up yet */ }
+      } catch {
+        continue
+      }
     }
     if (pending.size === 0) return
     await new Promise((r) => setTimeout(r, 1000))
