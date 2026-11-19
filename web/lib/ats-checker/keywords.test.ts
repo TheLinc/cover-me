@@ -239,3 +239,12 @@ test('a keyword covered by its alternative points at a mark in the resume', () =
   const shown = new Set(marks(resume, checked.filter((k) => k.found)).map((m) => m.name))
   for (const k of checked.filter((k) => k.found)) expect(shown.has(k.via ?? k.name)).toBe(true)
 })
+
+test('a keyword seen only inside a longer one is not found, so every found chip has a mark', () => {
+  const { keywords } = readPosting('Requirements\n- Power BI and business intelligence reporting')
+  const resume = 'Built Power BI dashboards.'
+  const checked = checkResume(keywords, resume)
+  expect(checked.find((k) => k.name === 'business intelligence')?.found).toBe(false)
+  const shown = new Set(marks(resume, checked.filter((k) => k.found)).map((m) => m.name))
+  for (const k of checked.filter((k) => k.found)) expect(shown.has(k.via ?? k.name)).toBe(true)
+})

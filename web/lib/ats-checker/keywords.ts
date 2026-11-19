@@ -194,14 +194,10 @@ export function readPosting(posting: string): Posting {
 }
 
 export function checkResume(keywords: Keyword[], resume: string): Array<Keyword & { found: boolean; via?: string }> {
-  const text = normalize(resume)
-  const byName = new Map(keywords.map((k) => [k.name, k]))
+  const shown = new Set(marks(resume, keywords).map((m) => m.name))
   return keywords.map((k) => {
-    if (has(text, k)) return { ...k, found: true }
-    const via = k.alternatives?.find((name) => {
-      const alt = byName.get(name)
-      return alt && has(text, alt)
-    })
+    if (shown.has(k.name)) return { ...k, found: true }
+    const via = k.alternatives?.find((name) => shown.has(name))
     return { ...k, found: !!via, via }
   })
 }

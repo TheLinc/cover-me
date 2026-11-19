@@ -1,6 +1,6 @@
 'use client'
 
-import { useDeferredValue, useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from 'react'
+import { useDeferredValue, useEffect, useMemo, useRef, useState, type ChangeEvent, type ClipboardEvent, type ReactNode } from 'react'
 import { CheckIcon, DeviceMobileIcon, PencilSimpleIcon, UploadSimpleIcon, XIcon } from '@phosphor-icons/react/dist/ssr'
 import { ExtensionPopup } from '@/components/landing/ExtensionPopup'
 import { Badge } from '@/components/ui/badge'
@@ -54,12 +54,13 @@ export function AtsChecker() {
   const [checks, setChecks] = useState(0)
   const [fromPhone, setFromPhone] = useState(false)
   const counted = useRef('')
+  const replacing = useRef(false)
   const postingBox = useRef<HTMLTextAreaElement>(null)
   const resumeBox = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
     const campaign = new URLSearchParams(window.location.search).get('utm_campaign')
-    setFromPhone(campaign === 'ats-phone-send' && window.matchMedia('(min-width: 1024px)').matches)
+    setFromPhone(campaign === 'ats-phone-send' && !window.matchMedia('(pointer: coarse)').matches)
   }, [])
 
   const deferredPosting = useDeferredValue(posting)
@@ -90,17 +91,23 @@ export function AtsChecker() {
 
   function onType(which: 'posting' | 'resume', e: ChangeEvent<HTMLTextAreaElement>) {
     const value = e.target.value
-    const wasEmpty = !(which === 'posting' ? posting : resume).trim()
+    const fresh = replacing.current && (e.nativeEvent as InputEvent).inputType === 'insertFromPaste'
+    replacing.current = false
     if (which === 'posting') setPosting(value)
     else {
       setResume(value)
       setFile(null)
       setFileNote(null)
     }
-    if (wasEmpty && (e.nativeEvent as InputEvent).inputType === 'insertFromPaste') {
+    if (fresh) {
       if (which === 'posting') fold(value, resume)
       else fold(posting, value)
     }
+  }
+
+  function onPaste(e: ClipboardEvent<HTMLTextAreaElement>) {
+    const box = e.currentTarget
+    replacing.current = box.selectionStart === 0 && box.selectionEnd === box.value.length
   }
 
   async function onFile(e: ChangeEvent<HTMLInputElement>) {
@@ -182,6 +189,7 @@ export function AtsChecker() {
                 ref={postingBox}
                 value={posting}
                 onChange={(e) => onType('posting', e)}
+                onPaste={onPaste}
                 placeholder="Paste the whole posting, including its requirements"
                 className="h-[200px] resize-y bg-white text-[14px] leading-[1.55]"
               />
@@ -202,6 +210,7 @@ export function AtsChecker() {
                 ref={resumeBox}
                 value={resume}
                 onChange={(e) => onType('resume', e)}
+                onPaste={onPaste}
                 placeholder="Paste your resume, or upload it as a PDF or Word file"
                 className="h-[200px] resize-y bg-white text-[14px] leading-[1.55]"
               />
@@ -289,7 +298,7 @@ function Summary({ result, sample }: { result: Result; sample: boolean }) {
         <p className="text-[13px] text-ink-2 max-lg:hidden">Nice to have: {nice.filter((k) => k.found).length} of {nice.length}</p>
       )}
       {!sample && (
-        <Button size="sm" className="self-start lg:hidden" onClick={sendToComputer}>
+        <Button size="sm" className="self-start [@media(pointer:fine)]:hidden" onClick={sendToComputer}>
           <DeviceMobileIcon size={16} aria-hidden /> Send this to my computer
         </Button>
       )}
@@ -380,10 +389,10 @@ function MissingChip({ k, on, onPick }: { k: Checked; on: boolean; onPick: (k: C
           <span className="font-semibold text-ink">Not on your resume: {k.name}.</span> If you&apos;ve used it, name it in the bullet where you
           used it. If you haven&apos;t, leave it out.
         </p>
-        <a href={storeUrl('ats-gap')} target="_blank" rel="noreferrer" className="font-medium text-brand-strong underline underline-offset-2 max-lg:hidden">
+        <a href={storeUrl('ats-gap')} target="_blank" rel="noreferrer" className="font-medium text-brand-strong underline underline-offset-2 [@media(pointer:coarse)]:hidden">
           Done it under another name? Cover Me&apos;s AI reads your bullets for it.
         </a>
-        <button type="button" onClick={sendToComputer} className="text-left font-medium text-brand-strong underline underline-offset-2 lg:hidden">
+        <button type="button" onClick={sendToComputer} className="text-left font-medium text-brand-strong underline underline-offset-2 [@media(pointer:fine)]:hidden">
           Done it under another name? Cover Me&apos;s AI reads your bullets for it. Send this to your computer.
         </button>
       </PopoverContent>
@@ -408,15 +417,15 @@ function Pitch({ result, checks }: { result: Result; checks: number }) {
               ? "Cover Me checks each one against your bullets, works in the ones you've done and leaves the rest out."
               : 'Cover Me rewrites your bullets around this posting and writes a matching cover letter.'}
         </p>
-        <Button asChild className="mt-1 self-start max-lg:hidden">
+        <Button asChild className="mt-1 self-start [@media(pointer:coarse)]:hidden">
           <a href={storeUrl(repeat ? 'ats-repeat' : 'ats-result')} target="_blank" rel="noreferrer">Tailor this resume in Chrome, free</a>
         </Button>
-        <Button size="sm" onClick={sendToComputer} className="mt-1 self-start lg:hidden">
+        <Button size="sm" onClick={sendToComputer} className="mt-1 self-start [@media(pointer:fine)]:hidden">
           <DeviceMobileIcon size={16} aria-hidden /> Send this to my computer
         </Button>
         <p className="text-[12.5px] text-ext-muted">
-          <span className="max-lg:hidden">About 30 seconds for a tailored resume and letter. Free plan, no card.</span>
-          <span className="lg:hidden">Cover Me runs in Chrome on a computer. Send yourself the link and tailor this resume there.</span>
+          <span className="[@media(pointer:coarse)]:hidden">About 30 seconds for a tailored resume and letter. Free plan, no card.</span>
+          <span className="[@media(pointer:fine)]:hidden">Cover Me runs in Chrome on a computer. Send yourself the link and tailor this resume there.</span>
         </p>
       </div>
     </ExtensionPopup>
