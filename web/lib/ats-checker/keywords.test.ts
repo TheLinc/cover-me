@@ -66,6 +66,10 @@ describe('keywords from saved postings', () => {
     ['Requirements:\nMust have experience in Excel, SQL and Power BI. We use Jira and Confluence daily.', 'required', ['Excel', 'SQL', 'Power BI']],
     ['We are looking for a Senior Accountant with 5+ years of experience, a CPA, strong Excel and QuickBooks skills, and knowledge of GAAP.', 'required', ['CPA', 'Excel', 'QuickBooks', 'GAAP']],
     ['Requirements\n- No H1B sponsorship, start date TBD\n- Python', 'required', ['Python']],
+    ['About Brightline\nBrightline helps 4,000 clinics run their front desk. We\'re a team of 80 based in Toronto.\n\nThe job\nYou\'ll join a team of six engineers building the scheduling product our clinics use every day.\n\nHere\'s what you need\n- 4+ years building web applications in TypeScript and React\n- Experience with Node.js and PostgreSQL\n- Comfort with AWS and Docker\n- Clear written communication\n\nBonus points\n- Experience with GraphQL',
+      'required', ['TypeScript', 'React', 'Node.js', 'PostgreSQL', 'AWS', 'Docker', 'communication']],
+    ['About Us\nWe build software.\n- 5+ years of Python', 'mentioned', ['Python']],
+    ['Benefits\n- Dental and vision\n- Python, SQL and Docker experience\n- Kubernetes', 'mentioned', ['Python', 'SQL', 'Docker', 'Kubernetes']],
     ['Compensation Analyst\nRequirements\nCompensation analysis experience\nAdvanced Excel and SQL\nKnowledge of Workday', 'required', ['Excel', 'SQL', 'Workday']],
     ['Accountant\nRequirements\nAbout 3-5 years of experience in accounting\nCPA required\nProficient in QuickBooks and Excel\nKnowledge of GAAP', 'required', ['CPA', 'QuickBooks', 'Excel', 'GAAP']],
     ['Requirements\nContact center experience preferred\nSalesforce and Zendesk\nData entry and typing', 'required', ['Salesforce', 'Zendesk', 'data entry', 'typing']],
@@ -83,6 +87,8 @@ describe('keywords from saved postings', () => {
     'About the candidate', 'Who We Are Looking For', 'WHO WE ARE LOOKING FOR', 'Who we are looking for:', "Who we're looking for",
     "We're looking for", 'Skills and qualifications', 'Your experience', 'Education and experience', 'Key skills',
     'Technical skills', 'Is this you?', 'You have', 'The right candidate', 'Contact Center Requirements',
+    "Here's what you need", 'You bring', 'You are', 'Skills you need', "Things you'll need", 'A bit about you',
+    "You're a great fit if", "We'd love to hear from you if", 'Work Experience',
   ])('"%s" starts a must-have section', (heading) => {
     expect(readPosting(`What you'll do\nPlan sprints\n${heading}\nKubernetes and Docker`).keywords.map((k) => [k.name, k.level]))
       .toEqual([['Kubernetes', 'required'], ['Docker', 'required']])
@@ -141,6 +147,12 @@ describe('checking a resume', () => {
       Tableau: [true, 'Looker'], Looker: [true, undefined],
       Agile: [false, undefined], Scrum: [true, undefined],
     })
+  })
+
+  test('an "or" covers only the level and section it was written in', () => {
+    const viaOf = (ask: string, resume: string, name: string) => checkResume(readPosting(ask).keywords, resume).find((k) => k.name === name)
+    expect(viaOf('Requirements\n- Salesforce\nNice to have\n- HubSpot or Salesforce', 'HubSpot admin', 'Salesforce')).toMatchObject({ found: false })
+    expect(viaOf('About the role\nWe build in Python or Go.\nRequirements\n- Python\n- Go', 'Go services', 'Python')).toMatchObject({ found: false })
   })
 
   test('an acronym the list lacks also matches its spelled-out name', () => {

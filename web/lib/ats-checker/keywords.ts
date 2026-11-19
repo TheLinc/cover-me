@@ -44,11 +44,11 @@ const mentions = (text: string, spelling: string, strict: boolean) => text.searc
 const has = (text: string, k: Term) => k.spellings.some((s) => mentions(text, s, k.strict))
 
 const PREFERRED = /prefer|nice[\s-]to[\s-]have|nice if|bonus|\bplus\b|desired|desirable|stand out|advantage|may also|good to have|ideally|even better|pluses|extra credit|would be great/i
-const REQUIRED = /requir|qualif|\bmust\b|need|bring|you have|you'?ll have$|you should have|looking for|good fit|great fit|about you|who you are|who you'?ll be|minimum|skills|education|^(your |relevant )?experience( and \w+)?$|ideal candidate|about the candidate|^tech stack|profile|background|essential|person specification|competenc|to be successful|sets you apart|right candidate|is this you|seeking/i
+const REQUIRED = /requir|qualif|\bmust\b|need|bring|you have|you'?ll have$|you should have|looking for|good fit|great fit|about you|who you are|who you'?ll be|minimum|skills|education|^((your|relevant|work|professional) )?experience( and \w+)?$|you are$|you'?re a|we'?d love to hear|things you|ideal candidate|about the candidate|^tech stack|profile|background|essential|person specification|competenc|to be successful|sets you apart|right candidate|is this you|seeking/i
 const CREDENTIALS = /^certifications?|^licen[sc]e|certifications?$/i
-const COMPANY = /^(about (?!you|the role|the team|the job|this job|this role|the position|the candidate|the opportunity|the work)|more about|why\b|life at)/i
-const HEADING_START = /^(more about|about us|why (join|work)|life at|what (you|we|makes you|sets you)|it would be (great|nice)|it'?d be (great|nice)|you'?ll\b|you (should|might|may)\b|who you|about (you|the (role|candidate|team|job|opportunity))|your (profile|background)|candidate profile|nice to have|good to have|bonus|requirements|qualifications|key (responsibilities|requirements|qualifications)|responsibilities|preferred|desirable|essential|ideally|even better|must[- ]haves?|minimum|basic qualifications|required|competencies|person specification|to be successful|the ideal candidate|the role|the opportunity|job description|tech stack|extra credit|pluses|who we('re| are) (looking|seeking)|we('re| are) (looking|seeking)|is this you|the right candidate)\b/i
-const HEADING_WHOLE = /^(((key|technical|desired|core|required|your|relevant) )?(skills|experience|education)( and \w+)?|you (have|will need|must have))$/i
+const COMPANY = /^(about (?!you|the role|the team|the job|this job|this role|the position|the candidate|the opportunity|the work)|more about|why\b|life at|who we are$|our (founding|story|culture|values)|how we work)/i
+const HEADING_START = /^(more about|about us|why (join|work)|life at|what (you|we|makes you|sets you)|it would be (great|nice)|it'?d be (great|nice)|you'?ll\b|you (should|might|may)\b|who you|about (you|the (role|candidate|team|job|opportunity))|your (profile|background)|candidate profile|nice to have|good to have|bonus|requirements|qualifications|key (responsibilities|requirements|qualifications)|responsibilities|preferred|desirable|essential|ideally|even better|must[- ]haves?|minimum|basic qualifications|required|competencies|person specification|to be successful|the ideal candidate|the role|the opportunity|job description|tech stack|extra credit|pluses|who we('re| are) (looking|seeking)|we('re| are) (looking|seeking)|is this you|the right candidate|here'?s what you|you'?re a (great|good)|skills you|things you|a bit about you|we'?d love to hear|you bring)\b/i
+const HEADING_WHOLE = /^(((key|technical|desired|core|required|your|relevant|work|professional) )?(skills|experience|education)( and \w+)?|you (are|have|will need|must have)|the (job|team|position)|your mission)$/i
 const MINOR_WORD = /^(a|an|and|at|by|for|if|in|is|of|on|or|the|to|with)$/i
 
 // A body line pasted without its bullet can start like a heading ("Compensation analysis
@@ -58,9 +58,9 @@ function looksLikeHeading(text: string, labelled: boolean): boolean {
   const words = text.split(/\s+/).filter((w) => /^[A-Za-z]/.test(w) && !MINOR_WORD.test(w))
   return words.length > 0 && words.every((w) => /^[A-Z]/.test(w))
 }
-const SKIP = /^(description of )?benefits?|^perks|what we offer|^compensation|^pay( range| transparency|$)|^salary|equal (opportunity|employment)|^our commitment|^who we are$|^our (founding|story|culture|values)|^how we work|^acknowledg|statement$|^accommodations?|^privacy|career growth$|^work\/life|^inclusive|^diverse|^apply$|^contact/i
+const SKIP = /^(description of )?benefits?|^perks|what we offer|^compensation|^pay( range| transparency|$)|^salary|equal (opportunity|employment)|^our commitment|^acknowledg|statement$|^accommodations?|^privacy|career growth$|^work\/life|^inclusive|^diverse|^apply$|^contact/i
 const BULLET = /^(\*\s|[-•●◦▪▫■□·‣⁃▸►○–—])/
-const OTHER = /^schedule|^job type|responsib|what you('ll| will)? (do|be doing)|day in the life|the role|the opportunity|job description|overview|summary|duties|additional information/i
+const OTHER = /^schedule|^job type|^the (job|team|position)$|^your mission|responsib|what you('ll| will)? (do|be doing)|day in the life|the role|the opportunity|job description|overview|summary|duties|additional information/i
 
 type Heading = Level | 'skip' | 'unknown'
 function headingLevel(line: string, labelled: boolean): Heading | null {
@@ -68,7 +68,7 @@ function headingLevel(line: string, labelled: boolean): Heading | null {
   const text = line.replace(/^[#*\s]+|[*:\s]+$/g, '')
   if (!text || /[.!]$/.test(text) || text.split(/\s+/).length > 10) return null
   if (!looksLikeHeading(text, labelled || /^(#|\*\*)|:\s*$/.test(line))) return null
-  if (COMPANY.test(text)) return 'skip'
+  if (COMPANY.test(text)) return 'mentioned'
   const namedHeading = /^(required|preferred|minimum|basic)\b|\b(requirements|qualifications)$|looking for|seeking/i.test(text)
   if (!namedHeading && DICTIONARY.some((term) => has(text, term))) return null
   if (!namedHeading && SKIP.test(text)) return 'skip'
@@ -112,6 +112,7 @@ export function readPosting(posting: string): Posting {
     else if (LEVELS.indexOf(k.level) < LEVELS.indexOf(seen.level)) seen.level = k.level
   }
   const years: string[] = []
+  const links: Array<[string, string, Level]> = []
   let section: Level | 'skip' = 'mentioned'
 
   const lines = normalize(posting).split(/\n+/).map((l) => l.trim()).filter(Boolean)
@@ -123,16 +124,13 @@ export function readPosting(posting: string): Posting {
       .filter(({ term, at }) => !at.every(([a, b]) => hits.some((h) => h.term !== term && h.at.some(([c, d]) => c <= a && b <= d && d - c > b - a))))
       .sort((x, y) => Math.min(...x.at.map(([a]) => a)) - Math.min(...y.at.map(([a]) => a)))
     for (const { term } of kept) add({ ...term, level })
+    if (level === 'mentioned') return
     for (const a of kept) {
       for (const b of kept) {
         const either = a !== b && a.at.some(([, end]) => b.at.some(([start]) => start > end && /^,?\s+or\s+$/i.test(text.slice(end, start))))
-        if (!either) continue
-        const [ka, kb] = [found.get(a.term.name.toLowerCase())!, found.get(b.term.name.toLowerCase())!]
-        ka.alternatives = [...new Set([...(ka.alternatives ?? []), kb.name])]
-        kb.alternatives = [...new Set([...(kb.alternatives ?? []), ka.name])]
+        if (either) links.push([a.term.name.toLowerCase(), b.term.name.toLowerCase(), level])
       }
     }
-    if (level === 'mentioned') return
     for (const k of unlistedNames(text)) {
       const known = [...DICTIONARY, ...found.values()].some((f) => has(k.name, f) || f.spellings.some((s) => mentions(s, k.name, true)))
       if (!known && !openers.has(k.name)) add({ ...k, level })
@@ -147,8 +145,9 @@ export function readPosting(posting: string): Posting {
     if (heading === 'unknown') {
       if (section === 'skip' && !head) section = 'mentioned'
     } else if (heading && !credentialsUnderPreferred) section = heading
+    if (section === 'skip' && BULLET.test(line) && DICTIONARY.filter((term) => has(line, term)).length >= 2) section = 'mentioned'
     if (section === 'skip' || BOILERPLATE.test(line)) continue
-    const body = !heading ? line : head ? rest : ''
+    const body =!heading ? line : head ? rest : ''
     for (const sentence of body.split(/(?<=[.!?;])\s+(?=[A-Z])/)) {
       const ask = ASKS.exec(sentence)
       if (ask) {
@@ -167,6 +166,10 @@ export function readPosting(posting: string): Posting {
     }
   }
 
+  for (const [a, b, level] of links) {
+    const [ka, kb] = [found.get(a)!, found.get(b)!]
+    if (ka.level === level && kb.level === level) ka.alternatives = [...new Set([...(ka.alternatives ?? []), kb.name])]
+  }
   const keywords = [...found.values()].sort((a, b) => LEVELS.indexOf(a.level) - LEVELS.indexOf(b.level))
   return { keywords, years }
 }
