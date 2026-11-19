@@ -67,9 +67,11 @@ function headingLevel(line: string, labelled: boolean): Heading | null {
   if (BULLET.test(line)) return null
   const text = line.replace(/^[#*\s]+|[*:\s]+$/g, '')
   if (!text || /[.!]$/.test(text) || text.split(/\s+/).length > 10) return null
-  if (!looksLikeHeading(text, labelled || /^(#|\*\*)|:\s*$/.test(line))) return null
+  const marked = labelled || /^(#|\*\*)|:\s*$/.test(line)
+  if (!marked && /\d/.test(text)) return null
+  if (!looksLikeHeading(text, marked)) return null
   if (COMPANY.test(text)) return 'mentioned'
-  const namedHeading = /^(required|preferred|minimum|basic)\b|\b(requirements|qualifications)$|looking for|seeking/i.test(text)
+  const namedHeading = /^((required|preferred|minimum|basic) (qualifications|requirements|skills|experience)|.*\b(requirements|qualifications)|.*\b(looking for|seeking))$/i.test(text)
   if (!namedHeading && DICTIONARY.some((term) => has(text, term))) return null
   if (!namedHeading && SKIP.test(text)) return 'skip'
   if (PREFERRED.test(text)) return 'preferred'
@@ -145,9 +147,13 @@ export function readPosting(posting: string): Posting {
     if (heading === 'unknown') {
       if (section === 'skip' && !head) section = 'mentioned'
     } else if (heading && !credentialsUnderPreferred) section = heading
-    if (section === 'skip' && BULLET.test(line) && DICTIONARY.filter((term) => has(line, term)).length >= 2) section = 'mentioned'
+    if (section === 'skip' && !heading && !head) {
+      const terms = DICTIONARY.filter((term) => has(line, term)).length
+      const shortLabel = !BULLET.test(line) && !/[.!?]$/.test(line) && line.split(/\s+/).length <= 8 && terms === 0
+      if (shortLabel || (BULLET.test(line) && terms >= 2)) section = 'mentioned'
+    }
     if (section === 'skip' || BOILERPLATE.test(line)) continue
-    const body =!heading ? line : head ? rest : ''
+    const body = !heading ? line : head ? rest : ''
     for (const sentence of body.split(/(?<=[.!?;])\s+(?=[A-Z])/)) {
       const ask = ASKS.exec(sentence)
       if (ask) {
@@ -168,7 +174,9 @@ export function readPosting(posting: string): Posting {
 
   for (const [a, b, level] of links) {
     const [ka, kb] = [found.get(a)!, found.get(b)!]
-    if (ka.level === level && kb.level === level) ka.alternatives = [...new Set([...(ka.alternatives ?? []), kb.name])]
+    if (ka.level !== level || kb.level !== level) continue
+    ka.alternatives = [...new Set([...(ka.alternatives ?? []), kb.name])]
+    kb.alternatives = [...new Set([...(kb.alternatives ?? []), ka.name])]
   }
   const keywords = [...found.values()].sort((a, b) => LEVELS.indexOf(a.level) - LEVELS.indexOf(b.level))
   return { keywords, years }

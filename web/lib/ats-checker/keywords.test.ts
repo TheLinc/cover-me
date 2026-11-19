@@ -69,6 +69,12 @@ describe('keywords from saved postings', () => {
     ['About Brightline\nBrightline helps 4,000 clinics run their front desk. We\'re a team of 80 based in Toronto.\n\nThe job\nYou\'ll join a team of six engineers building the scheduling product our clinics use every day.\n\nHere\'s what you need\n- 4+ years building web applications in TypeScript and React\n- Experience with Node.js and PostgreSQL\n- Comfort with AWS and Docker\n- Clear written communication\n\nBonus points\n- Experience with GraphQL',
       'required', ['TypeScript', 'React', 'Node.js', 'PostgreSQL', 'AWS', 'Docker', 'communication']],
     ['About Us\nWe build software.\n- 5+ years of Python', 'mentioned', ['Python']],
+    ["Minimum Qualifications\nMinimum 2 years of Salesforce administration experience\nMinimum 1 year with Apex and SOQL\nRequired knowledge of SQL\nBachelor's degree", 'required', ['Salesforce', 'SOQL', 'SQL', "Bachelor's degree"]],
+    ["Requirements\nMinimum 3 years of Python experience\nMinimum 2 years with AWS\nBachelor's degree in Computer Science", 'required', ['Python', 'AWS', "Bachelor's degree"]],
+    ['Requirements\nRequired certifications CPR and BLS', 'required', ['CPR', 'BLS']],
+    ['Qualifications\nPreferred experience with Tableau and Looker', 'preferred', ['Tableau', 'Looker']],
+    ['Perks\n- Remote work\n- Health insurance\nKnowledge, skills and abilities\n- Python\n- Strong SQL\n- Familiarity with AWS\n- Airflow', 'mentioned', ['Python', 'SQL', 'AWS', 'Airflow']],
+    ['What we offer\nHealth insurance and 401k\nWho should apply\nPython developers\nPeople with SQL and AWS', 'mentioned', ['Python', 'SQL', 'AWS']],
     ['Benefits\n- Dental and vision\n- Python, SQL and Docker experience\n- Kubernetes', 'mentioned', ['Python', 'SQL', 'Docker', 'Kubernetes']],
     ['Compensation Analyst\nRequirements\nCompensation analysis experience\nAdvanced Excel and SQL\nKnowledge of Workday', 'required', ['Excel', 'SQL', 'Workday']],
     ['Accountant\nRequirements\nAbout 3-5 years of experience in accounting\nCPA required\nProficient in QuickBooks and Excel\nKnowledge of GAAP', 'required', ['CPA', 'QuickBooks', 'Excel', 'GAAP']],
@@ -152,6 +158,7 @@ describe('checking a resume', () => {
   test('an "or" covers only the level and section it was written in', () => {
     const viaOf = (ask: string, resume: string, name: string) => checkResume(readPosting(ask).keywords, resume).find((k) => k.name === name)
     expect(viaOf('Requirements\n- Salesforce\nNice to have\n- HubSpot or Salesforce', 'HubSpot admin', 'Salesforce')).toMatchObject({ found: false })
+    expect(viaOf('Requirements\n- HubSpot or Salesforce', 'HubSpot admin', 'Salesforce')).toMatchObject({ found: true, via: 'HubSpot' })
     expect(viaOf('About the role\nWe build in Python or Go.\nRequirements\n- Python\n- Go', 'Go services', 'Python')).toMatchObject({ found: false })
   })
 
