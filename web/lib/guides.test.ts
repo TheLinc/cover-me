@@ -94,15 +94,17 @@ describe('moved guides', () => {
 })
 
 describe('internal links', () => {
-  const files = readdirSync(join(__dirname, '..'), { recursive: true, encoding: 'utf8' })
-    .filter((f) => /^(app|components)[\/].*\.tsx$/.test(f))
-    .map((f) => ({ file: f, text: readFileSync(join(__dirname, '..', f), 'utf8') }))
+  const root = join(__dirname, '..')
+  const files = ['app', 'components']
+    .flatMap((dir) => readdirSync(join(root, dir), { recursive: true, encoding: 'utf8' }).map((f) => join(dir, f)))
+    .filter((f) => f.endsWith('.tsx'))
+    .map((file) => ({ file, text: readFileSync(join(root, file), 'utf8') }))
 
   it.each(['aiapply-review', 'free-jobscan-alternatives', 'use-your-own-api-key-for-cover-letters'])(
     '%s is linked from at least two other pages, besides the /guides index',
     (slug) => {
       const own = join('app', 'guides', slug, 'page.tsx')
-      const linking = files.filter(({ file, text }) => join(file) !== own && text.includes(`href="/guides/${slug}"`))
+      const linking = files.filter(({ file, text }) => file !== own && text.includes(`href="/guides/${slug}"`))
       expect(linking.length).toBeGreaterThanOrEqual(2)
     },
   )

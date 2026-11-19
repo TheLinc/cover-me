@@ -151,7 +151,7 @@ export default function Page() {
           title: '3. Teal: free job tracking with a keyword check',
           body: (
             <p>
-              Teal&rsquo;s free plan has unlimited resumes and job tracking. On the free plan, its Job Matcher shows the top five keywords from a job description, and Teal+ shows the rest. Free AI is a one-time set of credits: 5 for bullets, 2 for summaries and 2 for cover letters. Teal+ is $13 every 7 days, $29 every 30 days or $79 every 90 days. A free Chrome extension saves jobs from job boards to your tracker. <Link href="/guides/teal-review">Cover Me vs Teal</Link> compares the two in more detail.
+              Teal&rsquo;s free plan has unlimited resumes and job tracking. On the free plan, its Job Matcher shows the top five keywords from a job description, and Teal+ shows the rest. Free AI is a one-time set of credits: 5 for bullets, 2 for summaries and 2 for cover letters. Teal+ is $13 every 7 days, $29 every 30 days or $79 every 90 days. A free Chrome extension saves jobs from job boards to your tracker. The <Link href="/guides/teal-review">Teal review</Link> covers its job board, prices and what users say.
             </p>
           ),
         },
@@ -183,7 +183,7 @@ export default function Page() {
           title: 'Is Jobscan’s free plan enough?',
           body: (
             <p>
-              For a few important applications, it can be. The free plan includes 5 scans a month, and a rescan after you edit your resume counts as a new scan, so fixing one resume for one job can use several. If you apply to more than a handful of jobs a month, or want the rewrite done for you, you&rsquo;ll hit the limit quickly. <Link href="/guides/jobscan-review">Cover Me vs Jobscan</Link> compares its paid plan with Cover Me&rsquo;s.
+              For a few important applications, it can be. The free plan includes 5 scans a month, and a rescan after you edit your resume counts as a new scan, so fixing one resume for one job can use several. If you apply to more than a handful of jobs a month, or want the rewrite done for you, you&rsquo;ll hit the limit quickly. The <Link href="/guides/jobscan-review">Jobscan review</Link> covers its paid plans and what users say about them.
             </p>
           ),
         },
