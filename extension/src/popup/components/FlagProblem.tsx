@@ -96,14 +96,14 @@ export default function FlagProblem({ target, resultKey }: { target: ReportTarge
     try {
       // Told "Your account goes with it": no session, no send.
       const token = report.contact ? (await ensureValidSession())?.access_token : undefined
-      if (report.contact && !token) throw new Error('signed out')
+      if (report.contact && !token) throw new Error('Sign in again to send this with your account, or go Back and untick "You can email me about this".')
       await sendGenerationReport(report, token)
       await rememberReportedResult(resultKey)
       submitted.current = true
       close()
       setReported(true)
-    } catch {
-      setError("Couldn't send the report. Try again in a moment.")
+    } catch (err) {
+      setError(err instanceof Error && err.message.startsWith('Sign in') ? err.message : "Couldn't send the report. Try again in a moment.")
     } finally {
       setSending('')
     }
@@ -167,12 +167,17 @@ export default function FlagProblem({ target, resultKey }: { target: ReportTarge
   )
 }
 
+const WHERE: Record<string, string> = {
+  summary: 'Summary', experience: 'Job', projects: 'Project', education: 'Education', skills: 'Skills', certifications: 'Certification',
+  otherSections: 'Section', atsGaps: 'ATS gap', atsGapsBeforeEdits: 'ATS gap before edits', bullets: 'bullets', lines: 'lines',
+}
+
 // What Send sends, editable: the letter, or each text of the resume (and of
 // the original resume, when it goes too).
 function Preview({ report, onChange }: { report: GenerationReport; onChange: (r: GenerationReport) => void }) {
   // Each box under a heading for where it sits ("experience 1 bullets"),
   // shown when that changes.
-  const name = (path: Array<string | number>) => path.map((p) => (typeof p === 'number' ? p + 1 : p)).join(' ')
+  const name = (path: Array<string | number>) => path.map((p) => (typeof p === 'number' ? p + 1 : WHERE[p] ?? p)).join(' ')
   const fields = (key: 'output' | 'sourceResume') => resumeTexts(report[key] as object).map(({ path, text }, i, all) => {
     const where = name(path.slice(0, -1)) || name(path)
     const heading = i === 0 || where !== (name(all[i - 1].path.slice(0, -1)) || name(all[i - 1].path))

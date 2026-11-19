@@ -100,11 +100,11 @@ function scrubResume(resume: object, known: Known): Resume {
 type Path = Array<string | number>
 // In the resume's own order: a stored one comes back with its keys sorted.
 const NOT_SHOWN = new Set(['sectionOrder', 'editedAt'])
-const ORDER = ['summary', 'experience', 'projects', 'education', 'skills', 'certifications', 'otherSections']
+const ORDER = ['summary', 'experience', 'projects', 'education', 'skills', 'certifications', 'otherSections', 'title', 'name', 'degree', 'company', 'institution', 'location', 'dates', 'heading', 'bullets', 'lines']
 const rank = (k: string) => (ORDER.includes(k) ? ORDER.indexOf(k) : ORDER.length)
 export function resumeTexts(resume: object, path: Path = []): Array<{ path: Path; text: string }> {
   const entries = Object.entries(resume)
-  if (!path.length) entries.sort(([a], [b]) => rank(a) - rank(b))
+  if (!Array.isArray(resume)) entries.sort(([a], [b]) => rank(a) - rank(b))
   return entries.flatMap(([k, v]) => {
     if (NOT_SHOWN.has(k)) return []
     const at = [...path, Array.isArray(resume) ? Number(k) : k]
