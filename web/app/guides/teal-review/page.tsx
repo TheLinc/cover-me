@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { ComparisonTable, GuideArticle } from '@/components/site/GuideArticle'
+import { ComparisonTable, GuideArticle, ext } from '@/components/site/GuideArticle'
 import { getGuide } from '@/lib/guides'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
@@ -76,8 +76,6 @@ const COMPARISON: { feature: string; coverMe: string; them: string }[] = [
   { feature: 'Templates and design', coverMe: 'Keeps your own Word design (beta), or a standard one-column layout; download as PDF or Word', them: 'Resume templates and Design Mode' },
   { feature: 'Open source', coverMe: 'Yes, MIT licensed', them: 'No' },
 ]
-
-const ext = { target: '_blank', rel: 'noopener noreferrer' } as const
 
 export default function Page() {
   return (

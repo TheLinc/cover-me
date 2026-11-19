@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { ComparisonTable, GuideArticle } from '@/components/site/GuideArticle'
+import { ComparisonTable, GuideArticle, ext } from '@/components/site/GuideArticle'
 import { getGuide } from '@/lib/guides'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
@@ -76,8 +76,6 @@ const COMPARISON: { feature: string; coverMe: string; them: string }[] = [
   { feature: 'Pricing', coverMe: 'Free for 10, then 5 a week · Pro $15 a month for 25 a day · prices on the site', them: 'Premium $29 a month; Auto Apply from $49 a month for 100 applications; prices in its help center' },
   { feature: 'Open source', coverMe: 'Yes, MIT licensed', them: 'No' },
 ]
-
-const ext = { target: '_blank', rel: 'noopener noreferrer' } as const
 
 export default function Page() {
   return (
