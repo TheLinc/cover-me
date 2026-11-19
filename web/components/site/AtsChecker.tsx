@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { checkResume, readPosting, type Level } from '@/lib/ats-checker/keywords'
 import { readResumeFile } from '@/lib/ats-checker/read-resume'
-import { cn, CHROME_STORE_URL } from '@/lib/utils'
+import { cn, storeUrl } from '@/lib/utils'
 
 const GROUPS: { level: Level; title: string }[] = [
   { level: 'required', title: 'Must-have' },
@@ -147,7 +147,7 @@ export function AtsChecker() {
               keywords your experience backs up and removes any skill your original resume doesn&apos;t support.
             </p>
             <Button asChild className="self-start">
-              <a href={CHROME_STORE_URL} target="_blank" rel="noreferrer">Install Cover Me free</a>
+              <a href={storeUrl('ats-checker')} target="_blank" rel="noreferrer">Install Cover Me free</a>
             </Button>
           </div>
         )}

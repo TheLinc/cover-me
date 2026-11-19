@@ -1,5 +1,5 @@
 import { CheckIcon } from '@phosphor-icons/react/dist/ssr'
-import { CHROME_STORE_URL } from '@/lib/utils'
+import { storeUrl } from '@/lib/utils'
 import { PLAN_LIMITS as L } from '@/lib/limits'
 import { Ambient } from './Ambient'
 
@@ -37,7 +37,7 @@ export function Pricing() {
               <li key={f} className="flex items-start gap-2.5"><CheckIcon size={16} className="mt-[3px] shrink-0 text-subtle" />{f}</li>
             ))}
           </ul>
-          <a href={CHROME_STORE_URL} target="_blank" rel="noreferrer" className="mt-auto rounded-full bg-panel py-3.5 text-center text-[15px] font-medium text-ink transition-colors hover:bg-line">
+          <a href={storeUrl('pricing')} target="_blank" rel="noreferrer" className="mt-auto rounded-full bg-panel py-3.5 text-center text-[15px] font-medium text-ink transition-colors hover:bg-line">
             Install free
           </a>
         </div>

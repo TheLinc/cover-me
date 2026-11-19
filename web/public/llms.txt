@@ -24,7 +24,7 @@ Key facts:
 - [Support](https://www.cover-me.dev/support): FAQ and contact (support@cover-me.dev)
 - [Privacy Policy](https://www.cover-me.dev/privacy)
 - [Terms of Service](https://www.cover-me.dev/terms)
-- [Chrome Web Store listing](https://chromewebstore.google.com/detail/cover-me-ai-resume-tailor/bpbnopjgjbimdjjdolhkgimllbgamgpi)
+- [Chrome Web Store listing](https://chromewebstore.google.com/detail/cover-me-ai-resume-tailor/bpbnopjgjbimdjjdolhkgimllbgamgpi?utm_source=llms-txt&utm_medium=ai)
 - [AlternativeTo listing](https://alternativeto.net/software/cover-me/about/): user reviews and comparisons with Jobscan, Teal, Kickresume and other resume tools
 - [Toolradar listing](https://toolradar.com/tools/cover-me): features, pricing, FAQ and alternatives such as Kickresume and Rezi
 - [Open Source Alternatives listing](https://www.opensourcealternatives.to/item/cover-me): Cover Me as an open-source alternative to Teal, Jobscan, Kickresume and Rezi
@@ -45,6 +45,8 @@ Key facts:
 - [What is an ATS score?](https://www.cover-me.dev/guides/what-is-an-ats-score)
 - [Cover Me vs ChatGPT for cover letters](https://www.cover-me.dev/guides/cover-me-vs-chatgpt)
 - [How to tailor your resume to a job description](https://www.cover-me.dev/guides/tailor-resume-to-job-description)
+- [ChatGPT resume prompts](https://www.cover-me.dev/guides/chatgpt-resume-prompts): four prompts that tailor a resume to a job posting in ChatGPT or Claude (keywords, summary, bullets, a check for anything made up), each run on a real posting in November 2026 with the answers shown
+- [ChatGPT cover letter prompts](https://www.cover-me.dev/guides/chatgpt-cover-letter-prompts): four prompts that write a cover letter in ChatGPT or Claude, strip the phrases that sound AI-written and check every claim, each run on a real posting in November 2026 with the answers shown
 - [Cover Me vs AIApply](https://www.cover-me.dev/guides/cover-me-vs-aiapply): one-click tailoring you review against automatic applying
 - [Cover Me vs Jobscan](https://www.cover-me.dev/guides/cover-me-vs-jobscan): a free, open-source Jobscan alternative; plans, prices and how the two scores differ
 - [Free Jobscan alternatives](https://www.cover-me.dev/guides/free-jobscan-alternatives): six tools that check a resume against a job posting for free (Cover Me, SkillSyncer, Teal, Resume Worded, Enhancv, Resume.io), their free limits, and which ones also rewrite the resume or write a cover letter, checked November 2026

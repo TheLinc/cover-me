@@ -5,9 +5,6 @@ import { getGuide } from '@/lib/guides'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 const guide = getGuide('cover-me-vs-teal')
-const HERO_IMAGE = '/guides/cover-me-vs-teal.png'
-const HERO_ALT =
-  "Table comparing Teal and Cover Me, with prices from each company's site in October 2026. Built for: building resumes and tracking jobs, against tailoring your resume and letter to each posting. Free AI cover letters: 2 credits, against unlimited with your own API key, or 10 to start then 5 a week. Paid plan: $13 a week, $29 every 30 days or $79 every 90 days, against $15 a month or $35 every 3 months. Open source: no against yes, MIT."
 
 export const metadata: Metadata = {
   title: { absolute: 'Cover Me vs Teal: A Cheaper Teal+ Alternative' },
@@ -19,13 +16,13 @@ export const metadata: Metadata = {
     url: `${BASE}/guides/${guide.slug}`,
     siteName: 'Cover Me',
     type: 'article',
-    images: [{ url: `${BASE}${HERO_IMAGE}`, width: 1600, height: 900, alt: 'Teal and Cover Me compared on what each is built for, free cover letters, paid plans and open source' }],
+    images: [{ url: `${BASE}${guide.image}`, width: 1600, height: 900, alt: 'Teal and Cover Me compared on what each is built for, free cover letters, paid plans and open source' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Cover Me vs Teal | Cover Me',
     description: 'A cheaper Teal+ alternative that tailors your resume and writes your cover letter on the posting.',
-    images: [`${BASE}${HERO_IMAGE}`],
+    images: [`${BASE}${guide.image}`],
   },
 }
 
@@ -76,7 +73,6 @@ export default function Page() {
   return (
     <GuideArticle
       guide={guide}
-      hero={{ src: HERO_IMAGE, alt: HERO_ALT }}
       lede={
         <>
           Teal is a resume builder and job tracker, with Teal+ at $29 every 30 days for unlimited AI and keyword matching. Cover Me (cover-me.dev) is an open-source Chrome extension that tailors the resume you already have to the posting you have open, scores it and writes a cover letter. It&rsquo;s free with your own API key, or $15 a month.

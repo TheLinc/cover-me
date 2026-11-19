@@ -1,6 +1,6 @@
 import { GoogleChromeLogoIcon } from '@phosphor-icons/react/dist/ssr'
 import { Button } from '@/components/ui/button'
-import { CHROME_STORE_URL } from '@/lib/utils'
+import { storeUrl } from '@/lib/utils'
 import { TailorRun } from './TailorRun'
 
 export function ClosingCta() {
@@ -15,7 +15,7 @@ export function ClosingCta() {
             That was Northwind. Install Cover Me, open your next posting and click the icon. The first one is free.
           </p>
           <Button asChild size="lg" className="self-start max-lg:self-center">
-            <a href={CHROME_STORE_URL} target="_blank" rel="noreferrer">
+            <a href={storeUrl('closing')} target="_blank" rel="noreferrer">
               <GoogleChromeLogoIcon size={18} />
               Add to Chrome, it&apos;s free
             </a>

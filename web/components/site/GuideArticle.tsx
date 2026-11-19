@@ -2,12 +2,13 @@ import type { ReactNode } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Source_Serif_4 } from 'next/font/google'
-import { CHROME_STORE_URL, cn } from '@/lib/utils'
+import { storeUrl, cn } from '@/lib/utils'
 import { type Guide, guideArticleJsonLd, guideBreadcrumbJsonLd, readingMinutes, slugify } from '@/lib/guides'
 import { Button } from '@/components/ui/button'
+import { CopyPromptButton } from './CopyPromptButton'
 import { GuideToc, GuideTocCollapsed } from './GuideToc'
 
-const serif = Source_Serif_4({ subsets: ['latin'], weight: '600', display: 'swap' })
+export const serif = Source_Serif_4({ subsets: ['latin'], weight: '600', display: 'swap' })
 
 type GuideSection = { title: string; id?: string; body: ReactNode }
 
@@ -45,6 +46,38 @@ export function GuideImage({ src, alt, width, height, caption, narrow }: { src: 
   )
 }
 
+const PLACEHOLDER = /(\[[A-Z ]+\])/
+
+export function GuidePrompt({ n, title, prompt, answer, caption, check }: { n: number; title: string; prompt: string; answer: string; caption: string; check: ReactNode }) {
+  return (
+    <>
+      <h3 id={slugify(title)} className="scroll-mt-24">
+        <span className="mr-3 text-[11px] font-bold tracking-[0.08em] text-brand">{String(n).padStart(2, '0')}</span>
+        {title}
+      </h3>
+      <div className="rounded-[16px] border border-line bg-surface">
+        <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-3">
+          <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-subtle">Prompt</span>
+          <CopyPromptButton text={prompt} />
+        </div>
+        <p className="whitespace-pre-line px-5 py-4 text-[15.5px] leading-[1.65] text-ink">
+          {prompt.split(PLACEHOLDER).map((part, i) =>
+            PLACEHOLDER.test(part) ? (
+              <span key={i} className="rounded-[4px] bg-brand-tint px-1 font-mono text-[13px] text-brand-ink">{part}</span>
+            ) : (
+              part
+            ),
+          )}
+        </p>
+      </div>
+      <GuideFigure caption={caption}>
+        <div className="whitespace-pre-line rounded-[12px] bg-white p-5 text-[14.5px] leading-[1.6] text-ink-2 max-sm:p-4">{answer}</div>
+      </GuideFigure>
+      <p>{check}</p>
+    </>
+  )
+}
+
 export function ComparisonTable({ name, rows, caption }: { name: string; rows: { feature: string; coverMe: string; them: string }[]; caption: string }) {
   const th = 'border-b border-line px-4 py-3 text-left font-bold'
   const td = 'border-b border-line px-4 py-3'
@@ -76,7 +109,6 @@ export function ComparisonTable({ name, rows, caption }: { name: string; rows: {
 
 export function GuideArticle({
   guide,
-  hero,
   lede,
   tldr,
   intro,
@@ -86,7 +118,6 @@ export function GuideArticle({
   cta,
 }: {
   guide: Guide
-  hero: { src: string; alt: string }
   lede: ReactNode
   tldr?: string[] | ReactNode
   intro?: ReactNode
@@ -102,7 +133,7 @@ export function GuideArticle({
 
   return (
     <main className="mx-auto max-w-[1040px] px-8 pb-24 pt-16 max-md:px-5 max-md:pt-10 lg:grid lg:grid-cols-[200px_minmax(0,1fr)] lg:gap-x-16">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(guideArticleJsonLd(guide, hero.src)) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(guideArticleJsonLd(guide)) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(guideBreadcrumbJsonLd(guide)) }} />
       {howTo && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(howTo) }} />}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faq) }} />
@@ -130,8 +161,8 @@ export function GuideArticle({
         </header>
 
         <Image
-          src={hero.src}
-          alt={hero.alt}
+          src={guide.image}
+          alt={guide.imageAlt}
           width={1600}
           height={900}
           priority
@@ -186,7 +217,7 @@ export function GuideArticle({
             {cta.body}
           </div>
           <Button asChild>
-            <a href={CHROME_STORE_URL} target="_blank" rel="noreferrer">
+            <a href={storeUrl('guide')} target="_blank" rel="noreferrer">
               Install free · Chrome
             </a>
           </Button>

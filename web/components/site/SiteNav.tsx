@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation'
 import { ListIcon } from '@phosphor-icons/react/dist/ssr'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
-import { cn, CHROME_STORE_URL } from '@/lib/utils'
+import { cn, storeUrl } from '@/lib/utils'
 import type { NavLink } from './app-links'
 
 const MARKETING_LINKS: NavLink[] = [
@@ -20,7 +20,7 @@ const MARKETING_LINKS: NavLink[] = [
 export function SiteNav({ actions, links }: { actions?: ReactNode; links?: NavLink[] }) {
   const pathname = usePathname()
   const [scrolled, setScrolled] = useState(false)
-  // Guides keep one SiteNav across pages, so Back with the menu open must close it (#135).
+  // Guides keep one SiteNav across pages, so Back with the menu open must close it. (#135)
   const [menuOpen, setMenuOpen] = useState(false)
   useEffect(() => setMenuOpen(false), [pathname])
   useEffect(() => {
@@ -61,7 +61,7 @@ export function SiteNav({ actions, links }: { actions?: ReactNode; links?: NavLi
                 <Link href="/auth">Sign in</Link>
               </Button>
               <Button asChild size="sm">
-                <a href={CHROME_STORE_URL} target="_blank" rel="noreferrer">
+                <a href={storeUrl('nav')} target="_blank" rel="noreferrer">
                   Install free
                 </a>
               </Button>

@@ -5,9 +5,6 @@ import { getGuide } from '@/lib/guides'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 const guide = getGuide('tailor-resume-in-word')
-const HERO_IMAGE = '/guides/tailor-resume-in-word.png'
-const HERO_ALT =
-  "A made-up Word resume for Alex Rivera after Cover Me tailored it to a sample Marketing Manager posting. The serif name, teal section rules, square bullets and right-aligned dates are the same as in the original file; the profile, bullets and skills line are rewritten. Labels read fonts kept, words rewritten and layout kept."
 const FILES = '/guides/tailor-resume-in-word'
 const SUMMARY = 'Change the words inside the paragraphs your resume already has, and leave the paragraphs alone. What breaks a Word design, how to tailor by hand, and a tested run with Cover Me.'
 
@@ -21,13 +18,13 @@ export const metadata: Metadata = {
     url: `${BASE}/guides/${guide.slug}`,
     siteName: 'Cover Me',
     type: 'article',
-    images: [{ url: `${BASE}${HERO_IMAGE}`, width: 1600, height: 900, alt: 'A made-up Word resume tailored to a job posting with its fonts and layout unchanged' }],
+    images: [{ url: `${BASE}${guide.image}`, width: 1600, height: 900, alt: 'A made-up Word resume tailored to a job posting with its fonts and layout unchanged' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'How to tailor your resume in Word without losing its formatting | Cover Me',
     description: SUMMARY,
-    images: [`${BASE}${HERO_IMAGE}`],
+    images: [`${BASE}${guide.image}`],
   },
 }
 
@@ -66,7 +63,6 @@ export default function Page() {
   return (
     <GuideArticle
       guide={guide}
-      hero={{ src: HERO_IMAGE, alt: HERO_ALT }}
       lede={
         <>
           To tailor a Word resume without losing its formatting, change the words inside the paragraphs it already has and leave the paragraphs themselves alone. The design breaks when new text brings its own formatting, when one bullet is split across several lines, or when the resume is rebuilt in another tool&rsquo;s template. I tailored a made-up Word resume to a sample posting with Cover Me, and its fonts, spacing and layout came back unchanged.

@@ -1,6 +1,8 @@
+import { existsSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { createElement as h } from 'react'
 import { describe, expect, it } from 'vitest'
-import { readingMinutes, slugify } from './guides'
+import { GUIDES, newestFirst, readingMinutes, slugify } from './guides'
 
 describe('slugify', () => {
   it('turns a guide heading into a stable anchor id', () => {
@@ -23,8 +25,48 @@ describe('readingMinutes', () => {
     expect(readingMinutes([body, 'two'])).toBe(3)
   })
 
+  it("counts a guide prompt's prompt, answer and check", () => {
+    const Prompt = () => null
+    const step = h(Prompt, { prompt: words(230), answer: words(230), check: h('em', null, 'one') })
+    expect(readingMinutes(step)).toBe(3)
+  })
+
   it('never shows less than one minute', () => {
     expect(readingMinutes(h('p', null, 'Short.'))).toBe(1)
     expect(readingMinutes(null)).toBe(1)
+  })
+})
+
+describe('newestFirst', () => {
+  const guide = (slug: string, date: string, updated?: string) => ({ slug, date, updated })
+
+  it('orders by last update, newest first, and a newer publish date wins a tie', () => {
+    const guides = [
+      guide('old', '2026-07-06', '2026-10-29'),
+      guide('updated-late', '2026-10-29', '2026-11-09'),
+      guide('never-updated', '2026-10-31'),
+      guide('published-late', '2026-11-09'),
+    ]
+    expect(newestFirst(guides).map((g) => g.slug)).toEqual(['published-late', 'updated-late', 'never-updated', 'old'])
+  })
+
+  it('returns a copy and leaves the input in its order', () => {
+    const guides = [guide('a', '2026-01-01'), guide('b', '2026-02-01')]
+    newestFirst(guides)
+    expect(guides.map((g) => g.slug)).toEqual(['a', 'b'])
+  })
+})
+
+describe('GUIDES', () => {
+  const llms = readFileSync(join(__dirname, '../public/llms.txt'), 'utf8')
+
+  it.each(GUIDES.map((g) => g.slug))('%s has a page and a line in llms.txt', (slug) => {
+    expect(existsSync(join(__dirname, '../app/guides', slug, 'page.tsx'))).toBe(true)
+    expect(llms).toContain(`https://www.cover-me.dev/guides/${slug})`)
+  })
+
+  it.each(GUIDES.map((g) => [g.slug, g] as const))('%s has a hero image in public/ and alt text', (_, g) => {
+    expect(existsSync(join(__dirname, '../public', g.image))).toBe(true)
+    expect(g.imageAlt.length).toBeGreaterThan(20)
   })
 })
