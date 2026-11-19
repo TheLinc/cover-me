@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
-import { checkResume, firstAt, marks, readPosting, type Level } from './keywords'
+import { checkResume, firstAt, markFor, marks, readPosting, type Level } from './keywords'
 import { TERMS } from './terms'
 
 const text = (name: string) => readFileSync(join(__dirname, 'postings', `${name}.txt`), 'utf8')
@@ -258,4 +258,18 @@ test('a keyword seen only inside a longer one is found and points at the longer 
 test('firstAt finds the keyword at a word edge, not inside another word', () => {
   const line = 'You will maintain and extend our tools, then apply AI where it helps.'
   expect(firstAt(line, { spellings: ['AI'], strict: true })).toBe(line.indexOf(' AI') + 1)
+})
+
+test('every posting keyword has a mark to scroll to, its own or one it overlaps', () => {
+  const postings = [
+    ...readdirSync(join(__dirname, 'postings')).map((name) => readFileSync(join(__dirname, 'postings', name), 'utf8')),
+    'Requirements\n- Experience with patient care plans',
+    'Requirements\n- Email marketing automation in HubSpot',
+    'Requirements\n- Build UI design systems in Figma',
+  ]
+  for (const posting of postings) {
+    const { keywords } = readPosting(posting)
+    const kept = marks(posting, keywords)
+    for (const k of keywords) expect(markFor(posting, kept, k), `${k.name} in ${posting.slice(0, 40)}`).toBeDefined()
+  }
 })

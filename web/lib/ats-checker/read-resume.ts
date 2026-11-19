@@ -5,17 +5,18 @@ export interface ResumeFile {
 
 export async function readResumeFile(file: File): Promise<ResumeFile> {
   const name = file.name.toLowerCase()
-  if (file.type === 'application/pdf' || name.endsWith('.pdf')) {
-    return readPdf(file).catch(() => {
-      throw new Error(`Couldn't read ${file.name}. If it has a password, save a copy without one, or paste the text instead.`)
-    })
+  const unreadable = () => {
+    throw new Error(`Couldn't read ${file.name}. If it has a password, save a copy without one, or paste the text instead.`)
   }
-  if (name.endsWith('.docx')) {
-    const { default: mammoth } = await import('mammoth')
-    return { text: (await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() })).value.trim() }
-  }
+  if (file.type === 'application/pdf' || name.endsWith('.pdf')) return readPdf(file).catch(unreadable)
+  if (name.endsWith('.docx')) return readDocx(file).catch(unreadable)
   if (file.type === 'text/plain' || name.endsWith('.txt')) return { text: (await file.text()).trim() }
   throw new Error('Upload a PDF, a Word file (.docx) or a text file.')
+}
+
+async function readDocx(file: File): Promise<ResumeFile> {
+  const { default: mammoth } = await import('mammoth')
+  return { text: (await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() })).value.trim() }
 }
 
 async function readPdf(file: File): Promise<ResumeFile> {

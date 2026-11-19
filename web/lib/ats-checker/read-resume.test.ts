@@ -31,6 +31,12 @@ describe('reading an uploaded resume', () => {
     await expect(readResumeFile(new File(['x'], 'resume.pages'))).rejects.toThrow('Upload a PDF, a Word file (.docx) or a text file.')
   })
 
+  test.each([['resume.pdf', 'application/pdf'], ['resume.docx', '']])('an unreadable %s gets a plain message', async (name, type) => {
+    await expect(readResumeFile(new File(['not really a file'], name, { type }))).rejects.toThrow(
+      `Couldn't read ${name}. If it has a password, save a copy without one, or paste the text instead.`,
+    )
+  })
+
   test.each([['single-column.pdf', 'application/pdf'], ['single-column.docx', ''], ['two-column.pdf', 'application/pdf'], ['table-layout.docx', '']])(
     '%s gives only real bullets, each with its number, and a page count for PDFs',
     async (name, type) => {

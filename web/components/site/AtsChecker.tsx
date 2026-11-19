@@ -11,7 +11,7 @@ import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { checkResumeText, postingTitle } from '@/lib/ats-checker/hints'
-import { checkResume, firstAt, marks, readPosting, type Level, type Mark, type Posting } from '@/lib/ats-checker/keywords'
+import { checkResume, firstAt, markFor, marks, readPosting, type Level, type Mark, type Posting } from '@/lib/ats-checker/keywords'
 import { readResumeFile } from '@/lib/ats-checker/read-resume'
 import { SAMPLE_POSTING, SAMPLE_RESUME } from '@/lib/ats-checker/sample'
 import { BASE } from '@/lib/structured-data'
@@ -25,12 +25,13 @@ const GROUPS: { level: Level; title: string }[] = [
 
 function analyse(posting: string, read: Posting, resume: string, pages?: number) {
   const keywords = checkResume(read.keywords, resume)
+  const postingMarks = marks(posting, keywords)
   return {
-    keywords,
+    keywords: keywords.map((k) => (k.found ? k : { ...k, mark: markFor(posting, postingMarks, k) })),
     years: read.years,
     checks: { ...checkResumeText(resume, posting), pages },
     resumeMarks: marks(resume, keywords.filter((k) => k.found)),
-    postingMarks: marks(posting, keywords),
+    postingMarks,
   }
 }
 type Result = ReturnType<typeof analyse>
