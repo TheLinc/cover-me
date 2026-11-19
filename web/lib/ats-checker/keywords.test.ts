@@ -274,8 +274,14 @@ test('every posting keyword has a mark to scroll to, its own or one it overlaps'
   }
 })
 
-test('equal-opportunity text drops itself and what follows on its line, nothing before it', () => {
+test('equal-opportunity statements and the compliance sentences after them are dropped, nothing else', () => {
   const names = (posting: string) => readPosting(posting).keywords.map((k) => k.name)
+  expect(names('Acme is an equal opportunity employer. We are looking for a Data Analyst. You must have SQL, Python and Tableau.'))
+    .toEqual(expect.arrayContaining(['SQL', 'Python', 'Tableau']))
+  expect(names('HR Generalist at Acme. You must have knowledge of FMLA and equal employment opportunity laws. Experience with HRIS, ADP and payroll is required.'))
+    .toEqual(expect.arrayContaining(['HRIS', 'ADP']))
+  expect(names('Requirements\n- Prepare affirmative action plans using HRIS and Excel')).toEqual(expect.arrayContaining(['HRIS', 'Excel']))
+  expect(names('Requirements\n- Review every Salesforce account regardless of the age of the account')).toContain('Salesforce')
   expect(names('Data Analyst at Acme. You must have 3+ years of SQL, Python and Tableau experience. Acme is an equal opportunity employer.'))
     .toEqual(expect.arrayContaining(['SQL', 'Python', 'Tableau']))
   expect(names('Data Analyst at Acme.\nYou must have 3+ years of SQL, Python and Tableau experience, regardless of industry.'))
@@ -287,10 +293,18 @@ test('equal-opportunity text drops itself and what follows on its line, nothing 
   ).sort()).toEqual(['Python', 'SQL'])
 })
 
-test('each years entry is the sentence that asks for them, even in a one-paragraph posting', () => {
+test('a years heading that ends in a colon is listed', () => {
+  expect(readPosting('Requirements\nYou have 5+ years of experience with:\n- Python\n- Airflow').years).toEqual(['You have 5+ years of experience with:'])
+})
+
+test('a posting pasted as one paragraph keeps its required listed keywords, and each years entry is a years phrase', () => {
+  const listed = new Set(TERMS.map((t) => t.replace(/^=/, '').split('|')[0]))
   for (const name of readdirSync(join(__dirname, 'postings'))) {
-    const paragraph = readFileSync(join(__dirname, 'postings', name), 'utf8').split('\n').map((l) => l.trim()).filter(Boolean)
-      .map((l) => (/[.!?;]$/.test(l) ? l : `${l}.`)).join(' ')
+    const posting = readFileSync(join(__dirname, 'postings', name), 'utf8')
+    const paragraph = posting.split('\n').map((l) => l.trim()).filter(Boolean).map((l) => (/[.!?;]$/.test(l) ? l : `${l}.`)).join(' ')
+    const flat = new Set(readPosting(paragraph).keywords.map((k) => k.name))
+    const lost = readPosting(posting).keywords.filter((k) => k.level === 'required' && listed.has(k.name) && !flat.has(k.name)).map((k) => k.name)
+    expect(lost, name).toEqual([])
     for (const entry of readPosting(paragraph).years) expect(entry, name).toMatch(/\b(\d{1,2}|one|two|three|four|five|six|seven|eight|nine|ten)\s*\+?\s*(-|–|to)?\s*\d*\s*\+?\s*(years?|yrs?)\b/i)
   }
 })

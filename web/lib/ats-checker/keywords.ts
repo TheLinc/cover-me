@@ -108,7 +108,12 @@ function unlistedNames(line: string): Keyword[] {
   return found
 }
 
-const BOILERPLATE = /equal (opportunity|employment)|affirmative action|(regardless of|without regard to)\b.{0,40}\b(race|colou?r|religion|creed|sex(ual)?|gender|age|national origin|ancestry|disability|veterans?)\b|map data ©/i
+const TRAIT = String.raw`\b(race|colou?r|religion|creed|sex(ual orientation)?|gender|age|national origin|ancestry|disability|veteran)`
+const BOILERPLATE = new RegExp(
+  String.raw`(equal (opportunity|employment)|affirmative action)( opportunity)?( ?\/ ?affirmative action)? employer|\bEOE\b|(regardless of|without regard to)[^.]{0,60}${TRAIT}[^.]{0,80}${TRAIT}|map data ©`,
+  'i',
+)
+const COMPLIANCE = /VEVRAA|OFCCP|federal contractor|accommodation|E-Verify|protected veteran|disabilit|pay transparency|know your rights/i
 const YEARS = /\b(\d{1,2}|one|two|three|four|five|six|seven|eight|nine|ten)\s*\+?\s*(?:(?:-|–|to)\s*\d{1,2}\s*\+?\s*)?(?:years?|yrs?)\b/i
 const COMPANY_VOICE = /\b([Ww]e|[Oo]ur|[Uu]s)\b/
 const COMPANY_SPEAKS = /^[^A-Za-z]*(we|our)\b/i
@@ -126,6 +131,14 @@ export function readPosting(posting: string): Posting {
   const links: Array<[string, string, Level]> = []
   let section: Level | 'skip' = 'mentioned'
   let aboutCompany = false
+  let eeo = false
+  const addYears = (text: string) => {
+    if (!YEARS.test(text) || /years?\s+(of\s+age|old)/i.test(text) || (section === 'mentioned' && !/experience/i.test(text))) return
+    const plain = text.replace(/^[-•●◦▪▫■□·‣⁃▸►○–—*#\s]+/, '').replace(/\*\*/g, '')
+    const start = plain.length > 160 ? Math.max(0, Math.min(plain.search(YEARS) - 60, plain.length - 157)) : 0
+    const quote = plain.length > 160 ? `${start ? '...' : ''}${plain.slice(start, start + 157).trim()}${start + 157 < plain.length ? '...' : ''}` : plain
+    if (!years.includes(quote)) years.push(quote)
+  }
 
   const lines = normalize(posting).split(/\n+/).map((l) => l.trim()).filter(Boolean)
   const openers = new Set(lines.map((l) => /^\w+/.exec(l)?.[0]))
@@ -164,14 +177,12 @@ export function readPosting(posting: string): Posting {
     }
     if (section === 'skip') continue
     const body = !heading ? line : head ? rest : ''
+    if (!body) addYears(line)
     for (const sentence of body.split(/(?<=[.!?;])\s+(?=[A-Z])/)) {
-      if (BOILERPLATE.test(sentence)) break
+      eeo = BOILERPLATE.test(sentence) || (eeo && COMPLIANCE.test(sentence))
+      if (eeo) continue
+      addYears(sentence)
       current = sentence.replace(/^[-•●◦▪▫■□·‣⁃▸►○–—*#\s]+/, '').replace(/\*\*/g, '')
-      if (YEARS.test(sentence) && !/years?\s+(of\s+age|old)/i.test(sentence) && (section !== 'mentioned' || /experience/i.test(sentence))) {
-        const start = current.length > 160 ? Math.max(0, Math.min(current.search(YEARS) - 60, current.length - 157)) : 0
-        const text = current.length > 160 ? `${start ? '...' : ''}${current.slice(start, start + 157).trim()}${start + 157 < current.length ? '...' : ''}` : current
-        if (!years.includes(text)) years.push(text)
-      }
       const ask = ASKS.exec(sentence)
       if (ask) {
         scan(sentence.slice(0, ask.index), 'mentioned')
