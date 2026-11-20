@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, type ChangeEvent, type ClipboardEvent, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react'
 import { flushSync } from 'react-dom'
 import { CaretDownIcon, CheckIcon, DeviceMobileIcon, PencilSimpleIcon, UploadSimpleIcon, XIcon } from '@phosphor-icons/react/dist/ssr'
 import { ExtensionPopup } from '@/components/landing/ExtensionPopup'
@@ -98,7 +98,6 @@ export function AtsChecker() {
   const pending = useRef<AbortController | null>(null)
   const botBox = useRef<HTMLDivElement>(null)
   const counted = useRef('')
-  const replacing = useRef(false)
   const postingBox = useRef<HTMLTextAreaElement>(null)
   const resumeBox = useRef<HTMLTextAreaElement>(null)
 
@@ -152,25 +151,12 @@ export function AtsChecker() {
 
   function onType(which: 'posting' | 'resume', e: ChangeEvent<HTMLTextAreaElement>) {
     preloadBotCheck()
-    const value = e.target.value
-    const pasted = replacing.current && (e.nativeEvent as InputEvent).inputType === 'insertFromPaste'
-    const fresh = pasted || (!(which === 'posting' ? posting : resume).trim() && value.length > 100)
-    replacing.current = false
-    if (which === 'posting') setPosting(value)
+    if (which === 'posting') setPosting(e.target.value)
     else {
-      setResume(value)
+      setResume(e.target.value)
       setFile(null)
       setFileNote(null)
     }
-    if (fresh) {
-      if (which === 'posting') fold(value, resume, file?.pages)
-      else fold(posting, value, undefined)
-    }
-  }
-
-  function onPaste(e: ClipboardEvent<HTMLTextAreaElement>) {
-    const box = e.currentTarget
-    replacing.current = box.selectionStart === 0 && box.selectionEnd === box.value.length
   }
 
   async function onFile(e: ChangeEvent<HTMLInputElement>) {
@@ -185,7 +171,6 @@ export function AtsChecker() {
       setResume(text)
       setFile({ name: picked.name, pages })
       setFileNote({ text: `Read ${picked.name}. Check its text under Your resume.` })
-      fold(posting, text, pages)
     } catch (err) {
       setFileNote({ text: err instanceof Error ? err.message : `Couldn't read ${picked.name}.`, error: true })
     }
@@ -263,7 +248,6 @@ export function AtsChecker() {
                 ref={postingBox}
                 value={posting}
                 onChange={(e) => onType('posting', e)}
-                onPaste={onPaste}
                 placeholder="Paste the whole posting, including its requirements"
                 className="h-[200px] resize-y bg-white text-[14px] leading-[1.55]"
               />
@@ -284,7 +268,6 @@ export function AtsChecker() {
                 ref={resumeBox}
                 value={resume}
                 onChange={(e) => onType('resume', e)}
-                onPaste={onPaste}
                 placeholder="Paste your resume, or upload it as a PDF or Word file"
                 className="h-[200px] resize-y bg-white text-[14px] leading-[1.55]"
               />
@@ -297,19 +280,15 @@ export function AtsChecker() {
         <p role="status" className={cn('-mt-2 text-[13px]', fileNote.error ? 'text-gap-ink' : 'text-ink-2', ready && 'max-sm:sr-only')}>{fileNote.text}</p>
       )}
 
-      {!ready && (
-        <p className="-mt-2 text-[13px] text-ink-2">
-          The check sends the posting and your resume to Anthropic&apos;s AI. We don&apos;t store them.
-        </p>
+      {!loading && (changed || !ready) && (
+        <Button onClick={() => fold(posting, resume, file?.pages)} disabled={!changed} className="-mt-1 self-start">
+          {check ? 'Check again' : 'Check my resume'}
+        </Button>
       )}
 
       <div ref={botBox} className="empty:hidden" />
 
-      {changed && !loading && (
-        <Button onClick={() => fold(posting, resume, file?.pages)} className="-mt-1 self-start">
-          {check ? 'Check again' : 'Check my resume'}
-        </Button>
-      )}
+      <Pitch result={mine} checks={checks} />
 
       {loading ? (
         <Checking />
@@ -366,7 +345,6 @@ export function AtsChecker() {
               <Viewer view={view} onView={setView} resume={shown.resume} posting={shown.posting} result={result} selected={selected} />
             </TabsContent>
           </Tabs>
-          <Pitch result={result} checks={checks} />
           {mine && (
             <Button variant="outline" size="sm" onClick={anotherPosting} className="self-start">Check another posting</Button>
           )}
@@ -587,25 +565,29 @@ function MissingChip({ k, on, onPick }: { k: Checked; on: boolean; onPick: (k: C
   )
 }
 
-function Pitch({ result, checks }: { result: Result; checks: number }) {
-  const { must, missing } = headline(result.keywords)
+function Pitch({ result, checks }: { result: Result | null; checks: number }) {
+  const { must, missing } = headline(result?.keywords ?? [])
   const repeat = checks >= 3
   const [one, many] = must ? ['must-have', 'must-haves'] : ['skill the posting names', 'skills the posting names']
   return (
     <ExtensionPopup status="Chrome extension" className="shadow-none">
       <div className="flex flex-col gap-2 px-4 py-3.5 text-[14px] leading-[1.5]">
         <p className="text-[16px] font-semibold text-white">
-          {missing === 0 ? `Every ${one} is on your resume.` : `${missing} ${missing === 1 ? `${one} isn't` : `${many} aren't`} on your resume.`}
+          {!result
+            ? 'Tailor your resume to every posting.'
+            : missing === 0 ? `Every ${one} is on your resume.` : `${missing} ${missing === 1 ? `${one} isn't` : `${many} aren't`} on your resume.`}
         </p>
         <p className="text-ext-text-2">
           {repeat
             ? 'Cover Me reads the posting on LinkedIn, Indeed, Greenhouse, Lever and Workday when you click, so you skip the copy and paste.'
-            : missing
+            : !result
+              ? 'Cover Me rewrites your bullets around each posting and writes a matching cover letter.'
+              : missing
               ? "Cover Me checks each one against your bullets, works in the ones you've done and leaves the rest out."
               : 'Cover Me rewrites your bullets around this posting and writes a matching cover letter.'}
         </p>
         <Button asChild className="mt-1 self-start [@media(pointer:coarse)]:hidden">
-          <a href={storeUrl(repeat ? 'ats-repeat' : 'ats-result')} target="_blank" rel="noreferrer">Tailor this resume in Chrome, free</a>
+          <a href={storeUrl(repeat ? 'ats-repeat' : 'ats-result')} target="_blank" rel="noreferrer">{result ? 'Tailor this resume in Chrome, free' : 'Add Cover Me to Chrome, free'}</a>
         </Button>
         <Button size="sm" onClick={sendToComputer} className="mt-1 self-start [@media(pointer:fine)]:hidden">
           <DeviceMobileIcon size={16} aria-hidden /> Send this to my computer
