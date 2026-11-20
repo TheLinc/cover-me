@@ -266,6 +266,12 @@ export function AtsChecker() {
         <p role="status" className={cn('-mt-2 text-[13px]', fileNote.error ? 'text-gap-ink' : 'text-ink-2', ready && 'max-sm:sr-only')}>{fileNote.text}</p>
       )}
 
+      {!ready && (
+        <p className="-mt-2 text-[13px] text-ink-2">
+          The check sends the posting and your resume to Anthropic&apos;s AI. We don&apos;t store them.
+        </p>
+      )}
+
       <div ref={botBox} className="empty:hidden" />
 
       {changed && !loading && (

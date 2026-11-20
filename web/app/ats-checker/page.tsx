@@ -31,12 +31,14 @@ const jsonLd = [
     browserRequirements: 'Requires JavaScript',
     isAccessibleForFree: true,
     featureList: [
+      'Scores the resume out of 100 the same way as the Cover Me extension',
       "Lists the posting's must-have and nice-to-have skills, tools and certifications",
+      'Checks years of experience and other hard requirements against the resume',
       'Highlights each keyword in your resume and in the posting',
       'Counts the experience bullets with a number and quotes the ones without',
       "Checks whether the posting's job title is on your resume",
       'Checks for an email address, a phone number and the page count',
-      'Reads PDF and Word files in the browser; nothing is uploaded',
+      "Reads PDF and Word files; the text goes to Anthropic to check it and isn't stored",
     ],
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
   },
@@ -59,7 +61,7 @@ export default function AtsCheckerPage() {
         <div className="-mb-6 flex flex-col gap-3">
           <h1 className="text-[clamp(30px,4vw,44px)] leading-[1.05]">Free ATS resume checker</h1>
           <p className="max-w-[640px] text-[16px] leading-[1.55] text-ink-2">
-            See which of the posting&apos;s skills, tools and certifications your resume has, and where they are.
+            Get an ATS match score and see which of the posting&apos;s skills, tools and certifications your resume has, and where they are.
           </p>
           <ul className="flex flex-wrap gap-2 text-[13px] text-ink-2 max-sm:gap-x-3 max-sm:gap-y-1 max-sm:text-[12.5px]">
             {['No sign-up', "We don't store your resume", 'PDF, Word or text'].map((t) => (
@@ -74,17 +76,18 @@ export default function AtsCheckerPage() {
         <AtsChecker />
 
         <div className="flex max-w-[720px] flex-col gap-3 text-[15px] leading-[1.65] text-body">
-          <h2 className="text-[22px] leading-[1.2] text-ink">How the checker reads a posting</h2>
+          <h2 className="text-[22px] leading-[1.2] text-ink">How the checker scores a resume</h2>
           <p>
-            It looks for more than 500 named skills, tools, licenses and degrees, and for acronyms and product names in the
-            posting&apos;s requirements and duty bullets. Keywords under headings like Requirements or Qualifications count as must-have,
-            and ones marked preferred or nice to have count as nice to have. It then checks each keyword against your resume
-            word by word, so &quot;PowerBI&quot; matches &quot;Power BI&quot; but &quot;managed projects&quot; doesn&apos;t match
-            &quot;project management&quot;.
+            It sends the posting and your resume to Claude, Anthropic&apos;s AI. Claude picks the posting&apos;s must-have and
+            nice-to-have keywords and judges which ones your resume shows by meaning, not spelling: &quot;B.S.,
+            Accounting&quot; counts as a bachelor&apos;s degree, but HubSpot doesn&apos;t count for Salesforce. It also checks
+            hard requirements, such as years of experience, against the dates on your resume. Cover Me doesn&apos;t store the
+            posting or your resume.
           </p>
           <p>
-            It shows a count, not a score out of 100. The match score in the Cover Me extension comes from an AI that reads
-            the whole posting, so the two would give different numbers for the same resume. Read{' '}
+            The score uses the same keyword rules and the same math as the ATS match score in the Cover Me extension.
+            Must-haves are worth 70 points and nice-to-haves 30, and each hard requirement you don&apos;t meet takes off 10, up
+            to 25. If the AI check can&apos;t run, the page uses a quick word match instead and shows a count, not a score. Read{' '}
             <Link href="/guides/what-is-an-ats-score" className="text-brand-strong underline underline-offset-2">what an ATS score is</Link>{' '}
             or{' '}
             <Link href="/guides/tailor-resume-to-job-description" className="text-brand-strong underline underline-offset-2">how to tailor your resume to a job description</Link>.

@@ -1,6 +1,6 @@
 type Turnstile = {
   render: (container: HTMLElement, options: Record<string, unknown>) => string
-  execute: (container: HTMLElement) => void
+  execute: (widget: string) => void
   remove: (widgetId: string) => void
 }
 
@@ -66,6 +66,6 @@ export async function botCheckToken(container: HTMLElement): Promise<string | nu
       },
       'error-callback': () => finish(null),
     })
-    turnstile.execute(container)
+    turnstile.execute(widgetId)
   })
 }

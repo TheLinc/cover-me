@@ -380,13 +380,13 @@ export default function PrivacyPage() {
                 are not counted at all.
               </Li>
               <Li>
-                <strong className="text-foreground">ATS checker (cover-me.dev/ats-checker, only when you run a check).</strong>{' '}
+                <strong className="text-foreground">ATS checker (cover-me.dev/ats-checker, only when you use it).</strong>{' '}
                 The job posting and resume you check go to our server and on to Anthropic, whose AI reports
                 which of the posting&apos;s keywords the resume shows. A PDF or Word file is read in your
                 browser and only its text is sent. No account is needed. Neither text is stored in our
                 database or written to our logs. To limit how often the tool can be used, our server keeps a
-                counter keyed by a hash of your IP address. Before each check, Cloudflare Turnstile checks
-                that you&apos;re not a bot (see Third-Party Services). The sample on the page sends nothing.
+                counter keyed by a hash of your IP address. Once you start typing or pick a file, Cloudflare
+                Turnstile loads to check that you&apos;re not a bot (see Third-Party Services). The sample on the page sends nothing.
               </Li>
               <Li>
                 <strong className="text-foreground">Uninstall survey (only if you answer it).</strong>{' '}
@@ -705,7 +705,7 @@ export default function PrivacyPage() {
                 {
                   name: 'Cloudflare Turnstile',
                   url: 'https://www.cloudflare.com/privacypolicy/',
-                  when: 'The website ATS checker only, when you run a check',
+                  when: 'The website ATS checker only, once you start typing or pick a file there',
                   receives: 'Your IP address, browser details and signals about how the page is used, so Turnstile can tell people from bots. It never receives your posting or resume. No other page on cover-me.dev loads it.',
                 },
                 {

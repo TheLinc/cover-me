@@ -1,5 +1,5 @@
-import { expect, test } from 'vitest'
-import { fromAi, type AiReport } from './ai'
+import { afterEach, describe, expect, test, vi } from 'vitest'
+import { askAi, fromAi, type AiReport } from './ai'
 
 const POSTING = 'Data Analyst\nRequirements\n- Strong SQL skills\n- Tableau or Looker\nNice to have\n- dbt'
 const REPORT: AiReport = {
@@ -33,4 +33,28 @@ test('a keyword keeps its quotes as spellings and the posting line that asked fo
 
 test('only gaps that are not keywords are listed as unmet requirements', () => {
   expect(fromAi(POSTING, REPORT).gates).toEqual(['Requires 3yr, candidate ~1yr'])
+})
+
+describe('askAi', () => {
+  afterEach(() => vi.unstubAllGlobals())
+  const reply = (status: number) => vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify(REPORT), { status })))
+
+  test.each([[429, 'busy'], [413, 'long'], [403, 'failed'], [502, 'failed'], [503, 'failed']])('maps a %s to the %s fallback', async (status, error) => {
+    reply(status)
+    expect(await askAi('p', 'r', null, new AbortController().signal)).toEqual({ error })
+  })
+
+  test('returns the report on a 200, and a network error as failed', async () => {
+    reply(200)
+    expect(await askAi('p', 'r', 't', new AbortController().signal)).toEqual(REPORT)
+    vi.stubGlobal('fetch', vi.fn(async () => { throw new TypeError('Failed to fetch') }))
+    expect(await askAi('p', 'r', 't', new AbortController().signal)).toEqual({ error: 'failed' })
+  })
+
+  test('rethrows when the check was aborted', async () => {
+    const controller = new AbortController()
+    controller.abort()
+    vi.stubGlobal('fetch', vi.fn(async () => { throw new DOMException('aborted', 'AbortError') }))
+    await expect(askAi('p', 'r', 't', controller.signal)).rejects.toThrow('aborted')
+  })
 })
