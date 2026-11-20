@@ -60,7 +60,8 @@ function runClaude(prompt: string, opts: CallOptions): Promise<string> {
     '--system-prompt', 'Follow the user\'s instructions exactly.',
   ]
   const env: NodeJS.ProcessEnv = { ...process.env }
-  // claude -p bills an ANTHROPIC_API_KEY in its env instead of the plan (#301).
+  // claude -p bills an ANTHROPIC_API_KEY in its env instead of the plan
+  // (https://github.com/TheLinc/cover-me/commit/cb47a02).
   delete env.ANTHROPIC_API_KEY
   if (CLEAN_CONFIG) env.CLAUDE_CONFIG_DIR = CLEAN_CONFIG
   // The thinking settings production uses, SONNET_FIELDS in src/lib/ai/claude.ts (#203).
