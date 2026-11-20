@@ -26,8 +26,8 @@
 # A one-sided run compares and updates only that side's baseline scores.
 #
 # Billing: only the CLAUDE_CODE_OAUTH_TOKEN secret (from `claude setup-token`),
-# so every call goes through `claude -p` on the Claude plan. There is no API key
-# fallback: ANTHROPIC_API_KEY is blanked and the eval runs with --via claude.
+# so every call goes through `claude -p` on the Claude plan. The harness has no
+# API key backend.
 # Without the secret (fork PRs never get secrets) the job skips with a warning.
 # It ran on the ANTHROPIC_API_KEY from 2026-10-09 to 2026-11-11, after a run on
 # 2026-10-08 hit the plan's session limit, which it shares with the owner's own
@@ -87,7 +87,6 @@ jobs:
     # actions, package install scripts) can read it. Other steps see HAS_TOKEN.
     env:
       HAS_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' }}
-      ANTHROPIC_API_KEY: ''
       FULL: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.full) }}
     steps:
       - uses: actions/checkout@v4
@@ -135,9 +134,9 @@ jobs:
           # when no letter file changed) becomes one flag.
           for s in $SIDE; do if [ "$s" != "all" ]; then EXTRA="$EXTRA --$s"; fi; done
           if [ "$FULL" = "true" ]; then
-            pnpm eval --live --judge --baseline --via claude --runs 2 --judge-model claude-opus-5-5 $EXTRA
+            pnpm eval --live --judge --baseline --runs 2 --judge-model claude-opus-5-5 $EXTRA
           else
-            pnpm eval --live --quick --judge --baseline --via claude $EXTRA
+            pnpm eval --live --quick --judge --baseline $EXTRA
           fi
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
