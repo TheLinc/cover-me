@@ -218,6 +218,7 @@ export function AtsChecker() {
     return { level, title, group, total: group.length, missing: group.filter((k) => !k.found).length }
   }).filter((t) => t.total)
   const tabs: string[] = [...tiers.map((t) => t.level), 'resume']
+  const activeTab = tabs.includes(resultTab) ? resultTab : tabs[0]
   const fixes = resumeFixes(result)
 
   return (
@@ -337,8 +338,13 @@ export function AtsChecker() {
         )}
         <div className="flex flex-col gap-4">
           <Summary result={result} sample={!mine} />
-          <Tabs value={tabs.includes(resultTab) ? resultTab : tabs[0]} onValueChange={setResultTab}>
-            <TabsList className="grid h-auto w-full rounded-[14px] border border-line bg-white/50 p-1" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
+          <Tabs value={activeTab} onValueChange={setResultTab}>
+            <TabsList className="relative grid h-auto w-full rounded-[14px] border border-line bg-white/50 p-1" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
+              <span
+                aria-hidden
+                className="absolute inset-y-1 left-1 rounded-[10px] bg-white shadow-[0_1px_4px_rgba(30,27,75,0.14)] transition-transform duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] motion-reduce:transition-none"
+                style={{ width: `calc((100% - 0.5rem) / ${tabs.length})`, transform: `translateX(${tabs.indexOf(activeTab) * 100}%)` }}
+              />
               {tiers.map(({ level, title, missing, total }) => (
                 <TabsTrigger key={level} value={level} className={TIER_TAB}>
                   <span>{title}</span>
@@ -414,7 +420,7 @@ function headline(keywords: Checked[]) {
   return { must: must.length > 0, pool, found, missing: pool.length - found }
 }
 
-const TIER_TAB = 'flex-col gap-0.5 rounded-[10px] py-2 whitespace-normal text-ink-2 data-[state=active]:bg-white data-[state=active]:text-ink data-[state=active]:shadow-[0_1px_4px_rgba(30,27,75,0.14)]'
+const TIER_TAB = 'relative flex-col gap-0.5 rounded-[10px] py-2 whitespace-normal text-ink-2 data-[state=active]:bg-transparent data-[state=active]:text-ink data-[state=active]:shadow-none'
 
 // Must match the tier weights in scoreFromMatch, backend/supabase/functions/_shared/ats-score.ts (#278).
 const TIER_POINTS = [
