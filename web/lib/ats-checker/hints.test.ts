@@ -90,6 +90,9 @@ describe('a number in a bullet', () => {
     ['Rolled out 2FA and 5G hotspots', false],
     ['Served 10K users at 3x the old speed', true],
     ['Cut build time from 12min to 4min', true],
+    ['Cut wait time to 15mins', true],
+    ['Closed the books 3days early', true],
+    ['Built 10ft racks', true],
   ])('%s: %s', (bullet, expected) => expect(hasNumber(bullet)).toBe(expected))
 })
 

@@ -60,7 +60,7 @@ const NOT_A_MEASURE = [
   new RegExp(RANGE.source, 'gi'),
   /\b(19[5-9]\d|20[0-3]\d)\b/g,
   /\b[A-Za-z]+\d+[A-Za-z]*\b/g,
-  /\b\d+(?!(k|m|bn?|x|h|hrs?|yrs?|mos?|min|ms|s|mm|cm|km|kg|lbs?|mph|gb|tb|mb|st|nd|rd|th)\b)[A-Za-z]+\b/gi,
+  /\b\d+(?!(k|m|bn?|x|h|hrs?|hours?|mins?|days?|wks?|weeks?|mos?|months?|yrs?|years?|ft|ms|s|mm|cm|km|kg|lbs?|mph|gb|tb|mb|st|nd|rd|th)\b)[A-Za-z]+\b/gi,
   /\b(ISO|OSHA|Section|Title|Level|Tier|Grade|Class|Phase|Windows|Office|Part|Form|Rule|Chapter|Step|Series|Article|Revit|Python|Java|Angular|Vue|WCAG)\s*[\d.]+(-hour)?\b/gi,
   /\b401\s*\(k\)/gi,
 ]

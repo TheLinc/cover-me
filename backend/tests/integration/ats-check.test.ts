@@ -1,7 +1,8 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { createHash } from 'node:crypto'
+import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { MOCK_PORT } from '../global-setup'
 import { MOCK_TURNSTILE_ELSEWHERE_TOKEN, MOCK_TURNSTILE_LOGIN_TOKEN, MOCK_TURNSTILE_TOKEN } from '../mock-anthropic'
-import { callFunction, mockClaude } from './helpers'
+import { admin, callFunction, mockClaude } from './helpers'
 
 const replyNext = (reply: unknown) => fetch(`http://127.0.0.1:${MOCK_PORT}/__mock/fail-next`, {
   method: 'POST',
@@ -25,6 +26,7 @@ const check = (body: unknown, ip = freshIp()) =>
 const PAIR = { posting: 'Acme Corp\nData Analyst\nRequirements\n- SQL\nPreferred\n- Tableau', resume: 'Data analyst. Wrote SQL reports.', token: MOCK_TURNSTILE_TOKEN }
 
 describe('ats-check', () => {
+  beforeAll(() => admin.from('scrape_rate_limits').delete().eq('ip_hash', createHash('sha256').update('ats-check:all').digest('hex')))
   beforeEach(() => mockClaude.reset())
 
   it("scores the model's report like the tailor does, without an account", async () => {

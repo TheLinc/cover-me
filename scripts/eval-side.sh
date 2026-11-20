@@ -38,6 +38,7 @@ while IFS= read -r f; do
     extension/src/lib/ai/parse-delta* | backend/supabase/functions/tailor/* | \
     backend/supabase/functions/_shared/resume-parse.ts | backend/supabase/functions/_shared/resume-grounding.ts | \
     backend/supabase/functions/_shared/ats-score.ts | \
+    extension/src/lib/ai/keyword-rules* | backend/supabase/functions/_shared/keyword-rules.ts | \
     extension/eval/claim-pairs.ts | extension/eval/line-pairs.ts)
       tailor=true ;;
     extension/src/lib/ai/answer* | backend/supabase/functions/answer/* | \

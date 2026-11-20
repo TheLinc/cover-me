@@ -86,8 +86,8 @@ export default function AtsCheckerPage() {
           </p>
           <p>
             The score uses the same keyword rules and the same math as the ATS match score in the Cover Me extension.
-            Must-haves are worth 70 points and nice-to-haves 30, and each hard requirement you don&apos;t meet takes off 10, up
-            to 25. If the AI check can&apos;t run, the page uses a quick word match instead and shows a count, not a score. Read{' '}
+            Must-haves are worth 70 points and nice-to-haves 30, and each unmet hard requirement that isn&apos;t already a
+            missing keyword takes off 10, up to 25. If the AI check can&apos;t run, the page uses a quick word match instead and shows a count, not a score. Read{' '}
             <Link href="/guides/what-is-an-ats-score" className="text-brand-strong underline underline-offset-2">what an ATS score is</Link>{' '}
             or{' '}
             <Link href="/guides/tailor-resume-to-job-description" className="text-brand-strong underline underline-offset-2">how to tailor your resume to a job description</Link>.

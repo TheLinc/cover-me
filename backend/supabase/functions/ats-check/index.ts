@@ -124,8 +124,8 @@ function isText(v: unknown): v is string {
 
 const plain = (s: string) => s.replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/\s+/g, ' ').trim().toLowerCase()
 
-// Quotes are kept only when they're really in the text sent, so the reply
-// can't carry anything else (#278).
+// Quotes and the title are kept only when they're really in the text sent, so
+// the only free model text left is names and gaps, capped at MAX_NAME (#278).
 function parseReport(text: string | undefined, posting: string, resume: string): Report | null {
   let parsed: { keywords?: unknown; gatingGaps?: unknown; job_title?: unknown }
   try {
