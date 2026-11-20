@@ -39,6 +39,27 @@ describe('experience bullets', () => {
     },
   )
 
+  test.each([
+    ['a date range inside a bullet', '- Managed enrollment for a Phase III trial from 2021 to 2023'],
+    ['a role-like pipe inside a bullet', '- Screened 40 patients a month | 95% retention'],
+    ['a bullet ending the role', '- Trained 3 new coordinators'],
+  ])('every bullet of two roles is counted, with %s', (_, odd) => {
+    const crc = Array.from({ length: 8 }, (_, i) => `- Coordinated study visit ${i + 1} with the sponsor`)
+    const rn = Array.from({ length: 5 }, (_, i) => `- Cared for ${i + 4} patients on the cardiac unit`)
+    const resume = [
+      'Experience',
+      'Clinical Research Coordinator | Ohio Heart Institute | Columbus, OH',
+      'March 2022 – Present',
+      ...crc, odd,
+      'Registered Nurse | Riverside Methodist Hospital | Columbus, OH',
+      'June 2018 – February 2022',
+      ...rn,
+      'Education',
+      'BSN, Ohio State University, 2018',
+    ].join('\n')
+    expect(resumeBullets(resume)).toHaveLength(14)
+  })
+
   test('a role line in title case is not a bullet', () => {
     const resume = 'Experience\nMarketing Manager, Fernwood Labs\nChicago, IL · Mar 2022 - Present\nRun campaign strategy for a $1.2M budget.'
     expect(resumeBullets(resume)).toEqual(['Run campaign strategy for a $1.2M budget.'])
@@ -65,6 +86,10 @@ describe('a number in a bullet', () => {
     ['Led a team of fifteen nurses', true],
     ['Grew revenue by sixty percent', true],
     ['Ran dozens of events', true],
+    ['Prepare plan sets in AutoCAD Civil 3D, including pipe networks', false],
+    ['Rolled out 2FA and 5G hotspots', false],
+    ['Served 10K users at 3x the old speed', true],
+    ['Cut build time from 12min to 4min', true],
   ])('%s: %s', (bullet, expected) => expect(hasNumber(bullet)).toBe(expected))
 })
 

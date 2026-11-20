@@ -7,7 +7,7 @@
 export const KEYWORD_TIERS = `Pull the hard requirements from the JD and tier them:
 - TIER 1 — must-have (4–6): explicitly required, repeated, or foundational.
 - TIER 2 — preferred (8–15): mentioned once or "nice to have."
-A keyword is a hard skill, tool, system, certification, license, degree, method, or regulation the JD asks for, named in the JD's own words (1–4 words). List each requirement once. Leave out:
+A keyword is a hard skill, tool, system, certification, license, degree, method, or regulation the JD asks for, named in the JD's own words (1–4 words). List each requirement once, and each skill on its own: "budgets and forecasts" is two keywords, "budgets" and "forecasts". Leave out:
 - soft-skill clichés ("communication", "team player", "proactive"): they score nothing
 - years of experience: they are gating gaps, never keywords
 - the employer's own name and products, benefits, pay, schedule, location
@@ -32,11 +32,13 @@ A keyword is covered when the resume, or context the candidate verified, shows t
 - a named instance of a category the JD asks for: "NetSuite" is an ERP system, "Jest" is unit testing
 - work the resume describes that plainly is the named activity: "trained 12 new hires on the line" shows training staff
 - for an alternative requirement, any one of its options
+- a tool or skill of the kind the JD names when its names are only examples ("such as", "like", "e.g.", "including"): "analytics tools such as Mixpanel" is met by any analytics tool the resume shows
 These do not:
-- a different product, version, or level, even one that does the same job: HubSpot≠Salesforce, OSHA 10≠OSHA 30, BLS≠ACLS, a Class B license≠Class A
+- a different product, version, or level, even one that does the same job, when the JD asks for that product itself, not for examples of a kind: HubSpot≠Salesforce, OSHA 10≠OSHA 30, BLS≠ACLS, a Class B license≠Class A
 - a general skill for a specific one the JD names: "reconciled accounts" doesn't show "bank reconciliations"; the specific thing has to be on the resume
 - something the candidate is learning, pursuing, or plans to get
+- helping with, scheduling, or keeping records for work someone else does: "scheduled the surgeons' procedures" doesn't show surgery, "ordered parts for the mechanics" doesn't show auto repair
 - a skill the resume never shows, however likely it seems for someone with this background
 Before you mark a keyword missing, read the whole resume again for it in other words: the summary, every bullet, the skills, education, and certifications.
 
-GATING GAPS — hard qualifications the JD explicitly requires that the candidate does not meet: years of experience, a required degree, a mandatory license or certification (≤55 chars each). For a years requirement, total the dates of the roles that did that kind of work, rounded down to whole years, and report it only when short: "Requires 4yr, candidate ~2yr". When the gap is also a missing keyword, start it with that keyword's exact name: "OSHA 30: candidate has OSHA 10". A "preferred"/"nice-to-have" item is a Tier 2 keyword, never a gating gap.`
+GATING GAPS — hard qualifications the JD explicitly requires that the candidate does not meet: years of experience, a required degree, a mandatory license or certification (≤55 chars each). For a years requirement, total the dates of the roles that did that kind of work, counting a current role up to today's date, rounded to the nearest half year (2 years 9 months is ~3yr, 2 years 4 months is ~2.5yr), and report it only when short: "Requires 4yr, candidate ~2.5yr". When the gap is also a missing keyword, start it with that keyword's exact name: "OSHA 30: candidate has OSHA 10". A "preferred"/"nice-to-have" item is a Tier 2 keyword, never a gating gap.`

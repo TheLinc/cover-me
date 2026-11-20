@@ -256,7 +256,7 @@ export function startMockAnthropic(port: number): Promise<Server> {
       // the question (https://github.com/TheLinc/cover-me/commit/0e9a09cd).
       const first = body.messages?.[0]?.content
       const prompt = typeof first === 'string' ? first : Array.isArray(first) ? first.map((b) => b.text ?? '').join('') : ''
-      if (prompt.startsWith('<posting>')) {
+      if (/^TODAY'S DATE: [\d-]+\n\n<posting>/.test(prompt)) {
         res.writeHead(200, { 'content-type': 'application/json' })
         return res.end(messageJson(JSON.stringify(MOCK_ATS_REPORT), body.model))
       }

@@ -1,6 +1,6 @@
 // ATS match score. Mirrored byte-for-byte:
 //   extension/src/lib/ai/ats-score.ts ⇄ backend/supabase/functions/_shared/ats-score.ts
-// scripts/check-prompt-sync.mjs fails the build if the copies drift.
+// scripts/check-prompt-sync.mjs fails the build if the copies drift (https://github.com/TheLinc/cover-me/commit/19482ab32c90e661ebfd9ca22cd04e6829aa0c6c).
 //
 // The model reports which of the posting's keywords the tailored resume covers;
 // the score is computed here, so it is deterministic and can only rise as
@@ -22,16 +22,15 @@ export interface KeywordMatch {
 }
 
 export interface ScoreContext {
-  /** The job posting, for either/or requirements. */
   jobDescription?: string
-  /** All of the candidate's own text (resume plus verified supplemental context). */
   candidate?: string
 }
 
 const TIER1_WEIGHT = 70
 const TIER2_WEIGHT = 30
-const GATING_PENALTY = 10 // per unmet hard qualification
-const MAX_GATING_PENALTY = 25 // cap so strong-skill candidates aren't cratered
+const GATING_PENALTY = 10
+// Capped so strong-skill candidates aren't cratered (https://github.com/TheLinc/cover-me/commit/19482ab32c90e661ebfd9ca22cd04e6829aa0c6c).
+const MAX_GATING_PENALTY = 25
 
 function strArr(v: unknown): string[] {
   return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string' && x.trim().length > 0) : []
@@ -45,16 +44,15 @@ function mentions(text: string, term: string): boolean {
   return new RegExp(`(^|[^A-Za-z0-9])${escapeRe(term)}($|[^A-Za-z0-9])`, 'i').test(text)
 }
 
-// "Requires 5yr, candidate ~7yr", "Requires 5+ years, candidate ~3 years".
+// "Requires 5yr, candidate ~7yr", "Requires 5+ years, candidate ~3 years", "Requires 4yr, candidate ~2.5yr" (#278).
 function yearsMet(gap: string): boolean {
-  const m = /requires?\s*(\d+)\+?\s*(?:yrs?|years?)\b.*?candidate\s*~?\s*(\d+)\s*(?:yrs?|years?)/i.exec(gap)
+  const m = /requires?\s*(\d+(?:\.\d+)?)\+?\s*(?:yrs?|years?)\b.*?candidate\s*~?\s*(\d+(?:\.\d+)?)\s*(?:yrs?|years?)/i.exec(gap)
   return !!m && Number(m[2]) >= Number(m[1])
 }
 
-// Up to two capitalized words, or one token like "SQL" or "C#".
+// Up to two capitalized words, or one token like "SQL" or "C#" (https://github.com/TheLinc/cover-me/commit/19482ab32c90e661ebfd9ca22cd04e6829aa0c6c).
 const OPTION = '[A-Z][\\w.+#-]*(?:\\s[A-Z][\\w.+#-]*)?'
 
-/** True when the posting offers `keyword` as one of several options and the candidate has another. */
 function coveredByAlternative(keyword: string, ctx: ScoreContext): boolean {
   if (!ctx.jobDescription || !ctx.candidate) return false
   const k = escapeRe(keyword)
@@ -70,7 +68,7 @@ function coveredByAlternative(keyword: string, ctx: ScoreContext): boolean {
 }
 
 // Coverage → score + complete gap list. A posting with no Tier-N keywords scores
-// that tier as fully covered (nothing to miss) rather than dividing by zero.
+// that tier as fully covered (nothing to miss) rather than dividing by zero (https://github.com/TheLinc/cover-me/commit/19482ab32c90e661ebfd9ca22cd04e6829aa0c6c).
 export function scoreFromMatch(m: KeywordMatch, ctx: ScoreContext = {}): { score: number; gaps: string[] } {
   let t1c = strArr(m.tier1Covered).length
   let t2c = strArr(m.tier2Covered).length
@@ -138,7 +136,7 @@ export function scoreText(m: KeywordMatch, text: string, jobDescription?: string
 // The original resume's score, on the tailored score's scale: the tailored
 // score less what tailoring's wording gained by word match. The model's own
 // judgment of the original would need a second call; comparing the two
-// resumes by one measure keeps the gain honest.
+// resumes by one measure keeps the gain honest (#228).
 export function scoreBefore(m: KeywordMatch, atsScore: number, original: string, tailored: string, jobDescription?: string): number {
   const gain = scoreText(m, tailored, jobDescription).score - scoreText(m, original, jobDescription).score
   return Math.max(0, atsScore - Math.max(0, gain))

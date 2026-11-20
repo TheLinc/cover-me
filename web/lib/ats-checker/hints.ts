@@ -42,7 +42,7 @@ export function resumeBullets(resume: string): string[] {
   const out: string[] = []
   let open = false
   for (const line of lines) {
-    const header = new RegExp(RANGE.source, 'i').test(line) || / \| /.test(line)
+    const header = !(marked && GLYPH.test(line)) && (new RegExp(RANGE.source, 'i').test(line) || / \| /.test(line))
     const continues = open && (marked ? /^[a-z0-9(]/ : /^[a-z0-9(%$]/).test(line)
     const starts = marked ? GLYPH.test(line) : line.split(/\s+/).length >= 4 && !titleCase(line)
     if (header) open = false
@@ -60,6 +60,7 @@ const NOT_A_MEASURE = [
   new RegExp(RANGE.source, 'gi'),
   /\b(19[5-9]\d|20[0-3]\d)\b/g,
   /\b[A-Za-z]+\d+[A-Za-z]*\b/g,
+  /\b\d+(?!(k|m|bn?|x|h|hrs?|yrs?|mos?|min|ms|s|mm|cm|km|kg|lbs?|mph|gb|tb|mb|st|nd|rd|th)\b)[A-Za-z]+\b/gi,
   /\b(ISO|OSHA|Section|Title|Level|Tier|Grade|Class|Phase|Windows|Office|Part|Form|Rule|Chapter|Step|Series|Article|Revit|Python|Java|Angular|Vue|WCAG)\s*[\d.]+(-hour)?\b/gi,
   /\b401\s*\(k\)/gi,
 ]

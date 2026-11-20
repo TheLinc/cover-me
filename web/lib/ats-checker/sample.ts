@@ -57,68 +57,68 @@ SEO, Campaign strategy, Google Analytics, Budget management, Team leadership, A/
 export const SAMPLE_AI: AiReport = {
   "score": 93,
   "gaps": [
+    "agency partners",
     "Tableau or Looker",
-    "agency management",
-    "SaaS company experience"
+    "SaaS company"
   ],
   "keywordMatch": {
     "tier1Covered": [
+      "B2B marketing",
+      "demand generation",
       "SEO",
-      "content marketing",
       "Google Analytics",
       "A/B testing",
-      "HubSpot or Salesforce",
-      "B2B demand generation"
+      "HubSpot or Salesforce"
     ],
     "tier1Missing": [],
     "tier2Covered": [
       "paid search",
       "email marketing",
-      "events marketing",
-      "team management",
-      "budget management",
-      "campaign planning",
-      "leadership reporting",
+      "events",
+      "content marketing",
       "copywriting",
-      "bachelor's degree"
+      "marketing budget",
+      "report results to leadership",
+      "team management",
+      "Bachelor's degree"
     ],
     "tier2Missing": [
+      "agency partners",
       "Tableau or Looker",
-      "agency management",
-      "SaaS company experience"
+      "SaaS company"
     ],
     "gatingGaps": []
   },
   "quotes": [
     {
-      "name": "SEO",
-      "posting_text": "SEO",
-      "resume_text": "rebuilding the SEO plan"
+      "name": "B2B marketing",
+      "posting_text": "B2B marketing",
+      "resume_text": "7 years of B2B campaign work"
     },
     {
-      "name": "content marketing",
-      "posting_text": "content marketing",
-      "resume_text": "rebuilding the SEO plan and site content"
+      "name": "demand generation",
+      "posting_text": "demand generation",
+      "resume_text": "lifted demo requests 22%"
+    },
+    {
+      "name": "SEO",
+      "posting_text": "SEO",
+      "resume_text": "SEO plan"
     },
     {
       "name": "Google Analytics",
       "posting_text": "Google Analytics",
-      "resume_text": "Built Google Analytics dashboards"
+      "resume_text": "Google Analytics dashboards"
     },
     {
       "name": "A/B testing",
       "posting_text": "A/B testing",
-      "resume_text": "Ran 40+ A/B tests"
+      "resume_text": "A/B tests"
     },
     {
       "name": "HubSpot or Salesforce",
       "posting_text": "HubSpot or Salesforce",
       "resume_text": "Salesforce"
-    },
-    {
-      "name": "B2B demand generation",
-      "posting_text": "B2B demand generation programs",
-      "resume_text": "lifted demo requests 22%"
     },
     {
       "name": "paid search",
@@ -128,22 +128,32 @@ export const SAMPLE_AI: AiReport = {
     {
       "name": "email marketing",
       "posting_text": "Email marketing",
-      "resume_text": "client email programs reaching 150,000 subscribers"
+      "resume_text": "client email programs"
     },
     {
-      "name": "events marketing",
+      "name": "events",
       "posting_text": "events",
       "resume_text": "trade show events"
     },
     {
-      "name": "Tableau or Looker",
-      "posting_text": "Tableau or Looker",
-      "resume_text": ""
+      "name": "content marketing",
+      "posting_text": "content marketing",
+      "resume_text": "site content"
     },
     {
-      "name": "agency management",
-      "posting_text": "Manage two agency partners",
-      "resume_text": ""
+      "name": "copywriting",
+      "posting_text": "copywriting",
+      "resume_text": "Wrote copy"
+    },
+    {
+      "name": "marketing budget",
+      "posting_text": "marketing budget",
+      "resume_text": "manage a $1.2M annual budget"
+    },
+    {
+      "name": "report results to leadership",
+      "posting_text": "report results to leadership",
+      "resume_text": "Kept leadership up to date on campaign results"
     },
     {
       "name": "team management",
@@ -151,34 +161,24 @@ export const SAMPLE_AI: AiReport = {
       "resume_text": "lead a team of four"
     },
     {
-      "name": "budget management",
-      "posting_text": "Own the marketing budget",
-      "resume_text": "manage a $1.2M annual budget"
+      "name": "Bachelor's degree",
+      "posting_text": "Bachelor's degree in marketing, communications or a related field",
+      "resume_text": "B.A. Communications"
     },
     {
-      "name": "campaign planning",
-      "posting_text": "Plan and run campaigns",
-      "resume_text": "Run campaign strategy"
-    },
-    {
-      "name": "leadership reporting",
-      "posting_text": "report results to leadership",
-      "resume_text": "Kept leadership up to date on campaign results"
-    },
-    {
-      "name": "copywriting",
-      "posting_text": "copywriting",
-      "resume_text": "Copywriting"
-    },
-    {
-      "name": "SaaS company experience",
-      "posting_text": "SaaS company",
+      "name": "agency partners",
+      "posting_text": "agency partners",
       "resume_text": ""
     },
     {
-      "name": "bachelor's degree",
-      "posting_text": "Bachelor's degree in marketing, communications or a related field",
-      "resume_text": "B.A. Communications"
+      "name": "Tableau or Looker",
+      "posting_text": "Tableau or Looker",
+      "resume_text": ""
+    },
+    {
+      "name": "SaaS company",
+      "posting_text": "SaaS company",
+      "resume_text": ""
     }
   ],
   "title": "Marketing Manager"

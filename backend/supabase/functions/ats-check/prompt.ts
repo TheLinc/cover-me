@@ -43,4 +43,4 @@ export const RESPONSE_SCHEMA = {
   additionalProperties: false,
 } as const
 
-export const userMessage = (posting: string, resume: string) => `<posting>\n${posting}\n</posting>\n\n<resume>\n${resume}\n</resume>`
+export const userMessage = (posting: string, resume: string, today = new Date().toISOString().slice(0, 10)) => `TODAY'S DATE: ${today}\n\n<posting>\n${posting}\n</posting>\n\n<resume>\n${resume}\n</resume>`
