@@ -1,13 +1,16 @@
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { createElement as h } from 'react'
-import { describe, expect, it } from 'vitest'
+import type { Metadata } from 'next'
+import { describe, expect, it, vi } from 'vitest'
 import { GUIDES, newestFirst, readingMinutes, slugify } from './guides'
+
+vi.mock('next/font/google', () => ({ Source_Serif_4: () => ({ className: '' }) }))
 
 describe('slugify', () => {
   it('turns a guide heading into a stable anchor id', () => {
     expect(slugify('What counts as a good ATS score?')).toBe('what-counts-as-a-good-ats-score')
-    expect(slugify('Cover Me vs Teal: a cheaper Teal+ alternative')).toBe('cover-me-vs-teal-a-cheaper-teal-alternative')
+    expect(slugify('Is Teal+ worth it? A Teal review')).toBe('is-teal-worth-it-a-teal-review')
     expect(slugify('3 resume layouts that broke a real ATS')).toBe('3-resume-layouts-that-broke-a-real-ats')
     expect(slugify('What’s free, and what isn’t')).toBe('whats-free-and-what-isnt')
   })
@@ -69,4 +72,40 @@ describe('GUIDES', () => {
     expect(existsSync(join(__dirname, '../public', g.image))).toBe(true)
     expect(g.imageAlt.length).toBeGreaterThan(20)
   })
+
+  it.each(GUIDES.map((g) => [g.slug, g] as const))('%s has a page title that differs from its H1', async (slug, g) => {
+    const { metadata } = (await import(`../app/guides/${slug}/page.tsx`)) as { metadata: Metadata }
+    const t = metadata.title
+    const title = typeof t === 'string' ? t : t && 'absolute' in t ? t.absolute : undefined
+    expect(title).toBeTruthy()
+    const plain = (s: string) => s.replace(/ \| Cover Me$/, '').toLowerCase()
+    expect(plain(title!)).not.toBe(plain(g.title))
+  }, 20_000)
+})
+
+describe('moved guides', () => {
+  it.each(['aiapply', 'jobscan', 'teal'])('the old %s comparison redirects permanently to its review', async (tool) => {
+    const { default: config } = await import('../next.config')
+    const redirects = (await config.redirects?.()) ?? []
+    const to = `${tool}-review`
+    expect(redirects).toContainEqual({ source: `/guides/cover-me-vs-${tool}`, destination: `/guides/${to}`, permanent: true })
+    expect(GUIDES.map((g) => g.slug)).toContain(to)
+  }, 20_000)
+})
+
+describe('internal links', () => {
+  const root = join(__dirname, '..')
+  const files = ['app', 'components']
+    .flatMap((dir) => readdirSync(join(root, dir), { recursive: true, encoding: 'utf8' }).map((f) => join(dir, f)))
+    .filter((f) => f.endsWith('.tsx'))
+    .map((file) => ({ file, text: readFileSync(join(root, file), 'utf8') }))
+
+  it.each(['aiapply-review', 'free-jobscan-alternatives', 'use-your-own-api-key-for-cover-letters'])(
+    '%s is linked from at least two other pages, besides the /guides index',
+    (slug) => {
+      const own = join('app', 'guides', slug, 'page.tsx')
+      const linking = files.filter(({ file, text }) => file !== own && text.includes(`href="/guides/${slug}"`))
+      expect(linking.length).toBeGreaterThanOrEqual(2)
+    },
+  )
 })

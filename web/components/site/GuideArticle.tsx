@@ -47,6 +47,8 @@ export function GuideImage({ src, alt, width, height, caption, narrow }: { src: 
   )
 }
 
+export const ext = { target: '_blank', rel: 'noopener noreferrer' } as const
+
 const PLACEHOLDER = /(\[[A-Z ]+\])/
 
 export function GuidePrompt({ n, title, prompt, answer, caption, check }: { n: number; title: string; prompt: string; answer: string; caption: string; check: ReactNode }) {

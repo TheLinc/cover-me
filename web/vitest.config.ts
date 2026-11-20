@@ -11,4 +11,5 @@ export default defineConfig({
       { find: /^mammoth$/, replacement: local('node_modules/mammoth/mammoth.browser.js') },
     ],
   },
+  oxc: { jsx: { runtime: 'automatic' } },
 })
