@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react'
 import { flushSync } from 'react-dom'
-import { CaretDownIcon, CheckIcon, DeviceMobileIcon, PencilSimpleIcon, UploadSimpleIcon, XIcon } from '@phosphor-icons/react/dist/ssr'
+import { CaretDownIcon, CheckIcon, DeviceMobileIcon, GoogleChromeLogoIcon, PencilSimpleIcon, UploadSimpleIcon, XIcon } from '@phosphor-icons/react/dist/ssr'
 import { ExtensionPopup } from '@/components/landing/ExtensionPopup'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -92,12 +92,10 @@ export function AtsChecker() {
   const [resultTab, setResultTab] = useState<string>('required')
   const [view, setView] = useState('resume')
   const [selected, setSelected] = useState<Selected | null>(null)
-  const [checks, setChecks] = useState(0)
   const [fromPhone, setFromPhone] = useState(false)
   const [check, setCheck] = useState<Check | null>(null)
   const pending = useRef<AbortController | null>(null)
   const botBox = useRef<HTMLDivElement>(null)
-  const counted = useRef('')
   const postingBox = useRef<HTMLTextAreaElement>(null)
   const resumeBox = useRef<HTMLTextAreaElement>(null)
 
@@ -136,10 +134,6 @@ export function AtsChecker() {
       setFolded(true)
       setResultTab('required')
     }, () => document.getElementById('results')?.focus())
-    if (count && p !== counted.current) {
-      counted.current = p
-      setChecks((n) => n + 1)
-    }
   }
 
   function edit(which: 'posting' | 'resume') {
@@ -281,14 +275,14 @@ export function AtsChecker() {
       )}
 
       {!loading && (changed || !ready) && (
-        <Button onClick={() => fold(posting, resume, file?.pages)} disabled={!changed} className="-mt-1 self-start">
+        <Button onClick={() => fold(posting, resume, file?.pages)} disabled={!changed} className="-mt-1 self-end">
           {check ? 'Check again' : 'Check my resume'}
         </Button>
       )}
 
       <div ref={botBox} className="empty:hidden" />
 
-      <Pitch result={mine} checks={checks} />
+      <Pitch />
 
       {loading ? (
         <Checking />
@@ -395,7 +389,7 @@ function headline(keywords: Checked[]) {
   const must = keywords.filter((k) => k.level === 'required')
   const pool = must.length ? must : keywords
   const found = pool.filter((k) => k.found).length
-  return { must: must.length > 0, pool, found, missing: pool.length - found }
+  return { must: must.length > 0, pool, found }
 }
 
 const TIER_TAB = 'relative flex-col gap-0.5 rounded-[10px] py-2 whitespace-normal text-ink-2 data-[state=active]:bg-transparent data-[state=active]:text-ink data-[state=active]:shadow-none'
@@ -565,36 +559,25 @@ function MissingChip({ k, on, onPick }: { k: Checked; on: boolean; onPick: (k: C
   )
 }
 
-function Pitch({ result, checks }: { result: Result | null; checks: number }) {
-  const { must, missing } = headline(result?.keywords ?? [])
-  const repeat = checks >= 3
-  const [one, many] = must ? ['must-have', 'must-haves'] : ['skill the posting names', 'skills the posting names']
+function Pitch() {
   return (
     <ExtensionPopup status="Chrome extension" className="shadow-none">
       <div className="flex flex-col gap-2 px-4 py-3.5 text-[14px] leading-[1.5]">
-        <p className="text-[16px] font-semibold text-white">
-          {!result
-            ? 'Tailor your resume to every posting.'
-            : missing === 0 ? `Every ${one} is on your resume.` : `${missing} ${missing === 1 ? `${one} isn't` : `${many} aren't`} on your resume.`}
-        </p>
+        <p className="text-[16px] font-semibold text-white">Automatically tailor your resume to every posting</p>
         <p className="text-ext-text-2">
-          {repeat
-            ? 'Cover Me reads the posting on LinkedIn, Indeed, Greenhouse, Lever and Workday when you click, so you skip the copy and paste.'
-            : !result
-              ? 'Cover Me rewrites your bullets around each posting and writes a matching cover letter.'
-              : missing
-              ? "Cover Me checks each one against your bullets, works in the ones you've done and leaves the rest out."
-              : 'Cover Me rewrites your bullets around this posting and writes a matching cover letter.'}
+          Cover Me rewrites your bullets around each posting, optimizes your resume for ATS and writes a matching cover letter.
         </p>
         <Button asChild className="mt-1 self-start [@media(pointer:coarse)]:hidden">
-          <a href={storeUrl(repeat ? 'ats-repeat' : 'ats-result')} target="_blank" rel="noreferrer">{result ? 'Tailor this resume in Chrome, free' : 'Add Cover Me to Chrome, free'}</a>
+          <a href={storeUrl('ats-result')} target="_blank" rel="noreferrer">
+            <GoogleChromeLogoIcon size={18} aria-hidden /> Add Cover Me to Chrome, free
+          </a>
         </Button>
         <Button size="sm" onClick={sendToComputer} className="mt-1 self-start [@media(pointer:fine)]:hidden">
           <DeviceMobileIcon size={16} aria-hidden /> Send this to my computer
         </Button>
         <p className="text-[12.5px] text-ext-muted">
           <span className="[@media(pointer:coarse)]:hidden">About 30 seconds for a tailored resume and letter. Free plan, no card.</span>
-          <span className="[@media(pointer:fine)]:hidden">Cover Me runs in Chrome on a computer. Send yourself the link and tailor this resume there.</span>
+          <span className="[@media(pointer:fine)]:hidden">Cover Me runs in Chrome on a computer. Send yourself the link and tailor your resume there.</span>
         </p>
       </div>
     </ExtensionPopup>

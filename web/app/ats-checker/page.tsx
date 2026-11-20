@@ -60,7 +60,7 @@ export default function AtsCheckerPage() {
       <main className="container flex flex-col gap-12 py-10 max-md:py-6">
         <div className="-mb-6 flex flex-col gap-3">
           <h1 className="text-[clamp(30px,4vw,44px)] leading-[1.05]">Free ATS resume checker</h1>
-          <p className="max-w-[640px] text-[16px] leading-[1.55] text-ink-2">
+          <p className="text-[16px] leading-[1.55] text-ink-2">
             Get an ATS match score and see which of the posting&apos;s skills, tools and certifications your resume has, and where they are.
           </p>
           <ul className="flex flex-wrap gap-2 text-[13px] text-ink-2 max-sm:gap-x-3 max-sm:gap-y-1 max-sm:text-[12.5px]">
