@@ -11,7 +11,7 @@ import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { checkResumeText, postingTitle } from '@/lib/ats-checker/hints'
-import { askAi, fromAi, type AiKeyword } from '@/lib/ats-checker/ai'
+import { askAi, fromAi, type AiReport } from '@/lib/ats-checker/ai'
 import { botCheckToken, preloadBotCheck } from '@/lib/ats-checker/turnstile'
 import { checkResume, firstAt, markFor, marks, oneEntryPerAsk, readPosting, type Keyword, type Level, type Mark } from '@/lib/ats-checker/keywords'
 import { readResumeFile } from '@/lib/ats-checker/read-resume'
@@ -27,7 +27,9 @@ const GROUPS: { level: Level; title: string }[] = [
 
 type Found = Keyword & { found: boolean; via?: string; mark?: string }
 
-function analyse(posting: string, resume: string, keywords: Found[], pages: number | undefined, fallback?: 'busy' | 'failed') {
+type FromAi = { score: number; gates: string[]; title: string }
+
+function analyse(posting: string, resume: string, keywords: Found[], pages: number | undefined, fallback?: 'busy' | 'failed', ai?: FromAi) {
   const postingMarks = marks(posting, keywords)
   const resumeMarks = marks(resume, keywords.filter((k) => k.found))
   const shown = oneEntryPerAsk(keywords.map((k) => ({
@@ -36,10 +38,12 @@ function analyse(posting: string, resume: string, keywords: Found[], pages: numb
   })))
   return {
     fallback,
+    score: ai?.score,
+    gates: ai?.gates ?? [],
     keywords: shown,
     missing: new Set(shown.filter((k) => !k.found).flatMap((k) => [k.name, ...(k.alternatives ?? [])])),
-    years: readPosting(posting).years,
-    checks: { ...checkResumeText(resume, posting), pages },
+    years: ai ? [] : readPosting(posting).years,
+    checks: { ...checkResumeText(resume, posting, ai?.title), pages },
     resumeMarks,
     postingMarks,
   }
@@ -49,8 +53,10 @@ type Checked = Result['keywords'][number]
 
 const byWords = (posting: string, resume: string, pages: number | undefined, fallback: 'busy' | 'failed') =>
   analyse(posting, resume, checkResume(readPosting(posting).keywords, resume), pages, fallback)
-const byAi = (posting: string, resume: string, keywords: AiKeyword[], pages: number | undefined) =>
-  analyse(posting, resume, fromAi(posting, keywords), pages)
+function byAi(posting: string, resume: string, report: AiReport, pages: number | undefined) {
+  const { keywords, gates } = fromAi(posting, report)
+  return analyse(posting, resume, keywords, pages, undefined, { score: report.score, gates, title: report.title })
+}
 
 type Selected = { name: string; target: string; at: number }
 type Check = { posting: string; resume: string; result: Result | null }
@@ -98,7 +104,7 @@ export function AtsChecker() {
       const token = botBox.current ? await botCheckToken(botBox.current) : null
       if (controller.signal.aborted) return
       const reply = await askAi(p, r, token, controller.signal)
-      setCheck({ posting: p, resume: r, result: 'keywords' in reply ? byAi(p, r, reply.keywords, pages) : byWords(p, r, pages, reply.error) })
+      setCheck({ posting: p, resume: r, result: 'error' in reply ? byWords(p, r, pages, reply.error) : byAi(p, r, reply, pages) })
     } catch {
       return
     }
@@ -199,7 +205,7 @@ export function AtsChecker() {
 
       {ready ? (
         <div className="grid gap-2 max-sm:gap-1.5 sm:grid-cols-2">
-          <FoldedInput label="Posting" value={postingTitle(posting) ?? posting.trim().split('\n')[0]} onEdit={() => edit('posting')} />
+          <FoldedInput label="Posting" value={mine?.checks.title?.posting ?? postingTitle(posting) ?? posting.trim().split('\n')[0]} onEdit={() => edit('posting')} />
           <FoldedInput label="Resume" value={file?.name ?? resume.trim().split('\n')[0].slice(0, 40)} onEdit={() => edit('resume')} />
         </div>
       ) : (
@@ -348,18 +354,34 @@ function headline(keywords: Checked[]) {
 function Summary({ result, sample }: { result: Result; sample: boolean }) {
   const { must, pool, found } = headline(result.keywords)
   const nice = result.keywords.filter((k) => k.level === 'preferred')
+  const scored = result.score !== undefined && pool.length > 0
   return (
     <div className="sticky top-[72px] z-10 flex flex-col gap-2.5 rounded-[16px] border border-line bg-white p-4 shadow-[0_10px_30px_-18px_rgba(30,27,75,0.35)]">
       <h2 id="results" tabIndex={-1} aria-live="polite" className="text-[clamp(18px,2.2vw,26px)] leading-[1.15] text-ink outline-none">
         {!pool.length
           ? 'No keywords found in this posting. Paste all of it, including the requirements.'
-          : must
-            ? `Must-haves on your resume: ${found} of ${pool.length}`
-            : `Skills the posting names on your resume: ${found} of ${pool.length}`}
+          : scored
+            ? `ATS match: ${result.score} out of 100`
+            : must
+              ? `Must-haves on your resume: ${found} of ${pool.length}`
+              : `Skills the posting names on your resume: ${found} of ${pool.length}`}
       </h2>
-      {pool.length > 0 && <Segments found={found} total={pool.length} />}
+      {scored ? (
+        <Progress value={result.score} aria-hidden className="h-2.5 border border-dashed border-gap bg-white [&>div]:bg-brand" />
+      ) : (
+        pool.length > 0 && <Segments found={found} total={pool.length} />
+      )}
+      {scored && must && <p className="text-[13px] text-ink-2">Must-haves on your resume: {found} of {pool.length}</p>}
       {nice.length > 0 && (
         <p className="text-[13px] text-ink-2 max-lg:hidden">Nice to have: {nice.filter((k) => k.found).length} of {nice.length}</p>
+      )}
+      {result.gates.length > 0 && (
+        <div className="text-[13px] text-ink-2">
+          <p>Requirements your resume doesn&apos;t meet:</p>
+          <ul className="mt-1 list-disc pl-5 text-gap-ink">
+            {result.gates.map((g) => <li key={g}>{g}</li>)}
+          </ul>
+        </div>
       )}
       {!sample && (
         <Button size="sm" className="self-start [@media(pointer:fine)]:hidden" onClick={sendToComputer}>

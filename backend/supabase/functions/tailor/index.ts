@@ -8,6 +8,7 @@ import { isUuid } from '../_shared/history-upload.ts'
 import { isCurrentParse, isValidParsedResume, parseResumeStructure, type ParsedResume, upgradedParse } from '../_shared/resume-parse.ts'
 import { buildsOnEdits, candidateText, checkAndRewriteLines, checkedTitle, groundSkills, groundTailored, keepSeen, matchSkillCase, seenVersion, trustedNotes } from '../_shared/resume-grounding.ts'
 import { scoreBefore, scoreFromMatch } from '../_shared/ats-score.ts'
+import { KEYWORD_JUDGING, KEYWORD_TIERS } from '../_shared/keyword-rules.ts'
 import { captureUsage } from '../_shared/posthog.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
@@ -17,9 +18,8 @@ const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')!
 declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void }
 
 // ── Tailor delta (mirrored: extension/src/lib/ai/resume-tailor.ts ⇄ backend/supabase/functions/tailor/index.ts) ──
-// The model outputs only rewritten content; these helpers validate it and merge
-// it back into the parsed resume, so immutable fields (name, contact, titles,
-// companies, dates, education, certifications) can never be altered by the model.
+// The model returns only rewritten text, so it can never alter name, contact, titles,
+// companies, dates, education or certifications: https://github.com/TheLinc/cover-me/commit/d7700ca5cc272c75785b90971b63a366f3d35016
 
 export interface TailorDeltaEntry { bullets: string[] }
 
@@ -27,16 +27,14 @@ export interface TailorDelta {
   summary?: string
   experience: TailorDeltaEntry[]
   projects?: TailorDeltaEntry[]
-  /** [{ skill, evidence? }] from current prompts; a comma-separated string from older ones. Converted by groundSkills before merging. */
+  /** Older prompts sent a comma-separated string; groundSkills converts both forms before merging: https://github.com/TheLinc/cover-me/commit/0e9a09cd3d4d9fc3b7cebb190aed7c4307954676 */
   skills?: string | unknown[]
   keywordMatch?: Record<string, unknown>
 }
 
 export function parseDelta(raw: string): TailorDelta {
-  // The model sometimes emits the JSON, then "Wait, correction needed..." and a
-  // corrected object (2 of 68 tailors in one full eval). Use the last complete
-  // top-level object that parses: that is its final answer. Code fences,
-  // surrounding prose, and an object cut off mid-stream all fall away.
+  // The model sometimes emits JSON, then "Wait, correction needed..." and a corrected
+  // object (2 of 68 tailors in one eval); the last complete one is its answer: https://github.com/TheLinc/cover-me/commit/30cd16dbed180782529d87cec6a47ec67f76a7b8
   const objects = topLevelObjects(raw)
   let incomplete = false
   for (let i = objects.length - 1; i >= 0; i--) {
@@ -52,7 +50,6 @@ export function parseDelta(raw: string): TailorDelta {
   throw new Error(incomplete ? 'AI returned incomplete response. Please try again.' : 'AI returned invalid JSON. Please try again.')
 }
 
-// Each balanced {...} at the top level, ignoring braces inside JSON strings.
 function topLevelObjects(text: string): string[] {
   const out: string[] = []
   let depth = 0
@@ -76,12 +73,8 @@ function topLevelObjects(text: string): string[] {
   return out
 }
 
-// Merge the model's delta into the parsed resume. A missing or empty bullets
-// array for an entry keeps that entry's original bullets — a partially valid
-// response degrades to "some bullets untailored", never to a broken resume.
-// The same holds for a count the prompt forbids: in default mode a role must
-// come back with as many bullets as it had (a different count means bullets
-// were merged or dropped). Projects follow the same rule.
+// A missing, empty or (with exactBulletCounts) wrong-length bullets array keeps the
+// original bullets, so bad output leaves bullets untailored, never a broken resume: https://github.com/TheLinc/cover-me/commit/30cd16dbed180782529d87cec6a47ec67f76a7b8
 export function mergeTailorDelta<T extends {
   experience: Array<{ bullets: string[] }>
   projects?: Array<{ bullets: string[] }>
@@ -104,13 +97,12 @@ export function mergeTailorDelta<T extends {
       : {}),
   }
 }
-// ── End mirrored tailor delta ──
+// ── End mirrored tailor delta ── https://github.com/TheLinc/cover-me/commit/d7700ca5cc272c75785b90971b63a366f3d35016
 
 interface JobPayload { title: string; company: string; description: string }
 
-// Model for the skill-claim pair check and the line check/rewrite (see
-// _shared/resume-grounding.ts). Sonnet, not Haiku: 38/38 vs 29/38 on
-// hand-labeled skill pairs (extension/eval/claim-pairs.ts).
+// Sonnet, not Haiku: 38/38 vs 29/38 on hand-labeled skill pairs (extension/eval/claim-pairs.ts).
+// https://github.com/TheLinc/cover-me/commit/0e9a09cd3d4d9fc3b7cebb190aed7c4307954676
 async function askChecker(prompt: string): Promise<string> {
   const res = await fetch(ANTHROPIC_MESSAGES_URL, {
     method: 'POST',
@@ -127,8 +119,6 @@ async function askChecker(prompt: string): Promise<string> {
   return data.content.find((b) => b.type === 'text')?.text ?? ''
 }
 
-// The model outputs a DELTA (rewritten content only), not the full resume —
-// immutable fields are merged back in code (see mergeTailorDelta above).
 function buildTailorSchema(parsed: ParsedResume): string {
   const delta: Record<string, unknown> = {
     summary: 'string — 2-3 sentence professional summary, no first-person pronouns; "" when STEP 4 says skip',
@@ -237,19 +227,9 @@ Identify the industry from the JD vocabulary; it sets which keywords and metrics
 - Other: infer the field's own hard-skill vocabulary and outcome metrics directly from the JD.
 
 STEP 2 — EXTRACT & TIER KEYWORDS
-Pull the hard requirements from the JD and tier them. Only tier a keyword the candidate GENUINELY HAS (Integrity 3).
-- TIER 1 — must-have (4–6): explicitly required, repeated, or foundational. Must appear in the summary, the skills, AND at least one bullet.
-- TIER 2 — preferred (8–15): mentioned once or "nice to have." Appear in skills and in the most relevant bullet.
-Only hard skills — soft-skill clichés ("communication", "team player", "proactive") score nothing and never appear in skills.
-
-BEHAVIORAL REQUIREMENTS — when the JD names a verifiable activity under its responsibilities (not its culture blurb) and a bullet already demonstrates it, treat it as Tier 2 and protect that bullet (Integrity 6). These are industry-specific:
-  Tech: code reviews, mentoring, technical documentation, on-call ownership
-  Healthcare: patient education, interdisciplinary rounds, care-plan review, clinical supervision
-  Finance: client reporting, audit review, stakeholder presentations
-  Legal: discovery review, client communication, brief preparation
-  Any: cross-functional collaboration, knowledge sharing, process documentation
+${KEYWORD_TIERS}
+Place only the keywords the candidate GENUINELY HAS (Integrity 3): each Tier 1 keyword in the summary, the skills, AND at least one bullet; each Tier 2 keyword in skills and in the most relevant bullet. Soft-skill clichés never appear in skills. When a bullet already demonstrates a behavioral requirement, protect that bullet (Integrity 6).
 ${parsed.skills ? '' : '\nNote: this resume has no skills section — embed keywords naturally within experience bullets only.\n'}
-ALTERNATIVE REQUIREMENTS — when the JD offers a choice ("X, Y, or Z"; "SQL/NoSQL"; "relational or non-relational"), treat the whole set as ONE requirement that is covered if the candidate has ANY one member. Tier it once, by the member the candidate has, and NEVER list the unused alternatives as missing or as a gap — they are not required.
 
 SYNONYM PAIRS — when the resume and JD name the same thing differently and both fit one phrase, keep both: "localization (i18n)"; "PostgreSQL (SQL)"; "REST API integrations".
 
@@ -295,11 +275,11 @@ STEP 7 — REORDER BULLETS
 Within each role, sort bullets most-relevant-first. This touches only the bullets inside a role; role order is fixed (Integrity 2).
 ${step8}
 STEP 9 — ATS MATCH REPORT (the score is computed in code from this report — do NOT output a number)
-Judge coverage ONLY against this JD: the Tier 1 and Tier 2 keywords from STEP 2, plus the qualifications the JD explicitly states. NEVER weigh skills the JD does not mention, or skills "typically"/"usually" expected for this kind of role — if it is not in this JD, it neither helps nor hurts the candidate.
+${KEYWORD_JUDGING}
 Report in keywordMatch:
 - tier1Covered / tier1Missing: every STEP 2 Tier 1 keyword, split by whether the candidate genuinely has it (Integrity 3).
 - tier2Covered / tier2Missing: same for every Tier 2 keyword.
-- gatingGaps: hard qualifications the JD explicitly requires but the candidate does not meet — years of experience, a required degree, a mandatory license/cert (≤55 chars each, e.g. "Requires 5yr, candidate ~3yr"). A "preferred"/"nice-to-have" item is a Tier 2 keyword, never a gatingGap.
+- gatingGaps: every gating gap.
 Be exhaustive — list ALL keywords across the covered/missing arrays, not a sample; the user's score and gap list are derived entirely from them.
 
 ${compactMode}---
@@ -379,7 +359,7 @@ Deno.serve(async (req) => {
     trim = !!body.trim
     includeSummary = body.includeSummary !== false
     previous = body.previous && typeof body.previous === 'object' ? body.previous : undefined
-    // Which file a result came from isn't resume content for the model to revise.
+    // Which file a result came from isn't resume content for the model to revise (#131).
     if (previous) {
       const { sourceHash: _h, designFellBack: _f, ...rest } = previous
       previous = rest
@@ -396,16 +376,13 @@ Deno.serve(async (req) => {
     return json({ error: 'Missing job title or description' }, 400)
   }
 
-  // Every hosted generation counts: free against its starter or weekly
-  // allowance, Pro against its fair-use cap (migration 015). Charged only once
-  // the request is valid, so a bad request never costs a generation.
+  // Charged only once the request is valid, so a bad request never costs a generation.
+  // https://github.com/TheLinc/cover-me/commit/fd2604ac6168a5d6dac44232e2fd5c377d004395
   const today = new Date().toISOString().split('T')[0]
   const consumed = await consumeGeneration(supabase, userId)
   if (!consumed.ok) return json(consumed.body, consumed.status)
   let charged = true
 
-  // Refunds the consumed slot when a downstream step fails, so a failed
-  // generation doesn't count against the user's allowance.
   const refund = async () => {
     if (!charged) return
     charged = false
@@ -413,18 +390,15 @@ Deno.serve(async (req) => {
     if (error) console.error('Rate limit refund RPC error:', error.message)
   }
 
-  // Debug — OFF by default. Logs PII (resume + prompt) to the function logs.
-  // Enable only for local/staging:  supabase secrets set DEBUG_MODE=true
-  // View with:  supabase functions logs tailor
+  // Logs PII (resume + prompt): enable only for local/staging.
+  // https://github.com/TheLinc/cover-me/commit/9f4ea308d03f2c9ca2a38a38b6e1aeb9b0305051
   const DEBUG = Deno.env.get('DEBUG_MODE') === 'true'
 
   let structuredResume!: ParsedResume
   let upstream!: ReadableStream<Uint8Array>
 
-  // Loads the structured resume and opens the Sonnet stream; on failure,
-  // refunds and returns the error. Streaming clients run it inside the stream:
-  // an uncached parse of a resume near the 12,000-character cap took 31 s, and
-  // Chrome stops a service worker whose fetch() gets no response for 30 s.
+  // Streaming clients run this inside the stream: an uncached parse can take 31 s and Chrome
+  // stops a service worker after 30 s of silence. https://github.com/TheLinc/cover-me/commit/097eb05bc5bbb157c7e8730f6f305e5fa73bb889
   const prepare = async (): Promise<{ error: string; status: number } | null> => {
     // Structured resume: read the cached copy, or parse the raw text once
     // (Haiku, verbatim extraction) and cache it encrypted for future tailors.
@@ -462,10 +436,11 @@ Deno.serve(async (req) => {
         }
         structured = cached
       }
-      // Cache best-effort — a failed write just means we re-parse next time.
+      // Cache best-effort: a failed write just means a re-parse next time.
+      // https://github.com/TheLinc/cover-me/commit/d7700ca5cc272c75785b90971b63a366f3d35016
       try {
         const structured_encrypted = await encrypt(JSON.stringify(structured))
-        // Only if the resume text wasn't replaced meanwhile.
+        // Only if the resume text wasn't replaced meanwhile: https://github.com/TheLinc/cover-me/commit/7684e73cf9a3cced3d7fa9072d4e263d9771590c
         const { error } = await supabase.from('resumes').update({ structured_encrypted })
           .eq('user_id', userId).like('text_encrypted', sameCiphertext(resumeRow.text_encrypted))
         if (error) console.error('Failed to cache structured resume')
@@ -497,10 +472,8 @@ Deno.serve(async (req) => {
           ...SONNET_BETA_HEADER,
         },
         body: JSON.stringify({
-          // Sonnet for tailoring: judgment-heavy (bullet preservation, relevance
-          // calls) — the small models compress/merge. Cover letters are on Sonnet
-          // too (see generate/index.ts). A mid-stream decline ends the stream
-          // early; the incomplete delta fails to parse and the request refunds.
+          // Sonnet for tailoring: the small models compress or merge bullets.
+          // https://github.com/TheLinc/cover-me/commit/9f4ea308d03f2c9ca2a38a38b6e1aeb9b0305051
           ...SONNET_FIELDS,
           // Summarized thinking streams as thinking_delta, so the popup can show
           // what the model is planning instead of a silent spinner (#91). Display
@@ -513,6 +486,7 @@ Deno.serve(async (req) => {
       })
     } catch (err) {
       // A dropped connection throws instead of returning a 5xx; refund it the same way.
+      // https://github.com/TheLinc/cover-me/commit/f8ea13f486e111d019e4c29819313c93255c7d68
       console.error('Claude connection error:', err instanceof Error ? err.message : err)
       await refund()
       return { error: 'AI generation failed. Please try again.', status: 502 }
@@ -529,9 +503,8 @@ Deno.serve(async (req) => {
     return null
   }
 
-  // Reads Anthropic's SSE stream, forwarding each text fragment to onDelta and
-  // each thinking-summary fragment to onThinking, and returning the full
-  // accumulated text. Thinking text can quote the resume: never log it.
+  // Thinking text can quote the resume: never log it.
+  // https://github.com/TheLinc/cover-me/commit/4d723e8424415890ecc6cec495bf0253801dca4f
   const readUpstream = async (onDelta?: (text: string) => void, onThinking?: (text: string) => void): Promise<string> => {
     const reader = upstream.getReader()
     const decoder = new TextDecoder()
@@ -571,8 +544,6 @@ Deno.serve(async (req) => {
     return raw
   }
 
-  // Parse the delta, merge into the structured resume, attach the code-computed
-  // score, and persist for Pro users. Throws on unusable model output.
   const assemble = async (raw: string): Promise<{ resume: Record<string, unknown>; savedId?: string }> => {
     if (DEBUG) console.log('[CoverMe debug] raw model response:\n', raw)
 
@@ -584,13 +555,11 @@ Deno.serve(async (req) => {
     const notes = trustedNotes(supplemental, previous)
     const base = seenVersion(structuredResume, previous)
     const candidate = candidateText(structuredResume, notes)
-    // Added skills follow the casing of the resume's own list.
     delta.skills = matchSkillCase((await groundSkills(delta.skills, candidate, askChecker)).skills, base.skills, `${candidate}
 ${job.description}`)
     const merged = keepSeen(mergeTailorDelta(base, delta, { exactBulletCounts: !compact && !trim }), structuredResume, base)
-    // Rewrite only the lines that claim more than the original resume supports.
     const { resume: lined, repair } = await checkAndRewriteLines(merged, base, job.description, askChecker, supplemental)
-    // Counts only: repair.flagged holds resume text.
+    // Counts only: repair.flagged holds resume text (#58).
     if (repair.flagged.length || repair.checkFailed) {
       const { rewritten, reverted, summary, checkFailed } = repair
       console.log('[CoverMe] line check:', JSON.stringify({ flagged: repair.flagged.length, rewritten, reverted, summary, checkFailed }))
@@ -613,14 +582,10 @@ ${job.description}`)
     if (sourceHash) resume.sourceHash = sourceHash
     if (buildsOnEdits(previous)) resume.hasEdits = true
 
-    // One count per hosted run, with the tailor's options and no resume or
-    // job text, unless the account opted out. A failed send never fails the run.
     EdgeRuntime.waitUntil(captureUsage(supabase, 'tailor_run', userId, { tier, compact, trim, includeSummary, layout, fellBack }))
 
-    // Every account's job goes on its board; the resume itself is kept for
-    // Pro only. Non-fatal if either fails. Under the extension's local ID
-    // when it sends one (1.2.0 doesn't), never overwriting an existing row,
-    // so a later upload of local history can't duplicate it.
+    // Saved under the extension's local ID (1.2.0 sends none), never overwriting a row, so a
+    // later upload of local history can't duplicate it: https://github.com/TheLinc/cover-me/commit/815c3d8699cc3279f2773f23ff2e817e2f29f1a6
     let jobAppId: string | undefined
     try {
       jobAppId = await findOrCreateJobApplication(supabase, userId, job)
@@ -640,6 +605,7 @@ ${job.description}`)
         }
         const table = supabase.from('tailored_resumes')
         // An upsert that hits an existing ID returns no row, so savedId stays empty.
+        // https://github.com/TheLinc/cover-me/commit/815c3d8699cc3279f2773f23ff2e817e2f29f1a6
         const { data, error } = await (localId
           ? table.upsert({ ...row, id: localId }, { onConflict: 'id', ignoreDuplicates: true })
           : table.insert(row)
@@ -654,9 +620,8 @@ ${job.description}`)
     return { resume, savedId }
   }
 
-  // Legacy clients (extension versions before the streaming update) expect a
-  // plain JSON body; new clients opt into NDJSON via the Accept header. Chrome
-  // Web Store updates roll out over days, so both must keep working.
+  // Extensions from before streaming expect plain JSON, and store updates roll out over days.
+  // https://github.com/TheLinc/cover-me/commit/d7700ca5cc272c75785b90971b63a366f3d35016
   const wantsStream = (req.headers.get('accept') ?? '').includes('application/x-ndjson')
   if (!wantsStream) {
     try {
@@ -671,23 +636,19 @@ ${job.description}`)
     }
   }
 
-  // Stream NDJSON to the extension: a start event (role count for the progress
-  // label), a thinking event per thinking-summary fragment and a delta event per
-  // text fragment, then a final done event carrying
-  // the fully merged + scored resume. Streaming from the first token keeps the
-  // connection alive on slow generations and lets the popup show real progress.
+  // Streaming from the first token keeps the connection alive on slow generations.
+  // https://github.com/TheLinc/cover-me/commit/d7700ca5cc272c75785b90971b63a366f3d35016
   const encoder = new TextEncoder()
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
-      // A client that hangs up mid-stream still got the generation, so a failed
-      // write must not reach the catch below and refund it. (The local edge
-      // runtime never cancels the stream; this guards runtimes that do.)
+      // A client that hangs up mid-stream still got the generation, so a failed write
+      // must not reach the catch below and refund it: https://github.com/TheLinc/cover-me/commit/7e65844a93cc84483f003ed635004797af3da478
       const send = (obj: unknown) => {
-        try { controller.enqueue(encoder.encode(JSON.stringify(obj) + '\n')) } catch { /* client gone */ }
+        try { controller.enqueue(encoder.encode(JSON.stringify(obj) + '\n')) } catch {}
       }
-      // Blank lines (clients skip them) send the headers at once and keep the
-      // connection from sitting silent while the resume is parsed.
-      const heartbeat = () => { try { controller.enqueue(encoder.encode('\n')) } catch { /* client gone */ } }
+      // Blank lines (clients skip them) send the headers at once and keep the connection from
+      // sitting silent while the resume is parsed: https://github.com/TheLinc/cover-me/commit/097eb05bc5bbb157c7e8730f6f305e5fa73bb889
+      const heartbeat = () => { try { controller.enqueue(encoder.encode('\n')) } catch {} }
       heartbeat()
       const beat = setInterval(heartbeat, 10_000)
       try {
@@ -697,8 +658,8 @@ ${job.description}`)
           return
         }
         send({ type: 'start', roles: structuredResume.experience.length })
-        // 'thinking' is newer than the 1.3.1 store build, whose reader skips
-        // event types it doesn't know.
+        // 'thinking' is newer than the 1.3.1 store build, whose reader skips unknown event types.
+        // https://github.com/TheLinc/cover-me/commit/4d723e8424415890ecc6cec495bf0253801dca4f
         const raw = await readUpstream((text) => send({ type: 'delta', text }), (text) => send({ type: 'thinking', text }))
         const { resume, savedId } = await assemble(raw)
         send({ type: 'done', resume, savedId })
@@ -708,7 +669,7 @@ ${job.description}`)
         send({ type: 'error', error: 'AI generation failed. Please try again.' })
       } finally {
         clearInterval(beat)
-        try { controller.close() } catch { /* client gone */ }
+        try { controller.close() } catch {}
       }
     },
   })

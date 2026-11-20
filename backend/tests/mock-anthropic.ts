@@ -41,10 +41,14 @@ Test Person`
 export const MOCK_TURNSTILE_TOKEN = 'XXXX.DUMMY.TOKEN.XXXX'
 
 // The ATS checker's reply (#278), whatever the posting and resume.
-export const MOCK_ATS_KEYWORDS = [
-  { name: 'SQL', level: 'required', posting_text: 'SQL', resume_text: 'SQL', found: true },
-  { name: 'Tableau', level: 'preferred', posting_text: 'Tableau', resume_text: '', found: false },
-]
+export const MOCK_ATS_REPORT = {
+  keywords: [
+    { name: 'SQL', tier: 1, posting_text: 'SQL', resume_text: 'SQL', covered: true },
+    { name: 'Tableau', tier: 2, posting_text: 'Tableau', resume_text: '', covered: false },
+  ],
+  gatingGaps: ['Requires 3yr, candidate ~1yr'],
+  job_title: 'Data Analyst',
+}
 
 export const MOCK_REWRITTEN_BULLET = 'Rebuilt the billing export pipeline in TypeScript'
 
@@ -254,7 +258,7 @@ export function startMockAnthropic(port: number): Promise<Server> {
       const prompt = typeof first === 'string' ? first : Array.isArray(first) ? first.map((b) => b.text ?? '').join('') : ''
       if (prompt.startsWith('<posting>')) {
         res.writeHead(200, { 'content-type': 'application/json' })
-        return res.end(messageJson(JSON.stringify({ keywords: MOCK_ATS_KEYWORDS }), body.model))
+        return res.end(messageJson(JSON.stringify(MOCK_ATS_REPORT), body.model))
       }
       if (prompt.startsWith('SKILL CLAIM CHECK')) {
         // Approve every pair: the tests assert which skills survive grounding (https://github.com/TheLinc/cover-me/commit/0e9a09cd).

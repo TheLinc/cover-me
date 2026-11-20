@@ -1,4 +1,5 @@
-// The website's free ATS checker (#278): POST { posting, resume } → { keywords }.
+// The website's free ATS checker (#278): POST { posting, resume, token } →
+// { score, gaps, keywordMatch, quotes, title }, scored like the extension's tailor.
 // No account, so verify_jwt is off in config.toml and calls are rate-limited per
 // IP. The posting and resume go to Anthropic on the checker's own key and are
 // never stored or logged, not even on failure (#278).
@@ -6,6 +7,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 import { ANTHROPIC_MESSAGES_URL } from '../_shared/anthropic.ts'
 import { handleCors, json } from '../_shared/cors.ts'
 import { checkIpRateLimit } from '../_shared/ip-rate-limit.ts'
+import { scoreFromMatch } from '../_shared/ats-score.ts'
 import { readBody } from '../_shared/read-body.ts'
 import { RESPONSE_SCHEMA, SYSTEM_PROMPT, userMessage } from './prompt.ts'
 
@@ -33,8 +35,10 @@ const MAX_CHARS = 30_000
 const MAX_BYTES = 4 * 2 * MAX_CHARS
 const MAX_KEYWORDS = 80
 const MAX_NAME = 80
+const MAX_GATES = 10
 
-type Keyword = { name: string; level: 'required' | 'preferred'; posting_text: string; resume_text: string; found: boolean }
+type Keyword = { name: string; tier: 1 | 2; posting_text: string; resume_text: string; covered: boolean }
+type Report = { keywords: Keyword[]; gatingGaps: string[]; title: string }
 
 Deno.serve(async (req) => {
   const cors = handleCors(req)
@@ -85,12 +89,16 @@ Deno.serve(async (req) => {
     return json({ error: 'Check failed' }, 502)
   }
   const data = await res.json() as { stop_reason?: string; content?: Array<{ type: string; text?: string }> }
-  const keywords = data.stop_reason === 'end_turn' ? parseKeywords(data.content?.find((b) => b.type === 'text')?.text, posting, resume) : null
-  if (!keywords) {
+  const report = data.stop_reason === 'end_turn' ? parseReport(data.content?.find((b) => b.type === 'text')?.text, posting, resume) : null
+  if (!report) {
     console.error('ats-check: unusable reply, stop_reason', data.stop_reason)
     return json({ error: 'Check failed' }, 502)
   }
-  return json({ keywords })
+  const names = (tier: 1 | 2, covered: boolean) => report.keywords.filter((k) => k.tier === tier && k.covered === covered).map((k) => k.name)
+  const keywordMatch = { tier1Covered: names(1, true), tier1Missing: names(1, false), tier2Covered: names(2, true), tier2Missing: names(2, false), gatingGaps: report.gatingGaps }
+  const { score, gaps } = scoreFromMatch(keywordMatch, { jobDescription: posting, candidate: resume })
+  const quotes = report.keywords.map(({ name, posting_text, resume_text }) => ({ name, posting_text, resume_text }))
+  return json({ score, gaps, keywordMatch, quotes, title: report.title })
 })
 
 async function passesBotCheck(token: unknown, req: Request): Promise<boolean> {
@@ -118,28 +126,32 @@ const plain = (s: string) => s.replace(/[‘’]/g, "'").replace(/[“”]/g, '"
 
 // Quotes are kept only when they're really in the text sent, so the reply
 // can't carry anything else (#278).
-function parseKeywords(text: string | undefined, posting: string, resume: string): Keyword[] | null {
-  let parsed: unknown
+function parseReport(text: string | undefined, posting: string, resume: string): Report | null {
+  let parsed: { keywords?: unknown; gatingGaps?: unknown; job_title?: unknown }
   try {
     parsed = JSON.parse(text ?? '')
   } catch {
     return null
   }
-  const list = (parsed as { keywords?: unknown })?.keywords
-  if (!Array.isArray(list) || list.length > MAX_KEYWORDS) return null
+  const { keywords: list, gatingGaps: gates, job_title: title } = parsed ?? {}
+  if (!Array.isArray(list) || list.length > MAX_KEYWORDS || !Array.isArray(gates) || gates.length > MAX_GATES) return null
   const valid = list.every((k) =>
     k && typeof k === 'object' &&
     ['name', 'posting_text', 'resume_text'].every((f) => typeof k[f] === 'string') &&
-    k.name.trim() && (k.level === 'required' || k.level === 'preferred') && typeof k.found === 'boolean'
-  )
+    k.name.trim() && (k.tier === 1 || k.tier === 2) && typeof k.covered === 'boolean'
+  ) && gates.every((g) => typeof g === 'string') && typeof title === 'string'
   if (!valid) return null
   const [inPosting, inResume] = [plain(posting), plain(resume)]
   const quote = (q: string, source: string) => (plain(q) && source.includes(plain(q)) ? q : '')
-  return list.map(({ name, level, posting_text, resume_text, found }) => ({
-    name: name.slice(0, MAX_NAME),
-    level,
-    posting_text: quote(posting_text, inPosting),
-    resume_text: found ? quote(resume_text, inResume) : '',
-    found,
-  }))
+  return {
+    keywords: list.map(({ name, tier, posting_text, resume_text, covered }) => ({
+      name: name.slice(0, MAX_NAME),
+      tier,
+      posting_text: quote(posting_text, inPosting),
+      resume_text: covered ? quote(resume_text, inResume) : '',
+      covered,
+    })),
+    gatingGaps: gates.map((g: string) => g.slice(0, MAX_NAME)).filter((g: string) => g.trim()),
+    title: quote(title, inPosting).slice(0, MAX_NAME),
+  }
 }

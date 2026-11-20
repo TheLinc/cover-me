@@ -96,9 +96,19 @@ describe('the posting title', () => {
     expect(checkResumeText('Data Analyst', 'Business Analyst\nJoin us as a Business Analyst.').title?.onResume).toBe(false)
   })
 
-  test('is left out when the first line is a sentence or never comes up again', () => {
+  test('is left out when no early line is a title the posting names again', () => {
     expect(postingTitle('We are hiring a great analyst to join our team.\nRequirements')).toBeNull()
-    expect(postingTitle('Skip to main content\nData Analyst\nJoin us as a Data Analyst.')).toBeNull()
+    expect(postingTitle('Data Analyst\nDescription\nWrite the description of each report.')).toBeNull()
+  })
+
+  test("skips a first line that is the employer's name", () => {
+    const posting = 'Ridgeback Freight Lines\nDenver, CO\nLoad Planner\nAs a Load Planner you will plan loads.\nRidgeback Freight Lines is an equal opportunity employer.'
+    expect(postingTitle(posting)).toBe('Load Planner')
+    expect(postingTitle('Skip to main content\nData Analyst\nJoin us as a Data Analyst.')).toBe('Data Analyst')
+  })
+
+  test("uses the AI's title when it has one", () => {
+    expect(checkResumeText('Load Planner, 2020 - Present', 'Ridgeback Freight Lines\nAbout Ridgeback Freight Lines', 'Load Planner').title?.onResume).toBe(true)
   })
 })
 

@@ -78,16 +78,27 @@ const mentionsTitle = (text: string, title: string) =>
 
 export function postingTitle(posting: string): string | null {
   const lines = posting.split('\n').map((l) => l.replace(/^[#*\s]+|[*\s]+$/g, ''))
-  const at = lines.findIndex(Boolean)
-  const title = lines[at]?.split(/,| [-–—|] |\(/)[0].trim()
-  if (!title || /[.!?:]$/.test(title) || title.split(/\s+/).length > 8 || isSectionHeading(title)) return null
-  if (/\b(program|programme|fellowship|cohort|bootcamp)\b/i.test(title)) return null
-  return mentionsTitle(lines.slice(at + 1).join('\n'), coreTitle(title)) ? title : null
+  const filled = lines.flatMap((l, i) => (l ? [i] : [])).slice(0, 4)
+  for (const at of filled) {
+    const title = lines[at].split(/,| [-–—|] |\(/)[0].trim()
+    if (isSectionHeading(title) || /^(job\s+)?(description|summary|overview|details)$/i.test(title)) return null
+    if (/\b(program|programme|fellowship|cohort|bootcamp)\b/i.test(title)) return null
+    if (!title || /[.!?:]$/.test(title) || /^(at|about|join|we|our)\b/i.test(title) || title.split(/\s+/).length > 8) continue
+    const rest = lines.slice(at + 1).join('\n')
+    if (mentionsTitle(rest, coreTitle(title)) && !namesEmployer(rest, title)) return title
+  }
+  return null
 }
 
-export function checkResumeText(resume: string, posting: string): ResumeChecks {
+// Many pasted postings open with the employer's name, which the posting then repeats (#296).
+function namesEmployer(text: string, name: string) {
+  const n = name.split(/\s+/).map(escapeRe).join('\\s+')
+  return new RegExp(`\\b(about|at|join)\\s+${n}\\b|${n}\\s+(is\\s+(an?\\s+equal|hiring|proud)|offers|provides)\\b`, 'i').test(text)
+}
+
+export function checkResumeText(resume: string, posting: string, known?: string): ResumeChecks {
   const bullets = resumeBullets(resume)
-  const title = postingTitle(posting)
+  const title = known || postingTitle(posting)
   return {
     bullets: { total: bullets.length, withoutNumber: bullets.filter((b) => !hasNumber(b)) },
     title: title ? { posting: title, core: coreTitle(title), onResume: mentionsTitle(resume, coreTitle(title)) } : null,

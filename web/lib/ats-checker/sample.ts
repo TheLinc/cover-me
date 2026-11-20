@@ -1,4 +1,4 @@
-import type { AiKeyword } from './ai'
+import type { AiReport } from './ai'
 
 export const SAMPLE_POSTING = `Marketing Manager
 
@@ -54,110 +54,132 @@ B.A. Communications, University of Illinois Chicago, 2013 - 2017
 Skills
 SEO, Campaign strategy, Google Analytics, Budget management, Team leadership, A/B testing, Copywriting, Salesforce`
 
-export const SAMPLE_AI: AiKeyword[] = [
-  {
-    name: "SEO and content marketing",
-    level: "required",
-    posting_text: "SEO and content marketing",
-    resume_text: "rebuilding the SEO plan and site content",
-    found: true
+export const SAMPLE_AI: AiReport = {
+  "score": 93,
+  "gaps": [
+    "Tableau or Looker",
+    "agency management",
+    "SaaS company experience"
+  ],
+  "keywordMatch": {
+    "tier1Covered": [
+      "SEO",
+      "content marketing",
+      "Google Analytics",
+      "A/B testing",
+      "HubSpot or Salesforce",
+      "B2B demand generation"
+    ],
+    "tier1Missing": [],
+    "tier2Covered": [
+      "paid search",
+      "email marketing",
+      "events marketing",
+      "team management",
+      "budget management",
+      "campaign planning",
+      "leadership reporting",
+      "copywriting",
+      "bachelor's degree"
+    ],
+    "tier2Missing": [
+      "Tableau or Looker",
+      "agency management",
+      "SaaS company experience"
+    ],
+    "gatingGaps": []
   },
-  {
-    name: "Google Analytics",
-    level: "required",
-    posting_text: "Google Analytics",
-    resume_text: "Built Google Analytics dashboards",
-    found: true
-  },
-  {
-    name: "A/B testing",
-    level: "required",
-    posting_text: "A/B testing",
-    resume_text: "Ran 40+ A/B tests",
-    found: true
-  },
-  {
-    name: "HubSpot or Salesforce",
-    level: "required",
-    posting_text: "HubSpot or Salesforce",
-    resume_text: "Salesforce",
-    found: true
-  },
-  {
-    name: "copywriting",
-    level: "required",
-    posting_text: "copywriting",
-    resume_text: "Copywriting",
-    found: true
-  },
-  {
-    name: "Bachelor's degree",
-    level: "required",
-    posting_text: "Bachelor's degree in marketing, communications or a related field",
-    resume_text: "B.A. Communications",
-    found: true
-  },
-  {
-    name: "paid search",
-    level: "required",
-    posting_text: "paid search",
-    resume_text: "paid search",
-    found: true
-  },
-  {
-    name: "Plan and run campaigns",
-    level: "required",
-    posting_text: "Plan and run campaigns",
-    resume_text: "Run campaign strategy",
-    found: true
-  },
-  {
-    name: "marketing budget",
-    level: "required",
-    posting_text: "Own the marketing budget",
-    resume_text: "manage a $1.2M annual budget",
-    found: true
-  },
-  {
-    name: "report results to leadership",
-    level: "required",
-    posting_text: "report results to leadership",
-    resume_text: "Kept leadership up to date on campaign results",
-    found: true
-  },
-  {
-    name: "Manage two agency partners",
-    level: "required",
-    posting_text: "Manage two agency partners",
-    resume_text: "",
-    found: false
-  },
-  {
-    name: "Manage a team of four",
-    level: "required",
-    posting_text: "a team of four",
-    resume_text: "lead a team of four",
-    found: true
-  },
-  {
-    name: "demand generation",
-    level: "required",
-    posting_text: "B2B demand generation programs",
-    resume_text: "lifted demo requests 22%",
-    found: true
-  },
-  {
-    name: "Email marketing",
-    level: "preferred",
-    posting_text: "Email marketing in a SaaS company",
-    resume_text: "client email programs reaching 150,000 subscribers",
-    found: true
-  },
-  {
-    name: "Tableau or Looker",
-    level: "preferred",
-    posting_text: "Tableau or Looker",
-    resume_text: "",
-    found: false
-  }
-]
+  "quotes": [
+    {
+      "name": "SEO",
+      "posting_text": "SEO",
+      "resume_text": "rebuilding the SEO plan"
+    },
+    {
+      "name": "content marketing",
+      "posting_text": "content marketing",
+      "resume_text": "rebuilding the SEO plan and site content"
+    },
+    {
+      "name": "Google Analytics",
+      "posting_text": "Google Analytics",
+      "resume_text": "Built Google Analytics dashboards"
+    },
+    {
+      "name": "A/B testing",
+      "posting_text": "A/B testing",
+      "resume_text": "Ran 40+ A/B tests"
+    },
+    {
+      "name": "HubSpot or Salesforce",
+      "posting_text": "HubSpot or Salesforce",
+      "resume_text": "Salesforce"
+    },
+    {
+      "name": "B2B demand generation",
+      "posting_text": "B2B demand generation programs",
+      "resume_text": "lifted demo requests 22%"
+    },
+    {
+      "name": "paid search",
+      "posting_text": "paid search",
+      "resume_text": "paid search"
+    },
+    {
+      "name": "email marketing",
+      "posting_text": "Email marketing",
+      "resume_text": "client email programs reaching 150,000 subscribers"
+    },
+    {
+      "name": "events marketing",
+      "posting_text": "events",
+      "resume_text": "trade show events"
+    },
+    {
+      "name": "Tableau or Looker",
+      "posting_text": "Tableau or Looker",
+      "resume_text": ""
+    },
+    {
+      "name": "agency management",
+      "posting_text": "Manage two agency partners",
+      "resume_text": ""
+    },
+    {
+      "name": "team management",
+      "posting_text": "a team of four",
+      "resume_text": "lead a team of four"
+    },
+    {
+      "name": "budget management",
+      "posting_text": "Own the marketing budget",
+      "resume_text": "manage a $1.2M annual budget"
+    },
+    {
+      "name": "campaign planning",
+      "posting_text": "Plan and run campaigns",
+      "resume_text": "Run campaign strategy"
+    },
+    {
+      "name": "leadership reporting",
+      "posting_text": "report results to leadership",
+      "resume_text": "Kept leadership up to date on campaign results"
+    },
+    {
+      "name": "copywriting",
+      "posting_text": "copywriting",
+      "resume_text": "Copywriting"
+    },
+    {
+      "name": "SaaS company experience",
+      "posting_text": "SaaS company",
+      "resume_text": ""
+    },
+    {
+      "name": "bachelor's degree",
+      "posting_text": "Bachelor's degree in marketing, communications or a related field",
+      "resume_text": "B.A. Communications"
+    }
+  ],
+  "title": "Marketing Manager"
+}
