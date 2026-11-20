@@ -1,5 +1,4 @@
-// Usage: pnpm test:functions [vitest args], e.g. pnpm test:functions tailor. It stops
-// any running `pnpm functions:serve`; restart it afterwards (https://github.com/TheLinc/cover-me/commit/f2256d02).
+// Stops any running `pnpm functions:serve`; restart it afterwards (https://github.com/TheLinc/cover-me/commit/f2256d02).
 
 import { spawnSync } from 'node:child_process'
 import { randomBytes } from 'node:crypto'
@@ -8,8 +7,7 @@ import { createServer } from 'node:net'
 import { join } from 'node:path'
 import { BACKEND, killTree, localStatus, publishableKey, serviceKey, supabaseAsync } from './lib.mjs'
 
-// A fixed port breaks when Windows reserves its range for Hyper-V/WSL, which
-// can change on reboot (https://github.com/TheLinc/cover-me/commit/766833f9).
+// Windows can reserve a fixed port's range for Hyper-V/WSL on reboot (https://github.com/TheLinc/cover-me/commit/766833f9).
 async function freePort() {
   const srv = createServer()
   await new Promise((resolve) => srv.listen(0, '0.0.0.0', resolve))
@@ -24,8 +22,7 @@ const status = localStatus()
 const ENCRYPTION_KEY = randomBytes(32).toString('hex')
 const NUDGE_SECRET = randomBytes(32).toString('hex')
 const EMAIL_TOKEN_SECRET = randomBytes(32).toString('hex')
-// The first-month offer's coupon (#213), also given to vitest. Run
-// `STRIPE_FIRST_MONTH_COUPON_ID= pnpm test:functions` to test with it unset.
+// `STRIPE_FIRST_MONTH_COUPON_ID= pnpm test:functions` tests with the coupon unset (#213).
 const FIRST_MONTH_COUPON = process.env.STRIPE_FIRST_MONTH_COUPON_ID ?? 'coupon_mock_first_month'
 const envFile = join(BACKEND, 'supabase', 'functions', '.env.test')
 writeFileSync(envFile, [
@@ -63,11 +60,8 @@ serve.stderr.on('data', (d) => (serveLog += d))
 const cleanup = () => killTree(serve)
 process.on('SIGINT', () => { cleanup(); process.exit(130) })
 
-// Ready when every function itself answers: the gateway accepts the legacy
-// anon JWT, then the function rejects it as a user token with its own JSON
-// body. Warming all of them here keeps cold starts (slow after a volume wipe,
-// when the runtime re-downloads npm deps) out of the first test that calls each
-// (https://github.com/TheLinc/cover-me/commit/766833f9).
+// A function's own JSON rejecting the anon JWT means it's up. Warming each here keeps
+// cold starts out of the first test that calls it (https://github.com/TheLinc/cover-me/commit/766833f9).
 const FUNCTIONS = ['resume', 'generate', 'tailor', 'letters', 'applications', 'billing', 'email-preferences', 'nudge', 'support']
 
 async function waitForFunctions(timeoutMs = 180_000) {
@@ -119,10 +113,7 @@ const vitest = spawnSync(
 
 if (vitest.status !== 0 && process.env.SHOW_FUNCTION_LOGS !== '0') {
   console.log('\n── supabase functions serve output ──\n' + serveLog.slice(-8000))
-  // The serve output can stop after the warm-up (#79), so print the containers'
-  // own logs too: the gateway's access log and the runtime's per-request lines
-  // and worker shutdown reasons. Before cleanup, which removes the runtime.
-  // From vitest's start, so the hung request is in them wherever its file ran.
+  // The serve output can stop after the warm-up (#79). Read before cleanup removes the runtime.
   for (const name of ['kong', 'edge_runtime']) {
     console.log(`\n── docker logs supabase_${name}_cover-me since vitest started ──`)
     spawnSync('docker', ['logs', '--timestamps', '--since', vitestStart, `supabase_${name}_cover-me`], { stdio: 'inherit' })

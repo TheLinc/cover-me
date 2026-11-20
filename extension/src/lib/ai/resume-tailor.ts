@@ -8,8 +8,7 @@ import { KEYWORD_JUDGING, KEYWORD_TIERS } from './keyword-rules'
 import { callOpenAI, OPENAI_MODEL } from './openai'
 
 
-// Key order matters: tailor-progress.ts derives the live progress label from which
-// key the model is emitting: https://github.com/TheLinc/cover-me/commit/d7700ca5cc272c75785b90971b63a366f3d35016
+// Key order matters: tailor-progress.ts reads the progress label from the key being streamed: https://github.com/TheLinc/cover-me/commit/d7700ca5cc272c75785b90971b63a366f3d35016
 function buildTailorSchema(parsed: ParsedResume): string {
   const delta: Record<string, unknown> = {
     summary: 'string — 2-3 sentence professional summary, no first-person pronouns; "" when STEP 4 says skip',
@@ -34,11 +33,7 @@ function buildTailorSchema(parsed: ParsedResume): string {
   return JSON.stringify(delta, null, 2)
 }
 
-// The editing base for revision mode — strip the derived score fields so the
-// model edits resume content, not stale numbers (STEP 9 is recomputed fresh).
-// An edited resume's fields from the editor tab go too: the old gaps, the
-// section order (layout, not wording), and deleted sections, so the model
-// doesn't put their text back (#197).
+// Otherwise the model edits stale scores and puts deleted sections back (#197).
 function stripScores(r: TailoredResume): Omit<TailoredResume, 'atsScore' | 'atsScoreBefore' | 'atsGaps' | 'atsGapsBeforeEdits' | 'editedAt' | 'hasEdits' | 'sectionOrder' | 'deletedSections'> {
   const { atsScore: _s, atsScoreBefore: _sb, atsGaps: _g, atsGapsBeforeEdits: _b, editedAt: _e, hasEdits: _h, sectionOrder: _o, deletedSections: _d, ...rest } = r
   return rest
@@ -100,8 +95,7 @@ function topLevelObjects(text: string): string[] {
   return out
 }
 
-// A missing, empty or (with exactBulletCounts) wrong-length bullets array keeps the
-// original bullets, so bad output leaves bullets untailored, never a broken resume: https://github.com/TheLinc/cover-me/commit/30cd16dbed180782529d87cec6a47ec67f76a7b8
+// Bad bullet output keeps the original bullets, never a broken resume: https://github.com/TheLinc/cover-me/commit/30cd16dbed180782529d87cec6a47ec67f76a7b8
 export function mergeTailorDelta<T extends {
   experience: Array<{ bullets: string[] }>
   projects?: Array<{ bullets: string[] }>
@@ -291,8 +285,7 @@ export function isValidResume(r: unknown): r is TailoredResume {
     Array.isArray(resume.experience)
 }
 
-// Shared by tailorResume and the eval harness so evals exercise exactly the
-// production path: https://github.com/TheLinc/cover-me/commit/d7700ca5cc272c75785b90971b63a366f3d35016
+// The eval harness calls this too, so evals run the production path: https://github.com/TheLinc/cover-me/commit/d7700ca5cc272c75785b90971b63a366f3d35016
 export async function assembleTailored(
   parsed: ParsedResume,
   raw: string,
@@ -300,8 +293,7 @@ export async function assembleTailored(
   onRemoved?: (terms: string[]) => void,
 ): Promise<TailoredResume> {
   const delta = parseDelta(raw)
-  // Regenerate from a version holding the user's edits (#171): their text is
-  // trusted like the note, and their version is the base everything checks against.
+  // The user's edited version (#171) is trusted like the note and is the base checks run against.
   const notes = trustedNotes(grounding.supplemental, grounding.previous)
   const base = seenVersion(parsed, grounding.previous)
   const candidate = candidateText(parsed, notes)
@@ -324,9 +316,7 @@ ${grounding.jobDescription}`)
     const { score, gaps } = scoreFromMatch(km, { jobDescription: grounding.jobDescription, candidate })
     resume.atsScore = score
     resume.atsGaps = gaps
-    // The upload, not the notes: an ATS sees only the resume (#228). Nor the
-    // gap list (it names the missing keywords) or the sections deleted in the
-    // editor: the PDF prints neither.
+    // An ATS sees only the uploaded resume (#228), not the notes; the PDF prints no gaps or deleted sections.
     resume.atsScoreBefore = scoreBefore(km, score, candidateText(parsed), candidateText({ ...resume, atsGaps: undefined, deletedSections: undefined }), grounding.jobDescription)
   }
   if (buildsOnEdits(grounding.previous)) resume.hasEdits = true
@@ -345,8 +335,7 @@ export async function tailorResume(
   previous?: TailoredResume,
   onProgress?: (label: string) => void,
 ): Promise<TailoredResume> {
-  // linksKept only marks the stored parse as current (#238): the model and
-  // the tailored resume don't need it.
+  // linksKept only marks the stored parse as current (#238).
   const { linksKept: _k, ...parsed } = stored
   const prompt = buildPrompt(job, parsed, compact, supplemental, trim, includeSummary, previous)
 
@@ -372,8 +361,7 @@ export async function tailorResume(
 
   let raw: string
   if (provider === 'claude') {
-    // Sonnet for tailoring: the small models compress or merge bullets.
-    // https://github.com/TheLinc/cover-me/commit/9f4ea308d03f2c9ca2a38a38b6e1aeb9b0305051
+    // Smaller models compress or merge bullets: https://github.com/TheLinc/cover-me/commit/9f4ea308d03f2c9ca2a38a38b6e1aeb9b0305051
     raw = await streamSonnet([{ role: 'user', content: prompt }], apiKey, onText, onProgress && onThinking)
   } else {
     raw = await callOpenAI([{ role: 'user', content: prompt }], apiKey, onText)
@@ -384,8 +372,7 @@ export async function tailorResume(
     void debugLog('Tailor — grounding guard removed', removed))
 }
 
-// Sonnet, not Haiku: 38/38 vs 29/38 on hand-labeled skill pairs (extension/eval/claim-pairs.ts).
-// https://github.com/TheLinc/cover-me/commit/0e9a09cd3d4d9fc3b7cebb190aed7c4307954676
+// Sonnet, not Haiku: 38/38 vs 29/38 on extension/eval/claim-pairs.ts (https://github.com/TheLinc/cover-me/commit/0e9a09cd3d4d9fc3b7cebb190aed7c4307954676).
 function checkModel(provider: AIProvider, apiKey: string): AskModel {
   return async (prompt) => {
     if (provider === 'claude') return streamSonnet([{ role: 'user', content: prompt }], apiKey)

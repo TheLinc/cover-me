@@ -50,8 +50,7 @@ write(fnPath, [
 ])
 if (!anthropicKey) console.warn('  ANTHROPIC_API_KEY is empty: add one to use generate/tailor from the extension.')
 
-// Accept the spellings the Supabase CLI's parser treats as on: quotes, a trailing
-// comment, TRUE or 1 (#16).
+// The Supabase CLI's parser treats quotes, a trailing comment, TRUE and 1 as on (#16).
 const googleOn = (readEnv(join(BACKEND, '.env')).SUPABASE_AUTH_EXTERNAL_GOOGLE_ENABLED ?? '')
   .replace(/\s+#.*$/, '').trim().replace(/^(["'])(.*)\1$/, '$2').toLowerCase()
 const google = googleOn === 'true' || googleOn === '1' ? '1' : ''

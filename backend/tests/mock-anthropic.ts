@@ -1,26 +1,3 @@
-// Stand-in for api.anthropic.com during function tests. The served functions
-// reach it through ANTHROPIC_BASE_URL (http://host.docker.internal:<port>).
-//
-// Routes:
-//   POST /v1/messages          canned reply picked by request shape (see reply())
-//   POST /__mock/fail-next     { status, body? } → the next /v1/messages call fails
-//   POST /__mock/delay-next    { ms } → the next /v1/messages call answers after ms
-//   POST /__mock/stream-pause  { ms } → the next streaming reply pauses ms after its first text delta
-//   POST /__mock/drop-next-stream     → the next streaming request has its connection cut, no response
-//   GET  /__mock/requests      every /v1/messages body received since the last reset
-//   POST /__mock/reset         clears recorded requests and queued failures
-//   POST /v1/customers, /v1/subscriptions, /v1/checkout/sessions, /v1/billing_portal/sessions
-//   GET  /v1/subscriptions, /v1/coupons/:id   Stripe stand-ins (billing function, via STRIPE_API_BASE)
-//   DELETE /v1/customers/:id   Stripe stand-in (account function)
-//   GET  /__mock/stripe        every Stripe call received since the last reset
-//   POST /emails               Resend stand-in (nudge function, via RESEND_API_BASE)
-//   GET  /__mock/emails        every email sent since the last reset
-//   POST /__mock/email-fail-next { status } → the next POST /emails fails
-//   POST /__mock/email-drop-next       → the next POST /emails has its connection cut
-//   POST /i/v0/e/              PostHog stand-in (tailor's tailor_run event, via POSTHOG_HOST)
-//   GET  /__mock/posthog       every PostHog event received since the last reset
-//   POST /turnstile/v0/siteverify  Turnstile stand-in (ats-check, via TURNSTILE_VERIFY_URL): passes only MOCK_TURNSTILE_TOKEN; MOCK_TURNSTILE_LOGIN_TOKEN passes for another action, MOCK_TURNSTILE_ELSEWHERE_TOKEN for another site
-
 import { createServer, type IncomingMessage, type Server } from 'node:http'
 
 export const MOCK_LETTER = `Dear Acme Team,
@@ -42,7 +19,6 @@ export const MOCK_TURNSTILE_TOKEN = 'XXXX.DUMMY.TOKEN.XXXX'
 export const MOCK_TURNSTILE_LOGIN_TOKEN = 'XXXX.DUMMY.TOKEN.LOGIN'
 export const MOCK_TURNSTILE_ELSEWHERE_TOKEN = 'XXXX.DUMMY.TOKEN.ELSEWHERE'
 
-// The ATS checker's reply (#278), whatever the posting and resume.
 export const MOCK_ATS_REPORT = {
   keywords: [
     { name: 'SQL', tier: 1, posting_text: 'SQL', resume_text: 'SQL', covered: true },
@@ -80,9 +56,7 @@ export const MOCK_PARSED_RESUME = {
   ],
   skills: 'TypeScript, Postgres, React',
   otherSections: [{ heading: 'Volunteer Work', lines: ['Mentor, Code Club (2019 – 2021)'] }],
-  // The model's order, wrong the way Haiku's often is (its JSON's order). The
-  // text has Volunteer Work between Experience and Education, and the order
-  // comes from the text (#165).
+  // Wrong the way Haiku's often is: the order must come from the text (#165).
   sectionOrder: ['experience', 'education', 'skills', 'other'],
 }
 
@@ -167,8 +141,7 @@ function messageJson(text: string, model = 'mock') {
 
 export const MOCK_THINKING = ['**Matching the posting**\n\nThe posting asks for Kafka.', ' The resume has data pipelines.']
 
-// Several text deltas, so the tailor function's NDJSON relay has more than one
-// fragment to forward. Summarized thinking comes first, as the real API sends it
+// Several deltas so the NDJSON relay forwards more than one; thinking comes first, as the real API sends it
 // (https://github.com/TheLinc/cover-me/commit/f2256d02).
 function sseBody(text: string, summarized = false): string {
   const chunks = text.match(/[\s\S]{1,80}/g) ?? []
@@ -269,8 +242,7 @@ export function startMockAnthropic(port: number): Promise<Server> {
         res.writeHead(200, { 'content-type': 'application/json' })
         return res.end(messageJson(JSON.stringify({ verdicts }), body.model))
       }
-      // "4 hours to 40 minutes" is the tailor output's invented metric: it isn't in
-      // the resume (https://github.com/TheLinc/cover-me/commit/48b89133).
+      // "4 hours to 40 minutes" is the tailor output's invented metric (https://github.com/TheLinc/cover-me/commit/48b89133).
       if (prompt.startsWith('RESUME ACCURACY CHECK')) {
         const id = /\[(e\d+b\d+)\][^\n]*4 hours to 40 minutes/.exec(prompt)?.[1]
         const flags = id ? [{ id, reason: 'invented run-time numbers' }] : []

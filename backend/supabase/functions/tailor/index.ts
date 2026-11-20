@@ -73,8 +73,7 @@ function topLevelObjects(text: string): string[] {
   return out
 }
 
-// A missing, empty or (with exactBulletCounts) wrong-length bullets array keeps the
-// original bullets, so bad output leaves bullets untailored, never a broken resume: https://github.com/TheLinc/cover-me/commit/30cd16dbed180782529d87cec6a47ec67f76a7b8
+// Bad bullet output keeps the original bullets, never a broken resume: https://github.com/TheLinc/cover-me/commit/30cd16dbed180782529d87cec6a47ec67f76a7b8
 export function mergeTailorDelta<T extends {
   experience: Array<{ bullets: string[] }>
   projects?: Array<{ bullets: string[] }>
@@ -101,8 +100,7 @@ export function mergeTailorDelta<T extends {
 
 interface JobPayload { title: string; company: string; description: string }
 
-// Sonnet, not Haiku: 38/38 vs 29/38 on hand-labeled skill pairs (extension/eval/claim-pairs.ts).
-// https://github.com/TheLinc/cover-me/commit/0e9a09cd3d4d9fc3b7cebb190aed7c4307954676
+// Sonnet, not Haiku: 38/38 vs 29/38 on extension/eval/claim-pairs.ts (https://github.com/TheLinc/cover-me/commit/0e9a09cd3d4d9fc3b7cebb190aed7c4307954676).
 async function askChecker(prompt: string): Promise<string> {
   const res = await fetch(ANTHROPIC_MESSAGES_URL, {
     method: 'POST',
@@ -143,9 +141,7 @@ function buildTailorSchema(parsed: ParsedResume): string {
   return JSON.stringify(delta, null, 2)
 }
 
-// An edited resume's fields from the extension's editor tab go too: the old
-// gaps, the section order (layout, not wording), and deleted sections, so the
-// model doesn't put their text back (#197).
+// Otherwise the model edits stale scores and puts deleted sections back (#197).
 function stripScores(r: Record<string, unknown>): Record<string, unknown> {
   const { atsScore: _s, atsScoreBefore: _sb, atsGaps: _g, atsGapsBeforeEdits: _b, editedAt: _e, hasEdits: _h, sectionOrder: _o, deletedSections: _d, ...rest } = r
   return rest
@@ -346,8 +342,6 @@ Deno.serve(async (req) => {
   let includeSummary = true
   let previous: Record<string, unknown> | undefined
   let localId: string | undefined
-  // "Your design" (#131): which layout the extension will put this in, for
-  // the usage count, and the hash of the user's Word file it's tailored in.
   let layout: 'yours' | 'cover-me' = 'cover-me'
   let fellBack = false
   let sourceHash: string | undefined
@@ -359,7 +353,7 @@ Deno.serve(async (req) => {
     trim = !!body.trim
     includeSummary = body.includeSummary !== false
     previous = body.previous && typeof body.previous === 'object' ? body.previous : undefined
-    // Which file a result came from isn't resume content for the model to revise (#131).
+    // Not resume content for the model to revise (#131).
     if (previous) {
       const { sourceHash: _h, designFellBack: _f, ...rest } = previous
       previous = rest
@@ -376,8 +370,7 @@ Deno.serve(async (req) => {
     return json({ error: 'Missing job title or description' }, 400)
   }
 
-  // Charged only once the request is valid, so a bad request never costs a generation.
-  // https://github.com/TheLinc/cover-me/commit/fd2604ac6168a5d6dac44232e2fd5c377d004395
+  // Charged after validation so a bad request never costs a generation: https://github.com/TheLinc/cover-me/commit/fd2604ac6168a5d6dac44232e2fd5c377d004395
   const today = new Date().toISOString().split('T')[0]
   const consumed = await consumeGeneration(supabase, userId)
   if (!consumed.ok) return json(consumed.body, consumed.status)
@@ -390,8 +383,7 @@ Deno.serve(async (req) => {
     if (error) console.error('Rate limit refund RPC error:', error.message)
   }
 
-  // Logs PII (resume + prompt): enable only for local/staging.
-  // https://github.com/TheLinc/cover-me/commit/9f4ea308d03f2c9ca2a38a38b6e1aeb9b0305051
+  // Logs the resume and prompt, so local/staging only: https://github.com/TheLinc/cover-me/commit/9f4ea308d03f2c9ca2a38a38b6e1aeb9b0305051
   const DEBUG = Deno.env.get('DEBUG_MODE') === 'true'
 
   let structuredResume!: ParsedResume
@@ -400,13 +392,8 @@ Deno.serve(async (req) => {
   // Streaming clients run this inside the stream: an uncached parse can take 31 s and Chrome
   // stops a service worker after 30 s of silence. https://github.com/TheLinc/cover-me/commit/097eb05bc5bbb157c7e8730f6f305e5fa73bb889
   const prepare = async (): Promise<{ error: string; status: number } | null> => {
-    // Structured resume: read the cached copy, or parse the raw text once
-    // (Haiku, verbatim extraction) and cache it encrypted for future tailors.
-    // resume/index.ts clears the cache when the text changes and usually parses
-    // it ahead in the background, so this parse is the fallback. A cached copy
-    // without otherSections (#54), sectionOrder (#165) or linksKept (#238)
-    // predates them and is parsed again once (upgradedParse keeps the order
-    // the user chose).
+    // resume/index.ts usually parses ahead, so this is the fallback. A cache without
+    // otherSections (#54), sectionOrder (#165) or linksKept (#238) is parsed again once.
     let cached: ParsedResume | null = null
     if (resumeRow.structured_encrypted) {
       try {
@@ -428,16 +415,14 @@ Deno.serve(async (req) => {
       try {
         structured = upgradedParse(cached, await parseResumeStructure(resumeText, ANTHROPIC_API_KEY))
       } catch {
-        // One without the order (#165) still tailors, in the standard order,
-        // and one from before the link fix (#238) as it was.
+        // A cache from before #165 or #238 still tailors.
         if (!Array.isArray(cached?.otherSections)) {
           await refund()
           return { error: 'Could not process your resume. Please try again.', status: 502 }
         }
         structured = cached
       }
-      // Cache best-effort: a failed write just means a re-parse next time.
-      // https://github.com/TheLinc/cover-me/commit/d7700ca5cc272c75785b90971b63a366f3d35016
+      // Best-effort: a failed write means a re-parse next time (https://github.com/TheLinc/cover-me/commit/d7700ca5cc272c75785b90971b63a366f3d35016).
       try {
         const structured_encrypted = await encrypt(JSON.stringify(structured))
         // Only if the resume text wasn't replaced meanwhile: https://github.com/TheLinc/cover-me/commit/7684e73cf9a3cced3d7fa9072d4e263d9771590c
@@ -449,8 +434,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // linksKept only marks the stored parse as current (#238): the model and
-    // the tailored resume don't need it.
+    // linksKept only marks the stored parse as current (#238).
     const { linksKept: _k, ...input } = structured
     const prompt = buildPrompt(job, input, compact, supplemental, trim, includeSummary, previous)
 
@@ -472,12 +456,9 @@ Deno.serve(async (req) => {
           ...SONNET_BETA_HEADER,
         },
         body: JSON.stringify({
-          // Sonnet for tailoring: the small models compress or merge bullets.
-          // https://github.com/TheLinc/cover-me/commit/9f4ea308d03f2c9ca2a38a38b6e1aeb9b0305051
+          // Smaller models compress or merge bullets: https://github.com/TheLinc/cover-me/commit/9f4ea308d03f2c9ca2a38a38b6e1aeb9b0305051
           ...SONNET_FIELDS,
-          // Summarized thinking streams as thinking_delta, so the popup can show
-          // what the model is planning instead of a silent spinner (#91). Display
-          // only: the thinking and its cost are the same.
+          // Lets the popup show the model's plan instead of a spinner, at no extra cost (#91).
           thinking: { type: 'adaptive', display: 'summarized' },
           max_tokens: SONNET_MAX_TOKENS,
           stream: true,
@@ -485,8 +466,7 @@ Deno.serve(async (req) => {
         }),
       })
     } catch (err) {
-      // A dropped connection throws instead of returning a 5xx; refund it the same way.
-      // https://github.com/TheLinc/cover-me/commit/f8ea13f486e111d019e4c29819313c93255c7d68
+      // A dropped connection throws instead of returning a 5xx: https://github.com/TheLinc/cover-me/commit/f8ea13f486e111d019e4c29819313c93255c7d68
       console.error('Claude connection error:', err instanceof Error ? err.message : err)
       await refund()
       return { error: 'AI generation failed. Please try again.', status: 502 }
@@ -503,8 +483,7 @@ Deno.serve(async (req) => {
     return null
   }
 
-  // Thinking text can quote the resume: never log it.
-  // https://github.com/TheLinc/cover-me/commit/4d723e8424415890ecc6cec495bf0253801dca4f
+  // Thinking text can quote the resume, so never log it: https://github.com/TheLinc/cover-me/commit/4d723e8424415890ecc6cec495bf0253801dca4f
   const readUpstream = async (onDelta?: (text: string) => void, onThinking?: (text: string) => void): Promise<string> => {
     const reader = upstream.getReader()
     const decoder = new TextDecoder()
@@ -548,10 +527,7 @@ Deno.serve(async (req) => {
     if (DEBUG) console.log('[CoverMe debug] raw model response:\n', raw)
 
     const delta = parseDelta(raw)
-    // Keep only skills the resume backs, then strip job-posting requirements
-    // the model copied in (see _shared/resume-grounding.ts).
-    // Regenerate from a version holding the user's edits (#171): their text is
-    // trusted like the note, and their version is the base everything checks against.
+    // The user's edited version (#171) is trusted like the note and is the base checks run against.
     const notes = trustedNotes(supplemental, previous)
     const base = seenVersion(structuredResume, previous)
     const candidate = candidateText(structuredResume, notes)
@@ -574,9 +550,7 @@ ${job.description}`)
       atsGaps = computed.gaps
       resume.atsScore = atsScore
       resume.atsGaps = atsGaps
-      // The upload, not the notes: an ATS sees only the resume (#228). Nor the
-      // gap list (it names the missing keywords) or the sections deleted in the
-      // editor: the PDF prints neither.
+      // An ATS sees only the uploaded resume (#228), not the notes; the PDF prints no gaps or deleted sections.
       resume.atsScoreBefore = scoreBefore(delta.keywordMatch, atsScore, candidateText(structuredResume), candidateText({ ...resume, atsGaps: undefined, deletedSections: undefined }), job.description)
     }
     if (sourceHash) resume.sourceHash = sourceHash
@@ -584,8 +558,7 @@ ${job.description}`)
 
     EdgeRuntime.waitUntil(captureUsage(supabase, 'tailor_run', userId, { tier, compact, trim, includeSummary, layout, fellBack }))
 
-    // Saved under the extension's local ID (1.2.0 sends none), never overwriting a row, so a
-    // later upload of local history can't duplicate it: https://github.com/TheLinc/cover-me/commit/815c3d8699cc3279f2773f23ff2e817e2f29f1a6
+    // Saved under the extension's local ID (1.2.0 sends none) so a later history upload can't duplicate it: https://github.com/TheLinc/cover-me/commit/815c3d8699cc3279f2773f23ff2e817e2f29f1a6
     let jobAppId: string | undefined
     try {
       jobAppId = await findOrCreateJobApplication(supabase, userId, job)
@@ -604,8 +577,7 @@ ${job.description}`)
           source_hash: sourceHash ?? null,
         }
         const table = supabase.from('tailored_resumes')
-        // An upsert that hits an existing ID returns no row, so savedId stays empty.
-        // https://github.com/TheLinc/cover-me/commit/815c3d8699cc3279f2773f23ff2e817e2f29f1a6
+        // An upsert that hits an existing ID returns no row: https://github.com/TheLinc/cover-me/commit/815c3d8699cc3279f2773f23ff2e817e2f29f1a6
         const { data, error } = await (localId
           ? table.upsert({ ...row, id: localId }, { onConflict: 'id', ignoreDuplicates: true })
           : table.insert(row)
@@ -620,8 +592,7 @@ ${job.description}`)
     return { resume, savedId }
   }
 
-  // Extensions from before streaming expect plain JSON, and store updates roll out over days.
-  // https://github.com/TheLinc/cover-me/commit/d7700ca5cc272c75785b90971b63a366f3d35016
+  // Extensions from before streaming expect plain JSON; store updates take days: https://github.com/TheLinc/cover-me/commit/d7700ca5cc272c75785b90971b63a366f3d35016
   const wantsStream = (req.headers.get('accept') ?? '').includes('application/x-ndjson')
   if (!wantsStream) {
     try {
@@ -636,8 +607,7 @@ ${job.description}`)
     }
   }
 
-  // Streaming from the first token keeps the connection alive on slow generations.
-  // https://github.com/TheLinc/cover-me/commit/d7700ca5cc272c75785b90971b63a366f3d35016
+  // Streaming keeps the connection alive on slow generations: https://github.com/TheLinc/cover-me/commit/d7700ca5cc272c75785b90971b63a366f3d35016
   const encoder = new TextEncoder()
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
@@ -658,8 +628,7 @@ ${job.description}`)
           return
         }
         send({ type: 'start', roles: structuredResume.experience.length })
-        // 'thinking' is newer than the 1.3.1 store build, whose reader skips unknown event types.
-        // https://github.com/TheLinc/cover-me/commit/4d723e8424415890ecc6cec495bf0253801dca4f
+        // The 1.3.1 store build skips the newer 'thinking' event: https://github.com/TheLinc/cover-me/commit/4d723e8424415890ecc6cec495bf0253801dca4f
         const raw = await readUpstream((text) => send({ type: 'delta', text }), (text) => send({ type: 'thinking', text }))
         const { resume, savedId } = await assemble(raw)
         send({ type: 'done', resume, savedId })

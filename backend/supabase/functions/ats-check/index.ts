@@ -1,8 +1,5 @@
-// The website's free ATS checker (#278): POST { posting, resume, token } →
-// { score, gaps, keywordMatch, quotes, title }, scored like the extension's tailor.
-// No account, so verify_jwt is off in config.toml and calls are rate-limited per
-// IP. The posting and resume go to Anthropic on the checker's own key and are
-// never stored or logged, not even on failure (#278).
+// No account, so verify_jwt is off in config.toml and calls are rate-limited per IP.
+// The posting and resume are never stored or logged, not even on failure (#278).
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { ANTHROPIC_MESSAGES_URL } from '../_shared/anthropic.ts'
 import { handleCors, json } from '../_shared/cors.ts'
@@ -24,8 +21,7 @@ const TURNSTILE_ACTION = 'ats-check'
 
 const PER_MINUTE = 6
 const PER_DAY = 40
-// Across all IPs, so calls spread over many addresses still stop well short of
-// the checker key's spend limit (#278).
+// Across all IPs, so calls from many addresses still stop short of the key's spend limit (#278).
 const ALL_PER_MINUTE = 60
 const ALL_PER_DAY = 3000
 // Hashed like an IP key, so every row in the rate-limit table stays a 64-character hash (#278).

@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# Self-test for eval-side.sh. Run: bash scripts/eval-side.test.sh
 set -u
 cd "$(dirname "$0")"
 fail=0

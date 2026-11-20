@@ -1,5 +1,5 @@
-// The Deno functions can't import from the extension tree, so prompts live in two copies; the
-// backend tailor once shipped without the BYOK prompt-injection guard. https://github.com/TheLinc/cover-me/commit/46f809a1dc946cf6964c9e2ad9a400323d9bada5
+// The Deno functions can't import from the extension tree, and the backend tailor once shipped
+// without the BYOK prompt-injection guard: https://github.com/TheLinc/cover-me/commit/46f809a1dc946cf6964c9e2ad9a400323d9bada5
 
 import { readFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
@@ -36,8 +36,7 @@ const EXT_LINT = 'extension/src/lib/ai/letter-lint.ts'
 const BE_LINT = 'backend/supabase/functions/_shared/letter-lint.ts'
 
 const checks = [
-  // Both files use the same interpolation expressions, so the whole template can be compared.
-  // https://github.com/TheLinc/cover-me/commit/46f809a1dc946cf6964c9e2ad9a400323d9bada5
+  // Both copies use the same interpolations, so the whole template compares: https://github.com/TheLinc/cover-me/commit/46f809a1dc946cf6964c9e2ad9a400323d9bada5
   {
     name: 'letter prompt template',
     a: EXT_LETTER,
@@ -59,8 +58,7 @@ const checks = [
     start: 'SUPPLEMENTAL CANDIDATE CONTEXT (verified by the candidate — real experience, a referral',
     end: 'a claim it does not actually support.',
   },
-  // Compared section by section so file-level differences (types, imports) don't trip it.
-  // https://github.com/TheLinc/cover-me/commit/d7700ca5cc272c75785b90971b63a366f3d35016
+  // By section, so types and imports can differ: https://github.com/TheLinc/cover-me/commit/d7700ca5cc272c75785b90971b63a366f3d35016
   {
     name: 'tailor: delta output contract',
     a: EXT_TAILOR,
@@ -69,8 +67,7 @@ const checks = [
     end: 'preserved verbatim from the input automatically.',
   },
   {
-    // These helpers decide what the model can alter, so BYOK and hosted must match.
-    // https://github.com/TheLinc/cover-me/commit/d7700ca5cc272c75785b90971b63a366f3d35016
+    // These decide what the model can alter, so BYOK and hosted must match: https://github.com/TheLinc/cover-me/commit/d7700ca5cc272c75785b90971b63a366f3d35016
     name: 'tailor: delta parse + merge helpers',
     a: EXT_TAILOR,
     b: BE_TAILOR,
@@ -147,8 +144,7 @@ const checks = [
     start: 'SUPPLEMENTAL CANDIDATE CONTEXT (verified by the candidate',
     end: 'existing bullets of the entry it describes.',
   },
-  // The parse prompt runs client-side for BYOK and server-side for the hosted resume cache.
-  // https://github.com/TheLinc/cover-me/commit/d7700ca5cc272c75785b90971b63a366f3d35016
+  // Runs client-side for BYOK and server-side for the hosted resume cache: https://github.com/TheLinc/cover-me/commit/d7700ca5cc272c75785b90971b63a366f3d35016
   {
     name: 'resume parse prompt template',
     a: 'extension/src/lib/ai/resume-parse.ts',

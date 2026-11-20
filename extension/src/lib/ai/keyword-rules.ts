@@ -1,8 +1,5 @@
-// How a posting's keywords are picked and judged for the ATS score. The tailor
-// (extension and hosted) and the website's ATS checker use this same text, so
-// one resume and posting score the same everywhere (#278). Mirrored
-// byte-for-byte: extension/src/lib/ai/keyword-rules.ts ⇄
-// backend/supabase/functions/_shared/keyword-rules.ts, checked by scripts/check-prompt-sync.mjs.
+// Shared by the tailor and the website's ATS checker so a resume scores the same everywhere (#278).
+// Mirrored byte-for-byte: extension/src/lib/ai/keyword-rules.ts ⇄ backend/supabase/functions/_shared/keyword-rules.ts.
 
 export const KEYWORD_TIERS = `Pull the hard requirements from the JD and tier them:
 - TIER 1 — must-have (4–6): explicitly required, repeated, or foundational.
