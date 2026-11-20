@@ -11,7 +11,7 @@ const COLUMNS: { title: string; links: FooterLink[] }[] = [
       { label: 'How it works', href: '/#how-it-works' },
       { label: 'ATS score', href: '/#ats-score' },
       { label: 'Application questions', href: '/#answers' },
-      { label: 'ATS checker', href: '/ats-checker' },
+      { label: 'ATS resume checker', href: '/ats-checker' },
       { label: 'Pricing', href: '/#pricing' },
       { label: 'Install', href: storeUrl('footer'), external: true },
     ],

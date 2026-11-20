@@ -23,7 +23,7 @@ const jsonLd = [
   {
     '@context': 'https://schema.org',
     '@type': 'WebApplication',
-    name: 'Cover Me ATS keyword checker',
+    name: 'Free ATS resume checker',
     url: PAGE_URL,
     description: DESCRIPTION,
     applicationCategory: 'BusinessApplication',
@@ -47,7 +47,7 @@ const jsonLd = [
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: BASE },
-      { '@type': 'ListItem', position: 2, name: 'ATS checker', item: PAGE_URL },
+      { '@type': 'ListItem', position: 2, name: 'Free ATS resume checker', item: PAGE_URL },
     ],
   },
 ]
