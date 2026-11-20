@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, type ChangeEvent, type ClipboardEvent, type ReactNode } from 'react'
+import { flushSync } from 'react-dom'
 import { CheckIcon, DeviceMobileIcon, PencilSimpleIcon, UploadSimpleIcon, XIcon } from '@phosphor-icons/react/dist/ssr'
 import { ExtensionPopup } from '@/components/landing/ExtensionPopup'
 import { Badge } from '@/components/ui/badge'
@@ -61,6 +62,23 @@ function byAi(posting: string, resume: string, report: AiReport, pages: number |
 type Selected = { name: string; target: string; at: number }
 type Check = { posting: string; resume: string; result: Result | null }
 
+let morphing: ViewTransition | null = null
+
+function morph(update: () => void, then?: () => void) {
+  if (!document.startViewTransition || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    update()
+    if (then) requestAnimationFrame(then)
+    return
+  }
+  const root = document.documentElement
+  root.classList.add('ats-morph')
+  const t = (morphing = document.startViewTransition(() => flushSync(update)))
+  if (then) void t.updateCallbackDone.then(then)
+  void t.finished.finally(() => {
+    if (morphing === t) root.classList.remove('ats-morph')
+  })
+}
+
 const SAMPLE = byAi(SAMPLE_POSTING, SAMPLE_RESUME, SAMPLE_AI, 1)
 const SHARE_URL = `${BASE}/ats-checker?utm_source=share&utm_medium=phone&utm_campaign=ats-phone-send`
 
@@ -105,17 +123,19 @@ export function AtsChecker() {
       const token = botBox.current ? await botCheckToken(botBox.current) : null
       if (controller.signal.aborted) return
       const reply = await askAi(p, r, token, controller.signal)
-      setCheck({ posting: p, resume: r, result: 'error' in reply ? byWords(p, r, pages, reply.error) : byAi(p, r, reply, pages) })
+      const result = 'error' in reply ? byWords(p, r, pages, reply.error) : byAi(p, r, reply, pages)
+      morph(() => setCheck({ posting: p, resume: r, result }))
     } catch {
-      if (!controller.signal.aborted) setCheck({ posting: p, resume: r, result: byWords(p, r, pages, 'failed') })
+      if (!controller.signal.aborted) morph(() => setCheck({ posting: p, resume: r, result: byWords(p, r, pages, 'failed') }))
     }
   }
 
   function fold(p: string, r: string, pages: number | undefined, count = true) {
     if (!p.trim() || !r.trim()) return
-    if (count) void run(p, r, pages)
-    setFolded(true)
-    requestAnimationFrame(() => document.getElementById('results')?.focus())
+    morph(() => {
+      if (count) void run(p, r, pages)
+      setFolded(true)
+    }, () => document.getElementById('results')?.focus())
     if (count && p !== counted.current) {
       counted.current = p
       setChecks((n) => n + 1)
@@ -123,9 +143,10 @@ export function AtsChecker() {
   }
 
   function edit(which: 'posting' | 'resume') {
-    setFolded(false)
-    setInputTab(which)
-    requestAnimationFrame(() => (which === 'posting' ? postingBox : resumeBox).current?.focus())
+    morph(() => {
+      setFolded(false)
+      setInputTab(which)
+    }, () => (which === 'posting' ? postingBox : resumeBox).current?.focus())
   }
 
   function onType(which: 'posting' | 'resume', e: ChangeEvent<HTMLTextAreaElement>) {
@@ -204,6 +225,7 @@ export function AtsChecker() {
         </div>
       )}
 
+      <div className="[view-transition-name:ats-inputs]">
       {ready ? (
         <div className="grid gap-2 max-sm:gap-1.5 sm:grid-cols-2">
           <FoldedInput label="Posting" value={mine?.checks.title?.posting ?? postingTitle(posting) ?? posting.trim().split('\n')[0]} onEdit={() => edit('posting')} />
@@ -262,6 +284,7 @@ export function AtsChecker() {
           </div>
         </Tabs>
       )}
+      </div>
       {fileNote && (
         <p role="status" className={cn('-mt-2 text-[13px]', fileNote.error ? 'text-gap-ink' : 'text-ink-2', ready && 'max-sm:sr-only')}>{fileNote.text}</p>
       )}
@@ -281,13 +304,13 @@ export function AtsChecker() {
       )}
 
       {loading ? (
-        <section aria-live="polite" className="flex min-h-[240px] flex-col items-center justify-center gap-3 rounded-[22px] border border-line bg-panel p-6 text-center">
+        <section aria-live="polite" className="flex min-h-[240px] [view-transition-name:ats-results] flex-col items-center justify-center gap-3 rounded-[22px] border border-line bg-panel p-6 text-center">
           <span className="size-6 animate-spin rounded-full border-2 border-brand border-t-transparent" aria-hidden />
           <p className="text-[15px] font-semibold text-ink">Checking your resume against the posting</p>
           <p className="max-w-[420px] text-[13.5px] text-ink-2">Your resume and the posting go to Anthropic&apos;s AI to check them. We don&apos;t store them.</p>
         </section>
       ) : (
-      <section aria-labelledby="results" className="relative rounded-[22px] border border-line bg-panel p-4 sm:p-5">
+      <section aria-labelledby="results" className="relative rounded-[22px] [view-transition-name:ats-results] border border-line bg-panel p-4 sm:p-5">
         {result.fallback && (
           <div role="status" className="mb-4 flex flex-wrap items-center gap-3 rounded-[12px] border border-line bg-white px-3.5 py-2.5 text-[13.5px] text-body">
             <span className="flex-1">
@@ -378,7 +401,7 @@ function Summary({ result, sample }: { result: Result; sample: boolean }) {
               : `Skills the posting names on your resume: ${found} of ${pool.length}`}
       </h2>
       {scored ? (
-        <Progress value={result.score} aria-hidden className="h-2.5 border border-dashed border-gap bg-white [&>div]:bg-brand" />
+        <Progress value={result.score} aria-hidden className={cn('h-2.5 border border-dashed border-gap bg-white [&>div]:bg-brand', !sample && 'score-fill')} />
       ) : (
         pool.length > 0 && <Segments found={found} total={pool.length} />
       )}
@@ -457,7 +480,7 @@ const chipClass = 'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-
 
 function FoundChip({ k, on, onPick }: { k: Checked; on: boolean; onPick: (k: Checked) => void }) {
   return (
-    <button type="button" onClick={() => onPick(k)} className={cn(chipClass, 'bg-brand-tint text-brand-ink hover:ring-1 hover:ring-brand', on && 'ring-2 ring-brand')}>
+    <button type="button" onClick={() => onPick(k)} className={cn(chipClass, 'border border-brand/60 bg-white text-brand-ink hover:border-brand hover:bg-brand-tint', on && 'ring-2 ring-brand')}>
       <CheckIcon size={13} weight="bold" aria-hidden />
       {k.name}
       {k.via && <span className="text-[12.5px] opacity-75">or {k.via}</span>}

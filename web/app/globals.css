@@ -303,3 +303,25 @@ img, svg, video { display: block; }
 .guide-prose section > :is(p, ul, ol) a { color: var(--brand-strong); text-decoration: underline; text-decoration-color: rgba(79, 70, 229, 0.35); text-underline-offset: 3px; }
 .guide-prose > p a:hover,
 .guide-prose section > :is(p, ul, ol) a:hover { color: var(--brand-deep); text-decoration-color: currentColor; }
+
+/* ATS checker: the inputs fold up and the result grows down, cropped from the
+   top so text never stretches. The new state covers the old before the old fades,
+   and the rest of the page switches at once, so nothing shows through twice. The
+   score bar fills once the panel has grown (#278). Reduced motion skips the view
+   transition in AtsChecker.tsx. */
+html.ats-morph::view-transition-old(root) { display: none; }
+html.ats-morph::view-transition-new(root) { animation: none; }
+::view-transition-group(ats-inputs) { animation-duration: 450ms; animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1); }
+::view-transition-group(ats-results) { animation-duration: 650ms; animation-timing-function: cubic-bezier(0.25, 1, 0.5, 1); background: var(--panel); border-radius: 22px; }
+::view-transition-old(ats-inputs), ::view-transition-new(ats-inputs),
+::view-transition-old(ats-results), ::view-transition-new(ats-results) { height: 100%; object-fit: none; object-position: top; overflow: clip; mix-blend-mode: normal; }
+::view-transition-image-pair(ats-inputs), ::view-transition-image-pair(ats-results) { overflow: clip; }
+::view-transition-new(ats-inputs), ::view-transition-new(ats-results) { animation: ats-in 220ms ease-out both; }
+::view-transition-old(ats-inputs) { animation: ats-out 120ms ease-in both; }
+::view-transition-old(ats-results) { animation: ats-out 180ms 100ms ease-in both; }
+@keyframes ats-in { from { opacity: 0; } }
+@keyframes ats-out { to { opacity: 0; } }
+@keyframes score-fill { from { transform: translateX(-100%); } }
+@media (prefers-reduced-motion: no-preference) {
+  .score-fill > * { animation: score-fill 900ms 500ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+}
