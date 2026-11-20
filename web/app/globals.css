@@ -297,7 +297,7 @@ img, svg, video { display: block; }
 .guide-prose section > :is(p, ul, ol) a:hover { color: var(--brand-deep); text-decoration-color: currentColor; }
 
 /* ATS checker: crops from the top so text never stretches. The page switches at once and the new state
-   covers the old before it fades, so nothing shows twice. The score bar waits for the panel (#278). */
+   covers the old before it fades, so nothing shows twice (#278). */
 html.ats-morph::view-transition-old(root) { display: none; }
 html.ats-morph::view-transition-new(root) { animation: none; }
 ::view-transition-group(ats-inputs) { animation-duration: 450ms; animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1); }
@@ -310,7 +310,3 @@ html.ats-morph::view-transition-new(root) { animation: none; }
 ::view-transition-old(ats-results) { animation: ats-out 180ms 100ms ease-in both; }
 @keyframes ats-in { from { opacity: 0; } }
 @keyframes ats-out { to { opacity: 0; } }
-@keyframes score-fill { from { transform: translateX(-100%); } }
-@media (prefers-reduced-motion: no-preference) {
-  .score-fill > * { animation: score-fill 900ms 500ms cubic-bezier(0.16, 1, 0.3, 1) both; }
-}

@@ -89,7 +89,7 @@ export function AtsChecker() {
   const [fileNote, setFileNote] = useState<{ text: string; error?: boolean } | null>(null)
   const [folded, setFolded] = useState(false)
   const [inputTab, setInputTab] = useState('posting')
-  const [resultTab, setResultTab] = useState('keywords')
+  const [resultTab, setResultTab] = useState<string>('required')
   const [view, setView] = useState('resume')
   const [selected, setSelected] = useState<Selected | null>(null)
   const [checks, setChecks] = useState(0)
@@ -135,6 +135,7 @@ export function AtsChecker() {
     morph(() => {
       if (count) void run(p, r, pages)
       setFolded(true)
+      setResultTab('required')
     }, () => document.getElementById('results')?.focus())
     if (count && p !== counted.current) {
       counted.current = p
@@ -212,6 +213,12 @@ export function AtsChecker() {
   }
 
   const ready = !!check && folded
+  const tiers = GROUPS.map(({ level, title }) => {
+    const group = result.keywords.filter((k) => k.level === level)
+    return { level, title, group, total: group.length, missing: group.filter((k) => !k.found).length }
+  }).filter((t) => t.total)
+  const tabs: string[] = [...tiers.map((t) => t.level), 'resume']
+  const fixes = resumeFixes(result)
 
   return (
     <div className="flex flex-col gap-5">
@@ -328,35 +335,36 @@ export function AtsChecker() {
             A made-up posting and resume. Paste yours above to see your own result.
           </div>
         )}
-        <Tabs value={resultTab} onValueChange={setResultTab}>
-          <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
-            <div className="flex flex-col gap-4 max-lg:contents">
-              <Summary result={result} sample={!mine} />
-              <TabsList className="w-full lg:hidden">
-                <TabsTrigger value="keywords" className="flex-1">Keywords</TabsTrigger>
-                <TabsTrigger value="resume" className="flex-1">Your resume</TabsTrigger>
-              </TabsList>
-              <TabsContent forceMount tabIndex={-1} value="keywords" className="mt-0 flex flex-col gap-4 data-[state=inactive]:max-lg:hidden">
-                <Chips keywords={result.keywords} selected={selected?.name} onPick={pick} />
-                <Pitch result={result} checks={checks} />
-                {mine && (
-                  <Button variant="outline" size="sm" onClick={anotherPosting} className="self-start">Check another posting</Button>
-                )}
+        <div className="flex flex-col gap-4">
+          <Summary result={result} sample={!mine} />
+          <Tabs value={tabs.includes(resultTab) ? resultTab : tabs[0]} onValueChange={setResultTab}>
+            <TabsList className="grid h-auto w-full rounded-[14px] border border-line bg-white/50 p-1" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
+              {tiers.map(({ level, title, missing, total }) => (
+                <TabsTrigger key={level} value={level} className={TIER_TAB}>
+                  <span>{title}</span>
+                  <span className={cn('text-[12px] font-normal', missing ? 'text-gap-ink' : 'text-ink-2')}>{missing ? `${missing} missing` : `all ${total} found`}</span>
+                </TabsTrigger>
+              ))}
+              <TabsTrigger value="resume" className={TIER_TAB}>
+                <span>Your resume</span>
+                <span className="text-[12px] font-normal text-ink-2">{fixes.cards.length ? `${fixes.cards.length} to fix` : 'looks fine'}</span>
+              </TabsTrigger>
+            </TabsList>
+            {tiers.map(({ level, group }) => (
+              <TabsContent key={level} value={level} className="mt-3 rounded-[16px] border border-line bg-white p-4">
+                <Tier group={group} selected={selected?.name} onPick={pick} />
               </TabsContent>
-            </div>
-            <TabsContent forceMount tabIndex={-1} value="resume" className="mt-0 flex flex-col gap-4 data-[state=inactive]:max-lg:hidden">
-              <Viewer
-                view={view}
-                onView={setView}
-                resume={shown.resume}
-                posting={shown.posting}
-                result={result}
-                selected={selected}
-              />
-              <ResumeChecks result={result} />
+            ))}
+            <TabsContent value="resume" className="mt-3 grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+              <ResumeChecks result={result} fixes={fixes} />
+              <Viewer view={view} onView={setView} resume={shown.resume} posting={shown.posting} result={result} selected={selected} />
             </TabsContent>
-          </div>
-        </Tabs>
+          </Tabs>
+          <Pitch result={result} checks={checks} />
+          {mine && (
+            <Button variant="outline" size="sm" onClick={anotherPosting} className="self-start">Check another posting</Button>
+          )}
+        </div>
       </section>
       )}
     </div>
@@ -406,9 +414,21 @@ function headline(keywords: Checked[]) {
   return { must: must.length > 0, pool, found, missing: pool.length - found }
 }
 
+const TIER_TAB = 'flex-col gap-0.5 rounded-[10px] py-2 whitespace-normal text-ink-2 data-[state=active]:bg-white data-[state=active]:text-ink data-[state=active]:shadow-[0_1px_4px_rgba(30,27,75,0.14)]'
+
+// Must match the tier weights in scoreFromMatch, backend/supabase/functions/_shared/ats-score.ts (#278).
+const TIER_POINTS = [
+  { level: 'required', title: 'Must-haves', points: 70 },
+  { level: 'preferred', title: 'Nice to have', points: 30 },
+] as const
+
 function Summary({ result, sample }: { result: Result; sample: boolean }) {
   const { must, pool, found } = headline(result.keywords)
   const scored = result.score !== undefined && pool.length > 0
+  const bars = TIER_POINTS.map(({ level, title, points }) => {
+    const group = result.keywords.filter((k) => k.level === level)
+    return { level, title, points, total: group.length, found: group.filter((k) => k.found).length }
+  }).filter((b) => b.total)
   return (
     <div className="flex flex-col gap-2.5 rounded-[16px] border border-line bg-white p-4 shadow-[0_10px_30px_-18px_rgba(30,27,75,0.35)]">
       <h2 id="results" tabIndex={-1} aria-live="polite" className="text-[clamp(18px,2.2vw,26px)] leading-[1.15] text-ink outline-none">
@@ -420,8 +440,18 @@ function Summary({ result, sample }: { result: Result; sample: boolean }) {
               ? `Must-haves on your resume: ${found} of ${pool.length}`
               : `Skills the posting names on your resume: ${found} of ${pool.length}`}
       </h2>
-      {scored ? (
-        <Progress value={result.score} aria-hidden className={cn('h-2.5 border border-dashed border-gap bg-white [&>div]:bg-brand', !sample && 'score-fill')} />
+      {bars.length ? (
+        <div className="flex gap-x-5 gap-y-3 max-sm:flex-col">
+          {bars.map(({ level, title, points, found: f, total }) => (
+            <div key={level} style={{ flexGrow: scored ? points : total }} className="flex min-w-0 basis-0 flex-col gap-1.5">
+              <p className="text-[12.5px] text-ink-2">
+                {title}{scored && ` · ${points} points`}
+                <span className="sr-only">: {f} of {total} on your resume</span>
+              </p>
+              <Segments found={f} total={total} />
+            </div>
+          ))}
+        </div>
       ) : (
         pool.length > 0 && <Segments found={found} total={pool.length} />
       )}
@@ -457,38 +487,53 @@ function Segments({ found, total }: { found: number; total: number }) {
 
 const SHOWN = 15
 
-function Chips({ keywords, selected, onPick }: { keywords: Checked[]; selected?: string; onPick: (k: Checked) => void }) {
-  const [open, setOpen] = useState<Level[]>([])
-  const levels = GROUPS.filter(({ level }) => keywords.some((k) => k.level === level))
+function Tier({ group, selected, onPick }: { group: Checked[]; selected?: string; onPick: (k: Checked) => void }) {
+  const missing = group.filter((k) => !k.found)
+  const found = group.filter((k) => k.found)
   return (
-    <div className="flex flex-col gap-2.5">
-      {levels.map(({ level, title }, i) => {
-        const group = keywords.filter((k) => k.level === level)
-        const all = open.includes(level) || group.length <= SHOWN
-        return (
-          <details key={level} open={i === 0} className="accordion group rounded-[16px] border border-line bg-white px-4 py-3">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-[6px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
-              <h3 className="text-[14px] font-semibold text-ink">
-                {title} <span className="font-normal text-ink-2">({group.filter((k) => k.found).length} of {group.length})</span>
-              </h3>
-              <CaretDownIcon size={14} weight="bold" aria-hidden className="shrink-0 text-ink-2 transition-transform group-open:rotate-180" />
-            </summary>
-            <ul className="flex flex-wrap gap-1.5 pt-2.5">
-              {(all ? group : group.slice(0, SHOWN)).map((k) => (
-                <li key={k.name}>{k.found ? <FoundChip k={k} on={selected === k.name} onPick={onPick} /> : <MissingChip k={k} on={selected === k.name} onPick={onPick} />}</li>
-              ))}
-              {!all && (
-                <li>
-                  <button type="button" onClick={() => setOpen([...open, level])} className={cn(chipClass, 'border border-line bg-white text-ink-2 hover:text-ink')}>
-                    Show all {group.length}
-                  </button>
-                </li>
-              )}
-            </ul>
-          </details>
-        )
-      })}
+    <div className="flex flex-col gap-3">
+      {missing.length ? (
+        <>
+          <h3 className="text-[12px] font-semibold uppercase tracking-[0.05em] text-ink-2">Missing</h3>
+          <ChipList keywords={missing} selected={selected} onPick={onPick} />
+          <p className="text-[13px] text-ink-2">Pick one to see where the posting asks for it.</p>
+        </>
+      ) : (
+        <h3 className="text-[15px] font-semibold text-ink">All {found.length} are on your resume.</h3>
+      )}
+      {found.length > 0 && (
+        <details open={!missing.length} className="accordion group rounded-[12px] border border-line px-3.5 py-2.5">
+          <summary className="flex cursor-pointer list-none items-center gap-2 rounded-[6px] text-[13.5px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+            <CheckIcon size={13} weight="bold" className="shrink-0 text-brand" aria-hidden />
+            <span className="shrink-0 font-semibold text-ink">You have {found.length}</span>
+            <span className="min-w-0 flex-1 truncate text-ink-2 group-open:invisible">{found.map((k) => k.name).join(', ')}</span>
+            <CaretDownIcon size={14} weight="bold" aria-hidden className="shrink-0 text-ink-2 transition-transform group-open:rotate-180" />
+          </summary>
+          <div className="flex flex-col gap-2 pt-2.5">
+            <ChipList keywords={found} selected={selected} onPick={onPick} />
+            <p className="text-[13px] text-ink-2">Pick one to see it on your resume.</p>
+          </div>
+        </details>
+      )}
     </div>
+  )
+}
+
+function ChipList({ keywords, selected, onPick }: { keywords: Checked[]; selected?: string; onPick: (k: Checked) => void }) {
+  const [all, setAll] = useState(keywords.length <= SHOWN)
+  return (
+    <ul className="flex flex-wrap gap-1.5">
+      {(all ? keywords : keywords.slice(0, SHOWN)).map((k) => (
+        <li key={k.name}>{k.found ? <FoundChip k={k} on={selected === k.name} onPick={onPick} /> : <MissingChip k={k} on={selected === k.name} onPick={onPick} />}</li>
+      ))}
+      {!all && (
+        <li>
+          <button type="button" onClick={() => setAll(true)} className={cn(chipClass, 'border border-line bg-white text-ink-2 hover:text-ink')}>
+            Show all {keywords.length}
+          </button>
+        </li>
+      )}
+    </ul>
   )
 }
 
@@ -665,7 +710,7 @@ function Marked({ text, marks: list, missing, selected }: { text: string; marks:
   return <>{parts}</>
 }
 
-function ResumeChecks({ result }: { result: Result }) {
+function resumeFixes(result: Result) {
   const { bullets, title, email, phone, pages } = result.checks
   const cards: { title: string; body: ReactNode }[] = []
   const fine: string[] = []
@@ -700,10 +745,14 @@ function ResumeChecks({ result }: { result: Result }) {
     cards.push({ title: `${pages} pages`, body: 'Recruiters skim, so put the experience that matches this posting on page one.' })
   } else if (pages) fine.push(`${pages} page${pages > 1 ? 's' : ''}`)
 
+  return { cards: cards.slice(0, 3), fine }
+}
+
+function ResumeChecks({ result, fixes: { cards, fine } }: { result: Result; fixes: ReturnType<typeof resumeFixes> }) {
   return (
     <div className="flex flex-col gap-2.5 rounded-[16px] border border-line bg-white p-4">
-      <h3 className="text-[14px] font-semibold text-ink">Your resume</h3>
-      {cards.slice(0, 3).map((c) => (
+      <h3 className="text-[14px] font-semibold text-ink">Resume checks</h3>
+      {cards.map((c) => (
         <div key={c.title} className="flex flex-col gap-1.5 rounded-[12px] bg-gap-tint/60 p-3 text-[13.5px] leading-[1.5] text-body">
           <p className="font-semibold text-ink">{c.title}</p>
           {c.body}
