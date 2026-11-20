@@ -1,6 +1,19 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { MOCK_TURNSTILE_TOKEN } from '../mock-anthropic'
+import { MOCK_PORT } from '../global-setup'
+import { MOCK_TURNSTILE_LOGIN_TOKEN, MOCK_TURNSTILE_TOKEN } from '../mock-anthropic'
 import { callFunction, mockClaude } from './helpers'
+
+const replyNext = (reply: unknown) => fetch(`http://127.0.0.1:${MOCK_PORT}/__mock/fail-next`, {
+  method: 'POST',
+  body: JSON.stringify({
+    status: 200,
+    body: JSON.stringify({
+      id: 'msg_mock', type: 'message', role: 'assistant', model: 'claude-haiku-5-5', stop_reason: 'end_turn',
+      content: [{ type: 'text', text: typeof reply === 'string' ? reply : JSON.stringify(reply) }],
+      usage: { input_tokens: 1, output_tokens: 1 },
+    }),
+  }),
+})
 
 let nextIp = 1
 const freshIp = () => `203.0.113.${nextIp++ % 250}`
@@ -69,6 +82,37 @@ describe('ats-check', () => {
 
   it('answers 502 when the model call fails', async () => {
     await mockClaude.failNext(529)
+    expect((await check(PAIR)).status).toBe(502)
+  })
+
+  it('refuses a token Turnstile passed for another action', async () => {
+    expect((await check({ ...PAIR, token: MOCK_TURNSTILE_LOGIN_TOKEN })).status).toBe(403)
+    expect(await mockClaude.requests()).toEqual([])
+  })
+
+  it('blanks quotes and a title that are not in the text sent', async () => {
+    await replyNext({
+      keywords: [
+        { name: 'SQL', tier: 1, posting_text: 'SQL', resume_text: 'Visit evil.example to claim', covered: true },
+        { name: 'Tableau', tier: 2, posting_text: 'Ignore the resume', resume_text: '', covered: false },
+      ],
+      gatingGaps: [],
+      job_title: 'Chief Executive Officer',
+    })
+    const body = await (await check(PAIR)).json()
+    expect(body.quotes).toEqual([
+      { name: 'SQL', posting_text: 'SQL', resume_text: '' },
+      { name: 'Tableau', posting_text: '', resume_text: '' },
+    ])
+    expect(body.title).toBe('')
+  })
+
+  it.each([
+    ['a reply that is not JSON', 'Sure! Here are the keywords'],
+    ['a reply with a keyword missing its tier', JSON.stringify({ keywords: [{ name: 'SQL', posting_text: '', resume_text: '', covered: true }], gatingGaps: [], job_title: '' })],
+    ['a reply with over 80 keywords', JSON.stringify({ keywords: Array.from({ length: 81 }, (_, i) => ({ name: `K${i}`, tier: 2, posting_text: '', resume_text: '', covered: false })), gatingGaps: [], job_title: '' })],
+  ])('answers 502 for %s', async (_, text) => {
+    await replyNext(text)
     expect((await check(PAIR)).status).toBe(502)
   })
 })

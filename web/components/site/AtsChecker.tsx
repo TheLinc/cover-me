@@ -11,7 +11,7 @@ import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { checkResumeText, postingTitle } from '@/lib/ats-checker/hints'
-import { askAi, fromAi, type AiReport } from '@/lib/ats-checker/ai'
+import { askAi, fromAi, MAX_CHARS, type AiReport, type Fallback } from '@/lib/ats-checker/ai'
 import { botCheckToken, preloadBotCheck } from '@/lib/ats-checker/turnstile'
 import { checkResume, firstAt, markFor, marks, oneEntryPerAsk, readPosting, type Keyword, type Level, type Mark } from '@/lib/ats-checker/keywords'
 import { readResumeFile } from '@/lib/ats-checker/read-resume'
@@ -29,7 +29,7 @@ type Found = Keyword & { found: boolean; via?: string; mark?: string }
 
 type FromAi = { score: number; gates: string[]; title: string }
 
-function analyse(posting: string, resume: string, keywords: Found[], pages: number | undefined, fallback?: 'busy' | 'failed', ai?: FromAi) {
+function analyse(posting: string, resume: string, keywords: Found[], pages: number | undefined, fallback?: Fallback, ai?: FromAi) {
   const postingMarks = marks(posting, keywords)
   const resumeMarks = marks(resume, keywords.filter((k) => k.found))
   const shown = oneEntryPerAsk(keywords.map((k) => ({
@@ -51,7 +51,7 @@ function analyse(posting: string, resume: string, keywords: Found[], pages: numb
 type Result = ReturnType<typeof analyse>
 type Checked = Result['keywords'][number]
 
-const byWords = (posting: string, resume: string, pages: number | undefined, fallback: 'busy' | 'failed') =>
+const byWords = (posting: string, resume: string, pages: number | undefined, fallback: Fallback) =>
   analyse(posting, resume, checkResume(readPosting(posting).keywords, resume), pages, fallback)
 function byAi(posting: string, resume: string, report: AiReport, pages: number | undefined) {
   const { keywords, gates } = fromAi(posting, report)
@@ -99,6 +99,7 @@ export function AtsChecker() {
     pending.current?.abort()
     const controller = new AbortController()
     pending.current = controller
+    if (p.length > MAX_CHARS || r.length > MAX_CHARS) return setCheck({ posting: p, resume: r, result: byWords(p, r, pages, 'long') })
     setCheck({ posting: p, resume: r, result: null })
     try {
       const token = botBox.current ? await botCheckToken(botBox.current) : null
@@ -106,7 +107,7 @@ export function AtsChecker() {
       const reply = await askAi(p, r, token, controller.signal)
       setCheck({ posting: p, resume: r, result: 'error' in reply ? byWords(p, r, pages, reply.error) : byAi(p, r, reply, pages) })
     } catch {
-      return
+      if (!controller.signal.aborted) setCheck({ posting: p, resume: r, result: byWords(p, r, pages, 'failed') })
     }
   }
 
@@ -284,7 +285,11 @@ export function AtsChecker() {
         {result.fallback && (
           <div role="status" className="mb-4 flex flex-wrap items-center gap-3 rounded-[12px] border border-line bg-white px-3.5 py-2.5 text-[13.5px] text-body">
             <span className="flex-1">
-              {result.fallback === 'busy' ? "You've run a lot of checks, so the AI check is paused for now." : "The AI check couldn't run."} This is a quick word
+              {result.fallback === 'busy'
+                ? "You've run a lot of checks, so the AI check is paused for now."
+                : result.fallback === 'long'
+                  ? `The posting or resume is over ${MAX_CHARS.toLocaleString('en-US')} characters, so the AI check can't run.`
+                  : "The AI check couldn't run."} This is a quick word
               match instead. It can miss skills your resume names in other words.
             </span>
             {result.fallback === 'failed' && (

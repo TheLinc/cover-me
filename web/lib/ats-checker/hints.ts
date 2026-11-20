@@ -94,7 +94,7 @@ export function postingTitle(posting: string): string | null {
 // Many pasted postings open with the employer's name, which the posting then repeats (#296).
 function namesEmployer(text: string, name: string) {
   const n = name.split(/\s+/).map(escapeRe).join('\\s+')
-  return new RegExp(`\\b(about|at|join)\\s+${n}\\b|${n}\\s+(is\\s+(an?\\s+equal|hiring|proud)|offers|provides)\\b`, 'i').test(text)
+  return new RegExp(`\\b(about|at|join)\\s+${n}\\b|${n}\\s+is\\s+(an?\\s+equal|hiring|proud)\\b`, 'i').test(text)
 }
 
 export function checkResumeText(resume: string, posting: string, known?: string): ResumeChecks {

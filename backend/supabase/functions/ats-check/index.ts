@@ -63,11 +63,11 @@ Deno.serve(async (req) => {
   if (limit !== 'ok') return json({ error: limit === 'over' ? 'Too many requests' : 'Try again shortly' }, limit === 'over' ? 429 : 503)
   const all = await supabase.rpc('check_scrape_rate_limit', { p_ip_hash: await ALL_KEY, p_per_minute: ALL_PER_MINUTE, p_per_day: ALL_PER_DAY })
   if (all.error) return json({ error: 'Try again shortly' }, 503)
-  if (all.data !== true) return json({ error: 'Too many requests' }, 429)
+  if (all.data !== true) return json({ error: 'Checker busy' }, 503)
 
-  let res: Response
+  let data: { stop_reason?: string; content?: Array<{ type: string; text?: string }> }
   try {
-    res = await fetch(ANTHROPIC_MESSAGES_URL, {
+    const res = await fetch(ANTHROPIC_MESSAGES_URL, {
       method: 'POST',
       headers: { 'x-api-key': API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
       body: JSON.stringify({
@@ -80,15 +80,15 @@ Deno.serve(async (req) => {
       }),
       signal: AbortSignal.timeout(60_000),
     })
+    if (!res.ok) {
+      console.error('ats-check: Anthropic status', res.status)
+      return json({ error: 'Check failed' }, 502)
+    }
+    data = await res.json()
   } catch (err) {
     console.error('ats-check: Anthropic request failed:', err instanceof Error ? err.name : 'unknown')
     return json({ error: 'Check failed' }, 502)
   }
-  if (!res.ok) {
-    console.error('ats-check: Anthropic status', res.status)
-    return json({ error: 'Check failed' }, 502)
-  }
-  const data = await res.json() as { stop_reason?: string; content?: Array<{ type: string; text?: string }> }
   const report = data.stop_reason === 'end_turn' ? parseReport(data.content?.find((b) => b.type === 'text')?.text, posting, resume) : null
   if (!report) {
     console.error('ats-check: unusable reply, stop_reason', data.stop_reason)

@@ -132,6 +132,10 @@ describe('the posting title', () => {
     expect(postingTitle('Skip to main content\nData Analyst\nJoin us as a Data Analyst.')).toBe('Data Analyst')
   })
 
+  test('keeps a title the posting describes as doing the work', () => {
+    expect(postingTitle('Registered Nurse\nAbout the role\nThe Registered Nurse provides direct patient care.')).toBe('Registered Nurse')
+  })
+
   test("uses the AI's title when it has one", () => {
     expect(checkResumeText('Load Planner, 2020 - Present', 'Ridgeback Freight Lines\nAbout Ridgeback Freight Lines', 'Load Planner').title?.onResume).toBe(true)
   })

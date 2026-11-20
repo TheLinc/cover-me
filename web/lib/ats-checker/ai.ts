@@ -8,7 +8,10 @@ export interface AiReport {
   title: string
 }
 
-export type AiReply = AiReport | { error: 'busy' | 'failed' }
+export type Fallback = 'busy' | 'failed' | 'long'
+export type AiReply = AiReport | { error: Fallback }
+
+export const MAX_CHARS = 30_000
 
 export async function askAi(posting: string, resume: string, token: string | null, signal: AbortSignal): Promise<AiReply> {
   try {
@@ -19,7 +22,7 @@ export async function askAi(posting: string, resume: string, token: string | nul
       signal,
     })
     if (res.ok) return (await res.json()) as AiReport
-    return { error: res.status === 429 ? 'busy' : 'failed' }
+    return { error: res.status === 429 ? 'busy' : res.status === 413 ? 'long' : 'failed' }
   } catch (err) {
     if (signal.aborted) throw err
     return { error: 'failed' }

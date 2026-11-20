@@ -19,7 +19,7 @@
 //   POST /__mock/email-drop-next       → the next POST /emails has its connection cut
 //   POST /i/v0/e/              PostHog stand-in (tailor's tailor_run event, via POSTHOG_HOST)
 //   GET  /__mock/posthog       every PostHog event received since the last reset
-//   POST /turnstile/v0/siteverify  Turnstile stand-in (ats-check, via TURNSTILE_VERIFY_URL): passes only MOCK_TURNSTILE_TOKEN
+//   POST /turnstile/v0/siteverify  Turnstile stand-in (ats-check, via TURNSTILE_VERIFY_URL): passes only MOCK_TURNSTILE_TOKEN; MOCK_TURNSTILE_LOGIN_TOKEN passes for another action
 
 import { createServer, type IncomingMessage, type Server } from 'node:http'
 
@@ -39,6 +39,7 @@ Test Person`
 
 // Cloudflare's dummy token, the only one test secrets accept (https://developers.cloudflare.com/turnstile/troubleshooting/testing/).
 export const MOCK_TURNSTILE_TOKEN = 'XXXX.DUMMY.TOKEN.XXXX'
+export const MOCK_TURNSTILE_LOGIN_TOKEN = 'XXXX.DUMMY.TOKEN.LOGIN'
 
 // The ATS checker's reply (#278), whatever the posting and resume.
 export const MOCK_ATS_REPORT = {
@@ -359,8 +360,9 @@ export function startMockAnthropic(port: number): Promise<Server> {
     if (req.method === 'POST' && url === '/turnstile/v0/siteverify') {
       const form = new URLSearchParams(await readBody(req))
       res.writeHead(200, { 'content-type': 'application/json' })
-      return res.end(JSON.stringify(form.get('response') === MOCK_TURNSTILE_TOKEN
-        ? { success: true, action: 'ats-check', hostname: 'localhost' }
+      const token = form.get('response')
+      return res.end(JSON.stringify(token === MOCK_TURNSTILE_TOKEN || token === MOCK_TURNSTILE_LOGIN_TOKEN
+        ? { success: true, action: token === MOCK_TURNSTILE_TOKEN ? 'ats-check' : 'login', hostname: 'localhost' }
         : { success: false, 'error-codes': ['invalid-input-response'] }))
     }
     if (req.method === 'GET' && url === '/__mock/posthog') {
