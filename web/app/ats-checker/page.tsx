@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { AtsChecker } from '@/components/site/AtsChecker'
-import { CheckIcon } from '@phosphor-icons/react/dist/ssr'
+import { FileTextIcon, ShieldCheckIcon, UserMinusIcon } from '@phosphor-icons/react/dist/ssr'
 import { SiteFooter } from '@/components/site/SiteFooter'
 import { SiteNav } from '@/components/site/SiteNav'
 import { BASE, OG_IMAGE } from '@/lib/structured-data'
@@ -64,9 +64,9 @@ export default function AtsCheckerPage() {
             Get an ATS match score and see which of the posting&apos;s skills, tools and certifications your resume has, and where they are.
           </p>
           <ul className="flex flex-wrap gap-2 text-[13px] text-ink-2 max-sm:gap-x-3 max-sm:gap-y-1 max-sm:text-[12.5px]">
-            {['No sign-up', "We don't store your resume", 'PDF, Word or text'].map((t) => (
+            {([[UserMinusIcon, 'No sign-up'], [ShieldCheckIcon, "We don't store your resume"], [FileTextIcon, 'PDF, Word or text']] as const).map(([Icon, t]) => (
               <li key={t} className="flex items-center gap-1.5 rounded-full border border-line bg-white px-3 py-1 max-sm:border-0 max-sm:bg-transparent max-sm:p-0">
-                <CheckIcon size={12} weight="bold" className="text-brand" aria-hidden />
+                <Icon size={14} weight="bold" className="text-brand" aria-hidden />
                 {t}
               </li>
             ))}

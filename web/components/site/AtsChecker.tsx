@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ChangeEvent, type ClipboardEvent, type ReactNode } from 'react'
 import { flushSync } from 'react-dom'
-import { CheckIcon, DeviceMobileIcon, PencilSimpleIcon, UploadSimpleIcon, XIcon } from '@phosphor-icons/react/dist/ssr'
+import { CaretDownIcon, CheckIcon, DeviceMobileIcon, PencilSimpleIcon, UploadSimpleIcon, XIcon } from '@phosphor-icons/react/dist/ssr'
 import { ExtensionPopup } from '@/components/landing/ExtensionPopup'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -304,11 +304,7 @@ export function AtsChecker() {
       )}
 
       {loading ? (
-        <section aria-live="polite" className="flex min-h-[240px] [view-transition-name:ats-results] flex-col items-center justify-center gap-3 rounded-[22px] border border-line bg-panel p-6 text-center">
-          <span className="size-6 animate-spin rounded-full border-2 border-brand border-t-transparent" aria-hidden />
-          <p className="text-[15px] font-semibold text-ink">Checking your resume against the posting</p>
-          <p className="max-w-[420px] text-[13.5px] text-ink-2">Your resume and the posting go to Anthropic&apos;s AI to check them. We don&apos;t store them.</p>
-        </section>
+        <Checking />
       ) : (
       <section aria-labelledby="results" className="relative rounded-[22px] [view-transition-name:ats-results] border border-line bg-panel p-4 sm:p-5">
         {result.fallback && (
@@ -341,7 +337,8 @@ export function AtsChecker() {
                 <TabsTrigger value="resume" className="flex-1">Your resume</TabsTrigger>
               </TabsList>
               <TabsContent forceMount tabIndex={-1} value="keywords" className="mt-0 flex flex-col gap-4 data-[state=inactive]:max-lg:hidden">
-                <Chips keywords={result.keywords} selected={selected?.name} onPick={pick} pitch={<Pitch result={result} checks={checks} />} />
+                <Chips keywords={result.keywords} selected={selected?.name} onPick={pick} />
+                <Pitch result={result} checks={checks} />
                 {mine && (
                   <Button variant="outline" size="sm" onClick={anotherPosting} className="self-start">Check another posting</Button>
                 )}
@@ -366,6 +363,30 @@ export function AtsChecker() {
   )
 }
 
+// Timed to the check's usual 15-20 s; the model reports no progress of its own (#278).
+const STEPS: [number, string][] = [
+  [0, 'Reading the job posting...'],
+  [2500, 'Reading your resume...'],
+  [6000, 'Comparing your resume with the posting...'],
+  [11000, 'Scoring what it found...'],
+  [19000, 'Almost done...'],
+]
+
+function Checking() {
+  const [step, setStep] = useState(STEPS[0][1])
+  useEffect(() => {
+    const timers = STEPS.slice(1).map(([at, text]) => setTimeout(() => setStep(text), at))
+    return () => timers.forEach(clearTimeout)
+  }, [])
+  return (
+    <section className="flex min-h-[240px] [view-transition-name:ats-results] flex-col items-center justify-center gap-3 rounded-[22px] border border-line bg-panel p-6 text-center">
+      <span className="size-6 animate-spin rounded-full border-2 border-brand border-t-transparent" aria-hidden />
+      <p className="text-[15px] font-semibold text-ink">Checking your resume against the posting</p>
+      <p aria-live="polite" className="text-[13.5px] text-ink-2">{step}</p>
+    </section>
+  )
+}
+
 function FoldedInput({ label, value, onEdit }: { label: string; value: string; onEdit: () => void }) {
   return (
     <div className="flex items-center gap-2 rounded-[12px] border border-line bg-white px-3.5 py-2.5 text-[14px] max-sm:py-1 max-sm:text-[13px]">
@@ -387,10 +408,9 @@ function headline(keywords: Checked[]) {
 
 function Summary({ result, sample }: { result: Result; sample: boolean }) {
   const { must, pool, found } = headline(result.keywords)
-  const nice = result.keywords.filter((k) => k.level === 'preferred')
   const scored = result.score !== undefined && pool.length > 0
   return (
-    <div className="sticky top-[72px] z-10 flex flex-col gap-2.5 rounded-[16px] border border-line bg-white p-4 shadow-[0_10px_30px_-18px_rgba(30,27,75,0.35)]">
+    <div className="flex flex-col gap-2.5 rounded-[16px] border border-line bg-white p-4 shadow-[0_10px_30px_-18px_rgba(30,27,75,0.35)]">
       <h2 id="results" tabIndex={-1} aria-live="polite" className="text-[clamp(18px,2.2vw,26px)] leading-[1.15] text-ink outline-none">
         {!pool.length
           ? 'No keywords found in this posting. Paste all of it, including the requirements.'
@@ -404,10 +424,6 @@ function Summary({ result, sample }: { result: Result; sample: boolean }) {
         <Progress value={result.score} aria-hidden className={cn('h-2.5 border border-dashed border-gap bg-white [&>div]:bg-brand', !sample && 'score-fill')} />
       ) : (
         pool.length > 0 && <Segments found={found} total={pool.length} />
-      )}
-      {scored && must && <p className="text-[13px] text-ink-2">Must-haves on your resume: {found} of {pool.length}</p>}
-      {nice.length > 0 && (
-        <p className="text-[13px] text-ink-2 max-lg:hidden">Nice to have: {nice.filter((k) => k.found).length} of {nice.length}</p>
       )}
       {result.gates.length > 0 && (
         <div className="text-[13px] text-ink-2">
@@ -441,35 +457,35 @@ function Segments({ found, total }: { found: number; total: number }) {
 
 const SHOWN = 15
 
-function Chips({ keywords, selected, onPick, pitch }: { keywords: Checked[]; selected?: string; onPick: (k: Checked) => void; pitch: ReactNode }) {
+function Chips({ keywords, selected, onPick }: { keywords: Checked[]; selected?: string; onPick: (k: Checked) => void }) {
   const [open, setOpen] = useState<Level[]>([])
   const levels = GROUPS.filter(({ level }) => keywords.some((k) => k.level === level))
   return (
-    <div className="flex flex-col gap-3.5">
+    <div className="flex flex-col gap-2.5">
       {levels.map(({ level, title }, i) => {
         const group = keywords.filter((k) => k.level === level)
         const all = open.includes(level) || group.length <= SHOWN
         return (
-          <div key={level} className="contents">
-            <div className="flex flex-col gap-2">
+          <details key={level} open={i === 0} className="accordion group rounded-[16px] border border-line bg-white px-4 py-3">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-[6px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
               <h3 className="text-[14px] font-semibold text-ink">
                 {title} <span className="font-normal text-ink-2">({group.filter((k) => k.found).length} of {group.length})</span>
               </h3>
-              <ul className="flex flex-wrap gap-1.5">
-                {(all ? group : group.slice(0, SHOWN)).map((k) => (
-                  <li key={k.name}>{k.found ? <FoundChip k={k} on={selected === k.name} onPick={onPick} /> : <MissingChip k={k} on={selected === k.name} onPick={onPick} />}</li>
-                ))}
-                {!all && (
-                  <li>
-                    <button type="button" onClick={() => setOpen([...open, level])} className={cn(chipClass, 'border border-line bg-white text-ink-2 hover:text-ink')}>
-                      Show all {group.length}
-                    </button>
-                  </li>
-                )}
-              </ul>
-            </div>
-            {i === 0 && pitch}
-          </div>
+              <CaretDownIcon size={14} weight="bold" aria-hidden className="shrink-0 text-ink-2 transition-transform group-open:rotate-180" />
+            </summary>
+            <ul className="flex flex-wrap gap-1.5 pt-2.5">
+              {(all ? group : group.slice(0, SHOWN)).map((k) => (
+                <li key={k.name}>{k.found ? <FoundChip k={k} on={selected === k.name} onPick={onPick} /> : <MissingChip k={k} on={selected === k.name} onPick={onPick} />}</li>
+              ))}
+              {!all && (
+                <li>
+                  <button type="button" onClick={() => setOpen([...open, level])} className={cn(chipClass, 'border border-line bg-white text-ink-2 hover:text-ink')}>
+                    Show all {group.length}
+                  </button>
+                </li>
+              )}
+            </ul>
+          </details>
         )
       })}
     </div>
