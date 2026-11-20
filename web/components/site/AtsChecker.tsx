@@ -127,10 +127,10 @@ export function AtsChecker() {
     }
   }
 
-  function fold(p: string, r: string, pages: number | undefined, count = true) {
+  function fold(p: string, r: string, pages: number | undefined) {
     if (!p.trim() || !r.trim()) return
     morph(() => {
-      if (count) void run(p, r, pages)
+      void run(p, r, pages)
       setFolded(true)
       setResultTab('required')
     }, () => document.getElementById('results')?.focus())
@@ -168,16 +168,6 @@ export function AtsChecker() {
     } catch (err) {
       setFileNote({ text: err instanceof Error ? err.message : `Couldn't read ${picked.name}.`, error: true })
     }
-  }
-
-  function trySample() {
-    setPosting(SAMPLE_POSTING)
-    setResume(SAMPLE_RESUME)
-    setFile({ name: 'Sample resume', pages: 1 })
-    setFileNote(null)
-    pending.current?.abort()
-    setCheck({ posting: SAMPLE_POSTING, resume: SAMPLE_RESUME, result: SAMPLE })
-    fold(SAMPLE_POSTING, SAMPLE_RESUME, 1, false)
   }
 
   function anotherPosting() {
@@ -220,22 +210,14 @@ export function AtsChecker() {
         </div>
       ) : (
         <Tabs value={inputTab} onValueChange={setInputTab}>
-          <div className="mb-3 flex items-center justify-between gap-3 lg:hidden">
-            <TabsList>
-              <TabsTrigger value="posting">Posting{posting.trim() && <CheckIcon size={12} weight="bold" className="ml-1" aria-hidden />}</TabsTrigger>
-              <TabsTrigger value="resume">Resume{resume.trim() && <CheckIcon size={12} weight="bold" className="ml-1" aria-hidden />}</TabsTrigger>
-            </TabsList>
-            {!posting.trim() && !resume.trim() && (
-              <Button variant="outline" size="sm" onClick={trySample} className="ml-auto lg:hidden">Try a sample</Button>
-            )}
-          </div>
+          <TabsList className="mb-3 lg:hidden">
+            <TabsTrigger value="posting">Posting{posting.trim() && <CheckIcon size={12} weight="bold" className="ml-1" aria-hidden />}</TabsTrigger>
+            <TabsTrigger value="resume">Resume{resume.trim() && <CheckIcon size={12} weight="bold" className="ml-1" aria-hidden />}</TabsTrigger>
+          </TabsList>
           <div className="grid gap-5 lg:grid-cols-2">
             <TabsContent forceMount tabIndex={-1} value="posting" className="mt-0 flex flex-col gap-2 data-[state=inactive]:max-lg:hidden">
               <div className="flex h-9 items-center justify-between gap-3">
                 <Label htmlFor="posting" className="text-[15px] font-semibold text-ink">Job posting</Label>
-                {!posting.trim() && !resume.trim() && (
-                  <Button variant="outline" size="sm" onClick={trySample} className="max-lg:hidden">Try a sample</Button>
-                )}
               </div>
               <Textarea
                 id="posting"
