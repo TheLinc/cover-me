@@ -68,7 +68,8 @@ Deno.serve(async (req) => {
       headers: { 'x-api-key': API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
       body: JSON.stringify({
         model: MODEL,
-        max_tokens: 16000,
+        // The dev set's longest reply was 11.7k tokens; this caps what a crafted input can spend (#278).
+        max_tokens: 14000,
         thinking: { type: 'adaptive' },
         output_config: { effort: 'medium', format: { type: 'json_schema', schema: RESPONSE_SCHEMA } },
         system: SYSTEM_PROMPT,

@@ -17,6 +17,7 @@ import { botCheckToken, preloadBotCheck } from '@/lib/ats-checker/turnstile'
 import { checkResume, firstAt, markFor, marks, oneEntryPerAsk, readPosting, type Keyword, type Level, type Mark } from '@/lib/ats-checker/keywords'
 import { readResumeFile } from '@/lib/ats-checker/read-resume'
 import { SAMPLE_AI, SAMPLE_POSTING, SAMPLE_RESUME } from '@/lib/ats-checker/sample'
+import { whenPosthogLoaded } from '@/lib/analytics'
 import { BASE } from '@/lib/structured-data'
 import { cn, storeUrl } from '@/lib/utils'
 
@@ -79,6 +80,13 @@ function morph(update: () => void, then?: () => void) {
   })
 }
 
+// Counts checks and how they ended, never their text. Imported lazily like the page-view setup in instrumentation-client.ts (#278).
+function logCheck(outcome: Fallback | 'ai', score?: number) {
+  void import('posthog-js').then(({ default: posthog }) =>
+    whenPosthogLoaded(posthog, () => posthog.capture('ats_check_run', { outcome, ...(score !== undefined && { score }) })),
+  )
+}
+
 const SAMPLE = byAi(SAMPLE_POSTING, SAMPLE_RESUME, SAMPLE_AI, 1)
 const SHARE_URL = `${BASE}/ats-checker?utm_source=share&utm_medium=phone&utm_campaign=ats-phone-send`
 
@@ -114,16 +122,22 @@ export function AtsChecker() {
     pending.current?.abort()
     const controller = new AbortController()
     pending.current = controller
-    if (p.length > MAX_CHARS || r.length > MAX_CHARS) return setCheck({ posting: p, resume: r, result: byWords(p, r, pages, 'long') })
+    if (p.length > MAX_CHARS || r.length > MAX_CHARS) {
+      logCheck('long')
+      return setCheck({ posting: p, resume: r, result: byWords(p, r, pages, 'long') })
+    }
     setCheck({ posting: p, resume: r, result: null })
     try {
       const token = botBox.current ? await botCheckToken(botBox.current) : null
       if (controller.signal.aborted) return
       const reply = await askAi(p, r, token, controller.signal)
       const result = 'error' in reply ? byWords(p, r, pages, reply.error) : byAi(p, r, reply, pages)
+      logCheck('error' in reply ? reply.error : 'ai', result.score)
       morph(() => setCheck({ posting: p, resume: r, result }))
     } catch {
-      if (!controller.signal.aborted) morph(() => setCheck({ posting: p, resume: r, result: byWords(p, r, pages, 'failed') }))
+      if (controller.signal.aborted) return
+      logCheck('failed')
+      morph(() => setCheck({ posting: p, resume: r, result: byWords(p, r, pages, 'failed') }))
     }
   }
 
