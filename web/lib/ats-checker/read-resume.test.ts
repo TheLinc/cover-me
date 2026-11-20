@@ -16,9 +16,11 @@ const EXPECTED = {
 }
 
 describe('reading an uploaded resume', () => {
+  // Loading pdf.js and mammoth took over 5 s on a cold CI runner, which failed the first upload test (#278).
   beforeAll(async () => {
     Object.assign(globalThis, { pdfjsWorker: await import('pdfjs-dist/legacy/build/pdf.worker.mjs') })
-  })
+    await Promise.all([import('pdfjs-dist/legacy/build/pdf.mjs'), import('mammoth')])
+  }, 30_000)
 
   test.each([['docx', ''], ['pdf', 'application/pdf']])('a %s upload finds the same keywords as the sample resume', async (ext, type) => {
     const { text } = await readResumeFile(file(`${SAMPLE}.${ext}`, type))
