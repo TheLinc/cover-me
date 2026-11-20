@@ -27,7 +27,7 @@ const ALL_PER_DAY = 3000
 // Hashed like an IP key, so every row in the rate-limit table stays a 64-character hash (#278).
 const ALL_KEY = crypto.subtle.digest('SHA-256', new TextEncoder().encode('ats-check:all'))
   .then((d) => Array.from(new Uint8Array(d), (b) => b.toString(16).padStart(2, '0')).join(''))
-const MAX_CHARS = 30_000
+const MAX_CHARS = 20_000
 const MAX_BYTES = 4 * 2 * MAX_CHARS
 const MAX_KEYWORDS = 80
 const MAX_NAME = 80

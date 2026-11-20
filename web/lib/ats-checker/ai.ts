@@ -11,7 +11,7 @@ export interface AiReport {
 export type Fallback = 'busy' | 'failed' | 'long'
 export type AiReply = AiReport | { error: Fallback }
 
-export const MAX_CHARS = 30_000
+export const MAX_CHARS = 20_000
 
 export async function askAi(posting: string, resume: string, token: string | null, signal: AbortSignal): Promise<AiReply> {
   try {

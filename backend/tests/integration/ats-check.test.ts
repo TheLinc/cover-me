@@ -71,7 +71,7 @@ describe('ats-check', () => {
   })
 
   it('rejects text over the size cap without calling the model', async () => {
-    expect((await check({ ...PAIR, resume: 'x'.repeat(30_001) })).status).toBe(413)
+    expect((await check({ ...PAIR, resume: 'x'.repeat(20_001) })).status).toBe(413)
     expect(await mockClaude.requests()).toEqual([])
   })
 

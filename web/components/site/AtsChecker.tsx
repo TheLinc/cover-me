@@ -245,6 +245,7 @@ export function AtsChecker() {
                 placeholder="Paste the whole posting, including its requirements"
                 className="h-[200px] resize-y bg-white text-[14px] leading-[1.55]"
               />
+              <CharCount text={posting} />
             </TabsContent>
             <TabsContent forceMount tabIndex={-1} value="resume" className="mt-0 flex flex-col gap-2 data-[state=inactive]:max-lg:hidden">
               <div className="flex h-9 items-center justify-between gap-3">
@@ -265,6 +266,7 @@ export function AtsChecker() {
                 placeholder="Paste your resume, or upload it as a PDF or Word file"
                 className="h-[200px] resize-y bg-white text-[14px] leading-[1.55]"
               />
+              <CharCount text={resume} />
             </TabsContent>
           </div>
         </Tabs>
@@ -370,6 +372,17 @@ function Checking() {
       <p className="text-[15px] font-semibold text-ink">Checking your resume against the posting</p>
       <p aria-live="polite" className="text-[13.5px] text-ink-2">{step}</p>
     </section>
+  )
+}
+
+function CharCount({ text }: { text: string }) {
+  if (text.length < MAX_CHARS * 0.75) return null
+  const over = text.length > MAX_CHARS
+  return (
+    <p aria-live="polite" className={cn('text-right text-[12.5px] tabular-nums', over ? 'text-gap-ink' : 'text-ink-2')}>
+      {over && 'Too long for the AI check. Trim it to run the full check. '}
+      {text.length.toLocaleString('en-US')} / {MAX_CHARS.toLocaleString('en-US')} characters
+    </p>
   )
 }
 
