@@ -1,11 +1,5 @@
-// Prompt-sync checker: the AI prompts live in two places (extension for BYOK,
-// Supabase Edge Functions for hosted) because the Deno functions can't import
-// from the extension tree. This script fails when the shared sections drift —
-// it already happened once (the backend tailor shipped without the
-// prompt-injection guard the BYOK tailor had).
-//
-// Run:  node scripts/check-prompt-sync.mjs   (or `pnpm check:prompts` in extension/)
-// The extension build runs it automatically.
+// The Deno functions can't import from the extension tree, and the backend tailor once shipped
+// without the BYOK prompt-injection guard: https://github.com/TheLinc/cover-me/commit/46f809a1dc946cf6964c9e2ad9a400323d9bada5
 
 import { readFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
@@ -15,7 +9,6 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 
 const read = (p) => readFileSync(join(ROOT, p), 'utf8').replace(/\r\n/g, '\n')
 
-/** Extract the inclusive substring between two markers; throws if missing. */
 function section(content, file, start, end) {
   const s = content.indexOf(start)
   if (s === -1) throw new Error(`${file}: start marker not found: "${start.slice(0, 60)}"`)
@@ -43,8 +36,7 @@ const EXT_LINT = 'extension/src/lib/ai/letter-lint.ts'
 const BE_LINT = 'backend/supabase/functions/_shared/letter-lint.ts'
 
 const checks = [
-  // The whole letter prompt template must be byte-identical (both files use
-  // the same interpolation expressions).
+  // Both copies use the same interpolations, so the whole template compares: https://github.com/TheLinc/cover-me/commit/46f809a1dc946cf6964c9e2ad9a400323d9bada5
   {
     name: 'letter prompt template',
     a: EXT_LETTER,
@@ -66,8 +58,7 @@ const checks = [
     start: 'SUPPLEMENTAL CANDIDATE CONTEXT (verified by the candidate — real experience, a referral',
     end: 'a claim it does not actually support.',
   },
-  // The tailor prompt builders are near-identical mirrors; compare each shared
-  // section individually so file-level differences (types, imports) don't trip it.
+  // By section, so types and imports can differ: https://github.com/TheLinc/cover-me/commit/d7700ca5cc272c75785b90971b63a366f3d35016
   {
     name: 'tailor: delta output contract',
     a: EXT_TAILOR,
@@ -76,8 +67,7 @@ const checks = [
     end: 'preserved verbatim from the input automatically.',
   },
   {
-    // The delta parse/merge helpers decide what the model can and cannot alter —
-    // they must behave identically in the extension (BYOK) and the Edge Function.
+    // These decide what the model can alter, so BYOK and hosted must match: https://github.com/TheLinc/cover-me/commit/d7700ca5cc272c75785b90971b63a366f3d35016
     name: 'tailor: delta parse + merge helpers',
     a: EXT_TAILOR,
     b: BE_TAILOR,
@@ -85,17 +75,10 @@ const checks = [
     end: '// ── End mirrored tailor delta ──',
   },
   {
-    name: 'tailor: industry detection + keyword tiering',
+    name: 'tailor: industry detection, keyword tiering, synonyms + angle',
     a: EXT_TAILOR,
     b: BE_TAILOR,
     start: 'STEP 1 — DETECT INDUSTRY',
-    end: 'Any: cross-functional collaboration, knowledge sharing, process documentation',
-  },
-  {
-    name: 'tailor: alternative requirements + synonyms + angle',
-    a: EXT_TAILOR,
-    b: BE_TAILOR,
-    start: 'ALTERNATIVE REQUIREMENTS',
     end: 'Every bullet and the summary must reinforce it.',
   },
   {
@@ -161,8 +144,7 @@ const checks = [
     start: 'SUPPLEMENTAL CANDIDATE CONTEXT (verified by the candidate',
     end: 'existing bullets of the entry it describes.',
   },
-  // The resume parse prompt runs client-side for BYOK and server-side for the
-  // hosted tier's structured-resume cache — the template must not drift.
+  // Runs client-side for BYOK and server-side for the hosted resume cache: https://github.com/TheLinc/cover-me/commit/d7700ca5cc272c75785b90971b63a366f3d35016
   {
     name: 'resume parse prompt template',
     a: 'extension/src/lib/ai/resume-parse.ts',
@@ -197,11 +179,11 @@ for (const c of checks) {
   }
 }
 
-// The lint, grounding, ATS and answer-prompt module mirrors must be byte-identical end to end.
 for (const [name, extPath, bePath] of [
   ['letter-lint', EXT_LINT, BE_LINT],
   ['resume-grounding', 'extension/src/lib/ai/resume-grounding.ts', 'backend/supabase/functions/_shared/resume-grounding.ts'],
   ['ats-score', 'extension/src/lib/ai/ats-score.ts', 'backend/supabase/functions/_shared/ats-score.ts'],
+  ['keyword rules', 'extension/src/lib/ai/keyword-rules.ts', 'backend/supabase/functions/_shared/keyword-rules.ts'],
   ['answer prompt', 'extension/src/lib/ai/answer.ts', 'backend/supabase/functions/_shared/answer.ts'],
 ]) {
   const a = read(extPath)

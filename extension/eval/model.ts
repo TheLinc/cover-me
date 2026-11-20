@@ -1,45 +1,15 @@
-// Model access for the eval harness, with two interchangeable backends:
-//
-//   api     Anthropic Messages API via ANTHROPIC_API_KEY (billed to API credits).
-//           Exactly the production request shape.
-//   claude  Claude Code headless (`claude -p`), billed to your Claude plan.
-//           Isolated so outputs match production as closely as possible: no
-//           tools, no MCP, no user settings/hooks, thinking as in production
-//           (Sonnet generation at high effort, the Haiku parse off), and the
-//           filesystem root as working dir. Claude Code loads CLAUDE.md and
-//           .claude/rules from every ancestor of its working dir, so any folder
-//           under your user profile (including the OS temp dir) would pull in
-//           ~/.claude/CLAUDE.md. With CLAUDE_CODE_OAUTH_TOKEN set (from
-//           `claude setup-token`) it also uses an empty config dir, so account
-//           context never reaches the model. Without the token it falls back to
-//           your normal login and warns.
-
 import { spawn } from 'node:child_process'
 import { existsSync, mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, parse } from 'node:path'
 
 export type Msg = { role: 'user' | 'assistant'; content: string }
-export type Backend = 'api' | 'claude'
 
 export interface CallOptions {
   model: string
   maxTokens: number
-  /** Judge calls think; generation calls mirror production. */
   think?: boolean
-  /** Step name for per-step usage (usage.log), e.g. "tailor". */
   label?: string
-}
-
-// $/MTok for the API-equivalent cost estimate (claude backend reports its own).
-const PRICES: Record<string, [number, number]> = {
-  'claude-haiku-4-5': [1, 5],
-  'claude-haiku-4-5-20251001': [1, 5],
-  'claude-sonnet-4-6': [3, 15],
-  'claude-sonnet-5': [2, 10],
-  'claude-sonnet-5-5': [2, 10],
-  'claude-opus-5': [5, 25],
-  'claude-opus-5-5': [4, 20],
 }
 
 export const usage = {
@@ -47,59 +17,17 @@ export const usage = {
   log: [] as Array<{ label?: string; model: string; input: number; output: number }>,
 }
 
-function record(model: string, input: number, output: number, cost?: number, label?: string) {
+function record(model: string, input: number, output: number, cost: number, label?: string) {
   usage.log.push({ label, model, input, output })
   usage.calls++
   usage.inputTokens += input
   usage.outputTokens += output
-  const [pin, pout] = PRICES[model] ?? [0, 0]
-  usage.costUsd += cost ?? (input * pin + output * pout) / 1e6
+  usage.costUsd += cost
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
-// ── api backend ──────────────────────────────────────────────────────────────
-
-async function callApi(messages: Msg[], opts: CallOptions): Promise<string> {
-  const body: Record<string, unknown> = { model: opts.model, max_tokens: opts.maxTokens, messages }
-  // Mirror production: Sonnet 5.5 generation uses adaptive thinking at high
-  // effort (SONNET_FIELDS in src/lib/ai/claude.ts). Judges think too. Thinking
-  // counts toward max_tokens, so leave room for it either way.
-  if (opts.think || opts.model === 'claude-sonnet-5-5') {
-    body.thinking = { type: 'adaptive' }
-    body.max_tokens = Math.max(opts.maxTokens, 16000)
-  }
-  if (opts.model === 'claude-sonnet-5-5' && !opts.think) body.output_config = { effort: 'high' }
-  for (let attempt = 0; ; attempt++) {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': process.env.ANTHROPIC_API_KEY!,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify(body),
-    })
-    // Rate limits and overload: wait as long as the API asks (retry-after), else
-    // back off with jitter, so a full run on a low usage tier slows down instead
-    // of failing cases.
-    if ((res.status === 429 || res.status >= 500) && attempt < 6) {
-      const after = Number(res.headers.get('retry-after'))
-      await sleep(after > 0 ? after * 1000 : 2000 * 2 ** attempt + Math.random() * 1000)
-      continue
-    }
-    if (!res.ok) throw new Error(`API ${res.status}: ${await res.text()}`)
-    const data = (await res.json()) as {
-      content: Array<{ type: string; text?: string }>
-      usage: { input_tokens: number; output_tokens: number }
-    }
-    record(opts.model, data.usage.input_tokens, data.usage.output_tokens, undefined, opts.label)
-    return data.content.find((b) => b.type === 'text')?.text ?? ''
-  }
-}
-
-// ── claude backend ───────────────────────────────────────────────────────────
-
+// Claude Code loads CLAUDE.md from every folder above its working dir (https://github.com/TheLinc/cover-me/commit/cb47a02).
 const WORKDIR = parse(tmpdir()).root
 const ROOT_HAS_INSTRUCTIONS = existsSync(join(WORKDIR, 'CLAUDE.md')) || existsSync(join(WORKDIR, '.claude'))
 const CLEAN_CONFIG = process.env.CLAUDE_CODE_OAUTH_TOKEN ? mkdtempSync(join(tmpdir(), 'coverme-eval-config-')) : undefined
@@ -111,8 +39,7 @@ export function claudeIsolation(): string {
     : 'NOT fully isolated: set CLAUDE_CODE_OAUTH_TOKEN (run `claude setup-token`) to keep your account context out'
 }
 
-// claude -p takes one prompt, so a multi-turn exchange (the letter lint retry)
-// is flattened into a transcript. Only the letter retry uses this.
+// claude -p takes one prompt (https://github.com/TheLinc/cover-me/commit/cb47a02).
 function flatten(messages: Msg[]): string {
   if (messages.length === 1) return messages[0].content
   return messages
@@ -128,10 +55,10 @@ function runClaude(prompt: string, opts: CallOptions): Promise<string> {
     '--system-prompt', 'Follow the user\'s instructions exactly.',
   ]
   const env: NodeJS.ProcessEnv = { ...process.env }
-  delete env.ANTHROPIC_API_KEY // bill the plan, never API credits
+  // With a key in its env, claude -p bills API credits, not the plan (https://github.com/TheLinc/cover-me/commit/cb47a02).
+  delete env.ANTHROPIC_API_KEY
   if (CLEAN_CONFIG) env.CLAUDE_CONFIG_DIR = CLEAN_CONFIG
-  // Mirror production, as callApi does: Sonnet 5.5 generation thinks at high
-  // effort. Other generation calls (the Haiku parse) don't think.
+  // Matches SONNET_FIELDS in src/lib/ai/claude.ts (#203).
   if (opts.model === 'claude-sonnet-5-5' && !opts.think) args.push('--effort', 'high')
   else if (!opts.think) env.MAX_THINKING_TOKENS = '0'
 
@@ -154,21 +81,19 @@ function runClaude(prompt: string, opts: CallOptions): Promise<string> {
       if (data.is_error) return reject(new Error(`claude -p error: ${String(data.result).slice(0, 500)}`))
       const u = data.usage ?? {}
       const input = (u.input_tokens ?? 0) + (u.cache_read_input_tokens ?? 0) + (u.cache_creation_input_tokens ?? 0)
-      record(opts.model, input, u.output_tokens ?? 0, data.total_cost_usd, opts.label)
+      record(opts.model, input, u.output_tokens ?? 0, data.total_cost_usd ?? 0, opts.label)
       resolve(data.result ?? '')
     })
     child.stdin.end(prompt)
   })
 }
 
-// Set once the Claude plan reports a session or usage limit. Every later call
-// fails at once instead of retrying, so the run finishes quickly and still
-// writes the outputs it completed.
+// After a plan limit, fail fast so the run still writes what it finished (https://github.com/TheLinc/cover-me/commit/0c46fe4).
 let planLimit: string | undefined
 export const planLimitHit = () => planLimit
 const LIMIT = /session limit|usage limit|hit your .*limit/i
 
-async function callClaude(messages: Msg[], opts: CallOptions): Promise<string> {
+export async function call(messages: Msg[], opts: CallOptions): Promise<string> {
   if (planLimit) throw new Error(planLimit)
   try {
     return await runClaude(flatten(messages), opts)
@@ -179,15 +104,10 @@ async function callClaude(messages: Msg[], opts: CallOptions): Promise<string> {
       throw e
     }
     await sleep(5000)
-    return runClaude(flatten(messages), opts) // one retry for transient failures
+    return runClaude(flatten(messages), opts)
   }
 }
 
-export function makeCaller(backend: Backend) {
-  return (messages: Msg[], opts: CallOptions) => (backend === 'api' ? callApi(messages, opts) : callClaude(messages, opts))
-}
-
-/** Runs fn over items with at most `limit` in flight, preserving order. */
 export async function pool<T, R>(items: T[], limit: number, fn: (item: T, i: number) => Promise<R>): Promise<R[]> {
   const results: R[] = new Array(items.length)
   let next = 0

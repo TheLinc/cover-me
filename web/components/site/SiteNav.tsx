@@ -12,11 +12,9 @@ import type { NavLink } from './app-links'
 
 const MARKETING_LINKS: NavLink[] = [
   { href: '/#how-it-works', label: 'How it works' },
-  { href: '/#ats-score', label: 'ATS score' },
+  { href: '/#answers', label: 'Application questions' },
+  { href: '/ats-checker', label: 'ATS checker' },
   { href: '/#pricing', label: 'Pricing' },
-  { href: '/guides', label: 'Guides' },
-  { href: '/roadmap', label: 'Roadmap' },
-  { href: '/about', label: 'About' },
 ]
 
 export function SiteNav({ actions, links }: { actions?: ReactNode; links?: NavLink[] }) {

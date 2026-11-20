@@ -157,7 +157,7 @@ export default function Page() {
           body: (
             <>
               <ol>
-                <li>Read the posting and note the skills, tools, and qualifications it repeats or lists as required. Those are the terms recruiters filter by.</li>
+                <li>Read the posting and note the skills, tools, and qualifications it repeats or lists as required. Those are the terms recruiters filter by. The free <Link href="/ats-checker">ATS keyword checker</Link> lists them and marks which ones your resume already has.</li>
                 <li>Use the posting&rsquo;s exact wording where it truthfully describes your experience: &ldquo;React&rdquo; instead of &ldquo;modern JavaScript frameworks&rdquo;, &ldquo;stakeholder management&rdquo; instead of &ldquo;worked with teams&rdquo;.</li>
                 <li>Rewrite your most relevant bullets to lead with the matched skills, and keep your real results and numbers.</li>
                 <li>Never add a skill you don&rsquo;t have. A keyword that gets you the interview and falls apart in the room costs more than the filter did.</li>

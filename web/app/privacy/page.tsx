@@ -372,12 +372,22 @@ export default function PrivacyPage() {
                 came from, your browser details (browser, operating system, device type, screen size and
                 language) and your time zone. When you click a link to Cover Me&apos;s Chrome Web Store
                 page, we also count the click and that link&apos;s label (such as &ldquo;Add to
-                Chrome&rdquo;); no other clicks are recorded. Counting visits stores nothing in your browser: no cookies
+                Chrome&rdquo;). When you run the free ATS checker, we count the check, whether the AI check or the
+                quick word match ran, and the score, never the posting or resume. No other clicks are recorded. Counting visits stores nothing in your browser: no cookies
                 and no local storage. PostHog uses your IP address only to make a one-day visitor count, a one-way
                 hash with your browser details and a salt it deletes daily, and does not store the
                 address or any location derived from it.
                 Visits are not linked to your account, and signed-in pages (sign-in, dashboard, checkout)
                 are not counted at all.
+              </Li>
+              <Li>
+                <strong className="text-foreground">ATS checker (cover-me.dev/ats-checker, only when you use it).</strong>{' '}
+                The job posting and resume you check go to our server and on to Anthropic, whose AI reports
+                which of the posting&apos;s keywords the resume shows. A PDF or Word file is read in your
+                browser and only its text is sent. No account is needed. Neither text is stored in our
+                database or written to our logs. To limit how often the tool can be used, our server keeps a
+                counter keyed by a hash of your IP address. Once you start typing or pick a file, Cloudflare
+                Turnstile loads to check that you&apos;re not a bot (see Third-Party Services). The sample on the page sends nothing.
               </Li>
               <Li>
                 <strong className="text-foreground">Uninstall survey (only if you answer it).</strong>{' '}
@@ -678,8 +688,8 @@ export default function PrivacyPage() {
                 {
                   name: 'Anthropic',
                   url: 'https://www.anthropic.com/privacy',
-                  when: 'BYOK mode (Claude provider) and Hosted mode (our key)',
-                  receives: 'Your resume text, the job posting data, any facts you add, and the question (with any change you ask for and the answer it changes) when you ask for an answer to an application question. In Hosted mode, also your resume on its own when you upload a new one (or on your first tailor, if it hasn\'t been read yet), and in BYOK mode the first time you tailor after uploading one, so its structure can be read. In BYOK mode, requests are made with your own API key and are subject to your agreement with Anthropic. In Hosted mode, requests are made with our key.',
+                  when: 'BYOK mode (Claude provider), Hosted mode (our key) and the website ATS checker',
+                  receives: 'Your resume text, the job posting data, any facts you add, and the question (with any change you ask for and the answer it changes) when you ask for an answer to an application question. In Hosted mode, also your resume on its own when you upload a new one (or on your first tailor, if it hasn\'t been read yet), and in BYOK mode the first time you tailor after uploading one, so its structure can be read. In BYOK mode, requests are made with your own API key and are subject to your agreement with Anthropic. In Hosted mode, requests are made with our key. On the website ATS checker, the posting and resume you check, sent with a key used only for that tool.',
                 },
                 {
                   name: 'OpenAI',
@@ -690,8 +700,14 @@ export default function PrivacyPage() {
                 {
                   name: 'Supabase',
                   url: 'https://supabase.com/privacy',
-                  when: 'Every mode (reading job postings, from version 1.3.0, and site requests and bug reports when you press the button); everything else Hosted mode only',
-                  receives: 'Copies of the job pages you ask us to read, which are processed and not stored, site requests and bug reports, passed on to PostHog and not stored, and rate-limit counters keyed by a hash of your IP address. In Hosted mode also: the job details, any facts you add, the application question when you ask for an answer (not stored) and, when you regenerate, the previous tailored resume, sent with each generation request (not stored, except Pro history); messages from the dashboard\'s support form, passed on to Resend and not stored; email address, hashed password (email sign-in only), encrypted resume text, encrypted cover letters and tailored resumes with the unencrypted fields that go with them (Pro), your encrypted Word file and which tailored resumes were made from it (Pro), your resume\'s file name, your Stripe customer ID, your Google name, picture link and account ID, session tokens, generation and answer counts, whether and when you opted out of usage counts, when you removed the extension (if you were signed in), and the account-keyed counter used when a new resume is read or a support message is sent (see Information We Collect for each). Supabase Auth also records the IP address and browser of each signed-in session, kept with your account. Supabase hosts our backend functions, authentication system and database, and keeps standard request logs (IP address, browser, time, and the address requested, which can include a dashboard search) for a short period.',
+                  when: 'Every mode (reading job postings, from version 1.3.0, and site requests and bug reports when you press the button), the website ATS checker when you run a check; everything else Hosted mode only',
+                  receives: 'Copies of the job pages you ask us to read, which are processed and not stored, site requests and bug reports, passed on to PostHog and not stored, the posting and resume you check on the website ATS checker, passed on to Anthropic and not stored, and rate-limit counters keyed by a hash of your IP address. In Hosted mode also: the job details, any facts you add, the application question when you ask for an answer (not stored) and, when you regenerate, the previous tailored resume, sent with each generation request (not stored, except Pro history); messages from the dashboard\'s support form, passed on to Resend and not stored; email address, hashed password (email sign-in only), encrypted resume text, encrypted cover letters and tailored resumes with the unencrypted fields that go with them (Pro), your encrypted Word file and which tailored resumes were made from it (Pro), your resume\'s file name, your Stripe customer ID, your Google name, picture link and account ID, session tokens, generation and answer counts, whether and when you opted out of usage counts, when you removed the extension (if you were signed in), and the account-keyed counter used when a new resume is read or a support message is sent (see Information We Collect for each). Supabase Auth also records the IP address and browser of each signed-in session, kept with your account. Supabase hosts our backend functions, authentication system and database, and keeps standard request logs (IP address, browser, time, and the address requested, which can include a dashboard search) for a short period.',
+                },
+                {
+                  name: 'Cloudflare Turnstile',
+                  url: 'https://www.cloudflare.com/privacypolicy/',
+                  when: 'The website ATS checker only, once you start typing or pick a file there',
+                  receives: 'Your IP address, browser details and signals about how the page is used, so Turnstile can tell people from bots. It never receives your posting or resume. No other page on cover-me.dev loads it.',
                 },
                 {
                   name: 'Google',
@@ -733,7 +749,7 @@ export default function PrivacyPage() {
                   name: 'PostHog',
                   url: 'https://posthog.com/privacy',
                   when: 'Visitors to the public pages of cover-me.dev (not the extension, and not signed-in pages), anyone who answers the uninstall survey, anyone who presses Request this site or Report bug in the extension, clicks where our server reads no job page, and Hosted accounts that have not opted out of usage counts',
-                  receives: 'A count of each page visit: the page address with only its campaign tags (such as utm_ parameters; ad click IDs are blanked first), the referring site, browser details (browser, operating system, device type, screen size, language) and time zone, plus a count of clicks on links to our Chrome Web Store page with the link\'s label. Requests go through cover-me.dev. Your IP address is used only to make a daily visitor hash and is not stored, nor is any location derived from it. No cookies or browser storage are used, and visits are not linked to your account. If you answer the uninstall survey: your answers, your comment, the extension version and, if you were signed in, your Cover Me account ID. For site requests and bug reports, in any mode, under a random ID: the site name, or for a bug report the page address, the part of the extension that tried to read it, the error and the extension version. For clicks where our server reads no job page, under a random ID: the site name of each page and the part of the extension that tried to read it. For Hosted accounts that have not opted out: usage counts with your Cover Me account ID, your plan and the features and options you used, never your resume, letters, added context, job or company details, file names or posting addresses.',
+                  receives: 'A count of each page visit: the page address with only its campaign tags (such as utm_ parameters; ad click IDs are blanked first), the referring site, browser details (browser, operating system, device type, screen size, language) and time zone, plus a count of clicks on links to our Chrome Web Store page with the link\'s label, and a count of each ATS checker run with whether the AI check or the word match ran and the score, never the posting or resume. Requests go through cover-me.dev. Your IP address is used only to make a daily visitor hash and is not stored, nor is any location derived from it. No cookies or browser storage are used, and visits are not linked to your account. If you answer the uninstall survey: your answers, your comment, the extension version and, if you were signed in, your Cover Me account ID. For site requests and bug reports, in any mode, under a random ID: the site name, or for a bug report the page address, the part of the extension that tried to read it, the error and the extension version. For clicks where our server reads no job page, under a random ID: the site name of each page and the part of the extension that tried to read it. For Hosted accounts that have not opted out: usage counts with your Cover Me account ID, your plan and the features and options you used, never your resume, letters, added context, job or company details, file names or posting addresses.',
                 },
               ].map((svc) => (
                 <div key={svc.name} className="bg-surface border border-border rounded-[10px] px-5 py-4">

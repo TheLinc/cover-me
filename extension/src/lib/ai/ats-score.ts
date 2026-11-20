@@ -1,17 +1,5 @@
-// ATS match score. Mirrored byte-for-byte:
-//   extension/src/lib/ai/ats-score.ts ⇄ backend/supabase/functions/_shared/ats-score.ts
-// scripts/check-prompt-sync.mjs fails the build if the copies drift.
-//
-// The model reports which of the posting's keywords the tailored resume covers;
-// the score is computed here, so it is deterministic and can only rise as
-// keywords are covered over a fixed posting. Three corrections to the model's
-// report, because each cost honest candidates points:
-//   - a hard requirement already counted as a missing keyword isn't subtracted
-//     a second time as a gating gap;
-//   - a years requirement the candidate meets ("Requires 5yr, candidate ~7yr")
-//     is not a gap;
-//   - an either/or requirement ("Tableau or Power BI", "Westlaw/Lexis") counts
-//     as covered when the resume has the other option.
+// Mirrored byte-for-byte: extension/src/lib/ai/ats-score.ts ⇄ backend/supabase/functions/_shared/ats-score.ts.
+// Scored here, not by the model, so it's deterministic (https://github.com/TheLinc/cover-me/commit/19482ab32c90e661ebfd9ca22cd04e6829aa0c6c).
 
 export interface KeywordMatch {
   tier1Covered?: unknown
@@ -22,16 +10,15 @@ export interface KeywordMatch {
 }
 
 export interface ScoreContext {
-  /** The job posting, for either/or requirements. */
   jobDescription?: string
-  /** All of the candidate's own text (resume plus verified supplemental context). */
   candidate?: string
 }
 
 const TIER1_WEIGHT = 70
 const TIER2_WEIGHT = 30
-const GATING_PENALTY = 10 // per unmet hard qualification
-const MAX_GATING_PENALTY = 25 // cap so strong-skill candidates aren't cratered
+const GATING_PENALTY = 10
+// Capped so strong-skill candidates aren't cratered (https://github.com/TheLinc/cover-me/commit/19482ab32c90e661ebfd9ca22cd04e6829aa0c6c).
+const MAX_GATING_PENALTY = 25
 
 function strArr(v: unknown): string[] {
   return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string' && x.trim().length > 0) : []
@@ -45,16 +32,15 @@ function mentions(text: string, term: string): boolean {
   return new RegExp(`(^|[^A-Za-z0-9])${escapeRe(term)}($|[^A-Za-z0-9])`, 'i').test(text)
 }
 
-// "Requires 5yr, candidate ~7yr", "Requires 5+ years, candidate ~3 years".
+// "Requires 5yr, candidate ~7yr", "Requires 5+ years, candidate ~3 years", "Requires 4yr, candidate ~2.5yr" (#278).
 function yearsMet(gap: string): boolean {
-  const m = /requires?\s*(\d+)\+?\s*(?:yrs?|years?)\b.*?candidate\s*~?\s*(\d+)\s*(?:yrs?|years?)/i.exec(gap)
+  const m = /requires?\s*(\d+(?:\.\d+)?)\+?\s*(?:yrs?|years?)\b.*?candidate\s*~?\s*(\d+(?:\.\d+)?)\s*(?:yrs?|years?)/i.exec(gap)
   return !!m && Number(m[2]) >= Number(m[1])
 }
 
-// Up to two capitalized words, or one token like "SQL" or "C#".
+// Up to two capitalized words, or one token like "SQL" or "C#" (https://github.com/TheLinc/cover-me/commit/19482ab32c90e661ebfd9ca22cd04e6829aa0c6c).
 const OPTION = '[A-Z][\\w.+#-]*(?:\\s[A-Z][\\w.+#-]*)?'
 
-/** True when the posting offers `keyword` as one of several options and the candidate has another. */
 function coveredByAlternative(keyword: string, ctx: ScoreContext): boolean {
   if (!ctx.jobDescription || !ctx.candidate) return false
   const k = escapeRe(keyword)
@@ -69,8 +55,6 @@ function coveredByAlternative(keyword: string, ctx: ScoreContext): boolean {
   return false
 }
 
-// Coverage → score + complete gap list. A posting with no Tier-N keywords scores
-// that tier as fully covered (nothing to miss) rather than dividing by zero.
 export function scoreFromMatch(m: KeywordMatch, ctx: ScoreContext = {}): { score: number; gaps: string[] } {
   let t1c = strArr(m.tier1Covered).length
   let t2c = strArr(m.tier2Covered).length
@@ -81,6 +65,7 @@ export function scoreFromMatch(m: KeywordMatch, ctx: ScoreContext = {}): { score
 
   const missing = [...t1Missing, ...t2Missing]
   const gating = strArr(m.gatingGaps).filter((g) => !yearsMet(g))
+  // A requirement already scored as a missing keyword isn't taken off twice (https://github.com/TheLinc/cover-me/commit/19482ab32c90e661ebfd9ca22cd04e6829aa0c6c).
   const penalized = gating.filter((g) => !missing.some((k) => mentions(g, k)))
 
   const t1total = t1c + t1Missing.length
@@ -95,11 +80,7 @@ export function scoreFromMatch(m: KeywordMatch, ctx: ScoreContext = {}): { score
   return { score, gaps }
 }
 
-// The same posting keywords, checked against `text` by word instead of by the
-// model's judgment (#228). The model names keywords as phrases ("Briefing
-// senior leadership", "SolidWorks (Creo or SolidWorks)"), so an exact match
-// would miss most of them; a keyword counts when every word of it, or of one
-// option it gives in parentheses or after a slash, appears in some form.
+// The model names keywords as phrases ("Briefing senior leadership"), which an exact match would miss (#228).
 // Gating gaps carry over: tailoring can't meet a hard requirement.
 const FILLER = new Set(['a', 'an', 'and', 'or', 'of', 'the', 'in', 'on', 'to', 'for', 'with', 'year', 'years', 'experience'])
 const words = (s: string) => s.split(/[^A-Za-z0-9+#]+/).filter(Boolean)
@@ -135,10 +116,7 @@ export function scoreText(m: KeywordMatch, text: string, jobDescription?: string
   )
 }
 
-// The original resume's score, on the tailored score's scale: the tailored
-// score less what tailoring's wording gained by word match. The model's own
-// judgment of the original would need a second call; comparing the two
-// resumes by one measure keeps the gain honest.
+// Judging the original would take a second model call; one word-match measure for both keeps the gain honest (#228).
 export function scoreBefore(m: KeywordMatch, atsScore: number, original: string, tailored: string, jobDescription?: string): number {
   const gain = scoreText(m, tailored, jobDescription).score - scoreText(m, original, jobDescription).score
   return Math.max(0, atsScore - Math.max(0, gain))

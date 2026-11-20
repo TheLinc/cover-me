@@ -1,25 +1,3 @@
-// Stand-in for api.anthropic.com during function tests. The served functions
-// reach it through ANTHROPIC_BASE_URL (http://host.docker.internal:<port>).
-//
-// Routes:
-//   POST /v1/messages          canned reply picked by request shape (see reply())
-//   POST /__mock/fail-next     { status, body? } → the next /v1/messages call fails
-//   POST /__mock/delay-next    { ms } → the next /v1/messages call answers after ms
-//   POST /__mock/stream-pause  { ms } → the next streaming reply pauses ms after its first text delta
-//   POST /__mock/drop-next-stream     → the next streaming request has its connection cut, no response
-//   GET  /__mock/requests      every /v1/messages body received since the last reset
-//   POST /__mock/reset         clears recorded requests and queued failures
-//   POST /v1/customers, /v1/subscriptions, /v1/checkout/sessions, /v1/billing_portal/sessions
-//   GET  /v1/subscriptions, /v1/coupons/:id   Stripe stand-ins (billing function, via STRIPE_API_BASE)
-//   DELETE /v1/customers/:id   Stripe stand-in (account function)
-//   GET  /__mock/stripe        every Stripe call received since the last reset
-//   POST /emails               Resend stand-in (nudge function, via RESEND_API_BASE)
-//   GET  /__mock/emails        every email sent since the last reset
-//   POST /__mock/email-fail-next { status } → the next POST /emails fails
-//   POST /__mock/email-drop-next       → the next POST /emails has its connection cut
-//   POST /i/v0/e/              PostHog stand-in (tailor's tailor_run event, via POSTHOG_HOST)
-//   GET  /__mock/posthog       every PostHog event received since the last reset
-
 import { createServer, type IncomingMessage, type Server } from 'node:http'
 
 export const MOCK_LETTER = `Dear Acme Team,
@@ -36,7 +14,20 @@ Kind regards,
 
 Test Person`
 
-// What the mock line rewrite returns for the flagged bullet (see /v1/messages below).
+// Cloudflare's dummy token, the only one test secrets accept (https://developers.cloudflare.com/turnstile/troubleshooting/testing/).
+export const MOCK_TURNSTILE_TOKEN = 'XXXX.DUMMY.TOKEN.XXXX'
+export const MOCK_TURNSTILE_LOGIN_TOKEN = 'XXXX.DUMMY.TOKEN.LOGIN'
+export const MOCK_TURNSTILE_ELSEWHERE_TOKEN = 'XXXX.DUMMY.TOKEN.ELSEWHERE'
+
+export const MOCK_ATS_REPORT = {
+  keywords: [
+    { name: 'SQL', tier: 1, posting_text: 'SQL', resume_text: 'SQL', covered: true },
+    { name: 'Tableau', tier: 2, posting_text: 'Tableau', resume_text: '', covered: false },
+  ],
+  gatingGaps: ['Requires 3yr, candidate ~1yr'],
+  job_title: 'Data Analyst',
+}
+
 export const MOCK_REWRITTEN_BULLET = 'Rebuilt the billing export pipeline in TypeScript'
 
 export const MOCK_PARSED_RESUME = {
@@ -65,9 +56,7 @@ export const MOCK_PARSED_RESUME = {
   ],
   skills: 'TypeScript, Postgres, React',
   otherSections: [{ heading: 'Volunteer Work', lines: ['Mentor, Code Club (2019 – 2021)'] }],
-  // The model's order, wrong the way Haiku's often is (its JSON's order). The
-  // text has Volunteer Work between Experience and Education, and the order
-  // comes from the text (#165).
+  // Wrong the way Haiku's often is: the order must come from the text (#165).
   sectionOrder: ['experience', 'education', 'skills', 'other'],
 }
 
@@ -77,8 +66,8 @@ export const MOCK_TAILOR_DELTA = {
     { bullets: ['Rebuilt the billing export pipeline in TypeScript, cutting run time from 4 hours to 40 minutes', 'Owned Postgres-backed customer dashboard services'] },
     { bullets: ['Fixed production bugs across the React web app'] },
   ],
-  // Current prompt format: added skills cite resume evidence. "Data Pipelines"
-  // is backed by a real bullet; "Kafka" cites evidence the resume lacks.
+  // "Data Pipelines" is backed by a real bullet; "Kafka" cites evidence the
+  // resume lacks (https://github.com/TheLinc/cover-me/commit/0e9a09cd).
   skills: [
     { skill: 'TypeScript' },
     { skill: 'Postgres' },
@@ -101,7 +90,6 @@ type MessagesBody = {
   messages?: Array<{ role: string; content: string | Array<{ type: string; text?: string }> }>
   thinking?: { type: string; display?: string }
   fallbacks?: unknown
-  /** The anthropic-beta request header, recorded so tests can check it. */
   betaHeader?: string
 }
 
@@ -113,10 +101,6 @@ let dropNextStream = false
 
 type StripeCall = { path: string; params: Record<string, string>; idempotencyKey: string | null }
 const stripeCalls: StripeCall[] = []
-// What GET /v1/subscriptions answers: these subscriptions (a bare status or a
-// whole object), or "No such customer". customerError and subscriptionError
-// make the next POST /v1/customers or /v1/subscriptions fail once, and
-// deleteCustomerError the next DELETE /v1/customers/:id.
 type MockSubscription = string | { id?: string; status: string; trial_end?: number; metadata?: Record<string, string> }
 type StripeFailure = { status: number; code: string } | null
 type SentEmail = { authorization: string | undefined; body: Record<string, unknown> }
@@ -131,7 +115,6 @@ const stripeState = {
   customerError: null as StripeFailure,
   subscriptionError: null as StripeFailure,
   deleteCustomerError: null as StripeFailure,
-  // Fails the next checkout session that carries a coupon.
   discountError: null as StripeFailure,
 }
 
@@ -158,9 +141,8 @@ function messageJson(text: string, model = 'mock') {
 
 export const MOCK_THINKING = ['**Matching the posting**\n\nThe posting asks for Kafka.', ' The resume has data pipelines.']
 
-// Anthropic SSE framing, split into several text deltas so the tailor
-// function's NDJSON relay has more than one fragment to forward. A request for
-// summarized thinking gets a thinking block first, as the real API sends it.
+// Several deltas so the NDJSON relay forwards more than one; thinking comes first, as the real API sends it
+// (https://github.com/TheLinc/cover-me/commit/f2256d02).
 function sseBody(text: string, summarized = false): string {
   const chunks = text.match(/[\s\S]{1,80}/g) ?? []
   const thinking: unknown[] = summarized
@@ -245,20 +227,22 @@ export function startMockAnthropic(port: number): Promise<Server> {
         return res.end(failure.body)
       }
 
-      // Tailor is the only streaming call; the skill-claim check and the resume
-      // parse run on Haiku; everything else is a cover letter.
-      // The answer function sends its prompt as text blocks (a cached part, then the question).
+      // The answer function sends its prompt as text blocks: a cached part, then
+      // the question (https://github.com/TheLinc/cover-me/commit/0e9a09cd).
       const first = body.messages?.[0]?.content
       const prompt = typeof first === 'string' ? first : Array.isArray(first) ? first.map((b) => b.text ?? '').join('') : ''
+      if (/^TODAY'S DATE: [\d-]+\n\n<posting>/.test(prompt)) {
+        res.writeHead(200, { 'content-type': 'application/json' })
+        return res.end(messageJson(JSON.stringify(MOCK_ATS_REPORT), body.model))
+      }
       if (prompt.startsWith('SKILL CLAIM CHECK')) {
-        // Approve every pair: the tests assert which skills survive grounding.
+        // Approve every pair: the tests assert which skills survive grounding (https://github.com/TheLinc/cover-me/commit/0e9a09cd).
         const count = (prompt.match(/^\d+\. EVIDENCE:/gm) ?? []).length
         const verdicts = Array.from({ length: count }, (_, i) => ({ i, ok: true }))
         res.writeHead(200, { 'content-type': 'application/json' })
         return res.end(messageJson(JSON.stringify({ verdicts }), body.model))
       }
-      // Line check: flag the tailor output's invented metric ("4 hours to 40
-      // minutes" is not in the resume). Line rewrite: fix each flagged id.
+      // "4 hours to 40 minutes" is the tailor output's invented metric (https://github.com/TheLinc/cover-me/commit/48b89133).
       if (prompt.startsWith('RESUME ACCURACY CHECK')) {
         const id = /\[(e\d+b\d+)\][^\n]*4 hours to 40 minutes/.exec(prompt)?.[1]
         const flags = id ? [{ id, reason: 'invented run-time numbers' }] : []
@@ -280,7 +264,6 @@ export function startMockAnthropic(port: number): Promise<Server> {
         if (streamPause) {
           const ms = streamPause
           streamPause = 0
-          // Split just before the second text delta.
           const cut = sse.lastIndexOf('event: ', sse.indexOf('"text_delta"', sse.indexOf('"text_delta"') + 1))
           res.write(sse.slice(0, cut))
           await new Promise((r) => setTimeout(r, ms))
@@ -347,6 +330,14 @@ export function startMockAnthropic(port: number): Promise<Server> {
       return res.end(JSON.stringify(reply))
     }
 
+    if (req.method === 'POST' && url === '/turnstile/v0/siteverify') {
+      const form = new URLSearchParams(await readBody(req))
+      res.writeHead(200, { 'content-type': 'application/json' })
+      const token = form.get('response')
+      return res.end(JSON.stringify([MOCK_TURNSTILE_TOKEN, MOCK_TURNSTILE_LOGIN_TOKEN, MOCK_TURNSTILE_ELSEWHERE_TOKEN].includes(token ?? '')
+        ? { success: true, action: token === MOCK_TURNSTILE_LOGIN_TOKEN ? 'login' : 'ats-check', hostname: token === MOCK_TURNSTILE_ELSEWHERE_TOKEN ? 'evil.example' : 'localhost' }
+        : { success: false, 'error-codes': ['invalid-input-response'] }))
+    }
     if (req.method === 'GET' && url === '/__mock/posthog') {
       res.writeHead(200, { 'content-type': 'application/json' })
       return res.end(JSON.stringify(posthogEvents))
@@ -390,7 +381,7 @@ export function startMockAnthropic(port: number): Promise<Server> {
 
   return new Promise((resolve, reject) => {
     server.once('error', reject)
-    // 0.0.0.0 so the Edge Runtime container can reach it via host.docker.internal.
+    // 0.0.0.0 so the Edge Runtime container can reach it via host.docker.internal (https://github.com/TheLinc/cover-me/commit/f2256d02).
     server.listen(port, '0.0.0.0', () => resolve(server))
   })
 }

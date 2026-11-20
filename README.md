@@ -249,7 +249,7 @@ pnpm eval --live --tailor --judge --industry Trades --runs 2
 
 Run only the side you changed (`--letters`, `--tailor`, or `--answers` for application-question answers). Letters and resume tailoring share no prompt code, and tailoring is about 70% of a full run's model calls (390 of 570). A letters-only full run is about 180 calls. `scripts/eval-side.sh <base-ref>` prints which side a diff needs.
 
-Live runs go through `claude -p` on your Claude plan unless `ANTHROPIC_API_KEY` is set (then `--via api` uses API credits). For clean outputs, put a token from `claude setup-token` in `extension/eval/.env` as `CLAUDE_CODE_OAUTH_TOKEN=...`. The harness then uses an empty Claude Code config, so your own `CLAUDE.md`, hooks and rules never reach the model. Every output is saved to `eval/reports/results-*.json`.
+Live runs go through `claude -p` on your Claude plan, never API credits. For clean outputs, put a token from `claude setup-token` in `extension/eval/.env` as `CLAUDE_CODE_OAUTH_TOKEN=...`. The harness then uses an empty Claude Code config, so your own `CLAUDE.md`, hooks and rules never reach the model. Every output is saved to `eval/reports/results-*.json`.
 
 A resume fails when the parse doesn't match its answer key, when an integrity check fails (invented skills or numbers, changed titles or dates, dropped certifications, wrong bullet counts), or when the judge scores faithfulness, field fit, relevance or readability at 2/5 or lower. `--baseline` also fails a case whose judge scores drop by a full point against `eval/baseline.json`. Refresh that file with `--update-baseline` after an intended change.
 
