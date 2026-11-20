@@ -1,8 +1,3 @@
-// Every call runs through `claude -p` on the Claude plan, with no tools, MCP or
-// user settings. Claude Code loads CLAUDE.md from each folder above its working
-// dir, so it runs from the filesystem root, and CLAUDE_CODE_OAUTH_TOKEN gets it
-// an empty config dir (https://github.com/TheLinc/cover-me/commit/cb47a02).
-
 import { spawn } from 'node:child_process'
 import { existsSync, mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -32,6 +27,7 @@ function record(model: string, input: number, output: number, cost: number, labe
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
+// Claude Code loads CLAUDE.md from every folder above its working dir (https://github.com/TheLinc/cover-me/commit/cb47a02).
 const WORKDIR = parse(tmpdir()).root
 const ROOT_HAS_INSTRUCTIONS = existsSync(join(WORKDIR, 'CLAUDE.md')) || existsSync(join(WORKDIR, '.claude'))
 const CLEAN_CONFIG = process.env.CLAUDE_CODE_OAUTH_TOKEN ? mkdtempSync(join(tmpdir(), 'coverme-eval-config-')) : undefined
@@ -43,8 +39,7 @@ export function claudeIsolation(): string {
     : 'NOT fully isolated: set CLAUDE_CODE_OAUTH_TOKEN (run `claude setup-token`) to keep your account context out'
 }
 
-// claude -p takes one prompt, so the letter lint retry's exchange goes in as a
-// transcript (https://github.com/TheLinc/cover-me/commit/cb47a02).
+// claude -p takes one prompt (https://github.com/TheLinc/cover-me/commit/cb47a02).
 function flatten(messages: Msg[]): string {
   if (messages.length === 1) return messages[0].content
   return messages
@@ -60,11 +55,10 @@ function runClaude(prompt: string, opts: CallOptions): Promise<string> {
     '--system-prompt', 'Follow the user\'s instructions exactly.',
   ]
   const env: NodeJS.ProcessEnv = { ...process.env }
-  // claude -p bills an ANTHROPIC_API_KEY in its env instead of the plan
-  // (https://github.com/TheLinc/cover-me/commit/cb47a02).
+  // With a key in its env, claude -p bills API credits, not the plan (https://github.com/TheLinc/cover-me/commit/cb47a02).
   delete env.ANTHROPIC_API_KEY
   if (CLEAN_CONFIG) env.CLAUDE_CONFIG_DIR = CLEAN_CONFIG
-  // The thinking settings production uses, SONNET_FIELDS in src/lib/ai/claude.ts (#203).
+  // Matches SONNET_FIELDS in src/lib/ai/claude.ts (#203).
   if (opts.model === 'claude-sonnet-5-5' && !opts.think) args.push('--effort', 'high')
   else if (!opts.think) env.MAX_THINKING_TOKENS = '0'
 
@@ -94,8 +88,7 @@ function runClaude(prompt: string, opts: CallOptions): Promise<string> {
   })
 }
 
-// Once the plan reports a session or usage limit, later calls fail at once so the run ends
-// fast and still writes what it finished (https://github.com/TheLinc/cover-me/commit/0c46fe4).
+// After a plan limit, fail fast so the run still writes what it finished (https://github.com/TheLinc/cover-me/commit/0c46fe4).
 let planLimit: string | undefined
 export const planLimitHit = () => planLimit
 const LIMIT = /session limit|usage limit|hit your .*limit/i
