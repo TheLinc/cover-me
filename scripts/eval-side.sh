@@ -1,20 +1,7 @@
 #!/usr/bin/env bash
-# Which sides of the output eval a diff needs: prints "all", or the sides to
-# run separated by spaces (letters, tailor, answers), each a `pnpm eval` flag.
-# Letters, resume tailoring and application answers share no prompt code, so
-# a change to one side doesn't need the others' model calls (tailoring is ~70%
-# of a full run).
-#
-#   scripts/eval-side.sh <base-ref>        diff <base-ref>...HEAD
-#   scripts/eval-side.sh --files a b c     classify these paths (for testing)
-#
-# Anything not listed as one side (model clients, the eval harness, fixtures,
-# the prompt-sync script) runs all, and so does an empty diff.
-#
-# When a non-empty diff runs letters without a letter file in it (the letter
-# prompt, lint or generate function, or a model client), " lint-warn" follows
-# "all": pass it as --lint-warn so a letter that still fails the lint after
-# its retry is a warning, not a failed job (#243).
+# Letters, tailoring and answers share no prompt code, so a diff runs only its sides (tailoring is ~70% of a full run).
+# " lint-warn" after "all" means no letter file changed: pass it as --lint-warn so a letter that still
+# fails lint after its retry warns instead of failing the job (#243).
 set -euo pipefail
 
 if [ "${1:-}" = "--files" ]; then
@@ -38,6 +25,7 @@ while IFS= read -r f; do
     extension/src/lib/ai/parse-delta* | backend/supabase/functions/tailor/* | \
     backend/supabase/functions/_shared/resume-parse.ts | backend/supabase/functions/_shared/resume-grounding.ts | \
     backend/supabase/functions/_shared/ats-score.ts | \
+    extension/src/lib/ai/keyword-rules* | backend/supabase/functions/_shared/keyword-rules.ts | \
     extension/eval/claim-pairs.ts | extension/eval/line-pairs.ts)
       tailor=true ;;
     extension/src/lib/ai/answer* | backend/supabase/functions/answer/* | \

@@ -3,7 +3,6 @@ import { scoreBefore, scoreFromMatch, scoreText } from './ats-score'
 
 describe('scoreFromMatch', () => {
   it('weights tier 1 at 70 and tier 2 at 30 over the covered fraction', () => {
-    // 2 of 3 tier-1, 1 of 1 tier-2: 70 * 2/3 + 30 = 76.67 → 77
     const r = scoreFromMatch({ tier1Covered: ['TypeScript', 'Postgres'], tier1Missing: ['Kafka'], tier2Covered: ['React'], tier2Missing: [] })
     expect(r.score).toBe(77)
     expect(r.gaps).toEqual(['Kafka'])
@@ -27,6 +26,11 @@ describe('scoreFromMatch', () => {
     const r = scoreFromMatch({ tier1Covered: ['A'], gatingGaps: ['Requires 5yr, candidate ~7yr'] })
     expect(r.score).toBe(100)
     expect(r.gaps).toEqual([])
+  })
+
+  it('reads half years in a years requirement', () => {
+    expect(scoreFromMatch({ tier1Covered: ['A'], gatingGaps: ['Requires 4yr UX or product design, candidate ~2.5yr'] }).score).toBe(90)
+    expect(scoreFromMatch({ tier1Covered: ['A'], gatingGaps: ['Requires 2yr, candidate ~2.5yr'] }).score).toBe(100)
   })
 
   it('keeps a years requirement the candidate falls short of', () => {
@@ -94,9 +98,7 @@ describe('scoreText', () => {
   })
 
   it('ignores case and finds a keyword inside a longer word only by its stem', () => {
-    // typescript + REACT found; "Java" is not "JavaScript"'s stem.
     const r = scoreText({ tier1Covered: ['TypeScript', 'Java'], tier2Covered: ['React'] }, 'typescript, JavaScript and REACT')
-    // 70 * 1/2 + 30 = 65
     expect(r.score).toBe(65)
     expect(r.gaps).toEqual(['Java'])
   })
@@ -134,7 +136,6 @@ describe('scoreBefore', () => {
   const report = { tier1Covered: ['TypeScript', 'Postgres'], tier1Missing: ['Kafka'], tier2Covered: ['React'] }
 
   it('takes the wording gain from tailoring off the tailored score', () => {
-    // Text match: original 70 * 1/3 + 30 = 53, tailored 70 * 2/3 + 30 = 77, so the gain is 24.
     expect(scoreBefore(report, 80, 'TypeScript and React', 'TypeScript, Postgres and React')).toBe(56)
   })
 

@@ -2,11 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Palette ─────────────────────────────────────────────────────────────────
- * Warm neutrals with Cover Me indigo as the only accent (the extension shares it).
- * Hex tokens for our own classes; the HSL channels in the base layer feed
- * shadcn's hsl(var(--x)) utilities. Keep the two in sync.
- * ─────────────────────────────────────────────────────────────────────────── */
+/* Hex tokens for our own classes; the HSL channels in the base layer feed shadcn's
+   hsl(var(--x)) utilities. Keep the two in sync. */
 :root {
   --paper:        #F5F3F2; /* page */
   --panel:        #ECEAE7; /* soft panels behind product visuals */
@@ -132,7 +129,6 @@ img, svg, video { display: block; }
   .container { padding-inline: 20px; }
 }
 
-/* In the components layer so Tailwind utilities can override them. */
 @layer utilities {
   /* Geist sits its capitals about 1px high in a centered control (measured at
      13px: 13 rows above, 15 below in a 36px chip). Labels inside pills take
@@ -141,13 +137,11 @@ img, svg, video { display: block; }
 }
 
 @layer components {
-  /* White rounded card on the paper background. */
   .soft-card {
     background: var(--surface);
     border-radius: 24px;
   }
 
-  /* Faint grid behind product stages. */
   .stage-grid {
     background-color: var(--panel);
     background-image:
@@ -156,14 +150,12 @@ img, svg, video { display: block; }
     background-size: 32px 32px;
   }
 
-  /* Dot field behind sections (Ambient), fading out toward its edges. */
   .dot-field {
     background-image: radial-gradient(#C9C3BC 1.3px, transparent 1.5px);
     background-size: 18px 18px;
     mask-image: radial-gradient(closest-side, #000 20%, transparent);
   }
 
-  /* Loading shimmer in product visuals. */
   .skeleton-line {
     border-radius: 3px;
     background: linear-gradient(90deg, var(--ext-elevated) 25%, rgba(99, 102, 241, 0.25) 50%, var(--ext-elevated) 75%);
@@ -303,3 +295,18 @@ img, svg, video { display: block; }
 .guide-prose section > :is(p, ul, ol) a { color: var(--brand-strong); text-decoration: underline; text-decoration-color: rgba(79, 70, 229, 0.35); text-underline-offset: 3px; }
 .guide-prose > p a:hover,
 .guide-prose section > :is(p, ul, ol) a:hover { color: var(--brand-deep); text-decoration-color: currentColor; }
+
+/* ATS checker: crops from the top so text never stretches. The page switches at once and the new state
+   covers the old before it fades, so nothing shows twice (#278). */
+html.ats-morph::view-transition-old(root) { display: none; }
+html.ats-morph::view-transition-new(root) { animation: none; }
+::view-transition-group(ats-inputs) { animation-duration: 450ms; animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1); }
+::view-transition-group(ats-results) { animation-duration: 650ms; animation-timing-function: cubic-bezier(0.25, 1, 0.5, 1); background: var(--panel); border-radius: 22px; }
+::view-transition-old(ats-inputs), ::view-transition-new(ats-inputs),
+::view-transition-old(ats-results), ::view-transition-new(ats-results) { height: 100%; object-fit: none; object-position: top; overflow: clip; mix-blend-mode: normal; }
+::view-transition-image-pair(ats-inputs), ::view-transition-image-pair(ats-results) { overflow: clip; }
+::view-transition-new(ats-inputs), ::view-transition-new(ats-results) { animation: ats-in 220ms ease-out both; }
+::view-transition-old(ats-inputs) { animation: ats-out 120ms ease-in both; }
+::view-transition-old(ats-results) { animation: ats-out 180ms 100ms ease-in both; }
+@keyframes ats-in { from { opacity: 0; } }
+@keyframes ats-out { to { opacity: 0; } }
