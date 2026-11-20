@@ -19,8 +19,8 @@ const SITEVERIFY_URL = Deno.env.get('TURNSTILE_VERIFY_URL') || 'https://challeng
 const TURNSTILE_HOSTNAMES = (Deno.env.get('TURNSTILE_HOSTNAMES') || 'cover-me.dev,www.cover-me.dev').split(',').map((h) => h.trim()).filter(Boolean)
 const TURNSTILE_ACTION = 'ats-check'
 
-const PER_MINUTE = 6
-const PER_DAY = 40
+const PER_MINUTE = 3
+const PER_DAY = 25
 // Across all IPs, so calls from many addresses still stop short of the key's spend limit (#278).
 const ALL_PER_MINUTE = 60
 const ALL_PER_DAY = 3000

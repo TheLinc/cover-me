@@ -78,8 +78,8 @@ describe('ats-check', () => {
   it('limits calls per IP', async () => {
     const ip = freshIp()
     const statuses: number[] = []
-    for (let i = 0; i < 7; i++) statuses.push((await check(PAIR, ip)).status)
-    expect(statuses).toEqual([200, 200, 200, 200, 200, 200, 429])
+    for (let i = 0; i < 4; i++) statuses.push((await check(PAIR, ip)).status)
+    expect(statuses).toEqual([200, 200, 200, 429])
   })
 
   it('answers 502 when the model call fails', async () => {
