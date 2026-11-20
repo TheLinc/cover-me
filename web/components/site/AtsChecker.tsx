@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react'
 import { flushSync } from 'react-dom'
+import Image from 'next/image'
 import { CaretDownIcon, CheckIcon, DeviceMobileIcon, GoogleChromeLogoIcon, PencilSimpleIcon, UploadSimpleIcon, XIcon } from '@phosphor-icons/react/dist/ssr'
-import { ExtensionPopup } from '@/components/landing/ExtensionPopup'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -561,26 +561,29 @@ function MissingChip({ k, on, onPick }: { k: Checked; on: boolean; onPick: (k: C
 
 function Pitch() {
   return (
-    <ExtensionPopup status="Chrome extension" className="shadow-none">
-      <div className="flex flex-col gap-2 px-4 py-3.5 text-[14px] leading-[1.5]">
-        <p className="text-[16px] font-semibold text-white">Automatically tailor your resume to every posting</p>
-        <p className="text-ext-text-2">
+    <aside className="flex items-center gap-x-8 gap-y-4 rounded-[18px] border border-ext-border bg-ext-bg px-5 py-5 text-ext-text max-md:flex-col max-md:items-start sm:px-6">
+      <Image src="/logo.png" width={44} height={44} alt="" className="shrink-0 rounded-[11px] max-md:hidden" />
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <p className="text-[17px] font-semibold text-white">Automatically tailor your resume to every posting</p>
+        <p className="text-[14px] leading-[1.5] text-ext-text-2">
           Cover Me rewrites your bullets around each posting, optimizes your resume for ATS and writes a matching cover letter.
         </p>
-        <Button asChild className="mt-1 self-start [@media(pointer:coarse)]:hidden">
+      </div>
+      <div className="flex shrink-0 flex-col gap-1.5 md:items-center">
+        <Button asChild className="[@media(pointer:coarse)]:hidden">
           <a href={storeUrl('ats-result')} target="_blank" rel="noreferrer">
             <GoogleChromeLogoIcon size={18} aria-hidden /> Add Cover Me to Chrome, free
           </a>
         </Button>
-        <Button size="sm" onClick={sendToComputer} className="mt-1 self-start [@media(pointer:fine)]:hidden">
+        <Button onClick={sendToComputer} className="[@media(pointer:fine)]:hidden">
           <DeviceMobileIcon size={16} aria-hidden /> Send this to my computer
         </Button>
         <p className="text-[12.5px] text-ext-muted">
-          <span className="[@media(pointer:coarse)]:hidden">About 30 seconds for a tailored resume and letter. Free plan, no card.</span>
-          <span className="[@media(pointer:fine)]:hidden">Cover Me runs in Chrome on a computer. Send yourself the link and tailor your resume there.</span>
+          <span className="[@media(pointer:coarse)]:hidden">Free plan, no card. About 30 seconds a resume.</span>
+          <span className="[@media(pointer:fine)]:hidden">Cover Me runs in Chrome on a computer.</span>
         </p>
       </div>
-    </ExtensionPopup>
+    </aside>
   )
 }
 
