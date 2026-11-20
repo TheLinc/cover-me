@@ -142,6 +142,14 @@ describe('the posting title', () => {
   test("uses the AI's title when it has one", () => {
     expect(checkResumeText('Load Planner, 2020 - Present', 'Ridgeback Freight Lines\nAbout Ridgeback Freight Lines', 'Load Planner').title?.onResume).toBe(true)
   })
+
+  test.each([
+    ['Estate Paralegal - Trusts and Probate', 'Estate Paralegal, Marsh & Cole LLP', 'Estate Paralegal'],
+    ['Licensed Practical Nurse - Surgical Unit (Days)', 'Licensed Practical Nurse | Lakeview Hospital', 'Licensed Practical Nurse'],
+    ['Data Engineer, Billing Platform', 'Data Engineer at Fernway', 'Data Engineer'],
+  ])("cuts the AI's whole title line %s to the title", (line, resume, title) => {
+    expect(checkResumeText(resume, `Acme\n${line}`, line).title).toEqual({ posting: title, core: title, onResume: true })
+  })
 })
 
 test('email and phone are found in every fixture resume', () => {

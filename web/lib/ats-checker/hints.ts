@@ -77,11 +77,13 @@ const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 const mentionsTitle = (text: string, title: string) =>
   new RegExp(`(?<![A-Za-z0-9])${title.split(/\s+/).map(escapeRe).join('\\s+')}s?(?![A-Za-z0-9])`, 'i').test(text)
 
+const titleOnly = (line: string) => line.split(/,| [-–—|] |\(/)[0].trim()
+
 export function postingTitle(posting: string): string | null {
   const lines = posting.split('\n').map((l) => l.replace(/^[#*\s]+|[*\s]+$/g, ''))
   const filled = lines.flatMap((l, i) => (l ? [i] : [])).slice(0, 4)
   for (const at of filled) {
-    const title = lines[at].split(/,| [-–—|] |\(/)[0].trim()
+    const title = titleOnly(lines[at])
     if (isSectionHeading(title) || /^(job\s+)?(description|summary|overview|details)$/i.test(title)) return null
     if (/\b(program|programme|fellowship|cohort|bootcamp)\b/i.test(title)) return null
     if (!title || /[.!?:]$/.test(title) || /^(at|about|join|we|our)\b/i.test(title) || title.split(/\s+/).length > 8) continue
@@ -99,7 +101,7 @@ function namesEmployer(text: string, name: string) {
 
 export function checkResumeText(resume: string, posting: string, known?: string): ResumeChecks {
   const bullets = resumeBullets(resume)
-  const title = known || postingTitle(posting)
+  const title = (known && titleOnly(known)) || postingTitle(posting)
   return {
     bullets: { total: bullets.length, withoutNumber: bullets.filter((b) => !hasNumber(b)) },
     title: title ? { posting: title, core: coreTitle(title), onResume: mentionsTitle(resume, coreTitle(title)) } : null,
