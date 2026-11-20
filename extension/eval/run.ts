@@ -1,41 +1,16 @@
-// Eval harness for Cover Me's prompts.
-//
-//   pnpm eval                                  static checks only (free, no model calls)
-//   pnpm eval --live --quick --judge --baseline   the PR check: 12 cases, ~12 min
-//   pnpm eval --live --judge --runs 2 --judge-model claude-opus-5-5 --baseline
-//                                              the weekly full check: every case
-//
-//   Flags:
-//     --quick                  12 cases: one per field family, two long postings and a
-//                              trim-mode case (PR check)
-//     --letters / --tailor / --answers
-//                              run only those sides (default all). Run only the side
-//                              you changed: tailoring is ~70% of a full run's calls.
-//                              scripts/eval-side.sh <base> prints which sides a diff needs.
-//                              Answers (#232) run every answer case, --quick or not:
-//                              there are six, one call each.
-//     --case <id>              one case          --industry <name>  one industry
-//     --runs <n>               samples per resume case (default 1)
-//     --concurrency <n>        parallel cases (default 6)
-//     --via claude|api         claude (default): `claude -p` on your Claude plan;
-//                              api: API credits, only when named explicitly. The key
-//                              is ANTHROPIC_API_KEY, read from extension/.env or
-//                              extension/eval/.env by `pnpm eval`.
-//     --no-parse               tailor from the fixture's answer key instead of the
-//                              model's parse (isolates tailoring from parsing)
-//     --lint-warn              a letter still failing the lint after its retry is a
-//                              warning, not a failure. CI passes it when letters run
-//                              only because shared code changed (#243).
-//     --baseline               fail if judge scores drop vs the baseline
-//                              (eval/baseline.json with --quick, else baseline-full.json)
-//     --update-baseline        write this run's judge scores to that baseline
-//     --model / --parse-model / --judge-model <id>
-//                              defaults: claude-sonnet-5-5 / claude-haiku-4-5 / claude-sonnet-5-5
-//
-// Static mode verifies prompt invariants and fixture integrity, so it doubles
-// as a regression test for prompt edits. Live mode mirrors production: the
-// same prompt builders, parse step, delta merge, lint and corrective retry.
-// Every output lands in eval/reports/results-*.json for review.
+// Prompt eval. README.md ("Resume quality eval") covers usage and CI.
+//   --live                          call models (default: static checks only)
+//   --quick                         the 12-case PR set (answers always run all six)
+//   --judge                         score outputs with a judge model
+//   --letters / --tailor / --answers  only those sides (default all)
+//   --case <id> / --industry <name> filter cases
+//   --runs <n>                      samples per case (default 1)
+//   --concurrency <n>               parallel cases (default 6)
+//   --no-parse                      tailor from the fixture's answer key, not the model's parse
+//   --lint-warn                     a letter failing lint after its retry only warns (#243)
+//   --baseline                      fail on judge score drops (baseline.json with --quick, else baseline-full.json)
+//   --update-baseline               write this run's scores to that baseline
+//   --model / --parse-model / --judge-model <id>
 
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
@@ -53,7 +28,7 @@ import { buildResumeJudgePrompt, DIMENSIONS, FAIL_AT, parseJudgment, type Dimens
 import { buildClaimCheckPrompt, buildLineCheckPrompt, parseClaimVerdicts, parseLineFlags, type LineRepair } from '../src/lib/ai/resume-grounding'
 import { CLAIM_CHECK_MIN, CLAIM_PAIRS } from './claim-pairs'
 import { LINE_CHECK_MIN, LINE_ROLES } from './line-pairs'
-import { claudeIsolation, makeCaller, planLimitHit, pool, usage, type Backend } from './model'
+import { call, claudeIsolation, planLimitHit, pool, usage } from './model'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 
@@ -76,30 +51,22 @@ const PARSE_MODEL = opt('parse-model') ?? 'claude-haiku-4-5'
 const JUDGE_MODEL = opt('judge-model') ?? 'claude-sonnet-5-5'
 const RUNS = Math.max(1, Number(opt('runs') ?? 1))
 const CONCURRENCY = Math.max(1, Number(opt('concurrency') ?? 6))
-// API credits only when asked for by name: an ANTHROPIC_API_KEY in the shell
-// must never switch the eval off the Claude plan.
-const VIA = (opt('via') ?? 'claude') as Backend
 const USE_PARSE = !flag('no-parse')
 const LINT_WARN = flag('lint-warn')
 const ONLY_CASE = opt('case')
 const ONLY_INDUSTRY = opt('industry')?.toLowerCase()
-// The PR gate and the weekly full run keep separate baselines: different case
-// sets and judges give scores that can't be compared.
+// Different case sets and judges give scores that can't be compared (https://github.com/TheLinc/cover-me/commit/9bddb29).
 const BASELINE_FILE = join(HERE, QUICK ? 'baseline.json' : 'baseline-full.json')
 
 const SIGN_OFFS = ['Sincerely,', 'Best regards,', 'Kind regards,']
 const HOOKS = ['Achievement-first', 'Bold specific claim']
 
 
-// A low judge score fails a plain run. Under --baseline (the CI gate) it is a
-// warning: the gate fails on drops against the baseline and on the factual
-// checks (invented terms, lint, integrity), so it isn't red on every PR while
-// overall quality is still being raised.
+// Under --baseline a low score only warns, so CI fails on drops and factual
+// checks instead of on every PR (https://github.com/TheLinc/cover-me/commit/7e09bfc).
 const judgeFloor = (r: { failures: string[]; warnings: string[] }) => (flag('baseline') ? r.warnings : r.failures)
 
-// --quick: one case per field family, the prompt-injection case, the two
-// long postings (the only cases past the old 4,000-character cut) and the
-// trim-mode case (#251), for the PR check. The full set runs weekly.
+// One case per field family, plus the injection, long-posting and trim cases (#251).
 const QUICK_CASES = [
   'tech-prompt-injection', 'new-grad-data-analyst', 'nurse-missing-certs',
   'sales-ae-midmarket-to-enterprise', 'uk-finance-assistant', 'teacher-to-instructional-designer',
@@ -119,20 +86,16 @@ if (cases.length === 0) {
   process.exit(1)
 }
 
-// Answer cases ride on the resume cases: --case and --industry pick them by
-// their base case.
 const answerCases = ANSWER_CASES.filter((a) => {
   const base = CASES.find((c) => c.id === a.caseId)
   return (!ONLY_CASE || a.caseId === ONLY_CASE) && (!ONLY_INDUSTRY || base?.industry.toLowerCase() === ONLY_INDUSTRY)
 })
 
-const call = makeCaller(VIA)
-
 let hardFailures = 0
 const stamp = new Date().toISOString().replace(/[:.]/g, '-')
 const reportLines: string[] = [
   `# Eval report — ${new Date().toISOString()}`, '',
-  `Tailor/letter model: ${MODEL} | parse: ${PARSE_MODEL} | judge: ${JUDGE_MODEL} | via: ${VIA} | live: ${LIVE} | runs: ${RUNS}${LINT_WARN ? ' | letter lint: warnings only (--lint-warn)' : ''}`, '',
+  `Tailor/letter model: ${MODEL} | parse: ${PARSE_MODEL} | judge: ${JUDGE_MODEL} | live: ${LIVE} | runs: ${RUNS}${LINT_WARN ? ' | letter lint: warnings only (--lint-warn)' : ''}`, '',
 ]
 
 function section(title: string) {
@@ -167,8 +130,6 @@ function stripMarkdown(text: string): string {
     .replace(/\n{3,}/g, '\n\n')
     .trim()
 }
-
-// ── Static checks (always run) ───────────────────────────────────────────────
 
 function staticChecks() {
   section('Static prompt invariants')
@@ -243,7 +204,6 @@ function staticChecks() {
     record(`answer prompt invariants: ${a.id}`, result)
   }
 
-  // Lint self-test 1: the in-prompt exemplar letter must itself pass the lint.
   section('Lint self-tests')
   const anyPrompt = buildLetterPrompt(cases[0].job, cases[0].resumeText)
   const exemplarMatch = anyPrompt.match(/Exemplar A \(technology\):\n"""\n([\s\S]*?)\n"""/)
@@ -256,7 +216,6 @@ function staticChecks() {
   }
   record('exemplar A passes the letter lint', exemplarResult)
 
-  // Lint self-test 2: a deliberately terrible letter must be caught.
   const badLetter = `Dear Hiring Manager,
 
 I am writing to apply for this position. I am a passionate, detail-oriented team player eager to delve into new challenges and leverage my synergistic skill set — a testament to my proven track record — in your fast-paced environment — moreover, I am a fast learner.
@@ -276,8 +235,7 @@ John Doe`
   }
   record(`bad letter caught (${badLint.violations.length} violations flagged)`, badResult)
 
-  // Lint self-test 3: a banned word inside the employer's name is the employer,
-  // not an AI tell. Without this, the model avoids naming "Beacon Retail Group".
+  // A banned word in the employer's name isn't an AI tell (https://github.com/TheLinc/cover-me/commit/7e09bfc).
   const companyResult: CheckResult = { failures: [], warnings: [] }
   if (exemplarMatch) {
     const renamed = exemplarMatch[1].replaceAll('Northlight', 'Beacon Retail Group')
@@ -287,8 +245,7 @@ John Doe`
   }
   record('banned words inside the company name are allowed', companyResult)
 
-  // Lint self-test 4: the letter goes to an employer, so a note to the user
-  // (seen live after a prompt-injection posting) must be caught and retried.
+  // A note to the user appeared in a letter after a prompt-injection posting (https://github.com/TheLinc/cover-me/commit/c25c105).
   const noteResult: CheckResult = { failures: [], warnings: [] }
   if (exemplarMatch) {
     const notes = [
@@ -305,8 +262,6 @@ John Doe`
   }
   record('notes to the user are caught', noteResult)
 }
-
-// ── Live letters ─────────────────────────────────────────────────────────────
 
 async function judgeLetter(letter: string): Promise<{ score: number; flags: string[] }> {
   const raw = await call(
@@ -334,27 +289,24 @@ Respond with ONLY this JSON: {"score": <1-5>, "flags": ["<each phrase or pattern
 
 async function liveLetters() {
   section(`Live letters (model: ${MODEL})`)
-  // Runs apply to letters too: one letter per case is too noisy to compare.
-  // Mode cases (#251) only change tailoring; their letter would repeat the base case's.
+  // Mode cases only change tailoring, so their letter would repeat the base case's (#251).
   const jobs = cases.filter((c) => !c.mode).flatMap((c, i) => Array.from({ length: RUNS }, (_, run) => ({ c, i, run })))
   process.stdout.write(`  ${jobs.length} letters `)
   const results = await pool(jobs, CONCURRENCY, async ({ c, i, run }) => {
     const v = i + run
-    // The close steps once every three letters, so it doesn't pair with one hook.
+    // The close changes once every three letters so it doesn't always pair with one hook (#206).
     const variation: LetterVariation = { signOff: SIGN_OFFS[v % SIGN_OFFS.length], hookPattern: HOOKS[v % HOOKS.length], closePattern: CLOSE_PATTERNS[Math.floor(v / 3) % CLOSE_PATTERNS.length] }
     const prompt = buildLetterPrompt(c.job, c.resumeText, undefined, variation)
     let letter: string
     try {
       letter = stripMarkdown(await call([{ role: 'user', content: prompt }], { model: MODEL, maxTokens: 1024 }))
     } catch (e) {
-      // One failed call fails this letter, not the whole run.
       process.stdout.write('x')
       const result: CheckResult = { failures: [`model call failed: ${e instanceof Error ? e.message : e}`], warnings: [] }
       return { c, run, variation, letter: '', result, judgeScore: undefined as number | undefined }
     }
 
-    // Mirror production: one corrective retry on lint violations. A failed
-    // retry keeps the draft, as production does.
+    // Same retry as production (https://github.com/TheLinc/cover-me/commit/0c46fe4).
     let retried = false
     const numberSources = [c.resumeText, c.job.title, c.job.description]
     const firstLint = lintLetter(letter, { companyName: c.job.company, numberSources, resumeText: c.resumeText })
@@ -369,7 +321,6 @@ async function liveLetters() {
         const retryLint = lintLetter(retry, { companyName: c.job.company, numberSources, resumeText: c.resumeText })
         if (retryLint.violations.length <= firstLint.violations.length) letter = retry
       } catch {
-        // keep the draft
       }
     }
 
@@ -398,12 +349,7 @@ async function liveLetters() {
   return results.map(({ c, run, letter, result, judgeScore }) => ({ id: c.id, run, letter, judgeScore, failures: result.failures, warnings: result.warnings }))
 }
 
-// ── Live answers (#232) ──────────────────────────────────────────────────────
-
-// The judge sees the resume: an answer may only use what's in it, so an
-// answer is judged against the best one the resume allows. Without it the
-// judge marked down honest answers for lacking details the resume doesn't
-// have, which rewards inventing them.
+// Without the resume, the judge marked down honest answers for missing details (#232).
 async function judgeAnswer(question: string, answer: string, resumeText: string, change?: string): Promise<{ score: number; flags: string[] }> {
   const raw = await call(
     [{
@@ -455,13 +401,11 @@ async function liveAnswers() {
     let answer = ''
     let result: CheckResult
     try {
-      // Production sends the two parts as one message (own key) or as two text
-      // blocks (hosted, for caching); the model reads the same text either way.
+      // Hosted sends two text blocks for caching; the model reads the same text (#232).
       let raw = await call([{ role: 'user', content: `${context}\n\n${question}` }], { model: MODEL, maxTokens: 4000, label: 'answer' })
       answer = finishAnswer(raw, a.maxLength)
       const first = answer
       if (a.change) {
-        // The status box's change: the answer as written, then the request.
         const revised = buildAnswerPrompt(c.job, c.resumeText, a.question, a.maxLength, undefined, { previous: first, request: a.change.request })
         raw = await call([{ role: 'user', content: `${revised.context}\n\n${revised.question}` }], { model: MODEL, maxTokens: 4000, label: 'answer change' })
         answer = finishAnswer(raw, a.maxLength)
@@ -499,8 +443,6 @@ async function liveAnswers() {
   return results.map(({ a, run, answer, result, judgeScore }) => ({ id: a.id, run, answer, judgeScore, failures: result.failures, warnings: result.warnings }))
 }
 
-// ── Live resume pipeline: parse → tailor → checks → judge ────────────────────
-
 interface TailorRun {
   id: string
   industry: string
@@ -508,13 +450,9 @@ interface TailorRun {
   parse?: { result: CheckResult; parsed?: ParsedResume }
   tailor: CheckResult
   tailored?: TailoredResume
-  /** The tailor's raw output, including each skill's cited evidence, for review. */
   raw?: string
-  /** Job-only terms the production grounding guard stripped from the model's output. */
   guardRemoved?: string[]
-  /** What the production line check flagged, rewrote, or reverted. */
   lines?: LineRepair
-  /** Expected category labels (EvalCase.expectedLabels) the final skills list did or didn't include. */
   connections?: { made: string[]; missed: string[] }
   judgment?: ResumeJudgment
   error?: string
@@ -523,7 +461,6 @@ interface TailorRun {
 async function tailorOnce(c: EvalCase, run: number): Promise<TailorRun> {
   const out: TailorRun = { id: c.id, industry: c.industry, run, tailor: { failures: [], warnings: [] } }
   try {
-    // 1. Parse the raw resume text, as the hosted tier does on first tailor.
     let input: ParsedResume = c.parsed
     if (USE_PARSE) {
       const raw = await call([{ role: 'user', content: buildParsePrompt(c.resumeText) }], { model: PARSE_MODEL, maxTokens: 6000, label: 'parse' })
@@ -531,15 +468,13 @@ async function tailorOnce(c: EvalCase, run: number): Promise<TailorRun> {
         const parsed = parseParsedJson(raw, c.resumeText)
         const result = checkParse(parsed, c)
         out.parse = { result, parsed }
-        // A bad parse would make every tailor check fail for the wrong reason,
-        // so tailor from the answer key and report the parse failure separately.
+        // After a bad parse, tailor from the answer key so the tailor checks still mean something (https://github.com/TheLinc/cover-me/commit/cb47a02).
         if (result.failures.length === 0) input = parsed
       } catch (e) {
         out.parse = { result: { failures: [`parse output unusable: ${e instanceof Error ? e.message : e}`], warnings: [] } }
       }
     }
 
-    // 2. Tailor, exactly as production does (delta → merge → code-computed ATS).
     const raw = await call([{ role: 'user', content: buildTailorPrompt(c.job, input, c.mode === 'compact', undefined, c.mode === 'trim') }], { model: MODEL, maxTokens: 6000, label: 'tailor' })
     out.raw = raw
     try {
@@ -569,7 +504,6 @@ async function tailorOnce(c: EvalCase, run: number): Promise<TailorRun> {
         out.tailor.warnings.push(`connections: ${made.length}/${c.expectedLabels.length}${missed.length ? ` (missed: ${missed.join(', ')})` : ''}`)
       }
 
-      // 3. Judge field fit and quality.
       if (JUDGE) {
         const jraw = await call([{ role: 'user', content: buildResumeJudgePrompt(c, input, tailored) }], { model: JUDGE_MODEL, maxTokens: 4000, think: true, label: 'judge' })
         const j = parseJudgment(jraw)
@@ -599,15 +533,12 @@ type Averages = Record<string, Record<Dimension, number>>
 interface Baseline {
   scores: Averages
   connectionRate?: number
-  /** Letter judge score (1 to 5) per case. */
   letters?: Record<string, number>
-  /** Answer judge score (1 to 5) per answer case. */
   answers?: Record<string, number>
   model?: string
   judge?: string
 }
 
-/** Share of expected category labels the tailor added, across every run that has any. */
 function connectionRate(runs: TailorRun[]): number | undefined {
   const made = runs.reduce((n, r) => n + (r.connections?.made.length ?? 0), 0)
   const total = runs.reduce((n, r) => n + (r.connections ? r.connections.made.length + r.connections.missed.length : 0), 0)
@@ -638,8 +569,7 @@ async function liveTailor(): Promise<TailorRun[]> {
     if (r.tailored) reportLines.push('<details><summary>tailored resume JSON</summary>\n\n```json\n' + JSON.stringify(r.tailored, null, 2) + '\n```\n</details>\n')
   }
 
-  // Production cost per tailor, by step (list prices; claude -p adds ~230 input
-  // tokens of its own per call, so these read slightly high).
+  // claude -p adds ~230 input tokens per call, so these read slightly high (https://github.com/TheLinc/cover-me/commit/48b8913).
   const perTailor = runs.length
   const costRows = ['| Step | Calls | Avg input | Avg output | Cost per tailor |', '|---|---|---|---|---|']
   for (const step of ['parse', 'tailor', 'skill check', 'line check', 'line rewrite']) {
@@ -652,7 +582,6 @@ async function liveTailor(): Promise<TailorRun[]> {
   reportLines.push('\n## Production cost per tailor\n', ...costRows, '')
   console.log('\n' + costRows.join('\n'))
 
-  // Industry summary table.
   const avgs = judgeAverages(runs)
   const table = ['| Industry | Case | Parse | Integrity | Faithful | Field fit | Relevance | Readability | ATS | Links |', '|---|---|---|---|---|---|---|---|---|---|']
   for (const c of cases) {
@@ -671,11 +600,6 @@ async function liveTailor(): Promise<TailorRun[]> {
   console.log('\n' + table.join('\n') + (rateLine ? `\n\n${rateLine}` : ''))
   return runs
 }
-
-// ── Baseline ─────────────────────────────────────────────────────────────────
-// A real regression is a sustained drop, not one noisy score: the gate is an
-// average falling 0.5 or more. Scores from a different judge model aren't
-// comparable, so a judge mismatch fails loudly.
 
 function baselineStep(letterScores: Record<string, number>, runs: TailorRun[], answerScores: Record<string, number> = {}) {
   const avgs = runs.length ? judgeAverages(runs) : {}
@@ -696,8 +620,7 @@ function baselineStep(letterScores: Record<string, number>, runs: TailorRun[], a
           if (drop >= 0.3) result.failures.push(`skill connections fell ${base.connectionRate} → ${rate}`)
           else if (drop >= 0.15) result.warnings.push(`skill connections dipped ${base.connectionRate} → ${rate}`)
         }
-        // One sample per case swings by a point between runs, so the gate is the
-        // average across cases per dimension; single-case drops are warnings.
+        // One case swings a point between runs, so the gate averages across cases (https://github.com/TheLinc/cover-me/commit/7e09bfc).
         const sharedIds = Object.keys(avgs).filter((id) => base.scores[id])
         for (const d of DIMENSIONS) {
           if (!sharedIds.length) break
@@ -735,10 +658,7 @@ function baselineStep(letterScores: Record<string, number>, runs: TailorRun[], a
   }
 }
 
-// ── Skill-claim checker accuracy ─────────────────────────────────────────────
-// The production pair check decides which added skill labels survive. Run it
-// over hand-labeled pairs, in batches of 5 like production calls.
-
+// Batches of 5, as production sends them (https://github.com/TheLinc/cover-me/commit/0e9a09c).
 async function claimChecker(): Promise<{ correct: number; total: number }> {
   section(`Skill-claim checker (model: ${MODEL})`)
   const batches: number[][] = []
@@ -760,8 +680,7 @@ async function claimChecker(): Promise<{ correct: number; total: number }> {
   return { correct, total: CLAIM_PAIRS.length }
 }
 
-// The production line check decides which rewritten bullets get rewritten
-// again. Run it over hand-labeled roles, one role per call.
+// One role per call, as production sends them (https://github.com/TheLinc/cover-me/commit/48b8913).
 async function lineChecker(): Promise<{ correct: number; total: number }> {
   section(`Line checker (model: ${MODEL})`)
   let correct = 0
@@ -795,8 +714,6 @@ async function lineChecker(): Promise<{ correct: number; total: number }> {
   return { correct, total }
 }
 
-// ── Main ─────────────────────────────────────────────────────────────────────
-
 async function main() {
   staticChecks()
 
@@ -804,12 +721,8 @@ async function main() {
   let tailorRuns: TailorRun[] = []
   let answers: Awaited<ReturnType<typeof liveAnswers>> = []
   if (LIVE) {
-    if (VIA === 'api' && !process.env.ANTHROPIC_API_KEY) {
-      console.error('\n--via api requires ANTHROPIC_API_KEY. Use --via claude to run on your Claude plan.')
-      process.exit(1)
-    }
-    console.log(`\nBackend: ${VIA}${VIA === 'claude' ? ` — ${claudeIsolation()}` : ''}`)
-    reportLines.push(`Backend: ${VIA}${VIA === 'claude' ? ` — ${claudeIsolation()}` : ''}`, '')
+    console.log(`\nBackend: claude -p — ${claudeIsolation()}`)
+    reportLines.push(`Backend: claude -p — ${claudeIsolation()}`, '')
     if (RUN_LETTERS) letters = await liveLetters()
     if (RUN_ANSWERS) answers = await liveAnswers()
     if (RUN_TAILOR) {
@@ -819,7 +732,6 @@ async function main() {
       tailorRuns = await liveTailor()
     }
     if (JUDGE) {
-      // Mean judge score per case across runs.
       const scored = letters.filter((l) => l.judgeScore !== undefined)
       const letterScores = Object.fromEntries([...new Set(scored.map((l) => l.id))].map((id) => [
         id, mean(scored.filter((l) => l.id === id).map((l) => l.judgeScore as number)),
@@ -829,7 +741,7 @@ async function main() {
       ]))
       baselineStep(letterScores, tailorRuns, answerScores)
     }
-    const costLine = `Model calls: ${usage.calls} | tokens in/out: ${usage.inputTokens}/${usage.outputTokens} | API-equivalent cost: $${usage.costUsd.toFixed(2)}${VIA === 'claude' ? ' (billed to your Claude plan, not API credits)' : ''}`
+    const costLine = `Model calls: ${usage.calls} | tokens in/out: ${usage.inputTokens}/${usage.outputTokens} | API-equivalent cost: $${usage.costUsd.toFixed(2)} (billed to your Claude plan, not API credits)`
     console.log(`\n${costLine}`)
     reportLines.splice(3, 0, costLine, '')
   } else {
@@ -842,7 +754,7 @@ async function main() {
   writeFileSync(file, reportLines.join('\n'), 'utf8')
   if (LIVE) {
     const resultsFile = join(reportsDir, `results-${stamp}.json`)
-    writeFileSync(resultsFile, JSON.stringify({ model: MODEL, parseModel: PARSE_MODEL, judgeModel: JUDGE_MODEL, via: VIA, runs: RUNS, letters, answers, tailor: tailorRuns }, null, 2))
+    writeFileSync(resultsFile, JSON.stringify({ model: MODEL, parseModel: PARSE_MODEL, judgeModel: JUDGE_MODEL, runs: RUNS, letters, answers, tailor: tailorRuns }, null, 2))
     console.log(`Outputs written to ${resultsFile}`)
   }
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, reportLines.slice(0, 60).join('\n') + '\n')

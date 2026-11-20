@@ -1,41 +1,12 @@
-# Live output eval: generates cover letters, tailored resumes and application
-# answers for real test cases and has a model judge them.
+# Generates letters, tailored resumes and answers for test cases and has a
+# model judge them. PRs run the quick set against extension/eval/baseline.json,
+# only for the sides the diff touches (scripts/eval-side.sh). A manual run does
+# every case by default, judged by Opus, against baseline-full.json. Usage: README.md.
 #
-#   Prompt PRs: the quick set (12 cases: one per field family, two long
-#   postings and a trim-mode case), judged by Sonnet 5.5, gated on
-#   extension/eval/baseline.json.
-#   About 10 min. Not re-run on the merge to master: the PR already tested
-#   that content, and every run spends the Claude plan.
-#   On demand (Actions > Output eval > Run workflow): every case, 2 runs per
-#   resume, judged by Opus 5.5, gated on extension/eval/baseline-full.json once
-#   that file exists. Run it at milestones, not per change.
-#   Weekly: paused during active development (2026-10-09). Turn the schedule
-#   below back on at launch, when catching model drift matters.
-#   Manual runs with "update_baseline" save the scores as an eval-baseline
-#   artifact to commit (the first full run needs this to create baseline-full).
-#
-# Only the sides a change touches: letters, resume tailoring and application
-# answers (#232) share no prompt code, and tailoring is ~70% of a full run's
-# calls (390 of 570 on 2026-11-13). On a PR, scripts/eval-side.sh picks the
-# sides from the diff ("all", or e.g. "letters answers"); a manual run does the
-# same by default ("auto", diffed against master) or takes the side you pick.
-# When letters run but no letter file changed, eval-side.sh adds "lint-warn":
-# a letter still failing the lint after its retry is then a warning (#243).
-# A letters-only full run is ~180 calls; answers are six calls plus judging.
-# Locally:  pnpm eval --live --letters ...  (or --tailor, --answers)
-# A one-sided run compares and updates only that side's baseline scores.
-#
-# Billing: only the CLAUDE_CODE_OAUTH_TOKEN secret (from `claude setup-token`),
-# so every call goes through `claude -p` on the Claude plan. There is no API key
-# fallback: ANTHROPIC_API_KEY is blanked and the eval runs with --via claude.
-# Without the secret (fork PRs never get secrets) the job skips with a warning.
-# It ran on the ANTHROPIC_API_KEY from 2026-10-09 to 2026-11-11, after a run on
-# 2026-10-08 hit the plan's session limit, which it shares with the owner's own
-# Claude sessions. Back on the plan so runs don't bill credits; a run that hits
-# the limit fails and can be re-run once it resets.
-#
+# Not re-run on merge: the PR tested it, and every run spends the Claude plan.
+# Billing is CLAUDE_CODE_OAUTH_TOKEN only; without it (fork PRs) the job skips.
 # Not a required check: GitHub never reports a path-filtered workflow on
-# unrelated PRs, so a required one would leave those PRs waiting forever.
+# unrelated PRs, so a required one would leave them waiting forever.
 name: Output eval
 
 on:
@@ -52,10 +23,10 @@ on:
       - backend/supabase/functions/_shared/resume-parse.ts
       - backend/supabase/functions/_shared/resume-grounding.ts
       - scripts/check-prompt-sync.mjs
-      # Not this file: a workflow-only edit can be checked with a manual run.
-  # Paused during active development; restore at launch.
+      # Not this file: check a workflow-only edit with a manual run.
+  # Paused during development; turn back on at launch to catch model drift.
   # schedule:
-  #   - cron: '0 9 * * 1' # Mondays 09:00 UTC: the full set, to catch model drift
+  #   - cron: '0 9 * * 1'
   workflow_dispatch:
     inputs:
       full:
@@ -83,11 +54,9 @@ jobs:
     defaults:
       run:
         working-directory: extension
-    # The token is only in the eval step's env, so no other step (third-party
-    # actions, package install scripts) can read it. Other steps see HAS_TOKEN.
+    # The token lives only in the eval step's env, out of reach of other steps.
     env:
       HAS_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' }}
-      ANTHROPIC_API_KEY: ''
       FULL: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.full) }}
     steps:
       - uses: actions/checkout@v4
@@ -131,20 +100,17 @@ jobs:
           fi
           EXTRA=""
           if [ "$UPDATE_BASELINE" = "true" ]; then EXTRA="--update-baseline"; fi
-          # "all" passes no side flag; every other word (a side, or lint-warn
-          # when no letter file changed) becomes one flag.
           for s in $SIDE; do if [ "$s" != "all" ]; then EXTRA="$EXTRA --$s"; fi; done
           if [ "$FULL" = "true" ]; then
-            pnpm eval --live --judge --baseline --via claude --runs 2 --judge-model claude-opus-5-5 $EXTRA
+            pnpm eval --live --judge --baseline --runs 2 --judge-model claude-opus-5-5 $EXTRA
           else
-            pnpm eval --live --quick --judge --baseline --via claude $EXTRA
+            pnpm eval --live --quick --judge --baseline $EXTRA
           fi
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           UPDATE_BASELINE: ${{ github.event_name == 'workflow_dispatch' && inputs.update_baseline }}
           SIDE: ${{ steps.side.outputs.side }}
-      # The workflow can't push to master, so a refreshed baseline comes out as
-      # an artifact: download it and commit it to extension/eval/.
+      # The workflow can't push to master: commit this artifact to extension/eval/.
       - uses: actions/upload-artifact@v4
         if: always() && github.event_name == 'workflow_dispatch' && inputs.update_baseline
         with:
