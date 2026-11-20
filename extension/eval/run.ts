@@ -1,10 +1,10 @@
 // Prompt eval. README.md ("Resume quality eval") covers usage and CI.
 //   --live                          call models (default: static checks only)
-//   --quick                         the 12-case PR set
+//   --quick                         the 12-case PR set (answers always run all six)
 //   --judge                         score outputs with a judge model
 //   --letters / --tailor / --answers  only those sides (default all)
 //   --case <id> / --industry <name> filter cases
-//   --runs <n>                      samples per resume case (default 1)
+//   --runs <n>                      samples per case (default 1)
 //   --concurrency <n>               parallel cases (default 6)
 //   --no-parse                      tailor from the fixture's answer key, not the model's parse
 //   --lint-warn                     a letter failing lint after its retry only warns (#243)
@@ -245,7 +245,7 @@ John Doe`
   }
   record('banned words inside the company name are allowed', companyResult)
 
-  // Letters addressed to the user showed up after a prompt-injection posting (https://github.com/TheLinc/cover-me/commit/c25c105).
+  // A note to the user appeared in a letter after a prompt-injection posting (https://github.com/TheLinc/cover-me/commit/c25c105).
   const noteResult: CheckResult = { failures: [], warnings: [] }
   if (exemplarMatch) {
     const notes = [
@@ -294,7 +294,7 @@ async function liveLetters() {
   process.stdout.write(`  ${jobs.length} letters `)
   const results = await pool(jobs, CONCURRENCY, async ({ c, i, run }) => {
     const v = i + run
-    // The close changes every third letter so it doesn't always pair with one hook (#206).
+    // The close changes once every three letters so it doesn't always pair with one hook (#206).
     const variation: LetterVariation = { signOff: SIGN_OFFS[v % SIGN_OFFS.length], hookPattern: HOOKS[v % HOOKS.length], closePattern: CLOSE_PATTERNS[Math.floor(v / 3) % CLOSE_PATTERNS.length] }
     const prompt = buildLetterPrompt(c.job, c.resumeText, undefined, variation)
     let letter: string

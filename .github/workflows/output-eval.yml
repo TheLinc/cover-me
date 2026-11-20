@@ -1,7 +1,7 @@
 # Generates letters, tailored resumes and answers for test cases and has a
 # model judge them. PRs run the quick set against extension/eval/baseline.json,
 # only for the sides the diff touches (scripts/eval-side.sh). A manual run does
-# every case, judged by Opus, against baseline-full.json. Usage: README.md.
+# every case by default, judged by Opus, against baseline-full.json. Usage: README.md.
 #
 # Not re-run on merge: the PR tested it, and every run spends the Claude plan.
 # Billing is CLAUDE_CODE_OAUTH_TOKEN only; without it (fork PRs) the job skips.
