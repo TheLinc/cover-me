@@ -17,6 +17,7 @@ describe('hasSessionCookie', () => {
   it('ignores a cookie whose name only ends like the session cookie', () => {
     expect(hasSessionCookie('xsb-abc-auth-token=x')).toBe(false)
     expect(hasSessionCookie('sb-abc-auth-token-0=x')).toBe(false)
+    expect(hasSessionCookie('sb-x; foo-auth-token=1')).toBe(false)
   })
 
   it('is false with no cookies', () => {
