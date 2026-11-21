@@ -13,3 +13,12 @@ Site features under the names a visitor would use, with the route and how to rea
 
 - Dashboard: `/dashboard`. After sign-in, or Nav, Dashboard. The Plan tile shows a gift trial's end or a paid plan's first payment (`lib/stripe-plan.ts`).
 - Settings: `/dashboard/settings`. Account menu, Settings. The Plan section shows the Pro badge, the trial end, first payment, renewal or end date from Stripe, and Manage billing (opens the Stripe portal).
+
+## Pages reached from outside links
+
+These have the logo-only header (`components/site/LogoHeader.tsx`), which lines up with the site nav.
+
+- Gift week of Pro: `/redeem/<code>`. From a gift trial link (`pnpm trial-links`). Signed out it asks to sign in; signed in it shows the site nav and a "Start my free week" button.
+- Uninstall survey: `/uninstalled`. Chrome opens it after the extension is removed.
+- Unsubscribe: `/unsubscribe`. The unsubscribe link in non-account emails.
+- Upgraded: `/upgraded`. Stripe Checkout's return page after paying.
