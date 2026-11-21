@@ -92,6 +92,11 @@ export default function AtsCheckerPage() {
             or{' '}
             <Link href="/guides/tailor-resume-to-job-description" className="text-brand-strong underline underline-offset-2">how to tailor your resume to a job description</Link>.
           </p>
+          <p>
+            To add the missing keywords in ChatGPT or Claude, use these{' '}
+            <Link href="/guides/chatgpt-resume-prompts" className="text-brand-strong underline underline-offset-2">ChatGPT resume prompts</Link>, tested on a real
+            posting.
+          </p>
         </div>
       </main>
       <SiteFooter />
