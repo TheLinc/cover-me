@@ -2,12 +2,14 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getServerUser } from '@/lib/supabase-server'
 import { Button } from '@/components/ui/button'
-import { LogoHeader, SiteNav } from '@/components/site/SiteNav'
+import { SiteNav } from '@/components/site/SiteNav'
+import { LogoHeader } from '@/components/site/LogoHeader'
 import { APP_LINKS } from '@/components/site/app-links'
 import { AccountMenu } from '@/components/site/AccountMenu'
 import { avatarUrl } from '@/lib/avatar'
 import { Ambient } from '@/components/landing/Ambient'
-import { GiftBadge, RedeemTrial } from './RedeemTrial'
+import { GiftBadge } from './GiftBadge'
+import { RedeemTrial } from './RedeemTrial'
 
 // A gift trial link from `pnpm trial-links` (#112). Not in sitemap.ts.
 export const metadata: Metadata = {

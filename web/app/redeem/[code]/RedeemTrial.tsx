@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import posthog from 'posthog-js'
-import { GiftIcon } from '@phosphor-icons/react/dist/ssr'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { LocalDate } from '@/app/dashboard/LocalDate'
@@ -11,14 +10,7 @@ import { TRIAL_REDEEMED, whenPosthogLoaded } from '@/lib/analytics'
 import { redeemTrial } from '@/lib/billing'
 import { storeUrl } from '@/lib/utils'
 import { confettiFrom } from './confetti'
-
-export function GiftBadge() {
-  return (
-    <span className="mx-auto mb-6 flex size-16 items-center justify-center rounded-full bg-brand-tint text-brand-strong shadow-[inset_0_0_0_1px_#DCDCFE]">
-      <GiftIcon size={30} weight="duotone" aria-hidden />
-    </span>
-  )
-}
+import { GiftBadge } from './GiftBadge'
 
 // The Stripe webhook turns Pro on, usually within seconds (#112).
 export function RedeemTrial({ code, email }: { code: string; email: string }) {

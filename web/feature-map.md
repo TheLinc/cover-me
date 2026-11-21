@@ -11,7 +11,7 @@ Site features under the names a visitor would use, with the route and how to rea
 
 ## Pages reached from outside links
 
-These have the logo-only header (`LogoHeader` in `components/site/SiteNav.tsx`), which lines up with the site nav.
+These have the logo-only header (`components/site/LogoHeader.tsx`), which lines up with the site nav.
 
 - Gift week of Pro: `/redeem/<code>`. From a gift trial link (`pnpm trial-links`). Signed out it asks to sign in; signed in it shows the site nav and a "Start my free week" button.
 - Uninstall survey: `/uninstalled`. Chrome opens it after the extension is removed.

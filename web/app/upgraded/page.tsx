@@ -5,7 +5,7 @@ import { CheckIcon, ClockCounterClockwiseIcon, SparkleIcon } from '@phosphor-ico
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { LogoHeader } from '@/components/site/SiteNav'
+import { LogoHeader } from '@/components/site/LogoHeader'
 import { LocalDate } from '@/app/dashboard/LocalDate'
 import { PLAN_LIMITS } from '@/lib/limits'
 

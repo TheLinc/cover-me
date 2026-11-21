@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
-import { LogoHeader } from '@/components/site/SiteNav'
+import { LogoHeader } from '@/components/site/LogoHeader'
 import { Unsubscribe } from './Unsubscribe'
 
 export const metadata: Metadata = {
