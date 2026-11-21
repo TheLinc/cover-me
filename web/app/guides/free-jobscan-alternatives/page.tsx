@@ -191,7 +191,7 @@ export default function Page() {
           title: 'Which one should you use?',
           body: (
             <p>
-              If you only want a score and a list of missing keywords to fix by hand, SkillSyncer gives the most free scans, and Enhancv and Resume.io let you paste a job into a free checker. If you&rsquo;re tracking a lot of applications in one place, Teal&rsquo;s free tracker is the strongest. If you want each resume rewritten for the posting and a cover letter written to match, Cover Me does both on its free plan. Whichever you use, change only what&rsquo;s true: the <Link href="/guides/tailor-resume-to-job-description">guide to tailoring your resume</Link> shows how.
+              If you only want a score and a list of missing keywords to fix by hand, SkillSyncer gives the most free scans, and Enhancv and Resume.io let you paste a job into a free checker. If you&rsquo;re tracking a lot of applications in one place, Teal&rsquo;s free tracker is the strongest. If you also want a job board that finds openings for you, the <Link href="/guides/jobright-review">Jobright review</Link> compares Jobright and Simplify. If you want each resume rewritten for the posting and a cover letter written to match, Cover Me does both on its free plan. Whichever you use, change only what&rsquo;s true: the <Link href="/guides/tailor-resume-to-job-description">guide to tailoring your resume</Link> shows how.
             </p>
           ),
         },
