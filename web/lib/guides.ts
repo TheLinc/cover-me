@@ -143,7 +143,7 @@ export const GUIDES: Guide[] = [
     date: '2026-11-21',
     image: '/guides/jobright-review.png',
     imageAlt:
-      "Jobright at a glance, checked November 21, 2026. Free: job matches, tracking and autofill, with an account. Turbo: no pricing page, and a user's checkout screenshot shows $39.99 a month. Trustpilot: 4.8 from 3,811 reviews, with recent ones invited by Jobright. Run by Jobright Inc. in Santa Clara, founded in 2023, $7.7 million raised.",
+      "Jobright at a glance, checked November 21, 2026. Free: job matches and tracking, with 2 AI resumes a day. Turbo: $29.99 a month on a timed offer, $49.99 crossed out, shown only after sign-in. Trustpilot: 4.8 from 3,811 reviews, with recent ones invited by Jobright. Run by Jobright Inc. in Santa Clara, founded in 2023, $7.7 million raised.",
   },
 ]
 

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { ComparisonTable, GuideArticle, GuideFigure, ext } from '@/components/site/GuideArticle'
+import { ComparisonTable, GuideArticle, GuideFigure, GuideImage, ext } from '@/components/site/GuideArticle'
 import { getGuide } from '@/lib/guides'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
@@ -8,11 +8,11 @@ const guide = getGuide('jobright-review')
 
 export const metadata: Metadata = {
   title: { absolute: 'Jobright Review (2026): Turbo Pricing, Is It Legit, and vs Simplify' },
-  description: "Jobright's job board is free, and Turbo's price is shown only at checkout. Who runs Jobright, what users report, and how it compares with Simplify.",
+  description: "Jobright's job board is free, and Turbo was $29.99 a month on a timed offer. Who runs Jobright, what users report, and how it compares with Simplify.",
   alternates: { canonical: `${BASE}/guides/${guide.slug}` },
   openGraph: {
     title: 'Jobright review: is it legit, and is Turbo worth paying for? | Cover Me',
-    description: 'Its terms and refund policy, a Turbo checkout a user posted, what users on Trustpilot and Reddit say, and Jobright vs Simplify.',
+    description: "Turbo's prices from Jobright's signed-in upgrade page, its refund policy, what users on Trustpilot and Reddit say, and Jobright vs Simplify.",
     url: `${BASE}/guides/${guide.slug}`,
     siteName: 'Cover Me',
     type: 'article',
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Jobright review: is it legit, and is Turbo worth paying for? | Cover Me',
-    description: 'Its terms and refund policy, a Turbo checkout a user posted, what users on Trustpilot and Reddit say, and Jobright vs Simplify.',
+    description: "Turbo's prices from Jobright's signed-in upgrade page, its refund policy, what users on Trustpilot and Reddit say, and Jobright vs Simplify.",
     images: [`${BASE}${guide.image}`],
   },
 }
@@ -43,7 +43,7 @@ const faqJsonLd = {
       name: 'How much does Jobright cost?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: "Jobright has no pricing page for job seekers. Turbo's price is shown at checkout after you sign up, and its terms say plans can be weekly, monthly, quarterly or six-monthly. Jobright's own blog has listed it at $29.99 a month, and a checkout screenshot a user posted in December 2025 showed $39.99 a month, or $19.99 with a student discount. Turbo renews automatically, and you can ask for a full refund within 7 days of a first monthly charge.",
+        text: "Jobright has no public pricing page for job seekers, so you see Turbo's price after you sign up. Signed in on November 21, 2026, its upgrade page showed $29.99 a month, $69.99 for 3 months or $17.99 a week. The monthly and quarterly prices were a timed special offer, against crossed-out prices of $49.99 a month and $149.97 for 3 months. Turbo renews automatically, and you can ask for a full refund within 7 days of a first monthly charge.",
       },
     },
     {
@@ -51,7 +51,7 @@ const faqJsonLd = {
       name: 'Is Jobright free?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Mostly. With a free account you can browse jobs, see match scores, track applications and use the autofill extension. Resume tailoring is limited on the free plan, and users report that the AI Agent that applies for you needs a paid plan.',
+        text: "Mostly, with daily limits. A free account can browse jobs, see match scores and track applications. Its upgrade page caps the free plan at 2 AI resumes, 4 autofills and 2 cover letters a day, with limited access to the AI Agent that applies for you. AI job search and the hidden jobs filter are Turbo only.",
       },
     },
     {
@@ -59,16 +59,16 @@ const faqJsonLd = {
       name: 'Is Jobright or Simplify better?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: "Neither is better for everyone: try both free plans with the same resume and keep the one whose matches you'd apply to. They do the same core job: a job board with matches, a tracker and an autofill extension, all free. Simplify lists Simplify+ at $39.99 a month with 20 auto-submitted applications a week; Jobright has no pricing page and shows Turbo's price at checkout. Simplify's free autofill has no limit, and its extension has 3,900 ratings to Jobright's 433.",
+        text: "Neither is better for everyone: try both free plans with the same resume and keep the one whose matches you'd apply to. They do the same core job: a job board with matches, a tracker and an autofill extension, all free. Simplify lists Simplify+ at $39.99 a month with 20 auto-submitted applications a week; Jobright showed Turbo at $29.99 a month on a timed offer, $49.99 without it. Simplify's free autofill has no limit where Jobright's allows 4 a day, and Simplify's extension has 3,900 ratings to Jobright's 433.",
       },
     },
   ],
 }
 
 const VS_SIMPLIFY: { feature: string; jobright: string; simplify: string }[] = [
-  { feature: 'Free', jobright: 'Job board, match scores, tracker and autofill', simplify: 'Job board, matches, tracker, unlimited autofill and a resume builder' },
-  { feature: 'Paid plan', jobright: 'Turbo, price shown at checkout; no pricing page', simplify: 'Simplify+: $19.99 a week, $39.99 a month or $89.99 for 3 months' },
-  { feature: 'Applies for you', jobright: 'The Agent, a paid feature according to users', simplify: 'Autopilot, 20 applications a week on Simplify+' },
+  { feature: 'Free', jobright: 'Job board, match scores and tracker; 2 AI resumes, 4 autofills and 2 cover letters a day', simplify: 'Job board, matches, tracker, unlimited autofill and a resume builder' },
+  { feature: 'Paid plan', jobright: 'Turbo: $17.99 a week, or $29.99 a month and $69.99 for 3 months on a timed offer; prices shown only after sign-up', simplify: 'Simplify+: $19.99 a week, $39.99 a month or $89.99 for 3 months' },
+  { feature: 'Applies for you', jobright: 'The Agent: limited on the free plan, unlimited on Turbo', simplify: 'Autopilot, 20 applications a week on Simplify+' },
   { feature: 'Refunds', jobright: 'Full refund on request within 7 days of a first monthly charge, unless you’ve used Turbo heavily', simplify: 'Generally non-refundable once active' },
   { feature: 'Chrome extension', jobright: '4.9 from 433 ratings, 300,000 users', simplify: '4.8 from 3,900 ratings, 500,000 users' },
   { feature: 'Trustpilot', jobright: '4.8 from 3,811 reviews, claimed, invites reviews', simplify: '2.7 from 22 reviews, unclaimed' },
@@ -76,10 +76,10 @@ const VS_SIMPLIFY: { feature: string; jobright: string; simplify: string }[] = [
 
 const COMPARISON: { feature: string; coverMe: string; them: string }[] = [
   { feature: 'Finds jobs for you', coverMe: 'No, it works on postings you open on LinkedIn, Indeed, Greenhouse, Lever, Workday or Ashby, or paste', them: 'Yes, its own job board with match scores, U.S. roles only' },
-  { feature: 'Submits applications', coverMe: 'No, you review and send every one', them: 'Autofill for you to review; the Agent, which users report is paid, can submit' },
-  { feature: 'Resume tailoring', coverMe: 'One click, with an ATS match score and missing keywords shown before you use it', them: 'AI resume tailoring, limited on the free plan' },
+  { feature: 'Submits applications', coverMe: 'No, you review and send every one', them: 'Autofill for you to review, 4 a day free; the Agent can submit, limited on the free plan' },
+  { feature: 'Resume tailoring', coverMe: 'One click, with an ATS match score and missing keywords shown before you use it', them: 'AI resumes, 2 a day on the free plan, unlimited on Turbo' },
   { feature: 'Invented skills', coverMe: 'A check removes skills your original resume does not support', them: 'Not described on its pages' },
-  { feature: 'Pricing', coverMe: 'Free for 10, then 5 a week · Pro $15 a month for 25 a day · prices on the site', them: 'Free plan; Turbo’s price shown at checkout, with no pricing page' },
+  { feature: 'Pricing', coverMe: 'Free for 10, then 5 a week · Pro $15 a month for 25 a day · prices on the site', them: 'Free plan with daily limits; Turbo $29.99 a month on a timed offer, prices shown only after sign-up' },
   { feature: 'Open source', coverMe: 'Yes, MIT licensed', them: 'No' },
 ]
 
@@ -92,17 +92,17 @@ export default function Page() {
       guide={guide}
       lede={
         <>
-          Jobright is legit: a Santa Clara company backed by $7.7 million in funding, including from Indeed&rsquo;s venture arm. Its job board, match scores and autofill are free. Turbo, the paid plan, has no pricing page, and a user&rsquo;s checkout screenshot showed $39.99 a month. Whether it&rsquo;s worth paying for depends on how many of its matches turn into interviews for you.
+          Jobright is legit: a Santa Clara company backed by $7.7 million in funding, including from Indeed&rsquo;s venture arm. Its job board, match scores and autofill are free. Turbo, the paid plan, showed $29.99 a month when I signed in, as a timed offer against a crossed-out $49.99. Whether it&rsquo;s worth paying for depends on how many of its matches turn into interviews for you.
         </>
       }
       tldr={[
-        'Jobright pulls U.S. job listings into one board, scores how well each fits your resume, and fills in applications with a browser extension. Those parts are free with an account.',
-        'Turbo adds more resume tailoring and, users report, an Agent that applies for you. It has no pricing page, so you see the price at checkout, and you can ask for a refund within 7 days of a first monthly charge.',
-        'Simplify does the same core job with published prices and a larger extension user base. Pick on which job board finds better matches for your field.',
+        'Jobright pulls U.S. job listings into one board, scores how well each fits your resume, and fills in applications with a browser extension. Those parts are free with an account, with daily limits on AI resumes and autofill.',
+        'Turbo lifts the limits and unlocks the Agent that applies for you. Signed in, it showed $29.99 a month on a timed offer or $17.99 a week, and you can ask for a refund within 7 days of a first monthly charge.',
+        'Simplify does the same core job with prices you can read before signing up, unlimited free autofill and a larger extension user base. Pick on which job board finds better matches for your field.',
       ]}
       intro={
         <p>
-          I build Cover Me, which writes tailored resumes and cover letters but doesn&rsquo;t find jobs, so weigh this review with that in mind. Everything here is from Jobright&rsquo;s and Simplify&rsquo;s own pages, their App Store and Chrome Web Store listings, press coverage, Trustpilot and Reddit, checked on November 21, 2026. Jobright&rsquo;s matching, tailoring and tools all need an account, so I read what its public pages show and what users report rather than signing up.
+          I build Cover Me, which writes tailored resumes and cover letters but doesn&rsquo;t find jobs, so weigh this review with that in mind. Everything here is from Jobright&rsquo;s and Simplify&rsquo;s own pages, their App Store and Chrome Web Store listings, press coverage, Trustpilot and Reddit, checked on November 21, 2026. Jobright shows Turbo&rsquo;s prices only after you sign in, so I made a free account to read its upgrade page. I didn&rsquo;t pay for Turbo, so what it&rsquo;s like to use comes from what users report.
         </p>
       }
       sections={[
@@ -127,8 +127,18 @@ export default function Page() {
           body: (
             <>
               <p>
-                Jobright has no pricing page for job seekers. <code>jobright.ai/pricing</code> returned a 404 on November 21, 2026, and the only <a href="https://jobright.ai/employers/pricing" {...ext}>pricing page</a> on the site is for employers. Its{' '}
-                <a href="https://jobright.ai/legal/service" {...ext}>terms</a> say paid subscriptions are sold for &ldquo;weekly, monthly, quarterly, six-month, or other billing periods&rdquo; at &ldquo;the amount shown at checkout&rdquo;, so you see the price after you sign up. What&rsquo;s on record:
+                Jobright has no public pricing page for job seekers. <code>jobright.ai/pricing</code> returned a 404 on November 21, 2026, and the only <a href="https://jobright.ai/employers/pricing" {...ext}>pricing page</a> on the site is for employers. Its{' '}
+                <a href="https://jobright.ai/legal/service" {...ext}>terms</a> say paid subscriptions are sold for &ldquo;weekly, monthly, quarterly, six-month, or other billing periods&rdquo; at &ldquo;the amount shown at checkout&rdquo;. Signed in to a free account the same day, the upgrade page showed three Turbo plans:
+              </p>
+              <GuideImage
+                src="/guides/jobright-review/turbo-pricing.png"
+                alt="Jobright's upgrade page. Monthly: $29.99 a month, crossed out from $49.99, save 40%. Quarterly: $69.99 for 3 months, crossed out from $149.97, save 53%. Both under a Your Special Offer banner with a 59:21 countdown. Weekly: $17.99 a week, $71.96 a month. Free plan: $0.00. Turbo gives unlimited AI custom resumes, autofill, AI Agent, AI cover letters, LinkedIn email finder, saved filters and job alerts, plus AI job search, office hours and a hidden jobs filter. The free plan gives 2 resume credits, 4 autofill credits, 2 cover letter credits and 2 email finder credits a day, limited access to the AI Agent, 1 saved filter and 1 alert a day."
+                width={1104}
+                height={650}
+                caption="Jobright's upgrade page, signed in to a free account on November 21, 2026."
+              />
+              <p>
+                The monthly and quarterly prices sat under a &ldquo;Your Special Offer&rdquo; banner with a countdown timer, next to crossed-out prices of $49.99 a month and $149.97 for 3 months. The weekly plan works out to $71.96 a month, more than twice the monthly offer. Other prices on record:
               </p>
               <ul>
                 <li>
@@ -153,8 +163,8 @@ export default function Page() {
           title: 'Is Jobright free?',
           body: (
             <p>
-              Mostly. The <a href="https://apps.apple.com/us/app/jobright-ai-job-search/id6738236788" {...ext}>App Store listing</a> says &ldquo;Browsing jobs, receiving match scores, and tracking applications are free,&rdquo; and Jobright&rsquo;s <a href="https://jobright.ai/blog/2025s-best-auto-apply-tools-for-tech-job-seekers/" {...ext}>blog</a> calls its autofill extension free. Tailoring is capped: a July 2026 <a href="https://www.trustpilot.com/reviews/6a64d29cbcdf891d969d0917" {...ext}>Trustpilot review</a> is titled &ldquo;Only two credits for free Resume Tweaking&rdquo;, and Jobright&rsquo;s reply agrees the free credits &ldquo;are limited to two&rdquo;. A user on{' '}
-              <a href="https://www.reddit.com/r/jobright/comments/1u50y3h/has_anyone_gotten_a_job/" {...ext}>r/jobright</a> said in June 2026, &ldquo;I don&rsquo;t like they took away features in free to add to Turbo.&rdquo; Users report the Agent is a paid feature: one who tried it <a href="https://www.reddit.com/r/recruitinghell/comments/1pex53h/jobright_agent_sucks/" {...ext}>wrote</a> that they &ldquo;bought a paid subscription to experience the AI Agent&rdquo;, and the Turbo checkout a user posted lists &ldquo;Automate your job search&rdquo; among its features.
+              Mostly, with daily limits. The <a href="https://apps.apple.com/us/app/jobright-ai-job-search/id6738236788" {...ext}>App Store listing</a> says &ldquo;Browsing jobs, receiving match scores, and tracking applications are free.&rdquo; The rest is capped. The upgrade page above gives a free account 2 AI resumes, 4 autofills, 2 cover letters and 2 LinkedIn email lookups a day, one saved filter, one job alert a day, and &ldquo;Limited Access&rdquo; to the AI Agent. AI job search, the hidden jobs filter and Turbo&rsquo;s weekly Q&amp;A sessions with a recruiter are paid only. A July 2026 <a href="https://www.trustpilot.com/reviews/6a64d29cbcdf891d969d0917" {...ext}>Trustpilot review</a> is titled &ldquo;Only two credits for free Resume Tweaking&rdquo;, and a user on{' '}
+              <a href="https://www.reddit.com/r/jobright/comments/1u50y3h/has_anyone_gotten_a_job/" {...ext}>r/jobright</a> said in June 2026, &ldquo;I don&rsquo;t like they took away features in free to add to Turbo.&rdquo;
             </p>
           ),
         },
@@ -230,7 +240,7 @@ export default function Page() {
                 </div>
               </GuideFigure>
               <p>
-                Simplify&rsquo;s <a href="https://help.simplify.jobs/articles/5623502-whats-included-in-simplify-features-and-pricing" {...ext}>help center</a> lists Simplify+ at $39.99 a month, the same list price as the Turbo checkout a user posted, and you can read it before signing up. Its refunds are stricter: its <a href="https://help.simplify.jobs/articles/8410005-manage-or-cancel-your-subscription" {...ext}>billing help</a> says &ldquo;Activated subscriptions are generally non-refundable&rdquo;, with exceptions in its refund policy. Its Autopilot submits &ldquo;without a review step&rdquo;, using one of 20 weekly credits per application, and its <a href="https://simplify.jobs/copilot" {...ext}>Copilot page</a> says of the free autofill, &ldquo;There is no limit on how many applications you can submit with Copilot!&rdquo; Its{' '}
+                Simplify&rsquo;s <a href="https://help.simplify.jobs/articles/5623502-whats-included-in-simplify-features-and-pricing" {...ext}>help center</a> lists Simplify+ at $39.99 a month, between Turbo&rsquo;s $29.99 offer and its crossed-out $49.99, and you can read it before signing up. Its refunds are stricter: its <a href="https://help.simplify.jobs/articles/8410005-manage-or-cancel-your-subscription" {...ext}>billing help</a> says &ldquo;Activated subscriptions are generally non-refundable&rdquo;, with exceptions in its refund policy. Its Autopilot submits &ldquo;without a review step&rdquo;, using one of 20 weekly credits per application, and its <a href="https://simplify.jobs/copilot" {...ext}>Copilot page</a> says of the free autofill, &ldquo;There is no limit on how many applications you can submit with Copilot!&rdquo;, where Jobright&rsquo;s free plan allows 4 autofills a day. Its{' '}
                 <a href="https://chromewebstore.google.com/detail/simplify-copilot-autofill/pbanhockgagggenencehbnadejlgchfc" {...ext}>extension</a> has more users and nine times as many ratings as Jobright&rsquo;s. On{' '}
                 <a href="https://www.trustpilot.com/review/simplify.jobs" {...ext}>Trustpilot</a> it has only 22 reviews and hasn&rsquo;t claimed the page, so its 2.7 says little either way.
               </p>
@@ -245,7 +255,7 @@ export default function Page() {
           body: (
             <>
               <p>
-                Jobright suits you if you&rsquo;re searching U.S. jobs and spend more time finding openings than applying to them. The free plan covers that: the board, match scores, tracker and autofill. Jobright&rsquo;s blog said in 2025 that about 30% of its users were international candidates looking for H-1B sponsorship. If that&rsquo;s you, check the posting itself: a Trustpilot reviewer said the &ldquo;H1B sponsor likely&rdquo; label is set per company, not per job, though Jobright replied that it&rsquo;s based on the posting and &ldquo;isn&rsquo;t a guarantee of sponsorship.&rdquo;
+                Jobright suits you if you&rsquo;re searching U.S. jobs and spend more time finding openings than applying to them. The free plan covers that: the board, match scores, tracker and 4 autofills a day. Jobright&rsquo;s blog said in 2025 that about 30% of its users were international candidates looking for H-1B sponsorship. If that&rsquo;s you, check the posting itself: a Trustpilot reviewer said the &ldquo;H1B sponsor likely&rdquo; label is set per company, not per job, though Jobright replied that it&rsquo;s based on the posting and &ldquo;isn&rsquo;t a guarantee of sponsorship.&rdquo;
               </p>
               <p>
                 Pay for Turbo only once the free matches are good for your field, and use it lightly at first: the refund window covers 7 days from a first monthly charge, but heavy use can rule a refund out. For jobs you care about, read what the Agent or autofill puts in each answer before it goes out, since one user found invented ones.
@@ -260,7 +270,7 @@ export default function Page() {
               <p>
                 Cover Me does the part after you&rsquo;ve found the job. On a posting on <Link href="/for/linkedin">LinkedIn</Link>, <Link href="/for/indeed">Indeed</Link>, <Link href="/for/greenhouse">Greenhouse</Link>, <Link href="/for/lever">Lever</Link>, <Link href="/for/workday">Workday</Link> or <Link href="/for/ashby">Ashby</Link>, including one you found through Jobright, it writes a tailored resume with an <Link href="/guides/what-is-an-ats-score">ATS score</Link> and a cover letter for you to edit and send. A check removes any skill your original resume doesn&rsquo;t support, so it won&rsquo;t write a project you never did.
               </p>
-              <ComparisonTable name="Jobright" rows={COMPARISON} caption="Jobright details are from its terms, refund policy, store listings and blog, checked November 21, 2026." />
+              <ComparisonTable name="Jobright" rows={COMPARISON} caption="Jobright details are from its terms, refund policy, signed-in upgrade page, store listings and blog, checked November 21, 2026." />
               <p>
                 The free plan gives 10 generations to start, then 5 a week, and Pro is $15 a month. With{' '}
                 <Link href="/guides/use-your-own-api-key-for-cover-letters">your own OpenAI or Claude API key</Link> it&rsquo;s free and unlimited, and you pay the AI provider for what you use. For a tool that applies for you, see the <Link href="/guides/aiapply-review">AIApply review</Link>. To check a resume against a posting for free, try Cover Me&rsquo;s <Link href="/ats-checker">free ATS resume checker</Link> or see <Link href="/guides/free-jobscan-alternatives">free Jobscan alternatives</Link>.
