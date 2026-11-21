@@ -10,12 +10,16 @@ import { SiteNav } from '@/components/site/SiteNav'
 import { APP_LINKS } from '@/components/site/app-links'
 import { AccountMenu } from '@/components/site/AccountMenu'
 import { Badge } from '@/components/ui/badge'
-import { LocalDate } from '../LocalDate'
+import { NO_PLAN, readPlan } from '@/lib/stripe-plan'
+import { DaysLeft, LocalDate } from '../LocalDate'
 import { DeleteAccount } from './DeleteAccount'
 import { ManageBilling } from './ManageBilling'
 import { ProductUpdatesSwitch } from './ProductUpdatesSwitch'
 
 export const metadata: Metadata = { title: 'Settings', robots: { index: false } }
+
+const DAY: Intl.DateTimeFormatOptions = { month: 'long', day: 'numeric' }
+const LINE = 'text-[13.5px] text-ink-2'
 
 const TILE = 'flex flex-col items-start gap-2.5 rounded-[20px] border border-line bg-surface px-6 py-5 shadow-[0_1px_2px_rgba(30,27,75,0.05),0_10px_28px_-16px_rgba(30,27,75,0.22)]'
 
@@ -36,8 +40,9 @@ function Section({ title, icon: SectionIcon, children }: { title: string; icon: 
 export default async function SettingsPage() {
   const { supabase, user } = await getServerUser()
   if (!user) redirect('/auth?next=/dashboard/settings')
-  const { data: userData } = await supabase.from('users').select('tier, created_at, product_updates').eq('id', user.id).single()
+  const { data: userData } = await supabase.from('users').select('tier, created_at, product_updates, stripe_customer_id').eq('id', user.id).single()
   const email = user.email ?? ''
+  const plan = userData?.tier === 'hosted_pro' && userData.stripe_customer_id ? await readPlan(userData.stripe_customer_id) : NO_PLAN
 
   return (
     <div className="min-h-screen bg-background">
@@ -56,6 +61,27 @@ export default async function SettingsPage() {
             {userData?.tier === 'hosted_pro' ? (
               <>
                 <Badge variant="pro">Pro <StarIcon size={11} weight="fill" aria-hidden /></Badge>
+                {plan.giftTrialEnd && (
+                  <div>
+                    <p className="text-[13.5px] font-semibold text-ink">Pro trial<DaysLeft iso={plan.giftTrialEnd} /></p>
+                    <p className={LINE}>Ends <LocalDate iso={plan.giftTrialEnd} options={DAY} />, then you&apos;re back on the free plan.</p>
+                  </div>
+                )}
+                {plan.firstPayment && (
+                  <p className={LINE}>
+                    <strong className="font-semibold text-ink">First payment <LocalDate iso={plan.firstPayment.date} options={DAY} />:</strong> {plan.firstPayment.price}.
+                  </p>
+                )}
+                {plan.renews && (
+                  <p className={LINE}>
+                    <strong className="font-semibold text-ink">Renews <LocalDate iso={plan.renews.date} options={DAY} />,</strong> {plan.renews.price}.
+                  </p>
+                )}
+                {plan.endsAt && (
+                  <p className={LINE}>
+                    <strong className="font-semibold text-ink">Ends <LocalDate iso={plan.endsAt} options={DAY} />.</strong> You won&apos;t be charged again.
+                  </p>
+                )}
                 <ManageBilling />
               </>
             ) : (

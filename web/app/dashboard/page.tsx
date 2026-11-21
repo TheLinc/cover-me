@@ -20,9 +20,6 @@ export default async function DashboardPage() {
     .eq('id', user.id)
     .single()
 
-  // Usage against the free starter, the free week, or Pro's daily cap
-  // (migration 015), and the separate answer allowance (032). The database
-  // owns the numbers.
   const [{ data: allowance }, { data: answers }, trial] = await Promise.all([
     supabase.rpc('my_generation_allowance'),
     supabase.rpc('my_answer_allowance'),
