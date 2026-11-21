@@ -1,9 +1,8 @@
 import type { Metadata } from 'next'
-import Image from 'next/image'
 import Link from 'next/link'
 import { getServerUser } from '@/lib/supabase-server'
 import { Button } from '@/components/ui/button'
-import { SiteNav } from '@/components/site/SiteNav'
+import { LogoHeader, SiteNav } from '@/components/site/SiteNav'
 import { APP_LINKS } from '@/components/site/app-links'
 import { AccountMenu } from '@/components/site/AccountMenu'
 import { avatarUrl } from '@/lib/avatar'
@@ -28,14 +27,7 @@ export default async function RedeemPage({ params }: { params: Promise<{ code: s
         // Signing out comes back here, so the link can go to another account.
         <SiteNav links={APP_LINKS} actions={<AccountMenu email={user.email ?? ''} avatar={avatarUrl(user.user_metadata)} signOutTo={here} />} />
       ) : (
-        <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-md">
-          <div className="max-w-3xl mx-auto px-6 h-16 flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2.5">
-              <Image src="/logo.png" alt="Cover Me" width={26} height={26} className="rounded-md" />
-              <span className="font-bold text-[15px] tracking-[-0.3px]">Cover Me</span>
-            </Link>
-          </div>
-        </header>
+        <LogoHeader />
       )}
 
       <main className="max-w-xl mx-auto px-6 py-20 text-center">

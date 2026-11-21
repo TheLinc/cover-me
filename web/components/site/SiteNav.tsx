@@ -17,6 +17,28 @@ const MARKETING_LINKS: NavLink[] = [
   { href: '/#pricing', label: 'Pricing' },
 ]
 
+const BAR = 'sticky top-0 z-50 border-b border-line bg-[rgba(245,243,242,0.88)] backdrop-blur-md'
+
+function SiteLogo({ href, compact }: { href: string; compact?: boolean }) {
+  return (
+    <Link href={href} className="flex shrink-0 items-center gap-2.5">
+      <Image src="/logo.png" width={28} height={28} alt="" className="rounded-[8px]" />
+      <span className={cn('text-[18px] font-semibold tracking-[-0.02em] text-ink', compact && 'max-sm:sr-only')}>Cover Me</span>
+    </Link>
+  )
+}
+
+// For pages people reach from a link outside the site, which have nothing to navigate to. (#311)
+export function LogoHeader({ href = '/' }: { href?: string }) {
+  return (
+    <header className={BAR}>
+      <div className="container flex h-16 items-center">
+        <SiteLogo href={href} />
+      </div>
+    </header>
+  )
+}
+
 export function SiteNav({ actions, links }: { actions?: ReactNode; links?: NavLink[] }) {
   const pathname = usePathname()
   const [scrolled, setScrolled] = useState(false)
@@ -31,17 +53,9 @@ export function SiteNav({ actions, links }: { actions?: ReactNode; links?: NavLi
   }, [])
 
   return (
-    <header
-      className={cn(
-        'sticky top-0 z-50 border-b border-line bg-[rgba(245,243,242,0.88)] backdrop-blur-md transition-shadow duration-300',
-        scrolled && 'shadow-[0_10px_30px_-18px_rgba(30,27,75,0.35)]',
-      )}
-    >
+    <header className={cn(BAR, 'transition-shadow duration-300', scrolled && 'shadow-[0_10px_30px_-18px_rgba(30,27,75,0.35)]')}>
       <div className="container flex h-16 items-center gap-8 max-sm:gap-2">
-        <Link href={links ? '/dashboard' : '/'} className="flex shrink-0 items-center gap-2.5">
-          <Image src="/logo.png" width={28} height={28} alt="" className="rounded-[8px]" />
-          <span className={cn('text-[18px] font-semibold tracking-[-0.02em] text-ink', links && 'max-sm:sr-only')}>Cover Me</span>
-        </Link>
+        <SiteLogo href={links ? '/dashboard' : '/'} compact={!!links} />
         <nav aria-label="Main" className={cn('flex flex-1 gap-1', !links && 'max-lg:hidden')}>
           {(links ?? MARKETING_LINKS).map((l) => (
             <Link

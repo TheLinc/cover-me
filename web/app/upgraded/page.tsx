@@ -1,11 +1,11 @@
 import type { Metadata } from 'next'
-import Image from 'next/image'
 import Link from 'next/link'
 import type { ComponentType } from 'react'
 import { CheckIcon, ClockCounterClockwiseIcon, SparkleIcon } from '@phosphor-icons/react/dist/ssr'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { LogoHeader } from '@/components/site/SiteNav'
 import { LocalDate } from '@/app/dashboard/LocalDate'
 import { PLAN_LIMITS } from '@/lib/limits'
 
@@ -127,15 +127,8 @@ export default async function UpgradedPage(props: Props) {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-md">
-        <div className="max-w-3xl mx-auto px-6 h-16 flex items-center justify-between">
-          {/* /dashboard sends signed-out visitors to /auth, which lands on the dashboard after sign-in. */}
-          <Link href="/dashboard" className="flex items-center gap-2.5">
-            <Image src="/logo.png" alt="Cover Me" width={26} height={26} className="rounded-md" />
-            <span className="font-bold text-[15px] tracking-[-0.3px]">Cover Me</span>
-          </Link>
-        </div>
-      </header>
+      {/* /dashboard sends signed-out visitors to /auth, which lands on the dashboard after sign-in. */}
+      <LogoHeader href="/dashboard" />
 
       <main className="mx-auto max-w-[520px] px-5 py-16 max-md:py-10">
         <div className="text-center">
