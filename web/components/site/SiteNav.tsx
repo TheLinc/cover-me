@@ -8,6 +8,7 @@ import { ListIcon } from '@phosphor-icons/react/dist/ssr'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { cn, storeUrl } from '@/lib/utils'
+import { hasSessionCookie } from '@/lib/session-cookie'
 import type { NavLink } from './app-links'
 
 const MARKETING_LINKS: NavLink[] = [
@@ -23,6 +24,9 @@ export function SiteNav({ actions, links }: { actions?: ReactNode; links?: NavLi
   // Guides keep one SiteNav across pages, so Back with the menu open must close it. (#135)
   const [menuOpen, setMenuOpen] = useState(false)
   useEffect(() => setMenuOpen(false), [pathname])
+  const [signedIn, setSignedIn] = useState(false)
+  useEffect(() => setSignedIn(hasSessionCookie(document.cookie)), [])
+  const account = signedIn ? { href: '/dashboard', label: 'Dashboard' } : { href: '/auth', label: 'Sign in' }
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24)
     onScroll()
@@ -58,7 +62,7 @@ export function SiteNav({ actions, links }: { actions?: ReactNode; links?: NavLi
           {actions ?? (
             <>
               <Button asChild variant="ghost" size="sm" className="max-lg:hidden">
-                <Link href="/auth">Sign in</Link>
+                <Link href={account.href}>{account.label}</Link>
               </Button>
               <Button asChild size="sm">
                 <a href={storeUrl('nav')} target="_blank" rel="noreferrer">
@@ -77,7 +81,7 @@ export function SiteNav({ actions, links }: { actions?: ReactNode; links?: NavLi
               <SheetContent side="right" aria-describedby={undefined} className="bg-paper px-4 pt-16">
                 <SheetTitle className="sr-only">Menu</SheetTitle>
                 <nav aria-label="Main" className="flex flex-col gap-1">
-                  {[...MARKETING_LINKS, ...(actions ? [] : [{ href: '/auth', label: 'Sign in' }])].map((l) => (
+                  {[...MARKETING_LINKS, ...(actions ? [] : [account])].map((l) => (
                     <SheetClose asChild key={l.href}>
                       <Link
                         href={l.href}

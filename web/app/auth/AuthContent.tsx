@@ -6,6 +6,7 @@ import Image from "next/image";
 import { createClient } from "@/lib/supabase";
 import { afterOAuth, hashReturn, oauthCancelled, oauthErrorDescription, oauthRedirectUrl, safeNext } from "@/lib/auth-redirect";
 import { saveProductUpdates } from "@/lib/email-preferences";
+import { hasSessionCookie } from "@/lib/session-cookie";
 import { PLAN_LIMITS } from "@/lib/limits";
 import { Button } from "@/components/ui/button";
 import { GoogleIcon } from "@/components/ui/google-icon";
@@ -77,8 +78,10 @@ function AuthForm() {
   // URL loses oauth and code below. /auth is static, so this renders on the
   // client only and reading params here can't mismatch the server HTML.
   // "opening" is Google with a session, navigating to the dashboard. (#39)
-  const [waiting, setWaiting] = useState<"google" | "opening" | "email" | null>(() =>
-    params.has("error") || fromHash.error ? null : params.has("oauth") ? "google" : params.has("code") ? "email" : null,
+  // "session" is a visit while already signed in, until getUser confirms it (#313).
+  const [waiting, setWaiting] = useState<"google" | "opening" | "email" | "session" | null>(() =>
+    params.has("error") || fromHash.error ? null : params.has("oauth") ? "google" : params.has("code") ? "email"
+      : typeof window !== "undefined" && !window.location.hash && hasSessionCookie(document.cookie) ? "session" : null,
   );
   // A live region that mounts already filled isn't announced, so it stays
   // empty until after the first render (#42).
@@ -182,6 +185,7 @@ function AuthForm() {
     if (!isOAuth && !isConfirmation && !hash) {
       supabase.auth.getUser().then(({ data: { user } }) => {
         if (user) window.location.replace(afterOAuth(searchParams.get("plan"), searchParams.get("next")));
+        else setWaiting(null);
       });
     }
 
@@ -403,7 +407,7 @@ function AuthForm() {
           style={{ animation: "fadeUp 0.5s ease 0.15s both" }}
         >
           <p role="status" className="sr-only">
-            {announce && (waiting === "email" ? "Checking your link" : waiting === "opening" ? "Opening your dashboard" : waiting ? "Signing you in" : "")}
+            {announce && (waiting === "email" ? "Checking your link" : waiting === "opening" || waiting === "session" ? "Opening your dashboard" : waiting ? "Signing you in" : "")}
           </p>
 
           <a
@@ -420,13 +424,13 @@ function AuthForm() {
             <div>
               <div className="mb-7">
                 <h2 className="text-2xl text-foreground leading-[1.2] mb-[5px]">
-                  {waiting === "email" ? "Checking your link." : "Signing you in."}
+                  {waiting === "email" ? "Checking your link." : waiting === "session" ? "You're signed in." : "Signing you in."}
                 </h2>
                 <p className="text-[13.5px] text-muted-foreground leading-[1.55]">
                   {waiting === "email" ? "One moment." : "Opening your dashboard in a moment."}
                 </p>
               </div>
-              <Card className="rounded-[16px] p-4 shadow-[0_1px_2px_rgba(30,27,75,0.05),0_12px_28px_-16px_rgba(30,27,75,0.18)]">
+              {waiting !== "session" && <Card className="rounded-[16px] p-4 shadow-[0_1px_2px_rgba(30,27,75,0.05),0_12px_28px_-16px_rgba(30,27,75,0.18)]">
                 <ul className="flex flex-col gap-3">
                   {waiting === "email" ? (
                     <>
@@ -445,7 +449,7 @@ function AuthForm() {
                     </>
                   )}
                 </ul>
-              </Card>
+              </Card>}
             </div>
           ) :
           view === "confirmed" ? (
