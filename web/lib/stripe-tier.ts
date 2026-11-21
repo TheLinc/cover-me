@@ -9,31 +9,41 @@ export function isGiftTrial(sub: Pick<Stripe.Subscription, 'status' | 'metadata'
   return sub.status === 'trialing' && sub.metadata?.gift_trial === 'true'
 }
 
-export interface TrialState {
-  /** A gift trial with no paid plan yet: it ends here, back on free. */
+type Charge = { date: string; price: string }
+
+export interface PlanState {
+  /** A gift trial with no paid plan yet: it ends here, back on free (#112). */
   giftTrialEnd: string | null
-  /** A paid plan still in a trial carried over from a gift trial: first charge. */
-  firstPayment: { date: string; price: string } | null
+  /** A paid plan still in a trial carried over from a gift trial: first charge (#112). */
+  firstPayment: Charge | null
+  /** An active paid plan: next charge (#312). */
+  renews: Charge | null
+  /** A paid plan set to cancel: its last day (#312). */
+  endsAt: string | null
 }
 
-// What the dashboard's plan tile says about trials, from the customer's
-// trialing subscriptions. A paid plan wins: the gift trial is about to be cancelled.
-export function trialState(trialing: Stripe.Subscription[]): TrialState {
-  const iso = (s: Stripe.Subscription) => new Date(s.trial_end! * 1000).toISOString()
-  const paid = trialing.find((s) => !isGiftTrial(s) && s.trial_end)
-  if (paid) return { giftTrialEnd: null, firstPayment: { date: iso(paid), price: priceLabel(paid.items.data[0].price) } }
-  const gift = trialing.find((s) => isGiftTrial(s) && s.trial_end)
-  return { giftTrialEnd: gift ? iso(gift) : null, firstPayment: null }
+// A paid plan wins over a gift trial: the gift trial is about to be cancelled (#112).
+export function planState(subs: Stripe.Subscription[]): PlanState {
+  const iso = (secs: number) => new Date(secs * 1000).toISOString()
+  const none: PlanState = { giftTrialEnd: null, firstPayment: null, renews: null, endsAt: null }
+  const paid = subs.find((s) => PAID_STATUSES.has(s.status) && !isGiftTrial(s))
+  if (paid) {
+    if (paid.cancel_at_period_end || paid.cancel_at) return { ...none, endsAt: iso(paid.cancel_at ?? paid.current_period_end) }
+    const price = priceLabel(paid.items.data[0].price)
+    if (paid.status === 'trialing' && paid.trial_end) return { ...none, firstPayment: { date: iso(paid.trial_end), price } }
+    return { ...none, renews: { date: iso(paid.current_period_end), price } }
+  }
+  const gift = subs.find((s) => isGiftTrial(s) && s.trial_end)
+  return { ...none, giftTrialEnd: gift ? iso(gift.trial_end!) : null }
 }
 
-// Calendar days from now to the trial's end, in the reader's own time zone.
+// Calendar days in the reader's own time zone, not 24-hour blocks (#112).
 export function daysLeftLabel(endIso: string, now = new Date()): string {
   const day = (d: Date) => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())
   const n = Math.round((day(new Date(endIso)) - day(now)) / 86_400_000)
   return n <= 0 ? 'ends today' : n === 1 ? '1 day left' : `${n} days left`
 }
 
-// "$15 a month", "$35 every 3 months": the dashboard's wording for the plans.
 function priceLabel(price: Pick<Stripe.Price, 'unit_amount' | 'recurring'>): string {
   const cents = price.unit_amount ?? 0
   const amount = `$${cents % 100 ? (cents / 100).toFixed(2) : cents / 100}`
@@ -46,17 +56,17 @@ export function tierFromStatuses(statuses: string[]): Tier {
 }
 
 export interface TierDeps {
-  /** Status of every subscription the customer has, read live from Stripe. */
   listStatuses(customerId: string): Promise<string[]>
-  /** readAt is when the Stripe read started; the DB drops writes older than the last one. */
+  /** readAt is when the Stripe read started; the DB drops writes older than the last one (https://docs.stripe.com/webhooks#event-ordering). */
   setTier(customerId: string, tier: Tier, readAt: Date): Promise<{ error: string | null }>
   linkCustomer(userId: string, customerId: string): Promise<{ error: string | null }>
-  /** Ends a gift trial (a no-op once it's already over). */
+  /** Ends a gift trial, a no-op once it's already over (#112). */
   cancelGiftTrial(subscriptionId: string): Promise<{ error: string | null }>
 }
 
 // Reads the customer's subscriptions from Stripe instead of trusting the event
-// body, so duplicate or out-of-order events all land on the same tier.
+// body, so duplicate or out-of-order events all land on the same tier
+// (https://docs.stripe.com/webhooks#event-ordering).
 // Returns false when a DB write failed; the route answers 500 and Stripe retries.
 export async function handleStripeEvent(event: Stripe.Event, deps: TierDeps): Promise<boolean> {
   let customerId: string | undefined
@@ -69,8 +79,8 @@ export async function handleStripeEvent(event: Stripe.Event, deps: TierDeps): Pr
       const { error } = await deps.linkCustomer(userId, customerId)
       if (error) return false
     }
-    // A paid upgrade from a gift trial (the billing function tags the session).
-    // The paid subscription keeps the user on Pro while the trial ends.
+    // A paid upgrade from a gift trial (#112): the paid subscription keeps the
+    // user on Pro while the trial ends.
     const giftTrial = session.metadata?.gift_trial_subscription
     if (giftTrial) {
       const { error } = await deps.cancelGiftTrial(giftTrial)
