@@ -9,8 +9,10 @@ import { avatarUrl } from '@/lib/avatar'
 import { SiteNav } from '@/components/site/SiteNav'
 import { APP_LINKS } from '@/components/site/app-links'
 import { AccountMenu } from '@/components/site/AccountMenu'
-import { Badge } from '@/components/ui/badge'
+import { Badge, type BadgeProps } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 import { readPlan } from '@/lib/stripe-plan'
+import type { PlanState } from '@/lib/stripe-tier'
 import { DaysLeft, LocalDate } from '../LocalDate'
 import { DeleteAccount } from './DeleteAccount'
 import { ManageBilling } from './ManageBilling'
@@ -19,7 +21,6 @@ import { ProductUpdatesSwitch } from './ProductUpdatesSwitch'
 export const metadata: Metadata = { title: 'Settings', robots: { index: false } }
 
 const DAY: Intl.DateTimeFormatOptions = { month: 'long', day: 'numeric' }
-const LINE = 'text-[13.5px] text-ink-2'
 
 const TILE = 'flex flex-col items-start gap-2.5 rounded-[20px] border border-line bg-surface px-6 py-5 shadow-[0_1px_2px_rgba(30,27,75,0.05),0_10px_28px_-16px_rgba(30,27,75,0.22)]'
 
@@ -33,6 +34,48 @@ function Section({ title, icon: SectionIcon, children }: { title: string; icon: 
       </h2>
       {children}
     </section>
+  )
+}
+
+type Next = { status: ReactNode; tone: BadgeProps['variant']; sub: string; event: string; date: string; then: string }
+
+function nextFor(plan: PlanState): Next | null {
+  if (plan.giftTrialEnd) {
+    const status = <>Trial<DaysLeft iso={plan.giftTrialEnd} /></>
+    return { status, tone: 'tint', sub: 'Free for a week, from a gift link.', event: 'Ends', date: plan.giftTrialEnd, then: "Then you're back on the free plan." }
+  }
+  if (plan.firstPayment) return { status: 'Trial', tone: 'tint', sub: plan.firstPayment.price, event: 'First payment', date: plan.firstPayment.date, then: 'Nothing is charged before then.' }
+  if (plan.renews) return { status: 'Active', tone: 'active', sub: plan.renews.price, event: 'Renews', date: plan.renews.date, then: 'Cancel any time before then.' }
+  if (plan.endsAt) return { status: 'Ending', tone: 'free', sub: "You won't be charged again.", event: 'Ends', date: plan.endsAt, then: "Then you're back on the free plan." }
+  return null
+}
+
+function ProPlan({ plan }: { plan: PlanState }) {
+  const next = nextFor(plan)
+  return (
+    <>
+      <div className="flex w-full items-center justify-between gap-3">
+        <p className="flex items-center gap-2 text-[24px] font-semibold leading-tight tracking-[-0.02em] text-ink">
+          Pro <StarIcon size={16} weight="fill" className="text-brand-strong" aria-hidden />
+        </p>
+        {next && (
+          <Badge variant={next.tone} className="h-6 gap-1.5 whitespace-nowrap px-2.5 font-semibold">
+            <span aria-hidden className="size-1.5 rounded-full bg-current" />
+            <span>{next.status}</span>
+          </Badge>
+        )}
+      </div>
+      {next && <p className="text-[14px] text-ink-2">{next.sub}</p>}
+      <div className={cn('flex w-full flex-wrap items-center justify-between gap-4', next && 'mt-1.5 border-t border-line pt-3.5')}>
+        {next && (
+          <p className="text-[14px] leading-snug text-ink-2">
+            <strong className="block text-[15px] font-semibold text-ink">{next.event} <LocalDate iso={next.date} options={DAY} /></strong>
+            {next.then}
+          </p>
+        )}
+        <div className="flex flex-col items-start gap-2"><ManageBilling /></div>
+      </div>
+    </>
   )
 }
 
@@ -59,31 +102,7 @@ export default async function SettingsPage() {
           </Section>
           <Section title="Plan" icon={CreditCardIcon}>
             {userData?.tier === 'hosted_pro' ? (
-              <>
-                <Badge variant="pro">Pro <StarIcon size={11} weight="fill" aria-hidden /></Badge>
-                {plan.giftTrialEnd && (
-                  <div>
-                    <p className="text-[13.5px] font-semibold text-ink">Pro trial<DaysLeft iso={plan.giftTrialEnd} /></p>
-                    <p className={LINE}>Ends <LocalDate iso={plan.giftTrialEnd} options={DAY} />, then you&apos;re back on the free plan.</p>
-                  </div>
-                )}
-                {plan.firstPayment && (
-                  <p className={LINE}>
-                    <strong className="font-semibold text-ink">First payment <LocalDate iso={plan.firstPayment.date} options={DAY} />:</strong> {plan.firstPayment.price}.
-                  </p>
-                )}
-                {plan.renews && (
-                  <p className={LINE}>
-                    <strong className="font-semibold text-ink">Renews <LocalDate iso={plan.renews.date} options={DAY} />,</strong> {plan.renews.price}.
-                  </p>
-                )}
-                {plan.endsAt && (
-                  <p className={LINE}>
-                    <strong className="font-semibold text-ink">Ends <LocalDate iso={plan.endsAt} options={DAY} />.</strong> You won&apos;t be charged again.
-                  </p>
-                )}
-                <ManageBilling />
-              </>
+              <ProPlan plan={plan} />
             ) : (
               <>
                 <Badge variant="free">Free plan</Badge>
