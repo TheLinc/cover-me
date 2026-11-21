@@ -21,7 +21,7 @@ const MARKETING_LINKS: NavLink[] = [
 export function SiteNav({ actions, links }: { actions?: ReactNode; links?: NavLink[] }) {
   const pathname = usePathname()
   const [scrolled, setScrolled] = useState(false)
-  // Guides keep one SiteNav across pages, so Back with the menu open must close it. (#135)
+  // Guides share one SiteNav across pages, so a route change must close the menu (#135).
   const [menuOpen, setMenuOpen] = useState(false)
   useEffect(() => setMenuOpen(false), [pathname])
   const [signedIn, setSignedIn] = useState(false)
