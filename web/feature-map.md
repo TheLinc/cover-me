@@ -16,3 +16,12 @@ Site features under the names a visitor would use, with the route and how to rea
 ## Sign in
 
 - Sign in and sign up: `/auth`. Header, Sign in, or the footer's Sign in and Upgrade to Pro (`/auth?plan=pro`). Already signed in, it shows "You're signed in." and goes to the dashboard (`/dashboard?upgrade=1` with `plan=pro`, or the `next` path).
+
+## Pages reached from outside links
+
+These have the logo-only header (`components/site/LogoHeader.tsx`), which lines up with the site nav.
+
+- Gift week of Pro: `/redeem/<code>`. From a gift trial link (`pnpm trial-links`). Signed out it asks to sign in; signed in it shows the site nav and a "Start my free week" button.
+- Uninstall survey: `/uninstalled`. Chrome opens it after the extension is removed.
+- Unsubscribe: `/unsubscribe`. The unsubscribe link in non-account emails.
+- Upgraded: `/upgraded`. Stripe Checkout's return page after paying.
