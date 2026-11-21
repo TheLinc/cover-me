@@ -13,3 +13,12 @@ Site features under the names a visitor would use, with the route and how to rea
 ## Tools
 
 - Free ATS resume checker: `/ats-checker`. Nav, footer, and links from the guides. No account needed; the page is `components/site/AtsChecker.tsx`.
+
+## Pages reached from outside links
+
+These have the logo-only header (`components/site/LogoHeader.tsx`), which lines up with the site nav.
+
+- Gift week of Pro: `/redeem/<code>`. From a gift trial link (`pnpm trial-links`). Signed out it asks to sign in; signed in it shows the site nav and a "Start my free week" button.
+- Uninstall survey: `/uninstalled`. Chrome opens it after the extension is removed.
+- Unsubscribe: `/unsubscribe`. The unsubscribe link in non-account emails.
+- Upgraded: `/upgraded`. Stripe Checkout's return page after paying.
