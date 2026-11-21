@@ -80,6 +80,11 @@ describe('planState', () => {
     expect(planState([scheduled]).endsAt).toBe('2026-12-01T00:00:00.000Z')
   })
 
+  it('still reports the renewal when a scheduled cancel falls after it', () => {
+    const later = { ...sub({ active: true }), cancel_at: Date.UTC(2027, 1, 1) / 1000 } as Stripe.Subscription
+    expect(planState([later])).toEqual({ ...NONE, renews: { date: '2026-12-21T00:00:00.000Z', price: '$15 a month' } })
+  })
+
   it('ignores subscriptions that no longer keep the user on Pro', () => {
     expect(planState([{ ...sub({ active: true }), status: 'past_due' } as Stripe.Subscription])).toEqual(NONE)
   })

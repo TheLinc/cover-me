@@ -29,7 +29,8 @@ export function planState(subs: Stripe.Subscription[]): PlanState {
   const iso = (secs: number) => new Date(secs * 1000).toISOString()
   const paid = subs.find((s) => PAID_STATUSES.has(s.status) && !isGiftTrial(s))
   if (paid) {
-    if (paid.cancel_at_period_end || paid.cancel_at) return { ...NO_PLAN, endsAt: iso(paid.cancel_at ?? paid.current_period_end) }
+    const { cancel_at: cancelAt, current_period_end: periodEnd } = paid
+    if (paid.cancel_at_period_end || (cancelAt && cancelAt <= periodEnd)) return { ...NO_PLAN, endsAt: iso(cancelAt ?? periodEnd) }
     const price = priceLabel(paid.items.data[0].price)
     if (paid.status === 'trialing' && paid.trial_end) return { ...NO_PLAN, firstPayment: { date: iso(paid.trial_end), price } }
     return { ...NO_PLAN, renews: { date: iso(paid.current_period_end), price } }
