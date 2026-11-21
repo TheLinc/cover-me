@@ -25,7 +25,7 @@ export default async function RedeemPage({ params }: { params: Promise<{ code: s
     <div className="min-h-screen bg-background text-foreground">
       {user ? (
         // Signed in: the account nav, so it's clear whose account this is.
-        // Signing out comes back here, so the link can go to another account.
+        // Signing out comes back here, so the link can go to another account. (#112)
         <SiteNav links={APP_LINKS} actions={<AccountMenu email={user.email ?? ''} avatar={avatarUrl(user.user_metadata)} signOutTo={here} />} />
       ) : (
         <LogoHeader />
@@ -51,7 +51,7 @@ export default async function RedeemPage({ params }: { params: Promise<{ code: s
             </Button>
           </>
         ) : row?.tier === 'hosted_pro' ? (
-          // Known before any click: billing would refuse it, so don't offer it.
+          // Known before any click: billing would refuse it, so don't offer it. (#112)
           <>
             <h1 className="text-[34px] font-semibold leading-tight tracking-[-0.03em]">You&apos;re already on Pro</h1>
             <p className="mt-4 text-[15px] text-muted-foreground">

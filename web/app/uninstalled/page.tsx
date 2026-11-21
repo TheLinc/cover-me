@@ -3,7 +3,7 @@ import { Suspense } from 'react'
 import { LogoHeader } from '@/components/site/SiteNav'
 import { UninstallSurvey } from './UninstallSurvey'
 
-// Not in sitemap.ts: only people who just removed the extension land here.
+// Not in sitemap.ts: only people who just removed the extension land here. (#106)
 export const metadata: Metadata = {
   title: 'Why did you remove Cover Me?',
   robots: { index: false },

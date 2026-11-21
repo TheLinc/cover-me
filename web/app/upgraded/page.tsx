@@ -23,9 +23,8 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 }
 
 // One small drawing per Pro item, each a piece of the real product reduced to
-// a single shape. Decorative: the row's heading says the same thing.
+// a single shape. Decorative: the row's heading says the same thing. (#227)
 
-// 25 a day, one dot per generation.
 function Quota() {
   return (
     <div className="grid grid-cols-5 gap-[3px]">
@@ -34,7 +33,6 @@ function Quota() {
   )
 }
 
-// The same History open on two computers.
 function Screen() {
   return (
     <div className="flex flex-col items-center">
@@ -56,7 +54,6 @@ function Devices() {
   )
 }
 
-// A resume page that downloads as Word.
 function WordDoc() {
   return (
     <div className="relative -translate-x-1">
@@ -70,7 +67,6 @@ function WordDoc() {
   )
 }
 
-// A line being typed, then the saved check.
 function EditSaved() {
   return (
     <div className="flex flex-col items-start gap-1.5">
@@ -85,7 +81,6 @@ function EditSaved() {
   )
 }
 
-// A question box with an answer typed in, as the right-click writes it.
 function AnswerBox() {
   return (
     <div className="flex h-[26px] w-[34px] flex-col justify-center gap-[3px] rounded-[5px] border-[1.5px] border-ink bg-white px-[4px]">
@@ -122,12 +117,13 @@ const ITEMS: { title: string; hint: string; Visual: ComponentType }[] = [
 // Stripe Checkout's success_url. Needs no sign-in: the extension picks up the
 // new tier from the server on its next request. Stripe's webhook can land a
 // few seconds after this page, so the copy doesn't promise Pro is already on.
+// https://github.com/TheLinc/cover-me/commit/df95c49
 export default async function UpgradedPage(props: Props) {
   const firstPayment = await firstPaymentDate(props)
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* /dashboard sends signed-out visitors to /auth, which lands on the dashboard after sign-in. */}
+      {/* /dashboard sends signed-out visitors to /auth, which lands on the dashboard after sign-in. (#233) */}
       <LogoHeader href="/dashboard" />
 
       <main className="mx-auto max-w-[520px] px-5 py-16 max-md:py-10">
