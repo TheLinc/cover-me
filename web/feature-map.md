@@ -25,7 +25,7 @@ Site features under the names a visitor would use, with the route and how to rea
 ## Account
 
 - Dashboard: `/dashboard`. After sign-in, or Nav, Dashboard. The Plan tile shows a gift trial's end or a paid plan's first payment (`lib/stripe-plan.ts`).
-- Settings: `/dashboard/settings`. Account menu, Settings. The Plan section shows the Pro badge, the trial end, first payment, renewal or end date from Stripe, and Manage billing (opens the Stripe portal).
+- Settings: `/dashboard/settings`. Account menu, Settings. The Plan section shows Pro with a Trial, Active or Ending pill, the next date (trial end, first payment, renewal or end) from Stripe, and Manage billing (opens the Stripe portal).
 
 ## Pages reached from outside links
 

@@ -65,6 +65,10 @@ describe('planState', () => {
     })
   })
 
+  it('shows the renewal, not the gift trial, once an active paid plan exists', () => {
+    expect(planState([sub({ gift: true }), sub({ active: true })])).toEqual({ ...NONE, renews: { date: '2026-12-21T00:00:00.000Z', price: '$15 a month' } })
+  })
+
   it('reports when an active paid plan renews, and at what price', () => {
     expect(planState([sub({ active: true })])).toEqual({ ...NONE, renews: { date: '2026-12-21T00:00:00.000Z', price: '$15 a month' } })
     expect(planState([sub({ active: true, amount: 3500, every: 3 })]).renews?.price).toBe('$35 every 3 months')
