@@ -22,6 +22,11 @@ Site features under the names a visitor would use, with the route and how to rea
 
 - Sign in and sign up: `/auth`. Header, Sign in, or the footer's Sign in and Upgrade to Pro (`/auth?plan=pro`). Already signed in, it shows "You're signed in." and goes to the dashboard (`/dashboard?upgrade=1` with `plan=pro`, or the `next` path).
 
+## Account
+
+- Dashboard: `/dashboard`. After sign-in, or Nav, Dashboard. The Plan tile shows a gift trial's end or a paid plan's first payment (`lib/stripe-plan.ts`).
+- Settings: `/dashboard/settings`. Account menu, Settings. The Plan section shows Pro with a Trial, Active or Ending pill, the next date (trial end, first payment, renewal or end) from Stripe, and Manage billing (opens the Stripe portal).
+
 ## Pages reached from outside links
 
 These have the logo-only header (`components/site/LogoHeader.tsx`), which lines up with the site nav.

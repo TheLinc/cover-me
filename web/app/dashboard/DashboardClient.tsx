@@ -4,7 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { firstMonthOffer, openBilling, type FirstMonthOffer } from "@/lib/billing";
 import { PLAN_LIMITS, describeAllowance, describeAnswers, type Allowance } from "@/lib/limits";
 import { DaysLeft, LocalDate } from "./LocalDate";
-import type { TrialState } from "@/lib/stripe-tier";
+import type { PlanState } from "@/lib/stripe-tier";
 import { storeUrl, cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -27,7 +27,7 @@ interface Props {
   greeting: string;
   tier: string;
   // A gift trial keeps the upgrade buttons; a plan bought during one shows its first payment. (#112)
-  trial: TrialState;
+  trial: PlanState;
   allowance: Allowance | null;
   // Answers to application questions, counted apart (#232).
   answers: Allowance | null;

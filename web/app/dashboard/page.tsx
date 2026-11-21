@@ -7,21 +7,7 @@ import { avatarUrl } from '@/lib/avatar'
 import { greetingFor } from '@/lib/greeting'
 import { RecentApplications, RecentApplicationsSkeleton } from './ApplicationHistory'
 import { Toaster } from '@/components/ui/sonner'
-import Stripe from 'stripe'
-import { trialState, type TrialState } from '@/lib/stripe-tier'
-
-const NO_TRIAL: TrialState = { giftTrialEnd: null, firstPayment: null }
-
-// A gift trial's end (#112), or the first payment of a plan bought during one.
-// A slow or failed Stripe read shows the plain Pro tile instead.
-async function readTrial(customer: string): Promise<TrialState> {
-  try {
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { timeout: 3000, maxNetworkRetries: 0 })
-    return trialState((await stripe.subscriptions.list({ customer, status: 'trialing', limit: 10 })).data)
-  } catch {
-    return NO_TRIAL
-  }
-}
+import { readPlan } from '@/lib/stripe-plan'
 
 export default async function DashboardPage() {
   const { supabase, user } = await getServerUser()
@@ -34,13 +20,10 @@ export default async function DashboardPage() {
     .eq('id', user.id)
     .single()
 
-  // Usage against the free starter, the free week, or Pro's daily cap
-  // (migration 015), and the separate answer allowance (032). The database
-  // owns the numbers.
   const [{ data: allowance }, { data: answers }, trial] = await Promise.all([
     supabase.rpc('my_generation_allowance'),
     supabase.rpc('my_answer_allowance'),
-    userData?.tier === 'hosted_pro' && userData.stripe_customer_id ? readTrial(userData.stripe_customer_id) : NO_TRIAL,
+    readPlan(userData?.tier === 'hosted_pro' ? userData.stripe_customer_id : null),
   ])
 
   // Recent applications, every account's (#101), streamed in so the rest of
