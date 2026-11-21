@@ -10,7 +10,7 @@ import { SiteNav } from '@/components/site/SiteNav'
 import { APP_LINKS } from '@/components/site/app-links'
 import { AccountMenu } from '@/components/site/AccountMenu'
 import { Badge } from '@/components/ui/badge'
-import { NO_PLAN, readPlan } from '@/lib/stripe-plan'
+import { readPlan } from '@/lib/stripe-plan'
 import { DaysLeft, LocalDate } from '../LocalDate'
 import { DeleteAccount } from './DeleteAccount'
 import { ManageBilling } from './ManageBilling'
@@ -42,7 +42,7 @@ export default async function SettingsPage() {
   if (!user) redirect('/auth?next=/dashboard/settings')
   const { data: userData } = await supabase.from('users').select('tier, created_at, product_updates, stripe_customer_id').eq('id', user.id).single()
   const email = user.email ?? ''
-  const plan = userData?.tier === 'hosted_pro' && userData.stripe_customer_id ? await readPlan(userData.stripe_customer_id) : NO_PLAN
+  const plan = await readPlan(userData?.tier === 'hosted_pro' ? userData.stripe_customer_id : null)
 
   return (
     <div className="min-h-screen bg-background">

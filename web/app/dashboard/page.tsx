@@ -7,7 +7,7 @@ import { avatarUrl } from '@/lib/avatar'
 import { greetingFor } from '@/lib/greeting'
 import { RecentApplications, RecentApplicationsSkeleton } from './ApplicationHistory'
 import { Toaster } from '@/components/ui/sonner'
-import { NO_PLAN, readPlan } from '@/lib/stripe-plan'
+import { readPlan } from '@/lib/stripe-plan'
 
 export default async function DashboardPage() {
   const { supabase, user } = await getServerUser()
@@ -23,7 +23,7 @@ export default async function DashboardPage() {
   const [{ data: allowance }, { data: answers }, trial] = await Promise.all([
     supabase.rpc('my_generation_allowance'),
     supabase.rpc('my_answer_allowance'),
-    userData?.tier === 'hosted_pro' && userData.stripe_customer_id ? readPlan(userData.stripe_customer_id) : NO_PLAN,
+    readPlan(userData?.tier === 'hosted_pro' ? userData.stripe_customer_id : null),
   ])
 
   // Recent applications, every account's (#101), streamed in so the rest of

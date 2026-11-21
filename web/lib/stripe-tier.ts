@@ -22,19 +22,20 @@ export interface PlanState {
   endsAt: string | null
 }
 
+export const NO_PLAN: PlanState = { giftTrialEnd: null, firstPayment: null, renews: null, endsAt: null }
+
 // A paid plan wins over a gift trial: the gift trial is about to be cancelled (#112).
 export function planState(subs: Stripe.Subscription[]): PlanState {
   const iso = (secs: number) => new Date(secs * 1000).toISOString()
-  const none: PlanState = { giftTrialEnd: null, firstPayment: null, renews: null, endsAt: null }
   const paid = subs.find((s) => PAID_STATUSES.has(s.status) && !isGiftTrial(s))
   if (paid) {
-    if (paid.cancel_at_period_end || paid.cancel_at) return { ...none, endsAt: iso(paid.cancel_at ?? paid.current_period_end) }
+    if (paid.cancel_at_period_end || paid.cancel_at) return { ...NO_PLAN, endsAt: iso(paid.cancel_at ?? paid.current_period_end) }
     const price = priceLabel(paid.items.data[0].price)
-    if (paid.status === 'trialing' && paid.trial_end) return { ...none, firstPayment: { date: iso(paid.trial_end), price } }
-    return { ...none, renews: { date: iso(paid.current_period_end), price } }
+    if (paid.status === 'trialing' && paid.trial_end) return { ...NO_PLAN, firstPayment: { date: iso(paid.trial_end), price } }
+    return { ...NO_PLAN, renews: { date: iso(paid.current_period_end), price } }
   }
   const gift = subs.find((s) => isGiftTrial(s) && s.trial_end)
-  return { ...none, giftTrialEnd: gift ? iso(gift.trial_end!) : null }
+  return { ...NO_PLAN, giftTrialEnd: gift ? iso(gift.trial_end!) : null }
 }
 
 // Calendar days in the reader's own time zone, not 24-hour blocks (#112).
