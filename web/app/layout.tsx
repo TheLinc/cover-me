@@ -87,13 +87,11 @@ const jsonLdWebSite = {
   description: 'Cover Me is an open-source Chrome extension that tailors your resume and writes a cover letter for the job posting you have open, on LinkedIn, Indeed, Greenhouse, Lever, Workday and Ashby.',
 }
 
-// SoftwareApplication, HowTo, and Speakable JSON-LD live in lib/structured-data.ts
-// and render on the homepage only — schema should describe the page it's on.
+// Homepage-only JSON-LD lives in lib/structured-data.ts: markup must describe the page it's on, https://developers.google.com/search/docs/appearance/structured-data/sd-policies
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    // suppressHydrationWarning covers only this element's own attributes: browser
-    // extensions add some to <html> before React hydrates.
+    // Browser extensions add attributes to <html> before React hydrates (#32)
     <html lang="en" className={`${sans.variable} ${mono.variable}`} suppressHydrationWarning>
       <head>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdOrg) }} />
