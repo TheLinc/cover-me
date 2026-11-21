@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import posthog from 'posthog-js'
+import { GiftIcon } from '@phosphor-icons/react/dist/ssr'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { LocalDate } from '@/app/dashboard/LocalDate'
@@ -10,6 +11,14 @@ import { TRIAL_REDEEMED, whenPosthogLoaded } from '@/lib/analytics'
 import { redeemTrial } from '@/lib/billing'
 import { storeUrl } from '@/lib/utils'
 import { confettiFrom } from './confetti'
+
+export function GiftBadge() {
+  return (
+    <span className="mx-auto mb-6 flex size-16 items-center justify-center rounded-full bg-brand-tint text-brand-strong shadow-[inset_0_0_0_1px_#DCDCFE]">
+      <GiftIcon size={30} weight="duotone" aria-hidden />
+    </span>
+  )
+}
 
 // The Stripe webhook turns Pro on, usually within seconds (#112).
 export function RedeemTrial({ code, email }: { code: string; email: string }) {
@@ -58,7 +67,10 @@ export function RedeemTrial({ code, email }: { code: string; email: string }) {
 
   return (
     <>
-      <h1 className="text-[34px] font-semibold leading-tight tracking-[-0.03em]">Start your free week of Pro</h1>
+      <GiftBadge />
+      <h1 className="text-balance text-[34px] font-semibold leading-tight tracking-[-0.03em]">
+        Start your <span className="text-brand-strong">free week</span> of Pro
+      </h1>
       <p className="mt-4 text-[15px] text-muted-foreground">
         25 letters and resumes a day for 7 days on {email}. No card needed. When the week ends you&apos;re back on the free plan unless you upgrade.
       </p>
