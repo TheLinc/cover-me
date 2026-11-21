@@ -1,0 +1,6 @@
+/guides/jobright-review -> 404
+/guides card: 0
+/guides/aiapply-review links to it: 0
+/guides/free-jobscan-alternatives links to it: 0
+sitemap has it: false
+llms.txt has it: false

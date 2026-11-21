@@ -1,0 +1,10 @@
+/guides/jobright-review -> 200
+title: Jobright Review (2026): Turbo Pricing, Is It Legit, and vs Simplify
+h1: Jobright review: is it legit, and is Turbo worth paying for?
+h2: TL;DR | What does Jobright do? | How much does Jobright cost? | Is Jobright free? | Does Jobright work? | Is Jobright legit? | Jobright vs Simplify | Who is Jobright for? | Cover Me as a Jobright alternative | Frequently asked questions | Tailor each application you find
+FAQPage: Is Jobright legit? | How much does Jobright cost? | Is Jobright free? | Is Jobright or Simplify better?
+/guides card: 1
+/guides/aiapply-review links to it: 1
+/guides/free-jobscan-alternatives links to it: 1
+sitemap has it: true
+llms.txt has it: true
