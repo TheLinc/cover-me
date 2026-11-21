@@ -84,7 +84,7 @@ const jsonLdWebSite = {
   '@type': 'WebSite',
   name: 'Cover Me',
   url: BASE,
-  description: 'Cover Me is an open-source Chrome extension that tailors your resume and writes a cover letter for the job posting you have open, on LinkedIn, Indeed, Greenhouse, Lever, Workday and Ashby.',
+  description: 'Cover Me is an open-source Chrome extension that tailors your resume, writes a cover letter and answers job application questions for the job posting you have open, on LinkedIn, Indeed, Greenhouse, Lever, Workday and Ashby.',
 }
 
 // Homepage-only JSON-LD lives in lib/structured-data.ts: markup must describe the page it's on, https://developers.google.com/search/docs/appearance/structured-data/sd-policies
