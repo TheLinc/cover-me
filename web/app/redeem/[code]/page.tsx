@@ -42,7 +42,7 @@ export default async function RedeemPage({ params }: { params: Promise<{ code: s
           <>
             <GiftBadge />
             <h1 className="text-balance text-[34px] font-semibold leading-tight tracking-[-0.03em]">
-              You&apos;ve been given a <span className="text-brand-strong">free week</span> of Pro
+              You&apos;ve been given a <span className="whitespace-nowrap text-brand-strong">free week</span> of Pro
             </h1>
             <p className="mt-4 text-[15px] text-muted-foreground">
               25 letters and resumes a day for 7 days. No card needed, and it ends on its own.

@@ -61,7 +61,7 @@ export function RedeemTrial({ code, email }: { code: string; email: string }) {
     <>
       <GiftBadge />
       <h1 className="text-balance text-[34px] font-semibold leading-tight tracking-[-0.03em]">
-        Start your <span className="text-brand-strong">free week</span> of Pro
+        Start your <span className="whitespace-nowrap text-brand-strong">free week</span> of Pro
       </h1>
       <p className="mt-4 text-[15px] text-muted-foreground">
         25 letters and resumes a day for 7 days on {email}. No card needed. When the week ends you&apos;re back on the free plan unless you upgrade.
