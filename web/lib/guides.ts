@@ -136,6 +136,15 @@ export const GUIDES: Guide[] = [
     imageAlt:
       "ChatGPT's first draft says \"I'm excited by the opportunity to help drive product growth through coordinated, measurable demand generation programs.\" After the prompt that strips AI phrases, the line reads \"I'm interested in helping build campaigns that connect product initiatives with measurable lead growth and marketing performance.\" Then the check prompt takes out \"global marketing\", which isn't on the resume.",
   },
+  {
+    slug: 'jobright-review',
+    title: 'Jobright review: is it legit, and is Turbo worth paying for?',
+    description: "Jobright is a real Santa Clara company with a free job board and a paid Turbo plan. What Turbo costs, what users report on Trustpilot and Reddit, and how it compares with Simplify.",
+    date: '2026-11-21',
+    image: '/guides/jobright-review.png',
+    imageAlt:
+      "Jobright at a glance, checked November 21, 2026. Free: job matches and tracking, with 2 AI resumes a day. Turbo: $29.99 a month on a timed offer, $49.99 crossed out, shown only after sign-in. Trustpilot: 4.8 from 3,811 reviews, with recent ones invited by Jobright. Run by Jobright Inc. in Santa Clara, founded in 2023, $7.7 million raised.",
+  },
 ]
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
