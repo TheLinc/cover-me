@@ -471,8 +471,17 @@ describe('groundSkills with a skill whose words are scattered through the resume
     expect(skills).toBe('Google Analytics')
     expect(dropped).toEqual([expect.stringMatching(/^Product marketing \(evidence ".+" doesn't show it\)$/)])
     expect(prompts).toHaveLength(1)
-    expect(prompts[0]).toContain('SKILL: "Product marketing"')
+    expect(prompts[0]).toContain('0. EVIDENCE: "Grew organic traffic 64% with an SEO plan for the blog and product pages; Marketing Lead" → SKILL: "Product marketing"')
     expect(prompts[0]).not.toContain('SKILL: "Google Analytics"')
+  })
+
+  test('cited evidence the resume lacks is replaced by the resume lines, not trusted', async () => {
+    const prompts: string[] = []
+    const reject = async (p: string) => { prompts.push(p); return '{"verdicts": []}' }
+    const { skills } = await groundSkills([{ skill: 'Product marketing', evidence: 'Owned product marketing for launches' }], alexRivera, reject)
+    expect(skills).toBeUndefined()
+    expect(prompts[0]).not.toContain('Owned product marketing')
+    expect(prompts[0]).toContain('product pages; Marketing Lead')
   })
 
   test('a reordered name is checked against the resume line that holds its words, and kept when approved', async () => {

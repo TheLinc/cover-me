@@ -196,8 +196,8 @@ export function jobOnlyTerms(jobDescription: string, candidate: string): string[
     }
   }
   // A plain word the posting also writes in lowercase ("Frontend Web Developer
-  // ... build web apps") is an everyday word there, not a named requirement.
-  // ponytail: "React" next to "react quickly" goes unchecked too; the line check covers it. (https://github.com/TheLinc/cover-me/commit/cb47a02)
+  // ... build web apps") is an everyday word there, not a named requirement. (https://github.com/TheLinc/cover-me/commit/cb47a02)
+  // ponytail: "React" next to "react quickly" goes unchecked too; the line check covers it.
   return [...terms].filter((t) => !(plainWord(t) && new RegExp(`(^|[^A-Za-z0-9])${escapeRe(t.toLowerCase())}($|[^A-Za-z0-9])`).test(jobDescription)))
 }
 
@@ -666,7 +666,7 @@ export async function checkAndRewriteLines<T extends Groundable>(
   // Drop ids that don't point at a real line (an empty summary is none), and
   // lines word for word the same as one of their entry's originals (or the
   // original summary): they claim nothing new. On Regenerate the originals
-  // include what the candidate typed in the editor (seenVersion). (https://github.com/TheLinc/cover-me/commit/48b8913)
+  // include what the candidate typed in the editor (seenVersion) (https://github.com/TheLinc/cover-me/commit/48b8913, #175).
   const unchanged = (id: LineId, line: string): boolean => {
     if (id === 'summary') return original.summary?.trim() === line
     const m = /^([ep])(\d+)b/.exec(id)
@@ -698,7 +698,7 @@ export async function checkAndRewriteLines<T extends Groundable>(
 
   let rewrites = new Map<LineId, string>()
   try {
-    // A tense-only line is its own source, so the rewrite keeps its tailoring. (https://github.com/TheLinc/cover-me/commit/48b8913)
+    // A tense-only line is its own source, so the rewrite keeps its tailoring. (#202)
     const promptSources = new Map(sources)
     for (const id of tense.keys()) if (tenseOnly(id)) promptSources.set(id, lineAt(tailored, id)!)
     rewrites = parseLineRewrites(await ask(buildLineRewritePrompt(original, tailored, flags, jobDescription, promptSources)))
@@ -723,7 +723,7 @@ export async function checkAndRewriteLines<T extends Groundable>(
           rewritten++
           bullets.push(text)
         } else if (tenseOnly(ids[k])) {
-          // The line claims nothing new; only its tense was off, so keep it. (https://github.com/TheLinc/cover-me/commit/48b8913)
+          // The line claims nothing new; only its tense was off, so keep it. (#202)
           bullets.push(b)
         } else {
           reverted++
@@ -745,7 +745,7 @@ export async function checkAndRewriteLines<T extends Groundable>(
       resume.summary = text
     } else {
       // Like a bullet, revert to the candidate's own summary. With none, keep
-      // the rewrite's sentences that pass; empty only when none do. (https://github.com/TheLinc/cover-me/commit/48b8913)
+      // the rewrite's sentences that pass; empty only when none do. (#63)
       reverted++
       const own = original.summary?.trim()
       const kept = text.split(/(?<=[.!?])\s+/).filter((s) => usableRewrite(s, allOriginal, [])).join(' ')
