@@ -18,7 +18,7 @@ import { botCheckToken, preloadBotCheck } from '@/lib/ats-checker/turnstile'
 import { checkResume, firstAt, markFor, marks, oneEntryPerAsk, readPosting, type Keyword, type Level, type Mark } from '@/lib/ats-checker/keywords'
 import { readResumeFile } from '@/lib/ats-checker/read-resume'
 import { SAMPLE_AI, SAMPLE_POSTING, SAMPLE_RESUME } from '@/lib/ats-checker/sample'
-import { whenPosthogLoaded } from '@/lib/analytics'
+import { capture } from '@/lib/analytics'
 import { cn, storeUrl } from '@/lib/utils'
 
 const GROUPS: { level: Level; title: string }[] = [
@@ -80,11 +80,9 @@ function morph(update: () => void, then?: () => void) {
   })
 }
 
-// Counts checks and how they ended, never their text. Imported lazily like the page-view setup in instrumentation-client.ts (#278).
+// Counts checks and how they ended, never their text (#278).
 function logCheck(outcome: Fallback | 'ai', score?: number) {
-  void import('posthog-js').then(({ default: posthog }) =>
-    whenPosthogLoaded(posthog, () => posthog.capture('ats_check_run', { outcome, ...(score !== undefined && { score }) })),
-  )
+  capture('ats_check_run', { outcome, ...(score !== undefined && { score }) })
 }
 
 const SAMPLE = byAi(SAMPLE_POSTING, SAMPLE_RESUME, SAMPLE_AI, 1)

@@ -1,8 +1,10 @@
 import { CheckIcon } from '@phosphor-icons/react/dist/ssr'
-import { storeUrl } from '@/lib/utils'
+import { cn, storeUrl } from '@/lib/utils'
 import { PLAN_LIMITS as L } from '@/lib/limits'
 import { SendToComputer } from '@/components/site/SendToComputer'
 import { Ambient } from './Ambient'
+
+const INSTALL = 'mt-auto rounded-full bg-panel py-3.5 text-center text-[15px] font-medium text-ink transition-colors hover:bg-line'
 
 const FREE = [
   `${L.free_starter} AI generations to start, then ${L.free_weekly} a week, letters and resumes`,
@@ -38,10 +40,10 @@ export function Pricing() {
               <li key={f} className="flex items-start gap-2.5"><CheckIcon size={16} className="mt-[3px] shrink-0 text-subtle" />{f}</li>
             ))}
           </ul>
-          <a href={storeUrl('pricing')} target="_blank" rel="noreferrer" className="mt-auto rounded-full bg-panel py-3.5 text-center text-[15px] font-medium text-ink transition-colors hover:bg-line [@media(pointer:coarse)]:hidden">
+          <a href={storeUrl('pricing')} target="_blank" rel="noreferrer" className={cn(INSTALL, '[@media(pointer:coarse)]:hidden')}>
             Install free
           </a>
-          <SendToComputer placement="pricing" className="mt-auto rounded-full bg-panel py-3.5 text-center text-[15px] font-medium text-ink transition-colors hover:bg-line [@media(pointer:fine)]:hidden">
+          <SendToComputer placement="pricing" className={cn(INSTALL, '[@media(pointer:fine)]:hidden')}>
             Send this to my computer
           </SendToComputer>
         </div>

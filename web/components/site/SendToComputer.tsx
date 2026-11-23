@@ -1,21 +1,23 @@
 'use client'
 
-import { useEffect, useState, type ButtonHTMLAttributes } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { DeviceMobileIcon } from '@phosphor-icons/react/dist/ssr'
 import { Button } from '@/components/ui/button'
-import { whenPosthogLoaded } from '@/lib/analytics'
+import { capture } from '@/lib/analytics'
 import { phoneSendUrl, sentFrom } from '@/lib/phone-send'
 import { storeUrl } from '@/lib/utils'
 
 // A Chrome extension can't be installed from a phone, so phones get this in place of the store link (#332).
-export function SendToComputer({ placement, ...props }: { placement: string } & ButtonHTMLAttributes<HTMLButtonElement>) {
-  return <button type="button" {...props} onClick={() => send(placement)} />
+export function SendToComputer({ placement, className, children }: { placement: string; className?: string; children: ReactNode }) {
+  return (
+    <button type="button" className={className} onClick={() => send(placement)}>
+      {children}
+    </button>
+  )
 }
 
 function send(placement: string) {
-  void import('posthog-js').then(({ default: posthog }) =>
-    whenPosthogLoaded(posthog, () => posthog.capture('phone_send', { placement })),
-  )
+  capture('phone_send', { placement })
   const url = phoneSendUrl(window.location.origin + window.location.pathname, placement)
   const mail = () => {
     window.location.href = `mailto:?subject=${encodeURIComponent('Install Cover Me on my computer')}&body=${encodeURIComponent(url)}`
