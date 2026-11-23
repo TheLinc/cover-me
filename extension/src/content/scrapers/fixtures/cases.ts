@@ -1,7 +1,7 @@
 // What each saved fixture must scrape to. Shared by the extension's fixture
 // tests and the backend's scrape-function test, so both check the same thing.
 // `ends` is text from the end of the posting: it proves the scraper took the
-// whole description, not only the first section (#3).
+// whole description, not only the first section (#2).
 export const FIXTURE_CASES = [
   { board: 'greenhouse', title: 'Anthropic Fellows Program, AI Safety & Security', company: 'Anthropic', ends: 'for using AI in our application process.' },
   // Signed-in job search on my.greenhouse.io with a posting open in its pop-up,
@@ -31,7 +31,7 @@ export const FIXTURE_CASES = [
   { board: 'terminal', title: 'Data Engineer', company: 'Overflow', ends: '- SQL' },
   // No dedicated scraper: schema.org microdata through the generic one (no JSON-LD on the page) (#5)
   { board: 'smartrecruiters', title: 'Housekeeping Associate, Downtown San Diego', company: 'Equinox', ends: 'Must have a legal right to work in the United States.' },
-  // Indeed's 2026 layout: same detail pane on /viewjob and in the search page's right-hand pane (#3)
+  // Indeed's 2026 layout: same detail pane on /viewjob and in the search page's right-hand pane (#2)
   { board: 'indeed', title: 'Welder', company: 'Bleema Manufacturing Corporation', ends: '1 year experience in shop setting' },
   { board: 'indeed-search', title: 'Welder', company: 'Bleema Manufacturing Corporation', ends: '1 year experience in shop setting' },
   // An employer with an Indeed company page: the pane links the name (no

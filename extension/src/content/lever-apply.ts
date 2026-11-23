@@ -17,7 +17,7 @@ export async function addLeverPostingJsonLd(): Promise<void> {
     } catch {
       continue
     }
-    if (sections && data['@type'] === 'JobPosting') data.description = sections
+    if (sections && [data['@type']].flat().includes('JobPosting')) data.description = sections
     const copy = document.createElement('script')
     copy.type = 'application/ld+json'
     copy.dataset.coverMePosting = ''
