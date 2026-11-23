@@ -25,7 +25,12 @@ const PLAIN: Record<string, string> = {
   '\u0141': 'L', '\u0142': 'l', '\u0110': 'D', '\u0111': 'd', '\u0126': 'H', '\u0127': 'h',
   '\u0131': 'i', '\u0166': 'T', '\u0167': 't', '\u0138': 'k',
   '\u03bc': '\u00b5', '\u03a9': ' ohm', '\u2126': ' ohm',
+  '\u2260': '!=', '\u2248': '~', '\u2032': "'", '\u2033': '"', '\u20b9': 'Rs ',
 }
+
+// Accent marks a letter can lose and still read the same. U+0338 (the stroke
+// that makes "=" into "\u2260") is not one of them (#190).
+const ACCENTS = /[\u0300-\u0337\u0339-\u036f]/g
 
 // What the standard PDF fonts print: ASCII, Latin-1 and the WinAnsi extras in
 // 0x80-0x9F (Š š Ž ž Œ œ Ÿ, curly quotes, dashes, the bullet, the euro sign) (#190).
@@ -37,7 +42,7 @@ const WIN_ANSI = /[\x09\x0A\x0D\x20-\x7E\u00A0-\u00FF\u20AC\u201A\u0192\u201E\u2
 // letter outside it loses its accent ("ń" prints as "n"), never the letter (#190).
 export function pdfSafe(text: unknown): string {
   return Array.from(String(text ?? '')
-    .replace(/[\u200B-\u200D\u2060\uFEFF\u00AD]/g, '')
+    .replace(/[\u200B-\u200D\u2060\uFEFF\u00AD\uFE00-\uFE0F]/g, '')
     .replace(/[\u2010-\u2012\u2212]/g, '-')
     .replace(/[\u00A0\u2000-\u200A\u202F\u205F]/g, ' ')
     .replace(/\u2192/g, '->')
@@ -45,11 +50,15 @@ export function pdfSafe(text: unknown): string {
     .replace(/\u2265/g, '>='))
     .map((ch) => {
       if (WIN_ANSI.test(ch)) return ch
-      const base = ch.normalize('NFD').replace(/[\u0300-\u036F]/g, '')
+      if (PLAIN[ch]) return PLAIN[ch]
+      // A superscript keeps a caret, so "10\u2076" never reads as "106"; other
+      // compatibility forms print plain, so "CO\u2082" prints as "CO2" (#190).
+      if (/[\u2070-\u207f]/.test(ch)) return `^${ch.normalize('NFKD')}`
+      const base = ch.normalize('NFKD').replace(ACCENTS, '')
       if (base && Array.from(base).every((c) => WIN_ANSI.test(c))) return base
-      // Any other letter shows as "?", so a missing one is visible; a symbol
-      // or emoji is still dropped (#190).
-      return PLAIN[ch] ?? (/\p{L}/u.test(ch) ? '?' : '')
+      // Anything else shows as "?", so a reader sees something is missing;
+      // only an emoji is dropped (#190).
+      return /\p{Extended_Pictographic}/u.test(ch) ? '' : '?'
     })
     .join('')
 }
@@ -136,25 +145,31 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
   }
 
   // "Name | subtitle": bold then italic on one line, a right-hand note at the
-  // margin. The italic part moves to its own line when both don't fit (#190).
+  // margin. A long name (a publication title) wraps short of the note, and the
+  // italic part moves to its own line when both don't fit (#190).
   function entryHeader(name: string, subtitle: string | undefined, right: string | undefined) {
-    need(14)
     doc.setFontSize(ENTRY)
     doc.setFont('times', 'normal')
     const rightW = right ? width(right) + 10 : 0
     doc.setFont('times', 'bold')
-    const nameW = width(name)
-    text(name, ML)
+    const names = wrap(name, CW - rightW)
+    need(14 + 13 * (names.length - 1))
+    if (right) {
+      doc.setFont('times', 'normal')
+      text(right, MR, { align: 'right' })
+      doc.setFont('times', 'bold')
+    }
+    names.forEach((line, i) => {
+      if (i) y += 13
+      text(line, ML)
+    })
+    const nameW = width(names[names.length - 1] ?? '')
     let wrapped = false
     if (subtitle) {
       doc.setFont('times', 'italic')
       const sub = `  |  ${subtitle}`
-      if (nameW + width(sub) <= CW - rightW) text(sub, ML + nameW)
+      if (nameW + width(sub) <= CW - (names.length > 1 ? 0 : rightW)) text(sub, ML + nameW)
       else wrapped = true
-    }
-    if (right) {
-      doc.setFont('times', 'normal')
-      text(right, MR, { align: 'right' })
     }
     y += 13
     if (wrapped && subtitle) {

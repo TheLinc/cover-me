@@ -884,8 +884,14 @@ function groundHeadline<T extends Groundable>(tailored: T, original: Groundable,
   const allWords = new Set(tokens([own, ...original.experience.flatMap((e) => e.bullets ?? []), ...(original.projects ?? []).flatMap((p) => p.bullets ?? [])].join(' \n ')))
   const backed = (w: string, words: Set<string>) => words.has(w) || words.has(`${w}s`) || words.has(w.replace(/s$/, '')) ||
     (w.length >= 4 && [...words].some((o) => o.startsWith(w)))
+  // The title comes from one of their own titles, not from words of several:
+  // "Journeyman Electrician" and "Plumber's Helper" make no "Journeyman Plumber" (#190).
+  const titleTokens = tokens(title ?? '').filter((w) => !SMALL_WORDS.has(w))
+  const fromOneTitle = [original.headline, ...original.experience.map((e) => e.title ?? '')]
+    .some((t) => t && titleTokens.every((w) => backed(w, new Set(tokens(t)))))
+  const titleUnbacked = titleTokens.filter((w) => !backed(w, titleWords))
   const unbacked = [
-    ...tokens(title ?? '').filter((w) => !SMALL_WORDS.has(w) && !backed(w, titleWords)),
+    ...(fromOneTitle ? [] : titleUnbacked.length ? titleUnbacked : [title ?? '']),
     ...tokens(specialty.join(' ')).filter((w) => !SMALL_WORDS.has(w) && !backed(w, allWords)),
   ]
   if (!level && !jobOnly.length && !unbacked.length) return tailored

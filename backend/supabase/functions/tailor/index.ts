@@ -113,21 +113,22 @@ export function mergeTailorDelta<T extends {
 }
 
 // A bullet stating a measured result: a percentage, or a before/after change
-// ("from 40 to 25 minutes", "0.76 to 0.84", "3/14 to 14/14", "cut ... 40 to
-// 25"). A plain range ("Managed 5 to 7 engineers", "2019 to 2021") or scope
-// alone ("a 60-case evaluation set") doesn't count (#190).
+// ("cut wait time from 40 to 25 minutes", "0.76 to 0.84", "3/14 to 14/14"). A
+// plain range ("Managed 5 to 7 engineers", "shifts from 7pm to 7am", "grades
+// from 9 to 12", "2019 to 2021") or scope alone ("a 60-case evaluation set")
+// doesn't count (#190).
 const PERCENT = /\b\d+(?:\.\d+)?(?:\/\d+)?\s*(?:%|percent\b)/i
 const CHANGE = /(\bfrom\s+)?\$?(\d+(?:[.,]\d+)*(?:\/\d+)?)(?:\s*[a-z%]+)?\s+(?:to|\u2192|->)\s+\$?(\d+(?:[.,]\d+)*(?:\/\d+)?)/gi
-const CHANGE_VERB = /\b(?:reduc|cut|improv|increas|rais|lower|decreas|boost|grew|grow|drop|shrank|shrunk|sped|speed|doubl|tripl|halv)\w*/i
+const CHANGE_VERB = /\b(?:reduc|cut|improv|increas|rais|lower|decreas|boost|grew|grow|drop|shrank|shrunk|sped|speed|doubl|tripl|halv|fell|rose|climb|declin|shorten)\w*/i
 const YEAR = /^(?:19|20)\d\d$/
 
 export function isResultBullet(text: string): boolean {
   if (PERCENT.test(text)) return true
   for (const m of text.matchAll(CHANGE)) {
-    const [, from, a, b] = m
+    const [, , a, b] = m
     if (YEAR.test(a) && YEAR.test(b)) continue
-    const fractional = /[./]/.test(a) || /[./]/.test(b)
-    if (from || fractional || verbBefore(text.slice(0, m.index))) return true
+    const fractional = /[./]/.test(a) && /[./]/.test(b)
+    if (fractional || verbBefore(text.slice(0, m.index))) return true
   }
   return false
 }
@@ -178,6 +179,21 @@ export interface BulletBudget {
   long: boolean
   experience: number[]
   projects: number[]
+}
+
+// On Regenerate from the user's edits, an entry keeps at least the bullets
+// they left it, as the revision prompt asks; the budget cuts only below that (#190).
+export function seenBudget<B extends Pick<BulletBudget, 'long' | 'experience' | 'projects'>>(
+  b: B,
+  seen: { experience: Array<{ bullets?: string[] }>; projects?: Array<{ bullets?: string[] }> },
+  upload: unknown,
+): B {
+  if (seen === upload) return b
+  return {
+    ...b,
+    experience: b.experience.map((n, i) => Math.max(n, seen.experience[i]?.bullets?.length ?? 0)),
+    projects: b.projects.map((n, i) => Math.max(n, seen.projects?.[i]?.bullets?.length ?? 0)),
+  }
 }
 
 export function bulletBudget(r: { experience: Array<{ bullets?: string[] }>; projects?: Array<{ bullets?: string[] }> }): BulletBudget {
@@ -673,7 +689,7 @@ Deno.serve(async (req) => {
     // Added skills follow the casing of the resume's own list (#198).
     delta.skills = recaseSkills((await groundSkills(delta.skills, candidate, askChecker, base.skills)).skills, base.skills, `${candidate}
 ${job.description}`)
-    const merged = keepSeen(mergeTailorDelta(base, delta, { exactBulletCounts: !compact && !trim, maxBullets: trim && !compact ? bulletBudget(structuredResume) : undefined }), structuredResume, base)
+    const merged = keepSeen(mergeTailorDelta(base, delta, { exactBulletCounts: !compact && !trim, maxBullets: trim && !compact ? seenBudget(bulletBudget(structuredResume), base, structuredResume) : undefined }), structuredResume, base)
     // Rewrite only the lines that claim more than the original resume supports (https://github.com/TheLinc/cover-me/commit/48b891334817c0138f614e129805c74712fe4ab2).
     const { resume: lined, repair } = await checkAndRewriteLines(merged, base, job.description, askChecker, supplemental)
     // Counts only: repair.flagged holds resume text (#58).

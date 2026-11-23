@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest'
 import { pdfPageText } from './resume-parser'
 import { groundSkills, groundTailored, recaseSkills, skillGroups } from './ai/resume-grounding'
-import { budgetText, bulletBudget, isResultBullet, keepResults, mergeTailorDelta } from './ai/resume-tailor'
+import { assembleTailored, budgetText, bulletBudget, isResultBullet, keepResults, mergeTailorDelta } from './ai/resume-tailor'
+import type { TailoredResume } from '../types'
 import { pdfSafe } from './pdf/resume'
 
 const at = (str: string, x: number, y: number, width: number, hasEOL = false) => ({ str, transform: [10, 0, 0, 10, x, y], width, hasEOL })
@@ -83,6 +84,15 @@ describe('bullet budget', () => {
     expect(merged.experience[0].bullets).toHaveLength(6)
   })
 
+  test('Regenerate in trim mode keeps the bullets the user added', async () => {
+    const parsed = { name: 'Ana Ruiz', email: '', phone: '', website: '', experience: [{ title: 'Line Cook', company: 'Fonda', location: 'Austin, TX', dates: '2021 - Present', bullets: ['Ran the grill station', 'Prepped sauces', 'Closed the line', 'Trained new cooks'] }], education: [] }
+    const mine = [...parsed.experience[0].bullets, 'Built the weekly prep sheet']
+    const previous = { ...parsed, summary: '', editedAt: '2026-11-20T10:00:00.000Z', experience: [{ ...parsed.experience[0], bullets: mine }] }
+    const raw = JSON.stringify({ summary: '', experience: [{ bullets: mine }] })
+    const out = await assembleTailored(parsed, raw, { jobDescription: 'Line cook, grill', previous: previous as unknown as TailoredResume, maxBullets: bulletBudget(parsed) })
+    expect(out.experience[0].bullets).toContain('Built the weekly prep sheet')
+  })
+
   test('a short resume\'s trim drops what the model dropped, measured or not', () => {
     const parsed = { experience: [{ bullets: ['Lifted 50 to 75 lb loads daily', 'Grew Instagram following 40%', 'Welded pipe to code', 'Read weld symbols'] }] }
     const merged = mergeTailorDelta(parsed, { experience: [{ bullets: ['Welded pipe to code', 'Read weld symbols'] }] }, { maxBullets: bulletBudget(parsed) })
@@ -113,7 +123,10 @@ describe('resume PDF text', () => {
   test('a unit keeps its meaning, and a missing letter shows', () => {
     expect(pdfSafe('Administered 50 \u03BCg fentanyl')).toBe('Administered 50 \u00B5g fentanyl')
     expect(pdfSafe('10 k\u03A9 resistors')).toBe('10 k ohm resistors')
-    expect(pdfSafe('\u0418\u0432\u0430\u043D \u2713')).toBe('???? ')
+    expect(pdfSafe('\u0418\u0432\u0430\u043D \u2713')).toBe('???? ?')
+    expect(pdfSafe('A \u2260 B, \u224850 patients')).toBe('A != B, ~50 patients')
+    expect(pdfSafe('1 \u00D7 10\u2076 cells, CO\u2082 welding, Mg\u00B2\u207A')).toBe('1 \u00D7 10^6 cells, CO2 welding, Mg\u00B2^+')
+    expect(pdfSafe('Managed \u20B92 crore, 5\u203210\u2033 \uD83D\uDE00')).toBe('Managed Rs 2 crore, 5\'10" ')
   })
 })
 
@@ -138,6 +151,11 @@ describe('measured results survive the trim', () => {
     expect(isResultBullet('Took 20 to 30 patient calls per shift')).toBe(false)
     expect(isResultBullet('Lifted 50 to 75 lb loads daily')).toBe(false)
     expect(isResultBullet('Moved 200 to 300 pallets a shift')).toBe(false)
+    expect(isResultBullet('Worked 12-hour night shifts from 7pm to 7am')).toBe(false)
+    expect(isResultBullet('Taught grades from 9 to 12')).toBe(false)
+    expect(isResultBullet('Covered shifts from 3 to 11')).toBe(false)
+    expect(isResultBullet('Worked 7.5 to 12 hour shifts')).toBe(false)
+    expect(isResultBullet('Wait times fell from 40 to 25 minutes')).toBe(true)
   })
 
   test('a change verb counts only beside the figures', () => {
@@ -226,6 +244,19 @@ describe('headline words the resume never shows', () => {
     expect(groundTailored({ ...rn, headline: 'Charge Nurse' }, rn, rnText, 'Charge Nurse').resume.headline).toBe('Registered Nurse')
     const welder = { headline: 'Welder', experience: [{ title: 'Welder', bullets: ['Welded pipe to code'] }] }
     expect(groundTailored({ ...welder, headline: 'Certified Welder' }, welder, 'Welder Welded pipe to code', 'Certified Welder').resume.headline).toBe('Welder')
+  })
+
+  test('a title made of words from two different titles goes back', () => {
+    const cases: Array<[string, string, string, string]> = [
+      ['Certified Nursing Assistant', 'Medical Assistant', 'Certified Medical Assistant', 'Certified Nursing Assistant'],
+      ['Journeyman Electrician', 'Plumber\'s Helper', 'Journeyman Plumber', 'Journeyman Electrician'],
+      ['Assistant Manager', 'Sales Associate', 'Sales Manager', 'Assistant Manager'],
+      ['Line Cook', 'Head Dishwasher', 'Head Cook', 'Line Cook'],
+    ]
+    for (const [first, second, claimed, kept] of cases) {
+      const own = { headline: first, experience: [{ title: first, bullets: ['Worked the shift'] }, { title: second, bullets: ['Worked the shift'] }] }
+      expect(groundTailored({ ...own, headline: claimed }, own, `${first} ${second} Worked the shift`, claimed).resume.headline, claimed).toBe(kept)
+    }
   })
 
   test('a title from their own titles keeps a specialty their bullets show', () => {

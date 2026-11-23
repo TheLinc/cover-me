@@ -399,7 +399,6 @@ export default function Editor() {
                   onChange={(l) => edit((r) => { r.otherSections![placed.index].entries![j].bullets = l })} />
               </div>
             ))}
-            {/* A section of entries shows its loose lines only when it has some (#190). */}
             {(!s.entries?.length || !!s.lines?.length) && (
               <Lines label={`Lines under ${s.heading || 'this section'}`} noun="line" items={s.lines ?? []}
                 onChange={(l) => edit((r) => { r.otherSections![placed.index].lines = l })} />
