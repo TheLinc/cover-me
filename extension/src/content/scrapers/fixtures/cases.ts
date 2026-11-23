@@ -1,58 +1,62 @@
 // What each saved fixture must scrape to. Shared by the extension's fixture
 // tests and the backend's scrape-function test, so both check the same thing.
 // `ends` is text from the end of the posting: it proves the scraper took the
-// whole description, not only the first section.
+// whole description, not only the first section (#2).
 export const FIXTURE_CASES = [
   { board: 'greenhouse', title: 'Anthropic Fellows Program, AI Safety & Security', company: 'Anthropic', ends: 'for using AI in our application process.' },
   // Signed-in job search on my.greenhouse.io with a posting open in its pop-up,
   // cut down to three results, with every company, title and line of posting
-  // text made up. The pop-up has no <h1> and ends with the application form.
+  // text made up. The pop-up has no <h1> and ends with the application form (#66).
   { board: 'greenhouse-modal', title: 'Platform Engineer', company: 'Fabrikam', ends: 'Applicants must be able to work in Canada.' },
   // Signed-in Applications page on my.greenhouse.io, with the company, title and
   // posting text made up. The applied posting sits under a "Job post" heading,
-  // with no <h1>, next to a list of applications and a "Stages" sidebar.
+  // with no <h1>, next to a list of applications and a "Stages" sidebar (#70).
   { board: 'greenhouse-applications', title: 'Backend Developer', company: 'Contoso', ends: 'Contoso does not accept unsolicited resumes from recruiting agencies.' },
   { board: 'lever', title: 'Administrative Business Partner', company: 'Palantir Technologies', ends: 'Internet Crime Complaint Center (IC3).' },
+  // An apply page, with the posting's JSON-LD copied in as the extension does. This
+  // posting's own JSON-LD description leaves out the closing notice (#325)
+  { board: 'lever-apply', title: 'Director', company: 'capital.com', ends: 'If you would like more information about how your data is processed, please contact us.' },
   { board: 'ashby', title: 'AI Systems Engineer, Codex Agents', company: 'OpenAI', ends: 'Join us in shaping the future of technology.' },
   { board: 'workable', title: 'Senior Open-Source Python Engineer, ML Developer Tools - EMEA Remote', company: 'Hugging Face', ends: 'Join a community supporting the ML/AI community.' },
   { board: 'workday', title: 'Senior Applied AI Engineer', company: 'Nvidia', ends: 'or any other characteristic protected by law.' },
   { board: 'bamboohr', title: 'Senior Business Analyst', company: 'Picton Mahoney Asset Management', ends: 'All decisions are made by our hiring team.' },
-  // Signed-out /jobs/view/ page: read from its JSON-LD
+  // Signed-out /jobs/view/ page: read from its JSON-LD (#2)
   { board: 'linkedin', title: 'RN - SAU', company: 'INTEGRIS Health', ends: 'including protected veteran or disability status.' },
   // Signed-in /jobs/view/ page for a posting already applied to, cut down to the
   // posting by hand (no nav, people or job lists), with the company and text made
   // up. "Application status" sits between the title and the description; "About
   // the company" links the company with its follower count; the description
-  // continues after its box.
+  // continues after its box (#21).
   { board: 'linkedin-applied', title: 'Frontend Developer', company: 'Northwind', ends: 'Northwind Applicant Privacy Notice' },
-  // Terminal's public posting page
   { board: 'terminal', title: 'Data Engineer', company: 'Overflow', ends: '- SQL' },
-  // No dedicated scraper: schema.org microdata through the generic one (no JSON-LD on the page)
+  // No dedicated scraper: schema.org microdata through the generic one (no JSON-LD on the page) (#5)
   { board: 'smartrecruiters', title: 'Housekeeping Associate, Downtown San Diego', company: 'Equinox', ends: 'Must have a legal right to work in the United States.' },
-  // Indeed's 2026 layout: same detail pane on /viewjob and in the search page's right-hand pane
+  // Indeed's 2026 layout: same detail pane on /viewjob and in the search page's right-hand pane (#2)
   { board: 'indeed', title: 'Welder', company: 'Bleema Manufacturing Corporation', ends: '1 year experience in shop setting' },
   { board: 'indeed-search', title: 'Welder', company: 'Bleema Manufacturing Corporation', ends: '1 year experience in shop setting' },
   // An employer with an Indeed company page: the pane links the name (no
-  // vj-company-name), and an empty sentinel div follows the description heading
+  // vj-company-name), and an empty sentinel div follows the description heading (#80)
   { board: 'indeed-search-company-link', title: 'Retail Associates', company: 'Walmart', ends: 'Work Location: In person' },
   // Company career sites that name the employer only in the tab title (#200).
   // Apple's posting card ends with its own links back to the search
   { board: 'apple', title: 'US - Specialist: Seasonal, Part-time', company: 'Apple', ends: 'See all roles in United States' },
-  // Amazon puts its <title> in <body>
+  // Amazon puts its <title> in <body> (#208)
   { board: 'amazon', title: 'Software Engineer', company: 'Amazon', ends: 'please contact your Recruiting Partner.' },
-  // The <h1> reads "job details"; the posting sits beside a list of other jobs
+  // The <h1> reads "job details"; the posting sits beside a list of other jobs (#208)
   { board: 'google-careers', title: 'Senior Staff Software Engineer, Generative AI, Search Intelligence', company: 'Google', ends: 'Current or past grants do not confer an acquired right.' },
   // The same posting opened by clicking it in the search results (saved by
   // hand: fixtures:save loads postings directly). A "Search Jobs" <h1> comes
-  // first, and the job list beside the posting is larger than it.
+  // first, and the job list beside the posting is larger than it (#208).
   { board: 'google-careers-search', title: 'Senior Staff Software Engineer, Generative AI, Search Intelligence', company: 'Google', ends: 'Current or past grants do not confer an acquired right.' },
-  // Phenom: JSON-LD with an empty hiringOrganization name
+  // Phenom: JSON-LD with an empty hiringOrganization name (#208)
   { board: 'phenom', title: 'Home Health Licensed Practical Nurse', company: 'Humana', ends: 'at all levels of employment.' },
+  // A jobs-count banner <h1> ("20 jobs on the Python Job Board") comes first;
+  // the posting's own <h1> holds the title, a "New" badge and the company (#73)
+  { board: 'python', title: 'Senior Python Developer', company: 'Eliassen Group', ends: 'https://devitjobs.com/jobs/Eliassen-Group-Senior-Python-Developer' },
   // Every <h1> is a section heading ("Key Responsibilities"); the tab title is
   // "RAMON.SPACE - Director of Finance", company first. The posting's block
-  // ends with an office map.
+  // ends with an office map (#208).
   { board: 'dueto', title: 'Director of Finance', company: 'RAMON.SPACE', ends: 'Report a map error' },
 ]
 
-// Line 1 of every fixture is `<!-- {url} saved {date} -->`.
 export const fixtureUrl = (html: string) => html.match(/^<!-- (\S+)/)![1]

@@ -1,16 +1,14 @@
 import type { AIProvider, JobData, ParsedResume, TailoredResume } from '../../types'
 import { debugGroup, debugLog } from '../debug'
 import { derivePlanningProgress, deriveTailorProgress } from './tailor-progress'
-import { buildsOnEdits, candidateText, checkAndRewriteLines, groundSkills, groundTailored, keepSeen, recaseSkills, seenVersion, skillGroups, trustedNotes, type AskModel, type LineRepair } from './resume-grounding'
+import { buildsOnEdits, candidateText, checkAndRewriteLines, checkedTitle, groundSkills, groundTailored, keepSeen, recaseSkills, seenVersion, skillGroups, trustedNotes, type AskModel, type LineRepair } from './resume-grounding'
 import { SONNET_FIELDS, streamSonnet } from './claude'
-import { scoreFromMatch, type KeywordMatch } from './ats-score'
+import { scoreBefore, scoreFromMatch, type KeywordMatch } from './ats-score'
+import { KEYWORD_JUDGING, KEYWORD_TIERS } from './keyword-rules'
 import { callOpenAI, OPENAI_MODEL } from './openai'
 
 
-// The model outputs a DELTA (rewritten content only), not the full resume —
-// immutable fields are merged back in code (see mergeTailorDelta below). Key
-// order matters: tailor-progress.ts derives the live progress label from which
-// key the model is currently emitting.
+// Key order matters: tailor-progress.ts reads the progress label from the key being streamed: https://github.com/TheLinc/cover-me/commit/d7700ca5cc272c75785b90971b63a366f3d35016
 function buildTailorSchema(parsed: ParsedResume): string {
   const delta: Record<string, unknown> = {
     summary: 'string — 2-3 sentence professional summary, no first-person pronouns; "" when STEP 4 says skip',
@@ -41,20 +39,15 @@ function buildTailorSchema(parsed: ParsedResume): string {
   return JSON.stringify(delta, null, 2)
 }
 
-// The editing base for revision mode — strip the derived score fields so the
-// model edits resume content, not stale numbers (STEP 9 is recomputed fresh).
-// An edited resume's fields from the editor tab go too: the old gaps, the
-// section order (layout, not wording), and deleted sections, so the model
-// doesn't put their text back (#197).
-function stripScores(r: TailoredResume): Omit<TailoredResume, 'atsScore' | 'atsGaps' | 'atsGapsBeforeEdits' | 'editedAt' | 'hasEdits' | 'sectionOrder' | 'deletedSections'> {
-  const { atsScore: _s, atsGaps: _g, atsGapsBeforeEdits: _b, editedAt: _e, hasEdits: _h, sectionOrder: _o, deletedSections: _d, ...rest } = r
+// Otherwise the model edits stale scores and puts deleted sections back (#197).
+function stripScores(r: TailoredResume): Omit<TailoredResume, 'atsScore' | 'atsScoreBefore' | 'atsGaps' | 'atsGapsBeforeEdits' | 'editedAt' | 'hasEdits' | 'sectionOrder' | 'deletedSections'> {
+  const { atsScore: _s, atsScoreBefore: _sb, atsGaps: _g, atsGapsBeforeEdits: _b, editedAt: _e, hasEdits: _h, sectionOrder: _o, deletedSections: _d, ...rest } = r
   return rest
 }
 
 // ── Tailor delta (mirrored: extension/src/lib/ai/resume-tailor.ts ⇄ backend/supabase/functions/tailor/index.ts) ──
-// The model outputs only rewritten content; these helpers validate it and merge
-// it back into the parsed resume, so immutable fields (name, contact, titles,
-// companies, dates, education, certifications) can never be altered by the model.
+// The model returns only rewritten text, so it can never alter name, contact, titles,
+// companies, dates, education or certifications: https://github.com/TheLinc/cover-me/commit/d7700ca5cc272c75785b90971b63a366f3d35016
 
 export interface TailorDeltaEntry { bullets: string[] }
 
@@ -64,16 +57,14 @@ export interface TailorDelta {
   headline?: string
   experience: TailorDeltaEntry[]
   projects?: TailorDeltaEntry[]
-  /** [{ skill, evidence? }] from current prompts; a comma-separated string from older ones. Converted by groundSkills before merging. */
+  /** Older prompts sent a comma-separated string; groundSkills converts both forms before merging: https://github.com/TheLinc/cover-me/commit/0e9a09cd3d4d9fc3b7cebb190aed7c4307954676 */
   skills?: string | unknown[]
   keywordMatch?: Record<string, unknown>
 }
 
 export function parseDelta(raw: string): TailorDelta {
-  // The model sometimes emits the JSON, then "Wait, correction needed..." and a
-  // corrected object (2 of 68 tailors in one full eval). Use the last complete
-  // top-level object that parses: that is its final answer. Code fences,
-  // surrounding prose, and an object cut off mid-stream all fall away.
+  // The model sometimes emits JSON, then "Wait, correction needed..." and a corrected
+  // object (2 of 68 tailors in one eval); the last complete one is its answer: https://github.com/TheLinc/cover-me/commit/30cd16dbed180782529d87cec6a47ec67f76a7b8
   const objects = topLevelObjects(raw)
   let incomplete = false
   for (let i = objects.length - 1; i >= 0; i--) {
@@ -89,7 +80,6 @@ export function parseDelta(raw: string): TailorDelta {
   throw new Error(incomplete ? 'AI returned incomplete response. Please try again.' : 'AI returned invalid JSON. Please try again.')
 }
 
-// Each balanced {...} at the top level, ignoring braces inside JSON strings.
 function topLevelObjects(text: string): string[] {
   const out: string[] = []
   let depth = 0
@@ -113,12 +103,7 @@ function topLevelObjects(text: string): string[] {
   return out
 }
 
-// Merge the model's delta into the parsed resume. A missing or empty bullets
-// array for an entry keeps that entry's original bullets — a partially valid
-// response degrades to "some bullets untailored", never to a broken resume.
-// The same holds for a count the prompt forbids: in default mode a role must
-// come back with as many bullets as it had (a different count means bullets
-// were merged or dropped), and projects keep their count in every mode.
+// Bad bullet output keeps the original bullets, never a broken resume: https://github.com/TheLinc/cover-me/commit/30cd16dbed180782529d87cec6a47ec67f76a7b8
 export function mergeTailorDelta<T extends {
   experience: Array<{ bullets: string[] }>
   projects?: Array<{ bullets: string[] }>
@@ -143,8 +128,7 @@ export function mergeTailorDelta<T extends {
     summary: typeof delta.summary === 'string' ? delta.summary : '',
     experience: base.experience.map((role, i) => ({ ...role, bullets: pick(role.bullets, delta.experience?.[i], exact, opts.maxBullets?.experience[i]) })),
     ...(base.projects?.length
-      // Projects keep their exact count except where trim's budget cuts them.
-      ? { projects: base.projects.map((p, i) => ({ ...p, bullets: pick(p.bullets, delta.projects?.[i], !(opts.maxBullets && opts.maxBullets.projects[i] < p.bullets.length), opts.maxBullets?.projects[i]) })) }
+      ? { projects: base.projects.map((p, i) => ({ ...p, bullets: pick(p.bullets, delta.projects?.[i], exact, opts.maxBullets?.projects[i]) })) }
       : {}),
     ...(base.skills
       ? { skills: typeof delta.skills === 'string' && delta.skills.trim() ? delta.skills : base.skills }
@@ -235,7 +219,7 @@ export function budgetText(r: { experience: Array<{ bullets?: string[]; title?: 
     ...(r.projects ?? []).map((p, i) => `- projects[${i}] (${p.name ?? ''}): ${p.bullets?.length ?? 0} bullets in, ${range(p.bullets?.length ?? 0, b.projects[i])}`),
   ].join('\n')
 }
-// ── End mirrored tailor delta ──
+// ── End mirrored tailor delta ── https://github.com/TheLinc/cover-me/commit/d7700ca5cc272c75785b90971b63a366f3d35016
 
 // Extra STEP 8 rules for a skills section written in labelled groups, so the
 // tailored list keeps those groups instead of collapsing into one long line.
@@ -283,6 +267,7 @@ ${groupedSkillsRule(parsed.skills)}` : ''
 COMPACT MODE — SINGLE PAGE REQUIRED:
 The output must fit on a single letter page. Apply these additional constraints (they override the general rules where they conflict):
 - Reduce to a maximum of 3 bullets per role — keep the most relevant 3, drop the rest. A bullet matching an activity the JD explicitly names (e.g. code reviews) is among the most relevant — keep it.
+- Reduce to a maximum of 2 bullets per project — keep the most relevant 2 by the same rule, and never drop the only evidence of a Tier 1 keyword. Every project keeps at least one bullet; never remove or reorder a project.
 - Every bullet must fit on a single line (100 characters maximum)
 - Shorten the skills list to the 10 most relevant skills only
 - The bullet budget rule (STEP 5) does NOT apply in compact mode — use these constraints instead
@@ -325,19 +310,9 @@ Identify the industry from the JD vocabulary; it sets which keywords and metrics
 - Other: infer the field's own hard-skill vocabulary and outcome metrics directly from the JD.
 
 STEP 2 — EXTRACT & TIER KEYWORDS
-Pull the hard requirements from the JD and tier them. Only tier a keyword the candidate GENUINELY HAS (Integrity 3).
-- TIER 1 — must-have (4–6): explicitly required, repeated, or foundational. Must appear in the summary, the skills, AND at least one bullet.
-- TIER 2 — preferred (8–15): mentioned once or "nice to have." Appear in skills and in the most relevant bullet.
-Only hard skills — soft-skill clichés ("communication", "team player", "proactive") score nothing and never appear in skills.
-
-BEHAVIORAL REQUIREMENTS — when the JD names a verifiable activity under its responsibilities (not its culture blurb) and a bullet already demonstrates it, treat it as Tier 2 and protect that bullet (Integrity 6). These are industry-specific:
-  Tech: code reviews, mentoring, technical documentation, on-call ownership
-  Healthcare: patient education, interdisciplinary rounds, care-plan review, clinical supervision
-  Finance: client reporting, audit review, stakeholder presentations
-  Legal: discovery review, client communication, brief preparation
-  Any: cross-functional collaboration, knowledge sharing, process documentation
+${KEYWORD_TIERS}
+Place only the keywords the candidate GENUINELY HAS (Integrity 3): each Tier 1 keyword in the summary, the skills, AND at least one bullet; each Tier 2 keyword in skills and in the most relevant bullet. Soft-skill clichés never appear in skills. When a bullet already demonstrates a behavioral requirement, protect that bullet (Integrity 6).
 ${parsed.skills ? '' : '\nNote: this resume has no skills section — embed keywords naturally within experience bullets only.\n'}
-ALTERNATIVE REQUIREMENTS — when the JD offers a choice ("X, Y, or Z"; "SQL/NoSQL"; "relational or non-relational"), treat the whole set as ONE requirement that is covered if the candidate has ANY one member. Tier it once, by the member the candidate has, and NEVER list the unused alternatives as missing or as a gap — they are not required.
 
 SYNONYM PAIRS — when the resume and JD name the same thing differently and both fit one phrase, keep both: "localization (i18n)"; "PostgreSQL (SQL)"; "REST API integrations".
 
@@ -346,7 +321,7 @@ Write one internal positioning sentence (not output): "[Role archetype] in [key 
 
 ${includeSummary ? `STEP 4 — WRITE SUMMARY
 2–3 sentences, 40–70 words, no first-person pronouns, no weak openers ("Experienced professional", "Results-driven", "Dynamic"), no clichés ("passionate", "innovative", "team player", "fast-paced", "dynamic"):
-- Identity: open with the candidate's own most recent title, or the archetype their experience directly supports. Use the TARGET ROLE's title only if the candidate has held that role at that level; never adopt a target title that names a level, specialty, license, or credential the resume does not show (a line cook is not a "Sous Chef", a tanker driver is not a "Hazmat Tanker Driver", a VP is not a "Chief Operating Officer"), and never write "[target title] candidate". Include 2–3 Tier 1 keywords.
+- Identity: open with the TARGET ROLE's title when it is the same or a broader name for work the bullets already show, at the same level (a Full Stack Developer opens as "Software Engineer"); recruiters search on the posting's exact title. Otherwise open with the candidate's own most recent title, or the archetype their experience directly supports. Never adopt a target title that adds a level, specialty, license, or credential the bullets don't show (a frontend-only engineer is not "Full Stack"; a line cook is not a "Sous Chef"; a tanker driver is not a "Hazmat Tanker Driver"; a VP is not a "Chief Operating Officer"). When the target title names a level the resume does not show (Senior, Lead, Staff, Principal), use it without that word ("Software Engineer" for "Senior Software Engineer"); a past title that already holds the level allows the full title. A generic word alone (Manager, Engineer, Specialist, Lead) never counts as a broader title. When the title can't be used, describe the matching work the bullets show in the posting's words. Never write "[target title] candidate". Include 2–3 Tier 1 keywords.
 - Strongest capability or achievement that answers the role's core challenge
 - Optional: a differentiator or collaboration strength relevant to the role
 - Aim it at THIS role: lead with the evidence that answers the posting's core need, in its terms where honest, and in fresh words: no phrase or figure lifted from the bullets beyond the one headline number. A summary that restates the bullets, or could sit on any application for the candidate's current job, is not tailored.
@@ -368,7 +343,12 @@ Cutting a long role to well under half is the EXPECTED result, not an edge case;
   : trim
   ? `TRIM MODE — RANK, THEN CUT: judging each bullet alone fails — in a strong resume almost every bullet looks individually "relevant," which is why nothing gets dropped. Instead RANK each role's bullets by relevance to THIS JD and keep only the strongest: a role with 8+ input bullets keeps the 5–7 most relevant and drops the rest; a role with 5–7 keeps 4–5; a role with 4 or fewer keeps at least 2. Cutting a long role to roughly half is the EXPECTED result, not an edge case. Drop first the bullets in a tech stack or domain the JD never names (e.g. a React Native / mobile bullet for a web role; a payments or CRM-integration bullet for a role about neither), then filler with no JD keyword and no concrete outcome. NEVER drop a bullet matching an activity the JD explicitly names (code reviews, mentoring, stakeholder communication — Integrity 6), and never drop the only evidence of a Tier 1 keyword. Never remove a role; never add or merge bullets — only drop whole ones.`
   : `DEFAULT MODE — STRICT 1:1: rewrite EVERY input bullet into exactly one output bullet. Each role's output bullet count MUST equal its input count exactly — no drops, no additions, no merges. Count the input bullets in each role first; if a role has 11 input bullets, output exactly 11. This is mandatory, not a target.`}
-${trim && long ? 'PROJECTS: keep the number of bullets the budget above gives each project, choosing the ones most relevant to this job.' : 'PROJECTS: preserve every project\'s bullet count exactly, and never drop a technology named in a project.'}
+${trim && long
+  ? 'PROJECTS: keep the number of bullets the budget above gives each project, choosing the ones most relevant to this job. Every project keeps at least one bullet; never remove or reorder a project.'
+  : trim
+  ? `PROJECTS — RANK, THEN CUT, on a smaller budget than roles because projects are short: a project with 8+ input bullets keeps about half; one with 3–7 keeps 2–3; one with 1–2 keeps them all. Drop first the bullets in a tech stack or domain the JD never names. The role protections apply: never drop a bullet matching an activity the JD explicitly names, and never drop the only evidence of a Tier 1 keyword. Every project keeps at least one bullet; never remove or reorder a project.`
+  : `PROJECTS: preserve every project's bullet count exactly.`}
+A kept project bullet never loses a technology it names.
 
 STEP 6 — REWRITE BULLETS
 Compressed STAR: [strong action verb] + [what was done] + [measurable result or concrete scope]. Reword for impact and ATS phrasing without changing what actually happened (Integrity 3–5).
@@ -390,11 +370,11 @@ STEP 7 — REORDER BULLETS
 Within each role, sort bullets most-relevant-first. When a role has a measured outcome that bears on this job (time saved, a score improved, a pilot result), lead the role with it. This touches only the bullets inside a role; role order is fixed (Integrity 2).
 ${step8}
 STEP 9 — ATS MATCH REPORT (the score is computed in code from this report — do NOT output a number)
-Judge coverage ONLY against this JD: the Tier 1 and Tier 2 keywords from STEP 2, plus the qualifications the JD explicitly states. NEVER weigh skills the JD does not mention, or skills "typically"/"usually" expected for this kind of role — if it is not in this JD, it neither helps nor hurts the candidate.
+${KEYWORD_JUDGING}
 Report in keywordMatch:
 - tier1Covered / tier1Missing: every STEP 2 Tier 1 keyword, split by whether the candidate genuinely has it (Integrity 3).
 - tier2Covered / tier2Missing: same for every Tier 2 keyword.
-- gatingGaps: hard qualifications the JD explicitly requires but the candidate does not meet — years of experience, a required degree, a mandatory license/cert (≤55 chars each, e.g. "Requires 5yr, candidate ~3yr"). A "preferred"/"nice-to-have" item is a Tier 2 keyword, never a gatingGap.
+- gatingGaps: every gating gap.
 Be exhaustive — list ALL keywords across the covered/missing arrays, not a sample; the user's score and gap list are derived entirely from them.
 
 ${compactMode}---
@@ -431,19 +411,15 @@ export function isValidResume(r: unknown): r is TailoredResume {
     Array.isArray(resume.experience)
 }
 
-// Full production assembly: raw model output → validated delta → merged resume
-// → grounding guard (job-only terms removed), with the code-computed ATS score
-// attached. Shared by tailorResume and the eval harness so evals exercise
-// exactly the production path.
+// The eval harness calls this too, so evals run the production path: https://github.com/TheLinc/cover-me/commit/d7700ca5cc272c75785b90971b63a366f3d35016
 export async function assembleTailored(
   parsed: ParsedResume,
   raw: string,
-  grounding: { jobDescription: string; supplemental?: string; previous?: TailoredResume; ask?: AskModel; onLineRepair?: (repair: LineRepair) => void; exactBulletCounts?: boolean; maxBullets?: Pick<BulletBudget, 'experience' | 'projects'> },
+  grounding: { jobDescription: string; jobTitle?: string; supplemental?: string; previous?: TailoredResume; ask?: AskModel; onLineRepair?: (repair: LineRepair) => void; exactBulletCounts?: boolean; maxBullets?: Pick<BulletBudget, 'experience' | 'projects'> },
   onRemoved?: (terms: string[]) => void,
 ): Promise<TailoredResume> {
   const delta = parseDelta(raw)
-  // Regenerate from a version holding the user's edits (#171): their text is
-  // trusted like the note, and their version is the base everything checks against.
+  // The user's edited version (#171) is trusted like the note and is the base checks run against.
   const notes = trustedNotes(grounding.supplemental, grounding.previous)
   const base = seenVersion(parsed, grounding.previous)
   const candidate = candidateText(parsed, notes)
@@ -452,18 +428,23 @@ export async function assembleTailored(
   delta.skills = recaseSkills(claimed.skills, base.skills, `${candidate}
 ${grounding.jobDescription}`)
   let merged = keepSeen(mergeTailorDelta(base, delta, { exactBulletCounts: grounding.exactBulletCounts, maxBullets: grounding.maxBullets }) as TailoredResume, parsed, base)
+  let title = ''
   if (grounding.ask) {
     const lines = await checkAndRewriteLines(merged, base, grounding.jobDescription, grounding.ask, grounding.supplemental)
     merged = lines.resume
+    title = await checkedTitle(grounding.jobTitle ?? '', base, merged, lines.repair, grounding.ask, grounding.supplemental)
     grounding.onLineRepair?.(lines.repair)
   }
-  const { resume, removed } = groundTailored(merged, base, candidate, grounding.jobDescription)
+  const { resume, removed } = groundTailored(merged, base, candidate, grounding.jobDescription, title)
   const all = [...claimed.dropped, ...removed]
   if (all.length) onRemoved?.(all)
   if (delta.keywordMatch && typeof delta.keywordMatch === 'object') {
-    const { score, gaps } = scoreFromMatch(delta.keywordMatch as KeywordMatch, { jobDescription: grounding.jobDescription, candidate })
+    const km = delta.keywordMatch as KeywordMatch
+    const { score, gaps } = scoreFromMatch(km, { jobDescription: grounding.jobDescription, candidate })
     resume.atsScore = score
     resume.atsGaps = gaps
+    // An ATS sees only the uploaded resume (#228), not the notes; the PDF prints no gaps or deleted sections.
+    resume.atsScoreBefore = scoreBefore(km, score, candidateText(parsed), candidateText({ ...resume, atsGaps: undefined, deletedSections: undefined }), grounding.jobDescription)
   }
   if (buildsOnEdits(grounding.previous)) resume.hasEdits = true
   return resume
@@ -471,7 +452,7 @@ ${grounding.jobDescription}`)
 
 export async function tailorResume(
   job: JobData,
-  parsed: ParsedResume,
+  stored: ParsedResume,
   provider: AIProvider,
   apiKey: string,
   compact = false,
@@ -481,6 +462,8 @@ export async function tailorResume(
   previous?: TailoredResume,
   onProgress?: (label: string) => void,
 ): Promise<TailoredResume> {
+  // linksKept only marks the stored parse as current (#238).
+  const { linksKept: _k, ...parsed } = stored
   const prompt = buildPrompt(job, parsed, compact, supplemental, trim, includeSummary, previous)
 
   await debugGroup('Tailor — full prompt sent to model (BYOK)', {
@@ -505,22 +488,18 @@ export async function tailorResume(
 
   let raw: string
   if (provider === 'claude') {
-    // Sonnet for tailoring: judgment-heavy (bullet preservation, relevance
-    // calls) — the small models compress/merge. Cover letters are on Sonnet too.
+    // Smaller models compress or merge bullets: https://github.com/TheLinc/cover-me/commit/9f4ea308d03f2c9ca2a38a38b6e1aeb9b0305051
     raw = await streamSonnet([{ role: 'user', content: prompt }], apiKey, onText, onProgress && onThinking)
   } else {
     raw = await callOpenAI([{ role: 'user', content: prompt }], apiKey, onText)
   }
 
   await debugLog('Tailor — raw model response', raw)
-  return assembleTailored(parsed, raw, { jobDescription: job.description, supplemental, previous, ask: checkModel(provider, apiKey), exactBulletCounts: !compact && !trim, maxBullets: trim && !compact ? bulletBudget(parsed) : undefined }, (removed) =>
+  return assembleTailored(parsed, raw, { jobDescription: job.description, jobTitle: job.title, supplemental, previous, ask: checkModel(provider, apiKey), exactBulletCounts: !compact && !trim, maxBullets: trim && !compact ? bulletBudget(parsed) : undefined }, (removed) =>
     void debugLog('Tailor — grounding guard removed', removed))
 }
 
-// Model for the skill-claim pair check and the line check/rewrite (see
-// resume-grounding.ts), on the same provider and key as the tailor call.
-// Sonnet, not Haiku: on 38 hand-labeled skill/evidence pairs Haiku was right 29
-// times, Sonnet 4.6 38 times (extension/eval/claim-pairs.ts). Prompts are small.
+// Sonnet, not Haiku: 38/38 vs 29/38 on extension/eval/claim-pairs.ts (https://github.com/TheLinc/cover-me/commit/0e9a09cd3d4d9fc3b7cebb190aed7c4307954676).
 function checkModel(provider: AIProvider, apiKey: string): AskModel {
   return async (prompt) => {
     if (provider === 'claude') return streamSonnet([{ role: 'user', content: prompt }], apiKey)

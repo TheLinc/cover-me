@@ -1,8 +1,10 @@
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL, WEB_URL } from './config'
-import { clearResume, clearSession, getCachedTier, getResume, getSession, getSettings, saveGoogleSignInError, saveCachedTier, saveResume, saveSession, saveSettings, takeGoogleSignInError } from './storage'
+import { restoreDesign } from './design'
+import { clearResume, clearSession, getCachedTier, getResume, getSession, getSettings, saveGoogleSignInError, saveCachedTier, saveResume, saveSession, saveSettings, takeGoogleSignInError, type DesignFile } from './storage'
 import { isValidResume } from './ai/resume-tailor'
 import { derivePlanningProgress, deriveTailorProgress } from './ai/tailor-progress'
 import type { ApplicationRecord, AuthSession, CoverLetter, JobData, ParsedResume, ResumeData, TailoredHistoryEntry, TailoredResume } from '../types'
+import type { AnswerRevision } from './ai/answer'
 
 // Asks the backend for the resume fields older extensions can't print (a
 // headline, project links and tech, section entries, grouped skills); without
@@ -131,10 +133,11 @@ export async function completeSignIn(sess: AuthSession): Promise<void> {
   const existing = await getSettings()
   await saveSettings({ provider: existing?.provider ?? 'claude', apiKey: existing?.apiKey ?? '', mode: 'hosted' })
   await saveSession(sess)
-  await syncResume(sess).catch(() => {})
   // A Google sign-in finishes in the worker with no panel open to do this, and
-  // the worker's Pro history sync reads the cached tier.
+  // the worker's Pro history sync reads the cached tier. Before the resume
+  // sync, which can wait on a Word file download (#174).
   await refreshTier(sess)
+  await syncResume(sess).catch(() => {})
 }
 
 // One resume on both sides, owned by this account:
@@ -160,7 +163,11 @@ async function syncResume(sess: AuthSession): Promise<void> {
   const signedOut = !!mine?.signedOutUpload
   const keepMine = mine && (!remote || remote.text === mine.text || (!signedOut && Date.parse(mine.updatedAt) >= Date.parse(remote.updatedAt)))
 
-  let next: ResumeData | null = remote ? { ...remote, accountId: userId } : null
+  let next: ResumeData | null = null
+  if (remote) {
+    const { designHash: _d, ...copy } = remote
+    next = { ...copy, accountId: userId }
+  }
   if (keepMine) {
     // Matching the account's copy, a signed-out copy is in the account after all.
     const { signedOutUpload, ...rest } = mine
@@ -175,10 +182,17 @@ async function syncResume(sess: AuthSession): Promise<void> {
   if (next) await saveResume(next)
   else if (local) await clearResume()
   if (keepMine && !signedOut && remote?.text !== mine.text) await uploadResumeToBackend(sess.access_token, mine.text, mine.filename)
+  // Pro: the Word file that goes with the account's resume comes down too
+  // (#174), unless this computer has its own design for it. A static import:
+  // Chrome refuses import() in the service worker, where a Google sign-in runs.
+  if (next && remote?.designHash && next.text === remote.text && !next.design) {
+    await restoreDesign(sess.access_token, remote.designHash, next.text)
+  }
 }
 
-// The account's resume, or null when it has none (404).
-async function fetchResumeFromBackend(accessToken: string): Promise<ResumeData | null> {
+// The account's resume, or null when it has none (404). designHash: Pro
+// only, the Word file that goes with this text (#174).
+async function fetchResumeFromBackend(accessToken: string): Promise<(ResumeData & { designHash?: string }) | null> {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/resume`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   })
@@ -186,7 +200,8 @@ async function fetchResumeFromBackend(accessToken: string): Promise<ResumeData |
   const data = await res.json().catch(() => ({})) as Record<string, unknown>
   if (!res.ok) throw new Error((data.error as string) || 'Resume sync failed')
   if (typeof data.text !== 'string' || !data.text) return null
-  return { text: data.text, filename: (data.filename as string) || 'resume', updatedAt: (data.updated_at as string) || new Date(0).toISOString() }
+  const designHash = typeof data.design_hash === 'string' ? data.design_hash : undefined
+  return { text: data.text, filename: (data.filename as string) || 'resume', updatedAt: (data.updated_at as string) || new Date(0).toISOString(), ...(designHash ? { designHash } : {}) }
 }
 
 export type GoogleSignInResponse =
@@ -324,9 +339,15 @@ export function limitErrorCode(err: RateLimitError): 'RATE_LIMIT' | 'FAIR_USE' {
   return err.kind === 'daily' ? 'FAIR_USE' : 'RATE_LIMIT'
 }
 
+// The server adds the first-month offer (#213) to the limit text for builds
+// without it in the upgrade prompt. This one drops it: the popup keeps the
+// text on screen across opens, where its day count would go stale, and the
+// upgrade prompt below shows the live offer.
+const OFFER_SENTENCE = / Your first month of monthly Pro is discounted at checkout for \d+ more days?\./
+
 function rateLimitError(data: Record<string, unknown>): RateLimitError {
   const kind = (data.allowance as { kind?: 'starter' | 'weekly' | 'daily' } | undefined)?.kind
-  return new RateLimitError((data.error as string) ?? 'Generation limit reached.', kind)
+  return new RateLimitError(((data.error as string) ?? 'Generation limit reached.').replace(OFFER_SENTENCE, ''), kind)
 }
 
 export async function generateViaBackend(job: JobData, accessToken: string, supplemental?: string): Promise<string> {
@@ -350,6 +371,38 @@ export async function generateViaBackend(job: JobData, accessToken: string, supp
   const letter = data.letter as string
   if (!letter) throw new Error('Empty response from server')
   return letter
+}
+
+// An answer to an application question (#232). Counts against the answer
+// allowance, not letters and resumes. jobSource: whether the job came from
+// the page or from saved jobs, for the answer_generated count. revision: a
+// change the applicant asked for to the answer in the box; counts the same.
+// The account's answer allowance after an answer (migration 032).
+export interface AnswerAllowance {
+  kind: 'starter' | 'weekly' | 'daily'
+  limit: number
+  remaining: number
+}
+
+export async function answerViaBackend(
+  accessToken: string,
+  req: { job: JobData; question: string; maxLength?: number; supplemental?: string; jobSource: 'page' | 'saved'; revision?: AnswerRevision },
+): Promise<{ answer: string; allowance?: AnswerAllowance }> {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/answer`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(req),
+  })
+  const data = await res.json().catch(() => ({})) as Record<string, unknown>
+  if (res.status === 429) throw rateLimitError(data)
+  // Sent as 200 before the answer is ready (heartbeatJson), so a late failure
+  // arrives as { error } with status 200.
+  if (!res.ok || data.error) throw new Error((data.error as string) ?? `Server error ${res.status}`)
+  const answer = data.answer as string
+  // The 200 came early (heartbeatJson), so a reply cut off mid-way (the
+  // function stopped, the network dropped) parses to nothing.
+  if (!answer) throw new Error('The connection dropped before the answer arrived. Please try again.')
+  return { answer, allowance: data.allowance as AnswerAllowance | undefined }
 }
 
 // parse: wait for the server's parse of this text and return it, for the
@@ -378,17 +431,37 @@ export async function uploadResumeToBackend(
 }
 
 // Pro: the Word file goes to the account too, so the dashboard can download
-// tailored resumes in its design. base64: the file's bytes.
-export async function uploadDesignFileToBackend(accessToken: string, hash: string, base64: string): Promise<void> {
+// tailored resumes in its design. base64: the file's bytes. textHash: the
+// SHA-256 of the resume text it was checked against; the account refuses the
+// file if its text has changed since.
+export async function uploadDesignFileToBackend(accessToken: string, hash: string, base64: string, textHash: string): Promise<void> {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/resume?file=1`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ hash, docx: base64 }),
+    body: JSON.stringify({ hash, docx: base64, textHash }),
   })
   if (!res.ok) {
     const data = await res.json().catch(() => ({})) as Record<string, unknown>
-    throw new Error((data.error as string) ?? 'Word file upload failed')
+    const message = (data.error as string) ?? 'Word file upload failed'
+    throw res.status === 409 ? new DesignRefusedError(message) : new Error(message)
   }
+}
+
+// The account refused the Word file for good: its resume text isn't the text
+// the file was checked against. Sending it again gets the same answer.
+export class DesignRefusedError extends Error {}
+
+// Pro: one of the account's Word files, with the parse that places tailored
+// text in it (#174). null when it's gone or the plan has ended (404, 403).
+export async function fetchDesignFileFromBackend(accessToken: string, hash: string): Promise<DesignFile | null> {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/applications?file=${hash}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    // Bounded: a sign-in waits on this.
+    signal: AbortSignal.timeout(20_000),
+  })
+  if (!res.ok) return null
+  const data = await res.json().catch(() => ({})) as { docx?: unknown; structured?: ParsedResume }
+  return typeof data.docx === 'string' && Array.isArray(data.structured?.experience) ? { data: data.docx, parsed: data.structured } : null
 }
 
 // Which Pro plan checkout sells (the portal ignores it).
@@ -404,6 +477,24 @@ export async function startBilling(accessToken: string, action: 'checkout' | 'po
   const data = await res.json().catch(() => ({})) as { url?: string; error?: string }
   if (!res.ok || !data.url) throw new Error(data.error ?? 'Could not reach billing. Please try again.')
   return data.url
+}
+
+// The first-month offer (#213) while it's open: when it ends, and the Stripe
+// coupon's customer-facing name (the amount lives only in Stripe). Null when
+// there's none or billing doesn't answer, so the popup just leaves it out.
+export interface FirstMonthOffer { endsAt: string; name: string | null }
+
+export async function fetchFirstMonthOffer(accessToken: string): Promise<FirstMonthOffer | null> {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/billing`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'offer' }),
+    })
+    return ((await res.json()) as { offer?: FirstMonthOffer | null }).offer ?? null
+  } catch {
+    return null
+  }
 }
 
 // The layout of a hosted tailor (#131): counted in the tailor_run event, and

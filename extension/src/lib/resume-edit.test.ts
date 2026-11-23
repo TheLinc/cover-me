@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { chosenOrder, editedResume, remainingGaps, restoreSection, saveResumeEdit, shownSections, withSections } from './resume-edit'
+import { chosenOrder, editedResume, openResumeEditor, postingTitleInSummary, remainingGaps, restoreSection, returnToTab, saveResumeEdit, shownSections, withSections } from './resume-edit'
 import { getTailoredHistory } from './storage'
 import type { TailoredResume } from '../types'
 
@@ -15,6 +15,72 @@ const resume: TailoredResume = {
   atsScore: 72,
   atsGaps: ['Kafka', 'Go', 'Terraform'],
 }
+
+describe("the note on a summary that uses the posting's title (#244)", () => {
+  const fullStack = (summary: string): TailoredResume => ({
+    ...resume, summary, experience: [{ ...resume.experience[0], title: 'Full Stack Developer' }],
+  })
+
+  test('shows when the summary opens with a title none of the jobs carry', () => {
+    expect(postingTitleInSummary(fullStack('Software Engineer who builds web applications.'), 'Software Engineer')).toEqual({ title: 'Software Engineer', shorter: false })
+  })
+
+  test('matches the title without its level or a scraped suffix', () => {
+    expect(postingTitleInSummary(fullStack('Software Engineer who builds web applications.'), 'Senior Software Engineer, Payments (Remote)')).toEqual({ title: 'Software Engineer', shorter: false })
+  })
+
+  test("not when the summary keeps the user's own title", () => {
+    expect(postingTitleInSummary(fullStack('Full Stack Developer who builds web applications.'), 'Software Engineer')).toBeUndefined()
+  })
+
+  test("not when one of the user's jobs already has that title, with or without a level", () => {
+    const r = { ...fullStack('Software Engineer who builds web applications.'), experience: [{ ...resume.experience[0], title: 'Senior Software Engineer' }] }
+    expect(postingTitleInSummary(r, 'Software Engineer')).toBeUndefined()
+  })
+
+  test('goes once the title is edited out of the summary', () => {
+    expect(postingTitleInSummary(fullStack('Developer who builds web applications.'), 'Software Engineer')).toBeUndefined()
+  })
+
+  test('not for a one-word posting title, which may be any word in the summary', () => {
+    expect(postingTitleInSummary(fullStack('Full Stack Developer who works with every designer.'), 'Designer')).toBeUndefined()
+  })
+
+  test('not once the experience section is deleted, with no job titles left to compare', () => {
+    expect(postingTitleInSummary({ ...fullStack('Software Engineer who builds web applications.'), experience: [] }, 'Software Engineer')).toBeUndefined()
+  })
+
+  test("shows a shorter form of the posting's title, flagged as shorter (#253)", () => {
+    expect(postingTitleInSummary(fullStack('Software Engineer building full-stack applications.'), 'Software Development Engineer')).toEqual({ title: 'Software Engineer', shorter: true })
+  })
+
+  test('a shorter form may skip any words but the last, after levels are dropped', () => {
+    expect(postingTitleInSummary(fullStack('Data Engineer who builds pipelines.'), 'Senior Data Platform Engineer')).toEqual({ title: 'Data Engineer', shorter: true })
+  })
+
+  test("no shorter form when one of the user's jobs has it", () => {
+    const r = { ...fullStack('Software Engineer building full-stack applications.'), experience: [{ ...resume.experience[0], title: 'Software Engineer II' }] }
+    expect(postingTitleInSummary(r, 'Software Development Engineer')).toBeUndefined()
+  })
+
+  test("one word of the posting's title never counts as a shorter form", () => {
+    expect(postingTitleInSummary(fullStack('Engineer building full-stack applications.'), 'Software Development Engineer')).toBeUndefined()
+  })
+
+  test("no shorter form when one of the user's jobs has the posting's full title", () => {
+    const r = { ...fullStack('Software Engineer building full-stack applications.'), experience: [{ ...resume.experience[0], title: 'Software Development Engineer' }] }
+    expect(postingTitleInSummary(r, 'Software Development Engineer')).toBeUndefined()
+  })
+
+  test('a shorter form counts only where the summary opens, after an article', () => {
+    expect(postingTitleInSummary(fullStack('A Software Engineer building full-stack applications.'), 'Software Development Engineer')).toEqual({ title: 'Software Engineer', shorter: true })
+    expect(postingTitleInSummary(fullStack('Full Stack Developer with experience in test automation.'), 'Software Engineer in Test')).toBeUndefined()
+  })
+
+  test('not for a posting with no title', () => {
+    expect(postingTitleInSummary(fullStack('Developer who builds web applications.'), '')).toBeUndefined()
+  })
+})
 
 describe('gap chips after an edit', () => {
   test('a gap goes once its keyword appears anywhere in the edited text, in any case', () => {
@@ -198,5 +264,53 @@ describe('the order saved for future resumes', () => {
       sectionOrder: ['summary', 'experience', 'projects', 'education', 'certifications', 'skills', 'other', 'other'],
       headings: ['Awards', 'Talks'],
     })
+  })
+})
+
+describe('the editor tab returns to the job tab (#223)', () => {
+  function fakeTabs(active: { id?: number; index: number; windowId: number } | undefined) {
+    const chrome = {
+      runtime: { getURL: (p: string) => `chrome-extension://id/${p}` },
+      tabs: {
+        query: vi.fn(async () => (active ? [active] : [])),
+        create: vi.fn(async () => ({})),
+        update: vi.fn(async (id: number) => ({ id, windowId: 7 })),
+      },
+      windows: { update: vi.fn(async () => ({})) },
+      action: { openPopup: vi.fn(async () => {}) },
+    }
+    vi.stubGlobal('chrome', chrome)
+    return chrome
+  }
+
+  test('the editor opens next to the job tab and remembers it', async () => {
+    const chrome = fakeTabs({ id: 42, index: 3, windowId: 7 })
+    await openResumeEditor('a b')
+    expect(chrome.tabs.create).toHaveBeenCalledWith({
+      url: 'chrome-extension://id/src/editor/index.html?id=a%20b&from=42', openerTabId: 42, index: 4,
+    })
+  })
+
+  test('with no active tab it opens as before', async () => {
+    const chrome = fakeTabs(undefined)
+    await openResumeEditor('x')
+    expect(chrome.tabs.create).toHaveBeenCalledWith({ url: 'chrome-extension://id/src/editor/index.html?id=x' })
+  })
+
+  test('Done makes the job tab active and opens the popup in its window', async () => {
+    const chrome = fakeTabs(undefined)
+    await returnToTab(42)
+    expect(chrome.tabs.update).toHaveBeenCalledWith(42, { active: true })
+    expect(chrome.windows.update).toHaveBeenCalledWith(7, { focused: true })
+    expect(chrome.action.openPopup).toHaveBeenCalledWith({ windowId: 7 })
+  })
+
+  test('a closed job tab or an old Chrome never throws', async () => {
+    const chrome = fakeTabs(undefined)
+    chrome.tabs.update.mockRejectedValueOnce(new Error('No tab with id: 42'))
+    await expect(returnToTab(42)).resolves.toBeUndefined()
+    expect(chrome.action.openPopup).not.toHaveBeenCalled()
+    chrome.action.openPopup.mockRejectedValueOnce(new Error('not available'))
+    await expect(returnToTab(42)).resolves.toBeUndefined()
   })
 })

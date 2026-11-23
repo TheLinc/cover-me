@@ -1,11 +1,4 @@
-// Runs the integration tests (tests/integration) against the local stack:
-//   1. writes supabase/functions/.env.test (local keys, throwaway ENCRYPTION_KEY,
-//      ANTHROPIC_BASE_URL pointed at the mock server vitest starts)
-//   2. serves the functions with that env file
-//   3. runs vitest, then stops the functions
-//
-// Usage: pnpm test:functions [vitest args], e.g. pnpm test:functions tailor
-// Stops any running `pnpm functions:serve`; restart it afterwards.
+// Stops any running `pnpm functions:serve`; restart it afterwards (https://github.com/TheLinc/cover-me/commit/f2256d02).
 
 import { spawnSync } from 'node:child_process'
 import { randomBytes } from 'node:crypto'
@@ -14,8 +7,7 @@ import { createServer } from 'node:net'
 import { join } from 'node:path'
 import { BACKEND, killTree, localStatus, publishableKey, serviceKey, supabaseAsync } from './lib.mjs'
 
-// OS-assigned free port for the mock Anthropic server. A fixed port breaks
-// when Windows reserves its range for Hyper-V/WSL, which can change on reboot.
+// Windows can reserve a fixed port's range for Hyper-V/WSL on reboot (https://github.com/TheLinc/cover-me/commit/766833f9).
 async function freePort() {
   const srv = createServer()
   await new Promise((resolve) => srv.listen(0, '0.0.0.0', resolve))
@@ -27,23 +19,27 @@ async function freePort() {
 const MOCK_PORT = process.env.MOCK_ANTHROPIC_PORT ?? await freePort()
 const status = localStatus()
 
-// Also given to vitest, so a test can seed an encrypted cached parse.
 const ENCRYPTION_KEY = randomBytes(32).toString('hex')
-// Also given to vitest, so a test can call the nudge function as the scheduler.
 const NUDGE_SECRET = randomBytes(32).toString('hex')
-// Also given to vitest, so a test can sign an unsubscribe token.
 const EMAIL_TOKEN_SECRET = randomBytes(32).toString('hex')
+// `STRIPE_FIRST_MONTH_COUPON_ID= pnpm test:functions` tests with the coupon unset (#213).
+const FIRST_MONTH_COUPON = process.env.STRIPE_FIRST_MONTH_COUPON_ID ?? 'coupon_mock_first_month'
 const envFile = join(BACKEND, 'supabase', 'functions', '.env.test')
 writeFileSync(envFile, [
   `SERVICE_KEY=${serviceKey(status)}`,
   `ENCRYPTION_KEY=${ENCRYPTION_KEY}`,
   `EMAIL_TOKEN_SECRET=${EMAIL_TOKEN_SECRET}`,
   'ANTHROPIC_API_KEY=mock-key',
+  'ANTHROPIC_CHECKER_API_KEY=mock-checker-key',
+  'TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA',
+  `TURNSTILE_VERIFY_URL=http://host.docker.internal:${MOCK_PORT}/turnstile/v0/siteverify`,
+  'TURNSTILE_HOSTNAMES=localhost',
   `ANTHROPIC_BASE_URL=http://host.docker.internal:${MOCK_PORT}`,
   'DEBUG_MODE=false',
   'STRIPE_SECRET_KEY=sk_test_mock',
   'STRIPE_PRO_PRICE_ID=price_mock_pro',
   'STRIPE_PRO_QUARTERLY_PRICE_ID=price_mock_pro_quarterly',
+  `STRIPE_FIRST_MONTH_COUPON_ID=${FIRST_MONTH_COUPON}`,
   `STRIPE_API_BASE=http://host.docker.internal:${MOCK_PORT}`,
   'SITE_URL=http://localhost:3000',
   `NUDGE_SECRET=${NUDGE_SECRET}`,
@@ -64,10 +60,8 @@ serve.stderr.on('data', (d) => (serveLog += d))
 const cleanup = () => killTree(serve)
 process.on('SIGINT', () => { cleanup(); process.exit(130) })
 
-// Ready when every function itself answers: the gateway accepts the legacy
-// anon JWT, then the function rejects it as a user token with its own JSON
-// body. Warming all of them here keeps cold starts (slow after a volume wipe,
-// when the runtime re-downloads npm deps) out of the first test that calls each.
+// A function's own JSON rejecting the anon JWT means it's up. Warming each here keeps
+// cold starts out of the first test that calls it (https://github.com/TheLinc/cover-me/commit/766833f9).
 const FUNCTIONS = ['resume', 'generate', 'tailor', 'letters', 'applications', 'billing', 'email-preferences', 'nudge', 'support']
 
 async function waitForFunctions(timeoutMs = 180_000) {
@@ -80,7 +74,9 @@ async function waitForFunctions(timeoutMs = 180_000) {
           headers: { Authorization: `Bearer ${status.ANON_KEY}`, apikey: status.ANON_KEY },
         })
         if (res.status === 401 && (await res.text()).includes('Invalid token')) pending.delete(name)
-      } catch { /* not up yet */ }
+      } catch {
+        continue
+      }
     }
     if (pending.size === 0) return
     await new Promise((r) => setTimeout(r, 1000))
@@ -110,16 +106,14 @@ const vitest = spawnSync(
       ENCRYPTION_KEY,
       EMAIL_TOKEN_SECRET,
       NUDGE_SECRET,
+      STRIPE_FIRST_MONTH_COUPON_ID: FIRST_MONTH_COUPON,
     },
   },
 )
 
 if (vitest.status !== 0 && process.env.SHOW_FUNCTION_LOGS !== '0') {
   console.log('\n── supabase functions serve output ──\n' + serveLog.slice(-8000))
-  // The serve output can stop after the warm-up (#79), so print the containers'
-  // own logs too: the gateway's access log and the runtime's per-request lines
-  // and worker shutdown reasons. Before cleanup, which removes the runtime.
-  // From vitest's start, so the hung request is in them wherever its file ran.
+  // The serve output can stop after the warm-up (#79). Read before cleanup removes the runtime.
   for (const name of ['kong', 'edge_runtime']) {
     console.log(`\n── docker logs supabase_${name}_cover-me since vitest started ──`)
     spawnSync('docker', ['logs', '--timestamps', '--since', vitestStart, `supabase_${name}_cover-me`], { stdio: 'inherit' })

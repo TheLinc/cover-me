@@ -62,6 +62,8 @@ export interface ParsedResume {
   otherSections?: ResumeSection[]
   /** The uploaded resume's section order (#165), carried to each tailored resume. Always an array on a parse made since then; a cached parse without it is parsed again. */
   sectionOrder?: SectionKey[]
+  /** Set on every parse made since URLs under a section stay in their entry (#238); a cached parse without it is parsed again. */
+  linksKept?: true
 }
 
 export interface ResumeData {
@@ -87,6 +89,7 @@ export interface ResumeData {
     check?: DesignCheck
     error?: string
     uploaded?: boolean // in the Pro account, for the dashboard
+    refused?: boolean // the account refused it: its resume text isn't the one checked here (#174)
   }
   // The layout picked on the resume page. Missing: "Your design" whenever its check passes.
   layout?: 'yours' | 'cover-me'

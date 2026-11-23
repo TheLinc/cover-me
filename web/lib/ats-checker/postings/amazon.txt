@@ -1,0 +1,75 @@
+Software Engineer
+
+Description
+
+AWS Infrastructure Services owns the design, planning, delivery, and operation of all AWS global infrastructure. In other words, we’re the people who keep the cloud running. We support all AWS data centers and all of the servers, storage, networking, power, and cooling equipment that ensure our customers have continual access to the innovation they rely on. We work on the most challenging problems, with thousands of variables impacting the supply chain — and we’re looking for talented people who want to help.
+
+You’ll join a diverse team of software, hardware, and network engineers, supply chain specialists, security experts, operations managers, and other vital roles. You’ll collaborate with people across AWS to help us deliver the highest standards for safety and security while providing seemingly infinite capacity at the lowest possible cost for our customers. And you’ll experience an inclusive culture that welcomes bold ideas and empowers you to own them to completion.
+
+Are you interested in building hyper-scale services in the cloud. At AWS, engineers get the chance to work on scalability solutions, large scale applications and entirely new products that change the landscape for billions of users worldwide. From RDS to AQUA, Redshift to Aurora, Platform to Builder Tools, not to mention Networking Services that power our global network; AWS engineers are simplifying the complex.
+
+This role is part of our Best Fit job match program. We have a variety of Software Engineering roles across ANZ. Apply for this role to be considered for multiple roles.
+
+Key job responsibilities
+- Design, develop, test, deploy, maintain and improve software
+- Investigate design approaches, prototype new technology and evaluate technical feasibility
+- Write high quality distributed system software and perform peer code-reviews
+- Perform development and maintenance of key system features
+- Drive best practices and engineering excellence
+- Provide technical direction to the team and identify areas of focus
+- Establish architectural principles, selecting design patterns and mentoring team members on their appropriate application
+- Create and review software design documentation and mentor junior engineers
+- Create and review documentation and process regarding recurring issues, new standard operating procedures, knowledge transfer material, etc
+
+
+A day in the life
+AWS engineers build at a scale. You will have the chance to work on new and existing products, that directly impact the lives of millions, if not billions, of users around the globe. You’ll collaborate with other team members to investigate design approaches, prototype new technology and evaluate technical feasibility. You’ll write high quality distributed system software and drive engineering best practices. Working in an Agile/Scrum environment you’ll establish architectural principles and mentor team members.
+
+AWS engineers are versatile, able to simplify the complex and remove obstacles so builders can build. When you join, you will work on projects that are critical to AWS, and our customers needs. You will have opportunities to continue to grow and follow your passion, with exposure to different teams and locations as the business continues to evolve.
+
+One of the keys to AWS’s success is its top-tier collaborative culture. You will be working closely with a talented team of managers and engineers that will push your technical abilities while you bring new innovations to widely adopted and fast
+growing services.
+
+Amazon offers an equitable salary package that includes shares, sign-on bonus, and a host of benefits. You will be encouraged and rewarded for doing what is right for the long-term success of the customer. We value your passion to discover, invent and build for the customer.
+
+Here at AWS, we embrace our differences. We are committed to furthering our culture of inclusion. We have ten employee-led affinity groups, reaching 40,000 employees in over 190 chapters globally. We have innovative benefit offerings, and we host annual and ongoing learning experiences, including our Conversations on Race and Ethnicity (CORE) and AmazeCon conferences.
+
+About the team
+About AWS
+
+Diverse Experiences
+Amazon values diverse experiences. Even if you do not meet all of the preferred qualifications and skills listed in the job description, we encourage candidates to apply. If your career is just starting, hasn’t followed a traditional path, or includes alternative experiences, don’t let it stop you from applying.
+
+Why AWS
+Amazon Web Services (AWS) is the world’s most comprehensive and broadly adopted cloud platform. We pioneered cloud computing and never stopped innovating — that’s why customers from the most successful startups to Global 500 companies trust our robust suite of products and services to power their businesses.
+
+Work/Life Balance
+We value work-life harmony. Achieving success at work should never come at the expense of sacrifices at home, which is why we strive for flexibility as part of our working culture. When we feel supported in the workplace and at home, there’s nothing we can’t achieve.
+
+Inclusive Team Culture
+AWS values curiosity and connection. Our employee-led and company-sponsored affinity groups promote inclusion and empower our people to take pride in what makes us unique. Our inclusion events foster stronger, more collaborative teams. Our continual innovation is fueled by the bold ideas, fresh perspectives, and passionate voices our teams bring to everything we do.
+
+Mentorship and Career Growth
+We’re continuously raising our performance bar as we strive to become Earth’s Best Employer. That’s why you’ll find endless knowledge-sharing, mentorship and other career-advancing resources here to help you develop into a better-rounded professional.
+
+
+Basic Qualifications
+
+- Bachelor's degree in Computer Science or other technical degree or related experience
+- 3+ years of software development experience
+- Experience with at least one general-purpose programming language such as Java, Python, C++, C#, Go, Rust, or TypeScript
+- Experience working with algorithms, data structures, complexity analysis, and object-oriented software design in Linux/Unix environments
+
+Preferred Qualifications
+
+- Experience building complex software systems that have been successfully delivered to customers
+- Knowledge of best practices for the full software development life cycle; including coding standards, code reviews, source control management, build processes, testing, and operations
+- Exposure to architecting and designing large-scale distributed systems (e.g. SQL/NoSQL, scalability and fault-tolerance)
+
+Acknowledgement of country:
+In the spirit of reconciliation Amazon acknowledges the Traditional Custodians of country throughout Australia and their connections to land, sea and community. We pay our respect to their elders past and present and extend that respect to all Aboriginal and Torres Strait Islander peoples today.
+
+IDE statement:
+Amazon is an equal opportunity employer and does not discriminate on the basis of protected veteran status, disability, or other legally protected status.
+
+Our inclusive culture empowers Amazonians to deliver the best results for our customers. If you have a disability and need a workplace accommodation or adjustment during the application and hiring process, including support for the interview or onboarding process, please visit https://amazon.jobs/content/en/how-we-hire/accommodations for more information. If the country/region you’re applying in isn’t listed, please contact your Recruiting Partner.

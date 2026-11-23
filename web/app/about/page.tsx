@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
-import { CHROME_STORE_URL } from '@/lib/utils'
+import Link from 'next/link'
+import { storeUrl } from '@/lib/utils'
 import { OG_IMAGE } from '@/lib/structured-data'
 import { SiteNav } from '@/components/site/SiteNav'
 import { SiteFooter } from '@/components/site/SiteFooter'
@@ -7,7 +8,7 @@ import { SiteFooter } from '@/components/site/SiteFooter'
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 
 const TITLE = 'About Cover Me: Open-Source Resume Tailor by Lincoln Laylor'
-const DESCRIPTION = 'Cover Me is an open-source Chrome extension by Lincoln Laylor that tailors your resume and writes a cover letter. Why he built it, your data, and the code.'
+const DESCRIPTION = 'Cover Me is an open-source Chrome extension by Lincoln Laylor that tailors your resume and writes a cover letter. Why it exists, your data, and the code.'
 
 export const metadata: Metadata = {
   title: { absolute: TITLE },
@@ -59,41 +60,37 @@ export default function AboutPage() {
 
       <main className="max-w-[900px] mx-auto px-8 py-20 max-md:px-5">
 
-        {/* Header */}
         <div className="mb-16 max-w-[640px]">
           <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-2 mb-4 block">
             About
           </span>
           <h1 className="text-[clamp(32px,5vw,56px)] text-foreground leading-[0.95] mb-4">
-            Built after 300 applications and no interviews.
+            Tailoring one application shouldn&apos;t take 12 minutes.
           </h1>
           <p className="text-[12px] text-muted-foreground mb-5">
-            <time dateTime="2026-10-29">Last updated October 29, 2026</time>
+            <time dateTime="2026-11-23">Last updated November 23, 2026</time>
           </p>
           <p className="text-[17px] text-muted-foreground leading-[1.75]">
             Cover Me (cover-me.dev) is an open-source Chrome extension that tailors your resume and writes a cover letter for the job posting you have open. Lincoln Laylor, a software developer in Canada, builds it. It reads postings on LinkedIn, Indeed, Greenhouse, Lever, Workday and Ashby, shows an ATS match score with the keywords you&apos;re missing, and removes any skill your original resume doesn&apos;t support. It&apos;s free with your own OpenAI or Claude API key. Cover Me isn&apos;t related to the CoverMe AI project on GitHub.
           </p>
         </div>
 
-        {/* Story */}
         <div className="grid grid-cols-[1fr_280px] gap-16 mb-20 max-lg:grid-cols-1">
           <div className="space-y-5 text-[15px] text-muted-foreground leading-[1.85]">
             <h2 className="text-[22px] text-foreground">
               Why Cover Me exists
             </h2>
             <p>
-              For three months I applied to about 300 software developer roles and didn&apos;t get a single interview. I was sending the same resume to every posting.
-            </p>
-            <p>
-              So I started tailoring each application with ChatGPT. It helped, but every application took about 12 minutes. I pasted the posting, uploaded my resume, explained my background again in every new chat, and kept hitting the free plan&apos;s upload limit. It also added skills I don&apos;t have because the posting asked for them, so I had to check every line before sending.
-            </p>
-            <p>
-              The tools built for this cost more than I wanted to pay while unemployed, and most were resume builders with templates. I only needed my own resume rewritten for each posting, plus a cover letter to match. So I built that.
-            </p>
-            <p>
-              In the month after I started using Cover Me, I got 4 interviews, while applying to fewer jobs than before. Tailoring every application was the one thing I changed. I can&apos;t prove it did all the work, but larger data points the same way. Huntr looked at over 1.39 million applications and found{' '}
+              Sending the same resume to every posting is faster, and it gets fewer interviews. Huntr looked at over 1.39 million applications and found{' '}
               <a href="https://huntr.co/research/job-search-trends-q2-2025" target="_blank" rel="noopener noreferrer" className="text-brand-light hover:text-brand transition-colors underline underline-offset-2">tailored resumes reached the interview stage 2.1 times as often</a>
               {' '}(5.75% against 2.68%).
+            </p>
+            <p>
+              Tailoring by hand with ChatGPT can take about{' '}
+              <Link href="/guides/chatgpt-resume-prompts#what-this-costs-for-every-application" className="text-brand-light hover:text-brand transition-colors underline underline-offset-2">12 minutes per application</Link>. You paste the posting, upload your resume, explain your background again in every new chat, and can run into the free plan&apos;s upload limit. It can also add skills you don&apos;t have because the posting asked for them, so you have to check every line before sending.
+            </p>
+            <p>
+              Most tools built for this are resume builders with templates and a monthly fee. Cover Me rewrites the resume you already have for each posting, plus a cover letter to match, in about 30 seconds.
             </p>
             <h2 className="text-[22px] text-foreground !mt-10">
               What Cover Me does with your resume
@@ -114,9 +111,9 @@ export default function AboutPage() {
               Cover Me is open source under the MIT license. The extension, the backend Edge Functions and the database schema are public on GitHub. You can read how your resume is handled, self-host with your own Supabase and Stripe accounts, or add a scraper for a job board it doesn&apos;t support yet.
             </p>
             <p>
-              Every privacy claim on this page can be checked in the code, so you don&apos;t have to take my word for it.
+              Every privacy claim on this page can be checked in the code, so you don&apos;t have to take it on trust.
             </p>
-            {/* Open Source Alternatives and Toolradar check for these badges during review. Plain imgs: the images live on their hosts. */}
+            {/* Open Source Alternatives and Toolradar check for these badges during review. Plain imgs: the images live on their hosts. (#86) */}
             <div className="flex flex-wrap items-center gap-4">
               <a href="https://www.opensourcealternatives.to/item/cover-me" target="_blank" rel="noopener" className="inline-block">
                 <img src="https://www.opensourcealternatives.to/badge-osa.svg" alt="As seen on Open Source Alternatives" width={270} height={20} />
@@ -127,7 +124,6 @@ export default function AboutPage() {
             </div>
           </div>
 
-          {/* Founder card */}
           <div className="space-y-5 max-lg:order-first">
             <div className="border border-border rounded-[12px] p-7 bg-surface">
               <div className="w-14 h-14 rounded-full bg-gradient-to-br from-brand to-brand-strong flex items-center justify-center text-white text-[22px] font-extrabold mb-5 select-none">
@@ -137,19 +133,10 @@ export default function AboutPage() {
                 Lincoln Laylor
               </h3>
               <p className="text-[13px] text-muted-foreground mb-4">
-                Founder &amp; developer
+                Developer
               </p>
               <p className="text-[13px] text-muted-foreground leading-[1.7] mb-5">
-                Software developer based in Canada. Built Cover Me during his own job search, after three months of applications with no interviews.
-                {' '}
-                <a
-                  href="https://dev.to/plain-stack/how-i-went-from-0-interviews-to-4-in-a-month-by-tailoring-every-application-1an4"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-brand-light hover:text-brand transition-colors underline underline-offset-2"
-                >
-                  He wrote up how it went on DEV.
-                </a>
+                Software developer based in Canada, and the one person who builds Cover Me.
               </p>
               <div className="flex flex-col gap-2.5">
                 <a
@@ -177,7 +164,6 @@ export default function AboutPage() {
               </div>
             </div>
 
-            {/* Stats */}
             <div className="border border-border rounded-[12px] p-7 bg-surface space-y-4">
               <h3 className="text-[12px] font-bold uppercase tracking-[0.09em] text-muted-foreground">
                 By the numbers
@@ -197,7 +183,6 @@ export default function AboutPage() {
           </div>
         </div>
 
-        {/* CTA */}
         <div className="border border-border rounded-[12px] p-10 bg-surface text-center">
           <h2 className="text-[22px] text-foreground mb-3">
             Try Cover Me free
@@ -207,7 +192,7 @@ export default function AboutPage() {
           </p>
           <div className="flex gap-3 justify-center flex-wrap">
             <a
-              href={CHROME_STORE_URL}
+              href={storeUrl('about')}
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-2 bg-brand-strong text-white font-semibold text-[14px] px-5 py-2.5 rounded-[8px] hover:bg-brand-deep transition-colors"

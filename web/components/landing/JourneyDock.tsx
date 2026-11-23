@@ -2,14 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
-import { GoogleChromeLogoIcon } from '@phosphor-icons/react/dist/ssr'
-import { cn, CHROME_STORE_URL } from '@/lib/utils'
+import { DeviceMobileIcon, GoogleChromeLogoIcon } from '@phosphor-icons/react/dist/ssr'
+import { SendToComputer } from '@/components/site/SendToComputer'
+import { cn, storeUrl } from '@/lib/utils'
 import { scrollProgress } from './useScrollProgress'
 import { EXAMPLE } from './visuals'
 
-// A floating bar that follows the Northwind application through the story
-// (#how-it-works) and keeps the install one click away. Hidden over the hero
-// and once the closing call to action (#get-started) is on screen.
 const STAGES = ['Posting open', 'Posting read', 'Resume tailored', `Scored ${EXAMPLE.score}`, 'Letter written']
 
 export function JourneyDock() {
@@ -25,7 +23,6 @@ export function JourneyDock() {
         const p = story ? scrollProgress(story) : 0
         const pastHero = story ? story.getBoundingClientRect().top < window.innerHeight * 0.5 : window.scrollY > 600
         const beforeEnd = end ? end.getBoundingClientRect().top > window.innerHeight * 0.85 : true
-        // Phones: the story shows its own progress bar, so the dock waits until it's over.
         const storyOver = !story || story.getBoundingClientRect().bottom < window.innerHeight
         const roomy = window.matchMedia('(min-width: 1024px)').matches
         setState({ show: pastHero && beforeEnd && (roomy || storyOver), p })
@@ -45,6 +42,10 @@ export function JourneyDock() {
   const done = state.p >= 0.98
   const stage = STAGES[Math.min(STAGES.length - 1, Math.floor(x))]
 
+  const action = cn(
+    'flex shrink-0 items-center gap-2 rounded-[12px] px-4 py-2.5 text-[13px] font-semibold transition-colors',
+    done ? 'bg-brand-strong text-white hover:bg-brand-deep' : 'bg-white text-ink hover:bg-brand-tint',
+  )
   return (
     <div
       className={cn(
@@ -71,19 +72,15 @@ export function JourneyDock() {
             ))}
           </div>
         </div>
-        <a
-          href={CHROME_STORE_URL}
-          target="_blank"
-          rel="noreferrer"
-          className={cn(
-            'flex shrink-0 items-center gap-2 rounded-[12px] px-4 py-2.5 text-[13px] font-semibold transition-colors',
-            done ? 'bg-brand-strong text-white hover:bg-brand-deep' : 'bg-white text-ink hover:bg-brand-tint',
-          )}
-        >
+        <a href={storeUrl('dock')} target="_blank" rel="noreferrer" className={cn(action, '[@media(pointer:coarse)]:hidden')}>
           <GoogleChromeLogoIcon size={16} />
           <span className="max-sm:hidden">Add to Chrome, free</span>
           <span className="sm:hidden">Install</span>
         </a>
+        <SendToComputer placement="dock" className={cn(action, '[@media(pointer:fine)]:hidden')}>
+          <DeviceMobileIcon size={16} aria-hidden />
+          Send to computer
+        </SendToComputer>
       </div>
     </div>
   )

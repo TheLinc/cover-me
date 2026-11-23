@@ -119,7 +119,7 @@ export const LONG_MASTER_CASE: EvalCase = {
   id: 'tech-long-master-trim',
   industry: 'Technology',
   fieldNotes: 'Software engineering: a long master resume cut to the bullets this backend role needs. Measured results stay; the headline stays the candidate\'s unless they held the role.',
-  trim: true,
+  mode: 'trim',
   job: {
     title: 'Site Reliability Engineer',
     company: 'Corvid Payments',

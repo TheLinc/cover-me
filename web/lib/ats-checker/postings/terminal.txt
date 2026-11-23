@@ -1,0 +1,71 @@
+Data Engineer
+
+About Overflow
+
+Overflow creates an opportunity for nonprofits to access a larger funding pool through stock donations.
+,About The Role
+
+## Who We Are
+
+Overflow is a Series C, growth-stage technology company on a bold mission: to inspire the world to give. We're a vertical fintech and SaaS platform unlocking more ways to give — cash, stock, crypto, and beyond — through a beautifully designed ecosystem built for high-impact churches, nonprofits, and mission-driven institutions.
+
+Backed by Uncork Capital, Craft Ventures, Salesforce Ventures, R7, and WIF (one of the largest lenders to faith and philanthropic organizations in the country), we're building the infrastructure that makes generosity frictionless at scale.
+
+## Our Founding Principles
+
+Overflow was founded on the belief that generosity transforms people and communities. Inspired by Proverbs 11:24 — *"The world of the generous gets larger and larger"* — we operate with integrity, stewardship, service, and excellence.
+
+## How We Work
+
+Overflow operates with a flexible work model. While there is no company-wide in-office requirement, some teams may establish in-person collaboration rhythms based on their function, goals, and team needs.
+
+We maintain offices in Los Gatos, CA and Birmingham, AL for team collaboration, coworking, meetings, and intentional in-person connection. Candidates should be comfortable participating in occasional in-person gatherings or team-specific onsite expectations, depending on their role and department.
+
+## About the Role
+
+We are looking for our first dedicated Data Engineer to lay the foundation of our data and analytics ecosystem. You will be the primary architect and builder of our data infrastructure, taking ownership of a rapidly expanding ecosystem of data.
+
+In your first 90 days, your primary mission will be to establish a robust BI and Data Governance layer ensuring our Sales, CS, Finance, and Success teams have reliable, governed access to the precise metrics they need. Beyond the immediate BI needs, you will design the storage and OLAP architecture for our financial transactions and partner closely with our Head of AI to organize agentic conversational data for our next-generation AI workflows. You won't be building this in a vacuum—you will collaborate daily with our Software Engineering team to support the customer facing products and our Business Operations engineers to support our internal tools.
+
+If you're energized by building from scratch, comfortable with ambiguity, and want your work to directly power a mission-driven company at an inflection point — this is the role for you.,What You’ll Do
+
+**Data Infrastructure & Pipeline Development**
+
+• Architect, build, and own Overflow's core data infrastructure from the ground up — pipelines, warehouses, data models, and orchestration
+• Design and implement scalable ETL/ELT pipelines that collect, transform, and deliver clean, reliable data across Overflow's platform and business functions
+• Build and maintain a unified data layer that integrates data across Engineering, Product, Finance, Revenue, Success, and Operations
+
+**Data Modeling & Analytics Enablement**
+
+• Design well-structured, intuitive data models that empower self-service analytics across the company and power OLAP views in customer facing applications
+• Build and maintain dashboards and reporting infrastructure that give leadership real-time visibility into key business metrics — total giving volume, client sentiment, payment revenue
+• Partner with the Head of AI to design storage schemas and organization strategies for semi-structured and unstructured data, providing the clean structures required to power advanced MLOps, RAG pipelines, and agent memory
+
+**Data Quality, Governance & Reliability**
+
+• Implement Databricks Unity Catalog to establish strict data governance, documentation standards, access controls, and role-based visibility across the organization.
+• Build for reliability by implementing data quality monitoring, alerting, and validation frameworks to ensure data accuracy and trustworthiness.
+
+**Cross-Functional Partnership**
+
+• Collaborate closely with Engineering, Product, Finance, Payment Ops, Support, and RevOps to understand data needs and deliver scalable solutions
+• Act as the internal expert and advocate for data — educating teams on best practices and helping them ask better questions of the data
+• Contribute to the product roadmap by surfacing data-driven insights about customer behavior, platform performance, and market opportunity,What You’ll Bring
+
+• **Core Experience:** 5+ years of Data Engineering experience, ideally acting as the first or lead Data Engineer at a fast-growing tech, fintech, or SaaS company.
+• **Data Modeling:** Proven ability to design efficient OLAP schemas for complex financial transactions and business metrics.
+• **Cloud & Pipeline Skills:** Strong proficiency with AWS data services and building reliable Change Data Capture pipelines.
+• **Database Knowledge:** Strong familiarity with NoSQL databases and a deep understanding of relational SQL databases.
+• **Cross-Functional Communication:** The ability to translate complex business requirements from Finance and Sales into technical data models, and the collaborative skills to work seamlessly with MLOps, Business Operations, and Software Engineering teams.
+
+## It'd Be Nice If You Had
+
+• **Databricks Expertise:** Hands-on experience working specifically within a Databricks environment, including leveraging Unity Catalog for governance, Delta Lake, and native Databricks SQL/BI tools.
+• **Fintech Knowledge:** An understanding of the fintech ecosystem, particularly handling transactional data, ledgering, and reconciliation and working in SOC 2 aligned environments
+• **Startup DNA:** Previous experience as a founding data engineer or early data team member at a high-growth startup. You thrive in ambiguity and love the 0-to-1 journey of building infrastructure from scratch.
+Skills:
+
+- AWS,
+- NoSQL,
+- Extract Transform Load (ETL),
+- SQL

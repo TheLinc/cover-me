@@ -452,6 +452,11 @@ verify_jwt = false
 [functions.site-request]
 verify_jwt = false
 
+# The website's free ATS checker (#278), used without an account. Rate-limited
+# per IP like scrape; sends the posting and resume only to Anthropic.
+[functions.ats-check]
+verify_jwt = false
+
 # Called by the uninstall page to stop the follow-up email (#126). No sign-in,
 # since the extension is already gone; rate-limited per IP like scrape.
 [functions.extension-removed]
@@ -463,6 +468,9 @@ verify_jwt = false
 # secret, so it would reject every user once Auth signs with the new keys.
 # They're declared because the Supabase GitHub integration deploys only
 # functions listed here (tests/integration/functions-config.test.ts).
+[functions.answer]
+verify_jwt = false
+
 [functions.applications]
 verify_jwt = false
 

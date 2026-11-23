@@ -44,10 +44,13 @@ Deno.serve(async (req) => {
   if (limit !== 'ok') return json({ error: limit === 'over' ? 'Too many requests' : 'Try again shortly' }, limit === 'over' ? 429 : 503)
 
   let pages: unknown
+  let forAnswer = false
   try {
     const body = await readBody(req, MAX_BYTES)
     if (body === null) return json({ error: 'Request too large' }, 413)
-    pages = (JSON.parse(body) as { pages?: unknown }).pages
+    const parsed = JSON.parse(body) as { pages?: unknown; answer?: unknown }
+    pages = parsed.pages
+    forAnswer = parsed.answer === true
   } catch {
     return json({ error: 'Invalid request body' }, 400)
   }
@@ -67,7 +70,9 @@ Deno.serve(async (req) => {
   // A click that read nothing here is counted (#130), by host and scraper
   // only: never the URL, which can carry a search, or the page. It may still
   // have worked: the bundled scrapers or a frame not sent can read the job.
-  if (!results.some((r) => r.ok)) {
+  // A right-click answer's read (#232) isn't counted: it's often of an
+  // application form with no posting on it, which is expected.
+  if (!forAnswer && !results.some((r) => r.ok)) {
     EdgeRuntime.waitUntil(capture('scrape_failed', crypto.randomUUID(), {
       pages: pages.map(({ url }) => ({ hostname: new URL(url).hostname, scraper: scraperFor(new URL(url).hostname) })),
     }))

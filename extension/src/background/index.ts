@@ -1,18 +1,28 @@
 import { checkedTier, ensureValidSession, generateViaBackend, handleGoogleSignIn, limitErrorCode, RateLimitError, saveLetterToBackend, tailorViaBackend } from '../lib/auth'
 import { generateCoverLetter } from '../lib/ai'
-import { isCurrentParse, parseResumeStructure, upgradedParse } from '../lib/ai/resume-parse'
+import { parseResumeStructure } from '../lib/ai/resume-parse'
 import { tailorResume } from '../lib/ai/resume-tailor'
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from '../lib/config'
 import { decryptApiKey } from '../lib/crypto'
-import { checkUploadedDesign, designForTailor, finishDesign, uploadDesignIfPro } from '../lib/design'
+import { checkUploadedDesign, designForTailor, finishDesign, parseForTailor, uploadDesignIfPro } from '../lib/design'
 import { debugGroup } from '../lib/debug'
-import { addToHistory, addToTailoredHistory, getCandidateContext, getResume, getSession, getSettings, hasAgreedToPageRead, resolveMode, saveParsedResume, setEntryAccounts, watchSession } from '../lib/storage'
+import { addToHistory, addToTailoredHistory, getCandidateContext, getResume, getSession, getSettings, hasAgreedToPageRead, resolveMode, setEntryAccounts, watchSession } from '../lib/storage'
 import { handleInstalled, uninstallUrl } from './install'
+import { handleAnswerClick, registerAnswerMenu, writeAnswer, type AnswerRequest } from './answer'
 import { scrapeFailure } from './scrape-failure'
 import type { PageSnapshot } from '../content/snapshot.ts'
 import type { CoverJob, CoverLetter, FrameScrapeResponse, GenerateResponse, JobData, ScrapeFailure, ScrapeResponse, TailoredResume, TailorJob, TailorResponse } from '../types'
 
-chrome.runtime.onInstalled.addListener((details) => { void handleInstalled(details) })
+chrome.runtime.onInstalled.addListener((details) => {
+  void handleInstalled(details)
+  registerAnswerMenu()
+})
+
+// Right-click "Cover Me: write an answer" (#232). The click grants activeTab
+// for that tab, the same access the toolbar button gives.
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  void keepAlive(handleAnswerClick(info, tab, scrapeTab, CONTENT_SCRIPT_FILE))
+})
 
 // Removing the extension opens the survey, with the account id while signed in
 function setUninstallUrl(userId?: string) {
@@ -45,6 +55,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   if (message.type === 'CHECK_DESIGN') {
     keepAlive(checkUploadedDesign(message.hash as string)).then(() => sendResponse({}))
+    return true
+  }
+  // "Use another job" in the answer's status box: the page script sends the
+  // box's question and the job picked.
+  if (message.type === 'ANSWER_REWRITE') {
+    keepAlive(writeAnswer(message.request as AnswerRequest)).then(sendResponse)
     return true
   }
   if (message.type === 'GOOGLE_SIGN_IN') {
@@ -154,7 +170,9 @@ type FrameScrape = { frameId: number; snapshot?: PageSnapshot | null } & (
 // the extension root. Injected on click; nothing is declared in content_scripts.
 const CONTENT_SCRIPT_FILE = 'content.js'
 
-async function scrapeTab(tabId: number): Promise<JobData> {
+// forAnswer: a right-click answer's read (#232), often of an application form
+// with no posting on it; the server doesn't count those as failed reads.
+async function scrapeTab(tabId: number, { forAnswer = false } = {}): Promise<JobData> {
   const { frameIds, urls } = await listScrapableFrames(tabId)
   const fail = async (error: string, frameId?: number) =>
     new ScrapeError(scrapeFailure(await topFrameUrl(tabId), [...urls.values()], error, frameId === undefined ? undefined : urls.get(frameId)))
@@ -182,7 +200,7 @@ async function scrapeTab(tabId: number): Promise<JobData> {
       }
     }),
   )
-  const results = await preferServerScrapes(local)
+  const results = await preferServerScrapes(local, forAnswer)
 
   // The top frame keeps its historical precedence so already-working sites
   // behave exactly as before; among iframe hits, take the longest description.
@@ -245,7 +263,7 @@ async function scrapeTab(tabId: number): Promise<JobData> {
 // scrapers also did: outdated scrapers tend to return a wrong or partial job
 // rather than fail. The bundled result stands when the server is unreachable,
 // unconfigured (self-hosted builds), slow, or couldn't read that frame.
-async function preferServerScrapes(results: FrameScrape[]): Promise<FrameScrape[]> {
+async function preferServerScrapes(results: FrameScrape[], forAnswer = false): Promise<FrameScrape[]> {
   const sent = results.filter((r) => r.snapshot)
   if (!SUPABASE_URL || sent.length === 0) return results
   // Until the user has agreed on the notice about how pages are read
@@ -253,7 +271,7 @@ async function preferServerScrapes(results: FrameScrape[]): Promise<FrameScrape[
   // bundled scrapers' results stand.
   if (!(await hasAgreedToPageRead())) return results
   try {
-    const body = JSON.stringify({ pages: sent.map((r) => r.snapshot) })
+    const body = JSON.stringify({ pages: sent.map((r) => r.snapshot), ...(forAnswer ? { answer: true } : {}) })
     const gzipped = await new Response(new Blob([body]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer()
     const res = await fetch(`${SUPABASE_URL}/functions/v1/scrape`, {
       method: 'POST',
@@ -454,12 +472,15 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
 
     // "Your design" (#131): the user's file sets the page, so there's no
     // compacting, and no summary when the file has none to rewrite.
-    const design = await designForTailor()
+    let design = await designForTailor()
     // The popup hides "Compact" whenever "Your design" is picked, fallen back or not.
-    if (design.design.layout === 'yours') {
-      compact = false
-      if (!design.summary) includeSummary = false
+    const asked = { compact, includeSummary }
+    const fitLayout = () => {
+      const yours = design.design.layout === 'yours'
+      compact = yours ? false : asked.compact
+      includeSummary = yours && !design.summary ? false : asked.includeSummary
     }
+    fitLayout()
 
     // Standing candidate facts (set once, edited in the "Candidate context" box)
     // apply to every generation, layered under any one-off note for this run.
@@ -525,20 +546,19 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
     }
     const apiKey = await decryptApiKey(settings.apiKey)
 
-    // Lazy parse: run once on first tailor, cache result for all subsequent tailors.
-    // Re-run automatically when resume is replaced (saveResume clears the parsed field),
-    // and once for a parse from before extra sections (publications…) or
-    // section order were kept.
-    // "Your design" places the text with the parse its file was checked
-    // against, so the tailor starts from that same parse, even one from
-    // before section order: the user's file keeps its own.
-    let parsed = design.parsed ?? resumeData.parsed
-    if (!parsed || (!design.parsed && !isCurrentParse(parsed))) {
+    // Lazy parse: run once on first tailor, cache result for all subsequent
+    // tailors. A new upload has no parse, so its first tailor reads it.
+    // "Your design" places the text with the parse its file was checked against.
+    const before = design
+    const read = await parseForTailor(design, resumeData, async () => {
       onProgress('Reading your resume (first run only)…')
-      parsed = upgradedParse(parsed, await parseResumeStructure(resumeData.text, settings.provider, apiKey))
-      await saveParsedResume(parsed)
+      const fresh = await parseResumeStructure(resumeData.text, settings.provider, apiKey)
       onProgress('') // read; the model thinks next, which is plain "Plan the changes"
-    }
+      return fresh
+    })
+    const parsed = read.parsed
+    design = read.design
+    if (design !== before) fitLayout() // checked again: its summary, or a fallback
 
     // Shows how many bullets the parser extracted per role — if this is already
     // short, the model never saw the missing bullets in the first place.

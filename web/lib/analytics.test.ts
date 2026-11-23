@@ -62,7 +62,6 @@ describe('scrubEvent', () => {
 })
 
 describe('storeClick', () => {
-  // Enough of an element for closest('a[href]') and the label
   const link = (href: string, text: string | null, ariaLabel?: string) => {
     const a = {
       textContent: text,
@@ -83,6 +82,12 @@ describe('storeClick', () => {
 
   it('falls back to aria-label for an icon-only link', () => {
     expect(storeClick({ type: 'click', button: 0, target: link(STORE, '', 'Install Cover Me') })).toEqual({ link_text: 'Install Cover Me' })
+  })
+
+  it("adds the link's utm_campaign as campaign, so clicks match the store dashboard", () => {
+    expect(storeClick({ type: 'click', button: 0, target: link(`${STORE}?utm_source=cover-me.dev&utm_medium=site&utm_campaign=hero`, 'Add to Chrome') }))
+      .toEqual({ link_text: 'Add to Chrome', campaign: 'hero' })
+    expect(storeClick({ type: 'click', button: 0, target: link(`${STORE}?utm_source=github`, 'Install') })).toEqual({ link_text: 'Install' })
   })
 
   it('counts middle clicks but not right clicks', () => {

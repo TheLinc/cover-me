@@ -3,12 +3,13 @@
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { useSearchParams } from 'next/navigation'
 import posthog from 'posthog-js'
+import { ArrowRightIcon } from '@phosphor-icons/react/dist/ssr'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Textarea } from '@/components/ui/textarea'
 import { whenPosthogLoaded } from '@/lib/analytics'
-import { CHROME_STORE_URL } from '@/lib/utils'
+import { storeUrl } from '@/lib/utils'
 
 // PostHog survey "Why did you remove Cover Me?" (API mode). Its results page
 // reads these events; the ids come from the survey in PostHog:
@@ -39,18 +40,18 @@ const LINK_CLASS = 'text-brand-strong underline-offset-4 hover:underline'
 
 const FREE_LIMIT = "A free account gets 5 generations a week, and with your own Claude or OpenAI key there's no limit from us."
 
-// Arrow markers, as on /privacy: the brand avoids round bullets
+// Arrow markers, as on /privacy: the brand avoids round bullets (#140)
 function Fact({ children }: { children: ReactNode }) {
   return (
     <li className="flex gap-3">
-      <span aria-hidden="true" className="shrink-0 text-brand">→</span>
+      <span aria-hidden="true" className="flex h-[1lh] shrink-0 items-center text-brand"><ArrowRightIcon size={14} /></span>
       <span>{children}</span>
     </li>
   )
 }
 
 // The line under "Thanks for telling us", by reason. Reasons not here get none.
-// Every privacy line must match a sentence on /privacy.
+// Every privacy line must match a sentence on /privacy. (#140)
 const REPLIES: Partial<Record<Reason, ReactNode>> = {
   "It didn't work on the job sites I use": (
     <p>
@@ -79,7 +80,7 @@ const REPLIES: Partial<Record<Reason, ReactNode>> = {
 type FollowUpQuestion = { id: string; question: string; choices: string[] }
 
 // One optional question on the thank-you screen, for the reasons that leave us guessing.
-// Its choices must match the question's in the PostHog survey.
+// Its choices must match the question's in the PostHog survey. (#140)
 const FOLLOW_UPS: Partial<Record<Reason, FollowUpQuestion>> = {
   'Too expensive': {
     id: PRICE_QUESTION_ID,
@@ -91,7 +92,7 @@ const FOLLOW_UPS: Partial<Record<Reason, FollowUpQuestion>> = {
     question: 'What worried you most?',
     choices: ['Uploading my resume', 'Creating an account', 'Sending data to an AI company', 'The extension reading web pages'],
   },
-  // Splits a template or styling problem from a content one
+  // Splits a template or styling problem from a content one (#157)
   "The resumes or cover letters weren't good enough": {
     id: QUALITY_QUESTION_ID,
     question: 'What was wrong with it?',
@@ -103,11 +104,11 @@ const VERSION = /^\d+(\.\d+){0,3}$/
 
 // When this browser last sent an answer. For a day after, the page shows the
 // thank-you screen instead of the form, so a refresh, a new tab or a second
-// uninstall doesn't send the same person's answer twice. Disclosed on /privacy.
+// uninstall doesn't send the same person's answer twice. Disclosed on /privacy. (#143)
 const SENT_AT_KEY = 'uninstall-survey-sent-at'
 const ANSWER_ONCE_MS = 24 * 60 * 60 * 1000
 
-// localStorage throws when the browser blocks storage; the form then just shows
+// localStorage throws when the browser blocks storage; the form then just shows (#143)
 function answeredRecently(): boolean {
   try {
     return Date.now() - Number(localStorage.getItem(SENT_AT_KEY)) < ANSWER_ONCE_MS
@@ -127,14 +128,14 @@ function rememberAnswered() {
 // Opened by Chrome when someone removes the extension (extension/src/background/install.ts).
 // u is the account id, there only when they were signed in. Both come from the
 // URL, so anything that isn't a UUID or a version number is dropped (and the
-// extension-removed function checks the id again).
+// extension-removed function checks the id again). (#106)
 export function UninstallSurvey() {
   const params = useSearchParams()
   const [reason, setReason] = useState('')
   const [comment, setComment] = useState('')
-  // The answer as sent, kept so a follow-up can re-send it under the same submission id
+  // The answer as sent, kept so a follow-up can re-send it under the same submission id (#140)
   const [sent, setSent] = useState<Record<string, unknown> | null>(null)
-  // False on the server, then the browser's value, without a hydration mismatch
+  // False on the server, then the browser's value, without a hydration mismatch (#143)
   const answeredBefore = useSyncExternalStore(noSubscribe, answeredRecently, () => false)
 
   // Marks the account so the follow-up email skips it (#126), answer or not.
@@ -165,7 +166,7 @@ export function UninstallSurvey() {
     const version = params.get('v') ?? ''
     const answer = {
       $survey_id: SURVEY_ID,
-      // A follow-up re-sends this with the same id, and PostHog keeps one response per id
+      // A follow-up re-sends this with the same id, and PostHog keeps one response per id (#140)
       $survey_submission_id: crypto.randomUUID(),
       $survey_completed: true,
       [`$survey_response_${REASON_QUESTION_ID}`]: reason,
@@ -179,17 +180,17 @@ export function UninstallSurvey() {
   }
 
   if (sent) {
-    // Sent only with a reason picked from REASONS
+    // Sent only with a reason picked from REASONS (#140)
     const reply = REPLIES[reason as Reason]
     const followUp = FOLLOW_UPS[reason as Reason]
     return (
       <div className="text-center">
-        {/* Focused on mount: the form, and the Send button that had focus, are gone */}
+        {/* Focused on mount: the form, and the Send button that had focus, are gone (#106) */}
         <h1 ref={(el) => el?.focus()} tabIndex={-1} className="text-[34px] font-semibold leading-tight tracking-[-0.03em] outline-none">Thanks for telling us</h1>
         {reply && <div className="mt-4 text-[15px] text-muted-foreground">{reply}</div>}
         {followUp && <FollowUp {...followUp} answer={sent} />}
         <p className="mt-6">
-          <a href={CHROME_STORE_URL} className={LINK_CLASS}>
+          <a href={storeUrl('uninstalled')} className={LINK_CLASS}>
             Changed your mind? Reinstall
           </a>
         </p>
@@ -197,14 +198,14 @@ export function UninstallSurvey() {
     )
   }
 
-  // After the sent screen: sending sets the flag this reads
+  // After the sent screen: sending sets the flag this reads (#143)
   if (answeredBefore) {
     return (
       <div className="text-center">
         <h1 className="text-[34px] font-semibold leading-tight tracking-[-0.03em]">Thanks for telling us</h1>
         <p className="mt-4 text-[15px] text-muted-foreground">We already have your answer.</p>
         <p className="mt-6">
-          <a href={CHROME_STORE_URL} className={LINK_CLASS}>
+          <a href={storeUrl('uninstalled')} className={LINK_CLASS}>
             Changed your mind? Reinstall
           </a>
         </p>
@@ -265,7 +266,7 @@ function FollowUp({ id, question, choices, answer }: FollowUpQuestion & { answer
   }
 
   if (done) {
-    // Focused on mount: the Send button that had focus is gone
+    // Focused on mount: the Send button that had focus is gone (#140)
     return <p ref={(el) => el?.focus()} tabIndex={-1} className="mt-8 text-[15px] outline-none">Thanks, that helps.</p>
   }
 

@@ -51,14 +51,26 @@ describe('mergeTailorDelta bullet counts', () => {
     expect(mergeTailorDelta(base, merged3).experience[0].bullets).toHaveLength(3)
   })
 
-  test('projects keep their bullet count in every mode', () => {
-    const delta = { experience: [], projects: [{ bullets: ['Built and shared a grading script with 4 teachers'] }] }
-    expect(mergeTailorDelta(base, delta).projects![0].bullets).toEqual(base.projects[0].bullets)
+  // #251: projects follow the same mode rule as roles.
+  const projectCut = { experience: [], projects: [{ bullets: ['Built a grading script used by 4 teachers'] }] }
+
+  test('default mode keeps the original project bullets when a project comes back with a different count', () => {
+    expect(mergeTailorDelta(base, projectCut, { exactBulletCounts: true }).projects![0].bullets).toEqual(base.projects[0].bullets)
   })
 
-  test('compact mode accepts no extra project bullets', () => {
-    const delta = { experience: [], projects: [{ bullets: [...base.projects[0].bullets, 'An extra bullet'] }] }
-    expect(mergeTailorDelta(base, delta, { exactBulletCounts: false }).projects![0].bullets).toEqual(base.projects[0].bullets)
+  test('default mode takes a project rewrite with the same count', () => {
+    const same = { experience: [], projects: [{ bullets: ['Built a Python grading script', 'Shared it with 4 math teachers'] }] }
+    expect(mergeTailorDelta(base, same, { exactBulletCounts: true }).projects![0].bullets).toEqual(['Built a Python grading script', 'Shared it with 4 math teachers'])
+  })
+
+  test('trim and compact modes may drop project bullets', () => {
+    expect(mergeTailorDelta(base, projectCut).projects![0].bullets).toEqual(['Built a grading script used by 4 teachers'])
+  })
+
+  test('a project that comes back empty keeps its original bullets in every mode', () => {
+    const empty = { experience: [], projects: [{ bullets: [] }] }
+    expect(mergeTailorDelta(base, empty).projects![0].bullets).toEqual(base.projects[0].bullets)
+    expect(mergeTailorDelta(base, empty, { exactBulletCounts: true }).projects![0].bullets).toEqual(base.projects[0].bullets)
   })
 
   test('trim mode cuts each entry to its budget, keeping the first-ranked bullets and any measured result', () => {
@@ -97,6 +109,8 @@ describe('Regenerate after section edits', () => {
     sectionOrder: ['other', 'skills', 'summary', 'experience', 'education', 'other'],
     deletedSections: [{ key: 'certifications', index: 4, certifications: ['Deleted cert text'] }],
     editedAt: '2026-11-12T00:00:00Z',
+    atsScore: 74,
+    atsScoreBefore: 61,
   }
   const raw = JSON.stringify({ summary: 'Reworded.', experience: [{ bullets: ['Built the billing service'] }] })
 
@@ -108,11 +122,75 @@ describe('Regenerate after section edits', () => {
     expect(resume.certifications).toBeUndefined()
   })
 
-  test("the prompt never sees a deleted section's text", () => {
+  test("the prompt never sees a deleted section's text or the old scores", () => {
     const job = { title: 'Engineer', company: 'Acme', description: 'Engineer' } as Parameters<typeof buildPrompt>[0]
     const prompt = buildPrompt(job, parsed, false, undefined, false, true, previous)
     expect(prompt).toContain('REVISION MODE')
     expect(prompt).not.toContain('Deleted cert text')
     expect(prompt).not.toContain('deletedSections')
+    expect(prompt).not.toContain('atsScore')
+  })
+})
+
+describe('score before tailoring (#228)', () => {
+  const parsed = {
+    name: 'Pat Lee', email: 'pat@example.com', phone: '', website: '',
+    experience: [{ title: 'Engineer', company: 'Northwind', location: '', dates: '2022', bullets: ['Built the billing service in TypeScript'] }],
+    education: [],
+  } as unknown as ParsedResume
+  const keywordMatch = { tier1Covered: ['TypeScript', 'Postgres'], tier1Missing: ['Kubernetes'] }
+
+  test('is the tailored score when the wording added no keyword, gap list aside', async () => {
+    const raw = JSON.stringify({ experience: [{ bullets: ['Built the billing service in TypeScript'] }], keywordMatch })
+    const resume = await assembleTailored(parsed, raw, { jobDescription: 'Engineer' })
+    expect(resume.atsGaps).toContain('Kubernetes')
+    expect(resume.atsScoreBefore).toBe(resume.atsScore)
+  })
+
+  test('drops by what the wording added', async () => {
+    const km = { tier1Covered: ['TypeScript', 'Payment systems'], tier1Missing: ['Kubernetes'] }
+    const raw = JSON.stringify({ experience: [{ bullets: ['Built the billing and payment systems in TypeScript'] }], keywordMatch: km })
+    const resume = await assembleTailored(parsed, raw, { jobDescription: 'Engineer' })
+    // Model: 70 * 2/3 + 30 = 77. Word match: original 70 * 1/3 + 30 = 53, tailored 77, so before is 77 - 24.
+    expect(resume.atsScore).toBe(77)
+    expect(resume.atsScoreBefore).toBe(53)
+  })
+})
+
+describe("the posting's title in the summary (#218)", () => {
+  const parsed = {
+    name: 'Pat Lee', email: 'pat@example.com', phone: '', website: '',
+    experience: [{ title: 'Web Developer', company: 'Northwind', location: '', dates: '2022', bullets: ['Built React screens'] }],
+    education: [], skills: 'React',
+  } as unknown as ParsedResume
+  const raw = JSON.stringify({ summary: 'Full Stack Developer building React screens.', experience: [{ bullets: ['Built React screens'] }] })
+  const grounding = { jobDescription: 'We are hiring a Full Stack Developer.', jobTitle: 'Full Stack Developer' }
+
+  test('keeps it when the line check passed the summary', async () => {
+    const resume = await assembleTailored(parsed, raw, { ...grounding, ask: async () => '{"flags": [], "summary": null}' })
+    expect(resume.summary).toBe('Full Stack Developer building React screens.')
+  })
+
+  test('keeps it when the summary was flagged for something else and its rewrite passes a second check', async () => {
+    let checks = 0
+    const ask = async (prompt: string) => prompt.startsWith('RESUME ACCURACY CHECK')
+      ? (++checks === 1 ? '{"flags": [], "summary": "names TypeScript"}' : '{"flags": [], "summary": null}')
+      : '{"rewrites": [{"id": "summary", "text": "Full Stack Developer who builds React screens."}]}'
+    const resume = await assembleTailored(parsed, raw, { ...grounding, ask })
+    expect(resume.summary).toBe('Full Stack Developer who builds React screens.')
+    expect(checks).toBe(2)
+  })
+
+  test('the code guard still removes it when the line check flagged the summary', async () => {
+    const ask = async (prompt: string) => prompt.startsWith('RESUME ACCURACY CHECK')
+      ? '{"flags": [], "summary": "claims backend work"}'
+      : '{"rewrites": [{"id": "summary", "text": "Full Stack Developer who builds React screens."}]}'
+    const resume = await assembleTailored(parsed, raw, { ...grounding, ask })
+    expect(resume.summary).toBe('')
+  })
+
+  test('the code guard still removes it when the line check could not run', async () => {
+    const resume = await assembleTailored(parsed, raw, { ...grounding, ask: async () => { throw new Error('down') } })
+    expect(resume.summary).toBe('')
   })
 })

@@ -33,6 +33,7 @@ html, body { width: auto; height: 100%; overflow: hidden; }
   scrollbar-color: var(--border) transparent;
 }
 .ed-form .ats-result { margin-bottom: 8px; }
+.ed-form .review-ask { margin: 0 0 12px; }
 
 .ed-section { padding: 20px 0; border-bottom: 1px solid var(--border); }
 .ed-section:last-child { border-bottom: none; }
@@ -50,6 +51,7 @@ html, body { width: auto; height: 100%; overflow: hidden; }
 .ed-item + .ed-item { margin-top: 22px; padding-top: 22px; border-top: 1px dashed var(--border); }
 .ed-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; }
 .ed-field { display: block; }
+.ed-section > .ed-field + .tip { margin-top: 8px; }
 .ed-section > .ed-field + .ed-lines { margin-top: 12px; }
 
 /* Text areas grow with what's typed. */

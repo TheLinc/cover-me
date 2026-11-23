@@ -1,7 +1,5 @@
-// Per-job-board landing page content for /for/[board].
-// Each board gets differentiated copy. Search engines and AI engines penalize
-// near-duplicate doorway pages, so keep the intros, steps, and FAQs specific,
-// and keep board behavior claims in line with extension/src/content/scrapers.
+// Search and AI engines penalize near-duplicate doorway pages, so keep each board's copy
+// specific, and its behavior claims in line with extension/src/content/scrapers (#88).
 
 export interface BoardFaq {
   q: string
@@ -11,14 +9,13 @@ export interface BoardFaq {
 export interface Board {
   slug: string
   name: string
-  /** e.g. "job board", "applicant tracking system", used in copy */
   kind: string
   metaTitle: string
   metaDescription: string
   h1: string
-  /** Direct-answer paragraph rendered right under the H1, written for featured snippets. */
   answer: string
   intro: string[]
+  related?: { lead: string; href: string; label: string }
   steps: { title: string; body: string }[]
   faqs: BoardFaq[]
 }
@@ -55,7 +52,7 @@ export const BOARDS: Board[] = [
     faqs: [
       {
         q: 'Does Cover Me work with LinkedIn Easy Apply?',
-        a: "Yes. Copy the letter or download it as a PDF, then add it in the Easy Apply form. If the form takes a resume upload, use the tailored resume, as a PDF or Word file. Cover Me never fills in or submits the form, so you check everything before it's sent.",
+        a: "Yes. Copy the letter or download it as a PDF, then add it in the Easy Apply form. If the form takes a resume upload, use the tailored resume, as a PDF or Word file. Cover Me never submits the form, so you check everything before it's sent. When the form asks a written question, right-click its box and choose \"Cover Me: write an answer\" to have an answer typed in for you to edit.",
       },
       {
         q: 'Does Cover Me need access to my LinkedIn account?',
@@ -98,7 +95,7 @@ export const BOARDS: Board[] = [
     faqs: [
       {
         q: "Does Cover Me work with Indeed's application form?",
-        a: 'Yes. When the form asks for a cover letter, paste the text or upload the PDF from Cover Me. Cover Me never fills in or submits applications.',
+        a: 'Yes. When the form asks for a cover letter, paste the text or upload the PDF from Cover Me. When it asks a written question, right-click the box and choose "Cover Me: write an answer", and Cover Me types an answer from your resume and the posting. Cover Me never submits an application.',
       },
       {
         q: "Does it work when Indeed links out to a company's own career site?",
@@ -121,7 +118,7 @@ export const BOARDS: Board[] = [
     answer:
       'To tailor a cover letter for a Greenhouse application, open the posting and click the Cover Me icon. Cover Me (cover-me.dev) is a free Chrome extension that reads Greenhouse postings on job-boards.greenhouse.io, on company career pages that embed them, and in your my.greenhouse.io account, then writes a letter and tailored resume from your resume.',
     intro: [
-      "Greenhouse is the applicant tracking system behind many tech company career pages. You'll recognize its postings by the job-boards.greenhouse.io address, or by an application form at the bottom of a company's own careers page. Many Greenhouse forms include a cover letter field, often marked optional.",
+      "Greenhouse is the applicant tracking system behind many tech company career pages. You'll recognize its postings by the job-boards.greenhouse.io address, or by an application form at the bottom of a company's own careers page. Many Greenhouse forms include a cover letter field, often marked optional, and some add written questions like \"Why do you want to work here?\" Right-click a question's box and choose \"Cover Me: write an answer\" to have an answer from your resume and the posting typed in.",
       "Cover Me reads the posting wherever it appears. On a company site, the Greenhouse posting often loads inside a frame from greenhouse.io, and Cover Me has permission to read that frame when you click. If you search and track jobs in my.greenhouse.io, it also reads the posting in the job pop-up and on your Applications page.",
     ],
     steps: [
@@ -164,7 +161,7 @@ export const BOARDS: Board[] = [
     answer:
       "To write a cover letter for a Lever application, open the jobs.lever.co posting and click the Cover Me icon. Cover Me (cover-me.dev) is a free Chrome extension that reads the role, company and description from the posting's structured job data, then writes a letter and a tailored resume from your resume.",
     intro: [
-      'Lever is an applicant tracking system used by many startups and growing companies. Its application form usually ends with an Additional information box, which is where a short cover letter goes when the form has no separate field for one.',
+      'Lever is an applicant tracking system used by many startups and growing companies. Its application form usually ends with an Additional information box, which is where a short cover letter goes when the form has no separate field for one. When a Lever form asks its own written questions, right-click a box and choose "Cover Me: write an answer" for an answer you can edit.',
       'Lever postings include structured job data that names the company and role exactly, and Cover Me reads it when you click. Add a note before you generate, like a referral or a project you want mentioned, and the letter uses it alongside your resume.',
     ],
     steps: [
@@ -210,6 +207,11 @@ export const BOARDS: Board[] = [
       'Workday is the applicant tracking system many large employers use. Its applications are long: you create an account with each employer, check the details Workday parsed from your resume, and answer screening questions, and the cover letter upload comes late in the process.',
       "Tailoring first means both documents are ready before you start. Cover Me reads Workday's page by labels that stay the same across employers, and takes the company name from the posting's address, like acme.wd1.myworkdayjobs.com.",
     ],
+    related: {
+      lead: 'Already applied and checking your status?',
+      href: '/guides/workday-application-status',
+      label: 'What Submitted, In Progress and Completed mean in Workday',
+    },
     steps: [
       {
         title: 'Open a Workday posting',
@@ -221,7 +223,7 @@ export const BOARDS: Board[] = [
       },
       {
         title: 'Upload in Workday',
-        body: 'Download the cover letter as a PDF and the tailored resume as a PDF or Word file. Upload the resume when the application starts and the letter where the form asks for documents, or paste the letter text.',
+        body: 'Download the cover letter as a PDF and the tailored resume as a PDF or Word file. Upload the resume when the application starts and the letter where the form asks for documents, or paste the letter text. For a written question, right-click its box and choose Cover Me: write an answer.',
       },
     ],
     faqs: [
@@ -235,7 +237,7 @@ export const BOARDS: Board[] = [
       },
       {
         q: 'Can Cover Me fill out the Workday application for me?',
-        a: 'No. Cover Me writes the cover letter and tailors your resume. It never fills in or submits a Workday application, so the form stays in your hands.',
+        a: "No. Cover Me writes the cover letter and tailors your resume, and it can answer a written question when you right-click its box and choose \"Cover Me: write an answer\". It doesn't fill in the rest of the form and never submits a Workday application, so the form stays in your hands.",
       },
     ],
   },
@@ -264,7 +266,7 @@ export const BOARDS: Board[] = [
       },
       {
         title: 'Apply',
-        body: "Edit the letter, then paste it into Ashby's form or attach the PDF, with the tailored resume, as a PDF or Word file, in the resume field.",
+        body: "Edit the letter, then paste it into Ashby's form or attach the PDF, with the tailored resume, as a PDF or Word file, in the resume field. For a written question, right-click its box and choose Cover Me: write an answer.",
       },
     ],
     faqs: [

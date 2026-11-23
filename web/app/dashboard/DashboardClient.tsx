@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
-import { openBilling } from "@/lib/billing";
-import { describeAllowance, type Allowance } from "@/lib/limits";
+import { useEffect, useState, type ReactNode } from "react";
+import { firstMonthOffer, openBilling, type FirstMonthOffer } from "@/lib/billing";
+import { PLAN_LIMITS, describeAllowance, describeAnswers, type Allowance } from "@/lib/limits";
 import { DaysLeft, LocalDate } from "./LocalDate";
-import type { TrialState } from "@/lib/stripe-tier";
-import { CHROME_STORE_URL, cn } from "@/lib/utils";
+import type { PlanState } from "@/lib/stripe-tier";
+import { storeUrl, cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -23,13 +23,14 @@ const TILE = "flex flex-col rounded-[20px] border border-line bg-surface px-6 py
 interface Props {
   email: string;
   avatar: string | null;
-  // greetingFor(), picked on the server so it can't differ after hydration.
+  // greetingFor(), picked on the server so it can't differ after hydration. (#133)
   greeting: string;
   tier: string;
-  // A gift trial keeps the upgrade buttons; a plan bought during one shows its first payment.
-  trial: TrialState;
+  // A gift trial keeps the upgrade buttons; a plan bought during one shows its first payment. (#112)
+  trial: PlanState;
   allowance: Allowance | null;
-  // Recent applications, rendered by the server page and streamed in.
+  // Answers to application questions, counted apart (#232).
+  answers: Allowance | null;
   history: ReactNode;
 }
 
@@ -40,14 +41,24 @@ export default function DashboardClient({
   tier,
   trial: { giftTrialEnd, firstPayment },
   allowance,
+  answers,
   history,
 }: Props) {
   const [upgrading, setUpgrading]           = useState<'monthly' | 'quarterly' | null>(null);
   const [upgradeError, setUpgradeError]     = useState('');
+  const [offer, setOffer]                   = useState<FirstMonthOffer | null>(null);
   const isPro = tier === "hosted_pro";
+
+  // The first-month offer (#213), if one is open. Loads after the page, and
+  // any failure just leaves it out.
+  useEffect(() => {
+    if (!isPro) firstMonthOffer().then(setOffer, () => {});
+  }, [isPro]);
   const usage = describeAllowance(allowance);
+  const answersLeft = describeAnswers(answers);
   const leftPct = usage && usage.limit > 0 ? ((usage.limit - usage.used) / usage.limit) * 100 : 0;
-  const proDaily = allowance?.pro_daily ?? 25;
+  const proDaily = allowance?.pro_daily ?? PLAN_LIMITS.pro_daily;
+  const answersDaily = answers?.pro_daily ?? PLAN_LIMITS.answer_pro_daily;
 
   async function handleUpgrade(plan: 'monthly' | 'quarterly') {
     setUpgrading(plan);
@@ -76,7 +87,6 @@ export default function DashboardClient({
 
           <h1 className="text-[34px] font-semibold leading-tight tracking-[-0.03em] text-ink">{greeting}</h1>
 
-          {/* Plan and usage: two tiles, stacked on phones. Usage leads with what's left. */}
           <section aria-label="Plan and usage" className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className={cn(TILE, "gap-2.5")}>
               <span className="text-[12.5px] text-subtle">{usage?.label ?? 'Generations'}</span>
@@ -85,7 +95,6 @@ export default function DashboardClient({
                   <p className="text-[14px] tabular-nums text-ink-2">
                     <span className="text-[34px] font-semibold leading-none tracking-[-0.03em] text-ink">{usage.limit - usage.used}</span> of {usage.limit} left
                   </p>
-                  {/* Free allowances are a handful of generations, one cell each; Pro's daily 25 is a bar. */}
                   {allowance?.kind === 'daily' ? (
                     <Progress value={leftPct} className="h-1.5" aria-label={`${usage.limit - usage.used} of ${usage.limit} left`} />
                   ) : (
@@ -103,6 +112,11 @@ export default function DashboardClient({
                   <div aria-hidden className="h-1.5 rounded-full bg-panel" />
                 </>
               )}
+              {answersLeft && (
+                <p className="mt-1 border-t border-line pt-2.5 text-[13px] tabular-nums text-ink-2">
+                  <span className="text-subtle">Application answers:</span> {answersLeft}
+                </p>
+              )}
             </div>
             {isPro && !giftTrialEnd ? (
               <div className={cn(TILE, "items-start gap-2.5")}>
@@ -110,7 +124,7 @@ export default function DashboardClient({
                 <p className="flex items-center gap-2 text-[24px] font-semibold leading-tight tracking-[-0.02em] text-ink">
                   Pro <StarIcon size={16} weight="fill" className="text-brand-strong" aria-hidden />
                 </p>
-                <p className="text-[13.5px] text-ink-2">{proDaily} generations a day. Your letters and resumes saved here, on every device.</p>
+                <p className="text-[13.5px] text-ink-2">{proDaily} generations and {answersDaily} answers to application questions a day. Your letters and resumes saved here, on every device.</p>
                 {firstPayment && (
                   <p className="text-[13.5px] text-ink-2">
                     <strong className="font-semibold text-ink">First payment <LocalDate iso={firstPayment.date} options={{ month: "long", day: "numeric" }} />:</strong> {firstPayment.price}.
@@ -129,8 +143,13 @@ export default function DashboardClient({
                 ) : (
                   <>
                     <span className="text-[12.5px] font-medium text-brand-ink">Go Pro</span>
+                    {offer && (
+                      <p className="text-[13.5px] text-ink">
+                        <strong className="font-semibold">{offer.name ?? "Your first month is discounted"}</strong> on the monthly plan, taken off at checkout. Ends <LocalDate iso={offer.endsAt} options={{ month: "long", day: "numeric" }} />.
+                      </p>
+                    )}
                     <ul className="flex flex-col gap-1 text-[13.5px] text-ink">
-                      {[`${proDaily} generations a day`, 'Your letters and resumes on every device', 'Cancel any time'].map((line) => (
+                      {[`${proDaily} generations a day`, `${answersDaily} answers to application questions a day`, 'Your letters and resumes on every device', 'Cancel any time'].map((line) => (
                         <li key={line} className="flex items-center gap-2"><span aria-hidden className="size-1.5 rounded-full bg-brand" />{line}</li>
                       ))}
                     </ul>
@@ -149,16 +168,14 @@ export default function DashboardClient({
             )}
           </section>
 
-          {/* Recent applications, streamed in by the server page. */}
           {history}
 
-          {/* Where the work happens */}
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-6">
             <p className="flex items-center gap-2.5 text-[13.5px] text-ink-2">
               <GoogleChromeLogoIcon size={18} className="text-subtle" aria-hidden />
               Make letters on LinkedIn, Indeed, Greenhouse, Lever, Workday and Ashby in one click.
             </p>
-            <a href={CHROME_STORE_URL} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[13.5px] font-medium text-brand-strong underline-offset-4 hover:underline">
+            <a href={storeUrl('dashboard')} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[13.5px] font-medium text-brand-strong underline-offset-4 hover:underline">
               Install the extension <ArrowUpRightIcon size={12} aria-hidden />
             </a>
           </div>

@@ -39,6 +39,9 @@
   --text-3:      #A6A3C6;
   --gap-bg:      rgba(249, 115, 22, 0.16);
   --gap-fg:      #FDBA74;
+  --tip-bg:      rgba(250, 204, 21, 0.12);
+  --tip-fg:      #FDE047;
+  --tip-border:  rgba(250, 204, 21, 0.28);
   --error:       #f87171;
   --error-dim:   rgba(248, 113, 113, 0.10);
   --success:     #34d399;
@@ -329,6 +332,22 @@ html, body {
 .page-read-notice-actions .btn { flex: 1; width: auto; }
 .news-heading { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
 .news-heading .page-read-notice-title { margin-bottom: 0; }
+.news-dismiss {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin: -2px -4px 0 auto;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--text-2);
+  cursor: pointer;
+}
+.news-dismiss:hover { background: var(--border); color: var(--text); }
+.answers-news-link { display: inline-block; margin-top: 6px; }
 .news-icon {
   flex-shrink: 0;
   display: grid;
@@ -349,6 +368,7 @@ html, body {
   font-size: 12px;
   line-height: 1.55;
 }
+.letter-container > .review-ask { margin-top: 0; }
 .review-ask-title { color: var(--text); font-size: 13px; font-weight: 600; margin-bottom: 4px; }
 .review-ask-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-top: 10px; }
 .review-ask-actions .btn { width: auto; text-decoration: none; }
@@ -746,6 +766,11 @@ html, body {
 
 .hint { font-size: 11px; color: var(--text-3); line-height: 1.55; }
 
+/* A tip about the result, like the summary using the posting's title (#244) */
+.tip { display: flex; gap: 8px; align-items: flex-start; font-size: 12px; line-height: 1.5; color: var(--text-2); background: var(--tip-bg); border: 1px solid var(--tip-border); border-radius: 8px; padding: 8px 10px; }
+.tip svg { color: var(--tip-fg); flex-shrink: 0; margin-top: 2px; }
+.tip strong { color: var(--tip-fg); font-weight: 600; }
+
 .input-wrap { position: relative; }
 
 .input-eye-btn {
@@ -802,6 +827,9 @@ html, body {
 /* The score is from before the user's edits in the editor tab (#118). */
 .ats-edited { font-size: 12px; color: var(--text-3); margin-bottom: 6px; }
 
+/* The original resume's score, when tailoring raised it (#228). */
+.ats-gain { font-size: 12px; color: var(--text-2); margin-bottom: 6px; }
+
 .supplemental-section { margin-bottom: 10px; }
 .supplemental-label {
   display: block;
@@ -830,6 +858,12 @@ html, body {
 .upgrade-actions .btn { width: auto; }
 .upgrade-actions .btn-primary { flex: 1; }
 .upgrade-actions .btn-secondary { padding: 10px 12px; font-size: 12px; }
+/* The first-month offer (#213), under the buttons */
+.upgrade-offer { font-size: 12px; line-height: 1.5; color: var(--text-2); background: var(--accent-dim); border-radius: 8px; padding: 8px 10px; }
+.upgrade-offer strong { color: var(--accent-h); font-weight: 600; }
+.generate-offer { display: flex; flex-direction: column; gap: 6px; }
+.offer-action { font-size: 12px; font-weight: 600; }
+.offer-tag { display: inline-flex; align-items: center; gap: 4px; margin-right: 6px; padding: 2px 7px; border-radius: 999px; background: var(--accent-strong); color: #fff; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; vertical-align: 1px; }
 
 /* Pro: save the applications that exist only in this browser */
 .upload-prompt {
@@ -1015,7 +1049,9 @@ html, body {
   font-size: 13px;
   font-weight: 600;
   color: var(--text);
-  word-break: break-all;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .tier-badge {
@@ -1285,7 +1321,17 @@ textarea:focus-visible, input:focus-visible, [tabindex]:focus-visible {
 .hint-under { margin-top: 7px; }
 .hint-tight { margin-top: 4px; }
 .form-input.with-eye { padding-right: 34px; }
-.account-signout { margin-top: 16px; }
+.account-signout { margin-left: auto; align-self: flex-start; flex-shrink: 0; }
+.account-dashboard { margin-top: 6px; text-decoration: none; }
+.account-dashboard-hint { font-size: 11px; color: var(--text-3); text-align: center; }
+/* A settings section that collapses: the title row is the <summary> */
+.setting-summary { display: flex; align-items: center; gap: 8px; cursor: pointer; list-style: none; }
+.setting-summary::-webkit-details-marker { display: none; }
+.setting-summary .page-read-setting-title { margin-bottom: 0; }
+.setting-state { margin-left: auto; font-size: 11px; color: var(--text-3); }
+.setting-summary .chevron { color: var(--text-3); }
+.setting-details[open] > .setting-summary { margin-bottom: 4px; }
+.setting-details[open] > .setting-summary .chevron { transform: rotate(180deg); }
 .manual-submit { margin-top: 12px; }
 .manual-tailor { margin-top: 8px; }
 .btn-compact { width: auto; padding: 10px 14px; }

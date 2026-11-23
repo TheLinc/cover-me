@@ -139,18 +139,19 @@ export async function clearParsedResume(userId: string) {
   await admin.from('resumes').update({ structured_encrypted: null }).eq('user_id', userId)
 }
 
-export async function quotaUsedToday(userId: string): Promise<number> {
+// table: rate_limits for letters and resumes, answer_counts for answers (migration 032).
+export async function quotaUsedToday(userId: string, table = 'rate_limits'): Promise<number> {
   const today = new Date().toISOString().split('T')[0]
-  const { data } = await admin.from('rate_limits').select('count').eq('user_id', userId).eq('date', today).maybeSingle()
+  const { data } = await admin.from(table).select('count').eq('user_id', userId).eq('date', today).maybeSingle()
   return data?.count ?? 0
 }
 
 // Usage rows for the allowance tests (migration 015): daysAgo 0 is today, UTC.
-export async function setUsage(userId: string, rows: Array<{ daysAgo: number; count: number }>) {
-  await admin.from('rate_limits').delete().eq('user_id', userId)
+export async function setUsage(userId: string, rows: Array<{ daysAgo: number; count: number }>, table = 'rate_limits') {
+  await admin.from(table).delete().eq('user_id', userId)
   for (const { daysAgo, count } of rows) {
     const date = new Date(Date.now() - daysAgo * 86_400_000).toISOString().split('T')[0]
-    const { error } = await admin.from('rate_limits').insert({ user_id: userId, date, count })
+    const { error } = await admin.from(table).insert({ user_id: userId, date, count })
     if (error) throw new Error(`set usage failed: ${error.message}`)
   }
 }
@@ -211,6 +212,7 @@ export const mockStripe = {
     customerError?: { status: number; code: string }
     subscriptionError?: { status: number; code: string }
     deleteCustomerError?: { status: number; code: string }
+    discountError?: { status: number; code: string }
   }) =>
     fetch(`${MOCK_URL}/__mock/stripe-state`, { method: 'POST', body: JSON.stringify(state) }),
 }
