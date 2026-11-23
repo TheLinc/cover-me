@@ -3,10 +3,12 @@ import { jsPDF } from 'jspdf'
 import { Document, ExternalHyperlink, Packer, Paragraph, Table, TableCell, TableRow, TextRun } from 'docx'
 import JSZip from 'jszip'
 import { parseResume } from './resume-parser'
+import { sectionOrderFromText } from './ai/resume-parse'
+import { CASES } from '../../eval/fixtures'
 
 // Node shims for what the popup gets from the browser: the worker as a file
 // URL (Vite's ?url is a server path), and mammoth's browser build, which reads
-// { arrayBuffer } where its Node build reads { buffer }.
+// { arrayBuffer } where its Node build reads { buffer } (#236).
 vi.mock('pdfjs-dist/build/pdf.worker.min.mjs?url', () => ({ default: new URL('../../node_modules/pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).href }))
 vi.mock('mammoth', async (importOriginal) => {
   const { default: m } = await importOriginal<{ default: typeof import('mammoth') }>()
@@ -119,5 +121,26 @@ describe('parseResume keeps clickable links (#236)', () => {
     const { default: mammoth } = await import('mammoth')
     const { value } = await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() })
     expect(await parseResume(file)).toBe(value.trim())
+  })
+})
+
+describe('parseResume keeps a PDF\'s line breaks (#339)', () => {
+  const resumes = [...new Map(CASES.map((c) => [c.resumeText, c.parsed])).entries()]
+
+  const resumePdf = (resumeText: string) => pdfFile((doc) => {
+    doc.setFontSize(10)
+    let y = 15
+    for (const line of resumeText.split('\n').flatMap((l) => doc.splitTextToSize(l, 180) as string[])) {
+      if (y > 285) {
+        doc.addPage()
+        y = 15
+      }
+      doc.text(line, 15, y)
+      y += 5
+    }
+  })
+
+  test.each(resumes.map(([text, parsed], i) => ({ i, text, parsed })))('eval resume $i: the section order is found in its PDF text', async ({ text, parsed }) => {
+    expect(sectionOrderFromText(parsed, await parseResume(resumePdf(text)))).not.toBeNull()
   })
 })
