@@ -34,23 +34,21 @@ describe('tailor', () => {
     expect(res.status).toBe(200)
     const { resume } = await res.json()
 
-    // Immutable fields come from the parse, rewritten content from the delta.
     expect(resume.name).toBe(MOCK_PARSED_RESUME.name)
     expect(resume.experience[0].company).toBe('Initech')
     expect(resume.experience[0].dates).toBe(MOCK_PARSED_RESUME.experience[0].dates)
     // The line check flags the invented "4 hours to 40 minutes"; only that
-    // bullet is rewritten, the rest of the role is untouched.
+    // bullet is rewritten, the rest of the role is untouched (https://github.com/TheLinc/cover-me/commit/48b8913).
     expect(resume.experience[0].bullets).toEqual([MOCK_REWRITTEN_BULLET, MOCK_TAILOR_DELTA.experience[0].bullets[1]])
     expect(resume.summary).toBe(MOCK_TAILOR_DELTA.summary)
-    // Sections outside the six come through from the parse untouched.
     expect(resume.otherSections).toEqual(MOCK_PARSED_RESUME.otherSections)
     // They print in the uploaded resume's order (#165), taken from its text
     // rather than the model's wrong one, the written summary first.
     expect(resume.sectionOrder).toEqual(['summary', 'experience', 'other', 'education', 'skills'])
     // Evidence-backed skills: the category label with real evidence stays, the
-    // skill whose evidence isn't in the resume is dropped.
+    // skill whose evidence isn't in the resume is dropped (https://github.com/TheLinc/cover-me/commit/0e9a09c).
     expect(resume.skills).toBe('TypeScript, Postgres, React, Data Pipelines')
-    // 2 of 3 tier-1 keywords covered, 1 of 1 tier-2: 70 * 2/3 + 30 = 76.67 → 77
+    // 2 of 3 tier-1 keywords covered, 1 of 1 tier-2: 70 * 2/3 + 30 = 76.67 → 77 (https://github.com/TheLinc/cover-me/commit/f2256d0)
     expect(resume.atsScore).toBe(77)
     expect(resume.atsGaps).toEqual(['Kafka'])
     // The upload already names TypeScript, Postgres and React, so tailoring
@@ -78,7 +76,7 @@ describe('tailor', () => {
       expect(resume.skills).toBe('TypeScript, Postgres, React, Data Pipelines, Kafka')
       expect(resume.experience[0].bullets[0]).toBe(typed)
       expect(await revisionPrompt()).toContain('includes edits and notes the candidate made themselves')
-      // Marked, so the next Regenerate, which starts from this result, trusts it too.
+      // Marked, so the next Regenerate, which starts from this result, trusts it too (#171).
       expect(resume.hasEdits).toBe(true)
       expect(resume.editedAt).toBeUndefined()
     })
@@ -92,7 +90,7 @@ describe('tailor', () => {
 
     it('keeps a bullet the user added and a title they fixed in the editor', async () => {
       // The mock returns 2 bullets for a role the user grew to 3; a count that
-      // doesn't fit keeps the version they saw, not the upload's 2.
+      // doesn't fit keeps the version they saw, not the upload's 2 (#171).
       const added = 'Wrote the on-call runbook'
       const grown = [{ ...MOCK_PARSED_RESUME.experience[0], title: 'Senior Software Engineer', bullets: [...MOCK_PARSED_RESUME.experience[0].bullets, added] }, MOCK_PARSED_RESUME.experience[1]]
       const resume = await regenerate({ ...MOCK_PARSED_RESUME, experience: grown, editedAt: '2026-11-09T00:00:00Z' })
@@ -109,7 +107,7 @@ describe('tailor', () => {
     it('an unedited previous is checked as before', async () => {
       const resume = await regenerate({ ...previous, sectionOrder: ['skills', 'experience'] })
       expect(resume.skills).toBe('TypeScript, Postgres, React, Data Pipelines')
-      // The order comes from the upload's parse, not the previous resume.
+      // The order comes from the upload's parse, not the previous resume (#165).
       expect(resume.sectionOrder).toEqual(['summary', 'experience', 'other', 'education', 'skills'])
       expect(resume.experience[0].bullets[0]).toBe(MOCK_REWRITTEN_BULLET)
       expect(await revisionPrompt()).not.toContain('includes edits and notes')
@@ -138,7 +136,7 @@ describe('tailor', () => {
   it('scores an either/or requirement as covered when the resume has the other option', async () => {
     user = await createUser()
     await uploadResume(user)
-    // The mock reports Kafka missing; this posting accepts Kafka or Postgres, and the resume has Postgres.
+    // The mock reports Kafka missing; this posting accepts Kafka or Postgres, and the resume has Postgres (#1).
     const job = { ...JOB, description: `${JOB.description} Queue work runs on Kafka or Postgres.` }
     const res = await callFunction('tailor', { token: user.token, body: { job } })
     const { resume } = await res.json()
@@ -146,20 +144,20 @@ describe('tailor', () => {
     expect(resume.atsScore).toBe(100)
   })
 
-  it('uses Sonnet 5.5 with adaptive thinking at high effort and fallback, and Haiku 4.5 for the parse', async () => {
+  it('uses Sonnet 5.5 with adaptive thinking at high effort and fallback, and Haiku 5.5 for the parse', async () => {
     user = await createUser()
     await uploadResume(user)
-    await clearParsedResume(user.id) // so tailor parses it itself
+    await clearParsedResume(user.id)
     await callFunction('tailor', { token: user.token, body: { job: JOB } })
 
     const requests = await mockClaude.requests()
     const parse = requests.filter((r) => r.messages[0].content.startsWith('You are a resume parser'))
     const sonnet = requests.filter((r) => !r.messages[0].content.startsWith('You are a resume parser'))
-    expect(parse.map((r) => r.model)).toEqual(['claude-haiku-4-5'])
+    expect(parse.map((r) => r.model)).toEqual(['claude-haiku-5-5'])
     expect(sonnet.length).toBeGreaterThan(0)
     for (const r of sonnet) {
       expect(r.model).toBe('claude-sonnet-5-5')
-      // The tailor call streams a thinking summary for the popup; the checks don't.
+      // The tailor call streams a thinking summary for the popup; the checks don't (#92).
       expect(r.thinking).toEqual(r.stream ? { type: 'adaptive', display: 'summarized' } : { type: 'adaptive' })
       expect(r.output_config).toEqual({ effort: 'high' })
       expect(r.max_tokens).toBeGreaterThanOrEqual(8000)
@@ -246,7 +244,6 @@ describe('tailor', () => {
     expect(events[0]).toEqual({ type: 'start', roles: 2 })
     const deltas = events.filter((e) => e.type === 'delta')
     expect(deltas.length).toBeGreaterThan(1)
-    // The thinking summary comes through ahead of the text.
     const thinking = events.filter((e) => e.type === 'thinking')
     expect(thinking.map((e) => e.type === 'thinking' && e.text)).toEqual(MOCK_THINKING)
     expect(events.findIndex((e) => e.type === 'thinking')).toBeLessThan(events.findIndex((e) => e.type === 'delta'))
@@ -292,7 +289,7 @@ describe('tailor', () => {
   it('refunds when the tailor call fails', async () => {
     user = await createUser()
     await uploadResume(user)
-    // The upload already parsed the resume, so the next Claude call is the tailor itself.
+    // The upload already parsed the resume, so the next Claude call is the tailor itself (#26).
     await mockClaude.failNext(529)
 
     const res = await callFunction('tailor', {
@@ -309,7 +306,7 @@ describe('tailor', () => {
     user = await createUser()
     await uploadResume(user)
     await clearParsedResume(user.id)
-    await mockClaude.delayNext(5000) // the parse
+    await mockClaude.delayNext(5000) // the parse (#31)
 
     const started = Date.now()
     const res = await callFunction('tailor', { token: user.token, body: { job: JOB }, headers: { Accept: 'application/x-ndjson' } })
@@ -355,7 +352,7 @@ describe('tailor', () => {
     const { data } = await admin.from('tailored_resumes').select('source_hash').eq('user_id', user.id)
     expect(data?.[0].source_hash).toBe(sourceHash)
 
-    // Sent behind the response.
+    // Sent behind the response (#131).
     let events = await mockPosthog.events()
     for (let i = 0; i < 20 && events.length === 0; i++) events = await new Promise((r) => setTimeout(r, 100)).then(mockPosthog.events)
     expect(events).toEqual([{
@@ -374,7 +371,7 @@ describe('tailor', () => {
     const res = await callFunction('tailor', { token: user.token, body: { job: JOB } })
     expect(res.status).toBe(200)
     // The count would be sent behind the response: give it the same 2 s the
-    // counted test waits.
+    // counted test waits (#169).
     await new Promise((r) => setTimeout(r, 2000))
     expect((await mockPosthog.events()).filter((e) => e.event === 'tailor_run' && e.distinct_id === user!.id)).toEqual([])
   })
@@ -422,11 +419,11 @@ describe('tailor', () => {
 
   // Disconnecting once the streamed rewrite has arrived must not refund it:
   // otherwise a script could read the deltas, drop the connection before
-  // "done", and tailor for free indefinitely.
+  // "done", and tailor for free indefinitely (#10).
   it('keeps the charge when the client disconnects after the streamed rewrite arrives', async () => {
     user = await createUser()
     await uploadResume(user)
-    await mockClaude.streamPause(3000) // the rewrite is still streaming when we hang up
+    await mockClaude.streamPause(3000) // the rewrite is still streaming when we hang up (#10)
     const abort = new AbortController()
     const res = await callFunction('tailor', {
       token: user.token, body: { job: JOB }, headers: { Accept: 'application/x-ndjson' }, signal: abort.signal,
@@ -446,7 +443,7 @@ describe('tailor', () => {
   })
 
   // A bad request is rejected before anything is charged, so it gets its real
-  // error even when the allowance is used up.
+  // error even when the allowance is used up (#10).
   it('rejects an invalid request with 400 before checking the allowance', async () => {
     user = await createUser()
     await uploadResume(user)
@@ -456,7 +453,7 @@ describe('tailor', () => {
     expect(await quotaUsedToday(user.id)).toBe(5)
   })
 
-  // A dropped connection to Anthropic (not an HTTP error) must refund too.
+  // A dropped connection to Anthropic (not an HTTP error) must refund too (#10).
   it('refunds when the connection to Claude drops', async () => {
     user = await createUser()
     await uploadResume(user)

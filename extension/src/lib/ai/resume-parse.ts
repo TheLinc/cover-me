@@ -1,5 +1,5 @@
 import type { AIProvider, ParsedResume } from '../../types'
-import { claudeDelta, HAIKU_MODEL, readSseText } from './claude'
+import { claudeDelta, HAIKU_PARSE_FIELDS, readSseText } from './claude'
 import { OPENAI_CHAT, OPENAI_PARSE_FIELDS } from './openai'
 
 const CLAUDE_API = 'https://api.anthropic.com/v1/messages'
@@ -14,8 +14,8 @@ RULES:
    - "skills": only if the resume has a skills, technical skills, or core competencies section
    - "certifications": only if the resume has a certifications, licenses, or credentials section
 3. Recognize experience headers: Work Experience, Professional Experience, Employment, Career History. A section of jobs, each a position held at an employer, is experience under any heading (Clinical Experience, Work History, Relevant Experience)
-4. Recognize education headers: Education, Academic Background, Degrees
-5. "otherSections": every other section goes here, in the order it appears: publications, volunteer work, clinical rotations or placements, awards, languages, memberships, interests, references, and anything else. Copy the heading exactly as written and each line or bullet verbatim, without its bullet marker. Volunteer roles and student clinical rotations, placements, practicums or clerkships go here even when they are laid out like jobs, with titles, organizations and dates; a paid position stays in experience. Never put contact details or a summary, profile or objective here; the summary is not part of the output. A list of tools, software or programming languages belongs in "skills". Use [] when the resume has no other sections
+4. Recognize education headers: Education, Academic Background, Degrees. A section of schooling, each a degree, diploma or apprenticeship at a school or training provider, is education under any heading (Training, Academic Training)
+5. "otherSections": every other section goes here, in the order it appears: publications, volunteer work, clinical rotations or placements, awards, languages, memberships, interests, references, and anything else. Copy the heading exactly as written and each line or bullet verbatim, without its bullet marker. Volunteer roles and student clinical rotations, placements, practicums or clerkships go here even when they are laid out like jobs, with titles, organizations and dates; a paid position stays in experience, and so does student teaching, which schools read as teaching experience. Never put contact details or a summary, profile or objective here; the summary is not part of the output. A list of tools, software or programming languages belongs in "skills". Use [] when the resume has no other sections
 6. "sectionOrder": the resume's sections from top to bottom, one entry each: "experience", "projects", "education", "certifications" or "skills" for those sections, and "other" for each entry of "otherSections", where it sits. Leave out the contact details and the summary
 7. Return ONLY valid JSON — no explanation, no markdown fences, no text before or after
 
@@ -29,9 +29,9 @@ JSON structure (omit "projects", "skills", "certifications" entirely if those se
   "links": ["every URL in the contact details at the top (website, LinkedIn, GitHub, portfolio), copied verbatim in the order written. A URL written under a project, job or section stays in that entry's text, verbatim, and never goes here"],
   "experience": [
     {
-      "title": "Job Title",
-      "company": "Company Name",
-      "location": "City, Province/State",
+      "title": "the job title as written",
+      "company": "the employer's name only, as written",
+      "location": "the job's city and region, kept out of title and company",
       "dates": "Month Year – Month Year",
       "bullets": ["bullet text copied verbatim"]
     }
@@ -44,9 +44,9 @@ JSON structure (omit "projects", "skills", "certifications" entirely if those se
   ],
   "education": [
     {
-      "institution": "School Name",
-      "degree": "Degree and Major",
-      "location": "City, Province/State",
+      "institution": "the school's name only, as written",
+      "degree": "the whole qualification line as written, with its major, subjects, grades and honours",
+      "location": "the school's city and region, kept out of institution and degree",
       "dates": "Year – Year",
       "bullets": ["achievement bullets copied verbatim"]
     }
@@ -77,7 +77,7 @@ function isValidParsedResume(r: unknown): r is ParsedResume {
   )
 }
 
-// ── Parse normalizers (mirrored: extension/src/lib/ai/resume-parse.ts ⇄ backend/supabase/functions/_shared/resume-parse.ts) ──
+// ── Parse normalizers (mirrored: extension/src/lib/ai/resume-parse.ts ⇄ backend/supabase/functions/_shared/resume-parse.ts) ── #149
 // The model's otherSections, kept only where each entry is a heading with
 // verbatim lines, and always an array: the tailor treats a cached parse
 // without one as made before extra sections were kept, and parses again.
@@ -97,12 +97,11 @@ export function urlCore(url: string): string {
   return url.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/(?<!\/)\/+$/, '')
 }
 
-// Text lowercased with its spaces collapsed, for finding one copy in another.
 const squashed = (s: unknown) => (typeof s === 'string' ? s.toLowerCase().replace(/\s+/g, ' ').trim() : '')
 
 // The parse's section entries' strings, squashed: their verbatim text, but not
 // the contact details, job titles (a tagline under the name often repeats
-// one), dates, locations or extra-section headings.
+// one), dates, locations or extra-section headings (#236).
 function entryStrings(parsed: ParsedResume): string[] {
   const entries = [
     parsed.experience.map((e) => [e?.company, e?.bullets]),
@@ -116,7 +115,7 @@ function entryStrings(parsed: ParsedResume): string[] {
 }
 
 // A LinkedIn or GitHub profile, which is a contact link wherever it sits: a
-// two-column PDF can put its contact sidebar after the first section.
+// two-column PDF can put its contact sidebar after the first section (#236).
 const PROFILE_URL = /^(?:[a-z]{2}\.)?linkedin\.com\/in\/[^/]+$|^github\.com\/[^/]+$/
 
 // A test of whether the resume text first shows a URL inside a section
@@ -163,7 +162,6 @@ export function withLinks<T extends ParsedResume>(parsed: T, resumeText?: string
   return links.length ? { ...parsed, website: links.includes(website) ? website : links[0]!, links } : parsed
 }
 
-// Which standard sections the parse has content for.
 function sectionsPresent(parsed: ParsedResume): Record<string, boolean> {
   return {
     experience: parsed.experience.length > 0,
@@ -194,7 +192,7 @@ export function sectionOrderFromText(parsed: ParsedResume, resumeText: string): 
   for (const o of parsed.otherSections ?? []) sections.push({ key: 'other', strings: strings([o.heading, o.lines]) })
 
   // A string inside the line counts its length; a line inside a longer string
-  // (a bullet the text wraps) counts the line's.
+  // (a bullet the text wraps) counts the line's (#165).
   const cover = (line: string, ss: string[]) => ss.reduce((n, s) => n + (line.includes(s) ? s.length : line.length >= 12 && s.includes(line) ? line.length : 0), 0)
   const best = sections.map(() => ({ line: -1, score: 0 }))
   resumeText.split('\n').map(norm).forEach((line, i) => {
@@ -202,7 +200,7 @@ export function sectionOrderFromText(parsed: ParsedResume, resumeText: string): 
     const scores = sections.map((s) => cover(line, s.strings))
     const top = Math.max(...scores)
     const k = scores.indexOf(top)
-    // A tie could be either section's line.
+    // A tie could be either section's line (#165).
     if (top > 0 && scores.lastIndexOf(top) === k && top > best[k]!.score) best[k] = { line: i, score: top }
   })
   if (best.some((b) => b.line < 0)) return null
@@ -288,16 +286,16 @@ export function withChosenOrder<T extends ParsedResume>(parsed: T, order: unknow
   }
   // withSectionOrder puts the summary first, as a parse has it, and drops what
   // the parse lacks. The user may have moved the summary: it goes after the
-  // sections kept from those above it.
+  // sections kept from those above it (#197).
   const { sectionOrder } = withSectionOrder({ ...parsed, otherSections, sectionOrder: keys as ParsedResume['sectionOrder'] })
   const rest = sectionOrder.slice(1)
   let at = 0
   for (const k of keys.slice(0, Math.max(keys.indexOf('summary'), 0))) if (k === rest[at]) at++
   return { ...parsed, otherSections, sectionOrder: at > 0 ? [...rest.slice(0, at), 'summary', ...rest.slice(at)] : sectionOrder }
 }
-// ── End mirrored parse normalizers ──
+// ── End mirrored parse normalizers ── #149
 
-// resumeText: the text parsed, which places the sections (sectionOrderFromText).
+// resumeText: the text parsed, which places the sections (sectionOrderFromText, #165).
 export function parseParsedJson(raw: string, resumeText?: string): ParsedResume {
   const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
   let parsed: unknown
@@ -321,7 +319,7 @@ export async function parseResumeStructure(
 
   // Both providers stream: a resume near the 12,000-character cap took 30-31 s
   // to parse on either, and Chrome stops a service worker whose fetch() gets no
-  // response for 30 s.
+  // response for 30 s (#31).
   if (provider === 'claude') {
     const res = await fetch(CLAUDE_API, {
       method: 'POST',
@@ -332,8 +330,7 @@ export async function parseResumeStructure(
         'anthropic-dangerous-direct-browser-access': 'true',
       },
       body: JSON.stringify({
-        model: HAIKU_MODEL,
-        max_tokens: 6000,
+        ...HAIKU_PARSE_FIELDS,
         stream: true,
         messages: [{ role: 'user', content: prompt }],
       }),
@@ -345,7 +342,6 @@ export async function parseResumeStructure(
     return parseParsedJson(await readSseText(res, claudeDelta), resumeText)
   }
 
-  // OpenAI
   const res = await fetch(OPENAI_CHAT, {
     method: 'POST',
     headers: {

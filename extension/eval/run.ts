@@ -21,6 +21,7 @@ import { buildPrompt as buildTailorPrompt, assembleTailored } from '../src/lib/a
 import { buildParsePrompt, parseParsedJson } from '../src/lib/ai/resume-parse'
 import { lintLetter, buildLintRetryMessage, letterLength } from '../src/lib/ai/letter-lint'
 import { buildAnswerPrompt, finishAnswer } from '../src/lib/ai/answer'
+import { HAIKU_PARSE_FIELDS } from '../src/lib/ai/claude'
 import { CASES, type EvalCase } from './fixtures'
 import { ANSWER_CASES } from './answer-cases'
 import { checkAnswer, checkFixture, checkLetter, checkParse, checkTailored, type CheckResult } from './checks'
@@ -47,7 +48,7 @@ const RUN_LETTERS = ALL_SIDES || flag('letters')
 const RUN_TAILOR = ALL_SIDES || flag('tailor')
 const RUN_ANSWERS = ALL_SIDES || flag('answers')
 const MODEL = opt('model') ?? 'claude-sonnet-5-5'
-const PARSE_MODEL = opt('parse-model') ?? 'claude-haiku-4-5'
+const PARSE_MODEL = opt('parse-model') ?? HAIKU_PARSE_FIELDS.model
 const JUDGE_MODEL = opt('judge-model') ?? 'claude-sonnet-5-5'
 const RUNS = Math.max(1, Number(opt('runs') ?? 1))
 const CONCURRENCY = Math.max(1, Number(opt('concurrency') ?? 6))
@@ -470,7 +471,7 @@ async function tailorOnce(c: EvalCase, run: number): Promise<TailorRun> {
   try {
     let input: ParsedResume = c.parsed
     if (USE_PARSE) {
-      const raw = await call([{ role: 'user', content: buildParsePrompt(c.resumeText) }], { model: PARSE_MODEL, maxTokens: 6000, label: 'parse' })
+      const raw = await call([{ role: 'user', content: buildParsePrompt(c.resumeText) }], { model: PARSE_MODEL, maxTokens: HAIKU_PARSE_FIELDS.max_tokens, label: 'parse' })
       try {
         const parsed = parseParsedJson(raw, c.resumeText)
         const result = checkParse(parsed, c)
@@ -566,6 +567,7 @@ function judgeAverages(runs: TailorRun[]): Averages {
 const PRICES: Record<string, [number, number]> = {
   'claude-sonnet-5-5': [2, 10],
   'claude-haiku-4-5': [1, 5],
+  'claude-haiku-5-5': [0.1, 0.5],
 }
 
 function costCell(es: typeof usage.log, perTailor: number): string {

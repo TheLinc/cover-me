@@ -35,14 +35,15 @@ describe('design files', () => {
 
   it("the same text again upgrades a parse without an order, or returns it as it was when that parse can't run", async () => {
     user = await createUser()
-    await callFunction('resume', { token: user.token, body: { text: RESUME_TEXT, filename: 'resume.docx', parse: true } })
     const { sectionOrder: _o, ...old } = MOCK_PARSED_RESUME
     const send = async () => (await (await callFunction('resume', { token: user!.token, body: { text: RESUME_TEXT, filename: 'resume.docx', parse: true } })).json()).structured
+    // The parse saves while the heartbeat body streams, so read it to the end before caching over it (#298).
+    await send()
 
     await cacheParsedResume(user.id, old)
     expect((await send()).sectionOrder).toEqual(['summary', 'experience', 'other', 'education', 'skills'])
 
-    // A third parse within the minute is over the limit.
+    // A third parse within the minute is over the limit (#165).
     await cacheParsedResume(user.id, old)
     expect(await send()).toEqual(old)
   })
@@ -61,7 +62,7 @@ describe('design files', () => {
     expect(data?.docx_encrypted).not.toContain(docx('file a'))
     expect(data?.structured_encrypted).toBeTruthy()
 
-    // A tailored resume made from file a keeps it; file b, used by nothing, goes when c arrives.
+    // A tailored resume made from file a keeps it; file b, used by nothing, goes when c arrives (#131).
     await callFunction('tailor', { token: user.token, body: { job: JOB, layout: 'yours', sourceHash: hash('a') } })
     await uploadFile(user, hash('b'), 'file b')
     expect(await storedHashes(user)).toEqual([hash('a'), hash('b')])
@@ -85,7 +86,7 @@ describe('design files', () => {
     expect(await current()).toBeUndefined()
   })
 
-  // Another computer replaced the resume before this one's file upload landed.
+  // Another computer replaced the resume before this one's file upload landed (#222).
   it("refuses a file checked against text the account no longer has", async () => {
     user = await createUser('hosted_pro')
     await uploadResume(user)

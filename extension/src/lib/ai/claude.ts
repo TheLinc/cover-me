@@ -5,18 +5,22 @@ export interface ChatMessage {
   content: string
 }
 
-// Sonnet for cover letters: the letter is the product's flagship "must sound
-// human" artifact and the prompt carries ~60 constraints — the small models
-// are the ones that leak AI-tells and drop rules. ~1¢/letter on the user's key.
+// Resume parsing is verbatim extraction, so low effort. A resume at the 12,000-
+// character cap parsed to ~5,100 output tokens on Haiku 5.5; thinking counts
+// toward max_tokens too, and unused tokens cost nothing (#298).
 // Keep in step with backend/supabase/functions/_shared/anthropic.ts.
-export const HAIKU_MODEL = 'claude-haiku-4-5'
+export const HAIKU_PARSE_FIELDS = {
+  model: 'claude-haiku-5-5',
+  output_config: { effort: 'low' },
+  max_tokens: 16000,
+} as const
 
 // Request fields every Sonnet call sends. Adaptive thinking at high effort: with
 // thinking off, letters cited posting requirements the resume lacks in 26 of 32
 // eval cases; at high effort, 0 of 32 (low and medium effort don't think on
 // this prompt). Thinking counts toward max_tokens, so callers leave room
 // (SONNET_MAX_TOKENS). fallbacks: 'default' re-runs a cyber-category decline (a
-// security-job posting can trip it) on Sonnet 5 server-side.
+// security-job posting can trip it) on Sonnet 5 server-side (#1, #203).
 export const SONNET_FIELDS = {
   model: 'claude-sonnet-5-5',
   thinking: { type: 'adaptive' },
@@ -24,7 +28,7 @@ export const SONNET_FIELDS = {
   fallbacks: 'default',
 } as const
 
-// Room for thinking plus the reply. Unused tokens cost nothing.
+// Room for thinking plus the reply. Unused tokens cost nothing (#1).
 export const SONNET_MAX_TOKENS = 16000
 
 export const SONNET_BETA_HEADER = { 'anthropic-beta': 'server-side-fallback-2026-07-01' }
@@ -40,7 +44,7 @@ export async function callClaude(prompt: string | ChatMessage[], apiKey: string)
 // response for 30 s, and a call that thinks at high effort can take longer; a
 // stream sends its headers at once. Returns '' on a decline (no text). With
 // onThinking, asks for the summarized thinking and streams it there (display
-// only: the thinking and its cost are the same).
+// only: the thinking and its cost are the same) (#1, #92).
 export async function streamSonnet(messages: ChatMessage[], apiKey: string, onText?: (text: string) => void, onThinking?: (text: string) => void): Promise<string> {
   const res = await fetch(CLAUDE_API, {
     method: 'POST',
@@ -76,7 +80,7 @@ export async function streamSonnet(messages: ChatMessage[], apiKey: string, onTe
 
 // Reads an SSE stream (Claude or OpenAI shape), forwarding each text fragment
 // to onText and returning the full accumulated text. Lines may split across
-// network chunks, so a partial-line buffer is kept between reads.
+// network chunks, so a partial-line buffer is kept between reads (#1).
 export async function readSseText(
   res: Response,
   extract: (ev: Record<string, unknown>) => string | undefined,
@@ -103,7 +107,7 @@ export async function readSseText(
       } catch {
         continue
       }
-      // Chat Completions sends a mid-stream error as { error } with no type.
+      // Chat Completions sends a mid-stream error as { error } with no type (#31).
       if (ev.type === 'error' || ev.error) {
         const e = ev.error as { message?: string } | undefined
         throw new Error(e?.message ?? 'AI stream error. Please try again.')
