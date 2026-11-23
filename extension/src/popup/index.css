@@ -817,10 +817,13 @@ html, body {
   padding: 14px;
   margin-bottom: 12px;
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   gap: 14px;
 }
-.ats-detail { flex: 1; min-width: 0; }
+.ats-detail { flex: 1; min-width: 0; align-self: center; }
+.ats-result > .gap-chips { flex-basis: 100%; }
+.ats-detail > :last-child { margin-bottom: 0; }
 .score-ring { flex-shrink: 0; font-family: inherit; }
 
 .mono { font-family: 'Geist Mono', ui-monospace, monospace; }

@@ -37,7 +37,7 @@ export default function GapChips({ gaps }: { gaps: string[] }) {
   const hidden = gaps.length - limit
   const shown = expanded ? gaps : gaps.slice(0, limit)
   return (
-    <div>
+    <div className="gap-chips">
       <div className="chip-caption mono">The posting also mentions</div>
       <ul className="chips" ref={listRef} id="gap-chips">
         {shown.map((g, i) => <li key={`${i}-${g}`} className="chip chip-gap">{g}</li>)}

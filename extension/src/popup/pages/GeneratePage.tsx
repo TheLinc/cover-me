@@ -1134,11 +1134,11 @@ export default function GeneratePage({ onNavigate }: Props) {
                         <p className="ats-meaning">How closely your resume matches this posting's keywords.</p>
                         {tailoredResume.editedAt && <p className="ats-edited">Scored before your edits</p>}
                         <ScoreGain score={tailoredResume.atsScore} before={tailoredResume.atsScoreBefore} />
-                        <GapChips gaps={tailoredResume.atsGaps ?? []} />
                         {(tailoredResume.atsGaps?.length ?? 0) === 0 && typeof tailoredResume.atsScore === 'number' && tailoredResume.atsScore >= 80 && (
                           <p className="ats-strong">Strong match: no significant gaps.</p>
                         )}
                       </div>
+                      <GapChips gaps={tailoredResume.atsGaps ?? []} />
                     </div>
                   )}
                   {reviewAt === 'resume' && reviewUnderScore && <ReviewAsk onClose={() => setReviewAt(null)} />}
