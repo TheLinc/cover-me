@@ -46,8 +46,8 @@ function skillLines(skills: string | undefined): string[] {
   return skillGroups(skills).length ? skills.split(/\n+/).filter((l) => l.trim()) : splitSkills(skills)
 }
 
-// The form's state as a resume: skills joined back into one line, and lines
-// left empty dropped. A section emptied out stays, empty, so it can be filled again (#118).
+// Lines left empty are dropped, but a section emptied out stays, empty, so it
+// can be filled again (#118).
 function resumeFromForm(draft: TailoredResume, skills: string[]): TailoredResume {
   const lines = (l: string[] | undefined) => l?.filter((s) => s.trim())
   return {

@@ -57,7 +57,7 @@ export interface TailoredResume {
   /** Every URL on the contact line, website first. Absent on a parse made before #129. */
   links?: string[]
   location?: string
-  /** The professional title under the name ("Applied AI Engineer"), verbatim (#190). */
+  /** The professional title under the name ("Applied AI Engineer") (#190). */
   headline?: string
   summary?: string
   experience: ResumeExperience[]

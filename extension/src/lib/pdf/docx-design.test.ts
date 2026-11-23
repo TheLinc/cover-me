@@ -238,14 +238,16 @@ describe('tailorDesign', () => {
     expect(bytes).toBeUndefined()
   })
 
-  test("a store client's folded project keeps every rewrite in its own paragraph (#190)", async () => {
+  test("a store client's folded project matches in full and fills only its bullets, trimmed or not (#190)", async () => {
     const file = await docx(PLAIN + heading('Projects') + p('tidewatch | Go, SQLite', 'Normal') + p('github.com/x/tw', 'Normal') + p('Built uptime monitor') + p('Added alerts'))
     const bullets = [['Built the billing service in Go', 'Cut page load time from 3s to 1s', 'Mentored two junior engineers']]
     const project = (b: string[]) => [{ name: 'tidewatch', tech: 'Go, SQLite', link: 'github.com/x/tw', bullets: b }]
     const older = new Request('https://example.com')
-    const { bytes } = await tailorDesign(file,
-      withOlderFields(parsed(bullets, { projects: project(['Built uptime monitor', 'Added alerts']) }), older),
-      withOlderFields(parsed(bullets, { projects: project(['Shipped an uptime monitor', 'Added Slack alerts']) }), older))
-    expect((await paragraphs(bytes!)).slice(-4)).toEqual(['tidewatch | Go, SQLite', 'github.com/x/tw', 'Shipped an uptime monitor', 'Added Slack alerts'])
+    const parse = withOlderFields(parsed(bullets, { projects: project(['Built uptime monitor', 'Added alerts']) }), older)
+    expect((await tailorDesign(file, parse)).check).toMatchObject({ matched: 5, total: 5 })
+    const full = await tailorDesign(file, parse, withOlderFields(parsed(bullets, { projects: project(['Shipped an uptime monitor', 'Added Slack alerts']) }), older))
+    expect((await paragraphs(full.bytes!)).slice(-4)).toEqual(['tidewatch | Go, SQLite', 'github.com/x/tw', 'Shipped an uptime monitor', 'Added Slack alerts'])
+    const trimmed = await tailorDesign(file, parse, withOlderFields(parsed(bullets, { projects: project(['Shipped an uptime monitor']) }), older))
+    expect((await paragraphs(trimmed.bytes!)).slice(-3)).toEqual(['tidewatch | Go, SQLite', 'github.com/x/tw', 'Shipped an uptime monitor'])
   })
 })
