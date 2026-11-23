@@ -94,7 +94,7 @@ export default function Page() {
       tldr={[
         'Answer the question in your first sentence, then back it with one or two real results from your resume.',
         "Use the posting to pick what you say about the job, and your resume for what you've done. Don't praise the company's mission or list its requirements back.",
-        'Salary, start date and reason for leaving are facts only you know. Keep those answers to one or two sentences.',
+        'Salary and reason for leaving are facts only you know. Keep those answers to one or two sentences.',
       ]}
       intro={
         <p>
@@ -107,8 +107,8 @@ export default function Page() {
           body: (
             <>
               <p>
-                This is the question applicants most often get wrong in the same way. A recruiting manager at Zapier told{' '}
-                <a href="https://www.huffingtonpost.co.uk/entry/recruiters-job-application-chatgpt_l_6723b4e1e4b0871068fe81ad" {...ext}>HuffPost UK</a> that many applicants answered it with the same template, starting &ldquo;Company&rsquo;s mission of &lsquo;insert mission statement&rsquo; resonates with me&rdquo;, and that once it repeats, &ldquo;it becomes obvious they all plugged this into the same tool.&rdquo;
+                Recruiters notice when many applicants answer it the same way. A recruiting manager at Zapier told{' '}
+                <a href="https://www.huffingtonpost.co.uk/entry/recruiters-job-application-chatgpt_l_6723b4e1e4b0871068fe81ad" {...ext}>HuffPost UK</a> that applicants sent her the same word-for-word answer to it, starting &ldquo;Company&rsquo;s mission of &lsquo;insert mission statement&rsquo; resonates with me&rdquo;. &ldquo;After seeing this exact same response over and over again,&rdquo; she said, &ldquo;it becomes clear that the candidates are all using AI.&rdquo;
               </p>
               <h3>What the employer is checking</h3>
               <p>
@@ -144,11 +144,11 @@ export default function Page() {
               <h3>How to answer</h3>
               <ol>
                 <li>Find something specific to this company: what it sells, who buys it, or a problem the posting says it has. The posting and the company&rsquo;s own product pages are enough. You don&rsquo;t need inside knowledge.</li>
-                <li>Say why that matters to you, in your first sentence. Don&rsquo;t describe the company back to them. They know what they sell.</li>
+                <li>Say why that matters to you, in your first sentence. Name the company fact in a few words and spend the rest on your reason. They know what they sell.</li>
                 <li>Back it with one thing you&rsquo;ve done that fits.</li>
               </ol>
               <Sample>
-                I want to market a product that small businesses choose for themselves, and independent clinics are that kind of customer. The work I&apos;d bring is search and email: at Brightline, an SEO plan for the blog and product pages grew organic traffic 64%.
+                Northwind sells to independent clinics, and I want my marketing to reach the person who runs the practice and makes the call. Email is how I&apos;ve done that best: at Juniper Labs I wrote and scheduled a weekly newsletter for 40,000 subscribers with a 41% open rate.
               </Sample>
               <p>
                 If the only reason you can find is the company&rsquo;s mission statement, write about the job instead. A true answer about the work reads better than borrowed praise.
@@ -170,7 +170,7 @@ export default function Page() {
                 Three or four sentences: what you do now and for how long, one result that matches the posting, and why you&rsquo;re applying. Leave out anything already in the form, such as your school or address.
               </p>
               <Sample>
-                I&apos;m a marketing lead with seven years in B2B demand generation, now at Brightline. I plan campaigns across email, social and search, and I manage a $1.2M paid media budget, where I cut cost per lead 22%. I&apos;m applying because I want to market a product that small businesses choose for themselves.
+                I&apos;m a marketing lead with seven years in B2B demand generation, now at Brightline. I plan campaigns across email, social and search, and my A/B tests on landing pages lifted sign-up conversion from 3.1% to 4.4%. I&apos;m applying because I want to bring that work to a company that sells to independent clinics.
               </Sample>
             </>
           ),
