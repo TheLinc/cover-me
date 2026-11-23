@@ -119,7 +119,7 @@ export default function Page() {
               <ol>
                 <li>Pick the one part of the job you most want to do, and say why in your first sentence.</li>
                 <li>Find one or two results on your resume that show you&rsquo;ve done that part already. Use the real numbers.</li>
-                <li>Stop there. Don&rsquo;t list the posting&rsquo;s requirements back as proof you fit. The result already shows it, and a form box is not a cover letter.</li>
+                <li>Stop there. Don&rsquo;t list the posting&rsquo;s requirements back as proof you fit. Your results already show it, and a form box is not a cover letter.</li>
               </ol>
               <Sample>
                 This role puts campaign strategy and the paid budget with one person, and that&apos;s the part of my work I want more of. At Brightline I led campaign strategy across email and social that grew qualified leads 38% in one year, and I manage a $1.2M paid media budget across four channels, where I cut cost per lead 22%.
