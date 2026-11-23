@@ -240,6 +240,11 @@ describe('checkAndRewriteLines summary', () => {
     expect(buildLineCheckPrompt(original, original, '  ')).toBe(buildLineCheckPrompt(original, original))
   })
 
+  test('the check prompt shows a project\'s tech line (#190)', () => {
+    const withProject = { ...original, projects: [{ name: 'tidewatch', tech: 'Go, SQLite', bullets: ['Built an uptime monitor'] }] }
+    expect(buildLineCheckPrompt(withProject, withProject)).toContain('tidewatch, built with Go, SQLite')
+  })
+
   test('an unusable rewrite falls back to the candidate\'s own summary', async () => {
     const { resume, repair } = await run(flagged, 'Led 12 developers building React portals.')
     expect(resume.summary).toBe(original.summary)

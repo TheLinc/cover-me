@@ -147,9 +147,8 @@ const figures = (text: string): string[] => text.match(/\d+(?:[./]\d+)*/g) ?? []
  * Cuts an entry to max bullets, the model's ranking first, while keeping up to
  * two of the original's measured results (in the order the resume gives them).
  * A result counts as kept when some bullet still states all of its percentages
- * or all of its other figures ("Cut wait 38%" keeps "from 40 to 25 minutes
- * (38%)"); a
- * dropped one comes back as the model's rewrite if it wrote one past the cut,
+ * or all of its other figures ("Cut wait 38%" keeps "from 40 to 25 minutes (38%)");
+ * a dropped one comes back as the model's rewrite if it wrote one past the cut,
  * else as the original, at the top, and the lowest-ranked bullets make room (#190).
  */
 export function keepResults(orig: string[], kept: string[], max: number): string[] {
@@ -690,11 +689,9 @@ Deno.serve(async (req) => {
     const notes = trustedNotes(supplemental, previous)
     const base = seenVersion(structuredResume, previous)
     const candidate = candidateText(structuredResume, notes)
-    // Added skills follow the casing of the resume's own list (#198).
     delta.skills = recaseSkills((await groundSkills(delta.skills, candidate, askChecker, base.skills)).skills, base.skills, `${candidate}
 ${job.description}`)
     const merged = keepSeen(mergeTailorDelta(base, delta, { exactBulletCounts: !compact && !trim, maxBullets: trim && !compact ? seenBudget(bulletBudget(structuredResume), base, structuredResume) : undefined }), structuredResume, base)
-    // Rewrite only the lines that claim more than the original resume supports (https://github.com/TheLinc/cover-me/commit/48b891334817c0138f614e129805c74712fe4ab2).
     const { resume: lined, repair } = await checkAndRewriteLines(merged, base, job.description, askChecker, supplemental)
     // Counts only: repair.flagged holds resume text (#58).
     if (repair.flagged.length || repair.checkFailed) {

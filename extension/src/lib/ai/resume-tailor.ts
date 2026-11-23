@@ -174,9 +174,8 @@ const figures = (text: string): string[] => text.match(/\d+(?:[./]\d+)*/g) ?? []
  * Cuts an entry to max bullets, the model's ranking first, while keeping up to
  * two of the original's measured results (in the order the resume gives them).
  * A result counts as kept when some bullet still states all of its percentages
- * or all of its other figures ("Cut wait 38%" keeps "from 40 to 25 minutes
- * (38%)"); a
- * dropped one comes back as the model's rewrite if it wrote one past the cut,
+ * or all of its other figures ("Cut wait 38%" keeps "from 40 to 25 minutes (38%)");
+ * a dropped one comes back as the model's rewrite if it wrote one past the cut,
  * else as the original, at the top, and the lowest-ranked bullets make room (#190).
  */
 export function keepResults(orig: string[], kept: string[], max: number): string[] {
@@ -456,7 +455,6 @@ export async function assembleTailored(
   const base = seenVersion(parsed, grounding.previous)
   const candidate = candidateText(parsed, notes)
   const claimed = await groundSkills(delta.skills, candidate, grounding.ask, base.skills)
-  // Added skills follow the casing of the resume's own list (#198).
   delta.skills = recaseSkills(claimed.skills, base.skills, `${candidate}
 ${grounding.jobDescription}`)
   let merged = keepSeen(mergeTailorDelta(base, delta, { exactBulletCounts: grounding.exactBulletCounts, maxBullets: grounding.maxBullets && seenBudget(grounding.maxBullets, base, parsed) }) as TailoredResume, parsed, base)

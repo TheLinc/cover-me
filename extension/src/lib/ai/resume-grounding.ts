@@ -25,7 +25,7 @@
 // gala doesn't back "annual fund campaigns"). Words scattered through the
 // resume are not enough on their own (#285).
 
-interface GroundEntry { bullets: string[]; title?: string; company?: string; name?: string; dates?: string }
+interface GroundEntry { bullets: string[]; title?: string; company?: string; name?: string; tech?: string; dates?: string }
 interface Groundable {
   headline?: string
   summary?: string
@@ -318,7 +318,7 @@ export interface SkillGroup { label: string; items: string }
 /**
  * The labelled groups of a skills section written one group per line
  * ("Languages: Python, SQL"), or [] for a plain list. Two or more such lines
- * make it grouped; one could be a sentence with a colon in it (#165).
+ * make it grouped; one could be a sentence with a colon in it (#190).
  */
 export function skillGroups(skills?: string): SkillGroup[] {
   if (!skills) return []
@@ -363,7 +363,7 @@ const SMALL_WORDS = new Set(['a', 'an', 'and', 'as', 'at', 'by', 'for', 'in', 'o
 /**
  * matchSkillCase for a tailored skills list, grouped or not: grouped skills
  * ("Languages: Python, SQL" a line) are recased group by group against the
- * resume's own items, so the labels and lines survive (#165).
+ * resume's own items, so the labels and lines survive (#190).
  */
 export function recaseSkills(skills: string | undefined, ownSkills: string | undefined, sources: string): string | undefined {
   const groups = skillGroups(skills)
@@ -509,7 +509,8 @@ type LineId = string // "e0b2" = experience[0].bullets[2], "p1b0" = projects[1].
 
 function roleLabel(entry: GroundEntry | undefined, fallback: string): string {
   if (!entry) return fallback
-  return [entry.title, entry.company].filter(Boolean).join(' at ') || entry.name || fallback
+  // A project's tech line shows, so its stack in a bullet isn't taken as added (#190).
+  return [entry.title, entry.company].filter(Boolean).join(' at ') || [entry.name, entry.tech].filter(Boolean).join(', built with ') || fallback
 }
 
 // What a summary may cite beyond the bullets: titles with their dates, degrees,
