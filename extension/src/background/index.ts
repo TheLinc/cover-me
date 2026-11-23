@@ -32,7 +32,7 @@ void getSession().then((session) => setUninstallUrl(session?.user?.id))
 watchSession((session) => setUninstallUrl(session?.user?.id))
 
 chrome.runtime.onConnect.addListener((port) => {
-  if (port.sender?.id === chrome.runtime.id && port.name === DELETE_PORT) handleDeletePort(port)
+  if (port.sender?.url?.startsWith(chrome.runtime.getURL('')) && port.name === DELETE_PORT) handleDeletePort(port)
 })
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {

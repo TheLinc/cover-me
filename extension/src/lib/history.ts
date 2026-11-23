@@ -4,7 +4,7 @@ import type { UploadResult } from './auth'
 
 export interface JobGroup {
   key: string
-  id: string | null // job_applications id; null for local groups (#17)
+  id: string | null
   title: string
   company: string
   url: string

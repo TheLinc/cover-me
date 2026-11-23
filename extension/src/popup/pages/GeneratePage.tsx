@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { GOOGLE_SIGNIN } from '../../lib/config'
 import { downloadCoverLetterPdf } from '../../lib/pdf/cover-letter'
 import { downloadTailoredResumePdf } from '../../lib/pdf/resume'
@@ -52,7 +52,7 @@ function ContextExpander({ contextExpanded, setContextExpanded, initialContext, 
   const inputRef = useFocusWhenOpened<HTMLTextAreaElement>(contextExpanded)
   const panelRef = useRef<HTMLDivElement>(null)
   // Kept mounted so it can animate open; inert keeps the closed box out of the tab order (#342).
-  useEffect(() => { if (panelRef.current) panelRef.current.inert = !contextExpanded }, [contextExpanded])
+  useLayoutEffect(() => { if (panelRef.current) panelRef.current.inert = !contextExpanded }, [contextExpanded])
   const preview = initialContext.trim().split('\n')[0]
   return (
     <div className="context-expander">
