@@ -70,16 +70,11 @@ export async function generateCoverLetter(
   await debugGroup('Cover letter — lint violations, sending corrective retry', {
     violations: draftLint.violations,
   })
-  let retry: string
-  try {
-    retry = stripMarkdown(await call([
-      { role: 'user', content: prompt },
-      { role: 'assistant', content: draft },
-      { role: 'user', content: buildLintRetryMessage(draftLint.violations) },
-    ]))
-  } catch {
-    return draft
-  }
+  const retry = stripMarkdown(await call([
+    { role: 'user', content: prompt },
+    { role: 'assistant', content: draft },
+    { role: 'user', content: buildLintRetryMessage(draftLint.violations) },
+  ]).catch(() => ''))
   if (!retry) return draft
   const retryLint = lintLetter(retry, lintOpts)
   return retryLint.violations.length <= draftLint.violations.length ? retry : draft
