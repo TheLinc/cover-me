@@ -19,7 +19,6 @@ import type { PageSnapshot } from '../src/content/snapshot.ts'
 export interface Board {
   name: string
   listing: string
-  // Omitted: save the listing itself, a split-pane search page (#2)
   posting?: RegExp
   rewrite?: (href: string) => string
   ready?: string
@@ -38,12 +37,11 @@ export const BOARDS: Board[] = [
   { name: 'linkedin', listing: 'https://www.linkedin.com/jobs/search?keywords=registered%20nurse&location=United%20States', posting: /linkedin\.com\/jobs\/view\/[^?]+/ },
   // Terminal's public posting pages: its app's job list is behind sign-in (#5)
   { name: 'terminal', listing: 'https://www.terminal.io/engineers/job-openings/canada', posting: /terminal\.io\/engineers\/job-openings\/canada\/[a-z]+\/[^/]+\/\d+\// },
-  // No dedicated scraper: the generic one (JSON-LD) covers SmartRecruiters (#5)
+  // No dedicated scraper: the generic one covers SmartRecruiters from its microdata (#5)
   { name: 'smartrecruiters', listing: 'https://jobs.smartrecruiters.com/Equinox', posting: /jobs\.smartrecruiters\.com\/Equinox\/\d+-/ },
   { name: 'indeed', listing: 'https://www.indeed.com/jobs?q=welder', posting: /indeed\.com\/rc\/clk\?jk=/,
     // The /rc/clk tracking redirect trips Cloudflare; the direct page doesn't (#2)
     rewrite: (href) => `https://www.indeed.com/viewjob?jk=${new URL(href).searchParams.get('jk')}`, ready: '[data-testid="vj-job-description-heading"]', headed: true },
-  // Search results with the first job open in the right-hand pane (#2)
   { name: 'indeed-search', listing: 'https://www.indeed.com/jobs?q=welder', ready: '[data-testid="vj-job-description-heading"]', headed: true },
   // Company career sites that name the employer only in the tab title (#200)
   { name: 'apple', listing: 'https://jobs.apple.com/en-us/search?location=united-states-USA', posting: /jobs\.apple\.com\/en-us\/details\/\d+/ },
@@ -51,7 +49,6 @@ export const BOARDS: Board[] = [
   { name: 'google-careers', listing: 'https://www.google.com/about/careers/applications/jobs/results/', posting: /careers\/applications\/jobs\/results\/\d+-/ },
   // A jobs-count banner <h1> ("20 jobs on the Python Job Board") above the posting's own (#73)
   { name: 'python', listing: 'https://www.python.org/jobs/', posting: /python\.org\/jobs\/\d+\/$/ },
-  // Humana's Phenom career site (#208)
   { name: 'phenom', listing: 'https://careers.humana.com/us/en/search-results', posting: /careers\.humana\.com\/us\/en\/job\// },
 ]
 

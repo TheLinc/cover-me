@@ -4,7 +4,7 @@ export async function addLeverPostingJsonLd(): Promise<void> {
   if (!/(^|\.)lever\.co$/.test(location.hostname)) return
   const posting = location.pathname.match(/^(\/[^/]+\/[^/]+)\/apply\/?$/)?.[1]
   if (!posting || document.querySelector('script[data-cover-me-posting]')) return
-  const res = await fetch(location.origin + posting)
+  const res = await fetch(location.origin + posting, { signal: AbortSignal.timeout(5000) })
   if (!res.ok) return
   const doc = new DOMParser().parseFromString(await res.text(), 'text/html')
   for (const ld of doc.querySelectorAll('script[type="application/ld+json"]')) {

@@ -19,7 +19,7 @@ export const FIXTURE_CASES = [
   { board: 'workable', title: 'Senior Open-Source Python Engineer, ML Developer Tools - EMEA Remote', company: 'Hugging Face', ends: 'Join a community supporting the ML/AI community.' },
   { board: 'workday', title: 'Senior Applied AI Engineer', company: 'Nvidia', ends: 'or any other characteristic protected by law.' },
   { board: 'bamboohr', title: 'Senior Business Analyst', company: 'Picton Mahoney Asset Management', ends: 'All decisions are made by our hiring team.' },
-  // Signed-out /jobs/view/ page: read from its JSON-LD (#21)
+  // Signed-out /jobs/view/ page: read from its JSON-LD (#2)
   { board: 'linkedin', title: 'RN - SAU', company: 'INTEGRIS Health', ends: 'including protected veteran or disability status.' },
   // Signed-in /jobs/view/ page for a posting already applied to, cut down to the
   // posting by hand (no nav, people or job lists), with the company and text made
@@ -28,7 +28,7 @@ export const FIXTURE_CASES = [
   // continues after its box (#21).
   { board: 'linkedin-applied', title: 'Frontend Developer', company: 'Northwind', ends: 'Northwind Applicant Privacy Notice' },
   { board: 'terminal', title: 'Data Engineer', company: 'Overflow', ends: '- SQL' },
-  // No dedicated scraper: schema.org microdata through the generic one (no JSON-LD on the page) (#3)
+  // No dedicated scraper: schema.org microdata through the generic one (no JSON-LD on the page) (#5)
   { board: 'smartrecruiters', title: 'Housekeeping Associate, Downtown San Diego', company: 'Equinox', ends: 'Must have a legal right to work in the United States.' },
   // Indeed's 2026 layout: same detail pane on /viewjob and in the search page's right-hand pane (#3)
   { board: 'indeed', title: 'Welder', company: 'Bleema Manufacturing Corporation', ends: '1 year experience in shop setting' },
@@ -47,7 +47,7 @@ export const FIXTURE_CASES = [
   // hand: fixtures:save loads postings directly). A "Search Jobs" <h1> comes
   // first, and the job list beside the posting is larger than it (#208).
   { board: 'google-careers-search', title: 'Senior Staff Software Engineer, Generative AI, Search Intelligence', company: 'Google', ends: 'Current or past grants do not confer an acquired right.' },
-  // Phenom: JSON-LD with an empty hiringOrganization name (#216)
+  // Phenom: JSON-LD with an empty hiringOrganization name (#208)
   { board: 'phenom', title: 'Home Health Licensed Practical Nurse', company: 'Humana', ends: 'at all levels of employment.' },
   // A jobs-count banner <h1> ("20 jobs on the Python Job Board") comes first;
   // the posting's own <h1> holds the title, a "New" badge and the company (#73)
