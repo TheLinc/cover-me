@@ -272,7 +272,7 @@ export default function HistoryPage() {
         {deleteError && <div className="error-box">{deleteError}</div>}
       </div>
 
-      {totalJobs === 0 ? (
+      {groups.length === 0 ? (
         <div className="history-empty">
           <div className="history-empty-icon">
             <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
