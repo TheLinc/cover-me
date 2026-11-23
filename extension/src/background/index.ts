@@ -238,7 +238,6 @@ async function scrapeTab(tabId: number, { forAnswer = false } = {}): Promise<Job
 async function preferServerScrapes(results: FrameScrape[], forAnswer = false): Promise<FrameScrape[]> {
   const sent = results.filter((r) => r.snapshot)
   if (!SUPABASE_URL || sent.length === 0) return results
-  // Nothing leaves the browser until the user agrees to PageReadNotice (#29).
   if (!(await hasAgreedToPageRead())) return results
   try {
     const body = JSON.stringify({ pages: sent.map((r) => r.snapshot), ...(forAnswer ? { answer: true } : {}) })

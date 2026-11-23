@@ -154,7 +154,6 @@ function TailorOptions({ inputMode, manualReady, onTailor, compact, setCompact, 
   )
 }
 
-// Starts open when it already holds text, so a restored note stays in view (#342).
 function AddExperience({ value, onChange, onRegenerate, hasGaps }: { value: string; onChange: (v: string) => void; onRegenerate: () => void; hasGaps: boolean }) {
   const [open, setOpen] = useState(() => value.trim() !== '')
   const inputRef = useFocusWhenOpened<HTMLTextAreaElement>(open)

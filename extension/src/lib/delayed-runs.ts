@@ -1,14 +1,13 @@
-// Work that waits out an undo window. `flush` runs what's waiting now, for when
-// the popup that could undo it closes (#342).
 export function delayedRuns(delayMs: number, onDone: (key: string, error?: string) => void) {
   const waiting = new Map<string, { timer: ReturnType<typeof setTimeout>; run: () => Promise<void> }>()
+  let queue = Promise.resolve()
 
   const fire = (key: string) => {
     const entry = waiting.get(key)
     if (!entry) return
     clearTimeout(entry.timer)
     waiting.delete(key)
-    entry.run().then(
+    queue = queue.then(entry.run).then(
       () => onDone(key),
       (err: unknown) => onDone(key, err instanceof Error ? err.message : String(err)),
     )

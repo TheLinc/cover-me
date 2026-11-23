@@ -6,7 +6,6 @@ export function nextLimit(tops: number[], limit: number, maxRows = MAX_ROWS): nu
   const rows = [...new Set(tops)].sort((a, b) => a - b)
   if (rows.length <= maxRows) return limit
   const fit = tops.slice(0, limit).filter(t => t <= rows[maxRows - 1]).length
-  // All chips fit but the "+N more" button spilled, so drop one chip to make room (#19).
   return fit < limit ? fit : limit - 1
 }
 

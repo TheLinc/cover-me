@@ -1,8 +1,7 @@
 /* ─────────────────────────────────────────────────
    Cover Me — Popup Styles
    Night (the website's night indigo) + Cover Me indigo.
-   tokens.test.ts holds the text tokens, button and badge fills and the
-   missing-keyword chips to 4.5:1.
+   tokens.test.ts holds the text tokens and the button and badge fills to 4.5:1.
 ───────────────────────────────────────────────── */
 
 /* Geist ships in the package (SIL OFL, fonts/OFL.txt): no request to Google. */
@@ -442,7 +441,6 @@ html, body {
 }
 
 .letter-actions { display: flex; gap: 8px; }
-/* Pinned to the bottom of the scroller so Download stays in view on a long result (#342). */
 .letter-container > .letter-actions {
   position: sticky;
   bottom: 0;
@@ -842,7 +840,6 @@ html, body {
 
 .ats-meaning { font-size: 12px; color: var(--text-3); margin-bottom: 6px; }
 .add-experience { margin-bottom: 4px; }
-/* About 4 lines, growing to about 8 as the user types (#342). */
 .supplemental-input {
   field-sizing: content;
   min-height: 82px;

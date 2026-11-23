@@ -12,13 +12,13 @@ import { EditIcon } from '../components/icons'
 import UpgradePrompt from '../components/UpgradePrompt'
 import { WEB_URL } from '../../lib/config'
 import { downloadResumeWord, uploadDesignIfPro } from '../../lib/design'
-import { DELETE_PORT, type DeletePortMessage, type DeleteResult } from '../../background/delete'
+import { DELETE_PORT, UNDO_MS, type DeletePortMessage, type DeleteResult } from '../../background/delete'
 
 
 export default function HistoryPage() {
   const [groups, setGroups] = useState<JobGroup[]>([])
   const [expandedKey, setExpandedKey] = useState<string | null>(null)
-  const [deleting, setDeleting] = useState<string[]>([])
+  const [deleting, setDeleting] = useState<{ key: string; undo: boolean }[]>([])
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const portRef = useRef<chrome.runtime.Port | null>(null)
   const [designHashes, setDesignHashes] = useState<string[]>([])
@@ -155,7 +155,6 @@ export default function HistoryPage() {
     }
   }
 
-  // A port, not a message: the worker runs the delete when the popup closes mid-undo (#342).
   function deletePort(): chrome.runtime.Port {
     if (portRef.current) return portRef.current
     const port = chrome.runtime.connect({ name: DELETE_PORT })
@@ -175,18 +174,20 @@ export default function HistoryPage() {
     }
     deletePort().postMessage(msg)
     setDeleteError(null)
-    setDeleting((d) => [...d, group.key])
+    setDeleting((d) => [...d, { key: group.key, undo: true }])
+    // Ends a little before the worker's timer, so an Undo click always reaches it first (#342).
+    setTimeout(() => setDeleting((d) => d.map((x) => (x.key === group.key ? { ...x, undo: false } : x))), UNDO_MS - 500)
     if (expandedKey === group.key) setExpandedKey(null)
   }
 
   function undoDelete(group: JobGroup) {
     deletePort().postMessage({ cancel: group.key } satisfies DeletePortMessage)
-    setDeleting((d) => d.filter((k) => k !== group.key))
+    setDeleting((d) => d.filter((x) => x.key !== group.key))
   }
 
   async function deleteFinished({ key, error }: DeleteResult) {
     const group = groups.find((g) => g.key === key)
-    setDeleting((d) => d.filter((k) => k !== key))
+    setDeleting((d) => d.filter((x) => x.key !== key))
     if (error) {
       setDeleteError(`Couldn't delete ${group?.title || 'that application'}. ${error}`)
       return
@@ -286,10 +287,11 @@ export default function HistoryPage() {
         <div className="history-list">
           {groups.map((group) => {
             const isExpanded = expandedKey === group.key
-            if (deleting.includes(group.key)) return (
+            const pending = deleting.find((x) => x.key === group.key)
+            if (pending) return (
               <div key={group.key} className="job-card job-card-deleted" role="status">
-                <span>Deleted {group.title || 'Unknown Role'}</span>
-                <button className="btn btn-secondary btn-sm" onClick={() => undoDelete(group)} autoFocus>Undo</button>
+                <span>{pending.undo ? 'Deleted' : 'Deleting'} {group.title || 'Unknown Role'}</span>
+                {pending.undo && <button className="btn btn-secondary btn-sm" onClick={() => undoDelete(group)} autoFocus>Undo</button>}
               </div>
             )
             return (
