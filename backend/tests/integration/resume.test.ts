@@ -39,11 +39,12 @@ describe('resume', () => {
     expect(data?.text_encrypted).not.toContain('Initech')
   })
 
-  it('parses a new resume in the background with Haiku, encrypted', async () => {
+  it('parses a new resume in the background with Haiku 5.5 at low effort, encrypted', async () => {
     await uploadResume(user, RESUME_TEXT, { wait: false })
     const parsed = await waitForParsedResume(user.id)
     expect(parsed).not.toContain('Initech')
-    expect((await mockClaude.requests()).filter(isParse).map((r) => r.model)).toEqual(['claude-haiku-4-5'])
+    const parses = (await mockClaude.requests()).filter(isParse)
+    expect(parses.map((r) => [r.model, r.output_config, r.max_tokens])).toEqual([['claude-haiku-5-5', { effort: 'low' }, 8000]])
   })
 
   it('saves the parse of a full-length resume', async () => {
@@ -80,7 +81,7 @@ describe('resume', () => {
     await uploadResume(user)
     // The limiter's per-account row (see resume/index.ts parseAhead), at its
     // daily cap. Pinned rather than raced, so a minute rolling over can't
-    // start a fresh window mid-test.
+    // start a fresh window mid-test (#26).
     const key = createHash('sha256').update(`resume-parse:${user.id}`).digest('hex')
     await admin.from('scrape_rate_limits').update({ count: 10 }).eq('ip_hash', key).eq('window_kind', 'day')
     await callFunction('resume', { method: 'DELETE', token: user.token })
@@ -94,8 +95,9 @@ describe('resume', () => {
     await mockClaude.delayNext(1500)
     await uploadResume(user, RESUME_TEXT, { wait: false })
     await uploadResume(user, NEW_TEXT, { wait: false })
-    const newest = await waitForParsedResume(user.id) // the second parse, not delayed
-    await sleep(2000) // the first one lands now, and must not write
+    const newest = await waitForParsedResume(user.id)
+    // The delayed first parse lands after the second and must not overwrite it (#26).
+    await sleep(2000)
     expect((await mockClaude.requests()).filter(isParse)).toHaveLength(2)
     expect(await parsedResume(user.id)).toBe(newest)
   })
@@ -145,7 +147,6 @@ describe('saving a section order', () => {
     expect((await res.json()).sectionOrder).toEqual(sectionOrder)
     const { resume } = await (await callFunction('tailor', { token: user.token, body: { job: JOB } })).json()
     expect(resume.sectionOrder).toEqual(sectionOrder)
-    // The saved parse is current, so tailoring didn't parse again.
     expect((await mockClaude.requests()).filter(isParse)).toHaveLength(0)
   })
 
