@@ -138,3 +138,49 @@ describe('the application questions guide', () => {
     expect(source).not.toMatch(/autofill|auto-apply/i)
   })
 })
+
+describe('the Workday application status guide', () => {
+  const slug = 'workday-application-status'
+  const render = async () => {
+    const { renderToStaticMarkup } = await import('react-dom/server')
+    const { default: Page } = await import(`../app/guides/${slug}/page.tsx`)
+    return renderToStaticMarkup(h(Page))
+  }
+
+  it('has one H1 naming "Workday application status" and a full page title under 60 characters', async () => {
+    const html = await render()
+    const h1s = [...html.matchAll(/<h1[^>]*>(.*?)<\/h1>/g)].map((m) => m[1])
+    expect(h1s).toHaveLength(1)
+    expect(h1s[0]).toMatch(/Workday application status/i)
+    const { metadata } = (await import(`../app/guides/${slug}/page.tsx`)) as { metadata: Metadata }
+    expect(`${metadata.title} | Cover Me`.length).toBeLessThan(60)
+  }, 20_000)
+
+  it('cites a linked HR or Workday source on every row of the status table', async () => {
+    const html = await render()
+    const rows = [...html.matchAll(/<tbody>(.*?)<\/tbody>/g)].flatMap((m) => m[1].split('</tr>').filter(Boolean))
+    expect(rows.length).toBeGreaterThanOrEqual(4)
+    for (const row of rows) expect(row).toMatch(/<a href="https:\/\/(hr\.wisc\.edu|www\.washington\.edu|hr\.uw\.edu|doc\.workday\.com|info\.montgomerycollege\.edu)\//)
+  }, 20_000)
+
+  it('links to /for/workday, and /for/workday links back', async () => {
+    expect(await render()).toContain('href="/for/workday"')
+    const { renderToStaticMarkup } = await import('react-dom/server')
+    const { default: BoardPage } = await import('../app/for/[board]/page')
+    const board = renderToStaticMarkup(await BoardPage({ params: Promise.resolve({ board: 'workday' }) }))
+    expect(board).toContain(`href="/guides/${slug}"`)
+  }, 20_000)
+
+  it('answers the status questions people search for in its FAQ markup', async () => {
+    const html = await render()
+    const blocks = [...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/g)].map((m) => JSON.parse(m[1]))
+    const faq = blocks.find((b) => b['@type'] === 'FAQPage')
+    expect(faq.mainEntity.map((q: { name: string }) => q.name)).toEqual([
+      'What does "Completed" mean on a Workday application?',
+      'Does Workday tell you when you are rejected?',
+      'What does "In Progress" mean on Workday?',
+      'Is "In Progress" a good sign on Workday?',
+      'What does "Submitted" mean on Workday?',
+    ])
+  }, 20_000)
+})
