@@ -78,3 +78,7 @@ export function whenPosthogLoaded(posthog: PostHog, fn: () => void): () => void 
   window.addEventListener(POSTHOG_LOADED, fn, { once: true })
   return () => window.removeEventListener(POSTHOG_LOADED, fn)
 }
+
+export function capture(event: string, props: Record<string, unknown>) {
+  void import('posthog-js').then(({ default: posthog }) => whenPosthogLoaded(posthog, () => posthog.capture(event, props)))
+}

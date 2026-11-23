@@ -1,11 +1,14 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { storeUrl } from '@/lib/utils'
+import { cn, storeUrl } from '@/lib/utils'
 import { OG_IMAGE } from '@/lib/structured-data'
 import { BOARDS, getBoard } from '@/lib/boards'
 import { SiteNav } from '@/components/site/SiteNav'
+import { SendToComputer } from '@/components/site/SendToComputer'
 import { SiteFooter } from '@/components/site/SiteFooter'
+
+const INSTALL = 'inline-flex items-center gap-2 bg-brand-strong text-white font-semibold text-[14px] px-5 py-2.5 rounded-[8px] hover:bg-brand-deep transition-colors'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 
@@ -135,10 +138,13 @@ export default async function BoardPage({ params }: { params: Promise<{ board: s
               href={storeUrl('for-board')}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-2 bg-brand-strong text-white font-semibold text-[14px] px-5 py-2.5 rounded-[8px] hover:bg-brand-deep transition-colors"
+              className={cn(INSTALL, '[@media(pointer:coarse)]:hidden')}
             >
               Install free · Chrome
             </a>
+            <SendToComputer placement="for-board" className={cn(INSTALL, '[@media(pointer:fine)]:hidden')}>
+              Send this to my computer
+            </SendToComputer>
             <Link
               href="/guides/tailor-resume-to-job-description"
               className="inline-flex items-center gap-2 border border-border text-foreground font-semibold text-[14px] px-5 py-2.5 rounded-[8px] hover:bg-elevated transition-colors"

@@ -5,7 +5,8 @@ import { Source_Serif_4 } from 'next/font/google'
 import { ArrowLeftIcon } from '@phosphor-icons/react/dist/ssr'
 import { storeUrl, cn } from '@/lib/utils'
 import { type Guide, guideArticleJsonLd, guideBreadcrumbJsonLd, readingMinutes, slugify } from '@/lib/guides'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
+import { SendToComputer } from './SendToComputer'
 import { CopyPromptButton } from './CopyPromptButton'
 import { GuideToc, GuideTocCollapsed } from './GuideToc'
 
@@ -219,11 +220,14 @@ export function GuideArticle({
           <div className="mx-auto mb-6 max-w-[460px] space-y-3 text-[15px] leading-[1.7] text-ink-2 [&_a]:text-brand-strong hover:[&_a]:text-brand-deep">
             {cta.body}
           </div>
-          <Button asChild>
+          <Button asChild className="[@media(pointer:coarse)]:hidden">
             <a href={storeUrl('guide')} target="_blank" rel="noreferrer">
               Install free · Chrome
             </a>
           </Button>
+          <SendToComputer placement="guide" className={buttonVariants({ className: '[@media(pointer:fine)]:hidden' })}>
+            Send this to my computer
+          </SendToComputer>
         </div>
       </article>
     </main>

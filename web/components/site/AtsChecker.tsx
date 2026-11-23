@@ -5,7 +5,8 @@ import { flushSync } from 'react-dom'
 import Image from 'next/image'
 import { CaretDownIcon, CheckIcon, DeviceMobileIcon, GoogleChromeLogoIcon, PencilSimpleIcon, UploadSimpleIcon, XIcon } from '@phosphor-icons/react/dist/ssr'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
+import { SendToComputer } from './SendToComputer'
 import { Label } from '@/components/ui/label'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Progress } from '@/components/ui/progress'
@@ -17,8 +18,7 @@ import { botCheckToken, preloadBotCheck } from '@/lib/ats-checker/turnstile'
 import { checkResume, firstAt, markFor, marks, oneEntryPerAsk, readPosting, type Keyword, type Level, type Mark } from '@/lib/ats-checker/keywords'
 import { readResumeFile } from '@/lib/ats-checker/read-resume'
 import { SAMPLE_AI, SAMPLE_POSTING, SAMPLE_RESUME } from '@/lib/ats-checker/sample'
-import { whenPosthogLoaded } from '@/lib/analytics'
-import { BASE } from '@/lib/structured-data'
+import { capture } from '@/lib/analytics'
 import { cn, storeUrl } from '@/lib/utils'
 
 const GROUPS: { level: Level; title: string }[] = [
@@ -80,15 +80,12 @@ function morph(update: () => void, then?: () => void) {
   })
 }
 
-// Counts checks and how they ended, never their text. Imported lazily like the page-view setup in instrumentation-client.ts (#278).
+// Counts checks and how they ended, never their text (#278).
 function logCheck(outcome: Fallback | 'ai', score?: number) {
-  void import('posthog-js').then(({ default: posthog }) =>
-    whenPosthogLoaded(posthog, () => posthog.capture('ats_check_run', { outcome, ...(score !== undefined && { score }) })),
-  )
+  capture('ats_check_run', { outcome, ...(score !== undefined && { score }) })
 }
 
 const SAMPLE = byAi(SAMPLE_POSTING, SAMPLE_RESUME, SAMPLE_AI, 1)
-const SHARE_URL = `${BASE}/ats-checker?utm_source=share&utm_medium=phone&utm_campaign=ats-phone-send`
 
 export function AtsChecker() {
   const [posting, setPosting] = useState('')
@@ -100,17 +97,11 @@ export function AtsChecker() {
   const [resultTab, setResultTab] = useState<string>('required')
   const [view, setView] = useState('resume')
   const [selected, setSelected] = useState<Selected | null>(null)
-  const [fromPhone, setFromPhone] = useState(false)
   const [check, setCheck] = useState<Check | null>(null)
   const pending = useRef<AbortController | null>(null)
   const botBox = useRef<HTMLDivElement>(null)
   const postingBox = useRef<HTMLTextAreaElement>(null)
   const resumeBox = useRef<HTMLTextAreaElement>(null)
-
-  useEffect(() => {
-    const campaign = new URLSearchParams(window.location.search).get('utm_campaign')
-    setFromPhone(campaign === 'ats-phone-send' && !window.matchMedia('(pointer: coarse)').matches)
-  }, [])
 
   const mine = check?.result ?? null
   const loading = !!check && !check.result
@@ -206,16 +197,6 @@ export function AtsChecker() {
 
   return (
     <div className="flex flex-col gap-5">
-      {fromPhone && (
-        <div className="flex flex-wrap items-center gap-3 rounded-[14px] border border-line bg-white px-4 py-3 text-[14px] text-body">
-          <DeviceMobileIcon size={18} aria-hidden className="text-brand" />
-          <span className="flex-1">Sent from your phone? Install Cover Me, then paste the posting again or open it on LinkedIn or Indeed.</span>
-          <Button asChild size="sm">
-            <a href={storeUrl('ats-phone-return')} target="_blank" rel="noreferrer">Install Cover Me free</a>
-          </Button>
-        </div>
-      )}
-
       <div className="[view-transition-name:ats-inputs]">
       {ready ? (
         <div className="grid gap-2 max-sm:gap-1.5 sm:grid-cols-2">
@@ -451,9 +432,9 @@ function Summary({ result, sample }: { result: Result; sample: boolean }) {
         </div>
       )}
       {!sample && (
-        <Button size="sm" className="self-start [@media(pointer:fine)]:hidden" onClick={sendToComputer}>
+        <SendToComputer placement="ats" className={buttonVariants({ size: 'sm', className: 'self-start [@media(pointer:fine)]:hidden' })}>
           <DeviceMobileIcon size={16} aria-hidden /> Send this to my computer
-        </Button>
+        </SendToComputer>
       )}
     </div>
   )
@@ -560,9 +541,9 @@ function MissingChip({ k, on, onPick }: { k: Checked; on: boolean; onPick: (k: C
         <a href={storeUrl('ats-gap')} target="_blank" rel="noreferrer" className="font-medium text-brand-strong underline underline-offset-2 [@media(pointer:coarse)]:hidden">
           Done it under another name? Cover Me&apos;s AI reads your bullets for it.
         </a>
-        <button type="button" onClick={sendToComputer} className="text-left font-medium text-brand-strong underline underline-offset-2 [@media(pointer:fine)]:hidden">
+        <SendToComputer placement="ats" className="text-left font-medium text-brand-strong underline underline-offset-2 [@media(pointer:fine)]:hidden">
           Done it under another name? Cover Me&apos;s AI reads your bullets for it. Send this to your computer.
-        </button>
+        </SendToComputer>
       </PopoverContent>
     </Popover>
   )
@@ -584,9 +565,9 @@ function Pitch() {
             <GoogleChromeLogoIcon size={18} aria-hidden /> Add Cover Me to Chrome, free
           </a>
         </Button>
-        <Button onClick={sendToComputer} className="[@media(pointer:fine)]:hidden">
+        <SendToComputer placement="ats" className={buttonVariants({ className: '[@media(pointer:fine)]:hidden' })}>
           <DeviceMobileIcon size={16} aria-hidden /> Send this to my computer
-        </Button>
+        </SendToComputer>
         <p className="text-[12.5px] text-ext-muted">
           <span className="[@media(pointer:coarse)]:hidden">Free plan, no card. About 30 seconds a resume.</span>
           <span className="[@media(pointer:fine)]:hidden">Cover Me runs in Chrome on a computer.</span>
@@ -594,18 +575,6 @@ function Pitch() {
       </div>
     </aside>
   )
-}
-
-function sendToComputer() {
-  if (navigator.share) {
-    navigator.share({ title: 'Cover Me ATS checker', text: 'Tailor my resume on my computer', url: SHARE_URL }).catch((err: Error) => {
-      if (err.name !== 'AbortError') mailLink()
-    })
-  } else mailLink()
-}
-
-function mailLink() {
-  window.location.href = `mailto:?subject=${encodeURIComponent('Tailor my resume with Cover Me')}&body=${encodeURIComponent(SHARE_URL)}`
 }
 
 function asked(k: Checked) {
