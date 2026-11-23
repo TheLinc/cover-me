@@ -7,15 +7,6 @@ import { PLAN_LIMITS as L } from '@/lib/limits'
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 const guide = getGuide('how-to-answer-job-application-questions')
 
-const SOURCES = {
-  zapier: 'https://www.huffingtonpost.co.uk/entry/recruiters-job-application-chatgpt_l_6723b4e1e4b0871068fe81ad',
-  civilService: 'https://www.civil-service-careers.gov.uk/artificial-intelligence-and-recruitment/',
-  newYork: 'https://www.ny.gov/salary-history-ban/salary-history-ban-what-you-need-know',
-  california: 'https://women.ca.gov/californiapayequity/employers-resources/guidance-for-employers-on-starting-compensation',
-  washington: 'https://app.leg.wa.gov/RCW/default.aspx?cite=49.58.100',
-  ranges: 'https://business.columbia.edu/faculty/research/tandem-anchoring-informational-and-politeness-effects-range-offers-social-exchange',
-}
-
 export const metadata: Metadata = {
   title: 'Why Are You Interested in This Position? Sample Answers',
   description: 'How to answer "Why are you interested in this position?", "Why do you want to work here?" and three more job application questions, with a sample answer for each.',
@@ -117,12 +108,12 @@ export default function Page() {
             <>
               <p>
                 This is the question applicants most often get wrong in the same way. A recruiting manager at Zapier told{' '}
-                <a href={SOURCES.zapier} {...ext}>HuffPost UK</a> that many applicants answered it with the same template, starting &ldquo;Company&rsquo;s mission of &lsquo;insert mission statement&rsquo; resonates with me&rdquo;, and that once it repeats, &ldquo;it becomes obvious they all plugged this into the same tool.&rdquo;
+                <a href="https://www.huffingtonpost.co.uk/entry/recruiters-job-application-chatgpt_l_6723b4e1e4b0871068fe81ad" {...ext}>HuffPost UK</a> that many applicants answered it with the same template, starting &ldquo;Company&rsquo;s mission of &lsquo;insert mission statement&rsquo; resonates with me&rdquo;, and that once it repeats, &ldquo;it becomes obvious they all plugged this into the same tool.&rdquo;
               </p>
               <h3>What the employer is checking</h3>
               <p>
                 Whether you know what the job is, and whether you&rsquo;ve done that kind of work. The UK Civil Service, which publishes how it reads applications, says a good one shows{' '}
-                <a href={SOURCES.civilService} {...ext}>&ldquo;how your skills and experience align with the role&rdquo; and &ldquo;what motivates you to do your best work&rdquo;</a>.
+                <a href="https://www.civil-service-careers.gov.uk/artificial-intelligence-and-recruitment/" {...ext}>&ldquo;how your skills and experience align with the role&rdquo; and &ldquo;what motivates you to do your best work&rdquo;</a>.
               </p>
               <h3>How to answer</h3>
               <ol>
@@ -194,11 +185,11 @@ export default function Page() {
               <h3>What the employer is checking</h3>
               <p>
                 Whether you fit the budget for the role. It&rsquo;s a question about what you want, not what you earn now. New York&rsquo;s guidance says{' '}
-                <a href={SOURCES.newYork} {...ext}>&ldquo;An employer may ask an applicant for their salary expectations for the position&rdquo;</a>, while the same law bars asking for pay history. California and Washington have similar bans (<a href={SOURCES.california} {...ext}>California</a>, <a href={SOURCES.washington} {...ext}>Washington</a>).
+                <a href="https://www.ny.gov/salary-history-ban/salary-history-ban-what-you-need-know" {...ext}>&ldquo;An employer may ask an applicant for their salary expectations for the position&rdquo;</a>, while the same law bars asking for pay history. California and Washington have similar bans (<a href="https://women.ca.gov/californiapayequity/employers-resources/guidance-for-employers-on-starting-compensation" {...ext}>California</a>, <a href="https://app.leg.wa.gov/RCW/default.aspx?cite=49.58.100" {...ext}>Washington</a>).
               </p>
               <h3>How to answer</h3>
               <ul>
-                <li>Give a range whose bottom is the figure you actually want. In five negotiation experiments, opening with a range like that got better final terms than a single number, as long as the range wasn&rsquo;t too wide (<a href={SOURCES.ranges} {...ext}>Ames and Mason, 2015</a>). Those were negotiations, not application forms, so treat it as a guide.</li>
+                <li>Give a range whose bottom is the figure you actually want. In five negotiation experiments, opening with a range like that got better final terms than a single number, as long as the range wasn&rsquo;t too wide (<a href="https://business.columbia.edu/faculty/research/tandem-anchoring-informational-and-politeness-effects-range-offers-social-exchange" {...ext}>Ames and Mason, 2015</a>). Those were negotiations, not application forms, so treat it as a guide.</li>
                 <li>If the field takes only a number, put your target.</li>
                 <li>If it asks for your current salary, you can answer with your expectations instead. Where the law allows the question, sharing your pay history is your choice.</li>
               </ul>
