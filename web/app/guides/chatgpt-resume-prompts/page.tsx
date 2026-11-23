@@ -213,8 +213,7 @@ export default function Page() {
               </p>
               <p>
                 When I tailored my own applications in ChatGPT, a resume and a cover letter took{' '}
-                <a href="https://dev.to/plain-stack/how-i-went-from-0-interviews-to-4-in-a-month-by-tailoring-every-application-1an4" target="_blank" rel="noopener noreferrer">about 12 minutes per application</a>
-                . That&rsquo;s fine for a few roles a week. At several a day, it&rsquo;s the reason people stop tailoring. A cover letter is another set of prompts: see <Link href="/guides/chatgpt-cover-letter-prompts">ChatGPT cover letter prompts</Link>.
+                about 12 minutes per application. That&rsquo;s fine for a few roles a week. At several a day, it&rsquo;s the reason people stop tailoring. A cover letter is another set of prompts: see <Link href="/guides/chatgpt-cover-letter-prompts">ChatGPT cover letter prompts</Link>.
               </p>
             </>
           ),

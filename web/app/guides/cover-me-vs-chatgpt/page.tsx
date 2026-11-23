@@ -102,8 +102,7 @@ export default function Page() {
             <>
               <p>
                 The difference is the work around the model. Cover Me runs on Claude, or on your own OpenAI key if you prefer. With ChatGPT, each application means opening the posting, copying the description, switching tabs, pasting your resume again, writing the prompt, then fixing the clichés. When I tailored my own applications in ChatGPT it took{' '}
-                <a href="https://dev.to/plain-stack/how-i-went-from-0-interviews-to-4-in-a-month-by-tailoring-every-application-1an4" target="_blank" rel="noopener noreferrer">about 12 minutes per application</a>
-                , and the free plan&rsquo;s file upload limit cut off my resume uploads partway through a day of applying.
+                about 12 minutes per application, and the free plan&rsquo;s file upload limit cut off my resume uploads partway through a day of applying.
               </p>
               <p>
                 Cover Me does those steps for you. It reads the posting, keeps your resume (encrypted on our server, or only in your browser with your own key), and runs the same cover letter prompt every time, with common AI clichés filtered out. Your thirtieth application of the week gets the same care as your first.
