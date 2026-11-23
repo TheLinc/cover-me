@@ -1,7 +1,5 @@
-// Per-job-board landing page content for /for/[board].
-// Each board gets differentiated copy. Search engines and AI engines penalize
-// near-duplicate doorway pages, so keep the intros, steps, and FAQs specific,
-// and keep board behavior claims in line with extension/src/content/scrapers.
+// Search and AI engines penalize near-duplicate doorway pages, so keep each board's copy
+// specific, and its behavior claims in line with extension/src/content/scrapers (#88).
 
 export interface BoardFaq {
   q: string
@@ -11,14 +9,13 @@ export interface BoardFaq {
 export interface Board {
   slug: string
   name: string
-  /** e.g. "job board", "applicant tracking system", used in copy */
   kind: string
   metaTitle: string
   metaDescription: string
   h1: string
-  /** Direct-answer paragraph rendered right under the H1, written for featured snippets. */
   answer: string
   intro: string[]
+  related?: { lead: string; href: string; label: string }
   steps: { title: string; body: string }[]
   faqs: BoardFaq[]
 }
@@ -210,6 +207,11 @@ export const BOARDS: Board[] = [
       'Workday is the applicant tracking system many large employers use. Its applications are long: you create an account with each employer, check the details Workday parsed from your resume, and answer screening questions, and the cover letter upload comes late in the process.',
       "Tailoring first means both documents are ready before you start. Cover Me reads Workday's page by labels that stay the same across employers, and takes the company name from the posting's address, like acme.wd1.myworkdayjobs.com.",
     ],
+    related: {
+      lead: 'Already applied and checking your status?',
+      href: '/guides/workday-application-status',
+      label: 'What Submitted, In Progress and Completed mean in Workday',
+    },
     steps: [
       {
         title: 'Open a Workday posting',

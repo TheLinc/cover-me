@@ -154,6 +154,15 @@ export const GUIDES: Guide[] = [
     imageAlt:
       'How to answer "Why are you interested in this position?" on an application. Take one line from the posting, such as owning campaign strategy across email and social with a $1.2M budget, and one result from your resume, such as growing qualified leads 38% in one year. The sample answer starts: This role puts campaign strategy and the paid budget with one person, and that\'s the part of my work I want more of.',
   },
+  {
+    slug: 'workday-application-status',
+    title: 'What your Workday application status means',
+    description: "What Submitted, In Progress, Completed and Withdrew mean on a Workday application, why Completed usually means you weren't selected, and what to do at each status. From HR guides and Workday's own manual.",
+    date: '2026-11-23',
+    image: '/guides/workday-application-status.png',
+    imageAlt:
+      "Workday application statuses and what they usually mean. Submitted, on the Active tab: the employer has it, in the first review. In Progress, on the Active tab: still being considered, at review, interview or assessment. Completed, on the Inactive tab: the process ended for you, usually not selected or a canceled job. From UW–Madison HR and Workday's recruiting manual, November 2026.",
+  },
 ]
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
