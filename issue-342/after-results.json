@@ -1,0 +1,110 @@
+{
+  "tailor options behind one summary line": {
+    "ok": true,
+    "detail": "Options: Summary"
+  },
+  "About you label, no \"Candidate context\"": {
+    "ok": true,
+    "detail": ""
+  },
+  "no blank band above the buttons": {
+    "ok": true,
+    "detail": "gap 20px"
+  },
+  "Enter opens the tailor options": {
+    "ok": true,
+    "detail": ""
+  },
+  "choices survive reopening": {
+    "ok": true,
+    "detail": "Options: Trim bullets · Summary"
+  },
+  "closed About you shows a one-line preview": {
+    "ok": true,
+    "detail": "About you\n“Referred by Jane Chen, a staff engineer on the platform team. Open to relocating.”\nEdit"
+  },
+  "opening About you focuses its text box": {
+    "ok": true,
+    "detail": ""
+  },
+  "About you opens with a height transition": {
+    "ok": true,
+    "detail": "2 -> 97 -> 125"
+  },
+  "About you grows to a cap while typing, 12px text": {
+    "ok": true,
+    "detail": "82 -> 154, 12px"
+  },
+  "reduced motion opens instantly": {
+    "ok": true,
+    "detail": "197px right after click"
+  },
+  "Download, Edit, New in view without scrolling": {
+    "ok": true,
+    "detail": ""
+  },
+  "actions stay in view while scrolling": {
+    "ok": true,
+    "detail": ""
+  },
+  "no ATS or Missing wording on the result": {
+    "ok": true,
+    "detail": ""
+  },
+  "score ring screen-reader label matches": {
+    "ok": true,
+    "detail": "Job match 63 out of 100, up from 52"
+  },
+  "add-experience box starts collapsed": {
+    "ok": true,
+    "detail": ""
+  },
+  "Done status is muted text with a check, not a button look": {
+    "ok": true,
+    "detail": "rgb(166, 163, 198)"
+  },
+  "add-experience starts open when it holds text": {
+    "ok": true,
+    "detail": ""
+  },
+  "Copy, PDF, New in view without scrolling": {
+    "ok": true,
+    "detail": ""
+  },
+  "no History date is a bare weekday": {
+    "ok": true,
+    "detail": "Sat, Nov 21 | Nov 3"
+  },
+  "one click on View shows the letter": {
+    "ok": true,
+    "detail": ""
+  },
+  "Delete removes nothing at once": {
+    "ok": true,
+    "detail": ""
+  },
+  "Undo shows and has focus": {
+    "ok": true,
+    "detail": ""
+  },
+  "Undo restores the card and nothing is deleted": {
+    "ok": true,
+    "detail": ""
+  },
+  "after the undo window the delete runs": {
+    "ok": true,
+    "detail": ""
+  },
+  "closing the popup mid-undo still deletes": {
+    "ok": true,
+    "detail": ""
+  },
+  "Resume subtitle mentions tailored resumes, upload says \"Reading your resume…\"": {
+    "ok": true,
+    "detail": "Upload once. Used for every letter and tailored resume."
+  },
+  "Settings subtitle has no \"API key\"": {
+    "ok": true,
+    "detail": "Your account"
+  }
+}

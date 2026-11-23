@@ -1,0 +1,90 @@
+{
+  "tailor options behind one summary line": {
+    "ok": false,
+    "detail": "no summary line"
+  },
+  "About you label, no \"Candidate context\"": {
+    "ok": false,
+    "detail": ""
+  },
+  "no blank band above the buttons": {
+    "ok": false,
+    "detail": "gap 74px"
+  },
+  "closed About you shows a one-line preview": {
+    "ok": false,
+    "detail": "Candidate context"
+  },
+  "opening About you focuses its text box": {
+    "ok": true,
+    "detail": ""
+  },
+  "About you opens with a height transition": {
+    "ok": false,
+    "detail": "62 -> 62 -> 62"
+  },
+  "About you grows to a cap while typing, 12px text": {
+    "ok": false,
+    "detail": "62 -> 62, 11px"
+  },
+  "reduced motion opens instantly": {
+    "ok": true,
+    "detail": "62px right after click"
+  },
+  "Download, Edit, New in view without scrolling": {
+    "ok": false,
+    "detail": ""
+  },
+  "actions stay in view while scrolling": {
+    "ok": true,
+    "detail": ""
+  },
+  "no ATS or Missing wording on the result": {
+    "ok": false,
+    "detail": "ATS MATCH | Missing something?"
+  },
+  "score ring screen-reader label matches": {
+    "ok": false,
+    "detail": "ATS match 63 out of 100, up from 52"
+  },
+  "add-experience box starts collapsed": {
+    "ok": false,
+    "detail": ""
+  },
+  "Done status is muted text with a check, not a button look": {
+    "ok": false,
+    "detail": "rgb(207, 204, 230)"
+  },
+  "add-experience starts open when it holds text": {
+    "ok": true,
+    "detail": ""
+  },
+  "Copy, PDF, New in view without scrolling": {
+    "ok": true,
+    "detail": ""
+  },
+  "no History date is a bare weekday": {
+    "ok": false,
+    "detail": "Sat | Nov 3"
+  },
+  "one click on View shows the letter": {
+    "ok": false,
+    "detail": ""
+  },
+  "Delete removes nothing at once": {
+    "ok": false,
+    "detail": ""
+  },
+  "Undo shows and has focus": {
+    "ok": false,
+    "detail": ""
+  },
+  "Resume subtitle mentions tailored resumes, upload says \"Reading your resume…\"": {
+    "ok": false,
+    "detail": "Upload once — used for every cover letter"
+  },
+  "Settings subtitle has no \"API key\"": {
+    "ok": false,
+    "detail": "Your account, or your own API key"
+  }
+}
