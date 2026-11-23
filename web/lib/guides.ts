@@ -145,6 +145,15 @@ export const GUIDES: Guide[] = [
     imageAlt:
       "Jobright at a glance, checked November 21, 2026. Free: job matches and tracking, with 2 AI resumes a day. Turbo: $29.99 a month on a timed offer, $49.99 crossed out, shown only after sign-in. Trustpilot: 4.8 from 3,811 reviews, with recent ones invited by Jobright. Run by Jobright Inc. in Santa Clara, founded in 2023, $7.7 million raised.",
   },
+  {
+    slug: 'how-to-answer-job-application-questions',
+    title: 'How to answer job application questions, with sample answers',
+    description: 'What the employer checks for in "Why are you interested in this position?", "Why do you want to work here?", tell us about yourself, desired salary and reason for leaving, with a sample answer for each.',
+    date: '2026-11-23',
+    image: '/guides/how-to-answer-job-application-questions.png',
+    imageAlt:
+      'How to answer "Why are you interested in this position?" on an application. Take one line from the posting, such as owning campaign strategy across email and social with a $1.2M budget, and one result from your resume, such as growing qualified leads 38% in one year. The sample answer starts: This role puts campaign strategy and the paid budget with one person, and that\'s the part of my work I want more of.',
+  },
 ]
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'

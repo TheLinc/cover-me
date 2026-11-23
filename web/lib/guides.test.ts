@@ -109,3 +109,27 @@ describe('internal links', () => {
     },
   )
 })
+
+describe('the application questions guide', () => {
+  const slug = 'how-to-answer-job-application-questions'
+
+  it('has one FAQ entry for each question it covers', async () => {
+    const { renderToStaticMarkup } = await import('react-dom/server')
+    const { default: Page } = await import(`../app/guides/${slug}/page.tsx`)
+    const html = renderToStaticMarkup(h(Page))
+    const blocks = [...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/g)].map((m) => JSON.parse(m[1]))
+    const faq = blocks.find((b) => b['@type'] === 'FAQPage')
+    expect(faq.mainEntity.map((q: { name: string }) => q.name)).toEqual([
+      'How do you answer "Why are you interested in this position?"',
+      'How do you answer "Why do you want to work here?"',
+      'How do you answer "Tell us about yourself" on a job application?',
+      'What should you put for desired salary on a job application?',
+      'What should you put for reason for leaving on a job application?',
+    ])
+  }, 20_000)
+
+  it('never calls answers autofill or auto-apply (#305)', () => {
+    const source = readFileSync(join(__dirname, '../app/guides', slug, 'page.tsx'), 'utf8')
+    expect(source).not.toMatch(/autofill|auto-apply/i)
+  })
+})
