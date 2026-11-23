@@ -40,11 +40,11 @@ function Sample({ children }: { children: string }) {
 
 const CHATGPT_RUNS: [string, number, number][] = [
   ['Praised Northwind’s mission', 5, 5],
-  ['Said “excited” and called the work “meaningful”', 5, 5],
+  ['Said “excited” and “meaningful”', 5, 5],
   ['Said “passion”', 4, 0],
   ['Opened with the exact first sentence of another run', 3, 3],
   ['Listed three or more of the resume’s numbers', 4, 5],
-  ['Said Northwind helps clinics focus on patients, which the posting doesn’t say', 3, 2],
+  ['Added a patient benefit the posting doesn’t state', 3, 2],
   ['Claimed HubSpot, which the resume doesn’t have', 0, 0],
 ]
 
@@ -171,7 +171,7 @@ export default function Page() {
                 Northwind sells to independent clinics, and I want my marketing to reach the person who runs the practice and makes the call. Email is how I&apos;ve done that best: at Juniper Labs I wrote and scheduled a weekly newsletter for 40,000 subscribers with a 41% open rate.
               </Sample>
               <p>
-                This example answer works because its reason only fits Northwind, and the newsletter result shows Alex has done that kind of work. If the only reason you can find is the company&rsquo;s mission statement, write about the job instead. A true answer about the work reads better than borrowed praise.
+                This example answer works because its reason fits Northwind, not any employer, and the newsletter result shows Alex has done that kind of work. If the only reason you can find is the company&rsquo;s mission statement, write about the job instead. A true answer about the work reads better than borrowed praise.
               </p>
             </>
           ),
@@ -181,7 +181,7 @@ export default function Page() {
           body: (
             <>
               <p>
-                On November 23, 2026, I asked ChatGPT (logged out, on chatgpt.com) each of the two questions above five times, each time in a new chat. The prompt was the same every time: the question, Alex Rivera&rsquo;s resume, the Northwind posting and &ldquo;Write my answer for the form box.&rdquo; The posting has a one-line mission statement, as most real postings do.
+                On November 23, 2026, I asked ChatGPT (logged out, on chatgpt.com) each of the two questions above five times, each time in a new chat. Apart from the question, the prompt was the same every time: Alex Rivera&rsquo;s resume, the Northwind posting and &ldquo;Write my answer for the form box.&rdquo; The posting has a one-line mission statement, which invites the mission praise counted below.
               </p>
               <GuideFigure caption="Ten answers from ChatGPT on November 23, 2026, five for each question. Each was 114 to 136 words.">
                 <div className="overflow-x-auto">
@@ -214,10 +214,13 @@ export default function Page() {
                 I want to work at Northwind because I&rsquo;m excited by the opportunity to use marketing to make a meaningful difference for independent clinics.
               </blockquote>
               <p>
-                That&rsquo;s the sameness the Zapier recruiter described. Everyone applying to the same job pastes in the same posting, so the drafts start alike. ChatGPT kept to the resume&rsquo;s numbers and didn&rsquo;t claim HubSpot, which Alex doesn&rsquo;t have. But every answer praised the mission, said &ldquo;excited&rdquo; and then listed most of the resume, which is what the advice above says to cut. Half of them also said Northwind helps clinics focus on their patients, which the posting never says.
+                The same resume and posting got the same first sentence, word for word, in three of five new chats. This test used one resume, not many applicants, but it shows how the repeats the Zapier recruiter saw can happen.
               </p>
               <p>
-                If you start from a ChatGPT draft, delete the mission sentence and the &ldquo;excited&rdquo; line, keep one or two results, check every claim about the company against the posting, and write the first sentence yourself. Your reason for wanting this job is the one part a chatbot can&rsquo;t know.
+                The drafts were accurate. ChatGPT kept to the resume&rsquo;s numbers and didn&rsquo;t claim HubSpot, which Alex doesn&rsquo;t have. The answers to &ldquo;Why do you want to work here?&rdquo; picked a fair reason, too: who Northwind sells to. What made them read alike is everything around that reason. Every answer praised the mission and said &ldquo;excited&rdquo;, and nine of ten listed three or more of the resume&rsquo;s numbers, where the advice above says to skip the mission praise and keep one or two results. Half of them also added a patient benefit the posting doesn&rsquo;t state.
+              </p>
+              <p>
+                If you start from a ChatGPT draft, keep its reason if it&rsquo;s true for you and say in your own words why it matters to you. Then delete the mission sentence and the &ldquo;excited&rdquo; line, keep one or two results, and check every claim about the company against the posting.
               </p>
             </>
           ),
@@ -252,7 +255,7 @@ export default function Page() {
               </p>
               <h3>What the employer is checking</h3>
               <p>
-                Whether you fit the budget for the role. It&rsquo;s a question about what you want, not what you earn now. New York&rsquo;s guidance says{' '}
+                Whether you fit the budget for the role. New York&rsquo;s guidance says{' '}
                 <a href="https://www.ny.gov/salary-history-ban/salary-history-ban-what-you-need-know" {...ext}>&ldquo;An employer may ask an applicant for their salary expectations for the position&rdquo;</a>, while the same law bars asking for pay history. California and Washington have similar bans (<a href="https://women.ca.gov/californiapayequity/employers-resources/guidance-for-employers-on-starting-compensation" {...ext}>California</a>, <a href="https://app.leg.wa.gov/RCW/default.aspx?cite=49.58.100" {...ext}>Washington</a>).
               </p>
               <h3>How to answer</h3>
@@ -282,7 +285,7 @@ export default function Page() {
               <h3>How to answer</h3>
               <ul>
                 <li>&ldquo;Laid off in a reorganization&rdquo; works as well as &ldquo;Position eliminated&rdquo;. Layoffs are common, and the reader knows it.</li>
-                <li>A past employer you criticize is the part the reader remembers, because they only hear your side.</li>
+                <li>Don&rsquo;t criticize a past employer. The reader only hears your side, and that&rsquo;s the part they remember.</li>
               </ul>
               <Sample>
                 I&apos;m still at Brightline. I&apos;m looking for a role where I own the whole campaign plan for one product.
@@ -298,7 +301,10 @@ export default function Page() {
                 I build <Link href="/">Cover Me</Link>, a Chrome extension that can write a first draft of these answers for you to edit. On the application, right-click the question box and choose &ldquo;Cover Me: write an answer&rdquo;. It reads the question and the job posting on the page, or the job you last saved in Cover Me, writes an answer from your resume, and types it into the box. You edit it there, ask for a change such as Shorter, or press Ctrl+Z to undo.
               </p>
               <p>
-                The answer comes first, and every fact in it comes from your resume or what you&rsquo;ve told Cover Me about yourself. Details such as your salary or start date stay in [brackets] for you to fill in. Check the draft against the advice above before you use it. For the cover letter itself, see <Link href="/guides/chatgpt-cover-letter-prompts">ChatGPT cover letter prompts</Link>, or <Link href="/guides/tailor-resume-to-job-description">how to tailor your resume to a job description</Link> for the resume. It never submits the form. Free accounts get {L.answer_starter} answers to start, then {L.answer_weekly} a week, Pro gets {L.answer_pro_daily} a day, and there&rsquo;s no limit with your own API key. You can <a href="#get-cover-me">install it below</a>.
+                The answer comes first, and every fact in it comes from your resume or what you&rsquo;ve told Cover Me about yourself. Details such as your salary or start date stay in [brackets] for you to fill in. Check the draft against the advice above before you use it. It never submits the form. Free accounts get {L.answer_starter} answers to start, then {L.answer_weekly} a week, Pro gets {L.answer_pro_daily} a day, and there&rsquo;s no limit with your own API key. You can <a href="#get-cover-me">install it below</a>.
+              </p>
+              <p>
+                For the rest of the application, see <Link href="/guides/tailor-resume-to-job-description">how to tailor your resume to a job description</Link> and the <Link href="/guides/chatgpt-cover-letter-prompts">ChatGPT cover letter prompts</Link>.
               </p>
             </>
           ),
