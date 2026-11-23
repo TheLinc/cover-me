@@ -144,3 +144,24 @@ describe('parseResume keeps a PDF\'s line breaks (#339)', () => {
     expect(sectionOrderFromText(parsed, await parseResume(resumePdf(text)))).not.toBeNull()
   })
 })
+
+describe('parseResume joins a PDF\'s glyph runs into words (#339)', () => {
+  test('runs with no gap between them are one word; a word gap is one space', async () => {
+    const text = await parseResume(pdfFile((doc) => {
+      doc.text('N', 10, 10)
+      doc.text('orthern', 10 + doc.getTextWidth('N'), 10)
+      doc.text('Arizona', 10 + doc.getTextWidth('Northern '), 10)
+      doc.text('University', 10 + doc.getTextWidth('Northern Arizona '), 10)
+      doc.text('Aug 2024', 10, 20)
+    }))
+    expect(text).toBe('Northern Arizona University\nAug 2024')
+  })
+})
+
+test('PDF: text drawn out of order on one baseline stays apart (#339)', async () => {
+  const text = await parseResume(pdfFile((doc) => {
+    doc.text('Aug 2024', 170, 10)
+    doc.text('Software Engineer', 10, 10)
+  }))
+  expect(text.split(/\s+/)).toEqual(['Aug', '2024', 'Software', 'Engineer'])
+})

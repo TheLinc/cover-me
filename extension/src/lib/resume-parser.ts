@@ -46,23 +46,24 @@ type PdfTextItem = { str: string; hasEOL?: boolean; transform?: number[]; width?
 // One page's text with its line breaks (#339). pdf.js gives runs of glyphs,
 // not words or lines: a kerned heading comes as "N" + "orthern". Runs on one
 // baseline get a space only where there's a gap wider than a fifth of the type
-// size; a new baseline or an end-of-line run starts a line. From #190.
+// size or a run drawn left of the last; a new baseline or an end-of-line run
+// starts a line. From #190.
 function pdfPageText(items: PdfTextItem[]): string {
   let out = ''
-  let prev: { y: number; end: number; size: number } | null = null
+  let prev: { x: number; y: number; end: number; size: number } | null = null
   for (const item of items) {
     const [, , , d = 0, x = 0, y = 0] = item.transform ?? []
     const size = Math.abs(d) || item.height || 10
     if (prev) {
       if (Math.abs(y - prev.y) >= Math.max(prev.size, size) * 0.5) {
         if (!out.endsWith('\n')) out += '\n'
-      } else if (item.str && !/\s$/.test(out) && !/^\s/.test(item.str) && x - prev.end > size * 0.2) {
+      } else if (item.str && !/\s$/.test(out) && !/^\s/.test(item.str) && (x - prev.end > size * 0.2 || x < prev.x)) {
         out += ' '
       }
     }
     out += item.str
     if (item.hasEOL && !out.endsWith('\n')) out += '\n'
-    if (item.str || !prev) prev = { y, end: x + (item.width ?? 0), size }
+    if (item.str || !prev) prev = { x, y, end: x + (item.width ?? 0), size }
   }
   return out.replace(/[ \t]+\n/g, '\n')
 }
