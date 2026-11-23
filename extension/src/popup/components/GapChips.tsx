@@ -2,27 +2,22 @@ import { useLayoutEffect, useRef, useState } from 'react'
 
 const MAX_ROWS = 3
 
-// One step toward the largest prefix of chips that, with the "+N more" button
-// after it, fits in maxRows wrapped rows. `tops` are the rendered items' top
-// offsets: the first `limit` chips, then the button when limit < total. Returns
-// `limit` once it fits; the caller re-measures until it does.
 export function nextLimit(tops: number[], limit: number, maxRows = MAX_ROWS): number {
   const rows = [...new Set(tops)].sort((a, b) => a - b)
   if (rows.length <= maxRows) return limit
   const fit = tops.slice(0, limit).filter(t => t <= rows[maxRows - 1]).length
-  // Chips spill: keep the ones that fit. Only the button spills: drop one chip.
+  // All chips fit but the "+N more" button spilled, so drop one chip to make room (#19).
   return fit < limit ? fit : limit - 1
 }
 
-// Keywords the posting asks for that the resume doesn't show. Matched
-// keywords aren't stored, so only the gaps are shown (visuals stay honest).
+// Matched keywords aren't stored, so only the gaps show (#19).
 export default function GapChips({ gaps }: { gaps: string[] }) {
   const listRef = useRef<HTMLUListElement>(null)
   const [limit, setLimit] = useState(gaps.length)
   const [expanded, setExpanded] = useState(false)
   const key = gaps.join('\n')
 
-  // New gaps, or Geist finishing loading (chip widths change): measure again.
+  // Chip widths change once Geist loads, so measure again then (#19).
   useLayoutEffect(() => {
     setLimit(gaps.length)
     setExpanded(false)
@@ -31,7 +26,7 @@ export default function GapChips({ gaps }: { gaps: string[] }) {
     return () => { live = false }
   }, [key])
 
-  // Runs before paint, so the over-long list never shows.
+  // A layout effect runs before paint, so the over-long list never shows (#19).
   useLayoutEffect(() => {
     if (expanded || !listRef.current) return
     const tops = Array.from(listRef.current.children, el => (el as HTMLElement).offsetTop)
@@ -44,10 +39,10 @@ export default function GapChips({ gaps }: { gaps: string[] }) {
   const shown = expanded ? gaps : gaps.slice(0, limit)
   return (
     <div>
-      <div className="chip-caption mono">Missing</div>
+      <div className="chip-caption mono">The posting also mentions</div>
       <ul className="chips" ref={listRef} id="gap-chips">
         {shown.map((g, i) => <li key={`${i}-${g}`} className="chip chip-gap">{g}</li>)}
-        {/* expanded too: a late fonts.ready re-measure can reset limit while open */}
+        {/* Shown while expanded too: a late font re-measure can reset limit while open (#19). */}
         {(expanded || hidden > 0) && (
           <li>
             <button
@@ -55,7 +50,7 @@ export default function GapChips({ gaps }: { gaps: string[] }) {
               className="chip chip-more"
               aria-expanded={expanded}
               aria-controls="gap-chips"
-              aria-label={expanded ? undefined : `+${hidden} more missing keywords`}
+              aria-label={expanded ? undefined : `+${hidden} more keywords`}
               onClick={() => setExpanded(e => !e)}
             >
               {expanded ? 'Show less' : `+${hidden} more`}

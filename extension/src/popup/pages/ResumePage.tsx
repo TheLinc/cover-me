@@ -15,7 +15,6 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
   const [error, setError] = useState('')
   const [dragOver, setDragOver] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
-  // Signed in to the account: a copy added while signed out isn't in it yet.
   const [accountMode, setAccountMode] = useState(false)
   const [pro, setPro] = useState(false)
   // Existing users: the "New" notice the Resume tab's dot leads to (#131).
@@ -25,7 +24,7 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
     const show = (r: ResumeData | null) => {
       setResume(r)
       setParsed(r?.parsed ?? null)
-      // A sign-in's sync rewrites the resume, so this also catches a sign-in.
+      // A sign-in's sync rewrites the resume, so this also catches a sign-in (#16).
       Promise.all([getMode(), getSession(), getCachedTier()]).then(([m, s, t]) => {
         setAccountMode(m === 'hosted' && !!s)
         setPro(t === 'hosted_pro')
@@ -46,7 +45,7 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
     if (current) await saveResume({ ...current, layout })
   }
 
-  // The service worker runs the check, so it finishes if the popup closes (lib/design.ts).
+  // The service worker runs the check, so it finishes if the popup closes (#131).
   function checkDesign(hash: string) {
     void chrome.runtime.sendMessage({ type: 'CHECK_DESIGN', hash }).catch(() => {})
   }
@@ -54,20 +53,17 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
   async function handleFile(file: File) {
     setStatus('parsing')
     setError('')
-    setParsed(null) // clear stale parse on new upload
+    setParsed(null)
     try {
       const text = await parseResume(file)
-      // A Word file is kept, so tailoring can edit it in place.
+      // A Word file is kept, so tailoring can edit it in place (#131).
       const bytes = file.name.toLowerCase().endsWith('.docx') ? new Uint8Array(await file.arrayBuffer()) : null
       const hash = bytes ? await sha256Hex(bytes) : undefined
-      // ensureValidSession refreshes an expired token (or clears a dead session),
-      // so the upload below doesn't fail with a stale token.
+      // Not getSession: an expired token would fail the upload below (#16).
       const [mode, session] = await Promise.all([getMode(), ensureValidSession()])
       const hosted = mode === 'hosted' && !!session
-      // Signed in (either mode): the copy belongs to this account. Signed out
-      // after an account was here: it keeps that owner, so another account can't
-      // claim it, and is marked so the owner's next sign-in doesn't upload it
-      // either (it may be someone else's). See syncResume in lib/auth.ts.
+      // A signed-out upload keeps the last owner so no other account can claim it, and is
+      // marked so the owner's next sign-in doesn't upload it (it may be someone else's) (#16).
       const inherited = session ? undefined : (await getResume())?.accountId
       const data: ResumeData = {
         text, filename: file.name, updatedAt: new Date().toISOString(),
@@ -75,10 +71,10 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
         ...(bytes && hash ? { design: { hash, size: bytes.length, status: 'checking' as const, checkedAt: new Date().toISOString() } } : {}),
       }
       // The resume first: a file stored before anything points to it could be
-      // pruned by a History save in between.
+      // pruned by a History save in between (#131).
       await saveResume(data)
       if (bytes && hash) {
-        // The same file again keeps the parse it was checked against.
+        // The same file again keeps the parse it was checked against (#131).
         await saveDesignFile(hash, { ...(await getDesignFile(hash)), data: toBase64(bytes) })
         checkDesign(hash)
       }
@@ -87,10 +83,8 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
       setStatus('saved')
       setTimeout(() => setStatus('idle'), 2500)
 
-      // Best-effort cloud sync for hosted users. A Word file's check uploads
-      // the text itself and waits for the server's parse of it: a second
-      // upload here would start a second parse that can come out different.
-      // Its failures show on the card.
+      // A Word file's check uploads the text itself. A second upload here would start
+      // a second server parse that can come out different (#131).
       if (hosted && session && !bytes) {
         uploadResumeToBackend(session.access_token, text, file.name).catch((err) => {
           setError(`Saved locally, but cloud sync failed: ${err instanceof Error ? err.message : 'unknown error'}`)
@@ -134,7 +128,7 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
       {!hideHeader && (
         <div className="page-header">
           <h1 className="page-title">Resume</h1>
-          <p className="page-subtitle">Upload once — used for every cover letter</p>
+          <p className="page-subtitle">Upload once. Used for every letter and tailored resume.</p>
         </div>
       )}
 
@@ -163,7 +157,7 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
 
       <div
         className={`upload-area${dragOver ? ' drag-over' : ''}`}
-        // The input's own click bubbles here too; don't open the picker twice.
+        // The input's own click bubbles here too, so don't open the picker twice (#19).
         onClick={(e) => { if (e.target !== inputRef.current) inputRef.current?.click() }}
         onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
         onDragLeave={() => setDragOver(false)}
@@ -180,7 +174,7 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
         {status === 'parsing' ? (
           <>
             <div className="spinner upload-spinner" />
-            <p className="upload-title">Parsing…</p>
+            <p className="upload-title">Reading your resume…</p>
           </>
         ) : (
           <>
@@ -222,7 +216,7 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
               {resume.signedOutUpload && accountMode && (
                 <div className="hint hint-tight">Added while signed out, so it isn&apos;t in your account yet. Upload it again to use it for letters.</div>
               )}
-              {/* The letter and parse prompts read only this much (lib/ai/index.ts, lib/ai/resume-parse.ts). */}
+              {/* The letter and parse prompts read only this much (#31). */}
               {resume.text.length > 12000 && (
                 <div className="hint hint-tight">Only the first 12,000 characters (about 2,400 words) are used. Shorten your resume so letters and tailored resumes include everything.</div>
               )}
@@ -264,7 +258,6 @@ const LAYOUT_WORDS = { columns: 'two columns', table: 'tables', textbox: 'text b
 const count = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
 const clip = (s: string) => (s.length > 40 ? `${s.slice(0, 40).trimEnd()}…` : s)
 
-// What to fix in Word when too few bullets can be edited in place.
 function designReasons(c: DesignCheck): string[] {
   if (c.total === 0) return ['No bullets were found under your experience. Check the file has them, then upload it again.']
   const loose = c.unmatched.length - c.textBoxBullets
@@ -281,7 +274,7 @@ function LayoutChoice({ design, yours, onPick, onRetry, dashboardFallback }: {
   onRetry: () => void
   dashboardFallback: boolean
 }) {
-  // Re-renders once the check would count as stale, for a popup left open.
+  // Re-renders once the check would count as stale, for a popup left open (#131).
   const [, setNow] = useState(0)
   const left = DESIGN_CHECK_STALE_MS - (Date.now() - Date.parse(design.checkedAt ?? ''))
   useEffect(() => {
@@ -305,7 +298,7 @@ function LayoutChoice({ design, yours, onPick, onRetry, dashboardFallback }: {
     return (
       <p className="hint design-choice">
         {design.error ?? "Couldn't check your design."}{' '}
-        {/* A check again would upload this browser's text over the account's resume. */}
+        {/* A check again would upload this browser's text over the account's resume (#174). */}
         {!design.refused && <button type="button" className="upload-link design-retry" onClick={onRetry}>Try again</button>}
       </p>
     )
