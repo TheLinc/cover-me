@@ -68,6 +68,11 @@ describe('GUIDES', () => {
     expect(llms).toContain(`https://www.cover-me.dev/guides/${slug})`)
   })
 
+  it.each(GUIDES.map((g) => g.slug))('%s is in the sitemap', async (slug) => {
+    const { default: sitemap } = await import('../app/sitemap')
+    expect(sitemap().map((e) => e.url)).toContain(`https://www.cover-me.dev/guides/${slug}`)
+  })
+
   it.each(GUIDES.map((g) => [g.slug, g] as const))('%s has a hero image in public/ and alt text', (_, g) => {
     expect(existsSync(join(__dirname, '../public', g.image))).toBe(true)
     expect(g.imageAlt.length).toBeGreaterThan(20)
@@ -100,7 +105,7 @@ describe('internal links', () => {
     .filter((f) => f.endsWith('.tsx'))
     .map((file) => ({ file, text: readFileSync(join(root, file), 'utf8') }))
 
-  it.each(['aiapply-review', 'free-jobscan-alternatives', 'use-your-own-api-key-for-cover-letters', 'jobright-review'])(
+  it.each(['aiapply-review', 'free-jobscan-alternatives', 'use-your-own-api-key-for-cover-letters', 'jobright-review', 'how-to-answer-job-application-questions'])(
     '%s is linked from at least two other pages, besides the /guides index',
     (slug) => {
       const own = join('app', 'guides', slug, 'page.tsx')
@@ -108,4 +113,28 @@ describe('internal links', () => {
       expect(linking.length).toBeGreaterThanOrEqual(2)
     },
   )
+})
+
+describe('the application questions guide', () => {
+  const slug = 'how-to-answer-job-application-questions'
+
+  it('has one FAQ entry for each question it covers', async () => {
+    const { renderToStaticMarkup } = await import('react-dom/server')
+    const { default: Page } = await import(`../app/guides/${slug}/page.tsx`)
+    const html = renderToStaticMarkup(h(Page))
+    const blocks = [...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/g)].map((m) => JSON.parse(m[1]))
+    const faq = blocks.find((b) => b['@type'] === 'FAQPage')
+    expect(faq.mainEntity.map((q: { name: string }) => q.name)).toEqual([
+      'How do you answer "Why are you interested in this position?"',
+      'How do you answer "Why do you want to work here?"',
+      'How do you answer "Tell us about yourself" on a job application?',
+      'What should you put for desired salary on a job application?',
+      'What should you put for reason for leaving on a job application?',
+    ])
+  }, 20_000)
+
+  it('never calls answers autofill or auto-apply (#305)', () => {
+    const source = readFileSync(join(__dirname, '../app/guides', slug, 'page.tsx'), 'utf8')
+    expect(source).not.toMatch(/autofill|auto-apply/i)
+  })
 })
