@@ -43,10 +43,8 @@ async function parsePdf(file: File): Promise<string> {
 
 type PdfTextItem = { str: string; transform: number[]; width: number; height: number }
 
-// One page's text with its line breaks (#339). pdf.js gives runs of glyphs,
-// not words or lines: a kerned heading comes as "N" + "orthern". Runs on one
-// baseline get a space only where there's a gap wider than a fifth of the type
-// size or a run drawn left of the last; a new baseline starts a line. From #190.
+// pdf.js gives runs of glyphs, not words or lines: a kerned heading comes as
+// "N" + "orthern", so runs are joined by position (#339, from #190).
 function pdfPageText(items: PdfTextItem[]): string {
   let out = ''
   let prev: { x: number; y: number; end: number; size: number } | null = null

@@ -140,8 +140,10 @@ describe('parseResume keeps a PDF\'s line breaks (#339)', () => {
     }
   })
 
-  test.each(resumes.map(([text, parsed], i) => ({ i, text, parsed })))('eval resume $i: the section order is found in its PDF text', async ({ text, parsed }) => {
-    expect(sectionOrderFromText(parsed, await parseResume(resumePdf(text)))).not.toBeNull()
+  test.each(resumes.map(([text, parsed], i) => ({ i, text, parsed })))('eval resume $i: its PDF text gives the section order its plain text does', async ({ text, parsed }) => {
+    const order = sectionOrderFromText(parsed, text)
+    expect(order).not.toBeNull()
+    expect(sectionOrderFromText(parsed, await parseResume(resumePdf(text)))).toEqual(order)
   })
 })
 
