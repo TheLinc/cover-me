@@ -1175,7 +1175,9 @@ html, body {
 .context-edit { flex-shrink: 0; font-weight: 500; color: var(--accent-h); }
 .context-panel { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.2s ease; }
 .context-panel.open { grid-template-rows: 1fr; }
-.context-panel-inner { min-height: 0; overflow: hidden; }
+/* clip, not hidden: a hidden box can be scrolled, and focusing the textarea
+   as it opens scrolled its top out of view (#342). */
+.context-panel-inner { min-height: 0; overflow: clip; }
 /* Drawn inside, since the panel clips anything outside it (#342). */
 .context-panel .supplemental-input:focus-visible { outline-offset: -2px; }
 
@@ -1203,7 +1205,14 @@ html, body {
 }
 .tailor-summary::-webkit-details-marker { display: none; }
 .tailor-summary:hover { color: var(--text); }
-.tailor-details[open] > .tailor-summary { margin-bottom: 6px; }
+/* The options stay clipped while they open, then unclip so the "?" tooltips
+   above them show (#342). */
+.tailor-details { interpolate-size: allow-keywords; }
+.tailor-details::details-content { height: 0; overflow: clip; transition: height 0.2s ease, content-visibility 0.2s ease allow-discrete; }
+.tailor-details[open]::details-content {
+  height: auto; overflow: visible;
+  transition: height 0.2s ease, content-visibility 0.2s ease allow-discrete, overflow 0s 0.2s allow-discrete;
+}
 .tailor-details[open] > .tailor-summary .chevron { transform: rotate(180deg); }
 
 .tailor-options {
@@ -1212,7 +1221,7 @@ html, body {
   gap: 6px;
   padding-left: 10px;
   border-left: 2px solid var(--border);
-  margin-left: 3px;
+  margin: 6px 0 0 3px;
 }
 
 .tailor-options .compact-toggle { margin-top: 0; }
@@ -1376,7 +1385,7 @@ textarea:focus-visible, input:focus-visible, [tabindex]:focus-visible {
 /* Reduced motion: spinners hold still (the arc still marks the active step). */
 @media (prefers-reduced-motion: reduce) {
   .spinner, .step-spinner { animation: none; }
-  .context-panel, .chevron, .step-thought { transition: none; }
+  .context-panel, .chevron, .step-thought, .tailor-details::details-content { transition: none; }
 }
 
 /* An option with its "?" beside the label, not inside it: the checkbox is
