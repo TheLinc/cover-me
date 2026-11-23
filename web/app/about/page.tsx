@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { storeUrl } from '@/lib/utils'
 import { OG_IMAGE } from '@/lib/structured-data'
 import { SiteNav } from '@/components/site/SiteNav'
@@ -7,7 +8,7 @@ import { SiteFooter } from '@/components/site/SiteFooter'
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 
 const TITLE = 'About Cover Me: Open-Source Resume Tailor by Lincoln Laylor'
-const DESCRIPTION = 'Cover Me is an open-source Chrome extension by Lincoln Laylor that tailors your resume and writes a cover letter. Why he built it, your data, and the code.'
+const DESCRIPTION = 'Cover Me is an open-source Chrome extension by Lincoln Laylor that tailors your resume and writes a cover letter. Why it exists, your data, and the code.'
 
 export const metadata: Metadata = {
   title: { absolute: TITLE },
@@ -85,7 +86,8 @@ export default function AboutPage() {
               {' '}(5.75% against 2.68%).
             </p>
             <p>
-              Tailoring by hand with ChatGPT takes about 12 minutes per application. You paste the posting, upload your resume, explain your background again in every new chat, and run into the free plan&apos;s upload limit. It also adds skills you don&apos;t have because the posting asked for them, so you have to check every line before sending.
+              Tailoring by hand with ChatGPT takes about{' '}
+              <Link href="/guides/chatgpt-resume-prompts" className="text-brand-light hover:text-brand transition-colors underline underline-offset-2">12 minutes per application</Link>. You paste the posting, upload your resume, explain your background again in every new chat, and run into the free plan&apos;s upload limit. It can also add skills you don&apos;t have because the posting asked for them, so you have to check every line before sending.
             </p>
             <p>
               Most tools built for this are resume builders with templates and a monthly fee. Cover Me rewrites the resume you already have for each posting, plus a cover letter to match, in about 30 seconds.
