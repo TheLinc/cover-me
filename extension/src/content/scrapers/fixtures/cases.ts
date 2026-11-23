@@ -13,8 +13,9 @@ export const FIXTURE_CASES = [
   // with no <h1>, next to a list of applications and a "Stages" sidebar (#70).
   { board: 'greenhouse-applications', title: 'Backend Developer', company: 'Contoso', ends: 'Contoso does not accept unsolicited resumes from recruiting agencies.' },
   { board: 'lever', title: 'Administrative Business Partner', company: 'Palantir Technologies', ends: 'Internet Crime Complaint Center (IC3).' },
-  // The same posting's apply page, with its JSON-LD copied in from the posting as the extension does (#325)
-  { board: 'lever-apply', title: 'Administrative Business Partner', company: 'Palantir Technologies', ends: 'Internet Crime Complaint Center (IC3).' },
+  // An apply page, with the posting's JSON-LD copied in as the extension does. This
+  // posting's own JSON-LD description leaves out the closing notice (#325)
+  { board: 'lever-apply', title: 'Director', company: 'capital.com', ends: 'If you would like more information about how your data is processed, please contact us.' },
   { board: 'ashby', title: 'AI Systems Engineer, Codex Agents', company: 'OpenAI', ends: 'Join us in shaping the future of technology.' },
   { board: 'workable', title: 'Senior Open-Source Python Engineer, ML Developer Tools - EMEA Remote', company: 'Hugging Face', ends: 'Join a community supporting the ML/AI community.' },
   { board: 'workday', title: 'Senior Applied AI Engineer', company: 'Nvidia', ends: 'or any other characteristic protected by law.' },

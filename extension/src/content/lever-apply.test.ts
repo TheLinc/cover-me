@@ -2,7 +2,12 @@ import { parseHTML } from 'linkedom'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { addLeverPostingJsonLd } from './lever-apply'
 
-const POSTING = '<html><head><script type="application/ld+json">{"@type":"JobPosting","title":"Analyst"}</script></head><body></body></html>'
+const POSTING = `<html><head><script type="application/ld+json">{"@type":"JobPosting","title":"Analyst","description":"<p>Intro only</p>"}</script></head><body>
+  <div class="section page-centered posting-header"><h2>Analyst</h2></div>
+  <div class="section page-centered"><p>Intro</p></div>
+  <div class="section page-centered"><p>Closing notice</p></div>
+  <div class="section page-centered last-section-apply"><a>Apply</a></div>
+</body></html>`
 
 function openPage(url: string) {
   const { document, DOMParser } = parseHTML('<html><head></head><body></body></html>')
@@ -26,7 +31,8 @@ describe('addLeverPostingJsonLd', () => {
     expect(fetch).toHaveBeenCalledOnce()
     expect(fetch.mock.calls[0]).toEqual(['https://jobs.lever.co/acme/1a2b', expect.anything()])
     expect(copied(document)).toHaveLength(1)
-    expect(copied(document)[0].textContent).toContain('"title":"Analyst"')
+    const ld = JSON.parse(copied(document)[0].textContent!)
+    expect(ld).toMatchObject({ title: 'Analyst', description: '<p>Intro</p><p>Closing notice</p>' })
   })
 
   test.each([

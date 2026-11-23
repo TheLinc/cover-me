@@ -29,7 +29,8 @@ export interface Board {
 export const BOARDS: Board[] = [
   { name: 'greenhouse', listing: 'https://job-boards.greenhouse.io/anthropic', posting: /greenhouse\.io\/anthropic\/jobs\/\d+/ },
   { name: 'lever', listing: 'https://jobs.lever.co/palantir', posting: /jobs\.lever\.co\/palantir\/[0-9a-f-]{36}$/ },
-  { name: 'lever-apply', listing: 'https://jobs.lever.co/palantir', posting: /jobs\.lever\.co\/palantir\/[0-9a-f-]{36}$/, rewrite: (href) => `${href}/apply` },
+  // capital.com's JSON-LD leaves out its postings' closing section (#325)
+  { name: 'lever-apply', listing: 'https://jobs.lever.co/capital', posting: /jobs\.lever\.co\/capital\/[0-9a-f-]{36}$/, rewrite: (href) => `${href}/apply` },
   { name: 'ashby', listing: 'https://jobs.ashbyhq.com/openai', posting: /jobs\.ashbyhq\.com\/openai\/[0-9a-f-]{36}$/ },
   { name: 'workable', listing: 'https://apply.workable.com/huggingface/', posting: /apply\.workable\.com\/huggingface\/j\/[0-9A-F]+\/?$/ },
   { name: 'workday', listing: 'https://nvidia.wd5.myworkdayjobs.com/NVIDIAExternalCareerSite', posting: /myworkdayjobs\.com\/(en-US\/)?NVIDIAExternalCareerSite\/job\// },
