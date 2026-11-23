@@ -7,6 +7,7 @@ import type { JobData, ParsedResume } from '../src/types'
 import { INDUSTRY_CASES } from './industry-cases'
 import { longPostingCases } from './long-postings'
 import { LONG_MASTER_CASE } from './long-master'
+import { NURSE_GROUPED_CASE } from './nurse-grouped'
 
 export interface EvalCase {
   id: string
@@ -457,4 +458,4 @@ Requirements: 6+ years of software engineering experience, React, TypeScript, te
   ...INDUSTRY_CASES,
 ]
 CASES.push(...longPostingCases(CASES))
-CASES.push(LONG_MASTER_CASE)
+CASES.push(LONG_MASTER_CASE, NURSE_GROUPED_CASE)
