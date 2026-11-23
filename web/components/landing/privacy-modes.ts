@@ -9,7 +9,7 @@ export const MODES = {
     holds: 'Resume + API key',
     via: null,
     ai: 'Claude or OpenAI',
-    facts: ['Your resume stays in your browser', 'Sent only to the AI you pick, never to Cover Me', 'Your API key is stored encrypted on this device'],
+    facts: ['Your resume stays in your browser', 'Your resume goes only to the AI you pick, never to Cover Me', 'Your API key is stored encrypted on your device'],
   },
   hosted: {
     label: 'Cover Me account',
