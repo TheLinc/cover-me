@@ -262,6 +262,13 @@ John Doe`
     }
   }
   record('notes to the user are caught', noteResult)
+
+  const priceResult: CheckResult = { failures: [], warnings: [] }
+  const sonnet = costCell([{ model: 'claude-sonnet-5-5', input: 500_000, output: 100_000 }], 2)
+  if (sonnet !== '$1.0000') priceResult.failures.push(`Sonnet 5.5 priced as ${sonnet}, expected $1.0000 at $2 in / $10 out`)
+  const unpriced = costCell([{ model: 'claude-sonnet-5-5', input: 1000, output: 1000 }, { model: 'claude-made-up-1', input: 1000, output: 1000 }], 1)
+  if (unpriced !== 'unknown (claude-made-up-1)') priceResult.failures.push(`a model with no price showed as ${unpriced}, expected unknown (claude-made-up-1)`)
+  record('cost table prices each step by its model', priceResult)
 }
 
 async function judgeLetter(letter: string): Promise<{ score: number; flags: string[] }> {
@@ -556,6 +563,23 @@ function judgeAverages(runs: TailorRun[]): Averages {
   return out
 }
 
+// List $ per million tokens, input then output (#304).
+const PRICES: Record<string, [number, number]> = {
+  'claude-sonnet-5-5': [2, 10],
+  'claude-haiku-4-5': [1, 5],
+  'claude-haiku-5-5': [0.1, 0.5],
+}
+
+function costCell(es: typeof usage.log, perTailor: number): string {
+  const unpriced = [...new Set(es.map((e) => e.model).filter((m) => !PRICES[m]))]
+  if (unpriced.length) return `unknown (${unpriced.join(', ')})`
+  const cost = es.reduce((n, e) => {
+    const [pin, pout] = PRICES[e.model]
+    return n + (e.input * pin + e.output * pout) / 1e6
+  }, 0)
+  return `$${(cost / perTailor).toFixed(4)}`
+}
+
 async function liveTailor(): Promise<TailorRun[]> {
   section(`Live tailoring (model: ${MODEL}, parse: ${USE_PARSE ? PARSE_MODEL : 'off'}${JUDGE ? `, judge: ${JUDGE_MODEL}` : ''})`)
   const jobs = cases.flatMap((c) => Array.from({ length: RUNS }, (_, run) => ({ c, run })))
@@ -576,9 +600,7 @@ async function liveTailor(): Promise<TailorRun[]> {
   for (const step of ['parse', 'tailor', 'skill check', 'line check', 'line rewrite']) {
     const es = usage.log.filter((e) => e.label === step)
     if (!es.length) continue
-    const [pin, pout] = step === 'parse' ? [0.1, 0.5] : [3, 15]
-    const cost = es.reduce((n, e) => n + (e.input * pin + e.output * pout) / 1e6, 0) / perTailor
-    costRows.push(`| ${step} | ${es.length} | ${Math.round(mean(es.map((e) => e.input)))} | ${Math.round(mean(es.map((e) => e.output)))} | $${cost.toFixed(4)} |`)
+    costRows.push(`| ${step} | ${es.length} | ${Math.round(mean(es.map((e) => e.input)))} | ${Math.round(mean(es.map((e) => e.output)))} | ${costCell(es, perTailor)} |`)
   }
   reportLines.push('\n## Production cost per tailor\n', ...costRows, '')
   console.log('\n' + costRows.join('\n'))
