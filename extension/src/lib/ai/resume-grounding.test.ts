@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { buildLineCheckPrompt, candidateText, checkAndRewriteLines, groundSkills, groundTailored, buildsOnEdits, keepSeen, matchSkillCase, mixedTenseLines, seenVersion, trustedNotes } from './resume-grounding'
 
-// Made-up posting and resume. The resume never says "web", "Ruby", "Rails" or "HIPAA".
+// Made-up posting and resume. The resume never says "web", "Ruby", "Rails" or "HIPAA". (#60)
 const posting = `Frontend Web Developer
 We build patient tools for Personal Health teams. You will ship Web features with React.
 Experience with Ruby on Rails and HIPAA is a plus.`
@@ -45,14 +45,14 @@ describe('groundTailored', () => {
     expect(run('Software Engineer building React apps and Node.js APIs.', 'Senior Software Engineer')).toBe('Software Engineer building React apps and Node.js APIs.')
     expect(run('Senior Software Engineer building React apps.', 'Senior Software Engineer')).toBe('')
     expect(run('Software Engineer building React apps. Holds a Hazmat endorsement.', 'Senior Software Engineer')).toBe('Software Engineer building React apps.')
-    // A scraped title's suffix (team, location) isn't part of the role's name.
+    // A scraped title's suffix (team, location) isn't part of the role's name. (#220)
     expect(run('Software Engineer building React apps.', 'Senior Software Engineer, Payments (Remote)')).toBe('Software Engineer building React apps.')
     expect(run('Software Engineer building React apps.', 'Software Engineer - EMEA')).toBe('Software Engineer building React apps.')
-    // A one-word title is a generic word, and the title only blanks whole words.
+    // A one-word title is a generic word, and the title only blanks whole words. (#220)
     expect(run('Engineer building React apps.', 'Lead Engineer')).toBe('')
     const eng = 'Hiring a Software Engineer. Platform Engineering owns Engineers.'
     expect(groundTailored({ ...resume, summary: 'Builds React apps. Joins Platform Engineering.' }, resume, candidateText(resume), eng, 'Software Engineer').resume.summary).toBe('Builds React apps.')
-    // Without the title, the posting's words are checked as before.
+    // Without the title, the posting's words are checked as before. (#220)
     expect(run('Software Engineer building React apps.', '')).toBe('')
   })
 
@@ -121,7 +121,7 @@ describe('an edited previous version', () => {
     const twoRoles = { ...original, experience: [original.experience[0], intern] }
     const edited = { ...twoRoles, experience: [{ ...original.experience[0], bullets: [bullet] }, intern], editedAt: 'x' }
     // The check flags the given line; no rewrite comes back, so a flagged line
-    // reverts to its original. On Regenerate the originals are the seen version.
+    // reverts to its original. On Regenerate the originals are the seen version. (#175)
     const check = (out: typeof twoRoles, id: string, prev?: object, notes?: string) => {
       const replies = [JSON.stringify({ flags: [{ id, reason: 'adds Rails' }], summary: null }), '{}']
       return checkAndRewriteLines(out, seenVersion(twoRoles, prev), posting, async () => replies.shift()!, notes)
@@ -132,7 +132,7 @@ describe('an edited previous version', () => {
       const { resume, repair } = await check(out, 'e0b0', edited)
       expect(resume.experience[0].bullets).toEqual([bullet])
       expect(repair.flagged).toEqual([])
-      // Unedited, it is checked as before.
+      // Unedited, it is checked as before. (#175)
       expect((await check(out, 'e0b0', { ...edited, editedAt: undefined })).resume.experience[0].bullets).toEqual(original.experience[0].bullets)
     })
 
@@ -158,7 +158,7 @@ describe('an edited previous version', () => {
     expect('skills' in seen).toBe(false)
     expect(seenVersion(original, { ...previous, experience: [{ bullets: 'oops' }], hasEdits: true })).toBe(original)
     expect(seenVersion(original, { ...previous, certifications: 'CPR', hasEdits: true })).toBe(original)
-    // A different resume uploaded since: its roles no longer line up.
+    // A different resume uploaded since: its roles no longer line up. (#175)
     expect(seenVersion(original, { ...previous, experience: [...previous.experience, ...previous.experience], editedAt: 'x' })).toBe(original)
     expect(seenVersion(original, { ...previous, experience: [], editedAt: 'x' }).experience).toEqual([])
     expect(seenVersion(original, previous)).toBe(original)
@@ -198,7 +198,7 @@ describe('an edited previous version', () => {
 })
 
 describe('checkAndRewriteLines summary', () => {
-  // The check flags only the summary; the rewrite reply is the given text.
+  // The check flags only the summary; the rewrite reply is the given text. (#63)
   const run = (summary: string, rewrite: string | null, input: { summary?: string } = original) => {
     const replies = [JSON.stringify({ flags: [], summary: 'claims leadership' }), JSON.stringify({ rewrites: rewrite === null ? [] : [{ id: 'summary', text: rewrite }] })]
     return checkAndRewriteLines({ ...original, summary }, { ...original, ...input }, posting, async () => replies.shift()!)
@@ -221,7 +221,7 @@ describe('checkAndRewriteLines summary', () => {
     expect(repair.summary).toBe('rewritten')
   })
 
-  // The model copies the reply example's id; a fixed "e0b2" there emptied every flagged summary.
+  // The model copies the reply example's id; a fixed "e0b2" there emptied every flagged summary. (#94)
   test('the rewrite prompt\'s reply example uses a flagged id', async () => {
     const prompts: string[] = []
     const replies = [JSON.stringify({ flags: [], summary: 'claims leadership' }), '{}']
@@ -230,13 +230,13 @@ describe('checkAndRewriteLines summary', () => {
     expect(prompts[1]).not.toContain('e0b2')
   })
 
-  // Without the notes the checker flagged context-backed lines ("uses GitHub Actions") as invented.
+  // Without the notes the checker flagged context-backed lines ("uses GitHub Actions") as invented. (#164)
   test('the check prompt carries the candidate\'s supplemental context', async () => {
     const prompts: string[] = []
     await checkAndRewriteLines({ ...original, summary: flagged }, original, posting, async (p) => (prompts.push(p), '{"flags": [], "summary": null}'), 'Cover Me uses GitHub Actions for CI/CD.')
     expect(prompts[0]).toContain('CANDIDATE NOTES')
     expect(prompts[0]).toContain('Cover Me uses GitHub Actions for CI/CD.')
-    // Blank notes leave the prompt exactly as it was before notes existed.
+    // Blank notes leave the prompt exactly as it was before notes existed. (#164)
     expect(buildLineCheckPrompt(original, original, '  ')).toBe(buildLineCheckPrompt(original, original))
   })
 
@@ -447,5 +447,56 @@ describe('candidateText and the section order', () => {
     const text = candidateText(resume)
     expect(text).not.toMatch(/experience/i)
     expect(text).toContain('Zendesk')
+  })
+})
+
+// The made-up resume in web/public/guides/tailor-resume-in-word, as text (#285).
+// It has "product launches" and a "Marketing Lead" title, but no product marketing.
+const alexRivera = `Alex Rivera
+Marketing Lead
+Marketing lead with seven years in B2B demand generation. Plans campaigns across email, social and search, manages budgets over $1M, and reports results in Google Analytics.
+Led campaign strategy across email and social, growing qualified leads 38% in one year
+Managed a $1.2M paid media budget across four channels and cut cost per lead 22%
+Grew organic traffic 64% with an SEO plan for the blog and product pages
+Wrote and scheduled a weekly newsletter for 40,000 subscribers with a 41% open rate
+Built the monthly reporting dashboard in Google Analytics for the sales team
+Coordinated three product launches with design, sales and customer success
+Campaign strategy, SEO, Google Analytics, A/B testing, Paid media, Budget management, Copywriting, Team leadership`
+
+describe('groundSkills with a skill whose words are scattered through the resume (#285)', () => {
+  test('goes to the model check, which can drop it', async () => {
+    const prompts: string[] = []
+    const reject = async (p: string) => { prompts.push(p); return '{"verdicts": []}' }
+    const { skills, dropped } = await groundSkills([{ skill: 'Product marketing' }, { skill: 'Google Analytics' }], alexRivera, reject)
+    expect(skills).toBe('Google Analytics')
+    expect(dropped).toEqual([expect.stringMatching(/^Product marketing \(evidence ".+" doesn't show it\)$/)])
+    expect(prompts).toHaveLength(1)
+    expect(prompts[0]).toContain('0. EVIDENCE: "Grew organic traffic 64% with an SEO plan for the blog and product pages; Marketing Lead" → SKILL: "Product marketing"')
+    expect(prompts[0]).not.toContain('SKILL: "Google Analytics"')
+  })
+
+  test('cited evidence the resume lacks is replaced by the resume lines, not trusted', async () => {
+    const prompts: string[] = []
+    const reject = async (p: string) => { prompts.push(p); return '{"verdicts": []}' }
+    const { skills } = await groundSkills([{ skill: 'Product marketing', evidence: 'Owned product marketing for launches' }], alexRivera, reject)
+    expect(skills).toBeUndefined()
+    expect(prompts[0]).not.toContain('Owned product marketing')
+    expect(prompts[0]).toContain('product pages; Marketing Lead')
+  })
+
+  test('a reordered name is checked against the resume line that holds its words, and kept when approved', async () => {
+    const prompts: string[] = []
+    const approve = async (p: string) => { prompts.push(p); return '{"verdicts": [{"i": 0, "ok": true}]}' }
+    const { skills, dropped } = await groundSkills([{ skill: 'Strategy (campaign)' }], 'Led campaign strategy across email and social', approve)
+    expect(skills).toBe('Strategy (campaign)')
+    expect(dropped).toEqual([])
+    expect(prompts[0]).toContain('0. EVIDENCE: "Led campaign strategy across email and social" → SKILL: "Strategy (campaign)"')
+  })
+
+  test('the evidence is the line that holds every word, when one does', async () => {
+    const prompts: string[] = []
+    const approve = async (p: string) => { prompts.push(p); return '{"verdicts": [{"i": 0, "ok": true}]}' }
+    await groundSkills([{ skill: 'Analytics (Google)' }], 'Data Analyst\nGoogle\nBuilt product analytics in Mixpanel\nSQL, Google Analytics', approve)
+    expect(prompts[0]).toContain('0. EVIDENCE: "SQL, Google Analytics" → SKILL: "Analytics (Google)"')
   })
 })
