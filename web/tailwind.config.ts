@@ -1,4 +1,5 @@
 import type { Config } from 'tailwindcss'
+import animate from 'tailwindcss-animate'
 
 const config: Config = {
   darkMode: ['class'],
@@ -10,7 +11,6 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // shadcn
         border:      'var(--line)',
         input:       'hsl(var(--input))',
         ring:        'hsl(var(--ring))',
@@ -23,7 +23,6 @@ const config: Config = {
         accent:      { DEFAULT: 'var(--panel)',             foreground: 'var(--ink)' },
         popover:     { DEFAULT: 'hsl(var(--popover))',     foreground: 'hsl(var(--popover-foreground))' },
         card:        { DEFAULT: 'hsl(var(--card))',        foreground: 'hsl(var(--card-foreground))' },
-        // Palette (values in globals.css)
         paper:  'var(--paper)',
         panel:  'var(--panel)',
         line:   'var(--line)',
@@ -36,7 +35,6 @@ const config: Config = {
           deep:    'var(--brand-deep)',
           tint:    'var(--brand-tint)',
           ink:     'var(--brand-ink)',
-          // Legacy names still used by inner pages.
           light:   'var(--brand-strong)',
           dim:     'var(--brand-tint)',
           glow:    'rgba(99,102,241,0.18)',
@@ -44,7 +42,6 @@ const config: Config = {
         gap:    { DEFAULT: 'var(--gap)', tint: 'var(--gap-tint)', ink: 'var(--gap-ink)' },
         offer:  { DEFAULT: 'var(--offer)', tint: 'var(--offer-tint)', ink: 'var(--offer-ink)' },
         night:  { DEFAULT: 'var(--night)', 2: 'var(--night-2)' },
-        // The extension popup's dark UI, for product visuals only.
         ext: {
           bg:       'var(--ext-bg)',
           surface:  'var(--ext-surface)',
@@ -56,7 +53,6 @@ const config: Config = {
           'text-2': 'var(--ext-text-2)',
           'border-hover': 'var(--ext-border-hover)',
         },
-        // Legacy aliases still used by inner pages. New code uses the names above.
         surface:  'var(--surface)',
         elevated: 'var(--panel)',
         dim:      'var(--subtle)',
@@ -97,7 +93,7 @@ const config: Config = {
       },
     },
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [animate],
 }
 
 export default config
