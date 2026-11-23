@@ -47,7 +47,7 @@ const RUN_LETTERS = ALL_SIDES || flag('letters')
 const RUN_TAILOR = ALL_SIDES || flag('tailor')
 const RUN_ANSWERS = ALL_SIDES || flag('answers')
 const MODEL = opt('model') ?? 'claude-sonnet-5-5'
-const PARSE_MODEL = opt('parse-model') ?? 'claude-haiku-4-5'
+const PARSE_MODEL = opt('parse-model') ?? 'claude-haiku-5-5'
 const JUDGE_MODEL = opt('judge-model') ?? 'claude-sonnet-5-5'
 const RUNS = Math.max(1, Number(opt('runs') ?? 1))
 const CONCURRENCY = Math.max(1, Number(opt('concurrency') ?? 6))
@@ -463,7 +463,7 @@ async function tailorOnce(c: EvalCase, run: number): Promise<TailorRun> {
   try {
     let input: ParsedResume = c.parsed
     if (USE_PARSE) {
-      const raw = await call([{ role: 'user', content: buildParsePrompt(c.resumeText) }], { model: PARSE_MODEL, maxTokens: 6000, label: 'parse' })
+      const raw = await call([{ role: 'user', content: buildParsePrompt(c.resumeText) }], { model: PARSE_MODEL, maxTokens: 8000, label: 'parse' })
       try {
         const parsed = parseParsedJson(raw, c.resumeText)
         const result = checkParse(parsed, c)
@@ -575,7 +575,7 @@ async function liveTailor(): Promise<TailorRun[]> {
   for (const step of ['parse', 'tailor', 'skill check', 'line check', 'line rewrite']) {
     const es = usage.log.filter((e) => e.label === step)
     if (!es.length) continue
-    const [pin, pout] = step === 'parse' ? [1, 5] : [3, 15]
+    const [pin, pout] = step === 'parse' ? [0.1, 0.5] : [3, 15]
     const cost = es.reduce((n, e) => n + (e.input * pin + e.output * pout) / 1e6, 0) / perTailor
     costRows.push(`| ${step} | ${es.length} | ${Math.round(mean(es.map((e) => e.input)))} | ${Math.round(mean(es.map((e) => e.output)))} | $${cost.toFixed(4)} |`)
   }

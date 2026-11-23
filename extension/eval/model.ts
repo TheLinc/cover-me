@@ -58,8 +58,9 @@ function runClaude(prompt: string, opts: CallOptions): Promise<string> {
   // With a key in its env, claude -p bills API credits, not the plan (https://github.com/TheLinc/cover-me/commit/cb47a02).
   delete env.ANTHROPIC_API_KEY
   if (CLEAN_CONFIG) env.CLAUDE_CONFIG_DIR = CLEAN_CONFIG
-  // Matches SONNET_FIELDS in src/lib/ai/claude.ts (#203).
+  // Matches SONNET_FIELDS and HAIKU_PARSE_FIELDS in src/lib/ai/claude.ts (#203, #298).
   if (opts.model === 'claude-sonnet-5-5' && !opts.think) args.push('--effort', 'high')
+  else if (opts.model === 'claude-haiku-5-5' && !opts.think) args.push('--effort', 'low')
   else if (!opts.think) env.MAX_THINKING_TOKENS = '0'
 
   return new Promise((resolve, reject) => {
