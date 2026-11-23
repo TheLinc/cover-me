@@ -3,16 +3,12 @@ import { PLAN_LIMITS as L } from '@/lib/limits'
 
 export const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 
-// Mirror of the live Chrome Web Store rating — update when reviews change.
-// Displayed in the hero and marked up in SoftwareApplication.aggregateRating;
-// the two must always match the store listing.
+// Must match the Chrome Web Store listing; update when reviews change. (#269)
 export const STORE_RATING = { value: 5, count: 3 }
 
-// The homepage's preview image, for pages that have none of their own.
 export const OG_IMAGE = { url: `${BASE}/opengraph-image`, width: 1200, height: 630, alt: 'Cover Me: tailor your resume to any job posting' }
 
-// `version` is the newest published release (getLatestVersion). Left out when
-// GitHub can't be read, rather than naming a stale version.
+// `version` is left out when GitHub can't be read, rather than naming a stale one. (#154)
 export const jsonLdApp = (version: string | null) => ({
   '@context': 'https://schema.org',
   '@type': 'SoftwareApplication',

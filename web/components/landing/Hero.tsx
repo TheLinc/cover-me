@@ -6,7 +6,7 @@ import { Button, buttonVariants } from '@/components/ui/button'
 import { SendToComputer } from '@/components/site/SendToComputer'
 import { badgeVariants } from '@/components/ui/badge'
 import { storeUrl, cn } from '@/lib/utils'
-import { STORE_RATING } from '@/lib/structured-data'
+import { PLAN_LIMITS as L } from '@/lib/limits'
 import { Ambient } from './Ambient'
 import { BrowserFrame, EXAMPLE } from './visuals'
 
@@ -201,11 +201,11 @@ export function Hero() {
             </a>
           </p>
           <p className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[11.5px] text-subtle max-xl:justify-center">
-            <span>{STORE_RATING.value.toFixed(1)} on Chrome Web Store</span>
+            <span>Free, no credit card</span>
             <span aria-hidden="true">/</span>
-            <span>Free to start, no API key needed</span>
+            <span>{L.free_starter} tailored resumes, then {L.free_weekly} a week</span>
             <span aria-hidden="true">/</span>
-            <span>Open source</span>
+            <span>Never invents experience</span>
           </p>
         </div>
         <div data-hero-stage className="mx-auto w-full max-w-[500px] pt-4">
