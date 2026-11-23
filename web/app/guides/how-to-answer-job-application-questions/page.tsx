@@ -44,7 +44,7 @@ const faqJsonLd = {
       name: 'How do you answer "Why are you interested in this position?"',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Name one part of the job, in the posting\'s words, in your first sentence. Then give one result from your resume that shows you have done that work, and say how the two connect. Leave out praise for the company\'s mission. Three or four sentences is enough for most form boxes.',
+        text: 'Name the one part of the job you most want to do, and why, in your first sentence. Then give one or two results from your resume that show you have done that work. Leave out praise for the company\'s mission, and don\'t list the posting\'s requirements back. Three or four sentences is enough for most form boxes.',
       },
     },
     {
@@ -52,7 +52,7 @@ const faqJsonLd = {
       name: 'How do you answer "Why do you want to work here?"',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: "Give a reason about this company that wouldn't fit any other: what it sells, who its customers are, or a problem the posting says it has. Then tie it to one thing you have done. If the only reason you can find is the mission statement, write about the job instead.",
+        text: "Give a reason about this company that wouldn't fit any other, such as what it sells or who its customers are, and say why it matters to you. Then back it with one thing you have done. If the only reason you can find is the mission statement, write about the job instead.",
       },
     },
     {
@@ -92,8 +92,8 @@ export default function Page() {
         </>
       }
       tldr={[
-        'Answer the question in your first sentence, then back it with one real result from your resume.',
-        "Use the posting's own words for what the job is, and your resume for what you've done. Don't praise the company's mission.",
+        'Answer the question in your first sentence, then back it with one or two real results from your resume.',
+        "Use the posting to pick what you say about the job, and your resume for what you've done. Don't praise the company's mission or list its requirements back.",
         'Salary, start date and reason for leaving are facts only you know. Keep those answers to one or two sentences.',
       ]}
       intro={
@@ -117,15 +117,15 @@ export default function Page() {
               </p>
               <h3>How to answer</h3>
               <ol>
-                <li>Pick the one part of the job you most want to do, and name it in the posting&rsquo;s words in your first sentence.</li>
-                <li>Find one result on your resume that shows you&rsquo;ve done that part already. Use its real number.</li>
+                <li>Pick the one part of the job you most want to do, and say why in your first sentence.</li>
+                <li>Find one or two results on your resume that show you&rsquo;ve done that part already. Use the real numbers.</li>
                 <li>Stop there. Don&rsquo;t list the posting&rsquo;s requirements back as proof you fit. The result already shows it, and a form box is not a cover letter.</li>
               </ol>
               <Sample>
                 This role puts campaign strategy and the paid budget with one person, and that&apos;s the part of my work I want more of. At Brightline I led campaign strategy across email and social that grew qualified leads 38% in one year, and I manage a $1.2M paid media budget across four channels, where I cut cost per lead 22%.
               </Sample>
               <p>
-                It never says &ldquo;passionate&rdquo; or praises Northwind. The reason is in the first sentence, and the two numbers are what make it believable.
+                It never says &ldquo;passionate&rdquo; or praises Northwind. The reason is in the first sentence, and the results are what make it believable.
               </p>
             </>
           ),
@@ -148,7 +148,7 @@ export default function Page() {
                 <li>Back it with one thing you&rsquo;ve done that fits.</li>
               </ol>
               <Sample>
-                I want to market a product that small businesses buy for themselves, and independent clinics are that kind of customer. Email and search are the channels I know best for reaching them: at Brightline, an SEO plan for the blog and product pages grew organic traffic 64%. I&apos;m also in Denver, close to your office.
+                I want to market a product that small businesses choose for themselves, and independent clinics are that kind of customer. The work I&apos;d bring is search and email: at Brightline, an SEO plan for the blog and product pages grew organic traffic 64%.
               </Sample>
               <p>
                 If the only reason you can find is the company&rsquo;s mission statement, write about the job instead. A true answer about the work reads better than borrowed praise.
@@ -170,7 +170,7 @@ export default function Page() {
                 Three or four sentences: what you do now and for how long, one result that matches the posting, and why you&rsquo;re applying. Leave out anything already in the form, such as your school or address.
               </p>
               <Sample>
-                I&apos;m a marketing lead with seven years in B2B demand generation, now at Brightline in Denver. I plan campaigns across email, social and search, and I manage a $1.2M paid media budget, where I cut cost per lead 22%. I&apos;m applying because this role owns the same channels and budget, and I&apos;d like to bring them to a product for clinics.
+                I&apos;m a marketing lead with seven years in B2B demand generation, now at Brightline. I plan campaigns across email, social and search, and I manage a $1.2M paid media budget, where I cut cost per lead 22%. I&apos;m applying because I want to market a product that small businesses choose for themselves.
               </Sample>
             </>
           ),
@@ -215,7 +215,7 @@ export default function Page() {
                 <li>Don&rsquo;t criticize the employer. The reader only hears your side, and it&rsquo;s the side they&rsquo;ll remember.</li>
               </ul>
               <Sample>
-                I&apos;m still at Brightline. I&apos;m looking for a role where I own the whole campaign plan for one product, and this one does.
+                I&apos;m still at Brightline. I&apos;m looking for a role where I own the whole campaign plan for one product.
               </Sample>
             </>
           ),
@@ -228,7 +228,7 @@ export default function Page() {
                 I build <Link href="/">Cover Me</Link>, a Chrome extension that can write a first draft of these answers for you to edit. On the application, right-click the question box and choose &ldquo;Cover Me: write an answer&rdquo;. It reads the question and the job posting on the page, or the job you last saved in Cover Me, writes an answer from your resume, and types it into the box. You edit it there, ask for a change such as Shorter, or press Ctrl+Z to undo.
               </p>
               <p>
-                It follows the rules above: the answer comes first, and every fact comes from your resume or what you&rsquo;ve told Cover Me about yourself. Details only you know, such as your salary or start date, stay in [brackets] for you to fill in. It never submits the form. Free accounts get {L.answer_starter} answers to start, then {L.answer_weekly} a week, Pro gets {L.answer_pro_daily} a day, and there&rsquo;s no limit with your own API key. You can <a href="#get-cover-me">install it below</a>.
+                The answer comes first, and every fact in it comes from your resume or what you&rsquo;ve told Cover Me about yourself. Details such as your salary or start date stay in [brackets] for you to fill in. Check the draft against the advice above before you use it. It never submits the form. Free accounts get {L.answer_starter} answers to start, then {L.answer_weekly} a week, Pro gets {L.answer_pro_daily} a day, and there&rsquo;s no limit with your own API key. You can <a href="#get-cover-me">install it below</a>.
               </p>
             </>
           ),
