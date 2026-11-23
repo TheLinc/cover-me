@@ -35,7 +35,6 @@ const config: Config = {
           deep:    'var(--brand-deep)',
           tint:    'var(--brand-tint)',
           ink:     'var(--brand-ink)',
-          // Legacy names still used by inner pages (#323).
           light:   'var(--brand-strong)',
           dim:     'var(--brand-tint)',
           glow:    'rgba(99,102,241,0.18)',
@@ -54,7 +53,6 @@ const config: Config = {
           'text-2': 'var(--ext-text-2)',
           'border-hover': 'var(--ext-border-hover)',
         },
-        // Legacy aliases still used by inner pages. New code uses the names above (#323).
         surface:  'var(--surface)',
         elevated: 'var(--panel)',
         dim:      'var(--subtle)',
