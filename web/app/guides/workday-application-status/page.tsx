@@ -189,7 +189,7 @@ export default function Page() {
                           <td className={`${td} text-muted-foreground`}>{s.tab}</td>
                           <td className={`${td} text-muted-foreground`}>{s.means}</td>
                           <td className={`${td} text-muted-foreground`}>{s.next}</td>
-                          <td className={`${td} text-muted-foreground`}>
+                          <td className={`${td} text-muted-foreground [&_a]:text-brand-strong [&_a]:underline [&_a]:underline-offset-2 hover:[&_a]:text-brand-deep`}>
                             {s.sources.map((source, j) => (
                               <span key={source}>
                                 {j > 0 && ', '}
