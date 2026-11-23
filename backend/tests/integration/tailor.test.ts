@@ -582,7 +582,7 @@ describe('long master resumes', () => {
     expect(current.otherSections[0].entries[0].name).toBe('pg-outbox')
 
     const older = await tailor({}, {})
-    expect(older.projects[0]).toEqual({ name: 'tidewatch', bullets: ['Go, SQLite | github.com/x/tidewatch', ...current.projects[0].bullets] })
+    expect(older.projects[0]).toEqual({ name: 'tidewatch', bullets: [...current.projects[0].bullets, 'Go, SQLite | github.com/x/tidewatch'] })
     expect(older.otherSections[0]).toEqual({
       heading: 'Open Source',
       lines: ['pg-outbox | Creator | github.com/x/pg-outbox', 'Outbox library for Postgres', 'Speaker, GopherCon 2024'],

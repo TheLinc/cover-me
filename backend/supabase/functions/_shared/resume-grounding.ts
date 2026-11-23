@@ -879,9 +879,11 @@ function groundHeadline<T extends Groundable>(tailored: T, original: Groundable,
   const headline = tailored.headline
   if (!headline || !original.headline || headline === original.headline) return tailored
   const own = [original.headline, ...original.experience.map((e) => e.title ?? '')].join(' \n ')
-  const level = LEVELS.find((l) => mentions(headline, l) && !mentions(own, l))
   const jobOnly = terms.filter((t) => namesTerm(headline, t))
   const [title, ...specialty] = headline.split(/\s*[,|(\u2013\u2014\u00b7]\s*|\s+-\s+/)
+  // Only the title claims a level: "Registered Nurse, IV Therapy" and
+  // "Analyst, Master Data" name a specialty, not a rank (#190).
+  const level = LEVELS.find((l) => mentions(title ?? '', l) && !mentions(own, l))
   const titleWords = new Set(tokens(own))
   const allWords = new Set(tokens([own, ...original.experience.flatMap((e) => e.bullets ?? []), ...(original.projects ?? []).flatMap((p) => p.bullets ?? [])].join(' \n ')))
   const backed = (w: string, words: Set<string>) => words.has(w) || words.has(`${w}s`) || words.has(w.replace(/s$/, '')) ||

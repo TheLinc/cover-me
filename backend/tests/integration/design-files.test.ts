@@ -153,7 +153,7 @@ describe('design files', () => {
       expect(r.skills).toContain('\n')
     }
     const isFolded = (r: Record<string, any>) => {
-      expect(r.projects[0]).toEqual({ name: 'tidewatch', bullets: ['Go, SQLite | github.com/x/tidewatch', ...r.projects[0].bullets.slice(1)] })
+      expect(r.projects[0]).toEqual({ name: 'tidewatch', bullets: [...r.projects[0].bullets.slice(0, -1), 'Go, SQLite | github.com/x/tidewatch'] })
       expect(r.otherSections[0]).toEqual({ heading: 'Open Source', lines: ['pg-outbox | Creator', 'Outbox library', 'Speaker, GopherCon 2024'] })
       expect(r.skills).not.toContain('\n')
     }

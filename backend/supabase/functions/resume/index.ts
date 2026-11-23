@@ -125,7 +125,6 @@ Deno.serve(async (req) => {
   // POST — save/replace resume. parse: true waits for the parse and returns
   // it (the extension's check of a Word upload); otherwise it runs behind (#131).
   if (req.method === 'POST') {
-    // Reject oversized payloads before parsing JSON (https://github.com/TheLinc/cover-me/commit/bb916656015943732838f958f925ad6cea16a69a)
     const contentLength = parseInt(req.headers.get('content-length') ?? '0', 10)
     if (contentLength > MAX_RESUME_BYTES) {
       return json({ error: 'Resume text too large (max 100 KB)' }, 413)
@@ -148,7 +147,6 @@ Deno.serve(async (req) => {
     if (filename && typeof filename !== 'string') {
       return json({ error: 'Invalid filename' }, 400)
     }
-    // Strip any non-printable characters from filename (https://github.com/TheLinc/cover-me/commit/bb916656015943732838f958f925ad6cea16a69a)
     const safeFilename = filename?.replace(/[^\x20-\x7E]/g, '').slice(0, 255) ?? null
 
     const { data: previous } = await supabase
@@ -233,7 +231,6 @@ Deno.serve(async (req) => {
     return json({ success: true, sectionOrder: structured.sectionOrder })
   }
 
-  // DELETE — remove resume (https://github.com/TheLinc/cover-me/commit/f704e78f0350c772053de8c347ffc835ae82266a)
   if (req.method === 'DELETE') {
     const { error } = await supabase.from('resumes').delete().eq('user_id', userId)
     if (error) return json({ error: 'Failed to delete resume' }, 500)

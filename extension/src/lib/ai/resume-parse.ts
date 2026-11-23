@@ -6,8 +6,8 @@ const CLAUDE_API = 'https://api.anthropic.com/v1/messages'
 
 // The most resume text a prompt carries, own-key and signed in alike. A long
 // master resume (three pages, fifteen bullets a role) runs about 13,000
-// characters; the old 12,000 cap cut off whatever came last, usually
-// education. 20,000 covers 99% of stored resumes while keeping the parse well
+// characters, and a cut drops whatever comes last, usually education.
+// 20,000 covers 99% of stored resumes while keeping the parse well
 // inside its output limit (#190).
 export const MAX_RESUME_CHARS = 20000
 

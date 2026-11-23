@@ -26,7 +26,6 @@ Deno.serve(async (req) => {
 
   const userId = user.id
 
-  // Parse request (#10)
   let job: { title: string; company: string; description: string; url?: string }
   let supplemental: string | undefined
   try {
@@ -41,7 +40,6 @@ Deno.serve(async (req) => {
     return json({ error: 'Missing job title or description' }, 400)
   }
 
-  // Fetch resume (https://github.com/TheLinc/cover-me/commit/f704e78f0350c772053de8c347ffc835ae82266a)
   const { data: resumeRow, error: resumeError } = await supabase
     .from('resumes')
     .select('text_encrypted')
@@ -76,7 +74,6 @@ Deno.serve(async (req) => {
     if (error) console.error('Rate limit refund RPC error:', error.message)
   }
 
-  // Build prompt and call Claude (https://github.com/TheLinc/cover-me/commit/f704e78f0350c772053de8c347ffc835ae82266a)
   const variation = pickLetterVariation()
   const prompt = buildPrompt(job, resumeText, supplemental, variation)
 

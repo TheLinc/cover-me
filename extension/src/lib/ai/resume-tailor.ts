@@ -173,21 +173,25 @@ const figures = (text: string): string[] => text.match(/\d+(?:[./]\d+)*/g) ?? []
 /**
  * Cuts an entry to max bullets, the model's ranking first, while keeping up to
  * two of the original's measured results (in the order the resume gives them).
- * A result counts as kept when some bullet still states all of its figures; a
+ * A result counts as kept when some bullet still states all of its percentages
+ * or all of its other figures ("Cut wait 38%" keeps "from 40 to 25 minutes
+ * (38%)"); a
  * dropped one comes back as the model's rewrite if it wrote one past the cut,
  * else as the original, at the top, and the lowest-ranked bullets make room (#190).
  */
 export function keepResults(orig: string[], kept: string[], max: number): string[] {
-  const states = (bullet: string, nums: string[]) => {
+  const states = (bullet: string, result: string) => {
     const own = new Set(figures(bullet))
-    return nums.every((n) => own.has(n))
+    const pct = new Set(result.match(/\d+(?:\.\d+)?(?=\s*%)/g) ?? [])
+    const nums = figures(result)
+    return [nums.filter((n) => pct.has(n)), nums.filter((n) => !pct.has(n))]
+      .some((part) => part.length > 0 && part.every((n) => own.has(n)))
   }
   const results = orig.filter(isResultBullet).slice(0, Math.min(2, max))
   const head: string[] = []
   for (const result of results) {
-    const nums = figures(result)
-    if (!nums.length) continue
-    const at = kept.findIndex((b) => states(b, nums))
+    if (!figures(result).length) continue
+    const at = kept.findIndex((b) => states(b, result))
     if (at >= 0 && at < max) continue
     head.push(at >= 0 ? kept[at] : result)
   }

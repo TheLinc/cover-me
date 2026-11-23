@@ -182,6 +182,12 @@ describe('measured results survive the trim', () => {
     const kept = [scope, 'Reduced section time from 40 to 25 minutes across 12 paired tasks.', ...other(4)]
     expect(keepResults([pilot, scope, ...other(4)], kept, 6)).toEqual(kept)
   })
+
+  test('a result rewritten with only its percentage counts as kept', () => {
+    const wait = 'Reduced ER wait from 40 to 25 minutes (38%) by moving triage forward.'
+    const kept = ['Cut ER wait times 38% by moving triage forward.', ...other(5)]
+    expect(keepResults([wait, ...other(5)], kept, 6)).toEqual(kept)
+  })
 })
 
 describe('tailored headline', () => {
@@ -276,6 +282,13 @@ describe('headline words the resume never shows', () => {
     expect(groundTailored({ ...own, headline: 'AI Agent Engineer' }, own, candidate, 'AI Agent Engineer').resume.headline).toBe('Applied AI Engineer')
     const rn = { headline: 'Registered Nurse', experience: [{ title: 'Staff Nurse', bullets: ['Cared for 5 med-surg patients a shift'] }] }
     expect(groundTailored({ ...rn, headline: 'Registered Nurse, Med-Surg' }, rn, 'Registered Nurse Staff Nurse Cared for 5 med-surg patients a shift', 'Registered Nurse').resume.headline).toBe('Registered Nurse, Med-Surg')
+  })
+
+  test('a level word in the specialty is not a level claim', () => {
+    const rn = { headline: 'Registered Nurse', experience: [{ title: 'Registered Nurse', bullets: ['Started IV therapy for 8 patients a shift'] }] }
+    expect(groundTailored({ ...rn, headline: 'Registered Nurse, IV Therapy' }, rn, 'Registered Nurse Started IV therapy for 8 patients a shift', 'Registered Nurse').resume.headline).toBe('Registered Nurse, IV Therapy')
+    const analyst = { headline: 'Data Analyst', experience: [{ title: 'Data Analyst', bullets: ['Cleaned master data for 3 plants'] }] }
+    expect(groundTailored({ ...analyst, headline: 'Data Analyst, Master Data' }, analyst, 'Data Analyst Cleaned master data for 3 plants', 'Data Analyst').resume.headline).toBe('Data Analyst, Master Data')
   })
 })
 
