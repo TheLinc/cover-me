@@ -35,9 +35,10 @@ describe('design files', () => {
 
   it("the same text again upgrades a parse without an order, or returns it as it was when that parse can't run", async () => {
     user = await createUser()
-    await callFunction('resume', { token: user.token, body: { text: RESUME_TEXT, filename: 'resume.docx', parse: true } })
     const { sectionOrder: _o, ...old } = MOCK_PARSED_RESUME
     const send = async () => (await (await callFunction('resume', { token: user!.token, body: { text: RESUME_TEXT, filename: 'resume.docx', parse: true } })).json()).structured
+    // The parse saves while the heartbeat body streams, so read it to the end before caching over it (#298).
+    await send()
 
     await cacheParsedResume(user.id, old)
     expect((await send()).sectionOrder).toEqual(['summary', 'experience', 'other', 'education', 'skills'])
