@@ -14,6 +14,16 @@ Site features under the names a visitor would use, with the route and how to rea
 
 - Free ATS resume checker: `/ats-checker`. Nav, footer, and links from the guides. No account needed; the page is `components/site/AtsChecker.tsx`.
 
+## Home
+
+- Homepage: `/`. The hero's install button, the "How it works" story with its bottom dock, Pricing (`#pricing`) and the closing section (`#get-started`).
+- Job board pages: `/for/<board>` (such as `/for/linkedin`). Linked from the guides and from search. One page per board in `lib/boards.ts`.
+
+## Install from a phone
+
+- Send to computer: on a touch screen, the hero, nav, dock, pricing, closing, guide and `/for/<board>` install buttons, and the ATS checker's, become "Send this to my computer" (`components/site/SendToComputer.tsx`). It opens the share sheet, or an email when there's none, with a link back to the same page tagged `utm_campaign=<placement>-phone-send`.
+- Return banner: that link opened on a computer shows "Sent from your phone?" under the header of any marketing page, with an install button.
+
 ## Site header
 
 - Header: every marketing page (`components/site/SiteNav.tsx`). "Sign in" goes to `/auth`. A browser with a session cookie sees "Dashboard" there instead, to `/dashboard`. Phones get the same links from the menu button.
