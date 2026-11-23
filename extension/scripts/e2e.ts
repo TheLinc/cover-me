@@ -15,8 +15,7 @@ export async function launchExtension(opts: { dist?: string; headless?: boolean 
   return { ctx, popupUrl: `chrome-extension://${new URL(sw.url()).host}/src/popup/index.html` }
 }
 
-// Writes what Settings and Resume save for an own-key account: the key
-// encrypted the way lib/crypto.ts does (#286).
+// The key format must match getMasterKey and decryptApiKey in lib/crypto.ts (#286).
 export async function seedOwnKey(popup: Page, opts: { provider: 'claude' | 'openai'; apiKey: string; resumeText: string }) {
   await popup.evaluate(async ({ provider, apiKey, resumeText }) => {
     const key = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt'])

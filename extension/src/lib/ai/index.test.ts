@@ -20,4 +20,5 @@ test('a failed cleanup retry still returns the first draft', async () => {
 test('an empty cleanup retry still returns the first draft', async () => {
   call.mockResolvedValueOnce(DRAFT).mockResolvedValueOnce('')
   await expect(generateCoverLetter(JOB, RESUME, 'claude', 'sk-test')).resolves.toBe(DRAFT)
+  expect(call).toHaveBeenCalledTimes(2)
 })
