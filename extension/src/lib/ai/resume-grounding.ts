@@ -852,23 +852,31 @@ export async function checkedTitle(jobTitle: string, original: Groundable, tailo
   }
 }
 
-const LEVELS = ['senior', 'sr', 'staff', 'lead', 'principal', 'head', 'director', 'manager', 'chief', 'vp', 'vice president', 'ii', 'iii', 'iv']
+// Ranks and licences a headline may claim only when the candidate's own
+// headline or a job title shows them, in tech and in trades and healthcare (#190).
+const LEVELS = ['senior', 'sr', 'staff', 'lead', 'principal', 'head', 'director', 'manager', 'chief', 'vp', 'vice president', 'ii', 'iii', 'iv',
+  'journeyman', 'master', 'foreman', 'supervisor', 'charge', 'licensed', 'registered', 'certified']
 
 // A rewritten headline goes back to the candidate's own when it claims a level
-// their headline and titles never show, names a job-only term, or uses any
-// word found in neither their headline and titles nor their bullets (the
-// posting's title they never held: "Site Reliability Engineer", or
-// "Registered Nurse" on a CNA's resume however the posting cases it) (#190).
+// their headline and titles never show, names a job-only term, or has a title
+// word their headline and titles lack. Only a specialty after a comma, bar or
+// parenthesis may come from their bullets: a CNA who "assisted registered
+// nurses" is still not a "Registered Nurse" (#190).
 function groundHeadline<T extends Groundable>(tailored: T, original: Groundable, terms: string[], removed: Set<string>): T {
   const headline = tailored.headline
   if (!headline || !original.headline || headline === original.headline) return tailored
   const own = [original.headline, ...original.experience.map((e) => e.title ?? '')].join(' \n ')
   const level = LEVELS.find((l) => mentions(headline, l) && !mentions(own, l))
   const jobOnly = terms.filter((t) => namesTerm(headline, t))
-  const ownWords = new Set(tokens([own, ...original.experience.flatMap((e) => e.bullets ?? []), ...(original.projects ?? []).flatMap((p) => p.bullets ?? [])].join(' \n ')))
-  const backed = (w: string) => ownWords.has(w) || ownWords.has(`${w}s`) || ownWords.has(w.replace(/s$/, '')) ||
-    (w.length >= 4 && [...ownWords].some((o) => o.startsWith(w)))
-  const unbacked = tokens(headline).filter((w) => !SMALL_WORDS.has(w) && !backed(w))
+  const [title, ...specialty] = headline.split(/\s*[,|(\u2013\u2014\u00b7]\s*|\s+-\s+/)
+  const titleWords = new Set(tokens(own))
+  const allWords = new Set(tokens([own, ...original.experience.flatMap((e) => e.bullets ?? []), ...(original.projects ?? []).flatMap((p) => p.bullets ?? [])].join(' \n ')))
+  const backed = (w: string, words: Set<string>) => words.has(w) || words.has(`${w}s`) || words.has(w.replace(/s$/, '')) ||
+    (w.length >= 4 && [...words].some((o) => o.startsWith(w)))
+  const unbacked = [
+    ...tokens(title ?? '').filter((w) => !SMALL_WORDS.has(w) && !backed(w, titleWords)),
+    ...tokens(specialty.join(' ')).filter((w) => !SMALL_WORDS.has(w) && !backed(w, allWords)),
+  ]
   if (!level && !jobOnly.length && !unbacked.length) return tailored
   jobOnly.forEach((t) => removed.add(t))
   unbacked.forEach((w) => removed.add(`${w} (headline word)`))

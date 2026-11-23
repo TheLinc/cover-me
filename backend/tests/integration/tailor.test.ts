@@ -529,7 +529,7 @@ describe('long master resumes', () => {
     headline: 'Backend Engineer',
     experience: [role('Backend Engineer', 'Initech', 15, RESULT), role('Backend Engineer', 'Globex', 15), role('Developer', 'Umbrella', 15)],
     projects: [{ name: 'tidewatch', link: 'github.com/x/tidewatch', tech: 'Go, SQLite', bullets: ['Uptime monitor', 'Slack alerts'] }],
-    otherSections: [{ heading: 'Open Source', lines: ['Speaker, GopherCon 2024'], entries: [{ name: 'pg-outbox', subtitle: 'Creator', link: 'github.com/x/pg-outbox', bullets: ['Outbox library for Postgres'] }] }],
+    otherSections: [{ heading: 'Open Source', lines: ['Speaker, GopherCon 2024'], entries: [{ name: 'pg-outbox', subtitle: 'Creator', link: 'github.com/x/pg-outbox', bullets: ['Outbox library for Postgres'] }, { name: '', subtitle: 'Maintainer', bullets: ['An entry with no name'] }] }],
     sectionOrder: ['summary', 'experience', 'projects', 'other', 'education', 'skills'],
   }
   const NEW_FIELDS = { 'X-Resume-Fields': '2' }
@@ -586,5 +586,11 @@ describe('long master resumes', () => {
       heading: 'Open Source',
       lines: ['pg-outbox | Creator | github.com/x/pg-outbox', 'Outbox library for Postgres', 'Speaker, GopherCon 2024'],
     })
+  })
+
+  it('a later fields version gets the new fields too', async () => {
+    const later = await tailor({}, { 'X-Resume-Fields': '3' })
+    expect(later.projects[0]).toMatchObject({ link: 'github.com/x/tidewatch', tech: 'Go, SQLite' })
+    expect(later.otherSections[0].entries[0].name).toBe('pg-outbox')
   })
 })

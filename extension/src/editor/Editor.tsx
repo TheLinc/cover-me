@@ -358,7 +358,7 @@ export default function Editor() {
               <Field label="Project" value={p.name} onChange={(v) => edit((r) => { r.projects![i].name = v })} />
               <Field label="Link" value={p.link ?? ''} onChange={(v) => edit((r) => { r.projects![i].link = v })} />
             </div>
-            <Field label="Tech" value={p.tech ?? ''} onChange={(v) => edit((r) => { r.projects![i].tech = v })} />
+            <Field label="Tools or tech" value={p.tech ?? ''} onChange={(v) => edit((r) => { r.projects![i].tech = v })} />
             <Lines label={`Bullets for ${p.name || `project ${i + 1}`}`} noun="bullet" items={p.bullets ?? []}
               onChange={(l) => edit((r) => { r.projects![i].bullets = l })} />
           </div>

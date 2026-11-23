@@ -151,9 +151,16 @@ export function isResultBullet(text: string): boolean {
     const [, from, a, b] = m
     if (YEAR.test(a) && YEAR.test(b)) continue
     const fractional = /[./]/.test(a) || /[./]/.test(b)
-    if (from || fractional || CHANGE_VERB.test(text)) return true
+    if (from || fractional || verbBefore(text.slice(0, m.index))) return true
   }
   return false
+}
+
+// A change verb in the same clause as the figures, at most eight words before
+// them: "Ran 3 to 5 workshops, improving onboarding" is a range, not a result (#190).
+function verbBefore(lead: string): boolean {
+  const clause = lead.split(/[,;:()]/).pop() ?? ''
+  return CHANGE_VERB.test(clause.trim().split(/\s+/).slice(-8).join(' '))
 }
 
 // The figures a bullet states, as written ("40", "25", "0.76", "3/14") (#190).

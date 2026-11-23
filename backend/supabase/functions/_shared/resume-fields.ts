@@ -5,10 +5,11 @@
 // so a client asks for them with this header; any other gets them folded
 // into the fields it already prints.
 export const RESUME_FIELDS_HEADER = 'X-Resume-Fields'
-export const RESUME_FIELDS_VERSION = '2'
+export const RESUME_FIELDS_VERSION = 2
 
+// Compared as a number, so a later version still gets these fields (#190).
 export function wantsNewFields(req: Request): boolean {
-  return req.headers.get(RESUME_FIELDS_HEADER) === RESUME_FIELDS_VERSION
+  return Number(req.headers.get(RESUME_FIELDS_HEADER)) >= RESUME_FIELDS_VERSION
 }
 
 type Rec = Record<string, unknown>
@@ -22,7 +23,10 @@ const strings = (v: unknown) => (Array.isArray(v) ? v.filter((s): s is string =>
  * extra-section entry as a line ("Name | subtitle | dates | link") followed by
  * its bullets as lines, and grouped skills on one line. The headline stays: an
  * older client never printed one, and keeping it lets a save round-trip.
- * A resume without the new fields comes back unchanged (#190).
+ * An entry with no name is left out, as the new layouts skip it. A resume
+ * without the new fields comes back unchanged. An older extension that edits
+ * and saves a tailored resume (PATCH ?resume= in applications) stores this
+ * folded form for good (#190).
  */
 export function withOlderFields<T>(resume: T, req: Request): T {
   if (wantsNewFields(req) || !resume || typeof resume !== 'object') return resume
@@ -38,10 +42,8 @@ export function withOlderFields<T>(resume: T, req: Request): T {
     r.otherSections = r.otherSections.map((s: Rec) => {
       if (!s || typeof s !== 'object' || !Array.isArray(s.entries)) return s
       const { entries, ...rest } = s
-      const fromEntries = (entries as Rec[]).flatMap((e) => {
-        const header = [str(e?.name), str(e?.subtitle), str(e?.dates), str(e?.link)].filter(Boolean).join(' | ')
-        return header ? [header, ...strings(e?.bullets)] : []
-      })
+      const fromEntries = (entries as Rec[]).flatMap((e) =>
+        str(e?.name) ? [[str(e?.name), str(e?.subtitle), str(e?.dates), str(e?.link)].filter(Boolean).join(' | '), ...strings(e?.bullets)] : [])
       return { ...rest, lines: [...fromEntries, ...strings(s.lines)] }
     })
   }

@@ -106,6 +106,13 @@ describe('measured results survive the trim', () => {
     expect(isResultBullet('Cut build time 40 to 25 minutes')).toBe(true)
   })
 
+  test('a change verb counts only beside the figures', () => {
+    expect(isResultBullet('Ran 3 to 5 workshops, improving onboarding')).toBe(false)
+    expect(isResultBullet('Ran 3 to 5 workshops a month and improved onboarding')).toBe(false)
+    expect(isResultBullet('Reduced weekly scrap 120 to 45 pounds')).toBe(true)
+    expect(isResultBullet('Raised patient satisfaction scores on the unit 78 to 91')).toBe(true)
+  })
+
   test('a result the model dropped comes back first, the lowest-ranked bullet goes', () => {
     const kept = [scope, ...other(5)]
     const out = keepResults([pilot, scope, ...other(5)], kept, 6)
@@ -147,7 +154,7 @@ describe('tailored headline', () => {
   test('a technology only the job names goes back too; a supported title stays', () => {
     const candidate = 'Applied AI Engineer AI Engineering Fellow Built agent orchestration'
     expect(groundTailored({ ...base, headline: 'Kubernetes Engineer' }, base, candidate, 'You will run services on Kubernetes daily.').resume.headline).toBe('Applied AI Engineer')
-    expect(groundTailored({ ...base, headline: 'AI Agent Engineer' }, base, candidate, 'AI Agent Engineer').resume.headline).toBe('AI Agent Engineer')
+    expect(groundTailored({ ...base, headline: 'AI Engineer, Agents' }, base, candidate, 'AI Agent Engineer').resume.headline).toBe('AI Engineer, Agents')
   })
 })
 
@@ -167,10 +174,34 @@ describe('headline words the resume never shows', () => {
     expect(groundTailored({ ...cna, headline: 'Registered Nurse' }, cna, candidate, posting).resume.headline).toBe('Certified Nursing Assistant')
   })
 
-  test('words from their titles and bullets stay', () => {
+  test('a CNA who assisted registered nurses is still not a "Registered Nurse"', () => {
+    const cna = { headline: 'Certified Nursing Assistant', experience: [{ title: 'CNA', bullets: ['Assisted registered nurses with patient vitals'] }] }
+    const candidate = 'Certified Nursing Assistant CNA Assisted registered nurses with patient vitals'
+    const { resume, removed } = groundTailored({ ...cna, headline: 'Registered Nurse' }, cna, candidate, 'Registered Nurse, med-surg')
+    expect(resume.headline).toBe('Certified Nursing Assistant')
+    expect(removed).toContain('registered (headline level)')
+  })
+
+  test('a trade rank or licence the titles never show goes back', () => {
+    const apprentice = { headline: 'Electrical Apprentice', experience: [{ title: 'Electrical Apprentice', bullets: ['Wired 40 homes under a master electrician', 'Ran conduit as a journeyman\'s helper'] }] }
+    const candidate = 'Electrical Apprentice Wired 40 homes under a master electrician Ran conduit as a journeyman\'s helper'
+    expect(groundTailored({ ...apprentice, headline: 'Journeyman Electrician' }, apprentice, candidate, 'Journeyman Electrician').resume.headline).toBe('Electrical Apprentice')
+    expect(groundTailored({ ...apprentice, headline: 'Master Electrician' }, apprentice, candidate, 'Master Electrician').resume.headline).toBe('Electrical Apprentice')
+    const rn = { headline: 'Registered Nurse', experience: [{ title: 'Registered Nurse', bullets: ['Covered the charge nurse role on 6 night shifts'] }] }
+    const rnText = 'Registered Nurse Covered the charge nurse role on 6 night shifts'
+    expect(groundTailored({ ...rn, headline: 'Charge Nurse' }, rn, rnText, 'Charge Nurse').resume.headline).toBe('Registered Nurse')
+    const welder = { headline: 'Welder', experience: [{ title: 'Welder', bullets: ['Welded pipe to code'] }] }
+    expect(groundTailored({ ...welder, headline: 'Certified Welder' }, welder, 'Welder Welded pipe to code', 'Certified Welder').resume.headline).toBe('Welder')
+  })
+
+  test('a title from their own titles keeps a specialty their bullets show', () => {
     const own = { headline: 'Applied AI Engineer', experience: [{ title: 'AI Engineering Fellow', bullets: ['Built agent orchestration with LangGraph'] }] }
     const candidate = 'Applied AI Engineer AI Engineering Fellow Built agent orchestration with LangGraph'
-    expect(groundTailored({ ...own, headline: 'AI Agent Engineer' }, own, candidate, 'AI Agent Engineer').resume.headline).toBe('AI Agent Engineer')
+    expect(groundTailored({ ...own, headline: 'AI Engineer, Agent Orchestration' }, own, candidate, 'AI Agent Engineer').resume.headline).toBe('AI Engineer, Agent Orchestration')
+    // Bullet words in the title itself don't count (#190).
+    expect(groundTailored({ ...own, headline: 'AI Agent Engineer' }, own, candidate, 'AI Agent Engineer').resume.headline).toBe('Applied AI Engineer')
+    const rn = { headline: 'Registered Nurse', experience: [{ title: 'Staff Nurse', bullets: ['Cared for 5 med-surg patients a shift'] }] }
+    expect(groundTailored({ ...rn, headline: 'Registered Nurse, Med-Surg' }, rn, 'Registered Nurse Staff Nurse Cared for 5 med-surg patients a shift', 'Registered Nurse').resume.headline).toBe('Registered Nurse, Med-Surg')
   })
 })
 
