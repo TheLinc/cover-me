@@ -19,6 +19,8 @@ Site features under the names a visitor would use, with the route and how to rea
 ## Home
 
 - Homepage: `/`. The hero's install button, the "How it works" story with its bottom dock, Pricing (`#pricing`) and the closing section (`#get-started`).
+- Hero line: the small line under the hero's install button, with the free plan's limits (`components/landing/Hero.tsx`).
+- Privacy panel: the dark "Your resume stays yours" band above Pricing, with its own key / account switch and the "For developers" note (`components/landing/PrivacyBand.tsx`, facts in `privacy-modes.ts`).
 - Job board pages: `/for/<board>` (such as `/for/linkedin`). Linked from the guides and from search. One page per board in `lib/boards.ts`.
 
 ## Install from a phone
