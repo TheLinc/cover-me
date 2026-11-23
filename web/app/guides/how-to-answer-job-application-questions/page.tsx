@@ -38,6 +38,16 @@ function Sample({ children }: { children: string }) {
   )
 }
 
+const CHATGPT_RUNS: [string, number, number][] = [
+  ['Praised Northwind\'s mission', 5, 5],
+  ['Said "excited" and called the work "meaningful"', 5, 5],
+  ['Said "passion"', 4, 0],
+  ['Opened with the exact first sentence of another run', 3, 3],
+  ['Listed three or more of the resume\'s numbers', 4, 5],
+  ['Said Northwind helps clinics focus on patients, which the posting doesn\'t say', 3, 2],
+  ['Claimed HubSpot, which the resume doesn\'t have', 0, 0],
+]
+
 const faqJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'FAQPage',
@@ -98,6 +108,7 @@ export default function Page() {
         'Answer the question in your first sentence, then back it with one or two real results from your resume.',
         "Use the posting to pick what you say about the job, and your resume for what you've done. Don't praise the company's mission or list its requirements back.",
         'Salary and reason for leaving are facts only you know. Keep those answers to one or two sentences.',
+        'In 10 ChatGPT runs, every answer praised the company\'s mission and said "excited". Cut those lines from any draft you start with.',
       ]}
       intro={
         <p>
@@ -161,6 +172,52 @@ export default function Page() {
               </Sample>
               <p>
                 This example answer works because its reason only fits Northwind, and the newsletter result shows Alex has done that kind of work. If the only reason you can find is the company&rsquo;s mission statement, write about the job instead. A true answer about the work reads better than borrowed praise.
+              </p>
+            </>
+          ),
+        },
+        {
+          title: 'What ChatGPT writes for these two questions',
+          body: (
+            <>
+              <p>
+                On November 23, 2026, I asked ChatGPT (logged out, on chatgpt.com) each of the two questions above five times, each time in a new chat. The prompt was the same every time: the question, Alex Rivera&rsquo;s resume, the Northwind posting and &ldquo;Write my answer for the form box.&rdquo; The posting has a one-line mission statement, as most real postings do.
+              </p>
+              <GuideFigure caption="Ten answers from ChatGPT on November 23, 2026, five for each question. Each was 114 to 136 words.">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[520px] overflow-hidden rounded-[8px] border border-line bg-white text-[14px]" style={{ borderCollapse: 'collapse' }}>
+                    <thead>
+                      <tr className="bg-paper">
+                        <th className="border-b border-line px-4 py-3 text-left font-bold text-muted-foreground">What the answer did</th>
+                        <th className="border-b border-line px-4 py-3 text-left font-bold text-muted-foreground">Why are you interested in this position?</th>
+                        <th className="border-b border-line px-4 py-3 text-left font-bold text-muted-foreground">Why do you want to work here?</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {CHATGPT_RUNS.map(([what, interested, here], i) => (
+                        <tr key={what} className={i % 2 === 0 ? 'bg-surface' : 'bg-paper'}>
+                          <td className="border-b border-line px-4 py-3 font-medium text-foreground">{what}</td>
+                          <td className="border-b border-line px-4 py-3 tabular-nums text-muted-foreground">{interested} of 5</td>
+                          <td className="border-b border-line px-4 py-3 tabular-nums text-muted-foreground">{here} of 5</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </GuideFigure>
+              <p>Three of the five answers to &ldquo;Why are you interested in this position?&rdquo; began with the same sentence, word for word:</p>
+              <blockquote className="border-l-2 border-line pl-5 text-ink">
+                I&rsquo;m interested in this position because it closely aligns with my experience in B2B marketing and my passion for building campaigns that deliver measurable results.
+              </blockquote>
+              <p>Three of the five answers to &ldquo;Why do you want to work here?&rdquo; began with this one:</p>
+              <blockquote className="border-l-2 border-line pl-5 text-ink">
+                I want to work at Northwind because I&rsquo;m excited by the opportunity to use marketing to make a meaningful difference for independent clinics.
+              </blockquote>
+              <p>
+                That&rsquo;s the sameness the Zapier recruiter described. Everyone applying to the same job pastes in the same posting, so the drafts start alike. ChatGPT kept to the resume&rsquo;s numbers and didn&rsquo;t claim HubSpot, which Alex doesn&rsquo;t have. But every answer praised the mission, said &ldquo;excited&rdquo; and then listed most of the resume, which is what the advice above says to cut. Half of them also said Northwind helps clinics focus on their patients, which the posting never says.
+              </p>
+              <p>
+                If you start from a ChatGPT draft, delete the mission sentence and the &ldquo;excited&rdquo; line, keep one or two results, check every claim about the company against the posting, and write the first sentence yourself. Your reason for wanting this job is the one part a chatbot can&rsquo;t know.
               </p>
             </>
           ),
