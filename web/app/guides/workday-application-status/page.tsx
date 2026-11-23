@@ -66,7 +66,7 @@ const STATUSES: { status: string; tab: string; means: string; next: string; sour
     status: 'In Progress',
     tab: 'Active',
     means: 'You are still being considered. At some employers it means you’re past the first review, such as at interview or assessment. At others it covers every active stage, review included.',
-    next: 'Watch your email and the tasks in your candidate account. A scheduled phone screen doesn’t change the status.',
+    next: 'Watch your email and the tasks in your candidate account. Moving to a phone screen step doesn’t change it.',
     sources: ['wisc', 'workday', 'uw'],
   },
   {
@@ -155,7 +155,7 @@ export default function Page() {
         'Submitted: the employer has it, and it is in the first review.',
         'In Progress: you are still being considered. It can cover every stage from first review to interview.',
         "Completed, on the Inactive tab: the process ended for you. Unless you have an offer, you weren't selected.",
-        "Changing your status in Workday doesn't send an email by itself, so the status can be the only answer you get.",
+        "A status change in Workday may not send you an email, so the status can be the only answer you get.",
       ]}
       intro={
         <p>
@@ -224,7 +224,7 @@ export default function Page() {
               </p>
               <h3>Why you might see Completed with no email</h3>
               <p>
-                UW&ndash;Madison&rsquo;s HR guide warns its own recruiters that changing a candidate&rsquo;s status in Workday, &ldquo;including removing them from consideration or closing the Job Requisition, does not send them any kind of notification/communication&rdquo; (<Cite source="wisc" />). An email goes out only if the recruiter sends one or the employer has set Workday up to send it. The University of Washington does. It sends a &ldquo;Disposition notification&rdquo; that &ldquo;Informs the candidate when they are no longer under consideration&rdquo; (<Cite source="uwHr" />).
+                UW&ndash;Madison&rsquo;s HR guide warns its own recruiters that changing a candidate&rsquo;s status in Workday, &ldquo;including removing them from consideration or closing the Job Requisition, does not send them any kind of notification/communication&rdquo; (<Cite source="wisc" />). An email goes out only if the recruiter sends one or the employer has set Workday up to send it. The University of Washington&rsquo;s setup can send a &ldquo;Disposition notification&rdquo; that &ldquo;Informs the candidate when they are no longer under consideration&rdquo; (<Cite source="uwHr" />).
               </p>
               <p>
                 Workday also lets employers hold decline emails back. Its manual says &ldquo;Candidates do not receive notifications immediately if they are declined from a job application&rdquo; when an employer turns on the delay, and &ldquo;The minimum delay is one day&rdquo; (<Cite source="workday" />). So the status can change a day or more before the email, and at some employers the email never comes.
@@ -264,7 +264,7 @@ export default function Page() {
                 The status leaves out most of what the recruiter sees. Workday tracks a step inside each stage, such as a phone screen or a resume screen, but UW&ndash;Madison&rsquo;s guide says the status and stage &ldquo;will influence what they see in their Candidate Home account, while the Step does not&rdquo; (<Cite source="wisc" />). A recruiter can move you through several steps and your status won&rsquo;t change.
               </p>
               <p>
-                It also doesn&rsquo;t show timing. The University of Washington says &ldquo;The total time it takes to fill any position varies&rdquo; and that &ldquo;Hiring departments only contact the most competitive candidates to interview&rdquo; (<Cite source="uw" />). An application can stay In Progress for weeks, and a status that hasn&rsquo;t changed tells you nothing either way.
+                It also doesn&rsquo;t show timing. The University of Washington says &ldquo;The total time it takes to fill any position varies&rdquo; and that &ldquo;Hiring departments only contact the most competitive candidates to interview&rdquo; (<Cite source="uw" />). An application can stay In Progress a long time, and a status that hasn&rsquo;t changed tells you nothing either way.
               </p>
               <p>
                 So while a status sits unchanged, put your time into the next application rather than refreshing this one.
