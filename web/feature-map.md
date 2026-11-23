@@ -21,7 +21,7 @@ Site features under the names a visitor would use, with the route and how to rea
 
 ## Install from a phone
 
-- Send to computer: on a touch screen, the hero, nav, dock, pricing, closing, guide and `/for/<board>` install buttons, and the ATS checker's, become "Send this to my computer" (`components/site/SendToComputer.tsx`). It opens the share sheet, or an email when there's none, with a link back to the same page tagged `utm_campaign=<placement>-phone-send`.
+- Send to computer: on a touch screen, the hero, nav, dock, pricing, closing, guide and `/for/<board>` install buttons, and the ATS checker's, become a send button ("Send this to my computer", or "Send to computer" in the nav and dock) (`components/site/SendToComputer.tsx`). It opens the share sheet, or an email when there's none, with a link back to the same page tagged `utm_campaign=<placement>-phone-send`.
 - Return banner: that link opened on a computer shows "Sent from your phone?" under the header of any marketing page, with an install button.
 
 ## Site header

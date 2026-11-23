@@ -69,10 +69,6 @@ export function scrubEvent(event: CaptureResult | null): CaptureResult | null {
 // capture() drops events sent before PostHog loads, which is after the page (#106).
 export const POSTHOG_LOADED = 'posthog-loaded'
 
-export function capture(event: string, props: Record<string, unknown>) {
-  void import('posthog-js').then(({ default: posthog }) => whenPosthogLoaded(posthog, () => posthog.capture(event, props)))
-}
-
 // Without a PostHog key (local and preview builds) fn never runs (#106).
 export function whenPosthogLoaded(posthog: PostHog, fn: () => void): () => void {
   if (posthog.__loaded) {
@@ -81,4 +77,8 @@ export function whenPosthogLoaded(posthog: PostHog, fn: () => void): () => void 
   }
   window.addEventListener(POSTHOG_LOADED, fn, { once: true })
   return () => window.removeEventListener(POSTHOG_LOADED, fn)
+}
+
+export function capture(event: string, props: Record<string, unknown>) {
+  void import('posthog-js').then(({ default: posthog }) => whenPosthogLoaded(posthog, () => posthog.capture(event, props)))
 }
