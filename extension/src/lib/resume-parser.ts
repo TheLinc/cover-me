@@ -33,7 +33,7 @@ async function parsePdf(file: File): Promise<string> {
     const page = await pdf.getPage(i)
     const content = await page.getTextContent()
     const strs = withLinkUrls(content.items, await page.getAnnotations())
-    pages.push(pdfPageText(content.items.map((item, i) => ('str' in item ? { ...item, str: strs[i] } : item))))
+    pages.push(pdfPageText(content.items.flatMap((item, i) => ('str' in item ? [{ ...item, str: strs[i]! }] : []))))
   }
 
   const result = pages.join('\n\n').replace(/[ \t]{3,}/g, '  ').replace(/\n{3,}/g, '\n\n').trim()
@@ -41,7 +41,7 @@ async function parsePdf(file: File): Promise<string> {
   return result
 }
 
-type PdfTextItem = { str?: string; hasEOL?: boolean; transform?: number[]; width?: number; height?: number }
+type PdfTextItem = { str: string; hasEOL?: boolean; transform?: number[]; width?: number; height?: number }
 
 // One page's text with its line breaks (#339). pdf.js gives runs of glyphs,
 // not words or lines: a kerned heading comes as "N" + "orthern". Runs on one
@@ -51,7 +51,6 @@ function pdfPageText(items: PdfTextItem[]): string {
   let out = ''
   let prev: { y: number; end: number; size: number } | null = null
   for (const item of items) {
-    if (typeof item.str !== 'string') continue
     const [, , , d = 0, x = 0, y = 0] = item.transform ?? []
     const size = Math.abs(d) || item.height || 10
     if (prev) {
