@@ -10,6 +10,7 @@ Site features under the names a visitor would use, with the route and how to rea
 - Comparisons: `/guides/cover-me-vs-chatgpt`, `/guides/cover-me-vs-rezi`.
 - ChatGPT prompt guides: `/guides/chatgpt-resume-prompts`, `/guides/chatgpt-cover-letter-prompts`. Linked from the footer, the tailoring guide, the ATS score guide and the ATS resume checker.
 - Application questions guide: `/guides/how-to-answer-job-application-questions`. Five common written questions with a sample answer each, and a section on drafting answers with the right-click menu. Linked from the tailoring guide and the ChatGPT cover letter prompts guide.
+- Workday application status guide: `/guides/workday-application-status`. What Submitted, In Progress, Completed and Withdrew mean, sourced from HR guides and Workday's manual. Linked from `/for/workday` through the board's `related` field in `lib/boards.ts`.
 
 ## Tools
 

@@ -89,6 +89,15 @@ export default async function BoardPage({ params }: { params: Promise<{ board: s
               {p}
             </p>
           ))}
+          {board.related && (
+            <p className="text-[15px] text-muted-foreground leading-[1.85] mb-4">
+              {board.related.lead}{' '}
+              <Link href={board.related.href} className="text-brand-strong underline underline-offset-2 hover:text-brand-deep">
+                {board.related.label}
+              </Link>
+              .
+            </p>
+          )}
         </div>
 
         <div className="mb-12 h-px bg-line" />
