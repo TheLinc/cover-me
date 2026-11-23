@@ -1,6 +1,9 @@
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 import { urlCore } from './ai/resume-parse'
 
+// Raised when parseResume reads files better: 2 keeps a PDF's line breaks (#339).
+export const READER_VERSION = 2
+
 export async function parseResume(file: File): Promise<string> {
   const name = file.name.toLowerCase()
 

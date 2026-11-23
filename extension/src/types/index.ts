@@ -3,8 +3,8 @@ export type AppMode = 'byok' | 'hosted'
 
 export interface Settings {
   provider: AIProvider
-  apiKey: string // AES-GCM encrypted, stored in chrome.storage.local
-  mode: AppMode  // see resolveMode() in lib/storage.ts for the default
+  apiKey: string
+  mode: AppMode // the default is resolveMode() in lib/storage.ts (#16)
 }
 
 export type { JobData } from '../content/scrapers/types.ts'
@@ -21,25 +21,22 @@ export interface CoverLetter {
   job: JobData
   letter: string
   createdAt: string
-  // Which account holds this entry on the server: the user's ID once the
-  // server confirmed it, 'other' when the ID already belongs to another
-  // account (a previous user of this browser), missing while it exists only
-  // in this browser.
+  // The user's ID once the server holds this entry, 'other' when the ID is
+  // another account's (a previous user here), missing until then (#24).
   account?: string
-  // Made while signed in to this Pro account, so it was always meant to be
-  // saved there. If that save didn't go through, History retries it without
-  // asking (entries from before the upgrade still wait for the user's Save).
+  // Made while signed in to this Pro account: History retries a failed save
+  // without asking. Entries from before the upgrade wait for Save (#24).
   saveTo?: string
 }
 
 export interface AuthSession {
   access_token: string
   refresh_token: string
-  expires_at: number // unix timestamp (seconds)
+  expires_at: number
   user: {
     id: string
     email: string
-    avatar_url?: string // Google sign-in only: the profile picture
+    avatar_url?: string // Google sign-in only: the profile picture (#16)
   }
 }
 
@@ -69,28 +66,28 @@ export interface ResumeData {
   filename: string
   updatedAt: string
   parsed?: ParsedResume
-  // The Cover Me account this copy belongs to. Set by a sign-in's sync, an
-  // upload while signed in, a sign-out, and inherited by a signed-out upload.
-  // Unset only when this browser has never had a signed-in account with a
-  // resume (BYOK or a new install), so the next sign-in may claim it.
+  // The account this copy belongs to. Unset only when no signed-in account has
+  // had a resume in this browser, so the next sign-in may claim it (#16).
   accountId?: string
   // Uploaded while signed out after an account was here. A sign-in never
-  // uploads it: on a shared browser it may be someone else's.
+  // uploads it: on a shared browser it may be someone else's (#16).
   signedOutUpload?: boolean
   // A Word upload, kept so tailoring can edit the user's own design (#131).
   // The file itself is in the design file store, under this hash.
   design?: {
     hash: string
-    size: number // bytes; over 2 MB the account's dashboard uses the Cover Me layout
+    size: number // bytes; over 2 MB the account's dashboard uses the Cover Me layout (#131)
     status: 'checking' | 'done' | 'error'
-    checkedAt?: string // when the check started; a stale one shows "Try again"
+    checkedAt?: string // when the check started; a stale one shows "Try again" (#131)
     check?: DesignCheck
     error?: string
-    uploaded?: boolean // in the Pro account, for the dashboard
+    uploaded?: boolean // in the Pro account, for the dashboard (#131)
     refused?: boolean // the account refused it: its resume text isn't the one checked here (#174)
   }
-  // The layout picked on the resume page. Missing: "Your design" whenever its check passes.
+  // The layout picked on the resume page. Missing: "Your design" whenever its check passes (#131).
   layout?: 'yours' | 'cover-me'
+  // READER_VERSION when uploaded. An older text can be offered a re-upload (#240).
+  readerVersion?: number
 }
 
 export type GenerateResponse =
@@ -118,13 +115,9 @@ export interface ScrapeFailure {
 
 // A frame's content script answer: its bundled scrapers' result (the offline
 // fallback) plus the page for the scrape Edge Function, null when it can't be
-// taken (src/content/snapshot.ts).
+// taken (#3).
 export type FrameScrapeResponse = ScrapeResponse & { snapshot: PageSnapshot | null }
 
-// Service-worker-owned job records persisted to chrome.storage.local so an
-// in-flight or completed generation survives the popup being closed. The popup
-// derives its loading/done/error view from these; "cancel" just stops watching
-// (the worker keeps running and the generation still counts).
 export interface CoverJob {
   id: string
   status: 'loading' | 'done' | 'error'
@@ -144,12 +137,11 @@ export interface TailorJob {
   error?: string
   errorCode?: 'RATE_LIMIT' | 'FAIR_USE'
   startedAt: number
-  // Live progress label derived from the model's streaming output
-  // ("Rewriting experience (2 of 3)…") — shown under the popup spinner.
+  // Shown under the popup spinner, like "Rewriting experience (2 of 3)…" (#91).
   progress?: string
-  // The finished resume's ID in tailored History, which the editor tab opens.
+  // The finished resume's ID in tailored History, which the editor tab opens (#118).
   entryId?: string
-  // The one-off note the run used; the popup clears its note box once done.
+  // The one-off note the run used; the popup clears its note box once done (#175).
   note?: string
 }
 
@@ -165,20 +157,17 @@ export interface TailoredResumeEntry {
   createdAt: string
 }
 
-// A tailored resume kept on this device (History), for every mode.
+// A tailored resume kept on this device (History), for every mode (#17).
 export interface TailoredHistoryEntry {
   id: string
   job: JobData
   resume: TailoredResume
   createdAt: string
-  // Which account holds this entry on the server: the user's ID once the
-  // server confirmed it, 'other' when the ID already belongs to another
-  // account (a previous user of this browser), missing while it exists only
-  // in this browser.
+  // The user's ID once the server holds this entry, 'other' when the ID is
+  // another account's (a previous user here), missing until then (#24).
   account?: string
-  // Made while signed in to this Pro account, so it was always meant to be
-  // saved there. If that save didn't go through, History retries it without
-  // asking (entries from before the upgrade still wait for the user's Save).
+  // Made while signed in to this Pro account: History retries a failed save
+  // without asking. Entries from before the upgrade wait for Save (#24).
   saveTo?: string
 }
 
