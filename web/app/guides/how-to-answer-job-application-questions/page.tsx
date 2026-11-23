@@ -119,10 +119,10 @@ export default function Page() {
               <ol>
                 <li>Pick the one part of the job you most want to do, and name it in the posting&rsquo;s words in your first sentence.</li>
                 <li>Find one result on your resume that shows you&rsquo;ve done that part already. Use its real number.</li>
-                <li>Say in one sentence how the two connect. Stop there. A form box is not a cover letter.</li>
+                <li>Stop there. Don&rsquo;t list the posting&rsquo;s requirements back as proof you fit. The result already shows it, and a form box is not a cover letter.</li>
               </ol>
               <Sample>
-                This role puts campaign strategy and the paid budget with one person, and that&apos;s the part of my work I want more of. At Brightline I led campaign strategy across email and social that grew qualified leads 38% in one year, and I manage a $1.2M paid media budget across four channels, where I cut cost per lead 22%. Your posting asks for both, at the same budget size.
+                This role puts campaign strategy and the paid budget with one person, and that&apos;s the part of my work I want more of. At Brightline I led campaign strategy across email and social that grew qualified leads 38% in one year, and I manage a $1.2M paid media budget across four channels, where I cut cost per lead 22%.
               </Sample>
               <p>
                 It never says &ldquo;passionate&rdquo; or praises Northwind. The reason is in the first sentence, and the two numbers are what make it believable.
@@ -144,11 +144,11 @@ export default function Page() {
               <h3>How to answer</h3>
               <ol>
                 <li>Find something specific to this company: what it sells, who buys it, or a problem the posting says it has. The posting and the company&rsquo;s own product pages are enough. You don&rsquo;t need inside knowledge.</li>
-                <li>Say why that matters to you, in your first sentence.</li>
+                <li>Say why that matters to you, in your first sentence. Don&rsquo;t describe the company back to them. They know what they sell.</li>
                 <li>Back it with one thing you&rsquo;ve done that fits.</li>
               </ol>
               <Sample>
-                Northwind sells to independent clinics, where one or two people decide what to buy, and I want to market to buyers I can reach directly through email and search. That&apos;s where I&apos;ve had my best results: at Brightline, an SEO plan for the blog and product pages grew organic traffic 64%. I&apos;m also in Denver, so the office days are easy for me.
+                I want to market a product that small businesses buy for themselves, and independent clinics are that kind of customer. Email and search are the channels I know best for reaching them: at Brightline, an SEO plan for the blog and product pages grew organic traffic 64%. I&apos;m also in Denver, close to your office.
               </Sample>
               <p>
                 If the only reason you can find is the company&rsquo;s mission statement, write about the job instead. A true answer about the work reads better than borrowed praise.
@@ -237,7 +237,7 @@ export default function Page() {
       faq={faqJsonLd}
       cta={{
         title: 'Get a first draft in the box',
-        body: `Right-click any question on an application. Free with your own API key, or ${L.answer_starter} answers to start, then ${L.answer_weekly} a week. No credit card required.`,
+        body: `Right-click the question box on an application. Free with your own API key, or ${L.answer_starter} answers to start, then ${L.answer_weekly} a week. No credit card required.`,
       }}
     />
   )

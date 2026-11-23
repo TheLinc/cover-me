@@ -68,6 +68,11 @@ describe('GUIDES', () => {
     expect(llms).toContain(`https://www.cover-me.dev/guides/${slug})`)
   })
 
+  it.each(GUIDES.map((g) => g.slug))('%s is in the sitemap', async (slug) => {
+    const { default: sitemap } = await import('../app/sitemap')
+    expect(sitemap().map((e) => e.url)).toContain(`https://www.cover-me.dev/guides/${slug}`)
+  })
+
   it.each(GUIDES.map((g) => [g.slug, g] as const))('%s has a hero image in public/ and alt text', (_, g) => {
     expect(existsSync(join(__dirname, '../public', g.image))).toBe(true)
     expect(g.imageAlt.length).toBeGreaterThan(20)
