@@ -50,9 +50,9 @@ JSON structure (omit "projects", "skills", "certifications" entirely if those se
   "links": ["every URL in the contact details at the top (website, LinkedIn, GitHub, portfolio), copied verbatim in the order written. A URL written under a project, job or section stays in that entry's text, verbatim, and never goes here"],
   "experience": [
     {
-      "title": "Job Title",
-      "company": "Company Name",
-      "location": "City, Province/State",
+      "title": "the job title as written",
+      "company": "the employer's name only, as written",
+      "location": "the job's city and region, kept out of title and company",
       "dates": "Month Year – Month Year",
       "bullets": ["bullet text copied verbatim"]
     }
@@ -65,9 +65,9 @@ JSON structure (omit "projects", "skills", "certifications" entirely if those se
   ],
   "education": [
     {
-      "institution": "School Name",
-      "degree": "Degree and Major",
-      "location": "City, Province/State",
+      "institution": "the school's name only, as written",
+      "degree": "the whole qualification line as written, with its major, subjects, grades and honours",
+      "location": "the school's city and region, kept out of institution and degree",
       "dates": "Year – Year",
       "bullets": ["achievement bullets copied verbatim"]
     }
