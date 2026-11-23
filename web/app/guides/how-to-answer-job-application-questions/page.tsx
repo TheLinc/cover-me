@@ -43,7 +43,7 @@ const CHATGPT_RUNS: [string, number, number][] = [
   ['Said “excited” and “meaningful”', 5, 5],
   ['Said “passion”', 4, 0],
   ['Opened with the exact first sentence of another run', 3, 3],
-  ['Listed three or more of the resume’s numbers', 4, 5],
+  ['Listed three or more results from the resume', 4, 5],
   ['Added a patient benefit the posting doesn’t state', 3, 2],
   ['Claimed HubSpot, which the posting asks for and the resume doesn’t have', 0, 0],
 ]
@@ -181,7 +181,7 @@ export default function Page() {
           body: (
             <>
               <p>
-                On November 23, 2026, I asked ChatGPT (logged out, on chatgpt.com) each of the two questions above five times, each time in a new chat. Apart from the question, the prompt was the same every time: Alex Rivera&rsquo;s resume, the Northwind posting and &ldquo;Write my answer for the form box.&rdquo; The posting has a one-line mission statement, which invites the mission praise counted below.
+                On November 23, 2026, I asked ChatGPT (logged out, on chatgpt.com) each of the two questions above five times, each time in a new chat. The prompt was &ldquo;I&rsquo;m applying for this job. The application form asks: [the question] Write my answer for the form box.&rdquo;, followed by Alex Rivera&rsquo;s resume and the Northwind posting. The posting has a one-line mission statement, which invites the mission praise counted below.
               </p>
               <GuideFigure caption="Ten answers from ChatGPT on November 23, 2026, five for each question. Each was 114 to 136 words.">
                 <div className="overflow-x-auto">
@@ -217,10 +217,10 @@ export default function Page() {
                 This test used one resume and one posting, so it can&rsquo;t show what many applicants get. It is consistent with the repeats the Zapier recruiter saw.
               </p>
               <p>
-                The drafts were accurate about Alex. ChatGPT kept to the resume&rsquo;s numbers and didn&rsquo;t claim HubSpot, which the posting asks for and Alex doesn&rsquo;t have. Three of the five answers to &ldquo;Why do you want to work here?&rdquo; picked a fair reason, too: who Northwind sells to. The other two gave the mission itself as the reason. What made the answers read alike is the wording around the reason. Every answer praised the mission and said &ldquo;excited&rdquo;, and nine of ten listed three or more of the resume&rsquo;s numbers, where the advice above says to skip the mission praise and keep one or two results. Half of them also added a patient benefit the posting doesn&rsquo;t state.
+                The drafts were accurate about Alex. ChatGPT kept to the resume&rsquo;s numbers and didn&rsquo;t claim HubSpot, which the posting asks for and Alex doesn&rsquo;t have. Three of the five answers to &ldquo;Why do you want to work here?&rdquo; picked a fair reason, too: who Northwind sells to. The other two gave the mission itself as the reason. What made the answers read alike is the wording around the reason. Every answer praised the mission and said &ldquo;excited&rdquo;, and nine of ten listed three or more results from the resume, where the advice above says to skip the mission praise and keep one or two results. Half of them also added a patient benefit the posting doesn&rsquo;t state.
               </p>
               <p>
-                If you start from a ChatGPT draft, keep its reason only if it&rsquo;s true for you, and rewrite it in your own words without &ldquo;excited&rdquo;, &ldquo;passion&rdquo; or &ldquo;meaningful&rdquo;. Then cut the mission praise, keep one or two results, and check every claim about the company against the posting.
+                If you start from a ChatGPT draft, keep its reason only if it&rsquo;s true for you and isn&rsquo;t the mission, and rewrite it in your own words without &ldquo;excited&rdquo;, &ldquo;passion&rdquo; or &ldquo;meaningful&rdquo;. Then cut the mission praise, keep one or two results, and check every claim about the company against the posting.
               </p>
             </>
           ),
