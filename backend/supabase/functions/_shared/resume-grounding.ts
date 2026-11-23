@@ -257,20 +257,26 @@ export function parseClaimVerdicts(raw: string, count: number): boolean[] {
  * has to really be there, and then `ask` (a small model) must agree the
  * evidence shows the skill. A skill without usable evidence whose every word
  * is in the resume ("Analytics (Google)") is a claim too, with the resume
- * lines holding its words as evidence: "product launches" and a "Marketing
+ * line holding all its words, or else the lines holding each, as evidence: "product launches" and a "Marketing
  * Lead" title don't make "Product marketing" (#285). "Zustand" backs
  * "State Management"; "annual fundraising gala" does not back "annual fund
  * campaigns". If the check can't run, claims are dropped: the resume stays
  * truthful and only the extra labels are lost. Without `ask` (legacy callers),
- * claims with real evidence are kept. A comma-separated string passes through.
+ * claims are kept. A comma-separated string passes through.
  */
 export async function groundSkills(skills: unknown, candidate: string, ask?: AskModel): Promise<{ skills?: string; dropped: string[] }> {
   if (typeof skills === 'string') return { skills, dropped: [] }
   if (!Array.isArray(skills)) return { dropped: [] }
   const flat = (s: string) => s.toLowerCase().replace(/[‐-―−]/g, '-').replace(/\s+/g, ' ').trim()
   const source = flat(candidate)
-  const lines = candidate.split('\n')
-  const lineWith = (w: string) => lines.find((l) => tokens(l).includes(w))
+  const lines = candidate.split('\n').map((text) => ({ text, words: new Set(tokens(text)) }))
+  const lineWith = (ws: string[]) => lines.find((l) => ws.every((w) => l.words.has(w)))?.text
+  const wordEvidence = (skill: string): string | undefined => {
+    const ws = tokens(skill)
+    if (ws.length === 0) return undefined
+    const perWord = ws.map((w) => lineWith([w]))
+    return lineWith(ws) ?? (perWord.every(Boolean) ? [...new Set(perWord)].join('; ') : undefined)
+  }
   const items: Array<{ skill: string; claim?: SkillClaim }> = []
   const dropped: string[] = []
   for (const item of skills) {
@@ -278,11 +284,13 @@ export async function groundSkills(skills: unknown, candidate: string, ask?: Ask
     const skill = (typeof item === 'string' ? item : typeof rec.skill === 'string' ? rec.skill : '').trim()
     const evidence = typeof rec.evidence === 'string' ? rec.evidence.trim() : ''
     if (!skill) continue
-    const wordLines = tokens(skill).map(lineWith)
     if (mentions(candidate, skill)) items.push({ skill })
     else if (flat(evidence).length >= 2 && source.includes(flat(evidence))) items.push({ skill, claim: { skill, evidence } })
-    else if (wordLines.length > 0 && wordLines.every(Boolean)) items.push({ skill, claim: { skill, evidence: [...new Set(wordLines)].join('; ') } })
-    else dropped.push(`${skill} (no resume evidence)`)
+    else {
+      const fromWords = wordEvidence(skill)
+      if (fromWords) items.push({ skill, claim: { skill, evidence: fromWords } })
+      else dropped.push(`${skill} (no resume evidence)`)
+    }
   }
 
   const claims = items.filter((i) => i.claim).map((i) => i.claim!)

@@ -483,4 +483,11 @@ describe('groundSkills with a skill whose words are scattered through the resume
     expect(dropped).toEqual([])
     expect(prompts[0]).toContain('0. EVIDENCE: "Led campaign strategy across email and social" → SKILL: "Strategy (campaign)"')
   })
+
+  test('the evidence is the line that holds every word, when one does', async () => {
+    const prompts: string[] = []
+    const approve = async (p: string) => { prompts.push(p); return '{"verdicts": [{"i": 0, "ok": true}]}' }
+    await groundSkills([{ skill: 'Analytics (Google)' }], 'Data Analyst\nGoogle\nBuilt product analytics in Mixpanel\nSQL, Google Analytics', approve)
+    expect(prompts[0]).toContain('0. EVIDENCE: "SQL, Google Analytics" → SKILL: "Analytics (Google)"')
+  })
 })
