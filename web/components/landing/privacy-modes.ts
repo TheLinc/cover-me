@@ -1,7 +1,7 @@
 // Where the resume goes, per mode. Keep each line true to the code:
 // BYOK keeps the resume in chrome.storage.local and encrypts only the API key
 // (extension/src/lib/crypto.ts); hosted encrypts the resume at rest in
-// Postgres (backend/supabase/functions/_shared/encrypt.ts) and calls Claude. (#268)
+// Postgres (backend/supabase/functions/_shared/encrypt.ts) and calls Claude. (#340)
 export const MODES = {
   byok: {
     label: 'Your own API key',
@@ -9,7 +9,7 @@ export const MODES = {
     holds: 'Resume + API key',
     via: null,
     ai: 'Claude or OpenAI',
-    facts: ['Your resume stays in your browser', 'Sent only to the AI you pick, never to Cover Me', 'Never sold or used to train AI'],
+    facts: ['Your resume stays in your browser', 'Sent only to the AI you pick, never to Cover Me', 'Your API key is stored encrypted on this device'],
   },
   hosted: {
     label: 'Cover Me account',

@@ -203,7 +203,7 @@ export function Hero() {
           <p className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[11.5px] text-subtle max-xl:justify-center">
             <span>Free, no credit card</span>
             <span aria-hidden="true">/</span>
-            <span>{L.free_starter} tailored resumes, then {L.free_weekly} a week</span>
+            <span>{L.free_starter} resumes or letters, then {L.free_weekly} a week</span>
             <span aria-hidden="true">/</span>
             <span>Never invents experience</span>
           </p>
