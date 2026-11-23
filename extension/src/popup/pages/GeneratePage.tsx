@@ -6,9 +6,10 @@ import { letterSteps, tailorSteps } from '../../lib/progress-steps'
 import { openResumeEditor, postingTitleInSummary } from '../../lib/resume-edit'
 import { downloadResumeWord, usesDesign } from '../../lib/design'
 import { getCandidateContext, getTailoredHistory, resolveMode, saveCandidateContext } from '../../lib/storage'
+import { tailorSummary } from '../../lib/tailor-options'
 import DownloadMenu from '../components/DownloadMenu'
 import GapChips from '../components/GapChips'
-import { EditIcon, RegenerateIcon } from '../components/icons'
+import { ChevronIcon, EditIcon, RegenerateIcon } from '../components/icons'
 import PageReadNotice from '../components/PageReadNotice'
 import AnswersNews from '../components/AnswersNews'
 import PostingTitleTip from '../components/PostingTitleTip'
@@ -37,31 +38,43 @@ interface ContextExpanderProps {
   setInitialContext: (v: string) => void
 }
 
+function useFocusWhenOpened<T extends HTMLElement>(open: boolean) {
+  const ref = useRef<T>(null)
+  const mounted = useRef(false)
+  useEffect(() => {
+    if (mounted.current && open) ref.current?.focus()
+    mounted.current = true
+  }, [open])
+  return ref
+}
+
 function ContextExpander({ contextExpanded, setContextExpanded, initialContext, setInitialContext }: ContextExpanderProps) {
+  const inputRef = useFocusWhenOpened<HTMLTextAreaElement>(contextExpanded)
+  const panelRef = useRef<HTMLDivElement>(null)
+  // Kept mounted so it can animate open; inert keeps the closed box out of the tab order (#342).
+  useEffect(() => { if (panelRef.current) panelRef.current.inert = !contextExpanded }, [contextExpanded])
+  const preview = initialContext.trim().split('\n')[0]
   return (
     <div className="context-expander">
-      <button className="context-toggle" onClick={() => setContextExpanded(v => !v)}>
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          {contextExpanded
-            ? <line x1="5" y1="12" x2="19" y2="12" />
-            : <><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></>
-          }
-        </svg>
-        Candidate context
-        {!contextExpanded && initialContext && <span className="context-dot" />}
+      <button className="context-toggle" aria-expanded={contextExpanded} aria-controls="about-you" onClick={() => setContextExpanded(v => !v)}>
+        <ChevronIcon />
+        About you
+        {!contextExpanded && preview && <span className="context-preview">“{preview}”</span>}
+        {!contextExpanded && preview && <span className="context-edit">Edit</span>}
       </button>
-      {contextExpanded && (
-        <>
+      <div id="about-you" ref={panelRef} className={`context-panel${contextExpanded ? ' open' : ''}`}>
+        <div className="context-panel-inner">
           <textarea
+            ref={inputRef}
             className="form-input supplemental-input"
-            placeholder={'Standing facts the AI should always factor in…\ne.g. "4 years total experience — resume only shows 3" · "Referred by Jane Chen" · "2yr GraphQL from freelance"'}
+            aria-label="About you"
+            placeholder={'Facts to use in every letter and resume…\ne.g. "4 years total experience, resume only shows 3" · "Referred by Jane Chen" · "2yr GraphQL from freelance"'}
             value={initialContext}
             onChange={e => setInitialContext(e.target.value)}
-            autoFocus
           />
-          <p className="context-hint">Saved automatically — applied to every cover letter and resume you generate.</p>
-        </>
-      )}
+          <p className="context-hint">Saved automatically. Used in every cover letter and resume you make.</p>
+        </div>
+      </div>
     </div>
   )
 }
@@ -95,6 +108,11 @@ function TailorOptions({ inputMode, manualReady, onTailor, compact, setCompact, 
         </svg>
         Tailor Resume to Job
       </button>
+      <details className="tailor-details">
+      <summary className="tailor-summary">
+        Options: {tailorSummary({ compact, trim, includeSummary, yours, designSummary: !!design?.summary })}
+        <ChevronIcon />
+      </summary>
       <div className="tailor-options">
         {design && (
           <p className="layout-line">
@@ -132,6 +150,41 @@ function TailorOptions({ inputMode, manualReady, onTailor, compact, setCompact, 
           >?</button>
         </div>}
       </div>
+      </details>
+    </div>
+  )
+}
+
+// Starts open when it already holds text, so a restored note stays in view (#342).
+function AddExperience({ value, onChange, onRegenerate, hasGaps }: { value: string; onChange: (v: string) => void; onRegenerate: () => void; hasGaps: boolean }) {
+  const [open, setOpen] = useState(() => value.trim() !== '')
+  const inputRef = useFocusWhenOpened<HTMLTextAreaElement>(open)
+  return (
+    <div className="regen-expander add-experience">
+      <button className="regen-toggle" aria-expanded={open} aria-controls="tailor-supplemental" onClick={() => setOpen(v => !v)}>
+        <ChevronIcon />
+        {hasGaps ? 'Have experience with any of these? Add it' : 'Missing something? Add it'}
+      </button>
+      {open && (
+        <div className="composer">
+          <textarea
+            ref={inputRef}
+            id="tailor-supplemental"
+            className="composer-input"
+            aria-label="Experience to add"
+            placeholder={'Add real experience not on your resume\ne.g. "2yr GraphQL from freelance, AWS cert in progress"'}
+            value={value}
+            onChange={e => onChange(e.target.value)}
+          />
+          <div className="composer-foot">
+            <span className="composer-hint">Real experience only</span>
+            <button className="btn btn-secondary btn-sm" onClick={onRegenerate}>
+              <RegenerateIcon />
+              Regenerate
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -697,7 +750,16 @@ export default function GeneratePage({ onNavigate }: Props) {
         <WhatsNewLink />
         {/* Mounted once saved state has loaded (so reopening the popup doesn't
             announce "Done"), then kept, so screen readers hear each change. (#19) */}
-        {setupLoaded && <span className="popup-status" role="status">{status}</span>}
+        {setupLoaded && (
+          <span className="popup-status" role="status">
+            {status === 'Done' && (
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            )}
+            {status}
+          </span>
+        )}
       </header>
 
       <PageReadNotice />
@@ -1074,6 +1136,7 @@ export default function GeneratePage({ onNavigate }: Props) {
                           }}
                         />}
                       <div className="ats-detail">
+                        <p className="ats-meaning">How closely your resume matches this posting's keywords.</p>
                         {tailoredResume.editedAt && <p className="ats-edited">Scored before your edits</p>}
                         <ScoreGain score={tailoredResume.atsScore} before={tailoredResume.atsScoreBefore} />
                         <GapChips gaps={tailoredResume.atsGaps ?? []} />
@@ -1084,25 +1147,12 @@ export default function GeneratePage({ onNavigate }: Props) {
                     </div>
                   )}
                   {reviewAt === 'resume' && reviewUnderScore && <ReviewAsk onClose={() => setReviewAt(null)} />}
-                  <div className="supplemental-section">
-                    <label className="supplemental-label" htmlFor="tailor-supplemental">Missing something?</label>
-                    <div className="composer">
-                      <textarea
-                        id="tailor-supplemental"
-                        className="composer-input"
-                        placeholder={'Add real experience not on your resume\ne.g. "2yr GraphQL from freelance, AWS cert in progress"'}
-                        value={supplemental}
-                        onChange={e => setSupplemental(e.target.value)}
-                      />
-                      <div className="composer-foot">
-                        <span className="composer-hint">Real experience only</span>
-                        <button className="btn btn-secondary btn-sm" onClick={regenerate}>
-                          <RegenerateIcon />
-                          Regenerate
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                  <AddExperience
+                    value={supplemental}
+                    onChange={setSupplemental}
+                    onRegenerate={regenerate}
+                    hasGaps={(tailoredResume.atsGaps?.length ?? 0) > 0}
+                  />
                   {tailoredResume.designFellBack && (
                     <p className="hint">Your file&apos;s layout couldn&apos;t be edited safely, so this one uses the Cover Me layout.</p>
                   )}
