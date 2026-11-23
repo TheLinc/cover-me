@@ -39,13 +39,13 @@ function Sample({ children }: { children: string }) {
 }
 
 const CHATGPT_RUNS: [string, number, number][] = [
-  ['Praised Northwind\'s mission', 5, 5],
-  ['Said "excited" and called the work "meaningful"', 5, 5],
-  ['Said "passion"', 4, 0],
+  ['Praised Northwind’s mission', 5, 5],
+  ['Said “excited” and called the work “meaningful”', 5, 5],
+  ['Said “passion”', 4, 0],
   ['Opened with the exact first sentence of another run', 3, 3],
-  ['Listed three or more of the resume\'s numbers', 4, 5],
-  ['Said Northwind helps clinics focus on patients, which the posting doesn\'t say', 3, 2],
-  ['Claimed HubSpot, which the resume doesn\'t have', 0, 0],
+  ['Listed three or more of the resume’s numbers', 4, 5],
+  ['Said Northwind helps clinics focus on patients, which the posting doesn’t say', 3, 2],
+  ['Claimed HubSpot, which the resume doesn’t have', 0, 0],
 ]
 
 const faqJsonLd = {
