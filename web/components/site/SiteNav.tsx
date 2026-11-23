@@ -64,7 +64,8 @@ export function SiteNav({ actions, links }: { actions?: ReactNode; links?: NavLi
                   </a>
                 </Button>
                 <SendToComputer placement="nav" className={buttonVariants({ size: 'sm', className: '[@media(pointer:fine)]:hidden' })}>
-                  Send to computer
+                  <span className="max-[359px]:hidden">Send to computer</span>
+                  <span className="min-[360px]:hidden">Send link</span>
                 </SendToComputer>
               </>
             )}
