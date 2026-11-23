@@ -1,8 +1,9 @@
 import type { CSSProperties } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowRightIcon, CheckIcon, FilePdfIcon, GoogleChromeLogoIcon } from '@phosphor-icons/react/dist/ssr'
-import { Button } from '@/components/ui/button'
+import { ArrowRightIcon, CheckIcon, DeviceMobileIcon, FilePdfIcon, GoogleChromeLogoIcon } from '@phosphor-icons/react/dist/ssr'
+import { Button, buttonVariants } from '@/components/ui/button'
+import { SendToComputer } from '@/components/site/SendToComputer'
 import { badgeVariants } from '@/components/ui/badge'
 import { storeUrl, cn } from '@/lib/utils'
 import { STORE_RATING } from '@/lib/structured-data'
@@ -179,17 +180,26 @@ export function Hero() {
             One click on the posting. Cover Me rewrites your resume in its words, scores the match and writes the cover letter.
           </p>
           <div className="flex flex-wrap gap-3 max-xl:justify-center">
-            <Button asChild size="lg">
+            <Button asChild size="lg" className="[@media(pointer:coarse)]:hidden">
               <a href={storeUrl('hero')} target="_blank" rel="noreferrer">
                 <GoogleChromeLogoIcon size={18} />
                 Add to Chrome, it&apos;s free
               </a>
             </Button>
+            <SendToComputer placement="hero" className={buttonVariants({ size: 'lg', className: '[@media(pointer:fine)]:hidden' })}>
+              <DeviceMobileIcon size={18} aria-hidden />
+              Send this to my computer
+            </SendToComputer>
             <Button asChild size="lg" variant="outline" className="max-sm:hidden">
               <a href="#how-it-works">See how it works</a>
             </Button>
           </div>
-          <p className="-mt-2 text-[13px] text-subtle sm:hidden">A Chrome extension for your computer. Open this page there to install.</p>
+          <p className="-mt-2 text-[13px] text-subtle [@media(pointer:fine)]:hidden">
+            A Chrome extension for your computer.{' '}
+            <a href={storeUrl('hero')} target="_blank" rel="noreferrer" className="underline underline-offset-2">
+              See it on the Chrome Web Store
+            </a>
+          </p>
           <p className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[11.5px] text-subtle max-xl:justify-center">
             <span>{STORE_RATING.value.toFixed(1)} on Chrome Web Store</span>
             <span aria-hidden="true">/</span>

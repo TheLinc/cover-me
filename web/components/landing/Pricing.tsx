@@ -1,6 +1,7 @@
 import { CheckIcon } from '@phosphor-icons/react/dist/ssr'
 import { storeUrl } from '@/lib/utils'
 import { PLAN_LIMITS as L } from '@/lib/limits'
+import { SendToComputer } from '@/components/site/SendToComputer'
 import { Ambient } from './Ambient'
 
 const FREE = [
@@ -37,9 +38,12 @@ export function Pricing() {
               <li key={f} className="flex items-start gap-2.5"><CheckIcon size={16} className="mt-[3px] shrink-0 text-subtle" />{f}</li>
             ))}
           </ul>
-          <a href={storeUrl('pricing')} target="_blank" rel="noreferrer" className="mt-auto rounded-full bg-panel py-3.5 text-center text-[15px] font-medium text-ink transition-colors hover:bg-line">
+          <a href={storeUrl('pricing')} target="_blank" rel="noreferrer" className="mt-auto rounded-full bg-panel py-3.5 text-center text-[15px] font-medium text-ink transition-colors hover:bg-line [@media(pointer:coarse)]:hidden">
             Install free
           </a>
+          <SendToComputer placement="pricing" className="mt-auto rounded-full bg-panel py-3.5 text-center text-[15px] font-medium text-ink transition-colors hover:bg-line [@media(pointer:fine)]:hidden">
+            Send this to my computer
+          </SendToComputer>
         </div>
         <div className="reveal flex flex-col gap-5 rounded-[24px] bg-ink p-9 text-white">
           <div className="flex items-center justify-between">

@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
-import { GoogleChromeLogoIcon } from '@phosphor-icons/react/dist/ssr'
+import { DeviceMobileIcon, GoogleChromeLogoIcon } from '@phosphor-icons/react/dist/ssr'
+import { SendToComputer } from '@/components/site/SendToComputer'
 import { cn, storeUrl } from '@/lib/utils'
 import { scrollProgress } from './useScrollProgress'
 import { EXAMPLE } from './visuals'
@@ -41,6 +42,10 @@ export function JourneyDock() {
   const done = state.p >= 0.98
   const stage = STAGES[Math.min(STAGES.length - 1, Math.floor(x))]
 
+  const action = cn(
+    'flex shrink-0 items-center gap-2 rounded-[12px] px-4 py-2.5 text-[13px] font-semibold transition-colors',
+    done ? 'bg-brand-strong text-white hover:bg-brand-deep' : 'bg-white text-ink hover:bg-brand-tint',
+  )
   return (
     <div
       className={cn(
@@ -67,19 +72,15 @@ export function JourneyDock() {
             ))}
           </div>
         </div>
-        <a
-          href={storeUrl('dock')}
-          target="_blank"
-          rel="noreferrer"
-          className={cn(
-            'flex shrink-0 items-center gap-2 rounded-[12px] px-4 py-2.5 text-[13px] font-semibold transition-colors',
-            done ? 'bg-brand-strong text-white hover:bg-brand-deep' : 'bg-white text-ink hover:bg-brand-tint',
-          )}
-        >
+        <a href={storeUrl('dock')} target="_blank" rel="noreferrer" className={cn(action, '[@media(pointer:coarse)]:hidden')}>
           <GoogleChromeLogoIcon size={16} />
           <span className="max-sm:hidden">Add to Chrome, free</span>
           <span className="sm:hidden">Install</span>
         </a>
+        <SendToComputer placement="dock" className={cn(action, '[@media(pointer:fine)]:hidden')}>
+          <DeviceMobileIcon size={16} aria-hidden />
+          Send to computer
+        </SendToComputer>
       </div>
     </div>
   )
