@@ -9,7 +9,7 @@ const guide = getGuide('how-to-answer-job-application-questions')
 
 export const metadata: Metadata = {
   title: 'Why Are You Interested in This Position? Sample Answers',
-  description: 'How to answer "Why are you interested in this position?", "Why do you want to work here?" and three more job application questions, with a sample answer for each.',
+  description: 'How to answer "Why do you want to work here?", "Why are you interested in this position?" and three more application questions, with example answers.',
   alternates: { canonical: `${BASE}/guides/${guide.slug}` },
   openGraph: {
     title: 'Why Are You Interested in This Position? Sample Answers | Cover Me',
@@ -103,9 +103,12 @@ export default function Page() {
       }
       sections={[
         {
-          title: 'Why are you interested in this position?',
+          title: 'How to answer “Why are you interested in this position?”',
           body: (
             <>
+              <p>
+                To answer &ldquo;Why are you interested in this position?&rdquo;, name the one part of the job you most want to do and why, in your first sentence. Then back it with one or two results from your resume. Skip praise for the company&rsquo;s mission and don&rsquo;t list the posting&rsquo;s requirements back. Three or four sentences fits most form boxes.
+              </p>
               <p>
                 Recruiters notice when many applicants answer it the same way. A recruiting manager at Zapier told{' '}
                 <a href="https://www.huffingtonpost.co.uk/entry/recruiters-job-application-chatgpt_l_6723b4e1e4b0871068fe81ad" {...ext}>HuffPost UK</a> that applicants sent her the same word-for-word answer to it, starting &ldquo;Company&rsquo;s mission of &lsquo;insert mission statement&rsquo; resonates with me&rdquo;. &ldquo;After seeing this exact same response over and over again,&rdquo; she said, &ldquo;it becomes clear that the candidates are all using AI.&rdquo;
@@ -131,11 +134,14 @@ export default function Page() {
           ),
         },
         {
-          title: 'Why do you want to work here?',
+          title: 'How to answer “Why do you want to work here?”',
           body: (
             <>
               <p>
-                It sounds like the same question, and many applications ask only one of the two. The difference is the subject: the first is about the job, this one is about the company.
+                To answer &ldquo;Why do you want to work here?&rdquo;, give one reason about this company that wouldn&rsquo;t fit any other, such as what it sells or who its customers are, and say why it matters to you. Then back it with one thing you&rsquo;ve done. If the reason would fit any company, it isn&rsquo;t a reason yet.
+              </p>
+              <p>
+                It sounds like the question above, and many applications ask only one of the two. The difference is the subject: that one is about the job, this one is about the company.
               </p>
               <h3>What the employer is checking</h3>
               <p>
@@ -151,24 +157,23 @@ export default function Page() {
                 Northwind sells to independent clinics, and I want my marketing to reach the person who runs the practice and makes the call. Email is how I&apos;ve done that best: at Juniper Labs I wrote and scheduled a weekly newsletter for 40,000 subscribers with a 41% open rate.
               </Sample>
               <p>
-                If the only reason you can find is the company&rsquo;s mission statement, write about the job instead. A true answer about the work reads better than borrowed praise.
+                This example answer works because its reason only fits Northwind, and the newsletter result shows Alex has done that kind of work. If the only reason you can find is the company&rsquo;s mission statement, write about the job instead. A true answer about the work reads better than borrowed praise.
               </p>
             </>
           ),
         },
         {
-          title: 'Tell us about yourself',
+          title: '“Tell us about yourself” on a job application',
           body: (
             <>
+              <p>
+                On a job application, answer &ldquo;Tell us about yourself&rdquo; in three or four sentences: what you do now and for how long, one result that matches the posting, and why you&rsquo;re applying. Leave out your life story and anything the form already asks for, such as your school or address.
+              </p>
               <p>
                 On a form, this isn&rsquo;t the two-minute spoken version. The reader has your resume open beside it.
               </p>
               <h3>What the employer is checking</h3>
               <p>Whether you can pick the parts of your background that matter for this job, and say them briefly.</p>
-              <h3>How to answer</h3>
-              <p>
-                Three or four sentences: what you do now and for how long, one result that matches the posting, and why you&rsquo;re applying. Leave out anything already in the form, such as your school or address.
-              </p>
               <Sample>
                 I&apos;m a marketing lead with seven years in B2B demand generation, now at Brightline. I plan campaigns across email, social and search, and my A/B tests on landing pages lifted sign-up conversion from 3.1% to 4.4%. I&apos;m applying because I want to bring that work to a company that sells to independent clinics.
               </Sample>
@@ -176,11 +181,14 @@ export default function Page() {
           ),
         },
         {
-          title: 'Desired salary',
+          title: 'How to answer desired salary on a job application',
           body: (
             <>
               <p>
-                Look for a pay range in the posting before you type anything. California, Colorado, Washington, British Columbia and Ontario are among the places that now require one, and an answer inside it is the easy case.
+                For desired salary on a job application, check the posting for a pay range first, then give a range whose bottom is the figure you want, such as $90,000 to $100,000. If the field takes only a number, put your target. The question asks what you want, not what you earn now.
+              </p>
+              <p>
+                California, Colorado, Washington, British Columbia and Ontario are among the places that now require a pay range in the posting, and an answer inside it is the easy case.
               </p>
               <h3>What the employer is checking</h3>
               <p>
@@ -200,19 +208,21 @@ export default function Page() {
           ),
         },
         {
-          title: 'Reason for leaving',
+          title: 'How to answer reason for leaving on a job application',
           body: (
             <>
               <p>
-                Applications ask this for your current job and sometimes for each past one. It has the shortest good answer of the five.
+                For reason for leaving on a job application, write one true sentence about what you want next, not about what went wrong. If you&rsquo;re still employed, say so. If you were laid off, write &ldquo;Position eliminated&rdquo;. Don&rsquo;t criticize the employer.
+              </p>
+              <p>
+                Applications ask this for your current job and sometimes for each past one. It has the shortest good answer of the five, and a plain one reads better than a vague one.
               </p>
               <h3>What the employer is checking</h3>
               <p>Whether something went wrong that could go wrong again, and whether you&rsquo;ll talk about a past employer badly.</p>
               <h3>How to answer</h3>
               <ul>
-                <li>Write one true sentence about what you want next. If you&rsquo;re still employed, say so.</li>
-                <li>If you were laid off, say &ldquo;Position eliminated&rdquo; or &ldquo;Laid off in a reorganization&rdquo;. It&rsquo;s common, and a plain answer reads better than a vague one.</li>
-                <li>Don&rsquo;t criticize the employer. The reader only hears your side, and it&rsquo;s the side they&rsquo;ll remember.</li>
+                <li>&ldquo;Laid off in a reorganization&rdquo; works as well as &ldquo;Position eliminated&rdquo;. Layoffs are common, and the reader knows it.</li>
+                <li>A past employer you criticize is the part the reader remembers, because they only hear your side.</li>
               </ul>
               <Sample>
                 I&apos;m still at Brightline. I&apos;m looking for a role where I own the whole campaign plan for one product.
@@ -228,7 +238,7 @@ export default function Page() {
                 I build <Link href="/">Cover Me</Link>, a Chrome extension that can write a first draft of these answers for you to edit. On the application, right-click the question box and choose &ldquo;Cover Me: write an answer&rdquo;. It reads the question and the job posting on the page, or the job you last saved in Cover Me, writes an answer from your resume, and types it into the box. You edit it there, ask for a change such as Shorter, or press Ctrl+Z to undo.
               </p>
               <p>
-                The answer comes first, and every fact in it comes from your resume or what you&rsquo;ve told Cover Me about yourself. Details such as your salary or start date stay in [brackets] for you to fill in. Check the draft against the advice above before you use it. It never submits the form. Free accounts get {L.answer_starter} answers to start, then {L.answer_weekly} a week, Pro gets {L.answer_pro_daily} a day, and there&rsquo;s no limit with your own API key. You can <a href="#get-cover-me">install it below</a>.
+                The answer comes first, and every fact in it comes from your resume or what you&rsquo;ve told Cover Me about yourself. Details such as your salary or start date stay in [brackets] for you to fill in. Check the draft against the advice above before you use it. For the cover letter itself, see <Link href="/guides/chatgpt-cover-letter-prompts">ChatGPT cover letter prompts</Link>, or <Link href="/guides/tailor-resume-to-job-description">how to tailor your resume to a job description</Link> for the resume. It never submits the form. Free accounts get {L.answer_starter} answers to start, then {L.answer_weekly} a week, Pro gets {L.answer_pro_daily} a day, and there&rsquo;s no limit with your own API key. You can <a href="#get-cover-me">install it below</a>.
               </p>
             </>
           ),
