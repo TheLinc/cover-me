@@ -1,4 +1,4 @@
-// Parsed once per upload and cached encrypted in resumes.structured_encrypted (#26).
+// Cached encrypted in resumes.structured_encrypted, so tailoring doesn't parse each time (#26).
 // The prompt mirrors extension/src/lib/ai/resume-parse.ts; scripts/check-prompt-sync.mjs
 // fails the build if the copies drift (https://github.com/TheLinc/cover-me/commit/46f809a1dc946cf6964c9e2ad9a400323d9bada5).
 
