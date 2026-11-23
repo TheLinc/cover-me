@@ -142,6 +142,7 @@ describe('design files', () => {
       otherSections: [{ heading: 'Open Source', lines: ['Speaker, GopherCon 2024'], entries: [{ name: 'pg-outbox', subtitle: 'Creator', bullets: ['Outbox library'] }] }],
       skills: 'Languages: TypeScript\nData: Postgres',
       sectionOrder: ['summary', 'experience', 'projects', 'other', 'education', 'skills'],
+      linksKept: true,
     })
     await uploadFile(user, hash('a'), 'file a')
     await callFunction('tailor', { token: user.token, headers: NEW, body: { job: JOB, layout: 'yours', sourceHash: hash('a') } })

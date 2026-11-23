@@ -531,6 +531,7 @@ describe('long master resumes', () => {
     projects: [{ name: 'tidewatch', link: 'github.com/x/tidewatch', tech: 'Go, SQLite', bullets: ['Uptime monitor', 'Slack alerts'] }],
     otherSections: [{ heading: 'Open Source', lines: ['Speaker, GopherCon 2024'], entries: [{ name: 'pg-outbox', subtitle: 'Creator', link: 'github.com/x/pg-outbox', bullets: ['Outbox library for Postgres'] }, { name: '', subtitle: 'Maintainer', bullets: ['An entry with no name'] }] }],
     sectionOrder: ['summary', 'experience', 'projects', 'other', 'education', 'skills'],
+    linksKept: true,
   }
   const NEW_FIELDS = { 'X-Resume-Fields': '2' }
   // The model's ranking: 9 rewritten bullets for the latest role, its measured result not among them (#190).
