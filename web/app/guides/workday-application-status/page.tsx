@@ -56,13 +56,6 @@ type Source = keyof typeof SOURCES
 
 const STATUSES: { status: string; tab: string; means: string; next: string; sources: Source[] }[] = [
   {
-    status: 'Draft',
-    tab: 'Draft applications',
-    means: 'You started the application and saved it for later. The employer hasn’t received it.',
-    next: 'Finish and submit it, or remove it.',
-    sources: ['montgomery'],
-  },
-  {
     status: 'Submitted',
     tab: 'Active',
     means: 'The employer has your application, and it is in the first review stage.',
@@ -79,7 +72,7 @@ const STATUSES: { status: string; tab: string; means: string; next: string; sour
   {
     status: 'Completed',
     tab: 'Inactive',
-    means: 'The process ended for you. Usually you were declined, or the job was canceled. It doesn’t mean you were hired.',
+    means: 'The process ended for you. Usually you were declined, or the job was canceled. At some employers, hired applications move to the Inactive tab too.',
     next: 'If you have no offer, treat it as a no. You can still apply for other jobs at the same employer.',
     sources: ['wisc', 'montgomery'],
   },
@@ -87,7 +80,7 @@ const STATUSES: { status: string; tab: string; means: string; next: string; sour
     status: 'Withdrew',
     tab: 'Inactive',
     means: 'You took yourself out of consideration.',
-    next: 'Nothing. Apply again if the job is still posted and you change your mind.',
+    next: 'Nothing. If you change your mind, contact the recruiter.',
     sources: ['wisc', 'uw'],
   },
 ]
@@ -101,7 +94,7 @@ const faqJsonLd = {
       name: 'What does "Completed" mean on a Workday application?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: "It means the hiring process has ended for you, and usually that you weren't selected. In UW–Madison's Workday setup, every decline reason except a withdrawal shows the candidate \"Completed\" on the Inactive tab, and so does a canceled job. Hired applications can also move to the Inactive tab, so if you accepted an offer, that's the other reason you'd see it.",
+        text: "It means the hiring process has ended for you, and usually that you weren't selected. In UW–Madison's Workday setup, every decline reason except a withdrawal shows the candidate \"Completed\" on the Inactive tab, and so does a canceled job. At some employers, hired applications move to the Inactive tab too, so if you accepted an offer, that may be why. If you didn't, read it as a no.",
       },
     },
     {
@@ -109,7 +102,7 @@ const faqJsonLd = {
       name: 'Does Workday tell you when you are rejected?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: "Not always. Employers set up their own notices. UW–Madison's HR guide says changing a candidate's status in Workday \"does not send them any kind of notification\", while the University of Washington sends a notice when a candidate is no longer under consideration. Workday also lets employers delay decline notices by a day or more, so the status can change before any email arrives.",
+        text: "Not always. Employers set up their own notices. UW–Madison's HR guide says changing a candidate's status in Workday \"does not send them any kind of notification/communication\", while the University of Washington sends a notice when a candidate is no longer under consideration. Workday also lets employers delay decline notices by a day or more, so the status can change before any email arrives.",
       },
     },
     {
@@ -155,14 +148,14 @@ export default function Page() {
       guide={guide}
       lede={
         <>
-          Workday shows candidates only a few statuses: Submitted, In Progress, Completed and Withdrew. The one that trips people up is Completed, which in most cases means you weren&rsquo;t selected. Here is what each status means, where it comes from, and what to do next.
+          A Workday application shows a status such as Submitted, In Progress, Completed or Withdrew, and employers can rename them. The one that trips people up is Completed, which in most cases means you weren&rsquo;t selected. Here is what each status means, where it comes from, and what to do next.
         </>
       }
       tldr={[
         'Submitted: the employer has it, and it is in the first review.',
         'In Progress: you are still being considered. It can cover every stage from first review to interview.',
         "Completed, on the Inactive tab: the process ended for you. Unless you have an offer, you weren't selected.",
-        "Many employers don't send an email when they decline you, so the status can be the only answer you get.",
+        "Changing your status in Workday doesn't send an email by itself, so the status can be the only answer you get.",
       ]}
       intro={
         <p>
@@ -221,13 +214,13 @@ export default function Page() {
           body: (
             <>
               <p>
-                &ldquo;Completed&rdquo; on a Workday application means the hiring process has ended for you, and in most cases that you weren&rsquo;t selected. It doesn&rsquo;t mean you were hired or that your application is complete. The word describes the process, not the outcome.
+                &ldquo;Completed&rdquo; on a Workday application means the hiring process has ended for you, and in most cases that you weren&rsquo;t selected. It doesn&rsquo;t mean your application went through and is complete. The word describes the process, not the outcome.
               </p>
               <p>
                 In UW&ndash;Madison&rsquo;s table, Completed appears in two cases: the employer declined you for any reason other than your own withdrawal, or the job requisition was canceled (<Cite source="wisc" />). The University of Washington&rsquo;s statuses make the same point in plainer words. Theirs says &ldquo;Not selected&rdquo;, which &ldquo;can occur at any time after application&rdquo;, and a canceled job shows &ldquo;Recruitment Canceled&rdquo; (<Cite source="uw" />).
               </p>
               <p>
-                The one exception is a hire. Montgomery College&rsquo;s Workday guide says applications that have been &ldquo;withdrawn, rejected or are ready for hire appear under the Inactive tab&rdquo; (<Cite source="montgomery" />). If you accepted an offer, that explains it. If you didn&rsquo;t, Completed means no.
+                Hires can end up on the same tab. Montgomery College&rsquo;s Workday guide for its own employees says applications that have been &ldquo;withdrawn, rejected or are ready for hire appear under the Inactive tab&rdquo; (<Cite source="montgomery" />). Neither guide says which label a hire shows. If you accepted an offer, that may be why your application moved. If you didn&rsquo;t, Completed means no.
               </p>
               <h3>Why you might see Completed with no email</h3>
               <p>
