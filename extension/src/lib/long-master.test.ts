@@ -71,7 +71,7 @@ describe('bullet budget', () => {
   })
 
   test('any other resume keeps what the trim prompt always allowed, and every project bullet', () => {
-    // The reviewer's 10/6/5/4/3 resume: trim may cut to 7/5/5/4/3 at most, never lower in code (#190).
+    // Trim may cut a 10/6/5/4/3 resume to 7/5/5/4/3 at most, never lower in code (#190).
     const b = bulletBudget({ experience: [role(10), role(6), role(5), role(4), role(3)], projects: [role(4)] })
     expect(b).toEqual({ long: false, experience: [7, 5, 5, 4, 3], projects: [4] })
   })
@@ -257,6 +257,15 @@ describe('headline words the resume never shows', () => {
       const own = { headline: first, experience: [{ title: first, bullets: ['Worked the shift'] }, { title: second, bullets: ['Worked the shift'] }] }
       expect(groundTailored({ ...own, headline: claimed }, own, `${first} ${second} Worked the shift`, claimed).resume.headline, claimed).toBe(kept)
     }
+  })
+
+  test('a title with its junior qualifier dropped goes back', () => {
+    for (const [held, claimed] of [['Apprentice Electrician', 'Electrician'], ['Student Nurse', 'Nurse'], ['Welder Helper', 'Welder'], ['Trainee Accountant', 'Accountant'], ['Assistant Manager', 'Manager'], ['Associate Director of Nursing', 'Director of Nursing']]) {
+      const own = { headline: held, experience: [{ title: held, bullets: ['Worked the shift'] }] }
+      expect(groundTailored({ ...own, headline: claimed }, own, `${held} Worked the shift`, claimed).resume.headline, claimed).toBe(held)
+    }
+    const own = { headline: 'Apprentice Electrician', experience: [{ title: 'Apprentice Electrician', bullets: ['Wired residential homes'] }] }
+    expect(groundTailored({ ...own, headline: 'Apprentice Electrician, Residential' }, own, 'Apprentice Electrician Wired residential homes', 'Electrician').resume.headline).toBe('Apprentice Electrician, Residential')
   })
 
   test('a title from their own titles keeps a specialty their bullets show', () => {

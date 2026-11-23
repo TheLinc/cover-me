@@ -288,7 +288,7 @@ GROUPED SKILLS — this resume lists its skills in labelled groups: ${groups.map
 function buildPrompt(job: JobPayload, parsed: ParsedResume, compact: boolean, supplemental?: string, trim = false, includeSummary = true, previous?: Record<string, unknown>): string {
   const company = job.company && job.company !== 'Unknown Company' ? job.company : 'Unknown'
   const budget = budgetText(parsed)
-  // Only a long master resume gets per-entry budgets; any other keeps the trim rules it always had (#190).
+  // Only a long master resume gets per-entry budgets in the prompt (#190).
   const long = bulletBudget(parsed).long
   const today = new Date().toISOString().split('T')[0]
 

@@ -127,12 +127,12 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
 
   // A left side too wide for the line wraps under itself (#190).
   function twoCol(left: string, right: string, leftStyle: 'bold' | 'italic', size = ENTRY) {
-    need(14)
     doc.setFont('times', 'normal')
     doc.setFontSize(size)
-    const rightW = right ? width(right) + 10 : 0
+    const rightW = right ? Math.min(width(right) + 10, CW / 2) : 0
     doc.setFont('times', leftStyle)
     const lines = wrap(left || '', CW - rightW)
+    need(14 + LH * (lines.length - 1))
     lines.forEach((line, i) => {
       if (i) y += LH
       text(line, ML)
@@ -146,15 +146,17 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
 
   // "Name | subtitle": bold then italic on one line, a right-hand note at the
   // margin. A long name (a publication title) wraps short of the note, and the
-  // italic part moves to its own line when both don't fit (#190).
+  // italic part moves to its own line when both don't fit. A note wider than
+  // half the line (a long link) goes on its own line under them (#190).
   function entryHeader(name: string, subtitle: string | undefined, right: string | undefined) {
     doc.setFontSize(ENTRY)
     doc.setFont('times', 'normal')
-    const rightW = right ? width(right) + 10 : 0
+    const inline = !!right && width(right) <= CW / 2
+    const rightW = inline ? width(right!) + 10 : 0
     doc.setFont('times', 'bold')
     const names = wrap(name, CW - rightW)
     need(14 + 13 * (names.length - 1))
-    if (right) {
+    if (right && inline) {
       doc.setFont('times', 'normal')
       text(right, MR, { align: 'right' })
       doc.setFont('times', 'bold')
@@ -176,6 +178,16 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
       doc.setFont('times', 'italic')
       doc.setFontSize(BODY)
       for (const line of wrap(subtitle, CW)) {
+        text(line, ML)
+        y += LH
+      }
+      y += 1
+    }
+    if (right && !inline) {
+      doc.setFont('times', 'normal')
+      doc.setFontSize(BODY)
+      for (const line of wrap(right, CW)) {
+        need(LH)
         text(line, ML)
         y += LH
       }

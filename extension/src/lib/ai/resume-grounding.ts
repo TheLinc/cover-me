@@ -863,6 +863,8 @@ export async function checkedTitle(jobTitle: string, original: Groundable, tailo
   }
 }
 
+const JUNIOR = new Set(['apprentice', 'student', 'assistant', 'associate', 'trainee', 'helper', 'junior', 'jr', 'intern', 'aide', 'resident', 'graduate', 'deputy', 'acting'])
+
 // Ranks and licences a headline may claim only when the candidate's own
 // headline or a job title shows them, in tech and in trades and healthcare (#190).
 const LEVELS = ['senior', 'sr', 'staff', 'lead', 'principal', 'head', 'director', 'manager', 'chief', 'vp', 'vice president', 'ii', 'iii', 'iv',
@@ -887,8 +889,12 @@ function groundHeadline<T extends Groundable>(tailored: T, original: Groundable,
   // The title comes from one of their own titles, not from words of several:
   // "Journeyman Electrician" and "Plumber's Helper" make no "Journeyman Plumber" (#190).
   const titleTokens = tokens(title ?? '').filter((w) => !SMALL_WORDS.has(w))
-  const fromOneTitle = [original.headline, ...original.experience.map((e) => e.title ?? '')]
-    .some((t) => t && titleTokens.every((w) => backed(w, new Set(tokens(t)))))
+  // Nor by dropping what makes it junior: an "Apprentice Electrician" is no
+  // "Electrician", an "Assistant Manager" no "Manager" (#190).
+  const fromOneTitle = [original.headline, ...original.experience.map((e) => e.title ?? '')].some((t) => {
+    const words = new Set(tokens(t ?? ''))
+    return t && titleTokens.every((w) => backed(w, words)) && ![...words].some((w) => JUNIOR.has(w) && !titleTokens.includes(w))
+  })
   const titleUnbacked = titleTokens.filter((w) => !backed(w, titleWords))
   const unbacked = [
     ...(fromOneTitle ? [] : titleUnbacked.length ? titleUnbacked : [title ?? '']),
@@ -923,8 +929,6 @@ export function groundTailored<T extends Groundable>(
     found.forEach((t) => removed.add(t))
     return found
   }
-  // A rewritten headline that names a job-only term, or claims a level the
-  // candidate's own headline and titles never show, goes back to theirs (#190).
   const headlineFixed = groundHeadline(tailored, original, terms, removed)
   if (terms.length === 0) return { resume: headlineFixed, removed: [...removed] }
 

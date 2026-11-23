@@ -358,7 +358,7 @@ export async function parseResumeStructure(
 ): Promise<ParsedResume> {
   const prompt = buildParsePrompt(resumeText)
 
-  // Both providers stream: a resume near the 12,000-character cap took 30-31 s
+  // Both providers stream: a 12,000-character resume took 30-31 s
   // to parse on either, and Chrome stops a service worker whose fetch() gets no
   // response for 30 s (#31).
   if (provider === 'claude') {
