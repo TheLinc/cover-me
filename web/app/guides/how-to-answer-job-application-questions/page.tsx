@@ -45,7 +45,7 @@ const CHATGPT_RUNS: [string, number, number][] = [
   ['Opened with the exact first sentence of another run', 3, 3],
   ['Listed three or more of the resume’s numbers', 4, 5],
   ['Added a patient benefit the posting doesn’t state', 3, 2],
-  ['Claimed HubSpot, which the resume doesn’t have', 0, 0],
+  ['Claimed HubSpot, which the posting asks for and the resume doesn’t have', 0, 0],
 ]
 
 const faqJsonLd = {
@@ -108,7 +108,7 @@ export default function Page() {
         'Answer the question in your first sentence, then back it with one or two real results from your resume.',
         "Use the posting to pick what you say about the job, and your resume for what you've done. Don't praise the company's mission or list its requirements back.",
         'Salary and reason for leaving are facts only you know. Keep those answers to one or two sentences.',
-        'In 10 ChatGPT runs, every answer praised the company\'s mission and said "excited". Cut those lines from any draft you start with.',
+        'In 10 ChatGPT runs, every answer praised the company\'s mission and said "excited". Rewrite those parts of any draft you start with.',
       ]}
       intro={
         <p>
@@ -177,7 +177,7 @@ export default function Page() {
           ),
         },
         {
-          title: 'What ChatGPT writes for these two questions',
+          title: 'What ChatGPT wrote for these two questions',
           body: (
             <>
               <p>
@@ -214,13 +214,13 @@ export default function Page() {
                 I want to work at Northwind because I&rsquo;m excited by the opportunity to use marketing to make a meaningful difference for independent clinics.
               </blockquote>
               <p>
-                The same resume and posting got the same first sentence, word for word, in three of five new chats. This test used one resume, not many applicants, but it shows how the repeats the Zapier recruiter saw can happen.
+                This test used one resume and one posting, so it can&rsquo;t show what many applicants get. It is consistent with the repeats the Zapier recruiter saw.
               </p>
               <p>
-                The drafts were accurate. ChatGPT kept to the resume&rsquo;s numbers and didn&rsquo;t claim HubSpot, which Alex doesn&rsquo;t have. The answers to &ldquo;Why do you want to work here?&rdquo; picked a fair reason, too: who Northwind sells to. What made them read alike is everything around that reason. Every answer praised the mission and said &ldquo;excited&rdquo;, and nine of ten listed three or more of the resume&rsquo;s numbers, where the advice above says to skip the mission praise and keep one or two results. Half of them also added a patient benefit the posting doesn&rsquo;t state.
+                The drafts were accurate about Alex. ChatGPT kept to the resume&rsquo;s numbers and didn&rsquo;t claim HubSpot, which the posting asks for and Alex doesn&rsquo;t have. Three of the five answers to &ldquo;Why do you want to work here?&rdquo; picked a fair reason, too: who Northwind sells to. The other two gave the mission itself as the reason. What made the answers read alike is the wording around the reason. Every answer praised the mission and said &ldquo;excited&rdquo;, and nine of ten listed three or more of the resume&rsquo;s numbers, where the advice above says to skip the mission praise and keep one or two results. Half of them also added a patient benefit the posting doesn&rsquo;t state.
               </p>
               <p>
-                If you start from a ChatGPT draft, keep its reason if it&rsquo;s true for you and say in your own words why it matters to you. Then delete the mission sentence and the &ldquo;excited&rdquo; line, keep one or two results, and check every claim about the company against the posting.
+                If you start from a ChatGPT draft, keep its reason only if it&rsquo;s true for you, and rewrite it in your own words without &ldquo;excited&rdquo;, &ldquo;passion&rdquo; or &ldquo;meaningful&rdquo;. Then cut the mission praise, keep one or two results, and check every claim about the company against the posting.
               </p>
             </>
           ),
@@ -261,7 +261,6 @@ export default function Page() {
               <h3>How to answer</h3>
               <ul>
                 <li>Give a range whose bottom is the figure you actually want. In five negotiation experiments, opening with a range like that got better final terms than a single number, as long as the range wasn&rsquo;t too wide (<a href="https://business.columbia.edu/faculty/research/tandem-anchoring-informational-and-politeness-effects-range-offers-social-exchange" {...ext}>Ames and Mason, 2015</a>). Those were negotiations, not application forms, so treat it as a guide.</li>
-                <li>If the field takes only a number, put your target.</li>
                 <li>If it asks for your current salary, you can answer with your expectations instead. Where the law allows the question, sharing your pay history is your choice.</li>
               </ul>
               <Sample>
@@ -283,10 +282,9 @@ export default function Page() {
               <h3>What the employer is checking</h3>
               <p>Whether something went wrong that could go wrong again, and whether you&rsquo;ll talk about a past employer badly.</p>
               <h3>How to answer</h3>
-              <ul>
-                <li>&ldquo;Laid off in a reorganization&rdquo; works as well as &ldquo;Position eliminated&rdquo;. Layoffs are common, and the reader knows it.</li>
-                <li>Don&rsquo;t criticize a past employer. The reader only hears your side, and that&rsquo;s the part they remember.</li>
-              </ul>
+              <p>
+                &ldquo;Laid off in a reorganization&rdquo; works as well as &ldquo;Position eliminated&rdquo;. Layoffs are common, and the reader knows it. Criticism of a past employer is what the reader remembers, because they only hear your side.
+              </p>
               <Sample>
                 I&apos;m still at Brightline. I&apos;m looking for a role where I own the whole campaign plan for one product.
               </Sample>
