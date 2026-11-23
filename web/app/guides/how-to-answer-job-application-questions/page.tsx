@@ -29,9 +29,12 @@ export const metadata: Metadata = {
 
 function Sample({ children }: { children: string }) {
   return (
-    <GuideFigure caption={`Sample answer for Alex Rivera, a made-up applicant, to a made-up Northwind posting. ${children.length} characters.`}>
-      <p className="!m-0 rounded-[12px] bg-white p-5 text-[15px] leading-[1.65] text-ink max-sm:p-4">{children}</p>
-    </GuideFigure>
+    <>
+      <h3 className="[&+figure]:!mt-4">Sample answer</h3>
+      <GuideFigure caption={`For Alex Rivera, a made-up applicant, to a made-up Northwind posting. ${children.length} characters.`}>
+        <p className="!m-0 rounded-[12px] bg-white p-5 text-[15px] leading-[1.65] text-ink max-sm:p-4">{children}</p>
+      </GuideFigure>
+    </>
   )
 }
 
