@@ -165,3 +165,13 @@ test('PDF: text drawn out of order on one baseline stays apart (#339)', async ()
   }))
   expect(text.split(/\s+/)).toEqual(['Aug', '2024', 'Software', 'Engineer'])
 })
+
+test('PDF: text drawn right after a link stays apart from its URL (#339)', async () => {
+  const text = await parseResume(pdfFile((doc) => {
+    doc.textWithLink('Portfolio', 10, 10, { url: 'https://ada.dev' })
+    const end = 10 + doc.getTextWidth('Portfolio')
+    doc.setFont('times')
+    doc.text('| GitHub', end, 10)
+  }))
+  expect(text).toBe('Portfolio (https://ada.dev/) | GitHub')
+})
