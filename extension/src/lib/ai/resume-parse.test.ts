@@ -18,6 +18,26 @@ describe('parseResumeStructure streams', () => {
     expect(await parseResumeStructure('r', 'claude', 'k')).toEqual({ ...RESUME, otherSections: [], sectionOrder: [], linksKept: true })
     expect(JSON.parse(fetch.mock.calls[0]![1].body as string).stream).toBe(true)
   })
+  test('Claude: asks Haiku 5.5 at low effort, with room for a resume at the length cap', async () => {
+    const fetch = vi.fn(async (_url: string, _init: RequestInit) => sse([{ type: 'content_block_delta', delta: { type: 'text_delta', text: json } }]))
+    vi.stubGlobal('fetch', fetch)
+    await parseResumeStructure('r', 'claude', 'k')
+    const body = JSON.parse(fetch.mock.calls[0]![1].body as string)
+    expect(body).toMatchObject({ model: 'claude-haiku-5-5', output_config: { effort: 'low' }, max_tokens: 16000 })
+  })
+  test('Claude: skips thinking deltas ahead of the text', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => sse([
+      { type: 'content_block_start', index: 0, content_block: { type: 'thinking', thinking: '' } },
+      { type: 'content_block_delta', index: 0, delta: { type: 'thinking_delta', thinking: 'The resume lists' } },
+      { type: 'content_block_delta', index: 0, delta: { type: 'signature_delta', signature: 'sig' } },
+      { type: 'content_block_delta', index: 1, delta: { type: 'text_delta', text: json } },
+    ])))
+    expect(await parseResumeStructure('r', 'claude', 'k')).toEqual({ ...RESUME, otherSections: [], sectionOrder: [], linksKept: true })
+  })
+  test('Claude: a refusal (no text) surfaces as the parse error', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => sse([{ type: 'message_delta', delta: { stop_reason: 'refusal' } }])))
+    await expect(parseResumeStructure('r', 'claude', 'k')).rejects.toThrow('Resume parse returned invalid JSON')
+  })
   test('OpenAI: joins the Chat Completions deltas', async () => {
     const fetch = vi.fn(async (_url: string, _init: RequestInit) => sse([json.slice(0, 20), json.slice(20)].map((content) => ({ choices: [{ delta: { content } }] }))))
     vi.stubGlobal('fetch', fetch)
@@ -153,7 +173,7 @@ describe('upgradedParse', () => {
 describe('the section order comes from the resume text', () => {
   const job = (title: string, company: string, bullets: string[]) => ({ title, company, location: '', dates: '', bullets })
   const school = { institution: 'University of Michigan', degree: 'B.S. in Statistics', location: '', dates: '', bullets: [] }
-  // The model's order in each: its JSON's order, not the resume's, as it gave in the live check.
+  // The model's order in each: its JSON's order, not the resume's, as it gave in the live check (#165).
   const parse = (text: string, fields: object) => parseParsedJson(JSON.stringify({ name: 'P', email: '', phone: '', website: '', ...fields }), text).sectionOrder
 
   test('skills first, ahead of a profile that names a skill', () => {
@@ -213,7 +233,7 @@ describe('withChosenOrder', () => {
   })
 
   test('the summary keeps its place among the sections the parse has', () => {
-    // An emptied certifications list shows in the editor, but the parse has none.
+    // An emptied certifications list shows in the editor, but the parse has none (#197).
     expect(withChosenOrder(parsed, ['certifications', 'summary', 'experience', 'education', 'skills', 'other', 'other'], []).sectionOrder)
       .toEqual(['summary', 'experience', 'education', 'skills', 'other', 'other'])
     expect(withChosenOrder(parsed, ['experience', 'projects', 'summary', 'education', 'skills', 'other', 'other'], []).sectionOrder)
@@ -272,7 +292,7 @@ const LINKED_PARSE = {
 } as unknown as ParsedResume
 
 // The backend copy reads Deno.env when loaded; its path is built at runtime so
-// tsc, which doesn't cover backend/, doesn't follow it.
+// tsc, which doesn't cover backend/, doesn't follow it (#236).
 const backendParse = '../../../../backend/supabase/functions/_shared/resume-parse.ts'
 describe.each([
   ['extension', async () => (await import('./resume-parse')).withLinks],
@@ -335,7 +355,7 @@ test('urlCore strips a trailing slash, and a long run of slashes costs no time (
 })
 
 // The eval's URL check is tested here, beside what it checks, as the issue
-// asks; vitest only collects tests under src/.
+// asks; vitest only collects tests under src/ (#236).
 describe('the URL check (#236)', () => {
   test('lists every URL in the resume text, and not emails or file names', () => {
     expect(resumeUrls(`${LINKED_TEXT}\nNode.js, résumé.pdf, ada.lovelace.dev@mail.com, www.ada.dev/blog.`)).toEqual([

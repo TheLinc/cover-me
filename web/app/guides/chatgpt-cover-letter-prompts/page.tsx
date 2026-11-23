@@ -198,8 +198,7 @@ export default function Page() {
               </p>
               <p>
                 When I wrote my own applications in ChatGPT, a letter and a tailored resume took{' '}
-                <a href="https://dev.to/plain-stack/how-i-went-from-0-interviews-to-4-in-a-month-by-tailoring-every-application-1an4" target="_blank" rel="noopener noreferrer">about 12 minutes per application</a>
-                . That&rsquo;s fine for a few roles a week, and it adds up fast at several a day.
+                about 12 minutes per application. That&rsquo;s fine for a few roles a week, and it adds up fast at several a day.
               </p>
             </>
           ),

@@ -159,6 +159,13 @@ const checks = [
     start: '// ── Parse normalizers (mirrored:',
     end: '// ── End mirrored parse normalizers ──',
   },
+  {
+    name: 'resume parse request fields',
+    a: 'extension/src/lib/ai/claude.ts',
+    b: 'backend/supabase/functions/_shared/anthropic.ts',
+    start: 'export const HAIKU_PARSE_FIELDS = {',
+    end: '} as const',
+  },
 ]
 
 let failed = 0
