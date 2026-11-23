@@ -234,7 +234,7 @@ export function groupedSkillsRule(skills?: string): string {
   const groups = skillGroups(skills)
   if (!groups.length) return ''
   return `
-GROUPED SKILLS — this resume lists its skills in labelled groups: ${groups.map((g) => `"${g.label}"`).join(', ')}. Keep that grouping. Give every skill a "category" copied exactly from one of these labels; an added skill takes the label of the group its evidence comes from. Emit skills most-relevant-first (groups print in the order their first skill appears), and leave out a group with nothing relevant to this job. These limits replace the ~15–18 target and the 18-item cap above: aim for 20–30 skills across at most 6 groups, hard cap 32. Prefer the resume's own wording, and add at most 3 skills worded in the JD's phrasing.
+GROUPED SKILLS — this resume lists its skills in labelled groups: ${groups.map((g) => `"${g.label}"`).join(', ')}. Keep that grouping. Give every skill a "category" copied exactly from one of these labels; an added skill takes the label of the group its evidence comes from. Emit skills most-relevant-first (groups print in the order their first skill appears), and leave out a group with nothing relevant to this job. These limits replace the ~15–18 target and the 18-item cap above: up to 30 skills across at most 6 groups, hard cap 32. Prefer the resume's own wording, and add at most 3 skills worded in the JD's phrasing.
 `
 }
 
@@ -338,8 +338,10 @@ INDUSTRY/DOMAIN: name a domain (e-commerce, fintech, biotech, etc.) ONLY if a bu
 ${parsed.headline ? `
 STEP 4B — HEADLINE
 The resume prints a title line under the candidate's name; theirs reads "${parsed.headline}". Rewrite it for THIS job, 2–6 words:
-- The same rule as the summary's identity (STEP 4): use the TARGET ROLE's title, or the plainest form of it ("Machine Learning Engineer" for "Machine Learning Engineer, LLM Evaluation"), only if the candidate has held that role, as one of their own job titles or their own headline shows. Otherwise build it from their own headline and titles, adding at most a specialty their bullets show.
-- Every word must come from the candidate's own headline, job titles or bullets. Never add a level or rank the resume's own titles don't show (Senior, Staff, Lead, Principal, Manager, Head, Director, II/III), a license or credential, a company or team name, or a technology the resume lacks.
+- Write it as a title, optionally followed by a comma and a specialty.
+- The title: the TARGET ROLE's title, or its plainest form ("Registered Nurse" for "Registered Nurse, Med-Surg"; "Machine Learning Engineer" for "Machine Learning Engineer, LLM Evaluation"), only if the candidate's own headline or one of their job titles shows they have held that role. Otherwise their own headline or most recent title. Every word of the title comes from their headline or job titles, never from their bullets: a nursing assistant whose bullets mention assisting registered nurses is not a "Registered Nurse".
+- The specialty: work their bullets show that this job asks for ("Welder, Pipe and Structural"; "Software Engineer, Payments").
+- Never add a level, rank or licence their own headline and titles don't show (Senior, Staff, Lead, Principal, Manager, Head, Director, II/III; Journeyman, Master, Foreman, Supervisor, Charge; Licensed, Registered, Certified), a company or team name, or a technology the resume lacks.
 - When in doubt, keep the candidate's headline exactly as written.
 ` : ''}
 STEP 5 — BULLET BUDGET
