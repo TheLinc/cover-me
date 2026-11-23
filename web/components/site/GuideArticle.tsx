@@ -213,7 +213,7 @@ export function GuideArticle({
         </div>
 
         <div className="mt-16 rounded-[16px] border border-line bg-surface px-8 py-10 text-center max-sm:px-5">
-          <h2 id="get-cover-me" className={cn(serif.className, 'mb-3 text-[28px] leading-[1.2]')}>
+          <h2 id="get-cover-me" className={cn(serif.className, 'mb-3 scroll-mt-24 text-[28px] leading-[1.2]')}>
             {cta.title}
           </h2>
           <div className="mx-auto mb-6 max-w-[460px] space-y-3 text-[15px] leading-[1.7] text-ink-2 [&_a]:text-brand-strong hover:[&_a]:text-brand-deep">
