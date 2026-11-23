@@ -8,7 +8,7 @@ const CLAUDE_API = 'https://api.anthropic.com/v1/messages'
 // master resume (three pages, fifteen bullets a role) runs about 13,000
 // characters; the old 12,000 cap cut off whatever came last, usually
 // education. 20,000 covers 99% of stored resumes while keeping the parse well
-// inside its output limit.
+// inside its output limit (#190).
 export const MAX_RESUME_CHARS = 20000
 
 export function buildParsePrompt(resumeText: string): string {
@@ -183,7 +183,7 @@ export function withLinks<T extends ParsedResume>(parsed: T, resumeText?: string
   return links.length ? { ...parsed, website: links.includes(website) ? website : links[0]!, links } : parsed
 }
 // The headline and each project's link and tech line, kept only when the
-// model found them: an empty string would print an empty line or a stray "|".
+// model found them: an empty string would print an empty line or a stray "|" (#190).
 export function withDetails<T extends object>(parsed: T): T {
   const out = { ...parsed } as Record<string, unknown>
   const headline = typeof out.headline === 'string' ? out.headline.trim() : ''

@@ -533,7 +533,7 @@ describe('long master resumes', () => {
     sectionOrder: ['summary', 'experience', 'projects', 'other', 'education', 'skills'],
   }
   const NEW_FIELDS = { 'X-Resume-Fields': '2' }
-  // The model's ranking: 9 rewritten bullets for the latest role, its measured result not among them.
+  // The model's ranking: 9 rewritten bullets for the latest role, its measured result not among them (#190).
   const ranked = { ...MOCK_TAILOR_DELTA, headline: 'Site Reliability Engineer', experience: [{ bullets: Array.from({ length: 9 }, (_, i) => `Ranked bullet ${i + 1} about services`) }] }
   const tailor = async (body: Record<string, unknown>, headers: Record<string, string> = NEW_FIELDS) => {
     await mockClaude.tailorDelta(ranked)

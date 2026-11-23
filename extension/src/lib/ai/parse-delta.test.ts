@@ -10,7 +10,7 @@ describe('parseDelta', () => {
     expect(parseDelta('Here is the resume:\n' + delta('a') + '\nHope that helps.').summary).toBe('a')
   })
 
-  // Seen in the 2026-10-09 full eval: the model emits the JSON, then corrects itself.
+  // Seen in the 2026-10-09 full eval: the model emits the JSON, then corrects itself (#9).
   test('takes the corrected object when the model revises its own output', () => {
     const raw = delta('first') + '\n\nWait — correction needed on evidence strings: the evidence for {Accessibility} must be verbatim.\n\n' + delta('corrected')
     expect(parseDelta(raw).summary).toBe('corrected')
@@ -35,7 +35,7 @@ describe('mergeTailorDelta bullet counts', () => {
     experience: [{ bullets: ['Teach Algebra I to 140 students', 'Raised scores from 38% to 52%', 'Write IEP accommodations', 'Use Desmos daily'] }],
     projects: [{ bullets: ['Built a grading script', 'Shared it with 4 teachers'] }],
   }
-  // Seen in the 2026-10-09 full eval: two bullets fused into one, 4 -> 3.
+  // Seen in the 2026-10-09 full eval: two bullets fused into one, 4 -> 3 (#9).
   const merged3 = { experience: [{ bullets: ['Raised scores from 38% to 52% teaching Algebra I to 140 students', 'Write IEP accommodations', 'Use Desmos daily'] }] }
 
   test('default mode keeps the original bullets when a role comes back with a different count', () => {
@@ -151,7 +151,7 @@ describe('score before tailoring (#228)', () => {
     const km = { tier1Covered: ['TypeScript', 'Payment systems'], tier1Missing: ['Kubernetes'] }
     const raw = JSON.stringify({ experience: [{ bullets: ['Built the billing and payment systems in TypeScript'] }], keywordMatch: km })
     const resume = await assembleTailored(parsed, raw, { jobDescription: 'Engineer' })
-    // Model: 70 * 2/3 + 30 = 77. Word match: original 70 * 1/3 + 30 = 53, tailored 77, so before is 77 - 24.
+    // Model: 70 * 2/3 + 30 = 77. Word match: original 70 * 1/3 + 30 = 53, tailored 77, so before is 77 - 24 (#228).
     expect(resume.atsScore).toBe(77)
     expect(resume.atsScoreBefore).toBe(53)
   })

@@ -53,7 +53,7 @@ export interface TailorDeltaEntry { bullets: string[] }
 
 export interface TailorDelta {
   summary?: string
-  /** The title line under the name, rewritten for the job (STEP 4B). */
+  /** The title line under the name, rewritten for the job (STEP 4B) (#190). */
   headline?: string
   experience: TailorDeltaEntry[]
   projects?: TailorDeltaEntry[]
@@ -113,12 +113,12 @@ export function mergeTailorDelta<T extends {
     const rewritten = Array.isArray(d?.bullets) ? d.bullets.filter((b): b is string => typeof b === 'string' && b.trim().length > 0) : []
     const kept = rewritten.length === 0 || (exact && rewritten.length !== orig.length) ? orig : rewritten
     // Trim mode: past the budget's maximum, the model's lowest-ranked bullets
-    // go, but never an entry's measured results.
+    // go, but never an entry's measured results (#190).
     return max && max > 0 ? keepResults(orig, kept, max) : kept
   }
   const exact = !!opts.exactBulletCounts
   // A headline is kept only when the resume has one, and only as a short
-  // single line; anything else keeps the resume's own.
+  // single line; anything else keeps the resume's own (#190).
   const headline = typeof delta.headline === 'string' ? delta.headline.replace(/\s+/g, ' ').trim() : ''
   const baseHeadline = (base as { headline?: unknown }).headline
   const newHeadline = typeof baseHeadline === 'string' && headline && headline.length <= 60 && headline.split(' ').length <= 8 ? headline : undefined
@@ -139,7 +139,7 @@ export function mergeTailorDelta<T extends {
 // A bullet stating a measured result: a percentage, or a before/after change
 // ("from 40 to 25 minutes", "0.76 to 0.84", "3/14 to 14/14", "cut ... 40 to
 // 25"). A plain range ("Managed 5 to 7 engineers", "2019 to 2021") or scope
-// alone ("a 60-case evaluation set") doesn't count.
+// alone ("a 60-case evaluation set") doesn't count (#190).
 const PERCENT = /\b\d+(?:\.\d+)?(?:\/\d+)?\s*(?:%|percent\b)/i
 const CHANGE = /(\bfrom\s+)?\$?(\d+(?:[.,]\d+)*(?:\/\d+)?)(?:\s*[a-z%]+)?\s+(?:to|\u2192|->)\s+\$?(\d+(?:[.,]\d+)*(?:\/\d+)?)/gi
 const CHANGE_VERB = /\b(?:reduc|cut|improv|increas|rais|lower|decreas|boost|grew|grow|drop|shrank|shrunk|sped|speed|lift|doubl|tripl|halv|moved|took)\w*/i
@@ -156,7 +156,7 @@ export function isResultBullet(text: string): boolean {
   return false
 }
 
-// The figures a bullet states, as written ("40", "25", "0.76", "3/14").
+// The figures a bullet states, as written ("40", "25", "0.76", "3/14") (#190).
 const figures = (text: string): string[] => text.match(/\d+(?:[./]\d+)*/g) ?? []
 
 /**
@@ -164,7 +164,7 @@ const figures = (text: string): string[] => text.match(/\d+(?:[./]\d+)*/g) ?? []
  * two of the original's measured results (in the order the resume gives them).
  * A result counts as kept when some bullet still states all of its figures; a
  * dropped one comes back as the model's rewrite if it wrote one past the cut,
- * else as the original, at the top, and the lowest-ranked bullets make room.
+ * else as the original, at the top, and the lowest-ranked bullets make room (#190).
  */
 export function keepResults(orig: string[], kept: string[], max: number): string[] {
   const states = (bullet: string, nums: string[]) => {
@@ -189,9 +189,9 @@ export function keepResults(orig: string[], kept: string[], max: number): string
 // comes out at one to two pages: 6 for the latest role, 4 for the next two, 3
 // for older ones, 3 for each project. Any other resume keeps the most the trim
 // prompt has always allowed (7 of 8 or more, 5 of 5 to 7, all of 4 or fewer)
-// and every project bullet. Never more than the entry has.
+// and every project bullet. Never more than the entry has (#190).
 export interface BulletBudget {
-  /** A master resume over 36 bullets, or with a role over 12: too long to print in full. */
+  /** A master resume over 36 bullets, or with a role over 12: too long to print in full (#190). */
   long: boolean
   experience: number[]
   projects: number[]
@@ -207,7 +207,7 @@ export function bulletBudget(r: { experience: Array<{ bullets?: string[] }>; pro
   }
 }
 
-// The budget as prompt lines: "- experience[0] (Title, Company): 15 bullets in, keep 5–6".
+// The budget as prompt lines: "- experience[0] (Title, Company): 15 bullets in, keep 5–6" (#190).
 export function budgetText(r: { experience: Array<{ bullets?: string[]; title?: string; company?: string }>; projects?: Array<{ bullets?: string[]; name?: string }> }): string {
   const b = bulletBudget(r)
   const range = (n: number, max: number) => {
@@ -222,7 +222,7 @@ export function budgetText(r: { experience: Array<{ bullets?: string[]; title?: 
 // ── End mirrored tailor delta ── https://github.com/TheLinc/cover-me/commit/d7700ca5cc272c75785b90971b63a366f3d35016
 
 // Extra STEP 8 rules for a skills section written in labelled groups, so the
-// tailored list keeps those groups instead of collapsing into one long line.
+// tailored list keeps those groups instead of collapsing into one long line (#190).
 export function groupedSkillsRule(skills?: string): string {
   const groups = skillGroups(skills)
   if (!groups.length) return ''
@@ -234,7 +234,7 @@ GROUPED SKILLS — this resume lists its skills in labelled groups: ${groups.map
 export function buildPrompt(job: JobData, parsed: ParsedResume, compact: boolean, supplemental?: string, trim = false, includeSummary = true, previous?: TailoredResume): string {
   const company = job.company && job.company !== 'Unknown Company' ? job.company : 'Unknown'
   const budget = budgetText(parsed)
-  // Only a long master resume gets per-entry budgets; any other keeps the trim rules it always had.
+  // Only a long master resume gets per-entry budgets; any other keeps the trim rules it always had (#190).
   const long = bulletBudget(parsed).long
   const today = new Date().toISOString().split('T')[0]
 
@@ -424,7 +424,7 @@ export async function assembleTailored(
   const base = seenVersion(parsed, grounding.previous)
   const candidate = candidateText(parsed, notes)
   const claimed = await groundSkills(delta.skills, candidate, grounding.ask, base.skills)
-  // Added skills follow the casing of the resume's own list.
+  // Added skills follow the casing of the resume's own list (#198).
   delta.skills = recaseSkills(claimed.skills, base.skills, `${candidate}
 ${grounding.jobDescription}`)
   let merged = keepSeen(mergeTailorDelta(base, delta, { exactBulletCounts: grounding.exactBulletCounts, maxBullets: grounding.maxBullets }) as TailoredResume, parsed, base)

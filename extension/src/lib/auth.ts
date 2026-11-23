@@ -8,12 +8,12 @@ import type { AnswerRevision } from './ai/answer'
 
 // Asks the backend for the resume fields older extensions can't print (a
 // headline, project links and tech, section entries, grouped skills); without
-// it they come folded into the old ones (backend/.../_shared/resume-fields.ts).
+// it they come folded into the old ones (backend/.../_shared/resume-fields.ts) (#190).
 const RESUME_FIELDS = { 'X-Resume-Fields': '2' }
 
 // Thrown by signUp() when the account was created but needs email confirmation
 // before it can sign in — not a failure, so callers should render it as a
-// neutral/success notice rather than an error.
+// neutral/success notice rather than an error (https://github.com/TheLinc/cover-me/commit/46f809a1dc946cf6964c9e2ad9a400323d9bada5).
 export class EmailConfirmationRequiredError extends Error {}
 
 function authHeaders(token?: string): HeadersInit {
@@ -62,7 +62,7 @@ export async function signUp(email: string, password: string, productUpdates = f
 }
 
 // Closing the Google window rejects launchWebAuthFlow; callers treat this as
-// "nothing happened" and show no error.
+// "nothing happened" and show no error (#16).
 export class GoogleSignInCancelledError extends Error {}
 
 function base64url(bytes: Uint8Array): string {
@@ -86,7 +86,7 @@ export async function signInWithGoogle(): Promise<AuthSession> {
     code_challenge: challenge,
     code_challenge_method: 's256',
     // Supabase passes this to Google. Without it Google signs straight back
-    // in to the last account and the user can't pick another.
+    // in to the last account and the user can't pick another (#49).
     prompt: 'select_account',
   })}`
 
@@ -96,17 +96,17 @@ export async function signInWithGoogle(): Promise<AuthSession> {
   } catch (err) {
     const message = err instanceof Error ? err.message : ''
     // Chrome's message when the user closes the window. Anything else (the
-    // page failed to load, say) is a real failure the user should see.
+    // page failed to load, say) is a real failure the user should see (#16).
     if (/did not approve/i.test(message)) throw new GoogleSignInCancelledError(message)
     throw new Error(message || 'Google sign-in failed. Please try again.')
   }
   if (!callback) throw new GoogleSignInCancelledError('Sign-in cancelled')
 
-  // Success comes back in the query; Supabase reports errors in the fragment.
+  // Success comes back in the query; Supabase reports errors in the fragment (#16).
   const u = new URL(callback)
   const params = new URLSearchParams(`${u.search.slice(1)}&${u.hash.slice(1)}`)
   const code = params.get('code')
-  // access_denied: the user pressed Cancel on Google's consent screen.
+  // access_denied: the user pressed Cancel on Google's consent screen (#16).
   if (params.get('error') === 'access_denied') throw new GoogleSignInCancelledError('Sign-in cancelled')
   if (!code) throw new Error(params.get('error_description') || 'Google sign-in failed. Please try again.')
 
@@ -125,11 +125,11 @@ export async function signInWithGoogle(): Promise<AuthSession> {
 // Everything a successful sign-in (email or Google) must leave behind for the
 // first hosted Generate to work: the session, hosted mode, and one resume on
 // both sides (see syncResume). A failed sync is non-fatal: the resume page
-// retries on the next upload.
+// retries on the next upload (#16).
 export async function completeSignIn(sess: AuthSession): Promise<void> {
-  // A saved Google failure is moot once any sign-in succeeds.
+  // A saved Google failure is moot once any sign-in succeeds (#16).
   await takeGoogleSignInError()
-  // Mode first: panels watching the session read the mode when it lands.
+  // Mode first: panels watching the session read the mode when it lands (#16).
   const existing = await getSettings()
   await saveSettings({ provider: existing?.provider ?? 'claude', apiKey: existing?.apiKey ?? '', mode: 'hosted' })
   await saveSession(sess)
@@ -150,16 +150,16 @@ export async function completeSignIn(sess: AuthSession): Promise<void> {
 //   comes down. Its owner normally has it in their account, unless their last
 //   upload failed.
 // The comparison uses this device's clock against the server's; a badly wrong
-// clock can pick the older copy.
+// clock can pick the older copy (#16).
 async function syncResume(sess: AuthSession): Promise<void> {
   const userId = sess.user.id
   const before = await getResume()
-  // Removed before the fetch, so a failed fetch can't leave it showing as this account's.
+  // Removed before the fetch, so a failed fetch can't leave it showing as this account's (#16).
   if (before?.accountId && before.accountId !== userId) await clearResume()
   const [local, remote] = await Promise.all([getResume(), fetchResumeFromBackend(sess.access_token)])
   const mine = local?.text && (!local.accountId || local.accountId === userId) ? local : null
   // Added while signed out: maybe someone else's on a shared browser, so never
-  // uploaded here. The account's copy wins when they differ.
+  // uploaded here. The account's copy wins when they differ (#16).
   const signedOut = !!mine?.signedOutUpload
   const keepMine = mine && (!remote || remote.text === mine.text || (!signedOut && Date.parse(mine.updatedAt) >= Date.parse(remote.updatedAt)))
 
@@ -169,16 +169,16 @@ async function syncResume(sess: AuthSession): Promise<void> {
     next = { ...copy, accountId: userId }
   }
   if (keepMine) {
-    // Matching the account's copy, a signed-out copy is in the account after all.
+    // Matching the account's copy, a signed-out copy is in the account after all (#16).
     const { signedOutUpload, ...rest } = mine
     next = { ...rest, accountId: userId, ...(signedOutUpload && remote?.text !== mine.text ? { signedOutUpload } : {}) }
   }
 
-  // Don't overwrite a resume the user added while this ran.
+  // Don't overwrite a resume the user added while this ran (#16).
   const current = await getResume()
   if (current?.updatedAt !== local?.updatedAt || current?.text !== local?.text) return
   // Tag before uploading: if the upload fails, the copy still isn't claimable
-  // by the next account to sign in here, and this account retries next time.
+  // by the next account to sign in here, and this account retries next time (#16).
   if (next) await saveResume(next)
   else if (local) await clearResume()
   if (keepMine && !signedOut && remote?.text !== mine.text) await uploadResumeToBackend(sess.access_token, mine.text, mine.filename)
@@ -233,7 +233,7 @@ export async function handleGoogleSignIn({ productUpdates = false } = {}): Promi
     }
     const error = (err instanceof Error && err.message) || 'Google sign-in failed'
     // Usually nobody is listening: the popup closed when Google's window
-    // opened. The next panel to open shows it.
+    // opened. The next panel to open shows it (#16).
     await saveGoogleSignInError(error)
     return { success: false, cancelled: false, error }
   }
@@ -252,18 +252,18 @@ async function refreshSession(refreshToken: string): Promise<AuthSession> {
     headers: authHeaders(),
     body: JSON.stringify({ refresh_token: refreshToken }),
   })
-  // A server error or rate limit is temporary, like being offline.
+  // A server error or rate limit is temporary, like being offline (#16).
   if (res.status >= 500 || res.status === 429) throw new Error('Session refresh unavailable')
   if (!res.ok) throw new SessionRejectedError('Session refresh failed')
   return parseSession(await res.json() as Record<string, unknown>)
 }
 
 // The auth server refused the refresh token: the session is over. A network
-// error is not this, so being offline doesn't sign anyone out.
+// error is not this, so being offline doesn't sign anyone out (#16).
 class SessionRejectedError extends Error {}
 
 // Returns a valid session (refreshing if near-expiry). Returns null if there's
-// no session or the server rejects the refresh; offline, returns the stored one.
+// no session or the server rejects the refresh; offline, returns the stored one (#16).
 export async function ensureValidSession(): Promise<AuthSession | null> {
   const session = await getSession()
   if (!session) return null
@@ -285,12 +285,12 @@ export async function ensureValidSession(): Promise<AuthSession | null> {
 }
 
 // null when the lookup fails (offline, an expired token): callers keep the
-// cached tier rather than downgrading a Pro user to free.
+// cached tier rather than downgrading a Pro user to free (#16).
 export async function fetchTier(userId: string, accessToken: string): Promise<string | null> {
   try {
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/users?select=tier&id=eq.${encodeURIComponent(userId)}&limit=1`,
-      // Bounded: a generation waits on this before saving its letter.
+      // Bounded: a generation waits on this before saving its letter (#181).
       { headers: authHeaders(accessToken), signal: AbortSignal.timeout(5000) },
     )
     if (!res.ok) return null
@@ -304,7 +304,7 @@ export async function fetchTier(userId: string, accessToken: string): Promise<st
 // The tier to act on in History. A cached tier other than Pro is checked with
 // the server, so an upgrade made in Checkout shows the Pro view at once; a
 // cached Pro tier makes no call, since History's Pro requests are refused
-// with a 403 once the plan has ended and that rechecks the tier.
+// with a 403 once the plan has ended and that rechecks the tier (#181).
 export async function currentTier(session: AuthSession): Promise<string | null> {
   const cached = await getCachedTier()
   return cached === 'hosted_pro' ? cached : checkedTier(session)
@@ -313,13 +313,13 @@ export async function currentTier(session: AuthSession): Promise<string | null> 
 // The tier to act on for a generation: always the server's, so an upgrade
 // counts at once and a plan that ended stops marking new letters for the
 // account (History saves those without asking). The cached tier when the
-// lookup fails.
+// lookup fails (#181).
 export async function checkedTier(session: AuthSession): Promise<string | null> {
   return (await refreshTier(session)) ?? getCachedTier()
 }
 
 // The server's tier, saved to the cache; null (cache untouched) when the
-// lookup fails.
+// lookup fails (#181).
 export async function refreshTier(session: AuthSession): Promise<string | null> {
   const fresh = await fetchTier(session.user.id, session.access_token)
   if (fresh) await saveCachedTier(fresh)
@@ -327,14 +327,14 @@ export async function refreshTier(session: AuthSession): Promise<string | null> 
 }
 
 // kind is the limit the server applied (migration 015): 'starter' or 'weekly'
-// for free accounts, 'daily' for Pro's fair-use cap.
+// for free accounts, 'daily' for Pro's fair-use cap (#10).
 export class RateLimitError extends Error {
   readonly code = 'RATE_LIMIT'
   constructor(message: string, readonly kind?: 'starter' | 'weekly' | 'daily') { super(message) }
 }
 
 // Pro's daily cap gets its own code so the popup doesn't offer an upgrade to
-// someone who is already on Pro.
+// someone who is already on Pro (#10).
 export function limitErrorCode(err: RateLimitError): 'RATE_LIMIT' | 'FAIR_USE' {
   return err.kind === 'daily' ? 'FAIR_USE' : 'RATE_LIMIT'
 }
@@ -364,7 +364,7 @@ export async function generateViaBackend(job: JobData, accessToken: string, supp
     throw rateLimitError(data)
   }
   // The function sends 200 before the letter is ready (see heartbeatJson in
-  // generate/index.ts), so a late failure arrives as { error } with status 200.
+  // generate/index.ts), so a late failure arrives as { error } with status 200 (#1).
   if (!res.ok || data.error) {
     throw new Error((data.error as string) ?? `Server error ${res.status}`)
   }
@@ -396,11 +396,11 @@ export async function answerViaBackend(
   const data = await res.json().catch(() => ({})) as Record<string, unknown>
   if (res.status === 429) throw rateLimitError(data)
   // Sent as 200 before the answer is ready (heartbeatJson), so a late failure
-  // arrives as { error } with status 200.
+  // arrives as { error } with status 200 (#232).
   if (!res.ok || data.error) throw new Error((data.error as string) ?? `Server error ${res.status}`)
   const answer = data.answer as string
   // The 200 came early (heartbeatJson), so a reply cut off mid-way (the
-  // function stopped, the network dropped) parses to nothing.
+  // function stopped, the network dropped) parses to nothing (#232).
   if (!answer) throw new Error('The connection dropped before the answer arrived. Please try again.')
   return { answer, allowance: data.allowance as AnswerAllowance | undefined }
 }
@@ -424,7 +424,7 @@ export async function uploadResumeToBackend(
     body: JSON.stringify({ text, filename, ...(parse ? { parse: true } : {}) }),
   })
   const data = await res.json().catch(() => ({})) as Record<string, unknown>
-  // A parse answer is sent as it's ready (heartbeatJson), so a late failure comes with status 200.
+  // A parse answer is sent as it's ready (heartbeatJson), so a late failure comes with status 200 (#131).
   if (!res.ok || data.error) throw new Error((data.error as string) ?? 'Resume sync failed')
   const structured = data.structured as ParsedResume | undefined
   return structured && Array.isArray(structured.experience) ? structured : undefined
@@ -433,7 +433,7 @@ export async function uploadResumeToBackend(
 // Pro: the Word file goes to the account too, so the dashboard can download
 // tailored resumes in its design. base64: the file's bytes. textHash: the
 // SHA-256 of the resume text it was checked against; the account refuses the
-// file if its text has changed since.
+// file if its text has changed since (#131).
 export async function uploadDesignFileToBackend(accessToken: string, hash: string, base64: string, textHash: string): Promise<void> {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/resume?file=1`, {
     method: 'POST',
@@ -448,7 +448,7 @@ export async function uploadDesignFileToBackend(accessToken: string, hash: strin
 }
 
 // The account refused the Word file for good: its resume text isn't the text
-// the file was checked against. Sending it again gets the same answer.
+// the file was checked against. Sending it again gets the same answer (#174).
 export class DesignRefusedError extends Error {}
 
 // Pro: one of the account's Word files, with the parse that places tailored
@@ -456,7 +456,7 @@ export class DesignRefusedError extends Error {}
 export async function fetchDesignFileFromBackend(accessToken: string, hash: string): Promise<DesignFile | null> {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/applications?file=${hash}`, {
     headers: { Authorization: `Bearer ${accessToken}` },
-    // Bounded: a sign-in waits on this.
+    // Bounded: a sign-in waits on this (#174).
     signal: AbortSignal.timeout(20_000),
   })
   if (!res.ok) return null
@@ -464,7 +464,7 @@ export async function fetchDesignFileFromBackend(accessToken: string, hash: stri
   return typeof data.docx === 'string' && Array.isArray(data.structured?.experience) ? { data: data.docx, parsed: data.structured } : null
 }
 
-// Which Pro plan checkout sells (the portal ignores it).
+// Which Pro plan checkout sells (the portal ignores it) (#160).
 export type Plan = 'monthly' | 'quarterly'
 
 export async function startBilling(accessToken: string, action: 'checkout' | 'portal', plan: Plan = 'monthly'): Promise<string> {
@@ -473,7 +473,7 @@ export async function startBilling(accessToken: string, action: 'checkout' | 'po
     headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ action, plan }),
   })
-  // A gateway error (502/504) can come back as an HTML page, not JSON.
+  // A gateway error (502/504) can come back as an HTML page, not JSON (https://github.com/TheLinc/cover-me/commit/2b25fdfea8909180598e62041da3c7ebcc3ec7ac).
   const data = await res.json().catch(() => ({})) as { url?: string; error?: string }
   if (!res.ok || !data.url) throw new Error(data.error ?? 'Could not reach billing. Please try again.')
   return data.url
@@ -508,7 +508,7 @@ export async function tailorViaBackend(job: JobData, accessToken: string, compac
       Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
       // Opts into the NDJSON progress stream; older function versions ignore
-      // this and respond with plain JSON, which the fallback below handles.
+      // this and respond with plain JSON, which the fallback below handles (https://github.com/TheLinc/cover-me/commit/d7700ca5cc272c75785b90971b63a366f3d35016).
       Accept: 'application/x-ndjson',
       ...RESUME_FIELDS,
     },
@@ -516,7 +516,7 @@ export async function tailorViaBackend(job: JobData, accessToken: string, compac
   })
 
   // Pre-stream failures (auth, rate limit, missing resume) and any older
-  // non-streaming function version respond with plain JSON.
+  // non-streaming function version respond with plain JSON (https://github.com/TheLinc/cover-me/commit/d7700ca5cc272c75785b90971b63a366f3d35016).
   const contentType = res.headers.get('content-type') ?? ''
   if (!res.ok || !contentType.includes('ndjson') || !res.body) {
     const data = await res.json().catch(() => ({})) as Record<string, unknown>
@@ -533,7 +533,7 @@ export async function tailorViaBackend(job: JobData, accessToken: string, compac
 
   // NDJSON stream: {type:'start',roles} → {type:'thinking',text}* → {type:'delta',text}* → {type:'done',resume}
   // Thinking and deltas only drive the progress label; the authoritative resume
-  // (merged and scored server-side) arrives in the done event.
+  // (merged and scored server-side) arrives in the done event (#92).
   const reader = res.body.getReader()
   const decoder = new TextDecoder()
   let lineBuf = ''
@@ -604,10 +604,10 @@ export class UploadError extends Error {
 // Saves local history to the account (applications POST), or with check only
 // asks which entries the account already holds. Job descriptions stay in the
 // browser: the server keeps title, company and URL, and 70 descriptions could
-// pass the 1 MB cap.
+// pass the 1 MB cap (#24).
 export async function uploadLocalHistory(accessToken: string, letters: CoverLetter[], tailored: TailoredHistoryEntry[], check = false): Promise<UploadResult> {
   // Trimmed to the server's per-field limit: scrapers keep the full page URL,
-  // and one long one must not make the whole batch fail.
+  // and one long one must not make the whole batch fail (#24).
   const cap = (v: string | undefined) => v?.slice(0, 8192)
   const job = (j: JobData) => ({ title: cap(j.title), company: cap(j.company), url: cap(j.url) })
   const body = check
@@ -702,7 +702,7 @@ export async function deleteLetterFromBackend(accessToken: string, id: string): 
 
 function parseSession(data: Record<string, unknown>): AuthSession {
   const user = data.user as Record<string, unknown>
-  // Google sign-ins carry the profile picture; email sign-ins show the initial.
+  // Google sign-ins carry the profile picture; email sign-ins show the initial (#16).
   const meta = (user?.user_metadata ?? {}) as Record<string, unknown>
   const picture = meta.avatar_url || meta.picture
   return {

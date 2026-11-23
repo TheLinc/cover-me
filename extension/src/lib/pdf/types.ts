@@ -1,5 +1,5 @@
 // Shared with the website. Edit here, then run `node scripts/sync-pdf.mjs`,
-// which copies this folder to web/lib/pdf/ (both builds fail on a stale copy).
+// which copies this folder to web/lib/pdf/ (both builds fail on a stale copy) (#27).
 
 export interface ResumeExperience {
   title: string
@@ -11,9 +11,9 @@ export interface ResumeExperience {
 
 export interface ResumeProject {
   name: string
-  /** The project's URL as the resume writes it (github.com/…). */
+  /** The project's URL as the resume writes it (github.com/…) (#190). */
   link?: string
-  /** The project's tech-stack line, verbatim. */
+  /** The project's tech-stack line, verbatim (#190). */
   tech?: string
   bullets: string[]
 }
@@ -28,25 +28,25 @@ export interface ResumeEducation {
 
 // Any section besides summary, experience, projects, education, skills and
 // certifications (publications, volunteer work, awards). Copied verbatim by
-// the parser and never rewritten by the tailor.
+// the parser and never rewritten by the tailor (#54).
 export interface ResumeSection {
   heading: string
   lines: string[]
   /** Set when the section is a list of entries (an award, an open-source
-   *  package) rather than loose lines: each prints like a project. */
+   *  package) rather than loose lines: each prints like a project (#190). */
   entries?: ResumeSectionEntry[]
 }
 
 export interface ResumeSectionEntry {
   name: string
-  /** Role, placing or issuer ("Creator and Maintainer", "3rd Place | Hosted by AWS"). */
+  /** Role, placing or issuer ("Creator and Maintainer", "3rd Place | Hosted by AWS") (#190). */
   subtitle?: string
   link?: string
   dates?: string
   bullets: string[]
 }
 
-// A section of the Cover Me layout. 'other' stands for the next of otherSections.
+// A section of the Cover Me layout. 'other' stands for the next of otherSections (#118).
 export type SectionKey = 'summary' | 'experience' | 'projects' | 'education' | 'certifications' | 'skills' | 'other'
 
 export interface TailoredResume {
@@ -57,7 +57,7 @@ export interface TailoredResume {
   /** Every URL on the contact line, website first. Absent on a parse made before #129. */
   links?: string[]
   location?: string
-  /** The professional title under the name ("Applied AI Engineer"), verbatim. */
+  /** The professional title under the name ("Applied AI Engineer"), verbatim (#190). */
   headline?: string
   summary?: string
   experience: ResumeExperience[]
@@ -81,7 +81,7 @@ export interface TailoredResume {
   // editedAt. Unlike editedAt, the score is fresh.
   hasEdits?: boolean
   // The print order the user set in the editor (sections.ts). Missing means
-  // the standard order.
+  // the standard order (#118).
   sectionOrder?: SectionKey[]
   // Sections deleted in the editor (#197), with the text they had, so they
   // can be restored. Nothing prints them.
@@ -90,18 +90,18 @@ export interface TailoredResume {
   // Missing means the Cover Me layout.
   sourceHash?: string
   // The user picked their design, but the file couldn't be edited safely, so
-  // this one uses the Cover Me layout.
+  // this one uses the Cover Me layout (#131).
   designFellBack?: boolean
 }
 
 // A deleted section: its content under its own field (an extra section under
-// section), and where it sat in the editor's list.
+// section), and where it sat in the editor's list (#197).
 export type DeletedSection = { index: number } & (
   | { key: 'other'; section: ResumeSection }
   | ({ key: Exclude<SectionKey, 'other'> } & Partial<Pick<TailoredResume, 'summary' | 'experience' | 'projects' | 'education' | 'certifications' | 'skills'>>)
 )
 
-// The job fields the letter's PDF prints. The extension's JobData has more.
+// The job fields the letter's PDF prints. The extension's JobData has more (#27).
 export interface PdfJob {
   title: string
   company: string

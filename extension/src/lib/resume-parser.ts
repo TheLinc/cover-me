@@ -1,5 +1,5 @@
 // Worker URL is a static asset reference (just a string) — keeping it static is fine.
-// The heavy pdfjs-dist and mammoth libraries are loaded dynamically only when needed.
+// The heavy pdfjs-dist and mammoth libraries are loaded dynamically only when needed (https://github.com/TheLinc/cover-me/commit/2be30759f4e0e6eeb7bd69f5c563e35f19132107).
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 import { urlCore } from './ai/resume-parse'
 
@@ -18,7 +18,7 @@ export async function parseResume(file: File): Promise<string> {
   throw new Error('Unsupported format. Upload a PDF, DOCX, or TXT file.')
 }
 
-// pdf.js with its worker set, loaded on first use. The editor's preview draws with it too.
+// pdf.js with its worker set, loaded on first use. The editor's preview draws with it too (#118).
 export async function loadPdfjs() {
   const pdfjsLib = await import('pdfjs-dist')
   pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl
@@ -120,7 +120,7 @@ async function parseDocx(file: File): Promise<string> {
   const arrayBuffer = await file.arrayBuffer()
   let value = ''
   // Only the hook is wanted: handing back an empty document keeps mammoth
-  // from rendering HTML or reading the images (a photo cost ~20 ms per MB).
+  // from rendering HTML or reading the images (a photo cost ~20 ms per MB) (#236).
   await mammoth.convertToHtml({ arrayBuffer }, {
     transformDocument: (doc: DocxElement) => {
       value = docxText(doc)
@@ -144,7 +144,7 @@ export interface PdfTextItem {
 // back runs of glyphs, not words: a kerned heading comes as "N" + "orthern",
 // so joining every run with a space prints "N orthern Arizona". Runs on the
 // same baseline are joined with a space only where there is a visible gap
-// between them; a baseline change or a run marked end-of-line starts a new line.
+// between them; a baseline change or a run marked end-of-line starts a new line (#190).
 export function pdfPageText(items: PdfTextItem[]): string {
   let out = ''
   let prev: { x: number; y: number; end: number; size: number } | null = null
@@ -159,7 +159,7 @@ export function pdfPageText(items: PdfTextItem[]): string {
       if (!sameLine) {
         if (!out.endsWith('\n')) out += '\n'
       } else if (item.str && !/\s$/.test(out) && !/^\s/.test(item.str)) {
-        // A gap wider than ~a fifth of the type size is a space between words.
+        // A gap wider than ~a fifth of the type size is a space between words (#190).
         if (x - prev.end > size * 0.2) out += ' '
       }
     }

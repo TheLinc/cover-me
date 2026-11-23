@@ -23,7 +23,7 @@
 // reworded skill must cite evidence copied from the resume, code checks the
 // evidence is really there, and a small model confirms the evidence shows the
 // skill (Zustand backs "State Management"; one gala doesn't back "annual fund
-// campaigns").
+// campaigns") (https://github.com/TheLinc/cover-me/commit/cb47a02aefb4309f0fc6c8b28701bae612283d9f).
 
 interface GroundEntry { bullets: string[]; title?: string; company?: string; name?: string; dates?: string }
 interface Groundable {
@@ -36,7 +36,7 @@ interface Groundable {
   certifications?: string[]
 }
 
-// Capitalized tokens that name nothing a candidate could lack.
+// Capitalized tokens that name nothing a candidate could lack (https://github.com/TheLinc/cover-me/commit/cb47a02aefb4309f0fc6c8b28701bae612283d9f).
 const GENERIC = new Set(['I', 'IT', 'HR', 'US', 'USA', 'UK', 'EU', 'OK', 'AM', 'PM', 'Inc', 'LLC', 'Ltd'])
 
 function escapeRe(s: string): string {
@@ -52,7 +52,7 @@ const INNER_CAPS = /^[A-Za-z]*[a-z][A-Z]/
 // A plain capitalized term ("Web" in "Frontend Web Developer", "Rails") names
 // the requirement only when the output capitalizes it too: lowercase "web" is
 // an everyday word. Acronyms, tokens with digits and inner capitals (HIPAA,
-// 401k, NetSuite) match in any case.
+// 401k, NetSuite) match in any case (#53).
 function namesTerm(text: string, term: string): boolean {
   if (!plainWord(term)) return mentions(text, term)
   const re = new RegExp(`(?:^|[^A-Za-z0-9])(${escapeRe(term)})(?=$|[^A-Za-z0-9])`, 'gi')
@@ -97,7 +97,7 @@ export function trustedNotes(supplemental: string | undefined, previous: unknown
  * Whether the version Regenerate starts from holds the candidate's own input:
  * they edited it (editedAt), or it was made with their note or regenerated from
  * one that holds it (hasEdits, set on the result so the trust carries to the
- * next Regenerate).
+ * next Regenerate) (#171).
  */
 export function buildsOnEdits(previous: unknown): boolean {
   return !!editedVersion(previous)
@@ -158,7 +158,7 @@ export function keepSeen<T extends Groundable>(merged: T, upload: Groundable, se
 }
 
 // Shaped the way the checks read it: entries with string bullets, and a
-// string summary and skills, string certifications and object education if any.
+// string summary and skills, string certifications and object education if any (#171).
 function groundable(r: Record<string, unknown>): boolean {
   const entries = (v: unknown) => Array.isArray(v) && v.every((e) => {
     const bullets = e && typeof e === 'object' ? (e as { bullets?: unknown }).bullets : undefined
@@ -173,7 +173,7 @@ function groundable(r: Record<string, unknown>): boolean {
 
 function grounded(token: string, candidate: string): boolean {
   if (mentions(candidate, token)) return true
-  // "CDL-A" is grounded by "CDL"; "Allen-Bradley" and "3-way" are not.
+  // "CDL-A" is grounded by "CDL"; "Allen-Bradley" and "3-way" are not (https://github.com/TheLinc/cover-me/commit/cb47a02aefb4309f0fc6c8b28701bae612283d9f).
   return token.includes('-') && token.split('-').some((p) => /[A-Za-z]{2,}/.test(p) && mentions(candidate, p))
 }
 
@@ -181,7 +181,7 @@ export function jobOnlyTerms(jobDescription: string, candidate: string): string[
   const terms = new Set<string>()
   for (const line of jobDescription.split('\n')) {
     // An all-caps line ("SENIOR WEB DEVELOPER") makes every word look like an
-    // acronym; its letter-only words are kept as plain words ("Web") instead.
+    // acronym; its letter-only words are kept as plain words ("Web") instead (#53).
     const shouted = !/[a-z]/.test(line) && (line.match(/[A-Za-z]{2,}/g)?.length ?? 0) >= 2
     const re = /[A-Za-z0-9][A-Za-z0-9+#&.-]*[A-Za-z0-9+#]|[A-Za-z0-9]/g
     let m: RegExpExecArray | null
@@ -200,7 +200,7 @@ export function jobOnlyTerms(jobDescription: string, candidate: string): string[
   }
   // A plain word the posting also writes in lowercase ("Frontend Web Developer
   // ... build web apps") is an everyday word there, not a named requirement.
-  // ponytail: "React" next to "react quickly" goes unchecked too; the line check covers it.
+  // ponytail: "React" next to "react quickly" goes unchecked too; the line check covers it (#53).
   return [...terms].filter((t) => !(plainWord(t) && new RegExp(`(^|[^A-Za-z0-9])${escapeRe(t.toLowerCase())}($|[^A-Za-z0-9])`).test(jobDescription)))
 }
 
@@ -210,14 +210,14 @@ function tokens(s: string): string[] {
   return (s.toLowerCase().match(/[a-z0-9+#]+/g) ?? []).filter((w) => w.length >= 2 && !SKILL_STOP.has(w))
 }
 
-/** An added skill backed only by a cited resume phrase, pending the pair check. */
+/** An added skill backed only by a cited resume phrase, pending the pair check (https://github.com/TheLinc/cover-me/commit/0e9a09cd3d4d9fc3b7cebb190aed7c4307954676). */
 export interface SkillClaim { skill: string; evidence: string }
 
-/** Asks a small model a question and returns its text reply. Each caller supplies its own. */
+/** Asks a small model a question and returns its text reply. Each caller supplies its own (https://github.com/TheLinc/cover-me/commit/0e9a09cd3d4d9fc3b7cebb190aed7c4307954676). */
 export type AskModel = (prompt: string) => Promise<string>
 
 // Examples deliberately come from fields the eval fixtures don't cover, so the
-// check isn't tuned to its own test cases.
+// check isn't tuned to its own test cases (https://github.com/TheLinc/cover-me/commit/0e9a09cd3d4d9fc3b7cebb190aed7c4307954676).
 export function buildClaimCheckPrompt(claims: SkillClaim[]): string {
   const lines = claims.map((c, i) => `${i}. EVIDENCE: "${c.evidence}" → SKILL: "${c.skill}"`).join('\n')
   return `SKILL CLAIM CHECK. A resume-tailoring tool added skills to a candidate's skills list, each justified by a phrase taken from the candidate's resume. For each pair, decide whether the evidence on its own shows the candidate has the skill, as a fair category name, synonym, or the job posting's wording for the same thing.
@@ -239,7 +239,7 @@ ${lines}
 Return ONLY JSON: {"verdicts": [{"i": 0, "ok": true}, ...]} with one entry per pair.`
 }
 
-/** Pair index → approved. Anything missing or unparseable counts as rejected. */
+/** Pair index → approved. Anything missing or unparseable counts as rejected (https://github.com/TheLinc/cover-me/commit/0e9a09cd3d4d9fc3b7cebb190aed7c4307954676). */
 export function parseClaimVerdicts(raw: string, count: number): boolean[] {
   const ok = new Array<boolean>(count).fill(false)
   const start = raw.indexOf('{')
@@ -251,7 +251,7 @@ export function parseClaimVerdicts(raw: string, count: number): boolean[] {
       if (typeof v.i === 'number' && v.i >= 0 && v.i < count) ok[v.i] = v.ok === true
     }
   } catch {
-    // Unparseable reply: every claim stays rejected.
+    // Unparseable reply: every claim stays rejected (https://github.com/TheLinc/cover-me/commit/0e9a09cd3d4d9fc3b7cebb190aed7c4307954676).
   }
   return ok
 }
@@ -265,7 +265,7 @@ export function parseClaimVerdicts(raw: string, count: number): boolean[] {
  * "State Management"; "annual fundraising gala" does not back "annual fund
  * campaigns". If the check can't run, claims are dropped: the resume stays
  * truthful and only the extra labels are lost. Without `ask` (legacy callers),
- * claims with real evidence are kept. A comma-separated string passes through.
+ * claims with real evidence are kept. A comma-separated string passes through (https://github.com/TheLinc/cover-me/commit/0e9a09cd3d4d9fc3b7cebb190aed7c4307954676).
  */
 export async function groundSkills(skills: unknown, candidate: string, ask?: AskModel, originalSkills?: string): Promise<{ skills?: string; dropped: string[] }> {
   if (typeof skills === 'string') return { skills, dropped: [] }
@@ -282,7 +282,7 @@ export async function groundSkills(skills: unknown, candidate: string, ask?: Ask
     const category = typeof rec.category === 'string' ? rec.category.trim() : undefined
     if (!skill) continue
     const ownWords = tokens(skill)
-    // mentions() first: a verbatim skill of any length ("R", "C") is backed.
+    // mentions() first: a verbatim skill of any length ("R", "C") is backed (https://github.com/TheLinc/cover-me/commit/0e9a09cd3d4d9fc3b7cebb190aed7c4307954676).
     if (mentions(candidate, skill) || (ownWords.length > 0 && ownWords.every((w) => sourceWords.has(w)))) items.push({ skill, category, evidence })
     else if (flat(evidence).length >= 2 && source.includes(flat(evidence))) items.push({ skill, claim: { skill, evidence }, category, evidence })
     else dropped.push(`${skill} (no resume evidence)`)
@@ -311,7 +311,7 @@ export interface SkillGroup { label: string; items: string }
 /**
  * The labelled groups of a skills section written one group per line
  * ("Languages: Python, SQL"), or [] for a plain list. Two or more such lines
- * make it grouped; one could be a sentence with a colon in it.
+ * make it grouped; one could be a sentence with a colon in it (#165).
  */
 export function skillGroups(skills?: string): SkillGroup[] {
   if (!skills) return []
@@ -324,14 +324,14 @@ export function skillGroups(skills?: string): SkillGroup[] {
 
 // A grouped skills list keeps at most this many skills in this many groups,
 // the model's top-ranked first. The prompt asks for it, but a model that
-// copies the whole master list back (73 skills in 8 groups) is cut here.
+// copies the whole master list back (73 skills in 8 groups) is cut here (#190).
 export const MAX_GROUPED_SKILLS = 32
 export const MAX_SKILL_GROUPS = 6
 
 // The kept skills back under the resume's own labels, one line per group, in
 // the order the model ranked them. A skill goes under the label the model
 // named when that label is the resume's, else the group that lists it, else
-// the group its evidence came from, else the first group.
+// the group its evidence came from, else the first group (#190).
 function groupSkills(items: Array<{ skill: string; category?: string; evidence?: string }>, groups: SkillGroup[]): string {
   const lower = (s: string) => s.toLowerCase().replace(/\s+/g, ' ').trim()
   const byLabel = new Map(groups.map((g) => [lower(g.label), g.label]))
@@ -342,7 +342,7 @@ function groupSkills(items: Array<{ skill: string; category?: string; evidence?:
       ?? (item.evidence ? groups.find((g) => lower(g.items).includes(lower(item.evidence!)))?.label : undefined)
       ?? groups[0].label
     const list = out.get(label)
-    // Past the caps, only lower-ranked skills are left: they go.
+    // Past the caps, only lower-ranked skills are left: they go (#190).
     if (!list && out.size >= MAX_SKILL_GROUPS) continue
     if (list?.some((s) => lower(s) === lower(item.skill))) continue
     if ([...out.values()].reduce((n, l) => n + l.length, 0) >= MAX_GROUPED_SKILLS) break
@@ -356,7 +356,7 @@ const SMALL_WORDS = new Set(['a', 'an', 'and', 'as', 'at', 'by', 'for', 'in', 'o
 /**
  * matchSkillCase for a tailored skills list, grouped or not: grouped skills
  * ("Languages: Python, SQL" a line) are recased group by group against the
- * resume's own items, so the labels and lines survive.
+ * resume's own items, so the labels and lines survive (#165).
  */
 export function recaseSkills(skills: string | undefined, ownSkills: string | undefined, sources: string): string | undefined {
   const groups = skillGroups(skills)
@@ -385,7 +385,7 @@ export function matchSkillCase(skills: string | undefined, ownSkills: string | u
   if (!skills || !ownSkills) return skills
   const has = (re: string) => new RegExp(re).test(sources)
   const word = (w: string) => `${escapeRe(w)}(?![A-Za-z0-9])`
-  // Capitalized after a lowercase word, a comma or a list marker: not a sentence start.
+  // Capitalized after a lowercase word, a comma or a list marker: not a sentence start (#198).
   const capMid = (w: string) => has(`(?:(?<![A-Za-z0-9])[a-z0-9]+ |[,;&/•*-] |\\()${word(w[0].toUpperCase() + w.slice(1).toLowerCase())}`)
   const keepsCase = (w: string): boolean => {
     if (w.length === 1 || /[\p{Lu}.]/u.test(w.slice(1))) return true
@@ -394,13 +394,13 @@ export function matchSkillCase(skills: string | undefined, ownSkills: string | u
   const keepsLower = (w: string) => w === w.toLowerCase() && has(`(?<![A-Za-z0-9])${word(w)}`) && !has(`(?<![A-Za-z0-9])${word(w[0].toUpperCase() + w.slice(1))}`)
   const inSources = (s: string) => has(`(^|[^A-Za-z0-9])${escapeRe(s)}($|[^A-Za-z0-9])`)
   const inParens = (s: string) => s.split('(').length > s.split(')').length
-  // Every word of an item with its position: first, small (and, of), or other.
+  // Every word of an item with its position: first, small (and, of), or other (#198).
   const wordsOf = (item: string) => [...item.matchAll(/\p{L}[\p{L}'.]*\p{L}|\p{L}/gu)].map((m, i) => ({ m, first: i === 0, small: i > 0 && SMALL_WORDS.has(m[0].toLowerCase()) }))
-  // The resume's list may be split by bars, bullets or lines rather than commas.
+  // The resume's list may be split by bars, bullets or lines rather than commas (#198).
   const own = ownSkills.split(/[|•·;\n]/).flatMap(splitSkills).filter(Boolean)
   // Words the resume's list writes past an item's start keep that casing even
   // where the posting uses them as plain words ("You will excel"). So does a
-  // one-word item also capitalized mid-sentence ("Excel", "in Excel").
+  // one-word item also capitalized mid-sentence ("Excel", "in Excel") (#198).
   const ownCased = new Set(own.flatMap((item) => {
     const ws = wordsOf(item).map((w) => w.m[0])
     return ws.length > 1 ? ws.slice(1) : ws.filter((w) => /^\p{Lu}/u.test(w) && capMid(w))
@@ -433,7 +433,7 @@ export function matchSkillCase(skills: string | undefined, ownSkills: string | u
     .join(', ')
 }
 
-// One skill per item, splitting on commas outside parentheses ("Cloud (AWS, GCP)" stays whole).
+// One skill per item, splitting on commas outside parentheses ("Cloud (AWS, GCP)" stays whole) (#118).
 export function splitSkills(skills: string): string[] {
   const items: string[] = []
   let depth = 0
@@ -457,7 +457,7 @@ function words(s: string): Set<string> {
 }
 
 // Pair each rewritten bullet with the original it most likely came from
-// (greedy by shared words, one-to-one), so an offending rewrite can be undone.
+// (greedy by shared words, one-to-one), so an offending rewrite can be undone (https://github.com/TheLinc/cover-me/commit/cb47a02aefb4309f0fc6c8b28701bae612283d9f).
 function originalsFor(rewritten: string[], originals: string[]): Array<string | undefined> {
   const pairs: Array<[number, number, number]> = []
   rewritten.forEach((r, i) => {
@@ -481,7 +481,6 @@ function originalsFor(rewritten: string[], originals: string[]): Array<string | 
   return out
 }
 
-// ── Line check and targeted rewrite ──────────────────────────────────────────
 // A model reads each rewritten bullet (and the summary) next to the candidate's
 // original lines and flags what claims more than they support ("Coordinated"
 // becoming "Owned", commercial work described as industrial). Only flagged
@@ -489,9 +488,9 @@ function originalsFor(rewritten: string[], originals: string[]): Array<string | 
 // rest of the resume is untouched. A line the rewrite can't fix reverts to its
 // original wording (a flagged summary to the candidate's own, see below). If
 // the check itself can't run, the resume keeps its tailoring; groundTailored
-// still runs after this.
+// still runs after this (https://github.com/TheLinc/cover-me/commit/48b891334817c0138f614e129805c74712fe4ab2).
 
-type LineId = string // "e0b2" = experience[0].bullets[2], "p1b0" = projects[1].bullets[0], "summary"
+type LineId = string
 
 function roleLabel(entry: GroundEntry | undefined, fallback: string): string {
   if (!entry) return fallback
@@ -500,7 +499,7 @@ function roleLabel(entry: GroundEntry | undefined, fallback: string): string {
 
 // What a summary may cite beyond the bullets: titles with their dates, degrees,
 // licenses, certifications. Without these the checker flags every year count
-// and credential in the summary as invented, and the summary gets dropped.
+// and credential in the summary as invented, and the summary gets dropped (#1).
 function resumeFacts(r: Groundable): string {
   const roles = r.experience.map((e) => `${roleLabel(e, 'Role')}${e.dates ? ` (${e.dates})` : ''}`)
   const edu = (r.education ?? []).map((e) => [e.degree, e.institution].filter(Boolean).join(', '))
@@ -509,7 +508,7 @@ function resumeFacts(r: Groundable): string {
 
 // Every line a summary may draw on: role and project bullets plus resumeFacts.
 // The line check shows the model projects too, so the rewrite and its number
-// check must accept them or a summary citing a project loses that fact.
+// check must accept them or a summary citing a project loses that fact (#62).
 function summarySources(r: Groundable): string {
   const lines = (list: GroundEntry[] | undefined, fallback: string) => (list ?? []).map((e) => `${roleLabel(e, fallback)}: ${e.bullets.join('; ')}`)
   return [...lines(r.experience, 'Role'), ...lines(r.projects, 'Project'), resumeFacts(r)].join('\n')
@@ -555,7 +554,7 @@ Return ONLY JSON, no other text. Keep each reason under 12 words, without quotat
 Set "summary" to a reason instead of null when the summary claims more than the originals support.`
 }
 
-/** Flagged line ids with reasons; null when the reply can't be read. */
+/** Flagged line ids with reasons; null when the reply can't be read (https://github.com/TheLinc/cover-me/commit/48b891334817c0138f614e129805c74712fe4ab2). */
 export function parseLineFlags(raw: string): Map<LineId, string> | null {
   const start = raw.indexOf('{')
   const end = raw.lastIndexOf('}')
@@ -583,7 +582,7 @@ function lineAt(r: Groundable, id: LineId): string | undefined {
 
 // Each flagged bullet is rewritten from the one original line it came from
 // (matched by shared words, one-to-one). Given the whole role, the model pulled
-// facts from other bullets into it and duplicated them across the resume.
+// facts from other bullets into it and duplicated them across the resume (https://github.com/TheLinc/cover-me/commit/48b891334817c0138f614e129805c74712fe4ab2).
 export function buildLineRewritePrompt(
   original: Groundable,
   tailored: Groundable,
@@ -639,7 +638,7 @@ export function parseLineRewrites(raw: string): Map<LineId, string> {
       if (typeof r.id === 'string' && typeof r.text === 'string' && r.text.trim()) out.set(r.id, r.text.trim())
     }
   } catch {
-    // Unreadable reply: every flagged line reverts.
+    // Unreadable reply: every flagged line reverts (https://github.com/TheLinc/cover-me/commit/48b891334817c0138f614e129805c74712fe4ab2).
   }
   return out
 }
@@ -648,7 +647,7 @@ function numbersIn(s: string): string[] {
   return (s.match(/\d[\d,.]*/g) ?? []).map((n) => n.replace(/[,.]+$/, '').replace(/,/g, ''))
 }
 
-/** A rewrite is usable when it adds no number its source lacks and doesn't duplicate a sibling line. */
+/** A rewrite is usable when it adds no number its source lacks and doesn't duplicate a sibling line (https://github.com/TheLinc/cover-me/commit/48b891334817c0138f614e129805c74712fe4ab2). */
 function usableRewrite(text: string, source: string, siblings: string[]): boolean {
   const have = new Set(numbersIn(source))
   if (numbersIn(text).some((n) => !have.has(n))) return false
@@ -664,14 +663,14 @@ function usableRewrite(text: string, source: string, siblings: string[]): boolea
 // Irregular past forms a bullet can open with; the rest end in -ed.
 // ponytail: an -ed adjective opener ("Advanced Excel models...") reads as past
 // tense, and a noun opener ("Member of...") as present. Either only costs a
-// rewrite that changes the tense alone; a word list per tense is the upgrade.
+// rewrite that changes the tense alone; a word list per tense is the upgrade (#198).
 const IRREGULAR_PAST = new Set(['ran', 'led', 'built', 'rebuilt', 'grew', 'wrote', 'rewrote', 'made', 'won', 'drove', 'took', 'began', 'brought', 'taught', 'sold', 'bought', 'spent', 'kept', 'held', 'oversaw', 'gave', 'met', 'sent', 'chose', 'became', 'drew', 'undertook', 'spoke', 'stood', 'sought', 'thought', 'felt', 'dealt', 'left', 'lost', 'paid', 'told', 'found', 'flew', 'rode', 'rose', 'struck', 'understood', 'upheld', 'oversold', 'saw', 'caught', 'spun', 'got', 'knew', 'fought', 'overcame', 'withdrew', 'overtook', 'outsold', 'did', 'redid', 'went', 'broke', 'heard', 'meant', 'swept', 'dug', 'stuck', 'arose', 'threw', 'wound', 'hung', 'shot', 'was', 'were', 'had', 'sat', 'laid', 'underwent', 'upsold', 'learnt', 'withstood', 'outgrew', 'foresaw', 'reran', 'overran', 'outran', 'overrode', 'withheld', 'bore'])
 const PREPOSITIONS = new Set(['as', 'in', 'for', 'over', 'after', 'during', 'within', 'across', 'with', 'by', 'at', 'on', 'from', 'since', 'while', 'under'])
-// Spelled the same in both tenses, or -ed words that aren't past forms: neither.
+// Spelled the same in both tenses, or -ed words that aren't past forms: neither (#198).
 const EITHER_TENSE = new Set(['cut', 'set', 'put', 'hit', 'let', 'shut', 'spread', 'upset', 'quit', 'read', 'cost', 'beat', 'bid', 'broadcast', 'forecast', 'embed', 'shed', 'proofread', 'split', 'typeset', 'reset', 'offset', 'recast', 'reread'])
 // An earlier role's dates end in a year ("2019 – 2022", "Mar 2020 - Jun 2022").
 // Anything else ("– Present", "– Till date", "Since 2022", an open "2022 –")
-// may be the current role, which is left alone.
+// may be the current role, which is left alone (#198).
 const isEarlierRole = (dates: string) => /(19|20)\d\d\s*$/.test(dates) && !/\b(since|from)\b/i.test(dates)
 
 /**
@@ -689,7 +688,7 @@ export function mixedTenseLines(r: Groundable): Map<LineId, string> {
     const tenses = role.bullets.map((b) => {
       // The verb after a hyphen ("Co-led", "Cross-trained") or a leading adverb
       // ("Successfully migrated"). A prepositional opener ("In 2021, launched")
-      // hides the verb, so it counts as neither.
+      // hides the verb, so it counts as neither (#198).
       const word = /^\s*((?:[A-Za-z]+-)*)([A-Za-z]+)(\S*)(?:\s+([A-Za-z]+))?/.exec(b)
       let w = word?.[2].toLowerCase()
       if (w && /ly$/.test(w) && !word![1] && !word![3] && word![4]) w = word![4].toLowerCase()
@@ -709,7 +708,7 @@ export interface LineRepair {
   rewritten: number
   reverted: number
   checkFailed?: boolean
-  /** What a flagged summary became. */
+  /** What a flagged summary became (#58). */
   summary?: 'rewritten' | 'original' | 'trimmed' | 'emptied'
 }
 
@@ -730,7 +729,7 @@ export async function checkAndRewriteLines<T extends Groundable>(
   // Drop ids that don't point at a real line (an empty summary is none), and
   // lines word for word the same as one of their entry's originals (or the
   // original summary): they claim nothing new. On Regenerate the originals
-  // include what the candidate typed in the editor (seenVersion).
+  // include what the candidate typed in the editor (seenVersion) (#171).
   const unchanged = (id: LineId, line: string): boolean => {
     if (id === 'summary') return original.summary?.trim() === line
     const m = /^([ep])(\d+)b/.exec(id)
@@ -740,7 +739,7 @@ export async function checkAndRewriteLines<T extends Groundable>(
     const line = lineAt(tailored, id)?.trim()
     if (!line || unchanged(id, line)) flags.delete(id)
   }
-  // Source original for every rewritten bullet, per entry.
+  // Source original for every rewritten bullet, per entry (https://github.com/TheLinc/cover-me/commit/48b891334817c0138f614e129805c74712fe4ab2).
   const sources = new Map<LineId, string>()
   const mapSources = (kind: 'e' | 'p', out: GroundEntry[] | undefined, input: GroundEntry[] | undefined) =>
     out?.forEach((entry, i) => {
@@ -751,7 +750,7 @@ export async function checkAndRewriteLines<T extends Groundable>(
 
   // Tense is checked in code, on unchanged lines too: the input can mix it.
   // A claim-flagged line is checked as its source too, since a failed rewrite
-  // falls back to it: the rewrite then fixes the tense along with the claim.
+  // falls back to it: the rewrite then fixes the tense along with the claim (#198).
   const claimFlags = new Set(flags.keys())
   const tense = mixedTenseLines(tailored)
   const asSource = { experience: tailored.experience.map((e, i) => ({ ...e, bullets: e.bullets.map((b, k) => (claimFlags.has(`e${i}b${k}`) && sources.get(`e${i}b${k}`)) || b) })) }
@@ -763,12 +762,12 @@ export async function checkAndRewriteLines<T extends Groundable>(
 
   let rewrites = new Map<LineId, string>()
   try {
-    // A tense-only line is its own source, so the rewrite keeps its tailoring.
+    // A tense-only line is its own source, so the rewrite keeps its tailoring (#198).
     const promptSources = new Map(sources)
     for (const id of tense.keys()) if (tenseOnly(id)) promptSources.set(id, lineAt(tailored, id)!)
     rewrites = parseLineRewrites(await ask(buildLineRewritePrompt(original, tailored, flags, jobDescription, promptSources)))
   } catch {
-    // Rewrite unavailable: every flagged line reverts below.
+    // Rewrite unavailable: every flagged line reverts below (https://github.com/TheLinc/cover-me/commit/48b891334817c0138f614e129805c74712fe4ab2).
   }
 
   let rewritten = 0
@@ -788,7 +787,7 @@ export async function checkAndRewriteLines<T extends Groundable>(
           rewritten++
           bullets.push(text)
         } else if (tenseOnly(ids[k])) {
-          // The line claims nothing new; only its tense was off, so keep it.
+          // The line claims nothing new; only its tense was off, so keep it (#198).
           bullets.push(b)
         } else {
           reverted++
@@ -810,7 +809,7 @@ export async function checkAndRewriteLines<T extends Groundable>(
       resume.summary = text
     } else {
       // Like a bullet, revert to the candidate's own summary. With none, keep
-      // the rewrite's sentences that pass; empty only when none do.
+      // the rewrite's sentences that pass; empty only when none do (#58).
       reverted++
       const own = original.summary?.trim()
       const kept = text.split(/(?<=[.!?])\s+/).filter((s) => usableRewrite(s, allOriginal, [])).join(' ')
@@ -824,7 +823,7 @@ export async function checkAndRewriteLines<T extends Groundable>(
   }
 }
 
-// The levels the tailor prompt's Identity rule drops from a posting's title.
+// The levels the tailor prompt's Identity rule drops from a posting's title (#218).
 const LEVEL_WORD = /^(senior|sr\.?|lead|staff|principal|i{1,3}|iv)$/i
 
 // The posting's title as the summary may use it (#218): a scraped suffix
@@ -859,7 +858,7 @@ const LEVELS = ['senior', 'sr', 'staff', 'lead', 'principal', 'head', 'director'
 // their headline and titles never show, names a job-only term, or uses any
 // word found in neither their headline and titles nor their bullets (the
 // posting's title they never held: "Site Reliability Engineer", or
-// "Registered Nurse" on a CNA's resume however the posting cases it).
+// "Registered Nurse" on a CNA's resume however the posting cases it) (#190).
 function groundHeadline<T extends Groundable>(tailored: T, original: Groundable, terms: string[], removed: Set<string>): T {
   const headline = tailored.headline
   if (!headline || !original.headline || headline === original.headline) return tailored
@@ -900,7 +899,7 @@ export function groundTailored<T extends Groundable>(
     return found
   }
   // A rewritten headline that names a job-only term, or claims a level the
-  // candidate's own headline and titles never show, goes back to theirs.
+  // candidate's own headline and titles never show, goes back to theirs (#190).
   const headlineFixed = groundHeadline(tailored, original, terms, removed)
   if (terms.length === 0) return { resume: headlineFixed, removed: [...removed] }
 
@@ -926,13 +925,13 @@ export function groundTailored<T extends Groundable>(
       .map((item) => {
         const cleaned = item.replace(/\s*\(([^()]*)\)/g, (group, inner: string) => (hits(inner).length ? '' : group)).trim()
         if (hits(cleaned).length === 0) return cleaned
-        // "QuickBooks Online (QuickBooks)": keep the part the resume actually names.
+        // "QuickBooks Online (QuickBooks)": keep the part the resume actually names (https://github.com/TheLinc/cover-me/commit/cb47a02aefb4309f0fc6c8b28701bae612283d9f).
         const inner = /\(([^()]*)\)/.exec(cleaned)?.[1].trim()
         return inner && mentions(candidate, inner) ? inner : ''
       })
       .filter(Boolean)
       .join(', ')
-    // Grouped skills are checked group by group, so the labels survive.
+    // Grouped skills are checked group by group, so the labels survive (#190).
     const groups = skillGroups(tailored.skills)
     resume.skills = groups.length
       ? groups.map((g) => ({ label: g.label, items: clean(g.items) })).filter((g) => g.items).map((g) => `${g.label}: ${g.items}`).join('\n')

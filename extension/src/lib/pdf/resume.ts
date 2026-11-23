@@ -1,5 +1,5 @@
 // Shared with the website. Edit here, then run `node scripts/sync-pdf.mjs`,
-// which copies this folder to web/lib/pdf/ (both builds fail on a stale copy).
+// which copies this folder to web/lib/pdf/ (both builds fail on a stale copy) (#27).
 import { jsPDF } from 'jspdf'
 import { contactParts } from './contact'
 import { resumeFileName } from './file-name'
@@ -7,32 +7,32 @@ import { GPA_LINE, SKILL_GROUP } from './layout-rules'
 import { orderedSections, type StandardSection } from './sections'
 import type { ResumeSection, TailoredResume } from './types'
 
-// Letter page: 612 × 792 pt
+// Letter page: 612 × 792 pt (https://github.com/TheLinc/cover-me/commit/a074665df759617a5ebedfaf28370e973177338c)
 const PW = 612
 const PH = 792
-const ML = 54   // left margin
-const MR = 558  // right margin
-const CW = MR - ML  // content width: 504pt
+const ML = 54
+const MR = 558
+const CW = MR - ML
 
 export function downloadTailoredResumePdf(resume: TailoredResume, jobTitle?: string): void {
   tailoredResumePdf(resume).save(resumeFileName(resume, jobTitle, 'pdf'))
 }
 
 // Letters the standard fonts lack and that don't decompose into a base letter
-// and an accent: printed as the plain letter rather than dropped.
+// and an accent: printed as the plain letter rather than dropped (#190).
 const PLAIN: Record<string, string> = {
   '\u0141': 'L', '\u0142': 'l', '\u0110': 'D', '\u0111': 'd', '\u0126': 'H', '\u0127': 'h',
   '\u0131': 'i', '\u0166': 'T', '\u0167': 't', '\u0138': 'k',
 }
 
 // What the standard PDF fonts print: ASCII, Latin-1 and the WinAnsi extras in
-// 0x80-0x9F (Š š Ž ž Œ œ Ÿ, curly quotes, dashes, the bullet, the euro sign).
+// 0x80-0x9F (Š š Ž ž Œ œ Ÿ, curly quotes, dashes, the bullet, the euro sign) (#190).
 const WIN_ANSI = /[\x09\x0A\x0D\x20-\x7E\u00A0-\u00FF\u20AC\u201A\u0192\u201E\u2026\u2020\u2021\u02C6\u2030\u0160\u2039\u0152\u017D\u2018\u2019\u201C\u201D\u2022\u2013\u2014\u02DC\u2122\u0161\u203A\u0153\u017E\u0178]/
 
 // The standard PDF fonts only cover WinAnsi: anything outside it (a non-breaking
 // hyphen, an arrow, a zero-width space from a PDF upload) prints as garbage or
 // spreads letters apart, so it is swapped for its plain equivalent first. A
-// letter outside it loses its accent ("ń" prints as "n"), never the letter.
+// letter outside it loses its accent ("ń" prints as "n"), never the letter (#190).
 export function pdfSafe(text: unknown): string {
   return Array.from(String(text ?? '')
     .replace(/[\u200B-\u200D\u2060\uFEFF\u00AD]/g, '')
@@ -51,15 +51,14 @@ export function pdfSafe(text: unknown): string {
 }
 
 // The resume as a jsPDF document: saved by the download, shown as a blob URL
-// by the extension's editor preview, so the two are the same file.
+// by the extension's editor preview, so the two are the same file (#118).
 export function tailoredResumePdf(resume: TailoredResume): jsPDF {
   const doc = new jsPDF({ unit: 'pt', format: 'letter' })
-  const LH = 12        // body line height
-  const BODY = 10      // body font size
-  const ENTRY = 10.5   // entry header font size
+  const LH = 12
+  const BODY = 10
+  const ENTRY = 10.5
   let y = 52
 
-  // ── Page overflow guard ──────────────────────────────────────────────────
   function need(pts: number) {
     if (y + pts > PH - 48) {
       doc.addPage()
@@ -71,7 +70,6 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
   const width = (s: string) => doc.getTextWidth(pdfSafe(s))
   const wrap = (s: string, w: number) => doc.splitTextToSize(pdfSafe(s), w) as string[]
 
-  // ── Header ───────────────────────────────────────────────────────────────
   doc.setFont('times', 'bold')
   doc.setFontSize(26)
   text(resume.name || 'Resume', PW / 2, { align: 'center' })
@@ -86,7 +84,7 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
 
   // Wrapped between items, never inside a URL, once links and a location
   // make the line wider than the page. One URL wider than the page still
-  // overflows; no real one is.
+  // overflows; no real one is (#149).
   const contact: string[] = []
   doc.setFont('times', 'normal')
   doc.setFontSize(10)
@@ -101,7 +99,6 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
   })
   if (contact.length) y += 6
 
-  // ── Section heading + rule ───────────────────────────────────────────────
   function sectionHeading(title: string) {
     y += 10
     need(18)
@@ -115,8 +112,7 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
     y += 9
   }
 
-  // ── Two-column line (left text, right text) ──────────────────────────────
-  // A left side too wide for the line wraps under itself.
+  // A left side too wide for the line wraps under itself (#190).
   function twoCol(left: string, right: string, leftStyle: 'bold' | 'italic', size = ENTRY) {
     need(14)
     doc.setFont('times', 'normal')
@@ -136,7 +132,7 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
   }
 
   // "Name | subtitle": bold then italic on one line, a right-hand note at the
-  // margin. The italic part moves to its own line when both don't fit.
+  // margin. The italic part moves to its own line when both don't fit (#190).
   function entryHeader(name: string, subtitle: string | undefined, right: string | undefined) {
     need(14)
     doc.setFontSize(ENTRY)
@@ -168,9 +164,8 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
     }
   }
 
-  // ── Bullet line with hanging indent ─────────────────────────────────────
-  const BULLET_X = ML + 4   // bullet char position
-  const TEXT_X = ML + 14   // text start (hanging indent)
+  const BULLET_X = ML + 4
+  const TEXT_X = ML + 14
   const WRAP_W = MR - TEXT_X
 
   function bulletLines(s: string): string[] {
@@ -203,7 +198,7 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
   }
 
   // Skills: one line per labelled group ("Languages: Python, SQL") with the
-  // label in bold, or a plain comma list.
+  // label in bold, or a plain comma list (#190).
   function skills(s: string) {
     const groups = s.split(/\n+/).map((l) => l.trim()).filter(Boolean)
     for (const group of groups) {
@@ -215,7 +210,7 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
       }
       const label = `${m[1].trim()}:`
       doc.setFont('times', 'bold')
-      // jsPDF drops a trailing space from the measured width, so the gap is added by hand.
+      // jsPDF drops a trailing space from the measured width, so the gap is added by hand (#190).
       const labelW = width(label) + BODY * 0.5
       doc.setFont('times', 'normal')
       const firstLine = wrap(m[2], CW - labelW)[0] ?? ''
@@ -237,7 +232,7 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
 
   const entryGap = () => { y += 5 }
 
-  // Each section, drawn in the order the user set (sections.ts).
+  // Each section, drawn in the order the user set (sections.ts) (#118).
   const draw: Record<StandardSection, () => void> = {
     summary: () => {
       if (resume.summary) {
@@ -297,8 +292,7 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
     },
   }
 
-  // ── Other sections (open source, awards, publications…), as the resume had them ─
-  // Its entries, each printed like a project, then any lines outside an entry.
+  // Its entries, each printed like a project, then any lines outside an entry (#190).
   const drawOther = (section: ResumeSection) => {
     const entries = section.entries?.filter((e) => e?.name) ?? []
     const lines = section.lines ?? []

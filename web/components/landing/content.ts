@@ -1,4 +1,4 @@
-// Landing FAQ copy. The same items feed the FAQPage JSON-LD.
+// Landing FAQ copy. The same items feed the FAQPage JSON-LD (https://github.com/TheLinc/cover-me/commit/c2aba19f4a0ab0611f28a504069f5e3281d09041).
 
 import { PLAN_LIMITS as L } from "@/lib/limits";
 

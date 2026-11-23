@@ -22,7 +22,7 @@ const strings = (v: unknown) => (Array.isArray(v) ? v.filter((s): s is string =>
  * extra-section entry as a line ("Name | subtitle | dates | link") followed by
  * its bullets as lines, and grouped skills on one line. The headline stays: an
  * older client never printed one, and keeping it lets a save round-trip.
- * A resume without the new fields comes back unchanged.
+ * A resume without the new fields comes back unchanged (#190).
  */
 export function withOlderFields<T>(resume: T, req: Request): T {
   if (wantsNewFields(req) || !resume || typeof resume !== 'object') return resume

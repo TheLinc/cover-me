@@ -5,7 +5,7 @@ import type { DeletedSection, SectionKey } from './pdf/types'
 import type { TailoredHistoryEntry, TailoredResume } from '../types'
 import { getTailoredHistory } from './storage'
 
-// Every piece of text the PDF prints, as one string.
+// Every piece of text the PDF prints, as one string (#118).
 function resumeText(r: TailoredResume): string {
   return [
     r.name, r.headline, ...contactParts(r), r.summary, r.skills,
@@ -19,7 +19,7 @@ function resumeText(r: TailoredResume): string {
 }
 
 // The ATS gaps an edit hasn't filled: a gap goes once its keyword appears in
-// the resume as a word of its own, in any case. No re-score: that's a model call.
+// the resume as a word of its own, in any case. No re-score: that's a model call (#118).
 export function remainingGaps(gaps: string[] | undefined, resume: TailoredResume): string[] {
   const text = resumeText(resume)
   return (gaps ?? []).filter((g) => !mentions(text, g))
@@ -33,14 +33,14 @@ export function postingTitleInSummary(resume: TailoredResume, jobTitle: string):
   const unclaimed = (t: string) => !resume.experience.some((e) => mentions(e.title, t))
   if (!title || !resume.experience.length || !unclaimed(title)) return undefined
   if (mentions(summary, title)) return { title, shorter: false }
-  // Shorter forms count only at the opening: further in, "in Test" from "Software Engineer in Test" is everyday prose.
+  // Shorter forms count only at the opening: further in, "in Test" from "Software Engineer in Test" is everyday prose (#253).
   const opening = summary.trim().replace(/^an?\s+/i, '')
   const opensWith = (t: string) => opening.toLowerCase().startsWith(t.toLowerCase()) && !/[a-z0-9]/i.test(opening[t.length] ?? '')
   const form = shorterForms(title).find((t) => opensWith(t) && unclaimed(t))
   return form ? { title: form, shorter: true } : undefined
 }
 
-// 2^(n-1) forms, so a long scraped title with no separator gets none.
+// 2^(n-1) forms, so a long scraped title with no separator gets none (#253).
 function shorterForms(title: string): string[] {
   const words = title.split(' ')
   const last = words.pop()
@@ -53,7 +53,7 @@ function shorterForms(title: string): string[] {
 
 // The edit as saved: the draft's text, the score from before any edit, and
 // the gaps the text hasn't filled, measured against the gaps that score found
-// (atsGapsBeforeEdits), so deleting a keyword in a later edit brings its gap back.
+// (atsGapsBeforeEdits), so deleting a keyword in a later edit brings its gap back (#118).
 export function editedResume(scored: TailoredResume, draft: TailoredResume, now = new Date()): TailoredResume {
   const before = scored.atsGapsBeforeEdits ?? scored.atsGaps
   const { atsScore: _score, atsGaps: _gaps, atsGapsBeforeEdits: _before, ...text } = draft
@@ -66,7 +66,7 @@ export function editedResume(scored: TailoredResume, draft: TailoredResume, now 
 }
 
 // Whether the editor shows a standard section: the resume has it. An emptied
-// summary, skills or certifications list still counts, so it can be filled again.
+// summary, skills or certifications list still counts, so it can be filled again (#118).
 function hasSection(r: TailoredResume, key: StandardSection): boolean {
   switch (key) {
     case 'summary': return r.summary !== undefined
@@ -78,14 +78,14 @@ function hasSection(r: TailoredResume, key: StandardSection): boolean {
   }
 }
 
-// The sections the editor shows, in print order.
+// The sections the editor shows, in print order (#118).
 export function shownSections(r: TailoredResume): PlacedSection[] {
   return orderedSections(r).filter((s) => s.key === 'other' || hasSection(r, s.key))
 }
 
 const placeId = (s: PlacedSection) => (s.key === 'other' ? `other-${s.index}` : s.key)
 
-// What a deleted section takes with it: its content, and where it sat.
+// What a deleted section takes with it: its content, and where it sat (#197).
 function stashed(r: TailoredResume, s: PlacedSection, index: number): DeletedSection {
   return s.key === 'other' ? { key: 'other', index, section: r.otherSections![s.index] } : { key: s.key, index, [s.key]: r[s.key] }
 }
@@ -116,7 +116,7 @@ export function withSections(r: TailoredResume, list: PlacedSection[]): Tailored
 // end of the list when that's past it). Its index counts the list as it was
 // when it went, so a section deleted after it that sat above it isn't there
 // to count, and one that sat below it moves down one now it's back.
-// ponytail: exact for two deletions at a time; with more, nearby is close enough.
+// ponytail: exact for two deletions at a time; with more, nearby is close enough (#197).
 export function restoreSection(r: TailoredResume, i: number): TailoredResume {
   const d = r.deletedSections![i]
   let at = d.index
@@ -153,7 +153,7 @@ export function chosenOrder(r: TailoredResume): { sectionOrder: SectionKey[]; he
 }
 
 // History with one entry's resume replaced, or null when the entry isn't
-// there (a Pro resume only on the server isn't added).
+// there (a Pro resume only on the server isn't added) (#118).
 export function withResumeEdit(list: TailoredHistoryEntry[], id: string, saved: TailoredResume): TailoredHistoryEntry[] | null {
   return list.some((e) => e.id === id) ? list.map((e) => (e.id === id ? { ...e, resume: saved } : e)) : null
 }
@@ -163,7 +163,7 @@ export async function saveResumeEdit(id: string, saved: TailoredResume): Promise
   if (next) await chrome.storage.local.set({ tailoredHistory: next })
 }
 
-// The editor tab, a page of its own (vite.config.ts builds it).
+// The editor tab, a page of its own (vite.config.ts builds it) (#118).
 const EDITOR_PATH = 'src/editor/index.html'
 
 // Opens next to the tab the popup was on (the job posting), and passes that
@@ -176,11 +176,11 @@ export async function openResumeEditor(id: string): Promise<void> {
 
 // Done in the editor: back to the job tab with the popup open. The tab may be
 // closed by now, and openPopup needs Chrome 127+; either way the editor still
-// closes, so this never throws.
+// closes, so this never throws (#223).
 export async function returnToTab(from: number): Promise<void> {
   try {
     const { windowId } = await chrome.tabs.update(from, { active: true })
     await chrome.windows.update(windowId, { focused: true })
     await chrome.action.openPopup({ windowId })
-  } catch { /* the editor closes anyway */ }
+  } catch { /* the editor closes anyway (#223) */ }
 }

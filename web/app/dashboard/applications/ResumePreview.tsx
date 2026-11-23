@@ -5,7 +5,7 @@ import type { TailoredResume } from '@/lib/pdf/types'
 
 // The tailored resume as the PDF prints it (lib/pdf/resume.ts): Times, centred
 // name and contact line, ruled section titles in the same order. Fields can be
-// missing from older resumes, as the PDF allows.
+// missing from older resumes, as the PDF allows (#52).
 export function ResumePreview({ resume }: { resume: TailoredResume }) {
   const contact = contactParts(resume).join(' | ')
   return (
@@ -56,7 +56,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   )
 }
 
-// Skills a labelled group per line ("Languages: Python, SQL"), label in bold, as the PDF prints them.
+// Skills a labelled group per line ("Languages: Python, SQL"), label in bold, as the PDF prints them (#190).
 function Skills({ skills }: { skills: string }) {
   return (
     <>
@@ -68,7 +68,7 @@ function Skills({ skills }: { skills: string }) {
   )
 }
 
-// leftSub: a project's tech line or an entry's role, in italics after the name.
+// leftSub: a project's tech line or an entry's role, in italics after the name (#190).
 function Entry({ left, leftSub, right, sub, subRight, bullets }: { left?: string; leftSub?: string; right?: string; sub?: string; subRight?: string; bullets?: string[] }) {
   return (
     <div className="mb-2 last:mb-0">

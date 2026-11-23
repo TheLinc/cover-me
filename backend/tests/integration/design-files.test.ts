@@ -161,11 +161,11 @@ describe('design files', () => {
       isFolded(await call({}))
     }
 
-    // The resume function's parse, sent back for the design check.
+    // The resume function's parse, sent back for the design check (#190).
     await both(async (headers) => (await (await callFunction('resume', { token: user!.token, headers, body: { text: RESUME_TEXT, filename: 'resume.docx', parse: true } })).json()).structured)
-    // The parse kept with a Word file.
+    // The parse kept with a Word file (#190).
     await both(async (headers) => (await (await callFunction('applications', { token: user!.token, headers, query: { file: hash('a') } })).json()).structured)
-    // A saved tailored resume, in one application's detail and in the full list.
+    // A saved tailored resume, in one application's detail and in the full list (#190).
     const { applications } = await (await callFunction('applications', { token: user.token, query: { summary: '1' } })).json()
     await both(async (headers) => (await (await callFunction('applications', { token: user!.token, headers, query: { detail: applications[0].id } })).json()).application.tailoredResumes[0].resume)
     await both(async (headers) => (await (await callFunction('applications', { token: user!.token, headers })).json()).applications[0].tailoredResumes[0].resume)

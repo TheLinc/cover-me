@@ -40,7 +40,7 @@ async function openResume(id: string): Promise<Opened | null> {
 }
 
 // The skills as the form edits them: a group per line when the resume groups
-// them ("Languages: Python, SQL"), else one skill per line.
+// them ("Languages: Python, SQL"), else one skill per line (#190).
 function skillLines(skills: string | undefined): string[] {
   if (!skills) return []
   return skillGroups(skills).length ? skills.split(/\n+/).filter((l) => l.trim()) : splitSkills(skills)
@@ -62,7 +62,7 @@ function resumeFromForm(draft: TailoredResume, skills: string[]): TailoredResume
       ...(s.entries ? { entries: s.entries.map((e) => ({ ...e, bullets: lines(e.bullets) ?? [] })) } : {}),
     })),
     // Grouped skills ("Languages: Python, SQL") are edited a group per line
-    // and kept that way; a plain list goes back to one comma-separated line.
+    // and kept that way; a plain list goes back to one comma-separated line (#190).
     skills: draft.skills === undefined ? undefined : lines(skills)!.map((s) => s.trim()).join(skillGroups(draft.skills).length ? '\n' : ', '),
   }
 }
@@ -399,7 +399,7 @@ export default function Editor() {
                   onChange={(l) => edit((r) => { r.otherSections![placed.index].entries![j].bullets = l })} />
               </div>
             ))}
-            {/* A section of entries shows its loose lines only when it has some. */}
+            {/* A section of entries shows its loose lines only when it has some (#190). */}
             {(!s.entries?.length || !!s.lines?.length) && (
               <Lines label={`Lines under ${s.heading || 'this section'}`} noun="line" items={s.lines ?? []}
                 onChange={(l) => edit((r) => { r.otherSections![placed.index].lines = l })} />

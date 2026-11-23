@@ -59,7 +59,7 @@ describe('bullet budget', () => {
   })
 
   test('any other resume keeps what the trim prompt always allowed, and every project bullet', () => {
-    // The reviewer's 10/6/5/4/3 resume: trim may cut to 7/5/5/4/3 at most, never lower in code.
+    // The reviewer's 10/6/5/4/3 resume: trim may cut to 7/5/5/4/3 at most, never lower in code (#190).
     const b = bulletBudget({ experience: [role(10), role(6), role(5), role(4), role(3)], projects: [role(4)] })
     expect(b).toEqual({ long: false, experience: [7, 5, 5, 4, 3], projects: [4] })
   })

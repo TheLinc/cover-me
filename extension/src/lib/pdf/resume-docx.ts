@@ -4,7 +4,7 @@
 // The Word copy of resume.ts's layout, built from real Word features (Title and
 // Heading 1 styles, a bullet list, right tab stops for dates) so it edits
 // cleanly in Word and Google Docs. Sizes and spacing follow the PDF's, in
-// Times New Roman, which every machine has. Load it lazily: docx is big.
+// Times New Roman, which every machine has. Load it lazily: docx is big (#120).
 import {
   AlignmentType, BorderStyle, Document, HeadingLevel, LevelFormat, LineRuleType,
   Packer, Paragraph, Tab, TabStopType, TextRun,
@@ -15,15 +15,15 @@ import { GPA_LINE, SKILL_GROUP } from './layout-rules'
 import { orderedSections, type StandardSection } from './sections'
 import type { TailoredResume } from './types'
 
-// Twips (1/20 pt). Letter page, the PDF's 54pt side margins.
+// Twips (1/20 pt). Letter page, the PDF's 54pt side margins (#120).
 const PT = 20
 const MARGIN = 54 * PT
-const CONTENT = (612 - 54 * 2) * PT  // 504pt: where the dates' tab stop sits
+const CONTENT = (612 - 54 * 2) * PT
 const FONT = 'Times New Roman'
 
 const BULLETS = 'bullets'
 
-// "Senior Engineer ⇥ 2020 – Present": left text, right text on the right margin.
+// "Senior Engineer ⇥ 2020 – Present": left text, right text on the right margin (#120).
 function twoCol(left: string, right: string, style: 'bold' | 'italic', opts: { before?: number; after?: number; keepNext?: boolean } = {}) {
   return new Paragraph({
     tabStops: [{ type: TabStopType.RIGHT, position: CONTENT }],
@@ -57,7 +57,7 @@ export function buildResumeDocx(resume: TailoredResume): Promise<Blob> {
     body.push(new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun(contact.join('   |   '))] }))
   }
 
-  // "Name | subtitle ⇥ link": a project or an open-source/award entry.
+  // "Name | subtitle ⇥ link": a project or an open-source/award entry (#190).
   const entryHeader = (name: string, subtitle: string | undefined, right: string | undefined, before: number, keepNext: boolean) => new Paragraph({
     tabStops: [{ type: TabStopType.RIGHT, position: CONTENT }],
     spacing: { line: 13 * PT, lineRule: LineRuleType.AT_LEAST, before },
@@ -69,7 +69,7 @@ export function buildResumeDocx(resume: TailoredResume): Promise<Blob> {
     ],
   })
 
-  // Each section, in the order the user set (sections.ts).
+  // Each section, in the order the user set (sections.ts) (#118).
   const add: Record<StandardSection, () => void> = {
     summary: () => {
       if (resume.summary) body.push(heading('SUMMARY'), new Paragraph(resume.summary))
@@ -126,9 +126,9 @@ export function buildResumeDocx(resume: TailoredResume): Promise<Blob> {
   for (const s of orderedSections(resume)) {
     if (s.key !== 'other') add[s.key]()
     else {
-      // Other sections (publications, volunteer work…), as the resume had them
+      // Other sections (publications, volunteer work…), as the resume had them (#118)
       const section = resume.otherSections![s.index]
-      // Its entries, then any lines outside an entry.
+      // Its entries, then any lines outside an entry (#190).
       const entries = section.entries?.filter((e) => e?.name) ?? []
       const lines = section.lines ?? []
       if (!entries.length && !lines.length) continue
@@ -147,7 +147,7 @@ export function buildResumeDocx(resume: TailoredResume): Promise<Blob> {
     title: resume.name ? `${resume.name} – Resume` : 'Resume',
     styles: {
       default: {
-        // 10pt on 12pt lines, as the PDF sets its body text.
+        // 10pt on 12pt lines, as the PDF sets its body text (#120).
         document: {
           run: { font: FONT, size: 20 },
           paragraph: { spacing: { before: 0, after: 0, line: 12 * PT, lineRule: LineRuleType.AT_LEAST } },
@@ -169,7 +169,7 @@ export function buildResumeDocx(resume: TailoredResume): Promise<Blob> {
     numbering: {
       config: [{
         reference: BULLETS,
-        // The PDF's bullet sits 4pt in and its text hangs at 14pt.
+        // The PDF's bullet sits 4pt in and its text hangs at 14pt (#120).
         levels: [{
           level: 0, format: LevelFormat.BULLET, text: '•', alignment: AlignmentType.LEFT,
           style: { paragraph: { indent: { left: 14 * PT, hanging: 10 * PT } } },

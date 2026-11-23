@@ -26,7 +26,7 @@ export interface ParsedResume {
   linksKept?: true
 }
 
-// Mirrors extension/src/lib/ai/resume-parse.ts: one cap for own-key and signed-in users.
+// Mirrors extension/src/lib/ai/resume-parse.ts: one cap for own-key and signed-in users (#190).
 export const MAX_RESUME_CHARS = 20000
 
 function buildParsePrompt(resumeText: string): string {
@@ -201,7 +201,7 @@ export function withLinks<T extends ParsedResume>(parsed: T, resumeText?: string
   return links.length ? { ...parsed, website: links.includes(website) ? website : links[0]!, links } : parsed
 }
 // The headline and each project's link and tech line, kept only when the
-// model found them: an empty string would print an empty line or a stray "|".
+// model found them: an empty string would print an empty line or a stray "|" (#190).
 export function withDetails<T extends object>(parsed: T): T {
   const out = { ...parsed } as Record<string, unknown>
   const headline = typeof out.headline === 'string' ? out.headline.trim() : ''

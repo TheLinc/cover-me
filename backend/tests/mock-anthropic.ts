@@ -98,7 +98,7 @@ const failures: Array<{ status: number; body: string }> = []
 let delayNext = 0
 let streamPause = 0
 let dropNextStream = false
-// A tailor delta a test set for the next streamed call, in place of MOCK_TAILOR_DELTA.
+// A tailor delta a test set for the next streamed call, in place of MOCK_TAILOR_DELTA (#190).
 let nextDelta: unknown = null
 
 type StripeCall = { path: string; params: Record<string, string>; idempotencyKey: string | null }
