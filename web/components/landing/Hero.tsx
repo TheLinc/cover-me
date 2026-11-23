@@ -200,13 +200,14 @@ export function Hero() {
               See it on the Chrome Web Store
             </a>
           </p>
-          <p className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[11.5px] text-subtle max-xl:justify-center">
-            <span>Free, no credit card</span>
-            <span aria-hidden="true">/</span>
-            <span>{L.free_starter} resumes or letters, then {L.free_weekly} a week</span>
-            <span aria-hidden="true">/</span>
-            <span>Never invents experience</span>
-          </p>
+          <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[11.5px] text-subtle max-xl:justify-center">
+            {['Free, no credit card', `${L.free_starter} resumes or letters, then ${L.free_weekly} a week`, 'Never invents experience'].map((t) => (
+              <li key={t} className="inline-flex items-center gap-1.5">
+                <CheckIcon size={12} weight="bold" aria-hidden="true" />
+                {t}
+              </li>
+            ))}
+          </ul>
         </div>
         <div data-hero-stage className="mx-auto w-full max-w-[500px] pt-4">
           <p className="sr-only">
