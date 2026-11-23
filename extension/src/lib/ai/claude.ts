@@ -5,13 +5,14 @@ export interface ChatMessage {
   content: string
 }
 
-// Resume parsing is verbatim extraction, so low effort. Haiku 5.5 counts the
-// same text as ~30% more tokens than 4.5, hence 8000 over the old 6000 (#298).
+// Resume parsing is verbatim extraction, so low effort. A resume at the 12,000-
+// character cap parsed to ~5,100 output tokens on Haiku 5.5; thinking counts
+// toward max_tokens too, and unused tokens cost nothing (#298).
 // Keep in step with backend/supabase/functions/_shared/anthropic.ts.
 export const HAIKU_PARSE_FIELDS = {
   model: 'claude-haiku-5-5',
   output_config: { effort: 'low' },
-  max_tokens: 8000,
+  max_tokens: 16000,
 } as const
 
 // Request fields every Sonnet call sends. Adaptive thinking at high effort: with
@@ -106,7 +107,7 @@ export async function readSseText(
       } catch {
         continue
       }
-      // Chat Completions sends a mid-stream error as { error } with no type (#1).
+      // Chat Completions sends a mid-stream error as { error } with no type (#31).
       if (ev.type === 'error' || ev.error) {
         const e = ev.error as { message?: string } | undefined
         throw new Error(e?.message ?? 'AI stream error. Please try again.')

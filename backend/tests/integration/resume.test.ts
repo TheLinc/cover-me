@@ -44,7 +44,7 @@ describe('resume', () => {
     const parsed = await waitForParsedResume(user.id)
     expect(parsed).not.toContain('Initech')
     const parses = (await mockClaude.requests()).filter(isParse)
-    expect(parses.map((r) => [r.model, r.output_config, r.max_tokens])).toEqual([['claude-haiku-5-5', { effort: 'low' }, 8000]])
+    expect(parses.map((r) => [r.model, r.output_config, r.max_tokens])).toEqual([['claude-haiku-5-5', { effort: 'low' }, 16000]])
   })
 
   it('saves the parse of a full-length resume', async () => {

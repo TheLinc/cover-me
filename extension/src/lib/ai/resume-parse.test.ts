@@ -18,12 +18,12 @@ describe('parseResumeStructure streams', () => {
     expect(await parseResumeStructure('r', 'claude', 'k')).toEqual({ ...RESUME, otherSections: [], sectionOrder: [], linksKept: true })
     expect(JSON.parse(fetch.mock.calls[0]![1].body as string).stream).toBe(true)
   })
-  test('Claude: asks Haiku 5.5 at low effort, with room for its larger token counts', async () => {
+  test('Claude: asks Haiku 5.5 at low effort, with room for a resume at the length cap', async () => {
     const fetch = vi.fn(async (_url: string, _init: RequestInit) => sse([{ type: 'content_block_delta', delta: { type: 'text_delta', text: json } }]))
     vi.stubGlobal('fetch', fetch)
     await parseResumeStructure('r', 'claude', 'k')
     const body = JSON.parse(fetch.mock.calls[0]![1].body as string)
-    expect(body).toMatchObject({ model: 'claude-haiku-5-5', output_config: { effort: 'low' }, max_tokens: 8000 })
+    expect(body).toMatchObject({ model: 'claude-haiku-5-5', output_config: { effort: 'low' }, max_tokens: 16000 })
   })
   test('Claude: skips thinking deltas ahead of the text', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => sse([
