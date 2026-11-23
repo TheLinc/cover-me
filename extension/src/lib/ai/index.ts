@@ -4,9 +4,8 @@ import { callClaude, type ChatMessage } from './claude'
 import { callOpenAI } from './openai'
 import { buildLintRetryMessage, letterLength, lintLetter } from './letter-lint'
 
-// Anti-fingerprint variation: with a fixed sign-off and hook, every letter the
-// product generates shares one skeleton — individually fine, detectable as a
-// corpus. Picked in code (not by the model) so the distribution is uniform.
+// A fixed sign-off and hook give every letter one skeleton, detectable across
+// letters (#206). Picked in code, not by the model, so the spread is uniform.
 export interface LetterVariation {
   signOff: string
   hookPattern: string
@@ -68,7 +67,6 @@ export async function generateCoverLetter(
   const draftLint = lintLetter(draft, lintOpts)
   if (draftLint.violations.length === 0) return draft
 
-  // One corrective retry: same conversation, violations spelled out.
   await debugGroup('Cover letter — lint violations, sending corrective retry', {
     violations: draftLint.violations,
   })
@@ -76,7 +74,8 @@ export async function generateCoverLetter(
     { role: 'user', content: prompt },
     { role: 'assistant', content: draft },
     { role: 'user', content: buildLintRetryMessage(draftLint.violations) },
-  ]))
+  ]).catch(() => ''))
+  if (!retry) return draft
   const retryLint = lintLetter(retry, lintOpts)
   return retryLint.violations.length <= draftLint.violations.length ? retry : draft
 }
@@ -284,12 +283,12 @@ FINAL CHECK — before emitting, silently verify the draft and fix any failure; 
 
 function stripMarkdown(text: string): string {
   return text
-    .replace(/^#+\s+.*$/gm, '')          // # headings
-    .replace(/\*\*(.+?)\*\*/g, '$1')     // **bold**
-    .replace(/\*(.+?)\*/g, '$1')         // *italic*
-    .replace(/^[-*]\s+/gm, '')           // - bullet points
-    .replace(/`(.+?)`/g, '$1')           // `code`
-    .replace(/\[(.+?)\]\(.+?\)/g, '$1') // [links](url)
-    .replace(/\n{3,}/g, '\n\n')          // 3+ blank lines → double
+    .replace(/^#+\s+.*$/gm, '')
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(/\*(.+?)\*/g, '$1')
+    .replace(/^[-*]\s+/gm, '')
+    .replace(/`(.+?)`/g, '$1')
+    .replace(/\[(.+?)\]\(.+?\)/g, '$1')
+    .replace(/\n{3,}/g, '\n\n')
     .trim()
 }
