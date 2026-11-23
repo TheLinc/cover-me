@@ -8,6 +8,7 @@ import { checkUploadedDesign, designForTailor, finishDesign, parseForTailor, upl
 import { debugGroup } from '../lib/debug'
 import { addToHistory, addToTailoredHistory, getCandidateContext, getResume, getSession, getSettings, hasAgreedToPageRead, resolveMode, setEntryAccounts, watchSession } from '../lib/storage'
 import { handleInstalled, uninstallUrl } from './install'
+import { DELETE_PORT, handleDeletePort } from './delete'
 import { handleAnswerClick, registerAnswerMenu, writeAnswer, type AnswerRequest } from './answer'
 import { scrapeFailure } from './scrape-failure'
 import type { PageSnapshot } from '../content/snapshot.ts'
@@ -30,6 +31,10 @@ function setUninstallUrl(userId?: string) {
 }
 void getSession().then((session) => setUninstallUrl(session?.user?.id))
 watchSession((session) => setUninstallUrl(session?.user?.id))
+
+chrome.runtime.onConnect.addListener((port) => {
+  if (port.sender?.id === chrome.runtime.id && port.name === DELETE_PORT) handleDeletePort(port)
+})
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (sender.id !== chrome.runtime.id) return

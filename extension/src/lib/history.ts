@@ -204,3 +204,12 @@ export function ownPending(letters: CoverLetter[], tailored: TailoredHistoryEntr
   const mine = <T extends { account?: string; saveTo?: string }>(e: T) => !e.account && e.saveTo === userId
   return { letters: letters.filter(mine), tailored: tailored.filter(mine) }
 }
+
+export function historyDate(iso: string, now = Date.now(), locale?: string): string {
+  const d = new Date(iso)
+  const secs = Math.floor((now - d.getTime()) / 1000)
+  if (secs < 3600) return `${Math.max(1, Math.floor(secs / 60))}m ago`
+  if (secs < 86400) return d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
+  if (secs < 604800) return d.toLocaleDateString(locale, { weekday: 'short', month: 'short', day: 'numeric' })
+  return d.toLocaleDateString(locale, { month: 'short', day: 'numeric' })
+}

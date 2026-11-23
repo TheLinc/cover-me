@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { accountUpdates, capWarning, groupLocalHistory, groupsFromApplications, ownPending, answerJobs, recentJobs, uploadMessage, uploadSummary, withLocalOnly } from './history'
+import { accountUpdates, capWarning, groupLocalHistory, groupsFromApplications, ownPending, answerJobs, historyDate, recentJobs, uploadMessage, uploadSummary, withLocalOnly } from './history'
 
 const job = (url: string, company = 'Northwind', title = 'Engineer') => ({ title, company, url, description: '' })
 const resume = { name: 'Pat', phone: '', email: '', website: '', experience: [], education: [] }
@@ -272,5 +272,21 @@ describe('answerJobs', () => {
   test('the same title and company count as the same job on an application page', () => {
     const page = posting('https://careers.northwind.com/apply?id=1', 'designer', 'NORTHWIND', 'form text')
     expect(answerJobs(page, saved).jobs[0]).toBe(saved[1])
+  })
+})
+
+describe('historyDate', () => {
+  const now = new Date(2026, 10, 23, 12, 0).getTime()
+
+  test('shows minutes ago within the hour', () => {
+    expect(historyDate(new Date(2026, 10, 23, 11, 45).toISOString(), now, 'en-US')).toBe('15m ago')
+  })
+
+  test('names the weekday with its date in the last week, never the weekday alone', () => {
+    expect(historyDate(new Date(2026, 10, 21, 9, 0).toISOString(), now, 'en-US')).toBe('Sat, Nov 21')
+  })
+
+  test('shows the month and day for older entries', () => {
+    expect(historyDate(new Date(2026, 10, 14, 9, 0).toISOString(), now, 'en-US')).toBe('Nov 14')
   })
 })
