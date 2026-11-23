@@ -18,7 +18,7 @@ import { DELETE_PORT, type DeletePortMessage, type DeleteResult } from '../../ba
 export default function HistoryPage() {
   const [groups, setGroups] = useState<JobGroup[]>([])
   const [expandedKey, setExpandedKey] = useState<string | null>(null)
-  const [deleting, setDeleting] = useState<JobGroup[]>([])
+  const [deleting, setDeleting] = useState<string[]>([])
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const portRef = useRef<chrome.runtime.Port | null>(null)
   const [designHashes, setDesignHashes] = useState<string[]>([])
@@ -175,18 +175,18 @@ export default function HistoryPage() {
     }
     deletePort().postMessage(msg)
     setDeleteError(null)
-    setDeleting((d) => [...d, group])
+    setDeleting((d) => [...d, group.key])
     if (expandedKey === group.key) setExpandedKey(null)
   }
 
   function undoDelete(group: JobGroup) {
     deletePort().postMessage({ cancel: group.key } satisfies DeletePortMessage)
-    setDeleting((d) => d.filter((g) => g.key !== group.key))
+    setDeleting((d) => d.filter((k) => k !== group.key))
   }
 
   async function deleteFinished({ key, error }: DeleteResult) {
     const group = groups.find((g) => g.key === key)
-    setDeleting((d) => d.filter((g) => g.key !== key))
+    setDeleting((d) => d.filter((k) => k !== key))
     if (error) {
       setDeleteError(`Couldn't delete ${group?.title || 'that application'}. ${error}`)
       return
@@ -286,7 +286,7 @@ export default function HistoryPage() {
         <div className="history-list">
           {groups.map((group) => {
             const isExpanded = expandedKey === group.key
-            if (deleting.some((g) => g.key === group.key)) return (
+            if (deleting.includes(group.key)) return (
               <div key={group.key} className="job-card job-card-deleted" role="status">
                 <span>Deleted {group.title || 'Unknown Role'}</span>
                 <button className="btn btn-secondary btn-sm" onClick={() => undoDelete(group)} autoFocus>Undo</button>

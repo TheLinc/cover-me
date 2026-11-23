@@ -59,8 +59,7 @@ function ContextExpander({ contextExpanded, setContextExpanded, initialContext, 
       <button className="context-toggle" aria-expanded={contextExpanded} aria-controls="about-you" onClick={() => setContextExpanded(v => !v)}>
         <ChevronIcon />
         About you
-        {!contextExpanded && preview && <span className="context-preview">“{preview}”</span>}
-        {!contextExpanded && preview && <span className="context-edit">Edit</span>}
+        {!contextExpanded && preview && <><span className="context-preview">“{preview}”</span><span className="context-edit">Edit</span></>}
       </button>
       <div id="about-you" ref={panelRef} className={`context-panel${contextExpanded ? ' open' : ''}`}>
         <div className="context-panel-inner">

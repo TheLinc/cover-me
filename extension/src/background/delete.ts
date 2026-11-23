@@ -3,9 +3,9 @@ import { delayedRuns } from '../lib/delayed-runs'
 import { deleteFromHistory, deleteFromTailoredHistory } from '../lib/storage'
 
 export const DELETE_PORT = 'history-delete'
-export const UNDO_MS = 5000
+const UNDO_MS = 5000
 
-export interface DeleteTarget {
+interface DeleteTarget {
   key: string
   serverId: string | null
   coverLetterIds: string[]
