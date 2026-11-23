@@ -108,20 +108,23 @@ export function mergeTailorDelta<T extends {
   experience: Array<{ bullets: string[] }>
   projects?: Array<{ bullets: string[] }>
   skills?: string
-}>(base: T, delta: TailorDelta, opts: { exactBulletCounts?: boolean; maxBullets?: Pick<BulletBudget, 'experience' | 'projects'> } = {}): T & { summary: string } {
+}>(base: T, delta: TailorDelta, opts: { exactBulletCounts?: boolean; maxBullets?: Pick<BulletBudget, 'long' | 'experience' | 'projects'> } = {}): T & { summary: string } {
   const pick = (orig: string[], d: TailorDeltaEntry | undefined, exact: boolean, max?: number): string[] => {
     const rewritten = Array.isArray(d?.bullets) ? d.bullets.filter((b): b is string => typeof b === 'string' && b.trim().length > 0) : []
     const kept = rewritten.length === 0 || (exact && rewritten.length !== orig.length) ? orig : rewritten
     // Trim mode: past the budget's maximum, the model's lowest-ranked bullets
-    // go, but never an entry's measured results (#190).
-    return max && max > 0 ? keepResults(orig, kept, max) : kept
+    // go. Only a long master also keeps an entry's first measured results, so
+    // a short resume's trim drops what the model dropped (#190).
+    if (!max || max <= 0) return kept
+    return opts.maxBullets?.long ? keepResults(orig, kept, max) : kept.slice(0, max)
   }
   const exact = !!opts.exactBulletCounts
   // A headline is kept only when the resume has one, and only as a short
-  // single line; anything else keeps the resume's own (#190).
+  // single line; anything else keeps the resume's own. One the user cleared in
+  // the editor stays cleared, as the guard has nothing to check it against (#190).
   const headline = typeof delta.headline === 'string' ? delta.headline.replace(/\s+/g, ' ').trim() : ''
   const baseHeadline = (base as { headline?: unknown }).headline
-  const newHeadline = typeof baseHeadline === 'string' && headline && headline.length <= 60 && headline.split(' ').length <= 8 ? headline : undefined
+  const newHeadline = typeof baseHeadline === 'string' && baseHeadline.trim() && headline && headline.length <= 60 && headline.split(' ').length <= 8 ? headline : undefined
   return {
     ...base,
     ...(newHeadline ? { headline: newHeadline } : {}),
@@ -142,7 +145,7 @@ export function mergeTailorDelta<T extends {
 // alone ("a 60-case evaluation set") doesn't count (#190).
 const PERCENT = /\b\d+(?:\.\d+)?(?:\/\d+)?\s*(?:%|percent\b)/i
 const CHANGE = /(\bfrom\s+)?\$?(\d+(?:[.,]\d+)*(?:\/\d+)?)(?:\s*[a-z%]+)?\s+(?:to|\u2192|->)\s+\$?(\d+(?:[.,]\d+)*(?:\/\d+)?)/gi
-const CHANGE_VERB = /\b(?:reduc|cut|improv|increas|rais|lower|decreas|boost|grew|grow|drop|shrank|shrunk|sped|speed|lift|doubl|tripl|halv|moved|took)\w*/i
+const CHANGE_VERB = /\b(?:reduc|cut|improv|increas|rais|lower|decreas|boost|grew|grow|drop|shrank|shrunk|sped|speed|doubl|tripl|halv)\w*/i
 const YEAR = /^(?:19|20)\d\d$/
 
 export function isResultBullet(text: string): boolean {
@@ -424,7 +427,7 @@ export function isValidResume(r: unknown): r is TailoredResume {
 export async function assembleTailored(
   parsed: ParsedResume,
   raw: string,
-  grounding: { jobDescription: string; jobTitle?: string; supplemental?: string; previous?: TailoredResume; ask?: AskModel; onLineRepair?: (repair: LineRepair) => void; exactBulletCounts?: boolean; maxBullets?: Pick<BulletBudget, 'experience' | 'projects'> },
+  grounding: { jobDescription: string; jobTitle?: string; supplemental?: string; previous?: TailoredResume; ask?: AskModel; onLineRepair?: (repair: LineRepair) => void; exactBulletCounts?: boolean; maxBullets?: Pick<BulletBudget, 'long' | 'experience' | 'projects'> },
   onRemoved?: (terms: string[]) => void,
 ): Promise<TailoredResume> {
   const delta = parseDelta(raw)

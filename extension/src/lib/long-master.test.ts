@@ -15,6 +15,10 @@ describe('PDF text extraction', () => {
   test('a run marked end-of-line ends the line', () => {
     expect(pdfPageText([at('EDUCATION', 50, 700, 50, true), at('', 0, 0, 0, true), at('Northern', 50, 686, 40)])).toBe('EDUCATION\nNorthern')
   })
+
+  test('a run drawn left of the one before it is a new word', () => {
+    expect(pdfPageText([at('Jan 2020 - Present', 480, 700, 80), at('Software Engineer', 50, 700, 90)])).toBe('Jan 2020 - Present Software Engineer')
+  })
 })
 
 const GROUPED = 'Languages: Python, TypeScript, SQL\nApplied AI and Agents: LangGraph, LangChain, agent orchestration\nDeployment and Operations: AWS ECS, Docker'
@@ -48,6 +52,13 @@ describe('grouped skills', () => {
     const { resume } = groundTailored(tailored, { experience: [] }, 'Python Docker', 'We use Rust and Python')
     expect(resume.skills).toBe('Languages: Python\nOps: Docker')
   })
+
+  test('a line with no label stays in a grouped list', () => {
+    const own = 'Clinical: Telemetry, IV therapy\nSystems: Epic\nBilingual in Spanish and English'
+    const { resume } = groundTailored({ experience: [], skills: own }, { experience: [] }, own, 'Telemetry RN')
+    expect(resume.skills).toBe(own)
+    expect(recaseSkills(own, own, own)).toBe(own)
+  })
 })
 
 describe('bullet budget', () => {
@@ -71,6 +82,19 @@ describe('bullet budget', () => {
     const merged = mergeTailorDelta(previous, delta, { maxBullets: bulletBudget(parsed) })
     expect(merged.experience[0].bullets).toHaveLength(6)
   })
+
+  test('a short resume\'s trim drops what the model dropped, measured or not', () => {
+    const parsed = { experience: [{ bullets: ['Lifted 50 to 75 lb loads daily', 'Grew Instagram following 40%', 'Welded pipe to code', 'Read weld symbols'] }] }
+    const merged = mergeTailorDelta(parsed, { experience: [{ bullets: ['Welded pipe to code', 'Read weld symbols'] }] }, { maxBullets: bulletBudget(parsed) })
+    expect(merged.experience[0].bullets).toEqual(['Welded pipe to code', 'Read weld symbols'])
+  })
+})
+
+describe('a headline the user cleared', () => {
+  test('stays cleared on Regenerate, whatever the model returns', () => {
+    const base = { headline: '', experience: [{ title: 'CNA', bullets: ['Assisted registered nurses with patient vitals'] }] }
+    expect(mergeTailorDelta(base, { headline: 'Registered Nurse', experience: [] }).headline).toBe('')
+  })
 })
 
 describe('resume PDF text', () => {
@@ -84,6 +108,12 @@ describe('resume PDF text', () => {
     expect(pdfSafe('Gda\u0144sk')).toBe('Gdansk')
     expect(pdfSafe('\u0141\u00F3d\u017A')).toBe('L\u00F3dz')
     expect(pdfSafe('Dvo\u0159\u00E1k')).toBe('Dvor\u00E1k')
+  })
+
+  test('a unit keeps its meaning, and a missing letter shows', () => {
+    expect(pdfSafe('Administered 50 \u03BCg fentanyl')).toBe('Administered 50 \u00B5g fentanyl')
+    expect(pdfSafe('10 k\u03A9 resistors')).toBe('10 k ohm resistors')
+    expect(pdfSafe('\u0418\u0432\u0430\u043D \u2713')).toBe('???? ')
   })
 })
 
@@ -104,6 +134,10 @@ describe('measured results survive the trim', () => {
     expect(isResultBullet('Managed 5 to 7 engineers across two teams')).toBe(false)
     expect(isResultBullet('Taught evening classes from 2019 to 2021')).toBe(false)
     expect(isResultBullet('Cut build time 40 to 25 minutes')).toBe(true)
+    // Volumes and loads in trades and healthcare are ranges, not changes (#190).
+    expect(isResultBullet('Took 20 to 30 patient calls per shift')).toBe(false)
+    expect(isResultBullet('Lifted 50 to 75 lb loads daily')).toBe(false)
+    expect(isResultBullet('Moved 200 to 300 pallets a shift')).toBe(false)
   })
 
   test('a change verb counts only beside the figures', () => {

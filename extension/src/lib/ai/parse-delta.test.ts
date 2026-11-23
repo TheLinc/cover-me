@@ -73,9 +73,9 @@ describe('mergeTailorDelta bullet counts', () => {
     expect(mergeTailorDelta(base, empty, { exactBulletCounts: true }).projects![0].bullets).toEqual(base.projects[0].bullets)
   })
 
-  test('trim mode cuts each entry to its budget, keeping the first-ranked bullets and any measured result', () => {
+  test('trim of a long master cuts each entry to its budget, keeping the first-ranked bullets and any measured result', () => {
     const delta = { experience: [{ bullets: ['a', 'b', 'c', 'd'] }], projects: [{ bullets: ['p1', 'p2', 'p3'] }] }
-    const merged = mergeTailorDelta(base, delta, { maxBullets: { experience: [2], projects: [1] } })
+    const merged = mergeTailorDelta(base, delta, { maxBullets: { long: true, experience: [2], projects: [1] } })
     expect(merged.experience[0].bullets).toEqual(['Raised scores from 38% to 52%', 'a'])
     expect(merged.projects![0].bullets).toEqual(['p1'])
   })

@@ -18,11 +18,13 @@ export function downloadTailoredResumePdf(resume: TailoredResume, jobTitle?: str
   tailoredResumePdf(resume).save(resumeFileName(resume, jobTitle, 'pdf'))
 }
 
-// Letters the standard fonts lack and that don't decompose into a base letter
-// and an accent: printed as the plain letter rather than dropped (#190).
+// Letters and units the standard fonts lack and that don't decompose into a
+// base letter and an accent: printed as the nearest plain form rather than
+// dropped, so "50 \u03bcg" never prints as "50 g" (#190).
 const PLAIN: Record<string, string> = {
   '\u0141': 'L', '\u0142': 'l', '\u0110': 'D', '\u0111': 'd', '\u0126': 'H', '\u0127': 'h',
   '\u0131': 'i', '\u0166': 'T', '\u0167': 't', '\u0138': 'k',
+  '\u03bc': '\u00b5', '\u03a9': ' ohm', '\u2126': ' ohm',
 }
 
 // What the standard PDF fonts print: ASCII, Latin-1 and the WinAnsi extras in
@@ -45,7 +47,9 @@ export function pdfSafe(text: unknown): string {
       if (WIN_ANSI.test(ch)) return ch
       const base = ch.normalize('NFD').replace(/[\u0300-\u036F]/g, '')
       if (base && Array.from(base).every((c) => WIN_ANSI.test(c))) return base
-      return PLAIN[ch] ?? ''
+      // Any other letter shows as "?", so a missing one is visible; a symbol
+      // or emoji is still dropped (#190).
+      return PLAIN[ch] ?? (/\p{L}/u.test(ch) ? '?' : '')
     })
     .join('')
 }

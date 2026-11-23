@@ -159,8 +159,10 @@ export function pdfPageText(items: PdfTextItem[]): string {
       if (!sameLine) {
         if (!out.endsWith('\n')) out += '\n'
       } else if (item.str && !/\s$/.test(out) && !/^\s/.test(item.str)) {
-        // A gap wider than ~a fifth of the type size is a space between words (#190).
-        if (x - prev.end > size * 0.2) out += ' '
+        // A gap wider than ~a fifth of the type size is a space between words.
+        // A run that starts left of the last one (a right-aligned date drawn
+        // before its title) is a new word too (#190).
+        if (x - prev.end > size * 0.2 || x < prev.x) out += ' '
       }
     }
     out += item.str

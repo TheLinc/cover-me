@@ -370,8 +370,19 @@ export function recaseSkills(skills: string | undefined, ownSkills: string | und
   const ownGroups = skillGroups(ownSkills)
   const own = ownGroups.length ? ownGroups.map((g) => g.items).join('\n') : ownSkills
   return groups.length
-    ? groups.map((g) => `${g.label}: ${matchSkillCase(g.items, own, sources)}`).join('\n')
+    ? mapSkillLines(skills!, (items) => matchSkillCase(items, own, sources))
     : matchSkillCase(skills, own, sources)
+}
+
+// Each line of a grouped skills list through fn, its label kept. A line with
+// no label ("Bilingual in Spanish and English") goes through whole, so it isn't
+// lost; a line fn empties is dropped (#190).
+function mapSkillLines(skills: string, fn: (items: string) => string | undefined): string {
+  return skills.split(/\n+/).map((line) => {
+    const m = /^([^:,\n]{2,48}):\s*(.+)$/.exec(line.trim())
+    const items = fn(m ? m[2].trim() : line.trim())
+    return items ? (m ? `${m[1].trim()}: ${items}` : items) : ''
+  }).filter(Boolean).join('\n')
 }
 
 /**
@@ -940,10 +951,7 @@ export function groundTailored<T extends Groundable>(
       .filter(Boolean)
       .join(', ')
     // Grouped skills are checked group by group, so the labels survive (#190).
-    const groups = skillGroups(tailored.skills)
-    resume.skills = groups.length
-      ? groups.map((g) => ({ label: g.label, items: clean(g.items) })).filter((g) => g.items).map((g) => `${g.label}: ${g.items}`).join('\n')
-      : clean(tailored.skills)
+    resume.skills = skillGroups(tailored.skills).length ? mapSkillLines(tailored.skills, clean) : clean(tailored.skills)
   }
   return { resume, removed: [...removed] }
 }

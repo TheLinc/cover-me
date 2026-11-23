@@ -186,12 +186,12 @@ export function checkTailored(out: TailoredResume, c: EvalCase, input: ParsedRes
       same(`experience[${i}].dates`, inRole.dates, outRole.dates)
       bulletCount(`experience[${i}]`, inRole.bullets.length, outRole.bullets.length, 3)
       if (budget) {
-        // Trim: within the role's budget, and its first measured results kept (#190).
+        // Trim: within the role's budget, and a long master keeps its first measured results (#190).
         if (outRole.bullets.length > budget.experience[i]) {
           result.failures.push(`experience[${i}] kept ${outRole.bullets.length} bullets; trim budget is ${budget.experience[i]}`)
         }
         const kept = outRole.bullets.join('\n')
-        for (const r of inRole.bullets.filter(isResultBullet).slice(0, Math.min(2, budget.experience[i]))) {
+        for (const r of budget.long ? inRole.bullets.filter(isResultBullet).slice(0, Math.min(2, budget.experience[i])) : []) {
           const nums = r.match(/\d+(?:[./]\d+)*/g) ?? []
           if (!nums.every((n) => kept.includes(n))) result.failures.push(`experience[${i}] dropped a measured result: "${r.slice(0, 60)}…"`)
         }

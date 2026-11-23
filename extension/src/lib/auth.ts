@@ -194,7 +194,7 @@ async function syncResume(sess: AuthSession): Promise<void> {
 // only, the Word file that goes with this text (#174).
 async function fetchResumeFromBackend(accessToken: string): Promise<(ResumeData & { designHash?: string }) | null> {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/resume`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
+    headers: { Authorization: `Bearer ${accessToken}`, ...RESUME_FIELDS },
   })
   if (res.status === 404) return null
   const data = await res.json().catch(() => ({})) as Record<string, unknown>
@@ -437,7 +437,7 @@ export async function uploadResumeToBackend(
 export async function uploadDesignFileToBackend(accessToken: string, hash: string, base64: string, textHash: string): Promise<void> {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/resume?file=1`, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json', ...RESUME_FIELDS },
     body: JSON.stringify({ hash, docx: base64, textHash }),
   })
   if (!res.ok) {
@@ -455,7 +455,7 @@ export class DesignRefusedError extends Error {}
 // text in it (#174). null when it's gone or the plan has ended (404, 403).
 export async function fetchDesignFileFromBackend(accessToken: string, hash: string): Promise<DesignFile | null> {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/applications?file=${hash}`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
+    headers: { Authorization: `Bearer ${accessToken}`, ...RESUME_FIELDS },
     // Bounded: a sign-in waits on this (#174).
     signal: AbortSignal.timeout(20_000),
   })
@@ -618,7 +618,7 @@ export async function uploadLocalHistory(accessToken: string, letters: CoverLett
       }
   const res = await fetch(`${SUPABASE_URL}/functions/v1/applications`, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json', ...RESUME_FIELDS },
     body: JSON.stringify(body),
   })
   const data = await res.json().catch(() => ({})) as Record<string, unknown>
@@ -656,7 +656,7 @@ export async function saveResumeEditToBackend(accessToken: string, id: string, r
   const res = await fetch(`${SUPABASE_URL}/functions/v1/applications?resume=${encodeURIComponent(id)}`, {
     method: 'PATCH',
     keepalive: true,
-    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json', ...RESUME_FIELDS },
     body: JSON.stringify({ resume }),
   })
   if (!res.ok && res.status !== 404) throw new Error(`Server error ${res.status}`)
@@ -669,7 +669,7 @@ export async function saveResumeEditToBackend(accessToken: string, id: string, r
 export async function saveSectionOrderToBackend(accessToken: string, sectionOrder: string[], headings: string[]): Promise<string | undefined> {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/resume`, {
     method: 'PATCH',
-    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json', ...RESUME_FIELDS },
     body: JSON.stringify({ sectionOrder, headings }),
   })
   if (res.ok) return undefined
@@ -681,7 +681,7 @@ export async function saveSectionOrderToBackend(accessToken: string, sectionOrde
 export async function deleteApplicationFromBackend(accessToken: string, id: string): Promise<void> {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/applications?id=${encodeURIComponent(id)}`, {
     method: 'DELETE',
-    headers: { Authorization: `Bearer ${accessToken}` },
+    headers: { Authorization: `Bearer ${accessToken}`, ...RESUME_FIELDS },
   })
   if (!res.ok) {
     const data = await res.json().catch(() => ({})) as Record<string, unknown>
