@@ -16,9 +16,8 @@ function Node({ icon, title, sub, dim }: { icon: ReactNode; title: string; sub?:
   )
 }
 
-// A dashed wire with small packets travelling along it. Both move with
-// transform only, so they run on the compositor instead of re-laying out and
-// repainting the page every frame.
+// Transform-only so the wire runs on the compositor, not a relayout every frame:
+// https://web.dev/articles/animations-guide
 function Wire({ off }: { off?: boolean }) {
   return (
     <div className="relative mt-[27px] h-[2px] min-w-6 flex-1" aria-hidden="true">
@@ -52,13 +51,19 @@ export function PrivacyBand() {
         <div className="relative flex min-w-0 flex-col gap-5">
           <h2 className="text-[clamp(32px,3.6vw,48px)] leading-[1.05] !text-[var(--on-night)]">Your resume stays yours</h2>
           <ul className="flex flex-wrap gap-2" aria-label="Privacy promises">
-            {['No tracking in the extension', 'Never used to train AI', 'Open source'].map((p) => (
+            {['No tracking in the extension', 'Never used to train AI'].map((p) => (
               <li key={p}><Badge variant="outline" className="border-white/20 bg-white/[0.06] px-2.5 py-1 text-[12.5px] font-medium text-[var(--on-night)]">{p}</Badge></li>
             ))}
           </ul>
           <p className="text-[17px] leading-[1.6] text-[var(--on-night-2)]">
-            Pick how it runs. Either way the code is open source, and the extension has no ads or tracking.
+            Pick how it runs. Either way the extension has no ads or tracking.
           </p>
+          <div className="mt-2 flex flex-col gap-1.5 border-t border-white/10 pt-5">
+            <h3 className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--on-night-2)]">For developers</h3>
+            <p className="text-[15px] leading-[1.6] text-[var(--on-night)]">
+              Bring your own Claude or OpenAI API key for unlimited use with no account. The code is open source under the MIT license.
+            </p>
+          </div>
           <a
             href="https://github.com/TheLinc/cover-me"
             target="_blank"
@@ -88,14 +93,13 @@ export function PrivacyBand() {
             ))}
           </div>
 
-          {/* Data flow: browser → (server) → AI */}
           <div aria-hidden="true" className="flex items-start pt-2">
             <Node icon={<BrowserIcon size={26} />} title="Your browser" sub={m.holds} />
             <Wire />
             <Node
               icon={<span className="relative"><CloudIcon size={26} /><LockSimpleIcon size={12} weight="fill" className="absolute -bottom-1 -right-1.5 text-[#C7D2FE]" /></span>}
               title={m.via ?? 'Cover Me server'}
-              sub={m.via ? 'Encrypted at rest' : 'Your resume skips it'}
+              sub={m.via ? 'Stored encrypted' : 'Your resume skips it'}
               dim={!m.via}
             />
             <Wire />
