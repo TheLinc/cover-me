@@ -33,8 +33,7 @@ async function parsePdf(file: File): Promise<string> {
     const page = await pdf.getPage(i)
     const content = await page.getTextContent()
     const strs = withLinkUrls(content.items, await page.getAnnotations())
-    // An added URL has no glyphs to measure the next run's gap from (#339).
-    pages.push(pdfPageText(content.items.flatMap((item, i) => ('str' in item ? [{ ...item, str: strs[i] === item.str ? item.str : `${strs[i]} ` }] : []))))
+    pages.push(pdfPageText(content.items.flatMap((item, i) => ('str' in item ? [{ ...item, str: strs[i]! }] : []))))
   }
 
   const result = pages.join('\n\n').replace(/[ \t]{3,}/g, '  ').replace(/\n{3,}/g, '\n\n').trim()
@@ -96,7 +95,8 @@ function withLinkUrls(items: object[], annotations: Array<{ rect?: number[]; url
   }
   for (const { url, covered } of links) {
     const link = covered.length ? urlToAppend(url, covered.map((i) => strs[i]).join(' ')) : null
-    if (link) strs[Math.max(...covered)] += ` (${link})`
+    // The URL has no glyphs to measure the next run's gap from (#339).
+    if (link) strs[Math.max(...covered)] += ` (${link}) `
   }
   return strs
 }
