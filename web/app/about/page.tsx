@@ -86,8 +86,8 @@ export default function AboutPage() {
               {' '}(5.75% against 2.68%).
             </p>
             <p>
-              Tailoring by hand with ChatGPT takes about{' '}
-              <Link href="/guides/chatgpt-resume-prompts" className="text-brand-light hover:text-brand transition-colors underline underline-offset-2">12 minutes per application</Link>. You paste the posting, upload your resume, explain your background again in every new chat, and run into the free plan&apos;s upload limit. It can also add skills you don&apos;t have because the posting asked for them, so you have to check every line before sending.
+              Tailoring by hand with ChatGPT can take about{' '}
+              <Link href="/guides/chatgpt-resume-prompts#what-this-costs-for-every-application" className="text-brand-light hover:text-brand transition-colors underline underline-offset-2">12 minutes per application</Link>. You paste the posting, upload your resume, explain your background again in every new chat, and can run into the free plan&apos;s upload limit. It can also add skills you don&apos;t have because the posting asked for them, so you have to check every line before sending.
             </p>
             <p>
               Most tools built for this are resume builders with templates and a monthly fee. Cover Me rewrites the resume you already have for each posting, plus a cover letter to match, in about 30 seconds.
@@ -111,7 +111,7 @@ export default function AboutPage() {
               Cover Me is open source under the MIT license. The extension, the backend Edge Functions and the database schema are public on GitHub. You can read how your resume is handled, self-host with your own Supabase and Stripe accounts, or add a scraper for a job board it doesn&apos;t support yet.
             </p>
             <p>
-              Every privacy claim on this page can be checked in the code, so you don&apos;t have to take my word for it.
+              Every privacy claim on this page can be checked in the code, so you don&apos;t have to take it on trust.
             </p>
             {/* Open Source Alternatives and Toolradar check for these badges during review. Plain imgs: the images live on their hosts. (#86) */}
             <div className="flex flex-wrap items-center gap-4">
