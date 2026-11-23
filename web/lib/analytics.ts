@@ -69,7 +69,6 @@ export function scrubEvent(event: CaptureResult | null): CaptureResult | null {
 // capture() drops events sent before PostHog loads, which is after the page (#106).
 export const POSTHOG_LOADED = 'posthog-loaded'
 
-// Imported lazily like the page-view setup in instrumentation-client.ts (#278).
 export function capture(event: string, props: Record<string, unknown>) {
   void import('posthog-js').then(({ default: posthog }) => whenPosthogLoaded(posthog, () => posthog.capture(event, props)))
 }
