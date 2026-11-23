@@ -25,7 +25,6 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   void keepAlive(handleAnswerClick(info, tab, scrapeTab, CONTENT_SCRIPT_FILE))
 })
 
-// Removing the extension opens the survey, with the account id while signed in
 function setUninstallUrl(userId?: string) {
   void chrome.runtime.setUninstallURL(uninstallUrl(chrome.runtime.getManifest().version, userId))
 }
@@ -62,8 +61,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     keepAlive(checkUploadedDesign(message.hash as string)).then(() => sendResponse({}))
     return true
   }
-  // "Use another job" in the answer's status box: the page script sends the
-  // box's question and the job picked.
+  // Sent by "Use another job" in the answer's status box on the page (#232).
   if (message.type === 'ANSWER_REWRITE') {
     keepAlive(writeAnswer(message.request as AnswerRequest)).then(sendResponse)
     return true
@@ -74,19 +72,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 })
 
-// Chrome stops a service worker after 30 s with no event or extension API call.
-// A letter with a lint retry, or a tailor run, can take longer, so ping an API
-// every 20 s until the work ends.
+// Chrome stops a service worker after 30 s with no event or extension API call,
+// and a tailor run or a letter with a lint retry can take longer (#1).
 function keepAlive<T>(work: Promise<T>): Promise<T> {
   const ping = setInterval(() => void chrome.runtime.getPlatformInfo(), 20_000)
   return work.finally(() => clearInterval(ping))
 }
 
-// --- Job lifecycle persistence ---------------------------------------------
-// The actual AI call runs here in the service worker, independent of the popup.
-// We persist the job's status to chrome.storage.local so the result survives the
-// popup closing mid-generation, and so a "cancel" in the popup can stop watching
-// without aborting the work (the generation still completes and still counts).
+// Job status lives in storage so a result survives the popup closing, and a cancel
+// in the popup stops watching without stopping the run (https://github.com/TheLinc/cover-me/commit/9f4ea308).
 async function setCoverJob(rec: CoverJob): Promise<void> {
   await chrome.storage.local.set({ coverJob: rec })
 }
@@ -100,11 +94,8 @@ async function failCover(id: string, job: JobData, startedAt: number, error: str
   return { success: false, error }
 }
 
-// Every successful run is kept for History, on every path. A Pro run's local
-// copy shares its ID with the server copy (account set once the server
-// confirmed it), so uploading local history never duplicates it. Best-effort:
-// a failed save must not turn a finished (and, hosted, already counted) run
-// into an error. owner: where a Pro run belongs (see TailoredHistoryEntry).
+// A Pro run's local copy shares its ID with the server copy, so uploading local
+// history never duplicates it. A failed save mustn't fail a finished run (#24).
 async function recordTailored(
   job: JobData,
   resume: TailoredResume,
@@ -119,17 +110,12 @@ async function failTailor(id: string, job: JobData, startedAt: number, error: st
   return { success: false, error }
 }
 
-// ATS providers that render job postings inside cross-origin iframes on
-// company careers pages. Frames on these hosts are worth scraping even though
-// they don't match the top frame's hostname.
+// These ATS hosts render postings in cross-origin iframes on company careers
+// pages (https://github.com/TheLinc/cover-me/commit/d7700ca5).
 const EMBEDDED_ATS_HOSTS = ['greenhouse.io', 'lever.co', 'myworkdayjobs.com', 'ashbyhq.com', 'bamboohr.com', 'workable.com']
 
-// Enumerate frames worth scraping: the top frame, same-hostname iframes
-// (LinkedIn's interop shell renders the job pane in a same-origin iframe at
-// /preload/), and known ATS iframes. Ad/tracking iframes never match. Falls
-// back to top-frame-only when scripting is unavailable (restricted pages).
-// urls: each listed frame's address, empty when Chrome won't let us script the
-// tab at all (scrapeFailure calls that not a web page).
+// Same-hostname iframes count because LinkedIn renders the job pane in one at
+// /preload/. urls is empty when Chrome won't script the tab at all (#130).
 async function listScrapableFrames(tabId: number): Promise<{ frameIds: number[]; urls: Map<number, string> }> {
   try {
     const frames = await chrome.scripting.executeScript({
@@ -154,7 +140,6 @@ async function listScrapableFrames(tabId: number): Promise<{ frameIds: number[];
   }
 }
 
-// A click that read no job, sorted for the popup (scrape-failure.ts).
 class ScrapeError extends Error {
   constructor(readonly failure: ScrapeFailure) {
     super(failure.error)
@@ -166,13 +151,8 @@ type FrameScrape = { frameId: number; snapshot?: PageSnapshot | null } & (
   | { ok: false; error: Error; connection: boolean }
 )
 
-// Scrape the active tab. Tries the content-script scrapers in every relevant
-// frame (some sites render the posting inside an iframe the top frame can't
-// see); falls back to a self-contained inline scraper injected via
-// chrome.scripting.executeScript so the user doesn't need to refresh after
-// installing or reloading the extension.
-// The scrapers, built by vite.config.ts (contentScriptIife) as one classic script at
-// the extension root. Injected on click; nothing is declared in content_scripts.
+// Built by vite.config.ts (contentScriptIife) as one classic script, and injected
+// on click instead of declared in content_scripts (https://github.com/TheLinc/cover-me/commit/50badfd9).
 const CONTENT_SCRIPT_FILE = 'content.js'
 
 // forAnswer: a right-click answer's read (#232), often of an application form
@@ -182,16 +162,12 @@ async function scrapeTab(tabId: number, { forAnswer = false } = {}): Promise<Job
   const fail = async (error: string, frameId?: number) =>
     new ScrapeError(scrapeFailure(await topFrameUrl(tabId), [...urls.values()], error, frameId === undefined ? undefined : urls.get(frameId)))
 
-  // Inject the scrapers into those frames. activeTab covers the main frame's
-  // origin; embedded ATS frames are covered by their host_permissions. A frame
-  // we can't inject into just answers with a connection error below, and the
-  // inline fallback gets its turn.
+  // activeTab covers the main frame and host_permissions the ATS frames. A frame
+  // that refuses gets a connection error below and the inline fallback (https://github.com/TheLinc/cover-me/commit/50badfd9).
   await chrome.scripting
     .executeScript({ target: { tabId, frameIds }, files: [CONTENT_SCRIPT_FILE] })
     .catch(() => {})
 
-  // --- Primary path: content script message, per frame ---
-  // The page copy is only built when it can be sent (preferServerScrapes).
   const wantSnapshot = !!SUPABASE_URL && (await hasAgreedToPageRead())
   const local: FrameScrape[] = await Promise.all(
     frameIds.map(async (frameId): Promise<FrameScrape> => {
@@ -207,8 +183,8 @@ async function scrapeTab(tabId: number, { forAnswer = false } = {}): Promise<Job
   )
   const results = await preferServerScrapes(local, forAnswer)
 
-  // The top frame keeps its historical precedence so already-working sites
-  // behave exactly as before; among iframe hits, take the longest description.
+  // The top frame wins so sites that worked before iframes were read behave the
+  // same (https://github.com/TheLinc/cover-me/commit/d7700ca5).
   const top = results.find((r) => r.frameId === 0)
   if (top?.ok) return top.job
   const successes = results.filter((r): r is Extract<FrameScrape, { ok: true }> => r.ok)
@@ -218,16 +194,13 @@ async function scrapeTab(tabId: number, { forAnswer = false } = {}): Promise<Job
     return { ...job, url: (await topFrameUrl(tabId)) ?? job.url }
   }
 
-  // No frame produced a job. If any frame ran our scraper and deliberately
-  // failed, surface that error — it carries a site-specific message. Pure
-  // connection errors mean the content script isn't loaded (e.g. right after
-  // an extension reload), which the inline fallback below handles.
+  // A scraper's own error carries a site-specific message, so it beats a connection
+  // error, which only means the content script isn't loaded (https://github.com/TheLinc/cover-me/commit/d7700ca5).
   const deliberate =
     results.find((r) => !r.ok && !r.connection && r.frameId === 0) ??
     results.find((r) => !r.ok && !r.connection)
   if (deliberate && !deliberate.ok) throw await fail(deliberate.error.message, deliberate.frameId)
 
-  // --- Fallback: inject a self-contained scraper into every frame ---
   type InlineResult = { title: string; company: string; description: string; url: string; heuristic?: boolean }
   let result: InlineResult | null = null
   let resultFrameId = 0
@@ -240,10 +213,8 @@ async function scrapeTab(tabId: number, { forAnswer = false } = {}): Promise<Job
       .map((i) => ({ frameId: i.frameId, r: i.result as InlineResult | null }))
       .filter((x): x is { frameId: number; r: InlineResult } =>
         !!x.r && typeof x.r === 'object' && 'title' in x.r && 'description' in x.r && x.r.description.length > 200)
-    // Selector-based results beat last-resort heuristic ones in ANY frame
-    // (the top frame may be an empty shell whose heuristic grabs nav text
-    // while an iframe holds the real posting); within the same quality tier,
-    // the top frame wins, then the longest description.
+    // Selector results beat heuristic ones in any frame: the top frame may be an
+    // empty shell whose heuristic grabs nav text (https://github.com/TheLinc/cover-me/commit/d7700ca5).
     valid.sort((a, b) =>
       Number(!!a.r.heuristic) - Number(!!b.r.heuristic) ||
       Number(b.frameId === 0) - Number(a.frameId === 0) ||
@@ -251,7 +222,7 @@ async function scrapeTab(tabId: number, { forAnswer = false } = {}): Promise<Job
     result = valid[0]?.r ?? null
     resultFrameId = valid[0]?.frameId ?? 0
   } catch {
-    // scripting API unavailable or page is restricted (e.g. chrome:// URLs)
+    // Restricted pages such as chrome:// URLs can't be scripted (https://github.com/TheLinc/cover-me/commit/a074665d).
   }
 
   if (result && result.description.length > 200) {
@@ -262,18 +233,12 @@ async function scrapeTab(tabId: number, { forAnswer = false } = {}): Promise<Job
   throw await fail('Could not read this page. Try refreshing, or paste the job description manually.')
 }
 
-// The scrape Edge Function runs the current scrapers on each frame's snapshot,
-// so a board's markup change ships by deploying the function, not through a
-// store release. It wins wherever it read a job, even where the bundled
-// scrapers also did: outdated scrapers tend to return a wrong or partial job
-// rather than fail. The bundled result stands when the server is unreachable,
-// unconfigured (self-hosted builds), slow, or couldn't read that frame.
+// The server's read wins even where the bundled scrapers also read a job: outdated
+// scrapers tend to return a wrong or partial job rather than fail (#3).
 async function preferServerScrapes(results: FrameScrape[], forAnswer = false): Promise<FrameScrape[]> {
   const sent = results.filter((r) => r.snapshot)
   if (!SUPABASE_URL || sent.length === 0) return results
-  // Until the user has agreed on the notice about how pages are read
-  // (popup/components/PageReadNotice.tsx), nothing leaves the browser: the
-  // bundled scrapers' results stand.
+  // Nothing leaves the browser until the user agrees to PageReadNotice (#29).
   if (!(await hasAgreedToPageRead())) return results
   try {
     const body = JSON.stringify({ pages: sent.map((r) => r.snapshot), ...(forAnswer ? { answer: true } : {}) })
@@ -298,8 +263,8 @@ async function preferServerScrapes(results: FrameScrape[], forAnswer = false): P
   }
 }
 
-// An iframe's location.href (e.g. LinkedIn's /preload/ interop frame) is not
-// the address the user sees — use the tab's URL for jobs scraped from iframes.
+// An iframe's location.href, like LinkedIn's /preload/ frame, is not the address
+// the user sees (https://github.com/TheLinc/cover-me/commit/d7700ca5).
 async function topFrameUrl(tabId: number): Promise<string | undefined> {
   try {
     return (await chrome.tabs.get(tabId)).url ?? undefined
@@ -308,8 +273,6 @@ async function topFrameUrl(tabId: number): Promise<string | undefined> {
   }
 }
 
-// Returns true when the error is a Chrome messaging/connection error rather than
-// a deliberate failure thrown by our own scraper code.
 function isConnectionError(err: Error): boolean {
   const msg = err.message.toLowerCase()
   return msg.includes('could not establish connection') ||
@@ -317,15 +280,13 @@ function isConnectionError(err: Error): boolean {
     msg.includes('no tab with id')
 }
 
-// Self-contained scraper injected via chrome.scripting.executeScript.
-// MUST NOT reference any outer-scope variables — this function is serialised
-// via .toString() and evaluated in the page's isolated world.
+// Must not use anything from outer scope: executeScript serializes the function
+// and runs it in the page (https://github.com/TheLinc/cover-me/commit/a074665d).
 function inlineScraper(): { title: string; company: string; description: string; url: string; heuristic?: boolean } | null {
   const url = location.href
 
-  // querySelector never pierces shadow roots, and some sites (LinkedIn's
-  // interop shell) render page content inside open/declarative shadow DOM.
-  // Collect the document plus every open shadow root and query across all.
+  // querySelector never enters shadow roots, and LinkedIn's interop shell renders
+  // content inside them (https://github.com/TheLinc/cover-me/commit/d7700ca5).
   const roots: (Document | ShadowRoot)[] = [document]
   const scanRoots = (root: Document | ShadowRoot): void => {
     for (const el of Array.from(root.querySelectorAll('*'))) {
@@ -347,7 +308,6 @@ function inlineScraper(): { title: string; company: string; description: string;
   const qa = (sel: string): HTMLElement[] =>
     roots.flatMap((r) => Array.from(r.querySelectorAll(sel)) as HTMLElement[])
 
-  // 1. JSON-LD structured data
   const ldScripts = qa('script[type="application/ld+json"]') as HTMLScriptElement[]
   for (const s of ldScripts) {
     try {
@@ -359,10 +319,9 @@ function inlineScraper(): { title: string; company: string; description: string;
         const desc = String(d.description ?? '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
         if (title && desc.length > 100) return { title, company, description: desc, url }
       }
-    } catch { /* malformed */ }
+    } catch {}
   }
 
-  // 2. BambooHR specific — Fabric design system uses stable data attributes and BambooRichText class
   if (location.hostname.includes('bamboohr.com')) {
     const titleEl = q('[data-fabric-component="Headline"]')
     const descEl = q('.BambooRichText')
@@ -377,8 +336,8 @@ function inlineScraper(): { title: string; company: string; description: string;
     if (title && description.length > 200) return { title, company, description, url }
   }
 
-  // 3. Common ATS + LinkedIn classic selectors, tried in priority order
-  // (a comma-group querySelector would return document order, not our order)
+  // One comma-joined querySelector would return document order, not this order
+  // (https://github.com/TheLinc/cover-me/commit/d7700ca5).
   const firstMatch = (sels: string[]): string => {
     for (const s of sels) {
       const t = q(s)?.innerText?.trim()
@@ -405,9 +364,8 @@ function inlineScraper(): { title: string; company: string; description: string;
     return { title: atsTitle, company: 'Unknown Company', description: atsDesc, url }
   }
 
-  // 4. Heuristic: largest text block + first plausible h1 (h2 only as backup).
-  // Skip headings that are clearly UI chrome (e.g. LinkedIn's toast counter
-  // "0 notifications total" is the first h2 in the document).
+  // LinkedIn's first h2 is its toast counter, "0 notifications total"
+  // (https://github.com/TheLinc/cover-me/commit/d7700ca5).
   const plausible = (el: HTMLElement): boolean => {
     const t = el.innerText?.trim()
     return !!t && t.length > 2 && t.length < 120 && !/^\d/.test(t) && !/notification|skip to|menu/i.test(t)
@@ -470,7 +428,7 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
   const id = jobId ?? crypto.randomUUID()
   const startedAt = Date.now()
   await setTailorJob({ id, status: 'loading', job, startedAt })
-  // Which file a result came from isn't resume content for the model to revise.
+  // Which file a result came from isn't resume content for the model to revise (#131).
   const { sourceHash: _h, designFellBack: _f, ...previous } = lastResult ?? {} as TailoredResume
   try {
     const settings = await getSettings()
@@ -478,7 +436,7 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
     // "Your design" (#131): the user's file sets the page, so there's no
     // compacting, and no summary when the file has none to rewrite.
     let design = await designForTailor()
-    // The popup hides "Compact" whenever "Your design" is picked, fallen back or not.
+    // The popup hides "Compact" whenever "Your design" is picked, fallen back or not (#131).
     const asked = { compact, includeSummary }
     const fitLayout = () => {
       const yours = design.design.layout === 'yours'
@@ -487,8 +445,6 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
     }
     fitLayout()
 
-    // Standing candidate facts (set once, edited in the "Candidate context" box)
-    // apply to every generation, layered under any one-off note for this run.
     const candidateContext = (await getCandidateContext()).trim()
     const merged = [candidateContext, supplemental?.trim()].filter(Boolean).join('\n\n') || undefined
     // A result made with a one-off note holds the user's own input, like an
@@ -507,9 +463,8 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
       flags: { compact, trim, includeSummary, layout: design.design.layout, fellBack: design.design.fellBack, hasCandidateContext: !!candidateContext, hasSupplemental: !!supplemental, hasPrevious: !!lastResult },
     })
 
-    // Live progress: the tailor call streams the model's output and reports a
-    // stage label; persisting it on the job record lets the popup show real
-    // progress (and survive being closed/reopened mid-generation).
+    // Progress is stored on the job record so a reopened popup still shows it
+    // (https://github.com/TheLinc/cover-me/commit/d7700ca5).
     let lastProgress = ''
     const onProgress = (progress: string): void => {
       if (progress === lastProgress) return
@@ -522,16 +477,16 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
       if (!session) {
         return failTailor(id, job, startedAt, 'Sign in to your Cover Me account in Settings.')
       }
-      // Hosted: the resume + final prompt live server-side. Enable DEBUG_MODE on
-      // the edge function to see those in the Supabase function logs.
+      // The resume and final prompt live on the server. DEBUG_MODE on the edge
+      // function logs them (https://github.com/TheLinc/cover-me/commit/9f4ea308).
       const localId = crypto.randomUUID()
       // Looked up alongside the tailor, so a change of plan counts without a
-      // wait once the resume is back.
+      // wait once the resume is back (#181).
       const tier = checkedTier(session)
       const { resume: tailored, savedId } = await tailorViaBackend(job, session.access_token, compact, merged, trim, includeSummary, lastResult && previous, onProgress, localId, design.design)
       const resume = await finishDesign(tailored, design)
       if (note) resume.hasEdits = true
-      // Awaited before the design upload, which reads the cached tier.
+      // Awaited before the design upload, which reads the cached tier (#181).
       const pro = (await tier) === 'hosted_pro'
       if (resume.sourceHash) void uploadDesignIfPro(session)
       await recordTailored(job, resume, localId, {
@@ -551,22 +506,20 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
     }
     const apiKey = await decryptApiKey(settings.apiKey)
 
-    // Lazy parse: run once on first tailor, cache result for all subsequent
-    // tailors. A new upload has no parse, so its first tailor reads it.
-    // "Your design" places the text with the parse its file was checked against.
+    // "Your design" places the text with the parse its file was checked against (#131).
     const before = design
     const read = await parseForTailor(design, resumeData, async () => {
       onProgress('Reading your resume (first run only)…')
       const fresh = await parseResumeStructure(resumeData.text, settings.provider, apiKey)
-      onProgress('') // read; the model thinks next, which is plain "Plan the changes"
+      onProgress('') // the next stage shows the plain "Plan the changes" (#25)
       return fresh
     })
     const parsed = read.parsed
     design = read.design
-    if (design !== before) fitLayout() // checked again: its summary, or a fallback
+    if (design !== before) fitLayout() // a new parse can change the summary or fall back (#239)
 
-    // Shows how many bullets the parser extracted per role — if this is already
-    // short, the model never saw the missing bullets in the first place.
+    // Short bullet counts here mean the model never saw the missing bullets
+    // (https://github.com/TheLinc/cover-me/commit/9f4ea308).
     await debugGroup('Tailor — parsed resume (BYOK, input to model)', {
       parsed,
       bulletsPerRole: parsed.experience?.map((e) => ({ role: e.title, bullets: e.bullets?.length })),
@@ -596,8 +549,6 @@ async function generateFromJob(job: JobData, supplemental?: string, jobId?: stri
   try {
     const settings = await getSettings()
 
-    // Standing candidate facts (set once, edited in the "Candidate context" box)
-    // apply to every generation, layered under any one-off note for this run.
     const candidateContext = (await getCandidateContext()).trim()
     const merged = [candidateContext, supplemental?.trim()].filter(Boolean).join('\n\n') || undefined
 
@@ -612,14 +563,13 @@ async function generateFromJob(job: JobData, supplemental?: string, jobId?: stri
       hasSupplemental: !!supplemental,
     })
 
-    // Hosted path: JWT sent to backend, no local API key or resume needed
     if (resolveMode(settings) === 'hosted') {
       const session = await ensureValidSession()
       if (!session) {
         return failCover(id, job, startedAt, 'Sign in to your Cover Me account in Settings.')
       }
       // The tier is looked up alongside the letter, so a change of plan
-      // counts without holding the letter back from History.
+      // counts without holding the letter back from History (#181).
       const [letter, tier] = await Promise.all([generateViaBackend(job, session.access_token, merged), checkedTier(session)])
       const pro = tier === 'hosted_pro'
       const entry: CoverLetter = {
@@ -627,7 +577,7 @@ async function generateFromJob(job: JobData, supplemental?: string, jobId?: stri
         job,
         letter,
         createdAt: new Date().toISOString(),
-        // A Pro letter belongs in the account; History retries it if this save fails.
+        // A Pro letter belongs in the account; History retries it if this save fails (#24).
         ...(pro ? { saveTo: session.user.id } : {}),
       }
       await addToHistory(entry)
@@ -640,7 +590,6 @@ async function generateFromJob(job: JobData, supplemental?: string, jobId?: stri
       return { success: true, letter, job }
     }
 
-    // BYOK path: decrypt local key, generate locally
     if (!settings?.apiKey) {
       return failCover(id, job, startedAt, 'No API key set. Open Settings to add your key.')
     }

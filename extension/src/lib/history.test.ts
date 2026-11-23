@@ -96,7 +96,7 @@ describe('withLocalOnly', () => {
         { id: 'l2', job: job('https://jobs.example/2'), letter: 'x', createdAt: '2026-10-01T00:00:00Z' },
         { id: 'l3', job: job('https://jobs.example/3'), letter: 'x', createdAt: '2026-10-05T00:00:00Z', account: 'other' },
         { id: 'l4', job: job('https://jobs.example/4'), letter: 'x', createdAt: '2026-10-06T00:00:00Z', account: 'me' },
-        // Another Pro account's letter whose save failed: still that account's.
+        // Another Pro account's letter whose save failed is still that account's (#24).
         { id: 'l5', job: job('https://jobs.example/5'), letter: 'x', createdAt: '2026-10-07T00:00:00Z', saveTo: 'you' },
       ],
       [],
@@ -149,8 +149,7 @@ describe('uploadMessage', () => {
 })
 
 describe('groupsFromApplications', () => {
-  // Same rule as local cards: the date is the newest thing made for the job,
-  // so a card doesn't jump to an older date once it's saved.
+  // Same rule as local cards, so a card doesn't jump to an older date once saved (#24).
   test('dates each application by its newest letter or resume', () => {
     const [g] = groupsFromApplications([{
       id: 'app1', title: 'A', company: 'Acme', url: 'https://jobs.example/a', createdAt: '2026-10-01T00:00:00Z',
@@ -165,7 +164,7 @@ describe('groupsFromApplications', () => {
       id, title: id, company: 'Acme', url: '', createdAt, tailoredResumes: [],
       coverLetters: letterAt ? [{ id: `l-${id}`, letter: 'x', createdAt: letterAt }] : [],
     })
-    // The server orders by when each application was made.
+    // The server orders by when each application was made (#24).
     const groups = groupsFromApplications([app('b', '2026-10-05T00:00:00+00:00'), app('a', '2026-10-01T00:00:00+00:00', '2026-10-10T00:00:00+00:00')])
     expect(groups.map((g) => g.id)).toEqual(['a', 'b'])
   })
@@ -237,7 +236,7 @@ describe('answerJobs', () => {
   })
 
   // Lever and Ashby put the form on its own page, which the scrapers can read
-  // as a "posting" made of form text. The saved copy has the real posting.
+  // as a "posting" made of form text. The saved copy has the real posting (#232).
   test("an application page matching a saved job uses the saved job's posting", () => {
     const form = posting('https://jobs.lever.co/northwind/123/apply', 'Backend Engineer', 'Northwind', 'Submit your application Resume/CV Full name')
     const { jobs, jobSource } = answerJobs(form, saved)
@@ -246,7 +245,7 @@ describe('answerJobs', () => {
     expect(jobSource).toBe('page')
   })
 
-  // LinkedIn and Indeed tell jobs apart by the query alone.
+  // LinkedIn and Indeed tell jobs apart by the query alone (#232).
   test('jobs whose links differ only in the query are different jobs', () => {
     const a = posting('https://www.linkedin.com/jobs/search/?currentJobId=111', 'Analyst A', 'Acme')
     const b = posting('https://www.linkedin.com/jobs/search/?currentJobId=222', 'Analyst B', 'Globex')
