@@ -3,7 +3,6 @@
 import { useState, type ReactNode } from 'react'
 import { ArrowUpRightIcon, BrowserIcon, CloudIcon, GithubLogoIcon, LockSimpleIcon, SparkleIcon } from '@phosphor-icons/react/dist/ssr'
 import { cn } from '@/lib/utils'
-import { Badge } from '@/components/ui/badge'
 import { MODES, type Mode } from './privacy-modes'
 
 function Node({ icon, title, sub, dim }: { icon: ReactNode; title: string; sub?: string; dim?: boolean }) {
@@ -50,11 +49,6 @@ export function PrivacyBand() {
         />
         <div className="relative flex min-w-0 flex-col gap-5">
           <h2 className="text-[clamp(32px,3.6vw,48px)] leading-[1.05] !text-[var(--on-night)]">Your resume stays yours</h2>
-          <ul className="flex flex-wrap gap-2" aria-label="Privacy promises">
-            {['No tracking in the extension', 'Never used to train AI'].map((p) => (
-              <li key={p}><Badge variant="outline" className="border-white/20 bg-white/[0.06] px-2.5 py-1 text-[12.5px] font-medium text-[var(--on-night)]">{p}</Badge></li>
-            ))}
-          </ul>
           <p className="text-[17px] leading-[1.6] text-[var(--on-night-2)]">
             Pick how it runs. Either way the extension has no ads or tracking.
           </p>
