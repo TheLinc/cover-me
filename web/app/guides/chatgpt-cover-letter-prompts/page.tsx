@@ -215,7 +215,7 @@ export default function Page() {
                 Part of prompt 3 is built in, with the checking done in code. Every letter is scanned for stock AI words and clichés, generic openers like &ldquo;I am writing to apply&rdquo;, and passive closes. It also flags any dollar amount, percentage or figure of three digits or more that isn&rsquo;t in your resume, your candidate context or the posting. When it finds a problem, Cover Me sends the letter back to the model once with each one listed, and keeps the new version unless it has more.
               </p>
               <p>
-                ChatGPT and Claude can write a good letter, as the answers above show. The difference is the copying and checking you do by hand. If you&rsquo;re deciding between a chatbot and a tool, <Link href="/guides/cover-me-vs-chatgpt">Cover Me vs ChatGPT</Link> compares them.
+                ChatGPT and Claude can write a good letter, as the answers above show. The difference is the copying and checking you do by hand. If you&rsquo;re deciding between a chatbot and a tool, <Link href="/guides/cover-me-vs-chatgpt">Cover Me vs ChatGPT</Link> compares them. For the written questions on the application form, see <Link href="/guides/how-to-answer-job-application-questions">how to answer job application questions</Link>.
               </p>
             </>
           ),
