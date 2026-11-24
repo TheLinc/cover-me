@@ -51,6 +51,7 @@ export function hashTokens(hash: string): LinkTokens | null {
   return !h.get('error') && access_token && refresh_token && (type === 'signup' || type === 'recovery') ? { access_token, refresh_token } : null
 }
 
-export function sessionSwitch(incomingId: string | undefined, currentId: string | undefined): 'set' | 'ask' {
-  return !currentId || incomingId === currentId ? 'set' : 'ask'
+export function sessionSwitch(incomingId: string | undefined, currentId: string | undefined, sessionStored: boolean): 'set' | 'ask' {
+  if (currentId) return incomingId === currentId ? 'set' : 'ask'
+  return sessionStored ? 'ask' : 'set'
 }

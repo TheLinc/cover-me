@@ -93,15 +93,18 @@ describe('hashTokens', () => {
 
 describe('sessionSwitch', () => {
   it('signs in when nobody is signed in', () => {
-    expect(sessionSwitch('user-b', undefined)).toBe('set')
+    expect(sessionSwitch('user-b', undefined, false)).toBe('set')
   })
   it('signs in again when the link is for the signed-in account', () => {
-    expect(sessionSwitch('user-a', 'user-a')).toBe('set')
+    expect(sessionSwitch('user-a', 'user-a', true)).toBe('set')
   })
   it('asks before replacing a different signed-in account', () => {
-    expect(sessionSwitch('user-b', 'user-a')).toBe('ask')
+    expect(sessionSwitch('user-b', 'user-a', true)).toBe('ask')
   })
   it('asks when the link\'s account can\'t be read', () => {
-    expect(sessionSwitch(undefined, 'user-a')).toBe('ask')
+    expect(sessionSwitch(undefined, 'user-a', true)).toBe('ask')
+  })
+  it("asks when a session is stored but its user can't be read", () => {
+    expect(sessionSwitch('user-b', undefined, true)).toBe('ask')
   })
 })

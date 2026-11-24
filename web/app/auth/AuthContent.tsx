@@ -116,7 +116,7 @@ function AuthForm() {
     if (tokens) {
       Promise.all([supabase.auth.getUser(tokens.access_token), supabase.auth.getUser()]).then(async ([incoming, current]) => {
         const currentUser = current.data.user ?? (await supabase.auth.getSession()).data.session?.user;
-        if (sessionSwitch(incoming.data.user?.id, currentUser?.id) === "ask") {
+        if (sessionSwitch(incoming.data.user?.id, currentUser?.id, hasSessionCookie(document.cookie)) === "ask") {
           setSwitchTo({ tokens, email: incoming.data.user?.email ?? "", current: currentUser?.email ?? "" });
           setWaiting(null);
         } else {
@@ -182,7 +182,12 @@ function AuthForm() {
   function adoptLinkSession(tokens: LinkTokens) {
     setSwitchTo(null);
     setWaiting("email");
-    supabase.auth.setSession(tokens).finally(() => setWaiting(null));
+    supabase.auth.setSession(tokens).then(({ error }) => {
+      if (error) {
+        setView("signin");
+        setError("This link couldn't sign you in. It may have expired or already been used. Sign in, or request a new link.");
+      }
+    }).finally(() => setWaiting(null));
   }
 
   function switchView(to: View) {
@@ -417,16 +422,16 @@ function AuthForm() {
                   Switch accounts?
                 </h2>
                 <p className="text-[13.5px] text-muted-foreground leading-[1.55]">
-                  You&apos;re signed in as <strong className="text-foreground">{switchTo.current}</strong>.
-                  This link is for {switchTo.email ? <strong className="text-foreground">{switchTo.email}</strong> : "a different account"}.
+                  {switchTo.current ? <>You&apos;re signed in as <strong className="text-foreground">{switchTo.current}</strong>.</> : "You're already signed in."}{" "}
+                  {switchTo.email ? <>This link is for <strong className="text-foreground">{switchTo.email}</strong>.</> : "We can't tell which account this link is for."}
                 </p>
               </div>
               <div className="flex flex-col gap-2.5">
                 <Button size="lg" className="w-full" onClick={() => adoptLinkSession(switchTo.tokens)}>
-                  Switch to {switchTo.email || "that account"}
+                  {switchTo.email ? `Switch to ${switchTo.email}` : "Use this link"}
                 </Button>
                 <Button size="lg" variant="outline" className="w-full" onClick={() => { window.location.replace(next ?? "/dashboard"); }}>
-                  Stay as {switchTo.current}
+                  {switchTo.current ? `Stay as ${switchTo.current}` : "Stay signed in"}
                 </Button>
               </div>
             </>
