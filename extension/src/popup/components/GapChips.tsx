@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, useState } from 'react'
+import { mentions } from '../../lib/ai/resume-grounding'
 
 const MAX_ROWS = 3
 
@@ -9,8 +10,16 @@ export function nextLimit(tops: number[], limit: number, maxRows = MAX_ROWS): nu
   return fit < limit ? fit : limit - 1
 }
 
+// A result saved before requirements were recorded has none, and shows every gap as a keyword (#342).
+export function splitGaps(gaps: string[], saved: string[] = []): { requirements: string[]; keywords: string[] } {
+  const requirements = saved.filter((r) => gaps.includes(r))
+  const keywords = gaps.filter((g) => !requirements.some((r) => r === g || mentions(r, g)))
+  return { requirements, keywords }
+}
+
 // Matched keywords aren't stored, so only the gaps show (#19).
-export default function GapChips({ gaps }: { gaps: string[] }) {
+export default function GapChips({ gaps: all, requirements: saved }: { gaps: string[]; requirements?: string[] }) {
+  const { requirements, keywords: gaps } = splitGaps(all, saved)
   const listRef = useRef<HTMLUListElement>(null)
   const [limit, setLimit] = useState(gaps.length)
   const [expanded, setExpanded] = useState(false)
@@ -33,11 +42,20 @@ export default function GapChips({ gaps }: { gaps: string[] }) {
     if (next !== limit) setLimit(Math.max(0, next))
   })
 
-  if (gaps.length === 0) return null
+  if (gaps.length === 0 && requirements.length === 0) return null
   const hidden = gaps.length - limit
   const shown = expanded ? gaps : gaps.slice(0, limit)
   return (
     <div className="gap-chips">
+      {requirements.length > 0 && (
+        <div className="gap-requirements">
+          <div className="chip-caption mono">Hard requirements</div>
+          <ul className="chips">
+            {requirements.map((r) => <li key={r} className="chip chip-requirement">{r}</li>)}
+          </ul>
+        </div>
+      )}
+      {gaps.length > 0 && <>
       <div className="chip-caption mono">The posting also mentions</div>
       <ul className="chips" ref={listRef} id="gap-chips">
         {shown.map((g, i) => <li key={`${i}-${g}`} className="chip chip-gap">{g}</li>)}
@@ -57,6 +75,7 @@ export default function GapChips({ gaps }: { gaps: string[] }) {
           </li>
         )}
       </ul>
+      </>}
     </div>
   )
 }

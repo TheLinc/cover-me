@@ -38,6 +38,8 @@
   --text-3:      #A6A3C6;
   --tip-bg:      rgba(250, 204, 21, 0.12);
   --tip-fg:      #FDE047;
+  --requirement-bg: rgba(249, 115, 22, 0.16);
+  --requirement-fg: #FDBA74;
   --tip-border:  rgba(250, 204, 21, 0.28);
   --error:       #f87171;
   --error-dim:   rgba(248, 113, 113, 0.10);
@@ -831,6 +833,8 @@ html, body {
 .chips { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { font-size: 11px; padding: 3px 9px; border-radius: 999px; }
 .chip-gap { background: var(--elevated); color: var(--text-2); }
+.chip-requirement { background: var(--requirement-bg); color: var(--requirement-fg); }
+.gap-requirements { margin-bottom: 10px; }
 .chip-more { display: block; line-height: inherit; background: var(--elevated); color: var(--text-2); border: none; font-family: inherit; cursor: pointer; }
 .chip-more:hover { color: var(--text); }
 

@@ -8,6 +8,12 @@ describe('scoreFromMatch', () => {
     expect(r.gaps).toEqual(['Kafka'])
   })
 
+  it('lists the unmet hard requirements apart from the gaps, leaving out a years one the candidate meets', () => {
+    const r = scoreFromMatch({ tier1Covered: ['A'], tier1Missing: ['Kubernetes'], gatingGaps: ['Kubernetes (required)', 'Requires 2yr, candidate ~3yr', 'RN license'] })
+    expect(r.requirements).toEqual(['Kubernetes (required)', 'RN license'])
+    expect(r.gaps).toEqual(['Kubernetes', 'Kubernetes (required)', 'RN license'])
+  })
+
   it('subtracts 10 per unmet hard requirement, capped at 25', () => {
     const one = scoreFromMatch({ tier1Covered: ['A'], gatingGaps: ['Active RN license required'] })
     expect(one.score).toBe(90)

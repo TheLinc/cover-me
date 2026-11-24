@@ -1138,7 +1138,7 @@ export default function GeneratePage({ onNavigate }: Props) {
                           <p className="ats-strong">Strong match: no significant gaps.</p>
                         )}
                       </div>
-                      <GapChips gaps={tailoredResume.atsGaps ?? []} />
+                      <GapChips gaps={tailoredResume.atsGaps ?? []} requirements={tailoredResume.atsRequirements} />
                     </div>
                   )}
                   {reviewAt === 'resume' && reviewUnderScore && <ReviewAsk onClose={() => setReviewAt(null)} />}

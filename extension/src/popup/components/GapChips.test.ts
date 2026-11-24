@@ -1,5 +1,23 @@
 import { describe, expect, it } from 'vitest'
-import { nextLimit } from './GapChips'
+import { nextLimit, splitGaps } from './GapChips'
+
+describe('splitGaps', () => {
+  it('shows each unmet requirement once, apart from the keywords', () => {
+    const gaps = ['Kubernetes', 'Go', 'Kubernetes (required)', 'Requires 4yr, candidate ~2.5yr']
+    expect(splitGaps(gaps, ['Kubernetes (required)', 'Requires 4yr, candidate ~2.5yr'])).toEqual({
+      requirements: ['Kubernetes (required)', 'Requires 4yr, candidate ~2.5yr'],
+      keywords: ['Go'],
+    })
+  })
+
+  it('keeps a result saved before requirements were recorded as one keyword list', () => {
+    expect(splitGaps(['Go', 'RN license'])).toEqual({ requirements: [], keywords: ['Go', 'RN license'] })
+  })
+
+  it('drops a requirement an edit filled', () => {
+    expect(splitGaps(['Go'], ['RN license'])).toEqual({ requirements: [], keywords: ['Go'] })
+  })
+})
 
 // Simulates the popup: chips of the given widths wrap into a row of `width`,
 // with the "+N more" button after the first `limit`. Returns each item's top.

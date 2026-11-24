@@ -103,6 +103,11 @@ describe('an edited previous version', () => {
     expect(resume.skills).toBe('React, TypeScript')
   })
 
+  test('the gap and requirement lists of an edited version never count as the candidate text', () => {
+    const notes = trustedNotes(undefined, { ...previous, editedAt: 'x', atsGaps: ['HIPAA'], atsGapsBeforeEdits: ['HIPAA'], atsRequirements: ['HIPAA certification'] })
+    expect(notes).not.toContain('HIPAA')
+  })
+
   test('keeps the note, and the note alone without an edited version', () => {
     expect(trustedNotes('Used Ruby daily.', { ...previous, editedAt: 'x' })).toContain('Used Ruby daily.')
     expect(trustedNotes('Used Ruby daily.', previous)).toBe('Used Ruby daily.')

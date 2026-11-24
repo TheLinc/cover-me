@@ -417,7 +417,7 @@ export default function Editor() {
             {typeof scored.atsScore === 'number' && <ScoreRing score={scored.atsScore} size={88} />}
             <div className="ats-detail">
               {edited && <p className="ats-edited">Scored before your edits</p>}
-              <GapChips gaps={saved.atsGaps ?? []} />
+              <GapChips gaps={saved.atsGaps ?? []} requirements={saved.atsRequirements} />
             </div>
           </section>
         )}
