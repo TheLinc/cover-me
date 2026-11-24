@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase";
-import { afterOAuth, hashReturn, oauthCancelled, oauthErrorDescription, oauthRedirectUrl, safeNext } from "@/lib/auth-redirect";
+import { afterOAuth, hashReturn, hashTokens, oauthCancelled, oauthErrorDescription, oauthRedirectUrl, safeNext, sessionSwitch } from "@/lib/auth-redirect";
 import { saveProductUpdates } from "@/lib/email-preferences";
 import { hasSessionCookie } from "@/lib/session-cookie";
 import { PLAN_LIMITS } from "@/lib/limits";
@@ -73,11 +73,14 @@ function AuthForm() {
   // HTML (#39). "session" covers a visit while already signed in (#313).
   const [waiting, setWaiting] = useState<"google" | "opening" | "email" | "session" | null>(() =>
     params.has("error") || fromHash.error ? null : params.has("oauth") ? "google" : params.has("code") ? "email"
+      : typeof window !== "undefined" && hashTokens(window.location.hash) ? "email"
       : typeof window !== "undefined" && !window.location.hash && hasSessionCookie(document.cookie) ? "session" : null,
   );
   // A live region that mounts already filled isn't announced, so it stays
   // empty until after the first render (#42).
   const [announce, setAnnounce] = useState(false);
+  const [accountEmail, setAccountEmail] = useState("");
+  const [switchTo, setSwitchTo] = useState<{ tokens: { access_token: string; refresh_token: string }; email: string; current: string } | null>(null);
 
   const supabase = createClient();
 
@@ -109,24 +112,22 @@ function AuthForm() {
     // Extension signups use the implicit flow and come back with #access_token=….
     // fromHash already read the view and any error (#43).
     const hash = window.location.hash;
-    if (hash) {
-      const h = new URLSearchParams(hash.slice(1));
-
-      if (!h.get("error") && h.get("access_token")) {
-        // The PKCE client ignores implicit-flow tokens and the dashboard checks
-        // cookies. Without setSession the user lands on "confirmed" signed out,
-        // and a password reset has no session. https://github.com/TheLinc/cover-me/commit/3af70b9
-        const refreshToken = h.get("refresh_token");
-        if (refreshToken) {
-          supabase.auth.setSession({
-            access_token: h.get("access_token")!,
-            refresh_token: refreshToken,
-          });
+    const tokens = hashTokens(hash);
+    if (tokens) {
+      // The PKCE client ignores implicit-flow tokens and the dashboard checks
+      // cookies. Without setSession the user lands on "confirmed" signed out,
+      // and a password reset has no session. https://github.com/TheLinc/cover-me/commit/3af70b9
+      Promise.all([supabase.auth.getUser(tokens.access_token), supabase.auth.getUser()]).then(([incoming, current]) => {
+        const currentUser = current.data.user;
+        if (currentUser && sessionSwitch(incoming.data.user?.id, currentUser.id) === "ask") {
+          setSwitchTo({ tokens, email: incoming.data.user?.email ?? "", current: currentUser.email ?? "" });
+          setWaiting(null);
+        } else {
+          adoptLinkSession(tokens);
         }
-      }
-
-      window.history.replaceState(null, "", window.location.pathname);
+      });
     }
+    if (hash) window.history.replaceState(null, "", window.location.pathname);
 
     async function openDashboard() {
       setWaiting("opening");
@@ -135,7 +136,8 @@ function AuthForm() {
       window.location.href = afterOAuth(searchParams.get("plan"), searchParams.get("next"));
     }
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setAccountEmail(session?.user.email ?? "");
       if (event === "PASSWORD_RECOVERY") setView("reset");
       if (event === "SIGNED_IN" && isConfirmation) setView("confirmed");
       if (event === "SIGNED_IN" && isOAuth) openDashboard();
@@ -176,6 +178,12 @@ function AuthForm() {
     return () => subscription.unsubscribe();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount: https://github.com/TheLinc/cover-me/commit/7278c73
   }, []);
+
+  function adoptLinkSession(tokens: { access_token: string; refresh_token: string }) {
+    setSwitchTo(null);
+    setWaiting("email");
+    supabase.auth.setSession(tokens).finally(() => setWaiting(null));
+  }
 
   function switchView(to: View) {
     setView(to);
@@ -402,7 +410,27 @@ function AuthForm() {
             </span>
           </a>
 
-          {waiting ? (
+          {switchTo ? (
+            <>
+              <div className="mb-7">
+                <h2 className="text-2xl text-foreground leading-[1.2] mb-[5px]">
+                  Switch accounts?
+                </h2>
+                <p className="text-[13.5px] text-muted-foreground leading-[1.55]">
+                  You&apos;re signed in as <strong className="text-foreground">{switchTo.current}</strong>.
+                  This link is for {switchTo.email ? <strong className="text-foreground">{switchTo.email}</strong> : "a different account"}.
+                </p>
+              </div>
+              <div className="flex flex-col gap-2.5">
+                <Button size="lg" className="w-full" onClick={() => adoptLinkSession(switchTo.tokens)}>
+                  Switch to {switchTo.email || "that account"}
+                </Button>
+                <Button size="lg" variant="outline" className="w-full" onClick={() => { window.location.replace(next ?? "/dashboard"); }}>
+                  Stay as {switchTo.current}
+                </Button>
+              </div>
+            </>
+          ) : waiting ? (
             <div>
               <div className="mb-7">
                 <h2 className="text-2xl text-foreground leading-[1.2] mb-[5px]">
@@ -443,7 +471,7 @@ function AuthForm() {
                 Email confirmed.
               </h2>
               <p className="text-[13.5px] text-muted-foreground leading-[1.6] mb-7">
-                Your account is active. Let&apos;s get to work.
+                Your account is active.{accountEmail && <> You&apos;re signed in as <strong className="text-foreground">{accountEmail}</strong>.</>}
               </p>
               <Button onClick={() => { window.location.href = next ?? "/dashboard"; }} size="lg" className="w-full">
                 {next ? "Continue" : "Go to dashboard"}
@@ -461,7 +489,9 @@ function AuthForm() {
                   </h2>
                   <p className="text-[13.5px] text-muted-foreground leading-[1.55]">
                     {view === "reset" ? (
-                      "Your password has been changed. You're now signed in."
+                      <>
+                        Your password has been changed. You&apos;re now signed in{accountEmail ? <> as <strong className="text-foreground">{accountEmail}</strong></> : null}.
+                      </>
                     ) : view === "forgot" ? (
                       <>
                         We sent a password reset link to{" "}
@@ -516,6 +546,7 @@ function AuthForm() {
                 </h2>
                 <p className="text-[13.5px] text-muted-foreground leading-[1.55]">
                   {subtext}
+                  {accountEmail && <> For <strong className="text-foreground">{accountEmail}</strong>.</>}
                 </p>
               </div>
 

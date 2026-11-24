@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { afterOAuth, hashReturn, oauthCancelled, oauthErrorDescription, oauthRedirectUrl, safeNext } from './auth-redirect'
+import { afterOAuth, hashReturn, hashTokens, oauthCancelled, oauthErrorDescription, oauthRedirectUrl, safeNext, sessionSwitch } from './auth-redirect'
 
 describe('oauthErrorDescription', () => {
   it('reads Supabase\'s reason from the query or the fragment', () => {
@@ -70,5 +70,31 @@ describe('hashReturn', () => {
   it('is empty with no hash or no token', () => {
     expect(hashReturn('')).toEqual({ view: null, error: '' })
     expect(hashReturn('#type=signup')).toEqual({ view: null, error: '' })
+  })
+})
+
+describe('hashTokens', () => {
+  it('reads the token pair from an email link fragment', () => {
+    expect(hashTokens('#access_token=a&refresh_token=r&type=signup')).toEqual({ access_token: 'a', refresh_token: 'r' })
+  })
+  it('is null without both tokens or with an error', () => {
+    expect(hashTokens('#access_token=a&type=signup')).toBeNull()
+    expect(hashTokens('#error=access_denied&access_token=a&refresh_token=r')).toBeNull()
+    expect(hashTokens('')).toBeNull()
+  })
+})
+
+describe('sessionSwitch', () => {
+  it('signs in when nobody is signed in', () => {
+    expect(sessionSwitch('user-b', undefined)).toBe('set')
+  })
+  it('signs in again when the link is for the signed-in account', () => {
+    expect(sessionSwitch('user-a', 'user-a')).toBe('set')
+  })
+  it('asks before replacing a different signed-in account', () => {
+    expect(sessionSwitch('user-b', 'user-a')).toBe('ask')
+  })
+  it('asks when the link\'s account can\'t be read', () => {
+    expect(sessionSwitch(undefined, 'user-a')).toBe('ask')
   })
 })
