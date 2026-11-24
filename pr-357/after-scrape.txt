@@ -1,0 +1,4 @@
+[this branch 1b79791b] made-up posting (Northwind Traders): HTTP 200 in 0.30 s
+[{"ok":true,"title":"Warehouse Supervisor","company":"Unknown Company","descriptionChars":699}]
+[this branch 1b79791b] 254 nested blocks around 3.4 MB of words (3.42 MB): HTTP 200 in 0.59 s
+[{"ok":false,"error":"Could not find job details on this page. Make sure you are on a specific job posting, not a listings page."}]

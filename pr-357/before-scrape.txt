@@ -1,0 +1,6 @@
+[master a1c2846c] made-up posting (Northwind Traders): HTTP 200 in 0.29 s
+[{"ok":true,"title":"Warehouse Supervisor","company":"Unknown Company","descriptionChars":699}]
+[master a1c2846c] 254 nested blocks around 3.4 MB of words (3.42 MB): HTTP 546 in 4.47 s
+{"code":"WORKER_LIMIT","message":"Worker failed to respond due to a resource limit (please check logs)"}
+2026-11-24T19:45:13.629505730Z CPU time soft limit reached: isolate: dfec46ce-114a-4a0d-959a-b5c513310ba0
+2026-11-24T19:45:16.533489446Z CPU time hard limit reached: isolate: dfec46ce-114a-4a0d-959a-b5c513310ba0

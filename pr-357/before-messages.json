@@ -1,0 +1,6 @@
+{
+  "build": "master a1c2846c",
+  "answerBoxHost": "COVER-ME-ANSWER-STATUS",
+  "checkDesignFromContentScript": "{}",
+  "checkDesignFromPopup": "{}"
+}
