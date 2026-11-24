@@ -1,0 +1,3 @@
+before | made-up posting | 0.0 MB | HTTP 200 | 47 ms | ok: "Payroll Clerk" at "Unknown Company"
+before | many attributes | 3.6 MB | HTTP 546 | 1727 ms | {"code":"WORKER_LIMIT","message":"Worker failed to respond due to a resource limit (please check logs)"}
+before | long styles above many elements | 2.9 MB | HTTP 546 | 3392 ms | {"code":"WORKER_LIMIT","message":"Worker failed to respond due to a resource limit (please check logs)"}

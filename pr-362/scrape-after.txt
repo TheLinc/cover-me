@@ -1,0 +1,3 @@
+after | made-up posting | 0.0 MB | HTTP 200 | 288 ms | ok: "Payroll Clerk" at "Unknown Company"
+after | many attributes | 3.6 MB | HTTP 200 | 71 ms | refused: This page is too large to read.
+after | long styles above many elements | 2.9 MB | HTTP 200 | 807 ms | refused: This page is too large to read.
