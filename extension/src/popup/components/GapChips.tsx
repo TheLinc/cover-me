@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import { mentions } from '../../lib/ai/resume-grounding'
+import { ChevronIcon } from './icons'
 
 const MAX_ROWS = 3
 
@@ -85,6 +86,7 @@ export default function GapChips({ gaps: all, requirements: saved, rows = MAX_RO
               onClick={() => { growFrom.current = listRef.current?.offsetHeight ?? null; setExpanded(e => !e) }}
             >
               {expanded ? 'Show less' : `+${hidden} more`}
+              <ChevronIcon />
             </button>
           </li>
         )}

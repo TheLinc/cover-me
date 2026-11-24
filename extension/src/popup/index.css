@@ -836,8 +836,9 @@ html, body {
 .requirement { font-size: 12px; line-height: 1.4; color: var(--requirement-fg); padding-left: 12px; position: relative; }
 .requirement::before { content: ""; position: absolute; left: 1px; top: 0.5em; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
 .gap-requirements { margin-bottom: 10px; }
-.chip-more { display: block; line-height: inherit; background: var(--elevated); color: var(--text-2); border: none; font-family: inherit; cursor: pointer; }
-.chip-more:hover { color: var(--text); }
+.chip-more { display: inline-flex; align-items: center; gap: 3px; line-height: inherit; background: var(--accent-dim); color: var(--accent-h); border: none; font-family: inherit; font-weight: 500; cursor: pointer; }
+.chip-more:hover { background: rgba(99, 102, 241, 0.28); }
+.chip-more[aria-expanded="true"] .chevron { transform: rotate(180deg); }
 
 .ats-strong {
   font-size: 12px;

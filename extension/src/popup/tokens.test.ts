@@ -32,6 +32,10 @@ describe('popup tokens (Night)', () => {
     expect(ratio('#FFFFFF', token('accent-strong')!)).toBeGreaterThanOrEqual(4.5)
   })
 
+  test('the +N more chip: --accent-h on the accent fill over a card is at least 4.5:1', () => {
+    expect(ratio(token('accent-h')!, overCard('accent-dim'))).toBeGreaterThanOrEqual(4.5)
+  })
+
   test('hard requirements: --requirement-fg on a card is at least 4.5:1', () => {
     expect(ratio(token('requirement-fg')!, token('surface')!)).toBeGreaterThanOrEqual(4.5)
   })
