@@ -74,11 +74,14 @@ function checkSize(doc: Dom) {
   }
 }
 
+// htmlparser2's whitespace is only these five: any other control character
+// starts a name (#357)
+const SPACE = new Set([9, 10, 12, 13, 32])
 function nameStarts(html: string): number {
   let n = 0
   for (let i = 1; i < html.length; i++) {
     const p = html.charCodeAt(i - 1), c = html.charCodeAt(i)
-    if ((p <= 32 || p === 47 || p === 34 || p === 39) && c > 32 && c !== 47 && c !== 62) n++
+    if ((p <= 32 || p === 47 || p === 34 || p === 39) && !SPACE.has(c) && c !== 47 && c !== 62) n++
   }
   return n
 }

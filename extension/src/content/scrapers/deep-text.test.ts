@@ -45,12 +45,15 @@ test('the pages of one request share the cap', () => {
 })
 
 const names = (count: number) => Array.from({ length: count }, (_, i) => `a${i}`)
+const controls = [...Array(32).keys()].filter((c) => ![0, 9, 10, 12, 13].includes(c)).map((c) => String.fromCharCode(c))
+const controlNames = (count: number) => Array.from({ length: count }, (_, i) => [1, 27, 729].map((d) => controls[Math.floor(i / d) % 27]).join(''))
 
 test.each([
   { case: '4,000 spans with 200 attributes each in 250 nested blocks', inner: `<b ${names(200).join(' ')}>a</b>`.repeat(4000), depth: 250 },
   { case: '360 spans with 2,000 attributes each', inner: `<b ${names(2000).join(' ')}>a</b>`.repeat(360), depth: 1 },
   { case: '220 spans with 2,000 attributes each, none spaced', inner: `<b ${names(2000).join('=""')}>a</b>`.repeat(220), depth: 1 },
   { case: '360 spans with 2,000 attributes each after a quote', inner: `<b ="${names(2000).join(' ')}">a</b>`.repeat(360), depth: 1 },
+  { case: '480 spans with 2,000 attributes each named in control characters', inner: `<b ${controlNames(2000).join(' ')}>a</b>`.repeat(480), depth: 1 },
 ])('attributes are capped before parsing: $case', ({ inner, depth }) => {
   const html = nested(depth, inner)
   expect(html.length).toBeLessThan(4_000_000)
@@ -69,7 +72,5 @@ test("attributes count against the request's cap", () => {
 test('the first text after the title is found in one walk', () => {
   const style = `color:red;${' '.repeat(10_000)}`
   const html = `<!doctype html><html><body>${`<div style="${style}">`.repeat(250)}<h1>Payroll Clerk</h1>${'<i></i>'.repeat(50_000)}${'</div>'.repeat(250)}</body></html>`
-  expect(elapsed(() => {
-    try { scrapeHtml(parseHTML, 'https://careers.example.com/jobs/1', html) } catch {}
-  })).toBeLessThan(2000)
+  expect(elapsed(() => expect(() => scrapeHtml(parseHTML, 'https://careers.example.com/jobs/1', html)).toThrow('too large'))).toBeLessThan(2000)
 })

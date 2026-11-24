@@ -201,8 +201,7 @@ function textAfter(el: Node): Node | undefined {
 // that links its tools, or a posting's sections that link from their text.
 // Lists that aren't rendered are returned apart: Chrome reads their source
 // text (innerText falls back to textContent), and the blocks around them leave
-// it out. The outermost lists only, each with its text and how much of it is
-// outside links (#215).
+// it out. The outermost lists only (#215).
 function cardLists(nested: Set<Element>): [Map<HTMLElement, { text: string, plain: number }>, Set<Element>] {
   const firstLink = new Map<Element, Element>()
   for (const a of Array.from(document.querySelectorAll('a[href]'))) {
