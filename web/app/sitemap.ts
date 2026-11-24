@@ -11,7 +11,6 @@ const LAST_MODIFIED = {
   about: '2026-11-23',
   legal: '2026-11-11',
   support: '2026-10-29',
-  boards: '2026-11-24',
   atsChecker: '2026-11-18',
 } as const
 
@@ -37,7 +36,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     ...BOARDS.map((b) => ({
       url: `${BASE}/for/${b.slug}`,
-      lastModified: LAST_MODIFIED.boards,
+      lastModified: b.updated,
       changeFrequency: 'monthly' as const,
       priority: 0.8,
     })),
