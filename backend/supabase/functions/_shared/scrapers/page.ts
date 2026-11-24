@@ -14,8 +14,8 @@ const MAX_TAGS = 150_000
 const MAX_ELEMENTS = 60_000
 const MAX_DEPTH = 256
 // The scrapers read a block's whole subtree for every block around it, so a
-// request's reads are capped by the nodes and characters they cover, a node
-// counting as 400 characters. Real postings use at most 4.5M (#357).
+// request's reads are capped by the nodes and characters they cover. The saved
+// postings use at most 20M (#357).
 const MAX_WORK = 2_000_000_000
 const NODE_WORK = 400
 export interface Meter { work: number }
@@ -105,7 +105,6 @@ function meterSubtreeReads(dom: Dom) {
   }
   wrap(dom.Element.prototype, 'querySelectorAll')
   wrap(dom.Document.prototype, 'querySelectorAll')
-  wrap(dom.DocumentFragment.prototype, 'querySelectorAll')
   wrap(dom.Element.prototype, 'textContent')
 }
 
