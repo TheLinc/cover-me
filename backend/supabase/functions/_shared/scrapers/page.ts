@@ -13,12 +13,15 @@ const GLOBALS = ['window', 'document', 'Node', 'HTMLElement', 'ShadowRoot', 'DOM
 const MAX_TAGS = 150_000
 const MAX_ELEMENTS = 60_000
 const MAX_DEPTH = 256
-// innerText reads a node again for every block around it. Real postings use
-// at most 4.5M of this work, the slowest page the tests accept 1.4G (#355).
+// innerText reads a node again for every block around it, so its work is
+// capped per request, a node visit counting as 400 characters. Real postings
+// use at most 4.5M, the slowest page the tests accept 1.4G (#PRNUM).
 const MAX_WORK = 1_600_000_000
 const NODE_WORK = 400
+export interface Meter { work: number }
 
-export function scrapeHtml(parseHTML: ParseHTML, url: string, html: string): JobData {
+export function scrapeHtml(parseHTML: ParseHTML, url: string, html: string, meter: Meter = { work: 0 }): JobData {
+  if (meter.work > MAX_WORK) throw new Error('This page is too large to read.')
   let tags = 0
   for (let i = html.indexOf('<'); i !== -1; i = html.indexOf('<', i + 1)) {
     if (++tags > MAX_TAGS) throw new Error('This page is too large to read.')
@@ -27,7 +30,7 @@ export function scrapeHtml(parseHTML: ParseHTML, url: string, html: string): Job
   dom.window.location = new URL(url)
   // Before attachShadowRoots, which recurses once per nested template (#3)
   checkSize(dom.document)
-  patchLayoutApis(dom)
+  patchLayoutApis(dom, meter)
   attachShadowRoots(dom.document)
 
   const g = globalThis as Record<string, unknown>
@@ -70,8 +73,7 @@ const SKIP = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEMPLATE', 'HEAD', 'TITLE'
 const BLOCK = new Set(['ADDRESS', 'ARTICLE', 'ASIDE', 'BLOCKQUOTE', 'DD', 'DIV', 'DL', 'DT', 'FIELDSET', 'FIGCAPTION',
   'FIGURE', 'FOOTER', 'FORM', 'HEADER', 'HR', 'LI', 'MAIN', 'NAV', 'OL', 'PRE', 'SECTION', 'TABLE', 'TR', 'UL'])
 
-function patchLayoutApis(dom: Dom) {
-  let work = 0
+function patchLayoutApis(dom: Dom, meter: Meter) {
   const kinds = new WeakMap<Dom, string | number>()
   const kindOf = (c: Dom): string | number => {
     if (c.nodeType === 3) return c.textContent.replace(/\s+/g, ' ')
@@ -89,9 +91,10 @@ function patchLayoutApis(dom: Dom) {
         for (const c of node.childNodes) {
           let kind = kinds.get(c)
           if (kind === undefined) kinds.set(c, kind = kindOf(c))
-          work += NODE_WORK
+          if ((meter.work += NODE_WORK + (typeof kind === 'string' ? kind.length : 0)) > MAX_WORK) {
+            throw new Error('This page is too large to read.')
+          }
           if (typeof kind === 'string') {
-            work += kind.length
             out.push(kind)
             continue
           }
@@ -102,7 +105,6 @@ function patchLayoutApis(dom: Dom) {
         }
       }
       walk(this)
-      if (work > MAX_WORK) throw new Error('This page is too large to read.')
       const parts: string[] = []
       let pending = 0
       for (const item of out) {

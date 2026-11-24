@@ -67,8 +67,8 @@ function focusedField(): HTMLElement | null {
   return null
 }
 
-// Never types into whatever box has focus now, and gives focus back to the box
-// the applicant moved on to while waiting (#232).
+// Focus goes back to the box the applicant moved on to while waiting, so their
+// next keys don't land in the answer (#232)
 function typeAnswer(el: HTMLElement, text: string): boolean {
   const before = deepActive()
   el.focus()
@@ -91,6 +91,7 @@ function insert(el: HTMLElement, text: string): boolean {
   }
   if (document.execCommand('insertText', false, text)) return true
   if (plain) {
+    // Through the prototype's setter, so React notices (#232)
     const proto = plain instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype
     Object.getOwnPropertyDescriptor(proto, 'value')?.set?.call(plain, text)
   } else {

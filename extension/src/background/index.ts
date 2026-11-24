@@ -74,6 +74,8 @@ function keepAlive<T>(work: Promise<T>): Promise<T> {
   return work.finally(() => clearInterval(ping))
 }
 
+// The run's status is stored so it survives the popup closing, and a "cancel"
+// there stops watching without stopping the run, which still counts (https://github.com/TheLinc/cover-me/commit/9f4ea308)
 async function setCoverJob(rec: CoverJob): Promise<void> {
   await chrome.storage.local.set({ coverJob: rec })
 }
@@ -148,6 +150,8 @@ async function scrapeTab(tabId: number, { forAnswer = false } = {}): Promise<Job
   const fail = async (error: string, frameId?: number) =>
     new ScrapeError(scrapeFailure(await topFrameUrl(tabId), [...urls.values()], error, frameId === undefined ? undefined : urls.get(frameId)))
 
+  // A frame that can't be injected answers the message below with a connection
+  // error, and the inline scraper takes over (https://github.com/TheLinc/cover-me/commit/50badfd9)
   await chrome.scripting
     .executeScript({ target: { tabId, frameIds }, files: [CONTENT_SCRIPT_FILE] })
     .catch(() => {})
@@ -403,6 +407,7 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
   const id = jobId ?? crypto.randomUUID()
   const startedAt = Date.now()
   await setTailorJob({ id, status: 'loading', job, startedAt })
+  // Which file a result came from isn't resume content for the model to revise (#131)
   const { sourceHash: _h, designFellBack: _f, ...previous } = lastResult ?? {} as TailoredResume
   try {
     const settings = await getSettings()
@@ -453,6 +458,7 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
       const { resume: tailored, savedId } = await tailorViaBackend(job, session.access_token, compact, merged, trim, includeSummary, lastResult && previous, onProgress, localId, design.design)
       const resume = await finishDesign(tailored, design)
       if (note) resume.hasEdits = true
+      // Awaited first: uploadDesignIfPro reads the cached tier (#182)
       const pro = (await tier) === 'hosted_pro'
       if (resume.sourceHash) void uploadDesignIfPro(session)
       await recordTailored(job, resume, localId, {
