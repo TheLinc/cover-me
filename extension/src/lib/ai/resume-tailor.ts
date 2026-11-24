@@ -256,7 +256,7 @@ export function groupedSkillsRule(skills?: string): string {
   const groups = skillGroups(skills)
   if (!groups.length) return ''
   return `
-GROUPED SKILLS — this resume lists its skills in labelled groups: ${groups.map((g) => `"${g.label}"`).join(', ')}. Keep that grouping. Give every skill a "category" copied exactly from one of these labels; an added skill takes the label of the group its evidence comes from. Emit skills most-relevant-first (groups print in the order their first skill appears), and leave out a group with nothing relevant to this job. These limits replace the ~15–18 target and the 18-item cap above: up to 30 skills across at most 6 groups, hard cap 32. Prefer the resume's own wording, and add at most 3 skills worded in the JD's phrasing.
+GROUPED SKILLS — this resume lists its skills in labelled groups: ${groups.map((g) => `"${g.label}"`).join(', ')}. Keep that grouping. Give every skill a "category" copied exactly from one of these labels; an added skill takes the label of the group its evidence comes from. Emit skills most-relevant-first (groups print in the order their first skill appears), and leave out a group with nothing relevant to this job. The ~15–18 target and the 18-item hard cap above count every group together, in at most 6 groups. Prefer the resume's own wording, and add at most 3 skills worded in the JD's phrasing.
 `
 }
 

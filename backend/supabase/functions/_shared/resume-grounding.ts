@@ -330,9 +330,10 @@ export function skillGroups(skills?: string): SkillGroup[] {
 }
 
 // A grouped skills list keeps at most this many skills in this many groups,
-// the model's top-ranked first. The prompt asks for it, but a model that
-// copies the whole master list back (73 skills in 8 groups) is cut here (#190).
-export const MAX_GROUPED_SKILLS = 32
+// the model's top-ranked first. 18, the same as a flat list: resume guides give
+// 8 to 18 and none allows more for groups. The prompt asks for it, but a model
+// that copies the whole master list back (73 skills in 8 groups) is cut here (#190).
+export const MAX_GROUPED_SKILLS = 18
 export const MAX_SKILL_GROUPS = 6
 
 // The kept skills back under the resume's own labels, one line per group, in
