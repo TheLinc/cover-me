@@ -164,6 +164,15 @@ export const GUIDES: Guide[] = [
       "Workday application statuses and what they usually mean. Submitted, on the Active tab: the employer has it, in the first review. In Progress, on the Active tab: still being considered, at review, interview or assessment. Completed, on the Inactive tab: the process ended for you, usually not selected or a canceled job. From UW–Madison HR and Workday's recruiting manual, November 2026.",
   },
   {
+    slug: 'careerflow-review',
+    title: 'Careerflow review: is it legit, and is Premium worth paying for?',
+    description: "Careerflow is a real 2022 company with a resume builder, job tracker and LinkedIn optimizer. What Premium costs, what its free plan leaves out, what users report on Reddit and Trustpilot, and how it compares with Teal.",
+    date: '2026-11-24',
+    image: '/guides/careerflow-review.png',
+    imageAlt:
+      "Careerflow at a glance, checked November 24, 2026. Free: 1 resume, 10 tracked jobs and a LinkedIn score, no AI cover letters. Premium: $23.99 a month or $8.99 a week, and the weekly plan is never refunded. Trustpilot: 3.8 from 20 reviews, 8 of them from its freelance data workers. Run by Careerflow Inc., founded in 2022, Techstars class of 2023.",
+  },
+  {
     slug: 'ats-resume-template',
     title: 'ATS resume template: a free Word file tested in 4 ATSs',
     description: 'A free one-column Word resume template with placeholder text, no sign-up. Read correctly by Lever, Workday, Ashby and SmartRecruiters, tested November 24, 2026.',

@@ -273,7 +273,7 @@ export default function Page() {
               <ComparisonTable name="Jobright" rows={COMPARISON} caption="Jobright details are from its terms, refund policy, signed-in upgrade page, store listings and blog, checked November 21, 2026." />
               <p>
                 The free plan gives 10 generations to start, then 5 a week, and Pro is $15 a month. With{' '}
-                <Link href="/guides/use-your-own-api-key-for-cover-letters">your own OpenAI or Claude API key</Link> it&rsquo;s free and unlimited, and you pay the AI provider for what you use. For a tool that applies for you, see the <Link href="/guides/aiapply-review">AIApply review</Link>. To check a resume against a posting for free, try Cover Me&rsquo;s <Link href="/ats-checker">free ATS resume checker</Link> or see <Link href="/guides/free-jobscan-alternatives">free Jobscan alternatives</Link>.
+                <Link href="/guides/use-your-own-api-key-for-cover-letters">your own OpenAI or Claude API key</Link> it&rsquo;s free and unlimited, and you pay the AI provider for what you use. For a tool that applies for you, see the <Link href="/guides/aiapply-review">AIApply review</Link>. For a resume builder with a job tracker and LinkedIn tools, see the <Link href="/guides/careerflow-review">Careerflow review</Link>. To check a resume against a posting for free, try Cover Me&rsquo;s <Link href="/ats-checker">free ATS resume checker</Link> or see <Link href="/guides/free-jobscan-alternatives">free Jobscan alternatives</Link>.
               </p>
             </>
           ),
