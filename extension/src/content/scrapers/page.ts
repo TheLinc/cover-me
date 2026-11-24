@@ -9,8 +9,8 @@ export type ParseHTML = (html: string) => Dom
 const GLOBALS = ['window', 'document', 'Node', 'HTMLElement', 'ShadowRoot', 'DOMParser'] as const
 
 // Real postings measured at most ~9k "<", ~5k elements, ~7k attributes and
-// depth 42. "<" is counted in the raw HTML, before linkedom allocates anything
-// (#3). linkedom walks attributes along with nodes (#357).
+// depth 42. "<" and attributes are counted in the raw HTML, before linkedom
+// allocates anything (#3, #357).
 const MAX_TAGS = 150_000
 const MAX_ELEMENTS = 60_000
 const MAX_ATTRIBUTES = 60_000
@@ -29,6 +29,7 @@ export function scrapeHtml(parseHTML: ParseHTML, url: string, html: string, mete
   for (let i = html.indexOf('<'); i !== -1; i = html.indexOf('<', i + 1)) {
     if (++tags > MAX_TAGS) throw new Error('This page is too large to read.')
   }
+  if (attributesIn(html) > MAX_ATTRIBUTES) throw new Error('This page is too large to read.')
   const dom = parseHTML(html)
   dom.window.location = new URL(url)
   // Before attachShadowRoots, which recurses once per nested template (#3)
@@ -61,16 +62,38 @@ export function scrapeHtml(parseHTML: ParseHTML, url: string, html: string, mete
 
 function checkSize(doc: Dom) {
   let count = 0
-  let attributes = 0
   const stack: [Dom, number][] = [[doc.documentElement, 1]]
   while (stack.length) {
     const [el, depth] = stack.pop()!
-    attributes += el.attributes.length
-    if (++count > MAX_ELEMENTS || depth > MAX_DEPTH || attributes > MAX_ATTRIBUTES) throw new Error('This page is too large to read.')
+    if (++count > MAX_ELEMENTS || depth > MAX_DEPTH) throw new Error('This page is too large to read.')
     // linkedom keeps a <template>'s markup in its children. Its .content is a
     // deep copy, which nested templates would multiply (#3).
     for (const child of el.children) stack.push([child, depth + 1])
   }
+}
+
+// Quoted values are skipped and anything else after a gap counts, so this is
+// never below linkedom's count, which costs ~1.5 µs per attribute (#357)
+function attributesIn(html: string): number {
+  let n = 0
+  for (let i = html.indexOf('<'); i !== -1; i = html.indexOf('<', i + 1)) {
+    if (!/[a-z]/i.test(html[i + 1] ?? '')) continue
+    let quote = '', gap = false, eq = false
+    for (i++; i < html.length; i++) {
+      const c = html[i]
+      if (quote) {
+        if (c === quote) [quote, gap] = ['', true]
+      } else if (c === '>') break
+      else if (c <= ' ' || c === '/') gap = true
+      else if (c === '=') [eq, gap] = [true, false]
+      else if (eq && (c === '"' || c === "'")) [quote, eq] = [c, false]
+      else {
+        if (gap && !eq) n++
+        gap = eq = false
+      }
+    }
+  }
+  return n
 }
 
 // Snapshots carry open shadow roots (LinkedIn's job pane) as <template

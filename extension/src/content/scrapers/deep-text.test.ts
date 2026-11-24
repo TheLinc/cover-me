@@ -44,13 +44,16 @@ test('the pages of one request share the cap', () => {
   })).toBeLessThan(4000)
 })
 
-const spans = (count: number, attributes: number) => `<b ${Array.from({ length: attributes }, (_, i) => `a${i}`).join(' ')}>a</b>`.repeat(count)
+const spans = (count: number, attributes: number, join = ' ') => `<b ${Array.from({ length: attributes }, (_, i) => `a${i}`).join(join)}>a</b>`.repeat(count)
 
 test.each([
   { case: '4,000 spans with 200 attributes each in 250 nested blocks', inner: spans(4000, 200), depth: 250 },
-  { case: '400 spans with 2,000 attributes each', inner: spans(400, 2000), depth: 1 },
-])('attributes are capped: $case', ({ inner, depth }) => {
-  expect(elapsed(() => expect(() => scrapeHtml(parseHTML, 'https://careers.example.com/jobs/1', nested(depth, inner))).toThrow('too large'))).toBeLessThan(4000)
+  { case: '360 spans with 2,000 attributes each', inner: spans(360, 2000), depth: 1 },
+  { case: '220 spans with 2,000 attributes each, none spaced', inner: spans(220, 2000, '=""'), depth: 1 },
+])('attributes are capped before parsing: $case', ({ inner, depth }) => {
+  const html = nested(depth, inner)
+  expect(html.length).toBeLessThan(4_000_000)
+  expect(elapsed(() => expect(() => scrapeHtml(parseHTML, 'https://careers.example.com/jobs/1', html)).toThrow('too large'))).toBeLessThan(200)
 })
 
 test('reads are charged for the attributes they pass', () => {
