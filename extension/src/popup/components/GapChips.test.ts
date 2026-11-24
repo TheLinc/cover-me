@@ -19,8 +19,7 @@ describe('splitGaps', () => {
   })
 })
 
-// Simulates the popup: chips of the given widths wrap into a row of `width`,
-// with the "+N more" button after the first `limit`. Returns each item's top.
+// The popup's wrapping, with the "+N more" button after the first `limit` chips (#19).
 function layout(widths: number[], limit: number, width = 230, button = 60): number[] {
   const items = limit < widths.length ? [...widths.slice(0, limit), button] : widths
   let x = 0, row = 0
@@ -51,7 +50,7 @@ describe('nextLimit', () => {
     const limit = settle(widths)
     const tops = layout(widths, limit)
     expect(new Set(tops).size).toBe(3)
-    expect(limit).toBe(5) // 2 + 2 + 1 chip, then the button on row 3
+    expect(limit).toBe(5) // 2 + 2 + 1 chip, then the button on row 3 (#19)
   })
 
   it('handles one chip wider than a row', () => {
