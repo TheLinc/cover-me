@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase";
-import { afterOAuth, hashReturn, hashTokens, type LinkTokens, oauthCancelled, oauthErrorDescription, oauthRedirectUrl, safeNext, sessionSwitch } from "@/lib/auth-redirect";
+import { afterOAuth, hashReturn, hashTokens, type LinkTokens, oauthCancelled, oauthErrorDescription, oauthRedirectUrl, safeNext, linkDecision } from "@/lib/auth-redirect";
 import { saveProductUpdates } from "@/lib/email-preferences";
 import { hasSessionCookie } from "@/lib/session-cookie";
 import { PLAN_LIMITS } from "@/lib/limits";
@@ -114,15 +114,14 @@ function AuthForm() {
     const hash = window.location.hash;
     const tokens = hashTokens(hash);
     if (tokens) {
-      Promise.all([supabase.auth.getUser(tokens.access_token), supabase.auth.getUser()]).then(async ([incoming, current]) => {
-        const currentUser = current.data.user ?? (await supabase.auth.getSession()).data.session?.user;
-        if (sessionSwitch(incoming.data.user?.id, currentUser?.id, hasSessionCookie(document.cookie)) === "ask") {
-          setSwitchTo({ tokens, email: incoming.data.user?.email ?? "", current: currentUser?.email ?? "" });
+      linkDecision(supabase.auth, tokens, () => hasSessionCookie(document.cookie)).then((decision) => {
+        if (decision.action === "set") adoptLinkSession(tokens);
+        else if (decision.action === "fail") linkFailed();
+        else {
+          setSwitchTo({ tokens, email: decision.email, current: decision.current });
           setWaiting(null);
-        } else {
-          adoptLinkSession(tokens);
         }
-      }).catch(() => setWaiting(null));
+      });
     }
     if (hash) window.history.replaceState(null, "", window.location.pathname);
 
@@ -183,11 +182,14 @@ function AuthForm() {
     setSwitchTo(null);
     setWaiting("email");
     supabase.auth.setSession(tokens).then(({ error }) => {
-      if (error) {
-        setView("signin");
-        setError("This link couldn't sign you in. It may have expired or already been used. Sign in, or request a new link.");
-      }
-    }).finally(() => setWaiting(null));
+      if (error) linkFailed();
+    }).catch(linkFailed).finally(() => setWaiting(null));
+  }
+
+  function linkFailed() {
+    setWaiting(null);
+    setView("signin");
+    setError("This link couldn't sign you in. It may have expired or already been used. Sign in, or request a new link.");
   }
 
   function switchView(to: View) {
@@ -428,10 +430,10 @@ function AuthForm() {
               </div>
               <div className="flex flex-col gap-2.5">
                 <Button size="lg" className="w-full" onClick={() => adoptLinkSession(switchTo.tokens)}>
-                  {switchTo.email ? `Switch to ${switchTo.email}` : "Use this link"}
+                  {switchTo.email ? "Switch accounts" : "Use this link"}
                 </Button>
                 <Button size="lg" variant="outline" className="w-full" onClick={() => { window.location.replace(next ?? "/dashboard"); }}>
-                  {switchTo.current ? `Stay as ${switchTo.current}` : "Stay signed in"}
+                  Stay signed in
                 </Button>
               </div>
             </>

@@ -26,7 +26,7 @@ export function hashReturn(hash: string): { view: 'confirmed' | 'reset' | null; 
     if (code === 'otp_expired') return { view: null, error: 'That confirmation link has expired. Sign in or sign up again to get a new one.' }
     if (code === 'access_denied') return { view: null, error: 'This link is invalid or has already been used. Sign in or request a new link.' }
     const desc = h.get('error_description')
-    return { view: null, error: desc ? decodeURIComponent(desc.replace(/\+/g, ' ')) : 'Something went wrong. Please try again.' }
+    return { view: null, error: desc || 'Something went wrong. Please try again.' }
   }
   if (!h.get('access_token')) return { view: null, error: '' }
   const type = h.get('type')
@@ -54,4 +54,25 @@ export function hashTokens(hash: string): LinkTokens | null {
 export function sessionSwitch(incomingId: string | undefined, currentId: string | undefined, sessionStored: boolean): 'set' | 'ask' {
   if (currentId) return incomingId === currentId ? 'set' : 'ask'
   return sessionStored ? 'ask' : 'set'
+}
+
+type LinkUser = { id: string; email?: string }
+type LinkAuth = {
+  getUser(jwt?: string): Promise<{ data: { user: LinkUser | null } }>
+  getSession(): Promise<{ data: { session: { user: LinkUser } | null } }>
+}
+
+export type LinkDecision = { action: 'set' } | { action: 'ask'; email: string; current: string } | { action: 'fail' }
+
+// sessionStored runs after the lookups because a failed refresh clears the cookie (#355).
+export async function linkDecision(auth: LinkAuth, tokens: LinkTokens, sessionStored: () => boolean): Promise<LinkDecision> {
+  try {
+    const [incoming, current] = await Promise.all([auth.getUser(tokens.access_token), auth.getUser()])
+    const currentUser = current.data.user ?? (await auth.getSession()).data.session?.user
+    const incomingUser = incoming.data.user
+    if (sessionSwitch(incomingUser?.id, currentUser?.id, sessionStored()) === 'set') return { action: 'set' }
+    return { action: 'ask', email: incomingUser?.email ?? '', current: currentUser?.email ?? '' }
+  } catch {
+    return { action: 'fail' }
+  }
 }
