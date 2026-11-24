@@ -198,7 +198,7 @@ export default function Page() {
               <ComparisonTable name="Teal" rows={COMPARISON} caption="Teal details are from its pricing page, checked November 19, 2026." />
               <p>
                 The free plan gives 10 generations to start, then 5 a week, and Pro is $15 a month or $35 every 3 months. With{' '}
-                <Link href="/guides/use-your-own-api-key-for-cover-letters">your own OpenAI or Claude API key</Link> it&rsquo;s free and unlimited, and you pay the AI provider for what you use. The two work together too: Teal to find and track jobs, Cover Me to tailor each application. For other tools, see the <Link href="/guides/jobscan-review">Jobscan review</Link>, the <Link href="/guides/aiapply-review">AIApply review</Link> and <Link href="/guides/free-jobscan-alternatives">free Jobscan alternatives</Link>.
+                <Link href="/guides/use-your-own-api-key-for-cover-letters">your own OpenAI or Claude API key</Link> it&rsquo;s free and unlimited, and you pay the AI provider for what you use. The two work together too: Teal to find and track jobs, Cover Me to tailor each application. For other tools, see the <Link href="/guides/jobscan-review">Jobscan review</Link>, the <Link href="/guides/aiapply-review">AIApply review</Link> and <Link href="/guides/free-jobscan-alternatives">free Jobscan alternatives</Link>. Weighing Teal against Careerflow? The <Link href="/guides/careerflow-review">Careerflow review</Link> compares the two.
               </p>
             </>
           ),
