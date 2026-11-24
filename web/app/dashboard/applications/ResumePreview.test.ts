@@ -24,7 +24,7 @@ describe('ResumePreview', () => {
 
   it('shows the headline, and a project with its tech and link', () => {
     expect(text(html)).toContain('Backend Engineer')
-    expect(text(html)).toMatch(/tidewatch \| Go, SQLite github\.com\/pat\/tidewatch/)
+    expect(text(html)).toMatch(/tidewatch github\.com\/pat\/tidewatch Go, SQLite/)
   })
 
   it('shows each skills group on its own line with the label in bold', () => {
@@ -34,7 +34,7 @@ describe('ResumePreview', () => {
 
   it("shows a section's entries and its loose lines", () => {
     const t = text(html)
-    expect(t).toMatch(/pg-outbox \| Creator github\.com\/pat\/pg-outbox/)
+    expect(t).toMatch(/pg-outbox github\.com\/pat\/pg-outbox Creator/)
     expect(t).toContain('Outbox library')
     expect(t).toContain('Speaker, GopherCon 2024')
   })

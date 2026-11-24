@@ -72,7 +72,8 @@ function Skills({ skills }: { skills: string }) {
 function Entry({ left, leftSub, right, sub, subRight, bullets }: { left?: string; leftSub?: string; right?: string; sub?: string; subRight?: string; bullets?: string[] }) {
   return (
     <div className="mb-2 last:mb-0">
-      <div className="flex justify-between gap-3"><span className="min-w-0 break-words"><b>{left}</b>{leftSub && <i>{`  |  ${leftSub}`}</i>}</span><span className="shrink-0">{right}</span></div>
+      <div className="flex justify-between gap-3"><b className="min-w-0 break-words">{left}</b><span className="shrink-0">{right}</span></div>
+      {leftSub && <div className="break-words"><i>{leftSub}</i></div>}
       {(sub || subRight) && <div className="flex justify-between gap-3"><i>{sub}</i><span className="shrink-0">{subRight}</span></div>}
       {!!bullets?.length && <Bullets items={bullets} />}
     </div>

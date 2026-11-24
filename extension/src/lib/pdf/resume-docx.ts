@@ -58,25 +58,11 @@ export function buildResumeDocx(resume: TailoredResume): Promise<Blob> {
   }
 
   // "Name | subtitle ⇥ link": a project or an open-source/award entry (#190).
-  // A subtitle too long to share the line goes under it, as in the PDF, so Word
-  // doesn't wrap it mid-list and push the link down a line (#190).
-  // ponytail: a character count, not a measured width; about 115 fit a line.
-  const entryHeader = (name: string, subtitle: string | undefined, right: string | undefined, before: number, keepNext: boolean) => {
-    const own = !!subtitle && `${name}  |  ${subtitle}    ${right ?? ''}`.length > 100
-    return [
-      new Paragraph({
-        tabStops: [{ type: TabStopType.RIGHT, position: CONTENT }],
-        spacing: { line: 13 * PT, lineRule: LineRuleType.AT_LEAST, before },
-        keepNext: keepNext || own,
-        children: [
-          new TextRun({ text: name || '', bold: true, size: 21 }),
-          ...(subtitle && !own ? [new TextRun({ text: `  |  ${subtitle}`, italics: true, size: 21 })] : []),
-          ...(right ? [new TextRun({ children: [new Tab(), right], size: 21 })] : []),
-        ],
-      }),
-      ...(own ? [new Paragraph({ keepNext, spacing: { after: 1 * PT }, children: [new TextRun({ text: subtitle, italics: true })] })] : []),
-    ]
-  }
+  // Name and link or dates, then the subtitle in italics under it, as in the PDF (#190).
+  const entryHeader = (name: string, subtitle: string | undefined, right: string | undefined, before: number, keepNext: boolean) => [
+    twoCol(name, right ?? '', 'bold', { before, keepNext: keepNext || !!subtitle }),
+    ...(subtitle ? [twoCol(subtitle, '', 'italic', { keepNext })] : []),
+  ]
 
   // Each section, in the order the user set (sections.ts) (#118).
   const add: Record<StandardSection, () => void> = {

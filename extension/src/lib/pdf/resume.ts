@@ -144,45 +144,15 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
     y += 13
   }
 
-  // "Name | subtitle": bold then italic on one line, a right-hand note at the
-  // margin. A long name (a publication title) wraps short of the note, and the
-  // italic part moves to its own line when both don't fit. A note wider than
-  // half the line (a long link) goes on its own line under them (#190).
+  // Name and a right-hand note (a link, dates) on one line, then the subtitle (a
+  // project's stack, an award's issuer) in italics under it, like a job's company
+  // line. A note wider than half the line (a long link) goes on its own line (#190).
   function entryHeader(name: string, subtitle: string | undefined, right: string | undefined) {
     doc.setFontSize(ENTRY)
     doc.setFont('times', 'normal')
     const inline = !!right && width(right) <= CW / 2
-    const rightW = inline ? width(right!) + 10 : 0
-    doc.setFont('times', 'bold')
-    const names = wrap(name, CW - rightW)
-    need(14 + 13 * (names.length - 1))
-    if (right && inline) {
-      doc.setFont('times', 'normal')
-      text(right, MR, { align: 'right' })
-      doc.setFont('times', 'bold')
-    }
-    names.forEach((line, i) => {
-      if (i) y += 13
-      text(line, ML)
-    })
-    const nameW = width(names[names.length - 1] ?? '')
-    let wrapped = false
-    if (subtitle) {
-      doc.setFont('times', 'italic')
-      const sub = `  |  ${subtitle}`
-      if (nameW + width(sub) <= CW - (names.length > 1 ? 0 : rightW)) text(sub, ML + nameW)
-      else wrapped = true
-    }
-    y += 13
-    if (wrapped && subtitle) {
-      doc.setFont('times', 'italic')
-      doc.setFontSize(BODY)
-      for (const line of wrap(subtitle, CW)) {
-        text(line, ML)
-        y += LH
-      }
-      y += 1
-    }
+    twoCol(name, inline ? right! : '', 'bold')
+    if (subtitle) twoCol(subtitle, '', 'italic')
     if (right && !inline) {
       doc.setFont('times', 'normal')
       doc.setFontSize(BODY)
