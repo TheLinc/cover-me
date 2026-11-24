@@ -189,7 +189,7 @@ export default function Page() {
               <p>
                 The free plan gives 10 generations to start, then 5 a week, and Pro is $15 a month. With{' '}
                 <Link href="/guides/use-your-own-api-key-for-cover-letters">your own OpenAI or Claude API key</Link> it&rsquo;s free and unlimited, and you pay the AI provider for what you use. Cover Me&rsquo;s score is calculated in code from the posting&rsquo;s must-have and nice-to-have keywords, and the code is public in{' '}
-                <a href="https://github.com/TheLinc/cover-me/blob/master/extension/src/lib/ai/ats-score.ts" {...ext}>ats-score.ts</a>. Looking at other paid tools too? The <Link href="/guides/teal-review">Teal review</Link> and <Link href="/guides/aiapply-review">AIApply review</Link> cover two more.
+                <a href="https://github.com/TheLinc/cover-me/blob/master/extension/src/lib/ai/ats-score.ts" {...ext}>ats-score.ts</a>. Looking at other paid tools too? The <Link href="/guides/teal-review">Teal review</Link>, <Link href="/guides/aiapply-review">AIApply review</Link> and <Link href="/guides/careerflow-review">Careerflow review</Link> cover three more.
               </p>
             </>
           ),
