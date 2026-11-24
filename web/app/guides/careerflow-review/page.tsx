@@ -86,7 +86,7 @@ const VS_TEAL: { feature: string; careerflow: string; teal: string }[] = [
 ]
 
 const COMPARISON: { feature: string; coverMe: string; them: string }[] = [
-  { feature: 'Resume tailoring', coverMe: 'One click on the posting, with an ATS match score and missing keywords shown before you use it', them: 'One tailored resume on the free plan; the one-click optimizer is Premium' },
+  { feature: 'Resume tailoring', coverMe: 'One click on the posting, with an ATS match score and missing keywords shown before you use it', them: 'Careerflow says one tailored resume is free; the one-click optimizer is Premium' },
   { feature: 'Cover letters', coverMe: 'Included on the free plan', them: 'Premium only' },
   { feature: 'Invented skills', coverMe: 'A check removes skills your original resume does not support', them: 'Not described on its pages' },
   { feature: 'Job tracker', coverMe: 'A board of the jobs you make a letter or resume for, tracked by stage', them: 'Kanban tracker for jobs saved from 45+ sites, 10 jobs on the free plan' },
@@ -114,7 +114,7 @@ export default function Page() {
       ]}
       intro={
         <p>
-          I build Cover Me, which also tailors resumes and writes cover letters, so weigh this review with that in mind. Everything here is from Careerflow&rsquo;s pricing page, terms and help center, its Chrome Web Store listing, Trustpilot and Reddit, checked on November 24, 2026. Careerflow publishes its prices, so I didn&rsquo;t need an account to read them. I didn&rsquo;t sign up or pay, so what it&rsquo;s like to use comes from what users report.
+          I build Cover Me, which also tailors resumes and writes cover letters, so weigh this review with that in mind. Everything here is from Careerflow&rsquo;s pricing page, terms and help center, its Chrome Web Store listing, Trustpilot and Reddit, checked on November 24, 2026 unless a date says otherwise. Careerflow publishes its prices, so I didn&rsquo;t need an account to read them. I didn&rsquo;t sign up or pay, so what it&rsquo;s like to use comes from what users report.
         </p>
       }
       sections={[
@@ -176,7 +176,7 @@ export default function Page() {
                 caption="Careerflow's pricing page on the Monthly tab, November 24, 2026."
               />
               <p>
-                Every plan and term shows the same crossed-out $45, from $8.99 a week to $44.99 a month, so it isn&rsquo;t a discount from one regular price. The weekly plan costs $35.96 for four weeks, more than a month at $23.99.
+                Every paid plan and term shows the same crossed-out $45, from $8.99 a week to $44.99 a month, so it isn&rsquo;t a discount from one regular price. The weekly plan costs $35.96 for four weeks, more than a month at $23.99.
               </p>
               <p>
                 Plans renew automatically. Careerflow&rsquo;s <a href={TERMS} {...ext}>terms</a> say you must cancel at least 24 hours before renewal in the Stripe portal on your Account page, and &ldquo;Emailing us is not sufficient grounds for cancellation.&rdquo; Refunds are the exception: &ldquo;All purchases made through the Site are final and non-refundable, except as specified in the terms of a specific service or product offering.&rdquo; Careerflow can grant one at its discretion if you ask within 7 days of the original purchase, the{' '}
@@ -211,7 +211,7 @@ export default function Page() {
                 The <a href={DO_NOT_USE} {...ext}>r/jobhunting post</a> that ranked first on Google for Careerflow reviews in November 2026 is a paid user&rsquo;s complaint: &ldquo;The linkedin optimizer is filled with bugs and isn&rsquo;t actually helpful. The write with AI feature deleted my entire 4 hours of work after clicking add.&rdquo; They found setting up the main resume &ldquo;very tedious and time consuming (20 hours +)&rdquo;. A Careerflow team member answered that it &ldquo;shouldn&rsquo;t take you 20 hours to edit a resume&rdquo; and offered help.
               </p>
               <p>
-                Two other users under the same post disagreed. One wrote in January 2026 that with Careerflow &ldquo;I was able to rapidly tailor resumes for job ad-specific keywords &amp; send out hundreds of resumes&rdquo;, and liked tracking jobs from saved to offer. Another, in February 2026, said they used it &ldquo;to create multiple resume versions and tailor my resume for multiple jobs&rdquo; and called the tracker &ldquo;such a lifesaver.&rdquo;
+                One commenter agreed, calling it &ldquo;a piece of junk&rdquo;. Two others disagreed. One wrote in January 2026 that with Careerflow &ldquo;I was able to rapidly tailor resumes for job ad-specific keywords &amp; send out hundreds of resumes&rdquo;, and liked tracking jobs from saved to offer. Another, in February 2026, said they used it &ldquo;to create multiple resume versions and tailor my resume for multiple jobs&rdquo; and called the tracker &ldquo;such a lifesaver.&rdquo;
               </p>
               <p>
                 A user who{' '}
@@ -236,7 +236,7 @@ export default function Page() {
               <p>
                 Read its Trustpilot page with care. It rates 3.8 from 20 reviews, but Careerflow also runs a{' '}
                 <a href="https://www.careerflow.ai/human-data" {...ext}>Human Data</a> business that hires freelancers to label data for AI labs, and 8 of those 20 reviews are from freelancers about that work. Five praise it. Three say freelancers weren&rsquo;t paid in full, including one titled{' '}
-                <a href="https://www.trustpilot.com/reviews/6a9e7726bbabf6272b95936f" {...ext}>&ldquo;The company refused to pay me for projects&rdquo;</a>; Careerflow replied that it paid for &ldquo;the work that was accepted&rdquo;. None of that is about the job search tools, which leaves about a dozen reviews from job seekers.
+                <a href="https://www.trustpilot.com/reviews/6a9e7726bbabf6272b95936f" {...ext}>&ldquo;The company refused to pay me for projects&rdquo;</a>; Careerflow replied that it paid for &ldquo;the work that was accepted&rdquo;. Apart from one of them also saying there&rsquo;s &ldquo;no way to delete your account&rdquo;, they&rsquo;re not about the job search tools, which leaves about a dozen reviews from job seekers.
               </p>
             </>
           ),
