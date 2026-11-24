@@ -1,7 +1,5 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { BOARDS } from './boards'
-
-vi.mock('next/font/google', () => ({ Source_Serif_4: () => ({ className: '' }) }))
 
 async function renderBoard(slug: string) {
   const { renderToStaticMarkup } = await import('react-dom/server')

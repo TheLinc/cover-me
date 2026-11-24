@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { cn, longDate, storeUrl } from '@/lib/utils'
-import { ext } from '@/components/site/GuideArticle'
 import { OG_IMAGE } from '@/lib/structured-data'
 import { BOARDS, getBoard } from '@/lib/boards'
 import { SiteNav } from '@/components/site/SiteNav'
@@ -107,7 +106,7 @@ export default async function BoardPage({ params }: { params: Promise<{ board: s
               {board.related.lead}{' '}
               <Link
                 href={board.related.href}
-                {...(/^https?:/.test(board.related.href) ? ext : {})}
+                {...(/^https?:/.test(board.related.href) && { target: '_blank', rel: 'noopener noreferrer' })}
                 className="text-brand-strong underline underline-offset-2 hover:text-brand-deep"
               >
                 {board.related.label}
@@ -140,7 +139,7 @@ export default async function BoardPage({ params }: { params: Promise<{ board: s
         <div className="mb-12 h-px bg-line" />
         <section className="mb-16">
           <h2 className="text-[24px] text-foreground mb-6">
-            Common questions about applying on {board.name}
+            Common questions about {board.name} applications
           </h2>
           <div className="divide-y divide-border border-t border-border max-w-[720px]">
             {board.faqs.map(({ q, a }) => (
