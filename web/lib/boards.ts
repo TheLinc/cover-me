@@ -25,12 +25,12 @@ export const BOARDS: Board[] = [
     slug: 'linkedin',
     name: 'LinkedIn',
     kind: 'job board',
-    metaTitle: 'AI Cover Letter and Resume Tailor for LinkedIn',
+    metaTitle: 'LinkedIn Cover Letter: How to Add One, and an AI Writer',
     metaDescription:
-      'Cover Me tailors your resume and writes a cover letter for the LinkedIn job you have open, including in the search results panel. Free Chrome extension.',
-    h1: 'AI cover letters and tailored resumes for LinkedIn jobs',
+      'You can add a cover letter on LinkedIn only when the employer asks for one, as a PDF or Word upload in Easy Apply. Cover Me writes it for that job, free.',
+    h1: 'How to add a cover letter on LinkedIn',
     answer:
-      'To tailor a cover letter and resume to a LinkedIn job, open the posting and click the Cover Me icon. Cover Me (cover-me.dev) is a free Chrome extension that reads the job title, company and description from the page, then writes a cover letter and rewrites your resume for that role, using only what your resume already shows.',
+      'You can add a cover letter on LinkedIn only when the employer asks for one. Those Easy Apply forms show an optional Upload cover letter button on the same page as your resume, for a PDF or Word file. Most forms have no upload, so your resume has to make the case. Cover Me (cover-me.dev) is a free Chrome extension that writes the letter and tailors your resume for the LinkedIn job you have open.',
     intro: [
       "LinkedIn shows jobs two ways: a full job page, and a split view where the posting opens in a panel beside your search results or saved collections. Cover Me reads both, so you don't have to open each job in its own tab first.",
       "It has no LinkedIn integration and never signs in to your account. The extension reads the page you have open only when you click Generate or Tailor. LinkedIn changes its layout often, so Cover Me's scrapers are tested against live LinkedIn postings every week, and once you agree, Cover Me's server also reads the page, which lets most layout changes get fixed without a new extension release.",
@@ -45,14 +45,18 @@ export const BOARDS: Board[] = [
         body: 'Cover Me reads the title, company and full description from that tab. Nothing is posted to LinkedIn and your account is never accessed.',
       },
       {
-        title: 'Add it to Easy Apply',
-        body: 'Edit the letter, then copy it or download a PDF. If the Easy Apply form takes a resume upload, upload the tailored resume as a PDF or Word file.',
+        title: 'Add it to your application',
+        body: "Edit the letter and download it as a PDF. If the Easy Apply form has an Upload cover letter button, upload it there, and upload the tailored resume in the Resume section. If the job says Apply on company website, use both on the employer's own form.",
       },
     ],
     faqs: [
       {
+        q: 'Can you add a cover letter on LinkedIn?',
+        a: "Sometimes. It depends on the employer. When an employer asks for one, the Easy Apply form shows a Cover letter section on the page where you pick your resume, with an Upload cover letter button that takes a PDF or Word file. Of 15 Easy Apply forms we opened in November 2026, 4 had that upload, and it was optional on all 4. The other 11 had nowhere to put a cover letter, so the resume was all the employer would see. Jobs marked Apply on company website send you to the employer's own site, and its form decides.",
+      },
+      {
         q: 'Does Cover Me work with LinkedIn Easy Apply?',
-        a: "Yes. Copy the letter or download it as a PDF, then add it in the Easy Apply form. If the form takes a resume upload, use the tailored resume, as a PDF or Word file. Cover Me never submits the form, so you check everything before it's sent. When the form asks a written question, right-click its box and choose \"Cover Me: write an answer\" to have an answer typed in for you to edit.",
+        a: "Yes. When the form has an Upload cover letter button, download the letter from Cover Me as a PDF and upload it. Upload the tailored resume in the Resume section, as a PDF or Word file. Cover Me never submits the form, so you check everything before it's sent. When the form asks a written question, right-click its box and choose \"Cover Me: write an answer\" to have an answer typed in for you to edit.",
       },
       {
         q: 'Does Cover Me need access to my LinkedIn account?',

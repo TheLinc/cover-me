@@ -11,7 +11,7 @@ const LAST_MODIFIED = {
   about: '2026-11-23',
   legal: '2026-11-11',
   support: '2026-10-29',
-  boards: '2026-10-29',
+  boards: '2026-11-24',
   atsChecker: '2026-11-18',
 } as const
 
