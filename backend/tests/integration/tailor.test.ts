@@ -475,8 +475,6 @@ describe('tailor', () => {
     expect(await mockClaude.requests()).toHaveLength(0)
   })
 
-  // Only a failed call to Anthropic is refunded. Once the model has replied,
-  // the generation stays counted even when its reply can't be used (#0000).
   it('keeps the charge when the streamed reply fails after its text went out', async () => {
     user = await createUser()
     await uploadResume(user)
@@ -493,6 +491,22 @@ describe('tailor', () => {
     const previous = { summary: 'x'.repeat(50_001), experience: [] }
     expect((await callFunction('tailor', { token: user.token, body: { job: JOB, previous } })).status).toBe(400)
     expect((await callFunction('tailor', { token: user.token, body: { job: JOB, supplemental: 'x'.repeat(1_000_001) } })).status).toBe(413)
+    expect(await quotaUsedToday(user.id)).toBe(0)
+  })
+
+  it('refunds a stream that errors before any text', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    const events = [
+      { type: 'message_start', message: { id: 'msg_mock', type: 'message', role: 'assistant', content: [] } },
+      { type: 'error', error: { type: 'overloaded_error', message: 'Overloaded' } },
+    ]
+    await mockClaude.replyNext(events.map((e) => `event: ${e.type}
+data: ${JSON.stringify(e)}
+
+`).join(''))
+    const res = await callFunction('tailor', { token: user.token, body: { job: JOB }, headers: { Accept: 'application/x-ndjson' } })
+    expect((await readNdjson(res)).at(-1)?.type).toBe('error')
     expect(await quotaUsedToday(user.id)).toBe(0)
   })
 

@@ -16,7 +16,7 @@ const MAX_LETTERS = 50
 const MAX_TAILORED = 20
 export const MAX_LETTER_CHARS = 20_000
 export const MAX_RESUME_JSON = 50_000
-export const MAX_JOB_FIELD = 8_192 // the extension trims to this; page URLs can carry long tracking parameters (#24)
+export const MAX_JOB_FIELD = 8_192 // the extension trims history uploads to this; page URLs can carry long tracking parameters (#24)
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export const isUuid = (v: unknown): v is string => typeof v === 'string' && UUID.test(v)

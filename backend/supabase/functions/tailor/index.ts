@@ -512,7 +512,7 @@ Deno.serve(async (req) => {
         } catch {
           continue
         }
-        if (ev.type === 'message_start') replied = true
+        if (ev.type === 'message_stop') replied = true
         if (ev.type === 'error') {
           const e = ev.error as { message?: string } | undefined
           throw new Error(e?.message ?? 'stream error')
@@ -520,6 +520,7 @@ Deno.serve(async (req) => {
         if (ev.type === 'content_block_delta') {
           const delta = ev.delta as { type?: string; text?: string; thinking?: string } | undefined
           if (delta?.type === 'text_delta' && delta.text) {
+            replied = true
             raw += delta.text
             onDelta?.(delta.text)
           } else if (delta?.type === 'thinking_delta' && delta.thinking) {

@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
           createdAt: row.created_at,
         })
       } catch {
-        // Skip letters that fail to decrypt rather than aborting the whole response (https://github.com/TheLinc/cover-me/commit/f188e54).
+        // One unreadable letter doesn't fail the whole list (https://github.com/TheLinc/cover-me/commit/f188e54).
       }
     }
 

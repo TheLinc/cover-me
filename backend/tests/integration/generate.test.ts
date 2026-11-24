@@ -110,7 +110,6 @@ describe('generate', () => {
   }, 20_000)
 
   // Headers have already gone out as 200, so a late failure is an { error } body (#1).
-  // Only a failed call to Anthropic is refunded, not a reply with no letter in it (#0000).
   it('keeps the generation when Claude declines the request', async () => {
     user = await createUser()
     await uploadResume(user)
