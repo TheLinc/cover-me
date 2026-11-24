@@ -131,7 +131,7 @@ select is(
   0, 'deleting the user deletes their remaining documents'
 );
 
--- 033's cleanup, rerun with the old single-column FK back in place.
+-- 033's cleanup, run with the FKs dropped so a crossed link can exist.
 alter table public.cover_letters drop constraint cover_letters_job_application_id_fkey;
 alter table public.tailored_resumes drop constraint tailored_resumes_job_application_id_fkey;
 insert into public.cover_letters (id, user_id, job_application_id, letter_encrypted) values

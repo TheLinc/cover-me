@@ -7,7 +7,7 @@
 --
 -- Covered by supabase/tests/database/document_tables.test.sql.
 
-set lock_timeout = '5s';
+set local lock_timeout = '5s';
 
 revoke all on public.resumes from anon, authenticated;
 revoke all on public.cover_letters from anon, authenticated;
