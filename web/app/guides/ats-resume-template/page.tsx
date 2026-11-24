@@ -9,7 +9,7 @@ const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 const guide = getGuide('ats-resume-template')
 
 export const metadata: Metadata = {
-  title: 'Free ATS Resume Template for Word, Tested in 4 ATSs',
+  title: 'Free ATS Resume Template for Word, 4 ATSs Tested',
   description: guide.description,
   alternates: { canonical: `${BASE}/guides/${guide.slug}` },
   openGraph: {
@@ -70,9 +70,9 @@ const faqJsonLd = {
 const FILL_IN: { title: string; body: string }[] = [
   { title: 'Replace every placeholder', body: 'Type over Your Name, Job Title, Company Name and the dates. The bullets say what to write in each one.' },
   { title: 'Keep your name and contact details as the first lines', body: "Leave them in the page, not in Word's header area. Some simpler systems skip the header." },
-  { title: 'Keep the section headings', body: 'Summary, Experience, Education and Skills are the words an ATS looks for. Rename them only if you must, and keep them plain.' },
+  { title: 'Keep the section headings', body: 'Summary, Experience, Education and Skills are the plain headings the tested file used. If you rename one, keep it plain.' },
   { title: 'Add a job by copying one', body: 'Copy a job title line, its date line and its bullets, and paste them below. That keeps the Word styles the systems read.' },
-  { title: "Don't add tables, text boxes or columns", body: 'They are the layouts that broke a system in the test.' },
+  { title: "Don't add tables, text boxes or columns", body: 'In the test, a table and a two-column design each broke one system.' },
   { title: 'Save as Word or PDF', body: 'Both worked. Then upload it, and check what the form fills in before you submit.' },
 ]
 
@@ -154,7 +154,7 @@ export default function Page() {
                 Tested October 31, 2026, with the one-column Word file filled in for a made-up marketing manager. No layout change fixes the small errors, so check the form before you submit. <Link href="/guides/ats-friendly-resume-format">Read the full test</Link>.
               </p>
               <p>
-                On November 24, 2026, I filled this template in for a made-up operations analyst and uploaded it to Ashby again. The name, email, LinkedIn link and city all came through correctly. The blank template is different: Ashby fills in the email and LinkedIn link but leaves &ldquo;Your Name&rdquo; and &ldquo;City, State&rdquo; empty, because they aren&rsquo;t a real name or place. Replace every placeholder before you apply.
+                On November 24, 2026, I filled this template in for a made-up operations analyst and uploaded it to Ashby again. The name, email, LinkedIn link and city all came through correctly. The blank template is different: Ashby fills in the email and LinkedIn link but leaves &ldquo;Your Name&rdquo; and &ldquo;City, State&rdquo; empty, most likely because they aren&rsquo;t a real name or place. Replace every placeholder before you apply.
               </p>
             </>
           ),

@@ -212,6 +212,11 @@ describe('the ATS resume template guide', () => {
     expect(html).toContain('href="/guides/ats-friendly-resume-format"')
   }, 20_000)
 
+  it('has a full page title under 60 characters', async () => {
+    const { metadata } = (await import(`../app/guides/${slug}/page.tsx`)) as { metadata: Metadata }
+    expect(`${metadata.title} | Cover Me`.length).toBeLessThan(60)
+  }, 20_000)
+
   it('is linked from the ATS format guide', () => {
     expect(readFileSync(join(__dirname, '../app/guides/ats-friendly-resume-format/page.tsx'), 'utf8')).toContain(`href="/guides/${slug}"`)
   })
