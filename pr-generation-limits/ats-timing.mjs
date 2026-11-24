@@ -1,0 +1,8 @@
+const [file, label] = process.argv.slice(2)
+const { scoreFromMatch } = await import(file)
+const posting = 'We are hiring a backend engineer to build services in Go and Python. '.repeat(15).slice(0, 1000) + 'Z'.repeat(19_000)
+const keywords = Array.from({ length: 80 }, (_, i) => `Skill${i}`)
+const t = performance.now()
+scoreFromMatch({ tier1Missing: keywords }, { jobDescription: posting, candidate: 'Resume text' })
+const alt = scoreFromMatch({ tier1Missing: ['Kubernetes', 'Go', 'Cloud Run', 'Deno'] }, { jobDescription: 'Ship on Docker / Kubernetes, in C#/Go, on AWS Lambda or Cloud Run, with Node.js or Deno.', candidate: 'Docker, C#, AWS Lambda, Node.js' })
+console.log(`${label}: 80 missing keywords on a 20,000-char posting with a 19,000-char capitalized run: ${Math.round(performance.now() - t)} ms; either/or gaps on a normal posting: ${JSON.stringify(alt.gaps)}`)

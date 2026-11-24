@@ -1,0 +1,674 @@
+%PDF-1.3
+%ºß¬à
+3 0 obj
+<</Type /Page
+/Parent 1 0 R
+/Resources 2 0 R
+/MediaBox [0 0 612. 792.]
+/Contents 4 0 R
+>>
+endobj
+4 0 obj
+<<
+/Length 5446
+>>
+stream
+0.200025 w
+0 G
+BT
+/F10 26 Tf
+29.8999999999999986 TL
+0 g
+225.789999999999992 740. Td
+(Jordan Rivera) Tj
+ET
+BT
+/F9 10 Tf
+11.5 TL
+0 g
+168.0499999999999829 724. Td
+(\(555\) 014-2290   |   jordan.rivera@example.com   |   jordanrivera.dev) Tj
+ET
+BT
+/F10 11 Tf
+12.6499999999999986 TL
+0 g
+54. 708. Td
+(SUMMARY) Tj
+ET
+0. G
+0.5 w
+54. 705. m
+558. 705. l
+S
+BT
+/F9 10 Tf
+11.5 TL
+0 g
+54. 696. Td
+(Backend engineer with seven years building payment and data platforms in TypeScript and Go. Led the move of a ledger) Tj
+ET
+BT
+/F9 10 Tf
+11.5 TL
+0 g
+54. 684. Td
+(service to event sourcing at 40M transactions a month. Looking for a senior role on a platform team that owns reliability end) Tj
+ET
+BT
+/F9 10 Tf
+11.5 TL
+0 g
+54. 672. Td
+(to end.) Tj
+ET
+BT
+/F10 11 Tf
+12.6499999999999986 TL
+0 g
+54. 650. Td
+(EXPERIENCE) Tj
+ET
+0. G
+0.5 w
+54. 647. m
+558. 647. l
+S
+BT
+/F10 10.5 Tf
+12.0749999999999993 TL
+0 g
+54. 638. Td
+(Senior Software Engineer) Tj
+ET
+BT
+/F9 10.5 Tf
+12.0749999999999993 TL
+0 g
+475.6800000000000068 638. Td
+(Mar 2022 – Present) Tj
+ET
+BT
+/F11 10.5 Tf
+12.0749999999999993 TL
+0 g
+54. 625. Td
+(Northwind Payments) Tj
+ET
+BT
+/F9 10.5 Tf
+12.0749999999999993 TL
+0 g
+503.8199999999999932 625. Td
+(Toronto, ON) Tj
+ET
+BT
+/F9 10 Tf
+11.5 TL
+0 g
+58. 610. Td
+(•) Tj
+ET
+BT
+/F9 10 Tf
+11.5 TL
+0 g
+68. 610. Td
+(Rebuilt the ledger service on event sourcing in TypeScript and Postgres, handling 40M transactions a month with zero) Tj
+ET
+BT
+/F9 10 Tf
+11.5 TL
+0 g
+68. 598. Td
+(reconciliation gaps) Tj
+ET
+BT
+/F9 10 Tf
+11.5 TL
+0 g
+58. 585. Td
+(•) Tj
+ET
+BT
+/F9 10 Tf
+11.5 TL
+0 g
+68. 585. Td
+(Cut p95 checkout latency from 820ms to 310ms by moving fraud scoring to an async Kafka pipeline) Tj
+ET
+BT
+/F9 10 Tf
+11.5 TL
+0 g
+58. 572. Td
+(•) Tj
+ET
+BT
+/F9 10 Tf
+11.5 TL
+0 g
+68. 572. Td
+(Led a team of four through an on-call redesign that reduced pages per week from 23 to 6) Tj
+ET
+BT
+/F9 10 Tf
+11.5 TL
+0 g
+58. 559. Td
+(•) Tj
+ET
+BT
+/F9 10 Tf
+11.5 TL
+0 g
+68. 559. Td
+(Wrote the internal guide to idempotent APIs, now required reading for new backend hires) Tj
+ET
+BT
+/F10 10.5 Tf
+12.0749999999999993 TL
+0 g
+54. 541. Td
+(Software Engineer) Tj
+ET
+BT
+/F9 10.5 Tf
+12.0749999999999993 TL
+0 g
+470.0099999999999909 541. Td
+(Jun 2019 – Feb 2022) Tj
+ET
+BT
+/F11 10.5 Tf
+12.0749999999999993 TL
+0 g
+54. 528. Td
+(Fieldstone Analytics) Tj
+ET
+BT
+/F9 10.5 Tf
+12.0749999999999993 TL
+0 g
+499.8299999999999841 528. Td
+(Montréal, QC) Tj
+ET
+BT
+/F9 10 Tf
+11.5 TL
+0 g
+58. 513. Td
+(•) Tj
+ET
+BT
+/F9 10 Tf
+11.5 TL
+0 g
+68. 513. Td
+(Built a Go ingestion service that loads 2TB of sensor data a day into ClickHouse) Tj
+ET
+BT
+/F9 10 Tf
+11.5 TL
+0 g
+58. 500. Td
+(•) Tj
+ET
+BT
+/F9 10 Tf
+11.5 TL
+0 g
+68. 500. Td
+(Replaced nightly batch exports with change data capture, so dashboards went from 24 hours stale to under a minute) Tj
+ET
+BT
+/F9 10 Tf
+11.5 TL
+0 g
+58. 487. Td
+(•) Tj
+ET
+BT
+/F9 10 Tf
+11.5 TL
+0 g
+68. 487. Td
+(Introduced Terraform for all AWS infrastructure across three environments) Tj
+ET
+BT
+/F10 10.5 Tf
+12.0749999999999993 TL
+0 g
+54. 469. Td
+(Junior Developer) Tj
+ET
+BT
+/F9 10.5 Tf
+12.0749999999999993 TL
+0 g
+462.9750000000000227 469. Td
+(Aug 2017 – May 2019) Tj
+ET
+BT
+/F11 10.5 Tf
+12.0749999999999993 TL
+0 g
+54. 456. Td
+(Brightline Studio) Tj
+ET
+BT
+/F9 10.5 Tf
+12.0749999999999993 TL
+0 g
+507.3899999999999864 456. Td
+(Ottawa, ON) Tj
+ET
+BT
+/F9 10 Tf
+11.5 TL
+0 g
+58. 441. Td
+(•) Tj
+ET
+BT
+/F9 10 Tf
+11.5 TL
+0 g
+68. 441. Td
+(Shipped React and Node features for twelve client projects, from discovery to launch) Tj
+ET
+BT
+/F9 10 Tf
+11.5 TL
+0 g
+58. 428. Td
+(•) Tj
+ET
+BT
+/F9 10 Tf
+11.5 TL
+0 g
+68. 428. Td
+(Added end-to-end tests with Playwright that caught three release-blocking bugs in the first month) Tj
+ET
+BT
+/F10 11 Tf
+12.6499999999999986 TL
+0 g
+54. 400. Td
+(PROJECTS) Tj
+ET
+0. G
+0.5 w
+54. 397. m
+558. 397. l
+S
+BT
+/F10 10.5 Tf
+12.0749999999999993 TL
+0 g
+54. 388. Td
+(pg-outbox \(open source\)) Tj
+ET
+BT
+/F9 10 Tf
+11.5 TL
+0 g
+58. 375. Td
+(•) Tj
+ET
+BT
+/F9 10 Tf
+11.5 TL
+0 g
+68. 375. Td
+(Transactional outbox library for Node and Postgres, 1.2k GitHub stars, used in production by four companies) Tj
+ET
+BT
+/F10 11 Tf
+12.6499999999999986 TL
+0 g
+54. 347. Td
+(EDUCATION) Tj
+ET
+0. G
+0.5 w
+54. 344. m
+558. 344. l
+S
+BT
+/F10 10.5 Tf
+12.0749999999999993 TL
+0 g
+54. 335. Td
+(University of Waterloo) Tj
+ET
+BT
+/F9 10.5 Tf
+12.0749999999999993 TL
+0 g
+505.5 335. Td
+(2013 – 2017) Tj
+ET
+BT
+/F11 10.5 Tf
+12.0749999999999993 TL
+0 g
+54. 322. Td
+(BMath, Computer Science) Tj
+ET
+BT
+/F9 10.5 Tf
+12.0749999999999993 TL
+0 g
+498.6750000000000114 322. Td
+(Waterloo, ON) Tj
+ET
+BT
+/F9 10 Tf
+11.5 TL
+0 g
+58. 307. Td
+(•) Tj
+ET
+BT
+/F9 10 Tf
+11.5 TL
+0 g
+68. 307. Td
+(Dean’s Honours List, four terms) Tj
+ET
+BT
+/F10 11 Tf
+12.6499999999999986 TL
+0 g
+54. 279. Td
+(CERTIFICATIONS) Tj
+ET
+0. G
+0.5 w
+54. 276. m
+558. 276. l
+S
+BT
+/F9 10 Tf
+11.5 TL
+0 g
+58. 267. Td
+(•) Tj
+ET
+BT
+/F9 10 Tf
+11.5 TL
+0 g
+68. 267. Td
+(AWS Certified Solutions Architect – Associate \(2023\)) Tj
+ET
+BT
+/F10 11 Tf
+12.6499999999999986 TL
+0 g
+54. 244. Td
+(SKILLS) Tj
+ET
+0. G
+0.5 w
+54. 241. m
+558. 241. l
+S
+BT
+/F9 10 Tf
+11.5 TL
+0 g
+54. 232. Td
+(TypeScript, Go, Node.js, Postgres, ClickHouse, Kafka, Redis, AWS \(ECS, Lambda, RDS\), Terraform, Docker, Kubernetes,) Tj
+ET
+BT
+/F9 10 Tf
+11.5 TL
+0 g
+54. 220. Td
+(React, Playwright) Tj
+ET
+BT
+/F10 11 Tf
+12.6499999999999986 TL
+0 g
+54. 198. Td
+(TALKS) Tj
+ET
+0. G
+0.5 w
+54. 195. m
+558. 195. l
+S
+BT
+/F9 10 Tf
+11.5 TL
+0 g
+58. 186. Td
+(•) Tj
+ET
+BT
+/F9 10 Tf
+11.5 TL
+0 g
+68. 186. Td
+(“Idempotency keys in practice”, Toronto Node Meetup, 2024) Tj
+ET
+endstream
+endobj
+1 0 obj
+<</Type /Pages
+/Kids [3 0 R ]
+/Count 1
+>>
+endobj
+5 0 obj
+<<
+/Type /Font
+/BaseFont /Helvetica
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+6 0 obj
+<<
+/Type /Font
+/BaseFont /Helvetica-Bold
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+7 0 obj
+<<
+/Type /Font
+/BaseFont /Helvetica-Oblique
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+8 0 obj
+<<
+/Type /Font
+/BaseFont /Helvetica-BoldOblique
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+9 0 obj
+<<
+/Type /Font
+/BaseFont /Courier
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+10 0 obj
+<<
+/Type /Font
+/BaseFont /Courier-Bold
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+11 0 obj
+<<
+/Type /Font
+/BaseFont /Courier-Oblique
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+12 0 obj
+<<
+/Type /Font
+/BaseFont /Courier-BoldOblique
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+13 0 obj
+<<
+/Type /Font
+/BaseFont /Times-Roman
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+14 0 obj
+<<
+/Type /Font
+/BaseFont /Times-Bold
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+15 0 obj
+<<
+/Type /Font
+/BaseFont /Times-Italic
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+16 0 obj
+<<
+/Type /Font
+/BaseFont /Times-BoldItalic
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+17 0 obj
+<<
+/Type /Font
+/BaseFont /ZapfDingbats
+/Subtype /Type1
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+18 0 obj
+<<
+/Type /Font
+/BaseFont /Symbol
+/Subtype /Type1
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+2 0 obj
+<<
+/ProcSet [/PDF /Text /ImageB /ImageC /ImageI]
+/Font <<
+/F1 5 0 R
+/F2 6 0 R
+/F3 7 0 R
+/F4 8 0 R
+/F5 9 0 R
+/F6 10 0 R
+/F7 11 0 R
+/F8 12 0 R
+/F9 13 0 R
+/F10 14 0 R
+/F11 15 0 R
+/F12 16 0 R
+/F13 17 0 R
+/F14 18 0 R
+>>
+/XObject <<
+>>
+>>
+endobj
+19 0 obj
+<<
+/Producer (jsPDF 4.2.1)
+/CreationDate (D:20261105143719-05'00')
+>>
+endobj
+20 0 obj
+<<
+/Type /Catalog
+/Pages 1 0 R
+/OpenAction [3 0 R /FitH null]
+/PageLayout /OneColumn
+>>
+endobj
+xref
+0 21
+0000000000 65535 f 
+0000005618 00000 n 
+0000007435 00000 n 
+0000000015 00000 n 
+0000000120 00000 n 
+0000005675 00000 n 
+0000005800 00000 n 
+0000005930 00000 n 
+0000006063 00000 n 
+0000006200 00000 n 
+0000006323 00000 n 
+0000006452 00000 n 
+0000006584 00000 n 
+0000006720 00000 n 
+0000006848 00000 n 
+0000006975 00000 n 
+0000007104 00000 n 
+0000007237 00000 n 
+0000007339 00000 n 
+0000007683 00000 n 
+0000007769 00000 n 
+trailer
+<<
+/Size 21
+/Root 20 0 R
+/Info 19 0 R
+/ID [ <395CF3354FE5B011E474892F7C690470> <395CF3354FE5B011E474892F7C690470> ]
+>>
+startxref
+7873
+%%EOF
