@@ -494,6 +494,23 @@ describe('tailor', () => {
     expect(await quotaUsedToday(user.id)).toBe(0)
   })
 
+  it('keeps the charge when the stream is declined with no text', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    const events = [
+      { type: 'message_start', message: { id: 'msg_mock', type: 'message', role: 'assistant', content: [] } },
+      { type: 'message_delta', delta: { stop_reason: 'refusal' } },
+      { type: 'message_stop' },
+    ]
+    await mockClaude.replyNext(events.map((e) => `event: ${e.type}
+data: ${JSON.stringify(e)}
+
+`).join(''))
+    const res = await callFunction('tailor', { token: user.token, body: { job: JOB }, headers: { Accept: 'application/x-ndjson' } })
+    expect((await readNdjson(res)).at(-1)?.type).toBe('error')
+    expect(await quotaUsedToday(user.id)).toBe(1)
+  })
+
   it('refunds a stream that errors before any text', async () => {
     user = await createUser()
     await uploadResume(user)

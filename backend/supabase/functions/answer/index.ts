@@ -103,7 +103,6 @@ Deno.serve(async (req) => {
     // A decline (stop_reason "refusal") comes back with no text (#235).
     if (!answer) return { error: FAILED }
     EdgeRuntime.waitUntil(captureUsage(supabase, 'answer_generated', userId, { tier, hasCharLimit: !!maxLength, jobSource, revised: !!revision }))
-    // Missing if the read fails: the answer still goes out (#235).
     const { data: allowance } = await supabase.rpc('answer_allowance', { p_user_id: userId })
     return { answer, allowance: allowance ?? undefined }
   })
