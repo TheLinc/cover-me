@@ -184,3 +184,36 @@ describe('the Workday application status guide', () => {
     ])
   }, 20_000)
 })
+
+describe('the ATS resume template guide', () => {
+  const slug = 'ats-resume-template'
+  const render = async () => {
+    const { renderToStaticMarkup } = await import('react-dom/server')
+    const { default: Page } = await import(`../app/guides/${slug}/page.tsx`)
+    return renderToStaticMarkup(h(Page))
+  }
+
+  it('offers the Word template as a direct download before the first section', async () => {
+    const html = await render()
+    const href = '/guides/ats-resume-template/ats-resume-template.docx'
+    expect(existsSync(join(__dirname, '../public', href))).toBe(true)
+    const link = html.indexOf(`href="${href}"`)
+    expect(link).toBeGreaterThan(-1)
+    expect(html.slice(html.lastIndexOf('<a', link), html.indexOf('>', link))).toContain('download=""')
+    expect(link).toBeLessThan(html.indexOf('<section'))
+  }, 20_000)
+
+  it('names the four systems and both test dates, and links to the test write-up', async () => {
+    const text = (await render()).replace(/<[^>]+>/g, ' ').replace(/&shy;/g, '')
+    for (const ats of ['Lever', 'Workday', 'Ashby', 'SmartRecruiters']) expect(text).toContain(ats)
+    expect(text).toContain('October 31, 2026')
+    expect(text).toContain('November 24, 2026')
+    expect(await render()).toContain('href="/guides/ats-friendly-resume-format"')
+  }, 20_000)
+
+  it('is linked from the ATS format guide', async () => {
+    const { renderToStaticMarkup } = await import('react-dom/server')
+    const { default: Format } = await import('../app/guides/ats-friendly-resume-format/page')
+    expect(renderToStaticMarkup(h(Format))).toContain(`href="/guides/${slug}"`)
+  }, 20_000)
+})

@@ -163,6 +163,15 @@ export const GUIDES: Guide[] = [
     imageAlt:
       "Workday application statuses and what they usually mean. Submitted, on the Active tab: the employer has it, in the first review. In Progress, on the Active tab: still being considered, at review, interview or assessment. Completed, on the Inactive tab: the process ended for you, usually not selected or a canceled job. From UW–Madison HR and Workday's recruiting manual, November 2026.",
   },
+  {
+    slug: 'ats-resume-template',
+    title: 'ATS resume template: a free Word file tested in 4 ATSs',
+    description: 'A free one-column Word resume template with placeholder text, no sign-up. The same layout read correctly in Lever, Workday, Ashby and SmartRecruiters, tested October 31, 2026.',
+    date: '2026-11-24',
+    image: '/guides/ats-resume-template.png',
+    imageAlt:
+      "The top of the free ATS resume template in Word: Your Name, Job Title, a contact line, then Summary and Experience headings with placeholder bullets. Below it, checks for Lever, Workday, Ashby and SmartRecruiters. Free .docx, no sign-up, tested October 31, 2026.",
+  },
 ]
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
