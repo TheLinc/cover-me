@@ -12,7 +12,7 @@ const DO_NOT_USE = 'https://www.reddit.com/r/jobhunting/comments/1ns4dxx/do_not_
 
 export const metadata: Metadata = {
   title: { absolute: 'Careerflow Review (2026): Pricing, Is It Legit, and vs Teal' },
-  description: 'Careerflow Premium is $23.99 a month, and its free plan has no AI cover letters. Who runs Careerflow, its refund terms, what users on Reddit and Trustpilot report, and Careerflow vs Teal.',
+  description: 'Careerflow Premium is $23.99 a month and its free plan has no AI cover letters. Who runs it, refund terms, what users report, and Careerflow vs Teal.',
   alternates: { canonical: `${BASE}/guides/${guide.slug}` },
   openGraph: {
     title: 'Careerflow review: is it legit, and is Premium worth paying for? | Cover Me',
@@ -152,7 +152,7 @@ export default function Page() {
           body: (
             <>
               <p>
-                Careerflow&rsquo;s <a href={PRICING} {...ext}>pricing page</a> lists two paid plans on four billing terms. Premium adds unlimited AI resumes, the ATS optimizer and the AI cover letter writer. Premium Plus adds AI mock interviews, interview analysis and priority support. On November 24, 2026:
+                Careerflow Premium costs $23.99 a month, or $172.99 a year ($14.41 a month), on Careerflow&rsquo;s <a href={PRICING} {...ext}>pricing page</a>. It adds unlimited AI resumes, the ATS optimizer and the AI cover letter writer. Premium Plus, at $44.99 a month, adds AI mock interviews, interview analysis and priority support. Both come on four billing terms. On November 24, 2026:
               </p>
               <GuideFigure caption={<>From Careerflow&rsquo;s <a href={PRICING} {...ext}>pricing page</a>, checked November 24, 2026. Each paid plan also shows a crossed-out $45.</>}>
                 <div className="overflow-x-auto">
