@@ -18,9 +18,10 @@ export function splitGaps(gaps: string[], saved: string[] = []): { requirements:
 }
 
 // Matched keywords aren't stored, so only the gaps show (#19).
-export default function GapChips({ gaps: all, requirements: saved }: { gaps: string[]; requirements?: string[] }) {
+export default function GapChips({ gaps: all, requirements: saved, rows = MAX_ROWS }: { gaps: string[]; requirements?: string[]; rows?: number }) {
   const { requirements, keywords: gaps } = splitGaps(all, saved)
   const listRef = useRef<HTMLUListElement>(null)
+  const growFrom = useRef<number | null>(null)
   const [limit, setLimit] = useState(gaps.length)
   const [expanded, setExpanded] = useState(false)
   const key = gaps.join('\n')
@@ -38,9 +39,22 @@ export default function GapChips({ gaps: all, requirements: saved }: { gaps: str
   useLayoutEffect(() => {
     if (expanded || !listRef.current) return
     const tops = Array.from(listRef.current.children, el => (el as HTMLElement).offsetTop)
-    const next = nextLimit(tops, limit)
+    const next = nextLimit(tops, limit, rows)
     if (next !== limit) setLimit(Math.max(0, next))
   })
+
+  useLayoutEffect(() => {
+    const el = listRef.current
+    const from = growFrom.current
+    growFrom.current = null
+    if (!el || from === null || matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const to = el.offsetHeight
+    if (to === from) return
+    Object.assign(el.style, { height: `${from}px`, overflow: 'clip' })
+    void el.offsetHeight
+    Object.assign(el.style, { transition: 'height 0.2s ease', height: `${to}px` })
+    el.addEventListener('transitionend', () => Object.assign(el.style, { height: '', overflow: '', transition: '' }), { once: true })
+  }, [expanded])
 
   if (gaps.length === 0 && requirements.length === 0) return null
   const hidden = gaps.length - limit
@@ -50,8 +64,8 @@ export default function GapChips({ gaps: all, requirements: saved }: { gaps: str
       {requirements.length > 0 && (
         <div className="gap-requirements">
           <div className="chip-caption mono">Hard requirements</div>
-          <ul className="chips">
-            {requirements.map((r) => <li key={r} className="chip chip-requirement">{r}</li>)}
+          <ul className="requirements">
+            {requirements.map((r) => <li key={r} className="requirement">{r}</li>)}
           </ul>
         </div>
       )}
@@ -68,7 +82,7 @@ export default function GapChips({ gaps: all, requirements: saved }: { gaps: str
               aria-expanded={expanded}
               aria-controls="gap-chips"
               aria-label={expanded ? undefined : `+${hidden} more keywords`}
-              onClick={() => setExpanded(e => !e)}
+              onClick={() => { growFrom.current = listRef.current?.offsetHeight ?? null; setExpanded(e => !e) }}
             >
               {expanded ? 'Show less' : `+${hidden} more`}
             </button>

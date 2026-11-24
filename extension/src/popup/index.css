@@ -38,7 +38,6 @@
   --text-3:      #A6A3C6;
   --tip-bg:      rgba(250, 204, 21, 0.12);
   --tip-fg:      #FDE047;
-  --requirement-bg: rgba(249, 115, 22, 0.16);
   --requirement-fg: #FDBA74;
   --tip-border:  rgba(250, 204, 21, 0.28);
   --error:       #f87171;
@@ -833,7 +832,9 @@ html, body {
 .chips { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { font-size: 11px; padding: 3px 9px; border-radius: 999px; }
 .chip-gap { background: var(--elevated); color: var(--text-2); }
-.chip-requirement { background: var(--requirement-bg); color: var(--requirement-fg); }
+.requirements { list-style: none; display: flex; flex-direction: column; gap: 2px; }
+.requirement { font-size: 12px; line-height: 1.4; color: var(--requirement-fg); padding-left: 12px; position: relative; }
+.requirement::before { content: ""; position: absolute; left: 1px; top: 0.5em; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
 .gap-requirements { margin-bottom: 10px; }
 .chip-more { display: block; line-height: inherit; background: var(--elevated); color: var(--text-2); border: none; font-family: inherit; cursor: pointer; }
 .chip-more:hover { color: var(--text); }
@@ -849,7 +850,8 @@ html, body {
 /* The original resume's score, when tailoring raised it (#228). */
 .ats-gain { font-size: 12px; color: var(--text-2); margin-bottom: 6px; }
 
-.ats-meaning { font-size: 12px; color: var(--text-3); margin-bottom: 6px; }
+.ats-meaning { font-size: 12px; color: var(--text-3); margin-bottom: 4px; }
+.ats-detail > .chip-caption { margin-bottom: 2px; }
 .add-experience { margin-bottom: 4px; }
 .supplemental-input {
   field-sizing: content;

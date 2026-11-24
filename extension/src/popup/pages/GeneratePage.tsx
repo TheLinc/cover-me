@@ -1129,8 +1129,11 @@ export default function GeneratePage({ onNavigate }: Props) {
                             setRingFilledFor(tailoredEntryId)
                             void chrome.storage.local.set({ ringFilledFor: tailoredEntryId })
                           }}
+                          size={72}
+                          label={false}
                         />}
                       <div className="ats-detail">
+                        <div className="chip-caption mono">Job match</div>
                         <p className="ats-meaning">How closely your resume matches this posting's keywords.</p>
                         {tailoredResume.editedAt && <p className="ats-edited">Scored before your edits</p>}
                         <ScoreGain score={tailoredResume.atsScore} before={tailoredResume.atsScoreBefore} />
@@ -1138,7 +1141,7 @@ export default function GeneratePage({ onNavigate }: Props) {
                           <p className="ats-strong">Strong match: no significant gaps.</p>
                         )}
                       </div>
-                      <GapChips gaps={tailoredResume.atsGaps ?? []} requirements={tailoredResume.atsRequirements} />
+                      <GapChips gaps={tailoredResume.atsGaps ?? []} requirements={tailoredResume.atsRequirements} rows={2} />
                     </div>
                   )}
                   {reviewAt === 'resume' && reviewUnderScore && <ReviewAsk onClose={() => setReviewAt(null)} />}
