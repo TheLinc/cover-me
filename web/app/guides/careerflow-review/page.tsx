@@ -7,12 +7,7 @@ const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 const guide = getGuide('careerflow-review')
 
 const PRICING = 'https://www.careerflow.ai/pricing-page'
-const FREE_VS_PREMIUM = 'https://help.careerflow.ai/en/articles/10605570-free-vs-premium-access'
-const CWS = 'https://chromewebstore.google.com/detail/careerflow-ai-job-applica/iadokddofjgcgjpjlfhngclhpmaelnli'
-const TRUSTPILOT = 'https://www.trustpilot.com/review/careerflow.ai'
 const TERMS = 'https://www.careerflow.ai/terms'
-const REFUND_HELP = 'https://help.careerflow.ai/en/articles/10581224-refund-and-cancelation-policy'
-const CANCEL_HELP = 'https://help.careerflow.ai/en/articles/8965369-cancel-or-pause-your-careerflow-premium-subscription'
 const DO_NOT_USE = 'https://www.reddit.com/r/jobhunting/comments/1ns4dxx/do_not_use_careerflow_ai/'
 
 export const metadata: Metadata = {
@@ -129,7 +124,7 @@ export default function Page() {
             <>
               <p>
                 Careerflow.ai is a set of job search tools in one account, run by Careerflow Inc. Its{' '}
-                <a href={CWS} {...ext}>Chrome Web Store listing</a> calls it &ldquo;your AI Copilot for your career&rdquo;. The parts:
+                <a href="https://chromewebstore.google.com/detail/careerflow-ai-job-applica/iadokddofjgcgjpjlfhngclhpmaelnli" {...ext}>Chrome Web Store listing</a> calls it &ldquo;your AI Copilot for your career&rdquo;. The parts:
               </p>
               <ul>
                 <li>A resume builder that imports your resume or LinkedIn profile, scores it, and makes a job-tailored copy for a posting you&rsquo;ve saved.</li>
@@ -185,11 +180,11 @@ export default function Page() {
               </p>
               <p>
                 Plans renew automatically. Careerflow&rsquo;s <a href={TERMS} {...ext}>terms</a> say you must cancel at least 24 hours before renewal in the Stripe portal on your Account page, and &ldquo;Emailing us is not sufficient grounds for cancellation.&rdquo; Refunds are the exception: &ldquo;All purchases made through the Site are final and non-refundable, except as specified in the terms of a specific service or product offering.&rdquo; Careerflow can grant one at its discretion if you ask within 7 days of the original purchase, the{' '}
-                <a href={REFUND_HELP} {...ext}>help center</a> says forgetting to cancel is &ldquo;non-refundable by default&rdquo;, and &ldquo;The Weekly Subscription is strictly non-refundable under all circumstances.&rdquo;
+                <a href="https://help.careerflow.ai/en/articles/10581224-refund-and-cancelation-policy" {...ext}>help center</a> says forgetting to cancel is &ldquo;non-refundable by default&rdquo;, and &ldquo;The Weekly Subscription is strictly non-refundable under all circumstances.&rdquo;
               </p>
               <p>
                 Careerflow&rsquo;s own pages don&rsquo;t agree on the window. Its{' '}
-                <a href={CANCEL_HELP} {...ext}>cancellation article</a> says &ldquo;You can request a refund within 30 days of your purchase&rdquo;, and a line near the end of the terms says &ldquo;We do not provide any refunds for any of our services.&rdquo; Plan on 7 days, and on no refund for the weekly plan.
+                <a href="https://help.careerflow.ai/en/articles/8965369-cancel-or-pause-your-careerflow-premium-subscription" {...ext}>cancellation article</a> says &ldquo;You can request a refund within 30 days of your purchase&rdquo;, and a line near the end of the terms says &ldquo;We do not provide any refunds for any of our services.&rdquo; Plan on 7 days, and on no refund for the weekly plan.
               </p>
             </>
           ),
@@ -199,7 +194,7 @@ export default function Page() {
           body: (
             <>
               <p>
-                Partly. Its <a href={FREE_VS_PREMIUM} {...ext}>help center</a> lists what a free account gets: one resume, a basic resume score and keyword score, a job tracker capped at 10 jobs, and an extension limited to the LinkedIn optimizer, saving jobs and adding contacts. The AI cover letter generator, the One-Click Optimizer and Write with AI are Premium only. The <a href={PRICING} {...ext}>pricing page</a> marks the AI cover letter writer &ldquo;N/A&rdquo; on the free plan, and says the tracker, autofill and document storage are &ldquo;Included (Will be limited soon)&rdquo;.
+                Partly. Its <a href="https://help.careerflow.ai/en/articles/10605570-free-vs-premium-access" {...ext}>help center</a> lists what a free account gets: one resume, a basic resume score and keyword score, a job tracker capped at 10 jobs, and an extension limited to the LinkedIn optimizer, saving jobs and adding contacts. The AI cover letter generator, the One-Click Optimizer and Write with AI are Premium only. The <a href={PRICING} {...ext}>pricing page</a> marks the AI cover letter writer &ldquo;N/A&rdquo; on the free plan, and says the tracker, autofill and document storage are &ldquo;Included (Will be limited soon)&rdquo;.
               </p>
               <p>
                 Tailoring is where people disagree. The author of the{' '}
@@ -223,7 +218,7 @@ export default function Page() {
                 <a href="https://www.reddit.com/r/AIToolTalks/comments/1w4hztf/paid_for_careerflow_for_exactly_2_months/" {...ext}>paid for two months</a> posted on r/AIToolTalks in September 2026 that the LinkedIn optimizer gave &ldquo;specific keyword and headline fixes&rdquo;, but &ldquo;the free tracker caps at ~10 jobs so you get nudged to pay fast, and the AI bullets/cover letters dont quite get my writing style so rewrote them.&rdquo; They cancelled the day they accepted an offer.
               </p>
               <p>
-                On <a href={TRUSTPILOT} {...ext}>Trustpilot</a>, job seekers who left reviews mostly praise the resume tools, the LinkedIn optimizer and support. Two complaints stand out. In March 2026 a user{' '}
+                On <a href="https://www.trustpilot.com/review/careerflow.ai" {...ext}>Trustpilot</a>, job seekers who left reviews mostly praise the resume tools, the LinkedIn optimizer and support. Two complaints stand out. In March 2026 a user{' '}
                 <a href="https://www.trustpilot.com/reviews/69a85164662006451938a6fb" {...ext}>reported an unexpected renewal charge</a>, and wrote that &ldquo;the initial response included a request to leave a review before processing the refund.&rdquo; Careerflow replied that it refunded them and sends renewal reminders seven days before each renewal. In May 2025 another user{' '}
                 <a href="https://www.trustpilot.com/reviews/681403dc681f64bb2497edec" {...ext}>said there was no way to delete an account yourself</a>: &ldquo;they require you to email support and wait until the end of the month to be added to some &lsquo;deletion queue.&rsquo;&rdquo;
               </p>
