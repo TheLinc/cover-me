@@ -126,7 +126,7 @@ export default function Page() {
           title: 'Does Cover Me keep my resume’s design?',
           body: (
             <p>
-              It does if you upload a Word file. Cover Me then rewrites the text inside your own .docx, and the Word download keeps its fonts, spacing and layout. This is in beta, and the popup tells you before you tailor how many bullets it can edit in place. A PDF upload, or a Word file it can&rsquo;t edit in place, gets Cover Me&rsquo;s standard one-column layout, and the PDF download always uses that layout. The{' '}
+              It does if you upload a Word file. Cover Me then rewrites the text inside your own .docx, and the Word download keeps its fonts, spacing and layout. This is in beta, and the popup tells you before you tailor how many bullets it can edit in place. A PDF upload, or a Word file it can&rsquo;t edit in place, gets Cover Me&rsquo;s standard one-column layout, and the PDF download always uses that layout. You can also download that layout as a <Link href="/guides/ats-resume-template">free ATS resume template</Link>. The{' '}
               <Link href="/guides/ats-friendly-resume-format">ATS format guide</Link> shows which Word layouts application systems read cleanly.
             </p>
           ),

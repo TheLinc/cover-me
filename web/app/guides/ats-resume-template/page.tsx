@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { DownloadSimpleIcon } from '@phosphor-icons/react/dist/ssr'
-import { GuideArticle } from '@/components/site/GuideArticle'
+import { GuideArticle, GuideImage } from '@/components/site/GuideArticle'
 import { buttonVariants } from '@/components/ui/button'
 import { getGuide } from '@/lib/guides'
 
@@ -53,7 +53,7 @@ const faqJsonLd = {
       name: 'Should I send the template as a Word file or a PDF?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Either one. In the test, all four systems filled in the same details from the Word file and from a PDF saved from it in Word. Send whichever the job posting asks for. To make a PDF, use File, then Save As, and pick PDF.',
+        text: 'Either one. In the test, all four systems filled in the same details from the Word file and from a PDF saved from it in Word. The one difference: Workday showed the Word file’s bullets as “1.” in the job descriptions, and kept the PDF’s as bullets. Send whichever the job posting asks for. To make a PDF, use File, then Save As, and pick PDF.',
       },
     },
     {
@@ -62,6 +62,14 @@ const faqJsonLd = {
       acceptedAnswer: {
         '@type': 'Answer',
         text: "Heading colors are fine: an earlier test file with Word's blue headings was read just as well. Keep one column, though. In that test, a two-column design made Ashby cut off a LinkedIn link, and a layout built with a table made SmartRecruiters put two skills into the degree.",
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Does the font matter to an ATS?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Not between standard fonts. The systems read the text in the file, not how it looks. A Calibri file in October and this Times New Roman template in November were both read correctly by all four. Pick a font that is easy to read and installed on every computer.',
       },
     },
   ],
@@ -79,11 +87,11 @@ const FILL_IN: { title: string; body: string }[] = [
 const TH = 'text-left px-3 py-3 font-bold text-muted-foreground border-b border-border'
 const TD = 'px-3 py-3 border-b border-border'
 
-const RESULTS: { ats: string; where: string; misread: string }[] = [
-  { ats: 'Lever', where: "Employ's careers page", misread: 'Nothing' },
-  { ats: 'Workday', where: "NVIDIA's careers site", misread: 'Left the latest company blank, put the job title in the address' },
-  { ats: 'Ashby', where: "Ashby's own careers page", misread: 'Nothing' },
-  { ats: 'SmartRecruiters', where: 'A Bosch job posting', misread: 'Shortened the school name, skipped the LinkedIn link' },
+const RESULTS: { ats: string; where: string; filled: string; misread: string }[] = [
+  { ats: 'Lever', where: "Employ's careers page", filled: 'Name, email, phone, city, current company, LinkedIn link', misread: 'Nothing' },
+  { ats: 'Workday', where: "NVIDIA's careers site", filled: 'Name, phone, city, every job title, company, location and start and end month, the school', misread: 'Left the degree empty, showed the Word file’s bullets as “1.” in the job descriptions' },
+  { ats: 'Ashby', where: "Ashby's own careers page", filled: 'Name, email, city, LinkedIn link', misread: 'Nothing' },
+  { ats: 'SmartRecruiters', where: 'A Bosch job posting', filled: 'Name, email, phone, city, every job title, company and bullet, the degree', misread: 'Shortened the school name, dropped the months from the dates, skipped the LinkedIn link' },
 ]
 
 export default function Page() {
@@ -110,14 +118,17 @@ export default function Page() {
       }
       sections={[
         {
-          title: "What's in the template",
+          title: 'What makes this template ATS-friendly',
           body: (
             <>
               <p>
-                One page in Times New Roman, in a single column that reads top to bottom: your name and contact line, then Summary, Experience, Education and Skills. Each job has a line with the job title and dates, a line with the company and location, and bullets in Word&rsquo;s own list style. Every line is a placeholder that says what goes there.
+                An ATS-friendly resume template is one that applicant tracking systems (ATSs), the software employers use to collect applications, can read into their forms without mixing anything up. That means one column, plain headings, contact details in the page and no tables.
               </p>
               <p>
-                It has no tables, text boxes, columns, icons or pictures. Those are what trip up the software that reads resumes, and the template is plain on purpose.
+                This one is a single page in Times New Roman, in one column that reads top to bottom: your name and contact line, then Summary, Experience, Education and Skills. Each job has a line with the job title and dates, a line with the company and location, and bullets in Word&rsquo;s own list style. Every line is a placeholder that says what goes there.
+              </p>
+              <p>
+                It has no tables, text boxes, columns, icons or pictures. In my tests, a table and a two-column design each tripped up one system, so the template is plain on purpose.
               </p>
             </>
           ),
@@ -128,14 +139,15 @@ export default function Page() {
             <>
               <p>
                 On November 24, 2026, I filled this template in for the same made-up marketing manager as in my{' '}
-                <Link href="/guides/ats-friendly-resume-format">test of six resume formats</Link> from October 31, 2026. I uploaded it to the &ldquo;autofill from resume&rdquo; button on live job postings, then a PDF saved from it in Word, and wrote down what each system filled in. All four filled in the form correctly, and the PDF got the same results as the Word file.
+                <Link href="/guides/ats-friendly-resume-format">test of six resume formats</Link> from October 31, 2026. I uploaded it to the &ldquo;autofill from resume&rdquo; button on live job postings, then a PDF saved from it in Word, and wrote down what each system filled in. All four filled in the form correctly. The PDF got the same results as the Word file, except for one Workday detail in the table.
               </p>
               <div className="overflow-x-auto !mt-6">
-                <table className="w-full min-w-[560px] text-[13.5px] border border-border rounded-[8px] overflow-hidden" style={{ borderCollapse: 'collapse' }}>
+                <table className="w-full min-w-[640px] text-[13.5px] border border-border rounded-[8px] overflow-hidden" style={{ borderCollapse: 'collapse' }}>
                   <thead>
                     <tr className="bg-elevated">
                       <th className={TH}>ATS</th>
                       <th className={TH}>Where I tested it</th>
+                      <th className={TH}>What it filled in correctly</th>
                       <th className={TH}>Small details it still got wrong</th>
                     </tr>
                   </thead>
@@ -144,6 +156,7 @@ export default function Page() {
                       <tr key={r.ats} className={i % 2 === 0 ? 'bg-surface' : 'bg-elevated'}>
                         <td className={`${TD} font-medium text-foreground`}>{r.ats}</td>
                         <td className={`${TD} text-muted-foreground`}>{r.where}</td>
+                        <td className={`${TD} text-muted-foreground`}>{r.filled}</td>
                         <td className={`${TD} text-muted-foreground`}>{r.misread}</td>
                       </tr>
                     ))}
@@ -151,8 +164,15 @@ export default function Page() {
                 </table>
               </div>
               <p className="text-[13px]">
-                Tested November 24, 2026. Each system made the same small errors with the plain one-column file in October, so no layout change fixes them. Check the form before you submit. <Link href="/guides/ats-friendly-resume-format">Read the October test</Link>.
+                Tested November 24, 2026. This layout fixed both of Workday&rsquo;s mistakes with the plain file in October: it filled in the latest company and kept the job title out of the address. SmartRecruiters made the same small errors with both files, so no layout fixes those. Check the form before you submit. <Link href="/guides/ats-friendly-resume-format">Read the October test</Link>.
               </p>
+              <GuideImage
+                src="/guides/ats-resume-template/smartrecruiters-filled.png"
+                alt="SmartRecruiters' Easy Apply form after uploading the filled-in template. First name Alex, last name Rivera, email, city Chicago and phone are filled in. Experience lists Marketing Manager, 2022 - Present, Fernwood Labs; Senior Marketing Specialist, 2019 - 2022, Quillmark Software; and Marketing Coordinator, 2017 - 2019, Tidewater Creative, each with its bullets. Education shows University of Illinois, 2013 - 2017, B.A. Communications."
+                width={1110}
+                height={1090}
+                caption="SmartRecruiters after the filled-in template: every job, date and company in the right place."
+              />
               <p>
                 Upload the template blank and it&rsquo;s a different story: Ashby fills in the email and LinkedIn link but leaves &ldquo;Your Name&rdquo; and &ldquo;City, State&rdquo; empty, most likely because they aren&rsquo;t a real name or place. Replace every placeholder before you apply.
               </p>
