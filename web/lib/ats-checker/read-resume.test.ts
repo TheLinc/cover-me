@@ -63,8 +63,8 @@ describe('reading an uploaded resume', () => {
 
 test('the ATS resume template reads as placeholders, with contact details in the body and nothing left of the test resume', async () => {
   const { text } = await readResumeFile(file(join(__dirname, '../../public/guides/ats-resume-template/ats-resume-template.docx')))
-  expect(text).toMatch(/^Your Name\s+Job Title\s/)
-  for (const heading of ['Summary', 'Experience', 'Education', 'Skills']) expect(text).toContain(heading)
+  expect(text).toMatch(/^Your Name\s+City, State/)
+  for (const heading of ['SUMMARY', 'EXPERIENCE', 'EDUCATION', 'SKILLS']) expect(text).toContain(heading)
   expect(text).not.toMatch(/Alex|Rivera|Fernwood|Quillmark|Tidewater|Illinois/)
   expect(checkResumeText(text, '')).toMatchObject({ email: true, phone: true, bullets: { total: 5 } })
 }, 30_000)

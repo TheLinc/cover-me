@@ -1,9 +1,12 @@
-import { existsSync, readdirSync, readFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { createElement as h } from 'react'
 import type { Metadata } from 'next'
 import { describe, expect, it, vi } from 'vitest'
+import JSZip from 'jszip'
+import { ATS_RESUME_TEMPLATE } from './ats-resume-template'
 import { GUIDES, newestFirst, readingMinutes, slugify } from './guides'
+import { buildResumeDocx } from './pdf/resume-docx'
 
 vi.mock('next/font/google', () => ({ Source_Serif_4: () => ({ className: '' }) }))
 
@@ -215,6 +218,18 @@ describe('the ATS resume template guide', () => {
   it('has a full page title under 60 characters', async () => {
     const { metadata } = (await import(`../app/guides/${slug}/page.tsx`)) as { metadata: Metadata }
     expect(`${metadata.title} | Cover Me`.length).toBeLessThan(60)
+  }, 20_000)
+
+  it("is the Cover Me Word layout, so it matches what the tailor downloads (UPDATE_ATS_TEMPLATE=1 rebuilds it)", async () => {
+    const path = join(__dirname, '../public/guides/ats-resume-template/ats-resume-template.docx')
+    const built = Buffer.from(await (await buildResumeDocx(ATS_RESUME_TEMPLATE)).arrayBuffer())
+    if (process.env.UPDATE_ATS_TEMPLATE) writeFileSync(path, built)
+    const parts = async (bytes: Buffer) => {
+      const zip = await JSZip.loadAsync(bytes)
+      const names = Object.keys(zip.files).filter((n) => n !== 'docProps/core.xml').sort()
+      return Object.fromEntries(await Promise.all(names.map(async (n) => [n, await zip.file(n)!.async('string')])))
+    }
+    expect(await parts(readFileSync(path))).toEqual(await parts(built))
   }, 20_000)
 
   it('is linked from the ATS format guide', () => {

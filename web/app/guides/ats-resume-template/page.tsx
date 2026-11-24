@@ -45,7 +45,7 @@ const faqJsonLd = {
       name: 'Which ATSs read this resume template correctly?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Lever, Workday, Ashby and SmartRecruiters all filled in their application forms from the same one-column Word layout on October 31, 2026. On November 24, 2026, a filled-in copy of this template went through Ashby again, and the name, email, LinkedIn link and city all came through correctly.',
+        text: 'Lever, Workday, Ashby and SmartRecruiters all filled in their application forms correctly from a filled-in copy of this template on November 24, 2026. It is the layout Cover Me downloads when it tailors a resume.',
       },
     },
     {
@@ -53,7 +53,7 @@ const faqJsonLd = {
       name: 'Should I send the template as a Word file or a PDF?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Either one. In the test, all four systems filled in the same details from the one-column Word file and the one-column PDF. Send whichever the job posting asks for. To make a PDF, use File, then Save As, and pick PDF.',
+        text: 'Either one. In the test, all four systems filled in the same details from the Word file and from a PDF saved from it in Word. Send whichever the job posting asks for. To make a PDF, use File, then Save As, and pick PDF.',
       },
     },
     {
@@ -61,17 +61,17 @@ const faqJsonLd = {
       name: 'Can I add color or a second column to the template?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: "Heading colors are fine: the tested file used Word's blue heading styles. Keep one column, though. In the same test, a two-column design made Ashby cut off a LinkedIn link, and a layout built with a table made SmartRecruiters put two skills into the degree.",
+        text: "Heading colors are fine: an earlier test file with Word's blue headings was read just as well. Keep one column, though. In that test, a two-column design made Ashby cut off a LinkedIn link, and a layout built with a table made SmartRecruiters put two skills into the degree.",
       },
     },
   ],
 }
 
 const FILL_IN: { title: string; body: string }[] = [
-  { title: 'Replace every placeholder', body: 'Type over Your Name, Job Title, Company Name and the dates. The bullets say what to write in each one.' },
+  { title: 'Replace every placeholder', body: 'Type over Your Name, City, State, Job Title, Company Name and the dates. The bullets say what to write in each one.' },
   { title: 'Keep your name and contact details as the first lines', body: "Leave them in the page, not in Word's header area. Some simpler systems skip the header." },
-  { title: 'Keep the section headings', body: 'Summary, Experience, Education and Skills are the plain headings the tested file used. If you rename one, keep it plain.' },
-  { title: 'Add a job by copying one', body: 'Copy a job title line, its date line and its bullets, and paste them below. That keeps the Word styles the systems read.' },
+  { title: 'Keep the section headings', body: 'Summary, Experience, Education and Skills are the plain headings the tested file used. If you rename one or add one, such as Projects, keep it plain.' },
+  { title: 'Add a job by copying one', body: 'Copy a job title line, the company line under it and its bullets, and paste them below. That keeps the Word styles and the tab before the dates.' },
   { title: "Don't add tables, text boxes or columns", body: 'In the test, a table and a two-column design each broke one system.' },
   { title: 'Save as Word or PDF', body: 'Both worked. Then upload it, and check what the form fills in before you submit.' },
 ]
@@ -92,7 +92,7 @@ export default function Page() {
       guide={guide}
       lede={
         <>
-          A free one-column Word resume template you can download without signing up. It&rsquo;s the same layout that Lever, Workday, Ashby and SmartRecruiters all read correctly when I tested six resume formats, with the made-up person&rsquo;s details swapped for placeholders.
+          A free one-column Word resume template you can download without signing up. It&rsquo;s the layout Cover Me downloads when it tailors a resume, and Lever, Workday, Ashby and SmartRecruiters all read it correctly when I uploaded it to real job postings.
         </>
       }
       tldr={
@@ -103,7 +103,7 @@ export default function Page() {
           </a>
           <ul className="list-disc space-y-2 pl-5 text-[16px] leading-[1.65] text-ink marker:text-brand">
             <li>One column, plain headings, name and contact details in the page.</li>
-            <li>The same layout was read correctly by Lever, Workday, Ashby and SmartRecruiters on October 31, 2026.</li>
+            <li>Read correctly by Lever, Workday, Ashby and SmartRecruiters on November 24, 2026.</li>
             <li>Free, no account, no email. Opens in Word.</li>
           </ul>
         </div>
@@ -114,7 +114,7 @@ export default function Page() {
           body: (
             <>
               <p>
-                One page in Calibri, in a single column that reads top to bottom: your name, job title and contact line, then Summary, Experience, Education and Skills. Each job has a title line, a date line and bullets in Word&rsquo;s own list style. Every line under the headings is a placeholder that says what goes there.
+                One page in Times New Roman, in a single column that reads top to bottom: your name and contact line, then Summary, Experience, Education and Skills. Each job has a line with the job title and dates, a line with the company and location, and bullets in Word&rsquo;s own list style. Every line is a placeholder that says what goes there.
               </p>
               <p>
                 It has no tables, text boxes, columns, icons or pictures. Those are what trip up the software that reads resumes, and the template is plain on purpose.
@@ -127,8 +127,8 @@ export default function Page() {
           body: (
             <>
               <p>
-                In my{' '}
-                <Link href="/guides/ats-friendly-resume-format">test of six resume formats</Link>, I uploaded the one-column Word file to the &ldquo;autofill from resume&rdquo; button on live job postings, and wrote down what each system filled in. All four filled in the form correctly. This template is that file with the details swapped for placeholders: same styles, same headings, same page setup.
+                On November 24, 2026, I filled this template in for the same made-up marketing manager as in my{' '}
+                <Link href="/guides/ats-friendly-resume-format">test of six resume formats</Link> from October 31, 2026. I uploaded it to the &ldquo;autofill from resume&rdquo; button on live job postings, then a PDF saved from it in Word, and wrote down what each system filled in. All four filled in the form correctly, and the PDF got the same results as the Word file.
               </p>
               <div className="overflow-x-auto !mt-6">
                 <table className="w-full min-w-[560px] text-[13.5px] border border-border rounded-[8px] overflow-hidden" style={{ borderCollapse: 'collapse' }}>
@@ -151,10 +151,10 @@ export default function Page() {
                 </table>
               </div>
               <p className="text-[13px]">
-                Tested October 31, 2026, with the one-column Word file filled in for a made-up marketing manager. No layout change fixes the small errors, so check the form before you submit. <Link href="/guides/ats-friendly-resume-format">Read the full test</Link>.
+                Tested November 24, 2026. Each system made the same small errors with the plain one-column file in October, so no layout change fixes them. Check the form before you submit. <Link href="/guides/ats-friendly-resume-format">Read the October test</Link>.
               </p>
               <p>
-                On November 24, 2026, I filled this template in for a made-up operations analyst and uploaded it to Ashby again. The name, email, LinkedIn link and city all came through correctly. The blank template is different: Ashby fills in the email and LinkedIn link but leaves &ldquo;Your Name&rdquo; and &ldquo;City, State&rdquo; empty, most likely because they aren&rsquo;t a real name or place. Replace every placeholder before you apply.
+                Upload the template blank and it&rsquo;s a different story: Ashby fills in the email and LinkedIn link but leaves &ldquo;Your Name&rdquo; and &ldquo;City, State&rdquo; empty, most likely because they aren&rsquo;t a real name or place. Replace every placeholder before you apply.
               </p>
             </>
           ),

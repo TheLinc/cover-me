@@ -166,11 +166,11 @@ export const GUIDES: Guide[] = [
   {
     slug: 'ats-resume-template',
     title: 'ATS resume template: a free Word file tested in 4 ATSs',
-    description: 'A free one-column Word resume template with placeholder text, no sign-up. The same layout read correctly in Lever, Workday, Ashby and SmartRecruiters, tested October 31, 2026.',
+    description: 'A free one-column Word resume template with placeholder text, no sign-up. Read correctly by Lever, Workday, Ashby and SmartRecruiters, tested November 24, 2026.',
     date: '2026-11-24',
     image: '/guides/ats-resume-template.png',
     imageAlt:
-      "The top of the free ATS resume template in Word: Your Name, Job Title, a contact line, then Summary and Experience headings with placeholder bullets. Below it, checks for Lever, Workday, Ashby and SmartRecruiters. Free .docx, no sign-up, tested October 31, 2026.",
+      "The top of the free ATS resume template in Word: Your Name centered over a contact line, then Summary, Experience and Education headings with placeholder text and bullets. Below it, checks for Lever, Workday, Ashby and SmartRecruiters. Free .docx, no sign-up, tested November 24, 2026.",
   },
 ]
 
