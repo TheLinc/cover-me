@@ -172,6 +172,15 @@ export const GUIDES: Guide[] = [
     imageAlt:
       "Careerflow at a glance, checked November 24, 2026. Free: 1 resume, 10 tracked jobs and a LinkedIn score, no AI cover letters. Premium: $23.99 a month or $8.99 a week, and the weekly plan is never refunded. Trustpilot: 3.8 from 20 reviews, 8 of them from its freelance data workers. Run by Careerflow Inc., founded in 2022, Techstars class of 2023.",
   },
+  {
+    slug: 'ats-resume-template',
+    title: 'ATS resume template: a free Word file tested in 4 ATSs',
+    description: 'A free one-column Word resume template with placeholder text, no sign-up. Read correctly by Lever, Workday, Ashby and SmartRecruiters, tested November 24, 2026.',
+    date: '2026-11-24',
+    image: '/guides/ats-resume-template.png',
+    imageAlt:
+      "The top of the free ATS resume template in Word: Your Name centered over a contact line, then Summary, Experience and Education headings with placeholder text and bullets. Below it, checks for Lever, Workday, Ashby and SmartRecruiters. Free .docx, no sign-up, tested November 24, 2026.",
+  },
 ]
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'

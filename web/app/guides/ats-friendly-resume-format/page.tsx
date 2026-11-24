@@ -239,7 +239,8 @@ export default function Page() {
                 </table>
               </div>
               <p className="text-[13px]">
-                A check means the system filled in the form correctly from that file. Tested October 31, 2026. Click a layout to download the test file.
+                A check means the system filled in the form correctly from that file. Tested October 31, 2026. Click a layout to download the test file, or get the one-column Word file with placeholders as a free{' '}
+                <Link href="/guides/ats-resume-template">ATS resume template</Link>.
               </p>
               <p>
                 The plain one-column PDF and Word file worked everywhere. So did putting your name in the Word header, which a lot of advice says to avoid. The other three layouts each broke one system.

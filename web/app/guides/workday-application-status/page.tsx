@@ -280,7 +280,7 @@ export default function Page() {
                 I build <Link href="/">Cover Me</Link>, a Chrome extension that gets the documents for a Workday application ready before you start the form. Open the posting on the employer&rsquo;s myworkdayjobs.com site and click the Cover Me icon. It reads the job and tailors your resume to it, writes a cover letter from your resume, and gives you an ATS score for how well the resume covers the posting&rsquo;s keywords. For a written question in the form, right-click its box and choose &ldquo;Cover Me: write an answer&rdquo;. More on how it works in Workday is on the <Link href="/for/workday">Cover Me for Workday</Link> page.
               </p>
               <p>
-                Upload the resume as a text PDF or a Word file. In my test of <Link href="/guides/ats-friendly-resume-format">six resume formats in four ATSs</Link>, Workday read nothing from an image-only PDF.
+                Upload the resume as a text PDF or a Word file. In my test of <Link href="/guides/ats-friendly-resume-format">six resume formats in four ATSs</Link>, Workday read nothing from an image-only PDF. From our <Link href="/guides/ats-resume-template">free ATS resume template</Link>, a Word file, Workday filled in every job title, company and date.
               </p>
             </>
           ),
