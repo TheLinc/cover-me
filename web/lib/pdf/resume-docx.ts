@@ -58,16 +58,25 @@ export function buildResumeDocx(resume: TailoredResume): Promise<Blob> {
   }
 
   // "Name | subtitle ⇥ link": a project or an open-source/award entry (#190).
-  const entryHeader = (name: string, subtitle: string | undefined, right: string | undefined, before: number, keepNext: boolean) => new Paragraph({
-    tabStops: [{ type: TabStopType.RIGHT, position: CONTENT }],
-    spacing: { line: 13 * PT, lineRule: LineRuleType.AT_LEAST, before },
-    keepNext,
-    children: [
-      new TextRun({ text: name || '', bold: true, size: 21 }),
-      ...(subtitle ? [new TextRun({ text: `  |  ${subtitle}`, italics: true, size: 21 })] : []),
-      ...(right ? [new TextRun({ children: [new Tab(), right], size: 21 })] : []),
-    ],
-  })
+  // A subtitle too long to share the line goes under it, as in the PDF, so Word
+  // doesn't wrap it mid-list and push the link down a line (#190).
+  // ponytail: a character count, not a measured width; about 115 fit a line.
+  const entryHeader = (name: string, subtitle: string | undefined, right: string | undefined, before: number, keepNext: boolean) => {
+    const own = !!subtitle && `${name}  |  ${subtitle}    ${right ?? ''}`.length > 100
+    return [
+      new Paragraph({
+        tabStops: [{ type: TabStopType.RIGHT, position: CONTENT }],
+        spacing: { line: 13 * PT, lineRule: LineRuleType.AT_LEAST, before },
+        keepNext: keepNext || own,
+        children: [
+          new TextRun({ text: name || '', bold: true, size: 21 }),
+          ...(subtitle && !own ? [new TextRun({ text: `  |  ${subtitle}`, italics: true, size: 21 })] : []),
+          ...(right ? [new TextRun({ children: [new Tab(), right], size: 21 })] : []),
+        ],
+      }),
+      ...(own ? [new Paragraph({ keepNext, spacing: { after: 1 * PT }, children: [new TextRun({ text: subtitle, italics: true })] })] : []),
+    ]
+  }
 
   // Each section, in the order the user set (sections.ts) (#118).
   const add: Record<StandardSection, () => void> = {
@@ -90,7 +99,7 @@ export function buildResumeDocx(resume: TailoredResume): Promise<Blob> {
       body.push(heading('PROJECTS'))
       resume.projects.forEach((proj, i) => {
         body.push(
-          entryHeader(proj.name || '', proj.tech, proj.link, i ? 5 * PT : 0, !!proj.bullets?.length),
+          ...entryHeader(proj.name || '', proj.tech, proj.link, i ? 5 * PT : 0, !!proj.bullets?.length),
           ...(proj.bullets ?? []).map(bullet),
         )
       })
@@ -134,7 +143,7 @@ export function buildResumeDocx(resume: TailoredResume): Promise<Blob> {
       if (!entries.length && !lines.length) continue
       body.push(heading(String(section.heading ?? '').toUpperCase()))
       entries.forEach((e, i) => body.push(
-        entryHeader(e.name, e.subtitle, e.dates || e.link, i ? 5 * PT : 0, !!e.bullets?.length || !!(e.dates && e.link)),
+        ...entryHeader(e.name, e.subtitle, e.dates || e.link, i ? 5 * PT : 0, !!e.bullets?.length || !!(e.dates && e.link)),
         ...(e.dates && e.link ? [new Paragraph({ keepNext: !!e.bullets?.length, children: [new TextRun({ text: e.link, italics: true })] })] : []),
         ...(e.bullets ?? []).map(bullet),
       ))
