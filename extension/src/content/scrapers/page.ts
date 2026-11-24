@@ -13,12 +13,13 @@ const GLOBALS = ['window', 'document', 'Node', 'HTMLElement', 'ShadowRoot', 'DOM
 const MAX_TAGS = 150_000
 const MAX_ELEMENTS = 60_000
 const MAX_DEPTH = 256
-// innerText reads a node again for every block around it, so its work is
-// capped per request, a node visit counting as 400 characters. Real postings
-// use at most 4.5M, the slowest page the tests accept 1.4G (#357).
-const MAX_WORK = 1_600_000_000
+// The scrapers read a block's whole subtree for every block around it, so a
+// request's reads are capped by the nodes and characters they cover, a node
+// counting as 400 characters. Real postings use at most 4.5M (#357).
+const MAX_WORK = 2_000_000_000
 const NODE_WORK = 400
 export interface Meter { work: number }
+let charge: ((node: Dom) => void) | undefined
 
 export function scrapeHtml(parseHTML: ParseHTML, url: string, html: string, meter: Meter = { work: 0 }): JobData {
   if (meter.work > MAX_WORK) throw new Error('This page is too large to read.')
@@ -30,15 +31,28 @@ export function scrapeHtml(parseHTML: ParseHTML, url: string, html: string, mete
   dom.window.location = new URL(url)
   // Before attachShadowRoots, which recurses once per nested template (#3)
   checkSize(dom.document)
-  patchLayoutApis(dom, meter)
+  patchLayoutApis(dom)
   attachShadowRoots(dom.document)
 
+  const weights = new WeakMap<Dom, number>()
+  const weigh = (node: Dom): number => {
+    const cached = weights.get(node)
+    if (cached !== undefined) return cached
+    let sum = NODE_WORK + (node.nodeType === 3 ? node.textContent.length : 0)
+    for (const c of node.childNodes ?? []) sum += weigh(c)
+    weights.set(node, sum)
+    return sum
+  }
   const g = globalThis as Record<string, unknown>
   const saved = GLOBALS.map((k) => g[k])
   GLOBALS.forEach((k) => (g[k] = k === 'window' ? dom.window : dom[k]))
+  charge = (node) => {
+    if ((meter.work += weigh(node)) > MAX_WORK) throw new Error('This page is too large to read.')
+  }
   try {
     return scrapeJobPage()
   } finally {
+    charge = undefined
     GLOBALS.forEach((k, i) => (g[k] = saved[i]))
   }
 }
@@ -73,7 +87,30 @@ const SKIP = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEMPLATE', 'HEAD', 'TITLE'
 const BLOCK = new Set(['ADDRESS', 'ARTICLE', 'ASIDE', 'BLOCKQUOTE', 'DD', 'DIV', 'DL', 'DT', 'FIELDSET', 'FIGCAPTION',
   'FIGURE', 'FOOTER', 'FORM', 'HEADER', 'HR', 'LI', 'MAIN', 'NAV', 'OL', 'PRE', 'SECTION', 'TABLE', 'TR', 'UL'])
 
-function patchLayoutApis(dom: Dom, meter: Meter) {
+const METERED = Symbol('metered')
+
+// linkedom's classes are shared by every parse, so each is wrapped once (#357)
+function meterSubtreeReads(dom: Dom) {
+  const wrap = (from: Dom, name: string) => {
+    let proto = from
+    while (!Object.getOwnPropertyDescriptor(proto, name)) proto = Object.getPrototypeOf(proto)
+    const d = Object.getOwnPropertyDescriptor(proto, name)!
+    const fn = d.get ?? d.value
+    if (fn[METERED]) return
+    const metered = Object.assign(function (this: Dom, ...args: unknown[]) {
+      charge?.(this)
+      return fn.apply(this, args)
+    }, { [METERED]: true })
+    Object.defineProperty(proto, name, d.get ? { ...d, get: metered } : { ...d, value: metered })
+  }
+  wrap(dom.Element.prototype, 'querySelectorAll')
+  wrap(dom.Document.prototype, 'querySelectorAll')
+  wrap(dom.DocumentFragment.prototype, 'querySelectorAll')
+  wrap(dom.Element.prototype, 'textContent')
+}
+
+function patchLayoutApis(dom: Dom) {
+  meterSubtreeReads(dom)
   const kinds = new WeakMap<Dom, string | number>()
   const kindOf = (c: Dom): string | number => {
     if (c.nodeType === 3) return c.textContent.replace(/\s+/g, ' ')
@@ -86,14 +123,12 @@ function patchLayoutApis(dom: Dom, meter: Meter) {
   Object.defineProperty(dom.HTMLElement.prototype, 'innerText', {
     configurable: true,
     get(this: Dom) {
+      charge?.(this)
       const out: (string | number)[] = []
       const walk = (node: Dom) => {
         for (const c of node.childNodes) {
           let kind = kinds.get(c)
           if (kind === undefined) kinds.set(c, kind = kindOf(c))
-          if ((meter.work += NODE_WORK + (typeof kind === 'string' ? kind.length : 0)) > MAX_WORK) {
-            throw new Error('This page is too large to read.')
-          }
           if (typeof kind === 'string') {
             out.push(kind)
             continue

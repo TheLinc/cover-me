@@ -103,6 +103,7 @@ function insert(el: HTMLElement, text: string): boolean {
 
 const STYLE = `
 :host { all: initial !important; }
+:host::before, :host::after { content: none !important; }
 .box { position: fixed; z-index: 2147483647; box-sizing: border-box; width: min(340px, calc(100vw - 16px));
   padding: 12px 12px 14px 14px; border-radius: 12px; overflow: hidden;
   background: #15132B; color: #EEEDF8; border: 1px solid #35315E;
