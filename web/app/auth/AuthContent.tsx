@@ -118,14 +118,13 @@ function AuthForm() {
       // cookies. Without setSession the user lands on "confirmed" signed out,
       // and a password reset has no session. https://github.com/TheLinc/cover-me/commit/3af70b9
       Promise.all([supabase.auth.getUser(tokens.access_token), supabase.auth.getUser()]).then(([incoming, current]) => {
-        const currentUser = current.data.user;
-        if (currentUser && sessionSwitch(incoming.data.user?.id, currentUser.id) === "ask") {
-          setSwitchTo({ tokens, email: incoming.data.user?.email ?? "", current: currentUser.email ?? "" });
+        if (sessionSwitch(incoming.data.user?.id, current.data.user?.id) === "ask") {
+          setSwitchTo({ tokens, email: incoming.data.user?.email ?? "", current: current.data.user?.email ?? "" });
           setWaiting(null);
         } else {
           adoptLinkSession(tokens);
         }
-      });
+      }).catch(() => setWaiting(null));
     }
     if (hash) window.history.replaceState(null, "", window.location.pathname);
 
@@ -397,7 +396,7 @@ function AuthForm() {
           style={{ animation: "fadeUp 0.5s ease 0.15s both" }}
         >
           <p role="status" className="sr-only">
-            {announce && (waiting === "email" ? "Checking your link" : waiting === "opening" || waiting === "session" ? "Opening your dashboard" : waiting ? "Signing you in" : "")}
+            {announce && (switchTo ? "Switch accounts?" : waiting === "email" ? "Checking your link" : waiting === "opening" || waiting === "session" ? "Opening your dashboard" : waiting ? "Signing you in" : "")}
           </p>
 
           <a

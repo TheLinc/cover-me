@@ -77,9 +77,16 @@ describe('hashTokens', () => {
   it('reads the token pair from an email link fragment', () => {
     expect(hashTokens('#access_token=a&refresh_token=r&type=signup')).toEqual({ access_token: 'a', refresh_token: 'r' })
   })
+  it('reads a recovery link', () => {
+    expect(hashTokens('#access_token=a&refresh_token=r&type=recovery')).toEqual({ access_token: 'a', refresh_token: 'r' })
+  })
+  it('is null for a link type /auth has no view for', () => {
+    expect(hashTokens('#access_token=a&refresh_token=r')).toBeNull()
+    expect(hashTokens('#access_token=a&refresh_token=r&type=magiclink')).toBeNull()
+  })
   it('is null without both tokens or with an error', () => {
     expect(hashTokens('#access_token=a&type=signup')).toBeNull()
-    expect(hashTokens('#error=access_denied&access_token=a&refresh_token=r')).toBeNull()
+    expect(hashTokens('#error=access_denied&access_token=a&refresh_token=r&type=signup')).toBeNull()
     expect(hashTokens('')).toBeNull()
   })
 })

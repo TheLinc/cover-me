@@ -45,7 +45,8 @@ export function hashTokens(hash: string): { access_token: string; refresh_token:
   const h = new URLSearchParams(hash.replace(/^#/, ''))
   const access_token = h.get('access_token')
   const refresh_token = h.get('refresh_token')
-  return !h.get('error') && access_token && refresh_token ? { access_token, refresh_token } : null
+  const type = h.get('type')
+  return !h.get('error') && access_token && refresh_token && (type === 'signup' || type === 'recovery') ? { access_token, refresh_token } : null
 }
 
 export function sessionSwitch(incomingId: string | undefined, currentId: string | undefined): 'set' | 'ask' {
