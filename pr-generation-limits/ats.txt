@@ -1,2 +1,0 @@
-before: 80 missing keywords on a 20,000-char posting with a 19,000-char capitalized run: 21734 ms; either/or gaps on a normal posting: []
-after: 80 missing keywords on a 20,000-char posting with a 19,000-char capitalized run: 11 ms; either/or gaps on a normal posting: []

@@ -1,3 +1,0 @@
-/guides/ats-resume-template: HTTP 404
-sitemap.xml has /guides/ats-resume-template: false
-llms.txt has /guides/ats-resume-template: false

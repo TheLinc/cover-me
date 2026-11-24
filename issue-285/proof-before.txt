@@ -1,9 +1,0 @@
-
-[before] stub model that rejects every claim
-{"skills":"Product marketing, Paid search","dropped":["Webinars (no resume evidence)"]}  model calls: 0
-PASS  bug reproduces: "Product marketing" kept with no model check
-
-[before] real Sonnet 5.5 claim check
-(no model call)
-{"skills":"Product marketing, Analytics (Google), Campaign strategy","dropped":[]}
-PASS  bug reproduces: "Product marketing" kept

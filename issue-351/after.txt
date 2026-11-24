@@ -1,6 +1,0 @@
-/guides/ats-resume-template: HTTP 200
-title: Free ATS Resume Template for Word, 4 ATSs Tested | Cover Me (59 chars)
-download: ats-resume-template.docx, 37225 bytes, starts with PK
-sitemap.xml has /guides/ats-resume-template: true
-llms.txt has /guides/ats-resume-template: true
-sitemap line: <loc>http://localhost:3100/guides/ats-resume-template</loc> <lastmod>2026-11-24</lastmod> <changefreq>monthly</changefreq> <priority>0.7</priority> </url>

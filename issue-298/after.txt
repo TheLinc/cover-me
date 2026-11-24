@@ -1,3 +1,0 @@
-after BYOK extension: {"model":"claude-haiku-5-5","output_config":{"effort":"low"},"max_tokens":16000,"stream":true}
-after hosted backend: {"model":"claude-haiku-5-5","output_config":{"effort":"low"},"max_tokens":16000}
-after: both paths parsed a reply that starts with a thinking block -> name "Dana Example", education "Example College"
