@@ -8,18 +8,20 @@ export type ParseHTML = (html: string) => Dom
 // requests in one isolate never see each other's page (#3)
 const GLOBALS = ['window', 'document', 'Node', 'HTMLElement', 'ShadowRoot', 'DOMParser'] as const
 
-// Real postings measured at most ~9k "<", ~5k elements, ~7k attributes and
-// depth 42. "<" and attributes are counted in the raw HTML, before linkedom
-// allocates anything (#3, #357).
+// Real postings measured at most ~9k "<", ~5k elements and depth 42. "<" is
+// counted in the raw HTML, before linkedom allocates anything (#3).
 const MAX_TAGS = 150_000
 const MAX_ELEMENTS = 60_000
-const MAX_ATTRIBUTES = 60_000
 const MAX_DEPTH = 256
 // The scrapers read a block's whole subtree for every block around it, so a
 // request's reads are capped by the nodes, attributes and characters they
-// cover. The saved postings use at most 30M (#357).
+// cover. linkedom takes ~2 µs to build each attribute, so the parse is charged
+// first: every attribute name follows whitespace, "/" or a quote, and counting
+// each start of a word or name after one is never below the parser's count.
+// The saved postings use at most 300M (#357).
 const MAX_WORK = 2_000_000_000
 const NODE_WORK = 400
+const NAME_WORK = 8000
 export interface Meter { work: number }
 let charge: ((node: Dom) => void) | undefined
 
@@ -29,7 +31,7 @@ export function scrapeHtml(parseHTML: ParseHTML, url: string, html: string, mete
   for (let i = html.indexOf('<'); i !== -1; i = html.indexOf('<', i + 1)) {
     if (++tags > MAX_TAGS) throw new Error('This page is too large to read.')
   }
-  if (attributesIn(html) > MAX_ATTRIBUTES) throw new Error('This page is too large to read.')
+  if ((meter.work += nameStarts(html) * NAME_WORK) > MAX_WORK) throw new Error('This page is too large to read.')
   const dom = parseHTML(html)
   dom.window.location = new URL(url)
   // Before attachShadowRoots, which recurses once per nested template (#3)
@@ -72,26 +74,11 @@ function checkSize(doc: Dom) {
   }
 }
 
-// Quoted values are skipped and anything else after a gap counts, so this is
-// never below linkedom's count, which costs ~1.5 µs per attribute (#357)
-function attributesIn(html: string): number {
+function nameStarts(html: string): number {
   let n = 0
-  for (let i = html.indexOf('<'); i !== -1; i = html.indexOf('<', i + 1)) {
-    if (!/[a-z]/i.test(html[i + 1] ?? '')) continue
-    let quote = '', gap = false, eq = false
-    for (i++; i < html.length; i++) {
-      const c = html[i]
-      if (quote) {
-        if (c === quote) [quote, gap] = ['', true]
-      } else if (c === '>') break
-      else if (c <= ' ' || c === '/') gap = true
-      else if (c === '=') [eq, gap] = [true, false]
-      else if (eq && (c === '"' || c === "'")) [quote, eq] = [c, false]
-      else {
-        if (gap && !eq) n++
-        gap = eq = false
-      }
-    }
+  for (let i = 1; i < html.length; i++) {
+    const p = html.charCodeAt(i - 1), c = html.charCodeAt(i)
+    if ((p <= 32 || p === 47 || p === 34 || p === 39) && c > 32 && c !== 47 && c !== 62) n++
   }
   return n
 }

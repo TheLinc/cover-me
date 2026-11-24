@@ -3,6 +3,7 @@ import { jobFromJsonLd, jobFromMicrodata } from './jsonld.ts'
 import { fromTabTitle } from './tabtitle.ts'
 
 export function scrapeGeneric(): JobData {
+  renderedCache = new WeakMap()
   return jobFromJsonLd() ?? jobFromMicrodata() ?? tryPythonJobBoard() ?? tryAtsSelectors() ?? tryHeuristic()
 }
 
@@ -63,13 +64,12 @@ function tryHeuristic(): JobData {
   // page holds a posting and the user can fix the title. Not a later <h1>: it
   // can be a hidden dialog's (Shopify's "Do Not Sell/Share My Personal
   // Information"). A page whose URL names an embedded posting (Greenhouse's
-  // gh_jid, Ashby's ashby_jid) fails instead, so the posting's frame wins.
-  // Pages with no such <h1> (none, a logo, a long hero line) fail (#208).
+  // gh_jid, Ashby's ashby_jid) fails instead, so the posting's frame wins (#208).
   const tab = fromTabTitle()
   const company = tab.company.toLowerCase()
   const notTitle = (t: string) => isNavHeading(t) || isSectionHeading(t) || isSiteHeading(t) || t.toLowerCase() === company
-  // Only headings of title length are kept: every <h1>'s text would cost
-  // elements x depth of memory on nested ones (#208).
+  // Keeping every <h1>'s text would cost elements x depth of memory on nested
+  // ones (#208).
   const h1s = Array.from(document.querySelectorAll<HTMLElement>('h1')).flatMap((el) => {
     const text = el.innerText?.trim() ?? ''
     return text.length > 2 && text.length < 120 ? [{ el, text }] : []
@@ -137,8 +137,8 @@ function largestBlock(doubtful: boolean, heading?: Element): string | undefined 
   // it's measured with its whitespace collapsed (a hidden mobile menu would
   // outweigh the page's text); linkedom's innerText has none to collapse.
   // Under a job's title, with nothing else left, the largest hidden block is
-  // read: a posting under "Read more" whose sections each end
-  // in a "Learn more" link looks like hidden cards (#215).
+  // read: a posting under "Read more" whose sections each end in a "Learn
+  // more" link looks like hidden cards (#215).
   const measure = (el: HTMLElement) => {
     const text = el.innerText?.trim() ?? ''
     const chromeHidden = text.length > 500 && typeof el.checkVisibility === 'function' && !rendered(el)
@@ -260,9 +260,9 @@ const CARD_TAGS = new Set(['LI', 'DIV', 'ARTICLE', 'SECTION', 'TR'])
 // Chrome knows from layout, though it counts a display: contents wrapper
 // (SvelteKit's app root) as not rendered: its parent answers instead. linkedom
 // has none, so its innerText's markup rules (hidden, inline display:none) are
-// checked up the tree. The answers are kept, since the scrapers never change
-// the page (#357).
-const renderedCache = new WeakMap<Element, boolean>()
+// checked up the tree. The answers are kept for one scrape, which never
+// changes the page (#357).
+let renderedCache = new WeakMap<Element, boolean>()
 function rendered(el: HTMLElement): boolean {
   if (typeof el.checkVisibility === 'function') {
     if (el.checkVisibility()) return true
@@ -285,8 +285,7 @@ function hasAncestorIn(el: Element, set: { has(el: Element): boolean }): boolean
 // Google's careers page puts the posting in a pane marked with the job's ID
 // from the URL (data-id), beside a list of other jobs that's larger than it.
 // The ID's entry in that list is the shorter of the two. The URL and page are
-// the caller's to choose, so the cost is capped: three distinct numbers from
-// the path, the first three blocks marked with each (#208).
+// the caller's to choose, so the cost is capped (#208).
 function postingById(): string | undefined {
   for (const id of [...new Set(window.location.pathname.match(/\d{6,}/g))].slice(0, 3)) {
     let best: HTMLElement | undefined
