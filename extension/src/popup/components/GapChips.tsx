@@ -65,8 +65,8 @@ export default function GapChips({ gaps: all, requirements: saved, rows = MAX_RO
       {requirements.length > 0 && (
         <div className="gap-requirements">
           <div className="chip-caption mono">Hard requirements</div>
-          <ul className="requirements">
-            {requirements.map((r) => <li key={r} className="requirement">{r}</li>)}
+          <ul className="chips">
+            {requirements.map((r) => <li key={r} className="chip chip-requirement">{r}</li>)}
           </ul>
         </div>
       )}

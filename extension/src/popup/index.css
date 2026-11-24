@@ -38,6 +38,7 @@
   --text-3:      #A6A3C6;
   --tip-bg:      rgba(250, 204, 21, 0.12);
   --tip-fg:      #FDE047;
+  --requirement-bg: rgba(249, 115, 22, 0.16);
   --requirement-fg: #FDBA74;
   --tip-border:  rgba(250, 204, 21, 0.28);
   --error:       #f87171;
@@ -832,9 +833,7 @@ html, body {
 .chips { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { font-size: 11px; padding: 3px 9px; border-radius: 999px; }
 .chip-gap { background: var(--elevated); color: var(--text-2); }
-.requirements { list-style: none; display: flex; flex-direction: column; gap: 2px; }
-.requirement { font-size: 12px; line-height: 1.4; color: var(--requirement-fg); padding-left: 12px; position: relative; }
-.requirement::before { content: ""; position: absolute; left: 1px; top: 0.5em; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.chip-requirement { background: var(--requirement-bg); color: var(--requirement-fg); }
 .gap-requirements { margin-bottom: 10px; }
 .chip-more { display: inline-flex; align-items: center; gap: 3px; line-height: inherit; background: var(--accent-dim); color: var(--accent-h); border: none; font-family: inherit; font-weight: 500; cursor: pointer; }
 .chip-more:hover { background: rgba(99, 102, 241, 0.28); }

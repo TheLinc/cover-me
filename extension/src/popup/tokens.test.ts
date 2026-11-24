@@ -36,8 +36,8 @@ describe('popup tokens (Night)', () => {
     expect(ratio(token('accent-h')!, overCard('accent-dim'))).toBeGreaterThanOrEqual(4.5)
   })
 
-  test('hard requirements: --requirement-fg on a card is at least 4.5:1', () => {
-    expect(ratio(token('requirement-fg')!, token('surface')!)).toBeGreaterThanOrEqual(4.5)
+  test('hard requirement chips: --requirement-fg on its fill over a card is at least 4.5:1', () => {
+    expect(ratio(token('requirement-fg')!, overCard('requirement-bg'))).toBeGreaterThanOrEqual(4.5)
   })
 
   test('tips: --tip-fg and --text-2 on the tip fill over a card are at least 4.5:1', () => {
