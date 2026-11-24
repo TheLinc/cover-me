@@ -3,31 +3,29 @@ import { SUPABASE_URL, WEB_URL } from '../../lib/config'
 import { getPageReadChoice, setPageReadChoice, watchPageReadChoice } from '../../lib/storage'
 import { ChevronIcon } from './icons'
 
-// The same choice as the notice (PageReadNotice.tsx), kept in Settings so the
-// user can agree after "Not now", or turn it off later. Turning it off is
-// remembered, so the notice doesn't ask again. Once agreed, it opens collapsed:
-// a native <details>, open at load only while the box is unticked, so ticking
-// it doesn't snap the section shut under the pointer.
+const OPEN_KEY = 'pageReadSettingOpen'
+
+// Open at load while the box is unticked, until the user opens or closes it
+// themselves; then it stays as they left it (#342).
 export default function PageReadSetting() {
   const [agreed, setAgreed] = useState<boolean | null>(null)
   const [startOpen, setStartOpen] = useState(true)
 
   useEffect(() => {
-    getPageReadChoice().then((choice) => {
+    Promise.all([getPageReadChoice(), chrome.storage.local.get(OPEN_KEY)]).then(([choice, { [OPEN_KEY]: open }]) => {
       setAgreed(choice === true)
-      setStartOpen(choice !== true)
+      setStartOpen(typeof open === 'boolean' ? open : choice !== true)
     })
-    // Agreeing in the notice while Settings is open ticks the box.
     return watchPageReadChoice((choice) => setAgreed(choice === true))
   }, [])
 
-  // A build without a backend never sends the page copy, so there's nothing to choose.
+  // A build without a backend never sends the page copy, so there's nothing to choose (#29).
   if (!SUPABASE_URL || agreed === null) return null
 
   return (
     <section className="page-read-setting" aria-labelledby="page-read-setting-title">
       <details className="setting-details" open={startOpen}>
-      <summary className="setting-summary">
+      <summary className="setting-summary" onClick={(e) => { void chrome.storage.local.set({ [OPEN_KEY]: !(e.currentTarget.parentElement as HTMLDetailsElement).open }) }}>
         <h2 id="page-read-setting-title" className="page-read-setting-title">Reading job pages</h2>
         <span className="setting-state">{agreed ? 'On' : 'Off'}</span>
         <ChevronIcon />
