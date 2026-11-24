@@ -178,7 +178,7 @@ export const mockClaude = {
   failNext: (status = 500) =>
     fetch(`${MOCK_URL}/__mock/fail-next`, { method: 'POST', body: JSON.stringify({ status }) }),
   refuseNext: () => mockClaude.replyNext(REFUSAL_BODY),
-  // fail-next with a 200 sends any reply body, JSON or SSE (#0000).
+  // fail-next with a 200 sends any reply body, JSON or SSE (#358).
   replyNext: (body: string) =>
     fetch(`${MOCK_URL}/__mock/fail-next`, { method: 'POST', body: JSON.stringify({ status: 200, body }) }),
   dropNextStream: () => fetch(`${MOCK_URL}/__mock/drop-next-stream`, { method: 'POST' }),

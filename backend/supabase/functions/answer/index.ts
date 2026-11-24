@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
     return json(consumed.body, consumed.status)
   }
   // Only for a failed call to Anthropic: an empty or declined reply still costs
-  // the answer (#0000).
+  // the answer (#358).
   const refund = async () => {
     const { error } = await supabase.rpc('refund_answer', { p_user_id: userId, p_date: today })
     if (error) console.error('Answer refund RPC error:', error.message)

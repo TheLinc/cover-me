@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
   if (!consumed.ok) return json(consumed.body, consumed.status)
 
   // Only for a failed call to Anthropic: an empty or declined reply still costs
-  // the generation (#0000).
+  // the generation (#358).
   const refund = async () => {
     const { error } = await supabase.rpc('decrement_rate_limit', { p_user_id: userId, p_date: today })
     if (error) console.error('Rate limit refund RPC error:', error.message)

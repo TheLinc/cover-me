@@ -2,7 +2,7 @@ import { isObject, MAX_JOB_FIELD } from './history-upload.ts'
 
 export const MAX_BODY_BYTES = 1_000_000
 export const MAX_SUPPLEMENTAL = 10_000
-// The prompts read no further than this, so grounding and scoring don't either (#0000).
+// The prompts read no further than this, so grounding and scoring don't either (#358).
 const MAX_DESCRIPTION = 15_000
 
 export interface JobInput { title: string; company: string; description: string; url?: string }

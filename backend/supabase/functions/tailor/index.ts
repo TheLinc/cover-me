@@ -380,7 +380,7 @@ Deno.serve(async (req) => {
   if (!consumed.ok) return json(consumed.body, consumed.status)
   let charged = true
   // Only a failed call is refunded: an empty, refused or broken reply still
-  // costs the generation (#0000).
+  // costs the generation (#358).
   let replied = false
 
   const refund = async () => {
