@@ -5,7 +5,7 @@
 -- these policies are the only thing between a user and other users' data, or
 -- between a free user and a free Pro upgrade.
 begin;
-select plan(17);
+select plan(13);
 
 -- ── Fixtures (as postgres, bypassing RLS) ────────────────────────────────────
 
@@ -54,15 +54,11 @@ set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","role":"authenticated"}', true);
 
 select results_eq('select id from public.users', $$values ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'::uuid)$$, 'users: sees only own row');
-select results_eq('select text_encrypted from public.resumes', $$values ('alice-ciphertext')$$, 'resumes: sees only own row');
-select results_eq('select company from public.job_applications', $$values ('Acme')$$, 'job_applications: sees only own rows');
-select results_eq('select letter_encrypted from public.cover_letters', $$values ('alice-letter')$$, 'cover_letters: sees only own rows');
-select results_eq('select resume_json_encrypted from public.tailored_resumes', $$values ('alice-tailored')$$, 'tailored_resumes: sees only own rows');
 select results_eq('select count from public.rate_limits', $$values (5)$$, 'rate_limits: sees only own row (dashboard usage bar)');
 
--- Writes against Bob's rows match nothing under RLS.
-update public.resumes set text_encrypted = 'pwned' where user_id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
-delete from public.job_applications where id = 'bbbbbbbb-0000-4000-8000-000000000001';
+-- Writes against Bob's rows fail: 033 took client grants on these tables.
+select pg_temp.try($$update public.resumes set text_encrypted = 'pwned' where user_id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'$$);
+select pg_temp.try($$delete from public.job_applications where id = 'bbbbbbbb-0000-4000-8000-000000000001'$$);
 
 -- Privilege escalation: tier and the daily quota are server-owned. The Stripe
 -- webhook and Edge Functions change them with the service key; a user must not.

@@ -33,12 +33,12 @@ Deno.serve(async (req) => {
   const searchParams = new URL(req.url).searchParams
   const letterId = searchParams.get('id')
 
-  // GET — fetch history joined with job_applications
   if (req.method === 'GET') {
     const { data: rows, error } = await supabase
       .from('cover_letters')
       .select('id, letter_encrypted, created_at, job_applications(title, company, url)')
       .eq('user_id', userId)
+      .eq('job_applications.user_id', userId)
       .order('created_at', { ascending: false })
       .limit(50)
 
@@ -56,14 +56,13 @@ Deno.serve(async (req) => {
           createdAt: row.created_at,
         })
       } catch {
-        // Skip letters that fail to decrypt rather than aborting the whole response
+        continue
       }
     }
 
     return json({ letters })
   }
 
-  // POST — save letter, find or create the job_application it belongs to
   if (req.method === 'POST') {
     let body: {
       id: string
@@ -81,7 +80,7 @@ Deno.serve(async (req) => {
 
     // An ID that already exists, in this account or another, is left alone:
     // never overwritten, and no job application is made for it. The extension
-    // sends each letter once, so this changes nothing for it.
+    // sends each letter once, so this changes nothing for it (#24).
     const { data: existing, error: lookupError } = await supabase.from('cover_letters').select('id').eq('id', body.id).maybeSingle()
     if (lookupError) return json({ error: 'Failed to save letter' }, 500)
     if (existing) return json({ success: true })
@@ -107,7 +106,6 @@ Deno.serve(async (req) => {
     return json({ success: true })
   }
 
-  // DELETE — remove letter by id
   if (req.method === 'DELETE') {
     if (!letterId) return json({ error: 'Missing id' }, 400)
 
