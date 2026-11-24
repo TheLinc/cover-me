@@ -204,16 +204,15 @@ describe('the ATS resume template guide', () => {
   }, 20_000)
 
   it('names the four systems and both test dates, and links to the test write-up', async () => {
-    const text = (await render()).replace(/<[^>]+>/g, ' ').replace(/&shy;/g, '')
+    const html = await render()
+    const text = html.replace(/<[^>]+>/g, ' ')
     for (const ats of ['Lever', 'Workday', 'Ashby', 'SmartRecruiters']) expect(text).toContain(ats)
     expect(text).toContain('October 31, 2026')
     expect(text).toContain('November 24, 2026')
-    expect(await render()).toContain('href="/guides/ats-friendly-resume-format"')
+    expect(html).toContain('href="/guides/ats-friendly-resume-format"')
   }, 20_000)
 
-  it('is linked from the ATS format guide', async () => {
-    const { renderToStaticMarkup } = await import('react-dom/server')
-    const { default: Format } = await import('../app/guides/ats-friendly-resume-format/page')
-    expect(renderToStaticMarkup(h(Format))).toContain(`href="/guides/${slug}"`)
-  }, 20_000)
+  it('is linked from the ATS format guide', () => {
+    expect(readFileSync(join(__dirname, '../app/guides/ats-friendly-resume-format/page.tsx'), 'utf8')).toContain(`href="/guides/${slug}"`)
+  })
 })

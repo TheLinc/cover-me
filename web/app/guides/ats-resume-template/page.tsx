@@ -7,8 +7,6 @@ import { getGuide } from '@/lib/guides'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 const guide = getGuide('ats-resume-template')
-const TEMPLATE = '/guides/ats-resume-template/ats-resume-template.docx'
-const SUMMARY = 'A free one-column Word resume template with placeholder text. The same layout read correctly in Lever, Workday, Ashby and SmartRecruiters.'
 
 export const metadata: Metadata = {
   title: 'Free ATS Resume Template for Word, Tested in 4 ATSs',
@@ -16,7 +14,7 @@ export const metadata: Metadata = {
   alternates: { canonical: `${BASE}/guides/${guide.slug}` },
   openGraph: {
     title: 'Free ATS resume template for Word, tested in 4 ATSs | Cover Me',
-    description: SUMMARY,
+    description: guide.description,
     url: `${BASE}/guides/${guide.slug}`,
     siteName: 'Cover Me',
     type: 'article',
@@ -25,7 +23,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Free ATS resume template for Word, tested in 4 ATSs | Cover Me',
-    description: SUMMARY,
+    description: guide.description,
     images: [`${BASE}${guide.image}`],
   },
 }
@@ -78,7 +76,6 @@ const FILL_IN: { title: string; body: string }[] = [
   { title: 'Save as Word or PDF', body: 'Both worked. Then upload it, and check what the form fills in before you submit.' },
 ]
 
-const LINK = 'text-brand-light hover:text-brand transition-colors'
 const TH = 'text-left px-3 py-3 font-bold text-muted-foreground border-b border-border'
 const TD = 'px-3 py-3 border-b border-border'
 
@@ -100,7 +97,7 @@ export default function Page() {
       }
       tldr={
         <div className="space-y-4">
-          <a href={TEMPLATE} download className={buttonVariants({ className: 'gap-2' })}>
+          <a href="/guides/ats-resume-template/ats-resume-template.docx" download className={buttonVariants({ className: 'gap-2' })}>
             <DownloadSimpleIcon size={16} aria-hidden="true" />
             Download the template (.docx)
           </a>
@@ -154,7 +151,7 @@ export default function Page() {
                 </table>
               </div>
               <p className="text-[13px]">
-                Tested October 31, 2026, with the one-column Word file filled in for a made-up marketing manager. No layout change fixes the small errors, so check the form before you submit. <Link href="/guides/ats-friendly-resume-format" className={LINK}>Read the full test</Link>.
+                Tested October 31, 2026, with the one-column Word file filled in for a made-up marketing manager. No layout change fixes the small errors, so check the form before you submit. <Link href="/guides/ats-friendly-resume-format">Read the full test</Link>.
               </p>
               <p>
                 On November 24, 2026, I filled this template in for a made-up operations analyst and uploaded it to Ashby again. The name, email, LinkedIn link and city all came through correctly. The blank template is different: Ashby fills in the email and LinkedIn link but leaves &ldquo;Your Name&rdquo; and &ldquo;City, State&rdquo; empty, because they aren&rsquo;t a real name or place. Replace every placeholder before you apply.
