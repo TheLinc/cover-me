@@ -265,7 +265,7 @@ export function parseClaimVerdicts(raw: string, count: number): boolean[] {
  * truthful and only the extra labels are lost. Without `ask` (legacy callers),
  * claims are kept. A comma-separated string passes through.
  */
-export async function groundSkills(skills: unknown, candidate: string, ask?: AskModel, originalSkills?: string): Promise<{ skills?: string; dropped: string[] }> {
+export async function groundSkills(skills: unknown, candidate: string, ask?: AskModel, originalSkills?: string, jobDescription = ''): Promise<{ skills?: string; dropped: string[] }> {
   if (typeof skills === 'string') return { skills, dropped: [] }
   if (!Array.isArray(skills)) return { dropped: [] }
   const flat = (s: string) => s.toLowerCase().replace(/[‐-―−]/g, '-').replace(/\s+/g, ' ').trim()
@@ -309,7 +309,7 @@ export async function groundSkills(skills: unknown, candidate: string, ask?: Ask
   const keptItems = items.filter((i) => !i.claim || !rejected.has(i.skill))
   const kept = keptItems.map((i) => i.skill)
   const groups = skillGroups(originalSkills)
-  if (groups.length && kept.length) return { skills: groupSkills(keptItems, groups), dropped }
+  if (groups.length && kept.length) return { skills: groupSkills(keptItems, groups, jobDescription), dropped }
   return { skills: kept.length ? kept.join(', ') : undefined, dropped }
 }
 
@@ -331,8 +331,10 @@ export function skillGroups(skills?: string): SkillGroup[] {
 
 // A grouped skills list keeps at most this many skills in this many groups,
 // the model's top-ranked first. 18, the same as a flat list: resume guides give
-// 8 to 18 and none allows more for groups. The prompt asks for it, but a model
-// that copies the whole master list back (73 skills in 8 groups) is cut here (#190).
+// 8 to 18 and none allows more for groups. Skills the posting names pass it only
+// when they alone fill it, as an ATS matches the posting's terms. The prompt asks
+// for it, but a model that copies the whole master list back (73 skills in 8
+// groups) is cut here (#190).
 export const MAX_GROUPED_SKILLS = 18
 export const MAX_SKILL_GROUPS = 6
 
@@ -340,23 +342,32 @@ export const MAX_SKILL_GROUPS = 6
 // the order the model ranked them. A skill goes under the label the model
 // named when that label is the resume's, else the group that lists it, else
 // the group its evidence came from, else the first group (#190).
-function groupSkills(items: Array<{ skill: string; category?: string; evidence?: string }>, groups: SkillGroup[]): string {
+function groupSkills(items: Array<{ skill: string; category?: string; evidence?: string }>, groups: SkillGroup[], jobDescription = ''): string {
   const lower = (s: string) => s.toLowerCase().replace(/\s+/g, ' ').trim()
   const byLabel = new Map(groups.map((g) => [lower(g.label), g.label]))
   const out = new Map<string, string[]>()
+  const ranked: Array<{ label: string; skill: string }> = []
   for (const item of items) {
     const label = (item.category && byLabel.get(lower(item.category)))
       ?? groups.find((g) => mentions(g.items, item.skill))?.label
       ?? (item.evidence ? groups.find((g) => lower(g.items).includes(lower(item.evidence!)))?.label : undefined)
       ?? groups[0].label
     const list = out.get(label)
-    // Past the caps, only lower-ranked skills are left: they go (#190).
+    // Past the group cap, only lower-ranked skills are left: they go (#190).
     if (!list && out.size >= MAX_SKILL_GROUPS) continue
     if (list?.some((s) => lower(s) === lower(item.skill))) continue
-    if ([...out.values()].reduce((n, l) => n + l.length, 0) >= MAX_GROUPED_SKILLS) break
     out.set(label, [...(list ?? []), item.skill])
+    ranked.push({ label, skill: item.skill })
   }
-  return [...out].map(([label, list]) => `${label}: ${list.join(', ')}`).join('\n')
+  const named = (skill: string) => !!jobDescription && mentions(jobDescription, skill)
+  const limit = Math.max(MAX_GROUPED_SKILLS, ranked.filter((r) => named(r.skill)).length)
+  for (let i = ranked.length - 1; i >= 0 && ranked.length > limit; i--) {
+    if (!named(ranked[i].skill)) ranked.splice(i, 1)
+  }
+  return [...out.keys()]
+    .map((label) => [label, ranked.filter((r) => r.label === label).map((r) => r.skill)] as const)
+    .filter(([, list]) => list.length)
+    .map(([label, list]) => `${label}: ${list.join(', ')}`).join('\n')
 }
 
 const SMALL_WORDS = new Set(['a', 'an', 'and', 'as', 'at', 'by', 'for', 'in', 'of', 'on', 'or', 'the', 'to', 'with'])

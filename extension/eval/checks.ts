@@ -263,13 +263,14 @@ export function checkTailored(out: TailoredResume, c: EvalCase, input: ParsedRes
   // Skills list invariants (https://github.com/TheLinc/cover-me/commit/46f809a1dc946cf6964c9e2ad9a400323d9bada5).
   if (out.skills) {
     // A grouped list counts each group's items, its label and anything in
-    // parentheses aside ("LLM APIs (OpenAI, Anthropic)" is one), against the
-    // grouped cap; any other list counts every comma against 18 (#190).
+    // parentheses aside ("LLM APIs (OpenAI, Anthropic)" is one); any other list
+    // counts every comma. Both are held to 18 (#190).
     const grouped = skillGroups(input.skills).length > 0
     const skillItems = (grouped
       ? out.skills.split('\n').flatMap((line) => line.replace(/^[^:,]{2,48}:\s*/, '').replace(/\([^()]*\)/g, '').split(','))
       : out.skills.split(',')).map((s) => s.trim()).filter(Boolean)
-    const cap = grouped ? MAX_GROUPED_SKILLS : 18
+    // Skills the posting names pass the cap only when they alone fill it (#190).
+    const cap = Math.max(MAX_GROUPED_SKILLS, skillItems.filter((s) => containsTerm(c.job.description, s)).length)
     if (skillItems.length > cap) result.failures.push(`skills list has ${skillItems.length} items (hard cap ${cap})`)
     for (const k of c.mustKeepSkills) {
       // A kept skill may be rephrased ("patient education" → "patient and

@@ -38,14 +38,26 @@ describe('grouped skills', () => {
     expect(skills).toBe('Applied AI and Agents: LangGraph, agent orchestration\nLanguages: Python\nDeployment and Operations: Docker')
   })
 
-  test('a model that returns the whole master list is cut to 32 skills in 6 groups, top-ranked first', async () => {
-    const master = Array.from({ length: 8 }, (_, g) => `Group ${g}: ${Array.from({ length: 9 }, (_, i) => `skill${g}x${i}`).join(', ')}`).join('\n')
-    const ranked = Array.from({ length: 72 }, (_, n) => ({ skill: `skill${n % 8}x${Math.floor(n / 8)}` }))
+  const master = Array.from({ length: 8 }, (_, g) => `Group ${g}: ${Array.from({ length: 9 }, (_, i) => `skill${g}x${i}`).join(', ')}`).join('\n')
+  const ranked = Array.from({ length: 72 }, (_, n) => ({ skill: `skill${n % 8}x${Math.floor(n / 8)}` }))
+  const items = (skills?: string) => skills!.split('\n').flatMap((l) => l.split(': ')[1].split(', '))
+
+  test('a model that returns the whole master list is cut to 18 skills in 6 groups, top-ranked first', async () => {
     const { skills } = await groundSkills(ranked, master, undefined, master)
     const lines = skills!.split('\n')
     expect(lines).toHaveLength(6)
-    expect(lines.flatMap((l) => l.split(': ')[1].split(', '))).toHaveLength(32)
-    expect(lines[0]).toMatch(/^Group 0: skill0x0, skill0x1/)
+    expect(items(skills)).toHaveLength(18)
+    expect(lines[0]).toBe('Group 0: skill0x0, skill0x1, skill0x2')
+  })
+
+  test('skills the posting names pass the cap only when they alone fill it', async () => {
+    const posting = Array.from({ length: 20 }, (_, i) => `skill${i % 4}x${Math.floor(i / 4)}`).join(', ')
+    const { skills } = await groundSkills(ranked, master, undefined, master, posting)
+    expect(items(skills)).toHaveLength(20)
+    expect(items(skills).every((s) => posting.includes(s))).toBe(true)
+    const few = await groundSkills(ranked, master, undefined, master, 'We use skill5x8 and skill0x0')
+    expect(items(few.skills)).toHaveLength(18)
+    expect(items(few.skills)).toContain('skill5x8')
   })
 
   test('the grounding guard keeps the labels', () => {

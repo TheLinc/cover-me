@@ -316,7 +316,7 @@ ADD a skill only when it is in the JD AND either named in the supplemental conte
 SKILLS OUTPUT FORMAT: "skills" is a JSON array of objects. A skill worded exactly as in the resume is {"skill": "..."}. Every other skill (an addition, or a rewording into the JD's phrasing) MUST include "evidence": a phrase copied character-for-character from the resume or the supplemental context that directly demonstrates that skill itself, not something merely near it. The application checks every evidence phrase against the resume and supplemental context and deletes any skill whose evidence is missing or not found, so never paraphrase evidence and never add a skill you cannot back.
 Never add a competing or unrelated tool the candidate lacks (Vue, Redux, a different language). Do NOT add process or architecture buzzwords the resume gives no concrete evidence for — in tech, "CI/CD", "DevOps", "Cloud Security", "Microservices Architecture", "Cloud-Native" each require a named tool or practice on the resume or in the supplemental context; in any field, a license, certification, or method named only in the JD is never added unless the resume states it or the supplemental context says the candidate holds it. Absent evidence, these are fabrications (Integrity 4). If in doubt, leave it out.
 
-REMOVE skills not relevant to this role type (e.g. a mobile-only framework for a pure web role). When over the cap, keep the most JD-relevant skills and drop the least relevant first. Aim for ~15–18 focused skills, not an exhaustive inventory; a bloated list buries the terms that matter and reads as unfocused. NEVER remove a skill the JD names — or a specific instance of a category the JD names (e.g. MySQL under "relational databases") — that the candidate genuinely has; ATS matches literal tokens, so the JD's exact term must survive. When the resume has both a JD-named specific term and its generic synonym, keep BOTH ("MySQL (SQL)", not just "SQL"); dedupe only synonyms the JD does not name. Hard cap: 18 items.
+REMOVE skills not relevant to this role type (e.g. a mobile-only framework for a pure web role). When over the cap, keep the most JD-relevant skills and drop the least relevant first. Aim for ~15–18 focused skills, not an exhaustive inventory; a bloated list buries the terms that matter and reads as unfocused. NEVER remove a skill the JD names — or a specific instance of a category the JD names (e.g. MySQL under "relational databases") — that the candidate genuinely has; ATS matches literal tokens, so the JD's exact term must survive. When the resume has both a JD-named specific term and its generic synonym, keep BOTH ("MySQL (SQL)", not just "SQL"); dedupe only synonyms the JD does not name. Hard cap: 18 items. The one exception: never cut a JD-named skill the candidate has to meet the cap. If those alone pass 18, keep all of them and nothing else.
 ${groupedSkillsRule(parsed.skills)}` : ''
 
   const compactMode = compact ? `---
@@ -689,7 +689,7 @@ Deno.serve(async (req) => {
     const notes = trustedNotes(supplemental, previous)
     const base = seenVersion(structuredResume, previous)
     const candidate = candidateText(structuredResume, notes)
-    delta.skills = recaseSkills((await groundSkills(delta.skills, candidate, askChecker, base.skills)).skills, base.skills, `${candidate}
+    delta.skills = recaseSkills((await groundSkills(delta.skills, candidate, askChecker, base.skills, job.description)).skills, base.skills, `${candidate}
 ${job.description}`)
     const merged = keepSeen(mergeTailorDelta(base, delta, { exactBulletCounts: !compact && !trim, maxBullets: trim && !compact ? seenBudget(bulletBudget(structuredResume), base, structuredResume) : undefined }), structuredResume, base)
     const { resume: lined, repair } = await checkAndRewriteLines(merged, base, job.description, askChecker, supplemental)
@@ -698,7 +698,7 @@ ${job.description}`)
       const { rewritten, reverted, summary, checkFailed } = repair
       console.log('[CoverMe] line check:', JSON.stringify({ flagged: repair.flagged.length, rewritten, reverted, summary, checkFailed }))
     }
-    const resume = groundTailored(lined, base, candidate, job.description, await checkedTitle(job.title, base, lined, repair, askChecker, supplemental)).resume as Record<string, unknown>
+    const resume: Record<string, unknown> = { ...groundTailored(lined, base, candidate, job.description, await checkedTitle(job.title, base, lined, repair, askChecker, supplemental)).resume }
 
     let atsScore: number | undefined
     let atsGaps: string[] | undefined
