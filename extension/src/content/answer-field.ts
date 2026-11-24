@@ -271,7 +271,7 @@ function changeControls(revise: (request: string, shown: string) => void): HTMLE
 function showStatus(anchor: HTMLElement | null, view: StatusView): void {
   const from = status?.box.getBoundingClientRect()
   closeStatus()
-  // Not a custom element: the page could define its name first (#355)
+  // Not a custom element: the page could define its name first (#357)
   const host = document.createElement('div')
   const root = host.attachShadow({ mode: 'closed' })
   const style = document.createElement('style')

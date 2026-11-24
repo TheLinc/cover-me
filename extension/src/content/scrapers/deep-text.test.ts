@@ -10,7 +10,7 @@ const elapsed = (run: () => void) => {
 }
 
 // Every block re-read the text inside it: 37 s for spaced text and 11 s for
-// many text nodes 254 levels deep, against the scrape function's 2 s of CPU (#PRNUM)
+// many text nodes 254 levels deep, against the scrape function's 2 s of CPU (#357)
 test.each([
   { case: '3.4 MB of words in 254 nested blocks', inner: 'lorem ipsum dolor '.repeat(190_000), limit: 2000 },
   { case: '140,000 text nodes in 254 nested blocks', inner: 'a b<!---->'.repeat(140_000) },

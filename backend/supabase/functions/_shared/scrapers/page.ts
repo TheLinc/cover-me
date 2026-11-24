@@ -15,7 +15,7 @@ const MAX_ELEMENTS = 60_000
 const MAX_DEPTH = 256
 // innerText reads a node again for every block around it, so its work is
 // capped per request, a node visit counting as 400 characters. Real postings
-// use at most 4.5M, the slowest page the tests accept 1.4G (#PRNUM).
+// use at most 4.5M, the slowest page the tests accept 1.4G (#357).
 const MAX_WORK = 1_600_000_000
 const NODE_WORK = 400
 export interface Meter { work: number }
