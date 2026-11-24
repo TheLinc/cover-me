@@ -43,3 +43,29 @@ test('the pages of one request share the cap', () => {
     for (let i = 0; i < 8; i++) expect(() => scrapeHtml(parseHTML, 'https://careers.example.com/jobs/1', page, meter)).toThrow()
   })).toBeLessThan(4000)
 })
+
+const spans = (count: number, attributes: number) => `<b ${Array.from({ length: attributes }, (_, i) => `a${i}`).join(' ')}>a</b>`.repeat(count)
+
+test.each([
+  { case: '4,000 spans with 200 attributes each in 250 nested blocks', inner: spans(4000, 200), depth: 250 },
+  { case: '400 spans with 2,000 attributes each', inner: spans(400, 2000), depth: 1 },
+])('attributes are capped: $case', ({ inner, depth }) => {
+  expect(elapsed(() => expect(() => scrapeHtml(parseHTML, 'https://careers.example.com/jobs/1', nested(depth, inner))).toThrow('too large'))).toBeLessThan(4000)
+})
+
+test('reads are charged for the attributes they pass', () => {
+  const page = nested(250, spans(290, 200))
+  const meter = { work: 0 }
+  expect(elapsed(() => {
+    for (let i = 0; i < 8; i++) expect(() => scrapeHtml(parseHTML, 'https://careers.example.com/jobs/1', page, meter)).toThrow()
+  })).toBeLessThan(4000)
+  expect(() => scrapeHtml(parseHTML, 'https://careers.example.com/jobs/1', page, meter)).toThrow('too large')
+})
+
+test('the first text after the title is found in one walk', () => {
+  const style = `color:red;${' '.repeat(10_000)}`
+  const html = `<!doctype html><html><body>${`<div style="${style}">`.repeat(250)}<h1>Payroll Clerk</h1>${'<i></i>'.repeat(50_000)}${'</div>'.repeat(250)}</body></html>`
+  expect(elapsed(() => {
+    try { scrapeHtml(parseHTML, 'https://careers.example.com/jobs/1', html) } catch {}
+  })).toBeLessThan(4000)
+})

@@ -8,14 +8,16 @@ export type ParseHTML = (html: string) => Dom
 // requests in one isolate never see each other's page (#3)
 const GLOBALS = ['window', 'document', 'Node', 'HTMLElement', 'ShadowRoot', 'DOMParser'] as const
 
-// Real postings measured at most ~9k "<", ~5k elements and depth 42. "<" is
-// counted in the raw HTML, before linkedom allocates anything (#3).
+// Real postings measured at most ~9k "<", ~5k elements, ~7k attributes and
+// depth 42. "<" is counted in the raw HTML, before linkedom allocates anything
+// (#3). linkedom walks attributes along with nodes (#357).
 const MAX_TAGS = 150_000
 const MAX_ELEMENTS = 60_000
+const MAX_ATTRIBUTES = 60_000
 const MAX_DEPTH = 256
 // The scrapers read a block's whole subtree for every block around it, so a
-// request's reads are capped by the nodes and characters they cover. The saved
-// postings use at most 20M (#357).
+// request's reads are capped by the nodes, attributes and characters they
+// cover. The saved postings use at most 30M (#357).
 const MAX_WORK = 2_000_000_000
 const NODE_WORK = 400
 export interface Meter { work: number }
@@ -38,7 +40,7 @@ export function scrapeHtml(parseHTML: ParseHTML, url: string, html: string, mete
   const weigh = (node: Dom): number => {
     const cached = weights.get(node)
     if (cached !== undefined) return cached
-    let sum = NODE_WORK + (node.nodeType === 3 ? node.textContent.length : 0)
+    let sum = NODE_WORK * (1 + (node.attributes?.length ?? 0)) + (node.nodeType === 3 ? node.textContent.length : 0)
     for (const c of node.childNodes ?? []) sum += weigh(c)
     weights.set(node, sum)
     return sum
@@ -59,10 +61,12 @@ export function scrapeHtml(parseHTML: ParseHTML, url: string, html: string, mete
 
 function checkSize(doc: Dom) {
   let count = 0
+  let attributes = 0
   const stack: [Dom, number][] = [[doc.documentElement, 1]]
   while (stack.length) {
     const [el, depth] = stack.pop()!
-    if (++count > MAX_ELEMENTS || depth > MAX_DEPTH) throw new Error('This page is too large to read.')
+    attributes += el.attributes.length
+    if (++count > MAX_ELEMENTS || depth > MAX_DEPTH || attributes > MAX_ATTRIBUTES) throw new Error('This page is too large to read.')
     // linkedom keeps a <template>'s markup in its children. Its .content is a
     // deep copy, which nested templates would multiply (#3).
     for (const child of el.children) stack.push([child, depth + 1])
