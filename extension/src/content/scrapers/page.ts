@@ -3,6 +3,8 @@ import type { JobData } from './types.ts'
 
 type Dom = any
 export type ParseHTML = (html: string) => Dom
+type ParserClass = new (handler: { onopentagname?(name: string): void; onclosetag?(name: string): void }) => { end(html: string): void }
+export interface Parsers { parseHTML: ParseHTML; Parser: ParserClass }
 
 // The scrapers read globals, swapped in for one synchronous call so concurrent
 // requests in one isolate never see each other's page (#3)
@@ -19,8 +21,6 @@ const MAX_DEPTH = 256
 // - linkedom takes ~2 µs per attribute. Every attribute name follows
 //   whitespace, "/" or a quote, so each start of a word after one is counted.
 // - linkedom makes a text node for every "&" entity.
-// - htmlparser2 keeps open tags with unshift and indexOf, so each open tag
-//   costs the nesting depth it opens at.
 // Stripped snapshots from the extension use at most 300M. The raw, unstripped
 // test fixtures use up to 1,355M.
 const MAX_WORK = 2_000_000_000
@@ -29,13 +29,18 @@ const NAME_WORK = 8000
 export interface Meter { work: number }
 let charge: ((node: Dom) => void) | undefined
 
+export function scrapeUntrusted({ parseHTML, Parser }: Parsers, url: string, html: string, meter?: Meter): JobData {
+  checkNesting(Parser, html)
+  return scrapeHtml(parseHTML, url, html, meter)
+}
+
 export function scrapeHtml(parseHTML: ParseHTML, url: string, html: string, meter: Meter = { work: 0 }): JobData {
   if (meter.work > MAX_WORK) throw new Error('This page is too large to read.')
   let tags = 0
   for (let i = html.indexOf('<'); i !== -1; i = html.indexOf('<', i + 1)) {
     if (++tags > MAX_TAGS) throw new Error('This page is too large to read.')
   }
-  if ((meter.work += 2 * nestingWork(html) + nameStarts(html) * NAME_WORK) > MAX_WORK) throw new Error('This page is too large to read.')
+  if ((meter.work += nameStarts(html) * NAME_WORK) > MAX_WORK) throw new Error('This page is too large to read.')
   const dom = parseHTML(html)
   dom.window.location = new URL(url)
   // Before attachShadowRoots, which recurses once per nested template (#3)
@@ -78,39 +83,22 @@ function checkSize(doc: Dom) {
   }
 }
 
-const VOID = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'])
-const RAW_TEXT = new Set(['script', 'style'])
-// Never below the parser's depth: a close tag only counts once per matching
-// open, and "/>" still opens in HTML (#362)
-function nestingWork(html: string): number {
-  const lower = html.toLowerCase()
-  const open = new Map<string, number>()
-  let depth = 0, work = 0
-  for (let i = lower.indexOf('<'); i !== -1; i = lower.indexOf('<', i + 1)) {
-    const close = lower.charCodeAt(i + 1) === 47
-    const start = close ? i + 2 : i + 1
-    const c = lower.charCodeAt(start)
-    if (c < 97 || c > 122) continue
-    let j = start + 1
-    for (let d = lower.charCodeAt(j); (d >= 97 && d <= 122) || (d >= 48 && d <= 57) || d === 45; d = lower.charCodeAt(++j));
-    const name = lower.slice(start, j)
-    if (close) {
-      const n = open.get(name) ?? 0
-      if (n) {
-        open.set(name, n - 1)
-        depth--
-      }
-      continue
-    }
-    if (VOID.has(name)) continue
-    work += ++depth
-    open.set(name, (open.get(name) ?? 0) + 1)
-    if (RAW_TEXT.has(name)) {
-      const end = lower.indexOf(`</${name}`, j)
-      if (end !== -1) i = end - 1
-    }
-  }
-  return work
+// linkedom parses with htmlparser2, which keeps its open tags and its
+// svg/math context in lists it shifts and searches on every tag. Running
+// htmlparser2 alone first, and stopping once either list outgrows any
+// posting, keeps that walk linear before linkedom builds anything (#362).
+const FOREIGN = new Set(['math', 'svg', 'mi', 'mo', 'mn', 'ms', 'mtext', 'annotation-xml', 'foreignobject', 'desc', 'title'])
+const MAX_FOREIGN = 5_000
+function checkNesting(Parser: ParserClass, html: string) {
+  let depth = 0, foreign = 0
+  new Parser({
+    onopentagname(name) {
+      if (++depth > MAX_DEPTH || (FOREIGN.has(name) && ++foreign > MAX_FOREIGN)) throw new Error('This page is too large to read.')
+    },
+    onclosetag() {
+      depth--
+    },
+  }).end(html)
 }
 
 // htmlparser2's whitespace is only these five: any other control character

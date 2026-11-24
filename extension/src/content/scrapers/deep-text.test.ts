@@ -1,6 +1,7 @@
+import { Parser } from 'htmlparser2'
 import { parseHTML } from 'linkedom'
 import { expect, test } from 'vitest'
-import { scrapeHtml } from './page.ts'
+import { scrapeHtml, scrapeUntrusted } from './page.ts'
 
 const nested = (depth: number, inner: string) => `<html><body>${'<div>'.repeat(depth)}${inner}${'</div>'.repeat(depth)}</body></html>`
 const elapsed = (run: () => void) => {
@@ -23,8 +24,15 @@ test.each([
   { case: '74,000 divs between stray close tags', html: `<html><body>${'<div></b>'.repeat(74_000)}` },
   { case: '149,000 self-closed divs', html: `<html><body>${'<div/>'.repeat(149_000)}` },
   { case: '990,000 entities in one paragraph', html: `<html><body><p>${'&lt;'.repeat(990_000)}` },
+  { case: 'namespaced tags closed by other names', html: `<html><body>${'<a:x></a:y>'.repeat(74_000)}` },
+  { case: 'non-ASCII tag names', html: `<html><body>${'<dé></dè>'.repeat(74_000)}` },
+  { case: 'stray close tags under deep nesting', html: `<html><body>${'<div>'.repeat(30_000)}${'</b>'.repeat(119_000)}` },
+  { case: 'divs after a commented-out script tag', html: `<html><body><!--<script>-->${'<div>'.repeat(149_000)}</script>` },
+  { case: 'divs after a script tag in an attribute', html: `<html><body><a title="<script>">${'<div>'.repeat(149_000)}</script>` },
+  { case: 'many unclosed script tags', html: `<html><body>${'<script>'.repeat(10_000)}${'x'.repeat(3_000_000)}` },
+  { case: 'svg contexts left open by closing their parents', html: `<html><body>${'<div><svg></div>'.repeat(49_000)}` },
 ])('pages that are slow to parse fail fast: $case', ({ html }) => {
-  expect(elapsed(() => expect(() => scrapeHtml(parseHTML, 'https://careers.example.com/jobs/1', html)).toThrow())).toBeLessThan(1000)
+  expect(elapsed(() => expect(() => scrapeUntrusted({ parseHTML, Parser }, 'https://careers.example.com/jobs/1', html)).toThrow())).toBeLessThan(1000)
 })
 
 test('a scraper that catches the error still stops reading', () => {

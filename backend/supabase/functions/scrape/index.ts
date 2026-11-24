@@ -5,13 +5,14 @@
 // The HTML can carry a signed-in user's name: never log it or put it in an
 // error. Never log or store the IP either, only its HMAC (#3).
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { Parser } from 'npm:htmlparser2@10.1.0'
 import { parseHTML } from 'npm:linkedom@0.18.13'
 import { handleCors, json } from '../_shared/cors.ts'
 import { checkIpRateLimit } from '../_shared/ip-rate-limit.ts'
 import { capture } from '../_shared/posthog.ts'
 import { readBody } from '../_shared/read-body.ts'
 import { scraperFor } from '../_shared/scrapers/index.ts'
-import { scrapeHtml } from '../_shared/scrapers/page.ts'
+import { scrapeUntrusted } from '../_shared/scrapers/page.ts'
 
 declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void }
 
@@ -53,7 +54,7 @@ Deno.serve(async (req) => {
   const meter = { work: 0 }
   const results = pages.map(({ url, html }) => {
     try {
-      return { ok: true, job: scrapeHtml(parseHTML, url, html, meter) }
+      return { ok: true, job: scrapeUntrusted({ parseHTML, Parser }, url, html, meter) }
     } catch (err) {
       // Scraper errors are fixed messages, never page content (#3)
       return { ok: false, error: err instanceof Error ? err.message : 'Could not read this page' }
