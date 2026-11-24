@@ -86,7 +86,7 @@ export default async function BoardPage({ params }: { params: Promise<{ board: s
         <div className="mb-14 max-w-[680px]">
           <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-2 mb-4 flex flex-wrap gap-x-3">
             <span>Cover Me for {board.name}</span>
-            <span aria-hidden>·</span>
+            <span aria-hidden className="max-sm:hidden">·</span>
             <time dateTime={board.updated}>Updated {longDate(board.updated)}</time>
           </p>
           <h1 className="text-[clamp(32px,5vw,52px)] text-foreground leading-[0.98] mb-5">
