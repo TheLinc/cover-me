@@ -6,7 +6,7 @@ import { getGuide } from '@/lib/guides'
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 const guide = getGuide('careerflow-review')
 
-const PRICING = 'https://www.careerflow.ai/pricing-page'
+const PRICING = 'https://www.careerflow.ai/premium'
 const TERMS = 'https://www.careerflow.ai/terms'
 const DO_NOT_USE = 'https://www.reddit.com/r/jobhunting/comments/1ns4dxx/do_not_use_careerflow_ai/'
 
@@ -63,7 +63,7 @@ const faqJsonLd = {
       name: 'Is Careerflow or Teal better?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: "Teal's free plan does more of the resume work: unlimited resumes and job tracking, plus a few AI cover letters, where Careerflow's free plan has one resume, 10 tracked jobs and no AI cover letters. Careerflow's free plan adds a LinkedIn profile score. Paid, Teal+ is $29 every 30 days and Careerflow Premium is $23.99 a month. Try both free plans and pay for the one whose editor you'd use every day.",
+        text: "Teal's free plan does more of the resume work: unlimited resumes and job tracking, plus a few AI cover letters, where Careerflow's free plan has one resume, 10 tracked jobs and no AI cover letters, plus a LinkedIn profile score. Paid, Teal+ is $29 every 30 days and Careerflow Premium is $23.99 a month. Try both free plans and pay for the one whose editor you'd use every day.",
       },
     },
   ],
@@ -80,7 +80,7 @@ const VS_TEAL: { feature: string; careerflow: string; teal: string }[] = [
   { feature: 'Free', careerflow: '1 resume, basic resume and LinkedIn scores, up to 10 tracked jobs, no AI cover letters', teal: 'Unlimited resumes and job tracking, top 5 keywords per job, one-time AI credits including 2 cover letters' },
   { feature: 'Paid plan', careerflow: 'Premium: $8.99 a week, $23.99 a month, $54.99 for 3 months or $172.99 a year', teal: 'Teal+: $13 every 7 days, $29 every 30 days or $79 every 90 days' },
   { feature: 'Refunds', careerflow: 'Final unless Careerflow agrees; ask within 7 days; weekly plan never refunded', teal: 'Ask within 2, 7 or 14 days depending on the plan; decided case by case' },
-  { feature: 'Extra tools', careerflow: 'LinkedIn profile score and rewrite, AI mock interviews on Premium Plus', teal: 'Its own job board, built from employers’ hiring systems' },
+  { feature: 'Extra tools', careerflow: 'LinkedIn profile score and rewrite, AI mock interviews on Premium Plus', teal: 'Its own job board, built from employers’ hiring systems, and a LinkedIn profile review' },
   { feature: 'Chrome extension', careerflow: '4.3 from 288 ratings, 200,000 users', teal: '4.7 from 3.2K ratings, 200,000 users' },
   { feature: 'Trustpilot', careerflow: '3.8 from 20 reviews, 8 of them about freelance data work', teal: '4.3 from 120 reviews' },
 ]
@@ -91,7 +91,7 @@ const COMPARISON: { feature: string; coverMe: string; them: string }[] = [
   { feature: 'Invented skills', coverMe: 'A check removes skills your original resume does not support', them: 'Not described on its pages' },
   { feature: 'Job tracker', coverMe: 'A board of the jobs you make a letter or resume for, tracked by stage', them: 'Kanban tracker for jobs saved from 45+ sites, 10 jobs on the free plan' },
   { feature: 'LinkedIn profile', coverMe: 'No', them: 'Profile score on the free plan, AI rewrite on Premium' },
-  { feature: 'Pricing', coverMe: 'Free for 10, then 5 a week · Pro $15 a month for 25 a day', them: 'Premium from $23.99 a month or $8.99 a week' },
+  { feature: 'Pricing', coverMe: 'Free for 10, then 5 a week · Pro $15 a month for 25 a day', them: 'Premium $23.99 a month, or $14.41 a month billed yearly' },
   { feature: 'Open source', coverMe: 'Yes, MIT licensed', them: 'No' },
 ]
 
@@ -110,7 +110,7 @@ export default function Page() {
       tldr={[
         'Careerflow is a job search toolkit: a resume builder that tailors to a posting, a job tracker, a LinkedIn profile optimizer, AI cover letters and a Chrome extension that saves jobs from 45+ sites.',
         'Premium is $8.99 a week, $23.99 a month, $54.99 for 3 months or $172.99 a year. Purchases are final unless Careerflow agrees to a refund, and the weekly plan is never refunded.',
-        "Users praise the tracker and LinkedIn tools and complain about bugs, setup time and an unexpected renewal. Teal's free plan does more resume work; Careerflow's adds the LinkedIn score.",
+        "Users praise the tracker and LinkedIn tools and complain about bugs, setup time and an unexpected renewal. Teal's free plan allows more resumes and tracked jobs.",
       ]}
       intro={
         <p>
@@ -146,7 +146,7 @@ export default function Page() {
               <p>
                 Careerflow&rsquo;s <a href={PRICING} {...ext}>pricing page</a> lists two paid plans on four billing terms. Premium adds unlimited AI resumes, the ATS optimizer and the AI cover letter writer. Premium Plus adds AI mock interviews, interview analysis and priority support. On November 24, 2026:
               </p>
-              <GuideFigure caption={<>From Careerflow&rsquo;s <a href={PRICING} {...ext}>pricing page</a>, checked November 24, 2026. Each plan also shows a crossed-out $45.</>}>
+              <GuideFigure caption={<>From Careerflow&rsquo;s <a href={PRICING} {...ext}>pricing page</a>, checked November 24, 2026. Each paid plan also shows a crossed-out $45.</>}>
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[520px] text-[13.5px] bg-white border border-border rounded-[8px] overflow-hidden" style={{ borderCollapse: 'collapse' }}>
                     <thead>
@@ -208,14 +208,14 @@ export default function Page() {
           body: (
             <>
               <p>
-                The <a href={DO_NOT_USE} {...ext}>r/jobhunting post</a> that ranks first on Google for Careerflow reviews is a paid user&rsquo;s complaint: &ldquo;The linkedin optimizer is filled with bugs and isn&rsquo;t actually helpful. The write with AI feature deleted my entire 4 hours of work after clicking add.&rdquo; They found setting up the main resume &ldquo;very tedious and time consuming (20 hours +)&rdquo;. A Careerflow team member answered that it &ldquo;shouldn&rsquo;t take you 20 hours to edit a resume&rdquo; and offered help.
+                The <a href={DO_NOT_USE} {...ext}>r/jobhunting post</a> that ranked first on Google for Careerflow reviews in November 2026 is a paid user&rsquo;s complaint: &ldquo;The linkedin optimizer is filled with bugs and isn&rsquo;t actually helpful. The write with AI feature deleted my entire 4 hours of work after clicking add.&rdquo; They found setting up the main resume &ldquo;very tedious and time consuming (20 hours +)&rdquo;. A Careerflow team member answered that it &ldquo;shouldn&rsquo;t take you 20 hours to edit a resume&rdquo; and offered help.
               </p>
               <p>
-                Other users under the same post disagreed. One wrote in January 2026 that with Careerflow &ldquo;I was able to rapidly tailor resumes for job ad-specific keywords &amp; send out hundreds of resumes&rdquo;, and liked tracking jobs from saved to offer. Another, in February 2026, said they used it &ldquo;to create multiple resume versions and tailor my resume for multiple jobs&rdquo; and called the tracker &ldquo;such a lifesaver.&rdquo;
+                Two other users under the same post disagreed. One wrote in January 2026 that with Careerflow &ldquo;I was able to rapidly tailor resumes for job ad-specific keywords &amp; send out hundreds of resumes&rdquo;, and liked tracking jobs from saved to offer. Another, in February 2026, said they used it &ldquo;to create multiple resume versions and tailor my resume for multiple jobs&rdquo; and called the tracker &ldquo;such a lifesaver.&rdquo;
               </p>
               <p>
                 A user who{' '}
-                <a href="https://www.reddit.com/r/AIToolTalks/comments/1w4hztf/paid_for_careerflow_for_exactly_2_months/" {...ext}>paid for two months</a> posted on r/AIToolTalks in September 2026 that the LinkedIn optimizer gave &ldquo;specific keyword and headline fixes&rdquo;, but &ldquo;the free tracker caps at ~10 jobs so you get nudged to pay fast, and the AI bullets/cover letters dont quite get my writing style so rewrote them.&rdquo; They cancelled the day they accepted an offer.
+                <a href="https://www.reddit.com/r/AIToolTalks/comments/1w4hztf/paid_for_careerflow_for_exactly_2_months/" {...ext}>paid for two months</a> posted on r/AIToolTalks in September 2026 that the LinkedIn optimizer gave &ldquo;specific keyword and headline fixes&rdquo;, but &ldquo;the free tracker caps at ~10 jobs so you get nudged to pay fast, and the AI bullets/cover letters dont quite get my writing style so rewrote them.&rdquo; Their verdict: &ldquo;worth it month-to-month while aggresively applying, might not keep it year-round.&rdquo; They cancelled the day they accepted an offer.
               </p>
               <p>
                 On <a href="https://www.trustpilot.com/review/careerflow.ai" {...ext}>Trustpilot</a>, job seekers who left reviews mostly praise the resume tools, the LinkedIn optimizer and support. Two complaints stand out. In March 2026 a user{' '}
@@ -246,9 +246,9 @@ export default function Page() {
           body: (
             <>
               <p>
-                <a href="https://www.tealhq.com" {...ext}>Teal</a> is the closest match: a resume builder that matches a posting&rsquo;s keywords, a job tracker and a Chrome extension, with a paid plan for AI writing. Careerflow&rsquo;s own extension listing compares itself with Teal, and the two come up together on Reddit. See the <Link href="/guides/teal-review">Teal review</Link> for more on Teal.
+                <a href="https://www.tealhq.com" {...ext}>Teal</a> is the closest match: a resume builder that matches a posting&rsquo;s keywords, a job tracker and a Chrome extension, with a paid plan for AI writing. Careerflow&rsquo;s own extension listing compares itself with Teal. See the <Link href="/guides/teal-review">Teal review</Link> for more on Teal.
               </p>
-              <GuideFigure caption="Careerflow from its pricing page, help center, Chrome Web Store listing and Trustpilot, November 24, 2026. Teal from its pricing page and Trustpilot on November 19, 2026, and its Chrome Web Store listing on November 24.">
+              <GuideFigure caption="Careerflow from its pricing page, help center, Chrome Web Store listing and Trustpilot, November 24, 2026. Teal from its pricing page and Trustpilot on November 19, 2026, and its Chrome Web Store listing on November 24. Sources are linked below the table.">
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[560px] text-[13.5px] bg-white border border-border rounded-[8px] overflow-hidden" style={{ borderCollapse: 'collapse' }}>
                     <thead>
@@ -271,7 +271,7 @@ export default function Page() {
                 </div>
               </GuideFigure>
               <p>
-                For resume work on a free plan, Teal gives more: unlimited resumes and tracking against Careerflow&rsquo;s one resume and 10 jobs. Careerflow&rsquo;s free plan has the LinkedIn profile score, which Teal doesn&rsquo;t. Paid, Careerflow Premium is $23.99 a month and Teal+ is $29 every 30 days, and both weekly plans cost more over a month. Teal&rsquo;s{' '}
+                Teal&rsquo;s figures are from its <a href="https://www.tealhq.com/pricing" {...ext}>pricing page</a>, <a href="https://chromewebstore.google.com/detail/teal-job-search-companion/opafjjlpbiaicbbgifbejoochmmeikep" {...ext}>Chrome Web Store listing</a> and <a href="https://www.trustpilot.com/review/tealhq.com" {...ext}>Trustpilot</a>. On their stated limits, Teal&rsquo;s free plan gives more room for resumes: unlimited resumes and tracking against Careerflow&rsquo;s one resume and 10 jobs. One user who <a href="https://www.reddit.com/r/ResumeExperts/comments/1snygj5/tried_careerflow_teal_for_2_months_honestly/" {...ext}>used both for two months</a> found the opposite in practice, writing in April 2026 that Teal &ldquo;feels nicer to use&rdquo; but its free version is &ldquo;kinda restrictive... you hit limits fast&rdquo; and that with Careerflow &ldquo;you get more for free&rdquo;. Paid, Careerflow Premium is $23.99 a month and Teal+ is $29 every 30 days, and both weekly plans cost more over a month. Teal&rsquo;s{' '}
                 <a href="https://www.tealhq.com/terms" {...ext}>terms</a> let you ask for a refund on any plan; Careerflow never refunds its weekly plan.
               </p>
             </>
@@ -282,7 +282,7 @@ export default function Page() {
           body: (
             <>
               <p>
-                Careerflow suits you if you want one account for your resume, your LinkedIn profile and your applications, and you&rsquo;ll use all three. The free plan is enough to test the LinkedIn score and the extension, and to tailor one resume.
+                Careerflow suits you if you want one account for your resume, your LinkedIn profile and your applications, and you&rsquo;ll use all three. The free plan is enough to test the LinkedIn score and the extension, and Careerflow says it lets you tailor one resume.
               </p>
               <p>
                 If you pay, skip the weekly plan unless you&rsquo;re sure: it&rsquo;s never refunded, and four weeks cost more than a month. Cancel in the Stripe portal at least 24 hours before renewal, since an email doesn&rsquo;t count, and ask for any refund within 7 days of your first payment. Check what the AI writes before you send it: one paying user rewrote its bullets and cover letters to sound like themselves.

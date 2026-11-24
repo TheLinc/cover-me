@@ -9,7 +9,7 @@ const errors = []
 const targets = process.argv.slice(2)
 
 // Retired palettes and fonts. The extension's dark palette is allowed only in globals.css's
-// extension-palette block; product visuals use its --ext-* tokens (https://github.com/TheLinc/cover-me/commit/44d39339).
+// extension-palette block; product visuals use its --ext-* tokens (https://github.com/TheLinc/cover-me/commit/c2aba19f).
 const RETIRED =
   /f2eadb|e8dcc6|c4321f|a3281a|e6b422|b3a489|1c1a17|5e574c|3b5b8f|141311|0d1117|161c2e|1e2740|2a3452|e2e8f0|94a3b8|475569|a5b4fc|28,\s*26,\s*23|196,\s*50,\s*31|242,\s*234,\s*219|179,\s*164,\s*137|59,\s*91,\s*143|230,\s*180,\s*34|13,\s*17,\s*23|Bodoni|Hanken|Plex Mono|Plus Jakarta|\b(amber|slate|violet)-\d|\b(tissue|thread|tape|chalk)\b/i
 const TIMELINE = /animation-?[tT]imeline/
@@ -101,7 +101,7 @@ if (base) {
     if (!home.includes(type)) errors.push(`/ is missing ${type} JSON-LD`)
   }
   if (!home.includes('data-hero-stage')) errors.push('/ is missing the hero product stage')
-  // Stats render their final values in HTML; the count-up only animates them (https://github.com/TheLinc/cover-me/commit/44d39339).
+  // Stats render their final values in HTML; the count-up only animates them (https://github.com/TheLinc/cover-me/commit/c2aba19f).
   for (const v of ['2.1', '97.4', '7.4', '30']) {
     if (!new RegExp(`data-stat[^>]*>${v.replace('.', '\\.')}<`).test(home)) errors.push(`/ stats row is missing ${v} in server HTML`)
   }
