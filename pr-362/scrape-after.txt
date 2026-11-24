@@ -1,3 +1,22 @@
-after | made-up posting | 0.0 MB | HTTP 200 | 288 ms | ok: "Payroll Clerk" at "Unknown Company"
-after | many attributes | 3.6 MB | HTTP 200 | 71 ms | refused: This page is too large to read.
-after | long styles above many elements | 2.9 MB | HTTP 200 | 807 ms | refused: This page is too large to read.
+#362's branch (origin/fix/scrape-attribute-cap) at ad155ef0, master a1c2846c already merged, served with supabase functions serve on a private local stack.
+Each page sent alone, gzipped, to POST /functions/v1/scrape. Two runs.
+
+Run 1:
+after | made-up posting (warm-up) | 0.0 MB | HTTP 200 | 318 ms | ok: "Payroll Clerk" at "Brightwater Tile Co."
+after | made-up posting | 0.0 MB | HTTP 200 | 13 ms | ok: "Payroll Clerk" at "Brightwater Tile Co."
+after | many attributes | 3.9 MB | HTTP 200 | 84 ms | refused: This page is too large to read.
+after | long styles above many elements | 2.9 MB | HTTP 200 | 1069 ms | refused: This page is too large to read.
+after | deep nesting | 0.7 MB | HTTP 200 | 236 ms | refused: This page is too large to read.
+after | entity-heavy | 4.0 MB | HTTP 200 | 81 ms | refused: This page is too large to read.
+after | svg contexts | 0.8 MB | HTTP 200 | 17 ms | refused: This page is too large to read.
+
+Run 2:
+after | made-up posting (warm-up) | 0.0 MB | HTTP 200 | 59 ms | ok: "Payroll Clerk" at "Brightwater Tile Co."
+after | made-up posting | 0.0 MB | HTTP 200 | 13 ms | ok: "Payroll Clerk" at "Brightwater Tile Co."
+after | many attributes | 3.9 MB | HTTP 200 | 109 ms | refused: This page is too large to read.
+after | long styles above many elements | 2.9 MB | HTTP 200 | 1481 ms | refused: This page is too large to read.
+after | deep nesting | 0.7 MB | HTTP 200 | 247 ms | refused: This page is too large to read.
+after | entity-heavy | 4.0 MB | HTTP 200 | 93 ms | refused: This page is too large to read.
+after | svg contexts | 0.8 MB | HTTP 200 | 20 ms | refused: This page is too large to read.
+
+Edge runtime log: each run logged "CPU time soft limit reached" once, on the long-styles request. Neither run logged a CPU hard limit or a memory limit.

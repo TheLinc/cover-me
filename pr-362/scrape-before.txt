@@ -1,3 +1,29 @@
-before | made-up posting | 0.0 MB | HTTP 200 | 47 ms | ok: "Payroll Clerk" at "Unknown Company"
-before | many attributes | 3.6 MB | HTTP 546 | 1727 ms | {"code":"WORKER_LIMIT","message":"Worker failed to respond due to a resource limit (please check logs)"}
-before | long styles above many elements | 2.9 MB | HTTP 546 | 3392 ms | {"code":"WORKER_LIMIT","message":"Worker failed to respond due to a resource limit (please check logs)"}
+#357's branch (origin/fix/scrape-cpu-and-answer-box) at 1b79791b, served with supabase functions serve on a private local stack.
+Each page sent alone, gzipped, to POST /functions/v1/scrape.
+
+before | made-up posting (warm-up) | 0.0 MB | HTTP 200 | 58 ms | ok: "Payroll Clerk" at "Brightwater Tile Co."
+before | made-up posting | 0.0 MB | HTTP 200 | 14 ms | ok: "Payroll Clerk" at "Brightwater Tile Co."
+before | many attributes | 3.9 MB | HTTP 546 | 1550 ms | {"code":"WORKER_LIMIT","message":"Worker failed to respond due to a resource limit (please check logs)"}
+before | long styles above many elements | 2.9 MB | HTTP 546 | 3298 ms | {"code":"WORKER_LIMIT","message":"Worker failed to respond due to a resource limit (please check logs)"}
+before | deep nesting | 0.7 MB | HTTP 546 | 3224 ms | {"code":"WORKER_LIMIT","message":"Worker failed to respond due to a resource limit (please check logs)"}
+before | entity-heavy | 4.0 MB | HTTP 546 | 2080 ms | {"code":"WORKER_LIMIT","message":"Worker failed to respond due to a resource limit (please check logs)"}
+before | svg contexts | 0.8 MB | HTTP 200 | 1141 ms | refused: This page is too large to read.
+
+Edge runtime log lines for this run:
+serving the request with supabase/functions/scrape
+serving the request with supabase/functions/scrape
+serving the request with supabase/functions/scrape
+CPU time soft limit reached: 
+memory limit reached for the worker: 
+serving the request with supabase/functions/scrape
+failed to send memory limit reached notification(isolate may already be terminating): , kind: mem_check
+CPU time soft limit reached: 
+CPU time hard limit reached: 
+serving the request with supabase/functions/scrape
+CPU time soft limit reached: 
+CPU time hard limit reached: 
+serving the request with supabase/functions/scrape
+CPU time soft limit reached: 
+memory limit reached for the worker: 
+serving the request with supabase/functions/scrape
+failed to send memory limit reached notification(isolate may already be terminating): , kind: v8
