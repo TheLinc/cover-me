@@ -125,9 +125,8 @@ Deno.serve(async (req) => {
 
 // Sonnet for cover letters: the letter is the product's flagship "must sound
 // human" artifact and the prompt carries ~60 constraints — the small models
-// are the ones that leak AI-tells and drop rules. Tailoring is on Sonnet too.
-// A decline (stop_reason "refusal") comes back with no text, which the caller
-// treats as an empty response (https://github.com/TheLinc/cover-me/commit/46f809a).
+// are the ones that leak AI-tells and drop rules. Tailoring is on Sonnet too
+// (https://github.com/TheLinc/cover-me/commit/46f809a).
 async function callClaude(messages: Array<{ role: 'user' | 'assistant'; content: string }>): Promise<string> {
   const res = await fetch(ANTHROPIC_MESSAGES_URL, {
     method: 'POST',
@@ -183,8 +182,6 @@ const pick = (list: string[]) => list[Math.floor(Math.random() * list.length)]
 function pickLetterVariation(): LetterVariation {
   return { signOff: pick(SIGN_OFFS), hookPattern: pick(HOOK_PATTERNS), closePattern: pick(CLOSE_PATTERNS) }
 }
-
-// Mirrors buildPrompt in extension/src/lib/ai/index.ts; scripts/check-prompt-sync.mjs compares them (https://github.com/TheLinc/cover-me/commit/46f809a).
 
 function buildPrompt(
   job: { title: string; company: string; description: string },

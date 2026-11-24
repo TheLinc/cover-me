@@ -42,8 +42,6 @@ export async function createUser(tier: 'hosted_free' | 'hosted_pro' = 'hosted_fr
   return { id: data.user.id, email, token: session.session.access_token }
 }
 
-// The token every unsubscribe link carries: the user id and an HMAC of it under
-// EMAIL_TOKEN_SECRET (the secret scripts/test-functions.mjs gave the functions) (#124).
 export function unsubscribeToken(userId: string) {
   const mac = createHmac('sha256', env('EMAIL_TOKEN_SECRET')).update(`unsubscribe:${userId}`).digest('base64url')
   return `${userId}.${mac}`
@@ -62,7 +60,6 @@ interface CallOptions {
   // Sent as-is (e.g. a gzipped body); set Content-Type in headers (#3).
   rawBody?: Uint8Array
   signal?: AbortSignal
-  // 'manual' to see a redirect itself rather than where it leads (#116).
   redirect?: RequestRedirect
 }
 
@@ -124,8 +121,6 @@ export async function waitForParsedResume(userId: string, timeoutMs = 10_000): P
   }
 }
 
-// Stores a parsed copy the way the functions do (AES-256-GCM, IV first,
-// base64), with the key scripts/test-functions.mjs gave them (#67).
 export async function cacheParsedResume(userId: string, parsed: unknown) {
   const key = await crypto.subtle.importKey('raw', Buffer.from(env('ENCRYPTION_KEY'), 'hex'), 'AES-GCM', false, ['encrypt'])
   const iv = crypto.getRandomValues(new Uint8Array(12))
@@ -172,7 +167,6 @@ export interface ClaudeRequest {
   betaHeader?: string
 }
 
-// A Sonnet 5.5 decline: HTTP 200, stop_reason "refusal", no text (#1).
 export const REFUSAL_BODY = JSON.stringify({
   id: 'msg_mock', type: 'message', role: 'assistant', model: 'claude-sonnet-5-5',
   content: [], stop_reason: 'refusal', stop_details: { type: 'refusal', category: 'general_harms' },

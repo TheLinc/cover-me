@@ -49,7 +49,6 @@ Deno.serve(async (req) => {
     supplemental = text(body.supplemental, MAX_SUPPLEMENTAL).trim() || undefined
     // Only a fixed value reaches PostHog (#235).
     jobSource = body.jobSource === 'saved' ? 'saved' : 'page'
-    // A change to an answer already in the box: both parts or neither (#235).
     const r = body.revision
     if (r !== undefined) {
       if (typeof r?.previous !== 'string' || typeof r?.request !== 'string' || !r.previous.trim() || !r.request.trim()) {
@@ -103,7 +102,6 @@ Deno.serve(async (req) => {
     }
     // A decline (stop_reason "refusal") comes back with no text (#235).
     if (!answer) return { error: FAILED }
-    // One count per answer, with fixed values only, unless the account opted out (#235).
     EdgeRuntime.waitUntil(captureUsage(supabase, 'answer_generated', userId, { tier, hasCharLimit: !!maxLength, jobSource, revised: !!revision }))
     // What's left after this one, for the status box. Missing if the read
     // fails: the answer still goes out (#235).

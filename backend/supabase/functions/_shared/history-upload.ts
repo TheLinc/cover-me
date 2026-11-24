@@ -1,8 +1,3 @@
-// The applications function's POST body: entries from the extension's local
-// history, saved to the account under their local IDs. check: true only asks
-// which IDs the account already holds.
-// Spec: docs/superpowers/specs/2026-10-13-local-history-upload-design.md (#24)
-
 export interface UploadJob { title?: string; company?: string; url?: string }
 
 export type UploadEntry =
@@ -13,7 +8,7 @@ export interface Upload {
   check: boolean
   letterIds: string[]
   tailoredIds: string[]
-  entries: UploadEntry[] // oldest first; empty for a check (#24)
+  entries: UploadEntry[]
 }
 
 export const MAX_UPLOAD_BYTES = 1_000_000
@@ -40,8 +35,7 @@ function parseJob(v: unknown): UploadJob | null {
   return job
 }
 
-// A date that doesn't parse, or is in the future (a wrong device clock),
-// becomes now (#24).
+// A future date means a wrong device clock (#24).
 function when(v: unknown, now: number): string {
   const t = typeof v === 'string' ? Date.parse(v) : NaN
   return new Date(Number.isNaN(t) || t > now ? now : t).toISOString()

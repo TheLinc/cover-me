@@ -164,7 +164,6 @@ describe('generate', () => {
   it('refuses past the free weekly allowance without calling Claude', async () => {
     user = await createUser()
     await uploadResume(user)
-    // The 10 starter generations last month, 5 more already this week (#10)
     await setUsage(user.id, [{ daysAgo: 40, count: 10 }, { daysAgo: 0, count: 5 }])
 
     const res = await callFunction('generate', { token: user.token, body: { job: JOB } })

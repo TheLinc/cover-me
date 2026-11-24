@@ -379,8 +379,8 @@ Deno.serve(async (req) => {
   const consumed = await consumeGeneration(supabase, userId)
   if (!consumed.ok) return json(consumed.body, consumed.status)
   let charged = true
-  // Set once Anthropic sends text or finishes the stream. Only a failed call is
-  // refunded: an empty, refused or broken reply still costs the generation (#0000).
+  // Only a failed call is refunded: an empty, refused or broken reply still
+  // costs the generation (#0000).
   let replied = false
 
   const refund = async () => {
@@ -512,6 +512,7 @@ Deno.serve(async (req) => {
         } catch {
           continue
         }
+        if (ev.type === 'message_start') replied = true
         if (ev.type === 'error') {
           const e = ev.error as { message?: string } | undefined
           throw new Error(e?.message ?? 'stream error')
@@ -519,7 +520,6 @@ Deno.serve(async (req) => {
         if (ev.type === 'content_block_delta') {
           const delta = ev.delta as { type?: string; text?: string; thinking?: string } | undefined
           if (delta?.type === 'text_delta' && delta.text) {
-            replied = true
             raw += delta.text
             onDelta?.(delta.text)
           } else if (delta?.type === 'thinking_delta' && delta.thinking) {
@@ -528,7 +528,6 @@ Deno.serve(async (req) => {
         }
       }
     }
-    replied = true
     return raw
   }
 

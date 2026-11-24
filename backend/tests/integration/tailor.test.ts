@@ -487,6 +487,24 @@ describe('tailor', () => {
     expect(await quotaUsedToday(user.id)).toBe(1)
   })
 
+  it('rejects an oversized previous resume or body before charging', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    const previous = { summary: 'x'.repeat(50_001), experience: [] }
+    expect((await callFunction('tailor', { token: user.token, body: { job: JOB, previous } })).status).toBe(400)
+    expect((await callFunction('tailor', { token: user.token, body: { job: JOB, supplemental: 'x'.repeat(1_000_001) } })).status).toBe(413)
+    expect(await quotaUsedToday(user.id)).toBe(0)
+  })
+
+  it('refunds a stream that answers 200 with no message in it', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    await mockClaude.replyNext('')
+    const res = await callFunction('tailor', { token: user.token, body: { job: JOB }, headers: { Accept: 'application/x-ndjson' } })
+    expect((await readNdjson(res)).at(-1)?.type).toBe('error')
+    expect(await quotaUsedToday(user.id)).toBe(0)
+  })
+
   it('keeps the charge when the resume parse reply is not a resume', async () => {
     user = await createUser()
     await uploadResume(user)
