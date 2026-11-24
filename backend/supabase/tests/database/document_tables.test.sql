@@ -1,18 +1,20 @@
 -- Client grants and owner-bound application links on the document tables (033).
 -- Run: pnpm db:test   (from backend/)
 begin;
-select plan(30);
+select plan(32);
 
 insert into auth.users (id, email) values
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'alice@cover-me.test'),
-  ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'bob@cover-me.test');
+  ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'bob@cover-me.test'),
+  ('cccccccc-cccc-4ccc-8ccc-cccccccccccc', 'carol@cover-me.test');
 
 insert into public.resumes (user_id, text_encrypted) values
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'alice-ciphertext');
 
 insert into public.job_applications (id, user_id, title, company, url) values
   ('aaaaaaaa-0000-4000-8000-000000000001', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'Engineer', 'Acme', 'https://example.com/a'),
-  ('bbbbbbbb-0000-4000-8000-000000000001', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'Designer', 'Globex', 'https://example.com/b');
+  ('bbbbbbbb-0000-4000-8000-000000000001', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'Designer', 'Globex', 'https://example.com/b'),
+  ('cccccccc-0000-4000-8000-000000000001', 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', 'Analyst', 'Initech', 'https://example.com/c');
 
 insert into public.cover_letters (id, user_id, job_application_id, letter_encrypted) values
   ('aaaaaaaa-1111-4000-8000-000000000001', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'aaaaaaaa-0000-4000-8000-000000000001', 'alice-letter');
@@ -20,7 +22,6 @@ insert into public.cover_letters (id, user_id, job_application_id, letter_encryp
 insert into public.tailored_resumes (id, user_id, job_application_id, resume_json_encrypted) values
   ('aaaaaaaa-2222-4000-8000-000000000001', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'aaaaaaaa-0000-4000-8000-000000000001', 'alice-tailored');
 
--- ── No client grants ─────────────────────────────────────────────────────────
 
 select ok(
   not exists (
@@ -62,7 +63,6 @@ select throws_ok($$delete from public.tailored_resumes$$, '42501', null, 'authen
 
 reset role;
 
--- ── Application links stay with their owner, even for the service role ───────
 
 set local role service_role;
 
@@ -115,7 +115,6 @@ select lives_ok(
 
 reset role;
 
--- ── Cascades still follow the application ────────────────────────────────────
 
 delete from public.job_applications where id = 'aaaaaaaa-0000-4000-8000-000000000001';
 select is((select count(*)::int from public.cover_letters where job_application_id is not null), 0,
@@ -130,6 +129,42 @@ select is(
   (select count(*)::int from public.cover_letters where user_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')
   + (select count(*)::int from public.tailored_resumes where user_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),
   0, 'deleting the user deletes their remaining documents'
+);
+
+-- 033's cleanup, rerun with the old single-column FK back in place.
+alter table public.cover_letters drop constraint cover_letters_job_application_id_fkey;
+alter table public.tailored_resumes drop constraint tailored_resumes_job_application_id_fkey;
+insert into public.cover_letters (id, user_id, job_application_id, letter_encrypted) values
+  ('bbbbbbbb-1111-4000-8000-000000000001', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'bbbbbbbb-0000-4000-8000-000000000001', 'bob-letter'),
+  ('bbbbbbbb-1111-4000-8000-000000000002', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'cccccccc-0000-4000-8000-000000000001', 'bob-crossed');
+insert into public.tailored_resumes (id, user_id, job_application_id, resume_json_encrypted) values
+  ('bbbbbbbb-2222-4000-8000-000000000002', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'cccccccc-0000-4000-8000-000000000001', 'bob-crossed');
+
+update public.cover_letters cl
+set job_application_id = null
+where job_application_id is not null
+  and not exists (
+    select 1 from public.job_applications ja
+    where ja.id = cl.job_application_id and ja.user_id = cl.user_id
+  );
+
+update public.tailored_resumes tr
+set job_application_id = null
+where job_application_id is not null
+  and not exists (
+    select 1 from public.job_applications ja
+    where ja.id = tr.job_application_id and ja.user_id = tr.user_id
+  );
+
+select results_eq(
+  $$select id, job_application_id from public.cover_letters where user_id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' order by id$$,
+  $$values ('bbbbbbbb-1111-4000-8000-000000000001'::uuid, 'bbbbbbbb-0000-4000-8000-000000000001'::uuid),
+           ('bbbbbbbb-1111-4000-8000-000000000002'::uuid, null::uuid)$$,
+  'the cleanup unlinks a cover letter from another user''s application and keeps its own link'
+);
+select is(
+  (select job_application_id from public.tailored_resumes where id = 'bbbbbbbb-2222-4000-8000-000000000002'), null,
+  'the cleanup unlinks a tailored resume from another user''s application'
 );
 
 select * from finish();

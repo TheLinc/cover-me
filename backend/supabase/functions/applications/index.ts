@@ -106,10 +106,8 @@ Deno.serve(async (req) => {
     .eq('id', userId)
     .single()
 
-  // Every account tracks its jobs: summaries, stages, deletes. What carries
-  // the letters and resumes themselves (the full list, one application in
-  // full, the upload) is Pro. The extension's history reads the full list,
-  // so a free account there still gets 403, as before (#101).
+  // The extension's history reads the full list, so a free account there
+  // gets 403 while the dashboard still shows its summaries (#101).
   const isPro = userData?.tier === 'hosted_pro'
   const proOnly = () => json({ error: 'Application history requires a Pro subscription.' }, 403)
 
@@ -243,8 +241,6 @@ Deno.serve(async (req) => {
     return json({ stage: data.stage, stageChangedAt: data.stage_changed_at })
   }
 
-  // POST never overwrites an existing row, so a local ID that is already
-  // taken stays with its owner (#24).
   if (req.method === 'POST') {
     if (!isPro) return proOnly()
     const raw = await readBody(req, MAX_UPLOAD_BYTES)

@@ -1,11 +1,12 @@
 -- Row level security and cascade deletes.
 -- Run: pnpm db:test   (from backend/)
 --
--- Clients (extension, web dashboard) talk to PostgREST with the user's JWT, so
--- these policies are the only thing between a user and other users' data, or
--- between a free user and a free Pro upgrade.
+-- Clients (extension, web dashboard) read users and rate_limits through
+-- PostgREST with the user's JWT, so these policies keep each user to their own
+-- rows and off a free Pro upgrade. The document tables have no client grants
+-- at all (document_tables.test.sql).
 begin;
-select plan(13);
+select plan(11);
 
 -- ── Fixtures (as postgres, bypassing RLS) ────────────────────────────────────
 
@@ -56,10 +57,6 @@ select set_config('request.jwt.claims', '{"sub":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaa
 select results_eq('select id from public.users', $$values ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'::uuid)$$, 'users: sees only own row');
 select results_eq('select count from public.rate_limits', $$values (5)$$, 'rate_limits: sees only own row (dashboard usage bar)');
 
--- Writes against Bob's rows fail: 033 took client grants on these tables.
-select pg_temp.try($$update public.resumes set text_encrypted = 'pwned' where user_id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'$$);
-select pg_temp.try($$delete from public.job_applications where id = 'bbbbbbbb-0000-4000-8000-000000000001'$$);
-
 -- Privilege escalation: tier and the daily quota are server-owned. The Stripe
 -- webhook and Edge Functions change them with the service key; a user must not.
 select pg_temp.try($$update public.users set tier = 'hosted_pro' where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'$$);
@@ -71,8 +68,6 @@ select pg_temp.try($$insert into public.rate_limits (user_id, date, count) value
 
 reset role;
 
-select is((select text_encrypted from public.resumes where user_id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'), 'bob-ciphertext', 'cannot update another user''s resume');
-select is((select count(*)::int from public.job_applications where id = 'bbbbbbbb-0000-4000-8000-000000000001'), 1, 'cannot delete another user''s job application');
 select is((select tier from public.users where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'), 'hosted_free', 'cannot upgrade own tier to hosted_pro');
 select is((select count from public.rate_limits where user_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' and date = current_date), 5, 'cannot reset or delete own daily quota');
 select is((select count(*)::int from public.rate_limits where user_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' and date = current_date + 1), 0, 'cannot pre-seed own quota for another day');

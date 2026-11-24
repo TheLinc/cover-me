@@ -42,7 +42,7 @@ describe('REST API as a signed-in free user', () => {
   })
 
   it.each(['resumes', 'cover_letters', 'job_applications', 'tailored_resumes'])('cannot read or write %s', async (table) => {
-    const read = await db.from(table).select('id').limit(1)
+    const read = await db.from(table).select('*').limit(1)
     expect(read.error?.code).toBe('42501')
     const write = await db.from(table).insert({ user_id: user.id })
     expect(write.error?.code).toBe('42501')
