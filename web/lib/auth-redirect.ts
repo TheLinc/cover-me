@@ -41,7 +41,9 @@ export function afterOAuth(plan: string | null, next: string | null = null): str
   return plan === 'pro' ? '/dashboard?upgrade=1' : safeNext(next) ?? '/dashboard'
 }
 
-export function hashTokens(hash: string): { access_token: string; refresh_token: string } | null {
+export type LinkTokens = { access_token: string; refresh_token: string }
+
+export function hashTokens(hash: string): LinkTokens | null {
   const h = new URLSearchParams(hash.replace(/^#/, ''))
   const access_token = h.get('access_token')
   const refresh_token = h.get('refresh_token')

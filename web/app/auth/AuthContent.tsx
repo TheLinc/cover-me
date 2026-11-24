@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase";
-import { afterOAuth, hashReturn, hashTokens, oauthCancelled, oauthErrorDescription, oauthRedirectUrl, safeNext, sessionSwitch } from "@/lib/auth-redirect";
+import { afterOAuth, hashReturn, hashTokens, type LinkTokens, oauthCancelled, oauthErrorDescription, oauthRedirectUrl, safeNext, sessionSwitch } from "@/lib/auth-redirect";
 import { saveProductUpdates } from "@/lib/email-preferences";
 import { hasSessionCookie } from "@/lib/session-cookie";
 import { PLAN_LIMITS } from "@/lib/limits";
@@ -80,7 +80,7 @@ function AuthForm() {
   // empty until after the first render (#42).
   const [announce, setAnnounce] = useState(false);
   const [accountEmail, setAccountEmail] = useState("");
-  const [switchTo, setSwitchTo] = useState<{ tokens: { access_token: string; refresh_token: string }; email: string; current: string } | null>(null);
+  const [switchTo, setSwitchTo] = useState<{ tokens: LinkTokens; email: string; current: string } | null>(null);
 
   const supabase = createClient();
 
@@ -114,12 +114,10 @@ function AuthForm() {
     const hash = window.location.hash;
     const tokens = hashTokens(hash);
     if (tokens) {
-      // The PKCE client ignores implicit-flow tokens and the dashboard checks
-      // cookies. Without setSession the user lands on "confirmed" signed out,
-      // and a password reset has no session. https://github.com/TheLinc/cover-me/commit/3af70b9
-      Promise.all([supabase.auth.getUser(tokens.access_token), supabase.auth.getUser()]).then(([incoming, current]) => {
-        if (sessionSwitch(incoming.data.user?.id, current.data.user?.id) === "ask") {
-          setSwitchTo({ tokens, email: incoming.data.user?.email ?? "", current: current.data.user?.email ?? "" });
+      Promise.all([supabase.auth.getUser(tokens.access_token), supabase.auth.getUser()]).then(async ([incoming, current]) => {
+        const currentUser = current.data.user ?? (await supabase.auth.getSession()).data.session?.user;
+        if (sessionSwitch(incoming.data.user?.id, currentUser?.id) === "ask") {
+          setSwitchTo({ tokens, email: incoming.data.user?.email ?? "", current: currentUser?.email ?? "" });
           setWaiting(null);
         } else {
           adoptLinkSession(tokens);
@@ -178,7 +176,10 @@ function AuthForm() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount: https://github.com/TheLinc/cover-me/commit/7278c73
   }, []);
 
-  function adoptLinkSession(tokens: { access_token: string; refresh_token: string }) {
+  // The PKCE client ignores implicit-flow tokens and the dashboard checks
+  // cookies. Without setSession the user lands on "confirmed" signed out,
+  // and a password reset has no session. https://github.com/TheLinc/cover-me/commit/3af70b9
+  function adoptLinkSession(tokens: LinkTokens) {
     setSwitchTo(null);
     setWaiting("email");
     supabase.auth.setSession(tokens).finally(() => setWaiting(null));
