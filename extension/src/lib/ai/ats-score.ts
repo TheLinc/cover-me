@@ -45,7 +45,8 @@ function coveredByAlternative(keyword: string, ctx: ScoreContext): boolean {
   if (!ctx.jobDescription || !ctx.candidate) return false
   const k = escapeRe(keyword)
   const sep = '\\s*(?:/|\\bor\\b)\\s*'
-  const patterns = [new RegExp(`${k}${sep}(${OPTION})`, 'gi'), new RegExp(`(${OPTION})${sep}${k}`, 'g')]
+  // Starting only where a word starts keeps this linear on a long capitalized run (#0000).
+  const patterns = [new RegExp(`${k}${sep}(${OPTION})`, 'gi'), new RegExp(`(?<![\\w.+#-])(${OPTION})${sep}${k}`, 'g')]
   for (const re of patterns) {
     for (const m of ctx.jobDescription.matchAll(re)) {
       const alt = m[1].trim().replace(/[.,;:]+$/, '')

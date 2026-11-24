@@ -10,6 +10,8 @@ import { handleCors, json } from '../_shared/cors.ts'
 import { heartbeatJson } from '../_shared/heartbeat-json.ts'
 import { decrypt } from '../_shared/encrypt.ts'
 import { captureUsage } from '../_shared/posthog.ts'
+import { MAX_BODY_BYTES, MAX_SUPPLEMENTAL, readJob, text } from '../_shared/job-input.ts'
+import { readBody } from '../_shared/read-body.ts'
 
 declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void }
 
@@ -18,6 +20,7 @@ const SUPABASE_SECRET_KEY = Deno.env.get('SERVICE_KEY')!
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')!
 
 const FAILED = 'Could not write an answer. Please try again.'
+const MAX_QUESTION = 2_000
 
 Deno.serve(async (req) => {
   const cors = handleCors(req)
@@ -31,37 +34,35 @@ Deno.serve(async (req) => {
   if (authError || !user) return json({ error: 'Invalid token' }, 401)
   const userId = user.id
 
-  let job: { title: string; company: string; description: string }
+  let body
   let question: string
   let maxLength: number | undefined
   let supplemental: string | undefined
   let jobSource: 'page' | 'saved'
   let revision: AnswerRevision | undefined
   try {
-    const body = await req.json()
-    job = body.job
-    question = typeof body.question === 'string' ? body.question.trim() : ''
+    const raw = await readBody(req, MAX_BODY_BYTES)
+    if (raw === null) return json({ error: 'Request too large' }, 413)
+    body = JSON.parse(raw)
+    question = text(body.question, MAX_QUESTION).trim()
     maxLength = Number.isInteger(body.maxLength) && body.maxLength > 0 ? body.maxLength : undefined
-    supplemental = typeof body.supplemental === 'string' ? body.supplemental.trim() || undefined : undefined
-    // Only a fixed value reaches PostHog.
+    supplemental = text(body.supplemental, MAX_SUPPLEMENTAL).trim() || undefined
+    // Only a fixed value reaches PostHog (#235).
     jobSource = body.jobSource === 'saved' ? 'saved' : 'page'
-    // A change to an answer already in the box: both parts or neither.
+    // A change to an answer already in the box: both parts or neither (#235).
     const r = body.revision
     if (r !== undefined) {
       if (typeof r?.previous !== 'string' || typeof r?.request !== 'string' || !r.previous.trim() || !r.request.trim()) {
         return json({ error: 'Invalid revision' }, 400)
       }
-      revision = { previous: r.previous, request: r.request }
+      revision = { previous: r.previous.slice(0, MAX_SUPPLEMENTAL), request: r.request.slice(0, MAX_QUESTION) }
     }
   } catch {
     return json({ error: 'Invalid request body' }, 400)
   }
   if (!question) return json({ error: 'Missing the question' }, 400)
-  // Checked as strings: the prompt is built after the answer is counted.
-  if (typeof job?.title !== 'string' || typeof job.description !== 'string' || !job.title || !job.description) {
-    return json({ error: 'Missing job title or description' }, 400)
-  }
-  if (typeof job.company !== 'string') job.company = ''
+  const job = readJob(body.job)
+  if (!job) return json({ error: 'Missing job title or description' }, 400)
 
   const { data: resumeRow } = await supabase.from('resumes').select('text_encrypted').eq('user_id', userId).maybeSingle()
   if (!resumeRow) return json({ error: 'No resume found. Upload your resume in the extension first.' }, 400)
@@ -75,13 +76,15 @@ Deno.serve(async (req) => {
   const { data: userRow } = await supabase.from('users').select('tier').eq('id', userId).single()
   const tier = userRow?.tier ?? 'hosted_free'
 
-  // Charged only once the request is valid, so a bad request never costs an answer.
+  // Charged only once the request is valid, so a bad request never costs an answer (#235).
   const today = new Date().toISOString().split('T')[0]
   const consumed = await consumeAnswer(supabase, userId)
   if (!consumed.ok) {
     if (consumed.allowance) EdgeRuntime.waitUntil(captureUsage(supabase, 'answer_limit_hit', userId, { tier, kind: consumed.allowance.kind }))
     return json(consumed.body, consumed.status)
   }
+  // Only for a failed call to Anthropic: an empty or declined reply still costs
+  // the answer (#0000).
   const refund = async () => {
     const { error } = await supabase.rpc('refund_answer', { p_user_id: userId, p_date: today })
     if (error) console.error('Answer refund RPC error:', error.message)
@@ -98,15 +101,12 @@ Deno.serve(async (req) => {
       await refund()
       return { error: FAILED }
     }
-    // A decline (stop_reason "refusal") comes back with no text.
-    if (!answer) {
-      await refund()
-      return { error: FAILED }
-    }
-    // One count per answer, with fixed values only, unless the account opted out.
+    // A decline (stop_reason "refusal") comes back with no text (#235).
+    if (!answer) return { error: FAILED }
+    // One count per answer, with fixed values only, unless the account opted out (#235).
     EdgeRuntime.waitUntil(captureUsage(supabase, 'answer_generated', userId, { tier, hasCharLimit: !!maxLength, jobSource, revised: !!revision }))
     // What's left after this one, for the status box. Missing if the read
-    // fails: the answer still goes out.
+    // fails: the answer still goes out (#235).
     const { data: allowance } = await supabase.rpc('answer_allowance', { p_user_id: userId })
     return { answer, allowance: allowance ?? undefined }
   })
@@ -114,7 +114,7 @@ Deno.serve(async (req) => {
 
 // The instructions, posting and resume go first with a cache breakpoint: they
 // repeat for every question on one application, and a cached read costs a
-// fraction of a fresh one. The question comes after it.
+// fraction of a fresh one. The question comes after it (#235).
 async function callClaude(context: string, question: string): Promise<string> {
   const res = await fetch(ANTHROPIC_MESSAGES_URL, {
     method: 'POST',

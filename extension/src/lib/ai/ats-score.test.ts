@@ -74,6 +74,21 @@ describe('scoreFromMatch', () => {
     expect(r.score).toBe(65)
   })
 
+  it('finds the other option when it is a symbol, dotted or two-word name', () => {
+    const r = scoreFromMatch(
+      { tier1Missing: ['Kubernetes', 'Go', 'Cloud Run', 'Deno'] },
+      { jobDescription: 'Ship on Docker / Kubernetes, in C#/Go, on AWS Lambda or Cloud Run, with Node.js or Deno.', candidate: 'Docker, C#, AWS Lambda, Node.js' },
+    )
+    expect(r.gaps).toEqual([])
+  })
+
+  it('scores 80 missing keywords against a posting with a long capitalized run quickly', () => {
+    const posting = 'We are hiring a backend engineer to build services in Go and Python. '.repeat(15).slice(0, 1000) + 'Z'.repeat(19_000)
+    const started = performance.now()
+    scoreFromMatch({ tier1Missing: Array.from({ length: 80 }, (_, i) => `Skill${i}`) }, { jobDescription: posting, candidate: 'Resume text' })
+    expect(performance.now() - started).toBeLessThan(500)
+  })
+
   it('needs no job context for the plain score', () => {
     expect(scoreFromMatch({}).score).toBe(100)
     expect(scoreFromMatch({ tier1Missing: ['X'], tier2Missing: ['Y'] }).score).toBe(0)

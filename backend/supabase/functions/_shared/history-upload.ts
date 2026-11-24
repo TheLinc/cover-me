@@ -1,7 +1,7 @@
 // The applications function's POST body: entries from the extension's local
 // history, saved to the account under their local IDs. check: true only asks
 // which IDs the account already holds.
-// Spec: docs/superpowers/specs/2026-10-13-local-history-upload-design.md
+// Spec: docs/superpowers/specs/2026-10-13-local-history-upload-design.md (#24)
 
 export interface UploadJob { title?: string; company?: string; url?: string }
 
@@ -13,15 +13,15 @@ export interface Upload {
   check: boolean
   letterIds: string[]
   tailoredIds: string[]
-  entries: UploadEntry[] // oldest first; empty for a check
+  entries: UploadEntry[] // oldest first; empty for a check (#24)
 }
 
 export const MAX_UPLOAD_BYTES = 1_000_000
 const MAX_LETTERS = 50
 const MAX_TAILORED = 20
-const MAX_LETTER_CHARS = 20_000
+export const MAX_LETTER_CHARS = 20_000
 export const MAX_RESUME_JSON = 50_000
-const MAX_JOB_FIELD = 8_192 // the extension trims to this; page URLs can carry long tracking parameters
+export const MAX_JOB_FIELD = 8_192 // the extension trims to this; page URLs can carry long tracking parameters (#24)
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export const isUuid = (v: unknown): v is string => typeof v === 'string' && UUID.test(v)
@@ -41,7 +41,7 @@ function parseJob(v: unknown): UploadJob | null {
 }
 
 // A date that doesn't parse, or is in the future (a wrong device clock),
-// becomes now.
+// becomes now (#24).
 function when(v: unknown, now: number): string {
   const t = typeof v === 'string' ? Date.parse(v) : NaN
   return new Date(Number.isNaN(t) || t > now ? now : t).toISOString()
@@ -71,7 +71,7 @@ export function parseUpload(body: unknown, now = Date.now()): Upload | { error: 
     if (!job || !isObject(e.resume) || JSON.stringify(e.resume).length > MAX_RESUME_JSON) return { error: 'Invalid resume' }
     upload.entries.push({ kind: 'tailored', id: e.id, job, createdAt: when(e.createdAt, now), resume: e.resume })
   }
-  // Oldest first, so a new job application takes its oldest entry's date.
+  // Oldest first, so a new job application takes its oldest entry's date (#24).
   upload.entries.sort((a, b) => a.createdAt.localeCompare(b.createdAt))
   return upload
 }

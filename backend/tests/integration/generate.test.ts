@@ -30,7 +30,7 @@ describe('generate', () => {
   })
 
   // Every account's generation is tracked on the board; the letter itself
-  // stays in the browser unless the account is Pro.
+  // stays in the browser unless the account is Pro (#105).
   it("a free account's letter puts its job on the board once per posting link", async () => {
     user = await createUser()
     await uploadResume(user)
@@ -48,7 +48,7 @@ describe('generate', () => {
   })
 
   // A Pro letter: generate tracks the job, then the extension saves the letter
-  // (letters function), which finds that same application by its link.
+  // (letters function), which finds that same application by its link (#105).
   it("a Pro account's letter and its save make one application", async () => {
     user = await createUser('hosted_pro')
     await uploadResume(user)
@@ -63,7 +63,7 @@ describe('generate', () => {
 
   // The extension's history reads the full list, which lists documents: a job
   // tracked while free, with none on the server, would show there as an empty
-  // entry beside the browser's copy of the same letter.
+  // entry beside the browser's copy of the same letter (#105).
   it('the full list leaves out applications with no documents; the board keeps them', async () => {
     user = await createUser()
     await uploadResume(user)
@@ -85,7 +85,7 @@ describe('generate', () => {
     expect(first.model).toBe('claude-sonnet-5-5')
     // With thinking off, letters cited posting requirements the resume lacks in
     // 26 of 32 eval cases; at high effort, 0 of 32. Thinking counts toward
-    // max_tokens, so the limit must leave room for it.
+    // max_tokens, so the limit must leave room for it (#1).
     expect(first.thinking).toEqual({ type: 'adaptive' })
     expect(first.output_config).toEqual({ effort: 'high' })
     expect(first.max_tokens).toBeGreaterThanOrEqual(8000)
@@ -94,7 +94,7 @@ describe('generate', () => {
   })
 
   // Chrome stops an extension service worker whose fetch() gets no response for
-  // 30 s. Headers must arrive before Claude answers, not after.
+  // 30 s. Headers must arrive before Claude answers, not after (#1).
   it('sends headers before the letter is ready', async () => {
     user = await createUser()
     await uploadResume(user)
@@ -109,14 +109,15 @@ describe('generate', () => {
     expect(letter).toContain('Dear Acme Team')
   }, 20_000)
 
-  // Headers have already gone out as 200, so a late failure is an { error } body.
-  it('refunds the generation when Claude declines the request', async () => {
+  // Headers have already gone out as 200, so a late failure is an { error } body (#1).
+  // Only a failed call to Anthropic is refunded, not a reply with no letter in it (#0000).
+  it('keeps the generation when Claude declines the request', async () => {
     user = await createUser()
     await uploadResume(user)
     await mockClaude.refuseNext()
     const res = await callFunction('generate', { token: user.token, body: { job: JOB } })
     expect((await res.json()).error).toMatch(/Empty response/)
-    expect(await quotaUsedToday(user.id)).toBe(0)
+    expect(await quotaUsedToday(user.id)).toBe(1)
   })
 
   it('refunds the generation when the user has no resume', async () => {
@@ -134,6 +135,23 @@ describe('generate', () => {
     expect(await quotaUsedToday(user.id)).toBe(0)
   })
 
+  it('rejects a job description that is not text before charging or calling Claude', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    const res = await callFunction('generate', { token: user.token, body: { job: { ...JOB, description: [JOB.description] } } })
+    expect(res.status).toBe(400)
+    expect(await quotaUsedToday(user.id)).toBe(0)
+    expect(await mockClaude.requests()).toHaveLength(0)
+  })
+
+  it('rejects a body over 1 MB', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    const res = await callFunction('generate', { token: user.token, body: { job: JOB, supplemental: 'x'.repeat(1_000_001) } })
+    expect(res.status).toBe(413)
+    expect(await quotaUsedToday(user.id)).toBe(0)
+  })
+
   it('refunds the generation when Claude fails', async () => {
     user = await createUser()
     await uploadResume(user)
@@ -146,7 +164,7 @@ describe('generate', () => {
   it('refuses past the free weekly allowance without calling Claude', async () => {
     user = await createUser()
     await uploadResume(user)
-    // The 10 starter generations last month, 5 more already this week
+    // The 10 starter generations last month, 5 more already this week (#10)
     await setUsage(user.id, [{ daysAgo: 40, count: 10 }, { daysAgo: 0, count: 5 }])
 
     const res = await callFunction('generate', { token: user.token, body: { job: JOB } })
@@ -177,7 +195,7 @@ describe('generate', () => {
     it('names the offer in the limit message while it is open', async () => {
       const error = await capped()
       expect(error).toContain("You've used this week's 5 free generations")
-      // Available since an hour ago; this refusal is its first showing, so all 7 days are left.
+      // Available since an hour ago; this refusal is its first showing, so all 7 days are left (#219).
       if (COUPON) expect(error).toContain('Your first month of monthly Pro is discounted at checkout for 7 more days.')
       else expect(error).not.toMatch(OFFER)
       const { data } = await admin.from('users').select('first_month_offer_shown_at').eq('id', user!.id).single()
@@ -199,7 +217,7 @@ describe('generate', () => {
       const at = await offerAt(user.id)
       if (!COUPON) return expect(at).toBeNull()
       expect(Date.parse(at!) - Date.now()).toBeGreaterThan(23 * 3_600_000)
-      expect(Date.parse(at!) - Date.now()).toBeLessThanOrEqual(24 * 3_600_000 + 60_000) // a minute of clock skew between Docker and the host
+      expect(Date.parse(at!) - Date.now()).toBeLessThanOrEqual(24 * 3_600_000 + 60_000) // a minute of clock skew between Docker and the host (#219)
     })
 
     it('does not start it before the last generation of the week', async () => {
@@ -246,7 +264,7 @@ describe('generate', () => {
   })
 
   // A bad request is rejected before anything is charged, so it gets its real
-  // error even when the allowance is used up.
+  // error even when the allowance is used up (#10).
   it('rejects an invalid request with 400 before checking the allowance', async () => {
     user = await createUser()
     await uploadResume(user)

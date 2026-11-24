@@ -12,6 +12,17 @@ type NdjsonEvent =
   | { type: 'done'; resume: Record<string, unknown>; savedId?: string }
   | { type: 'error'; error: string }
 
+function sse(text: string): string {
+  const events = [
+    { type: 'message_start', message: { id: 'msg_mock', type: 'message', role: 'assistant', content: [] } },
+    { type: 'content_block_start', index: 0, content_block: { type: 'text', text: '' } },
+    { type: 'content_block_delta', index: 0, delta: { type: 'text_delta', text } },
+    { type: 'content_block_stop', index: 0 },
+    { type: 'message_stop' },
+  ]
+  return events.map((e) => `event: ${e.type}\ndata: ${JSON.stringify(e)}\n\n`).join('')
+}
+
 async function readNdjson(res: Response): Promise<NdjsonEvent[]> {
   const text = await res.text()
   return text.split('\n').filter(Boolean).map((line) => JSON.parse(line))
@@ -451,6 +462,64 @@ describe('tailor', () => {
     const res = await callFunction('tailor', { token: user.token, body: { job: { title: 'Engineer' } } })
     expect(res.status).toBe(400)
     expect(await quotaUsedToday(user.id)).toBe(5)
+  })
+
+  it('rejects a job description that is not text before charging or calling Claude', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    const res = await callFunction('tailor', {
+      token: user.token, body: { job: { ...JOB, description: [JOB.description] } }, headers: { Accept: 'application/x-ndjson' },
+    })
+    expect(res.status).toBe(400)
+    expect(await quotaUsedToday(user.id)).toBe(0)
+    expect(await mockClaude.requests()).toHaveLength(0)
+  })
+
+  // Only a failed call to Anthropic is refunded. Once the model has replied,
+  // the generation stays counted even when its reply can't be used (#0000).
+  it('keeps the charge when the streamed reply fails after its text went out', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    await mockClaude.replyNext(sse('{"summary": "Software engineer'))
+    const res = await callFunction('tailor', { token: user.token, body: { job: JOB }, headers: { Accept: 'application/x-ndjson' } })
+    const events = await readNdjson(res)
+    expect(events.map((e) => e.type)).toEqual(['start', 'delta', 'error'])
+    expect(await quotaUsedToday(user.id)).toBe(1)
+  })
+
+  it('keeps the charge when the resume parse reply is not a resume', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    await clearParsedResume(user.id)
+    await mockClaude.replyNext(JSON.stringify({ type: 'message', role: 'assistant', content: [{ type: 'text', text: 'Sorry, I cannot help.' }], stop_reason: 'end_turn' }))
+    const res = await callFunction('tailor', { token: user.token, body: { job: JOB } })
+    expect(res.status).toBe(502)
+    expect(await quotaUsedToday(user.id)).toBe(1)
+  })
+
+  it('reads no more of the posting than the prompt does', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    const word = (n: number) => {
+      let w = 'Q'
+      for (let k = 0; k < 4; k++, n = Math.floor(n / 26)) w += String.fromCharCode(97 + (n % 26))
+      return w
+    }
+    const posting = (n: number) => {
+      let out = 'Platform Engineer. '
+      for (let i = 0; out.length < n; i++) out += `and ${word(i)} `
+      return out.slice(0, n)
+    }
+    const timed = async (description: string) => {
+      const started = Date.now()
+      const res = await callFunction('tailor', { token: user!.token, body: { job: { ...JOB, description } } })
+      expect(res.status).toBe(200)
+      await res.json()
+      return Date.now() - started
+    }
+    const capped = await timed(posting(15_000))
+    const long = await timed(posting(160_000))
+    expect(long).toBeLessThan(capped + 1_500)
   })
 
   // A dropped connection to Anthropic (not an HTTP error) must refund too (#10).
