@@ -18,6 +18,15 @@ test.each([
   expect(elapsed(() => expect(() => scrapeHtml(parseHTML, 'https://careers.example.com/jobs/1', nested(depth, inner))).toThrow())).toBeLessThan(limit)
 })
 
+test.each([
+  { case: '149,000 unclosed divs', html: `<html><body>${'<div>'.repeat(149_000)}` },
+  { case: '74,000 divs between stray close tags', html: `<html><body>${'<div></b>'.repeat(74_000)}` },
+  { case: '149,000 self-closed divs', html: `<html><body>${'<div/>'.repeat(149_000)}` },
+  { case: '990,000 entities in one paragraph', html: `<html><body><p>${'&lt;'.repeat(990_000)}` },
+])('pages that are slow to parse fail fast: $case', ({ html }) => {
+  expect(elapsed(() => expect(() => scrapeHtml(parseHTML, 'https://careers.example.com/jobs/1', html)).toThrow())).toBeLessThan(1000)
+})
+
 test('a scraper that catches the error still stops reading', () => {
   const html = `<!doctype html><html><body><main>${'<code id="bpr-guid-1">'.repeat(250)}${'a<!---->'.repeat(149_000)}${'</code>'.repeat(250)}</main></body></html>`
   expect(elapsed(() => expect(() => scrapeHtml(parseHTML, 'https://www.linkedin.com/jobs/view/1/', html)).toThrow())).toBeLessThan(4000)

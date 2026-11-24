@@ -260,7 +260,7 @@ const CARD_TAGS = new Set(['LI', 'DIV', 'ARTICLE', 'SECTION', 'TR'])
 // (SvelteKit's app root) as not rendered: its parent answers instead. linkedom
 // has none, so its innerText's markup rules (hidden, inline display:none) are
 // checked up the tree. The answers are kept for one scrape, which never
-// changes the page (#357).
+// changes the page (#362).
 let renderedCache = new WeakMap<Element, boolean>()
 function rendered(el: HTMLElement): boolean {
   if (typeof el.checkVisibility === 'function') {

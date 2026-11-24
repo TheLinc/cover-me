@@ -15,10 +15,14 @@ const MAX_ELEMENTS = 60_000
 const MAX_DEPTH = 256
 // The scrapers read a block's whole subtree for every block around it, so a
 // request's reads are capped by the nodes, attributes and characters they
-// cover. linkedom takes ~2 µs to build each attribute, so the parse is charged
-// first: every attribute name follows whitespace, "/" or a quote, and counting
-// each start of a word or name after one is never below the parser's count.
-// The saved postings use at most 300M (#357).
+// cover (#357). The parse is charged first, from the raw HTML (#362):
+// - linkedom takes ~2 µs per attribute. Every attribute name follows
+//   whitespace, "/" or a quote, so each start of a word after one is counted.
+// - linkedom makes a text node for every "&" entity.
+// - htmlparser2 keeps open tags with unshift and indexOf, so each open tag
+//   costs the nesting depth it opens at.
+// Stripped snapshots from the extension use at most 300M. The raw, unstripped
+// test fixtures use up to 1,355M.
 const MAX_WORK = 2_000_000_000
 const NODE_WORK = 400
 const NAME_WORK = 8000
@@ -31,7 +35,7 @@ export function scrapeHtml(parseHTML: ParseHTML, url: string, html: string, mete
   for (let i = html.indexOf('<'); i !== -1; i = html.indexOf('<', i + 1)) {
     if (++tags > MAX_TAGS) throw new Error('This page is too large to read.')
   }
-  if ((meter.work += nameStarts(html) * NAME_WORK) > MAX_WORK) throw new Error('This page is too large to read.')
+  if ((meter.work += 2 * nestingWork(html) + nameStarts(html) * NAME_WORK) > MAX_WORK) throw new Error('This page is too large to read.')
   const dom = parseHTML(html)
   dom.window.location = new URL(url)
   // Before attachShadowRoots, which recurses once per nested template (#3)
@@ -74,14 +78,50 @@ function checkSize(doc: Dom) {
   }
 }
 
+const VOID = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'])
+const RAW_TEXT = new Set(['script', 'style'])
+// Never below the parser's depth: a close tag only counts once per matching
+// open, and "/>" still opens in HTML (#362)
+function nestingWork(html: string): number {
+  const lower = html.toLowerCase()
+  const open = new Map<string, number>()
+  let depth = 0, work = 0
+  for (let i = lower.indexOf('<'); i !== -1; i = lower.indexOf('<', i + 1)) {
+    const close = lower.charCodeAt(i + 1) === 47
+    const start = close ? i + 2 : i + 1
+    const c = lower.charCodeAt(start)
+    if (c < 97 || c > 122) continue
+    let j = start + 1
+    for (let d = lower.charCodeAt(j); (d >= 97 && d <= 122) || (d >= 48 && d <= 57) || d === 45; d = lower.charCodeAt(++j));
+    const name = lower.slice(start, j)
+    if (close) {
+      const n = open.get(name) ?? 0
+      if (n) {
+        open.set(name, n - 1)
+        depth--
+      }
+      continue
+    }
+    if (VOID.has(name)) continue
+    work += ++depth
+    open.set(name, (open.get(name) ?? 0) + 1)
+    if (RAW_TEXT.has(name)) {
+      const end = lower.indexOf(`</${name}`, j)
+      if (end !== -1) i = end - 1
+    }
+  }
+  return work
+}
+
 // htmlparser2's whitespace is only these five: any other control character
-// starts a name (#357)
+// starts a name (#362)
 const SPACE = new Set([9, 10, 12, 13, 32])
 function nameStarts(html: string): number {
   let n = 0
   for (let i = 1; i < html.length; i++) {
     const p = html.charCodeAt(i - 1), c = html.charCodeAt(i)
-    if ((p <= 32 || p === 47 || p === 34 || p === 39) && !SPACE.has(c) && c !== 47 && c !== 62) n++
+    if (c === 38) n++
+    else if ((p <= 32 || p === 47 || p === 34 || p === 39) && !SPACE.has(c) && c !== 47 && c !== 62) n++
   }
   return n
 }
