@@ -103,7 +103,7 @@ export default function Page() {
           </a>
           <ul className="list-disc space-y-2 pl-5 text-[16px] leading-[1.65] text-ink marker:text-brand">
             <li>One column, plain headings, name and contact details in the page.</li>
-            <li>Read correctly by Lever, Workday, Ashby and SmartRecruiters on October 31, 2026.</li>
+            <li>The same layout was read correctly by Lever, Workday, Ashby and SmartRecruiters on October 31, 2026.</li>
             <li>Free, no account, no email. Opens in Word.</li>
           </ul>
         </div>
@@ -114,7 +114,7 @@ export default function Page() {
           body: (
             <>
               <p>
-                One page in Calibri, in a single column that reads top to bottom: your name, job title and contact line, then Summary, Experience, Education and Skills. Each job has a title line, a date line and bullets in Word&rsquo;s own list style. Every line is a placeholder that says what goes there.
+                One page in Calibri, in a single column that reads top to bottom: your name, job title and contact line, then Summary, Experience, Education and Skills. Each job has a title line, a date line and bullets in Word&rsquo;s own list style. Every line under the headings is a placeholder that says what goes there.
               </p>
               <p>
                 It has no tables, text boxes, columns, icons or pictures. Those are what trip up the software that reads resumes, and the template is plain on purpose.
