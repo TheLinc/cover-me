@@ -66,6 +66,14 @@ const faqJsonLd = {
         text: "Teal's free plan does more of the resume work: unlimited resumes and job tracking, plus a few AI cover letters, where Careerflow's free plan has one resume, 10 tracked jobs and no AI cover letters, plus a LinkedIn profile score. Paid, Teal+ is $29 every 30 days and Careerflow Premium is $23.99 a month. Try both free plans and pay for the one whose editor you'd use every day.",
       },
     },
+    {
+      '@type': 'Question',
+      name: 'Is there a cheaper Careerflow alternative?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: "Cover Me, if what you need is a tailored resume and cover letter for each job. Its free plan gives 10 generations to start, then 5 a week, cover letters included, where Careerflow's free plan has no AI cover letters. Cover Me Pro is $15 a month, against $23.99 a month for Careerflow Premium, or $14.41 a month if you pay $172.99 for a year. With your own OpenAI or Claude API key, Cover Me is free and unlimited, and you pay the AI provider for what you use. It doesn't build a resume from scratch or score your LinkedIn profile.",
+      },
+    },
   ],
 }
 
