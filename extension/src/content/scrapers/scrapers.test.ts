@@ -55,8 +55,8 @@ describe('company and title when the page doesn\'t name them (#200)', () => {
     expect(posting('Senior Auditor', 'Senior Auditor - Northwind', 'https://careers.example.com/jobs/senior-auditor').company).toBe('Unknown Company')
   })
 
-  // A wrong name is worse than none: an unnamed part may be a place or a
-  // requisition number, and job boards name themselves (#208)
+  // A wrong name is worse than none: a part the URL doesn't name may be a place
+  // or a requisition number, and job boards name themselves (#208)
   test.each([
     ['a place', 'Senior Auditor', 'Senior Auditor - Remote', 'https://careers.example.com/jobs/79'],
     ['a requisition number', 'Senior Auditor', 'Senior Auditor - R0012345', 'https://careers.example.com/jobs/79'],
@@ -149,8 +149,8 @@ describe('company and title when the page doesn\'t name them (#200)', () => {
     expect(posting(`${'We are hiring people who love numbers, '.repeat(4)}</h1><h1>Overview`, 'Overview').title).toBe('Overview')
   })
 
-  // The top frame fails so the embedded posting's frame wins: "Careers" leaves the
-  // site's name, and a hidden dialog's later <h1> isn't the title (#208)
+  // The top frame fails so the embedded posting's frame wins: the part after
+  // "Careers" is the site's name, and a hidden dialog's later <h1> isn't the title (#208)
   test.each([
     ['CAREERS', 'Careers | Hourglass', 'https://www.hourglasscosmetics.com/pages/careers?gh_jid=8930465002'],
     ['CAREERS</h1><h1>Do Not Sell/Share My Personal Information', 'Careers | Hourglass', 'https://www.hourglasscosmetics.com/pages/careers?gh_jid=8930465002'],
@@ -478,8 +478,8 @@ test.each([
   const start = performance.now()
   const job = scrapeHtml(parseHTML, 'https://www.linkedin.com/jobs/view/1/', `<!doctype html><html><body><main>${main}</main></body></html>`, meter)
   expect(performance.now() - start).toBeLessThan(limit) // slow versions took 1.2 to 200+ s; CI runners are slower than a laptop (#322)
-  // Work, not time, where the slow path reads whole subtrees: it adds about 2.6B,
-  // and a busy machine can't fail it (#322)
+  // Work, not time, where the slow path reads whole subtrees: it adds 2.6B or more
+  // but under 1.6 s, and a busy machine can't fail it (#322)
   expect(meter.work).toBeLessThan(work)
   expect(job.company).toBe(company)
 })
