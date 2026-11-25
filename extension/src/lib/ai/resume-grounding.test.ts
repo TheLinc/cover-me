@@ -329,7 +329,7 @@ describe('mixed tense within a role', () => {
     expect(mixedTenseLines({ experience: [odd, undated] }).size).toBe(0)
   })
 
-  test.each(['06/20 – 06/22', "Mar '20 – Mar '22", 'Mar ’20 – Mar ’22', '2020-22', '2020 – 22'])(
+  test.each(['06/20 – 06/22', "Mar '20 – Mar '22", 'Mar ’20 – Mar ’22', 'Mar ‘20 – Mar ‘22', '06.20 – 06.22', '2020-22', '2020 – 22', '2020 – 22'])(
     'a role dated "%s" ends in a two-digit year, so it is an earlier role (#374)', (dates) => {
       expect([...mixedTenseLines({ experience: [{ ...earlier, dates }] }).keys()]).toEqual(['e0b1'])
     })
