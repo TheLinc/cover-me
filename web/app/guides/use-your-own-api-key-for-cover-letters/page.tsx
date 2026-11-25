@@ -176,7 +176,7 @@ export default function Page() {
           body: (
             <>
               <p>
-                With a Claude key, Cover Me writes letters, tailors resumes and runs its accuracy checks with Claude Sonnet 5.5, and reads your resume&rsquo;s structure with Claude Haiku 4.5. With an OpenAI key, it uses GPT-6.1 Sol for letters, tailoring and checks, and GPT-6 Luna to read your resume. OpenAI requests are sent with storage turned off, so OpenAI doesn&rsquo;t save them to your account&rsquo;s logs. OpenAI may still keep API data for abuse monitoring under its terms.
+                With a Claude key, Cover Me writes letters, tailors resumes and runs its accuracy checks with Claude Sonnet 5.5, and reads your resume&rsquo;s structure with Claude Haiku 5.5. With an OpenAI key, it uses GPT-6.1 Sol for letters, tailoring and checks, and GPT-6 Luna to read your resume. OpenAI requests are sent with storage turned off, so OpenAI doesn&rsquo;t save them to your account&rsquo;s logs. OpenAI may still keep API data for abuse monitoring under its terms.
               </p>
               <p>
                 Measured in October 2026, a cover letter takes about 20 seconds, and a letter plus a tailored resume about 30 seconds.
