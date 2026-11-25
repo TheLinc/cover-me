@@ -15,7 +15,6 @@ const FULL_SELECT = `
   cover_letters(id, letter_encrypted, created_at),
   tailored_resumes(id, resume_json_encrypted, created_at, source_hash)
 `
-// What a card shows. Nothing to decrypt: the ATS score and gaps are plain columns (#27).
 const SUMMARY_SELECT = `
   id, title, company, url, created_at, stage, stage_changed_at,
   cover_letters(id, created_at),
@@ -54,7 +53,7 @@ async function fullApplication(row: Row, req: Request, files = new Set<string>()
   for (const cl of row.cover_letters ?? []) {
     try {
       coverLetters.push({ id: cl.id as string, letter: await decrypt(cl.letter_encrypted as string), createdAt: cl.created_at as string })
-    } catch { /* skip corrupt entries (#27) */ }
+    } catch { continue }
   }
   const tailoredResumes = []
   for (const tr of row.tailored_resumes ?? []) {
@@ -65,7 +64,7 @@ async function fullApplication(row: Row, req: Request, files = new Set<string>()
         createdAt: tr.created_at as string,
         ...(files.has(tr.source_hash as string) ? { design: true } : {}),
       })
-    } catch { /* skip corrupt entries (#27) */ }
+    } catch { continue }
   }
   return { ...base(row), coverLetters: coverLetters.sort(newestFirst), tailoredResumes: tailoredResumes.sort(newestFirst) }
 }
@@ -108,22 +107,15 @@ Deno.serve(async (req) => {
     .eq('id', userId)
     .single()
 
-  // Every account tracks its jobs: summaries, stages, deletes. What carries
-  // the letters and resumes themselves (the full list, one application in
-  // full, the upload) is Pro. The extension's history reads the full list,
-  // so a free account there still gets 403, as before (#101).
+  // The extension's history reads the full list, so a free account there
+  // gets 403 while the dashboard still shows its summaries (#101).
   const isPro = userData?.tier === 'hosted_pro'
   const proOnly = () => json({ error: 'Application history requires a Pro subscription.' }, 403)
 
   const params = new URL(req.url).searchParams
   const appId = params.get('id')
 
-  // GET: job applications, newest first; optional search, dates, paging and
-  // the stage filter (_shared/application-search.ts). summary=1 is what a
-  // dashboard card shows; detail=<id> is one application in full (#27).
   if (req.method === 'GET') {
-    // file=<hash>: one of the account's Word files, with the parse that places
-    // tailored text in it (lib/pdf/docx-design.ts on the website) (#131).
     const fileHash = params.get('file')
     if (fileHash !== null) {
       if (!isPro) return proOnly()
@@ -148,10 +140,11 @@ Deno.serve(async (req) => {
         .select(FULL_SELECT)
         .eq('id', detailId)
         .eq('user_id', userId)
+        .eq('cover_letters.user_id', userId)
+        .eq('tailored_resumes.user_id', userId)
         .maybeSingle()
       if (error) return json({ error: 'Failed to fetch application' }, 500)
       if (!row) return json({ error: 'Not found' }, 404)
-      // Only files that can place tailored text: a parse to match against (#131).
       const { data: files } = await supabase.from('resume_files').select('hash')
         .eq('user_id', userId).not('structured_encrypted', 'is', null)
       return json({ application: await fullApplication(row as unknown as Row, req, new Set((files ?? []).map((f) => f.hash as string))) })
@@ -165,6 +158,8 @@ Deno.serve(async (req) => {
       .from('job_applications')
       .select(search.summary ? SUMMARY_SELECT : FULL_SELECT)
       .eq('user_id', userId)
+      .eq('cover_letters.user_id', userId)
+      .eq('tailored_resumes.user_id', userId)
     for (const term of search.terms) query = query.ilike('search_text', likeContains(term))
     if (search.from) query = query.gte('created_at', search.from)
     if (search.to) query = query.lt('created_at', search.to)
@@ -177,7 +172,6 @@ Deno.serve(async (req) => {
     // in the same microsecond would page past one; use (created_at, id) if seen.
     if (search.before) query = query.lt('created_at', search.before)
 
-    // One extra row tells us whether there's another page (#22).
     const { data: found, error } = await query
       .order('created_at', { ascending: false })
       .limit(search.limit + 1)
@@ -224,10 +218,8 @@ Deno.serve(async (req) => {
     return json({ editedAt: data.edited_at })
   }
 
-  // PATCH ?id=: move the caller's own application to another stage (#99).
   if (req.method === 'PATCH') {
     if (!isUuid(appId)) return json({ error: 'Invalid id' }, 400)
-    // { stage: 'offer' } is a few bytes; anything past 1 KB isn't this request (#99).
     const raw = await readBody(req, 1024)
     if (raw === null) return json({ error: 'Request too large' }, 400)
     let body: unknown
@@ -250,9 +242,6 @@ Deno.serve(async (req) => {
     return json({ stage: data.stage, stageChangedAt: data.stage_changed_at })
   }
 
-  // POST: save entries from the extension's local history under their local
-  // IDs, or with check: true only report which the account already holds.
-  // Never overwrites an existing row. Spec: 2026-10-13-local-history-upload-design.md (#24)
   if (req.method === 'POST') {
     if (!isPro) return proOnly()
     const raw = await readBody(req, MAX_UPLOAD_BYTES)
@@ -315,7 +304,6 @@ Deno.serve(async (req) => {
   }
 
 
-  // DELETE — remove a job application (cascades to cover_letters + tailored_resumes) (https://github.com/TheLinc/cover-me/commit/a074665df759617a5ebedfaf28370e973177338c)
   if (req.method === 'DELETE') {
     if (!isUuid(appId)) return json({ error: 'Invalid id' }, 400)
 
@@ -327,7 +315,6 @@ Deno.serve(async (req) => {
       .select('id')
 
     if (error) return json({ error: 'Failed to delete application' }, 500)
-    // Nothing of yours had that id (already deleted, or someone else's) (#27).
     if (!data || data.length === 0) return json({ error: 'Not found' }, 404)
     return json({ success: true })
   }

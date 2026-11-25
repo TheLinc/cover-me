@@ -4,13 +4,15 @@ import { ANTHROPIC_MESSAGES_URL, SONNET_BETA_HEADER, SONNET_FIELDS, SONNET_MAX_T
 import { corsHeaders, handleCors, json } from '../_shared/cors.ts'
 import { decrypt, encrypt, sameCiphertext } from '../_shared/encrypt.ts'
 import { findOrCreateJobApplication } from '../_shared/job-application.ts'
-import { isUuid } from '../_shared/history-upload.ts'
-import { isCurrentParse, isValidParsedResume, parseResumeStructure, type ParsedResume, upgradedParse } from '../_shared/resume-parse.ts'
+import { isObject, isUuid, MAX_RESUME_JSON } from '../_shared/history-upload.ts'
+import { isCurrentParse, isValidParsedResume, parseResumeStructure, type ParsedResume, ParseReplyError, upgradedParse } from '../_shared/resume-parse.ts'
 import { buildsOnEdits, candidateText, checkAndRewriteLines, checkedTitle, groundSkills, groundTailored, keepSeen, recaseSkills, seenVersion, skillGroups, trustedNotes } from '../_shared/resume-grounding.ts'
 import { scoreBefore, scoreFromMatch } from '../_shared/ats-score.ts'
 import { KEYWORD_JUDGING, KEYWORD_TIERS } from '../_shared/keyword-rules.ts'
 import { captureUsage } from '../_shared/posthog.ts'
 import { withOlderFields } from '../_shared/resume-fields.ts'
+import { MAX_BODY_BYTES, MAX_SUPPLEMENTAL, readJob, text } from '../_shared/job-input.ts'
+import { readBody } from '../_shared/read-body.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SECRET_KEY = Deno.env.get('SERVICE_KEY')!
@@ -494,7 +496,7 @@ Deno.serve(async (req) => {
     return json({ error: 'No resume found. Upload your resume in the extension first.' }, 400)
   }
 
-  let job: JobPayload
+  let rawJob: unknown
   let compact = false
   let supplemental: string | undefined
   let trim = false
@@ -505,13 +507,16 @@ Deno.serve(async (req) => {
   let fellBack = false
   let sourceHash: string | undefined
   try {
-    const body = await req.json()
-    job = body.job
+    const raw = await readBody(req, MAX_BODY_BYTES)
+    if (raw === null) return json({ error: 'Request too large' }, 413)
+    const body = JSON.parse(raw)
+    rawJob = body.job
     compact = !!body.compact
-    supplemental = typeof body.supplemental === 'string' ? body.supplemental.trim() : undefined
+    supplemental = text(body.supplemental, MAX_SUPPLEMENTAL).trim()
     trim = !!body.trim
     includeSummary = body.includeSummary !== false
-    previous = body.previous && typeof body.previous === 'object' ? body.previous : undefined
+    previous = isObject(body.previous) ? body.previous : undefined
+    if (previous && JSON.stringify(previous).length > MAX_RESUME_JSON) return json({ error: 'Invalid request body' }, 400)
     // Not resume content for the model to revise (#131).
     if (previous) {
       const { sourceHash: _h, designFellBack: _f, ...rest } = previous
@@ -525,15 +530,17 @@ Deno.serve(async (req) => {
     return json({ error: 'Invalid request body' }, 400)
   }
 
-  if (!job?.title || !job?.description) {
-    return json({ error: 'Missing job title or description' }, 400)
-  }
+  const job = readJob(rawJob)
+  if (!job) return json({ error: 'Missing job title or description' }, 400)
 
   // Charged after validation so a bad request never costs a generation: https://github.com/TheLinc/cover-me/commit/fd2604ac6168a5d6dac44232e2fd5c377d004395
   const today = new Date().toISOString().split('T')[0]
   const consumed = await consumeGeneration(supabase, userId)
   if (!consumed.ok) return json(consumed.body, consumed.status)
   let charged = true
+  // Only a failed call is refunded: an empty, refused or broken reply still
+  // costs the generation (#358).
+  let replied = false
 
   const refund = async () => {
     if (!charged) return
@@ -573,10 +580,10 @@ Deno.serve(async (req) => {
       }
       try {
         structured = upgradedParse(cached, await parseResumeStructure(resumeText, ANTHROPIC_API_KEY))
-      } catch {
+      } catch (err) {
         // A cache from before #165 or #238 still tailors.
         if (!Array.isArray(cached?.otherSections)) {
-          await refund()
+          if (!(err instanceof ParseReplyError)) await refund()
           return { error: 'Could not process your resume. Please try again.', status: 502 }
         }
         structured = cached
@@ -664,6 +671,7 @@ Deno.serve(async (req) => {
         } catch {
           continue
         }
+        if (ev.type === 'message_stop') replied = true
         if (ev.type === 'error') {
           const e = ev.error as { message?: string } | undefined
           throw new Error(e?.message ?? 'stream error')
@@ -671,6 +679,7 @@ Deno.serve(async (req) => {
         if (ev.type === 'content_block_delta') {
           const delta = ev.delta as { type?: string; text?: string; thinking?: string } | undefined
           if (delta?.type === 'text_delta' && delta.text) {
+            replied = true
             raw += delta.text
             onDelta?.(delta.text)
           } else if (delta?.type === 'thinking_delta' && delta.thinking) {
@@ -761,7 +770,7 @@ ${job.description}`)
       return json({ resume: withOlderFields(resume, req), savedId })
     } catch (err) {
       console.error('Tailor error:', err instanceof Error ? err.message : err)
-      await refund()
+      if (!replied) await refund()
       return json({ error: 'AI generation failed. Please try again.' }, 502)
     }
   }
@@ -793,7 +802,7 @@ ${job.description}`)
         send({ type: 'done', resume: withOlderFields(resume, req), savedId })
       } catch (err) {
         console.error('Tailor stream error:', err instanceof Error ? err.message : err)
-        await refund()
+        if (!replied) await refund()
         send({ type: 'error', error: 'AI generation failed. Please try again.' })
       } finally {
         clearInterval(beat)

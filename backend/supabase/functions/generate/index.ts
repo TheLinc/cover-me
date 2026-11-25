@@ -7,6 +7,8 @@ import { decrypt } from '../_shared/encrypt.ts'
 import { buildLintRetryMessage, letterLength, lintLetter } from '../_shared/letter-lint.ts'
 import { findOrCreateJobApplication } from '../_shared/job-application.ts'
 import { MAX_RESUME_CHARS } from '../_shared/resume-parse.ts'
+import { MAX_BODY_BYTES, MAX_SUPPLEMENTAL, readJob, text } from '../_shared/job-input.ts'
+import { readBody } from '../_shared/read-body.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SECRET_KEY = Deno.env.get('SERVICE_KEY')!
@@ -26,19 +28,17 @@ Deno.serve(async (req) => {
 
   const userId = user.id
 
-  let job: { title: string; company: string; description: string; url?: string }
-  let supplemental: string | undefined
+  let body: { job?: unknown; supplemental?: unknown } | null
   try {
-    const body = await req.json()
-    job = body.job
-    supplemental = typeof body.supplemental === 'string' ? body.supplemental.trim() : undefined
+    const raw = await readBody(req, MAX_BODY_BYTES)
+    if (raw === null) return json({ error: 'Request too large' }, 413)
+    body = JSON.parse(raw)
   } catch {
     return json({ error: 'Invalid request body' }, 400)
   }
-
-  if (!job?.title || !job?.description) {
-    return json({ error: 'Missing job title or description' }, 400)
-  }
+  const job = readJob(body?.job)
+  if (!job) return json({ error: 'Missing job title or description' }, 400)
+  const supplemental = text(body?.supplemental, MAX_SUPPLEMENTAL).trim()
 
   const { data: resumeRow, error: resumeError } = await supabase
     .from('resumes')
@@ -63,13 +63,10 @@ Deno.serve(async (req) => {
   const today = new Date().toISOString().split('T')[0]
   const consumed = await consumeGeneration(supabase, userId)
   if (!consumed.ok) return json(consumed.body, consumed.status)
-  let charged = true
 
-  // Refunds the consumed slot when a downstream step fails, so a failed
-  // generation doesn't count against the user's allowance (#10).
+  // Only for a failed call to Anthropic: an empty or declined reply still costs
+  // the generation (#358).
   const refund = async () => {
-    if (!charged) return
-    charged = false
     const { error } = await supabase.rpc('decrement_rate_limit', { p_user_id: userId, p_date: today })
     if (error) console.error('Rate limit refund RPC error:', error.message)
   }
@@ -87,18 +84,15 @@ Deno.serve(async (req) => {
       return { error: 'AI generation failed. Please try again.' }
     }
 
-    if (!draft) {
-      await refund()
-      return { error: 'Empty response from AI. Please try again.' }
-    }
+    if (!draft) return { error: 'Empty response from AI. Please try again.' }
 
     // Deterministic lint + one corrective retry, so the prompt's style rules are
-    // guarantees rather than hopes. Retry failure falls back to the draft (#1).
+    // guarantees rather than hopes. Retry failure falls back to the draft (https://github.com/TheLinc/cover-me/commit/9ece0f1).
     let letter = draft
     const lintOpts = {
       companyName: job.company,
       resumeText,
-      numberSources: [resumeText, job.title, job.description, supplemental ?? ''],
+      numberSources: [resumeText, job.title, job.description, supplemental],
     }
     const draftLint = lintLetter(draft, lintOpts)
     if (draftLint.violations.length > 0) {
@@ -119,7 +113,7 @@ Deno.serve(async (req) => {
 
     // Every account's job goes on its board (title, company, link, dates).
     // The letter isn't stored here: a Pro account's extension saves it next
-    // (letters function), under this same application. Non-fatal (#101).
+    // (letters function), under this same application. Non-fatal (#105).
     try {
       await findOrCreateJobApplication(supabase, userId, job)
     } catch {
@@ -132,9 +126,8 @@ Deno.serve(async (req) => {
 
 // Sonnet for cover letters: the letter is the product's flagship "must sound
 // human" artifact and the prompt carries ~60 constraints — the small models
-// are the ones that leak AI-tells and drop rules. Tailoring is on Sonnet too.
-// A decline (stop_reason "refusal") comes back with no text, which the caller
-// treats as an empty response and refunds (https://github.com/TheLinc/cover-me/commit/46f809a1dc946cf6964c9e2ad9a400323d9bada5).
+// are the ones that leak AI-tells and drop rules. Tailoring is on Sonnet too
+// (https://github.com/TheLinc/cover-me/commit/46f809a).
 async function callClaude(messages: Array<{ role: 'user' | 'assistant'; content: string }>): Promise<string> {
   const res = await fetch(ANTHROPIC_MESSAGES_URL, {
     method: 'POST',
@@ -157,7 +150,7 @@ async function callClaude(messages: Array<{ role: 'user' | 'assistant'; content:
 
 // Anti-fingerprint variation: with a fixed sign-off and hook, every letter the
 // product generates shares one skeleton — individually fine, detectable as a
-// corpus. Picked in code (not by the model) so the distribution is uniform (https://github.com/TheLinc/cover-me/commit/46f809a1dc946cf6964c9e2ad9a400323d9bada5).
+// corpus. Picked in code (not by the model) so the distribution is uniform (https://github.com/TheLinc/cover-me/commit/46f809a).
 interface LetterVariation {
   signOff: string
   hookPattern: string
@@ -190,7 +183,6 @@ const pick = (list: string[]) => list[Math.floor(Math.random() * list.length)]
 function pickLetterVariation(): LetterVariation {
   return { signOff: pick(SIGN_OFFS), hookPattern: pick(HOOK_PATTERNS), closePattern: pick(CLOSE_PATTERNS) }
 }
-
 
 function buildPrompt(
   job: { title: string; company: string; description: string },

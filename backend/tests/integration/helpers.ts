@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { createHmac, randomUUID } from 'node:crypto'
 import { MOCK_PORT } from '../global-setup'
 
-// Set by scripts/test-functions.mjs from `supabase status` (https://github.com/TheLinc/cover-me/commit/f2256d029ba77a276f2c0f7f6abf88fbcd2569aa).
+// Set by scripts/test-functions.mjs from `supabase status` (https://github.com/TheLinc/cover-me/commit/f2256d0).
 function env(name: string): string {
   const v = process.env[name]
   if (!v) throw new Error(`${name} is not set. Run function tests with \`pnpm test:functions\`.`)
@@ -23,7 +23,7 @@ export interface TestUser {
   token: string
 }
 
-// A fresh confirmed user per test keeps rate-limit counts and history isolated (https://github.com/TheLinc/cover-me/commit/f2256d029ba77a276f2c0f7f6abf88fbcd2569aa).
+// A fresh confirmed user per test keeps rate-limit counts and history isolated (https://github.com/TheLinc/cover-me/commit/f2256d0).
 export async function createUser(tier: 'hosted_free' | 'hosted_pro' = 'hosted_free'): Promise<TestUser> {
   const email = `test-${randomUUID()}@cover-me.test`
   const password = 'password123'
@@ -42,8 +42,6 @@ export async function createUser(tier: 'hosted_free' | 'hosted_pro' = 'hosted_fr
   return { id: data.user.id, email, token: session.session.access_token }
 }
 
-// The token every unsubscribe link carries: the user id and an HMAC of it under
-// EMAIL_TOKEN_SECRET (the secret scripts/test-functions.mjs gave the functions) (#113).
 export function unsubscribeToken(userId: string) {
   const mac = createHmac('sha256', env('EMAIL_TOKEN_SECRET')).update(`unsubscribe:${userId}`).digest('base64url')
   return `${userId}.${mac}`
@@ -62,7 +60,6 @@ interface CallOptions {
   // Sent as-is (e.g. a gzipped body); set Content-Type in headers (#3).
   rawBody?: Uint8Array
   signal?: AbortSignal
-  // 'manual' to see a redirect itself rather than where it leads (#114).
   redirect?: RequestRedirect
 }
 
@@ -124,8 +121,6 @@ export async function waitForParsedResume(userId: string, timeoutMs = 10_000): P
   }
 }
 
-// Stores a parsed copy the way the functions do (AES-256-GCM, IV first,
-// base64), with the key scripts/test-functions.mjs gave them (#54).
 export async function cacheParsedResume(userId: string, parsed: unknown) {
   const key = await crypto.subtle.importKey('raw', Buffer.from(env('ENCRYPTION_KEY'), 'hex'), 'AES-GCM', false, ['encrypt'])
   const iv = crypto.getRandomValues(new Uint8Array(12))
@@ -134,12 +129,11 @@ export async function cacheParsedResume(userId: string, parsed: unknown) {
   await admin.from('resumes').update({ structured_encrypted }).eq('user_id', userId)
 }
 
-// Drops the parsed copy, so the next tailor parses the resume itself (#26).
 export async function clearParsedResume(userId: string) {
   await admin.from('resumes').update({ structured_encrypted: null }).eq('user_id', userId)
 }
 
-// table: rate_limits for letters and resumes, answer_counts for answers (migration 032) (#232).
+// table: rate_limits for letters and resumes, answer_counts for answers (migration 032, #235).
 export async function quotaUsedToday(userId: string, table = 'rate_limits'): Promise<number> {
   const today = new Date().toISOString().split('T')[0]
   const { data } = await admin.from(table).select('count').eq('user_id', userId).eq('date', today).maybeSingle()
@@ -162,7 +156,6 @@ export async function setQuotaUsedToday(userId: string, count: number) {
   if (error) throw new Error(`set quota failed: ${error.message}`)
 }
 
-
 export interface ClaudeRequest {
   model: string
   stream?: boolean
@@ -174,7 +167,6 @@ export interface ClaudeRequest {
   betaHeader?: string
 }
 
-// A Sonnet 5.5 decline: HTTP 200, stop_reason "refusal", no text (#1).
 export const REFUSAL_BODY = JSON.stringify({
   id: 'msg_mock', type: 'message', role: 'assistant', model: 'claude-sonnet-5-5',
   content: [], stop_reason: 'refusal', stop_details: { type: 'refusal', category: 'general_harms' },
@@ -185,8 +177,10 @@ export const mockClaude = {
   reset: () => fetch(`${MOCK_URL}/__mock/reset`, { method: 'POST' }),
   failNext: (status = 500) =>
     fetch(`${MOCK_URL}/__mock/fail-next`, { method: 'POST', body: JSON.stringify({ status }) }),
-  refuseNext: () =>
-    fetch(`${MOCK_URL}/__mock/fail-next`, { method: 'POST', body: JSON.stringify({ status: 200, body: REFUSAL_BODY }) }),
+  refuseNext: () => mockClaude.replyNext(REFUSAL_BODY),
+  // fail-next with a 200 sends any reply body, JSON or SSE (#358).
+  replyNext: (body: string) =>
+    fetch(`${MOCK_URL}/__mock/fail-next`, { method: 'POST', body: JSON.stringify({ status: 200, body }) }),
   dropNextStream: () => fetch(`${MOCK_URL}/__mock/drop-next-stream`, { method: 'POST' }),
   streamPause: (ms: number) =>
     fetch(`${MOCK_URL}/__mock/stream-pause`, { method: 'POST', body: JSON.stringify({ ms }) }),
