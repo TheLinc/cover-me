@@ -43,7 +43,6 @@ if (args.values.prod) {
     console.log('Cancelled.')
     process.exit(1)
   }
-  // Your `supabase login`, the same as deploy:prod. stdin 'ignore': see deploy.mjs (#112).
   const res = supabase(['projects', 'api-keys', '--project-ref', PROD_REF, '--reveal', '-o', 'json'], { stdio: ['ignore', 'pipe', 'inherit'] })
   const secret = res.status === 0 ? JSON.parse(res.stdout).find((k) => k.type === 'secret') : null
   if (!secret) {
@@ -62,7 +61,6 @@ if (args.values.prod) {
 
 const expires_at = new Date(Date.now() + days * 86_400_000).toISOString()
 const rows = Array.from({ length: count }, () => ({
-  // 16 base64url characters, 96 random bits, so a code can't be guessed (#112).
   code: randomBytes(12).toString('base64url'),
   note: args.values.note ?? null,
   expires_at,
