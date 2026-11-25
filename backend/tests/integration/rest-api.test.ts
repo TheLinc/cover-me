@@ -1,10 +1,10 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { admin, API_URL, createUser, deleteUser, quotaUsedToday, setQuotaUsedToday, type TestUser } from './helpers'
 
 describe('REST API as a signed-in free user', () => {
   let user: TestUser
-  let db: ReturnType<typeof createClient>
+  let db: SupabaseClient
 
   beforeAll(async () => {
     user = await createUser()
