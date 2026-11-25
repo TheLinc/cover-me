@@ -10,7 +10,7 @@ import type { SupabaseClient } from 'npm:@supabase/supabase-js@2'
 export type EmailKind = 'product_updates' | 'onboarding'
 
 // Asks the database (can_email, migration 022). Senders never read the consent
-// columns themselves. A failed lookup means no.
+// columns themselves. A failed lookup means no (#114).
 export async function canEmail(supabase: SupabaseClient, userId: string, kind: EmailKind): Promise<boolean> {
   const { data, error } = await supabase.rpc('can_email', { p_user_id: userId, p_kind: kind })
   return !error && data === true
@@ -18,7 +18,7 @@ export async function canEmail(supabase: SupabaseClient, userId: string, kind: E
 
 // The token in every unsubscribe link: "<user id>.<HMAC-SHA256 of
 // 'unsubscribe:<user id>'>" under EMAIL_TOKEN_SECRET. It never expires: the
-// law wants a link to keep working for at least 60 days after sending.
+// law wants a link to keep working for at least 60 days after sending (#114).
 function key(): Promise<CryptoKey> {
   const secret = Deno.env.get('EMAIL_TOKEN_SECRET')
   if (!secret) throw new Error('EMAIL_TOKEN_SECRET is not set')
@@ -33,8 +33,7 @@ export async function unsubscribeToken(userId: string): Promise<string> {
   return `${userId}.${b64}`
 }
 
-// The user id a token was signed for, or null. subtle.verify compares in
-// constant time.
+// subtle.verify compares in constant time (#114).
 export async function verifyUnsubscribeToken(token: string): Promise<string | null> {
   const [userId, mac, extra] = token.split('.')
   if (extra !== undefined || !UUID.test(userId ?? '') || !mac) return null
@@ -48,13 +47,12 @@ export async function verifyUnsubscribeToken(token: string): Promise<string | nu
   return ok ? userId : null
 }
 
-// The page a person lands on from the link in the email body.
 export async function unsubscribeUrl(userId: string): Promise<string> {
   const site = (Deno.env.get('SITE_URL') || 'https://www.cover-me.dev').replace(/\/+$/, '')
   return `${site}/unsubscribe?token=${encodeURIComponent(await unsubscribeToken(userId))}`
 }
 
-// One-click unsubscribe (RFC 8058): the mail client POSTs to this URL itself.
+// The mail client POSTs to this URL itself: https://www.rfc-editor.org/rfc/rfc8058
 export async function unsubscribeHeaders(userId: string): Promise<Record<string, string>> {
   const url = `${Deno.env.get('SUPABASE_URL')}/functions/v1/email-preferences?token=${encodeURIComponent(await unsubscribeToken(userId))}`
   return { 'List-Unsubscribe': `<${url}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' }
