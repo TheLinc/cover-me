@@ -1,0 +1,32 @@
+﻿after: prompt's job example "dates": "the dates as written, in the resume's own format"
+after run  2: as written  09/2022 – Present | 07/2020 – 08/2022
+after run  1: as written  09/2022 – Present | 07/2020 – 08/2022
+after run  3: as written  09/2022 – Present | 07/2020 – 08/2022
+after run  6: as written  09/2022 – Present | 07/2020 – 08/2022
+after run  4: as written  09/2022 – Present | 07/2020 – 08/2022
+after run  5: as written  09/2022 – Present | 07/2020 – 08/2022
+after run  7: as written  09/2022 – Present | 07/2020 – 08/2022
+after run  8: as written  09/2022 – Present | 07/2020 – 08/2022
+after run  9: as written  09/2022 – Present | 07/2020 – 08/2022
+after run 10: as written  09/2022 – Present | 07/2020 – 08/2022
+after run 13: as written  09/2022 – Present | 07/2020 – 08/2022
+after run 14: as written  09/2022 – Present | 07/2020 – 08/2022
+after run 11: as written  09/2022 – Present | 07/2020 – 08/2022
+after run 12: as written  09/2022 – Present | 07/2020 – 08/2022
+after run 18: as written  09/2022 – Present | 07/2020 – 08/2022
+after run 16: as written  09/2022 – Present | 07/2020 – 08/2022
+after run 17: as written  09/2022 – Present | 07/2020 – 08/2022
+after run 15: as written  09/2022 – Present | 07/2020 – 08/2022
+after run 22: as written  09/2022 – Present | 07/2020 – 08/2022
+after run 20: as written  09/2022 – Present | 07/2020 – 08/2022
+after run 21: as written  09/2022 – Present | 07/2020 – 08/2022
+after run 19: as written  09/2022 – Present | 07/2020 – 08/2022
+after run 23: as written  09/2022 – Present | 07/2020 – 08/2022
+after run 27: as written  09/2022 – Present | 07/2020 – 08/2022
+after run 24: as written  09/2022 – Present | 07/2020 – 08/2022
+after run 26: as written  09/2022 – Present | 07/2020 – 08/2022
+after run 25: as written  09/2022 – Present | 07/2020 – 08/2022
+after run 28: as written  09/2022 – Present | 07/2020 – 08/2022
+after run 30: as written  09/2022 – Present | 07/2020 – 08/2022
+after run 29: as written  09/2022 – Present | 07/2020 – 08/2022
+after: 30/30 parses kept "09/2022 – Present" and "07/2020 – 08/2022" as written

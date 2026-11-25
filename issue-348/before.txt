@@ -1,0 +1,32 @@
+﻿before: prompt's job example "dates": "Month Year – Month Year"
+before run  4: as written  09/2022 – Present | 07/2020 – 08/2022
+before run  1: as written  09/2022 – Present | 07/2020 – 08/2022
+before run  3: REWRITTEN  September 2022 – Present | July 2020 – August 2022
+before run  2: as written  09/2022 – Present | 07/2020 – 08/2022
+before run  5: as written  09/2022 – Present | 07/2020 – 08/2022
+before run  8: as written  09/2022 – Present | 07/2020 – 08/2022
+before run  6: as written  09/2022 – Present | 07/2020 – 08/2022
+before run  9: as written  09/2022 – Present | 07/2020 – 08/2022
+before run 10: as written  09/2022 – Present | 07/2020 – 08/2022
+before run  7: as written  09/2022 – Present | 07/2020 – 08/2022
+before run 13: as written  09/2022 – Present | 07/2020 – 08/2022
+before run 11: REWRITTEN  September 2022 – Present | July 2020 – August 2022
+before run 12: as written  09/2022 – Present | 07/2020 – 08/2022
+before run 15: as written  09/2022 – Present | 07/2020 – 08/2022
+before run 14: as written  09/2022 – Present | 07/2020 – 08/2022
+before run 16: REWRITTEN  September 2022 – Present | July 2020 – August 2022
+before run 17: as written  09/2022 – Present | 07/2020 – 08/2022
+before run 18: as written  09/2022 – Present | 07/2020 – 08/2022
+before run 19: as written  09/2022 – Present | 07/2020 – 08/2022
+before run 20: as written  09/2022 – Present | 07/2020 – 08/2022
+before run 21: as written  09/2022 – Present | 07/2020 – 08/2022
+before run 22: as written  09/2022 – Present | 07/2020 – 08/2022
+before run 23: as written  09/2022 – Present | 07/2020 – 08/2022
+before run 25: as written  09/2022 – Present | 07/2020 – 08/2022
+before run 27: as written  09/2022 – Present | 07/2020 – 08/2022
+before run 28: as written  09/2022 – Present | 07/2020 – 08/2022
+before run 26: as written  09/2022 – Present | 07/2020 – 08/2022
+before run 24: as written  09/2022 – Present | 07/2020 – 08/2022
+before run 29: as written  09/2022 – Present | 07/2020 – 08/2022
+before run 30: as written  09/2022 – Present | 07/2020 – 08/2022
+before: 27/30 parses kept "09/2022 – Present" and "07/2020 – 08/2022" as written
