@@ -4,6 +4,7 @@ import { heartbeatJson } from '../_shared/heartbeat-json.ts'
 import { decrypt, encrypt, sameCiphertext } from '../_shared/encrypt.ts'
 import { hasSectionOrder, isCurrentParse, isValidParsedResume, parseResumeStructure, type ParsedResume, upgradedParse, withChosenOrder } from '../_shared/resume-parse.ts'
 import { readBody } from '../_shared/read-body.ts'
+import { captureUsage } from '../_shared/posthog.ts'
 import { withOlderFields } from '../_shared/resume-fields.ts'
 
 const SUPABASE_URL        = Deno.env.get('SUPABASE_URL')!
@@ -144,7 +145,7 @@ Deno.serve(async (req) => {
     if (text.length > MAX_RESUME_BYTES) {
       return json({ error: 'Resume text too large (max 100 KB)' }, 413)
     }
-    if (filename && typeof filename !== 'string') {
+    if (filename != null && typeof filename !== 'string') {
       return json({ error: 'Invalid filename' }, 400)
     }
     const safeFilename = filename?.replace(/[^\x20-\x7E]/g, '').slice(0, 255) ?? null
@@ -188,6 +189,10 @@ Deno.serve(async (req) => {
     )
 
     if (error) return json({ error: 'Failed to save resume' }, 500)
+
+    // A sign-in sync of a different local resume is counted too: the server can't tell it from an upload (#168).
+    const fileType = safeFilename?.toLowerCase().match(/\.(pdf|docx|txt)$/)?.[1] ?? 'other'
+    EdgeRuntime.waitUntil(captureUsage(supabase, 'resume_upload', userId, { file_type: fileType }))
 
     if (wantParse) return heartbeatJson('resume', 'Resume parse failed', async () => ({ success: true, structured: withOlderFields(await parseNow(supabase, userId, text, text_encrypted), req) }))
     EdgeRuntime.waitUntil(parseNow(supabase, userId, text, text_encrypted))

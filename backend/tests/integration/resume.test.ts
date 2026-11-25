@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
-  admin, cacheParsedResume, callFunction, createUser, deleteUser, JOB, LONG_RESUME_TEXT, mockClaude, parsedResume, RESUME_TEXT, type TestUser, uploadResume, waitForParsedResume,
+  admin, cacheParsedResume, callFunction, createUser, deleteUser, JOB, LONG_RESUME_TEXT, mockClaude, mockPosthog, parsedResume, RESUME_TEXT, type TestUser, uploadResume, waitForParsedResume,
 } from './helpers'
 import { MOCK_PARSED_RESUME } from '../mock-anthropic'
 
@@ -30,6 +30,38 @@ describe('resume', () => {
     const body = await res.json()
     expect(body.text).toBe(RESUME_TEXT)
     expect(body.filename).toBe('resume.pdf')
+  })
+
+  it('counts a new upload with its file type and plan, never its name, and not a sync of the same text', async () => {
+    const upload = () => callFunction('resume', { token: user.token, body: { text: RESUME_TEXT, filename: 'Jane Doe Resume.DOCX' } })
+    expect((await upload()).status).toBe(200)
+    expect(await mockPosthog.eventsFor('resume_upload', user.id)).toEqual([{
+      api_key: 'phc_mock',
+      event: 'resume_upload',
+      distinct_id: user.id,
+      properties: { file_type: 'docx', tier: 'hosted_free', $process_person_profile: false, $geoip_disable: true },
+    }])
+
+    expect((await upload()).status).toBe(200)
+    expect(await mockPosthog.eventsFor('resume_upload', user.id, (e) => e.length > 1)).toHaveLength(1)
+  })
+
+  it('counts an unknown or missing file name as other', async () => {
+    await callFunction('resume', { token: user.token, body: { text: RESUME_TEXT } })
+    await callFunction('resume', { token: user.token, body: { text: `${RESUME_TEXT}
+More.`, filename: 'resume.doc' } })
+    const events = await mockPosthog.eventsFor('resume_upload', user.id, (e) => e.length === 2)
+    expect(events.map((e) => e.properties.file_type)).toEqual(['other', 'other'])
+  })
+
+  it('rejects a file name that is not a string', async () => {
+    expect((await callFunction('resume', { token: user.token, body: { text: RESUME_TEXT, filename: 0 } })).status).toBe(400)
+  })
+
+  it('sends no count for an account that opted out of usage counts', async () => {
+    await admin.from('users').update({ usage_counts_opted_out_at: new Date().toISOString() }).eq('id', user.id)
+    expect((await callFunction('resume', { token: user.token, body: { text: RESUME_TEXT, filename: 'resume.pdf' } })).status).toBe(200)
+    expect(await mockPosthog.eventsFor('resume_upload', user.id)).toEqual([])
   })
 
   it('stores ciphertext, never the plaintext resume', async () => {

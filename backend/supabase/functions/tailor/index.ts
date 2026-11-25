@@ -724,7 +724,10 @@ ${job.description}`)
     if (sourceHash) resume.sourceHash = sourceHash
     if (buildsOnEdits(previous)) resume.hasEdits = true
 
-    EdgeRuntime.waitUntil(captureUsage(supabase, 'tailor_run', userId, { tier, compact, trim, includeSummary, layout, fellBack }))
+    // Every extension build so far joins the standing "Candidate context" box into supplemental, so hasContext isn't only context added for this run (#168).
+    EdgeRuntime.waitUntil(captureUsage(supabase, 'tailor_run', userId, {
+      compact, trim, includeSummary, layout, fellBack, regenerate: !!previous, hasContext: !!supplemental,
+    }))
 
     // Saved under the extension's local ID (1.2.0 sends none) so a later history upload can't duplicate it: https://github.com/TheLinc/cover-me/commit/815c3d8699cc3279f2773f23ff2e817e2f29f1a6
     let jobAppId: string | undefined

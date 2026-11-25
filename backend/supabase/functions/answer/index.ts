@@ -72,14 +72,11 @@ Deno.serve(async (req) => {
     return json({ error: 'Failed to read resume. Please re-upload.' }, 500)
   }
 
-  const { data: userRow } = await supabase.from('users').select('tier').eq('id', userId).single()
-  const tier = userRow?.tier ?? 'hosted_free'
-
   // Charged only once the request is valid, so a bad request never costs an answer (#235).
   const today = new Date().toISOString().split('T')[0]
   const consumed = await consumeAnswer(supabase, userId)
   if (!consumed.ok) {
-    if (consumed.allowance) EdgeRuntime.waitUntil(captureUsage(supabase, 'answer_limit_hit', userId, { tier, kind: consumed.allowance.kind }))
+    if (consumed.allowance) EdgeRuntime.waitUntil(captureUsage(supabase, 'answer_limit_hit', userId, { kind: consumed.allowance.kind }))
     return json(consumed.body, consumed.status)
   }
   // Only for a failed call to Anthropic: an empty or declined reply still costs
@@ -102,7 +99,7 @@ Deno.serve(async (req) => {
     }
     // A decline (stop_reason "refusal") comes back with no text (#235).
     if (!answer) return { error: FAILED }
-    EdgeRuntime.waitUntil(captureUsage(supabase, 'answer_generated', userId, { tier, hasCharLimit: !!maxLength, jobSource, revised: !!revision }))
+    EdgeRuntime.waitUntil(captureUsage(supabase, 'answer_generated', userId, { hasCharLimit: !!maxLength, jobSource, revised: !!revision }))
     const { data: allowance } = await supabase.rpc('answer_allowance', { p_user_id: userId })
     return { answer, allowance: allowance ?? undefined }
   })
