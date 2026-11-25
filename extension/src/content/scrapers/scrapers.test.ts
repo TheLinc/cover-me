@@ -82,7 +82,7 @@ describe('company and title when the page doesn\'t name them (#200)', () => {
     expect(scrape('https://job-boards.greenhouse.io/embed/job_app', html).company).toBe('Anthropic')
   })
 
-  // The tab title regex retried at every " at ", quadratic on a crafted title (#208)
+  // A regex that retries at every " at " goes quadratic on this title (#208)
   test('a Greenhouse-style tab title of 40,000 " at " stays cheap', () => {
     const start = performance.now()
     scrape('https://careers.example.com/jobs/79', `<!doctype html><html><head><title>Job Application for x${' at '.repeat(40_000)}\n</title></head>
@@ -90,8 +90,8 @@ describe('company and title when the page doesn\'t name them (#200)', () => {
     expect(performance.now() - start).toBeLessThan(2000)
   })
 
-  // Each element marked with the URL's job ID was measured, once per repeat of the ID
-  // (8 s before). Spans, as nested divs cost master's own block pass more (#208)
+  // Measuring each element marked with the URL's job ID, once per repeat of the ID,
+  // takes seconds here. Spans cost the rest of the scrape nothing, so time shows only that (#208)
   test('elements marked with the URL\'s job ID, nested 250 deep, stay cheap', () => {
     const chain = '<span data-id="1234567">'.repeat(250) + 'x' + '</span>'.repeat(250)
     const start = performance.now()
@@ -125,8 +125,8 @@ describe('company and title when the page doesn\'t name them (#200)', () => {
     expect(posting('Job Details', 'Job Details | Northwind').title).toBe('Job Details')
   })
 
-  // Only a rejected heading falls back to the tab title. Master read a logo <h1>
-  // that way and let a framed posting win (#208)
+  // Only a rejected heading falls back to the tab title. A logo isn't one, so this
+  // page stays no job and a posting in a frame can win (#208)
   test('an <h1> holding only a logo doesn\'t fall back to the tab title', () => {
     expect(() => posting('<a href="/"><img alt="Northwind"></a>', 'Open Positions | Northwind', 'https://www.northwind.com/careers'))
       .toThrow('Could not find job details')
@@ -139,6 +139,7 @@ describe('company and title when the page doesn\'t name them (#200)', () => {
     expect(job.description).toMatch(/^Careers \/ Finance[\s\S]*Five years of external audit experience and a CPA\.$/)
   })
 
+  // Company-first and job-first titles look alike when the URL names neither (#208)
   test('a two-part tab title the URL doesn\'t name gives no job', () => {
     expect(posting('Key Responsibilities', 'Wiz - Director of Finance', 'https://employer.example.io/position/2600/79').title)
       .toBe('Key Responsibilities')
@@ -158,8 +159,8 @@ describe('company and title when the page doesn\'t name them (#200)', () => {
     expect(() => posting(h1, tab, url)).toThrow('Could not find job details')
   })
 
-  // Matches master, which kept "MSC CAREER PORTAL" when the tab title names no
-  // company (#208)
+  // A tab title that names no company can't tell the job from the site's name, so
+  // the heading stays (#208)
   test('a site heading stays the title of a posting on the page', () => {
     expect(posting('NORTHWIND CAREER PORTAL', 'CN - Accounts Receivable Specialist job in Mississauga',
       'https://northwind-jobs.example.com/job-details/cn-accounts-receivable-specialist-1761413').title).toBe('NORTHWIND CAREER PORTAL')
@@ -363,7 +364,7 @@ describe('generic heuristic', () => {
     }
   })
 
-  // Each link was read once per link it's nested in: 34 s before, 1 s now (#74)
+  // Reading each link once per link it's nested in takes about 34 s here (#74)
   test('70 nested links in 100 nested blocks stay cheap', () => {
     const main = '<div>'.repeat(100) + 'x'.repeat(600) + '<a href="/a">L<div>'.repeat(70) + '<i></i>'.repeat(20_000) + '</div></a>'.repeat(70) + '</div>'.repeat(100)
     const start = performance.now()
@@ -371,7 +372,7 @@ describe('generic heuristic', () => {
     expect(performance.now() - start).toBeLessThan(5000)
   })
 
-  // Card lists measure each level's text: 1 s here, as long as master's block search (#215)
+  // Card lists measure each level's text, which costs about as much as the block search here (#215)
   test('120 nested card lists over 2 MB stay cheap', () => {
     const card = (i: number, c: string) => `<div><a href="/${c}${i}">${c}${i}</a><b>x</b></div>`
     const main = Array.from({ length: 120 }, (_, i) => `<div>${card(i, 'a')}${card(i, 'b')}${card(i, 'c')}<div>`).join('')
@@ -394,7 +395,7 @@ test('refuses pages nested far deeper than any real posting', () => {
     .toThrow('too large')
   // Comments cost a node each though they aren't elements (#3)
   expect(() => scrape('https://careers.example.com/jobs/1', `<html><body>${'<!---->'.repeat(200_000)}</body></html>`)).toThrow('too large')
-  // Finding the outermost of 50,000 microdata sections compared every pair (#5)
+  // Comparing every pair of 50,000 microdata sections to find the outermost is quadratic (#5)
   const nestedSections = '<div itemprop="description">x</div>'.repeat(50_000)
   const start = performance.now()
   scrape('https://careers.example.com/jobs/1', `<html><body><main itemscope itemtype="https://schema.org/JobPosting"><h1 itemprop="title">Clerk</h1>${nestedSections}</main></body></html>`)
@@ -437,47 +438,49 @@ test('LinkedIn description runs past the list with a hidden sibling above the bo
 })
 
 test.each([
-  // The old "… more" regex went quadratic on long whitespace runs (#21)
+  // A backtracking "… more" regex goes quadratic on long whitespace runs (#21)
   { case: '40,000 line breaks in the box', main: deepBox(`a${'<br>'.repeat(40_000)}b`), company: 'Unknown Company' },
-  // Links were read once per level and ordered by walking siblings (#21)
+  // Reading links once per level, or ordering them by walking siblings, is quadratic here (#21)
   { case: '29,000 sibling company links', main: deepBox() + Array.from({ length: 29_000 }, (_, i) => companyLink(`c${i}`, `<p>C${i}</p>`)).join(''), company: 'C0' },
-  // The title fallback compared every <p> near the company link: 88 s before (#21)
+  // Comparing every <p> near the company link took 88 s on this page (#21)
   { case: '29,000 paragraphs beside a company link', main: companyLink('c', 'C') + '<p>1 hour ago</p>'.repeat(29_000) + deepBox(), company: 'C' },
-  // Each title candidate was judged again at each of 12 levels (#21)
+  // Judging each title candidate again at each of 12 levels costs 12 times as much (#21)
   { case: '19,000 title candidates beside the box', main: `<div>${'<div data-display-contents="true"><p>1 hour ago</p></div>'.repeat(19_000)}<div>${box()}</div></div>`, company: 'Unknown Company' },
-  // isUIChrome compiled a selector per call before it walked ancestors (#21)
+  // Compiling a selector per isUIChrome call, not walking ancestors, is slow at this depth (#21)
   { case: '19,000 title candidates 200 levels deep', main: '<div>'.repeat(200) + `<div>${'<div data-display-contents="true"><p>1 hour ago</p></div>'.repeat(19_000)}<div>${box()}</div></div>` + '</div>'.repeat(200), company: 'Unknown Company' },
-  // linkedom lets <a> nest: links inside a judged link are skipped, not each
-  // read whole (the depth cap keeps it from growing) (#21)
-  { case: '120 nested company links', main: `<div>${box()}</div>` + '<a href="https://www.linkedin.com/company/c/">C<div>'.repeat(120) + '<i></i>'.repeat(55_000) + '</div></a>'.repeat(120), company: 'C' },
-  // linkedom nests <p>, so reading a span that holds a block read everything below it (#21)
-  { case: '80 nested title candidates', main: `<div>${'<div data-display-contents="true"><p><span>'.repeat(80)}${'<i>x</i>'.repeat(55_000)}${'</span></p></div>'.repeat(80)}<div>${box()}</div></div>`, company: 'Unknown Company' },
-  // Nested "Show more" links each read their whole subtree in the last-resort search (#21)
-  { case: '120 nested "Show more" links', main: `<div>${box()}</div>` + '<a href="https://www.linkedin.com/company/c/">Show more<div>'.repeat(120) + '<i></i>'.repeat(55_000) + '</div></a>'.repeat(120), company: 'Unknown Company' },
+  // linkedom lets <a> nest, so reading each link inside a judged link costs links x subtree (#21)
+  { case: '120 nested company links', main: `<div>${box()}</div>` + '<a href="https://www.linkedin.com/company/c/">C<div>'.repeat(120) + '<i></i>'.repeat(55_000) + '</div></a>'.repeat(120), company: 'C', work: 1_200_000_000 },
+  // linkedom nests <p>, so reading a span that holds a block reads everything below it (#21)
+  { case: '80 nested title candidates', main: `<div>${'<div data-display-contents="true"><p><span>'.repeat(80)}${'<i>x</i>'.repeat(55_000)}${'</span></p></div>'.repeat(80)}<div>${box()}</div></div>`, company: 'Unknown Company', work: 1_200_000_000 },
+  // Reading each nested "Show more" link whole in the last-resort search costs links x subtree (#21)
+  { case: '120 nested "Show more" links', main: `<div>${box()}</div>` + '<a href="https://www.linkedin.com/company/c/">Show more<div>'.repeat(120) + '<i></i>'.repeat(55_000) + '</div></a>'.repeat(120), company: 'Unknown Company', work: 1_200_000_000 },
   // The "(verified job)" regexes backtrack on whitespace: 7 s at 100,000 spaces (#21)
   { case: 'a span candidate with 100,000 spaces', main: `<div><div data-display-contents="true"><p><span>a${' '.repeat(100_000)}b</span></p></div><div>${box()}</div></div>`, company: 'Unknown Company' },
   { case: 'a link candidate with 100,000 spaces', main: `<div><div data-display-contents="true"><p><a href="https://www.linkedin.com/jobs/view/1/">a${' '.repeat(100_000)}b</a></p></div><div>${box()}</div></div>`, company: 'Unknown Company' },
-  // JSON can write "<" as < past the tag cap, and the tag-stripping regex
-  // backtracked over a run of them (#21)
+  // JSON can write "<" as \u003c past the tag cap, and a tag-stripping regex can
+  // backtrack over a run of them (#21)
   { case: 'JSON-LD with 200,000 "<" and no ">"', main: `<script type="application/ld+json">{"@type":"JobPosting","title":"x","description":"${'\\u003c'.repeat(200_000)}"}</script>`, company: 'Unknown Company' },
-  // Leftovers after stripping could pair into tags for the entity decoder, an
+  // Leftovers after stripping can pair into tags for the entity decoder, an
   // uncapped DOMParser (#21)
   { case: 'JSON-LD with 100,000 "<<b>div>"', main: `<script type="application/ld+json">{"@type":"JobPosting","title":"x","description":"${'\\u003c\\u003cb>div>'.repeat(100_000)}"}</script>`, company: 'Unknown Company' },
-  // lastIndexOf costs text x pattern, so the end marker is capped at 80 characters
-  // like the start (#21)
+  // lastIndexOf costs text x pattern, so the end marker is capped in length like the start (#21)
   { case: 'a 100,000-character end marker', main: `<div>${box('x')}<ul><li>y</li></ul><button data-testid="expandable-text-button">${'a'.repeat(100_000)}b</button><div>${'a'.repeat(300_000)}</div></div>`, company: 'Unknown Company' },
-  // Each missed marker costs text x marker: 10 searches of 80 took 1.2 s on 3.9 MB,
-  // so hidden siblings are skipped and 3 of 20 remain (#21)
+  // Each missed marker costs text x marker: 10 searches of 80 characters take over
+  // a second on 3.9 MB (#21)
   { case: 'twelve hidden end markers after 3.9 MB', main: `<div>${box('a'.repeat(3_900_000))}<ul><li>y</li></ul><hr>${`<div hidden>${'a'.repeat(79)}b</div>`.repeat(12)}</div>`, company: 'Unknown Company', limit: 600 },
-  // linkedom's `:scope >` selectors scanned each nested candidate's whole subtree (#21)
-  { case: '120 nested <p><span> beside a company link', main: companyLink('c', 'C') + '<p><span>'.repeat(120) + '<i></i>'.repeat(55_000) + '</span></p>'.repeat(120) + deepBox(), company: 'C' },
-  // Nested templates attached through their own children, not deep-copied .content
-  // at every level (4 s before, 0.1 s now), so a tighter limit (#21)
+  // linkedom's `:scope >` selectors scan each nested candidate's whole subtree (#21)
+  { case: '120 nested <p><span> beside a company link', main: companyLink('c', 'C') + '<p><span>'.repeat(120) + '<i></i>'.repeat(55_000) + '</span></p>'.repeat(120) + deepBox(), company: 'C', work: 1_200_000_000 },
+  // Deep-copying each nested template's .content costs levels x subtree, 4 s here,
+  // so a tighter limit (#21)
   { case: '60 nested shadow roots', main: deepBox() + '<div><template shadowrootmode="open">'.repeat(60) + '<i></i>'.repeat(40_000) + '</template></div>'.repeat(60), company: 'Unknown Company', limit: 1500 },
-])('LinkedIn pages built to cost work stay cheap: $case', ({ main, company, limit = 5000 }) => {
+])('LinkedIn pages built to cost work stay cheap: $case', ({ main, company, limit = 5000, work = Infinity }) => {
+  const meter = { work: 0 }
   const start = performance.now()
-  const job = scrape('https://www.linkedin.com/jobs/view/1/', `<!doctype html><html><body><main>${main}</main></body></html>`)
-  expect(performance.now() - start).toBeLessThan(limit) // slow versions run past the work cap in page.ts or took 1.4 to 200+ s; CI runners are slower than a laptop (#322)
+  const job = scrapeHtml(parseHTML, 'https://www.linkedin.com/jobs/view/1/', `<!doctype html><html><body><main>${main}</main></body></html>`, meter)
+  expect(performance.now() - start).toBeLessThan(limit) // slow versions took 1.2 to 200+ s; CI runners are slower than a laptop (#322)
+  // Work, not time, where the slow path reads whole subtrees: it adds about 2.6B,
+  // and a busy machine can't fail it (#322)
+  expect(meter.work).toBeLessThan(work)
   expect(job.company).toBe(company)
 })
 
@@ -531,8 +534,9 @@ describe.runIf(import.meta.env.MODE === 'smoke')('scrapers on live postings', as
     expect(job).toMatchObject({ title: 'Senior Data Analyst', company: 'Acme Corp', description: description.trim() })
   })
 
-  // Retried because LinkedIn sometimes serves a runner's IP an empty page. Indeed
-  // needs a visible Chrome and blocks IPs after a few visits, so it isn't scheduled (#18)
+  // Retried: LinkedIn sometimes serves a runner's IP an empty page, and a real
+  // markup change fails every attempt (#18). Indeed needs a visible Chrome and
+  // blocks IPs after a few visits, so it isn't scheduled (#2)
   test.each(BOARDS.filter((b) => !b.headed))('$name', { timeout: 120_000, retry: 2 }, async (board) => {
     const { url, html } = await fetchPosting(browser, board)
     const job = scrape(url, html)
