@@ -8,16 +8,12 @@ import logoUrl from '../public/icon/48.png?inline'
 const clean = (s: string | null | undefined) =>
   (s ?? '').replace(/\s+/g, ' ').replace(/[\s*✱]+$/, '').trim()
 
-// Text of an element without the form controls inside it (a label wrapped
-// around its box would otherwise include the box's own text).
 function textWithoutFields(el: Element): string {
   const copy = el.cloneNode(true) as Element
   copy.querySelectorAll('input, textarea, select, [contenteditable]').forEach((n) => n.remove())
   return clean(copy.textContent)
 }
 
-// The question a box asks: its label, aria-labelledby, aria-label, the
-// nearest text above it, then its placeholder. '' when nothing names it.
 export function fieldQuestion(el: HTMLElement): string {
   const root = el.getRootNode() as Document | ShadowRoot
 
@@ -37,8 +33,7 @@ export function fieldQuestion(el: HTMLElement): string {
   const ariaLabel = clean(el.getAttribute('aria-label'))
   if (ariaLabel) return ariaLabel
 
-  // Lever and many custom forms: the question sits in an element before the
-  // box's wrapper. A few levels up at most, so a far-off heading isn't taken.
+  // Lever puts the question in an element before the box's wrapper (#232).
   let node: Element | null = el
   for (let depth = 0; node && depth < 4; depth++, node = node.parentElement) {
     for (let sib = node.previousElementSibling; sib; sib = sib.previousElementSibling) {
@@ -51,15 +46,10 @@ export function fieldQuestion(el: HTMLElement): string {
   return clean(el.getAttribute('placeholder'))
 }
 
-// The box's character limit, when it sets one.
 export function fieldMaxLength(el: HTMLElement): number | undefined {
   const n = Number.parseInt(el.getAttribute('maxlength') ?? '', 10)
   return n > 0 ? n : undefined
 }
-
-// ── In the page ──────────────────────────────────────────────────────────────
-// Everything below runs in the injected page script and isn't unit-tested:
-// it needs a real browser's focus, selection and execCommand.
 
 type Job = JobData
 type JobSource = 'page' | 'saved'
@@ -70,8 +60,6 @@ function deepActive(): HTMLElement | null {
   return el
 }
 
-// The box right-clicked: right-clicking a box focuses it, so it's the focused
-// element (inside open shadow roots too).
 function focusedField(): HTMLElement | null {
   const el = deepActive()
   if (!el) return null
@@ -79,15 +67,8 @@ function focusedField(): HTMLElement | null {
   return null
 }
 
-// Replaces the box's text with the answer as if typed: execCommand updates
-// React-built forms and rich-text boxes, and the browser's undo (Ctrl+Z)
-// brings back what was there. The value setter is the fallback for a box that
-// refuses it, set through the prototype so React notices.
-// false when the box is gone or won't take focus (re-rendered, or its form
-// step hidden while the answer was written): then nothing is typed, rather
-// than typing into whatever box has focus now. Focus goes back to the box the
-// applicant moved on to while waiting, so their next keys don't land in the
-// answer.
+// Focus goes back to the box the applicant moved on to while waiting, so their
+// next keys don't land in the answer (#232)
 function typeAnswer(el: HTMLElement, text: string): boolean {
   const before = deepActive()
   el.focus()
@@ -110,6 +91,7 @@ function insert(el: HTMLElement, text: string): boolean {
   }
   if (document.execCommand('insertText', false, text)) return true
   if (plain) {
+    // Through the prototype's setter, so React notices (#232)
     const proto = plain instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype
     Object.getOwnPropertyDescriptor(proto, 'value')?.set?.call(plain, text)
   } else {
@@ -119,10 +101,9 @@ function insert(el: HTMLElement, text: string): boolean {
   return true
 }
 
-// The popup's palette (src/popup/index.css), so the box reads as Cover Me on
-// any page. Text sizes stay small: it sits on someone else's form.
 const STYLE = `
-:host { all: initial; }
+:host { all: initial !important; }
+:host::before, :host::after { content: none !important; }
 .box { position: fixed; z-index: 2147483647; box-sizing: border-box; width: min(340px, calc(100vw - 16px));
   padding: 12px 12px 14px 14px; border-radius: 12px; overflow: hidden;
   background: #15132B; color: #EEEDF8; border: 1px solid #35315E;
@@ -168,9 +149,9 @@ select:focus-visible { outline: 2px solid #6366F1; outline-offset: 1px; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 `
 
-// The toolbar icon, bundled into the page script and drawn on a canvas: an
-// <img> of an extension file would need web_accessible_resources (which lets
-// any page detect Cover Me) and can be blocked by the page's img-src policy.
+// Drawn on a canvas, not an <img>: an extension file would need
+// web_accessible_resources (any page could detect Cover Me) and the page's
+// img-src policy can block it (#232).
 let logoBitmap: Promise<ImageBitmap | null> | null = null
 function drawLogo(canvas: HTMLCanvasElement): void {
   const scale = Math.max(2, Math.ceil(devicePixelRatio || 1))
@@ -224,10 +205,6 @@ function closeStatus(): void {
   status = null
 }
 
-// Under the field, or above it when there's no room below, so it reads as
-// part of that field. It moves with the field as the page (or a scrolling
-// panel) scrolls: off screen with it, and back. A field taller than the
-// screen keeps the box at the bottom edge while any of it shows.
 function place(anchor: HTMLElement | null, box: HTMLElement): void {
   if (anchor && !anchor.isConnected) return
   const rect = anchor?.getBoundingClientRect()
@@ -247,21 +224,15 @@ function place(anchor: HTMLElement | null, box: HTMLElement): void {
 interface StatusView {
   kind: 'working' | 'done' | 'error'
   title: string
-  // A short aside after the title, on the same line (the undo key).
   hint?: string
   note?: string
-  // What Cover Me read from the form, shown so the applicant can see it took
-  // the right question (and job) before trusting the answer.
   question?: string
   maxLength?: number
   job?: Job
   pick?: { jobs: Job[]; current: number; onPick: (index: number) => void }
-  // Asks for a change to the answer in the box (quick options or typed);
-  // shown: what the box says it's doing (the option's label, or the text).
   revise?: (request: string, shown: string) => void
 }
 
-// The quick changes, and what each one asks the model for.
 const QUICK_CHANGES: Array<[label: string, request: string]> = [
   ['Shorter', 'Make it shorter: about half the length, keeping the strongest point.'],
   ['More specific', 'Make it more specific: use the most concrete details the resume gives.'],
@@ -296,24 +267,21 @@ function changeControls(revise: (request: string, shown: string) => void): HTMLE
   return [chips, form]
 }
 
-// The small status box by the field: working (with a loading bar), done (with
-// the job used and a way to pick another) or an error. Text only goes in
-// through textContent, since questions and job titles come from web pages.
+// Text only goes in through textContent, since questions and job titles come
+// from web pages (#232).
 function showStatus(anchor: HTMLElement | null, view: StatusView): void {
-  // The box being replaced, if any, so the new one grows or shrinks from it.
   const from = status?.box.getBoundingClientRect()
   closeStatus()
-  const host = document.createElement('cover-me-answer-status')
+  // Not a custom element: the page could define its name first (#357)
+  const host = document.createElement('div')
   const root = host.attachShadow({ mode: 'closed' })
   const style = document.createElement('style')
   style.textContent = STYLE
   const box = node('div', view.kind === 'error' ? 'box err' : 'box')
   box.setAttribute('role', view.kind === 'error' ? 'alert' : 'status')
   if (view.kind === 'working') box.setAttribute('aria-busy', 'true')
-  // Keys typed in the change box don't bubble on to the page's own shortcut
-  // handlers (a "/" that jumps to search). Best effort: a page listening in
-  // the capture phase still sees them first, and nothing in a content script
-  // can stop that.
+  // Keeps typed keys from the page's shortcuts (a "/" that jumps to search).
+  // A page listening in the capture phase still sees them first (#232).
   for (const type of ['keydown', 'keyup', 'keypress']) box.addEventListener(type, (e) => e.stopPropagation())
 
   const head = node('div', 'head')
@@ -337,7 +305,6 @@ function showStatus(anchor: HTMLElement | null, view: StatusView): void {
     const ask = node('div', 'ask')
     ask.append(node('p', 'q', `“${view.question}”`))
     const meta = node('p', 'meta')
-    // With a picker the job shows in it, so the line keeps only the limit.
     if (view.job && !picking) meta.append(node('span', 'job', jobName(view.job)))
     if (view.maxLength) meta.append(`${meta.childNodes.length ? ' · ' : ''}${view.maxLength.toLocaleString()} characters max`)
     if (meta.childNodes.length) ask.append(meta)
@@ -373,8 +340,6 @@ function showStatus(anchor: HTMLElement | null, view: StatusView): void {
 
   place(anchor, box)
 
-  // A new state in the same place (the job picker appearing, an error after
-  // writing) eases from the old box's size instead of jumping to the new one.
   const to = box.getBoundingClientRect()
   if (from && Math.abs(from.left - to.left) < 1 && Math.abs(from.height - to.height) >= 1 && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
     box.animate(
@@ -384,15 +349,14 @@ function showStatus(anchor: HTMLElement | null, view: StatusView): void {
   }
 
   const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeStatus() }
-  // Capture catches scrolling inside panels and modals too; one move a frame.
+  // Capture, because scroll inside panels and modals doesn't bubble (#232).
   let frame = 0
   const follow = () => { if (!frame) frame = requestAnimationFrame(() => { frame = 0; place(anchor, box) }) }
   document.addEventListener('keydown', onKey, true)
   addEventListener('scroll', follow, { capture: true, passive: true })
   addEventListener('resize', follow, { passive: true })
-  // A tab or step switch (Ashby's Overview and Application) fires no scroll:
-  // check the field itself. Gone from the page: the box closes. Only hidden:
-  // the box hides with it, and comes back when the field does.
+  // A tab or step switch (Ashby's Overview and Application) fires no scroll,
+  // so the field itself is polled (#232).
   const watch = anchor && setInterval(() => {
     if (!anchor.isConnected) return closeStatus()
     const shown = anchor.checkVisibility()
@@ -414,15 +378,11 @@ function showStatus(anchor: HTMLElement | null, view: StatusView): void {
 const jobName = (job: Job) => (job.company && job.company !== 'Unknown Company' ? `${job.title} · ${job.company}` : job.title)
 const undoKey = () => (/Mac|iPhone|iPad/.test(navigator.platform) ? '⌘Z' : 'Ctrl+Z')
 
-// Each right-click's box, by the id the background gives it: an answer can
-// take half a minute, and another box may be right-clicked meanwhile.
 interface Target { el: HTMLElement; question: string; maxLength?: number }
 const targets = new Map<string, Target>()
 
 const asked = (target: Target) => ({ question: target.question, maxLength: target.maxLength })
 
-// What the account has left, after the answer just written. Pro's 50 a day
-// only shows once it runs low.
 export function answersLeft(a?: AnswerAllowance): string {
   if (!a) return ''
   const n = a.remaining
@@ -437,8 +397,6 @@ function done(target: Target, answer: string, jobs: Job[], index: number, jobSou
     showStatus(null, { kind: 'error', title: 'The box changed while the answer was being written. Right-click it again.' })
     return
   }
-  // The prompt leaves [blanks] for personal details only the applicant knows
-  // (a start date, a salary).
   const notes = [
     jobSource === 'saved' && index === 0 ? 'No job posting on this page, so this uses your latest saved job.' : '',
     /\[[^\]]+\]/.test(answer) ? 'Fill in the parts in [brackets] before you submit.' : '',
@@ -451,9 +409,7 @@ function done(target: Target, answer: string, jobs: Job[], index: number, jobSou
   })
 }
 
-// A change revises what's in the box now, so the applicant's own edits stay;
-// if they cleared it (Ctrl+Z), the answer Cover Me last typed. innerText for
-// a rich-text box, so its paragraphs keep their breaks.
+// Revises what's in the box now, so the applicant's own edits stay (#232).
 const reviser = (target: Target, answer: string, jobs: Job[], index: number, jobSource: JobSource) => (request: string, shown: string) => {
   const now = (target.el instanceof HTMLInputElement || target.el instanceof HTMLTextAreaElement ? target.el.value : target.el.innerText ?? '').trim()
   void rewrite(target, jobs, index, jobSource, { previous: now || answer, request }, shown)
@@ -461,8 +417,6 @@ const reviser = (target: Target, answer: string, jobs: Job[], index: number, job
 
 async function rewrite(target: Target, jobs: Job[], index: number, jobSource: JobSource, revision?: AnswerRevision, shown?: string): Promise<void> {
   const { el, question, maxLength } = target
-  // The form moved on (its next step, a re-render): nothing to type into, so
-  // nothing is sent and no answer is used up.
   if (!el.isConnected) {
     showStatus(null, { kind: 'error', title: 'That box is no longer on the page. Right-click it again.' })
     return
@@ -476,7 +430,6 @@ async function rewrite(target: Target, jobs: Job[], index: number, jobSource: Jo
       showStatus(el, {
         kind: 'error', title: result?.error ?? 'Could not write an answer. Please try again.', ...asked(target), job: jobs[index],
         pick: { jobs, current: index, onPick: (i) => void rewrite(target, jobs, i, jobSource) },
-        // A failed change can be tried again, from what's in the box by then.
         revise: revision ? reviser(target, revision.previous, jobs, index, jobSource) : undefined,
       })
     }
@@ -485,7 +438,6 @@ async function rewrite(target: Target, jobs: Job[], index: number, jobSource: Jo
   }
 }
 
-// Messages from the background (background/answer.ts).
 export function handleAnswerMessage(message: Record<string, unknown>, sendResponse: (r: unknown) => void): void {
   const jobs = (message.jobs as Job[] | undefined) ?? []
   const jobSource = (message.jobSource as JobSource | undefined) ?? 'page'
