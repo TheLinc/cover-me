@@ -3,9 +3,7 @@ import { admin, callFunction, createUser, deleteUser, type TestUser } from './he
 
 type App = { id: string; title: string; company: string; createdAt: string }
 
-// Seeds job_applications directly: search only reads these columns. Each gets
-// a letter row, since the full list leaves out applications with no documents
-// (its text isn't read here, and an unreadable letter is skipped in the list).
+// Each gets a placeholder letter, since the list leaves out applications with no documents (#101).
 async function seed(user: TestUser, rows: Array<{ title: string; company: string; createdAt: string }>) {
   const { data, error } = await admin.from('job_applications').insert(
     rows.map((r) => ({ user_id: user.id, title: r.title, company: r.company, url: null, created_at: r.createdAt })),
@@ -54,7 +52,7 @@ describe('applications search and paging', () => {
   })
 
   // The cursor keeps Postgres's microseconds: rounding it to milliseconds would
-  // skip a row from the same millisecond.
+  // skip a row from the same millisecond (#22).
   it('pages past rows in the same millisecond', async () => {
     user = await createUser('hosted_pro')
     await seed(user, [
@@ -98,7 +96,7 @@ describe('applications search and paging', () => {
 
   it('drops * instead of treating it as a wildcard', async () => {
     user = await createUser('hosted_pro')
-    // As a wildcard, E*r would match Editor; with * dropped it's "Er", which doesn't.
+    // As a wildcard, E*r would match Editor; with * dropped it's "Er", which doesn't (#22).
     await seed(user, [{ title: 'Editor', company: 'A', createdAt: day(1) }])
     expect((await list(user, { q: 'Edit*' })).body.applications).toHaveLength(1)
     expect((await list(user, { q: 'E*r' })).body.applications).toHaveLength(0)
