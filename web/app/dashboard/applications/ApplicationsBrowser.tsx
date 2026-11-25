@@ -21,12 +21,12 @@ import { BOARD_SEEN_KEY } from '../BoardNotice'
 type Status = 'loading' | 'ready' | 'error'
 type View = 'board' | 'list'
 
-// The view and sort are remembered on this device; search and filters aren't.
+// The view and sort are remembered on this device; search and filters aren't (#100).
 const VIEW_KEY = 'cover-me:applications-view'
 const SORT_KEY = 'cover-me:applications-sort'
-// Private windows can refuse storage: the page then just doesn't remember.
+// Private windows can refuse storage: the page then just doesn't remember (#100).
 const stored = (key: string) => { try { return localStorage.getItem(key) } catch { return null } }
-const store = (key: string, value: string) => { try { localStorage.setItem(key, value) } catch { /* not remembered */ } }
+const store = (key: string, value: string) => { try { localStorage.setItem(key, value) } catch {} }
 
 const CHIP = 'h-9 gap-1.5 rounded-full border-line bg-surface px-3.5 text-[13px] font-normal text-ink-2 hover:bg-surface hover:text-ink data-[state=on]:border-[color-mix(in_srgb,var(--brand-strong)_40%,transparent)] data-[state=on]:bg-brand-tint data-[state=on]:font-medium data-[state=on]:text-brand-ink'
 
@@ -37,7 +37,7 @@ async function load(query: ApplicationsQuery, signal: AbortSignal): Promise<Appl
   for (const [key, value] of Object.entries(query)) if (value) params.set(key, String(value))
   const res = await fetch(`/api/applications?${params}`, { signal })
   // Signed out: a retry can't fix it. The promise never settles, so the page
-  // doesn't flash an error on its way out.
+  // doesn't flash an error on its way out (#101).
   if (res.status === 401) { window.location.assign('/auth?next=/dashboard/applications'); return new Promise(() => {}) }
   if (!res.ok) throw new Error(String(res.status))
   return res.json()
@@ -45,20 +45,20 @@ async function load(query: ApplicationsQuery, signal: AbortSignal): Promise<Appl
 
 // Every application matching the search and dates loads at once (up to
 // PAGE_LIMIT), so the page sorts them and filters by stage itself.
-// pro: cards offer the letters and resumes; free ones show the job only.
+// pro: cards offer the letters and resumes; free ones show the job only (#100).
 export function ApplicationsBrowser({ pro }: { pro: boolean }) {
   const [text, setText] = useState('')
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
   const [applications, setApplications] = useState<ApplicationSummary[]>([])
   // Stage filters for the list; any number can be on. None on is every stage.
-  // The board's columns are the stages, so it shows them all.
+  // The board's columns are the stages, so it shows them all (#100).
   const [stages, setStages] = useState<Stage[]>([])
-  // More match than loaded: the page shows the newest PAGE_LIMIT.
+  // More match than loaded: the page shows the newest PAGE_LIMIT (#100).
   const [capped, setCapped] = useState(false)
   const [status, setStatus] = useState<Status>('loading')
   // null until read from this device after mount, so the server render and
-  // the first client render agree.
+  // the first client render agree (#100).
   const [view, setView] = useState<View | null>(null)
   const [chosenSort, setChosenSort] = useState<Sort | null>(null)
 
@@ -67,16 +67,16 @@ export function ApplicationsBrowser({ pro }: { pro: boolean }) {
     setView(v === 'board' || v === 'list' ? v : window.matchMedia('(min-width: 768px)').matches ? 'board' : 'list')
     const s = stored(SORT_KEY)
     if (SORTS.includes(s as Sort)) setChosenSort(s as Sort)
-    // The dashboard's "New: track your applications on a board" has done its job.
+    // The dashboard's "New: track your applications on a board" has done its job (#101).
     store(BOARD_SEEN_KEY, '1')
   }, [])
   const sort: Sort = chosenSort ?? (view === 'board' ? 'moved' : 'newest')
   function chooseView(v: View) { setView(v); store(VIEW_KEY, v) }
   function chooseSort(s: Sort) { setChosenSort(s); store(SORT_KEY, s) }
 
-  // Deleted here: a search that was already in flight mustn't bring them back.
+  // Deleted here: a search that was already in flight mustn't bring them back (#27).
   const deleted = useRef(new Set<string>())
-  // Stages saved here win over a search that started before the save.
+  // Stages saved here win over a search that started before the save (#100).
   const staged = useRef(new Map<string, StageState>())
   const search = useMemo(() => createLatestSearch<ApplicationsQuery, ApplicationsPage>(load, (_query, result) => {
     if (!result.ok) {
@@ -100,14 +100,13 @@ export function ApplicationsBrowser({ pro }: { pro: boolean }) {
   const filtered = searched || stageFiltered
 
   // The first load runs at once; after that, changes wait for a short pause
-  // (typing sends one search per pause, not per keystroke).
+  // (typing sends one search per pause, not per keystroke, #22).
   const loaded = useRef(false)
   useEffect(() => {
     if (!query) { search.cancel(); return }
     setStatus('loading')
     if (loaded.current) search.schedule(query)
     else { loaded.current = true; search.now(query) }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [text, from, to])
 
   function retry() {
@@ -123,27 +122,25 @@ export function ApplicationsBrowser({ pro }: { pro: boolean }) {
     setApplications((list) => list.map((a) => (a.id === id ? { ...a, ...state } : a)))
   }
 
-  // A stage changed from a card's menu or drawer, already saved.
   function stageSaved(id: string, state: StageState) {
     staged.current.set(id, state)
     patch(id, state)
   }
 
-  // A card leaves the page: deleted here or found deleted elsewhere.
   function removed(id: string) {
     deleted.current.add(id)
     setApplications((list) => list.filter((a) => a.id !== id))
   }
 
   // A card dropped in another column moves at once, then saves. If the save
-  // fails it goes back. Only the latest move of a card applies its answer.
+  // fails it goes back. Only the latest move of a card applies its answer (#100).
   const moves = useRef(new Map<string, number>())
   async function move(app: ApplicationSummary, stage: Stage) {
     if (app.stage === stage) return
     const n = (moves.current.get(app.id) ?? 0) + 1
     moves.current.set(app.id, n)
     const was: StageState = { stage: app.stage, stageChangedAt: app.stageChangedAt }
-    // Kept as staged at once, so a search landing mid-save doesn't pull it back.
+    // Kept as staged at once, so a search landing mid-save doesn't pull it back (#100).
     stageSaved(app.id, { stage, stageChangedAt: new Date().toISOString() })
     try {
       const saved = await setStage(app.id, stage)
@@ -161,7 +158,7 @@ export function ApplicationsBrowser({ pro }: { pro: boolean }) {
   }
 
   const shownCount = view === 'list' ? listed.length : applications.length
-  // The server caps after searching: with a search on, it's the newest matches.
+  // The server caps after searching: with a search on, it's the newest matches (#100).
   const pool = searched ? `the newest ${PAGE_LIMIT} matches` : `your newest ${PAGE_LIMIT}`
   const statusText = !range
     ? 'The From date is after the To date.'
@@ -176,14 +173,14 @@ export function ApplicationsBrowser({ pro }: { pro: boolean }) {
             : filtered
               ? `${shownCount} ${shownCount === 1 ? 'matches' : 'match'}`
               : `${shownCount} application${shownCount === 1 ? '' : 's'}`
-  // Stays visible while a search loads (its text says so), so the bar keeps its height.
+  // Stays visible while a search loads (its text says so), so the bar keeps its height (#27).
   const counted = range && status !== 'error' && shownCount > 0
 
   function clearFilters() {
     setText('')
     setFrom('')
     setTo('')
-    // The board hides the stage filters, so its Clear leaves them for the list.
+    // The board hides the stage filters, so its Clear leaves them for the list (#100).
     if (view === 'list') setStages([])
   }
 
@@ -193,7 +190,7 @@ export function ApplicationsBrowser({ pro }: { pro: boolean }) {
     <div className="flex flex-col gap-6">
       {/* Find first: the search leads and the filters are chips under it. It
           sticks under the site header (h-16) from md up; on phones it would
-          fill the screen. */}
+          fill the screen (#27). */}
       <div className="z-10 -mx-5 flex flex-col gap-3 bg-background px-5 pb-3 pt-2 md:sticky md:top-16">
         <div className="relative">
           <MagnifyingGlassIcon size={20} className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-subtle" aria-hidden />
@@ -208,11 +205,9 @@ export function ApplicationsBrowser({ pro }: { pro: boolean }) {
             className="h-14 rounded-full border-line bg-surface pl-14 pr-5 text-[16px] text-ink shadow-[0_1px_2px_rgba(30,27,75,0.05),0_10px_28px_-18px_rgba(30,27,75,0.25)] placeholder:text-subtle focus-visible:ring-brand"
           />
         </div>
-        {/* Filters on the left, sort and view on the right; on phones the sort
-            and view get their own line below. */}
         <div className="flex flex-col gap-2 md:flex-row md:items-center">
           {/* One line that scrolls sideways when it doesn't fit, out to the
-              screen's edges on phones; py-1 leaves room for the focus ring. */}
+              screen's edges on phones; py-1 leaves room for the focus ring (#99). */}
           <div className="-mx-5 -my-1 flex min-w-0 items-center gap-2 overflow-x-auto px-5 py-1 [scrollbar-width:none] md:mr-0 md:flex-1 md:pr-1 [&::-webkit-scrollbar]:hidden">
             <DateField id="app-from" label="From" value={from} onChange={setFrom} invalid={!range} describedBy={range ? undefined : 'app-range-error'} />
             <DateField id="app-to" label="To" value={to} onChange={setTo} invalid={!range} describedBy={range ? undefined : 'app-range-error'} />
@@ -224,7 +219,7 @@ export function ApplicationsBrowser({ pro }: { pro: boolean }) {
                     <Toggle
                       key={stage}
                       pressed={on}
-                      // Kept in STAGES order, so the same filters show the same way.
+                      // Kept in STAGES order, so the same filters show the same way (#99).
                       onPressedChange={(pressed) => setStages((list) => STAGES.filter((s) => (s === stage ? pressed : list.includes(s))))}
                       variant="outline"
                       size="sm"
@@ -264,7 +259,7 @@ export function ApplicationsBrowser({ pro }: { pro: boolean }) {
                 type="single"
                 aria-label="View"
                 value={view}
-                // Clicking the pressed one would leave neither on: ignored.
+                // Clicking the pressed one would leave neither on: ignored (#100).
                 onValueChange={(value) => { if (value) chooseView(value as View) }}
                 size="sm"
                 className="gap-1 rounded-full border border-line bg-surface p-0.5"
@@ -275,7 +270,7 @@ export function ApplicationsBrowser({ pro }: { pro: boolean }) {
             </div>
           )}
         </div>
-        {/* What the page below shows: visible as a count, otherwise announced only. */}
+        {/* What the page below shows: visible as a count, otherwise announced only (#100). */}
         <p aria-live="polite" className={counted ? 'px-1 text-[13px] tabular-nums text-subtle' : 'sr-only'}>{statusText}</p>
       </div>
 
@@ -303,7 +298,7 @@ export function ApplicationsBrowser({ pro }: { pro: boolean }) {
       </div>
 
       {range && view && status !== 'error' && shownCount > 0 && (
-        // The old results, dimmed and out of reach until the new ones replace them.
+        // The old results, dimmed and out of reach until the new ones replace them (#27).
         <div inert={dimmed} className={dimmed ? 'opacity-60 transition-opacity' : 'transition-opacity'}>
           {view === 'board' ? (
             <ApplicationsBoard applications={sorted} pro={pro} onMove={move} onDeleted={removed} onStageChange={stageSaved} />
