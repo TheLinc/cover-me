@@ -724,7 +724,7 @@ ${job.description}`)
     if (sourceHash) resume.sourceHash = sourceHash
     if (buildsOnEdits(previous)) resume.hasEdits = true
 
-    // Builds up to 1.6.0 join the standing "Candidate context" box into supplemental, so hasContext isn't only context added for this run (#168).
+    // Every extension build so far joins the standing "Candidate context" box into supplemental, so hasContext isn't only context added for this run (#168).
     EdgeRuntime.waitUntil(captureUsage(supabase, 'tailor_run', userId, {
       compact, trim, includeSummary, layout, fellBack, regenerate: !!previous, hasContext: !!supplemental,
     }))

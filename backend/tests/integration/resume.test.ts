@@ -49,8 +49,14 @@ describe('resume', () => {
 
   it('counts an unknown or missing file name as other', async () => {
     await callFunction('resume', { token: user.token, body: { text: RESUME_TEXT } })
-    const [event] = await mockPosthog.eventsFor('resume_upload', user.id)
-    expect(event.properties.file_type).toBe('other')
+    await callFunction('resume', { token: user.token, body: { text: `${RESUME_TEXT}
+More.`, filename: 'resume.doc' } })
+    const events = await mockPosthog.eventsFor('resume_upload', user.id, (e) => e.length === 2)
+    expect(events.map((e) => e.properties.file_type)).toEqual(['other', 'other'])
+  })
+
+  it('rejects a file name that is not a string', async () => {
+    expect((await callFunction('resume', { token: user.token, body: { text: RESUME_TEXT, filename: 0 } })).status).toBe(400)
   })
 
   it('sends no count for an account that opted out of usage counts', async () => {

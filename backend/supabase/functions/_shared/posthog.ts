@@ -37,7 +37,7 @@ export async function capture(event: string, distinctId: string, properties: Rec
   }
 }
 
-// Fails closed: when the opt-out can't be read, nothing is sent (#168).
+// An opted-out account must never be counted, so an unreadable opt-out sends nothing (#168).
 export async function captureUsage(supabase: SupabaseClient, event: string, userId: string, properties: Record<string, unknown>): Promise<void> {
   if (!POSTHOG_KEY) return
   const { data, error } = await supabase.from('users').select('tier, usage_counts_opted_out_at').eq('id', userId).single()

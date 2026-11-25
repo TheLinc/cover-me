@@ -72,9 +72,6 @@ Deno.serve(async (req) => {
     return json({ error: 'Failed to read resume. Please re-upload.' }, 500)
   }
 
-  const { data: userRow } = await supabase.from('users').select('tier').eq('id', userId).single()
-  const tier = userRow?.tier ?? 'hosted_free'
-
   // Charged only once the request is valid, so a bad request never costs an answer (#235).
   const today = new Date().toISOString().split('T')[0]
   const consumed = await consumeAnswer(supabase, userId)

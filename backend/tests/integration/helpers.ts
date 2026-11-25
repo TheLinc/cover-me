@@ -225,7 +225,7 @@ type PosthogEvent = { api_key: string; event: string; distinct_id: string; prope
 
 export const mockPosthog = {
   events: async (): Promise<PosthogEvent[]> => (await fetch(`${MOCK_URL}/__mock/posthog`)).json(),
-  // Counts are sent after the response, so this polls up to 2 s for `done` (#169).
+  // Counts are sent after the response (#169).
   eventsFor: async (event: string, userId: string, done = (e: PosthogEvent[]) => e.length > 0): Promise<PosthogEvent[]> => {
     const mine = async () => (await mockPosthog.events()).filter((e) => e.event === event && e.distinct_id === userId)
     let events = await mine()
