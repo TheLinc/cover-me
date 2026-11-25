@@ -44,6 +44,7 @@ Deno.serve(async (req) => {
       .eq('job_applications.user_id', userId)
       .order('created_at', { ascending: false })
       .limit(50)
+      .overrideTypes<{ job_applications: { title: string | null; company: string | null; url: string | null } | null }[]>()
 
     if (error) return json({ error: 'Failed to fetch history' }, 500)
 
@@ -51,7 +52,7 @@ Deno.serve(async (req) => {
     for (const row of rows ?? []) {
       try {
         const letter = await decrypt(row.letter_encrypted)
-        const ja = row.job_applications as { title: string | null; company: string | null; url: string | null } | null
+        const ja = row.job_applications
         letters.push({
           id: row.id,
           job: { title: ja?.title ?? '', company: ja?.company ?? '', description: '', url: ja?.url ?? '' },
