@@ -96,7 +96,6 @@ describe('applications search and paging', () => {
 
   it('drops * instead of treating it as a wildcard', async () => {
     user = await createUser('hosted_pro')
-    // As a wildcard, E*r would match Editor; with * dropped it's "Er", which doesn't (#22).
     await seed(user, [{ title: 'Editor', company: 'A', createdAt: day(1) }])
     expect((await list(user, { q: 'Edit*' })).body.applications).toHaveLength(1)
     expect((await list(user, { q: 'E*r' })).body.applications).toHaveLength(0)
