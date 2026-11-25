@@ -493,13 +493,13 @@ test.each([
   // ...and isUIChrome walks ancestors instead of compiling a selector each time
   { case: '19,000 title candidates 200 levels deep', main: '<div>'.repeat(200) + `<div>${'<div data-display-contents="true"><p>1 hour ago</p></div>'.repeat(19_000)}<div>${box()}</div></div>` + '</div>'.repeat(200), company: 'Unknown Company' },
   // linkedom lets <a> nest: links inside a judged link are skipped, not each
-  // read whole (0.17 s now, 1.35 s before; the depth cap keeps it from growing)
-  { case: '120 nested company links', main: `<div>${box()}</div>` + '<a href="https://www.linkedin.com/company/c/">C<div>'.repeat(120) + '<i></i>'.repeat(55_000) + '</div></a>'.repeat(120), company: 'C', limit: 800 },
+  // read whole (the depth cap keeps it from growing) (#21)
+  { case: '120 nested company links', main: `<div>${box()}</div>` + '<a href="https://www.linkedin.com/company/c/">C<div>'.repeat(120) + '<i></i>'.repeat(55_000) + '</div></a>'.repeat(120), company: 'C' },
   // linkedom nests <p> too: a candidate's span holding a block isn't read
   // (each would read everything below it)
-  { case: '80 nested title candidates', main: `<div>${'<div data-display-contents="true"><p><span>'.repeat(80)}${'<i>x</i>'.repeat(55_000)}${'</span></p></div>'.repeat(80)}<div>${box()}</div></div>`, company: 'Unknown Company', limit: 2000 },
+  { case: '80 nested title candidates', main: `<div>${'<div data-display-contents="true"><p><span>'.repeat(80)}${'<i>x</i>'.repeat(55_000)}${'</span></p></div>'.repeat(80)}<div>${box()}</div></div>`, company: 'Unknown Company' },
   // The last-resort company search skips nested links too
-  { case: '120 nested "Show more" links', main: `<div>${box()}</div>` + '<a href="https://www.linkedin.com/company/c/">Show more<div>'.repeat(120) + '<i></i>'.repeat(55_000) + '</div></a>'.repeat(120), company: 'Unknown Company', limit: 800 },
+  { case: '120 nested "Show more" links', main: `<div>${box()}</div>` + '<a href="https://www.linkedin.com/company/c/">Show more<div>'.repeat(120) + '<i></i>'.repeat(55_000) + '</div></a>'.repeat(120), company: 'Unknown Company' },
   // Long text never reaches the "(verified job)" regexes, which backtrack on
   // whitespace runs (7 s at 100,000 spaces)
   { case: 'a span candidate with 100,000 spaces', main: `<div><div data-display-contents="true"><p><span>a${' '.repeat(100_000)}b</span></p></div><div>${box()}</div></div>`, company: 'Unknown Company' },
@@ -518,7 +518,7 @@ test.each([
   { case: 'twelve hidden end markers after 3.9 MB', main: `<div>${box('a'.repeat(3_900_000))}<ul><li>y</li></ul><hr>${`<div hidden>${'a'.repeat(79)}b</div>`.repeat(12)}</div>`, company: 'Unknown Company', limit: 600 },
   // Title cases read direct children by tag, not `:scope >` selectors that
   // scan each nested candidate's whole subtree
-  { case: '120 nested <p><span> beside a company link', main: companyLink('c', 'C') + '<p><span>'.repeat(120) + '<i></i>'.repeat(55_000) + '</span></p>'.repeat(120) + deepBox(), company: 'C', limit: 600 },
+  { case: '120 nested <p><span> beside a company link', main: companyLink('c', 'C') + '<p><span>'.repeat(120) + '<i></i>'.repeat(55_000) + '</span></p>'.repeat(120) + deepBox(), company: 'C' },
   // Nested templates: walked and attached through their own children, not
   // deep-copied .content at every level (memory grows levels x subtree). Under
   // 0.3 s now, several seconds before, so a tighter limit.
@@ -526,7 +526,7 @@ test.each([
 ])('LinkedIn pages built to cost work stay cheap: $case', ({ main, company, limit = 5000 }) => {
   const start = performance.now()
   const job = scrape('https://www.linkedin.com/jobs/view/1/', `<!doctype html><html><body><main>${main}</main></body></html>`)
-  expect(performance.now() - start).toBeLessThan(limit) // the slow versions took 5 to 200+ s; CI runners are slower than a laptop
+  expect(performance.now() - start).toBeLessThan(limit) // slow versions run past the work cap in page.ts or took 1.4 to 200+ s; CI runners are slower than a laptop (#322)
   expect(job.company).toBe(company)
 })
 
