@@ -693,10 +693,11 @@ const IRREGULAR_PAST = new Set(['ran', 'led', 'built', 'rebuilt', 'grew', 'wrote
 const PREPOSITIONS = new Set(['as', 'in', 'for', 'over', 'after', 'during', 'within', 'across', 'with', 'by', 'at', 'on', 'from', 'since', 'while', 'under'])
 // Spelled the same in both tenses, or -ed words that aren't past forms: neither. (#202)
 const EITHER_TENSE = new Set(['cut', 'set', 'put', 'hit', 'let', 'shut', 'spread', 'upset', 'quit', 'read', 'cost', 'beat', 'bid', 'broadcast', 'forecast', 'embed', 'shed', 'proofread', 'split', 'typeset', 'reset', 'offset', 'recast', 'reread'])
-// An earlier role's dates end in a year ("2019 – 2022", "Mar 2020 - Jun 2022").
+// An earlier role's dates end in a year of four or two digits ("2019 – 2022",
+// "Mar 2020 - Jun 2022", "06/20 – 06/22"). (#374)
 // Anything else ("– Present", "– Till date", "Since 2022", an open "2022 –")
 // may be the current role, which is left alone. (#202)
-const isEarlierRole = (dates: string) => /(19|20)\d\d\s*$/.test(dates) && !/\b(since|from)\b/i.test(dates)
+const isEarlierRole = (dates: string) => /((19|20)\d\d|[/'‘’.\-–—\s]\d\d)\s*$/.test(dates) && !/\b(since|from)\b/i.test(dates)
 
 /**
  * Present-tense bullets in an earlier role (#198), with the fix as the reason:

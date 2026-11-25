@@ -46,7 +46,7 @@ pnpm typecheck && pnpm lint && pnpm test && pnpm build
 pnpm typecheck && pnpm lint && pnpm test && pnpm check
 
 # backend/ (lint needs Deno, test needs Docker running)
-pnpm lint && pnpm test
+pnpm typecheck && pnpm lint && pnpm test
 ```
 
 ## After you open the pull request
