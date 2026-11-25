@@ -6,6 +6,7 @@ import { heartbeatJson } from '../_shared/heartbeat-json.ts'
 import { decrypt } from '../_shared/encrypt.ts'
 import { buildLintRetryMessage, letterLength, lintLetter } from '../_shared/letter-lint.ts'
 import { findOrCreateJobApplication } from '../_shared/job-application.ts'
+import { MAX_RESUME_CHARS } from '../_shared/resume-parse.ts'
 import { MAX_BODY_BYTES, MAX_SUPPLEMENTAL, readJob, text } from '../_shared/job-input.ts'
 import { readBody } from '../_shared/read-body.ts'
 
@@ -230,7 +231,7 @@ ${job.description.slice(0, 15000)}
 """
 
 APPLICANT RESUME:
-${resumeText.slice(0, 12000)}
+${resumeText.slice(0, MAX_RESUME_CHARS)}
 ${supplementalSection}
 ---
 

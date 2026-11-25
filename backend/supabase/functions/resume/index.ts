@@ -4,10 +4,11 @@ import { heartbeatJson } from '../_shared/heartbeat-json.ts'
 import { decrypt, encrypt, sameCiphertext } from '../_shared/encrypt.ts'
 import { hasSectionOrder, isCurrentParse, isValidParsedResume, parseResumeStructure, type ParsedResume, upgradedParse, withChosenOrder } from '../_shared/resume-parse.ts'
 import { readBody } from '../_shared/read-body.ts'
+import { withOlderFields } from '../_shared/resume-fields.ts'
 
 const SUPABASE_URL        = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SECRET_KEY = Deno.env.get('SERVICE_KEY')!
-const MAX_RESUME_BYTES    = 100_000 // 100 KB — well above any real resume text
+const MAX_RESUME_BYTES    = 100_000
 // A Pro account's Word file for "Your design" (#131): 2 MB, sent as base64.
 const MAX_DOCX_BYTES      = 2 * 1024 * 1024
 const MAX_DOCX_BODY       = Math.ceil(MAX_DOCX_BYTES / 3) * 4 + 1_000
@@ -16,7 +17,7 @@ const MAX_ORDER_BYTES     = 10_000 // a section order and its extra sections' he
 const ANTHROPIC_API_KEY   = Deno.env.get('ANTHROPIC_API_KEY')!
 // Background parses per account. Uploads aren't charged like generations,
 // so this bounds the Haiku calls one account can cause by re-uploading (or
-// deleting and re-uploading). Past it, tailor parses on first use, as before.
+// deleting and re-uploading). Past it, tailor parses on first use, as before (#26).
 const PARSES_PER_MINUTE = 2
 const PARSES_PER_DAY    = 10
 
@@ -72,7 +73,7 @@ Deno.serve(async (req) => {
   // textHash: the SHA-256 of the resume text it was checked against. When the
   // account's text has changed since (another computer), the file is refused:
   // it would be kept with the wrong parse and restored as the wrong design.
-  // Older extensions don't send it.
+  // Older extensions don't send it (#131).
   if (req.method === 'POST' && new URL(req.url).searchParams.has('file')) {
     const { data: account } = await supabase.from('users').select('tier').eq('id', userId).single()
     if (account?.tier !== 'hosted_pro') return json({ error: 'Keeping your Word file requires a Pro subscription.' }, 403)
@@ -92,7 +93,7 @@ Deno.serve(async (req) => {
     const { data: resumeRow } = await supabase.from('resumes').select('text_encrypted, structured_encrypted').eq('user_id', userId).maybeSingle()
     if (textHash !== undefined) {
       let current: string | null = null
-      try { current = resumeRow ? await sha256Hex(await decrypt(resumeRow.text_encrypted)) : null } catch { /* unreadable: no match */ }
+      try { current = resumeRow ? await sha256Hex(await decrypt(resumeRow.text_encrypted)) : null } catch { /* unreadable: no match (#174) */ }
       if (current !== textHash) return json({ error: "Your account has a different resume than this browser, so this Word file wasn't saved to it. Upload your .docx here again to use it with your account." }, 409)
     }
     let docx_encrypted: string
@@ -107,14 +108,14 @@ Deno.serve(async (req) => {
     )
     if (error) return json({ error: 'Failed to save Word file' }, 500)
     // The file goes with the resume text it was checked against, unless new
-    // text arrived meanwhile.
+    // text arrived meanwhile (#174).
     if (resumeRow) {
       const { error: designError } = await supabase.from('resumes').update({ design_hash: hash })
         .eq('user_id', userId).like('text_encrypted', sameCiphertext(resumeRow.text_encrypted))
       if (designError) return json({ error: 'Failed to save Word file' }, 500)
     }
 
-    // Files no tailored resume was made from go, apart from this one.
+    // Files no tailored resume was made from go, apart from this one (#131).
     const { data: used } = await supabase.from('tailored_resumes').select('source_hash').eq('user_id', userId).not('source_hash', 'is', null)
     const keep = [...new Set([hash, ...(used ?? []).map((r) => r.source_hash as string)])]
     await supabase.from('resume_files').delete().eq('user_id', userId).not('hash', 'in', `(${keep.join(',')})`)
@@ -122,9 +123,8 @@ Deno.serve(async (req) => {
   }
 
   // POST — save/replace resume. parse: true waits for the parse and returns
-  // it (the extension's check of a Word upload); otherwise it runs behind.
+  // it (the extension's check of a Word upload); otherwise it runs behind (#131).
   if (req.method === 'POST') {
-    // Reject oversized payloads before parsing JSON
     const contentLength = parseInt(req.headers.get('content-length') ?? '0', 10)
     if (contentLength > MAX_RESUME_BYTES) {
       return json({ error: 'Resume text too large (max 100 KB)' }, 413)
@@ -147,7 +147,6 @@ Deno.serve(async (req) => {
     if (filename && typeof filename !== 'string') {
       return json({ error: 'Invalid filename' }, 400)
     }
-    // Strip any non-printable characters from filename
     const safeFilename = filename?.replace(/[^\x20-\x7E]/g, '').slice(0, 255) ?? null
 
     const { data: previous } = await supabase
@@ -157,21 +156,21 @@ Deno.serve(async (req) => {
       .maybeSingle()
     let sameText = false
     if (previous) {
-      try { sameText = (await decrypt(previous.text_encrypted)) === text } catch { /* unreadable: treat as new */ }
+      try { sameText = (await decrypt(previous.text_encrypted)) === text } catch { /* unreadable: treat as new (#26) */ }
     }
     const updated_at = new Date().toISOString()
 
     // The same text again (a sign-in sync) leaves the stored text and its
-    // parsed copy alone, so a parse still running for it can save its result.
+    // parsed copy alone, so a parse still running for it can save its result (#26).
     if (sameText) {
       const { error } = await supabase.from('resumes').update({ filename: safeFilename, updated_at }).eq('user_id', userId)
       if (error) return json({ error: 'Failed to save resume' }, 500)
       if (!wantParse) return json({ success: true })
       const cached = await readParse(previous!.structured_encrypted)
-      if (isCurrentParse(cached)) return json({ success: true, structured: cached })
+      if (isCurrentParse(cached)) return json({ success: true, structured: withOlderFields(cached, req) })
       // One without the order (#165) still serves when the parse that adds it fails.
       const usable = Array.isArray(cached?.otherSections) ? cached : null
-      return heartbeatJson('resume', 'Resume parse failed', async () => ({ success: true, structured: (await parseNow(supabase, userId, text, previous!.text_encrypted, cached)) ?? usable }))
+      return heartbeatJson('resume', 'Resume parse failed', async () => ({ success: true, structured: withOlderFields((await parseNow(supabase, userId, text, previous!.text_encrypted, cached)) ?? usable, req) }))
     }
 
     let text_encrypted: string
@@ -182,7 +181,7 @@ Deno.serve(async (req) => {
     }
 
     // New text clears the parsed copy and the Word file that went with the
-    // old text, and the parse starts now so the first tailor doesn't wait for it.
+    // old text, and the parse starts now so the first tailor doesn't wait for it (#174).
     const { error } = await supabase.from('resumes').upsert(
       { user_id: userId, text_encrypted, filename: safeFilename, updated_at, structured_encrypted: null, design_hash: null },
       { onConflict: 'user_id' },
@@ -190,7 +189,7 @@ Deno.serve(async (req) => {
 
     if (error) return json({ error: 'Failed to save resume' }, 500)
 
-    if (wantParse) return heartbeatJson('resume', 'Resume parse failed', async () => ({ success: true, structured: await parseNow(supabase, userId, text, text_encrypted) }))
+    if (wantParse) return heartbeatJson('resume', 'Resume parse failed', async () => ({ success: true, structured: withOlderFields(await parseNow(supabase, userId, text, text_encrypted), req) }))
     EdgeRuntime.waitUntil(parseNow(supabase, userId, text, text_encrypted))
 
     return json({ success: true })
@@ -224,7 +223,7 @@ Deno.serve(async (req) => {
     } catch {
       return json({ error: 'Encryption failed' }, 500)
     }
-    // Only if the resume text wasn't replaced meanwhile: a new upload has its own order.
+    // Only if the resume text wasn't replaced meanwhile: a new upload has its own order (#197).
     const { data: saved, error } = await supabase.from('resumes').update({ structured_encrypted })
       .eq('user_id', userId).like('text_encrypted', sameCiphertext(row.text_encrypted)).select('user_id')
     if (error) return json({ error: 'Failed to save the order' }, 500)
@@ -232,7 +231,6 @@ Deno.serve(async (req) => {
     return json({ success: true, sectionOrder: structured.sectionOrder })
   }
 
-  // DELETE — remove resume
   if (req.method === 'DELETE') {
     const { error } = await supabase.from('resumes').delete().eq('user_id', userId)
     if (error) return json({ error: 'Failed to delete resume' }, 500)
@@ -243,7 +241,7 @@ Deno.serve(async (req) => {
 })
 
 // A cached parse, or null when it's missing or unreadable. It may predate
-// otherSections, sectionOrder or linksKept: isCurrentParse says.
+// otherSections, sectionOrder or linksKept: isCurrentParse says (#165).
 async function readParse(encrypted: string | null): Promise<ParsedResume | null> {
   if (!encrypted) return null
   try {
@@ -257,11 +255,11 @@ async function readParse(encrypted: string | null): Promise<ParsedResume | null>
 // Parses the resume and caches it, the same way tailor does on first use.
 // An old cached parse of the same text is upgraded rather than replaced.
 // Only writes if the stored text is still the text it parsed. A failure, or
-// an account over its parse limit, returns null and leaves the parse to tailor.
+// an account over its parse limit, returns null and leaves the parse to tailor (#131).
 async function parseNow(supabase: SupabaseClient, userId: string, text: string, textEncrypted: string, cached?: ParsedResume | null): Promise<ParsedResume | null> {
   try {
     // The scrape limiter's counter, keyed by a hash of the account instead of
-    // the IP (the table holds only 64-character hex keys).
+    // the IP (the table holds only 64-character hex keys) (#26).
     const { data: allowed, error } = await supabase.rpc('check_scrape_rate_limit', {
       p_ip_hash: await sha256Hex(`resume-parse:${userId}`),
       p_per_minute: PARSES_PER_MINUTE,

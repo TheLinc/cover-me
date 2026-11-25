@@ -1,29 +1,77 @@
 // Shared with the website. Edit here, then run `node scripts/sync-pdf.mjs`,
-// which copies this folder to web/lib/pdf/ (both builds fail on a stale copy).
+// which copies this folder to web/lib/pdf/ (both builds fail on a stale copy) (#27).
 import { jsPDF } from 'jspdf'
 import { contactParts } from './contact'
 import { resumeFileName } from './file-name'
+import { GPA_LINE, SKILL_GROUP } from './layout-rules'
 import { orderedSections, type StandardSection } from './sections'
 import type { ResumeSection, TailoredResume } from './types'
 
-// Letter page: 612 × 792 pt
+// Letter page: 612 × 792 pt (https://github.com/TheLinc/cover-me/commit/a074665df759617a5ebedfaf28370e973177338c)
 const PW = 612
 const PH = 792
-const ML = 54   // left margin
-const MR = 558  // right margin
-const CW = MR - ML  // content width: 504pt
+const ML = 54
+const MR = 558
+const CW = MR - ML
 
 export function downloadTailoredResumePdf(resume: TailoredResume, jobTitle?: string): void {
   tailoredResumePdf(resume).save(resumeFileName(resume, jobTitle, 'pdf'))
 }
 
+// Letters and units the standard fonts lack and that don't decompose into a
+// base letter and an accent: printed as the nearest plain form rather than
+// dropped, so "50 \u03bcg" never prints as "50 g" (#190).
+const PLAIN: Record<string, string> = {
+  '\u0141': 'L', '\u0142': 'l', '\u0110': 'D', '\u0111': 'd', '\u0126': 'H', '\u0127': 'h',
+  '\u0131': 'i', '\u0166': 'T', '\u0167': 't', '\u0138': 'k',
+  '\u03bc': '\u00b5', '\u03a9': ' ohm', '\u2126': ' ohm',
+  '\u2260': '!=', '\u2248': '~', '\u2032': "'", '\u2033': '"', '\u20b9': 'Rs ',
+}
+
+// Accent marks a letter can lose and still read the same. U+0338 (the stroke
+// that makes "=" into "\u2260") is not one of them (#190).
+const ACCENTS = /[\u0300-\u0337\u0339-\u036f]/g
+
+// What the standard PDF fonts print: ASCII, Latin-1 and the WinAnsi extras in
+// 0x80-0x9F (Š š Ž ž Œ œ Ÿ, curly quotes, dashes, the bullet, the euro sign) (#190).
+const WIN_ANSI = /[\x09\x0A\x0D\x20-\x7E\u00A0-\u00FF\u20AC\u201A\u0192\u201E\u2026\u2020\u2021\u02C6\u2030\u0160\u2039\u0152\u017D\u2018\u2019\u201C\u201D\u2022\u2013\u2014\u02DC\u2122\u0161\u203A\u0153\u017E\u0178]/
+
+// The standard PDF fonts only cover WinAnsi: anything outside it (a non-breaking
+// hyphen, an arrow, a zero-width space from a PDF upload) prints as garbage or
+// spreads letters apart, so it is swapped for its plain equivalent first. A
+// letter outside it loses its accent ("ń" prints as "n"), never the letter (#190).
+export function pdfSafe(text: unknown): string {
+  return Array.from(String(text ?? '')
+    .replace(/[\u200B-\u200D\u2060\uFEFF\u00AD\uFE00-\uFE0F]/g, '')
+    .replace(/[\u2010-\u2012\u2212]/g, '-')
+    .replace(/[\u00A0\u2000-\u200A\u202F\u205F]/g, ' ')
+    .replace(/\u2192/g, '->')
+    .replace(/\u2264/g, '<=')
+    .replace(/\u2265/g, '>='))
+    .map((ch) => {
+      if (WIN_ANSI.test(ch)) return ch
+      if (PLAIN[ch]) return PLAIN[ch]
+      // A superscript keeps a caret, so "10\u2076" never reads as "106"; other
+      // compatibility forms print plain, so "CO\u2082" prints as "CO2" (#190).
+      if (/[\u2070-\u207f]/.test(ch)) return `^${ch.normalize('NFKD')}`
+      const base = ch.normalize('NFKD').replace(ACCENTS, '')
+      if (base && Array.from(base).every((c) => WIN_ANSI.test(c))) return base
+      // Anything else shows as "?", so a reader sees something is missing;
+      // only an emoji is dropped (#190).
+      return /\p{Extended_Pictographic}/u.test(ch) ? '' : '?'
+    })
+    .join('')
+}
+
 // The resume as a jsPDF document: saved by the download, shown as a blob URL
-// by the extension's editor preview, so the two are the same file.
+// by the extension's editor preview, so the two are the same file (#118).
 export function tailoredResumePdf(resume: TailoredResume): jsPDF {
   const doc = new jsPDF({ unit: 'pt', format: 'letter' })
+  const LH = 12
+  const BODY = 10
+  const ENTRY = 10.5
   let y = 52
 
-  // ── Page overflow guard ──────────────────────────────────────────────────
   function need(pts: number) {
     if (y + pts > PH - 48) {
       doc.addPage()
@@ -31,36 +79,45 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
     }
   }
 
-  // ── Header ───────────────────────────────────────────────────────────────
+  const text = (s: string, x: number, opts?: { align?: 'center' | 'right' }) => doc.text(pdfSafe(s), x, y, opts)
+  const width = (s: string) => doc.getTextWidth(pdfSafe(s))
+  const wrap = (s: string, w: number) => doc.splitTextToSize(pdfSafe(s), w) as string[]
+
   doc.setFont('times', 'bold')
   doc.setFontSize(26)
-  doc.text(resume.name || 'Resume', PW / 2, y, { align: 'center' })
+  text(resume.name || 'Resume', PW / 2, { align: 'center' })
   y += 16
+
+  if (resume.headline?.trim()) {
+    doc.setFont('times', 'normal')
+    doc.setFontSize(11.5)
+    text(resume.headline.trim(), PW / 2, { align: 'center' })
+    y += 13
+  }
 
   // Wrapped between items, never inside a URL, once links and a location
   // make the line wider than the page. One URL wider than the page still
-  // overflows; no real one is.
+  // overflows; no real one is (#149).
   const contact: string[] = []
   doc.setFont('times', 'normal')
   doc.setFontSize(10)
   for (const part of contactParts(resume)) {
     const joined = `${contact[contact.length - 1]}   |   ${part}`
-    if (contact.length && doc.getTextWidth(joined) <= CW) contact[contact.length - 1] = joined
+    if (contact.length && width(joined) <= CW) contact[contact.length - 1] = joined
     else contact.push(part)
   }
   contact.forEach((line, i) => {
     if (i) y += 12
-    doc.text(line, PW / 2, y, { align: 'center' })
+    text(line, PW / 2, { align: 'center' })
   })
   if (contact.length) y += 6
 
-  // ── Section heading + rule ───────────────────────────────────────────────
   function sectionHeading(title: string) {
     y += 10
     need(18)
     doc.setFont('times', 'bold')
     doc.setFontSize(11)
-    doc.text(title, ML, y)
+    text(title, ML)
     y += 3
     doc.setDrawColor(0)
     doc.setLineWidth(0.5)
@@ -68,53 +125,120 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
     y += 9
   }
 
-  // ── Two-column line (left text, right text) ──────────────────────────────
-  function twoCol(
-    left: string,
-    right: string,
-    leftStyle: 'bold' | 'italic',
-    size = 10.5,
-  ) {
-    need(14)
-    doc.setFont('times', leftStyle)
-    doc.setFontSize(size)
-    doc.text(left || '', ML, y)
+  // A left side too wide for the line wraps under itself (#190).
+  function twoCol(left: string, right: string, leftStyle: 'bold' | 'italic', size = ENTRY) {
     doc.setFont('times', 'normal')
-    doc.text(right || '', MR, y, { align: 'right' })
+    doc.setFontSize(size)
+    const rightW = right ? Math.min(width(right) + 10, CW / 2) : 0
+    doc.setFont('times', leftStyle)
+    const lines = wrap(left || '', CW - rightW)
+    need(14 + LH * (lines.length - 1))
+    lines.forEach((line, i) => {
+      if (i) y += LH
+      text(line, ML)
+    })
+    if (right) {
+      doc.setFont('times', 'normal')
+      doc.text(pdfSafe(right), MR, y - (lines.length - 1) * LH, { align: 'right' })
+    }
     y += 13
   }
 
-  // ── Bullet line with hanging indent ─────────────────────────────────────
-  const BULLET_X = ML + 4   // bullet char position
-  const TEXT_X  = ML + 14   // text start (hanging indent)
-  const WRAP_W  = MR - TEXT_X
-
-  function bullet(text: string) {
+  // Name and a right-hand note (a link, dates) on one line, then the subtitle (a
+  // project's stack, an award's issuer) in italics under it, like a job's company
+  // line. A note wider than half the line (a long link) goes on its own line (#190).
+  function entryHeader(name: string, subtitle: string | undefined, right: string | undefined) {
+    doc.setFontSize(ENTRY)
     doc.setFont('times', 'normal')
-    doc.setFontSize(10)
-    const lines = doc.splitTextToSize(String(text ?? ''), WRAP_W) as string[]
-    need(lines.length * 12 + 2)
-    doc.text('•', BULLET_X, y)
+    const inline = !!right && width(right) <= CW / 2
+    twoCol(name, inline ? right! : '', 'bold')
+    if (subtitle) twoCol(subtitle, '', 'italic')
+    if (right && !inline) {
+      doc.setFont('times', 'normal')
+      doc.setFontSize(BODY)
+      for (const line of wrap(right, CW)) {
+        need(LH)
+        text(line, ML)
+        y += LH
+      }
+      y += 1
+    }
+  }
+
+  const BULLET_X = ML + 4
+  const TEXT_X = ML + 14
+  const WRAP_W = MR - TEXT_X
+
+  function bulletLines(s: string): string[] {
+    doc.setFont('times', 'normal')
+    doc.setFontSize(BODY)
+    return wrap(s, WRAP_W)
+  }
+
+  function bullet(s: string) {
+    const lines = bulletLines(s)
+    need(lines.length * LH + 2)
+    doc.setFont('times', 'normal')
+    doc.setFontSize(BODY)
+    text('•', BULLET_X)
     for (const line of lines) {
       doc.text(line, TEXT_X, y)
-      y += 12
+      y += LH
     }
     y += 1
   }
 
-  // Each section, drawn in the order the user set (sections.ts).
+  function paragraph(s: string) {
+    doc.setFont('times', 'normal')
+    doc.setFontSize(BODY)
+    for (const line of wrap(s, CW)) {
+      need(LH)
+      doc.text(line, ML, y)
+      y += LH
+    }
+  }
+
+  // Skills: one line per labelled group ("Languages: Python, SQL") with the
+  // label in bold, or a plain comma list (#190).
+  function skills(s: string) {
+    const groups = s.split(/\n+/).map((l) => l.trim()).filter(Boolean)
+    for (const group of groups) {
+      const m = SKILL_GROUP.exec(group)
+      doc.setFontSize(BODY)
+      if (!m) {
+        paragraph(group)
+        continue
+      }
+      const label = `${m[1].trim()}:`
+      doc.setFont('times', 'bold')
+      // jsPDF drops a trailing space from the measured width, so the gap is added by hand (#190).
+      const labelW = width(label) + BODY * 0.5
+      doc.setFont('times', 'normal')
+      const firstLine = wrap(m[2], CW - labelW)[0] ?? ''
+      const rest = pdfSafe(m[2]).slice(firstLine.length).trim()
+      const restLines = rest ? wrap(rest, CW) : []
+      need(LH * (1 + restLines.length))
+      doc.setFont('times', 'bold')
+      text(label, ML)
+      doc.setFont('times', 'normal')
+      doc.text(firstLine, ML + labelW, y)
+      y += LH
+      for (const line of restLines) {
+        doc.text(line, ML, y)
+        y += LH
+      }
+      y += 1
+    }
+  }
+
+  const entryGap = () => { y += 5 }
+
+  // Each section, drawn in the order the user set (sections.ts) (#118).
   const draw: Record<StandardSection, () => void> = {
     summary: () => {
       if (resume.summary) {
         sectionHeading('SUMMARY')
-        doc.setFont('times', 'normal')
-        doc.setFontSize(10)
-        const lines = doc.splitTextToSize(resume.summary, CW) as string[]
-        for (const line of lines) {
-          need(12)
-          doc.text(line, ML, y)
-          y += 12
-        }
+        paragraph(resume.summary)
       }
     },
     experience: () => {
@@ -125,7 +249,7 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
           twoCol(exp.company, exp.location, 'italic')
           y += 2
           for (const b of exp.bullets ?? []) bullet(b)
-          y += 5
+          entryGap()
         }
       }
     },
@@ -133,13 +257,9 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
       if (resume.projects?.length) {
         sectionHeading('PROJECTS')
         for (const proj of resume.projects) {
-          need(14)
-          doc.setFont('times', 'bold')
-          doc.setFontSize(10.5)
-          doc.text(proj.name || '', ML, y)
-          y += 13
+          entryHeader(proj.name || '', proj.tech, proj.link)
           for (const b of proj.bullets ?? []) bullet(b)
-          y += 5
+          entryGap()
         }
       }
     },
@@ -147,47 +267,50 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
       if (resume.education?.length) {
         sectionHeading('EDUCATION')
         for (const edu of resume.education) {
+          const bullets = edu.bullets ?? []
+          const gpa = bullets.filter((b) => GPA_LINE.test(b.trim()))
+          const rest = bullets.filter((b) => !GPA_LINE.test(b.trim()))
+          const degree = [edu.degree, ...gpa.map((g) => g.trim())].filter(Boolean).join('  |  ')
           twoCol(edu.institution, edu.dates, 'bold')
-          twoCol(edu.degree, edu.location, 'italic')
+          twoCol(degree, edu.location, 'italic')
           y += 2
-          for (const b of edu.bullets ?? []) bullet(b)
-          y += 5
+          for (const b of rest) bullet(b)
+          entryGap()
         }
       }
     },
     certifications: () => {
       if (resume.certifications?.length) {
         sectionHeading('CERTIFICATIONS')
-        for (const cert of resume.certifications) {
-          need(13)
-          doc.setFont('times', 'normal')
-          doc.setFontSize(10)
-          doc.text('•', BULLET_X, y)
-          doc.text(cert, TEXT_X, y)
-          y += 13
-        }
+        for (const cert of resume.certifications) bullet(cert)
       }
     },
     skills: () => {
       if (resume.skills) {
         sectionHeading('SKILLS')
-        doc.setFont('times', 'normal')
-        doc.setFontSize(10)
-        const lines = doc.splitTextToSize(resume.skills, CW) as string[]
-        for (const line of lines) {
-          need(12)
-          doc.text(line, ML, y)
-          y += 12
-        }
+        skills(resume.skills)
       }
     },
   }
 
-  // ── Other sections (publications, volunteer work…), as the resume had them ─
+  // Its entries, each printed like a project, then any lines outside an entry (#190).
   const drawOther = (section: ResumeSection) => {
-    if (!section.lines?.length) return
+    const entries = section.entries?.filter((e) => e?.name) ?? []
+    const lines = section.lines ?? []
+    if (!entries.length && !lines.length) return
     sectionHeading(String(section.heading ?? '').toUpperCase())
-    for (const line of section.lines) bullet(line)
+    for (const e of entries) {
+      entryHeader(e.name, e.subtitle, e.dates || e.link)
+      if (e.dates && e.link) {
+        doc.setFont('times', 'italic')
+        doc.setFontSize(BODY)
+        text(e.link, ML)
+        y += LH + 1
+      }
+      for (const b of e.bullets ?? []) bullet(b)
+      entryGap()
+    }
+    for (const line of lines) bullet(line)
   }
 
   for (const s of orderedSections(resume)) {

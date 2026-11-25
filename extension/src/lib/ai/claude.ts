@@ -5,9 +5,10 @@ export interface ChatMessage {
   content: string
 }
 
-// Resume parsing is verbatim extraction, so low effort. A resume at the 12,000-
-// character cap parsed to ~5,100 output tokens on Haiku 5.5; thinking counts
-// toward max_tokens too, and unused tokens cost nothing (#298).
+// Resume parsing is verbatim extraction, so low effort. A 12,000-character
+// resume parsed to ~5,100 output tokens on Haiku 5.5, so one at the 20,000
+// cap (#190) needs about 8,500; thinking counts toward max_tokens too, and
+// unused tokens cost nothing (#298).
 // Keep in step with backend/supabase/functions/_shared/anthropic.ts.
 export const HAIKU_PARSE_FIELDS = {
   model: 'claude-haiku-5-5',

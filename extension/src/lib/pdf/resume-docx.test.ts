@@ -20,7 +20,7 @@ const resume: TailoredResume = {
   otherSections: [{ heading: 'Publications', lines: ['Sketch of the Analytical Engine'] }],
 }
 
-// Read the file back with an independent .docx reader, as Word or Docs would.
+// Read the file back with an independent .docx reader, as Word or Docs would (#120).
 async function read(r: TailoredResume) {
   const buffer = Buffer.from(await (await buildResumeDocx(r)).arrayBuffer())
   return (await mammoth.convertToHtml({ buffer })).value
@@ -65,5 +65,18 @@ describe('buildResumeDocx', () => {
     const html = await read({ name: '', phone: '', email: '', website: '', experience: [], education: [] })
     expect(html).toContain('Resume')
     expect(html).not.toContain('<h1>')
+  })
+
+  it('writes a long master\'s headline, project tech and link, grouped skills and entries (#190)', async () => {
+    const { value } = await mammoth.extractRawText({ buffer: Buffer.from(await (await buildResumeDocx({
+      ...resume,
+      headline: 'Registered Nurse, Telemetry',
+      projects: [{ name: 'Fall huddle', link: 'example.org/huddle', tech: 'Epic, Excel', bullets: ['Rewrote the checklist'] }],
+      skills: 'Clinical: Telemetry, IV therapy\nSystems: Epic',
+      otherSections: [{ heading: 'Awards', lines: ['Unit Nurse of the Quarter, Q2 2022'], entries: [{ name: 'DAISY Award', subtitle: 'Mercy General', dates: '2023', bullets: ['Nominated by a patient\'s family'] }] }],
+    })).arrayBuffer()) })
+    for (const s of ['Registered Nurse, Telemetry', 'Epic, Excel', 'example.org/huddle', 'Clinical: Telemetry, IV therapy', 'Systems: Epic', 'DAISY Award', 'Mercy General', 'Nominated by a patient\'s family', 'Unit Nurse of the Quarter, Q2 2022']) {
+      expect(value).toContain(s)
+    }
   })
 })
