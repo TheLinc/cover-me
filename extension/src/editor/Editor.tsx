@@ -1,32 +1,32 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { ensureValidSession, fetchApplicationsFromBackend, saveResumeEditToBackend } from '../lib/auth'
-import { splitSkills } from '../lib/ai/resume-grounding'
+import { ensureValidSession, fetchApplicationsFromBackend, saveResumeEditToBackend, saveSectionOrderToBackend } from '../lib/auth'
+import { skillGroups, splitSkills } from '../lib/ai/resume-grounding'
+import { hasSectionOrder, withChosenOrder } from '../lib/ai/resume-parse'
 import { downloadTailoredResumePdf, tailoredResumePdf } from '../lib/pdf/resume'
 import type { PlacedSection } from '../lib/pdf/sections'
-import { editedResume, saveResumeEdit, shownSections, withResumeEdit, withSections } from '../lib/resume-edit'
-import { getCachedTier, getMode, getTailoredHistory } from '../lib/storage'
+import type { DeletedSection } from '../lib/pdf/types'
+import { chosenOrder, editedResume, postingTitleInSummary, restoreSection, returnToTab, saveResumeEdit, shownSections, withResumeEdit, withSections } from '../lib/resume-edit'
+import { getCachedTier, getMode, getResume, getTailoredHistory, saveParsedResume } from '../lib/storage'
 import DownloadMenu from '../popup/components/DownloadMenu'
 import GapChips from '../popup/components/GapChips'
 import PdfPreview from './PdfPreview'
+import PostingTitleTip from '../popup/components/PostingTitleTip'
+import ReviewAsk from '../popup/components/ReviewAsk'
 import ScoreRing from '../popup/components/ScoreRing'
 import type { AuthSession, TailoredHistoryEntry, TailoredResume } from '../types'
 
-// The editor tab (#118): a form over one tailored resume on the left, the PDF
-// it makes on the right. Edits are the user's own, so the grounding checks
-// that guard the model's output don't run on them. Saved to local History as
-// you type; a Pro account's copy is overwritten too.
+// Edits are the user's own, so the grounding checks that guard the model's output don't run on them (#118).
 
 interface Opened { scored: TailoredResume; jobTitle: string; company: string }
 
-// A Pro account's session, or null. Checked from what this browser has
-// cached first, so BYOK and Free make no network call here.
+// Read from this browser's cache first, so BYOK and Free make no network call here (#118).
 async function proSession(): Promise<AuthSession | null> {
   if ((await getMode()) !== 'hosted' || (await getCachedTier()) !== 'hosted_pro') return null
   return ensureValidSession()
 }
 
-// Local History first; a Pro resume this browser no longer keeps (made on
-// another device, or past the 20 kept here) comes from the account.
+// A Pro resume this browser no longer keeps (made on another device, or past the
+// 20 kept here) comes from the account (#118).
 async function openResume(id: string): Promise<Opened | null> {
   const entry = (await getTailoredHistory()).find((e) => e.id === id)
   if (entry) return { scored: entry.resume, jobTitle: entry.job.title, company: entry.job.company }
@@ -39,8 +39,15 @@ async function openResume(id: string): Promise<Opened | null> {
   return null
 }
 
-// The form's state as a resume: skills joined back into one line, and lines
-// left empty dropped. A section emptied out stays, empty, so it can be filled again.
+// The skills as the form edits them: a group per line when the resume groups
+// them ("Languages: Python, SQL"), else one skill per line (#190).
+function skillLines(skills: string | undefined): string[] {
+  if (!skills) return []
+  return skillGroups(skills).length ? skills.split(/\n+/).filter((l) => l.trim()) : splitSkills(skills)
+}
+
+// Lines left empty are dropped, but a section emptied out stays, empty, so it
+// can be filled again (#118).
 function resumeFromForm(draft: TailoredResume, skills: string[]): TailoredResume {
   const lines = (l: string[] | undefined) => l?.filter((s) => s.trim())
   return {
@@ -49,17 +56,37 @@ function resumeFromForm(draft: TailoredResume, skills: string[]): TailoredResume
     projects: draft.projects?.map((p) => ({ ...p, bullets: lines(p.bullets) ?? [] })),
     education: draft.education.map((e) => ({ ...e, bullets: lines(e.bullets) ?? [] })),
     certifications: lines(draft.certifications),
-    otherSections: draft.otherSections?.map((s) => ({ ...s, lines: lines(s.lines) ?? [] })),
-    skills: draft.skills === undefined ? undefined : lines(skills)!.map((s) => s.trim()).join(', '),
+    otherSections: draft.otherSections?.map((s) => ({
+      ...s,
+      lines: lines(s.lines) ?? [],
+      ...(s.entries ? { entries: s.entries.map((e) => ({ ...e, bullets: lines(e.bullets) ?? [] })) } : {}),
+    })),
+    // Grouped skills ("Languages: Python, SQL") are edited a group per line
+    // and kept that way; a plain list goes back to one comma-separated line (#190).
+    skills: draft.skills === undefined ? undefined : lines(skills)!.map((s) => s.trim()).join(skillGroups(draft.skills).length ? '\n' : ', '),
   }
 }
 
-type Status = '' | 'saving' | 'saved' | 'local'
+// Returns a message only when the user can act on it; anything else throws (#197).
+async function saveOrderForLater(r: TailoredResume): Promise<string | undefined> {
+  const { sectionOrder, headings } = chosenOrder(r)
+  if ((await getMode()) === 'hosted') {
+    const session = await ensureValidSession()
+    if (!session) return 'Sign in again first.'
+    return saveSectionOrderToBackend(session.access_token, sectionOrder, headings)
+  }
+  const resume = await getResume()
+  // A new upload isn't read until its first tailor. One from before the link
+  // fix (#238) takes the order, and the tailor that parses it again keeps it.
+  if (!resume || !hasSectionOrder(resume.parsed)) return 'Tailor once with your current resume first.'
+  await saveParsedResume(withChosenOrder(resume.parsed, sectionOrder, headings), resume.text)
+}
 
-// Everything an undo step restores.
+type Status = '' | 'saving' | 'saved' | 'local'
+type OrderAsk = '' | 'ask' | 'saving' | 'saved' | 'failed'
+
 interface Form { draft: TailoredResume; skills: string[] }
 
-// Typing in one field counts as one undo step until it pauses this long.
 const STEP_PAUSE_MS = 1000
 const UNDO_LIMIT = 200
 const MOD = /Mac/.test(navigator.platform) ? '⌘' : 'Ctrl+'
@@ -67,22 +94,28 @@ const MOD = /Mac/.test(navigator.platform) ? '⌘' : 'Ctrl+'
 const SECTION_TITLES: Record<Exclude<PlacedSection['key'], 'other'>, string> = {
   summary: 'Summary', experience: 'Experience', projects: 'Projects', education: 'Education', certifications: 'Certifications', skills: 'Skills',
 }
+const deletedTitle = (d: DeletedSection) => (d.key === 'other' ? d.section.heading || 'Other' : SECTION_TITLES[d.key])
 
 export default function Editor() {
-  const id = useMemo(() => new URLSearchParams(location.search).get('id') ?? '', [])
+  const { id, from } = useMemo(() => {
+    const q = new URLSearchParams(location.search)
+    return { id: q.get('id') ?? '', from: Number(q.get('from')) } // from: the job tab (#223); 0 when none, as no tab has id 0
+  }, [])
   const [opened, setOpened] = useState<Opened | null | 'loading' | 'error'>('loading')
   const [form, setForm] = useState<Form | null>(null)
   const [steps, setSteps] = useState<{ past: Form[]; future: Form[] }>({ past: [], future: [] })
   const lastStep = useRef<{ field: Element | null; at: number }>({ field: null, at: 0 })
-  const [note, setNote] = useState('') // what the last section delete removed
-  const focusNext = useRef<string | null>(null) // a control to focus once the form re-renders
+  const [note, setNote] = useState('')
+  const [reviewOpen, setReviewOpen] = useState(false)
+  const focusNext = useRef<string | null>(null)
+  const [orderAsk, setOrderAsk] = useState<{ state: OrderAsk; at: number; error?: string }>({ state: '', at: 0 })
   const [dirty, setDirty] = useState(false)
   const [status, setStatus] = useState<Status>('')
   const [preview, setPreview] = useState<ArrayBuffer | null>(null)
 
   const localSaves = useRef<Promise<void>>(Promise.resolve())
   const accountSaves = useRef<Promise<void>>(Promise.resolve())
-  const forAccount = useRef<TailoredResume | null>(null) // saved locally, not yet sent
+  const forAccount = useRef<TailoredResume | null>(null)
   const accountOk = useRef(true)
   const session = useRef<AuthSession | null>(null)
 
@@ -90,9 +123,9 @@ export default function Editor() {
     openResume(id).then((o) => {
       setOpened(o)
       if (!o) return
-      setForm({ draft: structuredClone(o.scored), skills: o.scored.skills ? splitSkills(o.scored.skills) : [] })
+      setForm({ draft: structuredClone(o.scored), skills: skillLines(o.scored.skills) })
       document.title = `Edit resume · ${o.jobTitle || 'Cover Me'}`
-      // Ready for a save as the tab closes, which can't wait for a refresh.
+      // Ready for a save as the tab closes, which can't wait for a refresh. (#118)
       void proSession().then((s) => { session.current = s }).catch(() => {})
     }).catch(() => setOpened('error'))
   }, [id])
@@ -101,7 +134,6 @@ export default function Editor() {
   const current = useMemo(() => (form ? resumeFromForm(form.draft, form.skills) : null), [form])
   const saved = useMemo(() => (current && scored ? editedResume(scored, current) : null), [current, scored])
 
-  // The preview, re-made a moment after typing stops.
   useEffect(() => {
     if (!current) return
     const t = setTimeout(() => {
@@ -110,7 +142,6 @@ export default function Editor() {
     return () => clearTimeout(t)
   }, [current])
 
-  // The account's copy, one save at a time, in order.
   function saveToAccount(): Promise<void> {
     accountSaves.current = accountSaves.current.then(async () => {
       const edit = forAccount.current
@@ -130,10 +161,8 @@ export default function Editor() {
     return accountSaves.current
   }
 
-  // History gets each pause in typing; the account's copy a moment later.
-  // ponytail: History is read then written whole, as the background does when
-  // a tailor finishes, so the two can still collide; the pause keeps it rare.
-  // A per-entry key would end it.
+  // ponytail: History is read then written whole, as the background does when a tailor
+  // finishes, so the two can still collide; the pause keeps it rare. A per-entry key would end it (#118).
   useEffect(() => {
     if (!dirty || !saved) return
     setStatus('saving')
@@ -145,9 +174,8 @@ export default function Editor() {
     return () => { clearTimeout(local); clearTimeout(account) }
   }, [saved, dirty])
 
-  // Closing the tab before those: save now. There's no time to read History
-  // first, so a copy is kept current here. The account's copy goes with
-  // keepalive (in saveResumeEditToBackend), so it lands after the page is gone.
+  // No time to read History as the tab closes, so a current copy is kept here. The account's
+  // copy goes with keepalive (saveResumeEditToBackend), so it lands after the page is gone (#118).
   const history = useRef<TailoredHistoryEntry[] | null>(null)
   useEffect(() => {
     const listener = (changes: Record<string, chrome.storage.StorageChange>, area: string) => {
@@ -170,8 +198,6 @@ export default function Editor() {
     }
   }, [id])
 
-  // Every change goes through here, so it can be undone. Typing in one field
-  // joins the step before it until a pause; anything else is a step of its own.
   function change(update: (f: Form) => Form) {
     if (!form) return
     const active = document.activeElement
@@ -212,7 +238,7 @@ export default function Editor() {
   }
 
   // Ctrl+Z, Ctrl+Shift+Z and Ctrl+Y (⌘ on a Mac) work in a field too: one
-  // history for the whole resume instead of each field's own.
+  // history for the whole resume instead of each field's own. (#118)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!(e.ctrlKey || e.metaKey) || e.altKey) return
@@ -224,7 +250,6 @@ export default function Editor() {
     return () => window.removeEventListener('keydown', onKey)
   })
 
-  // Focus follows a moved section's button, or goes to Undo after a delete.
   useEffect(() => {
     if (!focusNext.current) return
     document.querySelector<HTMLElement>(focusNext.current)?.focus()
@@ -235,27 +260,51 @@ export default function Editor() {
     const next = [...list]
     ;[next[i], next[i + by]] = [next[i + by], next[i]]
     change((f) => ({ ...f, draft: withSections(f.draft, next) }))
-    // Moved to the top or bottom, its button is disabled: focus the other one.
+    // Moved to the top or bottom, its button is disabled: focus the other one. (#118)
     const end = by < 0 ? i + by === 0 : i + by === list.length - 1
     const dir = (by < 0) !== end ? 'up' : 'down'
     focusNext.current = `[aria-label="Move ${CSS.escape(title)} section ${dir}"]`
+    setOrderAsk({ state: 'ask', at: i + by })
   }
 
   function deleteSection(list: PlacedSection[], i: number, title: string) {
-    change((f) => ({ ...f, draft: withSections(f.draft, list.filter((_, j) => j !== i)) }))
+    // Skills synced first, so a restored Skills section has what was typed (#197).
+    change((f) => ({ ...f, draft: withSections({ ...f.draft, skills: resumeFromForm(f.draft, f.skills).skills }, list.filter((_, j) => j !== i)) }))
     setNote(`${title} deleted.`)
     focusNext.current = '.ed-note button'
   }
 
-  // Closes once everything is saved. When the account couldn't be reached the
-  // tab stays, showing why.
+  function restore(i: number, title: string) {
+    change((f) => {
+      const draft = restoreSection(f.draft, i)
+      return { draft, skills: f.draft.deletedSections![i].key === 'skills' ? skillLines(draft.skills) : f.skills }
+    })
+    setNote(`${title} restored.`)
+    focusNext.current = '.ed-note button'
+  }
+
+  async function saveOrder() {
+    if (!current) return
+    setOrderAsk((a) => ({ ...a, state: 'saving' }))
+    // A move while it saves asks again; the answer doesn't cover that one. (#197)
+    const settle = (state: OrderAsk, error?: string) => setOrderAsk((a) => (a.state === 'saving' ? { ...a, state, error } : a))
+    try {
+      const why = await saveOrderForLater(current)
+      settle(why ? 'failed' : 'saved', why)
+    } catch {
+      settle('failed')
+    }
+  }
+
   async function done() {
     if (dirty && saved) {
       forAccount.current = saved
       localSaves.current = localSaves.current.then(() => saveResumeEdit(id, saved)).catch(() => {})
     }
     await saveToAccount()
-    if (accountOk.current) window.close()
+    if (!accountOk.current) return
+    if (from) await returnToTab(from)
+    window.close()
   }
 
   if (opened === 'loading') return <main className="ed-message">Opening your resume…</main>
@@ -266,12 +315,29 @@ export default function Editor() {
 
   const edited = dirty || !!scored.editedAt
   const { draft, skills } = form
+  const postingTitle = postingTitleInSummary(draft, opened.jobTitle)
   const sections = shownSections(draft)
+  const askAt = Math.min(orderAsk.at, sections.length - 1)
+  const ask = orderAsk.state && (
+    <p className="ed-order-ask" role="status">
+      {orderAsk.state === 'ask' && <>Use this order for future resumes?{' '}
+        <button type="button" className="text-link" onClick={saveOrder}>Yes</button>{' '}
+        <button type="button" className="text-link" onClick={() => setOrderAsk({ state: '', at: 0 })}>No</button></>}
+      {orderAsk.state === 'saving' && 'Saving the order…'}
+      {orderAsk.state === 'saved' && 'Your next tailored resumes will use this order.'}
+      {orderAsk.state === 'failed' && <>Couldn't save the order. {orderAsk.error} <button type="button" className="text-link" onClick={saveOrder}>Try again</button></>}
+    </p>
+  )
 
   function sectionFields(placed: PlacedSection): ReactNode {
     switch (placed.key) {
       case 'summary':
-        return <Field label="Summary" hideLabel long value={draft.summary ?? ''} onChange={(v) => edit((r) => { r.summary = v })} />
+        return (
+          <>
+            <Field label="Summary" hideLabel long value={draft.summary ?? ''} onChange={(v) => edit((r) => { r.summary = v })} />
+            {postingTitle && <PostingTitleTip {...postingTitle} />}
+          </>
+        )
       case 'experience':
         return draft.experience.map((e, i) => (
           <div key={i} className="ed-item">
@@ -288,7 +354,11 @@ export default function Editor() {
       case 'projects':
         return (draft.projects ?? []).map((p, i) => (
           <div key={i} className="ed-item">
-            <Field label="Project" value={p.name} onChange={(v) => edit((r) => { r.projects![i].name = v })} />
+            <div className="ed-grid">
+              <Field label="Project" value={p.name} onChange={(v) => edit((r) => { r.projects![i].name = v })} />
+              <Field label="Link" value={p.link ?? ''} onChange={(v) => edit((r) => { r.projects![i].link = v })} />
+            </div>
+            <Field label="Tools or tech" value={p.tech ?? ''} onChange={(v) => edit((r) => { r.projects![i].tech = v })} />
             <Lines label={`Bullets for ${p.name || `project ${i + 1}`}`} noun="bullet" items={p.bullets ?? []}
               onChange={(l) => edit((r) => { r.projects![i].bullets = l })} />
           </div>
@@ -317,8 +387,22 @@ export default function Editor() {
         return (
           <>
             <Field label="Heading" value={s.heading} onChange={(v) => edit((r) => { r.otherSections![placed.index].heading = v })} />
-            <Lines label={`Lines under ${s.heading || 'this section'}`} noun="line" items={s.lines ?? []}
-              onChange={(l) => edit((r) => { r.otherSections![placed.index].lines = l })} />
+            {(s.entries ?? []).map((e, j) => (
+              <div key={j} className="ed-item">
+                <div className="ed-grid">
+                  <Field label="Name" value={e.name} onChange={(v) => edit((r) => { r.otherSections![placed.index].entries![j].name = v })} />
+                  <Field label="Dates" value={e.dates ?? ''} onChange={(v) => edit((r) => { r.otherSections![placed.index].entries![j].dates = v })} />
+                  <Field label="Role or placing" value={e.subtitle ?? ''} onChange={(v) => edit((r) => { r.otherSections![placed.index].entries![j].subtitle = v })} />
+                  <Field label="Link" value={e.link ?? ''} onChange={(v) => edit((r) => { r.otherSections![placed.index].entries![j].link = v })} />
+                </div>
+                <Lines label={`Bullets for ${e.name || `entry ${j + 1}`}`} noun="bullet" items={e.bullets ?? []}
+                  onChange={(l) => edit((r) => { r.otherSections![placed.index].entries![j].bullets = l })} />
+              </div>
+            ))}
+            {(!s.entries?.length || !!s.lines?.length) && (
+              <Lines label={`Lines under ${s.heading || 'this section'}`} noun="line" items={s.lines ?? []}
+                onChange={(l) => edit((r) => { r.otherSections![placed.index].lines = l })} />
+            )}
           </>
         )
       }
@@ -349,16 +433,17 @@ export default function Editor() {
             : status === 'local' ? "Couldn't reach your account, so it still has the version from before this edit. Press Done to try again."
             : ''}
         </p>
-        {/* Only Cover Me layout resumes open here (no Edit on "Your design"), so Word is the Cover Me layout too. */}
+        {/* Only Cover Me layout resumes open here (no Edit on "Your design"), so Word is the Cover Me layout too. (#118) */}
         <DownloadMenu className="btn btn-secondary btn-compact" options={[
-          { label: 'PDF', onSelect: () => downloadTailoredResumePdf(current, opened.jobTitle) },
-          // docx is big, so it loads only when someone asks for the Word file.
-          { label: 'Word', onSelect: () => void import('../lib/pdf/resume-docx').then((m) => m.downloadTailoredResumeDocx(current, opened.jobTitle)) },
+          { label: 'PDF', onSelect: () => { downloadTailoredResumePdf(current, opened.jobTitle); setReviewOpen(true) } },
+          // docx is big, so it loads only when someone asks for the Word file. (#118)
+          { label: 'Word', onSelect: () => void import('../lib/pdf/resume-docx').then((m) => m.downloadTailoredResumeDocx(current, opened.jobTitle)).then(() => setReviewOpen(true)) },
         ]} />
         <button className="btn btn-primary btn-compact" onClick={done}>Done</button>
       </header>
 
       <main className="ed-form">
+        {reviewOpen && <ReviewAsk onClose={() => setReviewOpen(false)} />}
         {(typeof scored.atsScore === 'number' || (saved.atsGaps?.length ?? 0) > 0) && (
           <section className="ats-result" aria-label="ATS result">
             {typeof scored.atsScore === 'number' && <ScoreRing score={scored.atsScore} size={88} />}
@@ -376,6 +461,7 @@ export default function Editor() {
             <Field label="Email" value={draft.email} onChange={(v) => edit((r) => { r.email = v })} />
             <Field label="Location" value={draft.location ?? ''} onChange={(v) => edit((r) => { r.location = v })} />
           </div>
+          <Field label="Headline" value={draft.headline ?? ''} onChange={(v) => edit((r) => { r.headline = v })} />
           {/* links (#129) prints instead of website; a resume parsed before it has only website. website stays
               set to the first link for builds that print only that. */}
           <Lines label="Links" noun="link" short items={draft.links ?? (draft.website ? [draft.website] : [])}
@@ -391,11 +477,28 @@ export default function Editor() {
             remove: () => deleteSection(sections, i, title),
           }
           return (
-            <Section key={placed.key === 'other' ? `other-${placed.index}` : placed.key} title={title} controls={controls}>
+            <Section key={placed.key === 'other' ? `other-${placed.index}` : placed.key} title={title} controls={controls} ask={i === askAt && ask}>
               {sectionFields(placed)}
             </Section>
           )
         })}
+
+        {!!draft.deletedSections?.length && (
+          <section className="ed-deleted" aria-label="Deleted sections">
+            <h2>Deleted sections</h2>
+            <ul>
+              {draft.deletedSections.map((d, i) => {
+                const title = deletedTitle(d)
+                return (
+                  <li key={i}>
+                    {title}{' '}
+                    <button type="button" className="text-link" aria-label={`Restore ${title} section`} onClick={() => restore(i, title)}>Restore</button>
+                  </li>
+                )
+              })}
+            </ul>
+          </section>
+        )}
       </main>
 
       <aside className="ed-preview" aria-label="PDF preview">
@@ -407,7 +510,7 @@ export default function Editor() {
 
 interface SectionControls { first: boolean; last: boolean; move: (by: number) => void; remove: () => void }
 
-function Section({ title, children, controls }: { title: string; children: ReactNode; controls?: SectionControls }) {
+function Section({ title, children, controls, ask }: { title: string; children: ReactNode; controls?: SectionControls; ask?: ReactNode }) {
   return (
     <section className="ed-section">
       <div className="ed-section-head">
@@ -420,6 +523,7 @@ function Section({ title, children, controls }: { title: string; children: React
           </div>
         )}
       </div>
+      {ask}
       {children}
     </section>
   )
@@ -436,8 +540,6 @@ function Field({ label, value, onChange, long, hideLabel }: { label: string; val
   )
 }
 
-// A list the user can add to, delete from and reorder: bullets, skills,
-// certifications, an extra section's lines.
 function Lines({ label, noun, items, onChange, hideLabel, short }: {
   label: string; noun: string; items: string[]; onChange: (items: string[]) => void; hideLabel?: boolean; short?: boolean
 }) {

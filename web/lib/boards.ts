@@ -1,7 +1,5 @@
-// Per-job-board landing page content for /for/[board].
-// Each board gets differentiated copy. Search engines and AI engines penalize
-// near-duplicate doorway pages, so keep the intros, steps, and FAQs specific,
-// and keep board behavior claims in line with extension/src/content/scrapers.
+// Search and AI engines penalize near-duplicate doorway pages, so keep each board's copy
+// specific, and its behavior claims in line with extension/src/content/scrapers (#88).
 
 export interface BoardFaq {
   q: string
@@ -11,14 +9,15 @@ export interface BoardFaq {
 export interface Board {
   slug: string
   name: string
-  /** e.g. "job board", "applicant tracking system", used in copy */
   kind: string
+  // Bump only for real content changes: it drives dateModified and the sitemap's lastmod (#265).
+  updated: string
   metaTitle: string
   metaDescription: string
   h1: string
-  /** Direct-answer paragraph rendered right under the H1, written for featured snippets. */
   answer: string
   intro: string[]
+  related?: { lead: string; href: string; label: string }
   steps: { title: string; body: string }[]
   faqs: BoardFaq[]
 }
@@ -28,16 +27,22 @@ export const BOARDS: Board[] = [
     slug: 'linkedin',
     name: 'LinkedIn',
     kind: 'job board',
-    metaTitle: 'AI Cover Letter and Resume Tailor for LinkedIn',
+    updated: '2026-11-24',
+    metaTitle: 'LinkedIn Cover Letter: When and How to Add One',
     metaDescription:
-      'Cover Me tailors your resume and writes a cover letter for the LinkedIn job you have open, including in the search results panel. Free Chrome extension.',
-    h1: 'AI cover letters and tailored resumes for LinkedIn jobs',
+      'You can add a cover letter on LinkedIn only when the employer asks for one, as a PDF or Word upload in Easy Apply. Cover Me writes it for that job, free.',
+    h1: 'How to add a cover letter on LinkedIn',
     answer:
-      'To tailor a cover letter and resume to a LinkedIn job, open the posting and click the Cover Me icon. Cover Me (cover-me.dev) is a free Chrome extension that reads the job title, company and description from the page, then writes a cover letter and rewrites your resume for that role, using only what your resume already shows.',
+      'You can add a cover letter on LinkedIn only when the employer asks for one. In Easy Apply forms we checked, that meant an Upload cover letter button next to the resume, for a PDF or Word file. Most had none. Cover Me (cover-me.dev), a free Chrome extension, writes the letter and tailors your resume to the posting.',
     intro: [
       "LinkedIn shows jobs two ways: a full job page, and a split view where the posting opens in a panel beside your search results or saved collections. Cover Me reads both, so you don't have to open each job in its own tab first.",
       "It has no LinkedIn integration and never signs in to your account. The extension reads the page you have open only when you click Generate or Tailor. LinkedIn changes its layout often, so Cover Me's scrapers are tested against live LinkedIn postings every week, and once you agree, Cover Me's server also reads the page, which lets most layout changes get fixed without a new extension release.",
     ],
+    related: {
+      lead: "The button you get, Easy Apply or Apply, depends on the employer's settings, according to",
+      href: 'https://www.linkedin.com/help/linkedin/answer/a512388',
+      label: "LinkedIn's help page",
+    },
     steps: [
       {
         title: 'Open a job on LinkedIn',
@@ -48,14 +53,18 @@ export const BOARDS: Board[] = [
         body: 'Cover Me reads the title, company and full description from that tab. Nothing is posted to LinkedIn and your account is never accessed.',
       },
       {
-        title: 'Add it to Easy Apply',
-        body: 'Edit the letter, then copy it or download a PDF. If the Easy Apply form takes a resume upload, upload the tailored resume as a PDF or Word file.',
+        title: 'Add it to your application',
+        body: "Upload the tailored resume in the Easy Apply form's Resume section. If the form also has an Upload cover letter button, upload the letter's PDF there. If there's no upload next to the resume, check the form's later pages before you submit. If the job has an Apply button instead of Easy Apply, it opens the employer's own site, so add the resume and the letter on that form.",
       },
     ],
     faqs: [
       {
+        q: 'Can you add a cover letter on LinkedIn?',
+        a: "Sometimes. It depends on the employer. Of 15 Easy Apply forms we opened in November 2026, 4 had a Cover letter section on the page where you pick your resume, with an Upload cover letter button that takes a PDF or Word file. It was optional on all 4. The other 11 had no cover letter upload on that page. Jobs with an Apply button instead of Easy Apply send you to the employer's own site, and its form decides.",
+      },
+      {
         q: 'Does Cover Me work with LinkedIn Easy Apply?',
-        a: "Yes. Copy the letter or download it as a PDF, then add it in the Easy Apply form. If the form takes a resume upload, use the tailored resume, as a PDF or Word file. Cover Me never fills in or submits the form, so you check everything before it's sent.",
+        a: "Yes. Upload the tailored resume in the Resume section, as a PDF or Word file. When the form also has an Upload cover letter button, download the letter from Cover Me as a PDF and upload it there. When there's no upload next to the resume, check the form's later pages before you submit. Cover Me never submits the form, so you check everything before it's sent. When the form asks a written question, right-click its box and choose \"Cover Me: write an answer\" to have an answer typed in for you to edit.",
       },
       {
         q: 'Does Cover Me need access to my LinkedIn account?',
@@ -71,6 +80,7 @@ export const BOARDS: Board[] = [
     slug: 'indeed',
     name: 'Indeed',
     kind: 'job board',
+    updated: '2026-11-16',
     metaTitle: 'AI Cover Letter and Resume Tailor for Indeed',
     metaDescription:
       'Cover Me tailors your resume and writes a cover letter for the Indeed job you have open, on the job page or in the search preview pane. Free Chrome extension.',
@@ -98,7 +108,7 @@ export const BOARDS: Board[] = [
     faqs: [
       {
         q: "Does Cover Me work with Indeed's application form?",
-        a: 'Yes. When the form asks for a cover letter, paste the text or upload the PDF from Cover Me. Cover Me never fills in or submits applications.',
+        a: 'Yes. When the form asks for a cover letter, paste the text or upload the PDF from Cover Me. When it asks a written question, right-click the box and choose "Cover Me: write an answer", and Cover Me types an answer from your resume and the posting. Cover Me never submits an application.',
       },
       {
         q: "Does it work when Indeed links out to a company's own career site?",
@@ -114,6 +124,7 @@ export const BOARDS: Board[] = [
     slug: 'greenhouse',
     name: 'Greenhouse',
     kind: 'applicant tracking system',
+    updated: '2026-11-16',
     metaTitle: 'AI Cover Letter and Resume Tailor for Greenhouse',
     metaDescription:
       'Cover Me reads the Greenhouse posting you have open, tailors your resume to it and writes a matching cover letter. Free Chrome extension.',
@@ -121,7 +132,7 @@ export const BOARDS: Board[] = [
     answer:
       'To tailor a cover letter for a Greenhouse application, open the posting and click the Cover Me icon. Cover Me (cover-me.dev) is a free Chrome extension that reads Greenhouse postings on job-boards.greenhouse.io, on company career pages that embed them, and in your my.greenhouse.io account, then writes a letter and tailored resume from your resume.',
     intro: [
-      "Greenhouse is the applicant tracking system behind many tech company career pages. You'll recognize its postings by the job-boards.greenhouse.io address, or by an application form at the bottom of a company's own careers page. Many Greenhouse forms include a cover letter field, often marked optional.",
+      "Greenhouse is the applicant tracking system behind many tech company career pages. You'll recognize its postings by the job-boards.greenhouse.io address, or by an application form at the bottom of a company's own careers page. Many Greenhouse forms include a cover letter field, often marked optional, and some add written questions like \"Why do you want to work here?\" Right-click a question's box and choose \"Cover Me: write an answer\" to have an answer from your resume and the posting typed in.",
       "Cover Me reads the posting wherever it appears. On a company site, the Greenhouse posting often loads inside a frame from greenhouse.io, and Cover Me has permission to read that frame when you click. If you search and track jobs in my.greenhouse.io, it also reads the posting in the job pop-up and on your Applications page.",
     ],
     steps: [
@@ -157,6 +168,7 @@ export const BOARDS: Board[] = [
     slug: 'lever',
     name: 'Lever',
     kind: 'applicant tracking system',
+    updated: '2026-11-16',
     metaTitle: 'AI Cover Letter and Resume Tailor for Lever',
     metaDescription:
       'Cover Me reads the jobs.lever.co posting you have open, tailors your resume to it and writes a matching cover letter. Free Chrome extension.',
@@ -164,7 +176,7 @@ export const BOARDS: Board[] = [
     answer:
       "To write a cover letter for a Lever application, open the jobs.lever.co posting and click the Cover Me icon. Cover Me (cover-me.dev) is a free Chrome extension that reads the role, company and description from the posting's structured job data, then writes a letter and a tailored resume from your resume.",
     intro: [
-      'Lever is an applicant tracking system used by many startups and growing companies. Its application form usually ends with an Additional information box, which is where a short cover letter goes when the form has no separate field for one.',
+      'Lever is an applicant tracking system used by many startups and growing companies. Its application form usually ends with an Additional information box, which is where a short cover letter goes when the form has no separate field for one. When a Lever form asks its own written questions, right-click a box and choose "Cover Me: write an answer" for an answer you can edit.',
       'Lever postings include structured job data that names the company and role exactly, and Cover Me reads it when you click. Add a note before you generate, like a referral or a project you want mentioned, and the letter uses it alongside your resume.',
     ],
     steps: [
@@ -200,6 +212,7 @@ export const BOARDS: Board[] = [
     slug: 'workday',
     name: 'Workday',
     kind: 'applicant tracking system',
+    updated: '2026-11-23',
     metaTitle: 'AI Cover Letter and Resume Tailor for Workday',
     metaDescription:
       "Cover Me reads the myworkdayjobs.com posting, tailors your resume and writes your cover letter before you start Workday's long application form.",
@@ -210,6 +223,11 @@ export const BOARDS: Board[] = [
       'Workday is the applicant tracking system many large employers use. Its applications are long: you create an account with each employer, check the details Workday parsed from your resume, and answer screening questions, and the cover letter upload comes late in the process.',
       "Tailoring first means both documents are ready before you start. Cover Me reads Workday's page by labels that stay the same across employers, and takes the company name from the posting's address, like acme.wd1.myworkdayjobs.com.",
     ],
+    related: {
+      lead: 'Already applied and checking your status?',
+      href: '/guides/workday-application-status',
+      label: 'What Submitted, In Progress and Completed mean in Workday',
+    },
     steps: [
       {
         title: 'Open a Workday posting',
@@ -221,7 +239,7 @@ export const BOARDS: Board[] = [
       },
       {
         title: 'Upload in Workday',
-        body: 'Download the cover letter as a PDF and the tailored resume as a PDF or Word file. Upload the resume when the application starts and the letter where the form asks for documents, or paste the letter text.',
+        body: 'Download the cover letter as a PDF and the tailored resume as a PDF or Word file. Upload the resume when the application starts and the letter where the form asks for documents, or paste the letter text. For a written question, right-click its box and choose Cover Me: write an answer.',
       },
     ],
     faqs: [
@@ -235,7 +253,7 @@ export const BOARDS: Board[] = [
       },
       {
         q: 'Can Cover Me fill out the Workday application for me?',
-        a: 'No. Cover Me writes the cover letter and tailors your resume. It never fills in or submits a Workday application, so the form stays in your hands.',
+        a: "No. Cover Me writes the cover letter and tailors your resume, and it can answer a written question when you right-click its box and choose \"Cover Me: write an answer\". It doesn't fill in the rest of the form and never submits a Workday application, so the form stays in your hands.",
       },
     ],
   },
@@ -243,6 +261,7 @@ export const BOARDS: Board[] = [
     slug: 'ashby',
     name: 'Ashby',
     kind: 'applicant tracking system',
+    updated: '2026-11-16',
     metaTitle: 'AI Cover Letter and Resume Tailor for Ashby',
     metaDescription:
       'Cover Me reads the jobs.ashbyhq.com posting you have open, tailors your resume to it and writes a matching cover letter. Free Chrome extension.',
@@ -264,7 +283,7 @@ export const BOARDS: Board[] = [
       },
       {
         title: 'Apply',
-        body: "Edit the letter, then paste it into Ashby's form or attach the PDF, with the tailored resume, as a PDF or Word file, in the resume field.",
+        body: "Edit the letter, then paste it into Ashby's form or attach the PDF, with the tailored resume, as a PDF or Word file, in the resume field. For a written question, right-click its box and choose Cover Me: write an answer.",
       },
     ],
     faqs: [

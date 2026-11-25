@@ -1,18 +1,13 @@
-// Saves one live posting per job board as a scraper test fixture.
-//
 //   pnpm fixtures:save            all boards
 //   pnpm fixtures:save lever      one board
 //
-// Each board starts from a listing page that stays up, follows the first
-// posting link, and saves the rendered DOM to src/content/scrapers/fixtures/.
-// The scraper tests read those files; the live smoke test (scrapers.test.ts)
-// reuses BOARDS and fetchPosting() against today's pages.
+// Each board starts from a listing page that stays up, since postings close (#2).
 //
 // Indeed's bot check blocks headless browsers, and sends the second page load in
 // a session to a sign-in page, but passes the first load in a visible Chrome
 // window with a fresh profile. So each Indeed page opens in its own new window
 // (Chrome must be installed). After a few visits it blocks the IP for a while
-// regardless, so the live smoke test skips Indeed.
+// regardless, so the live smoke test skips Indeed (#2).
 import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
@@ -24,57 +19,64 @@ import type { PageSnapshot } from '../src/content/snapshot.ts'
 export interface Board {
   name: string
   listing: string
-  // First href on the listing page that matches is the posting to save.
-  // Omitted: save the listing itself (a split-pane search page).
   posting?: RegExp
-  // Turns the matched link into the URL to open.
   rewrite?: (href: string) => string
-  // Wait for this selector before saving (content that renders late).
   ready?: string
-  // Needs a visible Chrome window (Cloudflare); skipped in CI.
+  // Needs a visible Chrome window (Cloudflare); skipped in CI (#2)
   headed?: true
 }
 
 export const BOARDS: Board[] = [
   { name: 'greenhouse', listing: 'https://job-boards.greenhouse.io/anthropic', posting: /greenhouse\.io\/anthropic\/jobs\/\d+/ },
   { name: 'lever', listing: 'https://jobs.lever.co/palantir', posting: /jobs\.lever\.co\/palantir\/[0-9a-f-]{36}$/ },
+  // capital.com's JSON-LD leaves out its postings' closing section (#325)
+  { name: 'lever-apply', listing: 'https://jobs.lever.co/capital', posting: /jobs\.lever\.co\/capital\/[0-9a-f-]{36}$/, rewrite: (href) => `${href}/apply` },
   { name: 'ashby', listing: 'https://jobs.ashbyhq.com/openai', posting: /jobs\.ashbyhq\.com\/openai\/[0-9a-f-]{36}$/ },
   { name: 'workable', listing: 'https://apply.workable.com/huggingface/', posting: /apply\.workable\.com\/huggingface\/j\/[0-9A-F]+\/?$/ },
   { name: 'workday', listing: 'https://nvidia.wd5.myworkdayjobs.com/NVIDIAExternalCareerSite', posting: /myworkdayjobs\.com\/(en-US\/)?NVIDIAExternalCareerSite\/job\// },
   { name: 'bamboohr', listing: 'https://pictonmahoney.bamboohr.com/careers', posting: /bamboohr\.com\/careers\/\d+/ },
   { name: 'linkedin', listing: 'https://www.linkedin.com/jobs/search?keywords=registered%20nurse&location=United%20States', posting: /linkedin\.com\/jobs\/view\/[^?]+/ },
-  // Terminal's public posting pages (its app's job list is behind sign-in)
+  // Terminal's public posting pages: its app's job list is behind sign-in (#5)
   { name: 'terminal', listing: 'https://www.terminal.io/engineers/job-openings/canada', posting: /terminal\.io\/engineers\/job-openings\/canada\/[a-z]+\/[^/]+\/\d+\// },
-  // No dedicated scraper: the generic one (JSON-LD) covers SmartRecruiters
+  // No dedicated scraper: the generic one covers SmartRecruiters from its microdata (#5)
   { name: 'smartrecruiters', listing: 'https://jobs.smartrecruiters.com/Equinox', posting: /jobs\.smartrecruiters\.com\/Equinox\/\d+-/ },
   { name: 'indeed', listing: 'https://www.indeed.com/jobs?q=welder', posting: /indeed\.com\/rc\/clk\?jk=/,
-    // The /rc/clk tracking redirect trips Cloudflare; the direct page doesn't.
+    // The /rc/clk tracking redirect trips Cloudflare; the direct page doesn't (#2)
     rewrite: (href) => `https://www.indeed.com/viewjob?jk=${new URL(href).searchParams.get('jk')}`, ready: '[data-testid="vj-job-description-heading"]', headed: true },
-  // Search results with the first job open in the right-hand pane
   { name: 'indeed-search', listing: 'https://www.indeed.com/jobs?q=welder', ready: '[data-testid="vj-job-description-heading"]', headed: true },
+  // Company career sites that name the employer only in the tab title (#200)
+  { name: 'apple', listing: 'https://jobs.apple.com/en-us/search?location=united-states-USA', posting: /jobs\.apple\.com\/en-us\/details\/\d+/ },
+  { name: 'amazon', listing: 'https://www.amazon.jobs/en/search?base_query=software+engineer', posting: /amazon\.jobs\/en\/jobs\/\d+/ },
+  { name: 'google-careers', listing: 'https://www.google.com/about/careers/applications/jobs/results/', posting: /careers\/applications\/jobs\/results\/\d+-/ },
+  // A jobs-count banner <h1> ("20 jobs on the Python Job Board") above the posting's own (#73)
+  { name: 'python', listing: 'https://www.python.org/jobs/', posting: /python\.org\/jobs\/\d+\/$/ },
+  { name: 'phenom', listing: 'https://careers.humana.com/us/en/search-results', posting: /careers\.humana\.com\/us\/en\/job\// },
 ]
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36'
 
-// The extension's own snapshotPage() (src/content/snapshot.ts), compiled to a
-// script so it runs in the page exactly as the content script does: shadow
-// roots included, scripts, styles and media stripped.
-const SNAPSHOT_JS = (await transformWithEsbuild(
-  readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../src/content/snapshot.ts'), 'utf8'),
-  'snapshot.ts',
-  { format: 'iife', globalName: '__coverMeSnapshot' },
+// The content script's own code, compiled so it runs in the page exactly as
+// the extension does (#2, #325).
+const compile = async (file: string, globalName: string) => (await transformWithEsbuild(
+  readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../src/content', file), 'utf8'),
+  file,
+  { format: 'iife', globalName },
 )).code
+const SNAPSHOT_JS = await compile('snapshot.ts', '__coverMeSnapshot')
+const LEVER_APPLY_JS = await compile('lever-apply.ts', '__coverMeLeverApply')
 
 export async function takeSnapshot(page: Page): Promise<PageSnapshot> {
-  // A string, not a function: evaluate runs it over CDP, so page CSP doesn't apply.
+  // A string, not a function: evaluate runs it over CDP, so page CSP doesn't apply (#2)
+  await page.evaluate(`${LEVER_APPLY_JS}; __coverMeLeverApply.addLeverPostingJsonLd()`)
   const snapshot = await page.evaluate(`${SNAPSHOT_JS}; __coverMeSnapshot.snapshotPage()`) as PageSnapshot | null
   if (!snapshot) throw new Error(`snapshotPage() returned null on ${page.url()} (page too large?)`)
   return snapshot
 }
 
-// Returns the posting URL and the HTML the extension would send for it.
 export async function fetchPosting(browser: Browsers, board: Board): Promise<PageSnapshot> {
-  const open = () => board.headed ? browser.headed() : browser.headless.newPage({ userAgent: UA })
+  // bypassCSP: takeSnapshot runs in the page's own world, where Google's
+  // careers page enforces Trusted Types and blocks the snapshot's parser (#2).
+  const open = () => board.headed ? browser.headed() : browser.headless.newPage({ userAgent: UA, bypassCSP: true })
   let page = await open()
   try {
     await load(page, board.listing)
@@ -98,7 +100,7 @@ export async function fetchPosting(browser: Browsers, board: Board): Promise<Pag
 // Some boards poll forever and never reach network idle; settle for whatever
 // has rendered after 15 s. LinkedIn answers a share of signed-out loads at
 // random with a 429 (an empty page) or a redirect to /authwall; loading the
-// page again after a pause usually gets through.
+// page again after a pause usually gets through (#2).
 async function load(page: Page, url: string) {
   for (let attempt = 1; ; attempt++) {
     const res = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45_000 })
@@ -112,7 +114,6 @@ async function load(page: Page, url: string) {
 
 export interface Browsers {
   headless: Browser
-  // A page in a new Chrome window with a fresh profile; closing the page closes the window.
   headed: () => Promise<Page>
   close: () => Promise<void>
 }
@@ -142,7 +143,6 @@ async function main() {
     for (const board of boards) {
       try {
         const { url, html } = await fetchPosting(browser, board)
-        // First line records where and when the page came from.
         writeFileSync(join(dir, `${board.name}.html`), `<!-- ${url} saved ${new Date().toISOString().slice(0, 10)} -->\n${html}`)
         console.log(`saved ${board.name}: ${url} (${Math.round(html.length / 1024)} KB)`)
       } catch (err) {

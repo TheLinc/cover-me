@@ -3,11 +3,9 @@ import { NextRequest } from 'next/server'
 
 const auth = { user: { id: 'u1' } as { id: string } | null, token: 'at' }
 vi.mock('@/lib/supabase-server', () => ({
-  createServerSupabaseClient: async () => ({
-    auth: {
-      getUser: async () => ({ data: { user: auth.user } }),
-      getSession: async () => ({ data: { session: auth.user ? { access_token: auth.token } : null } }),
-    },
+  getServerUser: async () => ({
+    user: auth.user,
+    supabase: { auth: { getSession: async () => ({ data: { session: auth.user ? { access_token: auth.token } : null } }) } },
   }),
 }))
 

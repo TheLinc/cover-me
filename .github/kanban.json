@@ -1,0 +1,12 @@
+{
+  "owner": "TheLinc",
+  "project": 6,
+  "repo": "TheLinc/cover-me",
+  "status": { "todo": "Todo", "in_progress": "In Progress", "in_review": "In Review", "done": "Done" },
+  "priority": { "field": "Priority", "order": ["High", "Normal", "Low"] },
+  "labels": {
+    "required_one_of": { "type": ["bug", "enhancement", "documentation", "maintenance"] },
+    "blocked": "needs-owner",
+    "agents_may_not_add": ["automerge", "roadmap", "wontfix", "duplicate", "invalid"]
+  }
+}

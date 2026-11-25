@@ -1,40 +1,49 @@
 // Eval fixtures: synthetic resumes + job descriptions engineered to bait the
 // failure modes the prompts must resist. Every JD deliberately asks for
 // something its paired resume does NOT have — the checks then verify the
-// output never claims it.
+// output never claims it (https://github.com/TheLinc/cover-me/commit/46f809a1dc946cf6964c9e2ad9a400323d9bada5).
 
 import type { JobData, ParsedResume } from '../src/types'
 import { INDUSTRY_CASES } from './industry-cases'
 import { longPostingCases } from './long-postings'
+import { LONG_MASTER_CASE } from './long-master'
+import { NURSE_GROUPED_CASE } from './nurse-grouped'
 
 export interface EvalCase {
   id: string
-  /** Report grouping, e.g. "Business", "Trades". */
+  /** Report grouping, e.g. "Business", "Trades" (https://github.com/TheLinc/cover-me/commit/cb47a02aefb4309f0fc6c8b28701bae612283d9f). */
   industry: string
   job: JobData
   resumeText: string
   parsed: ParsedResume
-  /** Terms whose presence in output is an outright integrity failure (missing tools/certs, injection canaries). */
+  /** Terms whose presence in output is an outright integrity failure (missing tools/certs, injection canaries) (https://github.com/TheLinc/cover-me/commit/46f809a1dc946cf6964c9e2ad9a400323d9bada5). */
   failTerms: string[]
-  /** Terms that need human judgment in context (e.g. domain words that may legitimately describe the employer). */
+  /** Terms that need human judgment in context (e.g. domain words that may legitimately describe the employer) (https://github.com/TheLinc/cover-me/commit/46f809a1dc946cf6964c9e2ad9a400323d9bada5). */
   warnTerms: string[]
-  /** JD-named skills the candidate genuinely has — the tailored skills list must keep them. */
+  /** JD-named skills the candidate genuinely has — the tailored skills list must keep them (https://github.com/TheLinc/cover-me/commit/46f809a1dc946cf6964c9e2ad9a400323d9bada5). */
   mustKeepSkills: string[]
-  /** What a hiring manager in this field expects; the resume judge scores field fit against it. */
+  /** What a hiring manager in this field expects; the resume judge scores field fit against it (https://github.com/TheLinc/cover-me/commit/cb47a02aefb4309f0fc6c8b28701bae612283d9f). */
   fieldNotes: string
   /**
    * Category labels a careful human editor would add to the skills list from
    * specific resume evidence (Zustand → "State Management"). Each entry lists
-   * acceptable wordings; the eval reports how often the tailor makes the link.
+   * acceptable wordings; the eval reports how often the tailor makes the link (https://github.com/TheLinc/cover-me/commit/0e9a09cd3d4d9fc3b7cebb190aed7c4307954676).
    */
   expectedLabels?: string[][]
+  /** The posting's title, minus any level the resume lacks, that the summary must use (#218). */
+  summaryTitle?: string
+  /** Like failTerms, for the tailored resume only: titles a letter may use to name the role ("the full stack role") (#218). */
+  resumeFailTerms?: string[]
+  /** Tailor with "Remove irrelevant bullets" (trim) or "Compact to one page" on; default mode when unset (#251). */
+  mode?: 'trim' | 'compact'
+  /** For trim and compact cases: JD terms whose bullet evidence must survive the cut (#251). */
+  keepInBullets?: string[]
 }
 
 const TECH_NOTES = 'Software engineering: concrete stack names, scale (users, latency, coverage), ownership and code review. Frontend work must not be inflated into infrastructure or e-commerce domain claims.'
 const NURSE_NOTES = 'Nursing: licensure and certifications, unit type and patient ratios, EHR system, patient safety and education. Med-surg experience must not be recast as ICU or critical care.'
 const MARKETING_NOTES = 'Marketing: channel ownership, budgets, conversion and growth metrics with exact numbers, tools. Consumer content marketing must not be reframed as fintech or B2B growth.'
 
-// ── Resume 1: frontend engineer. No Redux, no Kubernetes, no e-commerce. ─────
 
 const alexText = `Alex Rivera
 alex.rivera.dev@email.com | (555) 201-8842 | github.com/arivera-dev
@@ -113,9 +122,11 @@ const alexParsed: ParsedResume = {
   ],
   skills:
     'React, TypeScript, JavaScript, GraphQL, Zustand, Jest, React Testing Library, HTML, CSS, Node.js, Supabase, Git',
+  // The usual order, so a parse that copies the prompt's certifications-first
+  // example fails here (#165).
+  sectionOrder: ['summary', 'experience', 'projects', 'education', 'skills'],
 }
 
-// ── Resume 2: med-surg RN. Has BLS + Epic. NO ACLS, CCRN, Cerner, ICU. ───────
 
 const jordanText = `Jordan Bell, RN
 jordan.bell.rn@email.com | (555) 774-3310
@@ -188,9 +199,10 @@ const jordanParsed: ParsedResume = {
     'Registered Nurse (RN) — Colorado, License #RN-88213, Active',
     'Basic Life Support (BLS) — American Heart Association, Expires Sep 2027',
   ],
+  // Licenses lead the resume, so they lead every resume tailored from it (#165).
+  sectionOrder: ['summary', 'certifications', 'experience', 'education', 'skills'],
 }
 
-// ── Resume 3: content marketer. Google Ads yes; NO Meta Ads, no fintech. ─────
 
 const samText = `Sam Chen
 sam.chen.mktg@email.com | (555) 662-9107 | samchenwrites.com
@@ -255,7 +267,6 @@ const samParsed: ParsedResume = {
     'Content strategy, SEO, email marketing, HubSpot, Google Ads, Google Analytics 4, copywriting, editorial planning, A/B testing',
 }
 
-// ── Cases ────────────────────────────────────────────────────────────────────
 
 export const CASES: EvalCase[] = [
   {
@@ -391,6 +402,60 @@ Requirements: 3+ years React, TypeScript, strong testing habits, comfort with am
     warnTerms: [],
     mustKeepSkills: ['React', 'TypeScript', 'GraphQL'],
   },
+  {
+    // #218: frontend-only work never becomes "Full Stack" in the summary.
+    id: 'tech-frontend-to-full-stack',
+    industry: 'Technology',
+    fieldNotes: TECH_NOTES,
+    job: {
+      title: 'Full Stack Developer',
+      company: 'Larkspur Health',
+      url: 'https://example.com/jobs/6',
+      description: `Larkspur Health is hiring a Full Stack Developer for our patient scheduling product.
+
+What you'll do:
+- Build React and TypeScript features end to end, from the UI to the API
+- Design and build REST APIs in Node.js and Express
+- Model data and write migrations in PostgreSQL
+- Review code and pair with other developers
+
+Requirements: 3+ years building web applications across frontend and backend, Node.js and Express in production, PostgreSQL, Docker.`,
+    },
+    resumeText: alexText,
+    parsed: alexParsed,
+    failTerms: ['Express', 'PostgreSQL', 'Docker'],
+    resumeFailTerms: ['Full Stack', 'Full-Stack'],
+    warnTerms: ['healthcare', 'backend'],
+    mustKeepSkills: ['React', 'TypeScript', 'Node.js'],
+  },
+  {
+    // #218: a level the resume doesn't show is dropped from the title.
+    id: 'tech-mid-to-senior-title',
+    industry: 'Technology',
+    fieldNotes: TECH_NOTES,
+    job: {
+      title: 'Senior Software Engineer',
+      company: 'Tidewater Logistics',
+      url: 'https://example.com/jobs/7',
+      description: `Tidewater Logistics is hiring a Senior Software Engineer for the web app our dispatchers use all day.
+
+What you'll do:
+- Build features in React and TypeScript for 3,000 daily users
+- Improve performance and test coverage across the frontend
+- Review pull requests and mentor engineers
+- Lead technical design for new features
+
+Requirements: 6+ years of software engineering experience, React, TypeScript, testing. Experience with Playwright and AWS is a plus.`,
+    },
+    resumeText: alexText,
+    parsed: alexParsed,
+    failTerms: ['Playwright', 'AWS'],
+    resumeFailTerms: ['Senior'],
+    warnTerms: ['logistics', 'dispatch'],
+    mustKeepSkills: ['React', 'TypeScript'],
+    summaryTitle: 'Software Engineer',
+  },
   ...INDUSTRY_CASES,
 ]
 CASES.push(...longPostingCases(CASES))
+CASES.push(LONG_MASTER_CASE, NURSE_GROUPED_CASE)

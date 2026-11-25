@@ -1,10 +1,12 @@
 import JSZip from 'jszip'
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { checkUploadedDesign, designForTailor, finishDesign, toBase64 } from './design'
+import { checkUploadedDesign, designForTailor, designWithParse, downloadResumeWord, finishDesign, parseForTailor, toBase64, uploadDesignIfPro } from './design'
 
 const parseMock = vi.hoisted(() => vi.fn())
-vi.mock('./ai/resume-parse', () => ({ parseResumeStructure: parseMock }))
+vi.mock('./ai/resume-parse', async (importOriginal) => ({ ...(await importOriginal<object>()), parseResumeStructure: parseMock }))
 vi.mock('./crypto', () => ({ decryptApiKey: async () => 'sk-test' }))
+const saveFileMock = vi.hoisted(() => vi.fn())
+vi.mock('./pdf/file-name', async (importOriginal) => ({ ...(await importOriginal<object>()), saveFile: saveFileMock }))
 
 let local: Record<string, unknown> = {}
 function fakeLocal(data: Record<string, unknown> = {}) {
@@ -23,10 +25,13 @@ const resume = (b = bullets) => ({
   name: 'Ada Example', email: '', phone: '', website: '', education: [],
   experience: [{ title: 'Engineer', company: 'Northwind', location: '', dates: '2022', bullets: b }],
 })
+// A parse made since the link fix (#238), and one from before it.
+const current = () => ({ ...resume(), otherSections: [], sectionOrder: ['experience' as const], linksKept: true as const })
+const beforeLinks = () => ({ ...resume(), otherSections: [], sectionOrder: ['experience' as const], links: ['github.com/ada/billing'] })
 const hash = 'c'.repeat(64)
 const check = { matched: 2, total: 2, unmatched: [], textBoxBullets: 0, summary: false, skills: 'none' as const }
 
-async function store({ layout, withFile = true, extra = {}, status = 'done' }: { layout?: 'yours' | 'cover-me'; withFile?: boolean; extra?: Record<string, unknown>; status?: string } = {}) {
+async function store({ layout, withFile = true, extra = {}, status = 'done', fileParse = current() }: { layout?: 'yours' | 'cover-me'; withFile?: boolean; extra?: Record<string, unknown>; status?: string; fileParse?: object } = {}) {
   const zip = new JSZip()
   const body = bullets.map((b) => `<w:p><w:r><w:t>${b}</w:t></w:r></w:p>`).join('')
   zip.file('word/document.xml', `<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${body}</w:body></w:document>`)
@@ -35,7 +40,7 @@ async function store({ layout, withFile = true, extra = {}, status = 'done' }: {
   fakeLocal({
     resume: { text: 'Ada', filename: 'ada.docx', updatedAt: '2026-11-01T00:00:00Z', design: { hash, size: 100, status, check }, ...(layout ? { layout } : {}), ...(resumeExtra as object) },
     ...rest,
-    ...(withFile ? { [`designFile:${hash}`]: { data, parsed: resume() }, designFiles: [hash] } : {}),
+    ...(withFile ? { [`designFile:${hash}`]: { data, parsed: fileParse }, designFiles: [hash] } : {}),
   })
 }
 
@@ -74,6 +79,80 @@ describe('the layout of a tailor', () => {
   })
 })
 
+describe('a Word file checked against a parse from before the link fix (#238)', () => {
+  test('BYOK: takes the current parse, is checked again, and places tailored text with it', async () => {
+    await store({ fileParse: beforeLinks() })
+    const d = await designWithParse(hash, current())
+    expect(d.design).toEqual({ layout: 'yours', fellBack: false, sourceHash: hash })
+    expect(d.parsed).toEqual(current())
+    expect(local[`designFile:${hash}`]).toMatchObject({ parsed: current() })
+    expect(await finishDesign({ ...resume(['Shipped a Go billing service', 'Mentored two engineers']), summary: '' }, d)).toMatchObject({ sourceHash: hash })
+  })
+
+  test('BYOK: a file replaced while the parse ran keeps its own parse', async () => {
+    await store({ fileParse: beforeLinks() })
+    await designWithParse('d'.repeat(64), current())
+    expect(local[`designFile:${hash}`]).toMatchObject({ parsed: beforeLinks() })
+  })
+
+  test("BYOK: falls back when the new parse doesn't fit the file, then the Cover Me layout, with the new check on the resume page", async () => {
+    await store({ fileParse: beforeLinks() })
+    const moved = { ...current(), experience: [{ ...resume().experience[0], bullets: ['Something else entirely'] }] }
+    const d = await designWithParse(hash, moved)
+    expect(d.design).toEqual({ layout: 'yours', fellBack: true })
+    expect(await finishDesign(resume(), d)).toMatchObject({ designFellBack: true })
+    expect((local.resume as { design: { check: unknown } }).design.check).toMatchObject({ matched: 0 })
+    expect((await designForTailor()).design).toEqual({ layout: 'cover-me', fellBack: false })
+    // Older History entries still download in the user's design.
+    expect(local[`designFile:${hash}`]).toMatchObject({ parsed: beforeLinks() })
+  })
+})
+
+describe('the parse an own-key tailor starts from', () => {
+  const read = vi.fn(async () => current())
+  afterEach(() => read.mockClear())
+
+  test("a Word file's parse from before the link fix (#238) takes the current one, with no model call", async () => {
+    await store({ fileParse: beforeLinks(), extra: { resume: { parsed: current() } } })
+    const { parsed, design } = await parseForTailor(await designForTailor(), { text: 'Ada', parsed: current() }, read)
+    expect(read).not.toHaveBeenCalled()
+    expect(parsed).toEqual(current())
+    expect(design).toMatchObject({ design: { layout: 'yours', sourceHash: hash }, parsed: current() })
+  })
+
+  test('an old parse on both sides is read again once, and the file takes it', async () => {
+    await store({ fileParse: beforeLinks(), extra: { resume: { parsed: beforeLinks() } } })
+    const { parsed, design } = await parseForTailor(await designForTailor(), { text: 'Ada', parsed: beforeLinks() }, read)
+    expect(read).toHaveBeenCalledOnce()
+    expect(parsed).toMatchObject({ linksKept: true })
+    expect((local.resume as { parsed: unknown }).parsed).toMatchObject({ linksKept: true })
+    expect(local[`designFile:${hash}`]).toMatchObject({ parsed: { linksKept: true } })
+    expect(design.parsed).toBe(parsed)
+  })
+
+  test('a resume replaced while its parse runs never gets that parse, and the run still uses it', async () => {
+    fakeLocal({ resume: { text: 'Ada', filename: 'ada.pdf', updatedAt: '2026-11-01T00:00:00Z' } })
+    const replaced = { text: 'Someone else', filename: 'other.pdf', updatedAt: '2026-11-02T00:00:00Z' }
+    const { parsed } = await parseForTailor(await designForTailor(), { text: 'Ada' }, async () => {
+      local.resume = replaced
+      return current()
+    })
+    expect(parsed).toMatchObject({ linksKept: true })
+    expect(local.resume).toEqual(replaced)
+  })
+
+  test("a current Word file's parse is used as it is", async () => {
+    await store()
+    const before = local[`designFile:${hash}`]
+    const d = await designForTailor()
+    const { parsed, design } = await parseForTailor(d, { text: 'Ada', parsed: beforeLinks() }, read)
+    expect(read).not.toHaveBeenCalled()
+    expect(parsed).toBe(d.parsed)
+    expect(design).toBe(d)
+    expect(local[`designFile:${hash}`]).toBe(before)
+  })
+})
+
 describe('the upload check', () => {
   test('BYOK: a file uploaded again is checked against the parse it already had, with no model call', async () => {
     const fetchMock = vi.fn()
@@ -96,6 +175,40 @@ describe('the upload check', () => {
     expect(local.resume).toEqual(replaced)
   })
 
+  test('BYOK: a first upload reads a parse from before the link fix (#238) again, once, and keeps the new one', async () => {
+    const old = { ...resume(), otherSections: [], sectionOrder: ['summary', 'experience'] }
+    await store({ status: 'checking', extra: { settings: { provider: 'claude', apiKey: 'x', mode: 'byok' }, resume: { parsed: old } } })
+    delete (local[`designFile:${hash}`] as { parsed?: unknown }).parsed
+    parseMock.mockReset().mockResolvedValue({ ...old, linksKept: true })
+    await checkUploadedDesign(hash)
+    expect(parseMock).toHaveBeenCalledTimes(1)
+    expect((local.resume as { parsed: unknown }).parsed).toMatchObject({ linksKept: true })
+
+    // A new parse is reused as it is.
+    await store({ status: 'checking', extra: { settings: { provider: 'claude', apiKey: 'x', mode: 'byok' }, resume: { parsed: { ...old, linksKept: true } } } })
+    delete (local[`designFile:${hash}`] as { parsed?: unknown }).parsed
+    parseMock.mockClear()
+    await checkUploadedDesign(hash)
+    expect(parseMock).not.toHaveBeenCalled()
+  })
+
+  test('BYOK: a file uploaded again with a parse from before the link fix (#238) is read again once and takes the new parse', async () => {
+    await store({ status: 'checking', fileParse: beforeLinks(), extra: { settings: { provider: 'claude', apiKey: 'x', mode: 'byok' } } })
+    parseMock.mockReset().mockResolvedValue(current())
+    await checkUploadedDesign(hash)
+    expect(parseMock).toHaveBeenCalledOnce()
+    expect(local[`designFile:${hash}`]).toMatchObject({ parsed: current() })
+    expect((local.resume as { design: unknown }).design).toMatchObject({ status: 'done', check: { matched: 2, total: 2 } })
+  })
+
+  test("BYOK: a file uploaded again keeps its old parse when the new one doesn't fit it", async () => {
+    await store({ status: 'checking', fileParse: beforeLinks(), extra: { settings: { provider: 'claude', apiKey: 'x', mode: 'byok' } } })
+    parseMock.mockReset().mockResolvedValue({ ...current(), experience: [{ ...resume().experience[0], bullets: ['Something else entirely'] }] })
+    await checkUploadedDesign(hash)
+    expect(local[`designFile:${hash}`]).toMatchObject({ parsed: beforeLinks() })
+    expect((local.resume as { design: unknown }).design).toMatchObject({ status: 'done', check: { matched: 0 } })
+  })
+
   test('hosted: a copy added while signed out is never sent to the account', async () => {
     const fetchMock = vi.fn()
     const session = { access_token: 't', refresh_token: 'r', expires_at: Math.floor(Date.now() / 1000) + 3600, user: { id: 'me', email: 'ada@example.com' } }
@@ -104,5 +217,58 @@ describe('the upload check', () => {
     await checkUploadedDesign(hash)
     expect((local.resume as { design: unknown }).design).toMatchObject({ status: 'error', error: 'Upload your .docx again while signed in to use your design.' })
     expect(fetchMock).not.toHaveBeenCalled()
+  })
+})
+
+// History on another computer (#174): a Pro account's resume tailored in a
+// file this browser never had.
+describe('the Word download of a resume tailored on another computer', () => {
+  const session = { access_token: 't', refresh_token: 'r', expires_at: Math.floor(Date.now() / 1000) + 3600, user: { id: 'me', email: 'ada@example.com' } }
+  const tailored = { ...resume(['Shipped a Go billing service', 'Mentored two engineers']), sourceHash: hash }
+
+  test("Pro: fetches the file from the account, keeps it here, and downloads in the user's design", async () => {
+    await store({ extra: { session, cachedTier: 'hosted_pro' } })
+    const { data } = local[`designFile:${hash}`] as { data: string }
+    delete local[`designFile:${hash}`]
+    local.designFiles = []
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ docx: data, structured: resume() }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    saveFileMock.mockClear()
+
+    await downloadResumeWord(tailored, 'Engineer')
+
+    expect(String((fetchMock.mock.calls[0] as unknown[])[0])).toContain(`/functions/v1/applications?file=${hash}`)
+    expect(local[`designFile:${hash}`]).toEqual({ data, parsed: resume() })
+    const [blob] = saveFileMock.mock.calls[0] as [Blob]
+    const zip = await JSZip.loadAsync(await blob.arrayBuffer())
+    expect(await zip.file('word/document.xml')!.async('string')).toContain('Shipped a Go billing service')
+  })
+
+  test('free: makes no request and uses the Cover Me layout', async () => {
+    await store({ withFile: false, extra: { session, cachedTier: 'hosted_free' } })
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+    saveFileMock.mockClear()
+
+    await downloadResumeWord(tailored, 'Engineer')
+
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(saveFileMock).toHaveBeenCalledOnce()
+  })
+})
+
+// #174: the account refuses a file checked against text another computer has since replaced.
+describe('a Word file the account refuses', () => {
+  test('shows why on the resume page and is not sent again', async () => {
+    const session = { access_token: 't', refresh_token: 'r', expires_at: Math.floor(Date.now() / 1000) + 3600, user: { id: 'me', email: 'ada@example.com' } }
+    await store({ extra: { session, cachedTier: 'hosted_pro', resume: { accountId: 'me' } } })
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ error: 'Your resume changed on another computer. Upload your .docx again.' }), { status: 409 }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await uploadDesignIfPro(session)
+    await uploadDesignIfPro(session)
+
+    expect(fetchMock).toHaveBeenCalledOnce()
+    expect((local.resume as { design: unknown }).design).toMatchObject({ status: 'error', error: 'Your resume changed on another computer. Upload your .docx again.', refused: true })
   })
 })

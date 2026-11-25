@@ -1,20 +1,18 @@
 import { useState } from 'react'
-import { ensureValidSession, startBilling, type Plan } from '../../lib/auth'
+import type { Plan } from '../../lib/auth'
+import { OfferLine, openCheckout, useFirstMonthOffer } from './FirstMonthOffer'
 
-// Opens Stripe checkout for the chosen plan in a new tab (payments live on the
-// website, not in the extension). Prices match the dashboard's upgrade buttons.
+// The two Pro plans. Prices match the dashboard's upgrade buttons. An open
+// first-month offer (#213) shows below them, so its late arrival doesn't move
+// the buttons under the pointer.
 export default function UpgradePrompt() {
   const [error, setError] = useState('')
+  const offer = useFirstMonthOffer()
 
   async function handleUpgrade(plan: Plan) {
     setError('')
     try {
-      const session = await ensureValidSession()
-      if (!session) {
-        setError('Sign in again in Settings to upgrade.')
-        return
-      }
-      chrome.tabs.create({ url: await startBilling(session.access_token, 'checkout', plan) })
+      await openCheckout(plan)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not start checkout.')
     }
@@ -26,7 +24,8 @@ export default function UpgradePrompt() {
         <button className="btn btn-primary" onClick={() => handleUpgrade('monthly')}>Upgrade, $15/mo</button>
         <button className="btn btn-secondary" onClick={() => handleUpgrade('quarterly')}>$35 every 3 months</button>
       </div>
-      <p className="hint">Pro: up to 25 a day</p>
+      <p className="hint">Pro: up to 25 generations a day</p>
+      {offer && <OfferLine offer={offer} />}
       {error && <div className="error-box" role="alert">{error}</div>}
     </div>
   )

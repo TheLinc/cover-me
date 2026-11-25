@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Cover Me: AI Resume Tailor & Cover Letter Generator",
-  "version": "1.7.0",
-  "description": "Tailor your resume to any job posting and write a matching cover letter. See your ATS score and missing keywords.",
+  "name": "Cover Me: AI Resume Tailor & Cover Letter",
+  "version": "1.10.0",
+  "description": "Tailor your resume, write a matching cover letter and answer application questions for any job posting. See your ATS score.",
   "icons": {
     "16": "src/public/icon/16.png",
     "32": "src/public/icon/32.png",
@@ -28,7 +28,8 @@
     "unlimitedStorage",
     "activeTab",
     "scripting",
-    "identity"
+    "identity",
+    "contextMenus"
   ],
   "host_permissions": [
     "https://api.anthropic.com/*",

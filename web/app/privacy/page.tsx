@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { ArrowRightIcon, ArrowUpRightIcon } from '@phosphor-icons/react/dist/ssr'
 import { SiteNav } from '@/components/site/SiteNav'
 import { SiteFooter } from '@/components/site/SiteFooter'
 
@@ -25,7 +26,6 @@ export const metadata: Metadata = {
 const EFFECTIVE_DATE = 'November 24, 2026'
 const CONTACT_EMAIL  = 'support@cover-me.dev'
 
-// ── Section heading ────────────────────────────────────────────────────────
 
 function H2({ id, children }: { id: string; children: React.ReactNode }) {
   return (
@@ -65,7 +65,7 @@ function Ul({ children }: { children: React.ReactNode }) {
 function Li({ children }: { children: React.ReactNode }) {
   return (
     <li className="flex gap-3 text-[15px] text-muted-foreground leading-[1.8]">
-      <span className="text-brand mt-[3px] shrink-0">→</span>
+      <span aria-hidden="true" className="flex h-[1lh] shrink-0 items-center text-brand"><ArrowRightIcon size={14} /></span>
       <span>{children}</span>
     </li>
   )
@@ -97,7 +97,6 @@ function PermissionCard({
   )
 }
 
-// ── Table of contents ──────────────────────────────────────────────────────
 
 const TOC = [
   { id: 'overview',         label: 'Overview' },
@@ -114,7 +113,6 @@ const TOC = [
   { id: 'contact',          label: 'Contact' },
 ]
 
-// ── Page ───────────────────────────────────────────────────────────────────
 
 const breadcrumbJsonLd = {
   '@context': 'https://schema.org',
@@ -135,7 +133,6 @@ export default function PrivacyPage() {
       <div className="max-w-[1160px] mx-auto px-12 py-16 max-md:px-5">
         <div className="grid grid-cols-[220px_1fr] gap-16 max-lg:grid-cols-1">
 
-          {/* Sidebar TOC — sticky on desktop */}
           <aside className="max-lg:hidden">
             <div className="sticky top-24">
               <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-2 mb-4">
@@ -155,10 +152,8 @@ export default function PrivacyPage() {
             </div>
           </aside>
 
-          {/* Main content */}
           <main className="min-w-0">
 
-            {/* Header */}
             <div className="mb-10 pb-10 border-b border-border">
               <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-2 mb-4 block">
                 Legal
@@ -171,7 +166,6 @@ export default function PrivacyPage() {
               </p>
             </div>
 
-            {/* ── 1. Overview ─────────────────────────────────────────── */}
             <H2 id="overview">Overview</H2>
             <P>
               Cover Me (&ldquo;we&rdquo;, &ldquo;our&rdquo;, or &ldquo;us&rdquo;) is an open-source Chrome
@@ -206,7 +200,6 @@ export default function PrivacyPage() {
               Where this policy applies differently by mode, it is clearly noted.
             </P>
 
-            {/* ── 2. Information We Collect ───────────────────────────── */}
             <H2 id="data-collected">Information We Collect</H2>
 
             <H3>Information you provide directly</H3>
@@ -226,6 +219,19 @@ export default function PrivacyPage() {
                 upload it again. In Hosted mode, when you
                 upload a new resume, our server sends it to Anthropic right away to read its structure,
                 so tailoring can start at once (or on your first tailor, if it hasn&apos;t been read yet).
+              </Li>
+              <Li>
+                <strong className="text-foreground">Application questions (only when you ask).</strong>{' '}
+                When you right-click a text box on a web page and choose Cover Me: write an answer, the
+                extension reads that box&apos;s question (its label, or the text just above it) and its
+                character limit, and reads the job posting on the page as when you click Generate (see Job
+                posting data below). If the page has no posting, it uses the job from your latest saved
+                letter or resume. The question, the job details, your resume and any facts you add then go
+                to the AI provider whose key you use (BYOK), or to our server, which sends them to Anthropic
+                (Hosted). If you then ask for a change, the change you pick or type and the answer now in
+                the box go the same way. Our server stores neither the question, the change nor the answer.
+                The answer is typed into that box in your browser, and a small Cover Me status box appears
+                beside it until you close it; nothing else on the page is changed.
               </Li>
               <Li>
                 <strong className="text-foreground">Account credentials (Hosted mode only).</strong>{' '}
@@ -313,7 +319,8 @@ export default function PrivacyPage() {
                 short-lived request logs (see Third-Party Services), all a Free user&apos;s generation
                 leaves on our backend is this count and the job details under Application history, plus
                 usage counts sent to PostHog unless you opt out (see Usage counts below): no letter or resume
-                content is recorded server-side.
+                content is recorded server-side. Answers to application questions are counted the same
+                way, in a separate count with its own allowance.
               </Li>
               <Li>
                 <strong className="text-foreground">Rate-limit counter (all modes).</strong>{' '}
@@ -328,7 +335,10 @@ export default function PrivacyPage() {
                 To decide what to improve, our server counts which features you use, such as the file type
                 you upload, the tailoring options you pick and whether you regenerate. Each count goes to
                 PostHog with your Cover Me account ID, your plan and those choices, and PostHog keeps no
-                profile of you from it. Apart from your account ID and the time, a count holds only yes-or-no answers and choices from a fixed list. It
+                profile of you from it. Writing an answer to an application question sends one count
+                (answer_generated) with whether the box had a character limit, whether the job came from
+                the page or from your saved jobs, and whether it was a change you asked for, and reaching the answer allowance sends one
+                (answer_limit_hit) with which limit you reached. Apart from your account ID and the time, a count holds only yes-or-no answers and choices from a fixed list. It
                 never includes your resume, letters, the context you add, job or company details, file names
                 or posting addresses. There are no usage counts in BYOK mode. To stop them for your account,
                 email{' '}
@@ -362,12 +372,23 @@ export default function PrivacyPage() {
                 came from, your browser details (browser, operating system, device type, screen size and
                 language) and your time zone. When you click a link to Cover Me&apos;s Chrome Web Store
                 page, we also count the click and that link&apos;s label (such as &ldquo;Add to
-                Chrome&rdquo;); no other clicks are recorded. Counting visits stores nothing in your browser: no cookies
+                Chrome&rdquo;). When you run the free ATS checker, we count the check, whether the AI check or the
+                quick word match ran, and the score, never the posting or resume. When you press a Send to computer button on
+                a phone, we count the press and which button it was, never who you sent the link to. No other clicks are recorded. Counting visits stores nothing in your browser: no cookies
                 and no local storage. PostHog uses your IP address only to make a one-day visitor count, a one-way
                 hash with your browser details and a salt it deletes daily, and does not store the
                 address or any location derived from it.
                 Visits are not linked to your account, and signed-in pages (sign-in, dashboard, checkout)
                 are not counted at all.
+              </Li>
+              <Li>
+                <strong className="text-foreground">ATS checker (cover-me.dev/ats-checker, only when you use it).</strong>{' '}
+                The job posting and resume you check go to our server and on to Anthropic, whose AI reports
+                which of the posting&apos;s keywords the resume shows. A PDF or Word file is read in your
+                browser and only its text is sent. No account is needed. Neither text is stored in our
+                database or written to our logs. To limit how often the tool can be used, our server keeps a
+                counter keyed by a hash of your IP address. Once you start typing or pick a file, Cloudflare
+                Turnstile loads to check that you&apos;re not a bot (see Third-Party Services). The sample on the page sends nothing.
               </Li>
               <Li>
                 <strong className="text-foreground">Uninstall survey (only if you answer it).</strong>{' '}
@@ -406,14 +427,13 @@ export default function PrivacyPage() {
             <H3>Information we do NOT collect</H3>
             <Ul>
               <Li>We do not track your browsing history. We receive a page&apos;s address only when you activate the extension on it.</Li>
-              <Li>The extension contains no analytics or telemetry code. It only gives Chrome the uninstall survey&apos;s address, which records the removal if you were signed in (see above). In BYOK mode the only things it sends to Cover Me are the job page you activate it on, once you have agreed, so we can read the posting, and what Request this site or Report bug sends if you press one. Your resume and API key never reach us.</Li>
+              <Li>The extension contains no analytics or telemetry code. It only gives Chrome the uninstall survey&apos;s address, which records the removal if you were signed in (see above). The Rate Cover Me and Send feedback links in its rating card and in Settings carry campaign tags (<code className="text-brand-light font-mono text-[13px]">utm_</code> parameters) naming the button, so when you click one, the Chrome Web Store&apos;s dashboard or our website visit count (see Website visits above) can tell where the visit came from. The extension itself sends no count. In BYOK mode the only things it sends to Cover Me are the job page you activate it on, once you have agreed, so we can read the posting, and what Request this site or Report bug sends if you press one. Your resume and API key never reach us.</Li>
               <Li>In hosted mode our servers count how many letters and resumes you generate, to enforce the generation limits, count which features you use unless you opt out (see Usage counts above), and log errors, which also go to Sentry (see Third-Party Services). Logs, error reports and counts never contain your resume, letters, or job descriptions.</Li>
               <Li>We do not use cookies for tracking or advertising.</Li>
               <Li>We do not collect any data from tabs other than the active job posting tab, and only when you explicitly activate the extension.</Li>
               <Li>We do not sell, rent, or trade your data to any third party.</Li>
             </Ul>
 
-            {/* ── 3. How We Use Your Information ──────────────────────── */}
             <H2 id="how-we-use">How We Use Your Information</H2>
             <P>We use the information we collect only for these purposes:</P>
             <Ul>
@@ -436,14 +456,14 @@ export default function PrivacyPage() {
               beyond what is listed above.
             </P>
 
-            {/* ── 4. Chrome Extension Permissions ─────────────────────── */}
             <H2 id="permissions">Chrome Extension Permissions</H2>
             <P>
               The following section details every permission declared in Cover Me&apos;s{' '}
               <code className="text-[13px] text-brand-light bg-elevated px-1.5 py-0.5 rounded font-mono">manifest.json</code>,
               why it is necessary, and exactly how it is used. No permission is requested beyond what is
               strictly required to deliver the extension&apos;s single stated purpose: helping you apply
-              for a job by tailoring your resume to the posting and writing a matching cover letter.
+              for a job by tailoring your resume to the posting, writing a matching cover letter, and
+              answering the application&apos;s written questions.
             </P>
 
             <H3>Declared permissions</H3>
@@ -486,12 +506,15 @@ export default function PrivacyPage() {
               extension&apos;s own package into the page you are viewing and reads the job title,
               company name, and description. From version 1.3.0, once you agree, it also sends the page&apos;s address
               and a stripped copy of the page to our server to read the posting (see Job posting data
-              above). It reads no cookies, browsing history or other tabs.
+              above). When you choose Cover Me: write an answer from the right-click menu, it also reads
+              the question and character limit of the box you right-clicked, and types the answer into that
+              box. It reads no cookies, browsing history or other tabs.
               <br /><br />
               <strong className="text-foreground">Access is strictly user-initiated:</strong>{' '}
-              Chrome grants this access when you click the Cover Me icon, and it ends when you leave
-              the page or close the tab. The extension uses it only when you click Generate or Tailor
-              Resume. It has no access to any other tab.
+              Chrome grants this access when you click the Cover Me icon or choose Cover Me: write an
+              answer from the right-click menu, and it ends when you leave the page or close the tab. The
+              extension uses it only when you click Generate or Tailor Resume, or choose Cover Me: write
+              an answer. It has no access to any other tab.
             </PermissionCard>
 
             <PermissionCard name="scripting">
@@ -509,15 +532,28 @@ export default function PrivacyPage() {
               version 1.3.0, once you agree, the reader also returns the page&apos;s address and a copy of the page with
               scripts (except the posting&apos;s structured data), form fields, images and link query
               strings removed, which our server reads with
-              the latest version of the reader. They do not write to the page, access cookies or
-              localStorage, or persist anything.
+              the latest version of the reader. They do not access cookies or localStorage or persist
+              anything, and the only change they make to a page is the answer you ask for: typed into the
+              box you right-clicked, with a small status box beside it.
               <br /><br />
               <strong className="text-foreground">Access is strictly user-initiated:</strong>{' '}
               Injection is gated by <code className="text-brand-light font-mono text-[12px]">activeTab</code>{' '}
-              and only triggered when you click Generate or Tailor Resume. No scripts are injected in
+              and only triggered when you click Generate or Tailor Resume, or choose Cover Me: write an
+              answer. No scripts are injected in
               the background. Earlier versions loaded a small listener into every page that did nothing
               until you clicked Generate or Tailor Resume; Chrome shows those versions as able to read
               and change your data on all websites.
+            </PermissionCard>
+
+            <PermissionCard name="contextMenus">
+              <strong className="text-foreground">Why it is needed:</strong> It adds one item, Cover Me:
+              write an answer, to the menu Chrome shows when you right-click a text box. Chrome shows no
+              warning for it when you install or update the extension.
+              <br /><br />
+              <strong className="text-foreground">Exactly how it is used:</strong> The item appears only
+              on text boxes. Choosing it reads that box&apos;s question and character limit, writes an
+              answer from your resume and the job posting, and types it into the box (see Application
+              questions above). Nothing happens until you choose it.
             </PermissionCard>
 
             <PermissionCard name="identity">
@@ -559,14 +595,16 @@ export default function PrivacyPage() {
               <strong className="text-foreground">Exactly how it is used:</strong> Only when you click
               Generate or Tailor Resume, the job-posting reader is injected into the embedded posting
               frame and reads the job title, company name, and description. From version 1.3.0, nothing
-              runs on these domains at any other time. The reader does not modify the page, inject any UI, monitor
+              runs on these domains at any other time, except when you choose Cover Me: write an answer on a box in
+              an embedded application form, which types the answer into that box and shows a small status box
+              beside it. The reader does not otherwise modify the page or add anything to it, monitor
               navigation, or transmit data independently.
               <br /><br />
               <strong className="text-foreground">What we do NOT do:</strong>
               <ul className="mt-2 space-y-1 pl-4 list-disc">
                 <li>We do not read content from any tab other than the one you activate Generate on.</li>
                 <li>We do not monitor the pages you visit. We receive a page&apos;s address and content only when you click Generate or Tailor Resume on it.</li>
-                <li>We do not modify, inject into, or interact with web pages in any way beyond reading job posting data on explicit user request.</li>
+                <li>We do not modify, inject into, or interact with web pages in any way beyond reading job posting data, and typing an answer into the box you right-clicked, on explicit user request.</li>
                 <li>We do not track your browsing history or build any profile of the sites you visit.</li>
               </ul>
             </PermissionCard>
@@ -621,7 +659,6 @@ export default function PrivacyPage() {
               </ul>
             </PermissionCard>
 
-            {/* ── 5. Data Storage & Security ──────────────────────────── */}
             <H2 id="storage-security">Data Storage &amp; Security</H2>
 
             <H3>On-device storage (all modes)</H3>
@@ -641,7 +678,6 @@ export default function PrivacyPage() {
               <Li>The Supabase service-role key (which bypasses RLS) is used only on our servers (the backend functions and the Stripe webhook) and is never exposed to clients.</Li>
             </Ul>
 
-            {/* ── 6. Third-Party Services ─────────────────────────────── */}
             <H2 id="third-parties">Third-Party Services</H2>
             <P>
               Cover Me integrates with the following third-party services. Each service receives only
@@ -653,20 +689,26 @@ export default function PrivacyPage() {
                 {
                   name: 'Anthropic',
                   url: 'https://www.anthropic.com/privacy',
-                  when: 'BYOK mode (Claude provider) and Hosted mode (our key)',
-                  receives: 'Your resume text, the job posting data and any facts you add. In Hosted mode, also your resume on its own when you upload a new one (or on your first tailor, if it hasn\'t been read yet), and in BYOK mode the first time you tailor after uploading one, so its structure can be read. In BYOK mode, requests are made with your own API key and are subject to your agreement with Anthropic. In Hosted mode, requests are made with our key.',
+                  when: 'BYOK mode (Claude provider), Hosted mode (our key) and the website ATS checker',
+                  receives: 'Your resume text, the job posting data, any facts you add, and the question (with any change you ask for and the answer it changes) when you ask for an answer to an application question. In Hosted mode, also your resume on its own when you upload a new one (or on your first tailor, if it hasn\'t been read yet), and in BYOK mode the first time you tailor after uploading one, so its structure can be read. In BYOK mode, requests are made with your own API key and are subject to your agreement with Anthropic. In Hosted mode, requests are made with our key. On the website ATS checker, the posting and resume you check, sent with a key used only for that tool.',
                 },
                 {
                   name: 'OpenAI',
                   url: 'https://openai.com/policies/privacy-policy',
                   when: 'BYOK mode only (OpenAI provider)',
-                  receives: 'Your resume text, the job posting data and any facts you add, plus your resume on its own the first time you tailor after uploading it, to read its structure. Requests use your own API key and are subject to your agreement with OpenAI.',
+                  receives: 'Your resume text, the job posting data, any facts you add and the question (with any change you ask for and the answer it changes) when you ask for an answer to an application question, plus your resume on its own the first time you tailor after uploading it, to read its structure. Requests use your own API key and are subject to your agreement with OpenAI.',
                 },
                 {
                   name: 'Supabase',
                   url: 'https://supabase.com/privacy',
-                  when: 'Every mode (reading job postings, from version 1.3.0, and site requests and bug reports when you press the button); everything else Hosted mode only',
-                  receives: 'Copies of the job pages you ask us to read, which are processed and not stored, site requests and bug reports, passed on to PostHog and not stored, and rate-limit counters keyed by a hash of your IP address. In Hosted mode also: the job details, any facts you add and, when you regenerate, the previous tailored resume, sent with each generation request (not stored, except Pro history); messages from the dashboard\'s support form, passed on to Resend and not stored; email address, hashed password (email sign-in only), encrypted resume text, encrypted cover letters and tailored resumes with the unencrypted fields that go with them (Pro), your encrypted Word file and which tailored resumes were made from it (Pro), your resume\'s file name, your Stripe customer ID, your Google name, picture link and account ID, session tokens, generation counts, whether and when you opted out of usage counts, when you removed the extension (if you were signed in), and the account-keyed counter used when a new resume is read or a support message is sent (see Information We Collect for each). Supabase Auth also records the IP address and browser of each signed-in session, kept with your account. Supabase hosts our backend functions, authentication system and database, and keeps standard request logs (IP address, browser, time, and the address requested, which can include a dashboard search) for a short period.',
+                  when: 'Every mode (reading job postings, from version 1.3.0, and site requests and bug reports when you press the button), the website ATS checker when you run a check; everything else Hosted mode only',
+                  receives: 'Copies of the job pages you ask us to read, which are processed and not stored, site requests and bug reports, passed on to PostHog and not stored, the posting and resume you check on the website ATS checker, passed on to Anthropic and not stored, and rate-limit counters keyed by a hash of your IP address. In Hosted mode also: the job details, any facts you add, the application question when you ask for an answer (not stored) and, when you regenerate, the previous tailored resume, sent with each generation request (not stored, except Pro history); messages from the dashboard\'s support form, passed on to Resend and not stored; email address, hashed password (email sign-in only), encrypted resume text, encrypted cover letters and tailored resumes with the unencrypted fields that go with them (Pro), your encrypted Word file and which tailored resumes were made from it (Pro), your resume\'s file name, your Stripe customer ID, your Google name, picture link and account ID, session tokens, generation and answer counts, whether and when you opted out of usage counts, when you removed the extension (if you were signed in), and the account-keyed counter used when a new resume is read or a support message is sent (see Information We Collect for each). Supabase Auth also records the IP address and browser of each signed-in session, kept with your account. Supabase hosts our backend functions, authentication system and database, and keeps standard request logs (IP address, browser, time, and the address requested, which can include a dashboard search) for a short period.',
+                },
+                {
+                  name: 'Cloudflare Turnstile',
+                  url: 'https://www.cloudflare.com/privacypolicy/',
+                  when: 'The website ATS checker only, once you start typing or pick a file there',
+                  receives: 'Your IP address, browser details and signals about how the page is used, so Turnstile can tell people from bots. It never receives your posting or resume. No other page on cover-me.dev loads it.',
                 },
                 {
                   name: 'Google',
@@ -701,14 +743,14 @@ export default function PrivacyPage() {
                 {
                   name: 'Sentry',
                   url: 'https://sentry.io/privacy/',
-                  when: 'Visitors to cover-me.dev, and Hosted mode requests to our server. Never the extension itself, and never BYOK requests to our server.',
-                  receives: 'From the website: error reports and page-load timing, with the error, page URL, browser version, and your user ID if you are signed in. Form contents, cookies, and email addresses are removed before sending. From our server: an error report when a Hosted mode request fails, with the error, which part of the server failed, the time, and your account ID. Server error reports never contain your resume, letters, added context, job or company details, file names, or posting addresses.',
+                  when: 'Visitors to cover-me.dev, Hosted mode requests to our server, and subscribers whose plan change fails to save. Never the extension itself, and never BYOK requests to our server.',
+                  receives: 'From the website: error reports and page-load timing, with the error, page URL, browser and operating system, a rough location (country and city) that Sentry works out from your IP address without storing the address, and your user ID if you are signed in. Form contents, cookies, and email addresses are removed before sending. From our server: an error report when a Hosted mode request fails, with the error, which part of the server failed, the time, and your account ID, and a report when a plan change from Stripe fails to save, with the Stripe event ID and no payment details. Server error reports never contain your resume, letters, added context, job or company details, file names, or posting addresses.',
                 },
                 {
                   name: 'PostHog',
                   url: 'https://posthog.com/privacy',
                   when: 'Visitors to the public pages of cover-me.dev (not the extension, and not signed-in pages), anyone who answers the uninstall survey, anyone who presses Request this site or Report bug in the extension, clicks where our server reads no job page, and Hosted accounts that have not opted out of usage counts',
-                  receives: 'A count of each page visit: the page address with only its campaign tags (such as utm_ parameters; ad click IDs are blanked first), the referring site, browser details (browser, operating system, device type, screen size, language) and time zone, plus a count of clicks on links to our Chrome Web Store page with the link\'s label. Requests go through cover-me.dev. Your IP address is used only to make a daily visitor hash and is not stored, nor is any location derived from it. No cookies or browser storage are used, and visits are not linked to your account. If you answer the uninstall survey: your answers, your comment, the extension version and, if you were signed in, your Cover Me account ID. For site requests and bug reports, in any mode, under a random ID: the site name, or for a bug report the page address, the part of the extension that tried to read it, the error and the extension version. For clicks where our server reads no job page, under a random ID: the site name of each page and the part of the extension that tried to read it. For Hosted accounts that have not opted out: usage counts with your Cover Me account ID, your plan and the features and options you used, never your resume, letters, added context, job or company details, file names or posting addresses.',
+                  receives: 'A count of each page visit: the page address with only its campaign tags (such as utm_ parameters; ad click IDs are blanked first), the referring site, browser details (browser, operating system, device type, screen size, language) and time zone, plus a count of clicks on links to our Chrome Web Store page with the link\'s label, a count of each ATS checker run with whether the AI check or the word match ran and the score, never the posting or resume, and a count of each press of a Send to computer button on a phone with which button it was, never who the link went to. Requests go through cover-me.dev. Your IP address is used only to make a daily visitor hash and is not stored, nor is any location derived from it. No cookies or browser storage are used, and visits are not linked to your account. If you answer the uninstall survey: your answers, your comment, the extension version and, if you were signed in, your Cover Me account ID. For site requests and bug reports, in any mode, under a random ID: the site name, or for a bug report the page address, the part of the extension that tried to read it, the error and the extension version. For clicks where our server reads no job page, under a random ID: the site name of each page and the part of the extension that tried to read it. For Hosted accounts that have not opted out: usage counts with your Cover Me account ID, your plan and the features and options you used, never your resume, letters, added context, job or company details, file names or posting addresses.',
                 },
               ].map((svc) => (
                 <div key={svc.name} className="bg-surface border border-border rounded-[10px] px-5 py-4">
@@ -718,9 +760,9 @@ export default function PrivacyPage() {
                       href={svc.url}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-[12px] text-brand-light hover:text-foreground transition-colors"
+                      className="inline-flex items-center gap-1 text-[12px] text-brand-light hover:text-foreground transition-colors"
                     >
-                      Privacy Policy ↗
+                      Privacy Policy <ArrowUpRightIcon size={11} className="-translate-y-px" aria-hidden="true" />
                     </a>
                   </div>
                   <p className="text-[12.5px] text-muted-foreground mb-1">
@@ -733,7 +775,6 @@ export default function PrivacyPage() {
               ))}
             </div>
 
-            {/* ── 7. Data Retention ───────────────────────────────────── */}
             <H2 id="retention">Data Retention</H2>
             <Ul>
               <Li><strong className="text-foreground">BYOK mode:</strong> Your resume, API key and history stay on your device, and we hold no copy of them. You can delete them at any time by removing the extension or clearing extension storage in Chrome settings. The only BYOK data on our side are the rate-limit counters and Supabase&apos;s request logs described above.</Li>
@@ -745,7 +786,6 @@ export default function PrivacyPage() {
               <Li><strong className="text-foreground">Stripe billing records:</strong> Deleting your account also deletes your Stripe customer record, which holds your email and saved card. Stripe retains transaction records as required by financial regulations, and we cannot delete those.</Li>
             </Ul>
 
-            {/* ── 8. Your Rights ──────────────────────────────────────── */}
             <H2 id="your-rights">Your Rights</H2>
             <P>
               Depending on your jurisdiction, you may have the following rights regarding your personal data:
@@ -765,7 +805,6 @@ export default function PrivacyPage() {
               </a>. We will respond within 30 days. We may need to verify your identity before processing a request.
             </P>
 
-            {/* ── 9. Limited Use Statement ────────────────────────────── */}
             <H2 id="limited-use">Limited Use Statement</H2>
             <P>
               Cover Me&apos;s use of information received from Chrome extension APIs, browser storage,
@@ -795,7 +834,6 @@ export default function PrivacyPage() {
               </p>
             </div>
 
-            {/* ── 10. Children's Privacy ──────────────────────────────── */}
             <H2 id="children">Children&apos;s Privacy</H2>
             <P>
               Cover Me is not directed at children under the age of 13. We do not knowingly collect
@@ -803,7 +841,6 @@ export default function PrivacyPage() {
               such information, please contact us immediately and we will delete it.
             </P>
 
-            {/* ── 11. Changes ─────────────────────────────────────────── */}
             <H2 id="changes">Changes to This Policy</H2>
             <P>
               We may update this Privacy Policy from time to time. When we do, we will update the
@@ -816,7 +853,6 @@ export default function PrivacyPage() {
               public GitHub repository commit history.
             </P>
 
-            {/* ── 12. Contact ─────────────────────────────────────────── */}
             <H2 id="contact">Contact</H2>
             <P>
               If you have any questions about this Privacy Policy, wish to exercise your data rights, or
@@ -833,7 +869,6 @@ export default function PrivacyPage() {
               </a>
             </div>
 
-            {/* Footer note */}
             <div className="mt-16 pt-8 border-t border-border">
               <p className="text-[12.5px] text-muted-foreground">
                 Cover Me is open-source software released under the MIT License.

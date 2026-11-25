@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
-import { buildLineCheckPrompt, candidateText, checkAndRewriteLines, groundSkills, groundTailored, buildsOnEdits, keepSeen, seenVersion, trustedNotes } from './resume-grounding'
+import { buildLineCheckPrompt, candidateText, checkAndRewriteLines, groundSkills, groundTailored, buildsOnEdits, keepSeen, matchSkillCase, mixedTenseLines, seenVersion, trustedNotes } from './resume-grounding'
 
-// Made-up posting and resume. The resume never says "web", "Ruby", "Rails" or "HIPAA".
+// Made-up posting and resume. The resume never says "web", "Ruby", "Rails" or "HIPAA". (#60)
 const posting = `Frontend Web Developer
 We build patient tools for Personal Health teams. You will ship Web features with React.
 Experience with Ruby on Rails and HIPAA is a plus.`
@@ -36,6 +36,24 @@ describe('groundTailored', () => {
 
   test('still removes a capitalized copy of the everyday word', () => {
     expect(ground('Senior Web Developer. Ships React interfaces.').resume.summary).toBe('Ships React interfaces.')
+  })
+
+  test("lets the summary use the posting's title, but not a level the resume lacks or a requirement named elsewhere (#218)", () => {
+    const resume = { ...original, experience: [{ title: 'Full Stack Developer', company: 'Pinecrest', bullets: ['Built a React app and a Node.js API.'] }] }
+    const jd = 'We are hiring a Senior Software Engineer. Software Engineers here hold a Hazmat endorsement.'
+    const run = (summary: string, title: string) => groundTailored({ ...resume, summary }, resume, candidateText(resume), jd, title).resume.summary
+    expect(run('Software Engineer building React apps and Node.js APIs.', 'Senior Software Engineer')).toBe('Software Engineer building React apps and Node.js APIs.')
+    expect(run('Senior Software Engineer building React apps.', 'Senior Software Engineer')).toBe('')
+    expect(run('Software Engineer building React apps. Holds a Hazmat endorsement.', 'Senior Software Engineer')).toBe('Software Engineer building React apps.')
+    // A scraped title's suffix (team, location) isn't part of the role's name. (#220)
+    expect(run('Software Engineer building React apps.', 'Senior Software Engineer, Payments (Remote)')).toBe('Software Engineer building React apps.')
+    expect(run('Software Engineer building React apps.', 'Software Engineer - EMEA')).toBe('Software Engineer building React apps.')
+    // A one-word title is a generic word, and the title only blanks whole words. (#220)
+    expect(run('Engineer building React apps.', 'Lead Engineer')).toBe('')
+    const eng = 'Hiring a Software Engineer. Platform Engineering owns Engineers.'
+    expect(groundTailored({ ...resume, summary: 'Builds React apps. Joins Platform Engineering.' }, resume, candidateText(resume), eng, 'Software Engineer').resume.summary).toBe('Builds React apps.')
+    // Without the title, the posting's words are checked as before. (#220)
+    expect(run('Software Engineer building React apps.', '')).toBe('')
   })
 
   test('still removes an all-caps copy of a plain-word requirement', () => {
@@ -103,7 +121,7 @@ describe('an edited previous version', () => {
     const twoRoles = { ...original, experience: [original.experience[0], intern] }
     const edited = { ...twoRoles, experience: [{ ...original.experience[0], bullets: [bullet] }, intern], editedAt: 'x' }
     // The check flags the given line; no rewrite comes back, so a flagged line
-    // reverts to its original. On Regenerate the originals are the seen version.
+    // reverts to its original. On Regenerate the originals are the seen version. (#175)
     const check = (out: typeof twoRoles, id: string, prev?: object, notes?: string) => {
       const replies = [JSON.stringify({ flags: [{ id, reason: 'adds Rails' }], summary: null }), '{}']
       return checkAndRewriteLines(out, seenVersion(twoRoles, prev), posting, async () => replies.shift()!, notes)
@@ -114,7 +132,7 @@ describe('an edited previous version', () => {
       const { resume, repair } = await check(out, 'e0b0', edited)
       expect(resume.experience[0].bullets).toEqual([bullet])
       expect(repair.flagged).toEqual([])
-      // Unedited, it is checked as before.
+      // Unedited, it is checked as before. (#175)
       expect((await check(out, 'e0b0', { ...edited, editedAt: undefined })).resume.experience[0].bullets).toEqual(original.experience[0].bullets)
     })
 
@@ -140,10 +158,14 @@ describe('an edited previous version', () => {
     expect('skills' in seen).toBe(false)
     expect(seenVersion(original, { ...previous, experience: [{ bullets: 'oops' }], hasEdits: true })).toBe(original)
     expect(seenVersion(original, { ...previous, certifications: 'CPR', hasEdits: true })).toBe(original)
-    // A different resume uploaded since: its roles no longer line up.
+    // A different resume uploaded since: its roles no longer line up. (#175)
     expect(seenVersion(original, { ...previous, experience: [...previous.experience, ...previous.experience], editedAt: 'x' })).toBe(original)
     expect(seenVersion(original, { ...previous, experience: [], editedAt: 'x' }).experience).toEqual([])
     expect(seenVersion(original, previous)).toBe(original)
+    // #197: the order the user set and the sections they deleted carry over.
+    const deletedSections = [{ key: 'skills', index: 2, skills: 'React' }]
+    const moved = seenVersion(original, { ...noSkills, sectionOrder: ['experience', 'summary'], deletedSections, editedAt: 'x' })
+    expect(moved).toMatchObject({ sectionOrder: ['experience', 'summary'], deletedSections })
   })
 
   describe('keepSeen', () => {
@@ -176,7 +198,7 @@ describe('an edited previous version', () => {
 })
 
 describe('checkAndRewriteLines summary', () => {
-  // The check flags only the summary; the rewrite reply is the given text.
+  // The check flags only the summary; the rewrite reply is the given text. (#63)
   const run = (summary: string, rewrite: string | null, input: { summary?: string } = original) => {
     const replies = [JSON.stringify({ flags: [], summary: 'claims leadership' }), JSON.stringify({ rewrites: rewrite === null ? [] : [{ id: 'summary', text: rewrite }] })]
     return checkAndRewriteLines({ ...original, summary }, { ...original, ...input }, posting, async () => replies.shift()!)
@@ -199,7 +221,7 @@ describe('checkAndRewriteLines summary', () => {
     expect(repair.summary).toBe('rewritten')
   })
 
-  // The model copies the reply example's id; a fixed "e0b2" there emptied every flagged summary.
+  // The model copies the reply example's id; a fixed "e0b2" there emptied every flagged summary. (#94)
   test('the rewrite prompt\'s reply example uses a flagged id', async () => {
     const prompts: string[] = []
     const replies = [JSON.stringify({ flags: [], summary: 'claims leadership' }), '{}']
@@ -208,14 +230,19 @@ describe('checkAndRewriteLines summary', () => {
     expect(prompts[1]).not.toContain('e0b2')
   })
 
-  // Without the notes the checker flagged context-backed lines ("uses GitHub Actions") as invented.
+  // Without the notes the checker flagged context-backed lines ("uses GitHub Actions") as invented. (#164)
   test('the check prompt carries the candidate\'s supplemental context', async () => {
     const prompts: string[] = []
     await checkAndRewriteLines({ ...original, summary: flagged }, original, posting, async (p) => (prompts.push(p), '{"flags": [], "summary": null}'), 'Cover Me uses GitHub Actions for CI/CD.')
     expect(prompts[0]).toContain('CANDIDATE NOTES')
     expect(prompts[0]).toContain('Cover Me uses GitHub Actions for CI/CD.')
-    // Blank notes leave the prompt exactly as it was before notes existed.
+    // Blank notes leave the prompt exactly as it was before notes existed. (#164)
     expect(buildLineCheckPrompt(original, original, '  ')).toBe(buildLineCheckPrompt(original, original))
+  })
+
+  test('the check prompt shows a project\'s tech line (#190)', () => {
+    const withProject = { ...original, projects: [{ name: 'tidewatch', tech: 'Go, SQLite', bullets: ['Built an uptime monitor'] }] }
+    expect(buildLineCheckPrompt(withProject, withProject)).toContain('tidewatch, built with Go, SQLite')
   })
 
   test('an unusable rewrite falls back to the candidate\'s own summary', async () => {
@@ -257,5 +284,224 @@ describe('groundSkills with sections outside the six', () => {
     const { skills, dropped } = await groundSkills([{ skill: 'qPCR' }, { skill: 'Single-cell RNA-seq' }], candidateText(parsed))
     expect(skills).toBe('qPCR, Single-cell RNA-seq')
     expect(dropped).toEqual([])
+  })
+})
+
+// Earlier roles came back with a stray present-tense bullet (#198). A current
+// role mixes on purpose: ongoing duties in present tense, finished results in
+// past ("Delivered the rollout early"). Pushing those into present tense cost
+// faithfulness and readability in the 2026-11-11 full eval.
+describe('mixed tense within a role', () => {
+  const current = { title: 'Program Lead', company: 'Foundry Labs', dates: 'Jan 2023 – Present', bullets: [
+    'Ran diagnostic workshops for 40 founders',
+    'Run a 12-week accelerator for early-stage teams',
+    'Organize demo days with 300 attendees',
+  ] }
+  const earlier = { title: 'Analyst', company: 'Northwind', dates: '2019 – 2022', bullets: [
+    'Built the weekly pipeline report',
+    'Manage the vendor list for 12 suppliers',
+    'Led onboarding for new hires',
+  ] }
+
+  test('flags the present-tense bullets of an earlier role and leaves the current role alone', () => {
+    const flags = mixedTenseLines({ experience: [current, earlier] })
+    expect([...flags.keys()]).toEqual(['e1b1'])
+    expect(flags.get('e1b1')).toContain('past tense')
+  })
+
+  test('flags every present-tense bullet of an earlier role, even when they are most of it', () => {
+    const role = { ...earlier, bullets: ['Manage the vendor list', 'Lead onboarding', 'Built the weekly report'] }
+    expect([...mixedTenseLines({ experience: [role] }).keys()]).toEqual(['e0b0', 'e0b1'])
+  })
+
+  test('leaves an earlier role written wholly in another tense alone', () => {
+    expect(mixedTenseLines({ experience: [{ ...earlier, bullets: ['Manage the vendor list', 'Lead onboarding'] }] }).size).toBe(0)
+  })
+
+  test('verbs spelled the same in both tenses count as neither', () => {
+    const role = { ...earlier, bullets: ['Grew riders from 150 to 1,100', 'Cut onboarding from 9 days to 3', 'Set up 2 new cities'] }
+    expect(mixedTenseLines({ experience: [role] }).size).toBe(0)
+  })
+
+  test('ignores "Tech:" lines, -ing openers, numbers and roles without dates', () => {
+    const odd = { ...earlier, bullets: ['Built the weekly report', 'Tech: SQL, Looker', 'Managing 12 suppliers', '40+ vendor audits a year'] }
+    const undated = { title: 'Volunteer', bullets: ['Built a food bank roster', 'Run the Saturday shift'] }
+    expect(mixedTenseLines({ experience: [odd, undated] }).size).toBe(0)
+  })
+
+  test.each(['Mar 2022 – Till date', 'Mar 2022 –', 'Since 2022', '2022 to date', 'Jan 2023 - Presently'])(
+    'a role dated "%s" may be current and is left alone', (dates) => {
+      expect(mixedTenseLines({ experience: [{ ...earlier, dates, bullets: ['Built the report', 'Manage 6 people'] }] }).size).toBe(0)
+    })
+
+  test('reads past tense after a prefix or a leading adverb, and irregular forms', () => {
+    const bullets = ['Built the report', 'Co-led the migration', 'Re-architected the ETL', 'Rewrote the billing service', 'Spun up a team', 'Saw a 30% lift', 'Caught 12 billing errors', 'Successfully migrated 40 clients', 'Manage the vendor list',
+      'Was promoted to shift lead', 'Had full P&L for 3 stores', 'Cross-trained 8 cashiers', 'Fine-tuned the forecast model', 'As shift lead, trained 8 cashiers', 'In 2021, launched the loyalty program']
+    expect([...mixedTenseLines({ experience: [{ ...earlier, bullets }] }).keys()]).toEqual(['e0b8'])
+  })
+
+  test('past forms spelled like the present, and rarer irregulars, are not flagged', () => {
+    const bullets = ['Built the report', 'Proofread 40 grant reports', 'Split the team into 2 pods', 'Withstood a 3x traffic spike', 'Outgrew the old CRM', 'Reran the payroll audit']
+    expect(mixedTenseLines({ experience: [{ ...earlier, bullets }] }).size).toBe(0)
+  })
+
+  test('a claim-flagged line whose source is present tense also gets the tense fix', async () => {
+    const prompts: string[] = []
+    const orig = { ...earlier, bullets: ['Built the weekly pipeline report', 'Manage a 6-person city operations team', 'Led onboarding for new hires'] }
+    const tailored = { experience: [{ ...orig, bullets: [orig.bullets[0], 'Managed a 6-person city operations team across 3 regions', orig.bullets[2]] }] }
+    const replies = [JSON.stringify({ flags: [{ id: 'e0b1', reason: 'adds 3 regions' }], summary: null }), '{}']
+    await checkAndRewriteLines(tailored, { experience: [orig] }, posting, async (p) => (prompts.push(p), replies.shift()!))
+    expect(prompts[1]).toMatch(/\[e0b1\][^\n]*adds 3 regions; also present tense in an earlier role/)
+  })
+
+  test('a tense-only line is sent as its own source, so the rewrite keeps its tailoring', async () => {
+    const prompts: string[] = []
+    const tailoredLine = 'Manage supplier onboarding for 12 vendors'
+    const replies = ['{"flags": [], "summary": null}', JSON.stringify({ rewrites: [{ id: 'e0b1', text: 'Managed supplier onboarding for 12 vendors' }] })]
+    const tailored = { experience: [{ ...earlier, bullets: [earlier.bullets[0], tailoredLine, earlier.bullets[2]] }] }
+    const { resume } = await checkAndRewriteLines(tailored, { experience: [earlier] }, posting, async (p) => (prompts.push(p), replies.shift()!))
+    expect(prompts[1]).toContain(`SOURCE LINE (the original this came from; use only its facts): ${tailoredLine}`)
+    expect(resume.experience[0].bullets[1]).toBe('Managed supplier onboarding for 12 vendors')
+  })
+
+  test('the line check rewrites flagged bullets even when the model flags nothing', async () => {
+    const prompts: string[] = []
+    const replies = ['{"flags": [], "summary": null}', JSON.stringify({ rewrites: [{ id: 'e0b1', text: 'Managed the vendor list for 12 suppliers' }] })]
+    const tailored = { experience: [earlier] }
+    const { resume, repair } = await checkAndRewriteLines(tailored, tailored, posting, async (p) => (prompts.push(p), replies.shift()!))
+    expect(prompts[1]).toContain('[e0b1]')
+    expect(resume.experience[0].bullets).toEqual([earlier.bullets[0], 'Managed the vendor list for 12 suppliers', earlier.bullets[2]])
+    expect(repair).toMatchObject({ rewritten: 1, reverted: 0 })
+  })
+
+  test('a tense fix that fails keeps the tailored line instead of reverting it', async () => {
+    const replies = ['{"flags": [], "summary": null}', '{}']
+    const tailored = { experience: [{ ...earlier, bullets: [earlier.bullets[0], 'Manage the vendor list for 12 suppliers in logistics', earlier.bullets[2]] }] }
+    const { resume, repair } = await checkAndRewriteLines(tailored, { experience: [earlier] }, posting, async () => replies.shift()!)
+    expect(resume.experience[0].bullets[1]).toBe('Manage the vendor list for 12 suppliers in logistics')
+    expect(repair.reverted).toBe(0)
+  })
+})
+
+// Added skills came back "Founder Coaching" beside "Unit economics" (#198).
+describe('matchSkillCase', () => {
+  const sources = 'Built dashboards in Power BI and wrote SQL. Experience with PowerPoint and GitHub.'
+
+  test('sentence case list: added skills drop their inner capitals', () => {
+    expect(matchSkillCase('Founder Coaching, Unit economics, Data Analysis (SQL), Power BI', 'Unit economics, Financial modeling', sources))
+      .toBe('Founder coaching, Unit economics, Data analysis (SQL), Power BI')
+  })
+
+  test('Title Case list: added skills are title cased, small words stay low', () => {
+    expect(matchSkillCase('founder coaching, Monitoring and evaluation, Financial Modeling', 'Financial Modeling, Unit Economics', sources))
+      .toBe('Founder Coaching, Monitoring and Evaluation, Financial Modeling')
+  })
+
+  test('lowercase list: added skills go lowercase, acronyms and product names stay', () => {
+    expect(matchSkillCase('Data Dictionaries, data quality, SQL, Power BI, PowerPoint, GitHub', 'data quality, stakeholder reporting', sources))
+      .toBe('data dictionaries, data quality, SQL, Power BI, PowerPoint, GitHub')
+  })
+
+  test('product names written that way in the resume or posting, and dotted names, keep their casing', () => {
+    const posting = 'Track campaigns in Google Analytics. Our stack is Node.js.'
+    expect(matchSkillCase('Google Analytics, Node.js, Web Analytics', 'Unit economics, Financial modeling', posting)).toBe('Google Analytics, Node.js, Web analytics')
+  })
+
+  test('multi-word names, lowercase names and names in parentheses keep the casing the posting uses', () => {
+    const posting = 'You will build models in dbt and Google Sheets.\nTools:\n- Tableau\n- Salesforce\nPower BI for power users.'
+    expect(matchSkillCase('Google Sheets formulas, Microsoft Power BI, dbt models', 'Unit economics, Financial modeling', posting))
+      .toBe('Google Sheets formulas, Microsoft Power BI, dbt models')
+    expect(matchSkillCase('Data Visualization (Tableau), Salesforce Administration', 'data quality, stakeholder reporting', posting))
+      .toBe('data visualization (Tableau), Salesforce administration')
+    expect(matchSkillCase('Data modeling (dbt)', 'Financial Modeling, Unit Economics', posting)).toBe('Data Modeling (dbt)')
+  })
+
+  test('a resume list split by bars, bullets or lines still sets the style', () => {
+    for (const own of ['Excel | Financial modeling | Budgeting | Forecasting', 'Excel • Financial modeling • Budgeting', 'Excel\nFinancial modeling\nBudgeting'])
+      expect(matchSkillCase('Variance Analysis, Budget Forecasting', own, sources)).toBe('Variance analysis, Budget forecasting')
+  })
+
+  test('a name in the resume\'s own list keeps its casing where the posting uses it as a plain word', () => {
+    const posting = 'Built weekly reports in Excel.\nAdvanced Excel skills. You will excel on a team that lives in Slack and Teams, and teams across the office.'
+    expect(matchSkillCase('Advanced Excel, Microsoft Excel, Slack and Teams administration', 'Excel, SQL, Teams, Unit economics, Financial modeling', posting))
+      .toBe('Advanced Excel, Microsoft Excel, Slack and Teams administration')
+  })
+
+  test('accented words are recased as whole words', () => {
+    expect(matchSkillCase('Évaluation De Programmes', 'Unit economics, Financial modeling', sources)).toBe('Évaluation de programmes')
+    expect(matchSkillCase('équipe management', 'Financial Modeling, Unit Economics', sources)).toBe('Équipe Management')
+  })
+
+  test('the resume\'s own items keep their casing, and a list with no style signal is left alone', () => {
+    expect(matchSkillCase('Unit Economics, Founder Coaching', 'Unit Economics, financial modeling, SQL', sources)).toBe('Unit Economics, Founder Coaching')
+    expect(matchSkillCase('Founder Coaching', undefined, sources)).toBe('Founder Coaching')
+    expect(matchSkillCase(undefined, 'Unit economics', sources)).toBeUndefined()
+  })
+})
+
+describe('candidateText and the section order', () => {
+  test('the section keys are not resume evidence, so "Customer Experience" needs the resume to say it', () => {
+    const resume = { name: 'Pat Lee', experience: [{ title: 'Agent', company: 'Acme', bullets: ['Resolved customer tickets in Zendesk'] }], skills: 'Zendesk', sectionOrder: ['summary', 'experience', 'education', 'skills'] }
+    const text = candidateText(resume)
+    expect(text).not.toMatch(/experience|education/i)
+    expect(text).toContain('Zendesk')
+  })
+
+  test("nor is a deleted section's key, though its text counts (#197)", () => {
+    const resume = { name: 'Pat Lee', experience: [], deletedSections: [{ key: 'experience', index: 1, experience: [{ title: 'Agent', company: 'Acme', bullets: ['Resolved tickets in Zendesk'] }] }] }
+    const text = candidateText(resume)
+    expect(text).not.toMatch(/experience/i)
+    expect(text).toContain('Zendesk')
+  })
+})
+
+// The made-up resume in web/public/guides/tailor-resume-in-word, as text (#285).
+// It has "product launches" and a "Marketing Lead" title, but no product marketing.
+const alexRivera = `Alex Rivera
+Marketing Lead
+Marketing lead with seven years in B2B demand generation. Plans campaigns across email, social and search, manages budgets over $1M, and reports results in Google Analytics.
+Led campaign strategy across email and social, growing qualified leads 38% in one year
+Managed a $1.2M paid media budget across four channels and cut cost per lead 22%
+Grew organic traffic 64% with an SEO plan for the blog and product pages
+Wrote and scheduled a weekly newsletter for 40,000 subscribers with a 41% open rate
+Built the monthly reporting dashboard in Google Analytics for the sales team
+Coordinated three product launches with design, sales and customer success
+Campaign strategy, SEO, Google Analytics, A/B testing, Paid media, Budget management, Copywriting, Team leadership`
+
+describe('groundSkills with a skill whose words are scattered through the resume (#285)', () => {
+  test('goes to the model check, which can drop it', async () => {
+    const prompts: string[] = []
+    const reject = async (p: string) => { prompts.push(p); return '{"verdicts": []}' }
+    const { skills, dropped } = await groundSkills([{ skill: 'Product marketing' }, { skill: 'Google Analytics' }], alexRivera, reject)
+    expect(skills).toBe('Google Analytics')
+    expect(dropped).toEqual([expect.stringMatching(/^Product marketing \(evidence ".+" doesn't show it\)$/)])
+    expect(prompts).toHaveLength(1)
+    expect(prompts[0]).toContain('0. EVIDENCE: "Grew organic traffic 64% with an SEO plan for the blog and product pages; Marketing Lead" → SKILL: "Product marketing"')
+    expect(prompts[0]).not.toContain('SKILL: "Google Analytics"')
+  })
+
+  test('cited evidence the resume lacks is replaced by the resume lines, not trusted', async () => {
+    const prompts: string[] = []
+    const reject = async (p: string) => { prompts.push(p); return '{"verdicts": []}' }
+    const { skills } = await groundSkills([{ skill: 'Product marketing', evidence: 'Owned product marketing for launches' }], alexRivera, reject)
+    expect(skills).toBeUndefined()
+    expect(prompts[0]).not.toContain('Owned product marketing')
+    expect(prompts[0]).toContain('product pages; Marketing Lead')
+  })
+
+  test('a reordered name is checked against the resume line that holds its words, and kept when approved', async () => {
+    const prompts: string[] = []
+    const approve = async (p: string) => { prompts.push(p); return '{"verdicts": [{"i": 0, "ok": true}]}' }
+    const { skills, dropped } = await groundSkills([{ skill: 'Strategy (campaign)' }], 'Led campaign strategy across email and social', approve)
+    expect(skills).toBe('Strategy (campaign)')
+    expect(dropped).toEqual([])
+    expect(prompts[0]).toContain('0. EVIDENCE: "Led campaign strategy across email and social" → SKILL: "Strategy (campaign)"')
+  })
+
+  test('the evidence is the line that holds every word, when one does', async () => {
+    const prompts: string[] = []
+    const approve = async (p: string) => { prompts.push(p); return '{"verdicts": [{"i": 0, "ok": true}]}' }
+    await groundSkills([{ skill: 'Analytics (Google)' }], 'Data Analyst\nGoogle\nBuilt product analytics in Mixpanel\nSQL, Google Analytics', approve)
+    expect(prompts[0]).toContain('0. EVIDENCE: "SQL, Google Analytics" → SKILL: "Analytics (Google)"')
   })
 })

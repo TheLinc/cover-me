@@ -9,7 +9,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { parseHTML } from 'linkedom'
-import { afterAll, beforeAll, describe, expect, test } from 'vitest'
+import { afterAll, beforeAll, describe, expect, onTestFinished, test, vi } from 'vitest'
 import { FIXTURE_CASES, fixtureUrl } from './fixtures/cases.ts'
 import { scrapeHtml } from './page.ts'
 
@@ -27,7 +27,164 @@ describe('scrapers on saved postings', () => {
   })
 })
 
+describe('company and title when the page doesn\'t name them (#200)', () => {
+  // An Ashby posting reached from the board's own listing has no JSON-LD (it's
+  // rendered in the first page load only), so the selectors read it, and the
+  // company comes from the tab title "<job> @ OpenAI".
+  test('Ashby posting without JSON-LD', () => {
+    const html = readFileSync(join(__dirname, 'fixtures', 'ashby.html'), 'utf8')
+      .replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>/g, '')
+    expect(scrape(fixtureUrl(html), html)).toMatchObject({ title: 'AI Systems Engineer, Codex Agents', company: 'OpenAI' })
+  })
+
+  const description = `<p>${"Audit the finance team's controls and report to the board each quarter. ".repeat(10)}</p>`
+  const posting = (h1: string, tab: string, url = 'https://careers.northwind.com/jobs/79') =>
+    scrape(url, `<!doctype html><html><head><title>${tab}</title></head><body><main><h1>${h1}</h1><div><h2>Senior Auditor</h2>${description}</div></main></body></html>`)
+
+  // Headings seen as saved titles in production
+  test.each(['Key Responsibilities', 'Job Description', 'job details', 'CAREERS', 'Careers at Northwind.', 'NORTHWIND CAREER PORTAL', 'About the role'])(
+    'an <h1> of "%s" is a heading, not the title', (h1) => {
+      expect(posting(h1, 'Senior Auditor | Northwind')).toMatchObject({ title: 'Senior Auditor', company: 'Northwind' })
+    })
+
+  test('an <h1> naming the employer is not the title', () => {
+    expect(posting('Northwind', 'Senior Auditor | Northwind').title).toBe('Senior Auditor')
+  })
+
+  test('the company is the tab title part the URL names, wherever it sits', () => {
+    expect(posting('Senior Auditor', 'Northwind - Senior Auditor')).toMatchObject({ title: 'Senior Auditor', company: 'Northwind' })
+    expect(posting('Key Responsibilities', 'Northwind - Senior Auditor').title).toBe('Senior Auditor')
+    // A job slug in the path doesn't make the title the company
+    expect(posting('Senior Auditor', 'Senior Auditor - Northwind', 'https://careers.example.com/jobs/senior-auditor').company).toBe('Unknown Company')
+  })
+
+  // A wrong name is worse than none: a part the URL doesn't name may be a
+  // place or a requisition number, and a job board names itself
+  test.each([
+    ['a place', 'Senior Auditor', 'Senior Auditor - Remote', 'https://careers.example.com/jobs/79'],
+    ['a requisition number', 'Senior Auditor', 'Senior Auditor - R0012345', 'https://careers.example.com/jobs/79'],
+    ['a job board', 'Senior Auditor', 'Senior Auditor - Northwind | SEEK', 'https://www.seek.com.au/job/79'],
+    ['a job board', 'Senior Auditor', 'Senior Auditor at Northwind | Y Combinator', 'https://www.ycombinator.com/companies/northwind/jobs/79'],
+    // Path segments other than the first are places and job slugs
+    ['a place the path names', 'Senior Auditor', 'Senior Auditor - Atlanta', 'https://careers.example.com/job/atlanta/senior-auditor/79'],
+    ['a job the path names', 'Auditor', 'Auditor | Northwind', 'https://careers.example.com/jobs/auditor'],
+    ['a job the only path segment names', 'Auditor', 'Auditor | Northwind', 'https://careers.example.com/auditor'],
+    ['a locale the path names', 'Auditor', 'Auditor - US | Northwind', 'https://careers.example.com/us/en/job/79'],
+  ])('a tab title with %s keeps Unknown Company', (_, h1, tab, url) => {
+    expect(posting(h1, tab, url)).toMatchObject({ title: h1, company: 'Unknown Company' })
+  })
+
+  test('the hostname wins over the path', () => {
+    expect(posting('Auditor', 'Auditor - US | Northwind', 'https://careers.northwind.com/us/en/job/79'))
+      .toMatchObject({ title: 'Auditor', company: 'Northwind' })
+  })
+
+  // An embedded Greenhouse form's URL is /embed/job_app?for=anthropic: the
+  // company is only in the tab title's own wording
+  test('Greenhouse embed', () => {
+    const html = readFileSync(join(__dirname, 'fixtures', 'greenhouse.html'), 'utf8')
+    expect(scrape('https://job-boards.greenhouse.io/embed/job_app', html).company).toBe('Anthropic')
+  })
+
+  // "Job Application for ... at (.+)$" retries at every " at "
+  test('a Greenhouse-style tab title of 40,000 " at " stays cheap', () => {
+    const start = performance.now()
+    scrape('https://careers.example.com/jobs/79', `<!doctype html><html><head><title>Job Application for x${' at '.repeat(40_000)}\n</title></head>
+      <body><h1 class="title">Senior Auditor</h1><div id="content">${description}</div></body></html>`)
+    expect(performance.now() - start).toBeLessThan(2000)
+  })
+
+  // Every element marked with the URL's job ID was measured, each walking its
+  // subtree, once per repeat of the ID in the URL (8 s before). Spans cost the
+  // rest of the heuristic nothing, so this shows they're no longer measured;
+  // nested divs cost master's own block pass more than the per-ID cap saves.
+  test('elements marked with the URL\'s job ID, nested 250 deep, stay cheap', () => {
+    const chain = '<span data-id="1234567">'.repeat(250) + 'x' + '</span>'.repeat(250)
+    const start = performance.now()
+    expect(() => scrape('https://careers.example.com/1234567/1234567/1234567', `<!doctype html><html><body>${chain.repeat(230)}</body></html>`)).toThrow()
+    expect(performance.now() - start).toBeLessThan(2000)
+  })
+
+  // The tab title is read once per scrape, not once per JSON-LD posting
+  test('many JSON-LD postings without a company and a long tab title stay cheap', () => {
+    const nodes = JSON.stringify(Array.from({ length: 2000 }, () => ({ '@type': 'JobPosting', title: 'x', description: 'y' })))
+    const start = performance.now()
+    expect(() => scrape('https://careers.example.com/jobs/79',
+      `<!doctype html><html><head><title>${'a '.repeat(500_000)}</title><script type="application/ld+json">${nodes}</script></head><body></body></html>`)).toThrow()
+    expect(performance.now() - start).toBeLessThan(2000)
+  })
+
+  // Taleo: the job is in the tab title even when the company isn't
+  test('a heading <h1> takes the job from a tab title that names no company', () => {
+    expect(posting('Job Description', 'Job Description - Senior Auditor (2600000S)', 'https://northwind.taleo.net/careersection/ex1/jobdetail.ftl'))
+      .toMatchObject({ title: 'Senior Auditor (2600000S)', company: 'Unknown Company' })
+  })
+
+  test('a short header that opens with the title doesn\'t replace the description beside it', () => {
+    const header = `<p>${'Atlanta, GA. Full time. Apply by Friday. '.repeat(15)}</p>`
+    const job = scrape('https://careers.example.com/jobs/79', `<!doctype html><html><body><main><div><h1>Senior Auditor</h1>${header}</div>
+      <section>${description.repeat(4)}</section></main></body></html>`)
+    expect(job.description).toMatch(/^Audit the finance team/)
+  })
+
+  // The page is a posting: the heading beats failing, and the user can fix it
+  test('a section heading stays the title when the tab title has no job', () => {
+    expect(posting('Job Details', 'Job Details | Northwind').title).toBe('Job Details')
+  })
+
+  // A logo in the <h1>: no heading was rejected, so the tab title isn't read
+  // as a job (on master the top frame failed, and a posting in a frame won)
+  test('an <h1> holding only a logo doesn\'t fall back to the tab title', () => {
+    expect(() => posting('<a href="/"><img alt="Northwind"></a>', 'Open Positions | Northwind', 'https://www.northwind.com/careers'))
+      .toThrow('Could not find job details')
+  })
+
+  test('a block that opens with the title doesn\'t cut off the requirements after it', () => {
+    const requirements = `<p>${'Five years of external audit experience and a CPA. '.repeat(11)}</p>`
+    const job = scrape('https://careers.example.com/jobs/79', `<!doctype html><html><body><div class="job"><div>Careers / Finance</div>
+      <div><h1>Senior Auditor</h1>${description}</div><div><h2>Requirements</h2>${requirements}</div></div></body></html>`)
+    expect(job.description).toMatch(/^Careers \/ Finance[\s\S]*Five years of external audit experience and a CPA\.$/)
+  })
+
+  // Company first or job first can't be told apart when the URL names neither
+  test('a two-part tab title the URL doesn\'t name gives no job', () => {
+    expect(posting('Key Responsibilities', 'Wiz - Director of Finance', 'https://employer.example.io/position/2600/79').title)
+      .toBe('Key Responsibilities')
+  })
+
+  test('a long hero <h1> doesn\'t stop a section heading from being the title', () => {
+    expect(posting(`${'We are hiring people who love numbers, '.repeat(4)}</h1><h1>Overview`, 'Overview').title).toBe('Overview')
+  })
+
+  // A career page around an embedded posting: the top frame fails so the
+  // posting's frame wins. The part left after "Careers" is the site's name,
+  // and a later <h1> (a hidden privacy dialog's) isn't the title either.
+  test.each([
+    ['CAREERS', 'Careers | Hourglass', 'https://www.hourglasscosmetics.com/pages/careers?gh_jid=8930465002'],
+    ['CAREERS</h1><h1>Do Not Sell/Share My Personal Information', 'Careers | Hourglass', 'https://www.hourglasscosmetics.com/pages/careers?gh_jid=8930465002'],
+    ['Careers at Northwind.', 'Careers | Northwind', 'https://www.northwind.com/careers?ashby_jid=0fe4817e'],
+  ])('a site heading over an embedded posting is no job: %s', (h1, tab, url) => {
+    expect(() => posting(h1, tab, url)).toThrow('Could not find job details')
+  })
+
+  // Without an embed the posting is on the page: the heading beats failing, as
+  // on master ("MSC CAREER PORTAL", a tab title with no company)
+  test('a site heading stays the title of a posting on the page', () => {
+    expect(posting('NORTHWIND CAREER PORTAL', 'CN - Accounts Receivable Specialist job in Mississauga',
+      'https://northwind-jobs.example.com/job-details/cn-accounts-receivable-specialist-1761413').title).toBe('NORTHWIND CAREER PORTAL')
+  })
+
+  // The tab title is split by patterns that backtrack on whitespace runs
+  test('a tab title of 100,000 spaces stays cheap', () => {
+    const start = performance.now()
+    posting('Senior Auditor', `a${' '.repeat(100_000)}- ${' '.repeat(100_000)}jobs`)
+    expect(performance.now() - start).toBeLessThan(2000)
+  })
+})
+
 describe('generic heuristic', () => {
+  const description = 'Lead a team of twelve on the night shift and keep the loading dock on schedule. '.repeat(8).trim()
+
   // Greenhouse's public board listing: an <h1> of "Open Roles" over a list of
   // job links, once read as a job called "Open Roles" (#64).
   test('reads a listing page as no job, not a job', () => {
@@ -40,6 +197,206 @@ describe('generic heuristic', () => {
     expect(() => scrape(fixtureUrl(intro), intro)).toThrow('Could not find job details')
   })
 
+  // Listings whose job cards carry plain text (a location, a summary) beside
+  // the link, under an intro that isn't links: once read as a job (#72).
+  // fly.io's cards each end with a "Read more" link over the card; a
+  // Greenhouse board with an intro wraps each row in one link.
+  test.each(['flyio-jobs', 'greenhouse-board-intro'])('reads a card listing as no job: %s', (name) => {
+    const html = readFileSync(join(__dirname, 'fixtures', `${name}.html`), 'utf8')
+    expect(() => scrape(fixtureUrl(html), html)).toThrow('Could not find job details')
+  })
+
+  // Cards of a related-jobs panel each carry plain text, so link share alone
+  // doesn't keep them out
+  const relatedJobs = (n: number) => Array.from({ length: n }, (_, i) => `<li class="job"><a href="/jobs/${i}">Forklift Operator ${i}</a>
+    <p>Location: AUS, NSW, Sydney</p><p>Posted ${i + 2} days ago. Move pallets and load trucks on the night shift.</p></li>`).join('')
+  const related = relatedJobs(10)
+  test('reads a posting without the related jobs listed beside it', () => {
+    const job = scrape('https://careers.example.com/jobs/1', `<html><body><main><div><h1>Warehouse Supervisor</h1>
+      <div><p>${description}</p></div><div><h2>Related jobs</h2><ul>${related}</ul></div></div></main></body></html>`)
+    expect(job.description).toContain(description)
+    expect(job.description).not.toMatch(/Forklift|Sydney/)
+    // The posting's paragraphs beside the panel, in one block
+    const long = `${description} ${description}`
+    const together = scrape('https://careers.example.com/jobs/1', `<html><body><main><div><h1>Warehouse Supervisor</h1>
+      <p>${long}</p><div><h2>Related jobs</h2><ul>${related}</ul></div></div></main></body></html>`)
+    expect(together.description).toContain(long)
+    expect(together.description).not.toMatch(/Forklift|Sydney/)
+    // ...or the panel a block of its own, larger than the posting beside it
+    for (const tag of ['div', 'section']) {
+      const siblings = scrape('https://careers.example.com/jobs/1', `<html><body><main><h1>Warehouse Supervisor</h1>
+        <div><p>${description}</p></div><${tag}><h2>Related jobs</h2><ul>${related}</ul></${tag}></main></body></html>`)
+      expect(siblings.description).toBe(description)
+    }
+  })
+
+  // Chrome reads a list that isn't rendered as its source text, which the
+  // block around it leaves out
+  test('a hidden list is not a listing', () => {
+    const menu = `<ul>${Array.from({ length: 40 }, (_, i) => `<li><a href="/p/${i}">Product ${i}</a>
+        <span>New</span></li>`).join('')}</ul>`
+    for (const hidden of ['hidden', 'style="display: none"']) {
+      const job = scrape('https://careers.example.com/jobs/1', `<html><body><header><nav ${hidden}>${menu}</nav></header>
+        <main><h1>Job Description</h1><div><p>${description}</p><div ${hidden}><ul>${related}</ul></div></div></main></body></html>`)
+      expect(job.description).toBe(description)
+    }
+    // ...but a posting whose full text is hidden behind "Read more" is read
+    const job = scrape('https://careers.example.com/jobs/1', `<html><body><main><h1>Warehouse Supervisor</h1><div>
+      <div class="preview"><p>${description.slice(0, 150)}</p></div><div class="full" hidden><p>${description}</p></div></div></main></body></html>`)
+    expect(job.description).toBe(description)
+    // ...even inside a wrapper with a footer
+    const footer = `<footer><div>${'Acme Logistics, 1 Dock Road. Privacy. Terms. Accessibility. '.repeat(8)}</div></footer>`
+    const wrapped = scrape('https://careers.example.com/jobs/1', `<html><body><div id="app"><main><h1>Warehouse Supervisor</h1><div>
+      <div class="preview"><p>${description.slice(0, 150)}</p></div><div class="full" hidden><p>${description} ${description}</p></div></div></main>
+      ${footer}</div></body></html>`)
+    expect(wrapped.description).toBe(`${description} ${description}`)
+    // ...and one whose sections each end in a "Learn more" link, which look like
+    // cards: under a job's title, the largest hidden block is the last resort
+    const sections = ['The role', 'About us', 'Benefits'].map((h, i) => `<div class="sec"><h2>${h}</h2>
+      <p>${description.slice(i * 200, i * 200 + 300)}</p><a href="/more/${i}">Learn more</a></div>`).join('')
+    for (const full of [sections, `<div class="wrap">${sections}</div><p>Apply now.</p>`]) {
+      const learnMore = scrape('https://careers.example.com/jobs/1', `<html><body><main><h1>Warehouse Supervisor</h1><div>
+        <div class="preview"><p>${description.slice(0, 150)}</p></div><div class="full" hidden>${full}</div></div></main></body></html>`)
+      expect(learnMore.description).toContain(description.slice(400, 700))
+    }
+    // ...while a listing's hidden mobile copy of its cards isn't
+    const cards = `<ul>${relatedJobs(8)}</ul>`
+    expect(() => scrape('https://careers.example.com/careers', `<html><body><main><h1>Join Our Team</h1>
+      <div class="intro"><p>${description.slice(0, 300)}</p></div><div class="desktop">${cards}</div>
+      <div class="mobile" hidden>${cards}</div></main></body></html>`)).toThrow('Could not find job details')
+  })
+
+  // Chrome's innerText of a hidden element is its textContent, source
+  // indentation included (linkedom's collapses it): fly.io's hidden mobile menu
+  // measured 2,081 characters for 316 of text, and beat its job cards
+  test('a hidden menu\'s indentation doesn\'t make it the largest block', () => {
+    // Chrome for the elements hidden by their style; markup rules elsewhere
+    const asChrome = (html: string) => {
+      const dom = parseHTML(html)
+      for (const el of dom.document.querySelectorAll('[style*="none"]')) {
+        Object.defineProperties(el, { innerText: { get: () => el.textContent }, checkVisibility: { value: () => false } })
+      }
+      return dom
+    }
+    vi.stubGlobal('getComputedStyle', () => ({ display: 'none' }))
+    onTestFinished(() => { vi.unstubAllGlobals() })
+    const menu = Array.from({ length: 30 }, (_, i) => `
+                <a href="/p/${i}">Product ${i}</a>
+              `).join('')
+    expect(() => scrapeHtml(asChrome, 'https://careers.example.com/careers', `<html><body><header><div class="menu" style="display: none">${menu}</div></header>
+      <main><h1>Join Our Team</h1><div class="intro"><p>${description.slice(0, 300)}</p></div><div>${`<ul>${relatedJobs(8)}</ul>`}</div></main></body></html>`))
+      .toThrow('Could not find job details')
+    // ...while a posting under "Read more", indented in its source, is still read
+    const job = scrapeHtml(asChrome, 'https://careers.example.com/jobs/1', `<html><body><main><h1>Warehouse Supervisor</h1><div>
+      <div class="preview"><p>${description.slice(0, 150)}</p></div>
+      <div class="full" style="display: none">
+              <p>${description}</p>
+      </div></div></main></body></html>`)
+    expect(job.description).toBe(description)
+  })
+
+  // The posting has a job's title, so cards larger than it don't make the page
+  // a listing
+  test('reads a short posting beside a larger related-jobs sidebar', () => {
+    const job = scrape('https://careers.example.com/jobs/1', `<html><body><main><h1>Warehouse Supervisor</h1>
+      <div><p>${description}</p></div><aside><h2>Related jobs</h2><ul>${related}</ul></aside></main></body></html>`)
+    expect(job).toMatchObject({ title: 'Warehouse Supervisor', description })
+    // ...nor when the tab title names the job in place of the heading
+    const relatedMore = relatedJobs(40)
+    const tabbed = scrape('https://careers.acme.com/jobs/1', `<html><head><title>Warehouse Supervisor | Acme</title></head><body><main>
+      <h1>Job Description</h1><div><p>${description}</p></div><aside><ul>${relatedMore}</ul></aside></main></body></html>`)
+    expect(tabbed).toMatchObject({ title: 'Warehouse Supervisor', description })
+    // ...nor a posting sharing its parent with a few cards
+    const cards = Array.from({ length: 3 }, (_, i) => `<div class="card"><a href="/jobs/${i}">Forklift Operator ${i}</a><span>Sydney</span></div>`).join('')
+    const grid = scrape('https://careers.example.com/jobs/1', `<html><body><main><h1>Warehouse Supervisor</h1>
+      <div class="grid"><div class="posting"><p>${description}</p></div>${cards}</div></main></body></html>`)
+    expect(grid.description).toContain(description)
+    // ...nor a wrapper around the posting and a panel three times its size
+    const wrapped = scrape('https://careers.example.com/jobs/1', `<html><body><div id="app"><h1>Warehouse Supervisor</h1>
+      <div class="posting"><p>${description}</p></div><div class="sidebar"><ul>${relatedMore}</ul></div></div></body></html>`)
+    expect(wrapped.description).toBe(`Warehouse Supervisor\n\n${description}`)
+    const short = description.slice(0, 300).trim()
+    const shortJob = scrape('https://careers.example.com/jobs/1', `<html><body><main><div class="wrap"><h1>Warehouse Supervisor</h1>
+      <div class="posting"><p>${short}</p></div><div class="sidebar"><ul>${relatedMore}</ul></div></div></main></body></html>`)
+    expect(shortJob.description).toBe(`Warehouse Supervisor\n\n${short}`)
+    // ...nor when the wrapper holds the posting's paragraphs, or sections one
+    // of which is a long one about the company
+    const paragraphs = scrape('https://careers.example.com/jobs/1', `<html><body><div id="app"><h1>Warehouse Supervisor</h1>
+      <p>${description}</p><p>${description}</p><div class="sidebar"><ul>${relatedMore}</ul></div></div>
+      <div class="cookie">${'We use cookies to improve your experience. '.repeat(14)}</div></body></html>`)
+    expect(paragraphs.description).toBe(`Warehouse Supervisor\n\n${description}\n\n${description}`)
+    const sec = `<div class="sec"><p>${description.slice(0, 400)}</p></div>`
+    const sections = scrape('https://careers.example.com/jobs/1', `<html><body><div id="app"><h1>Warehouse Supervisor</h1>
+      ${sec}${sec}<div class="about"><h2>About Acme</h2><p>${description}</p></div><div class="sidebar"><ul>${relatedMore}</ul></div></div></body></html>`)
+    expect(sections.description).toMatch(/^Warehouse Supervisor\n\nLead a team[^]*About Acme/)
+    expect(sections.description).not.toMatch(/Forklift|Sydney/)
+  })
+
+  // The server's snapshot drops each link's query and fragment, so cards can
+  // share one href
+  test('reads a card listing as no job when its cards share one link', () => {
+    const html = readFileSync(join(__dirname, 'fixtures', 'flyio-jobs.html'), 'utf8').replace(/href="\/jobs\/[^"]+"/g, 'href="/jobs/"')
+    expect(() => scrape(fixtureUrl(html), html)).toThrow('Could not find job details')
+  })
+
+  // A posting's own lists and sections aren't job cards
+  test('keeps a requirements list that links some of its tools', () => {
+    const items = ['<a href="https://react.dev">React</a> and TypeScript in production', '<a href="https://go.dev">Go</a> services',
+      '<a href="https://postgresql.org">Postgres</a> at scale', 'Mentoring junior engineers',
+      '<a href="https://kafka.apache.org">Kafka</a> or another event log', 'On call one week in six']
+    const job = scrape('https://careers.example.com/jobs/1', `<html><body><main><h1>Backend Engineer</h1>
+      <div><p>${description}</p><ul>${items.map((i) => `<li>${i}</li>`).join('')}</ul></div></main></body></html>`)
+    expect(job.description).toContain('Kafka or another event log\nOn call one week in six')
+    // ...nor one whose bullets set a word in bold beside the link
+    const bold = items.map((i) => `<li>${i.replace(/(\w+)$/, '<b>$1</b>')}</li>`).join('')
+    const formatted = scrape('https://careers.example.com/jobs/1', `<html><body><main><h1>Backend Engineer</h1>
+      <div><p>${description}</p><ul>${bold}</ul></div></main></body></html>`)
+    expect(formatted.description).toContain('Kafka or another event log\nOn call one week in six')
+  })
+
+  test('reads a posting laid out in sections of one class', () => {
+    // One section holding most of the page
+    const job = scrape('https://careers.example.com/jobs/1', `<html><body>
+      <div class="row"><a href="/">Home</a></div>
+      <div class="row"><h1>Warehouse Supervisor</h1><p>${description}</p><a href="/apply">Apply</a></div>
+      <div class="row"><a href="/privacy">Privacy</a></div></body></html>`)
+    expect(job).toMatchObject({ title: 'Warehouse Supervisor', description: `Warehouse Supervisor\n\n${description}\n\nApply` })
+    // Sections of about one size, each with a link
+    const section = (heading: string, href: string) => `<div class="section"><h2>${heading}</h2><p>${description.slice(0, 300)} <a href="${href}">More</a></p><ul><li>${heading}</li></ul></div>`
+    const sections = scrape('https://careers.example.com/jobs/1', `<html><body><main><h1>Warehouse Supervisor</h1><div>
+      ${section('About us', '/about')}<div class="section"><h2>The role</h2><p>${description.slice(0, 300)}</p></div>
+      ${section('Benefits', '/benefits')}${section('Equal opportunity', '/eeo')}</div></main></body></html>`)
+    expect(sections.description).toContain('Equal opportunity')
+    // ...or from a bullet
+    const bullets = (heading: string, href: string) => `<div class="section"><h2>${heading}</h2><ul><li>${description.slice(0, 300)} <a href="${href}">More</a></li></ul></div>`
+    const bulleted = scrape('https://careers.example.com/jobs/1', `<html><body><main><h1>Warehouse Supervisor</h1><div>
+      ${bullets('About us', '/about')}${bullets('The role', '/role')}${bullets('Benefits', '/benefits')}${bullets('Equal opportunity', '/eeo')}</div></main></body></html>`)
+    expect(bulleted.description).toContain('Equal opportunity')
+    // ...or from text in a div or span, as some editors write paragraphs
+    for (const tag of ['div', 'span']) {
+      const prose = (heading: string, href: string) => `<div class="sec"><h3>${heading}</h3><${tag}>${description.slice(0, 300)} <a href="${href}">More</a></${tag}></div>`
+      const job = scrape('https://careers.example.com/jobs/1', `<html><body><main><h1>Warehouse Supervisor</h1><div>
+        ${prose('About us', '/about')}${prose('The role', 'mailto:jobs@example.com')}${prose('Benefits', '/benefits')}</div></main></body></html>`)
+      expect(job.description).toContain('Benefits')
+    }
+    // ...or from a call to action after the text, or between spans of it
+    const cta = (heading: string, href: string) => `<div class="sec"><h2>${heading}</h2><p>${description.slice(0, 200)}</p><a href="${href}">Learn more</a></div>`
+    const spans = (heading: string, href: string) => `<div class="sec"><h3>${heading}</h3><div><span>${description.slice(0, 250)} </span><a href="${href}">link</a><span> more.</span></div></div>`
+    // with a cookie banner beside it, or inside a wrapper with it
+    const cookie = `<div class="cookie">${'We use cookies to improve your experience. '.repeat(14)}</div>`
+    for (const section of [cta, spans]) {
+      const posting = `<main><h1>Warehouse Supervisor</h1><div class="posting"><div class="sec"><h2>The role</h2><p>${description}</p></div>
+        ${section('About us', '/about')}${section('Benefits', '/benefits')}${section('Life at Acme', '/life')}</div></main>`
+      const meta = posting.replace('</h1>', '</h1><p>Full time · Sydney</p>')
+      // what isn't shown between the title and the posting doesn't count
+      const unshown = posting.replace('</h1>', '</h1><style>.x{color:red}</style><div hidden>Share this job</div><button><svg><title>Share</title></svg></button>')
+      for (const body of [posting, `${posting}${cookie}`, `<div id="app">${posting}${cookie}</div>`, `${meta}${cookie}`, `<div id="app">${unshown}${cookie}</div>`]) {
+        const job = scrape('https://careers.example.com/jobs/1', `<html><body>${body}</body></html>`)
+        expect(job.description).toMatch(/^(Warehouse Supervisor\n\n)?The role[^]*Life at Acme/)
+      }
+    }
+  })
+
   // Each link read once per block, not once per link it's nested in (34 s
   // before, 1 s now)
   test('70 nested links in 100 nested blocks stay cheap', () => {
@@ -49,8 +406,18 @@ describe('generic heuristic', () => {
     expect(performance.now() - start).toBeLessThan(5000)
   })
 
+  // Each level three cards beside a child holding the next level: card lists
+  // measure each level's text (1 s, as master's block search takes)
+  test('120 nested card lists over 2 MB stay cheap', () => {
+    const card = (i: number, c: string) => `<div><a href="/${c}${i}">${c}${i}</a><b>x</b></div>`
+    const main = Array.from({ length: 120 }, (_, i) => `<div>${card(i, 'a')}${card(i, 'b')}${card(i, 'c')}<div>`).join('')
+      + 'x'.repeat(2_000_000) + '</div></div>'.repeat(120)
+    const start = performance.now()
+    expect(() => scrape('https://careers.example.com/jobs/1', `<!doctype html><html><body><h1>Clerk</h1><main>${main}</main></body></html>`)).toThrow()
+    expect(performance.now() - start).toBeLessThan(5000)
+  })
+
   test('reads a plain posting, not the larger list of similar jobs beside it', () => {
-    const description = 'Lead a team of twelve on the night shift and keep the loading dock on schedule. '.repeat(8).trim()
     const similar = Array.from({ length: 40 }, (_, i) => `<li><a href="/jobs/${i}">Forklift Operator, Night Shift - Toronto</a></li>`).join('')
     const job = scrape('https://careers.example.com/jobs/1', `<html><body><main><h1>Warehouse Supervisor</h1>
       <div><div><p>${description}</p></div><div><h2>Similar jobs</h2><ul>${similar}</ul></div></div></main></body></html>`)

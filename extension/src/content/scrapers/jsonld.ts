@@ -1,4 +1,5 @@
 import type { JobData } from './types.ts'
+import { fromTabTitle } from './tabtitle.ts'
 
 // schema.org JobPosting from the page's JSON-LD (microdata further down). Most boards (Lever, Ashby,
 // Workable, BambooHR, LinkedIn's signed-out page) embed one, and it names the
@@ -16,9 +17,12 @@ export function jobFromJsonLd(): JobData | null {
       if (!types.includes('JobPosting')) continue
       const title = htmlToText(String(node.title ?? node.name ?? ''))
       const org = node.hiringOrganization as { name?: unknown } | string | undefined
-      const company = htmlToText(String((typeof org === 'object' ? org?.name : org) ?? '')) || 'Unknown Company'
+      const company = htmlToText(String((typeof org === 'object' ? org?.name : org) ?? ''))
       const description = htmlToText(String(node.description ?? ''))
-      if (title && description.length > 100) return { title, company, description, url: window.location.href }
+      // The tab title is read once, for the posting returned, not per node
+      if (title && description.length > 100) {
+        return { title, company: company || fromTabTitle().company, description, url: window.location.href }
+      }
     }
   }
   return null
@@ -37,7 +41,7 @@ export function jobFromMicrodata(): JobData | null {
     (el?.getAttribute('content') ?? (el as HTMLElement | null)?.innerText ?? '').trim()
   const title = value(posting.querySelector('[itemprop="title"]'))
   const org = posting.querySelector('[itemprop="hiringOrganization"]')
-  const company = value(org?.querySelector('[itemprop="name"]')) || value(org) || 'Unknown Company'
+  const company = value(org?.querySelector('[itemprop="name"]')) || value(org) || fromTabTitle().company
   // Outermost sections only: some boards nest responsibilities inside description.
   // Checked by walking each section's ancestors (elements x depth, which the
   // scrape function caps), not by comparing every pair of sections.

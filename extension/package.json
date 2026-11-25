@@ -1,6 +1,6 @@
 {
   "name": "cover-me-extension",
-  "version": "1.7.0",
+  "version": "1.10.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -12,9 +12,11 @@
     "eval": "tsx --env-file-if-exists=.env --env-file-if-exists=eval/.env eval/run.ts",
     "check:prompts": "node ../scripts/check-prompt-sync.mjs",
     "test": "vitest run",
+    "lint": "eslint . && node ../scripts/check-comments.mjs",
     "test:scrapers-live": "vitest run --mode smoke src/content/scrapers",
     "fixtures:save": "tsx scripts/scraper-fixtures.ts",
-    "e2e:scrape": "tsx scripts/e2e-scrape.ts"
+    "e2e:scrape": "tsx scripts/e2e-scrape.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "docx": "^9.15.2",
@@ -33,10 +35,13 @@
     "@types/react-dom": "^18.3.1",
     "@types/webextension-polyfill": "^0.10.7",
     "@vitejs/plugin-react": "^4.3.4",
+    "eslint": "10.14.0",
+    "htmlparser2": "10.1.0",
     "linkedom": "0.18.13",
     "playwright": "^1.64.0",
     "tsx": "^4.22.5",
     "typescript": "^5.7.2",
+    "typescript-eslint": "8.72.0",
     "vite": "^5.4.11",
     "vitest": "3.2.7"
   },

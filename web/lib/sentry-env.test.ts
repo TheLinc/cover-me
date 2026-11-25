@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dropSurveyAccountId, sentryEnvironment } from './sentry-env'
+import { dropSurveyAccountId, scrubServerEvent, sentryEnvironment } from './sentry-env'
 
 describe('sentryEnvironment', () => {
   it("uses Vercel's deployment kind, so previews never mix with production", () => {
@@ -27,5 +27,26 @@ describe('dropSurveyAccountId', () => {
   it('leaves an event without it unchanged', () => {
     const event = { request: { url: 'https://www.cover-me.dev/?menu=1' } }
     expect(dropSurveyAccountId(event)).toBe(event)
+  })
+})
+
+describe('scrubServerEvent', () => {
+  const id = '3f2b8c1e-9d4a-4e6b-8f1a-2c7d5e9b0a13'
+  it('keeps only the url and the opaque user id, with the survey account id blanked', () => {
+    const event = {
+      request: {
+        url: `https://www.cover-me.dev/uninstalled?u=${id}`,
+        data: 'resume text',
+        cookies: { 'sb-auth': 'token' },
+        headers: { authorization: 'Bearer token' },
+      },
+      user: { id: 'user-1', email: 'someone@example.com', username: 'someone', ip_address: '203.0.113.7' },
+      contexts: { trace: { data: { 'url.full': `https://www.cover-me.dev/uninstalled?u=${id}` } } },
+    }
+    expect(scrubServerEvent(event)).toEqual({
+      request: { url: 'https://www.cover-me.dev/uninstalled?u=' },
+      user: { id: 'user-1' },
+      contexts: { trace: { data: { 'url.full': 'https://www.cover-me.dev/uninstalled?u=' } } },
+    })
   })
 })

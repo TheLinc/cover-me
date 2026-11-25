@@ -31,6 +31,14 @@ interface Spec {
   fieldNotes: string
   /** Category labels a human editor would add from specific resume evidence; see EvalCase. */
   expectedLabels?: string[][]
+  /** See EvalCase. */
+  summaryTitle?: string
+  /** See EvalCase. */
+  resumeFailTerms?: string[]
+  /** See EvalCase. */
+  mode?: 'trim' | 'compact'
+  /** See EvalCase. */
+  keepInBullets?: string[]
 }
 
 const role = (title: string, company: string, location: string, dates: string, bullets: string[]): ResumeExperience =>
@@ -92,6 +100,10 @@ const toCase = (s: Spec): EvalCase => ({
   mustKeepSkills: s.mustKeepSkills ?? [],
   fieldNotes: s.fieldNotes,
   expectedLabels: s.expectedLabels,
+  summaryTitle: s.summaryTitle,
+  resumeFailTerms: s.resumeFailTerms,
+  mode: s.mode,
+  keepInBullets: s.keepInBullets,
 })
 
 // ── Cases ────────────────────────────────────────────────────────────────────
@@ -406,6 +418,8 @@ Requirements: CPA required; 4+ years of accounting experience.`),
         edu('A-levels: Maths (B), Business (B), English (C)', 'Roundhay School', 'Leeds', '2017 – 2019'),
       ],
       skills: 'Xero, purchase ledger, credit control, bank reconciliation, VAT, Excel',
+      // Skills first, which the parse model put last (#165).
+      sectionOrder: ['summary', 'skills', 'experience', 'education'],
     },
     job: job('Accounts Payable Clerk', 'Meridian Logistics UK', `Meridian Logistics UK is hiring an Accounts Payable Clerk in Bradford.
 
@@ -622,6 +636,7 @@ Requirements: journeyman license, OSHA 30, 3+ years industrial experience.`),
 
 Requirements: ServSafe Manager certification, fine dining experience.`),
     failTerms: ['ServSafe Manager', 'food cost', 'menu costing'],
+    resumeFailTerms: ['Sous Chef'],
     warnTerms: ['fine dining', 'tasting menu'],
     mustKeepSkills: ['inventory'],
     fieldNotes: 'Kitchen: covers and volume, stations, menu scope, training, food safety; direct language. A line cook must not be inflated into running a kitchen; a Food Handler card is not a Manager certification.',
@@ -825,6 +840,8 @@ Requirements: CPhT; hospital experience preferred.`),
           ],
         },
       ],
+      // Rotations and volunteering sit after the certifications (#165).
+      sectionOrder: ['summary', 'experience', 'education', 'certifications', 'other', 'other'],
     },
     job: job('Registered Nurse, Medical-Surgical', 'Kettering Health', `Kettering Health is hiring new graduate RNs for its medical-surgical units.
 
@@ -990,6 +1007,8 @@ Requirements: Secret security clearance required; federal experience preferred.`
         heading: 'PUBLICATIONS',
         lines: ['Adeyemi S, Park J, Lowell R. "CRISPR screening identifies regulators of drug resistance in lung adenocarcinoma." Journal of Cell Biology. 2023;41(2):112-120.'],
       }],
+      // Publications last, after the six (#165).
+      sectionOrder: ['summary', 'experience', 'education', 'skills', 'other'],
     },
     job: job('Scientist I', 'Crestline Bio', `Crestline Bio develops cell therapies.
 
@@ -1002,6 +1021,44 @@ PhD or MS preferred.`),
     warnTerms: ['cell therapy', 'IND'],
     mustKeepSkills: ['CRISPR'],
     fieldNotes: 'Science: techniques, model systems, programs supported, publications. Exact methods matter; a B.S. must not be presented as graduate training. The publication must come through word for word under its own heading.',
+  },
+
+  {
+    // #218: "Software Engineer" is a broader name for full stack work, so the
+    // summary uses it, and it must survive the line check.
+    id: 'full-stack-to-software-engineer',
+    industry: 'Technology',
+    resume: {
+      name: 'Daniel Okafor', email: 'daniel.okafor.dev@email.com', phone: '(555) 410-2287', website: 'github.com/dokafor',
+      experience: [
+        role('Full Stack Developer', 'Pinecrest Payroll', 'Raleigh, NC', 'Jan 2022 – Present', [
+          'Built a timesheet approval flow in React and a Node.js REST API used by 1,200 client companies',
+          'Designed PostgreSQL schemas and migrations for the pay-run service',
+          'Cut API response times from 900ms to 250ms by adding query indexes and response caching',
+          'Wrote integration tests in Jest that run on every pull request',
+        ]),
+        role('Web Developer', 'Blue Heron Agency', 'Durham, NC', 'Jun 2019 – Dec 2021', [
+          'Developed client websites and admin dashboards in React and Express for 15 small businesses',
+          'Set up GitHub Actions deploys for 6 client projects',
+        ]),
+      ],
+      education: [edu('B.S. Information Technology', 'North Carolina State University', 'Raleigh, NC', '2015 – 2019')],
+      skills: 'JavaScript, TypeScript, React, Node.js, Express, PostgreSQL, REST APIs, Jest, Git, GitHub Actions',
+    },
+    job: job('Software Engineer', 'Meadowlark Insurance', `Meadowlark Insurance is hiring a Software Engineer to build our policy management platform.
+
+- Build features in React and TypeScript
+- Design and maintain REST APIs in Node.js
+- Write and tune PostgreSQL queries
+- Deploy services on AWS with Terraform
+
+Requirements: 3+ years building web applications, React, Node.js, SQL. AWS and Terraform experience preferred.`),
+    failTerms: ['AWS', 'Terraform'],
+    resumeFailTerms: ['Senior'],
+    warnTerms: ['insurance', 'policy'],
+    mustKeepSkills: ['React', 'Node.js', 'PostgreSQL'],
+    fieldNotes: 'Software engineering: concrete stack names, scale (users, latency, coverage), ownership and code review. "Software Engineer" is an honest name for full stack work; an added level or cloud stack is not.',
+    summaryTitle: 'Software Engineer',
   },
 
   // ── Early career and senior leadership ─────────────────────────────────────
@@ -1050,6 +1107,46 @@ PhD or MS preferred.`),
     warnTerms: ['retail'],
     mustKeepSkills: ['SQL', 'Python'],
     fieldNotes: 'Entry level: education, projects and internships carry the weight. Must not claim years of full-time analyst experience; a part-time barista job shows reliability but must not be inflated.',
+  },
+  {
+    // The earlier role has a present-tense bullet ("Manage") that must come back
+    // in past tense (#198); the current role mixes on purpose (ongoing "Run",
+    // finished "Ran"). The bullet that best answers the posting (rider
+    // activation) sits in the earlier role, and the skills list is in sentence case.
+    id: 'accelerator-lead-to-venture-builder',
+    industry: 'Business',
+    resume: {
+      name: 'Tomas Lindqvist', email: 'tomas.lindqvist@email.com', phone: '(555) 772-1904', website: 'linkedin.com/in/tomaslindqvist',
+      experience: [
+        role('Program Lead', 'Foundry North Accelerator', 'Minneapolis, MN', 'Feb 2023 – Present', [
+          'Ran diagnostic workshops with 40 early-stage founders on pricing and unit economics',
+          'Run a 12-week accelerator for 3 cohorts a year',
+          'Organize demo days for 300 investors and partners',
+          'Coach founders on financial models and fundraising decks',
+        ]),
+        role('Operations Manager', 'Pedalgo Delivery', 'Minneapolis, MN', 'Jun 2019 – Jan 2023', [
+          'Grew active rider supply from 150 to 1,100 by rebuilding the onboarding flow',
+          'Cut rider onboarding time from 9 days to 3',
+          'Manage a 6-person city operations team',
+          'Launched the service in 2 new cities',
+        ]),
+      ],
+      education: [edu('B.A. Economics', 'University of Minnesota', 'Minneapolis, MN', '2013 – 2017')],
+      skills: 'Unit economics, Financial modeling, Operations management, Excel, Workshop facilitation',
+    },
+    job: job('Venture Builder', 'Stackhouse Ventures', `Stackhouse Ventures builds new companies from scratch with corporate partners.
+
+As a Venture Builder you will:
+- Take new ventures from idea to first revenue
+- Design and run worker activation for our gig-labor ventures
+- Build financial models and unit economics for each venture
+- Coach founding teams through their first year
+
+Experience in venture capital or at a Big Four consultancy is a plus.`),
+    failTerms: ['venture capital', 'Big Four'],
+    warnTerms: ['gig'],
+    mustKeepSkills: ['Unit economics'],
+    fieldNotes: 'Venture building: hands-on operating results (supply growth, launches, unit economics) count more than titles. Accelerator work must not be recast as investing or venture capital; the rider growth numbers must stay exact.',
   },
   {
     id: 'vp-operations-to-coo',
@@ -1101,6 +1198,7 @@ PhD or MS preferred.`),
 
 M&A integration experience preferred.`),
     failTerms: ['SQF', 'FSMA', 'SAP', 'M&A'],
+    resumeFailTerms: ['Chief Operating Officer'],
     warnTerms: ['food', 'supply chain'],
     mustKeepSkills: ['P&L', 'lean'],
     expectedLabels: [['Quality Management', 'Quality Systems']],
@@ -1108,4 +1206,31 @@ M&A integration experience preferred.`),
   },
 ]
 
-export const INDUSTRY_CASES: EvalCase[] = SPECS.map(toCase)
+// #251: trim and compact modes cut project bullets. The new grad gets a long
+// robotics project the data posting never touches: trim must shorten it,
+// compact must hold it to 2 bullets, and neither may cut the only bullet
+// evidence of SQL, Python or pandas, or remove a project.
+const newGrad = SPECS.find((s) => s.id === 'new-grad-data-analyst')!
+const roverProject = {
+  name: 'Badger Rover Team',
+  bullets: [
+    'Designed the drivetrain gearbox for a competition Mars rover in SolidWorks',
+    'Machined aluminum chassis parts on a manual mill and lathe',
+    'Soldered and wired the motor controller harness for 6 wheel motors',
+    'Programmed motor control firmware in Arduino C++',
+    'Ran torque tests on 3 gearbox prototypes and picked the lightest design',
+    'Led a 4-person mechanical sub-team through 2 design reviews',
+    'Ordered parts within a $3,000 club budget',
+    'Placed 5th of 36 teams at the University Rover Challenge',
+  ],
+}
+const MODE_SPECS: Spec[] = (['trim', 'compact'] as const).map((mode) => ({
+  ...newGrad,
+  id: `new-grad-${mode}-long-project`,
+  mode,
+  resume: { ...newGrad.resume, projects: [...newGrad.resume.projects!, roverProject] },
+  keepInBullets: ['SQL', 'Python', 'pandas'],
+  fieldNotes: `${newGrad.fieldNotes} ${mode === 'trim' ? '"Remove irrelevant bullets" is on' : '"Compact to one page" is on'}: dropping bullets the posting doesn't need, especially from the robotics project, is the expected result, not a loss.`,
+}))
+
+export const INDUSTRY_CASES: EvalCase[] = [...SPECS, ...MODE_SPECS].map(toCase)

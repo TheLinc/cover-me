@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { accountUpdates, capWarning, groupLocalHistory, groupsFromApplications, ownPending, uploadMessage, uploadSummary, withLocalOnly } from './history'
+import { accountUpdates, capWarning, groupLocalHistory, groupsFromApplications, ownPending, answerJobs, recentJobs, uploadMessage, uploadSummary, withLocalOnly } from './history'
 
 const job = (url: string, company = 'Northwind', title = 'Engineer') => ({ title, company, url, description: '' })
 const resume = { name: 'Pat', phone: '', email: '', website: '', experience: [], education: [] }
@@ -186,5 +186,91 @@ describe('ownPending', () => {
     )
     expect(out.letters.map((e) => e.id)).toEqual(['mine'])
     expect(out.tailored.map((e) => e.id)).toEqual(['t1'])
+  })
+})
+
+describe('recentJobs', () => {
+  const posting = (url: string, title = 'Engineer') => ({ title, company: 'Northwind', url, description: `Posting for ${title}` })
+
+  test('lists saved jobs newest first, once each, from letters and resumes alike', () => {
+    const jobs = recentJobs(
+      [{ id: 'l1', job: posting('https://a', 'A'), letter: 'x', createdAt: '2026-10-01T00:00:00Z' }],
+      [
+        { id: 't1', job: posting('https://b', 'B'), resume, createdAt: '2026-10-03T00:00:00Z' },
+        { id: 't2', job: posting('https://a', 'A'), resume, createdAt: '2026-10-02T00:00:00Z' },
+      ],
+    )
+    expect(jobs.map((j) => j.title)).toEqual(['B', 'A'])
+    expect(jobs[0].description).toBe('Posting for B')
+  })
+
+  test("skips jobs with no posting text and other accounts' entries, and keeps at most the limit", () => {
+    const letters = Array.from({ length: 12 }, (_, i) => ({ id: `l${i}`, job: posting(`https://${i}`, `J${i}`), letter: 'x', createdAt: `2026-10-${String(10 + i)}T00:00:00Z` }))
+    const jobs = recentJobs([
+      ...letters,
+      { id: 'blank', job: job('https://blank'), letter: 'x', createdAt: '2026-11-01T00:00:00Z' },
+      { id: 'theirs', job: posting('https://theirs', 'Theirs'), letter: 'x', createdAt: '2026-11-02T00:00:00Z', account: 'other' },
+      { id: 'b', job: posting('https://b', 'Account B'), letter: 'x', createdAt: '2026-11-03T00:00:00Z', account: 'user-b' },
+      { id: 'pro', job: posting('https://pro', 'Saving to B'), letter: 'x', createdAt: '2026-11-04T00:00:00Z', saveTo: 'user-b' },
+      { id: 'mine', job: posting('https://mine', 'Mine'), letter: 'x', createdAt: '2026-11-05T00:00:00Z', account: 'user-a' },
+    ], [], 'user-a', 10)
+    expect(jobs).toHaveLength(10)
+    expect(jobs.map((j) => j.title).slice(0, 2)).toEqual(['Mine', 'J11'])
+    expect(jobs.map((j) => j.title)).not.toEqual(expect.arrayContaining(['Theirs']))
+    expect(jobs.map((j) => j.title).filter((t) => ['Theirs', 'Account B', 'Saving to B'].includes(t))).toEqual([])
+  })
+})
+
+describe('answerJobs', () => {
+  const posting = (url: string, title = 'Engineer', company = 'Northwind', description = `Posting for ${title}`) => ({ title, company, url, description })
+  const saved = [posting('https://jobs.lever.co/northwind/123', 'Backend Engineer'), posting('https://b', 'Designer')]
+
+  test("the page's job comes first, with saved jobs after it", () => {
+    const page = posting('https://other/9', 'Analyst')
+    const { jobs, jobSource } = answerJobs(page, saved)
+    expect(jobs.map((j) => j.title)).toEqual(['Analyst', 'Backend Engineer', 'Designer'])
+    expect(jobSource).toBe('page')
+  })
+
+  test('with no posting on the page, the latest saved job is used', () => {
+    expect(answerJobs(null, saved)).toEqual({ jobs: saved, jobSource: 'saved' })
+  })
+
+  // Lever and Ashby put the form on its own page, which the scrapers can read
+  // as a "posting" made of form text. The saved copy has the real posting.
+  test("an application page matching a saved job uses the saved job's posting", () => {
+    const form = posting('https://jobs.lever.co/northwind/123/apply', 'Backend Engineer', 'Northwind', 'Submit your application Resume/CV Full name')
+    const { jobs, jobSource } = answerJobs(form, saved)
+    expect(jobs[0].description).toBe('Posting for Backend Engineer')
+    expect(jobs).toHaveLength(2)
+    expect(jobSource).toBe('page')
+  })
+
+  // LinkedIn and Indeed tell jobs apart by the query alone.
+  test('jobs whose links differ only in the query are different jobs', () => {
+    const a = posting('https://www.linkedin.com/jobs/search/?currentJobId=111', 'Analyst A', 'Acme')
+    const b = posting('https://www.linkedin.com/jobs/search/?currentJobId=222', 'Analyst B', 'Globex')
+    expect(answerJobs(b, [a]).jobs.map((j) => j.title)).toEqual(['Analyst B', 'Analyst A'])
+  })
+
+  test('an application page with tracking in its query still finds its posting', () => {
+    const form = posting('https://jobs.lever.co/northwind/123/apply?lever-origin=applied', 'Backend Eng', 'Northwind', 'form text')
+    expect(answerJobs(form, saved).jobs[0].description).toBe('Posting for Backend Engineer')
+  })
+
+  test("two unknown companies' jobs with the same title aren't the same job", () => {
+    const savedUnknown = [posting('https://a.example/1', 'Software Engineer', 'Unknown Company')]
+    const page = posting('https://b.example/2', 'Software Engineer', 'Unknown Company', 'Another posting')
+    expect(answerJobs(page, savedUnknown).jobs[0].description).toBe('Another posting')
+  })
+
+  test("a posting page doesn't take another posting's place for sharing its title and company", () => {
+    const page = posting('https://careers.northwind.com/jobs/2', 'Designer', 'Northwind', 'The ED posting')
+    expect(answerJobs(page, saved).jobs.map((j) => j.description)).toEqual(['The ED posting', 'Posting for Backend Engineer', 'Posting for Designer'])
+  })
+
+  test('the same title and company count as the same job on an application page', () => {
+    const page = posting('https://careers.northwind.com/apply?id=1', 'designer', 'NORTHWIND', 'form text')
+    expect(answerJobs(page, saved).jobs[0]).toBe(saved[1])
   })
 })

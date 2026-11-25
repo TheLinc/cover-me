@@ -2,8 +2,9 @@ import JSZip from 'jszip'
 import { describe, expect, test } from 'vitest'
 import { designUsable, tailorDesign } from './docx-design'
 import type { TailoredResume } from './types'
+import { withOlderFields } from '../../../../backend/supabase/functions/_shared/resume-fields'
 
-// Made-up .docx fixtures: just enough of a Word package around a body.
+// Made-up .docx fixtures: just enough of a Word package around a body (#131).
 const W = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"'
 async function docx(body: string): Promise<Uint8Array> {
   const zip = new JSZip()
@@ -18,7 +19,6 @@ const heading = (text: string) => p(text, 'Heading1')
 async function bodyOf(bytes: Uint8Array): Promise<string> {
   return (await JSZip.loadAsync(bytes)).file('word/document.xml')!.async('string')
 }
-// The visible text of each paragraph, in order.
 async function paragraphs(bytes: Uint8Array): Promise<string[]> {
   const xml = await bodyOf(bytes)
   return [...xml.matchAll(/<w:p[ >][\s\S]*?<\/w:p>/g)].map((m) => [...m[0].matchAll(/<w:t[^>]*>([^<]*)<\/w:t>/g)].map((t) => t[1]).join(''))
@@ -94,6 +94,23 @@ describe('tailorDesign', () => {
 
     expect(check).toMatchObject({ matched: 2, total: 2, layoutWarning: 'columns' })
     expect(await paragraphs(bytes!)).toEqual(['Ada Example', 'Skills', 'Shipped a Go billing service', 'Mentored two engineers'])
+  })
+
+  test('a file checked against a parse from before the link fix (#238) still takes a resume tailored from the new parse', async () => {
+    const file = await docx(PLAIN + heading('Projects') + p('OpenShelf (github.com/ada/openshelf)', 'Normal') + p('Built a self-hosted reading list'))
+    const roles = [['Built the billing service in Go', 'Cut page load time from 3s to 1s', 'Mentored two junior engineers']]
+    const old = parsed(roles, { links: ['github.com/ada/openshelf'], website: 'github.com/ada/openshelf', projects: [{ name: 'OpenShelf', bullets: ['Built a self-hosted reading list'] }] })
+    const tailored = parsed([['Shipped a Go billing service', 'Reduced page load from 3s to 1s', 'Mentored two engineers']], {
+      projects: [{ name: 'OpenShelf (github.com/ada/openshelf)', bullets: ['Built a self-hosted reading list app'] }],
+    })
+
+    const { check, bytes } = await tailorDesign(file, old, tailored)
+
+    expect(check).toMatchObject({ matched: 4, total: 4 })
+    expect(await paragraphs(bytes!)).toEqual([
+      'Experience', 'Shipped a Go billing service', 'Reduced page load from 3s to 1s', 'Mentored two engineers',
+      'Projects', 'OpenShelf (github.com/ada/openshelf)', 'Built a self-hosted reading list app',
+    ])
   })
 
   test('bullets in text boxes are counted apart, and the file is left alone below 80%', async () => {
@@ -219,5 +236,18 @@ describe('tailorDesign', () => {
 
     expect(designUsable(check)).toBe(false)
     expect(bytes).toBeUndefined()
+  })
+
+  test("a store client's folded project matches in full and fills only its bullets, trimmed or not (#190)", async () => {
+    const file = await docx(PLAIN + heading('Projects') + p('tidewatch | Go, SQLite', 'Normal') + p('github.com/x/tw', 'Normal') + p('Built uptime monitor') + p('Added alerts'))
+    const bullets = [['Built the billing service in Go', 'Cut page load time from 3s to 1s', 'Mentored two junior engineers']]
+    const project = (b: string[]) => [{ name: 'tidewatch', tech: 'Go, SQLite', link: 'github.com/x/tw', bullets: b }]
+    const older = new Request('https://example.com')
+    const parse = withOlderFields(parsed(bullets, { projects: project(['Built uptime monitor', 'Added alerts']) }), older)
+    expect((await tailorDesign(file, parse)).check).toMatchObject({ matched: 5, total: 5 })
+    const full = await tailorDesign(file, parse, withOlderFields(parsed(bullets, { projects: project(['Shipped an uptime monitor', 'Added Slack alerts']) }), older))
+    expect((await paragraphs(full.bytes!)).slice(-4)).toEqual(['tidewatch | Go, SQLite', 'github.com/x/tw', 'Shipped an uptime monitor', 'Added Slack alerts'])
+    const trimmed = await tailorDesign(file, parse, withOlderFields(parsed(bullets, { projects: project(['Shipped an uptime monitor']) }), older))
+    expect((await paragraphs(trimmed.bytes!)).slice(-3)).toEqual(['tidewatch | Go, SQLite', 'github.com/x/tw', 'Shipped an uptime monitor'])
   })
 })

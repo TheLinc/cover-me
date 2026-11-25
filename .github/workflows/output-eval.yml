@@ -1,25 +1,12 @@
-# Live output eval: generates cover letters and tailored resumes for real test
-# cases and has a model judge them.
+# Generates letters, tailored resumes and answers for test cases and has a
+# model judge them. PRs run the quick set against extension/eval/baseline.json,
+# only for the sides the diff touches (scripts/eval-side.sh). A manual run does
+# every case by default, judged by Opus, against baseline-full.json. Usage: README.md.
 #
-#   Prompt PRs: the quick set (11 cases: one per field family plus two long
-#   postings), judged by Sonnet 5.5, gated on extension/eval/baseline.json.
-#   About 10 min. Not re-run on the merge to master: the PR already tested
-#   that content, and every run costs API credits.
-#   On demand (Actions > Output eval > Run workflow): every case, 2 runs per
-#   resume, judged by Opus 5.5, gated on extension/eval/baseline-full.json once
-#   that file exists. Run it at milestones, not per change.
-#   Weekly: paused during active development (2026-10-09). Turn the schedule
-#   below back on at launch, when catching model drift matters.
-#   Manual runs with "update_baseline" save the scores as an eval-baseline
-#   artifact to commit (the first full run needs this to create baseline-full).
-#
-# Billing: the ANTHROPIC_API_KEY secret, with --via api, so evals bill API
-# credits and never compete with the owner's Claude plan (until 2026-10-09 they
-# ran on a CLAUDE_CODE_OAUTH_TOKEN and hit the plan's session limit). Without
-# the secret (fork PRs never get secrets) the job skips with a warning.
-#
+# Not re-run on merge: the PR tested it, and every run spends the Claude plan.
+# Billing is CLAUDE_CODE_OAUTH_TOKEN only; without it (fork PRs) the job skips.
 # Not a required check: GitHub never reports a path-filtered workflow on
-# unrelated PRs, so a required one would leave those PRs waiting forever.
+# unrelated PRs, so a required one would leave them waiting forever.
 name: Output eval
 
 on:
@@ -29,15 +16,17 @@ on:
       - extension/eval/**
       - backend/supabase/functions/generate/**
       - backend/supabase/functions/tailor/**
+      - backend/supabase/functions/answer/**
+      - backend/supabase/functions/_shared/answer.ts
       - backend/supabase/functions/_shared/anthropic.ts
       - backend/supabase/functions/_shared/letter-lint.ts
       - backend/supabase/functions/_shared/resume-parse.ts
       - backend/supabase/functions/_shared/resume-grounding.ts
       - scripts/check-prompt-sync.mjs
-      # Not this file: a workflow-only edit can be checked with a manual run.
-  # Paused during active development; restore at launch.
+      # Not this file: check a workflow-only edit with a manual run.
+  # Paused during development; turn back on at launch to catch model drift.
   # schedule:
-  #   - cron: '0 9 * * 1' # Mondays 09:00 UTC: the full set, to catch model drift
+  #   - cron: '0 9 * * 1'
   workflow_dispatch:
     inputs:
       full:
@@ -48,10 +37,18 @@ on:
         description: Save this run's scores as the new baseline (download the eval-baseline artifact and commit it)
         type: boolean
         default: false
+      side:
+        description: Which outputs to evaluate (auto = from the diff against master)
+        type: choice
+        options: [auto, letters, tailor, answers, all]
+        default: auto
 
 concurrency:
   group: output-eval-${{ github.ref }}
   cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   live:
@@ -60,40 +57,65 @@ jobs:
     defaults:
       run:
         working-directory: extension
-    # The key is only in the eval step's env, so no other step (third-party
-    # actions, package install scripts) can read it.
+    # The token lives only in the eval step's env, out of reach of other steps.
     env:
+      HAS_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' }}
       FULL: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.full) }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+          fetch-depth: 0 # eval-side.sh diffs against the base branch
+      - name: Pick the eval sides (letters, tailor, answers, or all)
+        id: side
+        working-directory: .
+        run: |
+          if [ "$EVENT" = "workflow_dispatch" ] && [ "$INPUT_SIDE" != "auto" ]; then
+            SIDE="$INPUT_SIDE"
+          elif [ "$EVENT" = "pull_request" ]; then
+            SIDE=$(bash scripts/eval-side.sh "$PR_BASE")
+          elif [ "$EVENT" = "workflow_dispatch" ]; then
+            SIDE=$(bash scripts/eval-side.sh origin/master)
+          else
+            SIDE=all
+          fi
+          echo "Eval side: $SIDE"
+          echo "side=$SIDE" >> "$GITHUB_OUTPUT"
+        env:
+          EVENT: ${{ github.event_name }}
+          INPUT_SIDE: ${{ inputs.side }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
       - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
         with:
           version: 10
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: pnpm
           cache-dependency-path: extension/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
-      - name: Output eval (letters and tailored resumes)
+      - run: npm install -g @anthropic-ai/claude-code@2.1.331
+        if: env.HAS_TOKEN == 'true'
+      - name: Output eval (${{ steps.side.outputs.side }})
         run: |
-          if [ -z "$ANTHROPIC_API_KEY" ]; then
-            echo "::warning::No ANTHROPIC_API_KEY secret; skipping the live eval (fork PRs never get secrets)."
+          if [ -z "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
+            echo "::warning::No CLAUDE_CODE_OAUTH_TOKEN secret; skipping the live eval (fork PRs never get secrets)."
             exit 0
           fi
           EXTRA=""
           if [ "$UPDATE_BASELINE" = "true" ]; then EXTRA="--update-baseline"; fi
+          for s in $SIDE; do if [ "$s" != "all" ]; then EXTRA="$EXTRA --$s"; fi; done
           if [ "$FULL" = "true" ]; then
-            pnpm eval --live --judge --baseline --via api --runs 2 --judge-model claude-opus-5-5 $EXTRA
+            pnpm eval --live --judge --baseline --runs 2 --judge-model claude-opus-5-5 $EXTRA
           else
-            pnpm eval --live --quick --judge --baseline --via api $EXTRA
+            pnpm eval --live --quick --judge --baseline $EXTRA
           fi
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           UPDATE_BASELINE: ${{ github.event_name == 'workflow_dispatch' && inputs.update_baseline }}
-      # The workflow can't push to master, so a refreshed baseline comes out as
-      # an artifact: download it and commit it to extension/eval/.
-      - uses: actions/upload-artifact@v4
+          SIDE: ${{ steps.side.outputs.side }}
+      # The workflow can't push to master: commit this artifact to extension/eval/.
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always() && github.event_name == 'workflow_dispatch' && inputs.update_baseline
         with:
           name: eval-baseline
@@ -101,7 +123,7 @@ jobs:
             extension/eval/baseline.json
             extension/eval/baseline-full.json
           if-no-files-found: error
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
           name: output-eval-reports

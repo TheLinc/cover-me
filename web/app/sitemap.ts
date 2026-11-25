@@ -4,15 +4,14 @@ import { GUIDES } from '@/lib/guides'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 
-// Real content dates — bump the relevant entry when a page's content changes.
-// Never use new Date() here: stamping every page as modified on every deploy
-// teaches crawlers to ignore the lastmod signal entirely.
+// Real content dates, not new Date(): Google ignores lastmod once it stops matching real changes
+// (https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap#additional-notes-about-xml-sitemaps).
 const LAST_MODIFIED = {
   home: '2026-11-09',
-  about: '2026-10-29',
+  about: '2026-11-23',
   legal: '2026-11-11',
   support: '2026-10-29',
-  boards: '2026-10-29',
+  atsChecker: '2026-11-18',
 } as const
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -24,6 +23,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1,
     },
     {
+      url: `${BASE}/ats-checker`,
+      lastModified: LAST_MODIFIED.atsChecker,
+      changeFrequency: 'monthly',
+      priority: 0.9,
+    },
+    {
       url: `${BASE}/about`,
       lastModified: LAST_MODIFIED.about,
       changeFrequency: 'monthly',
@@ -31,7 +36,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     ...BOARDS.map((b) => ({
       url: `${BASE}/for/${b.slug}`,
-      lastModified: LAST_MODIFIED.boards,
+      lastModified: b.updated,
       changeFrequency: 'monthly' as const,
       priority: 0.8,
     })),

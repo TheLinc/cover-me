@@ -1,12 +1,11 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { getServerUser } from '@/lib/supabase-server'
 import { fetchApplications, queryFromParams } from '@/lib/applications'
 
 // The applications page's requests. The session's token stays on the server;
-// the function checks it, and the Pro tier for an application's documents.
+// the function checks it, and the Pro tier for an application's documents (#27).
 async function signedIn() {
-  const supabase = await createServerSupabaseClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { supabase, user } = await getServerUser()
   if (!user) return null
   const { data: { session } } = await supabase.auth.getSession()
   return session ? { token: session.access_token } : null
@@ -15,7 +14,7 @@ async function signedIn() {
 const notSignedIn = () => NextResponse.json({ error: 'Not signed in' }, { status: 401 })
 
 // One application's detail, a stage change and delete pass straight
-// through: the function's answer and status are the page's.
+// through: the function's answer and status are the page's (#99).
 async function forward(token: string, method: string, params: Record<string, string>, body?: unknown, signal?: AbortSignal) {
   const url = new URL(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/applications`)
   for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value)
@@ -25,7 +24,8 @@ async function forward(token: string, method: string, params: Record<string, str
       method,
       cache: 'no-store',
       signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
-      headers: { Authorization: `Bearer ${token}`, ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) },
+      // The website prints every resume field, so it asks for them (backend _shared/resume-fields.ts) (#190).
+      headers: { Authorization: `Bearer ${token}`, 'X-Resume-Fields': '2', ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) },
       body: body === undefined ? undefined : JSON.stringify(body),
     })
     const data = await res.json().catch(() => null)
@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
 
   const page = await fetchApplications(process.env.NEXT_PUBLIC_SUPABASE_URL!, s.token, queryFromParams(req.nextUrl.searchParams), req.signal)
   if (!page) {
-    // The page aborted it (a newer search): nobody reads this answer.
+    // The page aborted it (a newer search): nobody reads this answer (#22).
     if (req.signal.aborted) return new NextResponse(null, { status: 499 })
     return NextResponse.json({ error: 'Could not load applications' }, { status: 502 })
   }

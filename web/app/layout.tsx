@@ -9,7 +9,7 @@ const mono = Geist_Mono({ subsets: ['latin'], variable: '--font-mono', display: 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 
 const TITLE = 'Cover Me: AI Resume Tailor and Cover Letter Chrome Extension'
-const DESCRIPTION = "Tailor your resume and write a matching cover letter for the job posting you have open, with an ATS match score and the keywords you're missing. Free plan to start."
+const DESCRIPTION = 'Tailor your resume to the job description, write a matching cover letter and answer job application questions, with an ATS match score. Free plan to start.'
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE),
@@ -64,6 +64,8 @@ const jsonLdOrg = {
     'https://toolradar.com/tools/cover-me',
     'https://www.opensourcealternatives.to/item/cover-me',
     'https://www.libhunt.com/r/cover-me',
+    'https://www.saashub.com/cover-me-dev',
+    'https://www.rankmyai.com/tools/7d6bc99e-7a27-420c-bc04-03329ea46349/cover-me',
   ],
   founder: {
     '@type': 'Person',
@@ -82,16 +84,14 @@ const jsonLdWebSite = {
   '@type': 'WebSite',
   name: 'Cover Me',
   url: BASE,
-  description: 'Cover Me is an open-source Chrome extension that tailors your resume and writes a cover letter for the job posting you have open, on LinkedIn, Indeed, Greenhouse, Lever, Workday and Ashby.',
+  description: 'Cover Me is an open-source Chrome extension that tailors your resume, writes a cover letter and answers job application questions for the job posting you have open, on LinkedIn, Indeed, Greenhouse, Lever, Workday and Ashby.',
 }
 
-// SoftwareApplication, HowTo, and Speakable JSON-LD live in lib/structured-data.ts
-// and render on the homepage only — schema should describe the page it's on.
+// Homepage-only JSON-LD lives in lib/structured-data.ts: markup must describe the page it's on, https://developers.google.com/search/docs/appearance/structured-data/sd-policies
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    // suppressHydrationWarning covers only this element's own attributes: browser
-    // extensions add some to <html> before React hydrates.
+    // Browser extensions add attributes to <html> before React hydrates (#32)
     <html lang="en" className={`${sans.variable} ${mono.variable}`} suppressHydrationWarning>
       <head>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdOrg) }} />

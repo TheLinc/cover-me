@@ -1,9 +1,9 @@
-// Landing FAQ copy. The same items feed the FAQPage JSON-LD.
+import { PLAN_LIMITS as L } from "@/lib/limits";
 
 export const FAQ_ITEMS = [
   {
     q: "Is Cover Me free to use?",
-    a: "Yes. With your own Claude or OpenAI API key, Cover Me is free and unlimited, and you pay the provider for what you use. No account is needed. The hosted free plan gives you 10 AI generations to start, then 5 a week, with cover letters and resume tailoring counted together. Pro is $15 a month or $35 every 3 months for up to 25 generations a day, with every letter and tailored resume saved to your account, on any device. Free and Pro accounts both track every job they generate for on a board on the dashboard; the free plan saves the job's title, company and link there, not the documents. On the free plan and with your own key, the extension keeps your last 50 letters and 20 tailored resumes in your browser.",
+    a: `Yes. With your own Claude or OpenAI API key, Cover Me is free and unlimited, and you pay the provider for what you use. No account is needed. The hosted free plan gives you ${L.free_starter} AI generations to start, then ${L.free_weekly} a week, with cover letters and resume tailoring counted together. Pro is $15 a month or $35 every 3 months for up to ${L.pro_daily} generations a day, with every letter and tailored resume saved to your account, on any device. Answers to application questions are counted apart and never use up letters or resumes: ${L.answer_starter} to start, then ${L.answer_weekly} a week on the free plan, and up to ${L.answer_pro_daily} a day on Pro. Free and Pro accounts both track every job they generate for on a board on the dashboard; the free plan saves the job's title, company and link there, not the documents. On the free plan and with your own key, the extension keeps your last 50 letters and 20 tailored resumes in your browser.`,
   },
   {
     q: "Can Cover Me tailor my resume too?",
@@ -23,7 +23,7 @@ export const FAQ_ITEMS = [
   },
   {
     q: "Is my resume data private?",
-    a: "Yes. With your own API key, your resume and key never reach Cover Me's servers. Your resume goes only to the AI provider whose key you use. Since version 1.3.0, once you agree, Cover Me receives the job page you click on, so the posting can be read, and keeps no copy of it. If it can't read any page from a click, it counts each site's name and which part of the extension tried to read it, under a random ID. Request this site sends only the site's name. Report bug sends the page's address, which part of the extension tried to read it, the error and the extension version. Each sends only when you press it. On hosted plans, your resume is encrypted with AES-256-GCM before it's stored, and sent to Anthropic only to read it and write your documents. Our server also counts which features hosted accounts use. The counts never include your resume, letters or job details, and you can opt out by email. With your own key there are no usage counts, so nothing records which features you use. The extension has no ads, analytics or telemetry, and your resume is never used to train AI models.",
+    a: "Yes. With your own API key, your resume and key never reach Cover Me's servers. Your resume goes only to the AI provider whose key you use. Since version 1.3.0, once you agree, Cover Me receives the job page you click on, so the posting can be read, and keeps no copy of it. If it can't read any page from a click, it counts each site's name and which part of the extension tried to read it, under a random ID. Request this site sends only the site's name. Report bug sends the page's address, which part of the extension tried to read it, the error and the extension version. Each sends only when you press it. Writing an answer to an application question sends the question and the job posting, and asking for a change also sends the answer in the box and the change you want. On hosted plans these pass through our server to Anthropic, and our server stores none of them. On hosted plans, your resume is encrypted before it's stored, and sent to Anthropic only to read it and write your documents. Our server also counts which features hosted accounts use. The counts never include your resume, letters or job details, and you can opt out by email. With your own key there are no usage counts, so nothing records which features you use. The extension has no ads, analytics or telemetry, and Cover Me never uses your resume to train AI models.",
   },
   {
     q: "Should I upload my resume as a PDF or a Word file?",
@@ -31,7 +31,7 @@ export const FAQ_ITEMS = [
   },
   {
     q: "Should I give Cover Me a long master resume?",
-    a: "Yes, if you have one. Cover Me only uses what's in your resume and removes any skill or claim your resume doesn't support, so more material gives it more to choose from. Put every role, project and skill in one file, then turn on \"Remove irrelevant bullets\" and it keeps the bullets that fit each job. It reads the first 12,000 characters, about 2,400 words.",
+    a: "Yes, if you have one. Cover Me only uses what's in your resume and removes any skill or claim your resume doesn't support, so more material gives it more to choose from. Put every role, project and skill in one file, then turn on \"Remove irrelevant bullets\" and it keeps the bullets that fit each job. It reads the first 20,000 characters, about 4,000 words.",
   },
   {
     q: "Do I need an account to use Cover Me?",

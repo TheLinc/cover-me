@@ -4,10 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "node --env-file-if-exists=.env.localdb node_modules/next/dist/bin/next dev -p 3100",
-    "build": "next build",
+    "build": "next build --turbopack",
     "start": "next start",
     "test": "vitest run",
-    "check": "node ../scripts/sync-pdf.mjs --check && node scripts/check-brand.mjs"
+    "lint": "eslint . && node ../scripts/check-comments.mjs",
+    "check": "node ../scripts/sync-pdf.mjs --check && node scripts/check-brand.mjs",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -35,15 +37,19 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
     "docx": "^9.15.2",
+    "import-in-the-middle": "^3.0.0",
     "jspdf": "^4.2.1",
     "jszip": "^3.10.1",
     "lucide-react": "^1.56.0",
+    "mammoth": "^1.13.0",
     "next": "^15.1.0",
+    "pdfjs-dist": "^4.10.38",
     "postcss": "^8.5.15",
     "posthog-js": "^1.438.12",
     "react": "^19.0.0",
     "react-day-picker": "^10.0.2",
     "react-dom": "^19.0.0",
+    "require-in-the-middle": "^8.0.0",
     "sonner": "^2.0.8",
     "stripe": "^17.4.0",
     "tailwind-merge": "^3.6.0",
@@ -54,7 +60,9 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "eslint": "10.14.0",
     "typescript": "^5",
+    "typescript-eslint": "8.72.0",
     "vitest": "5.0.1"
   }
 }

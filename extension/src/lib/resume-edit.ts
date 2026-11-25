@@ -1,32 +1,59 @@
+import { mentions, titleWithoutLevel } from './ai/resume-grounding'
 import { contactParts } from './pdf/contact'
 import { orderedSections, type PlacedSection, type StandardSection } from './pdf/sections'
+import type { DeletedSection, SectionKey } from './pdf/types'
 import type { TailoredHistoryEntry, TailoredResume } from '../types'
 import { getTailoredHistory } from './storage'
 
-// Every piece of text the PDF prints, as one string.
+// Every piece of text the PDF prints, as one string (#118).
 function resumeText(r: TailoredResume): string {
   return [
-    r.name, ...contactParts(r), r.summary, r.skills,
+    r.name, r.headline, ...contactParts(r), r.summary, r.skills,
     ...(r.experience ?? []).flatMap((e) => [e.title, e.company, e.location, e.dates, ...(e.bullets ?? [])]),
-    ...(r.projects ?? []).flatMap((p) => [p.name, ...(p.bullets ?? [])]),
+    ...(r.projects ?? []).flatMap((p) => [p.name, p.tech, p.link, ...(p.bullets ?? [])]),
     ...(r.education ?? []).flatMap((e) => [e.institution, e.degree, e.location, e.dates, ...(e.bullets ?? [])]),
     ...(r.certifications ?? []),
-    ...(r.otherSections ?? []).flatMap((s) => [s.heading, ...(s.lines ?? [])]),
+    ...(r.otherSections ?? []).flatMap((s) => [s.heading, ...(s.lines ?? []),
+      ...(s.entries ?? []).flatMap((e) => [e.name, e.subtitle, e.link, e.dates, ...(e.bullets ?? [])])]),
   ].filter(Boolean).join('\n').toLowerCase()
 }
 
-const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-
 // The ATS gaps an edit hasn't filled: a gap goes once its keyword appears in
-// the resume as a word of its own, in any case. No re-score: that's a model call.
+// the resume as a word of its own, in any case. No re-score: that's a model call (#118).
 export function remainingGaps(gaps: string[] | undefined, resume: TailoredResume): string[] {
   const text = resumeText(resume)
-  return (gaps ?? []).filter((g) => !new RegExp(`(^|[^a-z0-9])${escape(g.toLowerCase())}($|[^a-z0-9])`).test(text))
+  return (gaps ?? []).filter((g) => !mentions(text, g))
+}
+
+export type PostingTitle = { title: string; shorter: boolean }
+
+export function postingTitleInSummary(resume: TailoredResume, jobTitle: string): PostingTitle | undefined {
+  const title = titleWithoutLevel(jobTitle)
+  const summary = resume.summary ?? ''
+  const unclaimed = (t: string) => !resume.experience.some((e) => mentions(e.title, t))
+  if (!title || !resume.experience.length || !unclaimed(title)) return undefined
+  if (mentions(summary, title)) return { title, shorter: false }
+  // Shorter forms count only at the opening: further in, "in Test" from "Software Engineer in Test" is everyday prose (#253).
+  const opening = summary.trim().replace(/^an?\s+/i, '')
+  const opensWith = (t: string) => opening.toLowerCase().startsWith(t.toLowerCase()) && !/[a-z0-9]/i.test(opening[t.length] ?? '')
+  const form = shorterForms(title).find((t) => opensWith(t) && unclaimed(t))
+  return form ? { title: form, shorter: true } : undefined
+}
+
+// 2^(n-1) forms, so a long scraped title with no separator gets none (#253).
+function shorterForms(title: string): string[] {
+  const words = title.split(' ')
+  const last = words.pop()
+  if (words.length > 6) return []
+  const subsets = words.reduce<string[][]>((sets, w) => [...sets, ...sets.map((s) => [...s, w])], [[]])
+  return subsets
+    .filter((s) => s.length && s.length < words.length)
+    .map((s) => [...s, last].join(' '))
 }
 
 // The edit as saved: the draft's text, the score from before any edit, and
 // the gaps the text hasn't filled, measured against the gaps that score found
-// (atsGapsBeforeEdits), so deleting a keyword in a later edit brings its gap back.
+// (atsGapsBeforeEdits), so deleting a keyword in a later edit brings its gap back (#118).
 export function editedResume(scored: TailoredResume, draft: TailoredResume, now = new Date()): TailoredResume {
   const before = scored.atsGapsBeforeEdits ?? scored.atsGaps
   const { atsScore: _score, atsGaps: _gaps, atsGapsBeforeEdits: _before, ...text } = draft
@@ -39,7 +66,7 @@ export function editedResume(scored: TailoredResume, draft: TailoredResume, now 
 }
 
 // Whether the editor shows a standard section: the resume has it. An emptied
-// summary, skills or certifications list still counts, so it can be filled again.
+// summary, skills or certifications list still counts, so it can be filled again (#118).
 function hasSection(r: TailoredResume, key: StandardSection): boolean {
   switch (key) {
     case 'summary': return r.summary !== undefined
@@ -51,19 +78,30 @@ function hasSection(r: TailoredResume, key: StandardSection): boolean {
   }
 }
 
-// The sections the editor shows, in print order.
+// The sections the editor shows, in print order (#118).
 export function shownSections(r: TailoredResume): PlacedSection[] {
   return orderedSections(r).filter((s) => s.key === 'other' || hasSection(r, s.key))
 }
 
+const placeId = (s: PlacedSection) => (s.key === 'other' ? `other-${s.index}` : s.key)
+
+// What a deleted section takes with it: its content, and where it sat (#197).
+function stashed(r: TailoredResume, s: PlacedSection, index: number): DeletedSection {
+  return s.key === 'other' ? { key: 'other', index, section: r.otherSections![s.index] } : { key: s.key, index, [s.key]: r[s.key] }
+}
+
 // The resume with its sections in list's order. A shown section missing from
-// list is deleted. Moving and deleting both go through here.
+// list is deleted: its content moves to deletedSections (#197), which nothing
+// prints. Moving and deleting both go through here.
 export function withSections(r: TailoredResume, list: PlacedSection[]): TailoredResume {
   const keep = new Set(list.map((s) => s.key))
+  const listed = new Set(list.map(placeId))
+  const gone = shownSections(r).flatMap((s, i) => (listed.has(placeId(s)) ? [] : [stashed(r, s, i)]))
   const next: TailoredResume = {
     ...r,
     sectionOrder: list.map((s) => s.key),
     otherSections: list.flatMap((s) => (s.key === 'other' ? [r.otherSections![s.index]] : [])),
+    ...(gone.length && { deletedSections: [...(r.deletedSections ?? []), ...gone] }),
   }
   if (!keep.has('summary')) delete next.summary
   if (!keep.has('experience')) next.experience = []
@@ -74,8 +112,48 @@ export function withSections(r: TailoredResume, list: PlacedSection[]): Tailored
   return next
 }
 
+// The resume with deleted section i back, with its text, where it sat (the
+// end of the list when that's past it). Its index counts the list as it was
+// when it went, so a section deleted after it that sat above it isn't there
+// to count, and one that sat below it moves down one now it's back.
+// ponytail: exact for two deletions at a time; with more, nearby is close enough (#197).
+export function restoreSection(r: TailoredResume, i: number): TailoredResume {
+  const d = r.deletedSections![i]
+  let at = d.index
+  const rest = r.deletedSections!.flatMap((e, j) => {
+    if (j === i) return []
+    if (j < i) return [e]
+    if (e.index < d.index) {
+      at--
+      return [e]
+    }
+    return [{ ...e, index: e.index + 1 }]
+  })
+  const next: TailoredResume = { ...r, deletedSections: rest }
+  let placed: PlacedSection
+  if (d.key === 'other') {
+    next.otherSections = [...(r.otherSections ?? []), d.section]
+    placed = { key: 'other', index: next.otherSections.length - 1 }
+  } else {
+    const { key, index: _index, ...content } = d
+    Object.assign(next, content)
+    placed = { key }
+  }
+  const list = shownSections(r)
+  list.splice(Math.max(0, Math.min(at, list.length)), 0, placed)
+  return withSections(next, list)
+}
+
+// "Use this order for future resumes?" (#197): this resume's order with its
+// deleted sections back in their places, since deletions never carry over,
+// and its extra sections' headings in that order (withChosenOrder matches them).
+export function chosenOrder(r: TailoredResume): { sectionOrder: SectionKey[]; headings: string[] } {
+  while (r.deletedSections?.length) r = restoreSection(r, r.deletedSections.length - 1)
+  return { sectionOrder: shownSections(r).map((s) => s.key), headings: (r.otherSections ?? []).map((s) => s.heading) }
+}
+
 // History with one entry's resume replaced, or null when the entry isn't
-// there (a Pro resume only on the server isn't added).
+// there (a Pro resume only on the server isn't added) (#118).
 export function withResumeEdit(list: TailoredHistoryEntry[], id: string, saved: TailoredResume): TailoredHistoryEntry[] | null {
   return list.some((e) => e.id === id) ? list.map((e) => (e.id === id ? { ...e, resume: saved } : e)) : null
 }
@@ -85,9 +163,24 @@ export async function saveResumeEdit(id: string, saved: TailoredResume): Promise
   if (next) await chrome.storage.local.set({ tailoredHistory: next })
 }
 
-// The editor tab, a page of its own (vite.config.ts builds it).
+// The editor tab, a page of its own (vite.config.ts builds it) (#118).
 const EDITOR_PATH = 'src/editor/index.html'
 
-export function openResumeEditor(id: string): void {
-  void chrome.tabs.create({ url: chrome.runtime.getURL(`${EDITOR_PATH}?id=${encodeURIComponent(id)}`) })
+// Opens next to the tab the popup was on (the job posting), and passes that
+// tab's id so Done can go back to it (#223).
+export async function openResumeEditor(id: string): Promise<void> {
+  const [from] = await chrome.tabs.query({ active: true, currentWindow: true })
+  const url = chrome.runtime.getURL(`${EDITOR_PATH}?id=${encodeURIComponent(id)}`)
+  await chrome.tabs.create(from?.id === undefined ? { url } : { url: `${url}&from=${from.id}`, openerTabId: from.id, index: from.index + 1 })
+}
+
+// Done in the editor: back to the job tab with the popup open. The tab may be
+// closed by now, and openPopup needs Chrome 127+; either way the editor still
+// closes, so this never throws (#223).
+export async function returnToTab(from: number): Promise<void> {
+  try {
+    const { windowId } = await chrome.tabs.update(from, { active: true })
+    await chrome.windows.update(windowId, { focused: true })
+    await chrome.action.openPopup({ windowId })
+  } catch { /* the editor closes anyway (#223) */ }
 }

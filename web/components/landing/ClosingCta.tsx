@@ -1,6 +1,7 @@
-import { GoogleChromeLogoIcon } from '@phosphor-icons/react/dist/ssr'
-import { Button } from '@/components/ui/button'
-import { CHROME_STORE_URL } from '@/lib/utils'
+import { DeviceMobileIcon, GoogleChromeLogoIcon } from '@phosphor-icons/react/dist/ssr'
+import { Button, buttonVariants } from '@/components/ui/button'
+import { SendToComputer } from '@/components/site/SendToComputer'
+import { storeUrl } from '@/lib/utils'
 import { TailorRun } from './TailorRun'
 
 export function ClosingCta() {
@@ -14,12 +15,21 @@ export function ClosingCta() {
           <p className="max-w-[460px] text-[17px] leading-[1.55] text-ink-2">
             That was Northwind. Install Cover Me, open your next posting and click the icon. The first one is free.
           </p>
-          <Button asChild size="lg" className="self-start max-lg:self-center">
-            <a href={CHROME_STORE_URL} target="_blank" rel="noreferrer">
+          <Button asChild size="lg" className="self-start max-lg:self-center [@media(pointer:coarse)]:hidden">
+            <a href={storeUrl('closing')} target="_blank" rel="noreferrer">
               <GoogleChromeLogoIcon size={18} />
               Add to Chrome, it&apos;s free
             </a>
           </Button>
+          <div className="flex flex-col gap-2 self-start max-lg:items-center max-lg:self-center [@media(pointer:fine)]:hidden">
+            <SendToComputer placement="closing" className={buttonVariants({ size: 'lg' })}>
+              <DeviceMobileIcon size={18} aria-hidden />
+              Send this to my computer
+            </SendToComputer>
+            <a href={storeUrl('closing')} target="_blank" rel="noreferrer" className="text-[13px] text-subtle underline underline-offset-2">
+              See it on the Chrome Web Store
+            </a>
+          </div>
         </div>
         <div className="mx-auto w-full max-w-[480px]">
           <TailorRun />

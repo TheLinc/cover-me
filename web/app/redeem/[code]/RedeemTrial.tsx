@@ -8,16 +8,16 @@ import { Spinner } from '@/components/ui/spinner'
 import { LocalDate } from '@/app/dashboard/LocalDate'
 import { TRIAL_REDEEMED, whenPosthogLoaded } from '@/lib/analytics'
 import { redeemTrial } from '@/lib/billing'
-import { CHROME_STORE_URL } from '@/lib/utils'
+import { storeUrl } from '@/lib/utils'
 import { confettiFrom } from './confetti'
+import { GiftBadge } from './GiftBadge'
 
-// One click starts the trial. The billing function checks the code and the
-// account; the Stripe webhook then turns Pro on, usually within seconds.
+// The Stripe webhook turns Pro on, usually within seconds (#112).
 export function RedeemTrial({ code, email }: { code: string; email: string }) {
   const [state, setState] = useState<{ status: 'idle' | 'loading' } | { status: 'done'; trialEnd: string } | { status: 'error'; error: string }>({ status: 'idle' })
 
   async function redeem(e: React.MouseEvent<HTMLButtonElement>) {
-    // Where the button is now: the success view replaces it, and the confetti starts there.
+    // Where the button is now: the success view replaces it, and the confetti starts there. (#112)
     const { left, top, width, height } = e.currentTarget.getBoundingClientRect()
     setState({ status: 'loading' })
     try {
@@ -38,7 +38,7 @@ export function RedeemTrial({ code, email }: { code: string; email: string }) {
   if (state.status === 'done') {
     return (
       <>
-        {/* Focused on mount: the button that had focus is gone */}
+        {/* Focused on mount: the button that had focus is gone (#112) */}
         <h1 ref={(el) => el?.focus()} tabIndex={-1} className="text-[34px] font-semibold leading-tight tracking-[-0.03em] outline-none">
           You&apos;re on Pro until <LocalDate iso={state.trialEnd} options={{ month: 'long', day: 'numeric' }} />
         </h1>
@@ -47,7 +47,7 @@ export function RedeemTrial({ code, email }: { code: string; email: string }) {
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <Button asChild size="lg">
-            <a href={CHROME_STORE_URL} target="_blank" rel="noreferrer">Add to Chrome</a>
+            <a href={storeUrl('redeem')} target="_blank" rel="noreferrer">Add to Chrome</a>
           </Button>
           <Button asChild size="lg" variant="outline">
             <Link href="/dashboard">Go to dashboard</Link>
@@ -59,7 +59,10 @@ export function RedeemTrial({ code, email }: { code: string; email: string }) {
 
   return (
     <>
-      <h1 className="text-[34px] font-semibold leading-tight tracking-[-0.03em]">Start your free week of Pro</h1>
+      <GiftBadge />
+      <h1 className="text-balance text-[34px] font-semibold leading-tight tracking-[-0.03em]">
+        Start your <span className="whitespace-nowrap text-brand-strong">free week</span> of Pro
+      </h1>
       <p className="mt-4 text-[15px] text-muted-foreground">
         25 letters and resumes a day for 7 days on {email}. No card needed. When the week ends you&apos;re back on the free plan unless you upgrade.
       </p>

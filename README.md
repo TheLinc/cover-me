@@ -37,7 +37,7 @@ The extension reads the job description from the page and combines it with your 
 
 ### Chrome Web Store
 
-[**Install Cover Me**](https://chromewebstore.google.com/detail/cover-me-ai-resume-tailor/bpbnopjgjbimdjjdolhkgimllbgamgpi) — add it to Chrome in one click.
+[**Install Cover Me**](https://chromewebstore.google.com/detail/cover-me-ai-resume-tailor/bpbnopjgjbimdjjdolhkgimllbgamgpi?utm_source=github&utm_medium=readme) — add it to Chrome in one click.
 
 ### Load unpacked (development build)
 
@@ -97,7 +97,7 @@ If the extension can't detect the job description automatically, use **"Paste it
 | Workable | Generic scraper |
 | Any careers page | Generic scraper (heuristic fallback) |
 
-The generic scraper tries three strategies in order: JSON-LD structured data, known ATS CSS selectors, then a heuristic that finds the largest heading and text block on the page. If all else fails, use the manual paste option.
+The generic scraper tries these strategies in order: JSON-LD structured data, schema.org microdata, python.org's job board markup, known ATS CSS selectors, then a heuristic that finds the largest heading and text block on the page. If all else fails, use the manual paste option.
 
 ---
 
@@ -133,7 +133,7 @@ From 1.3.0, no `<all_urls>` and no content scripts: the reader is injected only 
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 22.13+
 - pnpm 10+
 - Chrome
 
@@ -242,15 +242,18 @@ From `extension/`:
 
 ```bash
 pnpm eval                                   # free: prompt invariants, lint self-tests, fixture integrity
-pnpm eval --live --tailor --judge           # parse, tailor, integrity checks, and an industry-fit judge
+pnpm eval --live --tailor --judge           # resumes only: parse, tailor, integrity checks, and an industry-fit judge
+pnpm eval --live --letters --judge          # cover letters only: generate, lint and retry, and a judge
 pnpm eval --live --tailor --judge --industry Trades --runs 2
 ```
 
-Live runs go through `claude -p` on your Claude plan unless `ANTHROPIC_API_KEY` is set (then `--via api` uses API credits). For clean outputs, put a token from `claude setup-token` in `extension/eval/.env` as `CLAUDE_CODE_OAUTH_TOKEN=...`. The harness then uses an empty Claude Code config, so your own `CLAUDE.md`, hooks and rules never reach the model. Every output is saved to `eval/reports/results-*.json`.
+Run only the side you changed (`--letters`, `--tailor`, or `--answers` for application-question answers). Letters and resume tailoring share no prompt code, and tailoring is about 70% of a full run's model calls (390 of 570). A letters-only full run is about 180 calls. `scripts/eval-side.sh <base-ref>` prints which side a diff needs.
+
+Live runs go through `claude -p` on your Claude plan, never API credits. For clean outputs, put a token from `claude setup-token` in `extension/eval/.env` as `CLAUDE_CODE_OAUTH_TOKEN=...`. The harness then uses an empty Claude Code config, so your own `CLAUDE.md`, hooks and rules never reach the model. Every output is saved to `eval/reports/results-*.json`.
 
 A resume fails when the parse doesn't match its answer key, when an integrity check fails (invented skills or numbers, changed titles or dates, dropped certifications, wrong bullet counts), or when the judge scores faithfulness, field fit, relevance or readability at 2/5 or lower. `--baseline` also fails a case whose judge scores drop by a full point against `eval/baseline.json`. Refresh that file with `--update-baseline` after an intended change.
 
-GitHub Actions runs the free checks on every push (`.github/workflows/prompt-checks.yml`) and the live eval when the prompt code or eval changes, weekly, and on demand (`.github/workflows/resume-eval.yml`, needs a `CLAUDE_CODE_OAUTH_TOKEN` repository secret).
+GitHub Actions runs the free checks on every push (`.github/workflows/prompt-checks.yml`). The live eval (`.github/workflows/output-eval.yml`, needs a `CLAUDE_CODE_OAUTH_TOKEN` repository secret) runs the 11-case quick set on PRs that change prompt or eval code, and only the sides the diff touches: letters, tailoring, answers to application questions, or a mix. A manual run (Actions > Output eval > Run workflow) runs every case and picks the side the same way unless you choose one. The weekly run is paused during development.
 
 ### Project structure
 
@@ -532,7 +535,7 @@ Turn on the website's button only once users have an extension build with Google
 | `NUDGE_SECRET` | Shared with the `NUDGE_SECRET` GitHub secret; the daily follow-up workflow calls `nudge` with it |
 | `NUDGE_ENABLED` | `true` to let `nudge` send the follow-up email; anything else sends nothing |
 | `RESEND_API_KEY` | Resend API key, for the follow-up email and the dashboard's support form (`support` answers 503 without it) |
-| `POSTHOG_KEY` | PostHog project token for server-side counts (`tailor_run`, `scrape_failed`) and the extension's site requests and bug reports. Optional: without it nothing is sent |
+| `POSTHOG_KEY` | PostHog project token for server-side counts (`tailor_run`, `scrape_failed`, `answer_generated`, `answer_limit_hit`) and the extension's site requests and bug reports. Optional: without it nothing is sent |
 | `POSTHOG_SITE_SURVEY_ID` | ID of a PostHog survey in API mode with three open-text questions: type, site, page URL. `site-request` records the extension's "Request this site" and "Report bug" presses there; without it they're accepted and dropped |
 
 **Web dashboard** (`web/.env.local`):
@@ -560,12 +563,9 @@ Turn on the website's button only once users have an extension build with Google
 
 ## Contributing
 
-Contributions are welcome. A few guidelines:
+Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) before you start: bug fixes and scrapers can go straight to a PR, and anything else starts with an issue.
 
-- **Bug fixes and scraper improvements** — open a PR directly
-- **New features** — open an issue first; the scope is intentionally narrow
-- **New job board scrapers** — see `extension/src/content/scrapers/` for the pattern; PRs for dedicated Greenhouse and Ashby scrapers are especially welcome
-- Keep PRs focused — one thing per PR
+New job board scrapers follow the pattern in `extension/src/content/scrapers/`. Dedicated Greenhouse and Ashby scrapers are especially welcome.
 
 ---
 

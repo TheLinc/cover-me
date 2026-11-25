@@ -1,12 +1,14 @@
 import type { Metadata } from 'next'
-import Image from 'next/image'
 import Link from 'next/link'
-import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { getServerUser } from '@/lib/supabase-server'
 import { Button } from '@/components/ui/button'
 import { SiteNav } from '@/components/site/SiteNav'
+import { LogoHeader } from '@/components/site/LogoHeader'
 import { APP_LINKS } from '@/components/site/app-links'
 import { AccountMenu } from '@/components/site/AccountMenu'
 import { avatarUrl } from '@/lib/avatar'
+import { Ambient } from '@/components/landing/Ambient'
+import { GiftBadge } from './GiftBadge'
 import { RedeemTrial } from './RedeemTrial'
 
 // A gift trial link from `pnpm trial-links` (#112). Not in sitemap.ts.
@@ -17,8 +19,7 @@ export const metadata: Metadata = {
 
 export default async function RedeemPage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = await params
-  const supabase = await createServerSupabaseClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { supabase, user } = await getServerUser()
   const { data: row } = user ? await supabase.from('users').select('tier').eq('id', user.id).single() : { data: null }
   const here = `/redeem/${code}`
 
@@ -26,23 +27,23 @@ export default async function RedeemPage({ params }: { params: Promise<{ code: s
     <div className="min-h-screen bg-background text-foreground">
       {user ? (
         // Signed in: the account nav, so it's clear whose account this is.
-        // Signing out comes back here, so the link can go to another account.
+        // Signing out comes back here, so the link can go to another account. (#112)
         <SiteNav links={APP_LINKS} actions={<AccountMenu email={user.email ?? ''} avatar={avatarUrl(user.user_metadata)} signOutTo={here} />} />
       ) : (
-        <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-md">
-          <div className="max-w-3xl mx-auto px-6 h-16 flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2.5">
-              <Image src="/logo.png" alt="Cover Me" width={26} height={26} className="rounded-md" />
-              <span className="font-bold text-[15px] tracking-[-0.3px]">Cover Me</span>
-            </Link>
-          </div>
-        </header>
+        <LogoHeader />
       )}
 
-      <main className="max-w-xl mx-auto px-6 py-20 text-center">
+      <main className="relative isolate max-w-xl mx-auto px-6 py-20 text-center">
+        <Ambient
+          glows={[{ left: 0, top: -160, size: 560, tone: 'brand' }, { right: 0, top: 120, size: 360, tone: 'warm' }]}
+          dots={{ left: 'calc(50% - 210px)', top: 0, w: 420, h: 220 }}
+        />
         {!user ? (
           <>
-            <h1 className="text-[34px] font-semibold leading-tight tracking-[-0.03em]">You&apos;ve been given a free week of Pro</h1>
+            <GiftBadge />
+            <h1 className="text-balance text-[34px] font-semibold leading-tight tracking-[-0.03em]">
+              You&apos;ve been given a <span className="whitespace-nowrap text-brand-strong">free week</span> of Pro
+            </h1>
             <p className="mt-4 text-[15px] text-muted-foreground">
               25 letters and resumes a day for 7 days. No card needed, and it ends on its own.
               Sign in or create an account to start it.
@@ -52,7 +53,7 @@ export default async function RedeemPage({ params }: { params: Promise<{ code: s
             </Button>
           </>
         ) : row?.tier === 'hosted_pro' ? (
-          // Known before any click: billing would refuse it, so don't offer it.
+          // Known before any click: billing would refuse it, so don't offer it. (#112)
           <>
             <h1 className="text-[34px] font-semibold leading-tight tracking-[-0.03em]">You&apos;re already on Pro</h1>
             <p className="mt-4 text-[15px] text-muted-foreground">
