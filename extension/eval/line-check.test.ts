@@ -16,7 +16,7 @@ describe('checkLines', () => {
       return roleOf(prompt) === target ? SORRY : perfect(prompt)
     }, 6)
     expect(result.failures).toEqual([])
-    expect(result.warnings).toContain(`${target.id}: check reply could not be read after a retry: ${SORRY}`)
+    expect(result.warnings).toContain(`${target.id}: check reply could not be read, twice: ${JSON.stringify(SORRY)} then ${JSON.stringify(SORRY)}`)
     expect(asked.filter((id) => id === target.id)).toHaveLength(2)
     expect(total).toBe(LINE_ROLES.filter((r) => r !== target).reduce((n, r) => n + r.flag.length + r.ok.length, 0))
   })
@@ -32,10 +32,23 @@ describe('checkLines', () => {
     expect(total).toBe(LINE_ROLES.reduce((n, r) => n + r.flag.length + r.ok.length, 0))
   })
 
-  it('cuts a long unreadable reply to 300 characters in the warning', async () => {
-    const long = 'x'.repeat(500)
-    const { result } = await checkLines(async (prompt) => (roleOf(prompt) === target ? long : perfect(prompt)), 6)
-    expect(result.warnings).toContain(`${target.id}: check reply could not be read after a retry: ${'x'.repeat(300)}`)
+  it('quotes each unreadable reply on one line, cut to 300 characters', async () => {
+    let tries = 0
+    const replies = ['x'.repeat(500), 'cut off\n{"flags": [']
+    const { result } = await checkLines(async (prompt) => (roleOf(prompt) === target ? replies[tries++] : perfect(prompt)), 6)
+    expect(result.warnings).toContain(`${target.id}: check reply could not be read, twice: "${'x'.repeat(300)}" then "cut off\\n{\\"flags\\": ["`)
+  })
+
+  it('fails when more than a quarter of the roles never get a readable reply', async () => {
+    const broken = LINE_ROLES.slice(0, Math.floor(LINE_ROLES.length / 4) + 1)
+    const { result } = await checkLines(async (prompt) => (broken.includes(roleOf(prompt)) ? SORRY : perfect(prompt)), 6)
+    expect(result.failures).toEqual([`${broken.length} of ${LINE_ROLES.length} roles got no readable check reply`])
+  })
+
+  it('passes when exactly a quarter of the roles never get a readable reply', async () => {
+    const broken = LINE_ROLES.slice(0, Math.floor(LINE_ROLES.length / 4))
+    const { result } = await checkLines(async (prompt) => (broken.includes(roleOf(prompt)) ? SORRY : perfect(prompt)), 6)
+    expect(result.failures).toEqual([])
   })
 
   it('still fails when readable replies miss most inflated lines', async () => {

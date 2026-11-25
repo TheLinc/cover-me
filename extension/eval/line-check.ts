@@ -7,6 +7,7 @@ import { pool } from './model'
 export async function checkLines(ask: (prompt: string) => Promise<string>, concurrency: number): Promise<{ correct: number; total: number; result: CheckResult }> {
   let correct = 0
   let total = 0
+  let unreadable = 0
   const result: CheckResult = { failures: [], warnings: [] }
   const missed: string[] = []
   const wrong: string[] = []
@@ -14,12 +15,17 @@ export async function checkLines(ask: (prompt: string) => Promise<string>, concu
     const original = { experience: [{ title: r.title, company: r.company, bullets: r.original }] }
     const tailored = { summary: '', experience: [{ title: r.title, company: r.company, bullets: r.rewritten }] }
     const prompt = buildLineCheckPrompt(original, tailored)
-    let reply = await ask(prompt)
-    let flags = parseLineFlags(reply)
-    if (!flags) flags = parseLineFlags((reply = await ask(prompt)))
+    const first = await ask(prompt)
+    let flags = parseLineFlags(first)
+    let retry = ''
+    if (!flags) {
+      retry = await ask(prompt)
+      flags = parseLineFlags(retry)
+    }
     // Production keeps the tailored resume when the reply can't be read (#366).
     if (!flags) {
-      result.warnings.push(`${r.id}: check reply could not be read after a retry: ${reply.slice(0, 300)}`)
+      unreadable++
+      result.warnings.push(`${r.id}: check reply could not be read, twice: ${JSON.stringify(first.slice(0, 300))} then ${JSON.stringify(retry.slice(0, 300))}`)
       return
     }
     for (const k of r.flag) {
@@ -35,6 +41,8 @@ export async function checkLines(ask: (prompt: string) => Promise<string>, concu
   })
   if (missed.length) result.warnings.push(`inflation missed: ${missed.join(' | ')}`)
   if (wrong.length) result.warnings.push(`faithful lines flagged: ${wrong.join(' | ')}`)
+  // CI saw up to 2 of 12 flaky replies a run; more means the prompt stopped getting JSON back (#366).
+  if (unreadable * 4 > LINE_ROLES.length) result.failures.push(`${unreadable} of ${LINE_ROLES.length} roles got no readable check reply`)
   if (total && correct / total < LINE_CHECK_MIN) result.failures.push(`line check accuracy ${correct}/${total} is below ${LINE_CHECK_MIN * 100}%`)
   return { correct, total, result }
 }
