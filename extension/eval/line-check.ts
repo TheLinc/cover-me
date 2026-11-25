@@ -41,7 +41,7 @@ export async function checkLines(ask: (prompt: string) => Promise<string>, concu
   })
   if (missed.length) result.warnings.push(`inflation missed: ${missed.join(' | ')}`)
   if (wrong.length) result.warnings.push(`faithful lines flagged: ${wrong.join(' | ')}`)
-  // CI saw up to 2 of 12 flaky replies a run; more means the prompt stopped getting JSON back (#366).
+  // CI saw up to 2 flaky replies a run; more means the prompt stopped getting JSON back (#366).
   if (unreadable * 4 > LINE_ROLES.length) result.failures.push(`${unreadable} of ${LINE_ROLES.length} roles got no readable check reply`)
   if (total && correct / total < LINE_CHECK_MIN) result.failures.push(`line check accuracy ${correct}/${total} is below ${LINE_CHECK_MIN * 100}%`)
   return { correct, total, result }

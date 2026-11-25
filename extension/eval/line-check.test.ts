@@ -45,7 +45,7 @@ describe('checkLines', () => {
     expect(result.failures).toEqual([`${broken.length} of ${LINE_ROLES.length} roles got no readable check reply`])
   })
 
-  it('passes when exactly a quarter of the roles never get a readable reply', async () => {
+  it('passes when up to a quarter of the roles never get a readable reply', async () => {
     const broken = LINE_ROLES.slice(0, Math.floor(LINE_ROLES.length / 4))
     const { result } = await checkLines(async (prompt) => (broken.includes(roleOf(prompt)) ? SORRY : perfect(prompt)), 6)
     expect(result.failures).toEqual([])
