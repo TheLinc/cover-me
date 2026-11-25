@@ -53,8 +53,7 @@ Deno.serve(async (req) => {
   const resendKey = Deno.env.get('RESEND_API_KEY')
   if (!resendKey) return json({ error: 'Support email is not set up' }, 503)
 
-  // The scrape limiter's counter, keyed by a hash of the account (like resume's
-  // parse limit). Fails closed (#133).
+  // Reuses the scrape limiter, with an account hash in place of the IP hash (#133).
   const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`support:${user.id}`)))
   const { data: allowed, error: limitError } = await supabase.rpc('check_scrape_rate_limit', {
     p_ip_hash: Array.from(digest, (b) => b.toString(16).padStart(2, '0')).join(''),

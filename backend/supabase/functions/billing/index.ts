@@ -53,9 +53,8 @@ async function claimCode(supabase: SupabaseClient, code: unknown, userId: string
   return !found ? CODE_ERRORS.unknown : found.redeemed_at ? CODE_ERRORS.used : CODE_ERRORS.expired
 }
 
-// Checkout, billing portal, gift trial redemption and the first-month offer
-// for the extension and the web dashboard. All send the user's Supabase token,
-// so upgrading never needs a website sign-in (#213).
+// The extension and the dashboard send the user's Supabase token, so upgrading
+// never needs a website sign-in (#1).
 Deno.serve(async (req) => {
   const cors = handleCors(req)
   if (cors) return cors
@@ -75,7 +74,6 @@ Deno.serve(async (req) => {
 
   // Any failure only hides the offer banner (#213).
   if (action === 'offer') {
-    // Showing it starts its 7 days the first time (#213).
     const endsAt = await showFirstMonthOffer(supabase, user.id)
     if (!endsAt) return json({ offer: null })
     try {
