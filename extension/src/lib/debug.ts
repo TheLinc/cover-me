@@ -22,6 +22,7 @@ try {
       cached = changes[DEBUG_KEY].newValue === true
     }
   })
+// No chrome global when eval/run.ts imports this under Node (#261).
 } catch {}
 
 export async function debugLog(label: string, data: unknown): Promise<void> {

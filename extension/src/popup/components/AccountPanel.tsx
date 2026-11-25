@@ -15,9 +15,8 @@ type AuthView = 'signin' | 'signup'
 
 const MASKED = '••••••••••••••••'
 
-// The account first, with BYOK behind "I have an API key". Used by Settings and
-// by the welcome tab, which leaves out the upgrade and dashboard links so
-// onboarding stays on the first letter (#16).
+// The welcome tab leaves out the upgrade and dashboard links so onboarding
+// stays on the first letter (#25).
 export default function AccountPanel({ initialView = 'signin', links = true }: { initialView?: AuthView; links?: boolean }) {
   const [mode, setMode] = useState<AppMode>('hosted')
 

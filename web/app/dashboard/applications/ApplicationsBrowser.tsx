@@ -21,7 +21,6 @@ import { BOARD_SEEN_KEY } from '../BoardNotice'
 type Status = 'loading' | 'ready' | 'error'
 type View = 'board' | 'list'
 
-// The view and sort are remembered on this device; search and filters aren't (#100).
 const VIEW_KEY = 'cover-me:applications-view'
 const SORT_KEY = 'cover-me:applications-sort'
 // Private windows can refuse storage: the page then just doesn't remember (#100).

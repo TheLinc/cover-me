@@ -2,10 +2,10 @@ import { defineConfig } from 'eslint/config'
 import tseslint from 'typescript-eslint'
 
 export default defineConfig(
-  { ignores: ['dist/'] },
+  { ignores: ['dist/', 'eval/reports/'] },
   {
     ...tseslint.configs.base,
-    files: ['**/*.{ts,tsx}'],
+    files: ['**/*.{ts,tsx,js,mjs}'],
     rules: {
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_', ignoreRestSiblings: true }],
       '@typescript-eslint/no-explicit-any': 'error',

@@ -15,5 +15,6 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false
   },
-  "include": ["src", "eval", "scripts", "vite.config.ts", "vitest.config.ts"]
+  "include": ["src", "eval", "scripts", "vite.config.ts", "vitest.config.ts"],
+  "exclude": ["eval/reports"]
 }
