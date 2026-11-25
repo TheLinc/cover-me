@@ -49,7 +49,7 @@ function comments(text, file) {
 
 export const unlinkedComments = (text, file) => comments(text, file).filter((c) => !LINKED.test(c.body))
 
-const words = (c) => c.body.replace(/(\bsee:?\s+)?(https?:\/\/\S+|#\d+\b|docs\/adr\/\S+)/gi, ' ').match(/\w+/g)?.join(' ') ?? ''
+const words = (c) => c.body.replace(/(\bsee:?\s+)?(https?:\/\/\S+|#\d+\b|docs\/adr\/\S+)/gi, ' ').match(/\w+/g)?.join(' ')
 
 export function stampedComments(baseText, text, file) {
   const before = new Set(unlinkedComments(baseText, file).map(words))
@@ -59,13 +59,11 @@ export function stampedComments(baseText, text, file) {
 const checked = (f) => CHECKED.test(f) && !/\.d\.[mc]?ts$/.test(f) && !/(^|\/)(node_modules|dist)\//.test(f)
 
 function changedFiles(base) {
-  const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' })
+  const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: 'pipe' })
   const since = git('merge-base', base, 'HEAD').trim()
   const files = [git('diff', '--name-only', '-z', '--diff-filter=ACMR', since), git('ls-files', '-z', '--others', '--exclude-standard')]
-  const show = (rel) => {
-    try { return execFileSync('git', ['show', `${since}:${rel}`], { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }) } catch { return '' }
-  }
-  return [...new Set(files.join('\0').split('\0'))].filter(checked).map((rel) => ({ abs: path.join(root, rel), rel, base: () => show(rel) }))
+  const show = (rel) => { try { return git('show', `${since}:${rel}`) } catch { return '' } }
+  return [...new Set(files.join('\0').split('\0'))].filter(checked).map((rel) => ({ abs: path.join(root, rel), rel, base: show(rel) }))
 }
 
 function repoOf(dir) {
@@ -99,7 +97,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const list = (f, cs) => cs.map((c) => `${f.rel}:${c.line}  ${c.text.slice(0, 100)}`)
   const text = (f) => fs.readFileSync(f.abs, 'utf8')
   const found = files.flatMap((f) => list(f, unlinkedComments(text(f), f.rel)))
-  const stamped = files.flatMap((f) => f.base ? list(f, stampedComments(f.base(), text(f), f.rel)) : [])
+  const stamped = files.flatMap((f) => list(f, stampedComments(f.base ?? '', text(f), f.rel)))
   if (stamped.length) {
     console.error(stamped.join('\n'))
     console.error(`\nOnly a link was added to this comment since the base. Delete it if it says what the code does;
