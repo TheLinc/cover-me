@@ -270,7 +270,6 @@ export function ApplicationsBrowser({ pro }: { pro: boolean }) {
             </div>
           )}
         </div>
-        {/* What the page below shows: visible as a count, otherwise announced only (#100). */}
         <p aria-live="polite" className={counted ? 'px-1 text-[13px] tabular-nums text-subtle' : 'sr-only'}>{statusText}</p>
       </div>
 
@@ -298,7 +297,6 @@ export function ApplicationsBrowser({ pro }: { pro: boolean }) {
       </div>
 
       {range && view && status !== 'error' && shownCount > 0 && (
-        // The old results, dimmed and out of reach until the new ones replace them (#27).
         <div inert={dimmed} className={dimmed ? 'opacity-60 transition-opacity' : 'transition-opacity'}>
           {view === 'board' ? (
             <ApplicationsBoard applications={sorted} pro={pro} onMove={move} onDeleted={removed} onStageChange={stageSaved} />
