@@ -93,6 +93,8 @@ export interface ResumeData {
   }
   // The layout picked on the resume page. Missing: "Your design" whenever its check passes (#131).
   layout?: 'yours' | 'cover-me'
+  // READER_VERSION when uploaded. An older text can be offered a re-upload (#240).
+  readerVersion?: number
 }
 
 export type GenerateResponse =
