@@ -1,0 +1,12 @@
+
+extension job steps: pnpm typecheck -> pnpm exec eslint . -> pnpm test -> pnpm build
+  clean        CI GREEN
+  typeError    CI RED at "pnpm typecheck": src/lib/debug.ts(44,14): error TS2322: Type 'string' is not assignable to type 'number'.
+  unusedImport CI RED at "pnpm exec eslint .": 1:10  error  'WEB_URL' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars | ✖ 1 problem (1 error, 0 warnings)
+
+web job steps: pnpm typecheck -> pnpm exec eslint . -> pnpm test -> pnpm check
+  clean        CI GREEN
+  typeError    CI RED at "pnpm typecheck": lib/avatar.ts(7,14): error TS2322: Type 'string' is not assignable to type 'number'.
+  unusedImport CI RED at "pnpm exec eslint .": 1:10  error  'clsx' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars | ✖ 1 problem (1 error, 0 warnings)
+
+assertions for "after" passed

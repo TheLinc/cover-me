@@ -1,0 +1,12 @@
+
+extension job steps: pnpm test -> pnpm build
+  clean        CI GREEN
+  typeError    CI GREEN
+  unusedImport CI GREEN
+
+web job steps: pnpm test -> pnpm check
+  clean        CI GREEN
+  typeError    CI GREEN
+  unusedImport CI GREEN
+
+assertions for "before" passed
