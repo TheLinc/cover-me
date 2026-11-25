@@ -8,9 +8,9 @@ const INBOX = 'support@cover-me.dev'
 const MAX_MESSAGE = 1000
 const PER_MINUTE = 2
 const PER_DAY = 5
-// A gift trial's length (billing's GIFT_TRIAL_DAYS).
+// Must match billing's GIFT_TRIAL_DAYS (#133).
 const TRIAL_MS = 7 * 86_400_000
-// The subject's label comes from here, never from the request.
+// The subject's label comes from here, never from the request (#133).
 const TYPES: Record<string, string> = {
   problem: "Something isn't working",
   feature: 'Feature request',
@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
 
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405)
 
-  // Validated before the rate limit, so a malformed body doesn't use it up.
+  // Validated before the rate limit, so a malformed body doesn't use it up (#133).
   const body = await req.json().catch(() => null) as { type?: unknown; message?: unknown; site?: unknown } | null
   const type = typeof body?.type === 'string' && Object.hasOwn(TYPES, body.type) ? body.type : null
   if (!type) return json({ error: 'Unknown type' }, 400)
@@ -49,12 +49,12 @@ Deno.serve(async (req) => {
     site = body!.site
   }
 
-  // A self-hosted backend may have no Resend account.
+  // A self-hosted backend may have no Resend account (#133).
   const resendKey = Deno.env.get('RESEND_API_KEY')
   if (!resendKey) return json({ error: 'Support email is not set up' }, 503)
 
   // The scrape limiter's counter, keyed by a hash of the account (like resume's
-  // parse limit). Fails closed.
+  // parse limit). Fails closed (#133).
   const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`support:${user.id}`)))
   const { data: allowed, error: limitError } = await supabase.rpc('check_scrape_rate_limit', {
     p_ip_hash: Array.from(digest, (b) => b.toString(16).padStart(2, '0')).join(''),
@@ -100,7 +100,7 @@ Deno.serve(async (req) => {
   return json({ sent: true })
 })
 
-// "Trial" for a gift trial redeemed in the last week: no Stripe call needed.
+// "Trial" for a gift trial redeemed in the last week: no Stripe call needed (#133).
 async function planLabel(supabase: SupabaseClient, userId: string): Promise<'Free' | 'Pro' | 'Trial'> {
   const { data: row } = await supabase.from('users').select('tier').eq('id', userId).single()
   if (row?.tier !== 'hosted_pro') return 'Free'
