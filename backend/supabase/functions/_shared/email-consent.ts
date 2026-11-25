@@ -31,7 +31,6 @@ export async function unsubscribeToken(userId: string): Promise<string> {
   return `${userId}.${b64}`
 }
 
-// subtle.verify compares in constant time (#114).
 export async function verifyUnsubscribeToken(token: string): Promise<string | null> {
   const [userId, mac, extra] = token.split('.')
   if (extra !== undefined || !UUID.test(userId ?? '') || !mac) return null
