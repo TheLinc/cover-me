@@ -1,0 +1,20 @@
+{
+  "label": "after",
+  "site": "http://localhost:3102",
+  "posthogRequests": [
+    "POST /relay/e/"
+  ],
+  "redeemPageEvents": [],
+  "homePageEvents": [
+    {
+      "event": "$pageview",
+      "$pathname": "/"
+    }
+  ],
+  "trialCodeRow": [
+    {
+      "note": "proof batch",
+      "redeemed_at": "2026-11-25T18:19:06.343+00:00"
+    }
+  ]
+}
