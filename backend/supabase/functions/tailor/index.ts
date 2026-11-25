@@ -116,9 +116,10 @@ export function mergeTailorDelta<T extends {
 // ("cut wait time from 40 to 25 minutes", "0.76 to 0.84", "3/14 to 14/14"). A
 // plain range ("Managed 5 to 7 engineers", "shifts from 7pm to 7am", "grades
 // from 9 to 12", "2019 to 2021") or scope alone ("a 60-case evaluation set")
-// doesn't count (#190).
+// doesn't count (#190). CHANGE starts only at the start of a number, so a
+// 20,000-digit bullet takes milliseconds, not a second of the function's CPU (#190).
 const PERCENT = /\b\d+(?:\.\d+)?(?:\/\d+)?\s*(?:%|percent\b)/i
-const CHANGE = /(\bfrom\s+)?\$?(\d+(?:[.,]\d+)*(?:\/\d+)?)(?:\s*[a-z%]+)?\s+(?:to|\u2192|->)\s+\$?(\d+(?:[.,]\d+)*(?:\/\d+)?)/gi
+const CHANGE = /(?<![\d.,/])(\bfrom\s+)?\$?(\d+(?:[.,]\d+)*(?:\/\d+)?)(?:\s*[a-z%]+)?\s+(?:to|\u2192|->)\s+\$?(\d+(?:[.,]\d+)*(?:\/\d+)?)/gi
 const CHANGE_VERB = /\b(?:reduc|cut|improv|increas|rais|lower|decreas|boost|grew|grow|drop|shrank|shrunk|sped|speed|doubl|tripl|halv|fell|rose|climb|declin|shorten)\w*/i
 const YEAR = /^(?:19|20)\d\d$/
 

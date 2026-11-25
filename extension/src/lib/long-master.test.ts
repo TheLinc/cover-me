@@ -155,6 +155,13 @@ describe('measured results survive the trim', () => {
     expect(isResultBullet(scope)).toBe(false)
   })
 
+  test('a huge bullet is read in linear time', () => {
+    const start = performance.now()
+    expect(isResultBullet('1'.repeat(50_000))).toBe(false)
+    expect(isResultBullet('1.1'.repeat(20_000))).toBe(false)
+    expect(performance.now() - start).toBeLessThan(500)
+  })
+
   test('a plain range is not a result', () => {
     expect(isResultBullet('Managed 5 to 7 engineers across two teams')).toBe(false)
     expect(isResultBullet('Taught evening classes from 2019 to 2021')).toBe(false)
