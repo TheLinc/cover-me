@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { closeNotice, openNotice, type Notice } from './notices'
+import { closeNotice, NOTICES, openNotice, type Notice } from './notices'
 
 const notice = (id: string, until = '2027-01-01'): Notice => ({ id, label: 'Update', text: 'read what changed', href: '/privacy', until })
 
@@ -36,5 +36,15 @@ describe('openNotice', () => {
     expect(openNotice([notice('a', '2026-12-02')], now, memoryStore())?.id).toBe('a')
     expect(openNotice([notice('a', '2026-12-01T12:00:00Z')], now, memoryStore())).toBeNull()
     expect(openNotice([notice('a', '2026-11-30')], now, memoryStore())).toBeNull()
+  })
+})
+
+describe('NOTICES', () => {
+  it('has a unique ID and a real YYYY-MM-DD end date on every entry', () => {
+    expect(new Set(NOTICES.map((n) => n.id)).size).toBe(NOTICES.length)
+    for (const n of NOTICES) {
+      expect(n.until).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+      expect(new Date(n.until).toISOString().slice(0, 10)).toBe(n.until)
+    }
   })
 })

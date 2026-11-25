@@ -38,7 +38,7 @@ Site features under the names a visitor would use, with the route and how to rea
 
 ## Account
 
-- Dashboard: `/dashboard`. After sign-in, or Nav, Dashboard. The Plan tile shows a gift trial's end or a paid plan's first payment (`lib/stripe-plan.ts`). A notice from `lib/notices.ts` shows under the greeting until it's closed on this device or its end date passes.
+- Dashboard: `/dashboard`. After sign-in, or Nav, Dashboard. The Plan tile shows a gift trial's end or a paid plan's first payment (`lib/stripe-plan.ts`). A notice from `lib/notices.ts` shows under the greeting until it's closed on this device or until 00:00 UTC on its `until` date. A new ID shows again to people who closed an older one. With several open, the last entry wins.
 - Settings: `/dashboard/settings`. Account menu, Settings. The Plan section shows Pro with a Trial, Active or Ending pill, the next date (trial end, first payment, renewal or end) from Stripe, and Manage billing (opens the Stripe portal).
 
 ## Pages reached from outside links
