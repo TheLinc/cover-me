@@ -4,25 +4,26 @@
 // The Word copy of resume.ts's layout, built from real Word features (Title and
 // Heading 1 styles, a bullet list, right tab stops for dates) so it edits
 // cleanly in Word and Google Docs. Sizes and spacing follow the PDF's, in
-// Times New Roman, which every machine has. Load it lazily: docx is big.
+// Times New Roman, which every machine has. Load it lazily: docx is big (#120).
 import {
   AlignmentType, BorderStyle, Document, HeadingLevel, LevelFormat, LineRuleType,
   Packer, Paragraph, Tab, TabStopType, TextRun,
 } from 'docx'
 import { contactParts } from './contact'
 import { resumeFileName, saveFile } from './file-name'
+import { GPA_LINE, SKILL_GROUP } from './layout-rules'
 import { orderedSections, type StandardSection } from './sections'
 import type { TailoredResume } from './types'
 
-// Twips (1/20 pt). Letter page, the PDF's 54pt side margins.
+// Twips (1/20 pt). Letter page, the PDF's 54pt side margins (#120).
 const PT = 20
 const MARGIN = 54 * PT
-const CONTENT = (612 - 54 * 2) * PT  // 504pt: where the dates' tab stop sits
+const CONTENT = (612 - 54 * 2) * PT
 const FONT = 'Times New Roman'
 
 const BULLETS = 'bullets'
 
-// "Senior Engineer ⇥ 2020 – Present": left text, right text on the right margin.
+// "Senior Engineer ⇥ 2020 – Present": left text, right text on the right margin (#120).
 function twoCol(left: string, right: string, style: 'bold' | 'italic', opts: { before?: number; after?: number; keepNext?: boolean } = {}) {
   return new Paragraph({
     tabStops: [{ type: TabStopType.RIGHT, position: CONTENT }],
@@ -48,12 +49,22 @@ export function buildResumeDocx(resume: TailoredResume): Promise<Blob> {
     new Paragraph({ heading: HeadingLevel.TITLE, children: [new TextRun(resume.name || 'Resume')] }),
   ]
 
+  if (resume.headline?.trim()) {
+    body.push(new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: resume.headline.trim(), size: 23 })] }))
+  }
   const contact = contactParts(resume)
   if (contact.length) {
     body.push(new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun(contact.join('   |   '))] }))
   }
 
-  // Each section, in the order the user set (sections.ts).
+  // "Name | subtitle ⇥ link": a project or an open-source/award entry (#190).
+  // Name and link or dates, then the subtitle in italics under it, as in the PDF (#190).
+  const entryHeader = (name: string, subtitle: string | undefined, right: string | undefined, before: number, keepNext: boolean) => [
+    twoCol(name, right ?? '', 'bold', { before, keepNext: keepNext || !!subtitle }),
+    ...(subtitle ? [twoCol(subtitle, '', 'italic', { keepNext })] : []),
+  ]
+
+  // Each section, in the order the user set (sections.ts) (#118).
   const add: Record<StandardSection, () => void> = {
     summary: () => {
       if (resume.summary) body.push(heading('SUMMARY'), new Paragraph(resume.summary))
@@ -74,11 +85,7 @@ export function buildResumeDocx(resume: TailoredResume): Promise<Blob> {
       body.push(heading('PROJECTS'))
       resume.projects.forEach((proj, i) => {
         body.push(
-          new Paragraph({
-            spacing: { line: 13 * PT, lineRule: LineRuleType.AT_LEAST, before: i ? 5 * PT : 0 },
-            keepNext: !!proj.bullets?.length,
-            children: [new TextRun({ text: proj.name || '', bold: true, size: 21 })],
-          }),
+          ...entryHeader(proj.name || '', proj.tech, proj.link, i ? 5 * PT : 0, !!proj.bullets?.length),
           ...(proj.bullets ?? []).map(bullet),
         )
       })
@@ -87,10 +94,12 @@ export function buildResumeDocx(resume: TailoredResume): Promise<Blob> {
       if (!resume.education?.length) return
       body.push(heading('EDUCATION'))
       resume.education.forEach((edu, i) => {
+        const gpa = (edu.bullets ?? []).filter((b) => GPA_LINE.test(b.trim()))
+        const rest = (edu.bullets ?? []).filter((b) => !GPA_LINE.test(b.trim()))
         body.push(
           twoCol(edu.institution, edu.dates, 'bold', { before: i ? 5 * PT : 0, keepNext: true }),
-          twoCol(edu.degree, edu.location, 'italic', { after: 2 * PT, keepNext: !!edu.bullets?.length }),
-          ...(edu.bullets ?? []).map(bullet),
+          twoCol([edu.degree, ...gpa.map((g) => g.trim())].filter(Boolean).join('  |  '), edu.location, 'italic', { after: 2 * PT, keepNext: !!rest.length }),
+          ...rest.map(bullet),
         )
       })
     },
@@ -98,15 +107,33 @@ export function buildResumeDocx(resume: TailoredResume): Promise<Blob> {
       if (resume.certifications?.length) body.push(heading('CERTIFICATIONS'), ...resume.certifications.map(bullet))
     },
     skills: () => {
-      if (resume.skills) body.push(heading('SKILLS'), new Paragraph(resume.skills))
+      if (!resume.skills) return
+      body.push(heading('SKILLS'))
+      for (const group of resume.skills.split(/\n+/).map((l) => l.trim()).filter(Boolean)) {
+        const m = SKILL_GROUP.exec(group)
+        body.push(new Paragraph({
+          spacing: { after: 1 * PT },
+          children: m ? [new TextRun({ text: `${m[1].trim()}: `, bold: true }), new TextRun(m[2])] : [new TextRun(group)],
+        }))
+      }
     },
   }
   for (const s of orderedSections(resume)) {
     if (s.key !== 'other') add[s.key]()
     else {
-      // Other sections (publications, volunteer work…), as the resume had them
+      // Other sections (publications, volunteer work…), as the resume had them (#118)
       const section = resume.otherSections![s.index]
-      if (section.lines?.length) body.push(heading(String(section.heading ?? '').toUpperCase()), ...section.lines.map(bullet))
+      // Its entries, then any lines outside an entry (#190).
+      const entries = section.entries?.filter((e) => e?.name) ?? []
+      const lines = section.lines ?? []
+      if (!entries.length && !lines.length) continue
+      body.push(heading(String(section.heading ?? '').toUpperCase()))
+      entries.forEach((e, i) => body.push(
+        ...entryHeader(e.name, e.subtitle, e.dates || e.link, i ? 5 * PT : 0, !!e.bullets?.length || !!(e.dates && e.link)),
+        ...(e.dates && e.link ? [new Paragraph({ keepNext: !!e.bullets?.length, children: [new TextRun({ text: e.link, italics: true })] })] : []),
+        ...(e.bullets ?? []).map(bullet),
+      ))
+      body.push(...lines.map(bullet))
     }
   }
 
@@ -115,7 +142,7 @@ export function buildResumeDocx(resume: TailoredResume): Promise<Blob> {
     title: resume.name ? `${resume.name} – Resume` : 'Resume',
     styles: {
       default: {
-        // 10pt on 12pt lines, as the PDF sets its body text.
+        // 10pt on 12pt lines, as the PDF sets its body text (#120).
         document: {
           run: { font: FONT, size: 20 },
           paragraph: { spacing: { before: 0, after: 0, line: 12 * PT, lineRule: LineRuleType.AT_LEAST } },
@@ -137,7 +164,7 @@ export function buildResumeDocx(resume: TailoredResume): Promise<Blob> {
     numbering: {
       config: [{
         reference: BULLETS,
-        // The PDF's bullet sits 4pt in and its text hangs at 14pt.
+        // The PDF's bullet sits 4pt in and its text hangs at 14pt (#120).
         levels: [{
           level: 0, format: LevelFormat.BULLET, text: '•', alignment: AlignmentType.LEFT,
           style: { paragraph: { indent: { left: 14 * PT, hanging: 10 * PT } } },

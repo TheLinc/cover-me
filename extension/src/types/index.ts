@@ -4,7 +4,7 @@ export type AppMode = 'byok' | 'hosted'
 export interface Settings {
   provider: AIProvider
   apiKey: string
-  mode: AppMode // the default is resolveMode() in lib/storage.ts (#16)
+  mode: AppMode
 }
 
 export type { JobData } from '../content/scrapers/types.ts'
@@ -21,11 +21,14 @@ export interface CoverLetter {
   job: JobData
   letter: string
   createdAt: string
-  // The user's ID once the server holds this entry, 'other' when the ID is
-  // another account's (a previous user here), missing until then (#24).
+  // Which account holds this entry on the server: the user's ID once the
+  // server confirmed it, 'other' when the ID already belongs to another
+  // account (a previous user of this browser), missing while it exists only
+  // in this browser (#24).
   account?: string
-  // Made while signed in to this Pro account: History retries a failed save
-  // without asking. Entries from before the upgrade wait for Save (#24).
+  // Made while signed in to this Pro account, so it was always meant to be
+  // saved there. If that save didn't go through, History retries it without
+  // asking (entries from before the upgrade still wait for the user's Save) (#24).
   saveTo?: string
 }
 
@@ -36,7 +39,7 @@ export interface AuthSession {
   user: {
     id: string
     email: string
-    avatar_url?: string // Google sign-in only: the profile picture (#16)
+    avatar_url?: string
   }
 }
 
@@ -48,6 +51,8 @@ export interface ParsedResume {
   /** Every URL on the contact line, website first. Absent on a parse made before #129. */
   links?: string[]
   location?: string
+  /** The professional title under the name, verbatim (#190). */
+  headline?: string
   experience: ResumeExperience[]
   projects?: ResumeProject[]
   education: ResumeEducation[]
@@ -66,8 +71,10 @@ export interface ResumeData {
   filename: string
   updatedAt: string
   parsed?: ParsedResume
-  // The account this copy belongs to. Unset only when no signed-in account has
-  // had a resume in this browser, so the next sign-in may claim it (#16).
+  // The Cover Me account this copy belongs to. Set by a sign-in's sync, an
+  // upload while signed in, a sign-out, and inherited by a signed-out upload.
+  // Unset only when this browser has never had a signed-in account with a
+  // resume (BYOK or a new install), so the next sign-in may claim it (#16).
   accountId?: string
   // Uploaded while signed out after an account was here. A sign-in never
   // uploads it: on a shared browser it may be someone else's (#16).
@@ -76,12 +83,12 @@ export interface ResumeData {
   // The file itself is in the design file store, under this hash.
   design?: {
     hash: string
-    size: number // bytes; over 2 MB the account's dashboard uses the Cover Me layout (#131)
+    size: number
     status: 'checking' | 'done' | 'error'
-    checkedAt?: string // when the check started; a stale one shows "Try again" (#131)
+    checkedAt?: string
     check?: DesignCheck
     error?: string
-    uploaded?: boolean // in the Pro account, for the dashboard (#131)
+    uploaded?: boolean
     refused?: boolean // the account refused it: its resume text isn't the one checked here (#174)
   }
   // The layout picked on the resume page. Missing: "Your design" whenever its check passes (#131).
@@ -115,9 +122,13 @@ export interface ScrapeFailure {
 
 // A frame's content script answer: its bundled scrapers' result (the offline
 // fallback) plus the page for the scrape Edge Function, null when it can't be
-// taken (#3).
+// taken (src/content/snapshot.ts) (#3).
 export type FrameScrapeResponse = ScrapeResponse & { snapshot: PageSnapshot | null }
 
+// Service-worker-owned job records persisted to chrome.storage.local so an
+// in-flight or completed generation survives the popup being closed. The popup
+// derives its loading/done/error view from these; "cancel" just stops watching
+// (the worker keeps running and the generation still counts) (https://github.com/TheLinc/cover-me/commit/9f4ea308d03f2c9ca2a38a38b6e1aeb9b0305051).
 export interface CoverJob {
   id: string
   status: 'loading' | 'done' | 'error'
@@ -137,11 +148,12 @@ export interface TailorJob {
   error?: string
   errorCode?: 'RATE_LIMIT' | 'FAIR_USE'
   startedAt: number
-  // Shown under the popup spinner, like "Rewriting experience (2 of 3)…" (#91).
+  // Live progress label derived from the model's streaming output
+  // ("Rewriting experience (2 of 3)…") — shown under the popup spinner (https://github.com/TheLinc/cover-me/commit/d7700ca5cc272c75785b90971b63a366f3d35016).
   progress?: string
   // The finished resume's ID in tailored History, which the editor tab opens (#118).
   entryId?: string
-  // The one-off note the run used; the popup clears its note box once done (#175).
+  // The one-off note the run used; the popup clears its note box once done (#171).
   note?: string
 }
 
@@ -163,11 +175,14 @@ export interface TailoredHistoryEntry {
   job: JobData
   resume: TailoredResume
   createdAt: string
-  // The user's ID once the server holds this entry, 'other' when the ID is
-  // another account's (a previous user here), missing until then (#24).
+  // Which account holds this entry on the server: the user's ID once the
+  // server confirmed it, 'other' when the ID already belongs to another
+  // account (a previous user of this browser), missing while it exists only
+  // in this browser (#24).
   account?: string
-  // Made while signed in to this Pro account: History retries a failed save
-  // without asking. Entries from before the upgrade wait for Save (#24).
+  // Made while signed in to this Pro account, so it was always meant to be
+  // saved there. If that save didn't go through, History retries it without
+  // asking (entries from before the upgrade still wait for the user's Save) (#24).
   saveTo?: string
 }
 

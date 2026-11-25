@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { afterOAuth, hashReturn, oauthCancelled, oauthErrorDescription, oauthRedirectUrl, safeNext } from './auth-redirect'
+import { afterOAuth, hashReturn, hashTokens, linkDecision, oauthCancelled, oauthErrorDescription, oauthRedirectUrl, safeNext, sessionSwitch } from './auth-redirect'
 
 describe('oauthErrorDescription', () => {
   it('reads Supabase\'s reason from the query or the fragment', () => {
@@ -67,8 +67,82 @@ describe('hashReturn', () => {
     expect(hashReturn('#error=server_error&error_description=Database+error')).toEqual({ view: null, error: 'Database error' })
     expect(hashReturn('#error=server_error')).toEqual({ view: null, error: 'Something went wrong. Please try again.' })
   })
+  it('shows a reason with a literal percent sign without throwing', () => {
+    expect(hashReturn('#error=server_error&error_description=100%25+used')).toEqual({ view: null, error: '100% used' })
+  })
   it('is empty with no hash or no token', () => {
     expect(hashReturn('')).toEqual({ view: null, error: '' })
     expect(hashReturn('#type=signup')).toEqual({ view: null, error: '' })
+  })
+})
+
+describe('hashTokens', () => {
+  it('reads the token pair from an email link fragment', () => {
+    expect(hashTokens('#access_token=a&refresh_token=r&type=signup')).toEqual({ access_token: 'a', refresh_token: 'r' })
+  })
+  it('reads a recovery link', () => {
+    expect(hashTokens('#access_token=a&refresh_token=r&type=recovery')).toEqual({ access_token: 'a', refresh_token: 'r' })
+  })
+  it('is null for a link type /auth has no view for', () => {
+    expect(hashTokens('#access_token=a&refresh_token=r')).toBeNull()
+    expect(hashTokens('#access_token=a&refresh_token=r&type=magiclink')).toBeNull()
+  })
+  it('is null without both tokens or with an error', () => {
+    expect(hashTokens('#access_token=a&type=signup')).toBeNull()
+    expect(hashTokens('#error=access_denied&access_token=a&refresh_token=r&type=signup')).toBeNull()
+    expect(hashTokens('')).toBeNull()
+  })
+})
+
+describe('sessionSwitch', () => {
+  it('signs in when nobody is signed in', () => {
+    expect(sessionSwitch('user-b', undefined, false)).toBe('set')
+  })
+  it('signs in again when the link is for the signed-in account', () => {
+    expect(sessionSwitch('user-a', 'user-a', true)).toBe('set')
+  })
+  it('asks before replacing a different signed-in account', () => {
+    expect(sessionSwitch('user-b', 'user-a', true)).toBe('ask')
+  })
+  it('asks when the link\'s account can\'t be read', () => {
+    expect(sessionSwitch(undefined, 'user-a', true)).toBe('ask')
+  })
+  it("asks when a session is stored but its user can't be read", () => {
+    expect(sessionSwitch('user-b', undefined, true)).toBe('ask')
+  })
+})
+
+describe('linkDecision', () => {
+  const tokens = { access_token: 'token-b', refresh_token: 'refresh-b' }
+  const a = { id: 'user-a', email: 'a@example.test' }
+  const b = { id: 'user-b', email: 'b@example.test' }
+  const auth = (current: typeof a | null, session: typeof a | null = null) => ({
+    getUser: async (jwt?: string) => ({ data: { user: jwt ? b : current } }),
+    getSession: async () => ({ data: { session: session && { user: session } } }),
+  })
+
+  it('signs in when nobody is signed in', async () => {
+    expect(await linkDecision(auth(null), tokens, () => false)).toEqual({ action: 'set' })
+  })
+  it('asks with both emails when another account is signed in', async () => {
+    expect(await linkDecision(auth(a), tokens, () => true)).toEqual({ action: 'ask', email: 'b@example.test', current: 'a@example.test' })
+  })
+  it('falls back to the stored session when the user lookup fails', async () => {
+    expect(await linkDecision(auth(null, a), tokens, () => false)).toEqual({ action: 'ask', email: 'b@example.test', current: 'a@example.test' })
+  })
+  it("asks when a session cookie is stored but no user can be read", async () => {
+    expect(await linkDecision(auth(null), tokens, () => true)).toEqual({ action: 'ask', email: 'b@example.test', current: '' })
+  })
+  it('reads the cookie only after the lookups finish', async () => {
+    let stored = true
+    const slow = {
+      getUser: async (jwt?: string) => { stored = false; return { data: { user: jwt ? b : null } } },
+      getSession: async () => ({ data: { session: null } }),
+    }
+    expect(await linkDecision(slow, tokens, () => stored)).toEqual({ action: 'set' })
+  })
+  it('fails when a lookup throws', async () => {
+    const broken = { getUser: async () => { throw new Error('bad response') }, getSession: async () => ({ data: { session: null } }) }
+    expect(await linkDecision(broken, tokens, () => true)).toEqual({ action: 'fail' })
   })
 })

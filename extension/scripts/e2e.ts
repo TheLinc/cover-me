@@ -2,6 +2,7 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { chromium, type Page } from 'playwright'
+import type { TailoredHistoryEntry } from '../src/types'
 
 export async function launchExtension(opts: { dist?: string; headless?: boolean } = {}) {
   const dist = resolve(opts.dist ?? 'dist')
@@ -37,4 +38,10 @@ export async function generateFromPastedJob(popup: Page, job: { title: string; c
   await popup.getByPlaceholder('e.g. Acme Corp (optional)').fill(job.company)
   await popup.getByPlaceholder('Paste the full job description here…').fill(job.description)
   await popup.getByRole('button', { name: 'Generate Cover Letter' }).click()
+}
+
+export async function openEditor(page: Page, popupUrl: string, entry: TailoredHistoryEntry) {
+  await page.goto(popupUrl)
+  await page.evaluate((e) => chrome.storage.local.set({ tailoredHistory: [e] }), entry)
+  await page.goto(popupUrl.replace('popup/index.html', `editor/index.html?id=${encodeURIComponent(entry.id)}`))
 }

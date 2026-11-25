@@ -17,7 +17,7 @@ import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { ParsedResume, TailoredResume } from '../src/types'
 import { buildPrompt as buildLetterPrompt, CLOSE_PATTERNS, type LetterVariation } from '../src/lib/ai/index'
-import { buildPrompt as buildTailorPrompt, assembleTailored } from '../src/lib/ai/resume-tailor'
+import { buildPrompt as buildTailorPrompt, assembleTailored, bulletBudget } from '../src/lib/ai/resume-tailor'
 import { buildParsePrompt, parseParsedJson } from '../src/lib/ai/resume-parse'
 import { lintLetter, buildLintRetryMessage, letterLength } from '../src/lib/ai/letter-lint'
 import { buildAnswerPrompt, finishAnswer } from '../src/lib/ai/answer'
@@ -26,9 +26,9 @@ import { CASES, type EvalCase } from './fixtures'
 import { ANSWER_CASES } from './answer-cases'
 import { checkAnswer, checkFixture, checkLetter, checkParse, checkTailored, type CheckResult } from './checks'
 import { buildResumeJudgePrompt, DIMENSIONS, FAIL_AT, parseJudgment, type Dimension, type ResumeJudgment } from './judge'
-import { buildClaimCheckPrompt, buildLineCheckPrompt, parseClaimVerdicts, parseLineFlags, type LineRepair } from '../src/lib/ai/resume-grounding'
+import { buildClaimCheckPrompt, parseClaimVerdicts, type LineRepair } from '../src/lib/ai/resume-grounding'
 import { CLAIM_CHECK_MIN, CLAIM_PAIRS } from './claim-pairs'
-import { LINE_CHECK_MIN, LINE_ROLES } from './line-pairs'
+import { checkLines } from './line-check'
 import { call, claudeIsolation, planLimitHit, pool, usage } from './model'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
@@ -67,12 +67,14 @@ const HOOKS = ['Achievement-first', 'Bold specific claim']
 // checks instead of on every PR (https://github.com/TheLinc/cover-me/commit/7e09bfc).
 const judgeFloor = (r: { failures: string[]; warnings: string[] }) => (flag('baseline') ? r.warnings : r.failures)
 
-// One case per field family, plus the injection, long-posting and trim cases (#251).
+// One case per field family, plus the injection, long-posting and trim cases (#251) and the
+// non-tech headline, grouped skills and entries case (#190).
 const QUICK_CASES = [
   'tech-prompt-injection', 'new-grad-data-analyst', 'nurse-missing-certs',
   'sales-ae-midmarket-to-enterprise', 'uk-finance-assistant', 'teacher-to-instructional-designer',
   'welder-structural-to-pipe', 'line-cook-to-sous-chef', 'veteran-to-distribution-ops',
   'long-new-grad-data-analyst', 'long-nurse-missing-certs', 'new-grad-trim-long-project',
+  'nurse-headline-grouped-skills',
 ]
 
 const cases = CASES.filter((c) =>
@@ -491,7 +493,7 @@ async function tailorOnce(c: EvalCase, run: number): Promise<TailorRun> {
         prompt.startsWith('SKILL CLAIM CHECK') ? 'skill check' : prompt.startsWith('RESUME ACCURACY CHECK') ? 'line check' : 'line rewrite'
       const ask = (prompt: string) => call([{ role: 'user', content: prompt }], { model: MODEL, maxTokens: 2000, label: stepOf(prompt) })
       const onLineRepair = (repair: LineRepair) => (out.lines = repair)
-      const tailored = await assembleTailored(input, raw, { jobDescription: c.job.description, jobTitle: c.job.title, ask, onLineRepair, exactBulletCounts: !c.mode }, (removed) => (guarded = removed))
+      const tailored = await assembleTailored(input, raw, { jobDescription: c.job.description, jobTitle: c.job.title, ask, onLineRepair, exactBulletCounts: !c.mode, maxBullets: c.mode === 'trim' ? bulletBudget(input) : undefined }, (removed) => (guarded = removed))
       out.tailored = tailored
       out.guardRemoved = guarded
       out.tailor = checkTailored(tailored, c, input)
@@ -703,36 +705,9 @@ async function claimChecker(): Promise<{ correct: number; total: number }> {
   return { correct, total: CLAIM_PAIRS.length }
 }
 
-// One role per call, as production sends them (https://github.com/TheLinc/cover-me/commit/48b8913).
 async function lineChecker(): Promise<{ correct: number; total: number }> {
   section(`Line checker (model: ${MODEL})`)
-  let correct = 0
-  let total = 0
-  const result: CheckResult = { failures: [], warnings: [] }
-  const missed: string[] = []
-  const wrong: string[] = []
-  await pool(LINE_ROLES, CONCURRENCY, async (r) => {
-    const original = { experience: [{ title: r.title, company: r.company, bullets: r.original }] }
-    const tailored = { summary: '', experience: [{ title: r.title, company: r.company, bullets: r.rewritten }] }
-    const flags = parseLineFlags(await call([{ role: 'user', content: buildLineCheckPrompt(original, tailored) }], { model: MODEL, maxTokens: 2000 }))
-    if (!flags) {
-      result.failures.push(`${r.id}: check reply could not be read`)
-      return
-    }
-    for (const k of r.flag) {
-      total++
-      if (flags.has(`e0b${k}`)) correct++
-      else missed.push(`${r.id}: "${r.rewritten[k]}"`)
-    }
-    for (const k of r.ok) {
-      total++
-      if (!flags.has(`e0b${k}`)) correct++
-      else wrong.push(`${r.id}: "${r.rewritten[k]}" (${flags.get(`e0b${k}`)})`)
-    }
-  })
-  if (missed.length) result.warnings.push(`inflation missed: ${missed.join(' | ')}`)
-  if (wrong.length) result.warnings.push(`faithful lines flagged: ${wrong.join(' | ')}`)
-  if (total && correct / total < LINE_CHECK_MIN) result.failures.push(`line check accuracy ${correct}/${total} is below ${LINE_CHECK_MIN * 100}%`)
+  const { correct, total, result } = await checkLines((prompt) => call([{ role: 'user', content: prompt }], { model: MODEL, maxTokens: 2000 }), CONCURRENCY)
   record(`line checker: ${correct}/${total} correct`, result)
   return { correct, total }
 }

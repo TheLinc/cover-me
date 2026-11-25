@@ -13,17 +13,21 @@ export interface ParsedResume {
   links?: string[]
   location?: string
   experience: Array<{ title: string; company: string; location: string; dates: string; bullets: string[] }>
-  projects?: Array<{ name: string; bullets: string[] }>
+  projects?: Array<{ name: string; link?: string; tech?: string; bullets: string[] }>
   education: Array<{ institution: string; degree: string; location: string; dates: string; bullets: string[] }>
   skills?: string
   certifications?: string[]
   /** Always an array on a parse made since #54; a cached parse without it predates them and is parsed again. */
-  otherSections?: Array<{ heading: string; lines: string[] }>
+  otherSections?: Array<{ heading: string; lines: string[]; entries?: Array<{ name: string; subtitle?: string; link?: string; dates?: string; bullets: string[] }> }>
   /** The uploaded resume's section order (#165), carried to each tailored resume. Always an array on a parse made since then; a cached parse without it is parsed again. */
   sectionOrder?: Array<'summary' | 'experience' | 'projects' | 'education' | 'certifications' | 'skills' | 'other'>
+  headline?: string
   /** Set on every parse made since URLs under a section stay in their entry (#238); a cached parse without it is parsed again. */
   linksKept?: true
 }
+
+// Mirrors extension/src/lib/ai/resume-parse.ts: one cap for own-key and signed-in users (#190).
+export const MAX_RESUME_CHARS = 20000
 
 function buildParsePrompt(resumeText: string): string {
   return `You are a resume parser. Convert the resume text below into structured JSON.
@@ -36,10 +40,11 @@ RULES:
    - "certifications": only if the resume has a certifications, licenses, or credentials section
 3. Recognize experience headers: Work Experience, Professional Experience, Employment, Career History. A section of jobs, each a position held at an employer, is experience under any heading (Clinical Experience, Work History, Relevant Experience)
 4. Recognize education headers: Education, Academic Background, Degrees. A section of schooling, each a degree, diploma or apprenticeship at a school or training provider, is education under any heading (Training, Academic Training)
-5. "otherSections": every other section goes here, in the order it appears: publications, volunteer work, clinical rotations or placements, awards, languages, memberships, interests, references, and anything else. Copy the heading exactly as written and each line or bullet verbatim, without its bullet marker. Volunteer roles and student clinical rotations, placements, practicums or clerkships go here even when they are laid out like jobs, with titles, organizations and dates; a paid position stays in experience, and so does student teaching, which schools read as teaching experience. Never put contact details or a summary, profile or objective here; the summary is not part of the output. A list of tools, software or programming languages belongs in "skills". Use [] when the resume has no other sections
-6. "sectionOrder": the resume's sections from top to bottom, one entry each: "experience", "projects", "education", "certifications" or "skills" for those sections, and "other" for each entry of "otherSections", where it sits. Leave out the contact details and the summary
-7. Return ONLY valid JSON — no explanation, no markdown fences, no text before or after
-
+5. "headline": the professional title line printed directly under the name, if any ("Registered Nurse", "Applied AI Engineer"), copied verbatim; "" when the resume has none. Never a job title taken from the experience section
+6. "projects": copy each project's URL into "link" and a line listing its technologies into "tech", verbatim, instead of putting them in the name or the bullets; "" when absent
+7. "otherSections": every other section goes here, in the order it appears: publications, volunteer work, clinical rotations or placements, awards, languages, memberships, interests, references, and anything else. Copy the heading exactly as written and each line or bullet verbatim, without its bullet marker. Volunteer roles and student clinical rotations, placements, practicums or clerkships go here even when they are laid out like jobs, with titles, organizations and dates; a paid position stays in experience, and so does student teaching, which schools read as teaching experience. Never put contact details or a summary, profile or objective here; the summary is not part of the output. A list of tools, software or programming languages belongs in "skills". Use [] when the resume has no other sections. When a section is made of entries, each a name with lines such as a role, placing, issuer, date or URL and then bullets (awards and honors, publications or presentations with details, competitions, open-source packages, hackathons), give it "entries" instead of "lines": the name, the role or placing line as "subtitle", any URL as "link", any date as "dates", and the bullets verbatim. Lines that are not part of an entry go in "lines"
+8. "sectionOrder": the resume's sections from top to bottom, one entry each: "experience", "projects", "education", "certifications" or "skills" for those sections, and "other" for each entry of "otherSections", where it sits. Leave out the contact details and the summary
+9. Return ONLY valid JSON — no explanation, no markdown fences, no text before or after
 JSON structure (omit "projects", "skills", "certifications" entirely if those sections do not exist in the resume):
 {
   "name": "Full Name",
@@ -47,19 +52,22 @@ JSON structure (omit "projects", "skills", "certifications" entirely if those se
   "phone": "phone number or empty string if absent",
   "location": "the candidate's own city or region from the contact details, or empty string if absent",
   "website": "the first URL in the contact details, or empty string if absent",
-  "links": ["every URL in the contact details at the top (website, LinkedIn, GitHub, portfolio), copied verbatim in the order written. A URL written under a project, job or section stays in that entry's text, verbatim, and never goes here"],
+  "headline": "professional title line under the name, or empty string if absent",
+  "links": ["every URL in the contact details at the top (website, LinkedIn, GitHub, portfolio), copied verbatim in the order written. A URL written under a project goes in that project's \"link\"; one under a job or section stays in that entry's text, verbatim; neither goes here"],
   "experience": [
     {
       "title": "the job title as written",
       "company": "the employer's name only, as written",
       "location": "the job's city and region, kept out of title and company",
-      "dates": "Month Year – Month Year",
+      "dates": "the dates as written, in the resume's own format",
       "bullets": ["bullet text copied verbatim"]
     }
   ],
   "projects": [
     {
-      "name": "Project Name, copied with any URL written on its line",
+      "name": "Project Name",
+      "link": "project URL, or empty string",
+      "tech": "technologies line copied verbatim, or empty string",
       "bullets": ["bullet text copied verbatim"]
     }
   ],
@@ -68,23 +76,24 @@ JSON structure (omit "projects", "skills", "certifications" entirely if those se
       "institution": "the school's name only, as written",
       "degree": "the whole qualification line as written, with its major, subjects, grades and honours",
       "location": "the school's city and region, kept out of institution and degree",
-      "dates": "Year – Year",
+      "dates": "the dates as written, in the resume's own format",
       "bullets": ["achievement bullets copied verbatim"]
     }
   ],
-  "skills": "skills string exactly as written in the resume",
+  "skills": "skills string exactly as written in the resume; when the skills are in labelled groups (Languages: …), one group per line, lines separated by \\n",
   "certifications": ["each certification or license line copied verbatim"],
   "otherSections": [
     {
       "heading": "Section heading exactly as written",
-      "lines": ["each line copied verbatim"]
+      "lines": ["each line copied verbatim"],
+      "entries": [{ "name": "Entry name", "subtitle": "role or placing line", "link": "URL or empty string", "dates": "date or empty string", "bullets": ["bullet copied verbatim"] }]
     }
   ],
   "sectionOrder": ["certifications", "experience", "other", "education", "skills"]
 }
 
 RESUME:
-${resumeText.slice(0, 12000)}`
+${resumeText.slice(0, MAX_RESUME_CHARS)}`
 }
 
 export function isValidParsedResume(r: unknown): r is ParsedResume {
@@ -102,12 +111,21 @@ export function isValidParsedResume(r: unknown): r is ParsedResume {
 // The model's otherSections, kept only where each entry is a heading with
 // verbatim lines, and always an array: the tailor treats a cached parse
 // without one as made before extra sections were kept, and parses again.
-export function withOtherSections<T extends object>(parsed: T): T & { otherSections: Array<{ heading: string; lines: string[] }> } {
+export function withOtherSections<T extends object>(parsed: T): T & { otherSections: Array<{ heading: string; lines: string[]; entries?: Array<{ name: string; subtitle?: string; link?: string; dates?: string; bullets: string[] }> }> } {
   const raw = (parsed as { otherSections?: unknown }).otherSections
+  const str = (v: unknown) => (typeof v === 'string' ? v.trim() : '')
+  const strings = (v: unknown) => (Array.isArray(v) ? v.filter((l: unknown): l is string => typeof l === 'string' && l.trim().length > 0) : [])
   const otherSections = (Array.isArray(raw) ? raw : []).flatMap((s) => {
-    const heading = typeof s?.heading === 'string' ? s.heading.trim() : ''
-    const lines = Array.isArray(s?.lines) ? s.lines.filter((l: unknown): l is string => typeof l === 'string' && l.trim().length > 0) : []
-    return heading && lines.length ? [{ heading, lines }] : []
+    const heading = str(s?.heading)
+    const lines = strings(s?.lines)
+    const entries = (Array.isArray(s?.entries) ? s.entries : []).flatMap((e: Record<string, unknown> | null) => {
+      const name = str(e?.name)
+      if (!name) return []
+      const entry: { name: string; subtitle?: string; link?: string; dates?: string; bullets: string[] } = { name, bullets: strings(e?.bullets) }
+      for (const key of ['subtitle', 'link', 'dates'] as const) if (str(e?.[key])) entry[key] = str(e?.[key])
+      return [entry]
+    })
+    return heading && (lines.length || entries.length) ? [{ heading, lines, ...(entries.length ? { entries } : {}) }] : []
   })
   return { ...parsed, otherSections }
 }
@@ -126,11 +144,11 @@ const squashed = (s: unknown) => (typeof s === 'string' ? s.toLowerCase().replac
 function entryStrings(parsed: ParsedResume): string[] {
   const entries = [
     parsed.experience.map((e) => [e?.company, e?.bullets]),
-    (parsed.projects ?? []).map((p) => [p?.name, p?.bullets]),
+    (parsed.projects ?? []).map((p) => [p?.name, p?.link, p?.tech, p?.bullets]),
     parsed.education.map((e) => [e?.institution, e?.degree, e?.bullets]),
     parsed.certifications ?? [],
     parsed.skills,
-    (parsed.otherSections ?? []).map((o) => o?.lines),
+    (parsed.otherSections ?? []).map((o) => [o?.lines, (o?.entries ?? []).map((e) => [e?.name, e?.link, e?.bullets])]),
   ]
   return entries.flat(3).map(squashed).filter((s) => s.length >= 3)
 }
@@ -182,6 +200,26 @@ export function withLinks<T extends ParsedResume>(parsed: T, resumeText?: string
   }
   return links.length ? { ...parsed, website: links.includes(website) ? website : links[0]!, links } : parsed
 }
+// The headline and each project's link and tech line, kept only when the
+// model found them: an empty string would print an empty line or a stray "|" (#190).
+export function withDetails<T extends object>(parsed: T): T {
+  const out = { ...parsed } as Record<string, unknown>
+  const headline = typeof out.headline === 'string' ? out.headline.trim() : ''
+  if (headline) out.headline = headline
+  else delete out.headline
+  if (Array.isArray(out.projects)) {
+    out.projects = out.projects.map((p: Record<string, unknown>) => {
+      const proj = { ...p }
+      for (const key of ['link', 'tech']) {
+        const v = typeof proj[key] === 'string' ? (proj[key] as string).trim() : ''
+        if (v) proj[key] = v
+        else delete proj[key]
+      }
+      return proj
+    })
+  }
+  return out as T
+}
 
 function sectionsPresent(parsed: ParsedResume): Record<string, boolean> {
   return {
@@ -210,7 +248,7 @@ export function sectionOrderFromText(parsed: ParsedResume, resumeText: string): 
     { key: 'certifications' as const, strings: strings(parsed.certifications ?? []) },
     { key: 'skills' as const, strings: strings(typeof parsed.skills === 'string' ? parsed.skills.split(/[,;•|\n]/) : []) },
   ].filter((s) => present[s.key])
-  for (const o of parsed.otherSections ?? []) sections.push({ key: 'other', strings: strings([o.heading, o.lines]) })
+  for (const o of parsed.otherSections ?? []) sections.push({ key: 'other', strings: strings([o.heading, o.lines, (o.entries ?? []).map((e) => [e?.name, e?.subtitle, e?.bullets])]) })
 
   // A string inside the line counts its length; a line inside a longer string
   // (a bullet the text wraps) counts the line's (#165).
@@ -257,7 +295,7 @@ export function withSectionOrder<T extends ParsedResume>(parsed: T, resumeText?:
 // A model's parse, valid, made ready to store and tailor from. linksKept
 // marks it as made since a URL under a section stays in its entry (#238).
 function normalizedParse(parsed: ParsedResume, resumeText?: string): ParsedResume {
-  return { ...withSectionOrder(withLinks(withOtherSections(parsed), resumeText), resumeText), linksKept: true }
+  return { ...withDetails(withSectionOrder(withLinks(withOtherSections(parsed), resumeText), resumeText)), linksKept: true }
 }
 
 type OrderedParse = ParsedResume & Required<Pick<ParsedResume, 'otherSections' | 'sectionOrder'>>
@@ -316,6 +354,8 @@ export function withChosenOrder<T extends ParsedResume>(parsed: T, order: unknow
 }
 // ── End mirrored parse normalizers ── #149
 
+export class ParseReplyError extends Error {}
+
 export async function parseResumeStructure(resumeText: string, apiKey: string): Promise<ParsedResume> {
   const res = await fetch(ANTHROPIC_MESSAGES_URL, {
     method: 'POST',
@@ -340,8 +380,8 @@ export async function parseResumeStructure(resumeText: string, apiKey: string): 
   try {
     parsed = JSON.parse(cleaned)
   } catch {
-    throw new Error('Resume parse returned invalid JSON')
+    throw new ParseReplyError('Resume parse returned invalid JSON')
   }
-  if (!isValidParsedResume(parsed)) throw new Error('Resume parse returned incomplete data')
+  if (!isValidParsedResume(parsed)) throw new ParseReplyError('Resume parse returned incomplete data')
   return normalizedParse(parsed, resumeText)
 }

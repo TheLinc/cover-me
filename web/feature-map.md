@@ -6,7 +6,7 @@ Site features under the names a visitor would use, with the route and how to rea
 
 - Guides index: `/guides`. Nav, Guides. A card for every entry in `lib/guides.ts`, newest update first.
 - Guide page: `/guides/<slug>`. From a card on the index. The layout is `components/site/GuideArticle.tsx`.
-- Tool reviews: `/guides/aiapply-review`, `/guides/jobscan-review`, `/guides/teal-review`, `/guides/jobright-review` (with a Jobright vs Simplify section). The old `/guides/cover-me-vs-aiapply`, `-jobscan` and `-teal` addresses redirect here with a 308 (`next.config.ts`).
+- Tool reviews: `/guides/aiapply-review`, `/guides/jobscan-review`, `/guides/teal-review`, `/guides/jobright-review` (with a Jobright vs Simplify section), `/guides/careerflow-review` (with a Careerflow vs Teal section). The old `/guides/cover-me-vs-aiapply`, `-jobscan` and `-teal` addresses redirect here with a 308 (`next.config.ts`).
 - Comparisons: `/guides/cover-me-vs-chatgpt`, `/guides/cover-me-vs-rezi`.
 - ChatGPT prompt guides: `/guides/chatgpt-resume-prompts`, `/guides/chatgpt-cover-letter-prompts`. Linked from the footer, the tailoring guide, the ATS score guide and the ATS resume checker.
 - Application questions guide: `/guides/how-to-answer-job-application-questions`. Five common written questions with a sample answer each, and a section on drafting answers with the right-click menu. Linked from the tailoring guide and the ChatGPT cover letter prompts guide.
@@ -19,6 +19,8 @@ Site features under the names a visitor would use, with the route and how to rea
 ## Home
 
 - Homepage: `/`. The hero's install button, the "How it works" story with its bottom dock, Pricing (`#pricing`) and the closing section (`#get-started`).
+- Hero line: the small line under the hero's install button, with the free plan's limits (`components/landing/Hero.tsx`).
+- Privacy panel: the dark "Your resume stays yours" band above Pricing, with its own key / account switch and the "For developers" note (`components/landing/PrivacyBand.tsx`, facts in `privacy-modes.ts`).
 - Job board pages: `/for/<board>` (such as `/for/linkedin`). Linked from the guides and from search. One page per board in `lib/boards.ts`.
 
 ## Install from a phone

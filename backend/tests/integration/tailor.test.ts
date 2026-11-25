@@ -12,6 +12,17 @@ type NdjsonEvent =
   | { type: 'done'; resume: Record<string, unknown>; savedId?: string }
   | { type: 'error'; error: string }
 
+function sse(text: string): string {
+  const events = [
+    { type: 'message_start', message: { id: 'msg_mock', type: 'message', role: 'assistant', content: [] } },
+    { type: 'content_block_start', index: 0, content_block: { type: 'text', text: '' } },
+    { type: 'content_block_delta', index: 0, delta: { type: 'text_delta', text } },
+    { type: 'content_block_stop', index: 0 },
+    { type: 'message_stop' },
+  ]
+  return events.map((e) => `event: ${e.type}\ndata: ${JSON.stringify(e)}\n\n`).join('')
+}
+
 async function readNdjson(res: Response): Promise<NdjsonEvent[]> {
   const text = await res.text()
   return text.split('\n').filter(Boolean).map((line) => JSON.parse(line))
@@ -453,6 +464,113 @@ describe('tailor', () => {
     expect(await quotaUsedToday(user.id)).toBe(5)
   })
 
+  it('rejects a job description that is not text before charging or calling Claude', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    const res = await callFunction('tailor', {
+      token: user.token, body: { job: { ...JOB, description: [JOB.description] } }, headers: { Accept: 'application/x-ndjson' },
+    })
+    expect(res.status).toBe(400)
+    expect(await quotaUsedToday(user.id)).toBe(0)
+    expect(await mockClaude.requests()).toHaveLength(0)
+  })
+
+  it('keeps the charge when the streamed reply fails after its text went out', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    await mockClaude.replyNext(sse('{"summary": "Software engineer'))
+    const res = await callFunction('tailor', { token: user.token, body: { job: JOB }, headers: { Accept: 'application/x-ndjson' } })
+    const events = await readNdjson(res)
+    expect(events.map((e) => e.type)).toEqual(['start', 'delta', 'error'])
+    expect(await quotaUsedToday(user.id)).toBe(1)
+  })
+
+  it('rejects an oversized previous resume or body before charging', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    const previous = { summary: 'x'.repeat(50_001), experience: [] }
+    expect((await callFunction('tailor', { token: user.token, body: { job: JOB, previous } })).status).toBe(400)
+    expect((await callFunction('tailor', { token: user.token, body: { job: JOB, supplemental: 'x'.repeat(1_000_001) } })).status).toBe(413)
+    expect(await quotaUsedToday(user.id)).toBe(0)
+  })
+
+  it('keeps the charge when the stream is declined with no text', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    const events = [
+      { type: 'message_start', message: { id: 'msg_mock', type: 'message', role: 'assistant', content: [] } },
+      { type: 'message_delta', delta: { stop_reason: 'refusal' } },
+      { type: 'message_stop' },
+    ]
+    await mockClaude.replyNext(events.map((e) => `event: ${e.type}
+data: ${JSON.stringify(e)}
+
+`).join(''))
+    const res = await callFunction('tailor', { token: user.token, body: { job: JOB }, headers: { Accept: 'application/x-ndjson' } })
+    expect((await readNdjson(res)).at(-1)?.type).toBe('error')
+    expect(await quotaUsedToday(user.id)).toBe(1)
+  })
+
+  it('refunds a stream that errors before any text', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    const events = [
+      { type: 'message_start', message: { id: 'msg_mock', type: 'message', role: 'assistant', content: [] } },
+      { type: 'error', error: { type: 'overloaded_error', message: 'Overloaded' } },
+    ]
+    await mockClaude.replyNext(events.map((e) => `event: ${e.type}
+data: ${JSON.stringify(e)}
+
+`).join(''))
+    const res = await callFunction('tailor', { token: user.token, body: { job: JOB }, headers: { Accept: 'application/x-ndjson' } })
+    expect((await readNdjson(res)).at(-1)?.type).toBe('error')
+    expect(await quotaUsedToday(user.id)).toBe(0)
+  })
+
+  it('refunds a stream that answers 200 with no message in it', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    await mockClaude.replyNext('')
+    const res = await callFunction('tailor', { token: user.token, body: { job: JOB }, headers: { Accept: 'application/x-ndjson' } })
+    expect((await readNdjson(res)).at(-1)?.type).toBe('error')
+    expect(await quotaUsedToday(user.id)).toBe(0)
+  })
+
+  it('keeps the charge when the resume parse reply is not a resume', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    await clearParsedResume(user.id)
+    await mockClaude.replyNext(JSON.stringify({ type: 'message', role: 'assistant', content: [{ type: 'text', text: 'Sorry, I cannot help.' }], stop_reason: 'end_turn' }))
+    const res = await callFunction('tailor', { token: user.token, body: { job: JOB } })
+    expect(res.status).toBe(502)
+    expect(await quotaUsedToday(user.id)).toBe(1)
+  })
+
+  it('reads no more of the posting than the prompt does', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    const word = (n: number) => {
+      let w = 'Q'
+      for (let k = 0; k < 4; k++, n = Math.floor(n / 26)) w += String.fromCharCode(97 + (n % 26))
+      return w
+    }
+    const posting = (n: number) => {
+      let out = 'Platform Engineer. '
+      for (let i = 0; out.length < n; i++) out += `and ${word(i)} `
+      return out.slice(0, n)
+    }
+    const timed = async (description: string) => {
+      const started = Date.now()
+      const res = await callFunction('tailor', { token: user!.token, body: { job: { ...JOB, description } } })
+      expect(res.status).toBe(200)
+      await res.json()
+      return Date.now() - started
+    }
+    const capped = await timed(posting(15_000))
+    const long = await timed(posting(160_000))
+    expect(long).toBeLessThan(capped + 1_500)
+  })
+
   // A dropped connection to Anthropic (not an HTTP error) must refund too (#10).
   it('refunds when the connection to Claude drops', async () => {
     user = await createUser()
@@ -512,5 +630,86 @@ describe('tailor', () => {
     await uploadResume(user)
     const body = await (await callFunction('tailor', { token: user.token, body: { job: JOB, localId: randomUUID() } })).json()
     expect(body.savedId).toBeUndefined()
+  })
+})
+
+// Long master resumes (#190): the trim budget, measured results, the headline
+// guard, and the new fields folded for extensions that don't ask for them.
+describe('long master resumes', () => {
+  let user: TestUser | undefined
+  const RESULT = 'Cut nightly export run time from 40 to 25 minutes by batching writes'
+  const role = (title: string, company: string, n: number, first?: string) => ({
+    title, company, location: 'Remote', dates: '2020 – 2022',
+    bullets: [...(first ? [first] : []), ...Array.from({ length: n - (first ? 1 : 0) }, (_, i) => `${company} bullet ${i + 1} about services`)],
+  })
+  const long = {
+    ...MOCK_PARSED_RESUME,
+    headline: 'Backend Engineer',
+    experience: [role('Backend Engineer', 'Initech', 15, RESULT), role('Backend Engineer', 'Globex', 15), role('Developer', 'Umbrella', 15)],
+    projects: [{ name: 'tidewatch', link: 'github.com/x/tidewatch', tech: 'Go, SQLite', bullets: ['Uptime monitor', 'Slack alerts'] }],
+    otherSections: [{ heading: 'Open Source', lines: ['Speaker, GopherCon 2024'], entries: [{ name: 'pg-outbox', subtitle: 'Creator', link: 'github.com/x/pg-outbox', bullets: ['Outbox library for Postgres'] }, { name: '', subtitle: 'Maintainer', bullets: ['An entry with no name'] }] }],
+    sectionOrder: ['summary', 'experience', 'projects', 'other', 'education', 'skills'],
+    linksKept: true,
+  }
+  const NEW_FIELDS = { 'X-Resume-Fields': '2' }
+  // The model's ranking: 9 rewritten bullets for the latest role, its measured result not among them (#190).
+  const ranked = { ...MOCK_TAILOR_DELTA, headline: 'Site Reliability Engineer', experience: [{ bullets: Array.from({ length: 9 }, (_, i) => `Ranked bullet ${i + 1} about services`) }] }
+  const tailor = async (body: Record<string, unknown>, headers: Record<string, string> = NEW_FIELDS) => {
+    await mockClaude.tailorDelta(ranked)
+    const res = await callFunction('tailor', { token: user!.token, headers, body: { job: JOB, ...body } })
+    expect(res.status).toBe(200)
+    return (await res.json()).resume
+  }
+
+  beforeEach(async () => {
+    await mockClaude.reset()
+    user = await createUser()
+    await uploadResume(user)
+    await cacheParsedResume(user.id, long)
+  })
+  afterEach(async () => {
+    await deleteUser(user)
+    user = undefined
+  })
+
+  it('with trim off, every bullet stays: a long resume is never cut on its own', async () => {
+    const resume = await tailor({ trim: false })
+    expect(resume.experience.map((e: { bullets: string[] }) => e.bullets.length)).toEqual([15, 15, 15])
+  })
+
+  it('trim cuts to the budget and brings a dropped measured result back first', async () => {
+    const resume = await tailor({ trim: true })
+    expect(resume.experience.map((e: { bullets: string[] }) => e.bullets.length)).toEqual([6, 4, 4])
+    expect(resume.experience[0].bullets[0]).toBe(RESULT)
+    expect(resume.projects[0].bullets).toHaveLength(2)
+  })
+
+  it('Regenerate in trim mode is held to the same budget', async () => {
+    const first = await tailor({ trim: true })
+    const again = await tailor({ trim: true, previous: first })
+    expect(again.experience.map((e: { bullets: string[] }) => e.bullets.length)).toEqual([6, 4, 4])
+  })
+
+  it("the posting's title, never held, goes back to the candidate's headline", async () => {
+    expect((await tailor({ trim: true })).headline).toBe('Backend Engineer')
+  })
+
+  it('a client that asks gets the new fields; one that does not gets them folded into the old ones', async () => {
+    const current = await tailor({}, NEW_FIELDS)
+    expect(current.projects[0]).toMatchObject({ name: 'tidewatch', link: 'github.com/x/tidewatch', tech: 'Go, SQLite' })
+    expect(current.otherSections[0].entries[0].name).toBe('pg-outbox')
+
+    const older = await tailor({}, {})
+    expect(older.projects[0]).toEqual({ name: 'tidewatch | Go, SQLite | github.com/x/tidewatch', bullets: current.projects[0].bullets })
+    expect(older.otherSections[0]).toEqual({
+      heading: 'Open Source',
+      lines: ['pg-outbox | Creator | github.com/x/pg-outbox', 'Outbox library for Postgres', 'Speaker, GopherCon 2024'],
+    })
+  })
+
+  it('a later fields version gets the new fields too', async () => {
+    const later = await tailor({}, { 'X-Resume-Fields': '3' })
+    expect(later.projects[0]).toMatchObject({ link: 'github.com/x/tidewatch', tech: 'Go, SQLite' })
+    expect(later.otherSections[0].entries[0].name).toBe('pg-outbox')
   })
 })

@@ -10,6 +10,8 @@ export interface Board {
   slug: string
   name: string
   kind: string
+  // Bump only for real content changes: it drives dateModified and the sitemap's lastmod (#265).
+  updated: string
   metaTitle: string
   metaDescription: string
   h1: string
@@ -25,16 +27,22 @@ export const BOARDS: Board[] = [
     slug: 'linkedin',
     name: 'LinkedIn',
     kind: 'job board',
-    metaTitle: 'AI Cover Letter and Resume Tailor for LinkedIn',
+    updated: '2026-11-24',
+    metaTitle: 'LinkedIn Cover Letter: When and How to Add One',
     metaDescription:
-      'Cover Me tailors your resume and writes a cover letter for the LinkedIn job you have open, including in the search results panel. Free Chrome extension.',
-    h1: 'AI cover letters and tailored resumes for LinkedIn jobs',
+      'You can add a cover letter on LinkedIn only when the employer asks for one, as a PDF or Word upload in Easy Apply. Cover Me writes it for that job, free.',
+    h1: 'How to add a cover letter on LinkedIn',
     answer:
-      'To tailor a cover letter and resume to a LinkedIn job, open the posting and click the Cover Me icon. Cover Me (cover-me.dev) is a free Chrome extension that reads the job title, company and description from the page, then writes a cover letter and rewrites your resume for that role, using only what your resume already shows.',
+      'You can add a cover letter on LinkedIn only when the employer asks for one. In Easy Apply forms we checked, that meant an Upload cover letter button next to the resume, for a PDF or Word file. Most had none. Cover Me (cover-me.dev), a free Chrome extension, writes the letter and tailors your resume to the posting.',
     intro: [
       "LinkedIn shows jobs two ways: a full job page, and a split view where the posting opens in a panel beside your search results or saved collections. Cover Me reads both, so you don't have to open each job in its own tab first.",
       "It has no LinkedIn integration and never signs in to your account. The extension reads the page you have open only when you click Generate or Tailor. LinkedIn changes its layout often, so Cover Me's scrapers are tested against live LinkedIn postings every week, and once you agree, Cover Me's server also reads the page, which lets most layout changes get fixed without a new extension release.",
     ],
+    related: {
+      lead: "The button you get, Easy Apply or Apply, depends on the employer's settings, according to",
+      href: 'https://www.linkedin.com/help/linkedin/answer/a512388',
+      label: "LinkedIn's help page",
+    },
     steps: [
       {
         title: 'Open a job on LinkedIn',
@@ -45,14 +53,18 @@ export const BOARDS: Board[] = [
         body: 'Cover Me reads the title, company and full description from that tab. Nothing is posted to LinkedIn and your account is never accessed.',
       },
       {
-        title: 'Add it to Easy Apply',
-        body: 'Edit the letter, then copy it or download a PDF. If the Easy Apply form takes a resume upload, upload the tailored resume as a PDF or Word file.',
+        title: 'Add it to your application',
+        body: "Upload the tailored resume in the Easy Apply form's Resume section. If the form also has an Upload cover letter button, upload the letter's PDF there. If there's no upload next to the resume, check the form's later pages before you submit. If the job has an Apply button instead of Easy Apply, it opens the employer's own site, so add the resume and the letter on that form.",
       },
     ],
     faqs: [
       {
+        q: 'Can you add a cover letter on LinkedIn?',
+        a: "Sometimes. It depends on the employer. Of 15 Easy Apply forms we opened in November 2026, 4 had a Cover letter section on the page where you pick your resume, with an Upload cover letter button that takes a PDF or Word file. It was optional on all 4. The other 11 had no cover letter upload on that page. Jobs with an Apply button instead of Easy Apply send you to the employer's own site, and its form decides.",
+      },
+      {
         q: 'Does Cover Me work with LinkedIn Easy Apply?',
-        a: "Yes. Copy the letter or download it as a PDF, then add it in the Easy Apply form. If the form takes a resume upload, use the tailored resume, as a PDF or Word file. Cover Me never submits the form, so you check everything before it's sent. When the form asks a written question, right-click its box and choose \"Cover Me: write an answer\" to have an answer typed in for you to edit.",
+        a: "Yes. Upload the tailored resume in the Resume section, as a PDF or Word file. When the form also has an Upload cover letter button, download the letter from Cover Me as a PDF and upload it there. When there's no upload next to the resume, check the form's later pages before you submit. Cover Me never submits the form, so you check everything before it's sent. When the form asks a written question, right-click its box and choose \"Cover Me: write an answer\" to have an answer typed in for you to edit.",
       },
       {
         q: 'Does Cover Me need access to my LinkedIn account?',
@@ -68,6 +80,7 @@ export const BOARDS: Board[] = [
     slug: 'indeed',
     name: 'Indeed',
     kind: 'job board',
+    updated: '2026-11-16',
     metaTitle: 'AI Cover Letter and Resume Tailor for Indeed',
     metaDescription:
       'Cover Me tailors your resume and writes a cover letter for the Indeed job you have open, on the job page or in the search preview pane. Free Chrome extension.',
@@ -111,6 +124,7 @@ export const BOARDS: Board[] = [
     slug: 'greenhouse',
     name: 'Greenhouse',
     kind: 'applicant tracking system',
+    updated: '2026-11-16',
     metaTitle: 'AI Cover Letter and Resume Tailor for Greenhouse',
     metaDescription:
       'Cover Me reads the Greenhouse posting you have open, tailors your resume to it and writes a matching cover letter. Free Chrome extension.',
@@ -154,6 +168,7 @@ export const BOARDS: Board[] = [
     slug: 'lever',
     name: 'Lever',
     kind: 'applicant tracking system',
+    updated: '2026-11-16',
     metaTitle: 'AI Cover Letter and Resume Tailor for Lever',
     metaDescription:
       'Cover Me reads the jobs.lever.co posting you have open, tailors your resume to it and writes a matching cover letter. Free Chrome extension.',
@@ -197,6 +212,7 @@ export const BOARDS: Board[] = [
     slug: 'workday',
     name: 'Workday',
     kind: 'applicant tracking system',
+    updated: '2026-11-23',
     metaTitle: 'AI Cover Letter and Resume Tailor for Workday',
     metaDescription:
       "Cover Me reads the myworkdayjobs.com posting, tailors your resume and writes your cover letter before you start Workday's long application form.",
@@ -245,6 +261,7 @@ export const BOARDS: Board[] = [
     slug: 'ashby',
     name: 'Ashby',
     kind: 'applicant tracking system',
+    updated: '2026-11-16',
     metaTitle: 'AI Cover Letter and Resume Tailor for Ashby',
     metaDescription:
       'Cover Me reads the jobs.ashbyhq.com posting you have open, tailors your resume to it and writes a matching cover letter. Free Chrome extension.',

@@ -3,6 +3,7 @@ import { debugGroup } from '../debug'
 import { callClaude, type ChatMessage } from './claude'
 import { callOpenAI } from './openai'
 import { buildLintRetryMessage, letterLength, lintLetter } from './letter-lint'
+import { MAX_RESUME_CHARS } from './resume-parse'
 
 // A fixed sign-off and hook give every letter one skeleton, detectable across
 // letters (#206). Picked in code, not by the model, so the spread is uniform.
@@ -127,7 +128,7 @@ ${job.description.slice(0, 15000)}
 """
 
 APPLICANT RESUME:
-${resumeText.slice(0, 12000)}
+${resumeText.slice(0, MAX_RESUME_CHARS)}
 ${supplementalSection}
 ---
 

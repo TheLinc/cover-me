@@ -133,7 +133,7 @@ From 1.3.0, no `<all_urls>` and no content scripts: the reader is injected only 
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 22.13+
 - pnpm 10+
 - Chrome
 
@@ -563,12 +563,9 @@ Turn on the website's button only once users have an extension build with Google
 
 ## Contributing
 
-Contributions are welcome. A few guidelines:
+Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) before you start: bug fixes and scrapers can go straight to a PR, and anything else starts with an issue.
 
-- **Bug fixes and scraper improvements** — open a PR directly
-- **New features** — open an issue first; the scope is intentionally narrow
-- **New job board scrapers** — see `extension/src/content/scrapers/` for the pattern; PRs for dedicated Greenhouse and Ashby scrapers are especially welcome
-- Keep PRs focused — one thing per PR
+New job board scrapers follow the pattern in `extension/src/content/scrapers/`. Dedicated Greenhouse and Ashby scrapers are especially welcome.
 
 ---
 
