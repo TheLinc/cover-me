@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { callFunction, mockClaude, mockPosthog } from './helpers'
 
-// Only survey events: another file's background count can land after a reset.
-const surveyEvents = async () => (await mockPosthog.events()).filter((e) => e.event === 'survey sent')
+// site-request sends the event before it responds, so there's nothing to wait for (#383).
+const surveyEvents = () => mockPosthog.eventsNamed('survey sent', () => true)
 
 // Rate-limited per client IP, like scrape: each call claims its own IP unless
 // a test shares one on purpose.

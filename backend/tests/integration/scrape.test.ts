@@ -51,14 +51,11 @@ describe('scrape', () => {
     expect((await res.json()).results[0]).toMatchObject({ ok: false })
   })
 
-  // Sent behind the response, so wait a little for it. Only this host's: an
-  // earlier test's event can land after the reset.
+  // Each event has a random ID, so pick this test's by hostname.
   const posthogEvents = async (hostname: string) => {
-    const mine = async () => (await mockPosthog.events())
-      .filter((e) => (e.properties.pages as { hostname: string }[] | undefined)?.some((p) => p.hostname === hostname))
-    let events = await mine()
-    for (let i = 0; i < 20 && events.length === 0; i++) events = await new Promise((r) => setTimeout(r, 100)).then(mine)
-    return events
+    const mine = (e: { properties: Record<string, unknown> }) =>
+      (e.properties.pages as { hostname: string }[] | undefined)?.some((p) => p.hostname === hostname)
+    return (await mockPosthog.eventsNamed('scrape_failed', (events) => events.some(mine))).filter(mine)
   }
 
   it('counts a click where no page was read: hostname and scraper per page, no URL or HTML', async () => {

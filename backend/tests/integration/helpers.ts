@@ -223,15 +223,20 @@ export const mockResend = {
 
 type PosthogEvent = { api_key: string; event: string; distinct_id: string; properties: Record<string, unknown> }
 
+type Done = (events: PosthogEvent[]) => boolean
+
+// Counts are sent after the response (#169). Not exported, so a test can't read
+// another test's events by filtering the raw list by hand (#383).
+async function waitForEvents(match: (e: PosthogEvent) => boolean, done: Done = (e) => e.length > 0): Promise<PosthogEvent[]> {
+  const mine = async () => ((await (await fetch(`${MOCK_URL}/__mock/posthog`)).json()) as PosthogEvent[]).filter(match)
+  let events = await mine()
+  for (let i = 0; i < 20 && !done(events); i++) events = await new Promise((r) => setTimeout(r, 100)).then(mine)
+  return events
+}
+
 export const mockPosthog = {
-  events: async (): Promise<PosthogEvent[]> => (await fetch(`${MOCK_URL}/__mock/posthog`)).json(),
-  // Counts are sent after the response (#169).
-  eventsFor: async (event: string, userId: string, done = (e: PosthogEvent[]) => e.length > 0): Promise<PosthogEvent[]> => {
-    const mine = async () => (await mockPosthog.events()).filter((e) => e.event === event && e.distinct_id === userId)
-    let events = await mine()
-    for (let i = 0; i < 20 && !done(events); i++) events = await new Promise((r) => setTimeout(r, 100)).then(mine)
-    return events
-  },
+  eventsFor: (event: string, userId: string, done?: Done) => waitForEvents((e) => e.event === event && e.distinct_id === userId, done),
+  eventsNamed: (event: string, done?: Done) => waitForEvents((e) => e.event === event, done),
 }
 
 export const JOB = {
