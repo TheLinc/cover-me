@@ -190,7 +190,7 @@ Deno.serve(async (req) => {
 
     if (error) return json({ error: 'Failed to save resume' }, 500)
 
-    // A sign-in sync of a different local resume is counted too: the server can't tell it from an upload.
+    // A sign-in sync of a different local resume is counted too: the server can't tell it from an upload (#168).
     const fileType = safeFilename?.toLowerCase().match(/\.(pdf|docx|txt)$/)?.[1] ?? 'other'
     EdgeRuntime.waitUntil(captureUsage(supabase, 'resume_upload', userId, { file_type: fileType }))
 

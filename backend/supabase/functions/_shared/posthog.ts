@@ -15,8 +15,6 @@ import type { SupabaseClient } from 'npm:@supabase/supabase-js@2'
 const POSTHOG_KEY = Deno.env.get('POSTHOG_KEY') ?? ''
 const POSTHOG_HOST = Deno.env.get('POSTHOG_HOST') ?? 'https://us.i.posthog.com'
 
-// false when PostHog didn't take the event; true when it did, or when there's
-// no key to send with.
 export async function capture(event: string, distinctId: string, properties: Record<string, unknown>): Promise<boolean> {
   if (!POSTHOG_KEY) return true
   try {
@@ -39,8 +37,7 @@ export async function capture(event: string, distinctId: string, properties: Rec
   }
 }
 
-// A Hosted account's usage count, with the account's plan added. Sends
-// nothing when the account opted out, or when that can't be read.
+// Fails closed: when the opt-out can't be read, nothing is sent (#168).
 export async function captureUsage(supabase: SupabaseClient, event: string, userId: string, properties: Record<string, unknown>): Promise<void> {
   if (!POSTHOG_KEY) return
   const { data, error } = await supabase.from('users').select('tier, usage_counts_opted_out_at').eq('id', userId).single()

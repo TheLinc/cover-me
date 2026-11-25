@@ -382,7 +382,7 @@ describe('tailor', () => {
 
     const res = await callFunction('tailor', { token: user.token, body: { job: JOB, supplemental: context, previous: first.resume } })
     expect(res.status).toBe(200)
-    // Both runs' counts arrive behind their responses, in either order.
+    // Both runs' counts arrive after their responses, in either order (#168).
     const events = await mockPosthog.eventsFor('tailor_run', user.id, (e) => e.some((x) => x.properties.regenerate === true))
     const regenerate = events.find((e) => e.properties.regenerate === true)
     expect(regenerate?.properties).toMatchObject({ regenerate: true, hasContext: true, tier: 'hosted_free' })
