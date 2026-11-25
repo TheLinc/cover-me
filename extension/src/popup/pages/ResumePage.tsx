@@ -3,7 +3,7 @@ import { ensureValidSession, uploadResumeToBackend } from '../../lib/auth'
 import { DESIGN_CHECK_STALE_MS, DESIGN_UPLOAD_MAX, sha256Hex, toBase64, usesDesign } from '../../lib/design'
 import { designUsable } from '../../lib/pdf/docx-design'
 import { MAX_RESUME_CHARS } from '../../lib/ai/resume-parse'
-import { parseResume } from '../../lib/resume-parser'
+import { parseResume, READER_VERSION } from '../../lib/resume-parser'
 import { getCachedTier, getDesignFile, getMode, getResume, getSession, saveDesignFile, saveResume, watchResume } from '../../lib/storage'
 import type { DesignCheck, ParsedResume, ResumeData } from '../../types'
 
@@ -71,7 +71,7 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
       // either (it may be someone else's). See syncResume in lib/auth.ts (#16).
       const inherited = session ? undefined : (await getResume())?.accountId
       const data: ResumeData = {
-        text, filename: file.name, updatedAt: new Date().toISOString(),
+        text, filename: file.name, updatedAt: new Date().toISOString(), readerVersion: READER_VERSION,
         ...(session ? { accountId: session.user.id } : inherited ? { accountId: inherited, signedOutUpload: true } : {}),
         ...(bytes && hash ? { design: { hash, size: bytes.length, status: 'checking' as const, checkedAt: new Date().toISOString() } } : {}),
       }
