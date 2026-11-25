@@ -3,7 +3,7 @@
 
 const KEY_HEX = Deno.env.get('ENCRYPTION_KEY') ?? ''
 
-async function importKey(): Promise<CryptoKey> {
+function importKey(): Promise<CryptoKey> {
   const bytes = new Uint8Array(KEY_HEX.match(/.{2}/g)!.map((b) => parseInt(b, 16)))
   return crypto.subtle.importKey('raw', bytes, 'AES-GCM', false, ['encrypt', 'decrypt'])
 }

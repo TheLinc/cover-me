@@ -247,6 +247,7 @@ export function parseClaimVerdicts(raw: string, count: number): boolean[] {
       if (typeof v.i === 'number' && v.i >= 0 && v.i < count) ok[v.i] = v.ok === true
     }
   } catch {
+    return ok
   }
   return ok
 }

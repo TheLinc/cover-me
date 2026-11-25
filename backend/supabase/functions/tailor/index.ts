@@ -782,14 +782,18 @@ ${job.description}`)
   const encoder = new TextEncoder()
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
-      // A client that hangs up mid-stream still got the generation, so a failed write
-      // must not reach the catch below and refund it: https://github.com/TheLinc/cover-me/commit/7e65844a93cc84483f003ed635004797af3da478
-      const send = (obj: unknown) => {
-        try { controller.enqueue(encoder.encode(JSON.stringify(obj) + '\n')) } catch {}
+      const ifConnected = (op: () => void) => {
+        try {
+          op()
+        } catch {
+          // A client that hangs up mid-stream still got the generation, so a failed write
+          // must not reach the catch below and refund it: https://github.com/TheLinc/cover-me/commit/7e65844a93cc84483f003ed635004797af3da478
+        }
       }
+      const send = (obj: unknown) => ifConnected(() => controller.enqueue(encoder.encode(JSON.stringify(obj) + '\n')))
       // Blank lines (clients skip them) send the headers at once and keep the connection from
       // sitting silent while the resume is parsed: https://github.com/TheLinc/cover-me/commit/097eb05bc5bbb157c7e8730f6f305e5fa73bb889
-      const heartbeat = () => { try { controller.enqueue(encoder.encode('\n')) } catch {} }
+      const heartbeat = () => ifConnected(() => controller.enqueue(encoder.encode('\n')))
       heartbeat()
       const beat = setInterval(heartbeat, 10_000)
       try {
@@ -809,7 +813,7 @@ ${job.description}`)
         send({ type: 'error', error: 'AI generation failed. Please try again.' })
       } finally {
         clearInterval(beat)
-        try { controller.close() } catch {}
+        ifConnected(() => controller.close())
       }
     },
   })

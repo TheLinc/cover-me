@@ -19,7 +19,7 @@ export async function canEmail(supabase: SupabaseClient, userId: string, kind: E
 // The token in every unsubscribe link: "<user id>.<HMAC-SHA256 of
 // 'unsubscribe:<user id>'>" under EMAIL_TOKEN_SECRET. It never expires: the
 // law wants a link to keep working for at least 60 days after sending.
-async function key(): Promise<CryptoKey> {
+function key(): Promise<CryptoKey> {
   const secret = Deno.env.get('EMAIL_TOKEN_SECRET')
   if (!secret) throw new Error('EMAIL_TOKEN_SECRET is not set')
   return crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign', 'verify'])
