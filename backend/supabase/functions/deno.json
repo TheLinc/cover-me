@@ -1,5 +1,4 @@
 {
-  "lock": false,
   "lint": {
     "exclude": ["_shared/scrapers/"],
     "rules": {

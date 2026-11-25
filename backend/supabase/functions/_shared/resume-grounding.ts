@@ -246,9 +246,7 @@ export function parseClaimVerdicts(raw: string, count: number): boolean[] {
     for (const v of parsed.verdicts ?? []) {
       if (typeof v.i === 'number' && v.i >= 0 && v.i < count) ok[v.i] = v.ok === true
     }
-  } catch {
-    return ok
-  }
+  } catch { return ok }
   return ok
 }
 
