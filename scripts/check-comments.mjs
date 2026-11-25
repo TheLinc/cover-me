@@ -100,8 +100,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const stamped = files.flatMap((f) => f.base ? list(f, stampedComments(f.base, text(f), f.rel)) : [])
   if (stamped.length) {
     console.error(stamped.join('\n'))
-    console.error(`\nOnly a link was added to ${stamped.length} comment(s) since the base. Delete each one that says what the
-code does. Keep one only if it gives a reason the code can't show, and rewrite it to state that reason in a line
+    console.error(`\nOnly a link was added to ${stamped.length} comment(s) since the base. Delete each one that says what the code does.
+Keep one only if it gives a reason the code can't show, and rewrite it to state that reason in a line
 or two next to the link.${found.length ? '\n' : ''}`)
   }
   if (found.length) {
