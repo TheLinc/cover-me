@@ -1,0 +1,89 @@
+{
+  "side": "after",
+  "calls": [
+    {
+      "step": "1. upload a resume",
+      "request": {
+        "function": "resume",
+        "text": "<resume text>",
+        "filename": "Jane Doe Resume.DOCX"
+      },
+      "status": 200
+    },
+    {
+      "step": "2. tailor",
+      "request": {
+        "function": "tailor",
+        "job": {
+          "title": "Senior Backend Engineer",
+          "company": "Acme",
+          "description": "Acme is hiring a backend engineer to move our reporting stack from cron scripts to an event queue. You will work in TypeScript and Postgres on a team of six engineers. Kafka experience is a plus.",
+          "url": "https://jobs.example.com/acme/123"
+        }
+      },
+      "status": 200
+    },
+    {
+      "step": "3. regenerate with added context",
+      "request": {
+        "function": "tailor",
+        "job": {
+          "title": "Senior Backend Engineer",
+          "company": "Acme",
+          "description": "Acme is hiring a backend engineer to move our reporting stack from cron scripts to an event queue. You will work in TypeScript and Postgres on a team of six engineers. Kafka experience is a plus.",
+          "url": "https://jobs.example.com/acme/123"
+        },
+        "supplemental": "Led the Kafka migration at Initech",
+        "previous": "<first tailored resume>"
+      },
+      "status": 200
+    }
+  ],
+  "posthog": [
+    {
+      "api_key": "phc_mock",
+      "event": "resume_upload",
+      "distinct_id": "<test account id>",
+      "properties": {
+        "file_type": "docx",
+        "tier": "hosted_free",
+        "$process_person_profile": false,
+        "$geoip_disable": true
+      }
+    },
+    {
+      "api_key": "phc_mock",
+      "event": "tailor_run",
+      "distinct_id": "<test account id>",
+      "properties": {
+        "compact": false,
+        "trim": false,
+        "includeSummary": true,
+        "layout": "cover-me",
+        "fellBack": false,
+        "regenerate": false,
+        "hasContext": false,
+        "tier": "hosted_free",
+        "$process_person_profile": false,
+        "$geoip_disable": true
+      }
+    },
+    {
+      "api_key": "phc_mock",
+      "event": "tailor_run",
+      "distinct_id": "<test account id>",
+      "properties": {
+        "compact": false,
+        "trim": false,
+        "includeSummary": true,
+        "layout": "cover-me",
+        "fellBack": false,
+        "regenerate": true,
+        "hasContext": true,
+        "tier": "hosted_free",
+        "$process_person_profile": false,
+        "$geoip_disable": true
+      }
+    }
+  ]
+}
