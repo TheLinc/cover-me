@@ -3,6 +3,7 @@ import { jobFromJsonLd, jobFromMicrodata } from './jsonld.ts'
 import { fromTabTitle } from './tabtitle.ts'
 
 export function scrapeGeneric(): JobData {
+  renderedCache = new WeakMap()
   return jobFromJsonLd() ?? jobFromMicrodata() ?? tryPythonJobBoard() ?? tryAtsSelectors() ?? tryHeuristic()
 }
 
@@ -22,11 +23,10 @@ function tryPythonJobBoard(): JobData | null {
 }
 
 function tryAtsSelectors(): JobData | null {
-  // Covers Greenhouse, Lever, Ashby, Workable, BambooHR
   const title = firstText([
-    '.job__title h1', // Greenhouse job-boards.greenhouse.io
-    '.application-form-header--title', // Greenhouse job search pop-up, my.greenhouse.io
-    '.selected-application-pane .section-header', // Greenhouse Applications page, my.greenhouse.io
+    '.job__title h1', // Greenhouse job-boards.greenhouse.io (#2)
+    '.application-form-header--title', // Greenhouse job search pop-up, my.greenhouse.io (#66)
+    '.selected-application-pane .section-header', // Greenhouse Applications page, my.greenhouse.io (#70)
     '[data-qa="job-title"]',
     '.posting-headline h2',
     '.job-title',
@@ -41,7 +41,7 @@ function tryAtsSelectors(): JobData | null {
     '.posting-description',
     '[class*="job-description"]',
     '[class*="posting-description"]',
-    '#job-detail-body .content', // amazon.jobs
+    '#job-detail-body .content', // amazon.jobs (#208)
     '#content',
   ])
 
@@ -49,7 +49,7 @@ function tryAtsSelectors(): JobData | null {
     const company = firstText(['[data-qa="company"]', '[class*="company-name"]', '.selected-application-pane .section-header + * > .section-title'])
       // job-boards.greenhouse.io names the company only in the tab title,
       // which its embeds (/embed/job_app?for=...) don't put in the path
-      // (not on long titles: the pattern retries at every " at ")
+      // (not on long titles: the pattern retries at every " at ") (#208)
       ?? (document.title.length <= 300 ? document.title : '').match(/^Job Application for .+ at (.+)$/)?.[1]?.trim()
       ?? fromTabTitle().company
     return { title, company, description, url: window.location.href }
@@ -60,17 +60,16 @@ function tryAtsSelectors(): JobData | null {
 function tryHeuristic(): JobData {
   // The first <h1> that isn't a listing heading is the title when it reads like
   // one: not a section or site heading, nor the employer's name. In its place,
-  // the tab title's job; failing that, the heading itself, as before, since the
+  // the tab title's job; failing that, the heading itself, since the
   // page holds a posting and the user can fix the title. Not a later <h1>: it
   // can be a hidden dialog's (Shopify's "Do Not Sell/Share My Personal
   // Information"). A page whose URL names an embedded posting (Greenhouse's
-  // gh_jid, Ashby's ashby_jid) fails instead, so the posting's frame wins.
-  // Pages with no such <h1> (none, a logo, a long hero line) fail, as before.
+  // gh_jid, Ashby's ashby_jid) fails instead, so the posting's frame wins (#208).
   const tab = fromTabTitle()
   const company = tab.company.toLowerCase()
   const notTitle = (t: string) => isNavHeading(t) || isSectionHeading(t) || isSiteHeading(t) || t.toLowerCase() === company
-  // Only headings of title length are kept: every <h1>'s text would cost
-  // elements x depth of memory on nested ones.
+  // Keeping every <h1>'s text would cost elements x depth of memory on nested
+  // ones (#208).
   const h1s = Array.from(document.querySelectorAll<HTMLElement>('h1')).flatMap((el) => {
     const text = el.innerText?.trim() ?? ''
     return text.length > 2 && text.length < 120 ? [{ el, text }] : []
@@ -81,7 +80,6 @@ function tryHeuristic(): JobData {
   const tabJob = tab.title && !notTitle(tab.title) ? tab.title : undefined
   const title = first && (notTitle(first) ? tabJob ?? (embedded ? undefined : first) : first)
 
-  // The posting's own container when the page marks it with the job's ID.
   const description = postingById() ?? largestBlock(first !== undefined && notTitle(first) && !tabJob, heading?.el)
 
   if (!title || !description || description.length < 200) {
@@ -112,7 +110,7 @@ function largestBlock(doubtful: boolean, heading?: Element): string | undefined 
   const nested = new Set(document.querySelectorAll('a a'))
   const [lists, hiddenLists] = cardLists(nested)
   // Under a job's title, cards holding the first text after it are the
-  // posting's sections, not a panel beside it
+  // posting's sections, not a panel beside it (#215)
   const start = doubtful || !heading ? undefined : textAfter(heading)
   for (const list of lists.keys()) if (start && list.contains(start)) lists.delete(list)
   const holdsHidden = new Set<Element>()
@@ -139,8 +137,8 @@ function largestBlock(doubtful: boolean, heading?: Element): string | undefined 
   // it's measured with its whitespace collapsed (a hidden mobile menu would
   // outweigh the page's text); linkedom's innerText has none to collapse.
   // Under a job's title, with nothing else left, the largest hidden block is
-  // read, as master does: a posting under "Read more" whose sections each end
-  // in a "Learn more" link looks like hidden cards.
+  // read: a posting under "Read more" whose sections each end in a "Learn
+  // more" link looks like hidden cards (#215).
   const measure = (el: HTMLElement) => {
     const text = el.innerText?.trim() ?? ''
     const chromeHidden = text.length > 500 && typeof el.checkVisibility === 'function' && !rendered(el)
@@ -175,9 +173,8 @@ function largestBlock(doubtful: boolean, heading?: Element): string | undefined 
   return text.replace(/\n{3,}/g, '\n\n').trim()
 }
 
-// The first text shown after an element, in document order: one walk, ended
-// by the first text that isn't whitespace, past what isn't shown (a <style>
-// before each styled element, an icon's title, a hidden "Share" label)
+// Skips what isn't shown: a <style> before each styled element, an icon's
+// title, a hidden "Share" label (#215)
 function textAfter(el: Node): Node | undefined {
   let n: Node | null = el
   while (n && !n.nextSibling) n = n.parentNode
@@ -204,10 +201,7 @@ function textAfter(el: Node): Node | undefined {
 // that links its tools, or a posting's sections that link from their text.
 // Lists that aren't rendered are returned apart: Chrome reads their source
 // text (innerText falls back to textContent), and the blocks around them leave
-// it out. The outermost lists only, each with its text and how much of it is
-// outside links. Each element's first link is found in one pass over the
-// links; each child is looked at once, with a walk from its first link up to
-// it; a candidate list's text is read once per level it's nested in.
+// it out. The outermost lists only (#215).
 function cardLists(nested: Set<Element>): [Map<HTMLElement, { text: string, plain: number }>, Set<Element>] {
   const firstLink = new Map<Element, Element>()
   for (const a of Array.from(document.querySelectorAll('a[href]'))) {
@@ -257,7 +251,7 @@ function cardLists(nested: Set<Element>): [Map<HTMLElement, { text: string, plai
 }
 
 // Text straight in the card or around its link, as a sentence around a link
-// has; a card's lines are elements of their own
+// has; a card's lines are elements of their own (#215)
 const prose = (el: Element) => Array.from(el.childNodes).some((n) => n.nodeType === 3 && n.textContent?.trim())
 const UNSHOWN = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEMPLATE', 'SVG'])
 const CARD_TAGS = new Set(['LI', 'DIV', 'ARTICLE', 'SECTION', 'TR'])
@@ -265,16 +259,21 @@ const CARD_TAGS = new Set(['LI', 'DIV', 'ARTICLE', 'SECTION', 'TR'])
 // Chrome knows from layout, though it counts a display: contents wrapper
 // (SvelteKit's app root) as not rendered: its parent answers instead. linkedom
 // has none, so its innerText's markup rules (hidden, inline display:none) are
-// checked up the tree.
+// checked up the tree. The answers are kept for one scrape, which never
+// changes the page (#362).
+let renderedCache = new WeakMap<Element, boolean>()
 function rendered(el: HTMLElement): boolean {
   if (typeof el.checkVisibility === 'function') {
     if (el.checkVisibility()) return true
     return getComputedStyle(el).display === 'contents' && !!el.parentElement && rendered(el.parentElement)
   }
-  for (let e: Element | null = el; e; e = e.parentElement) {
-    if (e.hasAttribute('hidden') || /display\s*:\s*none/i.test(e.getAttribute('style') ?? '')) return false
+  let known = renderedCache.get(el)
+  if (known === undefined) {
+    known = !el.hasAttribute('hidden') && !/display\s*:\s*none/i.test(el.getAttribute('style') ?? '')
+      && (!el.parentElement || rendered(el.parentElement))
+    renderedCache.set(el, known)
   }
-  return true
+  return known
 }
 
 function hasAncestorIn(el: Element, set: { has(el: Element): boolean }): boolean {
@@ -285,9 +284,7 @@ function hasAncestorIn(el: Element, set: { has(el: Element): boolean }): boolean
 // Google's careers page puts the posting in a pane marked with the job's ID
 // from the URL (data-id), beside a list of other jobs that's larger than it.
 // The ID's entry in that list is the shorter of the two. The URL and page are
-// the caller's to choose, so the cost is capped: three distinct numbers from
-// the path, the first three blocks marked with each (one walk of each one's
-// subtree); only lengths are kept, and the longest one's text is read again.
+// the caller's to choose, so the cost is capped (#208).
 function postingById(): string | undefined {
   for (const id of [...new Set(window.location.pathname.match(/\d{6,}/g))].slice(0, 3)) {
     let best: HTMLElement | undefined
@@ -301,18 +298,14 @@ function postingById(): string | undefined {
   }
 }
 
-// Section headings some postings put in an <h1> ("Key Responsibilities",
-// "job details").
 function isSectionHeading(text: string): boolean {
   return /^(?:key |main |your |the )?(?:responsibilities|duties|requirements|qualifications|overview|summary|benefits|(?:job )?(?:description|details)|about(?: us| the (?:role|job|team|company|position))?|join (?:our|the) (?:\S+ )?team|what you.ll do|who we are)[.:!]?$/i.test(text)
 }
 
-// Site names in an <h1> ("CAREERS", "MSC CAREER PORTAL").
 function isSiteHeading(text: string): boolean {
   return /^careers(?: at .+)?[.!]?$|\bcareers? (?:portal|site)$/i.test(text)
 }
 
-// Headings that indicate a listing/nav page rather than a specific job posting
 function isNavHeading(text: string): boolean {
   const lower = text.toLowerCase()
   const navPhrases = [

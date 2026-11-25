@@ -3,6 +3,8 @@ import type { JobData } from './types.ts'
 
 type Dom = any
 export type ParseHTML = (html: string) => Dom
+type ParserClass = new (handler: { onopentagname?(name: string): void; onclosetag?(name: string): void }) => { end(html: string): void }
+export interface Parsers { parseHTML: ParseHTML; Parser: ParserClass }
 
 // The scrapers read globals, swapped in for one synchronous call so concurrent
 // requests in one isolate never see each other's page (#3)
@@ -14,12 +16,23 @@ const MAX_TAGS = 150_000
 const MAX_ELEMENTS = 60_000
 const MAX_DEPTH = 256
 // The scrapers read a block's whole subtree for every block around it, so a
-// request's reads are capped by the nodes and characters they cover. The saved
-// postings use at most 20M (#357).
+// request's reads are capped by the nodes, attributes and characters they
+// cover (#357). The parse is charged first, from the raw HTML (#362):
+// - linkedom takes ~2 µs per attribute. Every attribute name follows
+//   whitespace, "/" or a quote, so each start of a word after one is counted.
+// - linkedom makes a text node for every "&" entity.
+// Stripped snapshots from the extension use at most 300M. The raw, unstripped
+// test fixtures use up to 1,355M.
 const MAX_WORK = 2_000_000_000
 const NODE_WORK = 400
+const NAME_WORK = 8000
 export interface Meter { work: number }
 let charge: ((node: Dom) => void) | undefined
+
+export function scrapeUntrusted({ parseHTML, Parser }: Parsers, url: string, html: string, meter?: Meter): JobData {
+  checkNesting(Parser, html)
+  return scrapeHtml(parseHTML, url, html, meter)
+}
 
 export function scrapeHtml(parseHTML: ParseHTML, url: string, html: string, meter: Meter = { work: 0 }): JobData {
   if (meter.work > MAX_WORK) throw new Error('This page is too large to read.')
@@ -27,6 +40,7 @@ export function scrapeHtml(parseHTML: ParseHTML, url: string, html: string, mete
   for (let i = html.indexOf('<'); i !== -1; i = html.indexOf('<', i + 1)) {
     if (++tags > MAX_TAGS) throw new Error('This page is too large to read.')
   }
+  if ((meter.work += nameStarts(html) * NAME_WORK) > MAX_WORK) throw new Error('This page is too large to read.')
   const dom = parseHTML(html)
   dom.window.location = new URL(url)
   // Before attachShadowRoots, which recurses once per nested template (#3)
@@ -38,7 +52,7 @@ export function scrapeHtml(parseHTML: ParseHTML, url: string, html: string, mete
   const weigh = (node: Dom): number => {
     const cached = weights.get(node)
     if (cached !== undefined) return cached
-    let sum = NODE_WORK + (node.nodeType === 3 ? node.textContent.length : 0)
+    let sum = NODE_WORK * (1 + (node.attributes?.length ?? 0)) + (node.nodeType === 3 ? node.textContent.length : 0)
     for (const c of node.childNodes ?? []) sum += weigh(c)
     weights.set(node, sum)
     return sum
@@ -67,6 +81,37 @@ function checkSize(doc: Dom) {
     // deep copy, which nested templates would multiply (#3).
     for (const child of el.children) stack.push([child, depth + 1])
   }
+}
+
+// linkedom parses with htmlparser2, which keeps its open tags and its
+// svg/math context in lists it shifts and searches on every tag. Running
+// htmlparser2 alone first, and stopping once either list outgrows any
+// posting, keeps that walk linear before linkedom builds anything (#362).
+const FOREIGN = new Set(['math', 'svg', 'mi', 'mo', 'mn', 'ms', 'mtext', 'annotation-xml', 'foreignobject', 'desc', 'title'])
+const MAX_FOREIGN = 5_000
+function checkNesting(Parser: ParserClass, html: string) {
+  let depth = 0, foreign = 0
+  new Parser({
+    onopentagname(name) {
+      if (++depth > MAX_DEPTH || (FOREIGN.has(name) && ++foreign > MAX_FOREIGN)) throw new Error('This page is too large to read.')
+    },
+    onclosetag() {
+      depth--
+    },
+  }).end(html)
+}
+
+// htmlparser2's whitespace is only these five: any other control character
+// starts a name (#362)
+const SPACE = new Set([9, 10, 12, 13, 32])
+function nameStarts(html: string): number {
+  let n = 0
+  for (let i = 1; i < html.length; i++) {
+    const p = html.charCodeAt(i - 1), c = html.charCodeAt(i)
+    if (c === 38) n++
+    else if ((p <= 32 || p === 47 || p === 34 || p === 39) && !SPACE.has(c) && c !== 47 && c !== 62) n++
+  }
+  return n
 }
 
 // Snapshots carry open shadow roots (LinkedIn's job pane) as <template
