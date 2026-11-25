@@ -108,6 +108,9 @@ jobs:
       - if: steps.changes.outputs.backend == 'true'
         working-directory: backend/supabase/functions
         run: deno lint
+      - if: steps.changes.outputs.backend == 'true'
+        working-directory: backend/supabase/functions
+        run: deno check */index.ts
       # The Supabase ports sit inside Linux's ephemeral range, so an outgoing
       # connection (an image pull) can hold 54324 when mailpit tries to bind it.
       - if: steps.changes.outputs.backend == 'true'

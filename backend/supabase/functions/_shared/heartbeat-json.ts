@@ -9,7 +9,7 @@ import { corsHeaders } from './cors.ts'
 // reported as { error } in the body.
 export function heartbeatJson(name: string, failure: string, work: () => Promise<Record<string, unknown>>): Response {
   const enc = new TextEncoder()
-  let beat: number | undefined
+  let beat: ReturnType<typeof setInterval> | undefined
   const body = new ReadableStream<Uint8Array>({
     async start(controller) {
       const send = (s: string) => {

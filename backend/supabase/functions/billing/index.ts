@@ -1,4 +1,4 @@
-import { createClient } from 'npm:@supabase/supabase-js@2'
+import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2'
 import { handleCors, json } from '../_shared/cors.ts'
 import { stripe, StripeError } from '../_shared/stripe.ts'
 import { FIRST_MONTH_COUPON, openFirstMonthOffer, showFirstMonthOffer } from '../_shared/offer.ts'
@@ -33,11 +33,9 @@ const CODE_ERRORS = {
   accountUsed: { status: 409, error: 'This account has already used a free trial.' },
 }
 
-type Db = ReturnType<typeof createClient>
-
 // Marks the code used by this account in one statement, so two people can't
 // both claim it. The unique redeemed_by stops a second trial on one account.
-async function claimCode(supabase: Db, code: unknown, userId: string): Promise<{ note: string | null } | { status: number; error: string }> {
+async function claimCode(supabase: SupabaseClient, code: unknown, userId: string): Promise<{ note: string | null } | { status: number; error: string }> {
   if (typeof code !== 'string' || !/^[A-Za-z0-9_-]{1,64}$/.test(code)) return CODE_ERRORS.unknown
   const now = new Date().toISOString()
   const { data, error } = await supabase

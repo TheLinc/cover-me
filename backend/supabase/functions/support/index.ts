@@ -1,4 +1,4 @@
-import { createClient } from 'npm:@supabase/supabase-js@2'
+import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2'
 import { handleCors, json } from '../_shared/cors.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
 })
 
 // "Trial" for a gift trial redeemed in the last week: no Stripe call needed.
-async function planLabel(supabase: ReturnType<typeof createClient>, userId: string): Promise<'Free' | 'Pro' | 'Trial'> {
+async function planLabel(supabase: SupabaseClient, userId: string): Promise<'Free' | 'Pro' | 'Trial'> {
   const { data: row } = await supabase.from('users').select('tier').eq('id', userId).single()
   if (row?.tier !== 'hosted_pro') return 'Free'
   const { data: trial } = await supabase.from('trial_codes').select('code')
