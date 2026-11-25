@@ -16,7 +16,6 @@ import { ApplicationsBoard } from './ApplicationsBoard'
 import { TileSkeletons } from './TileSkeletons'
 import { EmptyApplications } from './EmptyApplications'
 import { DateField } from './DateField'
-import { BOARD_SEEN_KEY } from '../BoardNotice'
 
 type Status = 'loading' | 'ready' | 'error'
 type View = 'board' | 'list'
@@ -64,8 +63,6 @@ export function ApplicationsBrowser({ pro }: { pro: boolean }) {
     setView(v === 'board' || v === 'list' ? v : window.matchMedia('(min-width: 768px)').matches ? 'board' : 'list')
     const s = stored(SORT_KEY)
     if (SORTS.includes(s as Sort)) setChosenSort(s as Sort)
-    // The dashboard's "New: track your applications on a board" has done its job (#101).
-    store(BOARD_SEEN_KEY, '1')
   }, [])
   const sort: Sort = chosenSort ?? (view === 'board' ? 'moved' : 'newest')
   function chooseView(v: View) { setView(v); store(VIEW_KEY, v) }
