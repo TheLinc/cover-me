@@ -1,11 +1,12 @@
 import { test } from 'node:test'
 import { spawnSync } from 'node:child_process'
 import fs from 'node:fs'
+import { createRequire } from 'node:module'
 import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import assert from 'node:assert/strict'
-import { unlinkedComments } from './check-comments.mjs'
+import { stampedComments, unlinkedComments } from './check-comments.mjs'
 
 const lines = (text, file = 'a.ts') => unlinkedComments(text, file).map((c) => c.line)
 
@@ -56,6 +57,17 @@ test('JSX text that looks like a comment is not one, even as the first child', (
 
 test("an end-of-line comment doesn't borrow the next line's link", () => {
   assert.deepEqual(lines('const a = 1 // one\n// #5\nconst b = 2\n'), [1])
+})
+
+test('flags a comment whose only change from the base is an added link, even on another line', () => {
+  const base = 'const a = 1\n// adds one\nconst b = a + 1\n'
+  const stamped = (text) => stampedComments(base, text, 'a.ts').map((c) => c.line)
+  assert.deepEqual(stamped('const a = 1\n// adds one (#1)\nconst b = a + 1\n'), [2])
+  assert.deepEqual(stamped('const z = 0\nconst a = 1\n// adds one, see https://x.dev/1\nconst b = a + 1\n'), [3])
+  assert.deepEqual(stamped('const a = 1\n// Safari rounds this down (#1)\nconst b = a + 1\n'), [])
+  assert.deepEqual(stamped('const a = 1\n// Adds one (#1)\nconst b = a + 1\n'), [2])
+  assert.deepEqual(stampedComments('// adds one (#1)\nconst b = 2\n', '// adds one (#1)\nconst b = 2\n', 'a.ts'), [])
+  assert.deepEqual(stampedComments('// ------\nconst b = 2\n', '// https://crbug.com/1\nconst b = 2\n', 'a.ts'), [])
 })
 
 const script = fileURLToPath(new URL('./check-comments.mjs', import.meta.url))
@@ -116,6 +128,33 @@ test("as a hook, checks a file in another worktree of the repo", () => {
     assert.match(run.stderr, /^bad\.ts:1/m)
   } finally {
     git(path.dirname(script), 'worktree', 'remove', '--force', dir)
+  }
+})
+
+test('as lint, fails a comment that only gained a link since the base, and passes a rewrite', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cc-stamp-'))
+  const ts = path.dirname(createRequire(path.join(path.dirname(script), '..', 'extension', 'package.json')).resolve('typescript/package.json'))
+  try {
+    git(dir, 'init', '-q')
+    fs.mkdirSync(path.join(dir, 'scripts'))
+    fs.copyFileSync(script, path.join(dir, 'scripts', 'check-comments.mjs'))
+    fs.mkdirSync(path.join(dir, 'extension', 'node_modules'), { recursive: true })
+    fs.symlinkSync(ts, path.join(dir, 'extension', 'node_modules', 'typescript'), 'junction')
+    fs.writeFileSync(path.join(dir, 'a.ts'), 'const a = 1\n// adds one\nexport const b = a + 1\n')
+    git(dir, 'add', 'a.ts')
+    git(dir, '-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'base')
+    const lint = () => spawnSync(process.execPath, [path.join(dir, 'scripts', 'check-comments.mjs'), 'HEAD'], { encoding: 'utf8' })
+
+    fs.writeFileSync(path.join(dir, 'a.ts'), 'const a = 1\n// adds one (#1)\nexport const b = a + 1\n')
+    const run = lint()
+    assert.equal(run.status, 1)
+    assert.match(run.stderr, /^a\.ts:2 {2}\/\/ adds one \(#1\)/m)
+    assert.match(run.stderr, /Only a link was added to 1 comment\(s\)/)
+
+    fs.writeFileSync(path.join(dir, 'a.ts'), 'const a = 1\n// Safari rounds this down (#1)\nexport const b = a + 1\n')
+    assert.equal(lint().status, 0)
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true })
   }
 })
 
