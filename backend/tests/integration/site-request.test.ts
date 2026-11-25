@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { callFunction, mockClaude, mockPosthog } from './helpers'
 
-// Only survey events: another file's background count can land after a reset.
-const surveyEvents = async () => (await mockPosthog.events()).filter((e) => e.event === 'survey sent')
+// site-request sends the event before it responds, so there's nothing to wait for (#383).
+const surveyEvents = () => mockPosthog.eventsNamed('survey sent', () => true)
 
 // Rate-limited per client IP, like scrape: each call claims its own IP unless
-// a test shares one on purpose.
+// a test shares one on purpose (#150).
 let nextIp = 1
 const freshIp = () => `198.51.100.${nextIp++ % 250}`
 const send = (body: unknown, ip = freshIp()) =>
@@ -85,7 +85,7 @@ describe('site-request', () => {
   })
 
   it('limits each IP to 5 sends a minute', async () => {
-    // Clear of a minute boundary, so the six calls share one window.
+    // Clear of a minute boundary, so the six calls share one window (#150).
     const left = 60_000 - (Date.now() % 60_000)
     if (left < 10_000) await new Promise((r) => setTimeout(r, left + 500))
     const ip = '203.0.113.70'

@@ -145,9 +145,7 @@ describe('answer', () => {
     expect(question.text).toContain(revision.previous)
     expect(question.text).toContain(revision.request)
 
-    const mine = async () => (await mockPosthog.events()).filter((e) => e.distinct_id === user!.id && e.event === 'answer_generated')
-    let events = await mine()
-    for (let i = 0; i < 30 && events.length < 1; i++) events = await new Promise((r) => setTimeout(r, 100)).then(mine)
+    const events = await mockPosthog.eventsFor('answer_generated', user.id)
     expect(events[0]?.properties).toMatchObject({ revised: true })
     expect(JSON.stringify(events)).not.toContain(revision.request)
   })
