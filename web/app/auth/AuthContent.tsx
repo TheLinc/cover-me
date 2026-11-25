@@ -172,7 +172,6 @@ function AuthForm() {
     }
 
     return () => subscription.unsubscribe();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount: https://github.com/TheLinc/cover-me/commit/7278c73
   }, []);
 
   // The PKCE client ignores implicit-flow tokens and the dashboard checks

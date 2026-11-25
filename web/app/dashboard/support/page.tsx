@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: 'Support', robots: { index: false } }
 // The signed-in support form (#133): the support function emails it to us
 // with the account attached. Signed-out visitors keep the mailto on /support.
 export default async function SupportPage() {
-  const { supabase, user } = await getServerUser()
+  const { user } = await getServerUser()
   if (!user) redirect('/auth?next=/dashboard/support')
   const email = user.email ?? ''
 
