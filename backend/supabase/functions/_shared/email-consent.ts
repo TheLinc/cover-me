@@ -9,16 +9,14 @@ import type { SupabaseClient } from 'npm:@supabase/supabase-js@2'
 
 export type EmailKind = 'product_updates' | 'onboarding'
 
-// Asks the database (can_email, migration 022). Senders never read the consent
-// columns themselves. A failed lookup means no (#114).
+// Senders never read the consent columns themselves (#114).
 export async function canEmail(supabase: SupabaseClient, userId: string, kind: EmailKind): Promise<boolean> {
   const { data, error } = await supabase.rpc('can_email', { p_user_id: userId, p_kind: kind })
   return !error && data === true
 }
 
-// The token in every unsubscribe link: "<user id>.<HMAC-SHA256 of
-// 'unsubscribe:<user id>'>" under EMAIL_TOKEN_SECRET. It never expires: the
-// law wants a link to keep working for at least 60 days after sending (#114).
+// Unsubscribe tokens never expire: the law wants a link to keep working for at
+// least 60 days after sending (#114).
 function key(): Promise<CryptoKey> {
   const secret = Deno.env.get('EMAIL_TOKEN_SECRET')
   if (!secret) throw new Error('EMAIL_TOKEN_SECRET is not set')
