@@ -65,7 +65,9 @@ test('flags a comment whose only change from the base is an added link, even on 
   assert.deepEqual(stamped('const a = 1\n// adds one (#1)\nconst b = a + 1\n'), [2])
   assert.deepEqual(stamped('const z = 0\nconst a = 1\n// adds one, see https://x.dev/1\nconst b = a + 1\n'), [3])
   assert.deepEqual(stamped('const a = 1\n// Safari rounds this down (#1)\nconst b = a + 1\n'), [])
+  assert.deepEqual(stamped('const a = 1\n// Adds one (#1)\nconst b = a + 1\n'), [2])
   assert.deepEqual(stampedComments('// adds one (#1)\nconst b = 2\n', '// adds one (#1)\nconst b = 2\n', 'a.ts'), [])
+  assert.deepEqual(stampedComments('// ------\nconst b = 2\n', '// https://crbug.com/1\nconst b = 2\n', 'a.ts'), [])
 })
 
 const script = fileURLToPath(new URL('./check-comments.mjs', import.meta.url))
@@ -147,7 +149,7 @@ test('as lint, fails a comment that only gained a link since the base, and passe
     const run = lint()
     assert.equal(run.status, 1)
     assert.match(run.stderr, /^a\.ts:2 {2}\/\/ adds one \(#1\)/m)
-    assert.match(run.stderr, /Only a link was added to this comment/)
+    assert.match(run.stderr, /Only a link was added to 1 comment\(s\)/)
 
     fs.writeFileSync(path.join(dir, 'a.ts'), 'const a = 1\n// Safari rounds this down (#1)\nexport const b = a + 1\n')
     assert.equal(lint().status, 0)

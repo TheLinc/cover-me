@@ -49,10 +49,10 @@ function comments(text, file) {
 
 export const unlinkedComments = (text, file) => comments(text, file).filter((c) => !LINKED.test(c.body))
 
-const words = (c) => c.body.replace(/(\bsee:?\s+)?(https?:\/\/\S+|#\d+\b|docs\/adr\/\S+)/gi, ' ').match(/\w+/g)?.join(' ')
+const words = (c) => c.body.toLowerCase().replace(/(\bsee:?\s+)?(https?:\/\/\S+|#\d+\b|docs\/adr\/\S+)/g, ' ').match(/\w+/g)?.join(' ')
 
 export function stampedComments(baseText, text, file) {
-  const before = new Set(unlinkedComments(baseText, file).map(words))
+  const before = new Set(unlinkedComments(baseText, file).map(words).filter(Boolean))
   return comments(text, file).filter((c) => LINKED.test(c.body) && before.has(words(c)))
 }
 
@@ -97,11 +97,12 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const list = (f, cs) => cs.map((c) => `${f.rel}:${c.line}  ${c.text.slice(0, 100)}`)
   const text = (f) => fs.readFileSync(f.abs, 'utf8')
   const found = files.flatMap((f) => list(f, unlinkedComments(text(f), f.rel)))
-  const stamped = files.flatMap((f) => list(f, stampedComments(f.base ?? '', text(f), f.rel)))
+  const stamped = files.flatMap((f) => f.base ? list(f, stampedComments(f.base, text(f), f.rel)) : [])
   if (stamped.length) {
     console.error(stamped.join('\n'))
-    console.error(`\nOnly a link was added to this comment since the base. Delete it if it says what the code does;
-keep it only with a reason the code can't show.${found.length ? '\n' : ''}`)
+    console.error(`\nOnly a link was added to ${stamped.length} comment(s) since the base. Delete each one that says what the
+code does. Keep one only if it gives a reason the code can't show, and rewrite it to state that reason in a line
+or two next to the link.${found.length ? '\n' : ''}`)
   }
   if (found.length) {
     console.error(found.join('\n'))
@@ -112,7 +113,7 @@ Every comment in a file you change is checked, old ones too. For each one, first
 - It gives a reason the code can't show (an outside bug, a hidden constraint, why not the obvious way): keep it
   to one or two lines and link the ticket or ADR that holds the reason: #123, a URL, or docs/adr/<file>.
   For a comment you just wrote, that's the ticket you're on. For an older one, git log -L <line>,<line>:<file>
-  finds the PR that added it.
+  finds the PR that added it, and the comment needs rewording too: a link on its own fails the check.
 Allowed without a link: "// ponytail:" notes, "/// <reference ...>", "/* @vite-ignore */".`)
   }
   if (found.length || stamped.length) process.exit(asHook ? 2 : 1)
