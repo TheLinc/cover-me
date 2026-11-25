@@ -5,8 +5,6 @@ import { describe, expect, it } from 'vitest'
 import { FIXTURE_CASES, fixtureUrl } from '../../../extension/src/content/scrapers/fixtures/cases.ts'
 import { admin, callFunction, mockClaude, mockPosthog } from './helpers'
 
-// The extension's saved postings, read by the served function: the same cases
-// the extension's fixture tests check, so the deployed scrapers match (#3).
 const FIXTURES = join(__dirname, '../../../extension/src/content/scrapers/fixtures')
 const page = (board: string) => {
   const html = readFileSync(join(FIXTURES, `${board}.html`), 'utf8')
