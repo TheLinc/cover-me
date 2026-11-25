@@ -41,6 +41,7 @@ Deno.serve(async (req) => {
       .from('cover_letters')
       .select('id, letter_encrypted, created_at, job_applications(title, company, url)')
       .eq('user_id', userId)
+      .eq('job_applications.user_id', userId)
       .order('created_at', { ascending: false })
       .limit(50)
 
@@ -58,7 +59,7 @@ Deno.serve(async (req) => {
           createdAt: row.created_at,
         })
       } catch {
-        // One unreadable letter doesn't fail the whole list (https://github.com/TheLinc/cover-me/commit/f188e54).
+        continue
       }
     }
 
@@ -83,9 +84,8 @@ Deno.serve(async (req) => {
     if (!body?.id || typeof body.letter !== 'string' || !body.letter) return json({ error: 'Missing required fields' }, 400)
     if (body.letter.length > MAX_LETTER_CHARS) return json({ error: 'Letter too long' }, 400)
 
-    // An ID that already exists, in this account or another, is left alone:
-    // never overwritten, and no job application is made for it. The extension
-    // sends each letter once, so this changes nothing for it (#24).
+    // An ID another account holds must not be overwritten, nor leave an empty
+    // job application in this one (#24).
     const { data: existing, error: lookupError } = await supabase.from('cover_letters').select('id').eq('id', body.id).maybeSingle()
     if (lookupError) return json({ error: 'Failed to save letter' }, 500)
     if (existing) return json({ success: true })

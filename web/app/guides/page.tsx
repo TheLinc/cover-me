@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { serif } from '@/components/site/GuideArticle'
 import { Card, CardContent } from '@/components/ui/card'
 import { GUIDES, newestFirst } from '@/lib/guides'
-import { cn } from '@/lib/utils'
+import { cn, longDate } from '@/lib/utils'
 import { OG_IMAGE } from '@/lib/structured-data'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
@@ -75,7 +75,7 @@ export default function GuidesPage() {
                 </h2>
                 <p className="mb-4 text-[14px] leading-[1.7] text-ink-2">{g.description}</p>
                 <time dateTime={g.updated ?? g.date} className="font-mono text-[11px] uppercase tracking-[0.1em] text-subtle">
-                  Updated {new Date(`${g.updated ?? g.date}T00:00:00`).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                  Updated {longDate(g.updated ?? g.date)}
                 </time>
               </CardContent>
             </Card>

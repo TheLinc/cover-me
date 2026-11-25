@@ -1,9 +1,12 @@
-import { existsSync, readdirSync, readFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { createElement as h } from 'react'
 import type { Metadata } from 'next'
 import { describe, expect, it, vi } from 'vitest'
+import JSZip from 'jszip'
+import { ATS_RESUME_TEMPLATE } from './ats-resume-template'
 import { GUIDES, newestFirst, readingMinutes, slugify } from './guides'
+import { buildResumeDocx } from './pdf/resume-docx'
 
 vi.mock('next/font/google', () => ({ Source_Serif_4: () => ({ className: '' }) }))
 
@@ -105,7 +108,7 @@ describe('internal links', () => {
     .filter((f) => f.endsWith('.tsx'))
     .map((file) => ({ file, text: readFileSync(join(root, file), 'utf8') }))
 
-  it.each(['aiapply-review', 'free-jobscan-alternatives', 'use-your-own-api-key-for-cover-letters', 'jobright-review', 'how-to-answer-job-application-questions'])(
+  it.each(['aiapply-review', 'free-jobscan-alternatives', 'use-your-own-api-key-for-cover-letters', 'jobright-review', 'how-to-answer-job-application-questions', 'careerflow-review'])(
     '%s is linked from at least two other pages, besides the /guides index',
     (slug) => {
       const own = join('app', 'guides', slug, 'page.tsx')
@@ -183,4 +186,53 @@ describe('the Workday application status guide', () => {
       'What does "Submitted" mean on Workday?',
     ])
   }, 20_000)
+})
+
+describe('the ATS resume template guide', () => {
+  const slug = 'ats-resume-template'
+  const render = async () => {
+    const { renderToStaticMarkup } = await import('react-dom/server')
+    const { default: Page } = await import(`../app/guides/${slug}/page.tsx`)
+    return renderToStaticMarkup(h(Page))
+  }
+
+  it('offers the Word template as a direct download before the first section', async () => {
+    const html = await render()
+    const href = '/guides/ats-resume-template/ats-resume-template.docx'
+    expect(existsSync(join(__dirname, '../public', href))).toBe(true)
+    const link = html.indexOf(`href="${href}"`)
+    expect(link).toBeGreaterThan(-1)
+    expect(html.slice(html.lastIndexOf('<a', link), html.indexOf('>', link))).toContain('download=""')
+    expect(link).toBeLessThan(html.indexOf('<section'))
+  }, 20_000)
+
+  it('names the four systems and both test dates, and links to the test write-up', async () => {
+    const html = await render()
+    const text = html.replace(/<[^>]+>/g, ' ')
+    for (const ats of ['Lever', 'Workday', 'Ashby', 'SmartRecruiters']) expect(text).toContain(ats)
+    expect(text).toContain('October 31, 2026')
+    expect(text).toContain('November 24, 2026')
+    expect(html).toContain('href="/guides/ats-friendly-resume-format"')
+  }, 20_000)
+
+  it('has a full page title under 60 characters', async () => {
+    const { metadata } = (await import(`../app/guides/${slug}/page.tsx`)) as { metadata: Metadata }
+    expect(`${metadata.title} | Cover Me`.length).toBeLessThan(60)
+  }, 20_000)
+
+  it("is the Cover Me Word layout, so it matches what the tailor downloads (UPDATE_ATS_TEMPLATE=1 rebuilds it)", async () => {
+    const path = join(__dirname, '../public/guides/ats-resume-template/ats-resume-template.docx')
+    const built = Buffer.from(await (await buildResumeDocx(ATS_RESUME_TEMPLATE)).arrayBuffer())
+    if (process.env.UPDATE_ATS_TEMPLATE) writeFileSync(path, built)
+    const parts = async (bytes: Buffer) => {
+      const zip = await JSZip.loadAsync(bytes)
+      const names = Object.keys(zip.files).filter((n) => n !== 'docProps/core.xml').sort()
+      return Object.fromEntries(await Promise.all(names.map(async (n) => [n, await zip.file(n)!.async('string')])))
+    }
+    expect(await parts(readFileSync(path))).toEqual(await parts(built))
+  }, 20_000)
+
+  it('is linked from the ATS format guide', () => {
+    expect(readFileSync(join(__dirname, '../app/guides/ats-friendly-resume-format/page.tsx'), 'utf8')).toContain(`href="/guides/${slug}"`)
+  })
 })
