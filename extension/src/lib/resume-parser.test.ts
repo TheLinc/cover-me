@@ -3,10 +3,12 @@ import { jsPDF } from 'jspdf'
 import { Document, ExternalHyperlink, Packer, Paragraph, Table, TableCell, TableRow, TextRun } from 'docx'
 import JSZip from 'jszip'
 import { parseResume } from './resume-parser'
+import { sectionOrderFromText } from './ai/resume-parse'
+import { CASES } from '../../eval/fixtures'
 
 // Node shims for what the popup gets from the browser: the worker as a file
 // URL (Vite's ?url is a server path), and mammoth's browser build, which reads
-// { arrayBuffer } where its Node build reads { buffer }.
+// { arrayBuffer } where its Node build reads { buffer } (#236).
 vi.mock('pdfjs-dist/build/pdf.worker.min.mjs?url', () => ({ default: new URL('../../node_modules/pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).href }))
 vi.mock('mammoth', async (importOriginal) => {
   const { default: m } = await importOriginal<{ default: typeof import('mammoth') }>()
@@ -120,4 +122,58 @@ describe('parseResume keeps clickable links (#236)', () => {
     const { value } = await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() })
     expect(await parseResume(file)).toBe(value.trim())
   })
+})
+
+describe('parseResume keeps a PDF\'s line breaks (#339)', () => {
+  const resumes = [...new Map(CASES.map((c) => [c.resumeText, c.parsed])).entries()]
+
+  const resumePdf = (resumeText: string) => pdfFile((doc) => {
+    doc.setFontSize(10)
+    let y = 15
+    for (const line of resumeText.split('\n').flatMap((l) => doc.splitTextToSize(l, 180) as string[])) {
+      if (y > 285) {
+        doc.addPage()
+        y = 15
+      }
+      doc.text(line, 15, y)
+      y += 5
+    }
+  })
+
+  test.each(resumes.map(([text, parsed], i) => ({ i, text, parsed })))('eval resume $i: its PDF text gives the section order its plain text does', async ({ text, parsed }) => {
+    const order = sectionOrderFromText(parsed, text)
+    expect(order).not.toBeNull()
+    expect(sectionOrderFromText(parsed, await parseResume(resumePdf(text)))).toEqual(order)
+  })
+})
+
+describe('parseResume joins a PDF\'s glyph runs into words (#339)', () => {
+  test('runs with no gap between them are one word; a word gap is one space', async () => {
+    const text = await parseResume(pdfFile((doc) => {
+      doc.text('N', 10, 10)
+      doc.text('orthern', 10 + doc.getTextWidth('N'), 10)
+      doc.text('Arizona', 10 + doc.getTextWidth('Northern '), 10)
+      doc.text('University', 10 + doc.getTextWidth('Northern Arizona '), 10)
+      doc.text('Aug 2024', 10, 20)
+    }))
+    expect(text).toBe('Northern Arizona University\nAug 2024')
+  })
+})
+
+test('PDF: text drawn out of order on one baseline stays apart (#339)', async () => {
+  const text = await parseResume(pdfFile((doc) => {
+    doc.text('Aug 2024', 170, 10)
+    doc.text('Software Engineer', 10, 10)
+  }))
+  expect(text.split(/\s+/)).toEqual(['Aug', '2024', 'Software', 'Engineer'])
+})
+
+test('PDF: text drawn right after a link stays apart from its URL (#339)', async () => {
+  const text = await parseResume(pdfFile((doc) => {
+    doc.textWithLink('Portfolio', 10, 10, { url: 'https://ada.dev' })
+    const end = 10 + doc.getTextWidth('Portfolio')
+    doc.setFont('times')
+    doc.text('| GitHub', end, 10)
+  }))
+  expect(text).toBe('Portfolio (https://ada.dev/) | GitHub')
 })
