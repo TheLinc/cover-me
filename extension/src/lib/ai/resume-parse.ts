@@ -41,7 +41,7 @@ JSON structure (omit "projects", "skills", "certifications" entirely if those se
       "title": "the job title as written",
       "company": "the employer's name only, as written",
       "location": "the job's city and region, kept out of title and company",
-      "dates": "Month Year – Month Year",
+      "dates": "the dates as written, in the resume's own format",
       "bullets": ["bullet text copied verbatim"]
     }
   ],
@@ -58,7 +58,7 @@ JSON structure (omit "projects", "skills", "certifications" entirely if those se
       "institution": "the school's name only, as written",
       "degree": "the whole qualification line as written, with its major, subjects, grades and honours",
       "location": "the school's city and region, kept out of institution and degree",
-      "dates": "Year – Year",
+      "dates": "the dates as written, in the resume's own format",
       "bullets": ["achievement bullets copied verbatim"]
     }
   ],
