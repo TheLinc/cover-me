@@ -6,7 +6,7 @@ import { FIXTURE_CASES, fixtureUrl } from '../../../extension/src/content/scrape
 import { admin, callFunction, mockClaude, mockPosthog } from './helpers'
 
 // The extension's saved postings, read by the served function: the same cases
-// the extension's fixture tests check, so the deployed scrapers match.
+// the extension's fixture tests check, so the deployed scrapers match (#3).
 const FIXTURES = join(__dirname, '../../../extension/src/content/scrapers/fixtures')
 const page = (board: string) => {
   const html = readFileSync(join(FIXTURES, `${board}.html`), 'utf8')
@@ -14,7 +14,7 @@ const page = (board: string) => {
 }
 
 // The function rate-limits per client IP. Locally there's no Cloudflare in
-// front, so each call can claim its own IP and tests don't share a bucket.
+// front, so each call can claim its own IP and tests don't share a bucket (#3).
 let nextIp = 1
 const freshIp = () => `198.51.100.${nextIp++ % 250}`
 type Opts = Parameters<typeof callFunction>[1]
@@ -51,7 +51,7 @@ describe('scrape', () => {
     expect((await res.json()).results[0]).toMatchObject({ ok: false })
   })
 
-  // Each event has a random ID, so pick this test's by hostname.
+  // Each event has a random ID, so pick this test's by hostname (#383).
   const posthogEvents = async (hostname: string) => {
     const mine = (e: { properties: Record<string, unknown> }) =>
       (e.properties.pages as { hostname: string }[] | undefined)?.some((p) => p.hostname === hostname)
@@ -102,7 +102,7 @@ describe('scrape', () => {
 
   // The limiter counts per calendar minute (migration 014). A test that makes
   // 21 calls must not straddle a minute boundary, or the count restarts and the
-  // 21st call passes, so each starts with at least 15 s left in its minute.
+  // 21st call passes, so each starts with at least 15 s left in its minute (#26).
   const awayFromMinuteEdge = async () => {
     const left = 60_000 - (Date.now() % 60_000)
     if (left < 15_000) await new Promise((r) => setTimeout(r, left + 500))
@@ -119,7 +119,7 @@ describe('scrape', () => {
 
   it('ignores client-chosen x-forwarded-for entries', async () => {
     // No cf-connecting-ip: the key is the entry the gateway appends, so a
-    // different forged first entry on every call still shares one bucket.
+    // different forged first entry on every call still shares one bucket (#3).
     await awayFromMinuteEdge()
     const body = { pages: [page('lever')] }
     const statuses: number[] = []
