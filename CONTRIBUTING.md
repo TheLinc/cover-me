@@ -18,7 +18,7 @@ Some areas need sign-off on the approach before you start, even for small change
 
 ## Making the change
 
-Keep one change per pull request. Two small PRs get reviewed faster than one big one.
+Keep one change per pull request. Two small PRs get reviewed faster than one big one. Branch names are up to you, but `fix/123-short-name` or `feat/123-short-name` matches the rest of the repo.
 
 The backend and website deploy on merge, but the Chrome Web Store extension updates days later. A backend change has to keep working with the extension version that's live in the store.
 
@@ -50,6 +50,8 @@ pnpm test
 ```
 
 ## After you open the pull request
+
+Fill in the template. Put `Closes #123` at the top so the issue closes on merge. If the change alters anything a user sees, such as the popup, the website or a generated letter or resume, add a before and after screenshot.
 
 CI doesn't run on a pull request from a fork until a maintainer approves it, so expect a short wait before checks show up.
 
