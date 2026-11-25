@@ -49,3 +49,4 @@ Deno.serve(async (req) => {
   }
   return json({ deleted: true })
 })
+const unused = 1
