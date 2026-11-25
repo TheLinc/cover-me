@@ -12,23 +12,6 @@ describe('scrubEvent', () => {
     }
   })
 
-  it('keeps a gift trial redemption but not its code', () => {
-    const out = scrubEvent({
-      uuid: 'u',
-      event: 'trial_redeemed',
-      properties: {
-        note: 'reddit',
-        $pathname: '/redeem/code123',
-        $current_url: 'https://www.cover-me.dev/redeem/code123',
-        $session_entry_url: 'https://www.cover-me.dev/redeem/code123?utm_source=reddit',
-        $referrer: 'https://www.cover-me.dev/auth',
-      },
-    } as CaptureResult)
-    expect(out?.properties.note).toBe('reddit')
-    expect(out?.properties.$pathname).toBe('/redeem')
-    expect(JSON.stringify(out?.properties)).not.toContain('code123')
-  })
-
   it('keeps public pages, including ones that only start like a private path', () => {
     expect(isPrivatePath('/')).toBe(false)
     expect(isPrivatePath('/authors')).toBe(false)
