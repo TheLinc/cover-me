@@ -535,7 +535,7 @@ Turn on the website's button only once users have an extension build with Google
 | `NUDGE_SECRET` | Shared with the `NUDGE_SECRET` GitHub secret; the daily follow-up workflow calls `nudge` with it |
 | `NUDGE_ENABLED` | `true` to let `nudge` send the follow-up email; anything else sends nothing |
 | `RESEND_API_KEY` | Resend API key, for the follow-up email and the dashboard's support form (`support` answers 503 without it) |
-| `POSTHOG_KEY` | PostHog project token for server-side counts (`tailor_run`, `scrape_failed`, `answer_generated`, `answer_limit_hit`) and the extension's site requests and bug reports. Optional: without it nothing is sent |
+| `POSTHOG_KEY` | PostHog project token for server-side counts (`tailor_run`, `resume_upload`, `scrape_failed`, `answer_generated`, `answer_limit_hit`) and the extension's site requests and bug reports. Optional: without it nothing is sent |
 | `POSTHOG_SITE_SURVEY_ID` | ID of a PostHog survey in API mode with three open-text questions: type, site, page URL. `site-request` records the extension's "Request this site" and "Report bug" presses there; without it they're accepted and dropped |
 
 **Web dashboard** (`web/.env.local`):

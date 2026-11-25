@@ -43,8 +43,7 @@ describe('resume', () => {
     }])
 
     expect((await upload()).status).toBe(200)
-    await new Promise((r) => setTimeout(r, 1000))
-    expect(await mockPosthog.eventsFor('resume_upload', user.id)).toHaveLength(1)
+    expect(await mockPosthog.eventsFor('resume_upload', user.id, (e) => e.length > 1)).toHaveLength(1)
   })
 
   it('counts an unknown or missing file name as other', async () => {
