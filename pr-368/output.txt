@@ -1,0 +1,9 @@
+### before (master)
+=== Line checker (model: claude-sonnet-5-5) ===
+  [FAIL] line checker: 31/31 correct — 1 failures, 0 warnings
+      FAIL: electrician: check reply could not be read
+### after (branch)
+=== Line checker (model: claude-sonnet-5-5) ===
+  [PASS] line checker: 31/31 correct — 0 failures, 1 warnings
+      warn: electrician: check reply could not be read, twice: "Sorry, I can't help with that." then "Sorry, I can't help with that."
+ASSERTIONS PASSED
