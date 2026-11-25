@@ -43,8 +43,7 @@ async function load(query: ApplicationsQuery, signal: AbortSignal): Promise<Appl
 }
 
 // Every application matching the search and dates loads at once (up to
-// PAGE_LIMIT), so the page sorts them and filters by stage itself.
-// pro: cards offer the letters and resumes; free ones show the job only (#100).
+// PAGE_LIMIT), so the page sorts them and filters by stage itself (#100).
 export function ApplicationsBrowser({ pro }: { pro: boolean }) {
   const [text, setText] = useState('')
   const [from, setFrom] = useState('')
@@ -53,7 +52,6 @@ export function ApplicationsBrowser({ pro }: { pro: boolean }) {
   // Stage filters for the list; any number can be on. None on is every stage.
   // The board's columns are the stages, so it shows them all (#100).
   const [stages, setStages] = useState<Stage[]>([])
-  // More match than loaded: the page shows the newest PAGE_LIMIT (#100).
   const [capped, setCapped] = useState(false)
   const [status, setStatus] = useState<Status>('loading')
   // null until read from this device after mount, so the server render and
@@ -131,8 +129,6 @@ export function ApplicationsBrowser({ pro }: { pro: boolean }) {
     setApplications((list) => list.filter((a) => a.id !== id))
   }
 
-  // A card dropped in another column moves at once, then saves. If the save
-  // fails it goes back. Only the latest move of a card applies its answer (#100).
   const moves = useRef(new Map<string, number>())
   async function move(app: ApplicationSummary, stage: Stage) {
     if (app.stage === stage) return
