@@ -1,0 +1,9 @@
+{
+  "lock": false,
+  "lint": {
+    "exclude": ["_shared/scrapers/"],
+    "rules": {
+      "exclude": ["no-import-prefix"]
+    }
+  }
+}
