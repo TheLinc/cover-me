@@ -14,11 +14,14 @@
     "lint": "cd supabase/functions && deno lint",
     "test": "node ../scripts/sync-scrapers.mjs --check && node scripts/ensure-stack.mjs && supabase db reset && supabase test db && node scripts/test-functions.mjs",
     "deploy:prod": "node scripts/deploy.mjs",
-    "trial-links": "node scripts/trial-links.mjs"
+    "trial-links": "node scripts/trial-links.mjs",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@supabase/supabase-js": "2.117.1",
+    "@types/node": "22.20.7",
     "supabase": "2.117.0",
+    "typescript": "5.9.3",
     "vitest": "5.0.1"
   },
   "pnpm": {

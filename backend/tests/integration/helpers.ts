@@ -58,7 +58,7 @@ interface CallOptions {
   query?: Record<string, string>
   headers?: Record<string, string>
   // Sent as-is (e.g. a gzipped body); set Content-Type in headers (#3).
-  rawBody?: Uint8Array
+  rawBody?: Uint8Array<ArrayBuffer>
   signal?: AbortSignal
   redirect?: RequestRedirect
 }

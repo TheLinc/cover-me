@@ -111,7 +111,7 @@ describe('applications search and paging', () => {
     expect(body.applications.map((a) => a.title)).toEqual(['R2', 'R1'])
   })
 
-  it.each([{ from: 'yesterday' }, { to: 'x' }, { before: '2026-13-45' }, { limit: '0' }, { limit: '51' }, { limit: '2.5' }])(
+  it.each<Record<string, string>>([{ from: 'yesterday' }, { to: 'x' }, { before: '2026-13-45' }, { limit: '0' }, { limit: '51' }, { limit: '2.5' }])(
     'returns 400 for %o', async (query) => {
       user = await createUser('hosted_pro')
       expect((await list(user, query)).status).toBe(400)
