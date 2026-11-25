@@ -803,7 +803,8 @@ export function groundTailored<T extends Groundable>(
   const postingWithoutTitle = title
     ? jobDescription.replace(new RegExp(`(?<![A-Za-z0-9])${escapeRe(title)}(?![A-Za-z0-9])`, 'gi'), ' ')
     : jobDescription
-  const summaryTerms = jobOnlyTerms(postingWithoutTitle, candidate).filter((t) => terms.includes(t))
+  const termSet = new Set(terms)
+  const summaryTerms = jobOnlyTerms(postingWithoutTitle, candidate).filter((t) => termSet.has(t))
   const removed = new Set<string>()
   const hits = (text: string, list = terms): string[] => {
     const found = list.filter((t) => namesTerm(text, t))

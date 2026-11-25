@@ -316,6 +316,8 @@ export function withChosenOrder<T extends ParsedResume>(parsed: T, order: unknow
 }
 // ── End mirrored parse normalizers ── #149
 
+export class ParseReplyError extends Error {}
+
 export async function parseResumeStructure(resumeText: string, apiKey: string): Promise<ParsedResume> {
   const res = await fetch(ANTHROPIC_MESSAGES_URL, {
     method: 'POST',
@@ -340,8 +342,8 @@ export async function parseResumeStructure(resumeText: string, apiKey: string): 
   try {
     parsed = JSON.parse(cleaned)
   } catch {
-    throw new Error('Resume parse returned invalid JSON')
+    throw new ParseReplyError('Resume parse returned invalid JSON')
   }
-  if (!isValidParsedResume(parsed)) throw new Error('Resume parse returned incomplete data')
+  if (!isValidParsedResume(parsed)) throw new ParseReplyError('Resume parse returned incomplete data')
   return normalizedParse(parsed, resumeText)
 }

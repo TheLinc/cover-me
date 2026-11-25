@@ -25,7 +25,6 @@ describe('answer', () => {
     expect(res.status).toBe(200)
     const data = await res.json()
     expect(data.answer).toBeTruthy()
-    // what's left after this one, for the status box
     expect(data.allowance).toMatchObject({ kind: 'starter', limit: 5, remaining: 4 })
     expect(await answersToday(user.id)).toBe(1)
     expect(await quotaUsedToday(user.id)).toBe(0)
@@ -42,7 +41,7 @@ describe('answer', () => {
   })
 
   // The posting, resume and instructions are the same for every question on
-  // one application; caching them makes the next question cheaper.
+  // one application; caching them makes the next question cheaper (#235).
   it('asks Sonnet at high effort, with the posting and resume cached ahead of the question', async () => {
     user = await createUser()
     await uploadResume(user)
@@ -68,12 +67,12 @@ describe('answer', () => {
     expect(await answersToday(user.id)).toBe(0)
   })
 
-  it('refunds the answer when Claude declines', async () => {
+  it('keeps the answer counted when Claude declines', async () => {
     user = await createUser()
     await uploadResume(user)
     await mockClaude.refuseNext()
     expect((await (await callFunction('answer', { token: user.token, body: body() })).json()).error).toBeTruthy()
-    expect(await answersToday(user.id)).toBe(0)
+    expect(await answersToday(user.id)).toBe(1)
   })
 
   it('rejects a request with no question or job, charging nothing', async () => {
@@ -109,7 +108,7 @@ describe('answer', () => {
   it('a Pro account gets 50 answers a day', async () => {
     user = await createUser('hosted_pro')
     await uploadResume(user)
-    await setQuotaUsedToday(user.id, 25) // letters used up: answers still work
+    await setQuotaUsedToday(user.id, 25) // letters used up: answers still work (#235)
     await setUsage(user.id, [{ daysAgo: 0, count: 49 }], 'answer_counts')
     expect((await callFunction('answer', { token: user.token, body: body() })).status).toBe(200)
     const res = await callFunction('answer', { token: user.token, body: body() })
@@ -124,7 +123,7 @@ describe('answer', () => {
     await setUsage(user.id, [{ daysAgo: 40, count: 5 }, { daysAgo: 0, count: 5 }], 'answer_counts')
     await (await callFunction('answer', { token: user.token, body: body() })).json()
 
-    // Sent after the response (EdgeRuntime.waitUntil), so wait for both.
+    // Sent after the response (EdgeRuntime.waitUntil), so wait for both (#235).
     const mine = async () => (await mockPosthog.events()).filter((e) => e.distinct_id === user!.id)
     let events = await mine()
     for (let i = 0; i < 30 && events.length < 2; i++) events = await new Promise((r) => setTimeout(r, 100)).then(mine)

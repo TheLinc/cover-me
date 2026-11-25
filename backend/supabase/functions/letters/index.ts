@@ -2,6 +2,9 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 import { handleCors, json } from '../_shared/cors.ts'
 import { decrypt, encrypt } from '../_shared/encrypt.ts'
 import { findOrCreateJobApplication } from '../_shared/job-application.ts'
+import { MAX_JOB_FIELD, MAX_LETTER_CHARS } from '../_shared/history-upload.ts'
+import { MAX_BODY_BYTES, text } from '../_shared/job-input.ts'
+import { readBody } from '../_shared/read-body.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SECRET_KEY = Deno.env.get('SERVICE_KEY')!
@@ -66,17 +69,20 @@ Deno.serve(async (req) => {
   if (req.method === 'POST') {
     let body: {
       id: string
-      job: { title?: string; company?: string; url?: string }
-      letter: string
+      job?: { title?: unknown; company?: unknown; url?: unknown }
+      letter: unknown
       createdAt: string
     }
     try {
-      body = await req.json()
+      const raw = await readBody(req, MAX_BODY_BYTES)
+      if (raw === null) return json({ error: 'Request too large' }, 413)
+      body = JSON.parse(raw)
     } catch {
       return json({ error: 'Invalid request body' }, 400)
     }
 
-    if (!body?.id || !body?.letter) return json({ error: 'Missing required fields' }, 400)
+    if (!body?.id || typeof body.letter !== 'string' || !body.letter) return json({ error: 'Missing required fields' }, 400)
+    if (body.letter.length > MAX_LETTER_CHARS) return json({ error: 'Letter too long' }, 400)
 
     // An ID another account holds must not be overwritten, nor leave an empty
     // job application in this one (#24).
@@ -86,7 +92,11 @@ Deno.serve(async (req) => {
 
     let jobApplicationId: string
     try {
-      jobApplicationId = await findOrCreateJobApplication(supabase, userId, body.job ?? {})
+      jobApplicationId = await findOrCreateJobApplication(supabase, userId, {
+        title: text(body.job?.title, MAX_JOB_FIELD),
+        company: text(body.job?.company, MAX_JOB_FIELD),
+        url: text(body.job?.url, MAX_JOB_FIELD),
+      })
     } catch {
       return json({ error: 'Failed to resolve job application' }, 500)
     }
