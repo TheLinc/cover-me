@@ -17,7 +17,7 @@ import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { ParsedResume, TailoredResume } from '../src/types'
 import { buildPrompt as buildLetterPrompt, CLOSE_PATTERNS, type LetterVariation } from '../src/lib/ai/index'
-import { buildPrompt as buildTailorPrompt, assembleTailored } from '../src/lib/ai/resume-tailor'
+import { buildPrompt as buildTailorPrompt, assembleTailored, bulletBudget } from '../src/lib/ai/resume-tailor'
 import { buildParsePrompt, parseParsedJson } from '../src/lib/ai/resume-parse'
 import { lintLetter, buildLintRetryMessage, letterLength } from '../src/lib/ai/letter-lint'
 import { buildAnswerPrompt, finishAnswer } from '../src/lib/ai/answer'
@@ -67,12 +67,14 @@ const HOOKS = ['Achievement-first', 'Bold specific claim']
 // checks instead of on every PR (https://github.com/TheLinc/cover-me/commit/7e09bfc).
 const judgeFloor = (r: { failures: string[]; warnings: string[] }) => (flag('baseline') ? r.warnings : r.failures)
 
-// One case per field family, plus the injection, long-posting and trim cases (#251).
+// One case per field family, plus the injection, long-posting and trim cases (#251) and the
+// non-tech headline, grouped skills and entries case (#190).
 const QUICK_CASES = [
   'tech-prompt-injection', 'new-grad-data-analyst', 'nurse-missing-certs',
   'sales-ae-midmarket-to-enterprise', 'uk-finance-assistant', 'teacher-to-instructional-designer',
   'welder-structural-to-pipe', 'line-cook-to-sous-chef', 'veteran-to-distribution-ops',
   'long-new-grad-data-analyst', 'long-nurse-missing-certs', 'new-grad-trim-long-project',
+  'nurse-headline-grouped-skills',
 ]
 
 const cases = CASES.filter((c) =>
@@ -491,7 +493,7 @@ async function tailorOnce(c: EvalCase, run: number): Promise<TailorRun> {
         prompt.startsWith('SKILL CLAIM CHECK') ? 'skill check' : prompt.startsWith('RESUME ACCURACY CHECK') ? 'line check' : 'line rewrite'
       const ask = (prompt: string) => call([{ role: 'user', content: prompt }], { model: MODEL, maxTokens: 2000, label: stepOf(prompt) })
       const onLineRepair = (repair: LineRepair) => (out.lines = repair)
-      const tailored = await assembleTailored(input, raw, { jobDescription: c.job.description, jobTitle: c.job.title, ask, onLineRepair, exactBulletCounts: !c.mode }, (removed) => (guarded = removed))
+      const tailored = await assembleTailored(input, raw, { jobDescription: c.job.description, jobTitle: c.job.title, ask, onLineRepair, exactBulletCounts: !c.mode, maxBullets: c.mode === 'trim' ? bulletBudget(input) : undefined }, (removed) => (guarded = removed))
       out.tailored = tailored
       out.guardRemoved = guarded
       out.tailor = checkTailored(tailored, c, input)

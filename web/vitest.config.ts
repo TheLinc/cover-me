@@ -11,5 +11,6 @@ export default defineConfig({
       { find: /^mammoth$/, replacement: local('node_modules/mammoth/mammoth.browser.js') },
     ],
   },
+  // tsconfig preserves JSX for Next; tests that render a component need it compiled (#190).
   oxc: { jsx: { runtime: 'automatic' } },
 })

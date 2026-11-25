@@ -1,5 +1,5 @@
 // Worker URL is a static asset reference (just a string) — keeping it static is fine.
-// The heavy pdfjs-dist and mammoth libraries are loaded dynamically only when needed.
+// The heavy pdfjs-dist and mammoth libraries are loaded dynamically only when needed (https://github.com/TheLinc/cover-me/commit/2be30759f4e0e6eeb7bd69f5c563e35f19132107).
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 import { urlCore } from './ai/resume-parse'
 
@@ -18,7 +18,7 @@ export async function parseResume(file: File): Promise<string> {
   throw new Error('Unsupported format. Upload a PDF, DOCX, or TXT file.')
 }
 
-// pdf.js with its worker set, loaded on first use. The editor's preview draws with it too.
+// pdf.js with its worker set, loaded on first use. The editor's preview draws with it too (#118).
 export async function loadPdfjs() {
   const pdfjsLib = await import('pdfjs-dist')
   pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl
@@ -35,11 +35,14 @@ async function parsePdf(file: File): Promise<string> {
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i)
     const content = await page.getTextContent()
-    const text = withLinkUrls(content.items, await page.getAnnotations()).join(' ')
-    pages.push(text)
+    // Link URLs are written into the runs first (#236), then the runs are
+    // joined into lines and words by their positions.
+    const items = content.items as PdfTextItem[]
+    const strs = withLinkUrls(items, await page.getAnnotations())
+    pages.push(pdfPageText(items.map((item, j) => (typeof item.str === 'string' ? { ...item, str: strs[j] } : item))))
   }
 
-  const result = pages.join('\n\n').replace(/\s{3,}/g, '\n').trim()
+  const result = pages.join('\n\n').replace(/[ \t]{3,}/g, '  ').replace(/\n{3,}/g, '\n\n').trim()
   if (!result) throw new Error('No text found in PDF. Try a DOCX or TXT version.')
   return result
 }
@@ -117,7 +120,7 @@ async function parseDocx(file: File): Promise<string> {
   const arrayBuffer = await file.arrayBuffer()
   let value = ''
   // Only the hook is wanted: handing back an empty document keeps mammoth
-  // from rendering HTML or reading the images (a photo cost ~20 ms per MB).
+  // from rendering HTML or reading the images (a photo cost ~20 ms per MB) (#236).
   await mammoth.convertToHtml({ arrayBuffer }, {
     transformDocument: (doc: DocxElement) => {
       value = docxText(doc)
@@ -127,4 +130,44 @@ async function parseDocx(file: File): Promise<string> {
   const result = value.trim()
   if (!result) throw new Error('No text found in DOCX.')
   return result
+}
+
+export interface PdfTextItem {
+  str?: string
+  hasEOL?: boolean
+  transform?: number[]
+  width?: number
+  height?: number
+}
+
+// One page's text with its real line breaks and word spaces. pdf.js hands
+// back runs of glyphs, not words: a kerned heading comes as "N" + "orthern",
+// so joining every run with a space prints "N orthern Arizona". Runs on the
+// same baseline are joined with a space only where there is a visible gap
+// between them; a baseline change or a run marked end-of-line starts a new line (#190).
+export function pdfPageText(items: PdfTextItem[]): string {
+  let out = ''
+  let prev: { x: number; y: number; end: number; size: number } | null = null
+  for (const item of items) {
+    if (typeof item.str !== 'string') continue
+    const t = item.transform ?? [1, 0, 0, 1, 0, 0]
+    const x = t[4] ?? 0
+    const y = t[5] ?? 0
+    const size = Math.abs(t[3] ?? 0) || item.height || 10
+    if (prev) {
+      const sameLine = Math.abs(y - prev.y) < Math.max(prev.size, size) * 0.5
+      if (!sameLine) {
+        if (!out.endsWith('\n')) out += '\n'
+      } else if (item.str && !/\s$/.test(out) && !/^\s/.test(item.str)) {
+        // A gap wider than ~a fifth of the type size is a space between words.
+        // A run that starts left of the last one (a right-aligned date drawn
+        // before its title) is a new word too (#190).
+        if (x - prev.end > size * 0.2 || x < prev.x) out += ' '
+      }
+    }
+    out += item.str
+    if (item.hasEOL && !out.endsWith('\n')) out += '\n'
+    prev = item.str || !prev ? { x, y, end: x + (item.width ?? 0), size } : prev
+  }
+  return out.replace(/[ \t]+\n/g, '\n')
 }
