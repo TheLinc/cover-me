@@ -101,6 +101,13 @@ jobs:
               - 'extension/src/content/scrapers/**'
               - 'scripts/sync-scrapers.mjs'
               - '.github/workflows/ci.yml'
+      - if: steps.changes.outputs.backend == 'true'
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
+        with:
+          deno-version: v2.9.8
+      - if: steps.changes.outputs.backend == 'true'
+        working-directory: backend/supabase/functions
+        run: deno lint
       # The Supabase ports sit inside Linux's ephemeral range, so an outgoing
       # connection (an image pull) can hold 54324 when mailpit tries to bind it.
       - if: steps.changes.outputs.backend == 'true'
