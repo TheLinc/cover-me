@@ -25,8 +25,9 @@
 // gala doesn't back "annual fund campaigns"). Words scattered through the
 // resume are not enough on their own (#285).
 
-interface GroundEntry { bullets: string[]; title?: string; company?: string; name?: string; dates?: string }
+interface GroundEntry { bullets: string[]; title?: string; company?: string; name?: string; tech?: string; dates?: string }
 interface Groundable {
+  headline?: string
   summary?: string
   experience: GroundEntry[]
   projects?: GroundEntry[]
@@ -110,7 +111,7 @@ function editedVersion(previous: unknown): Record<string, unknown> | undefined {
 // A resume's content, as opposed to scores and other metadata, with the
 // section order and the sections deleted in the editor (#197): Regenerate
 // changes wording, not layout or what the user removed.
-const CONTENT_KEYS = ['name', 'phone', 'email', 'website', 'links', 'location', 'summary', 'experience', 'projects', 'education', 'skills', 'certifications', 'otherSections', 'sectionOrder', 'deletedSections']
+const CONTENT_KEYS = ['name', 'phone', 'email', 'website', 'links', 'location', 'headline', 'summary', 'experience', 'projects', 'education', 'skills', 'certifications', 'otherSections', 'sectionOrder', 'deletedSections']
 
 /**
  * What Regenerate revises (#171): when the version the candidate saw holds
@@ -264,7 +265,7 @@ export function parseClaimVerdicts(raw: string, count: number): boolean[] {
  * truthful and only the extra labels are lost. Without `ask` (legacy callers),
  * claims are kept. A comma-separated string passes through.
  */
-export async function groundSkills(skills: unknown, candidate: string, ask?: AskModel): Promise<{ skills?: string; dropped: string[] }> {
+export async function groundSkills(skills: unknown, candidate: string, ask?: AskModel, originalSkills?: string, jobDescription = ''): Promise<{ skills?: string; dropped: string[] }> {
   if (typeof skills === 'string') return { skills, dropped: [] }
   if (!Array.isArray(skills)) return { dropped: [] }
   const flat = (s: string) => s.toLowerCase().replace(/[‐-―−]/g, '-').replace(/\s+/g, ' ').trim()
@@ -277,18 +278,19 @@ export async function groundSkills(skills: unknown, candidate: string, ask?: Ask
     const perWord = ws.map((w) => lineWith([w]))
     return lineWith(ws) ?? (perWord.every(Boolean) ? [...new Set(perWord)].join('; ') : undefined)
   }
-  const items: Array<{ skill: string; claim?: SkillClaim }> = []
+  const items: Array<{ skill: string; claim?: SkillClaim; category?: string; evidence?: string }> = []
   const dropped: string[] = []
   for (const item of skills) {
     const rec = item && typeof item === 'object' ? (item as Record<string, unknown>) : {}
     const skill = (typeof item === 'string' ? item : typeof rec.skill === 'string' ? rec.skill : '').trim()
     const evidence = typeof rec.evidence === 'string' ? rec.evidence.trim() : ''
+    const category = typeof rec.category === 'string' ? rec.category.trim() : undefined
     if (!skill) continue
-    if (mentions(candidate, skill)) items.push({ skill })
-    else if (flat(evidence).length >= 2 && source.includes(flat(evidence))) items.push({ skill, claim: { skill, evidence } })
+    if (mentions(candidate, skill)) items.push({ skill, category, evidence })
+    else if (flat(evidence).length >= 2 && source.includes(flat(evidence))) items.push({ skill, claim: { skill, evidence }, category, evidence })
     else {
       const fromWords = wordEvidence(skill)
-      if (fromWords) items.push({ skill, claim: { skill, evidence: fromWords } })
+      if (fromWords) items.push({ skill, claim: { skill, evidence: fromWords }, category, evidence })
       else dropped.push(`${skill} (no resume evidence)`)
     }
   }
@@ -304,11 +306,96 @@ export async function groundSkills(skills: unknown, candidate: string, ask?: Ask
   }
   const rejected = new Set(claims.filter((_, i) => !approved[i]).map((c) => c.skill))
   claims.filter((c) => rejected.has(c.skill)).forEach((c) => dropped.push(`${c.skill} (evidence "${c.evidence}" doesn't show it)`))
-  const kept = items.filter((i) => !i.claim || !rejected.has(i.skill)).map((i) => i.skill)
+  const keptItems = items.filter((i) => !i.claim || !rejected.has(i.skill))
+  const kept = keptItems.map((i) => i.skill)
+  const groups = skillGroups(originalSkills)
+  if (groups.length && kept.length) return { skills: groupSkills(keptItems, groups, jobDescription), dropped }
   return { skills: kept.length ? kept.join(', ') : undefined, dropped }
 }
 
+export interface SkillGroup { label: string; items: string }
+
+/**
+ * The labelled groups of a skills section written one group per line
+ * ("Languages: Python, SQL"), or [] for a plain list. Two or more such lines
+ * make it grouped; one could be a sentence with a colon in it (#190).
+ */
+export function skillGroups(skills?: string): SkillGroup[] {
+  if (!skills) return []
+  const groups = skills.split(/\n+/).flatMap((line) => {
+    const m = /^([^:,\n]{2,48}):\s*(.+)$/.exec(line.trim())
+    return m ? [{ label: m[1].trim(), items: m[2].trim() }] : []
+  })
+  return groups.length >= 2 ? groups : []
+}
+
+// A grouped skills list keeps at most this many skills in this many groups,
+// the model's top-ranked first. 18, the same as a flat list: resume guides give
+// 8 to 18 and none allows more for groups. Skills the posting names pass it only
+// when they alone fill it, as an ATS matches the posting's terms. The prompt asks
+// for it, but a model that copies the whole master list back (73 skills in 8
+// groups) is cut here (#190).
+export const MAX_GROUPED_SKILLS = 18
+export const MAX_SKILL_GROUPS = 6
+
+// The kept skills back under the resume's own labels, one line per group, in
+// the order the model ranked them. A skill goes under the label the model
+// named when that label is the resume's, else the group that lists it, else
+// the group its evidence came from, else the first group (#190).
+function groupSkills(items: Array<{ skill: string; category?: string; evidence?: string }>, groups: SkillGroup[], jobDescription = ''): string {
+  const lower = (s: string) => s.toLowerCase().replace(/\s+/g, ' ').trim()
+  const byLabel = new Map(groups.map((g) => [lower(g.label), g.label]))
+  const out = new Map<string, string[]>()
+  const ranked: Array<{ label: string; skill: string }> = []
+  for (const item of items) {
+    const label = (item.category && byLabel.get(lower(item.category)))
+      ?? groups.find((g) => mentions(g.items, item.skill))?.label
+      ?? (item.evidence ? groups.find((g) => lower(g.items).includes(lower(item.evidence!)))?.label : undefined)
+      ?? groups[0].label
+    const list = out.get(label)
+    // Past the group cap, only lower-ranked skills are left: they go (#190).
+    if (!list && out.size >= MAX_SKILL_GROUPS) continue
+    if (list?.some((s) => lower(s) === lower(item.skill))) continue
+    out.set(label, [...(list ?? []), item.skill])
+    ranked.push({ label, skill: item.skill })
+  }
+  const named = (skill: string) => !!jobDescription && mentions(jobDescription, skill)
+  const limit = Math.max(MAX_GROUPED_SKILLS, ranked.filter((r) => named(r.skill)).length)
+  for (let i = ranked.length - 1; i >= 0 && ranked.length > limit; i--) {
+    if (!named(ranked[i].skill)) ranked.splice(i, 1)
+  }
+  return [...out.keys()]
+    .map((label) => [label, ranked.filter((r) => r.label === label).map((r) => r.skill)] as const)
+    .filter(([, list]) => list.length)
+    .map(([label, list]) => `${label}: ${list.join(', ')}`).join('\n')
+}
+
 const SMALL_WORDS = new Set(['a', 'an', 'and', 'as', 'at', 'by', 'for', 'in', 'of', 'on', 'or', 'the', 'to', 'with'])
+
+/**
+ * matchSkillCase for a tailored skills list, grouped or not: grouped skills
+ * ("Languages: Python, SQL" a line) are recased group by group against the
+ * resume's own items, so the labels and lines survive (#190).
+ */
+export function recaseSkills(skills: string | undefined, ownSkills: string | undefined, sources: string): string | undefined {
+  const groups = skillGroups(skills)
+  const ownGroups = skillGroups(ownSkills)
+  const own = ownGroups.length ? ownGroups.map((g) => g.items).join('\n') : ownSkills
+  return groups.length
+    ? mapSkillLines(skills!, (items) => matchSkillCase(items, own, sources))
+    : matchSkillCase(skills, own, sources)
+}
+
+// Each line of a grouped skills list through fn, its label kept. A line with
+// no label ("Bilingual in Spanish and English") goes through whole, so it isn't
+// lost; a line fn empties is dropped (#190).
+function mapSkillLines(skills: string, fn: (items: string) => string | undefined): string {
+  return skills.split(/\n+/).map((line) => {
+    const m = /^([^:,\n]{2,48}):\s*(.+)$/.exec(line.trim())
+    const items = fn(m ? m[2].trim() : line.trim())
+    return items ? (m ? `${m[1].trim()}: ${items}` : items) : ''
+  }).filter(Boolean).join('\n')
+}
 
 /**
  * Added skills in the casing of the resume's own skills list (#198): "Founder
@@ -434,7 +521,8 @@ type LineId = string // "e0b2" = experience[0].bullets[2], "p1b0" = projects[1].
 
 function roleLabel(entry: GroundEntry | undefined, fallback: string): string {
   if (!entry) return fallback
-  return [entry.title, entry.company].filter(Boolean).join(' at ') || entry.name || fallback
+  // A project's tech line shows, so its stack in a bullet isn't taken as added (#190).
+  return [entry.title, entry.company].filter(Boolean).join(' at ') || [entry.name, entry.tech].filter(Boolean).join(', built with ') || fallback
 }
 
 // What a summary may cite beyond the bullets: titles with their dates, degrees,
@@ -788,6 +876,52 @@ export async function checkedTitle(jobTitle: string, original: Groundable, tailo
   }
 }
 
+const JUNIOR = new Set(['apprentice', 'student', 'assistant', 'associate', 'trainee', 'helper', 'junior', 'jr', 'intern', 'aide', 'resident', 'graduate', 'deputy', 'acting'])
+
+// Ranks and licences a headline may claim only when the candidate's own
+// headline or a job title shows them, in tech and in trades and healthcare (#190).
+const LEVELS = ['senior', 'sr', 'staff', 'lead', 'principal', 'head', 'director', 'manager', 'chief', 'vp', 'vice president', 'ii', 'iii', 'iv',
+  'journeyman', 'master', 'foreman', 'supervisor', 'charge', 'licensed', 'registered', 'certified']
+
+// A rewritten headline goes back to the candidate's own when it claims a level
+// their headline and titles never show, names a job-only term, or has a title
+// word their headline and titles lack. Only a specialty after a comma, bar or
+// parenthesis may come from their bullets: a CNA who "assisted registered
+// nurses" is still not a "Registered Nurse" (#190).
+function groundHeadline<T extends Groundable>(tailored: T, original: Groundable, terms: string[], removed: Set<string>): T {
+  const headline = tailored.headline
+  if (!headline || !original.headline || headline === original.headline) return tailored
+  const own = [original.headline, ...original.experience.map((e) => e.title ?? '')].join(' \n ')
+  const jobOnly = terms.filter((t) => namesTerm(headline, t))
+  const [title, ...specialty] = headline.split(/\s*[,|(\u2013\u2014\u00b7]\s*|\s+-\s+/)
+  // Only the title claims a level: "Registered Nurse, IV Therapy" and
+  // "Analyst, Master Data" name a specialty, not a rank (#190).
+  const level = LEVELS.find((l) => mentions(title ?? '', l) && !mentions(own, l))
+  const titleWords = new Set(tokens(own))
+  const allWords = new Set(tokens([own, ...original.experience.flatMap((e) => e.bullets ?? []), ...(original.projects ?? []).flatMap((p) => p.bullets ?? [])].join(' \n ')))
+  const backed = (w: string, words: Set<string>) => words.has(w) || words.has(`${w}s`) || words.has(w.replace(/s$/, '')) ||
+    (w.length >= 4 && [...words].some((o) => o.startsWith(w)))
+  // The title comes from one of their own titles, not from words of several:
+  // "Journeyman Electrician" and "Plumber's Helper" make no "Journeyman Plumber" (#190).
+  const titleTokens = tokens(title ?? '').filter((w) => !SMALL_WORDS.has(w))
+  // Nor by dropping what makes it junior: an "Apprentice Electrician" is no
+  // "Electrician", an "Assistant Manager" no "Manager" (#190).
+  const fromOneTitle = [original.headline, ...original.experience.map((e) => e.title ?? '')].some((t) => {
+    const words = new Set(tokens(t ?? ''))
+    return t && titleTokens.every((w) => backed(w, words)) && ![...words].some((w) => JUNIOR.has(w) && !titleTokens.includes(w))
+  })
+  const titleUnbacked = titleTokens.filter((w) => !backed(w, titleWords))
+  const unbacked = [
+    ...(fromOneTitle ? [] : titleUnbacked.length ? titleUnbacked : [title ?? '']),
+    ...tokens(specialty.join(' ')).filter((w) => !SMALL_WORDS.has(w) && !backed(w, allWords)),
+  ]
+  if (!level && !jobOnly.length && !unbacked.length) return tailored
+  jobOnly.forEach((t) => removed.add(t))
+  unbacked.forEach((w) => removed.add(`${w} (headline word)`))
+  if (level) removed.add(`${level} (headline level)`)
+  return { ...tailored, headline: original.headline }
+}
+
 export function groundTailored<T extends Groundable>(
   tailored: T,
   original: Groundable,
@@ -803,14 +937,16 @@ export function groundTailored<T extends Groundable>(
   const postingWithoutTitle = title
     ? jobDescription.replace(new RegExp(`(?<![A-Za-z0-9])${escapeRe(title)}(?![A-Za-z0-9])`, 'gi'), ' ')
     : jobDescription
-  const summaryTerms = jobOnlyTerms(postingWithoutTitle, candidate).filter((t) => terms.includes(t))
+  const termSet = new Set(terms)
+  const summaryTerms = jobOnlyTerms(postingWithoutTitle, candidate).filter((t) => termSet.has(t))
   const removed = new Set<string>()
   const hits = (text: string, list = terms): string[] => {
     const found = list.filter((t) => namesTerm(text, t))
     found.forEach((t) => removed.add(t))
     return found
   }
-  if (terms.length === 0) return { resume: tailored, removed: [] }
+  const headlineFixed = groundHeadline(tailored, original, terms, removed)
+  if (terms.length === 0) return { resume: headlineFixed, removed: [...removed] }
 
   const fixEntries = (out: GroundEntry[] | undefined, input: GroundEntry[] | undefined) =>
     out?.map((entry, i) => {
@@ -820,7 +956,7 @@ export function groundTailored<T extends Groundable>(
       return { ...entry, bullets }
     })
 
-  const resume = { ...tailored }
+  const resume = { ...headlineFixed }
   if (tailored.summary) {
     resume.summary = tailored.summary
       .split(/(?<=[.!?])\s+/)
@@ -830,7 +966,7 @@ export function groundTailored<T extends Groundable>(
   resume.experience = fixEntries(tailored.experience, original.experience) ?? []
   if (tailored.projects) resume.projects = fixEntries(tailored.projects, original.projects)
   if (tailored.skills) {
-    resume.skills = splitSkills(tailored.skills)
+    const clean = (list: string) => splitSkills(list)
       .map((item) => {
         const cleaned = item.replace(/\s*\(([^()]*)\)/g, (group, inner: string) => (hits(inner).length ? '' : group)).trim()
         if (hits(cleaned).length === 0) return cleaned
@@ -840,6 +976,8 @@ export function groundTailored<T extends Groundable>(
       })
       .filter(Boolean)
       .join(', ')
+    // Grouped skills are checked group by group, so the labels survive (#190).
+    resume.skills = skillGroups(tailored.skills).length ? mapSkillLines(tailored.skills, clean) : clean(tailored.skills)
   }
   return { resume, removed: [...removed] }
 }

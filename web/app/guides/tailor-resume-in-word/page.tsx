@@ -194,7 +194,7 @@ export default function Page() {
           body: (
             <p>
               Either works if the layout is simple, so send what the application asks for. When I uploaded{' '}
-              <Link href="/guides/ats-friendly-resume-format">one resume in six formats</Link> to Lever, Workday, Ashby and SmartRecruiters, all four filled in the same details from the one-column Word file and the one-column PDF. To send your own design as a PDF, open the tailored Word file and use File, Save As, PDF. Cover Me&rsquo;s PDF button uses its own layout.
+              <Link href="/guides/ats-friendly-resume-format">one resume in six formats</Link> to Lever, Workday, Ashby and SmartRecruiters, all four filled in the same details from the one-column Word file and the one-column PDF. To send your own design as a PDF, open the tailored Word file and use File, Save As, PDF. Cover Me&rsquo;s PDF button uses its own layout, which is also a <Link href="/guides/ats-resume-template">free ATS resume template</Link> for Word.
             </p>
           ),
         },

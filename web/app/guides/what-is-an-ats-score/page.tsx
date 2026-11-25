@@ -168,7 +168,8 @@ export default function Page() {
               </GuideFigure>
               <p>
                 Our <Link href="/guides/tailor-resume-to-job-description">guide to tailoring your resume to a job description</Link> covers each step in detail, and these <Link href="/guides/chatgpt-resume-prompts">ChatGPT resume prompts</Link> run the same steps in a chatbot. Keywords only count if the ATS can read your file, so check your format with our{' '}
-                <Link href="/guides/ats-friendly-resume-format">test of six resume formats</Link>.
+                <Link href="/guides/ats-friendly-resume-format">test of six resume formats</Link>, or start from our{' '}
+                <Link href="/guides/ats-resume-template">free ATS resume template</Link>.
               </p>
             </>
           ),

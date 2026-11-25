@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ensureValidSession, uploadResumeToBackend } from '../../lib/auth'
 import { DESIGN_CHECK_STALE_MS, DESIGN_UPLOAD_MAX, sha256Hex, toBase64, usesDesign } from '../../lib/design'
 import { designUsable } from '../../lib/pdf/docx-design'
+import { MAX_RESUME_CHARS } from '../../lib/ai/resume-parse'
 import { parseResume } from '../../lib/resume-parser'
 import { getCachedTier, getDesignFile, getMode, getResume, getSession, saveDesignFile, saveResume, watchResume } from '../../lib/storage'
 import type { DesignCheck, ParsedResume, ResumeData } from '../../types'
@@ -15,6 +16,7 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
   const [error, setError] = useState('')
   const [dragOver, setDragOver] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  // Signed in to the account: a copy added while signed out isn't in it yet (#16).
   const [accountMode, setAccountMode] = useState(false)
   const [pro, setPro] = useState(false)
   // Existing users: the "New" notice the Resume tab's dot leads to (#131).
@@ -45,7 +47,7 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
     if (current) await saveResume({ ...current, layout })
   }
 
-  // The service worker runs the check, so it finishes if the popup closes (#131).
+  // The service worker runs the check, so it finishes if the popup closes (lib/design.ts) (#131).
   function checkDesign(hash: string) {
     void chrome.runtime.sendMessage({ type: 'CHECK_DESIGN', hash }).catch(() => {})
   }
@@ -59,11 +61,14 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
       // A Word file is kept, so tailoring can edit it in place (#131).
       const bytes = file.name.toLowerCase().endsWith('.docx') ? new Uint8Array(await file.arrayBuffer()) : null
       const hash = bytes ? await sha256Hex(bytes) : undefined
-      // Not getSession: an expired token would fail the upload below (#16).
+      // ensureValidSession refreshes an expired token (or clears a dead session),
+      // so the upload below doesn't fail with a stale token (#16).
       const [mode, session] = await Promise.all([getMode(), ensureValidSession()])
       const hosted = mode === 'hosted' && !!session
-      // A signed-out upload keeps the last owner so no other account can claim it, and is
-      // marked so the owner's next sign-in doesn't upload it (it may be someone else's) (#16).
+      // Signed in (either mode): the copy belongs to this account. Signed out
+      // after an account was here: it keeps that owner, so another account can't
+      // claim it, and is marked so the owner's next sign-in doesn't upload it
+      // either (it may be someone else's). See syncResume in lib/auth.ts (#16).
       const inherited = session ? undefined : (await getResume())?.accountId
       const data: ResumeData = {
         text, filename: file.name, updatedAt: new Date().toISOString(),
@@ -83,8 +88,10 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
       setStatus('saved')
       setTimeout(() => setStatus('idle'), 2500)
 
-      // A Word file's check uploads the text itself. A second upload here would start
-      // a second server parse that can come out different (#131).
+      // Best-effort cloud sync for hosted users. A Word file's check uploads
+      // the text itself and waits for the server's parse of it: a second
+      // upload here would start a second parse that can come out different.
+      // Its failures show on the card (#131).
       if (hosted && session && !bytes) {
         uploadResumeToBackend(session.access_token, text, file.name).catch((err) => {
           setError(`Saved locally, but cloud sync failed: ${err instanceof Error ? err.message : 'unknown error'}`)
@@ -157,7 +164,7 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
 
       <div
         className={`upload-area${dragOver ? ' drag-over' : ''}`}
-        // The input's own click bubbles here too, so don't open the picker twice (#19).
+        // The input's own click bubbles here too; don't open the picker twice (#19).
         onClick={(e) => { if (e.target !== inputRef.current) inputRef.current?.click() }}
         onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
         onDragLeave={() => setDragOver(false)}
@@ -216,9 +223,9 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
               {resume.signedOutUpload && accountMode && (
                 <div className="hint hint-tight">Added while signed out, so it isn&apos;t in your account yet. Upload it again to use it for letters.</div>
               )}
-              {/* The letter and parse prompts read only this much (#31). */}
-              {resume.text.length > 12000 && (
-                <div className="hint hint-tight">Only the first 12,000 characters (about 2,400 words) are used. Shorten your resume so letters and tailored resumes include everything.</div>
+              {/* The letter and parse prompts read only this much (lib/ai/index.ts, lib/ai/resume-parse.ts) (#31). */}
+              {resume.text.length > MAX_RESUME_CHARS && (
+                <div className="hint hint-tight">Only the first {MAX_RESUME_CHARS.toLocaleString('en-US')} characters (about {Math.round(MAX_RESUME_CHARS / 5).toLocaleString('en-US')} words) are used. Shorten your resume so letters and tailored resumes include everything.</div>
               )}
               {!wordUpload && !news && (
                 <div className="hint hint-tight">Upload your resume as a Word file (.docx) and tailored resumes keep its design.</div>
@@ -258,6 +265,7 @@ const LAYOUT_WORDS = { columns: 'two columns', table: 'tables', textbox: 'text b
 const count = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
 const clip = (s: string) => (s.length > 40 ? `${s.slice(0, 40).trimEnd()}…` : s)
 
+// What to fix in Word when too few bullets can be edited in place (#131).
 function designReasons(c: DesignCheck): string[] {
   if (c.total === 0) return ['No bullets were found under your experience. Check the file has them, then upload it again.']
   const loose = c.unmatched.length - c.textBoxBullets

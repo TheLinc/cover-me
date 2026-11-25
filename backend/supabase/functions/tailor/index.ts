@@ -4,12 +4,15 @@ import { ANTHROPIC_MESSAGES_URL, SONNET_BETA_HEADER, SONNET_FIELDS, SONNET_MAX_T
 import { corsHeaders, handleCors, json } from '../_shared/cors.ts'
 import { decrypt, encrypt, sameCiphertext } from '../_shared/encrypt.ts'
 import { findOrCreateJobApplication } from '../_shared/job-application.ts'
-import { isUuid } from '../_shared/history-upload.ts'
-import { isCurrentParse, isValidParsedResume, parseResumeStructure, type ParsedResume, upgradedParse } from '../_shared/resume-parse.ts'
-import { buildsOnEdits, candidateText, checkAndRewriteLines, checkedTitle, groundSkills, groundTailored, keepSeen, matchSkillCase, seenVersion, trustedNotes } from '../_shared/resume-grounding.ts'
+import { isObject, isUuid, MAX_RESUME_JSON } from '../_shared/history-upload.ts'
+import { isCurrentParse, isValidParsedResume, parseResumeStructure, type ParsedResume, ParseReplyError, upgradedParse } from '../_shared/resume-parse.ts'
+import { buildsOnEdits, candidateText, checkAndRewriteLines, checkedTitle, groundSkills, groundTailored, keepSeen, recaseSkills, seenVersion, skillGroups, trustedNotes } from '../_shared/resume-grounding.ts'
 import { scoreBefore, scoreFromMatch } from '../_shared/ats-score.ts'
 import { KEYWORD_JUDGING, KEYWORD_TIERS } from '../_shared/keyword-rules.ts'
 import { captureUsage } from '../_shared/posthog.ts'
+import { withOlderFields } from '../_shared/resume-fields.ts'
+import { MAX_BODY_BYTES, MAX_SUPPLEMENTAL, readJob, text } from '../_shared/job-input.ts'
+import { readBody } from '../_shared/read-body.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SECRET_KEY = Deno.env.get('SERVICE_KEY')!
@@ -25,6 +28,8 @@ export interface TailorDeltaEntry { bullets: string[] }
 
 export interface TailorDelta {
   summary?: string
+  /** The title line under the name, rewritten for the job (STEP 4B) (#190). */
+  headline?: string
   experience: TailorDeltaEntry[]
   projects?: TailorDeltaEntry[]
   /** Older prompts sent a comma-separated string; groundSkills converts both forms before merging: https://github.com/TheLinc/cover-me/commit/0e9a09cd3d4d9fc3b7cebb190aed7c4307954676 */
@@ -78,23 +83,146 @@ export function mergeTailorDelta<T extends {
   experience: Array<{ bullets: string[] }>
   projects?: Array<{ bullets: string[] }>
   skills?: string
-}>(base: T, delta: TailorDelta, opts: { exactBulletCounts?: boolean } = {}): T & { summary: string } {
-  const pick = (orig: string[], d: TailorDeltaEntry | undefined, exact: boolean): string[] => {
+}>(base: T, delta: TailorDelta, opts: { exactBulletCounts?: boolean; maxBullets?: Pick<BulletBudget, 'long' | 'experience' | 'projects'> } = {}): T & { summary: string } {
+  const pick = (orig: string[], d: TailorDeltaEntry | undefined, exact: boolean, max?: number): string[] => {
     const rewritten = Array.isArray(d?.bullets) ? d.bullets.filter((b): b is string => typeof b === 'string' && b.trim().length > 0) : []
-    if (rewritten.length === 0 || (exact && rewritten.length !== orig.length)) return orig
-    return rewritten
+    const kept = rewritten.length === 0 || (exact && rewritten.length !== orig.length) ? orig : rewritten
+    // Trim mode: past the budget's maximum, the model's lowest-ranked bullets
+    // go. Only a long master also keeps an entry's first measured results, so
+    // a short resume's trim drops what the model dropped (#190).
+    if (!max || max <= 0) return kept
+    return opts.maxBullets?.long ? keepResults(orig, kept, max) : kept.slice(0, max)
   }
+  const exact = !!opts.exactBulletCounts
+  // A headline is kept only when the resume has one, and only as a short
+  // single line; anything else keeps the resume's own. One the user cleared in
+  // the editor stays cleared, as the guard has nothing to check it against (#190).
+  const headline = typeof delta.headline === 'string' ? delta.headline.replace(/\s+/g, ' ').trim() : ''
+  const baseHeadline = (base as { headline?: unknown }).headline
+  const newHeadline = typeof baseHeadline === 'string' && baseHeadline.trim() && headline && headline.length <= 60 && headline.split(' ').length <= 8 ? headline : undefined
   return {
     ...base,
+    ...(newHeadline ? { headline: newHeadline } : {}),
     summary: typeof delta.summary === 'string' ? delta.summary : '',
-    experience: base.experience.map((role, i) => ({ ...role, bullets: pick(role.bullets, delta.experience?.[i], !!opts.exactBulletCounts) })),
+    experience: base.experience.map((role, i) => ({ ...role, bullets: pick(role.bullets, delta.experience?.[i], exact, opts.maxBullets?.experience[i]) })),
     ...(base.projects?.length
-      ? { projects: base.projects.map((p, i) => ({ ...p, bullets: pick(p.bullets, delta.projects?.[i], !!opts.exactBulletCounts) })) }
+      ? { projects: base.projects.map((p, i) => ({ ...p, bullets: pick(p.bullets, delta.projects?.[i], exact, opts.maxBullets?.projects[i]) })) }
       : {}),
     ...(base.skills
       ? { skills: typeof delta.skills === 'string' && delta.skills.trim() ? delta.skills : base.skills }
       : {}),
   }
+}
+
+// A bullet stating a measured result: a percentage, or a before/after change
+// ("cut wait time from 40 to 25 minutes", "0.76 to 0.84", "3/14 to 14/14"). A
+// plain range ("Managed 5 to 7 engineers", "shifts from 7pm to 7am", "grades
+// from 9 to 12", "2019 to 2021") or scope alone ("a 60-case evaluation set")
+// doesn't count (#190). CHANGE starts only at the start of a number, so a
+// 20,000-digit bullet takes milliseconds, not a second of the function's CPU (#190).
+const PERCENT = /\b\d+(?:\.\d+)?(?:\/\d+)?\s*(?:%|percent\b)/i
+const CHANGE = /(?<![\d.,/])(\bfrom\s+)?\$?(\d+(?:[.,]\d+)*(?:\/\d+)?)(?:\s*[a-z%]+)?\s+(?:to|\u2192|->)\s+\$?(\d+(?:[.,]\d+)*(?:\/\d+)?)/gi
+const CHANGE_VERB = /\b(?:reduc|cut|improv|increas|rais|lower|decreas|boost|grew|grow|drop|shrank|shrunk|sped|speed|doubl|tripl|halv|fell|rose|climb|declin|shorten)\w*/i
+const YEAR = /^(?:19|20)\d\d$/
+
+export function isResultBullet(text: string): boolean {
+  if (PERCENT.test(text)) return true
+  for (const m of text.matchAll(CHANGE)) {
+    const [, , a, b] = m
+    if (YEAR.test(a) && YEAR.test(b)) continue
+    const fractional = /[./]/.test(a) && /[./]/.test(b)
+    if (fractional || verbBefore(text.slice(0, m.index))) return true
+  }
+  return false
+}
+
+// A change verb in the same clause as the figures, at most eight words before
+// them: "Ran 3 to 5 workshops, improving onboarding" is a range, not a result (#190).
+function verbBefore(lead: string): boolean {
+  const clause = lead.split(/[,;:()]/).pop() ?? ''
+  return CHANGE_VERB.test(clause.trim().split(/\s+/).slice(-8).join(' '))
+}
+
+// The figures a bullet states, as written ("40", "25", "0.76", "3/14") (#190).
+const figures = (text: string): string[] => text.match(/\d+(?:[./]\d+)*/g) ?? []
+
+/**
+ * Cuts an entry to max bullets, the model's ranking first, while keeping up to
+ * two of the original's measured results (in the order the resume gives them).
+ * A result counts as kept when some bullet still states all of its percentages
+ * or all of its other figures ("Cut wait 38%" keeps "from 40 to 25 minutes (38%)");
+ * a dropped one comes back as the model's rewrite if it wrote one past the cut,
+ * else as the original, at the top, and the lowest-ranked bullets make room (#190).
+ */
+export function keepResults(orig: string[], kept: string[], max: number): string[] {
+  const states = (bullet: string, result: string) => {
+    const own = new Set(figures(bullet))
+    const pct = new Set(result.match(/\d+(?:\.\d+)?(?=\s*%)/g) ?? [])
+    const nums = figures(result)
+    return [nums.filter((n) => pct.has(n)), nums.filter((n) => !pct.has(n))]
+      .some((part) => part.length > 0 && part.every((n) => own.has(n)))
+  }
+  const results = orig.filter(isResultBullet).slice(0, Math.min(2, max))
+  const head: string[] = []
+  for (const result of results) {
+    if (!figures(result).length) continue
+    const at = kept.findIndex((b) => states(b, result))
+    if (at >= 0 && at < max) continue
+    head.push(at >= 0 ? kept[at] : result)
+  }
+  if (!head.length) return kept.slice(0, max)
+  return [...head, ...kept.filter((b) => !head.includes(b))].slice(0, max)
+}
+
+// How many bullets each entry keeps in trim mode. A long master resume (over
+// 36 bullets, or a role over 12) is cut hardest in the oldest roles, so it
+// comes out at one to two pages: 6 for the latest role, 4 for the next two, 3
+// for older ones, 3 for each project. Any other resume keeps the most the trim
+// prompt has always allowed (7 of 8 or more, 5 of 5 to 7, all of 4 or fewer)
+// and every project bullet. Never more than the entry has (#190).
+export interface BulletBudget {
+  /** A master resume over 36 bullets, or with a role over 12: too long to print in full (#190). */
+  long: boolean
+  experience: number[]
+  projects: number[]
+}
+
+// On Regenerate from the user's edits, an entry keeps at least the bullets
+// they left it, as the revision prompt asks; the budget cuts only below that (#190).
+export function seenBudget<B extends Pick<BulletBudget, 'long' | 'experience' | 'projects'>>(
+  b: B,
+  seen: { experience: Array<{ bullets?: string[] }>; projects?: Array<{ bullets?: string[] }> },
+  upload: unknown,
+): B {
+  if (seen === upload) return b
+  return {
+    ...b,
+    experience: b.experience.map((n, i) => Math.max(n, seen.experience[i]?.bullets?.length ?? 0)),
+    projects: b.projects.map((n, i) => Math.max(n, seen.projects?.[i]?.bullets?.length ?? 0)),
+  }
+}
+
+export function bulletBudget(r: { experience: Array<{ bullets?: string[] }>; projects?: Array<{ bullets?: string[] }> }): BulletBudget {
+  const counts = r.experience.map((e) => e.bullets?.length ?? 0)
+  const long = counts.reduce((a, b) => a + b, 0) > 36 || counts.some((n) => n > 12)
+  return {
+    long,
+    experience: counts.map((n, i) => Math.min(n, long ? (i === 0 ? 6 : i <= 2 ? 4 : 3) : n >= 8 ? 7 : n >= 5 ? 5 : n)),
+    projects: (r.projects ?? []).map((p) => Math.min(p.bullets?.length ?? 0, long ? 3 : Infinity)),
+  }
+}
+
+// The budget as prompt lines: "- experience[0] (Title, Company): 15 bullets in, keep 5–6" (#190).
+export function budgetText(r: { experience: Array<{ bullets?: string[]; title?: string; company?: string }>; projects?: Array<{ bullets?: string[]; name?: string }> }): string {
+  const b = bulletBudget(r)
+  const range = (n: number, max: number) => {
+    const min = Math.min(n, Math.max(2, max - 1))
+    return min === max ? `keep ${max}` : `keep ${min}–${max}`
+  }
+  return [
+    ...r.experience.map((e, i) => `- experience[${i}] (${[e.title, e.company].filter(Boolean).join(', ')}): ${e.bullets?.length ?? 0} bullets in, ${range(e.bullets?.length ?? 0, b.experience[i])}`),
+    ...(r.projects ?? []).map((p, i) => `- projects[${i}] (${p.name ?? ''}): ${p.bullets?.length ?? 0} bullets in, ${range(p.bullets?.length ?? 0, b.projects[i])}`),
+  ].join('\n')
 }
 // ── End mirrored tailor delta ── https://github.com/TheLinc/cover-me/commit/d7700ca5cc272c75785b90971b63a366f3d35016
 
@@ -120,12 +248,18 @@ async function askChecker(prompt: string): Promise<string> {
 function buildTailorSchema(parsed: ParsedResume): string {
   const delta: Record<string, unknown> = {
     summary: 'string — 2-3 sentence professional summary, no first-person pronouns; "" when STEP 4 says skip',
+    ...(parsed.headline ? { headline: 'string — the title line under the name (STEP 4B)' } : {}),
     experience: [{ bullets: ['string — rewritten bullets for the SAME-INDEX input experience entry'] }],
   }
   if (parsed.projects?.length) {
     delta.projects = [{ bullets: ['string — rewritten bullets for the SAME-INDEX input project'] }]
   }
-  if (parsed.skills) {
+  if (parsed.skills && skillGroups(parsed.skills).length) {
+    delta.skills = [
+      { category: 'string — the resume\'s own group label', skill: 'string — a skill worded exactly as in the resume' },
+      { category: 'string — the resume\'s own group label', skill: 'string — an added or reworded skill (STEP 8)', evidence: 'string — exact phrase copied from the resume that proves it' },
+    ]
+  } else if (parsed.skills) {
     delta.skills = [
       { skill: 'string — a skill worded exactly as in the resume' },
       { skill: 'string — an added or reworded skill (STEP 8)', evidence: 'string — exact phrase copied from the resume that proves it' },
@@ -147,8 +281,21 @@ function stripScores(r: Record<string, unknown>): Record<string, unknown> {
   return rest
 }
 
+// Extra STEP 8 rules for a skills section written in labelled groups, so the
+// tailored list keeps those groups instead of collapsing into one long line (#190).
+export function groupedSkillsRule(skills?: string): string {
+  const groups = skillGroups(skills)
+  if (!groups.length) return ''
+  return `
+GROUPED SKILLS — this resume lists its skills in labelled groups: ${groups.map((g) => `"${g.label}"`).join(', ')}. Keep that grouping. Give every skill a "category" copied exactly from one of these labels; an added skill takes the label of the group its evidence comes from. Emit skills most-relevant-first (groups print in the order their first skill appears), and leave out a group with nothing relevant to this job. The ~15–18 target and the 18-item hard cap above count every group together, in at most 6 groups. Prefer the resume's own wording, and add at most 3 skills worded in the JD's phrasing.
+`
+}
+
 function buildPrompt(job: JobPayload, parsed: ParsedResume, compact: boolean, supplemental?: string, trim = false, includeSummary = true, previous?: Record<string, unknown>): string {
   const company = job.company && job.company !== 'Unknown Company' ? job.company : 'Unknown'
+  const budget = budgetText(parsed)
+  // Only a long master resume gets per-entry budgets in the prompt (#190).
+  const long = bulletBudget(parsed).long
   const today = new Date().toISOString().split('T')[0]
 
   const previousSection = previous ? `
@@ -172,8 +319,8 @@ ADD a skill only when it is in the JD AND either named in the supplemental conte
 SKILLS OUTPUT FORMAT: "skills" is a JSON array of objects. A skill worded exactly as in the resume is {"skill": "..."}. Every other skill (an addition, or a rewording into the JD's phrasing) MUST include "evidence": a phrase copied character-for-character from the resume or the supplemental context that directly demonstrates that skill itself, not something merely near it. The application checks every evidence phrase against the resume and supplemental context and deletes any skill whose evidence is missing or not found, so never paraphrase evidence and never add a skill you cannot back.
 Never add a competing or unrelated tool the candidate lacks (Vue, Redux, a different language). Do NOT add process or architecture buzzwords the resume gives no concrete evidence for — in tech, "CI/CD", "DevOps", "Cloud Security", "Microservices Architecture", "Cloud-Native" each require a named tool or practice on the resume or in the supplemental context; in any field, a license, certification, or method named only in the JD is never added unless the resume states it or the supplemental context says the candidate holds it. Absent evidence, these are fabrications (Integrity 4). If in doubt, leave it out.
 
-REMOVE skills not relevant to this role type (e.g. a mobile-only framework for a pure web role). When over the cap, keep the most JD-relevant skills and drop the least relevant first. Aim for ~15–18 focused skills, not an exhaustive inventory; a bloated list buries the terms that matter and reads as unfocused. NEVER remove a skill the JD names — or a specific instance of a category the JD names (e.g. MySQL under "relational databases") — that the candidate genuinely has; ATS matches literal tokens, so the JD's exact term must survive. When the resume has both a JD-named specific term and its generic synonym, keep BOTH ("MySQL (SQL)", not just "SQL"); dedupe only synonyms the JD does not name. Hard cap: 18 items.
-` : ''
+REMOVE skills not relevant to this role type (e.g. a mobile-only framework for a pure web role). When over the cap, keep the most JD-relevant skills and drop the least relevant first. Aim for ~15–18 focused skills, not an exhaustive inventory; a bloated list buries the terms that matter and reads as unfocused. NEVER remove a skill the JD names — or a specific instance of a category the JD names (e.g. MySQL under "relational databases") — that the candidate genuinely has; ATS matches literal tokens, so the JD's exact term must survive. When the resume has both a JD-named specific term and its generic synonym, keep BOTH ("MySQL (SQL)", not just "SQL"); dedupe only synonyms the JD does not name. Hard cap: 18 items. The one exception: never cut a JD-named skill the candidate has to meet the cap. If those alone pass 18, keep all of them and nothing else.
+${groupedSkillsRule(parsed.skills)}` : ''
 
   const compactMode = compact ? `---
 
@@ -241,12 +388,26 @@ ${includeSummary ? `STEP 4 — WRITE SUMMARY
 YEARS OF EXPERIENCE: never state a count of years in the summary. The dates already sit on the resume, and any total you compute counts training, junior, or unrelated roles that a reader will not credit.
 Claim only what a bullet demonstrates — a skills-only technology may not be claimed as built/deployed/specialised in, and architecture buzzwords the resume does not support are forbidden (Integrity 4).
 INDUSTRY/DOMAIN: name a domain (e-commerce, fintech, biotech, etc.) ONLY if a bullet shows the candidate actually worked in it. Never borrow a domain from the JD's requirements or "nice-to-have" list, and never hedge an unearned one in with "-adjacent", "-aligned", or "cross-domain" (Integrity 4).` : `STEP 4 — SUMMARY: skip; set summary to "".`}
-
+${parsed.headline ? `
+STEP 4B — HEADLINE
+The resume prints a title line under the candidate's name; theirs reads "${parsed.headline}". Rewrite it for THIS job, 2–6 words:
+- Write it as a title, optionally followed by a comma and a specialty.
+- The title: the TARGET ROLE's title, or its plainest form ("Registered Nurse" for "Registered Nurse, Med-Surg"; "Machine Learning Engineer" for "Machine Learning Engineer, LLM Evaluation"), only if the candidate's own headline or one of their job titles shows they have held that role. Otherwise their own headline or most recent title. Every word of the title comes from their headline or job titles, never from their bullets: a nursing assistant whose bullets mention assisting registered nurses is not a "Registered Nurse".
+- The specialty: work their bullets show that this job asks for ("Welder, Pipe and Structural"; "Software Engineer, Payments").
+- Never add a level, rank or licence their own headline and titles don't show (Senior, Staff, Lead, Principal, Manager, Head, Director, II/III; Journeyman, Master, Foreman, Supervisor, Charge; Licensed, Registered, Certified), a company or team name, or a technology the resume lacks.
+- When in doubt, keep the candidate's headline exactly as written.
+` : ''}
 STEP 5 — BULLET BUDGET
-${trim
+${trim && long
+  ? `TRIM MODE — RANK, THEN CUT: judging each bullet alone fails — in a strong resume almost every bullet looks individually "relevant," which is why nothing gets dropped. Instead RANK each entry's bullets by relevance to THIS JD and keep only the strongest, within these per-entry budgets (the most recent role keeps the most):
+${budget}
+Cutting a long role to well under half is the EXPECTED result, not an edge case; anything past an entry's maximum is cut in code from the end, so order matters. Never drop a bullet that states a measured result (a before/after figure such as "40 to 25 minutes", a percentage, a score); keep it and rank it first when it bears on this job. Before cutting, go through each responsibility and requirement the JD lists and find the bullet in each entry that best shows it: those bullets are kept first. Cut bullets that answer nothing in the JD (general feedback loops, onboarding, process mapping) before any bullet that answers a named responsibility, and never keep two bullets that show the same responsibility while another named responsibility goes unshown. Drop first the bullets in a tech stack or domain the JD never names (e.g. a React Native / mobile bullet for a web role; a payments or CRM-integration bullet for a role about neither), then filler with no JD keyword and no concrete outcome. NEVER drop a bullet matching an activity the JD explicitly names (code reviews, mentoring, stakeholder communication — Integrity 6), and never drop the only evidence of a Tier 1 keyword. Never remove a role; never add or merge bullets — only drop whole ones.`
+  : trim
   ? `TRIM MODE — RANK, THEN CUT: judging each bullet alone fails — in a strong resume almost every bullet looks individually "relevant," which is why nothing gets dropped. Instead RANK each role's bullets by relevance to THIS JD and keep only the strongest: a role with 8+ input bullets keeps the 5–7 most relevant and drops the rest; a role with 5–7 keeps 4–5; a role with 4 or fewer keeps at least 2. Cutting a long role to roughly half is the EXPECTED result, not an edge case. Drop first the bullets in a tech stack or domain the JD never names (e.g. a React Native / mobile bullet for a web role; a payments or CRM-integration bullet for a role about neither), then filler with no JD keyword and no concrete outcome. NEVER drop a bullet matching an activity the JD explicitly names (code reviews, mentoring, stakeholder communication — Integrity 6), and never drop the only evidence of a Tier 1 keyword. Never remove a role; never add or merge bullets — only drop whole ones.`
   : `DEFAULT MODE — STRICT 1:1: rewrite EVERY input bullet into exactly one output bullet. Each role's output bullet count MUST equal its input count exactly — no drops, no additions, no merges. Count the input bullets in each role first; if a role has 11 input bullets, output exactly 11. This is mandatory, not a target.`}
-${trim
+${trim && long
+  ? 'PROJECTS: keep the number of bullets the budget above gives each project, choosing the ones most relevant to this job. Every project keeps at least one bullet; never remove or reorder a project.'
+  : trim
   ? `PROJECTS — RANK, THEN CUT, on a smaller budget than roles because projects are short: a project with 8+ input bullets keeps about half; one with 3–7 keeps 2–3; one with 1–2 keeps them all. Drop first the bullets in a tech stack or domain the JD never names. The role protections apply: never drop a bullet matching an activity the JD explicitly names, and never drop the only evidence of a Tier 1 keyword. Every project keeps at least one bullet; never remove or reorder a project.`
   : `PROJECTS: preserve every project's bullet count exactly.`}
 A kept project bullet never loses a technology it names.
@@ -268,7 +429,7 @@ Compressed STAR: [strong action verb] + [what was done] + [measurable result or 
 - Banned filler (reads as AI-written): leveraged, utilized, seamlessly, cutting-edge, state-of-the-art, spearheaded, honed, fostered, garnered, various, numerous. Use the plain verb or name the specific thing instead.
 
 STEP 7 — REORDER BULLETS
-Within each role, sort bullets most-relevant-first. This touches only the bullets inside a role; role order is fixed (Integrity 2).
+Within each role, sort bullets most-relevant-first. When a role has a measured outcome that bears on this job (time saved, a score improved, a pilot result), lead the role with it. This touches only the bullets inside a role; role order is fixed (Integrity 2).
 ${step8}
 STEP 9 — ATS MATCH REPORT (the score is computed in code from this report — do NOT output a number)
 ${KEYWORD_JUDGING}
@@ -335,7 +496,7 @@ Deno.serve(async (req) => {
     return json({ error: 'No resume found. Upload your resume in the extension first.' }, 400)
   }
 
-  let job: JobPayload
+  let rawJob: unknown
   let compact = false
   let supplemental: string | undefined
   let trim = false
@@ -346,13 +507,16 @@ Deno.serve(async (req) => {
   let fellBack = false
   let sourceHash: string | undefined
   try {
-    const body = await req.json()
-    job = body.job
+    const raw = await readBody(req, MAX_BODY_BYTES)
+    if (raw === null) return json({ error: 'Request too large' }, 413)
+    const body = JSON.parse(raw)
+    rawJob = body.job
     compact = !!body.compact
-    supplemental = typeof body.supplemental === 'string' ? body.supplemental.trim() : undefined
+    supplemental = text(body.supplemental, MAX_SUPPLEMENTAL).trim()
     trim = !!body.trim
     includeSummary = body.includeSummary !== false
-    previous = body.previous && typeof body.previous === 'object' ? body.previous : undefined
+    previous = isObject(body.previous) ? body.previous : undefined
+    if (previous && JSON.stringify(previous).length > MAX_RESUME_JSON) return json({ error: 'Invalid request body' }, 400)
     // Not resume content for the model to revise (#131).
     if (previous) {
       const { sourceHash: _h, designFellBack: _f, ...rest } = previous
@@ -366,15 +530,17 @@ Deno.serve(async (req) => {
     return json({ error: 'Invalid request body' }, 400)
   }
 
-  if (!job?.title || !job?.description) {
-    return json({ error: 'Missing job title or description' }, 400)
-  }
+  const job = readJob(rawJob)
+  if (!job) return json({ error: 'Missing job title or description' }, 400)
 
   // Charged after validation so a bad request never costs a generation: https://github.com/TheLinc/cover-me/commit/fd2604ac6168a5d6dac44232e2fd5c377d004395
   const today = new Date().toISOString().split('T')[0]
   const consumed = await consumeGeneration(supabase, userId)
   if (!consumed.ok) return json(consumed.body, consumed.status)
   let charged = true
+  // Only a failed call is refunded: an empty, refused or broken reply still
+  // costs the generation (#358).
+  let replied = false
 
   const refund = async () => {
     if (!charged) return
@@ -414,10 +580,10 @@ Deno.serve(async (req) => {
       }
       try {
         structured = upgradedParse(cached, await parseResumeStructure(resumeText, ANTHROPIC_API_KEY))
-      } catch {
+      } catch (err) {
         // A cache from before #165 or #238 still tailors.
         if (!Array.isArray(cached?.otherSections)) {
-          await refund()
+          if (!(err instanceof ParseReplyError)) await refund()
           return { error: 'Could not process your resume. Please try again.', status: 502 }
         }
         structured = cached
@@ -505,6 +671,7 @@ Deno.serve(async (req) => {
         } catch {
           continue
         }
+        if (ev.type === 'message_stop') replied = true
         if (ev.type === 'error') {
           const e = ev.error as { message?: string } | undefined
           throw new Error(e?.message ?? 'stream error')
@@ -512,6 +679,7 @@ Deno.serve(async (req) => {
         if (ev.type === 'content_block_delta') {
           const delta = ev.delta as { type?: string; text?: string; thinking?: string } | undefined
           if (delta?.type === 'text_delta' && delta.text) {
+            replied = true
             raw += delta.text
             onDelta?.(delta.text)
           } else if (delta?.type === 'thinking_delta' && delta.thinking) {
@@ -531,16 +699,16 @@ Deno.serve(async (req) => {
     const notes = trustedNotes(supplemental, previous)
     const base = seenVersion(structuredResume, previous)
     const candidate = candidateText(structuredResume, notes)
-    delta.skills = matchSkillCase((await groundSkills(delta.skills, candidate, askChecker)).skills, base.skills, `${candidate}
+    delta.skills = recaseSkills((await groundSkills(delta.skills, candidate, askChecker, base.skills, job.description)).skills, base.skills, `${candidate}
 ${job.description}`)
-    const merged = keepSeen(mergeTailorDelta(base, delta, { exactBulletCounts: !compact && !trim }), structuredResume, base)
+    const merged = keepSeen(mergeTailorDelta(base, delta, { exactBulletCounts: !compact && !trim, maxBullets: trim && !compact ? seenBudget(bulletBudget(structuredResume), base, structuredResume) : undefined }), structuredResume, base)
     const { resume: lined, repair } = await checkAndRewriteLines(merged, base, job.description, askChecker, supplemental)
     // Counts only: repair.flagged holds resume text (#58).
     if (repair.flagged.length || repair.checkFailed) {
       const { rewritten, reverted, summary, checkFailed } = repair
       console.log('[CoverMe] line check:', JSON.stringify({ flagged: repair.flagged.length, rewritten, reverted, summary, checkFailed }))
     }
-    const resume = groundTailored(lined, base, candidate, job.description, await checkedTitle(job.title, base, lined, repair, askChecker, supplemental)).resume as Record<string, unknown>
+    const resume: Record<string, unknown> = { ...groundTailored(lined, base, candidate, job.description, await checkedTitle(job.title, base, lined, repair, askChecker, supplemental)).resume }
 
     let atsScore: number | undefined
     let atsGaps: string[] | undefined
@@ -600,10 +768,10 @@ ${job.description}`)
       const failed = await prepare()
       if (failed) return json({ error: failed.error }, failed.status)
       const { resume, savedId } = await assemble(await readUpstream())
-      return json({ resume, savedId })
+      return json({ resume: withOlderFields(resume, req), savedId })
     } catch (err) {
       console.error('Tailor error:', err instanceof Error ? err.message : err)
-      await refund()
+      if (!replied) await refund()
       return json({ error: 'AI generation failed. Please try again.' }, 502)
     }
   }
@@ -632,10 +800,10 @@ ${job.description}`)
         // The 1.3.1 store build skips the newer 'thinking' event: https://github.com/TheLinc/cover-me/commit/4d723e8424415890ecc6cec495bf0253801dca4f
         const raw = await readUpstream((text) => send({ type: 'delta', text }), (text) => send({ type: 'thinking', text }))
         const { resume, savedId } = await assemble(raw)
-        send({ type: 'done', resume, savedId })
+        send({ type: 'done', resume: withOlderFields(resume, req), savedId })
       } catch (err) {
         console.error('Tailor stream error:', err instanceof Error ? err.message : err)
-        await refund()
+        if (!replied) await refund()
         send({ type: 'error', error: 'AI generation failed. Please try again.' })
       } finally {
         clearInterval(beat)

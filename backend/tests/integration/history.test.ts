@@ -2,7 +2,6 @@ import { randomUUID } from 'node:crypto'
 import { afterEach, describe, expect, it } from 'vitest'
 import { admin, callFunction, createUser, deleteUser, JOB, type TestUser } from './helpers'
 
-// Pro cross-device history: the letters and applications functions.
 describe('history sync', () => {
   let user: TestUser | undefined
 
@@ -37,6 +36,15 @@ describe('history sync', () => {
     const apps = await (await callFunction('applications', { token: user.token })).json()
     expect(apps.applications).toHaveLength(1)
     expect(apps.applications[0].coverLetters.map((c: { id: string }) => c.id)).toEqual([id])
+  })
+
+  it('rejects a letter over 20,000 characters', async () => {
+    user = await createUser('hosted_pro')
+    const res = await callFunction('letters', {
+      token: user.token,
+      body: { id: randomUUID(), job: JOB, letter: 'x'.repeat(20_001), createdAt: new Date().toISOString() },
+    })
+    expect(res.status).toBe(400)
   })
 
   it('reuses one job application for two letters with the same URL', async () => {

@@ -11,6 +11,10 @@ export interface ResumeExperience {
 
 export interface ResumeProject {
   name: string
+  /** The project's URL as the resume writes it (github.com/…) (#190). */
+  link?: string
+  /** The project's tech-stack line, verbatim (#190). */
+  tech?: string
   bullets: string[]
 }
 
@@ -28,6 +32,18 @@ export interface ResumeEducation {
 export interface ResumeSection {
   heading: string
   lines: string[]
+  /** Set when the section is a list of entries (an award, an open-source
+   *  package) rather than loose lines: each prints like a project (#190). */
+  entries?: ResumeSectionEntry[]
+}
+
+export interface ResumeSectionEntry {
+  name: string
+  /** Role, placing or issuer ("Creator and Maintainer", "3rd Place | Hosted by AWS") (#190). */
+  subtitle?: string
+  link?: string
+  dates?: string
+  bullets: string[]
 }
 
 // A section of the Cover Me layout. 'other' stands for the next of otherSections (#118).
@@ -41,6 +57,8 @@ export interface TailoredResume {
   /** Every URL on the contact line, website first. Absent on a parse made before #129. */
   links?: string[]
   location?: string
+  /** The professional title under the name ("Applied AI Engineer") (#190). */
+  headline?: string
   summary?: string
   experience: ResumeExperience[]
   projects?: ResumeProject[]
@@ -64,8 +82,8 @@ export interface TailoredResume {
   // version that held their edits, so the next Regenerate trusts its text like
   // editedAt. Unlike editedAt, the score is fresh.
   hasEdits?: boolean
-  // The print order the user set in the editor. Missing means the standard
-  // order (#118).
+  // The print order the user set in the editor (sections.ts). Missing means
+  // the standard order (#118).
   sectionOrder?: SectionKey[]
   // Sections deleted in the editor (#197), with the text they had, so they
   // can be restored. Nothing prints them.
@@ -85,6 +103,7 @@ export type DeletedSection = { index: number } & (
   | ({ key: Exclude<SectionKey, 'other'> } & Partial<Pick<TailoredResume, 'summary' | 'experience' | 'projects' | 'education' | 'certifications' | 'skills'>>)
 )
 
+// The job fields the letter's PDF prints. The extension's JobData has more (#27).
 export interface PdfJob {
   title: string
   company: string

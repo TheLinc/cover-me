@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { createHmac, randomUUID } from 'node:crypto'
 import { MOCK_PORT } from '../global-setup'
 
-// Set by scripts/test-functions.mjs from `supabase status`.
+// Set by scripts/test-functions.mjs from `supabase status` (https://github.com/TheLinc/cover-me/commit/f2256d0).
 function env(name: string): string {
   const v = process.env[name]
   if (!v) throw new Error(`${name} is not set. Run function tests with \`pnpm test:functions\`.`)
@@ -23,7 +23,7 @@ export interface TestUser {
   token: string
 }
 
-// A fresh confirmed user per test keeps rate-limit counts and history isolated.
+// A fresh confirmed user per test keeps rate-limit counts and history isolated (https://github.com/TheLinc/cover-me/commit/f2256d0).
 export async function createUser(tier: 'hosted_free' | 'hosted_pro' = 'hosted_free'): Promise<TestUser> {
   const email = `test-${randomUUID()}@cover-me.test`
   const password = 'password123'
@@ -42,8 +42,6 @@ export async function createUser(tier: 'hosted_free' | 'hosted_pro' = 'hosted_fr
   return { id: data.user.id, email, token: session.session.access_token }
 }
 
-// The token every unsubscribe link carries: the user id and an HMAC of it under
-// EMAIL_TOKEN_SECRET (the secret scripts/test-functions.mjs gave the functions).
 export function unsubscribeToken(userId: string) {
   const mac = createHmac('sha256', env('EMAIL_TOKEN_SECRET')).update(`unsubscribe:${userId}`).digest('base64url')
   return `${userId}.${mac}`
@@ -59,10 +57,9 @@ interface CallOptions {
   body?: unknown
   query?: Record<string, string>
   headers?: Record<string, string>
-  // Sent as-is (e.g. a gzipped body); set Content-Type in headers.
+  // Sent as-is (e.g. a gzipped body); set Content-Type in headers (#3).
   rawBody?: Uint8Array
   signal?: AbortSignal
-  // 'manual' to see a redirect itself rather than where it leads.
   redirect?: RequestRedirect
 }
 
@@ -99,7 +96,7 @@ export async function callFunction(name: string, opts: CallOptions = {}): Promis
 
 // The resume function parses new text in the background after it answers.
 // By default this waits for that parse, then clears the mock's log, so a test
-// sees only the Claude calls it makes itself. { wait: false } returns at once.
+// sees only the Claude calls it makes itself. { wait: false } returns at once (#26).
 export async function uploadResume(user: TestUser, text = RESUME_TEXT, { wait = true } = {}) {
   const res = await callFunction('resume', { token: user.token, body: { text, filename: 'resume.pdf' } })
   if (res.status !== 200) throw new Error(`resume upload failed: ${res.status} ${await res.text()}`)
@@ -124,8 +121,6 @@ export async function waitForParsedResume(userId: string, timeoutMs = 10_000): P
   }
 }
 
-// Stores a parsed copy the way the functions do (AES-256-GCM, IV first,
-// base64), with the key scripts/test-functions.mjs gave them.
 export async function cacheParsedResume(userId: string, parsed: unknown) {
   const key = await crypto.subtle.importKey('raw', Buffer.from(env('ENCRYPTION_KEY'), 'hex'), 'AES-GCM', false, ['encrypt'])
   const iv = crypto.getRandomValues(new Uint8Array(12))
@@ -134,19 +129,18 @@ export async function cacheParsedResume(userId: string, parsed: unknown) {
   await admin.from('resumes').update({ structured_encrypted }).eq('user_id', userId)
 }
 
-// Drops the parsed copy, so the next tailor parses the resume itself.
 export async function clearParsedResume(userId: string) {
   await admin.from('resumes').update({ structured_encrypted: null }).eq('user_id', userId)
 }
 
-// table: rate_limits for letters and resumes, answer_counts for answers (migration 032).
+// table: rate_limits for letters and resumes, answer_counts for answers (migration 032, #235).
 export async function quotaUsedToday(userId: string, table = 'rate_limits'): Promise<number> {
   const today = new Date().toISOString().split('T')[0]
   const { data } = await admin.from(table).select('count').eq('user_id', userId).eq('date', today).maybeSingle()
   return data?.count ?? 0
 }
 
-// Usage rows for the allowance tests (migration 015): daysAgo 0 is today, UTC.
+// Usage rows for the allowance tests (migration 015): daysAgo 0 is today, UTC (#10).
 export async function setUsage(userId: string, rows: Array<{ daysAgo: number; count: number }>, table = 'rate_limits') {
   await admin.from(table).delete().eq('user_id', userId)
   for (const { daysAgo, count } of rows) {
@@ -162,8 +156,6 @@ export async function setQuotaUsedToday(userId: string, count: number) {
   if (error) throw new Error(`set quota failed: ${error.message}`)
 }
 
-// ── Mock Anthropic control ───────────────────────────────────────────────────
-
 export interface ClaudeRequest {
   model: string
   stream?: boolean
@@ -175,7 +167,6 @@ export interface ClaudeRequest {
   betaHeader?: string
 }
 
-// A Sonnet 5.5 decline: HTTP 200, stop_reason "refusal", no text.
 export const REFUSAL_BODY = JSON.stringify({
   id: 'msg_mock', type: 'message', role: 'assistant', model: 'claude-sonnet-5-5',
   content: [], stop_reason: 'refusal', stop_details: { type: 'refusal', category: 'general_harms' },
@@ -186,14 +177,18 @@ export const mockClaude = {
   reset: () => fetch(`${MOCK_URL}/__mock/reset`, { method: 'POST' }),
   failNext: (status = 500) =>
     fetch(`${MOCK_URL}/__mock/fail-next`, { method: 'POST', body: JSON.stringify({ status }) }),
-  refuseNext: () =>
-    fetch(`${MOCK_URL}/__mock/fail-next`, { method: 'POST', body: JSON.stringify({ status: 200, body: REFUSAL_BODY }) }),
+  refuseNext: () => mockClaude.replyNext(REFUSAL_BODY),
+  // fail-next with a 200 sends any reply body, JSON or SSE (#358).
+  replyNext: (body: string) =>
+    fetch(`${MOCK_URL}/__mock/fail-next`, { method: 'POST', body: JSON.stringify({ status: 200, body }) }),
   dropNextStream: () => fetch(`${MOCK_URL}/__mock/drop-next-stream`, { method: 'POST' }),
   streamPause: (ms: number) =>
     fetch(`${MOCK_URL}/__mock/stream-pause`, { method: 'POST', body: JSON.stringify({ ms }) }),
   delayNext: (ms: number) =>
     fetch(`${MOCK_URL}/__mock/delay-next`, { method: 'POST', body: JSON.stringify({ ms }) }),
   requests: async (): Promise<ClaudeRequest[]> => (await fetch(`${MOCK_URL}/__mock/requests`)).json(),
+  // The delta the next tailor call streams back, in place of MOCK_TAILOR_DELTA (#190).
+  tailorDelta: (delta: unknown) => fetch(`${MOCK_URL}/__mock/tailor-delta`, { method: 'POST', body: JSON.stringify(delta) }),
 }
 
 export interface StripeCall {
@@ -259,6 +254,6 @@ SKILLS
 TypeScript, Postgres, React`
 
 // About 10,000 characters, like a real two-page resume. Its ciphertext is far
-// longer than a URL can carry, which once broke saving the parsed copy.
+// longer than a URL can carry, which once broke saving the parsed copy (#26).
 export const LONG_RESUME_TEXT = RESUME_TEXT + '\n' +
   Array.from({ length: 120 }, (_, i) => `- Shipped project ${i} on time and under budget for a long-running client.`).join('\n')
