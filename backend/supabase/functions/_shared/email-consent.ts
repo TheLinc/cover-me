@@ -34,7 +34,7 @@ export async function unsubscribeToken(userId: string): Promise<string> {
 export async function verifyUnsubscribeToken(token: string): Promise<string | null> {
   const [userId, mac, extra] = token.split('.')
   if (extra !== undefined || !UUID.test(userId ?? '') || !mac) return null
-  let sig: Uint8Array
+  let sig: Uint8Array<ArrayBuffer>
   try {
     sig = Uint8Array.from(atob(mac.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0))
   } catch {

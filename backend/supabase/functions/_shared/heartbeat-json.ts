@@ -6,14 +6,14 @@ import { corsHeaders } from './cors.ts'
 // the headers go out now and a space every 5 s until the JSON is ready; JSON
 // parsers skip leading whitespace, so the published extension reads it
 // unchanged. The status is already 200 by then, so a late failure is
-// reported as { error } in the body.
+// reported as { error } in the body (#131).
 export function heartbeatJson(name: string, failure: string, work: () => Promise<Record<string, unknown>>): Response {
   const enc = new TextEncoder()
-  let beat: number | undefined
+  let beat: ReturnType<typeof setInterval> | undefined
   const body = new ReadableStream<Uint8Array>({
     async start(controller) {
       const send = (s: string) => {
-        try { controller.enqueue(enc.encode(s)) } catch { /* client went away */ }
+        try { controller.enqueue(enc.encode(s)) } catch { /* client went away (#131) */ }
       }
       send(' ')
       beat = setInterval(() => send(' '), 5000)
@@ -26,7 +26,7 @@ export function heartbeatJson(name: string, failure: string, work: () => Promise
       }
       clearInterval(beat)
       send(JSON.stringify(result))
-      try { controller.close() } catch { /* already closed */ }
+      try { controller.close() } catch { /* already closed (#131) */ }
     },
     cancel() {
       clearInterval(beat)
