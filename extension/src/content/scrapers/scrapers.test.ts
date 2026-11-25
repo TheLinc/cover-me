@@ -39,7 +39,7 @@ describe('company and title when the page doesn\'t name them (#200)', () => {
   const posting = (h1: string, tab: string, url = 'https://careers.northwind.com/jobs/79') =>
     scrape(url, `<!doctype html><html><head><title>${tab}</title></head><body><main><h1>${h1}</h1><div><h2>Senior Auditor</h2>${description}</div></main></body></html>`)
 
-  // Headings seen as saved titles in production (#208)
+  // Real headings that users saved as job titles (#208)
   test.each(['Key Responsibilities', 'Job Description', 'job details', 'CAREERS', 'Careers at Northwind.', 'NORTHWIND CAREER PORTAL', 'About the role'])(
     'an <h1> of "%s" is a heading, not the title', (h1) => {
       expect(posting(h1, 'Senior Auditor | Northwind')).toMatchObject({ title: 'Senior Auditor', company: 'Northwind' })
@@ -52,18 +52,16 @@ describe('company and title when the page doesn\'t name them (#200)', () => {
   test('the company is the tab title part the URL names, wherever it sits', () => {
     expect(posting('Senior Auditor', 'Northwind - Senior Auditor')).toMatchObject({ title: 'Senior Auditor', company: 'Northwind' })
     expect(posting('Key Responsibilities', 'Northwind - Senior Auditor').title).toBe('Senior Auditor')
-    // A job slug in the path doesn't make the title the company (#208)
     expect(posting('Senior Auditor', 'Senior Auditor - Northwind', 'https://careers.example.com/jobs/senior-auditor').company).toBe('Unknown Company')
   })
 
-  // A wrong name is worse than none: a part the URL doesn't name may be a
-  // place or a requisition number, and a job board names itself (#208)
+  // A wrong name is worse than none: an unnamed part may be a place or a
+  // requisition number, and job boards name themselves (#208)
   test.each([
     ['a place', 'Senior Auditor', 'Senior Auditor - Remote', 'https://careers.example.com/jobs/79'],
     ['a requisition number', 'Senior Auditor', 'Senior Auditor - R0012345', 'https://careers.example.com/jobs/79'],
     ['a job board', 'Senior Auditor', 'Senior Auditor - Northwind | SEEK', 'https://www.seek.com.au/job/79'],
     ['a job board', 'Senior Auditor', 'Senior Auditor at Northwind | Y Combinator', 'https://www.ycombinator.com/companies/northwind/jobs/79'],
-    // Path segments other than the first are places and job slugs (#208)
     ['a place the path names', 'Senior Auditor', 'Senior Auditor - Atlanta', 'https://careers.example.com/job/atlanta/senior-auditor/79'],
     ['a job the path names', 'Auditor', 'Auditor | Northwind', 'https://careers.example.com/jobs/auditor'],
     ['a job the only path segment names', 'Auditor', 'Auditor | Northwind', 'https://careers.example.com/auditor'],
@@ -77,14 +75,14 @@ describe('company and title when the page doesn\'t name them (#200)', () => {
       .toMatchObject({ title: 'Auditor', company: 'Northwind' })
   })
 
-  // An embedded Greenhouse form's URL is /embed/job_app?for=anthropic: the
-  // company is only in the tab title's own wording (#208)
+  // Greenhouse embeds load /embed/job_app?for=<slug>, so only the tab title's
+  // wording names the company (#208)
   test('Greenhouse embed', () => {
     const html = readFileSync(join(__dirname, 'fixtures', 'greenhouse.html'), 'utf8')
     expect(scrape('https://job-boards.greenhouse.io/embed/job_app', html).company).toBe('Anthropic')
   })
 
-  // "Job Application for ... at (.+)$" retries at every " at " (#208)
+  // The tab title regex retried at every " at ", quadratic on a crafted title (#208)
   test('a Greenhouse-style tab title of 40,000 " at " stays cheap', () => {
     const start = performance.now()
     scrape('https://careers.example.com/jobs/79', `<!doctype html><html><head><title>Job Application for x${' at '.repeat(40_000)}\n</title></head>
@@ -101,7 +99,6 @@ describe('company and title when the page doesn\'t name them (#200)', () => {
     expect(performance.now() - start).toBeLessThan(2000)
   })
 
-  // The tab title is read once per scrape, not once per JSON-LD posting (#208)
   test('many JSON-LD postings without a company and a long tab title stay cheap', () => {
     const nodes = JSON.stringify(Array.from({ length: 2000 }, () => ({ '@type': 'JobPosting', title: 'x', description: 'y' })))
     const start = performance.now()
@@ -110,7 +107,7 @@ describe('company and title when the page doesn\'t name them (#200)', () => {
     expect(performance.now() - start).toBeLessThan(2000)
   })
 
-  // Taleo: the job is in the tab title even when the company isn't (#208)
+  // Taleo puts the job in the tab title but not the company (#208)
   test('a heading <h1> takes the job from a tab title that names no company', () => {
     expect(posting('Job Description', 'Job Description - Senior Auditor (2600000S)', 'https://northwind.taleo.net/careersection/ex1/jobdetail.ftl'))
       .toMatchObject({ title: 'Senior Auditor (2600000S)', company: 'Unknown Company' })
@@ -123,13 +120,13 @@ describe('company and title when the page doesn\'t name them (#200)', () => {
     expect(job.description).toMatch(/^Audit the finance team/)
   })
 
-  // The page is a posting: the heading beats failing, and the user can fix it (#208)
+  // On a posting a heading beats failing, since the user can edit a wrong title (#208)
   test('a section heading stays the title when the tab title has no job', () => {
     expect(posting('Job Details', 'Job Details | Northwind').title).toBe('Job Details')
   })
 
-  // A logo in the <h1>: no heading was rejected, so the tab title isn't read
-  // as a job (on master the top frame failed, and a posting in a frame won) (#208)
+  // Only a rejected heading falls back to the tab title. Master read a logo <h1>
+  // that way and let a framed posting win (#208)
   test('an <h1> holding only a logo doesn\'t fall back to the tab title', () => {
     expect(() => posting('<a href="/"><img alt="Northwind"></a>', 'Open Positions | Northwind', 'https://www.northwind.com/careers'))
       .toThrow('Could not find job details')
@@ -142,7 +139,6 @@ describe('company and title when the page doesn\'t name them (#200)', () => {
     expect(job.description).toMatch(/^Careers \/ Finance[\s\S]*Five years of external audit experience and a CPA\.$/)
   })
 
-  // Company first or job first can't be told apart when the URL names neither (#208)
   test('a two-part tab title the URL doesn\'t name gives no job', () => {
     expect(posting('Key Responsibilities', 'Wiz - Director of Finance', 'https://employer.example.io/position/2600/79').title)
       .toBe('Key Responsibilities')
@@ -162,14 +158,14 @@ describe('company and title when the page doesn\'t name them (#200)', () => {
     expect(() => posting(h1, tab, url)).toThrow('Could not find job details')
   })
 
-  // Without an embed the posting is on the page: the heading beats failing, as
-  // on master ("MSC CAREER PORTAL", a tab title with no company) (#208)
+  // Matches master, which kept "MSC CAREER PORTAL" when the tab title names no
+  // company (#208)
   test('a site heading stays the title of a posting on the page', () => {
     expect(posting('NORTHWIND CAREER PORTAL', 'CN - Accounts Receivable Specialist job in Mississauga',
       'https://northwind-jobs.example.com/job-details/cn-accounts-receivable-specialist-1761413').title).toBe('NORTHWIND CAREER PORTAL')
   })
 
-  // The tab title is split by patterns that backtrack on whitespace runs (#208)
+  // Splitting the tab title uses regexes that backtrack on whitespace runs (#208)
   test('a tab title of 100,000 spaces stays cheap', () => {
     const start = performance.now()
     posting('Senior Auditor', `a${' '.repeat(100_000)}- ${' '.repeat(100_000)}jobs`)
@@ -185,8 +181,8 @@ describe('generic heuristic', () => {
   test('reads a listing page as no job, not a job', () => {
     const html = readFileSync(join(__dirname, 'fixtures', 'greenhouse-board.html'), 'utf8')
     expect(() => scrape(fixtureUrl(html), html)).toThrow('Could not find job details')
-    // A board with an intro above the list: the intro isn't links, so the
-    // heading is what gives it away (#74)
+    // The intro above this board's list has no links, so only the heading marks
+    // the page as a listing (#74)
     const intro = html.replace('<div class="index--header index--header__no-description"></div>',
       `<div class="index--header"><p>${'We build reliable, interpretable AI systems. '.repeat(15)}</p></div>`)
     expect(() => scrape(fixtureUrl(intro), intro)).toThrow('Could not find job details')
@@ -201,8 +197,7 @@ describe('generic heuristic', () => {
     expect(() => scrape(fixtureUrl(html), html)).toThrow('Could not find job details')
   })
 
-  // Cards of a related-jobs panel each carry plain text, so link share alone
-  // doesn't keep them out (#215)
+  // Related-job cards carry plain text too, so link share alone can't rule them out (#215)
   const relatedJobs = (n: number) => Array.from({ length: n }, (_, i) => `<li class="job"><a href="/jobs/${i}">Forklift Operator ${i}</a>
     <p>Location: AUS, NSW, Sydney</p><p>Posted ${i + 2} days ago. Move pallets and load trucks on the night shift.</p></li>`).join('')
   const related = relatedJobs(10)
@@ -223,8 +218,8 @@ describe('generic heuristic', () => {
     }
   })
 
-  // Chrome reads a list that isn't rendered as its source text, which the
-  // block around it leaves out (#215)
+  // Chrome's innerText reads an unrendered list as its source text, which its
+  // parent block leaves out (#215)
   test('a hidden list is not a listing', () => {
     const menu = `<ul>${Array.from({ length: 40 }, (_, i) => `<li><a href="/p/${i}">Product ${i}</a>
         <span>New</span></li>`).join('')}</ul>`
@@ -282,8 +277,7 @@ describe('generic heuristic', () => {
     expect(job.description).toBe(description)
   })
 
-  // The posting has a job's title, so cards larger than it don't make the page
-  // a listing (#215)
+  // A job title on the page outweighs a sidebar of cards larger than the posting (#215)
   test('reads a short posting beside a larger related-jobs sidebar', () => {
     const job = scrape('https://careers.example.com/jobs/1', `<html><body><main><h1>Warehouse Supervisor</h1>
       <div><p>${description}</p></div><aside><h2>Related jobs</h2><ul>${related}</ul></aside></main></body></html>`)
@@ -314,8 +308,7 @@ describe('generic heuristic', () => {
     expect(sections.description).not.toMatch(/Forklift|Sydney/)
   })
 
-  // The server's snapshot drops each link's query and fragment, so cards can
-  // share one href (#215)
+  // Snapshots drop each link's query and fragment, so a listing's cards can share one href (#215)
   test('reads a card listing as no job when its cards share one link', () => {
     const html = readFileSync(join(__dirname, 'fixtures', 'flyio-jobs.html'), 'utf8').replace(/href="\/jobs\/[^"]+"/g, 'href="/jobs/"')
     expect(() => scrape(fixtureUrl(html), html)).toThrow('Could not find job details')
@@ -370,8 +363,7 @@ describe('generic heuristic', () => {
     }
   })
 
-  // Each link read once per block, not once per link it's nested in (34 s
-  // before, 1 s now) (#74)
+  // Each link was read once per link it's nested in: 34 s before, 1 s now (#74)
   test('70 nested links in 100 nested blocks stay cheap', () => {
     const main = '<div>'.repeat(100) + 'x'.repeat(600) + '<a href="/a">L<div>'.repeat(70) + '<i></i>'.repeat(20_000) + '</div></a>'.repeat(70) + '</div>'.repeat(100)
     const start = performance.now()
@@ -379,8 +371,7 @@ describe('generic heuristic', () => {
     expect(performance.now() - start).toBeLessThan(5000)
   })
 
-  // Each level three cards beside a child holding the next level: card lists
-  // measure each level's text (1 s, as master's block search takes) (#215)
+  // Card lists measure each level's text: 1 s here, as long as master's block search (#215)
   test('120 nested card lists over 2 MB stay cheap', () => {
     const card = (i: number, c: string) => `<div><a href="/${c}${i}">${c}${i}</a><b>x</b></div>`
     const main = Array.from({ length: 120 }, (_, i) => `<div>${card(i, 'a')}${card(i, 'b')}${card(i, 'c')}<div>`).join('')
@@ -401,15 +392,14 @@ describe('generic heuristic', () => {
 test('refuses pages nested far deeper than any real posting', () => {
   expect(() => scrape('https://careers.example.com/jobs/1', `<html><body>${'<div>'.repeat(300)}x${'</div>'.repeat(300)}</body></html>`))
     .toThrow('too large')
-  // Comments aren't elements but still cost a node each (#3)
+  // Comments cost a node each though they aren't elements (#3)
   expect(() => scrape('https://careers.example.com/jobs/1', `<html><body>${'<!---->'.repeat(200_000)}</body></html>`)).toThrow('too large')
-  // 50,000 microdata sections fit the caps; finding the outermost must not
-  // compare every pair of them (#5)
+  // Finding the outermost of 50,000 microdata sections compared every pair (#5)
   const nestedSections = '<div itemprop="description">x</div>'.repeat(50_000)
   const start = performance.now()
   scrape('https://careers.example.com/jobs/1', `<html><body><main itemscope itemtype="https://schema.org/JobPosting"><h1 itemprop="title">Clerk</h1>${nestedSections}</main></body></html>`)
   expect(performance.now() - start).toBeLessThan(2000)
-  // Nested declarative shadow roots, counted before they're attached (#3)
+  // Counted before attaching, which recurses once per nested template (#3)
   const nested = '<div><template shadowrootmode="open">'.repeat(300) + 'x' + '</template></div>'.repeat(300)
   expect(() => scrape('https://careers.example.com/jobs/1', `<html><body>${nested}</body></html>`)).toThrow('too large')
 })
@@ -447,43 +437,39 @@ test('LinkedIn description runs past the list with a hidden sibling above the bo
 })
 
 test.each([
-  // A backtracking "… more" regex goes quadratic on a long whitespace run (#21)
+  // The old "… more" regex went quadratic on long whitespace runs (#21)
   { case: '40,000 line breaks in the box', main: deepBox(`a${'<br>'.repeat(40_000)}b`), company: 'Unknown Company' },
-  // Each link read once, not once per level, and compared by tree order, not
-  // by walking its siblings (#21)
+  // Links were read once per level and ordered by walking siblings (#21)
   { case: '29,000 sibling company links', main: deepBox() + Array.from({ length: 29_000 }, (_, i) => companyLink(`c${i}`, `<p>C${i}</p>`)).join(''), company: 'C0' },
-  // The title fallback compares every <p> near the first company link (88 s on master) (#21)
+  // The title fallback compared every <p> near the company link: 88 s before (#21)
   { case: '29,000 paragraphs beside a company link', main: companyLink('c', 'C') + '<p>1 hour ago</p>'.repeat(29_000) + deepBox(), company: 'C' },
-  // The title walk judges each candidate once, not at each of its 12 levels (#21)
+  // Each title candidate was judged again at each of 12 levels (#21)
   { case: '19,000 title candidates beside the box', main: `<div>${'<div data-display-contents="true"><p>1 hour ago</p></div>'.repeat(19_000)}<div>${box()}</div></div>`, company: 'Unknown Company' },
-  // ...and isUIChrome walks ancestors instead of compiling a selector each time (#21)
+  // isUIChrome compiled a selector per call before it walked ancestors (#21)
   { case: '19,000 title candidates 200 levels deep', main: '<div>'.repeat(200) + `<div>${'<div data-display-contents="true"><p>1 hour ago</p></div>'.repeat(19_000)}<div>${box()}</div></div>` + '</div>'.repeat(200), company: 'Unknown Company' },
   // linkedom lets <a> nest: links inside a judged link are skipped, not each
   // read whole (the depth cap keeps it from growing) (#21)
   { case: '120 nested company links', main: `<div>${box()}</div>` + '<a href="https://www.linkedin.com/company/c/">C<div>'.repeat(120) + '<i></i>'.repeat(55_000) + '</div></a>'.repeat(120), company: 'C' },
-  // linkedom nests <p> too: a candidate's span holding a block isn't read
-  // (each would read everything below it) (#21)
+  // linkedom nests <p>, so reading a span that holds a block read everything below it (#21)
   { case: '80 nested title candidates', main: `<div>${'<div data-display-contents="true"><p><span>'.repeat(80)}${'<i>x</i>'.repeat(55_000)}${'</span></p></div>'.repeat(80)}<div>${box()}</div></div>`, company: 'Unknown Company' },
-  // The last-resort company search skips nested links too (#21)
+  // Nested "Show more" links each read their whole subtree in the last-resort search (#21)
   { case: '120 nested "Show more" links', main: `<div>${box()}</div>` + '<a href="https://www.linkedin.com/company/c/">Show more<div>'.repeat(120) + '<i></i>'.repeat(55_000) + '</div></a>'.repeat(120), company: 'Unknown Company' },
-  // Long text never reaches the "(verified job)" regexes, which backtrack on
-  // whitespace runs (7 s at 100,000 spaces) (#21)
+  // The "(verified job)" regexes backtrack on whitespace: 7 s at 100,000 spaces (#21)
   { case: 'a span candidate with 100,000 spaces', main: `<div><div data-display-contents="true"><p><span>a${' '.repeat(100_000)}b</span></p></div><div>${box()}</div></div>`, company: 'Unknown Company' },
   { case: 'a link candidate with 100,000 spaces', main: `<div><div data-display-contents="true"><p><a href="https://www.linkedin.com/jobs/view/1/">a${' '.repeat(100_000)}b</a></p></div><div>${box()}</div></div>`, company: 'Unknown Company' },
-  // JSON can write "<" as \u003c past the tag cap; the tag-stripping regex
-  // must not backtrack over a run of them (#21)
+  // JSON can write "<" as < past the tag cap, and the tag-stripping regex
+  // backtracked over a run of them (#21)
   { case: 'JSON-LD with 200,000 "<" and no ">"', main: `<script type="application/ld+json">{"@type":"JobPosting","title":"x","description":"${'\\u003c'.repeat(200_000)}"}</script>`, company: 'Unknown Company' },
-  // ...and what's left after stripping can't pair up into tags that the entity
-  // decoder (an uncapped DOMParser) would then parse (#21)
+  // Leftovers after stripping could pair into tags for the entity decoder, an
+  // uncapped DOMParser (#21)
   { case: 'JSON-LD with 100,000 "<<b>div>"', main: `<script type="application/ld+json">{"@type":"JobPosting","title":"x","description":"${'\\u003c\\u003cb>div>'.repeat(100_000)}"}</script>`, company: 'Unknown Company' },
-  // The description's end marker is searched for capped at 80 characters, as
-  // its start is (lastIndexOf with a long pattern costs text x pattern) (#21)
+  // lastIndexOf costs text x pattern, so the end marker is capped at 80 characters
+  // like the start (#21)
   { case: 'a 100,000-character end marker', main: `<div>${box('x')}<ul><li>y</li></ul><button data-testid="expandable-text-button">${'a'.repeat(100_000)}b</button><div>${'a'.repeat(300_000)}</div></div>`, company: 'Unknown Company' },
-  // Markers that miss (hidden siblings the container's text leaves out) stop
-  // after 3 searches of 20 characters, not 10 of 80 (1.2 s on 3.9 MB) (#21)
+  // Each missed marker costs text x marker: 10 searches of 80 took 1.2 s on 3.9 MB,
+  // so hidden siblings are skipped and 3 of 20 remain (#21)
   { case: 'twelve hidden end markers after 3.9 MB', main: `<div>${box('a'.repeat(3_900_000))}<ul><li>y</li></ul><hr>${`<div hidden>${'a'.repeat(79)}b</div>`.repeat(12)}</div>`, company: 'Unknown Company', limit: 600 },
-  // Title cases read direct children by tag, not `:scope >` selectors that
-  // scan each nested candidate's whole subtree (#21)
+  // linkedom's `:scope >` selectors scanned each nested candidate's whole subtree (#21)
   { case: '120 nested <p><span> beside a company link', main: companyLink('c', 'C') + '<p><span>'.repeat(120) + '<i></i>'.repeat(55_000) + '</span></p>'.repeat(120) + deepBox(), company: 'C' },
   // Nested templates attached through their own children, not deep-copied .content
   // at every level (4 s before, 0.1 s now), so a tighter limit (#21)
@@ -521,13 +507,13 @@ describe('JSON-LD', () => {
 
 describe.runIf(import.meta.env.MODE === 'smoke')('scrapers on live postings', async () => {
   const { BOARDS, fetchPosting, launchBrowsers, takeSnapshot } = await import('../../../scripts/scraper-fixtures')
-  // Launch in beforeAll: the describe body runs even when the suite is skipped (#2)
+  // The describe body runs even when the suite is skipped, so browsers launch in beforeAll (#2)
   let browser: Awaited<ReturnType<typeof launchBrowsers>>
   beforeAll(async () => { browser = await launchBrowsers() })
   afterAll(() => browser?.close())
 
-  // The capture path the fixtures can't show: LinkedIn's signed-in pages put
-  // the job pane in an open shadow root, which the snapshot must carry (#3)
+  // Fixtures can't show this: signed-in LinkedIn puts the job pane in an open
+  // shadow root, which the snapshot must carry (#3)
   test('snapshot keeps open shadow roots and drops scripts, tokens and data blobs', async () => {
     const page = await browser.headless.newPage()
     const description = 'Analyse sales data and build weekly dashboards for the regional team. '.repeat(8)
@@ -545,10 +531,8 @@ describe.runIf(import.meta.env.MODE === 'smoke')('scrapers on live postings', as
     expect(job).toMatchObject({ title: 'Senior Data Analyst', company: 'Acme Corp', description: description.trim() })
   })
 
-  // retry: LinkedIn now and then serves a runner's IP a page with no postings;
-  // a real markup change fails every attempt.
-  // Indeed's bot check needs a visible Chrome window and starts blocking an IP
-  // after a few visits, so it can't be smoke-tested on a schedule (#18)
+  // Retried because LinkedIn sometimes serves a runner's IP an empty page. Indeed
+  // needs a visible Chrome and blocks IPs after a few visits, so it isn't scheduled (#18)
   test.each(BOARDS.filter((b) => !b.headed))('$name', { timeout: 120_000, retry: 2 }, async (board) => {
     const { url, html } = await fetchPosting(browser, board)
     const job = scrape(url, html)
