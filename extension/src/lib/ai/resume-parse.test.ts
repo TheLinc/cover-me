@@ -54,7 +54,7 @@ describe('buildParsePrompt', () => {
   test("shows no date format to copy, so dates keep the resume's own (#348)", () => {
     const dates = [...buildParsePrompt('').matchAll(/"dates": "([^"]*)"/g)].map((m) => m[1])
     expect(dates.length).toBeGreaterThan(0)
-    for (const d of dates) expect(d).not.toMatch(/\b(Month|Year|MM|YYYY)\b/)
+    for (const d of dates) expect(d).not.toMatch(/\d|month|year|\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i)
   })
 })
 
