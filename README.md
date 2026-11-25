@@ -133,7 +133,7 @@ From 1.3.0, no `<all_urls>` and no content scripts: the reader is injected only 
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 22.13+
 - pnpm 10+
 - Chrome
 

@@ -40,10 +40,10 @@ Setup is in the README's [Development](README.md#development) section. Run the c
 
 ```bash
 # extension/
-pnpm test && pnpm build && pnpm lint
+pnpm typecheck && pnpm lint && pnpm test && pnpm build
 
 # web/
-pnpm test && pnpm check && pnpm lint
+pnpm typecheck && pnpm lint && pnpm test && pnpm check
 
 # backend/ (needs Docker running)
 pnpm test
