@@ -2,10 +2,10 @@
 //
 //   pnpm trial-links <n> [--note "<where it was shared>"] [--days 30] [--prod]
 //
-// --note is stored with each code and sent with PostHog's trial_redeemed
-// event, so a redemption traces back to its batch. --days is how long an
-// unused link works. Without --prod it writes to the local stack and prints
-// localhost links; --prod asks you to type "prod" first.
+// --note is stored with each code in trial_codes, so a redemption traces back
+// to its batch. --days is how long an unused link works. Without --prod it
+// writes to the local stack and prints localhost links; --prod asks you to
+// type "prod" first.
 //
 // Revoke an unused link by deleting its row from trial_codes.
 
@@ -43,7 +43,6 @@ if (args.values.prod) {
     console.log('Cancelled.')
     process.exit(1)
   }
-  // Your `supabase login`, the same as deploy:prod. stdin 'ignore': see deploy.mjs.
   const res = supabase(['projects', 'api-keys', '--project-ref', PROD_REF, '--reveal', '-o', 'json'], { stdio: ['ignore', 'pipe', 'inherit'] })
   const secret = res.status === 0 ? JSON.parse(res.stdout).find((k) => k.type === 'secret') : null
   if (!secret) {
@@ -60,7 +59,6 @@ if (args.values.prod) {
   site = 'http://localhost:3100'
 }
 
-// 16 base64url characters, 96 random bits: not guessable.
 const expires_at = new Date(Date.now() + days * 86_400_000).toISOString()
 const rows = Array.from({ length: count }, () => ({
   code: randomBytes(12).toString('base64url'),

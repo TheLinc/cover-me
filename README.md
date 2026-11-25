@@ -232,7 +232,7 @@ pnpm trial-links 5 --note "reddit launch"          # local stack, prints localho
 pnpm trial-links 5 --note "reddit launch" --prod   # production, asks you to type "prod"
 ```
 
-Each link (`/redeem/<code>`) gives one account a free week of Pro with no card, then drops it back to free unless it upgrades. One gift trial per account. `--days` (default 30) is how long an unused link works. The note is stored in `trial_codes` and sent with PostHog's `trial_redeemed` event. To revoke an unused link, delete its row.
+Each link (`/redeem/<code>`) gives one account a free week of Pro with no card, then drops it back to free unless it upgrades. One gift trial per account. `--days` (default 30) is how long an unused link works. The note is stored in `trial_codes`, so redemptions per batch can be counted there. To revoke an unused link, delete its row.
 
 ### Resume quality eval
 

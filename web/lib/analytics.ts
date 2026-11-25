@@ -4,9 +4,6 @@ import type { CaptureResult, PostHog } from 'posthog-js'
 // trial code, so PostHog never sees them (#33, #112).
 const PRIVATE_PATHS = ['/dashboard', '/auth', '/upgraded', '/api', '/redeem']
 
-// The one event a private page sends, to trace redemptions to their batch of links (#112).
-export const TRIAL_REDEEMED = 'trial_redeemed'
-
 export function isPrivatePath(pathname: unknown): boolean {
   if (typeof pathname !== 'string') return false
   return PRIVATE_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`))
@@ -52,13 +49,7 @@ const URL_PROPS = ['$current_url', '$referrer', '$prev_pageview_url']
 export function scrubEvent(event: CaptureResult | null): CaptureResult | null {
   if (!event) return null
   const props = event.properties
-  if (event.event === TRIAL_REDEEMED) {
-    // URLs, paths and entry pages can all carry the code (#112).
-    for (const key of Object.keys(props)) {
-      if (typeof props[key] === 'string' && props[key].includes('/redeem/')) delete props[key]
-    }
-    props.$pathname = '/redeem'
-  } else if (isPrivatePath(props.$pathname)) return null
+  if (isPrivatePath(props.$pathname)) return null
   if (isPrivatePath(props.$prev_pageview_pathname)) {
     for (const key of Object.keys(props)) if (key.startsWith('$prev_pageview_')) delete props[key]
   }
