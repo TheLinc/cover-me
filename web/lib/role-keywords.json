@@ -226,6 +226,10 @@
           "postings": 24
         },
         {
+          "name": "LinkedIn",
+          "postings": 22
+        },
+        {
           "name": "attention to detail",
           "postings": 21
         },
@@ -268,10 +272,6 @@
         {
           "name": "ZoomInfo",
           "postings": 18
-        },
-        {
-          "name": "Clari",
-          "postings": 17
         }
       ]
     },

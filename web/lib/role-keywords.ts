@@ -30,7 +30,7 @@ export function roleOf(title: string): RoleSlug | undefined {
 }
 
 // A role's own name and the teams it works with ("work closely with Marketing, Product and Customer Success") read as
-// asks; so did every sales "compliance" line, a culture line ("a 'compliance first' attitude") or the buyer's team (#299).
+// asks, and every sales "compliance" ask read was a culture line ("a 'compliance first' attitude") or the buyer's team (#299).
 const SKIP: Record<RoleSlug, string[]> = {
   'administrative-assistant': [],
   warehouse: ['warehouse'],

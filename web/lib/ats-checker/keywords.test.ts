@@ -411,6 +411,8 @@ test('sales and marketing tools are read by name, and ordinary "outreach" is not
   const names = (posting: string) => readPosting(posting).keywords.map((k) => k.name)
   expect(names('Requirements\n- Salesforce, SalesLoft, LinkedIn SalesNavigator and Gong')).toEqual(['Salesforce', 'Salesloft', 'Sales Navigator', 'Gong'])
   expect(names('Requirements\n- Experience with Outreach.io and Clari')).toEqual(['Outreach.io', 'Clari'])
+  expect(names('Requirements\n- Experience with outreach.io')).toEqual(['Outreach.io'])
+  expect(names('Requirements\n- Experience prospecting on LinkedIn')).toEqual(['LinkedIn'])
   expect(names('Requirements\n- Community outreach and outreach to new prospects')).toEqual(['community outreach'])
   expect(names('Requirements\n- Iterable, Mixpanel, 6sense or Demandbase')).toEqual(['Iterable', 'Mixpanel', '6sense', 'Demandbase'])
 })
