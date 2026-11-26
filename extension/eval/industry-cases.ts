@@ -1202,7 +1202,7 @@ const MODE_SPECS: Spec[] = (['trim', 'compact'] as const).map((mode) => ({
   mode,
   resume: { ...newGrad.resume, projects: [...newGrad.resume.projects!, roverProject] },
   keepInBullets: ['SQL', 'Python', 'pandas'],
-  fieldNotes: `${newGrad.fieldNotes} ${mode === 'trim' ? `"Cut what doesn't fit this job" is on` : '"Compact to one page" is on'}: dropping bullets the posting doesn't need, especially from the robotics project, is the expected result, not a loss.`,
+  fieldNotes: `${newGrad.fieldNotes} "${mode === 'trim' ? "Cut what doesn't fit this job" : 'Compact to one page'}" is on: dropping bullets the posting doesn't need, especially from the robotics project, is the expected result, not a loss.`,
 }))
 
 export const INDUSTRY_CASES: EvalCase[] = [...SPECS, ...MODE_SPECS].map(toCase)
