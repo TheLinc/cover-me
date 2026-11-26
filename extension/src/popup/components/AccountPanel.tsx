@@ -393,13 +393,11 @@ export default function AccountPanel({ initialView = 'signin', links = true }: {
                   </>
                 )}
               </p>
-            </>
-          )}
 
-          {!session && (
-            <p className="auth-switch">
-              <button className="auth-link" onClick={() => switchMode('byok')}>I have an API key →</button>
-            </p>
+              <p className="auth-switch">
+                <button className="auth-link" onClick={() => switchMode('byok')}>I have an API key →</button>
+              </p>
+            </>
           )}
 
           {session && links && tier === 'hosted_free' && (

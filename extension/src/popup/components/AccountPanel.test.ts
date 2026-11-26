@@ -33,8 +33,6 @@ vi.mock('./UpgradePrompt', () => ({ default: () => null }))
 
 const { default: AccountPanel } = await import('./AccountPanel')
 
-const KEY_LINK = 'I have an API key'
-
 let container: HTMLElement
 let unmount: () => void
 
@@ -68,7 +66,7 @@ function signIn(tier: string) {
 }
 
 function keyLink(el: HTMLElement) {
-  return [...el.querySelectorAll('button')].find((b) => b.textContent?.includes(KEY_LINK))
+  return [...el.querySelectorAll('button')].find((b) => b.textContent?.includes('I have an API key'))
 }
 
 describe('AccountPanel own-key link', () => {
