@@ -31,6 +31,7 @@ export async function generateMetadata({ params }: { params: Promise<{ role: str
 }
 
 const list = (names: string[]) => `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
+const capitalize = (s: string) => s[0].toUpperCase() + s.slice(1)
 
 export default async function RolePage({ params }: { params: Promise<{ role: string }> }) {
   const role = getRole((await params).role)
@@ -82,7 +83,7 @@ export default async function RolePage({ params }: { params: Promise<{ role: str
           </p>
           <h1 className="text-[clamp(32px,5vw,52px)] text-foreground leading-[0.98] mb-5">{h1}</h1>
           <p className="text-[17px] text-foreground leading-[1.7] mb-5 font-medium">
-            {list(counts.keywords.slice(0, 5).map((k) => k.name))} are the keywords {role.noun} job postings ask for most. Of the {counts.postings} postings
+            {capitalize(list(counts.keywords.slice(0, 5).map((k) => k.name)))} are the keywords {role.noun} job postings ask for most. Of the {counts.postings} postings
             read in {month}, {top.postings} ask for {top.name}.
           </p>
           {role.intro.map((p) => (

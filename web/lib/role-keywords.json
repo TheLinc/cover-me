@@ -218,10 +218,6 @@
           "postings": 65
         },
         {
-          "name": "OTE",
-          "postings": 49
-        },
-        {
           "name": "customer success",
           "postings": 43
         },
@@ -291,6 +287,10 @@
         },
         {
           "name": "lead generation",
+          "postings": 19
+        },
+        {
+          "name": "PEO",
           "postings": 19
         }
       ]
@@ -388,10 +388,6 @@
           "postings": 20
         },
         {
-          "name": "OTE",
-          "postings": 19
-        },
-        {
           "name": "ABM",
           "postings": 18
         },
@@ -421,6 +417,10 @@
         },
         {
           "name": "forecasting",
+          "postings": 13
+        },
+        {
+          "name": "PMM",
           "postings": 13
         }
       ]
