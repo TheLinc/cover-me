@@ -194,3 +194,67 @@ describe("the posting's title in the summary (#218)", () => {
     expect(resume.summary).toBe('')
   })
 })
+
+// Default mode cut a long skills list to about half with no cutting option on (#400).
+describe('the skills list with no cutting option on (#400)', () => {
+  const parsed = {
+    name: 'Sam Ortiz', email: 'sam@example.com', phone: '', website: '',
+    experience: [{ title: 'Backend Engineer', company: 'Northwind', location: '', dates: '2022', bullets: ['Built the billing service in Go'] }],
+    education: [], skills: 'Go, PostgreSQL, Kafka, React, Jenkins, Jira',
+  } as unknown as ParsedResume
+  const raw = JSON.stringify({ experience: [{ bullets: ['Built the billing service in Go'] }], skills: [{ skill: 'Kafka' }, { skill: 'PostgreSQL (SQL)', evidence: 'PostgreSQL' }, { skill: 'Go' }] })
+  const approve = async () => '{"verdicts": [{"i": 0, "ok": true}]}'
+
+  test('puts back every skill the model left out, after its list, without a second PostgreSQL', async () => {
+    const resume = await assembleTailored(parsed, raw, { jobDescription: 'Go, Kafka and PostgreSQL', ask: approve, exactBulletCounts: true })
+    expect(resume.skills).toBe('Kafka, PostgreSQL (SQL), Go, React, Jenkins, Jira')
+  })
+
+  test('keeps the model\'s shorter list in trim mode', async () => {
+    const resume = await assembleTailored(parsed, raw, { jobDescription: 'Go, Kafka and PostgreSQL', ask: approve, exactBulletCounts: false })
+    expect(resume.skills).toBe('Kafka, PostgreSQL (SQL), Go')
+  })
+})
+
+describe('a grouped skills list with no cutting option on (#400)', () => {
+  const langs = ['Go', 'Python', 'Java', 'Kotlin', 'PHP', 'Ruby', 'Rust', 'Scala', 'Perl', 'Elixir']
+  const tools = ['Docker', 'Kubernetes', 'Terraform', 'Jenkins', 'Jira', 'Grafana', 'Kafka', 'Redis', 'Ansible', 'Vault']
+  const parsed = {
+    name: 'Sam Ortiz', email: 'sam@example.com', phone: '', website: '',
+    experience: [{ title: 'Backend Engineer', company: 'Northwind', location: '', dates: '2022', bullets: ['Built the billing service in Go'] }],
+    education: [], skills: `Languages: ${langs.join(', ')}\nTools: ${tools.join(', ')}`,
+  } as unknown as ParsedResume
+  const raw = JSON.stringify({ experience: [{ bullets: ['Built the billing service in Go'] }], skills: [...tools.slice(0, 9), ...langs].map((skill) => ({ skill })) })
+
+  test('keeps all 20, and the one the model left out goes back under its own label', async () => {
+    const resume = await assembleTailored(parsed, raw, { jobDescription: 'Backend engineer', exactBulletCounts: true })
+    expect(resume.skills).toBe(`Tools: ${tools.join(', ')}\nLanguages: ${langs.join(', ')}`)
+  })
+
+  test('is cut to 18 in trim mode', async () => {
+    const resume = await assembleTailored(parsed, raw, { jobDescription: 'Backend engineer', exactBulletCounts: false })
+    expect(resume.skills).toBe(`Tools: ${tools.slice(0, 9).join(', ')}\nLanguages: ${langs.slice(0, 9).join(', ')}`)
+  })
+})
+
+describe('the skills step of the prompt (#400)', () => {
+  const job = { title: 'Engineer', company: 'Acme', description: 'Engineer' } as Parameters<typeof buildPrompt>[0]
+  const parsed = {
+    name: 'Sam Ortiz', email: 'sam@example.com', phone: '', website: '',
+    experience: [{ title: 'Engineer', company: 'Northwind', location: '', dates: '2022', bullets: ['Built things'] }],
+    education: [], skills: 'Languages: Go, Python\nTools: Docker, Jira',
+  } as unknown as ParsedResume
+
+  test('asks for no cuts and no cap with no cutting option on', () => {
+    const prompt = buildPrompt(job, parsed, false)
+    expect(prompt).toContain('KEEP every skill the resume lists')
+    expect(prompt).not.toMatch(/REMOVE skills|Hard cap|18-item/)
+  })
+
+  test.each([['trim', false, true], ['compact', true, false]] as const)('cuts to the cap in %s mode', (_mode, compact, trim) => {
+    const prompt = buildPrompt(job, parsed, compact, undefined, trim)
+    expect(prompt).toContain('REMOVE skills not relevant to this role type')
+    expect(prompt).toContain('the 18-item hard cap above')
+    expect(prompt).not.toContain('KEEP every skill the resume lists')
+  })
+})
