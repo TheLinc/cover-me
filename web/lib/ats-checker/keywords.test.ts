@@ -370,5 +370,6 @@ test('benefits under other headings, and agency or hiring-policy notices, add no
     'To all recruitment agencies: Acme does not accept agency resumes.',
     'Important information:\nAcme provides equal employment opportunities to all applicants. This policy applies to all terms and conditions of employment at Acme, including recruiting, hiring and promotion.',
     'Headhunters and recruitment agencies may not submit resumes to Acme.',
+    '- Potential compensation for this role is $102,855 to $136,000 OTE USD, plus RSUs.',
   ]) expect(readPosting(head + tail).keywords.map((k) => k.name), tail).toEqual(['Salesforce'])
 })
