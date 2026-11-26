@@ -68,9 +68,10 @@ function AccentPicker({ value, onChange }: { value: string | undefined; onChange
   )
 }
 
-function Sketch({ template, mini }: { template: ResumeTemplate; mini?: boolean }) {
+function Sketch({ template, mini, accent }: { template: ResumeTemplate; mini?: boolean; accent?: string }) {
+  const tint = accentOf(accent)
   return (
-    <span className={`template-thumb template-thumb-${template}${mini ? ' template-thumb-mini' : ''}`} aria-hidden="true">
+    <span className={`template-thumb template-thumb-${template}${mini ? ' template-thumb-mini' : ''}`} aria-hidden="true" style={tint ? { '--tt-accent': tint } as React.CSSProperties : undefined}>
       <span className="tt-name" /><span className="tt-rule" /><span className="tt-line" /><span className="tt-line" />
       <span className="tt-rule" /><span className="tt-line" /><span className="tt-line" />
     </span>
@@ -87,7 +88,7 @@ export default function TemplatePicker({ value, pro, onChange, previewLocked, ac
   return (
     <details className="template-picker" onToggle={(e) => setOpen(e.currentTarget.open)}>
       <summary className="template-bar">
-        <Sketch template={current} mini />
+        <Sketch template={current} mini accent={accent} />
         <span className="template-current"><span className="form-label">Template</span>{templateName(current)}</span>
         {!pro && <span className="template-more">3 more with Pro</span>}
         <span className="template-toggle">Change <ChevronIcon /></span>
@@ -100,7 +101,7 @@ export default function TemplatePicker({ value, pro, onChange, previewLocked, ac
             return (
               <label key={t} className={`template-option${locked ? ' is-locked' : ''}`}>
                 <input type="radio" name={group} value={t} checked={current === t} disabled={locked && !previewLocked} onChange={() => onChange(t)} />
-                <Sketch template={t} />
+                <Sketch template={t} accent={accent} />
                 <span className="template-name">{templateName(t)}</span>
                 {locked && (
                   <span className="template-lock">

@@ -1497,7 +1497,7 @@ textarea:focus-visible, input:focus-visible, [tabindex]:focus-visible {
 .template-thumb .tt-name { width: 70%; height: 4px; background: #222; }
 .template-thumb .tt-rule { height: 1px; margin-top: 2px; background: #222; }
 .template-thumb-modern, .template-thumb-minimal { align-items: flex-start; }
-.template-thumb-modern .tt-rule { background: #4F46E5; }
+.template-thumb-modern .tt-rule { background: var(--tt-accent, #4F46E5); }
 .template-thumb-compact { gap: 2px; padding: 5px 4px; }
 .template-thumb-minimal { gap: 4px; padding: 9px 8px; }
 .template-thumb-minimal .tt-name { height: 6px; width: 80%; background: #444; }
