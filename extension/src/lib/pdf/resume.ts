@@ -10,21 +10,68 @@ import type { ResumeSection, ResumeTemplate, TailoredResume } from './types'
 // Letter page: 612 × 792 pt (https://github.com/TheLinc/cover-me/commit/a074665df759617a5ebedfaf28370e973177338c)
 const PW = 612
 const PH = 792
-const ML = 54
-const MR = 558
-const CW = MR - ML
 
+type RGB = [number, number, number]
+
+// One layout, several looks: every template is single-column with plain-text
+// contact details, so ATS parsing holds (#119). Sizes and gaps are in points.
 interface TemplateStyle {
   font: 'times' | 'helvetica'
+  margin: number
+  top: number
+  bottom: number
+  align: 'center' | 'left'
+  name: { size: number; bold: boolean; after: number }
+  headline: { size: number; after: number }
+  contact: { size: number; step: number; after: number; sep: string }
+  heading: { size: number; before: number; after: number; colour: RGB; rule: { width: number; colour: RGB } }
+  body: number
+  entry: number
+  lineHeight: number
+  entryStep: number
+  entryGap: number
 }
+
+const BLACK: RGB = [0, 0, 0]
+const INDIGO: RGB = [79, 70, 229]
 
 export const RESUME_TEMPLATES: ResumeTemplate[] = ['classic', 'modern', 'compact', 'minimal']
 
+const CLASSIC: TemplateStyle = {
+  font: 'times', margin: 54, top: 52, bottom: 48, align: 'center',
+  name: { size: 26, bold: true, after: 16 },
+  headline: { size: 11.5, after: 13 },
+  contact: { size: 10, step: 12, after: 6, sep: '   |   ' },
+  heading: { size: 11, before: 10, after: 9, colour: BLACK, rule: { width: 0.5, colour: BLACK } },
+  body: 10, entry: 10.5, lineHeight: 12, entryStep: 13, entryGap: 5,
+}
+
 const STYLES: Record<ResumeTemplate, TemplateStyle> = {
-  classic: { font: 'times' },
-  modern: { font: 'helvetica' },
-  compact: { font: 'times' },
-  minimal: { font: 'times' },
+  classic: CLASSIC,
+  modern: {
+    ...CLASSIC, font: 'helvetica', align: 'left',
+    name: { size: 24, bold: true, after: 15 },
+    headline: { size: 11, after: 13 },
+    contact: { size: 9, step: 11.5, after: 6, sep: '   |   ' },
+    heading: { size: 10.5, before: 11, after: 9, colour: INDIGO, rule: { width: 0.75, colour: INDIGO } },
+    body: 9.5, entry: 10, lineHeight: 12,
+  },
+  compact: {
+    ...CLASSIC, margin: 40, top: 46, bottom: 36,
+    name: { size: 20, bold: true, after: 13 },
+    headline: { size: 10.5, after: 12 },
+    contact: { size: 9, step: 11, after: 4, sep: '  |  ' },
+    heading: { size: 10, before: 7, after: 7.5, colour: BLACK, rule: { width: 0.4, colour: BLACK } },
+    body: 9.5, entry: 10, lineHeight: 11, entryStep: 12, entryGap: 3,
+  },
+  minimal: {
+    ...CLASSIC, font: 'helvetica', margin: 64, top: 74, bottom: 56, align: 'left',
+    name: { size: 34, bold: false, after: 20 },
+    headline: { size: 11, after: 14 },
+    contact: { size: 9, step: 12, after: 10, sep: '   ·   ' },
+    heading: { size: 9, before: 16, after: 11, colour: [90, 90, 90], rule: { width: 0.3, colour: [200, 200, 200] } },
+    body: 9.5, entry: 10, lineHeight: 13.5, entryStep: 14.5, entryGap: 8,
+  },
 }
 
 // Stored resumes are untrusted JSON: an unknown name, even one on Object's prototype, prints as Classic (#119).
@@ -86,33 +133,38 @@ export function pdfSafe(text: unknown): string {
 // by the extension's editor preview, so the two are the same file (#118).
 export function tailoredResumePdf(resume: TailoredResume): jsPDF {
   const doc = new jsPDF({ unit: 'pt', format: 'letter' })
-  const { font } = STYLES[templateOf(resume)]
-  const LH = 12
-  const BODY = 10
-  const ENTRY = 10.5
-  let y = 52
+  const st = STYLES[templateOf(resume)]
+  const { font } = st
+  const ML = st.margin
+  const MR = PW - st.margin
+  const CW = MR - ML
+  const LH = st.lineHeight
+  const BODY = st.body
+  const ENTRY = st.entry
+  let y = st.top
 
   function need(pts: number) {
-    if (y + pts > PH - 48) {
+    if (y + pts > PH - st.bottom) {
       doc.addPage()
-      y = 52
+      y = st.top
     }
   }
 
   const text = (s: string, x: number, opts?: { align?: 'center' | 'right' }) => doc.text(pdfSafe(s), x, y, opts)
   const width = (s: string) => doc.getTextWidth(pdfSafe(s))
   const wrap = (s: string, w: number) => doc.splitTextToSize(pdfSafe(s), w) as string[]
+  const header = (s: string) => (st.align === 'center' ? text(s, PW / 2, { align: 'center' }) : text(s, ML))
 
-  doc.setFont(font, 'bold')
-  doc.setFontSize(26)
-  text(resume.name || 'Resume', PW / 2, { align: 'center' })
-  y += 16
+  doc.setFont(font, st.name.bold ? 'bold' : 'normal')
+  doc.setFontSize(st.name.size)
+  header(resume.name || 'Resume')
+  y += st.name.after
 
   if (resume.headline?.trim()) {
     doc.setFont(font, 'normal')
-    doc.setFontSize(11.5)
-    text(resume.headline.trim(), PW / 2, { align: 'center' })
-    y += 13
+    doc.setFontSize(st.headline.size)
+    header(resume.headline.trim())
+    y += st.headline.after
   }
 
   // Wrapped between items, never inside a URL, once links and a location
@@ -120,29 +172,33 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
   // overflows; no real one is (#149).
   const contact: string[] = []
   doc.setFont(font, 'normal')
-  doc.setFontSize(10)
+  doc.setFontSize(st.contact.size)
   for (const part of contactParts(resume)) {
-    const joined = `${contact[contact.length - 1]}   |   ${part}`
+    const joined = `${contact[contact.length - 1]}${st.contact.sep}${part}`
     if (contact.length && width(joined) <= CW) contact[contact.length - 1] = joined
     else contact.push(part)
   }
   contact.forEach((line, i) => {
-    if (i) y += 12
-    text(line, PW / 2, { align: 'center' })
+    if (i) y += st.contact.step
+    header(line)
   })
-  if (contact.length) y += 6
+  if (contact.length) y += st.contact.after
 
   function sectionHeading(title: string) {
-    y += 10
+    const { heading } = st
+    y += heading.before
     need(18)
     doc.setFont(font, 'bold')
-    doc.setFontSize(11)
+    doc.setFontSize(heading.size)
+    const tinted = heading.colour !== BLACK
+    if (tinted) doc.setTextColor(...heading.colour)
     text(title, ML)
+    if (tinted) doc.setTextColor(0)
     y += 3
-    doc.setDrawColor(0)
-    doc.setLineWidth(0.5)
+    doc.setDrawColor(...heading.rule.colour)
+    doc.setLineWidth(heading.rule.width)
     doc.line(ML, y, MR, y)
-    y += 9
+    y += heading.after
   }
 
   // A left side too wide for the line wraps under itself (#190).
@@ -161,7 +217,7 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
       doc.setFont(font, 'normal')
       doc.text(pdfSafe(right), MR, y - (lines.length - 1) * LH, { align: 'right' })
     }
-    y += 13
+    y += st.entryStep
   }
 
   // Name and a right-hand note (a link, dates) on one line, then the subtitle (a
@@ -251,7 +307,7 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
     }
   }
 
-  const entryGap = () => { y += 5 }
+  const entryGap = () => { y += st.entryGap }
 
   // Each section, drawn in the order the user set (sections.ts) (#118).
   const draw: Record<StandardSection, () => void> = {

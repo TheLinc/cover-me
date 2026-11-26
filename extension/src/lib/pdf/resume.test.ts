@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
-import { tailoredResumePdf } from './resume'
+import { RESUME_TEMPLATES, tailoredResumePdf } from './resume'
 import type { ResumeTemplate, TailoredResume } from './types'
 
 const filler = (n: number, word: string) => Array.from({ length: n }, (_, i) => (i % 7 === 0 ? `${word}ification` : word)).join(' ')
@@ -77,5 +77,74 @@ describe('resume templates', () => {
   test('Modern prints in a sans-serif font', async () => {
     const { lines } = await read(withTemplate(SHORT, 'modern'))
     expect(new Set(lines.map((l) => l.family))).toEqual(new Set(['sans-serif']))
+  })
+})
+
+function colourOf(resume: TailoredResume, text: string): number[] {
+  const block = new RegExp(String.raw`BT\n/F\d+ [\d.]+ Tf\n[\d.]+ TL\n(.+?)\n[^\n]+ Td\n\(${text}\) Tj`).exec(tailoredResumePdf(resume).output())
+  if (!block) throw new Error(`${text} not printed`)
+  const nums = block[1].split(' ').slice(0, -1).map((n) => Math.round(Number(n) * 255))
+  return nums.length === 1 ? [nums[0], nums[0], nums[0]] : nums
+}
+
+describe('template colour', () => {
+  test('Modern prints section headings in Cover Me indigo and the text in black', () => {
+    expect(colourOf(withTemplate(SHORT, 'modern'), 'EXPERIENCE')).toEqual([79, 70, 229])
+    expect(colourOf(withTemplate(SHORT, 'modern'), 'Intern')).toEqual([0, 0, 0])
+  })
+
+  test('Classic headings stay black', () => {
+    expect(colourOf(SHORT, 'EXPERIENCE')).toEqual([0, 0, 0])
+  })
+})
+
+describe('every template lays out a long and a short resume cleanly', () => {
+  const PAGE = { width: 612, height: 792 }
+  const ASCENT = 0.72
+  const DESCENT = 0.22
+
+  for (const template of RESUME_TEMPLATES) {
+    for (const [label, resume] of [['long', LONG], ['short', SHORT]] as const) {
+      test(`${template}, ${label}: all text sits inside the page with no lines overlapping`, async () => {
+        const { lines } = await read(withTemplate(resume, template))
+        for (const l of lines) {
+          expect(l.x, l.text).toBeGreaterThanOrEqual(36)
+          expect(l.x + l.width, l.text).toBeLessThanOrEqual(PAGE.width - 36)
+          expect(l.y - l.size * DESCENT, l.text).toBeGreaterThanOrEqual(30)
+          expect(l.y + l.size * ASCENT, l.text).toBeLessThanOrEqual(PAGE.height - 30)
+        }
+        const rows = new Map<string, Line[]>()
+        for (const l of lines) rows.set(`${l.page}:${l.y.toFixed(2)}`, [...(rows.get(`${l.page}:${l.y.toFixed(2)}`) ?? []), l])
+        const sorted = [...rows.values()].sort((a, b) => a[0].page - b[0].page || b[0].y - a[0].y)
+        for (let i = 1; i < sorted.length; i++) {
+          const [above, below] = [sorted[i - 1], sorted[i]]
+          if (above[0].page !== below[0].page) continue
+          const room = Math.max(...above.map((l) => l.size)) * DESCENT + Math.max(...below.map((l) => l.size)) * ASCENT
+          expect(above[0].y - below[0].y, `${above[0].text} / ${below[0].text}`).toBeGreaterThanOrEqual(room)
+        }
+        for (const row of rows.values()) {
+          const byX = [...row].sort((a, b) => a.x - b.x)
+          for (let i = 1; i < byX.length; i++) expect(byX[i].x, `${byX[i - 1].text} / ${byX[i].text}`).toBeGreaterThanOrEqual(byX[i - 1].x + byX[i - 1].width - 0.5)
+        }
+      })
+    }
+  }
+
+  test('every template prints the text as text a reader can copy', async () => {
+    for (const template of RESUME_TEMPLATES) {
+      const text = (await read(withTemplate(LONG, template))).lines.map((l) => l.text).join(' ')
+      for (const expected of ['Alexandra Montgomery-Okonkwo', 'alexandra.montgomery@example.com', 'University of Waterloo', 'Certified Kubernetes Administrator (CKA)', 'Languages:']) {
+        expect(text, template).toContain(expected)
+      }
+    }
+  })
+
+  test('Compact fits the long resume on fewer pages than Classic', async () => {
+    expect((await read(withTemplate(LONG, 'compact'))).pages).toBeLessThan((await read(LONG)).pages)
+  })
+
+  test('Minimal prints the name larger than Classic does', async () => {
+    const nameSize = async (t: ResumeTemplate) => (await read(withTemplate(SHORT, t))).lines.find((l) => l.text === 'Sam Lee')!.size
+    expect(await nameSize('minimal')).toBeGreaterThan(await nameSize('classic'))
   })
 })
