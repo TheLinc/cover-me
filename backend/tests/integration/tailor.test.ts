@@ -709,6 +709,13 @@ describe('long master resumes', () => {
     expect(resume.experience.map((e: { bullets: string[] }) => e.bullets.length)).toEqual([15, 15, 15])
   })
 
+  // The model left out Docker and Jira; default mode puts them back, trim doesn't (#400).
+  it('with trim off, every skill stays; with trim on, the model may cut them', async () => {
+    await cacheParsedResume(user!.id, { ...long, skills: 'TypeScript, Postgres, React, Docker, Jira' })
+    expect((await tailor({ trim: false })).skills).toBe('TypeScript, Postgres, React, Docker, Jira')
+    expect((await tailor({ trim: true })).skills).toBe('TypeScript, Postgres, React')
+  })
+
   it('trim cuts to the budget and brings a dropped measured result back first', async () => {
     const resume = await tailor({ trim: true })
     expect(resume.experience.map((e: { bullets: string[] }) => e.bullets.length)).toEqual([6, 4, 4])

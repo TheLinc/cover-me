@@ -114,13 +114,13 @@ function TailorOptions({ inputMode, manualReady, onTailor, compact, setCompact, 
         <div className="toggle-row">
           <label className="compact-toggle">
             <input type="checkbox" checked={trim} onChange={e => setTrim(e.target.checked)} />
-            Remove irrelevant bullets
+            Cut what doesn't fit this job
           </label>
           <button
             type="button"
             className="tooltip-icon"
-            aria-label="Best for long master resumes with all your experience — the AI selects only the bullets most relevant to the role being applied for."
-            data-tooltip="Best for long master resumes with all your experience — the AI selects only the bullets most relevant to the role being applied for."
+            aria-label="Best for long master resumes with all your experience — the AI keeps only the bullets and skills most relevant to this role."
+            data-tooltip="Best for long master resumes with all your experience — the AI keeps only the bullets and skills most relevant to this role."
           >?</button>
         </div>
         {(!yours || design?.summary) && <div className="toggle-row">

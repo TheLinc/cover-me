@@ -284,11 +284,11 @@ function stripScores(r: Record<string, unknown>): Record<string, unknown> {
 
 // Extra STEP 8 rules for a skills section written in labelled groups, so the
 // tailored list keeps those groups instead of collapsing into one long line (#190).
-export function groupedSkillsRule(skills?: string): string {
+export function groupedSkillsRule(skills: string | undefined, cut: boolean): string {
   const groups = skillGroups(skills)
   if (!groups.length) return ''
   return `
-GROUPED SKILLS — this resume lists its skills in labelled groups: ${groups.map((g) => `"${g.label}"`).join(', ')}. Keep that grouping. Give every skill a "category" copied exactly from one of these labels; an added skill takes the label of the group its evidence comes from. Emit skills most-relevant-first (groups print in the order their first skill appears), and leave out a group with nothing relevant to this job. The ~15–18 target and the 18-item hard cap above count every group together, in at most 6 groups. Prefer the resume's own wording, and add at most 3 skills worded in the JD's phrasing.
+GROUPED SKILLS — this resume lists its skills in labelled groups: ${groups.map((g) => `"${g.label}"`).join(', ')}. Keep that grouping. Give every skill a "category" copied exactly from one of these labels; an added skill takes the label of the group its evidence comes from. Emit skills most-relevant-first (groups print in the order their first skill appears)${cut ? ', and leave out a group with nothing relevant to this job. The ~15–18 target and the 18-item hard cap above count every group together, in at most 6 groups' : ''}. Prefer the resume's own wording, and add at most 3 skills worded in the JD's phrasing.
 `
 }
 
@@ -320,8 +320,8 @@ ADD a skill only when it is in the JD AND either named in the supplemental conte
 SKILLS OUTPUT FORMAT: "skills" is a JSON array of objects. A skill worded exactly as in the resume is {"skill": "..."}. Every other skill (an addition, or a rewording into the JD's phrasing) MUST include "evidence": a phrase copied character-for-character from the resume or the supplemental context that directly demonstrates that skill itself, not something merely near it. The application checks every evidence phrase against the resume and supplemental context and deletes any skill whose evidence is missing or not found, so never paraphrase evidence and never add a skill you cannot back.
 Never add a competing or unrelated tool the candidate lacks (Vue, Redux, a different language). Do NOT add process or architecture buzzwords the resume gives no concrete evidence for — in tech, "CI/CD", "DevOps", "Cloud Security", "Microservices Architecture", "Cloud-Native" each require a named tool or practice on the resume or in the supplemental context; in any field, a license, certification, or method named only in the JD is never added unless the resume states it or the supplemental context says the candidate holds it. Absent evidence, these are fabrications (Integrity 4). If in doubt, leave it out.
 
-REMOVE skills not relevant to this role type (e.g. a mobile-only framework for a pure web role). When over the cap, keep the most JD-relevant skills and drop the least relevant first. Aim for ~15–18 focused skills, not an exhaustive inventory; a bloated list buries the terms that matter and reads as unfocused. NEVER remove a skill the JD names — or a specific instance of a category the JD names (e.g. MySQL under "relational databases") — that the candidate genuinely has; ATS matches literal tokens, so the JD's exact term must survive. When the resume has both a JD-named specific term and its generic synonym, keep BOTH ("MySQL (SQL)", not just "SQL"); dedupe only synonyms the JD does not name. Hard cap: 18 items. The one exception: never cut a JD-named skill the candidate has to meet the cap. If those alone pass 18, keep all of them and nothing else.
-${groupedSkillsRule(parsed.skills)}` : ''
+${trim || compact ? `REMOVE skills not relevant to this role type (e.g. a mobile-only framework for a pure web role). When over the cap, keep the most JD-relevant skills and drop the least relevant first. Aim for ~15–18 focused skills, not an exhaustive inventory; a bloated list buries the terms that matter and reads as unfocused. NEVER remove a skill the JD names — or a specific instance of a category the JD names (e.g. MySQL under "relational databases") — that the candidate genuinely has; ATS matches literal tokens, so the JD's exact term must survive. When the resume has both a JD-named specific term and its generic synonym, keep BOTH ("MySQL (SQL)", not just "SQL"); dedupe only synonyms the JD does not name. Hard cap: 18 items. The one exception: never cut a JD-named skill the candidate has to meet the cap. If those alone pass 18, keep all of them and nothing else.` : 'KEEP every skill the resume lists: this mode removes none and has no cap. A skill you leave out is put back at the end of the list, so rank rather than drop.'}
+${groupedSkillsRule(parsed.skills, trim || compact)}` : ''
 
   const compactMode = compact ? `---
 
@@ -703,7 +703,7 @@ Deno.serve(async (req) => {
     const notes = trustedNotes(supplemental, previous)
     const base = seenVersion(structuredResume, previous)
     const candidate = candidateText(structuredResume, notes)
-    delta.skills = recaseSkills((await groundSkills(delta.skills, candidate, askChecker, base.skills, job.description)).skills, base.skills, `${candidate}
+    delta.skills = recaseSkills((await groundSkills(delta.skills, candidate, askChecker, base.skills, job.description, !compact && !trim)).skills, base.skills, `${candidate}
 ${job.description}`)
     const merged = keepSeen(mergeTailorDelta(base, delta, { exactBulletCounts: !compact && !trim, maxBullets: trim && !compact ? seenBudget(bulletBudget(structuredResume), base, structuredResume) : undefined }), structuredResume, base)
     const { resume: lined, repair } = await checkAndRewriteLines(merged, base, job.description, askChecker, supplemental)
