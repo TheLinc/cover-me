@@ -31,6 +31,7 @@ Key facts:
 - [LibHunt listing](https://www.libhunt.com/r/cover-me): Cover Me's open-source project page, with similar projects
 - [SaaSHub listing](https://www.saashub.com/cover-me-dev): features, pricing and alternatives such as Jobscan, Teal and Rezi
 - [RankmyAI listing](https://www.rankmyai.com/tools/7d6bc99e-7a27-420c-bc04-03329ea46349/cover-me): Cover Me's tool profile in RankmyAI's AI cover letter generator category
+- [Peerlist listing](https://peerlist.io/plainstackops/project/cover-me): Cover Me's project page on Peerlist, with answers on how it works, the ATS score and privacy
 
 ## Job board guides
 

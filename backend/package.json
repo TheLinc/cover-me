@@ -15,6 +15,7 @@
     "test": "node ../scripts/sync-scrapers.mjs --check && node scripts/ensure-stack.mjs && supabase db reset && supabase test db && node scripts/test-functions.mjs",
     "deploy:prod": "node scripts/deploy.mjs",
     "trial-links": "node scripts/trial-links.mjs",
+    "notify-site": "node scripts/notify-site.mjs",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
