@@ -19,7 +19,7 @@ import ProgressSteps from '../components/ProgressSteps'
 import ReviewAsk from '../components/ReviewAsk'
 import ScrapeFailurePanel, { type ShownFailure } from '../components/ScrapeFailure'
 import ScoreRing, { ScoreGain, scoreRose } from '../components/ScoreRing'
-import { isLocked, TEMPLATE_NAMES } from '../components/TemplatePicker'
+import { isLocked, templateName } from '../components/TemplatePicker'
 import UpgradePrompt from '../components/UpgradePrompt'
 import { GenerateOffer } from '../components/FirstMonthOffer'
 import { WhatsNewLink } from '../components/WhatsNew'
@@ -1129,7 +1129,7 @@ export default function GeneratePage({ onNavigate }: Props) {
                       <span className="form-label">Template</span>
                       <select className="form-input" value={templateOf(tailoredResume.template)} onChange={(e) => void pickTemplate(e.target.value as ResumeTemplate)}>
                         {RESUME_TEMPLATES.map((t) => (
-                          <option key={t} value={t} disabled={isLocked(t, pro)}>{TEMPLATE_NAMES[t]}{isLocked(t, pro) ? ' (Pro)' : ''}</option>
+                          <option key={t} value={t} disabled={isLocked(t, pro)}>{templateName(t)}{isLocked(t, pro) ? ' (Pro)' : ''}</option>
                         ))}
                       </select>
                     </label>
