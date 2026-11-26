@@ -271,7 +271,15 @@ export function checkTailored(out: TailoredResume, c: EvalCase, input: ParsedRes
       : out.skills.split(',')).map((s) => s.trim()).filter(Boolean)
     // Skills the posting names pass the cap only when they alone fill it (#190).
     const cap = Math.max(MAX_GROUPED_SKILLS, skillItems.filter((s) => containsTerm(c.job.description, s)).length)
-    if (skillItems.length > cap) result.failures.push(`skills list has ${skillItems.length} items (hard cap ${cap})`)
+    if (c.mode && skillItems.length > cap) result.failures.push(`skills list has ${skillItems.length} items (hard cap ${cap})`)
+    // Default mode cuts no skill; "Oracle ERP (ERP)" still keeps "Oracle ERP" (#400).
+    if (!c.mode && input.skills) {
+      const key = (s: string) => s.toLowerCase().replace(/\([^()]*\)/g, '').replace(/\s+/g, ' ').trim()
+      const have = new Set(out.skills.split(/[,\n]/).map((s) => key(s.replace(/^[^:,]{2,48}:\s*/, ''))))
+      for (const own of input.skills.split(/[,\n|•·;]/).map((s) => s.replace(/^[^:,]{2,48}:\s*/, '').trim()).filter(Boolean)) {
+        if (!have.has(key(own))) result.failures.push(`default mode dropped a resume skill: "${own}"`)
+      }
+    }
     for (const k of c.mustKeepSkills) {
       // A kept skill may be rephrased ("patient education" → "patient and
       // family education"), so require all its words inside one skill item (https://github.com/TheLinc/cover-me/commit/46f809a1dc946cf6964c9e2ad9a400323d9bada5).

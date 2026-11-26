@@ -34,7 +34,7 @@ export interface EvalCase {
   summaryTitle?: string
   /** Like failTerms, for the tailored resume only: titles a letter may use to name the role ("the full stack role") (#218). */
   resumeFailTerms?: string[]
-  /** Tailor with "Remove irrelevant bullets" (trim) or "Compact to one page" on; default mode when unset (#251). */
+  /** Tailor with "Cut what doesn't fit this job" (trim) or "Compact to one page" on; default mode when unset (#251). */
   mode?: 'trim' | 'compact'
   /** For trim and compact cases: JD terms whose bullet evidence must survive the cut (#251). */
   keepInBullets?: string[]
