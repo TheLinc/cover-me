@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it } from 'vitest'
-import { callFunction, mockClaude, mockPosthog } from './helpers'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { admin, callFunction, createUser, deleteUser, mockClaude, mockPosthog, type TestUser } from './helpers'
 
 // site-request sends the event before it responds, so there's nothing to wait for (#383).
 const surveyEvents = () => mockPosthog.eventsNamed('survey sent', () => true)
@@ -8,10 +8,10 @@ const surveyEvents = () => mockPosthog.eventsNamed('survey sent', () => true)
 // a test shares one on purpose (#150).
 let nextIp = 1
 const freshIp = () => `198.51.100.${nextIp++ % 250}`
-const send = (body: unknown, ip = freshIp()) =>
+const send = (body: unknown, ip = freshIp(), token?: string) =>
   callFunction('site-request', typeof body === 'string'
     ? { rawBody: new TextEncoder().encode(body), headers: { 'cf-connecting-ip': ip, 'Content-Type': 'application/json' } }
-    : { body, headers: { 'cf-connecting-ip': ip } })
+    : { body, token, headers: { 'cf-connecting-ip': ip } })
 
 const BUG = {
   kind: 'bug',
@@ -102,5 +102,58 @@ describe('site-request', () => {
       headers: { 'cf-connecting-ip': ip },
     })
     expect(scrape.status).toBe(200)
+  })
+})
+
+// "Email me when it's supported" (#195): signed-in only, stored in
+// site_watch, never sent to PostHog.
+describe('site-request watch', () => {
+  let user: TestUser
+  beforeEach(async () => {
+    await mockClaude.reset()
+    user = await createUser()
+  })
+  afterEach(() => deleteUser(user))
+
+  const rows = async (host = 'jobs.acme-careers.com') =>
+    (await admin.from('site_watch').select('host, user_id').eq('user_id', user.id).eq('host', host)).data
+
+  it('stores one row per tick, however many ticks, and sends nothing to PostHog', async () => {
+    for (let i = 0; i < 2; i++) {
+      expect((await send({ kind: 'watch', host: 'jobs.acme-careers.com', watch: true }, freshIp(), user.token)).status).toBe(200)
+    }
+    expect(await rows()).toEqual([{ host: 'jobs.acme-careers.com', user_id: user.id }])
+    expect(await surveyEvents()).toEqual([])
+  })
+
+  it('deletes the row when the box is unticked', async () => {
+    await send({ kind: 'watch', host: 'jobs.acme-careers.com', watch: true }, freshIp(), user.token)
+    expect((await send({ kind: 'watch', host: 'jobs.acme-careers.com', watch: false }, freshIp(), user.token)).status).toBe(200)
+    expect(await rows()).toEqual([])
+  })
+
+  it('leaves the site request it follows under a random ID', async () => {
+    await send({ kind: 'site', host: 'jobs.acme-careers.com' }, freshIp(), user.token)
+    await send({ kind: 'watch', host: 'jobs.acme-careers.com', watch: true }, freshIp(), user.token)
+    const events = await surveyEvents()
+    expect(events).toHaveLength(1)
+    expect(events[0].distinct_id).not.toBe(user.id)
+    expect(JSON.stringify(events[0])).not.toContain(user.id)
+    expect(JSON.stringify(events[0])).not.toContain(user.email)
+  })
+
+  it.each([
+    ['without a token', undefined],
+    ['with a bad token', 'not-a-token'],
+  ])('refuses a watch %s with 401 and stores nothing', async (_, token) => {
+    expect((await send({ kind: 'watch', host: 'jobs.acme-careers.com', watch: true }, freshIp(), token)).status).toBe(401)
+    expect(await rows()).toEqual([])
+  })
+
+  it.each([
+    ['a bad host', { kind: 'watch', host: 'acme.com/jobs', watch: true }],
+    ['no choice', { kind: 'watch', host: 'acme.com' }],
+  ])('rejects a watch with %s with 400', async (_, body) => {
+    expect((await send(body, freshIp(), user.token)).status).toBe(400)
   })
 })

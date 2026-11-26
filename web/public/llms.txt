@@ -31,6 +31,7 @@ Key facts:
 - [LibHunt listing](https://www.libhunt.com/r/cover-me): Cover Me's open-source project page, with similar projects
 - [SaaSHub listing](https://www.saashub.com/cover-me-dev): features, pricing and alternatives such as Jobscan, Teal and Rezi
 - [RankmyAI listing](https://www.rankmyai.com/tools/7d6bc99e-7a27-420c-bc04-03329ea46349/cover-me): Cover Me's tool profile in RankmyAI's AI cover letter generator category
+- [Peerlist listing](https://peerlist.io/plainstackops/project/cover-me): Cover Me's project page on Peerlist, with answers on how it works, the ATS score and privacy
 
 ## Job board guides
 
@@ -40,6 +41,15 @@ Key facts:
 - [Cover Me for Lever](https://www.cover-me.dev/for/lever)
 - [Cover Me for Workday](https://www.cover-me.dev/for/workday)
 - [Cover Me for Ashby](https://www.cover-me.dev/for/ashby)
+
+## Resume keywords by job
+
+Each page counts the skills, tools and degrees that real public job postings for one job ask for, read from company job boards on Greenhouse and Lever with the same rules as the free ATS checker. A keyword counts when a posting asks for it as a requirement or a nice-to-have. Each page gives each keyword as a share and a count of the postings read, grouped into tools, skills, education and soft skills, with the number of companies, the sources and the date. The postings come mostly from tech companies. Each page also shows where to put the keywords on a resume, with example bullets.
+
+- [Resume keywords by job](https://www.cover-me.dev/resume-keywords)
+- [Sales resume keywords](https://www.cover-me.dev/resume-keywords/sales)
+- [Marketing resume keywords](https://www.cover-me.dev/resume-keywords/marketing)
+- [Engineering resume keywords](https://www.cover-me.dev/resume-keywords/engineering)
 
 ## Guides
 

@@ -1,0 +1,539 @@
+{
+  "fetched": "2026-11-26",
+  "roles": {
+    "administrative-assistant": {
+      "postings": 51,
+      "companies": 28,
+      "sources": {
+        "Greenhouse": 48,
+        "Lever": 3
+      },
+      "keywords": [
+        {
+          "name": "communication",
+          "postings": 37
+        },
+        {
+          "name": "attention to detail",
+          "postings": 28
+        },
+        {
+          "name": "organizational skills",
+          "postings": 25
+        },
+        {
+          "name": "AI",
+          "postings": 19
+        },
+        {
+          "name": "Google Workspace",
+          "postings": 19
+        },
+        {
+          "name": "leadership",
+          "postings": 11
+        },
+        {
+          "name": "Bachelor's degree",
+          "postings": 10
+        },
+        {
+          "name": "Microsoft Office",
+          "postings": 10
+        },
+        {
+          "name": "sales",
+          "postings": 10
+        },
+        {
+          "name": "time management",
+          "postings": 9
+        },
+        {
+          "name": "calendar management",
+          "postings": 7
+        },
+        {
+          "name": "Excel",
+          "postings": 7
+        },
+        {
+          "name": "scheduling",
+          "postings": 7
+        },
+        {
+          "name": "Word",
+          "postings": 7
+        },
+        {
+          "name": "Slack",
+          "postings": 6
+        },
+        {
+          "name": "logistics",
+          "postings": 5
+        },
+        {
+          "name": "project management",
+          "postings": 5
+        },
+        {
+          "name": "recruiting",
+          "postings": 4
+        },
+        {
+          "name": "interpersonal skills",
+          "postings": 3
+        }
+      ]
+    },
+    "warehouse": {
+      "postings": 53,
+      "companies": 12,
+      "sources": {
+        "Greenhouse": 49,
+        "Lever": 4
+      },
+      "keywords": [
+        {
+          "name": "forklift",
+          "postings": 22
+        },
+        {
+          "name": "inventory",
+          "postings": 21
+        },
+        {
+          "name": "communication",
+          "postings": 18
+        },
+        {
+          "name": "ERP",
+          "postings": 17
+        },
+        {
+          "name": "Microsoft Office",
+          "postings": 17
+        },
+        {
+          "name": "High school diploma",
+          "postings": 14
+        },
+        {
+          "name": "attention to detail",
+          "postings": 13
+        },
+        {
+          "name": "Excel",
+          "postings": 13
+        },
+        {
+          "name": "Bachelor's degree",
+          "postings": 11
+        },
+        {
+          "name": "organizational skills",
+          "postings": 9
+        },
+        {
+          "name": "logistics",
+          "postings": 7
+        },
+        {
+          "name": "supply chain",
+          "postings": 6
+        }
+      ]
+    },
+    "sales": {
+      "postings": 457,
+      "companies": 64,
+      "sources": {
+        "Greenhouse": 432,
+        "Lever": 25
+      },
+      "keywords": [
+        {
+          "name": "communication",
+          "postings": 236
+        },
+        {
+          "name": "AI",
+          "postings": 136
+        },
+        {
+          "name": "SaaS",
+          "postings": 134
+        },
+        {
+          "name": "Bachelor's degree",
+          "postings": 125
+        },
+        {
+          "name": "Salesforce",
+          "postings": 122
+        },
+        {
+          "name": "business development",
+          "postings": 84
+        },
+        {
+          "name": "negotiation",
+          "postings": 77
+        },
+        {
+          "name": "CRM",
+          "postings": 67
+        },
+        {
+          "name": "B2B",
+          "postings": 66
+        },
+        {
+          "name": "leadership",
+          "postings": 41
+        },
+        {
+          "name": "organizational skills",
+          "postings": 37
+        },
+        {
+          "name": "procurement",
+          "postings": 31
+        },
+        {
+          "name": "forecasting",
+          "postings": 30
+        },
+        {
+          "name": "interpersonal skills",
+          "postings": 30
+        },
+        {
+          "name": "account management",
+          "postings": 27
+        },
+        {
+          "name": "Sales Navigator",
+          "postings": 27
+        },
+        {
+          "name": "networking",
+          "postings": 26
+        },
+        {
+          "name": "cold calling",
+          "postings": 24
+        },
+        {
+          "name": "attention to detail",
+          "postings": 21
+        },
+        {
+          "name": "KPI",
+          "postings": 21
+        },
+        {
+          "name": "teamwork",
+          "postings": 21
+        },
+        {
+          "name": "lead generation",
+          "postings": 20
+        },
+        {
+          "name": "logistics",
+          "postings": 19
+        },
+        {
+          "name": "PEO",
+          "postings": 19
+        },
+        {
+          "name": "program management",
+          "postings": 19
+        },
+        {
+          "name": "ROI",
+          "postings": 18
+        },
+        {
+          "name": "Salesloft",
+          "postings": 18
+        },
+        {
+          "name": "time management",
+          "postings": 18
+        },
+        {
+          "name": "ZoomInfo",
+          "postings": 18
+        },
+        {
+          "name": "Clari",
+          "postings": 17
+        }
+      ]
+    },
+    "marketing": {
+      "postings": 281,
+      "companies": 66,
+      "sources": {
+        "Greenhouse": 266,
+        "Lever": 15
+      },
+      "keywords": [
+        {
+          "name": "communication",
+          "postings": 135
+        },
+        {
+          "name": "AI",
+          "postings": 126
+        },
+        {
+          "name": "B2B",
+          "postings": 108
+        },
+        {
+          "name": "Bachelor's degree",
+          "postings": 66
+        },
+        {
+          "name": "leadership",
+          "postings": 55
+        },
+        {
+          "name": "Salesforce",
+          "postings": 55
+        },
+        {
+          "name": "SaaS",
+          "postings": 49
+        },
+        {
+          "name": "CRM",
+          "postings": 48
+        },
+        {
+          "name": "SQL",
+          "postings": 44
+        },
+        {
+          "name": "marketing automation",
+          "postings": 43
+        },
+        {
+          "name": "project management",
+          "postings": 35
+        },
+        {
+          "name": "growth marketing",
+          "postings": 34
+        },
+        {
+          "name": "Marketo",
+          "postings": 33
+        },
+        {
+          "name": "attention to detail",
+          "postings": 29
+        },
+        {
+          "name": "GTM",
+          "postings": 27
+        },
+        {
+          "name": "Tableau",
+          "postings": 24
+        },
+        {
+          "name": "organizational skills",
+          "postings": 22
+        },
+        {
+          "name": "compliance",
+          "postings": 20
+        },
+        {
+          "name": "problem-solving",
+          "postings": 20
+        },
+        {
+          "name": "ABM",
+          "postings": 18
+        },
+        {
+          "name": "lifecycle marketing",
+          "postings": 18
+        },
+        {
+          "name": "Excel",
+          "postings": 17
+        },
+        {
+          "name": "stakeholder management",
+          "postings": 17
+        },
+        {
+          "name": "business intelligence",
+          "postings": 14
+        },
+        {
+          "name": "forecasting",
+          "postings": 14
+        },
+        {
+          "name": "machine learning",
+          "postings": 14
+        },
+        {
+          "name": "Looker",
+          "postings": 13
+        },
+        {
+          "name": "MBA",
+          "postings": 13
+        },
+        {
+          "name": "ROI",
+          "postings": 13
+        },
+        {
+          "name": "statistics",
+          "postings": 13
+        }
+      ]
+    },
+    "engineering": {
+      "postings": 734,
+      "companies": 82,
+      "sources": {
+        "Greenhouse": 658,
+        "Lever": 76
+      },
+      "keywords": [
+        {
+          "name": "Python",
+          "postings": 349
+        },
+        {
+          "name": "AI",
+          "postings": 297
+        },
+        {
+          "name": "communication",
+          "postings": 287
+        },
+        {
+          "name": "Bachelor's degree",
+          "postings": 245
+        },
+        {
+          "name": "AWS",
+          "postings": 166
+        },
+        {
+          "name": "API",
+          "postings": 144
+        },
+        {
+          "name": "LLM",
+          "postings": 129
+        },
+        {
+          "name": "SQL",
+          "postings": 122
+        },
+        {
+          "name": "Go",
+          "postings": 118
+        },
+        {
+          "name": "machine learning",
+          "postings": 117
+        },
+        {
+          "name": "Kubernetes",
+          "postings": 110
+        },
+        {
+          "name": "Java",
+          "postings": 105
+        },
+        {
+          "name": "distributed systems",
+          "postings": 101
+        },
+        {
+          "name": "GCP",
+          "postings": 93
+        },
+        {
+          "name": "C++",
+          "postings": 92
+        },
+        {
+          "name": "CI/CD",
+          "postings": 87
+        },
+        {
+          "name": "TypeScript",
+          "postings": 80
+        },
+        {
+          "name": "Master's degree",
+          "postings": 77
+        },
+        {
+          "name": "Terraform",
+          "postings": 74
+        },
+        {
+          "name": "problem-solving",
+          "postings": 71
+        },
+        {
+          "name": "electrical",
+          "postings": 68
+        },
+        {
+          "name": "React",
+          "postings": 65
+        },
+        {
+          "name": "mentoring",
+          "postings": 64
+        },
+        {
+          "name": "Azure",
+          "postings": 63
+        },
+        {
+          "name": "leadership",
+          "postings": 63
+        },
+        {
+          "name": "JavaScript",
+          "postings": 62
+        },
+        {
+          "name": "Docker",
+          "postings": 61
+        },
+        {
+          "name": "Linux",
+          "postings": 61
+        },
+        {
+          "name": "networking",
+          "postings": 61
+        },
+        {
+          "name": "PhD",
+          "postings": 55
+        }
+      ]
+    }
+  }
+}
