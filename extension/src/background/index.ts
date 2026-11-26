@@ -8,6 +8,7 @@ import { checkUploadedDesign, designForTailor, finishDesign, parseForTailor, upl
 import { debugGroup } from '../lib/debug'
 import { addToHistory, addToTailoredHistory, getCandidateContext, getResume, getSession, getSettings, hasAgreedToPageRead, resolveMode, setEntryAccounts, watchSession } from '../lib/storage'
 import { handleInstalled, uninstallUrl } from './install'
+import { savePendingUpdate } from '../lib/update'
 import { handleAnswerClick, registerAnswerMenu, writeAnswer, type AnswerRequest } from './answer'
 import { scrapeFailure } from './scrape-failure'
 import { acceptsMessage } from './sender'
@@ -17,6 +18,10 @@ import type { CoverJob, CoverLetter, FrameScrapeResponse, GenerateResponse, JobD
 chrome.runtime.onInstalled.addListener((details) => {
   void handleInstalled(details)
   registerAnswerMenu()
+})
+
+chrome.runtime.onUpdateAvailable.addListener((details) => {
+  void savePendingUpdate(details.version)
 })
 
 // Right-click "Cover Me: write an answer" (#232). The click grants activeTab

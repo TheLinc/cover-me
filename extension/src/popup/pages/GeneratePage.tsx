@@ -11,6 +11,7 @@ import GapChips from '../components/GapChips'
 import { EditIcon, RegenerateIcon } from '../components/icons'
 import PageReadNotice from '../components/PageReadNotice'
 import AnswersNews from '../components/AnswersNews'
+import UpdateReady from '../components/UpdateReady'
 import PostingTitleTip from '../components/PostingTitleTip'
 import ProgressSteps from '../components/ProgressSteps'
 import ReviewAsk from '../components/ReviewAsk'
@@ -700,6 +701,7 @@ export default function GeneratePage({ onNavigate }: Props) {
         {setupLoaded && <span className="popup-status" role="status">{status}</span>}
       </header>
 
+      <UpdateReady />
       <PageReadNotice />
       {/* After setup, so a new user's first screen stays the checklist. (#242) */}
       {setupLoaded && setupComplete && <AnswersNews />}
