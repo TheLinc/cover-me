@@ -55,8 +55,7 @@ async function decideDesignNews(reason: string): Promise<void> {
   await chrome.storage.local.set({ designNews: resume && !resume.design ? 'pending' : 'seen' })
 }
 
-// Only the account id, and only when signed in: nothing else that identifies
-// the user goes in the uninstall survey's URL (#106).
+// Nothing that identifies the user beyond the account id goes in the uninstall survey's URL (#106).
 export function uninstallUrl(version: string, userId?: string): string {
   const params = new URLSearchParams({ v: version })
   if (userId) params.set('u', userId)
