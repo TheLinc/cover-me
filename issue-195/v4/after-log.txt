@@ -1,0 +1,31 @@
+PASS after: the box shows between the site field and Request this site, unticked
+PASS after: the visible label is just "Email me when it's supported"
+PASS after: "me" shows the account email on hover
+PASS after: screen readers hear the address in the box name
+PASS after: ticking before pressing Request saves nothing yet
+site_watch rows after Request: [{"host":"jobs.example-board.com","user_id":"e3834eed-64fb-4c9d-a388-23eed16652fc"}]
+PASS after: pressing Request with the box ticked creates exactly one site_watch row
+PASS after: the box stays ticked under the thanks line
+PASS after: unticking under the thanks line deletes it
+PASS after: ticking again there saves one row again
+PostHog survey response: {"api_key":"phc_mock","event":"survey sent","distinct_id":"64ffbbd1-f8b5-4f2e-891f-00e153a7ff47","properties":{"$survey_id":"survey_mock","$survey_response":"Site request","$survey_response_1":"jobs.example-board.com","$survey_completed":true,"$process_person_profile":false,"$geoip_disable":true}}
+PASS after: the survey response has a random distinct_id
+PASS after: and no account ID or email
+rows before notify: 2
+$ pnpm notify-site https://www.jobs.example-board.com/jobs/1
+jobs.example-board.com: sent 2, failed 0.
+PASS notify sends one email per row (2 rows, 2 emails)
+email: To proof-after-1795715336141@example.test | Reply-To lincoln@cover-me.dev | Subject: Cover Me now reads jobs.example-board.com
+Hi,
+
+You asked Cover Me to email you once it could read job postings on jobs.example-board.com. It can now.
+
+Open a posting there, click the Cover Me icon and press Generate or Tailor. If your extension has not updated yet, Chrome does that within a day.
+
+If something on that site still doesn't come out right, reply to this email and tell me what you see.
+
+Lincoln
+Cover Me
+
+You're getting this one email because you ticked "Email me when it's supported" for this site. We've now deleted that request.
+PASS notify leaves no rows for that host
