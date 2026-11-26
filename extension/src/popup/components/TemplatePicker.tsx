@@ -58,8 +58,9 @@ function AccentPicker({ value, onChange }: { value: string | undefined; onChange
   return (
     <div className="template-accent">
       <label className="template-accent-label">
+        <span className="form-label">Accent colour</span>
         <input ref={input} type="color" value={draft} onChange={(e) => setDraft(e.target.value)} aria-describedby={hint} />
-        Accent colour
+        <span className="template-accent-hex">{draft.toUpperCase()}</span>
       </label>
       {shown.toLowerCase() !== DEFAULT_ACCENT.toLowerCase() && (
         <button type="button" className="text-link" onClick={() => { onChange(DEFAULT_ACCENT); input.current?.focus() }}>Reset to indigo</button>
@@ -79,9 +80,9 @@ function Sketch({ template, mini, accent }: { template: ResumeTemplate; mini?: b
   )
 }
 
-export default function TemplatePicker({ value, pro, onChange, previewLocked, accent, onAccent }: {
+export default function TemplatePicker({ value, pro, onChange, previewLocked, accent, onAccent, titled }: {
   value: ResumeTemplate | undefined; pro: boolean; onChange: (t: ResumeTemplate) => void; previewLocked?: boolean
-  accent?: string; onAccent?: (hex: string) => void
+  accent?: string; onAccent?: (hex: string) => void; titled?: boolean
 }) {
   const current = templateOf(value)
   const group = useId()
@@ -90,7 +91,7 @@ export default function TemplatePicker({ value, pro, onChange, previewLocked, ac
     <details className="template-picker" onToggle={(e) => setOpen(e.currentTarget.open)}>
       <summary className="template-bar">
         <Sketch template={current} mini accent={accent} />
-        <span className="template-current"><span className="form-label">Template</span>{templateName(current)}</span>
+        <span className="template-current"><span className={titled ? 'sr-only' : 'form-label'}>Template</span>{templateName(current)}</span>
         {!pro && <span className="template-more">3 more with Pro</span>}
         <span className="template-toggle">Change <ChevronIcon /></span>
       </summary>
@@ -137,7 +138,7 @@ export function TemplateSetting() {
     <section className="page-read-setting" aria-labelledby="template-setting-title">
       <h2 id="template-setting-title" className="page-read-setting-title">Resume template</h2>
       <p className="page-read-setting-hint">Used for your next tailored resume. You can change it on any resume.</p>
-      <TemplatePicker value={nextTemplate(look.template, pro)} pro={pro} onChange={(template) => change({ template })} accent={look.accent} onAccent={(accent) => change({ accent })} />
+      <TemplatePicker titled value={nextTemplate(look.template, pro)} pro={pro} onChange={(template) => change({ template })} accent={look.accent} onAccent={(accent) => change({ accent })} />
     </section>
   )
 }

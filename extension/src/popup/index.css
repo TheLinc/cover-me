@@ -1514,7 +1514,13 @@ textarea:focus-visible, input:focus-visible, [tabindex]:focus-visible {
 .template-thumb-mini > span { height: 1px; }
 .template-thumb-mini .tt-name { height: 2px; }
 .page-read-setting .template-picker { margin: 10px 0 0; }
-.template-accent { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-top: 12px; }
-.template-accent-label { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: var(--text); cursor: pointer; }
-.template-accent-label input { width: 32px; height: 24px; padding: 0; border: 1px solid var(--border); border-radius: 6px; background: none; cursor: pointer; }
+.template-accent { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 12px 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+.template-accent-label { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; }
+.template-accent-label .form-label { margin: 0; }
+.template-accent-label input { width: 28px; height: 28px; padding: 2px; border: 1px solid var(--border); border-radius: 8px; background: var(--elevated); cursor: pointer; }
+.template-accent-label input::-webkit-color-swatch-wrapper { padding: 0; }
+.template-accent-label input::-webkit-color-swatch { border: none; border-radius: 5px; }
+.template-accent-hex { font-size: 12px; font-variant-numeric: tabular-nums; color: var(--text-2); }
+.template-accent .text-link { margin-left: auto; background: none; border: none; padding: 0; font: inherit; font-size: 12px; cursor: pointer; }
 .template-accent .hint { flex-basis: 100%; margin: 0; }
+.template-accent .hint:empty { display: none; }
