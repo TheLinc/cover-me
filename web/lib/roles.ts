@@ -4,7 +4,7 @@ import type { RoleSlug } from './role-keywords'
 interface RoleCopy {
   slug: RoleSlug
   name: string
-  noun: string
+  noun?: string
   metaTitle: string
   metaDescription: string
   titles: string
@@ -15,7 +15,6 @@ const COPY: RoleCopy[] = [
   {
     slug: 'sales',
     name: 'Sales',
-    noun: 'sales',
     metaTitle: 'Sales Resume Keywords Employers Ask For',
     metaDescription:
       'The skills, tools and certifications sales job postings ask for most, counted across real public postings, with how many postings ask for each one.',
@@ -27,7 +26,6 @@ const COPY: RoleCopy[] = [
   {
     slug: 'marketing',
     name: 'Marketing',
-    noun: 'marketing',
     metaTitle: 'Marketing Resume Keywords Employers Ask For',
     metaDescription:
       'The skills, tools and certifications marketing job postings ask for most, counted across real public postings, with how many postings ask for each one.',
@@ -39,7 +37,6 @@ const COPY: RoleCopy[] = [
   {
     slug: 'engineering',
     name: 'Engineering',
-    noun: 'engineering',
     metaTitle: 'Engineering Resume Keywords Employers Ask For',
     metaDescription:
       'The skills, tools and degrees engineering job postings ask for most, counted across real public postings, with how many postings ask for each one.',
@@ -51,7 +48,6 @@ const COPY: RoleCopy[] = [
   {
     slug: 'warehouse',
     name: 'Warehouse',
-    noun: 'warehouse',
     metaTitle: 'Warehouse Resume Keywords Employers Ask For',
     metaDescription:
       'The skills, certifications and tools warehouse job postings ask for most, counted across real public postings, with how many postings ask for each one.',
@@ -77,7 +73,7 @@ const COPY: RoleCopy[] = [
 
 export const FETCHED = data.fetched
 
-export const ROLES = COPY.map((c) => ({ ...c, fetched: data.fetched, counts: data.roles[c.slug] }))
+export const ROLES = COPY.map((c) => ({ ...c, noun: c.noun ?? c.name.toLowerCase(), counts: data.roles[c.slug] }))
 export type Role = (typeof ROLES)[number]
 
 export const getRole = (slug: string) => ROLES.find((r) => r.slug === slug)

@@ -6,11 +6,13 @@ import { SendToComputer } from '@/components/site/SendToComputer'
 import { SiteFooter } from '@/components/site/SiteFooter'
 import { SiteNav } from '@/components/site/SiteNav'
 import { PER_COMPANY } from '@/lib/role-keywords'
-import { ROLES, getRole } from '@/lib/roles'
+import { FETCHED, ROLES, getRole } from '@/lib/roles'
 import { BASE, OG_IMAGE } from '@/lib/structured-data'
-import { cn, longDate, storeUrl } from '@/lib/utils'
+import { cn, longDate, month, storeUrl } from '@/lib/utils'
 
-const INSTALL = 'inline-flex items-center gap-2 bg-brand-strong text-white font-semibold text-[14px] px-5 py-2.5 rounded-[8px] hover:bg-brand-deep transition-colors'
+const BUTTON = 'inline-flex items-center gap-2 font-semibold text-[14px] px-5 py-2.5 rounded-[8px] transition-colors'
+const PRIMARY = cn(BUTTON, 'bg-brand-strong text-white hover:bg-brand-deep')
+const OUTLINE = cn(BUTTON, 'border border-border text-foreground hover:bg-elevated')
 
 export function generateStaticParams() {
   return ROLES.map((r) => ({ role: r.slug }))
@@ -30,7 +32,7 @@ export async function generateMetadata({ params }: { params: Promise<{ role: str
   }
 }
 
-const list = (names: string[]) => `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
+const list = (names: string[]) => new Intl.ListFormat('en-GB', { type: 'conjunction' }).format(names)
 const capitalize = (s: string) => s[0].toUpperCase() + s.slice(1)
 
 export default async function RolePage({ params }: { params: Promise<{ role: string }> }) {
@@ -40,7 +42,6 @@ export default async function RolePage({ params }: { params: Promise<{ role: str
   const { counts } = role
   const url = `${BASE}/resume-keywords/${role.slug}`
   const h1 = `${role.name} resume keywords`
-  const month = new Date(`${role.fetched}T00:00:00Z`).toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' })
   const top = counts.keywords[0]
   const sources = Object.entries(counts.sources).filter(([, n]) => n > 0)
 
@@ -60,7 +61,7 @@ export default async function RolePage({ params }: { params: Promise<{ role: str
       name: `${h1} counted from ${counts.postings} job postings`,
       description: role.metaDescription,
       url,
-      dateModified: role.fetched,
+      dateModified: FETCHED,
       isAccessibleForFree: true,
       creator: { '@type': 'Organization', name: 'Cover Me', url: BASE },
       measurementTechnique: 'Keywords read from public Greenhouse and Lever job postings with the Cover Me ATS checker',
@@ -79,12 +80,12 @@ export default async function RolePage({ params }: { params: Promise<{ role: str
           <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-2 mb-4 flex flex-wrap gap-x-3">
             <Link href="/resume-keywords" className="hover:text-foreground">Resume keywords</Link>
             <span aria-hidden className="max-sm:hidden">·</span>
-            <time dateTime={role.fetched}>Updated {longDate(role.fetched)}</time>
+            <time dateTime={FETCHED}>Updated {longDate(FETCHED)}</time>
           </p>
           <h1 className="text-[clamp(32px,5vw,52px)] text-foreground leading-[0.98] mb-5">{h1}</h1>
           <p className="text-[17px] text-foreground leading-[1.7] mb-5 font-medium">
             {capitalize(list(counts.keywords.slice(0, 5).map((k) => k.name)))} are the keywords {role.noun} job postings ask for most. Of the {counts.postings} postings
-            read in {month}, {top.postings} ask for {top.name}.
+            read in {month(FETCHED)}, {top.postings} ask for {top.name}.
           </p>
           {role.intro.map((p) => (
             <p key={p.slice(0, 40)} className="text-[15px] text-muted-foreground leading-[1.85] mb-4">{p}</p>
@@ -94,7 +95,7 @@ export default async function RolePage({ params }: { params: Promise<{ role: str
         <section className="mb-14">
           <h2 className="text-[24px] text-foreground mb-3">What {role.noun} postings ask for</h2>
           <p className="text-[14px] text-muted-foreground leading-[1.8] mb-6 max-w-[680px]">
-            {counts.postings} {role.noun} postings from {counts.companies} companies, read on {longDate(role.fetched)} from their public job boards on{' '}
+            {counts.postings} {role.noun} postings from {counts.companies} companies, read on {longDate(FETCHED)} from their public job boards on{' '}
             {list(sources.map(([name, n]) => `${name} (${n})`))}. The titles read were {role.titles}. A keyword counts when the posting asks for it as a
             requirement or a nice-to-have, read with the same rules as the <Link href="/ats-checker" className="text-brand-strong underline underline-offset-2 hover:text-brand-deep">free ATS checker</Link>.
             At most {PER_COMPANY} postings come from any one company, and a keyword fewer than 3 companies ask for is left out.
@@ -130,18 +131,18 @@ export default async function RolePage({ params }: { params: Promise<{ role: str
             your resume is missing, or install Cover Me to tailor your resume to it.
           </p>
           <div className="flex gap-3 justify-center flex-wrap">
-            <Link href="/ats-checker" className={INSTALL}>Check my resume free</Link>
+            <Link href="/ats-checker" className={PRIMARY}>Check my resume free</Link>
             <a
               href={storeUrl('resume-keywords')}
               target="_blank"
               rel="noreferrer"
-              className={cn('inline-flex items-center gap-2 border border-border text-foreground font-semibold text-[14px] px-5 py-2.5 rounded-[8px] hover:bg-elevated transition-colors', '[@media(pointer:coarse)]:hidden')}
+              className={cn(OUTLINE, '[@media(pointer:coarse)]:hidden')}
             >
               Install free · Chrome
             </a>
             <SendToComputer
               placement="resume-keywords"
-              className={cn('inline-flex items-center gap-2 border border-border text-foreground font-semibold text-[14px] px-5 py-2.5 rounded-[8px] hover:bg-elevated transition-colors', '[@media(pointer:fine)]:hidden')}
+              className={cn(OUTLINE, '[@media(pointer:fine)]:hidden')}
             >
               Send this to my computer
             </SendToComputer>

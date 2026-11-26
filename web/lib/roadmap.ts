@@ -1,3 +1,5 @@
+import { month } from './utils'
+
 // The public roadmap, read from GitHub issues labeled `roadmap` (#117).
 // An issue shows only if its body has a `## Public` section: first line is the
 // public title, second the blurb. Issue titles are written for agents, so they
@@ -14,7 +16,6 @@ export interface RoadmapItem {
   number: number
   title: string
   blurb: string
-  /** Closing month for shipped items, like "October 2026". */
   shipped?: string
 }
 
@@ -24,7 +25,6 @@ export interface Roadmap {
   shipped: RoadmapItem[]
 }
 
-// The fields of GitHub's issue JSON this reads.
 export interface GithubIssue {
   number: number
   state: string
@@ -40,8 +40,6 @@ export interface GithubIssue {
 export const plain = (s: string) =>
   s.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/[*_`>#]/g, '').trim()
 
-// The lines of a body's `## Public` section, up to the next `##` heading.
-// Also read by release notes (lib/changelog.ts).
 export function publicSection(body: string | null | undefined): string[] | null {
   const lines = (body ?? '').split(/\r?\n/)
   const start = lines.findIndex((l) => /^##\s+public\s*$/i.test(l.trim()))
@@ -56,8 +54,6 @@ export function publicBlock(body: string | null | undefined): { title: string; b
   return title ? { title, blurb } : null
 }
 
-const month = (iso: string) =>
-  new Date(iso).toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' })
 const newestFirst = (key: 'created_at' | 'closed_at') => (a: GithubIssue, b: GithubIssue) =>
   (b[key] ?? '').localeCompare(a[key] ?? '')
 
@@ -83,10 +79,8 @@ export function toRoadmap(issues: GithubIssue[]): Roadmap {
   return roadmap
 }
 
-// Cached for an hour. A failed fetch throws, so ISR keeps serving the last
-// good page. During `next build` there is no last good page, so it returns
-// null instead and a GitHub outage can't fail a deploy. Also used by
-// lib/changelog.ts.
+// A failed fetch throws so ISR keeps serving the last good page, but returns null during
+// `next build`, where there is none, so a GitHub outage can't fail a deploy (#117).
 export async function fetchGithub<T>(url: string): Promise<T | null> {
   try {
     const res = await fetch(url, {

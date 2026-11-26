@@ -83,8 +83,10 @@ export function countKeywords(all: RolePosting[]) {
     taken.set(p.company, (taken.get(p.company) ?? 0) + 1)
     return true
   })
+  const sources: Record<Source, number> = { Greenhouse: 0, Lever: 0 }
   const tally = new Map<string, { postings: number; companies: Set<string> }>()
   for (const p of postings) {
+    sources[p.source]++
     for (const k of readPosting(p.text).keywords) {
       if (k.level === 'mentioned') continue
       const t = tally.get(k.name) ?? { postings: 0, companies: new Set<string>() }
@@ -93,8 +95,6 @@ export function countKeywords(all: RolePosting[]) {
       tally.set(k.name, t)
     }
   }
-  const sources: Record<Source, number> = { Greenhouse: 0, Lever: 0 }
-  for (const p of postings) sources[p.source]++
   return {
     postings: postings.length,
     companies: taken.size,

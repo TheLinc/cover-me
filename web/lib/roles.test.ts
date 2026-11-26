@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { MIN_POSTINGS, ROLE_SLUGS } from './role-keywords'
-import { ROLES } from './roles'
+import { FETCHED, ROLES } from './roles'
 
 async function renderRole(slug: string) {
   const { renderToStaticMarkup } = await import('react-dom/server')
@@ -33,7 +33,7 @@ describe('role keyword pages', () => {
     expect(html).toMatch(new RegExp(`${sales.counts.postings} sales postings from ${sales.counts.companies} companies`))
     expect(html).toContain('Greenhouse')
     expect(html).toContain('Lever')
-    expect(html).toContain(`<time dateTime="${sales.fetched}">`)
+    expect(html).toContain(`<time dateTime="${FETCHED}">`)
     expect(html).toContain('href="/ats-checker"')
   })
 
