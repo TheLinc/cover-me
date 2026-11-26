@@ -68,8 +68,8 @@ async function rateLimited(req: Request): Promise<Response | null> {
   return limit === 'ok' ? null : json({ error: limit === 'over' ? 'Too many requests' : 'Try again shortly' }, limit === 'over' ? 429 : 503)
 }
 
-async function watch(req: Request, { host, watch }: Body): Promise<Response> {
-  if (typeof host !== 'string' || !HOST.test(host) || typeof watch !== 'boolean') return json({ error: 'Invalid request' }, 400)
+async function watch(req: Request, { host, watch: on }: Body): Promise<Response> {
+  if (typeof host !== 'string' || !HOST.test(host) || typeof on !== 'boolean') return json({ error: 'Invalid request' }, 400)
   const token = req.headers.get('Authorization')?.replace(/^Bearer /, '')
   const user = token ? (await supabase.auth.getUser(token)).data.user : null
   if (!user) return json({ error: 'Invalid token' }, 401)
@@ -77,7 +77,7 @@ async function watch(req: Request, { host, watch }: Body): Promise<Response> {
   const limited = await rateLimited(req)
   if (limited) return limited
 
-  const { error } = watch
+  const { error } = on
     ? await supabase.from('site_watch').upsert({ host, user_id: user.id }, { onConflict: 'host,user_id', ignoreDuplicates: true })
     : await supabase.from('site_watch').delete().eq('host', host).eq('user_id', user.id)
   if (error) {

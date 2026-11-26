@@ -13,7 +13,8 @@ import { target } from './lib.mjs'
 const USAGE = 'Usage: pnpm notify-site <host> [--prod]'
 
 const args = parseArgs({ allowPositionals: true, options: { prod: { type: 'boolean', default: false } } })
-const host = args.positionals[0]?.toLowerCase()
+// Requests are stored the way the popup sends them: bare hostname, no www. (#195).
+const host = args.positionals[0]?.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').split(/[/?#]/)[0]
 if (args.positionals.length !== 1) {
   console.error(USAGE)
   process.exit(1)
@@ -30,5 +31,5 @@ if (!res.ok) {
   console.error(`site-watch answered ${res.status}: ${body.error ?? 'no details'}`)
   process.exit(1)
 }
-console.log(`${host}: sent ${body.sent}, failed ${body.failed}.`)
+console.log(body.sent + body.failed ? `${host}: sent ${body.sent}, failed ${body.failed}.` : `Nobody is waiting on ${host}. Check the spelling, or that no one asked.`)
 if (body.failed) process.exit(1)

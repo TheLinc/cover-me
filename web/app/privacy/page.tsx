@@ -658,7 +658,7 @@ export default function PrivacyPage() {
               communicates with our Supabase backend for the following user-initiated purposes:
               <ul className="mt-2 space-y-1 pl-4 list-disc">
                 <li>Reading the job posting (every mode): sending the stripped copy of the page you click Generate or Tailor Resume on, and getting back the job title, company and description. The page is not stored.</li>
-                <li>Site requests and bug reports (every mode, only when you press the button): sending what Request this site or Report bug sends, as described under Information We Collect. When you're signed in, also saving or deleting your request to hear back about the site when you tick or untick the box.</li>
+                <li>Site requests and bug reports (every mode, only when you press the button): sending what Request this site or Report bug sends, as described under Information We Collect. When you&apos;re signed in to Hosted mode, also saving or deleting your request to hear back about the site when you tick or untick the box.</li>
                 <li>Authentication: signing in, signing up, signing out, and refreshing JWT session tokens.</li>
                 <li>Account tier: fetching your plan, so Pro features turn on or off when it changes.</li>
                 <li>Upgrade: getting a Stripe checkout page when you click an Upgrade button.</li>
