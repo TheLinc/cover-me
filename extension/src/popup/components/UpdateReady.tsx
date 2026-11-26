@@ -7,15 +7,11 @@ export default function UpdateReady() {
   const [state, setState] = useState<UpdateState>({})
 
   useEffect(() => {
-    void chrome.storage.local.get([...KEYS]).then((r) => setState(r as UpdateState))
+    const load = () => void chrome.storage.local.get([...KEYS]).then((r) => setState(r as UpdateState))
+    load()
     void checkForUpdate()
     const listener = (changes: Record<string, chrome.storage.StorageChange>, area: string) => {
-      if (area !== 'local' || !KEYS.some((k) => k in changes)) return
-      setState((prev) => {
-        const next = { ...prev }
-        for (const k of KEYS) if (k in changes) next[k] = changes[k].newValue
-        return next
-      })
+      if (area === 'local' && KEYS.some((k) => k in changes)) load()
     }
     chrome.storage.onChanged.addListener(listener)
     return () => chrome.storage.onChanged.removeListener(listener)
