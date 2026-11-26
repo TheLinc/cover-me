@@ -400,6 +400,25 @@ describe('tailor', () => {
     expect(await mockPosthog.eventsFor('tailor_run', user.id)).toEqual([])
   })
 
+  it('a Pro account gets the template it last picked on the result and the saved copy (#119)', async () => {
+    user = await createUser('hosted_pro')
+    await uploadResume(user)
+    const res = await callFunction('tailor', { token: user.token, body: { job: JOB, template: 'minimal' } })
+    expect((await res.json()).resume.template).toBe('minimal')
+    const detail = await (await callFunction('applications', { token: user.token })).json()
+    expect(detail.applications[0].tailoredResumes[0].resume.template).toBe('minimal')
+  })
+
+  it.each([
+    ['a free account', 'hosted_free', 'modern'],
+    ['an unknown template', 'hosted_pro', 'retro'],
+  ] as const)('%s gets no template, so the resume prints as Classic (#119)', async (_, tier, template) => {
+    user = await createUser(tier)
+    await uploadResume(user)
+    const res = await callFunction('tailor', { token: user.token, body: { job: JOB, template } })
+    expect((await res.json()).resume).not.toHaveProperty('template')
+  })
+
   it('a run that fell back to the Cover Me layout keeps no hash', async () => {
     user = await createUser('hosted_pro')
     await uploadResume(user)

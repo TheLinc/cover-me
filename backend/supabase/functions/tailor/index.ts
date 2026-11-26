@@ -17,6 +17,7 @@ import { readBody } from '../_shared/read-body.ts'
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SECRET_KEY = Deno.env.get('SERVICE_KEY')!
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')!
+const PRO_TEMPLATES: unknown[] = ['modern', 'compact', 'minimal']
 
 declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void }
 
@@ -506,6 +507,7 @@ Deno.serve(async (req) => {
   let layout: 'yours' | 'cover-me' = 'cover-me'
   let fellBack = false
   let sourceHash: string | undefined
+  let template: string | undefined
   try {
     const raw = await readBody(req, MAX_BODY_BYTES)
     if (raw === null) return json({ error: 'Request too large' }, 413)
@@ -526,6 +528,8 @@ Deno.serve(async (req) => {
     layout = body.layout === 'yours' ? 'yours' : 'cover-me'
     fellBack = body.fellBack === true
     if (layout === 'yours' && !fellBack && typeof body.sourceHash === 'string' && /^[0-9a-f]{64}$/.test(body.sourceHash)) sourceHash = body.sourceHash
+    // The PDF template the user last picked, a Pro feature (#119). Missing prints as Classic.
+    if (tier === 'hosted_pro' && PRO_TEMPLATES.includes(body.template)) template = body.template
   } catch {
     return json({ error: 'Invalid request body' }, 400)
   }
@@ -722,6 +726,7 @@ ${job.description}`)
       resume.atsScoreBefore = scoreBefore(delta.keywordMatch, atsScore, candidateText(structuredResume), candidateText({ ...resume, atsGaps: undefined, deletedSections: undefined }), job.description)
     }
     if (sourceHash) resume.sourceHash = sourceHash
+    if (template) resume.template = template
     if (buildsOnEdits(previous)) resume.hasEdits = true
 
     // Every extension build so far joins the standing "Candidate context" box into supplemental, so hasContext isn't only context added for this run (#168).

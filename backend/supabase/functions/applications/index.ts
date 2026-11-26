@@ -207,7 +207,8 @@ Deno.serve(async (req) => {
       .update({
         resume_json_encrypted: await encrypt(JSON.stringify(resume)),
         ...resumeColumns(resume),
-        edited_at: new Date().toISOString(),
+        // A template picked on an unedited resume changes no text, so the score still holds (#119).
+        ...(typeof resume.editedAt === 'string' ? { edited_at: new Date().toISOString() } : {}),
       })
       .eq('id', resumeId)
       .eq('user_id', userId)
