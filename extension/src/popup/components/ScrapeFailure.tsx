@@ -48,46 +48,71 @@ export default function ScrapeFailurePanel({ failure, onReported, onPaste, onRet
     )
   }
 
-  // Styled as a notice card so it reads apart from the paste form below (#130).
-  return (
-    <section className="page-read-notice scrape-failure-card" aria-labelledby="scrape-failure-title">
-      <div className="news-heading">
-        <span className="news-icon" aria-hidden="true">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10" />
-            <path d="M2 12h20" />
-            <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
-          </svg>
-        </span>
-        {/* Fixed text keeps it on one line; the site shows in the field below and the thanks line (#130). */}
-        <p id="scrape-failure-title" className="page-read-notice-title">We can&apos;t read this site yet</p>
-      </div>
-      <p>
-        Paste the job description below and you&apos;ll still get your{' '}
-        {failure.flow === 'letter' ? 'letter' : 'tailored resume'}.
-      </p>
-      {SUPABASE_URL && <SiteRequestRow host={failure.host} />}
-    </section>
-  )
+  return <UnsupportedCard failure={failure} />
 }
 
-function SiteRequestRow({ host }: { host: string }) {
-  const [value, setValue] = useState(host)
+// Styled as a notice card so it reads apart from the paste form below (#130).
+// Once the site is requested, the icon and title change so the sent state
+// shows at a glance (#195).
+function UnsupportedCard({ failure }: { failure: ShownFailure }) {
   const [noted, setNoted] = useState<string | null>(null)
-  const [sending, setSending] = useState(false)
-  const [error, setError] = useState('')
+  const [watchSaved, setWatchSaved] = useState<boolean | null>(null)
   const thanks = useRef<HTMLParagraphElement>(null)
   const submitted = useRef(false)
   const session = useHostedSession()
-  const [watch, setWatch] = useState(false)
-  const [watchSaved, setWatchSaved] = useState<boolean | null>(null)
 
   // The form is gone after a send; focusing its replacement keeps keyboard focus and reads it out (#130).
   useEffect(() => { if (noted && submitted.current) thanks.current?.focus() }, [noted])
 
   useEffect(() => {
-    void requestedSites().then((sites) => { if (sites.includes(host)) setNoted(host) })
-  }, [host])
+    void requestedSites().then((sites) => { if (sites.includes(failure.host)) setNoted(failure.host) })
+  }, [failure.host])
+
+  function sent(site: string, saved: boolean | null) {
+    setWatchSaved(saved)
+    submitted.current = true
+    setNoted(site)
+  }
+
+  return (
+    <section className="page-read-notice scrape-failure-card" aria-labelledby="scrape-failure-title">
+      <div className="news-heading">
+        <span className="news-icon" aria-hidden="true">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            {noted ? <path d="M20 6L9 17l-5-5" /> : (
+              <>
+                <circle cx="12" cy="12" r="10" />
+                <path d="M2 12h20" />
+                <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
+              </>
+            )}
+          </svg>
+        </span>
+        {/* Fixed text keeps it on one line; the site shows in the field below and the thanks line (#130). */}
+        <p id="scrape-failure-title" className="page-read-notice-title">{noted ? 'Site request submitted' : "We can't read this site yet"}</p>
+      </div>
+      <p>
+        Paste the job description below and you&apos;ll still get your{' '}
+        {failure.flow === 'letter' ? 'letter' : 'tailored resume'}.
+      </p>
+      {SUPABASE_URL && (noted ? (
+        <>
+          <p className="scrape-failure-thanks" ref={thanks} tabIndex={-1}>
+            Thanks, we&apos;ve noted {noted}.{' '}
+            <a className="text-link" href={`${WEB_URL}/roadmap?utm_source=extension`} target="_blank" rel="noreferrer">See what&apos;s coming →</a>
+          </p>
+          {session && watchSaved !== null && <WatchStatus host={noted} email={session.user.email} saved={watchSaved} />}
+        </>
+      ) : <SiteRequestForm host={failure.host} session={session} onSent={sent} />)}
+    </section>
+  )
+}
+
+function SiteRequestForm({ host, session, onSent }: { host: string; session: AuthSession | null; onSent: (site: string, watchSaved: boolean | null) => void }) {
+  const [value, setValue] = useState(host)
+  const [sending, setSending] = useState(false)
+  const [error, setError] = useState('')
+  const [watch, setWatch] = useState(false)
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -106,23 +131,9 @@ function SiteRequestRow({ host }: { host: string }) {
       return
     }
     // A separate send, after the request, so the request's PostHog response stays unlinked (#195).
-    setWatchSaved(watch && session ? await saveWatch(site, true) : null)
-    submitted.current = true
-    setSending(false)
-    setNoted(site)
+    onSent(site, watch && session ? await saveWatch(site, true) : null)
   }
 
-  if (noted) {
-    return (
-      <>
-        <p className="scrape-failure-thanks" ref={thanks} tabIndex={-1}>
-          Thanks, we&apos;ve noted {noted}.{' '}
-          <a className="text-link" href={`${WEB_URL}/roadmap?utm_source=extension`} target="_blank" rel="noreferrer">See what&apos;s coming →</a>
-        </p>
-        {session && <WatchBox host={noted} email={session.user.email} saved={watchSaved} />}
-      </>
-    )
-  }
   const field = <input className="form-input" aria-label="Job site" value={value} onChange={(e) => setValue(e.target.value)} />
   const button = <button className="btn btn-secondary btn-sm" type="submit" disabled={sending || !value.trim()}>Request this site</button>
   return (
@@ -173,30 +184,29 @@ function WatchLabel({ email, checked, disabled, onChange }: { email: string; che
   )
 }
 
-// Under the thanks line the box saves as it changes, so a site requested
-// earlier can still be watched, or a tick taken back (#195). saved: what
-// happened to a tick made before pressing Request (null: there wasn't one).
-function WatchBox({ host, email, saved }: { host: string; email: string; saved: boolean | null }) {
-  const [watching, setWatching] = useState(saved === true)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState(saved === false ? "Couldn't save the email request. Tick the box to try again." : '')
+// What became of a tick made before pressing Request (#195): a line, not a
+// box, so nothing looks tickable after the send. Undo deletes the request.
+function WatchStatus({ host, email, saved }: { host: string; email: string; saved: boolean }) {
+  const [state, setState] = useState<'on' | 'off' | 'failed'>(saved ? 'on' : 'failed')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
 
-  async function toggle(watch: boolean) {
-    setWatching(watch)
-    setSaving(true)
+  async function change(watch: boolean) {
+    setBusy(true)
     setError('')
-    if (!(await saveWatch(host, watch))) {
-      setWatching(!watch)
-      setError("Couldn't save that. Try again in a moment.")
-    }
-    setSaving(false)
+    if (await saveWatch(host, watch)) setState(watch ? 'on' : 'off')
+    else setError(watch ? "Couldn't save that. Try again in a moment." : "Couldn't undo that. Try again in a moment.")
+    setBusy(false)
   }
 
+  const you = <><span className="site-watch-me" title={email}>you</span><span className="sr-only"> ({email})</span></>
   return (
-    <>
-      <WatchLabel email={email} checked={watching} disabled={saving} onChange={(c) => void toggle(c)} />
+    <div className="site-watch" aria-live="polite">
+      {state === 'on' && <p>We&apos;ll email {you} when it&apos;s supported. <button className="link-button" disabled={busy} onClick={() => void change(false)}>Undo</button></p>}
+      {state === 'off' && <p>OK, we won&apos;t email you about {host}.</p>}
+      {state === 'failed' && <p className="scrape-failure-error">Couldn&apos;t save the email request. <button className="link-button" disabled={busy} onClick={() => void change(true)}>Try again</button></p>}
       {error && <p className="scrape-failure-error" role="alert">{error}</p>}
-    </>
+    </div>
   )
 }
 
