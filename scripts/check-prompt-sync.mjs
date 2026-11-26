@@ -45,7 +45,7 @@ const checks = [
     end: 'at most two remain.',
   },
   {
-    // The length, evidence and Company Fit text built above the template.
+    // This text is built above the template, so the template check never sees it (#212).
     name: 'letter length, evidence and fit paragraphs',
     a: EXT_LETTER,
     b: BE_LETTER,

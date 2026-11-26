@@ -208,12 +208,9 @@ function staticChecks() {
     record(`answer prompt invariants: ${a.id}`, result)
   }
 
-  // Lint self-test 1: every in-prompt exemplar letter must itself pass the
-  // lint, a full-resume one against the full-resume floor.
   section('Lint self-tests')
   const anyPrompt = buildLetterPrompt(cases[0].job, cases[0].resumeText)
   const exemplars = [...anyPrompt.matchAll(/Exemplar [A-Z] \(([^)]*)\):\n"""\n([\s\S]*?)\n"""/g)]
-  // The employer each exemplar writes to, in prompt order.
   const exemplarCompanies = ['Harrow Mutual', 'Pinecrest Animal Hospital']
   const fullResume = Array.from({ length: 300 }, () => 'word').join(' ')
   const exemplarResult: CheckResult = { failures: [], warnings: [] }
@@ -328,7 +325,7 @@ async function liveLetters() {
     const variation: LetterVariation = { signOff: SIGN_OFFS[v % SIGN_OFFS.length], hookPattern: HOOKS[v % HOOKS.length], closePattern: CLOSE_PATTERNS[Math.floor(v / 3) % CLOSE_PATTERNS.length] }
     const prompt = buildLetterPrompt(c.job, c.resumeText, undefined, variation)
     let letter: string
-    // The first reply as the model wrote it, plan included, for review.
+    // Saved with its plan so the report shows what the model planned before writing (#212).
     let draft = ''
     try {
       draft = await call([{ role: 'user', content: prompt }], { model: MODEL, maxTokens: 2048 })

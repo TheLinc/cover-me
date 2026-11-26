@@ -5,7 +5,7 @@ const echoes = (sentence: string) =>
   lintLetter(sentence).violations.some((v) => v.startsWith('Restates the job posting'))
 
 describe('posting echo', () => {
-  // The two letters that named a missing requirement in the 2026-10-09 full eval
+  // The first two came from 2026-10-09 full-eval letters that named a requirement the applicant lacked (#6).
   test.each([
     'What stood out in the Beacon Retail Group posting is that the analysis goes straight to merchandising teams and supports A/B test analysis.',
     'Your posting pairs major gifts stewardship with proposal writing, which tells me the job depends on staying close to donors.',
@@ -110,20 +110,20 @@ describe('templated sentence shapes', () => {
   test.each([
     'I put that plan into practice across three warehouses.',
     'This is my eighth year in practice as a family physician.',
-    // A line that adds a new fact is not a label.
+    // These add a new fact after the example, so they aren't labels (#206).
     "I ran the vendor bid in 2022. That's how I met the plant manager who later hired me.",
     'I audited the stockroom. That is what I learned there: the counts were off by a shelf.',
     "I spent two years on structural steel. That's where I learned that most bad welds are decided before the arc starts.",
-    // Mid-paragraph, it leads into what follows: a close asking a question.
+    // Mid-paragraph the line leads into the close's question, so it passes (#209).
     'I can bring the cutover plan. That is the part I would want to hear about first. Could we talk next week?',
   ])('label leaves alone: %s', (s) => expect(flagged('Labels', opener, s, close)).toBe(false))
-  // The close names what the applicant wants to talk about; that is its job.
+  // Naming what to talk about is the close's job, so the label rule skips it (#209).
   test.each([
     'Could we talk next week about the Halcyon cutover? That is exactly the conversation I want to have.',
     'Could we set up a short call? The Halcyon cutover is the first thing I would raise. That is the project I would bring to a first conversation.',
   ])('label leaves the close alone: %s', (s) => expect(flagged('Labels', opener, s)).toBe(false))
   test('label message quotes the line, so the retry can find it', () => {
-    // The full eval's welder retry kept the line when the message only gave stock examples.
+    // Given only stock examples, the full eval's welder retry kept this line (#206).
     const v = lintLetter(letter(opener, "I kept zero rework on both jobs. That's the standard I'd bring to Gulf Coast Energy Services.", close)).violations
     expect(v.find((x) => x.startsWith('Labels'))).toContain("That's the standard I'd bring to Gulf Coast Energy Services.")
   })
@@ -214,8 +214,7 @@ describe('company name', () => {
   const nameViolations = (companyName: string, ...paragraphs: string[]) =>
     lintLetter(letter(...paragraphs), { companyName }).violations.filter((v) => /company|full name/i.test(v))
 
-  // The full eval's "Beacon" letters: the short form tripped the "beacon" rule,
-  // and the retry dropped the name to one mention.
+  // In the full eval, "Beacon" tripped the AI-word rule and the retry cut the name to one mention (#206).
   test('the short name is the employer, not an AI-flagged word', () => {
     const v = lintLetter(letter('I want to join Beacon Retail Group.', 'Beacon ships weekly, and so did I.'), { companyName: 'Beacon Retail Group' }).violations
     expect(v.filter((x) => x.includes('"beacon"'))).toEqual([])
@@ -238,18 +237,17 @@ describe('company name', () => {
     expect(nameViolations('Meridian Logistics UK',
       'Meridian Logistics UK runs 40 depots.', 'At Meridian Logistics UK I would own routing.', 'Could Meridian Logistics UK talk next week?')).toHaveLength(1)
   })
-  // Full eval run 43274484966: "the Department" didn't count, because the short
-  // name came out as "U.S".
+  // A full eval picked "U.S" as the short name, so "the Department" didn't count (#209).
   test('skips an abbreviation when picking the short name', () => {
     expect(nameViolations('U.S. Department of Labor', 'I want to join the U.S. Department of Labor.', 'The Department enforces wage rules.')).toEqual([])
   })
   test('steers the retry away from adding a label line for the second mention', () => {
-    // The same run's retry added "That's the habit I'd bring to Aurelia's design team."
+    // That eval's retry met the second mention with "That's the habit I'd bring to Aurelia's design team." (#209)
     const v = nameViolations('Aurelia Medical', 'I want to join Aurelia Medical.')
     expect(v[0]).toContain('not a line about what the applicant would bring')
   })
   test('does not tell the retry which short form to use', () => {
-    // The first word is often the wrong short form: "Valley" for Valley Medical Center.
+    // Naming one could steer the retry to a wrong short form like "Valley" (#209).
     const v = nameViolations('Valley Medical Center',
       'Valley Medical Center runs 40 beds.', 'At Valley Medical Center I would own intake.', 'Could Valley Medical Center talk next week?')
     expect(v).toHaveLength(1)
@@ -277,7 +275,7 @@ describe('posting restatement pivot', () => {
   const pivots = (companyName: string, sentence: string) =>
     lintPivot(companyName, `At Halcyon I cut page load from 1.2s to 400ms. ${sentence}`, 'Could we talk next week?')
 
-  // The Question and Next step closes name an employer detail and what to raise first.
+  // The Question and Next step closes pair an employer need with what to raise first, so they pass (#209).
   test.each([
     'Acme wants the close cut to five days by spring, and that is the first thing I would ask about. Could we talk next week?',
     "Your team needs the migration done by June; that's the part I would want to hear about first.",
@@ -305,7 +303,7 @@ describe('posting restatement pivot', () => {
     ['Acme', 'When Acme needed a new vendor in 2022, I ran the bid, and that is how I met the team.'],
     ['Acme', 'If you need weekend cover, I can start on Saturdays.'],
     ['Acme Software', "You need someone on nights at Acme Software, and that's a shift my family can support."],
-    // The need is not the sentence's subject, or the turn is a reason or a time.
+    // Pass: the need isn't the subject, or the turn gives a reason or a time (#209).
     ['Acme', 'I would like to hear what your team needs most in the first quarter, and that is where I would start our conversation.'],
     ['Acme', 'You want the close in five days, which is why I would start with the reconciliations.'],
     ['Acme', "Acme's needs shifted in 2023, and that is when I joined the vendor team."],
@@ -362,7 +360,7 @@ describe('commentary and framing', () => {
 })
 
 test('the retry asks for detail, not more figures, when it must add words', () => {
-  // A retry that padded with more resume items turned paragraph 3 into a list.
+  // A retry padded a short letter with more resume items and turned paragraph 3 into a list (#209).
   expect(buildLintRetryMessage(['x'])).toContain('not more figures or a list of other resume items')
 })
 
@@ -377,7 +375,7 @@ describe('long proof paragraph', () => {
   test('leaves six alone', () => expect(flagged(s(6))).toBe(false))
 })
 
-// A close that introduced a side project with "more than 400 GitHub stars".
+// From a test close that brought in a side project "with more than 400 GitHub stars" (#209).
 describe('new figure in the close', () => {
   const letter = (...paragraphs: string[]) => `Dear Hiring Manager,\n\n${paragraphs.join('\n\n')}\n\nKind regards,\nAlex Doe`
   const flagged = (close: string) =>
@@ -408,7 +406,7 @@ describe('stock lines', () => {
   ])('flags: %s', (s) => expect(flagged('Ends on a stock line', s)).toBe(true))
   test.each([
     'The night shift is where I learned to triage fast.',
-    // A field the applicant wants is a reason, not a stock line.
+    // Naming the field the applicant wants gives a reason, so it isn't a stock line (#206).
     'Fundraising is where I want to spend my working days.',
     'I\'d bring my own laptop.',
   ])('leaves alone: %s', (s) => expect(flagged('Ends on a stock line', s)).toBe(false))
