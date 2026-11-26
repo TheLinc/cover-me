@@ -416,3 +416,11 @@ test('sales and marketing tools are read by name, and ordinary "outreach" is not
   expect(names('Requirements\n- Community outreach and outreach to new prospects')).toEqual(['community outreach'])
   expect(names('Requirements\n- Iterable, Mixpanel, 6sense or Demandbase')).toEqual(['Iterable', 'Mixpanel', '6sense', 'Demandbase'])
 })
+
+test('LinkedIn as a social link or a recruiter notice is not an ask, and benefits headings that name a tool are still skipped', () => {
+  const names = (posting: string) => readPosting(posting).keywords.map((k) => k.name)
+  expect(names('Preferred Qualifications\n- Salesforce\nLinkedin | X (formerly Twitter) | Instagram | Acme.com')).toEqual(['Salesforce'])
+  expect(names('Requirements\n- Salesforce\n- Our recruiters will only reach out via LinkedIn or email.\n- If you receive messages on LinkedIn from other people, they may not be legitimate.')).toEqual(['Salesforce'])
+  expect(names('Requirements\n- Python\nBenefits at Salesloft:\n- Excel training\n## Gong Benefits\n- Slack stipend')).toEqual(['Python'])
+  expect(names('Requirements\n- LinkedIn Navigator, Sales Nav or SalesNav')).toEqual(['Sales Navigator'])
+})
