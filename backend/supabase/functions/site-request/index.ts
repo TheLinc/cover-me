@@ -6,8 +6,8 @@
 // site (a hostname) and page URL (bug reports only). The scraper, error and
 // version go with a bug report as event properties.
 //
-// Under the thanks line, a signed-in user can tick "Email me when Cover Me
-// reads this site" (#195):
+// With a site request, or later under its thanks line, a signed-in user can
+// tick "Email me when Cover Me reads this site" (#195):
 //   POST { kind: 'watch', host, watch }   with the user's token; watch: false takes it back
 // That goes to the site_watch table (migration 034), never to PostHog.
 //

@@ -241,7 +241,7 @@ pnpm notify-site jobs.example.com          # local stack (needs pnpm functions:s
 pnpm notify-site jobs.example.com --prod   # production, asks you to type "prod"
 ```
 
-Signed-in users can tick "Email me when Cover Me reads this site" after a site request (#195). Once the store build that reads a site is live, run this for each host the board uses (e.g. `boards.greenhouse.io` and `job-boards.greenhouse.io`). Each account waiting on that host gets one email from the `site-watch` function, replying to you, and its request is deleted. A send Resend refused stays for the next run. Requests nobody acts on are deleted after 12 months.
+Signed-in users can tick "Email me when Cover Me reads this site" when they request a site, or later under the thanks line (#195). Once the store build that reads a site is live, run this for each host the board uses (e.g. `boards.greenhouse.io` and `job-boards.greenhouse.io`). Each account waiting on that host gets one email from the `site-watch` function, replying to you, and its request is deleted. A send Resend refused stays for the next run. Requests nobody acts on are deleted after 12 months.
 
 ### Resume quality eval
 

@@ -78,6 +78,9 @@ function SiteRequestRow({ host }: { host: string }) {
   const [error, setError] = useState('')
   const thanks = useRef<HTMLParagraphElement>(null)
   const submitted = useRef(false)
+  const session = useHostedSession()
+  const [watch, setWatch] = useState(false)
+  const [watchSaved, setWatchSaved] = useState<boolean | null>(null)
 
   // The form is gone after a send; focusing its replacement keeps keyboard focus and reads it out (#130).
   useEffect(() => { if (noted && submitted.current) thanks.current?.focus() }, [noted])
@@ -95,15 +98,18 @@ function SiteRequestRow({ host }: { host: string }) {
     try {
       await sendSiteRequest({ kind: 'site', host: site })
       await rememberRequestedSite(site)
-      submitted.current = true
-      setNoted(site)
     } catch (err) {
       setError((err as { status?: number }).status === 400
         ? "That doesn't look like a site address, like jobs.example.com."
         : "Couldn't send that. Try again in a moment.")
-    } finally {
       setSending(false)
+      return
     }
+    // A separate send, after the request, so the request's PostHog response stays unlinked (#195).
+    setWatchSaved(watch && session ? await saveWatch(site, true) : null)
+    submitted.current = true
+    setSending(false)
+    setNoted(site)
   }
 
   if (noted) {
@@ -113,7 +119,7 @@ function SiteRequestRow({ host }: { host: string }) {
           Thanks, we&apos;ve noted {noted}.{' '}
           <a className="text-link" href={`${WEB_URL}/roadmap?utm_source=extension`} target="_blank" rel="noreferrer">See what&apos;s coming →</a>
         </p>
-        <WatchBox host={noted} />
+        {session && <WatchBox host={noted} email={session.user.email} saved={watchSaved} />}
       </>
     )
   }
@@ -123,6 +129,7 @@ function SiteRequestRow({ host }: { host: string }) {
         <input className="form-input" aria-label="Job site" value={value} onChange={(e) => setValue(e.target.value)} />
         <button className="btn btn-secondary btn-sm" type="submit" disabled={sending || !value.trim()}>Request this site</button>
       </div>
+      {session && <WatchLabel email={session.user.email} checked={watch} disabled={sending} onChange={setWatch} />}
       {error && <p className="scrape-failure-error" role="alert">{error}</p>}
     </form>
   )
@@ -130,40 +137,57 @@ function SiteRequestRow({ host }: { host: string }) {
 
 // Signed-in Hosted users only (#195): the email goes to a confirmed account
 // address, and BYOK mode keeps its promise of no account data on our side.
-function WatchBox({ host }: { host: string }) {
+function useHostedSession() {
   const [session, setSession] = useState<AuthSession | null>(null)
-  const [watching, setWatching] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
-
   useEffect(() => {
     void getMode().then(async (mode) => setSession(mode === 'hosted' ? await ensureValidSession() : null))
   }, [])
+  return session
+}
+
+async function saveWatch(host: string, watch: boolean): Promise<boolean> {
+  try {
+    const fresh = await ensureValidSession()
+    if (!fresh) return false
+    await sendSiteRequest({ kind: 'watch', host, watch }, fresh.access_token)
+    return true
+  } catch {
+    return false
+  }
+}
+
+function WatchLabel({ email, checked, disabled, onChange }: { email: string; checked: boolean; disabled: boolean; onChange: (checked: boolean) => void }) {
+  return (
+    <label className="compact-toggle site-watch">
+      <input type="checkbox" checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} />
+      <span>Email me at {email} when Cover Me reads this site</span>
+    </label>
+  )
+}
+
+// Under the thanks line the box saves as it changes, so a site requested
+// earlier can still be watched, or a tick taken back (#195). saved: what
+// happened to a tick made before pressing Request (null: there wasn't one).
+function WatchBox({ host, email, saved }: { host: string; email: string; saved: boolean | null }) {
+  const [watching, setWatching] = useState(saved === true)
+  const [saving, setSaving] = useState(false)
+  const [failed, setFailed] = useState(saved === false)
 
   async function toggle(watch: boolean) {
     setWatching(watch)
     setSaving(true)
-    setError('')
-    try {
-      const fresh = await ensureValidSession()
-      if (!fresh) throw new Error('Signed out')
-      await sendSiteRequest({ kind: 'watch', host, watch }, fresh.access_token)
-    } catch {
+    setFailed(false)
+    if (!(await saveWatch(host, watch))) {
       setWatching(!watch)
-      setError("Couldn't save that. Try again in a moment.")
-    } finally {
-      setSaving(false)
+      setFailed(true)
     }
+    setSaving(false)
   }
 
-  if (!session) return null
   return (
     <>
-      <label className="compact-toggle site-watch">
-        <input type="checkbox" checked={watching} disabled={saving} onChange={(e) => void toggle(e.target.checked)} />
-        <span>Email me at {session.user.email} when Cover Me reads this site</span>
-      </label>
-      {error && <p className="scrape-failure-error" role="alert">{error}</p>}
+      <WatchLabel email={email} checked={watching} disabled={saving} onChange={(c) => void toggle(c)} />
+      {failed && <p className="scrape-failure-error" role="alert">Couldn&apos;t save the email request. Tick the box to try again.</p>}
     </>
   )
 }
