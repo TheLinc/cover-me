@@ -69,7 +69,7 @@ if (phase === 'before') {
   check(await update.count() === 0 && await status.innerText() === 'Tailoring…', 'hidden while a resume is tailoring, status shows the run')
   await popup.screenshot({ path: join(out, `${phase}-2-tailoring.png`) })
 
-  await popup.evaluate(() => chrome.storage.local.set({ whatsNew: '1.9.0', tailorJob: { id: 'proof', status: 'error', error: 'x', job: { title: 'Senior Product Designer', company: 'Fabrikam', description: 'Design things.', url: '' }, startedAt: Date.now() } }))
+  await popup.evaluate(() => chrome.storage.local.set({ whatsNew: '1.9.0', tailorJob: { id: 'proof', status: 'error', error: 'Could not read this page. Try refreshing, or paste the job description manually.', job: { title: 'Senior Product Designer', company: 'Fabrikam', description: 'Design things.', url: '' }, startedAt: Date.now() } }))
   await popup.reload()
   await popup.waitForTimeout(800)
   check(await update.isVisible() && await status.innerText() === 'Tailoring failed', 'back once the run ends')
@@ -77,6 +77,7 @@ if (phase === 'before') {
   check(await popup.evaluate(() => (window as unknown as { updateChecks: number }).updateChecks) === 0, 'reopening within the hour does not ask again')
   await popup.screenshot({ path: join(out, `${phase}-3-crowded-header.png`) })
 
+  await popup.evaluate(() => chrome.storage.local.remove(['tailorJob']))
   setVersion('1.10.0')
   const closed = popup.waitForEvent('close', { timeout: 10_000 }).then(() => true, () => false)
   await update.click()
