@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
+import { ensureValidSession } from '../../lib/auth'
 import { SUPABASE_URL, WEB_URL } from '../../lib/config'
 import { rememberRequestedSite, requestedSites, sendSiteRequest } from '../../lib/site-request'
-import type { ScrapeFailure } from '../../types'
+import type { AuthSession, ScrapeFailure } from '../../types'
 
 // A click that read no job (#130), saved with the tab's Generate page state.
 // flow: which button was pressed. tabId, tabUrl: the tab it's about and the
@@ -12,14 +13,13 @@ export type ShownFailure = ScrapeFailure & { flow: 'letter' | 'tailor'; tabId?: 
 interface Props {
   failure: ShownFailure
   onReported: () => void
-  // Shown while the paste form is closed.
+  // Only passed while the paste form is closed, which is when its button makes sense (#130).
   onPaste?: () => void
   onRetry?: () => void
 }
 
-// What sits above (or instead of) the paste form after a failed read: a site
-// we don't read yet can be requested, a supported board's failure reported.
-// Builds without a backend have nothing to send to, so they get neither.
+// Builds without a backend have nothing to send a site request or bug report
+// to, so they show neither (#130).
 export default function ScrapeFailurePanel({ failure, onReported, onPaste, onRetry }: Props) {
   const actions = (onPaste || onRetry) && (
     <div className="scrape-failure-actions">
@@ -47,7 +47,7 @@ export default function ScrapeFailurePanel({ failure, onReported, onPaste, onRet
     )
   }
 
-  // A card like the popup's other notices, so it reads apart from the paste form below.
+  // Styled as a notice card so it reads apart from the paste form below (#130).
   return (
     <section className="page-read-notice scrape-failure-card" aria-labelledby="scrape-failure-title">
       <div className="news-heading">
@@ -58,7 +58,7 @@ export default function ScrapeFailurePanel({ failure, onReported, onPaste, onRet
             <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
           </svg>
         </span>
-        {/* Fixed, so it stays on one line; the site is in the field below and the thanks line. */}
+        {/* Fixed text keeps it on one line; the site shows in the field below and the thanks line (#130). */}
         <p id="scrape-failure-title" className="page-read-notice-title">We can&apos;t read this site yet</p>
       </div>
       <p>
@@ -78,8 +78,7 @@ function SiteRequestRow({ host }: { host: string }) {
   const thanks = useRef<HTMLParagraphElement>(null)
   const submitted = useRef(false)
 
-  // After a send, the form is gone: keep focus on the line that replaced it,
-  // which also reads it out.
+  // The form is gone after a send; focusing its replacement keeps keyboard focus and reads it out (#130).
   useEffect(() => { if (noted && submitted.current) thanks.current?.focus() }, [noted])
 
   useEffect(() => {
@@ -88,7 +87,7 @@ function SiteRequestRow({ host }: { host: string }) {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
-    // A pasted address works too: keep just the hostname.
+    // People paste whole addresses, and the server takes only a hostname (#130).
     const site = value.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').split(/[/?#]/)[0]
     setSending(true)
     setError('')
@@ -108,10 +107,13 @@ function SiteRequestRow({ host }: { host: string }) {
 
   if (noted) {
     return (
-      <p className="scrape-failure-thanks" ref={thanks} tabIndex={-1}>
-        Thanks, we&apos;ve noted {noted}.{' '}
-        <a className="text-link" href={`${WEB_URL}/roadmap?utm_source=extension`} target="_blank" rel="noreferrer">See what&apos;s coming →</a>
-      </p>
+      <>
+        <p className="scrape-failure-thanks" ref={thanks} tabIndex={-1}>
+          Thanks, we&apos;ve noted {noted}.{' '}
+          <a className="text-link" href={`${WEB_URL}/roadmap?utm_source=extension`} target="_blank" rel="noreferrer">See what&apos;s coming →</a>
+        </p>
+        <WatchBox host={noted} />
+      </>
     )
   }
   return (
@@ -122,6 +124,44 @@ function SiteRequestRow({ host }: { host: string }) {
       </div>
       {error && <p className="scrape-failure-error" role="alert">{error}</p>}
     </form>
+  )
+}
+
+// Signed-in users only (#195), so the email goes to a confirmed account
+// address and nobody can sign up someone else's.
+function WatchBox({ host }: { host: string }) {
+  const [session, setSession] = useState<AuthSession | null>(null)
+  const [watching, setWatching] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  useEffect(() => { void ensureValidSession().then(setSession) }, [])
+
+  async function toggle(watch: boolean) {
+    setWatching(watch)
+    setSaving(true)
+    setError('')
+    try {
+      const fresh = await ensureValidSession()
+      if (!fresh) throw new Error('Signed out')
+      await sendSiteRequest({ kind: 'watch', host, watch }, fresh.access_token)
+    } catch {
+      setWatching(!watch)
+      setError("Couldn't save that. Try again in a moment.")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (!session) return null
+  return (
+    <>
+      <label className="compact-toggle site-watch">
+        <input type="checkbox" checked={watching} disabled={saving} onChange={(e) => void toggle(e.target.checked)} />
+        <span>Email me at {session.user.email} when Cover Me reads this site</span>
+      </label>
+      {error && <p className="scrape-failure-error" role="alert">{error}</p>}
+    </>
   )
 }
 
@@ -149,7 +189,7 @@ function BugReport({ failure, onReported }: { failure: ShownFailure; onReported:
   }
 
   return (
-    // Live, so the button's change to "Reported" is read out.
+    // A live region, so screen readers announce the change to "Reported" (#130).
     <div className="bug-report" aria-live="polite">
       <button className="btn btn-secondary btn-sm" onClick={report} disabled={sending || failure.reported}>
         {failure.reported ? "Reported. Thanks, we're on it." : 'Report bug'}
