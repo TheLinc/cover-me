@@ -272,14 +272,17 @@ export function checkTailored(out: TailoredResume, c: EvalCase, input: ParsedRes
     // Skills the posting names pass the cap only when they alone fill it (#190).
     const cap = Math.max(MAX_GROUPED_SKILLS, skillItems.filter((s) => containsTerm(c.job.description, s)).length)
     if (c.mode && skillItems.length > cap) result.failures.push(`skills list has ${skillItems.length} items (hard cap ${cap})`)
-    // Default mode cuts no skill: each keeps all its words in one item, so
-    // "Oracle ERP (ERP)" keeps "Oracle ERP" and "Excel (pivot tables)" doesn't keep "Excel (pivot tables, VLOOKUP)" (#400).
+    // Default mode cuts no skill: the name and each term in its parentheses
+    // keep all their words in some item, so "Oracle ERP (ERP)" keeps "Oracle ERP",
+    // "Microsoft 365, Outlook" keeps "Microsoft 365 (Outlook)", and "Excel (pivot
+    // tables)" doesn't keep "Excel (pivot tables, VLOOKUP)" (#400).
     if (!c.mode && input.skills) {
       const items = (list: string, seps: RegExp) => list.split(seps).flatMap((line) => splitSkills(line.replace(/^\s*[^:,]{2,48}:\s*/, '')))
       const words = (s: string) => s.toLowerCase().match(/[\p{L}\p{N}+#.]+/gu) ?? []
+      const parts = (s: string) => [s.replace(/\([^()]*\)/g, ''), ...[...s.matchAll(/\(([^()]*)\)/g)].flatMap((m) => m[1].split(','))]
       const outWords = items(out.skills, /\n/).map((s) => new Set(words(s)))
       for (const own of items(input.skills, /[\n|•·;]/)) {
-        if (!outWords.some((w) => words(own).every((x) => w.has(x)))) result.failures.push(`default mode dropped a resume skill: "${own}"`)
+        if (!parts(own).every((p) => outWords.some((w) => words(p).every((x) => w.has(x))))) result.failures.push(`default mode dropped a resume skill: "${own}"`)
       }
     }
     for (const k of c.mustKeepSkills) {

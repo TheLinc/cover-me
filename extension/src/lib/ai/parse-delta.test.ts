@@ -241,6 +241,13 @@ describe('a grouped skills list with no cutting option on (#400)', () => {
     expect(resume.skills).toBe(`Tools: ${tools.join(', ')}\nLanguages: ${langs.join(', ')}`)
   })
 
+  test('keeps a seventh group', async () => {
+    const own = ['Go', 'Python', 'Docker', 'Jira', 'Kafka', 'Redis', 'Vault'].map((s, i) => `Group ${i + 1}: ${s}`).join('\n')
+    const raw = JSON.stringify({ experience: [{ bullets: ['Built the billing service in Go'] }], skills: [{ skill: 'Vault', category: 'Group 7' }] })
+    const resume = await assembleTailored(engineer(own), raw, { jobDescription: 'Backend engineer', exactBulletCounts: true })
+    expect(resume.skills).toBe(`Group 7: Vault\n${own.split('\n').slice(0, 6).join('\n')}`)
+  })
+
   test('is cut to 18 in trim mode', async () => {
     const resume = await assembleTailored(parsed, raw, { jobDescription: 'Backend engineer', exactBulletCounts: false })
     expect(resume.skills).toBe(`Tools: ${tools.slice(0, 9).join(', ')}\nLanguages: ${langs.slice(0, 9).join(', ')}`)

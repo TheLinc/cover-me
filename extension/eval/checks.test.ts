@@ -36,3 +36,13 @@ describe('a resume skill with a list in parentheses (#400)', () => {
     expect(dropped(checkTailored(out('SQL, Power BI, Excel (pivot tables), Jira, process mapping, requirements gathering, Visio'), c))).toEqual(['default mode dropped a resume skill: "Excel (pivot tables, VLOOKUP)"'])
   })
 })
+
+describe('a resume skill the output splits into its parts (#400)', () => {
+  const c = CASES.find((x) => x.id === 'executive-assistant-tool-swap')!
+  const own = c.parsed.skills!
+  const dropped = (skills: string) => checkTailored({ ...c.parsed, skills } as TailoredResume, c).failures.filter((f) => f.startsWith('default mode dropped'))
+
+  test('passes, as each part is still there', () => {
+    expect(dropped(own.replace('Microsoft 365 (Outlook, Excel, PowerPoint)', 'Microsoft 365, Outlook, Excel, PowerPoint'))).toEqual([])
+  })
+})
