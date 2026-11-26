@@ -135,7 +135,7 @@ describe('the Word file a stale plan skipped', () => {
   })
 })
 
-describe('the update ready card', () => {
+describe('the Update button', () => {
   test('an update clears the version it was waiting for', async () => {
     const chrome = fakeChrome()
     await handleInstalled({ reason: 'update', previousVersion: '1.4.0' })
