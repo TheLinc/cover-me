@@ -1,0 +1,12 @@
+== before (origin/master)
+required  SaaS
+required  Salesforce
+required  HubSpot
+required  mental health
+required  recruiting
+preferred OTE
+preferred RSU
+== after (this branch)
+required  SaaS
+required  Salesforce
+required  HubSpot
