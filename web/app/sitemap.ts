@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next'
 import { BOARDS } from '@/lib/boards'
 import { GUIDES } from '@/lib/guides'
+import { FETCHED, ROLES } from '@/lib/roles'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 
@@ -37,6 +38,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...BOARDS.map((b) => ({
       url: `${BASE}/for/${b.slug}`,
       lastModified: b.updated,
+      changeFrequency: 'monthly' as const,
+      priority: 0.8,
+    })),
+    ...['', ...ROLES.map((r) => `/${r.slug}`)].map((path) => ({
+      url: `${BASE}/resume-keywords${path}`,
+      lastModified: FETCHED,
       changeFrequency: 'monthly' as const,
       priority: 0.8,
     })),

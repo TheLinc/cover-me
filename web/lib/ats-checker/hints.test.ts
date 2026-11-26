@@ -137,6 +137,8 @@ describe('the posting title', () => {
 
   test('keeps a title the posting describes as doing the work', () => {
     expect(postingTitle('Registered Nurse\nAbout the role\nThe Registered Nurse provides direct patient care.')).toBe('Registered Nurse')
+    expect(postingTitle('Head of Benefits\nAs Head of Benefits you will run our plans.')).toBe('Head of Benefits')
+    expect(postingTitle('Director of Employee Benefits\nAs Director of Employee Benefits you will run our plans.')).toBe('Director of Employee Benefits')
   })
 
   test("uses the AI's title when it has one", () => {

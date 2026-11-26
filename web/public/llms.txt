@@ -42,6 +42,15 @@ Key facts:
 - [Cover Me for Workday](https://www.cover-me.dev/for/workday)
 - [Cover Me for Ashby](https://www.cover-me.dev/for/ashby)
 
+## Resume keywords by job
+
+Each page counts the skills, tools and degrees that real public job postings for one job ask for, read from company job boards on Greenhouse and Lever with the same rules as the free ATS checker. A keyword counts when a posting asks for it as a requirement or a nice-to-have. Each page gives each keyword as a share and a count of the postings read, grouped into tools, skills, education and soft skills, with the number of companies, the sources and the date. The postings come mostly from tech companies. Each page also shows where to put the keywords on a resume, with example bullets.
+
+- [Resume keywords by job](https://www.cover-me.dev/resume-keywords)
+- [Sales resume keywords](https://www.cover-me.dev/resume-keywords/sales)
+- [Marketing resume keywords](https://www.cover-me.dev/resume-keywords/marketing)
+- [Engineering resume keywords](https://www.cover-me.dev/resume-keywords/engineering)
+
 ## Guides
 
 - [What is an ATS score?](https://www.cover-me.dev/guides/what-is-an-ats-score)

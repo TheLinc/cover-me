@@ -59,7 +59,7 @@ function looksLikeHeading(text: string, labelled: boolean): boolean {
   const words = text.split(/\s+/).filter((w) => /^[A-Za-z]/.test(w) && !MINOR_WORD.test(w))
   return words.length > 0 && words.every((w) => /^[A-Z]/.test(w))
 }
-const SKIP = /^(description of )?benefits?|^perks|what we offer|^compensation|^pay( range| transparency|$)|^salary|equal (opportunity|employment)|^our commitment|^acknowledg|statement$|^accommodations?|^privacy|career growth$|^work\/life|^inclusive|^diverse|^apply$|^contact/i
+const SKIP = /^(description of )?benefits?|^(\w+ )?employee benefits$|^(our )?perks|what (we|(?!you\b)(\w+ ){1,3}can)('ll| will| can)? offer|^compensation|^pay( range| transparency|$)|^salary|equal (opportunity|employment)|^our commitment|^acknowledg|statement$|^accommodations?|^privacy|career growth$|^work\/life|^inclusive|^diverse|^apply$|^contact/i
 const BULLET = /^(\*\s|[-•●◦▪▫■□·‣⁃▸►○–—])/
 const OTHER = /^schedule|^job type|^the (job|team|position)$|^your mission|responsib|what you('ll| will)? (do|be doing)|day in the life|the role|the opportunity|job description|overview|summary|duties|additional information/i
 
@@ -77,7 +77,10 @@ function headingLevel(line: string, labelled: boolean): Heading | null {
   if (!marked && /\d/.test(text)) return null
   if (!looksLikeHeading(text, marked)) return null
   if (COMPANY.test(text)) return 'company'
-  const namedHeading = /^((required|preferred|minimum|basic) (qualifications|requirements|skills|experience)|.*\b(requirements|qualifications)|.*\b(looking for|seeking))$/i.test(text)
+  if (/^a few logistics$/i.test(text) || (marked && !labelled && /^logistics$/i.test(text))) return 'unknown'
+  const unnamed = text.replace(/ at [A-Z].*$|^\S+'s /, '')
+  const namedHeading = /^((required|preferred|minimum|basic) (qualifications|requirements|skills|experience)|.*\b(requirements|qualifications)|.*\b(looking for|seeking))$/i.test(unnamed)
+  if (!namedHeading && ((unnamed !== text && SKIP.test(unnamed)) || /^\w+ (benefits|perks)$/i.test(text))) return 'skip'
   if (!namedHeading && DICTIONARY.some((term) => has(text, term))) return null
   if (!namedHeading && SKIP.test(text)) return 'skip'
   if (PREFERRED.test(text)) return 'preferred'
@@ -87,7 +90,7 @@ function headingLevel(line: string, labelled: boolean): Heading | null {
 }
 
 const ACRONYM_STOP = new Set(['USD', 'GBP', 'CAD', 'EUR', 'PTO', 'EEO', 'EOE', 'FAQ', 'LLC', 'INC', 'USA', 'EMEA', 'APAC', 'NYC', 'CEO', 'CTO', 'CFO', 'COO', 'ETC', 'AND', 'THE', 'FOR', 'NOT', 'DNA', 'EST', 'PST', 'CST', 'MST', 'ASAP', 'III', 'SME',
-  'MUST', 'PLEASE', 'NOTE', 'ONLY', 'NEVER', 'WILL', 'ALL', 'ANY', 'YOU', 'YOUR', 'ARE', 'CAN', 'MAY', 'NEW', 'NOW', 'COVID', 'TBD', 'TBA', 'H1B'])
+  'MUST', 'PLEASE', 'NOTE', 'ONLY', 'NEVER', 'WILL', 'ALL', 'ANY', 'YOU', 'YOUR', 'ARE', 'CAN', 'MAY', 'NEW', 'NOW', 'COVID', 'TBD', 'TBA', 'H1B', 'OTE', 'RSU'])
 
 function unlistedNames(line: string): Keyword[] {
   const letters = line.replace(/[^A-Za-z]/g, '')
@@ -117,6 +120,7 @@ const BOILERPLATE = new RegExp(
     String.raw`(regardless of|without regard to)[^.]{0,60}${TRAIT}[^.]{0,80}${TRAIT}`,
     'Americans with Disabilities|reasonable accommodation|VEVRAA|OFCCP|E-Verify|eligibility to work|employment eligibility',
     'discriminat(?!ive)|protected veteran|pay transparency|know your rights|map data ©',
+    'agency resumes|unsolicited (resumes|candidates)|recruiters? (will )?only reach out|receive messages on LinkedIn|(headhunters|recruitment agencies) (may|must|should) not|terms and conditions of employment|(you will|you\'ll|required to|must) attend[^.]{0,40}onboarding|travel for purposes such as new hire onboarding|(role|position) requires in[- ]person onboarding',
   ].join('|'),
   'i',
 )

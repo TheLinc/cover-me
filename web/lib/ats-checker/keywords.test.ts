@@ -360,3 +360,79 @@ test('each "or" ask is one entry, counted once, and asks that share a keyword st
   const chain = readPosting('Requirements\n- Experience with Python or Go or Java').keywords.find((k) => k.name === 'Python')
   expect(chain?.alternatives).toEqual(['Go', 'Java'])
 })
+
+test('benefits under other headings, and agency or hiring-policy notices, add no keywords', () => {
+  const head = 'Requirements\n- Salesforce\n'
+  for (const tail of [
+    'What we’ll offer\nOur compensation package plays a big part in how we recognize you.\n- Mental health, wellness & fitness benefits',
+    'US Employee Benefits\nAcme cares about the wellbeing of its employees.\n- Expanded mental health support.',
+    'What Acme can offer you:\n- Ownership from Day 1: every employee receives Restricted Stock Units (RSUs).',
+    'To all recruitment agencies: Acme does not accept agency resumes.',
+    'Important information:\nAcme provides equal employment opportunities to all applicants. This policy applies to all terms and conditions of employment at Acme, including recruiting, hiring and promotion.',
+    'Headhunters and recruitment agencies may not submit resumes to Acme.',
+    '- Potential compensation for this role is $102,855 to $136,000 OTE USD, plus RSUs.',
+    "Here's what we offer:\n- Python learning budget",
+    'What Our Team Can Offer\n- Python learning budget',
+    '## Canadian Employee Benefits\nAcme cares about the wellbeing of its employees.\n- Expanded mental health support',
+    'Our Perks:\n- Free mental health & well-being sessions',
+  ]) expect(readPosting(head + tail).keywords.map((k) => k.name), tail).toEqual(['Salesforce'])
+})
+
+test('a "Logistics" section heading is not a keyword, but the requirements under it and an unmarked logistics line are', () => {
+  const names = (posting: string) => readPosting(posting).keywords.map((k) => k.name)
+  expect(names("Requirements\n- Salesforce\n## Logistics\nMinimum education: Bachelor's degree")).toEqual(['Salesforce', "Bachelor's degree"])
+  expect(names('Requirements\nLogistics\nSupply chain')).toEqual(['logistics', 'supply chain'])
+  expect(names("Requirements\n- Salesforce\nA Few Logistics\nThis role requires a bachelor's degree")).not.toContain('logistics')
+  expect(names('Requirements\nLogistics: 3+ years coordinating freight')).toContain('logistics')
+})
+
+test('onboarding as a hiring step is not a skill, but customer onboarding is', () => {
+  const names = (posting: string) => readPosting(posting).keywords.map((k) => k.name)
+  expect(names('Requirements\n- Salesforce\n- You are required to attend in person onboarding in San Francisco.\n- Travel for purposes such as new hire onboarding.')).toEqual(['Salesforce'])
+  expect(names('Requirements\n- Customer onboarding in Salesforce')).toEqual(expect.arrayContaining(['onboarding']))
+  expect(names('Requirements\n- Own new hire onboarding in Workday and BambooHR')).toEqual(expect.arrayContaining(['onboarding', 'Workday']))
+  expect(names('Requirements\n- Run in-person onboarding sessions using Workday')).toEqual(expect.arrayContaining(['Workday']))
+  expect(names('Requirements\n- This role requires in-person onboarding in Denver.')).toEqual([])
+  for (const ask of [
+    'Willingness to travel up to 25% to deliver in-person onboarding for new customers using Salesforce.',
+    'This role requires 2+ years running new hire onboarding in Workday and Excel.',
+    'Coordinate and complete new hire onboarding for 50+ employees in Workday.',
+    'Experience required to lead new hire onboarding programs in Workday.',
+  ]) expect(names(`Requirements\n- ${ask}`), ask).toEqual(expect.arrayContaining(['onboarding']))
+})
+
+test('a candidate-side "what you offer" heading and an agency requirement keep their keywords', () => {
+  const names = (posting: string) => readPosting(posting).keywords.map((k) => k.name)
+  expect(names('What you can offer us\n- Python')).toEqual(['Python'])
+  expect(names('Qualifications\n- 3+ years managing recruitment agency relationships in Workday')).toEqual(expect.arrayContaining(['Workday']))
+})
+
+test('sales and marketing tools are read by name, and ordinary "outreach" is not a tool', () => {
+  const names = (posting: string) => readPosting(posting).keywords.map((k) => k.name)
+  expect(names('Requirements\n- Salesforce, SalesLoft, LinkedIn SalesNavigator and Gong')).toEqual(['Salesforce', 'Salesloft', 'Sales Navigator', 'Gong'])
+  expect(names('Requirements\n- Experience with Outreach.io and Clari')).toEqual(['Outreach.io', 'Clari'])
+  expect(names('Requirements\n- Experience with outreach.io')).toEqual(['Outreach.io'])
+  expect(names('Requirements\n- Experience prospecting on LinkedIn')).toEqual(['LinkedIn'])
+  expect(names('Requirements\n- Community outreach and outreach to new prospects')).toEqual(['community outreach'])
+  expect(names('Requirements\n- Iterable, Mixpanel, 6sense or Demandbase')).toEqual(['Iterable', 'Mixpanel', '6sense', 'Demandbase'])
+})
+
+test('sales duties that mention LinkedIn still count', () => {
+  const names = (posting: string) => readPosting(posting).keywords.map((k) => k.name)
+  expect(names('Requirements\n- Comfortable writing personalized messages on LinkedIn and running sequences in Salesloft and Salesforce')).toEqual(['LinkedIn', 'Salesloft', 'Salesforce'])
+  expect(names('Requirements\n- You will reach out via LinkedIn, phone and Salesforce sequences to 50 prospects a day')).toEqual(['LinkedIn', 'Salesforce'])
+})
+
+test('LinkedIn as a social link or a recruiter notice is not an ask, and benefits headings that name a tool are still skipped', () => {
+  const names = (posting: string) => readPosting(posting).keywords.map((k) => k.name)
+  expect(names('Preferred Qualifications\n- Salesforce\nLinkedin | X (formerly Twitter) | Instagram | Acme.com')).toEqual(['Salesforce'])
+  expect(names('Requirements\n- Salesforce\n- Our recruiters will only reach out via LinkedIn or email.\n- If you receive messages on LinkedIn from other people, they may not be legitimate.')).toEqual(['Salesforce'])
+  expect(names('Requirements\n- Python\nBenefits at Salesloft:\n- Excel training\n## Gong Benefits\n- Slack stipend')).toEqual(['Python'])
+  expect(names('Requirements\n- LinkedIn Navigator, Sales Nav or SalesNav')).toEqual(['Sales Navigator'])
+  expect(names("Requirements\n- Python\nBenefits & Perks at Gong\n- Excel classes\n## Perks & Benefits at Mixpanel\n- Slack stipend\n## Salesloft's Benefits\n- Tableau\n## Compensation at Clari\n- Workday")).toEqual(['Python'])
+  const levels = (posting: string) => readPosting(posting).keywords.map((k) => `${k.name}:${k.level}`)
+  expect(levels('Benefits Administration Requirements at Acme\n- Workday')).toEqual(['Workday:required'])
+  expect(levels("Acme's Benefits Requirements\n- Workday")).toEqual(['Workday:required'])
+  expect(levels('About the role\n- Build things\nRequirements at Salesforce\n- Python')).toEqual(['Python:required'])
+  expect(levels('Who We Are Seeking at Datadog\n- Python')).toEqual(['Python:required'])
+})
