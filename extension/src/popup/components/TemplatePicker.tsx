@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { accentOf, DEFAULT_ACCENT, hasAccent, RESUME_TEMPLATES, templateOf } from '../../lib/pdf/resume'
 import type { ResumeTemplate } from '../../lib/pdf/types'
 import { getResumeLook, isCachedPro, saveResumeLook, type ResumeLook } from '../../lib/resume-template'
@@ -70,6 +70,13 @@ function AccentPicker({ value, onChange }: { value: string | undefined; onChange
   )
 }
 
+// Stays mounted so it can grow and shrink; inert keeps the hidden part out of the tab order and away from screen readers (#119).
+function Reveal({ shown, children }: { shown: boolean; children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => { ref.current?.toggleAttribute('inert', !shown) }, [shown])
+  return <div ref={ref} className={`template-reveal${shown ? ' is-shown' : ''}`}><div>{children}</div></div>
+}
+
 function Sketch({ template, mini, accent }: { template: ResumeTemplate; mini?: boolean; accent?: string }) {
   const tint = accentOf(accent)
   return (
@@ -124,7 +131,7 @@ export default function TemplatePicker({ value, pro, onChange, previewLocked, ac
           </>
         )}
       </fieldset>
-      {pro && onAccent && hasAccent(current) && <AccentPicker value={accent} onChange={onAccent} />}
+      {pro && onAccent && <Reveal shown={hasAccent(current)}><AccentPicker value={accent} onChange={onAccent} /></Reveal>}
     </details>
   )
 }
