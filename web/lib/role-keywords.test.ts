@@ -113,8 +113,11 @@ describe('skipped keywords', () => {
     ['warehouse', 'warehouse'],
     ['sales', 'SDR'],
     ['sales', 'BDR'],
+    ['sales', 'marketing'],
+    ['sales', 'customer success'],
+    ['marketing', 'sales'],
     ['marketing', 'PMM'],
-  ] as const)("%s doesn't list its own name", (slug, name) => {
+  ] as const)("%s doesn't list %s", (slug, name) => {
     expect(skipFor(slug)).toContain(name)
   })
 })
@@ -130,6 +133,9 @@ describe('kindOf', () => {
     ['lead generation', 'Skills'],
     ['CRM', 'Skills'],
     ['ZoomInfo', 'Tools and software'],
+    ['Sales Navigator', 'Tools and software'],
+    ['Outreach.io', 'Tools and software'],
+    ['6sense', 'Tools and software'],
     ['machine learning', 'Skills'],
   ])('%s is %s', (name, kind) => {
     expect(kindOf(name)).toBe(kind)

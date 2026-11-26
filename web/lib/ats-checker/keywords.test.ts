@@ -406,3 +406,11 @@ test('a candidate-side "what you offer" heading and an agency requirement keep t
   expect(names('What you can offer us\n- Python')).toEqual(['Python'])
   expect(names('Qualifications\n- 3+ years managing recruitment agency relationships in Workday')).toEqual(expect.arrayContaining(['Workday']))
 })
+
+test('sales and marketing tools are read by name, and ordinary "outreach" is not a tool', () => {
+  const names = (posting: string) => readPosting(posting).keywords.map((k) => k.name)
+  expect(names('Requirements\n- Salesforce, SalesLoft, LinkedIn SalesNavigator and Gong')).toEqual(['Salesforce', 'Salesloft', 'Sales Navigator', 'Gong'])
+  expect(names('Requirements\n- Experience with Outreach.io and Clari')).toEqual(['Outreach.io', 'Clari'])
+  expect(names('Requirements\n- Community outreach and outreach to new prospects')).toEqual(['community outreach'])
+  expect(names('Requirements\n- Iterable, Mixpanel, 6sense or Demandbase')).toEqual(['Iterable', 'Mixpanel', '6sense', 'Demandbase'])
+})

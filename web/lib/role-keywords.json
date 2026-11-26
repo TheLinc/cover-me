@@ -178,10 +178,6 @@
           "postings": 84
         },
         {
-          "name": "marketing",
-          "postings": 80
-        },
-        {
           "name": "negotiation",
           "postings": 77
         },
@@ -194,20 +190,12 @@
           "postings": 66
         },
         {
-          "name": "customer success",
-          "postings": 42
-        },
-        {
           "name": "leadership",
           "postings": 41
         },
         {
           "name": "organizational skills",
           "postings": 37
-        },
-        {
-          "name": "LinkedIn",
-          "postings": 31
         },
         {
           "name": "procurement",
@@ -234,6 +222,10 @@
           "postings": 24
         },
         {
+          "name": "Sales Navigator",
+          "postings": 24
+        },
+        {
           "name": "attention to detail",
           "postings": 21
         },
@@ -247,6 +239,10 @@
         },
         {
           "name": "lead generation",
+          "postings": 20
+        },
+        {
+          "name": "Salesloft",
           "postings": 20
         },
         {
@@ -272,6 +268,10 @@
         {
           "name": "ZoomInfo",
           "postings": 18
+        },
+        {
+          "name": "Clari",
+          "postings": 17
         }
       ]
     },
@@ -293,10 +293,6 @@
         },
         {
           "name": "B2B",
-          "postings": 108
-        },
-        {
-          "name": "sales",
           "postings": 108
         },
         {
@@ -402,6 +398,10 @@
         {
           "name": "ROI",
           "postings": 13
+        },
+        {
+          "name": "statistics",
+          "postings": 13
         }
       ]
     },
@@ -419,7 +419,7 @@
         },
         {
           "name": "AI",
-          "postings": 297
+          "postings": 296
         },
         {
           "name": "communication",
@@ -427,7 +427,7 @@
         },
         {
           "name": "Bachelor's degree",
-          "postings": 246
+          "postings": 247
         },
         {
           "name": "AWS",
@@ -439,11 +439,11 @@
         },
         {
           "name": "LLM",
-          "postings": 130
+          "postings": 129
         },
         {
           "name": "SQL",
-          "postings": 121
+          "postings": 122
         },
         {
           "name": "Go",

@@ -29,12 +29,13 @@ export function roleOf(title: string): RoleSlug | undefined {
   return ROLE_TITLES.find((r) => r.match.test(title) && !('exclude' in r && r.exclude.test(title)))?.slug
 }
 
-// Every sales "compliance" ask read was a culture line ("a 'compliance first' attitude") or the buyer's team (#299).
+// A role's own name and the teams it works with ("work closely with Marketing, Product and Customer Success") read as
+// asks; so did every sales "compliance" line, a culture line ("a 'compliance first' attitude") or the buyer's team (#299).
 const SKIP: Record<RoleSlug, string[]> = {
   'administrative-assistant': [],
   warehouse: ['warehouse'],
-  sales: ['sales', 'SDR', 'BDR', 'compliance'],
-  marketing: ['marketing', 'PMM'],
+  sales: ['sales', 'SDR', 'BDR', 'compliance', 'marketing', 'customer success'],
+  marketing: ['marketing', 'PMM', 'sales'],
   engineering: [],
 }
 export const skipFor = (slug: RoleSlug) => SKIP[slug]
@@ -43,7 +44,8 @@ export const KINDS = ['Tools and software', 'Skills', 'Education and certificati
 export type Kind = (typeof KINDS)[number]
 
 const TOOLS = new Set([
-  'Salesforce', 'HubSpot', 'LinkedIn', 'ZoomInfo', 'Outreach', 'Gong', 'Salesloft', 'SalesLoft', 'Apollo', 'Clari', 'Zendesk', 'Marketo', 'Tableau', 'Looker', 'Power BI', 'Google Analytics', 'Excel', 'Microsoft Office', 'Word',
+  'Salesforce', 'HubSpot', 'LinkedIn', 'Sales Navigator', 'ZoomInfo', 'Outreach.io', 'Gong', 'Salesloft', 'Clari', 'Zendesk',
+  'Iterable', 'Mixpanel', '6sense', 'Demandbase', 'Google Ads', 'Canva', 'Marketo', 'Tableau', 'Looker', 'Power BI', 'Google Analytics', 'Excel', 'Microsoft Office', 'Word',
   'PowerPoint', 'Outlook', 'Google Workspace', 'Slack', 'Jira', 'Figma', 'QuickBooks', 'SQL', 'Python', 'Java',
   'JavaScript', 'TypeScript', 'Go', 'Rust', 'C++', 'C#', 'React', 'Node.js', 'AWS', 'GCP', 'Azure', 'Kubernetes', 'Docker', 'Terraform',
   'Linux', 'Git', 'Snowflake', 'dbt', 'Airflow', 'Spark', 'PyTorch', 'TensorFlow',
@@ -59,7 +61,7 @@ const SKILLS = new Set([
   'forecasting', 'account management', 'networking', 'cold calling', 'onboarding', 'KPI', 'lead generation', 'logistics', 'PEO',
   'program management', 'project management', 'ROI', 'marketing automation', 'growth marketing', 'GTM', 'compliance', 'ABM',
   'lifecycle marketing', 'business intelligence', 'machine learning', 'API', 'LLM', 'distributed systems', 'CI/CD', 'electrical',
-  'SEO', 'content marketing', 'email marketing', 'social media', 'data analysis', 'inventory', 'forklift', 'supply chain', 'scheduling',
+  'SEO', 'content marketing', 'email marketing', 'social media', 'data analysis', 'statistics', 'inventory', 'forklift', 'supply chain', 'scheduling',
 ])
 
 export const isSorted = (name: string) => [TOOLS, EDUCATION, SOFT, SKILLS].some((set) => set.has(name))

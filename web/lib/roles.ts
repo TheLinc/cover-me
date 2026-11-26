@@ -27,7 +27,7 @@ const COPY: RoleCopy[] = [
       'Closed $1.2M in new B2B SaaS revenue in 2025, 118% of quota, from outbound prospecting and cold calling.',
       'Kept a 3x pipeline in Salesforce and called each quarter within 5% of the final number.',
       'Ran the negotiation on 14 enterprise renewals with buyers\' procurement teams, holding the average discount under 10%.',
-      'Built a lead generation sequence on LinkedIn that booked 40 first meetings a quarter for two account executives.',
+      'Built a lead generation sequence in Sales Navigator that booked 40 first meetings a quarter for two account executives.',
     ],
   },
   {

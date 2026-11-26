@@ -43,6 +43,8 @@ export const TERMS = [
   'SEM', 'content marketing', 'social media', 'email marketing', 'copywriting', 'public relations', 'market research',
   'customer service', 'customer success', 'customer support', 'recruiting|recruitment', 'onboarding', 'HRIS', 'ADP', 'employee relations',
   'Google Ads|Google AdWords', 'Meta Ads|Facebook Ads', 'PPC|pay-per-click', 'ROAS', 'marketing automation', 'Marketo', 'Mailchimp',
+  'Sales Navigator|LinkedIn Sales Navigator|LinkedIn SalesNavigator|SalesNavigator', 'Salesloft', '=Gong', '=Clari', '=Outreach.io',
+  '=Iterable', 'Mixpanel', '6sense', 'Demandbase',
   'Klaviyo', 'Canva', 'Premiere Pro|Adobe Premiere|Premiere', 'After Effects', 'Final Cut Pro', 'Cinema 4D|C4D', 'lifecycle marketing', 'growth marketing',
   'user research', 'usability testing', 'prototyping', 'wireframing|wireframes', 'design systems|design system', 'interaction design',
   'information architecture', 'accessibility', 'WCAG', 'FMLA', 'FLSA', 'ADA|Americans with Disabilities Act',
