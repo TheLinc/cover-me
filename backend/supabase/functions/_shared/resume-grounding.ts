@@ -264,7 +264,7 @@ export function parseClaimVerdicts(raw: string, count: number): boolean[] {
  * truthful and only the extra labels are lost. Without `ask` (legacy callers),
  * claims are kept. A comma-separated string passes through.
  */
-export async function groundSkills(skills: unknown, candidate: string, ask?: AskModel, originalSkills?: string, jobDescription = ''): Promise<{ skills?: string; dropped: string[] }> {
+export async function groundSkills(skills: unknown, candidate: string, ask?: AskModel, originalSkills?: string, jobDescription = '', keepAll = false): Promise<{ skills?: string; dropped: string[] }> {
   if (typeof skills === 'string') return { skills, dropped: [] }
   if (!Array.isArray(skills)) return { dropped: [] }
   const flat = (s: string) => s.toLowerCase().replace(/[‐-―−]/g, '-').replace(/\s+/g, ' ').trim()
@@ -306,10 +306,26 @@ export async function groundSkills(skills: unknown, candidate: string, ask?: Ask
   const rejected = new Set(claims.filter((_, i) => !approved[i]).map((c) => c.skill))
   claims.filter((c) => rejected.has(c.skill)).forEach((c) => dropped.push(`${c.skill} (evidence "${c.evidence}" doesn't show it)`))
   const keptItems = items.filter((i) => !i.claim || !rejected.has(i.skill))
-  const kept = keptItems.map((i) => i.skill)
   const groups = skillGroups(originalSkills)
-  if (groups.length && kept.length) return { skills: groupSkills(keptItems, groups, jobDescription), dropped }
+  if (keepAll && originalSkills) keptItems.push(...missingOwnSkills(keptItems, originalSkills, groups.length > 0))
+  const kept = keptItems.map((i) => i.skill)
+  if (groups.length && kept.length) return { skills: groupSkills(keptItems, groups, jobDescription, !keepAll), dropped }
   return { skills: kept.length ? kept.join(', ') : undefined, dropped }
+}
+
+// With no cutting option on, every skill the resume lists stays: one the model
+// left out goes back at the end, under its own group's label. "PostgreSQL (SQL)"
+// and "Message queues (PostgreSQL)" keep "PostgreSQL"; "Excel (pivot tables)"
+// doesn't keep "Excel (pivot tables, VLOOKUP)"; a synonym ("JS" for
+// "JavaScript") doesn't count (#400).
+function missingOwnSkills(kept: Array<{ skill: string }>, own: string, grouped: boolean): Array<{ skill: string; category?: string }> {
+  const flat = (s: string) => s.toLowerCase().replace(/\s+/g, ' ').trim()
+  const terms = (s: string) => [flat(s.replace(/\([^()]*\)/g, '')), ...[...s.matchAll(/\(([^()]*)\)/g)].flatMap((m) => m[1].split(',').map(flat))].filter(Boolean)
+  const have = new Set(kept.flatMap((i) => terms(i.skill)))
+  return own.split(/\n+/).flatMap((line) => {
+    const m = /^([^:,\n]{2,48}):\s*(.+)$/.exec(line.trim())
+    return (m ? m[2] : line).split(/[|•·;]/).flatMap(splitSkills).map((skill) => ({ skill, category: grouped ? m?.[1].trim() : undefined }))
+  }).filter((item) => !terms(item.skill).every((t) => have.has(t)) && terms(item.skill).every((t) => have.add(t)))
 }
 
 export interface SkillGroup { label: string; items: string }
@@ -333,7 +349,7 @@ export function skillGroups(skills?: string): SkillGroup[] {
 // 8 to 18 and none allows more for groups. Skills the posting names pass it only
 // when they alone fill it, as an ATS matches the posting's terms. The prompt asks
 // for it, but a model that copies the whole master list back (73 skills in 8
-// groups) is cut here (#190).
+// groups) is cut here, in trim and compact mode only (#190, #400).
 export const MAX_GROUPED_SKILLS = 18
 export const MAX_SKILL_GROUPS = 6
 
@@ -341,7 +357,7 @@ export const MAX_SKILL_GROUPS = 6
 // the order the model ranked them. A skill goes under the label the model
 // named when that label is the resume's, else the group that lists it, else
 // the group its evidence came from, else the first group (#190).
-function groupSkills(items: Array<{ skill: string; category?: string; evidence?: string }>, groups: SkillGroup[], jobDescription = ''): string {
+function groupSkills(items: Array<{ skill: string; category?: string; evidence?: string }>, groups: SkillGroup[], jobDescription: string, capped: boolean): string {
   const lower = (s: string) => s.toLowerCase().replace(/\s+/g, ' ').trim()
   const byLabel = new Map(groups.map((g) => [lower(g.label), g.label]))
   const out = new Map<string, string[]>()
@@ -353,13 +369,13 @@ function groupSkills(items: Array<{ skill: string; category?: string; evidence?:
       ?? groups[0].label
     const list = out.get(label)
     // Past the group cap, only lower-ranked skills are left: they go (#190).
-    if (!list && out.size >= MAX_SKILL_GROUPS) continue
+    if (capped && !list && out.size >= MAX_SKILL_GROUPS) continue
     if (list?.some((s) => lower(s) === lower(item.skill))) continue
     out.set(label, [...(list ?? []), item.skill])
     ranked.push({ label, skill: item.skill })
   }
   const named = (skill: string) => !!jobDescription && mentions(jobDescription, skill)
-  const limit = Math.max(MAX_GROUPED_SKILLS, ranked.filter((r) => named(r.skill)).length)
+  const limit = capped ? Math.max(MAX_GROUPED_SKILLS, ranked.filter((r) => named(r.skill)).length) : Infinity
   for (let i = ranked.length - 1; i >= 0 && ranked.length > limit; i--) {
     if (!named(ranked[i].skill)) ranked.splice(i, 1)
   }
