@@ -69,7 +69,8 @@ html, body { width: auto; height: 100%; overflow: hidden; }
 .ed-icon:hover:not(:disabled) { background: var(--elevated); color: var(--text); }
 .ed-icon:disabled { opacity: 0.3; cursor: default; }
 .ed-icon-delete:hover:not(:disabled) { color: var(--error); }
-.ed-add { width: auto; margin-top: 8px; padding-left: 0; }
+.ed-add { width: auto; margin: 8px 0 0 -8px; padding: 6px 10px 6px 8px; background: transparent; color: var(--accent-h); font-weight: 500; }
+.ed-add:hover { background: var(--accent-dim); }
 
 /* Skills: short items, two to a row. */
 .ed-lines-short ol { display: grid; grid-template-columns: 1fr 1fr; }

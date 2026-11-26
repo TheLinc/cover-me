@@ -9,6 +9,7 @@ import { chosenOrder, editedResume, postingTitleInSummary, restoreSection, retur
 import { getCachedTier, getMode, getResume, getTailoredHistory, saveParsedResume } from '../lib/storage'
 import DownloadMenu from '../popup/components/DownloadMenu'
 import GapChips from '../popup/components/GapChips'
+import { PlusIcon } from '../popup/components/icons'
 import PdfPreview from './PdfPreview'
 import PostingTitleTip from '../popup/components/PostingTitleTip'
 import ReviewAsk from '../popup/components/ReviewAsk'
@@ -573,7 +574,8 @@ function Lines({ label, noun, items, onChange, hideLabel, short }: {
           </li>
         ))}
       </ol>
-      <button type="button" className="btn btn-ghost btn-sm ed-add" onClick={() => { onChange([...items, '']); setFocusLast(true) }}>
+      <button type="button" className="btn btn-sm ed-add" onClick={() => { onChange([...items, '']); setFocusLast(true) }}>
+        <PlusIcon />
         Add {noun}
       </button>
     </fieldset>
