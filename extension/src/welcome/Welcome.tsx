@@ -3,7 +3,6 @@ import { getResume, getSession, getSettings, resolveMode, setupState, watchSetup
 import AccountPanel from '../popup/components/AccountPanel'
 import ResumePage from '../popup/pages/ResumePage'
 import logoIcon from '../public/icon/48.png'
-// The sites' own favicons (largest size in each .ico), unchanged.
 import indeedIcon from './indeed.png'
 import linkedInIcon from './linkedin.png'
 
@@ -15,21 +14,18 @@ const JOB_SITES = [
 ]
 
 export default function Welcome() {
-  // null until the first read, so a set-up user doesn't see the lock flash.
+  // null until the first read, so a set-up user doesn't see the lock flash (#108).
   const [ready, setReady] = useState<boolean | null>(null)
   const [hasResume, setHasResume] = useState(false)
-  // One line for a finished step 1: who is signed in, or which key is in use.
   const [summary, setSummary] = useState('')
-  // Step 1 reopened with "Change" after it was done.
   const [editing, setEditing] = useState(false)
   // Finishing step 1 and Done swap in a fresh panel, which loads while step 1
-  // is shut, so the next Change shows what's saved, not stale or unsaved state.
+  // is shut, so the next Change shows what's saved, not stale or unsaved state (#108).
   const [panelKey, setPanelKey] = useState(0)
   const resumeHeading = useRef<HTMLHeadingElement>(null)
   const wasReady = useRef<boolean | null>(null)
 
   useEffect(() => {
-    // The resume waits for step 1: an account to sync it to, or a key to use it with.
     const refresh = async () => {
       const [settings, session, resume] = await Promise.all([getSettings(), getSession(), getResume()])
       const state = setupState(settings, session, resume)
@@ -44,15 +40,14 @@ export default function Welcome() {
   }, [])
 
   useEffect(() => {
-    if (ready === false) setEditing(false) // signed out: the full panel shows anyway
-    // Step 1 just finished on this page: take the user to the step it unlocked.
+    if (ready === false) setEditing(false) // signed out: the full panel shows anyway (#108)
     if (ready && wasReady.current === false) {
       // AccountPanel reads settings only on mount; a key saved in the popup
-      // would leave it showing the sign-up form behind the next Change.
+      // would leave it showing the sign-up form behind the next Change (#108).
       setPanelKey((k) => k + 1)
       resumeHeading.current?.focus({ preventScroll: true })
       // Scroll once the steps have finished growing and shrinking, or the
-      // target is measured where the heading was, not where it ends up.
+      // target is measured where the heading was, not where it ends up (#108).
       const scroll = () => resumeHeading.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
       if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
         resumeHeading.current?.scrollIntoView({ block: 'start' })
@@ -61,7 +56,7 @@ export default function Welcome() {
         const once = () => { if (!done) { done = true; scroll() } }
         const onEnd = (e: TransitionEvent) => { if (e.propertyName === 'grid-template-rows') once() }
         document.addEventListener('transitionend', onEnd)
-        const timer = setTimeout(once, 600) // in case no transition ends
+        const timer = setTimeout(once, 600) // in case no transition ends (#108)
         wasReady.current = ready
         return () => { document.removeEventListener('transitionend', onEnd); clearTimeout(timer) }
       }
@@ -87,9 +82,9 @@ export default function Welcome() {
           action={ready ? { label: editing ? 'Done' : 'Change', ariaLabel: editing ? undefined : 'Change your account or API key', expanded: editing, onClick: () => { if (editing) setPanelKey((k) => k + 1); setEditing(!editing) } } : undefined}>
           <Reveal open={!!ready && !editing}><p className="welcome-summary">{summary}</p></Reveal>
           <Reveal open={!ready || editing}>
-            <div className="welcome-card">
+            <Grow className="welcome-card">
               <AccountPanel key={panelKey} initialView="signup" links={false} />
-            </div>
+            </Grow>
           </Reveal>
         </Step>
 
@@ -105,7 +100,7 @@ export default function Welcome() {
           </p>
           {/* Only once set up: earlier, they'd invite skipping steps 1 and 2. The
               other sites are hiring systems on each company's site, with no
-              job search to link to. */}
+              job search to link to (#108). */}
           <Reveal open={postingState === 'current'}>
             <div className="welcome-links">
               {JOB_SITES.map(({ name, url, icon }) => (
@@ -152,11 +147,30 @@ function Step({ n, state, title, action, headingRef, children }: {
   )
 }
 
-// Grows open and shrinks shut instead of snapping. It stays mounted, so a
-// half-filled form keeps its state; shut, it's inert, so nothing in it can be
-// clicked, focused or read.
+function Grow({ className, children }: { className: string; children: ReactNode }) {
+  const outer = useRef<HTMLDivElement>(null)
+  const inner = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const box = outer.current, content = inner.current
+    if (!box || !content) return
+    let last = box.offsetHeight
+    const ro = new ResizeObserver(() => {
+      const next = box.offsetHeight
+      if (next !== last && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        box.animate([{ height: `${last}px`, overflow: 'clip' }, { height: `${next}px`, overflow: 'clip' }], { duration: 200, easing: 'ease' })
+      }
+      last = next
+    })
+    ro.observe(content)
+    return () => ro.disconnect()
+  }, [])
+  return <div ref={outer} className={className}><div ref={inner}>{children}</div></div>
+}
+
+// It stays mounted, so a half-filled form keeps its state; shut, it's inert,
+// so nothing in it can be clicked, focused or read (#108).
 function Reveal({ open, children }: { open: boolean; children: ReactNode }) {
-  // React 18 doesn't type inert; the empty string turns it on.
+  // React 18 doesn't type inert; the empty string turns it on (#108).
   return (
     <div className="welcome-reveal" data-open={open} {...(!open && { inert: '' })}>
       <div>{children}</div>
