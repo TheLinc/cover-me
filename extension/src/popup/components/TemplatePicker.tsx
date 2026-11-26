@@ -58,12 +58,12 @@ function AccentPicker({ value, onChange }: { value: string | undefined; onChange
   return (
     <div className="template-accent">
       <label className="template-accent-label">
-        <span className="form-label">Accent colour</span>
-        <input ref={input} type="color" value={draft} onChange={(e) => setDraft(e.target.value)} aria-describedby={hint} />
+        <span className="form-label">Accent</span>
+        <input ref={input} type="color" value={draft} onChange={(e) => setDraft(e.target.value)} aria-label="Accent colour" aria-describedby={hint} />
         <span className="template-accent-hex">{draft.toUpperCase()}</span>
       </label>
       {shown.toLowerCase() !== DEFAULT_ACCENT.toLowerCase() && (
-        <button type="button" className="text-link" onClick={() => { onChange(DEFAULT_ACCENT); input.current?.focus() }}>Reset to indigo</button>
+        <button type="button" className="btn btn-secondary btn-sm" onClick={() => { onChange(DEFAULT_ACCENT); input.current?.focus() }}>Reset to default</button>
       )}
       <p id={hint} className="hint" role="status">{lowContrast(draft) && 'Light colours can be hard to read on a printed page.'}</p>
     </div>

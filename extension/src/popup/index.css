@@ -1521,6 +1521,6 @@ textarea:focus-visible, input:focus-visible, [tabindex]:focus-visible {
 .template-accent-label input::-webkit-color-swatch-wrapper { padding: 0; }
 .template-accent-label input::-webkit-color-swatch { border: none; border-radius: 5px; }
 .template-accent-hex { font-size: 12px; font-variant-numeric: tabular-nums; color: var(--text-2); }
-.template-accent .text-link { margin-left: auto; background: none; border: none; padding: 0; font: inherit; font-size: 12px; cursor: pointer; }
+.template-accent .btn { width: auto; margin-left: auto; }
 .template-accent .hint { flex-basis: 100%; margin: 0; }
 .template-accent .hint:empty { display: none; }
