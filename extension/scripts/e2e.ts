@@ -45,11 +45,13 @@ export async function seedHostedSession(popup: Page, session: AuthSession, resum
   await popup.reload()
 }
 
-// The Generate page restores a failed read only on the tab it happened on, so
-// this pins it to the popup's own tab (#130, #195).
+// The Generate page restores a failed read only on the active tab it happened
+// on, so this pins it to the popup's own tab, in front of the welcome tab
+// install opens (#130, #195).
 export async function showUnreadSite(popup: Page, host: string) {
   await popup.evaluate(async (host) => {
     const tab = (await chrome.tabs.getCurrent())!
+    await chrome.tabs.update(tab.id!, { active: true })
     await chrome.storage.local.set({
       generatePage: { state: 'idle', inputMode: 'auto', scrapeFailure: { reason: 'unsupported', host, flow: 'letter', tabId: tab.id, tabUrl: tab.url } },
     })
