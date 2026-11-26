@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { countKeywords, greenhouseText, leverText, roleOf } from './role-keywords'
+import { countKeywords, greenhouseText, kindOf, leverText, roleOf, skipFor } from './role-keywords'
 
 describe('roleOf', () => {
   test.each([
@@ -42,11 +42,15 @@ describe('roleOf', () => {
 describe('greenhouseText and leverText', () => {
   test('reads Greenhouse content, which arrives entity-encoded', () => {
     const content = '&lt;h3&gt;Requirements&lt;/h3&gt;&lt;ul&gt;&lt;li&gt;3+ years of &lt;strong&gt;B2B&lt;/strong&gt; sales&lt;/li&gt;&lt;li&gt;Salesforce &amp;amp; HubSpot&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;We&amp;#39;re hiring&amp;nbsp;now&lt;/p&gt;'
-    expect(greenhouseText(content)).toBe("Requirements\n- 3+ years of B2B sales\n- Salesforce & HubSpot\nWe're hiring now")
+    expect(greenhouseText(content)).toBe("## Requirements\n- 3+ years of B2B sales\n- Salesforce & HubSpot\nWe're hiring now")
   })
 
-  test('starts a new line at an opening block tag, and keeps an entity it cannot decode', () => {
-    expect(greenhouseText('&lt;div&gt;Intro&lt;h3&gt;Requirements&lt;/h3&gt;&lt;p&gt;Bad &amp;#99999999; char&lt;/p&gt;&lt;/div&gt;')).toBe('Intro\nRequirements\nBad &#99999999; char')
+  test('starts a new line at an opening block tag, marks HTML headings, and keeps an entity it cannot decode', () => {
+    expect(greenhouseText('&lt;div&gt;Intro&lt;h2&gt;&lt;strong&gt;Logistics&lt;/strong&gt;&lt;/h2&gt;&lt;p&gt;Bad &amp;#99999999; char&lt;/p&gt;&lt;/div&gt;')).toBe('Intro\n## Logistics\nBad &#99999999; char')
+  })
+
+  test('drops an empty heading, which would end the section above it', () => {
+    expect(greenhouseText('&lt;h2&gt;Benefits&lt;/h2&gt;&lt;p&gt;Pay&lt;/p&gt;&lt;h2&gt;&lt;/h2&gt;&lt;p&gt;Dental&lt;/p&gt;')).toBe('## Benefits\nPay\nDental')
   })
 
   test('treats line breaks in the HTML source as spaces, as a browser does', () => {
@@ -86,5 +90,34 @@ describe('countKeywords', () => {
       { name: 'Salesforce', postings: 12 },
       { name: 'HubSpot', postings: 3 },
     ])
+  })
+
+  test('leaves out the keywords a role skips', () => {
+    expect(countKeywords(postings, ['Salesforce']).keywords).toEqual([{ name: 'HubSpot', postings: 3 }])
+  })
+})
+
+describe('skipped keywords', () => {
+  test.each([
+    ['sales', 'sales'],
+    ['marketing', 'marketing'],
+    ['warehouse', 'warehouse'],
+  ] as const)("%s doesn't list its own name", (slug, name) => {
+    expect(skipFor(slug)).toContain(name)
+  })
+})
+
+describe('kindOf', () => {
+  test.each([
+    ['Salesforce', 'Tools and software'],
+    ['Python', 'Tools and software'],
+    ["Bachelor's degree", 'Education and certifications'],
+    ['MBA', 'Education and certifications'],
+    ['communication', 'Soft skills'],
+    ['attention to detail', 'Soft skills'],
+    ['lead generation', 'Skills'],
+    ['machine learning', 'Skills'],
+  ])('%s is %s', (name, kind) => {
+    expect(kindOf(name)).toBe(kind)
   })
 })

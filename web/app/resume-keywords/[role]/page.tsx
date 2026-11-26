@@ -5,11 +5,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { SendToComputer } from '@/components/site/SendToComputer'
 import { SiteFooter } from '@/components/site/SiteFooter'
 import { SiteNav } from '@/components/site/SiteNav'
-import { MIN_COMPANIES, PER_COMPANY, TOP } from '@/lib/role-keywords'
-import { FETCHED, ROLES, getRole } from '@/lib/roles'
+import { KINDS, MIN_COMPANIES, PER_COMPANY, TOP, kindOf } from '@/lib/role-keywords'
+import { FETCHED, ROLES, answers, getRole, lead, percent } from '@/lib/roles'
 import { BASE, OG_IMAGE } from '@/lib/structured-data'
-import { cn, longDate, month, storeUrl } from '@/lib/utils'
+import { cn, longDate, storeUrl } from '@/lib/utils'
 
+const LINK = 'text-brand-strong underline underline-offset-2 hover:text-brand-deep'
 const BUTTON = 'inline-flex items-center gap-2 font-semibold text-[14px] px-5 py-2.5 rounded-[8px] transition-colors'
 const PRIMARY = cn(BUTTON, 'bg-brand-strong text-white hover:bg-brand-deep')
 const OUTLINE = cn(BUTTON, 'border border-border text-foreground hover:bg-elevated')
@@ -33,7 +34,6 @@ export async function generateMetadata({ params }: { params: Promise<{ role: str
 }
 
 const list = (names: string[]) => new Intl.ListFormat('en-GB', { type: 'conjunction' }).format(names)
-const capitalize = (s: string) => s[0].toUpperCase() + s.slice(1)
 
 export default async function RolePage({ params }: { params: Promise<{ role: string }> }) {
   const role = getRole((await params).role)
@@ -42,7 +42,8 @@ export default async function RolePage({ params }: { params: Promise<{ role: str
   const { counts } = role
   const url = `${BASE}/resume-keywords/${role.slug}`
   const h1 = `${role.name} resume keywords`
-  const top = counts.keywords[0]
+  const tools = counts.keywords.filter((k) => kindOf(k.name) === 'Tools and software')
+  const skills = counts.keywords.filter((k) => kindOf(k.name) === 'Skills')
   const sources = Object.entries(counts.sources).filter(([, n]) => n > 0)
 
   const jsonLd = [
@@ -83,10 +84,7 @@ export default async function RolePage({ params }: { params: Promise<{ role: str
             <time dateTime={FETCHED}>Updated {longDate(FETCHED)}</time>
           </p>
           <h1 className="text-[clamp(32px,5vw,52px)] text-foreground leading-[0.98] mb-5">{h1}</h1>
-          <p className="text-[17px] text-foreground leading-[1.7] mb-5 font-medium">
-            {capitalize(list(counts.keywords.slice(0, 5).map((k) => k.name)))} are the keywords {role.noun} job postings ask for most. Of the {counts.postings} postings
-            read in {month(FETCHED)}, {top.postings} ask for {top.name}.
-          </p>
+          <p className="text-[17px] text-foreground leading-[1.7] mb-5 font-medium">{lead(role)}</p>
           {role.intro.map((p) => (
             <p key={p.slice(0, 40)} className="text-[15px] text-muted-foreground leading-[1.85] mb-4">{p}</p>
           ))}
@@ -94,36 +92,83 @@ export default async function RolePage({ params }: { params: Promise<{ role: str
 
         <section className="mb-14">
           <h2 className="text-[24px] text-foreground mb-3">What {role.noun} postings ask for</h2>
-          <p className="text-[14px] text-muted-foreground leading-[1.8] mb-6 max-w-[680px]">
+          <p className="text-[14px] text-muted-foreground leading-[1.8] mb-4 max-w-[680px]">
             {counts.postings} {role.noun} postings from {counts.companies} companies, read on {longDate(FETCHED)} from their public job boards on{' '}
             {list(sources.map(([name, n]) => `${name} (${n})`))}. The titles read were {role.titles}. A keyword counts when the posting asks for it as a
-            requirement or a nice-to-have, read with the same rules as the <Link href="/ats-checker" className="text-brand-strong underline underline-offset-2 hover:text-brand-deep">free ATS checker</Link>.
+            requirement or a nice-to-have, read with the same rules as the <Link href="/ats-checker" className={LINK}>free ATS checker</Link>.
             At most {PER_COMPANY} postings come from any one company. A keyword fewer than {MIN_COMPANIES} companies ask for is left out, and the table
             stops at the top {TOP}.
           </p>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Keyword</TableHead>
-                <TableHead className="text-right">Postings that ask for it</TableHead>
-                <TableHead className="w-[38%] max-sm:hidden" aria-hidden />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {counts.keywords.map((k) => (
-                <TableRow key={k.name}>
-                  <TableCell className="font-medium">{k.name}</TableCell>
-                  <TableCell className="text-right tabular-nums whitespace-nowrap">{k.postings} of {counts.postings}</TableCell>
-                  <TableCell className="max-sm:hidden" aria-hidden>
-                    <div className="h-2 rounded-full bg-elevated">
-                      <div className="h-2 rounded-full bg-brand" style={{ width: `${(k.postings / counts.postings) * 100}%` }} />
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <p className="text-[14px] text-muted-foreground leading-[1.8] mb-8 max-w-[680px]">
+            The postings come from mostly tech companies, since those are the employers that post on Greenhouse and Lever. Software terms such as AI rank
+            higher here than they would across all employers.
+          </p>
+          {KINDS.map((kind) => {
+            const rows = counts.keywords.filter((k) => kindOf(k.name) === kind)
+            if (!rows.length) return null
+            return (
+              <div key={kind} className="mb-10">
+                <h3 className="text-[17px] font-bold text-foreground tracking-[-0.3px] mb-2">{kind}</h3>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Keyword</TableHead>
+                      <TableHead className="text-right">Share</TableHead>
+                      <TableHead className="text-right">Postings that ask for it</TableHead>
+                      <TableHead className="w-[32%] max-sm:hidden" aria-hidden />
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {rows.map((k) => (
+                      <TableRow key={k.name}>
+                        <TableCell className="font-medium">{k.name}</TableCell>
+                        <TableCell className="text-right tabular-nums">{`${percent(role, k)}%`}</TableCell>
+                        <TableCell className="text-right tabular-nums whitespace-nowrap">{`${k.postings} of ${counts.postings}`}</TableCell>
+                        <TableCell className="max-sm:hidden" aria-hidden>
+                          <div className="h-2 rounded-full bg-elevated">
+                            <div className="h-2 rounded-full bg-brand" style={{ width: `${percent(role, k)}%` }} />
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )
+          })}
         </section>
+
+        <section className="mb-14 max-w-[680px]">
+          <h2 className="text-[24px] text-foreground mb-4">Where to put these keywords</h2>
+          <ul className="space-y-3 text-[15px] text-muted-foreground leading-[1.8] mb-6">
+            <li>
+              <strong className="text-foreground">Summary.</strong> Name your title and the two or three keywords that fit you best
+              {tools[0] && skills[0] ? `, such as ${tools[0].name} or ${skills[0].name}` : ''}.
+            </li>
+            <li>
+              <strong className="text-foreground">Skills section.</strong> List the tools you have used by name, in the posting&apos;s words
+              {tools.length > 1 ? `: ${list(tools.slice(0, 4).map((k) => k.name))}` : ''}.
+            </li>
+            <li>
+              <strong className="text-foreground">Experience bullets.</strong> Put each keyword next to a result, so a recruiter sees what you did with it.
+            </li>
+          </ul>
+          <h3 className="text-[17px] font-bold text-foreground tracking-[-0.3px] mb-3">Example {role.noun} resume bullets</h3>
+          <ul className="list-disc pl-5 space-y-2 text-[15px] text-muted-foreground leading-[1.8] mb-4">
+            {role.bullets.map((b) => <li key={b}>{b}</li>)}
+          </ul>
+          <p className="text-[14px] text-muted-foreground leading-[1.8]">
+            The numbers in these bullets are made up. For the whole process, see{' '}
+            <Link href="/guides/tailor-resume-to-job-description" className={LINK}>how to tailor your resume to a job description</Link>.
+          </p>
+        </section>
+
+        {answers(role).map(({ q, a }) => (
+          <section key={q} className="mb-10 max-w-[680px]">
+            <h2 className="text-[22px] text-foreground mb-3">{q}</h2>
+            <p className="text-[15px] text-muted-foreground leading-[1.85]">{a}</p>
+          </section>
+        ))}
 
         <div className="soft-card p-10 text-center mb-16 max-sm:p-6">
           <h2 className="text-[22px] text-foreground mb-3">Check your resume against one posting</h2>

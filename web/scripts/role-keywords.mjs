@@ -17,7 +17,7 @@ registerHooks({
     }
   },
 })
-const { MIN_POSTINGS, ROLE_SLUGS, countKeywords, greenhouseText, leverText, roleOf } = await import('../lib/role-keywords.ts')
+const { MIN_POSTINGS, ROLE_SLUGS, countKeywords, greenhouseText, leverText, roleOf, skipFor } = await import('../lib/role-keywords.ts')
 
 const GREENHOUSE = [
   'airbnb', 'stripe', 'doordashusa', 'lyft', 'pinterest', 'dropbox', 'reddit', 'robinhood', 'coinbase', 'gitlab', 'datadog',
@@ -51,7 +51,7 @@ const boards = await Promise.allSettled([...GREENHOUSE.map(greenhouse), ...LEVER
 for (const b of boards) if (b.status === 'rejected') console.warn(`skipped: ${b.reason.message}`)
 const postings = boards.flatMap((b) => (b.status === 'fulfilled' ? b.value : []))
 
-const roles = Object.fromEntries(ROLE_SLUGS.map((slug) => [slug, countKeywords(postings.filter((p) => roleOf(p.title) === slug))]))
+const roles = Object.fromEntries(ROLE_SLUGS.map((slug) => [slug, countKeywords(postings.filter((p) => roleOf(p.title) === slug), skipFor(slug))]))
 for (const [slug, r] of Object.entries(roles)) console.log(`${slug}: ${r.postings} postings from ${r.companies} companies, ${r.keywords.length} keywords`)
 const short = Object.entries(roles).filter(([, r]) => r.postings < MIN_POSTINGS)
 if (short.length) {

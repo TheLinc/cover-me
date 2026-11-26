@@ -10,7 +10,7 @@ import { longDate } from '@/lib/utils'
 const PAGE_URL = `${BASE}/resume-keywords`
 const TITLE = 'Resume Keywords by Job, From Real Postings'
 const DESCRIPTION =
-  'The skills, tools and certifications job postings ask for most, counted for sales, marketing, engineering, warehouse and administrative assistant jobs.'
+  'The skills, tools and degrees job postings ask for most, counted from real postings for sales, marketing and engineering jobs, with the share of postings for each.'
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -43,7 +43,7 @@ export default function ResumeKeywordsPage() {
           <h1 className="text-[clamp(32px,5vw,52px)] text-foreground leading-[0.98] mb-5">Resume keywords by job</h1>
           <p className="text-[17px] text-foreground leading-[1.7] mb-5 font-medium">
             Each page counts the skills, tools and certifications that real job postings for one kind of job ask for, read from companies&apos; public job
-            boards on Greenhouse and Lever. Use the ones that match your experience, in the words the postings use.
+            boards on Greenhouse and Lever. Those employers are mostly tech companies. Use the keywords that match your experience, in the words the postings use.
           </p>
           <p className="text-[15px] text-muted-foreground leading-[1.85]">
             To check your resume against the one posting you&apos;re applying to, use the{' '}

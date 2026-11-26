@@ -29,6 +29,34 @@ export function roleOf(title: string): RoleSlug | undefined {
   return ROLE_TITLES.find((r) => r.match.test(title) && !('exclude' in r && r.exclude.test(title)))?.slug
 }
 
+// Every sales "compliance" ask read was a culture line ("a 'compliance first' attitude") or the buyer's team (#299).
+const SKIP: Record<RoleSlug, string[]> = {
+  'administrative-assistant': [],
+  warehouse: ['warehouse'],
+  sales: ['sales', 'compliance'],
+  marketing: ['marketing'],
+  engineering: [],
+}
+export const skipFor = (slug: RoleSlug) => SKIP[slug]
+
+export const KINDS = ['Tools and software', 'Skills', 'Education and certifications', 'Soft skills'] as const
+export type Kind = (typeof KINDS)[number]
+
+const TOOLS = new Set([
+  'Salesforce', 'HubSpot', 'LinkedIn', 'Marketo', 'Tableau', 'Looker', 'Power BI', 'Google Analytics', 'Excel', 'Microsoft Office', 'Word',
+  'PowerPoint', 'Outlook', 'Google Workspace', 'Slack', 'Jira', 'Figma', 'QuickBooks', 'CRM', 'ERP', 'WMS', 'SQL', 'Python', 'Java',
+  'JavaScript', 'TypeScript', 'Go', 'Rust', 'C++', 'C#', 'React', 'Node.js', 'AWS', 'GCP', 'Azure', 'Kubernetes', 'Docker', 'Terraform',
+  'Linux', 'Git', 'Snowflake', 'dbt', 'Airflow', 'Spark', 'PyTorch', 'TensorFlow',
+])
+const EDUCATION = new Set(["Bachelor's degree", "Master's degree", 'MBA', 'PhD', 'High school diploma', "driver's license", 'CPA', 'PMP'])
+const SOFT = new Set([
+  'communication', 'leadership', 'organizational skills', 'interpersonal skills', 'attention to detail', 'teamwork', 'problem-solving',
+  'mentoring', 'time management', 'multitasking', 'stakeholder management',
+])
+
+export const kindOf = (name: string): Kind =>
+  TOOLS.has(name) ? 'Tools and software' : EDUCATION.has(name) ? 'Education and certifications' : SOFT.has(name) ? 'Soft skills' : 'Skills'
+
 const ENTITIES: Record<string, string> = {
   amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', rsquo: '’', lsquo: '‘', rdquo: '”', ldquo: '“',
   mdash: '—', ndash: '–', hellip: '…', bull: '•', middot: '·',
@@ -45,12 +73,13 @@ function htmlToText(html: string): string {
     .replace(/\s+/g, ' ')
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<li\b[^<>]*>(\s*<(p|div|span)\b[^<>]*>)*/gi, '\n- ')
+    .replace(/<h[1-6]\b[^<>]*>/gi, '\n## ')
     .replace(/<\/?(p|div|ul|ol|h[1-6]|tr|section)\b[^<>]*>/gi, '\n')
     .replace(/<[^<>]*>/g, '')
   return decode(text)
     .split('\n')
     .map((line) => line.replace(/\s+/g, ' ').trim())
-    .filter(Boolean)
+    .filter((line) => line && line !== '##')
     .join('\n')
 }
 
@@ -77,7 +106,7 @@ export interface RolePosting {
   text: string
 }
 
-export function countKeywords(all: RolePosting[]) {
+export function countKeywords(all: RolePosting[], skip: string[] = []) {
   const seen = new Set<string>()
   const taken = new Map<string, number>()
   const postings = all.filter((p) => {
@@ -91,7 +120,7 @@ export function countKeywords(all: RolePosting[]) {
   for (const p of postings) {
     sources[p.source]++
     for (const k of readPosting(p.text).keywords) {
-      if (k.level === 'mentioned') continue
+      if (k.level === 'mentioned' || skip.includes(k.name)) continue
       const t = tally.get(k.name) ?? { postings: 0, companies: new Set<string>() }
       t.postings++
       t.companies.add(p.company)

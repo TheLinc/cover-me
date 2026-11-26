@@ -96,10 +96,6 @@
       },
       "keywords": [
         {
-          "name": "warehouse",
-          "postings": 33
-        },
-        {
           "name": "forklift",
           "postings": 22
         },
@@ -120,15 +116,15 @@
           "postings": 17
         },
         {
+          "name": "High school diploma",
+          "postings": 14
+        },
+        {
           "name": "attention to detail",
           "postings": 13
         },
         {
           "name": "Excel",
-          "postings": 13
-        },
-        {
-          "name": "High school diploma",
           "postings": 13
         },
         {
@@ -158,12 +154,8 @@
       },
       "keywords": [
         {
-          "name": "sales",
-          "postings": 374
-        },
-        {
           "name": "communication",
-          "postings": 233
+          "postings": 238
         },
         {
           "name": "AI",
@@ -175,31 +167,31 @@
         },
         {
           "name": "Bachelor's degree",
-          "postings": 122
+          "postings": 124
         },
         {
           "name": "Salesforce",
-          "postings": 119
+          "postings": 122
         },
         {
           "name": "business development",
-          "postings": 82
+          "postings": 84
         },
         {
           "name": "marketing",
-          "postings": 79
+          "postings": 81
         },
         {
           "name": "negotiation",
-          "postings": 76
-        },
-        {
-          "name": "B2B",
-          "postings": 65
+          "postings": 77
         },
         {
           "name": "CRM",
-          "postings": 65
+          "postings": 67
+        },
+        {
+          "name": "B2B",
+          "postings": 66
         },
         {
           "name": "customer success",
@@ -207,7 +199,7 @@
         },
         {
           "name": "leadership",
-          "postings": 42
+          "postings": 43
         },
         {
           "name": "organizational skills",
@@ -223,18 +215,14 @@
         },
         {
           "name": "procurement",
-          "postings": 29
+          "postings": 31
         },
         {
           "name": "forecasting",
-          "postings": 28
+          "postings": 30
         },
         {
-          "name": "logistics",
-          "postings": 28
-        },
-        {
-          "name": "compliance",
+          "name": "account management",
           "postings": 27
         },
         {
@@ -242,12 +230,8 @@
           "postings": 26
         },
         {
-          "name": "account management",
-          "postings": 24
-        },
-        {
           "name": "cold calling",
-          "postings": 23
+          "postings": 24
         },
         {
           "name": "onboarding",
@@ -266,77 +250,89 @@
           "postings": 21
         },
         {
+          "name": "lead generation",
+          "postings": 20
+        },
+        {
+          "name": "logistics",
+          "postings": 20
+        },
+        {
           "name": "SDR",
           "postings": 20
         },
         {
-          "name": "lead generation",
+          "name": "PEO",
           "postings": 19
         },
         {
-          "name": "PEO",
+          "name": "program management",
           "postings": 19
+        },
+        {
+          "name": "ROI",
+          "postings": 18
         }
       ]
     },
     "marketing": {
-      "postings": 282,
+      "postings": 283,
       "companies": 66,
       "sources": {
-        "Greenhouse": 267,
+        "Greenhouse": 268,
         "Lever": 15
       },
       "keywords": [
         {
-          "name": "marketing",
-          "postings": 238
-        },
-        {
           "name": "communication",
-          "postings": 129
+          "postings": 136
         },
         {
           "name": "AI",
-          "postings": 119
-        },
-        {
-          "name": "sales",
-          "postings": 107
+          "postings": 126
         },
         {
           "name": "B2B",
-          "postings": 106
+          "postings": 108
+        },
+        {
+          "name": "sales",
+          "postings": 108
         },
         {
           "name": "Bachelor's degree",
-          "postings": 62
+          "postings": 66
         },
         {
           "name": "leadership",
-          "postings": 53
+          "postings": 55
         },
         {
           "name": "Salesforce",
-          "postings": 52
+          "postings": 55
+        },
+        {
+          "name": "CRM",
+          "postings": 49
         },
         {
           "name": "SaaS",
           "postings": 49
         },
         {
-          "name": "CRM",
-          "postings": 45
+          "name": "SQL",
+          "postings": 44
         },
         {
           "name": "marketing automation",
-          "postings": 41
-        },
-        {
-          "name": "SQL",
-          "postings": 38
+          "postings": 43
         },
         {
           "name": "project management",
+          "postings": 35
+        },
+        {
+          "name": "growth marketing",
           "postings": 34
         },
         {
@@ -344,28 +340,24 @@
           "postings": 33
         },
         {
-          "name": "growth marketing",
-          "postings": 32
-        },
-        {
           "name": "attention to detail",
-          "postings": 28
+          "postings": 29
         },
         {
           "name": "GTM",
-          "postings": 26
+          "postings": 27
         },
         {
           "name": "Tableau",
-          "postings": 23
+          "postings": 24
         },
         {
           "name": "organizational skills",
-          "postings": 21
+          "postings": 22
         },
         {
           "name": "compliance",
-          "postings": 20
+          "postings": 21
         },
         {
           "name": "problem-solving",
@@ -377,22 +369,22 @@
         },
         {
           "name": "lifecycle marketing",
-          "postings": 16
+          "postings": 18
         },
         {
-          "name": "logistics",
-          "postings": 16
+          "name": "Excel",
+          "postings": 17
         },
         {
           "name": "stakeholder management",
-          "postings": 15
+          "postings": 17
         },
         {
           "name": "business intelligence",
           "postings": 14
         },
         {
-          "name": "Excel",
+          "name": "forecasting",
           "postings": 14
         },
         {
@@ -400,7 +392,11 @@
           "postings": 14
         },
         {
-          "name": "forecasting",
+          "name": "Looker",
+          "postings": 13
+        },
+        {
+          "name": "MBA",
           "postings": 13
         },
         {
@@ -419,23 +415,23 @@
       "keywords": [
         {
           "name": "Python",
-          "postings": 337
+          "postings": 350
         },
         {
           "name": "AI",
-          "postings": 294
+          "postings": 297
         },
         {
           "name": "communication",
-          "postings": 279
+          "postings": 286
         },
         {
           "name": "Bachelor's degree",
-          "postings": 241
+          "postings": 246
         },
         {
           "name": "AWS",
-          "postings": 163
+          "postings": 167
         },
         {
           "name": "API",
@@ -443,70 +439,74 @@
         },
         {
           "name": "LLM",
-          "postings": 129
+          "postings": 130
         },
         {
           "name": "SQL",
-          "postings": 117
-        },
-        {
-          "name": "machine learning",
-          "postings": 114
+          "postings": 121
         },
         {
           "name": "Go",
-          "postings": 113
+          "postings": 118
+        },
+        {
+          "name": "machine learning",
+          "postings": 117
         },
         {
           "name": "Kubernetes",
-          "postings": 108
+          "postings": 110
         },
         {
           "name": "Java",
-          "postings": 103
+          "postings": 105
         },
         {
           "name": "distributed systems",
-          "postings": 98
+          "postings": 101
         },
         {
           "name": "GCP",
-          "postings": 92
+          "postings": 94
         },
         {
           "name": "C++",
-          "postings": 87
+          "postings": 92
         },
         {
           "name": "CI/CD",
-          "postings": 86
+          "postings": 87
         },
         {
           "name": "TypeScript",
-          "postings": 77
+          "postings": 80
         },
         {
           "name": "Master's degree",
-          "postings": 76
+          "postings": 79
         },
         {
           "name": "Terraform",
-          "postings": 70
+          "postings": 73
         },
         {
           "name": "problem-solving",
-          "postings": 69
+          "postings": 71
         },
         {
           "name": "electrical",
-          "postings": 66
+          "postings": 69
+        },
+        {
+          "name": "React",
+          "postings": 65
         },
         {
           "name": "leadership",
           "postings": 64
         },
         {
-          "name": "React",
+          "name": "mentoring",
           "postings": 64
         },
         {
@@ -514,7 +514,11 @@
           "postings": 63
         },
         {
-          "name": "mentoring",
+          "name": "Linux",
+          "postings": 63
+        },
+        {
+          "name": "JavaScript",
           "postings": 62
         },
         {
@@ -522,16 +526,8 @@
           "postings": 61
         },
         {
-          "name": "JavaScript",
-          "postings": 61
-        },
-        {
           "name": "networking",
-          "postings": 59
-        },
-        {
-          "name": "Linux",
-          "postings": 58
+          "postings": 61
         },
         {
           "name": "PhD",

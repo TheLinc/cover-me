@@ -373,7 +373,15 @@ test('benefits under other headings, and agency or hiring-policy notices, add no
     '- Potential compensation for this role is $102,855 to $136,000 OTE USD, plus RSUs.',
     "Here's what we offer:\n- Python learning budget",
     'What Our Team Can Offer\n- Python learning budget',
+    '## Canadian Employee Benefits\nAcme cares about the wellbeing of its employees.\n- Expanded mental health support',
+    'Our Perks:\n- Free mental health & well-being sessions',
   ]) expect(readPosting(head + tail).keywords.map((k) => k.name), tail).toEqual(['Salesforce'])
+})
+
+test('a "Logistics" section heading is not a keyword, but the requirements under it and an unmarked logistics line are', () => {
+  const names = (posting: string) => readPosting(posting).keywords.map((k) => k.name)
+  expect(names("Requirements\n- Salesforce\n## Logistics\nMinimum education: Bachelor's degree")).toEqual(['Salesforce', "Bachelor's degree"])
+  expect(names('Requirements\nLogistics\nSupply chain')).toEqual(['logistics', 'supply chain'])
 })
 
 test('a candidate-side "what you offer" heading and an agency requirement keep their keywords', () => {
