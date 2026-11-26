@@ -98,10 +98,16 @@ function UnsupportedCard({ failure }: { failure: ShownFailure }) {
       {SUPABASE_URL && (noted ? (
         <>
           <p className="scrape-failure-thanks" ref={thanks} tabIndex={-1}>
-            Thanks, we&apos;ve noted {noted}.{' '}
+            Thanks, we&apos;ve noted {noted}
+            {watchSaved && session && <> and we&apos;ll email <span className="site-watch-me" title={session.user.email}>you</span><span className="sr-only"> ({session.user.email})</span> when it&apos;s supported</>}.{' '}
             <a className="text-link" href={`${WEB_URL}/roadmap?utm_source=extension`} target="_blank" rel="noreferrer">See what&apos;s coming →</a>
           </p>
-          {session && watchSaved !== null && <WatchStatus host={noted} email={session.user.email} saved={watchSaved} />}
+          {watchSaved === false && (
+            <p className="scrape-failure-error" role="alert">
+              Couldn&apos;t save the email request.{' '}
+              <button className="link-button" onClick={() => void saveWatch(noted, true).then(setWatchSaved)}>Try again</button>
+            </p>
+          )}
         </>
       ) : <SiteRequestForm host={failure.host} session={session} onSent={sent} />)}
     </section>
@@ -181,32 +187,6 @@ function WatchLabel({ email, checked, disabled, onChange }: { email: string; che
       {/* The address shows on hover, and screen readers hear it, so the label stays short (#195). */}
       <span>Email <span className="site-watch-me" title={email}>me</span><span className="sr-only"> ({email})</span> when it&apos;s supported</span>
     </label>
-  )
-}
-
-// What became of a tick made before pressing Request (#195): a line, not a
-// box, so nothing looks tickable after the send. Undo deletes the request.
-function WatchStatus({ host, email, saved }: { host: string; email: string; saved: boolean }) {
-  const [state, setState] = useState<'on' | 'off' | 'failed'>(saved ? 'on' : 'failed')
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState('')
-
-  async function change(watch: boolean) {
-    setBusy(true)
-    setError('')
-    if (await saveWatch(host, watch)) setState(watch ? 'on' : 'off')
-    else setError(watch ? "Couldn't save that. Try again in a moment." : "Couldn't undo that. Try again in a moment.")
-    setBusy(false)
-  }
-
-  const you = <><span className="site-watch-me" title={email}>you</span><span className="sr-only"> ({email})</span></>
-  return (
-    <div className="site-watch" aria-live="polite">
-      {state === 'on' && <p>We&apos;ll email {you} when it&apos;s supported. <button className="link-button" disabled={busy} onClick={() => void change(false)}>Undo</button></p>}
-      {state === 'off' && <p>OK, we won&apos;t email you about {host}.</p>}
-      {state === 'failed' && <p className="scrape-failure-error">Couldn&apos;t save the email request. <button className="link-button" disabled={busy} onClick={() => void change(true)}>Try again</button></p>}
-      {error && <p className="scrape-failure-error" role="alert">{error}</p>}
-    </div>
   )
 }
 

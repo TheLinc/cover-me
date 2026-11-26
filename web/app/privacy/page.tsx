@@ -274,7 +274,7 @@ export default function PrivacyPage() {
                 it&apos;s supported, which shows their account email when you point at &ldquo;me&rdquo;. Nothing is saved unless
                 you tick it and press the button. Then the site&apos;s name is saved with your Cover Me account ID on
                 our server, never in PostHog: the site request itself is sent separately and stays under its random
-                ID. Undo, on the line that confirms it, deletes the record. When Cover Me starts reading that
+                ID. To take it back, email us and we delete the record. When Cover Me starts reading that
                 site, we send you one email at your account address and delete the record.
               </Li>
             </Ul>
@@ -659,7 +659,7 @@ export default function PrivacyPage() {
               communicates with our Supabase backend for the following user-initiated purposes:
               <ul className="mt-2 space-y-1 pl-4 list-disc">
                 <li>Reading the job posting (every mode): sending the stripped copy of the page you click Generate or Tailor Resume on, and getting back the job title, company and description. The page is not stored.</li>
-                <li>Site requests and bug reports (every mode, only when you press the button): sending what Request this site or Report bug sends, as described under Information We Collect. When you&apos;re signed in to Hosted mode, also saving your request to hear back about the site when you tick the box, and deleting it when you press Undo.</li>
+                <li>Site requests and bug reports (every mode, only when you press the button): sending what Request this site or Report bug sends, as described under Information We Collect. When you&apos;re signed in to Hosted mode, also saving your request to hear back about the site when you tick the box, and deleting it when you ask us to.</li>
                 <li>Authentication: signing in, signing up, signing out, and refreshing JWT session tokens.</li>
                 <li>Account tier: fetching your plan, so Pro features turn on or off when it changes.</li>
                 <li>Upgrade: getting a Stripe checkout page when you click an Upgrade button.</li>
@@ -792,7 +792,7 @@ export default function PrivacyPage() {
               <Li><strong className="text-foreground">Generation count records:</strong> Kept for as long as your account exists, because the free allowance counts generations over the life of the account. They are deleted with your account.</Li>
               <Li><strong className="text-foreground">PostHog:</strong> PostHog keeps everything we send it, including usage counts and uninstall survey answers, for up to two years. Deleting your account doesn&apos;t remove them sooner.</Li>
               <Li><strong className="text-foreground">Sentry:</strong> Sentry keeps error reports from the website and our server for up to 90 days. Deleting your account doesn&apos;t remove them sooner.</Li>
-              <Li><strong className="text-foreground">Requests to hear back about a site:</strong> Deleted when we send the email, when you press Undo, or after 12 months, whichever comes first. Deleting your account deletes them too.</Li>
+              <Li><strong className="text-foreground">Requests to hear back about a site:</strong> Deleted when we send the email, when you ask us to delete it, or after 12 months, whichever comes first. Deleting your account deletes them too.</Li>
               <Li><strong className="text-foreground">Rate-limit counters:</strong> A counter not updated for two days is deleted at the next cleanup, which runs during later requests.</Li>
               <Li><strong className="text-foreground">Stripe billing records:</strong> Deleting your account also deletes your Stripe customer record, which holds your email and saved card. Stripe retains transaction records as required by financial regulations, and we cannot delete those.</Li>
             </Ul>
