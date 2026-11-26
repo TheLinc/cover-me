@@ -212,6 +212,18 @@ describe('the skills list with no cutting option on (#400)', () => {
     expect(resume.skills).toBe('Kafka, PostgreSQL (SQL), Go, React, Jenkins, Jira')
   })
 
+  test('a resume skill the model wrote in parentheses is kept, not added twice', async () => {
+    const raw = JSON.stringify({ experience: [{ bullets: ['Built the billing service in Go'] }], skills: [{ skill: 'Message queues (Kafka)', evidence: 'Kafka' }] })
+    const resume = await assembleTailored(engineer('Go, Kafka'), raw, { jobDescription: 'Message queues', ask: approve, exactBulletCounts: true })
+    expect(resume.skills).toBe('Message queues (Kafka), Go')
+  })
+
+  test('a resume skill whose parentheses the model shortened comes back whole', async () => {
+    const raw = JSON.stringify({ experience: [{ bullets: ['Built the billing service in Go'] }], skills: [{ skill: 'Excel (pivot tables)' }] })
+    const resume = await assembleTailored(engineer('Excel (pivot tables, VLOOKUP)'), raw, { jobDescription: 'Excel', exactBulletCounts: true })
+    expect(resume.skills).toBe('Excel (pivot tables), Excel (pivot tables, VLOOKUP)')
+  })
+
   test('keeps the model\'s shorter list in trim mode', async () => {
     const resume = await assembleTailored(parsed, raw, { jobDescription: 'Go, Kafka and PostgreSQL', ask: approve, exactBulletCounts: false })
     expect(resume.skills).toBe('Kafka, PostgreSQL (SQL), Go')

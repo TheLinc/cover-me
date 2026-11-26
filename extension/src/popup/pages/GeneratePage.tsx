@@ -115,8 +115,8 @@ function TailorOptions({ inputMode, manualReady, onTailor, compact, setCompact, 
           <button
             type="button"
             className="tooltip-icon"
-            aria-label="Best for long master resumes with all your experience — the AI keeps only the bullets and skills most relevant to this role. When off, every bullet and skill stays."
-            data-tooltip="Best for long master resumes with all your experience — the AI keeps only the bullets and skills most relevant to this role. When off, every bullet and skill stays."
+            aria-label="Best for long master resumes with all your experience — the AI keeps only the bullets and skills most relevant to this role."
+            data-tooltip="Best for long master resumes with all your experience — the AI keeps only the bullets and skills most relevant to this role."
           >?</button>
         </div>
         {(!yours || design?.summary) && <div className="toggle-row">

@@ -22,3 +22,17 @@ describe('the skills list in default mode (#400)', () => {
     expect(skillFailures(checkTailored(out(all), { ...c, mode: 'trim' }))).toEqual(['skills list has 21 items (hard cap 18)'])
   })
 })
+
+describe('a resume skill with a list in parentheses (#400)', () => {
+  const c = CASES.find((x) => x.id === 'business-analyst-missing-cert')!
+  const out = (skills: string) => ({ ...c.parsed, skills }) as TailoredResume
+  const dropped = (r: { failures: string[] }) => r.failures.filter((f) => f.startsWith('default mode dropped'))
+
+  test('passes when it is kept whole, reordered with the rest', () => {
+    expect(dropped(checkTailored(out('Excel (pivot tables, VLOOKUP), SQL, Power BI, Jira, Process mapping, Requirements gathering, Visio'), c))).toEqual([])
+  })
+
+  test('names it once when part of its parentheses is gone', () => {
+    expect(dropped(checkTailored(out('SQL, Power BI, Excel (pivot tables), Jira, process mapping, requirements gathering, Visio'), c))).toEqual(['default mode dropped a resume skill: "Excel (pivot tables, VLOOKUP)"'])
+  })
+})

@@ -315,14 +315,17 @@ export async function groundSkills(skills: unknown, candidate: string, ask?: Ask
 
 // With no cutting option on, every skill the resume lists stays: one the model
 // left out goes back at the end, under its own group's label. "PostgreSQL (SQL)"
-// keeps "PostgreSQL"; a synonym ("JS" for "JavaScript") doesn't (#400).
+// and "Message queues (PostgreSQL)" keep "PostgreSQL"; "Excel (pivot tables)"
+// doesn't keep "Excel (pivot tables, VLOOKUP)"; a synonym ("JS" for
+// "JavaScript") doesn't count (#400).
 function missingOwnSkills(kept: Array<{ skill: string }>, own: string, grouped: boolean): Array<{ skill: string; category?: string }> {
-  const key = (s: string) => s.toLowerCase().replace(/\([^()]*\)/g, '').replace(/\s+/g, ' ').trim()
-  const have = new Set(kept.map((i) => key(i.skill)))
+  const flat = (s: string) => s.toLowerCase().replace(/\s+/g, ' ').trim()
+  const terms = (s: string) => [flat(s.replace(/\([^()]*\)/g, '')), ...[...s.matchAll(/\(([^()]*)\)/g)].flatMap((m) => m[1].split(',').map(flat))].filter(Boolean)
+  const have = new Set(kept.flatMap((i) => terms(i.skill)))
   return own.split(/\n+/).flatMap((line) => {
     const m = /^([^:,\n]{2,48}):\s*(.+)$/.exec(line.trim())
     return (m ? m[2] : line).split(/[|•·;]/).flatMap(splitSkills).map((skill) => ({ skill, category: grouped ? m?.[1].trim() : undefined }))
-  }).filter((item) => !have.has(key(item.skill)) && have.add(key(item.skill)))
+  }).filter((item) => !terms(item.skill).every((t) => have.has(t)) && terms(item.skill).every((t) => have.add(t)))
 }
 
 export interface SkillGroup { label: string; items: string }
@@ -346,7 +349,7 @@ export function skillGroups(skills?: string): SkillGroup[] {
 // 8 to 18 and none allows more for groups. Skills the posting names pass it only
 // when they alone fill it, as an ATS matches the posting's terms. The prompt asks
 // for it, but a model that copies the whole master list back (73 skills in 8
-// groups) is cut here (#190).
+// groups) is cut here, in trim and compact mode only (#190, #400).
 export const MAX_GROUPED_SKILLS = 18
 export const MAX_SKILL_GROUPS = 6
 
