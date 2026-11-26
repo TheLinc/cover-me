@@ -123,13 +123,20 @@ function SiteRequestRow({ host }: { host: string }) {
       </>
     )
   }
+  const field = <input className="form-input" aria-label="Job site" value={value} onChange={(e) => setValue(e.target.value)} />
+  const button = <button className="btn btn-secondary btn-sm" type="submit" disabled={sending || !value.trim()}>Request this site</button>
   return (
     <form className="site-request" onSubmit={submit}>
-      <div className="site-request-row">
-        <input className="form-input" aria-label="Job site" value={value} onChange={(e) => setValue(e.target.value)} />
-        <button className="btn btn-secondary btn-sm" type="submit" disabled={sending || !value.trim()}>Request this site</button>
-      </div>
-      {session && <WatchLabel email={session.user.email} checked={watch} disabled={sending} onChange={setWatch} />}
+      {/* The button comes after the box, so the box reads as part of the request, not a step after it (#195). */}
+      {session ? (
+        <div className="site-request-stack">
+          {field}
+          <WatchLabel email={session.user.email} checked={watch} disabled={sending} onChange={setWatch} />
+          {button}
+        </div>
+      ) : (
+        <div className="site-request-row">{field}{button}</div>
+      )}
       {error && <p className="scrape-failure-error" role="alert">{error}</p>}
     </form>
   )
