@@ -104,6 +104,11 @@ describe('countKeywords', () => {
   test('leaves out the keywords a role skips', () => {
     expect(countKeywords(postings, ['Salesforce']).keywords).toEqual([{ name: 'HubSpot', postings: 3 }])
   })
+
+  test("doesn't count a company's own name in its postings", () => {
+    const own = postings.map((p) => (p.company === 'b' ? { ...p, company: 'hubspot' } : p))
+    expect(countKeywords(own).keywords).toEqual([{ name: 'Salesforce', postings: 12 }])
+  })
 })
 
 describe('skipped keywords', () => {

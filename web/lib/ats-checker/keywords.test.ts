@@ -417,10 +417,17 @@ test('sales and marketing tools are read by name, and ordinary "outreach" is not
   expect(names('Requirements\n- Iterable, Mixpanel, 6sense or Demandbase')).toEqual(['Iterable', 'Mixpanel', '6sense', 'Demandbase'])
 })
 
+test('sales duties that mention LinkedIn still count', () => {
+  const names = (posting: string) => readPosting(posting).keywords.map((k) => k.name)
+  expect(names('Requirements\n- Comfortable writing personalized messages on LinkedIn and running sequences in Salesloft and Salesforce')).toEqual(['LinkedIn', 'Salesloft', 'Salesforce'])
+  expect(names('Requirements\n- You will reach out via LinkedIn, phone and Salesforce sequences to 50 prospects a day')).toEqual(['LinkedIn', 'Salesforce'])
+})
+
 test('LinkedIn as a social link or a recruiter notice is not an ask, and benefits headings that name a tool are still skipped', () => {
   const names = (posting: string) => readPosting(posting).keywords.map((k) => k.name)
   expect(names('Preferred Qualifications\n- Salesforce\nLinkedin | X (formerly Twitter) | Instagram | Acme.com')).toEqual(['Salesforce'])
   expect(names('Requirements\n- Salesforce\n- Our recruiters will only reach out via LinkedIn or email.\n- If you receive messages on LinkedIn from other people, they may not be legitimate.')).toEqual(['Salesforce'])
   expect(names('Requirements\n- Python\nBenefits at Salesloft:\n- Excel training\n## Gong Benefits\n- Slack stipend')).toEqual(['Python'])
   expect(names('Requirements\n- LinkedIn Navigator, Sales Nav or SalesNav')).toEqual(['Sales Navigator'])
+  expect(names("Requirements\n- Python\nBenefits & Perks at Gong\n- Excel classes\n## Perks & Benefits at Mixpanel\n- Slack stipend\n## Salesloft's Benefits\n- Tableau\n## Compensation at Clari\n- Workday")).toEqual(['Python'])
 })

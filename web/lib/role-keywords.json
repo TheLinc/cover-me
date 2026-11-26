@@ -242,10 +242,6 @@
           "postings": 20
         },
         {
-          "name": "Salesloft",
-          "postings": 20
-        },
-        {
           "name": "logistics",
           "postings": 19
         },
@@ -259,6 +255,10 @@
         },
         {
           "name": "ROI",
+          "postings": 18
+        },
+        {
+          "name": "Salesloft",
           "postings": 18
         },
         {

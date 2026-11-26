@@ -79,7 +79,8 @@ function headingLevel(line: string, labelled: boolean): Heading | null {
   if (COMPANY.test(text)) return 'company'
   if (/^a few logistics$/i.test(text) || (marked && !labelled && /^logistics$/i.test(text))) return 'unknown'
   const namedHeading = /^((required|preferred|minimum|basic) (qualifications|requirements|skills|experience)|.*\b(requirements|qualifications)|.*\b(looking for|seeking))$/i.test(text)
-  if (/^(benefits|perks)( and \w+)? at\b|^\w+ (benefits|perks)$/i.test(text)) return 'skip'
+  const unnamed = text.replace(/ at [A-Z].*$|^\S+'s /, '')
+  if ((unnamed !== text && SKIP.test(unnamed)) || /^\w+ (benefits|perks)$/i.test(text)) return 'skip'
   if (!namedHeading && DICTIONARY.some((term) => has(text, term))) return null
   if (!namedHeading && SKIP.test(text)) return 'skip'
   if (PREFERRED.test(text)) return 'preferred'
@@ -119,7 +120,7 @@ const BOILERPLATE = new RegExp(
     String.raw`(regardless of|without regard to)[^.]{0,60}${TRAIT}[^.]{0,80}${TRAIT}`,
     'Americans with Disabilities|reasonable accommodation|VEVRAA|OFCCP|E-Verify|eligibility to work|employment eligibility',
     'discriminat(?!ive)|protected veteran|pay transparency|know your rights|map data ©',
-    'agency resumes|unsolicited (resumes|candidates)|(only|will) reach out (to you )?(via|on|through) LinkedIn|messages on LinkedIn|(headhunters|recruitment agencies) (may|must|should) not|terms and conditions of employment|(you will|you\'ll|required to|must) attend[^.]{0,40}onboarding|travel for purposes such as new hire onboarding|(role|position) requires in[- ]person onboarding',
+    'agency resumes|unsolicited (resumes|candidates)|recruiters? (will )?only reach out|receive messages on LinkedIn|(headhunters|recruitment agencies) (may|must|should) not|terms and conditions of employment|(you will|you\'ll|required to|must) attend[^.]{0,40}onboarding|travel for purposes such as new hire onboarding|(role|position) requires in[- ]person onboarding',
   ].join('|'),
   'i',
 )

@@ -118,6 +118,8 @@ export interface RolePosting {
   text: string
 }
 
+const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '')
+
 export function countKeywords(all: RolePosting[], skip: string[] = []) {
   const seen = new Set<string>()
   const taken = new Map<string, number>()
@@ -132,7 +134,7 @@ export function countKeywords(all: RolePosting[], skip: string[] = []) {
   for (const p of postings) {
     sources[p.source]++
     for (const k of readPosting(p.text).keywords) {
-      if (k.level === 'mentioned' || skip.includes(k.name)) continue
+      if (k.level === 'mentioned' || skip.includes(k.name) || slug(k.name) === slug(p.company)) continue
       const t = tally.get(k.name) ?? { postings: 0, companies: new Set<string>() }
       t.postings++
       t.companies.add(p.company)
