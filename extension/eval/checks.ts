@@ -4,7 +4,7 @@
 import type { ParsedResume, TailoredResume } from '../src/types'
 import type { EvalCase } from './fixtures'
 import { extractNumbers, lintLetter } from '../src/lib/ai/letter-lint'
-import { MAX_GROUPED_SKILLS, mixedTenseLines, skillGroups } from '../src/lib/ai/resume-grounding'
+import { MAX_GROUPED_SKILLS, mixedTenseLines, skillGroups, splitSkills } from '../src/lib/ai/resume-grounding'
 import { shownInSection, urlCore } from '../src/lib/ai/resume-parse'
 import { bulletBudget, isResultBullet } from '../src/lib/ai/resume-tailor'
 
@@ -264,14 +264,27 @@ export function checkTailored(out: TailoredResume, c: EvalCase, input: ParsedRes
   if (out.skills) {
     // A grouped list counts each group's items, its label and anything in
     // parentheses aside ("LLM APIs (OpenAI, Anthropic)" is one); any other list
-    // counts every comma. Both are held to 18 (#190).
+    // counts every comma. Both are held to 18 in trim and compact mode (#190, #400).
     const grouped = skillGroups(input.skills).length > 0
     const skillItems = (grouped
       ? out.skills.split('\n').flatMap((line) => line.replace(/^[^:,]{2,48}:\s*/, '').replace(/\([^()]*\)/g, '').split(','))
       : out.skills.split(',')).map((s) => s.trim()).filter(Boolean)
     // Skills the posting names pass the cap only when they alone fill it (#190).
     const cap = Math.max(MAX_GROUPED_SKILLS, skillItems.filter((s) => containsTerm(c.job.description, s)).length)
-    if (skillItems.length > cap) result.failures.push(`skills list has ${skillItems.length} items (hard cap ${cap})`)
+    if (c.mode && skillItems.length > cap) result.failures.push(`skills list has ${skillItems.length} items (hard cap ${cap})`)
+    // Default mode cuts no skill: the name and each term in its parentheses
+    // keep all their words in some item, so "Oracle ERP (ERP)" keeps "Oracle ERP",
+    // "Microsoft 365, Outlook" keeps "Microsoft 365 (Outlook)", and "Excel (pivot
+    // tables)" doesn't keep "Excel (pivot tables, VLOOKUP)" (#400).
+    if (!c.mode && input.skills) {
+      const items = (list: string, seps: RegExp) => list.split(seps).flatMap((line) => splitSkills(line.replace(/^\s*[^:,]{2,48}:\s*/, '')))
+      const words = (s: string) => s.toLowerCase().match(/[\p{L}\p{N}+#.]+/gu) ?? []
+      const parts = (s: string) => [s.replace(/\([^()]*\)/g, ''), ...[...s.matchAll(/\(([^()]*)\)/g)].flatMap((m) => m[1].split(','))]
+      const outWords = items(out.skills, /\n/).map((s) => new Set(words(s)))
+      for (const own of items(input.skills, /[\n|•·;]/)) {
+        if (!parts(own).every((p) => outWords.some((w) => words(p).every((x) => w.has(x))))) result.failures.push(`default mode dropped a resume skill: "${own}"`)
+      }
+    }
     for (const k of c.mustKeepSkills) {
       // A kept skill may be rephrased ("patient education" → "patient and
       // family education"), so require all its words inside one skill item (https://github.com/TheLinc/cover-me/commit/46f809a1dc946cf6964c9e2ad9a400323d9bada5).

@@ -100,7 +100,7 @@ const checks = [
     a: EXT_TAILOR,
     b: BE_TAILOR,
     start: 'STEP 8 — OPTIMIZE SKILLS',
-    end: 'Hard cap: 18 items.',
+    end: 'so rank rather than drop.',
   },
   {
     name: 'tailor: ATS match report step',

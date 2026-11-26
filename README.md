@@ -262,7 +262,7 @@ Live runs go through `claude -p` on your Claude plan, never API credits. For cle
 
 A resume fails when the parse doesn't match its answer key, when an integrity check fails (invented skills or numbers, changed titles or dates, dropped certifications, wrong bullet counts), or when the judge scores faithfulness, field fit, relevance or readability at 2/5 or lower. `--baseline` also fails a case whose judge scores drop by a full point against `eval/baseline.json`. Refresh that file with `--update-baseline` after an intended change.
 
-GitHub Actions runs the free checks on every push (`.github/workflows/prompt-checks.yml`). The live eval (`.github/workflows/output-eval.yml`, needs a `CLAUDE_CODE_OAUTH_TOKEN` repository secret) runs the 11-case quick set on PRs that change prompt or eval code, and only the sides the diff touches: letters, tailoring, answers to application questions, or a mix. A manual run (Actions > Output eval > Run workflow) runs every case and picks the side the same way unless you choose one. The weekly run is paused during development.
+GitHub Actions runs the free checks on every push (`.github/workflows/prompt-checks.yml`). The live eval (`.github/workflows/output-eval.yml`, needs a `CLAUDE_CODE_OAUTH_TOKEN` repository secret) runs the 14-case quick set on PRs that change prompt or eval code, and only the sides the diff touches: letters, tailoring, answers to application questions, or a mix. A manual run (Actions > Output eval > Run workflow) runs every case and picks the side the same way unless you choose one. The weekly run is paused during development.
 
 ### Project structure
 
