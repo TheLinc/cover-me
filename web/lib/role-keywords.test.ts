@@ -45,6 +45,10 @@ describe('postingText', () => {
     expect(greenhouseText(content)).toBe("Requirements\n- 3+ years of B2B sales\n- Salesforce & HubSpot\nWe're hiring now")
   })
 
+  test('starts a new line at an opening block tag, and keeps an entity it cannot decode', () => {
+    expect(greenhouseText('&lt;div&gt;Intro&lt;h3&gt;Requirements&lt;/h3&gt;&lt;p&gt;Bad &amp;#99999999; char&lt;/p&gt;&lt;/div&gt;')).toBe('Intro\nRequirements\nBad &#99999999; char')
+  })
+
   test('treats line breaks in the HTML source as spaces, as a browser does', () => {
     expect(greenhouseText('&lt;ul&gt;\n&lt;li&gt;\n&lt;p&gt;Mental health\nbenefits&lt;/p&gt;\n&lt;/li&gt;&lt;/ul&gt;')).toBe('- Mental health benefits')
   })

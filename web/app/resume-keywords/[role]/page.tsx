@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { SendToComputer } from '@/components/site/SendToComputer'
 import { SiteFooter } from '@/components/site/SiteFooter'
 import { SiteNav } from '@/components/site/SiteNav'
-import { PER_COMPANY } from '@/lib/role-keywords'
+import { MIN_COMPANIES, PER_COMPANY, TOP } from '@/lib/role-keywords'
 import { FETCHED, ROLES, getRole } from '@/lib/roles'
 import { BASE, OG_IMAGE } from '@/lib/structured-data'
 import { cn, longDate, month, storeUrl } from '@/lib/utils'
@@ -98,14 +98,15 @@ export default async function RolePage({ params }: { params: Promise<{ role: str
             {counts.postings} {role.noun} postings from {counts.companies} companies, read on {longDate(FETCHED)} from their public job boards on{' '}
             {list(sources.map(([name, n]) => `${name} (${n})`))}. The titles read were {role.titles}. A keyword counts when the posting asks for it as a
             requirement or a nice-to-have, read with the same rules as the <Link href="/ats-checker" className="text-brand-strong underline underline-offset-2 hover:text-brand-deep">free ATS checker</Link>.
-            At most {PER_COMPANY} postings come from any one company, and a keyword fewer than 3 companies ask for is left out.
+            At most {PER_COMPANY} postings come from any one company. A keyword fewer than {MIN_COMPANIES} companies ask for is left out, and the table
+            stops at the top {TOP}.
           </p>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Keyword</TableHead>
                 <TableHead className="text-right">Postings that ask for it</TableHead>
-                <TableHead className="w-[38%] max-sm:hidden"><span className="sr-only">Share of postings</span></TableHead>
+                <TableHead className="w-[38%] max-sm:hidden" aria-hidden />
               </TableRow>
             </TableHeader>
             <TableBody>

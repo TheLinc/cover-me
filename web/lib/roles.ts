@@ -31,7 +31,7 @@ const COPY: RoleCopy[] = [
       'The skills, tools and certifications marketing job postings ask for most, counted across real public postings, with how many postings ask for each one.',
     titles: 'product marketing, growth, lifecycle, demand generation and other marketing titles',
     intro: [
-      'Marketing postings mix channels, such as email or paid search, with the software that runs them. Name both on your resume, and give the number each campaign moved.',
+      'Marketing postings ask for the software a team runs its campaigns in, such as Marketo or Salesforce. Name the tools you used on your resume, and give the number each campaign moved.',
     ],
   },
   {
@@ -40,7 +40,7 @@ const COPY: RoleCopy[] = [
     metaTitle: 'Engineering Resume Keywords Employers Ask For',
     metaDescription:
       'The skills, tools and degrees engineering job postings ask for most, counted across real public postings, with how many postings ask for each one.',
-    titles: 'software, hardware, mechanical, electrical and other engineer titles, leaving out managers and sales engineers',
+    titles: 'software, hardware, mechanical, electrical and other engineer titles, leaving out managers and sales, solutions and support engineers',
     intro: [
       'The postings come from software, hardware and aerospace companies, so the list mixes programming languages and cloud platforms with electrical and mechanical skills. When a posting names a specific service or version, such as AWS Lambda, use that name on your resume and not only the platform.',
     ],
@@ -53,7 +53,7 @@ const COPY: RoleCopy[] = [
       'The skills, certifications and tools warehouse job postings ask for most, counted across real public postings, with how many postings ask for each one.',
     titles: 'warehouse associate, forklift operator, material handler, inventory, receiving and fulfillment titles, leaving out managers',
     intro: [
-      'Warehouse postings are short, and what they ask for is concrete: running a forklift, counting inventory, and using the warehouse system the site runs. Put a forklift certification near the top of your resume, where a recruiter skimming it will see it.',
+      'Warehouse postings are short, and what they ask for is concrete: running a forklift, counting inventory, and using the inventory software the site runs, often an ERP system. Put a forklift certification near the top of your resume, where a recruiter skimming it will see it.',
     ],
   },
   {
@@ -63,7 +63,7 @@ const COPY: RoleCopy[] = [
     metaTitle: 'Administrative Assistant Resume Keywords',
     metaDescription:
       'The skills and tools administrative and executive assistant job postings ask for most, counted across real public postings, with how many ask for each.',
-    titles: 'executive assistant, administrative assistant, office manager and receptionist titles',
+    titles: 'executive assistant, administrative assistant, office coordinator, office manager and receptionist titles',
     intro: [
       'Few administrative assistant jobs are posted on Greenhouse and Lever, so this page counts executive assistant, office manager and receptionist postings with them. Most of the postings read are for executive assistants.',
       "These postings ask for soft skills by name, such as attention to detail and organization, more often than sales or engineering postings do. A resume line that shows the skill, such as managing three executives' calendars, does more than listing the words.",

@@ -1,16 +1,19 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 import { MIN_POSTINGS, ROLE_SLUGS } from './role-keywords'
 import { FETCHED, ROLES } from './roles'
 
-async function renderRole(slug: string) {
-  const { renderToStaticMarkup } = await import('react-dom/server')
-  const { default: RolePage } = await import('../app/resume-keywords/[role]/page')
-  return renderToStaticMarkup(await RolePage({ params: Promise.resolve({ role: slug }) }))
-}
+let renderRole: (slug: string) => Promise<string>
 
 describe('role keyword pages', () => {
+  // The first import of the page and react-dom takes about 4 s, past the 5 s test timeout when the suite runs in parallel (#299).
+  beforeAll(async () => {
+    const { renderToStaticMarkup } = await import('react-dom/server')
+    const { default: RolePage } = await import('../app/resume-keywords/[role]/page')
+    renderRole = async (slug) => renderToStaticMarkup(await RolePage({ params: Promise.resolve({ role: slug }) }))
+  }, 60_000)
+
   it('has a page for every role the script counts', () => {
     expect(ROLES.map((r) => r.slug).sort()).toEqual([...ROLE_SLUGS].sort())
   })

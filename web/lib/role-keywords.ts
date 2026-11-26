@@ -34,15 +34,18 @@ const ENTITIES: Record<string, string> = {
   mdash: '—', ndash: '–', hellip: '…', bull: '•', middot: '·',
 }
 const decode = (s: string) =>
-  s.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (whole, name: string) =>
-    name[0] === '#' ? String.fromCodePoint(Number(name[1].toLowerCase() === 'x' ? `0${name.slice(1)}` : name.slice(1))) : ENTITIES[name.toLowerCase()] ?? whole)
+  s.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (whole, name: string) => {
+    if (name[0] !== '#') return ENTITIES[name.toLowerCase()] ?? whole
+    const code = Number(name[1].toLowerCase() === 'x' ? `0${name.slice(1)}` : name.slice(1))
+    return code <= 0x10ffff ? String.fromCodePoint(code) : whole
+  })
 
 function htmlToText(html: string): string {
   const text = html
     .replace(/\s+/g, ' ')
     .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<li[^<>]*>/gi, '\n- ')
-    .replace(/<\/(p|div|ul|ol|h[1-6]|tr|section)>/gi, '\n')
+    .replace(/<li\b[^<>]*>(\s*<(p|div|span)\b[^<>]*>)*/gi, '\n- ')
+    .replace(/<\/?(p|div|ul|ol|h[1-6]|tr|section)\b[^<>]*>/gi, '\n')
     .replace(/<[^<>]*>/g, '')
   return decode(text)
     .split('\n')
@@ -55,17 +58,17 @@ export const greenhouseText = (content: string) => htmlToText(decode(content))
 
 export interface LeverPosting {
   description: string
-  lists: { text: string; content: string }[]
+  lists?: { text: string; content: string }[]
   additional: string
 }
 
 export const leverText = (p: LeverPosting) =>
-  htmlToText([p.description, ...p.lists.flatMap((l) => [`<div>${l.text}</div>`, `<ul>${l.content}</ul>`]), p.additional].join(''))
+  htmlToText([p.description, ...(p.lists ?? []).flatMap((l) => [`<div>${l.text}</div>`, `<ul>${l.content}</ul>`]), p.additional].join(''))
 
 export const PER_COMPANY = 10
 export const MIN_POSTINGS = 30
-const MIN_COMPANIES = 3
-const TOP = 30
+export const MIN_COMPANIES = 3
+export const TOP = 30
 
 export type Source = 'Greenhouse' | 'Lever'
 export interface RolePosting {
