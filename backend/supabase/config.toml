@@ -448,8 +448,14 @@ enabled = true
 verify_jwt = false
 
 # The extension's "Request this site" and "Report bug" buttons (#130), also
-# without an account. Rate-limited per IP like scrape; sends only to PostHog.
+# without an account. Rate-limited per IP like scrape; sends only to PostHog,
+# except a signed-in user's "Email me when Cover Me reads this site" (#195).
 [functions.site-request]
+verify_jwt = false
+
+# Emails the users waiting on a site once it's supported (#195). Only the
+# developer's `pnpm notify-site` calls it, with the service key.
+[functions.site-watch]
 verify_jwt = false
 
 # The website's free ATS checker (#278), used without an account. Rate-limited

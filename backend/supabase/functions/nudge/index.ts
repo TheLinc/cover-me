@@ -1,4 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { hasBearer } from '../_shared/bearer.ts'
 import { json } from '../_shared/cors.ts'
 import { unsubscribeHeaders, unsubscribeUrl } from '../_shared/email-consent.ts'
 import { nudgeEmail, type Version } from './email.ts'
@@ -9,7 +10,7 @@ const RESEND_API_BASE = (Deno.env.get('RESEND_API_BASE') || 'https://api.resend.
 const SITE_URL = (Deno.env.get('SITE_URL') || 'https://www.cover-me.dev').replace(/\/+$/, '')
 const FROM = 'Lincoln from Cover Me <lincoln@cover-me.dev>'
 const REPLY_TO = 'lincoln@cover-me.dev'
-// Resend's default limit is 2 requests a second.
+// Resend allows 2 requests a second by default (#113).
 const SEND_GAP_MS = 550
 
 // The one-day follow-up (#113). The daily workflow (.github/workflows/nudge.yml)
@@ -18,7 +19,7 @@ const SEND_GAP_MS = 550
 // email-preferences' job; this only links to it.
 // Sends nothing until the NUDGE_ENABLED secret is "true".
 Deno.serve(async (req) => {
-  if (!(await isScheduler(req))) return json({ error: 'Invalid token' }, 401)
+  if (!(await hasBearer(req, Deno.env.get('NUDGE_SECRET')))) return json({ error: 'Invalid token' }, 401)
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405)
 
   const sent = { resume: 0, no_resume: 0 }
@@ -34,9 +35,9 @@ Deno.serve(async (req) => {
   let failed = 0
   for (const [i, c] of (candidates as Candidate[]).entries()) {
     if (i > 0) await new Promise((r) => setTimeout(r, SEND_GAP_MS))
-    // Claim before sending, so the email goes out at most once even if a write
-    // fails or two runs overlap. Only a send Resend refused releases the
-    // claim for the next run; after a timeout it may have gone out, so it stays.
+    // Claimed first, so the email goes out at most once even if a write fails
+    // or two runs overlap (#113). Only a send Resend refused frees the claim
+    // for the next run; after a timeout it may have gone out, so it stays.
     const { data: claimed, error: claimError } = await supabase.from('users').update({ nudge_sent_at: new Date().toISOString() })
       .eq('id', c.user_id).is('nudge_sent_at', null).select('id')
     if (claimError) {
@@ -58,20 +59,10 @@ Deno.serve(async (req) => {
     }
   }
 
-  // Counts only: nothing that identifies anyone.
+  // Only counts, never who: logs stay free of personal data (#113).
   console.log(`[nudge] sent resume=${sent.resume} no_resume=${sent.no_resume} failed=${failed}`)
   return json({ enabled: true, sent, failed })
 })
-
-async function isScheduler(req: Request): Promise<boolean> {
-  const secret = Deno.env.get('NUDGE_SECRET')
-  const given = req.headers.get('Authorization')?.replace(/^Bearer /, '')
-  if (!secret || !given) return false
-  // Compare digests, so the time taken says nothing about the secret.
-  const digest = async (s: string) => new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)))
-  const [a, b] = await Promise.all([digest(secret), digest(given)])
-  return a.reduce((diff, byte, i) => diff | (byte ^ b[i]), 0) === 0
-}
 
 type Candidate = { user_id: string; email: string; has_resume: boolean }
 
@@ -93,7 +84,7 @@ async function send({ user_id: userId, email }: Candidate, version: Version): Pr
         text,
         headers: await unsubscribeHeaders(userId),
       }),
-      // One stuck send mustn't run the whole batch into the function time limit.
+      // So one stuck send can't push the batch past the function time limit (#113).
       signal: AbortSignal.timeout(15_000),
     })
     if (res.ok) return 'sent'
