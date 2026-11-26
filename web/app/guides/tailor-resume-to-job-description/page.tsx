@@ -157,7 +157,8 @@ export default function Page() {
               <p>{s.text}</p>
               {i === 0 && (
                 <p>
-                  The free <Link href="/ats-checker">ATS resume checker</Link> lists a posting&rsquo;s keywords and marks which ones your resume has.
+                  The free <Link href="/ats-checker">ATS resume checker</Link> lists a posting&rsquo;s keywords and marks which ones your resume has. To see
+                  which keywords most postings for your kind of job ask for, read the <Link href="/resume-keywords">resume keywords by job</Link>.
                 </p>
               )}
               {i === 2 && (
