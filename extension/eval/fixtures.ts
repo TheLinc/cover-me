@@ -38,6 +38,8 @@ export interface EvalCase {
   mode?: 'trim' | 'compact'
   /** For trim and compact cases: JD terms whose bullet evidence must survive the cut (#251). */
   keepInBullets?: string[]
+  /** Letter lines the resume can't support, as [pattern, what it claims]; a match fails the letter (#212). */
+  letterFailPatterns?: Array<[RegExp, string]>
 }
 
 const TECH_NOTES = 'Software engineering: concrete stack names, scale (users, latency, coverage), ownership and code review. Frontend work must not be inflated into infrastructure or e-commerce domain claims.'
@@ -298,6 +300,7 @@ Nice to have: Node.js, accessibility (WCAG 2.1 AA) experience.`,
     resumeText: alexText,
     parsed: alexParsed,
     failTerms: ['Redux', 'Kubernetes', 'Cypress'],
+    letterFailPatterns: [[/\b(?:most|much|bulk|share|half|majority|rest) of (?:my|the) (?:time|week|day|job|work)\b|\b(?:smaller|bigger|larger) share\b/i, "a split of the applicant's time"]],
     expectedLabels: [['State Management']],
     warnTerms: ['e-commerce', 'ecommerce', 'storefront'],
     mustKeepSkills: ['React', 'TypeScript', 'GraphQL', 'Jest', 'Node.js'],
