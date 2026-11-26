@@ -23,7 +23,7 @@ if (args.positionals.length !== 1) {
 const { apiUrl, key } = await target(args.values.prod, `Email everyone waiting on ${host}`)
 const res = await fetch(`${apiUrl}/functions/v1/site-watch`, {
   method: 'POST',
-  headers: { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+  headers: { apikey: key, 'X-Service-Key': key, 'Content-Type': 'application/json' },
   body: JSON.stringify({ host }),
 })
 const body = await res.json().catch(() => ({}))

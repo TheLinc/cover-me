@@ -234,6 +234,15 @@ pnpm trial-links 5 --note "reddit launch" --prod   # production, asks you to typ
 
 Each link (`/redeem/<code>`) gives one account a free week of Pro with no card, then drops it back to free unless it upgrades. One gift trial per account. `--days` (default 30) is how long an unused link works. The note is stored in `trial_codes`, so redemptions per batch can be counted there. To revoke an unused link, delete its row.
 
+#### Telling users a site now works
+
+```bash
+pnpm notify-site jobs.example.com          # local stack (needs pnpm functions:serve)
+pnpm notify-site jobs.example.com --prod   # production, asks you to type "prod"
+```
+
+Signed-in users can tick "Email me when Cover Me reads this site" after a site request (#195). Once the store build that reads a site is live, run this for each host the board uses (e.g. `boards.greenhouse.io` and `job-boards.greenhouse.io`). Each account waiting on that host gets one email from the `site-watch` function, replying to you, and its request is deleted. A send Resend refused stays for the next run. Requests nobody acts on are deleted after 12 months.
+
 ### Resume quality eval
 
 `extension/eval/` checks the cover letter and resume tailoring prompts against 32 synthetic resumes across 16 industries (business, finance, legal, education, trades, hospitality, retail, logistics, healthcare, engineering, design, government, nonprofit, science, technology, manufacturing). Every job posting asks for something its resume lacks, so the checks can confirm the output never claims it.

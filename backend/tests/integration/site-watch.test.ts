@@ -4,7 +4,7 @@ import { admin, callFunction, createUser, deleteUser, mockClaude, mockResend, ty
 // The developer runs this when support for a site ships (#195): one email to
 // each account waiting on that site, then their rows go.
 const notify = (host: unknown, key = process.env.SUPABASE_SERVICE_KEY!) =>
-  callFunction('site-watch', { body: { host }, headers: { Authorization: `Bearer ${key}` } })
+  callFunction('site-watch', { body: { host }, headers: { 'X-Service-Key': key } })
 
 const watching = async (host: string) =>
   (await admin.from('site_watch').select('user_id').eq('host', host)).data!.map((r) => r.user_id).sort()
@@ -52,9 +52,10 @@ describe('site-watch', () => {
     expect(await watching('jobs.refused.com')).toEqual([user.id])
   })
 
-  it('only answers the service key', async () => {
+  it('only answers the service key, in its own header', async () => {
     const user = await watcher('jobs.locked.com')
-    for (const res of [await notify('jobs.locked.com', 'wrong'), await callFunction('site-watch', { body: { host: 'jobs.locked.com' } })]) {
+    const asBearer = callFunction('site-watch', { body: { host: 'jobs.locked.com' }, token: process.env.SUPABASE_SERVICE_KEY })
+    for (const res of [await notify('jobs.locked.com', 'wrong'), await callFunction('site-watch', { body: { host: 'jobs.locked.com' } }), await asBearer]) {
       expect(res.status).toBe(401)
     }
     expect(await sentTo(user.email)).toEqual([])

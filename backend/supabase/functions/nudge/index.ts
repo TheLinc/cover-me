@@ -1,5 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
-import { hasBearer } from '../_shared/bearer.ts'
+import { secretMatches } from '../_shared/secret.ts'
 import { json } from '../_shared/cors.ts'
 import { unsubscribeHeaders, unsubscribeUrl } from '../_shared/email-consent.ts'
 import { SEND_GAP_MS, sendEmail } from '../_shared/resend.ts'
@@ -15,7 +15,7 @@ const SITE_URL = (Deno.env.get('SITE_URL') || 'https://www.cover-me.dev').replac
 // email-preferences' job; this only links to it.
 // Sends nothing until the NUDGE_ENABLED secret is "true".
 Deno.serve(async (req) => {
-  if (!(await hasBearer(req, Deno.env.get('NUDGE_SECRET')))) return json({ error: 'Invalid token' }, 401)
+  if (!(await secretMatches(req.headers.get('Authorization')?.replace(/^Bearer /, ''), Deno.env.get('NUDGE_SECRET')))) return json({ error: 'Invalid token' }, 401)
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405)
 
   const sent = { resume: 0, no_resume: 0 }
