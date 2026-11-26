@@ -36,7 +36,7 @@ describe('site-watch', () => {
     for (const user of [a, b]) {
       const mail = await sentTo(user.email)
       expect(mail).toHaveLength(1)
-      expect(mail[0].body.subject).toBe('Cover Me now reads jobs.acme.com')
+      expect(mail[0].body.subject).toBe('You asked about jobs.acme.com')
       expect(mail[0].body.reply_to).toBe('lincoln@cover-me.dev')
       expect(mail[0].body.text).toContain('jobs.acme.com')
     }

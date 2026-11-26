@@ -1402,6 +1402,7 @@ textarea:focus-visible, input:focus-visible, [tabindex]:focus-visible {
 .site-watch { align-items: flex-start; margin-top: 8px; overflow-wrap: anywhere; }
 .site-watch input[type="checkbox"] { flex-shrink: 0; margin-top: 2px; }
 .site-watch-me { text-decoration: underline dotted; text-underline-offset: 2px; cursor: help; }
+.link-button { padding: 0; border: none; background: none; color: var(--accent-h); font: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
 
 /* A text box with its action on its bottom edge (#118): Regenerate sits with
    the text it sends, which keeps the result row to Download, Edit and New. */

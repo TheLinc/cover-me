@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
 function send(to: string, host: string) {
   return sendEmail('site-watch', () => ({
     to: [to],
-    subject: `Cover Me now reads ${host}`,
+    subject: `You asked about ${host}`,
     text: [
       'Hi,',
       '',
