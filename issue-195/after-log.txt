@@ -1,0 +1,27 @@
+PASS no site_watch row before ticking
+PASS after: the box shows, unticked
+PASS after: the box shows the account email
+site_watch rows after tick: [{"host":"jobs.example-board.com","user_id":"d56f616f-98cc-4ee3-b5eb-42ae39dc7fc6"}]
+PASS after: ticking creates exactly one site_watch row for this account
+PASS after: unticking deletes it
+PostHog survey response: {"api_key":"phc_mock","event":"survey sent","distinct_id":"933329f3-c133-410c-a76c-3866c55e5192","properties":{"$survey_id":"survey_mock","$survey_response":"Site request","$survey_response_1":"jobs.example-board.com","$survey_completed":true,"$process_person_profile":false,"$geoip_disable":true}}
+PASS after: the survey response has a random distinct_id
+PASS after: and no account ID or email
+rows before notify: 2
+$ pnpm notify-site https://www.jobs.example-board.com/jobs/1
+jobs.example-board.com: sent 2, failed 0.
+PASS notify sends one email per row (2 rows, 2 emails)
+email: To proof-after-1795709321931@example.test | Reply-To lincoln@cover-me.dev | Subject: Cover Me now reads jobs.example-board.com
+Hi,
+
+You asked Cover Me to email you once it could read job postings on jobs.example-board.com. It can now.
+
+Open a posting there, click the Cover Me icon and press Generate or Tailor. If your extension has not updated yet, Chrome does that within a day.
+
+If something on that site still doesn't come out right, reply to this email and tell me what you see.
+
+Lincoln
+Cover Me
+
+You're getting this one email because you ticked "Email me when Cover Me reads this site". We've now deleted that request.
+PASS notify leaves no rows for that host

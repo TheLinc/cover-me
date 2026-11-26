@@ -1,0 +1,5 @@
+PASS no site_watch row before ticking
+PASS before: no "Email me when Cover Me reads this site" box
+PostHog survey response: {"api_key":"phc_mock","event":"survey sent","distinct_id":"3876687c-281b-4e07-9d80-47f0088bc8ae","properties":{"$survey_id":"survey_mock","$survey_response":"Site request","$survey_response_1":"jobs.example-board.com","$survey_completed":true,"$process_person_profile":false,"$geoip_disable":true}}
+PASS before: the survey response has a random distinct_id
+PASS before: and no account ID or email
