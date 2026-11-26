@@ -59,7 +59,7 @@ function looksLikeHeading(text: string, labelled: boolean): boolean {
   const words = text.split(/\s+/).filter((w) => /^[A-Za-z]/.test(w) && !MINOR_WORD.test(w))
   return words.length > 0 && words.every((w) => /^[A-Z]/.test(w))
 }
-const SKIP = /^(description of )?benefits?|benefits$|^perks|^what [\w' ]{0,30}offers?|^compensation|^pay( range| transparency|$)|^salary|equal (opportunity|employment)|^our commitment|^acknowledg|statement$|^accommodations?|^privacy|career growth$|^work\/life|^inclusive|^diverse|^apply$|^contact/i
+const SKIP = /^(description of )?benefits?|benefits$|^perks|what (we|(?!you\b)\w+ can)('ll| will| can)? offer|^compensation|^pay( range| transparency|$)|^salary|equal (opportunity|employment)|^our commitment|^acknowledg|statement$|^accommodations?|^privacy|career growth$|^work\/life|^inclusive|^diverse|^apply$|^contact/i
 const BULLET = /^(\*\s|[-•●◦▪▫■□·‣⁃▸►○–—])/
 const OTHER = /^schedule|^job type|^the (job|team|position)$|^your mission|responsib|what you('ll| will)? (do|be doing)|day in the life|the role|the opportunity|job description|overview|summary|duties|additional information/i
 
@@ -117,7 +117,7 @@ const BOILERPLATE = new RegExp(
     String.raw`(regardless of|without regard to)[^.]{0,60}${TRAIT}[^.]{0,80}${TRAIT}`,
     'Americans with Disabilities|reasonable accommodation|VEVRAA|OFCCP|E-Verify|eligibility to work|employment eligibility',
     'discriminat(?!ive)|protected veteran|pay transparency|know your rights|map data ©',
-    'recruit(ment|ing) agenc|headhunter|agency resumes|terms and conditions of employment',
+    'agency resumes|unsolicited (resumes|candidates)|(headhunters|recruitment agencies) (may|must|should) not|terms and conditions of employment',
   ].join('|'),
   'i',
 )

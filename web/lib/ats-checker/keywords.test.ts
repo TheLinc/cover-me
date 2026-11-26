@@ -371,5 +371,12 @@ test('benefits under other headings, and agency or hiring-policy notices, add no
     'Important information:\nAcme provides equal employment opportunities to all applicants. This policy applies to all terms and conditions of employment at Acme, including recruiting, hiring and promotion.',
     'Headhunters and recruitment agencies may not submit resumes to Acme.',
     '- Potential compensation for this role is $102,855 to $136,000 OTE USD, plus RSUs.',
+    "Here's what we offer:\n- Python learning budget",
   ]) expect(readPosting(head + tail).keywords.map((k) => k.name), tail).toEqual(['Salesforce'])
+})
+
+test('a candidate-side "what you offer" heading and an agency requirement keep their keywords', () => {
+  const names = (posting: string) => readPosting(posting).keywords.map((k) => k.name)
+  expect(names('What you can offer us\n- Python')).toEqual(['Python'])
+  expect(names('Qualifications\n- 3+ years managing recruitment agency relationships in Workday')).toEqual(expect.arrayContaining(['Workday']))
 })

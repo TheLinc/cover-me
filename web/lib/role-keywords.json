@@ -88,32 +88,32 @@
       ]
     },
     "warehouse": {
-      "postings": 60,
-      "companies": 16,
+      "postings": 53,
+      "companies": 12,
       "sources": {
-        "Greenhouse": 56,
+        "Greenhouse": 49,
         "Lever": 4
       },
       "keywords": [
         {
           "name": "warehouse",
-          "postings": 37
-        },
-        {
-          "name": "inventory",
-          "postings": 24
-        },
-        {
-          "name": "communication",
-          "postings": 22
+          "postings": 33
         },
         {
           "name": "forklift",
           "postings": 22
         },
         {
-          "name": "ERP",
+          "name": "inventory",
+          "postings": 21
+        },
+        {
+          "name": "communication",
           "postings": 18
+        },
+        {
+          "name": "ERP",
+          "postings": 17
         },
         {
           "name": "Microsoft Office",
@@ -121,47 +121,31 @@
         },
         {
           "name": "attention to detail",
-          "postings": 15
-        },
-        {
-          "name": "Excel",
-          "postings": 14
-        },
-        {
-          "name": "High school diploma",
-          "postings": 14
-        },
-        {
-          "name": "Bachelor's degree",
           "postings": 13
         },
         {
-          "name": "logistics",
-          "postings": 9
+          "name": "Excel",
+          "postings": 13
+        },
+        {
+          "name": "High school diploma",
+          "postings": 13
+        },
+        {
+          "name": "Bachelor's degree",
+          "postings": 11
         },
         {
           "name": "organizational skills",
           "postings": 9
         },
         {
-          "name": "supply chain",
+          "name": "logistics",
           "postings": 7
         },
         {
-          "name": "sales",
-          "postings": 5
-        },
-        {
-          "name": "WMS",
-          "postings": 5
-        },
-        {
-          "name": "Python",
-          "postings": 4
-        },
-        {
-          "name": "SQL",
-          "postings": 4
+          "name": "supply chain",
+          "postings": 6
         }
       ]
     },
@@ -426,28 +410,28 @@
       ]
     },
     "engineering": {
-      "postings": 733,
+      "postings": 734,
       "companies": 82,
       "sources": {
-        "Greenhouse": 657,
+        "Greenhouse": 658,
         "Lever": 76
       },
       "keywords": [
         {
           "name": "Python",
-          "postings": 336
+          "postings": 337
         },
         {
           "name": "AI",
-          "postings": 293
+          "postings": 294
         },
         {
           "name": "communication",
-          "postings": 278
+          "postings": 279
         },
         {
           "name": "Bachelor's degree",
-          "postings": 243
+          "postings": 241
         },
         {
           "name": "AWS",
@@ -455,31 +439,31 @@
         },
         {
           "name": "API",
-          "postings": 145
+          "postings": 144
         },
         {
           "name": "LLM",
-          "postings": 128
+          "postings": 129
         },
         {
           "name": "SQL",
-          "postings": 115
+          "postings": 117
+        },
+        {
+          "name": "machine learning",
+          "postings": 114
         },
         {
           "name": "Go",
           "postings": 113
         },
         {
-          "name": "machine learning",
-          "postings": 112
-        },
-        {
           "name": "Kubernetes",
-          "postings": 109
+          "postings": 108
         },
         {
           "name": "Java",
-          "postings": 105
+          "postings": 103
         },
         {
           "name": "distributed systems",
@@ -487,23 +471,23 @@
         },
         {
           "name": "GCP",
-          "postings": 93
+          "postings": 92
         },
         {
           "name": "C++",
-          "postings": 86
+          "postings": 87
         },
         {
           "name": "CI/CD",
-          "postings": 85
-        },
-        {
-          "name": "Master's degree",
-          "postings": 78
+          "postings": 86
         },
         {
           "name": "TypeScript",
           "postings": 77
+        },
+        {
+          "name": "Master's degree",
+          "postings": 76
         },
         {
           "name": "Terraform",
@@ -514,31 +498,31 @@
           "postings": 69
         },
         {
-          "name": "React",
-          "postings": 66
-        },
-        {
-          "name": "Azure",
-          "postings": 65
-        },
-        {
           "name": "electrical",
-          "postings": 65
+          "postings": 66
         },
         {
           "name": "leadership",
           "postings": 64
         },
         {
-          "name": "JavaScript",
+          "name": "React",
+          "postings": 64
+        },
+        {
+          "name": "Azure",
           "postings": 63
+        },
+        {
+          "name": "mentoring",
+          "postings": 62
         },
         {
           "name": "Docker",
           "postings": 61
         },
         {
-          "name": "mentoring",
+          "name": "JavaScript",
           "postings": 61
         },
         {

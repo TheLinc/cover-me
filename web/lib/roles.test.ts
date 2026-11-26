@@ -28,11 +28,11 @@ describe('role keyword pages', () => {
     const sales = ROLES.find((r) => r.slug === 'sales')!
     const html = await renderRole('sales')
     const top = sales.counts.keywords[0]
-    expect(html).toMatch(new RegExp(`<td[^>]*>${top.name}</td>`))
+    expect(html).toContain(`>${top.name}</td>`)
     expect(html).toContain(`${top.postings} of ${sales.counts.postings}`)
     expect(html).toMatch(new RegExp(`${sales.counts.postings} sales postings from ${sales.counts.companies} companies`))
-    expect(html).toContain('Greenhouse')
-    expect(html).toContain('Lever')
+    expect(html).toContain(`Greenhouse (${sales.counts.sources.Greenhouse})`)
+    expect(html).toContain(`Lever (${sales.counts.sources.Lever})`)
     expect(html).toContain(`<time dateTime="${FETCHED}">`)
     expect(html).toContain('href="/ats-checker"')
   })

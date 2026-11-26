@@ -9,6 +9,8 @@ describe('roleOf', () => {
     ['Software Engineer, Backend', 'engineering'],
     ['Mechanical Engineer II (Starship)', 'engineering'],
     ['Senior Software Engineer, Fulfillment', 'engineering'],
+    ['Industrial Engineer, Warehouse & Manufacturing', 'engineering'],
+    ['Software Engineer, Data Warehouse Analytics', 'engineering'],
     ['Warehouse Associate - 2nd Shift', 'warehouse'],
     ['Forklift Operator', 'warehouse'],
     ['Fulfillment Associate - Torrance, CA', 'warehouse'],
@@ -27,6 +29,11 @@ describe('roleOf', () => {
     'Seasonal Retail Sales Associate, Sunnyvale',
     'Recruiter, Sales',
     'Director of Warehouse Operations',
+    'Senior Solutions Architect (EDW Enterprise Data Warehouse Migrations)',
+    'Warehouse GM',
+    'Warehouse Lead - Live Sales Host, Recommerce',
+    'Presales Engineer',
+    'Sales Compensation Manager',
   ])('%s fits no role', (title) => {
     expect(roleOf(title)).toBeUndefined()
   })

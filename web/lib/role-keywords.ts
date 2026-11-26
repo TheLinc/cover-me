@@ -1,24 +1,24 @@
 import { readPosting } from './ats-checker/keywords'
 
-const LEADERSHIP = /\b(manager|director|head|vp|vice president|chief)\b/i
+const LEADERSHIP = /\b(manager|director|head|vp|vice president|chief|gm)\b/i
 
 const ROLE_TITLES = [
   { slug: 'administrative-assistant', match: /\b(administrative|admin|office|executive|personal) (assistant|coordinator)\b|\breceptionist\b|\boffice manager\b/i },
   {
     slug: 'warehouse',
     match: /\b(warehouse|forklift|material handler|picker|packer)\b|\b(inventory|receiving|shipping|fulfil+ment) (associate|specialist|clerk)\b/i,
-    exclude: LEADERSHIP,
+    exclude: new RegExp(`${LEADERSHIP.source}|\\b(engineer\\w*|architect|data|sales)\\b`, 'i'),
   },
   {
     slug: 'sales',
     match: /\b(sales|account executive|business development)\b/i,
-    exclude: /\b(engineer\w*|operations|enablement|recruit\w*|analyst|retail|finance|marketing|data)\b/i,
+    exclude: /\b(engineer\w*|operations|enablement|recruit\w*|analyst|retail|finance|marketing|data|compensation|warehouse)\b/i,
   },
   { slug: 'marketing', match: /\bmarketing\b/i, exclude: /\b(engineer\w*|scientist|recruit\w*)\b/i },
   {
     slug: 'engineering',
     match: /\bengineer\b/i,
-    exclude: new RegExp(`${LEADERSHIP.source}|\\b(sales|solutions|support|customer|recruit\\w*)\\b`, 'i'),
+    exclude: new RegExp(`${LEADERSHIP.source}|\\b(sales|presales|solutions|support|customer|recruit\\w*)\\b`, 'i'),
   },
 ] as const
 

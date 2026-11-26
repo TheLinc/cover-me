@@ -1,5 +1,5 @@
-// Counts resume keywords over public Greenhouse and Lever postings for each role on
-// /resume-keywords and writes lib/role-keywords.json. Run by hand, not at build time (#299):
+// Run by hand, not at build time: it reads live job boards, and the pages are checked
+// 30 days after each run before adding roles (#299). Needs Node 22.18 or later:
 //
 //   node scripts/role-keywords.mjs
 
