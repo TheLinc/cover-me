@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { ensureValidSession, fetchApplicationsFromBackend, saveResumeEditToBackend, saveSectionOrderToBackend } from '../lib/auth'
 import { skillGroups, splitSkills } from '../lib/ai/resume-grounding'
 import { hasSectionOrder, withChosenOrder } from '../lib/ai/resume-parse'
-import { downloadTailoredResumePdf, tailoredResumePdf } from '../lib/pdf/resume'
+import { downloadTailoredResumePdf, tailoredResumePdf, templateOf } from '../lib/pdf/resume'
 import type { PlacedSection } from '../lib/pdf/sections'
 import type { DeletedSection, ResumeTemplate } from '../lib/pdf/types'
 import { chosenOrder, postingTitleInSummary, restoreSection, returnToTab, saveResumeEdit, savedResume, shownSections, withResumeEdit, withSections } from '../lib/resume-edit'
@@ -14,7 +14,7 @@ import PdfPreview from './PdfPreview'
 import PostingTitleTip from '../popup/components/PostingTitleTip'
 import ReviewAsk from '../popup/components/ReviewAsk'
 import ScoreRing from '../popup/components/ScoreRing'
-import TemplatePicker, { useCachedPro } from '../popup/components/TemplatePicker'
+import TemplatePicker, { isLocked, templateName, useCachedPro } from '../popup/components/TemplatePicker'
 import type { AuthSession, TailoredHistoryEntry, TailoredResume } from '../types'
 
 // Edits are the user's own, so the grounding checks that guard the model's output don't run on them (#118).
@@ -115,6 +115,7 @@ export default function Editor() {
   const [preview, setPreview] = useState<ArrayBuffer | null>(null)
   const [template, setTemplate] = useState<ResumeTemplate | undefined>()
   const pro = useCachedPro()
+  const [previewing, setPreviewing] = useState<ResumeTemplate | null>(null)
   const [picked, setPicked] = useState(false)
 
   const localSaves = useRef<Promise<void>>(Promise.resolve())
@@ -143,10 +144,21 @@ export default function Editor() {
   useEffect(() => {
     if (!current) return
     const t = setTimeout(() => {
-      setPreview(tailoredResumePdf(current).output('arraybuffer'))
+      setPreview(tailoredResumePdf(previewing ? { ...current, template: previewing } : current).output('arraybuffer'))
     }, 300)
     return () => clearTimeout(t)
-  }, [current])
+  }, [current, previewing])
+
+  // Free and own-key users can see a Pro template but not download it or keep it. The resume's
+  // own template stays theirs, even after Pro lapses (#119).
+  function pickTemplate(t: ResumeTemplate) {
+    if (t === templateOf(template)) return setPreviewing(null)
+    if (isLocked(t, pro)) return setPreviewing(t)
+    setPreviewing(null)
+    setTemplate(t)
+    setPicked(true)
+    void saveResumeTemplate(t)
+  }
 
   function saveToAccount(): Promise<void> {
     accountSaves.current = accountSaves.current.then(async () => {
@@ -440,11 +452,13 @@ export default function Editor() {
             : ''}
         </p>
         {/* Only Cover Me layout resumes open here (no Edit on "Your design"), so Word is the Cover Me layout too. (#118) */}
-        <DownloadMenu className="btn btn-secondary btn-compact" options={[
+        {previewing ? (
+          <button type="button" className="btn btn-secondary btn-compact" disabled title={`${templateName(previewing)} downloads with Pro`}>Download</button>
+        ) : <DownloadMenu className="btn btn-secondary btn-compact" options={[
           { label: 'PDF', onSelect: () => { downloadTailoredResumePdf(current, opened.jobTitle); setReviewOpen(true) } },
           // docx is big, so it loads only when someone asks for the Word file. (#118)
           { label: 'Word', onSelect: () => void import('../lib/pdf/resume-docx').then((m) => m.downloadTailoredResumeDocx(current, opened.jobTitle)).then(() => setReviewOpen(true)) },
-        ]} />
+        ]} />}
         <button className="btn btn-primary btn-compact" onClick={done}>Done</button>
       </header>
 
@@ -508,7 +522,13 @@ export default function Editor() {
       </main>
 
       <aside className="ed-preview" aria-label="PDF preview">
-        <TemplatePicker value={template} pro={pro} onChange={(t) => { setTemplate(t); setPicked(true); void saveResumeTemplate(t) }} />
+        <TemplatePicker value={previewing ?? template} pro={pro} previewLocked onChange={pickTemplate} />
+        {previewing && (
+          <p className="ed-preview-note" role="status">
+            Previewing {templateName(previewing)}, a Pro template. Upgrade to download in it, or{' '}
+            <button type="button" className="text-link" onClick={() => setPreviewing(null)}>go back to {templateName(templateOf(template))}</button>.
+          </p>
+        )}
         <PdfPreview pdf={preview} />
       </aside>
     </div>

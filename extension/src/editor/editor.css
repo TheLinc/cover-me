@@ -96,3 +96,4 @@ html, body { width: auto; height: 100%; overflow: hidden; }
 @media (max-width: 600px) {
   .ed-grid, .ed-lines-short ol { grid-template-columns: minmax(0, 1fr); }
 }
+.ed-preview-note { margin: -4px 0 12px; font-size: 12px; color: var(--text-2); }

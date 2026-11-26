@@ -41,7 +41,7 @@ function Sketch({ template, mini }: { template: ResumeTemplate; mini?: boolean }
   )
 }
 
-export default function TemplatePicker({ value, pro, onChange }: { value: ResumeTemplate | undefined; pro: boolean; onChange: (t: ResumeTemplate) => void }) {
+export default function TemplatePicker({ value, pro, onChange, previewLocked }: { value: ResumeTemplate | undefined; pro: boolean; onChange: (t: ResumeTemplate) => void; previewLocked?: boolean }) {
   const current = templateOf(value)
   const group = useId()
   const [open, setOpen] = useState(false)
@@ -60,7 +60,7 @@ export default function TemplatePicker({ value, pro, onChange }: { value: Resume
             const locked = isLocked(t, pro)
             return (
               <label key={t} className={`template-option${locked ? ' is-locked' : ''}`}>
-                <input type="radio" name={group} value={t} checked={current === t} disabled={locked} onChange={() => onChange(t)} />
+                <input type="radio" name={group} value={t} checked={current === t} disabled={locked && !previewLocked} onChange={() => onChange(t)} />
                 <Sketch template={t} />
                 <span className="template-name">{templateName(t)}</span>
                 {locked && (
