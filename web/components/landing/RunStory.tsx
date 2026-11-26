@@ -16,7 +16,7 @@ const CHAPTERS = [
   { title: "Give it everything you've done", body: 'Upload it once, as a PDF or Word file. Cover Me only uses what is in it, so give it every role and project.' },
   { title: 'Click Cover Me on the posting', body: 'LinkedIn, Indeed, Greenhouse, Lever, Workday and more. Anywhere else, paste it in.' },
   { title: 'It reads what the job asks for', body: 'Every requirement in the posting, sorted into must-haves and nice-to-haves.' },
-  { title: "Your resume, in the posting's words", body: 'Same jobs, same facts, in the posting’s words. "Cut what doesn’t fit this job" drops the bullets and skills it doesn’t need.' },
+  { title: "Your resume, in the posting's words", body: 'Same jobs, same facts, in the posting’s words. "Cut what doesn’t fit this job" drops the bullets and skills this job doesn’t need.' },
   { title: 'A score you can read', body: 'Each requirement you cover adds points. Must-haves count the most.' },
   { title: 'And a cover letter to match', body: 'Written from your resume, about this job. Edit it, then send.' },
   { title: 'Your design, or ours', body: 'A Word file can keep your own design (beta). Or use the clean, ATS-ready Cover Me layout, as PDF or Word.' },
@@ -585,7 +585,7 @@ const COMPACT_W = 380
 const COMPACT_H = 620
 
 function Stage({ x, compact: c }: { x: number; compact?: boolean }) {
-  // The upload chapter went in first, so the older layers run one chapter behind the stage (#177).
+  // The upload chapter was added in front of the older layers, so they run one chapter behind the stage (#177).
   const y = x - 1
   return (
     <div className="relative" style={{ width: c ? COMPACT_W : STAGE_W, height: c ? COMPACT_H : STAGE_H }}>
@@ -719,7 +719,6 @@ export function RunStory() {
 
   return (
     <section ref={ref} id="how-it-works" className="relative" style={{ height: `${N * CHAPTER_VH + 100}vh` }}>
-      {/* The ATS score link lands partway into the score chapter, not at its start (#177). */}
       <span id="ats-score" className="absolute left-0" style={{ top: `${4.6 * CHAPTER_VH}vh` }} aria-hidden="true" />
       {summary}
       <div className="sticky top-16 h-[calc(100svh-4rem)] isolate overflow-hidden">
