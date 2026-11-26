@@ -15,7 +15,7 @@ Cover Me is an open-source Chrome extension that reads job descriptions and, usi
 3. Hit **Generate Cover Letter** — or **Tailor Resume to Job**
 4. Edit, copy, or download as PDF
 
-The extension reads the job description from the page and combines it with your resume. **Generate Cover Letter** produces a tailored, human-sounding letter — no generic templates, no "I am excited to apply." **Tailor Resume to Job** rewrites your resume's wording and skills to match the posting's ATS keywords (without fabricating experience), shows a match score out of 100 with a gap analysis, and exports a clean PDF. Optional toggles let you compact to one page, trim irrelevant bullets, or add a tailored summary.
+The extension reads the job description from the page and combines it with your resume. **Generate Cover Letter** produces a tailored, human-sounding letter — no generic templates, no "I am excited to apply." **Tailor Resume to Job** rewrites your resume's wording and skills to match the posting's ATS keywords (without fabricating experience), shows a match score out of 100 with a gap analysis, and exports a clean PDF. Optional toggles let you compact to one page, cut the bullets and skills that don't fit the job, or add a tailored summary.
 
 ---
 
