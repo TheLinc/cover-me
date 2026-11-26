@@ -15,6 +15,7 @@ Site features under the names a visitor would use, with the route and how to rea
 ## Tools
 
 - Free ATS resume checker: `/ats-checker`. Nav, footer, and links from the guides. No account needed; the page is `components/site/AtsChecker.tsx`.
+- Resume keywords by job: `/resume-keywords`, and a page per role at `/resume-keywords/<role>` (such as `/resume-keywords/sales`). Footer, Guides column. Copy per role in `lib/roles.ts`; the counts come from `lib/role-keywords.json`, written by hand-run `scripts/role-keywords.mjs`.
 
 ## Home
 
