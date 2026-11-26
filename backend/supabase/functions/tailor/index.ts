@@ -519,16 +519,16 @@ Deno.serve(async (req) => {
     includeSummary = body.includeSummary !== false
     previous = isObject(body.previous) ? body.previous : undefined
     if (previous && JSON.stringify(previous).length > MAX_RESUME_JSON) return json({ error: 'Invalid request body' }, 400)
-    // Not resume content for the model to revise (#131).
+    // Not resume content for the model to revise (#131, #119).
     if (previous) {
-      const { sourceHash: _h, designFellBack: _f, ...rest } = previous
+      const { sourceHash: _h, designFellBack: _f, template: _t, ...rest } = previous
       previous = rest
     }
     localId = isUuid(body.localId) ? body.localId : undefined
     layout = body.layout === 'yours' ? 'yours' : 'cover-me'
     fellBack = body.fellBack === true
     if (layout === 'yours' && !fellBack && typeof body.sourceHash === 'string' && /^[0-9a-f]{64}$/.test(body.sourceHash)) sourceHash = body.sourceHash
-    // The PDF template the user last picked, a Pro feature (#119). Missing prints as Classic.
+    // The PDF template the user last picked, a Pro feature (#119).
     if (tier === 'hosted_pro' && PRO_TEMPLATES.includes(body.template)) template = body.template
   } catch {
     return json({ error: 'Invalid request body' }, 400)

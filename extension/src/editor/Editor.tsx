@@ -5,7 +5,7 @@ import { hasSectionOrder, withChosenOrder } from '../lib/ai/resume-parse'
 import { downloadTailoredResumePdf, tailoredResumePdf } from '../lib/pdf/resume'
 import type { PlacedSection } from '../lib/pdf/sections'
 import type { DeletedSection, ResumeTemplate } from '../lib/pdf/types'
-import { chosenOrder, editedResume, postingTitleInSummary, restoreSection, returnToTab, saveResumeEdit, shownSections, withResumeEdit, withSections } from '../lib/resume-edit'
+import { chosenOrder, postingTitleInSummary, restoreSection, returnToTab, saveResumeEdit, savedResume, shownSections, withResumeEdit, withSections } from '../lib/resume-edit'
 import { isCachedPro, saveResumeTemplate } from '../lib/resume-template'
 import { getMode, getResume, getTailoredHistory, saveParsedResume } from '../lib/storage'
 import DownloadMenu from '../popup/components/DownloadMenu'
@@ -115,6 +115,7 @@ export default function Editor() {
   const [preview, setPreview] = useState<ArrayBuffer | null>(null)
   const [template, setTemplate] = useState<ResumeTemplate | undefined>()
   const [pro, setPro] = useState(false)
+  const [picked, setPicked] = useState(false)
 
   const localSaves = useRef<Promise<void>>(Promise.resolve())
   const accountSaves = useRef<Promise<void>>(Promise.resolve())
@@ -137,12 +138,8 @@ export default function Editor() {
 
   const scored = typeof opened === 'object' && opened ? opened.scored : null
   const current = useMemo(() => (form ? { ...resumeFromForm(form.draft, form.skills), template } : null), [form, template])
-  // A template alone changes no text, so it doesn't mark the resume edited or its score stale (#119).
-  const saved = useMemo(() => {
-    if (!current || !scored) return null
-    return dirty || scored.editedAt ? editedResume(scored, current) : { ...scored, template }
-  }, [current, scored, dirty, template])
-  const changed = dirty || (!!scored && template !== scored.template)
+  const saved = useMemo(() => (current && scored ? savedResume(scored, current, dirty || !!scored.editedAt) : null), [current, scored, dirty])
+  const changed = dirty || picked
 
   useEffect(() => {
     if (!current) return
@@ -512,7 +509,7 @@ export default function Editor() {
       </main>
 
       <aside className="ed-preview" aria-label="PDF preview">
-        <TemplatePicker value={template} pro={pro} onChange={(t) => { setTemplate(t); void saveResumeTemplate(t) }} />
+        <TemplatePicker value={template} pro={pro} onChange={(t) => { setTemplate(t); setPicked(true); void saveResumeTemplate(t) }} />
         <PdfPreview pdf={preview} />
       </aside>
     </div>

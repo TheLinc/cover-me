@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { chosenOrder, editedResume, openResumeEditor, postingTitleInSummary, remainingGaps, restoreSection, returnToTab, saveResumeEdit, shownSections, withSections } from './resume-edit'
+import { chosenOrder, editedResume, savedResume, openResumeEditor, postingTitleInSummary, remainingGaps, restoreSection, returnToTab, saveResumeEdit, shownSections, withSections } from './resume-edit'
 import { getTailoredHistory } from './storage'
 import type { TailoredResume } from '../types'
 
@@ -141,6 +141,15 @@ describe('saving an edit', () => {
     expect(first.atsGaps).toEqual(['Terraform'])
     const second = editedResume(first, { ...first, skills: 'Kafka' }, now)
     expect(second.atsGaps).toEqual(['Go', 'Terraform'])
+  })
+
+  test('a template picked on an unedited resume saves the template and leaves it unedited (#119)', () => {
+    expect(savedResume(resume, { ...resume, skills: 'typed but not counted', template: 'modern' }, false, now)).toEqual({ ...resume, template: 'modern' })
+  })
+
+  test('a template picked on an edited resume keeps the edit and its mark (#119)', () => {
+    const saved = savedResume(resume, { ...resume, skills: 'TypeScript, Go', template: 'compact' }, true, now)
+    expect(saved).toMatchObject({ skills: 'TypeScript, Go', template: 'compact', editedAt: '2026-11-05T10:00:00.000Z' })
   })
 
   test('overwrites that entry in local History and nothing else', async () => {

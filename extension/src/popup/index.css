@@ -1459,7 +1459,6 @@ textarea:focus-visible, input:focus-visible, [tabindex]:focus-visible {
 .download-menu-item small { display: block; font-size: 10.5px; font-weight: 400; color: var(--text-3); margin-top: 1px; }
 .download-menu-item:hover, .download-menu-item:focus-visible { background: var(--border); outline: none; }
 
-/* Resume template picker (#119): a small page sketch per template. */
 .template-picker { border: none; margin: 0 0 16px; padding: 0; min-width: 0; }
 .template-options { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 .template-option {

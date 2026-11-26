@@ -183,10 +183,10 @@ Deno.serve(async (req) => {
     return json({ applications, hasMore })
   }
 
-  // PATCH ?resume=: the extension's editor tab overwrites one of the caller's
-  // tailored resumes (#118). The ATS score stays from before the edit; the
-  // gaps come as the editor left them, and edited_at drives the "Scored
-  // before your edits" label.
+  // PATCH ?resume=: the extension's editor tab or its popup overwrites one of
+  // the caller's tailored resumes (#118, #119). The ATS score stays from before
+  // the edit; the gaps come as the editor left them, and edited_at drives the
+  // "Scored before your edits" label.
   const resumeId = params.get('resume')
   if (req.method === 'PATCH' && resumeId !== null) {
     if (!isPro) return proOnly()

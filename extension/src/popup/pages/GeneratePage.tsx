@@ -379,7 +379,7 @@ export default function GeneratePage({ onNavigate }: Props) {
     })
   }, [state, inputMode, scrapeFailure, manualTitle, manualCompany, manualDescription, letter, job, createdAt, compact, trim, includeSummary, tailorState, tailoredResume, tailoredJob, tailoredEntryId, supplemental, letterSupplemental, activeResultTab])
 
-  // Changed in the editor tab since this page saved it: show the edit (#118) or the template (#119).
+  // History holds what the editor tab saved since this page did: an edit (#118) or a template (#119).
   useEffect(() => {
     if (!tailoredEntryId) return
     getTailoredHistory().then((list) => {
