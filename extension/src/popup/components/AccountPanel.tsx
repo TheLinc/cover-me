@@ -6,7 +6,7 @@ import { encryptApiKey } from '../../lib/crypto'
 import { clearSession, getCachedTier, getMode, getSettings, resolveMode, saveCachedTier, saveSettings, takeGoogleSignInError, watchGoogleSignInError, watchSession } from '../../lib/storage'
 import type { AIProvider, AppMode, AuthSession } from '../../types'
 import GoogleIcon from './GoogleIcon'
-import { ArrowUpRightIcon } from './icons'
+import { ArrowUpRightIcon, ClaudeIcon, OpenAIIcon } from './icons'
 import UpgradePrompt from './UpgradePrompt'
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
@@ -225,7 +225,7 @@ export default function AccountPanel({ initialView = 'signin', links = true }: {
                   className={`provider-option${provider === p ? ' active' : ''}`}
                   onClick={() => setProvider(p)}
                 >
-                  {p === 'claude' ? 'Claude' : 'OpenAI'}
+                  {p === 'claude' ? <><ClaudeIcon />Claude</> : <><OpenAIIcon />OpenAI</>}
                 </button>
               ))}
             </div>
