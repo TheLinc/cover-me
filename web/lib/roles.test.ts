@@ -69,7 +69,8 @@ describe('role keyword pages', () => {
   it.each(each)('%s has 3 to 5 example bullets, each using a keyword from its table', (_, r) => {
     expect(r.bullets.length).toBeGreaterThanOrEqual(3)
     expect(r.bullets.length).toBeLessThanOrEqual(5)
-    for (const b of r.bullets) expect(r.counts.keywords.some((k) => b.includes(k.name)), b).toBe(true)
+    const word = (name: string) => new RegExp(`(?<![\\w])${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\w])`)
+    for (const b of r.bullets) expect(r.counts.keywords.some((k) => word(k.name).test(b)), b).toBe(true)
   })
 
   it('shows each keyword as a share and a count, grouped by type, with the sources, date and tech-company caveat', async () => {

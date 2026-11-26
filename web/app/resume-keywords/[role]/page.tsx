@@ -43,7 +43,8 @@ export default async function RolePage({ params }: { params: Promise<{ role: str
   const url = `${BASE}/resume-keywords/${role.slug}`
   const h1 = `${role.name} resume keywords`
   const tools = counts.keywords.filter((k) => kindOf(k.name) === 'Tools and software')
-  const skills = counts.keywords.filter((k) => kindOf(k.name) === 'Skills')
+  // AI ranks high partly because the boards read are mostly tech companies', so it's a poor default tip (#299).
+  const skill = counts.keywords.find((k) => kindOf(k.name) === 'Skills' && k.name !== 'AI')
   const sources = Object.entries(counts.sources).filter(([, n]) => n > 0)
 
   const jsonLd = [
@@ -143,7 +144,7 @@ export default async function RolePage({ params }: { params: Promise<{ role: str
           <ul className="space-y-3 text-[15px] text-muted-foreground leading-[1.8] mb-6">
             <li>
               <strong className="text-foreground">Summary.</strong> Name your title and the two or three keywords that fit you best
-              {tools[0] && skills[0] ? `, such as ${tools[0].name} or ${skills[0].name}` : ''}.
+              {tools[0] && skill ? `, such as ${tools[0].name} or ${skill.name}` : ''}.
             </li>
             <li>
               <strong className="text-foreground">Skills section.</strong> List the tools you have used by name, in the posting&apos;s words

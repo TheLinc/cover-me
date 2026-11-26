@@ -393,6 +393,12 @@ test('onboarding as a hiring step is not a skill, but customer onboarding is', (
   expect(names('Requirements\n- Own new hire onboarding in Workday and BambooHR')).toEqual(expect.arrayContaining(['onboarding', 'Workday']))
   expect(names('Requirements\n- Run in-person onboarding sessions using Workday')).toEqual(expect.arrayContaining(['Workday']))
   expect(names('Requirements\n- This role requires in-person onboarding in Denver.')).toEqual([])
+  for (const ask of [
+    'Willingness to travel up to 25% to deliver in-person onboarding for new customers using Salesforce.',
+    'This role requires 2+ years running new hire onboarding in Workday and Excel.',
+    'Coordinate and complete new hire onboarding for 50+ employees in Workday.',
+    'Experience required to lead new hire onboarding programs in Workday.',
+  ]) expect(names(`Requirements\n- ${ask}`), ask).toEqual(expect.arrayContaining(['onboarding']))
 })
 
 test('a candidate-side "what you offer" heading and an agency requirement keep their keywords', () => {

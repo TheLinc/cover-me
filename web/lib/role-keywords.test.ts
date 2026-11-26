@@ -34,6 +34,15 @@ describe('roleOf', () => {
     'Warehouse Lead - Live Sales Host, Recommerce',
     'Presales Engineer',
     'Sales Compensation Manager',
+    'Pre-Sales Solutions Architect, Money Management',
+    'Advisory Solutions Architect (Pre-Sales)',
+    'Sr. Technical Sales Architect (Starlink)',
+    'Senior People Business Partner, Sales',
+    'Sales Operation Manager',
+    'Senior Finance Manager, Marketing',
+    'Senior Product Manager, Marketing Enablement',
+    'Sr Solution Engineer (Commercial)',
+    'Senior Applied AI Solution Engineer',
   ])('%s fits no role', (title) => {
     expect(roleOf(title)).toBeUndefined()
   })

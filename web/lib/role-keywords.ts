@@ -12,13 +12,13 @@ const ROLE_TITLES = [
   {
     slug: 'sales',
     match: /\b(sales|account executive|business development)\b/i,
-    exclude: /\b(engineer\w*|operations|enablement|recruit\w*|analyst|retail|finance|marketing|data|compensation|warehouse)\b/i,
+    exclude: /\b(engineer\w*|operations?|enablement|recruit\w*|analyst|retail|finance|marketing|data|compensation|warehouse|pre-?sales|architect|people)\b/i,
   },
-  { slug: 'marketing', match: /\bmarketing\b/i, exclude: /\b(engineer\w*|scientist|recruit\w*)\b/i },
+  { slug: 'marketing', match: /\bmarketing\b/i, exclude: /\b(engineer\w*|scientist|recruit\w*|finance|product manager)\b/i },
   {
     slug: 'engineering',
     match: /\bengineer\b/i,
-    exclude: new RegExp(`${LEADERSHIP.source}|\\b(sales|presales|solutions|support|customer|recruit\\w*)\\b`, 'i'),
+    exclude: new RegExp(`${LEADERSHIP.source}|\\b(sales|presales|solutions?|support|customer|recruit\\w*)\\b`, 'i'),
   },
 ] as const
 

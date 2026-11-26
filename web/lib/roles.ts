@@ -53,7 +53,7 @@ const COPY: RoleCopy[] = [
       'The skills, tools and degrees engineering job postings ask for most, counted across real public postings, with the share of postings that ask for each one.',
     titles: 'software, hardware, mechanical, electrical and other engineer titles, leaving out managers and sales, solutions and support engineers',
     intro: [
-      'The postings come from software, hardware and aerospace companies. Most of the list is programming languages and cloud platforms, and "electrical" comes mostly from degree fields such as electrical engineering. When a posting names a specific service or version, such as AWS Lambda, use that name on your resume and not only the platform.',
+      'The postings come from software, hardware and aerospace companies. About half the list is programming languages, cloud platforms and other tools, and "electrical" comes mostly from degree fields such as electrical engineering. When a posting names a specific service or version, such as AWS Lambda, use that name on your resume and not only the platform.',
     ],
     bullets: [
       'Built a Python API on AWS that serves 40 million requests a day with p99 latency under 120 ms.',

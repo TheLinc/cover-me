@@ -118,7 +118,7 @@ const BOILERPLATE = new RegExp(
     String.raw`(regardless of|without regard to)[^.]{0,60}${TRAIT}[^.]{0,80}${TRAIT}`,
     'Americans with Disabilities|reasonable accommodation|VEVRAA|OFCCP|E-Verify|eligibility to work|employment eligibility',
     'discriminat(?!ive)|protected veteran|pay transparency|know your rights|map data ©',
-    'agency resumes|unsolicited (resumes|candidates)|(headhunters|recruitment agencies) (may|must|should) not|terms and conditions of employment|(attend|complete|travel|requires?|required to)\\b[^.]{0,60}\\b(in[- ]person|new hire) onboarding',
+    'agency resumes|unsolicited (resumes|candidates)|(headhunters|recruitment agencies) (may|must|should) not|terms and conditions of employment|(you will|you\'ll|required to|must) attend[^.]{0,40}onboarding|travel for purposes such as new hire onboarding|(role|position) requires in[- ]person onboarding',
   ].join('|'),
   'i',
 )

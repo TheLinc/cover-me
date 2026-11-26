@@ -155,19 +155,19 @@
       "keywords": [
         {
           "name": "communication",
-          "postings": 238
+          "postings": 236
         },
         {
           "name": "AI",
-          "postings": 137
+          "postings": 136
         },
         {
           "name": "SaaS",
-          "postings": 135
+          "postings": 134
         },
         {
           "name": "Bachelor's degree",
-          "postings": 124
+          "postings": 125
         },
         {
           "name": "Salesforce",
@@ -179,7 +179,7 @@
         },
         {
           "name": "marketing",
-          "postings": 81
+          "postings": 80
         },
         {
           "name": "negotiation",
@@ -195,19 +195,15 @@
         },
         {
           "name": "customer success",
-          "postings": 43
+          "postings": 42
         },
         {
           "name": "leadership",
-          "postings": 43
+          "postings": 41
         },
         {
           "name": "organizational skills",
-          "postings": 38
-        },
-        {
-          "name": "interpersonal skills",
-          "postings": 31
+          "postings": 37
         },
         {
           "name": "LinkedIn",
@@ -219,6 +215,10 @@
         },
         {
           "name": "forecasting",
+          "postings": 30
+        },
+        {
+          "name": "interpersonal skills",
           "postings": 30
         },
         {
@@ -276,16 +276,16 @@
       ]
     },
     "marketing": {
-      "postings": 283,
+      "postings": 281,
       "companies": 66,
       "sources": {
-        "Greenhouse": 268,
+        "Greenhouse": 266,
         "Lever": 15
       },
       "keywords": [
         {
           "name": "communication",
-          "postings": 136
+          "postings": 135
         },
         {
           "name": "AI",
@@ -312,12 +312,12 @@
           "postings": 55
         },
         {
-          "name": "CRM",
+          "name": "SaaS",
           "postings": 49
         },
         {
-          "name": "SaaS",
-          "postings": 49
+          "name": "CRM",
+          "postings": 48
         },
         {
           "name": "SQL",
@@ -357,7 +357,7 @@
         },
         {
           "name": "compliance",
-          "postings": 21
+          "postings": 20
         },
         {
           "name": "problem-solving",
