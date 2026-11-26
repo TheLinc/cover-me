@@ -3,22 +3,23 @@ import { jobFromJsonLd } from './jsonld.ts'
 
 export function scrapeLever(): JobData {
   const title = document.querySelector<HTMLElement>(
-    '.posting-headline h2, [data-qa="posting-name"], h2.posting-name',
+    '.posting-headline h2, .posting-header > h2, [data-qa="posting-name"], h2.posting-name',
   )?.innerText?.trim()
 
   // JSON-LD has the legal name ("Palantir Technologies"); the URL path only
-  // has the slug: jobs.lever.co/{company-slug}/...
+  // has the slug: jobs.lever.co/{company-slug}/... (#2)
   const companySlug = window.location.pathname.split('/').filter(Boolean)[0] ?? ''
-  const company = jobFromJsonLd()?.company ?? (companySlug
+  const ld = jobFromJsonLd()
+  const company = ld?.company ?? (companySlug
     ? companySlug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
     : 'Unknown Company')
 
   // The posting is split into sections: intro, one per requirements list, and a
-  // closing. [data-qa="job-description"] is only the intro.
+  // closing. [data-qa="job-description"] is only the intro (#2).
   const sections = Array.from(document.querySelectorAll<HTMLElement>(
-    '.section.page-centered:not(.posting-header):not(.last-section-apply)',
+    '.section.page-centered:not(.posting-header):not(.last-section-apply):not(.application-form)',
   )).map((s) => s.innerText?.trim()).filter(Boolean)
-  const description = sections.join('\n\n') || document.querySelector<HTMLElement>(
+  const description = sections.join('\n\n') || ld?.description || document.querySelector<HTMLElement>(
     '[data-qa="job-description"], .posting-description, .posting-body',
   )?.innerText?.trim()
 

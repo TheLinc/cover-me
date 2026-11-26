@@ -14,11 +14,13 @@ export interface Allowance {
   pro_daily: number
 }
 
-export function limitMessage(a: Allowance): string {
+// noun: what the allowance counts. Letters and resumes share 'generations';
+// answers to application questions have their own (migration 032).
+export function limitMessage(a: Allowance, noun = 'generations'): string {
   if (a.kind === 'daily') {
-    return `You've reached Pro's fair-use limit of ${a.limit} generations today. It resets at midnight UTC.`
+    return `You've reached Pro's fair-use limit of ${a.limit} ${noun} today. It resets at midnight UTC.`
   }
-  return `You've used this week's ${a.limit} free generations. They reset Monday at 00:00 UTC, or upgrade to Pro for up to ${a.pro_daily} a day.`
+  return `You've used this week's ${a.limit} free ${noun}. They reset Monday at 00:00 UTC, or upgrade to Pro for up to ${a.pro_daily} a day.`
 }
 
 // The first-month offer's line (#213), for extension builds older than the
@@ -47,5 +49,19 @@ export async function consumeGeneration(supabase: SupabaseClient, userId: string
     const offerEndsAt = allowance.kind === 'weekly' ? await showFirstMonthOffer(supabase, userId) : null
     return { ok: false, status: 429, body: { error: limitMessage(allowance) + (offerEndsAt ? offerLine(offerEndsAt) : ''), allowance } }
   }
+  return { ok: true }
+}
+
+// Takes one answer from the user's answer allowance (#232), or explains why
+// not. Answers don't open the first-month offer: that follows letters and resumes.
+export async function consumeAnswer(supabase: SupabaseClient, userId: string):
+  Promise<{ ok: true } | { ok: false; status: 429 | 500; body: Record<string, unknown>; allowance?: Allowance }> {
+  const { data, error } = await supabase.rpc('consume_answer', { p_user_id: userId })
+  if (error) {
+    console.error('Answer allowance RPC error:', error.message)
+    return { ok: false, status: 500, body: { error: 'Could not check your allowance. Please try again.' } }
+  }
+  const allowance = data as Allowance
+  if (!allowance.allowed) return { ok: false, status: 429, body: { error: limitMessage(allowance, 'answers'), allowance }, allowance }
   return { ok: true }
 }

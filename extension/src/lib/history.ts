@@ -1,4 +1,4 @@
-import type { ApplicationRecord, CoverLetter, CoverLetterEntry, TailoredHistoryEntry, TailoredResumeEntry } from '../types'
+import type { ApplicationRecord, CoverLetter, CoverLetterEntry, JobData, TailoredHistoryEntry, TailoredResumeEntry } from '../types'
 import { HISTORY_LIMIT, TAILORED_HISTORY_LIMIT } from './storage'
 import type { UploadResult } from './auth'
 
@@ -17,12 +17,15 @@ export interface JobGroup {
   localOnly?: boolean // Pro list: an entry that exists only in this browser
 }
 
-// Local letters and tailored resumes, grouped by posting (URL, or company and
-// title when there's no URL), newest activity first.
+// One posting: its URL, or company and title when there's no URL.
+export const jobKey = (job: Pick<JobData, 'url' | 'company' | 'title'>) => job.url || `${job.company}|||${job.title}`
+
+// Local letters and tailored resumes, grouped by posting (jobKey), newest
+// activity first.
 export function groupLocalHistory(letters: CoverLetter[], tailored: TailoredHistoryEntry[]): JobGroup[] {
   const map = new Map<string, JobGroup>()
   const groupFor = (job: CoverLetter['job'], createdAt: string): JobGroup => {
-    const key = job.url || `${job.company}|||${job.title}`
+    const key = jobKey(job)
     let g = map.get(key)
     if (!g) {
       g = { key, id: null, title: job.title, company: job.company, url: job.url, latestAt: createdAt, coverLetters: [], tailoredResumes: [], localCoverLetterIds: [], localTailoredIds: [] }
@@ -46,6 +49,47 @@ export function groupLocalHistory(letters: CoverLetter[], tailored: TailoredHist
     g.tailoredResumes.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   }
   return Array.from(map.values()).sort((a, b) => b.latestAt.localeCompare(a.latestAt))
+}
+
+// The jobs a right-click answer can be written for when the page has no
+// posting (#232): one per posting, newest first. Leaves out jobs saved with
+// no posting text, which can't be answered from, and entries that belong to
+// another account than userId (signed out: entries no account holds).
+export function recentJobs(letters: CoverLetter[], tailored: TailoredHistoryEntry[], userId?: string, limit = 10): JobData[] {
+  const seen = new Set<string>()
+  const mine = (owner?: string) => !owner || owner === userId
+  return [...letters, ...tailored]
+    .filter((e) => mine(e.account) && mine(e.saveTo) && e.job.description?.trim())
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .map((e) => e.job)
+    .filter((job) => {
+      const key = jobKey(job)
+      return !seen.has(key) && !!seen.add(key)
+    })
+    .slice(0, limit)
+}
+
+// The jobs offered for a right-click answer (#232), the one to write for
+// first. The page's job leads when it read one, except that a saved job for
+// the same posting takes its place: Lever and Ashby put the form on its own
+// page (/apply, /application), which the scrapers can read as a "posting" of
+// form text, and the saved copy has the real one. jobSource: whether the
+// first job is this page's.
+export function answerJobs(page: JobData | null, saved: JobData[]): { jobs: JobData[]; jobSource: 'page' | 'saved' } {
+  if (!page) return { jobs: saved, jobSource: 'saved' }
+  // An application page (/apply, /application) is its posting's page by path,
+  // or a saved job's by title and company (saved from a job board); any other
+  // page needs the same link, query included (LinkedIn and Indeed tell jobs
+  // apart by the query alone, and one employer posts many jobs under a title).
+  const path = (url: string) => url.replace(/[?#].*$/, '').replace(/\/$/, '')
+  const formOf = /\/(apply|application)$/.exec(path(page.url))
+  const posting = formOf ? path(page.url).slice(0, -formOf[0].length) : null
+  const known = (company: string) => !!company && company !== 'Unknown Company'
+  const same = (j: JobData) =>
+    (!!j.url && (j.url === page.url || (posting !== null && path(j.url) === posting))) ||
+    (posting !== null && known(page.company) && j.title.toLowerCase() === page.title.toLowerCase() && j.company.toLowerCase() === page.company.toLowerCase())
+  const match = saved.find(same)
+  return { jobs: [match ?? page, ...saved.filter((j) => j !== match && jobKey(j) !== jobKey(page))], jobSource: 'page' }
 }
 
 // The free account's upgrade prompt in History: once letters or tailored

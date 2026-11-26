@@ -4,8 +4,10 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase";
-import { afterOAuth, hashReturn, oauthCancelled, oauthErrorDescription, oauthRedirectUrl, safeNext } from "@/lib/auth-redirect";
+import { afterOAuth, hashReturn, hashTokens, type LinkTokens, oauthCancelled, oauthErrorDescription, oauthRedirectUrl, safeNext, linkDecision } from "@/lib/auth-redirect";
 import { saveProductUpdates } from "@/lib/email-preferences";
+import { hasSessionCookie } from "@/lib/session-cookie";
+import { PLAN_LIMITS } from "@/lib/limits";
 import { Button } from "@/components/ui/button";
 import { GoogleIcon } from "@/components/ui/google-icon";
 import { Input } from "@/components/ui/input";
@@ -13,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   ArrowLeftIcon,
+  ArrowRightIcon,
   CheckIcon,
   EyeIcon,
   EyeSlashIcon,
@@ -23,17 +26,13 @@ import { ProgressStep } from "@/components/landing/ExtensionPopup";
 
 type View = "signin" | "signup" | "forgot" | "reset" | "confirmed";
 
-// Off until the Google provider is set up in Supabase: merging deploys the site.
+// A flag because merging deploys the site, and Google sign-in fails until Supabase has the provider (#16).
 const GOOGLE_SIGNIN = process.env.NEXT_PUBLIC_GOOGLE_SIGNIN === "1";
 
-// The signup box across the Google round trip (#114).
 const SIGNUP_UPDATES_KEY = "cover-me:signup-updates";
 
-// Canonical origin for Supabase email redirects. window.location.origin varies
-// between www/non-www depending on how the user reached the site, and any
-// variant missing from the Supabase Redirect URL allowlist silently falls back
-// to the Site URL (landing page) instead of /auth. next (a gift trial link,
-// say) rides along so the confirmed view can continue there.
+// window.location.origin differs between www and non-www, and an origin missing
+// from Supabase's Redirect URL allowlist silently lands on the homepage. https://github.com/TheLinc/cover-me/commit/3af70b9
 function authRedirectUrl(next: string | null = null) {
   const url = `${process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin}/auth`;
   return next ? `${url}?next=${encodeURIComponent(next)}` : url;
@@ -50,61 +49,57 @@ export default function AuthContent() {
 function AuthForm() {
   const params = useSearchParams();
   const plan = params.get("plan");
-  // Where to go once signed in: a dashboard page or a gift trial link.
   const next = safeNext(params.get("next"));
 
-  // Back from an email link with the token in the hash: start on its view or
-  // error, not the sign-in form. The built /auth renders on the client only;
-  // `next dev` also renders it on the server, where there's no window.
+  // An email link with the token in the hash starts on its own view, not the form.
+  // `next dev` also renders /auth on the server, hence the window check (#43).
   const [fromHash] = useState(() => hashReturn(typeof window === "undefined" ? "" : window.location.hash));
   const [view, setView] = useState<View>(fromHash.view ?? "signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  // The signup box (#114): unticked until the user ticks it.
+  // Product emails need consent, so the box starts unticked (#114).
   const [productUpdates, setProductUpdates] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "success">("idle");
-  // A Google return's hash error is a cancel or a failed sign-in, not a used
-  // email link: the getSession() branch below words it.
+  // After Google, a hash error is a cancel or a failed sign-in, not a bad email
+  // link. The getSession branch below words it (#42).
   const [error, setError] = useState(params.has("oauth") ? "" : fromHash.error);
-  // Back from Google or an email link: show a waiting view while the code is
-  // swapped for a session, not the form. Fixed on the first render, since the
-  // URL loses oauth and code below. /auth is static, so this renders on the
-  // client only and reading params here can't mismatch the server HTML.
-  // "opening" is Google with a session, navigating to the dashboard.
-  const [waiting, setWaiting] = useState<"google" | "opening" | "email" | null>(() =>
-    params.has("error") || fromHash.error ? null : params.has("oauth") ? "google" : params.has("code") ? "email" : null,
+  // Set on the first render because the effect strips oauth and code from the URL.
+  // The built /auth renders on the client only, so this can't mismatch the server
+  // HTML (#39). "session" covers a visit while already signed in (#313).
+  const [waiting, setWaiting] = useState<"google" | "opening" | "email" | "session" | null>(() =>
+    params.has("error") || fromHash.error ? null : params.has("oauth") ? "google" : params.has("code") ? "email"
+      : typeof window !== "undefined" && hashTokens(window.location.hash) ? "email"
+      : typeof window !== "undefined" && !window.location.hash && hasSessionCookie(document.cookie) ? "session" : null,
   );
   // A live region that mounts already filled isn't announced, so it stays
-  // empty until after the first render.
+  // empty until after the first render (#42).
   const [announce, setAnnounce] = useState(false);
+  const [accountEmail, setAccountEmail] = useState("");
+  const [switchTo, setSwitchTo] = useState<{ tokens: LinkTokens; email: string; current: string } | null>(null);
 
   const supabase = createClient();
 
   useEffect(() => {
     setAnnounce(true);
-    // PKCE flow (web signup): Supabase redirects to /auth?code=xxx.
-    // createBrowserClient auto-exchanges the code internally and fires SIGNED_IN.
-    // We detect the code param as a signal that this is an email confirmation,
-    // then show the confirmed view when the exchange completes.
     const searchParams = new URLSearchParams(window.location.search);
-    // Google sign-in comes back with ?oauth=1&code=…: a sign-in, not a confirmation.
+    // Google returns with ?oauth=1&code=…. A code without oauth is an email
+    // confirmation, which createBrowserClient exchanges by itself (#16).
     const isOAuth = searchParams.has("oauth");
-    // Read before replaceState below strips the query and the hash.
+    // Read before replaceState below strips the query and the hash (#16).
     const cancelledOAuth = isOAuth && oauthCancelled(window.location.search, window.location.hash);
     const oauthReason = isOAuth ? oauthErrorDescription(window.location.search, window.location.hash) : "";
-    // The signup box, ticked before Google (handleGoogle). Kept in this tab's
-    // sessionStorage, never the URL, so a crafted link can't opt anyone in.
+    // handleGoogle keeps the box in sessionStorage, never the URL, so a crafted
+    // link can't opt anyone in (#114).
     const oauthUpdates = isOAuth && sessionStorage.getItem(SIGNUP_UPDATES_KEY) === "1";
     sessionStorage.removeItem(SIGNUP_UPDATES_KEY);
     const isConfirmation = searchParams.has("code") && !isOAuth;
     if (isConfirmation || isOAuth) {
-      // Drop the code and any error, but keep where to go after signing in
-      // (plan, next): a cancelled Google sign-in leaves the user here to retry.
+      // Keeps plan and next, since a cancelled Google sign-in leaves the user here to retry (#16).
       const keep = new URLSearchParams();
       for (const key of ["plan", "next"]) {
         const value = searchParams.get(key);
@@ -114,80 +109,87 @@ function AuthForm() {
       window.history.replaceState(null, "", window.location.pathname + (rest ? `?${rest}` : ""));
     }
 
-    // Implicit flow (extension signup via raw GoTrue API): redirects with #access_token=...
-    // The view and any error were already read from the hash (fromHash above).
+    // Extension signups use the implicit flow and come back with #access_token=….
+    // fromHash already read the view and any error (#43).
     const hash = window.location.hash;
-    if (hash) {
-      const h = new URLSearchParams(hash.slice(1));
-
-      if (!h.get("error") && h.get("access_token")) {
-        // The pkce browser client never consumes implicit-flow hash tokens,
-        // and the dashboard is server-guarded via cookies — without an
-        // explicit setSession the user lands on "confirmed" signed out, and
-        // password recovery's updateUser call has no session to act on.
-        const refreshToken = h.get("refresh_token");
-        if (refreshToken) {
-          supabase.auth.setSession({
-            access_token: h.get("access_token")!,
-            refresh_token: refreshToken,
-          });
+    const tokens = hashTokens(hash);
+    if (tokens) {
+      linkDecision(supabase.auth, tokens, () => hasSessionCookie(document.cookie)).then((decision) => {
+        if (decision.action === "set") adoptLinkSession(tokens);
+        else if (decision.action === "fail") linkFailed();
+        else {
+          setSwitchTo({ tokens, email: decision.email, current: decision.current });
+          setWaiting(null);
         }
-      }
-
-      window.history.replaceState(null, "", window.location.pathname);
+      });
     }
+    if (hash) window.history.replaceState(null, "", window.location.pathname);
 
     async function openDashboard() {
       setWaiting("opening");
-      // A failed save leaves the user opted out; the dashboard toggle can fix it.
+      // A failed save leaves the user opted out. The dashboard toggle fixes that (#114).
       if (oauthUpdates) await saveProductUpdates(true, "signup").catch(() => {});
       window.location.href = afterOAuth(searchParams.get("plan"), searchParams.get("next"));
     }
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setAccountEmail(session?.user.email ?? "");
       if (event === "PASSWORD_RECOVERY") setView("reset");
-      // Fires after auto-exchange of PKCE code completes
       if (event === "SIGNED_IN" && isConfirmation) setView("confirmed");
       if (event === "SIGNED_IN" && isOAuth) openDashboard();
     });
 
-    // getSession waits for the client's code exchange, so no session here
-    // means the exchange failed (an expired or reused link, say).
+    // getSession waits for the code exchange, so no session means it failed,
+    // say an expired or reused link (#16).
     if (isOAuth) {
       supabase.auth.getSession().then(({ data: { session } }) => {
         if (session) openDashboard();
         else {
           setWaiting(null);
-          // A cancel (?error= or #error=access_denied) shows no error.
+          // A cancel (?error= or #error=access_denied) shows no error (#16).
           if (!cancelledOAuth) setError(oauthReason || "Google sign-in didn't finish. Please try again.");
         }
       });
     }
 
-    // Fallback: auto-exchange may complete before the listener above is attached,
-    // in which case onAuthStateChange fires INITIAL_SESSION (not SIGNED_IN).
+    // The exchange can finish before the listener attaches, which fires
+    // INITIAL_SESSION, not SIGNED_IN. https://github.com/TheLinc/cover-me/commit/7278c73
     if (isConfirmation) {
       supabase.auth.getSession().then(({ data: { session } }) => {
-        // A recovery link also comes back with ?code= and has already set "reset".
+        // A recovery link also comes back with ?code= and has already set "reset" (#40).
         if (session) setView((v) => (v === "signin" ? "confirmed" : v));
         setWaiting(null);
       });
     }
 
-    // Opened while already signed in (a stale "Sign in" link, a bookmark): go
-    // where signing in would have gone. replace, so Back doesn't land here again.
-    // getUser asks the server, as the dashboard does: getSession only reads the
-    // cookie, and a cookie for a session the server no longer has (signed out
-    // elsewhere, a password change) would bounce between here and the dashboard.
+    // location.replace so Back skips /auth. getUser, not getSession, because a cookie
+    // for a session the server dropped would bounce between here and the dashboard (#112).
     if (!isOAuth && !isConfirmation && !hash) {
       supabase.auth.getUser().then(({ data: { user } }) => {
         if (user) window.location.replace(afterOAuth(searchParams.get("plan"), searchParams.get("next")));
+        else setWaiting(null);
       });
     }
 
     return () => subscription.unsubscribe();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // The PKCE client ignores implicit-flow tokens and the dashboard checks
+  // cookies. Without setSession the user lands on "confirmed" signed out,
+  // and a password reset has no session. https://github.com/TheLinc/cover-me/commit/3af70b9
+  function adoptLinkSession(tokens: LinkTokens) {
+    setSwitchTo(null);
+    setWaiting("email");
+    supabase.auth.setSession(tokens).then(({ error }) => {
+      if (error) linkFailed();
+    }).catch(linkFailed).finally(() => setWaiting(null));
+  }
+
+  function linkFailed() {
+    setWaiting(null);
+    setView("signin");
+    setError("This link couldn't sign you in. It may have expired or already been used. Sign in, or request a new link.");
+  }
 
   function switchView(to: View) {
     setView(to);
@@ -198,7 +200,6 @@ function AuthForm() {
     setShowConfirm(false);
   }
 
-  // ── Sign in / sign up ────────────────────────────────────────────────────
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setStatus("loading");
@@ -215,8 +216,8 @@ function AuthForm() {
         const { error } = await supabase.auth.signUp({
             email,
             password,
-            // The signup trigger records the box (migration 022), wherever
-            // the confirmation link is opened.
+            // The signup trigger (migration 022) saves the box wherever the
+            // confirmation link is opened (#114).
             options: { emailRedirectTo: authRedirectUrl(next), ...(productUpdates ? { data: { product_updates: true } } : {}) },
           });
         if (error) throw error;
@@ -240,15 +241,13 @@ function AuthForm() {
       provider: "google",
       options: {
         redirectTo: oauthRedirectUrl(process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin, plan, params.get("next")),
-        // Show Google's account chooser. Without it Google signs straight back
-        // in to the last account and the user can't pick another.
+        // Without it Google signs straight back in to the last account (#16).
         queryParams: { prompt: "select_account" },
       },
     });
     if (error) setError(error.message);
   }
 
-  // ── Forgot password ──────────────────────────────────────────────────────
   async function handleForgotPassword(e: React.FormEvent) {
     e.preventDefault();
     setStatus("loading");
@@ -265,7 +264,6 @@ function AuthForm() {
     }
   }
 
-  // ── Password reset (token already active in session) ────────────────────
   async function handlePasswordReset(e: React.FormEvent) {
     e.preventDefault();
     if (newPassword.length < 6) {
@@ -290,7 +288,6 @@ function AuthForm() {
     }
   }
 
-  // ── Derived labels ───────────────────────────────────────────────────────
   const heading =
     view === "reset"
       ? "Set a new password."
@@ -310,12 +307,11 @@ function AuthForm() {
         : view === "signin"
           ? "Sign in to your Cover Me account."
           : plan === "pro"
-            ? "Up to 25 generations a day, your letters and resumes on any device."
-            : "10 free generations to start. No credit card required.";
+            ? `Up to ${PLAN_LIMITS.pro_daily} letters or resumes and ${PLAN_LIMITS.answer_pro_daily} answers to application questions a day. Your letters and resumes saved to your account, on any device.`
+            : `${PLAN_LIMITS.free_starter} free generations to start. No credit card required.`;
 
   return (
     <div className="grid min-h-screen grid-cols-[55fr_45fr] max-md:grid-cols-1">
-      {/* ── Left panel ──────────────────────────────────────────────────── */}
       <div
         className="relative overflow-hidden bg-surface border-r border-border max-md:hidden"
         style={{
@@ -372,7 +368,7 @@ function AuthForm() {
             {[
               "Open source · MIT",
               "Bring your own key",
-              "10 free to start",
+              `${PLAN_LIMITS.free_starter} free to start`,
             ].map((item, i, arr) => (
               <span key={item} className="flex items-center gap-2.5">
                 <span className="text-xs font-medium text-dim tracking-[0.01em]">
@@ -387,10 +383,8 @@ function AuthForm() {
         </div>
       </div>
 
-      {/* ── Right panel ─────────────────────────────────────────────────── */}
       <div className="relative bg-background flex flex-col items-center px-10 py-12 min-h-screen max-md:px-6 max-md:pt-14 max-md:pb-10">
 
-        {/* Back link — hidden in reset view (user arrived via email link) */}
         {view !== "reset" && (
           <a
             href="/"
@@ -401,19 +395,17 @@ function AuthForm() {
           </a>
         )}
 
-        {/* Top-aligned, not centred, so a heading stays put when the view
-            changes height (waiting view to form, sign-in to forgot). The offsets
-            put every heading where the centred sign-in form had it (a 429px
-            column on desktop, measured; phones add the logo above it). */}
+        {/* Top-aligned so the heading stays put when the view changes height.
+            The offsets match where the centred form had it: a 429px column on
+            desktop, measured, plus the logo on phones (#42). */}
         <div
           className="relative z-[1] w-full max-w-[340px] mt-[max(0px,calc(50vh-262px))] max-md:max-w-full max-md:mt-[max(0px,calc(50vh-291px))]"
           style={{ animation: "fadeUp 0.5s ease 0.15s both" }}
         >
           <p role="status" className="sr-only">
-            {announce && (waiting === "email" ? "Checking your link" : waiting === "opening" ? "Opening your dashboard" : waiting ? "Signing you in" : "")}
+            {announce && (switchTo ? "Switch accounts?" : waiting === "email" ? "Checking your link" : waiting === "opening" || waiting === "session" ? "Opening your dashboard" : waiting ? "Signing you in" : "")}
           </p>
 
-          {/* Mobile logo */}
           <a
             href="/"
             className="hidden max-md:flex items-center gap-[9px] mb-8"
@@ -424,18 +416,37 @@ function AuthForm() {
             </span>
           </a>
 
-          {/* ── Back from Google or an email link ── */}
-          {waiting ? (
+          {switchTo ? (
+            <>
+              <div className="mb-7">
+                <h2 className="text-2xl text-foreground leading-[1.2] mb-[5px]">
+                  Switch accounts?
+                </h2>
+                <p className="text-[13.5px] text-muted-foreground leading-[1.55]">
+                  {switchTo.current ? <>You&apos;re signed in as <strong className="text-foreground">{switchTo.current}</strong>.</> : "You're already signed in."}{" "}
+                  {switchTo.email ? <>This link is for <strong className="text-foreground">{switchTo.email}</strong>.</> : "We can't tell which account this link is for."}
+                </p>
+              </div>
+              <div className="flex flex-col gap-2.5">
+                <Button size="lg" className="w-full" onClick={() => adoptLinkSession(switchTo.tokens)}>
+                  {switchTo.email ? "Switch accounts" : "Use this link"}
+                </Button>
+                <Button size="lg" variant="outline" className="w-full" onClick={() => { window.location.replace(next ?? "/dashboard"); }}>
+                  Stay signed in
+                </Button>
+              </div>
+            </>
+          ) : waiting ? (
             <div>
               <div className="mb-7">
                 <h2 className="text-2xl text-foreground leading-[1.2] mb-[5px]">
-                  {waiting === "email" ? "Checking your link." : "Signing you in."}
+                  {waiting === "email" ? "Checking your link." : waiting === "session" ? "You're signed in." : "Signing you in."}
                 </h2>
                 <p className="text-[13.5px] text-muted-foreground leading-[1.55]">
                   {waiting === "email" ? "One moment." : "Opening your dashboard in a moment."}
                 </p>
               </div>
-              <Card className="rounded-[16px] p-4 shadow-[0_1px_2px_rgba(30,27,75,0.05),0_12px_28px_-16px_rgba(30,27,75,0.18)]">
+              {waiting !== "session" && <Card className="rounded-[16px] p-4 shadow-[0_1px_2px_rgba(30,27,75,0.05),0_12px_28px_-16px_rgba(30,27,75,0.18)]">
                 <ul className="flex flex-col gap-3">
                   {waiting === "email" ? (
                     <>
@@ -454,9 +465,9 @@ function AuthForm() {
                     </>
                   )}
                 </ul>
-              </Card>
+              </Card>}
             </div>
-          ) : /* ── Email confirmed ── */
+          ) :
           view === "confirmed" ? (
             <>
               <div className="w-12 h-12 rounded-full bg-[rgba(79,70,229,0.1)] border border-[rgba(79,70,229,0.25)] flex items-center justify-center mb-6">
@@ -466,13 +477,13 @@ function AuthForm() {
                 Email confirmed.
               </h2>
               <p className="text-[13.5px] text-muted-foreground leading-[1.6] mb-7">
-                Your account is active. Let&apos;s get to work.
+                Your account is active.{accountEmail && <> You&apos;re signed in as <strong className="text-foreground">{accountEmail}</strong>.</>}
               </p>
               <Button onClick={() => { window.location.href = next ?? "/dashboard"; }} size="lg" className="w-full">
                 {next ? "Continue" : "Go to dashboard"}
               </Button>
             </>
-          ) : /* ── Success state ── */
+          ) :
           status === "success" ? (
             <>
               <div className="flex items-center gap-5 mb-7">
@@ -484,7 +495,9 @@ function AuthForm() {
                   </h2>
                   <p className="text-[13.5px] text-muted-foreground leading-[1.55]">
                     {view === "reset" ? (
-                      "Your password has been changed. You're now signed in."
+                      <>
+                        Your password has been changed. You&apos;re now signed in{accountEmail ? <> as <strong className="text-foreground">{accountEmail}</strong></> : null}.
+                      </>
                     ) : view === "forgot" ? (
                       <>
                         We sent a password reset link to{" "}
@@ -532,7 +545,6 @@ function AuthForm() {
               </div>
             </>
           ) : view === "reset" ? (
-            /* ── Password reset form ── */
             <>
               <div className="mb-7">
                 <h2 className="text-2xl text-foreground leading-[1.2] mb-[5px]">
@@ -540,6 +552,7 @@ function AuthForm() {
                 </h2>
                 <p className="text-[13.5px] text-muted-foreground leading-[1.55]">
                   {subtext}
+                  {accountEmail && <> For <strong className="text-foreground">{accountEmail}</strong>.</>}
                 </p>
               </div>
 
@@ -632,7 +645,6 @@ function AuthForm() {
               </form>
             </>
           ) : view === "forgot" ? (
-            /* ── Forgot password form ── */
             <>
               <div className="mb-7">
                 <h2 className="text-2xl text-foreground leading-[1.2] mb-[5px]">
@@ -684,15 +696,14 @@ function AuthForm() {
                 Remember it?{" "}
                 <button
                   type="button"
-                  className="bg-transparent border-none text-brand-light font-semibold text-[13px] cursor-pointer p-0 hover:text-foreground transition-colors"
+                  className="inline-flex items-center gap-1 align-baseline bg-transparent border-none text-brand-light font-semibold text-[13px] cursor-pointer p-0 hover:text-foreground transition-colors"
                   onClick={() => switchView("signin")}
                 >
-                  Sign in →
+                  Sign in <ArrowRightIcon size={12} className="-translate-y-px" aria-hidden="true" />
                 </button>
               </p>
             </>
           ) : (
-            /* ── Sign in / sign up form ── */
             <>
               <div className="mb-7">
                 <h2 className="text-2xl text-foreground leading-[1.2] mb-[5px]">
@@ -703,7 +714,7 @@ function AuthForm() {
                 </p>
               </div>
 
-              {/* Above both ways in, so it reads as applying to Google too. */}
+              {/* Above both buttons so it reads as applying to Google too (#114). */}
               {view === "signup" && (
                 <div className="flex items-center gap-2 mb-[18px]">
                   <Checkbox
@@ -827,10 +838,10 @@ function AuthForm() {
                     No account?{" "}
                     <button
                       type="button"
-                      className="bg-transparent border-none text-brand-light font-semibold text-[13px] cursor-pointer p-0 hover:text-foreground transition-colors"
+                      className="inline-flex items-center gap-1 align-baseline bg-transparent border-none text-brand-light font-semibold text-[13px] cursor-pointer p-0 hover:text-foreground transition-colors"
                       onClick={() => switchView("signup")}
                     >
-                      Create one free →
+                      Create one free <ArrowRightIcon size={12} className="-translate-y-px" aria-hidden="true" />
                     </button>
                   </>
                 ) : (
@@ -838,10 +849,10 @@ function AuthForm() {
                     Have an account?{" "}
                     <button
                       type="button"
-                      className="bg-transparent border-none text-brand-light font-semibold text-[13px] cursor-pointer p-0 hover:text-foreground transition-colors"
+                      className="inline-flex items-center gap-1 align-baseline bg-transparent border-none text-brand-light font-semibold text-[13px] cursor-pointer p-0 hover:text-foreground transition-colors"
                       onClick={() => switchView("signin")}
                     >
-                      Sign in →
+                      Sign in <ArrowRightIcon size={12} className="-translate-y-px" aria-hidden="true" />
                     </button>
                   </>
                 )}

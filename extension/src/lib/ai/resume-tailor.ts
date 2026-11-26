@@ -1,25 +1,29 @@
 import type { AIProvider, JobData, ParsedResume, TailoredResume } from '../../types'
 import { debugGroup, debugLog } from '../debug'
 import { derivePlanningProgress, deriveTailorProgress } from './tailor-progress'
-import { buildsOnEdits, candidateText, checkAndRewriteLines, groundSkills, groundTailored, keepSeen, matchSkillCase, seenVersion, trustedNotes, type AskModel, type LineRepair } from './resume-grounding'
+import { buildsOnEdits, candidateText, checkAndRewriteLines, checkedTitle, groundSkills, groundTailored, keepSeen, recaseSkills, seenVersion, skillGroups, trustedNotes, type AskModel, type LineRepair } from './resume-grounding'
 import { SONNET_FIELDS, streamSonnet } from './claude'
-import { scoreFromMatch, type KeywordMatch } from './ats-score'
+import { scoreBefore, scoreFromMatch, type KeywordMatch } from './ats-score'
+import { KEYWORD_JUDGING, KEYWORD_TIERS } from './keyword-rules'
 import { callOpenAI, OPENAI_MODEL } from './openai'
 
 
-// The model outputs a DELTA (rewritten content only), not the full resume —
-// immutable fields are merged back in code (see mergeTailorDelta below). Key
-// order matters: tailor-progress.ts derives the live progress label from which
-// key the model is currently emitting.
+// Key order matters: tailor-progress.ts reads the progress label from the key being streamed: https://github.com/TheLinc/cover-me/commit/d7700ca5cc272c75785b90971b63a366f3d35016
 function buildTailorSchema(parsed: ParsedResume): string {
   const delta: Record<string, unknown> = {
     summary: 'string — 2-3 sentence professional summary, no first-person pronouns; "" when STEP 4 says skip',
+    ...(parsed.headline ? { headline: 'string — the title line under the name (STEP 4B)' } : {}),
     experience: [{ bullets: ['string — rewritten bullets for the SAME-INDEX input experience entry'] }],
   }
   if (parsed.projects?.length) {
     delta.projects = [{ bullets: ['string — rewritten bullets for the SAME-INDEX input project'] }]
   }
-  if (parsed.skills) {
+  if (parsed.skills && skillGroups(parsed.skills).length) {
+    delta.skills = [
+      { category: 'string — the resume\'s own group label', skill: 'string — a skill worded exactly as in the resume' },
+      { category: 'string — the resume\'s own group label', skill: 'string — an added or reworded skill (STEP 8)', evidence: 'string — exact phrase copied from the resume that proves it' },
+    ]
+  } else if (parsed.skills) {
     delta.skills = [
       { skill: 'string — a skill worded exactly as in the resume' },
       { skill: 'string — an added or reworded skill (STEP 8)', evidence: 'string — exact phrase copied from the resume that proves it' },
@@ -35,37 +39,32 @@ function buildTailorSchema(parsed: ParsedResume): string {
   return JSON.stringify(delta, null, 2)
 }
 
-// The editing base for revision mode — strip the derived score fields so the
-// model edits resume content, not stale numbers (STEP 9 is recomputed fresh).
-// An edited resume's fields from the editor tab go too: the old gaps, the
-// section order (layout, not wording), and deleted sections, so the model
-// doesn't put their text back (#197).
-function stripScores(r: TailoredResume): Omit<TailoredResume, 'atsScore' | 'atsGaps' | 'atsGapsBeforeEdits' | 'editedAt' | 'hasEdits' | 'sectionOrder' | 'deletedSections'> {
-  const { atsScore: _s, atsGaps: _g, atsGapsBeforeEdits: _b, editedAt: _e, hasEdits: _h, sectionOrder: _o, deletedSections: _d, ...rest } = r
+// Otherwise the model edits stale scores and puts deleted sections back (#197).
+function stripScores(r: TailoredResume): Omit<TailoredResume, 'atsScore' | 'atsScoreBefore' | 'atsGaps' | 'atsGapsBeforeEdits' | 'editedAt' | 'hasEdits' | 'sectionOrder' | 'deletedSections'> {
+  const { atsScore: _s, atsScoreBefore: _sb, atsGaps: _g, atsGapsBeforeEdits: _b, editedAt: _e, hasEdits: _h, sectionOrder: _o, deletedSections: _d, ...rest } = r
   return rest
 }
 
 // ── Tailor delta (mirrored: extension/src/lib/ai/resume-tailor.ts ⇄ backend/supabase/functions/tailor/index.ts) ──
-// The model outputs only rewritten content; these helpers validate it and merge
-// it back into the parsed resume, so immutable fields (name, contact, titles,
-// companies, dates, education, certifications) can never be altered by the model.
+// The model returns only rewritten text, so it can never alter name, contact, titles,
+// companies, dates, education or certifications: https://github.com/TheLinc/cover-me/commit/d7700ca5cc272c75785b90971b63a366f3d35016
 
 export interface TailorDeltaEntry { bullets: string[] }
 
 export interface TailorDelta {
   summary?: string
+  /** The title line under the name, rewritten for the job (STEP 4B) (#190). */
+  headline?: string
   experience: TailorDeltaEntry[]
   projects?: TailorDeltaEntry[]
-  /** [{ skill, evidence? }] from current prompts; a comma-separated string from older ones. Converted by groundSkills before merging. */
+  /** Older prompts sent a comma-separated string; groundSkills converts both forms before merging: https://github.com/TheLinc/cover-me/commit/0e9a09cd3d4d9fc3b7cebb190aed7c4307954676 */
   skills?: string | unknown[]
   keywordMatch?: Record<string, unknown>
 }
 
 export function parseDelta(raw: string): TailorDelta {
-  // The model sometimes emits the JSON, then "Wait, correction needed..." and a
-  // corrected object (2 of 68 tailors in one full eval). Use the last complete
-  // top-level object that parses: that is its final answer. Code fences,
-  // surrounding prose, and an object cut off mid-stream all fall away.
+  // The model sometimes emits JSON, then "Wait, correction needed..." and a corrected
+  // object (2 of 68 tailors in one eval); the last complete one is its answer: https://github.com/TheLinc/cover-me/commit/30cd16dbed180782529d87cec6a47ec67f76a7b8
   const objects = topLevelObjects(raw)
   let incomplete = false
   for (let i = objects.length - 1; i >= 0; i--) {
@@ -81,7 +80,6 @@ export function parseDelta(raw: string): TailorDelta {
   throw new Error(incomplete ? 'AI returned incomplete response. Please try again.' : 'AI returned invalid JSON. Please try again.')
 }
 
-// Each balanced {...} at the top level, ignoring braces inside JSON strings.
 function topLevelObjects(text: string): string[] {
   const out: string[] = []
   let depth = 0
@@ -105,38 +103,169 @@ function topLevelObjects(text: string): string[] {
   return out
 }
 
-// Merge the model's delta into the parsed resume. A missing or empty bullets
-// array for an entry keeps that entry's original bullets — a partially valid
-// response degrades to "some bullets untailored", never to a broken resume.
-// The same holds for a count the prompt forbids: in default mode a role must
-// come back with as many bullets as it had (a different count means bullets
-// were merged or dropped), and projects keep their count in every mode.
+// Bad bullet output keeps the original bullets, never a broken resume: https://github.com/TheLinc/cover-me/commit/30cd16dbed180782529d87cec6a47ec67f76a7b8
 export function mergeTailorDelta<T extends {
   experience: Array<{ bullets: string[] }>
   projects?: Array<{ bullets: string[] }>
   skills?: string
-}>(base: T, delta: TailorDelta, opts: { exactBulletCounts?: boolean } = {}): T & { summary: string } {
-  const pick = (orig: string[], d: TailorDeltaEntry | undefined, exact: boolean): string[] => {
+}>(base: T, delta: TailorDelta, opts: { exactBulletCounts?: boolean; maxBullets?: Pick<BulletBudget, 'long' | 'experience' | 'projects'> } = {}): T & { summary: string } {
+  const pick = (orig: string[], d: TailorDeltaEntry | undefined, exact: boolean, max?: number): string[] => {
     const rewritten = Array.isArray(d?.bullets) ? d.bullets.filter((b): b is string => typeof b === 'string' && b.trim().length > 0) : []
-    if (rewritten.length === 0 || (exact && rewritten.length !== orig.length)) return orig
-    return rewritten
+    const kept = rewritten.length === 0 || (exact && rewritten.length !== orig.length) ? orig : rewritten
+    // Trim mode: past the budget's maximum, the model's lowest-ranked bullets
+    // go. Only a long master also keeps an entry's first measured results, so
+    // a short resume's trim drops what the model dropped (#190).
+    if (!max || max <= 0) return kept
+    return opts.maxBullets?.long ? keepResults(orig, kept, max) : kept.slice(0, max)
   }
+  const exact = !!opts.exactBulletCounts
+  // A headline is kept only when the resume has one, and only as a short
+  // single line; anything else keeps the resume's own. One the user cleared in
+  // the editor stays cleared, as the guard has nothing to check it against (#190).
+  const headline = typeof delta.headline === 'string' ? delta.headline.replace(/\s+/g, ' ').trim() : ''
+  const baseHeadline = (base as { headline?: unknown }).headline
+  const newHeadline = typeof baseHeadline === 'string' && baseHeadline.trim() && headline && headline.length <= 60 && headline.split(' ').length <= 8 ? headline : undefined
   return {
     ...base,
+    ...(newHeadline ? { headline: newHeadline } : {}),
     summary: typeof delta.summary === 'string' ? delta.summary : '',
-    experience: base.experience.map((role, i) => ({ ...role, bullets: pick(role.bullets, delta.experience?.[i], !!opts.exactBulletCounts) })),
+    experience: base.experience.map((role, i) => ({ ...role, bullets: pick(role.bullets, delta.experience?.[i], exact, opts.maxBullets?.experience[i]) })),
     ...(base.projects?.length
-      ? { projects: base.projects.map((p, i) => ({ ...p, bullets: pick(p.bullets, delta.projects?.[i], true) })) }
+      ? { projects: base.projects.map((p, i) => ({ ...p, bullets: pick(p.bullets, delta.projects?.[i], exact, opts.maxBullets?.projects[i]) })) }
       : {}),
     ...(base.skills
       ? { skills: typeof delta.skills === 'string' && delta.skills.trim() ? delta.skills : base.skills }
       : {}),
   }
 }
-// ── End mirrored tailor delta ──
+
+// A bullet stating a measured result: a percentage, or a before/after change
+// ("cut wait time from 40 to 25 minutes", "0.76 to 0.84", "3/14 to 14/14"). A
+// plain range ("Managed 5 to 7 engineers", "shifts from 7pm to 7am", "grades
+// from 9 to 12", "2019 to 2021") or scope alone ("a 60-case evaluation set")
+// doesn't count (#190). CHANGE starts only at the start of a number, so a
+// 20,000-digit bullet takes milliseconds, not a second of the function's CPU (#190).
+const PERCENT = /\b\d+(?:\.\d+)?(?:\/\d+)?\s*(?:%|percent\b)/i
+const CHANGE = /(?<![\d.,/])(\bfrom\s+)?\$?(\d+(?:[.,]\d+)*(?:\/\d+)?)(?:\s*[a-z%]+)?\s+(?:to|\u2192|->)\s+\$?(\d+(?:[.,]\d+)*(?:\/\d+)?)/gi
+const CHANGE_VERB = /\b(?:reduc|cut|improv|increas|rais|lower|decreas|boost|grew|grow|drop|shrank|shrunk|sped|speed|doubl|tripl|halv|fell|rose|climb|declin|shorten)\w*/i
+const YEAR = /^(?:19|20)\d\d$/
+
+export function isResultBullet(text: string): boolean {
+  if (PERCENT.test(text)) return true
+  for (const m of text.matchAll(CHANGE)) {
+    const [, , a, b] = m
+    if (YEAR.test(a) && YEAR.test(b)) continue
+    const fractional = /[./]/.test(a) && /[./]/.test(b)
+    if (fractional || verbBefore(text.slice(0, m.index))) return true
+  }
+  return false
+}
+
+// A change verb in the same clause as the figures, at most eight words before
+// them: "Ran 3 to 5 workshops, improving onboarding" is a range, not a result (#190).
+function verbBefore(lead: string): boolean {
+  const clause = lead.split(/[,;:()]/).pop() ?? ''
+  return CHANGE_VERB.test(clause.trim().split(/\s+/).slice(-8).join(' '))
+}
+
+// The figures a bullet states, as written ("40", "25", "0.76", "3/14") (#190).
+const figures = (text: string): string[] => text.match(/\d+(?:[./]\d+)*/g) ?? []
+
+/**
+ * Cuts an entry to max bullets, the model's ranking first, while keeping up to
+ * two of the original's measured results (in the order the resume gives them).
+ * A result counts as kept when some bullet still states all of its percentages
+ * or all of its other figures ("Cut wait 38%" keeps "from 40 to 25 minutes (38%)");
+ * a dropped one comes back as the model's rewrite if it wrote one past the cut,
+ * else as the original, at the top, and the lowest-ranked bullets make room (#190).
+ */
+export function keepResults(orig: string[], kept: string[], max: number): string[] {
+  const states = (bullet: string, result: string) => {
+    const own = new Set(figures(bullet))
+    const pct = new Set(result.match(/\d+(?:\.\d+)?(?=\s*%)/g) ?? [])
+    const nums = figures(result)
+    return [nums.filter((n) => pct.has(n)), nums.filter((n) => !pct.has(n))]
+      .some((part) => part.length > 0 && part.every((n) => own.has(n)))
+  }
+  const results = orig.filter(isResultBullet).slice(0, Math.min(2, max))
+  const head: string[] = []
+  for (const result of results) {
+    if (!figures(result).length) continue
+    const at = kept.findIndex((b) => states(b, result))
+    if (at >= 0 && at < max) continue
+    head.push(at >= 0 ? kept[at] : result)
+  }
+  if (!head.length) return kept.slice(0, max)
+  return [...head, ...kept.filter((b) => !head.includes(b))].slice(0, max)
+}
+
+// How many bullets each entry keeps in trim mode. A long master resume (over
+// 36 bullets, or a role over 12) is cut hardest in the oldest roles, so it
+// comes out at one to two pages: 6 for the latest role, 4 for the next two, 3
+// for older ones, 3 for each project. Any other resume keeps the most the trim
+// prompt has always allowed (7 of 8 or more, 5 of 5 to 7, all of 4 or fewer)
+// and every project bullet. Never more than the entry has (#190).
+export interface BulletBudget {
+  /** A master resume over 36 bullets, or with a role over 12: too long to print in full (#190). */
+  long: boolean
+  experience: number[]
+  projects: number[]
+}
+
+// On Regenerate from the user's edits, an entry keeps at least the bullets
+// they left it, as the revision prompt asks; the budget cuts only below that (#190).
+export function seenBudget<B extends Pick<BulletBudget, 'long' | 'experience' | 'projects'>>(
+  b: B,
+  seen: { experience: Array<{ bullets?: string[] }>; projects?: Array<{ bullets?: string[] }> },
+  upload: unknown,
+): B {
+  if (seen === upload) return b
+  return {
+    ...b,
+    experience: b.experience.map((n, i) => Math.max(n, seen.experience[i]?.bullets?.length ?? 0)),
+    projects: b.projects.map((n, i) => Math.max(n, seen.projects?.[i]?.bullets?.length ?? 0)),
+  }
+}
+
+export function bulletBudget(r: { experience: Array<{ bullets?: string[] }>; projects?: Array<{ bullets?: string[] }> }): BulletBudget {
+  const counts = r.experience.map((e) => e.bullets?.length ?? 0)
+  const long = counts.reduce((a, b) => a + b, 0) > 36 || counts.some((n) => n > 12)
+  return {
+    long,
+    experience: counts.map((n, i) => Math.min(n, long ? (i === 0 ? 6 : i <= 2 ? 4 : 3) : n >= 8 ? 7 : n >= 5 ? 5 : n)),
+    projects: (r.projects ?? []).map((p) => Math.min(p.bullets?.length ?? 0, long ? 3 : Infinity)),
+  }
+}
+
+// The budget as prompt lines: "- experience[0] (Title, Company): 15 bullets in, keep 5–6" (#190).
+export function budgetText(r: { experience: Array<{ bullets?: string[]; title?: string; company?: string }>; projects?: Array<{ bullets?: string[]; name?: string }> }): string {
+  const b = bulletBudget(r)
+  const range = (n: number, max: number) => {
+    const min = Math.min(n, Math.max(2, max - 1))
+    return min === max ? `keep ${max}` : `keep ${min}–${max}`
+  }
+  return [
+    ...r.experience.map((e, i) => `- experience[${i}] (${[e.title, e.company].filter(Boolean).join(', ')}): ${e.bullets?.length ?? 0} bullets in, ${range(e.bullets?.length ?? 0, b.experience[i])}`),
+    ...(r.projects ?? []).map((p, i) => `- projects[${i}] (${p.name ?? ''}): ${p.bullets?.length ?? 0} bullets in, ${range(p.bullets?.length ?? 0, b.projects[i])}`),
+  ].join('\n')
+}
+// ── End mirrored tailor delta ── https://github.com/TheLinc/cover-me/commit/d7700ca5cc272c75785b90971b63a366f3d35016
+
+// Extra STEP 8 rules for a skills section written in labelled groups, so the
+// tailored list keeps those groups instead of collapsing into one long line (#190).
+export function groupedSkillsRule(skills: string | undefined, cut: boolean): string {
+  const groups = skillGroups(skills)
+  if (!groups.length) return ''
+  return `
+GROUPED SKILLS — this resume lists its skills in labelled groups: ${groups.map((g) => `"${g.label}"`).join(', ')}. Keep that grouping. Give every skill a "category" copied exactly from one of these labels; an added skill takes the label of the group its evidence comes from. Emit skills most-relevant-first (groups print in the order their first skill appears)${cut ? ', and leave out a group with nothing relevant to this job. The ~15–18 target and the 18-item hard cap above count every group together, in at most 6 groups' : ''}. Prefer the resume's own wording, and add at most 3 skills worded in the JD's phrasing.
+`
+}
 
 export function buildPrompt(job: JobData, parsed: ParsedResume, compact: boolean, supplemental?: string, trim = false, includeSummary = true, previous?: TailoredResume): string {
   const company = job.company && job.company !== 'Unknown Company' ? job.company : 'Unknown'
+  const budget = budgetText(parsed)
+  // Only a long master resume gets per-entry budgets in the prompt (#190).
+  const long = bulletBudget(parsed).long
   const today = new Date().toISOString().split('T')[0]
 
   const previousSection = previous ? `
@@ -160,14 +289,15 @@ ADD a skill only when it is in the JD AND either named in the supplemental conte
 SKILLS OUTPUT FORMAT: "skills" is a JSON array of objects. A skill worded exactly as in the resume is {"skill": "..."}. Every other skill (an addition, or a rewording into the JD's phrasing) MUST include "evidence": a phrase copied character-for-character from the resume or the supplemental context that directly demonstrates that skill itself, not something merely near it. The application checks every evidence phrase against the resume and supplemental context and deletes any skill whose evidence is missing or not found, so never paraphrase evidence and never add a skill you cannot back.
 Never add a competing or unrelated tool the candidate lacks (Vue, Redux, a different language). Do NOT add process or architecture buzzwords the resume gives no concrete evidence for — in tech, "CI/CD", "DevOps", "Cloud Security", "Microservices Architecture", "Cloud-Native" each require a named tool or practice on the resume or in the supplemental context; in any field, a license, certification, or method named only in the JD is never added unless the resume states it or the supplemental context says the candidate holds it. Absent evidence, these are fabrications (Integrity 4). If in doubt, leave it out.
 
-REMOVE skills not relevant to this role type (e.g. a mobile-only framework for a pure web role). When over the cap, keep the most JD-relevant skills and drop the least relevant first. Aim for ~15–18 focused skills, not an exhaustive inventory; a bloated list buries the terms that matter and reads as unfocused. NEVER remove a skill the JD names — or a specific instance of a category the JD names (e.g. MySQL under "relational databases") — that the candidate genuinely has; ATS matches literal tokens, so the JD's exact term must survive. When the resume has both a JD-named specific term and its generic synonym, keep BOTH ("MySQL (SQL)", not just "SQL"); dedupe only synonyms the JD does not name. Hard cap: 18 items.
-` : ''
+${trim || compact ? `REMOVE skills not relevant to this role type (e.g. a mobile-only framework for a pure web role). When over the cap, keep the most JD-relevant skills and drop the least relevant first. Aim for ~15–18 focused skills, not an exhaustive inventory; a bloated list buries the terms that matter and reads as unfocused. NEVER remove a skill the JD names — or a specific instance of a category the JD names (e.g. MySQL under "relational databases") — that the candidate genuinely has; ATS matches literal tokens, so the JD's exact term must survive. When the resume has both a JD-named specific term and its generic synonym, keep BOTH ("MySQL (SQL)", not just "SQL"); dedupe only synonyms the JD does not name. Hard cap: 18 items. The one exception: never cut a JD-named skill the candidate has to meet the cap. If those alone pass 18, keep all of them and nothing else.` : 'KEEP every skill the resume lists: this mode removes none and has no cap. A skill you leave out is put back at the end of the list, so rank rather than drop.'}
+${groupedSkillsRule(parsed.skills, trim || compact)}` : ''
 
   const compactMode = compact ? `---
 
 COMPACT MODE — SINGLE PAGE REQUIRED:
 The output must fit on a single letter page. Apply these additional constraints (they override the general rules where they conflict):
 - Reduce to a maximum of 3 bullets per role — keep the most relevant 3, drop the rest. A bullet matching an activity the JD explicitly names (e.g. code reviews) is among the most relevant — keep it.
+- Reduce to a maximum of 2 bullets per project — keep the most relevant 2 by the same rule, and never drop the only evidence of a Tier 1 keyword. Every project keeps at least one bullet; never remove or reorder a project.
 - Every bullet must fit on a single line (100 characters maximum)
 - Shorten the skills list to the 10 most relevant skills only
 - The bullet budget rule (STEP 5) does NOT apply in compact mode — use these constraints instead
@@ -210,19 +340,9 @@ Identify the industry from the JD vocabulary; it sets which keywords and metrics
 - Other: infer the field's own hard-skill vocabulary and outcome metrics directly from the JD.
 
 STEP 2 — EXTRACT & TIER KEYWORDS
-Pull the hard requirements from the JD and tier them. Only tier a keyword the candidate GENUINELY HAS (Integrity 3).
-- TIER 1 — must-have (4–6): explicitly required, repeated, or foundational. Must appear in the summary, the skills, AND at least one bullet.
-- TIER 2 — preferred (8–15): mentioned once or "nice to have." Appear in skills and in the most relevant bullet.
-Only hard skills — soft-skill clichés ("communication", "team player", "proactive") score nothing and never appear in skills.
-
-BEHAVIORAL REQUIREMENTS — when the JD names a verifiable activity under its responsibilities (not its culture blurb) and a bullet already demonstrates it, treat it as Tier 2 and protect that bullet (Integrity 6). These are industry-specific:
-  Tech: code reviews, mentoring, technical documentation, on-call ownership
-  Healthcare: patient education, interdisciplinary rounds, care-plan review, clinical supervision
-  Finance: client reporting, audit review, stakeholder presentations
-  Legal: discovery review, client communication, brief preparation
-  Any: cross-functional collaboration, knowledge sharing, process documentation
+${KEYWORD_TIERS}
+Place only the keywords the candidate GENUINELY HAS (Integrity 3): each Tier 1 keyword in the summary, the skills, AND at least one bullet; each Tier 2 keyword in skills and in the most relevant bullet. Soft-skill clichés never appear in skills. When a bullet already demonstrates a behavioral requirement, protect that bullet (Integrity 6).
 ${parsed.skills ? '' : '\nNote: this resume has no skills section — embed keywords naturally within experience bullets only.\n'}
-ALTERNATIVE REQUIREMENTS — when the JD offers a choice ("X, Y, or Z"; "SQL/NoSQL"; "relational or non-relational"), treat the whole set as ONE requirement that is covered if the candidate has ANY one member. Tier it once, by the member the candidate has, and NEVER list the unused alternatives as missing or as a gap — they are not required.
 
 SYNONYM PAIRS — when the resume and JD name the same thing differently and both fit one phrase, keep both: "localization (i18n)"; "PostgreSQL (SQL)"; "REST API integrations".
 
@@ -231,19 +351,36 @@ Write one internal positioning sentence (not output): "[Role archetype] in [key 
 
 ${includeSummary ? `STEP 4 — WRITE SUMMARY
 2–3 sentences, 40–70 words, no first-person pronouns, no weak openers ("Experienced professional", "Results-driven", "Dynamic"), no clichés ("passionate", "innovative", "team player", "fast-paced", "dynamic"):
-- Identity: open with the candidate's own most recent title, or the archetype their experience directly supports. Use the TARGET ROLE's title only if the candidate has held that role at that level; never adopt a target title that names a level, specialty, license, or credential the resume does not show (a line cook is not a "Sous Chef", a tanker driver is not a "Hazmat Tanker Driver", a VP is not a "Chief Operating Officer"), and never write "[target title] candidate". Include 2–3 Tier 1 keywords.
+- Identity: open with the TARGET ROLE's title when it is the same or a broader name for work the bullets already show, at the same level (a Full Stack Developer opens as "Software Engineer"); recruiters search on the posting's exact title. Otherwise open with the candidate's own most recent title, or the archetype their experience directly supports. Never adopt a target title that adds a level, specialty, license, or credential the bullets don't show (a frontend-only engineer is not "Full Stack"; a line cook is not a "Sous Chef"; a tanker driver is not a "Hazmat Tanker Driver"; a VP is not a "Chief Operating Officer"). When the target title names a level the resume does not show (Senior, Lead, Staff, Principal), use it without that word ("Software Engineer" for "Senior Software Engineer"); a past title that already holds the level allows the full title. A generic word alone (Manager, Engineer, Specialist, Lead) never counts as a broader title. When the title can't be used, describe the matching work the bullets show in the posting's words. Never write "[target title] candidate". Include 2–3 Tier 1 keywords.
 - Strongest capability or achievement that answers the role's core challenge
 - Optional: a differentiator or collaboration strength relevant to the role
 - Aim it at THIS role: lead with the evidence that answers the posting's core need, in its terms where honest, and in fresh words: no phrase or figure lifted from the bullets beyond the one headline number. A summary that restates the bullets, or could sit on any application for the candidate's current job, is not tailored.
 YEARS OF EXPERIENCE: never state a count of years in the summary. The dates already sit on the resume, and any total you compute counts training, junior, or unrelated roles that a reader will not credit.
 Claim only what a bullet demonstrates — a skills-only technology may not be claimed as built/deployed/specialised in, and architecture buzzwords the resume does not support are forbidden (Integrity 4).
 INDUSTRY/DOMAIN: name a domain (e-commerce, fintech, biotech, etc.) ONLY if a bullet shows the candidate actually worked in it. Never borrow a domain from the JD's requirements or "nice-to-have" list, and never hedge an unearned one in with "-adjacent", "-aligned", or "cross-domain" (Integrity 4).` : `STEP 4 — SUMMARY: skip; set summary to "".`}
-
+${parsed.headline ? `
+STEP 4B — HEADLINE
+The resume prints a title line under the candidate's name; theirs reads "${parsed.headline}". Rewrite it for THIS job, 2–6 words:
+- Write it as a title, optionally followed by a comma and a specialty.
+- The title: the TARGET ROLE's title, or its plainest form ("Registered Nurse" for "Registered Nurse, Med-Surg"; "Machine Learning Engineer" for "Machine Learning Engineer, LLM Evaluation"), only if the candidate's own headline or one of their job titles shows they have held that role. Otherwise their own headline or most recent title. Every word of the title comes from their headline or job titles, never from their bullets: a nursing assistant whose bullets mention assisting registered nurses is not a "Registered Nurse".
+- The specialty: work their bullets show that this job asks for ("Welder, Pipe and Structural"; "Software Engineer, Payments").
+- Never add a level, rank or licence their own headline and titles don't show (Senior, Staff, Lead, Principal, Manager, Head, Director, II/III; Journeyman, Master, Foreman, Supervisor, Charge; Licensed, Registered, Certified), a company or team name, or a technology the resume lacks.
+- When in doubt, keep the candidate's headline exactly as written.
+` : ''}
 STEP 5 — BULLET BUDGET
-${trim
+${trim && long
+  ? `TRIM MODE — RANK, THEN CUT: judging each bullet alone fails — in a strong resume almost every bullet looks individually "relevant," which is why nothing gets dropped. Instead RANK each entry's bullets by relevance to THIS JD and keep only the strongest, within these per-entry budgets (the most recent role keeps the most):
+${budget}
+Cutting a long role to well under half is the EXPECTED result, not an edge case; anything past an entry's maximum is cut in code from the end, so order matters. Never drop a bullet that states a measured result (a before/after figure such as "40 to 25 minutes", a percentage, a score); keep it and rank it first when it bears on this job. Before cutting, go through each responsibility and requirement the JD lists and find the bullet in each entry that best shows it: those bullets are kept first. Cut bullets that answer nothing in the JD (general feedback loops, onboarding, process mapping) before any bullet that answers a named responsibility, and never keep two bullets that show the same responsibility while another named responsibility goes unshown. Drop first the bullets in a tech stack or domain the JD never names (e.g. a React Native / mobile bullet for a web role; a payments or CRM-integration bullet for a role about neither), then filler with no JD keyword and no concrete outcome. NEVER drop a bullet matching an activity the JD explicitly names (code reviews, mentoring, stakeholder communication — Integrity 6), and never drop the only evidence of a Tier 1 keyword. Never remove a role; never add or merge bullets — only drop whole ones.`
+  : trim
   ? `TRIM MODE — RANK, THEN CUT: judging each bullet alone fails — in a strong resume almost every bullet looks individually "relevant," which is why nothing gets dropped. Instead RANK each role's bullets by relevance to THIS JD and keep only the strongest: a role with 8+ input bullets keeps the 5–7 most relevant and drops the rest; a role with 5–7 keeps 4–5; a role with 4 or fewer keeps at least 2. Cutting a long role to roughly half is the EXPECTED result, not an edge case. Drop first the bullets in a tech stack or domain the JD never names (e.g. a React Native / mobile bullet for a web role; a payments or CRM-integration bullet for a role about neither), then filler with no JD keyword and no concrete outcome. NEVER drop a bullet matching an activity the JD explicitly names (code reviews, mentoring, stakeholder communication — Integrity 6), and never drop the only evidence of a Tier 1 keyword. Never remove a role; never add or merge bullets — only drop whole ones.`
   : `DEFAULT MODE — STRICT 1:1: rewrite EVERY input bullet into exactly one output bullet. Each role's output bullet count MUST equal its input count exactly — no drops, no additions, no merges. Count the input bullets in each role first; if a role has 11 input bullets, output exactly 11. This is mandatory, not a target.`}
-PROJECTS: preserve every project's bullet count exactly, and never drop a technology named in a project.
+${trim && long
+  ? 'PROJECTS: keep the number of bullets the budget above gives each project, choosing the ones most relevant to this job. Every project keeps at least one bullet; never remove or reorder a project.'
+  : trim
+  ? `PROJECTS — RANK, THEN CUT, on a smaller budget than roles because projects are short: a project with 8+ input bullets keeps about half; one with 3–7 keeps 2–3; one with 1–2 keeps them all. Drop first the bullets in a tech stack or domain the JD never names. The role protections apply: never drop a bullet matching an activity the JD explicitly names, and never drop the only evidence of a Tier 1 keyword. Every project keeps at least one bullet; never remove or reorder a project.`
+  : `PROJECTS: preserve every project's bullet count exactly.`}
+A kept project bullet never loses a technology it names.
 
 STEP 6 — REWRITE BULLETS
 Compressed STAR: [strong action verb] + [what was done] + [measurable result or concrete scope]. Reword for impact and ATS phrasing without changing what actually happened (Integrity 3–5).
@@ -262,14 +399,14 @@ Compressed STAR: [strong action verb] + [what was done] + [measurable result or 
 - Banned filler (reads as AI-written): leveraged, utilized, seamlessly, cutting-edge, state-of-the-art, spearheaded, honed, fostered, garnered, various, numerous. Use the plain verb or name the specific thing instead.
 
 STEP 7 — REORDER BULLETS
-Within each role, sort bullets most-relevant-first. This touches only the bullets inside a role; role order is fixed (Integrity 2).
+Within each role, sort bullets most-relevant-first. When a role has a measured outcome that bears on this job (time saved, a score improved, a pilot result), lead the role with it. This touches only the bullets inside a role; role order is fixed (Integrity 2).
 ${step8}
 STEP 9 — ATS MATCH REPORT (the score is computed in code from this report — do NOT output a number)
-Judge coverage ONLY against this JD: the Tier 1 and Tier 2 keywords from STEP 2, plus the qualifications the JD explicitly states. NEVER weigh skills the JD does not mention, or skills "typically"/"usually" expected for this kind of role — if it is not in this JD, it neither helps nor hurts the candidate.
+${KEYWORD_JUDGING}
 Report in keywordMatch:
 - tier1Covered / tier1Missing: every STEP 2 Tier 1 keyword, split by whether the candidate genuinely has it (Integrity 3).
 - tier2Covered / tier2Missing: same for every Tier 2 keyword.
-- gatingGaps: hard qualifications the JD explicitly requires but the candidate does not meet — years of experience, a required degree, a mandatory license/cert (≤55 chars each, e.g. "Requires 5yr, candidate ~3yr"). A "preferred"/"nice-to-have" item is a Tier 2 keyword, never a gatingGap.
+- gatingGaps: every gating gap.
 Be exhaustive — list ALL keywords across the covered/missing arrays, not a sample; the user's score and gap list are derived entirely from them.
 
 ${compactMode}---
@@ -306,39 +443,39 @@ export function isValidResume(r: unknown): r is TailoredResume {
     Array.isArray(resume.experience)
 }
 
-// Full production assembly: raw model output → validated delta → merged resume
-// → grounding guard (job-only terms removed), with the code-computed ATS score
-// attached. Shared by tailorResume and the eval harness so evals exercise
-// exactly the production path.
+// The eval harness calls this too, so evals run the production path: https://github.com/TheLinc/cover-me/commit/d7700ca5cc272c75785b90971b63a366f3d35016
 export async function assembleTailored(
   parsed: ParsedResume,
   raw: string,
-  grounding: { jobDescription: string; supplemental?: string; previous?: TailoredResume; ask?: AskModel; onLineRepair?: (repair: LineRepair) => void; exactBulletCounts?: boolean },
+  grounding: { jobDescription: string; jobTitle?: string; supplemental?: string; previous?: TailoredResume; ask?: AskModel; onLineRepair?: (repair: LineRepair) => void; exactBulletCounts?: boolean; maxBullets?: Pick<BulletBudget, 'long' | 'experience' | 'projects'> },
   onRemoved?: (terms: string[]) => void,
 ): Promise<TailoredResume> {
   const delta = parseDelta(raw)
-  // Regenerate from a version holding the user's edits (#171): their text is
-  // trusted like the note, and their version is the base everything checks against.
+  // The user's edited version (#171) is trusted like the note and is the base checks run against.
   const notes = trustedNotes(grounding.supplemental, grounding.previous)
   const base = seenVersion(parsed, grounding.previous)
   const candidate = candidateText(parsed, notes)
-  const claimed = await groundSkills(delta.skills, candidate, grounding.ask)
-  // Added skills follow the casing of the resume's own list.
-  delta.skills = matchSkillCase(claimed.skills, base.skills, `${candidate}
+  const claimed = await groundSkills(delta.skills, candidate, grounding.ask, base.skills, grounding.jobDescription, grounding.exactBulletCounts)
+  delta.skills = recaseSkills(claimed.skills, base.skills, `${candidate}
 ${grounding.jobDescription}`)
-  let merged = keepSeen(mergeTailorDelta(base, delta, { exactBulletCounts: grounding.exactBulletCounts }) as TailoredResume, parsed, base)
+  let merged = keepSeen(mergeTailorDelta(base, delta, { exactBulletCounts: grounding.exactBulletCounts, maxBullets: grounding.maxBullets && seenBudget(grounding.maxBullets, base, parsed) }) as TailoredResume, parsed, base)
+  let title = ''
   if (grounding.ask) {
     const lines = await checkAndRewriteLines(merged, base, grounding.jobDescription, grounding.ask, grounding.supplemental)
     merged = lines.resume
+    title = await checkedTitle(grounding.jobTitle ?? '', base, merged, lines.repair, grounding.ask, grounding.supplemental)
     grounding.onLineRepair?.(lines.repair)
   }
-  const { resume, removed } = groundTailored(merged, base, candidate, grounding.jobDescription)
+  const { resume, removed } = groundTailored(merged, base, candidate, grounding.jobDescription, title)
   const all = [...claimed.dropped, ...removed]
   if (all.length) onRemoved?.(all)
   if (delta.keywordMatch && typeof delta.keywordMatch === 'object') {
-    const { score, gaps } = scoreFromMatch(delta.keywordMatch as KeywordMatch, { jobDescription: grounding.jobDescription, candidate })
+    const km = delta.keywordMatch as KeywordMatch
+    const { score, gaps } = scoreFromMatch(km, { jobDescription: grounding.jobDescription, candidate })
     resume.atsScore = score
     resume.atsGaps = gaps
+    // An ATS sees only the uploaded resume (#228), not the notes; the PDF prints no gaps or deleted sections.
+    resume.atsScoreBefore = scoreBefore(km, score, candidateText(parsed), candidateText({ ...resume, atsGaps: undefined, deletedSections: undefined }), grounding.jobDescription)
   }
   if (buildsOnEdits(grounding.previous)) resume.hasEdits = true
   return resume
@@ -346,7 +483,7 @@ ${grounding.jobDescription}`)
 
 export async function tailorResume(
   job: JobData,
-  parsed: ParsedResume,
+  stored: ParsedResume,
   provider: AIProvider,
   apiKey: string,
   compact = false,
@@ -356,6 +493,8 @@ export async function tailorResume(
   previous?: TailoredResume,
   onProgress?: (label: string) => void,
 ): Promise<TailoredResume> {
+  // linksKept only marks the stored parse as current (#238).
+  const { linksKept: _k, ...parsed } = stored
   const prompt = buildPrompt(job, parsed, compact, supplemental, trim, includeSummary, previous)
 
   await debugGroup('Tailor — full prompt sent to model (BYOK)', {
@@ -380,22 +519,18 @@ export async function tailorResume(
 
   let raw: string
   if (provider === 'claude') {
-    // Sonnet for tailoring: judgment-heavy (bullet preservation, relevance
-    // calls) — the small models compress/merge. Cover letters are on Sonnet too.
+    // Smaller models compress or merge bullets: https://github.com/TheLinc/cover-me/commit/9f4ea308d03f2c9ca2a38a38b6e1aeb9b0305051
     raw = await streamSonnet([{ role: 'user', content: prompt }], apiKey, onText, onProgress && onThinking)
   } else {
     raw = await callOpenAI([{ role: 'user', content: prompt }], apiKey, onText)
   }
 
   await debugLog('Tailor — raw model response', raw)
-  return assembleTailored(parsed, raw, { jobDescription: job.description, supplemental, previous, ask: checkModel(provider, apiKey), exactBulletCounts: !compact && !trim }, (removed) =>
+  return assembleTailored(parsed, raw, { jobDescription: job.description, jobTitle: job.title, supplemental, previous, ask: checkModel(provider, apiKey), exactBulletCounts: !compact && !trim, maxBullets: trim && !compact ? bulletBudget(parsed) : undefined }, (removed) =>
     void debugLog('Tailor — grounding guard removed', removed))
 }
 
-// Model for the skill-claim pair check and the line check/rewrite (see
-// resume-grounding.ts), on the same provider and key as the tailor call.
-// Sonnet, not Haiku: on 38 hand-labeled skill/evidence pairs Haiku was right 29
-// times, Sonnet 4.6 38 times (extension/eval/claim-pairs.ts). Prompts are small.
+// Sonnet, not Haiku: 38/38 vs 29/38 on extension/eval/claim-pairs.ts (https://github.com/TheLinc/cover-me/commit/0e9a09cd3d4d9fc3b7cebb190aed7c4307954676).
 function checkModel(provider: AIProvider, apiKey: string): AskModel {
   return async (prompt) => {
     if (provider === 'claude') return streamSonnet([{ role: 'user', content: prompt }], apiKey)

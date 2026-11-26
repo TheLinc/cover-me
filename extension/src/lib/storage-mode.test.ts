@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { clearSession, resolveMode, setupState, takeGoogleSignInError, watchGoogleSignInError, watchResume, watchSession } from './storage'
+import { clearSession, resolveMode, saveParsedResume, setupState, takeGoogleSignInError, watchGoogleSignInError, watchResume, watchSession } from './storage'
 import type { AuthSession, Settings } from '../types'
 
 // Signing out stamps an untagged resume with the account that was signed in,
@@ -35,6 +35,30 @@ describe('clearSession', () => {
 })
 
 afterEach(() => vi.unstubAllGlobals())
+
+describe('saveParsedResume', () => {
+  const parsed = { name: 'Ada', email: '', phone: '', website: '', experience: [], education: [] }
+  function fakeResume(text: string) {
+    const data: Record<string, unknown> = { resume: { text, filename: 'f', updatedAt: '' } }
+    vi.stubGlobal('chrome', { storage: { local: {
+      get: async (k: string) => (k in data ? { [k]: data[k] } : {}),
+      set: async (o: Record<string, unknown>) => { Object.assign(data, o) },
+    } } })
+    return data
+  }
+
+  test('saves the parse onto the resume it was read from', async () => {
+    const data = fakeResume('Ada')
+    await saveParsedResume(parsed, 'Ada')
+    expect(data.resume).toEqual({ text: 'Ada', filename: 'f', updatedAt: '', parsed })
+  })
+
+  test('leaves a resume with other text alone', async () => {
+    const data = fakeResume('Someone else')
+    await saveParsedResume(parsed, 'Ada')
+    expect(data.resume).toEqual({ text: 'Someone else', filename: 'f', updatedAt: '' })
+  })
+})
 
 describe('takeGoogleSignInError', () => {
   test('returns a saved Google sign-in error once, then forgets it', async () => {

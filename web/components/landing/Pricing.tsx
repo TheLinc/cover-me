@@ -1,9 +1,25 @@
 import { CheckIcon } from '@phosphor-icons/react/dist/ssr'
-import { CHROME_STORE_URL } from '@/lib/utils'
+import { cn, storeUrl } from '@/lib/utils'
+import { PLAN_LIMITS as L } from '@/lib/limits'
+import { SendToComputer } from '@/components/site/SendToComputer'
 import { Ambient } from './Ambient'
 
-const FREE = ['10 AI generations to start, then 5 a week, letters and resumes', 'Unlimited with your own API key', 'PDF and Word export', 'With an account, every application on a board, from any device', 'Your last 50 letters and 20 tailored resumes, kept in your browser']
-const PRO = ['Up to 25 letters or tailored resumes a day', 'Every letter and tailored resume saved to your account, on any device', 'Early access to new features']
+const INSTALL = 'mt-auto rounded-full bg-panel py-3.5 text-center text-[15px] font-medium text-ink transition-colors hover:bg-line'
+
+const FREE = [
+  `${L.free_starter} AI generations to start, then ${L.free_weekly} a week, letters and resumes`,
+  `${L.answer_starter} answers to application questions to start, then ${L.answer_weekly} a week`,
+  'Unlimited with your own API key',
+  'PDF and Word export',
+  'With an account, every application on a board, from any device',
+  'Your last 50 letters and 20 tailored resumes, kept in your browser',
+]
+const PRO = [
+  `Up to ${L.pro_daily} letters or tailored resumes a day`,
+  `Up to ${L.answer_pro_daily} answers to application questions a day`,
+  'Every letter and tailored resume saved to your account, on any device',
+  'Early access to new features',
+]
 
 export function Pricing() {
   return (
@@ -24,9 +40,12 @@ export function Pricing() {
               <li key={f} className="flex items-start gap-2.5"><CheckIcon size={16} className="mt-[3px] shrink-0 text-subtle" />{f}</li>
             ))}
           </ul>
-          <a href={CHROME_STORE_URL} target="_blank" rel="noreferrer" className="mt-auto rounded-full bg-panel py-3.5 text-center text-[15px] font-medium text-ink transition-colors hover:bg-line">
+          <a href={storeUrl('pricing')} target="_blank" rel="noreferrer" className={cn(INSTALL, '[@media(pointer:coarse)]:hidden')}>
             Install free
           </a>
+          <SendToComputer placement="pricing" className={cn(INSTALL, '[@media(pointer:fine)]:hidden')}>
+            Send this to my computer
+          </SendToComputer>
         </div>
         <div className="reveal flex flex-col gap-5 rounded-[24px] bg-ink p-9 text-white">
           <div className="flex items-center justify-between">

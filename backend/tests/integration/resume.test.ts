@@ -1,8 +1,9 @@
 import { createHash } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
-  admin, callFunction, createUser, deleteUser, JOB, LONG_RESUME_TEXT, mockClaude, parsedResume, RESUME_TEXT, type TestUser, uploadResume, waitForParsedResume,
+  admin, cacheParsedResume, callFunction, createUser, deleteUser, JOB, LONG_RESUME_TEXT, mockClaude, mockPosthog, parsedResume, RESUME_TEXT, type TestUser, uploadResume, waitForParsedResume,
 } from './helpers'
+import { MOCK_PARSED_RESUME } from '../mock-anthropic'
 
 const isParse = (r: { messages: Array<{ content: string }> }) => r.messages[0].content.startsWith('You are a resume parser')
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
@@ -31,6 +32,38 @@ describe('resume', () => {
     expect(body.filename).toBe('resume.pdf')
   })
 
+  it('counts a new upload with its file type and plan, never its name, and not a sync of the same text', async () => {
+    const upload = () => callFunction('resume', { token: user.token, body: { text: RESUME_TEXT, filename: 'Jane Doe Resume.DOCX' } })
+    expect((await upload()).status).toBe(200)
+    expect(await mockPosthog.eventsFor('resume_upload', user.id)).toEqual([{
+      api_key: 'phc_mock',
+      event: 'resume_upload',
+      distinct_id: user.id,
+      properties: { file_type: 'docx', tier: 'hosted_free', $process_person_profile: false, $geoip_disable: true },
+    }])
+
+    expect((await upload()).status).toBe(200)
+    expect(await mockPosthog.eventsFor('resume_upload', user.id, (e) => e.length > 1)).toHaveLength(1)
+  })
+
+  it('counts an unknown or missing file name as other', async () => {
+    await callFunction('resume', { token: user.token, body: { text: RESUME_TEXT } })
+    await callFunction('resume', { token: user.token, body: { text: `${RESUME_TEXT}
+More.`, filename: 'resume.doc' } })
+    const events = await mockPosthog.eventsFor('resume_upload', user.id, (e) => e.length === 2)
+    expect(events.map((e) => e.properties.file_type)).toEqual(['other', 'other'])
+  })
+
+  it('rejects a file name that is not a string', async () => {
+    expect((await callFunction('resume', { token: user.token, body: { text: RESUME_TEXT, filename: 0 } })).status).toBe(400)
+  })
+
+  it('sends no count for an account that opted out of usage counts', async () => {
+    await admin.from('users').update({ usage_counts_opted_out_at: new Date().toISOString() }).eq('id', user.id)
+    expect((await callFunction('resume', { token: user.token, body: { text: RESUME_TEXT, filename: 'resume.pdf' } })).status).toBe(200)
+    expect(await mockPosthog.eventsFor('resume_upload', user.id)).toEqual([])
+  })
+
   it('stores ciphertext, never the plaintext resume', async () => {
     await uploadResume(user)
     const { data } = await admin.from('resumes').select('text_encrypted').eq('user_id', user.id).single()
@@ -38,11 +71,12 @@ describe('resume', () => {
     expect(data?.text_encrypted).not.toContain('Initech')
   })
 
-  it('parses a new resume in the background with Haiku, encrypted', async () => {
+  it('parses a new resume in the background with Haiku 5.5 at low effort, encrypted', async () => {
     await uploadResume(user, RESUME_TEXT, { wait: false })
     const parsed = await waitForParsedResume(user.id)
     expect(parsed).not.toContain('Initech')
-    expect((await mockClaude.requests()).filter(isParse).map((r) => r.model)).toEqual(['claude-haiku-4-5'])
+    const parses = (await mockClaude.requests()).filter(isParse)
+    expect(parses.map((r) => [r.model, r.output_config, r.max_tokens])).toEqual([['claude-haiku-5-5', { effort: 'low' }, 16000]])
   })
 
   it('saves the parse of a full-length resume', async () => {
@@ -79,7 +113,7 @@ describe('resume', () => {
     await uploadResume(user)
     // The limiter's per-account row (see resume/index.ts parseAhead), at its
     // daily cap. Pinned rather than raced, so a minute rolling over can't
-    // start a fresh window mid-test.
+    // start a fresh window mid-test (#26).
     const key = createHash('sha256').update(`resume-parse:${user.id}`).digest('hex')
     await admin.from('scrape_rate_limits').update({ count: 10 }).eq('ip_hash', key).eq('window_kind', 'day')
     await callFunction('resume', { method: 'DELETE', token: user.token })
@@ -93,8 +127,9 @@ describe('resume', () => {
     await mockClaude.delayNext(1500)
     await uploadResume(user, RESUME_TEXT, { wait: false })
     await uploadResume(user, NEW_TEXT, { wait: false })
-    const newest = await waitForParsedResume(user.id) // the second parse, not delayed
-    await sleep(2000) // the first one lands now, and must not write
+    const newest = await waitForParsedResume(user.id)
+    // The delayed first parse lands after the second and must not overwrite it (#26).
+    await sleep(2000)
     expect((await mockClaude.requests()).filter(isParse)).toHaveLength(2)
     expect(await parsedResume(user.id)).toBe(newest)
   })
@@ -144,8 +179,19 @@ describe('saving a section order', () => {
     expect((await res.json()).sectionOrder).toEqual(sectionOrder)
     const { resume } = await (await callFunction('tailor', { token: user.token, body: { job: JOB } })).json()
     expect(resume.sectionOrder).toEqual(sectionOrder)
-    // The saved parse is current, so tailoring didn't parse again.
     expect((await mockClaude.requests()).filter(isParse)).toHaveLength(0)
+  })
+
+  it('takes an order on a parse from before the link fix (#238), and the tailor that parses it again keeps it', async () => {
+    await uploadResume(user)
+    await cacheParsedResume(user.id, { ...MOCK_PARSED_RESUME, sectionOrder: ['summary', 'experience', 'other', 'education', 'skills'] })
+    const sectionOrder = ['skills', 'other', 'summary', 'experience', 'education']
+    expect((await save({ sectionOrder, headings: ['Volunteer Work'] })).status).toBe(200)
+
+    await mockClaude.reset()
+    const { resume } = await (await callFunction('tailor', { token: user.token, body: { job: JOB } })).json()
+    expect((await mockClaude.requests()).filter(isParse)).toHaveLength(1)
+    expect(resume.sectionOrder).toEqual(sectionOrder)
   })
 
   it('needs a parsed resume', async () => {

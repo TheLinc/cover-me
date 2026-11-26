@@ -5,8 +5,6 @@ import { describe, expect, it } from 'vitest'
 import { FIXTURE_CASES, fixtureUrl } from '../../../extension/src/content/scrapers/fixtures/cases.ts'
 import { admin, callFunction, mockClaude, mockPosthog } from './helpers'
 
-// The extension's saved postings, read by the served function: the same cases
-// the extension's fixture tests check, so the deployed scrapers match.
 const FIXTURES = join(__dirname, '../../../extension/src/content/scrapers/fixtures')
 const page = (board: string) => {
   const html = readFileSync(join(FIXTURES, `${board}.html`), 'utf8')
@@ -14,7 +12,7 @@ const page = (board: string) => {
 }
 
 // The function rate-limits per client IP. Locally there's no Cloudflare in
-// front, so each call can claim its own IP and tests don't share a bucket.
+// front, so each call can claim its own IP and tests don't share a bucket (#3).
 let nextIp = 1
 const freshIp = () => `198.51.100.${nextIp++ % 250}`
 type Opts = Parameters<typeof callFunction>[1]
@@ -51,14 +49,11 @@ describe('scrape', () => {
     expect((await res.json()).results[0]).toMatchObject({ ok: false })
   })
 
-  // Sent behind the response, so wait a little for it. Only this host's: an
-  // earlier test's event can land after the reset.
+  // Each event has a random ID, so pick this test's by hostname (#383).
   const posthogEvents = async (hostname: string) => {
-    const mine = async () => (await mockPosthog.events())
-      .filter((e) => (e.properties.pages as { hostname: string }[] | undefined)?.some((p) => p.hostname === hostname))
-    let events = await mine()
-    for (let i = 0; i < 20 && events.length === 0; i++) events = await new Promise((r) => setTimeout(r, 100)).then(mine)
-    return events
+    const mine = (e: { properties: Record<string, unknown> }) =>
+      (e.properties.pages as { hostname: string }[] | undefined)?.some((p) => p.hostname === hostname)
+    return (await mockPosthog.eventsNamed('scrape_failed', (events) => events.some(mine))).filter(mine)
   }
 
   it('counts a click where no page was read: hostname and scraper per page, no URL or HTML', async () => {
@@ -87,6 +82,16 @@ describe('scrape', () => {
     expect(await posthogEvents('jobs.lever.co')).toEqual([])
   })
 
+  // A right-click answer (#232) often reads an application form with no
+  // posting on it; that isn't a failed read of a job page.
+  it("doesn't count a right-click answer's read", async () => {
+    await mockClaude.reset()
+    const pages = [{ url: 'https://apply.example-answers.com/form', html: '<html><body><h1>Apply</h1></body></html>' }]
+    expect((await scrape({ body: { pages, answer: true } })).status).toBe(200)
+    await new Promise((r) => setTimeout(r, 1000))
+    expect(await posthogEvents('apply.example-answers.com')).toEqual([])
+  })
+
   it('rejects malformed requests', async () => {
     for (const body of [{}, { pages: [] }, { pages: [{ url: 'javascript:alert(1)', html: '' }] }, { pages: Array(9).fill(page('lever')) }]) {
       expect((await scrape({ body })).status).toBe(400)
@@ -95,7 +100,7 @@ describe('scrape', () => {
 
   // The limiter counts per calendar minute (migration 014). A test that makes
   // 21 calls must not straddle a minute boundary, or the count restarts and the
-  // 21st call passes, so each starts with at least 15 s left in its minute.
+  // 21st call passes, so each starts with at least 15 s left in its minute (#26).
   const awayFromMinuteEdge = async () => {
     const left = 60_000 - (Date.now() % 60_000)
     if (left < 15_000) await new Promise((r) => setTimeout(r, left + 500))
@@ -112,7 +117,7 @@ describe('scrape', () => {
 
   it('ignores client-chosen x-forwarded-for entries', async () => {
     // No cf-connecting-ip: the key is the entry the gateway appends, so a
-    // different forged first entry on every call still shares one bucket.
+    // different forged first entry on every call still shares one bucket (#3).
     await awayFromMinuteEdge()
     const body = { pages: [page('lever')] }
     const statuses: number[] = []

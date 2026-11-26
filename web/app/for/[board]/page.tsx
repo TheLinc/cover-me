@@ -1,11 +1,14 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { CHROME_STORE_URL } from '@/lib/utils'
+import { cn, longDate, storeUrl } from '@/lib/utils'
 import { OG_IMAGE } from '@/lib/structured-data'
 import { BOARDS, getBoard } from '@/lib/boards'
 import { SiteNav } from '@/components/site/SiteNav'
+import { SendToComputer } from '@/components/site/SendToComputer'
 import { SiteFooter } from '@/components/site/SiteFooter'
+
+const INSTALL = 'inline-flex items-center gap-2 bg-brand-strong text-white font-semibold text-[14px] px-5 py-2.5 rounded-[8px] hover:bg-brand-deep transition-colors'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 
@@ -60,25 +63,36 @@ export default async function BoardPage({ params }: { params: Promise<{ board: s
     })),
   }
 
+  const pageJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: board.h1,
+    description: board.metaDescription,
+    url: `${BASE}/for/${board.slug}`,
+    dateModified: board.updated,
+  }
+
   const otherBoards = BOARDS.filter((b) => b.slug !== board.slug)
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(pageJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
 
       <SiteNav />
 
       <main className="max-w-[900px] mx-auto px-8 py-20 max-md:px-5">
-        {/* Header */}
         <div className="mb-14 max-w-[680px]">
-          <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-2 mb-4 block">
-            Cover Me for {board.name}
-          </span>
+          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-2 mb-4 flex flex-wrap gap-x-3">
+            <span>Cover Me for {board.name}</span>
+            <span aria-hidden className="max-sm:hidden">·</span>
+            <time dateTime={board.updated}>Updated {longDate(board.updated)}</time>
+          </p>
           <h1 className="text-[clamp(32px,5vw,52px)] text-foreground leading-[0.98] mb-5">
             {board.h1}
           </h1>
-          {/* Direct-answer paragraph, kept concise for featured snippets */}
+          {/* Direct-answer paragraph, kept concise for featured snippets (#88) */}
           <p className="text-[17px] text-foreground leading-[1.7] mb-5 font-medium">
             {board.answer}
           </p>
@@ -87,10 +101,22 @@ export default async function BoardPage({ params }: { params: Promise<{ board: s
               {p}
             </p>
           ))}
+          {board.related && (
+            <p className="text-[15px] text-muted-foreground leading-[1.85] mb-4">
+              {board.related.lead}{' '}
+              <Link
+                href={board.related.href}
+                {...(/^https?:/.test(board.related.href) && { target: '_blank', rel: 'noopener noreferrer' })}
+                className="text-brand-strong underline underline-offset-2 hover:text-brand-deep"
+              >
+                {board.related.label}
+              </Link>
+              .
+            </p>
+          )}
         </div>
 
         <div className="mb-12 h-px bg-line" />
-        {/* Steps */}
         <section className="mb-16">
           <h2 className="text-[24px] text-foreground mb-8">
             How does Cover Me work on {board.name}?
@@ -111,10 +137,9 @@ export default async function BoardPage({ params }: { params: Promise<{ board: s
         </section>
 
         <div className="mb-12 h-px bg-line" />
-        {/* FAQ */}
         <section className="mb-16">
           <h2 className="text-[24px] text-foreground mb-6">
-            Common questions about Cover Me on {board.name}
+            Common questions about {board.name} applications
           </h2>
           <div className="divide-y divide-border border-t border-border max-w-[720px]">
             {board.faqs.map(({ q, a }) => (
@@ -126,7 +151,6 @@ export default async function BoardPage({ params }: { params: Promise<{ board: s
           </div>
         </section>
 
-        {/* CTA */}
         <div className="soft-card p-10 text-center mb-16">
           <h2 className="text-[22px] text-foreground mb-3">
             Try it on your next {board.name} application
@@ -136,13 +160,16 @@ export default async function BoardPage({ params }: { params: Promise<{ board: s
           </p>
           <div className="flex gap-3 justify-center flex-wrap">
             <a
-              href={CHROME_STORE_URL}
+              href={storeUrl('for-board')}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-2 bg-brand-strong text-white font-semibold text-[14px] px-5 py-2.5 rounded-[8px] hover:bg-brand-deep transition-colors"
+              className={cn(INSTALL, '[@media(pointer:coarse)]:hidden')}
             >
               Install free · Chrome
             </a>
+            <SendToComputer placement="for-board" className={cn(INSTALL, '[@media(pointer:fine)]:hidden')}>
+              Send this to my computer
+            </SendToComputer>
             <Link
               href="/guides/tailor-resume-to-job-description"
               className="inline-flex items-center gap-2 border border-border text-foreground font-semibold text-[14px] px-5 py-2.5 rounded-[8px] hover:bg-elevated transition-colors"
@@ -152,7 +179,6 @@ export default async function BoardPage({ params }: { params: Promise<{ board: s
           </div>
         </div>
 
-        {/* Other boards */}
         <div className="text-[13px] text-muted-foreground leading-[1.9]">
           <span className="font-semibold text-foreground">Also works on: </span>
           {otherBoards.map((b, i) => (

@@ -3,10 +3,10 @@ import { debugGroup } from '../debug'
 import { callClaude, type ChatMessage } from './claude'
 import { callOpenAI } from './openai'
 import { buildLintRetryMessage, letterLength, lintLetter, stripPlan } from './letter-lint'
+import { MAX_RESUME_CHARS } from './resume-parse'
 
-// Anti-fingerprint variation: with a fixed sign-off and hook, every letter the
-// product generates shares one skeleton — individually fine, detectable as a
-// corpus. Picked in code (not by the model) so the distribution is uniform.
+// A fixed sign-off and hook give every letter one skeleton, detectable across
+// letters (#206). Picked in code, not by the model, so the spread is uniform.
 export interface LetterVariation {
   signOff: string
   hookPattern: string
@@ -69,7 +69,6 @@ export async function generateCoverLetter(
   const draftLint = lintLetter(draft, lintOpts)
   if (draftLint.violations.length === 0) return draft
 
-  // One corrective retry: same conversation, violations spelled out.
   await debugGroup('Cover letter — lint violations, sending corrective retry', {
     violations: draftLint.violations,
   })
@@ -77,7 +76,8 @@ export async function generateCoverLetter(
     { role: 'user', content: prompt },
     { role: 'assistant', content: draft },
     { role: 'user', content: buildLintRetryMessage(draftLint.violations) },
-  ])))
+  ]).catch(() => '')))
+  if (!retry) return draft
   const retryLint = lintLetter(retry, lintOpts)
   return retry && retryLint.violations.length <= draftLint.violations.length ? retry : draft
 }
@@ -136,7 +136,7 @@ ${job.description.slice(0, 15000)}
 """
 
 APPLICANT RESUME:
-${resumeText.slice(0, 12000)}
+${resumeText.slice(0, MAX_RESUME_CHARS)}
 ${supplementalSection}
 ---
 
@@ -246,12 +246,12 @@ FINAL CHECK — silently fix the draft before emitting, then output the plan and
 
 function stripMarkdown(text: string): string {
   return text
-    .replace(/^#+\s+.*$/gm, '')          // # headings
-    .replace(/\*\*(.+?)\*\*/g, '$1')     // **bold**
-    .replace(/\*(.+?)\*/g, '$1')         // *italic*
-    .replace(/^[-*]\s+/gm, '')           // - bullet points
-    .replace(/`(.+?)`/g, '$1')           // `code`
-    .replace(/\[(.+?)\]\(.+?\)/g, '$1') // [links](url)
-    .replace(/\n{3,}/g, '\n\n')          // 3+ blank lines → double
+    .replace(/^#+\s+.*$/gm, '')
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(/\*(.+?)\*/g, '$1')
+    .replace(/^[-*]\s+/gm, '')
+    .replace(/`(.+?)`/g, '$1')
+    .replace(/\[(.+?)\]\(.+?\)/g, '$1')
+    .replace(/\n{3,}/g, '\n\n')
     .trim()
 }

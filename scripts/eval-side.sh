@@ -1,13 +1,7 @@
 #!/usr/bin/env bash
-# Which side of the output eval a diff needs: prints letters, tailor or both.
-# Letters and resume tailoring share no prompt code, so a change to one side
-# doesn't need the other's model calls (tailoring is ~70% of a full run).
-#
-#   scripts/eval-side.sh <base-ref>        diff <base-ref>...HEAD
-#   scripts/eval-side.sh --files a b c     classify these paths (for testing)
-#
-# Anything not listed as one side (model clients, the eval harness, fixtures,
-# the prompt-sync script) runs both, and so does an empty diff.
+# Letters, tailoring and answers share no prompt code, so a diff runs only its sides (tailoring is ~70% of a full run).
+# " lint-warn" after "all" means no letter file changed: pass it as --lint-warn so a letter that still
+# fails lint after its retry warns instead of failing the job (#243).
 set -euo pipefail
 
 if [ "${1:-}" = "--files" ]; then
@@ -18,25 +12,38 @@ else
 fi
 
 letters=false
+letter_files=false
 tailor=false
+answers=false
 while IFS= read -r f; do
   [ -z "$f" ] && continue
   case "$f" in
     extension/src/lib/ai/index.ts | extension/src/lib/ai/letter-lint* | \
     backend/supabase/functions/generate/* | backend/supabase/functions/_shared/letter-lint.ts)
-      letters=true ;;
+      letters=true; letter_files=true ;;
     extension/src/lib/ai/resume-* | extension/src/lib/ai/ats-score* | extension/src/lib/ai/tailor-progress* | \
     extension/src/lib/ai/parse-delta* | backend/supabase/functions/tailor/* | \
     backend/supabase/functions/_shared/resume-parse.ts | backend/supabase/functions/_shared/resume-grounding.ts | \
     backend/supabase/functions/_shared/ats-score.ts | \
+    extension/src/lib/ai/keyword-rules* | backend/supabase/functions/_shared/keyword-rules.ts | \
     extension/eval/claim-pairs.ts | extension/eval/line-pairs.ts)
       tailor=true ;;
-    extension/src/lib/ai/* | extension/eval/* | backend/supabase/functions/_shared/anthropic.ts | scripts/check-prompt-sync.mjs)
-      letters=true; tailor=true ;;
+    extension/src/lib/ai/answer* | backend/supabase/functions/answer/* | \
+    backend/supabase/functions/_shared/answer.ts | extension/eval/answer-cases.ts)
+      answers=true ;;
+    # The model clients set the letter model, so they count as letter files.
+    extension/src/lib/ai/claude.ts | backend/supabase/functions/_shared/anthropic.ts)
+      letters=true; letter_files=true; tailor=true; answers=true ;;
+    extension/src/lib/ai/* | extension/eval/* | scripts/check-prompt-sync.mjs)
+      letters=true; tailor=true; answers=true ;;
   esac
 done <<< "$files"
 
-if [ "$letters" = "$tailor" ]; then echo both
-elif [ "$letters" = true ]; then echo letters
-else echo tailor
-fi
+sides=""
+[ "$letters" = true ] && sides="$sides letters"
+[ "$tailor" = true ] && sides="$sides tailor"
+[ "$answers" = true ] && sides="$sides answers"
+sides="${sides# }"
+if [ -z "$sides" ] || [ "$sides" = "letters tailor answers" ]; then sides=all; fi
+if [ "$sides" = all ] && [ "$letter_files" = false ] && [ -n "$files" ]; then sides="all lint-warn"; fi
+echo "$sides"

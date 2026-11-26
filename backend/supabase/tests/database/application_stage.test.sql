@@ -1,8 +1,8 @@
 -- Application stages (020): the default, the CHECK, the old "got an
--- interview" column being gone (029), and RLS on a stage change.
+-- interview" column being gone (029), and that a client can't change a stage (033).
 -- Run: pnpm db:test   (from backend/)
 begin;
-select plan(5);
+select plan(6);
 
 insert into auth.users (id, email) values
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'alice@cover-me.test'),
@@ -28,10 +28,12 @@ select throws_ok(
 select hasnt_column('public', 'job_applications', 'interview_at',
   'the old interview_at column is gone (029)');
 
--- RLS: Alice can't move Bob's application.
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","role":"authenticated"}', true);
-update public.job_applications set stage = 'closed' where id = 'bbbbbbbb-0000-4000-8000-000000000001';
+select throws_ok(
+  $$update public.job_applications set stage = 'closed' where id = 'bbbbbbbb-0000-4000-8000-000000000001'$$,
+  '42501', null, 'a client cannot write job_applications'
+);
 reset role;
 select is(
   (select stage from public.job_applications where id = 'bbbbbbbb-0000-4000-8000-000000000001'),

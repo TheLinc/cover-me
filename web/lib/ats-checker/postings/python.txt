@@ -1,0 +1,47 @@
+Senior Python Developer
+
+Job Title
+
+Senior Python Developer
+
+Job Description
+
+This is a remote Senior Python Developer role building and operating components of a SaaS risk and compliance AI platform, with work spanning data ingestion, storage, search, cloud deployment, modernization, and production support.
+
+Responsibilities:
+
+Design, develop, and maintain Python services and data pipelines on Linux.
+Ingest, normalize, and query large, messy datasets.
+Implement and optimize data models in PostgreSQL or similar relational databases.
+Build and tune search functionality with Elasticsearch or comparable tools.
+Deploy and operate AWS workloads across services including Lambda, ECS, EC2, RDS, SQS, S3, Route 53, and core networking.
+Manage components end to end, including code, testing and validation, dependencies, and deployment strategies.
+Help modernize the screening platform while maintaining production stability.
+
+Restrictions
+
+No telecommuting
+No Agencies Please
+
+Requirements
+
+Must:
+
+Willing and able to work on a W-2 basis.
+At least 5 years of industry experience.
+Strong experience with Python and Linux.
+Proven ability to ingest, store, and query messy, large-scale data.
+Experience with PostgreSQL or another SQL relational database.
+Familiarity with Elasticsearch or another NoSQL search engine.
+Hands-on AWS experience with Lambda, ECS, EC2, RDS, SQS, S3, Route 53, and networking concepts.
+Initiative in independent or self-managed projects; adaptable, self-motivated, and curious, with startup experience preferred.
+Nice to have: experience with NER, NLP, modeling, machine learning, or agent frameworks such as LangGraph.
+
+About the Company
+
+Eligible consultants are offered medical, dental, and vision coverage, a 401(k) plan with company matching, life insurance, and additional benefits. Eliassen Group is a strategic consulting firm that serves clients through technology, business advisory, and life sciences solutions. AI tools are used during the initial application screening process, with AI-assisted evaluations and responses reviewed by human recruiters. Eliassen Group is an equal opportunity and affirmative action employer committed to fostering an inclusive workplace.
+
+Contact Info
+
+E-mail contact: dontsendemail@usetheapply.link
+Web: https://devitjobs.com/jobs/Eliassen-Group-Senior-Python-Developer

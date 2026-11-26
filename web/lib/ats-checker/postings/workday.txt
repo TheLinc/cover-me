@@ -1,0 +1,47 @@
+Senior Applied AI Engineer
+
+NVIDIA is looking for a Senior Applied AI Engineer to help build intelligent software systems that improve engineering productivity and software quality at scale. In this role, you will develop AI-powered workflows and services that help teams analyze complex code changes, surface meaningful signals from large engineering datasets, and accelerate debugging and decision-making. You will work at the intersection of software engineering, machine learning, and developer productivity to turn advanced AI capabilities into practical, reliable tools used in real engineering environments.
+
+
+What you will be doing:
+
+Invent and build AI-powered systems that enhance software quality, engineering efficiency, and developer workflows.
+Develop intelligent workflows for analyzing large codebases, code changes, and engineering signals to help teams identify issues earlier and make faster, better decisions.
+Build and maintain production services and infrastructure for AI-enabled applications, including orchestration, retrieval, evaluation, and monitoring.
+Partner with software engineers and multi-functional teams to understand real workflow problems and translate them into practical AI solutions.
+Evaluate emerging models, frameworks, and tooling to improve quality, latency, reliability, and cost across AI systems.
+Drive projects from early concept through production deployment, iteration, and continuous improvement.
+
+
+What we need to see:
+
+5+ years of proven experience or related field.
+Hold a B.S. or higher degree (or equivalent experience) in Computer Science/Engineering and related field
+Strong software engineering fundamentals with excellent Python skills and experience building production-quality systems.
+Hands-on experience building and deploying AI or ML systems, data-intensive backend services, or intelligent automation workflows.
+Experience with LLM-based applications, retrieval-augmented generation, agentic workflows, or orchestration frameworks.
+Strong familiarity with Git-based development workflows, including working with commits, branches, diffs, and large multi-repository codebases.
+Track record of solving complex technical problems and working effectively across teams.
+
+
+Ways to stand out from the crowd:
+
+Experience building AI systems for developer tools, code intelligence, software quality, testing, or debugging workflows.
+Familiarity with model evaluation, prompt and context design, observability, and production monitoring for AI systems.
+Experience balancing model quality, latency, cost, and reliability in production environments.
+Background working with large-scale software platforms, CI systems, or source-control-based engineering workflows.
+
+
+We are widely known as one of the technology world’s most desirable employers. Because of this, we have some of the most forward-thinking and hardworking people working for us. We want to hear from you if you're a creative and autonomous engineer with a real passion for technology.
+
+Your base salary will be determined based on your location, experience, and the pay of employees in similar positions. The base salary range is 152,000 USD - 241,500 USD.
+
+You will also be eligible for equity and benefits.
+
+Applications for this job will be accepted at least until October 12, 2026.
+
+This posting is for an existing vacancy.
+
+NVIDIA uses AI tools in its recruiting processes.
+
+NVIDIA is committed to fostering an inclusive work environment and proud to be an equal opportunity employer. As we highly value diversity in our current and future employees, we do not discriminate (including in our hiring and promotion practices) on the basis of race, religion, color, national origin, gender, gender expression, sexual orientation, age, marital status, veteran status, disability status or any other characteristic protected by law.

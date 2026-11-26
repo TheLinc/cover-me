@@ -1,11 +1,10 @@
-import { createClient } from 'npm:@supabase/supabase-js@2'
+import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2'
 import { handleCors, json } from '../_shared/cors.ts'
 import { stripe, StripeError } from '../_shared/stripe.ts'
 import { FIRST_MONTH_COUPON, openFirstMonthOffer, showFirstMonthOffer } from '../_shared/offer.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SECRET_KEY = Deno.env.get('SERVICE_KEY')!
-// Pro at $15/month or $35 every 3 months (relaunch pricing, 2026-10-08).
 const PRICES = {
   monthly: Deno.env.get('STRIPE_PRO_PRICE_ID')!,
   quarterly: Deno.env.get('STRIPE_PRO_QUARTERLY_PRICE_ID')!,
@@ -13,17 +12,17 @@ const PRICES = {
 const SITE_URL = (Deno.env.get('SITE_URL') || 'https://www.cover-me.dev').replace(/\/+$/, '')
 
 // Subscriptions that still bill (or retry) the card. Checkout on top of one
-// of these would charge the customer twice.
+// of these would charge the customer twice (#1).
 const OPEN_STATUSES = new Set(['active', 'trialing', 'past_due', 'unpaid'])
 
 type Subscription = { id: string; status: string; trial_end: number | null; metadata?: Record<string, string> }
 
 // A free week of Pro from a /redeem link: no card, and Stripe cancels it when
-// the week ends. Upgrading from one is the only checkout an open subscription allows.
+// the week ends. Upgrading from one is the only checkout an open subscription allows (#112).
 const GIFT_TRIAL_DAYS = '7'
 const isGiftTrial = (s: Subscription) => s.status === 'trialing' && s.metadata?.gift_trial === 'true'
 // Checkout's subscription_data.trial_end must be at least 48 hours away. A
-// minute of slack for the time between this check and Stripe's.
+// minute of slack for the time between this check and Stripe's (#112).
 const MIN_TRIAL_CARRYOVER_S = 2 * 86_400 + 60
 
 const CODE_ERRORS = {
@@ -33,11 +32,9 @@ const CODE_ERRORS = {
   accountUsed: { status: 409, error: 'This account has already used a free trial.' },
 }
 
-type Db = ReturnType<typeof createClient>
-
 // Marks the code used by this account in one statement, so two people can't
-// both claim it. The unique redeemed_by stops a second trial on one account.
-async function claimCode(supabase: Db, code: unknown, userId: string): Promise<{ note: string | null } | { status: number; error: string }> {
+// both claim it. The unique redeemed_by stops a second trial on one account (#112).
+async function claimCode(supabase: SupabaseClient, code: unknown, userId: string): Promise<{ note: string | null } | { status: number; error: string }> {
   if (typeof code !== 'string' || !/^[A-Za-z0-9_-]{1,64}$/.test(code)) return CODE_ERRORS.unknown
   const now = new Date().toISOString()
   const { data, error } = await supabase
@@ -56,9 +53,8 @@ async function claimCode(supabase: Db, code: unknown, userId: string): Promise<{
   return !found ? CODE_ERRORS.unknown : found.redeemed_at ? CODE_ERRORS.used : CODE_ERRORS.expired
 }
 
-// Checkout, billing portal, gift trial redemption and the first-month offer
-// for the extension and the web dashboard. All send the user's Supabase token,
-// so upgrading never needs a website sign-in.
+// The extension and the dashboard send the user's Supabase token, so upgrading
+// never needs a website sign-in (#1).
 Deno.serve(async (req) => {
   const cors = handleCors(req)
   if (cors) return cors
@@ -76,10 +72,8 @@ Deno.serve(async (req) => {
   if (action !== 'checkout' && action !== 'portal' && action !== 'redeem' && action !== 'offer') return json({ error: 'Unknown action' }, 400)
   if (plan !== 'monthly' && plan !== 'quarterly') return json({ error: 'Unknown plan' }, 400)
 
-  // For the dashboard and the popup: when the open offer ends, and the coupon's
-  // customer-facing name from Stripe. Any failure just hides the banner.
+  // Any failure only hides the offer banner (#213).
   if (action === 'offer') {
-    // Showing it starts its 7 days the first time.
     const endsAt = await showFirstMonthOffer(supabase, user.id)
     if (!endsAt) return json({ offer: null })
     try {
@@ -97,9 +91,7 @@ Deno.serve(async (req) => {
     .eq('id', user.id)
     .single()
   let customerId = (row?.stripe_customer_id as string | null) ?? null
-  // A gift trial is always on the monthly price.
   const price = action === 'redeem' ? 'monthly' : plan
-  // A claimed code goes back if the trial doesn't start (see finally).
   let claimed = false
   let trialStarted = false
   let note: string | null = null
@@ -116,7 +108,7 @@ Deno.serve(async (req) => {
 
     // A price secret that isn't set would reach Stripe as the string
     // "undefined" and come back as an opaque 502. Say which one, before any
-    // customer is created.
+    // customer is created (#10).
     if (!PRICES[price]) {
       console.error(`[billing] ${price === 'monthly' ? 'STRIPE_PRO_PRICE_ID' : 'STRIPE_PRO_QUARTERLY_PRICE_ID'} is not set`)
       return json({ error: price === 'quarterly'
@@ -125,7 +117,7 @@ Deno.serve(async (req) => {
     }
 
     // The tier can read free while a past_due subscription still retries the
-    // card, so ask Stripe. A customer deleted in Stripe gets replaced.
+    // card, so ask Stripe. A customer deleted in Stripe gets replaced (#1).
     let replaced = false
     let giftTrial: Subscription | undefined
     let hadSubscription = false
@@ -146,10 +138,10 @@ Deno.serve(async (req) => {
         replaced = true
       }
     }
-    // Pro with nothing open in Stripe (set by hand, say): nothing to upgrade from.
+    // Pro with nothing open in Stripe (set by hand, say): nothing to upgrade from (#112).
     if (isPro && !giftTrial) return json({ error: 'You are already on Pro.' }, 409)
 
-    // Claimed before any Stripe write, so a bad code changes nothing there.
+    // Claimed before any Stripe write, so a bad code changes nothing there (#112).
     if (action === 'redeem') {
       const result = await claimCode(supabase, code, user.id)
       if ('error' in result) return json({ error: result.error }, result.status)
@@ -159,7 +151,7 @@ Deno.serve(async (req) => {
 
     if (!customerId) {
       // The idempotency key makes a double click return the same customer. A
-      // replacement needs a fresh key: Stripe replays the old one for 24 hours.
+      // replacement needs a fresh key: Stripe replays the old one for 24 hours (#1).
       const createCustomer = (key: string) =>
         stripe('customers', { email: user.email ?? '', 'metadata[supabase_user_id]': user.id }, { idempotencyKey: key })
       const freshKey = () => `customer-${user.id}-${Date.now()}`
@@ -169,11 +161,11 @@ Deno.serve(async (req) => {
         customer = await createCustomer(replaced ? freshKey() : `customer-${user.id}`)
       } catch (err) {
         if (!(err instanceof StripeError)) throw err
-        // A second tab is creating the customer with the same key right now.
+        // A second tab is creating the customer with the same key right now (#1).
         if (err.code === 'idempotency_key_in_use') {
           return json({ error: 'Checkout is already opening. Try again in a moment.' }, 409)
         }
-        // Same key, different details (for example a changed email): new key.
+        // Same key, different details (for example a changed email): new key (#1).
         if (err.code !== 'idempotency_error') throw err
         customer = await createCustomer(freshKey())
       }
@@ -188,7 +180,7 @@ Deno.serve(async (req) => {
       // missing_payment_method=cancel ends a cardless trial; cancel_at_period_end
       // ends one whose customer kept a card from an old subscription, which
       // Stripe would otherwise charge. The key holds the user too: a released
-      // code can go to someone else.
+      // code can go to someone else (#112).
       const sub = await stripe('subscriptions', {
         customer: customerId,
         'items[0][price]': PRICES.monthly,
@@ -199,18 +191,18 @@ Deno.serve(async (req) => {
         'metadata[supabase_user_id]': user.id,
       }, { idempotencyKey: `gift-trial-${code}-${user.id}` })
       trialStarted = true
-      // The webhook sets the tier from the new subscription.
+      // The webhook sets the tier from the new subscription (#112).
       return json({ trialEnd: new Date(sub.trial_end * 1000).toISOString(), note })
     }
 
     // Upgrading from a gift trial: billing starts when the trial would have
-    // ended, if Stripe allows it, and the webhook cancels the trial once paid.
+    // ended, if Stripe allows it, and the webhook cancels the trial once paid (#112).
     const carryTrial = giftTrial?.trial_end && giftTrial.trial_end - Date.now() / 1000 >= MIN_TRIAL_CARRYOVER_S
 
     // The first-month offer: opening checkout makes it available a day later
     // (so today's checkout is full price), and a monthly checkout while it's
     // available takes the coupon off, for a customer Stripe has never billed.
-    // Only a monthly checkout counts as showing it.
+    // Only a monthly checkout counts as showing it (#213).
     await openFirstMonthOffer(supabase, user.id)
     const discount = price === 'monthly' && !hadSubscription && Boolean(await showFirstMonthOffer(supabase, user.id))
     const createSession = (withDiscount: boolean) => stripe('checkout/sessions', {
@@ -222,7 +214,7 @@ Deno.serve(async (req) => {
       ...(giftTrial && { 'metadata[gift_trial_subscription]': giftTrial.id }),
       ...(carryTrial && { 'subscription_data[trial_end]': String(giftTrial!.trial_end) }),
       ...(withDiscount && { 'discounts[0][coupon]': FIRST_MONTH_COUPON! }),
-      // Nothing is charged today on a carried-over trial: the page names the first payment.
+      // Nothing is charged today on a carried-over trial: the page names the first payment (#112).
       success_url: carryTrial ? `${SITE_URL}/upgraded?first=${giftTrial!.trial_end}` : `${SITE_URL}/upgraded`,
       cancel_url: `${SITE_URL}/dashboard`,
     })
@@ -231,7 +223,7 @@ Deno.serve(async (req) => {
       session = await createSession(discount)
     } catch (err) {
       // A coupon Stripe won't apply (deleted, expired, used up, a typo in the
-      // secret) mustn't block the upgrade: check out at full price instead.
+      // secret) mustn't block the upgrade: check out at full price instead (#213).
       if (!discount || !(err instanceof StripeError) || err.status !== 400) throw err
       console.error('[billing] coupon rejected:', err.message)
       session = await createSession(false)

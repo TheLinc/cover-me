@@ -1,12 +1,10 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { admin, API_URL, createUser, deleteUser, quotaUsedToday, setQuotaUsedToday, type TestUser } from './helpers'
 
-// What a signed-in user can do with their own JWT straight against PostgREST,
-// bypassing the Edge Functions. Mirrors rls.test.sql through the real API.
 describe('REST API as a signed-in free user', () => {
   let user: TestUser
-  let db: ReturnType<typeof createClient>
+  let db: SupabaseClient
 
   beforeAll(async () => {
     user = await createUser()
@@ -41,6 +39,13 @@ describe('REST API as a signed-in free user', () => {
     await db.from('rate_limits').delete().eq('user_id', user.id)
     await db.from('rate_limits').update({ count: 0 }).eq('user_id', user.id)
     expect(await quotaUsedToday(user.id)).toBe(5)
+  })
+
+  it.each(['resumes', 'cover_letters', 'job_applications', 'tailored_resumes'])('cannot read or write %s', async (table) => {
+    const read = await db.from(table).select('*').limit(1)
+    expect(read.error?.code).toBe('42501')
+    const write = await db.from(table).insert({ user_id: user.id })
+    expect(write.error?.code).toBe('42501')
   })
 
   it('cannot call the rate limit RPCs', async () => {

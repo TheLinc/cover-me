@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { ParsedResume } from '../../types'
 import { orderedSections } from '../pdf/sections'
-import { isCurrentParse, parseParsedJson, parseResumeStructure, upgradedParse, withChosenOrder, withSectionOrder } from './resume-parse'
+import { buildParsePrompt, hasSectionOrder, isCurrentParse, parseParsedJson, parseResumeStructure, upgradedParse, urlCore, withChosenOrder, withLinks, withSectionOrder } from './resume-parse'
+import { checkParse, checkParseUrls, resumeUrls } from '../../../eval/checks'
+import type { EvalCase } from '../../../eval/fixtures'
 
 const RESUME = { name: 'A', email: 'a@x.co', experience: [], education: [{ institution: 'U of T' }] }
 const json = JSON.stringify(RESUME)
@@ -13,18 +15,46 @@ describe('parseResumeStructure streams', () => {
   test('Claude: joins the text deltas', async () => {
     const fetch = vi.fn(async (_url: string, _init: RequestInit) => sse([json.slice(0, 20), json.slice(20)].map((text) => ({ type: 'content_block_delta', delta: { type: 'text_delta', text } }))))
     vi.stubGlobal('fetch', fetch)
-    expect(await parseResumeStructure('r', 'claude', 'k')).toEqual({ ...RESUME, otherSections: [], sectionOrder: [] })
+    expect(await parseResumeStructure('r', 'claude', 'k')).toEqual({ ...RESUME, otherSections: [], sectionOrder: [], linksKept: true })
     expect(JSON.parse(fetch.mock.calls[0]![1].body as string).stream).toBe(true)
+  })
+  test('Claude: asks Haiku 5.5 at low effort, with room for a resume at the length cap', async () => {
+    const fetch = vi.fn(async (_url: string, _init: RequestInit) => sse([{ type: 'content_block_delta', delta: { type: 'text_delta', text: json } }]))
+    vi.stubGlobal('fetch', fetch)
+    await parseResumeStructure('r', 'claude', 'k')
+    const body = JSON.parse(fetch.mock.calls[0]![1].body as string)
+    expect(body).toMatchObject({ model: 'claude-haiku-5-5', output_config: { effort: 'low' }, max_tokens: 16000 })
+  })
+  test('Claude: skips thinking deltas ahead of the text', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => sse([
+      { type: 'content_block_start', index: 0, content_block: { type: 'thinking', thinking: '' } },
+      { type: 'content_block_delta', index: 0, delta: { type: 'thinking_delta', thinking: 'The resume lists' } },
+      { type: 'content_block_delta', index: 0, delta: { type: 'signature_delta', signature: 'sig' } },
+      { type: 'content_block_delta', index: 1, delta: { type: 'text_delta', text: json } },
+    ])))
+    expect(await parseResumeStructure('r', 'claude', 'k')).toEqual({ ...RESUME, otherSections: [], sectionOrder: [], linksKept: true })
+  })
+  test('Claude: a refusal (no text) surfaces as the parse error', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => sse([{ type: 'message_delta', delta: { stop_reason: 'refusal' } }])))
+    await expect(parseResumeStructure('r', 'claude', 'k')).rejects.toThrow('Resume parse returned invalid JSON')
   })
   test('OpenAI: joins the Chat Completions deltas', async () => {
     const fetch = vi.fn(async (_url: string, _init: RequestInit) => sse([json.slice(0, 20), json.slice(20)].map((content) => ({ choices: [{ delta: { content } }] }))))
     vi.stubGlobal('fetch', fetch)
-    expect(await parseResumeStructure('r', 'openai', 'k')).toEqual({ ...RESUME, otherSections: [], sectionOrder: [] })
+    expect(await parseResumeStructure('r', 'openai', 'k')).toEqual({ ...RESUME, otherSections: [], sectionOrder: [], linksKept: true })
     expect(JSON.parse(fetch.mock.calls[0]![1].body as string).stream).toBe(true)
   })
   test("OpenAI: a mid-stream error surfaces OpenAI's message", async () => {
     vi.stubGlobal('fetch', vi.fn(async () => sse([{ choices: [{ delta: { content: '{' } }] }, { error: { message: 'Server overloaded' } }])))
     await expect(parseResumeStructure('r', 'openai', 'k')).rejects.toThrow('Server overloaded')
+  })
+})
+
+describe('buildParsePrompt', () => {
+  test("shows no date format to copy, so dates keep the resume's own (#348)", () => {
+    const dates = [...buildParsePrompt('').matchAll(/"dates": "([^"]*)"/g)].map((m) => m[1])
+    expect(dates.length).toBeGreaterThan(0)
+    for (const d of dates) expect(d).not.toMatch(/\d|month|year|\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i)
   })
 })
 
@@ -99,27 +129,51 @@ describe('parseParsedJson sectionOrder', () => {
 })
 
 describe('isCurrentParse', () => {
-  test('a stored parse from before extra sections or section order is parsed again; a new parse never is', () => {
+  test('a stored parse from before extra sections, section order or the link fix (#238) is parsed again; a new parse never is', () => {
     expect(isCurrentParse(undefined)).toBe(false)
     expect(isCurrentParse({ ...RESUME, otherSections: [] } as unknown as ParsedResume)).toBe(false)
     expect(isCurrentParse({ ...RESUME, sectionOrder: [] } as unknown as ParsedResume)).toBe(false)
+    expect(isCurrentParse({ ...RESUME, otherSections: [], sectionOrder: [] } as unknown as ParsedResume)).toBe(false)
     expect(isCurrentParse(parseParsedJson(json))).toBe(true)
+  })
+
+  test('a parse from before the link fix can still take a chosen order; one from before section order cannot', () => {
+    expect(hasSectionOrder({ ...RESUME, otherSections: [], sectionOrder: [] } as unknown as ParsedResume)).toBe(true)
+    expect(hasSectionOrder({ ...RESUME, otherSections: [] } as unknown as ParsedResume)).toBe(false)
+    expect(hasSectionOrder(undefined)).toBe(false)
   })
 })
 
 describe('upgradedParse', () => {
-  const fresh = parseParsedJson(JSON.stringify({ ...RESUME, experience: [{ title: 'RN', company: 'General', location: '', dates: '', bullets: ['Triage', 'Charting'] }], sectionOrder: ['education', 'experience'] }))
+  const fresh = parseParsedJson(JSON.stringify({
+    ...RESUME,
+    experience: [{ title: 'RN', company: 'General', location: '', dates: '', bullets: ['Triage', 'Charting'] }],
+    projects: [{ name: 'OpenShelf (github.com/ada/openshelf)', bullets: ['Built it'] }],
+    otherSections: [{ heading: 'Volunteering', lines: ['Food bank'] }, { heading: 'Languages', lines: ['French'] }],
+    sectionOrder: ['experience', 'projects', 'education', 'other', 'other'],
+  }))
 
-  test('a parse with extra sections but no order keeps its own content and takes only the fresh order', () => {
-    const cached = { ...RESUME, experience: [{ title: 'RN', company: 'General', location: '', dates: '', bullets: ['Triage and charting'] }], otherSections: [] } as unknown as ParsedResume
+  test("a parse from before the link fix takes the fresh content, and keeps the order the user chose in the editor", () => {
+    const cached = {
+      ...fresh,
+      projects: [{ name: 'OpenShelf', bullets: ['Built it'] }],
+      links: ['github.com/ada/openshelf'],
+      website: 'github.com/ada/openshelf',
+      otherSections: [{ heading: 'Languages', lines: ['French'] }, { heading: 'Volunteering', lines: ['Food bank'] }],
+      sectionOrder: ['education', 'other', 'summary', 'experience', 'projects', 'other'],
+      linksKept: undefined,
+    } as unknown as ParsedResume
     const up = upgradedParse(cached, fresh)
-    expect(up.experience).toEqual(cached.experience)
-    expect(up.sectionOrder).toEqual(['summary', 'education', 'experience'])
+    expect(up.projects).toEqual(fresh.projects)
+    expect(up).not.toHaveProperty('links')
+    expect(up.sectionOrder).toEqual(['education', 'other', 'summary', 'experience', 'projects', 'other'])
+    expect(up.otherSections!.map((o) => o.heading)).toEqual(['Languages', 'Volunteering'])
     expect(isCurrentParse(up)).toBe(true)
   })
 
-  test('a parse from before extra sections, or none, is replaced by the fresh one', () => {
+  test('a parse without extra sections or an order, or none, is replaced by the fresh one', () => {
     expect(upgradedParse({ ...RESUME } as unknown as ParsedResume, fresh)).toBe(fresh)
+    expect(upgradedParse({ ...RESUME, otherSections: [] } as unknown as ParsedResume, fresh)).toBe(fresh)
     expect(upgradedParse(undefined, fresh)).toBe(fresh)
   })
 })
@@ -127,7 +181,7 @@ describe('upgradedParse', () => {
 describe('the section order comes from the resume text', () => {
   const job = (title: string, company: string, bullets: string[]) => ({ title, company, location: '', dates: '', bullets })
   const school = { institution: 'University of Michigan', degree: 'B.S. in Statistics', location: '', dates: '', bullets: [] }
-  // The model's order in each: its JSON's order, not the resume's, as it gave in the live check.
+  // The model's order in each: its JSON's order, not the resume's, as it gave in the live check (#165).
   const parse = (text: string, fields: object) => parseParsedJson(JSON.stringify({ name: 'P', email: '', phone: '', website: '', ...fields }), text).sectionOrder
 
   test('skills first, ahead of a profile that names a skill', () => {
@@ -175,7 +229,7 @@ describe('withChosenOrder', () => {
   const parsed = {
     name: 'P', email: '', phone: '', website: '', experience: [job], education: [school], skills: 'Epic',
     otherSections: [{ heading: 'Talks', lines: ['x'] }, { heading: 'Awards', lines: ['y'] }],
-    sectionOrder: ['summary', 'experience', 'education', 'skills', 'other', 'other'],
+    sectionOrder: ['summary', 'experience', 'education', 'skills', 'other', 'other'], linksKept: true,
   } as ParsedResume
   const headings = (p: ParsedResume) => p.otherSections!.map((s) => s.heading)
 
@@ -187,7 +241,7 @@ describe('withChosenOrder', () => {
   })
 
   test('the summary keeps its place among the sections the parse has', () => {
-    // An emptied certifications list shows in the editor, but the parse has none.
+    // An emptied certifications list shows in the editor, but the parse has none (#197).
     expect(withChosenOrder(parsed, ['certifications', 'summary', 'experience', 'education', 'skills', 'other', 'other'], []).sectionOrder)
       .toEqual(['summary', 'experience', 'education', 'skills', 'other', 'other'])
     expect(withChosenOrder(parsed, ['experience', 'projects', 'summary', 'education', 'skills', 'other', 'other'], []).sectionOrder)
@@ -209,5 +263,134 @@ describe('withChosenOrder', () => {
     const next = withChosenOrder(parsed, 'nope', 42)
     expect(next.sectionOrder).toEqual(parsed.sectionOrder)
     expect(headings(next)).toEqual(['Talks', 'Awards'])
+  })
+})
+
+// A made-up resume with a link in every section (#236), and a parse that put
+// the project's URL on the contact line as well as under its project.
+const LINKED_TEXT = `Ada Lovelace
+ada@acme.dev | 555-0100 | https://ada.dev | linkedin.com/in/ada
+Engineer who ships tools.
+
+EXPERIENCE
+Software Engineer, Acme Corp — 2021 – Present
+Built the billing service, live at acme.com/billing
+
+PROJECTS
+Cover Me (https://github.com/ada/cover-me)
+Built a resume tailoring tool
+
+EDUCATION
+BSc Computer Science, University of Toronto — 2017 – 2021
+Thesis code at github.com/ada/thesis
+
+VOLUNTEERING
+Mentor, Code Club (codeclub.org/mentors)`
+
+const LINKED_PARSE = {
+  name: 'Ada Lovelace',
+  email: 'ada@acme.dev',
+  phone: '555-0100',
+  website: 'https://ada.dev',
+  links: ['https://ada.dev', 'linkedin.com/in/ada', 'https://github.com/ada/cover-me'],
+  experience: [{ title: 'Software Engineer', company: 'Acme Corp', location: '', dates: '2021 – Present', bullets: ['Built the billing service, live at acme.com/billing'] }],
+  projects: [{ name: 'Cover Me (https://github.com/ada/cover-me)', bullets: ['Built a resume tailoring tool'] }],
+  education: [{ institution: 'University of Toronto', degree: 'BSc Computer Science', location: '', dates: '2017 – 2021', bullets: ['Thesis code at github.com/ada/thesis'] }],
+  otherSections: [{ heading: 'VOLUNTEERING', lines: ['Mentor, Code Club (codeclub.org/mentors)'] }],
+} as unknown as ParsedResume
+
+// The backend copy reads Deno.env when loaded; its path is built at runtime so
+// tsc, which doesn't cover backend/, doesn't follow it (#236).
+const backendParse = '../../../../backend/supabase/functions/_shared/resume-parse.ts'
+describe.each([
+  ['extension', async () => (await import('./resume-parse')).withLinks],
+  ['backend', async () => {
+    vi.stubGlobal('Deno', { env: { get: () => undefined } })
+    return ((await import(/* @vite-ignore */ backendParse)) as typeof import('./resume-parse')).withLinks
+  }],
+])('%s withLinks keeps the contact line to the contact block (#236)', (_copy, load) => {
+  test("drops a project's URL found only under its project, and keeps the contact URLs", async () => {
+    const r = (await load())(LINKED_PARSE, LINKED_TEXT)
+    expect(r.links).toEqual(['https://ada.dev', 'linkedin.com/in/ada'])
+    expect(r.website).toBe('https://ada.dev')
+  })
+
+  test('drops website too when it is a section URL', async () => {
+    const r = (await load())({ ...LINKED_PARSE, website: 'https://github.com/ada/cover-me', links: ['https://github.com/ada/cover-me'] }, LINKED_TEXT)
+    expect(r.links ?? []).toEqual([])
+    expect(r.website).toBe('')
+  })
+
+  test('keeps a profile URL a sidebar puts after the first section', async () => {
+    const text = `Ada Lovelace\nEXPERIENCE\nSoftware Engineer, Acme Corp\nBuilt the billing service, live at acme.com/billing\nCONTACT\nada@acme.dev\nlinkedin.com/in/ada\ngithub.com/ada/`
+    const r = (await load())({ ...LINKED_PARSE, website: '', links: ['linkedin.com/in/ada', 'github.com/ada/'] }, text)
+    expect(r.links).toEqual(['linkedin.com/in/ada', 'github.com/ada/'])
+  })
+
+  test('a company in the email domain or a job title in a tagline does not end the contact block', async () => {
+    const text = `Ada Lovelace — Software Engineer\nada@acmecorp.com | ada.dev\n${LINKED_TEXT.split('\n').slice(3).join('\n')}`
+    const r = (await load())({ ...LINKED_PARSE, email: 'ada@acmecorp.com', website: '', links: ['ada.dev'], experience: [{ ...LINKED_PARSE.experience[0]!, company: 'AcmeCorp' }] }, text)
+    expect(r.links).toEqual(['ada.dev'])
+  })
+
+  test("a header naming a skill, a licence or the employer doesn't end the contact block", async () => {
+    const text = `Ruby Chen, CISSP\nSenior Engineer at Shopify\nruby@mail.com | ruby.dev\n\nEXPERIENCE\nSenior Engineer, Shopify\nBuilt checkout at shopify.com/checkout\n\nSKILLS\nRuby, React\n\nCERTIFICATIONS\nCISSP`
+    const r = (await load())({
+      ...LINKED_PARSE, email: 'ruby@mail.com', website: '', links: ['ruby.dev'], projects: [], education: [], otherSections: [],
+      experience: [{ title: 'Senior Engineer', company: 'Shopify', location: '', dates: '', bullets: ['Built checkout at shopify.com/checkout'] }],
+      skills: 'Ruby, React', certifications: ['CISSP'],
+    }, text)
+    expect(r.links).toEqual(['ruby.dev'])
+  })
+
+  test('a short entry inside a contact URL ("Git" in github.com) costs no link', async () => {
+    const text = `Ada Lovelace\nada@mail.com | 555-0100 | github.com/ada | ada.dev\n\nTOOLS\nGit\nDocker`
+    const r = (await load())({ ...LINKED_PARSE, email: 'ada@mail.com', website: '', links: ['github.com/ada', 'ada.dev'], experience: [], projects: [], education: [], otherSections: [{ heading: 'TOOLS', lines: ['Git', 'Docker'] }] }, text)
+    expect(r.links).toEqual(['github.com/ada', 'ada.dev'])
+  })
+
+  test("keeps a section URL the parse has nowhere else, so it isn't lost", async () => {
+    const r = (await load())({ ...LINKED_PARSE, projects: [{ name: 'Cover Me', bullets: ['Built a resume tailoring tool'] }] }, LINKED_TEXT)
+    expect(r.links).toEqual(LINKED_PARSE.links)
+  })
+})
+
+test('urlCore strips a trailing slash, and a long run of slashes costs no time (#236)', () => {
+  expect(urlCore('HTTPS://www.Ada.dev//')).toBe('ada.dev')
+  const started = performance.now()
+  urlCore(`https://a.co${'/'.repeat(100_000)}x`)
+  expect(performance.now() - started).toBeLessThan(200)
+})
+
+// The eval's URL check is tested here, beside what it checks, as the issue
+// asks; vitest only collects tests under src/ (#236).
+describe('the URL check (#236)', () => {
+  test('lists every URL in the resume text, and not emails or file names', () => {
+    expect(resumeUrls(`${LINKED_TEXT}\nNode.js, résumé.pdf, ada.lovelace.dev@mail.com, www.ada.dev/blog.`)).toEqual([
+      'https://ada.dev', 'linkedin.com/in/ada', 'acme.com/billing', 'https://github.com/ada/cover-me', 'github.com/ada/thesis', 'codeclub.org/mentors', 'www.ada.dev/blog',
+    ])
+  })
+
+  test('passes on a parse that keeps every URL, with only contact URLs on the contact line', () => {
+    expect(checkParseUrls(withLinks(LINKED_PARSE, LINKED_TEXT), LINKED_TEXT)).toEqual([])
+  })
+
+  test("reports a URL on the contact line that the parse also gives a section, whatever withLinks made of it", () => {
+    const text = LINKED_TEXT.replace(' (https://github.com/ada/cover-me)', '')
+    expect(checkParseUrls(LINKED_PARSE, text)).toEqual(['section URL on the contact line: "https://github.com/ada/cover-me"'])
+  })
+
+  test('reports a section URL the model moved from its entry to the contact line', () => {
+    const parsed = { ...LINKED_PARSE, projects: [{ name: 'Cover Me', bullets: ['Built a resume tailoring tool'] }] }
+    expect(checkParseUrls(parsed, LINKED_TEXT)).toEqual(['section URL on the contact line: "https://github.com/ada/cover-me"'])
+  })
+
+  test('checkParse reports a URL missing from the parse, and a section URL on the contact line', () => {
+    const parsed = { ...LINKED_PARSE, education: [{ ...LINKED_PARSE.education[0]!, bullets: ['Thesis code'] }] }
+    const { failures } = checkParse(parsed, { resumeText: LINKED_TEXT, parsed } as unknown as EvalCase)
+    expect(failures).toEqual([
+      'URL missing from the parse: "github.com/ada/thesis"',
+      'section URL on the contact line: "https://github.com/ada/cover-me"',
+    ])
   })
 })

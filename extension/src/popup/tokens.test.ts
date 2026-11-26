@@ -9,6 +9,13 @@ const lum = (hex: string) => {
   return 0.2126 * r + 0.7152 * g + 0.0722 * b
 }
 const ratio = (a: string, b: string) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05) }
+// A see-through fill (rgba token) as it shows over a card.
+const overCard = (name: string) => {
+  const [r, g, b, a] = css.match(new RegExp(`--${name}:\\s*rgba\\(([^)]+)\\)`))![1].split(',').map(Number)
+  const card = token('surface')!
+  const mix = [r, g, b].map((c, i) => Math.round(c * a + parseInt(card.slice(1 + i * 2, 3 + i * 2), 16) * (1 - a)))
+  return '#' + mix.map((v) => v.toString(16).padStart(2, '0')).join('')
+}
 
 describe('popup tokens (Night)', () => {
   test('are the Night palette', () => {
@@ -27,11 +34,13 @@ describe('popup tokens (Night)', () => {
   })
 
   test('missing-keyword chips: --gap-fg on the gap fill over a card is at least 4.5:1', () => {
-    const [r, g, b, a] = css.match(/--gap-bg:\s*rgba\(([^)]+)\)/)![1].split(',').map(Number)
-    const card = token('surface')!
-    const mix = [r, g, b].map((c, i) => Math.round(c * a + parseInt(card.slice(1 + i * 2, 3 + i * 2), 16) * (1 - a)))
-    const fill = '#' + mix.map((v) => v.toString(16).padStart(2, '0')).join('')
-    expect(ratio(token('gap-fg')!, fill)).toBeGreaterThanOrEqual(4.5)
+    expect(ratio(token('gap-fg')!, overCard('gap-bg'))).toBeGreaterThanOrEqual(4.5)
+  })
+
+  test('tips: --tip-fg and --text-2 on the tip fill over a card are at least 4.5:1', () => {
+    const fill = overCard('tip-bg')
+    expect(ratio(token('tip-fg')!, fill)).toBeGreaterThanOrEqual(4.5)
+    expect(ratio(token('text-2')!, fill)).toBeGreaterThanOrEqual(4.5)
   })
 
   // Text never sits on --accent (#6366F1): white on it is 4.47:1.

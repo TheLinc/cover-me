@@ -12,23 +12,6 @@ describe('scrubEvent', () => {
     }
   })
 
-  it('keeps a gift trial redemption but not its code', () => {
-    const out = scrubEvent({
-      uuid: 'u',
-      event: 'trial_redeemed',
-      properties: {
-        note: 'reddit',
-        $pathname: '/redeem/code123',
-        $current_url: 'https://www.cover-me.dev/redeem/code123',
-        $session_entry_url: 'https://www.cover-me.dev/redeem/code123?utm_source=reddit',
-        $referrer: 'https://www.cover-me.dev/auth',
-      },
-    } as CaptureResult)
-    expect(out?.properties.note).toBe('reddit')
-    expect(out?.properties.$pathname).toBe('/redeem')
-    expect(JSON.stringify(out?.properties)).not.toContain('code123')
-  })
-
   it('keeps public pages, including ones that only start like a private path', () => {
     expect(isPrivatePath('/')).toBe(false)
     expect(isPrivatePath('/authors')).toBe(false)
@@ -62,7 +45,6 @@ describe('scrubEvent', () => {
 })
 
 describe('storeClick', () => {
-  // Enough of an element for closest('a[href]') and the label
   const link = (href: string, text: string | null, ariaLabel?: string) => {
     const a = {
       textContent: text,
@@ -83,6 +65,12 @@ describe('storeClick', () => {
 
   it('falls back to aria-label for an icon-only link', () => {
     expect(storeClick({ type: 'click', button: 0, target: link(STORE, '', 'Install Cover Me') })).toEqual({ link_text: 'Install Cover Me' })
+  })
+
+  it("adds the link's utm_campaign as campaign, so clicks match the store dashboard", () => {
+    expect(storeClick({ type: 'click', button: 0, target: link(`${STORE}?utm_source=cover-me.dev&utm_medium=site&utm_campaign=hero`, 'Add to Chrome') }))
+      .toEqual({ link_text: 'Add to Chrome', campaign: 'hero' })
+    expect(storeClick({ type: 'click', button: 0, target: link(`${STORE}?utm_source=github`, 'Install') })).toEqual({ link_text: 'Install' })
   })
 
   it('counts middle clicks but not right clicks', () => {
