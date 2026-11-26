@@ -153,11 +153,17 @@ function Grow({ className, children }: { className: string; children: ReactNode 
   useEffect(() => {
     const box = outer.current, content = inner.current
     if (!box || !content) return
+    const frame = box.offsetHeight - content.offsetHeight
     let last = box.offsetHeight
+    let running: Animation | undefined
     const ro = new ResizeObserver(() => {
-      const next = box.offsetHeight
-      if (next !== last && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        box.animate([{ height: `${last}px`, overflow: 'clip' }, { height: `${next}px`, overflow: 'clip' }], { duration: 200, easing: 'ease' })
+      const next = content.offsetHeight + frame
+      // A row that animates its own height already moves the card smoothly (#342).
+      const selfAnimating = content.getAnimations({ subtree: true }).some((a) => a instanceof CSSTransition && a.transitionProperty === 'grid-template-rows')
+      if (next !== last && !selfAnimating && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        const from = running?.playState === 'running' ? box.getBoundingClientRect().height : last
+        running?.cancel()
+        running = box.animate([{ height: `${from}px`, overflow: 'clip' }, { height: `${next}px`, overflow: 'clip' }], { duration: 200, easing: 'ease' })
       }
       last = next
     })

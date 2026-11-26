@@ -17,11 +17,10 @@ const MASKED = '••••••••••••••••'
 
 // The account first, with BYOK behind "I have an API key". Used by Settings and
 // by the welcome tab, which leaves out the upgrade and dashboard links so
-// onboarding stays on the first letter.
+// onboarding stays on the first letter (https://github.com/TheLinc/cover-me/commit/e0cb85dc).
 export default function AccountPanel({ initialView = 'signin', links = true }: { initialView?: AuthView; links?: boolean }) {
   const [mode, setMode] = useState<AppMode>('hosted')
 
-  // BYOK
   const [provider, setProvider] = useState<AIProvider>('claude')
   const [apiKey, setApiKey] = useState('')
   const [keyDirty, setKeyDirty] = useState(false)
@@ -29,9 +28,8 @@ export default function AccountPanel({ initialView = 'signin', links = true }: {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
   const [saveError, setSaveError] = useState('')
 
-  // Hosted
   const [session, setSession] = useState<AuthSession | null>(null)
-  // null until known: no badge and no upgrade button rather than a wrong one.
+  // null until known: no badge and no upgrade button rather than a wrong one (https://github.com/TheLinc/cover-me/commit/99b26ce0).
   const [tier, setTier] = useState<string | null>(null)
   const [authView, setAuthView] = useState<AuthView>(initialView)
   const [email, setEmail] = useState('')
@@ -39,13 +37,13 @@ export default function AccountPanel({ initialView = 'signin', links = true }: {
   const [showPassword, setShowPassword] = useState(false)
   // The signup box (#114): unticked until the user ticks it.
   const [productUpdates, setProductUpdates] = useState(false)
-  const [authStatus, setAuthStatus] = useState<AuthStatus>('idle') // email sign-in
+  const [authStatus, setAuthStatus] = useState<AuthStatus>('idle')
   const [googleBusy, setGoogleBusy] = useState(false)
   const [authError, setAuthError] = useState('')
   const [authNotice, setAuthNotice] = useState('')
-  const [avatarFailed, setAvatarFailed] = useState(false) // offline, or Google's link expired
+  const [avatarFailed, setAvatarFailed] = useState(false) // offline, or Google's link expired (https://github.com/TheLinc/cover-me/commit/b43842e0)
   // The load, the sign-in handlers and the session watcher can all report the
-  // same session; fetch the tier once per session.
+  // same session; fetch the tier once per session (https://github.com/TheLinc/cover-me/commit/a69e1090).
   const shownToken = useRef<string | null>(null)
 
   useEffect(() => {
@@ -57,12 +55,12 @@ export default function AccountPanel({ initialView = 'signin', links = true }: {
       }
       if (sess) signedIn(sess)
     })
-    // A Google sign-in started from the popup fails after the popup closed.
+    // A Google sign-in started from the popup fails after the popup closed (https://github.com/TheLinc/cover-me/commit/d413984d).
     takeGoogleSignInError().then((msg) => { if (msg && !shownToken.current) setAuthError(msg) })
     // The worker may finish a Google sign-in after this panel opened, and the
     // welcome tab should follow a sign-in or sign-out made in the popup. A
     // token refresh lands here too, so take the mode from storage rather than
-    // assuming hosted (completeSignIn saves hosted mode before the session).
+    // assuming hosted (completeSignIn saves hosted mode before the session) (https://github.com/TheLinc/cover-me/commit/a69e1090).
     const stopSession = watchSession((sess) => {
       if (sess) {
         getMode().then(setMode)
@@ -70,16 +68,14 @@ export default function AccountPanel({ initialView = 'signin', links = true }: {
       } else {
         shownToken.current = null
         setSession(null)
-        setTier(null) // the next account's badge must not show this one's tier
+        setTier(null) // the next account's badge must not show this one's tier (https://github.com/TheLinc/cover-me/commit/45c9039f)
       }
     })
-    // A flow that fails while this panel is open: show it now, not next open.
     const stopError = watchGoogleSignInError((msg) => {
-      if (!shownToken.current) setAuthError(msg) // signed in: nothing to show it on
+      if (!shownToken.current) setAuthError(msg) // signed in: nothing to show it on (https://github.com/TheLinc/cover-me/commit/47052015)
       void takeGoogleSignInError()
     })
     return () => { stopSession(); stopError() }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   async function switchMode(next: AppMode) {
@@ -115,14 +111,14 @@ export default function AccountPanel({ initialView = 'signin', links = true }: {
 
   function signedIn(sess: AuthSession) {
     setSession(sess)
-    setAuthError('') // an old failure would reappear on the form after sign-out
+    setAuthError('') // an old failure would reappear on the form after sign-out (https://github.com/TheLinc/cover-me/commit/47052015)
     if (shownToken.current === sess.access_token) return
     shownToken.current = sess.access_token
     // The last known tier at once, so a Pro account doesn't flash "Upgrade"
-    // while the lookup runs; the lookup's answer wins when it lands.
+    // while the lookup runs; the lookup's answer wins when it lands (https://github.com/TheLinc/cover-me/commit/99b26ce0).
     let looked = false
     // A lookup that lands after a sign-out or a switch of account belongs to
-    // the old session: it must not set or cache this one's tier.
+    // the old session: it must not set or cache this one's tier (https://github.com/TheLinc/cover-me/commit/a3e2fe05).
     const current = () => shownToken.current === sess.access_token
     getCachedTier().then((cached) => { if (cached && !looked && current()) setTier(cached) })
     fetchTier(sess.user.id, sess.access_token).then(async (t) => {
@@ -132,7 +128,7 @@ export default function AccountPanel({ initialView = 'signin', links = true }: {
         setTier(t)
         await saveCachedTier(t)
       } else {
-        // Lookup failed (offline, say): show the last known tier, retry next time.
+        // Lookup failed (offline, say): show the last known tier, retry next time (https://github.com/TheLinc/cover-me/commit/5addd242).
         const cached = await getCachedTier()
         if (!current()) return
         shownToken.current = null
@@ -167,7 +163,7 @@ export default function AccountPanel({ initialView = 'signin', links = true }: {
   }
 
   // The worker runs the flow (see handleGoogleSignIn). In the popup this
-  // usually never resolves, because the popup closes when Google's window opens.
+  // usually never resolves, because the popup closes when Google's window opens (https://github.com/TheLinc/cover-me/commit/96947bc4).
   async function handleGoogle() {
     setGoogleBusy(true)
     setAuthError('')
@@ -177,7 +173,7 @@ export default function AccountPanel({ initialView = 'signin', links = true }: {
       if (res.success) signedIn(res.session)
       else if (!res.cancelled) {
         setAuthError(res.error || 'Google sign-in failed')
-        await takeGoogleSignInError() // shown here; don't show it again next open
+        await takeGoogleSignInError() // shown here; don't show it again next open (https://github.com/TheLinc/cover-me/commit/d413984d)
       }
     } catch (err) {
       setAuthError(err instanceof Error ? err.message : 'Google sign-in failed')
@@ -209,7 +205,7 @@ export default function AccountPanel({ initialView = 'signin', links = true }: {
 
   return (
     <>
-      {/* Once signed in, the account card's badge states the plan. */}
+      {/* Once signed in, the account card's badge states the plan (https://github.com/TheLinc/cover-me/commit/d413984d). */}
       {!(mode === 'hosted' && session) && (
         <p className="hint hint-intro">
           {mode === 'hosted'
@@ -217,8 +213,6 @@ export default function AccountPanel({ initialView = 'signin', links = true }: {
             : 'Claude or OpenAI, unlimited. Your key stays on this device.'}
         </p>
       )}
-
-      {/* ── BYOK ────────────────────────────────────────────────────────── */}
 
       {mode === 'byok' && (
         <>
@@ -280,12 +274,9 @@ export default function AccountPanel({ initialView = 'signin', links = true }: {
         </>
       )}
 
-      {/* ── Hosted ──────────────────────────────────────────────────────── */}
-
       {mode === 'hosted' && (
         <>
           {session ? (
-            /* Signed-in state: who you are and the dashboard; upgrading has its own section */
             <div className="account-card">
               <div className="account-row">
                 <div className="account-avatar">
@@ -306,7 +297,7 @@ export default function AccountPanel({ initialView = 'signin', links = true }: {
               {links && (
                 <>
                   {/* Usage, the application board and (for Pro) billing and every saved letter and resume.
-                      Free accounts keep the filled button for Upgrade, below. */}
+                      Free accounts keep the filled button for Upgrade, below (#213). */}
                   <a className={`btn ${isPro ? 'btn-primary' : 'btn-secondary'} account-dashboard`} href={`${WEB_URL}/dashboard`} target="_blank" rel="noreferrer">
                     Open your dashboard <ArrowUpRightIcon />
                   </a>
@@ -315,15 +306,16 @@ export default function AccountPanel({ initialView = 'signin', links = true }: {
               )}
             </div>
           ) : (
-            /* Auth form */
             <>
-              {/* Above both ways in, so it reads as applying to Google too. */}
-              {authView === 'signup' && (
-                <label className="compact-toggle signup-updates">
-                  <input type="checkbox" checked={productUpdates} onChange={(e) => setProductUpdates(e.target.checked)} />
-                  Email me about new features (a few times a year)
-                </label>
-              )}
+              {/* Above both ways in, so it reads as applying to Google too (#114). */}
+              <div className={`context-panel${authView === 'signup' ? ' open' : ''}`} {...(authView !== 'signup' && { inert: '' })}>
+                <div className="context-panel-inner">
+                  <label className="compact-toggle signup-updates">
+                    <input type="checkbox" checked={productUpdates} onChange={(e) => setProductUpdates(e.target.checked)} />
+                    Email me about new features (a few times a year)
+                  </label>
+                </div>
+              </div>
 
               {GOOGLE_SIGNIN && (
                 <>
@@ -411,7 +403,7 @@ export default function AccountPanel({ initialView = 'signin', links = true }: {
             <button className="auth-link" onClick={() => switchMode('byok')}>I have an API key →</button>
           </p>
 
-          {/* After the key link, which belongs with the account card above. */}
+          {/* After the key link, which belongs with the account card above (#213). */}
           {session && links && tier === 'hosted_free' && (
             <section className="page-read-setting" aria-labelledby="go-pro-title">
               <h2 id="go-pro-title" className="page-read-setting-title">Go Pro</h2>
