@@ -6,6 +6,8 @@ Extension features under the names a user would use, with where each lives and h
 
 - Generate: the popup's first tab (`src/popup/pages/GeneratePage.tsx`). Reads the job on the active tab, then "Generate Cover Letter".
 - Paste a job by hand: Generate, "Can't detect the posting? Paste it manually →". Job title, company and description, then "Generate Cover Letter". `generateFromPastedJob` in the driver.
+- Can't read this site: the card Generate shows when it can't read the page's site ("We can't read this site yet", `src/popup/components/ScrapeFailure.tsx`). "Request this site" sends the host to a PostHog survey under a random ID. `showUnreadSite` in the driver opens it.
+- Email me when Cover Me reads this site: the unticked box under the request's thanks line, Hosted and signed in only. Ticking saves a `site_watch` row; `pnpm notify-site <host>` in backend/ emails everyone waiting. `seedHostedSession` in the driver signs the popup in.
 - Own API key: Settings tab. A Claude or OpenAI key saved encrypted in `chrome.storage.local`; letters are written in the extension (`src/lib/ai/index.ts`), not on Cover Me's server. `seedOwnKey` in the driver sets one up with a resume.
 
 ## Editor tab
