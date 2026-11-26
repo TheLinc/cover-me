@@ -1494,3 +1494,6 @@ textarea:focus-visible, input:focus-visible, [tabindex]:focus-visible {
 .template-thumb-minimal .tt-name { height: 6px; width: 80%; background: #444; }
 .template-thumb-minimal .tt-rule { background: #ddd; }
 .template-thumb-minimal > span:not(.tt-name):not(.tt-rule) { background: #e1e1e6; }
+.template-select { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.template-select .form-label { margin: 0; }
+.template-select select { flex: 1; padding-top: 6px; padding-bottom: 6px; }
