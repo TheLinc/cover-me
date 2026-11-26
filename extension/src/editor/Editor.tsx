@@ -4,15 +4,17 @@ import { skillGroups, splitSkills } from '../lib/ai/resume-grounding'
 import { hasSectionOrder, withChosenOrder } from '../lib/ai/resume-parse'
 import { downloadTailoredResumePdf, tailoredResumePdf } from '../lib/pdf/resume'
 import type { PlacedSection } from '../lib/pdf/sections'
-import type { DeletedSection } from '../lib/pdf/types'
+import type { DeletedSection, ResumeTemplate } from '../lib/pdf/types'
 import { chosenOrder, editedResume, postingTitleInSummary, restoreSection, returnToTab, saveResumeEdit, shownSections, withResumeEdit, withSections } from '../lib/resume-edit'
-import { getCachedTier, getMode, getResume, getTailoredHistory, saveParsedResume } from '../lib/storage'
+import { isCachedPro, saveResumeTemplate } from '../lib/resume-template'
+import { getMode, getResume, getTailoredHistory, saveParsedResume } from '../lib/storage'
 import DownloadMenu from '../popup/components/DownloadMenu'
 import GapChips from '../popup/components/GapChips'
 import PdfPreview from './PdfPreview'
 import PostingTitleTip from '../popup/components/PostingTitleTip'
 import ReviewAsk from '../popup/components/ReviewAsk'
 import ScoreRing from '../popup/components/ScoreRing'
+import TemplatePicker from '../popup/components/TemplatePicker'
 import type { AuthSession, TailoredHistoryEntry, TailoredResume } from '../types'
 
 // Edits are the user's own, so the grounding checks that guard the model's output don't run on them (#118).
@@ -21,8 +23,7 @@ interface Opened { scored: TailoredResume; jobTitle: string; company: string }
 
 // Read from this browser's cache first, so BYOK and Free make no network call here (#118).
 async function proSession(): Promise<AuthSession | null> {
-  if ((await getMode()) !== 'hosted' || (await getCachedTier()) !== 'hosted_pro') return null
-  return ensureValidSession()
+  return (await isCachedPro()) ? ensureValidSession() : null
 }
 
 // A Pro resume this browser no longer keeps (made on another device, or past the
@@ -112,6 +113,8 @@ export default function Editor() {
   const [dirty, setDirty] = useState(false)
   const [status, setStatus] = useState<Status>('')
   const [preview, setPreview] = useState<ArrayBuffer | null>(null)
+  const [template, setTemplate] = useState<ResumeTemplate | undefined>()
+  const [pro, setPro] = useState(false)
 
   const localSaves = useRef<Promise<void>>(Promise.resolve())
   const accountSaves = useRef<Promise<void>>(Promise.resolve())
@@ -124,15 +127,22 @@ export default function Editor() {
       setOpened(o)
       if (!o) return
       setForm({ draft: structuredClone(o.scored), skills: skillLines(o.scored.skills) })
+      setTemplate(o.scored.template)
       document.title = `Edit resume · ${o.jobTitle || 'Cover Me'}`
       // Ready for a save as the tab closes, which can't wait for a refresh. (#118)
       void proSession().then((s) => { session.current = s }).catch(() => {})
+      void isCachedPro().then(setPro)
     }).catch(() => setOpened('error'))
   }, [id])
 
   const scored = typeof opened === 'object' && opened ? opened.scored : null
-  const current = useMemo(() => (form ? resumeFromForm(form.draft, form.skills) : null), [form])
-  const saved = useMemo(() => (current && scored ? editedResume(scored, current) : null), [current, scored])
+  const current = useMemo(() => (form ? { ...resumeFromForm(form.draft, form.skills), template } : null), [form, template])
+  // A template alone changes no text, so it doesn't mark the resume edited or its score stale (#119).
+  const saved = useMemo(() => {
+    if (!current || !scored) return null
+    return dirty || scored.editedAt ? editedResume(scored, current) : { ...scored, template }
+  }, [current, scored, dirty, template])
+  const changed = dirty || (!!scored && template !== scored.template)
 
   useEffect(() => {
     if (!current) return
@@ -164,7 +174,7 @@ export default function Editor() {
   // ponytail: History is read then written whole, as the background does when a tailor
   // finishes, so the two can still collide; the pause keeps it rare. A per-entry key would end it (#118).
   useEffect(() => {
-    if (!dirty || !saved) return
+    if (!changed || !saved) return
     setStatus('saving')
     forAccount.current = saved
     const local = setTimeout(() => {
@@ -172,7 +182,7 @@ export default function Editor() {
     }, 300)
     const account = setTimeout(saveToAccount, 800)
     return () => { clearTimeout(local); clearTimeout(account) }
-  }, [saved, dirty])
+  }, [saved, changed])
 
   // No time to read History as the tab closes, so a current copy is kept here. The account's
   // copy goes with keepalive (saveResumeEditToBackend), so it lands after the page is gone (#118).
@@ -297,7 +307,7 @@ export default function Editor() {
   }
 
   async function done() {
-    if (dirty && saved) {
+    if (changed && saved) {
       forAccount.current = saved
       localSaves.current = localSaves.current.then(() => saveResumeEdit(id, saved)).catch(() => {})
     }
@@ -502,6 +512,7 @@ export default function Editor() {
       </main>
 
       <aside className="ed-preview" aria-label="PDF preview">
+        <TemplatePicker value={template} pro={pro} onChange={(t) => { setTemplate(t); void saveResumeTemplate(t) }} />
         <PdfPreview pdf={preview} />
       </aside>
     </div>

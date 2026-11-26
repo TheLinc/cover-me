@@ -75,9 +75,8 @@ const STYLES: Record<ResumeTemplate, TemplateStyle> = {
 }
 
 // Stored resumes are untrusted JSON: an unknown name, even one on Object's prototype, prints as Classic (#119).
-export function templateOf(resume: TailoredResume): ResumeTemplate {
-  const t = resume.template
-  return RESUME_TEMPLATES.find((name) => name === t) ?? 'classic'
+export function templateOf(template: unknown): ResumeTemplate {
+  return RESUME_TEMPLATES.find((name) => name === template) ?? 'classic'
 }
 
 export function downloadTailoredResumePdf(resume: TailoredResume, jobTitle?: string): void {
@@ -133,7 +132,7 @@ export function pdfSafe(text: unknown): string {
 // by the extension's editor preview, so the two are the same file (#118).
 export function tailoredResumePdf(resume: TailoredResume): jsPDF {
   const doc = new jsPDF({ unit: 'pt', format: 'letter' })
-  const st = STYLES[templateOf(resume)]
+  const st = STYLES[templateOf(resume.template)]
   const { font } = st
   const ML = st.margin
   const MR = PW - st.margin

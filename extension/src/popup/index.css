@@ -1458,3 +1458,39 @@ textarea:focus-visible, input:focus-visible, [tabindex]:focus-visible {
 }
 .download-menu-item small { display: block; font-size: 10.5px; font-weight: 400; color: var(--text-3); margin-top: 1px; }
 .download-menu-item:hover, .download-menu-item:focus-visible { background: var(--border); outline: none; }
+
+/* Resume template picker (#119): a small page sketch per template. */
+.template-picker { border: none; margin: 0 0 16px; padding: 0; min-width: 0; }
+.template-options { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.template-option {
+  position: relative;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 8px 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  cursor: pointer;
+}
+.template-option input { position: absolute; opacity: 0; pointer-events: none; }
+.template-option:has(input:checked) { border-color: var(--accent); background: var(--accent-dim); }
+.template-option:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.template-option.is-locked { cursor: not-allowed; }
+.template-option.is-locked .template-thumb { opacity: 0.55; }
+.template-name { font-size: 12px; font-weight: 600; color: var(--text); }
+.template-lock { display: inline-flex; align-items: center; gap: 3px; font-size: 10.5px; font-weight: 600; color: var(--accent-h); }
+
+.template-thumb {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  width: 46px; height: 60px; padding: 7px 6px;
+  border-radius: 3px; background: #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}
+.template-thumb > span { display: block; width: 100%; height: 2px; border-radius: 1px; background: #c9c9d1; }
+.template-thumb .tt-name { width: 70%; height: 4px; background: #222; }
+.template-thumb .tt-rule { height: 1px; margin-top: 2px; background: #222; }
+.template-thumb-modern, .template-thumb-minimal { align-items: flex-start; }
+.template-thumb-modern .tt-rule { background: #4F46E5; }
+.template-thumb-compact { gap: 2px; padding: 5px 4px; }
+.template-thumb-minimal { gap: 4px; padding: 9px 8px; }
+.template-thumb-minimal .tt-name { height: 6px; width: 80%; background: #444; }
+.template-thumb-minimal .tt-rule { background: #ddd; }
+.template-thumb-minimal > span:not(.tt-name):not(.tt-rule) { background: #e1e1e6; }
