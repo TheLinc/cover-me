@@ -10,8 +10,8 @@ const HOST = /^(?=.{4,253}$)(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9-]{2,}$
 // "Email me when Cover Me reads this site" (#195). When support for a site
 // ships, the developer runs `pnpm notify-site <host>`, which POSTs { host }
 // here with the service key in X-Service-Key: the gateway may rewrite an
-// Authorization header that carries an API key. Each account in site_watch for that host gets
-// one email, and its row goes. Logs carry counts only, never who or which site.
+// Authorization header that carries an API key. Each account in site_watch
+// for that host gets one email, and its row goes. Logs carry counts only, never who or which site.
 Deno.serve(async (req) => {
   if (!(await secretMatches(req.headers.get('X-Service-Key'), SERVICE_KEY))) return json({ error: 'Invalid token' }, 401)
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405)

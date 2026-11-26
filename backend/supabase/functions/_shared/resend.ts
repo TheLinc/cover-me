@@ -5,8 +5,8 @@ export const SEND_GAP_MS = 550
 type Email = { to: string[]; subject: string; text: string; html?: string; headers?: Record<string, string> }
 
 // The developer's own emails, which replies reach (#113, #195). build runs
-// inside the try, so a failure there counts as a failed send, not a crash.
-// 'unknown' means no answer: the email may have gone out.
+// inside the try, so its failure ends one send, not the batch. 'unknown': no
+// answer from Resend (the email may have gone out) or build failed.
 export async function sendEmail(tag: string, build: () => Promise<Email> | Email): Promise<'sent' | 'refused' | 'unknown'> {
   try {
     const res = await fetch(`${RESEND_API_BASE}/emails`, {
