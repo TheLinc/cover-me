@@ -5,7 +5,7 @@ import { contactParts } from './contact'
 import { resumeFileName } from './file-name'
 import { GPA_LINE, SKILL_GROUP } from './layout-rules'
 import { orderedSections, type StandardSection } from './sections'
-import type { ResumeSection, TailoredResume } from './types'
+import type { ResumeSection, ResumeTemplate, TailoredResume } from './types'
 
 // Letter page: 612 × 792 pt (https://github.com/TheLinc/cover-me/commit/a074665df759617a5ebedfaf28370e973177338c)
 const PW = 612
@@ -13,6 +13,23 @@ const PH = 792
 const ML = 54
 const MR = 558
 const CW = MR - ML
+
+interface TemplateStyle {
+  font: 'times' | 'helvetica'
+}
+
+const STYLES: Record<ResumeTemplate, TemplateStyle> = {
+  classic: { font: 'times' },
+  modern: { font: 'helvetica' },
+  compact: { font: 'times' },
+  minimal: { font: 'times' },
+}
+
+// Stored resumes are untrusted JSON, so an unknown name, even one on Object's prototype, prints as Classic (#119).
+export function templateOf(resume: TailoredResume): ResumeTemplate {
+  const t = resume.template
+  return typeof t === 'string' && Object.hasOwn(STYLES, t) ? t : 'classic'
+}
 
 export function downloadTailoredResumePdf(resume: TailoredResume, jobTitle?: string): void {
   tailoredResumePdf(resume).save(resumeFileName(resume, jobTitle, 'pdf'))
@@ -67,6 +84,7 @@ export function pdfSafe(text: unknown): string {
 // by the extension's editor preview, so the two are the same file (#118).
 export function tailoredResumePdf(resume: TailoredResume): jsPDF {
   const doc = new jsPDF({ unit: 'pt', format: 'letter' })
+  const { font } = STYLES[templateOf(resume)]
   const LH = 12
   const BODY = 10
   const ENTRY = 10.5
@@ -83,13 +101,13 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
   const width = (s: string) => doc.getTextWidth(pdfSafe(s))
   const wrap = (s: string, w: number) => doc.splitTextToSize(pdfSafe(s), w) as string[]
 
-  doc.setFont('times', 'bold')
+  doc.setFont(font, 'bold')
   doc.setFontSize(26)
   text(resume.name || 'Resume', PW / 2, { align: 'center' })
   y += 16
 
   if (resume.headline?.trim()) {
-    doc.setFont('times', 'normal')
+    doc.setFont(font, 'normal')
     doc.setFontSize(11.5)
     text(resume.headline.trim(), PW / 2, { align: 'center' })
     y += 13
@@ -99,7 +117,7 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
   // make the line wider than the page. One URL wider than the page still
   // overflows; no real one is (#149).
   const contact: string[] = []
-  doc.setFont('times', 'normal')
+  doc.setFont(font, 'normal')
   doc.setFontSize(10)
   for (const part of contactParts(resume)) {
     const joined = `${contact[contact.length - 1]}   |   ${part}`
@@ -115,7 +133,7 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
   function sectionHeading(title: string) {
     y += 10
     need(18)
-    doc.setFont('times', 'bold')
+    doc.setFont(font, 'bold')
     doc.setFontSize(11)
     text(title, ML)
     y += 3
@@ -127,10 +145,10 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
 
   // A left side too wide for the line wraps under itself (#190).
   function twoCol(left: string, right: string, leftStyle: 'bold' | 'italic', size = ENTRY) {
-    doc.setFont('times', 'normal')
+    doc.setFont(font, 'normal')
     doc.setFontSize(size)
     const rightW = right ? Math.min(width(right) + 10, CW / 2) : 0
-    doc.setFont('times', leftStyle)
+    doc.setFont(font, leftStyle)
     const lines = wrap(left || '', CW - rightW)
     need(14 + LH * (lines.length - 1))
     lines.forEach((line, i) => {
@@ -138,7 +156,7 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
       text(line, ML)
     })
     if (right) {
-      doc.setFont('times', 'normal')
+      doc.setFont(font, 'normal')
       doc.text(pdfSafe(right), MR, y - (lines.length - 1) * LH, { align: 'right' })
     }
     y += 13
@@ -149,12 +167,12 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
   // line. A note wider than half the line (a long link) goes on its own line (#190).
   function entryHeader(name: string, subtitle: string | undefined, right: string | undefined) {
     doc.setFontSize(ENTRY)
-    doc.setFont('times', 'normal')
+    doc.setFont(font, 'normal')
     const inline = !!right && width(right) <= CW / 2
     twoCol(name, inline ? right! : '', 'bold')
     if (subtitle) twoCol(subtitle, '', 'italic')
     if (right && !inline) {
-      doc.setFont('times', 'normal')
+      doc.setFont(font, 'normal')
       doc.setFontSize(BODY)
       for (const line of wrap(right, CW)) {
         need(LH)
@@ -170,7 +188,7 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
   const WRAP_W = MR - TEXT_X
 
   function bulletLines(s: string): string[] {
-    doc.setFont('times', 'normal')
+    doc.setFont(font, 'normal')
     doc.setFontSize(BODY)
     return wrap(s, WRAP_W)
   }
@@ -178,7 +196,7 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
   function bullet(s: string) {
     const lines = bulletLines(s)
     need(lines.length * LH + 2)
-    doc.setFont('times', 'normal')
+    doc.setFont(font, 'normal')
     doc.setFontSize(BODY)
     text('•', BULLET_X)
     for (const line of lines) {
@@ -189,7 +207,7 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
   }
 
   function paragraph(s: string) {
-    doc.setFont('times', 'normal')
+    doc.setFont(font, 'normal')
     doc.setFontSize(BODY)
     for (const line of wrap(s, CW)) {
       need(LH)
@@ -210,17 +228,17 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
         continue
       }
       const label = `${m[1].trim()}:`
-      doc.setFont('times', 'bold')
+      doc.setFont(font, 'bold')
       // jsPDF drops a trailing space from the measured width, so the gap is added by hand (#190).
       const labelW = width(label) + BODY * 0.5
-      doc.setFont('times', 'normal')
+      doc.setFont(font, 'normal')
       const firstLine = wrap(m[2], CW - labelW)[0] ?? ''
       const rest = pdfSafe(m[2]).slice(firstLine.length).trim()
       const restLines = rest ? wrap(rest, CW) : []
       need(LH * (1 + restLines.length))
-      doc.setFont('times', 'bold')
+      doc.setFont(font, 'bold')
       text(label, ML)
-      doc.setFont('times', 'normal')
+      doc.setFont(font, 'normal')
       doc.text(firstLine, ML + labelW, y)
       y += LH
       for (const line of restLines) {
@@ -302,7 +320,7 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
     for (const e of entries) {
       entryHeader(e.name, e.subtitle, e.dates || e.link)
       if (e.dates && e.link) {
-        doc.setFont('times', 'italic')
+        doc.setFont(font, 'italic')
         doc.setFontSize(BODY)
         text(e.link, ML)
         y += LH + 1
