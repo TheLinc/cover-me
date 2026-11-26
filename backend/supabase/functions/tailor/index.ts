@@ -283,7 +283,7 @@ function stripScores(r: Record<string, unknown>): Record<string, unknown> {
 
 // Extra STEP 8 rules for a skills section written in labelled groups, so the
 // tailored list keeps those groups instead of collapsing into one long line (#190).
-export function groupedSkillsRule(skills?: string, cut = true): string {
+export function groupedSkillsRule(skills: string | undefined, cut: boolean): string {
   const groups = skillGroups(skills)
   if (!groups.length) return ''
   return `

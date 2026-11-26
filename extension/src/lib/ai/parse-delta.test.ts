@@ -195,13 +195,15 @@ describe("the posting's title in the summary (#218)", () => {
   })
 })
 
+const engineer = (skills: string) => ({
+  name: 'Sam Ortiz', email: 'sam@example.com', phone: '', website: '',
+  experience: [{ title: 'Backend Engineer', company: 'Northwind', location: '', dates: '2022', bullets: ['Built the billing service in Go'] }],
+  education: [], skills,
+}) as unknown as ParsedResume
+
 // Default mode cut a long skills list to about half with no cutting option on (#400).
 describe('the skills list with no cutting option on (#400)', () => {
-  const parsed = {
-    name: 'Sam Ortiz', email: 'sam@example.com', phone: '', website: '',
-    experience: [{ title: 'Backend Engineer', company: 'Northwind', location: '', dates: '2022', bullets: ['Built the billing service in Go'] }],
-    education: [], skills: 'Go, PostgreSQL, Kafka, React, Jenkins, Jira',
-  } as unknown as ParsedResume
+  const parsed = engineer('Go, PostgreSQL, Kafka, React, Jenkins, Jira')
   const raw = JSON.stringify({ experience: [{ bullets: ['Built the billing service in Go'] }], skills: [{ skill: 'Kafka' }, { skill: 'PostgreSQL (SQL)', evidence: 'PostgreSQL' }, { skill: 'Go' }] })
   const approve = async () => '{"verdicts": [{"i": 0, "ok": true}]}'
 
@@ -219,11 +221,7 @@ describe('the skills list with no cutting option on (#400)', () => {
 describe('a grouped skills list with no cutting option on (#400)', () => {
   const langs = ['Go', 'Python', 'Java', 'Kotlin', 'PHP', 'Ruby', 'Rust', 'Scala', 'Perl', 'Elixir']
   const tools = ['Docker', 'Kubernetes', 'Terraform', 'Jenkins', 'Jira', 'Grafana', 'Kafka', 'Redis', 'Ansible', 'Vault']
-  const parsed = {
-    name: 'Sam Ortiz', email: 'sam@example.com', phone: '', website: '',
-    experience: [{ title: 'Backend Engineer', company: 'Northwind', location: '', dates: '2022', bullets: ['Built the billing service in Go'] }],
-    education: [], skills: `Languages: ${langs.join(', ')}\nTools: ${tools.join(', ')}`,
-  } as unknown as ParsedResume
+  const parsed = engineer(`Languages: ${langs.join(', ')}\nTools: ${tools.join(', ')}`)
   const raw = JSON.stringify({ experience: [{ bullets: ['Built the billing service in Go'] }], skills: [...tools.slice(0, 9), ...langs].map((skill) => ({ skill })) })
 
   test('keeps all 20, and the one the model left out goes back under its own label', async () => {
@@ -239,11 +237,7 @@ describe('a grouped skills list with no cutting option on (#400)', () => {
 
 describe('the skills step of the prompt (#400)', () => {
   const job = { title: 'Engineer', company: 'Acme', description: 'Engineer' } as Parameters<typeof buildPrompt>[0]
-  const parsed = {
-    name: 'Sam Ortiz', email: 'sam@example.com', phone: '', website: '',
-    experience: [{ title: 'Engineer', company: 'Northwind', location: '', dates: '2022', bullets: ['Built things'] }],
-    education: [], skills: 'Languages: Go, Python\nTools: Docker, Jira',
-  } as unknown as ParsedResume
+  const parsed = engineer('Languages: Go, Python\nTools: Docker, Jira')
 
   test('asks for no cuts and no cap with no cutting option on', () => {
     const prompt = buildPrompt(job, parsed, false)

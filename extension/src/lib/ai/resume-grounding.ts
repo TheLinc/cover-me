@@ -354,7 +354,7 @@ export const MAX_SKILL_GROUPS = 6
 // the order the model ranked them. A skill goes under the label the model
 // named when that label is the resume's, else the group that lists it, else
 // the group its evidence came from, else the first group (#190).
-function groupSkills(items: Array<{ skill: string; category?: string; evidence?: string }>, groups: SkillGroup[], jobDescription = '', capped = true): string {
+function groupSkills(items: Array<{ skill: string; category?: string; evidence?: string }>, groups: SkillGroup[], jobDescription: string, capped: boolean): string {
   const lower = (s: string) => s.toLowerCase().replace(/\s+/g, ' ').trim()
   const byLabel = new Map(groups.map((g) => [lower(g.label), g.label]))
   const out = new Map<string, string[]>()
