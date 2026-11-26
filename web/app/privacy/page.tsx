@@ -270,12 +270,12 @@ export default function PrivacyPage() {
               </Li>
               <Li>
                 <strong className="text-foreground">Requests to hear back about a site (Hosted mode, signed in, only if you tick the box).</strong>{' '}
-                Under Request this site, a signed-in Hosted user sees an unticked box, Email me when Cover Me
-                reads this site, with their account email. The box stays under the thanks line afterwards, so you
-                can tick or untick it later. Nothing is saved unless you tick it. Ticking it saves the
-                site&apos;s name with your Cover Me account ID on our server, never in PostHog: the site request
-                itself is sent separately and stays under its random ID. Unticking it deletes the record. When Cover Me starts reading
-                that site, we send you one email at your account address and delete the record.
+                Under Request this site, a signed-in Hosted user sees an unticked box, Email me when Cover Me reads
+                this site, with their account email. The box stays under the thanks line afterwards, so you can tick
+                or untick it later. Nothing is saved unless you tick it. Ticking it saves the site&apos;s name with
+                your Cover Me account ID on our server, never in PostHog: the site request itself is sent separately
+                and stays under its random ID. Unticking it deletes the record. When Cover Me starts reading that
+                site, we send you one email at your account address and delete the record.
               </Li>
             </Ul>
 

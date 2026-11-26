@@ -171,15 +171,15 @@ function WatchLabel({ email, checked, disabled, onChange }: { email: string; che
 function WatchBox({ host, email, saved }: { host: string; email: string; saved: boolean | null }) {
   const [watching, setWatching] = useState(saved === true)
   const [saving, setSaving] = useState(false)
-  const [failed, setFailed] = useState(saved === false)
+  const [error, setError] = useState(saved === false ? "Couldn't save the email request. Tick the box to try again." : '')
 
   async function toggle(watch: boolean) {
     setWatching(watch)
     setSaving(true)
-    setFailed(false)
+    setError('')
     if (!(await saveWatch(host, watch))) {
       setWatching(!watch)
-      setFailed(true)
+      setError("Couldn't save that. Try again in a moment.")
     }
     setSaving(false)
   }
@@ -187,7 +187,7 @@ function WatchBox({ host, email, saved }: { host: string; email: string; saved: 
   return (
     <>
       <WatchLabel email={email} checked={watching} disabled={saving} onChange={(c) => void toggle(c)} />
-      {failed && <p className="scrape-failure-error" role="alert">Couldn&apos;t save the email request. Tick the box to try again.</p>}
+      {error && <p className="scrape-failure-error" role="alert">{error}</p>}
     </>
   )
 }
