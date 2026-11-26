@@ -1,0 +1,4 @@
+[before] mode: default (trim off, compact off)
+[before] skills in: 31, out: 17
+[before] output: Go, Kafka, PostgreSQL, Kubernetes, AWS, Terraform, gRPC, Redis, Prometheus, GitHub Actions, Grafana, Docker, Jenkins, REST APIs, Linux, Python, Git
+[before] resume skills missing from output (14): TypeScript, JavaScript, React, Node.js, GraphQL, Java, Kotlin, PHP, MySQL, RabbitMQ, GCP, Jira, Bash, Agile
