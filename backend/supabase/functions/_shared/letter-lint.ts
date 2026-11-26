@@ -237,16 +237,19 @@ export function letterLength(resumeText?: string): { min: number; max: number; a
 /**
  * The letter without the <plan> the prompt asks for before it (#212). The
  * letter starts at its salutation, so an unclosed or untagged plan, or a label
- * such as "Letter:", goes too.
- * ponytail: with no "Dear" line any leftover plan text stays in and the lint's
- * missing-salutation check sends it to the retry; parse the plan's shape if
- * that shows up in eval reports.
+ * such as "Letter:", goes too. With no closed plan and no "Dear" line nothing
+ * marks where the letter starts, so it returns '': a failed draft, which goes
+ * to the retry instead of reaching the user with the plan in it (#212).
  */
 export function stripPlan(text: string): string {
+  const closed = /<\/plan>/i.test(text)
   const rest = text.replace(/<plan>[\s\S]*?<\/plan>/gi, '')
   const dear = rest.search(/^Dear\b/im)
-  return (dear === -1 ? rest : rest.slice(dear)).trim()
+  if (dear !== -1) return rest.slice(dear).trim()
+  return closed ? rest.trim() : ''
 }
+
+export const NO_LETTER = 'No letter found: the reply has no "Dear …" line. Write the plan between <plan> and </plan>, then the letter, starting with the "Dear …" line.'
 
 function countWords(text: string): number {
   return text.split(/\s+/).filter((w) => w.length > 0).length

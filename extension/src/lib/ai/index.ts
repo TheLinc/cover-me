@@ -2,7 +2,7 @@ import type { AIProvider, JobData } from '../../types'
 import { debugGroup } from '../debug'
 import { callClaude, type ChatMessage } from './claude'
 import { callOpenAI } from './openai'
-import { buildLintRetryMessage, letterLength, lintLetter, stripPlan } from './letter-lint'
+import { buildLintRetryMessage, letterLength, lintLetter, NO_LETTER, stripPlan } from './letter-lint'
 import { MAX_RESUME_CHARS } from './resume-parse'
 
 // A fixed sign-off and hook give every letter one skeleton, detectable across
@@ -59,14 +59,15 @@ export async function generateCoverLetter(
   const call = (msgs: string | ChatMessage[]) =>
     provider === 'claude' ? callClaude(msgs, apiKey) : callOpenAI(msgs, apiKey)
 
-  const draft = stripMarkdown(stripPlan(await call(prompt)))
-  if (!draft) throw new Error('Empty response from the model. Please try again.')
+  const reply = await call(prompt)
+  if (!reply.trim()) throw new Error('Empty response from the model. Please try again.')
+  const draft = stripMarkdown(stripPlan(reply))
   const lintOpts = {
     companyName: job.company,
     resumeText,
     numberSources: [resumeText, job.title, job.description, supplemental ?? ''],
   }
-  const draftLint = lintLetter(draft, lintOpts)
+  const draftLint = draft ? lintLetter(draft, lintOpts) : { violations: [NO_LETTER] }
   if (draftLint.violations.length === 0) return draft
 
   await debugGroup('Cover letter — lint violations, sending corrective retry', {
@@ -74,12 +75,16 @@ export async function generateCoverLetter(
   })
   const retry = stripMarkdown(stripPlan(await call([
     { role: 'user', content: prompt },
-    { role: 'assistant', content: draft },
+    { role: 'assistant', content: draft || reply },
     { role: 'user', content: buildLintRetryMessage(draftLint.violations) },
   ]).catch(() => '')))
+  if (!draft) {
+    if (!retry) throw new Error('The model returned no letter. Please try again.')
+    return retry
+  }
   if (!retry) return draft
   const retryLint = lintLetter(retry, lintOpts)
-  return retry && retryLint.violations.length <= draftLint.violations.length ? retry : draft
+  return retryLint.violations.length <= draftLint.violations.length ? retry : draft
 }
 
 export function buildPrompt(
@@ -110,7 +115,7 @@ export function buildPrompt(
     : `"Dear Hiring Manager,"`
 
   const whyCompany = companyKnown
-    ? `Company Fit (2–3 sentences): make one link between a resume fact the letter hasn't told yet and the posting point it answers, inside a sentence about what the applicant has done; never repeat a fact or say what the applicant would bring. Then give the applicant's reason for the move from the plan, in plain words: the work they do now and what this job adds, named only in words the allowlist supports, never as a field they haven't worked in ("move into critical care" with no critical care on the resume). End the paragraph on the reason; if the plan has none, end on the link.`
+    ? `Company Fit (2–3 sentences): make one link between a resume fact the letter hasn't told yet and the posting point it answers, inside a sentence about what the applicant has done; never repeat a fact or say what the applicant would bring. Then give the applicant's reason for the move from the plan, in plain words: the work they do now and what this job adds, named only in words the allowlist supports, never as a field they haven't worked in ("move into critical care" with no critical care on the resume). End the paragraph on the reason; if the plan has none, state no motive or time split; end on the link.`
     : `Role Fit (1–2 sentences): link the applicant's strongest evidence to the role's main work, then give the reason from the plan if it has one, in plain words grounded in their experience.`
 
   const today = new Date().toISOString().split('T')[0]
@@ -181,7 +186,7 @@ Sign-off: "${variation.signOff}" on its own line, then a blank line, then the ap
 ---
 
 VOICE — the target sound:
-Write like a competent professional typing the letter in one sitting: plain verbs, concrete nouns, an occasional contraction, no ceremony. Confident but dry — the evidence does the impressing, not the adjectives. State each fact once and move on. Vary sentence length and how sentences open; don't start most of them with "I", and never start two sentences or two paragraphs in a row with "At <employer>". Name the job title once, then "the role". ${companyKnown ? 'Name the company in full once and by a short form at least once more ("Acme" for "Acme Software"), and "you" beyond that.' : 'Refer to "the team" or "the role", never a company name.'} Call an allowlisted tool or credential by the posting's name.
+Write like a competent professional typing the letter in one sitting: plain verbs, concrete nouns, an occasional contraction, no ceremony. Confident but dry — the evidence does the impressing, not the adjectives. State each fact once and move on. Vary sentence length and how sentences open. Name the job title once, then "the role". ${companyKnown ? 'Name the company in full once and by a short form at least once more ("Acme" for "Acme Software"), and "you" beyond that.' : 'Refer to "the team" or "the role", never a company name.'} Call an allowlisted tool or credential by the posting's name.
 
 TRUTH:
 - Every fact, figure, situation, method, and reason comes from the resume or the supplemental context. Never invent a metric, a cause, a process, a motive, a feeling, or the situation behind a result, and never guess an employer's industry, size, or location or how long something took. A thin true sentence beats a vivid invented one.
@@ -195,7 +200,7 @@ BANS (each holds everywhere in the letter):
 - Fillers: "Moreover," "Furthermore," "Additionally," "Separately," "not only… but also"
 - The posting played back: opening by describing the employer or the role back to them, or with a maxim; restating or summarizing the posting ("The posting asks for…"); a sentence led by the role or the employer's needs ("The role calls for…", "Acme needs…"); a set bridge onto the ad ("much like the … this job includes", "the same kind of … you'd have me do"); describing the employer's business back to them or flattering it.
 - Commentary: a line on why a fact matters, what it taught, what it shows, or what the applicant would bring ("That taught me…", "That's the work I do", "I'd bring that to…"); a tidy summing-up line; a short verdict ("I like that setup."); announcing a point; a stock reason ("After N years doing X, I want Y", "Acme is where I'd like to take that step"); talk of titles or a "step up".
-- Shapes: "X, not Y" contrasts; "Rather than…"; three parallel items or three actions in a row.
+- Shapes: "X, not Y" contrasts; "Rather than…"; three parallel items or three actions in a row; a clause tying past work to this job ("so X wouldn't be new to me"); a skill-only sentence ("Wound care is also part of it").
 - Format: plain text, no markdown; no subject line, date, address, or contact details; no dates for jobs or certificates; at most TWO em-dashes (—) in the whole letter.
 
 STYLE EXEMPLARS — calibration only, and fictional. Never reuse their phrasing, structure, names, or numbers; match only their qualities: concrete, plain, varied, sized to the resume.

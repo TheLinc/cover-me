@@ -4,7 +4,7 @@ import { ANTHROPIC_MESSAGES_URL, SONNET_BETA_HEADER, SONNET_FIELDS, SONNET_MAX_T
 import { handleCors, json } from '../_shared/cors.ts'
 import { heartbeatJson } from '../_shared/heartbeat-json.ts'
 import { decrypt } from '../_shared/encrypt.ts'
-import { buildLintRetryMessage, letterLength, lintLetter, stripPlan } from '../_shared/letter-lint.ts'
+import { buildLintRetryMessage, letterLength, lintLetter, NO_LETTER, stripPlan } from '../_shared/letter-lint.ts'
 import { findOrCreateJobApplication } from '../_shared/job-application.ts'
 import { MAX_RESUME_CHARS } from '../_shared/resume-parse.ts'
 import { MAX_BODY_BYTES, MAX_SUPPLEMENTAL, readJob, text } from '../_shared/job-input.ts'
@@ -75,16 +75,17 @@ Deno.serve(async (req) => {
   const prompt = buildPrompt(job, resumeText, supplemental, variation)
 
   return heartbeatJson('generate', 'AI generation failed. Please try again.', async () => {
-    let draft: string
+    let reply: string
     try {
-      draft = stripMarkdown(stripPlan(await callClaude([{ role: 'user', content: prompt }])))
+      reply = await callClaude([{ role: 'user', content: prompt }])
     } catch (err) {
       console.error('Claude error:', err instanceof Error ? err.message : String(err))
       await refund()
       return { error: 'AI generation failed. Please try again.' }
     }
 
-    if (!draft) return { error: 'Empty response from AI. Please try again.' }
+    if (!reply.trim()) return { error: 'Empty response from AI. Please try again.' }
+    const draft = stripMarkdown(stripPlan(reply))
 
     // Deterministic lint + one corrective retry, so the prompt's style rules are
     // guarantees rather than hopes. Retry failure falls back to the draft (https://github.com/TheLinc/cover-me/commit/9ece0f1).
@@ -94,22 +95,20 @@ Deno.serve(async (req) => {
       resumeText,
       numberSources: [resumeText, job.title, job.description, supplemental],
     }
-    const draftLint = lintLetter(draft, lintOpts)
+    const draftLint = draft ? lintLetter(draft, lintOpts) : { violations: [NO_LETTER] }
     if (draftLint.violations.length > 0) {
       try {
         const retry = stripMarkdown(stripPlan(await callClaude([
           { role: 'user', content: prompt },
-          { role: 'assistant', content: draft },
+          { role: 'assistant', content: draft || reply },
           { role: 'user', content: buildLintRetryMessage(draftLint.violations) },
         ])))
-        if (retry) {
-          const retryLint = lintLetter(retry, lintOpts)
-          if (retryLint.violations.length <= draftLint.violations.length) letter = retry
-        }
+        if (retry && (!draft || lintLetter(retry, lintOpts).violations.length <= draftLint.violations.length)) letter = retry
       } catch (err) {
         console.error('Claude retry error:', err instanceof Error ? err.message : String(err))
       }
     }
+    if (!letter) return { error: 'Empty response from AI. Please try again.' }
 
     // Every account's job goes on its board (title, company, link, dates).
     // The letter isn't stored here: a Pro account's extension saves it next
@@ -212,7 +211,7 @@ function buildPrompt(
     : `"Dear Hiring Manager,"`
 
   const whyCompany = companyKnown
-    ? `Company Fit (2–3 sentences): make one link between a resume fact the letter hasn't told yet and the posting point it answers, inside a sentence about what the applicant has done; never repeat a fact or say what the applicant would bring. Then give the applicant's reason for the move from the plan, in plain words: the work they do now and what this job adds, named only in words the allowlist supports, never as a field they haven't worked in ("move into critical care" with no critical care on the resume). End the paragraph on the reason; if the plan has none, end on the link.`
+    ? `Company Fit (2–3 sentences): make one link between a resume fact the letter hasn't told yet and the posting point it answers, inside a sentence about what the applicant has done; never repeat a fact or say what the applicant would bring. Then give the applicant's reason for the move from the plan, in plain words: the work they do now and what this job adds, named only in words the allowlist supports, never as a field they haven't worked in ("move into critical care" with no critical care on the resume). End the paragraph on the reason; if the plan has none, state no motive or time split; end on the link.`
     : `Role Fit (1–2 sentences): link the applicant's strongest evidence to the role's main work, then give the reason from the plan if it has one, in plain words grounded in their experience.`
 
   const today = new Date().toISOString().split('T')[0]
@@ -283,7 +282,7 @@ Sign-off: "${variation.signOff}" on its own line, then a blank line, then the ap
 ---
 
 VOICE — the target sound:
-Write like a competent professional typing the letter in one sitting: plain verbs, concrete nouns, an occasional contraction, no ceremony. Confident but dry — the evidence does the impressing, not the adjectives. State each fact once and move on. Vary sentence length and how sentences open; don't start most of them with "I", and never start two sentences or two paragraphs in a row with "At <employer>". Name the job title once, then "the role". ${companyKnown ? 'Name the company in full once and by a short form at least once more ("Acme" for "Acme Software"), and "you" beyond that.' : 'Refer to "the team" or "the role", never a company name.'} Call an allowlisted tool or credential by the posting's name.
+Write like a competent professional typing the letter in one sitting: plain verbs, concrete nouns, an occasional contraction, no ceremony. Confident but dry — the evidence does the impressing, not the adjectives. State each fact once and move on. Vary sentence length and how sentences open. Name the job title once, then "the role". ${companyKnown ? 'Name the company in full once and by a short form at least once more ("Acme" for "Acme Software"), and "you" beyond that.' : 'Refer to "the team" or "the role", never a company name.'} Call an allowlisted tool or credential by the posting's name.
 
 TRUTH:
 - Every fact, figure, situation, method, and reason comes from the resume or the supplemental context. Never invent a metric, a cause, a process, a motive, a feeling, or the situation behind a result, and never guess an employer's industry, size, or location or how long something took. A thin true sentence beats a vivid invented one.
@@ -297,7 +296,7 @@ BANS (each holds everywhere in the letter):
 - Fillers: "Moreover," "Furthermore," "Additionally," "Separately," "not only… but also"
 - The posting played back: opening by describing the employer or the role back to them, or with a maxim; restating or summarizing the posting ("The posting asks for…"); a sentence led by the role or the employer's needs ("The role calls for…", "Acme needs…"); a set bridge onto the ad ("much like the … this job includes", "the same kind of … you'd have me do"); describing the employer's business back to them or flattering it.
 - Commentary: a line on why a fact matters, what it taught, what it shows, or what the applicant would bring ("That taught me…", "That's the work I do", "I'd bring that to…"); a tidy summing-up line; a short verdict ("I like that setup."); announcing a point; a stock reason ("After N years doing X, I want Y", "Acme is where I'd like to take that step"); talk of titles or a "step up".
-- Shapes: "X, not Y" contrasts; "Rather than…"; three parallel items or three actions in a row.
+- Shapes: "X, not Y" contrasts; "Rather than…"; three parallel items or three actions in a row; a clause tying past work to this job ("so X wouldn't be new to me"); a skill-only sentence ("Wound care is also part of it").
 - Format: plain text, no markdown; no subject line, date, address, or contact details; no dates for jobs or certificates; at most TWO em-dashes (—) in the whole letter.
 
 STYLE EXEMPLARS — calibration only, and fictional. Never reuse their phrasing, structure, names, or numbers; match only their qualities: concrete, plain, varied, sized to the resume.

@@ -522,6 +522,14 @@ ${letter}`)).toBe(letter)
     expect(stripPlan(`Plan:\n- req: SQL\n\n${letter}`)).toBe(letter)
   })
 
+  test('an untagged plan with no "Dear" line is no letter, so the plan never passes', () => {
+    expect(stripPlan('Plan:\n- req: SQL\n\nHello Hiring Team,\n\nAt Acme I ship.')).toBe('')
+  })
+
+  test('a closed plan keeps a letter that opens without "Dear"', () => {
+    expect(stripPlan('<plan>\n- req: SQL\n</plan>\n\nHello Hiring Team,\n\nAt Acme I ship.')).toBe('Hello Hiring Team,\n\nAt Acme I ship.')
+  })
+
   test('an unclosed plan keeps the letter from its salutation', () => {
     expect(stripPlan(`<plan>
 - req: SQL

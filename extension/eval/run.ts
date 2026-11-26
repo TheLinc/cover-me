@@ -19,7 +19,7 @@ import type { ParsedResume, TailoredResume } from '../src/types'
 import { buildPrompt as buildLetterPrompt, CLOSE_PATTERNS, type LetterVariation } from '../src/lib/ai/index'
 import { buildPrompt as buildTailorPrompt, assembleTailored, bulletBudget } from '../src/lib/ai/resume-tailor'
 import { buildParsePrompt, parseParsedJson } from '../src/lib/ai/resume-parse'
-import { lintLetter, buildLintRetryMessage, letterLength, stripPlan } from '../src/lib/ai/letter-lint'
+import { lintLetter, buildLintRetryMessage, letterLength, NO_LETTER, stripPlan } from '../src/lib/ai/letter-lint'
 import { buildAnswerPrompt, finishAnswer } from '../src/lib/ai/answer'
 import { HAIKU_PARSE_FIELDS } from '../src/lib/ai/claude'
 import { CASES, type EvalCase } from './fixtures'
@@ -342,17 +342,16 @@ async function liveLetters() {
     // Same retry as production (https://github.com/TheLinc/cover-me/commit/0c46fe4).
     let retried = false
     const numberSources = [c.resumeText, c.job.title, c.job.description]
-    const firstLint = lintLetter(letter, { companyName: c.job.company, numberSources, resumeText: c.resumeText })
+    const firstLint = letter ? lintLetter(letter, { companyName: c.job.company, numberSources, resumeText: c.resumeText }) : { violations: [NO_LETTER] }
     if (firstLint.violations.length > 0) {
       retried = true
       try {
         const retry = stripMarkdown(stripPlan(await call([
           { role: 'user', content: prompt },
-          { role: 'assistant', content: letter },
+          { role: 'assistant', content: letter || draft },
           { role: 'user', content: buildLintRetryMessage(firstLint.violations) },
         ], { model: MODEL, maxTokens: 2048 })))
-        const retryLint = lintLetter(retry, { companyName: c.job.company, numberSources, resumeText: c.resumeText })
-        if (retryLint.violations.length <= firstLint.violations.length) letter = retry
+        if (retry && (!letter || lintLetter(retry, { companyName: c.job.company, numberSources, resumeText: c.resumeText }).violations.length <= firstLint.violations.length)) letter = retry
       } catch {
       }
     }

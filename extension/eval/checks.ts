@@ -125,6 +125,10 @@ export function checkLetter(letter: string, c: EvalCase, lintWarn = false): Chec
   for (const t of c.failTerms) {
     if (containsTerm(prose, t)) result.failures.push(`letter contains forbidden term "${t}" (not in resume)`)
   }
+  for (const [re, claim] of c.letterFailPatterns ?? []) {
+    const hit = prose.match(re)
+    if (hit) result.failures.push(`letter claims ${claim} the resume doesn't give: "${hit[0]}"`)
+  }
   for (const t of c.warnTerms) {
     if (containsTerm(prose, t)) result.warnings.push(`letter contains "${t}" — verify it describes the employer, not the candidate`)
   }
