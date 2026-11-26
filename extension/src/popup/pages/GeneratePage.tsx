@@ -2,11 +2,11 @@ import { useEffect, useRef, useState } from 'react'
 import { ensureValidSession, saveResumeEditToBackend } from '../../lib/auth'
 import { GOOGLE_SIGNIN } from '../../lib/config'
 import { downloadCoverLetterPdf } from '../../lib/pdf/cover-letter'
-import { downloadTailoredResumePdf, RESUME_TEMPLATES, templateOf } from '../../lib/pdf/resume'
+import { downloadTailoredResumePdf } from '../../lib/pdf/resume'
 import type { ResumeTemplate } from '../../lib/pdf/types'
 import { letterSteps, tailorSteps } from '../../lib/progress-steps'
 import { openResumeEditor, postingTitleInSummary, saveResumeEdit } from '../../lib/resume-edit'
-import { isCachedPro, saveResumeTemplate } from '../../lib/resume-template'
+import { saveResumeTemplate } from '../../lib/resume-template'
 import { downloadResumeWord, usesDesign } from '../../lib/design'
 import { getCandidateContext, getTailoredHistory, resolveMode, saveCandidateContext } from '../../lib/storage'
 import DownloadMenu from '../components/DownloadMenu'
@@ -19,7 +19,7 @@ import ProgressSteps from '../components/ProgressSteps'
 import ReviewAsk from '../components/ReviewAsk'
 import ScrapeFailurePanel, { type ShownFailure } from '../components/ScrapeFailure'
 import ScoreRing, { ScoreGain, scoreRose } from '../components/ScoreRing'
-import { isLocked, templateName } from '../components/TemplatePicker'
+import TemplatePicker, { useCachedPro } from '../components/TemplatePicker'
 import UpgradePrompt from '../components/UpgradePrompt'
 import { GenerateOffer } from '../components/FirstMonthOffer'
 import { WhatsNewLink } from '../components/WhatsNew'
@@ -162,8 +162,7 @@ export default function GeneratePage({ onNavigate }: Props) {
   const [tailorError, setTailorError] = useState('')
   const [tailorErrorCode, setTailorErrorCode] = useState<'RATE_LIMIT' | 'FAIR_USE' | undefined>()
   const [tailoredResume, setTailoredResume] = useState<TailoredResume | null>(null)
-  const [pro, setPro] = useState(false)
-  useEffect(() => { void isCachedPro().then(setPro) }, [])
+  const pro = useCachedPro()
   const [tailoredJob, setTailoredJob] = useState<JobData | null>(null)
   const [tailoredEntryId, setTailoredEntryId] = useState<string | null>(null)
   // The History entry whose ATS ring has filled, so reopening the popup doesn't fill it again (#228).
@@ -1125,14 +1124,7 @@ export default function GeneratePage({ onNavigate }: Props) {
                   {postingTitle && <PostingTitleTip {...postingTitle} />}
                   {reviewAt === 'resume' && !reviewUnderScore && <ReviewAsk onClose={() => setReviewAt(null)} />}
                   {tailoredEntryId && !tailoredResume.sourceHash && (
-                    <label className="template-select">
-                      <span className="form-label">Template</span>
-                      <select className="form-input" value={templateOf(tailoredResume.template)} onChange={(e) => void pickTemplate(e.target.value as ResumeTemplate)}>
-                        {RESUME_TEMPLATES.map((t) => (
-                          <option key={t} value={t} disabled={isLocked(t, pro)}>{templateName(t)}{isLocked(t, pro) ? ' (Pro)' : ''}</option>
-                        ))}
-                      </select>
-                    </label>
+                    <TemplatePicker value={tailoredResume.template} pro={pro} onChange={(t) => void pickTemplate(t)} />
                   )}
                   <div className="letter-actions">
                     <DownloadMenu

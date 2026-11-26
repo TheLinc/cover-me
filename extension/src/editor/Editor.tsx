@@ -14,7 +14,7 @@ import PdfPreview from './PdfPreview'
 import PostingTitleTip from '../popup/components/PostingTitleTip'
 import ReviewAsk from '../popup/components/ReviewAsk'
 import ScoreRing from '../popup/components/ScoreRing'
-import TemplatePicker from '../popup/components/TemplatePicker'
+import TemplatePicker, { useCachedPro } from '../popup/components/TemplatePicker'
 import type { AuthSession, TailoredHistoryEntry, TailoredResume } from '../types'
 
 // Edits are the user's own, so the grounding checks that guard the model's output don't run on them (#118).
@@ -114,7 +114,7 @@ export default function Editor() {
   const [status, setStatus] = useState<Status>('')
   const [preview, setPreview] = useState<ArrayBuffer | null>(null)
   const [template, setTemplate] = useState<ResumeTemplate | undefined>()
-  const [pro, setPro] = useState(false)
+  const pro = useCachedPro()
   const [picked, setPicked] = useState(false)
 
   const localSaves = useRef<Promise<void>>(Promise.resolve())
@@ -132,7 +132,6 @@ export default function Editor() {
       document.title = `Edit resume · ${o.jobTitle || 'Cover Me'}`
       // Ready for a save as the tab closes, which can't wait for a refresh. (#118)
       void proSession().then((s) => { session.current = s }).catch(() => {})
-      void isCachedPro().then(setPro)
     }).catch(() => setOpened('error'))
   }, [id])
 
