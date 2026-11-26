@@ -1,13 +1,24 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { RESUME_TEMPLATES } from './pdf/resume'
 import { isCachedPro } from './resume-template'
-import { isLocked } from '../popup/components/TemplatePicker'
+import { isLocked, nextTemplate } from '../popup/components/TemplatePicker'
 
 afterEach(() => vi.unstubAllGlobals())
 
 function fakeLocal(data: Record<string, unknown>) {
   vi.stubGlobal('chrome', { storage: { local: { get: async (k: string) => (k in data ? { [k]: data[k] } : {}) } } })
 }
+
+describe('the template Settings shows for the next resume (#119)', () => {
+  test('a Pro pick saved before Pro lapsed shows as Classic, which the next resume gets', () => {
+    expect(nextTemplate('modern', false)).toBe('classic')
+  })
+
+  test('Pro sees the saved pick, and a fresh install sees Classic', () => {
+    expect(nextTemplate('modern', true)).toBe('modern')
+    expect(nextTemplate(undefined, true)).toBe('classic')
+  })
+})
 
 describe('which templates an account can pick (#119)', () => {
   test.each([
