@@ -360,3 +360,15 @@ test('each "or" ask is one entry, counted once, and asks that share a keyword st
   const chain = readPosting('Requirements\n- Experience with Python or Go or Java').keywords.find((k) => k.name === 'Python')
   expect(chain?.alternatives).toEqual(['Go', 'Java'])
 })
+
+test('benefits under other headings, and agency or hiring-policy notices, add no keywords', () => {
+  const head = 'Requirements\n- Salesforce\n'
+  for (const tail of [
+    'What we’ll offer\nOur compensation package plays a big part in how we recognize you.\n- Mental health, wellness & fitness benefits',
+    'US Employee Benefits\nAcme cares about the wellbeing of its employees.\n- Expanded mental health support.',
+    'What Acme can offer you:\n- Ownership from Day 1: every employee receives Restricted Stock Units (RSUs).',
+    'To all recruitment agencies: Acme does not accept agency resumes.',
+    'Important information:\nAcme provides equal employment opportunities to all applicants. This policy applies to all terms and conditions of employment at Acme, including recruiting, hiring and promotion.',
+    'Headhunters and recruitment agencies may not submit resumes to Acme.',
+  ]) expect(readPosting(head + tail).keywords.map((k) => k.name), tail).toEqual(['Salesforce'])
+})
