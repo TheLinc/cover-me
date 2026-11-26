@@ -4,7 +4,7 @@ import { PLAN_LIMITS as L } from '@/lib/limits'
 export const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 
 // Must match the Chrome Web Store listing; update when reviews change. (#269)
-const STORE_RATING = { value: 5, count: 3 }
+export const STORE_RATING = { value: 5, count: 5 }
 
 export const AUTHOR = { '@type': 'Person', name: 'Lincoln Laylor', url: 'https://www.linkedin.com/in/lincolnlaylor/' }
 
