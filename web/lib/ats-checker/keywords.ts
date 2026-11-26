@@ -59,7 +59,7 @@ function looksLikeHeading(text: string, labelled: boolean): boolean {
   const words = text.split(/\s+/).filter((w) => /^[A-Za-z]/.test(w) && !MINOR_WORD.test(w))
   return words.length > 0 && words.every((w) => /^[A-Z]/.test(w))
 }
-const SKIP = /^(description of )?benefits?|employee benefits$|^perks|what (we|(?!you\b)\w+ can)('ll| will| can)? offer|^compensation|^pay( range| transparency|$)|^salary|equal (opportunity|employment)|^our commitment|^acknowledg|statement$|^accommodations?|^privacy|career growth$|^work\/life|^inclusive|^diverse|^apply$|^contact/i
+const SKIP = /^(description of )?benefits?|^(\w{2,6} )?employee benefits$|^perks|what (we|(?!you\b)(\w+ ){1,3}can)('ll| will| can)? offer|^compensation|^pay( range| transparency|$)|^salary|equal (opportunity|employment)|^our commitment|^acknowledg|statement$|^accommodations?|^privacy|career growth$|^work\/life|^inclusive|^diverse|^apply$|^contact/i
 const BULLET = /^(\*\s|[-•●◦▪▫■□·‣⁃▸►○–—])/
 const OTHER = /^schedule|^job type|^the (job|team|position)$|^your mission|responsib|what you('ll| will)? (do|be doing)|day in the life|the role|the opportunity|job description|overview|summary|duties|additional information/i
 

@@ -372,6 +372,7 @@ test('benefits under other headings, and agency or hiring-policy notices, add no
     'Headhunters and recruitment agencies may not submit resumes to Acme.',
     '- Potential compensation for this role is $102,855 to $136,000 OTE USD, plus RSUs.',
     "Here's what we offer:\n- Python learning budget",
+    'What Our Team Can Offer\n- Python learning budget',
   ]) expect(readPosting(head + tail).keywords.map((k) => k.name), tail).toEqual(['Salesforce'])
 })
 

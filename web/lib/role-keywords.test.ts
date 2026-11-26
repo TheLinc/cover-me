@@ -39,7 +39,7 @@ describe('roleOf', () => {
   })
 })
 
-describe('postingText', () => {
+describe('greenhouseText and leverText', () => {
   test('reads Greenhouse content, which arrives entity-encoded', () => {
     const content = '&lt;h3&gt;Requirements&lt;/h3&gt;&lt;ul&gt;&lt;li&gt;3+ years of &lt;strong&gt;B2B&lt;/strong&gt; sales&lt;/li&gt;&lt;li&gt;Salesforce &amp;amp; HubSpot&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;We&amp;#39;re hiring&amp;nbsp;now&lt;/p&gt;'
     expect(greenhouseText(content)).toBe("Requirements\n- 3+ years of B2B sales\n- Salesforce & HubSpot\nWe're hiring now")
