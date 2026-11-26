@@ -433,4 +433,6 @@ test('LinkedIn as a social link or a recruiter notice is not an ask, and benefit
   const levels = (posting: string) => readPosting(posting).keywords.map((k) => `${k.name}:${k.level}`)
   expect(levels('Benefits Administration Requirements at Acme\n- Workday')).toEqual(['Workday:required'])
   expect(levels("Acme's Benefits Requirements\n- Workday")).toEqual(['Workday:required'])
+  expect(levels('About the role\n- Build things\nRequirements at Salesforce\n- Python')).toEqual(['Python:required'])
+  expect(levels('Who We Are Seeking at Datadog\n- Python')).toEqual(['Python:required'])
 })
