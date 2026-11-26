@@ -1,6 +1,7 @@
-import { DeviceMobileIcon, GoogleChromeLogoIcon } from '@phosphor-icons/react/dist/ssr'
+import { DeviceMobileIcon, GoogleChromeLogoIcon, StarIcon } from '@phosphor-icons/react/dist/ssr'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { SendToComputer } from '@/components/site/SendToComputer'
+import { STORE_RATING } from '@/lib/structured-data'
 import { storeUrl } from '@/lib/utils'
 import { TailorRun } from './TailorRun'
 
@@ -30,6 +31,15 @@ export function ClosingCta() {
               See it on the Chrome Web Store
             </a>
           </div>
+          <a
+            href={storeUrl('closing-rating')}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 self-start text-[13px] text-subtle underline-offset-2 hover:underline max-lg:self-center"
+          >
+            <StarIcon size={14} weight="fill" className="text-brand-strong" aria-hidden />
+            {STORE_RATING.value.toFixed(1)} on the Chrome Web Store
+          </a>
         </div>
         <div className="mx-auto w-full max-w-[480px]">
           <TailorRun />
