@@ -382,6 +382,13 @@ test('a "Logistics" section heading is not a keyword, but the requirements under
   const names = (posting: string) => readPosting(posting).keywords.map((k) => k.name)
   expect(names("Requirements\n- Salesforce\n## Logistics\nMinimum education: Bachelor's degree")).toEqual(['Salesforce', "Bachelor's degree"])
   expect(names('Requirements\nLogistics\nSupply chain')).toEqual(['logistics', 'supply chain'])
+  expect(names("Requirements\n- Salesforce\nA Few Logistics\nThis role requires a bachelor's degree")).not.toContain('logistics')
+})
+
+test('onboarding as a hiring step is not a skill, but customer onboarding is', () => {
+  const names = (posting: string) => readPosting(posting).keywords.map((k) => k.name)
+  expect(names('Requirements\n- Salesforce\n- You are required to attend in person onboarding in San Francisco.\n- Travel for purposes such as new hire onboarding.')).toEqual(['Salesforce'])
+  expect(names('Requirements\n- Customer onboarding in Salesforce')).toEqual(expect.arrayContaining(['onboarding']))
 })
 
 test('a candidate-side "what you offer" heading and an agency requirement keep their keywords', () => {

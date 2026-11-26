@@ -33,8 +33,8 @@ export function roleOf(title: string): RoleSlug | undefined {
 const SKIP: Record<RoleSlug, string[]> = {
   'administrative-assistant': [],
   warehouse: ['warehouse'],
-  sales: ['sales', 'compliance'],
-  marketing: ['marketing'],
+  sales: ['sales', 'SDR', 'compliance'],
+  marketing: ['marketing', 'PMM'],
   engineering: [],
 }
 export const skipFor = (slug: RoleSlug) => SKIP[slug]
@@ -44,7 +44,7 @@ export type Kind = (typeof KINDS)[number]
 
 const TOOLS = new Set([
   'Salesforce', 'HubSpot', 'LinkedIn', 'Marketo', 'Tableau', 'Looker', 'Power BI', 'Google Analytics', 'Excel', 'Microsoft Office', 'Word',
-  'PowerPoint', 'Outlook', 'Google Workspace', 'Slack', 'Jira', 'Figma', 'QuickBooks', 'CRM', 'ERP', 'WMS', 'SQL', 'Python', 'Java',
+  'PowerPoint', 'Outlook', 'Google Workspace', 'Slack', 'Jira', 'Figma', 'QuickBooks', 'SQL', 'Python', 'Java',
   'JavaScript', 'TypeScript', 'Go', 'Rust', 'C++', 'C#', 'React', 'Node.js', 'AWS', 'GCP', 'Azure', 'Kubernetes', 'Docker', 'Terraform',
   'Linux', 'Git', 'Snowflake', 'dbt', 'Airflow', 'Spark', 'PyTorch', 'TensorFlow',
 ])

@@ -27,7 +27,7 @@ describe('role keyword pages', () => {
 
   it.each(each)('%s counts at least 30 postings and lists keywords', (_, r) => {
     expect(r.counts.postings).toBeGreaterThanOrEqual(MIN_POSTINGS)
-    expect(r.counts.keywords.length).toBeGreaterThan(0)
+    expect(r.counts.keywords.length).toBeGreaterThanOrEqual(4)
   })
 
   it.each(each)('%s has a page title with the posting count that Google shows in full', (_, r) => {
@@ -41,7 +41,7 @@ describe('role keyword pages', () => {
     const tool = sales.counts.keywords.find((k) => k.name === 'Salesforce')!
     const text = lead(sales)
     expect(text).toContain(`${first.name} (${Math.round((first.postings / sales.counts.postings) * 100)}%)`)
-    expect(text).toContain(`Salesforce, in ${Math.round((tool.postings / sales.counts.postings) * 100)}% (${tool.postings} of ${sales.counts.postings})`)
+    expect(text).toContain(`Salesforce, in ${Math.round((tool.postings / sales.counts.postings) * 100)}% of them (${tool.postings} of ${sales.counts.postings})`)
     expect(text).not.toMatch(/\bsales \(/)
   })
 
@@ -61,7 +61,8 @@ describe('role keyword pages', () => {
       expect(q).toMatch(/\?$/)
       expect(words(a), a).toBeGreaterThanOrEqual(40)
       expect(words(a), a).toBeLessThanOrEqual(60)
-      expect(a).toMatch(new RegExp(`of ${r.counts.postings}\\b`))
+      expect(a.match(new RegExp(`\\b${r.counts.postings}\\b`, 'g')), a).toHaveLength(1)
+      expect(a).not.toMatch(/\ba [A-Z][a-z]+'s degree/)
     }
   })
 

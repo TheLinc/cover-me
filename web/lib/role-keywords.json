@@ -234,10 +234,6 @@
           "postings": 24
         },
         {
-          "name": "onboarding",
-          "postings": 23
-        },
-        {
           "name": "attention to detail",
           "postings": 21
         },
@@ -255,11 +251,7 @@
         },
         {
           "name": "logistics",
-          "postings": 20
-        },
-        {
-          "name": "SDR",
-          "postings": 20
+          "postings": 19
         },
         {
           "name": "PEO",
@@ -271,6 +263,14 @@
         },
         {
           "name": "ROI",
+          "postings": 18
+        },
+        {
+          "name": "time management",
+          "postings": 18
+        },
+        {
+          "name": "ZoomInfo",
           "postings": 18
         }
       ]
@@ -400,7 +400,7 @@
           "postings": 13
         },
         {
-          "name": "PMM",
+          "name": "ROI",
           "postings": 13
         }
       ]

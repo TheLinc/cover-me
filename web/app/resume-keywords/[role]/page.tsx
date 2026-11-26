@@ -100,8 +100,8 @@ export default async function RolePage({ params }: { params: Promise<{ role: str
             stops at the top {TOP}.
           </p>
           <p className="text-[14px] text-muted-foreground leading-[1.8] mb-8 max-w-[680px]">
-            The postings come from mostly tech companies, since those are the employers that post on Greenhouse and Lever. Software terms such as AI rank
-            higher here than they would across all employers.
+            The job boards read belong to mostly tech companies, so software terms such as AI may rank higher here than they would across all
+            employers.
           </p>
           {KINDS.map((kind) => {
             const rows = counts.keywords.filter((k) => kindOf(k.name) === kind)

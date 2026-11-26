@@ -53,7 +53,7 @@ const COPY: RoleCopy[] = [
       'The skills, tools and degrees engineering job postings ask for most, counted across real public postings, with the share of postings that ask for each one.',
     titles: 'software, hardware, mechanical, electrical and other engineer titles, leaving out managers and sales, solutions and support engineers',
     intro: [
-      'The postings come from software, hardware and aerospace companies, so the list mixes programming languages and cloud platforms with electrical and mechanical skills. When a posting names a specific service or version, such as AWS Lambda, use that name on your resume and not only the platform.',
+      'The postings come from software, hardware and aerospace companies. Most of the list is programming languages and cloud platforms, and "electrical" comes mostly from degree fields such as electrical engineering. When a posting names a specific service or version, such as AWS Lambda, use that name on your resume and not only the platform.',
     ],
     bullets: [
       'Built a Python API on AWS that serves 40 million requests a day with p99 latency under 120 ms.',
@@ -89,7 +89,7 @@ export function lead(r: Role): string {
   const [a, b, c] = r.counts.keywords
   const [tool] = tools(r)
   const first = `The ${r.counts.postings} ${r.noun} job postings read in ${month(FETCHED)} ask most for ${share(r, a)}, ${share(r, b)} and ${share(r, c)}.`
-  return tool && ![a, b, c].includes(tool) ? `${first} The tool they name most is ${tool.name}, in ${percent(r, tool)}% (${tool.postings} of ${r.counts.postings}).` : first
+  return tool && ![a, b, c].includes(tool) ? `${first} The tool they name most is ${tool.name}, in ${percent(r, tool)}% of them (${tool.postings} of ${r.counts.postings}).` : first
 }
 
 export function answers(r: Role): { q: string; a: string }[] {
@@ -98,24 +98,24 @@ export function answers(r: Role): { q: string; a: string }[] {
   const [t1, t2, t3] = tools(r)
   const degrees = r.counts.keywords.filter((k) => kindOf(k.name) === 'Education and certifications')
   const bachelor = degrees.find((k) => k.name === "Bachelor's degree")
-  const higher = degrees.find((k) => k !== bachelor)
+  const higher = degrees.find((k) => k !== bachelor && /degree|MBA|PhD/.test(k.name))
   const qa = [
     {
       q: `What keywords should ${an(r.noun)} resume have?`,
-      a: `Start with the ones ${r.noun} postings ask for most. Of the ${n} postings read in ${month(FETCHED)}, ${k1.postings} of ${n} ask for ${k1.name}, then ${share(r, k2)}, ${share(r, k3)} and ${share(r, k4)}. Add the tools from the table that you have used, by name, and leave out any keyword your experience can't back up.`,
+      a: `Start with the ones ${r.noun} postings ask for most. Of the ${n} postings read in ${month(FETCHED)}, ${k1.postings} ask for ${k1.name} (${percent(r, k1)}%), then ${share(r, k2)}, ${share(r, k3)} and ${share(r, k4)}. Add the tools from the table that you have used, by name, and leave out any keyword your experience can't back up.`,
     },
   ]
-  if (t3) {
+  if (t2) {
     qa.push({
       q: `Which tools do ${r.noun} job postings ask for?`,
-      a: `${t1.name} leads, named in ${t1.postings} of ${n} postings (${percent(r, t1)}%), followed by ${share(r, t2)} and ${share(r, t3)}. Recruiters search an applicant tracking system for tools by name, so write the product you used, such as ${t1.name}, rather than a general word like "software".`,
+      a: `${t1.name} leads, named in ${t1.postings} of ${n} postings (${percent(r, t1)}%), followed by ${share(r, t2)}${t3 ? ` and ${share(r, t3)}` : ''}. Recruiters search an applicant tracking system for tools by name, so write the product you used, such as ${t1.name}, rather than a general word like "software" or "CRM".`,
     })
   }
   if (bachelor) {
-    const more = higher ? `, and ${higher.postings} ask for ${an(higher.name)}` : ''
+    const more = higher ? `, and ${higher.postings} ask for ${an(higher.name.replace(/^Master's/, "master's"))}` : ''
     qa.push({
       q: `Do ${r.noun} jobs ask for a degree?`,
-      a: `${bachelor.postings} of ${n} postings (${percent(r, bachelor)}%) ask for a bachelor's degree as a requirement or a nice-to-have${more}. The rest don't name a degree in what they ask for, so experience and results carry more weight there. List your degree once, in an education section near the end.`,
+      a: `${bachelor.postings} of ${n} postings (${percent(r, bachelor)}%) ask for a bachelor's degree as a requirement or a nice-to-have${more}. The real share is higher, since this count misses wordings like "4-year degree". List your degree once, in an education section near the end.`,
     })
   }
   return qa
