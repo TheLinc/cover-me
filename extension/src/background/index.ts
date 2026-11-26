@@ -6,6 +6,7 @@ import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from '../lib/config'
 import { decryptApiKey } from '../lib/crypto'
 import { checkUploadedDesign, designForTailor, finishDesign, parseForTailor, uploadDesignIfPro } from '../lib/design'
 import { debugGroup } from '../lib/debug'
+import { getResumeTemplate } from '../lib/resume-template'
 import { addToHistory, addToTailoredHistory, getCandidateContext, getResume, getSession, getSettings, hasAgreedToPageRead, resolveMode, setEntryAccounts, watchSession } from '../lib/storage'
 import { handleInstalled, uninstallUrl } from './install'
 import { handleAnswerClick, registerAnswerMenu, writeAnswer, type AnswerRequest } from './answer'
@@ -407,8 +408,8 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
   const id = jobId ?? crypto.randomUUID()
   const startedAt = Date.now()
   await setTailorJob({ id, status: 'loading', job, startedAt })
-  // Which file a result came from isn't resume content for the model to revise (#131)
-  const { sourceHash: _h, designFellBack: _f, ...previous } = lastResult ?? {} as TailoredResume
+  // Which file a result came from (#131) and its PDF template (#119) aren't resume content for the model to revise
+  const { sourceHash: _h, designFellBack: _f, template: _t, ...previous } = lastResult ?? {} as TailoredResume
   try {
     const settings = await getSettings()
 
@@ -455,7 +456,7 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
       }
       const localId = crypto.randomUUID()
       const tier = checkedTier(session)
-      const { resume: tailored, savedId } = await tailorViaBackend(job, session.access_token, compact, merged, trim, includeSummary, lastResult && previous, onProgress, localId, design.design)
+      const { resume: tailored, savedId } = await tailorViaBackend(job, session.access_token, compact, merged, trim, includeSummary, lastResult && previous, onProgress, localId, design.design, await getResumeTemplate())
       const resume = await finishDesign(tailored, design)
       if (note) resume.hasEdits = true
       // Awaited first: uploadDesignIfPro reads the cached tier (#182)

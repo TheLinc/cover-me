@@ -4,6 +4,7 @@ import { clearResume, clearSession, getCachedTier, getResume, getSession, getSet
 import { isValidResume } from './ai/resume-tailor'
 import { derivePlanningProgress, deriveTailorProgress } from './ai/tailor-progress'
 import type { ApplicationRecord, AuthSession, CoverLetter, JobData, ParsedResume, ResumeData, TailoredHistoryEntry, TailoredResume } from '../types'
+import type { ResumeTemplate } from './pdf/types'
 import type { AnswerRevision } from './ai/answer'
 
 // Asks the backend for the resume fields older extensions can't print (a
@@ -501,7 +502,7 @@ export async function fetchFirstMonthOffer(accessToken: string): Promise<FirstMo
 // sourceHash is saved on a Pro account's copy for the dashboard's download.
 export interface TailorDesign { layout: 'yours' | 'cover-me'; fellBack: boolean; sourceHash?: string }
 
-export async function tailorViaBackend(job: JobData, accessToken: string, compact = false, supplemental?: string, trim = false, includeSummary = true, previous?: TailoredResume, onProgress?: (label: string) => void, localId?: string, design?: TailorDesign): Promise<{ resume: TailoredResume; savedId?: string }> {
+export async function tailorViaBackend(job: JobData, accessToken: string, compact = false, supplemental?: string, trim = false, includeSummary = true, previous?: TailoredResume, onProgress?: (label: string) => void, localId?: string, design?: TailorDesign, template?: ResumeTemplate): Promise<{ resume: TailoredResume; savedId?: string }> {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/tailor`, {
     method: 'POST',
     headers: {
@@ -512,7 +513,7 @@ export async function tailorViaBackend(job: JobData, accessToken: string, compac
       Accept: 'application/x-ndjson',
       ...RESUME_FIELDS,
     },
-    body: JSON.stringify({ job, compact, supplemental: supplemental?.trim() || undefined, trim, includeSummary, previous, localId, ...design }),
+    body: JSON.stringify({ job, compact, supplemental: supplemental?.trim() || undefined, trim, includeSummary, previous, localId, ...design, template }),
   })
 
   // Pre-stream failures (auth, rate limit, missing resume) and any older
