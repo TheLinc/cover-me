@@ -234,6 +234,15 @@ pnpm trial-links 5 --note "reddit launch" --prod   # production, asks you to typ
 
 Each link (`/redeem/<code>`) gives one account a free week of Pro with no card, then drops it back to free unless it upgrades. One gift trial per account. `--days` (default 30) is how long an unused link works. The note is stored in `trial_codes`, so redemptions per batch can be counted there. To revoke an unused link, delete its row.
 
+#### Telling users a site now works
+
+```bash
+pnpm notify-site jobs.example.com          # local stack (needs pnpm functions:serve and a RESEND_API_KEY)
+pnpm notify-site jobs.example.com --prod   # production, asks you to type "prod"
+```
+
+Signed-in users can tick "Email me when it's supported" when they request a site, or later under the thanks line (#195). Once the store build that reads a site is live, run this for each host the board uses (e.g. `boards.greenhouse.io` and `job-boards.greenhouse.io`). Each account waiting on that host gets one email from the `site-watch` function, replying to you, and its request is deleted. A send Resend refused stays for the next run. Requests nobody acts on are deleted after 12 months.
+
 ### Resume quality eval
 
 `extension/eval/` checks the cover letter and resume tailoring prompts against 32 synthetic resumes across 16 industries (business, finance, legal, education, trades, hospitality, retail, logistics, healthcare, engineering, design, government, nonprofit, science, technology, manufacturing). Every job posting asks for something its resume lacks, so the checks can confirm the output never claims it.
@@ -524,7 +533,7 @@ Turn on the website's button only once users have an extension build with Google
 
 | Variable | Description |
 |---|---|
-| `SERVICE_KEY` | Supabase service role key |
+| `SERVICE_KEY` | Supabase secret key (in production, the one named `edge_functions`: `pnpm notify-site --prod` sends that one to `site-watch`) |
 | `ANTHROPIC_API_KEY` | Your Anthropic API key |
 | `ENCRYPTION_KEY` | 64-char hex string (32 bytes) for AES-256-GCM |
 | `STRIPE_SECRET_KEY` | Stripe secret key |
@@ -534,7 +543,7 @@ Turn on the website's button only once users have an extension build with Google
 | `EMAIL_TOKEN_SECRET` | Signs unsubscribe links. Never change it: links already sent would stop working |
 | `NUDGE_SECRET` | Shared with the `NUDGE_SECRET` GitHub secret; the daily follow-up workflow calls `nudge` with it |
 | `NUDGE_ENABLED` | `true` to let `nudge` send the follow-up email; anything else sends nothing |
-| `RESEND_API_KEY` | Resend API key, for the follow-up email and the dashboard's support form (`support` answers 503 without it) |
+| `RESEND_API_KEY` | Resend API key, for the follow-up email, the dashboard's support form (`support` answers 503 without it) and `site-watch`'s emails |
 | `POSTHOG_KEY` | PostHog project token for server-side counts (`tailor_run`, `resume_upload`, `scrape_failed`, `answer_generated`, `answer_limit_hit`) and the extension's site requests and bug reports. Optional: without it nothing is sent |
 | `POSTHOG_SITE_SURVEY_ID` | ID of a PostHog survey in API mode with three open-text questions: type, site, page URL. `site-request` records the extension's "Request this site" and "Report bug" presses there; without it they're accepted and dropped |
 
