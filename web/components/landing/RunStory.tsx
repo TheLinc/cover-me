@@ -11,29 +11,25 @@ import { useReducedMotion, useScrollProgress } from './useScrollProgress'
 import { BrowserFrame, CELLS, EXAMPLE, Hl, Label, Line, ResumeDoc, TIERS } from './visuals'
 import { Ambient } from './Ambient'
 
-// One application, start to finish. Scroll drives a single position x from 0
-// to 7 (one unit per chapter) and every layer of the stage derives its state
-// from x, so the story plays forwards and backwards with the scrollbar.
+// Every layer reads one scroll position x, so the story also plays backwards (https://github.com/TheLinc/cover-me/commit/645b50e3).
 const CHAPTERS = [
   { title: "Give it everything you've done", body: 'Upload it once, as a PDF or Word file. Cover Me only uses what is in it, so give it every role and project.' },
   { title: 'Click Cover Me on the posting', body: 'LinkedIn, Indeed, Greenhouse, Lever, Workday and more. Anywhere else, paste it in.' },
   { title: 'It reads what the job asks for', body: 'Every requirement in the posting, sorted into must-haves and nice-to-haves.' },
-  { title: "Your resume, in the posting's words", body: 'Same jobs, same facts, in the posting’s words. "Remove irrelevant bullets" drops what this job doesn’t need.' },
+  { title: "Your resume, in the posting's words", body: 'Same jobs, same facts, in the posting’s words. "Cut what doesn’t fit this job" drops the bullets and skills this job doesn’t need.' },
   { title: 'A score you can read', body: 'Each requirement you cover adds points. Must-haves count the most.' },
   { title: 'And a cover letter to match', body: 'Written from your resume, about this job. Edit it, then send.' },
   { title: 'Your design, or ours', body: 'A Word file can keep your own design (beta). Or use the clean, ATS-ready Cover Me layout, as PDF or Word.' },
 ]
 const N = CHAPTERS.length
-const CHAPTER_VH = 90 // scroll distance per chapter
+const CHAPTER_VH = 90
 
 const STAGE_W = 680
 const STAGE_H = 520
 
-// 0 before a, 1 after b, linear between.
 const ramp = (x: number, a: number, b: number) => Math.min(1, Math.max(0, (x - a) / (b - a)))
 const ease = (u: number) => 1 - Math.pow(1 - u, 3)
-// Chapter i's layer: fades in over the first 12% of its chapter and out over
-// the last 12%, so two layers never show at once.
+// Fading in and out inside each chapter keeps two layers from showing at once (https://github.com/TheLinc/cover-me/commit/645b50e3).
 const FADE = 0.12
 const chapter = (x: number, i: number) => Math.min(ramp(x, i, i + FADE), 1 - ramp(x, i + 1 - FADE, i + 1))
 
@@ -51,14 +47,10 @@ function typed(segments: string[], n: number) {
   })
 }
 
-// Requirements in the order they appear in the posting.
 const FOUND = EXAMPLE.posting.flat().flatMap((s) => (typeof s === 'string' ? [] : [s.k]))
-
-// ── Chapter 0: the master resume goes in ────────────────────────────────────
 
 const ROLES = ['Marketing Lead · Brightline', 'Growth Marketing Manager · Juniper Labs', 'Marketing Coordinator · Fieldstone Co.', 'Marketing Intern · Denver Botanic Gardens']
 
-// A long resume: three sheets, the top one showing every role.
 function MasterStack({ className, style }: { className?: string; style?: CSSProperties }) {
   const sheet = 'absolute inset-0 rounded-[6px] bg-white shadow-[0_18px_40px_-20px_rgba(30,27,75,0.35)]'
   return (
@@ -120,7 +112,6 @@ function UploadLayer({ x, c }: { x: number; c?: boolean }) {
           </div>
         </div>
       </ExtensionPopup>
-      {/* The stack drops into the upload area. */}
       <MasterStack
         className={cn('absolute', c ? 'left-[23%] top-[2%] h-[250px] w-[200px]' : 'left-[4%] top-[9%] h-[380px] w-[270px]')}
         style={{
@@ -132,8 +123,6 @@ function UploadLayer({ x, c }: { x: number; c?: boolean }) {
     </div>
   )
 }
-
-// ── Chapter 1 and 2: the posting in the browser ─────────────────────────────
 
 function ToolbarIcon({ x }: { x: number }) {
   const press = ramp(x, 0.48, 0.55) - ramp(x, 0.55, 0.62)
@@ -169,7 +158,6 @@ function ToolbarIcon({ x }: { x: number }) {
 }
 
 function PostingText({ x }: { x: number }) {
-  // Requirements light up one after another through chapter 1.
   const lit = ramp(x, 1.08, 1.75) * FOUND.length
   let j = -1
   return (
@@ -257,7 +245,6 @@ function BrowserLayer({ x, c }: { x: number; c?: boolean }) {
             </>
           )}
         </div>
-        {/* The popup grows out of the toolbar icon. */}
         <div className={cn('absolute right-3 w-[250px] origin-top-right', c ? 'bottom-3' : 'top-2')} style={{ opacity: open, scale: `${0.85 + open * 0.15}` }}>
           <ExtensionPopup status={x < 1.75 ? 'Reading…' : 'Posting read'}>
             <ReadPopup x={x} />
@@ -267,8 +254,6 @@ function BrowserLayer({ x, c }: { x: number; c?: boolean }) {
     </div>
   )
 }
-
-// ── Chapter 3: the rewrite (layer takes x - 1, see Stage) ─────────────────
 
 function Bullet({ x, at, before, after }: { x: number; at: number; before: string; after: string[] }) {
   const u = ramp(x, at, at + 0.2)
@@ -296,7 +281,6 @@ function Bullet({ x, at, before, after }: { x: number; at: number; before: strin
   )
 }
 
-// With "Remove irrelevant bullets" on, a bullet this job doesn't need is struck and folds away.
 function Dropped({ x }: { x: number }) {
   const u = ramp(x, 2.56, 2.72)
   const strike = ramp(u, 0, 0.4)
@@ -372,8 +356,6 @@ function RewriteLayer({ x, c }: { x: number; c?: boolean }) {
     </div>
   )
 }
-
-// ── Chapter 4: the score ──────────────────────────────────────────────────
 
 function Mark({ gap, on }: { gap: boolean; on: boolean }) {
   return (
@@ -479,8 +461,6 @@ function ScoreLayer({ x, c }: { x: number; c?: boolean }) {
   )
 }
 
-// ── Chapter 5: the letter ─────────────────────────────────────────────────
-
 const LETTER = [`Dear ${EXAMPLE.company} team,`, ...EXAMPLE.letter]
 const LETTER_LEN = LETTER.join('').length
 
@@ -490,7 +470,6 @@ function LetterLayer({ x, c }: { x: number; c?: boolean }) {
   const ready = ease(ramp(x, 4.7, 4.84))
   return (
     <div className="absolute inset-0" style={{ opacity: v, transform: `translateY(${(1 - v) * 24}px)` }}>
-      {/* Slides in behind the letter once both are done: the full application. */}
       <ResumeDoc
         className={cn('absolute left-[2%] top-[9%] w-[300px] origin-bottom-left', c && 'hidden')}
         style={{ opacity: ready, transform: `rotate(${-6 * ready}deg) translateX(${(1 - ready) * 60}px)` }}
@@ -526,11 +505,7 @@ function LetterLayer({ x, c }: { x: number; c?: boolean }) {
   )
 }
 
-// ── Chapter 6: what you download, by what you uploaded ─────────────────────
-
-// A tailored resume in miniature: the user's own Word design (any fonts and
-// colors, drawn here in teal) or the Cover Me layout (one column, Times, centred
-// name, as lib/pdf/resume.ts draws it).
+// The coverme kind copies the layout lib/pdf/resume.ts draws (#177).
 function OutDoc({ kind, title, formats, show }: { kind: 'yours' | 'coverme'; title: string; formats: string[]; show: number }) {
   const yours = kind === 'yours'
   const rule = yours ? 'bg-[#0F6E6E]' : 'bg-body'
@@ -606,14 +581,11 @@ function Caret() {
   return <span className="ml-px inline-block h-[14px] w-[2px] translate-y-[2px] animate-pulse bg-brand" />
 }
 
-// ── Stage and section ───────────────────────────────────────────────────────
-
-// Phones get a portrait stage: the same scenes, stacked instead of side by side.
 const COMPACT_W = 380
 const COMPACT_H = 620
 
 function Stage({ x, compact: c }: { x: number; compact?: boolean }) {
-  // The posting-to-letter layers were written for chapters 0 to 4; they now run one chapter later.
+  // The upload chapter was added in front of the older layers, so they run one chapter behind the stage (#177).
   const y = x - 1
   return (
     <div className="relative" style={{ width: c ? COMPACT_W : STAGE_W, height: c ? COMPACT_H : STAGE_H }}>
@@ -677,7 +649,6 @@ function Heading() {
   )
 }
 
-// Below the lg breakpoint the stage switches to its portrait layout.
 function useCompact() {
   const [compact, setCompact] = useState(false)
   useEffect(() => {
@@ -715,7 +686,6 @@ export function RunStory() {
     </p>
   )
 
-  // Reduced motion: every chapter as a still frame, stacked.
   if (reduced) {
     return (
       <section id="how-it-works" className="container py-28 max-md:py-20">
@@ -723,7 +693,7 @@ export function RunStory() {
         {summary}
         <div className="mt-10 flex flex-col gap-14">
           {CHAPTERS.map((c, i) => {
-            // Each chapter's finished frame: just before its fade-out (the last has none).
+            // The frame just before a chapter fades out; the last chapter never fades (https://github.com/TheLinc/cover-me/commit/645b50e3).
             const still = i === N - 1 ? N - 0.01 : i + 1 - FADE - 0.01
             return (
             <div key={c.title} id={i === 4 ? 'ats-score' : undefined} className="grid gap-6 lg:grid-cols-[360px_1fr]">
@@ -749,7 +719,6 @@ export function RunStory() {
 
   return (
     <section ref={ref} id="how-it-works" className="relative" style={{ height: `${N * CHAPTER_VH + 100}vh` }}>
-      {/* Nav target for "ATS score": partway into the score chapter. */}
       <span id="ats-score" className="absolute left-0" style={{ top: `${4.6 * CHAPTER_VH}vh` }} aria-hidden="true" />
       {summary}
       <div className="sticky top-16 h-[calc(100svh-4rem)] isolate overflow-hidden">
@@ -761,7 +730,6 @@ export function RunStory() {
           <div className="flex flex-col gap-8 max-lg:gap-3">
             <div className="max-lg:hidden"><Heading /></div>
             <div className="max-lg:hidden"><ChapterRail active={active} x={x} onPick={pick} /></div>
-            {/* Phones: just the current chapter, with a segmented progress bar. */}
             <div className="flex flex-col gap-2 lg:hidden">
               <div className="flex gap-1">
                 {CHAPTERS.map((c, i) => (
