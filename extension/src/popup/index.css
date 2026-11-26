@@ -456,6 +456,7 @@ html, body {
   background: var(--bg);
   border-top: 1px solid var(--border);
 }
+.letter-container > .letter-actions { margin-top: auto; }
 .letter-container > .letter-actions:last-child { margin-bottom: -14px; }
 .letter-actions .btn-primary { flex: 1; }
 
