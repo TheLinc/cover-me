@@ -78,8 +78,8 @@ function headingLevel(line: string, labelled: boolean): Heading | null {
   if (!looksLikeHeading(text, marked)) return null
   if (COMPANY.test(text)) return 'company'
   if (/^a few logistics$/i.test(text) || (marked && !labelled && /^logistics$/i.test(text))) return 'unknown'
-  const namedHeading = /^((required|preferred|minimum|basic) (qualifications|requirements|skills|experience)|.*\b(requirements|qualifications)|.*\b(looking for|seeking))$/i.test(text)
   const unnamed = text.replace(/ at [A-Z].*$|^\S+'s /, '')
+  const namedHeading = /^((required|preferred|minimum|basic) (qualifications|requirements|skills|experience)|.*\b(requirements|qualifications)|.*\b(looking for|seeking))$/i.test(unnamed)
   if (!namedHeading && ((unnamed !== text && SKIP.test(unnamed)) || /^\w+ (benefits|perks)$/i.test(text))) return 'skip'
   if (!namedHeading && DICTIONARY.some((term) => has(text, term))) return null
   if (!namedHeading && SKIP.test(text)) return 'skip'

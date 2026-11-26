@@ -419,7 +419,7 @@
         },
         {
           "name": "AI",
-          "postings": 296
+          "postings": 297
         },
         {
           "name": "communication",
@@ -427,11 +427,11 @@
         },
         {
           "name": "Bachelor's degree",
-          "postings": 246
+          "postings": 245
         },
         {
           "name": "AWS",
-          "postings": 167
+          "postings": 166
         },
         {
           "name": "API",
@@ -467,7 +467,7 @@
         },
         {
           "name": "GCP",
-          "postings": 94
+          "postings": 93
         },
         {
           "name": "C++",
@@ -483,11 +483,11 @@
         },
         {
           "name": "Master's degree",
-          "postings": 78
+          "postings": 77
         },
         {
           "name": "Terraform",
-          "postings": 73
+          "postings": 74
         },
         {
           "name": "problem-solving",
@@ -502,10 +502,6 @@
           "postings": 65
         },
         {
-          "name": "leadership",
-          "postings": 64
-        },
-        {
           "name": "mentoring",
           "postings": 64
         },
@@ -514,15 +510,19 @@
           "postings": 63
         },
         {
+          "name": "leadership",
+          "postings": 63
+        },
+        {
           "name": "JavaScript",
           "postings": 62
         },
         {
-          "name": "Linux",
-          "postings": 62
+          "name": "Docker",
+          "postings": 61
         },
         {
-          "name": "Docker",
+          "name": "Linux",
           "postings": 61
         },
         {

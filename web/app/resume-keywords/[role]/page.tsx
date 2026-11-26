@@ -71,7 +71,7 @@ export default async function RolePage({ params }: { params: Promise<{ role: str
       license: LICENSE,
       creator: [AUTHOR, { '@type': 'Organization', name: 'Cover Me', url: BASE }],
       measurementTechnique: 'Keywords read from public Greenhouse and Lever job postings with the Cover Me ATS checker',
-      variableMeasured: ['Keyword', 'Keyword type', 'Postings that ask for the keyword', 'Share of postings'],
+      variableMeasured: ['Keyword', 'Keyword type', 'Postings that ask for the keyword', 'Postings read', 'Share of postings'],
       distribution: { '@type': 'DataDownload', encodingFormat: 'text/csv', contentUrl: `${url}/keywords.csv` },
     },
   ]

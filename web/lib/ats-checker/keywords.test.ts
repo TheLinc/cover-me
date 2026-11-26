@@ -430,5 +430,7 @@ test('LinkedIn as a social link or a recruiter notice is not an ask, and benefit
   expect(names('Requirements\n- Python\nBenefits at Salesloft:\n- Excel training\n## Gong Benefits\n- Slack stipend')).toEqual(['Python'])
   expect(names('Requirements\n- LinkedIn Navigator, Sales Nav or SalesNav')).toEqual(['Sales Navigator'])
   expect(names("Requirements\n- Python\nBenefits & Perks at Gong\n- Excel classes\n## Perks & Benefits at Mixpanel\n- Slack stipend\n## Salesloft's Benefits\n- Tableau\n## Compensation at Clari\n- Workday")).toEqual(['Python'])
-  expect(names('Benefits Administration Requirements at Acme\n- Workday and ADP')).toEqual(['Workday', 'ADP'])
+  const levels = (posting: string) => readPosting(posting).keywords.map((k) => `${k.name}:${k.level}`)
+  expect(levels('Benefits Administration Requirements at Acme\n- Workday')).toEqual(['Workday:required'])
+  expect(levels("Acme's Benefits Requirements\n- Workday")).toEqual(['Workday:required'])
 })

@@ -14,7 +14,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ role: stri
   const role = getRole((await params).role)
   if (!role) return new Response('Not found', { status: 404 })
   const rows = [
-    ['keyword', 'type', 'postings', 'of', 'share_percent'],
+    ['keyword', 'type', 'postings', 'total_postings', 'share_percent'],
     ...role.counts.keywords.map((k) => [k.name, kindOf(k.name), k.postings, role.counts.postings, percent(role, k)]),
   ]
   return new Response(`${rows.map((r) => r.map(cell).join(',')).join('\n')}\n`, {

@@ -61,7 +61,7 @@ describe('role keyword pages', () => {
     const res = await GET(new Request('https://x'), { params: Promise.resolve({ role: 'sales' }) })
     expect(res.headers.get('Content-Type')).toContain('text/csv')
     const lines = (await res.text()).trim().split('\n')
-    expect(lines[0]).toBe('keyword,type,postings,of,share_percent')
+    expect(lines[0]).toBe('keyword,type,postings,total_postings,share_percent')
     expect(lines).toHaveLength(sales.counts.keywords.length + 1)
     const top = sales.counts.keywords[0]
     expect(lines[1]).toBe(`${top.name},${kindOf(top.name)},${top.postings},${sales.counts.postings},${Math.round((top.postings / sales.counts.postings) * 100)}`)
