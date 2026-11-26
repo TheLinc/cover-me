@@ -2,16 +2,12 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 import { hasBearer } from '../_shared/bearer.ts'
 import { json } from '../_shared/cors.ts'
 import { unsubscribeHeaders, unsubscribeUrl } from '../_shared/email-consent.ts'
+import { SEND_GAP_MS, sendEmail } from '../_shared/resend.ts'
 import { nudgeEmail, type Version } from './email.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SECRET_KEY = Deno.env.get('SERVICE_KEY')!
-const RESEND_API_BASE = (Deno.env.get('RESEND_API_BASE') || 'https://api.resend.com').replace(/\/+$/, '')
 const SITE_URL = (Deno.env.get('SITE_URL') || 'https://www.cover-me.dev').replace(/\/+$/, '')
-const FROM = 'Lincoln from Cover Me <lincoln@cover-me.dev>'
-const REPLY_TO = 'lincoln@cover-me.dev'
-// Resend allows 2 requests a second by default (#113).
-const SEND_GAP_MS = 550
 
 // The one-day follow-up (#113). The daily workflow (.github/workflows/nudge.yml)
 // POSTs here with NUDGE_SECRET. Who gets it is nudge_candidates() (migration
@@ -66,32 +62,10 @@ Deno.serve(async (req) => {
 
 type Candidate = { user_id: string; email: string; has_resume: boolean }
 
-async function send({ user_id: userId, email }: Candidate, version: Version): Promise<'sent' | 'refused' | 'unknown'> {
-  try {
-    const { subject, text, html } = nudgeEmail(version, await unsubscribeUrl(userId), SITE_URL)
-    const res = await fetch(`${RESEND_API_BASE}/emails`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${Deno.env.get('RESEND_API_KEY')}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: FROM,
-        to: [email],
-        reply_to: REPLY_TO,
-        subject,
-        html,
-        text,
-        headers: await unsubscribeHeaders(userId),
-      }),
-      // So one stuck send can't push the batch past the function time limit (#113).
-      signal: AbortSignal.timeout(15_000),
-    })
-    if (res.ok) return 'sent'
-    console.error(`[nudge] Resend answered ${res.status}`)
-    return 'refused'
-  } catch (err) {
-    console.error('[nudge] send failed:', err instanceof Error ? err.message : 'unknown error')
-    return 'unknown'
-  }
+function send({ user_id: userId, email }: Candidate, version: Version) {
+  return sendEmail('nudge', async () => ({
+    to: [email],
+    ...nudgeEmail(version, await unsubscribeUrl(userId), SITE_URL),
+    headers: await unsubscribeHeaders(userId),
+  }))
 }

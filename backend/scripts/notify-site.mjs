@@ -12,13 +12,7 @@ import { target } from './lib.mjs'
 
 const USAGE = 'Usage: pnpm notify-site <host> [--prod]'
 
-let args
-try {
-  args = parseArgs({ allowPositionals: true, options: { prod: { type: 'boolean', default: false } } })
-} catch (err) {
-  console.error(`${err.message}\n${USAGE}`)
-  process.exit(1)
-}
+const args = parseArgs({ allowPositionals: true, options: { prod: { type: 'boolean', default: false } } })
 const host = args.positionals[0]?.toLowerCase()
 if (args.positionals.length !== 1) {
   console.error(USAGE)
