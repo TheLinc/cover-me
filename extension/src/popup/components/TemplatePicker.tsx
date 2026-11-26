@@ -32,13 +32,13 @@ export function useCachedPro(): boolean {
   return pro
 }
 
-// Below WCAG's 3:1 for large text against the white page (https://www.w3.org/TR/WCAG21/#contrast-minimum).
+// Below WCAG's 4.5:1 for normal text against the white page: Modern's headings are 10.5pt (https://www.w3.org/TR/WCAG21/#contrast-minimum).
 export function lowContrast(hex: string): boolean {
   const [r, g, b] = [1, 3, 5].map((i) => {
     const c = parseInt(hex.slice(i, i + 2), 16) / 255
     return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
   })
-  return 1.05 / (0.2126 * r + 0.7152 * g + 0.0722 * b + 0.05) < 3
+  return 1.05 / (0.2126 * r + 0.7152 * g + 0.0722 * b + 0.05) < 4.5
 }
 
 function AccentPicker({ value, onChange }: { value: string | undefined; onChange: (hex: string) => void }) {
@@ -46,6 +46,7 @@ function AccentPicker({ value, onChange }: { value: string | undefined; onChange
   const [draft, setDraft] = useState(shown)
   useEffect(() => setDraft(shown), [shown])
   const input = useRef<HTMLInputElement>(null)
+  const hint = useId()
   // React's onChange fires on every step of a drag; the native change event fires once the picker closes, so that's when it saves (#119).
   useEffect(() => {
     const el = input.current
@@ -57,13 +58,13 @@ function AccentPicker({ value, onChange }: { value: string | undefined; onChange
   return (
     <div className="template-accent">
       <label className="template-accent-label">
-        <input ref={input} type="color" value={draft} onChange={(e) => setDraft(e.target.value)} />
+        <input ref={input} type="color" value={draft} onChange={(e) => setDraft(e.target.value)} aria-describedby={hint} />
         Accent colour
       </label>
       {shown.toLowerCase() !== DEFAULT_ACCENT.toLowerCase() && (
-        <button type="button" className="text-link" onClick={() => onChange(DEFAULT_ACCENT)}>Reset to indigo</button>
+        <button type="button" className="text-link" onClick={() => { onChange(DEFAULT_ACCENT); input.current?.focus() }}>Reset to indigo</button>
       )}
-      {lowContrast(draft) && <p className="hint">Light colours can be hard to read on a printed page.</p>}
+      <p id={hint} className="hint" role="status">{lowContrast(draft) && 'Light colours can be hard to read on a printed page.'}</p>
     </div>
   )
 }
@@ -115,7 +116,6 @@ export default function TemplatePicker({ value, pro, onChange, previewLocked, ac
             )
           })}
         </div>
-        {pro && onAccent && hasAccent(current) && <AccentPicker value={accent} onChange={onAccent} />}
         {!pro && open && (
           <>
             <p className="hint">Modern, Compact and Minimal come with Pro.</p>
@@ -123,6 +123,7 @@ export default function TemplatePicker({ value, pro, onChange, previewLocked, ac
           </>
         )}
       </fieldset>
+      {pro && onAccent && hasAccent(current) && <AccentPicker value={accent} onChange={onAccent} />}
     </details>
   )
 }

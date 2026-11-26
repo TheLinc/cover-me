@@ -37,6 +37,7 @@ describe('the warning under the accent picker (#119)', () => {
   test('a pale accent is flagged as hard to read on white, a strong one is not', () => {
     expect(lowContrast('#FFEB3B')).toBe(true)
     expect(lowContrast('#A5B4FC')).toBe(true)
+    expect(lowContrast('#3B82F6')).toBe(true)
     expect(lowContrast('#4F46E5')).toBe(false)
     expect(lowContrast('#0F766E')).toBe(false)
   })

@@ -34,8 +34,9 @@ interface TemplateStyle {
 }
 
 const BLACK: RGB = [0, 0, 0]
-const INDIGO: RGB = [79, 70, 229]
+const rgb = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)) as RGB
 export const DEFAULT_ACCENT = '#4F46E5'
+const INDIGO = rgb(DEFAULT_ACCENT)
 
 export const RESUME_TEMPLATES: ResumeTemplate[] = ['classic', 'modern', 'compact', 'minimal']
 
@@ -87,8 +88,6 @@ export const hasAccent = (template: ResumeTemplate) => !!STYLES[template].accent
 export function accentOf(accent: unknown): string | undefined {
   return typeof accent === 'string' && /^#[0-9a-f]{6}$/i.test(accent) ? accent : undefined
 }
-
-const rgb = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)) as RGB
 
 export function downloadTailoredResumePdf(resume: TailoredResume, jobTitle?: string): void {
   tailoredResumePdf(resume).save(resumeFileName(resume, jobTitle, 'pdf'))
