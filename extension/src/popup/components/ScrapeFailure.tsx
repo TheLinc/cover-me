@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { ensureValidSession } from '../../lib/auth'
+import { getMode } from '../../lib/storage'
 import { SUPABASE_URL, WEB_URL } from '../../lib/config'
 import { rememberRequestedSite, requestedSites, sendSiteRequest } from '../../lib/site-request'
 import type { AuthSession, ScrapeFailure } from '../../types'
@@ -127,15 +128,17 @@ function SiteRequestRow({ host }: { host: string }) {
   )
 }
 
-// Signed-in users only (#195), so the email goes to a confirmed account
-// address and nobody can sign up someone else's.
+// Signed-in Hosted users only (#195): the email goes to a confirmed account
+// address, and BYOK mode keeps its promise of no account data on our side.
 function WatchBox({ host }: { host: string }) {
   const [session, setSession] = useState<AuthSession | null>(null)
   const [watching, setWatching] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  useEffect(() => { void ensureValidSession().then(setSession) }, [])
+  useEffect(() => {
+    void getMode().then(async (mode) => setSession(mode === 'hosted' ? await ensureValidSession() : null))
+  }, [])
 
   async function toggle(watch: boolean) {
     setWatching(watch)

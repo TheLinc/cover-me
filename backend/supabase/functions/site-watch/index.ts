@@ -29,7 +29,12 @@ Deno.serve(async (req) => {
     if (i > 0) await new Promise((r) => setTimeout(r, SEND_GAP_MS))
     // Deleted before sending, like nudge's claim (#113): at most one email
     // each. Only a send Resend refused puts the row back for the next run.
-    const { data: claimed } = await supabase.from('site_watch').delete().eq('host', host).eq('user_id', row.user_id).select('user_id')
+    const { data: claimed, error: claimError } = await supabase.from('site_watch').delete().eq('host', host).eq('user_id', row.user_id).select('user_id')
+    if (claimError) {
+      console.error('[site-watch] claim:', claimError.code)
+      failed++
+      continue
+    }
     if (!claimed?.length) continue
     const { data: { user } } = await supabase.auth.admin.getUserById(row.user_id)
     const outcome = user?.email ? await send(user.email, host) : 'refused'

@@ -61,7 +61,10 @@ export async function target(prod, action) {
     process.exit(1)
   }
   const res = supabase(['projects', 'api-keys', '--project-ref', PROD_REF, '--reveal', '-o', 'json'], { stdio: ['ignore', 'pipe', 'inherit'] })
-  const secret = res.status === 0 ? JSON.parse(res.stdout).find((k) => k.type === 'secret') : null
+  // Production has more than one secret key, and site-watch accepts only the
+  // one the functions hold as SERVICE_KEY (#195).
+  const secrets = res.status === 0 ? JSON.parse(res.stdout).filter((k) => k.type === 'secret') : []
+  const secret = secrets.find((k) => k.name === 'edge_functions') ?? secrets[0]
   if (!secret) {
     console.error('Could not read the production secret key. Run `supabase login` and try again.')
     process.exit(1)

@@ -268,6 +268,14 @@ export default function PrivacyPage() {
                 generation request: to our server in Hosted mode, or to your AI provider with your own
                 key.
               </Li>
+              <Li>
+                <strong className="text-foreground">Requests to hear back about a site (Hosted mode, signed in, only if you tick the box).</strong>{' '}
+                After a site request, a signed-in Hosted user sees an unticked box, Email me when Cover Me reads this
+                site, with their account email. Nothing is saved unless you tick it. Ticking it saves the
+                site&apos;s name with your Cover Me account ID on our server, never in PostHog: the site request
+                itself stays under its random ID. Unticking it deletes the record. When Cover Me starts reading
+                that site, we send you one email at your account address and delete the record.
+              </Li>
             </Ul>
 
             <H3>Information collected automatically</H3>
@@ -356,14 +364,6 @@ export default function PrivacyPage() {
                 includes your search), which part of the extension tried to read it, the error and the
                 extension&apos;s version. Nothing from the page itself is sent. The extension remembers the sites
                 you asked for in its local storage, so it thanks you instead of asking again.
-              </Li>
-              <Li>
-                <strong className="text-foreground">Requests to hear back about a site (signed in, only if you tick the box).</strong>{' '}
-                After a site request, a signed-in user sees an unticked box, Email me when Cover Me reads this
-                site, with their account email. Nothing is saved unless you tick it. Ticking it saves the
-                site&apos;s name with your Cover Me account ID on our server, never in PostHog: the site request
-                itself stays under its random ID. Unticking it deletes the record. When Cover Me starts reading
-                that site, we send you one email at your account address and delete the record.
               </Li>
               <Li>
                 <strong className="text-foreground">Failed-read counts (when you&apos;ve agreed to send job pages).</strong>{' '}
@@ -455,7 +455,7 @@ export default function PrivacyPage() {
               <Li>To process subscription billing through Stripe (Pro mode only).</Li>
               <Li>To respond to support requests you initiate by contacting us directly.</Li>
               <Li>To email you about new features, only if you&apos;ve agreed to it (Hosted mode). You can stop them at any time.</Li>
-              <Li>To email you once when Cover Me starts reading a job site you asked to hear about, only if you ticked the box.</Li>
+              <Li>To email you once when Cover Me starts reading a job site you asked to hear about, only if you ticked the box (Hosted mode).</Li>
               <Li>To send one getting-started email a day after you sign up, if you haven&apos;t generated anything yet and haven&apos;t removed the extension while signed in (Hosted mode). You can unsubscribe from it.</Li>
               <Li>To count, in aggregate, how many accounts sign up and use the service.</Li>
               <Li>To see which features people use, so we know what to improve (Hosted mode, unless you opt out).</Li>
