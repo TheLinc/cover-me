@@ -1217,9 +1217,9 @@ html, body {
 .tailor-summary:hover { color: var(--text); }
 /* The options stay clipped while they open, then unclip so the "?" tooltips
    above them show (#342). */
-.tailor-details { interpolate-size: allow-keywords; }
-.tailor-details::details-content { height: 0; overflow: clip; transition: height 0.2s ease, content-visibility 0.2s ease allow-discrete; }
-.tailor-details[open]::details-content {
+.tailor-details, .setting-details { interpolate-size: allow-keywords; }
+.tailor-details::details-content, .setting-details::details-content { height: 0; overflow: clip; transition: height 0.2s ease, content-visibility 0.2s ease allow-discrete; }
+.tailor-details[open]::details-content, .setting-details[open]::details-content {
   height: auto; overflow: visible;
   transition: height 0.2s ease, content-visibility 0.2s ease allow-discrete, overflow 0s 0.2s allow-discrete;
 }
@@ -1374,12 +1374,13 @@ textarea:focus-visible, input:focus-visible, [tabindex]:focus-visible {
 .account-dashboard { margin-top: 6px; text-decoration: none; }
 .account-dashboard-hint { font-size: 11px; color: var(--text-3); text-align: center; }
 /* A settings section that collapses: the title row is the <summary> */
-.setting-summary { display: flex; align-items: center; gap: 8px; cursor: pointer; list-style: none; }
+.setting-summary { display: flex; align-items: center; gap: 8px; cursor: pointer; list-style: none; transition: margin-bottom 0.2s ease; }
 .setting-summary::-webkit-details-marker { display: none; }
 .setting-summary .page-read-setting-title { margin-bottom: 0; }
 .setting-state { margin-left: auto; font-size: 11px; color: var(--text-3); }
 .setting-summary .chevron { color: var(--text-3); }
-.setting-details[open] > .setting-summary { margin-bottom: 4px; }
+.setting-details[open] > .setting-summary { margin-bottom: 6px; }
+.setting-details > .compact-toggle { margin-top: 0; }
 .setting-details[open] > .setting-summary .chevron { transform: rotate(180deg); }
 .manual-submit { margin-top: 12px; }
 .manual-tailor { margin-top: 8px; }
@@ -1395,7 +1396,8 @@ textarea:focus-visible, input:focus-visible, [tabindex]:focus-visible {
 /* Reduced motion: spinners hold still (the arc still marks the active step). */
 @media (prefers-reduced-motion: reduce) {
   .spinner, .step-spinner { animation: none; }
-  .context-panel, .chevron, .step-thought, .tailor-details::details-content { transition: none; }
+  .context-panel, .chevron, .step-thought, .tailor-details::details-content, .setting-details::details-content, .setting-summary { transition: none; }
+  .tailor-details[open]::details-content, .setting-details[open]::details-content { transition: none; }
 }
 
 /* An option with its "?" beside the label, not inside it: the checkbox is
