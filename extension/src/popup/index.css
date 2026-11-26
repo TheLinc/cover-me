@@ -1482,7 +1482,7 @@ textarea:focus-visible, input:focus-visible, [tabindex]:focus-visible {
 .template-option input { position: absolute; opacity: 0; pointer-events: none; }
 .template-option:has(input:checked) { border-color: var(--accent); background: var(--accent-dim); }
 .template-option:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
-.template-option.is-locked { cursor: not-allowed; }
+.template-option.is-locked:has(input:disabled) { cursor: not-allowed; }
 .template-option.is-locked .template-thumb { opacity: 0.55; }
 .template-name { font-size: 12px; font-weight: 600; color: var(--text); }
 .template-picker .hint { margin-top: 8px; }

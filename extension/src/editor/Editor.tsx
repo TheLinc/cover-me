@@ -115,7 +115,9 @@ export default function Editor() {
   const [preview, setPreview] = useState<ArrayBuffer | null>(null)
   const [template, setTemplate] = useState<ResumeTemplate | undefined>()
   const pro = useCachedPro()
-  const [previewing, setPreviewing] = useState<ResumeTemplate | null>(null)
+  const [chosenPreview, setPreviewing] = useState<ResumeTemplate | null>(null)
+  // Ends by itself once the account is Pro: upgraded in another tab, or the cached tier loaded after the click (#119).
+  const previewing = chosenPreview && isLocked(chosenPreview, pro) ? chosenPreview : null
   const [picked, setPicked] = useState(false)
 
   const localSaves = useRef<Promise<void>>(Promise.resolve())
@@ -151,6 +153,11 @@ export default function Editor() {
 
   // Free and own-key users can see a Pro template but not download it or keep it. The resume's
   // own template stays theirs, even after Pro lapses (#119).
+  function endPreview() {
+    setPreviewing(null)
+    setTimeout(() => document.querySelector<HTMLElement>('.ed-preview .template-picker input:checked')?.focus())
+  }
+
   function pickTemplate(t: ResumeTemplate) {
     if (t === templateOf(template)) return setPreviewing(null)
     if (isLocked(t, pro)) return setPreviewing(t)
@@ -523,12 +530,12 @@ export default function Editor() {
 
       <aside className="ed-preview" aria-label="PDF preview">
         <TemplatePicker value={previewing ?? template} pro={pro} previewLocked onChange={pickTemplate} />
-        {previewing && (
-          <p className="ed-preview-note" role="status">
+        <p className="ed-preview-note" role="status">{previewing && (
+          <>
             Previewing {templateName(previewing)}, a Pro template. Upgrade to download in it, or{' '}
-            <button type="button" className="text-link" onClick={() => setPreviewing(null)}>go back to {templateName(templateOf(template))}</button>.
-          </p>
-        )}
+            <button type="button" className="text-link" onClick={endPreview}>go back to {templateName(templateOf(template))}</button>.
+          </>
+        )}</p>
         <PdfPreview pdf={preview} />
       </aside>
     </div>
