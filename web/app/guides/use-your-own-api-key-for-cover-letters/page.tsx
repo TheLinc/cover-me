@@ -71,7 +71,7 @@ const faqJsonLd = {
 
 const STEPS: { title: string; body: string }[] = [
   { title: 'Get an API key', body: 'Create a key in the Anthropic Console or on the OpenAI Platform, and add billing there. Setting a monthly spending limit is a good idea.' },
-  { title: 'Add it in Cover Me', body: 'Install the extension, open Settings and click "I have an API key". Choose Claude or OpenAI under AI Provider, paste the key and click Save Settings.' },
+  { title: 'Add it in Cover Me', body: 'Install the extension, open Settings and click "I have an API key". If you\'re signed in to a Cover Me account, sign out first to see it. Choose Claude or OpenAI under AI Provider, paste the key and click Save Settings.' },
   { title: 'Upload your resume once', body: 'Upload a PDF, DOCX or TXT file. The text is pulled out on your device and kept in the browser.' },
   { title: 'Generate on any posting', body: 'Open a job posting and click Tailor Resume to Job or Generate Cover Letter. The request goes from your browser straight to your provider.' },
 ]

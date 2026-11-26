@@ -396,11 +396,12 @@ export default function AccountPanel({ initialView = 'signin', links = true }: {
             </>
           )}
 
-          <p className="auth-switch">
-            <button className="auth-link" onClick={() => switchMode('byok')}>I have an API key →</button>
-          </p>
+          {!session && (
+            <p className="auth-switch">
+              <button className="auth-link" onClick={() => switchMode('byok')}>I have an API key →</button>
+            </p>
+          )}
 
-          {/* After the key link, which belongs with the account card above (#213). */}
           {session && links && tier === 'hosted_free' && (
             <section className="page-read-setting" aria-labelledby="go-pro-title">
               <h2 id="go-pro-title" className="page-read-setting-title">Go Pro</h2>
