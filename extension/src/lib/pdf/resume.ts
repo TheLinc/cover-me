@@ -18,6 +18,8 @@ interface TemplateStyle {
   font: 'times' | 'helvetica'
 }
 
+export const RESUME_TEMPLATES: ResumeTemplate[] = ['classic', 'modern', 'compact', 'minimal']
+
 const STYLES: Record<ResumeTemplate, TemplateStyle> = {
   classic: { font: 'times' },
   modern: { font: 'helvetica' },
@@ -25,10 +27,10 @@ const STYLES: Record<ResumeTemplate, TemplateStyle> = {
   minimal: { font: 'times' },
 }
 
-// Stored resumes are untrusted JSON, so an unknown name, even one on Object's prototype, prints as Classic (#119).
+// Stored resumes are untrusted JSON: an unknown name, even one on Object's prototype, prints as Classic (#119).
 export function templateOf(resume: TailoredResume): ResumeTemplate {
   const t = resume.template
-  return typeof t === 'string' && Object.hasOwn(STYLES, t) ? t : 'classic'
+  return RESUME_TEMPLATES.find((name) => name === t) ?? 'classic'
 }
 
 export function downloadTailoredResumePdf(resume: TailoredResume, jobTitle?: string): void {
