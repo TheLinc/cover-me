@@ -1,7 +1,7 @@
-import { useEffect, useId, useState } from 'react'
-import { RESUME_TEMPLATES, templateOf } from '../../lib/pdf/resume'
+import { useEffect, useId, useRef, useState } from 'react'
+import { accentOf, DEFAULT_ACCENT, hasAccent, RESUME_TEMPLATES, templateOf } from '../../lib/pdf/resume'
 import type { ResumeTemplate } from '../../lib/pdf/types'
-import { getResumeTemplate, isCachedPro, saveResumeTemplate } from '../../lib/resume-template'
+import { getResumeLook, isCachedPro, saveResumeLook, type ResumeLook } from '../../lib/resume-template'
 import { ChevronIcon } from './icons'
 import UpgradePrompt from './UpgradePrompt'
 
@@ -32,6 +32,42 @@ export function useCachedPro(): boolean {
   return pro
 }
 
+// Below WCAG's 3:1 for large text against the white page (https://www.w3.org/TR/WCAG21/#contrast-minimum).
+export function lowContrast(hex: string): boolean {
+  const [r, g, b] = [1, 3, 5].map((i) => {
+    const c = parseInt(hex.slice(i, i + 2), 16) / 255
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
+  })
+  return 1.05 / (0.2126 * r + 0.7152 * g + 0.0722 * b + 0.05) < 3
+}
+
+function AccentPicker({ value, onChange }: { value: string | undefined; onChange: (hex: string) => void }) {
+  const shown = accentOf(value) ?? DEFAULT_ACCENT
+  const [draft, setDraft] = useState(shown)
+  useEffect(() => setDraft(shown), [shown])
+  const input = useRef<HTMLInputElement>(null)
+  // React's onChange fires on every step of a drag; the native change event fires once the picker closes, so that's when it saves (#119).
+  useEffect(() => {
+    const el = input.current
+    if (!el) return
+    const commit = () => onChange(el.value)
+    el.addEventListener('change', commit)
+    return () => el.removeEventListener('change', commit)
+  }, [onChange])
+  return (
+    <div className="template-accent">
+      <label className="template-accent-label">
+        <input ref={input} type="color" value={draft} onChange={(e) => setDraft(e.target.value)} />
+        Accent colour
+      </label>
+      {shown.toLowerCase() !== DEFAULT_ACCENT.toLowerCase() && (
+        <button type="button" className="text-link" onClick={() => onChange(DEFAULT_ACCENT)}>Reset to indigo</button>
+      )}
+      {lowContrast(draft) && <p className="hint">Light colours can be hard to read on a printed page.</p>}
+    </div>
+  )
+}
+
 function Sketch({ template, mini }: { template: ResumeTemplate; mini?: boolean }) {
   return (
     <span className={`template-thumb template-thumb-${template}${mini ? ' template-thumb-mini' : ''}`} aria-hidden="true">
@@ -41,7 +77,10 @@ function Sketch({ template, mini }: { template: ResumeTemplate; mini?: boolean }
   )
 }
 
-export default function TemplatePicker({ value, pro, onChange, previewLocked }: { value: ResumeTemplate | undefined; pro: boolean; onChange: (t: ResumeTemplate) => void; previewLocked?: boolean }) {
+export default function TemplatePicker({ value, pro, onChange, previewLocked, accent, onAccent }: {
+  value: ResumeTemplate | undefined; pro: boolean; onChange: (t: ResumeTemplate) => void; previewLocked?: boolean
+  accent?: string; onAccent?: (hex: string) => void
+}) {
   const current = templateOf(value)
   const group = useId()
   const [open, setOpen] = useState(false)
@@ -75,6 +114,7 @@ export default function TemplatePicker({ value, pro, onChange, previewLocked }: 
             )
           })}
         </div>
+        {pro && onAccent && hasAccent(current) && <AccentPicker value={accent} onChange={onAccent} />}
         {!pro && open && (
           <>
             <p className="hint">Modern, Compact and Minimal come with Pro.</p>
@@ -88,13 +128,14 @@ export default function TemplatePicker({ value, pro, onChange, previewLocked }: 
 
 export function TemplateSetting() {
   const pro = useCachedPro()
-  const [template, setTemplate] = useState<ResumeTemplate | undefined>()
-  useEffect(() => { void getResumeTemplate().then(setTemplate) }, [])
+  const [look, setLook] = useState<ResumeLook>({})
+  useEffect(() => { void getResumeLook().then(setLook) }, [])
+  const change = (patch: ResumeLook) => { setLook((l) => ({ ...l, ...patch })); void saveResumeLook(patch) }
   return (
     <section className="page-read-setting" aria-labelledby="template-setting-title">
       <h2 id="template-setting-title" className="page-read-setting-title">Resume template</h2>
       <p className="page-read-setting-hint">Used for your next tailored resume. You can change it on any resume.</p>
-      <TemplatePicker value={nextTemplate(template, pro)} pro={pro} onChange={(t) => { setTemplate(t); void saveResumeTemplate(t) }} />
+      <TemplatePicker value={nextTemplate(look.template, pro)} pro={pro} onChange={(template) => change({ template })} accent={look.accent} onAccent={(accent) => change({ accent })} />
     </section>
   )
 }

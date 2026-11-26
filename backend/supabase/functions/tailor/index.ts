@@ -508,6 +508,7 @@ Deno.serve(async (req) => {
   let fellBack = false
   let sourceHash: string | undefined
   let template: string | undefined
+  let accent: string | undefined
   try {
     const raw = await readBody(req, MAX_BODY_BYTES)
     if (raw === null) return json({ error: 'Request too large' }, 413)
@@ -521,15 +522,16 @@ Deno.serve(async (req) => {
     if (previous && JSON.stringify(previous).length > MAX_RESUME_JSON) return json({ error: 'Invalid request body' }, 400)
     // Not resume content for the model to revise (#131, #119).
     if (previous) {
-      const { sourceHash: _h, designFellBack: _f, template: _t, ...rest } = previous
+      const { sourceHash: _h, designFellBack: _f, template: _t, accent: _a, ...rest } = previous
       previous = rest
     }
     localId = isUuid(body.localId) ? body.localId : undefined
     layout = body.layout === 'yours' ? 'yours' : 'cover-me'
     fellBack = body.fellBack === true
     if (layout === 'yours' && !fellBack && typeof body.sourceHash === 'string' && /^[0-9a-f]{64}$/.test(body.sourceHash)) sourceHash = body.sourceHash
-    // The PDF template the user last picked, a Pro feature (#119).
+    // The PDF template and accent the user last picked, a Pro feature (#119).
     if (tier === 'hosted_pro' && PRO_TEMPLATES.includes(body.template)) template = body.template
+    if (tier === 'hosted_pro' && typeof body.accent === 'string' && /^#[0-9a-f]{6}$/i.test(body.accent)) accent = body.accent
   } catch {
     return json({ error: 'Invalid request body' }, 400)
   }
@@ -727,6 +729,7 @@ ${job.description}`)
     }
     if (sourceHash) resume.sourceHash = sourceHash
     if (template) resume.template = template
+    if (accent) resume.accent = accent
     if (buildsOnEdits(previous)) resume.hasEdits = true
 
     // Every extension build so far joins the standing "Candidate context" box into supplemental, so hasContext isn't only context added for this run (#168).

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { RESUME_TEMPLATES } from './pdf/resume'
 import { isCachedPro } from './resume-template'
-import { isLocked, nextTemplate } from '../popup/components/TemplatePicker'
+import { isLocked, lowContrast, nextTemplate } from '../popup/components/TemplatePicker'
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -30,5 +30,14 @@ describe('which templates an account can pick (#119)', () => {
     fakeLocal(storage)
     const pro = await isCachedPro()
     expect(RESUME_TEMPLATES.filter((t) => !isLocked(t, pro))).toEqual(expected)
+  })
+})
+
+describe('the warning under the accent picker (#119)', () => {
+  test('a pale accent is flagged as hard to read on white, a strong one is not', () => {
+    expect(lowContrast('#FFEB3B')).toBe(true)
+    expect(lowContrast('#A5B4FC')).toBe(true)
+    expect(lowContrast('#4F46E5')).toBe(false)
+    expect(lowContrast('#0F766E')).toBe(false)
   })
 })

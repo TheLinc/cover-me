@@ -144,7 +144,7 @@ describe('saving an edit', () => {
   })
 
   test('a template picked on an unedited resume saves the template and leaves it unedited (#119)', () => {
-    expect(savedResume(resume, { ...resume, skills: 'typed but not counted', template: 'modern' }, false, now)).toEqual({ ...resume, template: 'modern' })
+    expect(savedResume(resume, { ...resume, skills: 'typed but not counted', template: 'modern', accent: '#0F766E' }, false, now)).toEqual({ ...resume, template: 'modern', accent: '#0F766E' })
   })
 
   test('a template picked on an edited resume keeps the edit and its mark (#119)', () => {

@@ -1507,3 +1507,7 @@ textarea:focus-visible, input:focus-visible, [tabindex]:focus-visible {
 .template-thumb-mini > span { height: 1px; }
 .template-thumb-mini .tt-name { height: 2px; }
 .page-read-setting .template-picker { margin: 10px 0 0; }
+.template-accent { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-top: 12px; }
+.template-accent-label { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: var(--text); cursor: pointer; }
+.template-accent-label input { width: 32px; height: 24px; padding: 0; border: 1px solid var(--border); border-radius: 6px; background: none; cursor: pointer; }
+.template-accent .hint { flex-basis: 100%; margin: 0; }

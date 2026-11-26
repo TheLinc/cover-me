@@ -3,10 +3,9 @@ import { ensureValidSession, saveResumeEditToBackend } from '../../lib/auth'
 import { GOOGLE_SIGNIN } from '../../lib/config'
 import { downloadCoverLetterPdf } from '../../lib/pdf/cover-letter'
 import { downloadTailoredResumePdf } from '../../lib/pdf/resume'
-import type { ResumeTemplate } from '../../lib/pdf/types'
 import { letterSteps, tailorSteps } from '../../lib/progress-steps'
 import { openResumeEditor, postingTitleInSummary, saveResumeEdit } from '../../lib/resume-edit'
-import { saveResumeTemplate } from '../../lib/resume-template'
+import { saveResumeLook, type ResumeLook } from '../../lib/resume-template'
 import { downloadResumeWord, usesDesign } from '../../lib/design'
 import { getCandidateContext, getTailoredHistory, resolveMode, saveCandidateContext } from '../../lib/storage'
 import DownloadMenu from '../components/DownloadMenu'
@@ -483,11 +482,11 @@ export default function GeneratePage({ onNavigate }: Props) {
     askForReview('resume')
   }
 
-  async function pickTemplate(template: ResumeTemplate) {
+  async function pickLook(look: ResumeLook) {
     if (!tailoredResume || !tailoredEntryId) return
-    const next = { ...tailoredResume, template }
+    const next = { ...tailoredResume, ...look }
     setTailoredResume(next)
-    void saveResumeTemplate(template)
+    void saveResumeLook(look)
     await saveResumeEdit(tailoredEntryId, next)
     const session = pro ? await ensureValidSession() : null
     if (session) await saveResumeEditToBackend(session.access_token, tailoredEntryId, next).catch(() => {})
@@ -1124,7 +1123,7 @@ export default function GeneratePage({ onNavigate }: Props) {
                   {postingTitle && <PostingTitleTip {...postingTitle} />}
                   {reviewAt === 'resume' && !reviewUnderScore && <ReviewAsk onClose={() => setReviewAt(null)} />}
                   {tailoredEntryId && !tailoredResume.sourceHash && (
-                    <TemplatePicker value={tailoredResume.template} pro={pro} onChange={(t) => void pickTemplate(t)} />
+                    <TemplatePicker value={tailoredResume.template} pro={pro} onChange={(template) => void pickLook({ template })} accent={tailoredResume.accent} onAccent={(accent) => void pickLook({ accent })} />
                   )}
                   <div className="letter-actions">
                     <DownloadMenu

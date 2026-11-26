@@ -65,9 +65,9 @@ export function editedResume(scored: TailoredResume, draft: TailoredResume, now 
   }
 }
 
-// A template alone changes no text, so it leaves the resume unedited and its score current (#119).
+// A template or accent alone changes no text, so it leaves the resume unedited and its score current (#119).
 export function savedResume(scored: TailoredResume, draft: TailoredResume, textEdited: boolean, now = new Date()): TailoredResume {
-  return textEdited ? editedResume(scored, draft, now) : { ...scored, template: draft.template }
+  return textEdited ? editedResume(scored, draft, now) : { ...scored, template: draft.template, accent: draft.accent }
 }
 
 // Whether the editor shows a standard section: the resume has it. An emptied

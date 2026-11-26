@@ -403,10 +403,10 @@ describe('tailor', () => {
   it('a Pro account gets the template it last picked on the result and the saved copy (#119)', async () => {
     user = await createUser('hosted_pro')
     await uploadResume(user)
-    const res = await callFunction('tailor', { token: user.token, body: { job: JOB, template: 'minimal' } })
-    expect((await res.json()).resume.template).toBe('minimal')
+    const res = await callFunction('tailor', { token: user.token, body: { job: JOB, template: 'modern', accent: '#0F766E' } })
+    expect((await res.json()).resume).toMatchObject({ template: 'modern', accent: '#0F766E' })
     const detail = await (await callFunction('applications', { token: user.token })).json()
-    expect(detail.applications[0].tailoredResumes[0].resume.template).toBe('minimal')
+    expect(detail.applications[0].tailoredResumes[0].resume).toMatchObject({ template: 'modern', accent: '#0F766E' })
   })
 
   it.each([
@@ -415,8 +415,17 @@ describe('tailor', () => {
   ] as const)('%s gets no template, so the resume prints as Classic (#119)', async (_, tier, template) => {
     user = await createUser(tier)
     await uploadResume(user)
-    const res = await callFunction('tailor', { token: user.token, body: { job: JOB, template } })
-    expect((await res.json()).resume).not.toHaveProperty('template')
+    const res = await callFunction('tailor', { token: user.token, body: { job: JOB, template, accent: '#0F766E' } })
+    const { resume } = await res.json()
+    expect(resume).not.toHaveProperty('template')
+    if (tier === 'hosted_free') expect(resume).not.toHaveProperty('accent')
+  })
+
+  it('an accent that is not a #RRGGBB colour is dropped (#119)', async () => {
+    user = await createUser('hosted_pro')
+    await uploadResume(user)
+    const res = await callFunction('tailor', { token: user.token, body: { job: JOB, template: 'modern', accent: 'url(javascript:x)' } })
+    expect((await res.json()).resume).not.toHaveProperty('accent')
   })
 
   it('a run that fell back to the Cover Me layout keeps no hash', async () => {

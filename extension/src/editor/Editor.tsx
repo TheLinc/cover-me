@@ -6,7 +6,7 @@ import { downloadTailoredResumePdf, tailoredResumePdf, templateOf } from '../lib
 import type { PlacedSection } from '../lib/pdf/sections'
 import type { DeletedSection, ResumeTemplate } from '../lib/pdf/types'
 import { chosenOrder, postingTitleInSummary, restoreSection, returnToTab, saveResumeEdit, savedResume, shownSections, withResumeEdit, withSections } from '../lib/resume-edit'
-import { isCachedPro, saveResumeTemplate } from '../lib/resume-template'
+import { isCachedPro, saveResumeLook } from '../lib/resume-template'
 import { getMode, getResume, getTailoredHistory, saveParsedResume } from '../lib/storage'
 import DownloadMenu from '../popup/components/DownloadMenu'
 import GapChips from '../popup/components/GapChips'
@@ -114,6 +114,7 @@ export default function Editor() {
   const [status, setStatus] = useState<Status>('')
   const [preview, setPreview] = useState<ArrayBuffer | null>(null)
   const [template, setTemplate] = useState<ResumeTemplate | undefined>()
+  const [accent, setAccent] = useState<string | undefined>()
   const pro = useCachedPro()
   const [chosenPreview, setPreviewing] = useState<ResumeTemplate | null>(null)
   // Ends by itself once the account is Pro: upgraded in another tab, or the cached tier loaded after the click (#119).
@@ -132,6 +133,7 @@ export default function Editor() {
       if (!o) return
       setForm({ draft: structuredClone(o.scored), skills: skillLines(o.scored.skills) })
       setTemplate(o.scored.template)
+      setAccent(o.scored.accent)
       document.title = `Edit resume · ${o.jobTitle || 'Cover Me'}`
       // Ready for a save as the tab closes, which can't wait for a refresh. (#118)
       void proSession().then((s) => { session.current = s }).catch(() => {})
@@ -139,7 +141,7 @@ export default function Editor() {
   }, [id])
 
   const scored = typeof opened === 'object' && opened ? opened.scored : null
-  const current = useMemo(() => (form ? { ...resumeFromForm(form.draft, form.skills), template } : null), [form, template])
+  const current = useMemo(() => (form ? { ...resumeFromForm(form.draft, form.skills), template, accent } : null), [form, template, accent])
   const saved = useMemo(() => (current && scored ? savedResume(scored, current, dirty || !!scored.editedAt) : null), [current, scored, dirty])
   const changed = dirty || picked
 
@@ -164,7 +166,13 @@ export default function Editor() {
     setPreviewing(null)
     setTemplate(t)
     setPicked(true)
-    void saveResumeTemplate(t)
+    void saveResumeLook({ template: t })
+  }
+
+  function pickAccent(hex: string) {
+    setAccent(hex)
+    setPicked(true)
+    void saveResumeLook({ accent: hex })
   }
 
   function saveToAccount(): Promise<void> {
@@ -529,7 +537,7 @@ export default function Editor() {
       </main>
 
       <aside className="ed-preview" aria-label="PDF preview">
-        <TemplatePicker value={previewing ?? template} pro={pro} previewLocked onChange={pickTemplate} />
+        <TemplatePicker value={previewing ?? template} pro={pro} previewLocked onChange={pickTemplate} accent={accent} onAccent={pickAccent} />
         <p className="ed-preview-note" role="status">{previewing && (
           <>
             Previewing {templateName(previewing)}, a Pro template. Upgrade to download in it, or{' '}

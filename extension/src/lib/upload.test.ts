@@ -61,10 +61,10 @@ describe('tailorViaBackend', () => {
     const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit]
     expect(JSON.parse(init.body as string).localId).toBe('abc')
   })
-  test('sends the template the user last picked, for the backend to apply on Pro (#119)', async () => {
+  test('sends the template and accent the user last picked, for the backend to apply on Pro (#119)', async () => {
     const fetchMock = answer(200, { resume })
-    await tailorViaBackend(job, 'at', false, undefined, false, true, undefined, undefined, 'abc', undefined, 'compact')
+    await tailorViaBackend(job, 'at', false, undefined, false, true, undefined, undefined, 'abc', undefined, { template: 'modern', accent: '#0F766E' })
     const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit]
-    expect(JSON.parse(init.body as string).template).toBe('compact')
+    expect(JSON.parse(init.body as string)).toMatchObject({ template: 'modern', accent: '#0F766E' })
   })
 })
