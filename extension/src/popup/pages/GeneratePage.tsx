@@ -699,9 +699,9 @@ export default function GeneratePage({ onNavigate }: Props) {
         {/* Mounted once saved state has loaded (so reopening the popup doesn't
             announce "Done"), then kept, so screen readers hear each change. (#19) */}
         {setupLoaded && <span className="popup-status" role="status">{status}</span>}
+        <UpdateReady />
       </header>
 
-      <UpdateReady />
       <PageReadNotice />
       {/* After setup, so a new user's first screen stays the checklist. (#242) */}
       {setupLoaded && setupComplete && <AnswersNews />}

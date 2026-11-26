@@ -5,7 +5,7 @@ Extension features under the names a user would use, with where each lives and h
 ## Popup
 
 - Generate: the popup's first tab (`src/popup/pages/GeneratePage.tsx`). Reads the job on the active tab, then "Generate Cover Letter".
-- Update ready card: top of Generate (`src/popup/components/UpdateReady.tsx`). "Cover Me {version} is ready" with "Restart to update", once Chrome has a newer version. An unpacked build never gets one, so tests stub `chrome.runtime.requestUpdateCheck` with `ctx.addInitScript`, and turn on developer mode first or Chromium disables the extension on restart.
+- Update button: right end of the Generate header (`src/popup/components/UpdateReady.tsx`). "Update" restarts the extension into the newer version Chrome has, and hides while a letter or resume is generating. An unpacked build never gets one, so tests stub `chrome.runtime.requestUpdateCheck` with `ctx.addInitScript`, and turn on developer mode first or Chromium disables the extension on restart.
 - Paste a job by hand: Generate, "Can't detect the posting? Paste it manually →". Job title, company and description, then "Generate Cover Letter". `generateFromPastedJob` in the driver.
 - Own API key: Settings tab. A Claude or OpenAI key saved encrypted in `chrome.storage.local`; letters are written in the extension (`src/lib/ai/index.ts`), not on Cover Me's server. `seedOwnKey` in the driver sets one up with a resume.
 

@@ -10,10 +10,9 @@ export interface UpdateState {
 
 // Reloading stops a run in the background, and a stopped run still counts
 // against the user's limit (background/index.ts setCoverJob) (#377).
-export function updateCard(state: UpdateState): { version: string; canRestart: boolean } | null {
-  if (!state.pendingUpdate) return null
+export function updateReady(state: UpdateState): string | null {
   const running = state.coverJob?.status === 'loading' || state.tailorJob?.status === 'loading'
-  return { version: state.pendingUpdate, canRestart: !running }
+  return running ? null : state.pendingUpdate ?? null
 }
 
 // Chrome's docs call checking on a timer a misuse, since Chrome checks every

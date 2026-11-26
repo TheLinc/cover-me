@@ -1,16 +1,16 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { checkForUpdate, updateCard } from './update'
+import { checkForUpdate, updateReady } from './update'
 
-describe('updateCard', () => {
+describe('updateReady', () => {
   test('hidden with no pending version', () => {
-    expect(updateCard({})).toBeNull()
+    expect(updateReady({})).toBeNull()
   })
-  test('shown for a pending version, button on when nothing runs', () => {
-    expect(updateCard({ pendingUpdate: '1.11.0', coverJob: { status: 'done' }, tailorJob: { status: 'error' } })).toEqual({ version: '1.11.0', canRestart: true })
+  test('shown for a pending version when nothing runs', () => {
+    expect(updateReady({ pendingUpdate: '1.11.0', coverJob: { status: 'done' }, tailorJob: { status: 'error' } })).toBe('1.11.0')
   })
-  test('button off while a letter or a tailor is generating', () => {
-    expect(updateCard({ pendingUpdate: '1.11.0', coverJob: { status: 'loading' } })).toEqual({ version: '1.11.0', canRestart: false })
-    expect(updateCard({ pendingUpdate: '1.11.0', tailorJob: { status: 'loading' } })).toEqual({ version: '1.11.0', canRestart: false })
+  test('hidden while a letter or a tailor is generating', () => {
+    expect(updateReady({ pendingUpdate: '1.11.0', coverJob: { status: 'loading' } })).toBeNull()
+    expect(updateReady({ pendingUpdate: '1.11.0', tailorJob: { status: 'loading' } })).toBeNull()
   })
 })
 
