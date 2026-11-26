@@ -109,13 +109,13 @@ export default async function RolePage({ params }: { params: Promise<{ role: str
             return (
               <div key={kind} className="mb-10">
                 <h3 className="text-[17px] font-bold text-foreground tracking-[-0.3px] mb-2">{kind}</h3>
-                <Table>
+                <Table className="table-fixed">
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Keyword</TableHead>
-                      <TableHead className="text-right">Share</TableHead>
-                      <TableHead className="text-right">Postings that ask for it</TableHead>
-                      <TableHead className="w-[32%] max-sm:hidden" aria-hidden />
+                      <TableHead className="w-[40%] max-sm:w-[50%]">Keyword</TableHead>
+                      <TableHead className="w-[14%] max-sm:w-[18%] text-right">Share</TableHead>
+                      <TableHead className="w-[22%] max-sm:w-[32%] text-right">Postings that ask for it</TableHead>
+                      <TableHead className="w-[24%] max-sm:hidden" aria-hidden />
                     </TableRow>
                   </TableHeader>
                   <TableBody>
