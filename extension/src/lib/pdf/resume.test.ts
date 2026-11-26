@@ -148,3 +148,20 @@ describe('every template lays out a long and a short resume cleanly', () => {
     expect(await nameSize('minimal')).toBeGreaterThan(await nameSize('classic'))
   })
 })
+
+describe('accent colour (#119)', () => {
+  test('Modern prints its headings in the accent the user picked', () => {
+    expect(colourOf({ ...withTemplate(SHORT, 'modern'), accent: '#0F766E' }, 'EXPERIENCE')).toEqual([15, 118, 110])
+  })
+
+  test('an accent that is not a six-digit hex colour prints in Cover Me indigo', () => {
+    for (const accent of ['red', '#fff', 'url(x)', '#12345g', 42]) {
+      expect(colourOf({ ...withTemplate(SHORT, 'modern'), accent: accent as string }, 'EXPERIENCE')).toEqual([79, 70, 229])
+    }
+  })
+
+  test('templates without an accent ignore it', () => {
+    expect(colourOf({ ...SHORT, accent: '#0F766E' }, 'EXPERIENCE')).toEqual([0, 0, 0])
+    expect(colourOf({ ...withTemplate(SHORT, 'compact'), accent: '#0F766E' }, 'EXPERIENCE')).toEqual([0, 0, 0])
+  })
+})

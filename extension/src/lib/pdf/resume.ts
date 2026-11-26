@@ -30,10 +30,12 @@ interface TemplateStyle {
   lineHeight: number
   entryStep: number
   entryGap: number
+  accented?: boolean
 }
 
 const BLACK: RGB = [0, 0, 0]
 const INDIGO: RGB = [79, 70, 229]
+export const DEFAULT_ACCENT = '#4F46E5'
 
 export const RESUME_TEMPLATES: ResumeTemplate[] = ['classic', 'modern', 'compact', 'minimal']
 
@@ -54,7 +56,7 @@ const STYLES: Record<ResumeTemplate, TemplateStyle> = {
     headline: { size: 11, after: 13 },
     contact: { size: 9, step: 11.5, after: 6, sep: '   |   ' },
     heading: { size: 10.5, before: 11, after: 9, colour: INDIGO, rule: { width: 0.75, colour: INDIGO } },
-    body: 9.5, entry: 10, lineHeight: 12,
+    body: 9.5, entry: 10, lineHeight: 12, accented: true,
   },
   compact: {
     ...CLASSIC, margin: 40, top: 46, bottom: 36,
@@ -78,6 +80,15 @@ const STYLES: Record<ResumeTemplate, TemplateStyle> = {
 export function templateOf(template: unknown): ResumeTemplate {
   return RESUME_TEMPLATES.find((name) => name === template) ?? 'classic'
 }
+
+export const hasAccent = (template: ResumeTemplate) => !!STYLES[template].accented
+
+// Stored resumes are untrusted JSON: anything but a "#RRGGBB" colour prints in the template's own (#119).
+export function accentOf(accent: unknown): string | undefined {
+  return typeof accent === 'string' && /^#[0-9a-f]{6}$/i.test(accent) ? accent : undefined
+}
+
+const rgb = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)) as RGB
 
 export function downloadTailoredResumePdf(resume: TailoredResume, jobTitle?: string): void {
   tailoredResumePdf(resume).save(resumeFileName(resume, jobTitle, 'pdf'))
@@ -134,6 +145,8 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
   const doc = new jsPDF({ unit: 'pt', format: 'letter' })
   const st = STYLES[templateOf(resume.template)]
   const { font } = st
+  const accent = st.accented ? accentOf(resume.accent) : undefined
+  const heading = accent ? { ...st.heading, colour: rgb(accent), rule: { ...st.heading.rule, colour: rgb(accent) } } : st.heading
   const ML = st.margin
   const MR = PW - st.margin
   const CW = MR - ML
@@ -184,7 +197,6 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
   if (contact.length) y += st.contact.after
 
   function sectionHeading(title: string) {
-    const { heading } = st
     y += heading.before
     need(18)
     doc.setFont(font, 'bold')

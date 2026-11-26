@@ -96,6 +96,8 @@ export interface TailoredResume {
   // this one uses the Cover Me layout (#131).
   designFellBack?: boolean
   template?: ResumeTemplate
+  // "#RRGGBB" for a template with an accent (Modern). Missing means Cover Me indigo (#119).
+  accent?: string
 }
 
 // A deleted section: its content under its own field (an extra section under
