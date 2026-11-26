@@ -43,7 +43,7 @@ export default function ResumeKeywordsPage() {
           <h1 className="text-[clamp(32px,5vw,52px)] text-foreground leading-[0.98] mb-5">Resume keywords by job</h1>
           <p className="text-[17px] text-foreground leading-[1.7] mb-5 font-medium">
             Each page counts the skills, tools and certifications that real job postings for one kind of job ask for, read from companies&apos; public job
-            boards on Greenhouse and Lever. The boards read belong to mostly tech companies. Use the keywords that match your experience, in the words the postings use.
+            boards on Greenhouse and Lever. The boards read belong mostly to tech companies. Use the keywords that match your experience, in the words the postings use.
           </p>
           <p className="text-[15px] text-muted-foreground leading-[1.85]">
             To check your resume against the one posting you&apos;re applying to, use the{' '}

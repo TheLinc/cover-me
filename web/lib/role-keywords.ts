@@ -33,7 +33,7 @@ export function roleOf(title: string): RoleSlug | undefined {
 const SKIP: Record<RoleSlug, string[]> = {
   'administrative-assistant': [],
   warehouse: ['warehouse'],
-  sales: ['sales', 'SDR', 'compliance'],
+  sales: ['sales', 'SDR', 'BDR', 'compliance'],
   marketing: ['marketing', 'PMM'],
   engineering: [],
 }
@@ -43,7 +43,7 @@ export const KINDS = ['Tools and software', 'Skills', 'Education and certificati
 export type Kind = (typeof KINDS)[number]
 
 const TOOLS = new Set([
-  'Salesforce', 'HubSpot', 'LinkedIn', 'Marketo', 'Tableau', 'Looker', 'Power BI', 'Google Analytics', 'Excel', 'Microsoft Office', 'Word',
+  'Salesforce', 'HubSpot', 'LinkedIn', 'ZoomInfo', 'Outreach', 'Gong', 'Salesloft', 'SalesLoft', 'Apollo', 'Clari', 'Zendesk', 'Marketo', 'Tableau', 'Looker', 'Power BI', 'Google Analytics', 'Excel', 'Microsoft Office', 'Word',
   'PowerPoint', 'Outlook', 'Google Workspace', 'Slack', 'Jira', 'Figma', 'QuickBooks', 'SQL', 'Python', 'Java',
   'JavaScript', 'TypeScript', 'Go', 'Rust', 'C++', 'C#', 'React', 'Node.js', 'AWS', 'GCP', 'Azure', 'Kubernetes', 'Docker', 'Terraform',
   'Linux', 'Git', 'Snowflake', 'dbt', 'Airflow', 'Spark', 'PyTorch', 'TensorFlow',
@@ -53,6 +53,16 @@ const SOFT = new Set([
   'communication', 'leadership', 'organizational skills', 'interpersonal skills', 'attention to detail', 'teamwork', 'problem-solving',
   'mentoring', 'time management', 'multitasking', 'stakeholder management',
 ])
+
+const SKILLS = new Set([
+  'AI', 'SaaS', 'B2B', 'sales', 'marketing', 'business development', 'negotiation', 'CRM', 'ERP', 'WMS', 'customer success', 'procurement',
+  'forecasting', 'account management', 'networking', 'cold calling', 'onboarding', 'KPI', 'lead generation', 'logistics', 'PEO',
+  'program management', 'project management', 'ROI', 'marketing automation', 'growth marketing', 'GTM', 'compliance', 'ABM',
+  'lifecycle marketing', 'business intelligence', 'machine learning', 'API', 'LLM', 'distributed systems', 'CI/CD', 'electrical',
+  'SEO', 'content marketing', 'email marketing', 'social media', 'data analysis', 'inventory', 'forklift', 'supply chain', 'scheduling',
+])
+
+export const isSorted = (name: string) => [TOOLS, EDUCATION, SOFT, SKILLS].some((set) => set.has(name))
 
 export const kindOf = (name: string): Kind =>
   TOOLS.has(name) ? 'Tools and software' : EDUCATION.has(name) ? 'Education and certifications' : SOFT.has(name) ? 'Soft skills' : 'Skills'

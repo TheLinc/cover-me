@@ -1,5 +1,4 @@
-// Run by hand, not at build time: it reads live job boards, and the pages are checked
-// 30 days after each run before adding roles (#299). Needs Node 22.18 or later:
+// Run by hand, not at build time, since it reads live job boards (#299). Needs Node 22.18 or later:
 //
 //   node scripts/role-keywords.mjs
 

@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { beforeAll, describe, expect, it } from 'vitest'
-import { KINDS, MIN_POSTINGS, ROLE_SLUGS } from './role-keywords'
+import { KINDS, MIN_POSTINGS, ROLE_SLUGS, isSorted } from './role-keywords'
 import { FETCHED, HELD, ROLES, answers, lead } from './roles'
 
 let render: (path: string) => Promise<string>
@@ -83,7 +83,7 @@ describe('role keyword pages', () => {
     expect(html).toMatch(new RegExp(`${sales.counts.postings} sales postings from ${sales.counts.companies} companies`))
     expect(html).toContain(`Greenhouse (${sales.counts.sources.Greenhouse})`)
     expect(html).toContain(`Lever (${sales.counts.sources.Lever})`)
-    expect(html).toContain('mostly tech companies')
+    expect(html).toContain('mostly to tech companies')
     expect(html).toContain(`<time dateTime="${FETCHED}">`)
     expect(html).toContain('>Where to put these keywords</h2>')
     for (const { q } of answers(sales)) expect(html).toContain(`>${q.replace(/'/g, '&#x27;')}</h2>`)
@@ -108,5 +108,16 @@ describe('role keyword pages', () => {
       expect(urls).not.toContain(`https://www.cover-me.dev/resume-keywords/${slug}`)
       expect(llms).not.toContain(`/resume-keywords/${slug})`)
     }
+  })
+})
+
+describe('keyword types', () => {
+  it.each(each)('%s puts every keyword in a type someone chose, so a new name fails here until it is sorted', (_, r) => {
+    expect(r.counts.keywords.map((k) => k.name).filter((name) => !isSorted(name))).toEqual([])
+  })
+
+  it('tells engineers to name the tool, without sales words', () => {
+    const engineering = ROLES.find((r) => r.slug === 'engineering')!
+    expect(answers(engineering).map(({ a }) => a).join(' ')).not.toContain('CRM')
   })
 })

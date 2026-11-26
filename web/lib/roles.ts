@@ -108,7 +108,7 @@ export function answers(r: Role): { q: string; a: string }[] {
   if (t2) {
     qa.push({
       q: `Which tools do ${r.noun} job postings ask for?`,
-      a: `${t1.name} leads, named in ${t1.postings} of ${n} postings (${percent(r, t1)}%), followed by ${share(r, t2)}${t3 ? ` and ${share(r, t3)}` : ''}. Recruiters search an applicant tracking system for tools by name, so write the product you used, such as ${t1.name}, rather than a general word like "software" or "CRM".`,
+      a: `${t1.name} leads, named in ${t1.postings} of ${n} postings (${percent(r, t1)}%), followed by ${share(r, t2)}${t3 ? ` and ${share(r, t3)}` : ''}. Recruiters search an applicant tracking system for tools by name, so write the name of the tool you used, such as ${t1.name}, rather than a general word like "software".`,
     })
   }
   if (bachelor) {

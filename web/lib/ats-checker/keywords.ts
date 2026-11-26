@@ -77,7 +77,7 @@ function headingLevel(line: string, labelled: boolean): Heading | null {
   if (!marked && /\d/.test(text)) return null
   if (!looksLikeHeading(text, marked)) return null
   if (COMPANY.test(text)) return 'company'
-  if (/^a few logistics$/i.test(text) || (marked && /^logistics$/i.test(text))) return 'unknown'
+  if (/^a few logistics$/i.test(text) || (marked && !labelled && /^logistics$/i.test(text))) return 'unknown'
   const namedHeading = /^((required|preferred|minimum|basic) (qualifications|requirements|skills|experience)|.*\b(requirements|qualifications)|.*\b(looking for|seeking))$/i.test(text)
   if (!namedHeading && DICTIONARY.some((term) => has(text, term))) return null
   if (!namedHeading && SKIP.test(text)) return 'skip'
@@ -118,7 +118,7 @@ const BOILERPLATE = new RegExp(
     String.raw`(regardless of|without regard to)[^.]{0,60}${TRAIT}[^.]{0,80}${TRAIT}`,
     'Americans with Disabilities|reasonable accommodation|VEVRAA|OFCCP|E-Verify|eligibility to work|employment eligibility',
     'discriminat(?!ive)|protected veteran|pay transparency|know your rights|map data ©',
-    'agency resumes|unsolicited (resumes|candidates)|(headhunters|recruitment agencies) (may|must|should) not|terms and conditions of employment|in[- ]person onboarding|new hire onboarding',
+    'agency resumes|unsolicited (resumes|candidates)|(headhunters|recruitment agencies) (may|must|should) not|terms and conditions of employment|(attend|complete|travel|requires?|required to)\\b[^.]{0,60}\\b(in[- ]person|new hire) onboarding',
   ].join('|'),
   'i',
 )

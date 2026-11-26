@@ -100,7 +100,7 @@ export default async function RolePage({ params }: { params: Promise<{ role: str
             stops at the top {TOP}.
           </p>
           <p className="text-[14px] text-muted-foreground leading-[1.8] mb-8 max-w-[680px]">
-            The job boards read belong to mostly tech companies, so software terms such as AI may rank higher here than they would across all
+            The job boards read belong mostly to tech companies, so software terms such as AI may rank higher here than they would across all
             employers.
           </p>
           {KINDS.map((kind) => {
