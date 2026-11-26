@@ -7,9 +7,11 @@ import { SiteFooter } from '@/components/site/SiteFooter'
 import { SiteNav } from '@/components/site/SiteNav'
 import { KINDS, MIN_COMPANIES, PER_COMPANY, TOP, kindOf } from '@/lib/role-keywords'
 import { FETCHED, ROLES, answers, getRole, lead, percent } from '@/lib/roles'
-import { BASE, OG_IMAGE } from '@/lib/structured-data'
+import { AUTHOR, BASE, OG_IMAGE } from '@/lib/structured-data'
 import { cn, longDate, storeUrl } from '@/lib/utils'
 
+const LICENSE = 'https://creativecommons.org/licenses/by/4.0/'
+const SCRIPT = 'https://github.com/TheLinc/cover-me/blob/master/web/scripts/role-keywords.mjs'
 const LINK = 'text-brand-strong underline underline-offset-2 hover:text-brand-deep'
 const BUTTON = 'inline-flex items-center gap-2 font-semibold text-[14px] px-5 py-2.5 rounded-[8px] transition-colors'
 const PRIMARY = cn(BUTTON, 'bg-brand-strong text-white hover:bg-brand-deep')
@@ -64,9 +66,13 @@ export default async function RolePage({ params }: { params: Promise<{ role: str
       description: role.metaDescription,
       url,
       dateModified: FETCHED,
+      temporalCoverage: FETCHED,
       isAccessibleForFree: true,
-      creator: { '@type': 'Organization', name: 'Cover Me', url: BASE },
+      license: LICENSE,
+      creator: [AUTHOR, { '@type': 'Organization', name: 'Cover Me', url: BASE }],
       measurementTechnique: 'Keywords read from public Greenhouse and Lever job postings with the Cover Me ATS checker',
+      variableMeasured: ['Keyword', 'Keyword type', 'Postings that ask for the keyword', 'Share of postings'],
+      distribution: { '@type': 'DataDownload', encodingFormat: 'text/csv', contentUrl: `${url}/keywords.csv` },
     },
   ]
 
@@ -100,9 +106,14 @@ export default async function RolePage({ params }: { params: Promise<{ role: str
             At most {PER_COMPANY} postings come from any one company. A keyword fewer than {MIN_COMPANIES} companies ask for is left out, and the table
             stops at the top {TOP}.
           </p>
-          <p className="text-[14px] text-muted-foreground leading-[1.8] mb-8 max-w-[680px]">
+          <p className="text-[14px] text-muted-foreground leading-[1.8] mb-4 max-w-[680px]">
             The job boards read belong mostly to tech companies, so software terms such as AI may rank higher here than they would across all
             employers.
+          </p>
+          <p className="text-[14px] text-muted-foreground leading-[1.8] mb-8 max-w-[680px]">
+            Counted by <a href={AUTHOR.url} className={LINK}>{AUTHOR.name}</a> with an{' '}
+            <a href={SCRIPT} className={LINK}>open-source script</a>. You can reuse these counts with credit to Cover Me under{' '}
+            <a href={LICENSE} className={LINK}>CC BY 4.0</a>. <a href={`/resume-keywords/${role.slug}/keywords.csv`} className={LINK}>Download the table as CSV</a>.
           </p>
           {KINDS.map((kind) => {
             const rows = counts.keywords.filter((k) => kindOf(k.name) === kind)

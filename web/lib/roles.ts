@@ -5,7 +5,6 @@ import { month } from './utils'
 interface RoleCopy {
   slug: RoleSlug
   name: string
-  metaDescription: string
   titles: string
   intro: string[]
   bullets: string[]
@@ -17,8 +16,6 @@ const COPY: RoleCopy[] = [
   {
     slug: 'sales',
     name: 'Sales',
-    metaDescription:
-      'The skills, tools and degrees sales job postings ask for most, counted across real public postings, with the share of postings that ask for each one.',
     titles: 'account executive, sales development, business development and other sales titles, leaving out sales engineers',
     intro: [
       'Sales postings name the tools a team already runs, so a resume that says "CRM" can miss a posting that asks for Salesforce. Use the names the posting uses, and put each one next to a result, such as a quota you hit or a pipeline you built.',
@@ -33,8 +30,6 @@ const COPY: RoleCopy[] = [
   {
     slug: 'marketing',
     name: 'Marketing',
-    metaDescription:
-      'The skills, tools and degrees marketing job postings ask for most, counted across real public postings, with the share of postings that ask for each one.',
     titles: 'product marketing, growth, lifecycle, demand generation and other marketing titles',
     intro: [
       'Marketing postings ask for the software a team runs its campaigns in, such as Marketo or Salesforce. Name the tools you used on your resume, and give the number each campaign moved.',
@@ -49,8 +44,6 @@ const COPY: RoleCopy[] = [
   {
     slug: 'engineering',
     name: 'Engineering',
-    metaDescription:
-      'The skills, tools and degrees engineering job postings ask for most, counted across real public postings, with the share of postings that ask for each one.',
     titles: 'software, hardware, mechanical, electrical and other engineer titles, leaving out managers and sales, solutions and support engineers',
     intro: [
       'The postings come from software, hardware and aerospace companies. About half the list is programming languages, cloud platforms and other tools, and "electrical" comes mostly from degree fields such as electrical engineering. When a posting names a specific service or version, such as AWS Lambda, use that name on your resume and not only the platform.',
@@ -70,7 +63,15 @@ const titleCase = (s: string) => s.replace(/\b\w/g, (c) => c.toUpperCase())
 
 export const ROLES = COPY.map((c) => {
   const counts = data.roles[c.slug]
-  return { ...c, noun: c.name.toLowerCase(), counts, metaTitle: `${titleCase(c.name)} Resume Keywords From ${counts.postings} Job Postings` }
+  const noun = c.name.toLowerCase()
+  const top = counts.keywords.find((k) => kindOf(k.name) === 'Tools and software') ?? counts.keywords[0]
+  return {
+    ...c,
+    noun,
+    counts,
+    metaTitle: `${titleCase(c.name)} Resume Keywords From ${counts.postings} Job Postings`,
+    metaDescription: `${top.name} is named in ${Math.round((top.postings / counts.postings) * 100)}% of ${counts.postings} ${noun} job postings read in ${month(FETCHED)}. See the skills, tools and degrees they ask for most, with the share for each.`,
+  }
 })
 export type Role = (typeof ROLES)[number]
 

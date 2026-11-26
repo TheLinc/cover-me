@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { beforeAll, describe, expect, it } from 'vitest'
-import { KINDS, MIN_POSTINGS, ROLE_SLUGS, isSorted } from './role-keywords'
+import { KINDS, MIN_POSTINGS, ROLE_SLUGS, isSorted, kindOf } from './role-keywords'
 import { FETCHED, HELD, ROLES, answers, lead } from './roles'
 
 let render: (path: string) => Promise<string>
@@ -33,6 +33,39 @@ describe('role keyword pages', () => {
   it.each(each)('%s has a page title with the posting count that Google shows in full', (_, r) => {
     expect(r.metaTitle).toContain(`${r.counts.postings} Job Postings`)
     expect(`${r.metaTitle} | Cover Me`.length).toBeLessThanOrEqual(60)
+  })
+
+  it.each(each)('%s has a meta description that quotes its top tool as a share and fits in a search result', (_, r) => {
+    const tool = r.counts.keywords.find((k) => kindOf(k.name) === 'Tools and software')!
+    expect(r.metaDescription).toContain(`${tool.name} is named in ${Math.round((tool.postings / r.counts.postings) * 100)}% of ${r.counts.postings} ${r.noun} job postings`)
+    expect(r.metaDescription.length).toBeLessThanOrEqual(160)
+  })
+
+  it.each(each)('%s offers its table as CSV under CC BY, credits who counted it, and says so in the Dataset schema', async (slug, r) => {
+    const html = await render(`/resume-keywords/${slug}`)
+    expect(html).toContain(`href="/resume-keywords/${slug}/keywords.csv"`)
+    expect(html).toContain('href="https://creativecommons.org/licenses/by/4.0/"')
+    expect(html).toContain('href="https://github.com/TheLinc/cover-me/blob/master/web/scripts/role-keywords.mjs"')
+    const dataset = JSON.parse(/<script type="application\/ld\+json">(.*?)<\/script>/.exec(html)![1]).find((d: { '@type': string }) => d['@type'] === 'Dataset')
+    expect(dataset).toMatchObject({
+      license: 'https://creativecommons.org/licenses/by/4.0/',
+      description: r.metaDescription,
+      distribution: { '@type': 'DataDownload', encodingFormat: 'text/csv', contentUrl: `https://www.cover-me.dev/resume-keywords/${slug}/keywords.csv` },
+    })
+    expect(dataset.creator).toContainEqual(expect.objectContaining({ '@type': 'Person', name: 'Lincoln Laylor' }))
+  })
+
+  it('serves each table as CSV, one row per keyword', async () => {
+    const { GET } = await import('../app/resume-keywords/[role]/keywords.csv/route')
+    const sales = ROLES.find((r) => r.slug === 'sales')!
+    const res = await GET(new Request('https://x'), { params: Promise.resolve({ role: 'sales' }) })
+    expect(res.headers.get('Content-Type')).toContain('text/csv')
+    const lines = (await res.text()).trim().split('\n')
+    expect(lines[0]).toBe('keyword,type,postings,of,share_percent')
+    expect(lines).toHaveLength(sales.counts.keywords.length + 1)
+    const top = sales.counts.keywords[0]
+    expect(lines[1]).toBe(`${top.name},${kindOf(top.name)},${top.postings},${sales.counts.postings},${Math.round((top.postings / sales.counts.postings) * 100)}`)
+    expect((await GET(new Request('https://x'), { params: Promise.resolve({ role: 'warehouse' }) })).status).toBe(404)
   })
 
   it('opens with the top keywords and the top tool, each as a share of the postings', () => {
