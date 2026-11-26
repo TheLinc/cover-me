@@ -271,7 +271,7 @@ export default function PrivacyPage() {
               <Li>
                 <strong className="text-foreground">Requests to hear back about a site (Hosted mode, signed in, only if you tick the box).</strong>{' '}
                 Above the Request this site button, a signed-in Hosted user sees an unticked box, Email me when
-                Cover Me reads this site, with their account email. The box stays under the thanks line afterwards, so you can tick
+                it&apos;s supported, which shows their account email when you point at &ldquo;me&rdquo;. The box stays under the thanks line afterwards, so you can tick
                 or untick it later. Nothing is saved unless you tick it. Ticking it saves the site&apos;s name with
                 your Cover Me account ID on our server, never in PostHog: the site request itself is sent separately
                 and stays under its random ID. Unticking it deletes the record. When Cover Me starts reading that

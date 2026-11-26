@@ -105,7 +105,7 @@ describe('site-request', () => {
   })
 })
 
-// "Email me when Cover Me reads this site" (#195): signed-in only, stored in
+// "Email me when it's supported" (#195): signed-in only, stored in
 // site_watch, never sent to PostHog.
 describe('site-request watch', () => {
   let user: TestUser

@@ -449,7 +449,7 @@ verify_jwt = false
 
 # The extension's "Request this site" and "Report bug" buttons (#130), also
 # without an account. Rate-limited per IP like scrape; sends only to PostHog,
-# except a signed-in user's "Email me when Cover Me reads this site" (#195).
+# except a signed-in user's "Email me when it's supported" (#195).
 [functions.site-request]
 verify_jwt = false
 

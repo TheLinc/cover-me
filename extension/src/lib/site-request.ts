@@ -4,7 +4,7 @@ import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from './config'
 // The popup's "Request this site" and "Report bug" buttons (#130), through the
 // site-request Edge Function. A press is consent for that one send, whatever
 // the user chose on the page-read notice. A watch is the signed-in "Email me
-// when Cover Me reads this site" box (#195), the only kind sent with a token.
+// when it's supported" box (#195), the only kind sent with a token.
 export type SiteRequest =
   | { kind: 'site'; host: string }
   | { kind: 'bug'; url: string; scraper: ScraperName; error: string; version: string }

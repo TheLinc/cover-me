@@ -7,7 +7,7 @@ const SERVICE_KEY = Deno.env.get('SERVICE_KEY')!
 const supabase = createClient(Deno.env.get('SUPABASE_URL')!, SERVICE_KEY)
 const HOST = /^(?=.{4,253}$)(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9-]{2,}$/
 
-// "Email me when Cover Me reads this site" (#195). When support for a site
+// "Email me when it's supported" (#195). When support for a site
 // ships, the developer runs `pnpm notify-site <host>`, which POSTs { host }
 // here with the service key in X-Service-Key: the gateway may rewrite an
 // Authorization header that carries an API key. Each account in site_watch
@@ -70,7 +70,7 @@ function send(to: string, host: string) {
       'Lincoln',
       'Cover Me',
       '',
-      "You're getting this one email because you ticked \"Email me when Cover Me reads this site\". We've now deleted that request.",
+      "You're getting this one email because you ticked \"Email me when it's supported\" for this site. We've now deleted that request.",
     ].join('\n'),
   }))
 }

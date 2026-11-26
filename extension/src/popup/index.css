@@ -1398,6 +1398,7 @@ textarea:focus-visible, input:focus-visible, [tabindex]:focus-visible {
 .scrape-failure-card p { text-wrap: pretty; }
 .site-watch { align-items: flex-start; margin-top: 8px; overflow-wrap: anywhere; }
 .site-watch input[type="checkbox"] { flex-shrink: 0; margin-top: 2px; }
+.site-watch-me { text-decoration: underline dotted; text-underline-offset: 2px; cursor: help; }
 
 /* A text box with its action on its bottom edge (#118): Regenerate sits with
    the text it sends, which keeps the result row to Download, Edit and New. */

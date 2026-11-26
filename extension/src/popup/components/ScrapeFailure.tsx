@@ -167,7 +167,8 @@ function WatchLabel({ email, checked, disabled, onChange }: { email: string; che
   return (
     <label className="compact-toggle site-watch">
       <input type="checkbox" checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} />
-      <span>Email me at {email} when Cover Me reads this site</span>
+      {/* The address shows on hover, and screen readers hear it, so the label stays short (#195). */}
+      <span>Email <span className="site-watch-me" title={email}>me</span><span className="sr-only"> ({email})</span> when it&apos;s supported</span>
     </label>
   )
 }
