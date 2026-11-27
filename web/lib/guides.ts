@@ -183,6 +183,15 @@ export const GUIDES: Guide[] = [
       "The top of the free ATS resume template in Word: Your Name centered over a contact line, then Summary, Experience and Education headings with placeholder text and bullets. Below it, checks for Lever, Workday, Ashby and SmartRecruiters. Free .docx, no sign-up, tested November 24, 2026.",
   },
   {
+    slug: 'best-chrome-extensions-for-job-applications',
+    title: 'Best Chrome extensions for job applications, sorted by what they do',
+    description: 'Nine Chrome extensions for job seekers, sorted by job: autofill, job tracking, resume tailoring and cover letters, and keyword checks. The job sites each one names, its free limits and its price, from each maker’s site in November 2026.',
+    date: '2026-11-27',
+    image: '/guides/best-chrome-extensions-for-job-applications.png',
+    imageAlt:
+      "Chrome extensions for job applications sorted by job, from each maker's site on November 27, 2026. Autofill: Simplify Copilot, free with no limit, and JobWizard, 30 a week free. Job tracking: Huntr, 100 jobs free, and Teal, unlimited free. Tailoring and cover letters: Cover Me, 10 to start then 5 a week free. Keyword check: Jobalytics, free.",
+  },
+  {
     slug: 'best-ai-for-resume-tailoring',
     title: 'Best AI for resume tailoring: 6 tools tested for made-up claims',
     description: 'Six AI tools got three resumes that lacked what the job asked for. Which ones made up skills, years or results? Tested November 2026.',

@@ -108,7 +108,18 @@ describe('internal links', () => {
     .filter((f) => f.endsWith('.tsx'))
     .map((file) => ({ file, text: readFileSync(join(root, file), 'utf8') }))
 
-  it.each(['aiapply-review', 'free-jobscan-alternatives', 'use-your-own-api-key-for-cover-letters', 'jobright-review', 'how-to-answer-job-application-questions', 'careerflow-review', 'best-ai-for-resume-tailoring'])(
+  it('every link to a guide points at a guide that exists', () => {
+    const slugs = new Set(GUIDES.map((g) => g.slug))
+    const libFiles = readdirSync(join(root, 'lib'))
+      .filter((f) => f.endsWith('.ts') && !f.endsWith('.test.ts'))
+      .map((f) => ({ file: join('lib', f), text: readFileSync(join(root, 'lib', f), 'utf8') }))
+    const broken = [...files, ...libFiles].flatMap(({ file, text }) =>
+      [...text.matchAll(/["']\/guides\/([a-z0-9-]+)["'#]/g)].filter((m) => !slugs.has(m[1])).map((m) => `${file}: /guides/${m[1]}`),
+    )
+    expect(broken).toEqual([])
+  })
+
+  it.each(['aiapply-review', 'free-jobscan-alternatives', 'use-your-own-api-key-for-cover-letters', 'jobright-review', 'how-to-answer-job-application-questions', 'careerflow-review', 'best-chrome-extensions-for-job-applications', 'best-ai-for-resume-tailoring'])(
     '%s is linked from at least two other pages, besides the /guides index',
     (slug) => {
       const own = join('app', 'guides', slug, 'page.tsx')
@@ -235,4 +246,42 @@ describe('the ATS resume template guide', () => {
   it('is linked from the ATS format guide', () => {
     expect(readFileSync(join(__dirname, '../app/guides/ats-friendly-resume-format/page.tsx'), 'utf8')).toContain(`href="/guides/${slug}"`)
   })
+})
+
+describe('the Chrome extensions for job applications guide', () => {
+  const slug = 'best-chrome-extensions-for-job-applications'
+  const render = async () => {
+    const { renderToStaticMarkup } = await import('react-dom/server')
+    const { default: Page } = await import(`../app/guides/${slug}/page.tsx`)
+    return renderToStaticMarkup(h(Page))
+  }
+
+  it('names Chrome extensions and job applications in its title and H1, and shows the test date', async () => {
+    const { metadata } = (await import(`../app/guides/${slug}/page.tsx`)) as { metadata: Metadata }
+    const title = (metadata.title as { absolute: string }).absolute
+    expect(title).toMatch(/Chrome extensions/i)
+    expect(title).toMatch(/job applications/i)
+    const html = await render()
+    const h1 = html.match(/<h1[^>]*>(.*?)<\/h1>/)![1]
+    expect(h1).toMatch(/Chrome extensions/i)
+    expect(h1).toMatch(/job applications/i)
+    expect(html.replace(/<[^>]+>/g, ' ')).toContain('November 27, 2026')
+  }, 20_000)
+
+  it("links every extension's store listing and its maker's own page in the comparison table", async () => {
+    const html = await render()
+    const rows = html.match(/<tbody>(.*?)<\/tbody>/)![1].split('</tr>').filter(Boolean)
+    expect(rows.length).toBeGreaterThanOrEqual(8)
+    for (const row of rows) {
+      expect(row).toMatch(/<a href="https:\/\/chromewebstore\.google\.com\/detail\//)
+      expect(row).toMatch(/<a href="(https:\/\/(?!chromewebstore)|\/#pricing|\/guides\/)/)
+    }
+  }, 20_000)
+
+  it("links Cover Me's store listing and every job site page", async () => {
+    const html = await render()
+    expect(html).toContain('href="https://chromewebstore.google.com/detail/cover-me-ai-resume-tailor/bpbnopjgjbimdjjdolhkgimllbgamgpi')
+    const { BOARDS } = await import('./boards')
+    for (const b of BOARDS) expect(html).toContain(`href="/for/${b.slug}"`)
+  }, 20_000)
 })
