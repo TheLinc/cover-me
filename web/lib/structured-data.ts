@@ -10,7 +10,7 @@ export const AUTHOR = { '@type': 'Person', name: 'Lincoln Laylor', url: 'https:/
 
 export const ORG_ID = `${BASE}/#organization`
 
-const SITE_DESCRIPTION = 'Cover Me is a Chrome extension that tailors your resume and writes a cover letter for the job posting you have open, with an ATS match score and answers to application questions. It reads postings on LinkedIn, Indeed, Greenhouse, Lever, Workday and Ashby, and has a free plan to start.'
+const SITE_DESCRIPTION = 'Cover Me is a Chrome extension that tailors your resume and writes a cover letter for the job posting you have open, with an ATS match score and answers to application questions. It reads postings on LinkedIn, Indeed, Greenhouse, Lever, Workday, Ashby, BambooHR and Workable, and has a free plan to start.'
 
 export const jsonLdOrg = {
   '@context': 'https://schema.org',

@@ -68,7 +68,7 @@ export default function AboutPage() {
             Tailoring one application shouldn&apos;t take 12 minutes.
           </h1>
           <p className="text-[12px] text-muted-foreground mb-5">
-            <time dateTime="2026-11-23">Last updated November 23, 2026</time>
+            <time dateTime="2026-11-27">Last updated November 27, 2026</time>
           </p>
           <p className="text-[17px] text-muted-foreground leading-[1.75]">
             Cover Me (cover-me.dev) is a Chrome extension that tailors your resume and writes a cover letter for the job posting you have open. Lincoln Laylor, a software developer in Canada, builds it. It reads postings on LinkedIn, Indeed, Greenhouse, Lever, Workday and Ashby, shows an ATS match score with the keywords you&apos;re missing, and removes any skill your original resume doesn&apos;t support. There&apos;s a free plan to start. Cover Me isn&apos;t related to the CoverMe AI project on GitHub.
