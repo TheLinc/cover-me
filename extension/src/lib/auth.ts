@@ -165,7 +165,12 @@ export async function syncResume(sess: AuthSession): Promise<void> {
   // A re-read the account never got replaces the account's copy only while
   // that copy is still the text it was read from (#401).
   const rereadOf = !!mine?.rereadFrom && !!remote && (remote.text === mine.text || await sha256Hex(new TextEncoder().encode(remote.text)) === mine.rereadFrom)
-  const keepMine = mine && (!remote || remote.text === mine.text || rereadOf || (!signedOut && Date.parse(mine.updatedAt) >= Date.parse(remote.updatedAt)))
+  // A marked copy whose base text the account no longer has lost to it, whatever the dates (#401).
+  const keepMine = mine && (!remote || remote.text === mine.text || rereadOf || (!signedOut && !mine.rereadFrom && Date.parse(mine.updatedAt) >= Date.parse(remote.updatedAt)))
+
+  // Don't overwrite a resume the user added while this ran (#16).
+  const current = await getResume()
+  if (current?.updatedAt !== local?.updatedAt || current?.text !== local?.text) return
 
   let next: ResumeData | null = null
   if (remote) {
@@ -174,7 +179,8 @@ export async function syncResume(sess: AuthSession): Promise<void> {
   }
   if (keepMine) {
     // Matching the account's copy, a signed-out copy is in the account after all (#16).
-    const { signedOutUpload, ...rest } = mine
+    // From current: a design check may have finished during the fetch (#401).
+    const { signedOutUpload, ...rest } = current ?? mine
     const same = remote?.text === mine.text
     const readerVersion = same ? Math.max(mine.readerVersion ?? 0, remote.readerVersion ?? 0) || undefined : mine.readerVersion
     const uploadedAt = mine.uploadedAt ?? (same ? remote.uploadedAt : undefined)
@@ -184,9 +190,6 @@ export async function syncResume(sess: AuthSession): Promise<void> {
     }
   }
 
-  // Don't overwrite a resume the user added while this ran (#16).
-  const current = await getResume()
-  if (current?.updatedAt !== local?.updatedAt || current?.text !== local?.text) return
   // Tag before uploading: if the upload fails, the copy still isn't claimable
   // by the next account to sign in here, and this account retries next time (#16).
   if (next) await saveResume(next)
@@ -201,13 +204,14 @@ export async function syncResume(sess: AuthSession): Promise<void> {
       if (!(err instanceof ResumeChangedError)) throw err
       refused = true
     }
+    // Refused: the account's text changed after the fetch, so it wins on the
+    // next pass. The mark stays until then, so nothing uploads this copy plain (#401).
+    if (refused) return syncResume(sess)
     const saved = await getResume()
     if (saved?.rereadFrom && saved.text === mine.text) {
       const { rereadFrom: _r, ...done } = saved
       await saveResume(done)
     }
-    // Refused: the account's text changed after the fetch. Without the marker, it wins now (#401).
-    if (refused) return syncResume(sess)
   }
   // Pro: the Word file that goes with the account's resume comes down too
   // (#174), unless this computer has its own design for it. A static import:

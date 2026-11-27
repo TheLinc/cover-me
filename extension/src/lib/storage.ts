@@ -104,8 +104,9 @@ export async function deleteFromTailoredHistory(id: string): Promise<void> {
 }
 
 // The user's uploaded PDF and Word files (#131, #401), each under an id
-// (fileId in lib/resume-file.ts, or the SHA-256 of an older Word file), kept for as long as the resume or a History entry uses
-// it, so an older entry still downloads in the design it was tailored in.
+// (fileId in lib/resume-file.ts, or the SHA-256 of an older Word file), kept
+// for as long as the resume or a History entry uses it, so an older entry
+// still downloads in the design it was tailored in.
 // Base64: storage holds JSON. parsed: Word only, the parse the upload check
 // matched against, which places the tailored text later.
 export interface DesignFile { data: string; parsed?: ParsedResume }

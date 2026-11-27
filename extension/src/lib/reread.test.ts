@@ -187,7 +187,7 @@ describe('refreshResume (#401)', () => {
     expect(local.resume).toMatchObject({ text: 'Pat new text', rereadFrom: await sha256Hex(new TextEncoder().encode('Pat old text')) })
   })
 
-  test("a hosted Word re-read asks the worker for the design check, and the account gets a guarded re-read", async () => {
+  test("a hosted Word re-read leaves the account to the worker's design check, which sends the re-read first", async () => {
     const word: ResumeData = { text: 'Pat old text', filename: 'Pat.docx', updatedAt: '2026-11-01T00:00:00.000Z', accountId: 'me', file: { id: OLD_ID, size: 4, type: 'docx' }, design: { hash: OLD_ID, size: 4, status: 'done' } }
     store(word, hosted)
     const order: string[] = []
@@ -197,8 +197,9 @@ describe('refreshResume (#401)', () => {
     fetchMock.mockImplementation(async (url: string, init?: RequestInit) => { if (init?.method === 'POST') order.push('post'); return inner(url, init) })
     ;(chrome.runtime as { sendMessage: unknown }).sendMessage = async () => { order.push('check') }
     expect(await refreshResume({ read: reads('Pat new text') })).toBe('changed')
-    expect(posts).toMatchObject([{ text: 'Pat new text', reread: true }])
-    expect(order).toEqual(['check', 'post'])
+    expect(posts).toEqual([])
+    expect(order).toEqual(['check'])
+    expect(local.resume).toMatchObject({ text: 'Pat new text', rereadFrom: await sha256Hex(new TextEncoder().encode('Pat old text')) })
   })
 
   test('a resume replaced during the read is not overwritten', async () => {

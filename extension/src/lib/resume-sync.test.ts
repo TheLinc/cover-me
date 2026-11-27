@@ -47,6 +47,21 @@ describe('syncResume carries the reader version (#401)', () => {
     expect(data.resume).toMatchObject({ uploadedAt: '2026-09-30T00:00:00Z' })
   })
 
+  test('a design check that finishes during the fetch is kept', async () => {
+    const { data } = setup(
+      { text: 'same', filename: 'cv.docx', updatedAt: '2026-10-05T00:00:00Z', design: { hash: 'f', size: 3, status: 'checking' } },
+      { text: 'same', filename: 'cv.docx', updated_at: '2026-10-01T00:00:00Z' },
+    )
+    const fetchMock = globalThis.fetch as ReturnType<typeof vi.fn>
+    const inner = fetchMock.getMockImplementation()!
+    fetchMock.mockImplementation(async (url: string, init?: RequestInit) => {
+      data.resume = { ...(data.resume as object), design: { hash: 'f', size: 3, status: 'done' } }
+      return inner(url, init)
+    })
+    await syncResume(session)
+    expect(data.resume).toMatchObject({ design: { status: 'done' } })
+  })
+
   test('a pulled-down resume carries reader_version and uploaded_at, and no stored file', async () => {
     const { data } = setup(
       { text: 'old local', filename: 'old.pdf', updatedAt: '2026-09-01T00:00:00Z', readerVersion: 1, file: { id: 'f', size: 3, type: 'pdf' } },
@@ -92,6 +107,13 @@ describe('syncResume finishes a re-read the account never got (#401)', () => {
   test("refused because the account changed meanwhile, the account's copy wins", async () => {
     const { data } = setup(await reread(), account, { later: { text: 'from another computer', filename: 'b.pdf', updated_at: '2026-10-02T00:00:00Z' }, postStatus: 409 })
     await syncResume(session)
+    expect(data.resume).toMatchObject({ text: 'from another computer' })
+  })
+
+  test('never goes up plain over another resume, even with a later date', async () => {
+    const { data, uploads } = setup({ ...(await reread()), updatedAt: '2026-12-01T00:00:00Z' }, { text: 'from another computer', filename: 'b.pdf', updated_at: '2026-10-02T00:00:00Z' })
+    await syncResume(session)
+    expect(uploads).toEqual([])
     expect(data.resume).toMatchObject({ text: 'from another computer' })
   })
 

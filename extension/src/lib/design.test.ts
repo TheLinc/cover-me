@@ -1,6 +1,6 @@
 import JSZip from 'jszip'
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { checkUploadedDesign, designForTailor, designWithParse, downloadResumeWord, finishDesign, parseForTailor, toBase64, uploadDesignIfPro } from './design'
+import { checkUploadedDesign, designForTailor, designWithParse, downloadResumeWord, finishDesign, parseForTailor, sha256Hex, toBase64, uploadDesignIfPro } from './design'
 
 const parseMock = vi.hoisted(() => vi.fn())
 vi.mock('./ai/resume-parse', async (importOriginal) => ({ ...(await importOriginal<object>()), parseResumeStructure: parseMock }))
@@ -216,7 +216,7 @@ describe('the upload check', () => {
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
-  test('hosted: a re-read the account lacks goes up as a re-read before the check, and a refused one stops it (#401)', async () => {
+  test('hosted: a re-read the account lacks goes up as a re-read before the check, and a failed send stops it (#401)', async () => {
     const session = { access_token: 't', refresh_token: 'r', expires_at: Math.floor(Date.now() / 1000) + 3600, user: { id: 'me', email: 'ada@example.com' } }
     const rereadFrom = 'b'.repeat(64)
     await store({ status: 'checking', extra: { settings: { provider: 'claude', apiKey: '', mode: 'hosted' }, session, resume: { accountId: 'me', rereadFrom } } })
@@ -240,6 +240,24 @@ describe('the upload check', () => {
     await checkUploadedDesign(hash)
     expect(posts.some((p) => p.parse)).toBe(false)
     expect((local.resume as { design: unknown }).design).toMatchObject({ status: 'error' })
+  })
+
+  test('hosted: a re-read the account refuses gives way to its copy, and the check stops quietly (#401)', async () => {
+    const session = { access_token: 't', refresh_token: 'r', expires_at: Math.floor(Date.now() / 1000) + 3600, user: { id: 'me', email: 'ada@example.com' } }
+    const rereadFrom = await sha256Hex(new TextEncoder().encode('Old Ada'))
+    await store({ status: 'checking', extra: { settings: { provider: 'claude', apiKey: '', mode: 'hosted' }, session, resume: { accountId: 'me', rereadFrom } } })
+    const posts: Array<Record<string, unknown>> = []
+    vi.stubGlobal('fetch', vi.fn(async (_url: string, init?: RequestInit) => {
+      if (init?.method === 'POST') {
+        posts.push(JSON.parse(init.body as string))
+        return new Response('{"error":"Resume changed"}', { status: 409 })
+      }
+      const text = posts.length ? 'From another computer' : 'Old Ada'
+      return new Response(JSON.stringify({ text, filename: 'other.pdf', updated_at: '2026-11-02T00:00:00Z' }), { status: 200 })
+    }))
+    await checkUploadedDesign(hash)
+    expect(posts).toMatchObject([{ reread: true, baseTextHash: rereadFrom }])
+    expect(local.resume).toMatchObject({ text: 'From another computer' })
   })
 
   test("hosted: the check's upload sends the resume's readerVersion and uploadedAt (#401)", async () => {
