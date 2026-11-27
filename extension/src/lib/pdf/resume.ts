@@ -11,11 +11,11 @@ import type { ResumeSection, ResumeTemplate, TailoredResume } from './types'
 const PW = 612
 const PH = 792
 
-type RGB = [number, number, number]
+export type RGB = [number, number, number]
 
 // One layout, several looks: every template is single-column with plain-text
 // contact details, so ATS parsing holds (#119). Sizes and gaps are in points.
-interface TemplateStyle {
+export interface TemplateStyle {
   font: 'times' | 'helvetica'
   margin: number
   top: number
@@ -89,6 +89,13 @@ export function accentOf(accent: unknown): string | undefined {
   return typeof accent === 'string' && /^#[0-9a-f]{6}$/i.test(accent) ? accent : undefined
 }
 
+// The look a resume prints in, the PDF's and the Word copy's, with its accent applied (#119).
+export function resumeStyle(resume: Pick<TailoredResume, 'template' | 'accent'>): TemplateStyle {
+  const st = STYLES[templateOf(resume.template)]
+  const accent = st.accented ? accentOf(resume.accent) : undefined
+  return accent ? { ...st, heading: { ...st.heading, colour: rgb(accent), rule: { ...st.heading.rule, colour: rgb(accent) } } } : st
+}
+
 export function downloadTailoredResumePdf(resume: TailoredResume, jobTitle?: string): void {
   tailoredResumePdf(resume).save(resumeFileName(resume, jobTitle, 'pdf'))
 }
@@ -142,10 +149,8 @@ export function pdfSafe(text: unknown): string {
 // by the extension's editor preview, so the two are the same file (#118).
 export function tailoredResumePdf(resume: TailoredResume): jsPDF {
   const doc = new jsPDF({ unit: 'pt', format: 'letter' })
-  const st = STYLES[templateOf(resume.template)]
-  const { font } = st
-  const accent = st.accented ? accentOf(resume.accent) : undefined
-  const heading = accent ? { ...st.heading, colour: rgb(accent), rule: { ...st.heading.rule, colour: rgb(accent) } } : st.heading
+  const st = resumeStyle(resume)
+  const { font, heading } = st
   const ML = st.margin
   const MR = PW - st.margin
   const CW = MR - ML
