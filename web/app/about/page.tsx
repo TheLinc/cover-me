@@ -171,7 +171,7 @@ export default function AboutPage() {
               {[
                 ['About 20 sec', 'for a cover letter, about 30 with a tailored resume'],
                 ['MIT licensed', 'extension, backend and schema on GitHub'],
-                ['6 job boards', 'LinkedIn, Indeed, Greenhouse, Lever, Workday, Ashby, plus paste from any site'],
+                ['8 job sites', 'LinkedIn, Indeed, Greenhouse, Lever, Workday, Ashby, BambooHR, Workable, plus paste from any site'],
                 ['0 telemetry', 'in the extension: no analytics, no ads, no tracking'],
               ].map(([stat, label]) => (
                 <div key={stat}>
