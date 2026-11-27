@@ -8,7 +8,7 @@ const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 // Real content dates, not new Date(): Google ignores lastmod once it stops matching real changes
 // (https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap#additional-notes-about-xml-sitemaps).
 const LAST_MODIFIED = {
-  home: '2026-11-09',
+  home: '2026-11-27',
   about: '2026-11-27',
   legal: '2026-11-11',
   support: '2026-10-29',
