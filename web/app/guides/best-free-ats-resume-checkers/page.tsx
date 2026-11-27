@@ -51,7 +51,7 @@ const TOOLS = [
   { name: 'Jobscan', limit: '5 resume scans a month', account: 'Yes', posting: 'Yes', result: 'Match rate, searchability tips and a short skills list', sources: [{ label: 'Plans', href: SRC.jobscanPlan }, { label: 'Premium', href: SRC.jobscanPremium }] },
   { name: 'SkillSyncer', limit: '2 job match scans and 10 AI credits a week', account: 'Yes, no card', posting: 'Yes', result: 'Match score, missing keywords, job title and degree match', sources: [{ label: 'Pricing', href: SRC.skillsyncer }] },
   { name: 'Teal', limit: 'Top 5 keywords for each job', account: 'Yes', posting: 'Yes', result: 'Basic resume analysis and the top 5 keywords', sources: [{ label: 'Pricing', href: SRC.teal }] },
-  { name: 'Resume Worded', limit: 'Your score and top issues; part of the Targeted Resume report', account: 'Yes', posting: 'Yes, in Targeted Resume', result: 'Score and top issues', sources: [{ label: 'Upload', href: SRC.resumeWordedUpload }, { label: 'Pro', href: SRC.resumeWordedPro }] },
+  { name: 'Resume Worded', limit: 'Not stated; the full Targeted Resume report is on Pro', account: 'Yes', posting: 'Yes, in Targeted Resume', result: 'Score and top issues', sources: [{ label: 'Upload', href: SRC.resumeWordedUpload }, { label: 'Pro', href: SRC.resumeWordedPro }] },
   { name: 'Enhancv', limit: 'Not stated', account: 'Not stated', posting: 'Optional', result: 'Score from 27 checks and a task list; with a job, the skills and keywords you have and miss', sources: [{ label: 'Checker', href: SRC.enhancv }] },
   { name: 'Resume.io', limit: 'Not stated', account: 'Email, which signs you up', posting: 'Optional', result: 'Score from 16 checks and fixes; with a job, a separate match score', sources: [{ label: 'Checker', href: SRC.resumeIo }] },
   { name: 'Rezi', limit: '1 resume', account: 'Yes', posting: 'Optional', result: 'Score out of 100 from up to 23 checks, and a list of issues', sources: [{ label: 'Checker', href: SRC.rezi }, { label: 'Pricing', href: SRC.reziPricing }] },
@@ -120,7 +120,7 @@ export default function Page() {
       ]}
       intro={
         <p>
-          I build Cover Me, one of the tools on this list, so weigh it with that in mind. I read every limit below on the tool&rsquo;s own pricing, help or product page on {CHECKED}, and the Source column links that page. I didn&rsquo;t run a test resume through each one, so this compares what the free plans allow, not how accurate each score is. Free plans change often, so check the linked page before you rely on one.
+          I build Cover Me, one of the tools on this list, so weigh it with that in mind. I read every limit below on the tool&rsquo;s own pricing, help or product page on {CHECKED}, and the link under each tool&rsquo;s name in the table goes to that page. I didn&rsquo;t run a test resume through each one, so this compares what the free plans allow, not how accurate each score is. Free plans change often, so check the linked page before you rely on one.
         </p>
       }
       sections={[
@@ -148,7 +148,7 @@ export default function Page() {
                             {row.sources.map((s, i) => (
                               <span key={s.href}>
                                 {i > 0 && ', '}
-                                {s.href.startsWith('/') ? <Link href={s.href} className={link}>{s.label}</Link> : <a href={s.href} className={link} {...ext}>{s.label}</a>}
+                                {s.href.startsWith('/') ? <Link href={s.href} className={link} aria-label={`${row.name} ${s.label.toLowerCase()} page`}>{s.label}</Link> : <a href={s.href} className={link} aria-label={`${row.name} ${s.label.toLowerCase()} page`} {...ext}>{s.label}</a>}
                               </span>
                             ))}
                           </span>
