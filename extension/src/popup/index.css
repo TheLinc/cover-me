@@ -1631,6 +1631,7 @@ textarea:focus-visible, input:focus-visible, [tabindex]:focus-visible {
 .template-current { display: flex; align-items: baseline; gap: 8px; font-size: 13px; font-weight: 600; color: var(--text); }
 .template-current .form-label { margin: 0; }
 .template-more { font-size: 11px; color: var(--accent-h); white-space: nowrap; }
+.template-picker[open] .template-current-name, .template-picker:not([open]) .template-more { display: none; }
 .template-toggle { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: var(--text-2); }
 .template-picker[open] .template-toggle .chevron { transform: rotate(180deg); }
 .template-picker { interpolate-size: allow-keywords; }

@@ -102,7 +102,7 @@ export default function TemplatePicker({ value, unlocked, onChange, previewLocke
     <details className="template-picker" onToggle={(e) => { if (e.currentTarget.open) setOpened(true) }}>
       <summary className="template-bar">
         <Sketch template={current} mini accent={accent} />
-        <span className="template-current"><span className="form-label">Template</span>{templateName(current)}</span>
+        <span className="template-current"><span className="form-label">Template</span><span className="template-current-name">{templateName(current)}</span></span>
         {!unlocked && <span className="template-more">3 more with Pro</span>}
         <span className="template-toggle">Change <ChevronIcon /></span>
       </summary>
