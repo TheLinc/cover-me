@@ -93,7 +93,7 @@ export default function Page() {
       ]}
       intro={
         <p>
-          I build Cover Me, which also tailors resumes, so weigh this review with that in mind. Prices are from Teal&rsquo;s pricing page and reviews from Trustpilot and Reddit, all checked on November 19, 2026. I browsed Teal&rsquo;s job board without an account and didn&rsquo;t sign up, so what Teal does after sign-up comes from its own pages and from users.
+          I build Cover Me, which also tailors resumes, so weigh this review with that in mind. Prices are from Teal&rsquo;s pricing page and reviews from Trustpilot and Reddit, all checked on November 19, 2026. I browsed Teal&rsquo;s job board without an account, so what Teal does after sign-up comes from its own pages and from users, apart from a later test of its free AI credits on November 26, 2026.
         </p>
       }
       sections={[
@@ -154,7 +154,10 @@ export default function Page() {
                 <a href="https://www.reddit.com/r/linkedin/comments/1boagr5/whats_the_deal_with_teal/" {...ext}>r/linkedin</a> found it &ldquo;so complicated&rdquo; in March 2024 and said &ldquo;I&rsquo;d rather just make edits in Google docs.&rdquo;
               </p>
               <p>
-                Teal&rsquo;s keyword matching highlights what to add, and you do the rewriting, with AI help on Teal+. On the free plan you see only the top 5 keywords for each job.
+                Teal&rsquo;s keyword matching highlights what to add, and you do the rewriting, with a few free AI credits and unlimited AI help on Teal+. Teal&rsquo;s pricing page says the free plan shows the top 5 keywords for each job.
+              </p>
+              <p>
+                Check what its AI writes. On November 26, 2026 I tried Teal&rsquo;s free AI credits on made-up resumes. Its summary for a nurse with four years of experience began &ldquo;Dedicated nurse with 1 year of experience in Acute Care&rdquo;, and its summary for a developer with six years said &ldquo;2+ years&rdquo;. <Link href="/guides/best-ai-for-resume-tailoring">Best AI for resume tailoring</Link> has the full test of Teal and five other tools.
               </p>
             </>
           ),

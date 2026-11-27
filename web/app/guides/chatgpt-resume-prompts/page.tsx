@@ -229,7 +229,7 @@ export default function Page() {
                 Part of prompt 4 is built in: a skill the AI adds that your resume or candidate context doesn&rsquo;t already name has to be backed by a line from them, code checks that the line is there, and a separate model call that sees only the skill and that line confirms it shows the skill. Then you see an <Link href="/guides/what-is-an-ats-score">ATS match score</Link> with the keywords still missing, and you download a PDF or Word file. A Word upload keeps its own design (beta).
               </p>
               <p>
-                ChatGPT and Claude can do this job well, as the answers above show. The difference is the copying and checking you do by hand. If you&rsquo;re deciding between a chatbot and a tool, <Link href="/guides/cover-me-vs-chatgpt">Cover Me vs ChatGPT</Link> compares them.
+                ChatGPT and Claude can do this job well, as the answers above show. The difference is the copying and checking you do by hand. If you&rsquo;re deciding between a chatbot and a tool, <Link href="/guides/cover-me-vs-chatgpt">Cover Me vs ChatGPT</Link> compares them, and <Link href="/guides/best-ai-for-resume-tailoring">Best AI for resume tailoring</Link> tests ChatGPT, Claude and four tools on resumes that lack what the posting asks for.
               </p>
             </>
           ),
