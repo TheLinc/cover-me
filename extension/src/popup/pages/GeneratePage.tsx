@@ -888,7 +888,7 @@ export default function GeneratePage({ onNavigate }: Props) {
                 />
               )}
 
-              {state === 'idle' && tailorState === 'idle' && inputMode === 'auto' && !scrapeFailure && (
+              {showStart && (
                 <div className="generate-cta">
                   <PostingCard posting={posting} onPaste={() => setInputMode('manual')} />
                   <ContextExpander
