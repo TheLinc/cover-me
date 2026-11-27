@@ -64,6 +64,8 @@ export interface ParsedResume {
   sectionOrder?: SectionKey[]
   /** Set on every parse made since URLs under a section stay in their entry (#238); a cached parse without it is parsed again. */
   linksKept?: true
+  /** PARSE_VERSION in lib/ai/resume-parse.ts when parsed; missing on a parse from before it (#401). */
+  parseVersion?: number
 }
 
 export interface ResumeData {

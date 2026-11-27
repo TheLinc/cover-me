@@ -24,6 +24,8 @@ export interface ParsedResume {
   headline?: string
   /** Set on every parse made since URLs under a section stay in their entry (#238); a cached parse without it is parsed again. */
   linksKept?: true
+  /** PARSE_VERSION in lib/ai/resume-parse.ts when parsed; missing on a parse from before it (#401). */
+  parseVersion?: number
 }
 
 // Mirrors extension/src/lib/ai/resume-parse.ts: one cap for own-key and signed-in users (#190).
@@ -292,10 +294,13 @@ export function withSectionOrder<T extends ParsedResume>(parsed: T, resumeText?:
   return { ...parsed, sectionOrder: order.length ? ['summary', ...order] : [] }
 }
 
-// A model's parse, valid, made ready to store and tailor from. linksKept
-// marks it as made since a URL under a section stays in its entry (#238).
+// Raised when a parse change should re-parse stored resumes (#401). Installed
+// store builds still read linksKept, so new parses keep writing it (#238).
+export const PARSE_VERSION = 1
+
+// A model's parse, valid, made ready to store and tailor from.
 function normalizedParse(parsed: ParsedResume, resumeText?: string): ParsedResume {
-  return { ...withDetails(withSectionOrder(withLinks(withOtherSections(parsed), resumeText), resumeText)), linksKept: true }
+  return { ...withDetails(withSectionOrder(withLinks(withOtherSections(parsed), resumeText), resumeText)), linksKept: true, parseVersion: PARSE_VERSION }
 }
 
 type OrderedParse = ParsedResume & Required<Pick<ParsedResume, 'otherSections' | 'sectionOrder'>>
@@ -306,10 +311,10 @@ export function hasSectionOrder(parsed: ParsedResume | null | undefined): parsed
   return Array.isArray(parsed?.otherSections) && Array.isArray(parsed?.sectionOrder)
 }
 
-// A cached parse made since then and since the link fix (#238). One from
-// before is parsed again, once.
+// A cached parse at PARSE_VERSION. One from before is parsed again, once. A
+// parse from before the number with all three flags counts as version 1 (#401).
 export function isCurrentParse(parsed: ParsedResume | null | undefined): parsed is OrderedParse {
-  return hasSectionOrder(parsed) && parsed.linksKept === true
+  return hasSectionOrder(parsed) && (parsed.parseVersion ?? (parsed.linksKept === true ? 1 : 0)) >= PARSE_VERSION
 }
 
 // What replaces a cached parse that isn't current, given a fresh parse of the

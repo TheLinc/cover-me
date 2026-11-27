@@ -239,6 +239,17 @@ describe('tailor', () => {
     expect((await prompts()).some((p) => p.includes('linksKept'))).toBe(false)
   })
 
+  it('a parse with parseVersion is current, and the number stays out of the prompt and the resume (#401)', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    await cacheParsedResume(user.id, { ...CURRENT, parseVersion: 1 })
+    await mockClaude.reset()
+    const { resume } = await (await callFunction('tailor', { token: user.token, body: { job: JOB } })).json()
+    expect((await prompts()).filter(isParse)).toHaveLength(0)
+    expect(resume).not.toHaveProperty('parseVersion')
+    expect((await prompts()).some((p) => p.includes('parseVersion'))).toBe(false)
+  })
+
   it('streams NDJSON start, delta and done events when asked', async () => {
     user = await createUser()
     await uploadResume(user)

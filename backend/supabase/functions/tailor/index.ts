@@ -600,8 +600,8 @@ Deno.serve(async (req) => {
       }
     }
 
-    // linksKept only marks the stored parse as current (#238).
-    const { linksKept: _k, ...input } = structured
+    // linksKept and parseVersion only mark the stored parse as current (#238, #401).
+    const { linksKept: _k, parseVersion: _v, ...input } = structured
     const prompt = buildPrompt(job, input, compact, supplemental, trim, includeSummary, previous)
 
     if (DEBUG) {
