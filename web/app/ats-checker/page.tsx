@@ -102,6 +102,10 @@ export default function AtsCheckerPage() {
             To see which keywords come up across many postings for your kind of job, read the{' '}
             <Link href="/resume-keywords" className="text-brand-strong underline underline-offset-2">resume keywords by job</Link>, counted from real postings.
           </p>
+          <p>
+            To see how this checker&apos;s free limits compare with Jobscan, SkillSyncer, Teal and other free checkers, read the{' '}
+            <Link href="/guides/best-free-ats-resume-checkers" className="text-brand-strong underline underline-offset-2">best free ATS resume checkers, compared</Link>.
+          </p>
         </div>
       </main>
       <SiteFooter />

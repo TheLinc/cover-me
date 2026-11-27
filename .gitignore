@@ -60,6 +60,7 @@ CLAUDE.md
 !web/public/llms.txt
 !web/public/c33bab843e1cd208dba82da4c2cd4073.txt
 !extension/src/fonts/OFL.txt
+!web/public/guides/best-free-ats-resume-checkers/*.txt
 !web/public/guides/**/*.docx
 !web/public/guides/**/*.pdf
 !web/lib/ats-checker/postings/*.txt

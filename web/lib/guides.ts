@@ -183,6 +183,15 @@ export const GUIDES: Guide[] = [
       "The top of the free ATS resume template in Word: Your Name centered over a contact line, then Summary, Experience and Education headings with placeholder text and bullets. Below it, checks for Lever, Workday, Ashby and SmartRecruiters. Free .docx, no sign-up, tested November 24, 2026.",
   },
   {
+    slug: 'best-free-ats-resume-checkers',
+    title: 'Best free ATS resume checkers (2026), compared',
+    description: "Eight free ATS resume checkers run on the same made-up resume, which lacked 4 of the posting's keywords. Which ones found them, what each free plan hid, and the free limits of eleven, checked November 27, 2026.",
+    date: '2026-11-27',
+    image: '/guides/best-free-ats-resume-checkers.png',
+    imageAlt:
+      "How many of the 4 missing keywords each free ATS checker found on the same made-up resume, tested November 27, 2026. Resume Worded, Rezi and Cover Me: 4 of 4. Jobscan, SkillSyncer and ResyMatch: 3 of 4, all missing Gainsight. Enhancv: 2 shown on the free plan. Teal: 0 shown on the free plan.",
+  },
+  {
     slug: 'best-ai-for-resume-tailoring',
     title: 'Best AI for resume tailoring: 6 tools tested for made-up claims',
     description: 'Six AI tools got three resumes that lacked what the job asked for. Which ones made up skills, years or results? Tested November 2026.',
