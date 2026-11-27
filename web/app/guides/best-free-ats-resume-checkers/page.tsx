@@ -137,7 +137,7 @@ export default function Page() {
       ]}
       intro={
         <p>
-          I build Cover Me, one of the tools on this list, and I wrote the test, so weigh both with that in mind. You can rerun it: the resume and posting are linked below. I ran every tool on its free plan on {CHECKED}, and read each free limit on the tool&rsquo;s own pricing, help or product page the same day. The link under each tool&rsquo;s name in the second table goes to that page. Free plans change often, so check the linked page before you rely on one.
+          I build Cover Me, one of the tools on this list, and I wrote the test, so weigh both with that in mind. You can rerun it: the resume and posting are linked below. I ran eight of them on their free plans on {CHECKED}, and read each free limit on the tool&rsquo;s own pricing, help or product page the same day. The link under each tool&rsquo;s name in the second table goes to that page. Free plans change often, so check the linked page before you rely on one.
         </p>
       }
       sections={[
@@ -188,7 +188,7 @@ export default function Page() {
                 Gainsight was the keyword most tools missed. The most common mistake was taking &ldquo;Analytics&rdquo; from the company&rsquo;s name as a skill to add, which Resume Worded, SkillSyncer and ResyMatch all did.
               </p>
               <p>
-                Three tools weren&rsquo;t tested. Resume.io&rsquo;s upload didn&rsquo;t respond in the test browser, Jobalytics works only inside a posting on a job board, and Resume Matcher has to be installed with an AI key. Jobscan, Teal and Rezi ran on free accounts that already existed in the test browser, and the others got new free accounts or none. Two tools didn&rsquo;t get the PDF itself. Jobscan&rsquo;s upload didn&rsquo;t take, so it got the same text pasted in. Teal&rsquo;s import merged the resume into an older test profile, which added a second degree, a &ldquo;Software Engineer&rdquo; title and some marketing skills. None of those is a keyword in the posting, but the title may have lowered Teal&rsquo;s 60%.
+                Three tools weren&rsquo;t tested. Resume.io&rsquo;s upload didn&rsquo;t respond in the test browser, Jobalytics works only inside a posting on a job board, and Resume Matcher has to be installed with an AI key. Jobscan, Teal and Rezi ran on free accounts that already existed in the test browser, and the others got new free accounts or none. Two tools didn&rsquo;t score the resume exactly as given. Jobscan&rsquo;s upload didn&rsquo;t take, so it got the same text pasted in. Teal&rsquo;s import merged the resume into an older test profile, which added a second degree, a &ldquo;Software Engineer&rdquo; title and some marketing skills. None of those is a keyword in the posting, but the title may have lowered Teal&rsquo;s 60%.
               </p>
             </>
           ),
@@ -254,7 +254,7 @@ export default function Page() {
           title: '3. Teal: a keyword check inside a free job tracker',
           body: (
             <p>
-              Teal&rsquo;s free plan, on its <a href={SRC.teal} {...ext}>pricing page</a>, shows the top 5 keywords from a job description and a basic analysis of your resume. Teal+ shows every keyword. In the test, the free Job Matcher gave a 60% match and showed 5 keywords, all marked as found, including &ldquo;Accounting&rdquo;, which neither the posting nor the resume mentions. None of the 4 missing keywords was among them; the other 15 keywords were blurred behind Teal+. The free plan also has AI credits: 5 for resume bullets, 2 for summaries and 2 for cover letters. Teal+ is $13 every 7 days, $29 every 30 days or $79 every 90 days. The checker is worth it mainly if you already track jobs in Teal. The <Link href="/guides/teal-review">Teal review</Link> covers its job board and what users say.
+              Teal&rsquo;s free plan, on its <a href={SRC.teal} {...ext}>pricing page</a>, shows the top 5 keywords from a job description and a basic analysis of your resume. Teal+ shows every keyword. In the test, the free Job Matcher gave a 60% match and showed 5 keywords, all marked as found, including &ldquo;Accounting&rdquo;, which the posting doesn&rsquo;t mention. None of the 4 missing keywords was among them; the other 15 keywords were blurred behind Teal+. The free plan also has AI credits: 5 for resume bullets, 2 for summaries and 2 for cover letters. Teal+ is $13 every 7 days, $29 every 30 days or $79 every 90 days. The checker is worth it mainly if you already track jobs in Teal. The <Link href="/guides/teal-review">Teal review</Link> covers its job board and what users say.
             </p>
           ),
         },
@@ -294,7 +294,7 @@ export default function Page() {
           title: '8. ResyMatch: a first scan with no account, job description required',
           body: (
             <p>
-              ResyMatch, from Cultivated Culture, compares your resume with a job description, which it requires. Its <a href={SRC.resyMatch} {...ext}>scanner page</a> says a free account gets 7 credits a month; the new test account showed 5 after its first scan. In the test, the first scan ran with no account and showed the score and the top 5 skill gaps; the rest of the list needed a free account. You can paste your resume or upload a PDF, Word or text file. It gave a 41% match and flagged Salesforce, SQL and Tableau but not Gainsight. It read the PDF with the lines run together, then marked QBRs and account management as missing even though the resume has both, QBRs as &ldquo;quarterly business reviews&rdquo;. The Unlimited plan is $7 a week.
+              ResyMatch, from Cultivated Culture, compares your resume with a job description, which it requires. Its <a href={SRC.resyMatch} {...ext}>scanner page</a> says a free account gets 7 credits a month; the new test account showed 5 credits after sign-up. In the test, the first scan ran with no account and showed the score and the top 5 skill gaps; the rest of the list needed a free account. You can paste your resume or upload a PDF, Word or text file. It gave a 41% match and flagged Salesforce, SQL and Tableau but not Gainsight. It read the PDF with the lines run together, then marked QBRs and account management as missing even though the resume has both, QBRs as &ldquo;quarterly business reviews&rdquo;. The Unlimited plan is $7 a week.
             </p>
           ),
         },
