@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { GuideArticle, GuideFigure, ext } from '@/components/site/GuideArticle'
 import { getGuide } from '@/lib/guides'
-import { CHROME_STORE_URL } from '@/lib/utils'
+import { storeUrl } from '@/lib/utils'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 const guide = getGuide('best-chrome-extensions-for-job-applications')
@@ -44,7 +44,7 @@ const faqJsonLd = {
       name: 'Is there a free Chrome extension that autofills job applications?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: "Yes. Simplify Copilot and Huntr both say autofill is unlimited on their free plans. JobWizard's free plan autofills 30 jobs a week. Each one fills the form and leaves the submit button to you.",
+        text: "Yes. Simplify Copilot and Huntr both say autofill is unlimited on their free plans. JobWizard's free plan autofills 30 jobs a week, and Jobright's 4 a day. Simplify, JobWizard and Jobright each say their autofill leaves the submit button to you.",
       },
     },
     {
@@ -52,7 +52,7 @@ const faqJsonLd = {
       name: 'Which Chrome extension writes cover letters for free?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: "Cover Me writes a cover letter for the posting you have open within its free generations, 10 to start and then 5 a week. JobWizard's free plan lists 30 cover letters a week, and Teal's free plan has 2 cover letter credits. Simplify, Careerflow and Jobscan keep AI cover letters on paid plans.",
+        text: "Cover Me writes a cover letter for the posting you have open within its free generations, 10 to start and then 5 a week. JobWizard's free plan lists 30 cover letters a week, Jobright's gives 2 a day, and Teal's free plan has 2 cover letter credits. Simplify, Careerflow and Jobscan keep AI cover letters on paid plans.",
       },
     },
     {
@@ -68,13 +68,14 @@ const faqJsonLd = {
       name: 'Do these extensions submit applications for me?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: "Their autofill doesn't. Simplify Copilot, JobWizard, Jobright, Huntr and Careerflow fill the form and you press submit, and Cover Me doesn't autofill or submit forms. Some makers sell submitting separately: Simplify's paid Autopilot fills and submits without a review step, Jobright's AI Agent can submit applications, with limited use on the free plan, and Jobscan's paid plans include 2 auto-apply credits a month.",
+        text: "Their autofill doesn't, according to Simplify, JobWizard and Jobright: it fills the form and you press submit. Cover Me doesn't autofill or submit forms. Some makers sell submitting separately: Simplify's paid Autopilot fills and submits without a review step, Jobright's AI Agent can submit applications, with limited use on the free plan, and Jobscan's paid plans include 2 auto-apply credits a month.",
       },
     },
   ],
 }
 
 const CHECKED = 'November 27, 2026'
+const STORE = storeUrl('guide-extensions')
 
 type Tool = { name: string; store: string; job: string; free: string; paid: string; sites: string; users: string; source: string; sourceLabel: string }
 
@@ -138,12 +139,12 @@ const TOOLS: Tool[] = [
     name: 'Careerflow',
     store: 'https://chromewebstore.google.com/detail/careerflow-ai-job-applica/iadokddofjgcgjpjlfhngclhpmaelnli',
     job: 'Job tracking',
-    free: 'Tracker and autofill, marked “will be limited soon”; no AI cover letters',
+    free: '10 tracked jobs; the extension saves jobs and runs the LinkedIn optimizer; no AI cover letters',
     paid: 'Premium $8.99 a week or $23.99 a month',
     sites: 'Saves from 45+ job sites including LinkedIn and Indeed; autofills Greenhouse, Lever and Workable',
     users: '200,000 users, 4.3 from 288 ratings',
-    source: 'https://www.careerflow.ai/premium',
-    sourceLabel: 'Pricing',
+    source: 'https://help.careerflow.ai/en/articles/10605570-free-vs-premium-access',
+    sourceLabel: 'Help center',
   },
   {
     name: 'Jobscan',
@@ -158,7 +159,7 @@ const TOOLS: Tool[] = [
   },
   {
     name: 'Cover Me',
-    store: CHROME_STORE_URL,
+    store: STORE,
     job: 'Tailoring and cover letters',
     free: '10 tailored resumes or cover letters to start, then 5 a week; ATS score',
     paid: 'Pro $15 a month or $35 every 3 months',
@@ -195,7 +196,7 @@ export default function Page() {
       tldr={[
         'Autofill: Simplify Copilot autofills with no limit for free. JobWizard gives 30 autofills a week free. Both leave the submit button to you.',
         'Job tracking: Huntr tracks 100 jobs free, Teal tracks unlimited jobs free, and both have a Chrome clipper for LinkedIn and Indeed.',
-        'Tailoring and cover letters: Cover Me rewrites your resume and writes the letter for the posting you have open, 10 to start and then 5 a week free. Simplify and Careerflow keep AI cover letters on paid plans.',
+        'Tailoring and cover letters: Cover Me rewrites your resume and writes the letter for the posting you have open, 10 to start and then 5 a week free. JobWizard gives more free, 30 cover letters and 30 resume retouches a week, alongside its autofill.',
         'Keyword checks: Jobalytics is free with no paid plan. JobWizard and Cover Me also show a match score, and Teal shows the top 5 keywords free.',
       ]}
       intro={
@@ -249,7 +250,7 @@ export default function Page() {
                 Autofill extensions copy your profile into application forms on employer sites, so you don&rsquo;t type your work history into Workday again. They save the most time when you apply on company career pages. Their autofill fills the form and leaves the submit button to you.
               </p>
               <p>
-                <strong>Simplify Copilot</strong> is the most used extension here, with 500,000 users. Simplify says its free autofill has &ldquo;no limit on how many applications you can submit&rdquo; and works on &ldquo;over 100 job boards and application portals including Workday, Greenhouse, iCIMS, Taleo, Avature, Lever, and SmartRecruiters&rdquo; (<a href="https://simplify.jobs/copilot" {...ext}>Copilot page</a>). On LinkedIn and Indeed it reads the posting to show keywords missing from your resume rather than filling a form. Its store listing advertises AI tailored resumes and cover letters, but the <a href="https://help.simplify.jobs/articles/5623502-whats-included-in-simplify-features-and-pricing" {...ext}>help center</a> puts both behind Simplify+, at $19.99 a week, $39.99 a month or $89.99 for 3 months. Simplify+ also includes Autopilot, which fills and submits &ldquo;without a review step&rdquo;. The listing says &ldquo;thousands of job boards&rdquo;, so the two pages disagree on coverage.
+                <strong>Simplify Copilot</strong> is the most used extension here, with 500,000 users. Simplify says its free autofill has &ldquo;no limit on how many applications you can submit&rdquo; and works on &ldquo;over 100 job boards and application portals including Workday, Greenhouse, iCIMS, Taleo, Avature, Lever, and SmartRecruiters&rdquo; (<a href="https://simplify.jobs/copilot" {...ext}>Copilot page</a>). It also reads LinkedIn and Indeed postings to show keywords missing from your resume. Its store listing advertises AI tailored resumes and cover letters, but the <a href="https://help.simplify.jobs/articles/5623502-whats-included-in-simplify-features-and-pricing" {...ext}>help center</a> puts both behind Simplify+, at $19.99 a week, $39.99 a month or $89.99 for 3 months. Simplify+ also includes Autopilot, which fills and submits &ldquo;without a review step&rdquo;. The listing says &ldquo;thousands of job boards&rdquo;, so the two pages disagree on coverage.
               </p>
               <p>
                 <strong>JobWizard</strong> has the most generous free AI quota of the autofill tools. Its <a href="https://jobwizard.ai/pricing" {...ext}>pricing page</a> lists 30 job autofills, 30 cover letters, 30 resume retouches and 30 keyword suggestions a week, with the match score and application tracker &ldquo;always free&rdquo;. Its <a href="https://jobwizard.ai/features/smart-autofill" {...ext}>autofill page</a> names Workday, Greenhouse, Lever, Ashby, iCIMS, SmartRecruiters, Oracle Taleo and LinkedIn Easy Apply. Paid plans start at $6.99 for 7 days with no auto-renew, behind a toggle on the pricing page, or $17.99 a month. The store listing says JobWizard &ldquo;never submits an application for you&rdquo;. It&rsquo;s small, with 10,000 users, and its own site claims 30K+.
@@ -274,7 +275,7 @@ export default function Page() {
                 <strong>Teal</strong>&rsquo;s free plan has unlimited job tracking, keyword matching for the top 5 keywords of a posting, and AI credits for 5 resume bullets, 2 summaries and 2 cover letters (<a href="https://www.tealhq.com/pricing" {...ext}>pricing</a>). The extension &ldquo;supports 40+ job boards, including LinkedIn, Indeed, Glassdoor&rdquo; (<a href="https://www.tealhq.com/tool/job-search-chrome-extension" {...ext}>extension page</a>), and since May 2025 it can bookmark a job on any site. Neither its listing nor its current pages mention autofill, and its store listing was last updated June 26, 2025, the oldest here. Teal+ is $13 every 7 days, $29 every 30 days or $79 every 90 days. The <Link href="/guides/teal-review">Teal review</Link> has more.
               </p>
               <p>
-                <strong>Careerflow</strong> saves jobs from &ldquo;45+ job platforms including LinkedIn, Indeed, Monster, USAJobs&rdquo;, according to its store listing. Its <a href="https://www.careerflow.ai/premium" {...ext}>pricing page</a> marks the free tracker and autofill &ldquo;Included (Will be limited soon)&rdquo; without a number, and keeps AI cover letters and the ATS keyword analyzer on Premium, from $8.99 a week or $23.99 a month. A Black Friday sale was running when this was checked. Its <a href="https://www.careerflow.ai/autofill" {...ext}>autofill page</a> names Greenhouse, Workday and Lever, but its <a href="https://help.careerflow.ai/en/articles/9023726-an-always-up-to-date-list-of-the-job-boards-careerflow-ai-supports" {...ext}>help center&rsquo;s list</a> of autofill sites leaves out Workday. The <Link href="/guides/careerflow-review">Careerflow review</Link> covers its refund terms and what users report.
+                <strong>Careerflow</strong> saves jobs from &ldquo;45+ job platforms including LinkedIn, Indeed, Monster, USAJobs&rdquo;, according to its store listing. Its <a href="https://help.careerflow.ai/en/articles/10605570-free-vs-premium-access" {...ext}>help center</a> gives a free account &ldquo;Up to 10 jobs tracked&rdquo; and limits the free extension to the LinkedIn optimizer, saving jobs and adding contacts. Its <a href="https://www.careerflow.ai/premium" {...ext}>pricing page</a> instead marks the free tracker and autofill &ldquo;Included (Will be limited soon)&rdquo;. Both keep AI cover letters and the ATS keyword analyzer on Premium, from $8.99 a week or $23.99 a month. A Black Friday sale was running when this was checked. Its <a href="https://www.careerflow.ai/autofill" {...ext}>autofill page</a> names Greenhouse, Workday and Lever, but its <a href="https://help.careerflow.ai/en/articles/9023726-an-always-up-to-date-list-of-the-job-boards-careerflow-ai-supports" {...ext}>help center&rsquo;s list</a> of autofill sites leaves out Workday. The <Link href="/guides/careerflow-review">Careerflow review</Link> covers its refund terms and what users report.
               </p>
               <p>
                 <strong>Jobscan</strong>&rsquo;s extension saves jobs to its tracker from Indeed, LinkedIn and Glassdoor (<a href="https://www.jobscan.co/job-tracker" {...ext}>job tracker page</a>). To see how well you match a saved job, you run a resume scan, and the free plan includes 5 a month (<a href="https://app.jobscan.co/plan" {...ext}>plans</a>). AI rewriting and cover letters are on paid plans, at $49.95 a month or $89.95 every 3 months. The <Link href="/guides/jobscan-review">Jobscan review</Link> covers what its match rate measures.
@@ -293,7 +294,7 @@ export default function Page() {
                 It reads postings on <Link href="/for/linkedin">LinkedIn</Link>, <Link href="/for/indeed">Indeed</Link>, <Link href="/for/greenhouse">Greenhouse</Link>, <Link href="/for/lever">Lever</Link>, <Link href="/for/workday">Workday</Link> and <Link href="/for/ashby">Ashby</Link>, plus BambooHR and Workable, and you can paste a posting from any other site. Its readers are tested against live LinkedIn postings every week.
               </p>
               <p>
-                The free account gives 10 tailored resumes or cover letters to start, then 5 a week, plus 5 answers to application questions to start, then 5 a week, with no credit card. Pro is $15 a month or $35 every 3 months, for up to 25 a day. With your own OpenAI or Claude API key it&rsquo;s unlimited and needs no account. It&rsquo;s the smallest extension here, with 354 users and a 5.0 rating from 5 ratings on its <a href={CHROME_STORE_URL} {...ext}>Chrome Web Store listing</a>. Cover Me doesn&rsquo;t autofill or submit application forms, so pair it with an autofill tool if you want both.
+                The free account gives 10 tailored resumes or cover letters to start, then 5 a week, plus 5 answers to application questions to start, then 5 a week, with no credit card. Pro is $15 a month or $35 every 3 months, for up to 25 a day. With your own OpenAI or Claude API key it&rsquo;s unlimited and needs no account. It&rsquo;s the smallest extension here, with 354 users and a 5.0 rating from 5 ratings on its <a href={STORE} {...ext}>Chrome Web Store listing</a>. Cover Me doesn&rsquo;t autofill or submit application forms, so pair it with an autofill tool if you want both.
               </p>
             </>
           ),
@@ -323,7 +324,7 @@ export default function Page() {
           title: 'Which one should you use?',
           body: (
             <p>
-              Most people end up with two: one that fills forms or tracks jobs, and one that writes. If you apply on Workday and other company sites, Simplify Copilot&rsquo;s free autofill saves the most typing. If you want every application on one board, Huntr or Teal. If you want your resume rewritten for each posting and a cover letter written to match, Cover Me does both on its free plan, and the <Link href="/guides/tailor-resume-to-job-description">guide to tailoring your resume</Link> shows what good tailoring changes. If you only want to see missing keywords, Jobalytics is free. For more resume checkers that run on a website rather than in Chrome, see <Link href="/guides/free-jobscan-alternatives">free Jobscan alternatives</Link>.
+              Most people end up with two: one that fills forms or tracks jobs, and one that writes. If you apply on Workday and other company sites, Simplify Copilot&rsquo;s free autofill saves the most typing. If you want every application on one board, Huntr or Teal. If you want your resume rewritten for each posting, scored against it and checked so it claims nothing your original doesn&rsquo;t, with a cover letter to match, that&rsquo;s what Cover Me is built for. If you want the most free cover letters a week, JobWizard gives 30. The <Link href="/guides/tailor-resume-to-job-description">guide to tailoring your resume</Link> shows what good tailoring changes. If you only want to see missing keywords, Jobalytics is free. For more resume checkers that run on a website rather than in Chrome, see <Link href="/guides/free-jobscan-alternatives">free Jobscan alternatives</Link>.
             </p>
           ),
         },

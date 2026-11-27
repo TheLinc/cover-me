@@ -184,7 +184,7 @@ export const GUIDES: Guide[] = [
   {
     slug: 'best-chrome-extensions-for-job-applications',
     title: 'Best Chrome extensions for job applications, sorted by what they do',
-    description: 'Nine Chrome extensions for job seekers, sorted by job: autofill, job tracking, resume tailoring and cover letters, and keyword checks. The job sites each one names, its free limits and its price, checked November 27, 2026.',
+    description: 'Nine Chrome extensions for job seekers, sorted by job: autofill, job tracking, resume tailoring and cover letters, and keyword checks. The job sites each one names, its free limits and its price, from each maker’s site in November 2026.',
     date: '2026-11-27',
     image: '/guides/best-chrome-extensions-for-job-applications.png',
     imageAlt:
