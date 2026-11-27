@@ -1,0 +1,28 @@
+Jordan Ellis
+Customer Success Manager
+jordan.ellis@example.com | (555) 010-0147 | Denver, CO
+
+Summary
+Customer success manager with six years at B2B SaaS companies. I keep mid-market accounts renewing and growing.
+
+Experience
+
+Customer Success Manager, Contoso Cloud, Denver, CO
+March 2022 to present
+- Manage a book of 60 mid-market accounts worth $3.1M in annual recurring revenue
+- Run quarterly business reviews with the executives of my 25 largest accounts
+- Cut gross churn from 11% to 7% in one year by flagging at-risk accounts early
+- Led onboarding for 40 new customers, cutting time to first value from 45 to 28 days
+- Renewed 94% of the accounts that came up for renewal in 2025
+
+Customer Success Associate, Fabrikam Software, Boulder, CO
+June 2020 to February 2022
+- Answered 50+ support tickets a day in Zendesk with a 96% satisfaction score
+- Launched the company's first NPS survey and raised the response rate to 38%
+- Built account health dashboards in Looker for the customer success team
+
+Skills
+Zendesk, HubSpot, Looker, Intercom, Excel, customer onboarding, account management
+
+Education
+B.A. Communications, Lakeside University, 2020

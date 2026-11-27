@@ -55,13 +55,13 @@ const TEST_FILES = {
 
 const RESULTS = [
   { name: 'Resume Worded', score: '81 relevancy', found: '4', mistakes: '"Analytics", taken from the company\'s name', hidden: 'Editing and rescoring on the page (Pro)' },
-  { name: 'Rezi', score: '64 Rezi Score, for resume quality', found: '4', mistakes: 'None in the free view, but its import dropped both start dates', hidden: '10 more keywords (Pro)' },
+  { name: 'Rezi', score: '64 Rezi Score, for resume quality', found: '4', mistakes: 'None in the free view, but its import lost one start date and the word "present"', hidden: '10 more keywords (Pro)' },
   { name: 'Cover Me', score: '63 out of 100', found: '4', mistakes: 'None', hidden: 'Nothing' },
   { name: 'Jobscan', score: '79% match', found: '3, missed Gainsight', mistakes: 'Said the posting asks for no years of experience; it asks for 4+', hidden: 'Not checked: the test account once had a Premium trial' },
   { name: 'SkillSyncer', score: '70% match', found: '3, missed Gainsight', mistakes: '"Analytics" and "Test", taken from the company\'s name and the posting\'s last line', hidden: 'Nothing; 1 of 2 weekly scans left' },
-  { name: 'ResyMatch', score: '41% match', found: '3, missed Gainsight', mistakes: 'QBRs and account management marked missing, though both are on the resume; "Analytics"', hidden: 'All but 5 skills until you make a free account' },
+  { name: 'ResyMatch', score: '41% match', found: '3, missed Gainsight', mistakes: 'QBRs and account management marked missing, though the resume has both (QBRs in other words); "Analytics"', hidden: 'All but 5 skills until you make a free account' },
   { name: 'Enhancv', score: '64 out of 100', found: '2 shown free', mistakes: 'Listed Zendesk as missing; it\'s on the resume', hidden: 'The rest of the skill list (Pro)' },
-  { name: 'Teal', score: '60% match', found: '0 shown free', mistakes: 'Showed "Accounting" as found; the posting doesn\'t ask for it', hidden: '15 of 20 keywords, including all 4 gaps (Teal+)' },
+  { name: 'Teal', score: '60% match', found: '0 shown free', mistakes: 'Showed "Accounting" as found; the posting doesn\'t ask for it', hidden: '15 of 20 keywords (Teal+)' },
 ]
 
 const TOOLS = [
@@ -95,7 +95,7 @@ const faqJsonLd = {
       name: 'Can I check my resume for ATS without signing up?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: "Yes. In a test on November 27, 2026, Cover Me's free ATS checker and Enhancv's checker both scored a resume with no account or email. ResyMatch ran a first scan without an account but asked for one to show the full skill list. Resume.io asks for your email to show results and uses it to sign you up. Jobscan, SkillSyncer, Teal, Resume Worded and Rezi need a free account.",
+        text: "Yes. In a test on November 27, 2026, Cover Me's free ATS checker and Enhancv's checker both scored a resume with no account or email, and ResyMatch ran a first scan without an account but asked for one to show the full skill list. Jobscan, SkillSyncer, Teal, Resume Worded and Rezi need a free account. Resume.io's page says it asks for your email to show results, and its sign-up uses that email.",
       },
     },
     {
@@ -103,7 +103,7 @@ const faqJsonLd = {
       name: 'Which free ATS checkers read a PDF resume?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: "Most of them. Enhancv and Rezi take PDF or DOCX files up to 2 MB, and Resume.io takes PDF or DOCX. ResyMatch takes PDF, Word or text files, but in a test it ran the PDF's lines together, so words like \"renewingand\" appeared and it missed a skill that was on the resume. Rezi's import dropped the start dates from the same PDF. Cover Me's checker takes a PDF, a Word file or pasted text. A PDF that is a scanned image has no text to read, so any checker will miss what's in it.",
+        text: "Most of them. Enhancv and Rezi take PDF or DOCX files up to 2 MB, and Resume.io takes PDF or DOCX. ResyMatch takes PDF, Word or text files, but in a test it ran the PDF's lines together, so words like \"renewingand\" appeared, and it marked account management missing although it is in the resume's skills line. Rezi's import of the same PDF lost one start date. Cover Me's checker takes a PDF, a Word file or pasted text. A PDF that is a scanned image has no text to read, so any checker will miss what's in it.",
       },
     },
     {
@@ -133,7 +133,7 @@ export default function Page() {
       tldr={[
         'Resume Worded, Rezi and Cover Me found all 4 missing keywords on their free plans. Jobscan, SkillSyncer and ResyMatch found 3 and missed Gainsight.',
         "Teal's free view showed none of the 4, and Enhancv showed 2 before asking for Pro. Four tools also flagged words that weren't real gaps, such as the company's name.",
-        'The same resume scored between 41 and 81. The scores measure different things, so use the list of missing keywords, not the number.',
+        'The headline scores for the same resume ranged from 41 to 81. They measure different things, so use the list of missing keywords, not the number.',
       ]}
       intro={
         <p>
@@ -188,7 +188,7 @@ export default function Page() {
                 Gainsight was the keyword most tools missed. The most common mistake was taking &ldquo;Analytics&rdquo; from the company&rsquo;s name as a skill to add, which Resume Worded, SkillSyncer and ResyMatch all did.
               </p>
               <p>
-                Three tools weren&rsquo;t tested. Resume.io&rsquo;s upload didn&rsquo;t respond in the test browser, Jobalytics works only inside a posting on a job board, and Resume Matcher has to be installed with an AI key. Jobscan, Teal and Rezi ran on free accounts that already existed in the test browser. The others got new free accounts, or none.
+                Three tools weren&rsquo;t tested. Resume.io&rsquo;s upload didn&rsquo;t respond in the test browser, Jobalytics works only inside a posting on a job board, and Resume Matcher has to be installed with an AI key. Jobscan, Teal and Rezi ran on free accounts that already existed in the test browser, and the others got new free accounts or none. Two tools didn&rsquo;t get the PDF itself. Jobscan&rsquo;s upload didn&rsquo;t take, so it got the same text pasted in. Teal&rsquo;s import merged the resume into an older test profile, which added a second degree, a &ldquo;Software Engineer&rdquo; title and some marketing skills. None of those is a keyword in the posting, but the title may have lowered Teal&rsquo;s 60%.
               </p>
             </>
           ),
@@ -254,7 +254,7 @@ export default function Page() {
           title: '3. Teal: a keyword check inside a free job tracker',
           body: (
             <p>
-              Teal&rsquo;s free plan, on its <a href={SRC.teal} {...ext}>pricing page</a>, shows the top 5 keywords from a job description and a basic analysis of your resume. Teal+ shows every keyword. In the test, the free Job Matcher gave a 60% match and showed 5 keywords, all of them ones the resume already had, including &ldquo;Accounting&rdquo;, which the posting never mentions. The 15 keywords it hid behind Teal+ included all 4 that were missing. The free plan also has AI credits: 5 for resume bullets, 2 for summaries and 2 for cover letters. Teal+ is $13 every 7 days, $29 every 30 days or $79 every 90 days. The checker is worth it mainly if you already track jobs in Teal. The <Link href="/guides/teal-review">Teal review</Link> covers its job board and what users say.
+              Teal&rsquo;s free plan, on its <a href={SRC.teal} {...ext}>pricing page</a>, shows the top 5 keywords from a job description and a basic analysis of your resume. Teal+ shows every keyword. In the test, the free Job Matcher gave a 60% match and showed 5 keywords, all marked as found, including &ldquo;Accounting&rdquo;, which neither the posting nor the resume mentions. None of the 4 missing keywords was among them; the other 15 keywords were blurred behind Teal+. The free plan also has AI credits: 5 for resume bullets, 2 for summaries and 2 for cover letters. Teal+ is $13 every 7 days, $29 every 30 days or $79 every 90 days. The checker is worth it mainly if you already track jobs in Teal. The <Link href="/guides/teal-review">Teal review</Link> covers its job board and what users say.
             </p>
           ),
         },
@@ -286,7 +286,7 @@ export default function Page() {
           title: '7. Rezi: a free score that moves your resume into its template',
           body: (
             <p>
-              Rezi&rsquo;s <a href={SRC.rezi} {...ext}>resume checker</a> is free with a Rezi account. It reads a PDF or Word file up to 2 MB, rebuilds it in a one-column template and scores it out of 100 on up to 23 checks, or 27 with Pro. A job description is optional. In the test it listed all 4 missing keywords for free and hid 10 more behind Pro. Its 64 is a score for the resume itself, not the match. The import also dropped both start dates, turning &ldquo;March 2022 to present&rdquo; into &ldquo;March 2022&rdquo;, so check the rebuilt resume before you download it. The free plan on Rezi&rsquo;s <a href={SRC.reziPricing} {...ext}>pricing page</a> allows 1 resume and 3 PDF downloads. Pro is $29 a month or $57 every 3 months, and Lifetime is $149 once. <Link href="/guides/cover-me-vs-rezi">Cover Me vs Rezi</Link> compares the two approaches.
+              Rezi&rsquo;s <a href={SRC.rezi} {...ext}>resume checker</a> is free with a Rezi account. It reads a PDF or Word file up to 2 MB, rebuilds it in a one-column template and scores it out of 100 on up to 23 checks, or 27 with Pro. A job description is optional. In the test it listed all 4 missing keywords for free and hid 10 more behind Pro. Its 64 is a score for the resume itself, not the match. The import also changed the dates: &ldquo;March 2022 to present&rdquo; became &ldquo;March 2022&rdquo;, and &ldquo;June 2020 to February 2022&rdquo; became &ldquo;February 2022&rdquo;, so check the rebuilt resume before you download it. The free plan on Rezi&rsquo;s <a href={SRC.reziPricing} {...ext}>pricing page</a> allows 1 resume and 3 PDF downloads. Pro is $29 a month or $57 every 3 months, and Lifetime is $149 once. <Link href="/guides/cover-me-vs-rezi">Cover Me vs Rezi</Link> compares the two approaches.
             </p>
           ),
         },
@@ -294,7 +294,7 @@ export default function Page() {
           title: '8. ResyMatch: a first scan with no account, job description required',
           body: (
             <p>
-              ResyMatch, from Cultivated Culture, compares your resume with a job description, which it requires. Its <a href={SRC.resyMatch} {...ext}>scanner page</a> says a free account gets 7 credits a month. In the test, the first scan ran with no account and showed the score and the top 5 skill gaps; the rest of the list needed a free account. You can paste your resume or upload a PDF, Word or text file. It gave a 41% match and flagged Salesforce, SQL and Tableau but not Gainsight. It read the PDF with the lines run together, then marked QBRs and account management as missing even though both are on the resume. The Unlimited plan is $7 a week.
+              ResyMatch, from Cultivated Culture, compares your resume with a job description, which it requires. Its <a href={SRC.resyMatch} {...ext}>scanner page</a> says a free account gets 7 credits a month; the new test account showed 5 after its first scan. In the test, the first scan ran with no account and showed the score and the top 5 skill gaps; the rest of the list needed a free account. You can paste your resume or upload a PDF, Word or text file. It gave a 41% match and flagged Salesforce, SQL and Tableau but not Gainsight. It read the PDF with the lines run together, then marked QBRs and account management as missing even though the resume has both, QBRs as &ldquo;quarterly business reviews&rdquo;. The Unlimited plan is $7 a week.
             </p>
           ),
         },
@@ -339,7 +339,7 @@ export default function Page() {
           title: 'Which one should you use?',
           body: (
             <p>
-              For a check against one posting with no sign-up, use Cover Me&rsquo;s checker, which found every gap in the test. If you&rsquo;ll make an account, Resume Worded also found every gap and showed them for free. SkillSyncer states the highest scan limit at 2 a week, and its AI credits rewrite bullets, but check its list for words taken from the company&rsquo;s name. Jobscan&rsquo;s 5 a month suit a handful of important applications. If you&rsquo;d rather check the resume&rsquo;s format with no job in mind, Enhancv and Rezi both do that. Whichever you use, add only keywords that are true of you: the <Link href="/guides/tailor-resume-to-job-description">guide to tailoring your resume</Link> shows how, and the <Link href="/guides/ats-friendly-resume-format">ATS format test</Link> shows which layouts real ATSs misread.
+              For a check against one posting with no sign-up, use Cover Me&rsquo;s checker, which found every gap in the test. If you&rsquo;ll make an account, Resume Worded and Rezi also found every gap on their free plans, though Rezi rebuilds your resume in its template. SkillSyncer states the highest scan limit at 2 a week, and its AI credits rewrite bullets. With any of them, check the list for words taken from the company&rsquo;s name, a mistake Resume Worded, SkillSyncer and ResyMatch all made. Jobscan&rsquo;s 5 a month suit a handful of important applications. If you&rsquo;d rather check the resume&rsquo;s format with no job in mind, Enhancv and Rezi both do that. Whichever you use, add only keywords that are true of you: the <Link href="/guides/tailor-resume-to-job-description">guide to tailoring your resume</Link> shows how, and the <Link href="/guides/ats-friendly-resume-format">ATS format test</Link> shows which layouts real ATSs misread.
             </p>
           ),
         },
