@@ -199,7 +199,7 @@ async function preferServerScrapes(results: FrameScrape[], forAnswer = false): P
     await debugGroup('Scrape — server', { frames: sent.length, read: server.filter((s) => s.ok).length })
     return results.map((r) => {
       const s = byFrame.get(r.frameId)
-      return s?.ok ? { frameId: r.frameId, ok: true, job: s.job } : r
+      return s?.ok ? { frameId: r.frameId, ok: true, job: { ...s.job, logo: r.ok ? r.job.logo : undefined } } : r
     })
   } catch (err) {
     await debugGroup('Scrape — server unavailable, using bundled scrapers', { error: err instanceof Error ? err.message : String(err) })

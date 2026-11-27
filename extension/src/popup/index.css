@@ -454,6 +454,7 @@ html, body {
   font-size: 15px;
   font-weight: 700;
 }
+img.posting-logo { object-fit: contain; background: #fff; padding: 3px; }
 .posting-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .posting-title, .posting-meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .posting-title { font-size: 14px; font-weight: 600; color: var(--text); }

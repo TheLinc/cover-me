@@ -3,6 +3,7 @@ import type { FrameScrapeResponse } from '../types'
 import { snapshotPage, type PageSnapshot } from './snapshot.ts'
 import { handleAnswerMessage } from './answer-field.ts'
 import { addLeverPostingJsonLd } from './lever-apply.ts'
+import { postingLogo } from './logo.ts'
 
 // Injected on each click and each popup open (#346), so it can run more than once per page. Keyed by version: after an
 // update a tab can hold the old script's flag with a dead listener (#232).
@@ -28,7 +29,7 @@ if (!w[flag]) {
         }
         try {
           const job = scrapeJobPage()
-          sendResponse({ success: true, job, snapshot } satisfies FrameScrapeResponse)
+          sendResponse({ success: true, job: { ...job, logo: postingLogo(job.company) }, snapshot } satisfies FrameScrapeResponse)
         } catch (err) {
           sendResponse({
             success: false,

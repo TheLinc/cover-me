@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { JobData } from '../../types'
 
 const BOARDS = [
@@ -7,6 +8,14 @@ const BOARDS = [
 
 function siteOf(url: string) {
   return URL.canParse(url) ? new URL(url).hostname.replace(/^www\./, '') : ''
+}
+
+function Logo({ job }: { job: JobData }) {
+  const [failed, setFailed] = useState<string>()
+  if (job.logo && failed !== job.logo) {
+    return <img className="posting-logo" src={job.logo} alt="" referrerPolicy="no-referrer" onError={() => setFailed(job.logo)} />
+  }
+  return <span className="posting-logo" aria-hidden="true">{job.company.trim().charAt(0).toUpperCase()}</span>
 }
 
 // posting: undefined while the tab is read, null when no posting was found (#346).
@@ -52,7 +61,7 @@ export default function PostingCard({ posting, onPaste }: { posting: JobData | n
     <div className="posting-card">
       <div className="posting-kicker">This posting</div>
       <div className="posting-main">
-        <span className="posting-logo" aria-hidden="true">{posting.company.trim().charAt(0).toUpperCase()}</span>
+        <Logo job={posting} />
         <div className="posting-text">
           <div className="posting-title" title={posting.title}>{posting.title}</div>
           <div className="posting-meta">{[posting.company, site].filter(Boolean).join(' · ')}</div>
