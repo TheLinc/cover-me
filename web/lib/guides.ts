@@ -232,6 +232,7 @@ export function guideArticleJsonLd(guide: Guide) {
     },
     publisher: {
       '@type': 'Organization',
+      '@id': `${BASE}/#organization`,
       name: 'Cover Me',
       url: BASE,
       logo: { '@type': 'ImageObject', url: `${BASE}/logo.png` },
