@@ -1,4 +1,5 @@
 import { isValidElement, type ReactNode } from 'react'
+import { ORG_ID } from '@/lib/structured-data'
 
 export type Guide = {
   slug: string
@@ -232,7 +233,7 @@ export function guideArticleJsonLd(guide: Guide) {
     },
     publisher: {
       '@type': 'Organization',
-      '@id': `${BASE}/#organization`,
+      '@id': ORG_ID,
       name: 'Cover Me',
       url: BASE,
       logo: { '@type': 'ImageObject', url: `${BASE}/logo.png` },
