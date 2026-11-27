@@ -7,6 +7,7 @@ import { decryptApiKey } from '../lib/crypto'
 import { checkUploadedDesign, designForTailor, finishDesign, parseForTailor, uploadDesignIfPro } from '../lib/design'
 import { debugGroup } from '../lib/debug'
 import { resumeSource } from '../lib/resume-file'
+import { applySavedLook, getResumeLook } from '../lib/resume-template'
 import { addToHistory, addToTailoredHistory, getCandidateContext, getResume, getSession, getSettings, hasAgreedToPageRead, resolveMode, setEntryAccounts, watchSession } from '../lib/storage'
 import { handleInstalled, uninstallUrl } from './install'
 import { savePendingUpdate } from '../lib/update'
@@ -422,8 +423,8 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
   const startedAt = Date.now()
   await setTailorJob({ id, status: 'loading', job, startedAt })
   const source = await currentSource()
-  // Which file a result came from isn't resume content for the model to revise (#131)
-  const { sourceHash: _h, designFellBack: _f, source: _s, ...previous } = lastResult ?? {} as TailoredResume
+  // Which file a result came from (#131, #401) and its PDF template and accent (#119) aren't resume content for the model to revise
+  const { sourceHash: _h, designFellBack: _f, source: _s, template: _t, accent: _a, ...previous } = lastResult ?? {} as TailoredResume
   try {
     const settings = await getSettings()
 
@@ -470,7 +471,7 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
       }
       const localId = crypto.randomUUID()
       const tier = checkedTier(session)
-      const { resume: tailored, savedId } = await tailorViaBackend(job, session.access_token, compact, merged, trim, includeSummary, lastResult && previous, onProgress, localId, design.design)
+      const { resume: tailored, savedId } = await tailorViaBackend(job, session.access_token, compact, merged, trim, includeSummary, lastResult && previous, onProgress, localId, design.design, await getResumeLook())
       const resume = await finishDesign(tailored, design)
       if (note) resume.hasEdits = true
       // Awaited first: uploadDesignIfPro reads the cached tier (#182)
@@ -510,6 +511,7 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
     })
 
     const tailored = await finishDesign(await tailorResume(job, parsed, settings.provider, apiKey, compact, merged, trim, includeSummary, lastResult && previous, onProgress), design)
+    await applySavedLook(tailored)
     if (note) tailored.hasEdits = true
     const entryId = crypto.randomUUID()
     await recordTailored(job, tailored, entryId, undefined, source)

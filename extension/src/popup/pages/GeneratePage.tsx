@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
+import { ensureValidSession, saveResumeEditToBackend } from '../../lib/auth'
 import { GOOGLE_SIGNIN } from '../../lib/config'
 import { downloadCoverLetterPdf } from '../../lib/pdf/cover-letter'
 import { downloadTailoredResumePdf } from '../../lib/pdf/resume'
 import { letterSteps, tailorSteps } from '../../lib/progress-steps'
-import { openResumeEditor, postingTitleInSummary } from '../../lib/resume-edit'
+import { openResumeEditor, postingTitleInSummary, saveResumeEdit } from '../../lib/resume-edit'
+import { saveResumeLook, type ResumeLook } from '../../lib/resume-template'
 import { downloadResumeWord, usesDesign } from '../../lib/design'
 import { usingLine } from '../../lib/resume-file'
 import { getCandidateContext, getTailoredHistory, resolveMode, saveCandidateContext } from '../../lib/storage'
@@ -18,6 +20,7 @@ import ProgressSteps from '../components/ProgressSteps'
 import ReviewAsk from '../components/ReviewAsk'
 import ScrapeFailurePanel, { type ShownFailure } from '../components/ScrapeFailure'
 import ScoreRing, { ScoreGain, scoreRose } from '../components/ScoreRing'
+import TemplatePicker, { useCachedPro, useTemplatesUnlocked } from '../components/TemplatePicker'
 import UpgradePrompt from '../components/UpgradePrompt'
 import { GenerateOffer } from '../components/FirstMonthOffer'
 import { WhatsNewLink } from '../components/WhatsNew'
@@ -160,6 +163,8 @@ export default function GeneratePage({ onNavigate }: Props) {
   const [tailorError, setTailorError] = useState('')
   const [tailorErrorCode, setTailorErrorCode] = useState<'RATE_LIMIT' | 'FAIR_USE' | undefined>()
   const [tailoredResume, setTailoredResume] = useState<TailoredResume | null>(null)
+  const pro = useCachedPro()
+  const templatesOpen = useTemplatesUnlocked()
   const [tailoredJob, setTailoredJob] = useState<JobData | null>(null)
   const [tailoredEntryId, setTailoredEntryId] = useState<string | null>(null)
   // The History entry whose ATS ring has filled, so reopening the popup doesn't fill it again (#228).
@@ -375,12 +380,12 @@ export default function GeneratePage({ onNavigate }: Props) {
     })
   }, [state, inputMode, scrapeFailure, manualTitle, manualCompany, manualDescription, letter, job, createdAt, compact, trim, includeSummary, tailorState, tailoredResume, tailoredJob, tailoredEntryId, supplemental, letterSupplemental, activeResultTab])
 
-  // Edited in the editor tab since this page saved it: show the edit. (#118)
+  // History holds what the editor tab saved since this page did: an edit (#118) or a template (#119).
   useEffect(() => {
     if (!tailoredEntryId) return
     getTailoredHistory().then((list) => {
       const entry = list.find((e) => e.id === tailoredEntryId)
-      if (entry?.resume.editedAt) setTailoredResume(entry.resume)
+      if (entry) setTailoredResume(entry.resume)
     })
   }, [tailoredEntryId])
 
@@ -478,6 +483,16 @@ export default function GeneratePage({ onNavigate }: Props) {
     if (!tailoredResume || !tailoredJob) return
     downloadTailoredResumePdf(tailoredResume, tailoredJob.title)
     askForReview('resume')
+  }
+
+  async function pickLook(look: ResumeLook) {
+    if (!tailoredResume || !tailoredEntryId) return
+    const next = { ...tailoredResume, ...look }
+    setTailoredResume(next)
+    void saveResumeLook(look)
+    await saveResumeEdit(tailoredEntryId, next)
+    const session = pro ? await ensureValidSession() : null
+    if (session) await saveResumeEditToBackend(session.access_token, tailoredEntryId, next).catch(() => {})
   }
 
   async function downloadResumeDocx() {
@@ -1113,6 +1128,9 @@ export default function GeneratePage({ onNavigate }: Props) {
                   )}
                   {postingTitle && <PostingTitleTip {...postingTitle} />}
                   {reviewAt === 'resume' && !reviewUnderScore && <ReviewAsk onClose={() => setReviewAt(null)} />}
+                  {tailoredEntryId && !tailoredResume.sourceHash && (
+                    <TemplatePicker value={tailoredResume.template} unlocked={templatesOpen} onChange={(template) => void pickLook({ template })} accent={tailoredResume.accent} onAccent={(accent) => void pickLook({ accent })} />
+                  )}
                   <div className="letter-actions">
                     <DownloadMenu
                       up

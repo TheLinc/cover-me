@@ -47,13 +47,23 @@ describe('editing a saved tailored resume', () => {
     expect(summary.applications[0].tailoredResumes[0].editedAt).toBeNull()
   })
 
-  // Edited while only in this browser, then saved to the account from History.
-  it('an uploaded resume that was edited keeps its editedAt', async () => {
+  it('a resume edited in this browser, then saved to the account from History, keeps its editedAt', async () => {
     const u = await user()
     const editedAt = '2026-11-01T12:00:00.000Z'
     await callFunction('applications', { token: u.token, body: { tailored: [{ id: randomUUID(), job, resume: { ...resume, editedAt }, createdAt: editedAt }] } })
     const summary = await (await callFunction('applications', { token: u.token, query: { summary: '1' } })).json()
     expect(Date.parse(summary.applications[0].tailoredResumes[0].editedAt)).toBe(Date.parse(editedAt))
+  })
+
+  it('a template picked on an unedited resume is saved without marking it edited (#119)', async () => {
+    const u = await user()
+    const id = await saved(u)
+    expect((await edit(u, id, { resume: { ...resume, template: 'modern' } })).status).toBe(200)
+
+    const detail = await (await callFunction('applications', { token: u.token })).json()
+    expect(detail.applications[0].tailoredResumes[0].resume.template).toBe('modern')
+    const summary = await (await callFunction('applications', { token: u.token, query: { summary: '1' } })).json()
+    expect(summary.applications[0].tailoredResumes[0].editedAt).toBeNull()
   })
 
   it("can't edit another account's resume", async () => {

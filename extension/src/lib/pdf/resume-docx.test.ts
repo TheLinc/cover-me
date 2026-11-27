@@ -1,5 +1,7 @@
+import JSZip from 'jszip'
 import mammoth from 'mammoth'
 import { describe, expect, it } from 'vitest'
+import { contactLines } from './resume'
 import { buildResumeDocx } from './resume-docx'
 import type { TailoredResume } from './types'
 
@@ -78,5 +80,73 @@ describe('buildResumeDocx', () => {
     for (const s of ['Registered Nurse, Telemetry', 'Epic, Excel', 'example.org/huddle', 'Clinical: Telemetry, IV therapy', 'Systems: Epic', 'DAISY Award', 'Mercy General', 'Nominated by a patient\'s family', 'Unit Nurse of the Quarter, Q2 2022']) {
       expect(value).toContain(s)
     }
+  })
+
+  describe("in the resume's template (#119)", () => {
+    async function xml(r: TailoredResume) {
+      const zip = await JSZip.loadAsync(await (await buildResumeDocx(r)).arrayBuffer())
+      const [styles, doc] = await Promise.all(['word/styles.xml', 'word/document.xml'].map((f) => zip.file(f)!.async('string')))
+      const style = (id: string) => styles.match(new RegExp(`<w:style [^>]*w:styleId="${id}"[\\s\\S]*?</w:style>`))![0]
+      return { styles, doc, title: style('Title'), heading: style('Heading1') }
+    }
+
+    it('prints Classic, and an unknown or missing template, in centred Times with black headings', async () => {
+      for (const template of [undefined, 'classic', 'retro'] as const) {
+        const { styles, title, heading } = await xml({ ...resume, template: template as TailoredResume['template'] })
+        expect(styles).toContain('w:ascii="Times New Roman"')
+        expect(title).toContain('<w:jc w:val="center"/>')
+        expect(heading).toContain('<w:color w:val="000000"/>')
+      }
+    })
+
+    it('prints Modern left-aligned in Arial with headings and rule in its accent', async () => {
+      const indigo = await xml({ ...resume, template: 'modern' })
+      expect(indigo.styles).toContain('w:ascii="Arial"')
+      expect(indigo.title).not.toContain('w:val="center"')
+      expect(indigo.heading).toContain('<w:color w:val="4F46E5"/>')
+      expect(indigo.heading).toMatch(/<w:bottom [^>]*w:color="4F46E5"/)
+      const teal = await xml({ ...resume, template: 'modern', accent: '#0f766e' })
+      expect(teal.heading).toContain('<w:color w:val="0F766E"/>')
+      expect(teal.heading).toMatch(/<w:bottom [^>]*w:color="0F766E"/)
+    })
+
+    it('ignores an accent on a template without one, and an invalid accent', async () => {
+      expect((await xml({ ...resume, template: 'classic', accent: '#0F766E' })).heading).toContain('<w:color w:val="000000"/>')
+      expect((await xml({ ...resume, template: 'modern', accent: 'red' })).heading).toContain('<w:color w:val="4F46E5"/>')
+    })
+
+    it('gives Compact narrower margins and Minimal wider ones than Classic', async () => {
+      const left = async (template: TailoredResume['template']) => Number((await xml({ ...resume, template })).doc.match(/<w:pgMar [^>]*w:left="(\d+)"/)![1])
+      expect(await left('compact')).toBeLessThan(await left('classic'))
+      expect(await left('minimal')).toBeGreaterThan(await left('classic'))
+    })
+
+    it('breaks the contact line where the PDF does, never inside a link', async () => {
+      const r: TailoredResume = { ...resume, template: 'minimal', location: 'Toronto, ON', links: ['alexandra.dev', 'linkedin.com/in/alexandra-montgomery-okonkwo', 'github.com/amontgomery'] }
+      const lines = contactLines(r)
+      expect(lines.length).toBeGreaterThan(1)
+      const { doc } = await xml(r)
+      for (const line of lines.slice(1)) expect(doc).toContain(`<w:br/><w:t xml:space="preserve">${line}</w:t>`)
+    })
+
+    it("puts each line on the PDF's baseline step and never splits a bullet across pages", async () => {
+      const { doc } = await xml(resume)
+      // A job's second bullet sits the PDF's 12pt line plus its 1pt gap below the first (#119).
+      expect(doc).toMatch(/<w:keepLines\/><w:numPr>.*?<\/w:numPr><w:spacing w:after="0" w:before="20" w:line="240" w:lineRule="exact"\/><\/w:pPr><w:r><w:t xml:space="preserve">Led a team of 4</)
+    })
+
+    it('puts a long link on its own line and keeps a title short of its dates, as the PDF does', async () => {
+      const link = 'github.com/jmontgomery/tidewatch-observability-toolkit-for-coastal-sensors'
+      const { doc } = await xml({ ...resume, projects: [{ name: 'tidewatch', link, bullets: ['Tide sensor dashboard'] }] })
+      expect(doc).toContain(`>${link}</w:t>`)
+      expect(doc).not.toMatch(new RegExp(`<w:tab/><w:t[^>]*>${link}`))
+      expect(doc).toMatch(/<w:ind [^>]*w:right="[1-9]\d*"/)
+    })
+
+    it("sets Minimal's larger name in regular weight", async () => {
+      const { title } = await xml({ ...resume, template: 'minimal' })
+      expect(title).toContain('<w:sz w:val="68"/>')
+      expect(title).toMatch(/<w:b w:val="false"\/>|<w:b w:val="0"\/>/)
+    })
   })
 })
