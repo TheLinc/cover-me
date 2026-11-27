@@ -5,10 +5,8 @@ import { parseResume, READER_VERSION } from './resume-parser'
 import { getDesignFile, getMode, getResume, saveDesignFile, saveResume } from './storage'
 import type { ResumeData } from '../types'
 
-type Stored = NonNullable<ResumeData['file']>
-
 // A Word upload from before #401 kept its bytes under design.hash with no file.
-function storedFile(resume: ResumeData): Stored | undefined {
+function storedFile(resume: ResumeData): ResumeData['file'] {
   return resume.file ?? (resume.design ? { id: resume.design.hash, size: resume.design.size, type: 'docx' } : undefined)
 }
 
@@ -48,7 +46,7 @@ export async function refreshResume({ read = parseResume }: { read?: (file: File
   if (session && ownedBy(resume, session)) {
     const baseTextHash = await sha256Hex(new TextEncoder().encode(resume.text))
     try {
-      await uploadResumeToBackend(session.access_token, text, resume.filename, false, { readerVersion: READER_VERSION, reread: { baseTextHash } })
+      await uploadResumeToBackend(session.access_token, text, resume.filename, false, { readerVersion: READER_VERSION, baseTextHash })
     } catch (err) {
       if (!(err instanceof ResumeChangedError)) return 'failed'
       await syncResume(session).catch(() => {})

@@ -174,18 +174,13 @@ Deno.serve(async (req) => {
     const updated_at = new Date().toISOString()
     const higherVersion = readerVersion !== null && readerVersion > (previous?.reader_version ?? 0) ? { reader_version: readerVersion } : {}
 
-    if (sameText && reread) {
-      const { error } = await supabase.from('resumes').update(higherVersion).eq('user_id', userId)
-      if (error) return json({ error: 'Failed to save resume' }, 500)
-      return json({ success: true })
-    }
-
     // The same text again (a sign-in sync) leaves the stored text and its
     // parsed copy alone, so a parse still running for it can save its result (#26).
+    // A same-text re-read only records the reader version (#401).
     if (sameText) {
-      const { error } = await supabase.from('resumes').update({ filename: safeFilename, updated_at, ...higherVersion }).eq('user_id', userId)
+      const { error } = await supabase.from('resumes').update(reread ? higherVersion : { filename: safeFilename, updated_at, ...higherVersion }).eq('user_id', userId)
       if (error) return json({ error: 'Failed to save resume' }, 500)
-      if (!wantParse) return json({ success: true })
+      if (!wantParse || reread) return json({ success: true })
       const cached = await readParse(previous!.structured_encrypted)
       if (isCurrentParse(cached)) return json({ success: true, structured: withOlderFields(cached, req) })
       // One without the order (#165) still serves when the parse that adds it fails.

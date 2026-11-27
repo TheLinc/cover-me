@@ -415,15 +415,15 @@ export async function answerViaBackend(
 
 // parse: wait for the server's parse of this text and return it, for the
 // check of an uploaded Word file (#131). Missing when the server didn't parse
-// (an older function, or the account's parse limit). reread: the stored file
-// read again, from the text with this hash; it throws ResumeChangedError when
-// the account's text has changed since (#401).
+// (an older function, or the account's parse limit). baseTextHash: a re-read
+// of the stored file, from the text with this hash; it throws
+// ResumeChangedError when the account's text has changed since (#401).
 export async function uploadResumeToBackend(
   accessToken: string,
   text: string,
   filename: string,
   parse = false,
-  extra: { readerVersion?: number; uploadedAt?: string; reread?: { baseTextHash: string } } = {},
+  extra: { readerVersion?: number; uploadedAt?: string; baseTextHash?: string } = {},
 ): Promise<ParsedResume | undefined> {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/resume`, {
     method: 'POST',
@@ -434,13 +434,12 @@ export async function uploadResumeToBackend(
     },
     body: JSON.stringify({
       text, filename, ...(parse ? { parse: true } : {}),
-      ...(extra.readerVersion ? { readerVersion: extra.readerVersion } : {}),
-      ...(extra.uploadedAt ? { uploadedAt: extra.uploadedAt } : {}),
-      ...(extra.reread ? { reread: true, baseTextHash: extra.reread.baseTextHash } : {}),
+      readerVersion: extra.readerVersion, uploadedAt: extra.uploadedAt,
+      ...(extra.baseTextHash ? { reread: true, baseTextHash: extra.baseTextHash } : {}),
     }),
   })
   const data = await res.json().catch(() => ({})) as Record<string, unknown>
-  if (res.status === 409 && extra.reread) throw new ResumeChangedError((data.error as string) ?? 'Resume changed')
+  if (res.status === 409 && extra.baseTextHash) throw new ResumeChangedError((data.error as string) ?? 'Resume changed')
   // A parse answer is sent as it's ready (heartbeatJson), so a late failure comes with status 200 (#131).
   if (!res.ok || data.error) throw new Error((data.error as string) ?? 'Resume sync failed')
   const structured = data.structured as ParsedResume | undefined

@@ -179,6 +179,13 @@ More.`, filename: 'resume.doc' } })
       expect(await parsedResume(user.id)).toBe(parse)
     })
 
+    it('a same-text re-read at the version the account has succeeds and changes nothing', async () => {
+      await post({ text: RESUME_TEXT, readerVersion: 2 })
+      const before = await updatedAt()
+      expect((await post({ text: RESUME_TEXT, readerVersion: 2, reread: true, baseTextHash: sha256(RESUME_TEXT) })).status).toBe(200)
+      expect(await updatedAt()).toBe(before)
+    })
+
     it('a re-read with new text saves it without a resume_upload event', async () => {
       await post({ text: RESUME_TEXT })
       const res = await post({ text: NEW_TEXT, reread: true, baseTextHash: sha256(RESUME_TEXT), readerVersion: 2 })
