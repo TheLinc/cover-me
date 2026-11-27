@@ -93,9 +93,10 @@ export default function TemplatePicker({ value, pro, onChange, previewLocked, ac
 }) {
   const current = templateOf(value)
   const group = useId()
-  const [open, setOpen] = useState(false)
+  // Stays true once opened, so the upgrade prompt is still there while the picker shrinks shut (#119).
+  const [opened, setOpened] = useState(false)
   return (
-    <details className="template-picker" onToggle={(e) => setOpen(e.currentTarget.open)}>
+    <details className="template-picker" onToggle={(e) => { if (e.currentTarget.open) setOpened(true) }}>
       <summary className="template-bar">
         <Sketch template={current} mini accent={accent} />
         <span className="template-current"><span className={titled ? 'sr-only' : 'form-label'}>Template</span>{templateName(current)}</span>
@@ -124,7 +125,7 @@ export default function TemplatePicker({ value, pro, onChange, previewLocked, ac
             )
           })}
         </div>
-        {!pro && open && (
+        {!pro && opened && (
           <>
             <p className="hint">Modern, Compact and Minimal come with Pro.</p>
             <UpgradePrompt />

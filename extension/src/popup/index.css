@@ -1479,6 +1479,9 @@ textarea:focus-visible, input:focus-visible, [tabindex]:focus-visible {
 .template-more { font-size: 11px; color: var(--accent-h); }
 .template-toggle { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: var(--text-2); }
 .template-picker[open] .template-toggle .chevron { transform: rotate(180deg); }
+.template-picker { interpolate-size: allow-keywords; }
+.template-picker::details-content { height: 0; overflow: clip; transition: height 0.2s ease, content-visibility 0.2s ease allow-discrete; }
+.template-picker[open]::details-content { height: auto; overflow: visible; transition: height 0.2s ease, content-visibility 0.2s ease allow-discrete, overflow 0s 0.2s allow-discrete; }
 .template-choices { border: none; margin: 0; padding: 4px 12px 12px; min-width: 0; }
 .template-options { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 .template-option {
@@ -1521,7 +1524,7 @@ textarea:focus-visible, input:focus-visible, [tabindex]:focus-visible {
 .template-reveal { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows 0.22s ease, opacity 0.18s ease; }
 .template-reveal.is-shown { grid-template-rows: 1fr; opacity: 1; }
 .template-reveal > div { min-height: 0; overflow: hidden; }
-@media (prefers-reduced-motion: reduce) { .template-reveal { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .template-reveal, .template-picker::details-content, .template-picker[open]::details-content { transition: none; } }
 .template-accent { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 12px 12px; padding-top: 12px; border-top: 1px solid var(--border); }
 .template-accent-label { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; }
 .template-accent-label .form-label { margin: 0; }
