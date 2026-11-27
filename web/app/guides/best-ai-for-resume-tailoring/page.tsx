@@ -186,7 +186,7 @@ export default function Page() {
               </p>
               <ResultsTable
                 rows={RESUMES}
-                caption="Tailored resumes, scored blind on November 26, 2026. Teal's are the imported resume plus its AI summary, on the free plan, and Rezi's free plan allowed one resume. Leftover placeholders aren't counted as claims: Claude left one in a bullet, which makes that resume not sendable, and Jobscan's editor had 5 empty fields, such as a blank GPA line, that probably don't export. Each Jobscan resume has a false claim without them."
+                caption="Tailored resumes, scored blind on November 26, 2026. Teal's are the imported resume plus its AI summary, on the free plan, and Rezi's free plan allowed one resume. Leftover placeholders aren't counted as claims: Claude left one in a bullet, one reason that resume isn't sendable, and Jobscan's editor had 5 empty fields, such as a blank GPA line, that probably don't export. Each Jobscan resume has a false claim without them."
               />
               <h3>Cover Me</h3>
               <p>
@@ -197,7 +197,7 @@ export default function Page() {
               </p>
               <h3>Claude and ChatGPT</h3>
               <p>
-                Neither chatbot claimed Redux, Kubernetes, ACLS, Meta Ads or the other headline requirements in a resume. Both pointed out the gaps and told the applicant not to claim them. Their problems were smaller, and some still borrowed from the posting: ChatGPT added an &ldquo;Interdisciplinary collaboration&rdquo; skill to the nurse&rsquo;s resume, echoing the posting&rsquo;s interdisciplinary rounds. Claude left an instruction inside a bullet in the marketing resume: &ldquo;A/B test campaigns and content to improve engagement and conversion (add a specific test and result here if you have one)&rdquo;, and turned &ldquo;segmenting sends&rdquo; into &ldquo;Built lifecycle email programs in HubSpot&rdquo;. ChatGPT described a developer whose dashboards serve 60,000 monthly users as having &ldquo;experience building high-traffic interfaces&rdquo;, echoing the posting&rsquo;s &ldquo;high-traffic consumer products&rdquo;. Both return chat text, so you still copy it into a document and format it yourself.
+                Neither chatbot claimed Redux, Kubernetes, ACLS, Meta Ads or the other headline requirements in a resume. Both pointed out the gaps and told the applicant not to claim them. Their problems were smaller, and some still borrowed from the posting: ChatGPT added an &ldquo;Interdisciplinary collaboration&rdquo; skill to the nurse&rsquo;s resume, echoing the posting&rsquo;s interdisciplinary rounds. Claude left an instruction inside a bullet in the marketing resume: &ldquo;A/B test campaigns and content to improve engagement and conversion (add a specific test and result here if you have one)&rdquo;, and opened the email bullet with &ldquo;Built lifecycle email programs in HubSpot&rdquo;, when the resume says only that the applicant segmented sends. ChatGPT described a developer whose dashboards serve 60,000 monthly users as having &ldquo;experience building high-traffic interfaces&rdquo;, echoing the posting&rsquo;s &ldquo;high-traffic consumer products&rdquo;. Both return chat text, so you still copy it into a document and format it yourself.
               </p>
               <h3>Rezi AI</h3>
               <p>
@@ -260,7 +260,7 @@ export default function Page() {
                 <li>Search the result for every requirement in the posting. Each one it contains should be something you&rsquo;ve really done.</li>
                 <li>Check your years of experience and every number against your original resume. Teal&rsquo;s summaries got the years wrong in this test, and so did one of Jobscan&rsquo;s cover letters.</li>
                 <li>Don&rsquo;t click Accept All. Read each suggested edit on its own.</li>
-                <li>Look for leftover placeholders such as &ldquo;X%&rdquo; or &ldquo;add a result here&rdquo;.</li>
+                <li>Look for leftover placeholders such as &ldquo;X%&rdquo; or &ldquo;add a specific test and result here&rdquo;.</li>
                 <li>Ask whether you could talk about each line in an interview. If you couldn&rsquo;t, cut it.</li>
               </ul>
               <p>

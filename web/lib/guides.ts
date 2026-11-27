@@ -184,7 +184,7 @@ export const GUIDES: Guide[] = [
   {
     slug: 'best-ai-for-resume-tailoring',
     title: 'Best AI for resume tailoring: 6 tools tested for made-up claims',
-    description: 'Six AI tools tailored three resumes that lacked what the job asked for. Which ones made up skills, years or results? Scored blind, tested November 2026.',
+    description: 'Six AI tools got three resumes that lacked what the job asked for. Which ones made up skills, years or results? Scored blind, tested November 2026.',
     date: '2026-11-27',
     image: '/guides/best-ai-for-resume-tailoring.png',
     imageAlt:
