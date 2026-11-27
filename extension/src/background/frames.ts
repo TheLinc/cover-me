@@ -34,10 +34,10 @@ export type FrameScrape = { frameId: number; snapshot?: PageSnapshot | null } & 
   | { ok: false; error: Error; connection: boolean }
 )
 
-// snapshot: also copy each page for the server read (#29). The preview read on popup open never does (#346).
+// snapshot: also copy each page for the server read (#29).
 export async function readFrames(tabId: number, frameIds: number[], snapshot: boolean): Promise<FrameScrape[]> {
   // A frame that can't be injected answers the message below with a connection
-  // error, and the inline scraper takes over (https://github.com/TheLinc/cover-me/commit/50badfd9)
+  // error (https://github.com/TheLinc/cover-me/commit/50badfd9)
   await chrome.scripting
     .executeScript({ target: { tabId, frameIds }, files: [CONTENT_SCRIPT_FILE] })
     .catch(() => {})

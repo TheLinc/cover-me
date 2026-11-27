@@ -54,7 +54,7 @@ export default function PostingCard({ posting, onPaste }: { posting: JobData | n
       <div className="posting-main">
         <span className="posting-logo" aria-hidden="true">{posting.company.trim().charAt(0).toUpperCase()}</span>
         <div className="posting-text">
-          <div className="posting-title">{posting.title}</div>
+          <div className="posting-title" title={posting.title}>{posting.title}</div>
           <div className="posting-meta">{[posting.company, site].filter(Boolean).join(' · ')}</div>
         </div>
       </div>

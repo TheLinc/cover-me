@@ -735,7 +735,10 @@ export default function GeneratePage({ onNavigate }: Props) {
   useEffect(() => {
     if (!showStart || previewed.current) return
     previewed.current = true
-    chrome.runtime.sendMessage({ type: 'PREVIEW_TAB' }).then((found: JobData | null) => setPosting(found), () => setPosting(null))
+    chrome.runtime.sendMessage({ type: 'PREVIEW_TAB' }).then(
+      (found: JobData | null) => setPosting((p) => (p === undefined ? found : p)),
+      () => setPosting((p) => (p === undefined ? null : p)),
+    )
   }, [showStart])
   const tryAnyway = posting === null ? 'Try anyway: ' : ''
 
