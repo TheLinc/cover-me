@@ -1,7 +1,6 @@
 import PageReadSetting from '../components/PageReadSetting'
 import AccountPanel from '../components/AccountPanel'
 import { ReviewLinksSetting } from '../components/ReviewAsk'
-import { TemplateSetting } from '../components/TemplatePicker'
 import { WhatsNewSetting } from '../components/WhatsNew'
 
 export default function SettingsPage() {
@@ -12,7 +11,6 @@ export default function SettingsPage() {
         <p className="page-subtitle">Your account</p>
       </div>
       <AccountPanel />
-      <TemplateSetting />
       <PageReadSetting />
       <WhatsNewSetting />
       <ReviewLinksSetting />

@@ -1509,9 +1509,10 @@ textarea:focus-visible, input:focus-visible, [tabindex]:focus-visible {
 .design-option { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; }
 .design-option input { accent-color: var(--accent); margin-top: 2px; cursor: pointer; }
 .design-legend { padding: 0; margin-bottom: 0; font-size: 11px; font-weight: 600; color: var(--text-3); }
-.design-card { padding: 10px 11px; border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--surface); }
-.design-card:has(input:checked) { border-color: var(--accent); background: var(--accent-dim); }
-.design-card:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.design-card { padding: 10px 11px; border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--surface); transition: border-color 0.22s ease, background-color 0.22s ease; }
+.design-card:has(> .design-option > input:checked) { border-color: var(--accent); background: var(--accent-dim); }
+.design-card:has(> .design-option > input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.design-card .template-picker { margin: 8px 0 0 21px; }
 .design-card.disabled { border-style: dashed; background: transparent; }
 .design-card.disabled .design-option { cursor: default; }
 .design-card.disabled .design-option-title { color: var(--text-3); }
@@ -1673,11 +1674,10 @@ textarea:focus-visible, input:focus-visible, [tabindex]:focus-visible {
 .template-thumb-mini { width: 18px; height: 24px; padding: 3px; gap: 1.5px; flex-shrink: 0; box-shadow: none; }
 .template-thumb-mini > span { height: 1px; }
 .template-thumb-mini .tt-name { height: 2px; }
-.page-read-setting .template-picker { margin: 10px 0 0; }
 .template-reveal { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows 0.22s ease, opacity 0.18s ease; }
 .template-reveal.is-shown { grid-template-rows: 1fr; opacity: 1; }
 .template-reveal > div { min-height: 0; overflow: hidden; }
-@media (prefers-reduced-motion: reduce) { .template-reveal, .template-picker::details-content, .template-picker[open]::details-content { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .template-reveal, .design-card, .template-picker::details-content, .template-picker[open]::details-content { transition: none; } }
 .template-accent { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 12px 12px; padding-top: 12px; border-top: 1px solid var(--border); }
 .template-accent-label { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; }
 .template-accent-label .form-label { margin: 0; }

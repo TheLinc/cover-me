@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { uploadResumeToBackend } from '../../lib/auth'
 import { DESIGN_CHECK_STALE_MS, DESIGN_UPLOAD_MAX, usesDesign } from '../../lib/design'
 import { designUsable } from '../../lib/pdf/docx-design'
@@ -9,6 +9,7 @@ import { parseResume } from '../../lib/resume-parser'
 import { getCachedTier, getMode, getResume, getSession, saveResume, watchResume } from '../../lib/storage'
 import type { DesignCheck, ParsedResume, ResumeData } from '../../types'
 import { DownloadIcon, FileTypeIcon, RegenerateIcon } from '../components/icons'
+import { Reveal, TemplateSetting } from '../components/TemplatePicker'
 
 type Status = 'idle' | 'parsing' | 'saved' | 'error'
 
@@ -301,13 +302,23 @@ function LayoutChoice({ design, wordUpload, yours, onPick, onRetry, onUpload, da
     return () => clearTimeout(t)
   }, [design?.status, left])
   const coverMe = (
-    <label className="design-card design-option">
-      <input type="radio" name="layout" checked={!yours} onChange={() => onPick('cover-me')} />
-      <span>
-        <span className="design-option-title">Cover Me layout</span>
-        <span className="design-option-desc">Clean ATS layout. Adds a summary, compact to one page, Word or PDF.</span>
-      </span>
-    </label>
+    <div className="design-card">
+      <label className="design-option">
+        <input type="radio" name="layout" checked={!yours} onChange={() => onPick('cover-me')} />
+        <span>
+          <span className="design-option-title">Cover Me layout</span>
+          <span className="design-option-desc">Clean ATS layout. Adds a summary, compact to one page, Word or PDF.</span>
+        </span>
+      </label>
+      <Reveal shown={!yours}><TemplateSetting /></Reveal>
+    </div>
+  )
+  const waiting = (status: ReactNode) => (
+    <fieldset className="design-choice">
+      <legend className="design-legend">Tailored resumes use</legend>
+      {coverMe}
+      {status}
+    </fieldset>
   )
   if (!design) {
     return (
@@ -336,23 +347,23 @@ function LayoutChoice({ design, wordUpload, yours, onPick, onRetry, onUpload, da
   }
   const stale = design.status === 'checking' && left <= 0
   if (stale) {
-    return (
-      <p className="hint design-choice">
+    return waiting(
+      <p className="hint">
         Checking your design didn&apos;t finish.{' '}
         <button type="button" className="upload-link design-retry" onClick={onRetry}>Try again</button>
-      </p>
+      </p>,
     )
   }
   if (design.status === 'checking') {
-    return <p className="design-checking" role="status"><span className="spinner design-spinner" aria-hidden />Checking your design…</p>
+    return waiting(<p className="design-checking" role="status"><span className="spinner design-spinner" aria-hidden />Checking your design…</p>)
   }
   if (design.status === 'error' || !design.check) {
-    return (
-      <p className="hint design-choice">
+    return waiting(
+      <p className="hint">
         {design.error ?? "Couldn't check your design."}{' '}
         {/* A check again would upload this browser's text over the account's resume (#174). */}
         {!design.refused && <button type="button" className="upload-link design-retry" onClick={onRetry}>Try again</button>}
-      </p>
+      </p>,
     )
   }
   const c = design.check
@@ -377,6 +388,7 @@ function LayoutChoice({ design, wordUpload, yours, onPick, onRetry, onUpload, da
             <span className="design-option-desc">Tailors your bullets inside your own Word file.</span>
           </span>
         </label>
+        <Reveal shown={yours || !usable}>
         <div className="design-readout">
           {usable ? (
             <>
@@ -402,6 +414,7 @@ function LayoutChoice({ design, wordUpload, yours, onPick, onRetry, onUpload, da
             <p>Your file is over 2 MB, so your account&apos;s dashboard uses the Cover Me layout for it.</p>
           )}
         </div>
+        </Reveal>
       </div>
       {coverMe}
     </fieldset>
