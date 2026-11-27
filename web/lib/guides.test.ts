@@ -236,3 +236,24 @@ describe('the ATS resume template guide', () => {
     expect(readFileSync(join(__dirname, '../app/guides/ats-friendly-resume-format/page.tsx'), 'utf8')).toContain(`href="/guides/${slug}"`)
   })
 })
+
+describe('the Chrome extensions for job applications guide', () => {
+  const slug = 'best-chrome-extensions-for-job-applications'
+  const render = async () => {
+    const { renderToStaticMarkup } = await import('react-dom/server')
+    const { default: Page } = await import(`../app/guides/${slug}/page.tsx`)
+    return renderToStaticMarkup(h(Page))
+  }
+
+  it('names Chrome extensions and job applications in its title and H1, and shows the test date', async () => {
+    const { metadata } = (await import(`../app/guides/${slug}/page.tsx`)) as { metadata: Metadata }
+    const title = (metadata.title as { absolute: string }).absolute
+    expect(title).toMatch(/Chrome extensions/i)
+    expect(title).toMatch(/job applications/i)
+    const html = await render()
+    const h1 = html.match(/<h1[^>]*>(.*?)<\/h1>/)![1]
+    expect(h1).toMatch(/Chrome extensions/i)
+    expect(h1).toMatch(/job applications/i)
+    expect(html.replace(/<[^>]+>/g, ' ')).toContain('November 27, 2026')
+  }, 20_000)
+})
