@@ -135,8 +135,8 @@ export function accountUpdates(
 export const unclaimed = (userId: string) => (e: { account?: string; saveTo?: string }): boolean =>
   !e.account && (!e.saveTo || e.saveTo === userId)
 
-// The account's copies have no file id (letters have no source at all); the
-// same entry saved here, under the same id, has it. letters and tailored: every
+// The hosted tailor's copies have no file id, and the account's letters have no
+// source at all; the same entry saved here, under the same id, has it. letters and tailored: every
 // local entry, saved to the account or not (#401).
 export function withSources(server: JobGroup[], letters: CoverLetter[], tailored: TailoredHistoryEntry[]): JobGroup[] {
   const sources = new Map([...letters.map((l) => [l.id, l.source] as const), ...tailored.map((t) => [t.id, t.resume.source] as const)].filter(([, s]) => s))

@@ -118,6 +118,7 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
 
   const wordUpload = !!resume?.filename.toLowerCase().endsWith('.docx')
   const readerNote = needsUploadNote(resume, noteSeen)
+  const kept = resume ? storedFile(resume) : undefined
 
   return (
     <div className="page">
@@ -215,8 +216,8 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
             <div className="resume-info">
               <div className="resume-name-row">
                 <div className="resume-name">{resume.filename}</div>
-                {storedFile(resume) && (
-                  <button type="button" className="btn btn-secondary btn-sm resume-download" aria-label={`Download ${resume.filename}`} onClick={() => void downloadStoredFile(storedFile(resume)!.id, resume.filename)}>
+                {kept && (
+                  <button type="button" className="btn btn-secondary btn-sm resume-download" aria-label={`Download ${resume.filename}`} onClick={() => void downloadStoredFile(kept.id, resume.filename)}>
                     Download
                   </button>
                 )}

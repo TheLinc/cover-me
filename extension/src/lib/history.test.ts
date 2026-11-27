@@ -91,7 +91,7 @@ describe('accountUpdates', () => {
   })
 })
 
-describe('withLocalOnly', () => {
+describe('withSources', () => {
   const server = [{ key: 'app1', id: 'app1', title: 'A', company: 'Acme', url: 'https://jobs.example/a', latestAt: '2026-10-03T00:00:00Z', coverLetters: [], tailoredResumes: [] }]
 
   test("the account's copies take the source saved here under the same id, which has the file id (#401)", () => {
@@ -105,6 +105,10 @@ describe('withLocalOnly', () => {
     expect(g.coverLetters[0].source).toEqual(local)
     expect(g.tailoredResumes.map((t) => t.resume.source)).toEqual([local, fromServer])
   })
+})
+
+describe('withLocalOnly', () => {
+  const server = [{ key: 'app1', id: 'app1', title: 'A', company: 'Acme', url: 'https://jobs.example/a', latestAt: '2026-10-03T00:00:00Z', coverLetters: [], tailoredResumes: [] }]
 
   test('adds local-only entries in date order, tagged, and leaves out other accounts', () => {
     const groups = withLocalOnly(
