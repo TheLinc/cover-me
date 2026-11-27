@@ -109,7 +109,7 @@ export default function Page() {
       guide={guide}
       lede={
         <>
-          Most free ATS resume checkers give you a score and a list of missing keywords for a few resumes a week or month. They differ on three things: whether you need an account, whether they read the job description, and how many checks you get before they ask you to pay. Here are eleven of them, with each free limit taken from the tool&rsquo;s own pages on {CHECKED}.
+          Most free ATS resume checkers give you a score and a list of missing keywords for a few resumes a week or month. They differ on three things: whether you need an account, whether they read the job description, and how many scans you get before they ask you to pay. Here are eleven of them, with each free limit taken from the tool&rsquo;s own pages on {CHECKED}.
         </>
       }
       tldr={[
