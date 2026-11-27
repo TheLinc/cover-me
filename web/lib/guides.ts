@@ -188,7 +188,7 @@ export const GUIDES: Guide[] = [
     date: '2026-11-27',
     image: '/guides/best-ai-for-resume-tailoring.png',
     imageAlt:
-      "Results for tailored resumes from six AI tools, tested November 26, 2026 with three resumes that lacked what the posting asked for and scored blind. Cover Me: 3 of 3 sendable, no false or misleading claims. Claude: 2 of 3 sendable, 1 misleading claim. ChatGPT: 2 of 3 sendable, 1 misleading claim. Rezi: 1 of 1 sendable on its free plan. Jobscan, with every suggestion accepted: 0 of 3 sendable, 7 false or misleading claims. Teal: 0 of 2 sendable, 4 false or misleading claims.",
+      "Results for tailored resumes from six AI tools, tested November 26, 2026 with three resumes that lacked what the posting asked for, and scored by a checker that didn't know which tool wrote them. Cover Me: 3 of 3 sendable, no false or misleading claims. Claude: 2 of 3 sendable, 1 misleading claim. ChatGPT: 2 of 3 sendable, 1 misleading claim. Rezi: 1 of 1 sendable on its free plan. Jobscan, with every suggestion accepted: 0 of 3 sendable, 7 false or misleading claims. Teal: 0 of 2 sendable, 4 false or misleading claims.",
   },
 ]
 
