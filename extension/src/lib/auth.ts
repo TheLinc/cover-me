@@ -1,5 +1,5 @@
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL, WEB_URL } from './config'
-import { restoreDesign } from './design'
+import { restoreDesign, sha256Hex } from './design'
 import { clearResume, clearSession, getCachedTier, getResume, getSession, getSettings, saveGoogleSignInError, saveCachedTier, saveResume, saveSession, saveSettings, takeGoogleSignInError, type DesignFile } from './storage'
 import { isValidResume } from './ai/resume-tailor'
 import { derivePlanningProgress, deriveTailorProgress } from './ai/tailor-progress'
@@ -161,7 +161,10 @@ export async function syncResume(sess: AuthSession): Promise<void> {
   // Added while signed out: maybe someone else's on a shared browser, so never
   // uploaded here. The account's copy wins when they differ (#16).
   const signedOut = !!mine?.signedOutUpload
-  const keepMine = mine && (!remote || remote.text === mine.text || (!signedOut && Date.parse(mine.updatedAt) >= Date.parse(remote.updatedAt)))
+  // A re-read the account never got replaces the account's copy only while
+  // that copy is still the text it was read from (#401).
+  const rereadOf = !!mine?.rereadFrom && !!remote && (remote.text === mine.text || await sha256Hex(new TextEncoder().encode(remote.text)) === mine.rereadFrom)
+  const keepMine = mine && (!remote || remote.text === mine.text || rereadOf || (!signedOut && Date.parse(mine.updatedAt) >= Date.parse(remote.updatedAt)))
 
   let next: ResumeData | null = null
   if (remote) {
@@ -171,8 +174,13 @@ export async function syncResume(sess: AuthSession): Promise<void> {
   if (keepMine) {
     // Matching the account's copy, a signed-out copy is in the account after all (#16).
     const { signedOutUpload, ...rest } = mine
-    const readerVersion = remote?.text === mine.text ? Math.max(mine.readerVersion ?? 0, remote.readerVersion ?? 0) || undefined : mine.readerVersion
-    next = { ...rest, accountId: userId, ...(readerVersion ? { readerVersion } : {}), ...(signedOutUpload && remote?.text !== mine.text ? { signedOutUpload } : {}) }
+    const same = remote?.text === mine.text
+    const readerVersion = same ? Math.max(mine.readerVersion ?? 0, remote.readerVersion ?? 0) || undefined : mine.readerVersion
+    const uploadedAt = mine.uploadedAt ?? (same ? remote.uploadedAt : undefined)
+    next = {
+      ...rest, accountId: userId, ...(readerVersion ? { readerVersion } : {}), ...(uploadedAt ? { uploadedAt } : {}),
+      ...(signedOutUpload && !same ? { signedOutUpload } : {}),
+    }
   }
 
   // Don't overwrite a resume the user added while this ran (#16).
@@ -182,8 +190,23 @@ export async function syncResume(sess: AuthSession): Promise<void> {
   // by the next account to sign in here, and this account retries next time (#16).
   if (next) await saveResume(next)
   else if (local) await clearResume()
-  if (keepMine && !signedOut && remote?.text !== mine.text) {
-    await uploadResumeToBackend(sess.access_token, mine.text, mine.filename, false, { readerVersion: mine.readerVersion, uploadedAt: mine.uploadedAt })
+  if (keepMine && !signedOut && (remote?.text !== mine.text || rereadOf)) {
+    let refused = false
+    try {
+      await uploadResumeToBackend(sess.access_token, mine.text, mine.filename, false, {
+        readerVersion: next!.readerVersion, uploadedAt: mine.uploadedAt, baseTextHash: rereadOf ? mine.rereadFrom : undefined,
+      })
+    } catch (err) {
+      if (!(err instanceof ResumeChangedError)) throw err
+      refused = true
+    }
+    const saved = await getResume()
+    if (saved?.rereadFrom && saved.text === mine.text) {
+      const { rereadFrom: _r, ...done } = saved
+      await saveResume(done)
+    }
+    // Refused: the account's text changed after the fetch. Without the marker, it wins now (#401).
+    if (refused) return syncResume(sess)
   }
   // Pro: the Word file that goes with the account's resume comes down too
   // (#174), unless this computer has its own design for it. A static import:

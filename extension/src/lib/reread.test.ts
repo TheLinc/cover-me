@@ -179,6 +179,28 @@ describe('refreshResume (#401)', () => {
     expect(posts).toEqual([])
   })
 
+  test("own-key mode marks a re-read of an account's resume for the next sign-in or hosted open", async () => {
+    store(pdf({ accountId: 'me' }))
+    const posts = fakeAccount([null])
+    expect(await refreshResume({ read: reads('Pat new text') })).toBe('changed')
+    expect(posts).toEqual([])
+    expect(local.resume).toMatchObject({ text: 'Pat new text', rereadFrom: await sha256Hex(new TextEncoder().encode('Pat old text')) })
+  })
+
+  test("a hosted Word re-read asks for the design check only after the account has the text", async () => {
+    const word: ResumeData = { text: 'Pat old text', filename: 'Pat.docx', updatedAt: '2026-11-01T00:00:00.000Z', accountId: 'me', file: { id: OLD_ID, size: 4, type: 'docx' }, design: { hash: OLD_ID, size: 4, status: 'done' } }
+    store(word, hosted)
+    const order: string[] = []
+    const posts = fakeAccount([{ text: 'Pat old text', filename: 'Pat.docx', updated_at: '2026-10-01T00:00:00.000Z' }])
+    const fetchMock = globalThis.fetch as ReturnType<typeof vi.fn>
+    const inner = fetchMock.getMockImplementation()!
+    fetchMock.mockImplementation(async (url: string, init?: RequestInit) => { if (init?.method === 'POST') order.push('post'); return inner(url, init) })
+    ;(chrome.runtime as { sendMessage: unknown }).sendMessage = async () => { order.push('check') }
+    expect(await refreshResume({ read: reads('Pat new text') })).toBe('changed')
+    expect(posts).toHaveLength(1)
+    expect(order).toEqual(['post', 'check'])
+  })
+
   test('a resume replaced during the read is not overwritten', async () => {
     store(pdf())
     const other = { text: 'Uploaded meanwhile', filename: 'New.pdf', updatedAt: '2026-11-25T00:00:00.000Z' }

@@ -260,7 +260,7 @@ export async function clearSession(): Promise<void> {
 }
 
 // "Remember me" used to keep an encrypted password here. The worker deletes any
-// leftover copy on update: https://github.com/TheLinc/cover-me/commit/0f03141b7f9e5edd2546d1be9bd0bc4b9a347dce
+// leftover copy on every install and update: https://github.com/TheLinc/cover-me/commit/0f03141b7f9e5edd2546d1be9bd0bc4b9a347dce
 export async function clearSavedLogin(): Promise<void> {
   await chrome.storage.local.remove('savedLogin')
 }

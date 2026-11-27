@@ -216,6 +216,32 @@ describe('the upload check', () => {
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
+  test('hosted: a re-read the account lacks goes up as a re-read before the check, and a refused one stops it (#401)', async () => {
+    const session = { access_token: 't', refresh_token: 'r', expires_at: Math.floor(Date.now() / 1000) + 3600, user: { id: 'me', email: 'ada@example.com' } }
+    const rereadFrom = 'b'.repeat(64)
+    await store({ status: 'checking', extra: { settings: { provider: 'claude', apiKey: '', mode: 'hosted' }, session, resume: { accountId: 'me', rereadFrom } } })
+    const posts: Array<Record<string, unknown>> = []
+    vi.stubGlobal('fetch', vi.fn(async (_url: string, init?: RequestInit) => {
+      if (init?.method !== 'POST') return new Response(JSON.stringify({ text: 'Ada', filename: 'ada.docx', updated_at: '2026-11-02T00:00:00Z' }), { status: 200 })
+      posts.push(JSON.parse(init.body as string))
+      return new Response(JSON.stringify({ success: true, structured: current() }), { status: 200 })
+    }))
+    await checkUploadedDesign(hash)
+    expect(posts).toMatchObject([{ reread: true, baseTextHash: rereadFrom }, { parse: true }])
+    expect(posts[1]).not.toHaveProperty('reread')
+    expect((local.resume as { design: unknown }).design).toMatchObject({ status: 'done' })
+
+    await store({ status: 'checking', extra: { settings: { provider: 'claude', apiKey: '', mode: 'hosted' }, session, resume: { accountId: 'me', rereadFrom } } })
+    posts.length = 0
+    vi.stubGlobal('fetch', vi.fn(async (_url: string, init?: RequestInit) => {
+      if (init?.method === 'POST') posts.push(JSON.parse(init.body as string))
+      return new Response('{"error":"Server error"}', { status: 503 })
+    }))
+    await checkUploadedDesign(hash)
+    expect(posts.some((p) => p.parse)).toBe(false)
+    expect((local.resume as { design: unknown }).design).toMatchObject({ status: 'error' })
+  })
+
   test("hosted: the check's upload sends the resume's readerVersion and uploadedAt (#401)", async () => {
     const session = { access_token: 't', refresh_token: 'r', expires_at: Math.floor(Date.now() / 1000) + 3600, user: { id: 'me', email: 'ada@example.com' } }
     await store({ status: 'checking', extra: { settings: { provider: 'claude', apiKey: '', mode: 'hosted' }, session, resume: { accountId: 'me', readerVersion: 2, uploadedAt: '2026-11-01T00:00:00Z' } } })

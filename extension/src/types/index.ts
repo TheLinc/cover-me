@@ -62,7 +62,7 @@ export interface ParsedResume {
   otherSections?: ResumeSection[]
   /** The uploaded resume's section order (#165), carried to each tailored resume. Always an array on a parse made since then; a cached parse without it is parsed again. */
   sectionOrder?: SectionKey[]
-  /** Set on every parse made since URLs under a section stay in their entry (#238); a cached parse without it is parsed again. */
+  /** Set on every parse made since URLs under a section stay in their entry (#238). */
   linksKept?: true
   /** PARSE_VERSION in lib/ai/resume-parse.ts when parsed; missing on a parse from before it (#401). */
   parseVersion?: number

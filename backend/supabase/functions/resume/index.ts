@@ -179,7 +179,8 @@ Deno.serve(async (req) => {
     // parsed copy alone, so a parse still running for it can save its result (#26).
     if (sameText) {
       const sync = { filename: safeFilename, updated_at, ...(uploadedAt ? { uploaded_at: uploadedAt } : {}) }
-      const { error } = await supabase.from('resumes').update({ ...(reread ? {} : sync), ...higherVersion }).eq('user_id', userId)
+      const { error } = await supabase.from('resumes').update({ ...(reread ? {} : sync), ...higherVersion })
+        .eq('user_id', userId).like('text_encrypted', sameCiphertext(previous!.text_encrypted))
       if (error) return json({ error: 'Failed to save resume' }, 500)
       if (!wantParse || reread) return json({ success: true })
       const cached = await readParse(previous!.structured_encrypted)

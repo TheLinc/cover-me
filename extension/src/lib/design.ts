@@ -1,7 +1,7 @@
 // "Your design" (#131) in the extension: the upload check, which runs in the
 // service worker so it survives the popup closing, and the tailor's choice of
 // layout. The edit itself is lib/pdf/docx-design.ts, shared with the website.
-import { checkedTier, DesignRefusedError, ensureValidSession, fetchDesignFileFromBackend, uploadDesignFileToBackend, uploadResumeToBackend, type TailorDesign } from './auth'
+import { checkedTier, DesignRefusedError, ensureValidSession, fetchDesignFileFromBackend, syncResume, uploadDesignFileToBackend, uploadResumeToBackend, type TailorDesign } from './auth'
 import { isCurrentParse, parseResumeStructure, upgradedParse } from './ai/resume-parse'
 import { decryptApiKey } from './crypto'
 import { designUsable, downloadDesignDocx, tailorDesign } from './pdf/docx-design'
@@ -58,6 +58,14 @@ export async function checkUploadedDesign(hash: string): Promise<void> {
       const session = await ensureValidSession()
       if (!session) throw new Error('Sign in to check your design.')
       if (!ownedBy(resume, session)) throw new Error('Upload your .docx again while signed in to use your design.')
+      // A re-read goes to the account first, checked against the text it replaced.
+      // This upload would skip that check (#401).
+      if (resume.rereadFrom) {
+        await syncResume(session).catch(() => {})
+        const now = await getResume()
+        if (now?.design?.hash !== hash) return
+        if (now.rereadFrom) throw new Error("Couldn't check your design right now. Try again in a few minutes.")
+      }
       parsed = await uploadResumeToBackend(session.access_token, resume.text, resume.filename, true, { readerVersion: resume.readerVersion, uploadedAt: resume.uploadedAt })
       if (!parsed) throw new Error("Couldn't check your design right now. Try again in a few minutes.")
     } else {
