@@ -11,6 +11,7 @@ import DownloadMenu from '../components/DownloadMenu'
 import GapChips from '../components/GapChips'
 import { ChevronIcon, EditIcon, RegenerateIcon } from '../components/icons'
 import PageReadNotice from '../components/PageReadNotice'
+import PostingCard from '../components/PostingCard'
 import AnswersNews from '../components/AnswersNews'
 import UpdateReady from '../components/UpdateReady'
 import PostingTitleTip from '../components/PostingTitleTip'
@@ -88,9 +89,10 @@ interface TailorOptionsProps {
   setIncludeSummary: (v: boolean) => void
   design: { yours: boolean; summary: boolean } | null
   onChangeLayout: () => void
+  label?: string
 }
 
-function TailorOptions({ inputMode, manualReady, onTailor, compact, setCompact, trim, setTrim, includeSummary, setIncludeSummary, design, onChangeLayout }: TailorOptionsProps) {
+function TailorOptions({ inputMode, manualReady, onTailor, compact, setCompact, trim, setTrim, includeSummary, setIncludeSummary, design, onChangeLayout, label = 'Tailor Resume to Job' }: TailorOptionsProps) {
   // The user's file sets the page: no compacting, and a summary only where the file has one. (#131)
   const yours = !!design?.yours
   return (
@@ -103,7 +105,7 @@ function TailorOptions({ inputMode, manualReady, onTailor, compact, setCompact, 
           <line x1="16" y1="17" x2="8" y2="17" />
           <polyline points="10 9 9 9 8 9" />
         </svg>
-        Tailor Resume to Job
+        {label}
       </button>
       <details className="tailor-details">
       <summary className="tailor-summary">
@@ -220,6 +222,7 @@ export default function GeneratePage({ onNavigate }: Props) {
   const [loadingJob, setLoadingJob] = useState<JobData | null>(null)
   // Saved, so it survives the popup closing while the user copies the posting (#130).
   const [scrapeFailure, setScrapeFailure] = useState<ShownFailure | null>(null)
+  const [posting, setPosting] = useState<JobData | null | undefined>(undefined)
 
   const [manualTitle, setManualTitle] = useState('')
   const [manualCompany, setManualCompany] = useState('')
@@ -459,6 +462,7 @@ export default function GeneratePage({ onNavigate }: Props) {
       if (!scrape.success) { setError(scrape.error); setState('error'); return }
       scrapedJob = scrape.job
       setLoadingJob(scrapedJob)
+      setPosting(scrapedJob)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not read this page.')
       setState('error')
@@ -577,6 +581,7 @@ export default function GeneratePage({ onNavigate }: Props) {
       if (!scrape.success) { setTailorError(scrape.error); setTailorState('error'); return }
       scrapedJob = scrape.job
       setLoadingJob(scrapedJob)
+      setPosting(scrapedJob)
     } catch (err) {
       setTailorError(err instanceof Error ? err.message : 'Could not read this page.')
       setTailorState('error')
@@ -724,6 +729,18 @@ export default function GeneratePage({ onNavigate }: Props) {
   const isReady = appMode === 'hosted' ? hasSession === true : hasApiKey === true
   const setupComplete = hasResume === true && isReady
   const setupLoaded = hasResume !== null && hasApiKey !== null && hasSession !== null
+  const showStart = setupLoaded && setupComplete && state === 'idle' && tailorState === 'idle' && inputMode === 'auto' && !scrapeFailure
+
+  const previewed = useRef(false)
+  useEffect(() => {
+    if (!showStart || previewed.current) return
+    previewed.current = true
+    chrome.runtime.sendMessage({ type: 'PREVIEW_TAB' }).then(
+      (found: JobData | null) => setPosting((p) => (p === undefined ? found : p)),
+      () => setPosting((p) => (p === undefined ? null : p)),
+    )
+  }, [showStart])
+  const tryAnyway = posting === null ? 'Try anyway: ' : ''
 
   const bothDone = state === 'done' && tailorState === 'done'
   // A good score is the moment to ask, so the card goes right under it. (#266)
@@ -874,8 +891,9 @@ export default function GeneratePage({ onNavigate }: Props) {
                 />
               )}
 
-              {state === 'idle' && tailorState === 'idle' && inputMode === 'auto' && !scrapeFailure && (
+              {showStart && (
                 <div className="generate-cta">
+                  <PostingCard posting={posting} onPaste={() => setInputMode('manual')} />
                   <ContextExpander
                     contextExpanded={contextExpanded}
                     setContextExpanded={setContextExpanded}
@@ -886,9 +904,10 @@ export default function GeneratePage({ onNavigate }: Props) {
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
                     </svg>
-                    Generate Cover Letter
+                    {tryAnyway}Generate Cover Letter
                   </button>
                   <TailorOptions
+                    label={tryAnyway ? 'Try anyway: Tailor Resume' : undefined}
                     inputMode={inputMode}
                     manualReady={manualReady}
                     onTailor={tailor}
@@ -901,12 +920,6 @@ export default function GeneratePage({ onNavigate }: Props) {
                     design={designOption}
                     onChangeLayout={() => onNavigate('resume')}
                   />
-                  <p className="generate-hint">
-                    Open a job posting on LinkedIn, Indeed, or any careers page, then click Generate.
-                  </p>
-                  <button className="manual-toggle" onClick={() => setInputMode('manual')}>
-                    Can't detect the posting? Paste it manually →
-                  </button>
                   <GenerateOffer hosted={appMode === 'hosted'} />
                 </div>
               )}

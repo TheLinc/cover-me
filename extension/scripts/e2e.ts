@@ -60,7 +60,7 @@ export async function showUnreadSite(popup: Page, host: string) {
 }
 
 export async function generateFromPastedJob(popup: Page, job: { title: string; company: string; description: string }) {
-  await popup.getByText("Can't detect the posting? Paste it manually").click()
+  await popup.getByRole('button', { name: /^(Wrong job\? Paste it|Paste a job description instead)$/ }).click()
   await popup.getByPlaceholder('e.g. Senior Software Engineer').fill(job.title)
   await popup.getByPlaceholder('e.g. Acme Corp (optional)').fill(job.company)
   await popup.getByPlaceholder('Paste the full job description here…').fill(job.description)

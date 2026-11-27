@@ -3,8 +3,9 @@ import type { FrameScrapeResponse } from '../types'
 import { snapshotPage, type PageSnapshot } from './snapshot.ts'
 import { handleAnswerMessage } from './answer-field.ts'
 import { addLeverPostingJsonLd } from './lever-apply.ts'
+import { postingLogo } from './logo.ts'
 
-// Injected on each click, so it can run more than once per page. Keyed by version: after an
+// Injected on each click and each popup open (#346), so it can run more than once per page. Keyed by version: after an
 // update a tab can hold the old script's flag with a dead listener (#232).
 const flag = `__coverMeScraper_${chrome.runtime.getManifest().version}`
 const w = window as typeof window & Record<string, true | undefined>
@@ -28,7 +29,11 @@ if (!w[flag]) {
         }
         try {
           const job = scrapeJobPage()
-          sendResponse({ success: true, job, snapshot } satisfies FrameScrapeResponse)
+          let logo: string | undefined
+          try {
+            logo = postingLogo(job.company)
+          } catch {}
+          sendResponse({ success: true, job: { ...job, logo }, snapshot } satisfies FrameScrapeResponse)
         } catch (err) {
           sendResponse({
             success: false,

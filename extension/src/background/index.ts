@@ -13,8 +13,8 @@ import { savePendingUpdate } from '../lib/update'
 import { handleAnswerClick, registerAnswerMenu, writeAnswer, type AnswerRequest } from './answer'
 import { scrapeFailure } from './scrape-failure'
 import { acceptsMessage } from './sender'
-import type { PageSnapshot } from '../content/snapshot.ts'
-import type { CoverJob, CoverLetter, FrameScrapeResponse, GenerateResponse, JobData, ScrapeFailure, ScrapeResponse, TailoredResume, TailorJob, TailorResponse } from '../types'
+import { bestJob, CONTENT_SCRIPT_FILE, listScrapableFrames, previewTab, readFrames, topFrameUrl, withServerRead, type FrameScrape } from './frames'
+import type { CoverJob, CoverLetter, GenerateResponse, JobData, ScrapeFailure, ScrapeResponse, TailoredResume, TailorJob, TailorResponse } from '../types'
 
 chrome.runtime.onInstalled.addListener((details) => {
   void handleInstalled(details)
@@ -45,6 +45,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!acceptsMessage(message.type, sender)) return
   if (message.type === 'SCRAPE_TAB') {
     handleScrapeTab().then(sendResponse)
+    return true
+  }
+  if (message.type === 'PREVIEW_TAB') {
+    chrome.tabs.query({ active: true, currentWindow: true })
+      .then(([tab]) => (tab?.id ? previewTab(tab.id) : null))
+      .catch(() => null)
+      .then(sendResponse)
     return true
   }
   if (message.type === 'GENERATE_FROM_TAB') {
@@ -114,44 +121,11 @@ async function failTailor(id: string, job: JobData, startedAt: number, error: st
   return { success: false, error }
 }
 
-const EMBEDDED_ATS_HOSTS = ['greenhouse.io', 'lever.co', 'myworkdayjobs.com', 'ashbyhq.com', 'bamboohr.com', 'workable.com']
-
-async function listScrapableFrames(tabId: number): Promise<{ frameIds: number[]; urls: Map<number, string> }> {
-  try {
-    const frames = await chrome.scripting.executeScript({
-      target: { tabId, allFrames: true },
-      func: () => location.href,
-    })
-    const hostOf = (href: unknown) => (typeof href === 'string' && URL.canParse(href) ? new URL(href).hostname : '')
-    const topHost = hostOf(frames.find((f) => f.frameId === 0)?.result)
-    const listed = frames.filter((f) => {
-      const host = hostOf(f.result)
-      if (!host) return false
-      if (f.frameId === 0) return true
-      return host === topHost || EMBEDDED_ATS_HOSTS.some((h) => host === h || host.endsWith('.' + h))
-    })
-    const ids = listed.map((f) => f.frameId)
-    return {
-      frameIds: ids.length > 0 ? [...new Set([0, ...ids])] : [0],
-      urls: new Map(listed.map((f) => [f.frameId, f.result as string])),
-    }
-  } catch {
-    return { frameIds: [0], urls: new Map() }
-  }
-}
-
 class ScrapeError extends Error {
   constructor(readonly failure: ScrapeFailure) {
     super(failure.error)
   }
 }
-
-type FrameScrape = { frameId: number; snapshot?: PageSnapshot | null } & (
-  | { ok: true; job: JobData }
-  | { ok: false; error: Error; connection: boolean }
-)
-
-const CONTENT_SCRIPT_FILE = 'content.js'
 
 // forAnswer: a right-click answer's read (#232), often of an application form
 // with no posting on it; the server doesn't count those as failed reads.
@@ -160,35 +134,10 @@ async function scrapeTab(tabId: number, { forAnswer = false } = {}): Promise<Job
   const fail = async (error: string, frameId?: number) =>
     new ScrapeError(scrapeFailure(await topFrameUrl(tabId), [...urls.values()], error, frameId === undefined ? undefined : urls.get(frameId)))
 
-  // A frame that can't be injected answers the message below with a connection
-  // error, and the inline scraper takes over (https://github.com/TheLinc/cover-me/commit/50badfd9)
-  await chrome.scripting
-    .executeScript({ target: { tabId, frameIds }, files: [CONTENT_SCRIPT_FILE] })
-    .catch(() => {})
-
   const wantSnapshot = !!SUPABASE_URL && (await hasAgreedToPageRead())
-  const local: FrameScrape[] = await Promise.all(
-    frameIds.map(async (frameId): Promise<FrameScrape> => {
-      try {
-        const scrape = (await chrome.tabs.sendMessage(tabId, { type: 'SCRAPE_JOB', snapshot: wantSnapshot }, { frameId })) as FrameScrapeResponse
-        if (scrape.success) return { frameId, ok: true, job: scrape.job, snapshot: scrape.snapshot }
-        return { frameId, ok: false, error: new Error(scrape.error), connection: false, snapshot: scrape.snapshot }
-      } catch (err) {
-        const e = err instanceof Error ? err : new Error(String(err))
-        return { frameId, ok: false, error: e, connection: isConnectionError(e) }
-      }
-    }),
-  )
-  const results = await preferServerScrapes(local, forAnswer)
-
-  const top = results.find((r) => r.frameId === 0)
-  if (top?.ok) return top.job
-  const successes = results.filter((r): r is Extract<FrameScrape, { ok: true }> => r.ok)
-  if (successes.length > 0) {
-    successes.sort((a, b) => b.job.description.length - a.job.description.length)
-    const job = successes[0].job
-    return { ...job, url: (await topFrameUrl(tabId)) ?? job.url }
-  }
+  const results = await preferServerScrapes(await readFrames(tabId, frameIds, wantSnapshot), forAnswer)
+  const best = await bestJob(tabId, results)
+  if (best) return best
 
   // Connection errors mean the content script isn't loaded (right after an extension reload), so only
   // deliberate failures carry a site-specific message to show. https://github.com/TheLinc/cover-me/commit/d7700ca5
@@ -248,30 +197,11 @@ async function preferServerScrapes(results: FrameScrape[], forAnswer = false): P
     const { results: server } = await res.json() as { results: ({ ok: true; job: JobData } | { ok: false; error: string })[] }
     const byFrame = new Map(sent.map((r, i) => [r.frameId, server[i]]))
     await debugGroup('Scrape — server', { frames: sent.length, read: server.filter((s) => s.ok).length })
-    return results.map((r) => {
-      const s = byFrame.get(r.frameId)
-      return s?.ok ? { frameId: r.frameId, ok: true, job: s.job } : r
-    })
+    return results.map((r) => withServerRead(r, byFrame.get(r.frameId)))
   } catch (err) {
     await debugGroup('Scrape — server unavailable, using bundled scrapers', { error: err instanceof Error ? err.message : String(err) })
     return results
   }
-}
-
-// An iframe's location.href (LinkedIn's /preload/ frame) is not the address the user sees. https://github.com/TheLinc/cover-me/commit/d7700ca5
-async function topFrameUrl(tabId: number): Promise<string | undefined> {
-  try {
-    return (await chrome.tabs.get(tabId)).url ?? undefined
-  } catch {
-    return undefined
-  }
-}
-
-function isConnectionError(err: Error): boolean {
-  const msg = err.message.toLowerCase()
-  return msg.includes('could not establish connection') ||
-    msg.includes('receiving end does not exist') ||
-    msg.includes('no tab with id')
 }
 
 // Serialised via .toString() and run in the page, so it must not reference outer-scope variables. https://github.com/TheLinc/cover-me/commit/a074665d

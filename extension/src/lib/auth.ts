@@ -609,7 +609,7 @@ export async function uploadLocalHistory(accessToken: string, letters: CoverLett
   // Trimmed to the server's per-field limit: scrapers keep the full page URL,
   // and one long one must not make the whole batch fail (#24).
   const cap = (v: string | undefined) => v?.slice(0, 8192)
-  const job = (j: JobData) => ({ title: cap(j.title), company: cap(j.company), url: cap(j.url) })
+  const job = (j: JobData) => ({ title: cap(j.title), company: cap(j.company), url: cap(j.url), logo: j.logo })
   const body = check
     ? { check: true, letters: letters.map((e) => ({ id: e.id })), tailored: tailored.map((e) => ({ id: e.id })) }
     : {
