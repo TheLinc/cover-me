@@ -78,3 +78,18 @@ export function PlusIcon() {
     </svg>
   )
 }
+
+const FILE_TYPES: Record<string, [string, string]> = { docx: ['DOCX', '#5B9BF8'], pdf: ['PDF', '#F47272'], txt: ['TXT', 'var(--text-3)'] }
+
+export function FileTypeIcon({ filename }: { filename: string }) {
+  const [label, color] = FILE_TYPES[filename.split('.').pop()?.toLowerCase() ?? ''] ?? ['FILE', 'var(--text-3)']
+  return (
+    <span className="file-type" style={{ '--file-type': color } as React.CSSProperties} aria-hidden="true">
+      <svg width="24" height="28" viewBox="0 0 24 28" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round">
+        <path d="M4 1h11l7 7v17a2 2 0 01-2 2H4a2 2 0 01-2-2V3a2 2 0 012-2z" />
+        <path d="M15 1v7h7" />
+      </svg>
+      <span className="file-type-label">{label}</span>
+    </span>
+  )
+}

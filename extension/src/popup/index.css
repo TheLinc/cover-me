@@ -674,21 +674,23 @@ html, body {
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s;
   user-select: none;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
-.upload-area:hover,
-.upload-area.drag-over {
+.upload-area:hover {
   border-color: var(--accent);
   background: var(--accent-dim);
 }
 
-/* Visually hidden but focusable: keyboard users Tab to it and press Enter. */
-.sr-only, .upload-input {
+.sr-only {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
 }
-.upload-area:has(.upload-input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
-.upload-area { position: relative; }
+.upload-choose { width: auto; margin: 4px 0 12px; padding: 8px 18px; }
 
 .upload-icon { color: var(--text-3); margin-bottom: 10px; }
 .upload-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
@@ -699,12 +701,30 @@ html, body {
   border: 1px solid var(--border);
   border-radius: var(--r);
   padding: 12px 14px;
-  display: flex;
-  align-items: center;
-  gap: 11px;
+}
+.resume-row { display: flex; align-items: flex-start; gap: 11px; }
+.resume-reading { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-2); }
+.resume-actions { display: flex; gap: 6px; margin-top: 12px; }
+.resume-actions .btn { flex: 1; }
+
+.file-type { position: relative; flex-shrink: 0; line-height: 0; color: var(--text-3); }
+.file-type-label {
+  position: absolute; left: -5px; bottom: 4px;
+  padding: 2px 3px; border-radius: 3px;
+  background: var(--file-type); color: var(--bg);
+  font-size: 7.5px; font-weight: 700; line-height: 1; letter-spacing: 0.03em;
 }
 
-.resume-icon { color: var(--accent); flex-shrink: 0; }
+.resume-page { position: relative; }
+.drop-overlay {
+  position: absolute; inset: 6px; z-index: 5;
+  display: flex; justify-content: center; align-items: flex-start;
+  padding: 120px 24px 0; text-align: center;
+  border: 2px dashed var(--accent); border-radius: var(--r);
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  font-size: 13px; font-weight: 600; color: var(--text);
+  pointer-events: none;
+}
 .resume-info { flex: 1; min-width: 0; }
 .resume-name {
   font-size: 13px;
@@ -715,7 +735,7 @@ html, body {
   text-overflow: ellipsis;
 }
 .resume-meta { font-size: 11px; color: var(--text-3); margin-top: 2px; }
-.resume-sections { font-size: 10px; color: var(--accent-h); margin-top: 4px; letter-spacing: 0.1px; }
+.resume-sections { font-size: 10px; color: var(--text-3); margin-top: 4px; letter-spacing: 0.1px; }
 
 .success-badge {
   display: inline-flex;
@@ -1072,7 +1092,6 @@ html, body {
 
 /* ── Misc ─────────────────────────────────────── */
 
-.divider { height: 1px; background: var(--border); margin: 14px 0; }
 
 
 /* ── Account card (hosted mode, signed in) ────────────────────── */
@@ -1410,7 +1429,6 @@ textarea:focus-visible, input:focus-visible, [tabindex]:focus-visible {
 .chevron { transition: transform 0.15s; }
 .chevron.open { transform: rotate(180deg); }
 .letter-preview { max-height: 160px; margin-bottom: 8px; }
-.upload-spinner { margin: 0 auto 10px; }
 .resume-error { margin-top: 10px; }
 /* The nav sits on the popup bottom edge, so its ring goes inside. */
 .nav-item:focus-visible { outline-offset: -3px; }
@@ -1432,8 +1450,14 @@ textarea:focus-visible, input:focus-visible, [tabindex]:focus-visible {
 .design-choice { border: none; margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
 .design-option { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; }
 .design-option input { accent-color: var(--accent); margin-top: 2px; cursor: pointer; }
-.design-option.disabled { cursor: default; }
-.design-option.disabled .design-option-title { color: var(--text-3); }
+.design-legend { padding: 0; margin-bottom: 0; font-size: 11px; font-weight: 600; color: var(--text-3); }
+.design-card { padding: 10px 11px; border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--surface); }
+.design-card:has(input:checked) { border-color: var(--accent); background: var(--accent-dim); }
+.design-card:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.design-card.disabled { border-style: dashed; background: transparent; }
+.design-card.disabled .design-option { cursor: default; }
+.design-card.disabled .design-option-title { color: var(--text-3); }
+.design-card .design-readout { margin-top: 6px; }
 .design-option-title { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; color: var(--text); }
 .design-option-desc { display: block; font-size: 11px; color: var(--text-3); margin-top: 2px; }
 .design-warn { color: #fbbf24; flex-shrink: 0; }
