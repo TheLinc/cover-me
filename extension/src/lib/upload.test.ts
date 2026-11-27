@@ -28,8 +28,8 @@ describe('uploadLocalHistory', () => {
     })
   })
 
-  // Scrapers keep the full page URL, tracking parameters and all; one long one
-  // must not make the server reject the whole batch.
+  // Scrapers keep the full page URL with its tracking parameters, and one long
+  // URL must not fail the whole batch (https://github.com/TheLinc/cover-me/commit/e46e9355).
   test('trims job fields to what the server accepts', async () => {
     const fetchMock = answer(200, { letters: [], tailored: [], failed: [] })
     const longUrl = `https://jobs.example/1?${'x'.repeat(9000)}`
@@ -60,5 +60,11 @@ describe('tailorViaBackend', () => {
     expect(out).toEqual({ resume, savedId: 'abc' })
     const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit]
     expect(JSON.parse(init.body as string).localId).toBe('abc')
+  })
+  test('sends the template and accent the user last picked, for the backend to apply on Pro (#119)', async () => {
+    const fetchMock = answer(200, { resume })
+    await tailorViaBackend(job, 'at', false, undefined, false, true, undefined, undefined, 'abc', undefined, { template: 'modern', accent: '#0F766E' })
+    const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit]
+    expect(JSON.parse(init.body as string)).toMatchObject({ template: 'modern', accent: '#0F766E' })
   })
 })

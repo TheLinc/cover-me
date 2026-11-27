@@ -2,17 +2,19 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { ensureValidSession, fetchApplicationsFromBackend, saveResumeEditToBackend, saveSectionOrderToBackend } from '../lib/auth'
 import { skillGroups, splitSkills } from '../lib/ai/resume-grounding'
 import { hasSectionOrder, withChosenOrder } from '../lib/ai/resume-parse'
-import { downloadTailoredResumePdf, tailoredResumePdf } from '../lib/pdf/resume'
+import { downloadTailoredResumePdf, tailoredResumePdf, templateOf } from '../lib/pdf/resume'
 import type { PlacedSection } from '../lib/pdf/sections'
-import type { DeletedSection } from '../lib/pdf/types'
-import { chosenOrder, editedResume, postingTitleInSummary, restoreSection, returnToTab, saveResumeEdit, shownSections, withResumeEdit, withSections } from '../lib/resume-edit'
-import { getCachedTier, getMode, getResume, getTailoredHistory, saveParsedResume } from '../lib/storage'
+import type { DeletedSection, ResumeTemplate } from '../lib/pdf/types'
+import { chosenOrder, postingTitleInSummary, restoreSection, returnToTab, saveResumeEdit, savedResume, shownSections, withResumeEdit, withSections } from '../lib/resume-edit'
+import { isCachedPro, saveResumeLook } from '../lib/resume-template'
+import { getMode, getResume, getTailoredHistory, saveParsedResume } from '../lib/storage'
 import DownloadMenu from '../popup/components/DownloadMenu'
 import GapChips from '../popup/components/GapChips'
 import PdfPreview from './PdfPreview'
 import PostingTitleTip from '../popup/components/PostingTitleTip'
 import ReviewAsk from '../popup/components/ReviewAsk'
 import ScoreRing from '../popup/components/ScoreRing'
+import TemplatePicker, { isLocked, templateName, useTemplatesUnlocked } from '../popup/components/TemplatePicker'
 import type { AuthSession, TailoredHistoryEntry, TailoredResume } from '../types'
 
 // Edits are the user's own, so the grounding checks that guard the model's output don't run on them (#118).
@@ -21,8 +23,7 @@ interface Opened { scored: TailoredResume; jobTitle: string; company: string }
 
 // Read from this browser's cache first, so BYOK and Free make no network call here (#118).
 async function proSession(): Promise<AuthSession | null> {
-  if ((await getMode()) !== 'hosted' || (await getCachedTier()) !== 'hosted_pro') return null
-  return ensureValidSession()
+  return (await isCachedPro()) ? ensureValidSession() : null
 }
 
 // A Pro resume this browser no longer keeps (made on another device, or past the
@@ -112,6 +113,13 @@ export default function Editor() {
   const [dirty, setDirty] = useState(false)
   const [status, setStatus] = useState<Status>('')
   const [preview, setPreview] = useState<ArrayBuffer | null>(null)
+  const [template, setTemplate] = useState<ResumeTemplate | undefined>()
+  const [accent, setAccent] = useState<string | undefined>()
+  const unlocked = useTemplatesUnlocked()
+  const [chosenPreview, setPreviewing] = useState<ResumeTemplate | null>(null)
+  // Ends by itself once the account is Pro: upgraded in another tab, or the cached tier loaded after the click (#119).
+  const previewing = chosenPreview && isLocked(chosenPreview, unlocked) ? chosenPreview : null
+  const [picked, setPicked] = useState(false)
 
   const localSaves = useRef<Promise<void>>(Promise.resolve())
   const accountSaves = useRef<Promise<void>>(Promise.resolve())
@@ -124,6 +132,8 @@ export default function Editor() {
       setOpened(o)
       if (!o) return
       setForm({ draft: structuredClone(o.scored), skills: skillLines(o.scored.skills) })
+      setTemplate(o.scored.template)
+      setAccent(o.scored.accent)
       document.title = `Edit resume · ${o.jobTitle || 'Cover Me'}`
       // Ready for a save as the tab closes, which can't wait for a refresh. (#118)
       void proSession().then((s) => { session.current = s }).catch(() => {})
@@ -131,16 +141,39 @@ export default function Editor() {
   }, [id])
 
   const scored = typeof opened === 'object' && opened ? opened.scored : null
-  const current = useMemo(() => (form ? resumeFromForm(form.draft, form.skills) : null), [form])
-  const saved = useMemo(() => (current && scored ? editedResume(scored, current) : null), [current, scored])
+  const current = useMemo(() => (form ? { ...resumeFromForm(form.draft, form.skills), template, accent } : null), [form, template, accent])
+  const saved = useMemo(() => (current && scored ? savedResume(scored, current, dirty || !!scored.editedAt) : null), [current, scored, dirty])
+  const changed = dirty || picked
 
   useEffect(() => {
     if (!current) return
     const t = setTimeout(() => {
-      setPreview(tailoredResumePdf(current).output('arraybuffer'))
+      setPreview(tailoredResumePdf(previewing ? { ...current, template: previewing } : current).output('arraybuffer'))
     }, 300)
     return () => clearTimeout(t)
-  }, [current])
+  }, [current, previewing])
+
+  // Free and own-key users can see a Pro template but not download it or keep it. The resume's
+  // own template stays theirs, even after Pro lapses (#119).
+  function endPreview() {
+    setPreviewing(null)
+    setTimeout(() => document.querySelector<HTMLElement>('.ed-preview .template-picker input:checked')?.focus())
+  }
+
+  function pickTemplate(t: ResumeTemplate) {
+    if (t === templateOf(template)) return setPreviewing(null)
+    if (isLocked(t, unlocked)) return setPreviewing(t)
+    setPreviewing(null)
+    setTemplate(t)
+    setPicked(true)
+    void saveResumeLook({ template: t })
+  }
+
+  function pickAccent(hex: string) {
+    setAccent(hex)
+    setPicked(true)
+    void saveResumeLook({ accent: hex })
+  }
 
   function saveToAccount(): Promise<void> {
     accountSaves.current = accountSaves.current.then(async () => {
@@ -164,7 +197,7 @@ export default function Editor() {
   // ponytail: History is read then written whole, as the background does when a tailor
   // finishes, so the two can still collide; the pause keeps it rare. A per-entry key would end it (#118).
   useEffect(() => {
-    if (!dirty || !saved) return
+    if (!changed || !saved) return
     setStatus('saving')
     forAccount.current = saved
     const local = setTimeout(() => {
@@ -172,7 +205,7 @@ export default function Editor() {
     }, 300)
     const account = setTimeout(saveToAccount, 800)
     return () => { clearTimeout(local); clearTimeout(account) }
-  }, [saved, dirty])
+  }, [saved, changed])
 
   // No time to read History as the tab closes, so a current copy is kept here. The account's
   // copy goes with keepalive (saveResumeEditToBackend), so it lands after the page is gone (#118).
@@ -297,7 +330,7 @@ export default function Editor() {
   }
 
   async function done() {
-    if (dirty && saved) {
+    if (changed && saved) {
       forAccount.current = saved
       localSaves.current = localSaves.current.then(() => saveResumeEdit(id, saved)).catch(() => {})
     }
@@ -434,11 +467,13 @@ export default function Editor() {
             : ''}
         </p>
         {/* Only Cover Me layout resumes open here (no Edit on "Your design"), so Word is the Cover Me layout too. (#118) */}
-        <DownloadMenu className="btn btn-secondary btn-compact" options={[
+        {previewing ? (
+          <button type="button" className="btn btn-secondary btn-compact" disabled title={`${templateName(previewing)} downloads with Pro`}>Download</button>
+        ) : <DownloadMenu className="btn btn-secondary btn-compact" options={[
           { label: 'PDF', onSelect: () => { downloadTailoredResumePdf(current, opened.jobTitle); setReviewOpen(true) } },
           // docx is big, so it loads only when someone asks for the Word file. (#118)
           { label: 'Word', onSelect: () => void import('../lib/pdf/resume-docx').then((m) => m.downloadTailoredResumeDocx(current, opened.jobTitle)).then(() => setReviewOpen(true)) },
-        ]} />
+        ]} />}
         <button className="btn btn-primary btn-compact" onClick={done}>Done</button>
       </header>
 
@@ -502,6 +537,13 @@ export default function Editor() {
       </main>
 
       <aside className="ed-preview" aria-label="PDF preview">
+        <TemplatePicker value={previewing ?? template} unlocked={unlocked} previewLocked onChange={pickTemplate} accent={accent} onAccent={pickAccent} />
+        <p className="ed-preview-note" role="status">{previewing && (
+          <>
+            Previewing {templateName(previewing)}, a Pro template. Upgrade to download in it, or{' '}
+            <button type="button" className="text-link" onClick={endPreview}>go back to {templateName(templateOf(template))}</button>.
+          </>
+        )}</p>
         <PdfPreview pdf={preview} />
       </aside>
     </div>
