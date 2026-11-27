@@ -7,16 +7,14 @@ import { CHROME_STORE_URL } from '@/lib/utils'
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 const guide = getGuide('best-chrome-extensions-for-job-applications')
 
-const DESCRIPTION =
-  'Nine Chrome extensions for job applications, sorted by what they do: autofill, job tracking, resume tailoring and cover letters, and ATS keyword checks. The job sites each one names and its free limits, checked November 27, 2026.'
 
 export const metadata: Metadata = {
   title: { absolute: 'Best Chrome Extensions for Job Applications (2026), Compared' },
-  description: DESCRIPTION,
+  description: guide.description,
   alternates: { canonical: `${BASE}/guides/${guide.slug}` },
   openGraph: {
     title: 'Best Chrome extensions for job applications (2026) | Cover Me',
-    description: DESCRIPTION,
+    description: guide.description,
     url: `${BASE}/guides/${guide.slug}`,
     siteName: 'Cover Me',
     type: 'article',
@@ -25,7 +23,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Best Chrome extensions for job applications (2026) | Cover Me',
-    description: DESCRIPTION,
+    description: guide.description,
     images: [`${BASE}${guide.image}`],
   },
 }
