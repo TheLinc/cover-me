@@ -108,7 +108,7 @@ describe('internal links', () => {
     .filter((f) => f.endsWith('.tsx'))
     .map((file) => ({ file, text: readFileSync(join(root, file), 'utf8') }))
 
-  it.each(['aiapply-review', 'free-jobscan-alternatives', 'use-your-own-api-key-for-cover-letters', 'jobright-review', 'how-to-answer-job-application-questions', 'careerflow-review'])(
+  it.each(['aiapply-review', 'free-jobscan-alternatives', 'use-your-own-api-key-for-cover-letters', 'jobright-review', 'how-to-answer-job-application-questions', 'careerflow-review', 'best-free-ats-resume-checkers'])(
     '%s is linked from at least two other pages, besides the /guides index',
     (slug) => {
       const own = join('app', 'guides', slug, 'page.tsx')
@@ -235,4 +235,37 @@ describe('the ATS resume template guide', () => {
   it('is linked from the ATS format guide', () => {
     expect(readFileSync(join(__dirname, '../app/guides/ats-friendly-resume-format/page.tsx'), 'utf8')).toContain(`href="/guides/${slug}"`)
   })
+})
+
+describe('the free ATS resume checkers guide', () => {
+  const slug = 'best-free-ats-resume-checkers'
+  const render = async () => {
+    const { renderToStaticMarkup } = await import('react-dom/server')
+    const { default: Page } = await import(`../app/guides/${slug}/page.tsx`)
+    return renderToStaticMarkup(h(Page))
+  }
+
+  it('has a page title naming free ATS resume checkers and the month they were checked, under 60 characters', async () => {
+    const { metadata } = (await import(`../app/guides/${slug}/page.tsx`)) as { metadata: Metadata }
+    const t = metadata.title as { absolute: string }
+    expect(t.absolute).toMatch(/free ATS resume checkers/i)
+    expect(t.absolute).toContain('November 2026')
+    expect(t.absolute.length).toBeLessThan(60)
+  }, 20_000)
+
+  it('links a source on every row of the comparison table, under a column naming the check date', async () => {
+    const html = await render()
+    const table = html.slice(html.indexOf('<table'), html.indexOf('</table>'))
+    expect(table).toMatch(/<th[^>]*>Source, checked Nov 27, 2026<\/th>/)
+    const rows = table.split('<tbody>')[1].split('</tr>').filter((r) => r.includes('<tr'))
+    expect(rows.length).toBeGreaterThanOrEqual(10)
+    for (const row of rows) expect(row).toMatch(/<a href="https:\/\//)
+  }, 20_000)
+
+  it('links to the free ATS checker, and the checker links back', async () => {
+    expect(await render()).toContain('href="/ats-checker"')
+    const { renderToStaticMarkup } = await import('react-dom/server')
+    const { default: Checker } = await import('../app/ats-checker/page')
+    expect(renderToStaticMarkup(h(Checker))).toContain(`href="/guides/${slug}"`)
+  }, 20_000)
 })

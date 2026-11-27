@@ -181,6 +181,15 @@ export const GUIDES: Guide[] = [
     imageAlt:
       "The top of the free ATS resume template in Word: Your Name centered over a contact line, then Summary, Experience and Education headings with placeholder text and bullets. Below it, checks for Lever, Workday, Ashby and SmartRecruiters. Free .docx, no sign-up, tested November 24, 2026.",
   },
+  {
+    slug: 'best-free-ats-resume-checkers',
+    title: 'Best free ATS resume checkers (2026), compared',
+    description: "Eleven free ATS resume checkers compared on what the free plan allows, whether you need an account, whether it reads a job description, and what the result shows. Every limit is from the tool's own pages, checked November 27, 2026.",
+    date: '2026-11-27',
+    image: '/guides/best-free-ats-resume-checkers.png',
+    imageAlt:
+      "Table of free ATS resume checkers, from each tool's own pages on November 27, 2026. Jobscan: 5 scans a month with an account. SkillSyncer: 2 job match scans a week with an account. Teal: the top 5 keywords for a job with an account. ResyMatch: 7 free credits a month with an account. Resume.io: free with an email. Cover Me's checker: 25 checks a day with no account.",
+  },
 ]
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
