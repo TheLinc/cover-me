@@ -51,7 +51,7 @@ const TOOLS = [
   { name: 'Jobscan', limit: '5 resume scans a month', account: 'Yes', posting: 'Yes', result: 'Match rate, searchability tips and a short skills list', sources: [{ label: 'Plans', href: SRC.jobscanPlan }, { label: 'Premium', href: SRC.jobscanPremium }] },
   { name: 'SkillSyncer', limit: '2 job match scans and 10 AI credits a week', account: 'Yes, no card', posting: 'Yes', result: 'Match score, missing keywords, job title and degree match', sources: [{ label: 'Pricing', href: SRC.skillsyncer }] },
   { name: 'Teal', limit: 'Top 5 keywords for each job', account: 'Yes', posting: 'Yes', result: 'Basic resume analysis and the top 5 keywords', sources: [{ label: 'Pricing', href: SRC.teal }] },
-  { name: 'Resume Worded', limit: 'Your score and top issues; part of the Targeted Resume report', account: 'Yes', posting: 'Yes, in Targeted Resume', result: 'Score, top issues and some missing keywords', sources: [{ label: 'Upload', href: SRC.resumeWordedUpload }, { label: 'Pro', href: SRC.resumeWordedPro }] },
+  { name: 'Resume Worded', limit: 'Your score and top issues; part of the Targeted Resume report', account: 'Yes', posting: 'Yes, in Targeted Resume', result: 'Score and top issues', sources: [{ label: 'Upload', href: SRC.resumeWordedUpload }, { label: 'Pro', href: SRC.resumeWordedPro }] },
   { name: 'Enhancv', limit: 'Not stated', account: 'Not stated', posting: 'Optional', result: 'Score from 27 checks and a task list; with a job, the skills and keywords you have and miss', sources: [{ label: 'Checker', href: SRC.enhancv }] },
   { name: 'Resume.io', limit: 'Not stated', account: 'Email, which signs you up', posting: 'Optional', result: 'Score from 16 checks and fixes; with a job, a separate match score', sources: [{ label: 'Checker', href: SRC.resumeIo }] },
   { name: 'Rezi', limit: '1 resume', account: 'Yes', posting: 'Optional', result: 'Score out of 100 from up to 23 checks, and a list of issues', sources: [{ label: 'Checker', href: SRC.rezi }, { label: 'Pricing', href: SRC.reziPricing }] },
@@ -70,7 +70,7 @@ const faqJsonLd = {
       name: 'What is the best free ATS resume checker?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: "It depends on whether you'll make an account. With a free account, SkillSyncer gives 2 job match scans a week, ResyMatch 7 credits a month and Jobscan 5 scans a month, and Teal shows the top 5 keywords for each job. Without one, Cover Me's free checker scores a resume against a posting up to 25 times a day. Enhancv and Rezi also score a resume with no job description, and neither states a limit. Limits are from each tool's own pages on November 27, 2026.",
+        text: "It depends on whether you'll make an account. With a free account, SkillSyncer gives 2 job match scans a week, ResyMatch 7 credits a month and Jobscan 5 scans a month, and Teal shows the top 5 keywords for each job. Without one, Cover Me's free checker scores a resume against a posting up to 25 times a day. Enhancv also scores a resume with no job description and states no limit, and Rezi does the same with a free account that holds 1 resume. Limits are from each tool's own pages on November 27, 2026.",
       },
     },
     {
@@ -199,7 +199,7 @@ export default function Page() {
           title: '5. Enhancv: 27 checks, with or without a job',
           body: (
             <p>
-              Enhancv&rsquo;s <a href={SRC.enhancv} {...ext}>resume checker</a> runs 27 checks on a PDF or Word resume up to 2 MB and gives a score with a task list. Paste a job description and it adds which of the job&rsquo;s skills and keywords you have and which you&rsquo;re missing. The checker page calls it free and doesn&rsquo;t say whether you need an account. Enhancv&rsquo;s <a href={SRC.enhancvPricing} {...ext}>pricing page</a> lists its free resume builder plan as valid for 7 days. The checker suggests changes but doesn&rsquo;t rewrite the resume.
+              Enhancv&rsquo;s <a href={SRC.enhancv} {...ext}>resume checker</a> runs 27 checks on a PDF or Word resume up to 2 MB and gives a score with a task list. Paste a job description and it adds which of the job&rsquo;s skills and keywords you have and which you&rsquo;re missing. The checker page calls it free and doesn&rsquo;t say whether you need an account. Enhancv&rsquo;s <a href={SRC.enhancvPricing} {...ext}>pricing page</a> lists its free resume builder plan as valid for 7 days. The checker suggests AI rewrites of weak bullets but doesn&rsquo;t apply them to your file.
             </p>
           ),
         },
@@ -215,7 +215,7 @@ export default function Page() {
           title: '7. Rezi: a free score that moves your resume into its template',
           body: (
             <p>
-              Rezi&rsquo;s <a href={SRC.rezi} {...ext}>resume checker</a> is free with a Rezi account. It reads a PDF or Word file up to 2 MB, rebuilds it in a one-column template and scores it out of 100 on up to 23 checks, or 27 with Pro. A job description is optional. The free plan on Rezi&rsquo;s <a href={SRC.reziPricing} {...ext}>pricing page</a> allows 1 resume and 3 PDF downloads. Pro is $29 a month, or $149 once for Lifetime. <Link href="/guides/cover-me-vs-rezi">Cover Me vs Rezi</Link> compares the two approaches.
+              Rezi&rsquo;s <a href={SRC.rezi} {...ext}>resume checker</a> is free with a Rezi account. It reads a PDF or Word file up to 2 MB, rebuilds it in a one-column template and scores it out of 100 on up to 23 checks, or 27 with Pro. A job description is optional. The free plan on Rezi&rsquo;s <a href={SRC.reziPricing} {...ext}>pricing page</a> allows 1 resume and 3 PDF downloads. Pro is $29 a month or $57 every 3 months, and Lifetime is $149 once. <Link href="/guides/cover-me-vs-rezi">Cover Me vs Rezi</Link> compares the two approaches.
             </p>
           ),
         },
