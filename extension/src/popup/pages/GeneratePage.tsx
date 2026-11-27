@@ -19,7 +19,7 @@ import ProgressSteps from '../components/ProgressSteps'
 import ReviewAsk from '../components/ReviewAsk'
 import ScrapeFailurePanel, { type ShownFailure } from '../components/ScrapeFailure'
 import ScoreRing, { ScoreGain, scoreRose } from '../components/ScoreRing'
-import TemplatePicker, { useCachedPro } from '../components/TemplatePicker'
+import TemplatePicker, { useCachedPro, useTemplatesUnlocked } from '../components/TemplatePicker'
 import UpgradePrompt from '../components/UpgradePrompt'
 import { GenerateOffer } from '../components/FirstMonthOffer'
 import { WhatsNewLink } from '../components/WhatsNew'
@@ -163,6 +163,7 @@ export default function GeneratePage({ onNavigate }: Props) {
   const [tailorErrorCode, setTailorErrorCode] = useState<'RATE_LIMIT' | 'FAIR_USE' | undefined>()
   const [tailoredResume, setTailoredResume] = useState<TailoredResume | null>(null)
   const pro = useCachedPro()
+  const templatesOpen = useTemplatesUnlocked()
   const [tailoredJob, setTailoredJob] = useState<JobData | null>(null)
   const [tailoredEntryId, setTailoredEntryId] = useState<string | null>(null)
   // The History entry whose ATS ring has filled, so reopening the popup doesn't fill it again (#228).
@@ -1125,7 +1126,7 @@ export default function GeneratePage({ onNavigate }: Props) {
                   {postingTitle && <PostingTitleTip {...postingTitle} />}
                   {reviewAt === 'resume' && !reviewUnderScore && <ReviewAsk onClose={() => setReviewAt(null)} />}
                   {tailoredEntryId && !tailoredResume.sourceHash && (
-                    <TemplatePicker value={tailoredResume.template} pro={pro} onChange={(template) => void pickLook({ template })} accent={tailoredResume.accent} onAccent={(accent) => void pickLook({ accent })} />
+                    <TemplatePicker value={tailoredResume.template} unlocked={templatesOpen} onChange={(template) => void pickLook({ template })} accent={tailoredResume.accent} onAccent={(accent) => void pickLook({ accent })} />
                   )}
                   <div className="letter-actions">
                     <DownloadMenu

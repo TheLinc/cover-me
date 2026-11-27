@@ -6,7 +6,7 @@ import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from '../lib/config'
 import { decryptApiKey } from '../lib/crypto'
 import { checkUploadedDesign, designForTailor, finishDesign, parseForTailor, uploadDesignIfPro } from '../lib/design'
 import { debugGroup } from '../lib/debug'
-import { getResumeLook } from '../lib/resume-template'
+import { applySavedLook, getResumeLook } from '../lib/resume-template'
 import { addToHistory, addToTailoredHistory, getCandidateContext, getResume, getSession, getSettings, hasAgreedToPageRead, resolveMode, setEntryAccounts, watchSession } from '../lib/storage'
 import { handleInstalled, uninstallUrl } from './install'
 import { savePendingUpdate } from '../lib/update'
@@ -501,6 +501,7 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
     })
 
     const tailored = await finishDesign(await tailorResume(job, parsed, settings.provider, apiKey, compact, merged, trim, includeSummary, lastResult && previous, onProgress), design)
+    await applySavedLook(tailored)
     if (note) tailored.hasEdits = true
     const entryId = crypto.randomUUID()
     await recordTailored(job, tailored, entryId)

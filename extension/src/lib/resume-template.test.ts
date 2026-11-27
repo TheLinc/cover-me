@@ -1,12 +1,13 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { RESUME_TEMPLATES } from './pdf/resume'
-import { isCachedPro } from './resume-template'
+import type { TailoredResume } from './pdf/types'
+import { applySavedLook, isCachedPro, templatesUnlocked } from './resume-template'
 import { isLocked, lowContrast, nextTemplate } from '../popup/components/TemplatePicker'
 
 afterEach(() => vi.unstubAllGlobals())
 
 function fakeLocal(data: Record<string, unknown>) {
-  vi.stubGlobal('chrome', { storage: { local: { get: async (k: string) => (k in data ? { [k]: data[k] } : {}) } } })
+  vi.stubGlobal('chrome', { storage: { local: { get: async (k: string | string[]) => Object.fromEntries([k].flat().filter((key) => key in data).map((key) => [key, data[key]])) } } })
 }
 
 describe('the template Settings shows for the next resume (#119)', () => {
@@ -24,12 +25,37 @@ describe('which templates an account can pick (#119)', () => {
   test.each([
     ['a Pro account', { settings: { mode: 'hosted' }, cachedTier: 'hosted_pro' }, ['classic', 'modern', 'compact', 'minimal']],
     ['a free account', { settings: { mode: 'hosted' }, cachedTier: 'hosted_free' }, ['classic']],
-    ['own key, even with a Pro tier left in the cache', { settings: { mode: 'byok', apiKey: 'x' }, cachedTier: 'hosted_pro' }, ['classic']],
+    ['own key', { settings: { mode: 'byok', apiKey: 'x' } }, ['classic', 'modern', 'compact', 'minimal']],
+    ['own key with a free tier left in the cache', { settings: { mode: 'byok', apiKey: 'x' }, cachedTier: 'hosted_free' }, ['classic', 'modern', 'compact', 'minimal']],
     ['a new install that never checked its tier', {}, ['classic']],
   ])('%s', async (_, storage, expected) => {
     fakeLocal(storage)
-    const pro = await isCachedPro()
-    expect(RESUME_TEMPLATES.filter((t) => !isLocked(t, pro))).toEqual(expected)
+    const unlocked = await templatesUnlocked()
+    expect(RESUME_TEMPLATES.filter((t) => !isLocked(t, unlocked))).toEqual(expected)
+  })
+
+  test('own key unlocks templates without counting as Pro, so the editor never reads the account', async () => {
+    fakeLocal({ settings: { mode: 'byok', apiKey: 'x' }, cachedTier: 'hosted_pro' })
+    expect(await isCachedPro()).toBe(false)
+  })
+})
+
+describe('an own-key tailored resume (#119)', () => {
+  const resume = () => ({ name: 'Pat Doe', experience: [], education: [] }) as unknown as TailoredResume
+
+  test('comes out in the saved template and accent', async () => {
+    fakeLocal({ resumeTemplate: 'modern', resumeAccent: '#0F766E' })
+    const r = resume()
+    await applySavedLook(r)
+    expect(r).toMatchObject({ template: 'modern', accent: '#0F766E' })
+  })
+
+  test('stays on the default look when nothing was saved', async () => {
+    fakeLocal({})
+    const r = resume()
+    await applySavedLook(r)
+    expect(r.template).toBeUndefined()
+    expect(r.accent).toBeUndefined()
   })
 })
 

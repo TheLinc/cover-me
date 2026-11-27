@@ -1,7 +1,7 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { accentOf, DEFAULT_ACCENT, hasAccent, RESUME_TEMPLATES, templateOf } from '../../lib/pdf/resume'
 import type { ResumeTemplate } from '../../lib/pdf/types'
-import { getResumeLook, isCachedPro, saveResumeLook, type ResumeLook } from '../../lib/resume-template'
+import { getResumeLook, isCachedPro, saveResumeLook, templatesUnlocked, type ResumeLook } from '../../lib/resume-template'
 import { ChevronIcon } from './icons'
 import UpgradePrompt from './UpgradePrompt'
 
@@ -9,28 +9,31 @@ export const templateName = (t: ResumeTemplate) => t[0].toUpperCase() + t.slice(
 
 // ponytail: a client-side check on the cached tier; templates ship in the bundle, so a
 // determined user can get past it. Enforcing it means rendering on the server (#119).
-export const isLocked = (template: ResumeTemplate, pro: boolean) => !pro && template !== 'classic'
+export const isLocked = (template: ResumeTemplate, unlocked: boolean) => !unlocked && template !== 'classic'
 
 // The tailor drops a template the account can't pick, so a pick saved while Pro shows as Classic once Pro lapses (#119).
-export function nextTemplate(saved: ResumeTemplate | undefined, pro: boolean): ResumeTemplate {
+export function nextTemplate(saved: ResumeTemplate | undefined, unlocked: boolean): ResumeTemplate {
   const t = templateOf(saved)
-  return isLocked(t, pro) ? 'classic' : t
+  return isLocked(t, unlocked) ? 'classic' : t
 }
 
 // Rechecked on a sign-in, sign-out, mode switch or tier refresh, which Settings can do while it's open (#119).
-export function useCachedPro(): boolean {
-  const [pro, setPro] = useState(false)
+function useStoredCheck(read: () => Promise<boolean>): boolean {
+  const [value, setValue] = useState(false)
   useEffect(() => {
-    const check = () => void isCachedPro().then(setPro)
+    const check = () => void read().then(setValue)
     check()
     const listener = (changes: Record<string, chrome.storage.StorageChange>, area: string) => {
       if (area === 'local' && ('cachedTier' in changes || 'settings' in changes)) check()
     }
     chrome.storage.onChanged.addListener(listener)
     return () => chrome.storage.onChanged.removeListener(listener)
-  }, [])
-  return pro
+  }, [read])
+  return value
 }
+
+export const useCachedPro = () => useStoredCheck(isCachedPro)
+export const useTemplatesUnlocked = () => useStoredCheck(templatesUnlocked)
 
 // Below WCAG's 4.5:1 for normal text against the white page: Modern's headings are 10.5pt (https://www.w3.org/TR/WCAG21/#contrast-minimum).
 export function lowContrast(hex: string): boolean {
@@ -87,8 +90,8 @@ function Sketch({ template, mini, accent }: { template: ResumeTemplate; mini?: b
   )
 }
 
-export default function TemplatePicker({ value, pro, onChange, previewLocked, accent, onAccent, titled }: {
-  value: ResumeTemplate | undefined; pro: boolean; onChange: (t: ResumeTemplate) => void; previewLocked?: boolean
+export default function TemplatePicker({ value, unlocked, onChange, previewLocked, accent, onAccent, titled }: {
+  value: ResumeTemplate | undefined; unlocked: boolean; onChange: (t: ResumeTemplate) => void; previewLocked?: boolean
   accent?: string; onAccent?: (hex: string) => void; titled?: boolean
 }) {
   const current = templateOf(value)
@@ -100,14 +103,14 @@ export default function TemplatePicker({ value, pro, onChange, previewLocked, ac
       <summary className="template-bar">
         <Sketch template={current} mini accent={accent} />
         <span className="template-current"><span className={titled ? 'sr-only' : 'form-label'}>Template</span>{templateName(current)}</span>
-        {!pro && <span className="template-more">3 more with Pro</span>}
+        {!unlocked && <span className="template-more">3 more with Pro</span>}
         <span className="template-toggle">Change <ChevronIcon /></span>
       </summary>
       <fieldset className="template-choices">
         <legend className="sr-only">Template</legend>
         <div className="template-options">
           {RESUME_TEMPLATES.map((t) => {
-            const locked = isLocked(t, pro)
+            const locked = isLocked(t, unlocked)
             return (
               <label key={t} className={`template-option${locked ? ' is-locked' : ''}`}>
                 <input type="radio" name={group} value={t} checked={current === t} disabled={locked && !previewLocked} onChange={() => onChange(t)} />
@@ -125,20 +128,20 @@ export default function TemplatePicker({ value, pro, onChange, previewLocked, ac
             )
           })}
         </div>
-        {!pro && opened && (
+        {!unlocked && opened && (
           <>
             <p className="hint">Modern, Compact and Minimal come with Pro.</p>
             <UpgradePrompt />
           </>
         )}
       </fieldset>
-      {pro && onAccent && <Reveal shown={hasAccent(current)}><AccentPicker value={accent} onChange={onAccent} /></Reveal>}
+      {unlocked && onAccent && <Reveal shown={hasAccent(current)}><AccentPicker value={accent} onChange={onAccent} /></Reveal>}
     </details>
   )
 }
 
 export function TemplateSetting() {
-  const pro = useCachedPro()
+  const unlocked = useTemplatesUnlocked()
   const [look, setLook] = useState<ResumeLook>({})
   useEffect(() => { void getResumeLook().then(setLook) }, [])
   const change = (patch: ResumeLook) => { setLook((l) => ({ ...l, ...patch })); void saveResumeLook(patch) }
@@ -146,7 +149,7 @@ export function TemplateSetting() {
     <section className="page-read-setting" aria-labelledby="template-setting-title">
       <h2 id="template-setting-title" className="page-read-setting-title">Resume template</h2>
       <p className="page-read-setting-hint">Used for your next tailored resume. You can change it on any resume.</p>
-      <TemplatePicker titled value={nextTemplate(look.template, pro)} pro={pro} onChange={(template) => change({ template })} accent={look.accent} onAccent={(accent) => change({ accent })} />
+      <TemplatePicker titled value={nextTemplate(look.template, unlocked)} unlocked={unlocked} onChange={(template) => change({ template })} accent={look.accent} onAccent={(accent) => change({ accent })} />
     </section>
   )
 }

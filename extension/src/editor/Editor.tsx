@@ -14,7 +14,7 @@ import PdfPreview from './PdfPreview'
 import PostingTitleTip from '../popup/components/PostingTitleTip'
 import ReviewAsk from '../popup/components/ReviewAsk'
 import ScoreRing from '../popup/components/ScoreRing'
-import TemplatePicker, { isLocked, templateName, useCachedPro } from '../popup/components/TemplatePicker'
+import TemplatePicker, { isLocked, templateName, useTemplatesUnlocked } from '../popup/components/TemplatePicker'
 import type { AuthSession, TailoredHistoryEntry, TailoredResume } from '../types'
 
 // Edits are the user's own, so the grounding checks that guard the model's output don't run on them (#118).
@@ -115,10 +115,10 @@ export default function Editor() {
   const [preview, setPreview] = useState<ArrayBuffer | null>(null)
   const [template, setTemplate] = useState<ResumeTemplate | undefined>()
   const [accent, setAccent] = useState<string | undefined>()
-  const pro = useCachedPro()
+  const unlocked = useTemplatesUnlocked()
   const [chosenPreview, setPreviewing] = useState<ResumeTemplate | null>(null)
   // Ends by itself once the account is Pro: upgraded in another tab, or the cached tier loaded after the click (#119).
-  const previewing = chosenPreview && isLocked(chosenPreview, pro) ? chosenPreview : null
+  const previewing = chosenPreview && isLocked(chosenPreview, unlocked) ? chosenPreview : null
   const [picked, setPicked] = useState(false)
 
   const localSaves = useRef<Promise<void>>(Promise.resolve())
@@ -162,7 +162,7 @@ export default function Editor() {
 
   function pickTemplate(t: ResumeTemplate) {
     if (t === templateOf(template)) return setPreviewing(null)
-    if (isLocked(t, pro)) return setPreviewing(t)
+    if (isLocked(t, unlocked)) return setPreviewing(t)
     setPreviewing(null)
     setTemplate(t)
     setPicked(true)
@@ -537,7 +537,7 @@ export default function Editor() {
       </main>
 
       <aside className="ed-preview" aria-label="PDF preview">
-        <TemplatePicker value={previewing ?? template} pro={pro} previewLocked onChange={pickTemplate} accent={accent} onAccent={pickAccent} />
+        <TemplatePicker value={previewing ?? template} unlocked={unlocked} previewLocked onChange={pickTemplate} accent={accent} onAccent={pickAccent} />
         <p className="ed-preview-note" role="status">{previewing && (
           <>
             Previewing {templateName(previewing)}, a Pro template. Upgrade to download in it, or{' '}
