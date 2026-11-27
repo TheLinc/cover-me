@@ -7,8 +7,8 @@ import { SiteFooter } from '@/components/site/SiteFooter'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 
-const TITLE = 'About Cover Me: Open-Source Resume Tailor by Lincoln Laylor'
-const DESCRIPTION = 'Cover Me is an open-source Chrome extension by Lincoln Laylor that tailors your resume and writes a cover letter. Why it exists, your data, and the code.'
+const TITLE = 'About Cover Me: AI Resume Tailor by Lincoln Laylor'
+const DESCRIPTION = 'Cover Me is a Chrome extension by Lincoln Laylor that tailors your resume and writes a cover letter for the job you have open. Why it exists and where your resume goes.'
 
 export const metadata: Metadata = {
   title: { absolute: TITLE },
@@ -71,7 +71,7 @@ export default function AboutPage() {
             <time dateTime="2026-11-23">Last updated November 23, 2026</time>
           </p>
           <p className="text-[17px] text-muted-foreground leading-[1.75]">
-            Cover Me (cover-me.dev) is an open-source Chrome extension that tailors your resume and writes a cover letter for the job posting you have open. Lincoln Laylor, a software developer in Canada, builds it. It reads postings on LinkedIn, Indeed, Greenhouse, Lever, Workday and Ashby, shows an ATS match score with the keywords you&apos;re missing, and removes any skill your original resume doesn&apos;t support. It&apos;s free with your own OpenAI or Claude API key. Cover Me isn&apos;t related to the CoverMe AI project on GitHub.
+            Cover Me (cover-me.dev) is a Chrome extension that tailors your resume and writes a cover letter for the job posting you have open. Lincoln Laylor, a software developer in Canada, builds it. It reads postings on LinkedIn, Indeed, Greenhouse, Lever, Workday and Ashby, shows an ATS match score with the keywords you&apos;re missing, and removes any skill your original resume doesn&apos;t support. There&apos;s a free plan to start. Cover Me isn&apos;t related to the CoverMe AI project on GitHub.
           </p>
         </div>
 

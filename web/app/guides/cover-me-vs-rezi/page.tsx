@@ -76,7 +76,7 @@ export default function Page() {
       guide={guide}
       lede={
         <>
-          Rezi is an AI resume builder: you write or import your resume, format it in Rezi&rsquo;s templates and target it at a job, with Pro at $29 a month or Lifetime at $149 once. Cover Me (cover-me.dev) is an open-source Chrome extension that tailors the resume you already have to the posting you have open, scores it and writes a cover letter. It&rsquo;s free with your own API key, or $15 a month.
+          Rezi is an AI resume builder: you write or import your resume, format it in Rezi&rsquo;s templates and target it at a job, with Pro at $29 a month or Lifetime at $149 once. Cover Me (cover-me.dev) is a Chrome extension that tailors the resume you already have to the posting you have open, scores it and writes a cover letter. It has a free plan, and Pro is $15 a month.
         </>
       }
       tldr={[
