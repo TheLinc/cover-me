@@ -143,7 +143,7 @@ Deno.serve(async (req) => {
       wantParse = body.parse === true
       if (Number.isInteger(body.readerVersion) && body.readerVersion >= 1 && body.readerVersion <= 999) readerVersion = body.readerVersion
       const at = typeof body.uploadedAt === 'string' ? Date.parse(body.uploadedAt) : NaN
-      if (at <= Date.now() + 24 * 60 * 60 * 1000) uploadedAt = new Date(at).toISOString()
+      if (at > 0 && at <= Date.now() + 24 * 60 * 60 * 1000) uploadedAt = new Date(at).toISOString()
       reread = body.reread === true
       baseTextHash = body.baseTextHash
     } catch {
@@ -205,7 +205,8 @@ Deno.serve(async (req) => {
         .eq('user_id', userId).like('text_encrypted', sameCiphertext(previous!.text_encrypted)).select('user_id')
       if (error) return json({ error: 'Failed to save resume' }, 500)
       if (!saved?.length) return json({ error: 'Resume changed' }, 409)
-      // No parse ahead: a Word file's design check parses it next, and two parses can differ (#131).
+      // No parse ahead: a Word file's design check parses it next, and two parses
+      // can differ (#131). A PDF's is parsed by its first tailor.
       return json({ success: true })
     }
     const { error } = await supabase.from('resumes').upsert({ user_id: userId, ...row, uploaded_at: uploadedAt }, { onConflict: 'user_id' })

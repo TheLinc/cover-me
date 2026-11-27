@@ -43,7 +43,7 @@ export async function saveUpload(file: File, text: string): Promise<{ resume: Re
   // The resume first: a file stored before anything points to it could be
   // pruned by a History save in between (#131).
   await saveResume(resume)
-  // The same file again keeps the parse it was checked against (#131).
+  // The same file again, under the same reader, keeps the parse it was checked against (#131).
   if (bytes && id) await saveDesignFile(id, { ...(await getDesignFile(id)), data: toBase64(bytes) })
   return { resume, word, hosted: mode === 'hosted' && session ? session : undefined }
 }

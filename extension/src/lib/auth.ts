@@ -124,8 +124,8 @@ export async function signInWithGoogle(): Promise<AuthSession> {
 
 // Everything a successful sign-in (email or Google) must leave behind for the
 // first hosted Generate to work: the session, hosted mode, and one resume on
-// both sides (see syncResume). A failed sync is non-fatal: the resume page
-// retries on the next upload (#16).
+// both sides (see syncResume). A failed sync is non-fatal: the next hosted
+// popup open or upload tries again (#16, #401).
 export async function completeSignIn(sess: AuthSession): Promise<void> {
   // A saved Google failure is moot once any sign-in succeeds (#16).
   await takeGoogleSignInError()
@@ -144,7 +144,8 @@ export async function completeSignIn(sess: AuthSession): Promise<void> {
 // - The newer copy wins. On a new device the account's resume comes down, so
 //   the user doesn't upload it again; a resume added before signing in goes up.
 // - Identical text moves nothing (the server would keep its parsed copy anyway;
-//   new text is parsed there in the background as soon as it's uploaded).
+//   new text is parsed there in the background as soon as it's uploaded),
+//   except a re-read the account hasn't recorded yet (#401).
 // - Another account's copy, left in this browser after a sign-out, is never
 //   uploaded here: it's removed first, then this account's copy (if any)
 //   comes down. Its owner normally has it in their account, unless their last

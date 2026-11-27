@@ -30,7 +30,7 @@ export async function sha256Hex(bytes: Uint8Array<ArrayBuffer>): Promise<string>
 // offers "Try again" (#131).
 export const DESIGN_CHECK_STALE_MS = 2 * 60 * 1000
 
-export function ownedBy(resume: ResumeData, session: AuthSession): boolean {
+function ownedBy(resume: ResumeData, session: AuthSession): boolean {
   return !resume.signedOutUpload && resume.accountId === session.user.id
 }
 
@@ -93,8 +93,9 @@ export async function checkUploadedDesign(hash: string): Promise<void> {
   }
 }
 
-// Also called after each hosted tailor and when History opens in the Pro view,
-// so a later upgrade or a failed send still gets the file to the dashboard (#181).
+// Safe to call again until the file lands, so a later upgrade or a failed send
+// still gets it to the dashboard. checkTier asks the server for the plan
+// instead of the cached one, only once there's a file to send (#181).
 export async function uploadDesignIfPro(session: AuthSession, checkTier = false): Promise<void> {
   const resume = await getResume()
   const d = resume?.design

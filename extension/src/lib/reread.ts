@@ -59,8 +59,9 @@ export async function refreshResume({ read = parseResume }: { read?: (file: File
   // The resume first, as on upload, so a prune can't take the new file (#131).
   await saveResume(next)
   if (!same) await saveDesignFile(id, { data: toBase64(bytes) })
-  if (session && rereadFrom) await syncResume(session).catch(() => {})
+  // The worker's check survives the popup closing, and sends a pending re-read first (lib/design.ts) (#401).
   if (!same && word) void chrome.runtime.sendMessage({ type: 'CHECK_DESIGN', hash: id }).catch(() => {})
+  if (session && rereadFrom) await syncResume(session).catch(() => {})
 
   const after = await getResume()
   if (after?.text !== next.text) return 'account'

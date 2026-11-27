@@ -104,7 +104,7 @@ export interface ResumeData {
   // Set by an upload only: updatedAt also moves on syncs (#401).
   uploadedAt?: string
   // A re-read saved here that the account hasn't confirmed: the SHA-256 of the
-  // text it replaced. The next popup open sends it again before syncing (#401).
+  // text it replaced. syncResume sends it as a re-read of that text (#401).
   rereadFrom?: string
 }
 
