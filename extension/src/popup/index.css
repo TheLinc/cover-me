@@ -425,6 +425,74 @@ html, body {
   line-height: 1.6;
 }
 
+.posting-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+}
+.posting-kicker {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.posting-main { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.posting-logo {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--r-sm);
+  background: var(--success-dim);
+  color: var(--success);
+  font-size: 15px;
+  font-weight: 700;
+}
+.posting-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.posting-title, .posting-meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.posting-title { font-size: 14px; font-weight: 600; color: var(--text); }
+.posting-meta { font-size: 12px; color: var(--text-2); }
+.posting-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 18px;
+  font-size: 12px;
+  color: var(--text-3);
+}
+.posting-foot .upload-link { margin: 0; font-weight: 500; }
+
+/* Holds the found card's height so the buttons don't move when the read ends (#346). */
+.posting-reading .posting-logo { background: var(--elevated); }
+.posting-reading .posting-text { flex: 1; }
+.posting-bar { display: inline-block; vertical-align: middle; width: 70%; height: 10px; border-radius: 5px; background: var(--elevated); }
+.posting-bar.short { width: 45%; }
+.posting-reading .posting-bar, .posting-reading .posting-logo { animation: posting-pulse 1.2s ease-in-out infinite alternate; }
+@keyframes posting-pulse { to { opacity: 0.45; } }
+
+.posting-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 18px 16px 14px;
+  border: 1px dashed var(--border);
+  border-radius: var(--r);
+  text-align: center;
+  color: var(--accent-h);
+}
+.posting-empty-title { font-size: 14px; font-weight: 600; color: var(--text); }
+.posting-empty-sub { font-size: 12px; line-height: 1.5; color: var(--text-2); }
+.posting-boards { display: flex; gap: 8px; margin-top: 4px; }
+.posting-boards .btn { width: auto; }
+.posting-empty .posting-paste { align-self: center; margin: 4px 0 0; font-weight: 500; }
+
 .letter-container { flex: 1; display: flex; flex-direction: column; gap: 10px; }
 
 .letter-box {
@@ -503,20 +571,6 @@ html, body {
   resize: none;
   line-height: 1.55;
 }
-
-.manual-toggle {
-  background: transparent;
-  border: none;
-  color: var(--text-2);
-  font-family: inherit;
-  font-size: 11px;
-  cursor: pointer;
-  text-align: center;
-  padding: 8px 0 0;
-  transition: color 0.14s;
-  width: 100%;
-}
-.manual-toggle:hover { color: var(--text); }
 
 .compact-toggle {
   display: flex;
@@ -1435,7 +1489,7 @@ textarea:focus-visible, input:focus-visible, [tabindex]:focus-visible {
 
 /* Reduced motion: spinners hold still (the arc still marks the active step). */
 @media (prefers-reduced-motion: reduce) {
-  .spinner, .step-spinner { animation: none; }
+  .spinner, .step-spinner, .posting-reading .posting-bar, .posting-reading .posting-logo { animation: none; }
   .context-panel, .nav-bar, .job-card-reveal, .job-card-reveal > div, .chevron, .step-thought, .tailor-details::details-content, .setting-details::details-content, .setting-summary { transition: none; }
   .tailor-details[open]::details-content, .setting-details[open]::details-content { transition: none; }
 }
