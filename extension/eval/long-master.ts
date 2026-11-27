@@ -1,7 +1,5 @@
-// A long master resume (three roles of 14 bullets, a headline, grouped
-// skills, an Open Source section of entries) tailored with "Remove irrelevant
-// bullets" on: the trim budget, measured results and the new parse fields
-// all run against a real model. Made up; no real person or employer (#190).
+// Tailored with "Cut what doesn't fit this job" on, against a real model, to test the trim budget and the new parse fields.
+// Made up; no real person or employer (#190).
 
 import type { ParsedResume } from '../src/types'
 import type { EvalCase } from './fixtures'

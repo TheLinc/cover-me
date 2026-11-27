@@ -13,6 +13,7 @@ import GapChips from '../components/GapChips'
 import { EditIcon, RegenerateIcon } from '../components/icons'
 import PageReadNotice from '../components/PageReadNotice'
 import AnswersNews from '../components/AnswersNews'
+import UpdateReady from '../components/UpdateReady'
 import PostingTitleTip from '../components/PostingTitleTip'
 import ProgressSteps from '../components/ProgressSteps'
 import ReviewAsk from '../components/ReviewAsk'
@@ -712,6 +713,7 @@ export default function GeneratePage({ onNavigate }: Props) {
         {/* Mounted once saved state has loaded (so reopening the popup doesn't
             announce "Done"), then kept, so screen readers hear each change. (#19) */}
         {setupLoaded && <span className="popup-status" role="status">{status}</span>}
+        <UpdateReady />
       </header>
 
       <PageReadNotice />

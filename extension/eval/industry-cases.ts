@@ -1,17 +1,8 @@
-// Industry coverage for the resume eval. Every resume is synthetic (no real
-// user data, ever). Each is written as the structured resume the parser
-// should produce, then rendered to plain text in a realistic layout, so the
-// same data is both the parser's input and its answer key.
-//
-// Like fixtures.ts, every job description asks for something its resume does
-// not have (a license, a tool, a domain). failTerms must never appear in the
-// tailored output; warnTerms need a human look; mustKeepSkills are JD-named
-// skills the candidate really has.
+// Synthetic resumes only, written as the parse answer key and rendered to text as the parser's input.
+// Each posting asks for something its resume lacks, so failTerms catch invented claims (https://github.com/TheLinc/cover-me/commit/cb47a02a).
 
 import type { JobData, ParsedResume, ResumeEducation, ResumeExperience } from '../src/types'
 import type { EvalCase } from './fixtures'
-
-// ── Rendering ────────────────────────────────────────────────────────────────
 
 type Layout = 'classic' | 'inline' | 'skills-first'
 
@@ -19,25 +10,19 @@ interface Spec {
   id: string
   industry: string
   resume: ParsedResume
-  /** classic: "Title — Company, Location (Dates)". inline: company line, then title line (trades). skills-first: skills and certs on top. */
   layout?: Layout
   headers?: Partial<Record<'experience' | 'education' | 'skills' | 'certifications' | 'projects' | 'profile', string>>
-  /** Summary paragraph in the source resume. Not part of the parsed schema: the parser must not turn it into experience. */
+  /** The parser must keep this summary out of experience; it isn't in the parsed schema (https://github.com/TheLinc/cover-me/commit/cb47a02a). */
   profile?: string
   job: JobData
   failTerms: string[]
   warnTerms?: string[]
   mustKeepSkills?: string[]
   fieldNotes: string
-  /** Category labels a human editor would add from specific resume evidence; see EvalCase. */
   expectedLabels?: string[][]
-  /** See EvalCase. */
   summaryTitle?: string
-  /** See EvalCase. */
   resumeFailTerms?: string[]
-  /** See EvalCase. */
   mode?: 'trim' | 'compact'
-  /** See EvalCase. */
   keepInBullets?: string[]
 }
 
@@ -77,7 +62,6 @@ function render(s: Spec): string {
   const certs = block(h.certifications, (r.certifications ?? []).map((c) => `- ${c}`))
   const skills = r.skills ? block(h.skills, [r.skills]) : []
   const profile = s.profile ? block(h.profile, [s.profile]) : []
-  // Sections outside the six, in their own order after the rest.
   const other = (r.otherSections ?? []).flatMap((o) => block(o.heading, o.lines))
 
   const body = layout === 'skills-first'
@@ -106,10 +90,7 @@ const toCase = (s: Spec): EvalCase => ({
   keepInBullets: s.keepInBullets,
 })
 
-// ── Cases ────────────────────────────────────────────────────────────────────
-
 const SPECS: Spec[] = [
-  // ── Business ───────────────────────────────────────────────────────────────
   {
     id: 'business-analyst-missing-cert',
     industry: 'Business',
@@ -359,7 +340,6 @@ Startup experience preferred.`),
     fieldNotes: 'Returning professional: present past experience confidently without inventing recent work or hiding the gap; years of experience must not count the career break. Office management: finances, payroll, vendors, operations.',
   },
 
-  // ── Finance ────────────────────────────────────────────────────────────────
   {
     id: 'accountant-no-cpa',
     industry: 'Finance',
@@ -431,7 +411,6 @@ Requirements: CPA required; 4+ years of accounting experience.`),
     fieldNotes: 'UK CV conventions: British spelling (centres), profile-style summary, no US-isms. Finance admin: volume and accuracy. AAT Level 2 must not be upgraded; Xero must not become Sage.',
   },
 
-  // ── Legal ──────────────────────────────────────────────────────────────────
   {
     id: 'paralegal-litigation-to-corporate',
     industry: 'Legal',
@@ -470,7 +449,6 @@ Duties:
     fieldNotes: 'Legal: precise, formal language. Litigation work (discovery, trials) must not be reframed as transactional or corporate work.',
   },
 
-  // ── Education ──────────────────────────────────────────────────────────────
   {
     id: 'teacher-out-of-state',
     industry: 'Education',
@@ -534,7 +512,6 @@ Corporate training experience preferred.`),
     fieldNotes: 'Career change: translate transferable work honestly into the target field (curriculum design to learning design, PD workshops to adult learning) without claiming the new field\'s tools or corporate experience.',
   },
 
-  // ── Trades ─────────────────────────────────────────────────────────────────
   {
     id: 'electrician-commercial-to-industrial',
     industry: 'Trades',
@@ -606,7 +583,6 @@ Requirements: journeyman license, OSHA 30, 3+ years industrial experience.`),
     fieldNotes: 'Welding: exact process and position certifications (3G/4G vs 6G) are gating and must never be upgraded. There is no skills section, so keywords belong in bullets only. Plain, direct trade language.',
   },
 
-  // ── Hospitality, retail, logistics ─────────────────────────────────────────
   {
     id: 'line-cook-to-sous-chef',
     industry: 'Hospitality',
@@ -770,7 +746,6 @@ Requirements:
     fieldNotes: 'Veterans: translate military jargon into civilian terms (property book to asset accountability, battalion to organization size) while keeping the real scope and numbers. Military systems must not become civilian WMS claims.',
   },
 
-  // ── Healthcare (non-nursing) ───────────────────────────────────────────────
   {
     id: 'pharmacy-tech-retail-to-hospital',
     industry: 'Healthcare',
@@ -807,8 +782,7 @@ Requirements: CPhT; hospital experience preferred.`),
   },
 
   {
-    // A paid job under "CLINICAL EXPERIENCE" is experience; the student
-    // rotations and the job-shaped volunteer role are not.
+    // The paid job under this heading counts as experience; rotations and the job-like volunteer role don't (#54).
     id: 'new-grad-nurse-rotations',
     industry: 'Healthcare',
     headers: { experience: 'CLINICAL EXPERIENCE' },
@@ -855,7 +829,6 @@ Requirements: Ohio RN license, BLS. ACLS within 6 months of hire. Epic experienc
     fieldNotes: 'New-grad nursing: license, clinical hours, patient load, and direct patient care. A patient care technician must not be presented as an RN with independent assessment or medication duties. The rotations and the volunteer role print word for word, not as jobs.',
   },
 
-  // ── Engineering, creative, government, nonprofit, science ──────────────────
   {
     id: 'mechanical-engineer-medical-device',
     industry: 'Engineering',
@@ -1061,7 +1034,6 @@ Requirements: 3+ years building web applications, React, Node.js, SQL. AWS and T
     summaryTitle: 'Software Engineer',
   },
 
-  // ── Early career and senior leadership ─────────────────────────────────────
   {
     id: 'new-grad-data-analyst',
     industry: 'Technology',
@@ -1230,7 +1202,7 @@ const MODE_SPECS: Spec[] = (['trim', 'compact'] as const).map((mode) => ({
   mode,
   resume: { ...newGrad.resume, projects: [...newGrad.resume.projects!, roverProject] },
   keepInBullets: ['SQL', 'Python', 'pandas'],
-  fieldNotes: `${newGrad.fieldNotes} ${mode === 'trim' ? '"Remove irrelevant bullets" is on' : '"Compact to one page" is on'}: dropping bullets the posting doesn't need, especially from the robotics project, is the expected result, not a loss.`,
+  fieldNotes: `${newGrad.fieldNotes} "${mode === 'trim' ? "Cut what doesn't fit this job" : 'Compact to one page'}" is on: dropping bullets the posting doesn't need, especially from the robotics project, is the expected result, not a loss.`,
 }))
 
 export const INDUSTRY_CASES: EvalCase[] = [...SPECS, ...MODE_SPECS].map(toCase)

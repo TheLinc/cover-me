@@ -210,10 +210,13 @@ html, body {
   margin: -18px -18px 16px;
   padding: 12px 18px;
   border-bottom: 1px solid var(--border);
+  white-space: nowrap;
 }
 .popup-bar .logo-icon { width: 20px; height: 20px; border-radius: 6px; }
 .popup-bar .logo-text { font-size: 14px; font-weight: 600; letter-spacing: -0.2px; }
-.popup-status { margin-left: auto; font-size: 12px; font-weight: 500; color: var(--text-2); }
+.popup-status { margin-left: auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 500; color: var(--text-2); }
+.popup-bar .update-ready { flex-shrink: 0; width: auto; margin-left: auto; padding: 4px 10px; font-size: 12px; gap: 5px; }
+.popup-status + .update-ready { margin-left: 0; }
 /* After a minor or major update (components/WhatsNew.tsx). */
 .popup-bar .whats-new { display: inline-flex; align-self: center; align-items: center; gap: 5px; }
 .whats-new-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
@@ -1399,6 +1402,7 @@ textarea:focus-visible, input:focus-visible, [tabindex]:focus-visible {
 .site-watch { align-items: flex-start; margin-top: 8px; overflow-wrap: anywhere; }
 .site-watch input[type="checkbox"] { flex-shrink: 0; margin-top: 2px; }
 .site-watch-me { text-decoration: underline dotted; text-underline-offset: 2px; cursor: help; }
+.link-button { padding: 0; border: none; background: none; color: var(--accent-h); font: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
 
 /* A text box with its action on its bottom edge (#118): Regenerate sits with
    the text it sends, which keeps the result row to Download, Edit and New. */
