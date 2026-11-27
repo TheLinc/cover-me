@@ -108,12 +108,12 @@ const TOOLS: Tool[] = [
     name: 'Jobright Autofill',
     store: 'https://chromewebstore.google.com/detail/jobright-autofill-%E2%80%93-insta/odcnpipkhjegpefkfplmedhmkmmhmoko',
     job: 'Autofill',
-    free: 'Not published; daily limits on resume tailoring',
-    paid: 'Shown only in the app',
+    free: '4 autofills, 2 AI resumes and 2 cover letters a day',
+    paid: 'Turbo $17.99 a week, or $29.99 a month on a timed offer',
     sites: 'Workday, Greenhouse, Lever, iCIMS, Ashby, Workable',
     users: '200,000 users, 4.9 from 438 ratings',
-    source: 'https://jobright.ai/job-autofill',
-    sourceLabel: 'Autofill page',
+    source: '/guides/jobright-review',
+    sourceLabel: 'upgrade page after sign-in, November 21',
   },
   {
     name: 'Huntr',
@@ -231,7 +231,7 @@ export default function Page() {
                         </td>
                         <td className={td}>{t.job}</td>
                         <td className={td}>
-                          {t.free} (<a href={t.source} {...(t.source.startsWith('http') ? ext : {})}>{t.sourceLabel}</a>)
+                          {t.free} ({t.source.startsWith('http') ? <a href={t.source} {...ext}>{t.sourceLabel}</a> : <Link href={t.source}>{t.sourceLabel}</Link>})
                         </td>
                         <td className={td}>{t.paid}</td>
                         <td className={td}>{t.sites}</td>
@@ -258,7 +258,7 @@ export default function Page() {
                 <strong>JobWizard</strong> has the most generous free AI quota of the autofill tools. Its <a href="https://jobwizard.ai/pricing" {...ext}>pricing page</a> lists 30 job autofills, 30 cover letters, 30 resume retouches and 30 keyword suggestions a week, with the match score and application tracker &ldquo;always free&rdquo;. Its <a href="https://jobwizard.ai/features/smart-autofill" {...ext}>autofill page</a> names Workday, Greenhouse, Lever, Ashby, iCIMS, SmartRecruiters, Oracle Taleo and LinkedIn Easy Apply. Paid plans start at $6.99 for 7 days with no auto-renew, behind a toggle on the pricing page, or $17.99 a month. The store listing says JobWizard &ldquo;never submits an application for you&rdquo;. It&rsquo;s small, with 10,000 users, and its own site claims 30K+.
               </p>
               <p>
-                <strong>Jobright Autofill</strong> says it supports &ldquo;MyWorkdayJobs, Greenhouse, Lever, iCIMS, Ashby, Workable and more&rdquo;, and that you &ldquo;review, edit, and submit&rdquo; each form yourself (<a href="https://jobright.ai/job-autofill" {...ext}>autofill page</a>). Its free limits aren&rsquo;t published, and Jobright&rsquo;s pages disagree: the homepage FAQ says all features are free with daily limits on resume tailoring, while its <a href="https://jobright.ai/tools/ai-job-apply" {...ext}>AI job apply page</a> says registering doesn&rsquo;t give a free allowance for every feature. The price is shown only inside the app. The <Link href="/guides/jobright-review">Jobright review</Link> covers what it costs once you sign in and how it compares with Simplify.
+                <strong>Jobright Autofill</strong> says it supports &ldquo;MyWorkdayJobs, Greenhouse, Lever, iCIMS, Ashby, Workable and more&rdquo;, and that you &ldquo;review, edit, and submit&rdquo; each form yourself (<a href="https://jobright.ai/job-autofill" {...ext}>autofill page</a>). Jobright doesn&rsquo;t publish its free limits or prices before you sign in. Its upgrade page, checked for the <Link href="/guides/jobright-review">Jobright review</Link> on November 21, 2026, gave a free account 4 autofills, 2 AI resumes and 2 cover letters a day, and Turbo at $17.99 a week, or $29.99 a month on a timed offer. That review also compares it with Simplify.
               </p>
             </>
           ),

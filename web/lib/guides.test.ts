@@ -108,7 +108,7 @@ describe('internal links', () => {
     .filter((f) => f.endsWith('.tsx'))
     .map((file) => ({ file, text: readFileSync(join(root, file), 'utf8') }))
 
-  it.each(['aiapply-review', 'free-jobscan-alternatives', 'use-your-own-api-key-for-cover-letters', 'jobright-review', 'how-to-answer-job-application-questions', 'careerflow-review'])(
+  it.each(['aiapply-review', 'free-jobscan-alternatives', 'use-your-own-api-key-for-cover-letters', 'jobright-review', 'how-to-answer-job-application-questions', 'careerflow-review', 'best-chrome-extensions-for-job-applications'])(
     '%s is linked from at least two other pages, besides the /guides index',
     (slug) => {
       const own = join('app', 'guides', slug, 'page.tsx')
@@ -255,5 +255,22 @@ describe('the Chrome extensions for job applications guide', () => {
     expect(h1).toMatch(/Chrome extensions/i)
     expect(h1).toMatch(/job applications/i)
     expect(html.replace(/<[^>]+>/g, ' ')).toContain('November 27, 2026')
+  }, 20_000)
+
+  it("links every extension's store listing and its maker's own page in the comparison table", async () => {
+    const html = await render()
+    const rows = html.match(/<tbody>(.*?)<\/tbody>/)![1].split('</tr>').filter(Boolean)
+    expect(rows.length).toBeGreaterThanOrEqual(8)
+    for (const row of rows) {
+      expect(row).toMatch(/<a href="https:\/\/chromewebstore\.google\.com\/detail\//)
+      expect(row).toMatch(/<a href="(https:\/\/(?!chromewebstore)|\/#pricing|\/guides\/)/)
+    }
+  }, 20_000)
+
+  it("links Cover Me's store listing and every job site page", async () => {
+    const html = await render()
+    expect(html).toContain('href="https://chromewebstore.google.com/detail/cover-me-ai-resume-tailor/bpbnopjgjbimdjjdolhkgimllbgamgpi')
+    const { BOARDS } = await import('./boards')
+    for (const b of BOARDS) expect(html).toContain(`href="/for/${b.slug}"`)
   }, 20_000)
 })
