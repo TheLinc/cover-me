@@ -210,15 +210,13 @@ export default function Page() {
           body: (
             <GuideFigure caption={`Each extension sorted by its main job. Limits and prices from each maker’s site, users and ratings from the Chrome Web Store, all checked ${CHECKED}, except Jobright’s limits and prices (November 21).`}>
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[900px] text-[13.5px] bg-white border border-border rounded-[8px] overflow-hidden" style={{ borderCollapse: 'collapse' }}>
+                <table className="w-full min-w-[600px] text-[13.5px] [&_a]:underline [&_a]:underline-offset-2 bg-white border border-border rounded-[8px] overflow-hidden" style={{ borderCollapse: 'collapse' }}>
                   <thead>
                     <tr className="bg-elevated">
                       <th className={th}>Extension</th>
-                      <th className={th}>Main job</th>
                       <th className={th}>Free plan</th>
                       <th className={th}>Paid from</th>
                       <th className={th}>Job sites it names</th>
-                      <th className={th}>Chrome Web Store</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -226,14 +224,13 @@ export default function Page() {
                       <tr key={t.name}>
                         <td className={`${td} font-medium ${t.name === 'Cover Me' ? 'text-brand-light' : 'text-foreground'}`}>
                           <a href={t.store} {...ext}>{t.name}</a>
+                          <span className="mt-1 block text-[12.5px] font-normal text-muted-foreground">{t.job}. {t.users}</span>
                         </td>
-                        <td className={td}>{t.job}</td>
                         <td className={td}>
                           {t.free} ({t.source.startsWith('http') ? <a href={t.source} {...ext}>{t.sourceLabel}</a> : <Link href={t.source}>{t.sourceLabel}</Link>})
                         </td>
                         <td className={td}>{t.paid}</td>
                         <td className={td}>{t.sites}</td>
-                        <td className={td}>{t.users}</td>
                       </tr>
                     ))}
                   </tbody>
