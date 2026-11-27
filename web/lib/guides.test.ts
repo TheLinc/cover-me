@@ -108,6 +108,14 @@ describe('internal links', () => {
     .filter((f) => f.endsWith('.tsx'))
     .map((file) => ({ file, text: readFileSync(join(root, file), 'utf8') }))
 
+  it('every link to a guide points at a guide that exists', () => {
+    const slugs = new Set(GUIDES.map((g) => g.slug))
+    const broken = files.flatMap(({ file, text }) =>
+      [...text.matchAll(/href="\/guides\/([a-z0-9-]+)[#"]/g)].filter((m) => !slugs.has(m[1])).map((m) => `${file}: /guides/${m[1]}`),
+    )
+    expect(broken).toEqual([])
+  })
+
   it.each(['aiapply-review', 'free-jobscan-alternatives', 'use-your-own-api-key-for-cover-letters', 'jobright-review', 'how-to-answer-job-application-questions', 'careerflow-review', 'best-chrome-extensions-for-job-applications'])(
     '%s is linked from at least two other pages, besides the /guides index',
     (slug) => {
