@@ -17,7 +17,7 @@ export function toBase64(bytes: Uint8Array): string {
   return btoa(s)
 }
 
-export function fromBase64(b64: string): Uint8Array {
+export function fromBase64(b64: string): Uint8Array<ArrayBuffer> {
   return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))
 }
 
@@ -33,7 +33,7 @@ export const DESIGN_CHECK_STALE_MS = 2 * 60 * 1000
 // The account may receive this upload's text and file: it was added while
 // signed in to this account. A copy added signed out, or another account's,
 // is never sent (the rule syncResume in lib/auth.ts follows).
-function ownedBy(resume: ResumeData, session: AuthSession): boolean {
+export function ownedBy(resume: ResumeData, session: AuthSession): boolean {
   return !resume.signedOutUpload && resume.accountId === session.user.id
 }
 

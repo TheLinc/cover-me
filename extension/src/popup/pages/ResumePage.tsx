@@ -3,6 +3,7 @@ import { uploadResumeToBackend } from '../../lib/auth'
 import { DESIGN_CHECK_STALE_MS, DESIGN_UPLOAD_MAX, usesDesign } from '../../lib/design'
 import { designUsable } from '../../lib/pdf/docx-design'
 import { MAX_RESUME_CHARS } from '../../lib/ai/resume-parse'
+import { needsUploadNote } from '../../lib/reread'
 import { saveUpload } from '../../lib/resume-file'
 import { parseResume } from '../../lib/resume-parser'
 import { getCachedTier, getMode, getResume, getSession, saveResume, watchResume } from '../../lib/storage'
@@ -22,6 +23,7 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
   const [pro, setPro] = useState(false)
   // Existing users: the "New" notice the Resume tab's dot leads to (#131).
   const [news, setNews] = useState(false)
+  const [noteSeen, setNoteSeen] = useState(true)
 
   useEffect(() => {
     const show = (r: ResumeData | null) => {
@@ -34,9 +36,17 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
       })
     }
     getResume().then(show)
-    chrome.storage.local.get('designNews').then((r) => setNews(r.designNews === 'pending' || r.designNews === 'opened'))
+    chrome.storage.local.get(['designNews', 'readerNote']).then((r) => {
+      setNews(r.designNews === 'pending' || r.designNews === 'opened')
+      setNoteSeen(r.readerNote === 'seen')
+    })
     return watchResume(show)
   }, [])
+
+  function dismissReaderNote() {
+    setNoteSeen(true)
+    void chrome.storage.local.set({ readerNote: 'seen' })
+  }
 
   function dismissNews() {
     setNews(false)
@@ -107,6 +117,7 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
   }
 
   const wordUpload = !!resume?.filename.toLowerCase().endsWith('.docx')
+  const readerNote = needsUploadNote(resume, noteSeen)
 
   return (
     <div className="page">
@@ -117,7 +128,18 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
         </div>
       )}
 
-      {news && resume && !resume.design && (
+      {readerNote && (
+        <section className="page-read-notice" aria-labelledby="reader-note-title">
+          <p id="reader-note-title" className="page-read-notice-title">Re-upload your resume</p>
+          <p>Cover Me reads resumes better now. It keeps the links behind clickable text and the order of your sections. Upload yours again, and future improvements will apply on their own.</p>
+          <div className="page-read-notice-actions">
+            <button className="btn btn-primary btn-sm" onClick={() => inputRef.current?.click()}>Upload again</button>
+            <button className="btn btn-secondary btn-sm" onClick={dismissReaderNote}>Not now</button>
+          </div>
+        </section>
+      )}
+
+      {news && !readerNote && resume && !resume.design && (
         <section className="page-read-notice" aria-labelledby="design-news-title">
           <div className="news-heading">
             <span className="news-icon" aria-hidden="true">
