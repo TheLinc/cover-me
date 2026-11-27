@@ -1,5 +1,6 @@
 import { ensureValidSession } from './auth'
 import { fromBase64, sha256Hex, toBase64 } from './design'
+import { DOCX_MIME } from './pdf/docx-design'
 import { saveFile } from './pdf/file-name'
 import { READER_VERSION } from './resume-parser'
 import { getDesignFile, getMode, getResume, saveDesignFile, saveResume } from './storage'
@@ -49,7 +50,7 @@ export async function saveUpload(file: File, text: string): Promise<{ resume: Re
   return { resume, word, hosted: mode === 'hosted' && session ? session : undefined }
 }
 
-const MIME = { pdf: 'application/pdf', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }
+const MIME = { pdf: 'application/pdf', docx: DOCX_MIME }
 
 export async function downloadStoredFile(id: string, filename: string): Promise<boolean> {
   const stored = await getDesignFile(id)
@@ -64,15 +65,11 @@ function uploadDate(iso: string): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', ...(d.getFullYear() !== new Date().getFullYear() ? { year: 'numeric' } : {}) })
 }
 
+const line = (verb: string, source: ResumeSource) => `${verb} ${source.filename}, uploaded ${uploadDate(source.uploadedAt)}`
+export const usingLine = (resume: ResumeData) => line('Using', resumeSource(resume))
+export const fromLine = (source: ResumeSource) => line('From', source)
+
 // A resume from before #401 has no uploadedAt; updatedAt is the closest date it has.
-export function usingLine(resume: ResumeData): string {
-  return `Using ${resume.filename}, uploaded ${uploadDate(resume.uploadedAt ?? resume.updatedAt)}`
-}
-
-export function fromLine(source: ResumeSource): string {
-  return `From ${source.filename}, uploaded ${uploadDate(source.uploadedAt)}`
-}
-
 export function resumeSource(resume: ResumeData): ResumeSource {
-  return { filename: resume.filename, uploadedAt: resume.uploadedAt ?? resume.updatedAt, ...(resume.file ? { fileId: resume.file.id } : {}) }
+  return { filename: resume.filename, uploadedAt: resume.uploadedAt ?? resume.updatedAt, fileId: resume.file?.id }
 }

@@ -701,18 +701,7 @@ html, body {
 .resume-name-row { display: flex; align-items: center; gap: 8px; }
 .resume-name-row .resume-name { flex: 1; min-width: 0; }
 .resume-download { flex-shrink: 0; padding: 3px 10px; font-size: 11px; }
-.using-line {
-  align-self: flex-start;
-  background: none;
-  border: none;
-  padding: 0;
-  margin: 0 0 8px;
-  color: var(--text-3);
-  font-family: inherit;
-  font-size: 11px;
-  text-align: left;
-  cursor: pointer;
-}
+.upload-link.using-line { margin: 0 0 8px; color: var(--text-3); font-size: 11px; text-decoration: none; text-align: left; }
 .using-line:hover { color: var(--text); text-decoration: underline; }
 .resume-sections { font-size: 10px; color: var(--accent-h); margin-top: 4px; letter-spacing: 0.1px; }
 
