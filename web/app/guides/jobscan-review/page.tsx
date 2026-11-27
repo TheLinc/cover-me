@@ -145,7 +145,7 @@ export default function Page() {
                 <a href="https://enhancv.com/blog/does-ats-reject-resumes/" {...ext}>a survey by Enhancv</a>, which sells resume tools, 23 of 25 recruiters said their ATS doesn&rsquo;t reject resumes automatically for formatting, content or design. <Link href="/guides/what-is-an-ats-score">What an ATS score measures</Link> covers what the number can and can&rsquo;t tell you.
               </p>
               <p>
-                After this review I tried Premium&rsquo;s AI Optimize, with its default Fast setting, on the 7-day trial, on November 26, 2026, with three made-up resumes that lacked what the posting asked for. With every suggestion accepted, it added a claim the resume doesn&rsquo;t support to all three, such as &ldquo;Developed E-Commerce marketing sites&rdquo; for a developer with no e-commerce work. You can reject suggestions one at a time, so read each one. <Link href="/guides/best-ai-for-resume-tailoring">Best AI for resume tailoring</Link> has the full test.
+                After this review I tried Premium&rsquo;s AI Optimize, on its standard setting, during the 7-day trial, on November 26, 2026, with three made-up resumes that lacked what the posting asked for. With every suggestion accepted, it added a claim the resume doesn&rsquo;t support to all three, such as &ldquo;Developed E-Commerce marketing sites&rdquo; for a developer with no e-commerce work. You can reject suggestions one at a time, so read each one. <Link href="/guides/best-ai-for-resume-tailoring">Best AI for resume tailoring</Link> has the full test.
               </p>
             </>
           ),
