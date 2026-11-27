@@ -7,6 +7,7 @@ Site features under the names a visitor would use, with the route and how to rea
 - Guides index: `/guides`. Nav, Guides. A card for every entry in `lib/guides.ts`, newest update first.
 - Guide page: `/guides/<slug>`. From a card on the index. The layout is `components/site/GuideArticle.tsx`.
 - Tool reviews: `/guides/aiapply-review`, `/guides/jobscan-review`, `/guides/teal-review`, `/guides/jobright-review` (with a Jobright vs Simplify section), `/guides/careerflow-review` (with a Careerflow vs Teal section). The old `/guides/cover-me-vs-aiapply`, `-jobscan` and `-teal` addresses redirect here with a 308 (`next.config.ts`).
+- Tested comparison: `/guides/best-ai-for-resume-tailoring`. Six AI tools were given three resumes that lacked what the posting asked for, scored blind for made-up claims. Linked from the Jobscan and Teal reviews and the ChatGPT resume prompts guide.
 - Comparisons: `/guides/cover-me-vs-chatgpt`, `/guides/cover-me-vs-rezi`.
 - Free ATS resume checkers list: `/guides/best-free-ats-resume-checkers`. Eleven checkers compared on free limits, account rules and results, each limit linked to its source. Linked from the ATS resume checker and the free Jobscan alternatives guide.
 - ChatGPT prompt guides: `/guides/chatgpt-resume-prompts`, `/guides/chatgpt-cover-letter-prompts`. Linked from the footer, the tailoring guide, the ATS score guide and the ATS resume checker.
