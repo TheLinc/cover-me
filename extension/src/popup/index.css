@@ -1017,6 +1017,7 @@ html, body {
   display: flex;
   align-items: stretch;
   flex-shrink: 0;
+  position: relative;
 }
 
 .nav-item {
@@ -1051,14 +1052,20 @@ html, body {
 
 .nav-item.active { color: var(--accent-h); }
 
-.nav-item.active::before {
-  content: '';
+.nav-bar {
   position: absolute;
   top: 0;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  width: 25%;
+  transform: translateX(calc(var(--nav-index) * 100%));
+  transition: transform 0.2s ease;
+}
+.nav-bar::before {
+  content: '';
+  display: block;
   width: 22px;
   height: 2px;
+  margin: 0 auto;
   background: var(--accent);
   border-radius: 0 0 2px 2px;
 }
@@ -1411,7 +1418,7 @@ textarea:focus-visible, input:focus-visible, [tabindex]:focus-visible {
 /* Reduced motion: spinners hold still (the arc still marks the active step). */
 @media (prefers-reduced-motion: reduce) {
   .spinner, .step-spinner { animation: none; }
-  .context-panel, .job-card-reveal, .job-card-reveal > div, .chevron, .step-thought, .tailor-details::details-content, .setting-details::details-content, .setting-summary { transition: none; }
+  .context-panel, .nav-bar, .job-card-reveal, .job-card-reveal > div, .chevron, .step-thought, .tailor-details::details-content, .setting-details::details-content, .setting-summary { transition: none; }
   .tailor-details[open]::details-content, .setting-details[open]::details-content { transition: none; }
 }
 

@@ -54,7 +54,8 @@ const items: { id: Page; label: string; icon: JSX.Element }[] = [
 
 export default function Nav({ current, onChange, dot }: Props) {
   return (
-    <nav className="nav">
+    <nav className="nav" style={{ '--nav-index': items.findIndex((item) => item.id === current) } as React.CSSProperties}>
+      <span className="nav-bar" aria-hidden="true" />
       {items.map((item) => (
         <button
           key={item.id}
