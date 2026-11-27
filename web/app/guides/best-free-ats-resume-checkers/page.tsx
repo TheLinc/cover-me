@@ -102,6 +102,7 @@ const faqJsonLd = {
 
 const th = 'text-left px-4 py-3 font-bold text-muted-foreground border-b border-border'
 const td = 'px-4 py-3 text-muted-foreground border-b border-border'
+const link = 'text-brand-strong underline underline-offset-2'
 
 export default function Page() {
   return (
@@ -126,35 +127,36 @@ export default function Page() {
         {
           title: 'Free ATS resume checkers at a glance',
           body: (
-            <GuideFigure caption={`What each free plan gives you, from each tool’s own pages on ${CHECKED}.`}>
+            <GuideFigure caption={`What each free plan gives you, from the source page linked under each tool’s name, checked ${CHECKED}.`}>
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[760px] text-[13.5px] bg-white border border-border rounded-[8px] overflow-hidden" style={{ borderCollapse: 'collapse' }}>
+                <table className="w-full min-w-[600px] text-[13.5px] bg-white border border-border rounded-[8px] overflow-hidden" style={{ borderCollapse: 'collapse' }}>
                   <thead>
                     <tr className="bg-elevated">
-                      <th className={th}>Tool</th>
+                      <th className={th}>Tool and source</th>
                       <th className={th}>Free limit</th>
                       <th className={th}>Account</th>
                       <th className={th}>Reads the job description</th>
                       <th className={th}>Free result</th>
-                      <th className={th}>Source, checked {CHECKED}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {TOOLS.map((row) => (
                       <tr key={row.name}>
-                        <td className={`${td} font-medium ${row.name === 'Cover Me' ? 'text-brand-light' : 'text-foreground'}`}>{row.name}</td>
+                        <td className={td}>
+                          <span className={`block font-medium ${row.name === 'Cover Me' ? 'text-brand-light' : 'text-foreground'}`}>{row.name}</span>
+                          <span className="text-[12.5px]">
+                            {row.sources.map((s, i) => (
+                              <span key={s.href}>
+                                {i > 0 && ', '}
+                                {s.href.startsWith('/') ? <Link href={s.href} className={link}>{s.label}</Link> : <a href={s.href} className={link} {...ext}>{s.label}</a>}
+                              </span>
+                            ))}
+                          </span>
+                        </td>
                         <td className={td}>{row.limit}</td>
                         <td className={td}>{row.account}</td>
                         <td className={td}>{row.posting}</td>
                         <td className={td}>{row.result}</td>
-                        <td className={td}>
-                          {row.sources.map((s, i) => (
-                            <span key={s.href}>
-                              {i > 0 && ', '}
-                              {s.href.startsWith('/') ? <Link href={s.href}>{s.label}</Link> : <a href={s.href} {...ext}>{s.label}</a>}
-                            </span>
-                          ))}
-                        </td>
                       </tr>
                     ))}
                   </tbody>
