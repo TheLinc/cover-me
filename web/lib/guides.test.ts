@@ -110,8 +110,11 @@ describe('internal links', () => {
 
   it('every link to a guide points at a guide that exists', () => {
     const slugs = new Set(GUIDES.map((g) => g.slug))
-    const broken = files.flatMap(({ file, text }) =>
-      [...text.matchAll(/href="\/guides\/([a-z0-9-]+)[#"]/g)].filter((m) => !slugs.has(m[1])).map((m) => `${file}: /guides/${m[1]}`),
+    const libFiles = readdirSync(join(root, 'lib'))
+      .filter((f) => f.endsWith('.ts') && !f.endsWith('.test.ts'))
+      .map((f) => ({ file: join('lib', f), text: readFileSync(join(root, 'lib', f), 'utf8') }))
+    const broken = [...files, ...libFiles].flatMap(({ file, text }) =>
+      [...text.matchAll(/["']\/guides\/([a-z0-9-]+)["'#]/g)].filter((m) => !slugs.has(m[1])).map((m) => `${file}: /guides/${m[1]}`),
     )
     expect(broken).toEqual([])
   })
