@@ -15,7 +15,7 @@ Cover Me is an open-source Chrome extension that reads job descriptions and, usi
 3. Hit **Generate Cover Letter** — or **Tailor Resume to Job**
 4. Edit, copy, or download as PDF
 
-The extension reads the job description from the page and combines it with your resume. **Generate Cover Letter** produces a tailored, human-sounding letter — no generic templates, no "I am excited to apply." **Tailor Resume to Job** rewrites your resume's wording and skills to match the posting's ATS keywords (without fabricating experience), shows a match score out of 100 with a gap analysis, and exports a clean PDF. Optional toggles let you compact to one page, trim irrelevant bullets, or add a tailored summary.
+The extension reads the job description from the page and combines it with your resume. **Generate Cover Letter** produces a tailored, human-sounding letter — no generic templates, no "I am excited to apply." **Tailor Resume to Job** rewrites your resume's wording and skills to match the posting's ATS keywords (without fabricating experience), shows a match score out of 100 with a gap analysis, and exports a clean PDF. Optional toggles let you compact to one page, cut the bullets and skills that don't fit the job, or add a tailored summary.
 
 ---
 
@@ -133,7 +133,7 @@ From 1.3.0, no `<all_urls>` and no content scripts: the reader is injected only 
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 22.13+
 - pnpm 10+
 - Chrome
 
@@ -232,7 +232,16 @@ pnpm trial-links 5 --note "reddit launch"          # local stack, prints localho
 pnpm trial-links 5 --note "reddit launch" --prod   # production, asks you to type "prod"
 ```
 
-Each link (`/redeem/<code>`) gives one account a free week of Pro with no card, then drops it back to free unless it upgrades. One gift trial per account. `--days` (default 30) is how long an unused link works. The note is stored in `trial_codes` and sent with PostHog's `trial_redeemed` event. To revoke an unused link, delete its row.
+Each link (`/redeem/<code>`) gives one account a free week of Pro with no card, then drops it back to free unless it upgrades. One gift trial per account. `--days` (default 30) is how long an unused link works. The note is stored in `trial_codes`, so redemptions per batch can be counted there. To revoke an unused link, delete its row.
+
+#### Telling users a site now works
+
+```bash
+pnpm notify-site jobs.example.com          # local stack (needs pnpm functions:serve and a RESEND_API_KEY)
+pnpm notify-site jobs.example.com --prod   # production, asks you to type "prod"
+```
+
+Signed-in users can tick "Email me when it's supported" when they request a site, or later under the thanks line (#195). Once the store build that reads a site is live, run this for each host the board uses (e.g. `boards.greenhouse.io` and `job-boards.greenhouse.io`). Each account waiting on that host gets one email from the `site-watch` function, replying to you, and its request is deleted. A send Resend refused stays for the next run. Requests nobody acts on are deleted after 12 months.
 
 ### Resume quality eval
 
@@ -253,7 +262,7 @@ Live runs go through `claude -p` on your Claude plan, never API credits. For cle
 
 A resume fails when the parse doesn't match its answer key, when an integrity check fails (invented skills or numbers, changed titles or dates, dropped certifications, wrong bullet counts), or when the judge scores faithfulness, field fit, relevance or readability at 2/5 or lower. `--baseline` also fails a case whose judge scores drop by a full point against `eval/baseline.json`. Refresh that file with `--update-baseline` after an intended change.
 
-GitHub Actions runs the free checks on every push (`.github/workflows/prompt-checks.yml`). The live eval (`.github/workflows/output-eval.yml`, needs a `CLAUDE_CODE_OAUTH_TOKEN` repository secret) runs the 11-case quick set on PRs that change prompt or eval code, and only the sides the diff touches: letters, tailoring, answers to application questions, or a mix. A manual run (Actions > Output eval > Run workflow) runs every case and picks the side the same way unless you choose one. The weekly run is paused during development.
+GitHub Actions runs the free checks on every push (`.github/workflows/prompt-checks.yml`). The live eval (`.github/workflows/output-eval.yml`, needs a `CLAUDE_CODE_OAUTH_TOKEN` repository secret) runs the 14-case quick set on PRs that change prompt or eval code, and only the sides the diff touches: letters, tailoring, answers to application questions, or a mix. A manual run (Actions > Output eval > Run workflow) runs every case and picks the side the same way unless you choose one. The weekly run is paused during development.
 
 ### Project structure
 
@@ -524,7 +533,7 @@ Turn on the website's button only once users have an extension build with Google
 
 | Variable | Description |
 |---|---|
-| `SERVICE_KEY` | Supabase service role key |
+| `SERVICE_KEY` | Supabase secret key (in production, the one named `edge_functions`: `pnpm notify-site --prod` sends that one to `site-watch`) |
 | `ANTHROPIC_API_KEY` | Your Anthropic API key |
 | `ENCRYPTION_KEY` | 64-char hex string (32 bytes) for AES-256-GCM |
 | `STRIPE_SECRET_KEY` | Stripe secret key |
@@ -534,8 +543,8 @@ Turn on the website's button only once users have an extension build with Google
 | `EMAIL_TOKEN_SECRET` | Signs unsubscribe links. Never change it: links already sent would stop working |
 | `NUDGE_SECRET` | Shared with the `NUDGE_SECRET` GitHub secret; the daily follow-up workflow calls `nudge` with it |
 | `NUDGE_ENABLED` | `true` to let `nudge` send the follow-up email; anything else sends nothing |
-| `RESEND_API_KEY` | Resend API key, for the follow-up email and the dashboard's support form (`support` answers 503 without it) |
-| `POSTHOG_KEY` | PostHog project token for server-side counts (`tailor_run`, `scrape_failed`, `answer_generated`, `answer_limit_hit`) and the extension's site requests and bug reports. Optional: without it nothing is sent |
+| `RESEND_API_KEY` | Resend API key, for the follow-up email, the dashboard's support form (`support` answers 503 without it) and `site-watch`'s emails |
+| `POSTHOG_KEY` | PostHog project token for server-side counts (`tailor_run`, `resume_upload`, `scrape_failed`, `answer_generated`, `answer_limit_hit`) and the extension's site requests and bug reports. Optional: without it nothing is sent |
 | `POSTHOG_SITE_SURVEY_ID` | ID of a PostHog survey in API mode with three open-text questions: type, site, page URL. `site-request` records the extension's "Request this site" and "Report bug" presses there; without it they're accepted and dropped |
 
 **Web dashboard** (`web/.env.local`):

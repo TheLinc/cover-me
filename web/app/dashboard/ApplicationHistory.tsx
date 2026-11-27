@@ -4,7 +4,6 @@ import { fetchApplications, type ApplicationSummary } from '@/lib/applications'
 import { ApplicationCard } from './applications/ApplicationCard'
 import { TileSkeletons } from './applications/TileSkeletons'
 import { EmptyApplications } from './applications/EmptyApplications'
-import { BoardNotice } from './BoardNotice'
 
 // Recent applications (2e; every account since #101). Streams in behind
 // <Suspense> so the rest of the dashboard doesn't wait on the applications
@@ -14,7 +13,6 @@ export async function RecentApplications({ accessToken, pro }: { accessToken: st
   return page ? <ApplicationHistory applications={page.applications} pro={pro} /> : null
 }
 
-// Holds the section's place while it streams in, so the page below doesn't jump.
 export function RecentApplicationsSkeleton() {
   return (
     <section className="flex flex-col gap-4" aria-label="Loading recent applications">
@@ -24,7 +22,6 @@ export function RecentApplicationsSkeleton() {
   )
 }
 
-// The newest six as tiles; the applications page has the rest, with search.
 export function ApplicationHistory({ applications, pro }: { applications: ApplicationSummary[]; pro: boolean }) {
   return (
     <section className="flex flex-col gap-4" aria-labelledby="recent-applications">
@@ -36,7 +33,6 @@ export function ApplicationHistory({ applications, pro }: { applications: Applic
           </Link>
         )}
       </div>
-      <BoardNotice />
       {applications.length === 0 ? (
         <EmptyApplications pro={pro} />
       ) : (

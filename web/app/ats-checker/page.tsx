@@ -97,6 +97,10 @@ export default function AtsCheckerPage() {
             <Link href="/guides/chatgpt-resume-prompts" className="text-brand-strong underline underline-offset-2">ChatGPT resume prompts</Link>, tested on a real
             posting.
           </p>
+          <p>
+            To see which keywords come up across many postings for your kind of job, read the{' '}
+            <Link href="/resume-keywords" className="text-brand-strong underline underline-offset-2">resume keywords by job</Link>, counted from real postings.
+          </p>
         </div>
       </main>
       <SiteFooter />

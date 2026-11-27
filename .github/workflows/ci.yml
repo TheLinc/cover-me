@@ -1,6 +1,5 @@
-# Pull requests and pushes to master: extension build (includes prompt sync and
-# check-dist, plus the comment check on pull requests), web unit tests and brand check, and the backend suite (pgTAP plus function tests against the
-# mock server) on a local Supabase stack in Docker. The Supabase CLI maps
+# The backend suite (pgTAP plus function tests against the mock server) runs on a
+# local Supabase stack in Docker. The Supabase CLI maps
 # host.docker.internal to the runner, so the functions reach the mock on Linux.
 # The backend suite skips when nothing it reads changed (see the backend job).
 name: CI
@@ -42,6 +41,8 @@ jobs:
           cache-dependency-path: extension/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - run: pnpm rebuild esbuild
+      - run: pnpm typecheck
+      - run: pnpm exec eslint .
       - run: pnpm test
       - run: pnpm build
       # Comments in every file the PR changes (#271). A PR checks out its merge
@@ -68,6 +69,8 @@ jobs:
           cache: pnpm
           cache-dependency-path: web/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm exec eslint .
       - run: pnpm test
       - run: pnpm check
 
@@ -98,6 +101,16 @@ jobs:
               - 'extension/src/content/scrapers/**'
               - 'scripts/sync-scrapers.mjs'
               - '.github/workflows/ci.yml'
+      - if: steps.changes.outputs.backend == 'true'
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
+        with:
+          deno-version: v2.9.8
+      - if: steps.changes.outputs.backend == 'true'
+        working-directory: backend/supabase/functions
+        run: deno lint
+      - if: steps.changes.outputs.backend == 'true'
+        working-directory: backend/supabase/functions
+        run: deno check */index.ts
       # The Supabase ports sit inside Linux's ephemeral range, so an outgoing
       # connection (an image pull) can hold 54324 when mailpit tries to bind it.
       - if: steps.changes.outputs.backend == 'true'
@@ -114,5 +127,7 @@ jobs:
           cache-dependency-path: backend/pnpm-lock.yaml
       - if: steps.changes.outputs.backend == 'true'
         run: pnpm install --frozen-lockfile
+      - if: steps.changes.outputs.backend == 'true'
+        run: pnpm typecheck
       - if: steps.changes.outputs.backend == 'true'
         run: pnpm test

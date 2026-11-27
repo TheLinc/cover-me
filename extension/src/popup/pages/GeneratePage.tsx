@@ -12,6 +12,7 @@ import GapChips from '../components/GapChips'
 import { ChevronIcon, EditIcon, RegenerateIcon } from '../components/icons'
 import PageReadNotice from '../components/PageReadNotice'
 import AnswersNews from '../components/AnswersNews'
+import UpdateReady from '../components/UpdateReady'
 import PostingTitleTip from '../components/PostingTitleTip'
 import ProgressSteps from '../components/ProgressSteps'
 import ReviewAsk from '../components/ReviewAsk'
@@ -124,13 +125,13 @@ function TailorOptions({ inputMode, manualReady, onTailor, compact, setCompact, 
         <div className="toggle-row">
           <label className="compact-toggle">
             <input type="checkbox" checked={trim} onChange={e => setTrim(e.target.checked)} />
-            Remove irrelevant bullets
+            Cut what doesn't fit this job
           </label>
           <button
             type="button"
             className="tooltip-icon"
-            aria-label="Best for long master resumes with all your experience — the AI selects only the bullets most relevant to the role being applied for."
-            data-tooltip="Best for long master resumes with all your experience — the AI selects only the bullets most relevant to the role being applied for."
+            aria-label="Best for long master resumes with all your experience — the AI keeps only the bullets and skills most relevant to this role."
+            data-tooltip="Best for long master resumes with all your experience — the AI keeps only the bullets and skills most relevant to this role."
           >?</button>
         </div>
         {(!yours || design?.summary) && <div className="toggle-row">
@@ -755,6 +756,7 @@ export default function GeneratePage({ onNavigate }: Props) {
             {status}
           </span>
         )}
+        <UpdateReady />
       </header>
 
       <PageReadNotice />

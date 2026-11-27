@@ -68,13 +68,13 @@ const HOOKS = ['Achievement-first', 'Bold specific claim']
 const judgeFloor = (r: { failures: string[]; warnings: string[] }) => (flag('baseline') ? r.warnings : r.failures)
 
 // One case per field family, plus the injection, long-posting and trim cases (#251) and the
-// non-tech headline, grouped skills and entries case (#190).
+// non-tech headline, grouped skills and entries case (#190), and a default-mode list over 18 skills (#400).
 const QUICK_CASES = [
   'tech-prompt-injection', 'new-grad-data-analyst', 'nurse-missing-certs',
   'sales-ae-midmarket-to-enterprise', 'uk-finance-assistant', 'teacher-to-instructional-designer',
   'welder-structural-to-pipe', 'line-cook-to-sous-chef', 'veteran-to-distribution-ops',
   'long-new-grad-data-analyst', 'long-nurse-missing-certs', 'new-grad-trim-long-project',
-  'nurse-headline-grouped-skills',
+  'nurse-headline-grouped-skills', 'vp-operations-to-coo',
 ]
 
 const cases = CASES.filter((c) =>

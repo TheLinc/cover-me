@@ -15,11 +15,13 @@ Site features under the names a visitor would use, with the route and how to rea
 ## Tools
 
 - Free ATS resume checker: `/ats-checker`. Nav, footer, and links from the guides. No account needed; the page is `components/site/AtsChecker.tsx`.
+- Resume keywords by job: `/resume-keywords`, and a page per role at `/resume-keywords/<role>` (such as `/resume-keywords/sales`). Footer, Guides column. Copy per role in `lib/roles.ts`; the counts come from `lib/role-keywords.json`, written by hand-run `scripts/role-keywords.mjs`.
 
 ## Home
 
 - Homepage: `/`. The hero's install button, the "How it works" story with its bottom dock, Pricing (`#pricing`) and the closing section (`#get-started`).
 - Hero line: the small line under the hero's install button, with the free plan's limits (`components/landing/Hero.tsx`).
+- Questions: the homepage FAQ above the closing section, each answer folded open on click (`components/landing/Faq.tsx`, questions and answers in `content.ts`).
 - Privacy panel: the dark "Your resume stays yours" band above Pricing, with its own key / account switch and the "For developers" note (`components/landing/PrivacyBand.tsx`, facts in `privacy-modes.ts`).
 - Job board pages: `/for/<board>` (such as `/for/linkedin`). Linked from the guides and from search. One page per board in `lib/boards.ts`.
 
@@ -38,7 +40,7 @@ Site features under the names a visitor would use, with the route and how to rea
 
 ## Account
 
-- Dashboard: `/dashboard`. After sign-in, or Nav, Dashboard. The Plan tile shows a gift trial's end or a paid plan's first payment (`lib/stripe-plan.ts`).
+- Dashboard: `/dashboard`. After sign-in, or Nav, Dashboard. The Plan tile shows a gift trial's end or a paid plan's first payment (`lib/stripe-plan.ts`). A notice from `lib/notices.ts` shows under the greeting until it's closed on this device or until 00:00 UTC on its `until` date. A new ID shows again to people who closed an older one. With several open, the last entry wins.
 - Settings: `/dashboard/settings`. Account menu, Settings. The Plan section shows Pro with a Trial, Active or Ending pill, the next date (trial end, first payment, renewal or end) from Stripe, and Manage billing (opens the Stripe portal).
 
 ## Pages reached from outside links

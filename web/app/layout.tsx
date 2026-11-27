@@ -66,6 +66,7 @@ const jsonLdOrg = {
     'https://www.libhunt.com/r/cover-me',
     'https://www.saashub.com/cover-me-dev',
     'https://www.rankmyai.com/tools/7d6bc99e-7a27-420c-bc04-03329ea46349/cover-me',
+    'https://peerlist.io/plainstackops/project/cover-me',
   ],
   founder: {
     '@type': 'Person',

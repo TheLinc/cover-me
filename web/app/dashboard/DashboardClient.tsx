@@ -17,6 +17,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { SiteNav } from '@/components/site/SiteNav'
 import { APP_LINKS } from '@/components/site/app-links'
 import { AccountMenu } from '@/components/site/AccountMenu'
+import { DashboardNotice } from './DashboardNotice'
 
 const TILE = "flex flex-col rounded-[20px] border border-line bg-surface px-6 py-5 shadow-[0_1px_2px_rgba(30,27,75,0.05),0_10px_28px_-16px_rgba(30,27,75,0.22)]";
 
@@ -86,6 +87,8 @@ export default function DashboardClient({
         <div className="mx-auto flex max-w-[1040px] flex-col gap-8">
 
           <h1 className="text-[34px] font-semibold leading-tight tracking-[-0.03em] text-ink">{greeting}</h1>
+
+          <DashboardNotice />
 
           <section aria-label="Plan and usage" className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className={cn(TILE, "gap-2.5")}>

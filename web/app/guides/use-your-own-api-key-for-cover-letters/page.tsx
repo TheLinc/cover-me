@@ -71,7 +71,7 @@ const faqJsonLd = {
 
 const STEPS: { title: string; body: string }[] = [
   { title: 'Get an API key', body: 'Create a key in the Anthropic Console or on the OpenAI Platform, and add billing there. Setting a monthly spending limit is a good idea.' },
-  { title: 'Add it in Cover Me', body: 'Install the extension, open Settings and click "I have an API key". Choose Claude or OpenAI under AI Provider, paste the key and click Save Settings.' },
+  { title: 'Add it in Cover Me', body: 'Install the extension, open Settings and click "I have an API key". If you\'re signed in to a Cover Me account, sign out first to see it. Choose Claude or OpenAI under AI Provider, paste the key and click Save Settings.' },
   { title: 'Upload your resume once', body: 'Upload a PDF, DOCX or TXT file. The text is pulled out on your device and kept in the browser.' },
   { title: 'Generate on any posting', body: 'Open a job posting and click Tailor Resume to Job or Generate Cover Letter. The request goes from your browser straight to your provider.' },
 ]
@@ -176,7 +176,7 @@ export default function Page() {
           body: (
             <>
               <p>
-                With a Claude key, Cover Me writes letters, tailors resumes and runs its accuracy checks with Claude Sonnet 5.5, and reads your resume&rsquo;s structure with Claude Haiku 4.5. With an OpenAI key, it uses GPT-6.1 Sol for letters, tailoring and checks, and GPT-6 Luna to read your resume. OpenAI requests are sent with storage turned off, so OpenAI doesn&rsquo;t save them to your account&rsquo;s logs. OpenAI may still keep API data for abuse monitoring under its terms.
+                With a Claude key, Cover Me writes letters, tailors resumes and runs its accuracy checks with Claude Sonnet 5.5, and reads your resume&rsquo;s structure with Claude Haiku 5.5. With an OpenAI key, it uses GPT-6.1 Sol for letters, tailoring and checks, and GPT-6 Luna to read your resume. OpenAI requests are sent with storage turned off, so OpenAI doesn&rsquo;t save them to your account&rsquo;s logs. OpenAI may still keep API data for abuse monitoring under its terms.
               </p>
               <p>
                 Measured in October 2026, a cover letter takes about 20 seconds, and a letter plus a tailored resume about 30 seconds.

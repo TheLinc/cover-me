@@ -4,7 +4,9 @@ import { PLAN_LIMITS as L } from '@/lib/limits'
 export const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
 
 // Must match the Chrome Web Store listing; update when reviews change. (#269)
-const STORE_RATING = { value: 5, count: 3 }
+export const STORE_RATING = { value: 5, count: 5 }
+
+export const AUTHOR = { '@type': 'Person', name: 'Lincoln Laylor', url: 'https://www.linkedin.com/in/lincolnlaylor/' }
 
 export const OG_IMAGE = { url: `${BASE}/opengraph-image`, width: 1200, height: 630, alt: 'Cover Me: tailor your resume to any job posting' }
 
@@ -22,11 +24,7 @@ export const jsonLdApp = (version: string | null) => ({
   installUrl: CHROME_STORE_URL,
   downloadUrl: CHROME_STORE_URL,
   screenshot: `${BASE}/opengraph-image`,
-  author: {
-    '@type': 'Person',
-    name: 'Lincoln Laylor',
-    url: 'https://www.linkedin.com/in/lincolnlaylor/',
-  },
+  author: AUTHOR,
   aggregateRating: {
     '@type': 'AggregateRating',
     ratingValue: STORE_RATING.value,

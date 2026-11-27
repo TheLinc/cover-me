@@ -3,6 +3,9 @@
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 import { urlCore } from './ai/resume-parse'
 
+// Raised when parseResume reads files better: 2 keeps a PDF's line breaks (#339).
+export const READER_VERSION = 2
+
 export async function parseResume(file: File): Promise<string> {
   const name = file.name.toLowerCase()
 
@@ -80,7 +83,8 @@ function withLinkUrls(items: object[], annotations: Array<{ rect?: number[]; url
   }
   for (const { url, covered } of links) {
     const link = covered.length ? urlToAppend(url, covered.map((i) => strs[i]).join(' ')) : null
-    if (link) strs[Math.max(...covered)] += ` (${link})`
+    // The URL has no glyphs to measure the next run's gap from (#339).
+    if (link) strs[Math.max(...covered)] += ` (${link}) `
   }
   return strs
 }

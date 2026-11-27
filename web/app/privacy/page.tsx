@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   },
 }
 
-const EFFECTIVE_DATE = 'November 24, 2026'
+const EFFECTIVE_DATE = 'November 26, 2026'
 const CONTACT_EMAIL  = 'support@cover-me.dev'
 
 
@@ -268,6 +268,15 @@ export default function PrivacyPage() {
                 generation request: to our server in Hosted mode, or to your AI provider with your own
                 key.
               </Li>
+              <Li>
+                <strong className="text-foreground">Requests to hear back about a site (Hosted mode, signed in, only if you tick the box).</strong>{' '}
+                Above the Request this site button, a signed-in Hosted user sees an unticked box, Email me when
+                it&apos;s supported, which shows their account email when you point at &ldquo;me&rdquo;. Nothing is saved unless
+                you tick it and press the button. Then the site&apos;s name is saved with your Cover Me account ID on
+                our server, never in PostHog: the site request itself is sent separately and stays under its random
+                ID. To take it back, email us and we delete the record. When Cover Me starts reading that
+                site, we send you one email at your account address and delete the record.
+              </Li>
             </Ul>
 
             <H3>Information collected automatically</H3>
@@ -447,6 +456,7 @@ export default function PrivacyPage() {
               <Li>To process subscription billing through Stripe (Pro mode only).</Li>
               <Li>To respond to support requests you initiate by contacting us directly.</Li>
               <Li>To email you about new features, only if you&apos;ve agreed to it (Hosted mode). You can stop them at any time.</Li>
+              <Li>To email you once when Cover Me starts reading a job site you asked to hear about, only if you ticked the box (Hosted mode).</Li>
               <Li>To send one getting-started email a day after you sign up, if you haven&apos;t generated anything yet and haven&apos;t removed the extension while signed in (Hosted mode). You can unsubscribe from it.</Li>
               <Li>To count, in aggregate, how many accounts sign up and use the service.</Li>
               <Li>To see which features people use, so we know what to improve (Hosted mode, unless you opt out).</Li>
@@ -649,7 +659,7 @@ export default function PrivacyPage() {
               communicates with our Supabase backend for the following user-initiated purposes:
               <ul className="mt-2 space-y-1 pl-4 list-disc">
                 <li>Reading the job posting (every mode): sending the stripped copy of the page you click Generate or Tailor Resume on, and getting back the job title, company and description. The page is not stored.</li>
-                <li>Site requests and bug reports (every mode, only when you press the button): sending what Request this site or Report bug sends, as described under Information We Collect.</li>
+                <li>Site requests and bug reports (every mode, only when you press the button): sending what Request this site or Report bug sends, as described under Information We Collect. When you&apos;re signed in to Hosted mode, also saving your request to hear back about the site when you tick the box, and deleting it when you ask us to.</li>
                 <li>Authentication: signing in, signing up, signing out, and refreshing JWT session tokens.</li>
                 <li>Account tier: fetching your plan, so Pro features turn on or off when it changes.</li>
                 <li>Upgrade: getting a Stripe checkout page when you click an Upgrade button.</li>
@@ -702,7 +712,7 @@ export default function PrivacyPage() {
                   name: 'Supabase',
                   url: 'https://supabase.com/privacy',
                   when: 'Every mode (reading job postings, from version 1.3.0, and site requests and bug reports when you press the button), the website ATS checker when you run a check; everything else Hosted mode only',
-                  receives: 'Copies of the job pages you ask us to read, which are processed and not stored, site requests and bug reports, passed on to PostHog and not stored, the posting and resume you check on the website ATS checker, passed on to Anthropic and not stored, and rate-limit counters keyed by a hash of your IP address. In Hosted mode also: the job details, any facts you add, the application question when you ask for an answer (not stored) and, when you regenerate, the previous tailored resume, sent with each generation request (not stored, except Pro history); messages from the dashboard\'s support form, passed on to Resend and not stored; email address, hashed password (email sign-in only), encrypted resume text, encrypted cover letters and tailored resumes with the unencrypted fields that go with them (Pro), your encrypted Word file and which tailored resumes were made from it (Pro), your resume\'s file name, your Stripe customer ID, your Google name, picture link and account ID, session tokens, generation and answer counts, whether and when you opted out of usage counts, when you removed the extension (if you were signed in), and the account-keyed counter used when a new resume is read or a support message is sent (see Information We Collect for each). Supabase Auth also records the IP address and browser of each signed-in session, kept with your account. Supabase hosts our backend functions, authentication system and database, and keeps standard request logs (IP address, browser, time, and the address requested, which can include a dashboard search) for a short period.',
+                  receives: 'Copies of the job pages you ask us to read, which are processed and not stored, site requests and bug reports, passed on to PostHog and not stored, the posting and resume you check on the website ATS checker, passed on to Anthropic and not stored, and rate-limit counters keyed by a hash of your IP address. In Hosted mode also: the job details, any facts you add, the application question when you ask for an answer (not stored) and, when you regenerate, the previous tailored resume, sent with each generation request (not stored, except Pro history); messages from the dashboard\'s support form, passed on to Resend and not stored; email address, hashed password (email sign-in only), encrypted resume text, encrypted cover letters and tailored resumes with the unencrypted fields that go with them (Pro), your encrypted Word file and which tailored resumes were made from it (Pro), your resume\'s file name, your Stripe customer ID, your Google name, picture link and account ID, session tokens, generation and answer counts, whether and when you opted out of usage counts, when you removed the extension (if you were signed in), the sites you asked to hear back about with your account ID, and the account-keyed counter used when a new resume is read or a support message is sent (see Information We Collect for each). Supabase Auth also records the IP address and browser of each signed-in session, kept with your account. Supabase hosts our backend functions, authentication system and database, and keeps standard request logs (IP address, browser, time, and the address requested, which can include a dashboard search) for a short period.',
                 },
                 {
                   name: 'Cloudflare Turnstile',
@@ -726,7 +736,7 @@ export default function PrivacyPage() {
                   name: 'Resend',
                   url: 'https://resend.com/legal/privacy-policy',
                   when: 'Hosted mode, when we email you or you message support',
-                  receives: 'Your email address and the email itself: account emails (confirming your address, resetting your password, changing your email), the one getting-started email after signup, and product updates if you agreed to them; and messages you send from the dashboard\'s support form. Resend delivers them for us and keeps a delivery log.',
+                  receives: 'Your email address and the email itself: account emails (confirming your address, resetting your password, changing your email), the one getting-started email after signup, the one email saying Cover Me now reads a site you asked to hear back about, and product updates if you agreed to them; and messages you send from the dashboard\'s support form. Resend delivers them for us and keeps a delivery log.',
                 },
                 {
                   name: 'Vercel',
@@ -782,6 +792,7 @@ export default function PrivacyPage() {
               <Li><strong className="text-foreground">Generation count records:</strong> Kept for as long as your account exists, because the free allowance counts generations over the life of the account. They are deleted with your account.</Li>
               <Li><strong className="text-foreground">PostHog:</strong> PostHog keeps everything we send it, including usage counts and uninstall survey answers, for up to two years. Deleting your account doesn&apos;t remove them sooner.</Li>
               <Li><strong className="text-foreground">Sentry:</strong> Sentry keeps error reports from the website and our server for up to 90 days. Deleting your account doesn&apos;t remove them sooner.</Li>
+              <Li><strong className="text-foreground">Requests to hear back about a site:</strong> Deleted when we send the email, when you ask us to delete it, or after 12 months, whichever comes first. Deleting your account deletes them too.</Li>
               <Li><strong className="text-foreground">Rate-limit counters:</strong> A counter not updated for two days is deleted at the next cleanup, which runs during later requests.</Li>
               <Li><strong className="text-foreground">Stripe billing records:</strong> Deleting your account also deletes your Stripe customer record, which holds your email and saved card. Stripe retains transaction records as required by financial regulations, and we cannot delete those.</Li>
             </Ul>

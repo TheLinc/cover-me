@@ -124,14 +124,11 @@ describe('answer', () => {
     await (await callFunction('answer', { token: user.token, body: body() })).json()
 
     // Sent after the response (EdgeRuntime.waitUntil), so wait for both (#235).
-    const mine = async () => (await mockPosthog.events()).filter((e) => e.distinct_id === user!.id)
-    let events = await mine()
-    for (let i = 0; i < 30 && events.length < 2; i++) events = await new Promise((r) => setTimeout(r, 100)).then(mine)
-    const generated = events.find((e) => e.event === 'answer_generated')
+    const [generated] = await mockPosthog.eventsFor('answer_generated', user.id)
     expect(generated?.properties).toMatchObject({ tier: 'hosted_free', hasCharLimit: true, jobSource: 'saved', revised: false })
-    const hit = events.find((e) => e.event === 'answer_limit_hit')
+    const [hit] = await mockPosthog.eventsFor('answer_limit_hit', user.id)
     expect(hit?.properties).toMatchObject({ tier: 'hosted_free', kind: 'weekly' })
-    expect(JSON.stringify(events)).not.toContain(QUESTION)
+    expect(JSON.stringify([generated, hit])).not.toContain(QUESTION)
   })
 
   // The applicant asks for a change to the answer in the box (#232).
@@ -148,9 +145,7 @@ describe('answer', () => {
     expect(question.text).toContain(revision.previous)
     expect(question.text).toContain(revision.request)
 
-    const mine = async () => (await mockPosthog.events()).filter((e) => e.distinct_id === user!.id && e.event === 'answer_generated')
-    let events = await mine()
-    for (let i = 0; i < 30 && events.length < 1; i++) events = await new Promise((r) => setTimeout(r, 100)).then(mine)
+    const events = await mockPosthog.eventsFor('answer_generated', user.id)
     expect(events[0]?.properties).toMatchObject({ revised: true })
     expect(JSON.stringify(events)).not.toContain(revision.request)
   })

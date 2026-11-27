@@ -22,6 +22,7 @@ const COLUMNS: { title: string; links: FooterLink[] }[] = [
       { label: 'What is an ATS score?', href: '/guides/what-is-an-ats-score' },
       { label: 'ChatGPT resume prompts', href: '/guides/chatgpt-resume-prompts' },
       { label: 'Tailor your resume', href: '/guides/tailor-resume-to-job-description' },
+      { label: 'Resume keywords by job', href: '/resume-keywords' },
       { label: 'All guides', href: '/guides' },
     ],
   },

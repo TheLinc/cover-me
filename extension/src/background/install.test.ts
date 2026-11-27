@@ -135,6 +135,19 @@ describe('the Word file a stale plan skipped', () => {
   })
 })
 
+describe('the Update button', () => {
+  test('an update clears the version it was waiting for', async () => {
+    const chrome = fakeChrome()
+    await handleInstalled({ reason: 'update', previousVersion: '1.4.0' })
+    expect(chrome.storage.local.remove).toHaveBeenCalledWith('pendingUpdate')
+  })
+  test('a Chrome update keeps it', async () => {
+    const chrome = fakeChrome()
+    await handleInstalled({ reason: 'chrome_update', previousVersion: '1.4.0' })
+    expect(chrome.storage.local.remove).not.toHaveBeenCalledWith('pendingUpdate')
+  })
+})
+
 describe('uninstallUrl', () => {
   test('signed out, it carries only the version', () => {
     expect(uninstallUrl('1.4.0')).toBe(`${WEB_URL}/uninstalled?v=1.4.0`)

@@ -58,7 +58,7 @@ interface CallOptions {
   query?: Record<string, string>
   headers?: Record<string, string>
   // Sent as-is (e.g. a gzipped body); set Content-Type in headers (#3).
-  rawBody?: Uint8Array
+  rawBody?: Uint8Array<ArrayBuffer>
   signal?: AbortSignal
   redirect?: RequestRedirect
 }
@@ -221,9 +221,22 @@ export const mockResend = {
   dropNext: () => fetch(`${MOCK_URL}/__mock/email-drop-next`, { method: 'POST' }),
 }
 
+type PosthogEvent = { api_key: string; event: string; distinct_id: string; properties: Record<string, unknown> }
+
+type Done = (events: PosthogEvent[]) => boolean
+
+// Counts are sent after the response (#169). Not exported, so a test can't read
+// another test's events by filtering the raw list by hand (#383).
+async function waitForEvents(match: (e: PosthogEvent) => boolean, done: Done = (e) => e.length > 0): Promise<PosthogEvent[]> {
+  const mine = async () => ((await (await fetch(`${MOCK_URL}/__mock/posthog`)).json()) as PosthogEvent[]).filter(match)
+  let events = await mine()
+  for (let i = 0; i < 20 && !done(events); i++) events = await new Promise((r) => setTimeout(r, 100)).then(mine)
+  return events
+}
+
 export const mockPosthog = {
-  events: async (): Promise<Array<{ api_key: string; event: string; distinct_id: string; properties: Record<string, unknown> }>> =>
-    (await fetch(`${MOCK_URL}/__mock/posthog`)).json(),
+  eventsFor: (event: string, userId: string, done?: Done) => waitForEvents((e) => e.event === event && e.distinct_id === userId, done),
+  eventsNamed: (event: string, done?: Done) => waitForEvents((e) => e.event === event, done),
 }
 
 export const JOB = {

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { ParsedResume } from '../../types'
 import { orderedSections } from '../pdf/sections'
-import { hasSectionOrder, isCurrentParse, parseParsedJson, parseResumeStructure, upgradedParse, urlCore, withChosenOrder, withLinks, withSectionOrder } from './resume-parse'
+import { buildParsePrompt, hasSectionOrder, isCurrentParse, parseParsedJson, parseResumeStructure, upgradedParse, urlCore, withChosenOrder, withLinks, withSectionOrder } from './resume-parse'
 import { checkParse, checkParseUrls, resumeUrls } from '../../../eval/checks'
 import type { EvalCase } from '../../../eval/fixtures'
 
@@ -47,6 +47,14 @@ describe('parseResumeStructure streams', () => {
   test("OpenAI: a mid-stream error surfaces OpenAI's message", async () => {
     vi.stubGlobal('fetch', vi.fn(async () => sse([{ choices: [{ delta: { content: '{' } }] }, { error: { message: 'Server overloaded' } }])))
     await expect(parseResumeStructure('r', 'openai', 'k')).rejects.toThrow('Server overloaded')
+  })
+})
+
+describe('buildParsePrompt', () => {
+  test("shows no date format to copy, so dates keep the resume's own (#348)", () => {
+    const dates = [...buildParsePrompt('').matchAll(/"dates": "([^"]*)"/g)].map((m) => m[1])
+    expect(dates.length).toBeGreaterThan(0)
+    for (const d of dates) expect(d).not.toMatch(/\d|month|year|\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i)
   })
 })
 

@@ -51,6 +51,7 @@ html, body { width: auto; height: 100%; overflow: hidden; }
 .ed-item + .ed-item { margin-top: 22px; padding-top: 22px; border-top: 1px dashed var(--border); }
 .ed-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; }
 .ed-field { display: block; }
+.ed-grid + .ed-field { margin-top: 10px; }
 .ed-section > .ed-field + .tip { margin-top: 8px; }
 .ed-section > .ed-field + .ed-lines { margin-top: 12px; }
 

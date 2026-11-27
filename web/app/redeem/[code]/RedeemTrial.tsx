@@ -2,11 +2,9 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import posthog from 'posthog-js'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { LocalDate } from '@/app/dashboard/LocalDate'
-import { TRIAL_REDEEMED, whenPosthogLoaded } from '@/lib/analytics'
 import { redeemTrial } from '@/lib/billing'
 import { storeUrl } from '@/lib/utils'
 import { confettiFrom } from './confetti'
@@ -23,8 +21,6 @@ export function RedeemTrial({ code, email }: { code: string; email: string }) {
     try {
       const data = await redeemTrial(code)
       if (data.trialEnd) {
-        const note = data.note ?? null
-        whenPosthogLoaded(posthog, () => { posthog.capture(TRIAL_REDEEMED, { note }) })
         confettiFrom(left + width / 2, top + height / 2)
         setState({ status: 'done', trialEnd: data.trialEnd })
       } else {

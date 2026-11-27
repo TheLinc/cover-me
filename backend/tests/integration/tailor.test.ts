@@ -363,15 +363,31 @@ describe('tailor', () => {
     const { data } = await admin.from('tailored_resumes').select('source_hash').eq('user_id', user.id)
     expect(data?.[0].source_hash).toBe(sourceHash)
 
-    // Sent behind the response (#131).
-    let events = await mockPosthog.events()
-    for (let i = 0; i < 20 && events.length === 0; i++) events = await new Promise((r) => setTimeout(r, 100)).then(mockPosthog.events)
-    expect(events).toEqual([{
+    expect(await mockPosthog.eventsFor('tailor_run', user.id)).toEqual([{
       api_key: 'phc_mock',
       event: 'tailor_run',
       distinct_id: user.id,
-      properties: { tier: 'hosted_pro', compact: false, trim: true, includeSummary: true, layout: 'yours', fellBack: false, $process_person_profile: false, $geoip_disable: true },
+      properties: {
+        tier: 'hosted_pro', compact: false, trim: true, includeSummary: true, layout: 'yours', fellBack: false,
+        regenerate: false, hasContext: false, $process_person_profile: false, $geoip_disable: true,
+      },
     }])
+  })
+
+  it('counts a regenerate with added context as flags, never the context or the previous resume', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    const first = await (await callFunction('tailor', { token: user.token, body: { job: JOB } })).json()
+    const context = 'Led the Kafka migration at Initech'
+
+    const res = await callFunction('tailor', { token: user.token, body: { job: JOB, supplemental: context, previous: first.resume } })
+    expect(res.status).toBe(200)
+    // Both runs' counts arrive after their responses, in either order (#168).
+    const events = await mockPosthog.eventsFor('tailor_run', user.id, (e) => e.some((x) => x.properties.regenerate === true))
+    const regenerate = events.find((e) => e.properties.regenerate === true)
+    expect(regenerate?.properties).toMatchObject({ regenerate: true, hasContext: true, tier: 'hosted_free' })
+    expect(JSON.stringify(events)).not.toContain('Kafka')
+    expect(JSON.stringify(events)).not.toContain('Initech')
   })
 
   it('an account that opted out of usage counts sends nothing to PostHog', async () => {
@@ -381,10 +397,7 @@ describe('tailor', () => {
 
     const res = await callFunction('tailor', { token: user.token, body: { job: JOB } })
     expect(res.status).toBe(200)
-    // The count would be sent behind the response: give it the same 2 s the
-    // counted test waits (#169).
-    await new Promise((r) => setTimeout(r, 2000))
-    expect((await mockPosthog.events()).filter((e) => e.event === 'tailor_run' && e.distinct_id === user!.id)).toEqual([])
+    expect(await mockPosthog.eventsFor('tailor_run', user.id)).toEqual([])
   })
 
   it('a run that fell back to the Cover Me layout keeps no hash', async () => {
@@ -675,6 +688,13 @@ describe('long master resumes', () => {
   it('with trim off, every bullet stays: a long resume is never cut on its own', async () => {
     const resume = await tailor({ trim: false })
     expect(resume.experience.map((e: { bullets: string[] }) => e.bullets.length)).toEqual([15, 15, 15])
+  })
+
+  // The model left out Docker and Jira; default mode puts them back, trim doesn't (#400).
+  it('with trim off, every skill stays; with trim on, the model may cut them', async () => {
+    await cacheParsedResume(user!.id, { ...long, skills: 'TypeScript, Postgres, React, Docker, Jira' })
+    expect((await tailor({ trim: false })).skills).toBe('TypeScript, Postgres, React, Docker, Jira')
+    expect((await tailor({ trim: true })).skills).toBe('TypeScript, Postgres, React')
   })
 
   it('trim cuts to the budget and brings a dropped measured result back first', async () => {

@@ -7,8 +7,9 @@
     "build": "next build --turbopack",
     "start": "next start",
     "test": "vitest run",
-    "lint": "node ../scripts/check-comments.mjs",
-    "check": "node ../scripts/sync-pdf.mjs --check && node scripts/check-brand.mjs"
+    "lint": "eslint . && node ../scripts/check-comments.mjs",
+    "check": "node ../scripts/sync-pdf.mjs --check && node scripts/check-brand.mjs",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -59,7 +60,9 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "eslint": "10.14.0",
     "typescript": "^5",
+    "typescript-eslint": "8.72.0",
     "vitest": "5.0.1"
   }
 }
