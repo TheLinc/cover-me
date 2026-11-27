@@ -30,6 +30,7 @@ export const metadata: Metadata = {
 const SRC = {
   jobscanPlan: 'https://app.jobscan.co/plan',
   jobscanPremium: 'https://www.jobscan.co/video-jobscan-premium',
+  jobscanRescan: 'https://jobscansupport.frontkb.com/en/articles/11538561',
   skillsyncer: 'https://skillsyncer.com/pricing',
   teal: 'https://www.tealhq.com/pricing',
   resumeWordedUpload: 'https://resumeworded.com/upload-resume',
@@ -48,15 +49,15 @@ const SRC = {
 
 const TOOLS = [
   { name: 'Jobscan', limit: '5 resume scans a month', account: 'Yes', posting: 'Yes', result: 'Match rate, searchability tips and a short skills list', sources: [{ label: 'Plans', href: SRC.jobscanPlan }, { label: 'Premium', href: SRC.jobscanPremium }] },
-  { name: 'SkillSyncer', limit: '2 job match scans and 10 AI credits a week', account: 'Yes, no card', posting: 'Yes', result: 'Match score, missing keywords and formatting issues', sources: [{ label: 'Pricing', href: SRC.skillsyncer }] },
+  { name: 'SkillSyncer', limit: '2 job match scans and 10 AI credits a week', account: 'Yes, no card', posting: 'Yes', result: 'Match score, missing keywords, job title and degree match', sources: [{ label: 'Pricing', href: SRC.skillsyncer }] },
   { name: 'Teal', limit: 'Top 5 keywords for each job', account: 'Yes', posting: 'Yes', result: 'Basic resume analysis and the top 5 keywords', sources: [{ label: 'Pricing', href: SRC.teal }] },
   { name: 'Resume Worded', limit: 'Your score and top issues; part of the Targeted Resume report', account: 'Yes', posting: 'Yes, in Targeted Resume', result: 'Score, top issues and some missing keywords', sources: [{ label: 'Upload', href: SRC.resumeWordedUpload }, { label: 'Pro', href: SRC.resumeWordedPro }] },
-  { name: 'Enhancv', limit: '27 checks, PDF or DOCX up to 2 MB', account: 'Not stated', posting: 'Optional', result: 'Score and task list; with a job, the skills and keywords you have and miss', sources: [{ label: 'Checker', href: SRC.enhancv }] },
-  { name: 'Resume.io', limit: '16 checks', account: 'Email only', posting: 'Optional', result: 'Score and fixes; with a job, a separate match score', sources: [{ label: 'Checker', href: SRC.resumeIo }] },
-  { name: 'Rezi', limit: 'Up to 23 checks', account: 'Yes', posting: 'Optional', result: 'Score out of 100 and a list of issues', sources: [{ label: 'Checker', href: SRC.rezi }, { label: 'Pricing', href: SRC.reziPricing }] },
+  { name: 'Enhancv', limit: 'Not stated', account: 'Not stated', posting: 'Optional', result: 'Score from 27 checks and a task list; with a job, the skills and keywords you have and miss', sources: [{ label: 'Checker', href: SRC.enhancv }] },
+  { name: 'Resume.io', limit: 'Not stated', account: 'Email, which signs you up', posting: 'Optional', result: 'Score from 16 checks and fixes; with a job, a separate match score', sources: [{ label: 'Checker', href: SRC.resumeIo }] },
+  { name: 'Rezi', limit: '1 resume', account: 'Yes', posting: 'Optional', result: 'Score out of 100 from up to 23 checks, and a list of issues', sources: [{ label: 'Checker', href: SRC.rezi }, { label: 'Pricing', href: SRC.reziPricing }] },
   { name: 'ResyMatch', limit: '7 free credits a month', account: 'Yes, verified email', posting: 'Required', result: 'Score for ATS practices, keywords and results shown', sources: [{ label: 'Scanner', href: SRC.resyMatch }] },
   { name: 'Jobalytics', limit: 'Free Chrome extension; limits not stated', account: 'Not stated', posting: 'Yes, on the job board page', result: 'Match rate and keywords to add', sources: [{ label: 'Home', href: SRC.jobalytics }] },
-  { name: 'Cover Me', limit: '25 checks a day', account: 'No', posting: 'Required', result: 'Score out of 100, every missing keyword, unmet requirements', sources: [{ label: 'Checker', href: '/ats-checker' }, { label: 'Limit', href: SRC.coverMeLimit }] },
+  { name: 'Cover Me', limit: '25 scans a day', account: 'No', posting: 'Required', result: 'Score out of 100, missing keywords, unmet requirements', sources: [{ label: 'Checker', href: '/ats-checker' }, { label: 'Limit', href: SRC.coverMeLimit }] },
   { name: 'Resume Matcher', limit: 'Free and open source; you run it yourself', account: 'No', posting: 'Yes', result: 'Match score, a tailored rewrite and a cover letter', sources: [{ label: 'GitHub', href: SRC.resumeMatcher }] },
 ]
 
@@ -69,7 +70,7 @@ const faqJsonLd = {
       name: 'What is the best free ATS resume checker?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: "It depends on what you need from the free plan. To check a resume against one posting with no account, Cover Me's free checker runs 25 checks a day and lists every missing keyword. With a free account, SkillSyncer gives 2 job match scans a week, ResyMatch 7 credits a month and Jobscan 5 scans a month. For a check without a job description, Enhancv runs 27 checks and Rezi up to 23. Limits are from each tool's own pages on November 27, 2026.",
+        text: "It depends on whether you'll make an account. With a free account, SkillSyncer gives 2 job match scans a week, ResyMatch 7 credits a month and Jobscan 5 scans a month, and Teal shows the top 5 keywords for each job. Without one, Cover Me's free checker scores a resume against a posting up to 25 times a day. Enhancv and Rezi also score a resume with no job description, and neither states a limit. Limits are from each tool's own pages on November 27, 2026.",
       },
     },
     {
@@ -77,7 +78,7 @@ const faqJsonLd = {
       name: 'Can I check my resume for ATS without signing up?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: "Yes. Cover Me's free ATS checker at cover-me.dev/ats-checker needs no account or email. Resume.io's checker needs an email address but no account. Jobscan, SkillSyncer, Teal, Resume Worded, Rezi and ResyMatch need a free account. Enhancv's checker page doesn't say whether it asks you to sign up.",
+        text: "Yes. Cover Me's free ATS checker at cover-me.dev/ats-checker needs no account or email. Resume.io's checker asks for your email to show results and uses it to sign you up. Jobscan, SkillSyncer, Teal, Resume Worded, Rezi and ResyMatch need a free account. Enhancv's checker page doesn't say whether it asks you to sign up.",
       },
     },
     {
@@ -85,7 +86,7 @@ const faqJsonLd = {
       name: 'Which free ATS checkers read a PDF resume?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: "Most of them. Enhancv, Resume.io and Rezi take PDF or DOCX files up to 2 MB. ResyMatch takes PDF, Word or text files. Cover Me's checker takes a PDF, a Word file or pasted text. A PDF that is a scanned image has no text to read, so any checker will miss what's in it.",
+        text: "Most of them. Enhancv and Rezi take PDF or DOCX files up to 2 MB, and Resume.io takes PDF or DOCX. ResyMatch takes PDF, Word or text files. Cover Me's checker takes a PDF, a Word file or pasted text. A PDF that is a scanned image has no text to read, so any checker will miss what's in it.",
       },
     },
     {
@@ -113,7 +114,7 @@ export default function Page() {
       }
       tldr={[
         "With a free account, SkillSyncer gives 2 job match scans a week, ResyMatch 7 credits a month and Jobscan 5 scans a month. Teal shows only the top 5 keywords for a job.",
-        "Cover Me's free checker needs no account and runs 25 checks a day. Resume.io asks for an email but no account. Enhancv's page doesn't say.",
+        "Cover Me's free checker needs no account and allows 25 scans a day. Resume.io signs you up with just an email. Enhancv's page doesn't say whether you need an account.",
         "No checker sees the score an employer's ATS gives you. Use the list of missing keywords, not the number.",
       ]}
       intro={
@@ -135,7 +136,7 @@ export default function Page() {
                       <th className={th}>Account</th>
                       <th className={th}>Reads the job description</th>
                       <th className={th}>Free result</th>
-                      <th className={th}>Source, checked Nov 27, 2026</th>
+                      <th className={th}>Source, checked {CHECKED}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -166,15 +167,15 @@ export default function Page() {
           title: '1. Jobscan: 5 free scans a month',
           body: (
             <p>
-              Jobscan&rsquo;s <a href={SRC.jobscanPlan} {...ext}>plan page</a> gives a free account 5 resume scans a month. Each scan compares your resume with a job description you paste in. The free result has searchability tips and a short list of skills, and the full skills list and formatting checks are on Premium, according to Jobscan&rsquo;s <a href={SRC.jobscanPremium} {...ext}>Premium page</a>. AI rewriting and the cover letter writer are paid only. Premium is $49.95 a month, or $89.95 every 3 months. A rescan after you edit counts as a new scan, so one job can use several. The <Link href="/guides/jobscan-review">Jobscan review</Link> covers what its match rate measures, and the <Link href="/guides/free-jobscan-alternatives">free Jobscan alternatives</Link> guide compares tools that also rewrite the resume.
+              Jobscan&rsquo;s <a href={SRC.jobscanPlan} {...ext}>plan page</a> gives a free account 5 resume scans a month. Each scan compares your resume with a job description you paste in. The free result has searchability tips and a short list of skills, and the full skills list and formatting checks are on Premium, according to Jobscan&rsquo;s <a href={SRC.jobscanPremium} {...ext}>Premium page</a>. AI rewriting and the cover letter writer are paid only. Premium is $49.95 a month, or $89.95 every 3 months. Jobscan&rsquo;s <a href={SRC.jobscanRescan} {...ext}>help center</a> says a rescan after you edit counts as a new scan, so one job can use several, and that you can earn more free scans through Jobscan Rewards. The <Link href="/guides/jobscan-review">Jobscan review</Link> covers what its match rate measures, and the <Link href="/guides/free-jobscan-alternatives">free Jobscan alternatives</Link> guide compares tools that also rewrite the resume.
             </p>
           ),
         },
         {
-          title: '2. SkillSyncer: the most free scans with an account',
+          title: '2. SkillSyncer: the highest stated scan limit with an account',
           body: (
             <p>
-              SkillSyncer&rsquo;s <a href={SRC.skillsyncer} {...ext}>pricing page</a> gives the free plan 2 job match scans a week, 10 AI credits a week and 1 resume, with no card needed. A scan shows a match score, the keywords you&rsquo;re missing and formatting problems that break resume parsers. The AI credits pay for rewrites of your bullets, and you approve each change. Premium is $14.95 a month, or $34.86 every 3 months, with unlimited scans.
+              SkillSyncer&rsquo;s <a href={SRC.skillsyncer} {...ext}>pricing page</a> gives the free plan 2 job match scans a week, 10 AI credits a week and 1 resume, with no card needed. On the free plan, a scan shows a match score, the skills and keywords you&rsquo;re missing, whether your job title and degree match, and checks on accomplishments, word count and contact details. The word choice and date formatting checks are on Premium. The AI credits pay for rewrites of your bullets, and you approve each change. Premium is $14.95 a month, or $34.86 every 3 months, with unlimited scans.
             </p>
           ),
         },
@@ -203,10 +204,10 @@ export default function Page() {
           ),
         },
         {
-          title: '6. Resume.io: 16 checks for an email address',
+          title: '6. Resume.io: 16 checks, with an email sign-up',
           body: (
             <p>
-              Resume.io&rsquo;s <a href={SRC.resumeIo} {...ext}>ATS checker</a> runs 16 checks on how well software can read your resume, how strong the content is and how well it matches a job. You enter an email to see the results, but you don&rsquo;t need an account. Add a job description and it gives a second score for how well you match the role. The page says &ldquo;max 2MB&rdquo; in one place and &ldquo;max 10MB&rdquo; in another, so keep the file under 2 MB.
+              Resume.io&rsquo;s <a href={SRC.resumeIo} {...ext}>ATS checker</a> runs 16 checks on how well software can read your resume, how strong the content is and how well it matches a job. You enter an email to see the results, and Resume.io uses it to make an account you sign in to with an emailed link. Add a job description and it gives a second score for how well you match the role. The page says &ldquo;max 2MB&rdquo; in one place and &ldquo;max 10MB&rdquo; in another, so keep the file under 2 MB.
             </p>
           ),
         },
@@ -235,11 +236,11 @@ export default function Page() {
           ),
         },
         {
-          title: '10. Cover Me: no account, 25 checks a day',
+          title: '10. Cover Me: no account, 25 scans a day',
           body: (
             <>
               <p>
-                Cover Me&rsquo;s <Link href="/ats-checker">free ATS resume checker</Link> needs no account or email. You paste a job posting, then paste your resume or upload a PDF or Word file. It gives an <Link href="/guides/what-is-an-ats-score">ATS match score</Link> out of 100 and lists every must-have and nice-to-have keyword the posting asks for, with where each one appears in your resume. It also checks hard requirements such as years of experience, whether the job title is on your resume, your contact details and page count, and which bullets have a number. It runs 25 checks a day, a limit set in its <a href={SRC.coverMeLimit} {...ext}>open-source code</a>.
+                Cover Me&rsquo;s <Link href="/ats-checker">free ATS resume checker</Link> needs no account or email. You paste a job posting, then paste your resume or upload a PDF or Word file. It gives an <Link href="/guides/what-is-an-ats-score">ATS match score</Link> out of 100 and lists the must-have and nice-to-have keywords it finds in the posting, with where each one appears in your resume. It also checks hard requirements such as years of experience, whether the job title is on your resume, your contact details and page count, and which bullets have a number. You can run it 25 times a day, a limit set in its <a href={SRC.coverMeLimit} {...ext}>open-source code</a>.
               </p>
               <p>
                 The posting and resume go to Anthropic&rsquo;s Claude to read them, and Cover Me doesn&rsquo;t store either. The checker doesn&rsquo;t rewrite anything. The Cover Me Chrome extension does that on the posting you have open: it tailors the resume, writes a cover letter and shows the same score. Its free account gives 10 generations to start, then 5 a week.
@@ -267,7 +268,7 @@ export default function Page() {
           title: 'Which one should you use?',
           body: (
             <p>
-              For a quick check against one posting with no sign-up, use Cover Me&rsquo;s checker, or Resume.io&rsquo;s if you don&rsquo;t mind giving an email. If you apply to a few jobs a week and want scans saved in an account, SkillSyncer&rsquo;s 2 a week go furthest, and its AI credits also rewrite bullets. Jobscan&rsquo;s 5 a month suit a handful of important applications. If you&rsquo;d rather check the resume&rsquo;s format with no job in mind, Enhancv and Rezi both do that. Whichever you use, add only keywords that are true of you: the <Link href="/guides/tailor-resume-to-job-description">guide to tailoring your resume</Link> shows how, and the <Link href="/guides/ats-friendly-resume-format">ATS format test</Link> shows which layouts real ATSs misread.
+              For a quick check against one posting with no sign-up, use Cover Me&rsquo;s checker. If you apply to a few jobs a week and want scans saved in an account, SkillSyncer states the highest limit at 2 a week, and its AI credits also rewrite bullets. Jobscan&rsquo;s 5 a month suit a handful of important applications. If you&rsquo;d rather check the resume&rsquo;s format with no job in mind, Enhancv and Rezi both do that. Whichever you use, add only keywords that are true of you: the <Link href="/guides/tailor-resume-to-job-description">guide to tailoring your resume</Link> shows how, and the <Link href="/guides/ats-friendly-resume-format">ATS format test</Link> shows which layouts real ATSs misread.
             </p>
           ),
         },

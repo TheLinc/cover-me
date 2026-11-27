@@ -188,7 +188,7 @@ export const GUIDES: Guide[] = [
     date: '2026-11-27',
     image: '/guides/best-free-ats-resume-checkers.png',
     imageAlt:
-      "Table of free ATS resume checkers, from each tool's own pages on November 27, 2026. Jobscan: 5 scans a month with an account. SkillSyncer: 2 job match scans a week with an account. Teal: the top 5 keywords for a job with an account. ResyMatch: 7 free credits a month with an account. Resume.io: free with an email. Cover Me's checker: 25 checks a day with no account.",
+      "Table of free ATS resume checkers, from each tool's own pages on November 27, 2026. Jobscan: 5 scans a month with an account. SkillSyncer: 2 job match scans a week with an account. Teal: the top 5 keywords for a job with an account. ResyMatch: 7 free credits a month with an account. Resume.io: no stated limit, with an email sign-up. Cover Me's checker: 25 scans a day with no account.",
   },
 ]
 

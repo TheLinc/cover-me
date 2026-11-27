@@ -256,7 +256,7 @@ describe('the free ATS resume checkers guide', () => {
   it('links a source on every row of the comparison table, under a column naming the check date', async () => {
     const html = await render()
     const table = html.slice(html.indexOf('<table'), html.indexOf('</table>'))
-    expect(table).toMatch(/<th[^>]*>Source, checked Nov 27, 2026<\/th>/)
+    expect(table).toMatch(/<th[^>]*>Source, checked November 27, 2026<\/th>/)
     const rows = table.split('<tbody>')[1].split('</tr>').filter((r) => r.includes('<tr'))
     expect(rows.length).toBeGreaterThanOrEqual(10)
     for (const row of rows) expect(row).toMatch(/<a href="https:\/\//)
