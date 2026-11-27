@@ -493,8 +493,8 @@ export async function tailorResume(
   previous?: TailoredResume,
   onProgress?: (label: string) => void,
 ): Promise<TailoredResume> {
-  // linksKept only marks the stored parse as current (#238).
-  const { linksKept: _k, ...parsed } = stored
+  // linksKept and parseVersion only mark the stored parse as current (#238, #401).
+  const { linksKept: _k, parseVersion: _v, ...parsed } = stored
   const prompt = buildPrompt(job, parsed, compact, supplemental, trim, includeSummary, previous)
 
   await debugGroup('Tailor — full prompt sent to model (BYOK)', {

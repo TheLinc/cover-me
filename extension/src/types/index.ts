@@ -62,8 +62,10 @@ export interface ParsedResume {
   otherSections?: ResumeSection[]
   /** The uploaded resume's section order (#165), carried to each tailored resume. Always an array on a parse made since then; a cached parse without it is parsed again. */
   sectionOrder?: SectionKey[]
-  /** Set on every parse made since URLs under a section stay in their entry (#238); a cached parse without it is parsed again. */
+  /** Set on every parse made since URLs under a section stay in their entry (#238). */
   linksKept?: true
+  /** PARSE_VERSION in lib/ai/resume-parse.ts when parsed; missing on a parse from before it (#401). */
+  parseVersion?: number
 }
 
 export interface ResumeData {
@@ -93,8 +95,17 @@ export interface ResumeData {
   }
   // The layout picked on the resume page. Missing: "Your design" whenever its check passes (#131).
   layout?: 'yours' | 'cover-me'
-  // READER_VERSION when uploaded. An older text can be offered a re-upload (#240).
+  // READER_VERSION when uploaded or read again. With a stored file, an older
+  // text is read again when the popup opens (lib/reread.ts) (#401).
   readerVersion?: number
+  // The uploaded PDF or Word file, in the design file store under id. For
+  // Word, design.hash is the same id (#401).
+  file?: { id: string; size: number; type: 'pdf' | 'docx' }
+  // Set by an upload only: updatedAt also moves on syncs (#401).
+  uploadedAt?: string
+  // A re-read saved here that the account hasn't confirmed: the SHA-256 of the
+  // text it replaced. syncResume sends it as a re-read of that text (#401).
+  rereadFrom?: string
 }
 
 export type GenerateResponse =

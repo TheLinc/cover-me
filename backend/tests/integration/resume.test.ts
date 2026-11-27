@@ -141,6 +141,112 @@ More.`, filename: 'resume.doc' } })
     expect(await parsedResume(user.id)).toBeNull()
   })
 
+  describe('reader version and upload date (#401)', () => {
+    const sha256 = (s: string) => createHash('sha256').update(s).digest('hex')
+    const post = (body: Record<string, unknown>) => callFunction('resume', { token: user.token, body: { filename: 'r.pdf', ...body } })
+    const get = async () => (await callFunction('resume', { token: user.token })).json()
+    const updatedAt = async () => (await admin.from('resumes').select('updated_at').eq('user_id', user.id).single()).data?.updated_at
+
+    it('stores and returns readerVersion and uploadedAt', async () => {
+      expect((await post({ text: RESUME_TEXT, readerVersion: 2, uploadedAt: '2026-11-20T10:00:00.000Z' })).status).toBe(200)
+      const body = await get()
+      expect(body.reader_version).toBe(2)
+      expect(Date.parse(body.uploaded_at)).toBe(Date.parse('2026-11-20T10:00:00.000Z'))
+    })
+
+    it('a row without them reads as null', async () => {
+      await uploadResume(user)
+      const body = await get()
+      expect(body.reader_version).toBeNull()
+      expect(body.uploaded_at).toBeNull()
+    })
+
+    it('ignores an out-of-range readerVersion and a future uploadedAt', async () => {
+      await post({ text: RESUME_TEXT, readerVersion: 1000, uploadedAt: '2999-01-01T00:00:00.000Z' })
+      const body = await get()
+      expect(body.reader_version).toBeNull()
+      expect(body.uploaded_at).toBeNull()
+    })
+
+    it('a same-text re-read only raises reader_version', async () => {
+      await post({ text: RESUME_TEXT, readerVersion: 1 })
+      await waitForParsedResume(user.id)
+      await mockClaude.reset()
+      const [before, parse] = [await updatedAt(), await parsedResume(user.id)]
+      expect((await post({ text: RESUME_TEXT, readerVersion: 2, reread: true, baseTextHash: sha256(RESUME_TEXT) })).status).toBe(200)
+      expect((await get()).reader_version).toBe(2)
+      expect(await updatedAt()).toBe(before)
+      expect(await parsedResume(user.id)).toBe(parse)
+    })
+
+    it('a same-text re-read at the version the account has succeeds and changes nothing', async () => {
+      await post({ text: RESUME_TEXT, readerVersion: 2 })
+      const before = await updatedAt()
+      expect((await post({ text: RESUME_TEXT, readerVersion: 2, reread: true, baseTextHash: sha256(RESUME_TEXT) })).status).toBe(200)
+      expect(await updatedAt()).toBe(before)
+    })
+
+    it('a re-read with new text saves it without a resume_upload event', async () => {
+      await post({ text: RESUME_TEXT })
+      const res = await post({ text: NEW_TEXT, reread: true, baseTextHash: sha256(RESUME_TEXT), readerVersion: 2 })
+      expect(res.status).toBe(200)
+      const body = await get()
+      expect(body.text).toBe(NEW_TEXT)
+      expect(body.reader_version).toBe(2)
+      expect(await mockPosthog.eventsFor('resume_upload', user.id, (e) => e.length > 1)).toHaveLength(1)
+    })
+
+    it('a re-read keeps the upload date', async () => {
+      await post({ text: RESUME_TEXT, uploadedAt: '2026-11-20T10:00:00.000Z' })
+      await post({ text: NEW_TEXT, reread: true, baseTextHash: sha256(RESUME_TEXT), readerVersion: 2, uploadedAt: '2026-11-25T10:00:00.000Z' })
+      expect(Date.parse((await get()).uploaded_at)).toBe(Date.parse('2026-11-20T10:00:00.000Z'))
+    })
+
+    it('a re-read sent again after it landed succeeds and keeps the text', async () => {
+      await post({ text: RESUME_TEXT })
+      const reread = { text: NEW_TEXT, reread: true, baseTextHash: sha256(RESUME_TEXT), readerVersion: 2 }
+      expect((await post(reread)).status).toBe(200)
+      expect((await post(reread)).status).toBe(200)
+      expect((await get()).text).toBe(NEW_TEXT)
+    })
+
+    it('a re-read never starts a parse ahead, so a Word check that follows parses once', async () => {
+      await uploadResume(user)
+      await post({ text: NEW_TEXT, reread: true, baseTextHash: sha256(RESUME_TEXT), readerVersion: 2 })
+      await sleep(800)
+      expect(await parsedResume(user.id)).toBeNull()
+      expect((await mockClaude.requests()).filter(isParse)).toHaveLength(0)
+    })
+
+    it('a same-text upload records its upload date', async () => {
+      await post({ text: RESUME_TEXT })
+      await post({ text: RESUME_TEXT, uploadedAt: '2026-11-21T10:00:00.000Z' })
+      expect(Date.parse((await get()).uploaded_at)).toBe(Date.parse('2026-11-21T10:00:00.000Z'))
+    })
+
+    it('a re-read against changed text is refused', async () => {
+      await uploadResume(user, NEW_TEXT)
+      const res = await post({ text: RESUME_TEXT + '\nMore', reread: true, baseTextHash: sha256(RESUME_TEXT), readerVersion: 2 })
+      expect(res.status).toBe(409)
+      expect((await get()).text).toBe(NEW_TEXT)
+    })
+
+    it('a re-read with no resume in the account is refused', async () => {
+      expect((await post({ text: RESUME_TEXT, reread: true, baseTextHash: sha256(RESUME_TEXT) })).status).toBe(409)
+    })
+
+    it('a re-read without baseTextHash is refused', async () => {
+      await uploadResume(user)
+      expect((await post({ text: NEW_TEXT, reread: true })).status).toBe(400)
+    })
+
+    it('a same-text sync never lowers reader_version', async () => {
+      await post({ text: RESUME_TEXT, readerVersion: 2 })
+      await post({ text: RESUME_TEXT, readerVersion: 1 })
+      expect((await get()).reader_version).toBe(2)
+    })
+  })
+
   it('rejects text over 100 KB', async () => {
     const res = await callFunction('resume', { token: user.token, body: { text: 'x'.repeat(100_001) } })
     expect(res.status).toBe(413)
