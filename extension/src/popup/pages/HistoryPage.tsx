@@ -4,7 +4,7 @@ import { downloadCoverLetterPdf } from '../../lib/pdf/cover-letter'
 import { downloadTailoredResumePdf } from '../../lib/pdf/resume'
 import { openResumeEditor } from '../../lib/resume-edit'
 import { downloadStoredFile, fromLine } from '../../lib/resume-file'
-import { accountUpdates, capWarning, groupLocalHistory, groupsFromApplications, ownPending, unclaimed, uploadMessage, uploadSummary, withLocalOnly, type JobGroup } from '../../lib/history'
+import { accountUpdates, capWarning, groupLocalHistory, groupsFromApplications, ownPending, unclaimed, uploadMessage, uploadSummary, withLocalOnly, withSources, type JobGroup } from '../../lib/history'
 import { deleteFromHistory, deleteFromTailoredHistory, getDesignHashes, getHistory, getMode, getTailoredHistory, getUploadAsked, markUploadAsked, setEntryAccounts } from '../../lib/storage'
 import type { AuthSession, CoverLetter, CoverLetterEntry, ResumeSource, TailoredHistoryEntry } from '../../types'
 import DownloadMenu from '../components/DownloadMenu'
@@ -131,12 +131,13 @@ export default function HistoryPage() {
     setIsProMode(true)
     setSyncing(true)
     try {
-      let server = groupsFromApplications(await fetchApplicationsFromBackend(session.access_token))
+      const [allLetters, allTailored] = await Promise.all([getHistory(), getTailoredHistory()])
+      let server = withSources(groupsFromApplications(await fetchApplicationsFromBackend(session.access_token)), allLetters, allTailored)
       setGroups(server)
       const checked = await localOnlyAfterCheck(session)
       if (checked) {
         const local = await retryOwn(session, checked)
-        if (local.saved) server = groupsFromApplications(await fetchApplicationsFromBackend(session.access_token))
+        if (local.saved) server = withSources(groupsFromApplications(await fetchApplicationsFromBackend(session.access_token)), allLetters, allTailored)
         setGroups(withLocalOnly(server, local.letters, local.tailored, session.user.id))
         const count = groupLocalHistory(local.letters, local.tailored).length
         setUpload(count > 0 ? { count, asked: (await getUploadAsked()).includes(session.user.id) } : null)
@@ -154,7 +155,12 @@ export default function HistoryPage() {
 
   async function removeGroup(group: JobGroup) {
     if (isProMode && group.id && sessionRef.current) {
-      await deleteApplicationFromBackend(sessionRef.current.access_token, group.id).catch(() => {})
+      const deleted = await deleteApplicationFromBackend(sessionRef.current.access_token, group.id).then(() => true, () => false)
+      // Hidden local copies would otherwise keep their resume file stored (#401).
+      if (deleted) {
+        for (const c of group.coverLetters) await deleteFromHistory(c.id)
+        for (const t of group.tailoredResumes) await deleteFromTailoredHistory(t.id)
+      }
     } else {
       for (const id of group.localCoverLetterIds ?? []) {
         await deleteFromHistory(id)

@@ -135,18 +135,23 @@ export function accountUpdates(
 export const unclaimed = (userId: string) => (e: { account?: string; saveTo?: string }): boolean =>
   !e.account && (!e.saveTo || e.saveTo === userId)
 
-export function withLocalOnly(server: JobGroup[], letters: CoverLetter[], tailored: TailoredHistoryEntry[], userId: string): JobGroup[] {
-  const mine = unclaimed(userId)
-  const local = groupLocalHistory(letters.filter(mine), tailored.filter(mine))
-    .map((g) => ({ ...g, key: `local:${g.key}`, localOnly: true }))
-  // The account's copies have no file id; the same entry saved here has (#401).
+// The account's copies have no file id (letters have no source at all); the
+// same entry saved here, under the same id, has it. letters and tailored: every
+// local entry, saved to the account or not (#401).
+export function withSources(server: JobGroup[], letters: CoverLetter[], tailored: TailoredHistoryEntry[]): JobGroup[] {
   const sources = new Map([...letters.map((l) => [l.id, l.source] as const), ...tailored.map((t) => [t.id, t.resume.source] as const)].filter(([, s]) => s))
-  const withSources = server.map((g) => ({
+  return server.map((g) => ({
     ...g,
     coverLetters: g.coverLetters.map((c) => (sources.has(c.id) ? { ...c, source: sources.get(c.id) } : c)),
     tailoredResumes: g.tailoredResumes.map((t) => (sources.has(t.id) ? { ...t, resume: { ...t.resume, source: sources.get(t.id) } } : t)),
   }))
-  return [...withSources, ...local].sort((a, b) => b.latestAt.localeCompare(a.latestAt))
+}
+
+export function withLocalOnly(server: JobGroup[], letters: CoverLetter[], tailored: TailoredHistoryEntry[], userId: string): JobGroup[] {
+  const mine = unclaimed(userId)
+  const local = groupLocalHistory(letters.filter(mine), tailored.filter(mine))
+    .map((g) => ({ ...g, key: `local:${g.key}`, localOnly: true }))
+  return [...server, ...local].sort((a, b) => b.latestAt.localeCompare(a.latestAt))
 }
 
 // Counts jobs, not entries, because the list and dashboard count jobs (#24).

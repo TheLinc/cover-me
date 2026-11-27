@@ -106,8 +106,8 @@ async function recordTailored(
   await addToTailoredHistory({ id, job, resume: source ? { ...resume, source } : resume, createdAt: new Date().toISOString(), ...owner }).catch(() => {})
 }
 
-// Stamped here as well as on the server, since only this computer knows the
-// file id. Read when a run starts: an upload during the run isn't its source (#401).
+// The server stamps only its tailored copy, without the file id this computer
+// knows. Read when a run starts: an upload during the run isn't its source (#401).
 async function currentSource(): Promise<ResumeSource | undefined> {
   const resume = await getResume().catch(() => null)
   return resume ? resumeSource(resume) : undefined

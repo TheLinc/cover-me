@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { accountUpdates, capWarning, groupLocalHistory, groupsFromApplications, ownPending, answerJobs, recentJobs, uploadMessage, uploadSummary, withLocalOnly } from './history'
+import { accountUpdates, capWarning, groupLocalHistory, groupsFromApplications, ownPending, answerJobs, recentJobs, uploadMessage, uploadSummary, withLocalOnly, withSources } from './history'
 
 const job = (url: string, company = 'Northwind', title = 'Engineer') => ({ title, company, url, description: '' })
 const resume = { name: 'Pat', phone: '', email: '', website: '', experience: [], education: [] }
@@ -97,11 +97,10 @@ describe('withLocalOnly', () => {
   test("the account's copies take the source saved here under the same id, which has the file id (#401)", () => {
     const local = { filename: 'Pat.pdf', uploadedAt: '2026-09-30T00:00:00Z', fileId: 'f' }
     const fromServer = { filename: 'Pat.pdf', uploadedAt: '2026-09-30T00:00:00Z' }
-    const [g] = withLocalOnly(
+    const [g] = withSources(
       [{ ...server[0], coverLetters: [{ id: 'l1', letter: 'x', createdAt: '2026-10-01T00:00:00Z' }], tailoredResumes: [{ id: 't1', resume: { ...resume, source: fromServer }, createdAt: '2026-10-02T00:00:00Z' }, { id: 't2', resume: { ...resume, source: fromServer }, createdAt: '2026-10-02T00:00:00Z' }] }],
       [{ id: 'l1', job: job('https://jobs.example/a'), letter: 'x', createdAt: '2026-10-01T00:00:00Z', account: 'me', source: local }],
       [{ id: 't1', job: job('https://jobs.example/a'), resume: { ...resume, source: local }, createdAt: '2026-10-02T00:00:00Z', account: 'me' }],
-      'me',
     )
     expect(g.coverLetters[0].source).toEqual(local)
     expect(g.tailoredResumes.map((t) => t.resume.source)).toEqual([local, fromServer])

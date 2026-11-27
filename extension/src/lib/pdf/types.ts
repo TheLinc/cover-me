@@ -96,7 +96,8 @@ export interface TailoredResume {
 }
 
 // The uploaded resume a tailored resume or letter was made from (#401).
-// fileId: its file in the extension's store, missing when none was kept.
+// fileId: its file in the extension's store, missing when none was kept and on
+// the copies the hosted tailor saves to the account.
 export interface ResumeSource { filename: string; uploadedAt: string; fileId?: string }
 
 // A deleted section: its content under its own field (an extra section under

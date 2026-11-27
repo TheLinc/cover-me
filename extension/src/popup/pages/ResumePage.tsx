@@ -6,7 +6,7 @@ import { MAX_RESUME_CHARS } from '../../lib/ai/resume-parse'
 import { needsUploadNote } from '../../lib/reread'
 import { downloadStoredFile, saveUpload, storedFile } from '../../lib/resume-file'
 import { parseResume } from '../../lib/resume-parser'
-import { getCachedTier, getDesignHashes, getMode, getResume, getSession, saveResume, watchResume } from '../../lib/storage'
+import { getCachedTier, getMode, getResume, getSession, saveResume, watchResume } from '../../lib/storage'
 import type { DesignCheck, ParsedResume, ResumeData } from '../../types'
 
 type Status = 'idle' | 'parsing' | 'saved' | 'error'
@@ -24,14 +24,11 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
   // Existing users: the "New" notice the Resume tab's dot leads to (#131).
   const [news, setNews] = useState(false)
   const [noteSeen, setNoteSeen] = useState(true)
-  const [fileKept, setFileKept] = useState(false)
 
   useEffect(() => {
     const show = (r: ResumeData | null) => {
       setResume(r)
       setParsed(r?.parsed ?? null)
-      const file = r && storedFile(r)
-      getDesignHashes().then((h) => setFileKept(!!file && h.includes(file.id)))
       // A sign-in's sync rewrites the resume, so this also catches a sign-in (#16).
       Promise.all([getMode(), getSession(), getCachedTier()]).then(([m, s, t]) => {
         setAccountMode(m === 'hosted' && !!s)
@@ -73,7 +70,6 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
     try {
       const text = await parseResume(file)
       const { resume: data, word, hosted } = await saveUpload(file, text)
-      setFileKept(!!data.file)
       if (word) checkDesign(word)
       dismissNews()
       setResume(data)
@@ -219,7 +215,7 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
             <div className="resume-info">
               <div className="resume-name-row">
                 <div className="resume-name">{resume.filename}</div>
-                {fileKept && storedFile(resume) && (
+                {storedFile(resume) && (
                   <button type="button" className="btn btn-secondary btn-sm resume-download" aria-label={`Download ${resume.filename}`} onClick={() => void downloadStoredFile(storedFile(resume)!.id, resume.filename)}>
                     Download
                   </button>
