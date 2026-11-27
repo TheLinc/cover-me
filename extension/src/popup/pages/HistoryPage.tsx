@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { currentTier, deleteApplicationFromBackend, ensureValidSession, fetchApplicationsFromBackend, refreshTier, uploadLocalHistory, UploadError } from '../../lib/auth'
+import { currentTier, ensureValidSession, fetchApplicationsFromBackend, refreshTier, uploadLocalHistory, UploadError } from '../../lib/auth'
 import { downloadCoverLetterPdf } from '../../lib/pdf/cover-letter'
 import { downloadTailoredResumePdf } from '../../lib/pdf/resume'
 import { openResumeEditor } from '../../lib/resume-edit'
 import { downloadStoredFile, fromLine } from '../../lib/resume-file'
-import { accountUpdates, capWarning, groupLocalHistory, groupsFromApplications, ownPending, unclaimed, uploadMessage, uploadSummary, withLocalOnly, withSources, type JobGroup } from '../../lib/history'
-import { deleteFromHistory, deleteFromTailoredHistory, getDesignHashes, getHistory, getMode, getTailoredHistory, getUploadAsked, markUploadAsked, setEntryAccounts } from '../../lib/storage'
+import { accountUpdates, capWarning, groupLocalHistory, groupsFromApplications, historyDate, ownPending, unclaimed, uploadMessage, uploadSummary, withLocalOnly, withSources, type JobGroup } from '../../lib/history'
+import { getDesignHashes, getHistory, getMode, getTailoredHistory, getUploadAsked, markUploadAsked, setEntryAccounts } from '../../lib/storage'
 import type { AuthSession, CoverLetter, CoverLetterEntry, ResumeSource, TailoredHistoryEntry } from '../../types'
 import DownloadMenu from '../components/DownloadMenu'
 import ReviewAsk from '../components/ReviewAsk'
@@ -13,12 +13,17 @@ import { EditIcon } from '../components/icons'
 import UpgradePrompt from '../components/UpgradePrompt'
 import { WEB_URL } from '../../lib/config'
 import { downloadResumeWord, uploadDesignIfPro } from '../../lib/design'
+import { DELETE_PORT, UNDO_MS, type DeletePortMessage, type DeleteResult } from '../../background/delete'
 
 
 export default function HistoryPage() {
   const [groups, setGroups] = useState<JobGroup[]>([])
   const [expandedKey, setExpandedKey] = useState<string | null>(null)
-  const [previewId, setPreviewId] = useState<string | null>(null)
+  // A card stays mounted once opened so it can shrink shut instead of vanishing (#342).
+  const opened = useRef(new Set<string>()).current
+  const [deleting, setDeleting] = useState<{ key: string; undo: boolean }[]>([])
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const portRef = useRef<chrome.runtime.Port | null>(null)
   const [designHashes, setDesignHashes] = useState<string[]>([])
   useEffect(() => { void getDesignHashes().then(setDesignHashes) }, [])
   const [copiedId, setCopiedId] = useState<string | null>(null)
@@ -34,6 +39,7 @@ export default function HistoryPage() {
 
   useEffect(() => {
     load()
+    return () => portRef.current?.disconnect()
   }, [])
 
   // Pro users before 1.3.0 saved their letters under the same IDs, so the server says which it holds (#24).
@@ -153,28 +159,52 @@ export default function HistoryPage() {
     }
   }
 
-  async function removeGroup(group: JobGroup) {
-    if (isProMode && group.id && sessionRef.current) {
-      const deleted = await deleteApplicationFromBackend(sessionRef.current.access_token, group.id).then(() => true, () => false)
-      // Hidden local copies would otherwise keep their resume file stored (#401).
-      if (deleted) {
-        for (const c of group.coverLetters) await deleteFromHistory(c.id)
-        for (const t of group.tailoredResumes) await deleteFromTailoredHistory(t.id)
-      }
-    } else {
-      for (const id of group.localCoverLetterIds ?? []) {
-        await deleteFromHistory(id)
-      }
-      for (const id of group.localTailoredIds ?? []) {
-        await deleteFromTailoredHistory(id)
-      }
+  function deletePort(): chrome.runtime.Port {
+    if (portRef.current) return portRef.current
+    const port = chrome.runtime.connect({ name: DELETE_PORT })
+    port.onMessage.addListener((result: DeleteResult) => void finishRef.current(result))
+    port.onDisconnect.addListener(() => { portRef.current = null; setDeleting([]) })
+    portRef.current = port
+    return port
+  }
+
+  const finishRef = useRef(deleteFinished)
+  finishRef.current = deleteFinished
+
+  function startDelete(group: JobGroup) {
+    const serverId = isProMode && group.id ? group.id : null
+    const msg: DeletePortMessage = {
+      schedule: serverId
+        ? { key: group.key, serverId, coverLetterIds: group.coverLetters.map((c) => c.id), tailoredIds: group.tailoredResumes.map((t) => t.id) }
+        : { key: group.key, serverId, coverLetterIds: group.localCoverLetterIds ?? [], tailoredIds: group.localTailoredIds ?? [] },
+    }
+    deletePort().postMessage(msg)
+    setDeleteError(null)
+    setDeleting((d) => [...d, { key: group.key, undo: true }])
+    // Ends a little before the worker's timer, so an Undo click always reaches it first (#342).
+    setTimeout(() => setDeleting((d) => d.map((x) => (x.key === group.key ? { ...x, undo: false } : x))), UNDO_MS - 500)
+    if (expandedKey === group.key) setExpandedKey(null)
+  }
+
+  function undoDelete(group: JobGroup) {
+    deletePort().postMessage({ cancel: group.key } satisfies DeletePortMessage)
+    setDeleting((d) => d.filter((x) => x.key !== group.key))
+  }
+
+  async function deleteFinished({ key, error }: DeleteResult) {
+    const group = groups.find((g) => g.key === key)
+    setDeleting((d) => d.filter((x) => x.key !== key))
+    if (error) {
+      setDeleteError(`Couldn't delete ${group?.title || 'that application'}. ${error}`)
+      return
+    }
+    setGroups((gs) => gs.filter((g) => g.key !== key))
+    if (group && !(isProMode && group.id)) {
       // Deleting makes room: recount, so a showing prompt updates or goes. (#23)
       const [letters, tailored] = await Promise.all([getHistory(), getTailoredHistory()])
       setCapText((current) => current && capWarning(letters.length, tailored.length))
       if (isProMode) setUpload((u) => (u && u.count > 1 ? { ...u, count: u.count - 1 } : null))
     }
-    setGroups((gs) => gs.filter((g) => g.key !== group.key))
-    if (expandedKey === group.key) setExpandedKey(null)
   }
 
   async function copyLetter(entry: CoverLetterEntry) {
@@ -186,15 +216,6 @@ export default function HistoryPage() {
   const thenAsk = (id: string, action: () => unknown) => async () => {
     await action()
     setReviewFor(id)
-  }
-
-  function formatDate(iso: string) {
-    const d = new Date(iso)
-    const diff = Math.floor((Date.now() - d.getTime()) / 1000)
-    if (diff < 3600) return `${Math.max(1, Math.floor(diff / 60))}m ago`
-    if (diff < 86400) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    if (diff < 604800) return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getDay()]
-    return d.toLocaleDateString([], { month: 'short', day: 'numeric' })
   }
 
   function formatHostname(url: string) {
@@ -209,12 +230,19 @@ export default function HistoryPage() {
     return parts.join(' · ') || 'No artifacts'
   }
 
-  const totalJobs = groups.length
+  const totalJobs = groups.length - deleting.length
 
   return (
     <div className="page">
       <div className="page-header">
-        <h1 className="page-title">Applications</h1>
+        <div className="page-title-row">
+          <h1 className="page-title">Applications</h1>
+          {isProMode && (
+            <a className="btn btn-secondary btn-sm title-action" href={`${WEB_URL}/dashboard/applications`} target="_blank" rel="noreferrer" aria-label="Search all applications on the dashboard">
+              Search ↗
+            </a>
+          )}
+        </div>
         <p className="page-subtitle">
           {syncing
             ? 'Syncing…'
@@ -222,11 +250,6 @@ export default function HistoryPage() {
               ? 'No applications yet'
               : `${totalJobs} job${totalJobs !== 1 ? 's' : ''}`}
         </p>
-        {isProMode && (
-          <a className="text-link" href={`${WEB_URL}/dashboard/applications`} target="_blank" rel="noreferrer">
-            See all on the dashboard, with search
-          </a>
-        )}
       </div>
 
       {capText && (
@@ -253,9 +276,10 @@ export default function HistoryPage() {
       )}
       <div aria-live="polite">
         {uploadNote && <div className={uploadNote.error ? 'error-box' : 'notice-box'}>{uploadNote.text}</div>}
+        {deleteError && <div className="error-box">{deleteError}</div>}
       </div>
 
-      {totalJobs === 0 ? (
+      {groups.length === 0 ? (
         <div className="history-empty">
           <div className="history-empty-icon">
             <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -269,6 +293,14 @@ export default function HistoryPage() {
         <div className="history-list">
           {groups.map((group) => {
             const isExpanded = expandedKey === group.key
+            if (isExpanded) opened.add(group.key)
+            const pending = deleting.find((x) => x.key === group.key)
+            if (pending) return (
+              <div key={group.key} className="job-card job-card-deleted" role="status">
+                <span>{pending.undo ? 'Deleted' : 'Deleting'} {group.title || 'Unknown Role'}</span>
+                {pending.undo && <button className="btn btn-secondary btn-sm" onClick={() => undoDelete(group)} autoFocus>Undo</button>}
+              </div>
+            )
             return (
               <div key={group.key} className="job-card">
                 <div className="job-card-header">
@@ -288,26 +320,26 @@ export default function HistoryPage() {
                     <span className="job-card-counts">{artifactCount(group)}</span>
                     <span className="job-card-date">
                       {group.localOnly && <span className="local-tag">Only in this browser · </span>}
-                      {formatDate(group.latestAt)}
+                      {historyDate(group.latestAt)}
                     </span>
                   </div>
                   <div className="job-card-actions">
                     <button
                       className="btn btn-secondary btn-sm"
-                      onClick={() => {
-                        setExpandedKey(isExpanded ? null : group.key)
-                        setPreviewId(null)
-                      }}
+                      aria-expanded={isExpanded}
+                      onClick={() => setExpandedKey(isExpanded ? null : group.key)}
                     >
                       {isExpanded ? 'Collapse' : 'View'}
                     </button>
-                    <button className="btn btn-danger btn-sm" onClick={() => removeGroup(group)}>
+                    <button className="btn btn-danger btn-sm" onClick={() => startDelete(group)}>
                       Delete
                     </button>
                   </div>
                 </div>
 
-                {isExpanded && (
+                {opened.has(group.key) && (
+                  <div className={`job-card-reveal${isExpanded ? ' open' : ''}`} {...(!isExpanded && { inert: '' })}>
+                  <div>
                   <div className="job-card-body">
                     {group.coverLetters.map((cl, i) => (
                       <div key={cl.id} className="artifact">
@@ -315,21 +347,13 @@ export default function HistoryPage() {
                           <span className="artifact-label">
                             Cover Letter{group.coverLetters.length > 1 ? ` ${i + 1}` : ''}
                           </span>
-                          <span className="artifact-date">{formatDate(cl.createdAt)}</span>
+                          <span className="artifact-date">{historyDate(cl.createdAt)}</span>
                         </div>
                         <SourceLine source={cl.source} stored={designHashes} />
-                        {previewId === cl.id && (
-                          <div className="letter-box letter-preview">
-                            <pre className="letter-text">{cl.letter}</pre>
-                          </div>
-                        )}
+                        <div className="letter-box letter-preview">
+                          <pre className="letter-text">{cl.letter}</pre>
+                        </div>
                         <div className="artifact-actions">
-                          <button
-                            className="btn btn-secondary btn-sm"
-                            onClick={() => setPreviewId(previewId === cl.id ? null : cl.id)}
-                          >
-                            {previewId === cl.id ? 'Collapse' : 'Preview'}
-                          </button>
                           <button className="btn btn-secondary btn-sm" onClick={thenAsk(cl.id, () => copyLetter(cl))}>
                             {copiedId === cl.id ? '✓ Copied' : 'Copy'}
                           </button>
@@ -350,12 +374,12 @@ export default function HistoryPage() {
                           <span className="artifact-label">
                             Tailored Resume{group.tailoredResumes.length > 1 ? ` ${i + 1}` : ''}
                           </span>
-                          <span className="artifact-date">{formatDate(tr.createdAt)}</span>
+                          <span className="artifact-date">{historyDate(tr.createdAt)}</span>
                         </div>
                         <SourceLine source={tr.resume.source} stored={designHashes} />
                         {typeof tr.resume.atsScore === 'number' && (
                           <p className="artifact-meta">
-                            ATS match {tr.resume.atsScore}{tr.resume.editedAt ? ' · Scored before your edits' : ''}
+                            Job match {tr.resume.atsScore}{tr.resume.editedAt ? ' · Scored before your edits' : ''}
                           </p>
                         )}
                         <div className="artifact-actions">
@@ -376,6 +400,8 @@ export default function HistoryPage() {
                         {reviewFor === tr.id && <ReviewAsk onClose={() => setReviewFor(null)} />}
                       </div>
                     ))}
+                  </div>
+                  </div>
                   </div>
                 )}
               </div>

@@ -9,10 +9,12 @@ import { saveResumeLook, type ResumeLook } from '../../lib/resume-template'
 import { downloadResumeWord, usesDesign } from '../../lib/design'
 import { usingLine } from '../../lib/resume-file'
 import { getCandidateContext, getTailoredHistory, resolveMode, saveCandidateContext } from '../../lib/storage'
+import { tailorSummary } from '../../lib/tailor-options'
 import DownloadMenu from '../components/DownloadMenu'
 import GapChips from '../components/GapChips'
-import { EditIcon, RegenerateIcon } from '../components/icons'
+import { ChevronIcon, EditIcon, RegenerateIcon } from '../components/icons'
 import PageReadNotice from '../components/PageReadNotice'
+import PostingCard from '../components/PostingCard'
 import AnswersNews from '../components/AnswersNews'
 import UpdateReady from '../components/UpdateReady'
 import PostingTitleTip from '../components/PostingTitleTip'
@@ -42,31 +44,39 @@ interface ContextExpanderProps {
   setInitialContext: (v: string) => void
 }
 
+function useFocusWhenOpened<T extends HTMLElement>(open: boolean) {
+  const ref = useRef<T>(null)
+  const mounted = useRef(false)
+  useEffect(() => {
+    if (mounted.current && open) ref.current?.focus()
+    mounted.current = true
+  }, [open])
+  return ref
+}
+
 function ContextExpander({ contextExpanded, setContextExpanded, initialContext, setInitialContext }: ContextExpanderProps) {
+  const inputRef = useFocusWhenOpened<HTMLTextAreaElement>(contextExpanded)
+  const preview = initialContext.trim().split('\n')[0]
   return (
     <div className="context-expander">
-      <button className="context-toggle" onClick={() => setContextExpanded(v => !v)}>
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          {contextExpanded
-            ? <line x1="5" y1="12" x2="19" y2="12" />
-            : <><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></>
-          }
-        </svg>
-        Candidate context
-        {!contextExpanded && initialContext && <span className="context-dot" />}
+      <button className="context-toggle" aria-expanded={contextExpanded} aria-controls="about-you" onClick={() => setContextExpanded(v => !v)}>
+        <ChevronIcon />
+        About you
+        {!contextExpanded && preview && <><span className="context-preview">“{preview}”</span><span className="context-edit">Edit</span></>}
       </button>
-      {contextExpanded && (
-        <>
+      <div id="about-you" className={`context-panel${contextExpanded ? ' open' : ''}`} {...(!contextExpanded && { inert: '' })}>
+        <div className="context-panel-inner">
           <textarea
+            ref={inputRef}
             className="form-input supplemental-input"
-            placeholder={'Standing facts the AI should always factor in…\ne.g. "4 years total experience — resume only shows 3" · "Referred by Jane Chen" · "2yr GraphQL from freelance"'}
+            aria-label="About you"
+            placeholder={'Facts to use in every letter and resume…\ne.g. "4 years total experience, resume only shows 3" · "Referred by Jane Chen" · "2yr GraphQL from freelance"'}
             value={initialContext}
             onChange={e => setInitialContext(e.target.value)}
-            autoFocus
           />
-          <p className="context-hint">Saved automatically — applied to every cover letter and resume you generate.</p>
-        </>
-      )}
+          <p className="context-hint">Saved automatically. Used in every cover letter and resume you make.</p>
+        </div>
+      </div>
     </div>
   )
 }
@@ -83,9 +93,10 @@ interface TailorOptionsProps {
   setIncludeSummary: (v: boolean) => void
   design: { yours: boolean; summary: boolean } | null
   onChangeLayout: () => void
+  label?: string
 }
 
-function TailorOptions({ inputMode, manualReady, onTailor, compact, setCompact, trim, setTrim, includeSummary, setIncludeSummary, design, onChangeLayout }: TailorOptionsProps) {
+function TailorOptions({ inputMode, manualReady, onTailor, compact, setCompact, trim, setTrim, includeSummary, setIncludeSummary, design, onChangeLayout, label = 'Tailor Resume to Job' }: TailorOptionsProps) {
   // The user's file sets the page: no compacting, and a summary only where the file has one. (#131)
   const yours = !!design?.yours
   return (
@@ -98,8 +109,13 @@ function TailorOptions({ inputMode, manualReady, onTailor, compact, setCompact, 
           <line x1="16" y1="17" x2="8" y2="17" />
           <polyline points="10 9 9 9 8 9" />
         </svg>
-        Tailor Resume to Job
+        {label}
       </button>
+      <details className="tailor-details">
+      <summary className="tailor-summary">
+        Options: {tailorSummary({ compact, trim, includeSummary, yours, designSummary: !!design?.summary })}
+        <ChevronIcon />
+      </summary>
       <div className="tailor-options">
         {design && (
           <p className="layout-line">
@@ -137,6 +153,40 @@ function TailorOptions({ inputMode, manualReady, onTailor, compact, setCompact, 
           >?</button>
         </div>}
       </div>
+      </details>
+    </div>
+  )
+}
+
+function AddExperience({ value, onChange, onRegenerate, hasGaps }: { value: string; onChange: (v: string) => void; onRegenerate: () => void; hasGaps: boolean }) {
+  const [open, setOpen] = useState(() => value.trim() !== '')
+  const inputRef = useFocusWhenOpened<HTMLTextAreaElement>(open)
+  return (
+    <div className="regen-expander add-experience">
+      <button className="regen-toggle" aria-expanded={open} aria-controls="tailor-supplemental" onClick={() => setOpen(v => !v)}>
+        <ChevronIcon />
+        {hasGaps ? 'Have experience with any of these? Add it' : 'Missing something? Add it'}
+      </button>
+      {open && (
+        <div className="composer">
+          <textarea
+            ref={inputRef}
+            id="tailor-supplemental"
+            className="composer-input"
+            aria-label="Experience to add"
+            placeholder={'Add real experience not on your resume\ne.g. "2yr GraphQL from freelance, AWS cert in progress"'}
+            value={value}
+            onChange={e => onChange(e.target.value)}
+          />
+          <div className="composer-foot">
+            <span className="composer-hint">Real experience only</span>
+            <button className="btn btn-secondary btn-sm" onClick={onRegenerate}>
+              <RegenerateIcon />
+              Regenerate
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -178,6 +228,7 @@ export default function GeneratePage({ onNavigate }: Props) {
   const [loadingJob, setLoadingJob] = useState<JobData | null>(null)
   // Saved, so it survives the popup closing while the user copies the posting (#130).
   const [scrapeFailure, setScrapeFailure] = useState<ShownFailure | null>(null)
+  const [posting, setPosting] = useState<JobData | null | undefined>(undefined)
 
   const [manualTitle, setManualTitle] = useState('')
   const [manualCompany, setManualCompany] = useState('')
@@ -417,6 +468,7 @@ export default function GeneratePage({ onNavigate }: Props) {
       if (!scrape.success) { setError(scrape.error); setState('error'); return }
       scrapedJob = scrape.job
       setLoadingJob(scrapedJob)
+      setPosting(scrapedJob)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not read this page.')
       setState('error')
@@ -545,6 +597,7 @@ export default function GeneratePage({ onNavigate }: Props) {
       if (!scrape.success) { setTailorError(scrape.error); setTailorState('error'); return }
       scrapedJob = scrape.job
       setLoadingJob(scrapedJob)
+      setPosting(scrapedJob)
     } catch (err) {
       setTailorError(err instanceof Error ? err.message : 'Could not read this page.')
       setTailorState('error')
@@ -692,6 +745,18 @@ export default function GeneratePage({ onNavigate }: Props) {
   const isReady = appMode === 'hosted' ? hasSession === true : hasApiKey === true
   const setupComplete = hasResume === true && isReady
   const setupLoaded = hasResume !== null && hasApiKey !== null && hasSession !== null
+  const showStart = setupLoaded && setupComplete && state === 'idle' && tailorState === 'idle' && inputMode === 'auto' && !scrapeFailure
+
+  const previewed = useRef(false)
+  useEffect(() => {
+    if (!showStart || previewed.current) return
+    previewed.current = true
+    chrome.runtime.sendMessage({ type: 'PREVIEW_TAB' }).then(
+      (found: JobData | null) => setPosting((p) => (p === undefined ? found : p)),
+      () => setPosting((p) => (p === undefined ? null : p)),
+    )
+  }, [showStart])
+  const tryAnyway = posting === null ? 'Try anyway: ' : ''
 
   const bothDone = state === 'done' && tailorState === 'done'
   // A good score is the moment to ask, so the card goes right under it. (#266)
@@ -714,7 +779,16 @@ export default function GeneratePage({ onNavigate }: Props) {
         <WhatsNewLink />
         {/* Mounted once saved state has loaded (so reopening the popup doesn't
             announce "Done"), then kept, so screen readers hear each change. (#19) */}
-        {setupLoaded && <span className="popup-status" role="status">{status}</span>}
+        {setupLoaded && (
+          <span className="popup-status" role="status">
+            {status === 'Done' && (
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            )}
+            {status}
+          </span>
+        )}
         <UpdateReady />
       </header>
 
@@ -833,8 +907,9 @@ export default function GeneratePage({ onNavigate }: Props) {
                 />
               )}
 
-              {state === 'idle' && tailorState === 'idle' && inputMode === 'auto' && !scrapeFailure && (
+              {showStart && (
                 <div className="generate-cta">
+                  <PostingCard posting={posting} onPaste={() => setInputMode('manual')} />
                   <ContextExpander
                     contextExpanded={contextExpanded}
                     setContextExpanded={setContextExpanded}
@@ -846,9 +921,10 @@ export default function GeneratePage({ onNavigate }: Props) {
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
                     </svg>
-                    Generate Cover Letter
+                    {tryAnyway}Generate Cover Letter
                   </button>
                   <TailorOptions
+                    label={tryAnyway ? 'Try anyway: Tailor Resume' : undefined}
                     inputMode={inputMode}
                     manualReady={manualReady}
                     onTailor={tailor}
@@ -861,12 +937,6 @@ export default function GeneratePage({ onNavigate }: Props) {
                     design={designOption}
                     onChangeLayout={() => onNavigate('resume')}
                   />
-                  <p className="generate-hint">
-                    Open a job posting on LinkedIn, Indeed, or any careers page, then click Generate.
-                  </p>
-                  <button className="manual-toggle" onClick={() => setInputMode('manual')}>
-                    Can't detect the posting? Paste it manually →
-                  </button>
                   <GenerateOffer hosted={appMode === 'hosted'} />
                 </div>
               )}
@@ -1092,37 +1162,28 @@ export default function GeneratePage({ onNavigate }: Props) {
                             setRingFilledFor(tailoredEntryId)
                             void chrome.storage.local.set({ ringFilledFor: tailoredEntryId })
                           }}
+                          size={72}
+                          label={false}
                         />}
                       <div className="ats-detail">
+                        <div className="chip-caption mono">Job match</div>
+                        <p className="ats-meaning">How closely your resume matches this posting's keywords.</p>
                         {tailoredResume.editedAt && <p className="ats-edited">Scored before your edits</p>}
                         <ScoreGain score={tailoredResume.atsScore} before={tailoredResume.atsScoreBefore} />
-                        <GapChips gaps={tailoredResume.atsGaps ?? []} />
                         {(tailoredResume.atsGaps?.length ?? 0) === 0 && typeof tailoredResume.atsScore === 'number' && tailoredResume.atsScore >= 80 && (
                           <p className="ats-strong">Strong match: no significant gaps.</p>
                         )}
                       </div>
+                      <GapChips gaps={tailoredResume.atsGaps ?? []} requirements={tailoredResume.atsRequirements} rows={2} />
                     </div>
                   )}
                   {reviewAt === 'resume' && reviewUnderScore && <ReviewAsk onClose={() => setReviewAt(null)} />}
-                  <div className="supplemental-section">
-                    <label className="supplemental-label" htmlFor="tailor-supplemental">Missing something?</label>
-                    <div className="composer">
-                      <textarea
-                        id="tailor-supplemental"
-                        className="composer-input"
-                        placeholder={'Add real experience not on your resume\ne.g. "2yr GraphQL from freelance, AWS cert in progress"'}
-                        value={supplemental}
-                        onChange={e => setSupplemental(e.target.value)}
-                      />
-                      <div className="composer-foot">
-                        <span className="composer-hint">Real experience only</span>
-                        <button className="btn btn-secondary btn-sm" onClick={regenerate}>
-                          <RegenerateIcon />
-                          Regenerate
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                  <AddExperience
+                    value={supplemental}
+                    onChange={setSupplemental}
+                    onRegenerate={regenerate}
+                    hasGaps={(tailoredResume.atsGaps?.length ?? 0) > 0}
+                  />
                   {tailoredResume.designFellBack && (
                     <p className="hint">Your file&apos;s layout couldn&apos;t be edited safely, so this one uses the Cover Me layout.</p>
                   )}

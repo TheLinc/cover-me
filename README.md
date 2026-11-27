@@ -78,7 +78,7 @@ Cover Me supports two AI providers:
 - Click **Generate Cover Letter**, or **Tailor Resume to Job** to produce an ATS-optimized resume with a match score
 - Edit the result inline, then copy or download as PDF
 
-If the extension can't detect the job description automatically, use **"Paste it manually"** to enter the details yourself.
+If the extension can't detect the job description automatically, use **"Paste a job description instead"** (or **"Wrong job? Paste it"** on the posting card) to enter the details yourself.
 
 ---
 

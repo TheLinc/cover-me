@@ -89,7 +89,7 @@ export function candidateText(resume: unknown, supplemental?: string): string {
 export function trustedNotes(supplemental: string | undefined, previous: unknown): string | undefined {
   const prev = editedVersion(previous)
   if (!prev) return supplemental
-  const { atsGaps: _g, atsGapsBeforeEdits: _b, ...rest } = prev
+  const { atsGaps: _g, atsGapsBeforeEdits: _b, atsRequirements: _r, ...rest } = prev
   return [supplemental, candidateText(rest)].filter(Boolean).join('\n')
 }
 

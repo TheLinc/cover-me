@@ -56,7 +56,7 @@ function coveredByAlternative(keyword: string, ctx: ScoreContext): boolean {
   return false
 }
 
-export function scoreFromMatch(m: KeywordMatch, ctx: ScoreContext = {}): { score: number; gaps: string[] } {
+export function scoreFromMatch(m: KeywordMatch, ctx: ScoreContext = {}): { score: number; gaps: string[]; requirements: string[] } {
   let t1c = strArr(m.tier1Covered).length
   let t2c = strArr(m.tier2Covered).length
   const t1Missing: string[] = []
@@ -78,7 +78,7 @@ export function scoreFromMatch(m: KeywordMatch, ctx: ScoreContext = {}): { score
   const penalty = Math.min(penalized.length * GATING_PENALTY, MAX_GATING_PENALTY)
   const score = Math.max(0, Math.min(100, Math.round(base - penalty)))
   const gaps = [...new Set([...missing, ...gating])]
-  return { score, gaps }
+  return { score, gaps, requirements: [...new Set(gating)] }
 }
 
 // The model names keywords as phrases ("Briefing senior leadership"), which an exact match would miss (#228).
@@ -103,7 +103,7 @@ function hasKeyword(stems: Set<string>, keyword: string): boolean {
   })
 }
 
-export function scoreText(m: KeywordMatch, text: string, jobDescription?: string): { score: number; gaps: string[] } {
+export function scoreText(m: KeywordMatch, text: string, jobDescription?: string): { score: number; gaps: string[]; requirements: string[] } {
   const stems = new Set(words(text).map(stem))
   const split = (keywords: string[]) => ({
     covered: keywords.filter((k) => hasKeyword(stems, k)),

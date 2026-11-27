@@ -1,11 +1,12 @@
+import { useRef } from 'react'
 import type { Step } from '../../lib/progress-steps'
 
 const SPOKEN = { done: 'done', active: 'in progress', todo: 'not started' } as const
 
-// Done steps get a check square, the active one a spinner, later ones a
-// dashed square (the website's ProgressStep, made real). Screen readers hear
-// each step's state, and the live region announces it as the run moves on.
 export default function ProgressSteps({ steps }: { steps: Step[] }) {
+  // The last thought stays so its row can shrink with the text in it (#342).
+  const thoughts = useRef<Record<string, string>>({}).current
+  for (const s of steps) if (s.thought && s.detail) thoughts[s.label] = s.detail
   return (
     <ul className="steps" aria-live="polite">
       {steps.map((s) => (
@@ -21,7 +22,7 @@ export default function ProgressSteps({ steps }: { steps: Step[] }) {
           {s.state === 'todo' && <span className="step-icon step-icon-todo" aria-hidden="true" />}
           <span>{s.label}</span>
           {s.detail && !s.thought && <><span className="sr-only">, </span><span className="step-detail">{s.detail}</span></>}
-          {s.thought && <span className="step-thought" aria-hidden="true">{s.detail}</span>}
+          {thoughts[s.label] && <span className={`step-thought${s.thought ? ' open' : ''}`} aria-hidden="true">{thoughts[s.label]}</span>}
           <span className="sr-only">, {SPOKEN[s.state]}</span>
         </li>
       ))}

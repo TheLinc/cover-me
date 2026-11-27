@@ -278,7 +278,7 @@ function buildTailorSchema(parsed: ParsedResume): string {
 
 // Otherwise the model edits stale scores and puts deleted sections back (#197).
 function stripScores(r: Record<string, unknown>): Record<string, unknown> {
-  const { atsScore: _s, atsScoreBefore: _sb, atsGaps: _g, atsGapsBeforeEdits: _b, editedAt: _e, hasEdits: _h, sectionOrder: _o, deletedSections: _d, ...rest } = r
+  const { atsScore: _s, atsScoreBefore: _sb, atsGaps: _g, atsGapsBeforeEdits: _b, atsRequirements: _r, editedAt: _e, hasEdits: _h, sectionOrder: _o, deletedSections: _d, ...rest } = r
   return rest
 }
 
@@ -726,6 +726,7 @@ ${job.description}`)
       resume.atsGaps = atsGaps
       // An ATS sees only the uploaded resume (#228), not the notes; the PDF prints no gaps or deleted sections.
       resume.atsScoreBefore = scoreBefore(delta.keywordMatch, atsScore, candidateText(structuredResume), candidateText({ ...resume, atsGaps: undefined, deletedSections: undefined }), job.description)
+      resume.atsRequirements = computed.requirements
     }
     if (sourceHash) resume.sourceHash = sourceHash
     if (template) resume.template = template

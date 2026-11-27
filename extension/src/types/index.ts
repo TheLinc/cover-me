@@ -7,14 +7,16 @@ export interface Settings {
   mode: AppMode
 }
 
-export type { JobData } from '../content/scrapers/types.ts'
 import type { ResumeEducation, ResumeExperience, ResumeProject, ResumeSection, ResumeSource, SectionKey, TailoredResume } from '../lib/pdf/types'
 export type { ResumeEducation, ResumeExperience, ResumeProject, ResumeSection, ResumeSource, TailoredResume } from '../lib/pdf/types'
 import type { DesignCheck } from '../lib/pdf/docx-design'
 export type { DesignCheck } from '../lib/pdf/docx-design'
 import type { PageSnapshot } from '../content/snapshot.ts'
 import type { ScraperName } from '../content/scrapers/index.ts'
-import type { JobData } from '../content/scrapers/types.ts'
+import type { JobData as ScrapedJob } from '../content/scrapers/types.ts'
+
+// logo is read on the device only (content/logo.ts), so the scrapers' server copy lacks it (#346).
+export type JobData = ScrapedJob & { logo?: string }
 
 export interface CoverLetter {
   id: string

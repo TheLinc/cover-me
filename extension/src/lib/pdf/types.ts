@@ -74,6 +74,8 @@ export interface TailoredResume {
   // what tailoring's wording gained. Equal to atsScore when it gained nothing.
   atsScoreBefore?: number
   atsGaps?: string[]
+  // The hard requirements among atsGaps, kept apart so they show apart (#342).
+  atsRequirements?: string[]
   // Set when the user edits it in the extension's editor tab (#118). The ATS
   // score is from before the edit, and says so. atsGapsBeforeEdits keeps the
   // gaps that score found; atsGaps drops the ones the edits filled.

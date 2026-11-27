@@ -31,6 +31,7 @@ html, body { width: auto; height: auto; overflow: auto; }
 .welcome-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 18px; }
 .welcome-summary { font-size: 13px; color: var(--text-2); background: var(--success-dim); border-radius: var(--r-sm); padding: 10px 12px; overflow-wrap: anywhere; }
 .welcome-step .page { padding: 0; min-height: 0; }
+.welcome-step .drop-overlay { inset: 0; }
 
 .welcome-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .welcome-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }

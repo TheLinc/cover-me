@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { uploadResumeToBackend } from '../../lib/auth'
 import { DESIGN_CHECK_STALE_MS, DESIGN_UPLOAD_MAX, usesDesign } from '../../lib/design'
 import { designUsable } from '../../lib/pdf/docx-design'
@@ -8,6 +8,8 @@ import { downloadStoredFile, saveUpload, storedFile } from '../../lib/resume-fil
 import { parseResume } from '../../lib/resume-parser'
 import { getCachedTier, getMode, getResume, getSession, saveResume, watchResume } from '../../lib/storage'
 import type { DesignCheck, ParsedResume, ResumeData } from '../../types'
+import { DownloadIcon, FileTypeIcon, RegenerateIcon } from '../components/icons'
+import { Reveal, TemplateSetting } from '../components/TemplatePicker'
 
 type Status = 'idle' | 'parsing' | 'saved' | 'error'
 
@@ -16,7 +18,9 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
   const [parsed, setParsed] = useState<ParsedResume | null>(null)
   const [status, setStatus] = useState<Status>('idle')
   const [error, setError] = useState('')
-  const [dragOver, setDragOver] = useState(false)
+  const [dragging, setDragging] = useState(false)
+  // dragenter and dragleave fire for every child the file passes over (#342).
+  const dragDepth = useRef(0)
   const inputRef = useRef<HTMLInputElement>(null)
   // Signed in to the account: a copy added while signed out isn't in it yet (#16).
   const [accountMode, setAccountMode] = useState(false)
@@ -91,9 +95,12 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
     }
   }
 
+  const hasFiles = (e: React.DragEvent) => e.dataTransfer.types.includes('Files')
+
   function onDrop(e: React.DragEvent) {
     e.preventDefault()
-    setDragOver(false)
+    dragDepth.current = 0
+    setDragging(false)
     const file = e.dataTransfer.files[0]
     if (file) handleFile(file)
   }
@@ -103,7 +110,8 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
     if (diff < 60) return 'just now'
     if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
     if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
-    return new Date(iso).toLocaleDateString()
+    const d = new Date(iso)
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', ...(d.getFullYear() !== new Date().getFullYear() && { year: 'numeric' }) })
   }
 
   function parsedSummary(p: ParsedResume): string {
@@ -121,11 +129,29 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
   const kept = resume ? storedFile(resume) : undefined
 
   return (
-    <div className="page">
+    <div
+      className={`page resume-page${dragging ? ' dropping' : ''}`}
+      onDragEnter={(e) => { if (hasFiles(e)) { dragDepth.current++; setDragging(true) } }}
+      onDragOver={(e) => { if (hasFiles(e)) e.preventDefault() }}
+      onDragLeave={(e) => { if (hasFiles(e) && --dragDepth.current === 0) setDragging(false) }}
+      onDrop={onDrop}
+    >
+      <input
+        ref={inputRef}
+        type="file"
+        hidden
+        accept=".pdf,.docx,.txt"
+        onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) handleFile(f) }}
+      />
+      {dragging && (
+        <div className="drop-overlay" aria-hidden="true">
+          {resume ? `Drop to replace ${resume.filename}` : 'Drop to upload your resume'}
+        </div>
+      )}
       {!hideHeader && (
         <div className="page-header">
           <h1 className="page-title">Resume</h1>
-          <p className="page-subtitle">Upload once — used for every cover letter</p>
+          <p className="page-subtitle">Upload once. Used for every letter and tailored resume.</p>
         </div>
       )}
 
@@ -163,105 +189,80 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
         </section>
       )}
 
-      <div
-        className={`upload-area${dragOver ? ' drag-over' : ''}`}
-        // The input's own click bubbles here too; don't open the picker twice (#19).
-        onClick={(e) => { if (e.target !== inputRef.current) inputRef.current?.click() }}
-        onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
-        onDragLeave={() => setDragOver(false)}
-        onDrop={onDrop}
-      >
-        <input
-          ref={inputRef}
-          className="upload-input"
-          type="file"
-          aria-label="Upload your resume (PDF, DOCX or TXT)"
-          accept=".pdf,.docx,.txt"
-          onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f) }}
-        />
-        {status === 'parsing' ? (
-          <>
-            <div className="spinner upload-spinner" />
-            <p className="upload-title">Parsing…</p>
-          </>
-        ) : (
-          <>
-            <div className="upload-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                <polyline points="17 8 12 3 7 8" />
-                <line x1="12" y1="3" x2="12" y2="15" />
-              </svg>
-            </div>
-            <p className="upload-title">{resume ? 'Replace resume' : 'Upload your resume'}</p>
-            <p className="upload-hint">Upload a Word file (.docx) to keep your own design. From Google Docs, use File, Download, Microsoft Word.</p>
-          </>
-        )}
-      </div>
-
-      {error && (
-        <div className="error-box resume-error">{error}</div>
+      {status === 'parsing' ? (
+        <div className="resume-card resume-reading" role="status">
+          <span className="spinner design-spinner" aria-hidden />Reading your resume…
+        </div>
+      ) : !resume && (
+        <div className="upload-area" onClick={() => inputRef.current?.click()}>
+          <div className="upload-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+          </div>
+          <p className="upload-title">Upload your resume</p>
+          <button type="button" className="btn btn-primary btn-sm upload-choose">Choose a file</button>
+          <p className="upload-hint">PDF, Word or text. A Word file (.docx) lets tailored resumes keep your own design. From Google Docs, use File, Download, Microsoft Word.</p>
+        </div>
       )}
 
       {resume && status !== 'parsing' && (
         <>
-          <div className="divider" />
           <div className="resume-card">
-            <div className="resume-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-                <polyline points="14 2 14 8 20 8" />
-              </svg>
-            </div>
-            <div className="resume-info">
-              <div className="resume-name-row">
+            <div className="resume-row">
+              <FileTypeIcon filename={resume.filename} />
+              <div className="resume-info">
                 <div className="resume-name">{resume.filename}</div>
-                {kept && (
-                  <button type="button" className="btn btn-secondary btn-sm resume-download" aria-label={`Download ${resume.filename}`} onClick={() => void downloadStoredFile(kept.id, resume.filename)}>
-                    Download
-                  </button>
+                <div className="resume-meta">
+                  Updated {formatAge(resume.updatedAt)} · ~{Math.round(resume.text.length / 5)} words
+                </div>
+                {parsed && (
+                  <div className="resume-sections">{parsedSummary(parsed)}</div>
+                )}
+                {resume.signedOutUpload && accountMode && (
+                  <div className="hint hint-tight">Added while signed out, so it isn&apos;t in your account yet. Upload it again to use it for letters.</div>
+                )}
+                {/* The letter and parse prompts read only this much (lib/ai/index.ts, lib/ai/resume-parse.ts) (#31). */}
+                {resume.text.length > MAX_RESUME_CHARS && (
+                  <div className="hint hint-tight">Only the first {MAX_RESUME_CHARS.toLocaleString('en-US')} characters (about {Math.round(MAX_RESUME_CHARS / 5).toLocaleString('en-US')} words) are used. Shorten your resume so letters and tailored resumes include everything.</div>
                 )}
               </div>
-              <div className="resume-meta">
-                Updated {formatAge(resume.updatedAt)} · ~{Math.round(resume.text.length / 5)} words
-              </div>
-              {parsed && (
-                <div className="resume-sections">{parsedSummary(parsed)}</div>
-              )}
-              {resume.signedOutUpload && accountMode && (
-                <div className="hint hint-tight">Added while signed out, so it isn&apos;t in your account yet. Upload it again to use it for letters.</div>
-              )}
-              {/* The letter and parse prompts read only this much (lib/ai/index.ts, lib/ai/resume-parse.ts) (#31). */}
-              {resume.text.length > MAX_RESUME_CHARS && (
-                <div className="hint hint-tight">Only the first {MAX_RESUME_CHARS.toLocaleString('en-US')} characters (about {Math.round(MAX_RESUME_CHARS / 5).toLocaleString('en-US')} words) are used. Shorten your resume so letters and tailored resumes include everything.</div>
-              )}
-              {!wordUpload && !news && (
-                <div className="hint hint-tight">Upload your resume as a Word file (.docx) and tailored resumes keep its design.</div>
-              )}
-              {/* A .docx name with no file here: synced from another computer, or uploaded before #131. */}
-              {wordUpload && !resume.design && !news && (
-                <div className="hint hint-tight">This browser doesn&apos;t have your Word file, so tailored resumes use the Cover Me layout. Upload the .docx again here to keep its design.</div>
+              {status === 'saved' && (
+                <span className="success-badge">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  Saved
+                </span>
               )}
             </div>
-            {status === 'saved' && (
-              <span className="success-badge">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-                Saved
-              </span>
-            )}
+            <div className="resume-actions">
+              {kept && (
+                <button type="button" className="btn btn-secondary btn-sm" aria-label={`Download ${resume.filename}`} onClick={() => void downloadStoredFile(kept.id, resume.filename)}>
+                  <DownloadIcon />Download
+                </button>
+              )}
+              <button type="button" className="btn btn-secondary btn-sm" onClick={() => inputRef.current?.click()}>
+                <RegenerateIcon />Replace
+              </button>
+            </div>
           </div>
-          {resume.design && (
-            <LayoutChoice
-              design={resume.design}
-              yours={usesDesign(resume)}
-              onPick={(l) => void pickLayout(l)}
-              onRetry={() => checkDesign(resume.design!.hash)}
-              dashboardFallback={accountMode && pro && resume.design.size > DESIGN_UPLOAD_MAX}
-            />
-          )}
+          <LayoutChoice
+            design={resume.design}
+            wordUpload={wordUpload}
+            yours={usesDesign(resume)}
+            onPick={(l) => void pickLayout(l)}
+            onRetry={() => resume.design && checkDesign(resume.design.hash)}
+            onUpload={() => inputRef.current?.click()}
+            dashboardFallback={accountMode && pro && !!resume.design && resume.design.size > DESIGN_UPLOAD_MAX}
+          />
         </>
+      )}
+
+      {error && (
+        <div className="error-box resume-error">{error}</div>
       )}
     </div>
   )
@@ -283,88 +284,25 @@ function designReasons(c: DesignCheck): string[] {
   return reasons
 }
 
-function LayoutChoice({ design, yours, onPick, onRetry, dashboardFallback }: {
-  design: NonNullable<ResumeData['design']>
+function LayoutChoice({ design, wordUpload, yours, onPick, onRetry, onUpload, dashboardFallback }: {
+  design: ResumeData['design']
+  wordUpload: boolean
   yours: boolean
   onPick: (layout: 'yours' | 'cover-me') => void
   onRetry: () => void
+  onUpload: () => void
   dashboardFallback: boolean
 }) {
   // Re-renders once the check would count as stale, for a popup left open (#131).
   const [, setNow] = useState(0)
-  const left = DESIGN_CHECK_STALE_MS - (Date.now() - Date.parse(design.checkedAt ?? ''))
+  const left = DESIGN_CHECK_STALE_MS - (Date.now() - Date.parse(design?.checkedAt ?? ''))
   useEffect(() => {
-    if (design.status !== 'checking' || !(left > 0)) return
+    if (design?.status !== 'checking' || !(left > 0)) return
     const t = setTimeout(() => setNow(Date.now()), left + 100)
     return () => clearTimeout(t)
-  }, [design.status, left])
-  const stale = design.status === 'checking' && left <= 0
-  if (stale) {
-    return (
-      <p className="hint design-choice">
-        Checking your design didn&apos;t finish.{' '}
-        <button type="button" className="upload-link design-retry" onClick={onRetry}>Try again</button>
-      </p>
-    )
-  }
-  if (design.status === 'checking') {
-    return <p className="design-checking" role="status"><span className="spinner design-spinner" aria-hidden />Checking your design…</p>
-  }
-  if (design.status === 'error' || !design.check) {
-    return (
-      <p className="hint design-choice">
-        {design.error ?? "Couldn't check your design."}{' '}
-        {/* A check again would upload this browser's text over the account's resume (#174). */}
-        {!design.refused && <button type="button" className="upload-link design-retry" onClick={onRetry}>Try again</button>}
-      </p>
-    )
-  }
-  const c = design.check
-  const usable = designUsable(c)
-  return (
-    <fieldset className="design-choice">
-      <legend className="sr-only">Layout for tailored resumes</legend>
-      <label className={`design-option${usable ? '' : ' disabled'}`}>
-        <input type="radio" name="layout" checked={yours} disabled={!usable} onChange={() => onPick('yours')} />
-        <span>
-          <span className="design-option-title">
-            {!usable && (
-              <svg className="design-warn" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" />
-                <line x1="12" y1="9" x2="12" y2="13" />
-                <line x1="12" y1="17" x2="12.01" y2="17" />
-              </svg>
-            )}
-            Your design (Beta)
-          </span>
-          <span className="design-option-desc">Tailors your bullets inside your own Word file.</span>
-        </span>
-      </label>
-      <div className="design-readout">
-        {usable ? (
-          <>
-            <p>{c.matched} of {count(c.total, 'bullet', 'bullets')} can be tailored</p>
-            {c.unmatched.length > 0 && (
-              <p>{count(c.unmatched.length, 'bullet stays', 'bullets stay')} as written: {c.unmatched.map((b) => `'${clip(b)}'`).join(', ')}</p>
-            )}
-            <p>Summary: {c.summary ? 'rewritten' : 'none in your file'}</p>
-            {c.skills !== 'none' && (
-              <p>Skills: {c.skills === 'reordered' ? 'reordered' : c.skills === 'table' ? "kept as written (they're in a table)" : "kept as written (they're on several lines)"}</p>
-            )}
-          </>
-        ) : (
-          designReasons(c).map((r) => <p key={r}>{r}</p>)
-        )}
-        {c.layoutWarning && (
-          <p>
-            Your layout uses {LAYOUT_WORDS[c.layoutWarning]}, which some application systems read out of order.{' '}
-            <a className="text-link" href={LAYOUT_GUIDE} target="_blank" rel="noreferrer">Learn more</a>
-          </p>
-        )}
-        {usable && dashboardFallback && (
-          <p>Your file is over 2 MB, so your account&apos;s dashboard uses the Cover Me layout for it.</p>
-        )}
-      </div>
+  }, [design?.status, left])
+  const coverMe = (
+    <div className="design-card">
       <label className="design-option">
         <input type="radio" name="layout" checked={!yours} onChange={() => onPick('cover-me')} />
         <span>
@@ -372,6 +310,113 @@ function LayoutChoice({ design, yours, onPick, onRetry, dashboardFallback }: {
           <span className="design-option-desc">Clean ATS layout. Adds a summary, compact to one page, Word or PDF.</span>
         </span>
       </label>
+      <Reveal shown={!yours}><TemplateSetting /></Reveal>
+    </div>
+  )
+  const waiting = (status: ReactNode) => (
+    <fieldset className="design-choice">
+      <legend className="design-legend">Tailored resumes use</legend>
+      {coverMe}
+      {status}
+    </fieldset>
+  )
+  if (!design) {
+    return (
+      <fieldset className="design-choice">
+        <legend className="design-legend">Tailored resumes use</legend>
+        {coverMe}
+        <div className="design-card disabled">
+          <div className="design-option">
+            <input type="radio" name="layout" disabled />
+            <span>
+              <span className="design-option-title">Your design (Beta)</span>
+              {/* A .docx name with no file here: synced from another computer, or uploaded before #131. */}
+              <span className="design-option-desc">
+                {wordUpload
+                  ? "This browser doesn't have your Word file. Upload it again here to keep its design."
+                  : 'Needs your resume as a Word file (.docx). From Google Docs, use File, Download, Microsoft Word.'}
+              </span>
+            </span>
+          </div>
+          <div className="design-readout">
+            <button type="button" className="upload-link design-retry" onClick={onUpload}>{wordUpload ? 'Upload it again' : 'Upload a Word file'}</button>
+          </div>
+        </div>
+      </fieldset>
+    )
+  }
+  const stale = design.status === 'checking' && left <= 0
+  if (stale) {
+    return waiting(
+      <p className="hint">
+        Checking your design didn&apos;t finish.{' '}
+        <button type="button" className="upload-link design-retry" onClick={onRetry}>Try again</button>
+      </p>,
+    )
+  }
+  if (design.status === 'checking') {
+    return waiting(<p className="design-checking" role="status"><span className="spinner design-spinner" aria-hidden />Checking your design…</p>)
+  }
+  if (design.status === 'error' || !design.check) {
+    return waiting(
+      <p className="hint">
+        {design.error ?? "Couldn't check your design."}{' '}
+        {/* A check again would upload this browser's text over the account's resume (#174). */}
+        {!design.refused && <button type="button" className="upload-link design-retry" onClick={onRetry}>Try again</button>}
+      </p>,
+    )
+  }
+  const c = design.check
+  const usable = designUsable(c)
+  return (
+    <fieldset className="design-choice">
+      <legend className="design-legend">Tailored resumes use</legend>
+      <div className={`design-card${usable ? '' : ' disabled'}`}>
+        <label className="design-option">
+          <input type="radio" name="layout" checked={yours} disabled={!usable} onChange={() => onPick('yours')} />
+          <span>
+            <span className="design-option-title">
+              {!usable && (
+                <svg className="design-warn" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" />
+                  <line x1="12" y1="9" x2="12" y2="13" />
+                  <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+              )}
+              Your design (Beta)
+            </span>
+            <span className="design-option-desc">Tailors your bullets inside your own Word file.</span>
+          </span>
+        </label>
+        <Reveal shown={yours || !usable}>
+        <div className="design-readout">
+          {usable ? (
+            <>
+              <p>{c.matched} of {count(c.total, 'bullet', 'bullets')} can be tailored</p>
+              {c.unmatched.length > 0 && (
+                <p>{count(c.unmatched.length, 'bullet stays', 'bullets stay')} as written: {c.unmatched.map((b) => `'${clip(b)}'`).join(', ')}</p>
+              )}
+              <p>Summary: {c.summary ? 'rewritten' : 'none in your file'}</p>
+              {c.skills !== 'none' && (
+                <p>Skills: {c.skills === 'reordered' ? 'reordered' : c.skills === 'table' ? "kept as written (they're in a table)" : "kept as written (they're on several lines)"}</p>
+              )}
+            </>
+          ) : (
+            designReasons(c).map((r) => <p key={r}>{r}</p>)
+          )}
+          {c.layoutWarning && (
+            <p>
+              Your layout uses {LAYOUT_WORDS[c.layoutWarning]}, which some application systems read out of order.{' '}
+              <a className="text-link" href={LAYOUT_GUIDE} target="_blank" rel="noreferrer">Learn more</a>
+            </p>
+          )}
+          {usable && dashboardFallback && (
+            <p>Your file is over 2 MB, so your account&apos;s dashboard uses the Cover Me layout for it.</p>
+          )}
+        </div>
+        </Reveal>
+      </div>
+      {coverMe}
     </fieldset>
   )
 }

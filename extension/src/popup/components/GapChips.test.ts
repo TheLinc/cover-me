@@ -1,8 +1,25 @@
 import { describe, expect, it } from 'vitest'
-import { nextLimit } from './GapChips'
+import { nextLimit, splitGaps } from './GapChips'
 
-// Simulates the popup: chips of the given widths wrap into a row of `width`,
-// with the "+N more" button after the first `limit`. Returns each item's top.
+describe('splitGaps', () => {
+  it('shows each unmet requirement once, apart from the keywords', () => {
+    const gaps = ['Kubernetes', 'Go', 'Kubernetes (required)', 'Requires 4yr, candidate ~2.5yr']
+    expect(splitGaps(gaps, ['Kubernetes (required)', 'Requires 4yr, candidate ~2.5yr'])).toEqual({
+      requirements: ['Kubernetes (required)', 'Requires 4yr, candidate ~2.5yr'],
+      keywords: ['Go'],
+    })
+  })
+
+  it('keeps a result saved before requirements were recorded as one keyword list', () => {
+    expect(splitGaps(['Go', 'RN license'])).toEqual({ requirements: [], keywords: ['Go', 'RN license'] })
+  })
+
+  it('drops a requirement an edit filled', () => {
+    expect(splitGaps(['Go'], ['RN license'])).toEqual({ requirements: [], keywords: ['Go'] })
+  })
+})
+
+// The popup's wrapping, with the "+N more" button after the first `limit` chips (#19).
 function layout(widths: number[], limit: number, width = 230, button = 60): number[] {
   const items = limit < widths.length ? [...widths.slice(0, limit), button] : widths
   let x = 0, row = 0
@@ -33,7 +50,7 @@ describe('nextLimit', () => {
     const limit = settle(widths)
     const tops = layout(widths, limit)
     expect(new Set(tops).size).toBe(3)
-    expect(limit).toBe(5) // 2 + 2 + 1 chip, then the button on row 3
+    expect(limit).toBe(5) // two 90px chips fit a 230px row, and row 3 keeps room for the button (#19)
   })
 
   it('handles one chip wider than a row', () => {

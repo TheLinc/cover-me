@@ -10,6 +10,7 @@ import { isCachedPro, saveResumeLook } from '../lib/resume-template'
 import { getMode, getResume, getTailoredHistory, saveParsedResume } from '../lib/storage'
 import DownloadMenu from '../popup/components/DownloadMenu'
 import GapChips from '../popup/components/GapChips'
+import { PlusIcon } from '../popup/components/icons'
 import PdfPreview from './PdfPreview'
 import PostingTitleTip from '../popup/components/PostingTitleTip'
 import ReviewAsk from '../popup/components/ReviewAsk'
@@ -484,7 +485,7 @@ export default function Editor() {
             {typeof scored.atsScore === 'number' && <ScoreRing score={scored.atsScore} size={88} />}
             <div className="ats-detail">
               {edited && <p className="ats-edited">Scored before your edits</p>}
-              <GapChips gaps={saved.atsGaps ?? []} />
+              <GapChips gaps={saved.atsGaps ?? []} requirements={saved.atsRequirements} />
             </div>
           </section>
         )}
@@ -615,7 +616,8 @@ function Lines({ label, noun, items, onChange, hideLabel, short }: {
           </li>
         ))}
       </ol>
-      <button type="button" className="btn btn-ghost btn-sm ed-add" onClick={() => { onChange([...items, '']); setFocusLast(true) }}>
+      <button type="button" className="btn btn-sm ed-add" onClick={() => { onChange([...items, '']); setFocusLast(true) }}>
+        <PlusIcon />
         Add {noun}
       </button>
     </fieldset>

@@ -40,8 +40,8 @@ function buildTailorSchema(parsed: ParsedResume): string {
 }
 
 // Otherwise the model edits stale scores and puts deleted sections back (#197).
-function stripScores(r: TailoredResume): Omit<TailoredResume, 'atsScore' | 'atsScoreBefore' | 'atsGaps' | 'atsGapsBeforeEdits' | 'editedAt' | 'hasEdits' | 'sectionOrder' | 'deletedSections'> {
-  const { atsScore: _s, atsScoreBefore: _sb, atsGaps: _g, atsGapsBeforeEdits: _b, editedAt: _e, hasEdits: _h, sectionOrder: _o, deletedSections: _d, ...rest } = r
+function stripScores(r: TailoredResume): Omit<TailoredResume, 'atsScore' | 'atsScoreBefore' | 'atsGaps' | 'atsGapsBeforeEdits' | 'atsRequirements' | 'editedAt' | 'hasEdits' | 'sectionOrder' | 'deletedSections'> {
+  const { atsScore: _s, atsScoreBefore: _sb, atsGaps: _g, atsGapsBeforeEdits: _b, atsRequirements: _r, editedAt: _e, hasEdits: _h, sectionOrder: _o, deletedSections: _d, ...rest } = r
   return rest
 }
 
@@ -471,11 +471,12 @@ ${grounding.jobDescription}`)
   if (all.length) onRemoved?.(all)
   if (delta.keywordMatch && typeof delta.keywordMatch === 'object') {
     const km = delta.keywordMatch as KeywordMatch
-    const { score, gaps } = scoreFromMatch(km, { jobDescription: grounding.jobDescription, candidate })
+    const { score, gaps, requirements } = scoreFromMatch(km, { jobDescription: grounding.jobDescription, candidate })
     resume.atsScore = score
     resume.atsGaps = gaps
     // An ATS sees only the uploaded resume (#228), not the notes; the PDF prints no gaps or deleted sections.
     resume.atsScoreBefore = scoreBefore(km, score, candidateText(parsed), candidateText({ ...resume, atsGaps: undefined, deletedSections: undefined }), grounding.jobDescription)
+    resume.atsRequirements = requirements
   }
   if (buildsOnEdits(grounding.previous)) resume.hasEdits = true
   return resume

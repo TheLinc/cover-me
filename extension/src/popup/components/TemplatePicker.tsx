@@ -74,7 +74,7 @@ function AccentPicker({ value, onChange }: { value: string | undefined; onChange
 }
 
 // Stays mounted so it can grow and shrink; inert keeps the hidden part out of the tab order and away from screen readers (#119).
-function Reveal({ shown, children }: { shown: boolean; children: ReactNode }) {
+export function Reveal({ shown, children }: { shown: boolean; children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null)
   useLayoutEffect(() => { ref.current?.toggleAttribute('inert', !shown) }, [shown])
   return <div ref={ref} className={`template-reveal${shown ? ' is-shown' : ''}`}><div>{children}</div></div>
@@ -90,9 +90,9 @@ function Sketch({ template, mini, accent }: { template: ResumeTemplate; mini?: b
   )
 }
 
-export default function TemplatePicker({ value, unlocked, onChange, previewLocked, accent, onAccent, titled }: {
+export default function TemplatePicker({ value, unlocked, onChange, previewLocked, accent, onAccent }: {
   value: ResumeTemplate | undefined; unlocked: boolean; onChange: (t: ResumeTemplate) => void; previewLocked?: boolean
-  accent?: string; onAccent?: (hex: string) => void; titled?: boolean
+  accent?: string; onAccent?: (hex: string) => void
 }) {
   const current = templateOf(value)
   const group = useId()
@@ -102,7 +102,7 @@ export default function TemplatePicker({ value, unlocked, onChange, previewLocke
     <details className="template-picker" onToggle={(e) => { if (e.currentTarget.open) setOpened(true) }}>
       <summary className="template-bar">
         <Sketch template={current} mini accent={accent} />
-        <span className="template-current"><span className={titled ? 'sr-only' : 'form-label'}>Template</span>{templateName(current)}</span>
+        <span className="template-current"><span className="form-label">Template</span><span className="template-current-name">{templateName(current)}</span></span>
         {!unlocked && <span className="template-more">3 more with Pro</span>}
         <span className="template-toggle">Change <ChevronIcon /></span>
       </summary>
@@ -145,11 +145,5 @@ export function TemplateSetting() {
   const [look, setLook] = useState<ResumeLook>({})
   useEffect(() => { void getResumeLook().then(setLook) }, [])
   const change = (patch: ResumeLook) => { setLook((l) => ({ ...l, ...patch })); void saveResumeLook(patch) }
-  return (
-    <section className="page-read-setting" aria-labelledby="template-setting-title">
-      <h2 id="template-setting-title" className="page-read-setting-title">Resume template</h2>
-      <p className="page-read-setting-hint">Used for your next tailored resume. You can change it on any resume.</p>
-      <TemplatePicker titled value={nextTemplate(look.template, unlocked)} unlocked={unlocked} onChange={(template) => change({ template })} accent={look.accent} onAccent={(accent) => change({ accent })} />
-    </section>
-  )
+  return <TemplatePicker value={nextTemplate(look.template, unlocked)} unlocked={unlocked} onChange={(template) => change({ template })} accent={look.accent} onAccent={(accent) => change({ accent })} />
 }
