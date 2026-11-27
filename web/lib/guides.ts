@@ -58,7 +58,7 @@ export const GUIDES: Guide[] = [
     title: 'Jobscan review: is it legit, and is it worth $49.95 a month?',
     description: "Jobscan gives 5 free scans a month, then costs $49.95 a month. What its match rate measures, what users on Trustpilot and Reddit say, and who should pay for it.",
     date: '2026-10-29',
-    updated: '2026-11-19',
+    updated: '2026-11-27',
     image: '/guides/jobscan-review.png',
     imageAlt:
       "Jobscan at a glance, checked November 19, 2026. Free: 5 resume scans a month, with an account. Premium: $49.95 a month, or $89.95 every 3 months after a 7-day trial that bills automatically. Trustpilot: 4.2 from 348 reviews. Run by Jobscan in Seattle, started in 2013.",
@@ -68,7 +68,7 @@ export const GUIDES: Guide[] = [
     title: 'Is Teal legit? A Teal review for job seekers',
     description: "Teal is a real company with its own job board, resume builder and job tracker. Where its job listings come from, what Teal+ costs, and what users say.",
     date: '2026-10-29',
-    updated: '2026-11-19',
+    updated: '2026-11-27',
     image: '/guides/teal-review.png',
     imageAlt:
       "Teal at a glance, checked November 19, 2026. Company: Teal Labs, Inc. in Miami, founded 2019, $19 million raised. Job board: yes, with listings from employers' own hiring systems, and Apply goes to the employer's site. Teal+: $13 every 7 days, $29 every 30 days or $79 every 90 days. Trustpilot: 4.3 from 120 reviews.",
@@ -181,6 +181,15 @@ export const GUIDES: Guide[] = [
     image: '/guides/ats-resume-template.png',
     imageAlt:
       "The top of the free ATS resume template in Word: Your Name centered over a contact line, then Summary, Experience and Education headings with placeholder text and bullets. Below it, checks for Lever, Workday, Ashby and SmartRecruiters. Free .docx, no sign-up, tested November 24, 2026.",
+  },
+  {
+    slug: 'best-ai-for-resume-tailoring',
+    title: 'Best AI for resume tailoring: 6 tools tested for made-up claims',
+    description: 'Six AI tools got three resumes that lacked what the job asked for. Which ones made up skills, years or results? Tested November 2026.',
+    date: '2026-11-27',
+    image: '/guides/best-ai-for-resume-tailoring.png',
+    imageAlt:
+      "Results for tailored resumes from six AI tools, tested November 26, 2026 with three resumes that lacked what the posting asked for, and scored by a checker that didn't know which tool wrote them. Cover Me: 3 of 3 sendable, no false or misleading claims. Claude: 2 of 3 sendable, 1 misleading claim. ChatGPT: 2 of 3 sendable, 1 misleading claim. Rezi: 1 of 1 sendable on its free plan. Jobscan, with every suggestion accepted: 0 of 3 sendable, 7 false or misleading claims. Teal: 0 of 2 sendable, 4 false or misleading claims.",
   },
 ]
 
