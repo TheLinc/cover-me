@@ -12,8 +12,8 @@ export async function saveSettings(settings: Settings): Promise<void> {
   await chrome.storage.local.set({ settings })
 }
 
-// The one place the default mode is decided. New installs get the free hosted
-// account; anyone who saved a mode (or, before modes existed, a key) keeps it.
+// Installs from before modes existed saved only a key, so a key without a
+// mode means BYOK (#16).
 export function resolveMode(settings: Settings | null | undefined): AppMode {
   return settings?.mode ?? (settings?.apiKey ? 'byok' : 'hosted')
 }
@@ -22,9 +22,8 @@ export async function getMode(): Promise<AppMode> {
   return resolveMode(await getSettings())
 }
 
-// The welcome tab's progress. Step 1 is done once signed in to the account or
-// an API key is saved. Step 2 is done once there's a resume to use; a copy
-// added while signed out isn't in the signed-in account, so it doesn't count there.
+// A resume added while signed out isn't in the account, so it doesn't count
+// for the welcome tab's resume step there (#108).
 export function setupState(settings: Settings | null, session: AuthSession | null, resume: ResumeData | null): { ready: boolean; hasResume: boolean } {
   const account = resolveMode(settings) === 'hosted'
   return {
@@ -33,8 +32,6 @@ export function setupState(settings: Settings | null, session: AuthSession | nul
   }
 }
 
-// Calls back when anything setupState reads changes: a sign-in, sign-out,
-// key save, mode switch or resume upload.
 export function watchSetup(onChange: () => void): () => void {
   const listener = (changes: Record<string, chrome.storage.StorageChange>, area: string) => {
     if (area === 'local' && ['settings', 'session', 'resume'].some((k) => k in changes)) onChange()
@@ -58,8 +55,6 @@ export async function clearResume(): Promise<void> {
   await pruneDesignFiles()
 }
 
-// Skips a resume replaced since `text` was read, the way the hosted tailor
-// matches the ciphertext.
 export async function saveParsedResume(parsed: ParsedResume, text: string): Promise<void> {
   const resume = await getResume()
   if (resume?.text !== text) return
@@ -75,7 +70,7 @@ export async function addToHistory(letter: CoverLetter): Promise<void> {
   const history = await getHistory()
   history.unshift(letter)
   await chrome.storage.local.set({ history: history.slice(0, HISTORY_LIMIT) })
-  await countGeneration().catch(() => {}) // a missed count must not fail a finished run
+  await countGeneration().catch(() => {}) // A rating-prompt count that fails must not fail a finished run (#96).
 }
 
 export async function saveHistory(letters: CoverLetter[]): Promise<void> {
@@ -87,7 +82,7 @@ export async function deleteFromHistory(id: string): Promise<void> {
   await chrome.storage.local.set({ history: history.filter((l) => l.id !== id) })
 }
 
-// Tailored resumes are 5–15 KB each, so fewer are kept than letters.
+// Tailored resumes are 5 to 15 KB each, so History keeps fewer of them than letters (#17).
 export const TAILORED_HISTORY_LIMIT = 20
 
 export async function getTailoredHistory(): Promise<TailoredHistoryEntry[]> {
@@ -99,7 +94,7 @@ export async function addToTailoredHistory(entry: TailoredHistoryEntry): Promise
   const list = await getTailoredHistory()
   await chrome.storage.local.set({ tailoredHistory: [entry, ...list].slice(0, TAILORED_HISTORY_LIMIT) })
   await pruneDesignFiles().catch(() => {})
-  await countGeneration().catch(() => {}) // a missed count must not fail a finished run
+  await countGeneration().catch(() => {}) // A rating-prompt count that fails must not fail a finished run (#96).
 }
 
 export async function deleteFromTailoredHistory(id: string): Promise<void> {
@@ -127,7 +122,7 @@ export async function saveDesignFile(hash: string, file: DesignFile): Promise<vo
   await chrome.storage.local.set({ [designKey(hash)]: file, designFiles: [...new Set([...(await getDesignHashes()), hash])] })
 }
 
-// Which files are stored, so History can label an entry before loading its file.
+// An index of stored files, so History can label an entry before loading its file (#131).
 export async function getDesignHashes(): Promise<string[]> {
   const { designFiles } = await chrome.storage.local.get('designFiles')
   return (designFiles as string[]) ?? []
@@ -142,8 +137,8 @@ async function pruneDesignFiles(): Promise<void> {
   await chrome.storage.local.set({ designFiles: stored.filter((h) => inUse.has(h)) })
 }
 
-// Every successful generation lands in one of the two history lists above, so
-// they count it for the rating prompt (lib/review-ask.ts). Local only.
+// Every successful generation goes through one of the two history adds, so
+// they count it for the rating prompt (#96).
 async function countGeneration(): Promise<void> {
   const gen = await getGenerationCount()
   await chrome.storage.local.set({ generationCount: { count: (gen?.count ?? 0) + 1, firstAt: gen?.firstAt ?? new Date().toISOString() } })
@@ -163,8 +158,6 @@ export async function saveReviewAsk(ask: ReviewAsk): Promise<void> {
   await chrome.storage.local.set({ reviewAsk: ask })
 }
 
-// The version whose changes the popup's "What's new" link points to, set by a
-// minor or major update (background/install.ts). Only clicking it clears it.
 export async function getWhatsNew(): Promise<string | null> {
   const { whatsNew } = await chrome.storage.local.get('whatsNew')
   return (whatsNew as string) ?? null
@@ -178,8 +171,6 @@ export async function clearWhatsNew(): Promise<void> {
   await chrome.storage.local.remove('whatsNew')
 }
 
-// The Generate page's card announcing answers to application questions
-// (popup/components/AnswersNews.tsx): shown until the user closes it.
 export async function isAnswersNewsSeen(): Promise<boolean> {
   const { answersNews } = await chrome.storage.local.get('answersNews')
   return answersNews === 'seen'
@@ -189,10 +180,9 @@ export async function markAnswersNewsSeen(): Promise<void> {
   await chrome.storage.local.set({ answersNews: 'seen' })
 }
 
-// Marks local entries with the account that holds them (see CoverLetter.account).
 export async function setEntryAccounts(updates: { letters?: Record<string, string>; tailored?: Record<string, string> }): Promise<void> {
-  // Only the lists that change are written: the background may be adding to
-  // the other one at the same moment.
+  // Write only the lists that change: the background may be adding to the
+  // other one at the same moment (#24).
   const mark = <T extends { id: string; account?: string }>(list: T[], accounts: Record<string, string> = {}): T[] | null =>
     list.some((e) => accounts[e.id]) ? list.map((e) => (accounts[e.id] ? { ...e, account: accounts[e.id] } : e)) : null
   const write: Record<string, unknown> = {}
@@ -207,8 +197,6 @@ export async function setEntryAccounts(updates: { letters?: Record<string, strin
   if (Object.keys(write).length > 0) await chrome.storage.local.set(write)
 }
 
-// Accounts that answered the "save these to your account?" prompt (Save or
-// Not now). They get the quiet link instead of the prompt from then on.
 export async function getUploadAsked(): Promise<string[]> {
   const { uploadAsked } = await chrome.storage.local.get('uploadAsked')
   return (uploadAsked as string[]) ?? []
@@ -228,21 +216,14 @@ export async function saveSession(session: AuthSession): Promise<void> {
   await chrome.storage.local.set({ session })
 }
 
-// Calls back when the saved session changes in another context: the worker
-// finishing Google sign-in, or a sign-in or sign-out in the popup while the
-// welcome tab is open. Returns the unsubscribe function.
 export function watchSession(onChange: (session: AuthSession | null) => void): () => void {
   return watchLocalKey('session', (value) => onChange((value as AuthSession) ?? null))
 }
 
-// Calls back when the worker saves a Google sign-in error, for a panel that
-// opened while Google's window was still up.
 export function watchGoogleSignInError(onError: (message: string) => void): () => void {
   return watchLocalKey('googleSignInError', (value) => { if (value) onError(value as string) })
 }
 
-// Calls back when the resume changes elsewhere, e.g. a sign-in downloading the
-// account's copy while the welcome tab shows the upload step.
 export function watchResume(onChange: (resume: ResumeData | null) => void): () => void {
   return watchLocalKey('resume', (value) => onChange((value as ResumeData) ?? null))
 }
@@ -255,8 +236,8 @@ function watchLocalKey(key: string, onChange: (newValue: unknown) => void): () =
   return () => chrome.storage.onChanged.removeListener(listener)
 }
 
-// A Google sign-in error the worker saved because the popup that started the
-// flow had already closed. Returned once, then removed.
+// The worker saves the error because the popup that started Google sign-in
+// may have closed by then (#16).
 export async function saveGoogleSignInError(message: string): Promise<void> {
   await chrome.storage.local.set({ googleSignInError: message })
 }
@@ -267,29 +248,25 @@ export async function takeGoogleSignInError(): Promise<string> {
   return (googleSignInError as string) ?? ''
 }
 
-// Sign-out, or a session that can't be refreshed. An untagged resume belonged
-// to the account that was signed in: tag it, so the next account to sign in on
-// this browser can't claim it (see syncResume in lib/auth.ts).
+// An untagged resume belonged to the account that was signed in. Tag it so
+// the next account on this browser can't claim it (#16).
 export async function clearSession(): Promise<void> {
   const [session, resume] = await Promise.all([getSession(), getResume()])
   if (session?.user?.id && resume?.text && !resume.accountId) {
     await saveResume({ ...resume, accountId: session.user.id })
   }
-  // The tier belonged to that account too; the next account caches its own.
+  // The tier belonged to that account, so the next one caches its own (#16).
   await chrome.storage.local.remove(['session', 'cachedTier'])
 }
 
-// "Remember me" used to keep the password here, encrypted with a key stored
-// next to it. The background worker deletes any leftover copy on install or update.
+// "Remember me" used to keep an encrypted password here. The worker deletes any
+// leftover copy on update: https://github.com/TheLinc/cover-me/commit/0f03141b7f9e5edd2546d1be9bd0bc4b9a347dce
 export async function clearSavedLogin(): Promise<void> {
   await chrome.storage.local.remove('savedLogin')
 }
 
-// The user's choice about sending the page copy to our server
-// (popup/components/PageReadNotice.tsx and PageReadSetting.tsx): true once they
-// agree, false once they turn it off in Settings, missing until they decide.
-// Only true sends (preferServerScrapes in background/index.ts), so a missing
-// or unreadable value never does.
+// Missing until the user decides. Only true sends the page copy, so a missing
+// or unreadable value never does (#29).
 export const PAGE_READ_KEY = 'pageReadAgreed'
 
 export async function getPageReadChoice(): Promise<boolean | undefined> {
@@ -305,7 +282,6 @@ export async function setPageReadChoice(agreed: boolean): Promise<void> {
   await chrome.storage.local.set({ [PAGE_READ_KEY]: agreed })
 }
 
-// Calls back with the new choice whenever it changes, from either component.
 export function watchPageReadChoice(cb: (agreed: boolean | undefined) => void): () => void {
   const listener = (changes: Record<string, chrome.storage.StorageChange>, area: string) => {
     if (area !== 'local' || !(PAGE_READ_KEY in changes)) return
@@ -316,7 +292,7 @@ export function watchPageReadChoice(cb: (agreed: boolean | undefined) => void): 
   return () => chrome.storage.onChanged.removeListener(listener)
 }
 
-// "Not now" hides the notice until the browser restarts (session storage).
+// "Not now" lasts until the browser restarts, so it lives in session storage (#29).
 export async function isPageReadNoticeSnoozed(): Promise<boolean> {
   const { pageReadNotNow } = await chrome.storage.session.get('pageReadNotNow')
   return pageReadNotNow === true
@@ -335,10 +311,8 @@ export async function saveCachedTier(tier: string): Promise<void> {
   await chrome.storage.local.set({ cachedTier: tier })
 }
 
-// Standing facts about the candidate (e.g. "4 years total experience — resume
-// only shows 3", "referred by Jane Chen") that apply to every future cover
-// letter and resume tailor, not just the generation in progress. Stored
-// separately from the per-job supplemental fields so it survives "New" resets.
+// Kept apart from the per-job fields so "New" doesn't clear it:
+// https://github.com/TheLinc/cover-me/commit/46f809a1dc946cf6964c9e2ad9a400323d9bada5
 export async function getCandidateContext(): Promise<string> {
   const { candidateContext } = await chrome.storage.local.get('candidateContext')
   return (candidateContext as string) ?? ''
