@@ -1,0 +1,198 @@
+{
+  "email": "e2e-09ee4fe1@example.com",
+  "results": [
+    {
+      "name": "A signed in through the popup",
+      "ok": true
+    },
+    {
+      "name": "1. PDF stored on this computer",
+      "ok": true,
+      "detail": {
+        "id": "0d26dcf041712b94ddabf99d0dfc3c375bfd170703a2b9e867f426a5496b120c",
+        "size": 49575,
+        "type": "pdf"
+      }
+    },
+    {
+      "name": "1. account has the text, reader_version 2 and the upload date",
+      "ok": true,
+      "detail": {
+        "reader_version": 2,
+        "uploaded_at": "2026-11-27T13:03:30.35+00:00",
+        "local": "2026-11-27T13:03:30.350Z"
+      }
+    },
+    {
+      "name": "1. upload counted once (positive control)",
+      "ok": true,
+      "detail": {
+        "before": 0,
+        "after": 1
+      }
+    },
+    {
+      "name": "2. this computer re-read the file (link back, reader 2, mark cleared)",
+      "ok": true,
+      "detail": {
+        "readerVersion": 2
+      }
+    },
+    {
+      "name": "2. account has the re-read text and reader_version 2",
+      "ok": true,
+      "detail": {
+        "reader_version": 2,
+        "hasLink": true
+      }
+    },
+    {
+      "name": "2. account kept the original upload date",
+      "ok": true,
+      "detail": {
+        "account": "2026-11-27T13:03:30.35+00:00",
+        "original": "2026-11-27T13:03:30.350Z"
+      }
+    },
+    {
+      "name": "2. re-read not counted as an upload",
+      "ok": true,
+      "detail": {
+        "before": 2,
+        "after": 2
+      }
+    },
+    {
+      "name": "2. re-read started no server parse of its text",
+      "ok": true,
+      "detail": {
+        "before": 1,
+        "after": 1
+      }
+    },
+    {
+      "name": "3. offline, A re-read and kept it marked as waiting for the account",
+      "ok": true,
+      "detail": {
+        "mark": "a55eb7f9e59d087437a61ad186d15285ce04d92a8596c2a4ecf1d05e17ef1883"
+      }
+    },
+    {
+      "name": "3. B uploaded a different resume to the account",
+      "ok": true
+    },
+    {
+      "name": "3. A took B's resume and dropped its waiting re-read",
+      "ok": true,
+      "detail": {
+        "filename": "Sam Other Resume.pdf"
+      }
+    },
+    {
+      "name": "3. account still has B's resume",
+      "ok": true
+    },
+    {
+      "name": "3. A's Resume tab names B's file",
+      "ok": true
+    },
+    {
+      "name": "3. the refused re-read was not counted as an upload",
+      "ok": true
+    },
+    {
+      "name": "4. Word upload: design check finished",
+      "ok": true,
+      "detail": {
+        "check": {
+          "matched": 0,
+          "skills": "split",
+          "summary": true,
+          "textBoxBullets": 0,
+          "total": 3,
+          "unmatched": [
+            "Built billing export pipeline",
+            "Maintained customer dashboard",
+            "Fixed bugs in the web app"
+          ]
+        },
+        "checkedAt": "2026-11-27T13:04:06.466Z",
+        "hash": "2b9c6bee16758d32cd5835a4775d4d2dae07f534d7108f72821b1ca000a5dcae",
+        "size": 10710,
+        "status": "done",
+        "uploaded": true
+      }
+    },
+    {
+      "name": "4. Word file stored and named as the resume file",
+      "ok": true
+    },
+    {
+      "name": "4. Pro: the Word file reached the account",
+      "ok": true
+    },
+    {
+      "name": "4. Word re-read: text back, mark cleared, design check done",
+      "ok": true,
+      "detail": {
+        "status": "done"
+      }
+    },
+    {
+      "name": "4. account has the Word re-read and reader_version 2",
+      "ok": true,
+      "detail": {
+        "reader_version": 2
+      }
+    },
+    {
+      "name": "4. Word re-read not counted as an upload",
+      "ok": true,
+      "detail": {
+        "before": 6,
+        "after": 6
+      }
+    },
+    {
+      "name": "5. Generate says which resume it uses",
+      "ok": true,
+      "detail": "Using Alex Rivera Resume.docx, uploaded Nov 27"
+    },
+    {
+      "name": "5. letter saved here with its source",
+      "ok": true,
+      "detail": {
+        "fileId": "2b9c6bee16758d32cd5835a4775d4d2dae07f534d7108f72821b1ca000a5dcae",
+        "filename": "Alex Rivera Resume.docx",
+        "uploadedAt": "2026-11-27T13:04:06.463Z"
+      }
+    },
+    {
+      "name": "5. tailored resume saved here with its source",
+      "ok": true,
+      "detail": {
+        "fileId": "2b9c6bee16758d32cd5835a4775d4d2dae07f534d7108f72821b1ca000a5dcae",
+        "filename": "Alex Rivera Resume.docx",
+        "uploadedAt": "2026-11-27T13:04:06.463Z"
+      }
+    },
+    {
+      "name": "5. Pro: the account's tailored copy names its source",
+      "ok": true,
+      "detail": "\"source\":{\"filename\":\"Alex Rivera Resume.docx\",\"uploadedAt\":\"2026-11-27T13:04:06.463+00:00\"}"
+    },
+    {
+      "name": "5. History shows the source on the letter and the tailored resume",
+      "ok": true,
+      "detail": [
+        "From Alex Rivera Resume.docx, uploaded Nov 27 · Download",
+        "From Alex Rivera Resume.docx, uploaded Nov 27 · Download"
+      ]
+    },
+    {
+      "name": "5. History Download saves the original Word file",
+      "ok": true,
+      "detail": "Alex Rivera Resume.docx"
+    }
+  ]
+}
