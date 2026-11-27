@@ -1,0 +1,394 @@
+[
+  {
+    "name": "byok-pdf",
+    "unexpected": [],
+    "expected": [
+      {
+        "field": "letter.source",
+        "base": "null",
+        "expected": true
+      },
+      {
+        "field": "letter.source.filename",
+        "up": "\"Robin Example Resume.pdf\"",
+        "expected": true
+      },
+      {
+        "field": "letter.source.uploadedAt",
+        "up": "\"2026-11-27T16:24:04.149Z\"",
+        "expected": true
+      },
+      {
+        "field": "tailor.source",
+        "base": "null",
+        "expected": true
+      },
+      {
+        "field": "tailor.source.filename",
+        "up": "\"Robin Example Resume.pdf\"",
+        "expected": true
+      },
+      {
+        "field": "tailor.source.uploadedAt",
+        "up": "\"2026-11-27T16:24:04.149Z\"",
+        "expected": true
+      },
+      {
+        "field": "version",
+        "base": "\"1.10.1\"",
+        "up": "\"1.11.0\"",
+        "expected": true
+      }
+    ]
+  },
+  {
+    "name": "byok-pdf-old",
+    "unexpected": [],
+    "expected": [
+      {
+        "field": "letter.source",
+        "base": "null",
+        "expected": true
+      },
+      {
+        "field": "letter.source.filename",
+        "up": "\"Robin Example Resume.pdf\"",
+        "expected": true
+      },
+      {
+        "field": "letter.source.uploadedAt",
+        "up": "\"2026-11-27T16:24:41.835Z\"",
+        "expected": true
+      },
+      {
+        "field": "resumeAfter.parseVersion",
+        "base": "null",
+        "up": "1",
+        "expected": true
+      },
+      {
+        "field": "resumeTab.note",
+        "base": "false",
+        "up": "true",
+        "expected": true
+      },
+      {
+        "field": "tailor.source",
+        "base": "null",
+        "expected": true
+      },
+      {
+        "field": "tailor.source.filename",
+        "up": "\"Robin Example Resume.pdf\"",
+        "expected": true
+      },
+      {
+        "field": "tailor.source.uploadedAt",
+        "up": "\"2026-11-27T16:24:41.835Z\"",
+        "expected": true
+      },
+      {
+        "field": "version",
+        "base": "\"1.10.1\"",
+        "up": "\"1.11.0\"",
+        "expected": true
+      }
+    ]
+  },
+  {
+    "name": "byok-txt",
+    "unexpected": [],
+    "expected": [
+      {
+        "field": "letter.source",
+        "base": "null",
+        "expected": true
+      },
+      {
+        "field": "letter.source.filename",
+        "up": "\"Jordan Sample Resume.txt\"",
+        "expected": true
+      },
+      {
+        "field": "letter.source.uploadedAt",
+        "up": "\"2026-11-27T16:25:19.377Z\"",
+        "expected": true
+      },
+      {
+        "field": "tailor.source",
+        "base": "null",
+        "expected": true
+      },
+      {
+        "field": "tailor.source.filename",
+        "up": "\"Jordan Sample Resume.txt\"",
+        "expected": true
+      },
+      {
+        "field": "tailor.source.uploadedAt",
+        "up": "\"2026-11-27T16:25:19.377Z\"",
+        "expected": true
+      },
+      {
+        "field": "version",
+        "base": "\"1.10.1\"",
+        "up": "\"1.11.0\"",
+        "expected": true
+      }
+    ]
+  },
+  {
+    "name": "byok-docx",
+    "unexpected": [],
+    "expected": [
+      {
+        "field": "letter.source",
+        "base": "null",
+        "expected": true
+      },
+      {
+        "field": "letter.source.fileId",
+        "up": "\"76fb78e9a6120a4e5c74316c3ce9f3899b014297a4d3cd6962773dfd19f78415\"",
+        "expected": true
+      },
+      {
+        "field": "letter.source.filename",
+        "up": "\"Test Person Resume.docx\"",
+        "expected": true
+      },
+      {
+        "field": "letter.source.uploadedAt",
+        "up": "\"2026-11-27T16:25:57.109Z\"",
+        "expected": true
+      },
+      {
+        "field": "resumeTab.download",
+        "base": "false",
+        "up": "true",
+        "expected": true
+      },
+      {
+        "field": "tailor.source",
+        "base": "null",
+        "expected": true
+      },
+      {
+        "field": "tailor.source.fileId",
+        "up": "\"76fb78e9a6120a4e5c74316c3ce9f3899b014297a4d3cd6962773dfd19f78415\"",
+        "expected": true
+      },
+      {
+        "field": "tailor.source.filename",
+        "up": "\"Test Person Resume.docx\"",
+        "expected": true
+      },
+      {
+        "field": "tailor.source.uploadedAt",
+        "up": "\"2026-11-27T16:25:57.109Z\"",
+        "expected": true
+      },
+      {
+        "field": "version",
+        "base": "\"1.10.1\"",
+        "up": "\"1.11.0\"",
+        "expected": true
+      }
+    ]
+  },
+  {
+    "name": "free-pdf-old",
+    "unexpected": [],
+    "expected": [
+      {
+        "field": "account.updated_at",
+        "base": "\"2026-11-27 16:26:19.073+00\"",
+        "up": "\"2026-11-27 16:26:41.317+00\"",
+        "expected": true
+      },
+      {
+        "field": "letter.source",
+        "base": "null",
+        "expected": true
+      },
+      {
+        "field": "letter.source.filename",
+        "up": "\"Robin Example Resume.pdf\"",
+        "expected": true
+      },
+      {
+        "field": "letter.source.uploadedAt",
+        "up": "\"2026-11-27T16:26:41.275Z\"",
+        "expected": true
+      },
+      {
+        "field": "resumeTab.note",
+        "base": "false",
+        "up": "true",
+        "expected": true
+      },
+      {
+        "field": "tailor.source",
+        "base": "null",
+        "expected": true
+      },
+      {
+        "field": "tailor.source.filename",
+        "up": "\"Robin Example Resume.pdf\"",
+        "expected": true
+      },
+      {
+        "field": "tailor.source.uploadedAt",
+        "up": "\"2026-11-27T16:26:41.275Z\"",
+        "expected": true
+      },
+      {
+        "field": "version",
+        "base": "\"1.10.1\"",
+        "up": "\"1.11.0\"",
+        "expected": true
+      }
+    ]
+  },
+  {
+    "name": "pro-pdf",
+    "unexpected": [],
+    "expected": [
+      {
+        "field": "account.updated_at",
+        "base": "\"2026-11-27 16:27:03.476+00\"",
+        "up": "\"2026-11-27 16:27:25.573+00\"",
+        "expected": true
+      },
+      {
+        "field": "letter.source",
+        "base": "null",
+        "expected": true
+      },
+      {
+        "field": "letter.source.filename",
+        "up": "\"Robin Example Resume.pdf\"",
+        "expected": true
+      },
+      {
+        "field": "letter.source.uploadedAt",
+        "up": "\"2026-11-27T16:27:25.482Z\"",
+        "expected": true
+      },
+      {
+        "field": "tailor.source",
+        "base": "null",
+        "expected": true
+      },
+      {
+        "field": "tailor.source.filename",
+        "up": "\"Robin Example Resume.pdf\"",
+        "expected": true
+      },
+      {
+        "field": "tailor.source.uploadedAt",
+        "up": "\"2026-11-27T16:27:25.482Z\"",
+        "expected": true
+      },
+      {
+        "field": "version",
+        "base": "\"1.10.1\"",
+        "up": "\"1.11.0\"",
+        "expected": true
+      }
+    ]
+  },
+  {
+    "name": "pro-docx-old",
+    "unexpected": [],
+    "expected": [
+      {
+        "field": "account.reader_version",
+        "base": "null",
+        "up": "\"2\"",
+        "expected": true
+      },
+      {
+        "field": "account.updated_at",
+        "base": "\"2026-11-27 16:27:47.59+00\"",
+        "up": "\"2026-11-27 16:28:09.709+00\"",
+        "expected": true
+      },
+      {
+        "field": "letter.source",
+        "base": "null",
+        "expected": true
+      },
+      {
+        "field": "letter.source.fileId",
+        "up": "\"76fb78e9a6120a4e5c74316c3ce9f3899b014297a4d3cd6962773dfd19f78415\"",
+        "expected": true
+      },
+      {
+        "field": "letter.source.filename",
+        "up": "\"Test Person Resume.docx\"",
+        "expected": true
+      },
+      {
+        "field": "letter.source.uploadedAt",
+        "up": "\"2026-11-27T16:28:09.627Z\"",
+        "expected": true
+      },
+      {
+        "field": "resumeAfter.file",
+        "base": "null",
+        "up": "\"docx\"",
+        "expected": true
+      },
+      {
+        "field": "resumeAfter.readerVersion",
+        "base": "null",
+        "up": "2",
+        "expected": true
+      },
+      {
+        "field": "resumeAfterOpen.file",
+        "base": "null",
+        "up": "\"docx\"",
+        "expected": true
+      },
+      {
+        "field": "resumeAfterOpen.readerVersion",
+        "base": "null",
+        "up": "2",
+        "expected": true
+      },
+      {
+        "field": "resumeTab.download",
+        "base": "false",
+        "up": "true",
+        "expected": true
+      },
+      {
+        "field": "tailor.source",
+        "base": "null",
+        "expected": true
+      },
+      {
+        "field": "tailor.source.fileId",
+        "up": "\"76fb78e9a6120a4e5c74316c3ce9f3899b014297a4d3cd6962773dfd19f78415\"",
+        "expected": true
+      },
+      {
+        "field": "tailor.source.filename",
+        "up": "\"Test Person Resume.docx\"",
+        "expected": true
+      },
+      {
+        "field": "tailor.source.uploadedAt",
+        "up": "\"2026-11-27T16:28:09.627Z\"",
+        "expected": true
+      },
+      {
+        "field": "version",
+        "base": "\"1.10.1\"",
+        "up": "\"1.11.0\"",
+        "expected": true
+      }
+    ]
+  }
+]

@@ -1,0 +1,19 @@
+Jordan Sample
+Data Analyst | jordan.sample@example.com | Springfield
+
+SUMMARY
+Analyst with four years of SQL reporting and dashboard work for retail teams.
+
+EXPERIENCE
+Data Analyst, Example Retail Co, 2022 to present
+- Built weekly sales dashboards in Tableau used by 40 store managers.
+- Rewrote the inventory report in SQL, cutting its run time from 3 hours to 20 minutes.
+
+Junior Analyst, Sample Logistics, 2020 to 2022
+- Cleaned shipment data in Python and pandas for monthly reviews.
+
+EDUCATION
+BSc Statistics, Springfield State University, 2020
+
+SKILLS
+SQL, Tableau, Python, pandas, Excel

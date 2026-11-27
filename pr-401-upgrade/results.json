@@ -1,0 +1,2270 @@
+{
+  "byok-pdf-base": {
+    "name": "byok-pdf",
+    "arm": "base",
+    "setup": {
+      "letter": {
+        "status": "done",
+        "saved": true,
+        "letter": "Dear Acme Team,\n\nAt Initech I rebuilt the billing export pipeline in TypeScript and cut nightly run time from four hours to forty minutes. Acme's posting describes a reporting stack that has outgrown its batch jobs, and that is work I have done before.\n\nOver three years I owned the data services behind Initech's customer dashboard. I moved the heaviest queries onto Postgres materialized views, added load tests before each release, and paired with support so the slow pages they reported got fixed first. When the on-call rotation shrank to two people, I wrote the runbooks that let new engineers take a shift in their second week.\n\nThe posting mentions a move from cron scripts to an event queue. I ran a similar migration at Initech, including the month both systems ran side by side. Acme's team of six engineers matches the group I work in now.\n\nI'd like to talk about how the Initech migration went and what I would change next time.\n\nKind regards,\n\nTest Person",
+        "source": null,
+        "uiErrors": []
+      },
+      "tailor": {
+        "status": "done",
+        "saved": true,
+        "content": "390af4176ebd",
+        "sourceHash": null,
+        "designFellBack": null,
+        "source": null,
+        "uiErrors": []
+      },
+      "answer": {
+        "ok": true,
+        "error": null,
+        "answer": "1b1d0a76e106"
+      },
+      "resume": {
+        "filename": "Robin Example Resume.pdf",
+        "text": "09354e40bf0e",
+        "readerVersion": 2,
+        "file": null,
+        "design": null,
+        "parsed": true,
+        "linksKept": true,
+        "parseVersion": null,
+        "mark": false
+      },
+      "history": {
+        "letters": 1,
+        "tailored": 1,
+        "files": 0
+      },
+      "account": null
+    },
+    "base": {
+      "version": "1.10.1",
+      "resumeAfterOpen": {
+        "filename": "Robin Example Resume.pdf",
+        "text": "09354e40bf0e",
+        "readerVersion": 2,
+        "file": null,
+        "design": null,
+        "parsed": true,
+        "linksKept": true,
+        "parseVersion": null,
+        "mark": false
+      },
+      "callsOnOpen": {
+        "backend": 0,
+        "backendParses": 0,
+        "shim": ""
+      },
+      "usingLine": null,
+      "generateErrors": [],
+      "resumeTab": {
+        "note": false,
+        "errors": [],
+        "filename": true,
+        "download": false
+      },
+      "letter": {
+        "status": "done",
+        "saved": true,
+        "letter": "Dear Acme Team,\n\nAt Initech I rebuilt the billing export pipeline in TypeScript and cut nightly run time from four hours to forty minutes. Acme's posting describes a reporting stack that has outgrown its batch jobs, and that is work I have done before.\n\nOver three years I owned the data services behind Initech's customer dashboard. I moved the heaviest queries onto Postgres materialized views, added load tests before each release, and paired with support so the slow pages they reported got fixed first. When the on-call rotation shrank to two people, I wrote the runbooks that let new engineers take a shift in their second week.\n\nThe posting mentions a move from cron scripts to an event queue. I ran a similar migration at Initech, including the month both systems ran side by side. Acme's team of six engineers matches the group I work in now.\n\nI'd like to talk about how the Initech migration went and what I would change next time.\n\nKind regards,\n\nTest Person",
+        "source": null,
+        "uiErrors": []
+      },
+      "callsLetter": {
+        "backend": 0,
+        "backendParses": 0,
+        "shim": "letter-or-answer,letter-or-answer"
+      },
+      "tailor": {
+        "status": "done",
+        "saved": true,
+        "content": "390af4176ebd",
+        "sourceHash": null,
+        "designFellBack": null,
+        "source": null,
+        "uiErrors": []
+      },
+      "callsTailor": {
+        "backend": 4,
+        "backendParses": 0,
+        "shim": "check,check,check,tailor"
+      },
+      "answer": {
+        "ok": true,
+        "error": null,
+        "answer": "1b1d0a76e106"
+      },
+      "callsAnswer": {
+        "backend": 0,
+        "backendParses": 0,
+        "shim": "letter-or-answer"
+      },
+      "resumeAfter": {
+        "filename": "Robin Example Resume.pdf",
+        "text": "09354e40bf0e",
+        "readerVersion": 2,
+        "file": null,
+        "design": null,
+        "parsed": true,
+        "linksKept": true,
+        "parseVersion": null,
+        "mark": false
+      },
+      "history": {
+        "letters": 2,
+        "tailored": 2,
+        "files": 0
+      },
+      "historyView": {
+        "oldCard": true,
+        "newCard": true,
+        "errors": [],
+        "oldHasLetter": true,
+        "oldHasTailored": true,
+        "oldFromLine": false
+      },
+      "oldLetterPdf": {
+        "ok": true,
+        "name": "cover-letter-acme-example-data-analyst.pdf",
+        "bytes": true,
+        "docx": null
+      },
+      "oldTailoredPdf": {
+        "ok": true,
+        "name": "Test-Person-data-analyst.pdf",
+        "bytes": true,
+        "docx": null
+      },
+      "oldTailoredWord": {
+        "ok": true,
+        "name": "Test-Person-data-analyst.docx",
+        "bytes": true,
+        "docx": "8176fa79ab0d"
+      },
+      "historyErrorsAfter": []
+    },
+    "account": null
+  },
+  "byok-pdf-up": {
+    "name": "byok-pdf",
+    "arm": "up",
+    "setup": {
+      "letter": {
+        "status": "done",
+        "saved": true,
+        "letter": "Dear Acme Team,\n\nAt Initech I rebuilt the billing export pipeline in TypeScript and cut nightly run time from four hours to forty minutes. Acme's posting describes a reporting stack that has outgrown its batch jobs, and that is work I have done before.\n\nOver three years I owned the data services behind Initech's customer dashboard. I moved the heaviest queries onto Postgres materialized views, added load tests before each release, and paired with support so the slow pages they reported got fixed first. When the on-call rotation shrank to two people, I wrote the runbooks that let new engineers take a shift in their second week.\n\nThe posting mentions a move from cron scripts to an event queue. I ran a similar migration at Initech, including the month both systems ran side by side. Acme's team of six engineers matches the group I work in now.\n\nI'd like to talk about how the Initech migration went and what I would change next time.\n\nKind regards,\n\nTest Person",
+        "source": null,
+        "uiErrors": []
+      },
+      "tailor": {
+        "status": "done",
+        "saved": true,
+        "content": "390af4176ebd",
+        "sourceHash": null,
+        "designFellBack": null,
+        "source": null,
+        "uiErrors": []
+      },
+      "answer": {
+        "ok": true,
+        "error": null,
+        "answer": "1b1d0a76e106"
+      },
+      "resume": {
+        "filename": "Robin Example Resume.pdf",
+        "text": "09354e40bf0e",
+        "readerVersion": 2,
+        "file": null,
+        "design": null,
+        "parsed": true,
+        "linksKept": true,
+        "parseVersion": null,
+        "mark": false
+      },
+      "history": {
+        "letters": 1,
+        "tailored": 1,
+        "files": 0
+      },
+      "account": null
+    },
+    "up": {
+      "version": "1.11.0",
+      "resumeAfterOpen": {
+        "filename": "Robin Example Resume.pdf",
+        "text": "09354e40bf0e",
+        "readerVersion": 2,
+        "file": null,
+        "design": null,
+        "parsed": true,
+        "linksKept": true,
+        "parseVersion": null,
+        "mark": false
+      },
+      "callsOnOpen": {
+        "backend": 0,
+        "backendParses": 0,
+        "shim": ""
+      },
+      "usingLine": null,
+      "generateErrors": [],
+      "resumeTab": {
+        "note": false,
+        "errors": [],
+        "filename": true,
+        "download": false
+      },
+      "letter": {
+        "status": "done",
+        "saved": true,
+        "letter": "Dear Acme Team,\n\nAt Initech I rebuilt the billing export pipeline in TypeScript and cut nightly run time from four hours to forty minutes. Acme's posting describes a reporting stack that has outgrown its batch jobs, and that is work I have done before.\n\nOver three years I owned the data services behind Initech's customer dashboard. I moved the heaviest queries onto Postgres materialized views, added load tests before each release, and paired with support so the slow pages they reported got fixed first. When the on-call rotation shrank to two people, I wrote the runbooks that let new engineers take a shift in their second week.\n\nThe posting mentions a move from cron scripts to an event queue. I ran a similar migration at Initech, including the month both systems ran side by side. Acme's team of six engineers matches the group I work in now.\n\nI'd like to talk about how the Initech migration went and what I would change next time.\n\nKind regards,\n\nTest Person",
+        "source": {
+          "filename": "Robin Example Resume.pdf",
+          "uploadedAt": "2026-11-27T16:24:04.149Z"
+        },
+        "uiErrors": []
+      },
+      "callsLetter": {
+        "backend": 0,
+        "backendParses": 0,
+        "shim": "letter-or-answer,letter-or-answer"
+      },
+      "tailor": {
+        "status": "done",
+        "saved": true,
+        "content": "390af4176ebd",
+        "sourceHash": null,
+        "designFellBack": null,
+        "source": {
+          "filename": "Robin Example Resume.pdf",
+          "uploadedAt": "2026-11-27T16:24:04.149Z"
+        },
+        "uiErrors": []
+      },
+      "callsTailor": {
+        "backend": 4,
+        "backendParses": 0,
+        "shim": "check,check,check,tailor"
+      },
+      "answer": {
+        "ok": true,
+        "error": null,
+        "answer": "1b1d0a76e106"
+      },
+      "callsAnswer": {
+        "backend": 0,
+        "backendParses": 0,
+        "shim": "letter-or-answer"
+      },
+      "resumeAfter": {
+        "filename": "Robin Example Resume.pdf",
+        "text": "09354e40bf0e",
+        "readerVersion": 2,
+        "file": null,
+        "design": null,
+        "parsed": true,
+        "linksKept": true,
+        "parseVersion": null,
+        "mark": false
+      },
+      "history": {
+        "letters": 2,
+        "tailored": 2,
+        "files": 0
+      },
+      "historyView": {
+        "oldCard": true,
+        "newCard": true,
+        "errors": [],
+        "oldHasLetter": true,
+        "oldHasTailored": true,
+        "oldFromLine": false
+      },
+      "oldLetterPdf": {
+        "ok": true,
+        "name": "cover-letter-acme-example-data-analyst.pdf",
+        "bytes": true,
+        "docx": null
+      },
+      "oldTailoredPdf": {
+        "ok": true,
+        "name": "Test-Person-data-analyst.pdf",
+        "bytes": true,
+        "docx": null
+      },
+      "oldTailoredWord": {
+        "ok": true,
+        "name": "Test-Person-data-analyst.docx",
+        "bytes": true,
+        "docx": "8176fa79ab0d"
+      },
+      "historyErrorsAfter": []
+    },
+    "account": null
+  },
+  "byok-pdf-old-base": {
+    "name": "byok-pdf-old",
+    "arm": "base",
+    "setup": {
+      "letter": {
+        "status": "done",
+        "saved": true,
+        "letter": "Dear Acme Team,\n\nAt Initech I rebuilt the billing export pipeline in TypeScript and cut nightly run time from four hours to forty minutes. Acme's posting describes a reporting stack that has outgrown its batch jobs, and that is work I have done before.\n\nOver three years I owned the data services behind Initech's customer dashboard. I moved the heaviest queries onto Postgres materialized views, added load tests before each release, and paired with support so the slow pages they reported got fixed first. When the on-call rotation shrank to two people, I wrote the runbooks that let new engineers take a shift in their second week.\n\nThe posting mentions a move from cron scripts to an event queue. I ran a similar migration at Initech, including the month both systems ran side by side. Acme's team of six engineers matches the group I work in now.\n\nI'd like to talk about how the Initech migration went and what I would change next time.\n\nKind regards,\n\nTest Person",
+        "source": null,
+        "uiErrors": []
+      },
+      "tailor": {
+        "status": "done",
+        "saved": true,
+        "content": "390af4176ebd",
+        "sourceHash": null,
+        "designFellBack": null,
+        "source": null,
+        "uiErrors": []
+      },
+      "answer": {
+        "ok": true,
+        "error": null,
+        "answer": "1b1d0a76e106"
+      },
+      "resume": {
+        "filename": "Robin Example Resume.pdf",
+        "text": "09354e40bf0e",
+        "readerVersion": null,
+        "file": null,
+        "design": null,
+        "parsed": true,
+        "linksKept": null,
+        "parseVersion": null,
+        "mark": false
+      },
+      "history": {
+        "letters": 1,
+        "tailored": 1,
+        "files": 0
+      },
+      "account": null
+    },
+    "base": {
+      "version": "1.10.1",
+      "resumeAfterOpen": {
+        "filename": "Robin Example Resume.pdf",
+        "text": "09354e40bf0e",
+        "readerVersion": null,
+        "file": null,
+        "design": null,
+        "parsed": true,
+        "linksKept": null,
+        "parseVersion": null,
+        "mark": false
+      },
+      "callsOnOpen": {
+        "backend": 0,
+        "backendParses": 0,
+        "shim": ""
+      },
+      "usingLine": null,
+      "generateErrors": [],
+      "resumeTab": {
+        "note": false,
+        "errors": [],
+        "filename": true,
+        "download": false
+      },
+      "letter": {
+        "status": "done",
+        "saved": true,
+        "letter": "Dear Acme Team,\n\nAt Initech I rebuilt the billing export pipeline in TypeScript and cut nightly run time from four hours to forty minutes. Acme's posting describes a reporting stack that has outgrown its batch jobs, and that is work I have done before.\n\nOver three years I owned the data services behind Initech's customer dashboard. I moved the heaviest queries onto Postgres materialized views, added load tests before each release, and paired with support so the slow pages they reported got fixed first. When the on-call rotation shrank to two people, I wrote the runbooks that let new engineers take a shift in their second week.\n\nThe posting mentions a move from cron scripts to an event queue. I ran a similar migration at Initech, including the month both systems ran side by side. Acme's team of six engineers matches the group I work in now.\n\nI'd like to talk about how the Initech migration went and what I would change next time.\n\nKind regards,\n\nTest Person",
+        "source": null,
+        "uiErrors": []
+      },
+      "callsLetter": {
+        "backend": 0,
+        "backendParses": 0,
+        "shim": "letter-or-answer,letter-or-answer"
+      },
+      "tailor": {
+        "status": "done",
+        "saved": true,
+        "content": "390af4176ebd",
+        "sourceHash": null,
+        "designFellBack": null,
+        "source": null,
+        "uiErrors": []
+      },
+      "callsTailor": {
+        "backend": 4,
+        "backendParses": 0,
+        "shim": "check,check,check,parse,tailor"
+      },
+      "answer": {
+        "ok": true,
+        "error": null,
+        "answer": "1b1d0a76e106"
+      },
+      "callsAnswer": {
+        "backend": 0,
+        "backendParses": 0,
+        "shim": "letter-or-answer"
+      },
+      "resumeAfter": {
+        "filename": "Robin Example Resume.pdf",
+        "text": "09354e40bf0e",
+        "readerVersion": null,
+        "file": null,
+        "design": null,
+        "parsed": true,
+        "linksKept": true,
+        "parseVersion": null,
+        "mark": false
+      },
+      "history": {
+        "letters": 2,
+        "tailored": 2,
+        "files": 0
+      },
+      "historyView": {
+        "oldCard": true,
+        "newCard": true,
+        "errors": [],
+        "oldHasLetter": true,
+        "oldHasTailored": true,
+        "oldFromLine": false
+      },
+      "oldLetterPdf": {
+        "ok": true,
+        "name": "cover-letter-acme-example-data-analyst.pdf",
+        "bytes": true,
+        "docx": null
+      },
+      "oldTailoredPdf": {
+        "ok": true,
+        "name": "Test-Person-data-analyst.pdf",
+        "bytes": true,
+        "docx": null
+      },
+      "oldTailoredWord": {
+        "ok": true,
+        "name": "Test-Person-data-analyst.docx",
+        "bytes": true,
+        "docx": "8176fa79ab0d"
+      },
+      "historyErrorsAfter": []
+    },
+    "account": null
+  },
+  "byok-pdf-old-up": {
+    "name": "byok-pdf-old",
+    "arm": "up",
+    "setup": {
+      "letter": {
+        "status": "done",
+        "saved": true,
+        "letter": "Dear Acme Team,\n\nAt Initech I rebuilt the billing export pipeline in TypeScript and cut nightly run time from four hours to forty minutes. Acme's posting describes a reporting stack that has outgrown its batch jobs, and that is work I have done before.\n\nOver three years I owned the data services behind Initech's customer dashboard. I moved the heaviest queries onto Postgres materialized views, added load tests before each release, and paired with support so the slow pages they reported got fixed first. When the on-call rotation shrank to two people, I wrote the runbooks that let new engineers take a shift in their second week.\n\nThe posting mentions a move from cron scripts to an event queue. I ran a similar migration at Initech, including the month both systems ran side by side. Acme's team of six engineers matches the group I work in now.\n\nI'd like to talk about how the Initech migration went and what I would change next time.\n\nKind regards,\n\nTest Person",
+        "source": null,
+        "uiErrors": []
+      },
+      "tailor": {
+        "status": "done",
+        "saved": true,
+        "content": "390af4176ebd",
+        "sourceHash": null,
+        "designFellBack": null,
+        "source": null,
+        "uiErrors": []
+      },
+      "answer": {
+        "ok": true,
+        "error": null,
+        "answer": "1b1d0a76e106"
+      },
+      "resume": {
+        "filename": "Robin Example Resume.pdf",
+        "text": "09354e40bf0e",
+        "readerVersion": null,
+        "file": null,
+        "design": null,
+        "parsed": true,
+        "linksKept": null,
+        "parseVersion": null,
+        "mark": false
+      },
+      "history": {
+        "letters": 1,
+        "tailored": 1,
+        "files": 0
+      },
+      "account": null
+    },
+    "up": {
+      "version": "1.11.0",
+      "resumeAfterOpen": {
+        "filename": "Robin Example Resume.pdf",
+        "text": "09354e40bf0e",
+        "readerVersion": null,
+        "file": null,
+        "design": null,
+        "parsed": true,
+        "linksKept": null,
+        "parseVersion": null,
+        "mark": false
+      },
+      "callsOnOpen": {
+        "backend": 0,
+        "backendParses": 0,
+        "shim": ""
+      },
+      "usingLine": null,
+      "generateErrors": [],
+      "resumeTab": {
+        "note": true,
+        "errors": [],
+        "filename": true,
+        "download": false
+      },
+      "letter": {
+        "status": "done",
+        "saved": true,
+        "letter": "Dear Acme Team,\n\nAt Initech I rebuilt the billing export pipeline in TypeScript and cut nightly run time from four hours to forty minutes. Acme's posting describes a reporting stack that has outgrown its batch jobs, and that is work I have done before.\n\nOver three years I owned the data services behind Initech's customer dashboard. I moved the heaviest queries onto Postgres materialized views, added load tests before each release, and paired with support so the slow pages they reported got fixed first. When the on-call rotation shrank to two people, I wrote the runbooks that let new engineers take a shift in their second week.\n\nThe posting mentions a move from cron scripts to an event queue. I ran a similar migration at Initech, including the month both systems ran side by side. Acme's team of six engineers matches the group I work in now.\n\nI'd like to talk about how the Initech migration went and what I would change next time.\n\nKind regards,\n\nTest Person",
+        "source": {
+          "filename": "Robin Example Resume.pdf",
+          "uploadedAt": "2026-11-27T16:24:41.835Z"
+        },
+        "uiErrors": []
+      },
+      "callsLetter": {
+        "backend": 0,
+        "backendParses": 0,
+        "shim": "letter-or-answer,letter-or-answer"
+      },
+      "tailor": {
+        "status": "done",
+        "saved": true,
+        "content": "390af4176ebd",
+        "sourceHash": null,
+        "designFellBack": null,
+        "source": {
+          "filename": "Robin Example Resume.pdf",
+          "uploadedAt": "2026-11-27T16:24:41.835Z"
+        },
+        "uiErrors": []
+      },
+      "callsTailor": {
+        "backend": 4,
+        "backendParses": 0,
+        "shim": "check,check,check,parse,tailor"
+      },
+      "answer": {
+        "ok": true,
+        "error": null,
+        "answer": "1b1d0a76e106"
+      },
+      "callsAnswer": {
+        "backend": 0,
+        "backendParses": 0,
+        "shim": "letter-or-answer"
+      },
+      "resumeAfter": {
+        "filename": "Robin Example Resume.pdf",
+        "text": "09354e40bf0e",
+        "readerVersion": null,
+        "file": null,
+        "design": null,
+        "parsed": true,
+        "linksKept": true,
+        "parseVersion": 1,
+        "mark": false
+      },
+      "history": {
+        "letters": 2,
+        "tailored": 2,
+        "files": 0
+      },
+      "historyView": {
+        "oldCard": true,
+        "newCard": true,
+        "errors": [],
+        "oldHasLetter": true,
+        "oldHasTailored": true,
+        "oldFromLine": false
+      },
+      "oldLetterPdf": {
+        "ok": true,
+        "name": "cover-letter-acme-example-data-analyst.pdf",
+        "bytes": true,
+        "docx": null
+      },
+      "oldTailoredPdf": {
+        "ok": true,
+        "name": "Test-Person-data-analyst.pdf",
+        "bytes": true,
+        "docx": null
+      },
+      "oldTailoredWord": {
+        "ok": true,
+        "name": "Test-Person-data-analyst.docx",
+        "bytes": true,
+        "docx": "8176fa79ab0d"
+      },
+      "historyErrorsAfter": []
+    },
+    "account": null
+  },
+  "byok-txt-base": {
+    "name": "byok-txt",
+    "arm": "base",
+    "setup": {
+      "letter": {
+        "status": "done",
+        "saved": true,
+        "letter": "Dear Acme Team,\n\nAt Initech I rebuilt the billing export pipeline in TypeScript and cut nightly run time from four hours to forty minutes. Acme's posting describes a reporting stack that has outgrown its batch jobs, and that is work I have done before.\n\nOver three years I owned the data services behind Initech's customer dashboard. I moved the heaviest queries onto Postgres materialized views, added load tests before each release, and paired with support so the slow pages they reported got fixed first. When the on-call rotation shrank to two people, I wrote the runbooks that let new engineers take a shift in their second week.\n\nThe posting mentions a move from cron scripts to an event queue. I ran a similar migration at Initech, including the month both systems ran side by side. Acme's team of six engineers matches the group I work in now.\n\nI'd like to talk about how the Initech migration went and what I would change next time.\n\nKind regards,\n\nTest Person",
+        "source": null,
+        "uiErrors": []
+      },
+      "tailor": {
+        "status": "done",
+        "saved": true,
+        "content": "390af4176ebd",
+        "sourceHash": null,
+        "designFellBack": null,
+        "source": null,
+        "uiErrors": []
+      },
+      "answer": {
+        "ok": true,
+        "error": null,
+        "answer": "1b1d0a76e106"
+      },
+      "resume": {
+        "filename": "Jordan Sample Resume.txt",
+        "text": "d032e6fd566a",
+        "readerVersion": 2,
+        "file": null,
+        "design": null,
+        "parsed": true,
+        "linksKept": true,
+        "parseVersion": null,
+        "mark": false
+      },
+      "history": {
+        "letters": 1,
+        "tailored": 1,
+        "files": 0
+      },
+      "account": null
+    },
+    "base": {
+      "version": "1.10.1",
+      "resumeAfterOpen": {
+        "filename": "Jordan Sample Resume.txt",
+        "text": "d032e6fd566a",
+        "readerVersion": 2,
+        "file": null,
+        "design": null,
+        "parsed": true,
+        "linksKept": true,
+        "parseVersion": null,
+        "mark": false
+      },
+      "callsOnOpen": {
+        "backend": 0,
+        "backendParses": 0,
+        "shim": ""
+      },
+      "usingLine": null,
+      "generateErrors": [],
+      "resumeTab": {
+        "note": false,
+        "errors": [],
+        "filename": true,
+        "download": false
+      },
+      "letter": {
+        "status": "done",
+        "saved": true,
+        "letter": "Dear Acme Team,\n\nAt Initech I rebuilt the billing export pipeline in TypeScript and cut nightly run time from four hours to forty minutes. Acme's posting describes a reporting stack that has outgrown its batch jobs, and that is work I have done before.\n\nOver three years I owned the data services behind Initech's customer dashboard. I moved the heaviest queries onto Postgres materialized views, added load tests before each release, and paired with support so the slow pages they reported got fixed first. When the on-call rotation shrank to two people, I wrote the runbooks that let new engineers take a shift in their second week.\n\nThe posting mentions a move from cron scripts to an event queue. I ran a similar migration at Initech, including the month both systems ran side by side. Acme's team of six engineers matches the group I work in now.\n\nI'd like to talk about how the Initech migration went and what I would change next time.\n\nKind regards,\n\nTest Person",
+        "source": null,
+        "uiErrors": []
+      },
+      "callsLetter": {
+        "backend": 0,
+        "backendParses": 0,
+        "shim": "letter-or-answer,letter-or-answer"
+      },
+      "tailor": {
+        "status": "done",
+        "saved": true,
+        "content": "390af4176ebd",
+        "sourceHash": null,
+        "designFellBack": null,
+        "source": null,
+        "uiErrors": []
+      },
+      "callsTailor": {
+        "backend": 4,
+        "backendParses": 0,
+        "shim": "check,check,check,tailor"
+      },
+      "answer": {
+        "ok": true,
+        "error": null,
+        "answer": "1b1d0a76e106"
+      },
+      "callsAnswer": {
+        "backend": 0,
+        "backendParses": 0,
+        "shim": "letter-or-answer"
+      },
+      "resumeAfter": {
+        "filename": "Jordan Sample Resume.txt",
+        "text": "d032e6fd566a",
+        "readerVersion": 2,
+        "file": null,
+        "design": null,
+        "parsed": true,
+        "linksKept": true,
+        "parseVersion": null,
+        "mark": false
+      },
+      "history": {
+        "letters": 2,
+        "tailored": 2,
+        "files": 0
+      },
+      "historyView": {
+        "oldCard": true,
+        "newCard": true,
+        "errors": [],
+        "oldHasLetter": true,
+        "oldHasTailored": true,
+        "oldFromLine": false
+      },
+      "oldLetterPdf": {
+        "ok": true,
+        "name": "cover-letter-acme-example-data-analyst.pdf",
+        "bytes": true,
+        "docx": null
+      },
+      "oldTailoredPdf": {
+        "ok": true,
+        "name": "Test-Person-data-analyst.pdf",
+        "bytes": true,
+        "docx": null
+      },
+      "oldTailoredWord": {
+        "ok": true,
+        "name": "Test-Person-data-analyst.docx",
+        "bytes": true,
+        "docx": "8176fa79ab0d"
+      },
+      "historyErrorsAfter": []
+    },
+    "account": null
+  },
+  "byok-txt-up": {
+    "name": "byok-txt",
+    "arm": "up",
+    "setup": {
+      "letter": {
+        "status": "done",
+        "saved": true,
+        "letter": "Dear Acme Team,\n\nAt Initech I rebuilt the billing export pipeline in TypeScript and cut nightly run time from four hours to forty minutes. Acme's posting describes a reporting stack that has outgrown its batch jobs, and that is work I have done before.\n\nOver three years I owned the data services behind Initech's customer dashboard. I moved the heaviest queries onto Postgres materialized views, added load tests before each release, and paired with support so the slow pages they reported got fixed first. When the on-call rotation shrank to two people, I wrote the runbooks that let new engineers take a shift in their second week.\n\nThe posting mentions a move from cron scripts to an event queue. I ran a similar migration at Initech, including the month both systems ran side by side. Acme's team of six engineers matches the group I work in now.\n\nI'd like to talk about how the Initech migration went and what I would change next time.\n\nKind regards,\n\nTest Person",
+        "source": null,
+        "uiErrors": []
+      },
+      "tailor": {
+        "status": "done",
+        "saved": true,
+        "content": "390af4176ebd",
+        "sourceHash": null,
+        "designFellBack": null,
+        "source": null,
+        "uiErrors": []
+      },
+      "answer": {
+        "ok": true,
+        "error": null,
+        "answer": "1b1d0a76e106"
+      },
+      "resume": {
+        "filename": "Jordan Sample Resume.txt",
+        "text": "d032e6fd566a",
+        "readerVersion": 2,
+        "file": null,
+        "design": null,
+        "parsed": true,
+        "linksKept": true,
+        "parseVersion": null,
+        "mark": false
+      },
+      "history": {
+        "letters": 1,
+        "tailored": 1,
+        "files": 0
+      },
+      "account": null
+    },
+    "up": {
+      "version": "1.11.0",
+      "resumeAfterOpen": {
+        "filename": "Jordan Sample Resume.txt",
+        "text": "d032e6fd566a",
+        "readerVersion": 2,
+        "file": null,
+        "design": null,
+        "parsed": true,
+        "linksKept": true,
+        "parseVersion": null,
+        "mark": false
+      },
+      "callsOnOpen": {
+        "backend": 0,
+        "backendParses": 0,
+        "shim": ""
+      },
+      "usingLine": null,
+      "generateErrors": [],
+      "resumeTab": {
+        "note": false,
+        "errors": [],
+        "filename": true,
+        "download": false
+      },
+      "letter": {
+        "status": "done",
+        "saved": true,
+        "letter": "Dear Acme Team,\n\nAt Initech I rebuilt the billing export pipeline in TypeScript and cut nightly run time from four hours to forty minutes. Acme's posting describes a reporting stack that has outgrown its batch jobs, and that is work I have done before.\n\nOver three years I owned the data services behind Initech's customer dashboard. I moved the heaviest queries onto Postgres materialized views, added load tests before each release, and paired with support so the slow pages they reported got fixed first. When the on-call rotation shrank to two people, I wrote the runbooks that let new engineers take a shift in their second week.\n\nThe posting mentions a move from cron scripts to an event queue. I ran a similar migration at Initech, including the month both systems ran side by side. Acme's team of six engineers matches the group I work in now.\n\nI'd like to talk about how the Initech migration went and what I would change next time.\n\nKind regards,\n\nTest Person",
+        "source": {
+          "filename": "Jordan Sample Resume.txt",
+          "uploadedAt": "2026-11-27T16:25:19.377Z"
+        },
+        "uiErrors": []
+      },
+      "callsLetter": {
+        "backend": 0,
+        "backendParses": 0,
+        "shim": "letter-or-answer,letter-or-answer"
+      },
+      "tailor": {
+        "status": "done",
+        "saved": true,
+        "content": "390af4176ebd",
+        "sourceHash": null,
+        "designFellBack": null,
+        "source": {
+          "filename": "Jordan Sample Resume.txt",
+          "uploadedAt": "2026-11-27T16:25:19.377Z"
+        },
+        "uiErrors": []
+      },
+      "callsTailor": {
+        "backend": 4,
+        "backendParses": 0,
+        "shim": "check,check,check,tailor"
+      },
+      "answer": {
+        "ok": true,
+        "error": null,
+        "answer": "1b1d0a76e106"
+      },
+      "callsAnswer": {
+        "backend": 0,
+        "backendParses": 0,
+        "shim": "letter-or-answer"
+      },
+      "resumeAfter": {
+        "filename": "Jordan Sample Resume.txt",
+        "text": "d032e6fd566a",
+        "readerVersion": 2,
+        "file": null,
+        "design": null,
+        "parsed": true,
+        "linksKept": true,
+        "parseVersion": null,
+        "mark": false
+      },
+      "history": {
+        "letters": 2,
+        "tailored": 2,
+        "files": 0
+      },
+      "historyView": {
+        "oldCard": true,
+        "newCard": true,
+        "errors": [],
+        "oldHasLetter": true,
+        "oldHasTailored": true,
+        "oldFromLine": false
+      },
+      "oldLetterPdf": {
+        "ok": true,
+        "name": "cover-letter-acme-example-data-analyst.pdf",
+        "bytes": true,
+        "docx": null
+      },
+      "oldTailoredPdf": {
+        "ok": true,
+        "name": "Test-Person-data-analyst.pdf",
+        "bytes": true,
+        "docx": null
+      },
+      "oldTailoredWord": {
+        "ok": true,
+        "name": "Test-Person-data-analyst.docx",
+        "bytes": true,
+        "docx": "8176fa79ab0d"
+      },
+      "historyErrorsAfter": []
+    },
+    "account": null
+  },
+  "byok-docx-base": {
+    "name": "byok-docx",
+    "arm": "base",
+    "setup": {
+      "letter": {
+        "status": "done",
+        "saved": true,
+        "letter": "Dear Acme Team,\n\nAt Initech I rebuilt the billing export pipeline in TypeScript and cut nightly run time from four hours to forty minutes. Acme's posting describes a reporting stack that has outgrown its batch jobs, and that is work I have done before.\n\nOver three years I owned the data services behind Initech's customer dashboard. I moved the heaviest queries onto Postgres materialized views, added load tests before each release, and paired with support so the slow pages they reported got fixed first. When the on-call rotation shrank to two people, I wrote the runbooks that let new engineers take a shift in their second week.\n\nThe posting mentions a move from cron scripts to an event queue. I ran a similar migration at Initech, including the month both systems ran side by side. Acme's team of six engineers matches the group I work in now.\n\nI'd like to talk about how the Initech migration went and what I would change next time.\n\nKind regards,\n\nTest Person",
+        "source": null,
+        "uiErrors": []
+      },
+      "tailor": {
+        "status": "done",
+        "saved": true,
+        "content": "2815e09282ff",
+        "sourceHash": "76fb78e9a6120a4e5c74316c3ce9f3899b014297a4d3cd6962773dfd19f78415",
+        "designFellBack": null,
+        "source": null,
+        "uiErrors": []
+      },
+      "answer": {
+        "ok": true,
+        "error": null,
+        "answer": "1b1d0a76e106"
+      },
+      "resume": {
+        "filename": "Test Person Resume.docx",
+        "text": "713a8dcb98cf",
+        "readerVersion": 2,
+        "file": null,
+        "design": "done",
+        "parsed": true,
+        "linksKept": true,
+        "parseVersion": null,
+        "mark": false
+      },
+      "history": {
+        "letters": 1,
+        "tailored": 1,
+        "files": 1
+      },
+      "account": null
+    },
+    "base": {
+      "version": "1.10.1",
+      "resumeAfterOpen": {
+        "filename": "Test Person Resume.docx",
+        "text": "713a8dcb98cf",
+        "readerVersion": 2,
+        "file": null,
+        "design": "done",
+        "parsed": true,
+        "linksKept": true,
+        "parseVersion": null,
+        "mark": false
+      },
+      "callsOnOpen": {
+        "backend": 0,
+        "backendParses": 0,
+        "shim": ""
+      },
+      "usingLine": null,
+      "generateErrors": [],
+      "resumeTab": {
+        "note": false,
+        "errors": [],
+        "filename": true,
+        "download": false
+      },
+      "letter": {
+        "status": "done",
+        "saved": true,
+        "letter": "Dear Acme Team,\n\nAt Initech I rebuilt the billing export pipeline in TypeScript and cut nightly run time from four hours to forty minutes. Acme's posting describes a reporting stack that has outgrown its batch jobs, and that is work I have done before.\n\nOver three years I owned the data services behind Initech's customer dashboard. I moved the heaviest queries onto Postgres materialized views, added load tests before each release, and paired with support so the slow pages they reported got fixed first. When the on-call rotation shrank to two people, I wrote the runbooks that let new engineers take a shift in their second week.\n\nThe posting mentions a move from cron scripts to an event queue. I ran a similar migration at Initech, including the month both systems ran side by side. Acme's team of six engineers matches the group I work in now.\n\nI'd like to talk about how the Initech migration went and what I would change next time.\n\nKind regards,\n\nTest Person",
+        "source": null,
+        "uiErrors": []
+      },
+      "callsLetter": {
+        "backend": 0,
+        "backendParses": 0,
+        "shim": "letter-or-answer,letter-or-answer"
+      },
+      "tailor": {
+        "status": "done",
+        "saved": true,
+        "content": "2815e09282ff",
+        "sourceHash": "76fb78e9a6120a4e5c74316c3ce9f3899b014297a4d3cd6962773dfd19f78415",
+        "designFellBack": null,
+        "source": null,
+        "uiErrors": []
+      },
+      "callsTailor": {
+        "backend": 4,
+        "backendParses": 0,
+        "shim": "check,check,check,tailor"
+      },
+      "answer": {
+        "ok": true,
+        "error": null,
+        "answer": "1b1d0a76e106"
+      },
+      "callsAnswer": {
+        "backend": 0,
+        "backendParses": 0,
+        "shim": "letter-or-answer"
+      },
+      "resumeAfter": {
+        "filename": "Test Person Resume.docx",
+        "text": "713a8dcb98cf",
+        "readerVersion": 2,
+        "file": null,
+        "design": "done",
+        "parsed": true,
+        "linksKept": true,
+        "parseVersion": null,
+        "mark": false
+      },
+      "history": {
+        "letters": 2,
+        "tailored": 2,
+        "files": 1
+      },
+      "historyView": {
+        "oldCard": true,
+        "newCard": true,
+        "errors": [],
+        "oldHasLetter": true,
+        "oldHasTailored": true,
+        "oldFromLine": false
+      },
+      "oldLetterPdf": {
+        "ok": true,
+        "name": "cover-letter-acme-example-data-analyst.pdf",
+        "bytes": true,
+        "docx": null
+      },
+      "oldTailoredPdf": {
+        "ok": true,
+        "name": "Test-Person-data-analyst.pdf",
+        "bytes": true,
+        "docx": null
+      },
+      "oldTailoredWord": {
+        "ok": true,
+        "name": "Test-Person-data-analyst.docx",
+        "bytes": true,
+        "docx": "fe268fad7a26"
+      },
+      "historyErrorsAfter": []
+    },
+    "account": null
+  },
+  "byok-docx-up": {
+    "name": "byok-docx",
+    "arm": "up",
+    "setup": {
+      "letter": {
+        "status": "done",
+        "saved": true,
+        "letter": "Dear Acme Team,\n\nAt Initech I rebuilt the billing export pipeline in TypeScript and cut nightly run time from four hours to forty minutes. Acme's posting describes a reporting stack that has outgrown its batch jobs, and that is work I have done before.\n\nOver three years I owned the data services behind Initech's customer dashboard. I moved the heaviest queries onto Postgres materialized views, added load tests before each release, and paired with support so the slow pages they reported got fixed first. When the on-call rotation shrank to two people, I wrote the runbooks that let new engineers take a shift in their second week.\n\nThe posting mentions a move from cron scripts to an event queue. I ran a similar migration at Initech, including the month both systems ran side by side. Acme's team of six engineers matches the group I work in now.\n\nI'd like to talk about how the Initech migration went and what I would change next time.\n\nKind regards,\n\nTest Person",
+        "source": null,
+        "uiErrors": []
+      },
+      "tailor": {
+        "status": "done",
+        "saved": true,
+        "content": "2815e09282ff",
+        "sourceHash": "76fb78e9a6120a4e5c74316c3ce9f3899b014297a4d3cd6962773dfd19f78415",
+        "designFellBack": null,
+        "source": null,
+        "uiErrors": []
+      },
+      "answer": {
+        "ok": true,
+        "error": null,
+        "answer": "1b1d0a76e106"
+      },
+      "resume": {
+        "filename": "Test Person Resume.docx",
+        "text": "713a8dcb98cf",
+        "readerVersion": 2,
+        "file": null,
+        "design": "done",
+        "parsed": true,
+        "linksKept": true,
+        "parseVersion": null,
+        "mark": false
+      },
+      "history": {
+        "letters": 1,
+        "tailored": 1,
+        "files": 1
+      },
+      "account": null
+    },
+    "up": {
+      "version": "1.11.0",
+      "resumeAfterOpen": {
+        "filename": "Test Person Resume.docx",
+        "text": "713a8dcb98cf",
+        "readerVersion": 2,
+        "file": null,
+        "design": "done",
+        "parsed": true,
+        "linksKept": true,
+        "parseVersion": null,
+        "mark": false
+      },
+      "callsOnOpen": {
+        "backend": 0,
+        "backendParses": 0,
+        "shim": ""
+      },
+      "usingLine": null,
+      "generateErrors": [],
+      "resumeTab": {
+        "note": false,
+        "errors": [],
+        "filename": true,
+        "download": true
+      },
+      "letter": {
+        "status": "done",
+        "saved": true,
+        "letter": "Dear Acme Team,\n\nAt Initech I rebuilt the billing export pipeline in TypeScript and cut nightly run time from four hours to forty minutes. Acme's posting describes a reporting stack that has outgrown its batch jobs, and that is work I have done before.\n\nOver three years I owned the data services behind Initech's customer dashboard. I moved the heaviest queries onto Postgres materialized views, added load tests before each release, and paired with support so the slow pages they reported got fixed first. When the on-call rotation shrank to two people, I wrote the runbooks that let new engineers take a shift in their second week.\n\nThe posting mentions a move from cron scripts to an event queue. I ran a similar migration at Initech, including the month both systems ran side by side. Acme's team of six engineers matches the group I work in now.\n\nI'd like to talk about how the Initech migration went and what I would change next time.\n\nKind regards,\n\nTest Person",
+        "source": {
+          "fileId": "76fb78e9a6120a4e5c74316c3ce9f3899b014297a4d3cd6962773dfd19f78415",
+          "filename": "Test Person Resume.docx",
+          "uploadedAt": "2026-11-27T16:25:57.109Z"
+        },
+        "uiErrors": []
+      },
+      "callsLetter": {
+        "backend": 0,
+        "backendParses": 0,
+        "shim": "letter-or-answer,letter-or-answer"
+      },
+      "tailor": {
+        "status": "done",
+        "saved": true,
+        "content": "2815e09282ff",
+        "sourceHash": "76fb78e9a6120a4e5c74316c3ce9f3899b014297a4d3cd6962773dfd19f78415",
+        "designFellBack": null,
+        "source": {
+          "fileId": "76fb78e9a6120a4e5c74316c3ce9f3899b014297a4d3cd6962773dfd19f78415",
+          "filename": "Test Person Resume.docx",
+          "uploadedAt": "2026-11-27T16:25:57.109Z"
+        },
+        "uiErrors": []
+      },
+      "callsTailor": {
+        "backend": 4,
+        "backendParses": 0,
+        "shim": "check,check,check,tailor"
+      },
+      "answer": {
+        "ok": true,
+        "error": null,
+        "answer": "1b1d0a76e106"
+      },
+      "callsAnswer": {
+        "backend": 0,
+        "backendParses": 0,
+        "shim": "letter-or-answer"
+      },
+      "resumeAfter": {
+        "filename": "Test Person Resume.docx",
+        "text": "713a8dcb98cf",
+        "readerVersion": 2,
+        "file": null,
+        "design": "done",
+        "parsed": true,
+        "linksKept": true,
+        "parseVersion": null,
+        "mark": false
+      },
+      "history": {
+        "letters": 2,
+        "tailored": 2,
+        "files": 1
+      },
+      "historyView": {
+        "oldCard": true,
+        "newCard": true,
+        "errors": [],
+        "oldHasLetter": true,
+        "oldHasTailored": true,
+        "oldFromLine": false
+      },
+      "oldLetterPdf": {
+        "ok": true,
+        "name": "cover-letter-acme-example-data-analyst.pdf",
+        "bytes": true,
+        "docx": null
+      },
+      "oldTailoredPdf": {
+        "ok": true,
+        "name": "Test-Person-data-analyst.pdf",
+        "bytes": true,
+        "docx": null
+      },
+      "oldTailoredWord": {
+        "ok": true,
+        "name": "Test-Person-data-analyst.docx",
+        "bytes": true,
+        "docx": "fe268fad7a26"
+      },
+      "historyErrorsAfter": []
+    },
+    "account": null
+  },
+  "free-pdf-old-base": {
+    "name": "free-pdf-old",
+    "arm": "base",
+    "setup": {
+      "letter": {
+        "status": "done",
+        "saved": true,
+        "letter": "Dear Acme Team,\n\nAt Initech I rebuilt the billing export pipeline in TypeScript and cut nightly run time from four hours to forty minutes. Acme's posting describes a reporting stack that has outgrown its batch jobs, and that is work I have done before.\n\nOver three years I owned the data services behind Initech's customer dashboard. I moved the heaviest queries onto Postgres materialized views, added load tests before each release, and paired with support so the slow pages they reported got fixed first. When the on-call rotation shrank to two people, I wrote the runbooks that let new engineers take a shift in their second week.\n\nThe posting mentions a move from cron scripts to an event queue. I ran a similar migration at Initech, including the month both systems ran side by side. Acme's team of six engineers matches the group I work in now.\n\nI'd like to talk about how the Initech migration went and what I would change next time.\n\nKind regards,\n\nTest Person",
+        "source": null,
+        "uiErrors": []
+      },
+      "tailor": {
+        "status": "done",
+        "saved": true,
+        "content": "390af4176ebd",
+        "sourceHash": null,
+        "designFellBack": null,
+        "source": null,
+        "uiErrors": []
+      },
+      "answer": {
+        "ok": true,
+        "error": null,
+        "answer": "1b1d0a76e106"
+      },
+      "resume": {
+        "filename": "Robin Example Resume.pdf",
+        "text": "09354e40bf0e",
+        "readerVersion": null,
+        "file": null,
+        "design": null,
+        "parsed": false,
+        "linksKept": null,
+        "parseVersion": null,
+        "mark": false
+      },
+      "history": {
+        "letters": 1,
+        "tailored": 1,
+        "files": 0
+      },
+      "account": {
+        "filename": "Robin Example Resume.pdf",
+        "reader_version": null,
+        "uploaded_at": null,
+        "design_hash": null,
+        "encLen": 708,
+        "updated_at": "2026-11-27 16:26:19.073+00"
+      }
+    },
+    "base": {
+      "version": "1.10.1",
+      "resumeAfterOpen": {
+        "filename": "Robin Example Resume.pdf",
+        "text": "09354e40bf0e",
+        "readerVersion": null,
+        "file": null,
+        "design": null,
+        "parsed": false,
+        "linksKept": null,
+        "parseVersion": null,
+        "mark": false
+      },
+      "callsOnOpen": {
+        "backend": 0,
+        "backendParses": 0,
+        "shim": ""
+      },
+      "usingLine": null,
+      "generateErrors": [],
+      "resumeTab": {
+        "note": false,
+        "errors": [],
+        "filename": true,
+        "download": false
+      },
+      "letter": {
+        "status": "done",
+        "saved": true,
+        "letter": "Dear Acme Team,\n\nAt Initech I rebuilt the billing export pipeline in TypeScript and cut nightly run time from four hours to forty minutes. Acme's posting describes a reporting stack that has outgrown its batch jobs, and that is work I have done before.\n\nOver three years I owned the data services behind Initech's customer dashboard. I moved the heaviest queries onto Postgres materialized views, added load tests before each release, and paired with support so the slow pages they reported got fixed first. When the on-call rotation shrank to two people, I wrote the runbooks that let new engineers take a shift in their second week.\n\nThe posting mentions a move from cron scripts to an event queue. I ran a similar migration at Initech, including the month both systems ran side by side. Acme's team of six engineers matches the group I work in now.\n\nI'd like to talk about how the Initech migration went and what I would change next time.\n\nKind regards,\n\nTest Person",
+        "source": null,
+        "uiErrors": []
+      },
+      "callsLetter": {
+        "backend": 2,
+        "backendParses": 0,
+        "shim": ""
+      },
+      "tailor": {
+        "status": "done",
+        "saved": true,
+        "content": "390af4176ebd",
+        "sourceHash": null,
+        "designFellBack": null,
+        "source": null,
+        "uiErrors": []
+      },
+      "callsTailor": {
+        "backend": 4,
+        "backendParses": 0,
+        "shim": ""
+      },
+      "answer": {
+        "ok": true,
+        "error": null,
+        "answer": "1b1d0a76e106"
+      },
+      "callsAnswer": {
+        "backend": 1,
+        "backendParses": 0,
+        "shim": ""
+      },
+      "resumeAfter": {
+        "filename": "Robin Example Resume.pdf",
+        "text": "09354e40bf0e",
+        "readerVersion": null,
+        "file": null,
+        "design": null,
+        "parsed": false,
+        "linksKept": null,
+        "parseVersion": null,
+        "mark": false
+      },
+      "history": {
+        "letters": 2,
+        "tailored": 2,
+        "files": 0
+      },
+      "account": {
+        "filename": "Robin Example Resume.pdf",
+        "reader_version": null,
+        "uploaded_at": null,
+        "design_hash": null,
+        "encLen": 708,
+        "updated_at": "2026-11-27 16:26:19.073+00"
+      },
+      "accountTextSame": true,
+      "historyView": {
+        "oldCard": true,
+        "newCard": true,
+        "errors": [],
+        "oldHasLetter": true,
+        "oldHasTailored": true,
+        "oldFromLine": false
+      },
+      "oldLetterPdf": {
+        "ok": true,
+        "name": "cover-letter-acme-example-data-analyst.pdf",
+        "bytes": true,
+        "docx": null
+      },
+      "oldTailoredPdf": {
+        "ok": true,
+        "name": "Test-Person-data-analyst.pdf",
+        "bytes": true,
+        "docx": null
+      },
+      "oldTailoredWord": {
+        "ok": true,
+        "name": "Test-Person-data-analyst.docx",
+        "bytes": true,
+        "docx": "8176fa79ab0d"
+      },
+      "historyErrorsAfter": []
+    },
+    "account": {
+      "tier": "free"
+    }
+  },
+  "free-pdf-old-up": {
+    "name": "free-pdf-old",
+    "arm": "up",
+    "setup": {
+      "letter": {
+        "status": "done",
+        "saved": true,
+        "letter": "Dear Acme Team,\n\nAt Initech I rebuilt the billing export pipeline in TypeScript and cut nightly run time from four hours to forty minutes. Acme's posting describes a reporting stack that has outgrown its batch jobs, and that is work I have done before.\n\nOver three years I owned the data services behind Initech's customer dashboard. I moved the heaviest queries onto Postgres materialized views, added load tests before each release, and paired with support so the slow pages they reported got fixed first. When the on-call rotation shrank to two people, I wrote the runbooks that let new engineers take a shift in their second week.\n\nThe posting mentions a move from cron scripts to an event queue. I ran a similar migration at Initech, including the month both systems ran side by side. Acme's team of six engineers matches the group I work in now.\n\nI'd like to talk about how the Initech migration went and what I would change next time.\n\nKind regards,\n\nTest Person",
+        "source": null,
+        "uiErrors": []
+      },
+      "tailor": {
+        "status": "done",
+        "saved": true,
+        "content": "390af4176ebd",
+        "sourceHash": null,
+        "designFellBack": null,
+        "source": null,
+        "uiErrors": []
+      },
+      "answer": {
+        "ok": true,
+        "error": null,
+        "answer": "1b1d0a76e106"
+      },
+      "resume": {
+        "filename": "Robin Example Resume.pdf",
+        "text": "09354e40bf0e",
+        "readerVersion": null,
+        "file": null,
+        "design": null,
+        "parsed": false,
+        "linksKept": null,
+        "parseVersion": null,
+        "mark": false
+      },
+      "history": {
+        "letters": 1,
+        "tailored": 1,
+        "files": 0
+      },
+      "account": {
+        "filename": "Robin Example Resume.pdf",
+        "reader_version": null,
+        "uploaded_at": null,
+        "design_hash": null,
+        "encLen": 708,
+        "updated_at": "2026-11-27 16:26:41.317+00"
+      }
+    },
+    "up": {
+      "version": "1.11.0",
+      "resumeAfterOpen": {
+        "filename": "Robin Example Resume.pdf",
+        "text": "09354e40bf0e",
+        "readerVersion": null,
+        "file": null,
+        "design": null,
+        "parsed": false,
+        "linksKept": null,
+        "parseVersion": null,
+        "mark": false
+      },
+      "callsOnOpen": {
+        "backend": 0,
+        "backendParses": 0,
+        "shim": ""
+      },
+      "usingLine": null,
+      "generateErrors": [],
+      "resumeTab": {
+        "note": true,
+        "errors": [],
+        "filename": true,
+        "download": false
+      },
+      "letter": {
+        "status": "done",
+        "saved": true,
+        "letter": "Dear Acme Team,\n\nAt Initech I rebuilt the billing export pipeline in TypeScript and cut nightly run time from four hours to forty minutes. Acme's posting describes a reporting stack that has outgrown its batch jobs, and that is work I have done before.\n\nOver three years I owned the data services behind Initech's customer dashboard. I moved the heaviest queries onto Postgres materialized views, added load tests before each release, and paired with support so the slow pages they reported got fixed first. When the on-call rotation shrank to two people, I wrote the runbooks that let new engineers take a shift in their second week.\n\nThe posting mentions a move from cron scripts to an event queue. I ran a similar migration at Initech, including the month both systems ran side by side. Acme's team of six engineers matches the group I work in now.\n\nI'd like to talk about how the Initech migration went and what I would change next time.\n\nKind regards,\n\nTest Person",
+        "source": {
+          "filename": "Robin Example Resume.pdf",
+          "uploadedAt": "2026-11-27T16:26:41.275Z"
+        },
+        "uiErrors": []
+      },
+      "callsLetter": {
+        "backend": 2,
+        "backendParses": 0,
+        "shim": ""
+      },
+      "tailor": {
+        "status": "done",
+        "saved": true,
+        "content": "390af4176ebd",
+        "sourceHash": null,
+        "designFellBack": null,
+        "source": {
+          "filename": "Robin Example Resume.pdf",
+          "uploadedAt": "2026-11-27T16:26:41.275Z"
+        },
+        "uiErrors": []
+      },
+      "callsTailor": {
+        "backend": 4,
+        "backendParses": 0,
+        "shim": ""
+      },
+      "answer": {
+        "ok": true,
+        "error": null,
+        "answer": "1b1d0a76e106"
+      },
+      "callsAnswer": {
+        "backend": 1,
+        "backendParses": 0,
+        "shim": ""
+      },
+      "resumeAfter": {
+        "filename": "Robin Example Resume.pdf",
+        "text": "09354e40bf0e",
+        "readerVersion": null,
+        "file": null,
+        "design": null,
+        "parsed": false,
+        "linksKept": null,
+        "parseVersion": null,
+        "mark": false
+      },
+      "history": {
+        "letters": 2,
+        "tailored": 2,
+        "files": 0
+      },
+      "account": {
+        "filename": "Robin Example Resume.pdf",
+        "reader_version": null,
+        "uploaded_at": null,
+        "design_hash": null,
+        "encLen": 708,
+        "updated_at": "2026-11-27 16:26:41.317+00"
+      },
+      "accountTextSame": true,
+      "historyView": {
+        "oldCard": true,
+        "newCard": true,
+        "errors": [],
+        "oldHasLetter": true,
+        "oldHasTailored": true,
+        "oldFromLine": false
+      },
+      "oldLetterPdf": {
+        "ok": true,
+        "name": "cover-letter-acme-example-data-analyst.pdf",
+        "bytes": true,
+        "docx": null
+      },
+      "oldTailoredPdf": {
+        "ok": true,
+        "name": "Test-Person-data-analyst.pdf",
+        "bytes": true,
+        "docx": null
+      },
+      "oldTailoredWord": {
+        "ok": true,
+        "name": "Test-Person-data-analyst.docx",
+        "bytes": true,
+        "docx": "8176fa79ab0d"
+      },
+      "historyErrorsAfter": []
+    },
+    "account": {
+      "tier": "free"
+    }
+  },
+  "pro-pdf-base": {
+    "name": "pro-pdf",
+    "arm": "base",
+    "setup": {
+      "letter": {
+        "status": "done",
+        "saved": true,
+        "letter": "Dear Acme Team,\n\nAt Initech I rebuilt the billing export pipeline in TypeScript and cut nightly run time from four hours to forty minutes. Acme's posting describes a reporting stack that has outgrown its batch jobs, and that is work I have done before.\n\nOver three years I owned the data services behind Initech's customer dashboard. I moved the heaviest queries onto Postgres materialized views, added load tests before each release, and paired with support so the slow pages they reported got fixed first. When the on-call rotation shrank to two people, I wrote the runbooks that let new engineers take a shift in their second week.\n\nThe posting mentions a move from cron scripts to an event queue. I ran a similar migration at Initech, including the month both systems ran side by side. Acme's team of six engineers matches the group I work in now.\n\nI'd like to talk about how the Initech migration went and what I would change next time.\n\nKind regards,\n\nTest Person",
+        "source": null,
+        "uiErrors": []
+      },
+      "tailor": {
+        "status": "done",
+        "saved": true,
+        "content": "390af4176ebd",
+        "sourceHash": null,
+        "designFellBack": null,
+        "source": null,
+        "uiErrors": []
+      },
+      "answer": {
+        "ok": true,
+        "error": null,
+        "answer": "1b1d0a76e106"
+      },
+      "resume": {
+        "filename": "Robin Example Resume.pdf",
+        "text": "09354e40bf0e",
+        "readerVersion": 2,
+        "file": null,
+        "design": null,
+        "parsed": false,
+        "linksKept": null,
+        "parseVersion": null,
+        "mark": false
+      },
+      "history": {
+        "letters": 1,
+        "tailored": 1,
+        "files": 0
+      },
+      "account": {
+        "filename": "Robin Example Resume.pdf",
+        "reader_version": null,
+        "uploaded_at": null,
+        "design_hash": null,
+        "encLen": 708,
+        "updated_at": "2026-11-27 16:27:03.476+00"
+      }
+    },
+    "base": {
+      "version": "1.10.1",
+      "resumeAfterOpen": {
+        "filename": "Robin Example Resume.pdf",
+        "text": "09354e40bf0e",
+        "readerVersion": 2,
+        "file": null,
+        "design": null,
+        "parsed": false,
+        "linksKept": null,
+        "parseVersion": null,
+        "mark": false
+      },
+      "callsOnOpen": {
+        "backend": 0,
+        "backendParses": 0,
+        "shim": ""
+      },
+      "usingLine": null,
+      "generateErrors": [],
+      "resumeTab": {
+        "note": false,
+        "errors": [],
+        "filename": true,
+        "download": false
+      },
+      "letter": {
+        "status": "done",
+        "saved": true,
+        "letter": "Dear Acme Team,\n\nAt Initech I rebuilt the billing export pipeline in TypeScript and cut nightly run time from four hours to forty minutes. Acme's posting describes a reporting stack that has outgrown its batch jobs, and that is work I have done before.\n\nOver three years I owned the data services behind Initech's customer dashboard. I moved the heaviest queries onto Postgres materialized views, added load tests before each release, and paired with support so the slow pages they reported got fixed first. When the on-call rotation shrank to two people, I wrote the runbooks that let new engineers take a shift in their second week.\n\nThe posting mentions a move from cron scripts to an event queue. I ran a similar migration at Initech, including the month both systems ran side by side. Acme's team of six engineers matches the group I work in now.\n\nI'd like to talk about how the Initech migration went and what I would change next time.\n\nKind regards,\n\nTest Person",
+        "source": null,
+        "uiErrors": []
+      },
+      "callsLetter": {
+        "backend": 2,
+        "backendParses": 0,
+        "shim": ""
+      },
+      "tailor": {
+        "status": "done",
+        "saved": true,
+        "content": "390af4176ebd",
+        "sourceHash": null,
+        "designFellBack": null,
+        "source": null,
+        "uiErrors": []
+      },
+      "callsTailor": {
+        "backend": 4,
+        "backendParses": 0,
+        "shim": ""
+      },
+      "answer": {
+        "ok": true,
+        "error": null,
+        "answer": "1b1d0a76e106"
+      },
+      "callsAnswer": {
+        "backend": 1,
+        "backendParses": 0,
+        "shim": ""
+      },
+      "resumeAfter": {
+        "filename": "Robin Example Resume.pdf",
+        "text": "09354e40bf0e",
+        "readerVersion": 2,
+        "file": null,
+        "design": null,
+        "parsed": false,
+        "linksKept": null,
+        "parseVersion": null,
+        "mark": false
+      },
+      "history": {
+        "letters": 2,
+        "tailored": 2,
+        "files": 0
+      },
+      "account": {
+        "filename": "Robin Example Resume.pdf",
+        "reader_version": null,
+        "uploaded_at": null,
+        "design_hash": null,
+        "encLen": 708,
+        "updated_at": "2026-11-27 16:27:03.476+00"
+      },
+      "accountTextSame": true,
+      "historyView": {
+        "oldCard": true,
+        "newCard": true,
+        "errors": [],
+        "oldHasLetter": true,
+        "oldHasTailored": true,
+        "oldFromLine": false
+      },
+      "oldLetterPdf": {
+        "ok": true,
+        "name": "cover-letter-acme-example-data-analyst.pdf",
+        "bytes": true,
+        "docx": null
+      },
+      "oldTailoredPdf": {
+        "ok": true,
+        "name": "Test-Person-data-analyst.pdf",
+        "bytes": true,
+        "docx": null
+      },
+      "oldTailoredWord": {
+        "ok": true,
+        "name": "Test-Person-data-analyst.docx",
+        "bytes": true,
+        "docx": "8176fa79ab0d"
+      },
+      "historyErrorsAfter": []
+    },
+    "account": {
+      "tier": "hosted_pro"
+    }
+  },
+  "pro-pdf-up": {
+    "name": "pro-pdf",
+    "arm": "up",
+    "setup": {
+      "letter": {
+        "status": "done",
+        "saved": true,
+        "letter": "Dear Acme Team,\n\nAt Initech I rebuilt the billing export pipeline in TypeScript and cut nightly run time from four hours to forty minutes. Acme's posting describes a reporting stack that has outgrown its batch jobs, and that is work I have done before.\n\nOver three years I owned the data services behind Initech's customer dashboard. I moved the heaviest queries onto Postgres materialized views, added load tests before each release, and paired with support so the slow pages they reported got fixed first. When the on-call rotation shrank to two people, I wrote the runbooks that let new engineers take a shift in their second week.\n\nThe posting mentions a move from cron scripts to an event queue. I ran a similar migration at Initech, including the month both systems ran side by side. Acme's team of six engineers matches the group I work in now.\n\nI'd like to talk about how the Initech migration went and what I would change next time.\n\nKind regards,\n\nTest Person",
+        "source": null,
+        "uiErrors": []
+      },
+      "tailor": {
+        "status": "done",
+        "saved": true,
+        "content": "390af4176ebd",
+        "sourceHash": null,
+        "designFellBack": null,
+        "source": null,
+        "uiErrors": []
+      },
+      "answer": {
+        "ok": true,
+        "error": null,
+        "answer": "1b1d0a76e106"
+      },
+      "resume": {
+        "filename": "Robin Example Resume.pdf",
+        "text": "09354e40bf0e",
+        "readerVersion": 2,
+        "file": null,
+        "design": null,
+        "parsed": false,
+        "linksKept": null,
+        "parseVersion": null,
+        "mark": false
+      },
+      "history": {
+        "letters": 1,
+        "tailored": 1,
+        "files": 0
+      },
+      "account": {
+        "filename": "Robin Example Resume.pdf",
+        "reader_version": null,
+        "uploaded_at": null,
+        "design_hash": null,
+        "encLen": 708,
+        "updated_at": "2026-11-27 16:27:25.573+00"
+      }
+    },
+    "up": {
+      "version": "1.11.0",
+      "resumeAfterOpen": {
+        "filename": "Robin Example Resume.pdf",
+        "text": "09354e40bf0e",
+        "readerVersion": 2,
+        "file": null,
+        "design": null,
+        "parsed": false,
+        "linksKept": null,
+        "parseVersion": null,
+        "mark": false
+      },
+      "callsOnOpen": {
+        "backend": 0,
+        "backendParses": 0,
+        "shim": ""
+      },
+      "usingLine": null,
+      "generateErrors": [],
+      "resumeTab": {
+        "note": false,
+        "errors": [],
+        "filename": true,
+        "download": false
+      },
+      "letter": {
+        "status": "done",
+        "saved": true,
+        "letter": "Dear Acme Team,\n\nAt Initech I rebuilt the billing export pipeline in TypeScript and cut nightly run time from four hours to forty minutes. Acme's posting describes a reporting stack that has outgrown its batch jobs, and that is work I have done before.\n\nOver three years I owned the data services behind Initech's customer dashboard. I moved the heaviest queries onto Postgres materialized views, added load tests before each release, and paired with support so the slow pages they reported got fixed first. When the on-call rotation shrank to two people, I wrote the runbooks that let new engineers take a shift in their second week.\n\nThe posting mentions a move from cron scripts to an event queue. I ran a similar migration at Initech, including the month both systems ran side by side. Acme's team of six engineers matches the group I work in now.\n\nI'd like to talk about how the Initech migration went and what I would change next time.\n\nKind regards,\n\nTest Person",
+        "source": {
+          "filename": "Robin Example Resume.pdf",
+          "uploadedAt": "2026-11-27T16:27:25.482Z"
+        },
+        "uiErrors": []
+      },
+      "callsLetter": {
+        "backend": 2,
+        "backendParses": 0,
+        "shim": ""
+      },
+      "tailor": {
+        "status": "done",
+        "saved": true,
+        "content": "390af4176ebd",
+        "sourceHash": null,
+        "designFellBack": null,
+        "source": {
+          "filename": "Robin Example Resume.pdf",
+          "uploadedAt": "2026-11-27T16:27:25.482Z"
+        },
+        "uiErrors": []
+      },
+      "callsTailor": {
+        "backend": 4,
+        "backendParses": 0,
+        "shim": ""
+      },
+      "answer": {
+        "ok": true,
+        "error": null,
+        "answer": "1b1d0a76e106"
+      },
+      "callsAnswer": {
+        "backend": 1,
+        "backendParses": 0,
+        "shim": ""
+      },
+      "resumeAfter": {
+        "filename": "Robin Example Resume.pdf",
+        "text": "09354e40bf0e",
+        "readerVersion": 2,
+        "file": null,
+        "design": null,
+        "parsed": false,
+        "linksKept": null,
+        "parseVersion": null,
+        "mark": false
+      },
+      "history": {
+        "letters": 2,
+        "tailored": 2,
+        "files": 0
+      },
+      "account": {
+        "filename": "Robin Example Resume.pdf",
+        "reader_version": null,
+        "uploaded_at": null,
+        "design_hash": null,
+        "encLen": 708,
+        "updated_at": "2026-11-27 16:27:25.573+00"
+      },
+      "accountTextSame": true,
+      "historyView": {
+        "oldCard": true,
+        "newCard": true,
+        "errors": [],
+        "oldHasLetter": true,
+        "oldHasTailored": true,
+        "oldFromLine": false
+      },
+      "oldLetterPdf": {
+        "ok": true,
+        "name": "cover-letter-acme-example-data-analyst.pdf",
+        "bytes": true,
+        "docx": null
+      },
+      "oldTailoredPdf": {
+        "ok": true,
+        "name": "Test-Person-data-analyst.pdf",
+        "bytes": true,
+        "docx": null
+      },
+      "oldTailoredWord": {
+        "ok": true,
+        "name": "Test-Person-data-analyst.docx",
+        "bytes": true,
+        "docx": "8176fa79ab0d"
+      },
+      "historyErrorsAfter": []
+    },
+    "account": {
+      "tier": "hosted_pro"
+    }
+  },
+  "pro-docx-old-base": {
+    "name": "pro-docx-old",
+    "arm": "base",
+    "setup": {
+      "letter": {
+        "status": "done",
+        "saved": true,
+        "letter": "Dear Acme Team,\n\nAt Initech I rebuilt the billing export pipeline in TypeScript and cut nightly run time from four hours to forty minutes. Acme's posting describes a reporting stack that has outgrown its batch jobs, and that is work I have done before.\n\nOver three years I owned the data services behind Initech's customer dashboard. I moved the heaviest queries onto Postgres materialized views, added load tests before each release, and paired with support so the slow pages they reported got fixed first. When the on-call rotation shrank to two people, I wrote the runbooks that let new engineers take a shift in their second week.\n\nThe posting mentions a move from cron scripts to an event queue. I ran a similar migration at Initech, including the month both systems ran side by side. Acme's team of six engineers matches the group I work in now.\n\nI'd like to talk about how the Initech migration went and what I would change next time.\n\nKind regards,\n\nTest Person",
+        "source": null,
+        "uiErrors": []
+      },
+      "tailor": {
+        "status": "done",
+        "saved": true,
+        "content": "2815e09282ff",
+        "sourceHash": "76fb78e9a6120a4e5c74316c3ce9f3899b014297a4d3cd6962773dfd19f78415",
+        "designFellBack": null,
+        "source": null,
+        "uiErrors": []
+      },
+      "answer": {
+        "ok": true,
+        "error": null,
+        "answer": "1b1d0a76e106"
+      },
+      "resume": {
+        "filename": "Test Person Resume.docx",
+        "text": "713a8dcb98cf",
+        "readerVersion": null,
+        "file": null,
+        "design": "done",
+        "parsed": false,
+        "linksKept": null,
+        "parseVersion": null,
+        "mark": false
+      },
+      "history": {
+        "letters": 1,
+        "tailored": 1,
+        "files": 1
+      },
+      "account": {
+        "filename": "Test Person Resume.docx",
+        "reader_version": null,
+        "uploaded_at": null,
+        "design_hash": "76fb78e9",
+        "encLen": 604,
+        "updated_at": "2026-11-27 16:27:47.59+00"
+      }
+    },
+    "base": {
+      "version": "1.10.1",
+      "resumeAfterOpen": {
+        "filename": "Test Person Resume.docx",
+        "text": "713a8dcb98cf",
+        "readerVersion": null,
+        "file": null,
+        "design": "done",
+        "parsed": false,
+        "linksKept": null,
+        "parseVersion": null,
+        "mark": false
+      },
+      "callsOnOpen": {
+        "backend": 0,
+        "backendParses": 0,
+        "shim": ""
+      },
+      "usingLine": null,
+      "generateErrors": [],
+      "resumeTab": {
+        "note": false,
+        "errors": [],
+        "filename": true,
+        "download": false
+      },
+      "letter": {
+        "status": "done",
+        "saved": true,
+        "letter": "Dear Acme Team,\n\nAt Initech I rebuilt the billing export pipeline in TypeScript and cut nightly run time from four hours to forty minutes. Acme's posting describes a reporting stack that has outgrown its batch jobs, and that is work I have done before.\n\nOver three years I owned the data services behind Initech's customer dashboard. I moved the heaviest queries onto Postgres materialized views, added load tests before each release, and paired with support so the slow pages they reported got fixed first. When the on-call rotation shrank to two people, I wrote the runbooks that let new engineers take a shift in their second week.\n\nThe posting mentions a move from cron scripts to an event queue. I ran a similar migration at Initech, including the month both systems ran side by side. Acme's team of six engineers matches the group I work in now.\n\nI'd like to talk about how the Initech migration went and what I would change next time.\n\nKind regards,\n\nTest Person",
+        "source": null,
+        "uiErrors": []
+      },
+      "callsLetter": {
+        "backend": 2,
+        "backendParses": 0,
+        "shim": ""
+      },
+      "tailor": {
+        "status": "done",
+        "saved": true,
+        "content": "2815e09282ff",
+        "sourceHash": "76fb78e9a6120a4e5c74316c3ce9f3899b014297a4d3cd6962773dfd19f78415",
+        "designFellBack": null,
+        "source": null,
+        "uiErrors": []
+      },
+      "callsTailor": {
+        "backend": 4,
+        "backendParses": 0,
+        "shim": ""
+      },
+      "answer": {
+        "ok": true,
+        "error": null,
+        "answer": "1b1d0a76e106"
+      },
+      "callsAnswer": {
+        "backend": 1,
+        "backendParses": 0,
+        "shim": ""
+      },
+      "resumeAfter": {
+        "filename": "Test Person Resume.docx",
+        "text": "713a8dcb98cf",
+        "readerVersion": null,
+        "file": null,
+        "design": "done",
+        "parsed": false,
+        "linksKept": null,
+        "parseVersion": null,
+        "mark": false
+      },
+      "history": {
+        "letters": 2,
+        "tailored": 2,
+        "files": 1
+      },
+      "account": {
+        "filename": "Test Person Resume.docx",
+        "reader_version": null,
+        "uploaded_at": null,
+        "design_hash": "76fb78e9",
+        "encLen": 604,
+        "updated_at": "2026-11-27 16:27:47.59+00"
+      },
+      "accountTextSame": true,
+      "historyView": {
+        "oldCard": true,
+        "newCard": true,
+        "errors": [],
+        "oldHasLetter": true,
+        "oldHasTailored": true,
+        "oldFromLine": false
+      },
+      "oldLetterPdf": {
+        "ok": true,
+        "name": "cover-letter-acme-example-data-analyst.pdf",
+        "bytes": true,
+        "docx": null
+      },
+      "oldTailoredPdf": {
+        "ok": true,
+        "name": "Test-Person-data-analyst.pdf",
+        "bytes": true,
+        "docx": null
+      },
+      "oldTailoredWord": {
+        "ok": true,
+        "name": "Test-Person-data-analyst.docx",
+        "bytes": true,
+        "docx": "fe268fad7a26"
+      },
+      "historyErrorsAfter": []
+    },
+    "account": {
+      "tier": "hosted_pro"
+    }
+  },
+  "pro-docx-old-up": {
+    "name": "pro-docx-old",
+    "arm": "up",
+    "setup": {
+      "letter": {
+        "status": "done",
+        "saved": true,
+        "letter": "Dear Acme Team,\n\nAt Initech I rebuilt the billing export pipeline in TypeScript and cut nightly run time from four hours to forty minutes. Acme's posting describes a reporting stack that has outgrown its batch jobs, and that is work I have done before.\n\nOver three years I owned the data services behind Initech's customer dashboard. I moved the heaviest queries onto Postgres materialized views, added load tests before each release, and paired with support so the slow pages they reported got fixed first. When the on-call rotation shrank to two people, I wrote the runbooks that let new engineers take a shift in their second week.\n\nThe posting mentions a move from cron scripts to an event queue. I ran a similar migration at Initech, including the month both systems ran side by side. Acme's team of six engineers matches the group I work in now.\n\nI'd like to talk about how the Initech migration went and what I would change next time.\n\nKind regards,\n\nTest Person",
+        "source": null,
+        "uiErrors": []
+      },
+      "tailor": {
+        "status": "done",
+        "saved": true,
+        "content": "2815e09282ff",
+        "sourceHash": "76fb78e9a6120a4e5c74316c3ce9f3899b014297a4d3cd6962773dfd19f78415",
+        "designFellBack": null,
+        "source": null,
+        "uiErrors": []
+      },
+      "answer": {
+        "ok": true,
+        "error": null,
+        "answer": "1b1d0a76e106"
+      },
+      "resume": {
+        "filename": "Test Person Resume.docx",
+        "text": "713a8dcb98cf",
+        "readerVersion": null,
+        "file": null,
+        "design": "done",
+        "parsed": false,
+        "linksKept": null,
+        "parseVersion": null,
+        "mark": false
+      },
+      "history": {
+        "letters": 1,
+        "tailored": 1,
+        "files": 1
+      },
+      "account": {
+        "filename": "Test Person Resume.docx",
+        "reader_version": null,
+        "uploaded_at": null,
+        "design_hash": "76fb78e9",
+        "encLen": 604,
+        "updated_at": "2026-11-27 16:28:09.709+00"
+      }
+    },
+    "up": {
+      "version": "1.11.0",
+      "resumeAfterOpen": {
+        "filename": "Test Person Resume.docx",
+        "text": "713a8dcb98cf",
+        "readerVersion": 2,
+        "file": "docx",
+        "design": "done",
+        "parsed": false,
+        "linksKept": null,
+        "parseVersion": null,
+        "mark": false
+      },
+      "callsOnOpen": {
+        "backend": 0,
+        "backendParses": 0,
+        "shim": ""
+      },
+      "usingLine": null,
+      "generateErrors": [],
+      "resumeTab": {
+        "note": false,
+        "errors": [],
+        "filename": true,
+        "download": true
+      },
+      "letter": {
+        "status": "done",
+        "saved": true,
+        "letter": "Dear Acme Team,\n\nAt Initech I rebuilt the billing export pipeline in TypeScript and cut nightly run time from four hours to forty minutes. Acme's posting describes a reporting stack that has outgrown its batch jobs, and that is work I have done before.\n\nOver three years I owned the data services behind Initech's customer dashboard. I moved the heaviest queries onto Postgres materialized views, added load tests before each release, and paired with support so the slow pages they reported got fixed first. When the on-call rotation shrank to two people, I wrote the runbooks that let new engineers take a shift in their second week.\n\nThe posting mentions a move from cron scripts to an event queue. I ran a similar migration at Initech, including the month both systems ran side by side. Acme's team of six engineers matches the group I work in now.\n\nI'd like to talk about how the Initech migration went and what I would change next time.\n\nKind regards,\n\nTest Person",
+        "source": {
+          "fileId": "76fb78e9a6120a4e5c74316c3ce9f3899b014297a4d3cd6962773dfd19f78415",
+          "filename": "Test Person Resume.docx",
+          "uploadedAt": "2026-11-27T16:28:09.627Z"
+        },
+        "uiErrors": []
+      },
+      "callsLetter": {
+        "backend": 2,
+        "backendParses": 0,
+        "shim": ""
+      },
+      "tailor": {
+        "status": "done",
+        "saved": true,
+        "content": "2815e09282ff",
+        "sourceHash": "76fb78e9a6120a4e5c74316c3ce9f3899b014297a4d3cd6962773dfd19f78415",
+        "designFellBack": null,
+        "source": {
+          "fileId": "76fb78e9a6120a4e5c74316c3ce9f3899b014297a4d3cd6962773dfd19f78415",
+          "filename": "Test Person Resume.docx",
+          "uploadedAt": "2026-11-27T16:28:09.627Z"
+        },
+        "uiErrors": []
+      },
+      "callsTailor": {
+        "backend": 4,
+        "backendParses": 0,
+        "shim": ""
+      },
+      "answer": {
+        "ok": true,
+        "error": null,
+        "answer": "1b1d0a76e106"
+      },
+      "callsAnswer": {
+        "backend": 1,
+        "backendParses": 0,
+        "shim": ""
+      },
+      "resumeAfter": {
+        "filename": "Test Person Resume.docx",
+        "text": "713a8dcb98cf",
+        "readerVersion": 2,
+        "file": "docx",
+        "design": "done",
+        "parsed": false,
+        "linksKept": null,
+        "parseVersion": null,
+        "mark": false
+      },
+      "history": {
+        "letters": 2,
+        "tailored": 2,
+        "files": 1
+      },
+      "account": {
+        "filename": "Test Person Resume.docx",
+        "reader_version": "2",
+        "uploaded_at": null,
+        "design_hash": "76fb78e9",
+        "encLen": 604,
+        "updated_at": "2026-11-27 16:28:09.709+00"
+      },
+      "accountTextSame": true,
+      "historyView": {
+        "oldCard": true,
+        "newCard": true,
+        "errors": [],
+        "oldHasLetter": true,
+        "oldHasTailored": true,
+        "oldFromLine": false
+      },
+      "oldLetterPdf": {
+        "ok": true,
+        "name": "cover-letter-acme-example-data-analyst.pdf",
+        "bytes": true,
+        "docx": null
+      },
+      "oldTailoredPdf": {
+        "ok": true,
+        "name": "Test-Person-data-analyst.pdf",
+        "bytes": true,
+        "docx": null
+      },
+      "oldTailoredWord": {
+        "ok": true,
+        "name": "Test-Person-data-analyst.docx",
+        "bytes": true,
+        "docx": "fe268fad7a26"
+      },
+      "historyErrorsAfter": []
+    },
+    "account": {
+      "tier": "hosted_pro"
+    }
+  }
+}
