@@ -16,8 +16,8 @@ export default defineConfig(
     ignores: ['app/layout.tsx'],
     rules: {
       'no-restricted-imports': ['error', {
-        paths: [{
-          name: '@/lib/utils',
+        patterns: [{
+          group: ['**/lib/utils'],
           importNames: ['CHROME_STORE_URL'],
           message: "A visible link to the store listing needs UTM tags, or the store dashboard can't tell which placement brought the install (#280). Use storeUrl('<placement>') from '@/lib/utils'. The bare URL is only for structured data, in app/layout.tsx and lib/structured-data.ts.",
         }],
