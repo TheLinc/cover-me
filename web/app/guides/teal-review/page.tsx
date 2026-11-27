@@ -154,7 +154,7 @@ export default function Page() {
                 <a href="https://www.reddit.com/r/linkedin/comments/1boagr5/whats_the_deal_with_teal/" {...ext}>r/linkedin</a> found it &ldquo;so complicated&rdquo; in March 2024 and said &ldquo;I&rsquo;d rather just make edits in Google docs.&rdquo;
               </p>
               <p>
-                Teal&rsquo;s keyword matching highlights what to add, and you do the rewriting, with AI help on Teal+. On the free plan you see only the top 5 keywords for each job.
+                Teal&rsquo;s keyword matching highlights what to add, and you do the rewriting, with a few free AI credits and unlimited AI help on Teal+. On the free plan you see only the top 5 keywords for each job.
               </p>
               <p>
                 Check what its AI writes. On November 26, 2026 I tried Teal&rsquo;s free AI credits on made-up resumes. Its summary for a nurse with four years as an RN began &ldquo;Dedicated nurse with 1 year of experience in Acute Care&rdquo;, and its summary for a developer with six years said &ldquo;2+ years&rdquo;. <Link href="/guides/best-ai-for-resume-tailoring">Best AI for resume tailoring</Link> has the full test of Teal and five other tools.
