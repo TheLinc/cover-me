@@ -150,7 +150,7 @@ export async function tailorDesign(
   return { check, bytes: await zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' }) }
 }
 
-export const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
 
 // Downloads resume tailored inside the user's file. False when the file can't
 // take it; the caller then offers the Cover Me layout.

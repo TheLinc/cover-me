@@ -1,6 +1,5 @@
 import { ensureValidSession } from './auth'
 import { fromBase64, sha256Hex, toBase64 } from './design'
-import { DOCX_MIME } from './pdf/docx-design'
 import { saveFile } from './pdf/file-name'
 import { READER_VERSION } from './resume-parser'
 import { getDesignFile, getMode, getResume, saveDesignFile, saveResume } from './storage'
@@ -50,7 +49,7 @@ export async function saveUpload(file: File, text: string): Promise<{ resume: Re
   return { resume, word, hosted: mode === 'hosted' && session ? session : undefined }
 }
 
-const MIME = { pdf: 'application/pdf', docx: DOCX_MIME }
+const MIME = { pdf: 'application/pdf', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }
 
 export async function downloadStoredFile(id: string, filename: string): Promise<boolean> {
   const stored = await getDesignFile(id)
