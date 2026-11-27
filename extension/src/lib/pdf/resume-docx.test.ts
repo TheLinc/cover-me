@@ -1,6 +1,7 @@
 import JSZip from 'jszip'
 import mammoth from 'mammoth'
 import { describe, expect, it } from 'vitest'
+import { contactLines } from './resume'
 import { buildResumeDocx } from './resume-docx'
 import type { TailoredResume } from './types'
 
@@ -118,6 +119,20 @@ describe('buildResumeDocx', () => {
       const left = async (template: TailoredResume['template']) => Number((await xml({ ...resume, template })).doc.match(/<w:pgMar [^>]*w:left="(\d+)"/)![1])
       expect(await left('compact')).toBeLessThan(await left('classic'))
       expect(await left('minimal')).toBeGreaterThan(await left('classic'))
+    })
+
+    it('breaks the contact line where the PDF does, never inside a link', async () => {
+      const r: TailoredResume = { ...resume, template: 'minimal', location: 'Toronto, ON', links: ['alexandra.dev', 'linkedin.com/in/alexandra-montgomery-okonkwo', 'github.com/amontgomery'] }
+      const lines = contactLines(r)
+      expect(lines.length).toBeGreaterThan(1)
+      const { doc } = await xml(r)
+      for (const line of lines.slice(1)) expect(doc).toContain(`<w:br/><w:t xml:space="preserve">${line}</w:t>`)
+    })
+
+    it("puts each line on the PDF's baseline step and never splits a bullet across pages", async () => {
+      const { doc } = await xml(resume)
+      // A job's second bullet sits the PDF's 12pt line plus its 1pt gap below the first (#119).
+      expect(doc).toMatch(/<w:keepLines\/><w:numPr>.*?<\/w:numPr><w:spacing w:after="0" w:before="20" w:line="240" w:lineRule="exact"\/><\/w:pPr><w:r><w:t xml:space="preserve">Led a team of 4</)
     })
 
     it("sets Minimal's larger name in regular weight", async () => {

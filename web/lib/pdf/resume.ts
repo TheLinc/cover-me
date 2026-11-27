@@ -96,6 +96,33 @@ export function resumeStyle(resume: Pick<TailoredResume, 'template' | 'accent'>)
   return accent ? { ...st, heading: { ...st.heading, colour: rgb(accent), rule: { ...st.heading.rule, colour: rgb(accent) } } } : st
 }
 
+// A name too wide for the line shrinks to fit it rather than running into the margin; the Word copy
+// sets it at the same size (#119).
+export function nameSize(resume: TailoredResume, doc = new jsPDF({ unit: 'pt' })): number {
+  const st = resumeStyle(resume)
+  doc.setFont(st.font, st.name.bold ? 'bold' : 'normal')
+  doc.setFontSize(st.name.size)
+  const w = doc.getTextWidth(pdfSafe(resume.name || 'Resume'))
+  return Math.min(st.name.size, Math.floor(((st.name.size * (PW - 2 * st.margin)) / w) * 2) / 2)
+}
+
+// Wrapped between items, never inside a URL, once links and a location make the line wider
+// than the page; the Word copy breaks at the same places (#149, #119). Lines fill 98% of it:
+// Word sets Arial a touch wider than jsPDF measures Helvetica, and a full line broke inside a
+// URL there (#119). One URL wider than the page still overflows; no real one is (#149).
+export function contactLines(resume: TailoredResume, doc = new jsPDF({ unit: 'pt' })): string[] {
+  const st = resumeStyle(resume)
+  doc.setFont(st.font, 'normal')
+  doc.setFontSize(st.contact.size)
+  const lines: string[] = []
+  for (const part of contactParts(resume)) {
+    const joined = `${lines[lines.length - 1]}${st.contact.sep}${part}`
+    if (lines.length && doc.getTextWidth(pdfSafe(joined)) <= (PW - 2 * st.margin) * 0.98) lines[lines.length - 1] = joined
+    else lines.push(part)
+  }
+  return lines
+}
+
 export function downloadTailoredResumePdf(resume: TailoredResume, jobTitle?: string): void {
   tailoredResumePdf(resume).save(resumeFileName(resume, jobTitle, 'pdf'))
 }
@@ -172,7 +199,7 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
   const header = (s: string) => (st.align === 'center' ? text(s, PW / 2, { align: 'center' }) : text(s, ML))
 
   doc.setFont(font, st.name.bold ? 'bold' : 'normal')
-  doc.setFontSize(st.name.size)
+  doc.setFontSize(nameSize(resume, doc))
   header(resume.name || 'Resume')
   y += st.name.after
 
@@ -183,26 +210,17 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
     y += st.headline.after
   }
 
-  // Wrapped between items, never inside a URL, once links and a location
-  // make the line wider than the page. One URL wider than the page still
-  // overflows; no real one is (#149).
-  const contact: string[] = []
-  doc.setFont(font, 'normal')
-  doc.setFontSize(st.contact.size)
-  for (const part of contactParts(resume)) {
-    const joined = `${contact[contact.length - 1]}${st.contact.sep}${part}`
-    if (contact.length && width(joined) <= CW) contact[contact.length - 1] = joined
-    else contact.push(part)
-  }
+  const contact = contactLines(resume, doc)
   contact.forEach((line, i) => {
     if (i) y += st.contact.step
     header(line)
   })
   if (contact.length) y += st.contact.after
 
-  function sectionHeading(title: string) {
+  // A heading never ends a page: it needs room for the first thing under it too (#119).
+  function sectionHeading(title: string, first: number) {
     y += heading.before
-    need(18)
+    need(3 + heading.after + first)
     doc.setFont(font, 'bold')
     doc.setFontSize(heading.size)
     const tinted = heading.colour !== BLACK
@@ -266,9 +284,15 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
     return wrap(s, WRAP_W)
   }
 
+  const bulletNeed = (s: string) => bulletLines(s).length * LH + 2
+
+  // An entry's title lines never end a page: they move over with its first bullet (#119).
+  const entryNeed = (lines: number, gap: number, first: string | undefined) =>
+    first === undefined ? (lines - 1) * st.entryStep + 14 : lines * st.entryStep + gap + bulletNeed(first)
+
   function bullet(s: string) {
+    need(bulletNeed(s))
     const lines = bulletLines(s)
-    need(lines.length * LH + 2)
     doc.setFont(font, 'normal')
     doc.setFontSize(BODY)
     text('•', BULLET_X)
@@ -328,14 +352,16 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
   const draw: Record<StandardSection, () => void> = {
     summary: () => {
       if (resume.summary) {
-        sectionHeading('SUMMARY')
+        sectionHeading('SUMMARY', LH)
         paragraph(resume.summary)
       }
     },
     experience: () => {
       if (resume.experience?.length) {
-        sectionHeading('EXPERIENCE')
+        const jobNeed = (exp: (typeof resume.experience)[number]) => entryNeed(2, 2, exp.bullets?.[0])
+        sectionHeading('EXPERIENCE', jobNeed(resume.experience[0]))
         for (const exp of resume.experience) {
+          need(jobNeed(exp))
           twoCol(exp.title, exp.dates, 'bold')
           twoCol(exp.company, exp.location, 'italic')
           y += 2
@@ -346,8 +372,10 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
     },
     projects: () => {
       if (resume.projects?.length) {
-        sectionHeading('PROJECTS')
+        const projNeed = (proj: (typeof resume.projects)[number]) => entryNeed(proj.tech ? 2 : 1, 0, proj.bullets?.[0])
+        sectionHeading('PROJECTS', projNeed(resume.projects[0]))
         for (const proj of resume.projects) {
+          need(projNeed(proj))
           entryHeader(proj.name || '', proj.tech, proj.link)
           for (const b of proj.bullets ?? []) bullet(b)
           entryGap()
@@ -356,11 +384,13 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
     },
     education: () => {
       if (resume.education?.length) {
-        sectionHeading('EDUCATION')
+        const restOf = (edu: (typeof resume.education)[number]) => (edu.bullets ?? []).filter((b) => !GPA_LINE.test(b.trim()))
+        sectionHeading('EDUCATION', entryNeed(2, 2, restOf(resume.education[0])[0]))
         for (const edu of resume.education) {
           const bullets = edu.bullets ?? []
           const gpa = bullets.filter((b) => GPA_LINE.test(b.trim()))
-          const rest = bullets.filter((b) => !GPA_LINE.test(b.trim()))
+          const rest = restOf(edu)
+          need(entryNeed(2, 2, rest[0]))
           const degree = [edu.degree, ...gpa.map((g) => g.trim())].filter(Boolean).join('  |  ')
           twoCol(edu.institution, edu.dates, 'bold')
           twoCol(degree, edu.location, 'italic')
@@ -372,13 +402,13 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
     },
     certifications: () => {
       if (resume.certifications?.length) {
-        sectionHeading('CERTIFICATIONS')
+        sectionHeading('CERTIFICATIONS', bulletNeed(resume.certifications[0]))
         for (const cert of resume.certifications) bullet(cert)
       }
     },
     skills: () => {
       if (resume.skills) {
-        sectionHeading('SKILLS')
+        sectionHeading('SKILLS', LH)
         skills(resume.skills)
       }
     },
@@ -389,8 +419,10 @@ export function tailoredResumePdf(resume: TailoredResume): jsPDF {
     const entries = section.entries?.filter((e) => e?.name) ?? []
     const lines = section.lines ?? []
     if (!entries.length && !lines.length) return
-    sectionHeading(String(section.heading ?? '').toUpperCase())
+    const otherNeed = (e: (typeof entries)[number]) => entryNeed(e.subtitle ? 2 : 1, e.dates && e.link ? LH + 1 : 0, e.bullets?.[0])
+    sectionHeading(String(section.heading ?? '').toUpperCase(), entries.length ? otherNeed(entries[0]) : bulletNeed(lines[0]))
     for (const e of entries) {
+      need(otherNeed(e))
       entryHeader(e.name, e.subtitle, e.dates || e.link)
       if (e.dates && e.link) {
         doc.setFont(font, 'italic')

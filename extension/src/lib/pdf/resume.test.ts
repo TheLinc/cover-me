@@ -149,6 +149,28 @@ describe('every template lays out a long and a short resume cleanly', () => {
   })
 })
 
+describe('page breaks and long lines (#119)', () => {
+  test('a name too wide for the line shrinks to fit inside the margins', async () => {
+    const { lines } = await read(withTemplate(LONG, 'minimal'))
+    const name = lines.find((l) => l.text === LONG.name)!
+    expect(name.x + name.width).toBeLessThanOrEqual(612 - 64)
+    expect(name.size).toBeLessThan(34)
+  })
+
+  test('a job never leaves its title and company at the bottom of a page without its first bullet', async () => {
+    for (const template of RESUME_TEMPLATES) {
+      const { lines } = await read(withTemplate(LONG, template))
+      let from = 0
+      for (const exp of LONG.experience) {
+        const title = lines.findIndex((l, i) => i >= from && exp.title.startsWith(l.text))
+        const bullet = lines.findIndex((l, i) => i > title && l.text.startsWith('Led migration 1'))
+        expect(lines[bullet].page, `${template}: ${exp.title}`).toBe(lines[title].page)
+        from = bullet
+      }
+    }
+  })
+})
+
 describe('accent colour (#119)', () => {
   test('Modern prints its headings in the accent the user picked', () => {
     expect(colourOf({ ...withTemplate(SHORT, 'modern'), accent: '#0F766E' }, 'EXPERIENCE')).toEqual([15, 118, 110])
