@@ -93,7 +93,7 @@ export default function Page() {
       ]}
       intro={
         <p>
-          I build Cover Me, which also tailors resumes, so weigh this review with that in mind. Prices are from Jobscan&rsquo;s plan page and reviews from Trustpilot and Reddit, all checked on November 19, 2026. I didn&rsquo;t create a Jobscan account, so what it does after sign-up comes from its own pages and from users.
+          I build Cover Me, which also tailors resumes, so weigh this review with that in mind. Prices are from Jobscan&rsquo;s plan page and reviews from Trustpilot and Reddit, all checked on November 19, 2026. For this review I didn&rsquo;t create a Jobscan account, so what it does after sign-up comes from its own pages and from users, apart from a later test of AI Optimize on November 26, 2026.
         </p>
       }
       sections={[
@@ -143,6 +143,9 @@ export default function Page() {
                 That fits what recruiters say about applicant tracking systems. A recruiter writing for{' '}
                 <a href="https://www.aol.com/landed-over-dozen-job-interviews-133130573.html" {...ext}>Business Insider</a> got 16% on Jobscan and still landed more than a dozen interviews. In the ATS that recruiter used at work, &ldquo;no applicants were filtered out by keywords or formatting.&rdquo; In{' '}
                 <a href="https://enhancv.com/blog/does-ats-reject-resumes/" {...ext}>a survey by Enhancv</a>, which sells resume tools, 23 of 25 recruiters said their ATS doesn&rsquo;t reject resumes automatically for formatting, content or design. <Link href="/guides/what-is-an-ats-score">What an ATS score measures</Link> covers what the number can and can&rsquo;t tell you.
+              </p>
+              <p>
+                After this review I tried Premium&rsquo;s AI Optimize on the 7-day trial, on November 26, 2026, with three made-up resumes that lacked what the posting asked for. With every suggestion accepted, it added a claim the resume doesn&rsquo;t support to all three, such as &ldquo;Developed E-Commerce marketing sites&rdquo; for a developer with no e-commerce work. You can reject suggestions one at a time, so read each one. <Link href="/guides/best-ai-for-resume-tailoring">Best AI for resume tailoring</Link> has the full test.
               </p>
             </>
           ),
