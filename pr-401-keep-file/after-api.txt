@@ -1,0 +1,22 @@
+# resume function, this branch
+1. Upload, reader 1
+  POST {"text":"Robin Example\nShelf: a reading list app","filename":"Robin Example Resume.pdf","readerVersion":1,"uploadedAt":"2026-11-20T15:00:00.000Z"}
+  -> {"status":200,"success":true}
+2. Read it back
+  GET 
+  -> {"status":200,"text":"Robin Example\nShelf: a reading list app","filename":"Robin Example Resume.pdf","reader_version":1,"uploaded_at":"2026-11-20T15:00:00+00:00"}
+3. Re-read under reader 2, from the text the account has
+  POST {"text":"Robin Example\nShelf (github.com/robin-example/shelf): a reading list app","filename":"Robin Example Resume.pdf","readerVersion":2,"reread":true,"baseTextHash":"6b42fedce03a1c1163a2f4c4c6a42955debc30eeeba2c0614820d57e5450e362"}
+  -> {"status":200,"success":true}
+4. Read it back
+  GET 
+  -> {"status":200,"text":"Robin Example\nShelf (github.com/robin-example/shelf): a reading list app","filename":"Robin Example Resume.pdf","reader_version":2,"uploaded_at":"2026-11-20T15:00:00+00:00"}
+5. Another computer uploads new text
+  POST {"text":"Robin Example\nUploaded on another computer","filename":"Other.pdf"}
+  -> {"status":200,"success":true}
+6. A stale re-read from the first computer (base text A)
+  POST {"text":"Robin Example\nShelf (github.com/robin-example/shelf): a reading list app","filename":"Robin Example Resume.pdf","readerVersion":2,"reread":true,"baseTextHash":"6b42fedce03a1c1163a2f4c4c6a42955debc30eeeba2c0614820d57e5450e362"}
+  -> {"status":409,"error":"Resume changed"}
+7. Read it back
+  GET 
+  -> {"status":200,"text":"Robin Example\nUploaded on another computer","filename":"Other.pdf","reader_version":null,"uploaded_at":null}
