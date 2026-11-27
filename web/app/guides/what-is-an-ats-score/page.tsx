@@ -179,7 +179,7 @@ export default function Page() {
           body: (
             <>
               <p>
-                <Link href="/">Cover Me (cover-me.dev)</Link> is an open-source Chrome extension that tailors your resume to the posting you have open and scores the result. The AI never makes up the number. It reports which of the posting&rsquo;s keywords your tailored resume covers, sorted into must-haves and nice-to-haves, plus any hard requirements you don&rsquo;t meet. Code then calculates the score:
+                <Link href="/">Cover Me (cover-me.dev)</Link> is a Chrome extension that tailors your resume to the posting you have open and scores the result. The AI never makes up the number. It reports which of the posting&rsquo;s keywords your tailored resume covers, sorted into must-haves and nice-to-haves, plus any hard requirements you don&rsquo;t meet. Code then calculates the score:
               </p>
               <ul>
                 <li>Must-have keywords are worth 70 points, split by how many you cover.</li>
