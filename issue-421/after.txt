@@ -1,0 +1,11 @@
+Organization @id: https://www.cover-me.dev/#organization
+WebSite publisher: {"@id":"https://www.cover-me.dev/#organization"}
+WebSite description: Cover Me is a Chrome extension that tailors your resume and writes a cover letter for the job posting you have open, with an ATS match score and answers to application questions. It reads postings on LinkedIn, Indeed, Greenhouse, Lever, Workday, Ashby, BambooHR and Workable, and has a free plan to start.
+SoftwareApplication publisher: {"@id":"https://www.cover-me.dev/#organization"}
+SoftwareApplication description: Cover Me is a Chrome extension that tailors your resume and writes a cover letter for the job posting you have open, with an ATS match score and answers to application questions. It reads postings on LinkedIn, Indeed, Greenhouse, Lever, Workday, Ashby, BambooHR and Workable, and has a free plan to start. A check removes skills your original resume doesn't support.
+keywords: AI cover letter generator,AI resume tailor,cover letter generator Chrome extension,cover letter from job posting,ATS match score,resume tailoring Chrome extension,ATS resume checker,cover letter generator free
+/about title: About Cover Me: AI Resume Tailor by Lincoln Laylor
+/about intro: Cover Me (cover-me.dev) is a Chrome extension that tailors your resume and writes a cover letter for the job posting you have open. Lincoln Laylor, a software developer in Canada, builds it. It reads postings on LinkedIn, Indeed, Greenhouse, Lever, Workday, Ashby, BambooHR and Workable, shows an ATS match score with the keywords you're missing, and removes any skill your original resume doesn't support. There's a free plan to start. Cover Me isn't related to the CoverMe AI project on GitHub.
+guide Article publisher @id: https://www.cover-me.dev/#organization
+llms.txt non-link lines under H2 headings: 0
+llms.txt last key fact: - Open source: the extension, backend and database schema are public and self-ho
