@@ -19,7 +19,8 @@ function dataLogo(company: string): string | undefined {
       const org = node.hiringOrganization as { name?: unknown; logo?: string | { url?: unknown; contentUrl?: unknown } } | undefined
       if (typeof org?.name === 'string' && !sameCompany(org.name, company)) continue
       const logo = org?.logo
-      const url = https(typeof logo === 'string' ? logo : String(logo?.url ?? logo?.contentUrl ?? ''))
+      const ref = typeof logo === 'string' ? logo : logo?.url ?? logo?.contentUrl
+      const url = typeof ref === 'string' ? https(ref) : undefined
       if (url) return url
     }
   }
@@ -67,7 +68,7 @@ function ownSiteIcon(company: string): string | undefined {
 }
 
 function https(url: string | undefined): string | undefined {
-  if (!url || !URL.canParse(url, location.href)) return undefined
+  if (!url || url.length > 2048 || !URL.canParse(url, location.href)) return undefined
   const resolved = new URL(url, location.href)
   return resolved.protocol === 'https:' ? resolved.href : undefined
 }
