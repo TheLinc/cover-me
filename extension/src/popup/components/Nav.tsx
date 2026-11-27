@@ -3,7 +3,6 @@ import type { Page } from '../App'
 interface Props {
   current: Page
   onChange: (page: Page) => void
-  // A page with something new to see
   dot?: Page
 }
 
