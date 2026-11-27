@@ -32,7 +32,7 @@ export function groupLocalHistory(letters: CoverLetter[], tailored: TailoredHist
   }
   for (const cl of letters) {
     const g = groupFor(cl.job, cl.createdAt)
-    g.coverLetters.push({ id: cl.id, letter: cl.letter, createdAt: cl.createdAt })
+    g.coverLetters.push({ id: cl.id, letter: cl.letter, createdAt: cl.createdAt, source: cl.source })
     g.localCoverLetterIds!.push(cl.id)
   }
   for (const tr of tailored) {
@@ -73,8 +73,8 @@ export function recentJobs(letters: CoverLetter[], tailored: TailoredHistoryEntr
 // first job is this page's.
 export function answerJobs(page: JobData | null, saved: JobData[]): { jobs: JobData[]; jobSource: 'page' | 'saved' } {
   if (!page) return { jobs: saved, jobSource: 'saved' }
-  // Other pages need the exact link, query included: LinkedIn and Indeed tell jobs
-  // apart by the query, and one employer posts many jobs under one title (#232).
+  // Only a form page matches by title and company. Other pages need the exact link, query included (#232).
+  // LinkedIn and Indeed tell jobs apart by the query, and one employer posts many jobs under one title.
   const path = (url: string) => url.replace(/[?#].*$/, '').replace(/\/$/, '')
   const formOf = /\/(apply|application)$/.exec(path(page.url))
   const posting = formOf ? path(page.url).slice(0, -formOf[0].length) : null
@@ -109,8 +109,8 @@ export function capWarning(letters: number, tailored: number): string | null {
   return sentences.join(' ')
 }
 
-// On Save, an ID neither confirmed nor failed belongs to another account: the
-// server never overwrites, so nothing else leaves an ID unsaved (#24).
+// An ID neither confirmed nor failed already belongs to another account.
+// The server never overwrites, so nothing else leaves one unsaved (#24).
 export function accountUpdates(
   submitted: { letters: string[]; tailored: string[] },
   result: UploadResult,
@@ -130,10 +130,22 @@ export function accountUpdates(
   return { letters: map(submitted.letters, result.letters), tailored: map(submitted.tailored, result.tailored) }
 }
 
-// An entry made while another account was Pro is still that account's, even
-// though its save failed (#24).
+// An entry with saveTo set to another account was made while that account was Pro
+// and its save failed, so it stays theirs (#24).
 export const unclaimed = (userId: string) => (e: { account?: string; saveTo?: string }): boolean =>
   !e.account && (!e.saveTo || e.saveTo === userId)
+
+// The hosted tailor's copies have no file id, and the account's letters have no
+// source at all; the same entry saved here, under the same id, has it. letters and tailored: every
+// local entry, saved to the account or not (#401).
+export function withSources(server: JobGroup[], letters: CoverLetter[], tailored: TailoredHistoryEntry[]): JobGroup[] {
+  const sources = new Map([...letters.map((l) => [l.id, l.source] as const), ...tailored.map((t) => [t.id, t.resume.source] as const)].filter(([, s]) => s))
+  return server.map((g) => ({
+    ...g,
+    coverLetters: g.coverLetters.map((c) => (sources.has(c.id) ? { ...c, source: sources.get(c.id) } : c)),
+    tailoredResumes: g.tailoredResumes.map((t) => (sources.has(t.id) ? { ...t, resume: { ...t.resume, source: sources.get(t.id) } } : t)),
+  }))
+}
 
 export function withLocalOnly(server: JobGroup[], letters: CoverLetter[], tailored: TailoredHistoryEntry[], userId: string): JobGroup[] {
   const mine = unclaimed(userId)
@@ -142,7 +154,7 @@ export function withLocalOnly(server: JobGroup[], letters: CoverLetter[], tailor
   return [...server, ...local].sort((a, b) => b.latestAt.localeCompare(a.latestAt))
 }
 
-// Counted in jobs, not entries, since that's the unit the list and dashboard use (#24).
+// Counts jobs, not entries, because the list and dashboard count jobs (#24).
 export function uploadSummary(letters: CoverLetter[], tailored: TailoredHistoryEntry[], result: UploadResult): { saved: number; other: number; failed: number } {
   const mine = new Set([...result.letters, ...result.tailored])
   const failed = new Set(result.failed)

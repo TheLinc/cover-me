@@ -239,6 +239,17 @@ describe('tailor', () => {
     expect((await prompts()).some((p) => p.includes('linksKept'))).toBe(false)
   })
 
+  it('a parse with parseVersion is current, and the number stays out of the prompt and the resume (#401)', async () => {
+    user = await createUser()
+    await uploadResume(user)
+    await cacheParsedResume(user.id, { ...CURRENT, parseVersion: 1 })
+    await mockClaude.reset()
+    const { resume } = await (await callFunction('tailor', { token: user.token, body: { job: JOB } })).json()
+    expect((await prompts()).filter(isParse)).toHaveLength(0)
+    expect(resume).not.toHaveProperty('parseVersion')
+    expect((await prompts()).some((p) => p.includes('parseVersion'))).toBe(false)
+  })
+
   it('streams NDJSON start, delta and done events when asked', async () => {
     user = await createUser()
     await uploadResume(user)
@@ -353,6 +364,18 @@ describe('tailor', () => {
     expect(data?.[0].job_application_id).toBeTruthy()
   })
 
+  it("a Pro tailor keeps the source resume's name and upload date with its copy, not in the answer (#401)", async () => {
+    user = await createUser('hosted_pro')
+    const res0 = await callFunction('resume', { token: user.token, body: { text: LONG_RESUME_TEXT, filename: 'Pat Resume.pdf', uploadedAt: '2026-11-20T15:00:00.000Z' } })
+    expect(res0.status).toBe(200)
+    const { resume } = await (await callFunction('tailor', { token: user.token, body: { job: JOB } })).json()
+    expect(resume).not.toHaveProperty('source')
+    const { applications } = await (await callFunction('applications', { token: user.token })).json()
+    const saved = applications[0].tailoredResumes[0].resume
+    expect(saved.source.filename).toBe('Pat Resume.pdf')
+    expect(Date.parse(saved.source.uploadedAt)).toBe(Date.parse('2026-11-20T15:00:00.000Z'))
+  })
+
   it("tailored in the user's Word file: the hash goes on the result and the Pro copy, and the run is counted", async () => {
     user = await createUser('hosted_pro')
     await uploadResume(user)
@@ -398,6 +421,34 @@ describe('tailor', () => {
     const res = await callFunction('tailor', { token: user.token, body: { job: JOB } })
     expect(res.status).toBe(200)
     expect(await mockPosthog.eventsFor('tailor_run', user.id)).toEqual([])
+  })
+
+  it('a Pro account gets the template it last picked on the result and the saved copy (#119)', async () => {
+    user = await createUser('hosted_pro')
+    await uploadResume(user)
+    const res = await callFunction('tailor', { token: user.token, body: { job: JOB, template: 'modern', accent: '#0F766E' } })
+    expect((await res.json()).resume).toMatchObject({ template: 'modern', accent: '#0F766E' })
+    const detail = await (await callFunction('applications', { token: user.token })).json()
+    expect(detail.applications[0].tailoredResumes[0].resume).toMatchObject({ template: 'modern', accent: '#0F766E' })
+  })
+
+  it.each([
+    ['a free account', 'hosted_free', 'modern'],
+    ['an unknown template', 'hosted_pro', 'retro'],
+  ] as const)('%s gets no template, so the resume prints as Classic (#119)', async (_, tier, template) => {
+    user = await createUser(tier)
+    await uploadResume(user)
+    const res = await callFunction('tailor', { token: user.token, body: { job: JOB, template, accent: '#0F766E' } })
+    const { resume } = await res.json()
+    expect(resume).not.toHaveProperty('template')
+    if (tier === 'hosted_free') expect(resume).not.toHaveProperty('accent')
+  })
+
+  it('an accent that is not a #RRGGBB colour is dropped (#119)', async () => {
+    user = await createUser('hosted_pro')
+    await uploadResume(user)
+    const res = await callFunction('tailor', { token: user.token, body: { job: JOB, template: 'modern', accent: 'url(javascript:x)' } })
+    expect((await res.json()).resume).not.toHaveProperty('accent')
   })
 
   it('a run that fell back to the Cover Me layout keeps no hash', async () => {

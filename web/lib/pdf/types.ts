@@ -49,6 +49,9 @@ export interface ResumeSectionEntry {
 // A section of the Cover Me layout. 'other' stands for the next of otherSections (#118).
 export type SectionKey = 'summary' | 'experience' | 'projects' | 'education' | 'certifications' | 'skills' | 'other'
 
+// The PDF's look (#119). Missing means classic, as on every resume made before templates.
+export type ResumeTemplate = 'classic' | 'modern' | 'compact' | 'minimal'
+
 export interface TailoredResume {
   name: string
   phone: string
@@ -94,7 +97,16 @@ export interface TailoredResume {
   // The user picked their design, but the file couldn't be edited safely, so
   // this one uses the Cover Me layout (#131).
   designFellBack?: boolean
+  source?: ResumeSource
+  template?: ResumeTemplate
+  // "#RRGGBB" for a template with an accent (Modern). Missing means Cover Me indigo (#119).
+  accent?: string
 }
+
+// The uploaded resume a tailored resume or letter was made from (#401).
+// fileId: its file in the extension's store, missing when none was kept and on
+// the copies the hosted tailor saves to the account.
+export interface ResumeSource { filename: string; uploadedAt: string; fileId?: string }
 
 // A deleted section: its content under its own field (an extra section under
 // section), and where it sat in the editor's list (#197).

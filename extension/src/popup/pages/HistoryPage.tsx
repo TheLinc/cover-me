@@ -3,9 +3,10 @@ import { currentTier, ensureValidSession, fetchApplicationsFromBackend, refreshT
 import { downloadCoverLetterPdf } from '../../lib/pdf/cover-letter'
 import { downloadTailoredResumePdf } from '../../lib/pdf/resume'
 import { openResumeEditor } from '../../lib/resume-edit'
-import { accountUpdates, capWarning, groupLocalHistory, groupsFromApplications, historyDate, ownPending, unclaimed, uploadMessage, uploadSummary, withLocalOnly, type JobGroup } from '../../lib/history'
+import { downloadStoredFile, fromLine } from '../../lib/resume-file'
+import { accountUpdates, capWarning, groupLocalHistory, groupsFromApplications, historyDate, ownPending, unclaimed, uploadMessage, uploadSummary, withLocalOnly, withSources, type JobGroup } from '../../lib/history'
 import { getDesignHashes, getHistory, getMode, getTailoredHistory, getUploadAsked, markUploadAsked, setEntryAccounts } from '../../lib/storage'
-import type { AuthSession, CoverLetter, CoverLetterEntry, TailoredHistoryEntry } from '../../types'
+import type { AuthSession, CoverLetter, CoverLetterEntry, ResumeSource, TailoredHistoryEntry } from '../../types'
 import DownloadMenu from '../components/DownloadMenu'
 import ReviewAsk from '../components/ReviewAsk'
 import { EditIcon } from '../components/icons'
@@ -136,12 +137,13 @@ export default function HistoryPage() {
     setIsProMode(true)
     setSyncing(true)
     try {
-      let server = groupsFromApplications(await fetchApplicationsFromBackend(session.access_token))
+      const [allLetters, allTailored] = await Promise.all([getHistory(), getTailoredHistory()])
+      let server = withSources(groupsFromApplications(await fetchApplicationsFromBackend(session.access_token)), allLetters, allTailored)
       setGroups(server)
       const checked = await localOnlyAfterCheck(session)
       if (checked) {
         const local = await retryOwn(session, checked)
-        if (local.saved) server = groupsFromApplications(await fetchApplicationsFromBackend(session.access_token))
+        if (local.saved) server = withSources(groupsFromApplications(await fetchApplicationsFromBackend(session.access_token)), allLetters, allTailored)
         setGroups(withLocalOnly(server, local.letters, local.tailored, session.user.id))
         const count = groupLocalHistory(local.letters, local.tailored).length
         setUpload(count > 0 ? { count, asked: (await getUploadAsked()).includes(session.user.id) } : null)
@@ -172,7 +174,9 @@ export default function HistoryPage() {
   function startDelete(group: JobGroup) {
     const serverId = isProMode && group.id ? group.id : null
     const msg: DeletePortMessage = {
-      schedule: { key: group.key, serverId, coverLetterIds: group.localCoverLetterIds ?? [], tailoredIds: group.localTailoredIds ?? [] },
+      schedule: serverId
+        ? { key: group.key, serverId, coverLetterIds: group.coverLetters.map((c) => c.id), tailoredIds: group.tailoredResumes.map((t) => t.id) }
+        : { key: group.key, serverId, coverLetterIds: group.localCoverLetterIds ?? [], tailoredIds: group.localTailoredIds ?? [] },
     }
     deletePort().postMessage(msg)
     setDeleteError(null)
@@ -345,6 +349,7 @@ export default function HistoryPage() {
                           </span>
                           <span className="artifact-date">{historyDate(cl.createdAt)}</span>
                         </div>
+                        <SourceLine source={cl.source} stored={designHashes} />
                         <div className="letter-box letter-preview">
                           <pre className="letter-text">{cl.letter}</pre>
                         </div>
@@ -371,6 +376,7 @@ export default function HistoryPage() {
                           </span>
                           <span className="artifact-date">{historyDate(tr.createdAt)}</span>
                         </div>
+                        <SourceLine source={tr.resume.source} stored={designHashes} />
                         {typeof tr.resume.atsScore === 'number' && (
                           <p className="artifact-meta">
                             Job match {tr.resume.atsScore}{tr.resume.editedAt ? ' · Scored before your edits' : ''}
@@ -404,5 +410,21 @@ export default function HistoryPage() {
         </div>
       )}
     </div>
+  )
+}
+
+function SourceLine({ source, stored }: { source?: ResumeSource; stored: string[] }) {
+  if (!source) return null
+  const fileId = source.fileId && stored.includes(source.fileId) ? source.fileId : undefined
+  return (
+    <p className="artifact-meta artifact-source">
+      {fromLine(source)}
+      {fileId && (
+        <>
+          {' · '}
+          <button type="button" className="upload-link" aria-label={`Download ${source.filename}`} onClick={() => void downloadStoredFile(fileId, source.filename)}>Download</button>
+        </>
+      )}
+    </p>
   )
 }

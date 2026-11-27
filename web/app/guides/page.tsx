@@ -52,7 +52,7 @@ export default function GuidesPage() {
           Job application guides
         </h1>
         <p className="text-[16px] text-muted-foreground leading-[1.75]">
-          Answers to the questions that decide whether your application gets read, from the developer of Cover Me, an open-source Chrome extension that tailors your resume and writes your cover letter.
+          Answers to the questions that decide whether your application gets read, from the developer of Cover Me, a Chrome extension that tailors your resume and writes your cover letter.
         </p>
       </div>
 

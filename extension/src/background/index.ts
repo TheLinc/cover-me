@@ -6,6 +6,8 @@ import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from '../lib/config'
 import { decryptApiKey } from '../lib/crypto'
 import { checkUploadedDesign, designForTailor, finishDesign, parseForTailor, uploadDesignIfPro } from '../lib/design'
 import { debugGroup } from '../lib/debug'
+import { resumeSource } from '../lib/resume-file'
+import { applySavedLook, getResumeLook } from '../lib/resume-template'
 import { addToHistory, addToTailoredHistory, getCandidateContext, getResume, getSession, getSettings, hasAgreedToPageRead, resolveMode, setEntryAccounts, watchSession } from '../lib/storage'
 import { handleInstalled, uninstallUrl } from './install'
 import { DELETE_PORT, handleDeletePort } from './delete'
@@ -14,7 +16,7 @@ import { handleAnswerClick, registerAnswerMenu, writeAnswer, type AnswerRequest 
 import { scrapeFailure } from './scrape-failure'
 import { acceptsMessage } from './sender'
 import { bestJob, CONTENT_SCRIPT_FILE, listScrapableFrames, previewTab, readFrames, topFrameUrl, withServerRead, type FrameScrape } from './frames'
-import type { CoverJob, CoverLetter, GenerateResponse, JobData, ScrapeFailure, ScrapeResponse, TailoredResume, TailorJob, TailorResponse } from '../types'
+import type { CoverJob, CoverLetter, GenerateResponse, JobData, ResumeSource, ScrapeFailure, ScrapeResponse, TailoredResume, TailorJob, TailorResponse } from '../types'
 
 chrome.runtime.onInstalled.addListener((details) => {
   void handleInstalled(details)
@@ -112,8 +114,16 @@ async function recordTailored(
   resume: TailoredResume,
   id: string = crypto.randomUUID(),
   owner?: { account?: string; saveTo?: string },
+  source?: ResumeSource,
 ): Promise<void> {
-  await addToTailoredHistory({ id, job, resume, createdAt: new Date().toISOString(), ...owner }).catch(() => {})
+  await addToTailoredHistory({ id, job, resume: source ? { ...resume, source } : resume, createdAt: new Date().toISOString(), ...owner }).catch(() => {})
+}
+
+// The server stamps only its tailored copy, without the file id this computer
+// knows. Read when a run starts: an upload during the run isn't its source (#401).
+async function currentSource(): Promise<ResumeSource | undefined> {
+  const resume = await getResume().catch(() => null)
+  return resume ? resumeSource(resume) : undefined
 }
 
 async function failTailor(id: string, job: JobData, startedAt: number, error: string): Promise<TailorResponse> {
@@ -347,8 +357,9 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
   const id = jobId ?? crypto.randomUUID()
   const startedAt = Date.now()
   await setTailorJob({ id, status: 'loading', job, startedAt })
-  // Which file a result came from isn't resume content for the model to revise (#131)
-  const { sourceHash: _h, designFellBack: _f, ...previous } = lastResult ?? {} as TailoredResume
+  const source = await currentSource()
+  // Which file a result came from (#131, #401) and its PDF template and accent (#119) aren't resume content for the model to revise
+  const { sourceHash: _h, designFellBack: _f, source: _s, template: _t, accent: _a, ...previous } = lastResult ?? {} as TailoredResume
   try {
     const settings = await getSettings()
 
@@ -395,7 +406,7 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
       }
       const localId = crypto.randomUUID()
       const tier = checkedTier(session)
-      const { resume: tailored, savedId } = await tailorViaBackend(job, session.access_token, compact, merged, trim, includeSummary, lastResult && previous, onProgress, localId, design.design)
+      const { resume: tailored, savedId } = await tailorViaBackend(job, session.access_token, compact, merged, trim, includeSummary, lastResult && previous, onProgress, localId, design.design, await getResumeLook())
       const resume = await finishDesign(tailored, design)
       if (note) resume.hasEdits = true
       // Awaited first: uploadDesignIfPro reads the cached tier (#182)
@@ -404,7 +415,7 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
       await recordTailored(job, resume, localId, {
         ...(savedId === localId ? { account: session.user.id } : {}),
         ...(pro ? { saveTo: session.user.id } : {}),
-      })
+      }, source)
       await setTailorJob({ id, status: 'done', job, resume, startedAt, entryId: localId, note })
       return { success: true, resume, job }
     }
@@ -435,9 +446,10 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
     })
 
     const tailored = await finishDesign(await tailorResume(job, parsed, settings.provider, apiKey, compact, merged, trim, includeSummary, lastResult && previous, onProgress), design)
+    await applySavedLook(tailored)
     if (note) tailored.hasEdits = true
     const entryId = crypto.randomUUID()
-    await recordTailored(job, tailored, entryId)
+    await recordTailored(job, tailored, entryId, undefined, source)
     await setTailorJob({ id, status: 'done', job, resume: tailored, startedAt, entryId, note })
     return { success: true, resume: tailored, job }
   } catch (err) {
@@ -477,6 +489,7 @@ async function generateFromJob(job: JobData, supplemental?: string, jobId?: stri
       if (!session) {
         return failCover(id, job, startedAt, 'Sign in to your Cover Me account in Settings.')
       }
+      const source = await currentSource()
       const [letter, tier] = await Promise.all([generateViaBackend(job, session.access_token, merged), checkedTier(session)])
       const pro = tier === 'hosted_pro'
       const entry: CoverLetter = {
@@ -485,6 +498,7 @@ async function generateFromJob(job: JobData, supplemental?: string, jobId?: stri
         letter,
         createdAt: new Date().toISOString(),
         ...(pro ? { saveTo: session.user.id } : {}),
+        source,
       }
       await addToHistory(entry)
       if (pro) {
@@ -511,6 +525,7 @@ async function generateFromJob(job: JobData, supplemental?: string, jobId?: stri
       job,
       letter,
       createdAt: new Date().toISOString(),
+      source: resumeSource(resume),
     }
     await addToHistory(entry)
     await setCoverJob({ id, status: 'done', job, letter, createdAt: entry.createdAt, startedAt })

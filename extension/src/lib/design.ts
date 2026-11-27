@@ -1,14 +1,14 @@
 // "Your design" (#131) in the extension: the upload check, which runs in the
 // service worker so it survives the popup closing, and the tailor's choice of
 // layout. The edit itself is lib/pdf/docx-design.ts, shared with the website.
-import { checkedTier, DesignRefusedError, ensureValidSession, fetchDesignFileFromBackend, uploadDesignFileToBackend, uploadResumeToBackend, type TailorDesign } from './auth'
+import { checkedTier, DesignRefusedError, ensureValidSession, fetchDesignFileFromBackend, syncResume, uploadDesignFileToBackend, uploadResumeToBackend, type TailorDesign } from './auth'
 import { isCurrentParse, parseResumeStructure, upgradedParse } from './ai/resume-parse'
 import { decryptApiKey } from './crypto'
 import { designUsable, downloadDesignDocx, tailorDesign } from './pdf/docx-design'
 import { getCachedTier, getDesignFile, getResume, getSettings, resolveMode, saveDesignFile, saveParsedResume, saveResume, type DesignFile } from './storage'
 import type { AuthSession, ParsedResume, ResumeData, TailoredResume } from '../types'
 
-// The account's dashboard keeps Word files up to this size.
+// The dashboard won't store a bigger Word file (#131).
 export const DESIGN_UPLOAD_MAX = 2 * 1024 * 1024
 
 export function toBase64(bytes: Uint8Array): string {
@@ -17,7 +17,7 @@ export function toBase64(bytes: Uint8Array): string {
   return btoa(s)
 }
 
-export function fromBase64(b64: string): Uint8Array {
+export function fromBase64(b64: string): Uint8Array<ArrayBuffer> {
   return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))
 }
 
@@ -26,34 +26,25 @@ export async function sha256Hex(bytes: Uint8Array<ArrayBuffer>): Promise<string>
   return Array.from(digest, (b) => b.toString(16).padStart(2, '0')).join('')
 }
 
-// A check that started this long ago without finishing died with the
-// service worker; the resume page offers "Try again".
+// A check this old died with the service worker, so the resume page
+// offers "Try again" (#131).
 export const DESIGN_CHECK_STALE_MS = 2 * 60 * 1000
 
-// The account may receive this upload's text and file: it was added while
-// signed in to this account. A copy added signed out, or another account's,
-// is never sent (the rule syncResume in lib/auth.ts follows).
 function ownedBy(resume: ResumeData, session: AuthSession): boolean {
   return !resume.signedOutUpload && resume.accountId === session.user.id
 }
 
-// "Your design" is used: its check passed and the user hasn't picked the Cover Me layout.
 export function usesDesign(resume: ResumeData | null | undefined): boolean {
   const d = resume?.design
   return d?.status === 'done' && !!d.check && designUsable(d.check) && resume?.layout !== 'cover-me'
 }
 
-// Saves the check's progress on the resume (and, BYOK, the parse it made),
-// unless another upload replaced the resume meanwhile.
 async function setDesign(hash: string, update: Partial<NonNullable<ResumeData['design']>>, parsed?: ParsedResume): Promise<void> {
   const resume = await getResume()
   if (resume?.design?.hash !== hash) return
   await saveResume({ ...resume, ...(parsed ? { parsed } : {}), design: { ...resume.design, ...update } })
 }
 
-// The CHECK_DESIGN message: parses the resume (on the server for an account,
-// with the user's key for BYOK), then runs the edit as a dry run against that
-// parse. Pro accounts then upload the file for the dashboard.
 export async function checkUploadedDesign(hash: string): Promise<void> {
   try {
     const [resume, file, settings] = await Promise.all([getResume(), getDesignFile(hash), getSettings()])
@@ -67,7 +58,15 @@ export async function checkUploadedDesign(hash: string): Promise<void> {
       const session = await ensureValidSession()
       if (!session) throw new Error('Sign in to check your design.')
       if (!ownedBy(resume, session)) throw new Error('Upload your .docx again while signed in to use your design.')
-      parsed = await uploadResumeToBackend(session.access_token, resume.text, resume.filename, true)
+      // A re-read goes to the account first, checked against the text it replaced.
+      // This upload would skip that check (#401).
+      if (resume.rereadFrom) {
+        await syncResume(session).catch(() => {})
+        const now = await getResume()
+        if (now?.design?.hash !== hash) return
+        if (now.rereadFrom) throw new Error("Couldn't check your design right now. Try again in a few minutes.")
+      }
+      parsed = await uploadResumeToBackend(session.access_token, resume.text, resume.filename, true, { readerVersion: resume.readerVersion, uploadedAt: resume.uploadedAt })
       if (!parsed) throw new Error("Couldn't check your design right now. Try again in a few minutes.")
     } else {
       if (!settings?.apiKey) throw new Error('Add your API key in Settings to check your design.')
@@ -80,10 +79,10 @@ export async function checkUploadedDesign(hash: string): Promise<void> {
     }
 
     const { check } = await tailorDesign(fromBase64(file.data), parsed!)
-    // A BYOK file's earlier parse stays when the new one doesn't fit, so
-    // History entries made from it still download in its design.
+    // A BYOK file keeps its earlier parse when the new one doesn't fit, so its
+    // History entries still download in its design (#239).
     if (hosted || !file.parsed || designUsable(check)) await saveDesignFile(hash, { ...file, parsed })
-    // BYOK: the tailor reuses this parse instead of making its own.
+    // BYOK saves the parse so the tailor reuses it instead of making its own (#131).
     await setDesign(hash, { status: 'done', check }, hosted ? undefined : parsed)
     if (hosted) {
       const session = await ensureValidSession()
@@ -94,12 +93,9 @@ export async function checkUploadedDesign(hash: string): Promise<void> {
   }
 }
 
-// Pro accounts keep the Word file for the dashboard. Tried after each check
-// and each hosted tailor until it lands, so an upgrade after the upload, or a
-// failed send, still gets the file there. Also tried when History opens in
-// the Pro view, so resumes saved from this browser after an upgrade can be
-// downloaded in their design on the dashboard. checkTier asks the server for
-// the plan instead of using the cached one (only once there's a file to send).
+// Safe to call again until the file lands, so a later upgrade or a failed send
+// still gets it to the dashboard. checkTier asks the server for the plan
+// instead of the cached one, only once there's a file to send (#181).
 export async function uploadDesignIfPro(session: AuthSession, checkTier = false): Promise<void> {
   const resume = await getResume()
   const d = resume?.design
@@ -111,7 +107,8 @@ export async function uploadDesignIfPro(session: AuthSession, checkTier = false)
     await uploadDesignFileToBackend(session.access_token, d.hash, file.data, await sha256Hex(new TextEncoder().encode(resume.text)))
     await setDesign(d.hash, { uploaded: true })
   } catch (err) {
-    // Shown on the resume page, and not sent again. Anything else is tried again on the next tailor.
+    // A refused file is not sent again and the resume page says why.
+    // Other errors retry on the next tailor (#174).
     if (err instanceof DesignRefusedError) await setDesign(d.hash, { status: 'error', error: err.message, refused: true })
   }
 }
@@ -127,9 +124,9 @@ export async function restoreDesign(accessToken: string, hash: string, text: str
   const { check } = await tailorDesign(bytes, file.parsed)
   const resume = await getResume()
   if (resume?.text !== text || resume.design) return
-  // The resume first, as on upload: a file stored before anything points to
-  // it could be pruned by a History save in between.
-  await saveResume({ ...resume, design: { hash, size: bytes.length, status: 'done', check, uploaded: true } })
+  // Save the resume first: a file stored before anything points to it could
+  // be pruned by a History save in between (#174).
+  await saveResume({ ...resume, file: { id: hash, size: bytes.length, type: 'docx' }, design: { hash, size: bytes.length, status: 'done', check, uploaded: true } })
   await saveDesignFile(hash, file)
 }
 
@@ -144,9 +141,6 @@ async function accountDesignFile(hash: string): Promise<DesignFile | null> {
   return file
 }
 
-// What a tailor needs about the layout: the file to edit when "Your design"
-// is used, and whether it fell back to the Cover Me layout because the file
-// is gone or no longer passes its check.
 export async function designForTailor(): Promise<{ design: TailorDesign; file?: Uint8Array; parsed?: ParsedResume; summary: boolean }> {
   const resume = await getResume()
   if (!usesDesign(resume)) return { design: { layout: 'cover-me', fellBack: false }, summary: true }
@@ -178,10 +172,6 @@ export async function designWithParse(hash: string, parsed: ParsedResume): Promi
   return designForTailor()
 }
 
-// The own-key tailor's parse: the one "Your design" was checked against when
-// it's current, else the resume's, read again once when it's from before
-// extra sections, section order or the link fix (upgradedParse keeps the
-// order the user chose). A Word file is then checked against it.
 export async function parseForTailor(d: ForTailor, resume: Pick<ResumeData, 'text' | 'parsed'>, read: () => Promise<ParsedResume>): Promise<{ parsed: ParsedResume; design: ForTailor }> {
   let parsed = isCurrentParse(d.parsed) ? d.parsed : resume.parsed
   if (!isCurrentParse(parsed)) {
@@ -192,8 +182,6 @@ export async function parseForTailor(d: ForTailor, resume: Pick<ResumeData, 'tex
   return { parsed, design }
 }
 
-// After the tailor: marks the resume as tailored in the user's file, or as
-// fallen back when the tailored text can't be placed in it.
 export async function finishDesign(resume: TailoredResume, d: Awaited<ReturnType<typeof designForTailor>>): Promise<TailoredResume> {
   const { sourceHash: _h, designFellBack: _f, ...plain } = resume
   if (d.design.layout !== 'yours') return plain
@@ -204,13 +192,10 @@ export async function finishDesign(resume: TailoredResume, d: Awaited<ReturnType
   return { ...plain, designFellBack: true }
 }
 
-// The Word download of a tailored resume: inside the user's own file when it
-// was tailored in one that's still stored here or in a Pro account, else the
-// Cover Me layout.
 export async function downloadResumeWord(resume: TailoredResume, jobTitle?: string): Promise<void> {
   const stored = resume.sourceHash ? (await getDesignFile(resume.sourceHash)) ?? await accountDesignFile(resume.sourceHash) : null
   if (stored?.parsed && await downloadDesignDocx(fromBase64(stored.data), stored.parsed, resume, jobTitle)) return
-  // docx is big, so it loads only when someone asks for this Word file.
+  // The docx library is large, so it loads only when someone downloads a Word file (#131).
   const { downloadTailoredResumeDocx } = await import('./pdf/resume-docx')
   await downloadTailoredResumeDocx(resume, jobTitle)
 }

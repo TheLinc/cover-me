@@ -20,8 +20,8 @@ async function deleteTarget(t: DeleteTarget): Promise<void> {
     const session = await ensureValidSession()
     if (!session) throw new Error('Sign in again in Settings to delete it.')
     await deleteApplicationFromBackend(session.access_token, t.serverId)
-    return
   }
+  // After a server delete, the hidden local copies would otherwise keep their resume file stored (#401).
   for (const id of t.coverLetterIds) await deleteFromHistory(id)
   for (const id of t.tailoredIds) await deleteFromTailoredHistory(id)
 }

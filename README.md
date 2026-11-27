@@ -69,7 +69,7 @@ Cover Me supports two AI providers:
 
 - Click the extension icon → **Resume** tab
 - Upload a Word file (.docx) to keep your own design, or a PDF or TXT file for the Cover Me layout
-- The extension extracts the text client-side. A Word file is kept in your browser so tailored resumes can be written into it (Pro also keeps it in the account, encrypted, for the dashboard); a PDF or TXT file is never stored or transmitted
+- The extension extracts the text client-side. A PDF or Word file is kept in your browser, so Cover Me can read it again when its reading improves, and so tailored resumes can be written into a Word file's design (Pro also keeps a Word file in the account, encrypted, for the dashboard). A PDF is never sent to our server. A TXT file isn't kept: its text is the file
 
 ### 3. Generate
 
@@ -105,7 +105,7 @@ The generic scraper tries these strategies in order: JSON-LD structured data, sc
 
 **Your resume is sensitive — here is exactly how it is handled:**
 
-- Text is extracted client-side on upload using pdf.js / mammoth.js. The raw file is never stored.
+- Text is extracted client-side on upload using pdf.js / mammoth.js. A PDF or Word file is kept in `chrome.storage.local` while your resume or History uses it. A PDF is never sent to our server.
 - In BYOK mode, extracted resume text is stored in `chrome.storage.local` on your device. It's sent only to the AI provider whose key you use.
 - API calls go directly from the extension to Anthropic or OpenAI using **your key**. Cover Me's servers never see your resume, letters, or key.
 - From 1.3.0, once you agree (a notice in the popup, or Settings), the extension sends the address and a copy of the job page you clicked on (most scripts, images, form fields and embedded data removed in the browser; the posting's JSON-LD is kept) to the `scrape` Edge Function, in every mode. It returns the title, company and description and keeps no copy. Until you agree, or if it can't be reached, the extension reads the page itself.
