@@ -79,7 +79,7 @@ const RESUMES = [
   { tool: 'ChatGPT', docs: '3', high: '0', medium: '1', sendable: '2 of 3', quality: '3.3' },
   { tool: 'Rezi', docs: '1', high: '0', medium: '0', sendable: '1 of 1', quality: '3.0' },
   { tool: 'Jobscan', docs: '3', high: '4', medium: '3', sendable: '0 of 3', quality: 'Not scored' },
-  { tool: 'Teal', docs: '2', high: '3', medium: '2', sendable: '0 of 2', quality: '1.5' },
+  { tool: 'Teal', docs: '2', high: '2', medium: '2', sendable: '0 of 2', quality: '1.5' },
 ]
 
 const LETTERS = [
@@ -131,11 +131,11 @@ export default function Page() {
       guide={guide}
       lede={
         <>
-          On November 26, 2026 I gave Cover Me, ChatGPT, Claude, Rezi, Jobscan and Teal three resumes that lacked what the job posting asked for, and a blind scorer checked every claim they wrote. Of the tools tested on all three resumes, Cover Me was the only one with no false or misleading claim. Jobscan&rsquo;s AI Optimize, with every suggestion accepted, put a false claim into every resume it tailored, and so did Teal&rsquo;s AI summaries.
+          On November 26, 2026 I gave Cover Me, ChatGPT, Claude, Rezi, Jobscan and Teal three resumes that lacked what the job posting asked for, and a blind scorer checked every claim they wrote. Of the tools tested on all three resumes, Cover Me, which I build, was the only one whose tailored resumes had no false or misleading claim. Jobscan&rsquo;s AI Optimize, with every suggestion accepted, put a false claim into every resume it tailored, and so did Teal&rsquo;s AI summaries.
         </>
       }
       tldr={[
-        'Of the tools tested on all three resumes, Cover Me was the only one with no false or misleading claim. Rezi also had none, but its free plan allowed only one resume.',
+        'Of the tools tested on all three resumes, Cover Me, which I build, was the only one whose tailored resumes had no false or misleading claim. Rezi also had none, but its free plan allowed only one resume.',
         "ChatGPT and Claude didn't add the big missing requirements, such as Redux, Kubernetes or ACLS, and both named the gaps. Each still made one of three resumes misleading.",
         'Jobscan\'s AI Optimize, with every suggestion accepted, added a false claim to all three resumes. Teal\'s AI summaries misstated the years of experience.',
         "For cover letters, Claude wrote the best ones but implied Kubernetes experience the applicant doesn't have. Cover Me's letters were plain, and one had a small made-up detail.",
@@ -186,7 +186,7 @@ export default function Page() {
               </p>
               <ResultsTable
                 rows={RESUMES}
-                caption="Tailored resumes, scored blind on November 26, 2026. Teal's are the imported resume plus its AI summary, on the free plan, and Rezi's free plan allowed one resume. Leftover placeholders aren't counted as claims: Claude left one in a bullet, one reason that resume isn't sendable, and Jobscan's editor had 6 empty fields, such as a blank GPA line. Each Jobscan resume has a false claim without them."
+                caption="Tailored resumes, scored blind on November 26, 2026. Teal's are the imported resume plus its AI summary, on the free plan, and Rezi's free plan allowed one resume. Leftover placeholders aren't counted as claims: Claude left one in a bullet, one reason that resume isn't sendable, and Jobscan's editor had 6 empty fields, such as a blank GPA line. Each Jobscan resume has a false claim without them. One Teal line is left out, as the Teal section explains."
               />
               <h3>Cover Me</h3>
               <p>
@@ -197,7 +197,7 @@ export default function Page() {
               </p>
               <h3>Claude and ChatGPT</h3>
               <p>
-                Neither chatbot claimed Redux, Kubernetes, ACLS, Meta Ads or the other headline requirements in a resume. Both pointed out the gaps and told the applicant not to claim them. Their problems were smaller, and some still borrowed from the posting: ChatGPT added an &ldquo;Interdisciplinary collaboration&rdquo; skill to the nurse&rsquo;s resume, echoing the posting&rsquo;s interdisciplinary rounds. Claude left an instruction inside a bullet in the marketing resume: &ldquo;A/B test campaigns and content to improve engagement and conversion (add a specific test and result here if you have one)&rdquo;, and opened the email bullet with &ldquo;Built lifecycle email programs in HubSpot&rdquo;, when the resume&rsquo;s only HubSpot work is segmenting sends. ChatGPT described a developer whose dashboards serve 60,000 monthly users as having &ldquo;experience building high-traffic interfaces&rdquo;, echoing the posting&rsquo;s &ldquo;high-traffic consumer products&rdquo;. Both return chat text, so you still copy it into a document and format it yourself.
+                Neither chatbot claimed Redux, Kubernetes, ACLS, Meta Ads or the other skills and certifications the posting asked for in a resume. Both pointed out the gaps and told the applicant not to claim them. Their problems were smaller, and some still borrowed from the posting: ChatGPT added an &ldquo;Interdisciplinary collaboration&rdquo; skill to the nurse&rsquo;s resume, echoing the posting&rsquo;s interdisciplinary rounds. Claude left an instruction inside a bullet in the marketing resume: &ldquo;A/B test campaigns and content to improve engagement and conversion (add a specific test and result here if you have one)&rdquo;, and opened the email bullet with &ldquo;Built lifecycle email programs in HubSpot&rdquo;, when the resume&rsquo;s only HubSpot work is segmenting sends. ChatGPT described a developer whose dashboards serve 60,000 monthly users as having &ldquo;experience building high-traffic interfaces&rdquo;, echoing the posting&rsquo;s &ldquo;high-traffic consumer products&rdquo;. Both return chat text, so you still copy it into a document and format it yourself.
               </p>
               <h3>Rezi AI</h3>
               <p>
@@ -209,7 +209,7 @@ export default function Page() {
               </p>
               <h3>Teal AI resume builder</h3>
               <p>
-                On the free plan, Teal&rsquo;s AI wrote a summary for the resume, and both summaries misstated the basic facts. The developer, with six years of experience, became a &ldquo;Frontend Engineer with 2+ years of experience&rdquo; who &ldquo;Achieved significant performance improvements in under 3 months&rdquo;, a timeframe the resume never gives. The nurse, with four years as an RN, became a &ldquo;Dedicated nurse with 1 year of experience in Acute Care. Proficient in Continuous Monitoring and critical care environments&rdquo;, two things from the ICU posting. The <Link href="/guides/teal-review">Teal review</Link> covers what Teal+ costs.
+                On the free plan, Teal&rsquo;s AI wrote a summary for the resume, and both summaries misstated the basic facts. The developer, with six years of experience, became a &ldquo;Frontend Engineer with 2+ years of experience&rdquo; who &ldquo;Achieved significant performance improvements in under 3 months&rdquo;, a timeframe the resume never gives. The nurse, with four years as an RN, became a &ldquo;Dedicated nurse with 1 year of experience in Acute Care&rdquo;. The same summary called the nurse &ldquo;Proficient in Continuous Monitoring and critical care environments&rdquo;, two things from the ICU posting, but those are also keywords I picked in Teal&rsquo;s job matcher for the stress test below, and I can&rsquo;t rule out that Teal used my picks, so I don&rsquo;t count that line. The <Link href="/guides/teal-review">Teal review</Link> covers what Teal+ costs.
               </p>
             </>
           ),
