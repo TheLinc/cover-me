@@ -18,6 +18,8 @@ import { DELETE_PORT, UNDO_MS, type DeletePortMessage, type DeleteResult } from 
 export default function HistoryPage() {
   const [groups, setGroups] = useState<JobGroup[]>([])
   const [expandedKey, setExpandedKey] = useState<string | null>(null)
+  // A card stays mounted once opened so it can shrink shut instead of vanishing (#342).
+  const opened = useRef(new Set<string>()).current
   const [deleting, setDeleting] = useState<{ key: string; undo: boolean }[]>([])
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const portRef = useRef<chrome.runtime.Port | null>(null)
@@ -287,6 +289,7 @@ export default function HistoryPage() {
         <div className="history-list">
           {groups.map((group) => {
             const isExpanded = expandedKey === group.key
+            if (isExpanded) opened.add(group.key)
             const pending = deleting.find((x) => x.key === group.key)
             if (pending) return (
               <div key={group.key} className="job-card job-card-deleted" role="status">
@@ -330,7 +333,9 @@ export default function HistoryPage() {
                   </div>
                 </div>
 
-                {isExpanded && (
+                {opened.has(group.key) && (
+                  <div className={`job-card-reveal${isExpanded ? ' open' : ''}`} {...(!isExpanded && { inert: '' })}>
+                  <div>
                   <div className="job-card-body">
                     {group.coverLetters.map((cl, i) => (
                       <div key={cl.id} className="artifact">
@@ -389,6 +394,8 @@ export default function HistoryPage() {
                         {reviewFor === tr.id && <ReviewAsk onClose={() => setReviewFor(null)} />}
                       </div>
                     ))}
+                  </div>
+                  </div>
                   </div>
                 )}
               </div>

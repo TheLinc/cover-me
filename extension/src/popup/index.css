@@ -968,6 +968,13 @@ html, body {
 .job-card-actions { display: flex; gap: 6px; margin-top: 10px; }
 
 /* Expanded artifact section */
+.job-card-reveal { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.2s ease; }
+.job-card-reveal.open { grid-template-rows: 1fr; }
+@starting-style { .job-card-reveal.open { grid-template-rows: 0fr; } }
+/* Unclipped once open, so the Download menu can show past the card (#342). */
+.job-card-reveal > div { min-height: 0; overflow: clip; }
+.job-card-reveal.open > div { overflow: visible; transition: overflow 0s 0.2s allow-discrete; }
+
 .job-card-body {
   border-top: 1px solid var(--border);
   display: flex;
@@ -1405,7 +1412,7 @@ textarea:focus-visible, input:focus-visible, [tabindex]:focus-visible {
 /* Reduced motion: spinners hold still (the arc still marks the active step). */
 @media (prefers-reduced-motion: reduce) {
   .spinner, .step-spinner { animation: none; }
-  .context-panel, .chevron, .step-thought, .tailor-details::details-content, .setting-details::details-content, .setting-summary { transition: none; }
+  .context-panel, .job-card-reveal, .job-card-reveal > div, .chevron, .step-thought, .tailor-details::details-content, .setting-details::details-content, .setting-summary { transition: none; }
   .tailor-details[open]::details-content, .setting-details[open]::details-content { transition: none; }
 }
 
