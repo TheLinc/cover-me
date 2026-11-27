@@ -3,7 +3,7 @@ import { isSupportedHost } from './scrapers/index.ts'
 // Surest to be the employer's own first. Kept out of the scrapers so their
 // server copy (scripts/sync-scrapers.mjs) doesn't change (#346).
 export function postingLogo(company: string): string | undefined {
-  return dataLogo(company) ?? https(boardLogo()) ?? https(ownSiteIcon(company))
+  return dataLogo(company) ?? https(boardLogo(company)) ?? https(ownSiteIcon(company))
 }
 
 function dataLogo(company: string): string | undefined {
@@ -43,8 +43,15 @@ function flatten(data: unknown): Record<string, unknown>[] {
   return [obj, ...flatten(obj['@graph'])]
 }
 
-// Most boards' share image is their own or the job's; these two hold the employer's uploaded logo (#346).
-function boardLogo(): string | undefined {
+// Most boards' share image is their own or the job's; Greenhouse's and Workday's
+// hold the employer's upload. Signed-in LinkedIn has no posting data, and its
+// page shows related jobs' logos too, so only the one named for the company (#346).
+function boardLogo(company: string): string | undefined {
+  if (location.hostname.endsWith('linkedin.com')) {
+    const name = company.toLowerCase()
+    return Array.from(document.querySelectorAll('img[src*="/company-logo_"]'))
+      .find((img) => name && (img.getAttribute('alt') ?? '').toLowerCase().includes(name))?.getAttribute('src') ?? undefined
+  }
   const image = document.querySelector('meta[property="og:image"]')?.getAttribute('content') ?? ''
   if (location.hostname.endsWith('greenhouse.io') && image.includes('/external_greenhouse_job_boards/logos/')) return image
   if (location.hostname.endsWith('myworkdayjobs.com') && /\/assets\/logo$/.test(image)) return image
