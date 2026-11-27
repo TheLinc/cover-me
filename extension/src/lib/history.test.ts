@@ -164,7 +164,7 @@ describe('groupsFromApplications', () => {
       id, title: id, company: 'Acme', url: '', createdAt, tailoredResumes: [],
       coverLetters: letterAt ? [{ id: `l-${id}`, letter: 'x', createdAt: letterAt }] : [],
     })
-    // The server orders by when each application was made (#24).
+    // The server sends b first, by creation, but a's newer letter must put it on top (#24).
     const groups = groupsFromApplications([app('b', '2026-10-05T00:00:00+00:00'), app('a', '2026-10-01T00:00:00+00:00', '2026-10-10T00:00:00+00:00')])
     expect(groups.map((g) => g.id)).toEqual(['a', 'b'])
   })
@@ -235,8 +235,8 @@ describe('answerJobs', () => {
     expect(answerJobs(null, saved)).toEqual({ jobs: saved, jobSource: 'saved' })
   })
 
-  // Lever and Ashby put the form on its own page, which the scrapers can read
-  // as a "posting" made of form text. The saved copy has the real posting (#232).
+  // Lever and Ashby put the form on its own page, where a scraper reads form text
+  // as the posting, so the saved copy's posting has to win (#232).
   test("an application page matching a saved job uses the saved job's posting", () => {
     const form = posting('https://jobs.lever.co/northwind/123/apply', 'Backend Engineer', 'Northwind', 'Submit your application Resume/CV Full name')
     const { jobs, jobSource } = answerJobs(form, saved)
@@ -245,7 +245,7 @@ describe('answerJobs', () => {
     expect(jobSource).toBe('page')
   })
 
-  // LinkedIn and Indeed tell jobs apart by the query alone (#232).
+  // LinkedIn and Indeed keep one path for every job and change only the query (#232).
   test('jobs whose links differ only in the query are different jobs', () => {
     const a = posting('https://www.linkedin.com/jobs/search/?currentJobId=111', 'Analyst A', 'Acme')
     const b = posting('https://www.linkedin.com/jobs/search/?currentJobId=222', 'Analyst B', 'Globex')

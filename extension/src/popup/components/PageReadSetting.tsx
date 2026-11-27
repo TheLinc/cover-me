@@ -19,7 +19,7 @@ export default function PageReadSetting() {
     return watchPageReadChoice((choice) => setAgreed(choice === true))
   }, [])
 
-  // A build without a backend never sends the page copy, so there's nothing to choose (#29).
+  // Without a backend the page copy has nowhere to go, so there's no choice to offer (#29).
   if (!SUPABASE_URL || agreed === null) return null
 
   return (

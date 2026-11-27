@@ -50,7 +50,7 @@ describe('nextLimit', () => {
     const limit = settle(widths)
     const tops = layout(widths, limit)
     expect(new Set(tops).size).toBe(3)
-    expect(limit).toBe(5) // 2 + 2 + 1 chip, then the button on row 3 (#19)
+    expect(limit).toBe(5) // two 90px chips fit a 230px row, and row 3 keeps room for the button (#19)
   })
 
   it('handles one chip wider than a row', () => {

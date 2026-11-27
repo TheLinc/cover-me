@@ -14,13 +14,13 @@ const JOB_SITES = [
 ]
 
 export default function Welcome() {
-  // null until the first read, so a set-up user doesn't see the lock flash (#108).
+  // Starts null, not false, or a set-up user sees step 2's lock flash before the first read (#108).
   const [ready, setReady] = useState<boolean | null>(null)
   const [hasResume, setHasResume] = useState(false)
   const [summary, setSummary] = useState('')
   const [editing, setEditing] = useState(false)
-  // Finishing step 1 and Done swap in a fresh panel, which loads while step 1
-  // is shut, so the next Change shows what's saved, not stale or unsaved state (#108).
+  // A new key remounts the panel while step 1 is shut, so the next Change
+  // shows what's saved rather than stale or half-typed input (#108).
   const [panelKey, setPanelKey] = useState(0)
   const resumeHeading = useRef<HTMLHeadingElement>(null)
   const wasReady = useRef<boolean | null>(null)
@@ -40,14 +40,14 @@ export default function Welcome() {
   }, [])
 
   useEffect(() => {
-    if (ready === false) setEditing(false) // signed out: the full panel shows anyway (#108)
+    if (ready === false) setEditing(false) // once signed out the whole panel shows, so there's nothing left to edit (#108)
     if (ready && wasReady.current === false) {
-      // AccountPanel reads settings only on mount; a key saved in the popup
-      // would leave it showing the sign-up form behind the next Change (#108).
+      // AccountPanel reads settings only when it mounts, so without a remount a key
+      // saved in the popup leaves the sign-up form behind the next Change (#108).
       setPanelKey((k) => k + 1)
       resumeHeading.current?.focus({ preventScroll: true })
-      // Scroll once the steps have finished growing and shrinking, or the
-      // target is measured where the heading was, not where it ends up (#108).
+      // Scrolling before the steps finish resizing would aim at where the
+      // heading was, not where it lands (#108).
       const scroll = () => resumeHeading.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
       if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
         resumeHeading.current?.scrollIntoView({ block: 'start' })
@@ -56,7 +56,7 @@ export default function Welcome() {
         const once = () => { if (!done) { done = true; scroll() } }
         const onEnd = (e: TransitionEvent) => { if (e.propertyName === 'grid-template-rows') once() }
         document.addEventListener('transitionend', onEnd)
-        const timer = setTimeout(once, 600) // in case no transition ends (#108)
+        const timer = setTimeout(once, 600) // an interrupted transition never fires transitionend (#108)
         wasReady.current = ready
         return () => { document.removeEventListener('transitionend', onEnd); clearTimeout(timer) }
       }
@@ -98,9 +98,9 @@ export default function Welcome() {
             Pin Cover Me: click the puzzle icon in Chrome's toolbar, then the pin next to Cover Me.
             On any posting (LinkedIn, Indeed, Greenhouse, Lever, Workday and more), click Cover Me, then Generate.
           </p>
-          {/* Only once set up: earlier, they'd invite skipping steps 1 and 2. The
-              other sites are hiring systems on each company's site, with no
-              job search to link to (#108). */}
+          {/* Hidden until set up, as earlier they'd invite skipping steps 1 and 2. Only
+              LinkedIn and Indeed: the other sites are each company's own hiring
+              system, with no job search to link to (#108). */}
           <Reveal open={postingState === 'current'}>
             <div className="welcome-links">
               {JOB_SITES.map(({ name, url, icon }) => (
@@ -176,7 +176,7 @@ function Grow({ className, children }: { className: string; children: ReactNode 
 // It stays mounted, so a half-filled form keeps its state; shut, it's inert,
 // so nothing in it can be clicked, focused or read (#108).
 function Reveal({ open, children }: { open: boolean; children: ReactNode }) {
-  // React 18 doesn't type inert; the empty string turns it on (#108).
+  // React 18's types lack inert, so it's spread in; an empty string turns it on (#108).
   return (
     <div className="welcome-reveal" data-open={open} {...(!open && { inert: '' })}>
       <div>{children}</div>
