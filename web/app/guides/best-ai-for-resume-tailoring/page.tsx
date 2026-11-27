@@ -35,7 +35,7 @@ const faqJsonLd = {
       name: 'Which AI is best for tailoring a resume?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: "In a test on November 26, 2026, with three resumes that lacked what the posting asked for, Cover Me was the only tool whose three tailored resumes had no false or misleading claim. ChatGPT and Claude each made one of three resumes misleading. Jobscan's AI Optimize added a false claim to all three resumes, and Teal's AI summaries misstated the applicants' years of experience. The author builds Cover Me, one of the tools tested, and three cases are enough for examples, not percentages.",
+        text: "In a test on November 26, 2026, with three resumes that lacked what the posting asked for, Cover Me was the only tool whose three tailored resumes had no false or misleading claim. ChatGPT and Claude each made one of three resumes misleading. Jobscan's AI Optimize, with every suggestion accepted, added a false claim to all three resumes, and Teal's AI summaries misstated the applicants' years of experience. The author builds Cover Me, one of the tools tested, and three cases are enough for examples, not percentages.",
       },
     },
     {
@@ -43,7 +43,7 @@ const faqJsonLd = {
       name: 'Do AI resume builders make things up?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: "Some do, mostly when the posting asks for something your resume doesn't have. In this test Jobscan's AI Optimize wrote \"Developed E-Commerce marketing sites\" for a developer with no e-commerce work, and Teal summed up a nurse with four years as an RN as having \"1 year of experience in Acute Care\". Read every line of a tailored resume against your original before you send it.",
+        text: "Some do. In a test on November 26, 2026, with three resumes that lacked what the posting asked for, Jobscan's AI Optimize wrote \"Developed E-Commerce marketing sites\" for a developer with no e-commerce work, and Teal summed up a nurse with four years as an RN as having \"1 year of experience in Acute Care\". Read every line of a tailored resume against your original before you send it.",
       },
     },
     {
@@ -51,7 +51,7 @@ const faqJsonLd = {
       name: 'Is Claude or ChatGPT better for resume writing?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: "Close. In this test neither added the main requirements the resume lacked, such as Redux, Kubernetes or ACLS, and both named the gaps. Claude's resumes scored a little higher on writing, but one kept an instruction to the user in a bullet: \"(add a specific test and result here if you have one)\". ChatGPT's added stretches of its own, such as \"experience building high-traffic interfaces\". For cover letters, Claude wrote the best letters of any tool.",
+        text: "Close. In a test on November 26, 2026, with three resumes that lacked what the posting asked for, neither added the main requirements the resume lacked, such as Redux, Kubernetes or ACLS, and both named the gaps. Claude's resumes scored a little higher on writing, but one kept an instruction to the user in a bullet: \"(add a specific test and result here if you have one)\". ChatGPT's added stretches of its own, such as \"experience building high-traffic interfaces\". For cover letters, Claude wrote the best letters of any tool.",
       },
     },
     {
@@ -67,7 +67,7 @@ const faqJsonLd = {
       name: "Is Jobscan's AI Optimize accurate?",
       acceptedAnswer: {
         '@type': 'Answer',
-        text: "In this test, with the default Fast optimization and every suggestion accepted, it added a claim the resume didn't support to each of three resumes, such as WCAG 2.1 AA compliance for a developer whose resume shows only Lighthouse scores. Jobscan shows its edits as suggestions you can reject one by one, so a careful user can keep only the true ones.",
+        text: "In a test on November 26, 2026, with the default Fast optimization and every suggestion accepted, it added a claim the resume didn't support to each of three resumes, such as WCAG 2.1 AA compliance for a developer whose resume shows only Lighthouse scores. Jobscan shows its edits as suggestions you can reject one by one, so a careful user can keep only the true ones.",
       },
     },
   ],
@@ -131,7 +131,7 @@ export default function Page() {
       guide={guide}
       lede={
         <>
-          On November 26, 2026 I gave Cover Me, ChatGPT, Claude, Rezi, Jobscan and Teal three resumes that lacked what the job posting asked for, and a blind scorer checked every claim they wrote. Of the tools tested on all three resumes, Cover Me was the only one with no false or misleading claim. Jobscan&rsquo;s AI Optimize put a false claim into every resume it tailored, and so did Teal&rsquo;s AI summaries.
+          On November 26, 2026 I gave Cover Me, ChatGPT, Claude, Rezi, Jobscan and Teal three resumes that lacked what the job posting asked for, and a blind scorer checked every claim they wrote. Of the tools tested on all three resumes, Cover Me was the only one with no false or misleading claim. Jobscan&rsquo;s AI Optimize, with every suggestion accepted, put a false claim into every resume it tailored, and so did Teal&rsquo;s AI summaries.
         </>
       }
       tldr={[
@@ -163,7 +163,7 @@ export default function Page() {
                 In ChatGPT and Claude I typed what most people would: &ldquo;Tailor my resume to this job posting.&rdquo; or &ldquo;Write a cover letter for this job using my resume.&rdquo;, then pasted the posting and the resume, one fresh chat per request. ChatGPT ran on a free account in a temporary chat with its default model. Claude ran Sonnet 5.5, the model on its free plan. The other tools ran with their default settings:
               </p>
               <ul>
-                <li>Cover Me: version 1.10.0 on a Pro account, posting pasted in, default options. It uses the same Claude Sonnet 5.5 model as the Claude chat.</li>
+                <li>Cover Me: built from its main branch on November 26 (version 1.10.0 plus unreleased changes), on a Pro account, posting pasted in, default options. It uses the same Claude Sonnet 5.5 model as the Claude chat.</li>
                 <li>Jobscan: the Premium trial, AI Optimize with the default Fast setting. Jobscan shows its edits as suggestions, and I scored what &ldquo;Accept All&rdquo; would produce.</li>
                 <li>Teal: a free account. Free AI credits ran out after two cover letters and two AI summaries, so the marketing case has neither.</li>
                 <li>Rezi: a free account, which allows one AI conversation, so only the developer resume. Rezi offers its changes as checkboxes; I ticked both of its suggested optimizations, one of which the resume doesn&rsquo;t support, and left the four gaps unticked. Its cover letters are paid only.</li>
@@ -193,15 +193,15 @@ export default function Page() {
                 All three resumes kept the facts of every bullet and added none of the missing requirements. Under &ldquo;Missing&rdquo;, each result lists what the posting wants and the resume lacks: Redux, Kubernetes and CI/CD for the developer, ACLS, critical care, CCRN and Cerner for the nurse, and Meta Ads, ROAS and attribution for the marketer. The cost of that is a modest score: the ATS match went from 60 to 63, 54 to 54, and 48 to 60. It won&rsquo;t raise the number with skills you don&rsquo;t have. <Link href="/guides/what-is-an-ats-score">What an ATS score measures</Link> explains why a lower true score beats a higher false one.
               </p>
               <p>
-                Two small flaws: the nurse&rsquo;s list named ACLS twice, and the marketer&rsquo;s summary ended on the odd phrase &ldquo;to a first growth hire&rdquo;.
+                Three small flaws: the nurse&rsquo;s list named ACLS twice, the marketer&rsquo;s list said the posting wants 3+ years of growth work and the applicant has about 1, though the resume shows Google Ads campaigns since January 2023, and the marketer&rsquo;s summary ended on the odd phrase &ldquo;to a first growth hire&rdquo;.
               </p>
               <h3>Claude and ChatGPT</h3>
               <p>
-                Neither chatbot added Redux, Kubernetes, ACLS, Meta Ads or the other headline requirements to a resume. Both pointed out the gaps and told the applicant not to claim them. Their problems were smaller, and some still borrowed from the posting: ChatGPT added an &ldquo;Interdisciplinary collaboration&rdquo; skill to the nurse&rsquo;s resume, echoing the posting&rsquo;s interdisciplinary rounds. Claude left an instruction inside a bullet in the marketing resume: &ldquo;A/B test campaigns and content to improve engagement and conversion (add a specific test and result here if you have one)&rdquo;, and turned &ldquo;segmenting sends&rdquo; into &ldquo;Built lifecycle email programs in HubSpot&rdquo;. ChatGPT described a developer whose dashboards serve 60,000 monthly users as having &ldquo;experience building high-traffic interfaces&rdquo;, echoing the posting&rsquo;s &ldquo;high-traffic consumer products&rdquo;. Both return chat text, so you still copy it into a document and format it yourself.
+                Neither chatbot claimed Redux, Kubernetes, ACLS, Meta Ads or the other headline requirements in a resume. Both pointed out the gaps and told the applicant not to claim them. Their problems were smaller, and some still borrowed from the posting: ChatGPT added an &ldquo;Interdisciplinary collaboration&rdquo; skill to the nurse&rsquo;s resume, echoing the posting&rsquo;s interdisciplinary rounds. Claude left an instruction inside a bullet in the marketing resume: &ldquo;A/B test campaigns and content to improve engagement and conversion (add a specific test and result here if you have one)&rdquo;, and turned &ldquo;segmenting sends&rdquo; into &ldquo;Built lifecycle email programs in HubSpot&rdquo;. ChatGPT described a developer whose dashboards serve 60,000 monthly users as having &ldquo;experience building high-traffic interfaces&rdquo;, echoing the posting&rsquo;s &ldquo;high-traffic consumer products&rdquo;. Both return chat text, so you still copy it into a document and format it yourself.
               </p>
               <h3>Rezi AI</h3>
               <p>
-                Rezi refused to add the one requirement the resume couldn&rsquo;t back up: its accessibility suggestion &ldquo;was not applied because your current resume references Lighthouse scores rather than WCAG specifically, and unverified requirements cannot be added.&rdquo; That&rsquo;s the right call. With one resume on the free plan, though, there isn&rsquo;t much to judge. <Link href="/guides/cover-me-vs-rezi">Cover Me vs Rezi</Link> covers what else differs.
+                Rezi declined the one unsupported change it was asked to apply: its accessibility suggestion &ldquo;was not applied because your current resume references Lighthouse scores rather than WCAG specifically, and unverified requirements cannot be added.&rdquo; That&rsquo;s the right call. With one resume on the free plan, though, there isn&rsquo;t much to judge. <Link href="/guides/cover-me-vs-rezi">Cover Me vs Rezi</Link> covers what else differs.
               </p>
               <h3>Jobscan AI Optimize</h3>
               <p>
@@ -219,7 +219,7 @@ export default function Page() {
           body: (
             <>
               <p>
-                In this test, Claude and ChatGPT were close for tailoring a resume. Neither added the main requirements the resume lacked, both named the gaps, and each left one of three resumes misleading. Claude&rsquo;s resumes read a little better, 3.7 against 3.3 out of 5, and its cover letters were the best of any tool. ChatGPT&rsquo;s letters were accurate but leaned on stock phrases: the scorer counted 20 clichés across its three letters, against 10 for Claude&rsquo;s.
+                In this November 26, 2026 test, Claude and ChatGPT were close for tailoring a resume. Neither added the main requirements the resume lacked, both named the gaps, and each left one of three resumes misleading. Claude&rsquo;s resumes read a little better, 3.7 against 3.3 out of 5, and its cover letters were the best of any tool. ChatGPT&rsquo;s letters were accurate but leaned on stock phrases: the scorer counted 20 clichés across its three letters, against 10 for Claude&rsquo;s.
               </p>
               <p>
                 Neither does the part after the writing. You paste the posting and resume into every chat, then copy the answer into a document and format it. If you&rsquo;d rather do it by hand, <Link href="/guides/chatgpt-resume-prompts">these ChatGPT resume prompts</Link> include one that checks the rewrite against your original for anything made up.
@@ -239,7 +239,7 @@ export default function Page() {
                 Claude wrote the strongest letters, and one of them still stretched the truth: &ldquo;I also work in Node.js and am eager to deepen my Kubernetes and CI/CD experience&rdquo;. You can only deepen experience you already have, and the resume has none. Teal&rsquo;s letter for the same developer was upfront that &ldquo;I haven&rsquo;t deployed to Kubernetes myself&rdquo;, then claimed &ldquo;I&rsquo;ve worked closely with CI/CD pipelines&rdquo;, which the resume doesn&rsquo;t mention. Jobscan&rsquo;s letter gave the nurse &ldquo;two years of experience as a Staff Nurse&rdquo;, when the resume shows four, and wrote that &ldquo;The responsibilities of delivering critical care&rdquo; align with the posting, though the resume shows no critical care work.
               </p>
               <p>
-                Cover Me&rsquo;s letters had no false claim the scorer found and no clichés, but they scored 3.0 for writing, below Claude&rsquo;s 4.3. The scorer called them &ldquo;plain and accurate&rdquo;. They list what the applicant has done more than they make a case for the job. Its marketing letter wrote that click-through rate rose &ldquo;to 3.4%, up from where it started&rdquo; when the resume gives the starting figure, 2.1%. I also found one line the scorer missed, in the developer&rsquo;s letter: &ldquo;Dashboard views take most of my time at Halcyon, and the data layer is the smaller share.&rdquo; The resume doesn&rsquo;t say how the applicant splits their time. That&rsquo;s a made-up detail, even if it&rsquo;s a small one, and I&rsquo;m working on it.
+                Cover Me&rsquo;s letters had no false claim the scorer found and no clichés, but they scored 3.0 for writing, below Claude&rsquo;s 4.3. The scorer called them accurate but plain. They list what the applicant has done more than they make a case for the job. Its marketing letter wrote that click-through rate rose &ldquo;to 3.4%, up from where it started&rdquo; when the resume gives the starting figure, 2.1%. I also found one line the scorer missed, in the developer&rsquo;s letter: &ldquo;Dashboard views take most of my time at Halcyon, and the data layer is the smaller share.&rdquo; The resume doesn&rsquo;t say how the applicant splits their time. That&rsquo;s a made-up detail, even if it&rsquo;s a small one, and I&rsquo;m working on it.
               </p>
             </>
           ),
@@ -248,7 +248,7 @@ export default function Page() {
           title: 'A stress test: Teal’s bullet writer',
           body: (
             <p>
-              Teal&rsquo;s job matcher lists keywords from the posting, including ones your resume lacks, and offers to write bullets with them. I picked three requirements the developer doesn&rsquo;t have, as someone chasing a higher match might. It wrote &ldquo;Led the implementation of Redux for state management across a React application, enhancing performance and scalability for over 900,000 monthly users within 4 months.&rdquo; and &ldquo;Optimized deployment processes using Kubernetes, reducing downtime by X%&rdquo;, with no warning that the resume shows neither. This is a test I set up on purpose, so it isn&rsquo;t in the tables, but it shows what happens when a tool does what you ask.
+              Teal&rsquo;s Write Bullet tool offers keywords from the posting, including ones your resume lacks, and writes bullets with them. I picked three requirements the developer doesn&rsquo;t have, as someone chasing a higher match might. It wrote &ldquo;Led the implementation of Redux for state management across a React application, enhancing performance and scalability for over 900,000 monthly users within 4 months.&rdquo; and &ldquo;Optimized deployment processes using Kubernetes, reducing downtime by X%&rdquo;, with no warning that the resume shows neither. This is a test I set up on purpose, so it isn&rsquo;t in the tables, but it shows what happens when a tool does what you ask.
             </p>
           ),
         },
