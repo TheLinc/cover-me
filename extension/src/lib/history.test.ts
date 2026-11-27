@@ -18,6 +18,12 @@ describe('groupLocalHistory', () => {
     expect(groups[0].localTailoredIds).toEqual(['t1'])
   })
 
+  test("a letter keeps the resume it came from (#401)", () => {
+    const source = { filename: 'Pat.pdf', uploadedAt: '2026-09-30T00:00:00Z', fileId: 'f' }
+    const [g] = groupLocalHistory([{ id: 'l1', job: job('https://jobs.example/1'), letter: 'x', createdAt: '2026-10-01T00:00:00Z', source }], [])
+    expect(g.coverLetters[0].source).toEqual(source)
+  })
+
   test('with no URL, company and title decide the group', () => {
     const groups = groupLocalHistory(
       [{ id: 'l1', job: job(''), letter: 'x', createdAt: '2026-10-01T00:00:00Z' }],

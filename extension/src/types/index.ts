@@ -8,8 +8,8 @@ export interface Settings {
 }
 
 export type { JobData } from '../content/scrapers/types.ts'
-import type { ResumeEducation, ResumeExperience, ResumeProject, ResumeSection, SectionKey, TailoredResume } from '../lib/pdf/types'
-export type { ResumeEducation, ResumeExperience, ResumeProject, ResumeSection, TailoredResume } from '../lib/pdf/types'
+import type { ResumeEducation, ResumeExperience, ResumeProject, ResumeSection, ResumeSource, SectionKey, TailoredResume } from '../lib/pdf/types'
+export type { ResumeEducation, ResumeExperience, ResumeProject, ResumeSection, ResumeSource, TailoredResume } from '../lib/pdf/types'
 import type { DesignCheck } from '../lib/pdf/docx-design'
 export type { DesignCheck } from '../lib/pdf/docx-design'
 import type { PageSnapshot } from '../content/snapshot.ts'
@@ -30,6 +30,7 @@ export interface CoverLetter {
   // saved there. If that save didn't go through, History retries it without
   // asking (entries from before the upgrade still wait for the user's Save) (#24).
   saveTo?: string
+  source?: ResumeSource
 }
 
 export interface AuthSession {
@@ -172,6 +173,7 @@ export interface CoverLetterEntry {
   id: string
   letter: string
   createdAt: string
+  source?: ResumeSource
 }
 
 export interface TailoredResumeEntry {

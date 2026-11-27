@@ -6,6 +6,7 @@ import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from '../lib/config'
 import { decryptApiKey } from '../lib/crypto'
 import { checkUploadedDesign, designForTailor, finishDesign, parseForTailor, uploadDesignIfPro } from '../lib/design'
 import { debugGroup } from '../lib/debug'
+import { resumeSource } from '../lib/resume-file'
 import { addToHistory, addToTailoredHistory, getCandidateContext, getResume, getSession, getSettings, hasAgreedToPageRead, resolveMode, setEntryAccounts, watchSession } from '../lib/storage'
 import { handleInstalled, uninstallUrl } from './install'
 import { savePendingUpdate } from '../lib/update'
@@ -101,7 +102,14 @@ async function recordTailored(
   id: string = crypto.randomUUID(),
   owner?: { account?: string; saveTo?: string },
 ): Promise<void> {
-  await addToTailoredHistory({ id, job, resume, createdAt: new Date().toISOString(), ...owner }).catch(() => {})
+  const source = await currentSource()
+  await addToTailoredHistory({ id, job, resume: source ? { ...resume, source } : resume, createdAt: new Date().toISOString(), ...owner }).catch(() => {})
+}
+
+// Stamped here, not on the server, so History knows the file on this computer (#401).
+async function currentSource() {
+  const resume = await getResume().catch(() => null)
+  return resume ? resumeSource(resume) : undefined
 }
 
 async function failTailor(id: string, job: JobData, startedAt: number, error: string): Promise<TailorResponse> {
@@ -413,7 +421,7 @@ async function tailorFromJob(job: JobData, compact: boolean, supplemental?: stri
   const startedAt = Date.now()
   await setTailorJob({ id, status: 'loading', job, startedAt })
   // Which file a result came from isn't resume content for the model to revise (#131)
-  const { sourceHash: _h, designFellBack: _f, ...previous } = lastResult ?? {} as TailoredResume
+  const { sourceHash: _h, designFellBack: _f, source: _s, ...previous } = lastResult ?? {} as TailoredResume
   try {
     const settings = await getSettings()
 
@@ -550,6 +558,7 @@ async function generateFromJob(job: JobData, supplemental?: string, jobId?: stri
         letter,
         createdAt: new Date().toISOString(),
         ...(pro ? { saveTo: session.user.id } : {}),
+        source: await currentSource(),
       }
       await addToHistory(entry)
       if (pro) {
@@ -576,6 +585,7 @@ async function generateFromJob(job: JobData, supplemental?: string, jobId?: stri
       job,
       letter,
       createdAt: new Date().toISOString(),
+      source: resumeSource(resume),
     }
     await addToHistory(entry)
     await setCoverJob({ id, status: 'done', job, letter, createdAt: entry.createdAt, startedAt })

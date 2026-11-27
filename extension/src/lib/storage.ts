@@ -80,6 +80,7 @@ export async function saveHistory(letters: CoverLetter[]): Promise<void> {
 export async function deleteFromHistory(id: string): Promise<void> {
   const history = await getHistory()
   await chrome.storage.local.set({ history: history.filter((l) => l.id !== id) })
+  await pruneDesignFiles()
 }
 
 // Tailored resumes are 5 to 15 KB each, so History keeps fewer of them than letters (#17).
@@ -130,8 +131,12 @@ export async function getDesignHashes(): Promise<string[]> {
 }
 
 async function pruneDesignFiles(): Promise<void> {
-  const [stored, resume, history] = await Promise.all([getDesignHashes(), getResume(), getTailoredHistory()])
-  const inUse = new Set([resume?.design?.hash, resume?.file?.id, ...history.map((e) => e.resume.sourceHash)])
+  const [stored, resume, tailored, letters] = await Promise.all([getDesignHashes(), getResume(), getTailoredHistory(), getHistory()])
+  const inUse = new Set([
+    resume?.design?.hash, resume?.file?.id,
+    ...tailored.flatMap((e) => [e.resume.sourceHash, e.resume.source?.fileId]),
+    ...letters.map((e) => e.source?.fileId),
+  ])
   const unused = stored.filter((h) => !inUse.has(h))
   if (unused.length === 0) return
   await chrome.storage.local.remove(unused.map(designKey))

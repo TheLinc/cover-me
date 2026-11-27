@@ -36,7 +36,7 @@ export function groupLocalHistory(letters: CoverLetter[], tailored: TailoredHist
   }
   for (const cl of letters) {
     const g = groupFor(cl.job, cl.createdAt)
-    g.coverLetters.push({ id: cl.id, letter: cl.letter, createdAt: cl.createdAt })
+    g.coverLetters.push({ id: cl.id, letter: cl.letter, createdAt: cl.createdAt, ...(cl.source ? { source: cl.source } : {}) })
     g.localCoverLetterIds!.push(cl.id)
   }
   for (const tr of tailored) {

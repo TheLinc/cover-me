@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { toBase64 } from './design'
-import { fileId, fileType, saveUpload } from './resume-file'
+import { downloadStoredFile, fileId, fileType, fromLine, resumeSource, saveUpload, usingLine } from './resume-file'
+import { saveDesignFile } from './storage'
+
+const saveFileMock = vi.hoisted(() => vi.fn())
+vi.mock('./pdf/file-name', async (importOriginal) => ({ ...(await importOriginal<object>()), saveFile: saveFileMock }))
 
 function fakeLocal(data: Record<string, unknown> = {}) {
   const pick = (k: string | string[]) => Object.fromEntries([k].flat().filter((x) => x in data).map((x) => [x, data[x]]))
@@ -55,5 +59,52 @@ describe('stored resume files (#401)', () => {
     const { resume } = await saveUpload(new File(['Pat text'], 'Pat.txt'), 'Pat text')
     expect(resume.file).toBeUndefined()
     expect(Object.keys(local).filter((k) => k.startsWith('designFile:'))).toEqual([])
+  })
+})
+
+describe('the uploaded file, seen (#401)', () => {
+  test('downloads the stored bytes under the original name', async () => {
+    fakeLocal()
+    const bytes = new Uint8Array([37, 80, 68, 70, 9])
+    await saveDesignFile('p', { data: toBase64(bytes) })
+    saveFileMock.mockClear()
+    expect(await downloadStoredFile('p', 'Pat Resume.pdf')).toBe(true)
+    const [blob, name] = saveFileMock.mock.calls[0] as [Blob, string]
+    expect(name).toBe('Pat Resume.pdf')
+    expect(blob.type).toBe('application/pdf')
+    expect(new Uint8Array(await blob.arrayBuffer())).toEqual(bytes)
+  })
+
+  test('a Word file downloads as Word', async () => {
+    fakeLocal()
+    await saveDesignFile('w', { data: toBase64(new Uint8Array([80, 75])) })
+    saveFileMock.mockClear()
+    await downloadStoredFile('w', 'Pat.docx')
+    expect((saveFileMock.mock.calls[0]![0] as Blob).type).toBe('application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+  })
+
+  test('returns false with no stored file', async () => {
+    fakeLocal()
+    saveFileMock.mockClear()
+    expect(await downloadStoredFile('gone', 'Pat.pdf')).toBe(false)
+    expect(saveFileMock).not.toHaveBeenCalled()
+  })
+
+  test('usingLine names the file and its upload date, with the year only when it is not this year', () => {
+    const year = new Date().getFullYear()
+    const base = { text: 'x', filename: 'Pat.pdf', updatedAt: `${year}-11-20T12:00:00Z` }
+    expect(usingLine({ ...base, uploadedAt: `${year}-11-12T12:00:00Z` })).toBe('Using Pat.pdf, uploaded Nov 12')
+    expect(usingLine(base)).toBe('Using Pat.pdf, uploaded Nov 20')
+    expect(usingLine({ ...base, uploadedAt: `${year - 1}-03-05T12:00:00Z` })).toBe(`Using Pat.pdf, uploaded Mar 5, ${year - 1}`)
+  })
+
+  test('fromLine names the source file and its upload date', () => {
+    const year = new Date().getFullYear()
+    expect(fromLine({ filename: 'Pat.pdf', uploadedAt: `${year}-02-03T12:00:00Z` })).toBe('From Pat.pdf, uploaded Feb 3')
+  })
+
+  test('resumeSource names the file and falls back to updatedAt', () => {
+    expect(resumeSource({ text: 'x', filename: 'Pat.pdf', updatedAt: 'U', uploadedAt: 'A', file: { id: 'f', size: 1, type: 'pdf' } })).toEqual({ filename: 'Pat.pdf', uploadedAt: 'A', fileId: 'f' })
+    expect(resumeSource({ text: 'x', filename: 'Pat.txt', updatedAt: 'U' })).toEqual({ filename: 'Pat.txt', uploadedAt: 'U' })
   })
 })

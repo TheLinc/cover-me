@@ -1,8 +1,9 @@
 import { ensureValidSession } from './auth'
-import { sha256Hex, toBase64 } from './design'
+import { fromBase64, sha256Hex, toBase64 } from './design'
+import { saveFile } from './pdf/file-name'
 import { READER_VERSION } from './resume-parser'
 import { getDesignFile, getMode, getResume, saveDesignFile, saveResume } from './storage'
-import type { AuthSession, ResumeData } from '../types'
+import type { AuthSession, ResumeData, ResumeSource } from '../types'
 
 // The reader version is part of the id, so a re-read under a new reader is
 // stored apart from the entry, and the parse, older History entries use (#401).
@@ -46,4 +47,32 @@ export async function saveUpload(file: File, text: string): Promise<{ resume: Re
   // The same file again, under the same reader, keeps the parse it was checked against (#131).
   if (bytes && id) await saveDesignFile(id, { ...(await getDesignFile(id)), data: toBase64(bytes) })
   return { resume, word, hosted: mode === 'hosted' && session ? session : undefined }
+}
+
+const MIME = { pdf: 'application/pdf', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }
+
+export async function downloadStoredFile(id: string, filename: string): Promise<boolean> {
+  const stored = await getDesignFile(id)
+  if (!stored) return false
+  const type = fileType(filename)
+  saveFile(new Blob([fromBase64(stored.data)], type ? { type: MIME[type] } : {}), filename)
+  return true
+}
+
+function uploadDate(iso: string): string {
+  const d = new Date(iso)
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', ...(d.getFullYear() !== new Date().getFullYear() ? { year: 'numeric' } : {}) })
+}
+
+// A resume from before #401 has no uploadedAt; updatedAt is the closest date it has.
+export function usingLine(resume: ResumeData): string {
+  return `Using ${resume.filename}, uploaded ${uploadDate(resume.uploadedAt ?? resume.updatedAt)}`
+}
+
+export function fromLine(source: ResumeSource): string {
+  return `From ${source.filename}, uploaded ${uploadDate(source.uploadedAt)}`
+}
+
+export function resumeSource(resume: ResumeData): ResumeSource {
+  return { filename: resume.filename, uploadedAt: resume.uploadedAt ?? resume.updatedAt, ...(resume.file ? { fileId: resume.file.id } : {}) }
 }

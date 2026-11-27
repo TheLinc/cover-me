@@ -4,9 +4,9 @@ import { DESIGN_CHECK_STALE_MS, DESIGN_UPLOAD_MAX, usesDesign } from '../../lib/
 import { designUsable } from '../../lib/pdf/docx-design'
 import { MAX_RESUME_CHARS } from '../../lib/ai/resume-parse'
 import { needsUploadNote } from '../../lib/reread'
-import { saveUpload } from '../../lib/resume-file'
+import { downloadStoredFile, saveUpload } from '../../lib/resume-file'
 import { parseResume } from '../../lib/resume-parser'
-import { getCachedTier, getMode, getResume, getSession, saveResume, watchResume } from '../../lib/storage'
+import { getCachedTier, getDesignHashes, getMode, getResume, getSession, saveResume, watchResume } from '../../lib/storage'
 import type { DesignCheck, ParsedResume, ResumeData } from '../../types'
 
 type Status = 'idle' | 'parsing' | 'saved' | 'error'
@@ -24,11 +24,13 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
   // Existing users: the "New" notice the Resume tab's dot leads to (#131).
   const [news, setNews] = useState(false)
   const [noteSeen, setNoteSeen] = useState(true)
+  const [fileKept, setFileKept] = useState(false)
 
   useEffect(() => {
     const show = (r: ResumeData | null) => {
       setResume(r)
       setParsed(r?.parsed ?? null)
+      getDesignHashes().then((h) => setFileKept(!!r?.file && h.includes(r.file.id)))
       // A sign-in's sync rewrites the resume, so this also catches a sign-in (#16).
       Promise.all([getMode(), getSession(), getCachedTier()]).then(([m, s, t]) => {
         setAccountMode(m === 'hosted' && !!s)
@@ -70,6 +72,7 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
     try {
       const text = await parseResume(file)
       const { resume: data, word, hosted } = await saveUpload(file, text)
+      setFileKept(!!data.file)
       if (word) checkDesign(word)
       dismissNews()
       setResume(data)
@@ -213,7 +216,14 @@ export default function ResumePage({ hideHeader = false }: { hideHeader?: boolea
               </svg>
             </div>
             <div className="resume-info">
-              <div className="resume-name">{resume.filename}</div>
+              <div className="resume-name-row">
+                <div className="resume-name">{resume.filename}</div>
+                {fileKept && resume.file && (
+                  <button type="button" className="btn btn-secondary btn-sm resume-download" aria-label={`Download ${resume.filename}`} onClick={() => void downloadStoredFile(resume.file!.id, resume.filename)}>
+                    Download
+                  </button>
+                )}
+              </div>
               <div className="resume-meta">
                 Updated {formatAge(resume.updatedAt)} · ~{Math.round(resume.text.length / 5)} words
               </div>

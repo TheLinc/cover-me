@@ -488,7 +488,7 @@ Deno.serve(async (req) => {
 
   const { data: resumeRow, error: resumeError } = await supabase
     .from('resumes')
-    .select('text_encrypted, structured_encrypted')
+    .select('text_encrypted, structured_encrypted, filename, uploaded_at, updated_at')
     .eq('user_id', userId)
     .single()
 
@@ -742,7 +742,8 @@ ${job.description}`)
         const row = {
           user_id: userId,
           job_application_id: jobAppId,
-          resume_json_encrypted: await encrypt(JSON.stringify(resume)),
+          // The dashboard can name the resume it was made from (#401).
+          resume_json_encrypted: await encrypt(JSON.stringify({ ...resume, source: { filename: resumeRow.filename ?? 'resume', uploadedAt: resumeRow.uploaded_at ?? resumeRow.updated_at } })),
           ats_score: atsScore ?? null,
           ats_gaps: atsGaps ?? null,
           source_hash: sourceHash ?? null,
