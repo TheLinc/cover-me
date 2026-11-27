@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { GuideArticle, GuideFigure } from '@/components/site/GuideArticle'
+import { GuideArticle, GuideFigure, ext } from '@/components/site/GuideArticle'
 import { getGuide } from '@/lib/guides'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.cover-me.dev'
@@ -131,7 +131,7 @@ export default function Page() {
       guide={guide}
       lede={
         <>
-          I gave six AI tools three resumes that were missing what the job posting asked for, then checked every claim they wrote. Most resume advice says not to lie. This test checks which tools lie for you.
+          On November 26, 2026 I gave Cover Me, ChatGPT, Claude, Rezi, Jobscan and Teal three resumes that lacked what the job posting asked for, and a blind scorer checked every claim they wrote. Cover Me was the only tool whose tailored resumes had no false or misleading claim. Jobscan&rsquo;s AI Optimize and Teal&rsquo;s AI put a false claim into every resume they tailored.
         </>
       }
       tldr={[
@@ -151,7 +151,8 @@ export default function Page() {
           body: (
             <>
               <p>
-                Three made-up applicants, each applying for a real-looking job that asks for things their resume doesn&rsquo;t have. That gap is where tailoring tools go wrong: the easy way to raise a match score is to borrow the posting&rsquo;s requirements.
+                Three made-up applicants, each applying for a real-looking job that asks for things their resume doesn&rsquo;t have. That gap is where tailoring tools go wrong: the easy way to raise a match score is to borrow the posting&rsquo;s requirements. The three resumes and postings are public in{' '}
+                <a href="https://github.com/TheLinc/cover-me/blob/ca5615324b319bd4aa8ed4d81385aff574e35a56/extension/eval/fixtures.ts#L273" {...ext}>Cover Me&rsquo;s test cases on GitHub</a>, so you can run them through any tool yourself.
               </p>
               <ul>
                 <li>A frontend developer with 6 years of React, applying for a Senior Frontend Engineer job that wants Redux, Kubernetes, Cypress and e-commerce experience.</li>
@@ -180,6 +181,9 @@ export default function Page() {
           title: 'Which AI is best for tailoring a resume?',
           body: (
             <>
+              <p>
+                Cover Me was the most accurate: all three of its tailored resumes were sendable, with no false or misleading claim and the best writing score, 4.0 out of 5. Rezi refused to add anything unverified, but its free plan allowed one resume. Claude and ChatGPT came close. Jobscan and Teal added a false claim to every resume.
+              </p>
               <ResultsTable
                 rows={RESUMES}
                 caption="Tailored resumes, scored blind on November 26, 2026. For Jobscan I left out 5 empty editor fields the scorer counted as misleading, such as a blank GPA line, since they probably don't export; each Jobscan resume has a false claim without them."
@@ -195,15 +199,15 @@ export default function Page() {
               <p>
                 Neither chatbot added Redux, Kubernetes, ACLS, Meta Ads or any other missing requirement to a resume. Both pointed out the gaps and told the applicant not to claim them. Their problems were smaller. Claude left an instruction inside a bullet in the marketing resume: &ldquo;A/B test campaigns and content to improve engagement and conversion (add a specific test and result here if you have one)&rdquo;, and turned &ldquo;segmenting sends&rdquo; into &ldquo;Built lifecycle email programs in HubSpot&rdquo;. ChatGPT described a developer whose dashboards serve 60,000 monthly users as having &ldquo;experience building high-traffic interfaces&rdquo;, the posting&rsquo;s phrase. Both return chat text, so you still copy it into a document and format it yourself.
               </p>
-              <h3>Rezi</h3>
+              <h3>Rezi AI</h3>
               <p>
                 Rezi refused to add the one requirement the resume couldn&rsquo;t back up: its accessibility suggestion &ldquo;was not applied because your current resume references Lighthouse scores rather than WCAG specifically, and unverified requirements cannot be added.&rdquo; That&rsquo;s the right call. With one resume on the free plan, though, there isn&rsquo;t much to judge. <Link href="/guides/cover-me-vs-rezi">Cover Me vs Rezi</Link> covers what else differs.
               </p>
-              <h3>Jobscan</h3>
+              <h3>Jobscan AI Optimize</h3>
               <p>
                 AI Optimize added a claim the resume doesn&rsquo;t support to every resume. The developer, who builds analytics dashboards, got &ldquo;Developed E-Commerce marketing sites and internal tools in React&rdquo; and a bullet ending &ldquo;ensuring compliance with WCAG 2.1 AA standards&rdquo;. The med-surg nurse got &ldquo;post-surgical discharge planning and critical care transitions&rdquo;. The marketer got &ldquo;to support brand storytelling and B2B awareness&rdquo;. Each one borrows from the posting and writes it into the applicant&rsquo;s past. Jobscan does let you reject suggestions one at a time, so a careful user can avoid this. The <Link href="/guides/jobscan-review">Jobscan review</Link> covers its prices and match rate.
               </p>
-              <h3>Teal</h3>
+              <h3>Teal AI resume builder</h3>
               <p>
                 On the free plan, Teal&rsquo;s AI wrote a summary for the resume, and both summaries got the basic facts wrong. The developer, with six years of experience, became a &ldquo;Frontend Engineer with 2+ years of experience&rdquo; who &ldquo;Achieved significant performance improvements in under 3 months&rdquo;, a timeframe the resume never gives. The nurse, with four years as an RN, became a &ldquo;Dedicated nurse with 1 year of experience in Acute Care. Proficient in Continuous Monitoring and critical care environments&rdquo;, two things from the ICU posting. The <Link href="/guides/teal-review">Teal review</Link> covers what Teal+ costs.
               </p>
@@ -215,7 +219,7 @@ export default function Page() {
           body: (
             <>
               <p>
-                Both are safe enough if you check the output. Claude&rsquo;s resumes read a little better, 3.7 against 3.3 out of 5, and its cover letters were the best of any tool. ChatGPT&rsquo;s letters were accurate but leaned on stock phrases: the scorer counted 20 clichés across its three letters, against 10 for Claude&rsquo;s.
+                For tailoring a resume, Claude and ChatGPT are close. Neither added a skill the resume lacked, both named the gaps, and each left one of three resumes misleading. Claude&rsquo;s resumes read a little better, 3.7 against 3.3 out of 5, and its cover letters were the best of any tool. ChatGPT&rsquo;s letters were accurate but leaned on stock phrases: the scorer counted 20 clichés across its three letters, against 10 for Claude&rsquo;s.
               </p>
               <p>
                 Neither does the part after the writing. You paste the posting and resume into every chat, then copy the answer into a document and format it. If you&rsquo;d rather do it by hand, <Link href="/guides/chatgpt-resume-prompts">these ChatGPT resume prompts</Link> include one that checks the rewrite against your original for anything made up.
@@ -227,6 +231,9 @@ export default function Page() {
           title: 'Cover letters: the best-written letter wasn’t the most accurate',
           body: (
             <>
+              <p>
+                Claude wrote the best cover letters in this test, 4.3 out of 5, but one of them claimed experience the resume doesn&rsquo;t have. Cover Me and ChatGPT were the only tools whose letters were all sendable.
+              </p>
               <ResultsTable rows={LETTERS} caption="Cover letters, scored blind on November 26, 2026. Rezi's letters are paid only, and Teal's free credits ran out after two." />
               <p>
                 Claude wrote the strongest letters, and one of them still stretched the truth: &ldquo;I also work in Node.js and am eager to deepen my Kubernetes and CI/CD experience&rdquo;. You can only deepen experience you already have, and the resume has none. Teal&rsquo;s letter for the same developer was upfront that &ldquo;I haven&rsquo;t deployed to Kubernetes myself&rdquo;, then claimed &ldquo;I&rsquo;ve worked closely with CI/CD pipelines&rdquo;, which the resume doesn&rsquo;t mention. Jobscan&rsquo;s letter gave the nurse &ldquo;two years of experience as a Staff Nurse&rdquo;, when the resume shows four, and wrote that &ldquo;The responsibilities of delivering critical care&rdquo; align with the posting, though the resume shows no critical care work.
