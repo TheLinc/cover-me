@@ -1,0 +1,289 @@
+{
+  "label": "branch",
+  "results": [
+    {
+      "name": "old: signed in",
+      "ok": true
+    },
+    {
+      "name": "old: PDF upload saved to the account",
+      "ok": true,
+      "detail": {
+        "reader_version": null,
+        "uploaded_at": null
+      }
+    },
+    {
+      "name": "old: no error on the Resume tab",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "name": "old: sign-in sync of the same text keeps it on both sides",
+      "ok": true,
+      "detail": {
+        "before": {
+          "filename": "Robin Example Resume.pdf",
+          "len": 503,
+          "head": "Robin Example\nrobin@example.co",
+          "updatedAt": "2026-11-27T13:46:18.751Z",
+          "rv": 2,
+          "mark": false
+        },
+        "after": {
+          "filename": "Robin Example Resume.pdf",
+          "len": 503,
+          "head": "Robin Example\nrobin@example.co",
+          "updatedAt": "2026-11-27T13:46:18.751Z",
+          "rv": 2,
+          "mark": false
+        },
+        "acct": {
+          "filename": "Robin Example Resume.pdf",
+          "len": 503,
+          "head": "Robin Example\nrobin@example.co",
+          "updatedAt": "2026-11-27T13:46:18.801+00:00",
+          "rv": null,
+          "mark": false
+        },
+        "session": true
+      }
+    },
+    {
+      "name": "old: Word upload design check finished",
+      "ok": true,
+      "detail": {
+        "status": "done"
+      }
+    },
+    {
+      "name": "old: Pro Word file reached the account",
+      "ok": true
+    },
+    {
+      "name": "old: cover letter generated and saved",
+      "ok": true,
+      "detail": [
+        "account",
+        "createdAt",
+        "id",
+        "job",
+        "letter",
+        "saveTo"
+      ]
+    },
+    {
+      "name": "old: resume tailored",
+      "ok": true,
+      "detail": {
+        "status": "done"
+      }
+    },
+    {
+      "name": "old: tailored resume saved",
+      "ok": true
+    },
+    {
+      "name": "old: account's tailored copy source (branch)",
+      "ok": true,
+      "detail": "\"source\":{\"filename\":\"Alex Rivera Resume.docx\",\"uploadedAt\":\"2026-11-27T13:46:32.664+00:00\"}"
+    },
+    {
+      "name": "old: Pro History shows the job with its letter and tailored resume",
+      "ok": true
+    },
+    {
+      "name": "old: no error in History",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "name": "old: applications list loads for the old build",
+      "ok": true,
+      "detail": {
+        "status": 200,
+        "id": "422a4f0a-0469-49da-a928-e92cd0b3227d"
+      }
+    },
+    {
+      "name": "mixed: new build takes the old build's Word upload",
+      "ok": true,
+      "detail": {
+        "y": {
+          "filename": "Alex Rivera Resume.docx",
+          "len": 1160,
+          "head": "Alex Rivera\n\nMarketing Lead\n\n(",
+          "updatedAt": "2026-11-27T13:46:32.664+00:00",
+          "file": "docx",
+          "design": "done",
+          "mark": false
+        },
+        "acct": {
+          "filename": "Alex Rivera Resume.docx",
+          "len": 1160,
+          "head": "Alex Rivera\n\nMarketing Lead\n\n(",
+          "updatedAt": "2026-11-27T13:46:32.664+00:00",
+          "rv": null,
+          "design": "1b2af5",
+          "mark": false
+        }
+      }
+    },
+    {
+      "name": "mixed: new build restored the Word file from the account, re-read it, and the account has reader_version 2",
+      "ok": true,
+      "detail": {
+        "y": {
+          "filename": "Alex Rivera Resume.docx",
+          "len": 1160,
+          "head": "Alex Rivera\n\nMarketing Lead\n\n(",
+          "updatedAt": "2026-11-27T13:46:32.664+00:00",
+          "rv": 2,
+          "file": "docx",
+          "design": "done",
+          "mark": false
+        },
+        "acct": {
+          "filename": "Alex Rivera Resume.docx",
+          "len": 1160,
+          "head": "Alex Rivera\n\nMarketing Lead\n\n(",
+          "updatedAt": "2026-11-27T13:46:32.664+00:00",
+          "rv": 2,
+          "design": "1b2af5",
+          "mark": false
+        }
+      }
+    },
+    {
+      "name": "mixed: new build upload reaches the account with reader_version 2",
+      "ok": true,
+      "detail": {
+        "y": {
+          "filename": "Robin Example Resume.pdf",
+          "len": 503,
+          "head": "Robin Example\nrobin@example.co",
+          "updatedAt": "2026-11-27T13:46:59.872Z",
+          "rv": 2,
+          "file": "pdf",
+          "mark": false
+        },
+        "acct": {
+          "filename": "Robin Example Resume.pdf",
+          "len": 503,
+          "head": "Robin Example\nrobin@example.co",
+          "updatedAt": "2026-11-27T13:46:59.979+00:00",
+          "rv": 2,
+          "mark": false
+        }
+      }
+    },
+    {
+      "name": "mixed: old build signing in takes the new build's upload",
+      "ok": true,
+      "detail": {
+        "x": {
+          "filename": "Robin Example Resume.pdf",
+          "len": 503,
+          "head": "Robin Example\nrobin@example.co",
+          "updatedAt": "2026-11-27T13:46:59.979+00:00",
+          "mark": false
+        },
+        "y": {
+          "filename": "Robin Example Resume.pdf",
+          "len": 503,
+          "head": "Robin Example\nrobin@example.co",
+          "updatedAt": "2026-11-27T13:46:59.872Z",
+          "rv": 2,
+          "file": "pdf",
+          "mark": false
+        }
+      }
+    },
+    {
+      "name": "mixed: old build has the older text before the re-read",
+      "ok": true,
+      "detail": {
+        "x": {
+          "filename": "Robin Example Resume.pdf",
+          "len": 473,
+          "head": "Robin Example\nrobin@example.co",
+          "updatedAt": "2026-11-27T13:47:08.111+00:00",
+          "mark": false
+        },
+        "acct": {
+          "filename": "Robin Example Resume.pdf",
+          "len": 473,
+          "head": "Robin Example\nrobin@example.co",
+          "updatedAt": "2026-11-27T13:47:08.111+00:00",
+          "rv": 1,
+          "mark": false
+        }
+      }
+    },
+    {
+      "name": "mixed: new build re-read reached the account",
+      "ok": true,
+      "detail": {
+        "y": {
+          "filename": "Robin Example Resume.pdf",
+          "len": 503,
+          "head": "Robin Example\nrobin@example.co",
+          "updatedAt": "2026-11-27T13:46:59.872Z",
+          "rv": 2,
+          "file": "pdf",
+          "mark": false
+        },
+        "acct": {
+          "filename": "Robin Example Resume.pdf",
+          "len": 503,
+          "head": "Robin Example\nrobin@example.co",
+          "updatedAt": "2026-11-27T13:47:16.952+00:00",
+          "rv": 2,
+          "mark": false
+        }
+      }
+    },
+    {
+      "name": "mixed: old build signing in takes the re-read, not its older text",
+      "ok": true,
+      "detail": {
+        "x": {
+          "filename": "Robin Example Resume.pdf",
+          "len": 503,
+          "head": "Robin Example\nrobin@example.co",
+          "updatedAt": "2026-11-27T13:47:16.952+00:00",
+          "mark": false
+        },
+        "acct": {
+          "filename": "Robin Example Resume.pdf",
+          "len": 503,
+          "head": "Robin Example\nrobin@example.co",
+          "updatedAt": "2026-11-27T13:47:16.952+00:00",
+          "rv": 2,
+          "mark": false
+        }
+      }
+    },
+    {
+      "name": "mixed: old build upload reaches the account",
+      "ok": true
+    },
+    {
+      "name": "mixed: new build takes it, with no Download for a file it doesn't have",
+      "ok": true,
+      "detail": {
+        "y": {
+          "filename": "Sam Other Resume.pdf",
+          "len": 487,
+          "head": "Sam Other\nsam@example.com | (5",
+          "updatedAt": "2026-11-27T13:47:27.569+00:00",
+          "mark": false
+        }
+      }
+    },
+    {
+      "name": "mixed: new build shows the one-time re-upload note for the old build's PDF",
+      "ok": true
+    }
+  ]
+}
